@@ -30,7 +30,8 @@ interface Props {
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata() {
-  return { title: 'SOP Marketplace | Sophia AI' };
+  const t = await getTranslations('sop.marketplace');
+  return { title: t('pageTitle') };
 }
 
 function getD1(): D1Database | null {

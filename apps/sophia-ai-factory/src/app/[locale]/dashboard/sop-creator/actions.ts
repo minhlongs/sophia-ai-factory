@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
+import { getTranslations } from 'next-intl/server';
 
 function getD1(): D1Database | null {
   try {
@@ -14,14 +15,15 @@ function getD1(): D1Database | null {
 }
 
 export async function createSopAction(formData: FormData): Promise<{ error?: string; templateId?: string }> {
+  const t = await getTranslations('sop.creator.actions');
   const user = await getCurrentUser();
-  if (!user) return { error: 'Unauthorized' };
+  if (!user) return { error: t('unauthorized') };
 
   const tier = await getUserTier(user.id);
-  if (tier !== 'MASTER') return { error: 'MASTER tier required' };
+  if (tier !== 'MASTER') return { error: t('masterRequired') };
 
   const db = getD1();
-  if (!db) return { error: 'Database unavailable' };
+  if (!db) return { error: t('dbUnavailable') };
 
   const nameEn = formData.get('name_en') as string;
   const nameVi = formData.get('name_vi') as string;
@@ -36,10 +38,10 @@ export async function createSopAction(formData: FormData): Promise<{ error?: str
   const creditsPerRun = Number(formData.get('credits_per_run') || '10');
 
   if (!nameEn || !nameVi || !category || !playbookMd || !agentsYaml) {
-    return { error: 'Required fields missing' };
+    return { error: t('requiredFieldsMissing') };
   }
   if (priceUsd < 5 || priceUsd > 999) {
-    return { error: 'Price must be between $5 and $999' };
+    return { error: t('priceRange') };
   }
 
   const slug = nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -47,18 +49,9 @@ export async function createSopAction(formData: FormData): Promise<{ error?: str
   const { createTemplate, createListing } = await import('@/lib/sop/sop-repo');
 
   const template = await createTemplate(db, {
-    slug,
-    nameVi,
-    nameEn,
-    descriptionVi,
-    descriptionEn,
-    category,
-    agentsYaml,
-    playbookMd,
-    configSchema: configSchema || undefined,
-    creditsPerRun,
-    setupTimeMinutes: setupTime,
-    authorUserId: user.id,
+    slug, nameVi, nameEn, descriptionVi, descriptionEn, category,
+    agentsYaml, playbookMd, configSchema: configSchema || undefined,
+    creditsPerRun, setupTimeMinutes: setupTime, authorUserId: user.id,
   });
 
   await createListing(db, {
@@ -70,16 +63,17 @@ export async function createSopAction(formData: FormData): Promise<{ error?: str
 }
 
 export async function submitForReviewAction(templateId: string): Promise<{ error?: string }> {
+  const t = await getTranslations('sop.creator.actions');
   const user = await getCurrentUser();
-  if (!user) return { error: 'Unauthorized' };
+  if (!user) return { error: t('unauthorized') };
 
   const db = getD1();
-  if (!db) return { error: 'Database unavailable' };
+  if (!db) return { error: t('dbUnavailable') };
 
   const { getTemplateById, getListingByTemplateId, updateListingStatus } = await import('@/lib/sop/sop-repo');
 
   const template = await getTemplateById(db, templateId);
-  if (!template || template.author_user_id !== user.id) return { error: 'Not your template' };
+  if (!template || template.author_user_id !== user.id) return { error: t('notYourTemplate') };
 
   await db.prepare(`UPDATE sop_templates SET status = 'published', updated_at = ?1 WHERE id = ?2`)
     .bind(Date.now(), templateId).run();

@@ -2142,7 +2142,8 @@
       "featuredTitle": "Featured Playbooks",
       "firstTimeTitle": "First time installing a SOP?",
       "firstTimeDesc": "3 steps: (1) pick a template below, (2) click Install, (3) go to /dashboard/sops and click Run to generate your first video. ~5 minutes total.",
-      "firstTimeFaq": "Read SOP FAQ →"
+      "firstTimeFaq": "Read SOP FAQ →",
+      "pageTitle": "SOP Marketplace | Sophia AI"
     },
     "card": {
       "creditsPerRun": "{n} credits/run",
@@ -2319,7 +2320,18 @@
         "deleteTemplate": "Delete Template",
         "confirmDelete": "Are you sure? This will permanently delete this SOP template.",
         "confirmDeleteYes": "Yes, delete",
-        "confirmDeleteNo": "Cancel"
+        "confirmDeleteNo": "Cancel",
+        "pageTitle": "SOP Template {id} | Creator Dashboard",
+        "draftDescription": "This template is in draft status. Publish it to make it available on the marketplace."
+      },
+      "pageTitle": "Creator Dashboard | Sophia AI",
+      "actions": {
+        "unauthorized": "Unauthorized",
+        "masterRequired": "MASTER tier required",
+        "dbUnavailable": "Database unavailable",
+        "requiredFieldsMissing": "Required fields missing",
+        "priceRange": "Price must be between $5 and $999",
+        "notYourTemplate": "Not your template"
       }
     },
     "community": {
@@ -2349,6 +2361,11 @@
       "commissionOverride": "50% commission for 60 days",
       "redeemed": "Redeemed",
       "active": "Active"
+    },
+    "status": {
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived"
     }
   },
   "agentChat": {

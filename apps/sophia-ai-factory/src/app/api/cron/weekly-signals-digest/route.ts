@@ -99,9 +99,11 @@ export async function GET(req: NextRequest) {
     finishCronCheckIn(cronCtx, CRON_NAME)
     return Response.json({ ok: true, eventCount: events.length, issue_url: issueUrl, telegram_ok: telegramOk, sources: ['posthog', 'd1'] })
   } catch (err) {
-    const msg = getErrorMessage(err)
-    if (db) await recordCronRun(db, CRON_NAME, 'failure', msg)
-    failCronCheckIn(cronCtx, CRON_NAME, err)
-    throw err
+    const errorId = crypto.randomUUID().slice(0, 8);
+    const errDetail = getErrorMessage(err);
+    logger.error('[Cron:WeeklySignals] ' + errorId, { error: errDetail });
+    if (db) await recordCronRun(db, CRON_NAME, 'failure', 'internal_error');
+    failCronCheckIn(cronCtx, CRON_NAME, err);
+    return Response.json({ ok: false, error: 'internal_error', ref: errorId }, { status: 500 })
   }
 }

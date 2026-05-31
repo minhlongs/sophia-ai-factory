@@ -94,6 +94,24 @@ async function handleOneBundlePermanentFailure(
     await deleteR2VideoArtifacts(row.r2_key);
   }
 
+  // Check if the linked purchase is refunded
+  const clientDb = createServerClient()
+  const result = await clientDb
+    .from('user_purchases')
+    .select('status')
+    .eq('id', purchaseId)
+    .single()
+  const { data: purchaseData } = result
+  const purchase = purchaseData as { status: string } | null
+
+  if (purchase?.status === 'refunded') {
+    logger.warn('[video-status-sync] Skipping email and compensation — purchase refunded', {
+      purchaseId,
+      videoId: row.id,
+    })
+    return
+  }
+
   await grantCompensationCredit(purchaseId, reason)
 
   const userInfo = await fetchUserInfo(row.user_id)
@@ -147,7 +165,7 @@ export async function GET(req: NextRequest) {
     const CONCURRENCY_LIMIT = 5;
 
     async function processRow(row: VideoRow): Promise<void> {
-      const createdAt = new Date(row.created_at).getTime();
+      const createdAt = new Date(Number(row.created_at) * 1000).getTime();
 
         // ── Timeout path ─────────────────────────────────────────────────────
         if (createdAt < cutoff) {

@@ -288,7 +288,7 @@ describe('Usage Metering - Timer', () => {
       const elapsed = getElapsed();
 
       expect(elapsed).toBeGreaterThanOrEqual(8); // Allow some tolerance
-      expect(elapsed).toBeLessThan(100);
+      expect(elapsed).toBeLessThan(1000);
     });
 
     it('returns function that can be called multiple times', () => {

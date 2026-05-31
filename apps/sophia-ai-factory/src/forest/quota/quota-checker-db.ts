@@ -1,4 +1,4 @@
-import { createServerClient } from '@/seed/db/client';
+import { createServerClient, getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { QUOTA_LIMITS } from '@/forest/usage-metering/aggregator';
@@ -60,7 +60,6 @@ export async function calculateCurrentUsage(
   userId: string,
   licenseNonce: string
 ): Promise<CachedQuota> {
-  const db = createServerClient();
   const now = Math.floor(Date.now() / 1000);
 
   const hourStart = Math.floor(now / 3600) * 3600;
@@ -68,49 +67,41 @@ export async function calculateCurrentUsage(
   const monthStart = Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime() / 1000);
 
   try {
-    const [hourlyResult, dailyResult, monthlyResult] = await Promise.all([
-      db
-        .from('usage_events')
-        .select('credits_used')
-        .eq('user_id', userId)
-        .eq('license_nonce', licenseNonce)
-        .gte('created_at', hourStart)
-        .lt('created_at', hourStart + 3600),
-
-      db
-        .from('usage_events')
-        .select('credits_used')
-        .eq('user_id', userId)
-        .eq('license_nonce', licenseNonce)
-        .gte('created_at', dayStart)
-        .lt('created_at', dayStart + 86400),
-
-      db
-        .from('usage_events')
-        .select('credits_used')
-        .eq('user_id', userId)
-        .eq('license_nonce', licenseNonce)
-        .gte('created_at', monthStart),
-    ]);
-
-    const hourlyCredits = ((hourlyResult.data ?? []) as unknown as CreditsUsedRow[]).reduce(
-      (sum, row) => sum + (row.credits_used ?? 0),
-      0
-    );
-    const dailyCredits = ((dailyResult.data ?? []) as unknown as CreditsUsedRow[]).reduce(
-      (sum, row) => sum + (row.credits_used ?? 0),
-      0
-    );
-    const monthlyCredits = ((monthlyResult.data ?? []) as unknown as CreditsUsedRow[]).reduce(
-      (sum, row) => sum + (row.credits_used ?? 0),
-      0
-    );
+    const db = await getD1Raw();
+    const result = await db
+      .prepare(
+        `SELECT
+          SUM(CASE WHEN created_at >= ? AND created_at < ? THEN credits_used ELSE 0 END) AS hourly_credits,
+          SUM(CASE WHEN created_at >= ? AND created_at < ? THEN credits_used ELSE 0 END) AS daily_credits,
+          SUM(CASE WHEN created_at >= ? THEN credits_used ELSE 0 END) AS monthly_credits,
+          COUNT(CASE WHEN created_at >= ? AND created_at < ? THEN 1 END) AS daily_requests
+         FROM usage_events
+         WHERE user_id = ? AND license_nonce = ? AND created_at >= ?`
+      )
+      .bind(
+        hourStart,
+        hourStart + 3600,
+        dayStart,
+        dayStart + 86400,
+        monthStart,
+        dayStart,
+        dayStart + 86400,
+        userId,
+        licenseNonce,
+        monthStart
+      )
+      .first<{
+        hourly_credits: number | null;
+        daily_credits: number | null;
+        monthly_credits: number | null;
+        daily_requests: number | null;
+      }>();
 
     return {
-      hourly: hourlyCredits,
-      daily: dailyCredits,
-      monthly: monthlyCredits,
-      requests: dailyResult.data?.length ?? 0,
+      hourly: result?.hourly_credits ?? 0,
+      daily: result?.daily_credits ?? 0,
+      monthly: result?.monthly_credits ?? 0,
+      requests: result?.daily_requests ?? 0,
     };
   } catch (error) {
     logger.error('[Quota Checker] Error calculating usage', toError(error));

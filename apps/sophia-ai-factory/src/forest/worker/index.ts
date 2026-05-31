@@ -34,6 +34,7 @@ export type { WorkerUsageEvent as UsageEvent }
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    (globalThis as Record<string, unknown>).KV_KV = env.KV_KV;
     const url = new URL(request.url)
     if (url.pathname === '/health') {
       return new Response(JSON.stringify({ status: 'ok', timestamp: Date.now() }), { headers: { 'Content-Type': 'application/json' } })

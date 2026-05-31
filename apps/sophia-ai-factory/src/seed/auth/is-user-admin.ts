@@ -32,10 +32,6 @@ export async function isUserAdmin(user: User): Promise<boolean> {
 export async function isUserAdminWithRole(
   user: User
 ): Promise<{ isAdmin: boolean; dbRole: string | null }> {
-  if (user.role === 'admin') {
-    return { isAdmin: true, dbRole: 'admin' };
-  }
-
   const db = createServerClient();
   const { data: rawData } = await db
     .from('user_profiles')

@@ -5,7 +5,7 @@
  * @module lib/db/repositories/user-purchases-repo
  */
 
-import { createServerClient } from '@/seed/db/client'
+import { createServerClient, getD1Raw } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import type { UserPurchase, PurchaseKind, PurchaseStatus } from '@/seed/types'
@@ -178,28 +178,31 @@ export async function markRefunded(paymentId: string): Promise<void> {
  * Returns true if decrement succeeded (credits were available), false if zero.
  */
 export async function decrementCredits(purchaseId: string): Promise<boolean> {
-  const db = createServerClient()
+  const db = await getD1Raw()
   const now = Math.floor(Date.now() / 1000)
 
   // Fetch current credits first
-  const { data } = await db
-    .from('user_purchases')
-    .select('credits_remaining')
-    .eq('id', purchaseId)
-    .eq('status', 'paid')
-    .single()
+  const row = await db
+    .prepare(
+      `SELECT credits_remaining
+       FROM user_purchases
+       WHERE id = ?1 AND status = 'paid'
+       LIMIT 1`,
+    )
+    .bind(purchaseId)
+    .first<{ credits_remaining: number }>()
 
-  const row = data as { credits_remaining: number } | null
   if (!row || row.credits_remaining <= 0) return false
 
-  await db
-    .from('user_purchases')
-    .update({
-      credits_remaining: row.credits_remaining - 1,
-      updated_at: now,
-    })
-    .eq('id', purchaseId)
-    .eq('credits_remaining', row.credits_remaining) // optimistic check
+  const result = await db
+    .prepare(
+      `UPDATE user_purchases
+       SET credits_remaining = credits_remaining - 1,
+           updated_at = ?2
+       WHERE id = ?1 AND status = 'paid' AND credits_remaining = ?3 AND credits_remaining > 0`,
+    )
+    .bind(purchaseId, now, row.credits_remaining)
+    .run()
 
-  return true
+  return (result.meta?.changes ?? 0) > 0
 }

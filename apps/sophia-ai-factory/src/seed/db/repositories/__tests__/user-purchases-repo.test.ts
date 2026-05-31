@@ -21,6 +21,7 @@ import type { UserPurchase } from '@/seed/types'
 // Mock the database client
 vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
+  getD1Raw: vi.fn(),
 }))
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -326,25 +327,54 @@ describe('decrementCredits — use 1 credit (for 1 video)', () => {
     vi.clearAllMocks()
   })
 
+  function mockD1(creditsRemaining: number | null, changes = 1) {
+    const firstFn = vi.fn().mockResolvedValue(creditsRemaining !== null ? { credits_remaining: creditsRemaining } : null)
+    const runFn = vi.fn().mockResolvedValue({ success: true, meta: { changes } })
+    const bindFn = vi.fn().mockImplementation((..._args: any[]) => {
+      return {
+        first: firstFn,
+        run: runFn,
+      }
+    })
+    const prepareFn = vi.fn().mockReturnValue({ bind: bindFn })
+    const rawDb = { prepare: prepareFn }
+    vi.mocked(dbClient.getD1Raw).mockResolvedValue(rawDb as unknown as any)
+    return { prepareFn, bindFn, firstFn, runFn }
+  }
+
   it('no credits left: returns false, no decrement', async () => {
-    const { queryBuilder } = mockDbClient()
-    // First single call returns 0 credits
-    queryBuilder.single.mockResolvedValueOnce({ data: { credits_remaining: 0 }, error: null })
+    const { runFn } = mockD1(0)
 
     const result = await decrementCredits('purchase_123')
 
     expect(result).toBe(false)
-    // Should not attempt update
-    expect(queryBuilder.update).not.toHaveBeenCalled()
+    expect(runFn).not.toHaveBeenCalled()
   })
 
   it('purchase not found: returns false', async () => {
-    const { queryBuilder } = mockDbClient()
-    // single returns null (not found)
-    queryBuilder.single.mockResolvedValueOnce({ data: null, error: null })
+    const { runFn } = mockD1(null)
 
     const result = await decrementCredits('purchase_123')
 
     expect(result).toBe(false)
+    expect(runFn).not.toHaveBeenCalled()
+  })
+
+  it('happy path: decrements credits and returns true', async () => {
+    const { runFn } = mockD1(5, 1)
+
+    const result = await decrementCredits('purchase_123')
+
+    expect(result).toBe(true)
+    expect(runFn).toHaveBeenCalled()
+  })
+
+  it('collision case: changes is 0, returns false', async () => {
+    const { runFn } = mockD1(5, 0)
+
+    const result = await decrementCredits('purchase_123')
+
+    expect(result).toBe(false)
+    expect(runFn).toHaveBeenCalled()
   })
 })
