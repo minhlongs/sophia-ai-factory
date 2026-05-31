@@ -46,10 +46,10 @@ export async function fetchDunningState(
       .select('state')
       .eq('license_nonce', licenseNonce)
       .single()
-    return (data?.state as 'ok' | 'grace_period' | 'suspended' | 'delinquent') || 'ok'
+    return (data?.state as 'ok' | 'grace_period' | 'suspended' | 'delinquent') || 'grace_period'
   } catch (error) {
     logger.warn('[Enriched JWT] Failed to fetch dunning state', toError(error))
-    return 'ok'
+    return 'grace_period'
   }
 }
 

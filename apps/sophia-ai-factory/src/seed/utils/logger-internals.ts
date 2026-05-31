@@ -94,13 +94,17 @@ export const log = (
   error?: Error,
   requestId?: string
 ): void => {
-  // Redact secret-named keys + value-shape PII patterns BEFORE building the log entry.
-  // Order matters: redactSecretKeys first masks key-named secrets, then scrubPIIDeep
-  // catches token shapes embedded in remaining string values.
-  const safeMetadata = metadata
-    ? (scrubPIIDeep(redactSecretKeys(metadata)) as Record<string, unknown>)
-    : undefined;
-  const safeMessage = scrubPII(message);
+  let safeMetadata: Record<string, unknown> | undefined;
+  let safeMessage: string;
+  try {
+    safeMetadata = metadata
+      ? (scrubPIIDeep(redactSecretKeys(metadata)) as Record<string, unknown>)
+      : undefined;
+    safeMessage = scrubPII(message);
+  } catch {
+    safeMetadata = metadata ? { _scrub_error: 'PII scrub failed' } : undefined;
+    safeMessage = message;
+  }
 
   const entry: LogEntry = {
     timestamp: new Date().toISOString(),

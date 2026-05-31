@@ -10,11 +10,13 @@
  * @module quota/quota-checker
  */
 
-import { getCachedUsage, updateCachedUsage } from './quota-checker-kv-cache';
+import { getCachedUsage, updateCachedUsage, invalidateQuotaCache } from './quota-checker-kv-cache';
 import { getEffectiveQuotaLimits, calculateCurrentUsage } from './quota-checker-db';
 import { logOverageEvent } from './quota-checker-overage';
 import type { QuotaCheckContext, QuotaConfig, EnhancedQuotaCheckResult, ExceededType } from './quota-checker-types';
 import { DEFAULT_CONFIG } from './quota-checker-types';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 
 export type { ExceededType, CachedQuota, QuotaCheckContext, QuotaConfig, EnhancedQuotaCheckResult } from './quota-checker-types';
 export { DEFAULT_CONFIG } from './quota-checker-types';
@@ -115,7 +117,9 @@ export async function checkQuotaWithOverage(
     requests: cached.requests + 1,
     timestamp: cached.timestamp,
   };
-  updateCachedUsage(userId, licenseNonce, reserved).catch(() => {});
+  updateCachedUsage(userId, licenseNonce, reserved).catch((err) => {
+    logger.warn('[Quota Checker] KV cache update failed', toError(err))
+  });
 
   return {
     allowed: true,

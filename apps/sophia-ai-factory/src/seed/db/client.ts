@@ -7,6 +7,7 @@
 
 import { D1Client } from '@/seed/db/d1-query-builder';
 import { toError } from '@/seed/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
 
 // Lazy dynamic load of local D1 mock to prevent Edge runtime bundle contamination
 let getLocalD1Mock: (() => unknown) | null = null;
@@ -142,17 +143,21 @@ class LazyQueryChain {
   }
 
   private async execute() {
-    const db = await this.getDb();
-    const client = new D1Client(db);
-    let chain = client.from(this.table) as unknown as Record<string, (...args: unknown[]) => unknown>;
-
-    for (const call of this.calls) {
-      const result = chain[call.method](...call.args);
-      if (result instanceof Promise) return result;
-      chain = result as Record<string, (...args: unknown[]) => unknown>;
+    try {
+      const db = await this.getDb();
+      const client = new D1Client(db);
+      let chain = client.from(this.table) as unknown as Record<string, (...args: unknown[]) => unknown>;
+      for (const call of this.calls) {
+        const result = chain[call.method](...call.args);
+        if (result instanceof Promise) return result;
+        chain = result as Record<string, (...args: unknown[]) => unknown>;
+      }
+      return chain;
+    } catch (err) {
+      const d1Err = err instanceof Error ? err : new Error(String(err));
+      logger.error('[D1Client] LazyQueryChain execution failed', d1Err);
+      throw d1Err;
     }
-
-    return chain;
   }
 }
 
