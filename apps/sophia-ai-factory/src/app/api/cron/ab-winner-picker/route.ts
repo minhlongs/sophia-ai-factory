@@ -93,3 +93,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  return GET(req);
+}

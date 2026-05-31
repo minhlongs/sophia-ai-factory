@@ -61,6 +61,10 @@ binding = "EXPERIMENT_KV"
 id = "c3857792e4014334ba31b62b19d2f32a"
 preview_id = "1f440b4e8566471d841aff66e90644ff"
 
+[[kv_namespaces]]
+binding = "KV_KV"
+id = "f2cf595dec5543dc96f6370bebbc8754"
+
 [vars]
 ENVIRONMENT = "staging"
 NEXT_PUBLIC_DISTRIBUTE_ENABLED = "1"

@@ -32,19 +32,57 @@ const IDEMPOTENCY_MARKER = '/* __SCHEDULED_HANDLER_INJECTED__ */';
 // Routes are verified below — missing routes are skipped with a warning.
 // ---------------------------------------------------------------------------
 const CRON_ROUTES = {
+  '* * * * *': [
+    '/api/cron/workflow-stepper',
+  ],
+  '*/2 * * * *': [
+    '/api/cron/fulfillment-retry',
+    '/api/cron/email-outbox-flush',
+  ],
   '*/5 * * * *': [
     '/api/cron/uptime-check',
     '/api/cron/video-status-sync',
     '/api/cron/sop-scheduler',
+    '/api/cron/mission-reaper',
+  ],
+  '*/10 * * * *': [
+    '/api/cron/heartbeat',
+  ],
+  '*/15 * * * *': [
+    '/api/cron/smoke-one-time',
   ],
   '5 * * * *': [
     '/api/cron/usage-export',
+    '/api/cron/hourly-rollup',
+  ],
+  '7 * * * *': [
+    '/api/cron/handover-status-sync',
+    '/api/cron/ab-winner-picker',
+  ],
+  '10 * * * *': [
+    '/api/cron/wallet-rebuild',
+  ],
+  '0 */4 * * *': [
+    '/api/cron/affiliate-scout',
+  ],
+  '0 0 * * *': [
+    '/api/cron/clearance-promote',
+    '/api/cron/promo-trial-expiry',
+    '/api/cron/status-rollup',
+    '/api/cron/promo-cleanup',
+  ],
+  '0 0 1 * *': [
+    '/api/cron/mcu-monthly-reset',
   ],
   '0 1 * * *': [
     '/api/cron/dunning-advance',
   ],
+  '5 1 * * *': [
+    '/api/cron/daily-rollup',
+  ],
   '0 2 * * *': [
     '/api/cron/subscription-reminders',
+    '/api/cron/memory-consolidation',
   ],
   '0 3 * * *': [
     '/api/cron/scheduled-campaigns',
@@ -52,49 +90,19 @@ const CRON_ROUTES = {
   '0 4 * * *': [
     '/api/cron/email-drip',
   ],
-  '0 6 * * 1': [
-    '/api/cron/weekly-signals-digest',
-  ],
-  // --- New cron routes added by plan 260502-0604-raas-fulfillment-zero-fail ---
-  '*/2 * * * *': [
-    '/api/cron/fulfillment-retry',
-    '/api/cron/email-outbox-flush',
-  ],
-  '*/15 * * * *': [
-    '/api/cron/smoke-one-time',
+  '0 5 * * *': [
+    '/api/cron/d1-backup',
+    '/api/cron/error-digest',
+    '/api/cron/quota-check',
   ],
   '0 6 * * *': [
     '/api/cron/fulfillment-reconcile',
   ],
-  // MCU monthly reset — 1st of month at midnight UTC
-  '0 0 1 * *': [
-    '/api/cron/mcu-monthly-reset',
-  ],
-  // Daily midnight UTC — clearance-promote + promo trial expiry
-  '0 0 * * *': [
-    '/api/cron/clearance-promote',
-    '/api/cron/promo-trial-expiry',
-  ],
-  // Hourly — recompute handover status (active/at_risk/churned)
-  '7 * * * *': [
-    '/api/cron/handover-status-sync',
-  ],
-  // Daily 05:00 UTC — D1 database backup to R2 `sophia-backups` bucket (GAP-R1 fix 2026-05-22)
-  '0 5 * * *': [
-    '/api/cron/d1-backup',
-    '/api/cron/error-digest',
+  '0 6 * * 1': [
+    '/api/cron/weekly-signals-digest',
   ],
   '0 7 * * *': [
     '/api/cron/llm-cache-purge',
-  ],
-  '0 */4 * * *': [
-    '/api/cron/affiliate-scout',
-  ],
-  '10 * * * *': [
-    '/api/cron/wallet-rebuild',
-  ],
-  '*/10 * * * *': [
-    '/api/cron/heartbeat',
   ],
 };
 

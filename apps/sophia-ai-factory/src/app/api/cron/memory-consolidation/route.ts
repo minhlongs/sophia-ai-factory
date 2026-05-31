@@ -7,7 +7,7 @@ import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+async function handleConsolidate(request: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
 
@@ -46,4 +46,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     logger.error('[cron/memory-consolidation] Failed', { error: getErrorMessage(err) });
     return NextResponse.json({ ok: false, error: getErrorMessage(err) }, { status: 500 });
   }
+}
+
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  return handleConsolidate(request);
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  return handleConsolidate(request);
 }
