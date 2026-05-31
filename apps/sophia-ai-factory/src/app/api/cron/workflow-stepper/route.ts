@@ -200,3 +200,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     throw err
   }
 }
+
+export async function POST(req: NextRequest): Promise<NextResponse> {
+  return GET(req);
+}

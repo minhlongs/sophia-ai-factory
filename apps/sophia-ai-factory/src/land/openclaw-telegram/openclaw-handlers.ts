@@ -395,12 +395,14 @@ export async function handleFree100(chatId: string, rawArg: string): Promise<voi
     );
     return;
   }
+  const userId = await resolveUserIdFromChat(chatId);
+  const isPaired = !!userId;
   const result = await callRedeemFree100({ code: 'FREE100', email, tier: 'MASTER' });
   if (!result.success) {
     await sendMessage(chatId, `❌ Redeem thất bại: \`${result.error ?? 'unknown_error'}\``);
     return;
   }
-  if (result.magicLink) {
+  if (result.magicLink && isPaired) {
     await sendMessage(
       chatId,
       `🎉 *FREE100 đã kích hoạt!*\n\n[Vào Dashboard ngay](${result.magicLink})\n\n_Link có hiệu lực 72h, single-use._`,

@@ -30,6 +30,14 @@ function getD1(): D1Database | null {
 export async function GET(req: NextRequest) {
   const authError = verifyCronAuth(req);
   if (authError) return authError;
+  return handleRollup(req);
+}
+
+export async function POST(req: NextRequest) {
+  return GET(req);
+}
+
+async function handleRollup(req: NextRequest) {
 
   const cronCtx = startCronCheckIn(CRON_NAME);
   const db = getD1();
