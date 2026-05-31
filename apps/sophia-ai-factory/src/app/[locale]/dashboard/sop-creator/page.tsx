@@ -1,8 +1,3 @@
-/**
- * /dashboard/sop-creator — MASTER-only creator dashboard.
- * Shows earnings summary, SOP list with status/sales, and create button.
- */
-
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
@@ -17,7 +12,8 @@ interface Props { params: Promise<{ locale: string }> }
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata() {
-  return { title: 'Creator Dashboard | Sophia AI' };
+  const t = await getTranslations('sop.creator');
+  return { title: t('pageTitle') };
 }
 
 function getD1(): D1Database | null {
@@ -30,10 +26,7 @@ function getD1(): D1Database | null {
 }
 
 interface EarningsSummary {
-  totalEarned: number;
-  pending: number;
-  payable: number;
-  paid: number;
+  totalEarned: number; pending: number; payable: number; paid: number;
 }
 
 const ZERO_EARNINGS: EarningsSummary = { totalEarned: 0, pending: 0, payable: 0, paid: 0 };
@@ -42,9 +35,7 @@ async function fetchEarnings(userId: string, db: D1Database): Promise<EarningsSu
   try {
     const { getCreatorEarnings } = await import('@/land/sop-marketplace');
     return await getCreatorEarnings(db, userId);
-  } catch {
-    return ZERO_EARNINGS;
-  }
+  } catch { return ZERO_EARNINGS; }
 }
 
 function formatUsd(cents: number) {
@@ -62,7 +53,6 @@ function statusBadge(status: SopTemplateRow['status']) {
 
 export default async function CreatorDashboardPage({ params }: Props) {
   const { locale } = await params;
-
   const t = await getTranslations('sop.creator');
 
   const user = await getCurrentUser();
@@ -85,6 +75,9 @@ export default async function CreatorDashboardPage({ params }: Props) {
     const prev = salesMap.get(s.template_id) ?? { count: 0, revenue: 0 };
     salesMap.set(s.template_id, { count: prev.count + 1, revenue: prev.revenue + (s.price_cents ?? 0) });
   }
+
+  const tc = await getTranslations('sop.categories');
+  const ts = await getTranslations('sop.status');
 
   return (
     <div className="space-y-6">
@@ -173,11 +166,11 @@ export default async function CreatorDashboardPage({ params }: Props) {
                         <p className="text-xs text-white/40 mt-0.5">{tpl.name_vi}</p>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="capitalize text-white/60 text-xs">{tpl.category}</span>
+                        <span className="capitalize text-white/60 text-xs">{tc(tpl.category)}</span>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs border capitalize ${statusBadge(tpl.status)}`}>
-                          {tpl.status}
+                          {ts(tpl.status as 'draft' | 'published' | 'archived')}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right text-white/70">{s.count}</td>

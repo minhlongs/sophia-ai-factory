@@ -16,8 +16,34 @@ import { NextRequest } from 'next/server'
 
 // ---- module mocks (must be hoisted before any import of mocked module) ----
 
+const mockSingle = vi.fn()
+const mockFrom = vi.fn((table: string) => {
+  if (table === 'user_purchases') {
+    return {
+      select: () => ({
+        eq: () => ({
+          single: mockSingle,
+        }),
+      }),
+    }
+  }
+  return {
+    select: () => ({
+      eq: () => ({
+        single: vi.fn().mockResolvedValue({
+          data: { email: 'user@example.com', locale: 'en' },
+          error: null,
+        }),
+      }),
+    }),
+  }
+})
+
 vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn(),
+  createServerClient: vi.fn(() => ({
+    from: mockFrom,
+  })),
 }))
 
 vi.mock('@/lib/heygen/heygen-client', () => ({
@@ -40,10 +66,32 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   },
 }))
 
+vi.mock('@/lib/fulfillment/compensation', () => ({
+  grantCompensationCredit: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock('@/land/billing/email/send-bundle-render-failed-email', () => ({
+  sendBundleRenderFailedEmail: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock('@/land/billing/email/send-one-time-bundle-ready-email', () => ({
+  sendOneTimeBundleReadyEmail: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock('@/lib/r2/video-cleanup', () => ({
+  deleteR2VideoArtifacts: vi.fn().mockResolvedValue(undefined),
+}))
+
+vi.mock('@/seed/db/get-user-credits', () => ({
+  getUserCredits: vi.fn().mockResolvedValue({ creditsRemaining: 5, expiresAt: null }),
+}))
+
 import { GET } from './route'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1Raw, createServerClient } from '@/seed/db/client'
 import { getHeyGenClient } from '@/lib/heygen/heygen-client'
 import { downloadAndStore } from '@/lib/video/video-storage-service'
+import { grantCompensationCredit } from '@/lib/fulfillment/compensation'
+import { sendBundleRenderFailedEmail } from '@/land/billing/email/send-bundle-render-failed-email'
 
 // ---- helpers ----
 
@@ -71,7 +119,7 @@ const VIDEO_ROW = {
   id: 'vid-001',
   user_id: 'user-abc',
   heygen_job_id: 'hj-111',
-  created_at: new Date().toISOString(),
+  created_at: Math.floor(Date.now() / 1000),
 }
 
 // ---- tests ----
@@ -81,6 +129,10 @@ describe('GET /api/cron/video-status-sync', () => {
     vi.clearAllMocks()
     vi.stubEnv('NODE_ENV', 'production')
     vi.stubEnv('CRON_SECRET', 'test-secret')
+    mockSingle.mockResolvedValue({
+      data: { status: 'paid', user_id: 'user-abc', credits_remaining: 10 },
+      error: null,
+    })
   })
 
   afterEach(() => {
@@ -198,20 +250,91 @@ describe('GET /api/cron/video-status-sync', () => {
   it('marks timed-out video as failed', async () => {
     const oldRow = {
       ...VIDEO_ROW,
-      created_at: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(), // 25h ago
+      created_at: Math.floor((Date.now() - 25 * 60 * 60 * 1000) / 1000), // 25h ago
     }
     const db = buildMockDb([oldRow])
     vi.mocked(getD1Raw).mockResolvedValueOnce(db as unknown as D1Database)
-    const getVideoStatusMock = vi.fn()
-    vi.mocked(getHeyGenClient).mockResolvedValueOnce({
-      getVideoStatus: getVideoStatusMock,
-    } as unknown as Awaited<ReturnType<typeof getHeyGenClient>>)
 
     const res = await GET(buildRequest('Bearer test-secret'))
     expect(res.status).toBe(200)
     const body = (await res.json()) as { timedOut: number }
     expect(body.timedOut).toBe(1)
     // HeyGen should NOT be polled for timed-out video
-    expect(getVideoStatusMock).not.toHaveBeenCalled()
+    expect(vi.mocked(getHeyGenClient)).not.toHaveBeenCalled()
+  })
+
+  it('handles permanent failure for one-time bundle with paid status (grants compensation & sends email)', async () => {
+    const bundleRow = {
+      ...VIDEO_ROW,
+      purchase_id: 'purch-paid-001',
+    }
+    const db = buildMockDb([bundleRow])
+    vi.mocked(getD1Raw).mockResolvedValueOnce(db as unknown as D1Database)
+    vi.mocked(getHeyGenClient).mockResolvedValueOnce({
+      getVideoStatus: vi.fn().mockResolvedValue({
+        status: 'failed',
+        error: 'heygen_failed_reason',
+      }),
+    } as unknown as Awaited<ReturnType<typeof getHeyGenClient>>)
+
+    mockSingle.mockResolvedValueOnce({
+      data: { status: 'paid', user_id: 'user-abc', credits_remaining: 10 },
+      error: null,
+    })
+
+    const res = await GET(buildRequest('Bearer test-secret'))
+    expect(res.status).toBe(200)
+
+    // Verify D1 updated to failed_permanent
+    const updateCall = db.prepare.mock.calls.find(
+      (c: string[]) => typeof c[0] === 'string' && c[0].includes('failed_permanent'),
+    )
+    expect(updateCall).toBeDefined()
+
+    // Verify grantCompensationCredit called
+    expect(vi.mocked(grantCompensationCredit)).toHaveBeenCalledWith('purch-paid-001', 'heygen_failed_reason')
+    
+    // Verify email sent
+    expect(vi.mocked(sendBundleRenderFailedEmail)).toHaveBeenCalledWith({
+      userEmail: 'user@example.com',
+      userId: 'user-abc',
+      purchaseId: 'purch-paid-001',
+      locale: 'en',
+    })
+  })
+
+  it('handles permanent failure for one-time bundle with refunded status (skips compensation & email)', async () => {
+    const bundleRow = {
+      ...VIDEO_ROW,
+      purchase_id: 'purch-refunded-001',
+    }
+    const db = buildMockDb([bundleRow])
+    vi.mocked(getD1Raw).mockResolvedValueOnce(db as unknown as D1Database)
+    vi.mocked(getHeyGenClient).mockResolvedValueOnce({
+      getVideoStatus: vi.fn().mockResolvedValue({
+        status: 'failed',
+        error: 'heygen_failed_reason',
+      }),
+    } as unknown as Awaited<ReturnType<typeof getHeyGenClient>>)
+
+    mockSingle.mockResolvedValueOnce({
+      data: { status: 'refunded', user_id: 'user-abc', credits_remaining: 0 },
+      error: null,
+    })
+
+    const res = await GET(buildRequest('Bearer test-secret'))
+    expect(res.status).toBe(200)
+
+    // Verify D1 updated to failed_permanent
+    const updateCall = db.prepare.mock.calls.find(
+      (c: string[]) => typeof c[0] === 'string' && c[0].includes('failed_permanent'),
+    )
+    expect(updateCall).toBeDefined()
+
+    // Verify grantCompensationCredit was NOT called
+    expect(vi.mocked(grantCompensationCredit)).not.toHaveBeenCalled()
+    
+    // Verify email was NOT sent
+    expect(vi.mocked(sendBundleRenderFailedEmail)).not.toHaveBeenCalled()
   })
 })

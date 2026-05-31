@@ -11,9 +11,9 @@ The SOP (Standard Operating Procedure) system in `apps/sophia-ai-factory` consis
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| 1 | M1: Translation & Test Clean | Fix bilingual ternaries, translate Creator & Marketplace pages, remove duplicate test file (R1, R2, R3) | None | PLANNED |
-| 2 | M2: DB & Error Optimization | Fix N+1 queries, add early `getD1()` null guards (R4, R5) | M1 | PLANNED |
-| 3 | M3: Detail Page & Action Integration | Create creator detail page route, wire `submitForReviewAction` button to publish (R6, R7) | M2 | PLANNED |
+| 1 | M1: Translation & Test Clean | Fix bilingual ternaries, translate Creator & Marketplace pages, remove duplicate test file (R1, R2, R3) | None | DONE |
+| 2 | M2: DB & Error Optimization | Fix N+1 queries, add early `getD1()` null guards (R4, R5) | M1 | DONE |
+| 3 | M3: Detail Page & Action Integration | Create creator detail page route, wire `submitForReviewAction` button to publish (R6, R7) | M2 | DONE |
 
 ## Interface Contracts
 - Translations: Key-based retrieval using `next-intl`'s `getTranslations('sop.creator')` and `getTranslations('sop.marketplace')`.

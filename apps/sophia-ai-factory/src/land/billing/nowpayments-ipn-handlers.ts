@@ -5,7 +5,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
-import { isPaymentProcessed, recordIpnEvent } from './nowpayments-ipn-db'
+import { getDb } from './nowpayments-ipn-db'
 import { handleFailed } from './nowpayments-ipn-subscription'
 import { dispatchFinished, dispatchRefunded } from './nowpayments-ipn-dispatch'
 
@@ -31,10 +31,36 @@ export async function processNowPaymentsIpn(
   ipn: NowPaymentsIpnPayload
 ): Promise<{ success: boolean; message: string }> {
   const { payment_id, payment_status } = ipn
+  const eventId = `nowpayments_${payment_id}_${payment_status}`
+  const db = getDb()
 
-  if (await isPaymentProcessed(payment_id)) return { success: true, message: 'Already processed' }
+  // 1. Atomically reserve event (lock mechanism via UNIQUE constraint on event_id)
+  const { error: insertError } = await db.from('payment_events').insert({
+    event_id: eventId,
+    event_type: `nowpayments.${payment_status}`,
+    payload: JSON.stringify(ipn),
+    processed: 0,
+    created_at: new Date().toISOString()
+  })
 
-  await recordIpnEvent(payment_id, payment_status, ipn as unknown as Record<string, unknown>, false)
+  if (insertError) {
+    // Unique constraint violation or other error
+    const { data: existing, error: selectError } = await db
+      .from('payment_events')
+      .select('processed')
+      .eq('event_id', eventId)
+      .single()
+
+    if (selectError || !existing) {
+      return { success: false, message: 'Database query failure' }
+    }
+
+    if (existing.processed === 1 || existing.processed === true) {
+      return { success: true, message: 'Already processed' }
+    } else {
+      return { success: false, message: 'Already processing' }
+    }
+  }
 
   try {
     switch (payment_status) {
@@ -45,11 +71,24 @@ export async function processNowPaymentsIpn(
       case 'expired':        logger.info('[NOWPayments] Payment expired — no action', { payment_id }); break
       default:               logger.debug('[NOWPayments] Unhandled status', { payment_status, payment_id })
     }
-    await recordIpnEvent(payment_id, payment_status, ipn as unknown as Record<string, unknown>, true)
+
+    // 2. Mark event as processed on success
+    await db.from('payment_events').update({
+      processed: 1
+    }).eq('event_id', eventId)
+
     return { success: true, message: `Processed ${payment_status}` }
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error))
     logger.error('[NOWPayments] IPN processing failed', err, { payment_id, payment_status })
+
+    // 3. Release the lock on failure to enable retries
+    try {
+      await db.from('payment_events').delete().eq('event_id', eventId)
+    } catch (delErr) {
+      logger.warn('[NOWPayments] Failed to release lock on failure', { payment_id, error: String(delErr) })
+    }
+
     return { success: false, message: err.message }
   }
 }

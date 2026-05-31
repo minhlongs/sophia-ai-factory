@@ -184,4 +184,66 @@ Quantify structural health across these domains:
 ### Executive Scorecard
 - [ ] An executive gap analysis summary with metric ratings for scalability, security, and velocity is compiled.
 
+## 2026-05-31T06:37:17Z
 
+Perform a parallel codebase review of the Sophia AI Factory project to identify and verify edge cases across payments, auth, video generation, and metering.
+
+Working directory: `/Users/macbook/projects/sophia-ai-factory`
+Integrity mode: development
+
+## Requirements
+
+### R1. Parallel Codebase Review & Edge Case Identification
+Identify and categorize edge cases in the Sophia AI Factory codebase focusing on:
+- Payments (NOWPayments & PayOS webhook signatures, idempotency, underpayments).
+- Authentication (Better Auth session state synchronization, D1 database failure handling).
+- Video & Credits (HeyGen webhook verification, optimistic locking in decrementCredits, Cloudflare timeouts).
+- Metering (Non-atomic Redis updates, CPU/memory performance of D1 usage rollup queries).
+
+### R2. Edge Case Verification
+Verify whether each identified edgecase is Handled, Unhandled, or Partially Handled, providing code references and line numbers.
+
+### R3. Aggregated Reporting
+Compile a structured Markdown report highlighting all verified edge cases, categorized by concern, with remediation recommendations.
+
+## Acceptance Criteria
+
+### Coverage & Verification
+- [ ] List at least 10 critical edge cases across the four key categories.
+- [ ] Each edgecase is marked with status (✅ Handled, ❌ Unhandled, or ⚠️ Partial).
+- [ ] Exact file names and line numbers are cited for every verified case.
+- [ ] Provide specific, actionable remediation recommendations for any unhandled or partial cases.
+
+## 2026-05-31T06:45:17Z
+
+Implement robust fixes for the 10 unhandled and partially handled edge cases identified in the codebase edge cases review report (`docs/codebase_edge_cases_report.md`) across payments, auth, video generation, and metering.
+
+Working directory: `/Users/macbook/projects/sophia-ai-factory`
+Integrity mode: development
+
+## Requirements
+
+### R1. Resolve Webhook & Payment Race Conditions and Underpayments
+- Fix NOWPayments and PayOS concurrent duplicate webhook races by adding an atomic database lock or constraint check on event insertion.
+- Add expected VND amount verification to the PayOS IPN route to prevent underpayment exploits.
+- Remove the insecure orders fallback match (`orders?.[0]`) on PayOS IPN matching failures.
+
+### R2. Resolve Auth Admin Demotion Caching & MFA Fail-Open Security
+- Bypass the 5-minute Better Auth session cookie cache in the critical admin privilege check by enforcing a live database role lookup when demoting.
+- Modify the MFA check in the middleware to fail closed (redirecting to login/error page) when the D1 database experiences connectivity failures.
+
+### R3. Resolve Credit & Video Concurrency, Locking, and Timeout Limits
+- Implement Compare-And-Swap (CAS) checks for HeyGen completed webhooks to prevent redundant downloading, R2 uploads, and duplicate receipt email notifications.
+- Fix optimistic locking in `decrementCredits` so that it returns `false` if zero rows are updated, ensuring transactions are verified.
+- Parallelize or chunk the retry queue cron jobs to prevent edge runtime wall-time timeouts.
+
+### R4. Resolve Quota Metering Race Conditions and DB Rollup Overhead
+- Implement atomic increments in Upstash Redis for realtime usage tracking (incorporating window starts in key structures).
+- Migrate D1 usage rollup queries from JavaScript in-memory reductions to SQL aggregate sums (`SUM`) inside a single conditional database call.
+
+## Acceptance Criteria
+
+### Security & Reliability Gates
+- [ ] All 10 edge case fixes pass TypeScript typechecking compiler (`npm run ci:typecheck`) with zero compile errors.
+- [ ] The full Vitest unit/integration test suite (`npm run ci:test`) passes successfully with zero failures.
+- [ ] The documentation verification script (`python3 scripts/verify-go-live-docs.py`) remains 100% green.

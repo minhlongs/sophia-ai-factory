@@ -23,7 +23,8 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: Props) {
   const { id } = await params;
-  return { title: `SOP Template ${id} | Creator Dashboard` };
+  const t = await getTranslations('sop.creator.detail');
+  return { title: t('pageTitle', { id }) };
 }
 
 function getD1(): D1Database | null {

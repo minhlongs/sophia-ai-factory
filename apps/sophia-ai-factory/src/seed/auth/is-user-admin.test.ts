@@ -32,10 +32,18 @@ describe('isUserAdmin', () => {
     mockSingle.mockReset();
   });
 
-  it('returns true when session role is admin (no DB call)', async () => {
+  it('queries database and returns true when session role is admin and DB role is admin', async () => {
+    mockSingle.mockResolvedValue({ data: { role: 'admin' } });
     const result = await isUserAdmin({ ...baseUser, role: 'admin' });
     expect(result).toBe(true);
-    expect(mockSingle).not.toHaveBeenCalled();
+    expect(mockSingle).toHaveBeenCalledOnce();
+  });
+
+  it('queries database and returns false when session role is admin but DB role is user', async () => {
+    mockSingle.mockResolvedValue({ data: { role: 'user' } });
+    const result = await isUserAdmin({ ...baseUser, role: 'admin' });
+    expect(result).toBe(false);
+    expect(mockSingle).toHaveBeenCalledOnce();
   });
 
   it('returns true when DB role is admin (session not admin)', async () => {

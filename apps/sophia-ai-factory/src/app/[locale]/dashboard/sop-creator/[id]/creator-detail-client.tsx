@@ -1,11 +1,5 @@
 'use client';
 
-/**
- * Client component for SOP Creator detail page actions.
- * Handles the "Publish to Marketplace" button with useTransition
- * to wire up the existing submitForReviewAction.
- */
-
 import { useTransition, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
@@ -49,9 +43,7 @@ export function CreatorDetailClient({ templateId, status }: Props) {
       ) : (
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           <div className="flex-1">
-            <p className="text-sm text-white/60">
-              This template is in draft status. Publish it to make it available on the marketplace.
-            </p>
+            <p className="text-sm text-white/60">{t('draftDescription')}</p>
           </div>
           <button
             type="button"
@@ -64,9 +56,7 @@ export function CreatorDetailClient({ templateId, status }: Props) {
           </button>
         </div>
       )}
-      {error && (
-        <p className="mt-3 text-sm text-red-400">{error}</p>
-      )}
+      {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
     </div>
   );
 }

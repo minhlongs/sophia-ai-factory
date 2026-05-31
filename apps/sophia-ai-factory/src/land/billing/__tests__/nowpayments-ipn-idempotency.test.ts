@@ -11,18 +11,52 @@ const handleFinishedSpy = vi.fn().mockResolvedValue(undefined)
 const handleFailedSpy = vi.fn().mockResolvedValue(undefined)
 
 // processed state per payment_id
-const processedPayments = new Set<string>()
+const mockDbEvents = new Map<string, { event_id: string; processed: number }>()
+let selectShouldFail = false
 
 vi.mock('../nowpayments-ipn-db', () => ({
-  isPaymentProcessed: vi.fn(async (id: string) => processedPayments.has(id)),
-  recordIpnEvent: vi.fn(async (id: string, _status: string, _payload: unknown, processed: boolean) => {
-    if (processed) processedPayments.add(id)
-  }),
   getDb: vi.fn(() => ({
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({ eq: vi.fn(() => ({ single: vi.fn().mockResolvedValue({ data: null }) })) })),
-      update: vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ data: null }) })),
-    })),
+    from: vi.fn((table: string) => {
+      if (table !== 'payment_events') {
+        throw new Error(`Unexpected table mock: ${table}`)
+      }
+      return {
+        insert: vi.fn(async (row: { event_id: string; processed: number }) => {
+          if (mockDbEvents.has(row.event_id)) {
+            return { error: new Error('Unique constraint violation') }
+          }
+          mockDbEvents.set(row.event_id, { ...row })
+          return { error: null }
+        }),
+        select: vi.fn(() => ({
+          eq: vi.fn((col: string, val: string) => ({
+            single: vi.fn(async () => {
+              if (selectShouldFail) {
+                return { data: null, error: new Error('Select failed') }
+              }
+              const row = mockDbEvents.get(val)
+              return { data: row ? { processed: row.processed } : null, error: null }
+            })
+          }))
+        })),
+        update: vi.fn((updates: { processed: number }) => ({
+          eq: vi.fn(async (col: string, val: string) => {
+            const row = mockDbEvents.get(val)
+            if (row) {
+              row.processed = updates.processed
+              mockDbEvents.set(val, row)
+            }
+            return { error: null }
+          })
+        })),
+        delete: vi.fn(() => ({
+          eq: vi.fn(async (col: string, val: string) => {
+            mockDbEvents.delete(val)
+            return { error: null }
+          })
+        }))
+      }
+    })
   })),
   parseUserIdFromOrderId: vi.fn(() => 'user123'),
 }))
@@ -48,9 +82,10 @@ const baseIpn = {
 }
 
 beforeEach(() => {
-  processedPayments.clear()
+  mockDbEvents.clear()
   handleFinishedSpy.mockClear()
   handleFailedSpy.mockClear()
+  selectShouldFail = false
 })
 
 describe('IPN idempotency', () => {
@@ -95,5 +130,26 @@ describe('IPN idempotency', () => {
     const result = await processNowPaymentsIpn(expiredIpn)
     expect(result.success).toBe(true)
     expect(handleFinishedSpy).not.toHaveBeenCalled()
+  })
+
+  it('returns success=false and message "Already processing" when processed = 0', async () => {
+    // Insert event with processed = 0
+    const eventId = `nowpayments_${baseIpn.payment_id}_${baseIpn.payment_status}`
+    mockDbEvents.set(eventId, { event_id: eventId, processed: 0 })
+
+    const result = await processNowPaymentsIpn(baseIpn)
+    expect(result.success).toBe(false)
+    expect(result.message).toBe('Already processing')
+  })
+
+  it('returns success=false and message "Database query failure" when db select fails', async () => {
+    // Insert event with processed = 0 to trigger select fallback
+    const eventId = `nowpayments_${baseIpn.payment_id}_${baseIpn.payment_status}`
+    mockDbEvents.set(eventId, { event_id: eventId, processed: 0 })
+    selectShouldFail = true
+
+    const result = await processNowPaymentsIpn(baseIpn)
+    expect(result.success).toBe(false)
+    expect(result.message).toBe('Database query failure')
   })
 })

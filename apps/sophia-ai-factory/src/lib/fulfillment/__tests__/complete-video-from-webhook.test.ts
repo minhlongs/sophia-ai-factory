@@ -15,6 +15,8 @@ vi.mock('@/seed/db/repositories/videos-repo', () => ({
   findByHeygenJobId: vi.fn(),
   markPermanentFailureCAS: vi.fn().mockResolvedValue(true),
   recordAttemptCAS: vi.fn().mockResolvedValue(2),
+  recordWebhookAttemptCAS: vi.fn().mockResolvedValue(2),
+  markWebhookPermanentFailureCAS: vi.fn().mockResolvedValue(true),
 }))
 
 vi.mock('@/seed/db/client', () => ({
@@ -54,6 +56,8 @@ import {
   findByHeygenJobId,
   markPermanentFailureCAS,
   recordAttemptCAS,
+  recordWebhookAttemptCAS,
+  markWebhookPermanentFailureCAS,
 } from '@/seed/db/repositories/videos-repo'
 import { getD1Raw, createServerClient } from '@/seed/db/client'
 import { sendOneTimeBundleReadyEmail } from '@/land/billing/email/send-one-time-bundle-ready-email'
@@ -80,7 +84,7 @@ const processingRow = {
 }
 
 function makeD1() {
-  const runFn = vi.fn().mockResolvedValue({ success: true })
+  const runFn = vi.fn().mockResolvedValue({ success: true, meta: { changes: 1 } })
   const bindFn = vi.fn().mockReturnValue({ run: runFn })
   const prepareFn = vi.fn().mockReturnValue({ bind: bindFn })
   return { prepare: prepareFn }
@@ -197,6 +201,8 @@ describe('failVideoFromWebhook', () => {
     vi.mocked(createServerClient).mockReturnValue(makeDb() as unknown as ReturnType<typeof createServerClient>)
     vi.mocked(markPermanentFailureCAS).mockResolvedValue(true)
     vi.mocked(recordAttemptCAS).mockResolvedValue(2)
+    vi.mocked(markWebhookPermanentFailureCAS).mockResolvedValue(true)
+    vi.mocked(recordWebhookAttemptCAS).mockResolvedValue(2)
   })
 
   it('records attempt (CAS) when below MAX_ATTEMPTS threshold', async () => {
@@ -205,8 +211,8 @@ describe('failVideoFromWebhook', () => {
     await failVideoFromWebhook({ video_id: 'heygen-abc', error: 'timeout' }, 'user-1')
 
     expect(findByHeygenJobId).toHaveBeenCalledWith('heygen-abc', 'user-1')
-    expect(recordAttemptCAS).toHaveBeenCalledWith('vid-1', 'timeout')
-    expect(markPermanentFailureCAS).not.toHaveBeenCalled()
+    expect(recordWebhookAttemptCAS).toHaveBeenCalledWith('vid-1', 'timeout')
+    expect(markWebhookPermanentFailureCAS).not.toHaveBeenCalled()
   })
 
   it('marks permanent failure (CAS) and compensates when attempt_count reaches MAX_ATTEMPTS', async () => {
@@ -214,7 +220,7 @@ describe('failVideoFromWebhook', () => {
 
     await failVideoFromWebhook({ video_id: 'heygen-abc', error: 'api_error' })
 
-    expect(markPermanentFailureCAS).toHaveBeenCalledWith('vid-1', 'api_error', 4)
+    expect(markWebhookPermanentFailureCAS).toHaveBeenCalledWith('vid-1', 'api_error', 4)
     expect(grantCompensationCredit).toHaveBeenCalledWith('purch-1', 'render_failed_permanent')
     expect(sendBundleRenderFailedEmail).toHaveBeenCalledOnce()
   })
@@ -222,7 +228,7 @@ describe('failVideoFromWebhook', () => {
   it('M2: CAS lost on permanent failure — skips email + compensation', async () => {
     vi.mocked(findByHeygenJobId).mockResolvedValue({ ...processingRow, attempt_count: 4 })
     // Simulate CAS loss: another caller already won
-    vi.mocked(markPermanentFailureCAS).mockResolvedValue(false)
+    vi.mocked(markWebhookPermanentFailureCAS).mockResolvedValue(false)
 
     await failVideoFromWebhook({ video_id: 'heygen-abc', error: 'api_error' })
 
@@ -234,12 +240,12 @@ describe('failVideoFromWebhook', () => {
   it('M2: CAS lost on recordAttempt — skips duplicate increment', async () => {
     vi.mocked(findByHeygenJobId).mockResolvedValue({ ...processingRow, attempt_count: 2 })
     // Simulate CAS loss: row already transitioned
-    vi.mocked(recordAttemptCAS).mockResolvedValue(null)
+    vi.mocked(recordWebhookAttemptCAS).mockResolvedValue(null)
 
     await failVideoFromWebhook({ video_id: 'heygen-abc', error: 'timeout' })
 
     // No permanent failure should be triggered
-    expect(markPermanentFailureCAS).not.toHaveBeenCalled()
+    expect(markWebhookPermanentFailureCAS).not.toHaveBeenCalled()
     expect(sendBundleRenderFailedEmail).not.toHaveBeenCalled()
   })
 
@@ -248,7 +254,20 @@ describe('failVideoFromWebhook', () => {
 
     await failVideoFromWebhook({ video_id: 'heygen-abc', error: 'timeout' })
 
-    expect(recordAttemptCAS).not.toHaveBeenCalled()
-    expect(markPermanentFailureCAS).not.toHaveBeenCalled()
+    expect(recordWebhookAttemptCAS).not.toHaveBeenCalled()
+    expect(markWebhookPermanentFailureCAS).not.toHaveBeenCalled()
+  })
+
+  it('skips compensation and email when purchase is refunded on permanent failure', async () => {
+    vi.mocked(findByHeygenJobId).mockResolvedValue({ ...processingRow, attempt_count: 4 })
+    vi.mocked(createServerClient).mockReturnValue(
+      makeDb({ email: 'u@test.com', locale: 'vi' }, 'refunded') as unknown as ReturnType<typeof createServerClient>,
+    )
+
+    await failVideoFromWebhook({ video_id: 'heygen-abc', error: 'api_error' })
+
+    expect(markWebhookPermanentFailureCAS).toHaveBeenCalledWith('vid-1', 'api_error', 4)
+    expect(grantCompensationCredit).not.toHaveBeenCalled()
+    expect(sendBundleRenderFailedEmail).not.toHaveBeenCalled()
   })
 })

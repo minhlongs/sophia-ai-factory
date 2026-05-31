@@ -1,22 +1,21 @@
 # Progress Log
 
 ## Current Status
-Last visited: 2026-05-30T11:35:00Z
+Last visited: 2026-05-31T13:37:49+07:00
 
-- [x] Initialized workspace and heartbeat cron
-- [x] Spawned worker_docs (Conv ID: d7149802-9211-423a-844c-56d36e95482e) to copy/generate the 15+ required documents in root `docs/` folder, write the consolidated `docs/audit_report.md` scorecard, and write the `scripts/verify-go-live-docs.py` validation script.
-- [x] Verify the docs check script and run vitest, typecheck, and lint on the codebase (handled by worker_docs and verified via logs).
-- [x] Compile victory claim and write final handoff report.
+- [x] Initialize codebase review plan and start heartbeat cron
+- [x] Spawn teamwork_preview_explorer to search and locate files for the 4 concern areas (Payments, Auth, Video/Credits, Metering)
+- [x] Analyze findings, extract details, and perform verification of at least 10 critical edge cases
+- [x] Compile the final Markdown report and present results
 
 ## Iteration Status
-Current iteration: 2 / 32
+Current iteration: 1 / 32
 
 ## Retrospective Notes
 ### What Worked
-- Spawning a dedicated Worker with precise, structured tasks enabled parallel progress and kept files organized.
-- Copying and synthesizing existing internal-layer and readiness files under `docs/go-live-readiness` and `apps/sophia-ai-factory/docs` allowed us to easily cover all 15 required documents without starting from scratch.
-- The Python validation script was very helpful for automated case-insensitive searches for placeholders and validating absolute/relative file URLs on disk.
+- Performing quick and targeted searches for "redis", "payos", "heygen", and "credits" allowed us to find the exact implementation paths and perform a thorough manual audit.
+- Reading previous logs and audits like `comprehensive_audit_report.md` helped cross-reference logic bugs and verify their exact files and line numbers.
 
 ### What Didn't / Lessons Learned
-- Creating separate documents for release and deployment processes is better than combining them, as it clarifies developer vs. operator concerns.
-- Specifying the exact target folder (`docs/`) for the 15+ required files avoids any path ambiguity between the root level and app subfolders.
+- In several cases, mock tests were green because the mock inputs did not accurately reflect runtime inputs (such as the regex mismatch in PayOS description parsing). Test assertions should verify the actual interaction between invoice generation and webhook verification.
+- Read-then-write patterns in both Redis (for nonces) and Cloudflare KV (for quotas) are common concurrency anti-patterns. They must be replaced with atomic updates to prevent double-spending and billing leaks under concurrency.

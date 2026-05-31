@@ -23,6 +23,8 @@ import {
   findByHeygenJobId,
   markPermanentFailureCAS,
   recordAttemptCAS,
+  recordWebhookAttemptCAS,
+  markWebhookPermanentFailureCAS,
 } from '@/seed/db/repositories/videos-repo'
 import { MAX_ATTEMPTS } from '@/lib/fulfillment/retry-backoff'
 import { recordHeyGenAttempt } from '@/lib/fulfillment/circuit-breaker'
@@ -116,7 +118,7 @@ export async function completeVideoFromWebhook(
   // now is unix-epoch INTEGER; updated_at column happens to be TEXT, so we keep the existing
   // datetime('now') default by binding `now` as INTEGER cast to TEXT via SQLite implicit conversion.
   const nowEpoch = Math.floor(Date.now() / 1000)
-  await d1
+  const result = await d1
     .prepare(
       `UPDATE videos
        SET status = 'completed',
@@ -126,10 +128,18 @@ export async function completeVideoFromWebhook(
            r2_size_bytes = ?5,
            updated_at = ?6,
            completed_at = COALESCE(completed_at, ?7)
-       WHERE id = ?1`,
+       WHERE id = ?1 AND status != 'completed' AND status != 'failed_permanent'`,
     )
     .bind(row.id, videoUrl, thumbnailUrl ?? null, r2Key, r2SizeBytes, now, nowEpoch)
     .run()
+
+  const updated = (result.meta?.changes ?? 0) > 0
+  if (!updated) {
+    logger.warn('[WebhookComplete] CAS lost — video already completed or failed permanently', {
+      videoId: row.id,
+    })
+    return
+  }
 
   // Record HeyGen success so circuit breaker observes all outcomes
   try { await recordHeyGenAttempt(true) } catch { /* non-fatal */ }
@@ -218,7 +228,7 @@ export async function failVideoFromWebhook(
 
   if (nextAttemptCount >= MAX_ATTEMPTS) {
     // CAS: only the winner of the race sends email + grants compensation
-    const won = await markPermanentFailureCAS(row.id, errorText, nextAttemptCount - 1)
+    const won = await markWebhookPermanentFailureCAS(row.id, errorText, nextAttemptCount - 1)
     if (!won) {
       logger.info('[WebhookFail] CAS lost — another caller already marked permanent failure', {
         videoId: row.id,
@@ -233,6 +243,13 @@ export async function failVideoFromWebhook(
     })
 
     if (row.purchase_id) {
+      const clientDb = createServerClient()
+      const { data: purchaseData } = await clientDb.from('user_purchases').select('status').eq('id', row.purchase_id).single();
+      const purchase = purchaseData as { status: string } | null
+      if (purchase?.status === 'refunded') {
+        logger.info('[WebhookFail] Skipping email and compensation — purchase refunded', { purchaseId: row.purchase_id });
+        return;
+      }
       await grantCompensationCredit(row.purchase_id, 'render_failed_permanent')
 
       const userInfo = await fetchUserInfo(row.user_id)
@@ -244,8 +261,8 @@ export async function failVideoFromWebhook(
       })
     }
   } else {
-    // CAS: increment attempt_count only when still in 'queued' state
-    const newCount = await recordAttemptCAS(row.id, errorText)
+    // CAS: increment attempt_count only when still in 'processing' state
+    const newCount = await recordWebhookAttemptCAS(row.id, errorText)
     if (newCount === null) {
       logger.info('[WebhookFail] CAS lost — row already transitioned, skipping recordAttempt', {
         videoId: row.id,

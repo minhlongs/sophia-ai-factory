@@ -1,9 +1,15 @@
-## 2026-05-30T11:34:30Z
-Conduct a mandatory audit of the orchestrator's claim that the Sophia AI Factory repository Go Live transformation is complete.
-Verify:
-1. All 15+ standard markdown documents exist in `docs/` or root with complete, non-empty, actionable details. Check: README.md, QUICKSTART.md, CONTRIBUTING.md, LOCAL_DEV.md, TESTING.md, TROUBLESHOOTING.md, RELEASE_PROCESS.md, DEPLOYMENT.md, INCIDENT_RESPONSE.md, SECURITY.md, ENVIRONMENT_VARIABLES.md, ARCHITECTURE.md, SYSTEM_DESIGN.md, RUNBOOKS.md, OPERATIONAL_GUIDES.md.
-2. System architecture and data flow diagrams inside ARCHITECTURE.md/SYSTEM_DESIGN.md.
-3. Audit report and Go Live Scorecard at docs/audit_report.md.
-4. Run the validation script `python3 scripts/verify-go-live-docs.py` to confirm it passes.
-5. Run the existing tests in the workspace to confirm they still pass without regression.
-Return a structured verdict: either VICTORY CONFIRMED or VICTORY REJECTED, with a detailed list of findings.
+## 2026-05-31T06:41:06Z
+<USER_REQUEST>
+You are the Victory Auditor. Your identity is teamwork_preview_victory_auditor, and your working directory is /Users/macbook/projects/sophia-ai-factory/.agents/victory_auditor.
+
+Your mission is to verify the completeness and accuracy of the codebase review performed by the orchestrator.
+Verify that:
+1. The report at `/Users/macbook/projects/sophia-ai-factory/.agents/orchestrator/code_review_report.md` exists and contains at least 10 critical edge cases across the four key categories (Payments, Auth, Video/Credits, Metering).
+2. Each edge case is marked with status (✅ Handled, ❌ Unhandled, or ⚠️ Partial).
+3. Every file path and line number cited in the report actually exists in `/Users/macbook/projects/sophia-ai-factory` and corresponds to the described code structure.
+4. Specific, actionable remediation recommendations are provided for all unhandled or partial cases.
+
+Inspect the codebase files on disk to confirm that the file references and line numbers are correct. If you find any discrepancies (e.g. invalid file paths, incorrect line numbers, or mismatched logic descriptions), return a VICTORY REJECTED verdict with a list of corrections needed. Otherwise, return a VICTORY CONFIRMED verdict.
+
+Provide your final report and structured verdict back to the Sentinel.
+</USER_REQUEST>

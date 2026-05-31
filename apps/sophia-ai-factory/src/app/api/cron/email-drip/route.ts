@@ -660,9 +660,11 @@ export async function GET(req: NextRequest) {
       firstSuccessEnqueued,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    await recordCronRun(db, CRON_NAME, 'failure', msg);
+    const errorId = crypto.randomUUID().slice(0, 8);
+    const errDetail = err instanceof Error ? err.message : String(err);
+    logger.error('[Cron:EmailDrip] ' + errorId, { error: errDetail });
+    await recordCronRun(db, CRON_NAME, 'failure', 'internal_error');
     failCronCheckIn(cronCtx, CRON_NAME, err);
-    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+    return NextResponse.json({ ok: false, error: 'internal_error', ref: errorId }, { status: 500 });
   }
 }

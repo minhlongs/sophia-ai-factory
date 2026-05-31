@@ -16,11 +16,10 @@ import { toError } from '@/seed/utils/to-error'
 
 export type { CircuitState, CircuitBreakerConfig, RealTimeUsage } from './realtime-tracker-types'
 export { recordCircuitFailure, recordCircuitSuccess, canPassCircuitBreaker } from './realtime-tracker-circuit-breaker'
-export { getRealTimeUsage, updateRealTimeUsage, invalidateRealTimeCache, hasEmergencyBypass } from './realtime-tracker-kv-ops'
+export { getRealTimeUsage, incrementRealTimeUsage, updateRealTimeUsage, invalidateRealTimeCache, hasEmergencyBypass } from './realtime-tracker-kv-ops'
 
 import { canPassCircuitBreaker, recordCircuitFailure, recordCircuitSuccess } from './realtime-tracker-circuit-breaker'
-import { getRealTimeUsage, updateRealTimeUsage } from './realtime-tracker-kv-ops'
-import type { RealTimeUsage } from './realtime-tracker-types'
+import { incrementRealTimeUsage } from './realtime-tracker-kv-ops'
 
 export async function trackWithCircuitBreaker(
   userId: string,
@@ -37,17 +36,11 @@ export async function trackWithCircuitBreaker(
     return { allowed: false, reason: circuitCheck.reason }
   }
   try {
-    let current = await getRealTimeUsage(userId, licenseNonce)
     const now = Date.now()
     const windowStart = Math.floor(now / windowMs) * windowMs
-    if (!current || current.windowStart !== windowStart) {
-      current = { licenseNonce, userId, tier, currentCredits: creditsUsed, windowStart, windowMs }
-    } else {
-      current.currentCredits += creditsUsed
-    }
-    await updateRealTimeUsage(current)
+    const currentCredits = await incrementRealTimeUsage(userId, licenseNonce, windowStart, creditsUsed)
     await recordCircuitSuccess(licenseNonce)
-    return { allowed: true, currentCredits: current.currentCredits }
+    return { allowed: true, currentCredits }
   } catch (error) {
     await recordCircuitFailure(licenseNonce, toError(error))
     return { allowed: false, reason: `tracking-error: ${toError(error).message}` }

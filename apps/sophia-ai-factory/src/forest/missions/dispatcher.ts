@@ -48,6 +48,26 @@ async function loadHandler(command: string): Promise<((ctx: import('./handlers/t
   }
 }
 
+/** Retry wrapper: attempt up to `maxAttempts` with `delayMs` between tries. */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxAttempts: number,
+  delayMs: number,
+): Promise<T> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (attempt < maxAttempts - 1) {
+        await new Promise<void>((r) => setTimeout(r, delayMs));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 interface MissionRow {
   id: string;
   user_id: string;
@@ -102,7 +122,7 @@ export async function dispatchMission(missionId: string): Promise<void> {
   const commandDef = getCommand(mission.command);
   const handler = await loadHandler(mission.command);
 
-  if (!handler || !commandDef) {
+  if (!commandDef) {
     await db
       .from('engine_missions')
       .update({
@@ -115,11 +135,29 @@ export async function dispatchMission(missionId: string): Promise<void> {
     return;
   }
 
+  if (!handler) {
+    await db
+      .from('engine_missions')
+      .update({
+        status: 'failed',
+        error: `Handler module failed to load for command: ${mission.command}`,
+        updated_at: Math.floor(Date.now() / 1000),
+        completed_at: Math.floor(Date.now() / 1000),
+      })
+      .eq('id', missionId);
+    return;
+  }
+
   let params: Record<string, unknown> = {};
   try {
     params = mission.params ? (JSON.parse(mission.params) as Record<string, unknown>) : {};
-  } catch {
-    params = {};
+  } catch (parseErr) {
+    logger.warn("[Dispatcher] Failed to parse mission params — using empty object", {
+      missionId,
+      raw: mission.params?.slice(0, 200),
+      error: parseErr instanceof Error ? parseErr.message : String(parseErr),
+    })
+    params = {}
   }
 
   const creditsUsed = commandDef.credits;
@@ -204,4 +242,35 @@ export async function dispatchMission(missionId: string): Promise<void> {
   }
 
   logger.debug('[Dispatcher] Mission complete', { missionId, command: mission.command, ok: handlerResult.ok });
+}
+
+/**
+ * Detect missions stuck in 'running' state beyond the timeout threshold.
+ * Called by a cron job to recover orphaned dispatches.
+ */
+export async function recoverStuckMissions(stuckThresholdSeconds = 300): Promise<number> {
+    const db = createServerClient();
+    const cutoff = Math.floor(Date.now() / 1000) - stuckThresholdSeconds;
+    try {
+        const { data } = await db
+            .from('engine_missions')
+            .select('id')
+            .eq('status', 'running')
+            .lt('updated_at', cutoff)
+            .limit(50);
+        const stuck = (data as { id: string }[] | null) ?? [];
+        for (const m of stuck) {
+            await db.from('engine_missions').update({
+                status: 'failed',
+                error: 'stuck:recovered_by_reaper',
+                updated_at: Math.floor(Date.now() / 1000),
+                completed_at: Math.floor(Date.now() / 1000),
+            }).eq('id', m.id);
+        }
+        if (stuck.length) logger.info('[Dispatcher] Recovered stuck missions', { count: stuck.length });
+        return stuck.length;
+    } catch (err) {
+        logger.error('[Dispatcher] recoverStuckMissions failed', { err });
+        return 0;
+    }
 }

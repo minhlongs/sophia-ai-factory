@@ -25,6 +25,7 @@ import {
   type HeyGenFailData,
 } from '@/lib/fulfillment/complete-video-from-webhook'
 import { sendOnboardingVideoEmail } from '@/forest/email/onboarding-emails'
+import { checkWebhookRateLimit } from '@/seed/security/webhook-rate-limiter'
 
 export const dynamic = 'force-dynamic'
 
@@ -118,11 +119,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
   }
 
+  const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
   const heygenJobId = resolveVideoId(payload)
+  const rateLimitKey = `${clientIp}:${heygenJobId ?? 'no-job-id'}`
 
-  // Resolve per-customer secret AND owner first (falls back to platform secret or null).
-  // ownerUserId scopes all subsequent D1 writes to prevent a malicious tenant
-  // forging a webhook for another tenant's heygen_job_id.
+  if (!checkWebhookRateLimit(rateLimitKey)) {
+    return NextResponse.json(
+      { error: 'rate_limit_exceeded' },
+      {
+        status: 429,
+        headers: { 'Retry-After': '60' },
+      },
+    )
+  }
+
   const { secret, ownerUserId, isUserScoped } = await resolveHeyGenWebhookSecret(heygenJobId)
 
   if (isUserScoped && !ownerUserId) {

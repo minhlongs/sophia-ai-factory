@@ -2142,7 +2142,8 @@
       "featuredTitle": "Playbook Nổi Bật",
       "firstTimeTitle": "Lần đầu cài SOP?",
       "firstTimeDesc": "3 bước: (1) chọn template phù hợp dưới đây, (2) bấm Install, (3) vào /dashboard/sops bấm Run để tạo video đầu tiên. Mất ~5 phút.",
-      "firstTimeFaq": "Xem FAQ về SOPs →"
+      "firstTimeFaq": "Xem FAQ về SOPs →",
+      "pageTitle": "Kho SOP | Sophia AI"
     },
     "card": {
       "creditsPerRun": "{n} credit/lần chạy",
@@ -2187,7 +2188,7 @@
       "crisis": "Xử Lý Khủng Hoảng",
       "sales": "Bán Hàng",
       "social": "Mạng Xã Hội",
-      "featuredTitle": "Quy Trình Nổi Bật",
+      "featuredTitle": "Playbook Nổi Bật",
       "noResults": "Không tìm thấy SOP phù hợp."
     },
     "list": {
@@ -2319,7 +2320,18 @@
         "deleteTemplate": "Xóa Template",
         "confirmDelete": "Bạn có chắc không? Hành động này sẽ xóa vĩnh viễn SOP template này.",
         "confirmDeleteYes": "Có, xóa",
-        "confirmDeleteNo": "Hủy"
+        "confirmDeleteNo": "Hủy",
+        "pageTitle": "SOP Template {id} | Bảng Điều Khiển",
+        "draftDescription": "Template này đang ở trạng thái nháp. Xuất bản để đưa lên marketplace."
+      },
+      "pageTitle": "Bảng Điều Khiển Creator | Sophia AI",
+      "actions": {
+        "unauthorized": "Chưa xác thực",
+        "masterRequired": "Cần tier MASTER",
+        "dbUnavailable": "Không kết nối được database",
+        "requiredFieldsMissing": "Thiếu trường bắt buộc",
+        "priceRange": "Giá phải từ $5 đến $999",
+        "notYourTemplate": "Không phải template của bạn"
       }
     },
     "community": {
@@ -2349,6 +2361,11 @@
       "commissionOverride": "Hoa hồng 50% trong 60 ngày",
       "redeemed": "Đã đổi",
       "active": "Đang hoạt động"
+    },
+    "status": {
+      "draft": "Bản Nháp",
+      "published": "Đã Xuất Bản",
+      "archived": "Đã Lưu Trữ"
     }
   },
   "agentChat": {

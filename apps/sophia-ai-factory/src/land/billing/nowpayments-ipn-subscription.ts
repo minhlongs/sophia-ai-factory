@@ -112,16 +112,21 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
       await d1.batch(stmts)
     } catch (batchErr) {
       // Fallback to individual statements if batch fails (e.g. test environment)
-      logger.warn('[NOWPayments] D1 batch failed, falling back to individual updates', { error: String(batchErr) })
-      const { data: existingSub2 } = await db.from('subscriptions').select('id').eq('org_id', orgId).single()
-      if (existingSub2) {
-        await db.from('subscriptions').update({ plan: tier.toLowerCase(), status: 'active', current_period_end: periodEnd, updated_at: now }).eq('org_id', orgId)
-      } else {
-        await db.from('subscriptions').insert({ org_id: orgId, plan: tier.toLowerCase(), status: 'active', current_period_start: now, current_period_end: periodEnd })
-      }
-      await db.from('organizations').update({ plan: tier.toLowerCase(), updated_at: now }).eq('id', orgId)
-      if (ipn.order_id) {
-        await markOrderCompleted(ipn.order_id, ipn.payment_id)
+      logger.warn('[NOWPayments] D1 batch failed, falling back to individual updates', batchErr)
+      try {
+        const { data: existingSub2 } = await db.from('subscriptions').select('id').eq('org_id', orgId).single()
+        if (existingSub2) {
+          await db.from('subscriptions').update({ plan: tier.toLowerCase(), status: 'active', current_period_end: periodEnd, updated_at: now }).eq('org_id', orgId)
+        } else {
+          await db.from('subscriptions').insert({ org_id: orgId, plan: tier.toLowerCase(), status: 'active', current_period_start: now, current_period_end: periodEnd })
+        }
+        await db.from('organizations').update({ plan: tier.toLowerCase(), updated_at: now }).eq('id', orgId)
+        if (ipn.order_id) {
+          await markOrderCompleted(ipn.order_id, ipn.payment_id)
+        }
+      } catch (fallbackErr) {
+        logger.error('[NOWPayments] Fallback sequential writes also failed', fallbackErr)
+        throw new Error('Subscription activation failed — both batch and fallback')
       }
     }
   } else {
