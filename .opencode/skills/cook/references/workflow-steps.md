@@ -18,7 +18,8 @@ All modes share core steps with mode-specific variations.
 - Spawn multiple `researcher` agents in parallel (max 2 if complex)
 - Use `/scout:ext` or `scout` agent for codebase search
 - Keep reports ≤150 lines
-- **Minimum report check:** If report is empty or <50 chars, retry once then escalate
+- **Minimum report check:** If report is empty or <50 chars, retry once (same prompt + "previous attempt returned empty, try again"). After retry:
+  - IF report still empty/min: → Auto mode: log "Research unavailable for [topic]" to phase-status.json, set researchContext = null, proceed to Step 2 WITHOUT research → Interactive mode: present to user, offer to proceed without research or abort
 
 **Parallel:**
 - Optional: max 2 researchers if complex
@@ -48,6 +49,12 @@ All modes share core steps with mode-specific variations.
 - Parse existing plan for phases
 
 **Output:** `✓ Step 2: Plan created - [N] phases`
+
+**Phase validation (MANDATORY):**
+- Count phases: `ls {plansDir}/phase-*.md 2>/dev/null | wc -l`
+- IF count == 0: ABORT with error "Plan has no phases. Create phase files before running /cook."
+- IF plan.md references phase files that don't exist: ABORT with error "Missing phase files: [list]"
+- **Code mode:** Since Step 2 is skipped, validate phases at the transition from Step 2 → Step 3 (before first phase loop iteration)
 
 ### [Review Gate 2] Post-Plan (skip if auto mode)
 - Present plan overview with phases
@@ -94,7 +101,11 @@ All modes share core steps with mode-specific variations.
 - Write tests: happy path, edge cases, errors
 - Use `tester` agent (max 300s timeout)
 - If failures: `debugger` → fix → repeat
-  - **MAX 3 debug cycles per test failure.** After 3 cycles: escalate to user (auto mode: log and skip test, proceed with warning).
+  - **MAX 3 debug cycles per test failure, MAX 9 total per phase.** After 9 total cycles: escalate to user (auto mode: log all failures to phase-status.json, skip remaining test failures, proceed with warning).
+- **Debug cycle tracking (auto mode):**
+- Track total debug cycles this phase (counter starts at 0 each phase)
+- Each test failure gets up to 3 cycles
+- If total cycles exceed 9: skip remaining failures, log to phase-status.json, proceed
 - **Forbidden:** fake mocks, commented tests, changed assertions
 
 **Output:** `✓ Step 4: Tests [X/X passed]`
@@ -114,6 +125,7 @@ All modes share core steps with mode-specific variations.
 
 **Auto:**
 - Auto-approve if score≥9.5 AND 0 critical (parsed from REVIEW_RESULT block)
+- **Score validation:** After parsing score, validate: score must be number in range [0, 10]. Use epsilon comparison: `abs(score - 9.5) < 0.001` for threshold check. If score is string/missing/out-of-range: treat as review failure, retry once, then per failure rule above.
 - Auto-fix critical (max 3 cycles) — NEVER auto-fix side-effects
 - Escalate to user after 3 failed cycles (write to phase-status.json)
 - **If REVIEW_RESULT block missing:** Treat as failure, retry once, then abort phase
@@ -131,7 +143,11 @@ All modes share core steps with mode-specific variations.
    - **Validate completion:** Check returned STATUS block shows `success: true`
    - On failure: retry once, then log warning and continue
 2. Spawn `docs-manager` subagent → update `./docs` if changes warrant
-   - **Trigger:** Run if any files outside `./docs/` were modified (check git diff)
+   - **Trigger:** Run if source files changed AND changes are meaningful:
+  - Only files with these extensions: `.ts`, `.tsx`, `.js`, `.jsx`, `.py`, `.go`, `.rs`
+  - Exclude paths: `node_modules/`, `.next/`, `dist/`, `build/`, `*.test.*`, `*.spec.*`, `*.d.ts`, `migrations/`, `__generated__/`
+  - Minimum threshold: > 10 lines changed in qualifying files
+  - Check: `git diff --name-only {lastCommitSha} | grep -E '\.(ts|tsx|js|jsx|py|go|rs)$' | grep -vE '(test|spec|d\.ts|node_modules|\.next|dist|build|migrations|__generated__)' | xargs wc -l | tail -1 | awk '{print $1}' | bc -l` (if result > 10, trigger)
    - On failure: log warning, continue (non-blocking)
 3. `TaskUpdate` → mark all Claude Tasks complete
    - **Validation:** Call `TaskList` and verify all tasks for this phase show `completed`. If any remain `in_progress` or `pending`, mark them complete only if Step 3 output confirms [X/Y] == total tasks.
@@ -183,6 +199,24 @@ FOR each phase in plan:
 
 **Termination:** After last phase's Step 6, output final report and STOP. Do NOT attempt to start a non-existent Phase N+1.
 
+## Phase State Tracking
+
+```python
+phaseStates = {} # {phaseNum: "pending"|"running"|"completed"|"failed"|"skipped"}
+FOR each phase:
+    phaseStates[phase] = "running"
+    # ... run Steps 0-6 ...
+    IF phase completed successfully:
+        phaseStates[phase] = "completed"
+    ELIF phase aborted:
+        phaseStates[phase] = "failed"
+    ELIF phase skipped:
+        phaseStates[phase] = "skipped"
+    # NEVER reset to "pending" — prevents re-run
+```
+
+**Enforcement:** Before entering a phase, check `phaseStates.get(phase, "pending")`. If not "pending", SKIP (already ran).
+
 ## Error Propagation Rules
 
 ```
@@ -198,15 +232,47 @@ Step failure (cannot proceed):
 
 ## Token Budget
 
-```
+```python
+# Calculate before spawning parallel agents:
+# contextRemaining = (maxContext - contextUsed) / maxContext * 100
+# maxContext = model's context window (e.g., 200000 for Claude)
+# contextUsed = approximate tokens in conversation so far
+# If no tool available to measure: estimate from message count
+# Rough heuristic: 1 message ≈ 500 tokens for orchestration prompts
 Before spawning parallel agents:
-  IF contextRemaining < 20% of max:
-    → WARN: "Token budget low ([X]% remaining)"
-    → Reduce parallel agents to 1
-  IF contextRemaining < 10% of max:
-    → ABORT: "Token budget exhausted"
-    → Write partial results, stop workflow
+IF contextRemaining < 20% of max:
+→ WARN: "Token budget low ([X]% remaining)"
+→ Reduce parallel agents to 1
+IF contextRemaining < 10% of max:
+→ ABORT: "Token budget exhausted"
+→ Write partial results to partial-results.json (see schema below)
+→ Stop workflow, present accumulated results
 ```
+
+**Token budget gate (all modes):**
+Check contextRemaining at phase start.
+IF < 10%: ABORT entire workflow, write final report from accumulated data.
+IF < 20%: WARN, proceed with sequential execution only (no parallel agents).
+
+
+## Partial Results Schema
+
+When workflow aborts due to token exhaustion, write to `{plansDir}/partial-results.json`:
+
+```json
+{
+  "abortedAt": "ISO8601 timestamp",
+  "reason": "token_budget_exhausted|subagent_timeout|phase_failure",
+  "contextRemaining": "X%",
+  "completedPhases": [{"phase": 1, "status": "completed", "commitSha": "abc123"}],
+  "currentPhase": N,
+  "failedAt": "Step N",
+  "accumulatedWarnings": ["warning1", "warning2"],
+  "resumeInstruction": "Re-run from Phase N, Step 3"
+}
+```
+
+**Resume protocol:** On next /cook invocation, check for partial-results.json. If found and user confirms, resume from `currentPhase` at `failedAt` step.
 
 ## Critical Rules
 
@@ -219,4 +285,6 @@ Before spawning parallel agents:
 - **Every subagent spawn MUST include timeout_ms.**
 - **Every subagent result MUST be parsed for structured output block.**
 - **Max 4 concurrent fullstack-developer agents** (hardware constraint).
-- **Debugger max 3 cycles per test failure** (prevents infinite loops).
+- **Debugger max 3 cycles per test failure, MAX 9 total per phase** (prevents infinite loops).
+- **Phase state tracking enforced** — no phase runs twice.
+- **Token budget checked at phase start** — abort if <10%, warn+sequential if <20%.
