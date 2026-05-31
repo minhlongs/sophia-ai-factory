@@ -4,6 +4,7 @@ import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/seed/securit
 import { raasGate, shouldApplyRaasGate } from '@/forest/raas-gate'
 import { emitUsageEvent } from '@/forest/usage-metering'
 import { logger } from '@/seed/utils/logger-utility'
+import { verifyInternalSecret } from '@/seed/security/verify-internal-secret'
 import { track } from './lib/signals/track'
 import { D1Events } from './lib/signals/d1-event-types'
 import { tenantIsolationMiddleware } from '@/forest/middleware/tenant-isolation'
@@ -13,14 +14,14 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
   const isolationResult = await tenantIsolationMiddleware(request)
   if (isolationResult) return isolationResult
 
-  // Webhook version pinning — senders must use stable version during canary
+  // Webhook version pinning — internal secret required during canary
   if (
     pathname.startsWith('/api/webhooks/nowpayments') ||
     pathname.startsWith('/api/webhooks/payos') ||
     pathname.startsWith('/api/webhooks/telegram')
   ) {
-    const versionKey = request.headers.get('Cloudflare-Workers-Version-Key')
-    if (versionKey !== 'stable') {
+    // Enforce only when INTERNAL_API_SECRET is configured; skip during migration window
+    if (process.env.INTERNAL_API_SECRET && !verifyInternalSecret(request)) {
       return new Response(
         JSON.stringify({ error: 'canary_window', message: 'Webhook pinned to stable version — retry shortly' }),
         { status: 503, headers: { 'Content-Type': 'application/json', 'Retry-After': '30' } }
@@ -52,7 +53,7 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
         status: 429,
         headers: {
           'Content-Type': 'application/json',
-          'Retry-After': String(rateLimitResult.reset - Math.floor(Date.now() / 1000)),
+          'Retry-After': String(Math.max(0, rateLimitResult.reset - Math.floor(Date.now() / 1000))),
           'X-RateLimit-Limit': String(rateLimitConfig.maxRequests),
           'X-RateLimit-Remaining': '0',
           'X-RateLimit-Reset': String(rateLimitResult.reset),
@@ -61,7 +62,8 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
       }
     )
     track(D1Events.API_RATE_LIMIT_HIT, identifier, {
-      path: pathname, identifier,
+      path: pathname,
+      identifier,
       limit_type: rateLimitConfig === RATE_LIMITS.auth ? 'auth' : rateLimitConfig === RATE_LIMITS.webhook ? 'webhook' : rateLimitConfig === RATE_LIMITS.discovery ? 'discovery' : 'api',
     })
     emitUsageEvent(request, { status: 429, headers: rateLimitResponse.headers }).catch(err => {
@@ -80,7 +82,7 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
         forbiddenResponse.headers.set('X-RateLimit-Remaining', '0')
         if (!forbiddenResponse.headers.has('Retry-After')) {
           const resetTimestamp = Math.floor(Date.now() / 1000) + 3600
-          forbiddenResponse.headers.set('Retry-After', String(resetTimestamp - Math.floor(Date.now() / 1000)))
+          forbiddenResponse.headers.set('Retry-After', String(Math.max(0, resetTimestamp - Math.floor(Date.now() / 1000))))
           forbiddenResponse.headers.set('X-RateLimit-Reset', String(resetTimestamp))
         }
       }
