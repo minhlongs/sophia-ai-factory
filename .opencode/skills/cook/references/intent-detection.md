@@ -8,6 +8,7 @@ Detect user intent from natural language and route to appropriate workflow.
 FUNCTION detectMode(input):
   # Priority 1: Explicit flags (override all)
   IF input contains "--fast": RETURN "fast"
+  IF input contains "--auto" AND "--parallel": RETURN "auto"  # conflict: auto wins
   IF input contains "--parallel": RETURN "parallel"
   IF input contains "--auto": RETURN "auto"
   IF input contains "--no-test": RETURN "no-test"
@@ -94,8 +95,9 @@ Detect multiple features from natural language:
 ## Conflict Resolution
 
 When multiple signals detected, priority order:
-1. Explicit flags (`--fast`, `--auto`, etc.)
-2. Path detection (plan files)
-3. Keywords in text
-4. Feature count analysis
-5. Default (interactive)
+1. `--auto` + `--parallel` together → `auto` wins (stronger autonomy signal)
+2. Explicit flags (`--fast`, `--auto`, etc.)
+3. Path detection (plan files)
+4. Keywords in text
+5. Feature count analysis
+6. Default (interactive)
