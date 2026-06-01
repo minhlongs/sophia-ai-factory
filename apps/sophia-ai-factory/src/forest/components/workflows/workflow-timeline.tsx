@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { WorkflowStepRow, type StepRowData } from './workflow-step-row'
-import { STATUS_LABELS, WORKFLOW_LABELS } from '@/lib/workflows/workflow-labels'
+import { STATUS_LABELS, WORKFLOW_LABELS } from '@/land/workflows/workflow-labels'
 
 const TERMINAL_STATUSES = new Set(['completed', 'failed'])
 const POLL_INTERVAL_MS = 30_000 // throttled from 3s to 30s minimum; workflow detail page only

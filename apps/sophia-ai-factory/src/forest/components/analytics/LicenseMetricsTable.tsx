@@ -13,7 +13,7 @@ import {
   TableRow,
 } from '@/seed/components/ui/table';
 import { ChevronUp, ChevronDown } from 'lucide-react';
-import type { LicenseUtilization } from '@/lib/analytics/types';
+import type { LicenseUtilization } from '@/land/analytics/types';
 import { LicenseMetricsFilterBar } from './license-metrics-filter-bar';
 import { LicenseMetricsTableBody } from './license-metrics-table-body';
 

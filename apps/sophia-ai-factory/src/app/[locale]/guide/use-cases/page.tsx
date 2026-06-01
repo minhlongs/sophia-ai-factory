@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { TrendingUp, ShoppingBag, Home, ArrowRight } from "lucide-react";
-import { buildBreadcrumbSchema } from "@/lib/seo/schema-org";
+import { buildBreadcrumbSchema } from "@/land/seo/schema-org";
 
 export const revalidate = 60;
 

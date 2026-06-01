@@ -12,7 +12,7 @@
  */
 
 import { createServerClient } from '@/seed/db/client'
-import { getKvClient } from '@/lib/redis'
+import { getKvClient } from '@/land/redis'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 import {

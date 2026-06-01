@@ -6,7 +6,7 @@
  */
 
 import { inngest } from '@/forest/inngest/client';
-import type { VideoGenerateRequestedEvent } from '@/lib/video/types';
+import type { VideoGenerateRequestedEvent } from '@/land/video/types';
 
 export interface EmitVideoGenerateInput {
   missionId: string;

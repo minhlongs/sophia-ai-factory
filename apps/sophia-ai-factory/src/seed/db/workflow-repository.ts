@@ -5,7 +5,7 @@
  * All queries are org_id-scoped to prevent cross-tenant leakage.
  */
 
-import { SUPERVISOR_STEPS } from '@/lib/workflows/supervisor-steps'
+import { SUPERVISOR_STEPS } from '@/land/workflows/supervisor-steps'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

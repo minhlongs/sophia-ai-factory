@@ -16,7 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { checkAdmin } from '@/lib/analytics/rbac';
+import { checkAdmin } from '@/land/analytics/rbac';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type { TierAdoptionPoint, TierAdoptionChartRow, TierAdoptionData } from '@/seed/types/analytics-tier';

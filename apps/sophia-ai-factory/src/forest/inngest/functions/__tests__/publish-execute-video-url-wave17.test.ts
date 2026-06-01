@@ -88,7 +88,7 @@ const {
 
 // Error classes must be defined inside vi.mock factory to avoid hoisting issues.
 // We define them here as local classes matching the real ones' names.
-vi.mock('@/lib/video/get-canonical-video-url', () => {
+vi.mock('@/land/video/get-canonical-video-url', () => {
   class VideoNotFoundError extends Error {
     constructor(videoId: string) {
       super(`[getCanonicalVideoUrl] Video not found: ${videoId}`);
@@ -122,11 +122,11 @@ vi.mock('@/forest/publishing/providers/telegram-publisher', () => ({
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: mockLoggerWarn, error: vi.fn() },
 }));
-vi.mock('@/lib/publishing/oauth-token-refresher', () => ({
+vi.mock('@/forest/publishing/oauth-token-refresher', () => ({
   refreshChannelToken: vi.fn(),
   refreshExpiringTokens: vi.fn(),
 }));
-vi.mock('@/lib/publishing/token-crypto', () => ({
+vi.mock('@/forest/publishing/token-crypto', () => ({
   decryptToken: mockDecryptToken,
 }));
 vi.mock('@/forest/inngest/client', () => ({
@@ -137,18 +137,18 @@ vi.mock('@/forest/inngest/client', () => ({
 }));
 
 const publisherObj = { upload: mockUpload, pollStatus: vi.fn().mockResolvedValue('processing'), getMetrics: vi.fn().mockResolvedValue({}) };
-vi.mock('@/lib/publishing/tiktok-publisher', () => ({ TikTokPublisher: vi.fn().mockImplementation(() => publisherObj) }));
-vi.mock('@/lib/publishing/youtube-publisher', () => ({ YouTubePublisher: vi.fn().mockImplementation(() => publisherObj) }));
-vi.mock('@/lib/publishing/instagram-publisher', () => ({ InstagramPublisher: vi.fn().mockImplementation(() => publisherObj) }));
-vi.mock('@/lib/publishing/facebook-publisher', () => ({ FacebookPublisher: vi.fn().mockImplementation(() => publisherObj) }));
-vi.mock('@/lib/publishing/twitter-publisher', () => ({ TwitterPublisher: vi.fn().mockImplementation(() => publisherObj) }));
-vi.mock('@/lib/publishing/pinterest-publisher', () => ({ PinterestPublisher: vi.fn().mockImplementation(() => publisherObj) }));
-vi.mock('@/lib/publishing/linkedin-publisher', () => ({ LinkedInPublisher: vi.fn().mockImplementation(() => publisherObj) }));
-vi.mock('@/lib/publishing/zalo-publisher', () => ({ ZaloPublisher: vi.fn().mockImplementation(() => publisherObj) }));
-vi.mock('@/lib/publishing/threads', () => ({ ThreadsPublisher: vi.fn().mockImplementation(() => publisherObj) }));
-vi.mock('@/lib/publishing/reddit', () => ({ RedditPublisher: vi.fn().mockImplementation(() => publisherObj) }));
-vi.mock('@/lib/publishing/bluesky', () => ({ BlueskyPublisher: vi.fn().mockImplementation(() => publisherObj) }));
-vi.mock('@/lib/publishing/mastodon', () => ({ MastodonPublisher: vi.fn().mockImplementation(() => publisherObj) }));
+vi.mock('@/forest/publishing/tiktok-publisher', () => ({ TikTokPublisher: vi.fn().mockImplementation(() => publisherObj) }));
+vi.mock('@/forest/publishing/youtube-publisher', () => ({ YouTubePublisher: vi.fn().mockImplementation(() => publisherObj) }));
+vi.mock('@/forest/publishing/instagram-publisher', () => ({ InstagramPublisher: vi.fn().mockImplementation(() => publisherObj) }));
+vi.mock('@/forest/publishing/facebook-publisher', () => ({ FacebookPublisher: vi.fn().mockImplementation(() => publisherObj) }));
+vi.mock('@/forest/publishing/twitter-publisher', () => ({ TwitterPublisher: vi.fn().mockImplementation(() => publisherObj) }));
+vi.mock('@/forest/publishing/pinterest-publisher', () => ({ PinterestPublisher: vi.fn().mockImplementation(() => publisherObj) }));
+vi.mock('@/forest/publishing/linkedin-publisher', () => ({ LinkedInPublisher: vi.fn().mockImplementation(() => publisherObj) }));
+vi.mock('@/forest/publishing/zalo-publisher', () => ({ ZaloPublisher: vi.fn().mockImplementation(() => publisherObj) }));
+vi.mock('@/forest/publishing/threads', () => ({ ThreadsPublisher: vi.fn().mockImplementation(() => publisherObj) }));
+vi.mock('@/forest/publishing/reddit', () => ({ RedditPublisher: vi.fn().mockImplementation(() => publisherObj) }));
+vi.mock('@/forest/publishing/bluesky', () => ({ BlueskyPublisher: vi.fn().mockImplementation(() => publisherObj) }));
+vi.mock('@/forest/publishing/mastodon', () => ({ MastodonPublisher: vi.fn().mockImplementation(() => publisherObj) }));
 
 // ── Re-import error types from mocked module ──────────────────────────────────
 
@@ -156,7 +156,7 @@ import {
   VideoNotFoundError,
   VideoUnauthorizedError,
   VideoNotMirroredError,
-} from '@/lib/video/get-canonical-video-url';
+} from '@/land/video/get-canonical-video-url';
 
 // ── Shared test fixtures ───────────────────────────────────────────────────────
 

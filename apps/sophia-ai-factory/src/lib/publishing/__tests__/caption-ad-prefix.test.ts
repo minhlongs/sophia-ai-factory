@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   checkPublishStatus: vi.fn().mockResolvedValue({ status: 'PUBLISH_COMPLETE' }),
 }));
 
-vi.mock('@/lib/tiktok/tiktok-oauth-client', () => ({
+vi.mock('@/land/tiktok/tiktok-oauth-client', () => ({
   publishVideo: mocks.publishVideo,
   checkPublishStatus: mocks.checkPublishStatus,
 }));

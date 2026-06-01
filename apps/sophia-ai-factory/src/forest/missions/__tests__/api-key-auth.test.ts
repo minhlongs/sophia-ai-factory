@@ -45,7 +45,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   },
 }));
 
-vi.mock('@/lib/observability/sentry-forwarder', () => ({
+vi.mock('@/land/observability/sentry-forwarder', () => ({
   forwardToSentry: mockForwardToSentry,
 }));
 

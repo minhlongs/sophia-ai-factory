@@ -14,7 +14,7 @@ import type {
 import {
   uploadVideo,
   refreshAccessToken,
-} from "@/lib/youtube/youtube-oauth-client";
+} from "@/land/youtube/youtube-oauth-client";
 import { createServerClient } from '@/seed/db/client';
 import { logger } from "@/seed/utils/logger-utility";
 

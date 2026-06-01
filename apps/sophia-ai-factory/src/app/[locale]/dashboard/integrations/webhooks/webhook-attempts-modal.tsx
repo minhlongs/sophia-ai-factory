@@ -13,7 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/seed/components/ui/dialog';
-import type { WebhookAttempt } from '@/lib/webhooks/types';
+import type { WebhookAttempt } from '@/land/webhooks/types';
 
 interface Props {
   endpointId: string;

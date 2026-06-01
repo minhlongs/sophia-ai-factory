@@ -10,7 +10,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import type { BrandingSettings } from '@/lib/tenant-settings/defaults';
+import type { BrandingSettings } from '@/land/tenant-settings/defaults';
 import { BrandingImageUploader } from './branding-image-uploader';
 
 interface Props {

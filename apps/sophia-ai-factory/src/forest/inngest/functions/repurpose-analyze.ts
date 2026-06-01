@@ -1,10 +1,10 @@
 import { inngest } from '@/forest/inngest/client';
 import { updateRepurposeJobStatus, insertRepurposeClips } from '@/seed/db/repositories/repurpose-jobs-repo';
-import { scoreHighlights } from '@/lib/video/highlight-scorer';
-import { detectScenes } from '@/lib/video/scene-detector';
-import { mergeClipBoundaries, type TranscriptWord } from '@/lib/video/clip-boundary-merger';
+import { scoreHighlights } from '@/land/video/highlight-scorer';
+import { detectScenes } from '@/land/video/scene-detector';
+import { mergeClipBoundaries, type TranscriptWord } from '@/land/video/clip-boundary-merger';
 import { logger } from '@/seed/utils/logger-utility';
-import type { TranscriptSegment } from '@/lib/video/highlight-scorer';
+import type { TranscriptSegment } from '@/land/video/highlight-scorer';
 
 export const repurposeAnalyze = inngest.createFunction(
   { id: 'repurpose-analyze', retries: 2 },

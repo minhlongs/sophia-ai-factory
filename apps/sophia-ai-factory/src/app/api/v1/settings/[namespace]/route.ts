@@ -11,10 +11,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getOrDefault, set, merge, deleteNamespace } from '@/lib/tenant-settings/registry';
-import { SETTINGS_NAMESPACES, SettingsValidationError } from '@/lib/tenant-settings/types';
-import { validatorFor } from '@/lib/tenant-settings/namespace-validators';
-import type { SettingsNamespace } from '@/lib/tenant-settings';
+import { getOrDefault, set, merge, deleteNamespace } from '@/land/tenant-settings/registry';
+import { SETTINGS_NAMESPACES, SettingsValidationError } from '@/land/tenant-settings/types';
+import { validatorFor } from '@/land/tenant-settings/namespace-validators';
+import type { SettingsNamespace } from '@/land/tenant-settings';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 

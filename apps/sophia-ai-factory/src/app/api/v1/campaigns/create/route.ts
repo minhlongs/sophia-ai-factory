@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createServerClient } from "@/seed/db/client";
 import { logger } from "@/seed/utils/logger-utility";
 import { toError } from "@/seed/utils/to-error";
-import { sendCampaignCreatedEvent } from "@/lib/campaigns/create-campaign-core";
+import { sendCampaignCreatedEvent } from "@/land/campaigns/create-campaign-core";
 import { withRateLimit } from "@/forest/middleware/rate-limit-wrapper";
 
 // POST /api/v1/campaigns/create

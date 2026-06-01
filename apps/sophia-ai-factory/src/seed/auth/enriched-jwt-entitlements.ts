@@ -3,7 +3,7 @@
  * @module auth/enriched-jwt-entitlements
  */
 
-import { getAccessibleFeatures } from '@/lib/features'
+import { getAccessibleFeatures } from '@/land/features'
 import type { FeatureLimit } from '@/seed/auth/enriched-jwt-types'
 
 export function getDefaultEntitlements(tier: string): string[] {

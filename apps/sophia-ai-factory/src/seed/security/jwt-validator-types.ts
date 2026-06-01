@@ -4,9 +4,9 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
+// EnrichedJwtClaims is imported (not re-exported) to avoid TS2308 conflicts at the seed/ and security/ barrel level.
+// Consumers should import EnrichedJwtClaims from '@/seed/auth/enriched-jwt' or '@/seed/auth/enriched-jwt-types'.
 import type { EnrichedJwtPayload } from '@/seed/auth/enriched-jwt'
-
-export type { EnrichedJwtPayload as EnrichedJwtClaims } from '@/seed/auth/enriched-jwt'
 
 export interface JwtPayload {
   sub: string

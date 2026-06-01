@@ -6,7 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getAuthorizationUrl } from '@/lib/publishing/reddit-oauth-client';
+import { getAuthorizationUrl } from '@/forest/publishing/reddit-oauth-client';
 import { logger } from '@/seed/utils/logger-utility';
 
 async function buildSignedState(userId: string): Promise<string> {

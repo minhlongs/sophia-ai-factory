@@ -6,9 +6,9 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
-import { checkAdmin, canAccessRevenue } from '@/lib/analytics/rbac';
-import { fetchRevenueSnapshot } from '@/lib/analytics/queries/revenue-nowpayments';
-import { fetchUnifiedRevenue } from '@/lib/analytics/queries/revenue-unified-query';
+import { checkAdmin, canAccessRevenue } from '@/land/analytics/rbac';
+import { fetchRevenueSnapshot } from '@/land/analytics/queries/revenue-nowpayments';
+import { fetchUnifiedRevenue } from '@/land/analytics/queries/revenue-unified-query';
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FeatureFlag, Tier } from "@/seed/types";
-import { checkTierAccess } from "@/lib/features";
-import { tierGuard, LimitType } from "@/lib/tier-guard";
+import { checkTierAccess } from "@/land/features";
+import { tierGuard, LimitType } from "@/land/tier-guard";
 import { getUserTier } from "@/seed/db/get-user-tier";
 import { toError } from "@/seed/utils/to-error";
 

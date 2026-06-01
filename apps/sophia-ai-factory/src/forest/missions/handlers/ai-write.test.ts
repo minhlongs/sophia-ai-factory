@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/lib/ai/script-generator', () => ({
+vi.mock('@/seed/ai/script-generator', () => ({
   generateScript: vi.fn(async () => ({
     title: 'RaaS Automation',
     scenes: [
@@ -11,7 +11,7 @@ vi.mock('@/lib/ai/script-generator', () => ({
   })),
 }));
 
-import { generateScript } from '@/lib/ai/script-generator';
+import { generateScript } from '@/seed/ai/script-generator';
 import { handle } from './ai-write';
 
 describe('ai:write handler', () => {

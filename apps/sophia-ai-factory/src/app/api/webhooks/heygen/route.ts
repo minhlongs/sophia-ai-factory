@@ -16,14 +16,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/seed/utils/logger-utility'
 import { createServerClient } from '@/seed/db/client'
-import { verifyHeyGenSignature } from '@/lib/webhooks/heygen-signature-verifier'
-import { resolveHeyGenWebhookSecret } from '@/lib/webhooks/heygen-webhook-secret-resolver'
+import { verifyHeyGenSignature } from '@/land/webhooks/heygen-signature-verifier'
+import { resolveHeyGenWebhookSecret } from '@/land/webhooks/heygen-webhook-secret-resolver'
 import {
   completeVideoFromWebhook,
   failVideoFromWebhook,
   type HeyGenSuccessData,
   type HeyGenFailData,
-} from '@/lib/fulfillment/complete-video-from-webhook'
+} from '@/land/fulfillment/complete-video-from-webhook'
 import { sendOnboardingVideoEmail } from '@/forest/email/onboarding-emails'
 import { checkWebhookRateLimit } from '@/seed/security/webhook-rate-limiter'
 

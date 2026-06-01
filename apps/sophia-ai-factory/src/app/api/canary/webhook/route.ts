@@ -24,7 +24,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper'
-import { verifyWebhook } from '@/lib/webhooks/signature'
+import { verifyWebhook } from '@/land/webhooks/signature'
 import { logger } from '@/seed/utils/logger-utility'
 
 const SIG_HEADER = 'x-sophia-signature'

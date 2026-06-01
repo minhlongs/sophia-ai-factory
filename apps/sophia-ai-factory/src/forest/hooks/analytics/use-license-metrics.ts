@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { queryKeys } from '@/lib/query-client';
+import { queryKeys } from '@/land/query-client';
 import type { LicenseUtilization } from '@/forest/raas-gateway-client';
 
 interface LocalLicenseMetricsResponse {

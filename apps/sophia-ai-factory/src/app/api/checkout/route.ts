@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { createInvoiceUrl, NOWPAYMENTS_TIERS } from '@/tree/clients/nowpayments-client';
 import { UNIFIED_TIERS } from '@/seed/config/tiers';
-import { checkoutSchema } from '@/lib/schemas';
+import { checkoutSchema } from '@/land/schemas';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { getCurrentUserFromHeaders, AuthSystemError } from '@/seed/auth/better-auth-session';
 import { validatePromoCode } from '@/land/promo/promo-validator';
@@ -12,8 +12,8 @@ import { writeOrder, findActivePendingOrder } from '@/land/orders/pending-order-
 import { derivePeriod, assertPeriodAllowed, assertPaymentMethodAllowed } from '@/land/checkout/checkout-validators';
 import type { PendingOrderPeriod, PaymentMethod } from '@/land/orders/pending-order-types';
 import { createPayOsInvoice } from '@/land/payments/payos';
-import { track } from '@/lib/signals/track';
-import { D1Events } from '@/lib/signals/d1-event-types';
+import { track } from '@/land/signals/track';
+import { D1Events } from '@/land/signals/d1-event-types';
 
 /**
  * Extract user ID from Better Auth session headers.

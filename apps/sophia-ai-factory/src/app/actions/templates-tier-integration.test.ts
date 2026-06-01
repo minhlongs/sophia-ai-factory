@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createTemplate } from './templates';
-import { tierGuard } from '@/lib/tier-guard';
+import { tierGuard } from '@/land/tier-guard';
 
 // Mock D1 client — replaces Supabase
 const mocks = vi.hoisted(() => {
@@ -31,7 +31,7 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn()
 }));
 
-vi.mock('@/lib/tier-guard');
+vi.mock('@/land/tier-guard');
 
 describe('createTemplate Integration', () => {
   const mockTemplateData = {

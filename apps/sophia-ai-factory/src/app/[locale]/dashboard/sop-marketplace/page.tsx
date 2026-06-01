@@ -16,7 +16,7 @@ import {
   listInstallationsForUser,
   listPublishedListings,
   listUserLicenses,
-} from '@/lib/sop/sop-repo';
+} from '@/tree/sop/sop-repo';
 import { SopGrid } from '@/forest/components/sop/sop-grid';
 import { CommunityListingCard } from './community-listing-card';
 import { installSopAction } from './actions';

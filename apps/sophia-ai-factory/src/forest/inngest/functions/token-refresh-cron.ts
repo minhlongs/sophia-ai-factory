@@ -1,5 +1,5 @@
 import { inngest } from '@/forest/inngest/client';
-import { refreshExpiredTokensForUser } from '@/lib/publishing/token-refresh-service';
+import { refreshExpiredTokensForUser } from '@/forest/publishing/token-refresh-service';
 import { logger } from '@/seed/utils/logger-utility';
 import { getD1Raw } from '@/seed/db/client';
 

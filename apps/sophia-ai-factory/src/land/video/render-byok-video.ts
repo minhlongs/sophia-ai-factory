@@ -12,7 +12,7 @@
  */
 import { getHeyGenKey } from '@/tree/credentials/get-provider-key';
 import { getD1Raw } from '@/seed/db/client';
-import { createHeyGenVideo } from '@/lib/video/heygen-helpers';
+import { createHeyGenVideo } from '@/land/video/heygen-helpers';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 

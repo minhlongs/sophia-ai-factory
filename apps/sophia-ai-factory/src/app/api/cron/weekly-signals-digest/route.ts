@@ -6,7 +6,7 @@
  */
 
 import { NextRequest } from 'next/server'
-import { requireCron } from '@/lib/signals/auth-helper'
+import { requireCron } from '@/land/signals/auth-helper'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import {
@@ -20,13 +20,13 @@ import {
   queryPaymentStats,
   queryTopByokProviders,
   queryAgentDispatches,
-} from '@/lib/signals/digest/d1-aggregates'
-import { renderDigestMarkdown, buildTldr, type DigestData } from '@/lib/signals/digest/markdown-renderer'
-import { upsertGithubIssue, buildIssueTitle } from '@/lib/signals/digest/github-issue-poster'
-import { postTelegramDigest } from '@/lib/signals/digest/telegram-poster'
+} from '@/land/signals/digest/d1-aggregates'
+import { renderDigestMarkdown, buildTldr, type DigestData } from '@/land/signals/digest/markdown-renderer'
+import { upsertGithubIssue, buildIssueTitle } from '@/land/signals/digest/github-issue-poster'
+import { postTelegramDigest } from '@/land/signals/digest/telegram-poster'
 import { fetchTopEvents, buildEventSummaryText, summarizeWithAI } from './weekly-digest-ai'
 import { sendEmail, sendTelegram, getD1 } from './weekly-digest-delivery'
-import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
+import { recordCronRun, wasRecentlyRun } from '@/land/cron/run-tracker'
 
 const CRON_NAME = 'weekly-signals-digest'
 /** Weekly — skip if ran within last 3 days */

@@ -15,7 +15,7 @@ import { requireAdmin } from '@/seed/auth/require-admin'
 import { logger } from '@/seed/utils/logger-utility'
 import { z } from 'zod'
 import { rateLimit } from '@/seed/security/rate-limiter'
-import type { RaasAuditLogRow } from '@/lib/supabase/types'
+import type { RaasAuditLogRow } from '@/land/supabase/types'
 
 // Query params validation schema
 const receiptQuerySchema = z.object({

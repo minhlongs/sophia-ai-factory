@@ -19,7 +19,7 @@ vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }));
 
-vi.mock('@/lib/actions/settings', () => ({
+vi.mock('@/app/actions/settings', () => ({
   encryptAndSaveSettings: vi.fn(),
 }));
 

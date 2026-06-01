@@ -6,7 +6,7 @@
  * AuditLogEntry, HashChainVerificationResult) now live in seed layer.
  *
  * Domain-specific utilities (verifyHashChain, merkleRoot) remain here
- * since they depend on @/lib/supabase/types (RaasAuditLogRow).
+ * since they depend on @/land/supabase/types (RaasAuditLogRow).
  *
  * @module audit/crypto-utils
  */

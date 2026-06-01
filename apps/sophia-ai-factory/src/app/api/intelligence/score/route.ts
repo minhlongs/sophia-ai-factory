@@ -1,4 +1,4 @@
-import { scoreAllProducts } from '@/lib/intelligence/runner'
+import { scoreAllProducts } from '@/land/intelligence/runner'
 import { toError } from '@/seed/utils/to-error'
 import { NextResponse } from 'next/server'
 

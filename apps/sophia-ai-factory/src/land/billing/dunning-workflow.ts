@@ -5,7 +5,7 @@
  * This file re-exports everything so existing imports continue to work.
  *
  * @module billing/dunning-workflow
- * @deprecated Import from '@/lib/billing/dunning' directly
+ * @deprecated Import from '@/tree/billing/dunning' directly
  */
 
 export type {

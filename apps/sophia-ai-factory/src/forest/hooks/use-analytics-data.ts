@@ -6,7 +6,7 @@
 
 import useSWR from 'swr'
 import { useMemo } from 'react'
-import type { UsageMetrics, RevenueMetrics, LicenseMetrics } from '@/lib/analytics/types'
+import type { UsageMetrics, RevenueMetrics, LicenseMetrics } from '@/land/analytics/types'
 import { useRaasAnalytics, useRaasBillingAnalytics, useRaasLicenseAnalytics } from './use-raas-analytics'
 
 export { useRaasAnalytics, useRaasBillingAnalytics, useRaasLicenseAnalytics } from './use-raas-analytics'

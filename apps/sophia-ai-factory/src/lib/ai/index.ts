@@ -1,4 +1,4 @@
-export * from '../services/factory';
+export * from '@/land/services/factory';
 export type {
   GenerateScriptInput,
   ScriptScene,

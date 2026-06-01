@@ -2,7 +2,7 @@
  * Internal Secret Verification — shared helper for all "internal" API routes.
  *
  * Usage:
- *   import { verifyInternalSecret } from '@/lib/security/verify-internal-secret';
+ *   import { verifyInternalSecret } from '@/seed/security/verify-internal-secret';
  *   if (!verifyInternalSecret(request)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
  *
  * Header: x-internal-secret

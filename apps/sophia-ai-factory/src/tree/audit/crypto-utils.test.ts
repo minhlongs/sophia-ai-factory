@@ -13,7 +13,7 @@ import {
   verifyHashChain,
   merkleRoot
 } from '@/tree/audit/crypto-utils'
-import type { RaasAuditLogRow } from '@/lib/supabase/types'
+import type { RaasAuditLogRow } from '@/land/supabase/types'
 
 // Save original env vars
 const ORIGINAL_SALT = process.env.AUDIT_HASH_SALT

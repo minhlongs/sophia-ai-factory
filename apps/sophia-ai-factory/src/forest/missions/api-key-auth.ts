@@ -20,7 +20,7 @@ import { createServerClient } from "@/seed/db/client";
 import { sha256 } from "@/tree/audit/crypto-utils";
 import { logger } from "@/seed/utils/logger-utility";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
-import { forwardToSentry } from "@/lib/observability/sentry-forwarder";
+import { forwardToSentry } from "@/land/observability/sentry-forwarder";
 
 export type ApiKeyAuthErrorType =
   | "missing_credentials"

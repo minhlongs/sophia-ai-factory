@@ -12,7 +12,7 @@ import { checkQuotaWithOverage, DEFAULT_CONFIG } from '@/forest/quota/quota-chec
 import { enforceQuota } from '@/forest/quota/quota-enforcer'
 import { createServerClient } from '@/seed/db/client'
 import { hasEmergencyBypass, recordCircuitFailure, recordCircuitSuccess } from '@/forest/usage-metering/realtime-tracker'
-import { logViolationAndAlert } from '@/lib/alerts/realtime-alert-service'
+import { logViolationAndAlert } from '@/forest/alerts/realtime-alert-service'
 import { sha256 } from '@/tree/audit/crypto-utils'
 import { serializeReceiptForHeader } from '@/tree/audit/logger/audit-query'
 import type { ComplianceReceipt } from '@/tree/audit/compliance-receipt'

@@ -8,7 +8,7 @@
 import { TableBody, TableCell, TableRow } from '@/seed/components/ui/table';
 import { Badge } from '@/seed/components/ui/badge';
 import { AlertTriangle } from 'lucide-react';
-import type { LicenseUtilization } from '@/lib/analytics/types';
+import type { LicenseUtilization } from '@/land/analytics/types';
 import { UsageProgress, StatusBadge, formatExpiration } from './license-metrics-cell-renderers';
 
 interface LicenseMetricsTableBodyProps {

@@ -9,7 +9,7 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import { deductCredits } from '@/lib/mcu/credits-repo';
+import { deductCredits } from '@/land/mcu/credits-repo';
 import { getCommand } from './command-registry';
 import { fireMissionWebhook } from './fire-webhook';
 import { logger } from '@/seed/utils/logger-utility';

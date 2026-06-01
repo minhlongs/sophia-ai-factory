@@ -12,7 +12,7 @@
  * @module seed/db/get-user-channels
  */
 
-import type { ChannelProvider, ChannelStatus } from '@/lib/publishing/publisher-interface';
+import type { ChannelProvider, ChannelStatus } from '@/forest/publishing/publisher-interface';
 
 export interface UserChannel {
   id: string;

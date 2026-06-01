@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({ logger: mocks.logger }));
-vi.mock('@/lib/publishing/scheduler', () => ({ schedulePublish: mocks.schedulePublish }));
+vi.mock('@/forest/publishing/scheduler', () => ({ schedulePublish: mocks.schedulePublish }));
 vi.mock('@/seed/auth/get-current-user-or-openclaw', () => ({
   getCurrentUserOrOpenClaw: mocks.getCurrentUserOrOpenClaw,
   isAuthError: mocks.isAuthError,

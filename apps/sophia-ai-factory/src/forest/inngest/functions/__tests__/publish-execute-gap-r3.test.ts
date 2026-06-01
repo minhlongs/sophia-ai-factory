@@ -81,14 +81,14 @@ vi.mock('@/tree/telegram/dispatch-with-retry-hints', () => ({
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
-vi.mock('@/lib/publishing/oauth-token-refresher', () => ({
+vi.mock('@/forest/publishing/oauth-token-refresher', () => ({
   refreshChannelToken: vi.fn(),
   refreshExpiringTokens: vi.fn(),
 }));
-vi.mock('@/lib/publishing/token-crypto', () => ({
+vi.mock('@/forest/publishing/token-crypto', () => ({
   decryptToken: vi.fn().mockResolvedValue('decrypted-token'),
 }));
-vi.mock('@/lib/video/get-canonical-video-url', () => ({
+vi.mock('@/land/video/get-canonical-video-url', () => ({
   getCanonicalVideoUrl: vi.fn().mockResolvedValue('https://pub-test.r2.dev/vid.mp4'),
   VideoNotFoundError: class VideoNotFoundError extends Error {},
   VideoUnauthorizedError: class VideoUnauthorizedError extends Error {},

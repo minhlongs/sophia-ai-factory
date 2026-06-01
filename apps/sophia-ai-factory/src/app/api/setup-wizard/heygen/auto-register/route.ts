@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { getUserCredential, setUserCredential } from '@/tree/credentials/user-credentials-repo'
-import { registerHeyGenWebhook } from '@/lib/heygen/webhook-registrar'
+import { registerHeyGenWebhook } from '@/land/heygen/webhook-registrar'
 import { logger } from '@/seed/utils/logger-utility'
 
 const SOPHIA_HEYGEN_WEBHOOK_URL = 'https://sophia.agencyos.network/api/webhooks/heygen'

@@ -24,11 +24,11 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import { decryptToken } from '@/lib/publishing/token-crypto';
-import { refreshChannelToken } from '@/lib/publishing/oauth-token-refresher';
-import { YouTubePublisher } from '@/lib/publishing/youtube-publisher';
+import { decryptToken } from '@/forest/publishing/token-crypto';
+import { refreshChannelToken } from '@/forest/publishing/oauth-token-refresher';
+import { YouTubePublisher } from '@/forest/publishing/youtube-publisher';
 import { logger } from '@/seed/utils/logger-utility';
-import type { PublishingChannel } from '@/lib/publishing/publisher-interface';
+import type { PublishingChannel } from '@/forest/publishing/publisher-interface';
 import type { MissionHandlerResult, MissionContext } from './types';
 
 const REFRESH_LEAD_SECONDS = 3600;

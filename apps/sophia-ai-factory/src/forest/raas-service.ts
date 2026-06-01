@@ -10,7 +10,7 @@
  * Example: raas_premium_1735689600_a1b2c3d4e5f6_e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
  */
 
-import { redis } from '@/lib/redis';
+import { redis } from '@/land/redis';
 import { logger } from '@/seed/utils/logger-utility';
 import {
   parseLicenseKey,

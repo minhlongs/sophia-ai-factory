@@ -14,7 +14,7 @@
  * @module land/publish/register-publishing-channel
  */
 import { getD1Raw } from '@/seed/db/client';
-import { encryptToken } from '@/lib/publishing/token-crypto';
+import { encryptToken } from '@/forest/publishing/token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 

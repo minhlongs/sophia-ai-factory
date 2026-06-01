@@ -16,7 +16,7 @@ import { DateRangePicker } from '@/forest/components/analytics/date-range-picker
 import { TierFilter } from '@/forest/components/analytics/tier-filter';
 import { CustomerSearch } from '@/forest/components/analytics/customer-search';
 import { ExportButton } from '@/forest/components/analytics/export-button';
-import { getAnalyticsAccess } from '@/lib/analytics/rbac';
+import { getAnalyticsAccess } from '@/land/analytics/rbac';
 import { DateRange } from 'react-day-picker';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -248,7 +248,7 @@ export function UsageAnalyticsView({ userTier }: UsageAnalyticsViewProps) {
         URL.revokeObjectURL(url);
       } else {
         // PNG export (chart screenshot)
-        const { exportChartToPng } = await import('@/lib/analytics/chart-export');
+        const { exportChartToPng } = await import('@/land/analytics/chart-export');
         await exportChartToPng('usage-chart', `usage-analytics-${Date.now()}`);
       }
     } catch (error) {

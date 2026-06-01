@@ -10,7 +10,7 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
-import { getTemplateById } from '@/lib/sop/sop-repo';
+import { getTemplateById } from '@/tree/sop/sop-repo';
 import { CategoryBadge } from '@/forest/components/sop/category-badge';
 import { ArrowLeft, Calendar, Clock, Coins, FileText } from 'lucide-react';
 import { CreatorDetailClient } from './creator-detail-client';

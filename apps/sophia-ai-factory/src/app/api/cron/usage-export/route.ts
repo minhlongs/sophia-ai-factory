@@ -11,7 +11,7 @@ import { getPreviousDayRange } from './cron-usage-export-helpers'
 import { verifyCronAuth } from '@/seed/security/cron-auth'
 import { getActiveLicenses } from './cron-usage-export-db'
 import { processLicenseExport } from './cron-usage-export-processor'
-import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
+import { recordCronRun, wasRecentlyRun } from '@/land/cron/run-tracker'
 import {
   startCronCheckIn,
   finishCronCheckIn,

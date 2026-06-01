@@ -3,7 +3,7 @@
  * @module audit/report-scheduler-types
  */
 
-import type { Json } from '@/lib/supabase/types'
+import type { Json } from '@/land/supabase/types'
 
 export type ReportType = 'compliance' | 'usage' | 'billing'
 export type ReportFormat = 'pdf' | 'csv' | 'json'

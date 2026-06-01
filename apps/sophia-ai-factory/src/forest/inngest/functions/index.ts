@@ -1,67 +1,36 @@
 /**
- * Inngest Functions — barrel re-export
+ * @module functions
+ * Inngest function registry — re-exports from canonical sources.
+ * payout/sop/storage-tracker functions live in forest/jobs/ and forest/sops/.
  */
-
-export { helloWorld } from './hello-world';
-export { generateCampaign } from './generate-campaign';
-export { autoDiscoverAffiliates } from './auto-discover-affiliates';
-
-// ── DEPRECATED: Phase 06 video_jobs chain ────────────────────────────────────
-// Removed from serve() registration on 2026-05-17 per ADR 0007.
-// Underlying `video_jobs` table was never applied to prod D1.
-// These exports are retained only for backwards compatibility; they have
-// ZERO consumers as of 2026-05-30. Safe to delete after 2026-06-30.
-// @deprecated — use HeyGen webhook → `videos` table pipeline instead.
-export { videoScripting } from './video-scripting';
-export { videoTTS } from './video-tts';
-export { videoVisual } from './video-visual';
-export { videoCompose } from './video-compose';
-export { videoUpload } from './video-upload';
-export { videoPublish } from './video-publish';
-
-// Publishing pipeline functions (Phase 10)
-export { publishExecute, publishTokenRefreshCron } from './publish-execute';
-
-// Affiliate offer sync cron (Phase 09)
-export { offerSyncCron } from '@/forest/jobs/offer-sync-cron';
-
-// Payout pipeline functions (Phase 13)
-export { conversionToLedger } from './conversion-to-ledger';
-export { pendingPromoterCron } from '@/forest/jobs/pending-promoter-cron';
-export { payoutBatcher } from '@/forest/jobs/payout-batcher';
-export { reconciliationCron } from '@/forest/jobs/reconciliation';
-
-// Phase 11: storage tracker cron
-export { storageTrackerDaily } from '@/forest/quota/storage-tracker-cron';
-
-// ── DEPRECATED: URL-to-Revenue video handler ─────────────────────────────────
-// Depends on Phase 06 video_jobs chain which was never applied to prod D1.
-// Removed from serve() registration on 2026-05-17 per ADR 0007.
-// ZERO consumers as of 2026-05-30. Safe to delete after 2026-06-30.
-// @deprecated
-export { urlRevenueVideoHandler } from './url-revenue-video-handler';
-
-// Wave 13 I2: Mission video generation
-export { videoGenerate } from './video-generate';
-
-// Wave 22 P06: auto-finalize account deletion after 7d cooldown
-export { accountDeleteFinalizeCron } from './account-delete-finalize-cron';
-
-// SOP execution engine (Phase 01 Solo SOPs)
-export { sopExecute } from '@/forest/sops/sop-executor';
-
-// Video Factory v2: Batch video generation fanout
-export { batchVideoFanout } from './batch-video-fanout';
-
-// Phase 03: Auto-repurpose
-export { repurposeAnalyze } from './repurpose-analyze';
-export { repurposeClipGenerate } from './repurpose-clip-generate';
-
-// Phase 05: Per-video analytics sync cron
-export { analyticsSync } from './analytics-sync';
-
-// Phase 06: Token refresh cron (TikTok/Instagram/YouTube)
-export { tokenRefreshCron } from './token-refresh-cron';
-
-// Phase 07: Thumbnail A/B selector cron
-export { thumbnailAbSelector } from './thumbnail-ab-selector';
+export * from './account-delete-finalize-cron';
+export * from './account-delete-finalize-email';
+export * from './analytics-sync';
+export * from './auto-discover-affiliates';
+export * from './batch-video-fanout';
+export * from './conversion-to-ledger';
+export * from './generate-campaign-db';
+export * from './generate-campaign-refund-notify';
+export * from './generate-campaign-video-poller';
+export * from './generate-campaign';
+export * from './hello-world';
+export * from './publish-execute';
+export * from './repurpose-analyze';
+export * from './repurpose-clip-generate';
+export * from './thumbnail-ab-selector';
+export * from './token-refresh-cron';
+export * from './url-revenue-video-handler';
+export * from './video-compose';
+export * from './video-generate';
+export * from './video-publish';
+export * from './video-scripting';
+export * from './video-tts';
+export * from './video-upload';
+export * from './video-visual';
+// payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/
+export { payoutBatcher } from '@/forest/jobs';
+export { pendingPromoterCron } from '@/forest/jobs';
+export { reconciliationCron } from '@/forest/jobs';
+export { offerSyncCron } from '@/forest/jobs';
+export { storageTrackerDaily } from '@/forest/quota';
+export { sopExecute } from '@/forest/sops';

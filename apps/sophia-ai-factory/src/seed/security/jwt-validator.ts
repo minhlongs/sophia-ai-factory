@@ -9,10 +9,17 @@ import { getErrorMessage } from '@/seed/utils/to-error'
 import { checkJwtNonce, markJwtNonceAsUsed } from '@/seed/auth/jwt-nonce-tracker'
 import { BEARER_PREFIX, getJwkSet, getExpectedIssuer } from '@/seed/security/jwt-validator-jwks'
 import type { ExtendedJwtPayload, JwtValidationResult } from '@/seed/security/jwt-validator-types'
+// EnrichedJwtClaims is imported directly (not via re-export) to avoid TS2308 chain conflicts.
+// Import from '@/seed/auth/enriched-jwt' when needed.
+import type { EnrichedJwtClaims } from '@/seed/auth/enriched-jwt'
 
-export type { JwtPayload, ExtendedJwtPayload, JwtValidationResult, EnrichedJwtClaims } from './jwt-validator-types'
+export type { JwtPayload, ExtendedJwtPayload, JwtValidationResult } from './jwt-validator-types'
+export type { EnrichedJwtClaims } from '@/seed/auth/enriched-jwt'
 export { isEnrichedPayload, extractEnrichedClaims } from './jwt-validator-types'
-export { decodeJwt, isJwtExpired } from './jwt-validator-jwks'
+// isJwtExpired excluded from jwt-validator barrel re-export — conflicts with auth/enriched-jwt.ts
+// at the seed/index.ts level (both auth and security barrels export it).
+// Import isJwtExpired from '@/seed/auth/enriched-jwt' directly.
+export { decodeJwt } from './jwt-validator-jwks'
 
 export async function validateJwt(authHeader: string | null): Promise<JwtValidationResult> {
   if (!authHeader) return { valid: false, error: 'missing-token' }

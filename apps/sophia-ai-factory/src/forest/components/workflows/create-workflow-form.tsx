@@ -10,7 +10,7 @@
 
 import { useTransition, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { WORKFLOW_LABELS } from '@/lib/workflows/workflow-labels'
+import { WORKFLOW_LABELS } from '@/land/workflows/workflow-labels'
 
 interface Props {
   onCancel?: () => void

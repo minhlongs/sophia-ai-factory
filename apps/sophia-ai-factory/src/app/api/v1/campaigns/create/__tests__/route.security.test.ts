@@ -24,7 +24,7 @@ vi.mock('@/forest/middleware/rate-limit-wrapper', () => ({
 }));
 
 // Mock the campaigns event sender so no Inngest call goes out.
-vi.mock('@/lib/campaigns/create-campaign-core', () => ({
+vi.mock('@/land/campaigns/create-campaign-core', () => ({
   sendCampaignCreatedEvent: vi.fn().mockResolvedValue(undefined),
 }));
 

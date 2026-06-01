@@ -20,7 +20,7 @@ import {
   getD1RawForAnalytics,
   type WindowOption,
   type AgentPerformanceReport,
-} from '@/lib/analytics/agent-performance-resolver';
+} from '@/land/analytics/agent-performance-resolver';
 
 
 // ── Validation ───────────────────────────────────────────────────────────────

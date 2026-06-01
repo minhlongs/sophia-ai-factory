@@ -12,23 +12,23 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/lib/analytics/rbac', () => ({
+vi.mock('@/land/analytics/rbac', () => ({
   checkAdmin: vi.fn(),
 }));
 
-vi.mock('@/lib/analytics/realtime-snapshot', () => ({
+vi.mock('@/land/analytics/realtime-snapshot', () => ({
   fetchRealtimeSnapshot: vi.fn(),
 }));
 
-vi.mock('@/lib/analytics/sse-broadcaster', () => ({
+vi.mock('@/land/analytics/sse-broadcaster', () => ({
   createSSEStream: vi.fn(),
 }));
 
 import { GET } from './route';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { checkAdmin } from '@/lib/analytics/rbac';
-import { fetchRealtimeSnapshot } from '@/lib/analytics/realtime-snapshot';
-import { createSSEStream } from '@/lib/analytics/sse-broadcaster';
+import { checkAdmin } from '@/land/analytics/rbac';
+import { fetchRealtimeSnapshot } from '@/land/analytics/realtime-snapshot';
+import { createSSEStream } from '@/land/analytics/sse-broadcaster';
 
 const MOCK_SNAPSHOT = {
   timestamp: '2026-04-25T00:00:00.000Z',
@@ -170,8 +170,8 @@ describe('GET /api/analytics/realtime', () => {
 describe('SSE Broadcaster helpers', () => {
   it('formatSSEMessage produces valid SSE frame', async () => {
     const { formatSSEMessage } = await vi.importActual<
-      typeof import('@/lib/analytics/sse-broadcaster')
-    >('@/lib/analytics/sse-broadcaster');
+      typeof import('@/land/analytics/sse-broadcaster')
+    >('@/land/analytics/sse-broadcaster');
 
     const frame = formatSSEMessage('snapshot', MOCK_SNAPSHOT);
     expect(frame).toMatch(/^event: snapshot\n/);

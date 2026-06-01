@@ -10,10 +10,10 @@
 
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getTemplateBySlug, createInstallation, setEnabled, deleteInstallation, getInstallation } from '@/lib/sop/sop-repo';
-import { generateWebhookSecret } from '@/lib/sop/webhook-hmac';
-import { installInputSchema } from '@/lib/sop/install-input-schema';
-import type { SopCustomizations } from '@/lib/sop/sop-types';
+import { getTemplateBySlug, createInstallation, setEnabled, deleteInstallation, getInstallation } from '@/tree/sop/sop-repo';
+import { generateWebhookSecret } from '@/tree/sop/webhook-hmac';
+import { installInputSchema } from '@/tree/sop/install-input-schema';
+import type { SopCustomizations } from '@/tree/sop/sop-types';
 
 // ---------------------------------------------------------------------------
 // D1 access — mirror pattern from trigger route
@@ -144,7 +144,7 @@ export async function purchaseSopAction(
     markLicensePaid,
     incrementSales,
     getTemplateById,
-  } = await import('@/lib/sop/sop-repo');
+  } = await import('@/tree/sop/sop-repo');
   const { recordSopSaleCommission } = await import('@/land/sop-marketplace');
 
   // Idempotency: bail if already purchased

@@ -15,7 +15,7 @@ import {
   Brush,
 } from 'recharts';
 import { useTranslations } from 'next-intl';
-import type { TimeSeriesPoint } from '@/lib/analytics/types';
+import type { TimeSeriesPoint } from '@/land/analytics/types';
 import type { TooltipProps } from 'recharts';
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 

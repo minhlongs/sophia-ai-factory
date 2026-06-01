@@ -46,7 +46,7 @@ export async function createSopAction(formData: FormData): Promise<{ error?: str
 
   const slug = nameEn.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-  const { createTemplate, createListing } = await import('@/lib/sop/sop-repo');
+  const { createTemplate, createListing } = await import('@/tree/sop/sop-repo');
 
   const template = await createTemplate(db, {
     slug, nameVi, nameEn, descriptionVi, descriptionEn, category,
@@ -70,7 +70,7 @@ export async function submitForReviewAction(templateId: string): Promise<{ error
   const db = getD1();
   if (!db) return { error: t('dbUnavailable') };
 
-  const { getTemplateById, getListingByTemplateId, updateListingStatus } = await import('@/lib/sop/sop-repo');
+  const { getTemplateById, getListingByTemplateId, updateListingStatus } = await import('@/tree/sop/sop-repo');
 
   const template = await getTemplateById(db, templateId);
   if (!template || template.author_user_id !== user.id) return { error: t('notYourTemplate') };

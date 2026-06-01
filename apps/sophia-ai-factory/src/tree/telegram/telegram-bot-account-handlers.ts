@@ -6,7 +6,7 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { sendTelegramMessage } from '@/tree/telegram/telegram-client';
-import { Database, Json } from '@/lib/supabase/types';
+import { Database, Json } from '@/land/supabase/types';
 
 function getSupabase() {
   return createServerClient();

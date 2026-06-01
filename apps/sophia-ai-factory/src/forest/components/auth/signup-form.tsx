@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, User, Loader2, CheckCircle } from "lucide-react";
 import { authClient } from "@/seed/auth/better-auth-client";
-import { trackSignupComplete } from "@/lib/analytics/conversion-events";
+import { trackSignupComplete } from "@/land/analytics/conversion-events";
 
 interface SignupFormProps {
   /** i18n strings — caller passes from server component or static keys */

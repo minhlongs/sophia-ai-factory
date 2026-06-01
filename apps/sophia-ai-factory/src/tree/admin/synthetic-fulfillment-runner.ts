@@ -16,7 +16,7 @@ import {
   markPaid,
 } from '@/seed/db/repositories/user-purchases-repo'
 import { findByPurchaseId } from '@/seed/db/repositories/videos-repo'
-import { triggerOneTimeFulfillment } from '@/lib/fulfillment/one-time-fulfillment'
+import { triggerOneTimeFulfillment } from '@/land/fulfillment/one-time-fulfillment'
 import { ONE_TIME_SKUS } from '@/seed/config/one-time-skus'
 import type { OneTimeSkuId } from '@/seed/types'
 

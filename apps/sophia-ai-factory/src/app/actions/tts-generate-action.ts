@@ -15,7 +15,7 @@
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
-import { generateElevenLabsVoiceover } from '@/lib/ai/elevenlabs-api-client';
+import { generateElevenLabsVoiceover } from '@/seed/ai/elevenlabs-api-client';
 import { getUserApiKey } from '@/tree/byok/user-api-key-store';
 import { logger } from '@/seed/utils/logger-utility';
 

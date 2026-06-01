@@ -2,7 +2,7 @@
  * Analytics Queries - Barrel Re-export
  *
  * All analytics query functions consolidated for backward-compatible import.
- * Import from '@/lib/analytics/queries' or individual modules.
+ * Import from '@/land/analytics/queries' or individual modules.
  */
 
 export { fetchUsageMetrics } from './usage-queries';

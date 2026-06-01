@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getD1Raw } from '@/seed/auth/resolve-org-id';
-import { computeVideoRenderBenchmark } from '@/lib/analytics/video-render-benchmark';
+import { computeVideoRenderBenchmark } from '@/land/analytics/video-render-benchmark';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import { timingSafeEqual } from '@/seed/security/crypto-utils';
 

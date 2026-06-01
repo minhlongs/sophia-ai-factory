@@ -180,7 +180,7 @@ export function getAuth() {
                 subscription_tier: 'BASIC',
               });
 
-              const { addCredits } = await import('@/lib/mcu/credits-repo');
+              const { addCredits } = await import('@/land/mcu/credits-repo');
               await addCredits(user.id, 50, 'Signup Bonus');
             } catch (err) {
               // Non-critical — org creation failure shouldn't block signup

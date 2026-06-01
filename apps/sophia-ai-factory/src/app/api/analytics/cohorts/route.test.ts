@@ -14,11 +14,11 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/lib/analytics/rbac', () => ({
+vi.mock('@/land/analytics/rbac', () => ({
   checkAdmin: vi.fn(),
 }));
 
-vi.mock('@/lib/analytics/queries/revenue-nowpayments', () => ({
+vi.mock('@/land/analytics/queries/revenue-nowpayments', () => ({
   fetchRevenueSnapshot: vi.fn().mockResolvedValue({
     arr: 12000,
     mrr: 1000,
@@ -64,11 +64,11 @@ function makeD1(tables: Record<string, unknown[]>): D1Database {
 
 // ── Imports (after mocks) ─────────────────────────────────────────────────────
 
-import { fetchCohortRetention } from '@/lib/analytics/cohort-calculator';
-import { fetchChurnTimeline } from '@/lib/analytics/churn-calculator';
-import { calculateLTVByTier } from '@/lib/analytics/ltv-calculator';
+import { fetchCohortRetention } from '@/land/analytics/cohort-calculator';
+import { fetchChurnTimeline } from '@/land/analytics/churn-calculator';
+import { calculateLTVByTier } from '@/land/analytics/ltv-calculator';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { checkAdmin } from '@/lib/analytics/rbac';
+import { checkAdmin } from '@/land/analytics/rbac';
 
 // ── Cohort retention tests ────────────────────────────────────────────────────
 

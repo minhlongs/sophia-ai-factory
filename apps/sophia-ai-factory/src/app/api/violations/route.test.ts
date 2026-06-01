@@ -16,13 +16,13 @@ vi.mock('@/seed/db/get-user-tier', () => ({
   getUserTier: vi.fn().mockResolvedValue('BASIC'),
 }));
 
-vi.mock('@/lib/analytics/rbac', () => ({
+vi.mock('@/land/analytics/rbac', () => ({
   verifyLicenseAccess: vi.fn(),
   getUserLicenseNonce: vi.fn(),
   checkAdmin: vi.fn(),
 }));
 
-vi.mock('@/lib/analytics/queries', () => ({
+vi.mock('@/land/analytics/queries', () => ({
   fetchViolations: vi.fn(),
   fetchViolationSummary: vi.fn(),
 }));
@@ -41,8 +41,8 @@ vi.mock('@/seed/security/rate-limiter', () => ({
 
 import { GET } from './route';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/lib/analytics/rbac';
-import { fetchViolations, fetchViolationSummary } from '@/lib/analytics/queries';
+import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/land/analytics/rbac';
+import { fetchViolations, fetchViolationSummary } from '@/land/analytics/queries';
 import { validateApiKey } from '@/seed/security/api-key-validator';
 import { validateJwt } from '@/seed/security/jwt-validator';
 import { checkRateLimit } from '@/seed/security/rate-limiter';

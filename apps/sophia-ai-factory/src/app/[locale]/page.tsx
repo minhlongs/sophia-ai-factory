@@ -9,7 +9,7 @@ import { Hero } from "@/app/components/sections/hero";
 import { Skeleton } from "@/seed/components/ui/skeleton";
 import { ScrollReveal } from "@/seed/components/ui/scroll-reveal";
 import { StickyMobileCta } from "@/app/components/layout/sticky-mobile-cta";
-import { buildFAQPageSchema, buildOrganizationSchema } from "@/lib/seo/schema-org";
+import { buildFAQPageSchema, buildOrganizationSchema } from "@/land/seo/schema-org";
 import { buildHomeMetadata } from "./home-metadata";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }) {

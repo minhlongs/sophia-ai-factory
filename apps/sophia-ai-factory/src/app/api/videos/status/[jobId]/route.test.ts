@@ -17,7 +17,7 @@ vi.mock('@/seed/auth/get-current-user-or-openclaw', () => ({
   isAuthError: mocks.isAuthError,
 }));
 vi.mock('@/seed/db/client', () => ({ getD1Client: mocks.getD1Client }));
-vi.mock('@/lib/video/video-job-fsm', () => ({
+vi.mock('@/land/video/video-job-fsm', () => ({
   STATUS_PROGRESS: { queued: 0, processing: 50, done: 100, error: 0 },
 }));
 

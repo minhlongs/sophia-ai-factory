@@ -10,7 +10,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 }));
 
 // Mock ServiceFactory (used by all heygen routes)
-vi.mock('@/lib/services/factory', () => ({
+vi.mock('@/land/services/factory', () => ({
   ServiceFactory: {
     getVideoService: vi.fn(),
   },
@@ -40,7 +40,7 @@ vi.mock('@/seed/db/client', () => {
 });
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { ServiceFactory } from '@/lib/services/factory';
+import { ServiceFactory } from '@/land/services/factory';
 
 describe('HeyGen API Routes', () => {
   const mockVideoService = {

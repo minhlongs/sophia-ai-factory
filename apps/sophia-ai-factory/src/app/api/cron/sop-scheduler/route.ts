@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
-import { handleSopSchedulerTick } from '@/lib/cron/sop-scheduler';
+import { handleSopSchedulerTick } from '@/land/cron/sop-scheduler';
 import { logger } from '@/seed/utils/logger-utility';
 import {
   startCronCheckIn,

@@ -3,7 +3,7 @@ import { ArrowRight, User, Brain, Mic, Video, ArrowDown } from "lucide-react";
 import { GuideCallout } from "@/forest/components/guide/guide-callout";
 import { GuideFeatureGrid, GuideFeatureItem } from "@/forest/components/guide/guide-feature-grid";
 import Link from "next/link";
-import { buildBreadcrumbSchema } from "@/lib/seo/schema-org";
+import { buildBreadcrumbSchema } from "@/land/seo/schema-org";
 
 const SITE_URL = 'https://sophia.agencyos.network';
 const breadcrumbSchema = buildBreadcrumbSchema([

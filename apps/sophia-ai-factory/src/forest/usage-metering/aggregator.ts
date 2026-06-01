@@ -9,7 +9,7 @@
  * This file re-exports everything so existing imports continue to work.
  *
  * @module usage-metering/aggregator
- * @deprecated Import from individual modules or '@/lib/usage-metering' barrel
+ * @deprecated Import from individual modules or '@/forest/usage-metering' barrel
  */
 
 export { QUOTA_LIMITS, checkQuota, getAggregatedSummary } from './usage-rollup-engine';

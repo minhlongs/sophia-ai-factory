@@ -18,7 +18,7 @@ import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { requireAdmin } from '@/seed/auth/require-admin';
-import type { OverageEventRow } from '@/lib/supabase/types';
+import type { OverageEventRow } from '@/land/supabase/types';
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin(req);

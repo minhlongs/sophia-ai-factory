@@ -3,7 +3,7 @@
  * Phase 12: 10 primitives for the Sophia AI Factory agent substrate
  *
  * Usage:
- *   import { openclaw } from '@/lib/openclaw'
+ *   import { openclaw } from '@/land/openclaw'
  *   await openclaw.spawnAgentFleet([...], { tenantId })
  *   await openclaw.audit({ tenantId, action: 'video.gen.started' })
  *

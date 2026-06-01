@@ -11,7 +11,7 @@ import {
 } from '@/seed/components/ui/card';
 import { ExternalLink } from 'lucide-react';
 import { UseFormReturn } from 'react-hook-form';
-import { UserProfileFormValues } from '@/lib/schemas/settings';
+import { UserProfileFormValues } from '@/land/schemas/settings';
 import { ApiKeyInput } from '@/tree/components/setup-wizard/api-key-input';
 
 interface ApiKeysSectionProps {

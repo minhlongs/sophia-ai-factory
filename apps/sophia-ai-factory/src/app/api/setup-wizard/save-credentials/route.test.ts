@@ -17,7 +17,7 @@ vi.mock('@/tree/credentials/user-credentials-repo', () => ({
   setUserCredential: vi.fn(),
 }));
 
-vi.mock('@/lib/heygen/webhook-registrar', () => ({
+vi.mock('@/land/heygen/webhook-registrar', () => ({
   registerHeyGenWebhook: vi.fn(),
 }));
 
@@ -37,7 +37,7 @@ vi.mock('@/forest/outbox/email-outbox', () => ({
 import { POST } from './route';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { setUserCredential } from '@/tree/credentials/user-credentials-repo';
-import { registerHeyGenWebhook } from '@/lib/heygen/webhook-registrar';
+import { registerHeyGenWebhook } from '@/land/heygen/webhook-registrar';
 
 const mockGetCurrentUser = vi.mocked(getCurrentUser);
 const mockSetUserCredential = vi.mocked(setUserCredential);

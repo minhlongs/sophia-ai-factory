@@ -15,17 +15,17 @@ vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }));
 
-vi.mock('@/lib/video/r2-binding', () => ({
+vi.mock('@/land/video/r2-binding', () => ({
   getVideoBucket: vi.fn(),
   tenantScopedKey: vi.fn((t: string, j: string, s: string) => `tenants/${t}/videos/${j}/${s}`),
 }));
 
-vi.mock('@/lib/video/r2-multipart-upload', () => ({
+vi.mock('@/land/video/r2-multipart-upload', () => ({
   uploadToR2: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { createServerClient } from '@/seed/db/client';
-import { getVideoBucket } from '@/lib/video/r2-binding';
+import { getVideoBucket } from '@/land/video/r2-binding';
 import { POST } from '../route';
 
 const mockChain = {

@@ -48,13 +48,13 @@ vi.mock('@/forest/inngest/client', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({ getD1Client: mockGetD1Client }));
-vi.mock('@/lib/video/r2-binding', () => ({ getVideoBucket: mockGetVideoBucket }));
-vi.mock('@/lib/video/cost-ledger', () => ({ recordCost: mockRecordCost }));
+vi.mock('@/land/video/r2-binding', () => ({ getVideoBucket: mockGetVideoBucket }));
+vi.mock('@/land/video/cost-ledger', () => ({ recordCost: mockRecordCost }));
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock('@/lib/video/wan21-client', () => {
+vi.mock('@/land/video/wan21-client', () => {
   function MockWanVideoClient() {
     return { generateVideo: mockGenerateVideo, getJobStatus: mockGetJobStatus };
   }
@@ -64,7 +64,7 @@ vi.mock('@/lib/video/wan21-client', () => {
   };
 });
 
-vi.mock('@/lib/video/fish-speech-client', () => {
+vi.mock('@/land/video/fish-speech-client', () => {
   function MockFishSpeechClient() {
     return { generateSpeech: mockGenerateSpeech };
   }
@@ -78,11 +78,11 @@ vi.mock('@/seed/db/repositories/brand-kits-repo', () => ({
   getBrandKit: mockGetBrandKit,
 }));
 
-vi.mock('@/lib/video/subtitle-generator', () => ({
+vi.mock('@/land/video/subtitle-generator', () => ({
   generateSubtitles: mockGenerateSubtitles,
 }));
 
-vi.mock('@/lib/video/composer-ffmpeg', () => ({
+vi.mock('@/land/video/composer-ffmpeg', () => ({
   composeFinalVideo: mockComposeFinalVideo,
   applyBrandKit: vi.fn((userId, input) => Promise.resolve(input)),
 }));

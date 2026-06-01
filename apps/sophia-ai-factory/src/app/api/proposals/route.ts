@@ -4,7 +4,7 @@ import { generateProposalSchema } from '@/seed/validators/proposal';
 import { generateProposal } from '@/seed/ai/proposal-generator';
 import { checkProposalQuality } from '@/seed/ai/proposal-quality-check';
 import { SYSTEM_TEMPLATES } from '@/seed/ai/proposal-templates';
-import { getBalance, deductCredits } from '@/lib/mcu/credits-repo';
+import { getBalance, deductCredits } from '@/land/mcu/credits-repo';
 import { getProposalCost } from '@/land/billing/proposal-mcu-cost-config';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';

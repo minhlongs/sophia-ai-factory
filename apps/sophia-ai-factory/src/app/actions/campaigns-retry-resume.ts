@@ -10,7 +10,7 @@
 
 import { getD1Client } from "@/seed/db/client";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
-import { sendCampaignCreatedEvent } from "@/lib/campaigns/create-campaign-core";
+import { sendCampaignCreatedEvent } from "@/land/campaigns/create-campaign-core";
 import { revalidatePath } from "next/cache";
 import { Tier } from "@/seed/types";
 

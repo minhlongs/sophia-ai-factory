@@ -8,7 +8,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUserOrOpenClaw, isAuthError } from '@/seed/auth/get-current-user-or-openclaw';
 import { getD1Client } from '@/seed/db/client';
-import type { PublishingJob, PublishingResult } from '@/lib/publishing/publisher-interface';
+import type { PublishingJob, PublishingResult } from '@/forest/publishing/publisher-interface';
 import { logger } from '@/seed/utils/logger-utility';
 
 export async function GET(

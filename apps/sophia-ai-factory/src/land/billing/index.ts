@@ -5,8 +5,9 @@
  * tree/* and seed/* MUST NOT import from land/*.
  */
 
+// dunning-workflow excluded — dunning/ barrel covers the same exports.
+// Import directly from '@/land/billing/dunning-workflow' for backward compat.
 export * from './billing-types';
-export * from './dunning-workflow';
 export * from './ipn-payload-schema';
 export * from './nowpayments-ipn-db';
 export * from './nowpayments-ipn-dispatch';

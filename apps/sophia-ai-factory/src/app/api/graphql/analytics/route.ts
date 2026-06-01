@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/seed/utils/logger-utility';
 import { typeDefs } from './schema';
-import { resolvers } from '@/lib/analytics/graphql-resolvers';
+import { resolvers } from '@/land/analytics/graphql-resolvers';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 
 interface GraphQLExecutionResult {

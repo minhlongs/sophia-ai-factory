@@ -2,7 +2,7 @@
  * SOP Challenges — gamification CRUD + progress tracking
  */
 
-import type { SopChallengeRow, UserChallengeProgressRow } from '@/lib/sop/sop-types';
+import type { SopChallengeRow, UserChallengeProgressRow } from '@/tree/sop/sop-types';
 
 export async function listActiveChallenges(db: D1Database): Promise<SopChallengeRow[]> {
   const now = Date.now();

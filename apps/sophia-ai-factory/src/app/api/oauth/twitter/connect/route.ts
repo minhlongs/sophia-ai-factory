@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { generatePkce, getAuthorizationUrl } from '@/lib/publishing/twitter-oauth-client';
+import { generatePkce, getAuthorizationUrl } from '@/forest/publishing/twitter-oauth-client';
 import { logger } from '@/seed/utils/logger-utility';
 
 async function buildSignedState(payload: { userId: string; codeVerifier: string }): Promise<string> {

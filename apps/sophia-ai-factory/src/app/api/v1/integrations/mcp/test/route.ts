@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { resolveTenantMcpServers } from '@/lib/openclaw/mcp-gateway';
+import { resolveTenantMcpServers } from '@/land/openclaw/mcp-gateway';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';

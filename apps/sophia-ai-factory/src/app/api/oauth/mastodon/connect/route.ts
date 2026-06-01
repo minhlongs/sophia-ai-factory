@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { registerMastodonApp, getAuthorizationUrl } from '@/lib/publishing/mastodon-oauth-client';
+import { registerMastodonApp, getAuthorizationUrl } from '@/forest/publishing/mastodon-oauth-client';
 import { storeOauthState } from '@/seed/auth/oauth-state-store';
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';

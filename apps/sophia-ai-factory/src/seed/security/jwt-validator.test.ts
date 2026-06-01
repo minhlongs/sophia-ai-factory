@@ -4,13 +4,13 @@
  * Tests JWT validation, decoding, and extraction
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import {
   validateJwt,
   decodeJwt,
-  isJwtExpired,
   extractUserIdFromJwt,
 } from '@/seed/security/jwt-validator'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { isJwtExpired } from '@/seed/auth/enriched-jwt'
 
 // Mock jose library
 vi.mock('jose', () => ({

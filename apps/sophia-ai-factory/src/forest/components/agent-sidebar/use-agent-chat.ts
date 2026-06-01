@@ -11,7 +11,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type { ChatMessage, SseEvent } from '@/lib/agent-chat/types';
+import type { ChatMessage, SseEvent } from '@/land/agent-chat/types';
 
 export interface UseAgentChatReturn {
   messages: ChatMessage[];

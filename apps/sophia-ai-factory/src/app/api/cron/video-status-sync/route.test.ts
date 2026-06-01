@@ -46,15 +46,15 @@ vi.mock('@/seed/db/client', () => ({
   })),
 }))
 
-vi.mock('@/lib/heygen/heygen-client', () => ({
+vi.mock('@/land/heygen/heygen-client', () => ({
   getHeyGenClient: vi.fn(),
 }))
 
-vi.mock('@/lib/video/video-storage-service', () => ({
+vi.mock('@/land/video/video-storage-service', () => ({
   downloadAndStore: vi.fn(),
 }))
 
-vi.mock('@/lib/cron/run-tracker', () => ({
+vi.mock('@/land/cron/run-tracker', () => ({
   recordCronRun: vi.fn().mockResolvedValue(undefined),
 }))
 
@@ -66,7 +66,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   },
 }))
 
-vi.mock('@/lib/fulfillment/compensation', () => ({
+vi.mock('@/land/fulfillment/compensation', () => ({
   grantCompensationCredit: vi.fn().mockResolvedValue(undefined),
 }))
 
@@ -78,7 +78,7 @@ vi.mock('@/land/billing/email/send-one-time-bundle-ready-email', () => ({
   sendOneTimeBundleReadyEmail: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock('@/lib/r2/video-cleanup', () => ({
+vi.mock('@/land/r2/video-cleanup', () => ({
   deleteR2VideoArtifacts: vi.fn().mockResolvedValue(undefined),
 }))
 
@@ -88,9 +88,9 @@ vi.mock('@/seed/db/get-user-credits', () => ({
 
 import { GET } from './route'
 import { getD1Raw, createServerClient } from '@/seed/db/client'
-import { getHeyGenClient } from '@/lib/heygen/heygen-client'
-import { downloadAndStore } from '@/lib/video/video-storage-service'
-import { grantCompensationCredit } from '@/lib/fulfillment/compensation'
+import { getHeyGenClient } from '@/land/heygen/heygen-client'
+import { downloadAndStore } from '@/land/video/video-storage-service'
+import { grantCompensationCredit } from '@/land/fulfillment/compensation'
 import { sendBundleRenderFailedEmail } from '@/land/billing/email/send-bundle-render-failed-email'
 
 // ---- helpers ----

@@ -1,20 +1,7 @@
 /**
- * Usage Metering Rollup - Barrel Re-export
- *
- * All rollup functions and types consolidated for import.
+ * @module rollup
+ * Barrel re-exports.
  */
-
-export type { ServiceBreakdownItem, HourlySummaryRecord, DailySummaryRecord } from './rollup-utils';
-export { calcAvgResponseTime } from './rollup-utils';
-
-export {
-  calculateHourlyRollup,
-  upsertHourlySummary,
-  runHourlyRollup,
-} from './hourly-rollup';
-
-export {
-  calculateDailyRollup,
-  upsertDailySummary,
-  runDailyRollup,
-} from './daily-rollup';
+export { calculateDailyRollup } from './daily-rollup-calculator';
+export { runDailyRollup, upsertDailySummary } from './daily-rollup';
+export { calculateHourlyRollup, runHourlyRollup, upsertHourlySummary } from './hourly-rollup';

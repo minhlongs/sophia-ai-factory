@@ -10,7 +10,7 @@
  * @module seed/config/channel-cooldown-rules
  */
 
-import type { ChannelProvider } from '@/lib/publishing/publisher-interface';
+import type { ChannelProvider } from '@/forest/publishing/publisher-interface';
 
 /** Minimum gap in seconds between consecutive posts on each channel. */
 export const CHANNEL_COOLDOWN_SECONDS: Record<ChannelProvider, number> = {

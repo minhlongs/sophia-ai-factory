@@ -27,7 +27,7 @@ import {
   Edit2
 } from 'lucide-react'
 import { ByokHelpTip } from '@/components/onboarding/byok-help-tip'
-import { validateProviderKey } from '@/lib/byok/key-format-validators'
+import { validateProviderKey } from '@/tree/byok/key-format-validators'
 
 export type UserSettableProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'muapi' | 'apollo' | 'hunter'
 type Provider = UserSettableProvider

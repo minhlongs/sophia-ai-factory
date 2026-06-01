@@ -19,7 +19,7 @@ import {
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in';
 import { toError } from '@/seed/utils/to-error';
-import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
+import { recordCronRun, wasRecentlyRun } from '@/land/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 
 const CRON_NAME = 'dunning-advance';

@@ -5,7 +5,7 @@
  * LIVE — calls Cloudflare Workers AI Whisper binding.
  */
 
-import { generateSubtitles } from '@/lib/video/subtitle-generator';
+import { generateSubtitles } from '@/land/video/subtitle-generator';
 import type { MissionHandlerResult, MissionContext } from './types';
 
 export async function handle(ctx: MissionContext): Promise<MissionHandlerResult> {

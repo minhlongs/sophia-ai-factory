@@ -7,7 +7,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('@/tree/byok/resolve-user-api-key', () => ({
   resolveUserApiKey: vi.fn(),
 }));
-vi.mock('@/lib/apollo/apollo-client', () => ({
+vi.mock('@/tree/apollo/apollo-client', () => ({
   apolloPeopleBulkSearch: vi.fn(),
 }));
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -15,9 +15,9 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 }));
 
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
-import { apolloPeopleBulkSearch } from '@/lib/apollo/apollo-client';
+import { apolloPeopleBulkSearch } from '@/tree/apollo/apollo-client';
 import { handle } from './lead-export';
-import type { ApolloPerson } from '@/lib/apollo/apollo-client';
+import type { ApolloPerson } from '@/tree/apollo/apollo-client';
 
 const mockResolve = resolveUserApiKey as ReturnType<typeof vi.fn>;
 const mockBulk = apolloPeopleBulkSearch as ReturnType<typeof vi.fn>;

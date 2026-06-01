@@ -17,7 +17,7 @@ import {
   verifyReceiptDetailed,
   type ComplianceReceipt
 } from '@/tree/audit/compliance-receipt'
-import type { RaasAuditLogRow } from '@/lib/supabase/types'
+import type { RaasAuditLogRow } from '@/land/supabase/types'
 
 // Set up test environment variable for receipt secret
 const TEST_RECEIPT_SECRET = 'test-secret-key-for-compliance-receipt-32-bytes-minimum'

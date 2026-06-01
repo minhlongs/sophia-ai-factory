@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { toError } from '@/seed/utils/to-error';
-import { addCredits } from '@/lib/mcu/credits-repo';
+import { addCredits } from '@/land/mcu/credits-repo';
 
 interface CouponActivateRequest {
   coupon?: string;

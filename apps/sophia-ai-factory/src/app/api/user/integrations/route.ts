@@ -3,7 +3,7 @@ import { createServerClient } from '@/seed/db/client'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { getUserTier } from '@/seed/db/get-user-tier'
 import { UNIFIED_TIERS } from '@/seed/config/tiers'
-import { integrationSchema } from '@/lib/schemas'
+import { integrationSchema } from '@/land/schemas'
 import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter'
 
 export async function POST(request: NextRequest) {

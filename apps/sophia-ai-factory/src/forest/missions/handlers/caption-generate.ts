@@ -10,7 +10,7 @@
  * LIVE — requires AssemblyAI API key in user_provider_credentials.
  */
 
-import { AssemblyAIClient } from '@/lib/video/assemblyai-client';
+import { AssemblyAIClient } from '@/land/video/assemblyai-client';
 import { getAssemblyAIKey } from '@/tree/credentials/get-provider-key';
 import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from './types';

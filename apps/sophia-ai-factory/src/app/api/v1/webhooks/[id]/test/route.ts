@@ -41,13 +41,13 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
     try {
-      const { getById, recordAttempt } = await import('@/lib/webhooks/registry');
-      const { sendWebhook } = await import('@/lib/webhooks/sender');
+      const { getById, recordAttempt } = await import('@/land/webhooks/registry');
+      const { sendWebhook } = await import('@/land/webhooks/sender');
 
       const endpoint = await getById(db, id, user.id);
       if (!endpoint) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-      const { getActiveEndpointsForEvent } = await import('@/lib/webhooks/registry');
+      const { getActiveEndpointsForEvent } = await import('@/land/webhooks/registry');
       const endpointsWithSecret = await getActiveEndpointsForEvent(db, user.id, 'webhook.test');
       const epWithSecret = endpointsWithSecret.find(e => e.id === id);
 

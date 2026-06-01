@@ -67,7 +67,7 @@ vi.mock('@/seed/db/audit/audit-log', () => ({
   recordAudit: vi.fn().mockResolvedValue(undefined),
 }))
 
-vi.mock('@/lib/video/onboarding-video', () => ({
+vi.mock('@/land/video/onboarding-video', () => ({
   createOnboardingVideo: vi.fn().mockResolvedValue(undefined),
   ONBOARDING_TIERS: new Set(['ENTERPRISE', 'MASTER']),
 }))

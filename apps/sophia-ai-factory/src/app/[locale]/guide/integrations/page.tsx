@@ -5,7 +5,7 @@ import { GuideStepCard } from "@/forest/components/guide/guide-step-card";
 import { GuideCallout } from "@/forest/components/guide/guide-callout";
 import { GuideFeatureGrid, GuideFeatureItem } from "@/forest/components/guide/guide-feature-grid";
 import { YouTubeEmbed } from "@/forest/components/guide/youtube-embed";
-import { buildBreadcrumbSchema } from "@/lib/seo/schema-org";
+import { buildBreadcrumbSchema } from "@/land/seo/schema-org";
 
 const SITE_URL = 'https://sophia.agencyos.network';
 const breadcrumbSchema = buildBreadcrumbSchema([

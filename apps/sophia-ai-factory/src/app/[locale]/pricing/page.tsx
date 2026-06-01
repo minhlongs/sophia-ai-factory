@@ -10,7 +10,7 @@ import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { getUserCredential } from "@/tree/credentials/user-credentials-repo";
 import { getUserTier } from "@/seed/db/get-user-tier";
 import Link from "next/link";
-import { buildAllProductSchemas, buildBreadcrumbSchema, BREADCRUMBS } from "@/lib/seo/schema-org";
+import { buildAllProductSchemas, buildBreadcrumbSchema, BREADCRUMBS } from "@/land/seo/schema-org";
 
 // Pricing page — cache 60s at the edge. PricingSection reads HeyGen health
 // per request; we accept it may be 60s stale at peak. Calculator + FAQ are

@@ -11,7 +11,7 @@ import { getAllPrograms, getCategories } from "@/land/affiliates";
 import {
   scoreAffiliates,
   type AffiliateScore,
-} from "@/lib/discovery/affiliate-ai-scorer";
+} from "@/tree/discovery/affiliate-ai-scorer";
 import { sendMessage as sendTelegramMessage } from "@/tree/telegram/handlers/utils";
 import { createServerClient } from '@/seed/db/client';
 

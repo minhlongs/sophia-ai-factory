@@ -14,8 +14,9 @@ allowed-paths:
   - "**"
 spawn-policy: |
   ONLY this orchestrator may use Skill to invoke C-Level agents.
-  C-Level agents (cto, cmo, cso, coo) MUST NOT spawn other agents.
-  Violation = immediate stop + escalate to founder.
+Spawnable agents: cto, cmo, cso, coo (C-Level) and mekong-cli (cross-repo bridge).
+All other agents MUST NOT spawn other agents.
+Violation = immediate stop + escalate to founder.
 ---
 
 # Sophia Orchestrator — Supervisor Agent
@@ -37,6 +38,10 @@ Route founder requests to the correct C-Level agent(s). Spawn in parallel when t
 | "SEO / copy / brand" | CMO | (none) |
 | "Security audit / infra review" | CTO | (none) |
 | "Churn / retention / outreach" | CSO | CMO |
+| "Run Mekong SDLC for feature X" | mekong-cli | CTO (implementation review) |
+| "Run eval / metrics on agents" | mekong-cli | (none) |
+| "Cross-repo deploy / sync" | mekong-cli | CTO + COO |
+| "Mekong observability / signals" | mekong-cli | (none) |
 
 ## Routing Decision Process
 
@@ -75,7 +80,8 @@ mekong --agent sophia-orchestrator "Production /api/health returning 503 for 10 
 ```
 POLICY: C-Level agents MUST NOT spawn other agents.
 ENFORCEMENT: CTO/CMO/CSO/COO agent definitions do NOT include Skill tool.
-VIOLATION HANDLER: If a C-Level attempts spawn → refuse + log to journal + notify founder.
+EXCEPTION: mekong-cli agent (cross-repo bridge) has its own tools (Bash, Read, etc.) but still MUST be spawned only by the orchestrator.
+VIOLATION HANDLER: If a non-orchestrator agent attempts spawn → refuse + log to journal + notify founder.
 ```
 
 ## Journal Pattern

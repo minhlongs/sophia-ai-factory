@@ -11,7 +11,7 @@ import {
   resolveTenantMcpServers,
   _clearMCPRegistry,
 } from '../mcp-gateway';
-import { set } from '@/lib/tenant-settings/registry';
+import { set } from '@/land/tenant-settings/registry';
 import { createFakeD1 } from '../../publishing/__tests__/fake-d1-sqlite';
 import type { D1Database } from '@cloudflare/workers-types';
 
@@ -35,7 +35,7 @@ function makeDb() {
 const TENANT = 'tenant-mcp-test';
 
 // Mock token-crypto to avoid needing OAUTH_TOKEN_ENC_KEY in tests
-vi.mock('@/lib/publishing/token-crypto', () => ({
+vi.mock('@/forest/publishing/token-crypto', () => ({
   encryptToken: vi.fn(async (val: string) => `encrypted:${val}`),
   decryptToken: vi.fn(async (val: string) =>
     val.startsWith('encrypted:') ? val.slice(10) : val,

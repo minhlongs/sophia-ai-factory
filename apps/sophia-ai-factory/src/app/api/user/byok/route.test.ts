@@ -27,7 +27,7 @@ vi.mock('@/tree/byok/user-api-key-store', () => ({
   listUserApiKeyProviders:  vi.fn(),
 }))
 
-vi.mock('@/lib/signals/track', () => ({
+vi.mock('@/land/signals/track', () => ({
   track: vi.fn(),
 }))
 
@@ -42,8 +42,8 @@ import {
   clearUserApiKey,
   listUserApiKeyProviders,
 } from '@/tree/byok/user-api-key-store'
-import { track } from '@/lib/signals/track'
-import { D1Events } from '@/lib/signals/d1-event-types'
+import { track } from '@/land/signals/track'
+import { D1Events } from '@/land/signals/d1-event-types'
 import { globalRateLimiter } from '@/forest/middleware/rate-limiter'
 
 const mockGetCurrentUser = vi.mocked(getCurrentUser)

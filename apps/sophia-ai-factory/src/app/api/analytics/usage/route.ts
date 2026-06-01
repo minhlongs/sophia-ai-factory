@@ -19,10 +19,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
-import { fetchUsageMetrics } from '@/lib/analytics/queries';
-import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/lib/analytics/rbac';
-import { analyticsUsageQuerySchema } from '@/lib/validation/services';
-import type { UsageFilters, AnalyticsGranularity, AiService, UsageMetrics } from '@/lib/analytics/types';
+import { fetchUsageMetrics } from '@/land/analytics/queries';
+import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/land/analytics/rbac';
+import { analyticsUsageQuerySchema } from '@/land/validation/services';
+import type { UsageFilters, AnalyticsGranularity, AiService, UsageMetrics } from '@/land/analytics/types';
 
 function emptyUsageMetrics(): UsageMetrics {
   return {

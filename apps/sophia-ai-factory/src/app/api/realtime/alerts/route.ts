@@ -18,7 +18,7 @@ import { toError } from '@/seed/utils/to-error';
 import {
   subscribeToUsageEvents,
   subscribeToViolations,
-} from '@/lib/alerts/supabase-realtime-alert-service';
+} from '@/forest/alerts/supabase-realtime-alert-service';
 
 // Global subscription state
 let realtimeUnsubscribe: (() => Promise<void>) | null = null;

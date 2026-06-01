@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
-import { localizedHref } from "@/lib/i18n/localized-href";
+import { localizedHref } from "@/land/i18n/localized-href";
 
 export default async function VideoNotFound() {
   const t = await getTranslations("dashboard.videos.notFound");

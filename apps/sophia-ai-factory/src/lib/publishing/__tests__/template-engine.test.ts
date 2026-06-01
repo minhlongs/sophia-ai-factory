@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderTemplate, getEffectiveCaption, getEffectiveTitle, getEffectiveHashtags } from '../template-engine';
-import { set } from '@/lib/tenant-settings/registry';
+import { set } from '@/land/tenant-settings/registry';
 import { createFakeD1 } from './fake-d1-sqlite';
 import type { D1Database } from '@cloudflare/workers-types';
 

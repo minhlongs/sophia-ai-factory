@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/seed/components/ui/button';
-import { CAMPAIGN_TEMPLATES } from '@/lib/templates/campaign-templates';
+import { CAMPAIGN_TEMPLATES } from '@/land/templates/campaign-templates';
 import { TemplateCard } from './template-card';
 import type { Tier } from '@/seed/types';
 

@@ -10,7 +10,7 @@
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import type { RaasLicenseRow as RaasLicense } from '@/lib/supabase/types';
+import type { RaasLicenseRow as RaasLicense } from '@/land/supabase/types';
 import { logAuditAction, logLicenseRevocation } from './audit-logging-service';
 
 /**

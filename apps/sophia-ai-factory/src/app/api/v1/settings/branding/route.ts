@@ -13,10 +13,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getOrDefault, merge } from '@/lib/tenant-settings/registry';
-import { DEFAULT_BRANDING } from '@/lib/tenant-settings/defaults';
-import { BrandingSchema } from '@/lib/tenant-settings/namespace-validators';
-import { SettingsValidationError } from '@/lib/tenant-settings/types';
+import { getOrDefault, merge } from '@/land/tenant-settings/registry';
+import { DEFAULT_BRANDING } from '@/land/tenant-settings/defaults';
+import { BrandingSchema } from '@/land/tenant-settings/namespace-validators';
+import { SettingsValidationError } from '@/land/tenant-settings/types';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 

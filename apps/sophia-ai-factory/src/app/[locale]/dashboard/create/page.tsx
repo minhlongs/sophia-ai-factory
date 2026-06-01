@@ -1,6 +1,6 @@
 import React from "react";
 import dynamic from "next/dynamic";
-import { templateService } from "@/lib/services/template-service";
+import { templateService } from "@/land/services/template-service";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { Skeleton } from "@/seed/components/ui/skeleton";
 import { getTranslations } from 'next-intl/server';

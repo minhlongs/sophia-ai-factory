@@ -11,7 +11,7 @@ import type {
   RaasLicenseRow as RaasLicense,
   RaasLicenseInsert,
   Json,
-} from '@/lib/supabase/types';
+} from '@/land/supabase/types';
 import type { LicenseSummary, LicenseListResponse, LicenseTier } from '@/forest/raas-schema';
 
 export interface LicenseCreationParams {

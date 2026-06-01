@@ -183,7 +183,7 @@ export async function aggregateByokEvents(hoursBack = 24): Promise<ByokEventCoun
  * LLM call trace aggregates — Phase 4K SSR helper.
  *
  * Reads last 24h of llm_call_trace events from D1 signals_events and
- * delegates to the pure `aggregateTraceStats()` from `@/lib/admin/trace-aggregator`
+ * delegates to the pure `aggregateTraceStats()` from `@/tree/admin/trace-aggregator`
  * (extracted in Phase 4M). Returns null when D1 is unavailable or query throws —
  * page renders a graceful "No LLM traces yet" placeholder without error banners.
  */

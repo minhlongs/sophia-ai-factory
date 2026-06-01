@@ -2,7 +2,7 @@
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
-import { getVideoBucket } from '@/lib/video/r2-binding';
+import { getVideoBucket } from '@/land/video/r2-binding';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import {
   createBatchJob,
@@ -13,7 +13,7 @@ import {
   updateBatchJobStatus,
   cancelPendingBatchVideos,
 } from '@/seed/db/repositories/batch-jobs-repo';
-import { parseBatchCsv, parseBatchJson, estimateBatchCost } from '@/lib/video/batch-csv-parser';
+import { parseBatchCsv, parseBatchJson, estimateBatchCost } from '@/land/video/batch-csv-parser';
 import { inngest } from '@/forest/inngest/client';
 import type { BatchJob, BatchVideo } from '@/seed/db/repositories/batch-jobs-repo';
 

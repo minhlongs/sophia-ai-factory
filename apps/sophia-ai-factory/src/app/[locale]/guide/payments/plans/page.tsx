@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { GuideCallout } from "@/forest/components/guide/guide-callout";
-import { buildBreadcrumbSchema } from "@/lib/seo/schema-org";
+import { buildBreadcrumbSchema } from "@/land/seo/schema-org";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 

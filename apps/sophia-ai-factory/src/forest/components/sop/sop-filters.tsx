@@ -8,7 +8,7 @@
  */
 
 import { useTranslations } from 'next-intl';
-import type { SopTemplateRow } from '@/lib/sop/sop-types';
+import type { SopTemplateRow } from '@/tree/sop/sop-types';
 import { Search } from 'lucide-react';
 
 type Category = SopTemplateRow['category'] | 'all';

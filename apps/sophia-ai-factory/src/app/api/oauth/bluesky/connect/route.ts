@@ -8,8 +8,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getD1Client } from '@/seed/db/client';
-import { encryptToken } from '@/lib/publishing/token-crypto';
-import { createAtprotoSession } from '@/lib/publishing/bluesky';
+import { encryptToken } from '@/forest/publishing/token-crypto';
+import { createAtprotoSession } from '@/forest/publishing/bluesky';
 import { logger } from '@/seed/utils/logger-utility';
 import { randomUUID } from 'crypto';
 

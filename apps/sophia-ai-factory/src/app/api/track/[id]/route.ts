@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { recordClick } from '@/lib/tracking/edge-link';
+import { recordClick } from '@/land/tracking/edge-link';
 
 export const dynamic = 'force-dynamic';
 

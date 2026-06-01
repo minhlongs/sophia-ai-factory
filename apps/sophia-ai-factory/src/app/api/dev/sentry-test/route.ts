@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { isUserAdmin } from '@/seed/auth/is-user-admin';
-import { forwardToSentry } from '@/lib/observability/sentry-forwarder';
+import { forwardToSentry } from '@/land/observability/sentry-forwarder';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

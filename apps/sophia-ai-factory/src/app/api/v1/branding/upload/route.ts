@@ -12,9 +12,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { merge, getOrDefault } from '@/lib/tenant-settings/registry';
-import { DEFAULT_BRANDING } from '@/lib/tenant-settings/defaults';
-import type { BrandingSettings } from '@/lib/tenant-settings/defaults';
+import { merge, getOrDefault } from '@/land/tenant-settings/registry';
+import { DEFAULT_BRANDING } from '@/land/tenant-settings/defaults';
+import type { BrandingSettings } from '@/land/tenant-settings/defaults';
 import { logger } from '@/seed/utils/logger-utility';
 import {
   enforceFileSizeLimit,
@@ -22,8 +22,8 @@ import {
   safeStorageKey,
   FileUploadPolicyError,
 } from '@/seed/security/file-upload-policy';
-import { getVideoBucket } from '@/lib/video/r2-binding';
-import { uploadToR2 } from '@/lib/video/r2-multipart-upload';
+import { getVideoBucket } from '@/land/video/r2-binding';
+import { uploadToR2 } from '@/land/video/r2-multipart-upload';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';

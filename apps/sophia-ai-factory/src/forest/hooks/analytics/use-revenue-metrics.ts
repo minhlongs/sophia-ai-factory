@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { queryKeys } from '@/lib/query-client';
+import { queryKeys } from '@/land/query-client';
 import { RaasGatewayClient, type BillingMetrics } from '@/forest/raas-gateway-client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';

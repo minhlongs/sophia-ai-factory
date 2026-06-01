@@ -8,7 +8,7 @@
  */
 
 import { getD1Raw } from '@/seed/db/client';
-import { generateShortId } from '@/lib/tracking/edge-link';
+import { generateShortId } from '@/land/tracking/edge-link';
 import { logger } from '@/seed/utils/logger-utility';
 import type {
   AbExperiment,

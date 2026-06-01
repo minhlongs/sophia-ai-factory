@@ -5,8 +5,8 @@
  */
 
 import { NextRequest } from 'next/server'
-import { requireAuth } from '@/lib/signals/auth-helper'
-import { assignVariant } from '@/lib/signals/ab-experiment'
+import { requireAuth } from '@/land/signals/auth-helper'
+import { assignVariant } from '@/land/signals/ab-experiment'
 
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req)

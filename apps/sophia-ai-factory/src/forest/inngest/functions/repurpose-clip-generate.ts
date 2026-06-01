@@ -5,8 +5,8 @@ import {
 } from '@/seed/db/repositories/repurpose-jobs-repo';
 import { logger } from '@/seed/utils/logger-utility';
 import { getD1Raw } from '@/seed/db/client';
-import { generateSubtitles } from '@/lib/video/subtitle-generator';
-import { composeFinalVideo, applyBrandKit } from '@/lib/video/composer-ffmpeg';
+import { generateSubtitles } from '@/land/video/subtitle-generator';
+import { composeFinalVideo, applyBrandKit } from '@/land/video/composer-ffmpeg';
 
 export const repurposeClipGenerate = inngest.createFunction(
   { id: 'repurpose-clip-generate', retries: 2, concurrency: { limit: 3 } },

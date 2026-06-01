@@ -12,7 +12,7 @@
  */
 
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'
-import { createDidTalk, type DidErrorResponse } from '@/lib/did/did-client'
+import { createDidTalk, type DidErrorResponse } from '@/land/did/did-client'
 import { logger } from '@/seed/utils/logger-utility'
 import type { MissionContext, MissionHandlerResult } from './types'
 

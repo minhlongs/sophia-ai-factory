@@ -42,7 +42,7 @@ export async function scheduleReport(report: ScheduleReportInput): Promise<Sched
     format: report.format,
     frequency: report.frequency,
     recipients: report.recipients,
-    filters: report.filters as import('@/lib/supabase/types').Json,
+    filters: report.filters as import('@/land/supabase/types').Json,
     next_run_at: nextRunAt,
     created_at: now,
     created_by: report.createdBy

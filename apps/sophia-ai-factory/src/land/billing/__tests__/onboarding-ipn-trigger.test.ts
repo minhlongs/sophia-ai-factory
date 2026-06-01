@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ONBOARDING_TIERS } from '@/lib/video/onboarding-video';
+import { ONBOARDING_TIERS } from '@/land/video/onboarding-video';
 
 describe('nowpayments-ipn-subscription — onboarding trigger', () => {
   describe('ONBOARDING_TIERS eligibility', () => {

@@ -30,7 +30,7 @@ vi.mock('@/seed/health/heygen-health-check', () => ({
   isHeyGenHealthy: vi.fn(async () => true),
 }))
 
-vi.mock('@/lib/fulfillment/circuit-breaker', () => ({
+vi.mock('@/land/fulfillment/circuit-breaker', () => ({
   getCircuitState: vi.fn(async () => ({
     state: 'closed',
     recentFailures: 0,

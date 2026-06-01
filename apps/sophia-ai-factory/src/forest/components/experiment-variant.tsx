@@ -4,7 +4,7 @@
  */
 
 import { cookies } from 'next/headers'
-import { assignVariant, readVariantFromCookie } from '@/lib/signals/ab-experiment'
+import { assignVariant, readVariantFromCookie } from '@/land/signals/ab-experiment'
 
 interface ExperimentVariantProps {
   /** PostHog experiment / feature flag name */

@@ -58,15 +58,18 @@ mekong-cli/
 ## When to use Sophia C-Level vs Mekong SDLC
 
 - **Sophia C-Level (`/sophia <request>`)**: business-layer decisions (CTO/CMO/CSO/COO routing). Constrained to Sophia repo paths.
+- **Mekong CLI Agent (`mekong-cli`)**: cross-repo SDLC, observability, symlinks, subagent orchestration between Sophia and Mekong CLI.
 - **Mekong SDLC (`/mekong <subcommand>`)**: technical SDLC scaffold (spec→design→code→deploy). Cross-repo, includes Mekong's observability + signals.
 
 Typical flow:
 1. `/sophia "new feature: weekly tier-upgrade nudge email"` → CMO drafts copy + CTO drafts technical spec
-2. `/mekong spec new tier-upgrade-nudge` → formal spec via Mekong SDLC scaffold
-3. `/mekong design tier-upgrade-nudge` → architecture
-4. `/mekong code tier-upgrade-nudge` → implementation (uses Mekong's CI/CD gates)
-5. `/mekong deploy tier-upgrade-nudge` → deploy with canary + auto-rollback (Mekong's pipeline)
-6. `/mekong eval-agent cmo` → assess CMO output quality after rollout
+2. Orchestrator routes SDLC task → `mekong-cli` agent (via Skill spawn)
+3. `mekong-cli` runs: `mekong spec new tier-upgrade-nudge` → copies artifact to Sophia `plans/`
+4. `mekong-cli` runs: `mekong design tier-upgrade-nudge` → architecture
+5. `mekong-cli` runs: `mekong code tier-upgrade-nudge` → implementation (Mekong's CI/CD gates)
+6. `mekong-cli` runs: `mekong deploy tier-upgrade-nudge` → deploy with canary + auto-rollback
+7. `mekong-cli` runs: `mekong eval-agent cmo` → assess CMO output quality after rollout
+8. `/mekong metrics` → view unified observability dashboard (Sophia Better Stack + Mekong Grafana)
 
 ## Observability bridge (when Docker activated on M1 Max)
 
@@ -83,6 +86,7 @@ Sophia's Better Stack logs + Mekong's Grafana metrics CAN merge:
 - Architecture: `docs/sophia-mekong-integration.md` (this bridge documented in detail)
 
 ## Constraints
-- Mekong CLI is INDEPENDENT repo at `/Users/macbook/mekong-cli/` — DO NOT mutate from Sophia
+- Mekong CLI is INDEPENDENT repo at `/Users/macbook/mekong-cli/` — DO NOT mutate from Sophia directly
 - `/mekong` slash from Sophia operates READ-ONLY against Mekong (or via official `mekong` CLI binary which has own permissions)
+- ALL cross-repo writes MUST go through the `mekong-cli` agent — it is the sole authorized mutator of Mekong state from Sophia context
 - Cross-repo writes go through PR workflow on respective repo

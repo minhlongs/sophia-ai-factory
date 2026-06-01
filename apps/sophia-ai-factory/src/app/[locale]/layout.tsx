@@ -12,8 +12,8 @@ import { ErrorReporter } from "@/forest/components/providers/error-reporter";
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { getCspNonce } from '@/seed/security/get-csp-nonce';
-import { buildOrganizationSchema } from '@/lib/seo/schema-org';
-import { Ga4Script } from '@/lib/analytics/ga4-script';
+import { buildOrganizationSchema } from '@/land/seo/schema-org';
+import { Ga4Script } from '@/land/analytics/ga4-script';
 
 // JSON-LD schema — explicit type to avoid TypeScript stack overflow
 const JSONLD_SCHEMA: Record<string, unknown> = {
