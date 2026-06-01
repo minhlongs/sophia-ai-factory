@@ -7,14 +7,14 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { WebhooksPageClient } from './webhooks-page-client';
-import type { WebhookEndpoint } from '@/lib/webhooks/types';
+import type { WebhookEndpoint } from '@/land/webhooks/types';
 
 export const dynamic = 'force-dynamic';
 
 async function fetchWebhooks(userId: string): Promise<WebhookEndpoint[]> {
   try {
     // Use D1 registry directly on server — avoids self-fetch in Workers
-    const { listByTenant } = await import('@/lib/webhooks/registry');
+    const { listByTenant } = await import('@/land/webhooks/registry');
     // Get D1 binding via the same pattern as other server routes
     const db = getD1ServerSide();
     if (!db) return [];

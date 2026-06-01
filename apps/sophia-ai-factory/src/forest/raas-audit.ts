@@ -5,7 +5,7 @@
  * This file re-exports everything so existing imports continue to work.
  *
  * @module lib/raas-audit
- * @deprecated Import from '@/lib/raas' directly
+ * @deprecated Import from '@/forest/raas' directly
  */
 
 export {

@@ -14,7 +14,7 @@ import { getAuth } from '@/seed/auth/better-auth-server';
 import { createServerClient } from '@/seed/db/client';
 import { verifyTotp, verifyBackupCode, consumeBackupCode } from '@/seed/auth/mfa/totp-service';
 import { clearSessionMfaPending } from '@/seed/auth/mfa/login-challenge';
-import { decryptToken } from '@/lib/publishing/token-crypto';
+import { decryptToken } from '@/forest/publishing/token-crypto';
 
 export const dynamic = 'force-dynamic';
 

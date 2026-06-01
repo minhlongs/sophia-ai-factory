@@ -8,7 +8,7 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import type { SopInstallationRow, SopTemplateRow } from '@/lib/sop/sop-types';
+import type { SopInstallationRow, SopTemplateRow } from '@/tree/sop/sop-types';
 import { CategoryBadge } from './category-badge';
 import { Button } from '@/seed/components/ui/button';
 import { Play, Eye } from 'lucide-react';

@@ -19,8 +19,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
-import { exportUsageToCsv } from '@/lib/analytics/export';
-import { checkAdmin, canExport } from '@/lib/analytics/rbac';
+import { exportUsageToCsv } from '@/land/analytics/export';
+import { checkAdmin, canExport } from '@/land/analytics/rbac';
 
 interface AnalyticsExportPayload {
   start?: number;
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     if (!isAdmin && !queryLicenseNonce) {
       // Auto-inject user's own license for non-admin
-      const { getUserLicenseNonce } = await import('@/lib/analytics/rbac');
+      const { getUserLicenseNonce } = await import('@/land/analytics/rbac');
       queryLicenseNonce = await getUserLicenseNonce(user.id) || undefined;
     }
 

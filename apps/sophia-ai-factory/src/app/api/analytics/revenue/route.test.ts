@@ -22,12 +22,12 @@ vi.mock('@/seed/db/get-user-tier', () => ({
   getUserTier: vi.fn(),
 }));
 
-vi.mock('@/lib/analytics/rbac', () => ({
+vi.mock('@/land/analytics/rbac', () => ({
   checkAdmin: vi.fn(),
   canAccessRevenue: vi.fn(),
 }));
 
-vi.mock('@/lib/analytics/queries/revenue-nowpayments', () => ({
+vi.mock('@/land/analytics/queries/revenue-nowpayments', () => ({
   fetchRevenueSnapshot: vi.fn(),
 }));
 
@@ -38,8 +38,8 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 import { GET } from './route';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
-import { checkAdmin, canAccessRevenue } from '@/lib/analytics/rbac';
-import { fetchRevenueSnapshot } from '@/lib/analytics/queries/revenue-nowpayments';
+import { checkAdmin, canAccessRevenue } from '@/land/analytics/rbac';
+import { fetchRevenueSnapshot } from '@/land/analytics/queries/revenue-nowpayments';
 import type { RevenueSnapshot } from '@/seed/types/analytics-revenue';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────

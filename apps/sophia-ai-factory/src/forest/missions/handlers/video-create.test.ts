@@ -23,7 +23,7 @@ vi.mock('@/tree/credentials/get-provider-key', () => ({
   getHeyGenKey: vi.fn(),
 }));
 
-vi.mock('@/lib/video/heygen-helpers', () => ({
+vi.mock('@/land/video/heygen-helpers', () => ({
   createHeyGenVideo: vi.fn(),
 }));
 
@@ -33,7 +33,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 
 import { createServerClient } from '@/seed/db/client';
 import { getHeyGenKey } from '@/tree/credentials/get-provider-key';
-import { createHeyGenVideo } from '@/lib/video/heygen-helpers';
+import { createHeyGenVideo } from '@/land/video/heygen-helpers';
 import { handle } from './video-create';
 
 const mockCreateServerClient = vi.mocked(createServerClient);

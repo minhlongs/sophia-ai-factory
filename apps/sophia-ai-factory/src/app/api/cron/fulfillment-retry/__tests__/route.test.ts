@@ -7,7 +7,7 @@ vi.mock('@/seed/security/cron-auth', () => ({
   verifyCronAuth: vi.fn().mockReturnValue(null),
 }))
 
-vi.mock('@/lib/fulfillment/compensation', () => ({
+vi.mock('@/land/fulfillment/compensation', () => ({
   grantCompensationCredit: vi.fn().mockResolvedValue(true),
 }))
 
@@ -15,7 +15,7 @@ vi.mock('@/land/billing/email/send-bundle-render-failed-email', () => ({
   sendBundleRenderFailedEmail: vi.fn().mockResolvedValue({ success: true }),
 }))
 
-vi.mock('@/lib/cron/run-tracker', () => ({
+vi.mock('@/land/cron/run-tracker', () => ({
   recordCronRun: vi.fn().mockResolvedValue(true),
   wasRecentlyRun: vi.fn().mockResolvedValue(false),
 }))
@@ -31,7 +31,7 @@ vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }))
 
-vi.mock('@/lib/video/heygen-helpers', () => ({
+vi.mock('@/land/video/heygen-helpers', () => ({
   createHeyGenVideo: vi.fn().mockResolvedValue({ videoId: 'heygen-job-1' }),
 }))
 
@@ -46,12 +46,12 @@ vi.mock('@/seed/db/repositories/videos-repo', () => ({
   markPermanentFailureCAS: vi.fn().mockResolvedValue(true),
 }))
 
-vi.mock('@/lib/fulfillment/retry-backoff', () => ({
+vi.mock('@/land/fulfillment/retry-backoff', () => ({
   MAX_ATTEMPTS: 5,
   isRetryDue: vi.fn().mockReturnValue(true),
 }))
 
-vi.mock('@/lib/fulfillment/circuit-breaker', () => ({
+vi.mock('@/land/fulfillment/circuit-breaker', () => ({
   shouldDispatch: vi.fn().mockResolvedValue({ allowed: true }),
   recordHeyGenAttempt: vi.fn().mockResolvedValue(true),
 }))
@@ -65,10 +65,10 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 }))
 
 import { listQueuedForRetry, markPermanentFailureCAS } from '@/seed/db/repositories/videos-repo'
-import { isRetryDue } from '@/lib/fulfillment/retry-backoff'
-import { createHeyGenVideo } from '@/lib/video/heygen-helpers'
+import { isRetryDue } from '@/land/fulfillment/retry-backoff'
+import { createHeyGenVideo } from '@/land/video/heygen-helpers'
 import { createServerClient } from '@/seed/db/client'
-import { grantCompensationCredit } from '@/lib/fulfillment/compensation'
+import { grantCompensationCredit } from '@/land/fulfillment/compensation'
 import { sendBundleRenderFailedEmail } from '@/land/billing/email/send-bundle-render-failed-email'
 
 describe('fulfillment-retry cron route', () => {

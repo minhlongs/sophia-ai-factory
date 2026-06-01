@@ -5,7 +5,7 @@
  * This file re-exports everything so existing imports continue to work.
  *
  * @module billing/resend-email-service
- * @deprecated Import from '@/lib/billing/email' directly
+ * @deprecated Import from '@/tree/billing/email' directly
  */
 
 export type { EmailTemplateType, BillingEmailContext } from './email/types';

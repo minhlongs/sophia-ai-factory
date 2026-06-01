@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
-import { getAllEffectivePrices, listPricingOverrides } from '@/lib/config/pricing-resolver'
+import { getAllEffectivePrices, listPricingOverrides } from '@/seed/config/pricing-resolver'
 import { ONE_TIME_SKUS } from '@/seed/config/one-time-skus'
 
 export const dynamic = 'force-dynamic'

@@ -5,7 +5,7 @@
  * This file re-exports everything so existing imports continue to work.
  *
  * @module alerts/quota-alert-service
- * @deprecated Import from '@/lib/alerts/quota' directly
+ * @deprecated Import from '@/forest/alerts/quota' directly
  */
 
 export type {

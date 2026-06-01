@@ -11,7 +11,7 @@ import { toError } from '@/seed/utils/to-error';
 import type {
   RaasLicenseRow as RaasLicense,
   RaasLicenseUpdate,
-} from '@/lib/supabase/types';
+} from '@/land/supabase/types';
 import { getLicenseByNonce } from './raas-license-crud';
 
 export type { LicenseCreationParams } from './raas-license-crud';

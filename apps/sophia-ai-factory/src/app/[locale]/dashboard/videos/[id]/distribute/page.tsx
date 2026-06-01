@@ -9,7 +9,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient, getD1Raw } from '@/seed/db/client';
-import { localizedHref } from '@/lib/i18n/localized-href';
+import { localizedHref } from '@/land/i18n/localized-href';
 import { getUserChannels } from '@/seed/db/get-user-channels';
 import { DistributePanel } from './distribute-panel';
 import { DistributeStatusPanel } from '@/components/distribute/distribute-status-panel';

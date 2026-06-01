@@ -13,8 +13,8 @@ import { useTranslations } from 'next-intl';
 import { ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/seed/components/ui/dialog';
 import { Button } from '@/seed/components/ui/button';
-import type { SopTemplateRow } from '@/lib/sop/sop-types';
-import { CRON_PRESETS } from '@/lib/sop/install-input-schema';
+import type { SopTemplateRow } from '@/tree/sop/sop-types';
+import { CRON_PRESETS } from '@/tree/sop/install-input-schema';
 import { CategoryBadge } from './category-badge';
 import { SopConfigForm, parseConfigSchema } from './sop-config-form';
 

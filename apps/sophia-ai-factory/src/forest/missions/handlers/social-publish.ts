@@ -8,7 +8,7 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { schedulePublish } from '@/forest/publishing/schedule-publish';
-import type { ChannelProvider } from '@/lib/publishing/publisher-interface';
+import type { ChannelProvider } from '@/forest/publishing/publisher-interface';
 import type { MissionContext, MissionHandlerResult } from './types';
 
 const PROVIDERS: ChannelProvider[] = [

@@ -7,7 +7,7 @@
  * @module audit/crypto-utils-signing
  */
 
-import type { RaasAuditLogRow } from '@/lib/supabase/types'
+import type { RaasAuditLogRow } from '@/land/supabase/types'
 import { sha256, computeContentHash } from '@/seed/security/crypto-utils'
 import type { AuditLogEntry, HashChainVerificationResult } from '@/seed/security/crypto-utils'
 

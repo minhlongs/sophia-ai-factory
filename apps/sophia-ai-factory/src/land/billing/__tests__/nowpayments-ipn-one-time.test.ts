@@ -9,7 +9,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { handleOneTimeFinished, handleOneTimeRefunded } from '../nowpayments-ipn-one-time'
 import * as userPurchasesRepo from '@/seed/db/repositories/user-purchases-repo'
 import * as videosRepo from '@/seed/db/repositories/videos-repo'
-import * as fulfillment from '@/lib/fulfillment/one-time-fulfillment'
+import * as fulfillment from '@/land/fulfillment/one-time-fulfillment'
 import * as auditLog from '@/seed/db/audit/audit-log'
 import { logger } from '@/seed/utils/logger-utility'
 import type { NowPaymentsIpnPayload } from '../nowpayments-ipn-handlers'
@@ -18,7 +18,7 @@ import type { OneTimeSku } from '@/seed/types'
 // Mock modules
 vi.mock('@/seed/db/repositories/user-purchases-repo')
 vi.mock('@/seed/db/repositories/videos-repo')
-vi.mock('@/lib/fulfillment/one-time-fulfillment')
+vi.mock('@/land/fulfillment/one-time-fulfillment')
 vi.mock('@/seed/db/audit/audit-log')
 vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn(async () => ({})),

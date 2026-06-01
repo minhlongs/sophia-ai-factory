@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getErrorMessage } from '@/seed/utils/to-error'
-import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker'
+import { recordCronRun, wasRecentlyRun } from '@/land/cron/run-tracker'
 import { verifyCronAuth } from '@/seed/security/cron-auth'
 import {
   startCronCheckIn,

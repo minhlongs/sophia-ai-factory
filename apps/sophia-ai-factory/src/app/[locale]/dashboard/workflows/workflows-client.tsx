@@ -13,7 +13,7 @@ import Link from 'next/link'
 import { WorkflowList, type WorkflowListItem } from '@/forest/components/workflows/workflow-list'
 import { CreateWorkflowForm } from '@/forest/components/workflows/create-workflow-form'
 import { EmptyState } from '@/seed/components/ui/empty-state'
-import { WORKFLOW_LABELS } from '@/lib/workflows/workflow-labels'
+import { WORKFLOW_LABELS } from '@/land/workflows/workflow-labels'
 import { GitBranch } from 'lucide-react'
 
 export default function WorkflowsClient() {

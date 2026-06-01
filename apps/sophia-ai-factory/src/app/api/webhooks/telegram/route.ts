@@ -44,7 +44,7 @@ import {
   approvePairing,
   listPaired,
   revokePairing,
-} from '@/lib/telegram/pairing'
+} from '@/tree/telegram/pairing'
 import { consumePairingToken } from '@/tree/telegram/pairing-token-service'
 
 interface TelegramUpdate {

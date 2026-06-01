@@ -3,7 +3,7 @@ import {
   validateOpenRouter,
   validateElevenLabs,
   validateDID,
-} from '@/lib/validation/services';
+} from '@/land/validation/services';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 
 interface SetupVerifyPayload {

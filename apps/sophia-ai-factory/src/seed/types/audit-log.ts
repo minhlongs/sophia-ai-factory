@@ -6,7 +6,7 @@
  * @module @/types/audit-log
  */
 
-import type { RaasAuditLogRow, RaasAuditLogInsert, Json } from '@/lib/supabase/types'
+import type { RaasAuditLogRow, RaasAuditLogInsert, Json } from '@/land/supabase/types'
 
 /**
  * Hash chain entry for audit log integrity verification

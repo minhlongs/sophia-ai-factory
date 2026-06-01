@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createCampaign } from "@/app/actions/campaigns";
-import { createCampaignSchema } from "@/lib/campaigns/validation";
+import { createCampaignSchema } from "@/land/campaigns/validation";
 import { Button } from "@/seed/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
 

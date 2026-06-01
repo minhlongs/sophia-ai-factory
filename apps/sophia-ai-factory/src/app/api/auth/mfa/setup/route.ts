@@ -13,7 +13,7 @@ import {
   generateOtpauthUri,
 } from '@/seed/auth/mfa/totp-service';
 import { createServerClient } from '@/seed/db/client';
-import { encryptToken } from '@/lib/publishing/token-crypto';
+import { encryptToken } from '@/forest/publishing/token-crypto';
 
 export const dynamic = 'force-dynamic';
 

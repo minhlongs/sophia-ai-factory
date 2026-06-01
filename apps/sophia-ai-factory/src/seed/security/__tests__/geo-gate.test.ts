@@ -18,11 +18,11 @@ import type { GeoRule } from '../geo-gate';
 // Helpers: mock registry for tenant-aware tests
 // ---------------------------------------------------------------------------
 
-vi.mock('@/lib/tenant-settings/registry', () => ({
+vi.mock('@/land/tenant-settings/registry', () => ({
   getOrDefault: vi.fn(),
 }));
 
-import { getOrDefault } from '@/lib/tenant-settings/registry';
+import { getOrDefault } from '@/land/tenant-settings/registry';
 
 const mockGetOrDefault = getOrDefault as ReturnType<typeof vi.fn>;
 

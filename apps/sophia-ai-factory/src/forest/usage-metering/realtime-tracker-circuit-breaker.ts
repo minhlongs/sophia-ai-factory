@@ -5,7 +5,7 @@
 
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
-import { getKvClient } from '@/lib/redis'
+import { getKvClient } from '@/land/redis'
 import { logAuditEvent } from '@/tree/audit/audit-logger'
 import {
   DEFAULT_CIRCUIT_BREAKER,

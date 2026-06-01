@@ -11,7 +11,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { createClientFromBinding } from '@/seed/db/client'
-import { createFakeD1 } from '@/lib/publishing/__tests__/fake-d1-sqlite'
+import { createFakeD1 } from '@/forest/publishing/__tests__/fake-d1-sqlite'
 import type { D1Database } from '@cloudflare/workers-types'
 
 const SCHEMA = [

@@ -12,9 +12,9 @@
  * @module seed/security/geo-gate
  */
 
-import { getOrDefault } from '@/lib/tenant-settings/registry';
-import { DEFAULT_GEO } from '@/lib/tenant-settings/defaults';
-import type { GeoSettings } from '@/lib/tenant-settings/defaults';
+import { getOrDefault } from '@/land/tenant-settings/registry';
+import { DEFAULT_GEO } from '@/land/tenant-settings/defaults';
+import type { GeoSettings } from '@/land/tenant-settings/defaults';
 
 // ---------------------------------------------------------------------------
 // Types

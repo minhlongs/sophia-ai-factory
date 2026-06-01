@@ -15,11 +15,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { resolveLlmRoute } from '@/lib/agent-chat/llm-router';
-import { formatStream, serializeSseEvent, openAiStreamToChunks } from '@/lib/agent-chat/stream-formatter';
-import { buildSystemPrompt } from '@/lib/agent-chat/system-prompt';
-import { deductCredits, getBalance } from '@/lib/mcu/credits-repo';
-import type { ChatMessage, ChatContext, SseEvent } from '@/lib/agent-chat/types';
+import { resolveLlmRoute } from '@/land/agent-chat/llm-router';
+import { formatStream, serializeSseEvent, openAiStreamToChunks } from '@/land/agent-chat/stream-formatter';
+import { buildSystemPrompt } from '@/land/agent-chat/system-prompt';
+import { deductCredits, getBalance } from '@/land/mcu/credits-repo';
+import type { ChatMessage, ChatContext, SseEvent } from '@/land/agent-chat/types';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';

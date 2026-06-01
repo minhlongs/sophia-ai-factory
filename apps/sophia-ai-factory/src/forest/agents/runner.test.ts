@@ -31,15 +31,15 @@ vi.mock('./repository', () => ({
   appendLog: vi.fn().mockResolvedValue({ id: 'log-001', taskId: TASK_ID, action: 'invoke', payload: {}, createdAt: '2026-01-01' }),
 }));
 
-vi.mock('@/lib/signals/track', () => ({
+vi.mock('@/land/signals/track', () => ({
   track: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/lib/signals/ab-experiment', () => ({
+vi.mock('@/land/signals/ab-experiment', () => ({
   assignVariant: vi.fn().mockResolvedValue({ variant: 'control' }),
 }));
 
-vi.mock('@/lib/telemetry/error-tracker', () => ({
+vi.mock('@/land/telemetry/error-tracker', () => ({
   reportError: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -166,7 +166,7 @@ describe('runAgent', () => {
     const mockFetch = vi.fn().mockRejectedValue(new Error('Network timeout'));
     vi.stubGlobal('fetch', mockFetch);
 
-    const { reportError } = await import('@/lib/telemetry/error-tracker');
+    const { reportError } = await import('@/land/telemetry/error-tracker');
     const { runAgent } = await import('./runner');
 
     await expect(runAgent(TASK_ID, ORG_ID, 'PREMIUM')).rejects.toThrow('Network timeout');

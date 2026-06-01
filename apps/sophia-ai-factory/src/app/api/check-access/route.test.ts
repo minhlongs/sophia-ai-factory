@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GET } from './route';
 import { NextRequest } from 'next/server';
-import { tierGuard } from '@/lib/tier-guard';
-import { checkTierAccess } from '@/lib/features';
+import { tierGuard } from '@/land/tier-guard';
+import { checkTierAccess } from '@/land/features';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
 
@@ -13,8 +13,8 @@ interface MockResponse {
 }
 
 // Mock dependencies
-vi.mock('@/lib/tier-guard');
-vi.mock('@/lib/features');
+vi.mock('@/land/tier-guard');
+vi.mock('@/land/features');
 vi.mock('@/seed/auth/better-auth-session', () => ({
     getCurrentUserFromHeaders: vi.fn(),
 }));

@@ -4,7 +4,7 @@
  */
 
 import Link from 'next/link'
-import { WORKFLOW_LABELS, STATUS_LABELS } from '@/lib/workflows/workflow-labels'
+import { WORKFLOW_LABELS, STATUS_LABELS } from '@/land/workflows/workflow-labels'
 
 export interface WorkflowListItem {
   id: string

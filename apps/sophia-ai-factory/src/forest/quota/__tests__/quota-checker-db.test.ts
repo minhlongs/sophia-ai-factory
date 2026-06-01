@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createFakeD1 } from '@/lib/publishing/__tests__/fake-d1-sqlite';
+import { createFakeD1 } from '@/forest/publishing/__tests__/fake-d1-sqlite';
 import { getD1Raw, createServerClient } from '@/seed/db/client';
 import { D1Client } from '@/seed/db/d1-query-builder';
 import type { D1Database } from '@cloudflare/workers-types';

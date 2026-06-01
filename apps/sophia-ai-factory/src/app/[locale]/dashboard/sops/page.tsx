@@ -7,11 +7,11 @@
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { listInstallationsForUser, getTemplatesByIds } from '@/lib/sop/sop-repo';
+import { listInstallationsForUser, getTemplatesByIds } from '@/tree/sop/sop-repo';
 import { InstallationListTable } from '@/forest/components/sop/installation-list-table';
 import { EmptyState } from '@/seed/components/ui/empty-state';
 import { BookOpen, Store, PartyPopper } from 'lucide-react';
-import type { SopInstallationRow, SopTemplateRow } from '@/lib/sop/sop-types';
+import type { SopInstallationRow, SopTemplateRow } from '@/tree/sop/sop-types';
 import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
 
 interface Props {

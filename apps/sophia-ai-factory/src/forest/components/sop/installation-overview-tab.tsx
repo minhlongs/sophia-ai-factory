@@ -6,7 +6,7 @@
 
 import { useState, useTransition } from 'react';
 import { useTranslations } from 'next-intl';
-import type { SopInstallationRow } from '@/lib/sop/sop-types';
+import type { SopInstallationRow } from '@/tree/sop/sop-types';
 import { Button } from '@/seed/components/ui/button';
 import { Play, Trash2 } from 'lucide-react';
 

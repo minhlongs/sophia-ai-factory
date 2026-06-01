@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import { RunStatusBadge } from './run-status-badge';
-import type { SopRunRow } from '@/lib/sop/sop-types';
+import type { SopRunRow } from '@/tree/sop/sop-types';
 
 // Minimal messages for the sop.run namespace
 const messages = {

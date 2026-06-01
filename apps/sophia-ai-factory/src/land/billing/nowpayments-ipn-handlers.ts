@@ -97,28 +97,42 @@ export async function processNowPaymentsIpn(
     // 3a. Enqueue to DLQ on permanent failure (non-recoverable errors)
     // NOWPayments will retry automatically on network errors; DLQ is for
     // application-level failures that need manual intervention.
-    if (isPermanentFailure(err)) {
-      try {
-        await enqueueDlqEntry(db as unknown as D1LikeClient, {
-          eventId,
-          paymentId: payment_id,
-          paymentStatus: payment_status,
-          orderId: ipn.order_id ?? '',
-          payload: ipn as unknown as Record<string, unknown>,
-          failureReason: err.message,
-          retryCount: 1,
-        })
-        logger.warn('[NOWPayments] IPN enqueued to DLQ', {
-          event_id: eventId,
-          reason: err.message,
-        })
-      } catch (dlqErr) {
-        logger.error('[NOWPayments] Failed to enqueue DLQ entry', {
-          event_id: eventId,
-          error: String(dlqErr),
-        })
-      }
-    }
+if (isPermanentFailure(err)) {
+  const { data: dlqRow } = await db
+    .from('payment_dlq')
+    .select('retry_count')
+    .eq('event_id', eventId)
+    .maybeSingle()
+  const currentRetries = typeof dlqRow?.retry_count === 'number' ? dlqRow.retry_count : 0
+  if (currentRetries >= MAX_DLQ_RETRIES) {
+    logger.warn('[NOWPayments] DLQ max retries reached — dropping', {
+      eventId,
+      reason: err.message,
+    })
+    return { success: false, message: `Permanent failure after ${MAX_DLQ_RETRIES} retries: ${err.message}` }
+  }
+  try {
+    await enqueueDlqEntry(db as unknown as D1LikeClient, {
+      eventId,
+      paymentId: payment_id,
+      paymentStatus: payment_status,
+      orderId: ipn.order_id ?? '',
+      payload: ipn as unknown as Record<string, unknown>,
+      failureReason: err.message,
+      retryCount: currentRetries,
+    })
+    logger.warn('[NOWPayments] IPN enqueued to DLQ', {
+      event_id: eventId,
+      reason: err.message,
+    })
+  } catch (dlqErr) {
+    logger.error('[NOWPayments] Failed to enqueue DLQ entry', {
+      event_id: eventId,
+      error: String(dlqErr),
+    })
+  }
+  return { success: false, message: `Permanent failure: ${err.message}` }
+}
 
     // 3b. Release the lock on failure to enable retries
     try {

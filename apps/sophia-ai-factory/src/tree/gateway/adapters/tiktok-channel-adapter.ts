@@ -13,7 +13,7 @@ import type {
 import {
   publishVideo,
   checkPublishStatus,
-} from '@/lib/tiktok/tiktok-oauth-client';
+} from '@/land/tiktok/tiktok-oauth-client';
 import { logger } from '@/seed/utils/logger-utility';
 
 const CHANNEL_ID = 'tiktok';

@@ -1,4 +1,4 @@
-import { sophiaIndex } from '@/lib/supabase/sophia-index'
+import { sophiaIndex } from '@/land/supabase/sophia-index'
 import { toError } from '@/seed/utils/to-error'
 import { NextResponse } from 'next/server'
 

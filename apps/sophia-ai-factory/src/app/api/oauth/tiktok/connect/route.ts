@@ -6,7 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getAuthorizationUrl } from '@/lib/tiktok/tiktok-oauth-client';
+import { getAuthorizationUrl } from '@/land/tiktok/tiktok-oauth-client';
 import { logger } from '@/seed/utils/logger-utility';
 
 async function buildSignedState(userId: string): Promise<string> {

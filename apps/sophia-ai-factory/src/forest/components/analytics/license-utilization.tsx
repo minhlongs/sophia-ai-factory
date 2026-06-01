@@ -16,7 +16,7 @@ import {
   Cell,
 } from 'recharts';
 import { useTranslations } from 'next-intl';
-import type { LicenseUtilization } from '@/lib/analytics/types';
+import type { LicenseUtilization } from '@/land/analytics/types';
 
 export interface LicenseUtilizationChartProps {
   data: LicenseUtilization[] | null;

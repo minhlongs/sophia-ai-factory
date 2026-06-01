@@ -9,11 +9,11 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getInstallation } from '@/lib/sop/sop-repo';
+import { getInstallation } from '@/tree/sop/sop-repo';
 import { SopRunTimeline } from '@/forest/components/sop/sop-run-timeline';
 import { RunStatusBadge } from '@/forest/components/sop/run-status-badge';
 import { ArrowLeft } from 'lucide-react';
-import type { SopRunRow } from '@/lib/sop/sop-types';
+import type { SopRunRow } from '@/tree/sop/sop-types';
 
 interface Props {
   params: Promise<{ id: string; runId: string; locale: string }>;

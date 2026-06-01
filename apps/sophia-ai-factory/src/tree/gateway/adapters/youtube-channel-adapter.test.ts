@@ -3,7 +3,7 @@ import { YouTubeChannelAdapter } from '@/tree/gateway/adapters/youtube-channel-a
 import type { CampaignOutput } from '@/tree/gateway/gateway-types'
 
 // Mock dependencies used by the adapter
-vi.mock('@/lib/youtube/youtube-oauth-client', () => ({
+vi.mock('@/land/youtube/youtube-oauth-client', () => ({
   uploadVideo: vi.fn(),
   refreshAccessToken: vi.fn(),
 }))
@@ -16,7 +16,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
-import { uploadVideo, refreshAccessToken } from '@/lib/youtube/youtube-oauth-client'
+import { uploadVideo, refreshAccessToken } from '@/land/youtube/youtube-oauth-client'
 import { createServerClient } from '@/seed/db/client'
 
 const sampleContent: CampaignOutput = {

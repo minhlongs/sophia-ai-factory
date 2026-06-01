@@ -17,7 +17,7 @@
  */
 
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
-import { findEmail, verifyEmail } from '@/lib/hunter/hunter-client';
+import { findEmail, verifyEmail } from '@/land/hunter/hunter-client';
 import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from './types';
 

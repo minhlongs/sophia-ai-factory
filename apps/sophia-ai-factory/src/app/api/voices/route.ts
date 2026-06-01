@@ -12,8 +12,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
-import { getVideoBucket } from '@/lib/video/r2-binding';
-import { uploadToR2 } from '@/lib/video/r2-multipart-upload';
+import { getVideoBucket } from '@/land/video/r2-binding';
+import { uploadToR2 } from '@/land/video/r2-multipart-upload';
 import { logger } from '@/seed/utils/logger-utility';
 import {
   enforceFileSizeLimit,

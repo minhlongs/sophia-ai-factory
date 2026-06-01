@@ -9,10 +9,10 @@
 import { inngest } from '@/forest/inngest/client';
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { getDecryptedCredentials, storeCredentials } from '@/lib/publishing/credential-manager';
-import { refreshAccessToken } from '@/lib/youtube/youtube-oauth-client';
-import { fetchYouTubeAnalytics } from '@/lib/analytics/youtube-analytics-fetcher';
-import { normalizeYouTubeMetrics } from '@/lib/analytics/analytics-normalizer';
+import { getDecryptedCredentials, storeCredentials } from '@/forest/publishing/credential-manager';
+import { refreshAccessToken } from '@/land/youtube/youtube-oauth-client';
+import { fetchYouTubeAnalytics } from '@/land/analytics/youtube-analytics-fetcher';
+import { normalizeYouTubeMetrics } from '@/land/analytics/analytics-normalizer';
 import { upsertVideoAnalytics } from '@/seed/db/repositories/video-analytics-repo';
 
 interface PublishedVideoRow {

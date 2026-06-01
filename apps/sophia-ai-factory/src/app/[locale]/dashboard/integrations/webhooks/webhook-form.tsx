@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/seed/components/ui/dialog';
-import type { WebhookEndpoint, WebhookEvent } from '@/lib/webhooks/types';
+import type { WebhookEndpoint, WebhookEvent } from '@/land/webhooks/types';
 
 const ALL_EVENTS: WebhookEvent[] = [
   'mission.completed',

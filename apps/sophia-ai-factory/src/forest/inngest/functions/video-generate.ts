@@ -21,17 +21,17 @@
 
 import { inngest } from '@/forest/inngest/client';
 import { getD1Client } from '@/seed/db/client';
-import { getVideoBucket } from '@/lib/video/r2-binding';
-import { recordCost } from '@/lib/video/cost-ledger';
+import { getVideoBucket } from '@/land/video/r2-binding';
+import { recordCost } from '@/land/video/cost-ledger';
 import { logger } from '@/seed/utils/logger-utility';
-import { WanVideoClient } from '@/lib/video/wan21-client';
-import { FishSpeechClient } from '@/lib/video/fish-speech-client';
-import { muxVideoAudio } from '@/lib/video/ffmpeg-muxer';
+import { WanVideoClient } from '@/land/video/wan21-client';
+import { FishSpeechClient } from '@/land/video/fish-speech-client';
+import { muxVideoAudio } from '@/land/video/ffmpeg-muxer';
 import { insertAiPromptVideo } from '@/seed/db/repositories/videos-repo';
 import { getBrandKit } from '@/seed/db/repositories/brand-kits-repo';
-import { generateSubtitles } from '@/lib/video/subtitle-generator';
-import { composeFinalVideo, applyBrandKit } from '@/lib/video/composer-ffmpeg';
-import type { VideoGenerateRequestedEvent } from '@/lib/video/types';
+import { generateSubtitles } from '@/land/video/subtitle-generator';
+import { composeFinalVideo, applyBrandKit } from '@/land/video/composer-ffmpeg';
+import type { VideoGenerateRequestedEvent } from '@/land/video/types';
 
 const POLL_INTERVAL_MS = 20_000; // 20s between polls
 const POLL_MAX_ATTEMPTS = 18;    // 18 × 20s = 6 min max wait

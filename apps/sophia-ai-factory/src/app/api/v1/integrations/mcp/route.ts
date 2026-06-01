@@ -12,11 +12,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { get, set } from '@/lib/tenant-settings/registry';
-import { encryptToken } from '@/lib/publishing/token-crypto';
-import { resolveTenantMcpServers } from '@/lib/openclaw/mcp-gateway';
-import { McpCustomServerSchema } from '@/lib/tenant-settings/namespace-validators';
-import type { McpSettings, McpCustomServer } from '@/lib/tenant-settings/defaults';
+import { get, set } from '@/land/tenant-settings/registry';
+import { encryptToken } from '@/forest/publishing/token-crypto';
+import { resolveTenantMcpServers } from '@/land/openclaw/mcp-gateway';
+import { McpCustomServerSchema } from '@/land/tenant-settings/namespace-validators';
+import type { McpSettings, McpCustomServer } from '@/land/tenant-settings/defaults';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 

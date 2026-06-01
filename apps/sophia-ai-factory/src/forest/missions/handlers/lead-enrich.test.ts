@@ -7,13 +7,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('@/tree/byok/resolve-user-api-key', () => ({
   resolveUserApiKey: vi.fn(),
 }))
-vi.mock('@/lib/hunter/hunter-client', () => ({
+vi.mock('@/land/hunter/hunter-client', () => ({
   findEmail: vi.fn(),
   verifyEmail: vi.fn(),
 }))
 
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'
-import { findEmail, verifyEmail } from '@/lib/hunter/hunter-client'
+import { findEmail, verifyEmail } from '@/land/hunter/hunter-client'
 import { handle } from './lead-enrich'
 
 const mockResolve = resolveUserApiKey as ReturnType<typeof vi.fn>

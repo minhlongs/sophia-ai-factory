@@ -9,9 +9,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { listOfficialTemplates, getTemplateBySlug, createInstallation } from '@/lib/sop/sop-repo';
-import { generateWebhookSecret } from '@/lib/sop/webhook-hmac';
-import { getSopD1 } from '@/lib/sop/d1';
+import { listOfficialTemplates, getTemplateBySlug, createInstallation } from '@/tree/sop/sop-repo';
+import { generateWebhookSecret } from '@/tree/sop/webhook-hmac';
+import { getSopD1 } from '@/tree/sop/d1';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 

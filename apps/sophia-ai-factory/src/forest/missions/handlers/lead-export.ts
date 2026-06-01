@@ -12,7 +12,7 @@
 
 import { z } from 'zod';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
-import { apolloPeopleBulkSearch, type ApolloPerson } from '@/lib/apollo/apollo-client';
+import { apolloPeopleBulkSearch, type ApolloPerson } from '@/tree/apollo/apollo-client';
 import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from './types';
 

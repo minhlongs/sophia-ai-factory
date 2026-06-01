@@ -3,9 +3,9 @@ import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
-import { listTemplatesByAuthor, listCreatorSales } from '@/lib/sop/sop-repo';
+import { listTemplatesByAuthor, listCreatorSales } from '@/tree/sop/sop-repo';
 import { Palette, DollarSign, Plus, FileText, TrendingUp } from 'lucide-react';
-import type { SopTemplateRow } from '@/lib/sop/sop-types';
+import type { SopTemplateRow } from '@/tree/sop/sop-types';
 
 interface Props { params: Promise<{ locale: string }> }
 

@@ -16,7 +16,7 @@ vi.mock('@sentry/nextjs', () => ({
   captureException: captureExceptionMock,
 }));
 
-vi.mock('@/lib/i18n/localized-href', () => ({
+vi.mock('@/land/i18n/localized-href', () => ({
   localizedHref: (loc: string, path: string) => `/${loc}${path}`,
 }));
 

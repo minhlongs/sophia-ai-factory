@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ServiceFactory } from "@/lib/services/factory";
+import { ServiceFactory } from "@/land/services/factory";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 
 // Module-level cache — best-effort within Cloudflare isolate lifetime (~5 min)

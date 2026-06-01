@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { localizedHref } from "@/lib/i18n/localized-href";
+import { localizedHref } from "@/land/i18n/localized-href";
 
 interface VideoItem {
   id: string;

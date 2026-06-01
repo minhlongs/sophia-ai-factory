@@ -5,7 +5,7 @@
 
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
-import { lookupCache, writeCache, type CacheKey } from '@/lib/llm/cache/llm-cache'
+import { lookupCache, writeCache, type CacheKey } from '@/land/llm/cache/llm-cache'
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'
 
 const POSTHOG_QUERY_URL = 'https://us.i.posthog.com/api/projects/@current/events/'

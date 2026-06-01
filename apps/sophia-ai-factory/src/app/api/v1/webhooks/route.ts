@@ -7,10 +7,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { listByTenant, create } from '@/lib/webhooks/registry';
+import { listByTenant, create } from '@/land/webhooks/registry';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
-import type { WebhookEvent } from '@/lib/webhooks/types';
+import type { WebhookEvent } from '@/land/webhooks/types';
 
 export const dynamic = 'force-dynamic';
 

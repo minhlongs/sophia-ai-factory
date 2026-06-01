@@ -20,7 +20,7 @@ vi.mock('@/seed/db/repositories/videos-repo', () => ({
   findByPurchaseId: vi.fn(),
 }))
 
-vi.mock('@/lib/fulfillment/one-time-fulfillment', () => ({
+vi.mock('@/land/fulfillment/one-time-fulfillment', () => ({
   triggerOneTimeFulfillment: vi.fn(),
 }))
 
@@ -39,7 +39,7 @@ vi.mock('@/seed/db/client', () => ({
 
 import { insertPurchase, markPaid } from '@/seed/db/repositories/user-purchases-repo'
 import { findByPurchaseId } from '@/seed/db/repositories/videos-repo'
-import { triggerOneTimeFulfillment } from '@/lib/fulfillment/one-time-fulfillment'
+import { triggerOneTimeFulfillment } from '@/land/fulfillment/one-time-fulfillment'
 import { runSyntheticFulfillment } from '@/tree/admin/synthetic-fulfillment-runner'
 
 const mockInsertPurchase = vi.mocked(insertPurchase)

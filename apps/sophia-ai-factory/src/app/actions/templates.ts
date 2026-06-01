@@ -3,7 +3,7 @@
 import { getD1Client } from "@/seed/db/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { tierGuard } from "@/lib/tier-guard";
+import { tierGuard } from "@/land/tier-guard";
 
 export const createTemplateSchema = z.object({
   name: z.string().min(1).max(50),

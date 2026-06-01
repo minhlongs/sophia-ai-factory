@@ -6,7 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getAuthorizationUrl } from '@/lib/youtube/youtube-oauth-client';
+import { getAuthorizationUrl } from '@/land/youtube/youtube-oauth-client';
 import { logger } from '@/seed/utils/logger-utility';
 
 async function buildSignedState(userId: string): Promise<string> {

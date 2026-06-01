@@ -14,7 +14,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
 import { Skeleton } from '@/seed/components/ui/skeleton';
 import { TrendingUp, TrendingDown, DollarSign, Users } from 'lucide-react';
-import { formatCurrency } from '@/lib/analytics/formatters';
+import { formatCurrency } from '@/land/analytics/formatters';
 import type { RevenueSnapshot } from '@/seed/types/analytics-revenue';
 
 // ── Props ───────────────────────────────────────────────────────────────────

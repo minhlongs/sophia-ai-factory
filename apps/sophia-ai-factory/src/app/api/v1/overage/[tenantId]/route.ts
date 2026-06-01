@@ -28,7 +28,7 @@ import {
   calculateOverageTotals,
   type FormattedOverageEvent,
   type OverageTotals,
-} from '@/lib/overage/overage-formatter';
+} from '@/land/overage/overage-formatter';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import type { OverageEvent } from '@/seed/types/billing-contracts';
 

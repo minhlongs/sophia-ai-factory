@@ -5,7 +5,7 @@
  * conversion for the campaign_checkpoints table.
  */
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createAdminClient } from "@/land/supabase/admin";
 import type { D1Client } from "@/seed/db/d1-query-builder";
 import type { Checkpoint } from "@/tree/gateway/gateway-types";
 

@@ -8,7 +8,7 @@
 import { z } from 'zod'
 import { FEATURE_PAYOS } from '@/seed/config/flags'
 import type { Tier } from '@/seed/types'
-import { verifyInboundWebhook } from '@/lib/webhooks/signature'
+import { verifyInboundWebhook } from '@/land/webhooks/signature'
 
 // ── USD to VND conversion (pin via env, fallback to market rate) ──────────────
 const USD_TO_VND = Number(process.env.USD_TO_VND ?? '25000')

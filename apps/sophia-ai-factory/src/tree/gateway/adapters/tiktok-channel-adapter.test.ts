@@ -3,7 +3,7 @@ import { TikTokChannelAdapter } from '@/tree/gateway/adapters/tiktok-channel-ada
 import type { CampaignOutput } from '@/tree/gateway/gateway-types'
 
 // Mock TikTok OAuth client
-vi.mock('@/lib/tiktok/tiktok-oauth-client', () => ({
+vi.mock('@/land/tiktok/tiktok-oauth-client', () => ({
   publishVideo: vi.fn(),
   checkPublishStatus: vi.fn(),
 }))
@@ -12,7 +12,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
-import { publishVideo, checkPublishStatus } from '@/lib/tiktok/tiktok-oauth-client'
+import { publishVideo, checkPublishStatus } from '@/land/tiktok/tiktok-oauth-client'
 
 const sampleContent: CampaignOutput = {
   campaignId: 'camp-002',

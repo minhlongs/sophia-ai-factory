@@ -14,10 +14,10 @@
 
 import { inngest } from '@/forest/inngest/client';
 import { getD1Client } from '@/seed/db/client';
-import { recordCost } from '@/lib/video/cost-ledger';
-import { assertValidTransition } from '@/lib/video/video-job-fsm';
-import type { VideoJobStatus } from '@/lib/video/video-job-fsm';
-import type { PublishingChannel } from '@/lib/publishing/publisher-interface';
+import { recordCost } from '@/land/video/cost-ledger';
+import { assertValidTransition } from '@/land/video/video-job-fsm';
+import type { VideoJobStatus } from '@/land/video/video-job-fsm';
+import type { PublishingChannel } from '@/forest/publishing/publisher-interface';
 import { randomUUID } from 'crypto';
 import { logger } from '@/seed/utils/logger-utility';
 

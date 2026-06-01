@@ -18,10 +18,10 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
-import type { BundleId } from '@/lib/publishing/bundle-definitions';
-import { BUNDLE_IDS, getBundleChannels } from '@/lib/publishing/bundle-definitions';
-import { publishToBundle } from '@/lib/publishing/bundle-publisher';
-import type { ChannelPublishResult } from '@/lib/publishing/bundle-publisher';
+import type { BundleId } from '@/forest/publishing/bundle-definitions';
+import { BUNDLE_IDS, getBundleChannels } from '@/forest/publishing/bundle-definitions';
+import { publishToBundle } from '@/forest/publishing/bundle-publisher';
+import type { ChannelPublishResult } from '@/forest/publishing/bundle-publisher';
 import type { UserChannel } from '@/seed/db/get-user-channels';
 import { PROVIDER_LABELS } from '@/app/[locale]/dashboard/videos/[id]/distribute/channel-meta';
 

@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/seed/components/ui/dialog';
-import type { WebhookEndpoint } from '@/lib/webhooks/types';
+import type { WebhookEndpoint } from '@/land/webhooks/types';
 
 interface Props {
   initialEndpoints: WebhookEndpoint[];

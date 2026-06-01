@@ -9,7 +9,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getTemplateBySlug, listInstallationsForUser } from '@/lib/sop/sop-repo';
+import { getTemplateBySlug, listInstallationsForUser } from '@/tree/sop/sop-repo';
 import { SopPreview } from '@/forest/components/sop/sop-preview';
 import { CategoryBadge } from '@/forest/components/sop/category-badge';
 import { SopDetailInstallButton } from './install-button';

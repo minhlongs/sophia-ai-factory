@@ -19,12 +19,12 @@ import {
   listUserApiKeyProviders,
   type ByokProvider,
 } from '@/tree/byok/user-api-key-store'
-import { track } from '@/lib/signals/track'
-import { D1Events } from '@/lib/signals/d1-event-types'
+import { track } from '@/land/signals/track'
+import { D1Events } from '@/land/signals/d1-event-types'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter'
-import { validateProviderKey, sanitizeCredential, type ValidatorProvider } from '@/lib/byok/key-format-validators'
+import { validateProviderKey, sanitizeCredential, type ValidatorProvider } from '@/tree/byok/key-format-validators'
 
 const PROVIDERS = ['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi', 'apollo', 'hunter'] as const
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { GuideStepCard } from "@/forest/components/guide/guide-step-card";
 import { GuideCallout } from "@/forest/components/guide/guide-callout";
-import { buildBreadcrumbSchema } from "@/lib/seo/schema-org";
+import { buildBreadcrumbSchema } from "@/land/seo/schema-org";
 
 export const revalidate = 60;
 

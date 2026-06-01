@@ -12,15 +12,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { recordConversion } from '@/lib/tracking/edge-link';
+import { recordConversion } from '@/land/tracking/edge-link';
 import { logger } from '@/seed/utils/logger-utility';
 import { getD1Raw } from '@/seed/db/client';
-import { resolveNetworkSecret } from '@/lib/postback/network-secret-resolver';
+import { resolveNetworkSecret } from '@/land/postback/network-secret-resolver';
 import {
   verifyHmacSha256Hex,
   verifyHmacSha256Base64,
   computeHmacSha256Hex,
-} from '@/lib/postback/hmac-verifier';
+} from '@/land/postback/hmac-verifier';
 
 export const dynamic = 'force-dynamic';
 

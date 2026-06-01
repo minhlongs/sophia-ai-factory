@@ -9,7 +9,7 @@ vi.mock("@/seed/db/get-user-tier", () => ({
   getUserTier: vi.fn(),
 }));
 
-vi.mock("@/lib/ai/script-generator", async (importOriginal) => {
+vi.mock("@/seed/ai/script-generator", async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...(actual as Record<string, unknown>),
@@ -34,7 +34,7 @@ vi.mock("next/server", async (importOriginal) => {
 
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { getUserTier } from "@/seed/db/get-user-tier";
-import { generateScript } from "@/lib/ai/script-generator";
+import { generateScript } from "@/seed/ai/script-generator";
 
 interface MockResponse {
   body: Record<string, unknown>;

@@ -11,16 +11,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }))
-vi.mock('@/lib/publishing/token-crypto', () => ({
+vi.mock('@/forest/publishing/token-crypto', () => ({
   decryptToken: vi.fn(),
 }))
-vi.mock('@/lib/publishing/oauth-token-refresher', () => ({
+vi.mock('@/forest/publishing/oauth-token-refresher', () => ({
   refreshChannelToken: vi.fn(),
 }))
 const uploadMock = vi.fn()
 const pollStatusMock = vi.fn()
 const getMetricsMock = vi.fn()
-vi.mock('@/lib/publishing/youtube-publisher', () => ({
+vi.mock('@/forest/publishing/youtube-publisher', () => ({
   YouTubePublisher: class {
     upload = uploadMock
     pollStatus = pollStatusMock
@@ -29,8 +29,8 @@ vi.mock('@/lib/publishing/youtube-publisher', () => ({
 }))
 
 import { createServerClient } from '@/seed/db/client'
-import { decryptToken } from '@/lib/publishing/token-crypto'
-import { refreshChannelToken } from '@/lib/publishing/oauth-token-refresher'
+import { decryptToken } from '@/forest/publishing/token-crypto'
+import { refreshChannelToken } from '@/forest/publishing/oauth-token-refresher'
 import { handle } from './youtube-publish'
 
 const mockClient = createServerClient as ReturnType<typeof vi.fn>

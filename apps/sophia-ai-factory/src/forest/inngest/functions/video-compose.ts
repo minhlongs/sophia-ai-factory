@@ -10,10 +10,10 @@
 
 import { inngest } from '@/forest/inngest/client';
 import { getD1Client } from '@/seed/db/client';
-import { recordCost } from '@/lib/video/cost-ledger';
-import { assertValidTransition } from '@/lib/video/video-job-fsm';
-import { tenantScopedKey } from '@/lib/video/r2-binding';
-import type { VideoJobStatus } from '@/lib/video/video-job-fsm';
+import { recordCost } from '@/land/video/cost-ledger';
+import { assertValidTransition } from '@/land/video/video-job-fsm';
+import { tenantScopedKey } from '@/land/video/r2-binding';
+import type { VideoJobStatus } from '@/land/video/video-job-fsm';
 
 interface VideoJobRow {
   status: VideoJobStatus;

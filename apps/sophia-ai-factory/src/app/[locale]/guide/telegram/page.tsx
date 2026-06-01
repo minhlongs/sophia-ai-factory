@@ -4,7 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { GuideStepCard } from "@/forest/components/guide/guide-step-card";
 import { GuideCodeBlock } from "@/forest/components/guide/guide-code-block";
 import { GuideCallout } from "@/forest/components/guide/guide-callout";
-import { buildBreadcrumbSchema } from "@/lib/seo/schema-org";
+import { buildBreadcrumbSchema } from "@/land/seo/schema-org";
 
 const SITE_URL = 'https://sophia.agencyos.network';
 const breadcrumbSchema = buildBreadcrumbSchema([

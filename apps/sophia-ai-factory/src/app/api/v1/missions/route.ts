@@ -12,7 +12,7 @@ import { z } from 'zod';
 import { createServerClient } from '@/seed/db/client';
 import { validateMissionApiKey, apiKeyAuthErrorResponse } from '@/forest/missions/api-key-auth';
 import { isValidCommand, getCommand } from '@/forest/missions/command-registry';
-import { getBalance } from '@/lib/mcu/credits-repo';
+import { getBalance } from '@/land/mcu/credits-repo';
 import { dispatchMission } from '@/forest/missions/dispatcher';
 import { checkAiCommandQuota } from '@/seed/auth/enforce-ai-command-quota';
 import { logger } from '@/seed/utils/logger-utility';

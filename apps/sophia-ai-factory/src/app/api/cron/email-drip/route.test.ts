@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
-vi.mock('@/lib/cron/run-tracker', () => ({
+vi.mock('@/land/cron/run-tracker', () => ({
   recordCronRun: vi.fn().mockResolvedValue(undefined),
   wasRecentlyRun: vi.fn().mockResolvedValue(false),
 }))
@@ -31,7 +31,7 @@ vi.mock('@/land/affiliates/dashboard-stats', () => ({
 }))
 
 import { GET } from './route'
-import { wasRecentlyRun } from '@/lib/cron/run-tracker'
+import { wasRecentlyRun } from '@/land/cron/run-tracker'
 
 interface CronGlobal {
   __env?: { DB?: unknown }

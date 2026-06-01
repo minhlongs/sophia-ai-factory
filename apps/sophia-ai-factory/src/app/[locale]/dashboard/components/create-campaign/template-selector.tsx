@@ -1,4 +1,4 @@
-import { CampaignTemplate } from "@/lib/templates/campaign-templates";
+import { CampaignTemplate } from "@/seed/templates/campaign-templates";
 import { Check } from "lucide-react";
 import { useTranslations } from 'next-intl';
 

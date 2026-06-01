@@ -3,9 +3,9 @@
  * Layer: tree (domain-reusable, imports seed only)
  */
 
-import { routeLLM } from '@/lib/openclaw/llm-router'
-import { spawnAgentFleet } from '@/lib/openclaw/spawn-agent-fleet'
-import type { AgentTask } from '@/lib/openclaw/spawn-agent-fleet'
+import { routeLLM } from '@/land/openclaw/llm-router'
+import { spawnAgentFleet } from '@/land/openclaw/spawn-agent-fleet'
+import type { AgentTask } from '@/land/openclaw/spawn-agent-fleet'
 import type {
   AgentThought,
   SoloCompanyConfig,

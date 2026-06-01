@@ -56,7 +56,7 @@ vi.mock('next/cache', () => ({
   revalidatePath: mockRevalidatePath,
 }));
 
-vi.mock('@/lib/campaigns/create-campaign-core', () => ({
+vi.mock('@/land/campaigns/create-campaign-core', () => ({
   sendCampaignCreatedEvent: mockSendEvent,
 }));
 

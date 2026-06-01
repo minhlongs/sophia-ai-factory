@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { GuideAccordionFaq, FaqItem } from "@/forest/components/guide/guide-accordion-faq";
 import { GuideCallout } from "@/forest/components/guide/guide-callout";
-import { buildFAQPageSchema, buildBreadcrumbSchema, BREADCRUMBS } from "@/lib/seo/schema-org";
+import { buildFAQPageSchema, buildBreadcrumbSchema, BREADCRUMBS } from "@/land/seo/schema-org";
 
 export const metadata: Metadata = {
   title: "Câu Hỏi Thường Gặp — Hướng Dẫn Sophia AI Factory",

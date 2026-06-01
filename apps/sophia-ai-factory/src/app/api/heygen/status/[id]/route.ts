@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ServiceFactory } from "@/lib/services/factory";
+import { ServiceFactory } from "@/land/services/factory";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { createServerClient } from "@/seed/db/client";
 import { logger } from "@/seed/utils/logger-utility";

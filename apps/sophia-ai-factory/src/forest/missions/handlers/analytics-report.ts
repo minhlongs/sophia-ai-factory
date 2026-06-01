@@ -5,7 +5,7 @@
  * LIVE — no external API call. Uses raw D1 SQL for aggregations.
  */
 
-import { getBalance } from '@/lib/mcu/credits-repo';
+import { getBalance } from '@/land/mcu/credits-repo';
 import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from './types';
 

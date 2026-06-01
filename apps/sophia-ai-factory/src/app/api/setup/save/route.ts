@@ -13,8 +13,8 @@ import type { ByokProvider } from '@/tree/byok/user-api-key-store';
 import { z } from 'zod';
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { validateProviderKey, sanitizeCredential } from '@/lib/byok/key-format-validators';
-import type { ValidatorProvider } from '@/lib/byok/key-format-validators';
+import { validateProviderKey, sanitizeCredential } from '@/tree/byok/key-format-validators';
+import type { ValidatorProvider } from '@/tree/byok/key-format-validators';
 
 const setupSaveSchema = z
   .object({

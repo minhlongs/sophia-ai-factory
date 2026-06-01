@@ -8,7 +8,7 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { inngest } from '@/forest/inngest/client';
-import { generateShortCode } from '@/lib/affiliate-shortlink/short-code-generator';
+import { generateShortCode } from '@/land/affiliate-shortlink/short-code-generator';
 import { logger } from '@/seed/utils/logger-utility';
 import { sendTelegramMessage } from '@/tree/telegram/telegram-client';
 import { TelegramFSM } from '@/tree/telegram/telegram-fsm-state-manager';

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { tierGuard } from './tier-guard';
 import * as getUserTierLib from '@/seed/db/get-user-tier';
-import { templateService } from './services/template-service';
+import { templateService } from '@/land/services/template-service';
 
 vi.mock('@/seed/db/get-user-tier');
-vi.mock('./services/template-service');
+vi.mock('@/land/services/template-service');
 
 describe('tierGuard', () => {
   const userId = 'user-123';

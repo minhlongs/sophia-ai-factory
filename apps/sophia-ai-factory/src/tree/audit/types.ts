@@ -3,13 +3,13 @@
  *
  * These are narrow read-shapes used by db.from<T>() in audit queries.
  * For full raas_audit_logs read/insert shapes, use RaasAuditLogRow / RaasAuditLogInsert
- * from '@/lib/supabase/types'.
+ * from '@/land/supabase/types'.
  *
  * @module audit/types
  */
 
 // Re-export canonical raas_audit_logs types for convenience
-export type { RaasAuditLogRow, RaasAuditLogInsert } from '@/lib/supabase/types'
+export type { RaasAuditLogRow, RaasAuditLogInsert } from '@/land/supabase/types'
 
 /**
  * DB row shape for compliance_report_schedules table.
@@ -21,7 +21,7 @@ export interface AuditScheduledReportRow {
   format: string
   frequency: string
   recipients: string[]
-  filters: import('@/lib/supabase/types').Json
+  filters: import('@/land/supabase/types').Json
   next_run_at: number
   created_at: number
   created_by: string

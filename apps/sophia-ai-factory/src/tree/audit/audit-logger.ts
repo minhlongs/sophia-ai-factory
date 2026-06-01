@@ -2,7 +2,7 @@
  * Audit Logger - Barrel Re-export (backward compatibility)
  *
  * Implementation moved to logger/ directory for modular code management.
- * Import from here or directly from '@/lib/audit/logger/*'.
+ * Import from here or directly from '@/tree/audit/logger/*'.
  */
 
 export type {

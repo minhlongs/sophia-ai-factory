@@ -8,7 +8,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
-import type { UnifiedRevenueSummary } from '@/lib/analytics/queries/revenue-unified-query';
+import type { UnifiedRevenueSummary } from '@/land/analytics/queries/revenue-unified-query';
 
 // ── Mock next-intl (not needed by this component, but may be in deps) ─────────
 vi.mock('next-intl', () => ({

@@ -4,11 +4,11 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@/lib/affiliate-shortlink/short-code-generator', () => ({
+vi.mock('@/land/affiliate-shortlink/short-code-generator', () => ({
   isValidShortCode: vi.fn(),
 }));
 
-vi.mock('@/lib/affiliate-shortlink/click-logger', () => ({
+vi.mock('@/land/affiliate-shortlink/click-logger', () => ({
   logClick: vi.fn(),
 }));
 
@@ -17,8 +17,8 @@ vi.mock('@/seed/db/client', () => ({
 }));
 
 import { GET } from './route';
-import { isValidShortCode } from '@/lib/affiliate-shortlink/short-code-generator';
-import { logClick } from '@/lib/affiliate-shortlink/click-logger';
+import { isValidShortCode } from '@/land/affiliate-shortlink/short-code-generator';
+import { logClick } from '@/land/affiliate-shortlink/click-logger';
 import { createServerClient } from '@/seed/db/client';
 import { NextRequest } from 'next/server';
 

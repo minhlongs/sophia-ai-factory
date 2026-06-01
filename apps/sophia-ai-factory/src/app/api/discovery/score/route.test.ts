@@ -20,7 +20,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }))
 
-vi.mock('@/lib/discovery/affiliate-openrouter-niche-enhancer', () => ({
+vi.mock('@/tree/discovery/affiliate-openrouter-niche-enhancer', () => ({
   enhanceNicheScoreWithAI: vi.fn(),
 }))
 
@@ -28,16 +28,16 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }))
 
-vi.mock('@/lib/signals/track', () => ({
+vi.mock('@/land/signals/track', () => ({
   track: vi.fn(),
 }))
 
 import { POST } from './route'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
-import { enhanceNicheScoreWithAI } from '@/lib/discovery/affiliate-openrouter-niche-enhancer'
+import { enhanceNicheScoreWithAI } from '@/tree/discovery/affiliate-openrouter-niche-enhancer'
 import { logger } from '@/seed/utils/logger-utility'
-import { track } from '@/lib/signals/track'
-import { D1Events } from '@/lib/signals/d1-event-types'
+import { track } from '@/land/signals/track'
+import { D1Events } from '@/land/signals/d1-event-types'
 import { RATE_LIMITS } from '@/seed/security/sql-rate-limiter'
 
 const mockGetCurrentUser    = vi.mocked(getCurrentUser)

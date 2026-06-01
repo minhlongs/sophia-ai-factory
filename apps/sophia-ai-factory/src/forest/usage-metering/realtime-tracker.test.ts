@@ -54,7 +54,7 @@ const mockKv = {
   })
 };
 
-vi.mock('@/lib/redis', () => ({
+vi.mock('@/land/redis', () => ({
   getKvClient: () => mockKv,
 }));
 

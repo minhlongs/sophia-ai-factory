@@ -1,13 +1,13 @@
 "use server";
 
 import { getD1Client } from "@/seed/db/client";
-import { sendCampaignCreatedEvent } from "@/lib/campaigns/create-campaign-core";
-import { createCampaignSchema } from "@/lib/campaigns/validation";
+import { sendCampaignCreatedEvent } from "@/land/campaigns/create-campaign-core";
+import { createCampaignSchema } from "@/land/campaigns/validation";
 import { revalidatePath } from "next/cache";
-import { tierGuard } from "@/lib/tier-guard";
+import { tierGuard } from "@/land/tier-guard";
 import { toError } from "@/seed/utils/to-error";
 import { getProgramById } from "@/land/affiliates";
-import { generateShortCode } from "@/lib/affiliate-shortlink/short-code-generator";
+import { generateShortCode } from "@/land/affiliate-shortlink/short-code-generator";
 import { logger } from "@/seed/utils/logger-utility";
 
 export async function createCampaign(formData: FormData) {

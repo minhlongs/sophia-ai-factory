@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
-import { localizedHref } from "@/lib/i18n/localized-href";
+import { localizedHref } from "@/land/i18n/localized-href";
 import { VideoGallery } from "./components/video-gallery";
 import { EmptyState } from "@/seed/components/ui/empty-state";
 import { Video } from "lucide-react";

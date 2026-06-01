@@ -3,7 +3,7 @@ import dynamic from "next/dynamic";
 import { getD1Client } from "@/seed/db/client";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { getUserTier } from "@/seed/db/get-user-tier";
-import { checkAdmin, canAccessRevenue } from "@/lib/analytics/rbac";
+import { checkAdmin, canAccessRevenue } from "@/land/analytics/rbac";
 import { Campaign, Tier } from "@/seed/types";
 import { Skeleton } from "@/seed/components/ui/skeleton";
 import { TierGateCard } from "@/seed/components/ui/tier-gate-card";
@@ -36,7 +36,7 @@ async function fetchInitialRevenue(
   if (!canAccessRevenue(userTier, isAdmin)) return null;
 
   try {
-    const { fetchRevenueSnapshot } = await import('@/lib/analytics/queries/revenue-nowpayments');
+    const { fetchRevenueSnapshot } = await import('@/land/analytics/queries/revenue-nowpayments');
     return await fetchRevenueSnapshot('30d', undefined);
   } catch {
     return null;

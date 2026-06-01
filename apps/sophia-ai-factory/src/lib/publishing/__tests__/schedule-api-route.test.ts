@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({ logger: mocks.logger }));
-vi.mock('@/lib/publishing/scheduler', () => ({ schedulePublish: mocks.schedulePublish }));
+vi.mock('@/forest/publishing/scheduler', () => ({ schedulePublish: mocks.schedulePublish }));
 vi.mock('@/seed/auth/better-auth-session', () => ({ getCurrentUserFromHeaders: mocks.getCurrentUserFromHeaders }));
 
 import { POST } from '@/app/api/publish/schedule/route';

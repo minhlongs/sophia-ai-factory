@@ -4,7 +4,7 @@
  * optional start/end times, optional result snippet.
  */
 
-import { STEP_LABELS, STATUS_LABELS } from '@/lib/workflows/workflow-labels'
+import { STEP_LABELS, STATUS_LABELS } from '@/land/workflows/workflow-labels'
 
 export interface StepRowData {
   step_order: number

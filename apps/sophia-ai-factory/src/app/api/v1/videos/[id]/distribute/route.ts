@@ -22,7 +22,7 @@ import { createServerClient } from '@/seed/db/client';
 import { schedulePublish } from '@/forest/publishing/schedule-publish';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { logger } from '@/seed/utils/logger-utility';
-import type { ChannelProvider } from '@/lib/publishing/publisher-interface';
+import type { ChannelProvider } from '@/forest/publishing/publisher-interface';
 
 export const dynamic = 'force-dynamic';
 

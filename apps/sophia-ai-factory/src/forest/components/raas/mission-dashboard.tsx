@@ -10,7 +10,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
-import { toBcp47 } from '@/lib/i18n/to-bcp47';
+import { toBcp47 } from '@/land/i18n/to-bcp47';
 import { McuBalanceWidget } from './mcu-balance-widget';
 import type { MissionStatus } from '@/seed/types/raas';
 

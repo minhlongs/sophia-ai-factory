@@ -17,8 +17,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
-import { recordCronRun, wasRecentlyRun } from '@/lib/cron/run-tracker';
-import { pushHeartbeat, pushFatalLog } from '@/lib/telemetry/better-stack-client';
+import { recordCronRun, wasRecentlyRun } from '@/land/cron/run-tracker';
+import { pushHeartbeat, pushFatalLog } from '@/land/telemetry/better-stack-client';
 import { getErrorMessage, toError } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
 import { buildD1Dump } from '@/forest/dr/d1-dump-builder';

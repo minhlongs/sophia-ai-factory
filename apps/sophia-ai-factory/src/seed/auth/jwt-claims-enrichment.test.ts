@@ -100,7 +100,7 @@ const mockQuotaProvider = {
 };
 
 // Mock features
-vi.mock('@/lib/features', () => ({
+vi.mock('@/land/features', () => ({
   getAccessibleFeatures: (tier: string) => {
     if (tier === 'PREMIUM') {
       return ['enable_affiliate_engine', 'enable_roi_calculator' as const];

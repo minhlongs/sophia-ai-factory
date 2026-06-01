@@ -6,7 +6,7 @@
  * crisis steps.
  */
 
-import { generateScript } from '@/lib/ai/script-generator';
+import { generateScript } from '@/seed/ai/script-generator';
 import type { MissionContext, MissionHandlerResult } from './types';
 
 function asString(value: unknown, fallback = ''): string {

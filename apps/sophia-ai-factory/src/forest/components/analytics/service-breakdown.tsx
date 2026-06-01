@@ -12,7 +12,7 @@ import {
   Legend,
 } from 'recharts';
 import { useTranslations } from 'next-intl';
-import type { ServiceBreakdown } from '@/lib/analytics/types';
+import type { ServiceBreakdown } from '@/land/analytics/types';
 import type { TooltipProps } from 'recharts';
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
 

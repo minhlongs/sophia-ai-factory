@@ -16,9 +16,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
-import { calculateRoiMetrics } from '@/lib/analytics/roi-calculator';
-import { verifyLicenseAccess, checkAdmin } from '@/lib/analytics/rbac';
-import { analyticsRoiQuerySchema } from '@/lib/validation/services';
+import { calculateRoiMetrics } from '@/land/analytics/roi-calculator';
+import { verifyLicenseAccess, checkAdmin } from '@/land/analytics/rbac';
+import { analyticsRoiQuerySchema } from '@/land/validation/services';
 
 export async function GET(request: NextRequest) {
   try {

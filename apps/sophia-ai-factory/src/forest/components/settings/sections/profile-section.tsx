@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/seed/components/ui/card';
 import { UseFormReturn } from 'react-hook-form';
-import { UserProfileFormValues } from '@/lib/schemas/settings';
+import { UserProfileFormValues } from '@/land/schemas/settings';
 
 interface ProfileSectionProps {
   form: UseFormReturn<UserProfileFormValues>;

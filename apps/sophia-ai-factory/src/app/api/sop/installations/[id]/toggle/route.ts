@@ -8,8 +8,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getInstallation, setEnabled } from '@/lib/sop/sop-repo';
-import { getSopD1 } from '@/lib/sop/d1';
+import { getInstallation, setEnabled } from '@/tree/sop/sop-repo';
+import { getSopD1 } from '@/tree/sop/d1';
 
 export const dynamic = 'force-dynamic';
 

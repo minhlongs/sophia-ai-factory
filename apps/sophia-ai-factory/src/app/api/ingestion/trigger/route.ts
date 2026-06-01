@@ -1,6 +1,6 @@
-import { runIngestion } from '@/lib/ingestion/runner'
+import { runIngestion } from '@/land/ingestion/runner'
 import { NextResponse } from 'next/server'
-import { ingestionTriggerRequestSchema } from '@/lib/validation/services'
+import { ingestionTriggerRequestSchema } from '@/land/validation/services'
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper'
 import { toError } from '@/seed/utils/to-error'
 

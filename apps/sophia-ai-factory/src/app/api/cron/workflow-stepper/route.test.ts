@@ -12,11 +12,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // ── Module-level mocks (hoisted before any import) ────────────────────────────
 
-vi.mock('@/lib/llm/cache/call-with-cache', () => ({
+vi.mock('@/land/llm/cache/call-with-cache', () => ({
   callWithCache: vi.fn(),
 }))
 
-vi.mock('@/lib/signals/track', () => ({
+vi.mock('@/land/signals/track', () => ({
   track: vi.fn(),
 }))
 
@@ -24,16 +24,16 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }))
 
-vi.mock('@/lib/telemetry/llm-trace', () => ({
+vi.mock('@/land/telemetry/llm-trace', () => ({
   recordLlmCall: vi.fn(),
   buildTraceId:  vi.fn(),
 }))
 
-vi.mock('@/lib/ai/llm-router', () => ({
+vi.mock('@/seed/ai/llm-router', () => ({
   route: vi.fn(),
 }))
 
-vi.mock('@/lib/ai/anthropic-adapter', () => ({
+vi.mock('@/seed/ai/anthropic-adapter', () => ({
   callAnthropic: vi.fn(),
 }))
 
@@ -47,14 +47,14 @@ vi.mock('@/tree/byok/resolve-user-api-key', () => ({
 // ── Imports after mocks ───────────────────────────────────────────────────────
 
 import { executeStep } from './route'
-import { callWithCache } from '@/lib/llm/cache/call-with-cache'
+import { callWithCache } from '@/land/llm/cache/call-with-cache'
 import { logger } from '@/seed/utils/logger-utility'
-import { recordLlmCall } from '@/lib/telemetry/llm-trace'
-import { route as routeLlm } from '@/lib/ai/llm-router'
-import { callAnthropic } from '@/lib/ai/anthropic-adapter'
+import { recordLlmCall } from '@/land/telemetry/llm-trace'
+import { route as routeLlm } from '@/seed/ai/llm-router'
+import { callAnthropic } from '@/seed/ai/anthropic-adapter'
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'
 import type { WorkflowRow } from '@/seed/db/workflow-repository'
-import type { RouteDecision } from '@/lib/ai/llm-router'
+import type { RouteDecision } from '@/seed/ai/llm-router'
 
 const mockCallWithCache    = vi.mocked(callWithCache)
 const mockLoggerWarn       = vi.mocked(logger.warn)

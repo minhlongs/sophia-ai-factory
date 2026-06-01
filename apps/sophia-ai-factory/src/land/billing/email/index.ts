@@ -1,36 +1,18 @@
 /**
- * Billing Email Module
- *
- * Barrel re-export for all billing email functionality.
- * Maintains backward compatibility with original resend-email-service.ts imports.
- *
  * @module billing/email
+ * Barrel re-exports.
  */
-
-// Types
-export type { EmailTemplateType, BillingEmailContext } from './types';
-
-// Template building
-export {
-  buildHtmlTemplate,
-  buildTextTemplate,
-  getEmailSubject,
-} from './email-template-builder';
-
-// Delivery
-export {
-  sendBillingEmail,
-  sendBatchDunningEmails,
-  sendPaymentFailedEmail,
-  sendGracePeriodWarningEmail,
-  sendSuspensionNoticeEmail,
-  sendPaymentSuccessEmail,
-  sendOverageDetectedEmail,
-  // Dunning time-boxed sequence
-  sendDunningDay1Email,
-  sendDunningDay3Email,
-  sendDunningDay5Email,
-} from './email-delivery-service';
-
-// Tracking
-export { logEmailDelivery } from './email-tracking-service';
+export * from './email-delivery-service';
+export * from './email-template-builder';
+export * from './email-template-html-content';
+export * from './email-template-html-layout';
+export * from './email-tracking-service';
+export * from './receipt-email-sender';
+export * from './receipt-email-template';
+export * from './send-bundle-generating-email';
+export * from './send-bundle-outage-apology-email';
+export * from './send-bundle-render-failed-email';
+export * from './send-one-time-bundle-ready-email';
+export * from './send-refund-emails';
+export * from './tenant-branding-resolver';
+export * from './types';

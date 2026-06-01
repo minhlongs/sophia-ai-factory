@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import * as Sentry from "@sentry/nextjs";
 import { useLocale, useTranslations } from "next-intl";
 import { AlertTriangle, RefreshCw, LogIn, Wifi, Server } from "lucide-react";
-import { localizedHref } from "@/lib/i18n/localized-href";
+import { localizedHref } from "@/land/i18n/localized-href";
 
 type ErrorKind = "auth" | "network" | "db" | "unknown";
 

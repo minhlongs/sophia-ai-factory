@@ -1,9 +1,9 @@
 import { NonRetriableError } from 'inngest'
 import { inngest } from '@/forest/inngest/client'
 import { logger } from '@/seed/utils/logger-utility'
-import { ServiceFactory } from '@/lib/services/factory'
-import { MissingCredentialsError, ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/lib/services/errors'
-import { startVideoGeneration } from '@/lib/ai/video-generator'
+import { ServiceFactory } from '@/land/services/factory'
+import { MissingCredentialsError, ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/land/services/errors'
+import { startVideoGeneration } from '@/seed/ai/video-generator'
 import { getD1Client } from '@/seed/db/client'
 import { OpenClawGateway } from '@/tree/gateway/openclaw-gateway'
 import { SmartResumeEngine } from '@/tree/gateway/smart-resume-engine'
@@ -14,7 +14,7 @@ import { resolveOrgId } from '@/seed/auth/resolve-org-id'
 import { updateCampaignStatus, notifyUserByTelegram } from './generate-campaign-db'
 import { notifyRefundRequired, notifyProviderError } from './generate-campaign-refund-notify'
 import { pollVideoStatus } from './generate-campaign-video-poller'
-import { emit } from '@/lib/webhooks/emitter'
+import { emit } from '@/land/webhooks/emitter'
 
 /** Resolve D1 binding for webhook emission (best-effort, no throw) */
 function getD1ForWebhooks(): D1Database | null {

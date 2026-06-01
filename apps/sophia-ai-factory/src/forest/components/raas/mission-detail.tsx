@@ -11,7 +11,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { toBcp47 } from '@/lib/i18n/to-bcp47';
+import { toBcp47 } from '@/land/i18n/to-bcp47';
 import type { MissionStatus } from '@/seed/types/raas';
 
 const RECONNECT_TOAST_DELAY_MS = 5_000;

@@ -14,7 +14,7 @@
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { checkQuota } from './usage-rollup-engine';
-import { getKvClient } from '@/lib/redis';
+import { getKvClient } from '@/land/redis';
 import type { BatchUsageRecord, IngestionResult, BatchIngestionResponse, QuotaCheckResult, LicenseMetadataRow } from './types';
 import type { D1Response } from '@/seed/db/types';
 

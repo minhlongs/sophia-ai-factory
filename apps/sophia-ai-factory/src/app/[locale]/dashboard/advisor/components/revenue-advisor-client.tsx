@@ -32,7 +32,7 @@ import {
 import { Badge } from '@/seed/components/ui/badge';
 import { Skeleton } from '@/seed/components/ui/skeleton';
 import type { RevenueSnapshot, TierRevenueRow, ARRTrendPoint } from '@/seed/types/analytics-revenue';
-import type { UnifiedRevenueSummary } from '@/lib/analytics/queries/revenue-unified-query';
+import type { UnifiedRevenueSummary } from '@/land/analytics/queries/revenue-unified-query';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

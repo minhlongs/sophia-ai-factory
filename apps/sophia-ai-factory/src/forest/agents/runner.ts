@@ -5,12 +5,12 @@
  */
 
 import { getTask, getAgentById, updateTaskStatus, updateTaskResult, appendLog } from './repository';
-import { track } from '@/lib/signals/track';
-import { D1Events } from '@/lib/signals/d1-event-types';
-import { assignVariant } from '@/lib/signals/ab-experiment';
+import { track } from '@/land/signals/track';
+import { D1Events } from '@/land/signals/d1-event-types';
+import { assignVariant } from '@/land/signals/ab-experiment';
 import { resolvePrompt, experimentName } from './prompt-variants';
 import { assertTierAllowsAgent, AgentTierBlockedError } from './enforcement-gate';
-import { reportError } from '@/lib/telemetry/error-tracker';
+import { reportError } from '@/land/telemetry/error-tracker';
 import type { AgentTask } from './types';
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';

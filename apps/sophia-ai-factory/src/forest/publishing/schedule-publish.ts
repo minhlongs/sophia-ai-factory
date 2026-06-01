@@ -22,7 +22,7 @@
 import { inngest } from '@/forest/inngest/client';
 import { checkCooldown } from '@/forest/quota/channel-cooldown';
 import { logger } from '@/seed/utils/logger-utility';
-import type { ChannelProvider } from '@/lib/publishing/publisher-interface';
+import type { ChannelProvider } from '@/forest/publishing/publisher-interface';
 
 export interface SchedulePublishInput {
   /**

@@ -11,7 +11,7 @@
 
 import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import type { SopTemplateRow, SopCategory } from '@/lib/sop/sop-types';
+import type { SopTemplateRow, SopCategory } from '@/tree/sop/sop-types';
 import { SopCard } from './sop-card';
 import { SopFilters } from './sop-filters';
 import { SopInstallModal } from './sop-install-modal';

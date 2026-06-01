@@ -2,7 +2,7 @@ import React from 'react';
 import dynamic from 'next/dynamic';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
-import { checkAdmin, canAccessRevenue } from '@/lib/analytics/rbac';
+import { checkAdmin, canAccessRevenue } from '@/land/analytics/rbac';
 import { TierGateCard } from '@/seed/components/ui/tier-gate-card';
 import { Skeleton } from '@/seed/components/ui/skeleton';
 import { redirect } from 'next/navigation';

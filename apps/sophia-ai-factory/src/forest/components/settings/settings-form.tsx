@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import {
   userProfileFormSchema,
   UserProfileFormValues,
-} from '@/lib/schemas/settings';
+} from '@/land/schemas/settings';
 import { updateUserProfile } from '@/app/actions/settings';
 import { ProfileSection } from './sections/profile-section';
 import { AppearanceSection } from './sections/appearance-section';

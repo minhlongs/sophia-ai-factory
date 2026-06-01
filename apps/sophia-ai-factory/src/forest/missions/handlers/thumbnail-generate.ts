@@ -8,7 +8,7 @@
  */
 
 import { getThumbnailKey } from '@/tree/credentials/get-provider-key';
-import { ThumbnailClient } from '@/lib/video/thumbnail-client';
+import { ThumbnailClient } from '@/land/video/thumbnail-client';
 import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from './types';
 

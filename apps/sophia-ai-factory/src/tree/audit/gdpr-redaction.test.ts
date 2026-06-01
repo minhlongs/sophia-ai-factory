@@ -13,7 +13,7 @@ import {
   shouldDeleteForRetentionPolicy,
   type RedactionOptions,
 } from '@/tree/audit/gdpr-redaction'
-import type { RaasAuditLogRow } from '@/lib/supabase/types'
+import type { RaasAuditLogRow } from '@/land/supabase/types'
 
 // Mock environment variable for consistent testing
 const ORIGINAL_SALT = process.env.AUDIT_HASH_SALT

@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { GuideCommandCard } from "@/forest/components/guide/guide-command-card";
 import { GuideCallout } from "@/forest/components/guide/guide-callout";
-import { buildBreadcrumbSchema } from "@/lib/seo/schema-org";
+import { buildBreadcrumbSchema } from "@/land/seo/schema-org";
 
 const SITE_URL = 'https://sophia.agencyos.network';
 const breadcrumbSchema = buildBreadcrumbSchema([

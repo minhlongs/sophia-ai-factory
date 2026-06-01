@@ -1,7 +1,7 @@
 /**
  * Handover welcome email service.
  * Uses Resend (existing infra) to send the magic link + onboarding doc.
- * Delegates template rendering to @/lib/email/render-email (unified registry).
+ * Delegates template rendering to @/seed/email/render-email (unified registry).
  * @module lib/handover/handover-email-service
  */
 

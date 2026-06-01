@@ -16,10 +16,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
-import { fetchLicenseMetrics } from '@/lib/analytics/queries';
-import { checkAdmin, verifyLicenseAccess, getUserLicenseNonce } from '@/lib/analytics/rbac';
-import { analyticsLicensesQuerySchema } from '@/lib/validation/services';
-import type { LicenseStatus, LicenseFilters } from '@/lib/analytics/types';
+import { fetchLicenseMetrics } from '@/land/analytics/queries';
+import { checkAdmin, verifyLicenseAccess, getUserLicenseNonce } from '@/land/analytics/rbac';
+import { analyticsLicensesQuerySchema } from '@/land/validation/services';
+import type { LicenseStatus, LicenseFilters } from '@/land/analytics/types';
 
 export async function GET(request: NextRequest) {
   try {
@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
 
     // Step 6: For non-admin users, filter utilization to only their licenses
     if (!isAdmin) {
-      const { createAdminClient } = await import('@/lib/supabase/admin');
+      const { createAdminClient } = await import('@/land/supabase/admin');
       const supabase = await createAdminClient();
 
       // Get all licenses owned by this user

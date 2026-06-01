@@ -12,8 +12,8 @@
  * limited to provider, status codes, and latency (no key material).
  */
 
-import { track } from '@/lib/signals/track'
-import { D1Events } from '@/lib/signals/d1-event-types'
+import { track } from '@/land/signals/track'
+import { D1Events } from '@/land/signals/d1-event-types'
 
 // ── Error class ───────────────────────────────────────────────────────────────
 

@@ -25,8 +25,8 @@ export interface LogEntry {
   };
 }
 
-import { forwardToSentry } from '@/lib/observability/sentry-forwarder';
-import { scrubPII, scrubPIIDeep } from '@/lib/telemetry/pii-scrubber';
+import { forwardToSentry } from '@/land/observability/sentry-forwarder';
+import { scrubPII, scrubPIIDeep } from '@/land/telemetry/pii-scrubber';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 

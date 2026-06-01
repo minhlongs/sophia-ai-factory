@@ -124,8 +124,8 @@ export async function runMeteringReconciliation(
       logger.info('[Reconciliation Runner] Emitting discrepancy alerts');
       alertsEmitted = await emitDiscrepancyAlerts(discrepancies, {
         ...DEFAULT_ALERT_EMITTER_CONFIG,
-        apiKey: env.AGENCYOS_API_KEY,
-        alertsEndpoint: env.AGENCYOS_ALERT_WEBHOOK_URL,
+        apiKey: env.AGENCYOS_API_KEY as string,
+        alertsEndpoint: env.AGENCYOS_ALERT_WEBHOOK_URL as string,
       });
     }
 
@@ -133,7 +133,7 @@ export async function runMeteringReconciliation(
     logger.info('[Reconciliation Runner] Storing report in R2');
     report.r2StorageKey = await storeReconciliationReport(
       report,
-      env.R2_BUCKET,
+      env.R2_BUCKET as R2Bucket,
       config.r2KeyPrefix
     );
 
@@ -142,13 +142,13 @@ export async function runMeteringReconciliation(
       ctx.waitUntil(
         emitCompletionAlert(report.r2StorageKey, 'system', {
           ...DEFAULT_ALERT_EMITTER_CONFIG,
-          apiKey: env.AGENCYOS_API_KEY,
+          apiKey: env.AGENCYOS_API_KEY as string,
         })
       );
     }
 
     // Step 11: Cleanup old reports
-    ctx.waitUntil(cleanupOldReports(env.R2_BUCKET, config.retentionDays));
+    ctx.waitUntil(cleanupOldReports(env.R2_BUCKET as R2Bucket, config.retentionDays));
 
     logger.info('[Reconciliation Runner] Reconciliation complete', {
       reportId: report.id,

@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { listNetworks, saveCredentials, AffiliateNetwork, NetworkCredentialPayload } from '@/lib/affiliates/credentials';
+import { listNetworks, saveCredentials, AffiliateNetwork, NetworkCredentialPayload } from '@/land/affiliates/credentials';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 

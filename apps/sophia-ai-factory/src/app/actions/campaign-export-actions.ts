@@ -3,7 +3,7 @@
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { createServerClient } from "@/seed/db/client";
 import { Campaign } from "@/seed/types";
-import { convertToCSV } from "@/lib/export-utils";
+import { convertToCSV } from "@/land/export-utils";
 
 export type ExportFormat = "json" | "csv";
 

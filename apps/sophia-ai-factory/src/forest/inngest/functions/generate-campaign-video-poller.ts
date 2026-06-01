@@ -3,7 +3,7 @@
  * @module inngest/functions/generate-campaign-video-poller
  */
 
-import { checkVideoGenerationStatus } from '@/lib/ai/video-generator'
+import { checkVideoGenerationStatus } from '@/seed/ai/video-generator'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { CampaignStatus, type Tier } from '@/seed/types'

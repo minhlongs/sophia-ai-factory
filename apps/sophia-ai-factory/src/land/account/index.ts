@@ -1,11 +1,4 @@
 /**
- * Land/Account public API.
- *
- * @module land/account
+ * @module account
  */
-
-export {
-  cascadeDeleteAccount,
-  ACCOUNT_DELETE_ORDER,
-  type CascadeDeleteResult,
-} from './cascade-delete';
+export * from './cascade-delete';

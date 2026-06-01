@@ -9,7 +9,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
-vi.mock('@/lib/tiktok/tiktok-oauth-client', () => ({
+vi.mock('@/land/tiktok/tiktok-oauth-client', () => ({
   publishVideo: tiktokMocks.publishVideo,
   checkPublishStatus: tiktokMocks.checkPublishStatus,
 }));

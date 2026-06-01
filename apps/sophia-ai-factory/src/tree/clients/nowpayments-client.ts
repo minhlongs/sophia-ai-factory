@@ -6,7 +6,7 @@
 import { Tier } from '@/seed/types'
 import { getOneTimeSkuByInvoiceId, ONE_TIME_INVOICE_IDS } from '@/seed/config/one-time-skus'
 import type { OneTimeSku } from '@/seed/types'
-import { verifyInboundWebhook } from '@/lib/webhooks/signature'
+import { verifyInboundWebhook } from '@/land/webhooks/signature'
 
 export interface NowPaymentsTierConfig {
   tier: Tier

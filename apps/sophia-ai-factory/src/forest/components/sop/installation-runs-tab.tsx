@@ -6,7 +6,7 @@
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import type { SopRunRow } from '@/lib/sop/sop-types';
+import type { SopRunRow } from '@/tree/sop/sop-types';
 import { RunStatusBadge } from './run-status-badge';
 
 interface Props {

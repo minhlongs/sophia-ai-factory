@@ -1,11 +1,11 @@
 import { createServerClient, getD1Raw } from '@/seed/db/client';
 import { getHeyGenKey } from '@/tree/credentials/get-provider-key';
-import { createHeyGenVideo } from '@/lib/video/heygen-helpers';
+import { createHeyGenVideo } from '@/land/video/heygen-helpers';
 import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from './types';
-import { getOrDefault } from '@/lib/tenant-settings/registry';
-import type { StorageSettings } from '@/lib/tenant-settings/defaults';
-import { openclaw } from '@/lib/openclaw';
+import { getOrDefault } from '@/land/tenant-settings/registry';
+import type { StorageSettings } from '@/land/tenant-settings/defaults';
+import { openclaw } from '@/land/openclaw';
 
 export async function handle(ctx: MissionContext): Promise<MissionHandlerResult> {
   const { userId, params } = ctx;

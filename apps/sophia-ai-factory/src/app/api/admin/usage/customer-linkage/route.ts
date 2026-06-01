@@ -12,8 +12,8 @@ import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { requireAdmin } from '@/seed/auth/require-admin';
-import { customerLinkageRequestSchema } from '@/lib/validation/services';
-import type { RaasLicenseUpdate } from '@/lib/supabase/types';
+import { customerLinkageRequestSchema } from '@/land/validation/services';
+import type { RaasLicenseUpdate } from '@/land/supabase/types';
 
 /**
  * GET /api/admin/usage/customer-linkage

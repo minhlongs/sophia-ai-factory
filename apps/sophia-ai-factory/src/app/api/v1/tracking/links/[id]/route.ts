@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getTrackingLink } from '@/lib/tracking/edge-link';
+import { getTrackingLink } from '@/land/tracking/edge-link';
 import { getD1Client } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';

@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { getUserTier } from "@/seed/db/get-user-tier";
-import { generateScript, selectModelForTier } from "@/lib/ai/script-generator";
+import { generateScript, selectModelForTier } from "@/seed/ai/script-generator";
 import { logger } from "@/seed/utils/logger-utility";
 import type { Tier } from "@/seed/types";
 

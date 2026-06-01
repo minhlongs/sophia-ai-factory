@@ -10,7 +10,7 @@
  * @module audit/compliance-receipt
  */
 
-import type { RaasAuditLogRow } from '@/lib/supabase/types';
+import type { RaasAuditLogRow } from '@/land/supabase/types';
 import {
   getReceiptSecret,
   buildSignaturePayload,

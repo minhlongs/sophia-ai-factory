@@ -13,12 +13,12 @@ import { withTimeout, BYOKTimeoutError } from '@/tree/byok/with-timeout'
 
 // ── Mock track() — must come before module imports that depend on it ──────────
 
-vi.mock('@/lib/signals/track', () => ({
+vi.mock('@/land/signals/track', () => ({
   track: vi.fn(),
 }))
 
-import { track } from '@/lib/signals/track'
-import { D1Events } from '@/lib/signals/d1-event-types'
+import { track } from '@/land/signals/track'
+import { D1Events } from '@/land/signals/d1-event-types'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

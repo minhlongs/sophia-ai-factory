@@ -53,11 +53,11 @@ vi.mock('@/seed/db/client', () => ({
   getD1Raw: vi.fn().mockResolvedValue(mocks.mockRawDb),
 }));
 
-vi.mock('@/lib/tiktok/tiktok-token-manager', () => ({
+vi.mock('@/land/tiktok/tiktok-token-manager', () => ({
   refreshAccessToken: mocks.refreshTikTok,
 }));
 
-vi.mock('@/lib/youtube/youtube-oauth-client', () => ({
+vi.mock('@/land/youtube/youtube-oauth-client', () => ({
   refreshAccessToken: mocks.refreshYouTube,
 }));
 

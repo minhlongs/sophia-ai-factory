@@ -15,10 +15,10 @@ import {
   getDecryptedCredentials,
   storeCredentials,
   getClientCredentials,
-} from '@/lib/publishing/credential-manager';
-import { getAdapter } from '@/lib/publishing/token-refresh-service';
+} from '@/forest/publishing/credential-manager';
+import { getAdapter } from '@/forest/publishing/token-refresh-service';
 import { inngest } from '@/forest/inngest/client';
-import type { Platform } from '@/lib/publishing/platform-adapter';
+import type { Platform } from '@/forest/publishing/platform-adapter';
 import type { VideoPublish } from '@/seed/db/repositories/video-publishes-repo';
 
 type ActionResult<T = unknown> =

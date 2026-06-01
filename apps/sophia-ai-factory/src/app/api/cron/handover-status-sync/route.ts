@@ -17,7 +17,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
-import { recordCronRun } from '@/lib/cron/run-tracker';
+import { recordCronRun } from '@/land/cron/run-tracker';
 import {
   startCronCheckIn,
   finishCronCheckIn,

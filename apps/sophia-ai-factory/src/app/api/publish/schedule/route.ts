@@ -10,7 +10,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserOrOpenClaw, isAuthError } from '@/seed/auth/get-current-user-or-openclaw';
-import { schedulePublish } from '@/lib/publishing/scheduler';
+import { schedulePublish } from '@/forest/publishing/scheduler';
 import { logger } from '@/seed/utils/logger-utility';
 
 const scheduleBodySchema = z.object({

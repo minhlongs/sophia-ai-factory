@@ -5,7 +5,7 @@
  */
 
 import { useTranslations } from 'next-intl';
-import type { SopRunRow } from '@/lib/sop/sop-types';
+import type { SopRunRow } from '@/tree/sop/sop-types';
 
 type RunStatus = SopRunRow['status'];
 

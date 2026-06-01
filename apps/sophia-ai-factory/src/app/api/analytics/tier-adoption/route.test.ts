@@ -18,7 +18,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/lib/analytics/rbac', () => ({
+vi.mock('@/land/analytics/rbac', () => ({
   checkAdmin: vi.fn(),
 }));
 
@@ -32,7 +32,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 
 import { GET } from './route';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { checkAdmin } from '@/lib/analytics/rbac';
+import { checkAdmin } from '@/land/analytics/rbac';
 import { createServerClient } from '@/seed/db/client';
 
 const mockGetCurrentUser = vi.mocked(getCurrentUser);

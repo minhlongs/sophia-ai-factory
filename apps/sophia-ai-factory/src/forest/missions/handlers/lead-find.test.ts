@@ -7,12 +7,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('@/tree/byok/resolve-user-api-key', () => ({
   resolveUserApiKey: vi.fn(),
 }))
-vi.mock('@/lib/apollo/apollo-client', () => ({
+vi.mock('@/tree/apollo/apollo-client', () => ({
   apolloPeopleSearch: vi.fn(),
 }))
 
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'
-import { apolloPeopleSearch } from '@/lib/apollo/apollo-client'
+import { apolloPeopleSearch } from '@/tree/apollo/apollo-client'
 import { handle } from './lead-find'
 
 const mockResolve = resolveUserApiKey as ReturnType<typeof vi.fn>

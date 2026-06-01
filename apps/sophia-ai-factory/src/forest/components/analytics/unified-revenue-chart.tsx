@@ -30,8 +30,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
 import { Skeleton } from '@/seed/components/ui/skeleton';
 import { DollarSign } from 'lucide-react';
-import { formatCurrency } from '@/lib/analytics/formatters';
-import type { UnifiedRevenueSummary } from '@/lib/analytics/queries/revenue-unified-query';
+import { formatCurrency } from '@/land/analytics/formatters';
+import type { UnifiedRevenueSummary } from '@/land/analytics/queries/revenue-unified-query';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

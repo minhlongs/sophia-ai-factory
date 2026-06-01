@@ -13,7 +13,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/lib/mcu/credits-repo', () => ({
+vi.mock('@/land/mcu/credits-repo', () => ({
   getBalance: vi.fn(),
   deductCredits: vi.fn(),
 }));
@@ -35,7 +35,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 
 import { POST } from './route';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getBalance, deductCredits } from '@/lib/mcu/credits-repo';
+import { getBalance, deductCredits } from '@/land/mcu/credits-repo';
 import { generateProposal } from '@/seed/ai/proposal-generator';
 import { checkProposalQuality } from '@/seed/ai/proposal-quality-check';
 

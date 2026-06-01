@@ -6,8 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getD1Client } from '@/seed/db/client';
-import { encryptToken } from '@/lib/publishing/token-crypto';
-import { exchangeCodeForTokens, getUserInfo } from '@/lib/publishing/twitter-oauth-client';
+import { encryptToken } from '@/forest/publishing/token-crypto';
+import { exchangeCodeForTokens, getUserInfo } from '@/forest/publishing/twitter-oauth-client';
 import { logger } from '@/seed/utils/logger-utility';
 import { randomUUID } from 'crypto';
 

@@ -18,8 +18,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
-import { checkAdmin, canAccessRevenue } from '@/lib/analytics/rbac';
-import { fetchUnifiedRevenue } from '@/lib/analytics/queries/revenue-unified-query';
+import { checkAdmin, canAccessRevenue } from '@/land/analytics/rbac';
+import { fetchUnifiedRevenue } from '@/land/analytics/queries/revenue-unified-query';
 import { logger } from '@/seed/utils/logger-utility';
 
 

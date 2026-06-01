@@ -1,4 +1,4 @@
-import { CampaignTemplate, CAMPAIGN_TEMPLATES } from "@/lib/templates/campaign-templates";
+import { CampaignTemplate, CAMPAIGN_TEMPLATES } from "@/seed/templates/campaign-templates";
 
 export const templateService = {
   /**

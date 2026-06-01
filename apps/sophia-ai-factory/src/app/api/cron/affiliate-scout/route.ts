@@ -14,16 +14,16 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
-import { recordCronRun } from '@/lib/cron/run-tracker';
+import { recordCronRun } from '@/land/cron/run-tracker';
 import {
   startCronCheckIn,
   finishCronCheckIn,
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in';
-import { runAffiliateScout } from '@/lib/affiliates/scout';
-import { getOrDefault } from '@/lib/tenant-settings/registry';
-import { DEFAULT_CRON } from '@/lib/tenant-settings/defaults';
-import type { CronSettings } from '@/lib/tenant-settings/defaults';
+import { runAffiliateScout } from '@/land/affiliates/scout';
+import { getOrDefault } from '@/land/tenant-settings/registry';
+import { DEFAULT_CRON } from '@/land/tenant-settings/defaults';
+import type { CronSettings } from '@/land/tenant-settings/defaults';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 

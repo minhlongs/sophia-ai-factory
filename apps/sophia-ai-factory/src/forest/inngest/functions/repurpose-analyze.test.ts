@@ -20,9 +20,9 @@ vi.mock('@/forest/inngest/client', () => ({
   },
 }));
 
-vi.mock('@/lib/video/scene-detector', () => ({ detectScenes: mockDetectScenes }));
-vi.mock('@/lib/video/highlight-scorer', () => ({ scoreHighlights: mockScoreHighlights }));
-vi.mock('@/lib/video/clip-boundary-merger', () => ({
+vi.mock('@/land/video/scene-detector', () => ({ detectScenes: mockDetectScenes }));
+vi.mock('@/land/video/highlight-scorer', () => ({ scoreHighlights: mockScoreHighlights }));
+vi.mock('@/land/video/clip-boundary-merger', () => ({
   mergeClipBoundaries: mockMergeClipBoundaries,
 }));
 vi.mock('@/seed/db/repositories/repurpose-jobs-repo', () => ({

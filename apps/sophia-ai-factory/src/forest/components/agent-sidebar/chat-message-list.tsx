@@ -11,7 +11,7 @@
 
 import { useEffect, useRef } from 'react';
 import { ShowWorkPanel } from './show-work-panel';
-import type { ChatMessage } from '@/lib/agent-chat/types';
+import type { ChatMessage } from '@/land/agent-chat/types';
 
 interface ChatMessageListProps {
   messages: ChatMessage[];

@@ -9,7 +9,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import type { SopInstallationRow, SopRunRow } from '@/lib/sop/sop-types';
+import type { SopInstallationRow, SopRunRow } from '@/tree/sop/sop-types';
 import { InstallationOverviewTab } from '@/forest/components/sop/installation-overview-tab';
 import { InstallationRunsTab } from '@/forest/components/sop/installation-runs-tab';
 import { InstallationEditTab } from '@/forest/components/sop/installation-edit-tab';
