@@ -2229,7 +2229,20 @@
       "deleteConfirmYes": "Có, Xóa",
       "deleteConfirmNo": "Hủy",
       "never": "Chưa bao giờ",
-      "notScheduled": "Không có lịch"
+      "notScheduled": "Không có lịch",
+      "analytics": {
+        "totalRuns": "Tổng lượt chạy",
+        "successRate": "Tỷ lệ thành công",
+        "creditsSpent": "Credits đã dùng",
+        "avgDuration": "Thời gian trung bình",
+        "statusCompleted": "Hoàn tất",
+        "statusRunning": "Đang chạy",
+        "statusFailed": "Thất bại",
+        "statusPaused": "Tạm dừng",
+        "recentRuns": "Lịch sử gần đây",
+        "breakdownTitle": "Phân tích trạng thái",
+        "runsLast24h": "Lượt chạy (24h)"
+      }
     },
     "run": {
       "trigger": "Kích Hoạt Bởi",
@@ -2365,6 +2378,14 @@
       "draft": "Bản Nháp",
       "published": "Đã Xuất Bản",
       "archived": "Đã Lưu Trữ"
+    },
+    "runs": {
+      "pageTitle": "Lịch sử chạy",
+      "pageTitleSimple": "Lịch sử chạy",
+      "subtitle": "Xem lại các lần chạy SOP này",
+      "emptyTitle": "Chưa có lần chạy nào",
+      "emptyDesc": "Chạy SOP này từ tab Tổng quan để thấy lịch sử ở đây.",
+      "backToSop": "Quay lại SOP"
     }
   },
   "agentChat": {

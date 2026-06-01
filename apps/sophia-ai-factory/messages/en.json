@@ -2229,7 +2229,20 @@
       "deleteConfirmYes": "Yes, Delete",
       "deleteConfirmNo": "Cancel",
       "never": "Never",
-      "notScheduled": "Not scheduled"
+      "notScheduled": "Not scheduled",
+      "analytics": {
+        "totalRuns": "Total Runs",
+        "successRate": "Success Rate",
+        "creditsSpent": "Credits Spent",
+        "avgDuration": "Avg Duration",
+        "statusCompleted": "Succeeded",
+        "statusRunning": "Running",
+        "statusFailed": "Failed",
+        "statusPaused": "Paused",
+        "recentRuns": "Recent Runs",
+        "breakdownTitle": "Status Breakdown",
+        "runsLast24h": "Runs in last 24h"
+      }
     },
     "run": {
       "trigger": "Trigger",
@@ -2365,6 +2378,14 @@
       "draft": "Draft",
       "published": "Published",
       "archived": "Archived"
+    },
+    "runs": {
+      "pageTitle": "Run History for \"{name}\"",
+      "pageTitleSimple": "Run History",
+      "subtitle": "Browse past runs for this SOP installation",
+      "emptyTitle": "No runs yet",
+      "emptyDesc": "Run this SOP from the overview tab to see runs here.",
+      "backToSop": "Back to SOP"
     }
   },
   "agentChat": {
