@@ -25,7 +25,7 @@ export async function GET(
   if (!db) return NextResponse.json({ error: 'DB unavailable' }, { status: 500 });
 
   const run = await db
-    .prepare(`SELECT * FROM sop_runs WHERE id = ?1 LIMIT 1`)
+    .prepare(`SELECT * FROM sop_executions WHERE id = ?1 LIMIT 1`)
     .bind(runId)
     .first<SopRunRow>();
 

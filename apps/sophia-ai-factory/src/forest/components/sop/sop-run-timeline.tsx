@@ -23,7 +23,7 @@ interface SopRunTimelineProps {
   initialRun: SopRunRow & { missionIds: string[] };
 }
 
-const TERMINAL_STATUSES = new Set<SopRunRow['status']>(['succeeded', 'failed', 'partial']);
+const TERMINAL_STATUSES = new Set<SopRunRow['status']>(['completed', 'failed', 'paused']);
 const POLL_INTERVAL_MS = 3_000;
 const BACKOFF_AFTER_MS = 120_000;
 const BACKOFF_INTERVAL_MS = 5_000;

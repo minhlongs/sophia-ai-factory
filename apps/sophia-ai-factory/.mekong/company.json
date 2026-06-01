@@ -1,0 +1,26 @@
+{
+  "name": "Sophia AI Factory",
+  "stage": "pmf",
+  "model": "SaaS B2B + Marketplace",
+  "target_arr": "$1M",
+  "icp": "Non-technical CEO/founder running faceless YouTube channels who want to automate video production without hiring a team",
+  "moat": "Vertical integration (AI video generation + SOP automation + NOWPayments/PayOS payment in one platform) + creator network effects on SOP marketplace",
+  "agents": {
+    "ceo": "Strategy, investor relations, board prep, quarterly OKR alignment",
+    "revenue": "Sales pipeline management, NOWPayments/PayOS ops, upsell campaigns, churn prevention",
+    "ops": "SRE, CF deployment, health sweeps, incident response, billing reconciliation",
+    "product": "SOP marketplace curation, feature prioritization, user research, onboarding optimization",
+    "cto": "Architecture decisions, migration management, code review, infra scaling"
+  },
+  "okrs": [
+    "Q2 2026: Fix SOP sync system (all 93 tests pass, sidebar navigation discoverable), launch SOP marketplace publicly (20 creators, 50 SOPs), reach $20K MRR",
+    "Q3 2026: Enterprise tier launch (3 MASTER customers), Vietnam market expansion (Vietnamese UI, PayOS optimization), 70% agent automation of routine ops"
+  ],
+  "next_steps": [
+    "Fix SOP sync + navigation audit items (R1-R2)",
+    "Create investor deck + financial model",
+    "Board governance setup",
+    "Launch SOP marketplace publicly",
+    "Growth experiments + channel testing"
+  ]
+}

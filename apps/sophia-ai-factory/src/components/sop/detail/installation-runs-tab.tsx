@@ -1,13 +1,16 @@
 'use client';
 
 /**
- * InstallationRunsTab — paginated table of sop_executions for an installation.
+ * InstallationRunsTab — table + empty-state for sop_executions.
+ *
+ * Wraps the existing forest component behaviour so detail-tabs.tsx can
+ * re-export a single symbol with no extra runtime deps.
  */
 
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import type { SopRunRow } from '@/tree/sop/sop-types';
-import { RunStatusBadge } from './run-status-badge';
+import { RunStatusBadge } from '@/forest/components/sop/run-status-badge';
 
 interface Props {
   runs: SopRunRow[];
@@ -24,7 +27,10 @@ function durationSec(run: SopRunRow): string {
   return `${run.completed_at - run.started_at}s`;
 }
 
-function triggerLabel(trigger: SopRunRow['trigger_type'], t: ReturnType<typeof useTranslations>): string {
+function triggerLabel(
+  trigger: SopRunRow['trigger_type'],
+  t: ReturnType<typeof useTranslations>,
+): string {
   const map: Record<string, string> = {
     manual: t('manual'),
     webhook: t('webhook'),
@@ -37,7 +43,11 @@ export function InstallationRunsTab({ runs, installationId }: Props) {
   const t = useTranslations('sop.run');
 
   if (runs.length === 0) {
-    return <p className="text-muted-foreground text-sm py-8 text-center">{t('noMissions')}</p>;
+    return (
+      <div className="rounded-xl border border-dashed border-border py-10 text-center">
+        <p className="text-muted-foreground text-sm">{t('noMissions')}</p>
+      </div>
+    );
   }
 
   return (
@@ -54,11 +64,22 @@ export function InstallationRunsTab({ runs, installationId }: Props) {
         </thead>
         <tbody>
           {runs.map((run) => (
-            <tr key={run.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-              <td className="px-4 py-3 text-muted-foreground">{triggerLabel(run.trigger_type, t)}</td>
-              <td className="px-4 py-3"><RunStatusBadge status={run.status} /></td>
-              <td className="px-4 py-3 text-muted-foreground">{formatTs(run.started_at)}</td>
-              <td className="px-4 py-3 text-muted-foreground">{durationSec(run)}</td>
+            <tr
+              key={run.id}
+              className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
+            >
+              <td className="px-4 py-3 text-muted-foreground">
+                {triggerLabel(run.trigger_type, t)}
+              </td>
+              <td className="px-4 py-3">
+                <RunStatusBadge status={run.status} />
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">
+                {formatTs(run.started_at)}
+              </td>
+              <td className="px-4 py-3 text-muted-foreground">
+                {durationSec(run)}
+              </td>
               <td className="px-4 py-3">
                 <Link
                   href={`/dashboard/sops/${installationId}/runs/${run.id}`}

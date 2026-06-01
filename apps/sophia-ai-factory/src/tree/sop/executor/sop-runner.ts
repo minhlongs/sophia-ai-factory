@@ -80,7 +80,7 @@ async function dispatchStep(
 
 async function getRunById(db: D1Database, runId: string) {
   return db
-    .prepare(`SELECT * FROM sop_runs WHERE id = ?1 LIMIT 1`)
+    .prepare(`SELECT * FROM sop_executions WHERE id = ?1 LIMIT 1`)
     .bind(runId)
     .first<Awaited<ReturnType<typeof createRun>>>();
 }
@@ -157,7 +157,7 @@ export async function runSop(
 
     const completedAt = nowSec();
     await updateRunStatus(db, run.id, {
-      status: 'succeeded',
+      status: 'completed',
       resultSummary: JSON.stringify(aggregate),
       requiresApproval: requiresApproval ? 1 : 0,
       completedAt,
@@ -170,17 +170,17 @@ export async function runSop(
       .then((m) => m.markFirstRun(inst.user_id))
       .catch(() => { /* swallow */ });
 
-    return { runId: run.id, status: 'succeeded', summary: aggregate };
+    return { runId: run.id, status: 'completed', summary: aggregate };
 
   } catch (e) {
     const isPartial = e instanceof StepFailed && stepResults.length > 0;
     const errMsg = e instanceof Error ? e.message : String(e);
     await updateRunStatus(db, run.id, {
-      status: isPartial ? 'partial' : 'failed',
+      status: isPartial ? 'paused' : 'failed',
       errorMessage: errMsg,
       completedAt: nowSec(),
     });
     logger.error('[sop-runner] run failed', e instanceof Error ? e : new Error(errMsg), { runId: run.id });
-    return { runId: run.id, status: isPartial ? 'partial' : 'failed', errorMessage: errMsg };
+    return { runId: run.id, status: isPartial ? 'paused' : 'failed', errorMessage: errMsg };
   }
 }

@@ -41,7 +41,7 @@ export default async function RunDetailPage({ params }: Props) {
   if (!db) notFound();
 
   const run = await db
-    .prepare(`SELECT * FROM sop_runs WHERE id = ?1 LIMIT 1`)
+    .prepare(`SELECT * FROM sop_executions WHERE id = ?1 LIMIT 1`)
     .bind(runId)
     .first<SopRunRow>();
 

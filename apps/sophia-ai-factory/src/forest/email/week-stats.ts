@@ -10,15 +10,15 @@ interface RunRow {
   day: string;
 }
 
-/** Query usage_events / sop_runs for last 7d and return stats. */
+/** Query usage_events / sop_executions for last 7d and return stats. */
 export async function computeWeekStats(db: D1Database, userId: string): Promise<WeekStats> {
   const sevenDaysAgo = Math.floor(Date.now() / 1000) - 7 * 86400;
 
-  // Use sop_runs as proxy for API calls
+  // Use sop_executions as proxy for API calls
   const result = await db
     .prepare(
       `SELECT i.sop_slug, date(r.created_at, 'unixepoch') as day
-       FROM sop_runs r
+       FROM sop_executions r
        JOIN user_sop_installations i ON r.installation_id = i.id
        WHERE i.user_id = ?1 AND r.created_at >= ?2
        LIMIT 1000`,
