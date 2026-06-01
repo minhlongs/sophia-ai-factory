@@ -672,7 +672,7 @@
     },
     "missions": {
       "pev_stage": {
-        "queued": "Đang Xếp Hàng",
+        "pending": "Đang Xếp Hàng",
         "planning": "Đang Lập Kế Hoạch",
         "executing": "Đang Thực Thi",
         "verifying": "Đang Kiểm Tra",
@@ -1521,7 +1521,7 @@
     "distribute": {
       "status": {
         "header": "Trạng thái phân phối",
-        "queued": "Đang chờ",
+        "pending": "Đang chờ",
         "processing": "Đang xử lý",
         "live": "Đang phát",
         "failed": "Thất bại",
@@ -1801,7 +1801,7 @@
     },
     "status": {
       "draft": "Bản Nháp",
-      "queued": "Đang Chờ",
+      "pending": "Đang Chờ",
       "processing_script": "Đang Xử Lý Kịch Bản",
       "processing_video": "Đang Xử Lý Video",
       "completed": "Đã Hoàn Thành",
@@ -2235,7 +2235,7 @@
       "trigger": "Kích Hoạt Bởi",
       "status": "Trạng Thái",
       "started": "Bắt Đầu",
-      "completed": "Hoàn Thành",
+      "completed": "Thành Công",
       "duration": "Thời Gian",
       "missions": "Missions",
       "viewMission": "Xem Mission",
@@ -2243,11 +2243,10 @@
       "manual": "Thủ công",
       "webhook": "Webhook",
       "cron": "Theo Lịch",
-      "queued": "Đang Chờ",
+      "pending": "Đang Chờ",
       "running": "Đang Chạy",
-      "succeeded": "Thành Công",
       "failed": "Thất Bại",
-      "partial": "Một Phần",
+      "paused": "Một Phần",
       "backToSops": "Quay Lại SOPs",
       "backToRuns": "Quay Lại Lịch Sử",
       "title": "Chi Tiết Lần Chạy"

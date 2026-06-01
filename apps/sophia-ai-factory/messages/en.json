@@ -672,7 +672,7 @@
     },
     "missions": {
       "pev_stage": {
-        "queued": "Queued",
+        "pending": "Queued",
         "planning": "Planning",
         "executing": "Executing",
         "verifying": "Verifying",
@@ -1521,7 +1521,7 @@
     "distribute": {
       "status": {
         "header": "Distribution Status",
-        "queued": "Queued",
+        "pending": "Queued",
         "processing": "Processing",
         "live": "Live",
         "failed": "Failed",
@@ -1801,7 +1801,7 @@
     },
     "status": {
       "draft": "Draft",
-      "queued": "Queued",
+      "pending": "Queued",
       "processing_script": "Processing Script",
       "processing_video": "Processing Video",
       "completed": "Completed",
@@ -2235,7 +2235,7 @@
       "trigger": "Trigger",
       "status": "Status",
       "started": "Started",
-      "completed": "Completed",
+      "completed": "Succeeded",
       "duration": "Duration",
       "missions": "Missions",
       "viewMission": "View Mission",
@@ -2243,11 +2243,10 @@
       "manual": "Manual",
       "webhook": "Webhook",
       "cron": "Scheduled",
-      "queued": "Queued",
+      "pending": "Pending",
       "running": "Running",
-      "succeeded": "Succeeded",
       "failed": "Failed",
-      "partial": "Partial",
+      "paused": "Paused",
       "backToSops": "Back to SOPs",
       "backToRuns": "Back to Runs",
       "title": "Run Details"

@@ -109,7 +109,7 @@ function makeRun(overrides?: Partial<SopRunRow>): SopRunRow {
     installation_id: 'inst-001',
     trigger_type: 'cron',
     mission_ids: '[]',
-    status: 'queued',
+    status: 'pending',
     result_summary: null,
     error_message: null,
     requires_approval: 0,
@@ -297,7 +297,7 @@ describe('SopRunRow type contract', () => {
     const run = makeRun();
     expect(run.installation_id).toBeTypeOf('string');
     expect(run.trigger_type).toBe('cron');
-    expect(run.status).toBe('queued');
+    expect(run.status).toBe('pending');
     expect(run.mission_ids).toBe('[]');
     expect(run.requires_approval).toBe(0);
   });
@@ -308,10 +308,10 @@ describe('updateRunStatus', () => {
     const db = buildMockD1();
 
     const { updateRunStatus } = await import('./sop-repo-runs');
-    await updateRunStatus(db as unknown as D1Database, 'run-001', { status: 'succeeded' });
+    await updateRunStatus(db as unknown as D1Database, 'run-001', { status: 'completed' });
 
     expect(db.prepare).toHaveBeenCalledWith(expect.stringContaining('status'));
-    expect(db._stmt.bind).toHaveBeenCalledWith('succeeded', 'run-001');
+    expect(db._stmt.bind).toHaveBeenCalledWith('completed', 'run-001');
   });
 
   it('skips update when no fields provided', async () => {

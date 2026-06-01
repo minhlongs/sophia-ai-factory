@@ -12,15 +12,15 @@ import type { SopRunRow } from '@/tree/sop/sop-types';
 const messages = {
   sop: {
     run: {
-      queued: 'Queued',
+      pending: 'Pending',
       running: 'Running',
-      succeeded: 'Succeeded',
-      failed: 'Failed',
-      partial: 'Partial',
-      trigger: 'Trigger',
-      status: 'Status',
-      started: 'Started',
       completed: 'Completed',
+      failed: 'Failed',
+      paused: 'Paused',
+  trigger: 'Run Trigger',
+          status: 'Status',
+          started: 'Started',
+          completedAt: 'Completed',
       duration: 'Duration',
       missions: 'Missions',
       viewMission: 'View Mission',
@@ -43,7 +43,7 @@ function wrap(ui: React.ReactNode) {
   );
 }
 
-const STATUSES: Array<SopRunRow['status']> = ['queued', 'running', 'succeeded', 'failed', 'partial'];
+const STATUSES: Array<SopRunRow['status']> = ['pending', 'running', 'completed', 'failed', 'paused'];
 
 describe('RunStatusBadge', () => {
   for (const status of STATUSES) {
@@ -62,8 +62,8 @@ describe('RunStatusBadge', () => {
     expect(badge.className).toContain('bg-blue-900');
   });
 
-  it('applies green color for succeeded', () => {
-    const { container } = wrap(<RunStatusBadge status="succeeded" />);
+  it('applies green color for completed', () => {
+    const { container } = wrap(<RunStatusBadge status="completed" />);
     const el = container.firstChild as HTMLElement;
     expect(el.className).toContain('emerald');
   });
@@ -75,7 +75,7 @@ describe('RunStatusBadge', () => {
   });
 
   it('accepts custom className', () => {
-    const { container } = wrap(<RunStatusBadge status="queued" className="mt-2" />);
+    const { container } = wrap(<RunStatusBadge status="pending" className="mt-2" />);
     const el = container.firstChild as HTMLElement;
     expect(el.className).toContain('mt-2');
   });
