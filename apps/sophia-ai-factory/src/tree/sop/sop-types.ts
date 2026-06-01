@@ -67,7 +67,7 @@ export interface SopRunRow {
   installation_id: string;
   trigger_type: 'cron' | 'webhook' | 'manual';
   mission_ids: string;  // JSON array string
-  status: 'queued' | 'running' | 'succeeded' | 'failed' | 'partial';
+  status: 'pending' | 'running' | 'paused' | 'completed' | 'failed';
   result_summary: string | null;  // JSON string
   error_message: string | null;
   requires_approval: 0 | 1;

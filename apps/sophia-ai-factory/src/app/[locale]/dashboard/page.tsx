@@ -101,7 +101,7 @@ export default async function DashboardPage() {
       const [instResult, runsResult, videosResult, trialResult, activeKeyResult] = await Promise.all([
         d1.prepare('SELECT COUNT(*) as cnt FROM user_sop_installations WHERE user_id = ?').bind(user.id).first<{ cnt: number }>(),
         d1.prepare(`SELECT r.id, r.status, r.created_at, r.installation_id
-          FROM sop_runs r
+          FROM sop_executions r
           JOIN user_sop_installations i ON r.installation_id = i.id
           WHERE i.user_id = ?
           ORDER BY r.created_at DESC LIMIT 10`).bind(user.id).all<SopRunRow>(),

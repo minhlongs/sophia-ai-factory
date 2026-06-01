@@ -78,12 +78,12 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
 
     const quotaUsed = usedRow?.total ?? 0;
 
-    // Last 7d daily API call counts from sop_runs
+    // Last 7d daily API call counts from sop_executions
     const sevenDaysAgo = Math.floor(Date.now() / 1000) - 7 * 86400;
     const dayCounts = await db
       .prepare(
         `SELECT date(created_at, 'unixepoch') as date, COUNT(*) as count
-         FROM sop_runs r
+         FROM sop_executions r
          JOIN user_sop_installations i ON r.installation_id = i.id
          WHERE i.user_id = ?1 AND r.created_at >= ?2
          GROUP BY date(created_at, 'unixepoch')

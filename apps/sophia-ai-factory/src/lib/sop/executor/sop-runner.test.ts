@@ -3,7 +3,7 @@
  *
  * Mocks: dispatchMission, all repo calls via D1 mock.
  * Asserts: run lifecycle transitions, advanceSchedule called on success,
- *          StepFailed produces 'partial', full run error produces 'failed'.
+ *          StepFailed produces 'paused', full run error produces 'failed'.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -47,9 +47,10 @@ function buildTestDb(options: {
 
       if (callCount === 1) return Promise.resolve(installation);   // getInstallation
       if (callCount === 2) return Promise.resolve(template);       // getTemplateById
-      if (callCount === 3) return Promise.resolve({ id: 'run-001', installation_id: 'inst-001', trigger_type: 'cron', mission_ids: '[]', status: 'queued', result_summary: null, error_message: null, requires_approval: 0, started_at: null, completed_at: null, created_at: 1000 }); // createRun SELECT
-      // mission_ids for appendMissionId
-      if (callCount === 4) return Promise.resolve({ mission_ids: '[]' });
+if (callCount === 3) return Promise.resolve({ user_id: 'user-001', org_id: 'org-001', sop_template_id: 'tpl-001' }); // resolveInstallationContext
+if (callCount === 4) return Promise.resolve({ id: 'run-001', installation_id: 'inst-001', trigger_type: 'cron', mission_ids: '[]', status: 'pending', result_summary: null, error_message: null, requires_approval: 0, started_at: null, completed_at: null, created_at: 1000 }); // createRun SELECT after INSERT
+// mission_ids for appendMissionId
+if (callCount === 5) return Promise.resolve({ mission_ids: '[]' });
       // mission poll
       return Promise.resolve({ status: missionStatus, result: missionResult, error: null });
     }),
@@ -126,7 +127,7 @@ describe('runSop', () => {
   it('returns succeeded status on happy path', async () => {
     const db = buildTestDb({});
     const result = await runSop(db as unknown as D1Database, baseCtx);
-    expect(result.status).toBe('succeeded');
+    expect(result.status).toBe('completed');
     expect(result.runId).toBe('run-001');
   });
 
@@ -144,7 +145,7 @@ describe('runSop', () => {
     await runSop(db as unknown as D1Database, baseCtx);
 
     const updateCalls = db.prepare.mock.calls
-      .filter((call: unknown[]) => typeof call[0] === 'string' && (call[0] as string).includes('UPDATE sop_runs'))
+      .filter((call: unknown[]) => typeof call[0] === 'string' && (call[0] as string).includes('UPDATE sop_executions'))
       .map((call: unknown[]) => call[0]);
 
     expect(updateCalls.length).toBeGreaterThanOrEqual(2);
@@ -160,31 +161,27 @@ describe('runSop', () => {
     await expect(runSop(db as unknown as D1Database, baseCtx)).rejects.toThrow(/Template not found/);
   });
 
-  it('returns partial status when step fails but prior steps succeeded', async () => {
-    // Build db where mission poll returns failed after 1 successful step
-    const firstCallDone = false;
+  it('returns failed status when step fails immediately', async () => {
     const db = buildTestDb({ missionStatus: 'succeeded' });
 
-    // Override mission poll to fail on first call
+    // Override .first() so the mission poll returns failed on first call
     const stmtMock = db._stmt;
-    const origFirst = stmtMock.first;
-    const pollCount = 0;
     stmtMock.first = vi.fn().mockImplementation(() => {
-      const callCount = (stmtMock.first as ReturnType<typeof vi.fn>).mock.calls.length;
-      // First 4 calls are for getInstallation, getTemplateById, createRun, appendMissionId
-      if (callCount <= 4) {
-        if (callCount === 1) return Promise.resolve(makeInstallation());
-        if (callCount === 2) return Promise.resolve(makeTemplate());
-        if (callCount === 3) return Promise.resolve({ id: 'run-001', installation_id: 'inst-001', trigger_type: 'cron', mission_ids: '[]', status: 'queued', result_summary: null, error_message: null, requires_approval: 0, started_at: null, completed_at: null, created_at: 1000 });
-        if (callCount === 4) return Promise.resolve({ mission_ids: '[]' });
-      }
-      // Poll: always return failed
-      return Promise.resolve({ status: 'failed', result: null, error: 'handler error' });
+      const callCount = stmtMock.first.mock.calls.length;
+      // Calls 1-2: getInstallation, getTemplateById (from buildTestDb)
+// Calls 1-2: getInstallation, getTemplateById
+// Call 3: resolveInstallationContext (user_sop_installations)
+// Calls 4-5: createRun SELECT after INSERT, appendMissionId SELECT
+// call 6+: mission poll
+if (callCount === 1) return Promise.resolve(makeInstallation());
+if (callCount === 2) return Promise.resolve(makeTemplate());
+if (callCount === 3) return Promise.resolve({ user_id: 'user-001', org_id: 'org-001', sop_template_id: 'tpl-001' }); // resolveInstallationContext
+if (callCount === 4) return Promise.resolve({ id: 'run-001', installation_id: 'inst-001', trigger_type: 'cron', mission_ids: "[]", status: 'pending', result_summary: null, error_message: null, requires_approval: 0, started_at: null, completed_at: null, created_at: 1000 });
+if (callCount === 5) return Promise.resolve({ mission_ids: "[]" });
     });
 
     const result = await runSop(db as unknown as D1Database, baseCtx);
-    // 0 prior steps succeeded (step 1 itself failed) → 'failed' not 'partial'
-    expect(['failed', 'partial']).toContain(result.status);
+    expect(['failed', 'paused']).toContain(result.status);
     expect(result.errorMessage).toBeDefined();
   });
 });

@@ -3,19 +3,22 @@
 /**
  * SopDetailTabs — client tab navigation for SOP installation detail.
  *
- * Tabs: Overview / Runs / Edit / Webhook
+ * Tabs: Overview / Runs / Analytics / Edit / Webhook
  * Each tab content is a separate component for ≤200 LOC compliance.
  */
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { SopInstallationRow, SopRunRow } from '@/tree/sop/sop-types';
-import { InstallationOverviewTab } from '@/forest/components/sop/installation-overview-tab';
-import { InstallationRunsTab } from '@/forest/components/sop/installation-runs-tab';
-import { InstallationEditTab } from '@/forest/components/sop/installation-edit-tab';
-import { InstallationWebhookTab } from '@/forest/components/sop/installation-webhook-tab';
 
-type TabKey = 'overview' | 'runs' | 'edit' | 'webhook';
+// Each tab is a thin, focused component.
+import { InstallationOverviewTab } from '@/components/sop/detail/installation-overview-tab';
+import { InstallationRunsTab } from '@/components/sop/detail/installation-runs-tab';
+import { InstallationEditTab } from '@/components/sop/detail/installation-edit-tab';
+import { InstallationWebhookTab } from '@/components/sop/detail/installation-webhook-tab';
+import { SopAnalyticsTab } from '@/components/sop/detail/analytics-tab';
+
+type TabKey = 'overview' | 'runs' | 'analytics' | 'edit' | 'webhook';
 
 interface Props {
   installation: SopInstallationRow;
@@ -25,26 +28,35 @@ interface Props {
   locale: string;
   configSchema: string | null;
   configDefaults: string | null;
-  onRunNow: () => Promise<{ error?: string }>;
-  onDelete: () => Promise<{ error?: string }>;
-  onSavePlaybook: (v: string) => Promise<{ error?: string }>;
-  onSaveConfig: (v: Record<string, unknown>) => Promise<{ error?: string }>;
-  onRegenSecret: () => Promise<{ error?: string; webhookSecret?: string }>;
+  onRunNow: (installationId: string) => Promise<{ error?: string }>;
+  onDelete: (installationId: string) => Promise<{ error?: string }>;
+  onSavePlaybook: (installationId: string, md: string) => Promise<{ error?: string }>;
+  onSaveConfig: (config: Record<string, unknown>) => Promise<{ error?: string }>;
+  onRegenSecret: (installationId: string) => Promise<{ error?: string; webhookSecret?: string }>;
 }
 
 export function SopDetailTabs({
-  installation, runs, playbookMd, installationId, locale,
-  configSchema, configDefaults,
-  onRunNow, onDelete, onSavePlaybook, onSaveConfig, onRegenSecret,
+  installation,
+  runs,
+  playbookMd,
+  installationId,
+  configSchema,
+  configDefaults,
+  onRunNow,
+  onDelete,
+  onSavePlaybook,
+  onSaveConfig,
+  onRegenSecret,
 }: Props) {
-  const t = useTranslations('sop.detail_page');
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
+  const t = useTranslations('sop.detail_page');
 
   const tabs: Array<{ key: TabKey; label: string }> = [
     { key: 'overview', label: t('overview') },
-    { key: 'runs',     label: `${t('runs')} (${runs.length})` },
-    { key: 'edit',     label: t('edit') },
-    { key: 'webhook',  label: t('webhook') },
+    { key: 'runs', label: `${t('runs')} (${runs.length})` },
+    { key: 'analytics', label: t('analytics') },
+    { key: 'edit', label: t('edit') },
+    { key: 'webhook', label: t('webhook') },
   ];
 
   return (
@@ -72,25 +84,35 @@ export function SopDetailTabs({
         {activeTab === 'overview' && (
           <InstallationOverviewTab
             installation={installation}
-            onRunNow={onRunNow}
-            onDelete={onDelete}
+            onRunNow={() => onRunNow(installationId)}
+            onDelete={() => onDelete(installationId)}
           />
         )}
+
         {activeTab === 'runs' && (
           <InstallationRunsTab runs={runs} installationId={installationId} />
         )}
+
+        {activeTab === 'analytics' && (
+          <SopAnalyticsTab runs={runs} />
+        )}
+
         {activeTab === 'edit' && (
           <InstallationEditTab
             playbookMd={playbookMd}
             configSchema={configSchema}
             configDefaults={configDefaults}
             configValues={installation.config_values}
-            onSave={onSavePlaybook}
-            onSaveConfig={onSaveConfig}
+            onSave={(value) => onSavePlaybook(installationId, value)}
+            onSaveConfig={(values) => onSaveConfig(values)}
           />
         )}
+
         {activeTab === 'webhook' && (
-          <InstallationWebhookTab installationId={installationId} onRegenSecret={onRegenSecret} />
+          <InstallationWebhookTab
+            installationId={installationId}
+            onRegenSecret={() => onRegenSecret(installationId)}
+          />
         )}
       </div>
     </div>

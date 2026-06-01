@@ -48,7 +48,7 @@ export default async function SopDetailPage({ params }: Props) {
 
   // Fetch last 20 runs
   const { results: runs } = await db
-    .prepare(`SELECT * FROM sop_runs WHERE installation_id = ?1 ORDER BY created_at DESC LIMIT 20`)
+    .prepare(`SELECT * FROM sop_executions WHERE installation_id = ?1 ORDER BY created_at DESC LIMIT 20`)
     .bind(id)
     .all<SopRunRow>();
 
