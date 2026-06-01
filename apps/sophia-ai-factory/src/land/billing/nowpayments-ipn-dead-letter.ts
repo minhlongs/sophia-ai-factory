@@ -92,6 +92,7 @@ export async function enqueueDlqEntry(
           retry_count: opts.retryCount + 1,
           failure_reason: opts.failureReason,
           last_attempted_at: now,
+        first_failed_at: now,
         })
         .eq('event_id', opts.eventId)
         .eq('resolved', 0);
