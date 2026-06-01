@@ -44,7 +44,7 @@ export interface StepResult {
 /** Final result returned by runSop */
 export interface RunResult {
   runId: string;
-  status: 'succeeded' | 'failed' | 'partial';
+  status: 'completed' | 'failed' | 'paused';
   summary?: Record<string, unknown>;
   errorMessage?: string;
 }
