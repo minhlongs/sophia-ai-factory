@@ -11,6 +11,7 @@ import { Target, Trophy, Flame } from 'lucide-react';
 import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { listActiveChallenges, getUserAllProgress } from '@/land/sop-marketplace/challenges';
+import { claimChallengeRewardAction } from '@/app/actions/challenge-actions';
 import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
@@ -84,20 +85,17 @@ export default async function ChallengesPage() {
             const current = prog?.current_value ?? 0;
             const pct = progressPct(current, challenge.goal_value);
             const isCompleted = !!prog?.completed_at;
+const isClaimed = !!prog?.reward_claimed;
             const title = locale === 'vi' ? challenge.title_vi : challenge.title_en;
             const desc = locale === 'vi' ? challenge.description_vi : challenge.description_en;
             const rewardIcon = REWARD_ICONS[challenge.reward_type] ?? '🎁';
             const days = daysLeft(challenge.ends_at);
 
             return (
-              <div
-                key={challenge.id}
-                className={`rounded-xl border p-5 space-y-4 transition-colors ${
-                  isCompleted
-                    ? 'border-green-500/40 bg-green-500/5'
-                    : 'border-border bg-card hover:border-border/80'
-                }`}
-              >
+      <div
+      key={challenge.id}
+      className={`rounded-xl border p-5 space-y-4 transition-colors ${isCompleted ? 'border-green-500/40 bg-green-500/5' : 'border-border bg-card hover:border-border/80'}`}
+      >
                 {/* Title row */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="space-y-1">
@@ -142,6 +140,17 @@ export default async function ChallengesPage() {
                       {days} {t('daysLeft')}
                     </span>
                   )}
+        {isCompleted && !isClaimed && (
+        <form action={claimChallengeRewardAction}>
+          <input type="hidden" name="challengeId" value={challenge.id} />
+          <button
+            type="submit"
+            className="mt-2 w-full rounded-lg bg-violet-600 px-3 py-2 text-xs font-semibold text-white hover:bg-violet-700"
+          >
+            {t('claimReward')}
+          </button>
+        </form>
+        )}
                 </div>
               </div>
             );

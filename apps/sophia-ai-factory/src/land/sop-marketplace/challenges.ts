@@ -3,6 +3,66 @@
  */
 
 import type { SopChallengeRow, UserChallengeProgressRow } from '@/tree/sop/sop-types';
+import { addCredits } from '@/land/mcu/credits-repo';
+
+/** Claim a completed challenge reward. Supports: 'credits' | 'badge' | 'commission_boost'. */
+export async function claimChallengeReward(
+  db: D1Database,
+  userId: string,
+  challengeId: string,
+  rewardType: string,
+  rewardValue: string,
+): Promise<{ ok: boolean; reason?: string; applied: string }> {
+  // Verify user actually completed the challenge
+  const progress = await getUserProgress(db, userId, challengeId);
+  if (!progress || !progress.completed_at) {
+    return { ok: false, reason: 'not_completed', applied: 'none' };
+  }
+
+  if (progress.reward_claimed) {
+    return { ok: false, reason: 'already_claimed', applied: 'none' };
+  }
+
+  let applied = 'none';
+
+  if (rewardType === 'credits') {
+    const amount = Number(rewardValue);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return { ok: false, reason: 'invalid_amount', applied: 'none' };
+    }
+    await addCredits(userId, amount, 'challenge_reward', { challengeId, rewardType });
+    applied = `credits:${amount}`;
+  } else if (rewardType === 'badge') {
+    // Best-effort: upsert badge into user_badges table if it exists
+    try {
+      const badgeId = crypto.randomUUID();
+      await db.prepare(
+        `INSERT OR IGNORE INTO user_badges (id, user_id, badge_key, earned_at) VALUES (?1, ?2, ?3, ?4)`,
+      )
+        .bind(badgeId, userId, rewardValue, Date.now())
+        .run();
+      applied = `badge:${rewardValue}`;
+    } catch (err) {
+      // Table may not exist yet — log but don't fail the whole claim
+      console.warn('[challenge] badge insert skipped (table missing?)', err);
+      applied = `badge:${rewardValue} (skipped)`;
+    }
+  } else if (rewardType === 'commission_boost') {
+    // Commission boost requires affiliate profile updates — deferred to affiliate tier integration.
+    // Mark the claim record but do NOT apply boost yet.
+    applied = `commission_boost:${rewardValue} (pending)`;
+  } else {
+    return { ok: false, reason: `unsupported_reward_type:${rewardType}`, applied: 'none' };
+  }
+
+  // Mark reward as claimed
+  const now = Date.now();
+  await db.prepare(
+    `UPDATE user_challenge_progress SET reward_claimed = 1, updated_at = ?1 WHERE user_id = ?2 AND challenge_id = ?3`,
+  ).bind(now, userId, challengeId).run();
+
+  return { ok: true, applied };
+}
 
 export async function listActiveChallenges(db: D1Database): Promise<SopChallengeRow[]> {
   const now = Date.now();
