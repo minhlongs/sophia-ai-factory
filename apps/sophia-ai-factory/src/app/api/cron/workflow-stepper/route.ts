@@ -56,7 +56,7 @@ export async function executeStep(
 
   const decision = routeLlm(workflow.prompt, false)
 
-  let result: string
+  let result: string = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
   let llmDegraded = false
   let degradeReason: 'LLM_MISSING_KEY_FALLBACK' | 'LLM_LIVE_FAILED_FALLBACK' | undefined
 

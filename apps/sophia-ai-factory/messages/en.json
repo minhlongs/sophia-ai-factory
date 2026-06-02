@@ -78,6 +78,13 @@
       "retryFailed": "Save failed after 3 attempts. Please set up manually.",
       "manualSetup": "Manual setup in Settings",
       "webhookWarning": "HeyGen webhook not registered — videos won't receive auto-notifications."
+    },
+    "finish": {
+      "subtitle": "Subtitle",
+      "errorOccurred": "Error Occurred",
+      "readyToUse": "Ready To Use",
+      "launchBtn": "Launch Btn",
+      "continueToChallenges": "Continue To Challenges"
     }
   },
   "landing": {
@@ -170,7 +177,8 @@
           "badge": "Premium"
         }
       },
-      "highlight": "Premium tier unlocks API integrations with PartnerStack, Impact.com, and auto-discovery of new affiliate programs every 4 hours."
+      "highlight": "Premium tier unlocks API integrations with PartnerStack, Impact.com, and auto-discovery of new affiliate programs every 4 hours.",
+      "badge_label": "Badge label"
     },
     "raas": {
       "title": "AI-Powered Business Automation",
@@ -247,7 +255,8 @@
       "badges": {
         "secure": "256-bit Encrypted",
         "rated": "Bilingual UI",
-        "certified": "Cloudflare-secured Infrastructure"
+        "certified": "Cloudflare-secured Infrastructure",
+        "customer_reviews": "Customer reviews"
       },
       "testimonials_disclaimer": "Composite testimonials based on early user research and beta feedback."
     },
@@ -330,7 +339,12 @@
           "name": "Master",
           "description": "Lifetime access. One payment. Everything included forever."
         }
-      }
+      },
+      "per_year": "Per year",
+      "subscribe_now": "Subscribe now",
+      "monthly_label": "Monthly label",
+      "annual_label": "Annual label",
+      "subscribe_now_master": "Subscribe now master"
     },
     "roi": {
       "title": "Calculate Your Potential Revenue",
@@ -345,7 +359,39 @@
         "total_views": "Total Views/Month"
       },
       "disclaimer": "Results are estimates only and may vary based on niche, content quality, SEO optimization, and audience engagement. Actual revenue depends on many factors.",
-      "estimate_note": "* Estimates based on $2 CPM + affiliate commissions"
+      "estimate_note": "* Estimates based on $2 CPM + affiliate commissions",
+      "revenue_by_source": "Revenue by source",
+      "videos_month": "Videos month",
+      "views_month": "Views month",
+      "total_revenue": "Total revenue",
+      "operating_costs": "Operating costs",
+      "lifetime_suffix": "Lifetime suffix",
+      "total_costs": "Total costs",
+      "net_profit": "Net profit",
+      "roi_payback": "Roi payback",
+      "roi_label": "Roi label",
+      "payback_label": "Payback label",
+      "days": "Days",
+      "annual_revenue": "Annual revenue",
+      "annual_costs": "Annual costs",
+      "annual_profit": "Annual profit",
+      "vs_manual": "Vs manual",
+      "monthly_suffix": "Monthly suffix",
+      "tier_selector": "Tier selector",
+      "service_plan": "Service plan",
+      "one_time_fee": "One time fee",
+      "equivalent_monthly": "Equivalent monthly",
+      "monthly_fee": "Monthly fee",
+      "cost_per_video": "Cost per video",
+      "channel_scale": "Channel scale",
+      "channels_label": "Channels label",
+      "videos_week": "Videos week",
+      "avg_views": "Avg views",
+      "affiliate_params": "Affiliate params",
+      "click_rate": "Click rate",
+      "avg_commission": "Avg commission",
+      "email_capture": "Email capture",
+      "full_cost_disclaimer": "Full cost disclaimer"
     },
     "affiliate": {
       "title": "High-Ticket Affiliate Discovery",
@@ -421,7 +467,8 @@
         "integrations": "Integrations",
         "commands": "Commands",
         "faq": "FAQ",
-        "telegram": "Telegram Bot"
+        "telegram": "Telegram Bot",
+        "section_": {}
       },
       "back_to_dashboard": "Back to Dashboard",
       "title": "User Guide",
@@ -459,7 +506,11 @@
           "status": "Check the status of running campaigns",
           "results": "Get links to completed videos",
           "stop": "Pause a running campaign",
-          "help": "List all available commands"
+          "help": "List all available commands",
+          "start": "Start",
+          "cancel": "Cancel",
+          "tier": "Tier",
+          "quota": "Quota"
         },
         "tipsTitle": "Tips",
         "tip1": "The more specific the topic, the better the video. Instead of <em>\"earbuds\"</em>, write <em>\"Top 5 wireless earbuds under $50 in 2024\"</em>.",
@@ -470,6 +521,13 @@
         "supportSeeAlso": "See also",
         "supportFaqLink": "Frequently Asked Questions"
       }
+    },
+    "creative_studio": {
+      "badge": "Badge",
+      "title": "Title",
+      "subtitle": "Subtitle",
+      "cta": "Cta",
+      "tabs": {}
     }
   },
   "dashboard": {
@@ -505,7 +563,10 @@
         "title": "This Month",
         "unlimited": "Unlimited",
         "viewBilling": "View billing details"
-      }
+      },
+      "creative_studio": "Creative studio",
+      "sop_creator": "Sop creator",
+      "challenges": "Challenges"
     },
     "notFound": {
       "title": "Page Not Found",
@@ -827,6 +888,98 @@
           "description": "Your API access has been suspended due to non-payment.",
           "action": "Restore Service"
         }
+      },
+      "selfServeTitle": "Self Serve Title",
+      "changeTierTitle": "Change Tier Title",
+      "changeTierDesc": "Change Tier Desc",
+      "changeTierCta": "Change Tier Cta",
+      "refundTitle": "Refund Title",
+      "refundDesc": "Refund Desc",
+      "refundCta": "Refund Cta",
+      "cancelTitle": "Cancel Title",
+      "cancelDesc": "Cancel Desc",
+      "cancelCta": "Cancel Cta",
+      "changeTier": {
+        "pageTitle": "Page Title",
+        "pageSubtitle": "Page Subtitle",
+        "error_already_on_tier": "Error already on tier",
+        "error_no_subscription": "Error no subscription",
+        "error_master_payment": "Error master payment",
+        "error_generic": "Error generic",
+        "success_title": "Success title",
+        "success_immediate": "Success immediate",
+        "success_end_of_cycle": "Success end of cycle",
+        "badge_current": "Badge current",
+        "badge_downgrade": "Badge downgrade",
+        "master_title": "Master title",
+        "master_hint": "Master hint",
+        "master_cta": "Master cta",
+        "timing_title": "Timing title",
+        "timing_subtitle": "Timing subtitle",
+        "timing_immediate_label": "Timing immediate label",
+        "timing_immediate_desc": "Timing immediate desc",
+        "timing_eoc_label": "Timing eoc label",
+        "timing_eoc_desc": "Timing eoc desc",
+        "submitting": "Submitting",
+        "submit": "Submit",
+        "confirm_downgrade_title": "Confirm downgrade title",
+        "confirm_lose_title": "Confirm lose title",
+        "lose_custom_integrations": "Lose custom integrations",
+        "lose_unlimited_channels": "Lose unlimited channels",
+        "lose_seo_optimization": "Lose seo optimization",
+        "lose_api_access": "Lose api access",
+        "confirm_immediate_downgrade_warning": "Confirm immediate downgrade warning",
+        "cancel": "Cancel",
+        "confirm_downgrade_confirm": "Confirm downgrade confirm"
+      },
+      "refund": {
+        "pageTitle": "Page Title",
+        "pageSubtitle": "Page Subtitle",
+        "error_window_expired": "Error window expired",
+        "error_already_requested": "Error already requested",
+        "error_purchase_not_found": "Error purchase not found",
+        "error_generic": "Error generic",
+        "error_network": "Error network",
+        "success_title": "Success title",
+        "success_body": "Success body",
+        "success_refund_id": "Success refund id",
+        "formTitle": "Form Title",
+        "label_purchase_id": "Label purchase id",
+        "placeholder_select_purchase": "Placeholder select purchase",
+        "placeholder_purchase_id": "Placeholder purchase id",
+        "hint_purchase_id": "Hint purchase id",
+        "label_reason": "Label reason",
+        "placeholder_reason": "Placeholder reason",
+        "label_details": "Label details",
+        "placeholder_details": "Placeholder details",
+        "label_wallet": "Label wallet",
+        "placeholder_wallet": "Placeholder wallet",
+        "hint_wallet": "Hint wallet",
+        "crypto_warning": "Crypto warning",
+        "submitting": "Submitting",
+        "submit": "Submit"
+      },
+      "cancel": {
+        "error_generic": "Error generic",
+        "success_title": "Success title",
+        "success_immediate": "Success immediate",
+        "success_eoc": "Success eoc",
+        "close": "Close",
+        "step1_title": "Step1 title",
+        "lose_section_title": "Lose section title",
+        "mode_title": "Mode title",
+        "mode_eoc_label": "Mode eoc label",
+        "mode_eoc_desc": "Mode eoc desc",
+        "mode_immediate_label": "Mode immediate label",
+        "mode_immediate_desc": "Mode immediate desc",
+        "keep_plan": "Keep plan",
+        "continue": "Continue",
+        "step2_title": "Step2 title",
+        "step2_desc_immediate": "Step2 desc immediate",
+        "step2_desc_eoc": "Step2 desc eoc",
+        "back": "Back",
+        "submitting": "Submitting",
+        "confirm_cancel": "Confirm cancel"
       }
     },
     "support": {
@@ -1210,7 +1363,10 @@
       "thType": "Type",
       "thGross": "Gross",
       "thYourCut": "Your Cut",
-      "thStatus": "Status"
+      "thStatus": "Status",
+      "errorTitle": "Error Title",
+      "errorHint": "Error Hint",
+      "errorRetry": "Error Retry"
     },
     "onboarding": {
       "page_title": "Get Started with Sophia AI Factory",
@@ -1275,6 +1431,10 @@
       "error": "Failed to load revenue data",
       "no_data": "No revenue data for this period",
       "tooltip_total": "Total"
+    },
+    "agiOutcomes": {
+      "title": "Title",
+      "subtitle": "Subtitle"
     }
   },
   "account": {
@@ -1327,7 +1487,8 @@
     "delete_status_cancelled": "Deletion request cancelled.",
     "delete_cancel_btn": "Cancel Deletion Request",
     "delete_cancel_pending": "Cancelling…",
-    "delete_error": "Could not process deletion request. Please try again."
+    "delete_error": "Could not process deletion request. Please try again.",
+    "sub_cancel_failed": "Sub cancel failed"
   },
   "onboarding": {
     "title": "Welcome to Sophia AI Factory",
@@ -1442,7 +1603,23 @@
       "access_activated_desc": "Check your email for the magic login link.",
       "free_trial_days": "{days}-day free trial",
       "free_full_label": "Full free access"
-    }
+    },
+    "crypto_explainer_title": "Crypto explainer title",
+    "crypto_explainer_subtitle": "Crypto explainer subtitle",
+    "crypto_no_wallet_title": "Crypto no wallet title",
+    "crypto_no_wallet_desc": "Crypto no wallet desc",
+    "crypto_support_cta": "Crypto support cta",
+    "row_mcu": "Row mcu",
+    "row_campaigns": "Row campaigns",
+    "row_youtube": "Row youtube",
+    "row_team": "Row team",
+    "row_api": "Row api",
+    "row_webhooks": "Row webhooks",
+    "row_integrations": "Row integrations",
+    "row_white_label": "Row white label",
+    "row_billing": "Row billing",
+    "billing_one_time": "Billing one time",
+    "billing_monthly": "Billing monthly"
   },
   "campaign": {
     "template_selection": {
@@ -1797,7 +1974,11 @@
       "searchPlaceholder": "Search SOPs...",
       "noResults": "No SOPs found matching your search.",
       "installed": "Installed",
-      "featuredTitle": "Featured Playbooks"
+      "featuredTitle": "Featured Playbooks",
+      "firstTimeTitle": "Start with your first SOP",
+      "firstTimeDesc": "Browse the marketplace to install SOPs and automate your agency workflows.",
+      "firstTimeFaq": "What are SOPs?",
+      "pageTitle": "Page Title"
     },
     "card": {
       "creditsPerRun": "{n} credits/run",
@@ -1805,7 +1986,8 @@
       "installed": "Installed",
       "viewDetails": "View Details",
       "featured": "Featured",
-      "setupTime": "Setup {n} min"
+      "setupTime": "Setup {n} min",
+      "upgradeTier": "Upgrade Tier"
     },
     "detail": {
       "agentsTitle": "Agents",
@@ -1859,11 +2041,12 @@
       "viewDetail": "View",
       "runNow": "Run Now",
       "delete": "Delete",
-      "manual": "Manual"
+      "manual": "Manual",
+      "firstInstallTitle": "Your first SOP is installed!",
+      "firstInstallDesc": "Great start! Explore more SOPs in the marketplace or run this one now."
     },
     "detail_page": {
       "overview": "Overview",
-      "runs": "Run History",
       "edit": "Edit Playbook",
       "webhook": "Webhook",
       "schedule": "Schedule",
@@ -1880,7 +2063,25 @@
       "deleteConfirmYes": "Yes, Delete",
       "deleteConfirmNo": "Cancel",
       "never": "Never",
-      "notScheduled": "Not scheduled"
+      "notScheduled": "Not scheduled",
+      "runs": {
+        "pageTitleSimple": "Run History",
+        "subtitle": "Subtitle",
+        "backToSop": "Back To Sop"
+      },
+      "analytics": {
+        "fallback": "Analytics",
+        "totalRuns": "Total Runs",
+        "successRate": "Success Rate",
+        "creditsSpent": "Credits Spent",
+        "runsLast24h": "Runs Last24h",
+        "breakdownTitle": "Breakdown Title",
+        "statusCompleted": "Status Completed",
+        "statusRunning": "Status Running",
+        "statusPaused": "Status Paused",
+        "statusFailed": "Status Failed",
+        "recentRuns": "Recent Runs"
+      }
     },
     "run": {
       "trigger": "Trigger",
@@ -1920,6 +2121,59 @@
       "regenConfirm": "This will invalidate existing signatures. Continue?",
       "regenSuccess": "New secret generated. Update your webhook sender.",
       "urlHelp": "POST to this URL with HMAC signature to trigger this SOP."
+    },
+    "creator": {
+      "pageTitle": "Creator Dashboard",
+      "title": "Creator Dashboard",
+      "subtitle": "Manage your SOP templates and earnings",
+      "newSop": "Create New SOP",
+      "totalEarned": "Total Earned",
+      "pending": "Pending",
+      "payable": "Payable",
+      "paid": "Paid Out",
+      "yourSops": "Your SOPs",
+      "noSops": "No SOPs yet",
+      "noSopsDesc": "Create your first SOP template to start earning",
+      "createFirst": "Create First SOP",
+      "name": "Name",
+      "category": "Category",
+      "status": "Status",
+      "sales": "Sales",
+      "revenue": "Revenue",
+      "detail": {
+        "pageTitle": "SOP Details",
+        "back": "Back",
+        "templateDetails": "Template Details",
+        "descriptionEn": "English Description",
+        "descriptionVi": "Vietnamese Description",
+        "creditsPerRun": "Credits Per Run",
+        "setupTime": "Setup Time",
+        "setupTimeMinutes": "{minutes} min",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "publishSuccess": "Publish Success",
+        "draftDescription": "Draft Description",
+        "publishing": "Publishing",
+        "submitForReview": "Submit For Review"
+      },
+      "actions": {
+        "unauthorized": "You must be logged in to perform this action.",
+        "masterRequired": "MASTER tier is required to manage SOPs.",
+        "dbUnavailable": "Database is temporarily unavailable. Please try again later.",
+        "requiredFieldsMissing": "Please fill in all required fields.",
+        "priceRange": "Price must be between $5 and $999.",
+        "notYourTemplate": "You do not have permission to modify this template.",
+        "createSuccess": "SOP template created successfully!",
+        "createError": "Failed to create SOP template. Please try again.",
+        "submitSuccess": "SOP submitted for review successfully!",
+        "submitError": "Failed to submit SOP for review. Please try again."
+      },
+      "publish": {
+        "submitForReview": "Submit for Review",
+        "publishing": "Publishing...",
+        "publishSuccess": "Template published successfully!",
+        "draftDescription": "This template is in draft. Submit it for review to publish it to the marketplace."
+      }
     }
   },
   "agentChat": {
@@ -2200,6 +2454,30 @@
     },
     "footer": {
       "disclaimer": "Commission rates and terms subject to change. See affiliate agreement for details."
+    },
+    "earnings": {
+      "title": "Title",
+      "tier_col": "Tier col",
+      "price_col": "Price col",
+      "your_cut_col": "Your cut col",
+      "note": "Note"
+    },
+    "onboarding": {
+      "title": "Title",
+      "step1_title": "Step1 title",
+      "step1_desc": "Step1 desc",
+      "step2_title": "Step2 title",
+      "step2_desc": "Step2 desc",
+      "step3_title": "Step3 title",
+      "step3_desc": "Step3 desc"
+    },
+    "copyLink": {
+      "title": "Title",
+      "loginHint": "Login Hint",
+      "generating": "Generating",
+      "cta": "Cta",
+      "copied": "Copied",
+      "copy": "Copy"
     }
   },
   "tour": {
@@ -2318,5 +2596,242 @@
       "b": "Winner: Version B picked ({delta} more clicks)",
       "no_winner": "No clear winner after 48 hours — both versions kept running."
     }
+  },
+  "agi": {
+    "outcomes_title": "Outcomes title",
+    "outcomes_description": "Outcomes description",
+    "confidence_title": "Confidence title",
+    "confidence_description": "Confidence description",
+    "agents_title": "Agents title",
+    "agents_description": "Agents description",
+    "api_keys_title": "Api keys title",
+    "api_keys_description": "Api keys description",
+    "feedback_title": "Feedback title",
+    "feedback_description": "Feedback description",
+    "compliance_title": "Compliance title",
+    "compliance_description": "Compliance description",
+    "hub_title": "Hub title",
+    "hub_subtitle": "Hub subtitle",
+    "coming_soon": "Coming soon"
+  },
+  "challenges": {
+    "title": "Title",
+    "subtitle": "Subtitle",
+    "noChallenges": "No Challenges",
+    "claimed": "Claimed",
+    "completed": "Completed",
+    "progress": "Progress",
+    "badge": "Badge",
+    "credits": "Credits",
+    "commissionBoost": "Commission Boost",
+    "daysLeft": "Days Left",
+    "claimReward": "Claim Reward"
+  },
+  "creativeStudio": {
+    "audio": {
+      "download": "Download",
+      "generating": "Generating",
+      "generateAudio": "Generate Audio",
+      "emptyState": "Empty State",
+      "textLabel": "Text Label",
+      "textPlaceholder": "Text Placeholder",
+      "voiceLabel": "Voice Label",
+      "voicePlaceholder": "Voice Placeholder"
+    },
+    "brand": {
+      "loading": "Loading",
+      "brandKit": "Brand Kit",
+      "colors": "Colors",
+      "primaryColor": "Primary Color",
+      "secondaryColor": "Secondary Color",
+      "logo": "Logo",
+      "uploadLogo": "Upload Logo",
+      "logoPosition": "Logo Position",
+      "logoOpacity": "Logo Opacity",
+      "intro": "Intro",
+      "uploadIntro": "Upload Intro",
+      "outro": "Outro",
+      "uploadOutro": "Upload Outro",
+      "font": "Font",
+      "uploadFont": "Upload Font",
+      "saving": "Saving"
+    },
+    "image": {
+      "generateFirst": "Generate First",
+      "generationFailed": "Generation Failed",
+      "download": "Download",
+      "copyUrl": "Copy Url",
+      "generateImage": "Generate Image",
+      "generatedImages": "Generated Images",
+      "modelLabel": "Model Label",
+      "modelPlaceholder": "Model Placeholder",
+      "upgradeToUnlock": "Upgrade To Unlock",
+      "promptLabel": "Prompt Label",
+      "promptPlaceholder": "Prompt Placeholder",
+      "charsRemaining": "Chars Remaining",
+      "aspectRatioLabel": "Aspect Ratio Label",
+      "generating": "Generating"
+    },
+    "newsletter": {
+      "brandLabel": "Brand Label",
+      "brandPlaceholder": "Brand Placeholder",
+      "topicLabel": "Topic Label",
+      "topicPlaceholder": "Topic Placeholder",
+      "toneLabel": "Tone Label",
+      "introLabel": "Intro Label",
+      "introPlaceholder": "Intro Placeholder",
+      "ctaLabel": "Cta Label",
+      "ctaPlaceholder": "Cta Placeholder",
+      "generating": "Generating",
+      "generate": "Generate",
+      "previewLabel": "Preview Label",
+      "copied": "Copied",
+      "copyHtml": "Copy Html",
+      "subjectLine": "Subject Line",
+      "words": "Words",
+      "previewPlaceholder": "Preview Placeholder"
+    },
+    "templates": {
+      "useTemplate": "Use Template",
+      "filterAll": "Filter All",
+      "filterCampaign": "Filter Campaign",
+      "filterVideo": "Filter Video",
+      "campaignTemplates": "Campaign Templates",
+      "videoTemplates": "Video Templates"
+    },
+    "video": {
+      "avatarLabel": "Avatar Label",
+      "successTitle": "Success Title",
+      "successDescription": "Success Description",
+      "errorTitle": "Error Title",
+      "generating": "Generating",
+      "generate": "Generate",
+      "previewLabel": "Preview Label",
+      "previewPlaceholder": "Preview Placeholder",
+      "missionCreated": "Mission Created",
+      "trackProgress": "Track Progress",
+      "scriptLabel": "Script Label",
+      "scriptPlaceholder": "Script Placeholder",
+      "templateLabel": "Template Label",
+      "voiceLabel": "Voice Label"
+    },
+    "tabs": {
+      "image": "Image",
+      "audio": "Audio",
+      "newsletter": "Newsletter",
+      "templates": "Templates",
+      "brand": "Brand"
+    },
+    "stats": {
+      "video": {
+        "label": "Label",
+        "value": "Value"
+      },
+      "image": {
+        "label": "Label",
+        "value": "Value"
+      },
+      "audio": {
+        "label": "Label",
+        "value": "Value"
+      }
+    },
+    "eyebrow": "Eyebrow",
+    "title": "Title",
+    "subtitle": "Subtitle"
+  },
+  "publish": {
+    "publish": "Publish",
+    "publishVideo": "Publish Video",
+    "publishSuccess": "Publish Success",
+    "platform": "Platform",
+    "noPlatforms": "No Platforms",
+    "title": "Title",
+    "description": "Description",
+    "tags": "Tags",
+    "tagsPlaceholder": "Tags Placeholder",
+    "privacy": "Privacy",
+    "private": "Private",
+    "unlisted": "Unlisted",
+    "public": "Public",
+    "publishNow": "Publish Now"
+  },
+  "analytics": {
+    "syncNow": "Sync Now",
+    "totalViews": "Total Views",
+    "totalWatchTime": "Total Watch Time",
+    "avgCTR": "Avg C T R",
+    "avgEngagement": "Avg Engagement",
+    "topVideos": "Top Videos",
+    "noData": "No Data",
+    "views": "Views",
+    "watchTime": "Watch Time",
+    "ctr": "Ctr",
+    "engagement": "Engagement",
+    "title": "Title",
+    "last": {}
+  },
+  "batch": {
+    "cancel": "Cancel",
+    "completed": "Completed",
+    "failed": "Failed",
+    "status": "Status",
+    "cost": "Cost",
+    "videoList": "Video List",
+    "view": "View",
+    "uploadTitle": "Upload Title",
+    "batchName": "Batch Name",
+    "batchNamePlaceholder": "Batch Name Placeholder",
+    "uploadFile": "Upload File",
+    "uploadHint": "Upload Hint",
+    "videosReady": "Videos Ready",
+    "estimatedCost": "Estimated Cost",
+    "validate": "Validate",
+    "startBatch": "Start Batch",
+    "title": "Title",
+    "description": "Description"
+  },
+  "thumbnails": {
+    "abTest": "Ab Test",
+    "clicks": "Clicks",
+    "winner": "Winner"
+  },
+  "repurpose": {
+    "title": "Title",
+    "selectVideo": "Select Video",
+    "analyzeForClips": "Analyze For Clips",
+    "analyzing": "Analyzing",
+    "clipsReady": "Clips Ready",
+    "clipScore": "Clip Score",
+    "generateClips": "Generate Clips",
+    "noClips": "No Clips"
+  },
+  "notFoundPage": {
+    "heading": "Heading",
+    "description": "Description",
+    "returnHome": "Return Home",
+    "goToDashboard": "Go To Dashboard",
+    "features": "Features",
+    "pricing": "Pricing",
+    "dashboard": "Dashboard",
+    "contactSupport": "Contact Support"
+  },
+  "agi_showcase": {
+    "title": "Title",
+    "subtitle": "Subtitle"
+  },
+  "community": {
+    "joinCommunity": "Join Community",
+    "telegramDescription": "Telegram Description",
+    "joinTelegram": "Join Telegram",
+    "discordDescription": "Discord Description",
+    "joinDiscord": "Join Discord",
+    "dismiss": "Dismiss"
+  },
+  "affiliate": {
+    "cta_banner_title": "Cta banner title",
+    "cta_banner_description": "Cta banner description",
+    "cta_banner_cta": "Cta banner cta",
+    "cta_banner_dismiss": "Cta banner dismiss"
   }
 }

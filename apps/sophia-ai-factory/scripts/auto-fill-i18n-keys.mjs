@@ -27,7 +27,13 @@ function setNestedValue(obj, path, value) {
   const keys = path.split('.');
   const lastKey = keys.pop();
   const target = keys.reduce((o, k) => {
-    if (!(k in o)) o[k] = {};
+    if (o[k] === undefined || o[k] === null) {
+      o[k] = {};
+    } else if (typeof o[k] === 'string') {
+      // Promote string to object with `fallback` key for the original value
+      const original = o[k];
+      o[k] = { fallback: original };
+    }
     return o[k];
   }, obj);
   target[lastKey] = value;
