@@ -18,6 +18,8 @@ export default defineConfig({
       'node_modules/**',
       'dist/**',
       '**/*.config.ts',
+      '.next/**',
+      '.open-next/**',
     ],
     coverage: {
       reporter: ['text', 'json-summary', 'html'],
@@ -42,6 +44,8 @@ export default defineConfig({
         'src/components/ui/**',
         '**/*.d.ts',
         '**/*.config.ts',
+      '.next/**',
+      '.open-next/**',
       ],
     },
     // Mock server-side modules for API route tests
