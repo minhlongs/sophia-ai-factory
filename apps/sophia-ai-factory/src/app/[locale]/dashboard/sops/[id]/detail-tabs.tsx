@@ -9,7 +9,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import type { SopInstallationRow, SopRunRow } from '@/tree/sop/sop-types';
+import type { SopInstallationRow, SopRunRow, SopTemplateRow } from '@/tree/sop/sop-types';
 
 // Each tab is a thin, focused component.
 import { InstallationOverviewTab } from '@/components/sop/detail/installation-overview-tab';
@@ -28,6 +28,7 @@ interface Props {
   locale: string;
   configSchema: string | null;
   configDefaults: string | null;
+  template: SopTemplateRow | null;
   onRunNow: (installationId: string) => Promise<{ error?: string }>;
   onDelete: (installationId: string) => Promise<{ error?: string }>;
   onSavePlaybook: (installationId: string, md: string) => Promise<{ error?: string }>;
@@ -42,6 +43,7 @@ export function SopDetailTabs({
   installationId,
   configSchema,
   configDefaults,
+  template,
   onRunNow,
   onDelete,
   onSavePlaybook,
@@ -94,7 +96,7 @@ export function SopDetailTabs({
         )}
 
         {activeTab === 'analytics' && (
-          <SopAnalyticsTab runs={runs} />
+          <SopAnalyticsTab runs={runs} sopId={installationId} template={template} />
         )}
 
         {activeTab === 'edit' && (

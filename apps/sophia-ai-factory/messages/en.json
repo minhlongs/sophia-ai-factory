@@ -65,6 +65,11 @@
       "providers": "Providers",
       "finish": "Finish"
     },
+    "finish": {
+      "subtitle": "Sophia is ready to automate your business",
+      "launchBtn": "Launch Sophia",
+      "continueToChallenges": "Continue to Challenges"
+    },
     "actions": {
       "back": "Back",
       "next": "Continue",
@@ -2506,6 +2511,7 @@
     "workflows": "Workflows",
     "sop_marketplace": "Sop marketplace",
     "my_sops": "My sops",
+  "challenges": "Challenges",
     "api_docs": "Api docs",
     "settings": "Settings",
     "replay_tour": "Replay tour",

@@ -69,7 +69,7 @@
       "back": "Quay lại",
       "next": "Tiếp tục",
       "saving": "Đang lưu",
-      "launch": "Kích hoạt"
+      "launch": "Khởi động"
     },
     "footer": "Cần hỗ trợ? Liên hệ đội ngũ của chúng tôi",
     "save": {
@@ -77,6 +77,11 @@
       "retryFailed": "Lưu thất bại sau 3 lần thử. Vui lòng cài đặt thủ công.",
       "manualSetup": "Thiết lập thủ công trong Cài đặt",
       "webhookWarning": "HeyGen webhook chưa đăng ký — video sẽ không nhận thông báo tự động."
+    },
+    "finish": {
+      "subtitle": "Sophia đã sẵn sàng tự động hóa doanh nghiệp của bạn",
+      "launchBtn": "Khởi động Sophia",
+      "continueToChallenges": "Tiếp tục đến Thử thách"
     }
   },
   "landing": {
