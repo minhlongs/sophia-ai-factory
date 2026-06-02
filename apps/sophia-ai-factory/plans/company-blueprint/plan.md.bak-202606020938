@@ -34,10 +34,10 @@
 ## 6-Month Roadmap
 
 ### Month 1 (Jun 2026)
-- [x] Fix SOP sync issues (dual execution systems → canonical `sop_executions`)
-- [x] Add SOP sidebar navigation entries
-- [x] Create investor deck (12 slides) + financial model
-- [x] Cap table + shareholder agreements
+- [ ] Fix SOP sync issues (dual execution systems → canonical `sop_runs`)
+- [ ] Add SOP sidebar navigation entries
+- [ ] Create investor deck (12 slides) + financial model
+- [ ] Cap table + shareholder agreements
 
 ### Month 2 (Jul 2026)
 - [ ] Board governance setup (monthly async board pack)
