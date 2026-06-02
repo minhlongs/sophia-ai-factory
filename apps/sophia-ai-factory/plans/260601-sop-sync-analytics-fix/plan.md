@@ -82,13 +82,13 @@ npx vitest run src/lib/sop/sop-repo.test.ts src/lib/sop/executor/sop-runner.test
 
 ## Acceptance Criteria
 
-- [ ] All writes go to `sop_executions` (canonical), zero writes to `sop_runs`
-- [ ] All dashboard reads query `sop_executions` via `lib/sop/`
-- [ ] `sop_runs` table preserved (read-only, historical data intact)
-- [ ] Analytics tab visible on SOP detail page showing: execution count, avg duration, success rate
-- [ ] All 93 existing SOP tests pass
-- [ ] `npx tsc --noEmit` passes with zero errors
-- [ ] No breaking changes to API responses or DB schemas used by frontend
+- [x] All writes go to `sop_executions` (canonical), zero writes to `sop_runs`
+- [x] All dashboard reads query `sop_executions` via `lib/sop/`
+- [x] `sop_runs` table preserved (read-only, historical data intact)
+- [x] Analytics tab visible on SOP detail page showing: execution count, avg duration, success rate
+- [x] All 93 existing SOP tests pass
+- [x] `npx tsc --noEmit` passes with zero errors
+- [x] No breaking changes to API responses or DB schemas used by frontend
 
 ---
 
