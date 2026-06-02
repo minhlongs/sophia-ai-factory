@@ -27,7 +27,6 @@ import {
   handleCloneVoice,
   handleSeoScript,
   handleSchedulePublish,
-  handleAutoVideo,
 } from '@/land/openclaw-telegram/openclaw-handlers'
 import {
   handleCampaign as handleCampaignFsm,
@@ -44,7 +43,7 @@ import {
   approvePairing,
   listPaired,
   revokePairing,
-} from '@/tree/telegram/pairing'
+} from '@/lib/telegram/pairing'
 import { consumePairingToken } from '@/tree/telegram/pairing-token-service'
 
 interface TelegramUpdate {
@@ -80,13 +79,13 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json().catch(() => ({}))) as TelegramUpdate
 
+    // Verify webhook secret token only when secret is configured
     const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET
-    if (!webhookSecret) {
-      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
-    }
-    const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
-    if (token !== webhookSecret) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (webhookSecret) {
+      const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
+      if (token !== webhookSecret) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
     }
 
     // Handle callback queries (inline keyboard button clicks)
@@ -279,9 +278,6 @@ export async function POST(request: NextRequest) {
       } else if (text.startsWith('/publish')) {
         const arg = text.replace('/publish', '').trim()
         await handleSchedulePublish(chatId, arg)
-      } else if (text.startsWith('/auto')) {
-        const arg = text.replace('/auto', '').trim()
-        await handleAutoVideo(chatId, arg)
       } else if (text.startsWith('/free100')) {
         const email = text.replace('/free100', '').trim()
         await handleFree100(chatId, email)
