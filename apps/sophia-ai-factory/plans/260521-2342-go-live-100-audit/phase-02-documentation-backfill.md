@@ -80,16 +80,16 @@ Sequential within phase (docs cross-reference each other). Parallelizable with P
 
 ## Todo List
 
-- [ ] Confirm clean tree post-Phase-1
-- [ ] Update repo-root `README.md`
-- [ ] Update `docs/system-architecture.md` with Phase 1 maps
-- [ ] Create `docs/QUICKSTART.md`
-- [ ] Create `docs/INCIDENT_RESPONSE.md`
-- [ ] Create `docs/SECURITY.md`
-- [ ] Create `docs/runbooks/INDEX.md`
-- [ ] Update `docs/codebase-summary.md` + `docs/project-overview-pdr.md`
-- [ ] Validate via `npm run lint-md` if present
-- [ ] Commit + push (push-precondition for any later deploy work)
+- [x] Confirm clean tree post-Phase-1 (verified 2026-06-02: working tree clean after 4 commits)
+- [x] Update repo-root `README.md` (already complete: stack, tier model, deploy docs, production URL)
+- [x] Update `docs/system-architecture.md` with Phase 1 maps
+- [x] Create `docs/QUICKSTART.md`
+- [x] Create `docs/INCIDENT_RESPONSE.md`
+- [x] Create `docs/SECURITY.md`
+- [x] Create `docs/runbooks/INDEX.md`
+- [x] Update `docs/codebase-summary.md` + `docs/project-overview-pdr.md`
+- [x] Validate via `npm run lint-md` if present (skipped — tool absent)
+- [x] Commit + push (push-precondition for any later deploy work)
 
 ## Success Criteria
 

@@ -1,8 +1,8 @@
 ---
 title: "Go-Live 100/100 Production-Readiness Audit & Hardening"
 description: "Five-phase audit + hardening cycle targeting honest 100/100 across 10 enterprise categories. Doctrine v1.28.1 operator-creds ceiling SUSPENDED for this cycle."
-status: pending
-priority: P1
+status: complete
+priority: P0
 effort: large
 branch: main
 tags: [audit, go-live, hardening, production-readiness, doctrine-reversal]
@@ -70,6 +70,6 @@ Future sessions: this reversal is local to this plan. The doctrine file is NOT b
 
 1. **Operator credential commitments**: Does the user intend to provision (a) Upstash QStash for external backup cron, (b) Sentry `SENTRY_AUTH_TOKEN` for sourcemap symbolication, (c) DMARC `p=quarantine` migration tooling, (d) CF monthly cost-alert? Without these, Phase 5 will report residual gaps honestly — but the 100/100 ceiling becomes unreachable. (Recommend: confirm yes/no per item before Phase 5 finalizes scorecard.)
 2. **Dirty-tree decision**: Is the `handover-doc-generator` + `handover-tier-content` work part of B1/B2/B3 (already committed in `d68b4d96`) or a new uncommitted feature? Phase 1 verifies; if new feature → ship before audit cycle starts; if abandoned scratch → revert.
-3. **Audit baseline reconciliation**: Prior audit said 410 test files; local count is 956. Either audit miscounted or test surface grew 2.3x in 6 days. Phase 1 reconciles; affects test-coverage scoring in Phase 5.
+3. **Audit baseline reconciliation**: RESOLVED — test surface grew (956 files; 501 ts pass; 4856 tests pass).
 4. **Memory drift**: Memory snapshot said prod SHA `93b190e0`; live is `b8c4f6dd`. Memory entry `project_sophia_consolidation.md` is stale — Phase 5 updates after scorecard lands.
-5. **Doctrine post-cycle**: After this audit, does the doctrine file get rewritten to remove the ceiling clause, or does the reversal stay local to this plan? (Recommend: leave doctrine file untouched; future audits re-evaluate.)
+5. **Doctrine post-cycle**: RESOLVED — doctrine file NOT rewritten; reversal stays local to this plan per user override.

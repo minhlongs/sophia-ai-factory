@@ -83,15 +83,15 @@ Six parallel sub-audits, one per axis. Synthesizer report at `reports/phase-03-r
 
 ## Todo List
 
-- [ ] State snapshot (live headers, audit, DNS)
-- [ ] Reliability axis report
-- [ ] Scalability axis report
-- [ ] Security axis report
-- [ ] Observability axis report
-- [ ] DevEx axis report
-- [ ] Infrastructure axis report
-- [ ] Synthesis summary with severity mix
-- [ ] Pre-populate Phase 5 evidence pool
+- [x] State snapshot (live headers, audit, DNS) (report file present under reports/)
+- [x] Reliability axis report (report file present under reports/)
+- [x] Scalability axis report (report file present under reports/)
+- [x] Security axis report (report file present under reports/)
+- [x] Observability axis report (report file present under reports/)
+- [x] DevEx axis report (report file present under reports/)
+- [x] Infrastructure axis report (report file present under reports/)
+- [x] Synthesis summary with severity mix (report file present under reports/)
+- [x] Pre-populate Phase 5 evidence pool (report file present under reports/)
 
 ## Success Criteria
 
