@@ -92,6 +92,7 @@ export default async function SopDetailPage({ params }: Props) {
       <SopDetailTabs
         installation={installation}
         runs={runs}
+  template={template}
         playbookMd={playbookMd}
         installationId={id}
         locale={locale}
