@@ -26,8 +26,10 @@ const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number];
 
+type PageTemplate = Record<string, unknown>;
+
 export default async function SopMarketplacePage() {
-  let templates: unknown[] = [];
+  let templates: PageTemplate[] = [];
   try {
     const base = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const res = await fetch(`${base}/api/sop-marketplace?limit=100`, {
@@ -35,7 +37,7 @@ export default async function SopMarketplacePage() {
     });
     if (res.ok) {
       const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-      templates = (json.templates as unknown[]) ?? [];
+      templates = (json.templates as PageTemplate[]) ?? [];
     }
   } catch {
     templates = [];
@@ -51,7 +53,7 @@ export default async function SopMarketplacePage() {
         </p>
       </div>
 
-      <MarketplaceClient initialTemplates={templates} categories={CATEGORIES} />
+      <MarketplaceClient initialTemplates={templates as any} categories={CATEGORIES} />
     </div>
   );
 }

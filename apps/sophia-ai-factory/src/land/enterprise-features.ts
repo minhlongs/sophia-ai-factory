@@ -15,7 +15,7 @@
  *   - quota checkers (`quota-checker.ts`)
  */
 
-import { Tier } from '@/seed/types';
+import { Tier, FeatureFlag } from '@/seed/types';
 import { tierHasFeature } from '@/seed/config/tiers';
 import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import { getUnifiedTierLimits } from '@/seed/config/tiers/unified-limits';
@@ -173,5 +173,5 @@ export function getVisibleEnterpriseFeatures(tier: Tier): MasterFeature[] {
  */
 export function masterHasFeature(tier: Tier, flag: MasterFeatureFlag): boolean {
   if (!hasMasterAccess(tier)) return false;
-  return tierHasFeature(tier, flag);
+  return tierHasFeature(tier, flag as FeatureFlag);
 }

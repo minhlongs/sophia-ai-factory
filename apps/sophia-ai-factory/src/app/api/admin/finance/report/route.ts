@@ -20,7 +20,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getD1Database } from "@/seed/db/d1-client";
+import { getD1Database } from "@/land/analytics/cohort-calculator";
 
 const INTERNAL_SECRET = process.env.INTERNAL_SECRET || process.env.X_INTERNAL_SECRET || "";
 
@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
   const period = searchParams.get("period") || "monthly";
   const fromStr = searchParams.get("from") || "";
   const toStr = searchParams.get("to") || "";
-  const { fromSec, toSec } = parsePeriod(fromStr, toStr);
+  const { fromSec, toSec, from, to } = parsePeriod(fromStr, toStr);
 
   const db = getD1Database();
 
@@ -138,7 +138,7 @@ export async function GET(req: NextRequest) {
         ltv,
         cac,
         churn_rate: Math.round(churnRate * 1000) / 10,
-        ltv_cac,
+        ltv_cac: ltvCac,
         tx_count: txCount,
       },
       notes: [
