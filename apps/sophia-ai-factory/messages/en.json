@@ -2219,7 +2219,11 @@
     },
     "detail_page": {
       "overview": "Overview",
-      "runs": "Run History",
+      "runs": {
+        "pageTitleSimple": "Run History",
+        "subtitle": "All execution logs for this SOP",
+        "backToSop": "Back to SOP"
+      },
       "edit": "Edit Playbook",
       "webhook": "Webhook",
       "schedule": "Schedule",
