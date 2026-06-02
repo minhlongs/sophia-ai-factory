@@ -102,16 +102,16 @@ L1-L10 per `actual-fullstack-audit.md`. For each: current score, prior 5/15 scor
 
 ## Todo List
 
-- [ ] Build evidence index from Phase 1-4 outputs
-- [ ] Score Scorecard A (10 categories)
-- [ ] Score Scorecard B (10-layer) with delta column
-- [ ] Cross-map table
-- [ ] Severity-sorted fix list (blocker/high/med/low)
-- [ ] Operator-commitments analysis
-- [ ] Residual-gaps doc
-- [ ] Compute three score points (current/with-commits/max)
-- [ ] Final report `phase-05-scorecard.md`
-- [ ] User-facing verdict + go-live recommendation
+- [x] Build evidence index from Phase 1-4 outputs (reports/ directory with phase1-3, phase3-axis1-6, phase4-tech-debt)
+- [x] Score Scorecard A (10 categories) — see phase5-go-live-scorecard.md Scorecard A section
+- [x] Score Scorecard B (10-layer) with delta column — see phase5-go-live-scorecard.md Scorecard B section
+- [x] Cross-map table — see phase5-go-live-scorecard.md cross-map section
+- [x] Severity-sorted fix list (blocker/high/med/low) — see phase5-go-live-scorecard.md fix list section
+- [x] Operator-commitments analysis — see phase5-go-live-scorecard.md operator-commitments section
+- [x] Residual-gaps doc — see phase5-go-live-scorecard.md residual-gaps section
+- [x] Compute three score points (current/with-commits/max) — current=67, with-commits=75, max=92 per phase5-go-live-scorecard.md
+- [x] Final report `phase-05-scorecard.md` — reports/phase5-go-live-scorecard.md written 2026-05-22
+- [x] User-facing verdict + go-live recommendation — NO-GO for 100/100, ship Milestone A (8 P0s) to reach 75, per phase5-go-live-scorecard.md
 
 ## Success Criteria
 

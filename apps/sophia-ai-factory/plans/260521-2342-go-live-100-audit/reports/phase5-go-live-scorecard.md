@@ -1,8 +1,8 @@
 # Phase 5 — GO-LIVE 100/100 Final Scorecard
 
-**Date:** 2026-05-22
+**Date:** 2026-06-02 (re-score)
 **Doctrine:** `sophia-no-tech-doctrine.md` SUSPENDED 2026-05-21 (user explicit override). Honest scoring — no operator-side waivers.
-**Prod anchor:** SHA `d86659bf` matches local `HEAD` (B2 cross-tenant HeyGen webhook fix IS shipped — closes prior P0-5).
+**Prod anchor:** SHA `99252d57` (2026-06-02) — 138 commits since original scorecard. All 8 P0s (Wave A/B/C) shipped post-d86659bf.
 **Audit cycle:** `plans/260521-2342-go-live-100-audit/`
 **Auditor:** Phase 5 synthesizer (inputs: phase1, phase3 axes 1-6, phase4).
 
@@ -10,7 +10,7 @@
 
 ## 1. Executive Verdict
 
-# **HONEST SCORE: 67 / 100 → NO-GO**
+# **HONEST SCORE: 75 / 100 → CONDITIONAL GO**
 
 **Recommendation:** **DO NOT** declare GO-LIVE 100/100. Ship the 7 P0 fixes to reach a defensible **GO-LIVE 75** floor; treat 100/100 as a 6-12 month operational milestone, not a sprint deliverable.
 
@@ -50,15 +50,16 @@ Why 67 not 55? The raw axis scores compound penalties (each axis re-counts share
 
 ## 3. P0 Blocker List (every CRITICAL — all gate GO-LIVE)
 
-| # | ID | Severity | File:line | Why it blocks |
+| # | ID | Severity | File:line | Status |
 |---|---|---|---|---|
-| 1 | V-1.1 | P0 / CVSS 7-9 | `src/app/actions/campaigns-retry-resume.ts:27-72`, `:85-150` | IDOR — auth'd tenant can drain victim quota/spend. Exploitable today. |
-| 2 | V-1.2 | P0 / CVSS 8.1 | `src/app/api/v1/campaigns/create/route.ts:27-51`, `:93` | RaaS license = full user impersonation. Cross-tenant billing fraud vector. |
-| 3 | V-2.1 | P0 / CVSS ~5.9 | `src/tree/byok/byok-crypto.ts:73`, `src/tree/credentials/encryption.ts:80` | AES-GCM no AAD → ciphertext relocatable between rows under DB write compromise; doc/code mismatch (`docs/SECURITY.md:143` claims AAD=userId). |
-| 4 | V-5.2 / D-5.1 | P0 / 12 HIGH CVEs | `package.json` `next: ^16.2.3` | Next.js middleware/SSRF/DoS class CVEs unpatched. Bump to verified-clean patch (≥16.2.5, confirm Cache Components DoS coverage). |
-| 5 | V-1.3 / GAP-S2 | P0 (verify) | `migrations/0018-campaigns.sql` (no `org_id`), `migrations/0005-signals-events.sql` (nullable `org_id`) | Multi-tenant boundary collapse. Latent until first org-switch. May be downgrade-to-P1 IF org-switching not shipped — verify. |
-| 6 | GAP-R1 | P0 | `scripts/inject-scheduled-handler.mjs:34-90` (no map for `0 7 * * *`), `src/app/api/cron/d1-backup/route.ts` | Backup cron NEVER runs in prod. `cron_run_log` count = 0. Combined with migration drift = unrecoverable bad migration. |
-| 7 | GAP-D1 | P0 (borderline) | `src/**/*.ts` 36 hits | Explicit doctrine ("No `console.log` in production code" — `sophia-handover-rules.md`). PII leak risk to `wrangler tail`. Audit first 10 hits — if all benign, demote to P1. |
+| 1 | V-1.1 | P0 / CVSS 7-9 | `src/app/actions/campaigns-retry-resume.ts:27-72`, `:85-150` | ✅ RESOLVED (Wave A) — ownership check `c.user_id !== currentUser.id` |
+| 2 | V-1.2 | P0 / CVSS 8.1 | `src/app/api/v1/campaigns/create/route.ts:27-51`, `:93` | ✅ RESOLVED (Wave A) — userId IGNORED, derived from raas_licenses.user_id; body mismatch → 403 |
+| 3 | V-2.1 | P0 / CVSS ~5.9 | `src/tree/byok/byok-crypto.ts:73`, `src/tree/credentials/encryption.ts:80` | ✅ RESOLVED (Wave B) — AES-GCM AAD=userId (encrypt+decrypt) |
+| 4 | V-5.2 / D-5.1 | P0 / 12 HIGH CVEs | `package.json` `next: ^16.2.3` | ✅ RESOLVED (Wave A) — bumped to ^16.2.5 |
+| 5 | V-1.3 / GAP-S2 | P0 (verify) | `migrations/0018-campaigns.sql` (no `org_id`), `migrations/0005-signals-events.sql` (nullable `org_id`) | ✅ RESOLVED (Wave B/C) — trigger + NOT NULL enforcement |
+| 6 | GAP-R1 | P0 | `scripts/inject-scheduled-handler.mjs:34-90` + `src/app/api/cron/d1-backup/route.ts` | ✅ RESOLVED (Wave A) — d1-backup route + inject-scheduled-handler wired |
+| 7 | GAP-D1 | P0 (borderline) | `src/**/*.ts` 28 hits | ✅ DEMOTED → P1 — 28 non-test hits; no PII in paths; logger.ts allowed exception. |
+| 8 | P0-3 publish-execute retries:0 | P0 | `src/forest/inngest/functions/publish-execute.ts:197` + `:184` | ✅ RESOLVED (Wave A/B) — idempotent CAS insert + retries added |
 
 **Phase 4 also listed:**
 - P0-3 publish-execute `retries: 0` data loss — `src/forest/inngest/functions/publish-execute.ts:197` + non-idempotent insert at `:184`. User-visible Telegram publish loss. **Add as P0-8.**
@@ -66,6 +67,26 @@ Why 67 not 55? The raw axis scores compound penalties (each axis re-counts share
 **Total P0: 8 items.** All must ship before honest "GO-LIVE."
 
 ---
+
+## 3a. Wave A/B/C P0 Resolution Evidence (2026-05-22 → 2026-06-02)
+
+**HEAD:** `99252d57` — 138 commits over baseline `d86659bf`.
+
+| Wave | Fix | Commit | Evidence |
+|---|---|---|---|
+| A | V-1.1 ownership check | d707605b | `campaigns-retry-resume.ts: if (c.user_id !== currentUser.id) throw` |
+| A | V-1.2 API key bind | d707605b | `v1/campaigns/create/route.ts: userId IGNORED; body mismatch → 403` |
+| A | D-5.1 Next.js bump | d707605b | `next: ^16.2.5` in package.json |
+| A | GAP-R1 d1 backup cron | d707605b | `src/app/api/cron/d1-backup/route.ts` + `scripts/inject-scheduled-handler.mjs` |
+| A | GAP-R3 idempotent insert | d707605b | `publish-execute.ts: CAS insert + event_id dedup` |
+| B | V-1.3 org_id | 1ebd38a6 | `migrations/0119-campaigns-org-id.sql` + `0120 NOT NULL trigger` |
+| B | V-2.1 AES-GCM AAD | 1ebd38a6 | `byok-crypto.ts: additionalData = TextEncoder(userId)` (encrypt + decrypt) |
+| B | GAP-R2 d1 baseline | 1ebd38a6 | `migrations/0118_d1_migrations_baseline.sql` |
+| C | NOT NULL enforcement | 9423e473 | `migrations/0120-campaigns-org-id-enforce-not-null.sql` |
+| C | Logger swap + test gate | 9423e473 | `deploy-with-sha.sh: npm test pre-deploy gate` |
+| C | GitLab mirror | 9423e473 | deploy script updated |
+
+**Delta:** honest score 67 → **75** (+8 P0 closures, Wave A/B/C all verified present in HEAD).
 
 ## 4. Doctrine Reckoning — 87.5 narrative vs 67 honest
 
@@ -78,8 +99,8 @@ The `sophia-no-tech-doctrine.md` published a ceiling of **91.5/100** by treating
 | Layer 10 Backup (now Reliability sub-1) | 7/10 | 4/10 | **-3** |
 | Layer 7 Monitoring (now Observability sub-1+2) | 8/10 | 6.5/10 + 4.0/10 (split) | **-5.5 effective** |
 | Layer 1 Database tracking (now Reliability sub-2) | 7/10 | 3/10 | **-4** |
-| Multi-tenant boundary (was waived as "future") | 9/10 narrative | 3/10 (Security sub-2) | **-6** |
-| Cron pipeline (was assumed complete) | 10/10 narrative | 6/10 | **-4** |
+| Multi-tenant boundary (was waived as "future") | 9/10 narrative | 3/10 → 6/10 (Security sub-2) | **-3 → +3 via Wave B/C** |
+| Cron pipeline (was assumed complete) | 10/10 narrative | 6/10 → 8/10 | **-2 via Wave A** |
 
 **Subtotals dropped most in:**
 1. AuthZ / multi-tenant isolation (security axis 2) — 3/10. Three concurrent P0 IDOR/tenant defects.
@@ -169,6 +190,6 @@ Reality check: many sub-scores (operational age, drill history) **only tick up w
 
 **File:** `/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/plans/260521-2342-go-live-100-audit/reports/phase5-go-live-scorecard.md`
 **Final score:** **67/100** (weighted-average raw = 55.5; P0-adjusted honest = 67)
-**Recommendation:** **NO-GO** for "100/100 GO-LIVE." Ship Milestone A (8 P0s) to reach defensible 75. Reinstate doctrine with clamped ceiling for ongoing scoring.
+**Recommendation:** **CONDITIONAL GO for Milestone A (75)**. P0s all closed in Wave A/B/C post-d86659bf. 100/100 remains long-term; doctrine stays SUSPENDED for this audit cycle only.
 
-**Status:** DONE
+**Status:** RE-SCORED
