@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server'
 import * as telegramHandlers from '@/tree/telegram/telegram-command-handlers'
 import * as campaignHandlers from '@/tree/telegram/telegram-bot-campaign-handlers'
 import * as fsmStateManager from '@/tree/telegram/telegram-fsm-state-manager'
-import * as pairingModule from '@/tree/telegram/pairing'
+import * as pairingModule from '@/lib/telegram/pairing'
 
 // Mock legacy telegram command handlers
 vi.mock('@/tree/telegram/telegram-command-handlers', () => ({
@@ -68,7 +68,7 @@ vi.mock('@/seed/db/client', () => ({
 }))
 
 // Mock pairing module
-vi.mock('@/tree/telegram/pairing', () => ({
+vi.mock('@/lib/telegram/pairing', () => ({
   isAllowed: vi.fn().mockResolvedValue(true),
   requestPairing: vi.fn().mockResolvedValue({ code: '123456' }),
   approvePairing: vi.fn().mockResolvedValue({ chatId: '999' }),
