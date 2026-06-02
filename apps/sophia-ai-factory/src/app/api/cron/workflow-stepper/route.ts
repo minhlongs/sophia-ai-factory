@@ -70,20 +70,32 @@ export async function executeStep(
         event: 'llm_router_unsupported', provider, model, workflowId: workflow.id,
       })
       result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
-    } else if (provider === 'anthropic') {
-      const llmResult = await callAnthropicWithByok(workflow, model, stepType)
-      result = llmResult.result
-      llmDegraded = llmResult.llmDegraded
-      degradeReason = llmResult.degradeReason
-    } else {
-      const llmResult = await callOpenRouterWithByok(workflow, model, provider, stepType)
-      result = llmResult.result
-      llmDegraded = llmResult.llmDegraded
-      degradeReason = llmResult.degradeReason
-    }
-  } else {
+} else if (provider === 'anthropic') {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    console.log('[DEBUG] ANTHROPIC_API_KEY guard triggered, process.env.ANTHROPIC_API_KEY =', process.env.ANTHROPIC_API_KEY)
+    logger.warn('[workflow-stepper] ANTHROPIC_API_KEY not set, falling back to mock', {
+      event: 'llm_anthropic_missing_key',
+      provider,
+      model,
+      workflowId: workflow.id,
+    })
     result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+    llmDegraded = true
+    degradeReason = 'LLM_MISSING_KEY_FALLBACK'
+  } else {
+    const llmResult = await callAnthropicWithByok(workflow, model, stepType)
+    result = llmResult.result
+    llmDegraded = llmResult.llmDegraded
+    degradeReason = llmResult.degradeReason
   }
+} else if (provider === 'openrouter') {
+  const llmResult = await callOpenRouterWithByok(workflow, model, provider, stepType)
+  result = llmResult.result
+  llmDegraded = llmResult.llmDegraded
+  degradeReason = llmResult.degradeReason
+}
+  result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
+}
 
   try {
     if (workflow.status === 'queued') {
