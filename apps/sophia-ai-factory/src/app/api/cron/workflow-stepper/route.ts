@@ -55,7 +55,6 @@ export async function executeStep(
   const startedAt = Date.now()
 
   const decision = routeLlm(workflow.prompt, false)
-console.log('[DEBUG executeStep] process.env.ANTHROPIC_API_KEY =', JSON.stringify(process.env.ANTHROPIC_API_KEY), 'isRealLlmEnabled =', (() => process.env.WORKFLOW_REAL_LLM_ENABLED === '1' && Boolean(process.env.OPENROUTER_API_KEY))())
 
   let result: string
   let llmDegraded = false
