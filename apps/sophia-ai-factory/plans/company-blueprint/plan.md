@@ -92,6 +92,6 @@ After blueprint approval, auto-dispatch:
 
 ## Next Commands
 ```
-/plan "Fix SOP sync + navigation audit items"
+/plan "Board governance setup + financial reporting automation"
 /cook ./plans/company-blueprint/plan.md --auto
 ```
