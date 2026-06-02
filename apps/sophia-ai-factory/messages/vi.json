@@ -82,7 +82,8 @@
       "subtitle": "Sophia đã sẵn sàng tự động hóa doanh nghiệp của bạn",
       "launchBtn": "Khởi động Sophia",
       "continueToChallenges": "Tiếp tục đến Thử thách",
-      "readyToUse": "Sophia đã sẵn sàng tự động hóa doanh nghiệp của bạn"
+      "readyToUse": "Your workspace is ready to automate",
+      "errorOccurred": "Đã xảy ra lỗi — vui lòng thử lại"
     }
   },
   "landing": {
@@ -3170,5 +3171,10 @@
     "ctr": "CTR",
     "selectWinner": "Chọn người thắng",
     "generating": "Đang tạo thumbnail..."
+  },
+  "runs": {
+    "pageTitleSimple": "Lịch Sử Chạy",
+    "subtitle": "Tất cả nhật ký thực thi SOP này",
+    "backToSop": "Quay lại SOP"
   }
 }

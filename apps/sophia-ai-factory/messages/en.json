@@ -68,7 +68,9 @@
     "finish": {
       "subtitle": "Sophia is ready to automate your business",
       "launchBtn": "Launch Sophia",
-      "continueToChallenges": "Continue to Challenges"
+      "continueToChallenges": "Continue to Challenges",
+      "readyToUse": "Your workspace is ready to automate",
+      "errorOccurred": "Something went wrong — please try again"
     },
     "actions": {
       "back": "Back",
@@ -3170,5 +3172,10 @@
     "ctr": "CTR",
     "selectWinner": "Select Winner",
     "generating": "Generating thumbnails..."
+  },
+  "runs": {
+    "pageTitleSimple": "Run History",
+    "subtitle": "All execution logs for this SOP",
+    "backToSop": "Back to SOP"
   }
 }
