@@ -32,7 +32,6 @@ import {
   callCloneVoice,
   callGenerateSeoScript,
   callSchedulePublish,
-  callRunAutoVideoMission,
 } from '@/land/openclaw-telegram/openclaw-bridge';
 
 const NOT_PAIRED_MSG =
@@ -395,14 +394,12 @@ export async function handleFree100(chatId: string, rawArg: string): Promise<voi
     );
     return;
   }
-  const userId = await resolveUserIdFromChat(chatId);
-  const isPaired = !!userId;
   const result = await callRedeemFree100({ code: 'FREE100', email, tier: 'MASTER' });
   if (!result.success) {
     await sendMessage(chatId, `❌ Redeem thất bại: \`${result.error ?? 'unknown_error'}\``);
     return;
   }
-  if (result.magicLink && isPaired) {
+  if (result.magicLink) {
     await sendMessage(
       chatId,
       `🎉 *FREE100 đã kích hoạt!*\n\n[Vào Dashboard ngay](${result.magicLink})\n\n_Link có hiệu lực 72h, single-use._`,
@@ -413,86 +410,4 @@ export async function handleFree100(chatId: string, rawArg: string): Promise<voi
       `✅ Đã redeem (handover \`${result.handoverId ?? '—'}\`). Email magic-link đang được gửi.`,
     );
   }
-}
-
-/**
- * /auto <topic> [| lang=vi] [| translate=en] [| channel=<id>] [| niche=fashion]
- *
- * One-shot autonomous video mission. Chains SEO script → optional translate →
- * affiliate-enriched description → publish schedule (when channel given).
- * Returns the missionId so the user can poll status from the dashboard.
- */
-export async function handleAutoVideo(chatId: string, rawArg: string): Promise<void> {
-  const userId = await resolveUserIdFromChat(chatId);
-  if (!userId) {
-    await sendMessage(chatId, NOT_PAIRED_MSG);
-    return;
-  }
-  const raw = rawArg.trim();
-  if (!raw) {
-    await sendMessage(
-      chatId,
-      '❌ Cú pháp: `/auto <topic> [| lang=vi] [| translate=en] [| channel=<id>] [| niche=fashion]`\n' +
-        'Ví dụ: `/auto Fashion trends 2026 | lang=en | translate=vi | niche=fashion`',
-    );
-    return;
-  }
-  const [topicRaw, ...flagParts] = raw.split('|').map((s) => s.trim());
-  const flags: Record<string, string> = {};
-  for (const p of flagParts) {
-    const [k, v] = p.split('=').map((s) => s.trim());
-    if (k && v) flags[k] = v;
-  }
-  const primaryLanguage = flags.lang === 'vi' ? 'vi' : 'en';
-  const secondaryLanguage =
-    flags.translate === 'vi' ? 'vi' : flags.translate === 'en' ? 'en' : undefined;
-
-  const out = await callRunAutoVideoMission({
-    userId,
-    topic: topicRaw,
-    primaryLanguage,
-    secondaryLanguage,
-    channelId: flags.channel || undefined,
-    nicheHint: flags.niche || undefined,
-  });
-
-  if (!out.ok) {
-    const missionLine = out.missionId ? `\n• Mission: \`${out.missionId}\`` : '';
-    await sendMessage(
-      chatId,
-      `❌ Mission thất bại (\`${out.code}\`): ${out.message}${missionLine}`,
-    );
-    return;
-  }
-
-  const r = out.result;
-  const titles = r.script.primary.suggestedTitles
-    .slice(0, 3)
-    .map((t, i) => `  ${i + 1}. ${t}`)
-    .join('\n');
-  const scheduleLine = r.publish && !('skipped' in r.publish)
-    ? `\n📅 Scheduled \`${r.publish.jobId}\` at ${new Date(r.publish.scheduledAt * 1000).toISOString()}`
-    : r.publish && 'skipped' in r.publish
-      ? `\n📅 Publish skipped — no HeyGen key configured (add BYOK in Setup Wizard)`
-      : '';
-  const secondaryLine = r.script.secondary
-    ? `\n🌐 Translated → \`${r.script.secondary.language}\` (${r.script.secondary.body.length} chars)`
-    : '';
-  const videoLine = r.video
-    ? `\n🎬 HeyGen render started — video \`${r.video.videoId}\` (job \`${r.video.heygenJobId}\`, status: ${r.video.status})`
-    : '\n🎬 HeyGen render skipped — add your HeyGen key in Setup Wizard to enable.';
-  await sendMessage(
-    chatId,
-    [
-      `🤖 *Auto-mission hoàn tất* — \`${r.missionId}\``,
-      `• SEO score: *${r.script.primary.seoScore}/100*  (${r.script.primary.wordCount} words)`,
-      `• Suggested titles:\n${titles}`,
-      `• Affiliate links injected: *${r.description.affiliateCount}*`,
-      videoLine.trim(),
-      secondaryLine.trim(),
-      scheduleLine.trim(),
-    ]
-      .filter((s) => s.length > 0)
-      .join('\n'),
-  );
 }

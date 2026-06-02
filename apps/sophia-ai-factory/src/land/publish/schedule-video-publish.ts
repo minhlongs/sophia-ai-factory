@@ -18,7 +18,6 @@
  *
  * @module land/publish/schedule-video-publish
  */
-import { inngest } from '@/forest/inngest/client';
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -149,17 +148,6 @@ export async function schedulePublish(
     });
     throw err;
   }
-
-  // Emit Inngest event after row is committed — matches publish.scheduled schema in forest/inngest/client.ts.
-  // Row is persisted first; if inngest.send fails the job row still exists and can be retried by cron.
-  await inngest.send({
-    name: 'publish.scheduled',
-    data: { jobId, tenantId: input.userId, userId: input.userId },
-  });
-
-  logger.info('[schedule-video-publish] job inserted and event emitted', {
-    jobId, channelId: input.channelId, videoId: input.videoId,
-  });
 
   return { jobId, scheduledAt: input.scheduledAt, status: 'scheduled' };
 }
