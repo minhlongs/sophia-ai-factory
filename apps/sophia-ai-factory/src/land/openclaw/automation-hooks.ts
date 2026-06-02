@@ -106,9 +106,9 @@ export async function handleMissionCreated(payload: MissionPayload): Promise<voi
 
   try {
     const agentTasks = agentFleet.map((agentName, idx) => ({
-      name: `${agentName}-${missionId.slice(0, 8)}-${idx}`,
+      id: `${agentName}-${missionId.slice(0, 8)}-${idx}`,
       prompt: `[AUTO] Handle mission ${missionId} of type ${missionType} on behalf of tenant ${tenantId}. Mission: ${missionText.slice(0, 1000)}`,
-      role: agentName,
+      
     }));
 
     const results = await spawnAgentFleet(agentTasks, {
@@ -121,14 +121,14 @@ export async function handleMissionCreated(payload: MissionPayload): Promise<voi
       missionId,
       missionType,
       agentFleet,
-      successCount: results.filter((r) => r.ok).length,
+      successCount: results.filter((r) => r.success).length,
       total: results.length,
       triggeredBy,
     });
 
     logger.info('automation: dispatch complete', {
       missionId,
-      successCount: results.filter((r) => r.ok).length,
+      successCount: results.filter((r) => r.success).length,
       total: results.length,
     });
   } catch (err) {

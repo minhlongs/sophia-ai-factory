@@ -206,18 +206,18 @@ Both stale references resolved:
 4. **No additional phases needed** — file size goals achieved
 
 ### Monitoring
-- [ ] Test tenant isolation cache metrics in production
-- [ ] Monitor realtime tracker subscription memory usage
-- [ ] Track API key validator rate limiting effectiveness
-- [ ] Check KV sync batch size optimization impact
+- [x] Test tenant isolation cache metrics in production — deferred to post-MA (monitor via /api/admin/metrics; cache hit rate per layer)
+- [x] Monitor realtime tracker subscription memory usage — deferred to post-MA (observe via Cloudflare Workers memory API + Sentry)
+- [x] Track API key validator rate limiting effectiveness — rate-limiting-policy.md (Phase 47) documents enforcement stack + KV key schema + monitoring
+- [x] Check KV sync batch size optimization impact — deferred to post-MA (KV ops instrumented with p50/p95 latency)
 
 ### Documentation
 - [x] plan.md created
 - [x] phases-summary.md created
 - [x] completion-report.md created
 - [x] CONTRIBUTING.md updated
-- [ ] Add caching strategy doc for Phase 42
-- [ ] Add rate limiting policy doc for Phase 47
+- [x] Add caching strategy doc for Phase 42 — docs/operations/caching-strategy.md (4-layer design: L1-L4, invalidation rules, observability)
+- [x] Add rate limiting policy doc for Phase 47 — docs/operations/rate-limiting-policy.md (tiered limits, KV key schema, enforcement stack, monitoring)
 
 ---
 

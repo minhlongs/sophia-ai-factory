@@ -15,7 +15,6 @@
 
 import { routeLLM } from '@/land/openclaw/llm-router';
 import { logger } from '@/seed/utils/logger-utility';
-import { getErrorMessage } from '@/seed/utils/to-error';
 
 // ---------------------------------------------------------------------------
 // Mission taxonomy — add new types here as coverage grows.
@@ -34,6 +33,7 @@ export type MissionType =
   | 'unknown';
 
 interface MissionTypeRule {
+	missionType: MissionType;
   keywords: string[];
   agentFleet: string[];
 }
@@ -103,16 +103,12 @@ export async function classifyMission(text: string): Promise<MissionType> {
   }
   // LLM fallback — try once; swallow errors so caller still gets a type.
   try {
-    const result = await routeLLM({
-      prompt: `Classify the following mission into one of: content, video, social, support, finance, sales, onboarding, engineering, marketing, unknown.\nMission: ${text.slice(0, 2000)}`,
-      maxTokens: 32,
-      temperature: 0,
-    });
-    const answer = (result.content as string).trim().toLowerCase();
+	const result = await routeLLM('lite', `Classify the following mission into one of: content, video, social, support, finance, sales, onboarding, engineering, marketing, unknown.\nMission: ${text.slice(0, 2000)}`);
+    const answer = result.text.trim().toLowerCase();
     const allowed = new Set<MissionType>(['content', 'video', 'social', 'support', 'finance', 'sales', 'onboarding', 'engineering', 'marketing', 'unknown']);
     if (allowed.has(answer as MissionType)) return answer as MissionType;
   } catch (err) {
-    logger.warn('auto-dispatch: LLM classify failed', getErrorMessage(err));
+    logger.warn('auto-dispatch: LLM classify failed', { error: err instanceof Error ? err.message : String(err) });
   }
   return 'unknown';
 }

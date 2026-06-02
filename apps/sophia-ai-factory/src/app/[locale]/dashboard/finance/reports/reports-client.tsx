@@ -13,7 +13,7 @@
 import { useMemo, useState } from 'react';
 import useSWR from 'swr';
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+const fetcher = (url: string): Promise<ReportResponse> => fetch(url).then((r) => r.json());
 
 type PnL = {
   revenue: number;

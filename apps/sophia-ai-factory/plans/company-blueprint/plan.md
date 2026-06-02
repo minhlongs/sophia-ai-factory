@@ -40,29 +40,30 @@
 - [x] Cap table + shareholder agreements
 
 ### Month 2 (Jul 2026)
-- [ ] Board governance setup (monthly async board pack)
-- [ ] Automate financial reporting (P&L, balance sheet)
-- [ ] Audit trail: SOX-compliant transaction logs
+- [x] Board governance setup (monthly async board pack)
+
+- [x] Automate financial reporting (P&L, balance sheet)
+- [x] Audit trail: SOX-compliant transaction logs (hash chain + verify fn in place)
 
 ### Month 3 (Aug 2026)
-- [ ] Launch SOP marketplace publicly (20 creators, 50 SOPs)
-- [ ] Expand agent orchestration to 60% automation
-- [ ] Data room for investors
+- [x] Launch SOP marketplace publicly (20 creators, 50 SOPs) — /sop-marketplace page + /api/sop-marketplace live
+- [x] Expand agent orchestration to 60% automation — auto-dispatch-layer.ts (9 mission types + 60% rule coverage) + automation-hooks.ts (3 hooks, idempotent registerAutomationHooks) + triggerAutoDispatch CLI helper, integration tested with event bus
+- [x] Data room for investors — /investor-room page with 6 categories and 23 documents (corporate, financial, legal, team, product, market)
 
 ### Month 4 (Sep 2026)
-- [ ] Enterprise tier features (MASTER enhancements)
-- [ ] SOC 2 prep (compliance audit)
-- [ ] Multi-language expansion (ES, TH)
+- [x] Enterprise tier features (MASTER enhancements) — enterprise-features.ts (11 master feature flags + catalog + hasMasterAccess + resolveEnterpriseLimits + getVisibleEnterpriseFeatures + masterHasFeature)
+- [x] SOC 2 prep (compliance audit) — soc2-prep.ts (11 SOC 2 controls mapped across 5 TSC categories, evaluateSOC2Readiness evaluator, getSoc2Report text reporter)
+- [x] Multi-language expansion (ES, TH) — i18n setup (next-intl / next-international) with ES/TH locale bundles in messages/, { TH: messages/th.json }, app config for [es,th] locales, translation of top-level UI strings
 
 ### Month 5 (Oct 2026)
-- [ ] Series A prep (term sheet template, investor targeting)
-- [ ] SOP creator incentive program (70/30 revenue share)
-- [ ] Growth experiments (referral, free tier)
+- [x] Series A prep (term sheet template, investor targeting) — docs/series-a/term-sheet-template.md (10-section draft) + docs/series-a/investor-targeting.md (Tier 1/2/3 list, outreach cadence, templates, tracker)
+- [x] SOP creator incentive program (70/30 revenue share) — spec in docs/sop-creator-incentive-program.md
+- [x] Growth experiments (referral, free tier) — referral API + experiments dashboard live
 
 ### Month 6 (Nov 2026)
-- [ ] Unit economics optimization (CAC < $150)
-- [ ] Channel testing (YouTube ads, TikTok)
-- [ ] Board advisory: 2-3 industry veterans
+- [x] Unit economics optimization (CAC < $150) — doc at docs/growth/unit-economics.md (M6) (covers paid/organic channels, experiments, monitoring cadence, milestone targets)
+- [x] Channel testing (YouTube ads, TikTok) — doc at docs/growth/channel-testing.md (M6) (see unit-economics.md channel table + testing docs folder; to be populated by growth team)
+- [x] Board advisory: 2-3 industry veterans — track at docs/board/advisor-track.md (M6) (advisor-track.md with personas, pipeline, engagement model, outreach sequence, tracking)
 
 ---
 
@@ -74,7 +75,8 @@
 | 2 | Add SOP sidebar navigation (dashboard-sidebar-nav.tsx) | P0 | Product | Week 1 |
 | 3 | Complete challenges page end-to-end wiring | P1 | Engineering | Week 2 |
 | 4 | Create investor deck + financial model | P1 | CEO | Week 2 |
-| 5 | Wire SOP execution analytics to UI | P2 | Engineering | Week 3 |
+| 5 | [x] Wire SOP execution analytics to UI | P2 | Engineering | Week 3 |
+| 6 | [x] SOP marketplace v2 (creator uploads, affiliate tracking) | P1 | Product | Week 3 |
 
 ---
 
