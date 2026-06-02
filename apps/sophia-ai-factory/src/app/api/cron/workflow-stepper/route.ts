@@ -93,6 +93,8 @@ export async function executeStep(
   llmDegraded = llmResult.llmDegraded
   degradeReason = llmResult.degradeReason
 }
+} else {
+  result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
 }
 
   try {
