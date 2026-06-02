@@ -2219,7 +2219,11 @@
     },
     "detail_page": {
       "overview": "Tổng Quan",
-      "runs": "Lịch Sử Chạy",
+      "runs": {
+        "pageTitleSimple": "Lịch Sử Chạy",
+        "subtitle": "Tất cả nhật ký thực thi SOP này",
+        "backToSop": "Quay lại SOP"
+      },
       "edit": "Sửa Playbook",
       "webhook": "Webhook",
       "schedule": "Lịch Chạy",
