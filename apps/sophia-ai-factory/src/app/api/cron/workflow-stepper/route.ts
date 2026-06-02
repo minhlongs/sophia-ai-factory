@@ -55,6 +55,7 @@ export async function executeStep(
   const startedAt = Date.now()
 
   const decision = routeLlm(workflow.prompt, false)
+console.log('[DEBUG executeStep] process.env.ANTHROPIC_API_KEY =', JSON.stringify(process.env.ANTHROPIC_API_KEY), 'isRealLlmEnabled =', (() => process.env.WORKFLOW_REAL_LLM_ENABLED === '1' && Boolean(process.env.OPENROUTER_API_KEY))())
 
   let result: string
   let llmDegraded = false
@@ -72,7 +73,6 @@ export async function executeStep(
       result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
 } else if (provider === 'anthropic') {
   if (!process.env.ANTHROPIC_API_KEY) {
-    console.log('[DEBUG] ANTHROPIC_API_KEY guard triggered, process.env.ANTHROPIC_API_KEY =', process.env.ANTHROPIC_API_KEY)
     logger.warn('[workflow-stepper] ANTHROPIC_API_KEY not set, falling back to mock', {
       event: 'llm_anthropic_missing_key',
       provider,
@@ -94,7 +94,6 @@ export async function executeStep(
   llmDegraded = llmResult.llmDegraded
   degradeReason = llmResult.degradeReason
 }
-  result = `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`
 }
 
   try {
