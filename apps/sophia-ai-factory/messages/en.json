@@ -2511,7 +2511,7 @@
     "workflows": "Workflows",
     "sop_marketplace": "Sop marketplace",
     "my_sops": "My sops",
-  "challenges": "Challenges",
+    "challenges": "Challenges",
     "api_docs": "Api docs",
     "settings": "Settings",
     "replay_tour": "Replay tour",
@@ -2871,7 +2871,8 @@
     "credits": "Credits",
     "commissionBoost": "Commission Boost",
     "noChallenges": "No active challenges right now",
-    "claimed": "Claimed"
+    "claimed": "Claimed",
+    "claimReward": "Claim Reward"
   },
   "community": {
     "joinCommunity": "Join the Community",
