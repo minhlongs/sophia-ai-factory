@@ -20,15 +20,18 @@ function buildRequest(auth?: string): NextRequest {
 }
 
 function buildMockDb(changes: number | Error) {
-  const run =
-    changes instanceof Error
-      ? vi.fn().mockRejectedValue(changes)
-      : vi.fn().mockResolvedValue({ meta: { changes } })
-  return {
-    prepare: vi.fn().mockReturnValue({
-      bind: vi.fn().mockReturnValue({ run }),
-    }),
-  }
+ const run =
+ changes instanceof Error
+   ? vi.fn().mockRejectedValue(changes)
+   : vi.fn().mockResolvedValue({ meta: { changes } })
+ const first = vi.fn().mockResolvedValue(null)
+ const all = vi.fn().mockResolvedValue([])
+ const stmt = { run, first, all }
+ return {
+   prepare: vi.fn().mockReturnValue({
+     bind: vi.fn().mockReturnValue(stmt),
+   }),
+ }
 }
 
 describe('GET/POST /api/cron/llm-cache-purge', () => {
