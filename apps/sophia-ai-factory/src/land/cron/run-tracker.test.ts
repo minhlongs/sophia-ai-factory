@@ -73,10 +73,10 @@ describe('wasRecentlyRun', () => {
     expect(result).toBe(true);
   });
 
-  it('returns false (fail-open) when DB first() rejects', async () => {
+  it('returns true (fail-closed) when DB first() rejects — prevents double cron execution', async () => {
     const db = makeD1Mock({ first: vi.fn().mockRejectedValue(new Error('D1 error')) });
     const result = await wasRecentlyRun(db, 'test-cron', 5 * 60 * 1000);
-    expect(result).toBe(false);
+    expect(result).toBe(true);
   });
 });
 

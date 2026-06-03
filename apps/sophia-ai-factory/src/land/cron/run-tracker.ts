@@ -72,8 +72,8 @@ export async function wasRecentlyRun(
     return row !== null;
   } catch (err) {
     logger.error('cron-run-tracker: wasRecentlyRun failed', toError(err), { cronName });
-    // Fail open — don't block execution on DB errors
-    return false;
+    // Fail CLOSED — if DB is unavailable, assume cron already ran to prevent double-execution
+    return true;
   }
 }
 

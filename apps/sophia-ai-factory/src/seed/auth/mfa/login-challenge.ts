@@ -11,6 +11,8 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
+import { toError } from '@/seed/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
 
 const MFA_PENDING_TTL_SECONDS = 10 * 60; // 10 minutes
 
@@ -74,18 +76,24 @@ export async function clearSessionMfaPending(sessionId: string): Promise<void> {
  * Middleware calls this on every protected request.
  */
 export async function isSessionMfaPending(sessionId: string): Promise<boolean> {
-  const db = createServerClient();
-  const now = Math.floor(Date.now() / 1000);
+ const db = createServerClient();
+ const now = Math.floor(Date.now() / 1000);
 
+ try {
   const result = await db
-    .from('mfa_pending_sessions')
-    .select('session_id, expires_at')
-    .eq('session_id', sessionId)
-    .single();
+   .from('mfa_pending_sessions')
+   .select('session_id, expires_at')
+   .eq('session_id', sessionId)
+   .single();
 
   const row = result.data as MfaPendingRow | null;
   if (!row) return false;
 
   // Treat expired rows as not-pending (they will be cleaned up lazily)
   return row.expires_at > now;
+ } catch (dbErr) {
+  // FIX 5: Fail-closed - on DB error, assume MFA is pending to prevent bypass
+  logger.error('[MFA] isSessionMfaPending DB error, failing closed', toError(dbErr));
+  return true;
+ }
 }

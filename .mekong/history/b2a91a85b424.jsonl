@@ -1,0 +1,4 @@
+{"event_id": "f3fd2be7e461", "kind": "workflow_started", "timestamp": 1780460008.493247, "workflow_id": "b2a91a85b424", "step_order": null, "data": {"recipe": "Plan: Phase 5: Sophia AI Factory Gate Advancement \u2014 Close Gates 1, 2, 4", "steps": 1}}
+{"event_id": "0072ab6baded", "kind": "step_scheduled", "timestamp": 1780460008.493634, "workflow_id": "b2a91a85b424", "step_order": 1, "data": {}}
+{"event_id": "6b67af726461", "kind": "step_completed", "timestamp": 1780460055.644792, "workflow_id": "b2a91a85b424", "step_order": 1, "data": {}}
+{"event_id": "4f8e4ac3e43e", "kind": "workflow_completed", "timestamp": 1780460055.6450849, "workflow_id": "b2a91a85b424", "step_order": null, "data": {"success_rate": 100.0}}

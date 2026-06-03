@@ -17,35 +17,20 @@ const mockKv = {
     }
     return 1;
   }),
-  pipeline: vi.fn(() => {
-    const commands: Array<{ type: 'hincrby' | 'expire'; key: string; field?: string; amount?: number; ttl?: number }> = [];
-    const chain = {
-      hincrby(key: string, field: string, amount: number) {
-        commands.push({ type: 'hincrby', key, field, amount });
-        return chain;
-      },
-      expire(key: string, ttl: number) {
-        commands.push({ type: 'expire', key, ttl });
-        return chain;
-      },
-      async exec() {
-        const results: unknown[] = [];
-        for (const cmd of commands) {
-          if (cmd.type === 'hincrby') {
-            if (!redisMockStore[cmd.key]) redisMockStore[cmd.key] = {};
-            const current = redisMockStore[cmd.key][cmd.field!] ?? 0;
-            const updated = current + cmd.amount!;
-            redisMockStore[cmd.key][cmd.field!] = updated;
-            results.push(updated);
-          } else if (cmd.type === 'expire') {
-            redisTtlStore[cmd.key] = cmd.ttl!;
-            results.push(1);
-          }
-        }
-        return results;
-      }
-    };
-    return chain;
+  eval: vi.fn(async (luaScript: string, keys: string[], args: string[]) => {
+    const key = keys[0];
+    const field = args[0];
+    const delta = parseInt(args[1], 10);
+    const ttl = parseInt(args[2], 10);
+    if (!redisMockStore[key]) redisMockStore[key] = {};
+    const current = redisMockStore[key][field] ?? 0;
+    const updated = current + delta;
+    redisMockStore[key][field] = updated;
+    redisTtlStore[key] = ttl;
+    return 1; // Lua returns 1 on success
+  }),
+  expire: vi.fn(async (key: string, ttl: number) => {
+    redisTtlStore[key] = ttl;
   }),
   del: vi.fn(async (key: string) => {
     delete redisMockStore[key];
@@ -54,9 +39,7 @@ const mockKv = {
   })
 };
 
-vi.mock('@/land/redis', () => ({
-  getKvClient: () => mockKv,
-}));
+vi.mock('@/land/redis', () => ({ getKvClient: () => mockKv }));
 
 // Mock the circuit breaker to always succeed
 vi.mock('./realtime-tracker-circuit-breaker', () => ({

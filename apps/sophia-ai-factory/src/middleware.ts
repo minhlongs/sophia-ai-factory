@@ -179,9 +179,18 @@ export async function proxy(request: NextRequest) {
             .first<{ tier: string | null; plan: string | null }>()
           const raw = row?.tier ?? row?.plan ?? null
           const isMaster = raw === 'MASTER' || raw === 'master'
-          if (!isMaster) {
-            return NextResponse.redirect(new URL('/dashboard?error=admin_required', request.url))
-          }
+
+ // FIX 4: Gate 2 - Check user_profiles.role as second admin gate (defense-in-depth)
+ const profileRow = await db
+  .prepare(`SELECT role FROM user_profiles WHERE user_id = ?1 LIMIT 1`)
+  .bind(session.user.id)
+  .first<{ role: string | null }>()
+ const userRole = profileRow?.role ?? null
+ const isAdminRole = userRole === 'admin'
+
+ if (!isMaster && !isAdminRole) {
+ return NextResponse.redirect(new URL('/dashboard?error=admin_required', request.url))
+}
         } catch (tierErr) {
           // On lookup failure, fail closed → deny admin access rather than
           // leak a partial render. Page-level `requireMasterTier()` then
