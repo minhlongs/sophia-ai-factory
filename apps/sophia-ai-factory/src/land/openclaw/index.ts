@@ -1,7 +1,9 @@
 /**
  * @module openclaw
  * Barrel re-exports — canonical source: land/openclaw/* modules.
- * The openclaw namespace object is provided by lib/openclaw/index.ts.
+ * The openclaw namespace object is defined in land/openclaw/openclaw-namespace.ts.
+ * This barrel exports all land/openclaw/* primitives plus the namespace object.
+ * No dependency on lib/openclaw — full layer compliance.
  *
  * Note: emit is also exported from land/webhooks. The webhooks version
  * is canonical — excluded here. Import directly from
@@ -20,5 +22,5 @@ export * from './skill-loader';
 export * from './spawn-agent-fleet-executor';
 export * from './spawn-agent-fleet';
 export * from './with-tenant';
-// Namespace object re-exported from lib (original home)
-export { openclaw } from '@/lib/openclaw';
+// Namespace object defined in land/openclaw (canonical, no lib dependency)
+export { openclaw } from './openclaw-namespace';

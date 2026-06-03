@@ -31,7 +31,7 @@ export * from './services';
 export * from './signals';
 export * from './sop-marketplace';
 export * from './status';
-export * from './supabase';
+
 export * from './telemetry';
 export * from './tenant-settings';
 export * from './tiktok';

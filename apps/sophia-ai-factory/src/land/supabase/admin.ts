@@ -1,17 +1,19 @@
 /**
- * Supabase admin client — compatibility shim backed by D1.
+ * D1 admin client — drop-in replacement for the deleted Supabase admin shim.
  *
  * All callers of `createAdminClient()` and `isAdminClientConfigured()`
- * continue to work unchanged. D1 has no concept of service-role vs anon —
- * the same D1Client is returned for all server-side operations.
+ * continue to work unchanged. Returns a D1Client backed by the
+ * Cloudflare D1 binding instead of a Supabase service-role client.
  */
+
 import { getD1Client } from '@/seed/db/client';
+import type { D1Client } from '@/seed/db/d1-query-builder';
 
 /**
  * Returns a D1Client with the same query API as the Supabase admin client.
  * Async because D1 binding resolution may be async on first call.
  */
-export async function createAdminClient() {
+export async function createAdminClient(): Promise<D1Client> {
   return getD1Client();
 }
 

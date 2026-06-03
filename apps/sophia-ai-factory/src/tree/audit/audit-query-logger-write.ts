@@ -7,7 +7,7 @@ import { createServerClient } from '@/seed/db/client'
 import { insertTyped } from '@/seed/db/insert-typed'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
-import type { RaasAuditLogInsert, RaasAuditLogRow, Json } from '@/land/supabase/types'
+import type { RaasAuditLogInsert, RaasAuditLogRow, Json } from '@/tree/database/supabase-types'
 import type { AuditQueryLogParams } from '@/tree/audit/audit-query-logger'
 
 export async function logAuditQuery(params: AuditQueryLogParams): Promise<boolean> {

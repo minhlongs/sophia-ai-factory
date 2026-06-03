@@ -8,7 +8,7 @@ import { getErrorMessage } from '@/seed/utils/to-error'
 import { getUsageExportData } from '@/land/usage-export/export-service'
 import { logUsageWithReceipt } from '@/tree/audit/audit-logger'
 import { storeExportReceipt } from './cron-usage-export-db'
-import type { RaasLicenseRow } from '@/land/supabase/types'
+import type { RaasLicenseRow } from '@/tree/database/supabase-types'
 
 export async function processLicenseExport(
   license: RaasLicenseRow,

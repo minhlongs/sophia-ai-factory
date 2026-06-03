@@ -6,7 +6,7 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import type { Json } from '@/land/supabase/types';
+import type { Json } from '@/tree/database/supabase-types';
 import type { RevenuePeriod, RevenueMetrics } from '../types';
 
 // Local SELECT-shaped projections — narrower than full table rows because

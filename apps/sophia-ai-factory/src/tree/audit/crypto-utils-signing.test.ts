@@ -17,7 +17,7 @@ import {
 } from './crypto-utils-signing'
 import { sha256, computeContentHash } from './crypto-utils'
 import type { AuditLogEntry } from './crypto-utils'
-import type { RaasAuditLogRow } from '@/land/supabase/types'
+import type { RaasAuditLogRow } from '@/tree/database/supabase-types'
 
 function makeLog(
   overrides: Partial<RaasAuditLogRow> & { previous_log_hash: string | null; content_hash: string },

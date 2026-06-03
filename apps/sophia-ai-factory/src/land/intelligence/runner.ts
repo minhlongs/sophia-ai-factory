@@ -1,7 +1,7 @@
 import { createServerClient } from '@/seed/db/client'
 import { scoringService } from './scoring'
 import type { ScorableProduct } from './types'
-import type { Database } from '@/land/supabase/types'
+import type { Database } from '@/tree/database/supabase-types'
 
 type AffiliateProduct = Database['public']['Tables']['affiliate_products']['Row']
 

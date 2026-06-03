@@ -3,7 +3,7 @@
  * @module usage-export/types
  */
 
-import type { UsageEventRow } from '@/land/supabase/types';
+import type { UsageEventRow } from '@/tree/database/supabase-types';
 
 export type BillingPeriod = 'weekly' | 'monthly' | 'custom';
 export type ExportFormat = 'json' | 'csv';

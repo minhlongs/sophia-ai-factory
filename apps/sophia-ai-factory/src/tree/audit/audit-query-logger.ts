@@ -6,7 +6,7 @@
 import { createServerClient } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
-import type { RaasAuditLogRow } from '@/land/supabase/types'
+import type { RaasAuditLogRow } from '@/tree/database/supabase-types'
 
 export interface AuditQueryLogParams {
   queriedBy: string

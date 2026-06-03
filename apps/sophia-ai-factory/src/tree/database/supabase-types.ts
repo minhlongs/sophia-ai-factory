@@ -1,3 +1,9 @@
+/**
+ * Database type definitions (migrated from land/supabase/types.ts)
+ * Centralized type store for the entire codebase.
+ * All D1/Supabase table row/insert/update types + Database interface.
+ */
+
 export type Json =
   | string
   | number

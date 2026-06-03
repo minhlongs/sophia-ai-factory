@@ -13,7 +13,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { requireAdmin } from '@/seed/auth/require-admin';
 import { customerLinkageRequestSchema } from '@/land/validation/services';
-import type { RaasLicenseUpdate } from '@/land/supabase/types';
+import type { RaasLicenseUpdate } from '@/tree/database/supabase-types';
 
 /**
  * GET /api/admin/usage/customer-linkage
