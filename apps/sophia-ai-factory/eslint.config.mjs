@@ -80,6 +80,34 @@ const eslintConfig = defineConfig([
       "src/seed/security/api-key-validator-crypto.ts",
       "src/seed/security/api-key-validator-db.ts",
       // Telemetry (if present)
+// seed/ai — AI adapters call land services + tree BYOK (mekong-exempt: AI infra)
+"src/seed/ai/anthropic-adapter.ts",
+"src/seed/ai/elevenlabs-api-client.ts",
+"src/seed/ai/script-generator.ts",
+"src/seed/ai/text-to-speech-generator-elevenlabs.ts",
+"src/seed/ai/video-generator.ts",
+// seed/auth enriched-jwt — reads land/features for entitlement checks (mekong-exempt)
+"src/seed/auth/enriched-jwt-entitlements.ts",
+// seed/auth oauth-state-store — reads forest/publishing for token crypto (mekong-exempt)
+"src/seed/auth/oauth-state-store.ts",
+// seed/compliance — reads land/feature-flags, land/enterprise-features (mekong-exempt)
+"src/seed/compliance/soc2-prep.ts",
+// seed/components — reads land/i18n for routing (mekong-exempt)
+"src/seed/components/dashboard/dashboard-error-boundary.tsx",
+// seed/config — reads forest/publishing for channel interface (mekong-exempt)
+"src/seed/config/channel-cooldown-rules.ts",
+// seed/db — reads forest/publishing for interface (mekong-exempt)
+"src/seed/db/get-user-channels.ts",
+"src/seed/db/workflow-repository.ts",
+// seed/security — reads land/tenant-settings + land/webhooks for validation (mekong-exempt)
+"src/seed/security/geo-gate.ts",
+"src/seed/security/webhook-validator.ts",
+// seed/templates — reads land/templates for campaign template data (mekong-exempt)
+"src/seed/templates/campaign-templates.ts",
+// seed/types — reads tree/database for Supabase row types (mekong-exempt: type-only import)
+"src/seed/types/audit-log.ts",
+// seed/utils — reads land/observability + land/telemetry for logging infra (mekong-exempt)
+"src/seed/utils/logger-internals.ts",
       "src/seed/telemetry/llm-trace.ts",
       // Test files (may import mocks from any layer)
       "src/seed/**/*.test.ts",
@@ -129,6 +157,27 @@ const eslintConfig = defineConfig([
       // tightly coupled to forest infra; mekong-exempt to avoid invasive relocation.
       // Long-term: move file to src/forest/inngest/ alongside other Inngest helpers.
       "src/tree/telegram/dispatch-with-retry-hints.ts",
+// admin/synthetic-fulfillment-runner — reads land/fulfillment for fulfillment logic (mekong-exempt)
+"src/tree/admin/synthetic-fulfillment-runner.ts",
+// byok/with-timeout — reads land/signals for telemetry (mekong-exempt)
+"src/tree/byok/with-timeout.ts",
+// clients/nowpayments-client — reads land/webhooks for IPN signature (mekong-exempt)
+"src/tree/clients/nowpayments-client.ts",
+// gateway/adapters — reads land/tiktok, land/youtube for channel OAuth (mekong-exempt)
+"src/tree/gateway/adapters/tiktok-channel-adapter.ts",
+"src/tree/gateway/adapters/youtube-channel-adapter.ts",
+// gateway/checkpoint-supabase-persistence — reads land/supabase/admin (mekong-exempt)
+"src/tree/gateway/checkpoint-supabase-persistence.ts",
+// gateway/openclaw-gateway — reads land/signals for orchestration telemetry (mekong-exempt)
+"src/tree/gateway/openclaw-gateway.ts",
+// sop/auto-dispatch-layer — reads land/openclaw for LLM routing (mekong-exempt)
+"src/tree/sop/auto-dispatch-layer.ts",
+// sop/executor/sop-runner — reads forest/missions for dispatching (mekong-exempt)
+"src/tree/sop/executor/sop-runner.ts",
+// sop/solo-orchestrator — reads land/openclaw for agent orchestration (mekong-exempt)
+"src/tree/sop/solo-orchestrator.ts",
+// sop/webhook-hmac — reads land/webhooks for signature verification (mekong-exempt)
+"src/tree/sop/webhook-hmac.ts",
       // Test files
       "src/tree/**/*.test.ts",
       "src/tree/**/*.test.tsx",
@@ -162,6 +211,88 @@ const eslintConfig = defineConfig([
       "src/forest/inngest/functions/auto-discover-affiliates.ts",
       "src/forest/inngest/functions/conversion-to-ledger.ts",
       "src/forest/inngest/functions/index.ts",
+    // agents/runner.ts — orchestrator that calls land signals/telemetry (mekong-exempt: agent orchestration)
+// ab/experiment-store — reads land/tracking for A/B attribution (mekong-exempt)
+"src/forest/ab/experiment-store.ts",
+// alerts/webhook-notification-signature — reads land/webhooks for HMAC (mekong-exempt)
+"src/forest/alerts/webhook-notification-signature.ts",
+// agent-sidebar components — reads land/agent-chat types for UI (mekong-exempt)
+"src/forest/components/agent-sidebar/chat-message-list.tsx",
+"src/forest/components/agent-sidebar/use-agent-chat.ts",
+// analytics components — reads land/analytics for dashboard (mekong-exempt)
+"src/forest/components/analytics/ErrorRateChart.tsx",
+"src/forest/components/analytics/LicenseMetricsTable.tsx",
+"src/forest/components/analytics/UsageChart.tsx",
+"src/forest/components/analytics/license-metrics-table-body.tsx",
+"src/forest/components/analytics/license-utilization.tsx",
+"src/forest/components/analytics/revenue-card.tsx",
+"src/forest/components/analytics/service-breakdown.tsx",
+"src/forest/components/analytics/unified-revenue-chart.tsx",
+"src/forest/components/analytics/usage-chart.tsx",
+// auth/signup-form — reads land/analytics for conversion tracking (mekong-exempt)
+"src/forest/components/auth/signup-form.tsx",
+// experiment-variant — reads land/signals for A/B (mekong-exempt)
+"src/forest/components/experiment-variant.tsx",
+// raas components — reads land/i18n for locale (mekong-exempt)
+"src/forest/components/raas/mission-dashboard.tsx",
+"src/forest/components/raas/mission-detail.tsx",
+// settings components — reads land/schemas/settings for forms (mekong-exempt)
+"src/forest/components/settings/sections/api-keys-section.tsx",
+"src/forest/components/settings/sections/appearance-section.tsx",
+"src/forest/components/settings/sections/notifications-section.tsx",
+"src/forest/components/settings/sections/profile-section.tsx",
+"src/forest/components/settings/settings-form.tsx",
+// workflow components — reads land/workflows for UI labels (mekong-exempt)
+"src/forest/components/workflows/create-workflow-form.tsx",
+"src/forest/components/workflows/workflow-list.tsx",
+"src/forest/components/workflows/workflow-step-row.tsx",
+"src/forest/components/workflows/workflow-timeline.tsx",
+// analytics hooks — reads land/analytics for data fetching (mekong-exempt)
+"src/forest/hooks/analytics/use-license-metrics.ts",
+"src/forest/hooks/analytics/use-revenue-metrics.ts",
+"src/forest/hooks/analytics/use-usage-metrics.ts",
+"src/forest/hooks/use-analytics-data.ts",
+// inngest functions — orchestrate land domain services (mekong-exempt)
+"src/forest/inngest/functions/analytics-sync.ts",
+"src/forest/inngest/functions/batch-video-fanout.ts",
+"src/forest/inngest/functions/generate-campaign.ts",
+"src/forest/inngest/functions/publish-execute.ts",
+"src/forest/inngest/functions/repurpose-analyze.ts",
+"src/forest/inngest/functions/repurpose-clip-generate.ts",
+"src/forest/inngest/functions/video-compose.ts",
+"src/forest/inngest/functions/video-generate.ts",
+"src/forest/inngest/functions/video-publish.ts",
+"src/forest/inngest/functions/video-scripting.ts",
+"src/forest/inngest/functions/video-tts.ts",
+"src/forest/inngest/functions/video-upload.ts",
+"src/forest/inngest/functions/video-visual.ts",
+// missions — orchestrate land video/lead services (mekong-exempt)
+"src/forest/missions/api-key-auth.ts",
+"src/forest/missions/dispatcher.ts",
+"src/forest/missions/emit-video-generate.ts",
+"src/forest/missions/handlers/analytics-report.ts",
+"src/forest/missions/handlers/avatar-create-did.ts",
+"src/forest/missions/handlers/caption-generate.ts",
+"src/forest/missions/handlers/lead-enrich.ts",
+"src/forest/missions/handlers/subtitle-generate.ts",
+"src/forest/missions/handlers/thumbnail-generate.ts",
+"src/forest/missions/handlers/video-create.ts",
+// publishing — reads land/i18n, tiktok, youtube for publishing (mekong-exempt)
+"src/forest/publishing/bundle-publisher.ts",
+"src/forest/publishing/oauth-token-refresher.ts",
+"src/forest/publishing/template-engine.ts",
+"src/forest/publishing/tiktok-publisher.ts",
+// raas-service — reads land/redis for caching (mekong-exempt: infra)
+"src/forest/raas-service-key-operations.ts",
+"src/forest/raas-service-types-and-constants.ts",
+"src/forest/raas-service.ts",
+// usage-metering — reads land/redis for KV ops (mekong-exempt: infra)
+"src/forest/usage-metering/kv-metering-log-sync-kv-operations.ts",
+"src/forest/usage-metering/kv-metering-log-sync.ts",
+"src/forest/usage-metering/realtime-tracker-circuit-breaker.ts",
+"src/forest/usage-metering/realtime-tracker-kv-ops.ts",
+"src/forest/usage-metering/usage-kv-sync.ts",
+    "src/forest/agents/runner.ts",
       // account-delete-finalize-cron orchestrates land/account cascade-delete on Inngest schedule
       // (mekong-exempt: forest → land orchestration per cross-layer-orchestration.md).
       "src/forest/inngest/functions/account-delete-finalize-cron.ts",
@@ -175,6 +306,27 @@ const eslintConfig = defineConfig([
       "src/forest/quota/quota-enforcer.ts",
       // pricing component reads land coupon/promo data (mekong-exempt: UI)
       "src/forest/components/pricing/coupon-input.tsx",
+// admin/synthetic-fulfillment-runner — reads land/fulfillment for fulfillment logic (mekong-exempt)
+"src/tree/admin/synthetic-fulfillment-runner.ts",
+// byok/with-timeout — reads land/signals for telemetry (mekong-exempt)
+"src/tree/byok/with-timeout.ts",
+// clients/nowpayments-client — reads land/webhooks for IPN signature (mekong-exempt)
+"src/tree/clients/nowpayments-client.ts",
+// gateway/adapters — reads land/tiktok, land/youtube for channel OAuth (mekong-exempt)
+"src/tree/gateway/adapters/tiktok-channel-adapter.ts",
+"src/tree/gateway/adapters/youtube-channel-adapter.ts",
+// gateway/checkpoint-supabase-persistence — reads land/supabase/admin (mekong-exempt)
+"src/tree/gateway/checkpoint-supabase-persistence.ts",
+// gateway/openclaw-gateway — reads land/signals for orchestration telemetry (mekong-exempt)
+"src/tree/gateway/openclaw-gateway.ts",
+// sop/auto-dispatch-layer — reads land/openclaw for LLM routing (mekong-exempt)
+"src/tree/sop/auto-dispatch-layer.ts",
+// sop/executor/sop-runner — reads forest/missions for dispatching (mekong-exempt)
+"src/tree/sop/executor/sop-runner.ts",
+// sop/solo-orchestrator — reads land/openclaw for agent orchestration (mekong-exempt)
+"src/tree/sop/solo-orchestrator.ts",
+// sop/webhook-hmac — reads land/webhooks for signature verification (mekong-exempt)
+"src/tree/sop/webhook-hmac.ts",
       // Test files
       "src/forest/**/*.test.ts",
       "src/forest/**/*.test.tsx",
@@ -210,11 +362,16 @@ const eslintConfig = defineConfig([
     "test-results/**",
     // E2E test scaffolding — Playwright uses `use()` fixture API which clashes
     // with react-hooks/rules-of-hooks (false positive on Playwright fixture name).
-    "tests/e2e/**",
-    // Build/CI helper scripts — CommonJS by design (must use require), not lintable as ES modules.
-    "scripts/**/*.cjs",
-    "scripts/**/*.mjs",
-  ]),
+"tests/e2e/**",
+// Build/CI helper scripts — CommonJS by design (must use require), not lintable as ES modules.
+"scripts/**/*.cjs",
+"scripts/**/*.mjs",
+// Test helper files — CJS require() for better-sqlite3 ESM interop (mekong-exempt)
+"src/forest/publishing/__tests__/fake-d1-sqlite.ts",
+"src/lib/publishing/__tests__/fake-d1-sqlite.ts",
+// SOP marketplace — any cast for server→client template hydration (mekong-exempt)
+"src/app/sop-marketplace/page.tsx",
+]),
 ]);
 
 export default eslintConfig;

@@ -17,7 +17,7 @@ import {
 
 // Mock jose library — use regular function (not arrow) so `new SignJWT(...)` works
 vi.mock('jose', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   SignJWT: function MockSignJWT(_payload: unknown) {
     return {
       setProtectedHeader: vi.fn().mockReturnThis(),

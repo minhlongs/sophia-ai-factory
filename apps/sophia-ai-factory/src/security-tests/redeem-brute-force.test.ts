@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 /**
  * Redeem Brute Force & Input Validation Tests
  * Security regression tests for /api/promo/redeem-free handler

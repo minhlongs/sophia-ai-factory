@@ -9,7 +9,7 @@
 
 // better-sqlite3 uses `export =` in @types, incompatible with ESM default import under isolatedModules
 // @ts-ignore: require returns the CJS module with all constructable signatures
-const Database: any = require('better-sqlite3');
+const Database = require('better-sqlite3');
 
 export interface FakeD1RunResult {
   success: true;
