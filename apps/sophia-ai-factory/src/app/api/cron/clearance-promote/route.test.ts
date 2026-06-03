@@ -6,8 +6,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock refs: 'var' so initialization is hoisted alongside the declaration,
 // making them available when the vi.mock factory (also hoisted) runs.
-var mockRecordCronRun = vi.fn().mockResolvedValue(undefined);
-var mockWasRecentlyRun = vi.fn().mockResolvedValue(false);
+const mockRecordCronRun = vi.fn().mockResolvedValue(undefined);
+const mockWasRecentlyRun = vi.fn().mockResolvedValue(false);
 
 vi.mock('@/land/cron/run-tracker', () => ({
   recordCronRun: (...args: unknown[]) => mockRecordCronRun(...args),

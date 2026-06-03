@@ -167,7 +167,7 @@ const composedConfig = withPWA(withAnalyzer(withNextIntl(nextConfig)));
 // warn loudly when this is set during a production NODE_ENV build so accidental
 // silent regression in observability is visible.
 if (process.env.NODE_ENV === 'production' && process.env.SKIP_SENTRY_BUILD === '1') {
-  // eslint-disable-next-line no-console
+   
   console.warn('[next.config] SKIP_SENTRY_BUILD=1 in production build — source maps will NOT be uploaded; prod stack traces will be minified.');
 }
 const finalConfig = process.env.SKIP_SENTRY_BUILD === '1'
