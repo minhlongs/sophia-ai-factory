@@ -44,7 +44,8 @@ export async function claimChallengeReward(
       applied = `badge:${rewardValue}`;
     } catch (err) {
       // Table may not exist yet — log but don't fail the whole claim
-      console.warn('[challenge] badge insert skipped (table missing?)', err);
+      const { logger } = await import('@/seed/utils/logger-utility');
+      logger.warn('[challenge] badge insert skipped (table missing?)', err instanceof Error ? { error: err.message } : undefined);
       applied = `badge:${rewardValue} (skipped)`;
     }
   } else if (rewardType === 'commission_boost') {

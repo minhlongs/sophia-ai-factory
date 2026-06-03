@@ -6,7 +6,7 @@
 import { createServerClient } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
-import type { UsageEventRow } from '../supabase/types'
+import type { UsageEventRow } from '@/tree/database/supabase-types'
 import type { UsageExportRecord, UsageExportSummary, BillingPeriod } from './types'
 import type { GetUsageExportParams } from './export-service-params'
 

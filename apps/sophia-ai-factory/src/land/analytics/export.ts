@@ -7,7 +7,7 @@
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import type { UsageEventRow } from '@/land/supabase/types';
+import type { UsageEventRow } from '@/tree/database/supabase-types';
 
 /**
  * Export options

@@ -6,7 +6,7 @@
 import { createServerClient } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
-import type { RaasLicenseRow } from '@/land/supabase/types'
+import type { RaasLicenseRow } from '@/tree/database/supabase-types'
 
 interface ExportJobInsert {
   id: string

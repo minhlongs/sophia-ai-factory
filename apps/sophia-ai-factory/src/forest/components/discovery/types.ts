@@ -1,4 +1,4 @@
-import { type Database } from '@/land/supabase/types'
+import { type Database } from '@/tree/database/supabase-types'
 
 export type Product = Database['public']['Tables']['affiliate_products']['Row']
 

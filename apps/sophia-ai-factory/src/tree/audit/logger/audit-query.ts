@@ -10,7 +10,7 @@ import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 import { createServerClient } from '@/seed/db/client'
 import type { ComplianceReceipt } from '@/tree/audit/compliance-receipt'
-import type { Json } from '@/land/supabase/types'
+import type { Json } from '@/tree/database/supabase-types'
 import { insertAuditLog } from '@/tree/audit/logger/audit-event-builder'
 
 /**

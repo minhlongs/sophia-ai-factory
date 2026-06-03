@@ -4,6 +4,7 @@
  */
 
 import { randomUUID } from 'node:crypto'
+import type { Json } from '@/tree/database/supabase-types'
 import { createServerClient } from '@/seed/db/client'
 import { insertTyped } from '@/seed/db/insert-typed'
 import { logger } from '@/seed/utils/logger-utility'
@@ -42,7 +43,7 @@ export async function scheduleReport(report: ScheduleReportInput): Promise<Sched
     format: report.format,
     frequency: report.frequency,
     recipients: report.recipients,
-    filters: report.filters as import('@/land/supabase/types').Json,
+    filters: report.filters as Json,
     next_run_at: nextRunAt,
     created_at: now,
     created_by: report.createdBy

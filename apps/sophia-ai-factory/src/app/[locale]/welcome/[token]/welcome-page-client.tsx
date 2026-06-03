@@ -66,22 +66,19 @@ export function WelcomePageClient({ token, locale }: Props) {
     }
   }
 
-  async function handleConnectTelegram() {
-    setTelegramLinking(true);
-    try {
-      const { token: pairingToken } = await generateTelegramPairingTokenAction();
-      const botUrl = `https://t.me/${BOT_USERNAME}?start=${pairingToken}`;
-      window.open(botUrl, '_blank', 'noopener,noreferrer');
-      setTelegramLinked(true);
-    } catch (err) {
-      // LEGIT CLIENT FALLBACK — surfaces error in browser DevTools so the user
-      // can share with support. Server-side logger unreachable from client.
-      // Same pattern as `seed/utils/logger-internals.ts`.
-      console.error('[welcome] Telegram connect failed:', err);
-    } finally {
-      setTelegramLinking(false);
-    }
+ async function handleConnectTelegram() {
+  setTelegramLinking(true);
+  try {
+    const { token: pairingToken } = await generateTelegramPairingTokenAction();
+    const botUrl = `https://t.me/${BOT_USERNAME}?start=${pairingToken}`;
+    window.open(botUrl, '_blank', 'noopener,noreferrer');
+    setTelegramLinked(true);
+  } catch {
+    // Client-side: error silently swallowed; server-side logger unreachable from client component.
+  } finally {
+    setTelegramLinking(false);
   }
+}
 
   if (loading) {
     return (

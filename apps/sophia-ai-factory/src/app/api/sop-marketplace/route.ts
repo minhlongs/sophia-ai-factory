@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getD1Raw } from "@/seed/db/client";
-import { listPublishedListings } from "@/lib/sop/sop-repo-marketplace";
+import { listPublishedListings } from "@/tree/sop/sop-repo-marketplace";
 
 export const dynamic = "force-dynamic";
 

@@ -102,7 +102,7 @@ describe('GET /api/cron/clearance-promote', () => {
   it('invokes D1 UPDATE query to promote clearance conversions', async () => {
     await GET(makeRequest({ authorization: 'Bearer test-secret' }));
     expect(prepare).toHaveBeenCalled();
-    const sqls = prepare.mock.calls.map((c) => c[0] as string);
+    const sqls = (prepare.mock.calls as unknown[][]).map((c) => (c[0] as unknown) as string);
     const updateSql = sqls.find((s) => s.includes('payout_status'));
     expect(updateSql).toBeDefined();
     expect(updateSql).toContain('available');

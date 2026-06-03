@@ -14,7 +14,7 @@ import type { Tier } from '@/seed/types';
 import type {
   RaasAuditLogInsert,
   Json,
-} from '@/land/supabase/types';
+} from '@/tree/database/supabase-types';
 import type { AuditAction } from '@/forest/raas-schema';
 
 // -------------------------------------------------------------------------

@@ -8,7 +8,7 @@
  */
 
 import { hashSensitiveData } from '@/tree/audit/audit-hashing'
-import type { RaasAuditLogRow } from '@/land/supabase/types'
+import type { RaasAuditLogRow } from '@/tree/database/supabase-types'
 import { logger } from '@/seed/utils/logger-utility'
 import { redactDetailsPII } from '@/tree/audit/gdpr-redaction-pii-detection'
 

@@ -7,7 +7,7 @@
 
 import { createServerClient } from '@/seed/db/client'
 import { insertTyped } from '@/seed/db/insert-typed'
-import type { RaasAuditLogInsert, RaasAuditLogRow } from '@/land/supabase/types'
+import type { RaasAuditLogInsert, RaasAuditLogRow } from '@/tree/database/supabase-types'
 
 /** Type helper for Supabase query results */
 export type SupabaseResult<T> = { data: T | null; error: Error | null }

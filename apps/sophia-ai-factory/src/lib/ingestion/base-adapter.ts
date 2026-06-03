@@ -1,6 +1,6 @@
 import { createServerClient } from '@/seed/db/client'
 import type { IngestionAdapter, IngestionResult, RawProduct } from './types'
-import type { Database, Json } from '@/land/supabase/types'
+import type { Database, Json } from '@/tree/database/supabase-types'
 import Bottleneck from 'bottleneck'
 
 type AffiliateProductInsert = Database['public']['Tables']['affiliate_products']['Insert']
