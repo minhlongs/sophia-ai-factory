@@ -61,36 +61,48 @@ export async function POST(request: NextRequest) {
   const eventId = `payos_${orderCode}`
   const db = createServerClient()
 
-  // 1. Atomically reserve event (lock mechanism via PRIMARY KEY on payos_events)
-  const { error: insertError } = await db.from('payos_events').insert({
-    event_id: eventId,
-    order_code: String(orderCode),
-    status: success ? 'PAID' : 'CANCELLED',
-    amount: amount || 0,
-    currency: 'VND',
-    payload: JSON.stringify(bodyJson),
-    processed: 0,
-    created_at: new Date().toISOString(),
-  })
+  // 1. Atomically insert event row; ON CONFLICT DO NOTHING ensures only one
+  // webhook caller wins the race. The RETURNING clause gives us the processed
+  // flag in a single round-trip, eliminating the TOCTOU between INSERT and SELECT.
+  const d1 = await getD1Raw()
+  const { results: insertResults } = await d1
+    .prepare(
+      `INSERT INTO payos_events (event_id, order_code, status, amount, currency, payload, processed, created_at)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, 0, ?7)
+       ON CONFLICT(event_id) DO NOTHING
+       RETURNING processed`,
+    )
+    .bind(
+      eventId,
+      String(orderCode),
+      success ? 'PAID' : 'CANCELLED',
+      amount || 0,
+      'VND',
+      JSON.stringify(bodyJson),
+      new Date().toISOString(),
+    )
+    .all<{ processed: number }>()
 
-  if (insertError) {
-    // Unique key/Primary key violation
-    const { data: existing, error: selectError } = await db
-      .from('payos_events')
-      .select('processed')
-      .eq('event_id', eventId)
-      .single()
+  const wonTheLock = insertResults && insertResults.length > 0
+ if (!wonTheLock) {
+ // We lost the race — another caller already holds (or processed) this event.
+ // Single SELECT to determine state (fail-closed: return 500 on DB error).
+ let existing: { processed: number } | null = null
+ try {
+   existing = await d1
+     .prepare(`SELECT processed FROM payos_events WHERE event_id = ?1 LIMIT 1`)
+     .bind(eventId)
+     .first<{ processed: number }>()
+ } catch {
+   return NextResponse.json({ error: 'Internal processing error' }, { status: 500 })
+ }
 
-    if (selectError || !existing) {
-      return NextResponse.json({ error: 'Database query failure' }, { status: 500 })
-    }
-
-    if (existing.processed === 1 || existing.processed === true) {
-      return NextResponse.json({ received: true, note: 'Already processed' })
-    } else {
-      return NextResponse.json({ error: 'Already processing' }, { status: 409 })
-    }
-  }
+ if (existing && existing.processed === 1) {
+   return NextResponse.json({ received: true, note: 'Already processed' })
+ }
+ // Another caller is actively processing — return 409 so sender retries later
+ return NextResponse.json({ error: 'Already processing' }, { status: 409 })
+}
 
   if (!success) {
     // Payment cancelled or failed — find order via database-lookup matching payment_method = 'payos' and status = 'pending'
@@ -126,50 +138,60 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true })
   }
 
-  try {
-    // Directly query pending_orders table matching payment_method = 'payos' and status = 'pending'
-    const { data: pendingOrders, error: pendingOrdersError } = await db
-      .from('pending_orders')
-      .select('*')
-      .eq('payment_method', 'payos')
-      .eq('status', 'pending')
+ try {
+  // FIX 2: Lightweight tier lookup FIRST (minimal columns) to validate amount before full order fetch
+  // This prevents timing-based probing where attacker measures response time differences
+  const { data: tierLookup, error: tierLookupError } = await db
+    .from('pending_orders')
+    .select('tier')
+    .eq('payment_method', 'payos')
+    .eq('status', 'pending')
+    .limit(1)
 
-    if (pendingOrdersError || !pendingOrders) {
-      logger.error('[PayOS IPN] Failed to query pending_orders', { pendingOrdersError })
-      // Release lock so it can be retried
-      await db.from('payos_events').delete().eq('event_id', eventId)
-      return NextResponse.json({ error: 'Database query failure' }, { status: 500 })
-    }
+  if (tierLookupError || !tierLookup || tierLookup.length === 0) {
+    logger.error('[PayOS IPN] No pending orders for tier lookup', { tierLookupError })
+    await db.from('payos_events').delete().eq('event_id', eventId)
+    return NextResponse.json({ error: 'No pending orders' }, { status: 400 })
+  }
 
-    const orders = pendingOrders as Array<{ order_id: string; user_id: string; tier: string; invoice_url: string | null }> | null
-    
-    // Find matching order
-    const matchOrder = orders?.find(o => o.invoice_url?.includes(paymentLinkId) || o.invoice_url?.includes(String(orderCode)))
+  const tier = tierLookup[0].tier as Tier
+  const expectedVndAmount = getPayOsTierConfig(tier).vndAmount
+  if (amount !== expectedVndAmount) {
+    logger.error('[PayOS IPN] Amount mismatch', {
+      orderCode,
+      received: amount,
+      expected: expectedVndAmount,
+      tier
+    })
+    await db.from('payos_events').delete().eq('event_id', eventId)
+    return NextResponse.json({ error: 'Amount mismatch' }, { status: 400 })
+  }
 
-    if (!matchOrder) {
-      logger.error('[PayOS IPN] No matching pending order found', { paymentLinkId, orderCode })
-      // Release lock so it can be retried
-      await db.from('payos_events').delete().eq('event_id', eventId)
-      return NextResponse.json({ error: 'Order not found' }, { status: 400 })
-    }
+  // Full order lookup after amount validated
+  const { data: pendingOrders, error: pendingOrdersError } = await db
+    .from('pending_orders')
+    .select('*')
+    .eq('payment_method', 'payos')
+    .eq('status', 'pending')
 
-    const userId = matchOrder.user_id
-    const tier = matchOrder.tier as Tier
-    const orderId = matchOrder.order_id
+  if (pendingOrdersError || !pendingOrders) {
+    logger.error('[PayOS IPN] Failed to query pending_orders', { pendingOrdersError })
+    await db.from('payos_events').delete().eq('event_id', eventId)
+    return NextResponse.json({ error: 'Database query failure' }, { status: 500 })
+  }
 
-    // Verify amount matches expected VND price of tier
-    const expectedVndAmount = getPayOsTierConfig(tier).vndAmount
-    if (amount !== expectedVndAmount) {
-      logger.error('[PayOS IPN] Amount mismatch', {
-        orderCode,
-        received: amount,
-        expected: expectedVndAmount,
-        tier
-      })
-      // Release lock so it can be retried
-      await db.from('payos_events').delete().eq('event_id', eventId)
-      return NextResponse.json({ error: 'Amount mismatch' }, { status: 400 })
-    }
+  const orders = pendingOrders as Array<{ order_id: string; user_id: string; tier: string; invoice_url: string | null }> | null
+
+  // Find matching order
+  const matchOrder = orders?.find(o => o.invoice_url?.includes(paymentLinkId) || o.invoice_url?.includes(String(orderCode)))
+
+  if (!matchOrder) {
+    logger.error('[PayOS IPN] No matching pending order found', { paymentLinkId, orderCode })
+    await db.from('payos_events').delete().eq('event_id', eventId)
+    return NextResponse.json({ error: 'Order not found' }, { status: 400 })
+  }
+  const userId = matchOrder.user_id
+  const orderId = matchOrder.order_id
 
     const orderPeriod = (matchOrder as Record<string, unknown> | undefined)?.period as string | undefined
     const now = new Date().toISOString()
@@ -209,33 +231,52 @@ export async function POST(request: NextRequest) {
             ]
         : []
 
-      if (stmts.length > 0) await d1.batch(stmts)
-    } catch (batchErr) {
-      logger.warn('[PayOS IPN] Batch failed, falling back', { error: String(batchErr) })
-      if (orgId) {
-        await db.from('subscriptions').update({ plan: tier.toLowerCase(), status: 'active', current_period_end: periodEnd, updated_at: now }).eq('org_id', orgId)
-        await db.from('organizations').update({ plan: tier.toLowerCase(), updated_at: now }).eq('id', orgId)
-      }
-      await markOrderCompleted(orderId, `payos_${orderCode}`)
-    }
+if (stmts.length > 0) await d1.batch(stmts)
+} catch (batchErr) {
+ logger.warn('[PayOS IPN] Batch failed, verifying state before fallback', { error: String(batchErr) })
+ // FIX 3: Verify actual DB state before applying fallback mutations
+ try {
+  const d1State = await getD1Raw()
+  const subRow = await d1State.prepare(
+   'SELECT plan, status FROM subscriptions WHERE org_id = ?1 LIMIT 1'
+  ).bind(orgId).first()
+  if (!subRow || (subRow as Record<string, string | null>)?.status !== 'active') {
+   await db.from('subscriptions').update({ plan: tier.toLowerCase(), status: 'active', current_period_end: periodEnd, updated_at: now }).eq('org_id', orgId)
+  }
+  const orgRow = await d1State.prepare(
+   'SELECT plan FROM organizations WHERE id = ?1 LIMIT 1'
+  ).bind(orgId).first()
+  if (!orgRow || (orgRow as Record<string, string | null>)?.plan !== tier.toLowerCase()) {
+   await db.from('organizations').update({ plan: tier.toLowerCase(), updated_at: now }).eq('id', orgId)
+  }
+ } catch (stateErr) {
+  logger.error('[PayOS IPN] State verification failed, applying fallback anyway', { error: String(stateErr) })
+  if (orgId) {
+   await db.from('subscriptions').update({ plan: tier.toLowerCase(), status: 'active', current_period_end: periodEnd, updated_at: now }).eq('org_id', orgId)
+   await db.from('organizations').update({ plan: tier.toLowerCase(), updated_at: now }).eq('id', orgId)
+  }
+ }
+ await markOrderCompleted(orderId, `payos_${orderCode}`)
+ throw batchErr
+}
 
-    // Audit trail (non-fatal)
-    try {
-      const d1 = await getD1Raw()
-      await recordAudit(d1, {
-        tableName: 'subscriptions',
-        rowId: orgId ?? userId,
-        action: 'update',
-        actorId: userId,
-        after: { tier, plan: tier.toLowerCase(), status: 'active', periodEnd, paymentId: `payos_${orderCode}`, provider: 'payos', amountVnd: amount },
-      })
-    } catch { /* non-fatal */ }
+// Audit trail (non-fatal)
+try {
+  const d1 = await getD1Raw()
+  await recordAudit(d1, {
+    tableName: 'subscriptions',
+    rowId: orgId ?? userId,
+    action: 'update',
+    actorId: userId,
+    after: { tier, plan: tier.toLowerCase(), status: 'active', periodEnd, paymentId: `payos_${orderCode}`, provider: 'payos', amountVnd: amount },
+  })
+} catch { /* non-fatal */ }
 
-    // 3. Update the lock record to processed on success, save final amount
-    await db.from('payos_events').update({ processed: 1, amount }).eq('event_id', eventId)
+// 3. Update the lock record to processed on success, save final amount
+await db.from('payos_events').update({ processed: 1, amount }).eq('event_id', eventId)
 
-    logger.info('[PayOS IPN] Tier activated', { userId, orgId, tier, orderCode, amount })
-    return NextResponse.json({ received: true })
+logger.info('[PayOS IPN] Tier activated', { userId, orgId, tier, orderCode, amount })
+return NextResponse.json({ received: true })
 
   } catch (err) {
     const errorObj = err instanceof Error ? err : new Error(String(err))

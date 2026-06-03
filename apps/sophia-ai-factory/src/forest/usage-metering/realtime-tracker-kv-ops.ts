@@ -39,6 +39,78 @@ export async function getRealTimeUsage(
   }
 }
 
+/**
+ * Atomic increment + expire via Lua script (single round-trip to Upstash Redis).
+ * Eliminates the hincrby-then-expire race where a connection drop after hincrby
+ * leaves the key incremented but without TTL, causing ghost credits.
+ */
+const ATOMIC_INCREMENT_EXPIRE_LUA = `
+  local current = redis.call('HINCRBY', KEYS[1], ARGV[1], ARGV[2])
+  redis.call('EXPIRE', KEYS[1], ARGV[3])
+  return current
+`;
+
+export async function atomicIncrementWithExpire(
+  userId: string,
+  licenseNonce: string,
+  windowStart: number,
+  creditsUsed: number,
+  ttlSeconds: number = 3600,
+): Promise<number> {
+  const kv = getKvClient()
+  if (!kv) {
+    logger.debug('[Real-Time Tracker] Redis not available, using DB fallback')
+    return creditsUsed
+  }
+  try {
+    const key = `usage:${userId}:${licenseNonce}`
+    const result = await kv.eval(
+      ATOMIC_INCREMENT_EXPIRE_LUA,
+      [key],
+      [windowStart.toString(), creditsUsed.toString(), ttlSeconds.toString()],
+    )
+    if (typeof result !== 'number') {
+      throw new Error(`Unexpected eval result type: ${typeof result}`)
+    }
+    return result
+  } catch (error) {
+    logger.error('[Real-Time Tracker] Atomic increment error', toError(error))
+    // Re-read current value to detect partial success before propagating error
+    const key = `usage:${userId}:${licenseNonce}`
+    try {
+      const current = await kv.hget(key, windowStart.toString())
+      if (current !== null && current !== undefined) {
+        // Increment may have partially succeeded — return current value
+        // so caller can make an informed decision rather than double-counting
+        return typeof current === 'number' ? current : parseInt(current as string, 10)
+      }
+    } catch {
+      // Cannot determine state — propagate original error
+    }
+    throw error
+  }
+}
+
+/**
+ * Lua script for atomic increment + expire on Redis hash field.
+ * Eliminates TOCTOU between hincrby and expire in the REST API pipeline.
+ * Upstash Redis executes pipeline commands sequentially over HTTP — if the
+ * connection drops after hincrby succeeds but before expire, credits are
+ * ghost-counted (key has no TTL). This Lua script guarantees both-or-neither.
+ *
+ * KEYS[1] = usage key (e.g. "usage:{userId}:{nonce}")
+ * ARGV[1] = field (windowStart as string)
+ * ARGV[2] = delta (credits used, positive integer)
+ * ARGV[3] = ttl seconds
+ */
+const ATOMIC_INCR_EXPIRE_LUA = `local key = KEYS[1]
+local field = ARGV[1]
+local delta = tonumber(ARGV[2])
+local ttl = tonumber(ARGV[3])
+redis.call('HINCRBY', key, field, delta)
+redis.call('EXPIRE', key, ttl)
+return 1`;
+
 export async function incrementRealTimeUsage(
   userId: string,
   licenseNonce: string,
@@ -54,16 +126,20 @@ export async function incrementRealTimeUsage(
   try {
     const key = `usage:${userId}:${licenseNonce}`
     const field = windowStart.toString()
-    const p = kv.pipeline()
-    p.hincrby(key, field, creditsUsed)
-    p.expire(key, ttlSeconds)
-    const results = await p.exec()
-    if (!results || results.length === 0) {
-      throw new Error('Pipeline execution returned no results')
+    // Atomic increment + expire via Lua — eliminates pipeline TOCTOU
+    const result = await kv.eval(ATOMIC_INCR_EXPIRE_LUA, [key], [field, creditsUsed.toString(), ttlSeconds.toString()])
+    if (result !== 1) {
+      throw new Error(`Unexpected Lua eval result: ${result}`)
     }
-    return results[0] as number
+    // Read back the current value after atomic increment
+    const current = await kv.hget(key, field)
+    const currentNum = typeof current === 'number' ? current : parseInt(current as string, 10)
+    if (isNaN(currentNum)) {
+      throw new Error(`Could not read incremented value for ${key}:${field}`)
+    }
+    return currentNum
   } catch (error) {
-    logger.error('[Real-Time Tracker] Redis increment error', toError(error))
+    logger.error('[Real-Time Tracker] Redis atomic increment error', toError(error))
     throw error
   }
 }

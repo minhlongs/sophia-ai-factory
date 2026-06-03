@@ -34,7 +34,7 @@ export async function upsertDailySummary(summary: DailySummaryRecord): Promise<v
 
   const { error } = await db
     .from('usage_daily_summary')
-    .insert(insertPayload);
+    .upsert(insertPayload);
 
   if (error) {
     const err = new Error(error.message);
