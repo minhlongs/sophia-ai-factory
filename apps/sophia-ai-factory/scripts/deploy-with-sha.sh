@@ -90,15 +90,76 @@ if [ "${ALLOW_UNPUSHED_DEPLOY:-0}" != "1" ]; then
     echo "Commit or stash first."
     exit 2
   fi
+  UNTRACKED=$(git -C "$REPO_ROOT" ls-files --others --exclude-standard)
+  if [ -n "$UNTRACKED" ]; then
+    echo "❌ Refusing to deploy: untracked files in working tree."
+    echo "Affected files:"
+    printf '%s\n' "$UNTRACKED" | sed -n '1,10p'
+    echo "Commit, stash, or ignore generated files first."
+    exit 2
+  fi
   echo "✅ Push precondition: HEAD == origin/main, working tree clean"
 fi
 
-# Collect version metadata from git
+# Collect version metadata from git before any manifest/attestation step uses it.
 COMMIT_SHA=$(git -C "$REPO_ROOT" rev-parse HEAD)
 COMMIT_SHORT=$(echo "$COMMIT_SHA" | cut -c1-8)
 # Use macOS-compatible date (no GNU-specific flags)
 DEPLOYED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 DEPLOY_BRANCH=$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD)
+
+# ─── Step 0.7: Deploy attestation (SOC 2 CC6.1 — separation-of-duties) ─────
+# Audit-mode by default so the canonical CF-direct deploy remains usable.
+# Set REQUIRE_DEPLOY_ATTESTATION=1 to enforce at least two distinct operator
+# signatures. Emergency bypass remains SKIP_ATTESTATION=1 with documented reason.
+if [ "${SKIP_ATTESTATION:-0}" != "1" ]; then
+  echo "==> Deploy attestation (separation-of-duties)"
+
+  # Generate deploy manifest
+  DIFF_STAT=$(git -C "$REPO_ROOT" diff --stat origin/main...HEAD 2>/dev/null | tail -1 || echo "0 files changed")
+  FILES_CHANGED=$(git -C "$REPO_ROOT" diff --name-only origin/main...HEAD 2>/dev/null | wc -l | tr -d ' ')
+  OPERATOR_HOST=$(hostname)
+  OPERATOR_USER=$(whoami)
+  MANIFEST=$(node -e "const [commit_sha,branch,timestamp,operator_host,operator_user,diff_summary,files_changed]=process.argv.slice(1); console.log(JSON.stringify({commit_sha,branch,timestamp,operator_host,operator_user,diff_summary,files_changed:Number(files_changed)}));" "$COMMIT_SHA" "$DEPLOY_BRANCH" "$DEPLOYED_AT" "$OPERATOR_HOST" "$OPERATOR_USER" "$DIFF_STAT" "$FILES_CHANGED")
+
+  echo "Deploy manifest:"
+  echo "  $MANIFEST"
+
+  # Require at least two distinct operator attestations
+  ATTESTATION_COUNT=0
+  for KEY_NUM in 1 2 3 4 5; do
+    SECRET_VAR="DEPLOY_KEY_${KEY_NUM}"
+    SIGNED_VAR="DEPLOY_ATTESTATION_${KEY_NUM}"
+    if [ -n "${!SECRET_VAR:-}" ] && [ -n "${!SIGNED_VAR:-}" ]; then
+      EXPECTED=$(printf '%s' "$MANIFEST" | openssl dgst -sha256 -hmac "${!SECRET_VAR}" 2>/dev/null | awk '{print $NF}')
+      if [ "$EXPECTED" = "${!SIGNED_VAR}" ]; then
+        echo "  ✅ Attestation ${KEY_NUM} verified (operator key ${KEY_NUM})"
+        ATTESTATION_COUNT=$((ATTESTATION_COUNT + 1))
+      else
+        echo "  ❌ Attestation ${KEY_NUM} INVALID — signature mismatch"
+        echo "  Bypass: SKIP_ATTESTATION=1 ./scripts/deploy-with-sha.sh (emergency only — document reason)"
+        exit 2
+      fi
+    fi
+  done
+
+  if [ "$ATTESTATION_COUNT" -lt 2 ]; then
+    if [ "${REQUIRE_DEPLOY_ATTESTATION:-0}" = "1" ]; then
+      echo "❌ Deploy requires at least 2 operator attestations (found ${ATTESTATION_COUNT})"
+      echo "Setup: export DEPLOY_KEY_1=<key> DEPLOY_ATTESTATION_1=<sig> DEPLOY_KEY_2=<key> DEPLOY_ATTESTATION_2=<sig>"
+      echo "Bypass: SKIP_ATTESTATION=1 ./scripts/deploy-with-sha.sh (emergency only — document reason)"
+      exit 2
+    fi
+    echo "⚠️ Deploy attestation audit: ${ATTESTATION_COUNT}/2 signatures verified"
+    echo "⚠️ Set REQUIRE_DEPLOY_ATTESTATION=1 to enforce separation-of-duties"
+  else
+    echo "✅ Attestation passed: ${ATTESTATION_COUNT} operator(s) signed"
+  fi
+else
+  echo "⚠️ SKIP_ATTESTATION=1 — BYPASSING deploy attestation (emergency hotfix)"
+  echo "⚠️ Document bypass reason: date, operator, reason, rollback plan"
+  echo "⚠️ SOC 2 CC6.1: Re-attest within 24h or next business day"
+fi
 
 echo "Deploying SHA $COMMIT_SHORT (branch: $DEPLOY_BRANCH)"
 echo "Deployed at: $DEPLOYED_AT"
@@ -220,9 +281,42 @@ if [ -x scripts/ci/sentry-upload-sourcemaps.sh ]; then
   bash scripts/ci/sentry-upload-sourcemaps.sh || echo "warn: sentry sourcemap upload failed (non-fatal)"
 fi
 
+PROD_URL="${PROD_URL:-https://sophia.agencyos.network}"
+VERSION_URL="${VERSION_URL:-$PROD_URL/api/version}"
+
+# ─── Step 5.2: Mandatory live deploy verification ──────────────────────────
+# HTTP 200 alone can be a stale worker. /api/version must expose the exact
+# COMMIT_SHA secret injected above before this deploy can be reported GREEN.
+echo "==> verify deployed SHA via $VERSION_URL"
+LIVE_SHA=""
+for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
+  VERSION_JSON=$(curl -fsS "$VERSION_URL" 2>/dev/null || true)
+  LIVE_SHA=$(echo "$VERSION_JSON" | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4 || true)
+  if [ "$LIVE_SHA" = "$COMMIT_SHORT" ]; then
+    echo "✅ Deploy SHA match: $LIVE_SHA"
+    break
+  fi
+  echo "⏳ Deploy SHA not visible yet (attempt $attempt/12): local=$COMMIT_SHORT live=${LIVE_SHA:-missing}"
+  sleep 5
+done
+
+if [ "$LIVE_SHA" != "$COMMIT_SHORT" ]; then
+  echo "❌ Deploy SHA mismatch after propagation wait: local=$COMMIT_SHORT live=${LIVE_SHA:-missing}"
+  echo "Version response: ${VERSION_JSON:-<empty>}"
+  exit 2
+fi
+
+echo "==> verify production HTTP via $PROD_URL"
+HTTP_STATUS=$(curl -sS -o /dev/null -w "%{http_code}" "$PROD_URL" 2>/dev/null || true)
+if [ "$HTTP_STATUS" != "200" ]; then
+  echo "❌ Production HTTP check failed: ${HTTP_STATUS:-curl-error}"
+  exit 2
+fi
+echo "✅ Production HTTP: $HTTP_STATUS"
+
 echo ""
 echo "Deploy complete."
-echo "Verify: curl -s https://sophia.agencyos.network/api/version"
+echo "Verified: $VERSION_URL shortSha == $COMMIT_SHORT"
 
 # ─── Step 5.5: Mirror push to gitlab (non-fatal, Wave C P2-5, 2026-05-22) ────
 # Best-effort mirror. Local doctrine docs `git push gitlab main` as a manual
@@ -240,7 +334,6 @@ fi
 # SOPHIA_EXPECTED_SHA is passed so the version test asserts the exact new SHA.
 # If smoke fails the worker is live but smoke found a regression — operator
 # MUST decide rollback manually (see sophia-deploy-verify.md §Rollback).
-PROD_URL="${PROD_URL:-https://sophia.agencyos.network}"
 if [ "${RUN_POSTDEPLOY_E2E:-0}" = "1" ]; then
   echo "[deploy] Post-deploy smoke vs $PROD_URL..."
   LOCAL_SHA=$(git -C "$REPO_ROOT" rev-parse HEAD | cut -c1-8)

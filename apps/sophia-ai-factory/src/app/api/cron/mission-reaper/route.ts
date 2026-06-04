@@ -72,7 +72,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   for (const mission of stuckMissions) {
     const nowSec = Math.floor(Date.now() / 1000);
     try {
-      await db
+      const result = await db
         .prepare(
           `UPDATE engine_missions
            SET status = 'failed',
@@ -83,6 +83,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         )
         .bind(nowSec, nowSec, mission.id)
         .run();
+      if (result.meta.changes === 0) {
+        logger.info('[cron/mission-reaper] Mission was already resolved before reaper update', {
+          missionId: mission.id,
+          originalStatus: mission.status,
+        });
+        continue;
+      }
       reaped++;
     } catch (err) {
       logger.error('[cron/mission-reaper] Failed to mark mission failed', {

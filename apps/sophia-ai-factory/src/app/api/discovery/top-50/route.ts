@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sophiaIndex } from '@/land/supabase/sophia-index'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 
-export const revalidate = 3600 // Cache for 1 hour (ISR)
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser()

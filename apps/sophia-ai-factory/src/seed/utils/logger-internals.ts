@@ -28,7 +28,65 @@ export interface LogEntry {
 import { forwardToSentry } from '@/land/observability/sentry-forwarder';
 import { scrubPII, scrubPIIDeep } from '@/land/telemetry/pii-scrubber';
 
+// Better Stack bridge. The central logger is synchronous, so shipment is
+// best-effort and must never affect request execution.
+import { safeLog } from '@/land/telemetry/safe-log';
+import { LogBuffer } from '@/land/telemetry/log-buffer';
+import { pushBatch, type BetterStackConfig } from '@/land/telemetry/better-stack-client';
+
 const isDevelopment = process.env.NODE_ENV === 'development';
+
+// Lazy-constructed Better Stack buffer. Kept for callers that explicitly flush.
+declare global {
+  var __betterStackBuffer: { buffer: LogBuffer } | undefined;
+  var __betterStackFlushScheduled: boolean | undefined;
+}
+
+function getBetterStackBuffer() {
+  if (!globalThis.__betterStackBuffer) {
+    globalThis.__betterStackBuffer = {
+      buffer: new LogBuffer(),
+    };
+  }
+  return globalThis.__betterStackBuffer;
+}
+
+/** Ship buffered entries to Better Stack. Call from ctx.waitUntil() in middleware. */
+export async function flushBetterStackBuffer(): Promise<number> {
+  const { buffer } = getBetterStackBuffer();
+  const entries = buffer.flush();
+  const dropped = buffer.droppedCount;
+  buffer.droppedCount = 0;
+  const config = {
+    logsToken: process.env.BETTER_STACK_LOGS_TOKEN ?? '',
+    ingestingHost: process.env.BETTER_STACK_INGESTING_HOST,
+  };
+  if (entries.length && config.logsToken) {
+    await pushBatch(entries, config);
+  }
+  return dropped;
+}
+
+function getBetterStackConfig(): BetterStackConfig {
+  return {
+    logsToken: process.env.BETTER_STACK_LOGS_TOKEN ?? '',
+    ingestingHost: process.env.BETTER_STACK_INGESTING_HOST,
+  };
+}
+
+function scheduleBetterStackLog(entry: ReturnType<typeof safeLog>): void {
+  const config = getBetterStackConfig();
+  if (!config.logsToken) return;
+
+  getBetterStackBuffer().buffer.push(entry);
+  if (globalThis.__betterStackFlushScheduled) return;
+
+  globalThis.__betterStackFlushScheduled = true;
+  queueMicrotask(() => {
+    globalThis.__betterStackFlushScheduled = false;
+    void flushBetterStackBuffer();
+  });
+}
 
 /**
  * Redact common secret-named keys before they leave the process boundary.
@@ -128,30 +186,52 @@ export const log = (
 
   const formatted = formatLogEntry(entry);
 
+  /** Push a typed payload to the Better Stack buffer. */
+  function pushToBetterStack(
+    lvl: LogLevel,
+    msg: string,
+    meta?: Record<string, unknown>,
+    reqId?: string,
+    errData?: { name: string; message: string; stack?: string },
+  ): void {
+    try {
+      const ctx: Record<string, unknown> = { ...(meta ?? {}), commit: process.env.COMMIT_SHA ?? 'unknown' };
+      if (reqId) ctx.requestId = reqId;
+      if (errData) ctx.error = errData;
+      scheduleBetterStackLog(safeLog(lvl, msg, ctx));
+    } catch {
+      // Logging must never affect request execution.
+    }
+  }
+
   switch (level) {
-    case 'error':
-      console.error(formatted); // LEGIT FALLBACK — do not replace
-      if (error) {
-        // SDK path: captureException with full stack trace
-        captureToSentry(error, entry.metadata).catch(() => { /* no-op */ });
-      } else {
-        // C2: message-only errors (no Error object) → forwardToSentry HTTP forwarder
-        // fire-and-forget; never blocks caller
-        void forwardToSentry({
-          level: 'error',
-          message: entry.message,
-          extra: entry.metadata as Record<string, string> | undefined,
-        });
-      }
-      break;
-    case 'warn':
-      console.warn(`[logger-fallback] ${formatted}`);
-      break;
-    case 'debug':
-      if (isDevelopment) console.debug(formatted);
-      break;
-    default:
-      console.log(`[logger-fallback] ${formatted}`);
+  case 'error':
+    console.error(formatted); // LEGIT FALLBACK — do not replace
+    pushToBetterStack('error', entry.message, entry.metadata, entry.requestId, entry.error ? { name: entry.error.name, message: entry.error.message, stack: entry.error.stack } : undefined);
+    if (error) {
+      // SDK path: captureException with full stack trace
+      captureToSentry(error, entry.metadata).catch(() => { /* no-op */ });
+    } else {
+      // C2: message-only errors (no Error object) -> forwardToSentry HTTP forwarder
+      // fire-and-forget; never blocks caller
+      void forwardToSentry({
+        level: 'error',
+        message: entry.message,
+        extra: entry.metadata as Record<string, string> | undefined,
+      });
+    }
+    break;
+  case 'warn':
+    pushToBetterStack('warn', entry.message, entry.metadata, entry.requestId);
+    console.warn(`[logger-fallback] ${formatted}`);
+    break;
+  case 'debug':
+    pushToBetterStack('debug', entry.message, entry.metadata, entry.requestId);
+    if (isDevelopment) console.debug(formatted);
+    break;
+  default:
+    pushToBetterStack('info', entry.message, entry.metadata, entry.requestId);
+    console.log(`[logger-fallback] ${formatted}`);
   }
 };
 

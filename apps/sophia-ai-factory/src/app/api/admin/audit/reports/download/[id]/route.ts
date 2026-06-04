@@ -14,6 +14,8 @@ import { logger } from '@/seed/utils/logger-utility'
 import { downloadStoredReport } from '@/tree/audit/report-delivery'
 import { createServerClient } from '@/seed/db/client'
 
+export const dynamic = 'force-dynamic'
+
 interface RouteParams {
   params: Promise<{ id: string }>
 }

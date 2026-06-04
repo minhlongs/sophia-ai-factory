@@ -17,6 +17,8 @@ import { z } from 'zod'
 import { rateLimit } from '@/seed/security/rate-limiter'
 import type { RaasAuditLogRow } from '@/tree/database/supabase-types'
 
+export const dynamic = 'force-dynamic'
+
 // Query params validation schema
 const receiptQuerySchema = z.object({
   logId: z.string().uuid('Invalid UUID format')

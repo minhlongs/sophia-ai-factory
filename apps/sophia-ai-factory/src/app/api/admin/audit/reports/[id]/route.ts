@@ -14,6 +14,8 @@ import { rateLimit } from '@/seed/security/rate-limiter'
 import { logger } from '@/seed/utils/logger-utility'
 import { cancelScheduledReport, getDueReports } from '@/tree/audit/report-scheduler'
 
+export const dynamic = 'force-dynamic'
+
 interface RouteParams {
   params: Promise<{ id: string }>
 }

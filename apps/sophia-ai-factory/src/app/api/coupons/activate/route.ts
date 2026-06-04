@@ -9,7 +9,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { toError } from '@/seed/utils/to-error';
-import { addCredits } from '@/land/mcu/credits-repo';
 import { getD1Raw } from '@/seed/db/client';
 import { csrfForbiddenResponse, verifyCsrfToken } from '@/seed/security/csrf';
 
@@ -30,6 +29,10 @@ const TIER_MCU: Record<string, number> = {
   MASTER: 100000,
 };
 
+const VALID_TIERS = new Set(Object.keys(TIER_MCU));
+const COUPON_ACTIVATION_REASON = 'Coupon Activation';
+const NEW_ORG_STARTER_BALANCE = 50;
+
 export async function POST(request: NextRequest) {
   try {
     if (!verifyCsrfToken(request)) return csrfForbiddenResponse();
@@ -47,6 +50,9 @@ export async function POST(request: NextRequest) {
     if (!couponDef) {
       return NextResponse.json({ success: false, error: 'Invalid coupon' });
     }
+    if (!VALID_TIERS.has(tier)) {
+      return NextResponse.json({ success: false, error: 'Invalid tier' }, { status: 400 });
+    }
 
     let d1: D1Database;
     try {
@@ -57,21 +63,24 @@ export async function POST(request: NextRequest) {
 
     const userId = user.id;
     const payload = { email: user.email }; // compat for org auto-create below
-    const mcuMonthly = TIER_MCU[tier] || TIER_MCU.BASIC;
+    const mcuMonthly = TIER_MCU[tier];
 
     // Find user's org — auto-create if missing (old accounts before signup fix)
     let orgRow = await d1.prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
       .bind(userId).first<{ org_id: string }>();
 
+    const statements: D1PreparedStatement[] = [];
+    let orgBalanceDelta = couponDef.mcuBonus;
+
     if (!orgRow) {
       const email = (payload.email as string) || 'user';
       const newOrgId = crypto.randomUUID();
       const slug = email.split('@')[0].replace(/[^a-z0-9]/gi, '-').toLowerCase();
-      await d1.batch([
+      orgBalanceDelta += NEW_ORG_STARTER_BALANCE;
+      statements.push(
         d1.prepare('INSERT INTO organizations (id, name, slug) VALUES (?, ?, ?)').bind(newOrgId, email, slug),
         d1.prepare('INSERT INTO org_members (org_id, user_id, role) VALUES (?, ?, ?)').bind(newOrgId, userId, 'owner'),
-        d1.prepare('INSERT OR IGNORE INTO org_balances (org_id, balance, updated_at) VALUES (?, 50, datetime(\'now\'))').bind(newOrgId),
-      ]);
+      );
       orgRow = { org_id: newOrgId };
     }
 
@@ -79,20 +88,42 @@ export async function POST(request: NextRequest) {
     const existing = await d1.prepare('SELECT id FROM subscriptions WHERE org_id = ? LIMIT 1')
       .bind(orgRow.org_id).first();
     if (existing) {
-      await d1.prepare("UPDATE subscriptions SET plan = ?, status = 'active', updated_at = datetime('now') WHERE org_id = ?")
-        .bind(tier, orgRow.org_id).run();
+      statements.push(
+        d1.prepare("UPDATE subscriptions SET plan = ?, status = 'active', updated_at = datetime('now') WHERE org_id = ?")
+          .bind(tier, orgRow.org_id),
+      );
     } else {
-      await d1.prepare("INSERT INTO subscriptions (id, org_id, plan, status, created_at, updated_at) VALUES (?, ?, ?, 'active', datetime('now'), datetime('now'))")
-        .bind(crypto.randomUUID(), orgRow.org_id, tier).run();
+      statements.push(
+        d1.prepare("INSERT INTO subscriptions (id, org_id, plan, status, created_at, updated_at) VALUES (?, ?, ?, 'active', datetime('now'), datetime('now'))")
+          .bind(crypto.randomUUID(), orgRow.org_id, tier),
+      );
     }
 
-    // Add MCU bonus
-    await d1.prepare('UPDATE org_balances SET balance = balance + ?, updated_at = datetime(\'now\') WHERE org_id = ?')
-      .bind(couponDef.mcuBonus, orgRow.org_id)
-      .run();
+    statements.push(
+      d1.prepare(
+        `INSERT INTO org_balances (org_id, balance, updated_at)
+         VALUES (?, ?, datetime('now'))
+         ON CONFLICT(org_id) DO UPDATE SET
+           balance = balance + excluded.balance,
+           updated_at = datetime('now')`,
+      ).bind(orgRow.org_id, orgBalanceDelta),
+      d1.prepare(
+        `INSERT INTO user_mcu_balance (user_id, credits_remaining, credits_total_purchased, updated_at)
+         VALUES (?, ?, ?, strftime('%s','now'))
+         ON CONFLICT(user_id) DO UPDATE SET
+           credits_remaining = credits_remaining + excluded.credits_remaining,
+           credits_total_purchased = credits_total_purchased + excluded.credits_total_purchased,
+           updated_at = strftime('%s','now')`,
+      ).bind(userId, couponDef.mcuBonus, couponDef.mcuBonus),
+      d1.prepare(
+        `INSERT INTO mcu_transactions (user_id, delta, reason, metadata)
+         VALUES (?, ?, ?, ?)`,
+      ).bind(userId, couponDef.mcuBonus, COUPON_ACTIVATION_REASON, JSON.stringify({ coupon })),
+    );
 
-    const creditsAdded = await addCredits(userId, couponDef.mcuBonus, 'Coupon Activation', { coupon });
-    if (!creditsAdded) {
+    try {
+      await d1.batch(statements);
+    } catch {
       return NextResponse.json({ success: false, error: 'Failed to add MCU credits' }, { status: 500 });
     }
 

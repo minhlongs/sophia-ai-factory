@@ -22,6 +22,8 @@ import {
   type ReportFilters
 } from '@/tree/audit/report-scheduler'
 
+export const dynamic = 'force-dynamic'
+
 // Request body validation schema
 const scheduleReportSchema = z.object({
   type: z.enum(['compliance', 'usage', 'billing']),

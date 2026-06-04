@@ -5,6 +5,28 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderReceipt } from '../receipt-email-template'
 
+const receiptSentMap = vi.hoisted(() => new Map<string, number>())
+
+vi.mock('@/seed/db/client', () => ({
+  createServerClient: () => ({
+    from: () => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn(async () => ({
+            data: { receipt_sent: receiptSentMap.get('nowpayments_pay_idempotent') ?? 0 },
+          })),
+        })),
+      })),
+      update: vi.fn(() => ({
+        eq: vi.fn(async () => {
+          receiptSentMap.set('nowpayments_pay_idempotent', 1)
+          return { data: null }
+        }),
+      })),
+    }),
+  }),
+}))
+
 const baseInput = {
   email: 'user@example.com',
   tier: 'PREMIUM',
@@ -49,28 +71,6 @@ describe('renderReceipt', () => {
 })
 
 describe('sendReceiptEmail idempotency (skips when receipt_sent=1)', () => {
-  const receiptSentMap = new Map<string, number>()
-
-  vi.mock('@/seed/db/client', () => ({
-    createServerClient: () => ({
-      from: () => ({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn(async () => ({
-              data: { receipt_sent: receiptSentMap.get('nowpayments_pay_idempotent') ?? 0 },
-            })),
-          })),
-        })),
-        update: vi.fn(() => ({
-          eq: vi.fn(async () => {
-            receiptSentMap.set('nowpayments_pay_idempotent', 1)
-            return { data: null }
-          }),
-        })),
-      }),
-    }),
-  }))
-
   beforeEach(() => {
     receiptSentMap.clear()
   })
