@@ -28,6 +28,11 @@ type BatchResult<T = unknown> =
   | { success: true; data: T }
   | { success: false; error: string };
 
+async function sha256Hex(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
 export async function createBatchAction(
   formData: FormData,
 ): Promise<BatchResult<{ batchId: string; estimatedCostCents: number; videoCount: number }>> {
@@ -61,6 +66,13 @@ export async function createBatchAction(
     }
 
     const estimatedCostCents = estimateBatchCost(parsed.rows.length);
+    const idempotencyKey = await sha256Hex(JSON.stringify({
+      userId: user.id,
+      name,
+      fileName: file.name,
+      totalVideos: parsed.rows.length,
+      content: text,
+    }));
 
     // Upload original file to R2
     const r2Key = `batch-inputs/${user.id}/${Date.now()}-${file.name}`;
@@ -72,21 +84,24 @@ export async function createBatchAction(
       });
     }
 
-    const batch = await createBatchJob({
+    const { job: batch, created } = await createBatchJob({
       userId: user.id,
       name,
       totalVideos: parsed.rows.length,
       estimatedCostCents,
       inputR2Key: r2Key,
+      idempotencyKey,
     });
 
-    await insertBatchVideos(
-      batch.id,
-      parsed.rows.map((r) => ({
-        rowIndex: r.rowIndex,
-        inputData: JSON.stringify(r),
-      })),
-    );
+    if (created || (await getBatchVideos(batch.id)).length === 0) {
+      await insertBatchVideos(
+        batch.id,
+        parsed.rows.map((r) => ({
+          rowIndex: r.rowIndex,
+          inputData: JSON.stringify(r),
+        })),
+      );
+    }
 
     return {
       success: true,

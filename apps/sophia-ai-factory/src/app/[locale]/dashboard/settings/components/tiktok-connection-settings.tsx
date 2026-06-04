@@ -18,10 +18,6 @@ interface IntegrationsResponse {
   integrations: Integration[];
 }
 
-function generateState(): string {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
-}
-
 export function TikTokConnectionSettings() {
   const [isConnected, setIsConnected] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
@@ -63,11 +59,7 @@ export function TikTokConnectionSettings() {
 
   function handleConnect() {
     startTransition(() => {
-      const state = generateState();
-      sessionStorage.setItem('tiktok_oauth_state', state);
-      // getAuthorizationUrl runs on the client — env var must be public or passed via API
-      // We call the server-side redirect instead to avoid exposing client_key
-      window.location.href = `/api/auth/tiktok/start?state=${state}`;
+      window.location.href = '/api/oauth/tiktok/connect';
     });
   }
 

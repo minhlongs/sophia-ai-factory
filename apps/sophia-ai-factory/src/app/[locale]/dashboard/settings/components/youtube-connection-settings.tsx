@@ -4,7 +4,7 @@
  * YouTube connection settings panel.
  * Lets users connect / disconnect their YouTube account via OAuth2.
  * Connection status is derived from GET /api/user/youtube-connection-status.
- * OAuth flow starts via /api/auth/youtube/start (server-side redirect).
+ * OAuth flow starts via /api/oauth/youtube/connect (server-side redirect).
  */
 
 import { useEffect, useState, useTransition } from 'react';
@@ -23,10 +23,6 @@ interface ApiKeysShape {
 
 interface UserProfileApiResponse {
   api_keys?: ApiKeysShape;
-}
-
-function generateState(): string {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
 export function YouTubeConnectionSettings() {
@@ -81,9 +77,7 @@ export function YouTubeConnectionSettings() {
 
   function handleConnect() {
     startTransition(() => {
-      const state = generateState();
-      sessionStorage.setItem('youtube_oauth_state', state);
-      window.location.href = `/api/auth/youtube/start?state=${state}`;
+      window.location.href = '/api/oauth/youtube/connect';
     });
   }
 

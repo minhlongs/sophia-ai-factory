@@ -12,8 +12,14 @@ export interface BatchJob {
   estimated_cost_cents: number;
   actual_cost_cents: number;
   input_r2_key: string | null;
+  idempotency_key?: string | null;
   created_at: string;
   completed_at: string | null;
+}
+
+export interface CreateBatchJobResult {
+  job: BatchJob;
+  created: boolean;
 }
 
 export interface BatchVideo {
@@ -35,9 +41,42 @@ export async function createBatchJob(input: {
   totalVideos: number;
   estimatedCostCents: number;
   inputR2Key?: string;
-}): Promise<BatchJob> {
+  idempotencyKey?: string;
+}): Promise<CreateBatchJobResult> {
   const db = await getD1Raw();
+  if (input.idempotencyKey) {
+    const existing = await getBatchJobByIdempotencyKey(input.idempotencyKey);
+    if (existing) return { job: existing, created: false };
+  }
+
   const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
+
+  if (input.idempotencyKey) {
+    await db
+      .prepare(
+        `INSERT OR IGNORE INTO batch_jobs
+          (id, user_id, name, total_videos, estimated_cost_cents, input_r2_key, idempotency_key)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(
+        id,
+        input.userId,
+        input.name,
+        input.totalVideos,
+        input.estimatedCostCents,
+        input.inputR2Key ?? null,
+        input.idempotencyKey,
+      )
+      .run();
+
+    const job = await getBatchJobByIdempotencyKey(input.idempotencyKey);
+    if (!job) throw new Error('Failed to create batch job');
+    const created = job.id === id;
+    if (created) {
+      logger.info('[batch-jobs-repo] Created batch job', { id, userId: input.userId, totalVideos: input.totalVideos });
+    }
+    return { job, created };
+  }
 
   await db
     .prepare(
@@ -48,12 +87,22 @@ export async function createBatchJob(input: {
     .run();
 
   logger.info('[batch-jobs-repo] Created batch job', { id, userId: input.userId, totalVideos: input.totalVideos });
-  return (await getBatchJob(id))!;
+  const job = await getBatchJob(id);
+  if (!job) throw new Error('Failed to create batch job');
+  return { job, created: true };
 }
 
 export async function getBatchJob(id: string): Promise<BatchJob | null> {
   const db = await getD1Raw();
   return db.prepare('SELECT * FROM batch_jobs WHERE id = ?').bind(id).first<BatchJob>() ?? null;
+}
+
+export async function getBatchJobByIdempotencyKey(idempotencyKey: string): Promise<BatchJob | null> {
+  const db = await getD1Raw();
+  return db
+    .prepare('SELECT * FROM batch_jobs WHERE idempotency_key = ? LIMIT 1')
+    .bind(idempotencyKey)
+    .first<BatchJob>() ?? null;
 }
 
 export async function listBatchJobs(userId: string): Promise<BatchJob[]> {

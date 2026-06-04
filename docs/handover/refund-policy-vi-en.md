@@ -10,28 +10,44 @@ last_updated: 2026-04-29
 
 ## VI: Chính Sách Hoàn Tiền Sophia AI Factory
 
-**Ngày hiệu lực:** 29/04/2026
+**Ngày hiệu lực:** 04/06/2026
 
-### 1. Bảo Hành 7 Ngày
+### 1. Bảo Hành 7 Ngày — Gói Subscription Thường
 
-Nếu bạn **KHÔNG hài lòng lần subscribe đầu tiên**, Sophia AI Factory hoàn 100% tiền trong **7 ngày**.
+Nếu bạn **KHÔNG hài lòng lần subscribe đầu tiên** với gói BASIC/PREMIUM/ENTERPRISE, Sophia AI Factory hoàn 100% tiền trong **7 ngày**.
 
 ✅ **Điều kiện:**
-- Là lần subscribe đầu tiên (không áp dụng lần upgrade)
-- Yêu cầu trong vòng 7 ngày từ ngày charge
+- Gói BASIC/PREMIUM/ENTERPRISE lần đầu
+- Yêu cầu trong vòng 7 ngày kể từ ngày thanh toán
 - Email đến support@mekongmind.com kèm Invoice ID
 
 ⏱️ **Xử lý:** 5-10 ngày làm việc, hoàn vào tài khoản gốc (NOWPayments hoặc PayOS)
 
-❌ **KHÔNG hoàn lại:**
+### 2. Hoàn Tiền 14 Ngày — Gói MASTER ($4,999)
+
+Gói MASTER là gói cao cấp nhất (one-time, $4,999), Sophia áp dụng cửa sổ hoàn tiền **14 ngày** — rộng hơn 7 ngày tiêu chuẩn để phù hợp với mức đầu tư cao và quy định Luật Bảo vệ Quyền lợi Người tiêu dùng Việt Nam 2023.
+
+✅ **Điều kiện:**
+- Mua gói MASTER (one-time $4,999)
+- Yêu cầu trong vòng **14 ngày** kể từ ngày thanh toán
+- Gửi email đến support@mekongmind.com kèm Invoice ID
+- Không cần lý do (no questions asked)
+
+⏱️ **Xử lý:** 5-10 ngày làm việc, hoàn về phương thức thanh toán gốc
+
+**Ví dụ:** Bạn mua MASTER ngày 01/06/2026. Có thể yêu cầu hoàn tiền đến hết ngày 15/06/2026.
+
+❌ **KHÔNG hoàn lại (MASTER):**
+- Nếu đã kích hoạt source code delivery / đã nhận handover kỹ thuật
+- Nếu vi phạm điều khoản sử dụng (abuse, chargeback từ ngân hàng)
 - MCU credits đã dùng
 - Video đã tạo ra (bạn sở hữu 100% video)
 - Dữ liệu prompts
-- Nếu yêu cầu sau 7 ngày
+- Nếu yêu cầu sau 14 ngày
 
-**Ví dụ:** Bạn subscribe PREMIUM ($399) ngày 15/4. Bạn có thể hoàn toàn bộ đến ngày 22/4. Sau đó = không hoàn được.
+**Ví dụ:** Bạn mua MASTER ($4,999) ngày 1/6. Bạn có thể hoàn toàn bộ đến ngày 15/6. Sau đó = không hoàn được.
 
-### 2. Upgrade & Downgrade — Tính Tiền Prorated
+### 3. Upgrade & Downgrade — Tính Tiền Prorated
 
 #### Upgrade (BASIC → PREMIUM)
 
@@ -55,7 +71,7 @@ Nếu bạn downgrade, Sophia tính tiền prorated cho tháng SAU:
 
 ✅ Hoàn tiền đó sẽ hiển thị trong billing tiếp theo.
 
-### 3. Video Credits — Không Hoàn Lại
+### 4. Video Credits — Không Hoàn Lại
 
 MCU (Mission Credit Unit) là credits để tạo video:
 
@@ -73,7 +89,7 @@ MCU (Mission Credit Unit) là credits để tạo video:
 
 **Ví dụ:** Bạn dùng 3,000 MCU tạo 30 video, rồi cancel = không hoàn lại 3,000 MCU.
 
-### 4. Hoàn Tiền Bị Từ Chối — Khi Nào?
+### 5. Hoàn Tiền Bị Từ Chối — Khi Nào?
 
 ❌ **Sophia AI Factory CÓ QUY HỀN hoàn tiền nếu:**
 
@@ -89,7 +105,7 @@ MCU (Mission Credit Unit) là credits để tạo video:
 4. **Video đã tạo:** "Tôi tạo 100 video, bây giờ muốn hoàn tiền"
    - ✅ Sửa: Video là sản phẩm của bạn, bạn sở hữu, không hoàn được
 
-### 5. Quy Trình Hoàn Tiền — Bước Từng Bước
+### 6. Quy Trình Hoàn Tiền — Bước Từng Bước
 
 **Bước 1:** Email đến **support@mekongmind.com**
 
@@ -114,7 +130,7 @@ Nội dung:
 
 ⚠️ **Lưu ý:** Phí giao dịch (1-2%) do nhà cung cấp payment không hoàn.
 
-### 6. Hủy Subscription — Không Hoàn Lại Tiền Tháng Tới
+### 7. Hủy Subscription — Không Hoàn Lại Tiền Tháng Tới
 
 Nếu bạn **hủy giữa tháng**, bạn **vẫn có quyền dùng đến hết tháng đó**, nhưng **KHÔNG hoàn tiền tháng tới**:
 
@@ -125,7 +141,7 @@ Nếu bạn **hủy giữa tháng**, bạn **vẫn có quyền dùng đến hế
 - Ngày 1/6, không bị charge, account inactive
 - ❌ Không hoàn $199 cho tháng 5
 
-### 7. Khôi Phục Account — Có Hoàn Tiền Không?
+### 8. Khôi Phục Account — Có Hoàn Tiền Không?
 
 Nếu Sophia khóa account của bạn vì:
 - ❌ Không thanh toán quá 30 ngày
@@ -136,7 +152,7 @@ Nếu Sophia khóa account của bạn vì:
 
 ⚠️ **Ngoại lệ:** Nếu Sophia server bị hỏng và mất dữ liệu của bạn = Sophia hoàn 1 tháng tiền.
 
-### 8. Nếu Ở Ngoài Việt Nam — Thuế & Phí
+### 9. Nếu Ở Ngoài Việt Nam — Thuế & Phí
 
 Nếu bạn ở nước ngoài + dùng NOWPayments:
 - ✅ NOWPayments không tính VAT (giá là final)
@@ -148,28 +164,42 @@ Hoàn tiền được tính đủ (NOWPayments không tính lại fee).
 
 ## EN: Refund Policy
 
-**Effective Date:** April 29, 2026
+**Effective Date:** June 4, 2026 (updated MASTER policy)
 
-### 1. 7-Day Money-Back Guarantee
+### 1. 7-Day Money-Back Guarantee — Standard Subscriptions
 
-If you are **NOT satisfied with your first subscription**, Sophia AI Factory refunds 100% within **7 days**.
+If you are **not satisfied with your first subscription** on BASIC/PREMIUM/ENTERPRISE, Sophia AI Factory refunds 100% within **7 days**.
 
 ✅ **Conditions:**
-- First subscription only (not applicable to upgrades)
-- Request within 7 days from charge date
+- First BASIC/PREMIUM/ENTERPRISE subscription only
+- Request within 7 days of payment date
 - Email support@mekongmind.com with Invoice ID
 
 ⏱️ **Processing:** 5-10 business days, refund to original payment method (NOWPayments or PayOS)
 
-❌ **NON-REFUNDABLE:**
+### 2. MASTER Refund — 14 Days
+
+The **MASTER plan ($4,999 one-time)** receives a full refund within **14 days** of payment — no questions asked.
+
+✅ **Conditions:**
+- MASTER one-time purchase
+- Request within 14 days of payment date
+- Email support@mekongmind.com with Invoice ID
+
+⏱️ **Processing:** 5-10 business days, refund to original payment method.
+
+❌ **NON-REFUNDABLE for MASTER:**
+- Requests after 14 days
+- Source code delivery or technical handover already activated
+- Terms abuse or bank chargeback abuse
 - MCU credits already consumed
 - Generated videos (you own 100% of videos)
 - Prompt data
-- If requested after 7 days
+- API costs already consumed
 
-**Example:** You subscribe PREMIUM ($399) on 4/15. You can refund until 4/22. After that = no refund.
+**Example:** You purchase MASTER ($4,999) on 6/1. You can refund until 6/15. After that = no refund.
 
-### 2. Upgrade & Downgrade — Prorated Charges
+### 3. Upgrade & Downgrade — Prorated Charges
 
 #### Upgrade (BASIC → PREMIUM)
 
@@ -193,7 +223,7 @@ If you downgrade, Sophia calculates prorated refund for NEXT month:
 
 ✅ Refund appears in next billing statement.
 
-### 3. Video Credits — Non-Refundable
+### 4. Video Credits — Non-Refundable
 
 MCU (Mission Credit Unit) is the credit used to generate videos:
 
@@ -211,7 +241,7 @@ MCU (Mission Credit Unit) is the credit used to generate videos:
 
 **Example:** You use 3,000 MCU to create 30 videos, then cancel = no refund for 3,000 MCU.
 
-### 4. Refund Denial — When?
+### 5. Refund Denial — When?
 
 ❌ **Sophia AI Factory MAY DENY refund if:**
 
@@ -227,7 +257,7 @@ MCU (Mission Credit Unit) is the credit used to generate videos:
 4. **Videos created:** "I created 100 videos, now want refund"
    - ✅ Fix: Videos are your product, you own them, no refund
 
-### 5. Refund Process — Step by Step
+### 6. Refund Process — Step by Step
 
 **Step 1:** Email **support@mekongmind.com**
 
@@ -252,7 +282,7 @@ Body:
 
 ⚠️ **Note:** Transaction fees (1-2%) charged by payment provider are not refunded.
 
-### 6. Cancellation — No Refund for Following Month
+### 7. Cancellation — No Refund for Following Month
 
 If you **cancel mid-month**, you **remain active until end of current month**, but **NO refund for next month**:
 
@@ -263,7 +293,7 @@ If you **cancel mid-month**, you **remain active until end of current month**, b
 - On 6/1, no charge, account inactive
 - ❌ No refund for May $199
 
-### 7. Account Recovery — Any Refund?
+### 8. Account Recovery — Any Refund?
 
 If Sophia suspends your account for:
 - ❌ Non-payment beyond 30 days
@@ -274,7 +304,7 @@ If Sophia suspends your account for:
 
 ⚠️ **Exception:** If Sophia server fails and loses your data = Sophia refunds 1 month.
 
-### 8. Outside Vietnam — Tax & Fees
+### 9. Outside Vietnam — Tax & Fees
 
 If you're outside Vietnam + use NOWPayments:
 - ✅ NOWPayments charges no VAT (price is final)

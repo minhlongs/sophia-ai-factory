@@ -45,10 +45,11 @@
     "db:gen-sop-seed-v2": "node scripts/generate-sop-seed-sql-v2.mjs",
     "doctor": "node scripts/sophia-doctor.mjs",
     "check:bundle-size": "bash scripts/check-bundle-size.sh",
-    "ci": "npm run ci:typecheck && npm run ci:lint && npm run ci:test && npm run ci:secrets && npm run ci:audit",
+    "ci": "npm run ci:typecheck && npm run ci:lint && npm run ci:test && npm run ci:get-side-effects && npm run ci:secrets && npm run ci:audit",
     "ci:typecheck": "tsc --noEmit",
     "ci:lint": "eslint src --max-warnings=341",
     "ci:test": "vitest run",
+    "ci:get-side-effects": "bash scripts/ci-check-get-side-effects.sh",
     "ci:secrets": "secretlint --secretlintignore .secretlintignore 'src/**/*.{ts,tsx,js,mjs,json}' 'scripts/**/*.{ts,js,mjs,sh}' '*.{json,toml,yaml,yml,sh}'",
     "ci:audit": "npm audit --audit-level=high || true",
     "prepare": "husky"

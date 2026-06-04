@@ -145,7 +145,8 @@ describe('requireRecentAuth helper', () => {
     const token = await mintAdminChallengeToken('admin_user_1', TEST_SECRET);
     // Flip last char of signature segment
     const dotIdx = token.lastIndexOf('.');
-    const tampered = token.slice(0, dotIdx + 1) + 'X' + token.slice(dotIdx + 2);
+    const replacement = token[dotIdx + 1] === 'X' ? 'Y' : 'X';
+    const tampered = token.slice(0, dotIdx + 1) + replacement + token.slice(dotIdx + 2);
     const req = makeBulkRequest(tampered);
     const result = await requireRecentAuth(req, 5 * 60 * 1000);
     expect(result.ok).toBe(false);
