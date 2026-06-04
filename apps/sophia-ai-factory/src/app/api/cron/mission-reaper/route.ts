@@ -19,6 +19,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { addCredits } from '@/land/mcu/credits-repo';
 import { logger } from '@/seed/utils/logger-utility';
+import { getD1Safe } from '@/seed/db/client';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,31 +35,11 @@ interface StuckMission {
   created_at: number;
 }
 
-type D1Binding = {
-  prepare: (sql: string) => {
-    bind: (...args: unknown[]) => {
-      all: () => Promise<{ results: StuckMission[] }>;
-      run: () => Promise<{ meta: { changes: number } }>;
-    };
-  };
-};
-
-function getD1Binding(): D1Binding | null {
-  try {
-    const env = (globalThis as unknown as { __env?: Record<string, unknown> }).__env;
-    if (env?.DB) return env.DB as D1Binding;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Binding | undefined;
-    return globalDb ?? null;
-  } catch {
-    return null;
-  }
-}
-
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const authError = verifyCronAuth(request);
   if (authError) return authError;
 
-  const db = getD1Binding();
+  const db = await getD1Safe();
   if (!db) {
     logger.error('[cron/mission-reaper] D1 binding unavailable');
     return NextResponse.json({ error: 'D1 binding unavailable' }, { status: 503 });
@@ -75,7 +56,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       )
       .bind(STUCK_THRESHOLD_MINUTES * 60)
       .all();
-    stuckMissions = results;
+    stuckMissions = results as unknown as StuckMission[];
   } catch (err) {
     logger.error('[cron/mission-reaper] Failed to query stuck missions', err instanceof Error ? err : new Error(String(err)));
     return NextResponse.json({ error: 'Failed to query stuck missions' }, { status: 500 });

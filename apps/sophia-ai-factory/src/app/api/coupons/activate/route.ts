@@ -10,6 +10,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { toError } from '@/seed/utils/to-error';
 import { addCredits } from '@/land/mcu/credits-repo';
+import { getD1Raw } from '@/seed/db/client';
+import { csrfForbiddenResponse, verifyCsrfToken } from '@/seed/security/csrf';
 
 interface CouponActivateRequest {
   coupon?: string;
@@ -28,16 +30,10 @@ const TIER_MCU: Record<string, number> = {
   MASTER: 100000,
 };
 
-function getD1(): D1Database | null {
-  const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-  if (env?.DB) return env.DB as D1Database;
-  const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[Symbol.for('__cloudflare-context__')];
-  if (ctx?.env?.DB) return ctx.env.DB as D1Database;
-  return null;
-}
-
 export async function POST(request: NextRequest) {
   try {
+    if (!verifyCsrfToken(request)) return csrfForbiddenResponse();
+
     const user = await getCurrentUserFromHeaders(request.headers);
     if (!user) {
       return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
@@ -52,8 +48,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Invalid coupon' });
     }
 
-    const d1 = getD1();
-    if (!d1) {
+    let d1: D1Database;
+    try {
+      d1 = await getD1Raw();
+    } catch {
       return NextResponse.json({ success: false, error: 'Database unavailable' }, { status: 500 });
     }
 

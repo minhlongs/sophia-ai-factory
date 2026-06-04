@@ -45,9 +45,12 @@ function timingSafeCompare(a: string, b: string): boolean {
 function verifyInternalToken(request: NextRequest): boolean {
   const expected = process.env.COQUI_INTERNAL_TOKEN;
   if (!expected) {
-    // Dev fallback: allow through with warning
-    logger.warn('[TTS] COQUI_INTERNAL_TOKEN not set — running in dev mode');
-    return true;
+    if (process.env.NODE_ENV !== 'production') {
+      logger.warn('[TTS] COQUI_INTERNAL_TOKEN not set — allowing non-production dev mode');
+      return true;
+    }
+    logger.error('[TTS] COQUI_INTERNAL_TOKEN not set — rejecting production request');
+    return false;
   }
   const provided = request.headers.get('x-internal-token') ?? '';
   return timingSafeCompare(provided, expected);
