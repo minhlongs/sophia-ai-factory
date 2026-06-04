@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Mail, Lock, ArrowLeft, Loader2, CheckCircle } from "lucide-react";
 import { authClient } from "@/seed/auth/better-auth-client";
 import { SignupForm } from "@/forest/components/auth/signup-form";
+import { useCsrfToken } from "@/seed/security/use-csrf-token";
 
 type AuthMode = "password" | "magic";
 type PageTab = "signin" | "signup";
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const redirectTo = searchParams.get('redirect') || '/dashboard';
   const tabParam = searchParams.get('tab');
   const tSignup = useTranslations("auth.signup");
+  const csrfHeaders = useCsrfToken();
   const signupStrings = useMemo(() => ({
     name_label: tSignup("name_label"),
     name_placeholder: tSignup("name_placeholder"),
@@ -57,6 +59,27 @@ export default function LoginPage() {
     setPassword("");
   }
 
+  async function activateCouponAfterLogin() {
+    if (!coupon || !tier) return true;
+
+    const res = await fetch("/api/coupons/activate", {
+      method: "POST",
+      headers: {
+        ...csrfHeaders,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ coupon, tier }),
+    });
+
+    if (!res.ok) return false;
+    const body = await res.json() as { success?: boolean; error?: string };
+    if (!body.success) {
+      setError(body.error ?? "Kích hoạt coupon thất bại");
+      return false;
+    }
+    return true;
+  }
+
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -75,7 +98,10 @@ export default function LoginPage() {
       }
 
       if (coupon && tier) {
-        window.location.href = `/api/coupons/activate-redirect?coupon=${coupon}&tier=${tier}`;
+        const activated = await activateCouponAfterLogin();
+        if (!activated) return;
+        router.push(`/dashboard?activated=${encodeURIComponent(tier)}`);
+        router.refresh();
         return;
       }
 

@@ -42,7 +42,7 @@ function getEnv(request: NextRequest): CloudflareEnv {
  return {
   COMMIT_SHA: ctx?.COMMIT_SHA ?? process.env.COMMIT_SHA,
   DEPLOYED_AT: ctx?.DEPLOYED_AT ?? process.env.DEPLOYED_AT,
-  DEPLOY_BRANCH: ctx?.DEPLOYED_BRANCH ?? process.env.DEPLOY_BRANCH,
+  DEPLOY_BRANCH: ctx?.DEPLOY_BRANCH ?? process.env.DEPLOY_BRANCH,
   INTROSPECT_TOKEN: ctx?.INTROSPECT_TOKEN ?? process.env.INTROSPECT_TOKEN,
   OPENNEXT_VERSION: ctx?.OPENNEXT_VERSION ?? process.env.OPENNEXT_VERSION,
  };

@@ -24,12 +24,24 @@ export function Navbar() {
   }, []);
 
   useEffect(() => {
-    const hasToken = document.cookie.includes('better-auth.session_token=')
-      || document.cookie.includes('auth-token=');
-    const timer = setTimeout(() => {
-      setIsLoggedIn(hasToken);
-    }, 0);
-    return () => clearTimeout(timer);
+    const controller = new AbortController();
+
+    async function syncSessionState() {
+      try {
+        const res = await fetch("/api/auth/session", {
+          credentials: "include",
+          signal: controller.signal,
+        });
+        setIsLoggedIn(res.ok);
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          setIsLoggedIn(false);
+        }
+      }
+    }
+
+    void syncSessionState();
+    return () => controller.abort();
   }, [pathname]);
 
   const cleanPath = pathname.replace(/^\/(en|vi)/, "") || "/";
@@ -40,7 +52,7 @@ export function Navbar() {
   if (isDashboard) return null;
 
   // Smart referral link: logged-in users go to dashboard affiliate, guests to discovery page
-  const referEarnHref = isLoggedIn ? "/affiliate" : "/affiliate-discovery";
+  const referEarnHref = isLoggedIn ? "/dashboard/affiliate" : "/affiliate-discovery";
 
   const navLinks = [
     { label: t("nav.raas"), href: isHomePage ? "/#raas" : "/guide/commands" },

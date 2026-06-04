@@ -239,7 +239,10 @@ Co. Ban co the huy goi bat ky luc nao. Goi se con hieu luc den het chu ky thanh 
 Chung toi chap nhan USDT/crypto qua NOWPayments. Khach hang o Viet Nam co the thanh toan bang VietQR hoac chuyen khoan ngan hang qua PayOS.
 
 **Co hoan tien khong?**
-Chung toi khong hoan tien cho thoi gian da su dung. Khi huy, ban van duoc su dung den het thang da thanh toan.
+- **MASTER ($4,999):** Hoan tien day du trong vong **14 ngay** ke tu ngay thanh toan, khong can ly do.
+- **Cac goi khac (BASIC/PREMIUM/ENTERPRISE):** Khong hoan tien cho thoi gian da su dung. Khi huy, ban van duoc su dung den het thang da thanh toan.
+
+Dieu nay ap dung theo chinh sach chung: thoi gian da su dung khong duoc hoan tien, nhung MASTER la goi mot lan nen chung toi chap nhan tra lai trong 14 ngay dau.
 
 ### English
 
@@ -250,7 +253,10 @@ Yes. You can cancel anytime. Your plan remains active until the end of your curr
 We accept USDT/crypto via NOWPayments. Customers in Vietnam can pay using VietQR or bank transfer via PayOS.
 
 **Do you offer refunds?**
-We don't refund for time already used. When you cancel, you keep access until the end of the paid month.
+- **MASTER ($4,999):** Full refund within **14 days** of payment — no questions asked.
+- **Other plans (BASIC/PREMIUM/ENTERPRISE):** No refund for time already used. When you cancel, you keep access until the end of your paid month.
+
+This policy balances customer trust with operational sustainability for a Vietnamese B2B SaaS platform.
 
 ---
 

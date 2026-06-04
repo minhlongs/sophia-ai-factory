@@ -335,7 +335,15 @@
       "monthly_label": "Monthly label",
       "annual_label": "Annual label",
       "subscribe_now_master": "Subscribe now master",
-      "save_percent": "Tiết kiệm {percent}%"
+      "save_percent": "Tiết kiệm {percent}%",
+      "refund_master_title": "Gói MASTER — Hoàn Tiền Đầy Đủ Trong 14 Ngày",
+      "refund_master_desc": "Gói MASTER ($4,999 một lần) được hoàn tiền đầy đủ trong 14 ngày kể từ ngày thanh toán, không cần lý do.",
+      "refund_master_conditions": "Gói MASTER (một lần) — không áp dụng lần upgrade. Yêu cầu trong vòng 14 ngày kể từ ngày thanh toán.",
+      "refund_master_example": "Bạn mua MASTER ($4,999) ngày 1/6. Bạn có thể hoàn toàn bộ đến ngày 15/6. Sau đó = không hoàn được.",
+      "refund_other_plans": "Các gói khác (BASIC/PREMIUM/ENTERPRISE): Không hoàn tiền cho thời gian đã sử dụng. Khi hủy, bạn vẫn dùng đến hết tháng đã thanh toán.",
+      "refund_non_refundable": "Credits đã dùng, video đã tạo, và phí API không được hoàn lại.",
+      "faq_3_a": "Gói MASTER ($4,999 một lần) được hoàn tiền đầy đủ trong 14 ngày — không cần lý do. BASIC/PREMIUM/ENTERPRISE được hoàn tiền 100% trong 7 ngày cho lần subscribe đầu tiên. Các gói tháng không hoàn tiền cho thời gian đã sử dụng; hủy bất cứ lúc nào và giữ quyền truy cập đến hết kỳ thanh toán.",
+      "faq_3_q": "Chính sách hoàn tiền của bạn là gì?"
     },
     "roi": {
       "title": "Tính Toán Doanh Thu Tiềm Năng",

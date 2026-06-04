@@ -342,7 +342,7 @@
       "refund_master_example": "If you buy MASTER ($4,999) on June 1, you can get a full refund until June 15. After that, it is non-refundable.",
       "refund_other_plans": "Other plans (BASIC/PREMIUM/ENTERPRISE): used billing time is non-refundable. When you cancel, you keep access until the end of the paid month.",
       "refund_non_refundable": "Used credits, generated videos, and API fees are non-refundable.",
-      "faq_3_a": "We offer a 14-day refund window for all plans. MASTER ($4,999 one-time) is fully refundable within 14 days, no reason required. Monthly plans do not refund used billing time; cancel anytime and keep access until the end of the billing period.",
+      "faq_3_a": "MASTER ($4,999 one-time) is fully refundable within 14 days, no reason required. BASIC/PREMIUM/ENTERPRISE are eligible for a 100% refund within 7 days for the first subscription. Monthly plans do not refund used billing time; cancel anytime and keep access until the end of the billing period.",
       "faq_3_q": "What is your refund policy?"
     },
     "roi": {

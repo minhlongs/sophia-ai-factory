@@ -22,6 +22,8 @@ const standaloneServerDir = join(appRoot, '.next', 'standalone', '.next', 'serve
 const filesToCopy = [
   'instrumentation.js',
   'instrumentation.js.map',
+  'chunks/instrumentation_ts_0zq9-xz._.js',
+  'chunks/instrumentation_ts_0zq9-xz._.js.map',
 ];
 
 mkdirSync(standaloneServerDir, { recursive: true });

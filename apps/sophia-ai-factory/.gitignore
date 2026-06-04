@@ -73,3 +73,6 @@ docs/audit/*/
 
 # CLEO agent runtime artifacts (not part of the app source)
 .cleo/
+.next/
+.open-next/
+node_modules/
