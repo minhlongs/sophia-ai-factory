@@ -13,7 +13,7 @@
  *   /affiliate       → sophia_get_affiliate_stats
  *   /videos          → sophia_get_video_status (optional state arg)
  *   /handover        → sophia_get_handover
- *   /free100 <email> → sophia_redeem_free100   (public, mints magic link)
+ *   /free100 <email> → sophia_redeem_free100   (paired, mints magic link)
  *
  * @module tree/telegram/handlers/openclaw-handlers
  */
@@ -384,7 +384,7 @@ export async function handleSchedulePublish(chatId: string, rawArg: string): Pro
   );
 }
 
-/** /free100 <email> — public, mints a magic link for the supplied email. */
+/** /free100 <email> — paired chats only; mints a magic link for the supplied email. */
 export async function handleFree100(chatId: string, rawArg: string): Promise<void> {
   const email = rawArg.trim();
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {

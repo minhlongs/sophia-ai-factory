@@ -463,7 +463,7 @@ describe('Telegram Webhook Route — /start <token> pairing', () => {
     expect(pairingModule.requestPairing).not.toHaveBeenCalled()
   })
 
-  it('/free100 bypasses pairing gate when chat is not paired', async () => {
+  it('/free100 requires pairing when chat is not paired', async () => {
     process.env.TELEGRAM_ADMIN_CHAT_ID = '777'
     vi.mocked(pairingModule.isAllowed).mockResolvedValue(false)
     vi.mocked(pairingModule.requestPairing).mockResolvedValue({ code: 'X' })
@@ -474,7 +474,7 @@ describe('Telegram Webhook Route — /start <token> pairing', () => {
     const res = await POST(req)
 
     expect(res.status).toBe(200)
-    expect(pairingModule.requestPairing).not.toHaveBeenCalled()
+    expect(pairingModule.requestPairing).toHaveBeenCalledWith(expect.anything(), '54321', '')
   })
 
   it('/tier still requires pairing when chat is not paired', async () => {

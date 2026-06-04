@@ -145,13 +145,13 @@ export const log = (
       }
       break;
     case 'warn':
-      console.warn(formatted);
+      console.warn(`[logger-fallback] ${formatted}`);
       break;
     case 'debug':
       if (isDevelopment) console.debug(formatted);
       break;
     default:
-      console.log(formatted);
+      console.log(`[logger-fallback] ${formatted}`);
   }
 };
 

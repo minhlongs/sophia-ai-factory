@@ -165,16 +165,15 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Public OpenClaw command whitelist (bypass pairing gate) ──────────────
-    // These commands MUST work for unpaired chats so a brand-new user can
-    // discover Sophia, probe deploy state, and redeem FREE100 without first
-    // requesting admin pairing. They are the doors into the funnel; everything
-    // else (tier, quota, affiliate, etc.) still requires a paired user_id.
+    // Keep this list read-only/status-only. Promo redemption and any command
+    // that can mutate accounts, grants, tiers, or credits must stay behind the
+    // pairing gate.
     //
     // NOTE: /start is INTENTIONALLY excluded — bare /start should trigger the
     // pairing gate so admin-controlled bots reject unknown senders. The
     // /start <token> deep-link flow consumes the token AFTER the gate (it
     // expects the chat to be paired via web-side admin invite).
-    const PUBLIC_COMMANDS = ['/version', '/help', '/free100'] as const
+    const PUBLIC_COMMANDS = ['/version', '/help'] as const
     const isPublicCommand = PUBLIC_COMMANDS.some(
       (c) => text === c || text.startsWith(`${c} `),
     )
@@ -189,7 +188,7 @@ export async function POST(request: NextRequest) {
         const { code } = await requestPairing(db, chatId, firstName)
         await sendTelegramMessage(
           chatId,
-          `Hi! To use Sophia bot, ask the admin to approve you.\n\nYour pairing code: \`${code}\`\n\n_Code expires in 15 minutes._\n\nMeanwhile you can run: /version, /help, /free100 <email>.`
+          `Hi! To use Sophia bot, ask the admin to approve you.\n\nYour pairing code: \`${code}\`\n\n_Code expires in 15 minutes._\n\nMeanwhile you can run: /version, /help.`
         )
         return NextResponse.json({ ok: true })
       }

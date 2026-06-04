@@ -37,10 +37,10 @@ const mockChain = {
 
 const ORIGINAL_FETCH = globalThis.fetch;
 
-function buildRequest(body: unknown): NextRequest {
+function buildRequest(body: unknown, headers: Record<string, string> = {}): NextRequest {
   return new NextRequest('http://localhost/api/internal/tts', {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...headers },
     body: JSON.stringify(body),
   });
 }
@@ -80,7 +80,7 @@ function installFetchCapture(): () => CapturedFetch | null {
 describe('POST /api/internal/tts — voicePresetId resolution', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    delete process.env.COQUI_INTERNAL_TOKEN; // dev-mode allows through
+    process.env.COQUI_INTERNAL_TOKEN = 'test-internal-token';
     process.env.COQUI_FLY_URL = 'http://coqui.test';
 
     vi.mocked(createServerClient).mockReturnValue({
@@ -96,6 +96,7 @@ describe('POST /api/internal/tts — voicePresetId resolution', () => {
   afterEach(() => {
     globalThis.fetch = ORIGINAL_FETCH;
     delete process.env.COQUI_FLY_URL;
+    delete process.env.COQUI_INTERNAL_TOKEN;
   });
 
   it('returns 400 for unknown voicePresetId', async () => {
@@ -105,7 +106,7 @@ describe('POST /api/internal/tts — voicePresetId resolution', () => {
         voicePresetId: 'does-not-exist-9999',
         tenantId: 't1',
         jobId: 'j1',
-      }),
+      }, { 'x-internal-token': 'test-internal-token' }),
     );
     expect(resp.status).toBe(400);
     const body = (await resp.json()) as { error: string };
@@ -120,7 +121,7 @@ describe('POST /api/internal/tts — voicePresetId resolution', () => {
         voicePresetId: 'alex-en-m',
         tenantId: 't1',
         jobId: 'j-alex',
-      }),
+      }, { 'x-internal-token': 'test-internal-token' }),
     );
     const captured = getCaptured();
     expect(captured).not.toBeNull();
@@ -136,7 +137,7 @@ describe('POST /api/internal/tts — voicePresetId resolution', () => {
         voicePresetId: 'linh-vi-f',
         tenantId: 't1',
         jobId: 'j-linh',
-      }),
+      }, { 'x-internal-token': 'test-internal-token' }),
     );
     expect(getCaptured()?.language).toBe('vi');
   });
@@ -150,7 +151,7 @@ describe('POST /api/internal/tts — voicePresetId resolution', () => {
         language: 'en',
         tenantId: 't1',
         jobId: 'j-override',
-      }),
+      }, { 'x-internal-token': 'test-internal-token' }),
     );
     expect(getCaptured()?.language).toBe('en');
   });
@@ -163,8 +164,20 @@ describe('POST /api/internal/tts — voicePresetId resolution', () => {
         voiceId: 'https://example.com/custom-voice.wav',
         tenantId: 't1',
         jobId: 'j-byov',
-      }),
+      }, { 'x-internal-token': 'test-internal-token' }),
     );
     expect(getCaptured()?.voiceRefUrl).toBe('https://example.com/custom-voice.wav');
+  });
+
+  it('rejects requests with a missing internal token when configured', async () => {
+    const resp = await POST(
+      buildRequest({
+        text: 'hello',
+        tenantId: 't1',
+        jobId: 'j-auth',
+      }),
+    );
+
+    expect(resp.status).toBe(401);
   });
 });

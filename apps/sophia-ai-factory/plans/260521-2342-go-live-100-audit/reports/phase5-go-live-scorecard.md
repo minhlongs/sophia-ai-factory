@@ -1,8 +1,8 @@
 # Phase 5 — GO-LIVE 100/100 Final Scorecard
 
-**Date:** 2026-06-02 (re-score)
+**Date:** 2026-06-04 (P2 update)
 **Doctrine:** `sophia-no-tech-doctrine.md` SUSPENDED 2026-05-21 (user explicit override). Honest scoring — no operator-side waivers.
-**Prod anchor:** SHA `99252d57` (2026-06-02) — 138 commits since original scorecard. All 8 P0s (Wave A/B/C) shipped post-d86659bf.
+**Prod anchor:** SHA `671dec22` (2026-06-04) — 139 commits since original scorecard. All 8 P0s (Wave A/B/C) shipped post-d86659bf. SG-008 (console.* purge) closed 2026-06-04.
 **Audit cycle:** `plans/260521-2342-go-live-100-audit/`
 **Auditor:** Phase 5 synthesizer (inputs: phase1, phase3 axes 1-6, phase4).
 
@@ -86,7 +86,7 @@ Why 67 not 55? The raw axis scores compound penalties (each axis re-counts share
 | C | Logger swap + test gate | 9423e473 | `deploy-with-sha.sh: npm test pre-deploy gate` |
 | C | GitLab mirror | 9423e473 | deploy script updated |
 
-**Delta:** honest score 67 → **75** (+8 P0 closures, Wave A/B/C all verified present in HEAD).
+**Delta:** honest score 67 → **75** (+8 P0 closures + SG-008 console.* purge closed; Wave A/B/C + SG-008 all verified in HEAD).
 
 ## 4. Doctrine Reckoning — 87.5 narrative vs 67 honest
 

@@ -9,7 +9,7 @@
  * - addCredits always succeeds (INSERT OR REPLACE + UPDATE)
  */
 
-import { createServerClient } from '@/seed/db/client';
+import { createServerClient, getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 export interface McuBalance {
@@ -63,10 +63,8 @@ export async function deductCredits(
 ): Promise<boolean> {
   if (amount <= 0) return true;
 
-  const db = createServerClient();
   try {
-    // Atomic deduct using D1 raw SQL
-    const d1 = db as unknown as { prepare: (sql: string) => { bind: (...args: unknown[]) => { run: () => Promise<{ meta: { changes: number } }> } } };
+    const d1 = await getD1Raw();
 
     const stmt = d1.prepare(
       `UPDATE user_mcu_balance
@@ -82,14 +80,10 @@ export async function deductCredits(
       return false;
     }
 
-    // Record transaction
-    await db.from('mcu_transactions').insert({
-      user_id: userId,
-      delta: -amount,
-      reason,
-      mission_id: missionId,
-      metadata: JSON.stringify({ auto: true }),
-    });
+    await d1.prepare(
+      `INSERT INTO mcu_transactions (user_id, delta, reason, mission_id, metadata)
+       VALUES (?, ?, ?, ?, ?)`
+    ).bind(userId, -amount, reason, missionId, JSON.stringify({ auto: true })).run();
 
     return true;
   } catch (err) {
@@ -110,9 +104,8 @@ export async function addCredits(
 ): Promise<void> {
   if (amount <= 0) return;
 
-  const db = createServerClient();
   try {
-    const d1 = db as unknown as { prepare: (sql: string) => { bind: (...args: unknown[]) => { run: () => Promise<unknown> } } };
+    const d1 = await getD1Raw();
 
     // Upsert balance row
     await d1.prepare(
@@ -124,13 +117,10 @@ export async function addCredits(
          updated_at = strftime('%s','now')`
     ).bind(userId, amount, amount).run();
 
-    // Record transaction
-    await db.from('mcu_transactions').insert({
-      user_id: userId,
-      delta: amount,
-      reason,
-      metadata: metadata ? JSON.stringify(metadata) : null,
-    });
+    await d1.prepare(
+      `INSERT INTO mcu_transactions (user_id, delta, reason, metadata)
+       VALUES (?, ?, ?, ?)`
+    ).bind(userId, amount, reason, metadata ? JSON.stringify(metadata) : null).run();
   } catch (err) {
     logger.error('[MCU] addCredits error', err instanceof Error ? err : new Error(String(err)));
   }
