@@ -52,7 +52,7 @@ while IFS= read -r sql_file; do
     continue
   fi
 
-  tables_in_file=$(grep -ioE 'CREATE TABLE (IF NOT EXISTS )?[a-zA-Z_]+' "$sql_file" \
+  tables_in_file=$(grep -ioE 'CREATE TABLE (IF NOT EXISTS )?[a-zA-Z_]+' "$sql_file" 2>/dev/null || true \
     | awk '{print tolower($NF)}' \
     | sort -u)
 
@@ -66,7 +66,13 @@ while IFS= read -r sql_file; do
       orphans_found=$((orphans_found + 1))
     fi
   done <<< "$tables_in_file"
-done < <(find src -name "*.sql" -type f 2>/dev/null | sort)
+# Scan src/**/*.sql but exclude historical seed/db/migrations/ (already applied)
+# and src/db/migrations/ (Supabase-target files, skipped via PG_MARKERS anyway).
+# The canonical check is: every CREATE TABLE in src/ must also exist in migrations/.
+done < <(find src -name "*.sql" -type f \
+  -not -path "src/seed/db/migrations/*" \
+  -not -path "src/db/migrations/*" \
+  2>/dev/null | sort)
 
 echo
 echo "Migration coverage check:"
