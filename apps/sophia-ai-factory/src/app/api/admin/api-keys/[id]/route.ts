@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
-import { requireAdmin } from '@/seed/auth/require-admin'
+import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin'
 
 import {
   revokeApiKey,
@@ -31,7 +31,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdmin(request);
+  const auth = await requireAdminWithRecentAuth(request);
   if (auth instanceof NextResponse) return auth;
   const userId = auth.user.id;
 

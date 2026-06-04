@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireAdmin } from '@/seed/auth/require-admin';
+import { requireAdmin, requireAdminWithRecentAuth } from '@/seed/auth/require-admin';
 import { getD1Raw } from '@/seed/db/client';
 import { writeAuditLog } from '@/tree/admin/audit-log';
 import { logger } from '@/seed/utils/logger-utility';
@@ -23,6 +23,7 @@ const patchSchema = z.object({
 
 export async function GET(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   const auth = await requireAdmin(request);
+if (auth instanceof NextResponse) return auth;
   if (auth instanceof NextResponse) return auth;
 
   const { id } = await params;
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
 }
 
 export async function PATCH(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
-  const auth = await requireAdmin(request);
+  const auth = await requireAdminWithRecentAuth(request);
   if (auth instanceof NextResponse) return auth;
   const { user: admin } = auth;
 

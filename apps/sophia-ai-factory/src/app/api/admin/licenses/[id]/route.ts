@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getLicenseByNonce, revokeLicense, logLicenseRevocation } from '@/forest/raas-audit'
-import { requireAdmin } from '@/seed/auth/require-admin'
+import { requireAdmin, requireAdminWithRecentAuth } from '@/seed/auth/require-admin'
 import { logger } from '@/seed/utils/logger-utility'
 
 /**
@@ -75,7 +75,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdmin(request);
+  const auth = await requireAdminWithRecentAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   try {

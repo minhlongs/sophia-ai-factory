@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAdmin } from '@/seed/auth/require-admin'
+import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin'
 import { getRefundById, updateRefundStatus } from '@/land/refunds/refund-repo'
 import { writeAuditLog } from '@/tree/admin/audit-log'
 import { sendRefundApprovedEmail, sendRefundRejectedEmail } from '@/land/billing/email/send-refund-emails'
@@ -28,7 +28,7 @@ export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
-  const auth = await requireAdmin(request)
+  const auth = await requireAdminWithRecentAuth(request)
   if (auth instanceof NextResponse) return auth
 
   const { id } = await context.params

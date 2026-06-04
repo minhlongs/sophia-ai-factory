@@ -149,6 +149,44 @@ export async function requireRecentAuth(
 }
 
 /**
+ * Combined gate: require admin role AND recent authentication challenge.
+ * This is the ASVS V3.5.1 enforcement helper for destructive admin mutations.
+ *
+ * Usage:
+ * const auth = await requireAdminWithRecentAuth(request);
+ * if (auth instanceof NextResponse) return auth;
+ * // proceed with mutation — admin identity + recent auth confirmed
+ */
+export async function requireAdminWithRecentAuth(
+	request: NextRequest | Request,
+): Promise<RequireAdminResult & { recentAuth: true } | NextResponse> {
+	// Step 1: Verify admin role (existing check)
+	const adminResult = await requireAdmin(request);
+	if (adminResult instanceof NextResponse) {
+		return adminResult;
+	}
+
+	// Step 2: Verify recent auth challenge (ASVS V3.5.1)
+	const recentAuth = await requireRecentAuth(request);
+	if (!recentAuth.ok) {
+		const status = recentAuth.reason === 'no-challenge' ? 401 : 403;
+		return NextResponse.json(
+			{
+				error: 'Re-authentication required',
+				reason: recentAuth.reason,
+				detail:
+					recentAuth.reason === 'no-challenge'
+						? 'Please confirm your password to continue.'
+						: 'Authentication session expired. Please try again.',
+			},
+			{ status },
+		);
+	}
+
+	return { ...adminResult, recentAuth: true };
+}
+
+/**
  * Gate a route on Better Auth session + role === 'admin'.
  * Returns { user } on success, or a NextResponse with 401/403 on failure.
  *
