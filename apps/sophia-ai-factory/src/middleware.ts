@@ -84,7 +84,13 @@ export async function proxy(request: NextRequest) {
     if (blocked) return blocked
 
     // MFA gate for sensitive API routes — webhook and public routes are excluded
-    const SENSITIVE_API_PREFIXES = ['/api/account', '/api/checkout', '/api/admin']
+    const SENSITIVE_API_PREFIXES = [
+  '/api/account',
+  '/api/checkout',
+  '/api/admin',
+  '/api/billing',
+  '/api/v1/settings',
+]
     const isSensitiveApi = SENSITIVE_API_PREFIXES.some(prefix => pathname.startsWith(prefix))
     if (isSensitiveApi) {
       try {
