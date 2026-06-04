@@ -107,6 +107,22 @@ echo "Deployed at: $DEPLOYED_AT"
 echo "==> generate-supabase-migrations-manifest"
 node scripts/generate-supabase-migrations-manifest.mjs
 
+# ─── Step 0.3: Resolve OpenNext version from installed package (not package.json range) ─
+# Reads the actual @opennextjs/cloudflare version from node_modules (the exact build artifact
+# shipped by `npx @opennextjs/cloudflare build`). Injects into wrangler.toml [vars] so
+# /api/version reflects reality instead of a stale hardcoded constant.
+RESOLVED_OPENNEXT=$(node -e "try{console.log(require.resolve('@opennextjs/cloudflare/package.json'))}catch(e){console.log('')}")
+if [ -n "$RESOLVED_OPENNEXT" ]; then
+  OPENNEXT_VER=$(node -p "require('${RESOLVED_OPENNEXT}').version")
+  # Only update if wrangler.toml has the placeholder pattern
+  if grep -q 'OPENNEXT_VERSION = "' "$APP_DIR/wrangler.toml" 2>/dev/null; then
+    echo "==> Injecting OPENNEXT_VERSION=$OPENNEXT_VER into wrangler.toml"
+    sed -i.bak "s/OPENNEXT_VERSION = \".*\"/OPENNEXT_VERSION = \"${OPENNEXT_VER}\"/" "$APP_DIR/wrangler.toml"
+  fi
+else
+  echo "⚠️ @opennextjs/cloudflare not in node_modules — OPENNEXT_VERSION stays as wrangler.toml default"
+fi
+
 # ─── Step 0.5: TypeScript gate (replaces removed ignoreBuildErrors safety) ───
 # next.config.ts has `ignoreBuildErrors: true` to dodge an M1 16GB OOM during
 # Next's inner typecheck. We MUST run tsc --noEmit externally before next build
