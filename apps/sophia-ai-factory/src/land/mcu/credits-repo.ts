@@ -101,8 +101,8 @@ export async function addCredits(
   amount: number,
   reason: string,
   metadata?: Record<string, unknown>,
-): Promise<void> {
-  if (amount <= 0) return;
+): Promise<boolean> {
+  if (amount <= 0) return true;
 
   try {
     const d1 = await getD1Raw();
@@ -121,8 +121,10 @@ export async function addCredits(
       `INSERT INTO mcu_transactions (user_id, delta, reason, metadata)
        VALUES (?, ?, ?, ?)`
     ).bind(userId, amount, reason, metadata ? JSON.stringify(metadata) : null).run();
+    return true;
   } catch (err) {
     logger.error('[MCU] addCredits error', err instanceof Error ? err : new Error(String(err)));
+    return false;
   }
 }
 

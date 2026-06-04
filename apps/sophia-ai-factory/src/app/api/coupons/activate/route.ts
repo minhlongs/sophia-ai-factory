@@ -91,7 +91,10 @@ export async function POST(request: NextRequest) {
       .bind(couponDef.mcuBonus, orgRow.org_id)
       .run();
 
-    await addCredits(userId, couponDef.mcuBonus, 'Coupon Activation', { coupon });
+    const creditsAdded = await addCredits(userId, couponDef.mcuBonus, 'Coupon Activation', { coupon });
+    if (!creditsAdded) {
+      return NextResponse.json({ success: false, error: 'Failed to add MCU credits' }, { status: 500 });
+    }
 
     return NextResponse.json({
       success: true,
