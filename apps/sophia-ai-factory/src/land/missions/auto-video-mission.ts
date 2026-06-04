@@ -48,8 +48,9 @@ export interface AutoVideoMissionResult {
     secondary?: { language: 'en' | 'vi'; body: string };
   };
   description: { body: string; affiliateCount: number };
-  /** Present when the user has a HeyGen BYOK key configured. Render is async (status='processing'). */
-  video?: { videoId: string; heygenJobId: string; status: 'processing' };
+  /** Present when the user has a HeyGen BYOK key configured. Render is async (status='processing').
+   * In proof/mock mode: status='completed' and videoUrl is set immediately. */
+  video?: { videoId: string; heygenJobId: string; status: 'processing' | 'completed'; videoUrl?: string };
   /** Scheduled publish job, or skip record when publish was not possible. */
   publish?: { jobId: string; scheduledAt: number } | { skipped: true; reason: 'no_byok' };
   status: 'succeeded';
@@ -207,7 +208,12 @@ export async function runAutoVideoMission(
       script: scriptResult.script,
       title: scriptResult.suggestedTitles[0] ?? input.topic,
     });
-    videoResult = { videoId: submit.videoId, heygenJobId: submit.heygenJobId, status: 'processing' };
+    videoResult = {
+  videoId: submit.videoId,
+  heygenJobId: submit.heygenJobId,
+  status: submit.status,
+  ...(submit.videoUrl ? { videoUrl: submit.videoUrl } : {}),
+};
   } catch (err) {
     if (err instanceof RenderByokVideoError && err.code === 'BYOK_REQUIRED') {
       logger.info('[auto-video-mission] HeyGen render skipped (no BYOK key)', { missionId });

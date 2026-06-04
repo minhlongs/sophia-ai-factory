@@ -31,7 +31,8 @@ export interface RenderByokVideoInput {
 export interface RenderByokVideoResult {
   videoId: string;          // local videos.id
   heygenJobId: string;      // HeyGen video_id for polling
-  status: 'processing';
+  status: 'processing' | 'completed';
+  videoUrl?: string; // present when mock provider completed immediately (proof mode)
 }
 
 export class RenderByokVideoError extends Error {
