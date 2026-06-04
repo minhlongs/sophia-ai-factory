@@ -14,7 +14,7 @@ echo "==> Checking for migrations changed since $REF..."
 # `[ -f "$m" ]` check + `wrangler --file=$m` resolve correctly. Without it,
 # git returns repo-root-relative paths (apps/sophia-ai-factory/migrations/...)
 # which double up after the `cd "$SCRIPT_DIR/.."` above.
-MIGRATIONS=$(git diff --name-only --relative "$REF" HEAD -- migrations/ 2>/dev/null | grep -E "\.sql$" || true)
+MIGRATIONS=$(git diff --name-only --relative "$REF" HEAD -- migrations/ src/seed/db/migrations/ 2>/dev/null | grep -E "\.sql$" || true)
 
 if [ -z "$MIGRATIONS" ]; then
   echo "No new migrations to apply."
