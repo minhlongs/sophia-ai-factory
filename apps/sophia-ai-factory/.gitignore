@@ -70,3 +70,6 @@ plans/reports/core-video-factory-proof-latest.json
 
 # CEO dashboard audit working artifacts
 docs/audit/*/
+
+# CLEO agent runtime artifacts (not part of the app source)
+.cleo/
