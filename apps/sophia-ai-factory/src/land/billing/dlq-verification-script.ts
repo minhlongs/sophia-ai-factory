@@ -1,14 +1,15 @@
 import { readFileSync } from 'node:fs';
+import { logger } from '@/seed/utils/logger-utility';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 let passCount = 0, failCount = 0;
 function assert(cond: boolean, msg: string) {
-  if (cond) { console.log(`  ✓ ${msg}`); passCount++; }
-  else { console.error(`  ✗ FAIL: ${msg}`); failCount++; process.exitCode = 1; }
+    if (cond) { logger.info(` ✓ ${msg}`); passCount++; }
+    else { logger.error(` ✗ FAIL: ${msg}`); failCount++; process.exitCode = 1; }
 }
-console.log('DLQ verification running...\n');
+logger.info('DLQ verification running...');
 const source = readFileSync(resolve(__dirname, 'nowpayments-ipn-dead-letter.ts'), 'utf-8');
 // F1: enqueueDlqEntry uses opts.retryCount + 1 (NOT the removed db.raw pattern)
 const e = source.substring(source.indexOf('enqueueDlqEntry('), source.indexOf('enqueueDlqEntry(') + 1400);
@@ -28,5 +29,5 @@ assert(ue.includes('resolved: 0'), 'F3b: UNIQUE-violation re-enqueue keeps resol
 assert(source.includes('first_failed_at'), 'DDL: first_failed_at column exists');
 assert(source.includes('last_attempted_at'), 'DDL: last_attempted_at column exists');
 // 'resolved' DDL column is covered by F3a (resolved=1 in resolve) + F3b (resolved=0 in re-enqueue).
-console.log(`\nDLQ verification complete: ${passCount} passed, ${failCount} failed.`);
+logger.info(`\nDLQ verification complete: ${passCount} passed, ${failCount} failed.`);
 if (failCount > 0) process.exitCode = 1;
