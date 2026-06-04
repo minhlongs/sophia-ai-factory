@@ -185,6 +185,18 @@ export async function getD1Raw(): Promise<D1Database> {
 }
 
 /**
+ * Get D1Database binding, returning null on failure (non-fatal).
+ * Use this when the caller can gracefully degrade if D1 is unavailable.
+ */
+export async function getD1Safe(): Promise<D1Database | null> {
+  try {
+    return await getD1Async();
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Compatibility shim for createAuthClient(token).
  * @deprecated Use getCurrentUser() from '@/seed/auth/better-auth-session' instead.
  */
