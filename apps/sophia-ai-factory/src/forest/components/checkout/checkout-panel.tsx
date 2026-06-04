@@ -182,11 +182,7 @@ export function CheckoutPanel({
             <div className="space-y-3">
               <div className="flex items-start gap-2 text-xs text-zinc-400">
                 <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span>
-                  {isVi
-                    ? "Bảo vệ hoàn tiền 100% trong 14 ngày nếu không hài lòng."
-                    : "100% Risk-Free: 14-day money-back guarantee."}
-                </span>
+                <span>{t("pricing.refund_master_title")}: {t("pricing.refund_master_desc")}</span>
               </div>
               <div className="flex items-start gap-2 text-xs text-zinc-400">
                 <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
