@@ -226,12 +226,7 @@ export function PricingSection() {
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
               <Check className="h-3 w-3" />
             </span>
-            <span className="font-semibold text-zinc-100">
-              {locale.startsWith("vi") ? "100% Không Rủi Ro:" : "100% Risk-Free:"}
-            </span>
-            {locale.startsWith("vi") 
-              ? "Cam kết hoàn tiền trong 14 ngày nếu không hài lòng" 
-              : "14-day money-back guarantee policy applies"}
+ <span className="font-semibold text-zinc-100">{t("pricing.refund_master_title")}</span> {t("pricing.refund_master_desc")}
           </p>
         </div>
 
