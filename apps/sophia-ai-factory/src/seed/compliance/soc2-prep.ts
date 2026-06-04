@@ -106,11 +106,11 @@ export const SOC2_CONTROLS: SOC2Control[] = [
     id: 'CC6.6',
     category: 'security',
     title: 'Immutable audit logging',
-    description: 'Audit records immutability enforced via database triggers (migration 0170). '
-      + 'CC6.6 requires audit trail that cannot be altered or deleted.',
+    description: 'D1 admin audit records are append-only via migration 0170 triggers. '
+      + 'Supabase RAAS audit immutability requires separate Postgres evidence.',
     probe: (tier) => hasMasterAccess(tier) && masterHasFeature(tier, 'enable_enterprise_audit_log'),
-    evidenceMissing: 'MASTER audit-log feature disabled or D1 migration 0170 not verified as applied',
-    externalEvidenceRequired: 'D1 migration 0170 trigger verification against remote production database',
+    evidenceMissing: 'MASTER audit-log feature disabled or production audit immutability evidence missing',
+    externalEvidenceRequired: 'Remote D1 admin_audit_log trigger verification plus Supabase raas_audit_logs immutability evidence',
   },
   {
     id: 'CC6.7',
@@ -250,7 +250,7 @@ export function getSoc2Report(tier: Tier): string {
     'SOC 2 Type I Readiness Report',
     `Tier: ${tier}`,
     `Timestamp: ${result.timestamp}`,
-    'External evidence required: verify D1 migration 0170 is applied before claiming CC6.6 auditor-ready.',
+    'External evidence required: verify D1 migration 0170 admin_audit_log triggers and Supabase RAAS audit immutability before claiming CC6.6 auditor-ready.',
     '',
     `Score: ${result.score}% (${result.passed}/${result.passed + result.failed} applicable controls passing)`,
     '',

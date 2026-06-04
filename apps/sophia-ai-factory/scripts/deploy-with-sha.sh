@@ -172,13 +172,13 @@ node scripts/generate-supabase-migrations-manifest.mjs
 # Reads the actual @opennextjs/cloudflare version from node_modules (the exact build artifact
 # shipped by `npx @opennextjs/cloudflare build`). Injects into wrangler.toml [vars] so
 # /api/version reflects reality instead of a stale hardcoded constant.
-RESOLVED_OPENNEXT=$(node -e "try{console.log(require.resolve('@opennextjs/cloudflare/package.json'))}catch(e){console.log('')}")
+RESOLVED_OPENNEXT=$(node -e "const fs=require('fs'); const path=require('path'); const p=path.join(process.cwd(),'node_modules','@opennextjs','cloudflare','package.json'); console.log(fs.existsSync(p)?p:'')")
 if [ -n "$RESOLVED_OPENNEXT" ]; then
   OPENNEXT_VER=$(node -p "require('${RESOLVED_OPENNEXT}').version")
   # Only update if wrangler.toml has the placeholder pattern
   if grep -q 'OPENNEXT_VERSION = "' "$APP_DIR/wrangler.toml" 2>/dev/null; then
     echo "==> Injecting OPENNEXT_VERSION=$OPENNEXT_VER into wrangler.toml"
-    sed -i.bak "s/OPENNEXT_VERSION = \".*\"/OPENNEXT_VERSION = \"${OPENNEXT_VER}\"/" "$APP_DIR/wrangler.toml"
+    node -e "const fs=require('fs'); const file=process.argv[1]; const version=process.argv[2]; const src=fs.readFileSync(file,'utf8'); fs.writeFileSync(file,src.replace(/OPENNEXT_VERSION = \"[^\"]*\"/,'OPENNEXT_VERSION = \"'+version+'\"'));" "$APP_DIR/wrangler.toml" "$OPENNEXT_VER"
   fi
 else
   echo "⚠️ @opennextjs/cloudflare not in node_modules — OPENNEXT_VERSION stays as wrangler.toml default"
