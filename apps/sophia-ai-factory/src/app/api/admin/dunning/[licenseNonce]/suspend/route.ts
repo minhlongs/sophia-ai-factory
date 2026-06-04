@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/seed/auth/require-admin';
+import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin';
 import { createServerClient } from '@/seed/db/client';
 import { suspendLicense } from '@/land/billing/dunning-workflow';
 import { logger } from '@/seed/utils/logger-utility';
@@ -19,7 +19,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: { licenseNonce: string } }
 ) {
-  const auth = await requireAdmin(req);
+  const auth = await requireAdminWithRecentAuth(req);
   if (auth instanceof NextResponse) return auth;
 
   try {

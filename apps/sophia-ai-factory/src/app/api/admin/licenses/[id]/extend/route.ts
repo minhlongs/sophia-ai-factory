@@ -9,7 +9,7 @@ import {
   extendLicense as extendLicenseService,
   logLicenseExtension
 } from '@/forest/raas-audit'
-import { requireAdmin } from '@/seed/auth/require-admin'
+import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin'
 import { logger } from '@/seed/utils/logger-utility'
 import { z } from 'zod'
 
@@ -28,7 +28,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireAdmin(request);
+  const auth = await requireAdminWithRecentAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   try {
