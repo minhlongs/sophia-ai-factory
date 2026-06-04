@@ -13,7 +13,8 @@ describe('soc2-prep', () => {
   it('does not claim immutable audit migration is applied from runtime config alone', () => {
     const report = getSoc2Report('MASTER');
 
-    expect(report).toContain('External evidence required: verify D1 migration 0170 is applied');
+    expect(report).toContain('External evidence required: verify D1 migration 0170 admin_audit_log triggers');
+    expect(report).toContain('Supabase RAAS audit immutability');
     expect(report).not.toContain('APPLIED');
   });
 

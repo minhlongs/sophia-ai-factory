@@ -164,5 +164,5 @@ FEATURE_PAYOS = "false"
 # === OPENNEXT-VERSION-BEGIN ===
 # Runtime-injected by deploy-with-sha.sh from package.json @opennextjs/cloudflare version.
 # Prevents drift between the hardcoded constant and the actual deployed adapter version.
-OPENNEXT_VERSION = "^1.19.5"
+OPENNEXT_VERSION = "1.19.9"
 # === OPENNEXT-VERSION-END ===
