@@ -10,6 +10,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { VIDEO_TIER_CONFIG } from '@/seed/config/tiers/video-quota-tiers';
 
+const mocks = vi.hoisted(() => ({
+  requireAdmin: vi.fn(),
+}));
+
+vi.mock('@/seed/auth/require-admin', () => ({
+  requireAdmin: mocks.requireAdmin,
+}));
+
 // ── Helper: Mock D1 DB ────────────────────────────────────────────────────────
 
 function makeD1WithVideoCount(count: number): D1Database {
@@ -161,12 +169,14 @@ describe('storage tracker upsert', () => {
 // ── Admin API auth guard — structural test ────────────────────────────────────
 
 describe('admin route auth guard (structural)', () => {
+  beforeEach(() => {
+    mocks.requireAdmin.mockReset();
+  });
+
   it('requireAdmin returns NextResponse with 403 for non-admin', async () => {
-    vi.mock('@/seed/auth/require-admin', () => ({
-      requireAdmin: vi.fn().mockResolvedValue(
-        { status: 403, body: { error: 'Forbidden: admin role required' } }
-      ),
-    }));
+    mocks.requireAdmin.mockResolvedValue(
+      { status: 403, body: { error: 'Forbidden: admin role required' } }
+    );
 
     const { requireAdmin } = await import('@/seed/auth/require-admin');
     const result = await requireAdmin({} as Request);

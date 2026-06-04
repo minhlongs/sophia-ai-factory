@@ -142,6 +142,84 @@ Estimated impact: <user-count or %>
 
 ---
 
+## 4a. Role assignments / Phân Công Vai Trò
+
+> Milestone B deliverable (Enterprise-ready 85). Defined per SOC 2 CC6.1 separation-of-duties requirement.
+> Reviewed quarterly. Update when personnel change.
+
+| Role | Name / Contact | Responsibilities | Auth level | On-call rotation |
+|------|---------------|------------------|------------|------------------|
+| **Incident Commander (IC)** | [NAME] — [contact] | Declares incident, coordinates response, makes go/no-go decisions | Deploy attestation signer (DEPLOY_KEY_1) | Primary |
+| **Incident Responder** | [NAME] — [contact] | Executes mitigation steps, runs diagnostics, applies rollback | Deploy attestation signer (DEPLOY_KEY_2) | Secondary |
+| **Communications Lead** | [NAME] — [contact] | Customer + internal notifications, status page updates | Read-only prod access | Tertiary |
+| **Security Reviewer** | [NAME] — [contact] | Assesses security impact, determines P0/P1 severity, reviews AuthZ fixes | Admin dashboard, D1 direct | On-call |
+| **Deploy Operator** | [NAME] — [contact] | Executes deploy + attestation, signs manifest | DEPLOY_KEY holder | Rotating |
+
+**Minimum viable response:** Any two of IC, Responder, or Security Reviewer must be reachable within SLA. If fewer than two are available → escalate to Communications Lead to notify customers of delay.
+
+**Escalation path for unavailability:**
+1. Communications Lead pages third-party on-call vendor (CF support, Inngest support)
+2. If no vendor SLA → public status page notice + hourly customer email until staffing restored
+
+---
+
+## 4b. Quarterly access review / Rà Soát Quyền Truy Cập Hàng Quý
+
+> Milestone B deliverable. SOC 2 CC6.1, CC6.3 requirement.
+> Conducted every 3 months. Document results in `plans/audits/access-review-<YYYY-Q#>.md`.
+
+### Review checklist
+
+- [ ] **CF Worker secret inventory:** Enumerate all secrets via `wrangler secret list`. Verify each secret has a known owner. Revoke any orphaned secrets (no owner, no rotation date).
+- [ ] **DEPLOY_KEY holders:** Confirm all `DEPLOY_KEY_N` holders are current operators. Revoke keys for departed personnel immediately.
+- [ ] **Admin dashboard access:** Query `user_profiles` D1 table for `role='admin'` entries. Confirm each is an active operator. Downgrade or remove stale admin accounts.
+- [ ] **D1 direct access:** List all operators with `wrangler d1 execute` capability (via CF API tokens). Token scoped to minimum required permissions.
+- [ ] **GitHub/GitLab deploy permissions:** Review branch protection on `main`. Confirm required reviews (minimum 1) still enforced.
+- [ ] **Third-party service accounts:** NOWPayments, Inngest, Telegram, Sentry, Better Stack — confirm each account has >1 admin. Rotate any single-admin accounts.
+- [ ] **SSH / machine access:** Review M1 deploy machine access. Rotate any shared credentials.
+- [ ] **Service account rotation schedule:** Verify secrets rotated within policy (see `docs/secret-rotation-runbook.md`). Flag overdue rotations.
+
+### Review output template
+
+```markdown
+# Access Review <YYYY> Q<#>
+
+Date: <YYYY-MM-DD>
+Reviewer: <role + name>
+
+## Secrets reviewed: <count> total, <count> overdue for rotation
+
+## DEPLOY_KEY holders: <count> (expected: 2-4)
+
+## Admin accounts: <count> active, <count> revoked this quarter
+
+## Third-party admins: <count per service>
+
+## Actions taken:
+- Revoked: <list>
+- Rotated: <list>
+- Downgraded: <list>
+
+## Next review: <YYYY-MM-DD> (Q<#> + 3 months)
+```
+
+### Integration with deploy attestation
+
+The deploy attestation system (`scripts/deploy-with-sha.sh` Step 0.7) records separation-of-duties evidence at deploy time:
+- Audit mode is default: logs verified signature count and continues
+- Strict mode: set `REQUIRE_DEPLOY_ATTESTATION=1` to require ≥2 distinct `DEPLOY_KEY_N` signatures per deploy
+- Emergency bypass (`SKIP_ATTESTATION=1`) MUST be re-attested within 24h or next business day when strict mode is active
+- Bypass events logged in deploy manifest → surfaced in quarterly access review
+
+### Integration with incident response
+
+When P0/P1 incidents occur:
+1. IC verifies all responders have current access before granting emergency credentials
+2. Post-incident review includes access audit: "Were all responders authorized? Any privilege escalation observed?"
+3. Findings feed into next quarterly access review action items
+
+---
+
 ## 5. Escalation contacts / Liên Hệ Cấp Cao
 
 → See [escalation-contacts.md](escalation-contacts.md)

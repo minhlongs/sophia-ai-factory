@@ -1,121 +1,56 @@
 /**
- * soc2-prep.ts — SOC 2 readiness tracker + audit helpers.
+ * soc2-prep.ts — SOC 2 readiness tracker + implementation probes.
  *
- * Plan reference: "SOC 2 prep (compliance audit)"
+ * Plan reference: "SOC 2 prep (compliance audit)" — Milestone B deliverable #1
  *
  * Provides:
- *   - `SOC2_CONTROLS` — Trust Services Criteria mapped to concrete checks.
- *   - `evaluateSOC2Readiness(tier)` — runs controls against current config.
- *   - `getSoc2Report(tier)` — returns human-readable readiness report.
+ * - `SOC2_CONTROLS` — Trust Services Criteria mapped to implementation probes.
+ * - `evaluateSOC2Readiness(tier)` — runs controls against actual implementation.
+ * - `getSoc2Report(tier)` — human-readable readiness report.
  *
  * Design:
- *   - Read-only probes on config / flags. Does not modify production behavior.
- *   - Findings returned as data; persisted by caller (audit trail, D1, etc.).
+ * - Probes verify runtime configuration and tier capability.
+ * - External evidence such as applied D1 migrations and DR drills must still be
+ *   verified by deployment/audit tooling before an auditor-ready claim.
+ * - Read-only: never modifies production behavior.
+ *
+ * SOC 2 Type I scope (11 controls across 5 criteria):
+ *   CC6.1  Logical access controls
+ *   CC6.2  System authentication
+ *   CC6.3  Role-based access control
+ *   CC6.6  Immutable audit logging
+ *   CC6.7  Encryption at rest + in transit
+ *   A1.1   Backup / recovery
+ *   A1.2   Incident response
+ *   PI1.1  Input validation
+ *   PI1.2  Error handling
+ *   C1.1   Data classification (PII/secrets)
+ *   P1.1   Privacy notice + consent
  */
 
 import { Tier } from '@/seed/types';
-import { tierHasFeature } from '@/seed/config/tiers';
 import { hasTierAccess } from '@/land/feature-flags';
 import { hasMasterAccess, masterHasFeature } from '@/land/enterprise-features';
 
 // ---------------------------------------------------------------------------
-// Trust Services Criteria (TSC) mapped to probe functions
+// Types
 // ---------------------------------------------------------------------------
 
 type ControlId = string;
 type ControlCategory = 'security' | 'availability' | 'processing_integrity' | 'confidentiality' | 'privacy';
 
-interface SOC2Control {
+export interface SOC2Control {
   id: ControlId;
   category: ControlCategory;
   title: string;
   description: string;
+  /** Probe returns true if control is SATISFIED. */
   probe: (tier: Tier) => boolean;
+  /** Human-readable evidence string shown when probe returns false. */
+  evidenceMissing?: string;
+  /** Evidence that cannot be proven from runtime config alone. */
+  externalEvidenceRequired?: string;
 }
-
-export const SOC2_CONTROLS: SOC2Control[] = [
-  {
-    id: 'CC6.1',
-    category: 'security',
-    title: 'Logical access controls',
-    description: 'Tenant isolation and role-based access in place.',
-    probe: (tier) => hasMasterAccess(tier) && masterHasFeature(tier, 'enable_enterprise_multi_tenant_isolation'),
-  },
-  {
-    id: 'CC6.2',
-    category: 'security',
-    title: 'System authentication',
-    description: 'Authentication + MFA policy enforced.',
-    probe: (tier) => hasMasterAccess(tier) && masterHasFeature(tier, 'enable_enterprise_sso'),
-  },
-  {
-    id: 'CC6.3',
-    category: 'security',
-    title: 'Role-based access',
-    description: 'Role-based access with least privilege.',
-    probe: (tier) => hasTierAccess(tier, 'enable_admin_dashboard'),
-  },
-  {
-    id: 'CC6.6',
-    category: 'security',
-    title: 'Audit logging',
-    description: 'Immutable audit trail on sensitive operations.',
-    probe: (tier) => hasMasterAccess(tier) && masterHasFeature(tier, 'enable_enterprise_audit_log'),
-  },
-  {
-    id: 'CC6.7',
-    category: 'security',
-    title: 'Data encryption at rest + in transit',
-    description: 'Encryption primitives present for stored and in-flight data.',
-    probe: () => true, // Encryption handled by DB / TLS layer.
-  },
-  {
-    id: 'A1.1',
-    category: 'availability',
-    title: 'Backup / recovery policy',
-    description: 'Recovery procedures and backup cadence documented.',
-    probe: () => true, // Covered by infra / D1 backup policy.
-  },
-  {
-    id: 'A1.2',
-    category: 'availability',
-    title: 'Incident response',
-    description: 'Incident handling runbook exists.',
-    probe: (tier) => hasMasterAccess(tier) && masterHasFeature(tier, 'enable_enterprise_sla'),
-  },
-  {
-    id: 'PI1.1',
-    category: 'processing_integrity',
-    title: 'Input validation',
-    description: 'Inputs validated and sanitized before processing.',
-    probe: () => true, // Covered by Zod schemas + server validation.
-  },
-  {
-    id: 'PI1.2',
-    category: 'processing_integrity',
-    title: 'Error handling & audit of processing exceptions',
-    description: 'Errors produce structured logs / audit records.',
-    probe: (tier) => hasTierAccess(tier, 'enable_admin_dashboard'),
-  },
-  {
-    id: 'C1.1',
-    category: 'confidentiality',
-    title: 'Data classification',
-    description: 'PII / secret data classified and access-restricted.',
-    probe: (tier) => hasMasterAccess(tier),
-  },
-  {
-    id: 'P1.1',
-    category: 'privacy',
-    title: 'Privacy notice + consent',
-    description: 'Privacy policy + consent flow present.',
-    probe: () => true, // Assumed present in UI / legal docs.
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Findings
-// ---------------------------------------------------------------------------
 
 export type SOC2Finding = {
   controlId: ControlId;
@@ -123,6 +58,7 @@ export type SOC2Finding = {
   category: ControlCategory;
   status: 'pass' | 'fail' | 'not_applicable';
   note?: string;
+  evidenceMissing?: string;
 };
 
 export interface SOC2ReadinessResult {
@@ -138,20 +74,140 @@ export interface SOC2ReadinessResult {
 }
 
 // ---------------------------------------------------------------------------
+// SOC 2 Controls — runtime capability probes
+// ---------------------------------------------------------------------------
+
+export const SOC2_CONTROLS: SOC2Control[] = [
+  {
+    id: 'CC6.1',
+    category: 'security',
+    title: 'Logical access controls',
+    description: 'Tenant isolation capability is available for enterprise customers.',
+    probe: (tier) => hasMasterAccess(tier) && masterHasFeature(tier, 'enable_enterprise_multi_tenant_isolation'),
+    evidenceMissing: 'MASTER tier multi-tenant isolation feature is not enabled',
+  },
+  {
+    id: 'CC6.2',
+    category: 'security',
+    title: 'System authentication',
+    description: 'Enterprise authentication capability is available.',
+    probe: (tier) => hasMasterAccess(tier) && masterHasFeature(tier, 'enable_enterprise_sso'),
+    evidenceMissing: 'MASTER tier SSO/authentication control is not enabled',
+  },
+  {
+    id: 'CC6.3',
+    category: 'security',
+    title: 'Role-based access control (RBAC)',
+    description: 'Role-based access with least privilege via user_profiles.role.',
+    probe: (tier) => hasTierAccess(tier, 'enable_admin_dashboard'),
+    evidenceMissing: 'Admin dashboard/RBAC capability is not enabled for this tier',
+  },
+  {
+    id: 'CC6.6',
+    category: 'security',
+    title: 'Immutable audit logging',
+    description: 'Audit records immutability enforced via database triggers (migration 0170). '
+      + 'CC6.6 requires audit trail that cannot be altered or deleted.',
+    probe: (tier) => hasMasterAccess(tier) && masterHasFeature(tier, 'enable_enterprise_audit_log'),
+    evidenceMissing: 'MASTER audit-log feature disabled or D1 migration 0170 not verified as applied',
+    externalEvidenceRequired: 'D1 migration 0170 trigger verification against remote production database',
+  },
+  {
+    id: 'CC6.7',
+    category: 'security',
+    title: 'Data encryption at rest + in transit',
+    description: 'BYOK credentials encrypted with AES-GCM + AAD=userId. TLS enforced by CF Workers.',
+    probe: () => true,
+    evidenceMissing: 'BYOK encryption or TLS enforcement missing external evidence',
+    externalEvidenceRequired: 'Production TLS/header evidence and BYOK encryption test evidence',
+  },
+  {
+    id: 'A1.1',
+    category: 'availability',
+    title: 'Backup / recovery policy',
+    description: 'D1 backup cron route exists; R2 export documented. Monthly restore drill required.',
+    probe: () => true,
+    evidenceMissing: 'Backup route, R2 export, or restore drill evidence missing',
+    externalEvidenceRequired: 'Recent backup artifact plus restore-drill record',
+  },
+  {
+    id: 'A1.2',
+    category: 'availability',
+    title: 'Incident response runbook',
+    description: 'Incident response runbook with severity ladder, rollback procedure, and war-room template.',
+    probe: (tier) => hasMasterAccess(tier) && masterHasFeature(tier, 'enable_enterprise_sla'),
+    evidenceMissing: 'Enterprise SLA/incident response capability is not enabled',
+  },
+  {
+    id: 'PI1.1',
+    category: 'processing_integrity',
+    title: 'Input validation',
+    description: 'Inputs validated and sanitized via Zod schemas before processing.',
+    probe: () => true,
+    evidenceMissing: 'Zod or equivalent input validation not found in API routes',
+    externalEvidenceRequired: 'Route inventory proving mutation inputs have validation coverage',
+  },
+  {
+    id: 'PI1.2',
+    category: 'processing_integrity',
+    title: 'Error handling and processing exception audit',
+    description: 'Errors produce structured logs via Better Stack + Sentry; error boundaries catch failures.',
+    probe: (tier) => hasTierAccess(tier, 'enable_admin_dashboard'),
+    evidenceMissing: 'Structured logging or error boundaries missing',
+    externalEvidenceRequired: 'Sentry/Better Stack event delivery evidence from production',
+  },
+  {
+    id: 'C1.1',
+    category: 'confidentiality',
+    title: 'Data classification (PII and secrets)',
+    description: 'PII scrubbing + secret key redaction applied before any outbound log emission.',
+    probe: (tier) => hasMasterAccess(tier),
+    evidenceMissing: 'PII scrubber or secret redaction missing',
+  },
+  {
+    id: 'P1.1',
+    category: 'privacy',
+    title: 'Privacy notice and consent',
+    description: 'Privacy policy + cookie consent flow present in UI.',
+    probe: () => true,
+    evidenceMissing: 'Privacy policy or consent flow missing',
+    externalEvidenceRequired: 'Rendered privacy policy and consent-flow evidence',
+  },
+];
+
+// ---------------------------------------------------------------------------
 // Evaluation
 // ---------------------------------------------------------------------------
 
 export function evaluateSOC2Readiness(tier: Tier): SOC2ReadinessResult {
-  const findings: SOC2Finding[] = SOC2_CONTROLS.map((ctrl) => {
-    const pass = ctrl.probe(tier);
-    return {
+  const findings: SOC2Finding[] = [];
+
+  for (const ctrl of SOC2_CONTROLS) {
+    let implementationPass: boolean;
+    try {
+      implementationPass = ctrl.probe(tier);
+    } catch {
+      implementationPass = false;
+    }
+    const pass = implementationPass && !ctrl.externalEvidenceRequired;
+
+    findings.push({
       controlId: ctrl.id,
       title: ctrl.title,
       category: ctrl.category,
       status: pass ? 'pass' : 'fail',
-      note: pass ? undefined : `Feature flag or tier requirement not met for ${ctrl.id}`,
-    };
-  });
+      note: pass
+        ? undefined
+        : implementationPass && ctrl.externalEvidenceRequired
+          ? `External evidence required for ${ctrl.id}`
+          : `Implementation probe failed for ${ctrl.id}`,
+      evidenceMissing: pass
+        ? undefined
+        : implementationPass && ctrl.externalEvidenceRequired
+          ? ctrl.externalEvidenceRequired
+          : ctrl.evidenceMissing,
+    });
+  }
 
   const applicable = findings.filter((f) => f.status !== 'not_applicable');
   const passed = applicable.filter((f) => f.status === 'pass').length;
@@ -161,10 +217,14 @@ export function evaluateSOC2Readiness(tier: Tier): SOC2ReadinessResult {
   let recommendation: string | undefined;
   if (score < 60) {
     recommendation =
-      'Remediate failed controls before external audit. Consider upgrading to MASTER tier and enabling SSO, audit log, and multi-tenant isolation.';
+      'Remediate failed controls before external audit. '
+      + 'Priority: CC6.6 (immutable audit triggers), CC6.2 (MFA), A1.1 (backup).';
   } else if (score < 90) {
     recommendation =
-      'Address remaining failed controls and obtain a signed-off risk assessment from a third-party assessor.';
+      'Address remaining failed controls. Obtain signed-off risk assessment from third-party assessor. '
+      + 'Complete DR drill cadence and quarterly access review.';
+  } else {
+    recommendation = 'All SOC 2 Type I controls passing. Proceed with external auditor engagement.';
   }
 
   return {
@@ -187,21 +247,27 @@ export function evaluateSOC2Readiness(tier: Tier): SOC2ReadinessResult {
 export function getSoc2Report(tier: Tier): string {
   const result = evaluateSOC2Readiness(tier);
   const lines: string[] = [
-    'SOC 2 Readiness Report',
+    'SOC 2 Type I Readiness Report',
     `Tier: ${tier}`,
     `Timestamp: ${result.timestamp}`,
+    'External evidence required: verify D1 migration 0170 is applied before claiming CC6.6 auditor-ready.',
     '',
     `Score: ${result.score}% (${result.passed}/${result.passed + result.failed} applicable controls passing)`,
     '',
     'Findings:',
   ];
+
   for (const f of result.findings) {
-    const icon = f.status === 'pass' ? '✅' : f.status === 'fail' ? '❌' : '➖';
-    lines.push(`  ${icon} [${f.controlId}] ${f.title} (${f.category})${f.note ? ` — ${f.note}` : ''}`);
+    const icon =
+      f.status === 'pass' ? '✅' : f.status === 'fail' ? '❌' : '➖';
+    const detail = f.evidenceMissing ? ` — MISSING: ${f.evidenceMissing}` : '';
+    lines.push(`  ${icon} [${f.controlId}] ${f.title} (${f.category})${detail}`);
   }
+
   if (result.recommendation) {
     lines.push('');
     lines.push(`Recommendation: ${result.recommendation}`);
   }
+
   return lines.join('\n');
 }

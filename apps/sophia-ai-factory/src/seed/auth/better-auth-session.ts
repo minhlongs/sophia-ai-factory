@@ -9,6 +9,7 @@
 import { getAuth } from '@/seed/auth/better-auth-server';
 import type { User } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { unstable_rethrow } from 'next/navigation';
 
 /** Thrown when auth lookup fails due to a system/DB error (not "no session"). */
 export class AuthSystemError extends Error {
@@ -18,6 +19,10 @@ export class AuthSystemError extends Error {
   }
 }
 
+function hasAuthCredential(headers: Headers): boolean {
+  return Boolean(headers.get('cookie') || headers.get('authorization'));
+}
+
 /**
  * Get the full Better Auth session (user + session metadata).
  * Returns null if not authenticated.
@@ -25,13 +30,17 @@ export class AuthSystemError extends Error {
 export async function getSession() {
   try {
     const { headers } = await import('next/headers');
+    const requestHeaders = await headers();
+    if (!hasAuthCredential(requestHeaders)) return null;
+
     const auth = getAuth();
     if (!auth) return null;
     const session = await auth.api.getSession({
-      headers: await headers(),
+      headers: requestHeaders,
     });
     return session;
   } catch (err) {
+    unstable_rethrow(err);
     logger.error('[better-auth-session] getSession failed', err instanceof Error ? err : new Error(String(err)), {
       errorName: err instanceof Error ? err.constructor.name : typeof err,
       errorMessage: err instanceof Error ? err.message : String(err),
@@ -69,6 +78,8 @@ export async function getCurrentUserFromHeaders(
   reqHeaders: Headers,
 ): Promise<User | null> {
   try {
+    if (!hasAuthCredential(reqHeaders)) return null;
+
     const auth = getAuth();
     if (!auth) return null;
     const session = await auth.api.getSession({ headers: reqHeaders });
@@ -83,6 +94,7 @@ export async function getCurrentUserFromHeaders(
       role: (user.role as string) ?? 'user',
     };
   } catch (err) {
+    unstable_rethrow(err);
     logger.error(
       '[better-auth-session] getCurrentUserFromHeaders failed',
       err instanceof Error ? err : new Error(String(err)),
