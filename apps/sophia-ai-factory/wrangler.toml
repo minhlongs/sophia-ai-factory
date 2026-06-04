@@ -160,3 +160,9 @@ IS_CONFIGURED = "true"
 #   Then set FEATURE_PAYOS = "true" below and redeploy.
 FEATURE_PAYOS = "false"
 # === PAYOS-VARS-END ===
+
+# === OPENNEXT-VERSION-BEGIN ===
+# Runtime-injected by deploy-with-sha.sh from package.json @opennextjs/cloudflare version.
+# Prevents drift between the hardcoded constant and the actual deployed adapter version.
+OPENNEXT_VERSION = "^1.19.5"
+# === OPENNEXT-VERSION-END ===
