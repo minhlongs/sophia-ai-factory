@@ -335,7 +335,15 @@
       "monthly_label": "Monthly label",
       "annual_label": "Annual label",
       "subscribe_now_master": "Subscribe now master",
-      "save_percent": "Save {percent}%"
+      "save_percent": "Save {percent}%",
+      "refund_master_title": "MASTER Plan — Full 14-Day Refund",
+      "refund_master_desc": "The MASTER plan ($4,999 one-time) is fully refundable for 14 days from payment, no reason required.",
+      "refund_master_conditions": "MASTER plan (one-time) only — upgrades are excluded. Request within 14 days from payment.",
+      "refund_master_example": "If you buy MASTER ($4,999) on June 1, you can get a full refund until June 15. After that, it is non-refundable.",
+      "refund_other_plans": "Other plans (BASIC/PREMIUM/ENTERPRISE): used billing time is non-refundable. When you cancel, you keep access until the end of the paid month.",
+      "refund_non_refundable": "Used credits, generated videos, and API fees are non-refundable.",
+      "faq_3_a": "We offer a 14-day refund window for all plans. MASTER ($4,999 one-time) is fully refundable within 14 days, no reason required. Monthly plans do not refund used billing time; cancel anytime and keep access until the end of the billing period.",
+      "faq_3_q": "What is your refund policy?"
     },
     "roi": {
       "title": "Calculate Your Potential Revenue",
@@ -383,7 +391,10 @@
       "avg_commission": "Avg commission",
       "email_capture": "Email capture",
       "full_cost_disclaimer": "Full cost disclaimer",
-      "manual_cost_desc": "Manual production costs: hire editor, stock footage, software licenses, and revisions."
+      "manual_cost_desc": "Manual production costs: hire editor, stock footage, software licenses, and revisions.",
+      "savings_monthly": "Monthly savings",
+      "savings_annual": "Annual savings",
+      "save_percent": "Save {percent}%"
     },
     "affiliate": {
       "title": "High-Ticket Affiliate Discovery",
@@ -434,6 +445,18 @@
         "refund": {
           "question": "Is there a refund policy?",
           "answer": "Yes! We offer a 30-day money-back guarantee. If you're not satisfied with the platform, contact us within 30 days of purchase for a full refund, no questions asked."
+        },
+        "vnd_payment": {
+          "question": "Can I pay in VND?",
+          "answer": "Yes. We support VNPay, Momo, and bank transfer. Contact support@sophia.agency for setup instructions."
+        },
+        "zalo": {
+          "question": "Can I get support through Zalo?",
+          "answer": "Yes. Our Zalo support group is active daily from 9:00 to 18:00. Join from the page link or scan the QR code."
+        },
+        "vat": {
+          "question": "Can you issue a VAT invoice?",
+          "answer": "Yes. We issue full VAT invoices for businesses. Please provide your company details during payment."
         }
       }
     },
@@ -2883,7 +2906,19 @@
   },
   "agi_showcase": {
     "title": "Title",
-    "subtitle": "Subtitle"
+    "subtitle": "Subtitle",
+    "outcome_tracking_title": "Real Outcome Tracking",
+    "outcome_tracking_desc": "Measure campaign performance across channels with a real-time dashboard.",
+    "confidence_title": "High Confidence",
+    "confidence_desc": "Every recommendation includes a confidence score and rationale, so you make the final call.",
+    "multi_agent_title": "Multi-Agent Collaboration",
+    "multi_agent_desc": "Specialized agents coordinate to optimize the full content pipeline.",
+    "pricing_title": "Flexible Pricing Model",
+    "pricing_desc": "Pay by channel, by video, or on an enterprise plan. No hidden fees.",
+    "feedback_title": "Automatic Feedback Loop",
+    "feedback_desc": "The system learns from real results to continuously improve recommendations.",
+    "compliance_title": "Automated Compliance",
+    "compliance_desc": "Check copyright, brand safety, and compliance risks before publishing."
   },
   "community": {
     "joinCommunity": "Join Community",
@@ -2897,6 +2932,17 @@
     "cta_banner_title": "Cta banner title",
     "cta_banner_description": "Cta banner description",
     "cta_banner_cta": "Cta banner cta",
-    "cta_banner_dismiss": "Cta banner dismiss"
+    "cta_banner_dismiss": "Cta banner dismiss",
+    "refer_earn_nav": "Refer & Earn",
+    "commission_badge": "Up to 40% Commission",
+    "earnings_table_title": "Affiliate Earnings Table",
+    "earnings_tier_col": "Tier",
+    "earnings_price_col": "Price",
+    "earnings_commission_col": "Commission/Sale",
+    "earnings_starter": "Starter",
+    "earnings_growth": "Growth",
+    "earnings_premium": "Premium",
+    "tier_multiplier_note": "Multiplier applies by tier",
+    "copy_link_cta": "Copy Referral Link"
   }
 }
