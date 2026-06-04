@@ -121,22 +121,30 @@ export function Navbar() {
           ))}
         </div>
 
-        {/* Desktop CTA */}
-        <div className="hidden lg:flex items-center gap-3">
-          <LanguageSwitcher />
-          {!isLoggedIn && (
-            <Link href="/login">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:scale-105 active:scale-95 transition-all duration-200">
-                {t("nav.login")}
-              </Button>
-            </Link>
-          )}
-          <Link href="/dashboard">
-            <Button variant="primary" size="sm" className="rounded-full px-5 hover:scale-105 active:scale-95 transition-all duration-200">
-              {t("nav.dashboard")}
-            </Button>
-          </Link>
-        </div>
+ {/* Desktop CTA */}
+ <div className="hidden lg:flex items-center gap-3">
+   <LanguageSwitcher />
+   {isLoggedIn ? (
+     <Link href="/dashboard">
+       <Button variant="primary" size="sm" className="rounded-full px-5 hover:scale-105 active:scale-95 transition-all duration-200">
+         {t("nav.dashboard")}
+       </Button>
+     </Link>
+   ) : (
+     <>
+       <Link href="/login">
+         <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:scale-105 active:scale-95 transition-all duration-200">
+           {t("nav.login")}
+         </Button>
+       </Link>
+       <Link href="/dashboard">
+         <Button variant="primary" size="sm" className="rounded-full px-5 hover:scale-105 active:scale-95 transition-all duration-200">
+           {t("nav.dashboard")}
+         </Button>
+       </Link>
+     </>
+   )}
+ </div>
 
         {/* Mobile hamburger */}
         <button
@@ -171,18 +179,28 @@ export function Navbar() {
           <div className="flex items-center justify-between pt-2 pb-1">
             <LanguageSwitcher />
           </div>
-          <div className="flex gap-3">
-            <Link href="/login" className="flex-1" onClick={() => setMenuOpen(false)}>
-              <Button variant="outline" size="sm" className="w-full rounded-full">
-                {t("nav.login")}
-              </Button>
-            </Link>
-            <Link href="/dashboard" className="flex-1" onClick={() => setMenuOpen(false)}>
-              <Button variant="primary" size="sm" className="w-full rounded-full">
-                {t("nav.dashboard")}
-              </Button>
-            </Link>
-          </div>
+ <div className="flex gap-3">
+   {isLoggedIn ? (
+     <Link href="/dashboard" className="flex-1" onClick={() => setMenuOpen(false)}>
+       <Button variant="primary" size="sm" className="w-full rounded-full">
+         {t("nav.dashboard")}
+       </Button>
+     </Link>
+   ) : (
+     <>
+       <Link href="/login" className="flex-1" onClick={() => setMenuOpen(false)}>
+         <Button variant="outline" size="sm" className="w-full rounded-full">
+           {t("nav.login")}
+         </Button>
+       </Link>
+       <Link href="/dashboard" className="flex-1" onClick={() => setMenuOpen(false)}>
+         <Button variant="primary" size="sm" className="w-full rounded-full">
+           {t("nav.dashboard")}
+         </Button>
+       </Link>
+     </>
+   )}
+ </div>
         </div>
       )}
     </nav>
