@@ -146,35 +146,25 @@
       "title": "Everything You Need to Dominate",
       "subtitle": "Powerful features designed for serious content creators",
       "items": {
-        "multi_channel": {
-          "title": "YouTube-First Distribution",
-          "description": "Manage YouTube publishing from one dashboard today. Multi-platform expansion (TikTok, IG, FB) on the roadmap.",
-          "badge": "Growth"
+        "ai_engine": {
+          "title": "AI Engine",
+          "description": "Core AI infrastructure powering every step of your content pipeline. From script to screen, one engine.",
+          "badge": "Core"
         },
-        "auto_affiliate": {
-          "title": "Affiliate Program Discovery",
-          "description": "Discover affiliate offers from PartnerStack, Impact.com, and Apollo. Manage your affiliate IDs to embed into video descriptions.",
-          "badge": "Premium"
+        "video_factory": {
+          "title": "Video Factory",
+          "description": "Produce scroll-stopping videos at scale. AI scripts, ElevenLabs voice, auto-publish — all in one flow.",
+          "badge": "Popular"
         },
-        "voice_cloning": {
-          "title": "ElevenLabs Voice Cloning",
-          "description": "Bring your own ElevenLabs key (BYOK). One-call voice cloning is live via /api/voice/clone and the Telegram /clone-voice command — register a new voice_id from your audio samples and use it everywhere.",
-          "badge": "Growth"
+        "credits": {
+          "title": "Credit System",
+          "description": "Transparent MCU-based credits that scale with your usage. No surprise bills, pay only for what you consume.",
+          "badge": "Flexible"
         },
-        "script_gen": {
-          "title": "AI Script Generation (SEO-scored)",
-          "description": "Generate scripts via your BYOK OpenRouter key with built-in SEO scoring — keyword coverage, heading structure, length band, title ideas. Live at /api/scripts/seo and Telegram /seo-script.",
-          "badge": "Starter"
-        },
-        "auto_publish": {
-          "title": "YouTube Auto-Publishing",
-          "description": "Schedule and publish videos to YouTube on cron — live via /api/publish/schedule and Telegram /publish. Other platforms unlock as adapters ship.",
-          "badge": "Growth"
-        },
-        "global_reach": {
-          "title": "Bilingual Platform + BYOK Translation",
-          "description": "Sophia ships with native English and Vietnamese throughout the platform. One-shot script translation is live via /api/translate and the Telegram /translate command — powered by your own OpenRouter key (BYOK).",
-          "badge": "Premium"
+        "api": {
+          "title": "API & Integrations",
+          "description": "Connect Sophia to your stack. REST API, webhooks, and Telegram bot for full automation control.",
+          "badge": "Pro"
         }
       },
       "highlight": "Premium tier unlocks API integrations with PartnerStack, Impact.com, and auto-discovery of new affiliate programs every 4 hours.",
@@ -230,10 +220,10 @@
       "title": "Trusted by Creators Worldwide",
       "subtitle": "Join thousands of content creators already building their empires with Sophia AI",
       "stats": {
-        "creators": "Active Creators",
-        "ai_tools": "AI Tools Integrated",
-        "videos": "Videos Generated",
-        "proposals": "Proposals Generated"
+        "missions": "Active Creators",
+        "agencies": "AI Tools Integrated",
+        "edge_pops": "Videos Generated",
+        "response_time": "Proposals Generated"
       },
       "testimonials": {
         "creator_1": {
@@ -344,7 +334,8 @@
       "subscribe_now": "Subscribe now",
       "monthly_label": "Monthly label",
       "annual_label": "Annual label",
-      "subscribe_now_master": "Subscribe now master"
+      "subscribe_now_master": "Subscribe now master",
+      "save_percent": "Save {percent}%"
     },
     "roi": {
       "title": "Calculate Your Potential Revenue",
@@ -391,7 +382,8 @@
       "click_rate": "Click rate",
       "avg_commission": "Avg commission",
       "email_capture": "Email capture",
-      "full_cost_disclaimer": "Full cost disclaimer"
+      "full_cost_disclaimer": "Full cost disclaimer",
+      "manual_cost_desc": "Manual production costs: hire editor, stock footage, software licenses, and revisions."
     },
     "affiliate": {
       "title": "High-Ticket Affiliate Discovery",
@@ -527,7 +519,63 @@
       "title": "Title",
       "subtitle": "Subtitle",
       "cta": "Cta",
-      "tabs": {}
+      "tabs": {
+        "video": {
+          "title": "AI Video Factory",
+          "description": "Generate scroll-stopping videos with AI scripts, voice-over, and auto-publish to YouTube.",
+          "features": [
+            "SEO-scoped script generation",
+            "ElevenLabs voice cloning",
+            "Auto YouTube publishing",
+            "Multi-language support"
+          ],
+          "cta": "Explore Video Factory"
+        },
+        "image": {
+          "title": "AI Image Studio",
+          "description": "Create stunning thumbnails and visual assets with generative AI tailored for content creators.",
+          "features": [
+            "AI thumbnail generation",
+            "Brand-consistent styles",
+            "Bulk image creation",
+            "One-click export"
+          ],
+          "cta": "Explore Image Studio"
+        },
+        "audio": {
+          "title": "AI Voice Engine",
+          "description": "Clone any voice and generate natural-sounding narration in seconds for any language.",
+          "features": [
+            "Voice cloning (BYOK)",
+            "11+ languages supported",
+            "Emotion control",
+            "Real-time preview"
+          ],
+          "cta": "Explore Voice Engine"
+        },
+        "brand": {
+          "title": "Brand Identity Kit",
+          "description": "Build a consistent visual brand across all your channels with AI-powered style guides.",
+          "features": [
+            "Auto color palette extraction",
+            "Logo variant generation",
+            "Style guide templates",
+            "Cross-platform consistency"
+          ],
+          "cta": "Explore Brand Kit"
+        },
+        "templates": {
+          "title": "Smart Templates",
+          "description": "Launch campaigns faster with proven video templates optimized for engagement and conversion.",
+          "features": [
+            "50+ pre-built templates",
+            "A/B tested layouts",
+            "Customizable scenes",
+            "One-click duplication"
+          ],
+          "cta": "Explore Templates"
+        }
+      }
     }
   },
   "dashboard": {
@@ -1544,6 +1592,13 @@
           "step2": "Navigate to Account Settings → API → click \"Generate\"",
           "step3": "Copy the full Basic ... string and paste it above as-is",
           "signupUrl": "https://studio.d-id.com/account-settings"
+        },
+        "nowpayments": {
+          "title": "How to get your NOWPayments API Key",
+          "step1": "Go to https://nowpayments.io → create a merchant account",
+          "step2": "Navigate to Settings → API → copy your API Key (starts with -)",
+          "step3": "Paste the API key string above",
+          "signupUrl": "https://nowpayments.io"
         }
       }
     }
@@ -1604,11 +1659,11 @@
       "free_trial_days": "{days}-day free trial",
       "free_full_label": "Full free access"
     },
-    "crypto_explainer_title": "Crypto explainer title",
-    "crypto_explainer_subtitle": "Crypto explainer subtitle",
-    "crypto_no_wallet_title": "Crypto no wallet title",
-    "crypto_no_wallet_desc": "Crypto no wallet desc",
-    "crypto_support_cta": "Crypto support cta",
+    "crypto_explainer_title": "💡 How to Pay with Crypto (USDT)",
+    "crypto_explainer_subtitle": "New to crypto? Follow these simple steps — it only takes 5 minutes.",
+    "crypto_no_wallet_title": "Don't have a crypto wallet?",
+    "crypto_no_wallet_desc": "You can create one for free in 2 minutes using Trust Wallet, Coin98, or Binance. We can also guide you step by step.",
+    "crypto_support_cta": "Request PayOS (Bank Transfer) →",
     "row_mcu": "Row mcu",
     "row_campaigns": "Row campaigns",
     "row_youtube": "Row youtube",
@@ -1619,7 +1674,17 @@
     "row_white_label": "Row white label",
     "row_billing": "Row billing",
     "billing_one_time": "Billing one time",
-    "billing_monthly": "Billing monthly"
+    "billing_monthly": "Billing monthly",
+    "crypto_what_is_usdt": "What is USDT?",
+    "crypto_what_is_usdt_desc": "USDT (Tether) is a stable cryptocurrency pegged 1:1 to the US Dollar — so 1 USDT = $1. Unlike Bitcoin, its price doesn't fluctuate. Think of it like digital USD.",
+    "crypto_wallet_title": "Get a Crypto Wallet",
+    "crypto_wallet_desc": "Install Trust Wallet (mobile), Coin98 (mobile), or Binance (exchange). Each gives you a USDT wallet address. It's like a bank account number for crypto.",
+    "crypto_network_title": "Choose Network: TRC-20 (Recommended)",
+    "crypto_network_desc": "When sending, select TRC-20 (Tron) — fees are lowest (~$0.50). Avoid ERC-20 (Ethereum) as fees can be $5-20. Selecting the wrong network means you lose your funds permanently.",
+    "crypto_send_title": "Send Exact Amount",
+    "crypto_send_desc": "Copy the USDT amount shown on the payment page and send EXACTLY that amount from your wallet. Send more or less → your order won't be confirmed automatically and needs manual review (delays 24-48h).",
+    "crypto_time_title": "Wait for Confirmation (5-30 min)",
+    "crypto_time_desc": "NOWPayments detects your payment automatically (5-30 min). Your tier activates instantly once confirmed — no manual steps. Check your email for the confirmation receipt."
   },
   "campaign": {
     "template_selection": {

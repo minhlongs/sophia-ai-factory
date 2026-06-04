@@ -146,35 +146,25 @@
       "title": "Mọi Thứ Bạn Cần Để Thống Trị",
       "subtitle": "Tính năng mạnh mẽ dành cho nhà sáng tạo nội dung chuyên nghiệp",
       "items": {
-        "multi_channel": {
-          "title": "Phân Phối YouTube-First",
-          "description": "Quản lý xuất bản YouTube từ một bảng điều khiển hôm nay. Mở rộng đa nền tảng (TikTok, IG, FB) trong lộ trình.",
-          "badge": "Growth"
+        "ai_engine": {
+          "title": "AI Engine",
+          "description": "Hạ tầng AI cốt lõi vận hành mọi bước pipeline nội dung. Từ kịch bản đến màn hình, một engine.",
+          "badge": "Core"
         },
-        "auto_affiliate": {
-          "title": "Khám Phá Chương Trình Affiliate",
-          "description": "Khám phá ưu đãi affiliate từ PartnerStack, Impact.com và Apollo. Quản lý ID affiliate của bạn để chèn vào mô tả video.",
-          "badge": "Premium"
+        "video_factory": {
+          "title": "Video Factory",
+          "description": "Sản xuất video thu hút quy mô lớn. Kịch bản AI, giọng ElevenLabs, tự động xuất bản — tất cả trong một luồng.",
+          "badge": "Phổ Biến"
         },
-        "voice_cloning": {
-          "title": "Nhân Bản Giọng ElevenLabs",
-          "description": "Mang theo key ElevenLabs (BYOK). Nhân bản giọng một-phát-ra-voice-id qua /api/voice/clone và lệnh Telegram /clone-voice — đăng ký voice mới từ audio mẫu và dùng được ở mọi nơi.",
-          "badge": "Growth"
+        "credits": {
+          "title": "Hệ Thống Credits",
+          "description": "Tín chỉ MCU minh bạch theo mức sử dụng. Không phí ẩn, chỉ trả những gì bạn dùng.",
+          "badge": "Linh Hoạt"
         },
-        "script_gen": {
-          "title": "Tạo Kịch Bản AI (Có Chấm Điểm SEO)",
-          "description": "Tạo kịch bản qua key OpenRouter BYOK với chấm điểm SEO tích hợp — coverage keyword, cấu trúc heading, word-count band, title ideas. Live tại /api/scripts/seo và Telegram /seo-script.",
-          "badge": "Starter"
-        },
-        "auto_publish": {
-          "title": "Tự Động Xuất Bản YouTube",
-          "description": "Lên lịch và xuất bản video lên YouTube theo cron — live qua /api/publish/schedule và Telegram /publish. Các nền tảng khác mở khoá khi adapter sẵn sàng.",
-          "badge": "Growth"
-        },
-        "global_reach": {
-          "title": "Nền Tảng Song Ngữ + Translate BYOK",
-          "description": "Sophia tích hợp sẵn tiếng Anh và tiếng Việt trên toàn nền tảng. Dịch kịch bản một-phát-ra-kết-quả qua /api/translate và lệnh Telegram /translate — chạy bằng key OpenRouter của riêng bạn (BYOK).",
-          "badge": "Premium"
+        "api": {
+          "title": "API & Tích Hợp",
+          "description": "Kết nối Sophia với hệ thống của bạn. REST API, webhooks và Telegram bot để tự động hóa hoàn toàn.",
+          "badge": "Pro"
         }
       },
       "highlight": "Gói Premium mở khóa tích hợp API với PartnerStack, Impact.com, và tự động phát hiện chương trình liên kết mới mỗi 4 giờ.",
@@ -230,10 +220,10 @@
       "title": "Được Tin Dùng Bởi Nhà Sáng Tạo Toàn Cầu",
       "subtitle": "Tham gia cùng hàng nghìn nhà sáng tạo nội dung đang xây dựng đế chế với Sophia AI",
       "stats": {
-        "creators": "Nhà Sáng Tạo Hoạt Động",
-        "ai_tools": "Công Cụ AI Tích Hợp",
-        "videos": "Video Đã Tạo",
-        "proposals": "Đề Xuất Đã Tạo"
+        "missions": "Dự Án Hoàn Thành",
+        "agencies": "Agency Đối Tác",
+        "edge_pops": "Edge Pop Đã Triển Khai",
+        "response_time": "Thời Gian Phản Hồi"
       },
       "testimonials": {
         "creator_1": {
@@ -344,7 +334,8 @@
       "subscribe_now": "Subscribe now",
       "monthly_label": "Monthly label",
       "annual_label": "Annual label",
-      "subscribe_now_master": "Subscribe now master"
+      "subscribe_now_master": "Subscribe now master",
+      "save_percent": "Tiết kiệm {percent}%"
     },
     "roi": {
       "title": "Tính Toán Doanh Thu Tiềm Năng",
@@ -360,38 +351,42 @@
       },
       "disclaimer": "Kết quả chỉ là ước tính và có thể thay đổi dựa trên ngách, chất lượng nội dung, tối ưu SEO và mức độ tương tác của khán giả. Doanh thu thực tế phụ thuộc vào nhiều yếu tố.",
       "estimate_note": "* Ước tính dựa trên $2 CPM + hoa hồng liên kết",
-      "revenue_by_source": "Revenue by source",
-      "videos_month": "Videos month",
-      "views_month": "Views month",
-      "total_revenue": "Total revenue",
-      "operating_costs": "Operating costs",
-      "lifetime_suffix": "Lifetime suffix",
-      "total_costs": "Total costs",
-      "net_profit": "Net profit",
-      "roi_payback": "Roi payback",
-      "roi_label": "Roi label",
-      "payback_label": "Payback label",
-      "days": "Days",
-      "annual_revenue": "Annual revenue",
-      "annual_costs": "Annual costs",
-      "annual_profit": "Annual profit",
-      "vs_manual": "Vs manual",
-      "monthly_suffix": "Monthly suffix",
-      "tier_selector": "Tier selector",
-      "service_plan": "Service plan",
-      "one_time_fee": "One time fee",
-      "equivalent_monthly": "Equivalent monthly",
-      "monthly_fee": "Monthly fee",
-      "cost_per_video": "Cost per video",
-      "channel_scale": "Channel scale",
-      "channels_label": "Channels label",
-      "videos_week": "Videos week",
-      "avg_views": "Avg views",
-      "affiliate_params": "Affiliate params",
-      "click_rate": "Click rate",
-      "avg_commission": "Avg commission",
-      "email_capture": "Email capture",
-      "full_cost_disclaimer": "Full cost disclaimer"
+      "revenue_by_source": "Doanh thu theo nguồn",
+      "videos_month": "Video/tháng",
+      "views_month": "Lượt xem/tháng",
+      "total_revenue": "Tổng doanh thu",
+      "operating_costs": "Chi phí vận hành",
+      "lifetime_suffix": "Trọn đời",
+      "total_costs": "Tổng chi phí",
+      "net_profit": "Lợi nhuận ròng",
+      "roi_payback": "Hoàn vốn ROI",
+      "roi_label": "ROI",
+      "payback_label": "Hoàn vốn",
+      "days": "Ngày",
+      "annual_revenue": "Doanh thu năm",
+      "annual_costs": "Chi phí năm",
+      "annual_profit": "Lợi nhuận năm",
+      "vs_manual": "So với thủ công",
+      "monthly_suffix": "Hàng tháng",
+      "tier_selector": "Chọn gói",
+      "service_plan": "Gói dịch vụ",
+      "one_time_fee": "Phí một lần",
+      "equivalent_monthly": "Tương đương hàng tháng",
+      "monthly_fee": "Phí hàng tháng",
+      "cost_per_video": "Chi phí/video",
+      "channel_scale": "Quy mô kênh",
+      "channels_label": "Kênh",
+      "videos_week": "Video/tuần",
+      "avg_views": "Lượt xem TB",
+      "affiliate_params": "Thông số affiliate",
+      "click_rate": "Tỷ lệ click",
+      "avg_commission": "Hoa hồng TB",
+      "email_capture": "Thu thập email",
+      "full_cost_disclaimer": "Tuyên bố đầy đủ về chi phí",
+      "manual_cost_desc": "Chi phí sản xuất thủ công: thuê editor, mua stock footage, phần mềm.",
+      "savings_monthly": "Tiết kiệm hàng tháng",
+      "savings_annual": "Tiết kiệm hàng năm",
+      "save_percent": "Tiết kiệm {percent}%"
     },
     "affiliate": {
       "title": "Khám Phá Liên Kết Cao Cấp",
@@ -442,6 +437,18 @@
         "refund": {
           "question": "Có chính sách hoàn tiền không?",
           "answer": "Có! Chúng tôi cam kết hoàn tiền 100% trong 30 ngày. Nếu bạn không hài lòng với nền tảng, liên hệ chúng tôi trong vòng 30 ngày kể từ ngày mua để được hoàn tiền đầy đủ, không hỏi lý do."
+        },
+        "vnd_payment": {
+          "question": "Tôi có thể thanh toán bằng VND không?",
+          "answer": "Có! Chúng tôi hỗ trợ thanh toán qua VNPay, Momo và chuyển khoản ngân hàng. Liên hệ support@sophia.agency để được hướng dẫn."
+        },
+        "zalo": {
+          "question": "Tôi có thể nhận hỗ trợ qua Zalo không?",
+          "answer": "Có, nhóm Zalo support của chúng tôi hoạt động 9h-18h hàng ngày. Tham gia qua link trên trang hoặc quét QR code."
+        },
+        "vat": {
+          "question": "Có xuất hóa đơn VAT không?",
+          "answer": "Có, chúng tôi xuất hóa đơn VAT đầy đủ cho doanh nghiệp. Vui lòng cung cấp thông tin công ty khi thanh toán."
         }
       }
     },
@@ -527,7 +534,63 @@
       "title": "Title",
       "subtitle": "Subtitle",
       "cta": "Cta",
-      "tabs": {}
+      "tabs": {
+        "video": {
+          "title": "AI Video Factory",
+          "description": "Tạo video thu hút với kịch bản AI, lồng tiếng và tự động xuất bản lên YouTube.",
+          "features": [
+            "Tạo kịch bản có chấm điểm SEO",
+            "Nhân bản giọng ElevenLabs",
+            "Tự động xuất bản YouTube",
+            "Hỗ trợ đa ngôn ngữ"
+          ],
+          "cta": "Khám Phá Video Factory"
+        },
+        "image": {
+          "title": "AI Image Studio",
+          "description": "Tạo thumbnail và hình ảnh ấn tượng với AI được thiết kế riêng cho nhà sáng tạo nội dung.",
+          "features": [
+            "Tạo thumbnail bằng AI",
+            "Phong cách nhất quán thương hiệu",
+            "Tạo hàng loạt hình ảnh",
+            "Xuất một-click"
+          ],
+          "cta": "Khám Phá Image Studio"
+        },
+        "audio": {
+          "title": "AI Voice Engine",
+          "description": "Nhân bản mọi giọng nói và tạo lời thuyết tự nhiên trong vài giây cho mọi ngôn ngữ.",
+          "features": [
+            "Nhân bản giọng (BYOK)",
+            "Hỗ trợ 11+ ngôn ngữ",
+            "Điều khiển cảm xúc",
+            "Xem trước thời gian thực"
+          ],
+          "cta": "Khám Phá Voice Engine"
+        },
+        "brand": {
+          "title": "Brand Identity Kit",
+          "description": "Xây dựng thương hiệu hình ảnh nhất quán trên tất cả kênh với hướng dẫn phong cách AI.",
+          "features": [
+            "Tự động trích màu thương hiệu",
+            "Tạo biến thể logo",
+            "Mẫu hướng dẫn phong cách",
+            "Nhất quán đa nền tảng"
+          ],
+          "cta": "Khám Phá Brand Kit"
+        },
+        "templates": {
+          "title": "Smart Templates",
+          "description": "Triển khai chiến dịch nhanh hơn với mẫu video được kiểm chứng tối ưu tương tác và chuyển đổi.",
+          "features": [
+            "50+ mẫu có sẵn",
+            "Bố cục đã A/B test",
+            "Cảnh tùy chỉnh",
+            "Nhân bản một-click"
+          ],
+          "cta": "Khám Phá Templates"
+        }
+      }
     }
   },
   "dashboard": {
@@ -1544,6 +1607,13 @@
           "step2": "Vào Account Settings → API → bấm \"Generate\"",
           "step3": "Copy chuỗi Basic ... và dán nguyên vẹn vào ô bên trên",
           "signupUrl": "https://studio.d-id.com/account-settings"
+        },
+        "nowpayments": {
+          "title": "Cách lấy NOWPayments API Key",
+          "step1": "Truy cập https://nowpayments.io → đăng ký tài khoản merchant",
+          "step2": "Vào Settings → API → copy API Key (bắt đầu bằng dấu -)",
+          "step3": "Dán chuỗi API key vào ô bên trên",
+          "signupUrl": "https://nowpayments.io"
         }
       }
     }
@@ -1604,11 +1674,11 @@
       "free_trial_days": "Dùng thử miễn phí {days} ngày",
       "free_full_label": "Truy cập miễn phí toàn bộ"
     },
-    "crypto_explainer_title": "Crypto explainer title",
-    "crypto_explainer_subtitle": "Crypto explainer subtitle",
-    "crypto_no_wallet_title": "Crypto no wallet title",
-    "crypto_no_wallet_desc": "Crypto no wallet desc",
-    "crypto_support_cta": "Crypto support cta",
+    "crypto_explainer_title": "💡 Cách Thanh Toán Bằng Crypto (USDT)",
+    "crypto_explainer_subtitle": "Chưa dùng crypto? Làm theo các bước đơn giản này — chỉ mất 5 phút.",
+    "crypto_no_wallet_title": "Chưa có ví crypto?",
+    "crypto_no_wallet_desc": "Bạn có thể tạo miễn phí trong 2 phút với Trust Wallet, Coin98, hoặc Binance. Chúng tôi cũng có thể hướng dẫn bạn từng bước.",
+    "crypto_support_cta": "Yêu cầu thanh toán PayOS (Chuyển khoản ngân hàng) →",
     "row_mcu": "Row mcu",
     "row_campaigns": "Row campaigns",
     "row_youtube": "Row youtube",
@@ -1619,7 +1689,17 @@
     "row_white_label": "Row white label",
     "row_billing": "Row billing",
     "billing_one_time": "Billing one time",
-    "billing_monthly": "Billing monthly"
+    "billing_monthly": "Billing monthly",
+    "crypto_what_is_usdt": "USDT Là Gì?",
+    "crypto_what_is_usdt_desc": "USDT (Tether) là tiền điện tử ổn định, giá trị luôn bằng 1 USD — nghĩa là 1 USDT = $1. Khác với Bitcoin, giá USDT không biến động. Hãy coi đây như USD dạng số.",
+    "crypto_wallet_title": "Tạo Ví Crypto",
+    "crypto_wallet_desc": "Tải Trust Wallet (mobile), Coin98 (mobile), hoặc Binance (sàn giao dịch). Mỗi ứng dụng sẽ cấp cho bạn địa chỉ ví USDT — giống như số tài khoản ngân hàng nhưng dùng cho crypto.",
+    "crypto_network_title": "Chọn Mạng: TRC-20 (Khuyến nghị)",
+    "crypto_network_desc": "Khi gửi tiền, hãy chọn mạng TRC-20 (Tron) — phí thấp nhất (~$0.50). Tránh ERC-20 (Ethereum) vì phí có thể lên tới $5-20. Chọn sai mạng = mất tiền vĩnh viễn.",
+    "crypto_send_title": "Gửi Đúng Số Tiền",
+    "crypto_send_desc": "Sao chép số USDT hiển thị trên trang thanh toán và gửi ĐÚNG số tiền đó từ ví của bạn. Gửi thiếu hoặc thừa → đơn hàng không tự động xác nhận, cần xử lý thủ công (mất 24-48 giờ).",
+    "crypto_time_title": "Chờ Xác Nhận (5-30 phút)",
+    "crypto_time_desc": "NOWPayments tự động phát hiện giao dịch của bạn (5-30 phút). Gói dịch vụ được kích hoạt ngay khi xác nhận — không cần thao tác thêm. Kiểm tra email để nhận biên lai xác nhận."
   },
   "campaign": {
     "template_selection": {
@@ -2818,7 +2898,19 @@
   },
   "agi_showcase": {
     "title": "Title",
-    "subtitle": "Subtitle"
+    "subtitle": "Subtitle",
+    "outcome_tracking_title": "Theo Dõi Kết Quả Thực Tế",
+    "outcome_tracking_desc": "Đo lường hiệu quả chiến dịch từng kênh với dashboard theo thời gian thực.",
+    "confidence_title": "Độ Tin Cậy Cao",
+    "confidence_desc": "Mỗi đề xuất đều có điểm tin cậy và lý do — bạn quyết định cuối cùng.",
+    "multi_agent_title": "Đa Agent Hợp Tác",
+    "multi_agent_desc": "Nhiều agent chuyên biệt phối hợp để tối ưu toàn bộ pipeline nội dung.",
+    "pricing_title": "Mô Hình Giá Linh Hoạt",
+    "pricing_desc": "Trả theo kênh, theo video, hoặc gói enterprise. Không phí ẩn.",
+    "feedback_title": "Vòng Phản Hồi Tự Động",
+    "feedback_desc": "Hệ thống tự học từ kết quả thực tế để cải thiện đề xuất liên tục.",
+    "compliance_title": "Tuân Thủ Tự Động",
+    "compliance_desc": "Kiểm tra vi phạm bản quyền, brand safety và compliance trước khi xuất bản."
   },
   "community": {
     "joinCommunity": "Join Community",
@@ -2832,6 +2924,17 @@
     "cta_banner_title": "Cta banner title",
     "cta_banner_description": "Cta banner description",
     "cta_banner_cta": "Cta banner cta",
-    "cta_banner_dismiss": "Cta banner dismiss"
+    "cta_banner_dismiss": "Cta banner dismiss",
+    "refer_earn_nav": "Giới Thiệu & Kiếm Tiền",
+    "commission_badge": "Hoa Hồng Đến 40%",
+    "earnings_table_title": "Bảng Thu Nhập Affiliate",
+    "earnings_tier_col": "Gói",
+    "earnings_price_col": "Giá",
+    "earnings_commission_col": "Hoa Hồng/Lần",
+    "earnings_starter": "Starter",
+    "earnings_growth": "Growth",
+    "earnings_premium": "Premium",
+    "tier_multiplier_note": "Hệ số nhân áp dụng theo gói",
+    "copy_link_cta": "Sao Chép Link Giới Thiệu"
   }
 }
