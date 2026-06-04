@@ -97,12 +97,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const creditsToRefund = mission.credits_used ?? 0;
     if (creditsToRefund > 0) {
       try {
-        await addCredits(
+        const creditsAdded = await addCredits(
           mission.user_id,
           creditsToRefund,
           'reaper_refund',
           { mission_id: mission.id, original_status: mission.status },
         );
+        if (!creditsAdded) {
+          logger.error('[cron/mission-reaper] Failed to refund credits', {
+            missionId: mission.id,
+            creditsToRefund,
+          });
+          continue;
+        }
         refunded += creditsToRefund;
       } catch (err) {
         // Non-fatal: log and continue — mission is still marked failed.
