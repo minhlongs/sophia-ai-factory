@@ -34,6 +34,7 @@ export type { NonceCache } from './jwt-nonce-storage';
 export async function checkJwtNonce(nonce: string): Promise<{
   valid: boolean;
   reason?: 'already-used' | 'expired' | 'invalid';
+  error?: string;
 }> {
   if (!nonce || nonce.length < 8) {
     return { valid: false, reason: 'invalid' };
@@ -111,7 +112,7 @@ export async function checkJwtNonce(nonce: string): Promise<{
     return { valid: true };
   } catch (error) {
     logger.error('[JWT Nonce] Error checking nonce', toError(error));
-    return { valid: true }; // Fail open on error
+    return { valid: false, reason: 'invalid' }; // Fail closed on error
   }
 }
 
