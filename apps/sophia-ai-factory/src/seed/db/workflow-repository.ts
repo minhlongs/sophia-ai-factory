@@ -78,6 +78,7 @@ export async function createWorkflow(
 
   // Resolve steps from preset or fall back to default
   const preset = presetName ? WORKFLOW_PRESETS[presetName] : undefined
+  const effectivePresetName = preset?.id ?? 'default'
   const steps: WorkflowStep[] = preset?.steps ?? (SUPERVISOR_STEPS as unknown as WorkflowStep[])
   const stepIds = steps.map(() => newId())
 
@@ -101,7 +102,7 @@ export async function createWorkflow(
       workflow_id: workflowId,
       parallel_group: step.parallelGroup ?? null,
       depends_on: step.dependsOn ?? [],
-      preset: presetName ?? 'default',
+      preset: effectivePresetName,
     })
     return db.prepare(
       `INSERT INTO missions
@@ -145,7 +146,7 @@ export async function createWorkflow(
         workflow_id: workflowId,
         parallel_group: step.parallelGroup ?? null,
         depends_on: step.dependsOn ?? [],
-        preset: presetName ?? 'default',
+        preset: effectivePresetName,
       }),
       result: null,
       error_message: null,

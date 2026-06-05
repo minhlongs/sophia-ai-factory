@@ -6,16 +6,21 @@
  * This focuses on testing the type contracts and expected behavior.
  */
 
-import { describe, it, expect } from 'vitest'
+import { afterEach, describe, it, expect, vi } from 'vitest'
 import type {
   WorkflowRow,
   StepMissionRow,
   WorkflowWithSteps,
 } from '@/seed/db/workflow-repository'
+import { createWorkflow } from '@/seed/db/workflow-repository'
 
 // ── Test fixtures ─────────────────────────────────────────────────────────────
 
 const now = new Date().toISOString()
+
+afterEach(() => {
+  delete (globalThis as { __D1_DB?: unknown }).__D1_DB
+})
 
 function createWorkflowRow(overrides?: Partial<WorkflowRow>): WorkflowRow {
   return {
@@ -518,5 +523,58 @@ describe('Step params JSON structure for preset workflows', () => {
     })
     const parsed = JSON.parse(params)
     expect(parsed.preset).toBe('default')
+  })
+})
+
+describe('createWorkflow() preset fallback metadata', () => {
+  function installD1Mock() {
+    const calls = {
+      prepare: [] as string[],
+      binds: [] as unknown[][],
+      batches: [] as unknown[][],
+    }
+    const db = {
+      prepare: vi.fn((sql: string) => {
+        calls.prepare.push(sql)
+        return {
+          bind: vi.fn((...args: unknown[]) => {
+            calls.binds.push(args)
+            return { sql, args }
+          }),
+        }
+      }),
+      batch: vi.fn(async (statements: unknown[]) => {
+        calls.batches.push(statements)
+        return []
+      }),
+    }
+    ;(globalThis as { __D1_DB?: unknown }).__D1_DB = db
+    return calls
+  }
+
+  it('stores the effective default preset name when an unknown preset falls back', async () => {
+    installD1Mock()
+
+    const workflow = await createWorkflow('org-1', 'Build the campaign', 'typo-preset')
+
+    expect(workflow.steps).toHaveLength(3)
+    expect(workflow.steps.map(step => JSON.parse(step.params).preset)).toEqual([
+      'default',
+      'default',
+      'default',
+    ])
+  })
+
+  it('stores ceo-solo-media for the ceo preset and queues all dependency-free initial steps', async () => {
+    installD1Mock()
+
+    const workflow = await createWorkflow('org-1', 'Build the media company', 'ceo-solo-media')
+
+    expect(workflow.steps).toHaveLength(8)
+    expect(workflow.steps.map(step => JSON.parse(step.params).preset)).toEqual(
+      Array.from({ length: 8 }, () => 'ceo-solo-media'),
+    )
+    expect(workflow.steps.slice(0, 2).map(step => step.status)).toEqual(['queued', 'queued'])
+    expect(workflow.steps.slice(2).every(step => step.status === 'blocked')).toBe(true)
   })
 })

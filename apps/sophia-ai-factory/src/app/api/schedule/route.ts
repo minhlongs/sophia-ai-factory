@@ -10,6 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1Client } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
@@ -24,22 +25,43 @@ interface ScheduledCampaignRow {
   is_active: number;
 }
 
-interface ScheduleBody {
-  topic: string;
-  template_script?: string | null;
-  interval_days?: number;
-  next_run_date: string;
-}
-
-interface SchedulePatchBody {
-  id: string;
-  is_active?: boolean;
-  interval_days?: number;
-  next_run_date?: string;
-  topic?: string;
-}
-
 export const dynamic = 'force-dynamic';
+
+const scheduleDateSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .refine(
+    (value) => /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,3})?)?(?:Z|[+-]\d{2}:\d{2})?)?$/.test(value),
+    'Expected YYYY-MM-DD or ISO datetime',
+  )
+  .transform((value) => value.slice(0, 10))
+  .refine((value) => {
+    const parsed = new Date(`${value}T00:00:00.000Z`);
+    return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+  }, 'Invalid calendar date');
+
+const scheduleCreateSchema = z.object({
+  topic: z.string().trim().min(1).max(200),
+  template_script: z.string().max(20000).nullable().optional(),
+  interval_days: z.number().int().min(1).max(365).optional().default(7),
+  next_run_date: scheduleDateSchema,
+});
+
+const schedulePatchSchema = z.object({
+  id: z.string().trim().min(1).max(128),
+  is_active: z.boolean().optional(),
+  interval_days: z.number().int().min(1).max(365).optional(),
+  next_run_date: scheduleDateSchema.optional(),
+  topic: z.string().trim().min(1).max(200).optional(),
+}).refine(
+  (value) =>
+    value.is_active !== undefined ||
+    value.interval_days !== undefined ||
+    value.next_run_date !== undefined ||
+    value.topic !== undefined,
+  'No fields to update',
+);
 
 // GET — list current user's scheduled campaigns
 export async function GET(req: NextRequest) {
@@ -81,15 +103,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = (await req.json()) as ScheduleBody;
-    const { topic, template_script, interval_days, next_run_date } = body;
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
 
-    if (!topic || !next_run_date) {
+    const parsed = scheduleCreateSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Missing required fields: topic, next_run_date' },
+        { error: 'Invalid schedule input', details: parsed.error.flatten().fieldErrors },
         { status: 400 },
       );
     }
+    const { topic, template_script, interval_days, next_run_date } = parsed.data;
 
     const db = await getD1Client();
     const { data, error } = await db
@@ -131,14 +159,22 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = (await req.json()) as SchedulePatchBody;
-    const { id, is_active, interval_days, next_run_date, topic } = body;
-
-    if (!id) {
-      return NextResponse.json({ error: 'Missing schedule id' }, { status: 400 });
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
     }
 
-    const db = await getD1Client();
+    const parsed = schedulePatchSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid schedule input', details: parsed.error.flatten().fieldErrors },
+        { status: 400 },
+      );
+    }
+    const { id, is_active, interval_days, next_run_date, topic } = parsed.data;
+
     const updateData: Record<string, unknown> = {};
 
     if (typeof is_active === 'boolean') updateData.is_active = is_active ? 1 : 0;
@@ -146,10 +182,7 @@ export async function PATCH(req: NextRequest) {
     if (typeof next_run_date === 'string') updateData.next_run_date = next_run_date;
     if (typeof topic === 'string') updateData.topic = topic;
 
-    if (Object.keys(updateData).length === 0) {
-      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
-    }
-
+    const db = await getD1Client();
     const { data, error } = await db
       .from('scheduled_campaigns')
       .update(updateData)
@@ -166,6 +199,10 @@ export async function PATCH(req: NextRequest) {
     }
 
     const row = data?.[0];
+    if (!row) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+
     return NextResponse.json({
       success: true,
       schedule: row as unknown as ScheduledCampaignRow,
@@ -192,6 +229,25 @@ export async function DELETE(req: NextRequest) {
     }
 
     const db = await getD1Client();
+    const { data: existing, error: lookupError } = await db
+      .from('scheduled_campaigns')
+      .select('id')
+      .eq('id', id)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (lookupError) {
+      if (lookupError.code === 'TABLE_NOT_FOUND') {
+        return NextResponse.json({ error: 'Schedule table not initialized' }, { status: 503 });
+      }
+      logger.error('[api/schedule] Delete lookup error', new Error(lookupError.message));
+      return NextResponse.json({ error: 'Failed to delete schedule' }, { status: 500 });
+    }
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+
     const { error } = await db
       .from('scheduled_campaigns')
       .delete()

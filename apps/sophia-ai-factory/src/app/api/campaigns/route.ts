@@ -1,8 +1,9 @@
 /**
- * /api/campaigns — list and create campaigns
+ * /api/campaigns — list, read, and delete campaigns
  *
  * GET  /api/campaigns — list current user's campaigns
- * POST /api/campaigns — create a new campaign (delegates to server action)
+ * GET  /api/campaigns?id=... — read one current-user campaign
+ * DELETE /api/campaigns?id=... — delete one current-user campaign
  *
  * Auth: requires valid Better Auth session
  */
@@ -86,6 +87,25 @@ export async function DELETE(req: NextRequest) {
     }
 
     const db = await getD1Client();
+    const { data: existing, error: lookupError } = await db
+      .from('campaigns')
+      .select('id')
+      .eq('id', campaignId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (lookupError) {
+      logger.error('[api/campaigns] Delete lookup error', new Error(lookupError.message));
+      return NextResponse.json(
+        { error: 'Failed to delete campaign' },
+        { status: 500 }
+      );
+    }
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+
     const { error } = await db
       .from('campaigns')
       .delete()

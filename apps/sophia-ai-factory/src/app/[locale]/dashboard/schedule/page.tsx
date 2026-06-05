@@ -146,13 +146,11 @@ export default function SchedulePage(): React.JSX.Element {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   }
 
   function isOverdue(dateStr: string): boolean {
-    return new Date(dateStr) < new Date();
+    return dateStr.slice(0, 10) < new Date().toISOString().slice(0, 10);
   }
 
   // Set default next run to tomorrow
@@ -160,7 +158,7 @@ export default function SchedulePage(): React.JSX.Element {
     if (!nextRun) {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      setNextRun(tomorrow.toISOString().slice(0, 16));
+      setNextRun(tomorrow.toISOString().slice(0, 10));
     }
   }, []);
 
@@ -263,7 +261,7 @@ export default function SchedulePage(): React.JSX.Element {
                   Ngày chạy đầu tiên <span className="text-red-400">*</span>
                 </label>
                 <input
-                  type="datetime-local"
+                  type="date"
                   value={nextRun}
                   onChange={(e) => setNextRun(e.target.value)}
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm font-mono"
