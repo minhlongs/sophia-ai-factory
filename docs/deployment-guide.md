@@ -55,13 +55,9 @@ git push origin main
 # Step 1: Build + inject SHA + deploy
 cd apps/sophia-ai-factory
 npm run deploy:full
-# This runs: next build → inject COMMIT_SHA/DEPLOYED_AT secrets → wrangler deploy
+# This runs: type-check → tests → next build → OpenNext build → changed D1 migrations → wrangler deploy → SHA verification
 
-# Step 2: Apply any new D1 migrations (if migrations/ changed in this commit)
-bash scripts/apply-migrations.sh
-# Or to check what changed: git diff HEAD~1 HEAD -- migrations/ | grep "^+"
-
-# The deploy script exits 2 if unpushed commits exist.
+# The deploy script exits 2 if unpushed commits or dirty files exist.
 # Emergency bypass (document reason in deploy log):
 # ALLOW_UNPUSHED_DEPLOY=1 npm run deploy:full
 ```

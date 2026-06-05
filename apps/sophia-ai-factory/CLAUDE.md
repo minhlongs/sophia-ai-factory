@@ -97,10 +97,7 @@ git push gitlab main  # optional mirror
 cd apps/sophia-ai-factory
 npm run deploy:full
 
-# Step 2: Apply any new D1 migrations (if migrations/ changed)
-bash scripts/apply-migrations.sh   # or: npm run deploy:migrations
-
-# Step 3: Verify SHA match
+# Step 2: Verify SHA match
 curl -s https://sophia.agencyos.network/api/version | jq .shortSha
 # Must match: git rev-parse HEAD | cut -c1-8
 ```
@@ -110,7 +107,7 @@ curl -s https://sophia.agencyos.network/api/version | jq .shortSha
 Hard rules:
 - **Push BEFORE deploy** — `deploy-with-sha.sh` rejects with exit 2 if `git log origin/main..HEAD` is non-empty. Bypass only with `ALLOW_UNPUSHED_DEPLOY=1` for emergency hotfixes; document the reason in deploy log.
 - SHA match is MANDATORY — HTTP 200 alone is not sufficient (may be stale deploy)
-- Run `npm run deploy:migrations` after any commit that adds files to `migrations/`
+- `npm run deploy:full` applies changed canonical D1 migrations from `migrations/` before replacing the Worker. Do not run `npm run deploy:migrations` again after a successful `deploy:full` unless you are intentionally applying a separate migration range.
 - Do NOT use `gh run list` as deploy check — GitHub Actions is intentionally disabled
 
 ## Green Production Rule

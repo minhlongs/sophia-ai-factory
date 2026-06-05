@@ -65,6 +65,30 @@ retry_cf() {
   done
 }
 
+fetch_url() {
+  local url="$1"
+  curl -fsS "$url" 2>/dev/null || curl --noproxy '*' -fsS "$url" 2>/dev/null
+}
+
+fetch_status() {
+  local url="$1"
+  curl -sS -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || \
+    curl --noproxy '*' -sS -o /dev/null -w "%{http_code}" "$url" 2>/dev/null
+}
+
+cache_bust_url() {
+  local url="$1"
+  local nonce="$2"
+  case "$url" in
+    *\?*) printf '%s&deployVerify=%s' "$url" "$nonce" ;;
+    *) printf '%s?deployVerify=%s' "$url" "$nonce" ;;
+  esac
+}
+
+extract_short_sha() {
+  node -e "let input=''; process.stdin.on('data', c => input += c); process.stdin.on('end', () => { try { const parsed = JSON.parse(input); if (typeof parsed.shortSha === 'string') process.stdout.write(parsed.shortSha); } catch {} });"
+}
+
 # ─── Step 0: Push precondition (2026-05-15 — prevent prod/git divergence) ────
 # Reject deploy if local HEAD has commits not yet on origin/main. Latent divergence
 # is the root cause of incident 2026-05-13/15 where prod ran code that existed
@@ -115,6 +139,23 @@ COMMIT_SHORT=$(echo "$COMMIT_SHA" | cut -c1-8)
 # Use macOS-compatible date (no GNU-specific flags)
 DEPLOYED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 DEPLOY_BRANCH=$(git -C "$REPO_ROOT" rev-parse --abbrev-ref HEAD)
+PROD_URL="${PROD_URL:-https://sophia.agencyos.network}"
+VERSION_BASE_URL="${VERSION_URL:-$PROD_URL/api/version}"
+PREVIOUS_VERSION_URL=$(cache_bust_url "$VERSION_BASE_URL" "pre-${COMMIT_SHORT}-$(date +%s)")
+VERIFY_VERSION_URL=$(cache_bust_url "$VERSION_BASE_URL" "sha-${COMMIT_SHORT}")
+
+# Capture the currently deployed SHA before replacing the worker. This is the
+# authoritative migration range for CF-direct deploys: any D1 migration changed
+# between previous-live and HEAD must be applied before this script may report
+# production green.
+PREVIOUS_LIVE_SHA=""
+PREVIOUS_VERSION_JSON=$(fetch_url "$PREVIOUS_VERSION_URL" || true)
+PREVIOUS_LIVE_SHA=$(printf '%s' "$PREVIOUS_VERSION_JSON" | extract_short_sha || true)
+if [ -n "$PREVIOUS_LIVE_SHA" ]; then
+  echo "Previous live SHA: $PREVIOUS_LIVE_SHA"
+else
+  echo "⚠️ Could not read previous live SHA from $PREVIOUS_VERSION_URL; deploy will abort before replacing the worker unless SKIP_D1_MIGRATIONS=1"
+fi
 
 # ─── Step 0.7: Deploy attestation (SOC 2 CC6.1 — separation-of-duties) ─────
 # Audit-mode by default so the canonical CF-direct deploy remains usable.
@@ -259,6 +300,28 @@ if [ "${RUN_PREDEPLOY_E2E:-0}" = "1" ]; then
   echo "[deploy] ✅ Pre-deploy smoke passed"
 fi
 
+# ─── Step 3.7: Apply D1 migrations changed since previous-live SHA ─────────
+# SHA/HTTP green is not enough when a deploy includes new D1 migrations. Use
+# the live SHA captured before this deploy so multi-commit deploys cannot miss
+# migrations that were not in HEAD~1. Apply before replacing the worker so new
+# code does not run against an old schema. Emergency bypass: SKIP_D1_MIGRATIONS=1.
+if [ "${SKIP_D1_MIGRATIONS:-0}" != "1" ]; then
+  if [ -n "$PREVIOUS_LIVE_SHA" ] && git -C "$REPO_ROOT" rev-parse --verify "$PREVIOUS_LIVE_SHA^{commit}" >/dev/null 2>&1; then
+    echo "==> apply D1 migrations changed since previous live SHA ($PREVIOUS_LIVE_SHA)"
+    bash scripts/apply-migrations.sh "$PREVIOUS_LIVE_SHA"
+  elif [ -n "$PREVIOUS_LIVE_SHA" ]; then
+    echo "❌ Previous live SHA $PREVIOUS_LIVE_SHA is not present locally; cannot determine D1 migration range"
+    echo "Emergency bypass: SKIP_D1_MIGRATIONS=1 npm run deploy:full (document reason)"
+    exit 2
+  else
+    echo "❌ Previous live SHA unavailable; cannot determine D1 migration range"
+    echo "Emergency bypass: SKIP_D1_MIGRATIONS=1 npm run deploy:full (document reason)"
+    exit 2
+  fi
+else
+  echo "⚠️ SKIP_D1_MIGRATIONS=1 — bypassing D1 migration apply"
+fi
+
 # ─── Step 4: Deploy ─────────────────────────────────────────────────────────
 # IMPORTANT: explicit `--config wrangler.toml` is required for OpenNext's
 # deploy hook (wrangler auto-detects opennext projects and delegates to
@@ -289,17 +352,14 @@ if [ -x scripts/ci/sentry-upload-sourcemaps.sh ]; then
   bash scripts/ci/sentry-upload-sourcemaps.sh || echo "warn: sentry sourcemap upload failed (non-fatal)"
 fi
 
-PROD_URL="${PROD_URL:-https://sophia.agencyos.network}"
-VERSION_URL="${VERSION_URL:-$PROD_URL/api/version}"
-
 # ─── Step 5.2: Mandatory live deploy verification ──────────────────────────
 # HTTP 200 alone can be a stale worker. /api/version must expose the exact
 # COMMIT_SHA secret injected above before this deploy can be reported GREEN.
-echo "==> verify deployed SHA via $VERSION_URL"
+echo "==> verify deployed SHA via $VERIFY_VERSION_URL"
 LIVE_SHA=""
 for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
-  VERSION_JSON=$(curl -fsS "$VERSION_URL" 2>/dev/null || true)
-  LIVE_SHA=$(echo "$VERSION_JSON" | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4 || true)
+  VERSION_JSON=$(fetch_url "$VERIFY_VERSION_URL" || true)
+  LIVE_SHA=$(printf '%s' "$VERSION_JSON" | extract_short_sha || true)
   if [ "$LIVE_SHA" = "$COMMIT_SHORT" ]; then
     echo "✅ Deploy SHA match: $LIVE_SHA"
     break
@@ -315,7 +375,7 @@ if [ "$LIVE_SHA" != "$COMMIT_SHORT" ]; then
 fi
 
 echo "==> verify production HTTP via $PROD_URL"
-HTTP_STATUS=$(curl -sS -o /dev/null -w "%{http_code}" "$PROD_URL" 2>/dev/null || true)
+HTTP_STATUS=$(fetch_status "$PROD_URL" || true)
 if [ "$HTTP_STATUS" != "200" ]; then
   echo "❌ Production HTTP check failed: ${HTTP_STATUS:-curl-error}"
   exit 2
@@ -324,7 +384,7 @@ echo "✅ Production HTTP: $HTTP_STATUS"
 
 echo ""
 echo "Deploy complete."
-echo "Verified: $VERSION_URL shortSha == $COMMIT_SHORT"
+echo "Verified: $VERIFY_VERSION_URL shortSha == $COMMIT_SHORT"
 
 # ─── Step 5.5: Mirror push to gitlab (non-fatal, Wave C P2-5, 2026-05-22) ────
 # Best-effort mirror. Local doctrine docs `git push gitlab main` as a manual
