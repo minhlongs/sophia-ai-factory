@@ -113,9 +113,15 @@ export async function reserveVideoSlot(
     .bind(userId, yearMonth, now, limit)
     .all<{ count: number }>();
 
+  // Invalidate edge cache so next quota check reads fresh D1 data
+  const kv = globalThis.KV_KV as KVNamespace | undefined
+  await kv?.delete(`quota:video:${userId}:${yearMonth}`).catch(() => { /* fail-open */ })
+
   if (results && results.length > 0) {
     return { reserved: true, used: results[0].count, limit, resetAt };
   }
+
+  // Invalidate edge cache — D1 was mutated (increment path) or limit reached
 
   const used = await readUsage(userId, yearMonth);
   return { reserved: false, used, limit, resetAt };
@@ -139,6 +145,10 @@ export async function releaseVideoSlot(userId: string): Promise<void> {
     )
     .bind(userId, yearMonth, now)
     .run();
+
+  // Invalidate edge cache after decrement
+  const kv = globalThis.KV_KV as KVNamespace | undefined
+  await kv?.delete(`quota:video:${userId}:${yearMonth}`).catch(() => { /* fail-open */ })
 }
 
 /**
@@ -160,4 +170,8 @@ export async function incrementVideoUsage(userId: string): Promise<void> {
     )
     .bind(userId, yearMonth, now)
     .run();
+
+  // Invalidate edge cache after increment
+  const kv = globalThis.KV_KV as KVNamespace | undefined
+  await kv?.delete(`quota:video:${userId}:${yearMonth}`).catch(() => { /* fail-open */ })
 }

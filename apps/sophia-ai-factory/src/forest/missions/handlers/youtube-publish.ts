@@ -24,7 +24,7 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import { decryptToken } from '@/forest/publishing/token-crypto';
+import { decryptToken } from '@/tree/crypto/token-crypto';
 import { refreshChannelToken } from '@/forest/publishing/oauth-token-refresher';
 import { YouTubePublisher } from '@/forest/publishing/youtube-publisher';
 import { logger } from '@/seed/utils/logger-utility';

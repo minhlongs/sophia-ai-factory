@@ -133,11 +133,26 @@ describe('videoGenerate Inngest function', () => {
     process.env.FISH_SPEECH_API_KEY = 'test-fish-key';
 
     // D1 mock
-    const dbMock = {
-      from: vi.fn().mockReturnThis(),
-      update: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockResolvedValue({ data: null, error: null }),
-    };
+ const dbMock = {
+    from: vi.fn((table: string) => {
+        if (table === "engine_missions") {
+            return {
+                select: vi.fn((cols: string) => ({
+                    eq: vi.fn((col: string, val: string) => ({
+                        single: vi.fn().mockResolvedValue({ data: null, error: null }),
+                    })),
+                })),
+                update: vi.fn().mockReturnThis(),
+                eq: vi.fn().mockReturnThis(),
+            };
+        }
+        return {
+            select: vi.fn().mockReturnThis(),
+            update: vi.fn().mockReturnThis(),
+            eq: vi.fn().mockReturnThis(),
+        };
+    }),
+ };
     mockGetD1Client.mockResolvedValue(dbMock);
 
     // R2 mock

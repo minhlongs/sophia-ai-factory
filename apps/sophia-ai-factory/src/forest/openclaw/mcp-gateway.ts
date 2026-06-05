@@ -11,7 +11,7 @@
 
 import type { TenantContext } from './with-tenant';
 import { getOrDefault } from '@/seed/tenant-settings/registry';
-import { decryptToken } from '@/forest/publishing/token-crypto';
+import { decryptToken } from '@/tree/crypto/token-crypto';
 import type { McpSettings } from '@/seed/tenant-settings/defaults';
 
 export class MCPDeniedError extends Error {

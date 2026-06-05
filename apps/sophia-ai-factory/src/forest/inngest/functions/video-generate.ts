@@ -71,7 +71,19 @@ export const videoGenerate = inngest.createFunction(
   async ({ event, step }) => {
     const data = event.data as VideoGenerateRequestedEvent;
 
-    // ── Step 1: Parse Input ────────────────────────────────────────────────
+ // ── Idempotency guard: skip if mission already succeeded or running ─────
+ const idempotencyDb = await getD1Client();
+ const { data: existingMission } = await idempotencyDb
+   .from('engine_missions')
+   .select('id, status')
+   .eq('id', data.missionId)
+   .single();
+ if (existingMission && (existingMission.status === 'succeeded' || existingMission.status === 'running')) {
+   logger.info('[videoGenerate] Mission already processed — skipping', { missionId: data.missionId, status: existingMission.status });
+   return { skipped: true, missionId: data.missionId };
+ }
+
+ // ── Step 1: Parse Input ────────────────────────────────────────────────arse Input ────────────────────────────────────────────────
     const { missionId, prompt, voiceoverText, tenantId, userId, language } =
       await step.run('parse-input', async () => {
         if (!data.missionId) throw new Error('[videoGenerate] missionId is required');

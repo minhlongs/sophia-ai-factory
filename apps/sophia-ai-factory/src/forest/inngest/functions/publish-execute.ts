@@ -11,7 +11,7 @@
 import { inngest } from '@/forest/inngest/client';
 import { getD1Client } from '@/seed/db/client';
 import { refreshChannelToken } from '@/forest/publishing/oauth-token-refresher';
-import { decryptToken } from '@/forest/publishing/token-crypto';
+import { decryptToken } from '@/tree/crypto/token-crypto';
 import { TikTokPublisher } from '@/forest/publishing/tiktok-publisher';
 import { YouTubePublisher } from '@/forest/publishing/youtube-publisher';
 import { InstagramPublisher } from '@/forest/publishing/instagram-publisher';

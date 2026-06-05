@@ -49,7 +49,21 @@ export const generateCampaign = inngest.createFunction(
   async ({ event, step }) => {
     const { campaignId, userId, topic, audience, tier, resume, resumeFrom } = event.data
 
-    const updateStatus = (status: Parameters<typeof updateCampaignStatus>[1], progress: number, data?: Record<string, unknown>) =>
+  // ── Idempotency guard: skip if campaign already processing or completed ────
+  if (!resume) {
+    const idempotencyDb = await getD1Client();
+    const { data: existingCampaign } = await idempotencyDb
+      .from('campaigns')
+      .select('id, status')
+      .eq('id', campaignId)
+      .single();
+    if (existingCampaign && ['processing_script', 'processing_video', 'completed'].includes(existingCampaign.status)) {
+      logger.info('[generateCampaign] Campaign already processed — skipping', { campaignId, status: existingCampaign.status });
+      return { skipped: true, campaignId };
+    }
+  }
+
+   const updateStatus = (status: Parameters<typeof updateCampaignStatus>[1], progress: number, data?: Record<string, unknown>) =>
       updateCampaignStatus(campaignId, status, progress, data)
     const notifyUser = (message: string) => notifyUserByTelegram(userId, message)
 

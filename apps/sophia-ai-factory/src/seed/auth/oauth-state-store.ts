@@ -8,7 +8,7 @@
  * Payload encrypted via AES-256-GCM (encryptToken/decryptToken from token-crypto).
  */
 
-import { encryptToken, decryptToken } from '@/forest/publishing/token-crypto';
+import { encryptToken, decryptToken } from '@/tree/crypto/token-crypto';
 
 /** Minimal D1 binding interface */
 interface D1Binding {

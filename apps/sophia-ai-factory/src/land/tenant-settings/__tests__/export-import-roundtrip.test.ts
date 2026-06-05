@@ -19,7 +19,7 @@ import { createFakeD1 } from '../../../forest/publishing/__tests__/fake-d1-sqlit
 import type { D1Database } from '@cloudflare/workers-types';
 
 // Mock token-crypto so tests don't need OAUTH_TOKEN_ENC_KEY
-vi.mock('@/forest/publishing/token-crypto', () => ({
+vi.mock('@/tree/crypto/token-crypto', () => ({
   encryptToken: vi.fn(async (val: string) => `encrypted:${val}`),
   decryptToken: vi.fn(async (val: string) =>
     val.startsWith('encrypted:') ? val.slice(10) : val,

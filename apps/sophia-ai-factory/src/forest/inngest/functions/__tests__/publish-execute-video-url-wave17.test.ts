@@ -126,7 +126,7 @@ vi.mock('@/forest/publishing/oauth-token-refresher', () => ({
   refreshChannelToken: vi.fn(),
   refreshExpiringTokens: vi.fn(),
 }));
-vi.mock('@/forest/publishing/token-crypto', () => ({
+vi.mock('@/tree/crypto/token-crypto', () => ({
   decryptToken: mockDecryptToken,
 }));
 vi.mock('@/forest/inngest/client', () => ({

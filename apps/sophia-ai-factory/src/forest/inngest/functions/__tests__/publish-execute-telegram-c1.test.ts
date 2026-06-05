@@ -85,7 +85,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 }));
 // Stub unused imports that would require full env
 vi.mock('@/forest/publishing/oauth-token-refresher', () => ({ refreshChannelToken: vi.fn(), refreshExpiringTokens: vi.fn() }));
-vi.mock('@/forest/publishing/token-crypto', () => ({ decryptToken: vi.fn().mockResolvedValue('decrypted') }));
+vi.mock('@/tree/crypto/token-crypto', () => ({ decryptToken: vi.fn().mockResolvedValue('decrypted') }));
 vi.mock('@/forest/inngest/client', () => ({
   inngest: {
     createFunction: vi.fn(),
