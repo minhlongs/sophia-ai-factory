@@ -68,6 +68,7 @@ products/paid/*.zip
 .cleo/*
 !.cleo/.gitignore
 !.cleo/project-context.json
+.cleo/.git/
 *.log
 
 # OS

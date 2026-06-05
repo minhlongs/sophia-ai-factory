@@ -8,19 +8,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { CAMPAIGN_TEMPLATES, getTemplateById } from '@/land/templates/campaign-templates';
-
-
-interface GenerateScriptRequest {
-  templateId: string;
-  topic: string;
-  brandName?: string;
-  targetDuration?: number;
-  tone?: string;
-  language?: 'en' | 'vi';
-}
+import { TIER_RANK } from '@/seed/types';
 
 interface ScriptScene {
   id: number;
@@ -47,6 +39,22 @@ interface GeneratedScript {
 
 export const dynamic = 'force-dynamic';
 
+const categorySchema = z.enum(['welcome', 'product', 'seasonal', 'promotion', 'viral']);
+const optionalText = (maxLength: number) =>
+  z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+    z.string().trim().min(1).max(maxLength).optional(),
+  );
+
+const generateScriptSchema = z.object({
+  templateId: z.string().trim().min(1).max(100),
+  topic: z.string().trim().min(1).max(500),
+  brandName: optionalText(100),
+  targetDuration: z.number().int().min(10).max(300).optional().default(30),
+  tone: optionalText(80),
+  language: z.enum(['en', 'vi']).optional().default('vi'),
+});
+
 // GET — list available script templates
 export async function GET(req: NextRequest) {
   try {
@@ -68,19 +76,21 @@ export async function GET(req: NextRequest) {
     }));
 
     if (category && category !== 'all') {
+      const parsedCategory = categorySchema.safeParse(category);
+      if (!parsedCategory.success) {
+        return NextResponse.json({ error: 'Invalid category' }, { status: 400 });
+      }
       templates = templates.filter((t) => t.category === category);
     }
 
     return NextResponse.json({ templates });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch script templates' },
       { status: 500 },
     );
   }
 }
-
-const TIER_RANK: Record<string, number> = { BASIC: 0, PREMIUM: 1, ENTERPRISE: 2, MASTER: 3 };
 
 // POST — generate a script from template + inputs
 export async function POST(req: NextRequest) {
@@ -92,23 +102,29 @@ export async function POST(req: NextRequest) {
 
     const tier = await resolveUserTier(user.id);
 
-    // Script generation requires at least BASIC tier
-    if (!tier || TIER_RANK[tier] < TIER_RANK.BASIC) {
+    // All authenticated Sophia tiers can generate deterministic scripts.
+    if (TIER_RANK[tier] === undefined) {
       return NextResponse.json(
-        { error: 'Script generation requires an active subscription' },
+        { error: 'Script generation requires a valid tier' },
         { status: 403 },
       );
     }
 
-    const body = (await req.json()) as GenerateScriptRequest;
-    const { templateId, topic, brandName, targetDuration = 30, tone, language = 'vi' } = body;
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
+    }
 
-    if (!templateId || !topic) {
+    const parsed = generateScriptSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Missing required fields: templateId, topic' },
+        { error: 'Invalid script input', details: parsed.error.flatten().fieldErrors },
         { status: 400 },
       );
     }
+    const { templateId, topic, brandName, targetDuration, tone, language } = parsed.data;
 
     const template = getTemplateById(templateId);
     if (!template) {

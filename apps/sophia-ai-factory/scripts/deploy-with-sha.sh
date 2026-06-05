@@ -98,7 +98,7 @@ if [ "${ALLOW_UNPUSHED_DEPLOY:-0}" != "1" ]; then
     echo "Commit or stash first."
     exit 2
   fi
-  UNTRACKED=$(git -C "$REPO_ROOT" ls-files --others --exclude-standard)
+  UNTRACKED=$(git -C "$REPO_ROOT" ls-files --others --exclude-standard | grep -vE '^\.cleo(/)?$' || true)
   if [ -n "$UNTRACKED" ]; then
     echo "❌ Refusing to deploy: untracked files in working tree."
     echo "Affected files:"
