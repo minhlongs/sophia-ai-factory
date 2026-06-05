@@ -5,8 +5,8 @@ import { raasGate, shouldApplyRaasGate } from '@/forest/raas-gate'
 import { emitUsageEvent } from '@/forest/usage-metering'
 import { logger } from '@/seed/utils/logger-utility'
 import { verifyInternalSecret } from '@/seed/security/verify-internal-secret'
-import { track } from './lib/signals/track'
-import { D1Events } from './lib/signals/d1-event-types'
+import { track } from '@/forest/telemetry/track'
+import { D1Events } from '@/forest/telemetry/d1-event-types'
 import { tenantIsolationMiddleware } from '@/forest/middleware/tenant-isolation'
 
 // Returns a blocking response, or null to continue
