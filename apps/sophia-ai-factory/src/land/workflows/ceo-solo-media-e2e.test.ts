@@ -48,10 +48,10 @@ describe('CEO Solo Media — End-to-End Workflow Lifecycle', () => {
   it('runs through all 8 steps and completes', () => {
     const missions: StepMissionRow[] = [
       makeMission(1, 'market_research', 'queued', [], 1),
-      makeMission(2, 'audience_analysis', 'blocked', [1], 1),
-      makeMission(3, 'content_strategy', 'blocked', [1, 2]),
+      makeMission(2, 'audience_analysis', 'queued', [], 1),
+      makeMission(3, 'content_strategy', 'blocked', [1, 2], 2),
       makeMission(4, 'monetization_blueprint', 'blocked', [1, 2], 2),
-      makeMission(5, 'content_production', 'blocked', [3], 3),
+      makeMission(5, 'content_production', 'blocked', [3, 4], 3),
       makeMission(6, 'distribution_setup', 'blocked', [3, 4], 3),
       makeMission(7, 'analytics_dashboard', 'blocked', [5, 6]),
       makeMission(8, 'optimization_loop', 'blocked', [7]),
@@ -60,16 +60,12 @@ describe('CEO Solo Media — End-to-End Workflow Lifecycle', () => {
 
     const trace: Array<{ order: number; action: string }> = []
 
-    // Step 1: execute
+    // Phase 1: execute both independent queued steps
     let action = computeNext(wf, missions)
     expect(action.action).toBe('execute')
     trace.push({ order: 1, action: 'execute' })
     missions[0].status = 'completed'
 
-    // Step 2: unblock → execute
-    action = computeNext(wf, missions)
-    expect(action.action).toBe('unblock')
-    missions[1].status = 'queued'
     action = computeNext(wf, missions)
     expect(action.action).toBe('execute')
     trace.push({ order: 2, action: 'execute' })
@@ -89,18 +85,16 @@ describe('CEO Solo Media — End-to-End Workflow Lifecycle', () => {
     trace.push({ order: 3, action: 'execute' })
     missions[2].status = 'completed'
 
-    // After step 3: step 5 (blocked, deps [3]) unblocks before step 4 executes
-    action = computeNext(wf, missions)
-    expect(action.action).toBe('unblock')
-    missions[4].status = 'queued'
-
-    // Execute step 4 (lowest order queued: 4 < 5)
+    // Step 5 must wait for both phase-2 steps.
     action = computeNext(wf, missions)
     expect(action.action).toBe('execute')
     trace.push({ order: 4, action: 'execute' })
     missions[3].status = 'completed'
 
-    // After step 4: step 6 (blocked, deps [3,4]) unblocks
+    action = computeNext(wf, missions)
+    expect(action.action).toBe('unblock')
+    missions[4].status = 'queued'
+
     action = computeNext(wf, missions)
     expect(action.action).toBe('unblock')
     missions[5].status = 'queued'
@@ -169,19 +163,19 @@ describe('CEO Solo Media — End-to-End Workflow Lifecycle', () => {
     const pg3 = preset.steps.filter(s => s.parallelGroup === 3)
     const noPg = preset.steps.filter(s => s.parallelGroup === undefined)
     expect(pg1.length).toBe(2) // market_research (order 1) + audience_analysis (order 2)
-    expect(pg2.length).toBe(1) // monetization_blueprint (order 4)
+    expect(pg2.length).toBe(2) // content_strategy (order 3) + monetization_blueprint (order 4)
     expect(pg3.length).toBe(2) // content_production (order 5) + distribution_setup (order 6)
-    expect(noPg.length).toBe(3) // content_strategy (3), analytics_dashboard (7), optimization_loop (8)
+    expect(noPg.length).toBe(2) // analytics_dashboard (7), optimization_loop (8)
   })
 
   it('has correct depends_on chains', () => {
     const preset = WORKFLOW_PRESETS['ceo-solo-media']
     const stepMap = Object.fromEntries(preset.steps.map(s => [s.order, s]))
     expect(stepMap[1].dependsOn).toBeUndefined()
-    expect(stepMap[2].dependsOn).toEqual([1])
+    expect(stepMap[2].dependsOn).toBeUndefined()
     expect(stepMap[3].dependsOn).toEqual([1, 2])
     expect(stepMap[4].dependsOn).toEqual([1, 2])
-    expect(stepMap[5].dependsOn).toEqual([3])
+    expect(stepMap[5].dependsOn).toEqual([3, 4])
     expect(stepMap[6].dependsOn).toEqual([3, 4])
     expect(stepMap[7].dependsOn).toEqual([5, 6])
     expect(stepMap[8].dependsOn).toEqual([7])

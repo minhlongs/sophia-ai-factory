@@ -65,6 +65,9 @@ htmlcov/
 products/paid/*.zip
 !products/paid/README.md
 .archive/
+.cleo/*
+!.cleo/.gitignore
+!.cleo/project-context.json
 *.log
 
 # OS

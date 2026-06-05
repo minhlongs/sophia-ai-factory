@@ -88,7 +88,10 @@ export async function createWorkflow(
 
   const missionInserts = steps.map((step, i) => {
     const missionId = stepIds[i]
-    const status = step.order === 1 ? 'queued' : 'blocked'
+    const hasDependencies = (step.dependsOn?.length ?? 0) > 0
+    const status = preset?.mode === 'parallel'
+      ? (hasDependencies ? 'blocked' : 'queued')
+      : (step.order === 1 ? 'queued' : 'blocked')
     const title = step.label
       ? `${step.label.en}`
       : `Step ${step.order}: ${step.type}`
@@ -133,7 +136,9 @@ export async function createWorkflow(
       id: stepIds[i],
       org_id: orgId,
       parent_mission_id: workflowId,
-      status: step.order === 1 ? 'queued' : 'blocked',
+      status: preset?.mode === 'parallel'
+        ? ((step.dependsOn?.length ?? 0) > 0 ? 'blocked' : 'queued')
+        : (step.order === 1 ? 'queued' : 'blocked'),
       params: JSON.stringify({
         step_order: step.order,
         step_type: step.type,

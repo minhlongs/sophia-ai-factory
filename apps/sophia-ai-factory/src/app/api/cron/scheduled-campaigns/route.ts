@@ -46,7 +46,7 @@ interface ScheduledCampaignRow {
   template_script: string | null;
   interval_days: number | null;
   next_run_date: string;
-  is_active: boolean;
+  is_active: number;
 }
 
 export async function GET(req: NextRequest) {
@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
     const { data: schedules, error: fetchError } = await db
       .from('scheduled_campaigns')
       .select('*')
-      .eq('is_active', true)
+      .eq('is_active', 1)
       .lte('next_run_date', today);
 
     if (fetchError) {
@@ -98,9 +98,17 @@ export async function GET(req: NextRequest) {
         const { error: insertError } = await db.from('campaigns').insert({
           user_id: schedule.user_id,
           title: `${schedule.topic} — ${today}`,
-          script: schedule.template_script ?? '',
+          topic: schedule.topic,
+          audience: null,
+          script_content: {
+            source: 'scheduled_campaign',
+            schedule_id: schedule.id,
+            script: schedule.template_script ?? '',
+          },
           status: 'queued',
+          progress: 0,
           created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         });
 
         if (insertError) {
@@ -120,6 +128,7 @@ export async function GET(req: NextRequest) {
           .update({
             next_run_date: nextDate.toISOString().split('T')[0],
             last_run_date: today,
+            updated_at: new Date().toISOString(),
           })
           .eq('id', schedule.id);
 

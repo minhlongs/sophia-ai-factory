@@ -91,7 +91,6 @@ export const WORKFLOW_PRESETS: Record<string, WorkflowPreset> = {
         type: 'audience_analysis',
         command: 'solo.analyst.audience',
         parallelGroup: 1,
-        dependsOn: [1],
         label: {
           en: 'Audience Segmentation & Persona Building',
           vi: 'Phân khúc khán giả & xây dựng persona',
@@ -102,6 +101,7 @@ export const WORKFLOW_PRESETS: Record<string, WorkflowPreset> = {
         order: 3,
         type: 'content_strategy',
         command: 'solo.marketer.content_strategy',
+        parallelGroup: 2,
         dependsOn: [1, 2],
         label: {
           en: 'Content Strategy & Pillar Planning',
@@ -124,7 +124,7 @@ export const WORKFLOW_PRESETS: Record<string, WorkflowPreset> = {
         order: 5,
         type: 'content_production',
         command: 'solo.marketer.production',
-        dependsOn: [3],
+        dependsOn: [3, 4],
         parallelGroup: 3,
         label: {
           en: 'Content Production Pipeline',
