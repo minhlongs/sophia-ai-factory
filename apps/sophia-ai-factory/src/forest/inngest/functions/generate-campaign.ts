@@ -5,6 +5,7 @@ import { ServiceFactory } from '@/land/services/factory'
 import { MissingCredentialsError, ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/land/services/errors'
 import { startVideoGeneration } from '@/seed/ai/video-generator'
 import { getD1Client } from '@/seed/db/client'
+import { Tier } from '@/seed/types'
 import { OpenClawGateway } from '@/tree/gateway/openclaw-gateway'
 import { SmartResumeEngine } from '@/tree/gateway/smart-resume-engine'
 import { YouTubeChannelAdapter } from '@/tree/gateway/adapters/youtube-channel-adapter'
@@ -46,17 +47,26 @@ interface AffiliateOfferSelectedRow {
 export const generateCampaign = inngest.createFunction(
   { id: 'generate-campaign', retries: 3 },
   { event: 'campaign.created' },
-  async ({ event, step }) => {
-    const { campaignId, userId, topic, audience, tier, resume, resumeFrom } = event.data
+   async ({ event, step }) => {
+  const eventData = event.data as unknown as {
+    campaignId: string
+    userId: string
+    topic: string
+    audience: string
+    tier: Tier
+    resume?: boolean
+    resumeFrom?: string
+  }
+  const { campaignId, userId, topic, audience, tier, resume, resumeFrom } = eventData
 
-  // ── Idempotency guard: skip if campaign already processing or completed ────
+ // ── Idempotency guard: skip if campaign already processing or completed ────
   if (!resume) {
     const idempotencyDb = await getD1Client();
-    const { data: existingCampaign } = await idempotencyDb
-      .from('campaigns')
-      .select('id, status')
-      .eq('id', campaignId)
-      .single();
+ const { data: existingCampaign } = await idempotencyDb
+  .from('campaigns')
+  .select('id, status')
+  .eq('id', campaignId as string)
+  .single() as { data: { id: string; status: string } | null };
     if (existingCampaign && ['processing_script', 'processing_video', 'completed'].includes(existingCampaign.status)) {
       logger.info('[generateCampaign] Campaign already processed — skipping', { campaignId, status: existingCampaign.status });
       return { skipped: true, campaignId };
@@ -95,7 +105,7 @@ export const generateCampaign = inngest.createFunction(
     const script = await step.run('generate-script', async () => {
       if (resume && (resumeFrom === 'tts' || resumeFrom === 'video' || resumeFrom === 'finalize')) {
         const db = await getD1Client()
-        const { data: campaign } = await db.from('campaigns').select('script_content').eq('id', campaignId).single()
+        const { data: campaign } = await db.from('campaigns').select('script_content').eq('id', campaignId as string).single()
         const typedCampaign = campaign as { script_content: Record<string, unknown> | null } | null
         if (!typedCampaign?.script_content) throw new Error('Cannot resume: script content not found')
         return typedCampaign.script_content
@@ -131,7 +141,7 @@ export const generateCampaign = inngest.createFunction(
     await step.run('generate-voiceover', async () => {
       if (resume && (resumeFrom === 'video' || resumeFrom === 'finalize')) {
         const db = await getD1Client()
-        const { data: campaign } = await db.from('campaigns').select('audio_url').eq('id', campaignId).single()
+        const { data: campaign } = await db.from('campaigns').select('audio_url').eq('id', campaignId as string).single()
         const typedCampaign = campaign as { audio_url: string | null } | null
         if (!typedCampaign?.audio_url) throw new Error('Cannot resume: audio URL not found')
         return typedCampaign.audio_url
@@ -189,7 +199,7 @@ export const generateCampaign = inngest.createFunction(
     const videoAssets = await step.run('poll-video-status', async () => {
       if (resume && resumeFrom === 'finalize') {
         const db = await getD1Client()
-        const { data: campaign } = await db.from('campaigns').select('video_url, thumbnail_url').eq('id', campaignId).single()
+        const { data: campaign } = await db.from('campaigns').select('video_url, thumbnail_url').eq('id', campaignId as string).single()
         const typedCampaign = campaign as { video_url: string | null; thumbnail_url: string | null } | null
         if (!typedCampaign?.video_url) throw new Error('Cannot resume: video URL not found')
         return { video_url: typedCampaign.video_url, thumbnail_url: typedCampaign.thumbnail_url || '' }
