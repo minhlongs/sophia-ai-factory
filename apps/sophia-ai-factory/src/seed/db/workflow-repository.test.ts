@@ -402,8 +402,8 @@ describe('WORKFLOW_PRESETS registry', () => {
     }
     // Group 1: steps 1 and 2 (market research + audience analysis)
     expect(groupMap.get(1)).toHaveLength(2)
-    // Group 2: step 4 only (monetization)
-    expect(groupMap.get(2)).toHaveLength(1)
+    // Group 2: steps 3 and 4 (strategy + monetization)
+    expect(groupMap.get(2)).toHaveLength(2)
     // Group 3: steps 5 and 6 (production + distribution)
     expect(groupMap.get(3)).toHaveLength(2)
   })
