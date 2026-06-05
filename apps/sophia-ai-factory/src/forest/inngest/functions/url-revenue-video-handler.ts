@@ -57,6 +57,7 @@ export const urlRevenueVideoHandler = inngest.createFunction(
 
     // Emit video.requested to chain into existing videoScripting function
     await step.sendEvent('emit-video-requested', {
+      id: `video-req-${videoJobId}`,
       name: 'video.requested',
       data: { jobId: videoJobId, tenantId, userId: tenantId },
     });

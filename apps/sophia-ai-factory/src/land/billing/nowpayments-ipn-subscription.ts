@@ -221,6 +221,19 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
     logger.warn('[NOWPayments] Auto-handover failed (non-fatal)', { userId, error: String(err) })
   }
 
+  // Invalidate license KV cache so next quota check reads fresh tier data
+  try {
+    const d1 = await getD1Raw()
+    const lic = await d1
+      .prepare('SELECT nonce FROM raas_licenses WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 1')
+      .bind(userId)
+      .first<{ nonce: string }>()
+    if (lic?.nonce) {
+      const kv = globalThis.KV_KV as KVNamespace | undefined
+      await kv?.delete(`license:${lic.nonce}`).catch(() => { /* fail-open */ })
+    }
+  } catch { /* non-fatal */ }
+
   // Receipt email (non-fatal)
   try {
     const { data: userRow } = await db.from('user').select('email,name').eq('id', userId).single()

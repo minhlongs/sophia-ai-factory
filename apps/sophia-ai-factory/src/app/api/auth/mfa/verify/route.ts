@@ -14,7 +14,7 @@ import {
   hashBackupCodesToJson,
 } from '@/seed/auth/mfa/totp-service';
 import { createServerClient } from '@/seed/db/client';
-import { decryptToken } from '@/forest/publishing/token-crypto';
+import { decryptToken } from '@/tree/crypto/token-crypto';
 
 export const dynamic = 'force-dynamic';
 

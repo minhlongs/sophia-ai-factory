@@ -49,6 +49,7 @@ export const batchVideoFanout = inngest.createFunction(
           await updateBatchVideoStatus(bv.id, 'generating');
 
           events.push({
+            id: `video-gen-${batchId}-${bv.row_index}`,
             name: 'video/generate.requested' as const,
             data: {
               missionId: `batch-${batchId}-${bv.row_index}`,

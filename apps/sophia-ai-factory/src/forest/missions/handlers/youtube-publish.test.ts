@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }))
-vi.mock('@/forest/publishing/token-crypto', () => ({
+vi.mock('@/tree/crypto/token-crypto', () => ({
   decryptToken: vi.fn(),
 }))
 vi.mock('@/forest/publishing/oauth-token-refresher', () => ({
@@ -29,7 +29,7 @@ vi.mock('@/forest/publishing/youtube-publisher', () => ({
 }))
 
 import { createServerClient } from '@/seed/db/client'
-import { decryptToken } from '@/forest/publishing/token-crypto'
+import { decryptToken } from '@/tree/crypto/token-crypto'
 import { refreshChannelToken } from '@/forest/publishing/oauth-token-refresher'
 import { handle } from './youtube-publish'
 

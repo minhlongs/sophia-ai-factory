@@ -35,7 +35,7 @@ function makeDb() {
 const TENANT = 'tenant-mcp-test';
 
 // Mock token-crypto to avoid needing OAUTH_TOKEN_ENC_KEY in tests
-vi.mock('@/forest/publishing/token-crypto', () => ({
+vi.mock('@/tree/crypto/token-crypto', () => ({
   encryptToken: vi.fn(async (val: string) => `encrypted:${val}`),
   decryptToken: vi.fn(async (val: string) =>
     val.startsWith('encrypted:') ? val.slice(10) : val,

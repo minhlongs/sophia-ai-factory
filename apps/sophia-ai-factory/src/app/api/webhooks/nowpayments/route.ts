@@ -26,13 +26,43 @@ function getD1ForWebhooks(): D1Database | null {
 
 const NOWPAYMENTS_IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET
 
+const MAX_BODY_BYTES = 64 * 1024 // 64KB limit — prevent memory exhaustion
+
 export async function POST(request: NextRequest) {
   if (!NOWPAYMENTS_IPN_SECRET) {
     logger.error('[NOWPayments Webhook] NOWPAYMENTS_IPN_SECRET not configured')
     return NextResponse.json({ error: 'Configuration error' }, { status: 500 })
   }
 
-  const rawBody = await request.text()
+  // Read body with size limit (reject oversized payloads with 413)
+  let rawBody = ''
+  try {
+    const reader = request.body?.getReader()
+    if (reader) {
+      const chunks: Uint8Array[] = []
+      let totalSize = 0
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        totalSize += value.byteLength
+        if (totalSize > MAX_BODY_BYTES) {
+          logger.warn('[NOWPayments Webhook] Payload too large', { size: totalSize })
+          return NextResponse.json({ error: 'Payload too large (max 64KB)' }, { status: 413 })
+        }
+        chunks.push(value)
+      }
+      rawBody = new TextDecoder().decode(
+        chunks.reduce((acc, chunk) => {
+          const merged = new Uint8Array(acc.byteLength + chunk.byteLength)
+          merged.set(acc, 0)
+          merged.set(chunk, acc.byteLength)
+          return merged
+        }, new Uint8Array(0)),
+      )
+    }
+  } catch {
+    return NextResponse.json({ error: 'Failed to read request body' }, { status: 400 })
+  }
 
   // Verify IPN signature from x-nowpayments-sig header
   const signature = request.headers.get('x-nowpayments-sig')

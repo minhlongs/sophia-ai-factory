@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getD1Client, getD1Raw } from '@/seed/db/client';
-import { encryptToken } from '@/forest/publishing/token-crypto';
+import { encryptToken } from '@/tree/crypto/token-crypto';
 import { exchangeCodeForTokens, getAccountInfo } from '@/forest/publishing/mastodon-oauth-client';
 import { consumeOauthState } from '@/seed/auth/oauth-state-store';
 import { logger } from '@/seed/utils/logger-utility';

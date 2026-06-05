@@ -165,7 +165,7 @@ describe('checkJwtNonce', () => {
     expect(result.reason).toBe('already-used')
   })
 
-  it('should fail open on database error', async () => {
+  it('should fail closed on database error', async () => {
     // Reset KV_KV to undefined rather than deleting (property may be non-configurable from setup)
     ;(globalThis as Record<string, unknown>).KV_KV = undefined
 
@@ -181,7 +181,8 @@ describe('checkJwtNonce', () => {
 
     const result = await checkJwtNonce('error-nonce')
 
-    expect(result.valid).toBe(true) // Fail open
+    expect(result.valid).toBe(false)
+    expect(result.reason).toBe('invalid') // Fail closed
   })
 })
 

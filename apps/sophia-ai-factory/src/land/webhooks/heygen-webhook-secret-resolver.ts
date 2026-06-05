@@ -15,7 +15,7 @@
 
 import { logger } from '@/seed/utils/logger-utility'
 import { createServerClient } from '@/seed/db/client'
-import { getUserCredential } from '@/tree/credentials/user-credentials-repo'
+import { ByokKeyRotatedError, getUserCredential } from '@/tree/credentials/user-credentials-repo'
 
 interface VideoOwnerRow {
   user_id: string

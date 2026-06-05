@@ -76,7 +76,7 @@ function makeFakeD1() {
 }
 
 // Stub encryptToken / decryptToken so tests don't need OAUTH_TOKEN_ENC_KEY
-vi.mock('@/forest/publishing/token-crypto', () => ({
+vi.mock('@/tree/crypto/token-crypto', () => ({
   encryptToken: (plaintext: string) => Promise.resolve(`enc::${plaintext}`),
   decryptToken: (cipher: string) => Promise.resolve(cipher.replace(/^enc::/, '')),
 }));

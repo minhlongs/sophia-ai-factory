@@ -22,7 +22,7 @@ import {
   validateRegisterInput,
   RegisterChannelError,
 } from '@/land/publish/register-publishing-channel';
-import { decryptToken } from '@/forest/publishing/token-crypto';
+import { decryptToken } from '@/tree/crypto/token-crypto';
 
 describe('validateRegisterInput', () => {
   it('rejects unsupported provider', () => {

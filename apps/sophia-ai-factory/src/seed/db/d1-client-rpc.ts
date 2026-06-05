@@ -90,30 +90,79 @@ export class D1Client {
     return { data: { success: true }, error: null };
   }
 
-  private async creditMcuBalance(orgId: string, amount: number, subscriptionId: string): Promise<QueryResult<unknown>> {
-    await this.db.batch([
-      this.db.prepare(
-        'INSERT INTO org_balances (org_id, balance, updated_at) VALUES (?, ?, datetime(\'now\')) ON CONFLICT(org_id) DO UPDATE SET balance = balance + ?, updated_at = datetime(\'now\')'
-      ).bind(orgId, amount, amount),
-      this.db.prepare('INSERT INTO transactions (org_id, amount, type, description) VALUES (?, ?, ?, ?)').bind(orgId, amount, 'credit', subscriptionId),
-    ]);
+  private async creditMcuBalance(
+    orgId: string,
+    amount: number,
+    subscriptionId: string,
+  ): Promise<QueryResult<unknown>> {
+    try {
+      const batchResults = await this.db.batch([
+        this.db
+          .prepare(
+            "INSERT INTO org_balances (org_id, balance, updated_at) VALUES (?, ?, datetime('now')) ON CONFLICT(org_id) DO UPDATE SET balance = balance + ?, updated_at = datetime('now')",
+          )
+          .bind(orgId, amount, amount),
+        this.db
+          .prepare(
+            'INSERT INTO transactions (org_id, amount, type, description) VALUES (?, ?, ?, ?)',
+          )
+          .bind(orgId, amount, 'credit', subscriptionId),
+      ]);
 
-    return { data: { success: true }, error: null };
+      if (!batchResults || batchResults.length !== 2) {
+        return {
+          data: null,
+          error: { message: `Unexpected batch result length: ${batchResults?.length ?? 'undefined'}` },
+        };
+      }
+
+ // Check per-result errors first — D1 batch() resolves even if individual statements fail
+ for (let i = 0; i < batchResults.length; i++) {
+  const result = batchResults[i];
+  if ((result as unknown as { error?: { message: string } }).error) {
+return {
+    data: null,
+    error: { message: `Batch statement ${i} failed: ${(result as unknown as { error: { message: string } }).error.message}` },
+  };
+  }
+ }
+
+      const rowsAffected = batchResults.reduce(
+        (sum, result) => sum + (result.meta?.rows_written ?? 0),
+        0,
+      );
+      if (rowsAffected !== 2) {
+        return {
+          data: null,
+          error: { message: `Expected 2 rows affected, got ${rowsAffected}` },
+        };
+      }
+
+      return { data: { success: true }, error: null };
+    } catch (err) {
+      return { data: null, error: { message: toError(err).message } };
+    }
   }
 
   private async incrementReferralCounter(code: string): Promise<QueryResult<unknown>> {
-    await this.db
+    const updateResult = await this.db
       .prepare('UPDATE referral_codes SET uses = uses + 1 WHERE code = ?')
       .bind(code)
       .run();
+    if (!updateResult.meta.rows_written || updateResult.meta.rows_written === 0) {
+      return { data: null, error: { message: `Referral code not found: ${code}` } };
+    }
     return { data: { success: true }, error: null };
   }
 
   private async incrementLlmCacheHit(hash: string, orgId: string): Promise<QueryResult<unknown>> {
-    await this.db
+    const updateResult = await this.db
       .prepare('UPDATE llm_cache SET hit_count = hit_count + 1 WHERE hash = ? AND org_id = ?')
       .bind(hash, orgId)
       .run();
+    if (!updateResult.meta.rows_written || updateResult.meta.rows_written === 0) {
+      return { data: null, error: { message: 'LLM cache entry not found' } };
+    }
     return { data: { success: true }, error: null };
   }
 

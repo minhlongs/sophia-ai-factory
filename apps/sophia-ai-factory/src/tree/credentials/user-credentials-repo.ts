@@ -13,6 +13,14 @@
 import { getD1Raw } from '@/seed/db/client'
 import { encryptValue, decryptValue } from '@/tree/credentials/encryption'
 
+// M11: error thrown when stored credential cannot be decrypted (key rotated)
+export class ByokKeyRotatedError extends Error {
+ constructor(public readonly provider: string) {
+   super(`BYOK_KEY_ROTATED: credential for '${provider}' cannot be decrypted — the encryption key was rotated while this credential was stored. Re-enter your key in Settings > Integrations.`)
+   this.name = 'ByokKeyRotatedError'
+ }
+}
+
 export type ProviderType = 'heygen' | 'heygen_webhook_secret' | 'resend' | 'nowpayments' | 'local_llm' | 'kling' | 'assemblyai' | 'openai' | 'openrouter'
 
 export interface CredentialSummary {
@@ -52,7 +60,9 @@ export async function getUserCredential(
   let d1: D1Database
   try {
     d1 = await getD1Raw()
-  } catch {
+  } catch (err) {
+    // M11: distinguish decryption failure (key rotated) from row-not-found
+    if (err instanceof ByokKeyRotatedError) throw err
     return null
   }
 
@@ -81,7 +91,9 @@ export async function getUserCredential(
       .catch(() => { /* non-fatal */ })
 
     return plaintext
-  } catch {
+  } catch (err) {
+    // M11: distinguish decryption failure (key rotated) from row-not-found
+    if (err instanceof ByokKeyRotatedError) throw err
     return null
   }
 }

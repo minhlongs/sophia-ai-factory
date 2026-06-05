@@ -5,7 +5,7 @@
  * @module lib/affiliates/credentials
  */
 
-import { encryptToken, decryptToken } from '@/forest/publishing/token-crypto';
+import { encryptToken, decryptToken } from '@/tree/crypto/token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 
 /** All supported affiliate/exchange networks */
