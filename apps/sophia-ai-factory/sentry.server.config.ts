@@ -3,7 +3,7 @@
  * Centralized options in lib/observability/sentry-options.ts.
  */
 import * as Sentry from '@sentry/nextjs';
-import { buildServerOptions } from '@/lib/observability/sentry-options';
+import { buildServerOptions } from '@/land/observability/sentry-options';
 
 Sentry.init({
   ...buildServerOptions(),

@@ -15,7 +15,7 @@ import {
   deleteNamespace,
 } from '../registry';
 import type { SettingsNamespace } from '../types';
-import { createFakeD1 } from '../../../lib/publishing/__tests__/fake-d1-sqlite';
+import { createFakeD1 } from '../../../forest/publishing/__tests__/fake-d1-sqlite';
 import type { D1Database } from '@cloudflare/workers-types';
 
 // Mock token-crypto so tests don't need OAUTH_TOKEN_ENC_KEY
