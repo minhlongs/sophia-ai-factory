@@ -3,8 +3,8 @@ import { getHeyGenKey } from '@/tree/credentials/get-provider-key';
 import { createHeyGenVideo } from '@/land/video/heygen-helpers';
 import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from './types';
-import { getOrDefault } from '@/land/tenant-settings/registry';
-import type { StorageSettings } from '@/land/tenant-settings/defaults';
+import { getOrDefault } from '@/seed/tenant-settings/registry';
+import type { StorageSettings } from '@/seed/tenant-settings/defaults';
 import { openclaw } from '@/land/openclaw';
 
 export async function handle(ctx: MissionContext): Promise<MissionHandlerResult> {

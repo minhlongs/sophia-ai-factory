@@ -23,7 +23,8 @@ vi.mock('@/seed/auth/resolve-org-id', () => ({
   resolveOrgId: vi.fn(async () => MOCK_ORG_ID),
 }));
 
-vi.mock('@/seed/db/get-user-tier', () => ({
+vi.mock('@/seed/db/resolve-user-tier', () => ({
+  resolveUserTier: vi.fn(async () => 'BASIC'),
   getUserTier: vi.fn(async () => 'BASIC'),
 }));
 

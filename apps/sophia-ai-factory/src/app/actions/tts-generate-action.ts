@@ -14,7 +14,7 @@
 
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { generateElevenLabsVoiceover } from '@/seed/ai/elevenlabs-api-client';
 import { getUserApiKey } from '@/tree/byok/user-api-key-store';
 import { logger } from '@/seed/utils/logger-utility';
@@ -74,7 +74,7 @@ export async function generateTtsAction(
   const { text, voiceId: voiceName } = parsed.data;
 
   // Step 3: Tier gate (BASIC and PREMIUM have restricted voices)
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   const allowedVoices = TIER_ALLOWED_VOICES[tier];
   if (allowedVoices && allowedVoices.length > 0 && !allowedVoices.includes(voiceName)) {
     return {

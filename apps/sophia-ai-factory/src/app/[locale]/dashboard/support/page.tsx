@@ -1,7 +1,7 @@
 import React from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
-import { getUserTier } from "@/seed/db/get-user-tier";
+import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import { Tier } from "@/seed/types";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/seed/components/ui/card";
@@ -52,7 +52,7 @@ export default async function SupportPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const userTier: Tier = await getUserTier(user.id);
+  const userTier: Tier = await resolveUserTier(user.id);
 
   return (
     <div className="space-y-8">

@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserOrOpenclawBearer } from '@/seed/auth/openclaw-token';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { checkMissionQuota } from '@/forest/quota/mission-quota';
 import { runAutoVideoMission, AutoVideoMissionError } from '@/land/missions/auto-video-mission';
 
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   // Tier quota gate (defense-in-depth) — counts engine_missions this month.
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   const quota = await checkMissionQuota(user.id, tier, 'engine_missions');
   if (!quota.allowed) {
     return NextResponse.json(

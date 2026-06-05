@@ -15,7 +15,7 @@ import {
   parseAnthropicSse,
   type AnthropicStreamEvent,
 } from './anthropic-sse-parser'
-import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/land/services/errors'
+import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/seed/services/errors'
 
 export type { AnthropicStreamEvent } from './anthropic-sse-parser'
 

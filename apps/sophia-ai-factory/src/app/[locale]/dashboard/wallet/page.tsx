@@ -6,7 +6,7 @@
  */
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getD1Raw } from '@/seed/db/client';
 import { TierGateCard } from '@/seed/components/ui/tier-gate-card';
 import { getTranslations } from 'next-intl/server';
@@ -94,7 +94,7 @@ export default async function WalletPage() {
   if (!user) redirect('/login');
 
   const t = await getTranslations('dashboard.wallet');
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
 
   // Wallet (affiliate earnings/payouts) requires MASTER tier
   if (tier !== 'MASTER') {

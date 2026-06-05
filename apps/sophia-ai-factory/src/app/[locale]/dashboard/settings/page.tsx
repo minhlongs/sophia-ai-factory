@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { getUserProfile } from '@/app/actions/settings';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { ReferralShareWidget } from '@/forest/components/dashboard/referral-share-widget';
 import { PlanUpgradeWidget } from '@/forest/components/dashboard/plan-upgrade-widget';
 import { getSubscriptionPeriodEnd } from '@/land/billing/subscription-expiry';
@@ -24,7 +24,7 @@ export default async function SettingsPage() {
   const [profile, user] = await Promise.all([getUserProfile(), getCurrentUser()]);
   if (!user) redirect('/login');
 
-  const currentTier = user ? await getUserTier(user.id) : 'BASIC';
+  const currentTier = user ? await resolveUserTier(user.id) : 'BASIC';
   const [periodEnd, completedOrderCount] = user
     ? await Promise.all([
         getSubscriptionPeriodEnd(user.id).catch(() => null),

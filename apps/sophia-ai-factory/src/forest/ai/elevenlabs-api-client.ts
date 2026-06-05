@@ -8,8 +8,7 @@
 import { logger } from '@/seed/utils/logger-utility';
 import { Tier } from '@/seed/types';
 import { withTimeout } from '@/tree/byok/with-timeout';
-import { uploadAudioToR2 } from '@/land/r2/audio-upload';
-import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/land/services/errors';
+import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/seed/services/errors';
 
 /** Get default voice ID based on tier (ElevenLabs pre-made voice IDs) */
 export function getDefaultVoiceId(tier: Tier): string {
@@ -36,6 +35,7 @@ export async function uploadAudioToStorage(
   const userId = opts?.userId ?? 'unknown';
   const videoId = opts?.videoId ?? 'unknown';
   const key = `audio/${userId}/${videoId}/${crypto.randomUUID()}.mp3`;
+  const { uploadAudioToR2 } = await import('@/land/r2/audio-upload');
   return uploadAudioToR2(audioData.buffer as ArrayBuffer, 'audio/mpeg', key);
 }
 

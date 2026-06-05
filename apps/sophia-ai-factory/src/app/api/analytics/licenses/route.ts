@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { fetchLicenseMetrics } from '@/land/analytics/queries';
 import { checkAdmin, verifyLicenseAccess, getUserLicenseNonce } from '@/land/analytics/rbac';
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
 
     // Step 3: RBAC - Determine access level
     const isAdmin = await checkAdmin(user.id);
-    const userTier = await getUserTier(user.id);
+    const userTier = await resolveUserTier(user.id);
 
     logger.info('[Analytics Licenses] Querying license metrics', {
       userId: user.id,

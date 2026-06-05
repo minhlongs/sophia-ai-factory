@@ -11,7 +11,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import {
   listTemplatesForTier,
   type TemplatePreset,
@@ -48,7 +48,7 @@ export default async function TemplatesPage(props: {
     redirect('/login');
   }
 
-  const tierRaw = await getUserTier(user.id);
+  const tierRaw = await resolveUserTier(user.id);
   const tier = (typeof tierRaw === 'string' ? tierRaw.toUpperCase() : 'BASIC') as
     | 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER';
 

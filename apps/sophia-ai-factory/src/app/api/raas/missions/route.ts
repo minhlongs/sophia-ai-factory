@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { createServerClient } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveOrgId } from '@/seed/auth/resolve-org-id';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { checkMissionQuota } from '@/forest/quota/mission-quota';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
 
     // Tier quota gate (defense-in-depth) — prevents endless mission creation
     // by lower tiers exhausting platform compute.
-    const tier = await getUserTier(user.id);
+    const tier = await resolveUserTier(user.id);
     const quota = await checkMissionQuota(orgId, tier, 'missions');
     if (!quota.allowed) {
       return NextResponse.json(

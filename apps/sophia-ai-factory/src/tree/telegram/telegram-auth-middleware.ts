@@ -1,4 +1,4 @@
-import { getUserTier } from '@/seed/db/get-user-tier'
+import { resolveUserTier } from '@/seed/db/resolve-user-tier'
 import { createServerClient } from '@/seed/db/client'
 import { Tier } from '@/seed/types'
 import { logger } from '@/seed/utils/logger-utility'
@@ -56,7 +56,7 @@ export async function checkSubscriptionAuth(
       }
     }
 
-    const tier = await getUserTier(userId)
+    const tier = await resolveUserTier(userId)
     const hasAccess = TIER_RANK[tier] >= TIER_RANK[requiredTier]
 
     return {

@@ -2,9 +2,9 @@ import { Tier } from "@/seed/types";
 import { getErrorMessage } from '@/seed/utils/to-error';
 import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/forest/usage-metering';
 import { getUsageContext } from '@/forest/usage-metering/context';
-import { callWithCache } from '@/land/llm/cache/call-with-cache';
+import { callWithCache } from '@/forest/llm/cache/call-with-cache';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
-import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/land/services/errors';
+import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/seed/services/errors';
 import {
   generateMockScript,
   buildScriptUserPrompt,

@@ -19,14 +19,14 @@ const {
   mockInngestSend,
   mockReserveVideoSlot,
   mockReleaseVideoSlot,
-  mockGetUserTier,
+  mockResolveUserTier,
 } = vi.hoisted(() => ({
   mockGetCurrentUser: vi.fn(),
   mockDbFrom: vi.fn(),
   mockInngestSend: vi.fn(),
   mockReserveVideoSlot: vi.fn(),
   mockReleaseVideoSlot: vi.fn(),
-  mockGetUserTier: vi.fn(),
+  mockResolveUserTier: vi.fn(),
 }));
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
@@ -35,8 +35,8 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: mockGetCurrentUser,
 }));
 
-vi.mock('@/seed/db/get-user-tier', () => ({
-  getUserTier: mockGetUserTier,
+vi.mock('@/seed/db/resolve-user-tier', () => ({
+  resolveUserTier: mockResolveUserTier,
 }));
 
 vi.mock('@/forest/quota/video-quota', () => ({
@@ -100,7 +100,7 @@ describe('POST /api/v1/missions/[id]/generate-video', () => {
       error: null,
     });
 
-    mockGetUserTier.mockResolvedValue('MASTER');
+    mockResolveUserTier.mockResolvedValue('MASTER');
     mockReserveVideoSlot.mockResolvedValue({
       reserved: true,
       used: 1,

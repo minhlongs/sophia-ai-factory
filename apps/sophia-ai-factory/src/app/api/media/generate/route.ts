@@ -16,7 +16,7 @@ import {
 } from '@/tree/clients/muapi-media-client'
 import { toError } from '@/seed/utils/to-error'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
-import { getUserTier } from '@/seed/db/get-user-tier'
+import { resolveUserTier } from '@/seed/db/resolve-user-tier'
 
 const generateSchema = z.object({
   type: z.enum(['image', 'video', 'audio']),
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const tier = await getUserTier(user.id)
+  const tier = await resolveUserTier(user.id)
   // FREE (BASIC) users cannot access paid media generation
   if (tier === 'BASIC') {
     return NextResponse.json(

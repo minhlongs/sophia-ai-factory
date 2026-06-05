@@ -8,7 +8,6 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
-import { dispatchMission } from '@/forest/missions/dispatcher';
 import { getInstallation } from '../sop-repo-installations';
 import { getTemplateById } from '../sop-repo-templates';
 import { createRun, updateRunStatus, appendMissionId } from '../sop-repo-runs';
@@ -71,6 +70,7 @@ async function dispatchStep(
     .bind(missionId, userId, command, JSON.stringify(args), nowSec())
     .run();
 
+  const { dispatchMission } = await import('@/forest/missions/dispatcher');
   void dispatchMission(missionId).catch(e => {
     logger.error('[sop-runner] dispatch error', e instanceof Error ? e : new Error(String(e)), { missionId, command });
   });

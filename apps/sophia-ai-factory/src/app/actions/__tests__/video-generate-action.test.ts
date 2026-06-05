@@ -27,8 +27,8 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/seed/db/get-user-tier', () => ({
-  getUserTier: vi.fn().mockResolvedValue('MASTER'),
+vi.mock('@/seed/db/resolve-user-tier', () => ({
+  resolveUserTier: vi.fn().mockResolvedValue('MASTER'),
 }));
 
 vi.mock('@/forest/quota/video-quota', () => ({

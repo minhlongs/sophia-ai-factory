@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getTranslations } from 'next-intl/server';
 
 function getD1(): D1Database | null {
@@ -19,7 +19,7 @@ export async function createSopAction(formData: FormData): Promise<{ error?: str
   const user = await getCurrentUser();
   if (!user) return { error: t('unauthorized') };
 
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   if (tier !== 'MASTER') return { error: t('masterRequired') };
 
   const db = getD1();

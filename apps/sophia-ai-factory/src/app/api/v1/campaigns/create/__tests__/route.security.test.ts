@@ -29,8 +29,8 @@ vi.mock('@/land/campaigns/create-campaign-core', () => ({
 }));
 
 // Mock tier lookup so campaigns pass the monthly limit check.
-vi.mock('@/seed/db/get-user-tier', () => ({
-  getUserTier: vi.fn().mockResolvedValue('BASIC'),
+vi.mock('@/seed/db/resolve-user-tier', () => ({
+  resolveUserTier: vi.fn().mockResolvedValue('BASIC'),
 }));
 
 vi.mock('@/seed/config/tiers', () => ({

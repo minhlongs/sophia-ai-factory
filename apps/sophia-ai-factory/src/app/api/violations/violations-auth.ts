@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/land/analytics/rbac';
 import { validateApiKey } from '@/seed/security/api-key-validator';
 import { validateJwt } from '@/seed/security/jwt-validator';
@@ -37,7 +37,7 @@ export async function authenticateRequest(
     userId = jwtResult.payload.sub;
     const user = await getCurrentUser();
     if (user) {
-      userTier = await getUserTier(user.id);
+      userTier = await resolveUserTier(user.id);
       isAdmin = await checkAdmin(user.id);
 
       const rateLimitResult = await checkRateLimit(user.id, 100);

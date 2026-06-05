@@ -1,6 +1,11 @@
 import { Tier } from "@/seed/types";
-import { ServiceFactory } from "@/land/services/factory";
-import { VideoStatus } from "@/land/services/types";
+
+interface VideoStatus {
+  status: "processing" | "completed" | "failed" | "pending";
+  video_url?: string;
+  thumbnail_url?: string;
+  error?: string;
+}
 
 interface GenerateVideoInput {
   script: unknown; // typed as ScriptOutput in practice
@@ -19,6 +24,7 @@ interface VideoOutput {
  */
 export async function startVideoGeneration(input: GenerateVideoInput): Promise<string> {
   const { script: rawScript, userId } = input;
+  const { ServiceFactory } = await import("@/land/services/factory");
   const videoService = await ServiceFactory.getVideoService(userId);
 
   // Extract narration from script
@@ -42,6 +48,7 @@ export async function startVideoGeneration(input: GenerateVideoInput): Promise<s
  */
  
 export async function checkVideoGenerationStatus(jobId: string, _tier: Tier, userId?: string): Promise<{ status: 'processing' | 'completed' | 'failed'; output?: VideoOutput; error?: string }> {
+  const { ServiceFactory } = await import("@/land/services/factory");
   const videoService = await ServiceFactory.getVideoService(userId);
 
   try {
@@ -93,5 +100,4 @@ export async function generateVideo(input: GenerateVideoInput): Promise<VideoOut
 
   throw new Error('Video generation timed out');
 }
-
 

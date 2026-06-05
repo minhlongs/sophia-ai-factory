@@ -5,7 +5,7 @@
  * All queries are org_id-scoped to prevent cross-tenant leakage.
  */
 
-import { SUPERVISOR_STEPS } from '@/land/workflows/supervisor-steps'
+import { SUPERVISOR_STEPS, type WorkflowStep, WORKFLOW_PRESETS } from '@/land/workflows/supervisor-steps'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -25,7 +25,7 @@ export interface StepMissionRow {
   org_id: string
   parent_mission_id: string
   status: string
-  params: string   // JSON: {step_order, step_type, workflow_id}
+  params: string // JSON: {step_order, step_type, workflow_id}
   result?: string | null
   error_message?: string | null
   started_at?: string | null
@@ -63,41 +63,52 @@ function newId(): string {
 // ── createWorkflow ────────────────────────────────────────────────────────────
 
 /**
- * Atomically insert 1 workflow + 3 step missions via D1 batch().
- * Step 1 → status='queued', steps 2+3 → status='blocked'.
+ * Atomically insert 1 workflow + N step missions via D1 batch().
+ *
+ * @param presetName - Optional workflow preset name. Falls back to SUPERVISOR_STEPS (default).
  */
 export async function createWorkflow(
   orgId: string,
   prompt: string,
+  presetName?: string,
 ): Promise<WorkflowWithSteps> {
   const db = getD1()
   const workflowId = newId()
   const now = new Date().toISOString()
 
-  const stepIds = [newId(), newId(), newId()]
+  // Resolve steps from preset or fall back to default
+  const preset = presetName ? WORKFLOW_PRESETS[presetName] : undefined
+  const steps: WorkflowStep[] = preset?.steps ?? (SUPERVISOR_STEPS as unknown as WorkflowStep[])
+  const stepIds = steps.map(() => newId())
 
   const wfInsert = db.prepare(
     `INSERT INTO workflows (id, org_id, prompt, status, created_at, updated_at)
      VALUES (?, ?, ?, 'queued', ?, ?)`,
   ).bind(workflowId, orgId, prompt, now, now)
 
-  const missionInserts = SUPERVISOR_STEPS.map((step, i) => {
+  const missionInserts = steps.map((step, i) => {
     const missionId = stepIds[i]
     const status = step.order === 1 ? 'queued' : 'blocked'
+    const title = step.label
+      ? `${step.label.en}`
+      : `Step ${step.order}: ${step.type}`
     const params = JSON.stringify({
       step_order: step.order,
-      step_type:  step.type,
+      step_type: step.type,
       workflow_id: workflowId,
+      parallel_group: step.parallelGroup ?? null,
+      depends_on: step.dependsOn ?? [],
+      preset: presetName ?? 'default',
     })
     return db.prepare(
       `INSERT INTO missions
-         (id, org_id, title, command, params, status, parent_mission_id,
-          created_at, updated_at)
+       (id, org_id, title, command, params, status, parent_mission_id,
+        created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(
       missionId,
       orgId,
-      `Step ${step.order}: ${step.type}`,
+      title,
       step.command,
       params,
       status,
@@ -118,7 +129,7 @@ export async function createWorkflow(
     error_message: null,
     created_at: now,
     updated_at: now,
-    steps: SUPERVISOR_STEPS.map((step, i) => ({
+    steps: steps.map((step, i) => ({
       id: stepIds[i],
       org_id: orgId,
       parent_mission_id: workflowId,
@@ -127,6 +138,9 @@ export async function createWorkflow(
         step_order: step.order,
         step_type: step.type,
         workflow_id: workflowId,
+        parallel_group: step.parallelGroup ?? null,
+        depends_on: step.dependsOn ?? [],
+        preset: presetName ?? 'default',
       }),
       result: null,
       error_message: null,
@@ -156,7 +170,7 @@ export async function getWorkflow(
   const { results } = await db
     .prepare(
       `SELECT id, org_id, parent_mission_id, status, params,
-              result, error_message, started_at, completed_at, created_at
+       result, error_message, started_at, completed_at, created_at
        FROM missions WHERE parent_mission_id=? AND org_id=?
        ORDER BY CAST(json_extract(params,'$.step_order') AS INTEGER) ASC`,
     )

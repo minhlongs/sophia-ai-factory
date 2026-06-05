@@ -6,8 +6,8 @@
  * @module lib/publishing/template-engine
  */
 
-import { getOrDefault } from '@/land/tenant-settings/registry';
-import type { ChannelProvider, ChannelsSettings } from '@/land/tenant-settings/defaults';
+import { getOrDefault } from '@/seed/tenant-settings/registry';
+import type { ChannelProvider, ChannelsSettings } from '@/seed/tenant-settings/defaults';
 
 /** Variables available for template substitution. */
 export type TemplateVars = {

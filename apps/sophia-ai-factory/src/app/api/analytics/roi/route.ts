@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { calculateRoiMetrics } from '@/land/analytics/roi-calculator';
 import { verifyLicenseAccess, checkAdmin } from '@/land/analytics/rbac';
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const userTier = await getUserTier(user.id);
+    const userTier = await resolveUserTier(user.id);
 
     logger.info('[Analytics ROI] Calculating ROI metrics', {
       userId: user.id,

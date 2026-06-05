@@ -22,6 +22,7 @@ export const dynamic = 'force-dynamic'
 
 const CreateWorkflowSchema = z.object({
   prompt: z.string().trim().min(10, 'Prompt must be at least 10 characters').max(2000),
+  preset: z.enum(['default', 'ceo-solo-media']).optional(),
 })
 
 // ── POST ──────────────────────────────────────────────────────────────────────
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // medium → proceed, already logged
     }
 
-    const workflow = await createWorkflow(orgId, parsed.data.prompt)
+    const workflow = await createWorkflow(orgId, parsed.data.prompt, parsed.data.preset)
 
     // Fire-and-forget signal — never blocks response
     track(D1Events.WORKFLOW_STARTED, user.id, {

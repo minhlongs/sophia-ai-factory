@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { TIER_MCU_LIMITS } from '@/tree/handover/handover-types';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
@@ -44,7 +44,7 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {
-    let tier = await getUserTier(user.id);
+    let tier = await resolveUserTier(user.id);
 
     // Fallback: stale tier cache → query subscriptions directly
     if (!tier) {

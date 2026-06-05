@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { FeatureFlag, Tier } from "@/seed/types";
 import { checkTierAccess } from "@/land/features";
 import { tierGuard, LimitType } from "@/land/tier-guard";
-import { getUserTier } from "@/seed/db/get-user-tier";
+import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import { toError } from "@/seed/utils/to-error";
 
 export async function GET(request: NextRequest) {
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       const user = await getCurrentUserFromHeaders(request.headers);
       if (user) {
         userId = user.id;
-        userTier = await getUserTier(userId);
+        userTier = await resolveUserTier(userId);
       }
     } catch {
       // Auth failure defaults to BASIC tier

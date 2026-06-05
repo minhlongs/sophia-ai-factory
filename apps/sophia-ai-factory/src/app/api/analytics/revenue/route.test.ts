@@ -18,8 +18,8 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/seed/db/get-user-tier', () => ({
-  getUserTier: vi.fn(),
+vi.mock('@/seed/db/resolve-user-tier', () => ({
+  resolveUserTier: vi.fn(),
 }));
 
 vi.mock('@/land/analytics/rbac', () => ({
@@ -37,7 +37,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 
 import { GET } from './route';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { checkAdmin, canAccessRevenue } from '@/land/analytics/rbac';
 import { fetchRevenueSnapshot } from '@/land/analytics/queries/revenue-nowpayments';
 import type { RevenueSnapshot } from '@/seed/types/analytics-revenue';
@@ -83,7 +83,7 @@ describe('GET /api/analytics/revenue', () => {
 
   it('returns 400 for invalid period param', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1', email: 'a@b.com' });
-    vi.mocked(getUserTier).mockResolvedValue('ENTERPRISE');
+    vi.mocked(resolveUserTier).mockResolvedValue('ENTERPRISE');
     vi.mocked(checkAdmin).mockResolvedValue(false);
     vi.mocked(canAccessRevenue).mockReturnValue(true);
     const res = await GET(makeRequest({ period: 'invalid' }));
@@ -92,7 +92,7 @@ describe('GET /api/analytics/revenue', () => {
 
   it('returns 403 for BASIC tier', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1', email: 'a@b.com' });
-    vi.mocked(getUserTier).mockResolvedValue('BASIC');
+    vi.mocked(resolveUserTier).mockResolvedValue('BASIC');
     vi.mocked(checkAdmin).mockResolvedValue(false);
     vi.mocked(canAccessRevenue).mockReturnValue(false);
     const res = await GET(makeRequest());
@@ -101,7 +101,7 @@ describe('GET /api/analytics/revenue', () => {
 
   it('returns 403 for PREMIUM tier', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1', email: 'a@b.com' });
-    vi.mocked(getUserTier).mockResolvedValue('PREMIUM');
+    vi.mocked(resolveUserTier).mockResolvedValue('PREMIUM');
     vi.mocked(checkAdmin).mockResolvedValue(false);
     vi.mocked(canAccessRevenue).mockReturnValue(false);
     const res = await GET(makeRequest());
@@ -110,7 +110,7 @@ describe('GET /api/analytics/revenue', () => {
 
   it('returns 403 when non-admin provides org_id', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1', email: 'a@b.com' });
-    vi.mocked(getUserTier).mockResolvedValue('ENTERPRISE');
+    vi.mocked(resolveUserTier).mockResolvedValue('ENTERPRISE');
     vi.mocked(checkAdmin).mockResolvedValue(false);
     vi.mocked(canAccessRevenue).mockReturnValue(true);
     const res = await GET(makeRequest({ org_id: 'other-org' }));
@@ -119,7 +119,7 @@ describe('GET /api/analytics/revenue', () => {
 
   it('returns 200 with RevenueSnapshot for ENTERPRISE user', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1', email: 'a@b.com' });
-    vi.mocked(getUserTier).mockResolvedValue('ENTERPRISE');
+    vi.mocked(resolveUserTier).mockResolvedValue('ENTERPRISE');
     vi.mocked(checkAdmin).mockResolvedValue(false);
     vi.mocked(canAccessRevenue).mockReturnValue(true);
     vi.mocked(fetchRevenueSnapshot).mockResolvedValue(mockSnapshot);
@@ -134,7 +134,7 @@ describe('GET /api/analytics/revenue', () => {
 
   it('ARR equals MRR × 12', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1', email: 'a@b.com' });
-    vi.mocked(getUserTier).mockResolvedValue('MASTER');
+    vi.mocked(resolveUserTier).mockResolvedValue('MASTER');
     vi.mocked(checkAdmin).mockResolvedValue(true);
     vi.mocked(canAccessRevenue).mockReturnValue(true);
     vi.mocked(fetchRevenueSnapshot).mockResolvedValue(mockSnapshot);
@@ -146,7 +146,7 @@ describe('GET /api/analytics/revenue', () => {
 
   it('admin can request with org_id and receives 200', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'admin1', email: 'admin@b.com' });
-    vi.mocked(getUserTier).mockResolvedValue('MASTER');
+    vi.mocked(resolveUserTier).mockResolvedValue('MASTER');
     vi.mocked(checkAdmin).mockResolvedValue(true);
     vi.mocked(canAccessRevenue).mockReturnValue(true);
     vi.mocked(fetchRevenueSnapshot).mockResolvedValue(mockSnapshot);

@@ -11,7 +11,7 @@
  * @module seed/auth/enforce-ai-command-quota
  */
 
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { createServerClient } from '@/seed/db/client';
 import { getAiCommandLimit } from '@/seed/config/tiers';
 
@@ -42,7 +42,7 @@ function nextMonthIso(): string {
  * Pre-write gate — call before inserting a row into engine_missions.
  */
 export async function checkAiCommandQuota(userId: string): Promise<AiCommandQuotaResult> {
-  const tier = await getUserTier(userId);
+  const tier = await resolveUserTier(userId);
   const limit = getAiCommandLimit(tier);
   const resetsAt = nextMonthIso();
 

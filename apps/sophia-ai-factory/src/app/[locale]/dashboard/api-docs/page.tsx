@@ -1,6 +1,6 @@
 import React from "react";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
-import { getUserTier } from "@/seed/db/get-user-tier";
+import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import { Tier } from "@/seed/types";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/seed/components/ui/card";
@@ -24,7 +24,7 @@ export default async function ApiDocsPage() {
   const t = await getTranslations("dashboard.api_docs");
   const user = await getCurrentUser();
 
-  const userTier: Tier = user ? await getUserTier(user.id) : "BASIC" as Tier;
+  const userTier: Tier = user ? await resolveUserTier(user.id) : "BASIC" as Tier;
 
   const hasAccess = userTier === "ENTERPRISE" || userTier === "MASTER";
 

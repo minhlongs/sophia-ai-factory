@@ -12,9 +12,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { merge, getOrDefault } from '@/land/tenant-settings/registry';
-import { DEFAULT_BRANDING } from '@/land/tenant-settings/defaults';
-import type { BrandingSettings } from '@/land/tenant-settings/defaults';
+import { merge, getOrDefault } from '@/seed/tenant-settings/registry';
+import { DEFAULT_BRANDING } from '@/seed/tenant-settings/defaults';
+import type { BrandingSettings } from '@/seed/tenant-settings/defaults';
 import { logger } from '@/seed/utils/logger-utility';
 import {
   enforceFileSizeLimit,

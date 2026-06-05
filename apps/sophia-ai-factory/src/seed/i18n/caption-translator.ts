@@ -14,7 +14,6 @@
  */
 
 import { z } from 'zod'
-import { withTimeout } from '@/tree/byok/with-timeout'
 import { logger } from '@/seed/utils/logger-utility'
 import { enforceCharCap } from './channel-caption-rules'
 
@@ -112,6 +111,20 @@ interface OpenRouterChoice {
   message: { content: string | null }
 }
 
+async function fetchWithTimeout(
+  input: RequestInfo,
+  init: RequestInit & { timeoutMs?: number },
+): Promise<Response> {
+  const { timeoutMs = 20_000, ...rest } = init
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(input, { ...rest, signal: controller.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 async function callOpenRouter(
   source: string,
   targetLocale: string,
@@ -127,7 +140,7 @@ Rules:
 - Return ONLY the translated caption text, nothing else`
 
   try {
-    const res = await withTimeout(OPENROUTER_URL, {
+    const res = await fetchWithTimeout(OPENROUTER_URL, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
@@ -144,7 +157,6 @@ Rules:
         max_tokens: 500,
         temperature: 0.3,
       }),
-      provider: 'openrouter',
       timeoutMs: 20_000,
     })
 

@@ -12,8 +12,22 @@
  * @module lib/i18n/channel-caption-rules
  */
 
-import type { ChannelProvider } from '@/forest/publishing/publisher-interface'
 import { z } from 'zod'
+
+export type ChannelProvider =
+  | 'tiktok'
+  | 'youtube'
+  | 'instagram'
+  | 'pinterest'
+  | 'linkedin'
+  | 'zalo'
+  | 'facebook'
+  | 'twitter'
+  | 'threads'
+  | 'reddit'
+  | 'bluesky'
+  | 'mastodon'
+  | 'telegram'
 
 // ---------------------------------------------------------------------------
 // Types

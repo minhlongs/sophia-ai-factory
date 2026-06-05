@@ -1,7 +1,7 @@
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getVideoBucket } from '@/land/video/r2-binding';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import {
@@ -39,7 +39,7 @@ export async function createBatchAction(
   const user = await getCurrentUser();
   if (!user) return { success: false, error: 'Not authenticated' };
 
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   const maxBatch = BATCH_LIMITS[tier] ?? 0;
   if (maxBatch === 0) return { success: false, error: 'Batch generation not available on your plan' };
 

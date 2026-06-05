@@ -4,7 +4,7 @@ import { templateService } from "@/land/services/template-service";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { Skeleton } from "@/seed/components/ui/skeleton";
 import { getTranslations } from 'next-intl/server';
-import { getUserTier } from "@/seed/db/get-user-tier";
+import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import { getTopPrograms } from "@/land/affiliates";
 
 const CreateProjectFormWithTemplates = dynamic(
@@ -27,7 +27,7 @@ export default async function CreateProjectPage() {
   const user = await getCurrentUser();
 
   const templates = await templateService.getTemplates(user?.id);
-  const tier = user ? await getUserTier(user.id) : 'BASIC';
+  const tier = user ? await resolveUserTier(user.id) : 'BASIC';
   const affiliatePrograms = getTopPrograms(5, tier);
 
   return (

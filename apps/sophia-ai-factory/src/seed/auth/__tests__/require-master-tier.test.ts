@@ -28,9 +28,9 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: getCurrentUserMock,
 }));
 
-const getUserTierMock = vi.fn();
-vi.mock('@/seed/db/get-user-tier', () => ({
-  getUserTier: getUserTierMock,
+const resolveUserTierMock = vi.fn();
+vi.mock('@/seed/db/resolve-user-tier', () => ({
+  resolveUserTier: resolveUserTierMock,
 }));
 
 const SAMPLE_USER: User = {
@@ -46,7 +46,7 @@ const SAMPLE_USER: User = {
 beforeEach(() => {
   redirectMock.mockClear();
   getCurrentUserMock.mockReset();
-  getUserTierMock.mockReset();
+  resolveUserTierMock.mockReset();
 });
 
 describe('requireMasterTier', () => {
@@ -56,12 +56,12 @@ describe('requireMasterTier', () => {
 
     await expect(requireMasterTier()).rejects.toThrow(/NEXT_REDIRECT:\/login/);
     expect(redirectMock).toHaveBeenCalledWith('/login');
-    expect(getUserTierMock).not.toHaveBeenCalled();
+    expect(resolveUserTierMock).not.toHaveBeenCalled();
   });
 
   it('redirects to deny URL when user has non-MASTER tier', async () => {
     getCurrentUserMock.mockResolvedValue(SAMPLE_USER);
-    getUserTierMock.mockResolvedValue('PREMIUM');
+    resolveUserTierMock.mockResolvedValue('PREMIUM');
     const { requireMasterTier } = await import('../require-master-tier');
 
     await expect(requireMasterTier()).rejects.toThrow(
@@ -72,7 +72,7 @@ describe('requireMasterTier', () => {
 
   it('redirects to deny URL when tier is BASIC', async () => {
     getCurrentUserMock.mockResolvedValue(SAMPLE_USER);
-    getUserTierMock.mockResolvedValue('BASIC');
+    resolveUserTierMock.mockResolvedValue('BASIC');
     const { requireMasterTier } = await import('../require-master-tier');
 
     await expect(requireMasterTier()).rejects.toThrow(
@@ -82,7 +82,7 @@ describe('requireMasterTier', () => {
 
   it('returns user when tier is MASTER', async () => {
     getCurrentUserMock.mockResolvedValue(SAMPLE_USER);
-    getUserTierMock.mockResolvedValue('MASTER');
+    resolveUserTierMock.mockResolvedValue('MASTER');
     const { requireMasterTier } = await import('../require-master-tier');
 
     const user = await requireMasterTier();
@@ -102,7 +102,7 @@ describe('requireMasterTier', () => {
 
   it('honors custom denyRedirect when tier denied', async () => {
     getCurrentUserMock.mockResolvedValue(SAMPLE_USER);
-    getUserTierMock.mockResolvedValue('ENTERPRISE');
+    resolveUserTierMock.mockResolvedValue('ENTERPRISE');
     const { requireMasterTier } = await import('../require-master-tier');
 
     await expect(

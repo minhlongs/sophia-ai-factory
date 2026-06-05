@@ -12,7 +12,7 @@
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { getD1Raw } from '@/seed/db/client';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { provisionTierChange } from '@/land/billing/tier-change-provisioner';
 import type { Tier } from '@/seed/types';
@@ -77,7 +77,7 @@ export async function changeTierAction(
   }
 
   try {
-    const currentTier = await getUserTier(user.id);
+    const currentTier = await resolveUserTier(user.id);
     if (currentTier === targetTier) {
       return { success: false, error: 'already_on_tier' };
     }

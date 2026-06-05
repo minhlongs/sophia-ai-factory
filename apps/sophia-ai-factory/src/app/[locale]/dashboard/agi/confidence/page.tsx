@@ -1,7 +1,7 @@
 import React from 'react';
 import dynamic from 'next/dynamic';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { redirect } from 'next/navigation';
 import { Skeleton } from '@/seed/components/ui/skeleton';
 import { TierGateCard } from '@/seed/components/ui/tier-gate-card';
@@ -53,7 +53,7 @@ export default async function ConfidenceMonitorPage() {
 
   let userTier: Tier = 'BASIC';
   try {
-    userTier = await getUserTier(user.id);
+    userTier = await resolveUserTier(user.id);
   } catch (err) {
     logger.error('[ConfidenceMonitor] Failed to load tier', toError(err));
   }

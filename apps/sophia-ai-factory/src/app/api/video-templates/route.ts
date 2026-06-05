@@ -8,14 +8,14 @@
  * is intentionally OMITTED — clients pass `id` to the renderer which resolves the
  * transition spec server-side.
  *
- * Auth: requires session. Tier resolved via `getUserTier(user.id)`.
+ * Auth: requires session. Tier resolved via `resolveUserTier(user.id)`.
  *
  * @module app/api/video-templates/route
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import {
   listTemplatesForTier,
   type TemplatePreset,
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   let tier: TemplateTier;
   try {
-    tier = normaliseTier(await getUserTier(user.id));
+    tier = normaliseTier(await resolveUserTier(user.id));
   } catch (err) {
     logger.warn('[video-templates] getUserTier failed', { userId: user.id, error: String(err) });
     return NextResponse.json({ error: 'Failed to resolve tier' }, { status: 500 });

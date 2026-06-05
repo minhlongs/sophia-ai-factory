@@ -8,7 +8,7 @@ import { redirect } from 'next/navigation';
 import nextDynamic from 'next/dynamic';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getBalance } from '@/land/mcu/credits-repo';
 import { logger } from '@/seed/utils/logger-utility';
 import { TIER_CONFIG } from '@/seed/config/tiers';
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
   // Fetch profile, tier, balance in parallel
   const [profileResult, tier, balance] = await Promise.all([
     db.from('user_profiles').select('api_keys,onboarding_completed_at').eq('user_id', user.id).single(),
-    getUserTier(user.id),
+    resolveUserTier(user.id),
     getBalance(user.id).catch(() => ({ credits_remaining: 0, credits_total_purchased: 0, credits_total_used: 0 })),
   ]);
 

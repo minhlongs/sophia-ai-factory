@@ -12,7 +12,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { listPresetsForTier, type VoicePreset, type VoiceLanguage } from '@/seed/voices/presets';
 
 export const dynamic = 'force-dynamic';
@@ -36,7 +36,7 @@ export default async function VoicesPage(props: {
     redirect('/login');
   }
 
-  const tierRaw = await getUserTier(user.id);
+  const tierRaw = await resolveUserTier(user.id);
   const tier = (typeof tierRaw === 'string' ? tierRaw.toUpperCase() : 'BASIC') as
     | 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER';
 

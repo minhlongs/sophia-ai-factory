@@ -8,14 +8,14 @@
  * Coqui speaker server-side. This keeps the speaker mapping a server secret that
  * may evolve without breaking client contracts.
  *
- * Auth: requires session. Tier resolved via `getUserTier(user.id)`.
+ * Auth: requires session. Tier resolved via `resolveUserTier(user.id)`.
  *
  * @module app/api/voice-presets/route
  */
 
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { listPresetsForTier, type VoicePreset } from '@/seed/voices/presets';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -50,7 +50,7 @@ export async function GET(): Promise<NextResponse> {
 
   let tier;
   try {
-    tier = await getUserTier(user.id);
+    tier = await resolveUserTier(user.id);
   } catch (err) {
     logger.warn('[voice-presets] getUserTier failed', { userId: user.id, error: String(err) });
     return NextResponse.json({ error: 'Failed to resolve tier' }, { status: 500 });

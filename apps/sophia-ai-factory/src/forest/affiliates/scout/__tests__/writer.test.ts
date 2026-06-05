@@ -19,7 +19,7 @@ const PASS_ALL_SCORES = { threshold: 0 };
 // --- Mocks ---
 
 // Mock the webhooks emitter so we can count calls
-vi.mock('@/land/webhooks', () => ({
+vi.mock('@/forest/webhooks', () => ({
   emit: vi.fn(),
 }));
 
@@ -32,7 +32,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   },
 }));
 
-import { emit } from '@/land/webhooks';
+import { emit } from '@/forest/webhooks';
 import { runAffiliateScout } from '../writer';
 
 // --- D1 stub helpers ---

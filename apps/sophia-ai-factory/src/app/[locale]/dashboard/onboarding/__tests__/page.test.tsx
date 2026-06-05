@@ -15,8 +15,8 @@ vi.mock('next-intl/server', () => ({
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
-vi.mock('@/seed/db/get-user-tier', () => ({
-  getUserTier: vi.fn(),
+vi.mock('@/seed/db/resolve-user-tier', () => ({
+  resolveUserTier: vi.fn(),
 }));
 vi.mock('@/app/actions/complete-onboarding-action', () => ({
   completeOnboardingAction: vi.fn().mockResolvedValue({ success: true }),
@@ -30,12 +30,12 @@ vi.stubGlobal('__env', undefined);
 
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import OnboardingPage from '../page';
 
 const mockRedirect = vi.mocked(redirect);
 const mockGetCurrentUser = vi.mocked(getCurrentUser);
-const mockGetUserTier = vi.mocked(getUserTier);
+const mockResolveUserTier = vi.mocked(resolveUserTier);
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -52,7 +52,7 @@ describe('OnboardingPage', () => {
 
   it('renders wizard for non-MASTER tier (canonical onboarding URL serves all tiers)', async () => {
     mockGetCurrentUser.mockResolvedValue({ id: 'user-1', email: 'test@test.com', full_name: 'Test User' } as never);
-    mockGetUserTier.mockResolvedValue('PREMIUM');
+    mockResolveUserTier.mockResolvedValue('PREMIUM');
 
     const result = await OnboardingPage({ params: Promise.resolve({ locale: 'en' }) });
 
@@ -63,7 +63,7 @@ describe('OnboardingPage', () => {
 
   it('renders without crashing for MASTER user with no D1 available', async () => {
     mockGetCurrentUser.mockResolvedValue({ id: 'user-master', email: 'free@test.com', full_name: 'Free User' } as never);
-    mockGetUserTier.mockResolvedValue('MASTER');
+    mockResolveUserTier.mockResolvedValue('MASTER');
 
     // Should not throw — D1 null fallback means all steps = false
     const result = await OnboardingPage({ params: Promise.resolve({ locale: 'en' }) });

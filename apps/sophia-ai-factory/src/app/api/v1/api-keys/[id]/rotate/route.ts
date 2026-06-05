@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { rotateApiKey, tierToRateLimit } from '@/forest/api-keys/d1-store';
 import { globalRateLimiter, getClientIdentifier, createRateLimitResponse } from '@/forest/middleware/rate-limiter';
 import { logger } from '@/seed/utils/logger-utility';
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
     try {
-      const tier = await getUserTier(user.id);
+      const tier = await resolveUserTier(user.id);
       const rateLimit = tierToRateLimit(tier);
       const result = await rotateApiKey(db, id, user.id, parsed.data.name ?? 'Rotated Key', rateLimit);
       if (!result) return NextResponse.json({ error: 'Key not found or already revoked' }, { status: 404 });
