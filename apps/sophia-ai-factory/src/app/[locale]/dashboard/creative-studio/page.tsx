@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { CreativeStudioTabs } from './creative-studio-tabs';
@@ -14,7 +14,7 @@ export default async function CreativeStudioPage({ params, searchParams }: PageP
   const sp = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/auth/signup`);
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   const t = await getTranslations({ locale, namespace: 'creativeStudio' });
   const activeTab = typeof sp?.tab === 'string' ? sp.tab : 'video';
   const statCards = [

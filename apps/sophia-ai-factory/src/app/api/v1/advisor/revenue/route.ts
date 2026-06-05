@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { checkAdmin, canAccessRevenue } from '@/land/analytics/rbac';
 import { fetchRevenueSnapshot } from '@/land/analytics/queries/revenue-nowpayments';
 import { fetchUnifiedRevenue } from '@/land/analytics/queries/revenue-unified-query';
@@ -59,7 +59,7 @@ export async function GET(): Promise<NextResponse> {
   let tier: Tier = 'BASIC';
   let isAdmin = false;
   try {
-    tier = await getUserTier(user.id);
+    tier = await resolveUserTier(user.id);
     isAdmin = tier === 'MASTER' || await checkAdmin(user.id);
   } catch (err) {
     logger.error('[API] Failed to resolve tier/admin', { error: getErrorMessage(err) });

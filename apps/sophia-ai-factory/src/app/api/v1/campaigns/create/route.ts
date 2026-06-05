@@ -135,9 +135,9 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
     const { script, title } = parsed.data;
 
     // TIER CHECK: Monthly campaign limit
-    const { getUserTier } = await import("@/seed/db/get-user-tier");
+    const { resolveUserTier } = await import("@/seed/db/resolve-user-tier");
     const { UNIFIED_TIERS } = await import("@/seed/config/tiers");
-    const tier = await getUserTier(userId);
+    const tier = await resolveUserTier(userId);
     const monthLimit = UNIFIED_TIERS[tier].campaignsPerMonth;
 
     if (monthLimit < 999) {

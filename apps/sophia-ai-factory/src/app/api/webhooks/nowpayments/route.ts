@@ -12,7 +12,7 @@ import { captureTierUpgraded } from '@/land/signals/posthog-capture'
 import { track } from '@/land/signals/track'
 import { D1Events } from '@/land/signals/d1-event-types'
 import { emit } from '@/land/webhooks/emitter'
-import { getUserTier } from '@/seed/db/get-user-tier'
+import { resolveUserTier } from '@/seed/db/resolve-user-tier'
 
 function getD1ForWebhooks(): D1Database | null {
   try {
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
     const userId = ipn.order_id.split('_')[1] ?? ipn.order_id
     void captureTierUpgraded({ distinctId: userId, tier: ipn.invoice_id ?? 'unknown', amount: ipn.price_amount, currency: ipn.price_currency })
     track(D1Events.PAYMENT_SUCCESS, 'webhook', { amount_usd: ipn.price_amount, currency: ipn.price_currency, provider: 'nowpayments', payment_id: ipn.payment_id }, userId)
-    const fromTier = await getUserTier(userId)
+    const fromTier = await resolveUserTier(userId)
     track(D1Events.TIER_CONVERSION, userId, { from_tier: fromTier, to_tier: ipn.invoice_id ?? 'unknown', amount_usd: ipn.price_amount, provider: 'nowpayments' }, userId)
 
     // Emit outbound webhook event (fire-and-forget)

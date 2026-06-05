@@ -8,12 +8,12 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/seed/db/get-user-tier', () => ({
-  getUserTier: vi.fn(),
+vi.mock('@/seed/db/resolve-user-tier', () => ({
+  resolveUserTier: vi.fn(),
 }));
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { GET } from '../route';
 
 interface PresetResponse {
@@ -39,7 +39,7 @@ describe('GET /api/voice-presets', () => {
 
   it('returns BASIC-tier presets only for BASIC user', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>);
-    vi.mocked(getUserTier).mockResolvedValue('BASIC');
+    vi.mocked(resolveUserTier).mockResolvedValue('BASIC');
 
     const resp = await GET();
     expect(resp.status).toBe(200);
@@ -51,7 +51,7 @@ describe('GET /api/voice-presets', () => {
 
   it('MASTER tier sees presets across all tiers', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>);
-    vi.mocked(getUserTier).mockResolvedValue('MASTER');
+    vi.mocked(resolveUserTier).mockResolvedValue('MASTER');
 
     const resp = await GET();
     const body = (await resp.json()) as PresetResponse;
@@ -62,7 +62,7 @@ describe('GET /api/voice-presets', () => {
 
   it('strips internal coquiSpeaker from public projection', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>);
-    vi.mocked(getUserTier).mockResolvedValue('MASTER');
+    vi.mocked(resolveUserTier).mockResolvedValue('MASTER');
 
     const resp = await GET();
     const body = (await resp.json()) as PresetResponse;
@@ -73,7 +73,7 @@ describe('GET /api/voice-presets', () => {
 
   it('returns 500 when getUserTier throws', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>);
-    vi.mocked(getUserTier).mockRejectedValue(new Error('D1 down'));
+    vi.mocked(resolveUserTier).mockRejectedValue(new Error('D1 down'));
 
     const resp = await GET();
     expect(resp.status).toBe(500);

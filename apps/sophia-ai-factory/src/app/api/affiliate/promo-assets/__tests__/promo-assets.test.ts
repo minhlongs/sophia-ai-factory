@@ -9,12 +9,12 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/seed/db/get-user-tier', () => ({
-  getUserTier: vi.fn(),
+vi.mock('@/seed/db/resolve-user-tier', () => ({
+  resolveUserTier: vi.fn(),
 }));
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { GET } from '../route';
 
 interface PromoResponse {
@@ -42,14 +42,14 @@ describe('GET /api/affiliate/promo-assets', () => {
 
   it('returns 500 when getUserTier throws', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>);
-    vi.mocked(getUserTier).mockRejectedValue(new Error('D1 unreachable'));
+    vi.mocked(resolveUserTier).mockRejectedValue(new Error('D1 unreachable'));
     const resp = await GET(buildRequest());
     expect(resp.status).toBe(500);
   });
 
   it('BASIC user sees only BASIC assets', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>);
-    vi.mocked(getUserTier).mockResolvedValue('BASIC');
+    vi.mocked(resolveUserTier).mockResolvedValue('BASIC');
     const resp = await GET(buildRequest());
     expect(resp.status).toBe(200);
     const body = (await resp.json()) as PromoResponse;
@@ -59,7 +59,7 @@ describe('GET /api/affiliate/promo-assets', () => {
 
   it('locale=vi narrows copy templates to vi only', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>);
-    vi.mocked(getUserTier).mockResolvedValue('MASTER');
+    vi.mocked(resolveUserTier).mockResolvedValue('MASTER');
     const resp = await GET(buildRequest({ locale: 'vi' }));
     const body = (await resp.json()) as PromoResponse;
     expect(body.locale).toBe('vi');
@@ -68,7 +68,7 @@ describe('GET /api/affiliate/promo-assets', () => {
 
   it('invalid locale param falls back to no-filter', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>);
-    vi.mocked(getUserTier).mockResolvedValue('MASTER');
+    vi.mocked(resolveUserTier).mockResolvedValue('MASTER');
     const resp = await GET(buildRequest({ locale: 'fr' }));
     const body = (await resp.json()) as PromoResponse;
     expect(body.locale).toBeNull();
@@ -78,7 +78,7 @@ describe('GET /api/affiliate/promo-assets', () => {
 
   it('unknown tier from DB normalises to BASIC', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>);
-    vi.mocked(getUserTier).mockResolvedValue('UNKNOWN_TIER' as never);
+    vi.mocked(resolveUserTier).mockResolvedValue('UNKNOWN_TIER' as never);
     const resp = await GET(buildRequest());
     const body = (await resp.json()) as PromoResponse;
     expect(body.tier).toBe('BASIC');

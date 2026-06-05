@@ -1,6 +1,6 @@
 import { Tier } from "@/seed/types";
 import { getTierConfig, UNIFIED_TIERS, type UnifiedTierLimits } from "@/seed/config/tiers";
-import { getUserTier } from "@/seed/db/get-user-tier";
+import { getUserTier, resolveUserTier } from "@/seed/db/resolve-user-tier";
 import { templateService } from "@/land/services/template-service";
 
 export type LimitType =
@@ -26,7 +26,7 @@ export const tierGuard = {
    * Check if a user has reached their limit for a specific resource
    */
   async checkLimit(userId: string, limitType: LimitType): Promise<LimitCheckResult> {
-    const userTier = await getUserTier(userId);
+    const userTier = await resolveUserTier(userId);
     const config = getTierConfig(userTier);
 
     // Default allowed/limit values
@@ -126,7 +126,7 @@ export const tierGuard = {
    * Check if user allows multiple channels (Premium feature)
    */
   async checkMultiChannelAccess(userId: string): Promise<boolean> {
-    const userTier = await getUserTier(userId);
+    const userTier = await resolveUserTier(userId);
     return userTier !== "BASIC";
   },
 
@@ -137,7 +137,7 @@ export const tierGuard = {
    * Let's stick to the prompt requirement: ENTERPRISE for custom templates.)
    */
   async checkCustomTemplateAccess(userId: string): Promise<boolean> {
-    const userTier = await getUserTier(userId);
+    const userTier = await resolveUserTier(userId);
     return userTier === "ENTERPRISE" || userTier === "MASTER";
   }
 };
@@ -160,7 +160,7 @@ export async function checkTierFeature(
   userId: string,
   feature: BooleanTierFeature
 ): Promise<{ allowed: boolean; tier: Tier; requiredTier: string }> {
-  const tier = await getUserTier(userId);
+  const tier = await resolveUserTier(userId);
   const limits = UNIFIED_TIERS[tier];
   const allowed = !!limits[feature];
 

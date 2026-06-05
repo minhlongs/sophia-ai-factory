@@ -8,7 +8,7 @@
  * Depends on Phase 03 fetchRevenueSnapshot for ARPU inputs.
  */
 
-import { fetchRevenueSnapshot } from '@/land/analytics/queries/revenue-nowpayments';
+import { fetchRevenueSnapshot } from '@/forest/analytics/queries/revenue-nowpayments';
 import { fetchChurnTimeline } from './churn-calculator';
 import { logger } from '@/seed/utils/logger-utility';
 import { TIER_CONFIGS } from '@/seed/config/tiers';

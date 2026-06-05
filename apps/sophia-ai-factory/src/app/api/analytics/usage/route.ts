@@ -17,7 +17,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { fetchUsageMetrics } from '@/land/analytics/queries';
 import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/land/analytics/rbac';
@@ -104,7 +104,7 @@ export async function GET(request: NextRequest) {
 
     // Check if user is admin
     const isAdmin = await checkAdmin(user.id);
-    const userTier = await getUserTier(user.id);
+    const userTier = await resolveUserTier(user.id);
 
     if (!isAdmin) {
       // Customer users can only see their own data

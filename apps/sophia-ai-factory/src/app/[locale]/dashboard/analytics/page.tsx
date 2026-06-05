@@ -2,7 +2,7 @@ import React from "react";
 import dynamic from "next/dynamic";
 import { getD1Client } from "@/seed/db/client";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
-import { getUserTier } from "@/seed/db/get-user-tier";
+import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import { checkAdmin, canAccessRevenue } from "@/land/analytics/rbac";
 import { Campaign, Tier } from "@/seed/types";
 import { Skeleton } from "@/seed/components/ui/skeleton";
@@ -59,7 +59,7 @@ export default async function AnalyticsPage() {
   let loadError: string | undefined;
   try {
     [userTier, isAdmin] = await Promise.all([
-      getUserTier(user.id),
+      resolveUserTier(user.id),
       checkAdmin(user.id),
     ]);
   } catch (err) {

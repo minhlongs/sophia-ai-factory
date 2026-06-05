@@ -4,8 +4,8 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('@/seed/db/get-user-tier', () => ({
-  getUserTier: vi.fn(),
+vi.mock('@/seed/db/resolve-user-tier', () => ({
+  resolveUserTier: vi.fn(),
 }))
 
 vi.mock('@/forest/quota/video-quota', () => ({
@@ -18,11 +18,11 @@ vi.mock('@/forest/quota/video-quota', () => ({
   },
 }))
 
-import { getUserTier } from '@/seed/db/get-user-tier'
+import { resolveUserTier } from '@/seed/db/resolve-user-tier'
 import { checkVideoQuota } from '@/forest/quota/video-quota'
 import { checkTierQuota } from '@/seed/auth/enforce-tier-quota'
 
-const mockGetUserTier = getUserTier as ReturnType<typeof vi.fn>
+const mockResolveUserTier = resolveUserTier as ReturnType<typeof vi.fn>
 const mockCheckVideoQuota = checkVideoQuota as ReturnType<typeof vi.fn>
 
 describe('checkTierQuota', () => {
@@ -31,7 +31,7 @@ describe('checkTierQuota', () => {
   })
 
   it('returns allowed=false for BASIC tier (limit=0)', async () => {
-    mockGetUserTier.mockResolvedValue('BASIC')
+    mockResolveUserTier.mockResolvedValue('BASIC')
     const result = await checkTierQuota('user-basic')
     expect(result.allowed).toBe(false)
     expect(result.limit).toBe(0)
@@ -40,7 +40,7 @@ describe('checkTierQuota', () => {
   })
 
   it('returns allowed=true when under quota', async () => {
-    mockGetUserTier.mockResolvedValue('PREMIUM')
+    mockResolveUserTier.mockResolvedValue('PREMIUM')
     mockCheckVideoQuota.mockResolvedValue({
       allowed: true,
       used: 5,
@@ -55,7 +55,7 @@ describe('checkTierQuota', () => {
   })
 
   it('returns allowed=false with reason when quota exceeded', async () => {
-    mockGetUserTier.mockResolvedValue('PREMIUM')
+    mockResolveUserTier.mockResolvedValue('PREMIUM')
     mockCheckVideoQuota.mockResolvedValue({
       allowed: false,
       used: 30,
@@ -69,7 +69,7 @@ describe('checkTierQuota', () => {
   })
 
   it('returns correct limit for ENTERPRISE tier', async () => {
-    mockGetUserTier.mockResolvedValue('ENTERPRISE')
+    mockResolveUserTier.mockResolvedValue('ENTERPRISE')
     mockCheckVideoQuota.mockResolvedValue({
       allowed: true,
       used: 10,

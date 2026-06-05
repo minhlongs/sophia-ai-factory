@@ -17,7 +17,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { checkAdmin, canAccessRevenue } from '@/land/analytics/rbac';
 import { fetchRevenueSnapshot } from '@/land/analytics/queries/revenue-nowpayments';
 import { logger } from '@/seed/utils/logger-utility';
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     // RBAC
     const [userTier, isAdmin] = await Promise.all([
-      getUserTier(user.id),
+      resolveUserTier(user.id),
       checkAdmin(user.id),
     ]);
 

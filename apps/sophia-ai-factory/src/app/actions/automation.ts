@@ -34,8 +34,8 @@ export async function generateScript(formData: FormData) {
   }
 
   // Get actual user tier from D1
-  const { getUserTier } = await import("@/seed/db/get-user-tier");
-  const userTier: Tier = await getUserTier(user.id);
+  const { resolveUserTier } = await import("@/seed/db/resolve-user-tier");
+  const userTier: Tier = await resolveUserTier(user.id);
 
   try {
     const db = createServerClient();

@@ -55,8 +55,8 @@ export async function createCampaign(formData: FormData) {
     }
   }
 
-  const { getUserTier } = await import("@/seed/db/get-user-tier");
-  const tier = await getUserTier(userId);
+  const { resolveUserTier } = await import("@/seed/db/resolve-user-tier");
+  const tier = await resolveUserTier(userId);
 
   // TIER CHECK: Monthly campaign limit
   const { UNIFIED_TIERS } = await import("@/seed/config/tiers");
@@ -157,8 +157,8 @@ export async function getOffersForUser() {
     const user = await getCurrentUser();
     if (!user) return [];
 
-    const { getUserTier } = await import("@/seed/db/get-user-tier");
-    const tier = await getUserTier(user.id);
+    const { resolveUserTier } = await import("@/seed/db/resolve-user-tier");
+    const tier = await resolveUserTier(user.id);
 
     const { getTopPrograms } = await import("@/land/affiliates");
     return getTopPrograms(5, tier);

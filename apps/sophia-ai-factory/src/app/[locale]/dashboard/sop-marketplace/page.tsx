@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getSopInstallLimit } from '@/seed/config/tiers';
 import {
   listOfficialTemplates,
@@ -62,7 +62,7 @@ export default async function MarketplacePage({ params }: Props) {
   const installedTemplateIds = installations.map(i => i.template_id);
   const licensedTemplateIds = new Set(licenses.map(l => l.template_id));
 
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   const sopLimit = getSopInstallLimit(tier);
 
 

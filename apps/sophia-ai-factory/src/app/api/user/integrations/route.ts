@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/seed/db/client'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
-import { getUserTier } from '@/seed/db/get-user-tier'
+import { resolveUserTier } from '@/seed/db/resolve-user-tier'
 import { UNIFIED_TIERS } from '@/seed/config/tiers'
 import { integrationSchema } from '@/land/schemas'
 import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter'
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     if (!rl.allowed) return createRateLimitResponse(rl)
 
     // Custom integrations are gated to ENTERPRISE and MASTER tiers
-    const tier = await getUserTier(user.id)
+    const tier = await resolveUserTier(user.id)
     if (!UNIFIED_TIERS[tier].customIntegrations) {
       return NextResponse.json(
         { error: 'Custom integrations require Premium or Master plan.' },
@@ -75,7 +75,7 @@ export async function GET() {
     if (!rl.allowed) return createRateLimitResponse(rl)
 
     // Custom integrations are gated to ENTERPRISE and MASTER tiers
-    const tier = await getUserTier(user.id)
+    const tier = await resolveUserTier(user.id)
     if (!UNIFIED_TIERS[tier].customIntegrations) {
       return NextResponse.json(
         { error: 'Custom integrations require Premium or Master plan.' },

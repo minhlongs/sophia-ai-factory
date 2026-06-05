@@ -194,8 +194,18 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     for (const wf of active) {
       try {
-        const record = await advanceOne(db, wf, executeStep)
-        actions.push(record)
+        // Loop advanceOne to allow parallel steps to execute in the same tick.
+        // Each iteration resolves one step (execute/unblock). With depends_on logic,
+        // all steps in a parallel group whose deps are met can unblock in sequence
+        // within the same tick.
+        for (let tick = 0; tick < 8; tick++) {
+          const record = await advanceOne(db, wf, executeStep)
+          actions.push(record)
+          // Stop if no more progress possible (step running, blocked waiting for deps, or done)
+          if (record.action !== 'execute' && record.action !== 'unblock') {
+            break
+          }
+        }
       } catch (err) {
         logger.warn('[workflow-stepper] advanceOne failed', { workflowId: wf.id, err })
         actions.push({ workflowId: wf.id, action: 'error' })

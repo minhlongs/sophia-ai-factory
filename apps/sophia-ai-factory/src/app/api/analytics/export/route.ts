@@ -17,7 +17,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { exportUsageToCsv } from '@/land/analytics/export';
 import { checkAdmin, canExport } from '@/land/analytics/rbac';
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Check export access
     const isAdmin = await checkAdmin(user.id);
-    const userTier = await getUserTier(user.id);
+    const userTier = await resolveUserTier(user.id);
 
     if (!canExport(userTier, isAdmin)) {
       return NextResponse.json(

@@ -6,16 +6,16 @@
  */
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
-import { fetchUsageMetrics, fetchRevenueMetrics, fetchLicenseMetrics } from '@/land/analytics/queries';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
+import { fetchUsageMetrics, fetchRevenueMetrics, fetchLicenseMetrics } from '@/forest/analytics/queries';
 import {
   checkAdmin,
   canAccessRevenue,
   verifyLicenseAccess,
   getUserLicenseNonce,
   getAnalyticsAccess,
-} from '@/land/analytics/rbac';
-import { calculateRoiMetrics } from '@/land/analytics/roi-calculator';
+} from '@/forest/analytics/rbac';
+import { calculateRoiMetrics } from '@/forest/analytics/roi-calculator';
 import type {
   UsageFilters,
   AnalyticsGranularity,
@@ -23,7 +23,7 @@ import type {
   RevenuePeriod,
   LicenseStatus,
   LicenseFilters,
-} from '@/land/analytics/types';
+} from '@/forest/analytics/types';
 
 // -------------------------------------------------------------------------
 // Auth context helper
@@ -39,7 +39,7 @@ export async function getUserContext() {
 
   const [isAdmin, tier] = await Promise.all([
     checkAdmin(user.id),
-    getUserTier(user.id),
+    resolveUserTier(user.id),
   ]);
 
   return {

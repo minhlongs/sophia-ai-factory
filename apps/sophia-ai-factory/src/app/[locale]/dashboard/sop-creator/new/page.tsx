@@ -6,7 +6,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { Palette, ArrowLeft } from 'lucide-react';
 import { SopCreateForm } from './sop-create-form';
 import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
@@ -26,7 +26,7 @@ export default async function NewSopPage({ params }: Props) {
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
 
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   if (tier !== 'MASTER') redirect(`/${locale}/pricing`);
 
   return (

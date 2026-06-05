@@ -8,7 +8,7 @@ import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { createServerClient } from '@/seed/db/client';
 import { TIER_CONFIG } from '@/seed/config/tiers';
 import { AccountTabs } from './account-tabs';
@@ -36,7 +36,7 @@ export default async function AccountPage({ params }: Props) {
   if (!user) redirect('/login');
 
   const [tier, profileResult] = await Promise.all([
-    getUserTier(user.id),
+    resolveUserTier(user.id),
     createServerClient()
       .from('user_profiles')
       .select('settings')

@@ -14,7 +14,7 @@
 
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { createServerClient } from '@/seed/db/client';
 import { submitMediaJob, SUPPORTED_MODELS } from '@/tree/clients/muapi-media-client';
 import { logger } from '@/seed/utils/logger-utility';
@@ -68,7 +68,7 @@ export async function generateImageAction(
   const { prompt, model, aspectRatio } = parsed.data;
 
   // Step 3: Tier gate
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   const allowedModels = TIER_ALLOWED_MODELS[tier] ?? TIER_ALLOWED_MODELS.BASIC;
   if (!allowedModels.includes(model)) {
     return {

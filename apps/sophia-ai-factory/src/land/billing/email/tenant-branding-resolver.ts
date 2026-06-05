@@ -4,9 +4,9 @@
  * @module billing/email/tenant-branding-resolver
  */
 
-import { getOrDefault } from '@/land/tenant-settings/registry';
-import { DEFAULT_BRANDING } from '@/land/tenant-settings/defaults';
-import type { BrandingSettings } from '@/land/tenant-settings/defaults';
+import { getOrDefault } from '@/seed/tenant-settings/registry';
+import { DEFAULT_BRANDING } from '@/seed/tenant-settings/defaults';
+import type { BrandingSettings } from '@/seed/tenant-settings/defaults';
 import { logger } from '@/seed/utils/logger-utility';
 
 export interface ResolvedEmailBranding {

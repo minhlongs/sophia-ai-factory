@@ -14,7 +14,7 @@ import { TrialBanner } from "./components/trial-banner";
 import { CommunityCTABanner } from "@/forest/components/community-cta-banner";
 import { AffiliateCTABanner } from "@/forest/components/dashboard/affiliate-cta-banner";
 import { getD1Raw } from "@/seed/db/client";
-import { getUserTier } from "@/seed/db/get-user-tier";
+import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import { SignOutButton } from "@/seed/auth/sign-out-button";
 import { DashboardSidebarNav } from "@/forest/components/dashboard/dashboard-sidebar-nav";
 
@@ -68,7 +68,7 @@ export default async function DashboardLayout({
   const [trialEndsAt, userTier, redeemedCode] = currentUser
     ? await Promise.all([
         getUserTrialEndsAt(currentUser.id),
-        getUserTier(currentUser.id),
+        resolveUserTier(currentUser.id),
         getRedeemedPromoCode(currentUser.id),
       ])
     : [null, null, null];

@@ -8,7 +8,7 @@ import { getTranslations } from "next-intl/server";
 import { isHeyGenHealthy } from "@/seed/health/heygen-health-check";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { getUserCredential } from "@/tree/credentials/user-credentials-repo";
-import { getUserTier } from "@/seed/db/get-user-tier";
+import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import Link from "next/link";
 import { buildAllProductSchemas, buildBreadcrumbSchema, BREADCRUMBS } from "@/land/seo/schema-org";
 
@@ -34,7 +34,7 @@ export default async function PricingPage() {
     ? Boolean(await getUserCredential(user.id, 'heygen').catch(() => null))
     : false;
 
-  const currentTier = user ? await getUserTier(user.id).catch(() => null) : null;
+  const currentTier = user ? await resolveUserTier(user.id).catch(() => null) : null;
 
   const productSchemas = buildAllProductSchemas();
   const breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing);

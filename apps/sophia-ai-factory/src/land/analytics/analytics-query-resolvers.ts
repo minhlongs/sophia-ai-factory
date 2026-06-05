@@ -6,7 +6,7 @@
  */
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { fetchUsageMetrics, fetchRevenueMetrics, fetchLicenseMetrics } from '@/land/analytics/queries';
 import {
   checkAdmin,
@@ -39,7 +39,7 @@ export async function getUserContext() {
 
   const [isAdmin, tier] = await Promise.all([
     checkAdmin(user.id),
-    getUserTier(user.id),
+    resolveUserTier(user.id),
   ]);
 
   return {

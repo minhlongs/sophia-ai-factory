@@ -5,7 +5,7 @@
  */
 
 import { Tier } from '@/seed/types';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 
 /**
  * Analytics feature access levels
@@ -102,7 +102,7 @@ export function getAnalyticsAccess(
  */
 export async function checkAdmin(userId: string): Promise<boolean> {
   // MASTER tier users are considered admins
-  const tier = await getUserTier(userId);
+  const tier = await resolveUserTier(userId);
   if (tier === 'MASTER') {
     return true;
   }

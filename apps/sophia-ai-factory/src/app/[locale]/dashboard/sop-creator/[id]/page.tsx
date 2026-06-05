@@ -9,7 +9,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getTemplateById } from '@/tree/sop/sop-repo';
 import { CategoryBadge } from '@/forest/components/sop/category-badge';
 import { ArrowLeft, Calendar, Clock, Coins, FileText } from 'lucide-react';
@@ -60,7 +60,7 @@ export default async function CreatorDetailPage({ params }: Props) {
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
 
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   if (tier !== 'MASTER') redirect(`/${locale}/pricing`);
 
   const db = getD1();

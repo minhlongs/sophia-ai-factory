@@ -14,7 +14,7 @@
 
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { createServerClient } from '@/seed/db/client';
 import { reserveVideoSlot, releaseVideoSlot } from '@/forest/quota/video-quota';
 import { emitVideoGenerate } from '@/forest/missions/emit-video-generate';
@@ -84,7 +84,7 @@ export async function generateVideoAction(
   const { prompt, language } = parsed.data;
 
   // Step 3: Atomic quota reservation
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   const reservation = await reserveVideoSlot(user.id, tier);
   if (!reservation.reserved) {
     return {

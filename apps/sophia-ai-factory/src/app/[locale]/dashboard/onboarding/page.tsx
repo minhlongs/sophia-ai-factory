@@ -14,7 +14,7 @@
 
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { WizardClient } from './wizard-client';
 import { completeOnboardingAction } from '@/app/actions/complete-onboarding-action';
@@ -75,7 +75,7 @@ export default async function OnboardingPage(
   // MASTER users who have completed all post-activation milestones are
   // auto-completed and sent to dashboard. This preserves the protected flow
   // (sophia-handover-rules.md: MASTER post-onboarding must not be re-prompted).
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   if (tier === 'MASTER') {
     const d1 = getD1();
     if (d1) {

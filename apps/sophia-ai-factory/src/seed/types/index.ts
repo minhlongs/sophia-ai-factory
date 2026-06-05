@@ -4,6 +4,14 @@
 
 // Tier system - defines customer subscription levels
 export type Tier = "BASIC" | "PREMIUM" | "ENTERPRISE" | "MASTER";
+// Tier ranking for comparison (used by resolve-user-tier)
+export const TIER_RANK: Record<Tier, number> = {
+  BASIC: 0,
+  PREMIUM: 1,
+  ENTERPRISE: 2,
+  MASTER: 3,
+};
+
 
 // Lowercase tier for license key generation
 export type TierLowercase = "basic" | "premium" | "enterprise" | "master";

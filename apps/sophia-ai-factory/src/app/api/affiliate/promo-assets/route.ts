@@ -4,14 +4,14 @@
  * Returns the affiliate promo library filtered to caller's tier.
  * Optional `?locale=en|vi` filters copy templates + outreach scripts.
  *
- * Tier resolved server-side via `getUserTier(user.id)`.
+ * Tier resolved server-side via `resolveUserTier(user.id)`.
  *
  * @module app/api/affiliate/promo-assets
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { listPromoAssetsForTier, type PromoLocale, type PromoNiche, type PromoTier } from '@/land/affiliates/promo-library';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   let tier: PromoTier;
   try {
-    const raw = await getUserTier(user.id);
+    const raw = await resolveUserTier(user.id);
     tier = normaliseTier(typeof raw === 'string' ? raw : null);
   } catch (err) {
     logger.warn('[promo-assets] getUserTier failed', { userId: user.id, error: String(err) });

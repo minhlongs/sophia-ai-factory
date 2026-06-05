@@ -18,7 +18,7 @@
 
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import type { User } from '@/seed/db/client';
 
 export interface RequireMasterTierOptions {
@@ -45,7 +45,7 @@ export async function requireMasterTier(
     redirect(loginRedirect);
   }
 
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   if (tier !== 'MASTER') {
     redirect(denyRedirect);
   }

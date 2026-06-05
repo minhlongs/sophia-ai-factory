@@ -4,7 +4,7 @@ import { NextRequest } from 'next/server';
 import { tierGuard } from '@/land/tier-guard';
 import { checkTierAccess } from '@/land/features';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 
 // Type for mock NextResponse.json return value
 interface MockResponse {
@@ -18,8 +18,8 @@ vi.mock('@/land/features');
 vi.mock('@/seed/auth/better-auth-session', () => ({
     getCurrentUserFromHeaders: vi.fn(),
 }));
-vi.mock('@/seed/db/get-user-tier', () => ({
-    getUserTier: vi.fn(),
+vi.mock('@/seed/db/resolve-user-tier', () => ({
+    resolveUserTier: vi.fn(),
 }));
 
 // Mock NextResponse
@@ -47,7 +47,7 @@ describe('API check-access Integration', () => {
             role: 'user'
         });
 
-        vi.mocked(getUserTier).mockResolvedValue('BASIC');
+        vi.mocked(resolveUserTier).mockResolvedValue('BASIC');
     });
 
     it('should return 403 if limit reached', async () => {
@@ -90,7 +90,7 @@ describe('API check-access Integration', () => {
 
     it('should check feature access', async () => {
         // Mock user tier as PREMIUM for this test
-        vi.mocked(getUserTier).mockResolvedValue('PREMIUM');
+        vi.mocked(resolveUserTier).mockResolvedValue('PREMIUM');
 
         vi.mocked(checkTierAccess).mockReturnValue({
             hasAccess: true,

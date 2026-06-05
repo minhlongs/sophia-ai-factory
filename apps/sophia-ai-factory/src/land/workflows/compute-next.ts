@@ -20,6 +20,8 @@ interface StepParams {
   step_order: number
   step_type: string
   workflow_id: string
+  parallel_group?: number | null
+  depends_on?: number[]
 }
 
 function parseParams(mission: StepMissionRow): StepParams {
@@ -69,20 +71,27 @@ export function computeNext(workflow: WorkflowRow, missions: StepMissionRow[]): 
     return { action: 'complete', reason: `All ${sorted.length} steps completed — last: ${lastResult.id}` }
   }
 
-  // Rule 4 — lowest blocked mission whose prior step is 'completed'
+  // Rule 4 — lowest blocked mission whose dependencies are all completed
   for (const mission of sorted) {
     if (mission.status !== 'blocked') continue
-    const { step_order } = parseParams(mission)
-    if (step_order <= 1) {
-      // Step 1 should never be blocked; skip
+    const { step_order, depends_on } = parseParams(mission)
+    if (step_order <= 1 && (!depends_on || depends_on.length === 0)) {
+      // Step 1 with no explicit deps should never be blocked; skip
       continue
     }
-    const priorStep = sorted.find(m => parseParams(m).step_order === step_order - 1)
-    if (priorStep?.status === 'completed') {
+    // If step has explicit depends_on, ALL must be completed
+    const deps = depends_on && depends_on.length > 0
+      ? depends_on
+      : [step_order - 1]
+    const allDepsCompleted = deps.every(depOrder => {
+      const depMission = sorted.find(m => parseParams(m).step_order === depOrder)
+      return depMission?.status === 'completed'
+    })
+    if (allDepsCompleted) {
       return {
         action: 'unblock',
         nextMissionId: mission.id,
-        reason: `Step ${step_order} unblocked (prior step completed)`,
+        reason: `Step ${step_order} unblocked (all dependencies completed)`,
       }
     }
   }

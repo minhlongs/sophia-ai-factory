@@ -3,7 +3,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
-import { getUserTier } from "@/seed/db/get-user-tier";
+import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import { generateScript, selectModelForTier } from "@/seed/ai/script-generator";
 import { logger } from "@/seed/utils/logger-utility";
 import type { Tier } from "@/seed/types";
@@ -30,7 +30,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   if (TIER_RANK[tier] < TIER_RANK.BASIC) {
     return NextResponse.json(
       { error: "Insufficient tier", requiredTier: "BASIC" },

@@ -14,7 +14,7 @@
  */
 
 import { getD1Safe } from '@/seed/db/client';
-import { normalizePlanToTier } from '@/seed/db/get-user-tier';
+import { normalizePlanToTier } from '@/seed/db/resolve-user-tier';
 import { Tier } from '@/seed/types';
 
 export interface UserEnrichment {

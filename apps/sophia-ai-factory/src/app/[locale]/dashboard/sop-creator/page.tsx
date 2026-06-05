@@ -2,7 +2,7 @@ import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { listTemplatesByAuthor, listCreatorSales } from '@/tree/sop/sop-repo';
 import { Palette, DollarSign, Plus, FileText, TrendingUp } from 'lucide-react';
 import type { SopTemplateRow } from '@/tree/sop/sop-types';
@@ -58,7 +58,7 @@ export default async function CreatorDashboardPage({ params }: Props) {
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
 
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   if (tier !== 'MASTER') redirect(`/${locale}/pricing`);
 
   const db = getD1();

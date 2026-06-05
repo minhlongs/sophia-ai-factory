@@ -21,9 +21,9 @@ import {
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in';
 import { runAffiliateScout } from '@/land/affiliates/scout';
-import { getOrDefault } from '@/land/tenant-settings/registry';
-import { DEFAULT_CRON } from '@/land/tenant-settings/defaults';
-import type { CronSettings } from '@/land/tenant-settings/defaults';
+import { getOrDefault } from '@/seed/tenant-settings/registry';
+import { DEFAULT_CRON } from '@/seed/tenant-settings/defaults';
+import type { CronSettings } from '@/seed/tenant-settings/defaults';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 

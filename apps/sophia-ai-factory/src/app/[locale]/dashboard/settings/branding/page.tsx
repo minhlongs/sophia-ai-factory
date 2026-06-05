@@ -9,8 +9,8 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { BrandingFormClient } from './branding-form-client';
-import type { BrandingSettings } from '@/land/tenant-settings/defaults';
-import { DEFAULT_BRANDING } from '@/land/tenant-settings/defaults';
+import type { BrandingSettings } from '@/seed/tenant-settings/defaults';
+import { DEFAULT_BRANDING } from '@/seed/tenant-settings/defaults';
 
 interface Props {
   params: Promise<{ locale: string }>;

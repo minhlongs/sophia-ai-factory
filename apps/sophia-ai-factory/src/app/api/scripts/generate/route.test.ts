@@ -5,8 +5,8 @@ vi.mock("@/seed/auth/better-auth-session", () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock("@/seed/db/get-user-tier", () => ({
-  getUserTier: vi.fn(),
+vi.mock("@/seed/db/resolve-user-tier", () => ({
+  resolveUserTier: vi.fn(),
 }));
 
 vi.mock("@/seed/ai/script-generator", async (importOriginal) => {
@@ -33,7 +33,7 @@ vi.mock("next/server", async (importOriginal) => {
 });
 
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
-import { getUserTier } from "@/seed/db/get-user-tier";
+import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import { generateScript } from "@/seed/ai/script-generator";
 
 interface MockResponse {
@@ -91,7 +91,7 @@ describe("POST /api/scripts/generate", () => {
 
   it("returns 400 on missing topic", async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getUserTier).mockResolvedValue("BASIC");
+    vi.mocked(resolveUserTier).mockResolvedValue("BASIC");
 
     const res = await POST(makeRequest({ audience: "beginners" })) as unknown as MockResponse;
 
@@ -101,7 +101,7 @@ describe("POST /api/scripts/generate", () => {
 
   it("returns 400 on missing audience", async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getUserTier).mockResolvedValue("BASIC");
+    vi.mocked(resolveUserTier).mockResolvedValue("BASIC");
 
     const res = await POST(makeRequest({ topic: "fitness" })) as unknown as MockResponse;
 
@@ -111,7 +111,7 @@ describe("POST /api/scripts/generate", () => {
 
   it("returns 200 with valid script structure on happy path (BASIC)", async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getUserTier).mockResolvedValue("BASIC");
+    vi.mocked(resolveUserTier).mockResolvedValue("BASIC");
     vi.mocked(generateScript).mockResolvedValue(mockScriptOutput);
 
     const res = await POST(
@@ -137,7 +137,7 @@ describe("POST /api/scripts/generate", () => {
 
   it("returns 200 with claude model for ENTERPRISE tier", async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getUserTier).mockResolvedValue("ENTERPRISE");
+    vi.mocked(resolveUserTier).mockResolvedValue("ENTERPRISE");
     vi.mocked(generateScript).mockResolvedValue(mockScriptOutput);
 
     const res = await POST(
@@ -151,7 +151,7 @@ describe("POST /api/scripts/generate", () => {
 
   it("returns 500 on generator error", async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getUserTier).mockResolvedValue("BASIC");
+    vi.mocked(resolveUserTier).mockResolvedValue("BASIC");
     vi.mocked(generateScript).mockRejectedValue(new Error("OpenRouter down"));
 
     const res = await POST(
@@ -164,7 +164,7 @@ describe("POST /api/scripts/generate", () => {
 
   it("returns 400 on invalid JSON body", async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getUserTier).mockResolvedValue("BASIC");
+    vi.mocked(resolveUserTier).mockResolvedValue("BASIC");
 
     const res = await POST(makeRawRequest("not json")) as unknown as MockResponse;
 
@@ -174,7 +174,7 @@ describe("POST /api/scripts/generate", () => {
 
   it("ignores client-supplied tier — BASIC user cannot escalate to MASTER", async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getUserTier).mockResolvedValue("BASIC");
+    vi.mocked(resolveUserTier).mockResolvedValue("BASIC");
     vi.mocked(generateScript).mockResolvedValue(mockScriptOutput);
 
     const res = await POST(

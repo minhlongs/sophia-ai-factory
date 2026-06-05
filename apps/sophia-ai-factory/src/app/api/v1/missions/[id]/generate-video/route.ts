@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { createServerClient } from '@/seed/db/client';
 import { inngest } from '@/forest/inngest/client';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
@@ -92,7 +92,7 @@ export async function POST(
       // ── Quota gate (defense-in-depth) ────────────────────────────────────
       // Parity with generateVideoAction — without this, an authenticated user
       // could bypass server-action quota by POSTing directly to this route.
-      const tier = await getUserTier(userId);
+      const tier = await resolveUserTier(userId);
       const reservation = await reserveVideoSlot(userId, tier);
       if (!reservation.reserved) {
         return NextResponse.json(

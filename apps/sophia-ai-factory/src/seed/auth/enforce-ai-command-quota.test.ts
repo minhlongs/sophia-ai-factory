@@ -7,8 +7,8 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@/seed/db/get-user-tier', () => ({
-  getUserTier: vi.fn(),
+vi.mock('@/seed/db/resolve-user-tier', () => ({
+  resolveUserTier: vi.fn(),
 }));
 
 const fromSelectEqGte = vi.fn();
@@ -24,10 +24,10 @@ vi.mock('@/seed/db/client', () => ({
   }),
 }));
 
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { checkAiCommandQuota } from '@/seed/auth/enforce-ai-command-quota';
 
-const mockGetUserTier = getUserTier as ReturnType<typeof vi.fn>;
+const mockResolveUserTier = resolveUserTier as ReturnType<typeof vi.fn>;
 
 describe('checkAiCommandQuota', () => {
   beforeEach(() => {
@@ -35,7 +35,7 @@ describe('checkAiCommandQuota', () => {
   });
 
   it('MASTER tier short-circuits as unlimited (no DB query)', async () => {
-    mockGetUserTier.mockResolvedValue('MASTER');
+    mockResolveUserTier.mockResolvedValue('MASTER');
     const result = await checkAiCommandQuota('user-master');
     expect(result.allowed).toBe(true);
     expect(result.limit).toBe(999);
@@ -43,7 +43,7 @@ describe('checkAiCommandQuota', () => {
   });
 
   it('BASIC tier allows when used (4) < limit (5)', async () => {
-    mockGetUserTier.mockResolvedValue('BASIC');
+    mockResolveUserTier.mockResolvedValue('BASIC');
     fromSelectEqGte.mockResolvedValueOnce({ data: Array.from({ length: 4 }, (_, i) => ({ id: `m${i}` })) });
     const result = await checkAiCommandQuota('user-basic');
     expect(result.allowed).toBe(true);
@@ -52,7 +52,7 @@ describe('checkAiCommandQuota', () => {
   });
 
   it('BASIC tier denies at boundary (used=5 >= limit=5)', async () => {
-    mockGetUserTier.mockResolvedValue('BASIC');
+    mockResolveUserTier.mockResolvedValue('BASIC');
     fromSelectEqGte.mockResolvedValueOnce({ data: Array.from({ length: 5 }, (_, i) => ({ id: `m${i}` })) });
     const result = await checkAiCommandQuota('user-basic-full');
     expect(result.allowed).toBe(false);
@@ -63,7 +63,7 @@ describe('checkAiCommandQuota', () => {
   });
 
   it('PREMIUM tier allows higher quota (used=10, limit=15)', async () => {
-    mockGetUserTier.mockResolvedValue('PREMIUM');
+    mockResolveUserTier.mockResolvedValue('PREMIUM');
     fromSelectEqGte.mockResolvedValueOnce({ data: Array.from({ length: 10 }, (_, i) => ({ id: `m${i}` })) });
     const result = await checkAiCommandQuota('user-premium');
     expect(result.allowed).toBe(true);
@@ -71,7 +71,7 @@ describe('checkAiCommandQuota', () => {
   });
 
   it('PREMIUM tier denies past 15', async () => {
-    mockGetUserTier.mockResolvedValue('PREMIUM');
+    mockResolveUserTier.mockResolvedValue('PREMIUM');
     fromSelectEqGte.mockResolvedValueOnce({ data: Array.from({ length: 15 }, (_, i) => ({ id: `m${i}` })) });
     const result = await checkAiCommandQuota('user-premium-full');
     expect(result.allowed).toBe(false);
@@ -79,7 +79,7 @@ describe('checkAiCommandQuota', () => {
   });
 
   it('ENTERPRISE tier shares 15 limit with PREMIUM (per UNIFIED_TIERS)', async () => {
-    mockGetUserTier.mockResolvedValue('ENTERPRISE');
+    mockResolveUserTier.mockResolvedValue('ENTERPRISE');
     fromSelectEqGte.mockResolvedValueOnce({ data: Array.from({ length: 14 }, (_, i) => ({ id: `m${i}` })) });
     const result = await checkAiCommandQuota('user-enterprise');
     expect(result.allowed).toBe(true);
@@ -87,7 +87,7 @@ describe('checkAiCommandQuota', () => {
   });
 
   it('null DB result is treated as zero usage', async () => {
-    mockGetUserTier.mockResolvedValue('BASIC');
+    mockResolveUserTier.mockResolvedValue('BASIC');
     fromSelectEqGte.mockResolvedValueOnce({ data: null });
     const result = await checkAiCommandQuota('user-empty');
     expect(result.allowed).toBe(true);
@@ -95,7 +95,7 @@ describe('checkAiCommandQuota', () => {
   });
 
   it('resetsAt is start of next month UTC (ISO)', async () => {
-    mockGetUserTier.mockResolvedValue('MASTER');
+    mockResolveUserTier.mockResolvedValue('MASTER');
     const result = await checkAiCommandQuota('user-reset-check');
     expect(result.resetsAt).toMatch(/^\d{4}-\d{2}-01T00:00:00\.000Z$/);
   });

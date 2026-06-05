@@ -8,7 +8,7 @@
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { ChangeTierClient } from '@/components/billing/change-tier-client';
 
 interface PageProps {
@@ -20,7 +20,7 @@ export default async function ChangeTierPage({ params }: PageProps): Promise<Rea
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
 
-  const currentTier = await getUserTier(user.id);
+  const currentTier = await resolveUserTier(user.id);
   const t = await getTranslations({ locale, namespace: 'dashboard.billing.changeTier' });
 
   return (

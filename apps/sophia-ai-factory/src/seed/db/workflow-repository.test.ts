@@ -321,3 +321,202 @@ describe('Mission params JSON structure', () => {
     expect(parsed).toEqual(original)
   })
 })
+
+// ── Tests: Workflow preset system ─────────────────────────────────────────────
+// Note: These test the type contracts and preset registry behavior.
+// createWorkflow() itself requires a D1 binding and is tested via integration.
+
+import {
+  SUPERVISOR_STEPS,
+  WORKFLOW_PRESETS,
+  WorkflowStep,
+  WorkflowPreset,
+  getStepsForPreset,
+  getPreset,
+  listPresetNames,
+} from '@/land/workflows/supervisor-steps'
+
+describe('WORKFLOW_PRESETS registry', () => {
+  it('should have a "default" preset', () => {
+    expect(WORKFLOW_PRESETS).toHaveProperty('default')
+  })
+
+  it('should have a "ceo-solo-media" preset', () => {
+    expect(WORKFLOW_PRESETS).toHaveProperty('ceo-solo-media')
+  })
+
+  it('default preset should have 3 steps matching SUPERVISOR_STEPS', () => {
+    const defaultPreset = WORKFLOW_PRESETS.default
+    expect(defaultPreset.steps).toHaveLength(3)
+    expect(defaultPreset.steps[0].order).toBe(1)
+    expect(defaultPreset.steps[1].order).toBe(2)
+    expect(defaultPreset.steps[2].order).toBe(3)
+    expect(defaultPreset.mode).toBe('linear')
+  })
+
+  it('ceo-solo-media preset should have 8 steps', () => {
+    const preset = WORKFLOW_PRESETS['ceo-solo-media']
+    expect(preset.steps).toHaveLength(8)
+    expect(preset.mode).toBe('parallel')
+    expect(preset.goal).toBe('$1,000,000 MRR')
+    expect(preset.targetScore).toBe(100)
+  })
+
+  it('ceo-solo-media preset should define soloRoles', () => {
+    const preset = WORKFLOW_PRESETS['ceo-solo-media']
+    expect(preset.soloRoles).toEqual(['ceo', 'marketer', 'analyst', 'ops'])
+  })
+
+  it('ceo-solo-media preset steps should have labels (en + vi)', () => {
+    const preset = WORKFLOW_PRESETS['ceo-solo-media']
+    for (const step of preset.steps) {
+      expect(step.label).toBeDefined()
+      expect(step.label?.en).toBeTruthy()
+      expect(step.label?.vi).toBeTruthy()
+    }
+  })
+
+  it('ceo-solo-media preset steps should have parallelGroup or dependsOn defined', () => {
+    const preset = WORKFLOW_PRESETS['ceo-solo-media']
+    const stepsWithParallel = preset.steps.filter(s => s.parallelGroup !== undefined)
+    const stepsWithDeps = preset.steps.filter(s => s.dependsOn !== undefined)
+    expect(stepsWithParallel.length).toBeGreaterThan(0)
+    expect(stepsWithDeps.length).toBeGreaterThan(0)
+  })
+
+  it('ceo-solo-media step orders should be 1-8', () => {
+    const preset = WORKFLOW_PRESETS['ceo-solo-media']
+    const orders = preset.steps.map(s => s.order)
+    expect(orders).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
+  })
+
+  it('ceo-solo-media parallel groups should be correctly assigned', () => {
+    const preset = WORKFLOW_PRESETS['ceo-solo-media']
+    const groupMap = new Map<number, WorkflowStep[]>()
+    for (const step of preset.steps) {
+      if (step.parallelGroup !== undefined) {
+        const group = groupMap.get(step.parallelGroup) ?? []
+        group.push(step)
+        groupMap.set(step.parallelGroup, group)
+      }
+    }
+    // Group 1: steps 1 and 2 (market research + audience analysis)
+    expect(groupMap.get(1)).toHaveLength(2)
+    // Group 2: step 4 only (monetization)
+    expect(groupMap.get(2)).toHaveLength(1)
+    // Group 3: steps 5 and 6 (production + distribution)
+    expect(groupMap.get(3)).toHaveLength(2)
+  })
+})
+
+describe('getStepsForPreset()', () => {
+  it('should return default steps for "default"', () => {
+    const steps = getStepsForPreset('default')
+    expect(steps).toHaveLength(3)
+    expect(steps[0].type).toBe('create_plan')
+  })
+
+  it('should return 8 steps for "ceo-solo-media"', () => {
+    const steps = getStepsForPreset('ceo-solo-media')
+    expect(steps).toHaveLength(8)
+    expect(steps[0].type).toBe('market_research')
+  })
+
+  it('should fall back to SUPERVISOR_STEPS for unknown preset', () => {
+    const steps = getStepsForPreset('nonexistent')
+    expect(steps).toHaveLength(SUPERVISOR_STEPS.length)
+    expect(steps).toEqual(SUPERVISOR_STEPS)
+  })
+})
+
+describe('getPreset()', () => {
+  it('should return preset metadata for "default"', () => {
+    const preset = getPreset('default')
+    expect(preset).toBeDefined()
+    expect(preset?.name).toBe('Default Supervisor')
+  })
+
+  it('should return preset metadata for "ceo-solo-media"', () => {
+    const preset = getPreset('ceo-solo-media')
+    expect(preset).toBeDefined()
+    expect(preset?.name).toBe('CEO Solo Media')
+    expect(preset?.goal).toBe('$1,000,000 MRR')
+  })
+
+  it('should return undefined for unknown preset', () => {
+    const preset = getPreset('nonexistent')
+    expect(preset).toBeUndefined()
+  })
+})
+
+describe('listPresetNames()', () => {
+  it('should return at least "default" and "ceo-solo-media"', () => {
+    const names = listPresetNames()
+    expect(names).toContain('default')
+    expect(names).toContain('ceo-solo-media')
+  })
+})
+
+// ── Tests: Step params JSON for preset workflows ──────────────────────────────
+describe('Step params JSON structure for preset workflows', () => {
+  it('should include parallel_group in params for preset steps', () => {
+    const preset = WORKFLOW_PRESETS['ceo-solo-media']
+    // Simulate how createWorkflow would build params for step with parallelGroup
+    const step = preset.steps.find(s => s.parallelGroup !== undefined)!
+    const params = JSON.stringify({
+      step_order: step.order,
+      step_type: step.type,
+      workflow_id: 'wf-test',
+      parallel_group: step.parallelGroup,
+      depends_on: step.dependsOn ?? [],
+      preset: 'ceo-solo-media',
+    })
+    const parsed = JSON.parse(params)
+    expect(parsed.parallel_group).toBe(step.parallelGroup)
+  })
+
+  it('should include depends_on array in params for preset steps', () => {
+    const preset = WORKFLOW_PRESETS['ceo-solo-media']
+    const step = preset.steps.find(s => s.dependsOn !== undefined && s.dependsOn.length > 0)!
+    const params = JSON.stringify({
+      step_order: step.order,
+      step_type: step.type,
+      workflow_id: 'wf-test',
+      parallel_group: step.parallelGroup ?? null,
+      depends_on: step.dependsOn ?? [],
+      preset: 'ceo-solo-media',
+    })
+    const parsed = JSON.parse(params)
+    expect(Array.isArray(parsed.depends_on)).toBe(true)
+    expect(parsed.depends_on.length).toBeGreaterThan(0)
+  })
+
+  it('should include preset name in params', () => {
+    const preset = WORKFLOW_PRESETS['ceo-solo-media']
+    const step = preset.steps[0]
+    const params = JSON.stringify({
+      step_order: step.order,
+      step_type: step.type,
+      workflow_id: 'wf-test',
+      parallel_group: step.parallelGroup ?? null,
+      depends_on: step.dependsOn ?? [],
+      preset: 'ceo-solo-media',
+    })
+    const parsed = JSON.parse(params)
+    expect(parsed.preset).toBe('ceo-solo-media')
+  })
+
+  it('should use "default" preset name for fallback steps', () => {
+    const step = SUPERVISOR_STEPS[0]
+    const params = JSON.stringify({
+      step_order: step.order,
+      step_type: step.type,
+      workflow_id: 'wf-test',
+      parallel_group: null,
+      depends_on: [],
+      preset: 'default',
+    })
+    const parsed = JSON.parse(params)
+    expect(parsed.preset).toBe('default')
+  })
+})

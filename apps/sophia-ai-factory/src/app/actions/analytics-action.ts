@@ -1,7 +1,7 @@
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import {
   getVideoAnalytics,
@@ -32,7 +32,7 @@ export async function getVideoAnalyticsAction(
   const user = await getCurrentUser();
   if (!user) return { success: false, error: 'Not authenticated' };
 
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   if (tier === 'BASIC') return { success: false, error: 'Analytics requires Premium tier' };
 
   try {
@@ -54,7 +54,7 @@ export async function getAnalyticsDashboardAction(
   const user = await getCurrentUser();
   if (!user) return { success: false, error: 'Not authenticated' };
 
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   if (tier === 'BASIC') return { success: false, error: 'Analytics requires Premium tier' };
 
   try {

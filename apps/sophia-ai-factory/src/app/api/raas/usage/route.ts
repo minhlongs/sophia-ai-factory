@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveOrgId } from '@/seed/auth/resolve-org-id';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { getMcuMonthlyLimit } from '@/seed/config/tiers';
 import type { Tier } from '@/seed/types';
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const days = Math.min(parseInt(searchParams.get('days') ?? '30'), 90);
 
-    const tier = (await getUserTier(user.id)) as Tier;
+    const tier = (await resolveUserTier(user.id)) as Tier;
     const monthlyLimit = getMcuMonthlyLimit(tier);
 
     // Calculate monthly MCU used from completed missions

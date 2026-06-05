@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { createApiKey, listApiKeys, tierToRateLimit } from '@/forest/api-keys/d1-store';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
@@ -60,7 +60,7 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {
-    const tier = await getUserTier(user.id);
+    const tier = await resolveUserTier(user.id);
     const rateLimit = tierToRateLimit(tier);
     const result = await createApiKey(db, user.id, parsed.data.name, rateLimit, parsed.data.permissions);
     return NextResponse.json(result, { status: 201 });

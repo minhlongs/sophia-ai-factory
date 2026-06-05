@@ -16,7 +16,7 @@
  */
 
 import type { Tier } from '@/seed/types'
-import { normalizePlanToTier } from '@/seed/db/get-user-tier'
+import { normalizePlanToTier } from '@/seed/db/resolve-user-tier'
 import { getD1Raw } from '@/seed/auth/resolve-org-id'
 
 export interface TenantContext {

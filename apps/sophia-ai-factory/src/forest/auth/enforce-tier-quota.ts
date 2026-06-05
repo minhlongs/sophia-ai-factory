@@ -14,7 +14,7 @@
  * @module forest/auth/enforce-tier-quota
  */
 
-import { getUserTier } from '@/seed/db/get-user-tier'
+import { resolveUserTier } from '@/seed/db/resolve-user-tier'
 import { checkVideoQuota, VIDEO_QUOTA_BY_TIER } from '@/forest/quota/video-quota'
 
 export interface TierQuotaResult {
@@ -39,7 +39,7 @@ export interface TierQuotaResult {
  * @returns TierQuotaResult
  */
 export async function checkTierQuota(userId: string): Promise<TierQuotaResult> {
-  const tier = await getUserTier(userId)
+  const tier = await resolveUserTier(userId)
   const limit = VIDEO_QUOTA_BY_TIER[tier] ?? 0
 
   if (limit === 0) {

@@ -11,7 +11,7 @@ import {
   resolveTenantMcpServers,
   _clearMCPRegistry,
 } from '../mcp-gateway';
-import { set } from '@/land/tenant-settings/registry';
+import { set } from '@/seed/tenant-settings/registry';
 import { createFakeD1 } from '../../../forest/publishing/__tests__/fake-d1-sqlite';
 import type { D1Database } from '@cloudflare/workers-types';
 
