@@ -34,7 +34,17 @@ function scheduledCampaignRunId(scheduleId: string, runDate: string): string {
 
 function isUniqueConstraintError(error: { message?: string } | null | undefined): boolean {
   const message = error?.message?.toLowerCase() ?? '';
-  return message.includes('unique') || message.includes('constraint') || message.includes('primary key');
+  return message.includes('unique constraint') || message.includes('primary key') || message.includes('duplicate');
+}
+
+function dateOnly(value: string): string {
+  return value.slice(0, 10);
+}
+
+function addDays(date: string, days: number): string {
+  const nextDate = new Date(`${date}T00:00:00.000Z`);
+  nextDate.setUTCDate(nextDate.getUTCDate() + days);
+  return nextDate.toISOString().split('T')[0];
 }
 
 interface ScheduledCampaignRow {
@@ -96,11 +106,12 @@ export async function GET(req: NextRequest) {
 
     for (const schedule of schedules as unknown as ScheduledCampaignRow[]) {
       try {
+        const runDate = dateOnly(schedule.next_run_date);
         let insertedCampaign = true;
         const { error: insertError } = await db.from('campaigns').insert({
-          id: scheduledCampaignRunId(schedule.id, today),
+          id: scheduledCampaignRunId(schedule.id, runDate),
           user_id: schedule.user_id,
-          title: `${schedule.topic} — ${today}`,
+          title: `${schedule.topic} — ${runDate}`,
           topic: schedule.topic,
           audience: null,
           script_content: {
@@ -117,7 +128,7 @@ export async function GET(req: NextRequest) {
         if (insertError) {
           if (isUniqueConstraintError(insertError)) {
             insertedCampaign = false;
-            logger.info(`[scheduled-campaigns] Campaign already exists for schedule ${schedule.id} on ${today}`);
+            logger.info(`[scheduled-campaigns] Campaign already exists for schedule ${schedule.id} on ${runDate}`);
           } else {
             logger.error(
               `[scheduled-campaigns] Insert failed for schedule ${schedule.id}`,
@@ -128,14 +139,11 @@ export async function GET(req: NextRequest) {
           }
         }
 
-        const nextDate = new Date();
-        nextDate.setDate(nextDate.getDate() + (schedule.interval_days ?? 7));
-
         const { data: updatedSchedules, error: updateError } = await db
           .from('scheduled_campaigns')
           .update({
-            next_run_date: nextDate.toISOString().split('T')[0],
-            last_run_date: today,
+            next_run_date: addDays(today, schedule.interval_days ?? 7),
+            last_run_date: runDate,
             updated_at: new Date().toISOString(),
           })
           .eq('id', schedule.id)

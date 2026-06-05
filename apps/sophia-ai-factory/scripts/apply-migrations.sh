@@ -1,5 +1,5 @@
 #!/bin/bash
-# apply-migrations.sh — Apply D1 migrations not yet applied to remote.
+# apply-migrations.sh — Apply canonical D1 migrations changed since a git ref.
 # Usage: bash scripts/apply-migrations.sh [REF]
 #   REF: git ref to compare against HEAD (default: HEAD~1)
 #   Example: bash scripts/apply-migrations.sh HEAD~3
@@ -9,12 +9,28 @@ REF="${1:-HEAD~1}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/.."
 
+DB_NAME="${DB_NAME:-sophia-raas-db}"
+WRANGLER_CONFIG="${WRANGLER_CONFIG:-wrangler.toml}"
+WRANGLER_REMOTE_FLAG="${WRANGLER_REMOTE_FLAG:---remote}"
+WRANGLER_SCOPE_ARGS=()
+if [ -n "$WRANGLER_REMOTE_FLAG" ]; then
+  WRANGLER_SCOPE_ARGS+=("$WRANGLER_REMOTE_FLAG")
+fi
+
 echo "==> Checking for migrations changed since $REF..."
 # --relative emits paths relative to CWD (apps/sophia-ai-factory/) so the
 # `[ -f "$m" ]` check + `wrangler --file=$m` resolve correctly. Without it,
 # git returns repo-root-relative paths (apps/sophia-ai-factory/migrations/...)
 # which double up after the `cd "$SCRIPT_DIR/.."` above.
-MIGRATIONS=$(git diff --name-only --relative "$REF" HEAD -- migrations/ src/seed/db/migrations/ 2>/dev/null | grep -E "\.sql$" || true)
+MIGRATIONS=$(git diff --name-only --relative "$REF" HEAD -- migrations/ 2>/dev/null | grep -E "\.sql$" | sort || true)
+NON_CANONICAL_D1_SQL=$(git diff --name-only --relative "$REF" HEAD -- src/seed/db/migrations/ 2>/dev/null | grep -E "\.sql$" | sort || true)
+
+if [ -n "$NON_CANONICAL_D1_SQL" ]; then
+  echo "❌ Refusing to apply non-canonical D1 migration files."
+  echo "Move these SQL files into migrations/ or document why they are not production D1 migrations:"
+  printf '%s\n' "$NON_CANONICAL_D1_SQL"
+  exit 2
+fi
 
 if [ -z "$MIGRATIONS" ]; then
   echo "No new migrations to apply."
@@ -30,8 +46,8 @@ for m in $MIGRATIONS; do
     echo "⚠️  File not found (may have been deleted): $m — skipping"
     continue
   fi
-  echo "==> Applying $(basename $m)"
-  npx wrangler d1 execute sophia-raas-db --file="$m" --remote
+  echo "==> Applying $(basename "$m") to $DB_NAME"
+  npx wrangler d1 execute "$DB_NAME" --config "$WRANGLER_CONFIG" --file="$m" "${WRANGLER_SCOPE_ARGS[@]}"
 done
 
 echo ""

@@ -235,6 +235,40 @@ describe('GET /api/cron/scheduled-campaigns', () => {
     expect(mocks.recordCronRun).toHaveBeenCalledWith(d1, 'scheduled-campaigns', 'success', undefined)
   })
 
+  it('uses the due date as the campaign idempotency key when retrying an overdue schedule', async () => {
+    vi.setSystemTime(new Date('2026-06-06T12:00:00.000Z'))
+    const { db, calls } = makeDb([
+      {
+        id: 'sched-1',
+        user_id: 'user-1',
+        topic: 'Weekly media plan',
+        template_script: 'Intro script',
+        interval_days: 7,
+        next_run_date: '2026-06-05',
+        is_active: 1,
+      },
+    ], null, { insertError: { message: 'UNIQUE constraint failed: campaigns.id' } })
+    mocks.createServerClient.mockReturnValue(db)
+
+    const res = await GET(makeRequest())
+    const body = await res.json() as { success: boolean; created: number; total: number; failures?: string[] }
+
+    expect(res.status).toBe(200)
+    expect(body).toMatchObject({ success: true, created: 0, total: 1 })
+    expect(body.failures).toBeUndefined()
+    expect(calls.campaignInsert[0]).toMatchObject({
+      id: 'scheduled_sched-1_20260605',
+      title: 'Weekly media plan — 2026-06-05',
+    })
+    expect(calls.scheduleUpdate[0]).toMatchObject({
+      last_run_date: '2026-06-05',
+      next_run_date: '2026-06-13',
+    })
+    expect(mocks.loggerInfo).toHaveBeenCalledWith(
+      '[scheduled-campaigns] Campaign already exists for schedule sched-1 on 2026-06-05',
+    )
+  })
+
   it('does not count created when schedule advance fails after campaign insert', async () => {
     const { db, calls } = makeDb([
       {
@@ -264,6 +298,45 @@ describe('GET /api/cron/scheduled-campaigns', () => {
     expect(calls.campaignInsert).toHaveLength(1)
     expect(mocks.loggerError).toHaveBeenCalledWith(
       '[scheduled-campaigns] Schedule advance failed for sched-1',
+      expect.any(Error),
+    )
+    expect(mocks.recordCronRun).toHaveBeenCalledWith(
+      d1,
+      'scheduled-campaigns',
+      'failure',
+      'Failed schedules: sched-1',
+    )
+  })
+
+  it('does not treat non-unique constraint insert failures as duplicate campaigns', async () => {
+    const { db, calls } = makeDb([
+      {
+        id: 'sched-1',
+        user_id: 'user-1',
+        topic: 'Weekly media plan',
+        template_script: 'Intro script',
+        interval_days: 7,
+        next_run_date: '2026-06-05',
+        is_active: 1,
+      },
+    ], null, { insertError: { message: 'CHECK constraint failed: campaigns.status' } })
+    mocks.createServerClient.mockReturnValue(db)
+    const d1 = {}
+    mocks.getD1Safe.mockResolvedValue(d1)
+
+    const res = await GET(makeRequest())
+    const body = await res.json() as { success: boolean; created: number; total: number; failures: string[] }
+
+    expect(res.status).toBe(200)
+    expect(body).toMatchObject({
+      success: true,
+      created: 0,
+      total: 1,
+      failures: ['sched-1'],
+    })
+    expect(calls.scheduleUpdate).toHaveLength(0)
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      '[scheduled-campaigns] Insert failed for schedule sched-1',
       expect.any(Error),
     )
     expect(mocks.recordCronRun).toHaveBeenCalledWith(
