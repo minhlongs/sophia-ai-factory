@@ -249,8 +249,7 @@ export const POST = withRateLimit(async function POST(request: Request) {
         return NextResponse.json({ error: `PayOS checkout failed: ${msg}` }, { status: 500 });
       }
     }
-
- (first customer or manual bank transfer) ────
+// ── Offline / cash payment path (first customer or manual bank transfer) ────
 if (paymentMethod === 'offline' || paymentMethod === 'cash') {
   const orderId = `sophia_${userId}_${Date.now()}`;
   try {
@@ -278,4 +277,15 @@ if (paymentMethod === 'offline' || paymentMethod === 'cash') {
     message: 'Your order has been received. Our team will contact you to confirm payment. / Don hang cua ban da duoc nhan. Doi ngu se lien he xac nhan thanh toan.',
   });
 }
+
+} catch (error) {
+  const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  logger.error('[Checkout] Unexpected error', new Error(errorMessage), {});
+  return NextResponse.json(
+    { error: `Failed to create checkout session: ${errorMessage}` },
+    { status: 500 }
+  );
+}
+}, { addHeaders: true, config: { intervalMs: 60000, maxRequests: 10 } });
+
 
