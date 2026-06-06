@@ -260,7 +260,7 @@
       "processing": "Processing...",
       "error_checkout": "Failed to start checkout. Please try again.",
       "error_network": "Network error. Please try again.",
-    "dismiss": "Dismiss",
+      "dismiss": "Dismiss",
       "master": {
         "best_value": "Best Value — Save 48%",
         "one_time": "one-time",
@@ -344,7 +344,8 @@
       "refund_other_plans": "Other plans (BASIC/PREMIUM/ENTERPRISE): used billing time is non-refundable. When you cancel, you keep access until the end of the paid month.",
       "refund_non_refundable": "Used credits, generated videos, and API fees are non-refundable.",
       "faq_3_a": "MASTER ($4,999 one-time) is fully refundable within 14 days, no reason required. BASIC/PREMIUM/ENTERPRISE are eligible for a 100% refund within 7 days for the first subscription. Monthly plans do not refund used billing time; cancel anytime and keep access until the end of the billing period.",
-      "faq_3_q": "What is your refund policy?"
+      "faq_3_q": "What is your refund policy?",
+      "tier_selection_label": "Tier selection label"
     },
     "roi": {
       "title": "Calculate Your Potential Revenue",

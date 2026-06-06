@@ -49,6 +49,7 @@ function getStarterSops(tier: Tier, agencyType: AgencyType): string[] {
 
 /** Look up user by email in D1 users table. Returns userId or null. */
 async function findUserByEmail(db: D1Database, email: string): Promise<string | null> {
+  email = email.toLowerCase().trim()
   try {
     const row = await db
       .prepare(`SELECT id FROM user WHERE email = ?1 LIMIT 1`)

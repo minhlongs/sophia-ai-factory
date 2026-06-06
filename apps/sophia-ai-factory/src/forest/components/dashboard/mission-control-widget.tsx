@@ -50,6 +50,28 @@ export function MissionControlWidget({ isVi = false }: MissionControlWidgetProps
 	const quotaPct = data.quota.total > 0 ? (data.quota.used / data.quota.total) * 100 : 0;
 	const weeklyTotal = data.last7d.reduce((a, b) => a + b.count, 0);
 
+
+	const hasNoActivity = data.quota.total === 0 && weeklyTotal === 0;
+
+	if (hasNoActivity) {
+		return (
+			<div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+				<div className="flex flex-col items-center gap-4 py-6">
+					<p className="text-zinc-400 text-sm text-center">
+						{isVi ? 'Chưa có hoạt động — bắt đầu chiến dịch đầu tiên' : 'No activity yet — start your first campaign'}
+					</p>
+					<Link
+						href="/dashboard/campaigns/new"
+						className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-violet-600 to-violet-500 text-white text-sm font-medium shadow shadow-violet-500/20 hover:opacity-90 transition-opacity"
+					>
+						{isVi ? 'Tạo chiến dịch' : 'Create campaign'}
+					</Link>
+				</div>
+			</div>
+		);
+	}
+
+
 	return (
 		<div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

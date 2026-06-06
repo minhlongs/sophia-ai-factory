@@ -17,13 +17,13 @@ export async function createCustomerUser(
   fullName: string,
 ): Promise<string> {
   const userId = genId();
-  const nowIso = new Date().toISOString();
+  const nowSec = Math.floor(Date.now() / 1000);
   await db
     .prepare(
       `INSERT INTO user (id, email, name, emailVerified, role, createdAt, updatedAt)
        VALUES (?1, ?2, ?3, 1, 'customer', ?4, ?4)`,
     )
-    .bind(userId, email, fullName, nowIso)
+    .bind(userId, email, fullName, nowSec, nowSec)
     .run();
 
  // M1: Also create user_profiles row so downstream queries don't get null
@@ -33,7 +33,7 @@ export async function createCustomerUser(
  `INSERT OR IGNORE INTO user_profiles (id, user_id, email, full_name, created_at, updated_at)
  VALUES (?1, ?2, ?3, ?4, ?5, ?5)`,
  )
- .bind(genId(), userId, email, fullName, nowIso)
+ .bind(genId(), userId, email, fullName, nowSec)
  .run();
  } catch (err) {
  logger.warn(

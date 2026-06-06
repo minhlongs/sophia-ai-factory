@@ -121,7 +121,7 @@ export async function getRedemptionCount(codeId: string, userId: string): Promis
 
 /** Record a new redemption. Returns the created row. */
 export async function recordRedemption(input: {
-  promoCcodeId: string;
+  promoCodeId: string;
   promoCode: string;
   userId: string;
   email?: string;
@@ -147,7 +147,7 @@ export async function recordRedemption(input: {
     )
     .bind(
       id,
-      input.promoCcodeId,
+      input.promoCodeId,
       input.promoCode.toUpperCase(),
       input.userId,
       input.email ?? null,
@@ -164,7 +164,7 @@ export async function recordRedemption(input: {
 
   return {
     id,
-    promo_code_id: input.promoCcodeId,
+    promo_code_id: input.promoCodeId,
     promo_code: input.promoCode.toUpperCase(),
     user_id: input.userId,
     email: input.email ?? null,

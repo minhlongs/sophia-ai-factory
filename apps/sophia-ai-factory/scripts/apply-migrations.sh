@@ -1,8 +1,8 @@
 #!/bin/bash
 # apply-migrations.sh — Apply canonical D1 migrations changed since a git ref.
 # Usage: bash scripts/apply-migrations.sh [REF]
-#   REF: git ref to compare against HEAD (default: HEAD~1)
-#   Example: bash scripts/apply-migrations.sh HEAD~3
+# REF: git ref to compare against HEAD (default: HEAD~1)
+# Example: bash scripts/apply-migrations.sh HEAD~3
 set -euo pipefail
 
 REF="${1:-HEAD~1}"
@@ -46,7 +46,24 @@ for m in $MIGRATIONS; do
     echo "⚠️  File not found (may have been deleted): $m — skipping"
     continue
   fi
-  echo "==> Applying $(basename "$m") to $DB_NAME"
+
+  # Guard: skip migrations already recorded in D1's _migrations table.
+  # This prevents crashes when re-running apply-migrations.sh after a
+  # prior successful deploy (set -euo pipefail would otherwise abort
+  # on ALTER TABLE duplicate column errors).
+  MIGRATION_NAME=$(basename "$m" .sql)
+  APPLIED_COUNT=$(npx wrangler d1 execute "$DB_NAME" \
+    --config "$WRANGLER_CONFIG" \
+    --remote \
+    --command "SELECT COUNT(*) AS cnt FROM _migrations WHERE name = '${MIGRATION_NAME}'" \
+    2>/dev/null | grep -o '"cnt":[0-9]*' | cut -d: -f2 || echo "0")
+
+  if [ "${APPLIED_COUNT:-0}" -gt 0 ]; then
+    echo "⏭️  ${MIGRATION_NAME} already applied — skipping"
+    continue
+  fi
+
+  echo "==> Applying ${MIGRATION_NAME} to ${DB_NAME}"
   npx wrangler d1 execute "$DB_NAME" --config "$WRANGLER_CONFIG" --file="$m" "${WRANGLER_SCOPE_ARGS[@]}"
 done
 

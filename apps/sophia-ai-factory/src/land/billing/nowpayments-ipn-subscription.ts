@@ -38,6 +38,15 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
     }
   }
 
+
+      // Log overpaid transactions (>1% above expected — rounding/gas fee anomaly)
+      if (actuallyPaid !== undefined && actuallyPaid > ipn.price_amount * 1.01) {
+        logger.warn('[NOWPayments] Overpaid', {
+          payment_id: ipn.payment_id,
+          expected: ipn.price_amount,
+          actual: actuallyPaid,
+        })
+      }
   const invoiceId = ipn.invoice_id
   if (!invoiceId) { logger.warn('[NOWPayments] finished: missing invoice_id', { paymentId: ipn.payment_id }); return }
 
@@ -77,9 +86,15 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
  const d1 = await getD1Raw()
  const { data: currentSub } = await db.from('subscriptions').select('plan').eq('org_id', orgId).single()
  const currentPlan = (currentSub as { plan?: string } | null)?.plan ?? ''
- const isDowngrade = currentPlan === 'master' && tier.toLowerCase() !== 'master'
+      // Out-of-order IPN guard: generalized downgrade protection.
+      // Previously only blocked MASTER->non-MASTER; now covers all tiers.
+      const TIER_RANK: Record<string, number> = { basic: 0, premium: 1, enterprise: 2, master: 3 }
+      const currentRank = TIER_RANK[currentPlan.toLowerCase()] ?? -1
+      const newRank = TIER_RANK[tier.toLowerCase()] ?? -1
+      const wouldDowngrade = currentRank > newRank
+      // const isDowngrade replaced by generalized wouldDowngrade check above
  const stmts = currentSub
-   ? isDowngrade
+   ? wouldDowngrade
      ? [
          d1.prepare('UPDATE subscriptions SET current_period_end=?, updated_at=? WHERE org_id=?')
          .bind(periodEnd, now, orgId),

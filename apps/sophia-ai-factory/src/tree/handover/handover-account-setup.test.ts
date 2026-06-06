@@ -90,7 +90,7 @@ describe('createCustomerUser', () => {
     expect(executed[0].bindings[0]).toBe(userId)
     expect(executed[0].bindings[1]).toBe('new@example.com')
     expect(executed[0].bindings[2]).toBe('New Customer')
-    expect(typeof executed[0].bindings[3]).toBe('string') // ISO timestamp
+    expect(typeof executed[0].bindings[3]).toBe('number') // epoch seconds
     expect(executed[1].sql).toContain('INSERT OR IGNORE INTO user_profiles')
   })
 

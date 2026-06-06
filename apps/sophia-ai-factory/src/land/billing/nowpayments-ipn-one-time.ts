@@ -211,6 +211,42 @@ export async function handleOneTimeRefunded(
     })
   }
 
+  // Revert tier from auto-handover: one-time refund → downgrade to BASIC
+  // The user's tier was set by the one-time purchase (e.g. FREE100 → MASTER).
+  // A full refund should undo that upgrade.
+  try {
+    const db = getDb()
+    const nowSec = Math.floor(Date.now() / 1000)
+    // Update subscriptions table
+    const subResult = await db
+      .prepare('UPDATE subscriptions SET plan = ?, updated_at = ? WHERE user_id = ? AND plan != ?')
+      .bind('basic', nowSec, userId, 'basic')
+      .run()
+    // Update organizations table for org-scoped users
+    const orgRow = await db
+      .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
+      .bind(userId)
+      .first<{ org_id: string }>()
+    if (orgRow?.org_id) {
+      await db
+        .prepare('UPDATE organizations SET plan = ?, updated_at = ? WHERE id = ? AND plan != ?')
+        .bind('basic', nowSec, orgRow.org_id, 'basic')
+        .run()
+    }
+    logger.info('[IPN/OneTime] Tier reverted to basic after refund', {
+      userId,
+      purchaseId,
+      paymentId: ipn.payment_id,
+      subscriptionRowsAffected: subResult.meta?.changes ?? 0,
+    })
+  } catch (tierErr) {
+    logger.error('[IPN/OneTime] Tier revert failed (non-fatal)', tierErr instanceof Error ? tierErr : undefined, {
+      userId,
+      purchaseId,
+      paymentId: ipn.payment_id,
+    })
+  }
+
   logger.info('[IPN/OneTime] Purchase refunded — credits zeroed, access revoked', {
     userId,
     purchaseId,
