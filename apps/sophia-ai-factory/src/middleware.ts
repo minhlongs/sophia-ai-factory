@@ -32,11 +32,23 @@ function generateNonce(): string {
   return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
 }
 
+const SUPPORTED_LOCALES = ['en', 'vi'] as const
+
+function isSupportedLocale(segment: string | undefined): boolean {
+  return segment !== undefined && SUPPORTED_LOCALES.includes(segment as 'en' | 'vi')
+}
+
 const intlMiddleware = createMiddleware({
-  locales: ['en', 'vi'],
+  locales: SUPPORTED_LOCALES,
   defaultLocale: 'vi',
   localePrefix: 'as-needed',
 })
+
+function redirectToDefault(request: NextRequest): NextResponse {
+  const url = request.nextUrl.clone()
+  url.pathname = '/'
+  return NextResponse.redirect(url)
+}
 
 /**
  * Attach the per-request CSP nonce header to a response and forward the nonce
@@ -56,6 +68,13 @@ export async function proxy(request: NextRequest) {
   const startTime = Date.now()
 
   if (isInternalOrStatic(pathname)) return NextResponse.next()
+
+  // Reject unsupported locale segments (e.g. /zh-CN, /ja, /fr) and redirect to root (/vi)
+  const pathLocale = pathname.split('/')[1]
+  if (pathLocale && !isSupportedLocale(pathLocale)) {
+    return redirectToDefault(request)
+  }
+
   if (request.method === 'OPTIONS') return handleCorsPrelight(origin)
 
   // Generate a fresh nonce for every HTML-bearing request.
