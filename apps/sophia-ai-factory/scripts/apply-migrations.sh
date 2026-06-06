@@ -52,7 +52,14 @@ for m in $MIGRATIONS; do
   # prior successful deploy (set -euo pipefail would otherwise abort
   # on ALTER TABLE duplicate column errors).
   MIGRATION_NAME=$(basename "$m" .sql)
-  APPLIED_COUNT=$(npx wrangler d1 execute "$DB_NAME" \
+TMP_SQL=$(mktemp /tmp/migration-check-XXXXXX.sql)
+echo "SELECT COUNT(*) AS cnt FROM _migrations WHERE name = '${MIGRATION_NAME}'" > "$TMP_SQL"
+APPLIED_COUNT=$(npx wrangler d1 execute "$DB_NAME" \
+ --config "$WRANGLER_CONFIG" \
+ --remote \
+ --file="$TMP_SQL" \
+ 2>/dev/null | grep -o '"cnt":[0-9]*' | cut -d: -f2 || echo "0")
+rm -f "$TMP_SQL"
     --config "$WRANGLER_CONFIG" \
     --remote \
     --command "SELECT COUNT(*) AS cnt FROM _migrations WHERE name = '${MIGRATION_NAME}'" \

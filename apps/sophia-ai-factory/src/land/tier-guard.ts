@@ -29,11 +29,11 @@ export interface LimitCheckResult {
  *
  * Usage: await enforceLimit(userId, LimitType.xxx)
  */
-export async function enforceLimit(userId: string, requiredTier: Tier): Promise<void> {
-  const result = await tierGuard.checkLimit(userId, requiredTier);
+export async function enforceLimit(userId: string, limitType: LimitType): Promise<void> {
+  const result = await tierGuard.checkLimit(userId, limitType);
   if (!result.allowed) {
     throw new Error(
-      `Access denied: requires ${requiredTier} tier, current: ${result.currentTier ?? 'unknown'}`,
+      `Access denied: requires ${limitType} tier, current: ${result.currentTier ?? 'unknown'}`,
     );
   }
 }
