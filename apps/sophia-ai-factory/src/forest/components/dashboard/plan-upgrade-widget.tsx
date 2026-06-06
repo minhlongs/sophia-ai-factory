@@ -24,6 +24,9 @@ interface CheckoutResponse {
   orderId?: string;
   error?: string;
   redirectTo?: string;
+  status?: string;
+  handoverId?: string;
+  magicLink?: string;
 }
 
 const TIER_ORDER: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
@@ -49,7 +52,9 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
         window.location.href = data.redirectTo;
         return;
       }
-      if (data.url) {
+      if (data.status === 'free_order_completed') {
+  window.location.href = `/${locale}/dashboard?handover=${data.handoverId}`;
+} else if (data.url) {
         window.location.href = data.url;
       } else {
         alert(data.error || 'Checkout failed. Please try again.');
