@@ -260,7 +260,7 @@
       "processing": "Đang Xử Lý...",
       "error_checkout": "Không thể bắt đầu thanh toán. Vui lòng thử lại.",
       "error_network": "Lỗi mạng. Vui lòng thử lại.",
-  "dismiss": "Đóng",
+      "dismiss": "Đóng",
       "master": {
         "best_value": "Giá Trị Tốt Nhất — Tiết Kiệm 48%",
         "one_time": "một lần",
@@ -344,7 +344,8 @@
       "refund_other_plans": "Các gói khác (BASIC/PREMIUM/ENTERPRISE): Không hoàn tiền cho thời gian đã sử dụng. Khi hủy, bạn vẫn dùng đến hết tháng đã thanh toán.",
       "refund_non_refundable": "Credits đã dùng, video đã tạo, và phí API không được hoàn lại.",
       "faq_3_a": "Gói MASTER ($4,999 một lần) được hoàn tiền đầy đủ trong 14 ngày — không cần lý do. BASIC/PREMIUM/ENTERPRISE được hoàn tiền 100% trong 7 ngày cho lần subscribe đầu tiên. Các gói tháng không hoàn tiền cho thời gian đã sử dụng; hủy bất cứ lúc nào và giữ quyền truy cập đến hết kỳ thanh toán.",
-      "faq_3_q": "Chính sách hoàn tiền của bạn là gì?"
+      "faq_3_q": "Chính sách hoàn tiền của bạn là gì?",
+      "tier_selection_label": "Chọn gói dịch vụ"
     },
     "roi": {
       "title": "Tính Toán Doanh Thu Tiềm Năng",

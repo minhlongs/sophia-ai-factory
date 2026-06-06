@@ -110,7 +110,20 @@ export async function flushOutbox(db: D1Database): Promise<{ sent: number; faile
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      await handleFailure(db, row, msg, now);
+      try {
+        await handleFailure(db, row, msg, now);
+      } catch (handleErr) {
+        // handleFailure itself failed — force-release the lock so the row
+        // is not permanently stuck in 'processing' state.
+        logger.error('[EmailOutbox] handleFailure threw, force-releasing lock', {
+          id: row.id,
+          cause: handleErr instanceof Error ? handleErr.message : String(handleErr),
+        });
+        await db
+          .prepare(`UPDATE welcome_email_outbox SET status='pending', locked_at=NULL, attempts=?1, last_error=?2, next_retry_at=?3 WHERE id=?4`)
+          .bind(row.attempts + 1, msg.slice(0, 500), now + 120, row.id)
+          .run();
+      }
       failed++;
     }
   }

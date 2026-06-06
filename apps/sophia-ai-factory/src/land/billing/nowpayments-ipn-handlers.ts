@@ -80,8 +80,12 @@ export async function processNowPaymentsIpn(
       case 'partially_paid':
         logger.info('[NOWPayments] Partial payment received — holding', { payment_id })
         break
-      case 'expired':
-        logger.info('[NOWPayments] Payment expired — no action', { payment_id })
+ case 'expired':
+ try {
+   await db.from('pending_orders').update({ status: 'expired' }).eq('order_id', ipn.order_id)
+ } catch { /* non-fatal */ }
+ logger.info('[NOWPayments] Payment expired', { payment_id, order_id: ipn.order_id })
+ logger.info('[NOWPayments] Payment expired — marked pending_orders expired', { payment_id, order_id: ipn.order_id })
         break
       default:
         logger.debug('[NOWPayments] Unhandled status', { payment_status, payment_id })
@@ -99,7 +103,7 @@ export async function processNowPaymentsIpn(
     // application-level failures that need manual intervention.
 if (isPermanentFailure(err)) {
   const { data: dlqRow } = await db
-    .from('payment_dlq')
+    .from('ipn_dead_letter_queue')
     .select('retry_count')
     .eq('event_id', eventId)
     .maybeSingle()

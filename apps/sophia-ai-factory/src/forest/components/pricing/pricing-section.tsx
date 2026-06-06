@@ -158,6 +158,7 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
         </div>
 
         {/* ── Billing period toggle (Monthly / Annual) ──────────────────────────── */}
+ <div role="group" aria-label="Chu kỳ thanh toán">
         <div className="mt-6 flex justify-center">
           <div className="inline-flex items-center rounded-xl border border-violet-500/20 bg-card p-1 gap-1 shadow-[0_0_15px_rgba(139,92,246,0.12)]">
             <button
@@ -187,8 +188,10 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
             </button>
           </div>
         </div>
+    </div>
 
         {/* ── Payment method selector ──────────────────────────────────────────── */}
+ <div role="group" aria-label="Phương thức thanh toán">
         <div className="mt-6 flex justify-center">
           <div className="inline-flex rounded-xl border border-violet-500/20 bg-card p-1 gap-1 shadow-[0_0_15px_rgba(139,92,246,0.12)]">
             <button
@@ -200,7 +203,7 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              💎 Pay with Crypto (USDT)
+              <span aria-hidden="true">💎</span> Pay with Crypto (USDT)
             </button>
             <button
               type="button"
@@ -211,9 +214,10 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              🏦 Chuyển khoản VND
+              <span aria-hidden="true">🏦</span> Chuyển khoản VND
             </button>
           </div>
+    </div>
         </div>
         {paymentMethod === "payos" ? (
           <p className="mt-2 text-center text-xs text-amber-400/70">
@@ -247,7 +251,8 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
           </p>
         </div>
 
-        <div className="mt-4 grid gap-8 md:grid-cols-3">
+        {/* ── Pricing tier selection (radiogroup) ───────────────────────────────── */}
+<div role="radiogroup" aria-label={t("pricing.tier_selection_label")} className="mt-4 grid gap-8 md:grid-cols-3">
           {PRICING_TIERS.map((pricing) => {
             const tierConfig = UNIFIED_TIERS[pricing.tier as keyof typeof UNIFIED_TIERS];
             const isAnnual = billingPeriod === "annual";

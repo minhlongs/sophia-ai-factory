@@ -180,7 +180,7 @@ let validation: Awaited<ReturnType<typeof validatePromoCode>> | null = null;
           // (nowpayments-ipn-subscription.ts handleFinished) after payment is confirmed.
           // Reserved redemptions older than 2h should be cleaned up by a cron job.
           await recordRedemption({
-            promoCcodeId: validation!.codeId,
+            promoCodeId: validation!.codeId,
             promoCode,
             userId,
             appliedToTier: tier,
@@ -207,9 +207,22 @@ let validation: Awaited<ReturnType<typeof validatePromoCode>> | null = null;
     }
 
     // ── FREE order bypass (free_full promo — skip payment, fire handover directly) ──
-if (promoCode && validation?.valid && calc.isFreeOrder) {
+if (promoCode && validation?.valid && calc.isFreeOrder && validation.discountType === 'free_full') {
   const freeOrderId = `sophia_${userId}_${Date.now()}`;
   try {
+    await writeOrder({
+      order_id: freeOrderId,
+      user_id: userId,
+      tier,
+      period: period || "monthly",
+      payment_method: "nowpayments",
+      amount_usd_cents: 0,
+      promo_code: promoCode,
+      customer_email: customerEmail,
+      invoice_url: undefined,
+      status: "completed",
+    });
+
     const result = await triggerAutoHandover({
       paymentId: `promo_${promoCode}_${userId}_${Date.now()}`,
       userId,
@@ -223,7 +236,7 @@ if (promoCode && validation?.valid && calc.isFreeOrder) {
 
     try {
       await recordRedemption({
-        promoCcodeId: validation!.codeId,
+        promoCodeId: validation!.codeId,
         promoCode,
         userId,
         appliedToTier: tier,
@@ -235,25 +248,6 @@ if (promoCode && validation?.valid && calc.isFreeOrder) {
     } catch (redemptErr) {
       logger.warn("[Checkout/FREE] Redemption record failed (non-fatal)", {
         error: redemptErr instanceof Error ? redemptErr.message : String(redemptErr),
-      });
-    }
-
-    try {
-      await writeOrder({
-        order_id: freeOrderId,
-        user_id: userId,
-        tier,
-        period: period || "monthly",
-        payment_method: "nowpayments",
-        amount_usd_cents: 0,
-        promo_code: promoCode,
-        customer_email: customerEmail,
-        invoice_url: undefined,
-        status: "completed",
-      });
-    } catch (orderErr) {
-      logger.warn("[Checkout/FREE] Order write failed (non-fatal)", {
-        error: orderErr instanceof Error ? orderErr.message : String(orderErr),
       });
     }
 

@@ -18,7 +18,36 @@ export interface LimitCheckResult {
   limit: number;
   currentusage: number;
   requiredTier: Tier;
+  currentTier?: Tier;
   message?: string;
+}
+
+/**
+ * Async enforce: checks the limit internally, throws Error(403) if not allowed.
+ * Defense-in-depth — callers who forget the check get a hard error instead of
+ * silent escalation. Wrap in try/catch in route handlers and translate to 403.
+ *
+ * Usage: await enforceLimit(userId, LimitType.xxx)
+ */
+export async function enforceLimit(userId: string, requiredTier: Tier): Promise<void> {
+  const result = await tierGuard.checkLimit(userId, requiredTier);
+  if (!result.allowed) {
+    throw new Error(
+      `Access denied: requires ${requiredTier} tier, current: ${result.currentTier ?? 'unknown'}`,
+    );
+  }
+}
+
+/**
+ * Synchronous enforce from a previously-fetched LimitCheckResult.
+ * Throws Error(403) if not allowed — callers catch and return HTTP 403.
+ */
+export function enforceLimitFromResult(result: LimitCheckResult): void {
+  if (!result.allowed) {
+    throw new Error(
+      `Access denied: requires ${result.requiredTier} tier, current: ${result.currentTier ?? 'unknown'}`,
+    );
+  }
 }
 
 export const tierGuard = {

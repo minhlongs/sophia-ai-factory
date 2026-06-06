@@ -70,6 +70,7 @@ const CRON_ROUTES = {
     '/api/cron/promo-trial-expiry',
     '/api/cron/status-rollup',
     '/api/cron/promo-cleanup',
+  '/api/cron/pending-orders-cleanup',
   ],
   '0 0 1 * *': [
     '/api/cron/mcu-monthly-reset',

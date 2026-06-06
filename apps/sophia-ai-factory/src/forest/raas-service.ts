@@ -108,7 +108,7 @@ export async function revokeLicenseKey(
   try {
     // Store revoked key with 1 year TTL
     await redisClient.set(cacheKey, '1', { ex: 31536000 });
-    logger.info('[RaaS Service] License key revoked', { key });
+    logger.info('[RaaS Service] License key revoked', { key: key.slice(0, 8) + '...' });
   } catch (error) {
     logger.error('[RaaS Service] Failed to revoke key', error instanceof Error ? error : new Error(String(error)));
     throw error;
