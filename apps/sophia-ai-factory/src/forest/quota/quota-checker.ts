@@ -10,7 +10,7 @@
  * @module quota/quota-checker
  */
 
-import { getCachedUsage, updateCachedUsage, invalidateQuotaCache } from './quota-checker-kv-cache';
+import { getCachedUsage, updateCachedUsage, invalidateQuotaCache, atomicIncrementQuota } from './quota-checker-kv-cache';
 import { getEffectiveQuotaLimits, calculateCurrentUsage } from './quota-checker-db';
 import { logOverageEvent } from './quota-checker-overage';
 import type { QuotaCheckContext, QuotaConfig, EnhancedQuotaCheckResult, ExceededType } from './quota-checker-types';
@@ -20,7 +20,7 @@ import { toError } from '@/seed/utils/to-error';
 
 export type { ExceededType, CachedQuota, QuotaCheckContext, QuotaConfig, EnhancedQuotaCheckResult } from './quota-checker-types';
 export { DEFAULT_CONFIG } from './quota-checker-types';
-export { getCachedUsage, updateCachedUsage, invalidateQuotaCache } from './quota-checker-kv-cache';
+export { getCachedUsage, updateCachedUsage, invalidateQuotaCache, atomicIncrementQuota } from './quota-checker-kv-cache';
 export { getEffectiveQuotaLimits, calculateCurrentUsage } from './quota-checker-db';
 export { logOverageEvent, getQuotaStatus } from './quota-checker-overage';
 
@@ -117,9 +117,9 @@ export async function checkQuotaWithOverage(
     requests: cached.requests + 1,
     timestamp: cached.timestamp,
   };
-  updateCachedUsage(userId, licenseNonce, reserved).catch((err) => {
-    logger.warn('[Quota Checker] KV cache update failed', toError(err))
-  });
+ atomicIncrementQuota(userId, licenseNonce, reserved.timestamp ?? Date.now(), requestedCredits).catch((err) => {
+   logger.warn('[Quota Checker] Atomic KV increment failed', toError(err))
+ });
 
   return {
     allowed: true,

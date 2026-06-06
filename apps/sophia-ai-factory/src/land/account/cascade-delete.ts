@@ -14,19 +14,48 @@
 import type { R2Bucket } from '@cloudflare/workers-types';
 import type { R2BucketRef } from '@/land/video/r2-binding';
 
-/** Dependents-first deletion order. ALL tables MUST scope by tenant_id. */
-export const ACCOUNT_DELETE_ORDER = [
-  'audit_log',
-  'publishing_results',
-  'publishing_jobs',
-  'publishing_channels',
-  'payout_batches',
-  'commission_ledger',
-  'conversion_events',
-  'affiliate_links',
-  'videos',
-  'sessions',
-  'users',
+/**
+ * Per-table delete instruction.
+ * - table:    table name to DELETE FROM
+ * - column:   column used in the WHERE clause (org_id | user_id | tenant_id)
+ *
+ * Tables are ordered dependents-first so FK constraints don't block
+ * intermediate deletions.
+ */
+export interface DeleteTable {
+  table: string;
+  column: 'org_id' | 'user_id' | 'tenant_id';
+}
+
+/** Dependents-first deletion order.
+ *
+ * Column semantics:
+ *   org_id     → org-scoped tables (most business data)
+ *   user_id    → user-scoped tables (personal API keys, videos)
+ *   tenant_id  → the top-level tenant row itself
+ */
+export const ACCOUNT_DELETE_ORDER: readonly DeleteTable[] = [
+  { table: 'audit_log',            column: 'tenant_id' },
+  { table: 'publishing_results',   column: 'tenant_id' },
+  { table: 'publishing_jobs',      column: 'tenant_id' },
+  { table: 'publishing_channels',  column: 'tenant_id' },
+  { table: 'payout_batches',       column: 'tenant_id' },
+  { table: 'commission_ledger',    column: 'tenant_id' },
+  { table: 'conversion_events',    column: 'tenant_id' },
+  { table: 'affiliate_links',      column: 'tenant_id' },
+  { table: 'org_members',          column: 'org_id'    },
+  { table: 'subscriptions',        column: 'org_id'    },
+  { table: 'org_balances',         column: 'org_id'    },
+  { table: 'transactions',         column: 'org_id'    },
+  { table: 'missions',             column: 'org_id'    },
+  { table: 'referral_codes',       column: 'org_id'    },
+  { table: 'raas_api_keys',        column: 'org_id'    },
+  { table: 'raas_api_usage',       column: 'org_id'    },
+  { table: 'usage_logs',           column: 'org_id'    },
+  { table: 'raas_user_api_keys',   column: 'user_id'   },
+  { table: 'videos',               column: 'user_id'   },
+  { table: 'sessions',             column: 'tenant_id' },
+  { table: 'users',                column: 'tenant_id' },
 ] as const;
 
 export interface CascadeDeleteResult {
@@ -34,6 +63,22 @@ export interface CascadeDeleteResult {
   byTable: Record<string, number>;
   /** Number of R2 objects successfully deleted (non-fatal: errors logged, not re-thrown). */
   r2Deleted: number;
+}
+
+/**
+ * Fetch the org_id for a tenant from the users table.
+ * Returns null if no row found (already deleted or no org).
+ */
+async function fetchOrgId(db: D1Database, userId: string): Promise<string | null> {
+  try {
+    const { results } = await db
+      .prepare(`SELECT org_id FROM user WHERE id = ? LIMIT 1`)
+      .bind(userId)
+      .all<{ org_id: string | null }>();
+    return results?.[0]?.org_id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -142,16 +187,33 @@ export async function cascadeDeleteAccount(
   const byTable: Record<string, number> = {};
   let total = 0;
 
+  // Pre-fetch org_id once — needed for org-scoped tables (org_members, subscriptions, etc.)
+  const orgId = await fetchOrgId(db, userId);
+
   // Phase 1: collect R2 keys before rows are deleted
   const r2Keys =
     r2Bucket !== undefined ? await collectTenantR2Keys(db, tenantId) : [];
 
   // Phase 2: D1 cascade delete (dependents-first order)
-  for (const table of ACCOUNT_DELETE_ORDER) {
+  for (const { table, column } of ACCOUNT_DELETE_ORDER) {
     try {
+      // Resolve the bind value based on column scope
+      let bindValue: string;
+      switch (column) {
+        case 'org_id':
+          bindValue = orgId ?? '';
+          break;
+        case 'user_id':
+          bindValue = userId;
+          break;
+        case 'tenant_id':
+          bindValue = tenantId;
+          break;
+      }
+
       const r = await db
-        .prepare(`DELETE FROM ${table} WHERE tenant_id = ?`)
-        .bind(tenantId)
+        .prepare(`DELETE FROM ${table} WHERE ${column} = ?`)
+        .bind(bindValue)
         .run();
       const c = r.meta?.rows_written ?? 0;
       byTable[table] = c;

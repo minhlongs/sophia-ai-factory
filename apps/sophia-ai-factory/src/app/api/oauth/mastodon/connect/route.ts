@@ -11,6 +11,7 @@ import { registerMastodonApp, getAuthorizationUrl } from '@/forest/publishing/ma
 import { storeOauthState } from '@/seed/auth/oauth-state-store';
 import { getD1Raw } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { isSafeUrl } from '@/seed/utils/is-safe-url';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -37,6 +38,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     } catch {
       return NextResponse.json({ error: 'Invalid instanceUrl' }, { status: 400 });
     }
+
+  // SSRF guard: reject URLs pointing to internal/private endpoints
+  if (!isSafeUrl(normalized)) {
+    return NextResponse.json({ error: 'Invalid instanceUrl' }, { status: 400 });
+  }
 
     const creds = await registerMastodonApp(normalized);
     const db = await getD1Raw();

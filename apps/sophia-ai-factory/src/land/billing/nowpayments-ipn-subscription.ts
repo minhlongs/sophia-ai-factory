@@ -18,9 +18,7 @@ import { markOrderCompleted, markOrderFailed, getOrderById } from '@/land/orders
 import { findReservedRedemption, finalizeRedemption, incrementUsedCount } from '@/land/promo/promo-repo'
 import { sendReceiptEmail } from './email/receipt-email-sender'
 import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox'
-
-/** 1% tolerance for crypto gas fees / exchange rounding */
-const UNDERPAYMENT_THRESHOLD = 0.99
+import { UNDERPAYMENT_THRESHOLD } from './nowpayments-ipn-underpaid'
 
 export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> {
   // Underpayment guard — reject if actually_paid < price_amount * 0.99
@@ -343,6 +341,20 @@ export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<void> 
   if (membership?.org_id) {
     await db.from('subscriptions').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('org_id', membership.org_id)
   }
+
+  // Invalidate license KV cache so next quota check reads fresh tier data (mirrors activation path)
+  try {
+    const d1 = await getD1Raw()
+    const lic = await d1
+      .prepare('SELECT nonce FROM raas_licenses WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 1')
+      .bind(userId)
+      .first<{ nonce: string }>()
+    if (lic?.nonce) {
+      const kv = globalThis.KV_KV as KVNamespace | undefined
+      await kv?.delete(`license:${lic.nonce}`).catch(() => { /* fail-open */ })
+    }
+  } catch { /* non-fatal */ }
+
   logger.info('[NOWPayments] Payment refunded — subscription cancelled', { userId, paymentId: ipn.payment_id })
 }
 
