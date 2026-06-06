@@ -36,6 +36,7 @@ export const pendingOrderInputSchema = z.object({
   promo_code: z.string().optional(),
   customer_email: z.string().email().optional(),
   invoice_url: z.string().url().optional(),
+ status: z.enum(["pending", "completed", "failed", "expired"]).default("pending").optional(),
 })
 
 export type PendingOrderInput = z.infer<typeof pendingOrderInputSchema>

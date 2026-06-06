@@ -157,14 +157,16 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
 
     // Reserve promo code redemption if provided — calculate actual discount
     let promoDiscountCents = 0;
-    let promoTrialDays = 0;
+let promoTrialDays = 0;
+let calc = { isFreeOrder: false, discountCents: 0, trialDays: 0 } as ReturnType<typeof calculateDiscount>;
+let validation: { valid: boolean; codeId: string; discountType: string; discountValue: number } | null = null;
     if (promoCode) {
       try {
-        const validation = await validatePromoCode(promoCode, { userId, tier });
+        validation = await validatePromoCode(promoCode, { userId, tier });
         if (validation.valid) {
           const tierConfig = UNIFIED_TIERS[tier as import('@/seed/types').Tier];
           const baseCents = tierConfig ? tierConfig.price * 100 : 0;
-          const calc = calculateDiscount({
+          calc = calculateDiscount({
             discountType: validation.discountType,
             discountValue: validation.discountValue,
             originalAmountCents: baseCents,
