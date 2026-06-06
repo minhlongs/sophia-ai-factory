@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import { vi, beforeEach } from 'vitest';
+import { vi, beforeEach, afterEach } from 'vitest';
 
 // Clear shared singletons before EVERY test across the suite.
 // Prevents flaky failures from cross-file state leaks — most notably
@@ -18,6 +18,32 @@ import { vi, beforeEach } from 'vitest';
 beforeEach(async () => {
   const { globalRateLimiter } = await import('@/forest/middleware/rate-limiter');
   globalRateLimiter.clear();
+});
+
+// ── Shared State Reset ──────────────────────────────────────────────────
+// Reset mock states between tests. CRITICAL: do NOT replace env.DB or
+// env.DB.prepare — test files configure their own mock chains and
+// replacing breaks them. Each test file calls vi.clearAllMocks() in
+// beforeEach + reconfigures mock return values there.
+afterEach(() => {
+  // Reset __d1Mock state (tests that use global D1 mock directly)
+  const d1Mock = (globalThis as Record<string, unknown>).__d1Mock as
+    | { prepare: ReturnType<typeof vi.fn> }
+    | undefined;
+  if (d1Mock?.prepare) {
+    d1Mock.prepare.mockReset();
+    d1Mock.prepare.mockReturnValue({
+      bind: vi.fn().mockReturnThis(),
+      first: vi.fn().mockResolvedValue(null),
+      all: vi.fn().mockResolvedValue({ results: [], success: true }),
+      run: vi.fn().mockResolvedValue({ success: true, meta: {} }),
+    });
+  }
+  // Reset KV store
+  const kvStore = (globalThis as Record<string, unknown>).__kvStore as
+    | Map<string, string>
+    | undefined;
+  if (kvStore) kvStore.clear();
 });
 
 // ── Environment Variables ──────────────────────────────────────────────
@@ -47,7 +73,9 @@ const kvMock = {
 (globalThis as Record<string, unknown>).KV_KV = kvMock;
 
 // ── Cloudflare D1 Mock ─────────────────────────────────────────────────
-// Must be a truthy object with .prepare() to satisfy getD1Sync() check.
+// Truthy object with .prepare() to satisfy getD1Sync() check.
+// Store initial reference so afterEach can reset mock state in-place
+// (NOT replace the chain — replacing breaks test file mock chains).
 const d1Mock = {
   prepare: vi.fn().mockReturnValue({
     bind: vi.fn().mockReturnThis(),
@@ -59,7 +87,22 @@ const d1Mock = {
   batch: vi.fn().mockResolvedValue([]),
   exec: vi.fn().mockResolvedValue({ count: 0, duration: 0 }),
 };
-(globalThis as Record<string, unknown>).__env = { KV: kvMock, DB: d1Mock };
+// Keep a stable reference on globalThis so afterEach can reset it
+// regardless of whether test files replace __env or just configure mocks.
+(globalThis as Record<string, unknown>).__d1Mock = d1Mock;
+// ── Cloudflare R2 Mock ──────────────────────────────────────────────────
+// Truthy object with .put/.get/.delete/.list stubs — prevents TypeError
+// when unit tests exercise code that accesses env.R2_BUCKET.
+const r2Mock = {
+  put: vi.fn().mockResolvedValue(undefined),
+  get: vi.fn().mockResolvedValue(null),
+  delete: vi.fn().mockResolvedValue(undefined),
+  head: vi.fn().mockResolvedValue(null),
+  list: vi.fn().mockResolvedValue({ objects: [], truncated: false }),
+};
+(globalThis as Record<string, unknown>).R2_BUCKET = r2Mock;
+
+(globalThis as Record<string, unknown>).__env = { KV: kvMock, DB: d1Mock, R2: r2Mock };
 
 // ── Mock next/link ─────────────────────────────────────────────────────
 type LinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
