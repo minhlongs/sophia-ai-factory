@@ -98,13 +98,20 @@ export async function POST(request: NextRequest) {
     // Mark onboarding complete in DB (primary) and cookie (fallback resilience)
     try {
       const db = await getD1Raw()
-      const nowSec = Math.floor(Date.now() / 1000)
+      const nowMs = Date.now()
       await db
         .prepare(
           'UPDATE user_profiles SET onboarding_completed_at = ? WHERE user_id = ?',
         )
-        .bind(nowSec, user.id)
+        .bind(nowMs, user.id)
         .run()
+  // H1: Auto-enable pre-installed SOPs after CEO completes BYOK wizard
+  await db
+    .prepare(
+      'UPDATE user_sop_installations SET enabled = 1 WHERE user_id = ? AND enabled = 0',
+    )
+    .bind(user.id)
+    .run()
     } catch (dbErr) {
       // Non-fatal — cookie fallback below ensures wizard gate is satisfied
       logger.warn('[SetupSave] Failed to set onboarding_completed_at in DB', { error: dbErr })

@@ -122,7 +122,7 @@ describe('triggerAutoHandover', () => {
       isFirstPurchase: true,
     });
 
-    expect(accountSetup.createCustomerUser).toHaveBeenCalledWith(db, 'newcustomer@test.com', 'newcustomer');
+    expect(accountSetup.createCustomerUser).toHaveBeenCalledWith(db, 'newcustomer@test.com', 'Newcustomer');
     expect(result.isNewCustomer).toBe(true);
     expect(result.handoverId).toBe('handover-abc');
     expect(result.skipped).toBe(false);

@@ -30,10 +30,10 @@ export function renderWelcomeMagicLink(data: WelcomeMagicLinkData): { html: stri
     : `Thank you for purchasing the <strong>${data.tier}</strong> plan! Your <strong>${agencyName}</strong> account is ready.`;
   const ctaLabel = isVi ? 'Truy Cập Ngay' : 'Access Your Account';
   const nextLabel = isVi ? 'Bước tiếp theo:' : 'Next steps:';
-  const setupWizardUrl = `${BASE_URL}/setup-wizard`;
+  const setupWizardUrl = `${BASE_URL}/dashboard/onboarding`;
   const setupWizardLinkLabel = isVi
-    ? `<a href="${setupWizardUrl}" style="color:#8b5cf6">Trợ lý cài đặt Sophia</a>`
-    : `<a href="${setupWizardUrl}" style="color:#8b5cf6">Sophia Setup Wizard</a>`;
+    ? `<a href="${setupWizardUrl}" style="color:#8b5cf6">Bắt đầu ngay</a>`
+    : `<a href="${setupWizardUrl}" style="color:#8b5cf6">Start Setup</a>`;
   const steps = isVi
     ? [
         'Click link bên trên → đăng nhập vào Sophia',
@@ -48,7 +48,7 @@ export function renderWelcomeMagicLink(data: WelcomeMagicLinkData): { html: stri
         'Your first campaign will be ready in 5–10 minutes!',
       ];
 
-  const setupCtaLabel = isVi ? 'Bắt đầu cài đặt ngay' : 'Start Setup Wizard';
+  const setupCtaLabel = isVi ? 'Bắt đầu ngay' : 'Start Setup';
 
   const content = `
     <p style="margin:0 0 16px">${greeting}</p>

@@ -260,6 +260,7 @@
       "processing": "Processing...",
       "error_checkout": "Failed to start checkout. Please try again.",
       "error_network": "Network error. Please try again.",
+    "dismiss": "Dismiss",
       "master": {
         "best_value": "Best Value — Save 48%",
         "one_time": "one-time",
@@ -1707,7 +1708,8 @@
     "crypto_send_title": "Send Exact Amount",
     "crypto_send_desc": "Copy the USDT amount shown on the payment page and send EXACTLY that amount from your wallet. Send more or less → your order won't be confirmed automatically and needs manual review (delays 24-48h).",
     "crypto_time_title": "Wait for Confirmation (5-30 min)",
-    "crypto_time_desc": "NOWPayments detects your payment automatically (5-30 min). Your tier activates instantly once confirmed — no manual steps. Check your email for the confirmation receipt."
+    "crypto_time_desc": "NOWPayments detects your payment automatically (5-30 min). Your tier activates instantly once confirmed — no manual steps. Check your email for the confirmation receipt.",
+    "dismiss": "Dismiss"
   },
   "campaign": {
     "template_selection": {

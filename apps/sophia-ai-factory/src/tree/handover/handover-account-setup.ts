@@ -1,9 +1,4 @@
-/**
- * Account and SOP setup helpers for handover creation.
- * Extracted from create/route for file size compliance.
- * @module lib/handover/handover-account-setup
- */
-
+/** * Account and SOP setup helpers for handover creation. * Extracted from create/route for file size compliance. * @module lib/handover/handover-account-setup */
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 
@@ -23,7 +18,6 @@ export async function createCustomerUser(
 ): Promise<string> {
   const userId = genId();
   const nowIso = new Date().toISOString();
-
   await db
     .prepare(
       `INSERT INTO user (id, email, name, emailVerified, role, createdAt, updatedAt)
@@ -32,6 +26,21 @@ export async function createCustomerUser(
     .bind(userId, email, fullName, nowIso)
     .run();
 
+ // M1: Also create user_profiles row so downstream queries don't get null
+ try {
+ await db
+ .prepare(
+ `INSERT OR IGNORE INTO user_profiles (id, user_id, email, full_name, created_at, updated_at)
+ VALUES (?1, ?2, ?3, ?4, ?5, ?5)`,
+ )
+ .bind(genId(), userId, email, fullName, nowIso)
+ .run();
+ } catch (err) {
+ logger.warn(
+ '[HandoverSetup] user_profiles insert failed (non-fatal)',
+ err instanceof Error ? err : undefined,
+ );
+ }
   return userId;
 }
 
@@ -59,7 +68,6 @@ export async function ensureCustomerOrg(
   const orgId = genId();
   const nowSec = Math.floor(Date.now() / 1000);
   const displayName = email.split('@')[0];
-
   await db
     .prepare(
       `INSERT INTO organizations (id, name, slug, created_at, updated_at)
@@ -92,11 +100,10 @@ export async function ensureCustomerOrg(
       err instanceof Error ? err : undefined,
     );
   }
-
   return orgId;
 }
 
-/** Upsert subscription tier for a user. Ensures org exists first (org_id NOT NULL). */
+/** Upsert subscription tier for a user. Also updates organizations.plan (F-02). */
 export async function upsertUserTier(
   db: D1Database,
   userId: string,
@@ -108,10 +115,15 @@ export async function upsertUserTier(
     const orgId = await ensureCustomerOrg(db, userId, email || userId);
     await db
       .prepare(
-        `INSERT OR REPLACE INTO subscriptions (id, org_id, user_id, tier, status, created_at, updated_at)
+        `INSERT OR REPLACE INTO subscriptions (id, org_id, user_id, plan, status, created_at, updated_at)
          VALUES (?1, ?2, ?3, ?4, 'active', ?5, ?5)`,
       )
-      .bind(genId(), orgId, userId, tier.toUpperCase(), nowSec)
+      .bind(genId(), orgId, userId, tier.toUpperCase(), 'active', nowSec, nowSec)
+      .run();
+    // F-02: Also sync organizations.plan so resolveUserTier() reads the correct plan
+    await db
+      .prepare(`UPDATE organizations SET plan = ?1, updated_at = ?2 WHERE id = ?3`)
+      .bind(tier.toUpperCase(), nowSec, orgId)
       .run();
   } catch (err) {
     logger.error('[HandoverSetup] Subscription upsert failed', err instanceof Error ? err : undefined);
@@ -127,20 +139,17 @@ export async function preInstallSops(
 ): Promise<string[]> {
   const installed: string[] = [];
   const nowSec = Math.floor(Date.now() / 1000);
-
   for (const slug of sopSlugs) {
     try {
       const template = await db
         .prepare(`SELECT id FROM sop_templates WHERE slug = ?1 AND status = 'published' LIMIT 1`)
         .bind(slug)
         .first<{ id: string }>();
-
       if (template) {
         const installId = genId();
         await db
           .prepare(
-            `INSERT OR IGNORE INTO user_sop_installations
-             (id, user_id, template_id, enabled, run_count, created_at)
+            `INSERT OR IGNORE INTO user_sop_installations (id, user_id, template_id, enabled, run_count, created_at)
              VALUES (?1, ?2, ?3, 0, 0, ?4)`,
           )
           .bind(installId, userId, template.id, nowSec)
@@ -151,7 +160,6 @@ export async function preInstallSops(
       logger.warn('[HandoverSetup] SOP install skipped', { slug, err: getErrorMessage(err) });
     }
   }
-
   return installed;
 }
 
@@ -173,7 +181,6 @@ export async function createHandoverRecord(
   const nowSec = Math.floor(Date.now() / 1000);
   const source = params.source ?? 'manual';
   const triggerPaymentId = params.triggerPaymentId ?? null;
-
   await db
     .prepare(
       `INSERT INTO customer_handovers
@@ -193,6 +200,5 @@ export async function createHandoverRecord(
       triggerPaymentId,
     )
     .run();
-
   return handoverId;
 }

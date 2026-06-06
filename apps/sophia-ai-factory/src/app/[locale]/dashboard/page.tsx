@@ -126,7 +126,10 @@ export default async function DashboardPage() {
     }
   }
 
-  const tierLabel = TIER_CONFIG[tier]?.label ?? tier;
+   const tierLabel = TIER_CONFIG[tier]?.label ?? tier;
+ // H3: firstRun = true when user has never executed any SOP (zero-run)
+ // Ensures first-campaign CTA shows for MASTER users regardless of pre-installed SOP count
+ const firstRun = recentRuns.length === 0;
   const jar = await cookies();
   const isVi = jar.get('NEXT_LOCALE')?.value !== 'en';
 
@@ -148,19 +151,22 @@ export default async function DashboardPage() {
 
 
 
-      {showFirstTimeSteps && sopCount === 0 ? (
-        <DashboardSetupSteps hasApiKeys={hasApiKeys} sopCount={sopCount} />
-      ) : sopCount === 0 ? (
-        // Onboarding done but no SOPs installed yet — show quick-action CTA
-        <DashboardFirstCampaignCta />
-      ) : (
-        <DashboardReturningUser
-          sopCount={sopCount}
-          mcuRemaining={balance.credits_remaining}
-          videosThisMonth={videosThisMonth}
-          recentRuns={recentRuns}
-        />
-      )}
-    </div>
-  );
+ {showFirstTimeSteps && sopCount === 0 ? (
+ <DashboardSetupSteps hasApiKeys={hasApiKeys} sopCount={sopCount} />
+ ) : sopCount === 0 && !firstRun ? (
+ // Onboarding done but no SOPs installed yet and not first run — show quick-action CTA
+ <DashboardFirstCampaignCta />
+ ) : firstRun ? (
+ // H3: Zero-run user (regardless of pre-installed SOP count) — show first-campaign CTA
+ <DashboardFirstCampaignCta />
+ ) : (
+ <DashboardReturningUser
+ sopCount={sopCount}
+ mcuRemaining={balance.credits_remaining}
+ videosThisMonth={videosThisMonth}
+ recentRuns={recentRuns}
+ />
+ )}
+ </div>
+ );
 }

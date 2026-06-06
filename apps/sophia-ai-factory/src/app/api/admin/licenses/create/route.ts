@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateLicenseKey } from '@/forest/raas-key-generator'
 import { createLicense, logLicenseCreation } from '@/forest/raas-audit'
-import { requireAdmin } from '@/seed/auth/require-admin'
+import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin'
 import { logger } from '@/seed/utils/logger-utility'
 import { Tier, TierLowercase } from '@/seed/types'
 import { createHash } from 'crypto'
@@ -29,7 +29,7 @@ const createLicenseSchema = z.object({
  * Body: { tier: string, expiresAt?: number (timestamp), metadata?: object, customerEmail?: string }
  */
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin(request);
+  const auth = await requireAdminWithRecentAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   try {

@@ -168,7 +168,7 @@ describe('triggerAutoHandover — user resolution', () => {
 
     const result = await triggerAutoHandover(baseOpts)
 
-    expect(mockCreateCustomerUser).toHaveBeenCalledWith(db, 'new@example.com', 'new')
+    expect(mockCreateCustomerUser).toHaveBeenCalledWith(db, 'new@example.com', 'New')
     expect(result.isNewCustomer).toBe(true)
   })
 
@@ -178,7 +178,7 @@ describe('triggerAutoHandover — user resolution', () => {
 
     await triggerAutoHandover({ ...baseOpts, email: 'jane.doe@example.com' })
 
-    expect(mockCreateCustomerUser).toHaveBeenCalledWith(db, 'jane.doe@example.com', 'jane.doe')
+    expect(mockCreateCustomerUser).toHaveBeenCalledWith(db, 'jane.doe@example.com', 'Jane Doe')
   })
 
   it('returns user_create_failed when createCustomerUser throws', async () => {
@@ -226,7 +226,7 @@ describe('triggerAutoHandover — tier upgrade short-circuit', () => {
 
     expect(mockSendTierUpgradeEmail).toHaveBeenCalledWith({
       toEmail: 'new@example.com',
-      ownerFullName: 'new',
+      ownerFullName: 'New',
       newTier: 'PREMIUM',
       locale: 'vi',
     })
