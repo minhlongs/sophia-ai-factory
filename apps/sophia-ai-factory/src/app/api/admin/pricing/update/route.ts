@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { requireAdmin } from '@/seed/auth/require-admin'
+import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin'
 import { setSkuPrice } from '@/seed/config/pricing-resolver'
 import { writeAuditLog } from '@/tree/admin/audit-log'
 import { getErrorMessage } from '@/seed/utils/to-error'
@@ -19,7 +19,7 @@ const bodySchema = z.object({
 })
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const auth = await requireAdmin(request)
+  const auth = await requireAdminWithRecentAuth(request)
   if (auth instanceof NextResponse) return auth
 
   let body: z.infer<typeof bodySchema>

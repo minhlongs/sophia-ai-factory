@@ -377,7 +377,7 @@ export function WizardClient() {
         // non-fatal: redirect still proceeds; the page-level auto-complete
         // also covers this when the user later runs 3 milestones.
       }
-      router.push(llmData.redirect || '/dashboard/settings');
+      router.push(llmData.redirect || '/dashboard');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (attempt < 3) {

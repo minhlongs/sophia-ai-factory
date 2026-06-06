@@ -33,6 +33,7 @@ import { batchIngestionRequestSchema } from '@/land/validation/services';
 import type { BatchUsageRecord, ApiKeyRecord } from '@/forest/usage-metering/types';
 import type { D1Response } from '@/seed/db/types';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
+import { isOriginAllowed } from '@/seed/security/cors-security-configuration';
 
 /**
  * Validate API key and return associated user info
@@ -183,13 +184,18 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
 }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 10 } });
 
 export async function OPTIONS(request: NextRequest) {
+  const origin = request.headers.get('origin');
+  if (!origin || !isOriginAllowed(origin)) {
+    return new NextResponse(null, { status: 403 });
+  }
   return new NextResponse(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': origin,
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, x-api-key',
       'Access-Control-Max-Age': '86400',
+      'Vary': 'Origin',
     },
   });
 }

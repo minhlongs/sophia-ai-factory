@@ -115,19 +115,6 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  const isConfigured = process.env.NEXT_PUBLIC_IS_CONFIGURED === 'true' || process.env.IS_CONFIGURED === 'true'
-  if (!isConfigured) {
-    const cleanedForSetup = pathnameWithoutLocale(pathname)
-    if (
-    (cleanedForSetup.startsWith('/dashboard') && cleanedForSetup !== '/dashboard/onboarding' && !cleanedForSetup.startsWith('/dashboard/onboarding/')) ||
-    cleanedForSetup.startsWith('/admin')
-  ) {
-      // Redirect to canonical onboarding URL (locale-free, intl middleware will add prefix).
-      // Previously redirected to /setup-wizard which fell through to marketing page — see
-      // plan 260519-0300-handover-funnel-critical-fixes/phase-02-setup-wizard-locale-routing.md.
-      return NextResponse.redirect(new URL('/dashboard/onboarding', request.url))
-    }
-  }
 
   const cleanPath = pathnameWithoutLocale(pathname)
 

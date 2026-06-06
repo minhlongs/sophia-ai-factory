@@ -83,7 +83,7 @@ describe('createCustomerUser', () => {
 
     const userId = await createCustomerUser(db, 'new@example.com', 'New Customer')
 
-    expect(executed).toHaveLength(1)
+    expect(executed).toHaveLength(2)
     expect(executed[0].sql).toContain('INSERT INTO user')
     expect(executed[0].sql).toContain("role")
     expect(executed[0].sql).toContain("'customer'")
@@ -91,6 +91,7 @@ describe('createCustomerUser', () => {
     expect(executed[0].bindings[1]).toBe('new@example.com')
     expect(executed[0].bindings[2]).toBe('New Customer')
     expect(typeof executed[0].bindings[3]).toBe('string') // ISO timestamp
+    expect(executed[1].sql).toContain('INSERT OR IGNORE INTO user_profiles')
   })
 
   it('returns a 32-char hex id (uuid without dashes)', async () => {

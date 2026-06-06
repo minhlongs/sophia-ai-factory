@@ -260,6 +260,7 @@
       "processing": "Đang Xử Lý...",
       "error_checkout": "Không thể bắt đầu thanh toán. Vui lòng thử lại.",
       "error_network": "Lỗi mạng. Vui lòng thử lại.",
+  "dismiss": "Đóng",
       "master": {
         "best_value": "Giá Trị Tốt Nhất — Tiết Kiệm 48%",
         "one_time": "một lần",
@@ -1707,7 +1708,8 @@
     "crypto_send_title": "Gửi Đúng Số Tiền",
     "crypto_send_desc": "Sao chép số USDT hiển thị trên trang thanh toán và gửi ĐÚNG số tiền đó từ ví của bạn. Gửi thiếu hoặc thừa → đơn hàng không tự động xác nhận, cần xử lý thủ công (mất 24-48 giờ).",
     "crypto_time_title": "Chờ Xác Nhận (5-30 phút)",
-    "crypto_time_desc": "NOWPayments tự động phát hiện giao dịch của bạn (5-30 phút). Gói dịch vụ được kích hoạt ngay khi xác nhận — không cần thao tác thêm. Kiểm tra email để nhận biên lai xác nhận."
+    "crypto_time_desc": "NOWPayments tự động phát hiện giao dịch của bạn (5-30 phút). Gói dịch vụ được kích hoạt ngay khi xác nhận — không cần thao tác thêm. Kiểm tra email để nhận biên lai xác nhận.",
+    "dismiss": "Đóng"
   },
   "campaign": {
     "template_selection": {

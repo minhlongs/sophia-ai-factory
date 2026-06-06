@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withEdgeCache } from "@/seed/cache/edge-cache";
+import { timingSafeEqual } from "@/land/webhooks/signature";
 
 // IMPORTANT: do NOT add `export const revalidate = N` here. The route reads
 // COMMIT_SHA / DEPLOYED_AT / OPENNEXT_VERSION from the runtime env. `revalidate`
@@ -56,7 +57,7 @@ function isIntrospectAuthorized(request: NextRequest, env: CloudflareEnv): boole
  const token = env.INTROSPECT_TOKEN;
  if (!token) return false;
  const auth = request.headers.get("authorization") ?? "";
- return auth === `Bearer ${token}`;
+ return timingSafeEqual(auth, `Bearer ${token}`);
 }
 
 // Public payload is deploy-stable for 60s — the only field that ever changes

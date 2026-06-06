@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { requireAdmin } from '@/seed/auth/require-admin';
+import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin';
 import { createCode, getCodeByCode } from '@/land/promo/promo-repo';
 
 export const dynamic = 'force-dynamic';
@@ -30,7 +30,7 @@ const createCodeSchema = z.object({
 });
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const auth = await requireAdmin(request);
+  const auth = await requireAdminWithRecentAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   const { user: admin } = auth;

@@ -20,7 +20,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import { requireAdmin } from '@/seed/auth/require-admin';
+import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin';
 import { z } from 'zod';
 
 const adjustQuotaSchema = z.object({
@@ -36,7 +36,7 @@ const adjustQuotaSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const auth = await requireAdmin(req);
+  const auth = await requireAdminWithRecentAuth(req);
   if (auth instanceof NextResponse) return auth;
 
   try {

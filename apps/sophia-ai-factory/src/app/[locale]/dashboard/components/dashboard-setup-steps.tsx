@@ -30,7 +30,7 @@ export async function DashboardSetupSteps({ hasApiKeys, sopCount }: DashboardSet
       titleKey: 'step1_title',
       descKey: 'step1_desc',
       ctaKey: 'step1_cta',
-      href: '/setup-wizard',
+      href: '/dashboard/onboarding',
       completed: hasApiKeys,
     },
     {

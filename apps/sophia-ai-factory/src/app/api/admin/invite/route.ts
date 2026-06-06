@@ -3,7 +3,7 @@ import { createServerClient } from "@/seed/db/client";
 import { UNIFIED_TIERS } from "@/seed/config/tiers";
 import type { Tier } from "@/seed/types";
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
-import { requireAdmin } from '@/seed/auth/require-admin';
+import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin';
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,7 @@ const VALID_TIERS: Tier[] = ["BASIC", "PREMIUM", "ENTERPRISE", "MASTER"];
  */
 // Wrap handler with rate limiting (20 requests per minute for admin endpoints)
 export const POST = withRateLimit(async function POST(request: NextRequest) {
-  const auth = await requireAdmin(request);
+  const auth = await requireAdminWithRecentAuth(request);
   if (auth instanceof NextResponse) return auth;
 
   try {

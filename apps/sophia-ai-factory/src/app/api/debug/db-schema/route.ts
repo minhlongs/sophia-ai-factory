@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { toError } from '@/seed/utils/to-error';
 import { verifyInternalSecret } from '@/seed/security/verify-internal-secret';
+import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin';
 
 function getD1(): D1Database | null {
   const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
@@ -18,9 +19,10 @@ function getD1(): D1Database | null {
 }
 
 export async function GET(request: NextRequest) {
-  if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Not Found' }, { status: 404 });
-  }
+  // Admin role + recent re-authentication required — NODE_ENV check is
+  // insufficient in Workers where NODE_ENV may not be 'production'
+  const auth = await requireAdminWithRecentAuth(request);
+  if (auth instanceof NextResponse) return auth;
 
   if (!verifyInternalSecret(request)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

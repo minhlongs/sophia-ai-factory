@@ -12,11 +12,7 @@ function getDb() {
   return createServerClient()
 }
 
-/**
- * Insert a new pending order row.
- * Returns the created row (re-select after insert for consistency).
- * Throws if order_id already exists (PK constraint).
- */
+/** Insert a new pending order row. Returns the created row. Throws if order_id already exists (PK). */
 export async function writeOrder(input: PendingOrderInput): Promise<PendingOrder> {
   const db = getDb()
   const row = {
@@ -39,10 +35,7 @@ export async function writeOrder(input: PendingOrderInput): Promise<PendingOrder
   return row as PendingOrder
 }
 
-/**
- * Fetch a single order by its ID.
- * Returns null if not found.
- */
+/** Fetch a single order by its ID. Returns null if not found. */
 export async function getOrderById(orderId: string): Promise<PendingOrder | null> {
   const db = getDb()
   const { data } = await db
@@ -54,9 +47,28 @@ export async function getOrderById(orderId: string): Promise<PendingOrder | null
 }
 
 /**
- * Flip status to completed and record payment_id.
- * Called from IPN handleFinished after D1 batch.
+ * F-03: Find the most recent pending order for a user + payment_method.
+ * Used by PayOS webhook to resolve the correct order_id when the
+ * paymentLinkId-based key doesn't match pending_orders.order_id.
  */
+export async function findPendingOrderByUserAndMethod(
+  userId: string,
+  paymentMethod: string,
+): Promise<PendingOrder | null> {
+  const db = getDb()
+  const { data } = await db
+    .from('pending_orders')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('payment_method', paymentMethod)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+    .limit(1)
+  const rows = (data as PendingOrder[] | null) ?? []
+  return rows[0] ?? null
+}
+
+/** Flip status to completed and record payment_id. */
 export async function markOrderCompleted(orderId: string, paymentId: string): Promise<void> {
   const db = getDb()
   await db
@@ -66,10 +78,7 @@ export async function markOrderCompleted(orderId: string, paymentId: string): Pr
   logger.info('[PendingOrder] Completed', { order_id: orderId, payment_id: paymentId })
 }
 
-/**
- * Flip status to failed.
- * Called from IPN handleFailed / expired flows.
- */
+/** Flip status to failed. */
 export async function markOrderFailed(orderId: string, reason?: string): Promise<void> {
   const db = getDb()
   await db
@@ -79,14 +88,7 @@ export async function markOrderFailed(orderId: string, reason?: string): Promise
   logger.info('[PendingOrder] Failed', { order_id: orderId, reason })
 }
 
-/**
- * Find an existing pending order for (user, tier, period, payment_method)
- * created within `sinceMs` ago. Used to dedupe rapid double-clicks on
- * the checkout button before the first invoice is paid or expired.
- *
- * Why: prevents the user from being charged twice for the same SKU during
- * the NOWPayments invoice TTL window.
- */
+/** Find an existing pending order for (user, tier, period, payment_method) within sinceMs. */
 export async function findActivePendingOrder(args: {
   userId: string
   tier: string
@@ -111,10 +113,7 @@ export async function findActivePendingOrder(args: {
   return rows[0] ?? null
 }
 
-/**
- * List recent orders for a user (for audit / dashboard history link).
- * Default limit 10, sorted by created_at desc.
- */
+/** List recent orders for a user. */
 export async function listOrdersByUser(userId: string, limit = 10): Promise<PendingOrder[]> {
   const db = getDb()
   const { data } = await db

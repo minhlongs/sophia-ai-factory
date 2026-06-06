@@ -65,6 +65,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Reject when TTS provider is not configured (prevents silent mock fallback in production)
+  const coquiUrl = process.env.COQUI_FLY_URL;
+  if (!coquiUrl) {
+    if (process.env.NODE_ENV !== 'production') {
+      logger.warn('[TTS] COQUI_FLY_URL not set — returning mock WAV', { jobId: 'unknown' });
+    } else {
+      logger.error('[TTS] COQUI_FLY_URL not set — rejecting production request (500)');
+      return NextResponse.json(
+        { error: 'TTS provider not configured', detail: 'COQUI_FLY_URL env var is missing' },
+        { status: 500 },
+      );
+    }
+  }
+
   let body: unknown;
   try {
     body = await request.json();
@@ -114,7 +128,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   }
 
-  const coquiUrl = process.env.COQUI_FLY_URL;
   const r2Key = tenantScopedKey(tenantId, jobId, 'audio.wav');
 
   if (!coquiUrl) {

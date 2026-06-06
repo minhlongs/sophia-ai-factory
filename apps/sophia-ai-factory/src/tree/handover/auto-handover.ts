@@ -6,45 +6,45 @@
  * @module lib/handover/auto-handover
  */
 
-import { getD1Raw } from '@/seed/db/client';
-import { logger } from '@/seed/utils/logger-utility';
-import { getErrorMessage } from '@/seed/utils/to-error';
-import { createCustomerUser, upsertUserTier, preInstallSops, createHandoverRecord } from '@/tree/handover/handover-account-setup';
-import { createMagicLinkToken } from '@/tree/handover/handover-magic-link';
-import { sendTierUpgradeEmail } from '@/tree/handover/handover-email-service';
-import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox';
-import { AGENCY_SOP_MAP, TIER_SOP_COUNTS } from '@/tree/handover/handover-types';
-import { installStarterSop } from '@/tree/handover/install-starter-sop';
-import type { AgencyType } from '@/tree/handover/handover-types';
-import type { Tier } from '@/seed/types';
+import { getD1Raw } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility'
+import { getErrorMessage } from '@/seed/utils/to-error'
+import { createCustomerUser, upsertUserTier, preInstallSops, createHandoverRecord } from '@/tree/handover/handover-account-setup'
+import { createMagicLinkToken } from '@/tree/handover/handover-magic-link'
+import { sendTierUpgradeEmail } from '@/tree/handover/handover-email-service'
+import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox'
+import { AGENCY_SOP_MAP, TIER_SOP_COUNTS } from '@/tree/handover/handover-types'
+import { installStarterSop } from '@/tree/handover/install-starter-sop'
+import type { AgencyType } from '@/tree/handover/handover-types'
+import type { Tier } from '@/seed/types'
 
 export interface AutoHandoverOptions {
-  paymentId: string;
-  userId?: string | null;
-  email: string;
-  fullName?: string | null;
-  tier: Tier;
-  agencyType?: AgencyType;
-  locale?: string;
-  isFirstPurchase: boolean;
+  paymentId: string
+  userId?: string | null
+  email: string
+  fullName?: string | null
+  tier: Tier
+  agencyType?: AgencyType
+  locale?: string
+  isFirstPurchase: boolean
 }
 
 export interface AutoHandoverResult {
-  handoverId: string | null;
-  isNewCustomer: boolean;
-  magicLink: string | null;
-  sopsInstalled: string[];
-  skipped: boolean;
-  skipReason?: string;
+  handoverId: string | null
+  isNewCustomer: boolean
+  magicLink: string | null
+  sopsInstalled: string[]
+  skipped: boolean
+  skipReason?: string
   /** Set when magic link generation or handover failed — surface to caller/client. */
-  error?: string;
+  error?: string
 }
 
 /** Derive starter SOP slugs from tier + agencyType, capped to tier limit. */
 function getStarterSops(tier: Tier, agencyType: AgencyType): string[] {
-  const cap = TIER_SOP_COUNTS[tier] ?? 3;
-  const candidates = AGENCY_SOP_MAP[agencyType] ?? AGENCY_SOP_MAP.other;
-  return candidates.slice(0, cap);
+  const cap = TIER_SOP_COUNTS[tier] ?? 3
+  const candidates = AGENCY_SOP_MAP[agencyType] ?? AGENCY_SOP_MAP.other
+  return candidates.slice(0, cap)
 }
 
 /** Look up user by email in D1 users table. Returns userId or null. */
@@ -53,10 +53,10 @@ async function findUserByEmail(db: D1Database, email: string): Promise<string | 
     const row = await db
       .prepare(`SELECT id FROM user WHERE email = ?1 LIMIT 1`)
       .bind(email)
-      .first<{ id: string }>();
-    return row?.id ?? null;
+      .first<{ id: string }>()
+    return row?.id ?? null
   } catch {
-    return null;
+    return null
   }
 }
 
@@ -66,10 +66,10 @@ async function handoverExistsForPayment(db: D1Database, paymentId: string): Prom
     const row = await db
       .prepare(`SELECT id FROM customer_handovers WHERE trigger_payment_id = ?1 LIMIT 1`)
       .bind(paymentId)
-      .first<{ id: string }>();
-    return !!row;
+      .first<{ id: string }>()
+    return !!row
   } catch {
-    return false;
+    return false
   }
 }
 
@@ -79,10 +79,10 @@ async function getExistingHandoverId(db: D1Database, userId: string): Promise<st
     const row = await db
       .prepare(`SELECT id FROM customer_handovers WHERE customer_user_id = ?1 ORDER BY created_at DESC LIMIT 1`)
       .bind(userId)
-      .first<{ id: string }>();
-    return row?.id ?? null;
+      .first<{ id: string }>()
+    return row?.id ?? null
   } catch {
-    return null;
+    return null
   }
 }
 
@@ -92,10 +92,10 @@ async function countUserPurchases(db: D1Database, userId: string): Promise<numbe
     const row = await db
       .prepare(`SELECT COUNT(*) as cnt FROM user_purchases WHERE user_id = ?1 AND status = 'paid'`)
       .bind(userId)
-      .first<{ cnt: number }>();
-    return row?.cnt ?? 0;
+      .first<{ cnt: number }>()
+    return row?.cnt ?? 0
   } catch {
-    return 0;
+    return 0
   }
 }
 
@@ -105,7 +105,7 @@ async function countUserPurchases(db: D1Database, userId: string): Promise<numbe
  * 307 redirects (localePrefix: 'as-needed' drops /en/ → /).
  */
 function localePath(locale: string): string {
-  return locale === 'en' ? '' : `/${locale}`;
+  return locale === 'en' ? '' : `/${locale}`
 }
 
 /**
@@ -120,52 +120,61 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
     agencyType = 'other',
     locale = 'vi',
     isFirstPurchase,
-  } = opts;
-  const fullName = opts.fullName ?? email.split('@')[0];
+  } = opts
+  const fullName = opts.fullName ?? email.split('@')[0].split('.').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
-  const db = await getD1Raw();
+  const db = await getD1Raw()
 
   // Idempotency — skip if already processed this paymentId
-  const alreadyProcessed = await handoverExistsForPayment(db, paymentId);
+  const alreadyProcessed = await handoverExistsForPayment(db, paymentId)
   if (alreadyProcessed) {
-    logger.info('[AutoHandover] Already processed — skip', { paymentId });
-    return { handoverId: null, isNewCustomer: false, magicLink: null, sopsInstalled: [], skipped: true, skipReason: 'duplicate_payment_id' };
+    // F-04: Return the existing handover instead of null so callers can use the id
+    const existingId = await getExistingHandoverId(db, opts.userId!)
+    logger.info('[AutoHandover] Already processed — skip', { paymentId })
+    return {
+      handoverId: existingId,
+      isNewCustomer: false,
+      magicLink: null,
+      sopsInstalled: [],
+      skipped: true,
+      skipReason: 'duplicate_payment_id',
+    }
   }
 
   // Resolve userId
-  let userId = opts.userId ?? null;
-  let isNewCustomer = false;
+  let userId = opts.userId ?? null
+  let isNewCustomer = false
 
   if (!userId) {
-    userId = await findUserByEmail(db, email);
+    userId = await findUserByEmail(db, email)
   }
 
   if (!userId) {
     // Create new customer user
     try {
-      userId = await createCustomerUser(db, email, fullName);
-      isNewCustomer = true;
-      logger.info('[AutoHandover] New customer created', { userId, email });
+      userId = await createCustomerUser(db, email, fullName)
+      isNewCustomer = true
+      logger.info('[AutoHandover] New customer created', { userId, email })
     } catch (err) {
-      logger.error('[AutoHandover] createCustomerUser failed', err instanceof Error ? err : undefined);
-      return { handoverId: null, isNewCustomer: false, magicLink: null, sopsInstalled: [], skipped: true, skipReason: 'user_create_failed' };
+      logger.error('[AutoHandover] createCustomerUser failed', err instanceof Error ? err : undefined)
+      return { handoverId: null, isNewCustomer: false, magicLink: null, sopsInstalled: [], skipped: true, skipReason: 'user_create_failed' }
     }
 
     // Auto-install starter SOP for MASTER-tier (FREE100) new users — non-blocking
     if (tier === 'MASTER') {
       installStarterSop(db, userId).catch((err) =>
         logger.warn('[AutoHandover] installStarterSop failed (non-fatal)', { error: String(err) }),
-      );
+      )
     }
   }
 
   // Upsert tier (ensureCustomerOrg inside — org_id NOT NULL satisfied)
-  await upsertUserTier(db, userId, tier, email);
+  await upsertUserTier(db, userId, tier, email)
 
   // Check existing handover
-  const existingHandoverId = await getExistingHandoverId(db, userId);
-  const purchaseCount = await countUserPurchases(db, userId);
-  const isTierUpgrade = !!existingHandoverId && !isFirstPurchase && purchaseCount > 1;
+  const existingHandoverId = await getExistingHandoverId(db, userId)
+  const purchaseCount = await countUserPurchases(db, userId)
+  const isTierUpgrade = !!existingHandoverId && !isFirstPurchase && purchaseCount > 1
 
   if (isTierUpgrade) {
     // Tier upgrade — just send upgrade email, no new SOPs
@@ -175,9 +184,9 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
         ownerFullName: fullName,
         newTier: tier,
         locale,
-      });
+      })
     } catch (err) {
-      logger.warn('[AutoHandover] Tier upgrade email failed (non-fatal)', { error: getErrorMessage(err) });
+      logger.warn('[AutoHandover] Tier upgrade email failed (non-fatal)', { error: getErrorMessage(err) })
     }
     return {
       handoverId: existingHandoverId,
@@ -185,14 +194,14 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
       magicLink: null,
       sopsInstalled: [],
       skipped: false,
-    };
+    }
   }
 
   // First handover — install SOPs + create record + magic link + welcome email
-  const sopSlugs = getStarterSops(tier, agencyType);
-  const installedSops = await preInstallSops(db, userId, sopSlugs);
+  const sopSlugs = getStarterSops(tier, agencyType)
+  const installedSops = await preInstallSops(db, userId, sopSlugs)
 
-  let handoverId: string | null = null;
+  let handoverId: string | null = null
   try {
     handoverId = await createHandoverRecord(db, {
       userId,
@@ -203,23 +212,23 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
       adminId: 'SYSTEM_AUTO',
       source: 'auto_payment',
       triggerPaymentId: paymentId,
-    });
+    })
   } catch (err) {
-    logger.error('[AutoHandover] createHandoverRecord failed', err instanceof Error ? err : undefined);
-    return { handoverId: null, isNewCustomer, magicLink: null, sopsInstalled: installedSops, skipped: true, skipReason: 'record_create_failed' };
+    logger.error('[AutoHandover] createHandoverRecord failed', err instanceof Error ? err : undefined)
+    return { handoverId: null, isNewCustomer, magicLink: null, sopsInstalled: installedSops, skipped: true, skipReason: 'record_create_failed' }
   }
 
   // Generate magic link — omit locale prefix for default locale ('en') to avoid
   // middleware 307 redirect (localePrefix: 'as-needed' means /en/... → /).
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network';
-  let magicLink: string | null = null;
-  let magicLinkError: string | undefined;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'
+  let magicLink: string | null = null
+  let magicLinkError: string | undefined
   try {
-    const token = await createMagicLinkToken(handoverId, { source: 'auto_signup' });
-    magicLink = `${appUrl}${localePath(locale)}/welcome/${token}`;
+    const token = await createMagicLinkToken(handoverId, { source: 'auto_signup' })
+    magicLink = `${appUrl}${localePath(locale)}/welcome/${token}`
   } catch (err) {
-    magicLinkError = getErrorMessage(err);
-    logger.warn('[AutoHandover] Magic link generation failed (non-fatal)', { error: magicLinkError });
+    magicLinkError = getErrorMessage(err)
+    logger.warn('[AutoHandover] Magic link generation failed (non-fatal)', { error: magicLinkError })
   }
 
   // Enqueue welcome email (durable — outbox flush cron retries up to 5x)
@@ -234,9 +243,9 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
         locale,
         magicLinkUrl: magicLink ?? `${appUrl}${localePath(locale)}/login`,
       },
-    });
+    })
   } catch (err) {
-    logger.warn('[AutoHandover] Welcome email enqueue failed (non-fatal)', { error: getErrorMessage(err) });
+    logger.warn('[AutoHandover] Welcome email enqueue failed (non-fatal)', { error: getErrorMessage(err) })
   }
 
   logger.info('[AutoHandover] Handover complete', {
@@ -246,7 +255,7 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
     isNewCustomer,
     sopsInstalled: installedSops.length,
     paymentId,
-  });
+  })
 
   return {
     handoverId,
@@ -255,5 +264,5 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
     sopsInstalled: installedSops,
     skipped: false,
     error: magicLinkError,
-  };
+  }
 }

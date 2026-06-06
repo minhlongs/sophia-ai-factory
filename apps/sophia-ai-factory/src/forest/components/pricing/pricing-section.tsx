@@ -39,6 +39,7 @@ export function PricingSection() {
     couponCode?: string;
   } | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const t = useTranslations("landing");
   const locale = useLocale();
   const { PRICING_TIERS, MASTER_TIER } = usePricingData();
@@ -101,6 +102,7 @@ export function PricingSection() {
         couponCode: appliedDiscount?.code,
       });
       setIsCheckoutOpen(true);
+		setCheckoutError(null);
 
       const response = await fetch("/api/checkout", {
         method: "POST",
@@ -125,11 +127,11 @@ export function PricingSection() {
         } : null);
       } else {
         setIsCheckoutOpen(false);
-        alert(data.error || t("pricing.error_checkout"));
+        setCheckoutError(data.error || t("pricing.error_checkout"));
       }
     } catch {
       setIsCheckoutOpen(false);
-      alert(t("pricing.error_network"));
+      setCheckoutError(t("pricing.error_network"));
     } finally {
       setLoading(null);
     }
@@ -223,6 +225,18 @@ export function PricingSection() {
           </p>
         )}
 
+
+		{checkoutError && (
+			<div className="mt-6 mx-auto max-w-xl rounded-xl border border-red-500/30 bg-red-500/10 p-4 flex items-center justify-between">
+				<p className="text-sm text-red-400">{checkoutError}</p>
+				<button
+					onClick={() => setCheckoutError(null)}
+					className="text-xs text-red-300 hover:text-red-200 underline ml-4 whitespace-nowrap"
+				>
+					{t("pricing.dismiss")}
+				</button>
+			</div>
+		)}
         {/* ── 100% Risk-Free Refund Policy Banner ── */}
         <div className="mt-8 mx-auto max-w-xl rounded-2xl border border-violet-500/20 bg-gradient-to-r from-violet-950/20 via-violet-900/10 to-cyan-950/20 p-4 text-center shadow-lg backdrop-blur-sm">
           <p className="flex items-center justify-center gap-2 text-xs md:text-sm text-zinc-300">
@@ -349,7 +363,7 @@ export function PricingSection() {
       {checkoutData && (
         <CheckoutPanel
           isOpen={isCheckoutOpen}
-          onClose={() => setIsCheckoutOpen(false)}
+          onClose={() => { setIsCheckoutOpen(false); setCheckoutError(null); }}
           tier={checkoutData.tier}
           priceCents={checkoutData.priceCents}
           discountedPriceCents={checkoutData.discountedPriceCents}

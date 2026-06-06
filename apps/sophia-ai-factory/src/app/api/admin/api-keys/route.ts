@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError, getErrorMessage } from '@/seed/utils/to-error'
-import { requireAdmin } from '@/seed/auth/require-admin'
+import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin'
 
 import {
   generateApiKey,
@@ -26,7 +26,7 @@ export const dynamic = 'force-dynamic'
  * List all API keys for the authenticated user
  */
 export async function GET(request: NextRequest) {
-  const auth = await requireAdmin(request);
+  const auth = await requireAdminWithRecentAuth(request);
   if (auth instanceof NextResponse) return auth;
   const userId = auth.user.id;
 
@@ -74,7 +74,7 @@ const createApiKeyBodySchema = z.object({
  * - rateLimitPerMinute: number (optional, default 100)
  */
 export async function POST(request: NextRequest) {
-  const auth = await requireAdmin(request);
+  const auth = await requireAdminWithRecentAuth(request);
   if (auth instanceof NextResponse) return auth;
   const userId = auth.user.id;
 

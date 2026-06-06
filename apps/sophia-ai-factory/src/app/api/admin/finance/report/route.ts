@@ -21,12 +21,21 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { getD1Database } from "@/land/analytics/cohort-calculator";
+import { requireAdminWithRecentAuth } from "@/seed/auth/require-admin";
+import { timingSafeEqual } from "@/land/webhooks/signature";
 
 const INTERNAL_SECRET = process.env.INTERNAL_SECRET || process.env.X_INTERNAL_SECRET || "";
 
+/**
+ * Timing-safe internal secret verification.
+ * Rejects when INTERNAL_SECRET is not configured (empty) to prevent bypass.
+ */
 function requireInternal(req: NextRequest) {
   const secret = req.headers.get("x-internal-secret") || "";
-  if (!INTERNAL_SECRET || secret !== INTERNAL_SECRET) {
+  if (!INTERNAL_SECRET) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  if (!timingSafeEqual(secret, INTERNAL_SECRET)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   return null;
@@ -41,6 +50,11 @@ function parsePeriod(fromStr: string, toStr: string) {
 }
 
 export async function GET(req: NextRequest) {
+  // Layer 1: admin role + recent re-authentication (ASVS V3.5.1)
+  const auth = await requireAdminWithRecentAuth(req);
+  if (auth instanceof NextResponse) return auth;
+
+  // Layer 2: internal secret (timing-safe, rejects when not configured)
   const unauthorized = requireInternal(req);
   if (unauthorized) return unauthorized;
 
