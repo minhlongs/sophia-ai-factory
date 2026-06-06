@@ -42,17 +42,39 @@ export async function getQuotaStatus(
   const dayStart = Math.floor(now / 86400) * 86400
   const monthStart = Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime() / 1000)
 
-  const [hourlyResult, dailyResult, monthlyResult] = await Promise.all([
-    db.from('usage_events').select('credits_used').eq('user_id', userId).eq('license_nonce', licenseNonce).gte('created_at', hourStart),
-    db.from('usage_events').select('credits_used').eq('user_id', userId).eq('license_nonce', licenseNonce).gte('created_at', dayStart),
-    db.from('usage_events').select('credits_used').eq('user_id', userId).eq('license_nonce', licenseNonce).gte('created_at', monthStart),
-  ])
+  let hourlyResult: { data: UsageEventRow[] | null } | null = null
+  let dailyResult: { data: UsageEventRow[] | null } | null = null
+  let monthlyResult: { data: UsageEventRow[] | null } | null = null
+
+  try {
+    const raw = await Promise.all([
+      db.from('usage_events').select('credits_used').eq('user_id', userId).eq('license_nonce', licenseNonce).gte('created_at', hourStart),
+      db.from('usage_events').select('credits_used').eq('user_id', userId).eq('license_nonce', licenseNonce).gte('created_at', dayStart),
+      db.from('usage_events').select('credits_used').eq('user_id', userId).eq('license_nonce', licenseNonce).gte('created_at', monthStart),
+    ])
+    // Cast each result to expected shape (ORM returns { data: Row[] | null })
+    hourlyResult = raw[0] as { data: UsageEventRow[] | null }
+    dailyResult = raw[1] as { data: UsageEventRow[] | null }
+    monthlyResult = raw[2] as { data: UsageEventRow[] | null }
+  } catch (error) {
+    logger.error('[Quota Enforcer] Usage query failed — failing open', toError(error), { userId, licenseNonce })
+    return {
+      usage: { hourly: 0, daily: 0, monthly: 0, requests: 0 },
+      limits,
+      percentages: { hourly: 0, daily: 0, monthly: 0 },
+      status: 'ok' as const,
+    }
+  }
+
+  const hourlyData = hourlyResult?.data as UsageEventRow[] | null | undefined
+  const dailyData = dailyResult?.data as UsageEventRow[] | null | undefined
+  const monthlyData = monthlyResult?.data as UsageEventRow[] | null | undefined
 
   const usage = {
-    hourly: (hourlyResult.data as unknown as UsageEventRow[])?.reduce((sum, r) => sum + (r.credits_used || 0), 0) || 0,
-    daily: (dailyResult.data as unknown as UsageEventRow[])?.reduce((sum, r) => sum + (r.credits_used || 0), 0) || 0,
-    monthly: (monthlyResult.data as unknown as UsageEventRow[])?.reduce((sum, r) => sum + (r.credits_used || 0), 0) || 0,
-    requests: dailyResult.data?.length || 0,
+    hourly: hourlyData?.reduce((sum, r) => sum + (r.credits_used || 0), 0) || 0,
+    daily: dailyData?.reduce((sum, r) => sum + (r.credits_used || 0), 0) || 0,
+    monthly: monthlyData?.reduce((sum, r) => sum + (r.credits_used || 0), 0) || 0,
+    requests: dailyData?.length || 0,
   }
 
   const percentages = {

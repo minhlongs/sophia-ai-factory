@@ -1,6 +1,58 @@
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { getKvClient as getRedisClient } from '@/land/redis'
 import type { CachedQuota } from './quota-checker-types';
+
+/**
+ * Atomic HINCRBY + EXPIRE Lua script for quota KV cache.
+ * Eliminates the race where a connection drop between kv.set() and
+ * kv.expire() leaves credits ghost-counted (key persisted but no TTL).
+ *
+ * KEYS[1]  = quota key (e.g. "quota:{userId}:{nonce}")
+ * ARGV[1]  = field (windowStart as string)
+ * ARGV[2]  = delta (credits to increment)
+ * ARGV[3]  = ttl seconds
+ */
+const ATOMIC_INCREMENT_EXPIRE_LUA = `local key = KEYS[1]
+local field = ARGV[1]
+local delta = tonumber(ARGV[2])
+local ttl = tonumber(ARGV[3])
+redis.call('HINCRBY', key, field, delta)
+redis.call('EXPIRE', key, ttl)
+return 1`;
+
+/**
+ * Atomically increment quota fields and refresh TTL in a single Redis round-trip.
+ * Uses Upstash Redis (via @/land/redis) which supports Lua eval — guarantees
+ * HINCRBY + EXPIRE are both-or-neither. Falls back to fail-open on unavailability.
+ */
+export async function atomicIncrementQuota(
+  userId: string,
+  licenseNonce: string,
+  windowStart: number,
+  requestedCredits: number,
+  ttlSeconds: number = 3600,
+): Promise<void> {
+  const kv = getRedisClient()
+  if (!kv) {
+    logger.debug('[Quota Checker] Redis not available, skipping atomic increment')
+    return
+  }
+  try {
+    const key = `quota:${userId}:${licenseNonce}`
+    await kv.eval(
+      ATOMIC_INCREMENT_EXPIRE_LUA,
+      [key],
+      [windowStart.toString(), requestedCredits.toString(), ttlSeconds.toString()],
+    )
+  } catch (error) {
+    // Fail-open: quota check already passed; a cache write failure must not
+    // block the request. Log for observability.
+    logger.error('[Quota Checker] Atomic Redis increment failed', toError(error))
+  }
+}
+
+
 
 function getKvClient() {
   if (typeof globalThis !== 'undefined' && (globalThis as Record<string, unknown>).KV_KV) {

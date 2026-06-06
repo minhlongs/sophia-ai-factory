@@ -1,5 +1,5 @@
 /**
- * Tests for cascadeDeleteAccount (Wave 22 Phase 06 + R2 cleanup fix).
+ * Tests for cascadeDeleteAccount (Wave 22 Phase 06 + R2 cleanup fix + multi-column fix).
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -7,6 +7,7 @@ import type { R2Bucket } from '@cloudflare/workers-types';
 import {
   cascadeDeleteAccount,
   ACCOUNT_DELETE_ORDER,
+  type DeleteTable,
 } from '../cascade-delete';
 
 interface SqlCall {
@@ -14,22 +15,29 @@ interface SqlCall {
   binds: unknown[];
 }
 
-function makeDb(opts: {
-  rowsPerTable?: Record<string, number>;
-  throwOn?: string;
-  r2KeyRows?: {
-    video_jobs?: Array<{
-      audio_r2_key: string | null;
-      visual_r2_key: string | null;
-      final_r2_key: string | null;
-    }>;
-    batch_jobs?: Array<{ input_r2_key: string | null }>;
-    thumbnail_variants?: Array<{
-      r2_key: string | null;
-      preview_r2_key: string | null;
-    }>;
-  };
-} = {}) {
+const DELETE_ORDER_TABLES = (ACCOUNT_DELETE_ORDER as readonly DeleteTable[]).map(
+  (d) => d.table,
+);
+
+function makeDb(
+  opts: {
+    rowsPerTable?: Record<string, number>;
+    throwOn?: string;
+    orgId?: string;
+    r2KeyRows?: {
+      video_jobs?: Array<{
+        audio_r2_key: string | null;
+        visual_r2_key: string | null;
+        final_r2_key: string | null;
+      }>;
+      batch_jobs?: Array<{ input_r2_key: string | null }>;
+      thumbnail_variants?: Array<{
+        r2_key: string | null;
+        preview_r2_key: string | null;
+      }>;
+    };
+  } = {},
+) {
   const calls: SqlCall[] = [];
   const db = {
     prepare: vi.fn().mockImplementation((sql: string) => ({
@@ -69,6 +77,21 @@ function makeDb(opts: {
           };
         }
 
+        // fetchOrgId SELECT (Phase 2 pre-fetch)
+        if (
+          sql.includes('SELECT') &&
+          sql.includes('org_id') &&
+          sql.includes('FROM user WHERE id')
+        ) {
+          return {
+            all: vi.fn().mockResolvedValue({
+              results: opts.orgId
+                ? [{ org_id: opts.orgId }]
+                : [{ org_id: null }],
+            }),
+          };
+        }
+
         // account_deletion_requests cleanup
         if (sql.includes('FROM account_deletion_requests')) {
           return {
@@ -76,16 +99,20 @@ function makeDb(opts: {
           };
         }
 
-        // ACCOUNT_DELETE_ORDER DELETE statements
-        for (const table of ACCOUNT_DELETE_ORDER) {
-          if (sql.includes(`FROM ${table}`)) {
-            if (opts.throwOn === table)
+        // ACCOUNT_DELETE_ORDER DELETE statements (new: column-aware)
+        for (const dt of ACCOUNT_DELETE_ORDER) {
+          if (sql.includes(`FROM ${dt.table}`)) {
+            if (opts.throwOn === dt.table)
               return {
-                run: vi.fn().mockRejectedValue(new Error(`fail-${table}`)),
+                run: vi.fn().mockRejectedValue(
+                  new Error(`fail-${dt.table}`),
+                ),
               };
             return {
               run: vi.fn().mockResolvedValue({
-                meta: { rows_written: opts.rowsPerTable?.[table] ?? 0 },
+                meta: {
+                  rows_written: opts.rowsPerTable?.[dt.table] ?? 0,
+                },
               }),
             };
           }
@@ -119,15 +146,59 @@ describe('cascadeDeleteAccount', () => {
     const { db, calls } = makeDb();
     const res = await cascadeDeleteAccount(db, 'user-1', 'tenant-1');
 
-    for (const table of ACCOUNT_DELETE_ORDER) {
+    for (const dt of ACCOUNT_DELETE_ORDER) {
       expect(
         calls.some(
-          (c) => c.sql.includes(`FROM ${table}`) && c.binds[0] === 'tenant-1',
+          (c) =>
+            c.sql.includes(`FROM ${dt.table}`) &&
+            c.sql.includes(`WHERE ${dt.column} = ?`) &&
+            c.binds[0] === (dt.column === 'org_id' ? '' : dt.column === 'user_id' ? 'user-1' : 'tenant-1'),
         ),
       ).toBe(true);
     }
-    expect(Object.keys(res.byTable)).toEqual([...ACCOUNT_DELETE_ORDER]);
+    expect(Object.keys(res.byTable)).toEqual([...DELETE_ORDER_TABLES]);
     expect(res.r2Deleted).toBe(0); // no bucket supplied
+  });
+
+  it('uses org_id column for org-scoped tables when orgId is available', async () => {
+    const { db, calls } = makeDb({ orgId: 'org-42' });
+    await cascadeDeleteAccount(db, 'user-1', 'tenant-1');
+
+    // org-scoped tables must use org_id = 'org-42'
+    const orgScopedTables = (ACCOUNT_DELETE_ORDER as readonly DeleteTable[])
+      .filter((dt) => dt.column === 'org_id')
+      .map((dt) => dt.table);
+
+    for (const table of orgScopedTables) {
+      expect(
+        calls.some(
+          (c) =>
+            c.sql.includes(`FROM ${table}`) &&
+            c.sql.includes('WHERE org_id = ?') &&
+            c.binds[0] === 'org-42',
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it('falls back to empty string when orgId is null', async () => {
+    const { db, calls } = makeDb({ orgId: undefined });
+    await cascadeDeleteAccount(db, 'user-1', 'tenant-1');
+
+    const orgScopedTables = (ACCOUNT_DELETE_ORDER as readonly DeleteTable[])
+      .filter((dt) => dt.column === 'org_id')
+      .map((dt) => dt.table);
+
+    for (const table of orgScopedTables) {
+      expect(
+        calls.some(
+          (c) =>
+            c.sql.includes(`FROM ${table}`) &&
+            c.sql.includes('WHERE org_id = ?') &&
+            c.binds[0] === '',
+        ),
+      ).toBe(true);
+    }
   });
 
   it('sums rows_written across tables into totalDeleted', async () => {
@@ -198,7 +269,7 @@ describe('cascadeDeleteAccount — R2 cleanup', () => {
     );
   });
 
-  it('collects R2 keys from batch_jobs via user→tenant join', async () => {
+  it('collects R2 keys from batch_jobs via user to tenant join', async () => {
     const bucket = makeR2Bucket();
     const { db } = makeDb({
       r2KeyRows: {
@@ -210,12 +281,15 @@ describe('cascadeDeleteAccount — R2 cleanup', () => {
     expect(bucket._getDeleted()).toContain('batch-uploads/u-1/input.zip');
   });
 
-  it('collects R2 keys from thumbnail_variants via user→tenant join', async () => {
+  it('collects R2 keys from thumbnail_variants via user to tenant join', async () => {
     const bucket = makeR2Bucket();
     const { db } = makeDb({
       r2KeyRows: {
         thumbnail_variants: [
-          { r2_key: 'thumbs/v-1/0.jpg', preview_r2_key: 'thumbs/v-1/0-preview.jpg' },
+          {
+            r2_key: 'thumbs/v-1/0.jpg',
+            preview_r2_key: 'thumbs/v-1/0-preview.jpg',
+          },
         ],
       },
     });
@@ -238,8 +312,10 @@ describe('cascadeDeleteAccount — R2 cleanup', () => {
       },
     });
     const res = await cascadeDeleteAccount(db, 'user-1', 't-1', bucket);
-    // same key in two tables → deleted once
-    expect(bucket._getDeleted().filter((k) => k === 'shared/key.mp4')).toHaveLength(1);
+    // same key in two tables -> deleted once
+    expect(
+      bucket._getDeleted().filter((k) => k === 'shared/key.mp4'),
+    ).toHaveLength(1);
     expect(res.r2Deleted).toBe(1);
   });
 
@@ -261,7 +337,9 @@ describe('cascadeDeleteAccount — R2 cleanup', () => {
   });
 
   it('logs but continues when individual R2 delete fails', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
     const bucket = makeR2Bucket({
       'tenants/t-1/videos/j1/final.mp4': 'fail',
     });
@@ -277,7 +355,7 @@ describe('cascadeDeleteAccount — R2 cleanup', () => {
       },
     });
     const res = await cascadeDeleteAccount(db, 'user-1', 't-1', bucket);
-    // one succeeded, one failed → r2Deleted = 1, not 0
+    // one succeeded, one failed -> r2Deleted = 1, not 0
     expect(res.r2Deleted).toBe(1);
     expect(consoleSpy).toHaveBeenCalled();
     consoleSpy.mockRestore();

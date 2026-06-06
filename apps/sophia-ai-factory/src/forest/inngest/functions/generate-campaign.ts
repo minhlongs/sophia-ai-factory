@@ -5,13 +5,14 @@ import { ServiceFactory } from '@/land/services/factory'
 import { MissingCredentialsError, ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/land/services/errors'
 import { startVideoGeneration } from '@/seed/ai/video-generator'
 import { getD1Client } from '@/seed/db/client'
-import { Tier } from '@/seed/types'
+import { Tier, TIER_RANK } from '@/seed/types'
 import { OpenClawGateway, type DistributionResult } from '@/tree/gateway/openclaw-gateway'
 import { SmartResumeEngine } from '@/tree/gateway/smart-resume-engine'
 import { YouTubeChannelAdapter } from '@/tree/gateway/adapters/youtube-channel-adapter'
 import { TikTokChannelAdapter } from '@/tree/gateway/adapters/tiktok-channel-adapter'
 import { TelegramNotificationAdapter } from '@/tree/gateway/adapters/telegram-notification-adapter'
 import { resolveOrgId } from '@/seed/auth/resolve-org-id'
+import { resolveUserTier } from '@/seed/db/resolve-user-tier'
 import { updateCampaignStatus, notifyUserByTelegram, markEngineMissionFailed } from './generate-campaign-db'
 import { notifyRefundRequired, notifyProviderError } from './generate-campaign-refund-notify'
 import { pollVideoStatus } from './generate-campaign-video-poller'
@@ -246,6 +247,28 @@ export const generateCampaign = inngest.createFunction(
       await runStepSafely('checkpoint-video-ready', async () => {
         await resumeEngine.checkpoint(campaignId, 'poll-video-status', { video_url: videoAssets.video_url, thumbnail_url: videoAssets.thumbnail_url })
       })
+
+
+ // ── Mid-flight tier re-validation before the most expensive step ──────────────
+ // User tier can change mid-flight (downgrade via NOWPayments cancellation or
+ // admin action). Re-resolve against DB and abort if it dropped below what the
+ // event carried, preventing distribution on a tier the user no longer qualifies for.
+ const currentTier = await step.run('validate-tier-mid-flight', async () => {
+   return resolveUserTier(userId)
+ })
+ const eventTierRank = TIER_RANK[tier] ?? 0
+ const currentTierRank = TIER_RANK[currentTier] ?? 0
+ if (currentTierRank < eventTierRank) {
+   logger.warn('[generateCampaign] Tier downgrade mid-flight — aborting distribution', {
+     campaignId, userId, eventTier: tier, currentTier,
+   })
+   await updateCampaignStatus(campaignId, 'failed', 0, {
+     error_message: `Tier downgraded mid-flight from ${tier} to ${currentTier}. Campaign aborted.`,
+   }).catch(() => undefined)
+   throw new NonRetriableError(
+     `Tier downgrade mid-flight: ${tier} → ${currentTier}. Please re-run with an active tier.`,
+   )
+ }
 
       const distributionResult = await runStepSafely('distribute-channels', async () => {
         const gateway = createGateway()
