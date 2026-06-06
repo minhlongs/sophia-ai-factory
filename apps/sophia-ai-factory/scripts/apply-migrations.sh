@@ -43,30 +43,24 @@ echo ""
 
 for m in $MIGRATIONS; do
   if [ ! -f "$m" ]; then
-    echo "⚠️  File not found (may have been deleted): $m — skipping"
+    echo "⚠️ File not found (may have been deleted): $m — skipping"
     continue
   fi
 
   # Guard: skip migrations already recorded in D1's _migrations table.
-  # This prevents crashes when re-running apply-migrations.sh after a
-  # prior successful deploy (set -euo pipefail would otherwise abort
-  # on ALTER TABLE duplicate column errors).
+  # Uses --file with temp SQL to avoid --command hanging in non-interactive mode.
   MIGRATION_NAME=$(basename "$m" .sql)
-TMP_SQL=$(mktemp /tmp/migration-check-XXXXXX.sql)
-echo "SELECT COUNT(*) AS cnt FROM _migrations WHERE name = '${MIGRATION_NAME}'" > "$TMP_SQL"
-APPLIED_COUNT=$(npx wrangler d1 execute "$DB_NAME" \
- --config "$WRANGLER_CONFIG" \
- --remote \
- --file="$TMP_SQL" \
- 2>/dev/null | grep -o '"cnt":[0-9]*' | cut -d: -f2 || echo "0")
-rm -f "$TMP_SQL"
+  TMP_SQL=$(mktemp /tmp/migration-check-XXXXXX.sql)
+  echo "SELECT COUNT(*) AS cnt FROM _migrations WHERE name = '${MIGRATION_NAME}'" > "$TMP_SQL"
+  APPLIED_COUNT=$(npx wrangler d1 execute "$DB_NAME" \
     --config "$WRANGLER_CONFIG" \
     --remote \
-    --command "SELECT COUNT(*) AS cnt FROM _migrations WHERE name = '${MIGRATION_NAME}'" \
+    --file="$TMP_SQL" \
     2>/dev/null | grep -o '"cnt":[0-9]*' | cut -d: -f2 || echo "0")
+  rm -f "$TMP_SQL"
 
   if [ "${APPLIED_COUNT:-0}" -gt 0 ]; then
-    echo "⏭️  ${MIGRATION_NAME} already applied — skipping"
+    echo "⏭️ ${MIGRATION_NAME} already applied — skipping"
     continue
   fi
 
