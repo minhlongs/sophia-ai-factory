@@ -18,6 +18,9 @@ interface CheckoutResponse {
   orderId?: string;
   error?: string;
   redirectTo?: string;
+  status?: string;
+  handoverId?: string;
+  magicLink?: string;
 }
 
 export function PricingSection() {

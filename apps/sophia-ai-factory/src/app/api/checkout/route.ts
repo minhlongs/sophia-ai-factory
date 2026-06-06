@@ -7,6 +7,7 @@ import { getCurrentUserFromHeaders, AuthSystemError } from '@/seed/auth/better-a
 import { validatePromoCode } from '@/land/promo/promo-validator';
 import { recordRedemption } from '@/land/promo/promo-repo';
 import { calculateDiscount } from '@/land/promo/promo-discount-calculator';
+import { triggerAutoHandover } from '@/tree/handover/auto-handover';
 import { logger } from '@/seed/utils/logger-utility';
 import { writeOrder, findActivePendingOrder } from '@/land/orders/pending-order-repo';
 import { derivePeriod, assertPeriodAllowed, assertPaymentMethodAllowed } from '@/land/checkout/checkout-validators';
@@ -177,7 +178,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
           // (nowpayments-ipn-subscription.ts handleFinished) after payment is confirmed.
           // Reserved redemptions older than 2h should be cleaned up by a cron job.
           await recordRedemption({
-            promoCcodeId: validation.codeId,
+            promoCcodeId: validation!.codeId,
             promoCode,
             userId,
             appliedToTier: tier,
@@ -203,7 +204,74 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
       }
     }
 
-    // ── NOWPayments path (crypto, default) ───────────────────────────────────
+    // ── FREE order bypass (free_full promo — skip payment, fire handover directly) ──
+if (promoCode && calc.isFreeOrder) {
+  const freeOrderId = `sophia_${userId}_${Date.now()}`;
+  try {
+    const result = await triggerAutoHandover({
+      paymentId: `promo_${promoCode}_${userId}_${Date.now()}`,
+      userId,
+      email: customerEmail ?? "",
+      fullName: null,
+      tier: tier as import("@/seed/types").Tier,
+      agencyType: "other",
+      locale: "vi",
+      isFirstPurchase: true,
+    });
+
+    try {
+      await recordRedemption({
+        promoCcodeId: validation!.codeId,
+        promoCode,
+        userId,
+        appliedToTier: tier,
+        discountAppliedCents: promoDiscountCents,
+        trialDaysGranted: promoTrialDays,
+        status: "redeemed",
+        handoverId: result.handoverId ?? undefined,
+      });
+    } catch (redemptErr) {
+      logger.warn("[Checkout/FREE] Redemption record failed (non-fatal)", {
+        error: redemptErr instanceof Error ? redemptErr.message : String(redemptErr),
+      });
+    }
+
+    try {
+      await writeOrder({
+        order_id: freeOrderId,
+        user_id: userId,
+        tier,
+        period: period || "monthly",
+        payment_method: "nowpayments",
+        amount_usd_cents: 0,
+        promo_code: promoCode,
+        customer_email: customerEmail,
+        invoice_url: undefined,
+        status: "completed",
+      });
+    } catch (orderErr) {
+      logger.warn("[Checkout/FREE] Order write failed (non-fatal)", {
+        error: orderErr instanceof Error ? orderErr.message : String(orderErr),
+      });
+    }
+
+    return NextResponse.json({
+      status: "free_order_completed",
+      orderId: freeOrderId,
+      handoverId: result.handoverId,
+      magicLink: result.magicLink,
+    });
+  } catch (freeErr) {
+    const msg = freeErr instanceof Error ? freeErr.message : String(freeErr);
+    logger.error("[Checkout/FREE] Handover failed", new Error(msg), { userId, tier, promoCode });
+    return NextResponse.json(
+      { error: `FREE order activation failed: ${msg}` },
+      { status: 500 }
+    );
+  }
+}
+
+// // ── NOWPayments path (crypto, default) ───────────────────────────────────
         if (paymentMethod === 'nowpayments') {
           const orderId = `sophia_${userId}_${Date.now()}`;
           try {
