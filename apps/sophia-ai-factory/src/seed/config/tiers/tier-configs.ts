@@ -145,3 +145,6 @@ export const TIER_DB_MAPPING: Record<Tier, string> = {
   ENTERPRISE: 'enterprise',
   MASTER: 'master',
 };
+
+/** Tiers that allow video generation (PREMIUM+ required) */
+export const TIER_ALLOWED_VIDEO: Tier[] = ['PREMIUM', 'ENTERPRISE', 'MASTER'];

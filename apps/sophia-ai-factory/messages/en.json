@@ -2758,7 +2758,10 @@
       "promptPlaceholder": "Prompt Placeholder",
       "charsRemaining": "Chars Remaining",
       "aspectRatioLabel": "Aspect Ratio Label",
-      "generating": "Generating"
+      "generating": "Generating",
+      "loadHistoryFailed": "Load History Failed",
+      "retry": "Retry",
+      "loadFailed": "Load Failed"
     },
     "newsletter": {
       "brandLabel": "Brand Label",

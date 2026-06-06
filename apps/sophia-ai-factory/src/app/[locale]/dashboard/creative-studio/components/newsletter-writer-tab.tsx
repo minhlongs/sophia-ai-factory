@@ -76,6 +76,11 @@ export function NewsletterWriterTab({ tier: _tier }: NewsletterWriterTabProps) {
     [result],
   );
 
+ const sanitizedSubject = useMemo(
+   () => result ? DOMPurify.sanitize(result.subject) : '',
+   [result],
+ );
+
   const handleCopyHtml = useCallback(() => {
     if (!result) return;
     navigator.clipboard.writeText(result.html).catch(() => {
@@ -204,7 +209,7 @@ export function NewsletterWriterTab({ tier: _tier }: NewsletterWriterTabProps) {
           <div className="flex flex-col gap-2">
             <div className="rounded-lg border border-border bg-background p-3">
               <p className="text-xs text-muted-foreground">{t('subjectLine')}</p>
-              <p className="mt-1 text-sm font-semibold text-foreground">{result.subject}</p>
+              <p className="mt-1 text-sm font-semibold text-foreground">{sanitizedSubject}</p>
             </div>
             <div
               className="newsletter-preview rounded-lg border border-border bg-white p-4 text-sm text-gray-800 dark:bg-gray-50"

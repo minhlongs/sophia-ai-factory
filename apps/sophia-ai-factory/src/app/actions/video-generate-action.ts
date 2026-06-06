@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { createServerClient } from '@/seed/db/client';
+import { TIER_ALLOWED_VIDEO } from '@/seed/config/tiers';
 import { reserveVideoSlot, releaseVideoSlot } from '@/forest/quota/video-quota';
 import { emitVideoGenerate } from '@/forest/missions/emit-video-generate';
 
@@ -83,9 +84,18 @@ export async function generateVideoAction(
 
   const { prompt, language } = parsed.data;
 
-  // Step 3: Atomic quota reservation
-  const tier = await resolveUserTier(user.id);
-  const reservation = await reserveVideoSlot(user.id, tier);
+ // Step 3: Tier gate
+ const tier = await resolveUserTier(user.id);
+ if (!TIER_ALLOWED_VIDEO.includes(tier)) {
+   return {
+     success: false,
+     error: 'Video generation requires PREMIUM or higher',
+     code: 'TIER_RESTRICTED',
+   };
+ }
+
+ // Step 4: Atomic quota reservation
+ const reservation = await reserveVideoSlot(user.id, tier);
   if (!reservation.reserved) {
     return {
       success: false,
@@ -94,7 +104,7 @@ export async function generateVideoAction(
     };
   }
 
-  // Step 4: Insert engine_missions row
+  // Step 5: Insert engine_missions row
   const missionId = crypto.randomUUID();
 
   const db = createServerClient();

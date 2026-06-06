@@ -7,7 +7,7 @@
 import { z } from 'zod'
 
 export type PendingOrderStatus = 'pending' | 'completed' | 'failed' | 'expired'
-export type PaymentMethod = 'nowpayments' | 'payos'
+export type PaymentMethod = 'nowpayments' | 'payos' | 'offline' | 'cash'
 export type PendingOrderPeriod = 'monthly' | 'yearly' | 'lifetime'
 
 export interface PendingOrder {
@@ -31,7 +31,7 @@ export const pendingOrderInputSchema = z.object({
   user_id: z.string().min(1),
   tier: z.enum(['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER']),
   period: z.enum(['monthly', 'yearly', 'lifetime']).default('monthly'),
-  payment_method: z.enum(['nowpayments', 'payos']).default('nowpayments'),
+  payment_method: z.enum(['nowpayments', 'payos', 'offline', 'cash']).default('nowpayments'),
   amount_usd_cents: z.number().int().positive(),
   promo_code: z.string().optional(),
   customer_email: z.string().email().optional(),

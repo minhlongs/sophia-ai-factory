@@ -3,9 +3,10 @@
  * @module inngest/functions/generate-campaign-db
  */
 
-import { getD1Client } from '@/seed/db/client'
+import { getD1Client, getD1Raw } from '@/seed/db/client'
 import { sendMessage as sendTelegramMessage } from '@/tree/telegram/handlers/utils'
 import { CampaignStatus } from '@/seed/types'
+import { logger } from '@/seed/utils/logger-utility'
 
 export async function updateCampaignStatus(
   campaignId: string,
@@ -38,6 +39,31 @@ export async function notifyUserByTelegram(userId: string, message: string): Pro
   if (profile.settings?.notifications?.telegram?.enabled !== true) return
 
   await sendTelegramMessage(profile.telegram_chat_id, message)
+}
+
+/**
+ * Mark an engine_missions row as failed with error message.
+ * Fire-and-forget — catches and logs DB errors so caller can always throw NonRetriableError.
+ */
+export async function markEngineMissionFailed(
+  missionId: string,
+  errorMessage: string,
+): Promise<void> {
+  try {
+    const db = await getD1Raw()
+    const nowSec = Math.floor(Date.now() / 1000)
+    await db
+      .prepare(
+        'UPDATE engine_missions SET status=\'failed\', error=?1, updated_at=?2 WHERE id=?3',
+      )
+      .bind(errorMessage.slice(0, 500), nowSec, missionId)
+      .run()
+  } catch (dbErr) {
+    logger.warn('[markEngineMissionFailed] DB update failed', {
+      missionId,
+      error: dbErr instanceof Error ? dbErr.message : String(dbErr),
+    })
+  }
 }
 
 /**

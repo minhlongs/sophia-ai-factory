@@ -20,6 +20,7 @@ interface UseImageGenerationState {
 
 const POLL_INTERVAL_MS = 3_000;
 const TIMEOUT_MS = 5 * 60 * 1_000; // 5 minutes
+const BACKOFF_MAX_MS = 30_000;
 
 export function useImageGeneration(jobId: string | null): UseImageGenerationState {
   const [state, setState] = useState<UseImageGenerationState>({
@@ -33,6 +34,7 @@ export function useImageGeneration(jobId: string | null): UseImageGenerationStat
   const startTimeRef = useRef<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeJobIdRef = useRef<string | null>(null);
+  const pollIntervalRef = useRef<number>(POLL_INTERVAL_MS);
 
   const stopPolling = useCallback(() => {
     if (timerRef.current) {
@@ -58,7 +60,24 @@ export function useImageGeneration(jobId: string | null): UseImageGenerationStat
     try {
       const res = await fetch(`/api/v1/creative-studio/images/${id}/status`);
       if (!res.ok) {
-        // Non-fatal network hiccup — keep polling
+        // 401 — session expired, stop and prompt re-login
+        if (res.status === 401) {
+          setState((prev) => ({
+            ...prev,
+            status: 'failed',
+            error: 'Session expired. Please re-login and refresh this page.',
+            isPolling: false,
+          }));
+          stopPolling();
+          return;
+        }
+        // 429 — rate limited, exponential backoff (double, cap at 30 s)
+        if (res.status === 429) {
+          pollIntervalRef.current = Math.min(pollIntervalRef.current * 2, BACKOFF_MAX_MS);
+          scheduleNext(id, pollIntervalRef.current);
+          return;
+        }
+        // Non-fatal server hiccup (>=500) — keep polling
         if (res.status >= 500) {
           scheduleNext(id);
           return;
@@ -102,15 +121,16 @@ export function useImageGeneration(jobId: string | null): UseImageGenerationStat
         scheduleNext(id);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stopPolling]);
 
-  function scheduleNext(id: string) {
+  function scheduleNext(id: string, delay?: number) {
+    const effectiveDelay = delay ?? pollIntervalRef.current;
     timerRef.current = setTimeout(() => {
       if (activeJobIdRef.current === id) {
         pollOnce(id);
       }
-    }, POLL_INTERVAL_MS);
+    }, effectiveDelay);
   }
 
   useEffect(() => {
@@ -129,6 +149,7 @@ export function useImageGeneration(jobId: string | null): UseImageGenerationStat
     // New job — reset and start polling
     activeJobIdRef.current = jobId;
     startTimeRef.current = Date.now();
+    pollIntervalRef.current = POLL_INTERVAL_MS;
     setState({
       status: 'pending',
       resultUrl: null,
