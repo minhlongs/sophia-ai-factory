@@ -34,7 +34,7 @@ export const webhookHeaderSchema = z.object({
 export const checkoutSchema = z.object({
   tier: z.enum(["BASIC", "PREMIUM", "ENTERPRISE", "MASTER"]),
   period: z.enum(["monthly", "yearly", "lifetime"]).optional(),
-  paymentMethod: z.enum(["nowpayments", "payos"]).default("nowpayments"),
+  paymentMethod: z.enum(["nowpayments", "payos", "offline", "cash"]).default("nowpayments"),
   promoCode: z.string().min(3).max(40).optional(),
   customerEmail: z.string().email().optional(),
 });

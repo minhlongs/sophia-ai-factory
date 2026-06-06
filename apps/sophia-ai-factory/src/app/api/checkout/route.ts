@@ -203,7 +203,29 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
       }
     }
 
-    // ── PayOS path (VND bank transfer for VN users) ───────────────────────────
+    // ── NOWPayments path (crypto, default) ───────────────────────────────────
+        if (paymentMethod === 'nowpayments') {
+          const orderId = `sophia_${userId}_${Date.now()}`;
+          try {
+            const invoiceUrl = createInvoiceUrl(tier, userId);
+            await writeOrder({
+              order_id: orderId,
+              user_id: userId,
+              tier,
+              period: period || 'monthly',
+              payment_method: 'nowpayments',
+              amount_usd_cents: 0,
+              promo_code: promoCode,
+              customer_email: customerEmail,
+              invoice_url: invoiceUrl,
+            });
+            return NextResponse.json({ url: invoiceUrl, orderId });
+          } catch (npErr) {
+            const msg = npErr instanceof Error ? npErr.message : String(npErr);
+            logger.error('[Checkout/NOWPayments] Failed to create invoice', new Error(msg), { userId, tier });
+            return NextResponse.json({ error: `NOWPayments checkout failed: ${msg}` }, { status: 500 });
+          }
+        } // ── PayOS path (VND bank transfer for VN users) ───────────────────────────
     if (paymentMethod === 'payos') {
       // PayOS does not support yearly billing — reject explicitly instead of silent fallback.
       // When PayOS adds yearly support, remove this guard and pass period directly.
