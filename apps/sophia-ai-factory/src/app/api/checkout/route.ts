@@ -159,7 +159,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
     let promoDiscountCents = 0;
 let promoTrialDays = 0;
 let calc = { isFreeOrder: false, discountCents: 0, trialDays: 0 } as ReturnType<typeof calculateDiscount>;
-let validation: { valid: boolean; codeId: string; discountType: string; discountValue: number } | null = null;
+let validation: Awaited<ReturnType<typeof validatePromoCode>> | null = null;
     if (promoCode) {
       try {
         validation = await validatePromoCode(promoCode, { userId, tier });
@@ -207,7 +207,7 @@ let validation: { valid: boolean; codeId: string; discountType: string; discount
     }
 
     // ── FREE order bypass (free_full promo — skip payment, fire handover directly) ──
-if (promoCode && calc.isFreeOrder) {
+if (promoCode && validation?.valid && calc.isFreeOrder) {
   const freeOrderId = `sophia_${userId}_${Date.now()}`;
   try {
     const result = await triggerAutoHandover({
