@@ -40,21 +40,38 @@ export class NewsletterConfigError extends Error {
   }
 }
 
+function sanitizePrompt(input: string): string {
+  const patterns = [
+    /ignore\s+(all\s+)?previous\s+instructions?/gi,
+    /reveal\s+(your\s+)?system\s+prompt/gi,
+    /output\s+your\s+(full\s+)?system/gi,
+    /---\s*\n/g,
+    /```system/gi,
+    /<\/?system>/gi,
+    /\{\{|\}\}|<%|%>/g,
+  ];
+  let cleaned = input;
+  for (const p of patterns) {
+    cleaned = cleaned.replace(p, '[filtered]');
+  }
+  return cleaned.trim().slice(0, 3000);
+}
+
 const DEFAULT_MODEL = 'meta-llama/llama-3.1-8b-instruct:free';
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 function buildPrompt(input: GenerateNewsletterInput): string {
   const lang = input.language === 'vi' ? 'Vietnamese' : 'English';
-  const introLine = input.editorIntro
-    ? `Include this editor intro near the top: "${input.editorIntro}"`
-    : '';
+  const safeIntro = input.editorIntro ? sanitizePrompt(input.editorIntro) : '';
+  const introLine = safeIntro ? `Include this editor intro near the top: "${safeIntro}"` : '';
+  const safeTopic = sanitizePrompt(input.topic);
   const ctaLine = input.ctaText
     ? `End with a call-to-action button text: "${input.ctaText}"`
     : '';
 
   return [
     `Write a ${lang}-language email newsletter for the brand "${input.brandName}".`,
-    `Topic/theme this week: ${input.topic}`,
+    `Topic/theme this week: ${safeTopic}`,
     `Tone: ${input.tone}`,
     introLine,
     'Structure:',

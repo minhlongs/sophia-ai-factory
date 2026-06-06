@@ -44,6 +44,7 @@ export interface MediaGenerationResult {
   success: boolean
   job?: MediaJob
   error?: string
+  code?: string
 }
 
 /** Supported models per media type */
@@ -88,7 +89,9 @@ export async function submitMediaJob(
 
     if (!res.ok) {
       const errBody = await res.text().catch(() => '')
-      return { success: false, error: `MuAPI ${res.status}: ${errBody.slice(0, 200)}` }
+      console.error(`[MuAPI] ${res.status} error body:`, errBody)
+      const snippet = errBody.length > 200 ? `${errBody.slice(0, 200)}…` : errBody
+   return { success: false, error: `MuAPI ${res.status}${snippet ? ` ${snippet}` : ''}` }
     }
 
     const data = (await res.json()) as {

@@ -2758,7 +2758,10 @@
       "promptPlaceholder": "Prompt Placeholder",
       "charsRemaining": "Chars Remaining",
       "aspectRatioLabel": "Aspect Ratio Label",
-      "generating": "Generating"
+      "generating": "Generating",
+      "loadHistoryFailed": "Không thể tải lịch sử. Vui lòng thử lại.",
+      "retry": "Thử Lại",
+      "loadFailed": "Hình ảnh không thể tải"
     },
     "newsletter": {
       "brandLabel": "Brand Label",

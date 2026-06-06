@@ -250,66 +250,32 @@ export const POST = withRateLimit(async function POST(request: Request) {
       }
     }
 
-    // ── NOWPayments path (default — USDT crypto) ──────────────────────────────
-
-    // Resolve amount: yearly invoices use yearlyPrice from unified config.
-    // TODO(phase-07): NOWPayments does not yet have dedicated yearly invoice IDs.
-    // For now, createInvoiceUrl uses the monthly invoice ID (which sets the description)
-    // but we override amountUsdCents below so the actual charge reflects the annual price.
-    // When NOWPayments yearly invoice IDs are configured in nowpayments-client.ts,
-    // pass `period` to createInvoiceUrl and remove this override.
-    const invoiceUrl = createInvoiceUrl(tier, userId, customerEmail);
-
-    // Extract order_id from the URL (embedded by createInvoiceUrl)
-    const urlObj = new URL(invoiceUrl);
-    const orderId = urlObj.searchParams.get('order_id') ?? `sophia_${userId}_${Date.now()}`;
-
-    // Use yearlyPrice for annual billing; fall back to monthly price from NOWPAYMENTS_TIERS
-    const tierConfig = UNIFIED_TIERS[tier as import('@/seed/types').Tier];
-    const amountUsdCents: number = (() => {
-      if (period === 'yearly' && tierConfig && tierConfig.yearlyPrice > 0) {
-        return tierConfig.yearlyPrice * 100;
-      }
-      return Math.round((NOWPAYMENTS_TIERS[tier].price ?? 0) * 100);
-    })();
-
-    // Write pending order — fail gracefully if D1 write fails (do not block checkout)
-    try {
-      await writeOrder({
-        order_id: orderId,
-        user_id: userId,
-        tier,
-        period,
-        payment_method: paymentMethod,
-        amount_usd_cents: amountUsdCents,
-        promo_code: promoCode,
-        customer_email: customerEmail,
-        invoice_url: invoiceUrl,
-      });
-    } catch (dbErr) {
-      // Non-fatal: log metric but still return checkout URL
-      logger.warn('[Checkout] Failed to write pending_order (non-fatal)', {
-        orderId,
-        error: dbErr instanceof Error ? dbErr.message : String(dbErr),
-      });
-    }
-
-    // Fire-and-forget D1 signal for funnel analytics — non-blocking
-    track(D1Events.CHECKOUT_STARTED, userId, {
+ (first customer or manual bank transfer) ────
+if (paymentMethod === 'offline' || paymentMethod === 'cash') {
+  const orderId = `sophia_${userId}_${Date.now()}`;
+  try {
+    await writeOrder({
+      order_id: orderId,
+      user_id: userId,
       tier,
       period,
       payment_method: paymentMethod,
-      order_id: orderId,
-      has_promo: Boolean(promoCode),
+      amount_usd_cents: 0,
+      promo_code: promoCode,
+      customer_email: customerEmail,
+      invoice_url: undefined,
     });
-
-    return NextResponse.json({ url: invoiceUrl, orderId });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('[Checkout] Unexpected error', new Error(errorMessage), {});
-    return NextResponse.json(
-      { error: `Failed to create checkout session: ${errorMessage}` },
-      { status: 500 }
-    );
+    logger.info('[Checkout/Offline] Order created for manual payment', { orderId, userId, tier, paymentMethod });
+  } catch (dbErr) {
+    logger.warn('[Checkout/Offline] Failed to write pending_order (non-fatal)', {
+      orderId,
+      error: dbErr instanceof Error ? dbErr.message : String(dbErr),
+    });
   }
-}, { addHeaders: true, config: { intervalMs: 60000, maxRequests: 10 } });
+  return NextResponse.json({
+    status: 'pending_manual_payment',
+    orderId,
+    message: 'Your order has been received. Our team will contact you to confirm payment. / Don hang cua ban da duoc nhan. Doi ngu se lien he xac nhan thanh toan.',
+  });
+}
+

@@ -24,7 +24,7 @@ export async function newsletterGenerateAction(
   input: NewsletterActionInput,
 ): Promise<NewsletterActionResult> {
   const user = await getCurrentUser();
-  if (!user) return { success: false, error: 'Not authenticated' };
+  if (!user) return { success: false, error: 'Not authenticated', code: 'UNAUTHORIZED' };
 
   try {
     const result = await generateNewsletter({
