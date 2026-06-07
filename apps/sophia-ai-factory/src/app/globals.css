@@ -38,6 +38,8 @@
   --input: 214.3 31.8% 91.4%;
   --ring: 222.2 84% 4.9%;
 
+	 --background-secondary: 210 40% 96.1%;
+
   --radius: 0.5rem;
 
   /* Chart Colors */
@@ -71,17 +73,17 @@
   --popover: 222.2 84% 4.9%;
   --popover-foreground: 210 40% 98%;
 
-  --primary: 210 40% 98%;
-  --primary-foreground: 222.2 47.4% 11.2%;
+ --primary: 330 81% 52%;
+ --primary-foreground: 0 0% 100%;
 
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
+ --secondary: 330 84% 43%;
+ --secondary-foreground: 0 0% 100%;
 
   --muted: 217.2 32.6% 17.5%;
   --muted-foreground: 215.4 16.3% 56.9%;
 
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
+ --accent: 221 83% 53%;
+ --accent-foreground: 0 0% 100%;
 
   /* WCAG 2 AA fix (2026-05-18): red-400 = 7.33:1 contrast on #020817 (was
      #7f1d1d red-900 = 1.34:1, severe failure). Caught by axe-core on
@@ -93,6 +95,8 @@
   --input: 217.2 32.6% 17.5%;
   --ring: 215.4 16.3% 56.9%;
 
+	 --background-secondary: 217.2 32.6% 17.5%;
+
   /* Chart Colors */
   --chart-1: #22005c;
   --chart-2: #190041;
@@ -103,9 +107,10 @@
   /* Custom Brand Colors (Neon) */
   --neon-cyan: #00f0ff;
   --neon-cyan-hsl: 184 100% 50%;
-  --neon-purple: #7000ff;
-  --neon-purple-hsl: 266 100% 50%;
-  --neon-pink: #ff00ff;
+ --neon-purple: #7c3aed;
+ --neon-purple-hsl: 262 83% 58%;
+	 --neon-pink: #EC4899;
+	 --neon-pink-hsl: 330 81% 52%;
 
   /* Space Theme */
   --gradient-space: linear-gradient(135deg, #020817 0%, #0f172a 100%);
