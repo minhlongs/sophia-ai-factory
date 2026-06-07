@@ -1609,7 +1609,8 @@
         "ogImage": "Ảnh OG (1200×630, tối đa 2 MB)",
         "customDomain": "Tên Miền Tuỳ Chỉnh",
         "domain": "Tên miền",
-        "domainHint": "Cần cấu hình DNS CNAME sau khi lưu. Liên hệ hỗ trợ để được hướng dẫn."
+        "domainHint": "Cần cấu hình DNS CNAME sau khi lưu. Liên hệ hỗ trợ để được hướng dẫn.",
+        "domainPlaceholder": "ten-mien-cua-ban.com"
       }
     }
   },

@@ -1609,7 +1609,8 @@
         "ogImage": "OG Image (1200×630, max 2 MB)",
         "customDomain": "Custom Domain",
         "domain": "Domain",
-        "domainHint": "DNS CNAME setup required after saving. Contact support for instructions."
+        "domainHint": "DNS CNAME setup required after saving. Contact support for instructions.",
+        "domainPlaceholder": "yourbrand.com"
       }
     }
   },
