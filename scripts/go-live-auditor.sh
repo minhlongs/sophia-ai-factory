@@ -1,147 +1,122 @@
 #!/usr/bin/env bash
-# go-live-auditor.sh — Pre-deploy audit for sophia-ai-factory
-# Checks all quality gates, reports score out of 10, fixes what it can.
+# go-live-auditor.sh — Pre-deploy audit for sophia-ai-factory (macOS compatible)
 set -uo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_DIR="$REPO_ROOT/apps/sophia-ai-factory"
-SCORE=10
-ISSUES=""
+APP_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../apps/sophia-ai-factory" && pwd)"
 
-echo "╔══════════════════════════════════════════════════╗"
-echo "║    SOPHIA-AI-FACTORY GO-LIVE AUDITOR v2.0        ║"
-echo "╚══════════════════════════════════════════════════╝"
+echo "========================================================"
+echo "  SOPHIA-AI-FACTORY GO-LIVE AUDITOR v2.0 (macOS)"
+echo "========================================================"
 echo ""
 
 cd "$APP_DIR" || exit 1
 
-# ──────────────────────────────────────────────
-# GATE 1: TypeScript build (target: 0 errors)
-# ─────────────────────────
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "[GATE 1/5] TypeScript type-check"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+# ─── GATE 1: TypeScript type-check ──────────────
+echo "--- GATE 1/5: TypeScript ---"
 TSC_OUTPUT=$(npx tsc --noEmit 2>&1)
 TSC_EXIT=$?
 if [ $TSC_EXIT -eq 0 ]; then
     echo "✅ PASS — 0 TS errors"
 else
-    SCORE=$((SCORE < 7 ? SCORE : 7))
-    ISSUES="${ISSUES}\n❌ TypeScript build failed ($TSC_EXIT errors)"
+    echo "❌ FAIL — $TSC_EXIT TS errors:"
     echo "$TSC_OUTPUT" | tail -30
 fi
 
-# ──────────────────────────────────────────────
-# GATE 2: ESLint (target: ≤10 errors, warnings OK)
-# ─────────────────────────
+# ─── GATE 2: ESLint ──────────────────────
 echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "[GATE 2/5] ESLint check"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "--- GATE 2/5: ESLint ---"
 LINT_OUTPUT=$(npm run lint 2>&1 || true)
-# Extract error count from eslint output
-ERROR_COUNT=$(echo "$LINT_OUTPUT" | grep -oP '\d+ problems?\s*\(\s*\K\d+(?= errors)' | tail -1)
-if [ -z "$ERROR_COUNT" ]; then
-    # fallback: check for "X errors, Y warnings" pattern
-    ERROR_COUNT=$(echo "$LINT_OUTPUT" | grep -oP '\b(\d+)\s*errors?,\s*\d+\s*warnings?\b' | grep -oP '^\d+' || echo "0")
-fi
-WARNING_COUNT=$(echo "$LINT_OUTPUT" | grep -oP '\b\d+\s*warnings?' | head -1 | grep -oP '\d+' || echo "0")
-
+ERROR_COUNT=$(echo "$LINT_OUTPUT" | grep -oE '[0-9]+ problem' | grep -oE '^[0-9]+' || echo "0")
 if [ "${ERROR_COUNT:-0}" -le 10 ]; then
-    echo "✅ PASS — ${ERROR_COUNT:-0} errors, ${WARNING_COUNT:-0} warnings"
+    echo "✅ PASS — ${ERROR_COUNT:-0} errors"
 else
-    SCORE=$((SCORE < 5 ? SCORE : 5))
-    ISSUES="${ISSUES}\n❌ ESLint has $ERROR_COUNT errors (target ≤10)"
+    echo "❌ FAIL — $ERROR_COUNT errors (target ≤10)"
 fi
 
-# ──────────────────────────────────────────────
-# GATE 3: Vitest tests
-# ─────────────────────────
+# ─── GATE 3: Vitest tests ──────────────
 echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "[GATE 3/5] Vitest test suite"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "--- GATE 3/5: Vitest Tests ---"
 TEST_OUTPUT=$(npx vitest run --reporter=verbose 2>&1)
-# Check for passed tests line
-if echo "$TEST_OUTPUT" | grep -qP 'Test Files\s+\d+\s+passed'; then
-    PASS_COUNT=$(echo "$TEST_OUTPUT" | grep -oP '\d+(?= Test Files\s+passed)' | head -1 || echo "0")
-    TOTAL_TESTS=$(echo "$TEST_OUTPUT" | grep -oP '\d+(?= total|Tests?)' | head -1 || echo "?")
-    echo "✅ PASS — $PASS_COUNT test files passed"
-else
-    if echo "$TEST_OUTPUT" | grep -qP 'Test Files\s+\d+\s+failed'; then
-        FAIL_COUNT=$(echo "$TEST_OUTPUT" | grep -oP '\d+(?= Test Files\s+failed)' | head -1 || echo "?")
-        SCORE=$((SCORE < 3 ? SCORE : 3))
-        ISSUES="${ISSUES}\n❌ $FAIL_COUNT test files failed"
-    else
-        echo "⚠️  UNKNOWN — could not determine test results"
-        ISSUES="${ISSUES}\n⚠️ Test output ambiguous"
+TEST_EXIT=$?
+if echo "$TEST_OUTPUT" | grep -q "Test Files.*passed"; then
+    TEST_COUNT=$(echo "$TEST_OUTPUT" | grep -oE '[0-9]+ test' | head -1 || echo "?")
+    echo "✅ PASS — $TEST_COUNT"
+elif [ $TEST_EXIT -eq 0 ]; then
+     # vitest exit 0 but no match line — check for failure text
+    if echo "$TEST_OUTPUT" | grep -qE "FAILED|failed"; then
+        FAIL=$(echo "$TEST_OUTPUT" | grep -oE '[0-9]+ failed' | head -1 || echo "?")
+        echo "❌ FAIL — $FAIL"
+     else
+        echo "⚠️  UNKNOWN — check output manually"
     fi
-fi
-
-# ──────────────────────────────────────────────
-# GATE 4: Zero :any types in prod code
-# ─────────────────────────
-echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "[GATE 4/5] Zero ':any' types in production"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-ANY_COUNT=$(grep -rn ': any ' src --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v '__tests__' | grep -v '.test.' | wc -l | tr -d ' ')
-
-if [ "${ANY_COUNT:-0}" -eq 0 ]; then
-    echo "✅ PASS — Zero :any types in production code"
-elif [ "${ANY_COUNT:-0}" -le 20 ]; then
-    # Partial credit for small remaining
-    SCORE=$((SCORE < 7 ? SCORE : 7))
-    ISSUES="${ISSUES}\n⚠️ $ANY_COUNT ':any' types remain (target: 0)"
 else
-    SCORE=$((SCORE < 4 ? SCORE : 4))
-    ISSUES="${ISSUES}\n❌ $ANY_COUNT ':any' types in production (target: 0)"
+    if echo "$TEST_OUTPUT" | grep -qE "FAILED|failed"; then
+        FAIL=$(echo "$TEST_OUTPUT" | grep -oE '[0-9]+ failed' | head -1 || echo "?")
+        echo "❌ FAIL — $FAIL"
+    else
+        echo "❌ FAIL — vitest exit code: $TEST_EXIT"
+     fi
 fi
 
-echo "Total :any count (prod): ${ANY_COUNT:-0}"
-
-# ──────────────────────────────────────────────
-# GATE 5: Zero console.log/warn/error in prod
-# ─────────────────────────
+# ─── GATE 4: Zero :any in production ──────────────
 echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "[GATE 5/5] No console.* in production code"
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-
-# Exclude tests, __tests__, .test., spec files, setup scripts, seed data
-CONSOLE_COUNT=$(grep -rn 'console\.\(log\|warn\|error\)' src \
-    --include="*.ts" --include="*.tsx" 2>/dev/null | \
-    grep -v '__tests__' | \
-    grep -v '.test.' | \
-    grep -v 'spec.' | \
-    grep -v 'seed/' | \
-    grep -v 'scripts/' | \
-    wc -l | tr -d ' ')
-
-if [ "${CONSOLE_COUNT:-0}" -eq 0 ]; then
-    echo "✅ PASS — Zero console.* calls in production"
-elif [ "${CONSOLE_COUNT:-0}" -le 10 ]; then
-    SCORE=$((SCORE < 7 ? SCORE : 7))
-    ISSUES="${ISSUES}\n⚠️ $CONSOLE_COUNT console.* remain (target: 0)"
+echo "--- GATE 4/5: Zero ':any' types ---"
+ANY_FILES=$(find src -name '*.ts' -o -name '*.tsx' | grep -v '__tests__' | grep -v '.test.' | grep -v 'spec.')
+if [ -n "$ANY_FILES" ]; then
+    ANY_COUNT=$(grep -rn ': any ' $(echo "$ANY_FILES" | tr '\n' ' ') --include='*.ts' --include='*.tsx' 2>/dev/null | wc -l | tr -d ' ')
 else
-    SCORE=$((SCORE < 4 ? SCORE : 4))
-    ISSUES="${ISSUES}\n❌ $CONSOLE_COUNT console.* in production (target: 0)"
+     ANY_COUNT=0
+fi
+# Alternative: search all non-test files more simply
+if [ "$ANY_COUNT" = "0" ] || [ -z "$ANY_COUNT" ]; then
+    # Try broader search
+    ANY_COUNT=$(find . -path './node_modules' -prune -o \
+        \( -name '*.ts' -o -name '*.tsx' \) -print 2>/dev/null | \
+        grep -v '__tests__' | grep -v '.test.' | \
+        xargs grep -c ': any ' 2>/dev/null | \
+        awk '{s+=$1} END {print s}' || echo "0")
 fi
 
-echo "Total console.* count (prod): ${CONSOLE_COUNT:-0}"
+if [ "$ANY_COUNT" = "0" ]; then
+    echo "✅ PASS — Zero :any in production code"
+else
+    echo "⚠️  ISSUE — $ANY_COUNT ':any' types remain:"
+fi
 
-# ──────────────────────────────────────────────
-# SUMMARY
-# ─────────────────────────
+# ─── GATE 5: No console.log/warn/error in prod ──────
 echo ""
-echo "╔══════════════════════════════════════════════════╗"
-echo "║  AUDIT SCORE: $SCORE /10                           ║"
-echo "╚══════════════════════════════════════════════════╝"
-
-if [ "${#ISSUES}" -gt 0 ]; then
-    echo ""
-    echo "── Issues found ──────────────────────────────"
-    printf "%b\n" "$ISSUES"
+echo "--- GATE 5/5: No console.* in production ---"
+CONSOLE_FILES=$(find src -name '*.ts' -o -name '*.tsx' | grep -v '__tests__' | grep -v '.test.' | grep -v 'spec.' || true)
+if [ -n "$CONSOLE_FILES" ]; then
+    CONSOLE_OUTPUT=$(grep -rn 'console\.log\|console\.warn\|console\.error' $CONSOLE_FILES 2>/dev/null || true)
+    CONSOLE_COUNT=$(echo "$CONSOLE_OUTPUT" | grep -c '.' || echo "0")
+else
+    CONSOLE_COUNT=0
 fi
 
-exit $SCORE
+if [ "$CONSOLE_COUNT" = "0" ]; then
+    echo "✅ PASS — Zero console.* in production"
+else
+    echo "❌ ISSUE — $CONSOLE_COUNT console.* calls:"
+     # Show first 20 lines for context
+    echo "$CONSOLE_OUTPUT" | head -20
+fi
+
+# ─── SUMMARY ──────────────
+echo ""
+echo "========================================================"
+if [ "$(cat .next/BUILD_ID 2>/dev/null || echo '')" != "" ]; then
+     echo "  ✅ BUILD ID exists"
+else
+     echo "  ⚠️  No BUILD_ID — run npm run build"
+fi
+
+# Check git status for uncommitted changes  
+UNCOMMITTED=$(git status --porcelain | wc -l | tr -d ' ')
+if [ "$UNCOMMITTED" = "0" ]; then
+    echo "  ✅ Git working tree clean"
+else
+     echo "  ⚠️  $UNCOMMITED uncommitted changes"
+fi
+
+echo "========================================================"
