@@ -83,9 +83,7 @@ const nextConfig: NextConfig = {
       // Landing
       { source: '/about', destination: '/', permanent: false },
       { source: '/contact', destination: '/', permanent: false },
-      // Locale — redirect /en to root (default locale is en, served without prefix)
-      { source: '/en', destination: '/', permanent: true },
-      { source: '/en/:path*', destination: '/:path*', permanent: true },
+      // Locale prefix always present via next-intl localePrefix: 'always'.
     ];
   },
   async headers() {
