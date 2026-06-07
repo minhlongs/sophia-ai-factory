@@ -23,7 +23,7 @@ export async function createCustomerUser(
       `INSERT INTO user (id, email, name, emailVerified, role, createdAt, updatedAt)
        VALUES (?1, ?2, ?3, 1, 'customer', ?4, ?4)`,
     )
-    .bind(userId, email, fullName, nowSec, nowSec)
+    .bind(userId, email, fullName, nowSec)
     .run();
 
  // M1: Also create user_profiles row so downstream queries don't get null
