@@ -65,30 +65,52 @@ export class D1Client {
     }
   }
 
-  private async debitMcuBalance(orgId: string, amount: number, feature: string): Promise<QueryResult<unknown>> {
-    // Atomic CAS: single UPDATE with WHERE guard prevents TOCTOU double-spend.
-    // If balance < amount or org_id doesn't exist, zero rows are written.
-    const updateResult = await this.db
-      .prepare(
-        `UPDATE org_balances
-         SET balance = balance - ?, updated_at = datetime('now')
-         WHERE org_id = ? AND balance >= ?`,
-      )
-      .bind(amount, orgId, amount)
-      .run();
+ private async debitMcuBalance(orgId: string, amount: number, feature: string): Promise<QueryResult<unknown>> {
+ // Atomic: UPDATE + INSERT wrapped in db.batch() prevents balance drift
+ // if INSERT fails after UPDATE (mirrors creditMcuBalance pattern).
+ const batchResults = await this.db.batch([
+ this.db
+ .prepare(
+ `UPDATE org_balances SET balance = balance - ?, updated_at = datetime('now') WHERE org_id = ? AND balance >= ?`,
+ )
+ .bind(amount, orgId, amount),
+ this.db
+ .prepare('INSERT INTO transactions (org_id, amount, type, description) VALUES (?, ?, ?, ?)')
+ .bind(orgId, -amount, 'debit', feature),
+ ]);
 
-    if (!updateResult.meta.rows_written || updateResult.meta.rows_written === 0) {
-      return { data: null, error: { message: 'Insufficient balance' } };
-    }
+ // Check if balance update succeeded (rows_written === 1)
+ const updateResult = batchResults[0];
+ if (!updateResult.meta?.rows_written || updateResult.meta.rows_written === 0) {
+ return { data: null, error: { message: 'Insufficient balance' } };
+ }
 
-    // Balance already debited atomically above — now record the transaction
-    await this.db
-      .prepare('INSERT INTO transactions (org_id, amount, type, description) VALUES (?, ?, ?, ?)')
-      .bind(orgId, -amount, 'debit', feature)
-      .run();
+ // Check per-result errors from batch
+ for (let i = 0; i < batchResults.length; i++) {
+ const result = batchResults[i];
+ if ((result as unknown as { error?: { message: string } }).error) {
+ return {
+ data: null,
+ error: {
+ message: `Batch statement ${i} failed: ${(result as unknown as { error: { message: string } }).error.message}`,
+ },
+ };
+ }
+ }
 
-    return { data: { success: true }, error: null };
-  }
+ const rowsAffected = batchResults.reduce(
+ (sum, result) => sum + (result.meta?.rows_written ?? 0),
+ 0,
+ );
+ if (rowsAffected !== 2) {
+ return {
+ data: null,
+ error: { message: `Expected 2 rows affected, got ${rowsAffected}` },
+ };
+ }
+
+ return { data: { success: true }, error: null };
+ }
 
   private async creditMcuBalance(
     orgId: string,

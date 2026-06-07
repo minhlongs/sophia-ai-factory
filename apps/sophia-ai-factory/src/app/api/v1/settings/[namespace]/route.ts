@@ -1,15 +1,16 @@
 /**
  * GET/PUT/PATCH/DELETE /api/v1/settings/:namespace — single-namespace CRUD.
- *
- * GET    → returns current value (with default if row absent)
- * PUT    → replaces entire namespace value (validates via Zod schema)
- * PATCH  → shallow-merges partial value into existing
+
+ * GET → returns current value (with default if row absent)
+ * PUT → replaces entire namespace value (validates via Zod schema)
+ * PATCH → shallow-merges partial value into existing
  * DELETE → removes the row (resets to default on next read)
  *
  * @module app/api/v1/settings/[namespace]/route
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getOrDefault, set, merge, deleteNamespace } from '@/seed/tenant-settings/registry';
 import { SETTINGS_NAMESPACES, SettingsValidationError } from '@/seed/tenant-settings/types';
@@ -108,6 +109,30 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json({ error: 'PATCH body must be a plain object' }, { status: 400 });
     }
 
+    // FIX-12: reject non-string keys and deeply nested values to prevent
+    // injection via malformed PATCH payloads (arrays, functions, circular refs).
+    const rawObj = body as Record<string, unknown>;
+    const keyCheck = Object.keys(rawObj).every(
+      k => typeof k === 'string' && /^[a-zA-Z_]/.test(k),
+    );
+    if (!keyCheck) {
+      return NextResponse.json(
+        { error: 'PATCH keys must be plain string identifiers starting with a letter' },
+        { status: 400 },
+      );
+    }
+    // Depth guard: reject payloads nested > 3 levels deep
+    const maxDepth = (obj: unknown, d = 0): number => {
+      if (d > 3 || typeof obj !== 'object' || obj === null) return d;
+      return Math.max(0, ...Object.values(obj as Record<string, unknown>).map(v => maxDepth(v, d + 1)));
+    };
+    if (maxDepth(rawObj) > 3) {
+      return NextResponse.json(
+        { error: 'PATCH body too deeply nested (max 3 levels)' },
+        { status: 400 },
+      );
+    }
+
     const db = getD1();
     if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
@@ -116,7 +141,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
         db,
         user.id,
         namespace,
-        body as Record<string, unknown>,
+        rawObj,
       );
       return NextResponse.json({ namespace, value: merged });
     } catch (err) {

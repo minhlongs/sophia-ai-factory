@@ -62,6 +62,7 @@ export class HeyGenClient {
         "Content-Type": "application/json",
         ...options.headers,
       },
+      signal: AbortSignal.timeout(15_000), // 15s timeout prevents hung connections
     });
 
     if (!response.ok) {

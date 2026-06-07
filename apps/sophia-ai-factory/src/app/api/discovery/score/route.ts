@@ -1,14 +1,14 @@
 /**
  * POST /api/discovery/score
- *
+
  * User-authenticated endpoint to score an affiliate program against a niche
  * using the OpenRouter-powered semantic enhancer (Phase 7C).
  *
  * Auth: getCurrentUser() required — 401 when missing.
  * Rate limiting: RATE_LIMITS.discovery (30 req/min) — stricter than default api
- *   to limit OpenRouter cost exposure.
+ * to limit OpenRouter cost exposure.
  * Audit: emits D1Events.DISCOVERY_SCORE_REQUESTED after each successful 200 response.
- *   Emission is fire-and-forget; never fails the score response.
+ * Emission is fire-and-forget; never fails the score response.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -22,14 +22,14 @@ import { D1Events } from '@/land/signals/d1-event-types'
 import type { AffiliateProgram } from '@/seed/types'
 
 const ProgramSchema = z.object({
-  id:       z.string().min(1),
-  name:     z.string().min(1),
+  id: z.string().min(1),
+  name: z.string().min(1),
   category: z.string().optional(),
-}).passthrough()
+}).strip()
 
 const BodySchema = z.object({
   program: ProgramSchema,
-  niche:   z.string().min(1).max(200),
+  niche: z.string().min(1).max(200),
 })
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -53,8 +53,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     )
   }
 
-  // `passthrough()` preserves all caller-supplied fields; cast to AffiliateProgram
-  // so the enhancer can access optional fields (category, description, etc.) if present.
+  // `.strip()` removes any extra fields not declared in ProgramSchema.
+  // Only id, name, category are forwarded to the enhancer — no prompt injection.
   const program = parsed.data.program as unknown as AffiliateProgram
 
   let score: number | null
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   } catch (err) {
     logger.warn('[discovery-score] enhanceNicheScoreWithAI failed', {
       userId: user.id,
-      error:  getErrorMessage(err),
+      error: getErrorMessage(err),
     })
     return NextResponse.json({ error: 'Scoring failed' }, { status: 500 })
   }
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     track(D1Events.DISCOVERY_SCORE_REQUESTED, user.id, {
       program_id: parsed.data.program.id,
-      niche_len:  parsed.data.niche.length,
+      niche_len: parsed.data.niche.length,
       score_null: score === null,
     })
   } catch {

@@ -8,9 +8,14 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      spacing: {
+        '18': '4.5rem',
+        '22': '5.5rem',
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        "background-secondary": "var(--background-secondary, var(--muted))",
         card: {
           DEFAULT: "var(--card)",
           foreground: "var(--card-foreground)",
@@ -49,7 +54,6 @@ const config: Config = {
           "4": "var(--chart-4)",
           "5": "var(--chart-5)",
         },
-        "background-secondary": "var(--background-secondary)",
         "neon-cyan": "var(--neon-cyan)",
         "neon-purple": "var(--neon-purple)",
         "neon-pink": "var(--neon-pink)",
@@ -65,6 +69,10 @@ const config: Config = {
       },
       backdropBlur: {
         glass: "20px",
+      },
+      fontFamily: {
+        sans: ["var(--font-plus-jakarta)", "var(--font-geist-sans)", "Arial", "Helvetica", "sans-serif"],
+        mono: ["var(--font-geist-mono)", "monospace"],
       },
     },
   },

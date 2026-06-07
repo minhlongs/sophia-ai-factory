@@ -64,7 +64,7 @@ export async function calculateCurrentUsage(
 
   const hourStart = Math.floor(now / 3600) * 3600;
   const dayStart = Math.floor(now / 86400) * 86400;
-  const monthStart = Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime() / 1000);
+  const monthStart = Math.floor(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1) / 1000);
 
   try {
     const db = await getD1Raw();

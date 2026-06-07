@@ -19,7 +19,7 @@ export function HealthIndicator() {
 
   if (isLoading) return null;
 
-  let statusColor = 'text-green-500';
+  let statusColor = 'text-emerald-400';
   let StatusIcon = CheckCircle;
   let statusText = 'System Operational';
 
@@ -32,7 +32,7 @@ export function HealthIndicator() {
     StatusIcon = AlertCircle;
     statusText = 'System Issues Detected';
   } else if (health.status === 'degraded') {
-    statusColor = 'text-yellow-500';
+    statusColor = 'text-amber-400';
     StatusIcon = AlertCircle;
     statusText = 'System Degraded';
   }

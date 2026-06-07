@@ -54,7 +54,7 @@ describe('calculateCommission (tier-aware)', () => {
       offerCommissionPct: 0.2,
       tenantTier: 'MASTER',
     })
-    expect(result.commissionUsd).toBe(52)
+    expect(result.commissionUsd).toBe(60) // MASTER = 1.5x multiplier
   })
 
   it('unknown tier defaults to 1.0x', () => {

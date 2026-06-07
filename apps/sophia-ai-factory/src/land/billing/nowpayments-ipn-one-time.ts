@@ -26,7 +26,11 @@ import { triggerAutoHandover } from '@/tree/handover/auto-handover'
 
 function addMonths(base: Date, months: number): Date {
   const d = new Date(base)
+  const originalDay = d.getDate()
   d.setMonth(d.getMonth() + months)
+  // Clamp to last day of target month to prevent overflow (e.g. Jan 31 + 1 month)
+  const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()
+  d.setDate(Math.min(originalDay, lastDay))
   return d
 }
 

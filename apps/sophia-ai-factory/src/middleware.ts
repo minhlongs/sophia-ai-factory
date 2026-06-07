@@ -309,5 +309,5 @@ export const middleware = proxy
 // through intlMiddleware for locale rewrite + CSP nonce attachment. The
 // /setup-wizard page itself redirects to /dashboard/onboarding (canonical URL).
 export const config = {
-  matcher: ['/((?!api|_next|_worker|auth/callback|.*\\..*).*)'],
+  matcher: ['/((?!_next|_worker|auth/callback|.*\\..*).*)'],
 }

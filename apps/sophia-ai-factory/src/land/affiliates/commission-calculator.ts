@@ -29,13 +29,13 @@ export function calcCommission(grossAmount: number): CommissionSplit {
   return { user, sophia }
 }
 
-// Tier multipliers: free/pro/enterprise → 0.7x / 1.0x / 1.3x
-// Maps Sophia tier names to multipliers
+// Tier multipliers: BASIC=0.7x / PREMIUM=1.0x / ENTERPRISE=1.3x / MASTER=1.5x
+// MASTER is lifetime/highest tier — intentionally higher than ENTERPRISE
 const TIER_MULTIPLIERS: Record<string, number> = {
   BASIC: 0.7,
   PREMIUM: 1.0,
   ENTERPRISE: 1.3,
-  MASTER: 1.3,
+  MASTER: 1.5,
   // Aliases
   free: 0.7,
   pro: 1.0,

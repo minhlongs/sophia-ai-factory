@@ -8,28 +8,28 @@ export function SystemCheckStep() {
       <ByokDoctrineBanner />
       <h2 className="text-xl font-semibold text-foreground">Kiểm Tra Hệ Thống</h2>
       <div className="grid gap-4">
-        <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900">
+        <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border">
           <div className="flex items-center gap-3">
-            <Cloud className="text-green-600 dark:text-green-400" />
+            <Cloud className="text-foreground" />
             <div>
               <p className="font-medium text-foreground">Cloudflare Workers</p>
-              <p className="text-sm text-green-700 dark:text-green-400">Hệ thống đang chạy trên edge (toàn cầu)</p>
+              <p className="text-sm text-muted-foreground">Hệ thống đang chạy trên edge (toàn cầu)</p>
             </div>
           </div>
-          <Check className="text-green-600 dark:text-green-400" />
+          <Check className="text-foreground" />
         </div>
-        <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/10 rounded-lg border border-green-100 dark:border-green-900">
+        <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border">
           <div className="flex items-center gap-3">
-            <Shield className="text-green-600 dark:text-green-400" />
+            <Shield className="text-foreground" />
             <div>
               <p className="font-medium text-foreground">Bảo Mật</p>
-              <p className="text-sm text-green-700 dark:text-green-400">API key được mã hóa AES-256 khi lưu</p>
+              <p className="text-sm text-muted-foreground">API key được mã hóa AES-256 khi lưu</p>
             </div>
           </div>
-          <Check className="text-green-600 dark:text-green-400" />
+          <Check className="text-foreground" />
         </div>
       </div>
-      <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-lg text-sm text-blue-800 dark:text-blue-300 flex gap-2">
+      <div className="bg-accent/10 border border-accent/20 p-4 rounded-lg text-sm text-accent flex gap-2">
         <AlertCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
         <p>Bước tiếp theo: nhập API key cho dịch vụ AI. Bạn có thể bỏ qua và thêm sau trong Settings.</p>
       </div>

@@ -74,7 +74,7 @@ export function calculateOverageEstimate(
   const breakdown: { type: string; units: number; rate: number; amount: number }[] = []
   let totalEstimate = 0
   for (const overage of overages) {
-    const amount = overage.exceededBy * rate
+    const amount = Math.round(overage.exceededBy * rate * 100) / 100
     breakdown.push({ type: overage.type, units: overage.exceededBy, rate, amount })
     totalEstimate += amount
   }

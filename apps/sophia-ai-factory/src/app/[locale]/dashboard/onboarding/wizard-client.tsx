@@ -435,7 +435,7 @@ export function WizardClient() {
             {step === 3 && (
               <>
                 {webhookWarning && (
-                  <div className="mb-4 flex items-start gap-2 rounded-lg border border-yellow-400 bg-yellow-50 dark:bg-yellow-900/10 p-3 text-sm text-yellow-800 dark:text-yellow-300">
+                  <div className="mb-4 flex items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm text-primary max-w-xs">
                     <AlertTriangle className="mt-0.5 w-4 h-4 shrink-0" />
                     <span>{t('save.webhookWarning')}</span>
                   </div>
@@ -455,12 +455,12 @@ export function WizardClient() {
             {step === 4 && (
               <>
                 {saveError && retryCount > 0 && (
-                  <div className="mb-4 rounded-lg border border-blue-400 bg-blue-50 dark:bg-blue-900/10 p-3 text-sm text-blue-800 dark:text-blue-300">
+                  <div className="mb-4 rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm text-primary max-w-xs">
                     {saveError}
                   </div>
                 )}
                 {saveFailed && (
-                  <div className="mb-4 rounded-lg border border-red-400 bg-red-50 dark:bg-red-900/10 p-3 text-sm text-red-800 dark:text-red-300">
+                  <div className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive max-w-xs">
                     <p className="font-medium">{saveError}</p>
                     <p className="mt-2">
                       <Link href="/dashboard/settings" className="underline underline-offset-2 hover:opacity-80 font-medium">
@@ -512,7 +512,7 @@ export function WizardClient() {
                 <button
                     onClick={() => void handleSave(1)}
                     disabled={loading}
-                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-lg font-bold flex items-center gap-2 transition-transform hover:scale-105 ml-auto w-full justify-center sm:w-auto"
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 rounded-lg font-bold flex items-center gap-2 transition-transform hover:scale-105 ml-auto w-full justify-center sm:w-auto"
                 >
                     {loading ? (
                         <>

@@ -62,6 +62,8 @@ export function determineNewState(
   if (currentState === 'current') return 'past_due';
   if (currentState === 'past_due' && attemptNumber >= config.maxRetryAttempts) return 'suspended';
   if (currentState === 'past_due' && attemptNumber >= Math.ceil(config.maxRetryAttempts / 2)) return 'delinquent';
+  // FIX-9A: delinquent → suspended when retries exhausted
+  if (currentState === 'delinquent' && attemptNumber >= config.maxRetryAttempts) return 'suspended';
   return currentState;
 }
 

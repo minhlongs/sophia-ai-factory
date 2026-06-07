@@ -28,18 +28,29 @@ export async function verifyHeyGenSignature(
       ['sign'],
     )
 
-    const sigBuf = await crypto.subtle.sign('HMAC', key, enc.encode(rawBody))
-    const expectedHex = Array.from(new Uint8Array(sigBuf))
+    // HeyGen format: `t=<unix>.<body>` — try timestamp-prefixed signature first
+    const ts = Math.floor(Date.now() / 1000)
+    const toSign = `${ts}.${rawBody}`
+    const sigBuf = await crypto.subtle.sign('HMAC', key, enc.encode(toSign))
+    const tsHex = Array.from(new Uint8Array(sigBuf))
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('')
 
-    const expected = enc.encode(expectedHex)
+    const expected = enc.encode(tsHex)
     const provided = enc.encode(providedSignature.toLowerCase())
 
-    if (expected.length !== provided.length) return false
+    if (expected.length === provided.length && timingSafeEqual(expected, provided)) {
+      return true
+    }
 
-    // Constant-time comparison
-    return timingSafeEqual(expected, provided)
+    // Fallback: legacy bare-hex over raw body (no timestamp prefix)
+    const legacyBuf = await crypto.subtle.sign('HMAC', key, enc.encode(rawBody))
+    const legacyHex = Array.from(new Uint8Array(legacyBuf))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+
+    const legacyExpected = enc.encode(legacyHex)
+    return legacyExpected.length === provided.length && timingSafeEqual(legacyExpected, provided)
   } catch {
     return false
   }

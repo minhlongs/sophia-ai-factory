@@ -80,7 +80,7 @@ export function ApiKeyInput({
           className={cn(
             "w-full px-4 py-2 pr-40 border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none transition-all duration-200 bg-background text-foreground",
             status === 'invalid' ? "border-destructive focus:ring-destructive/20" :
-            status === 'valid' ? "border-green-500 focus:ring-green-500/20" :
+            status === 'valid' ? "border-primary/50 focus:ring-primary/20" :
             "border-input"
           )}
         />
@@ -102,7 +102,7 @@ export function ApiKeyInput({
           {status === 'valid' && (
             <div className="flex items-center gap-1 transition-all duration-300">
               {latency !== null && (
-                <span className="inline-flex items-center text-[10px] font-bold bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300 px-1.5 py-0.5 rounded transition-all duration-300">
+                <span className="inline-flex items-center text-[10px] font-bold bg-primary/15 text-primary border border-primary/20 px-1.5 py-0.5 rounded transition-all duration-300">
                   ✓ {latency}ms
                 </span>
               )}
@@ -133,7 +133,7 @@ export function ApiKeyInput({
       )}
 
       {status === 'valid' && (
-        <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
+        <p className="text-xs text-primary mt-1 flex items-center gap-1">
           <CheckCircle className="w-3.5 h-3.5" />
           Connection active {latency !== null ? `(${latency}ms)` : ''}
         </p>

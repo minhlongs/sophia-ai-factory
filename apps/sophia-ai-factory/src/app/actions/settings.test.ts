@@ -4,6 +4,7 @@ import { createServerClient } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { encrypt } from '@/seed/security/encryption-aes-gcm';
 import { revalidatePath } from 'next/cache';
+import { requireOrgMembership } from '@/seed/db/org-membership';
 
 // Mock dependencies
 vi.mock('@/seed/db/client', () => ({
@@ -16,6 +17,10 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 
 vi.mock('@/seed/security/encryption-aes-gcm', () => ({
   encrypt: vi.fn((val) => `encrypted_${val}`),
+}));
+
+vi.mock('@/seed/db/org-membership', () => ({
+  requireOrgMembership: vi.fn().mockResolvedValue({ authorized: true, orgId: 'test-org' }),
 }));
 
 vi.mock('next/cache', () => ({
@@ -235,25 +240,13 @@ describe('Settings Server Actions', () => {
       expect(result).toEqual({ error: 'Failed to update profile' });
     });
 
-    it('should return error if user has no org membership', async () => {
-      const mockUser = { id: 'user-123', email: 'test@example.com', full_name: 'Test', role: 'user' };
-      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+it('should return error if user has no org membership', async () => {
+  const mockUser = { id: 'user-123', email: 'test@example.com', full_name: 'Test', role: 'user' };
+  vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+  vi.mocked(requireOrgMembership).mockResolvedValue({ authorized: false, error: 'Forbidden: user is not a member of any organization' });
 
-      mockDb.from.mockImplementation((table: string) => {
-        if (table === 'org_members') {
-          return {
-            select: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                maybeSingle: vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } }),
-              }),
-            }),
-          };
-        }
-        return mockDb;
-      });
-
-      const result = await updateUserProfile(validData);
-      expect(result).toEqual({ error: 'Forbidden: user is not a member of any organization' });
-    });
+  const result = await updateUserProfile(validData);
+  expect(result).toEqual({ error: 'Forbidden: user is not a member of any organization' });
+});
   });
 });

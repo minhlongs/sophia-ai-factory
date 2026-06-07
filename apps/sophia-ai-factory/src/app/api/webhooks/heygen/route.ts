@@ -16,7 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/seed/utils/logger-utility'
 import { createServerClient } from '@/seed/db/client'
-import { verifyHeyGenSignature } from '@/land/webhooks/heygen-signature-verifier'
+import { verifyWebhook } from '@/land/webhooks/signature'
 import { resolveHeyGenWebhookSecret } from '@/land/webhooks/heygen-webhook-secret-resolver'
 import {
   completeVideoFromWebhook,
@@ -159,10 +159,26 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'missing_signature' }, { status: 401 })
   }
 
-  const valid = await verifyHeyGenSignature(rawBody, sig, secret)
+  const valid = await verifyWebhook(rawBody, sig, secret, { toleranceSec: 300, acceptLegacy: true })
   if (!valid) {
     logger.warn('[heygen-webhook] Invalid signature', { heygenJobId })
     return NextResponse.json({ error: 'invalid_signature' }, { status: 401 })
+  }
+
+  // Dedup: skip if same event processed within 5 min
+  if (heygenJobId) {
+    const now = Math.floor(Date.now() / 1000)
+    const fiveMinAgo = now - 300
+    try {
+      const db = createServerClient()
+      const { data: recent } = await db.from('videos').select('id, updated_at').eq('heygen_job_id', heygenJobId).gte('updated_at', new Date(fiveMinAgo * 1000).toISOString()).order('updated_at', { ascending: false }).limit(1).single() as { data: { id: string; updated_at: string } | null }
+      if (recent) {
+        logger.info('[heygen-webhook] Dedup — recent event skipped', { heygenJobId, lastUpdated: recent.updated_at })
+        return NextResponse.json({ ok: true, deduped: true })
+      }
+    } catch (err) {
+      logger.warn('[heygen-webhook] Dedup check failed (non-fatal)', { heygenJobId, error: String(err) })
+    }
   }
 
   const eventType = payload.event_type ?? ''

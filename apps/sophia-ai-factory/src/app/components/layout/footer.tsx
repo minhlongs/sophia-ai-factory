@@ -35,11 +35,7 @@ export function Footer() {
 
   return (
     <footer
-      className="border-t"
-      style={{
-        background: "linear-gradient(to bottom, #0a0f1a, var(--background))",
-        borderColor: "rgba(255,255,255,0.06)",
-      }}
+ className="border-t border-border"
     >
       <Container>
         <div className="py-14">
@@ -110,13 +106,12 @@ export function Footer() {
 
           {/* Bottom bar */}
           <div
-            className="border-t pt-6 flex flex-col md:flex-row items-center justify-between gap-4"
-            style={{ borderColor: "rgba(255,255,255,0.06)" }}
+            className="border-t border-border pt-6 flex flex-col md:flex-row items-center justify-between gap-4"
           >
-            <p className="text-muted-foreground/60 text-xs">
+            <p className="text-muted-foreground text-xs">
               &copy; {currentYear} Sophia AI Factory. All rights reserved.
             </p>
-            <p className="text-muted-foreground/60 text-xs">
+            <p className="text-muted-foreground text-xs">
               Powered by{" "}
               <span style={{ color: "var(--neon-cyan)" }}>Mekong CLI</span>
             </p>

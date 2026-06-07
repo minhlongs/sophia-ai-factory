@@ -53,18 +53,23 @@ export async function processNowPaymentsIpn(
     // Unique constraint violation or other error
     const { data: existing, error: selectError } = await db
       .from('payment_events')
-      .select('processed')
+      .select('processed, created_at')
       .eq('event_id', eventId)
       .single()
 
     if (selectError || !existing) {
       return { success: false, message: 'Database query failure' }
     }
-    if (existing.processed === 1 || existing.processed === true) {
-      return { success: true, message: 'Already processed' }
-    } else {
-      return { success: false, message: 'Already processing' }
-    }
+ if (existing.processed === 1 || existing.processed === true) {
+ return { success: true, message: 'Already processed' }
+ }
+ // Stale lock recovery: if lock >5 min old, delete and allow re-processing
+ const lockAgeMs = Date.now() - new Date((existing as { created_at?: string }).created_at ?? '').getTime()
+ if (lockAgeMs > 5 * 60 * 1000) {
+   try { await db.from('payment_events').delete().eq('event_id', eventId) } catch { /* non-fatal */ }
+   return { success: false, message: 'Stale lock cleared, retry' }
+ }
+ return { success: false, message: 'Already processing' }
   }
 
   try {
