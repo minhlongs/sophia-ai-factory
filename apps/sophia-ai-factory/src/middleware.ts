@@ -41,7 +41,7 @@ function isSupportedLocale(segment: string | undefined): boolean {
 const intlMiddleware = createMiddleware({
   locales: SUPPORTED_LOCALES,
   defaultLocale: 'vi',
-  localePrefix: 'as-needed',
+  localePrefix: 'always',
 })
 
 function redirectToDefault(request: NextRequest): NextResponse {
