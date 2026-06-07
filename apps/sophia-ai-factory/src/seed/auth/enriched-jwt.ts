@@ -34,8 +34,7 @@ const JWT_CONFIG = { algorithm: 'HS256' as const, ttlSeconds: 3600 }
 function getJwtSecret(): Uint8Array {
   const secret = process.env.JWT_SECRET=REDACTED
   if (!secret) {
-    logger.warn('[Enriched JWT] JWT_SECRET=REDACTED not set, using insecure default')
-    return new TextEncoder().encode('insecure-dev-secret-change-in-production')
+    throw new Error('[Enriched JWT] JWT_SECRET=REDACTED is required — refusing to start with insecure default')
   }
   return new TextEncoder().encode(secret)
 }
