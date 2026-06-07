@@ -21,6 +21,9 @@ const mockSupabase = {
   from: vi.fn(),
 }
 
+// Set required env var for tests — production code throws if missing
+process.env.API_KEY_SECRET = 'test-secret-for-unit-tests-only'
+
 vi.mock('@/seed/db/client', () => ({
   createServerClient: () => mockSupabase,
 }))

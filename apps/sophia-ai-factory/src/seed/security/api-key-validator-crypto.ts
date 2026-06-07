@@ -11,13 +11,12 @@ export const API_KEY_PREFIX = 'mk_'
 export const KEY_ID_LENGTH = 16
 
 export function getApiKeySecret(): string {
-  const secret = process.env.API_KEY_SECRET || process.env.RAAS_API_KEY_SECRET
+  const secret = process.env.API_KEY_SECRET
   if (!secret) {
-    logger.warn('[API Key Validator] API_KEY_SECRET not set, using insecure default')
-    return 'insecure-dev-secret-change-in-production'
+    throw new Error('[API Key] API_KEY_SECRET is required — refusing to start with insecure default')
   }
   return secret
-}
+  }
 
 export function generateKeyId(): string {
   const bytes = new Uint8Array(KEY_ID_LENGTH / 2)
