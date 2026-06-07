@@ -43,6 +43,11 @@ REPO_ROOT="$(cd "$APP_DIR/../.." && pwd)"
 
 cd "$APP_DIR"
 
+# ─── Unset proxy for CF API calls (local SOCKS5 proxy breaks wrangler fetch) ──
+# NO_PROXY list doesn't include Cloudflare API hosts; clear all proxy vars so
+# wrangler/opennext can reach api.cloudflare.com/workers directly.
+unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy ALL_PROXY all_proxy
+
 # ─── Retry helper for transient CF API failures (502 Bad Gateway, etc) ───────
 # 3 attempts with exponential backoff (5s, 10s, 20s). Permanent errors
 # (auth, validation, etc) still fail on first attempt — only 5xx and network
