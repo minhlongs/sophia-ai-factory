@@ -64,10 +64,10 @@ export async function processNowPaymentsIpn(
  return { success: true, message: 'Already processed' }
  }
  // Stale lock recovery: if lock >5 min old, delete and allow re-processing
- const lockAgeMs = Date.now() - new Date((existing as { created_at?: string }).created_at ?? '').getTime()
+ const lockAgeMs = Date.now() - new Date((existing as { created_at?: string }).created_at ?? new Date().toISOString()).getTime()
  if (lockAgeMs > 5 * 60 * 1000) {
    try { await db.from('payment_events').delete().eq('event_id', eventId) } catch { /* non-fatal */ }
-   return { success: false, message: 'Stale lock cleared, retry' }
+   return { success: true, message: 'Stale lock cleared, retry' }
  }
  return { success: false, message: 'Already processing' }
   }
