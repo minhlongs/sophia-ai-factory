@@ -15,6 +15,7 @@ import { CategoryBadge } from '@/forest/components/sop/category-badge';
 import { SopDetailInstallButton } from './install-button';
 import { installSopAction } from '../actions';
 import { ArrowLeft, Zap } from 'lucide-react';
+import { getD1 } from '@/seed/db/get-d1';
 
 interface Props {
   params: Promise<{ slug: string; locale: string }>;
@@ -22,14 +23,6 @@ interface Props {
 
 export const dynamic = 'force-dynamic';
 
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch { return null; }
-}
 
 export default async function SopDetailPage({ params }: Props) {
   const { slug, locale } = await params;

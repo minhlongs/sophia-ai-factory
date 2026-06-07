@@ -9,23 +9,17 @@
  */
 
 import { redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getTemplateBySlug, createInstallation, setEnabled, deleteInstallation, getInstallation } from '@/tree/sop/sop-repo';
 import { generateWebhookSecret } from '@/tree/sop/webhook-hmac';
 import { installInputSchema } from '@/tree/sop/install-input-schema';
 import type { SopCustomizations } from '@/tree/sop/sop-types';
+import { getD1 } from '@/seed/db/get-d1';
 
 // ---------------------------------------------------------------------------
 // D1 access — mirror pattern from trigger route
 // ---------------------------------------------------------------------------
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch { return null; }
-}
 
 // ---------------------------------------------------------------------------
 // Install
@@ -104,6 +98,7 @@ export async function toggleSopAction(installationId: string, enabled: boolean):
   if (inst.user_id !== user.id) return { error: 'Forbidden' };
 
   await setEnabled(db, installationId, enabled);
+ revalidatePath('/dashboard/sops');
   return {};
 }
 
@@ -181,6 +176,7 @@ export async function purchaseSopAction(
     });
   }
 
+ revalidatePath('/dashboard/sop-marketplace');
   return {};
 }
 

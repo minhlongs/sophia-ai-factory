@@ -6,6 +6,7 @@ import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { listTemplatesByAuthor, listCreatorSales } from '@/tree/sop/sop-repo';
 import { Palette, DollarSign, Plus, FileText, TrendingUp } from 'lucide-react';
 import type { SopTemplateRow } from '@/tree/sop/sop-types';
+import { getD1 } from '@/seed/db/get-d1';
 
 interface Props { params: Promise<{ locale: string }> }
 
@@ -16,14 +17,6 @@ export async function generateMetadata() {
   return { title: t('pageTitle') };
 }
 
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch { return null; }
-}
 
 interface EarningsSummary {
   totalEarned: number; pending: number; payable: number; paid: number;

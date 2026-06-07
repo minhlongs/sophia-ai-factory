@@ -14,6 +14,7 @@ import { getTemplateById } from '@/tree/sop/sop-repo';
 import { CategoryBadge } from '@/forest/components/sop/category-badge';
 import { ArrowLeft, Calendar, Clock, Coins, FileText } from 'lucide-react';
 import { CreatorDetailClient } from './creator-detail-client';
+import { getD1 } from '@/seed/db/get-d1';
 
 interface Props {
   params: Promise<{ id: string; locale: string }>;
@@ -27,14 +28,6 @@ export async function generateMetadata({ params }: Props) {
   return { title: t('pageTitle', { id }) };
 }
 
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch { return null; }
-}
 
 function statusBadge(status: string) {
   const map: Record<string, string> = {

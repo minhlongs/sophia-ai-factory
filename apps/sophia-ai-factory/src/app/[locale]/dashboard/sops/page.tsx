@@ -13,6 +13,7 @@ import { EmptyState } from '@/seed/components/ui/empty-state';
 import { BookOpen, Store, PartyPopper } from 'lucide-react';
 import type { SopInstallationRow, SopTemplateRow } from '@/tree/sop/sop-types';
 import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
+import { getD1 } from '@/seed/db/get-d1';
 
 interface Props {
   params: Promise<{ locale: string }>;
@@ -20,14 +21,6 @@ interface Props {
 
 export const dynamic = 'force-dynamic';
 
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch { return null; }
-}
 
 interface InstallWithTemplate extends SopInstallationRow {
   template: SopTemplateRow | null;

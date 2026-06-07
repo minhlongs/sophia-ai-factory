@@ -8,7 +8,7 @@ import type { SopTemplateRow } from './sop-types';
 /** List all published official templates */
 export async function listOfficialTemplates(db: D1Database): Promise<SopTemplateRow[]> {
   const { results } = await db
-    .prepare(`SELECT * FROM sop_templates WHERE is_official = 1 AND status = 'published' ORDER BY created_at ASC`)
+    .prepare(`SELECT * FROM sop_templates WHERE is_official = 1 AND status = 'published' ORDER BY created_at ASC LIMIT 100`)
     .all<SopTemplateRow>();
   return results;
 }
@@ -45,7 +45,7 @@ export async function getTemplatesByIds(db: D1Database, ids: string[]): Promise<
 /** List published community (non-official) templates */
 export async function listMarketplaceTemplates(db: D1Database): Promise<SopTemplateRow[]> {
   const { results } = await db
-    .prepare(`SELECT * FROM sop_templates WHERE is_official = 0 AND status = 'published' ORDER BY created_at DESC`)
+    .prepare(`SELECT * FROM sop_templates WHERE is_official = 0 AND status = 'published' ORDER BY created_at DESC LIMIT 100`)
     .all<SopTemplateRow>();
   return results;
 }
@@ -53,7 +53,7 @@ export async function listMarketplaceTemplates(db: D1Database): Promise<SopTempl
 /** List templates created by a specific user */
 export async function listTemplatesByAuthor(db: D1Database, authorUserId: string): Promise<SopTemplateRow[]> {
   const { results } = await db
-    .prepare(`SELECT * FROM sop_templates WHERE author_user_id = ?1 ORDER BY created_at DESC`)
+    .prepare(`SELECT * FROM sop_templates WHERE author_user_id = ?1 ORDER BY created_at DESC LIMIT 100`)
     .bind(authorUserId)
     .all<SopTemplateRow>();
   return results;

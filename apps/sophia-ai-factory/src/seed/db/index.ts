@@ -15,6 +15,7 @@ export * from './d1-query-chain-executors';
 export * from './d1-query-chain';
 export * from './d1-query-types';
 export * from './d1-query-utilities';
+export * from './get-d1';
 export * from './get-user-channels';
 export * from './get-user-credits';
 export * from './get-user-tier';

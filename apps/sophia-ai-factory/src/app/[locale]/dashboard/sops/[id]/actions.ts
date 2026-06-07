@@ -19,15 +19,8 @@ import { runSop } from '@/tree/sop/executor/sop-runner';
 import { createRun } from '@/tree/sop/sop-repo-runs';
 import { logger } from '@/seed/utils/logger-utility';
 import type { SopCustomizations } from '@/tree/sop/sop-types';
+import { getD1 } from '@/seed/db/get-d1';
 
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch { return null; }
-}
 
 async function assertOwner(id: string) {
   const user = await getCurrentUser();

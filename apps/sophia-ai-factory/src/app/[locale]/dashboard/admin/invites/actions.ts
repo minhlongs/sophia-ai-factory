@@ -3,15 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import { createBetaInvite, revokeInvite } from '@/land/sop-marketplace/beta-invites';
-
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch { return null; }
-}
+import { getD1 } from '@/seed/db/get-d1';
 
 export async function createInviteAction(formData: FormData): Promise<{ error?: string }> {
   const user = await requireMasterTier();

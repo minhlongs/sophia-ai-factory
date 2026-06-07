@@ -13,6 +13,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { getD1Raw } from '@/seed/db/client';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
+import { revalidatePath } from 'next/cache';
 import { logger } from '@/seed/utils/logger-utility';
 import { provisionTierChange } from '@/land/billing/tier-change-provisioner';
 import type { Tier } from '@/seed/types';
@@ -115,6 +116,9 @@ export async function changeTierAction(
       creditCents: result.creditCents,
     });
 
+  revalidatePath('/dashboard/billing');
+  revalidatePath('/dashboard');
+
     return {
       success: true,
       creditCents: result.creditCents,
@@ -174,6 +178,7 @@ export async function cancelSubscriptionAction(
       userId: user.id,
       mode,
     });
+  revalidatePath('/dashboard/billing');
     return { success: true };
   } catch (err) {
     logger.error('[cancelSubscriptionAction] Unexpected error', err instanceof Error ? err : undefined);

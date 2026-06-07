@@ -22,6 +22,7 @@ import { CommunityListingCard } from './community-listing-card';
 import { installSopAction } from './actions';
 import { Store, Sparkles, Users } from 'lucide-react';
 import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
+import { getD1 } from '@/seed/db/get-d1';
 
 interface Props {
   params: Promise<{ locale: string }>;
@@ -34,14 +35,6 @@ export async function generateMetadata() {
   return { title: t('pageTitle') };
 }
 
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch { return null; }
-}
 
 export default async function MarketplacePage({ params }: Props) {
   const { locale } = await params;

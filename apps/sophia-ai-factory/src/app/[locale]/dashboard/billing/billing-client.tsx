@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { use } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
@@ -44,6 +44,7 @@ export default function BillingClient({ params }: { params: Promise<{ locale: st
   const { locale } = use(params);
   const t = useTranslations('dashboard.billing');
   const [cancelOpen, setCancelOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: usageData, isLoading, error } = useQuery<UsageSummaryResponse>({
     queryKey: ['/api/billing/usage-summary'],
@@ -156,7 +157,7 @@ export default function BillingClient({ params }: { params: Promise<{ locale: st
       </div>
 
       <BillingOverageTable data={usageData} formatCurrency={(c) => formatCurrency(c, locale)} />
-      <BillingPaymentHistory data={usageData} formatCurrency={(c) => formatCurrency(c, locale)} />
+      <BillingPaymentHistory />
 
       {/* Self-serve billing actions */}
       <div>

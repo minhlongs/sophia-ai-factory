@@ -9,7 +9,6 @@ import { EmptyState } from "@/seed/components/ui/empty-state";
 import Link from "next/link";
 import { Plus, Megaphone } from "lucide-react";
 import { Campaign } from "@/seed/types";
-import { CampaignExportControl } from "../components/campaign-export-control";
 import { getTranslations } from 'next-intl/server';
 
 const CampaignList = dynamic(
@@ -59,7 +58,6 @@ export default async function CampaignsPage() {
           <p className="text-muted-foreground">{t('subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
-          <CampaignExportControl />
           <Link href="/dashboard/create">
             <Button className="flex items-center gap-2">
               <Plus className="w-4 h-4" aria-hidden="true" />
