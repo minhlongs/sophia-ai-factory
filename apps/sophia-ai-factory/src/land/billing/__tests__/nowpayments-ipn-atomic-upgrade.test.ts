@@ -98,6 +98,7 @@ vi.mock('@/tree/clients/nowpayments-client', () => ({
     const tier = map[invoiceId]
     return tier ? { tier, invoiceId } : null
   }),
+  NOWPAYMENTS_TIERS: {} as Record<string, { price: number }>,
 }))
 
 vi.mock('@/land/billing/nowpayments-ipn-db', () => ({
