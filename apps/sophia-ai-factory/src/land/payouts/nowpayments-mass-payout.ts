@@ -95,7 +95,7 @@ export interface BatchQueueInput {
  * Converts cents → USDT float at API call boundary.
  */
 export async function queueBatch(input: BatchQueueInput): Promise<{ externalPaymentId: string }> {
-  const db = getD1Raw()  // F29 fix: getD1Raw() is synchronous — no await
+  const db = await getD1Raw()  // F29 fix: getD1Raw() is synchronous — no await
   const apiKey = process.env.NOWPAYMENTS_API_KEY
 
   // Check if already sent or in-flight (idempotency — short-circuit for confirmed or sending)
