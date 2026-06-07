@@ -118,7 +118,7 @@ export async function upsertUserTier(
         `INSERT OR REPLACE INTO subscriptions (id, org_id, user_id, plan, status, created_at, updated_at)
          VALUES (?1, ?2, ?3, ?4, 'active', ?5, ?5)`,
       )
-      .bind(genId(), orgId, userId, tier.toUpperCase(), 'active', nowSec, nowSec)
+      .bind(genId(), orgId, userId, tier.toUpperCase(), nowSec)
       .run();
     // F-02: Also sync organizations.plan so resolveUserTier() reads the correct plan
     await db
