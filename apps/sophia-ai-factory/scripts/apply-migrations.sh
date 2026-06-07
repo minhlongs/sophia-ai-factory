@@ -208,8 +208,8 @@ for m in $MIGRATIONS; do
 
   # Post-flight schema verification
   for entry in "${VERIFY_AFTER[@]}"; do
-    local v_name="${entry%%|*}"
-    local v_sql="${entry#*|}"
+    v_name="${entry%%|*}"
+    v_sql="${entry#*|}"
     if [ "$v_name" = "$MIGRATION_NAME" ]; then
       echo "   Verifying schema after ${MIGRATION_NAME}..."
       if run_verify "$MIGRATION_NAME" "$v_sql"; then
