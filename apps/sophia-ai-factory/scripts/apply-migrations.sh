@@ -62,7 +62,7 @@ run_verify() {
   local migration_name="$1"
   local verify_sql="$2"
   local tmp_sql
-  tmp_sql=$(mktemp /tmp/migration-verify-XXXXXX.sql)
+  tmp_sql=$(mktemp -t migration-verify)
   echo "$verify_sql" > "$tmp_sql"
   local output
   output=$(npx wrangler d1 execute "$DB_NAME" \
@@ -92,7 +92,7 @@ run_verify() {
 guard_drop_rename() {
   local migration_file="$1"
   local tmp_guard_sql
-  tmp_guard_sql=$(mktemp /tmp/migration-guard-XXXXXX.sql)
+  tmp_guard_sql=$(mktemp -t migration-guard)
 
   local tables_to_check=()
   while IFS= read -r line; do
@@ -177,7 +177,7 @@ for m in $MIGRATIONS; do
   MIGRATION_NAME=$(basename "$m" .sql)
 
   # Guard: skip migrations already recorded in D1 _migrations table
-  TMP_SQL=$(mktemp /tmp/migration-check-XXXXXX.sql)
+  TMP_SQL=$(mktemp -t migration-check)
   echo "SELECT COUNT(*) AS cnt FROM _migrations WHERE name = '${MIGRATION_NAME}'" > "$TMP_SQL"
   APPLIED_COUNT_DB=$(npx wrangler d1 execute "$DB_NAME" \
     --config "$WRANGLER_CONFIG" \
