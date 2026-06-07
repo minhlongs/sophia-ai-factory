@@ -204,7 +204,7 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
         <TextField
           label={t('domain')}
           value={branding.customDomain ?? ''}
-          placeholder="app.yourbrand.com"
+          placeholder={t('domainPlaceholder')}
           onBlur={(v) => handleBlur('customDomain', v || null)}
           inputCls={inputCls}
         />
