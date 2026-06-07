@@ -105,7 +105,6 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
   if (orgId) {
     // ── Atomic D1 batch: subscription + organization + pending_orders ──────
     try {
-      const d1 = await getD1Raw()
       const { data: currentSub } = await db.from('subscriptions').select('plan').eq('org_id', orgId).single()
       const currentPlan = (currentSub as { plan?: string } | null)?.plan ?? ''
       // Out-of-order IPN guard: generalized downgrade protection.
@@ -180,7 +179,6 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
 
   // Audit trail — record tier activation event (non-fatal)
   try {
-    const d1 = await getD1Raw()
     await recordAudit(d1, {
       tableName: 'subscriptions',
       rowId: orgId ?? userId,
@@ -239,7 +237,6 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
     const userEmail = (userRow as { email?: string; name?: string } | null)?.email ?? ''
     const userName = (userRow as { email?: string; name?: string } | null)?.name ?? undefined
     if (userEmail) {
-      const d1 = await getD1Raw()
       const purchaseCount = await d1
         .prepare(`SELECT COUNT(*) as cnt FROM user_purchases WHERE user_id = ?1 AND status = 'paid'`)
         .bind(userId)
@@ -260,7 +257,6 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
 
   // Invalidate license KV cache so next quota check reads fresh tier data
   try {
-    const d1 = await getD1Raw()
     const lic = await d1
       .prepare('SELECT nonce FROM raas_licenses WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 1')
       .bind(userId)
@@ -297,7 +293,6 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
     const userEmail = (userRow as { email?: string; name?: string } | null)?.email ?? ''
     const userName = (userRow as { email?: string; name?: string } | null)?.name ?? ''
     if (userEmail) {
-      const d1 = await getD1Raw()
       await enqueueWelcomeEmail(d1, {
         paymentId: `post_purchase_welcome_${ipn.payment_id}`,
         toEmail: userEmail,
@@ -323,7 +318,6 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
       : null
     const referrerId = settings?.referred_by as string | undefined
     if (referrerId && referrerId !== userId) {
-      const d1 = await getD1Raw()
       // Check if this payment was already rewarded (idempotency guard)
       const existingReward = await d1
         .prepare('SELECT id FROM referral_rewards WHERE payment_id = ?1 AND referrer_id = ?2')
@@ -389,6 +383,8 @@ export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<void> 
   if (!userId) { logger.warn('[NOWPayments] refunded: cannot parse userId', { orderId: ipn.order_id }); return }
 
   const db = getDb()
+  // Cache D1 binding — resolves Cloudflare context once; reuse for all subsequent D1 queries in this handler
+  const d1 = await getD1Raw()
   const { data: membership } = await db.from('org_members').select('org_id').eq('user_id', userId).single()
   if (membership?.org_id) {
     await db.from('subscriptions').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('org_id', membership.org_id)
@@ -396,7 +392,6 @@ export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<void> 
 
   // Invalidate license KV cache so next quota check reads fresh tier data (mirrors activation path)
   try {
-    const d1 = await getD1Raw()
     const lic = await d1
       .prepare('SELECT nonce FROM raas_licenses WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 1')
       .bind(userId)
