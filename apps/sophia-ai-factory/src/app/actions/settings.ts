@@ -100,9 +100,19 @@ export async function updateUserProfile(data: UserProfileFormValues) {
     return { error: 'Unauthorized' };
   }
 
-  try {
-    const db = createServerClient();
+  // Validate org membership — prevents actions from touching org-scoped tables without membership
+  const db = createServerClient();
+  const { data: membership } = await db
+    .from('org_members')
+    .select('org_id')
+    .eq('user_id', user.id)
+    .maybeSingle();
 
+  if (!membership) {
+    return { error: 'Forbidden: user is not a member of any organization' };
+  }
+
+  try {
     // Update user full_name in users table
     if (fullName !== user.full_name) {
       await db.from('users').update({ full_name: fullName }).eq('id', user.id);

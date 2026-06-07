@@ -8,11 +8,12 @@ import { inngest } from '@/forest/inngest/client';
 const mocks = vi.hoisted(() => {
   const insertMock = vi.fn().mockReturnThis();
   const singleMock = vi.fn().mockResolvedValue({ data: { id: 'campaign-123' }, error: null });
+  const maybeSingleMock = vi.fn().mockResolvedValue({ data: { org_id: 'org-1' }, error: null });
 
   // Differentiate profile queries (user_id eq) from campaign queries
   const eqMock = vi.fn().mockImplementation((field: string) => {
     if (field === 'user_id') {
-      return { single: vi.fn().mockResolvedValue({ data: { subscription_tier: 'basic' }, error: null }) };
+      return { single: vi.fn().mockResolvedValue({ data: { subscription_tier: 'basic' }, error: null }), maybeSingle: maybeSingleMock };
     }
     return { single: singleMock };
   });
@@ -38,6 +39,16 @@ const mocks = vi.hoisted(() => {
         })
       };
     }
+if (table === 'org_members') {
+  return {
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        maybeSingle: vi.fn().mockResolvedValue({ data: { org_id: 'org-1' }, error: null }),
+      }),
+    }),
+  };
+}
+
     // campaigns table — handles both count query and insert
     const gteMock = vi.fn().mockResolvedValue({ data: [], error: null });
     const campaignEqMock = vi.fn().mockReturnValue({ gte: gteMock });
@@ -105,6 +116,16 @@ describe('createCampaign Integration', () => {
           })
         };
       }
+if (table === 'org_members') {
+  return {
+    select: vi.fn().mockReturnValue({
+      eq: vi.fn().mockReturnValue({
+        maybeSingle: vi.fn().mockResolvedValue({ data: { org_id: 'org-1' }, error: null }),
+      }),
+    }),
+  };
+}
+
       // campaigns table — handles both count query and insert
       const gteMock = vi.fn().mockResolvedValue({ data: [], error: null });
       const campaignEqMock = vi.fn().mockReturnValue({ gte: gteMock });

@@ -66,7 +66,7 @@ async function downloadToBuffer(url: string): Promise<ArrayBuffer> {
 }
 
 export const videoGenerate = inngest.createFunction(
-  { id: 'video-generate', retries: 2 },
+  { id: 'video-generate', retries: 2, concurrency: { limit: 3 } },
   { event: 'video/generate.requested' },
   async ({ event, step }) => {
     const data = event.data as VideoGenerateRequestedEvent;

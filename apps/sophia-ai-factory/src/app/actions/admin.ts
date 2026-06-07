@@ -28,6 +28,17 @@ export async function getAdminStats(): Promise<AdminStats> {
 
   const db = createServerClient();
 
+  // Validate org membership
+  const { data: membership } = await db
+.from('org_members')
+.select('org_id')
+.eq('user_id', user.id)
+.maybeSingle();
+
+  if (!membership) {
+   throw new Error('Forbidden: user is not a member of any organization');
+  }
+
   // Parallel queries
   const [campaignsResult, completedResult, paymentsResult, recentResult] = await Promise.all([
     db.from("campaigns").select("id, user_id, video_url, status"),

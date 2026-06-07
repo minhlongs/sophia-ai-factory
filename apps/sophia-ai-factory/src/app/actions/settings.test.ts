@@ -28,6 +28,7 @@ describe('Settings Server Actions', () => {
     select: ReturnType<typeof vi.fn>;
     eq: ReturnType<typeof vi.fn>;
     single: ReturnType<typeof vi.fn>;
+    maybeSingle: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
     upsert: ReturnType<typeof vi.fn>;
   }
@@ -37,6 +38,7 @@ describe('Settings Server Actions', () => {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     single: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
     upsert: vi.fn().mockResolvedValue({ data: null, error: null }),
   };
@@ -50,8 +52,11 @@ describe('Settings Server Actions', () => {
     mockDb.select.mockReturnThis();
     mockDb.eq.mockReturnThis();
     mockDb.single.mockReturnThis();
+    mockDb.maybeSingle.mockReturnThis();
     mockDb.update.mockReturnThis();
     mockDb.upsert.mockResolvedValue({ data: null, error: null });
+    // Default: from() returns the chainable mockDb (tests override as needed)
+    mockDb.from.mockImplementation(() => mockDb);
   });
 
   describe('getUserProfile', () => {
@@ -81,8 +86,8 @@ describe('Settings Server Actions', () => {
             },
             telegram: {
               enabled: false,
-            }
-          }
+            },
+          },
         },
         apiKeys: { openai: '', anthropic: '', elevenlabs: '' },
       });
@@ -95,17 +100,17 @@ describe('Settings Server Actions', () => {
       const mockProfile = {
         user_id: 'user-123',
         settings: JSON.stringify({
-            theme: 'dark',
-            notifications: {
-                email: { marketing: true, security: true, updates: false },
-                telegram: { enabled: true }
-            }
+          theme: 'dark',
+          notifications: {
+            email: { marketing: true, security: true, updates: false },
+            telegram: { enabled: true },
+          },
         }),
         api_keys: JSON.stringify({
           openai: 'enc_openai',
           anthropic: 'enc_anthropic',
-          elevenlabs: null
-        })
+          elevenlabs: null,
+        }),
       };
 
       mockDb.single.mockResolvedValue({ data: mockProfile, error: null });
@@ -129,14 +134,14 @@ describe('Settings Server Actions', () => {
         theme: 'light' as const,
         notifications: {
           email: { marketing: false, security: true, updates: true },
-          telegram: { enabled: false }
-        }
+          telegram: { enabled: false },
+        },
       },
       apiKeys: {
         openai: 'sk-new-key',
         anthropic: '********', // masked, shouldn't change
-        elevenlabs: '' // empty, shouldn't change unless we handle delete logic (current logic: empty = delete if not masked? No, code says: if empty delete from encryptedKeys)
-      }
+        elevenlabs: '',
+      },
     };
 
     it('should return error if unauthorized', async () => {
@@ -151,14 +156,23 @@ describe('Settings Server Actions', () => {
       vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 
       // Mock the from() call chain for both users table update and user_profiles fetch/upsert
-      // We need from() to return different chains based on the table name
       mockDb.from.mockImplementation((table: string) => {
         if (table === 'users') {
           // users.update().eq() chain
           return {
             update: vi.fn().mockReturnValue({
-              eq: vi.fn().mockResolvedValue({ error: null })
-            })
+              eq: vi.fn().mockResolvedValue({ error: null }),
+            }),
+          };
+        }
+        // org_members query (new org validation)
+        if (table === 'org_members') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue({ data: { org_id: 'org-123' }, error: null }),
+              }),
+            }),
           };
         }
         // user_profiles table - return the standard mock
@@ -168,8 +182,11 @@ describe('Settings Server Actions', () => {
       // Mock fetching current keys from user_profiles
       mockDb.select.mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: { api_keys: JSON.stringify({ openai: 'enc_old', anthropic: 'enc_anthropic_old' }) }, error: null })
-        })
+          single: vi.fn().mockResolvedValue({
+            data: { api_keys: JSON.stringify({ openai: 'enc_old', anthropic: 'enc_anthropic_old' }) },
+            error: null,
+          }),
+        }),
       });
 
       const result = await updateUserProfile(validData);
@@ -185,23 +202,58 @@ describe('Settings Server Actions', () => {
           user_id: userId,
           settings: expect.any(String),
           api_keys: expect.any(String),
-          updated_at: expect.any(String)
-        })
+          updated_at: expect.any(String),
+        }),
       );
 
       expect(revalidatePath).toHaveBeenCalledWith('/settings');
     });
 
     it('should handle update error', async () => {
-        const mockUser = { id: 'user-123', email: 'test@example.com', full_name: 'Test', role: 'user' };
-        vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      const mockUser = { id: 'user-123', email: 'test@example.com', full_name: 'Test', role: 'user' };
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
 
-        // Mock upsert to throw an error
-        mockDb.upsert.mockRejectedValue(new Error('DB Error'));
-
-        const result = await updateUserProfile(validData);
-
-        expect(result).toEqual({ error: 'Failed to update profile' });
+      // Mock org_members to pass org check
+      mockDb.from.mockImplementation((table: string) => {
+        if (table === 'org_members') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue({ data: { org_id: 'org-123' }, error: null }),
+              }),
+            }),
+          };
+        }
+        return mockDb;
       });
+
+      // Mock upsert to throw an error
+      mockDb.upsert.mockRejectedValue(new Error('DB Error'));
+
+      const result = await updateUserProfile(validData);
+
+      expect(result).toEqual({ error: 'Failed to update profile' });
+    });
+
+    it('should return error if user has no org membership', async () => {
+      const mockUser = { id: 'user-123', email: 'test@example.com', full_name: 'Test', role: 'user' };
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+
+      mockDb.from.mockImplementation((table: string) => {
+        if (table === 'org_members') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } }),
+              }),
+            }),
+          };
+        }
+        return mockDb;
+      });
+
+      const result = await updateUserProfile(validData);
+      expect(result).toEqual({ error: 'Forbidden: user is not a member of any organization' });
+    });
   });
 });

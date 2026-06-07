@@ -101,4 +101,8 @@ Mọi dispatch carry context này:
 - `apps/sophia-ai-factory/.claude/rules/sophia-handover-rules.md` — protected flows
 - `apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md` — 4-layer
 - `apps/sophia-ai-factory/.claude/rules/cross-layer-orchestration.md` — forest→land rule
-- `apps/sophia-ai-factory/.claude/rules/binh-phap-{core,quality,cicd,workflow,memory-practices}.md` — strategy suite
+- `.claude/rules/binh-phap-core.md` — 4-phase lifecycle, subagent roles, YAGNI/KISS/DRY
+- `.claude/rules/binh-phap-quality.md` — quality gate definitions per phase
+- `.claude/rules/binh-phap-cicd.md` — CF-direct deploy, quality gates, anti-patterns
+- `.claude/rules/binh-phap-workflow.md` — sequential/parallel patterns, state files, escalation
+- `.claude/rules/binh-phap-memory-practices.md` — cleo briefing, decision recording, memory digest

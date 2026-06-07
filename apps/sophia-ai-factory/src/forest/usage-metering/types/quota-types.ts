@@ -39,3 +39,10 @@ export interface QuotaCheckResult {
     current: number;
   };
 }
+
+/** Atomic credit slot reservation result (mirrors VideoSlotReservation) */
+export interface CreditSlotReservation {
+  reserved: boolean;
+  used: number;
+  limit: number;
+}
