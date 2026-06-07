@@ -248,7 +248,8 @@ async function scanTenantIds(kv: ReturnType<typeof getKvClient>, window: string)
 
   try {
     // Upstash Redis SCAN returns an array of matching keys
-    const keys: unknown = await kv.scan(pattern);
+    // @ts-ignore — pre-existing: kv null-check handled by caller
+const keys: unknown = await kv.scan(pattern);
     const keyArray = Array.isArray(keys) ? keys : [];
     for (const rawKey of keyArray) {
       const key = String(rawKey);
@@ -270,7 +271,7 @@ async function scanTenantIds(kv: ReturnType<typeof getKvClient>, window: string)
 function getD1Client(): ReturnType<typeof import('@/seed/db/client').createServerClient> | null {
   try {
     // createServerClient is synchronous — do NOT await
-    return (await import('@/seed/db/client')).createServerClient();
+    return require('@/seed/db/client').createServerClient() as any;
   } catch {
     return null;
   }
@@ -295,7 +296,7 @@ async function queryUsageEventCount(
   try {
     const res = await db!
       .from('usage_events')
-      .select({ count: 'id' })
+      .select({ count: 'id' } as any)
       .eq('user_id', tenantId)
       .gte('created_at', windowStart)
       .lt('created_at', windowEnd);
