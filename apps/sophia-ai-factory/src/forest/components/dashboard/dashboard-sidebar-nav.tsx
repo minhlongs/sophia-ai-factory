@@ -64,8 +64,8 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
       "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
       "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
       active
-        ? "text-foreground bg-white/5 font-semibold border border-[var(--neon-cyan)]/30 shadow-[0_0_12px_rgba(0,240,255,0.15)]"
-        : "text-muted-foreground hover:text-foreground hover:bg-white/[0.02] border border-transparent"
+        ? "text-foreground bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+        : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
     );
   };
 
@@ -73,14 +73,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
     const active = isActive(href);
     return cn(
       "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-      active ? "text-[var(--neon-cyan)]" : "text-muted-foreground group-hover:text-foreground"
+      active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
     );
   };
 
   const renderActiveIndicator = (href: string) => {
     if (isActive(href)) {
       return (
-        <span className="absolute left-0 top-1/4 h-1/2 w-1 rounded-r-full bg-gradient-to-b from-cyan-400 to-violet-500 shadow-[0_0_8px_var(--neon-cyan)]" />
+        <span className="absolute left-0 top-1/4 h-1/2 w-1 rounded-r-full bg-gradient-to-b from-primary to-accent shadow-[0_0_8px_hsl(var(--primary))]" />
       );
     }
     return null;
@@ -204,14 +204,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin")}
               <LayoutDashboard className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">Admin Home</span>
             </Link>
@@ -222,14 +222,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin/ops")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin/ops")}
               <Activity className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/ops") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin/ops") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">Ops Dashboard</span>
             </Link>
@@ -240,14 +240,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin/funnel")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin/funnel")}
               <BarChart2 className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/funnel") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin/funnel") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">Activation Funnel</span>
             </Link>
@@ -258,14 +258,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin/crons")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin/crons")}
               <ServerCog className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/crons") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin/crons") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">Cron Monitor</span>
             </Link>
@@ -276,14 +276,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin/email-outbox")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin/email-outbox")}
               <Webhook className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/email-outbox") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin/email-outbox") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">Email Outbox</span>
             </Link>
@@ -294,14 +294,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin/affiliate-leaderboard")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin/affiliate-leaderboard")}
               <Coins className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/affiliate-leaderboard") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin/affiliate-leaderboard") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">Affiliate Leaderboard</span>
             </Link>
@@ -312,14 +312,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin/webhook-deliveries")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin/webhook-deliveries")}
               <Webhook className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/webhook-deliveries") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin/webhook-deliveries") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">Webhook Deliveries</span>
             </Link>
@@ -330,14 +330,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin/storage")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin/storage")}
               <Database className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/storage") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin/storage") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">Storage Usage</span>
             </Link>
@@ -348,14 +348,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin/audit-log")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin/audit-log")}
               <FileText className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/audit-log") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin/audit-log") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">Audit Log</span>
             </Link>
@@ -366,14 +366,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin/api-key-usage")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin/api-key-usage")}
               <KeyRound className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/api-key-usage") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin/api-key-usage") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">API Key Usage</span>
             </Link>
@@ -384,14 +384,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin/tenant-lookup")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin/tenant-lookup")}
               <Activity className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/tenant-lookup") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin/tenant-lookup") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">Tenant Lookup</span>
             </Link>
@@ -402,14 +402,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin/cost")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin/cost")}
               <Coins className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/cost") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin/cost") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">Cost Dashboard</span>
             </Link>
@@ -420,14 +420,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin/migrations")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin/migrations")}
               <Database className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/migrations") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin/migrations") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">Migrations</span>
             </Link>
@@ -438,14 +438,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin/e2e-smoke")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin/e2e-smoke")}
               <FlaskConical className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/e2e-smoke") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin/e2e-smoke") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">E2E Smoke</span>
             </Link>
@@ -456,14 +456,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin/heygen-webhooks")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin/heygen-webhooks")}
               <Webhook className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/heygen-webhooks") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin/heygen-webhooks") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">HeyGen Webhooks</span>
             </Link>
@@ -474,14 +474,14 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
                 "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
                 "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
                 isActive("/dashboard/admin/deploy-status")
-                  ? "text-violet-400 bg-white/5 font-semibold border border-violet-500/30 shadow-[0_0_12px_rgba(139,92,246,0.15)]"
-                  : "text-violet-400 hover:text-violet-300 hover:bg-violet-950/30 border border-transparent"
+                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
               )}
             >
               {renderActiveIndicator("/dashboard/admin/deploy-status")}
               <ServerCog className={cn(
                 "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/deploy-status") ? "text-violet-400" : "text-violet-400 group-hover:text-violet-300"
+                isActive("/dashboard/admin/deploy-status") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
               )} aria-hidden="true" />
               <span className="font-medium">Deploy Status</span>
             </Link>

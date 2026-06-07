@@ -82,8 +82,8 @@ export async function checkQuota(
     return { allowed: true, remaining };
   } catch (error) {
     logger.error('[Quota Check] Error checking quota', error instanceof Error ? error : new Error(String(error)));
-    // Fail open — allow request if quota check fails
-    return { allowed: true, remaining: { dailyCredits: 0, hourlyCredits: 0, dailyRequests: 0, monthlyCredits: 0 } };
+        // Fail closed — deny request if quota check errors; caller should surface to user for retry
+        return { allowed: false, remaining: { dailyCredits: 0, hourlyCredits: 0, dailyRequests: 0, monthlyCredits: 0 } };
   }
 }
 

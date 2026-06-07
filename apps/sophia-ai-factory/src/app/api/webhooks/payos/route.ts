@@ -6,10 +6,10 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import {
-  verifyPayOsWebhook,
-  payOsIpnSchema,
-  parseUserIdFromPayOsDescription,
-  FEATURE_PAYOS,
+verifyPayOsWebhook,
+payOsIpnSchema,
+parseUserIdFromPayOsDescription,
+FEATURE_PAYOS,
 } from '@/land/payments/payos'
 import { logger } from '@/seed/utils/logger-utility'
 import { createServerClient } from '@/seed/db/client'
@@ -21,7 +21,10 @@ import { D1Events } from '@/land/signals/d1-event-types'
 
 const PAYOS_CHECKSUM_KEY = process.env.PAYOS_CHECKSUM_KEY
 
-/** Map PayOS description amount to the correct tier. */
+/** Map PayOS description amount to the correct tier.
+ *  Picks the tier whose expected VND amount is closest to the received amount.
+ *  Rejects if the closest tier is more than 0.5% off (prevents tier confusion from
+ *  underpayments that fall within another tier's wider 1% tolerance window). */
 function resolveTierFromAmount(amountVnd: number): Tier | null {
   const USD_TO_VND = Number(process.env.USD_TO_VND ?? '25000')
   const TIER_USD: Record<Tier, number> = {
@@ -30,11 +33,20 @@ function resolveTierFromAmount(amountVnd: number): Tier | null {
     ENTERPRISE: 799,
     MASTER: 4999,
   }
+  let closest: Tier | null = null
+  let closestDiff = Infinity
   for (const [tier, usd] of Object.entries(TIER_USD) as [Tier, number][]) {
     const expected = Math.round((usd * USD_TO_VND) / 1000) * 1000
-    if (Math.abs(amountVnd - expected) <= expected * 0.01) return tier
+    const diff = Math.abs(amountVnd - expected)
+    if (diff < closestDiff) {
+      closestDiff = diff
+      closest = tier
+    }
   }
-  return null
+  if (!closest) return null
+  const expectedForClosest = Math.round((TIER_USD[closest] * USD_TO_VND) / 1000) * 1000
+  if (closestDiff > expectedForClosest * 0.005) return null
+  return closest
 }
 
 /** F-06: Log a lost payment event to the DLQ (payment_events table) for later recovery. */
@@ -129,30 +141,36 @@ export async function POST(request: NextRequest) {
 
   const db = createServerClient()
 
-  // Idempotency: check if this paymentLinkId was already processed
+  // Idempotency: INSERT-first with UNIQUE constraint check (F1 fix — eliminates SELECT-then-upsert race)
   try {
-    const { data: existing } = await db
+    await db
       .from('payment_events')
-      .select('processed')
-      .eq('event_id', `payos_${paymentLinkId}`)
-      .single()
-    if (existing?.processed) {
-      logger.info('[PayOS Webhook] Already processed', { paymentLinkId })
-      return NextResponse.json({ received: true, duplicate: true })
+      .insert({
+        event_id: `payos_${paymentLinkId}`,
+        event_type: 'payos.payment_success',
+        payload: rawBody,
+        processed: 0,
+        created_at: new Date().toISOString(),
+      })
+  } catch (err: unknown) {
+    const code = typeof err === 'object' && err !== null && 'code' in err ? (err as { code?: string }).code : undefined
+    const msg = typeof err === 'object' && err !== null && 'message' in err ? String((err as { message?: string }).message) : ''
+    if (code === '23505' || msg.includes('UNIQUE constraint')) {
+      // Concurrent request already inserted — check if already processed
+      const { data: existing } = await db
+        .from('payment_events')
+        .select('processed')
+        .eq('event_id', `payos_${paymentLinkId}`)
+        .single()
+      if (existing?.processed) {
+        logger.info('[PayOS Webhook] Already processed (race recovered)', { paymentLinkId })
+        return NextResponse.json({ received: true, duplicate: true })
+      }
+      // Inserted by concurrent request but not yet processed — continue processing
+    } else {
+      logger.warn('[PayOS Webhook] Failed to record event', { error: msg })
+      return NextResponse.json({ error: 'Cannot record payment event' }, { status: 422 })
     }
-  } catch { /* not found — continue */ }
-
-  // Record event (unprocessed)
-  try {
-    await db.from('payment_events').upsert({
-      event_id: `payos_${paymentLinkId}`,
-      event_type: 'payos.payment_success',
-      payload: rawBody,
-      processed: 0,
-      created_at: new Date().toISOString(),
-    })
-  } catch (err) {
-    logger.warn('[PayOS Webhook] Failed to record event (non-fatal)', { error: String(err) })
   }
 
   const isLifetime = UNIFIED_TIERS[tier]?.billingType === 'lifetime'

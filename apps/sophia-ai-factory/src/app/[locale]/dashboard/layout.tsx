@@ -92,18 +92,18 @@ export default async function DashboardLayout({
   return (
     <div className="relative min-h-screen flex text-foreground overflow-hidden bg-gradient-to-tr from-[#020817] via-[#080b18] to-[#120a2e] p-0 md:p-1">
       {/* Fixed Ambient Glow Background */}
-      <div className="fixed inset-0 -z-50 overflow-hidden pointer-events-none bg-zinc-950">
-        {/* Cosmic Cyan Orb */}
-        <div className="absolute top-[-10%] left-[-10%] w-[55%] h-[55%] rounded-full bg-cyan-500/10 blur-[130px] animate-float" />
-        {/* Cosmic Purple Orb */}
-        <div className="absolute bottom-[-10%] right-[-10%] w-[55%] h-[55%] rounded-full bg-violet-600/10 blur-[130px] animate-float-delayed" />
+      <div className="fixed inset-0 -z-50 overflow-hidden pointer-events-none bg-background">
+        {/* Cosmic Primary Orb */}
+        <div className="absolute top-[-10%] left-[-10%] w-[55%] h-[55%] rounded-full bg-primary/5 blur-[130px] animate-float" />
+        {/* Cosmic Secondary Orb */}
+        <div className="absolute bottom-[-10%] right-[-10%] w-[55%] h-[55%] rounded-full bg-accent/5 blur-[130px] animate-float-delayed" />
         {/* Grid Overlay */}
         <div className="absolute inset-0 dot-grid-overlay opacity-[0.03]" />
       </div>
 
       {/* Sidebar */}
-      <aside className="w-64 backdrop-blur-xl bg-zinc-950/40 border border-white/[0.06] rounded-2xl shadow-2xl hidden md:flex flex-col z-10 my-4 ml-4 mr-2">
-        <div className="p-6 border-b border-white/[0.06]">
+      <aside className="w-64 backdrop-blur-xl bg-background/40 border border-border rounded-2xl shadow-2xl hidden md:flex flex-col z-10 my-4 ml-4 mr-2">
+        <div className="p-6 border-b border-border">
           <Link href="/" className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform duration-200">
             <span className="text-xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
               {t('header.brand')}
@@ -134,7 +134,7 @@ export default async function DashboardLayout({
 
         <DashboardSidebarNav isAdmin={isAdmin} isVi={isVi} />
 
-        <div className="p-4 border-t border-white/[0.06] space-y-2">
+        <div className="p-4 border-t border-border space-y-2">
           <SidebarQuotaWidget />
           {userTier && userTier !== 'MASTER' && (
             <Link
@@ -153,7 +153,7 @@ export default async function DashboardLayout({
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 bg-zinc-950/20 backdrop-blur-md border border-white/[0.04] rounded-2xl shadow-xl overflow-hidden mx-4 my-4 md:my-4 md:mr-4 md:ml-2 z-10">
+      <div className="flex-1 flex flex-col min-w-0 bg-background/20 backdrop-blur-md border border-border rounded-2xl shadow-xl overflow-hidden mx-4 my-4 md:my-4 md:mr-4 md:ml-2 z-10">
         {/* Trial banner — shown above content when user has active trial */}
         {showTrialBanner && (
           <TrialBanner trialEndsAt={trialEndsAt!} />
@@ -166,7 +166,7 @@ export default async function DashboardLayout({
         <AffiliateCTABanner />
 
         {/* Mobile Header (visible only on small screens) */}
-        <header className="bg-zinc-950/30 backdrop-blur-xl border border-white/10 rounded-2xl p-4 mx-4 mt-4 shadow-md md:hidden flex items-center justify-between z-10">
+        <header className="bg-background/30 backdrop-blur-xl border border-border rounded-2xl p-4 mx-4 mt-4 shadow-md md:hidden flex items-center justify-between z-10">
           <span className="font-bold text-lg text-foreground">{t('header.title')}</span>
           <div className="hover:scale-105 active:scale-95 transition-transform duration-200">
             <ThemeToggle />

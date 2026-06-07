@@ -36,21 +36,21 @@ export default async function CheckoutFailurePage({
       ];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-lg space-y-6">
         {/* Hero card */}
-        <div className="rounded-2xl border border-red-500/20 bg-white/[0.03] backdrop-blur-sm p-8 text-center shadow-2xl">
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-8 text-center shadow-lg">
           <div className="mb-4 flex items-center justify-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-500/15 border border-red-500/30">
-              <XCircle className="h-8 w-8 text-red-400" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-destructive/15 border border-destructive/30">
+              <XCircle className="h-8 w-8 text-destructive" />
             </div>
           </div>
 
-          <h1 className="mb-2 text-2xl font-bold text-white">
+          <h1 className="mb-2 text-2xl font-bold text-foreground">
             {isVi ? "Thanh toán không thành công" : "Payment Unsuccessful"}
           </h1>
 
-          <p className="text-zinc-400 text-sm">
+          <p className="text-muted-foreground text-sm">
             {isVi
               ? "Rất tiếc, thanh toán của bạn không thể hoàn tất. Đừng lo — bạn có thể thử lại."
               : "We're sorry, your payment could not be completed. Don't worry — you can try again."}
@@ -58,14 +58,14 @@ export default async function CheckoutFailurePage({
         </div>
 
         {/* Common reasons */}
-        <div className="rounded-2xl border border-zinc-800 bg-white/[0.02] p-6">
-          <h2 className="mb-3 text-sm font-semibold text-zinc-300 uppercase tracking-wider">
+        <div className="rounded-2xl border border-border bg-muted/30 p-6">
+          <h2 className="mb-3 text-sm font-semibold text-foreground uppercase tracking-wider text-sm">
             {isVi ? "Nguyên nhân phổ biến" : "Common reasons"}
           </h2>
           <ul className="space-y-2">
             {reasons.map((reason, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-zinc-400">
-                <span className="text-zinc-600 mt-0.5">•</span>
+              <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                <span className="text-muted-foreground/60 mt-0.5">•</span>
                 {reason}
               </li>
             ))}
@@ -76,14 +76,14 @@ export default async function CheckoutFailurePage({
         <div className="flex flex-col gap-3">
           <Link
             href={`/${locale}/pricing`}
-            className="inline-flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-6 py-3.5 text-center font-semibold text-white transition hover:from-violet-500 hover:to-blue-500"
+            className="inline-flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-6 py-3.5 text-center font-semibold text-foreground transition hover:from-violet-500 hover:to-blue-500"
           >
             <RefreshCw className="h-4 w-4" />
             {isVi ? "Thử lại" : "Try again"}
           </Link>
           <a
             href="mailto:support@mekongmind.com"
-            className="inline-flex items-center justify-center gap-2 w-full rounded-xl border border-zinc-700 px-6 py-3.5 text-center font-medium text-zinc-300 transition hover:border-zinc-500 hover:text-white"
+            className="inline-flex items-center justify-center gap-2 w-full rounded-xl border border-border px-6 py-3.5 text-center font-medium text-foreground transition hover:border-zinc-500 hover:text-foreground"
           >
             <MessageCircle className="h-4 w-4" />
             {isVi ? "Liên hệ hỗ trợ" : "Contact support"}
@@ -91,7 +91,7 @@ export default async function CheckoutFailurePage({
         </div>
 
         {orderId && (
-          <p className="text-center text-xs text-zinc-600">
+          <p className="text-center text-xs text-muted-foreground/60">
             {isVi ? "Mã đơn hàng:" : "Order ID:"} {orderId}
           </p>
         )}

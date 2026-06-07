@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { revalidatePath } from 'next/cache';
 import { encrypt } from '@/seed/security/encryption-aes-gcm';
+import { requireOrgMembership } from '@/seed/db/org-membership';
 import { UserProfileFormValues, userProfileFormSchema } from '@/land/schemas/settings';
 import { EncryptedApiKeys } from '@/seed/types/user';
 
@@ -18,7 +19,12 @@ export async function getUserProfile(): Promise<UserProfileFormValues> {
     throw new Error('Unauthorized');
   }
 
-  // Try to fetch profile from D1 user_profiles table
+  // Validate org membership
+  const orgResult = await requireOrgMembership(user.id);
+  if (!orgResult.authorized) {
+    throw new Error(orgResult.error);
+  }
+
   try {
     const db = createServerClient();
     const { data } = await db
@@ -67,7 +73,6 @@ export async function getUserProfile(): Promise<UserProfileFormValues> {
     // user_profiles table may not exist yet in D1
   }
 
-  // Default profile
   return {
     fullName: (user.full_name as string) || '',
     email: user.email || '',
@@ -93,32 +98,24 @@ export async function updateUserProfile(data: UserProfileFormValues) {
   }
 
   const { settings, apiKeys, fullName } = result.data;
-
   const user = await getCurrentUser();
 
   if (!user) {
     return { error: 'Unauthorized' };
   }
 
-  // Validate org membership — prevents actions from touching org-scoped tables without membership
-  const db = createServerClient();
-  const { data: membership } = await db
-    .from('org_members')
-    .select('org_id')
-    .eq('user_id', user.id)
-    .maybeSingle();
-
-  if (!membership) {
-    return { error: 'Forbidden: user is not a member of any organization' };
+  const orgResult = await requireOrgMembership(user.id);
+  if (!orgResult.authorized) {
+    return { error: orgResult.error };
   }
 
+  const db = createServerClient();
+
   try {
-    // Update user full_name in users table
     if (fullName !== user.full_name) {
       await db.from('users').update({ full_name: fullName }).eq('id', user.id);
     }
 
-    // Fetch existing keys to merge
     let currentKeys: EncryptedApiKeys = {};
     try {
       const { data: currentData } = await db
@@ -156,7 +153,6 @@ export async function updateUserProfile(data: UserProfileFormValues) {
       delete newEncryptedKeys.elevenlabs;
     }
 
-    // Upsert profile
     await db
       .from('user_profiles')
       .upsert({
@@ -168,7 +164,6 @@ export async function updateUserProfile(data: UserProfileFormValues) {
 
     revalidatePath('/settings');
     return { success: true };
-
   } catch {
     return { error: 'Failed to update profile' };
   }

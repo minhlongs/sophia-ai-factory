@@ -10,6 +10,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import DOMPurify from 'dompurify';
 
 interface ProposalSection {
   key: string;
@@ -33,8 +34,7 @@ const DEFAULT_SECTION_KEYS = [
 ];
 
 function sanitize(html: string): string {
-  // Basic sanitization without DOMPurify (server-safe)
-  return html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  return DOMPurify.sanitize(html, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
 }
 
 export function ProposalEditor({ initialContent = {}, onSave }: Props) {

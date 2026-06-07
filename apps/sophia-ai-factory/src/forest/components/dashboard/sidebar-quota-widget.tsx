@@ -65,7 +65,7 @@ export function SidebarQuotaWidget() {
         <div className="flex items-baseline gap-1.5 text-foreground">
           <span className="text-sm font-semibold tabular-nums">{used}</span>
           <span className="text-xs text-muted-foreground">/</span>
-          <InfinityIcon className="h-4 w-4 text-amber-500" aria-label={t('unlimited')} />
+          <InfinityIcon className="h-4 w-4 text-amber-400" aria-label={t('unlimited')} />
         </div>
       ) : (
         <QuotaBar used={used} limit={limit} />
@@ -79,7 +79,7 @@ function QuotaBar({ used, limit }: { used: number; limit: number }) {
   const pct = Math.min(100, Math.round((used / safeLimit) * 100));
   const isWarning = pct >= 75;
   const isCritical = pct >= 90;
-  const barColor = isCritical ? 'bg-red-500' : isWarning ? 'bg-amber-500' : 'bg-primary';
+  const barColor = isCritical ? 'bg-red-400' : isWarning ? 'bg-amber-400' : 'bg-primary';
 
   return (
     <>

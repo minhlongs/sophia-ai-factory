@@ -132,6 +132,10 @@ export async function getDunningState(licenseNonce: string): Promise<DunningStat
 
 /**
  * Transition dunning state in the database.
+ *
+ * FIX-9B: optimistic locking — includes old state in WHERE clause to prevent
+ * TOCTOU races. If 0 rows affected (concurrent state change detected), retries
+ * once after re-reading current state.
  */
 export async function transitionDunningState(
   licenseNonce: string,
@@ -147,11 +151,40 @@ export async function transitionDunningState(
   }
 
   const db = createServerClient();
-  await db.rpc('update_dunning_state', {
-    p_license_nonce: licenseNonce,
-    p_new_state: newState,
-    p_user_id: userId,
-  });
+
+  // FIX-9B: optimistic lock — WHERE includes current state so concurrent
+  // transitions cannot silently overwrite each other.
+  const result = await db.prepare(
+    `UPDATE dunning_settings
+     SET dunning_state = ?1, dunning_state_changed_at = datetime('now'), updated_at = datetime('now')
+     WHERE license_nonce = ?2 AND dunning_state = ?3`,
+  ).bind(newState, licenseNonce, oldState).run();
+
+  if (result.changes === 0) {
+    // Possible TOCTOU race — re-read current state and retry once
+    const retrySettings = await getDunningSettings(licenseNonce);
+    const retryState = retrySettings?.dunning_state || 'current';
+    if (retryState === newState) {
+      logger.debug('[Dunning] Already at target state (retry)', { licenseNonce: licenseNonce.slice(0, 8), state: newState });
+      return;
+    }
+    if (retryState !== oldState && retryState !== newState) {
+      // Different concurrent transition — log and accept current state
+      logger.warn('[Dunning] Concurrent transition detected, accepting new state', {
+        licenseNonce: licenseNonce.slice(0, 8),
+        from: oldState,
+        concurrent: retryState,
+        requested: newState,
+      });
+      return;
+    }
+    // Retry with the fresh state as the WHERE anchor
+    await db.prepare(
+      `UPDATE dunning_settings
+       SET dunning_state = ?1, dunning_state_changed_at = datetime('now'), updated_at = datetime('now')
+       WHERE license_nonce = ?2 AND dunning_state = ?3`,
+    ).bind(newState, licenseNonce, retryState).run();
+  }
 
   logger.info('[Dunning] State transitioned', {
     licenseNonce: licenseNonce.slice(0, 8),

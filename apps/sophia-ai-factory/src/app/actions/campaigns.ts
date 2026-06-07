@@ -29,7 +29,7 @@ export async function createCampaign(formData: FormData) {
   const { title, topic, audience } = validation.data;
   const platforms = rawData.platforms as string[];
 
-  let userId: string | undefined;
+let userId: string | undefined = undefined;
   try {
     const { getCurrentUser } = await import("@/seed/auth/better-auth-session");
     const user = await getCurrentUser();
@@ -45,7 +45,7 @@ const db = createServerClient();
 const { data: membership } = await db
 .from('org_members')
 .select('org_id')
-.eq('user_id', userId!)
+        .eq('user_id', userId)
 .maybeSingle();
 
 if (!membership) {

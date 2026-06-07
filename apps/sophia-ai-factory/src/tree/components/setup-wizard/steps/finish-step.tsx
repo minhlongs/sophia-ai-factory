@@ -19,13 +19,13 @@ export function FinishStep({
 
   return (
     <div className="flex flex-col items-center justify-center text-center py-8">
-      <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
-        <Check className="w-8 h-8 text-green-600 dark:text-green-400" />
+      <div className="w-16 h-16 rounded-full bg-muted/30 flex items-center justify-center mb-4">
+        <Check className="w-8 h-8 text-primary" />
       </div>
-      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+      <h2 className="text-2xl font-semibold text-foreground mb-2">
         {t("subtitle")}
       </h2>
-      <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
+      <p className="text-muted-foreground mb-6 max-w-sm">
         {saveFailed ? t("errorOccurred") : t("readyToUse")}
       </p>
 
@@ -52,7 +52,7 @@ export function FinishStep({
           </Link>
           <Link
             href="/dashboard/challenges"
-            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium"
+            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg border border-border text-foreground hover:bg-muted transition-colors text-sm font-medium"
           >
             <Trophy className="w-4 h-4" />
             {t("continueToChallenges")}

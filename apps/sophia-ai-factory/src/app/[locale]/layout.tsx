@@ -115,7 +115,8 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
 }>) {
-  const { locale } = await params;
+  const { locale: rawLocale } = await params;
+  const locale = rawLocale === 'vi' || rawLocale === 'en' ? rawLocale : 'vi';
   const messages = await getMessages();
   const nonce = await getCspNonce();
   const ga4Id = process.env.NODE_ENV === 'production'
@@ -130,7 +131,11 @@ export default async function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
         />
-        <link rel="preconnect" href="https://api.nowpayments.io" />
+        <link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"
+/>
+<link rel="preconnect" href="https://api.nowpayments.io" />
         <link rel="dns-prefetch" href="https://api.nowpayments.io" />
         <script
           type="application/ld+json"
