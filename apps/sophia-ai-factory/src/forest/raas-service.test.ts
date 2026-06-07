@@ -40,7 +40,7 @@ import {
   generateNonce,
   type Tier,
 } from './raas-service';
-import { redis } from '@/land/redis';
+import { redis } from '@/seed/redis';
 import { logger } from '@/seed/utils/logger-utility';
 
 // Type-safe mock access

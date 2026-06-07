@@ -292,6 +292,8 @@ const eslintConfig = defineConfig([
 "src/forest/usage-metering/realtime-tracker-circuit-breaker.ts",
 "src/forest/usage-metering/realtime-tracker-kv-ops.ts",
 "src/forest/usage-metering/usage-kv-sync.ts",
+// quota — reads land/redis for KV cache ops (mekong-exempt: infra)
+"src/forest/quota/quota-checker-kv-cache.ts",
     "src/forest/agents/runner.ts",
       // account-delete-finalize-cron orchestrates land/account cascade-delete on Inngest schedule
       // (mekong-exempt: forest → land orchestration per cross-layer-orchestration.md).
