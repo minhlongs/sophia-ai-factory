@@ -75,7 +75,7 @@ export async function resetQuotaCounters(
     const key = `quota:${userId}:${licenseNonce}`;
     // Overwrite with all zeros + refresh TTL so cache stays alive
     const zeroed: CachedQuota = { hourly: 0, daily: 0, monthly: 0, requests: 0, timestamp: Date.now() };
-    await kv.set(key, zeroed as unknown as Parameters<typeof kv.set>[1], { expirationTtl: 3600 });
+    await kv.set(key, zeroed as unknown as Parameters<typeof kv.set>[1]);
     logger.info('[Quota Checker] Counters reset', { userId: userId.slice(0, 8), licenseNonce: licenseNonce.slice(0, 8) });
   } catch (error) {
     logger.error('[Quota Checker] Quota reset failed', toError(error));

@@ -154,7 +154,7 @@ export async function transitionDunningState(
 
   // FIX-9B: optimistic lock — WHERE includes current state so concurrent
   // transitions cannot silently overwrite each other.
-  const result = await db.prepare(
+  const result = await raw.prepare(
     `UPDATE dunning_settings
      SET dunning_state = ?1, dunning_state_changed_at = datetime('now'), updated_at = datetime('now')
      WHERE license_nonce = ?2 AND dunning_state = ?3`,
@@ -179,7 +179,7 @@ export async function transitionDunningState(
       return;
     }
     // Retry with the fresh state as the WHERE anchor
-    await db.prepare(
+    await raw.prepare(
       `UPDATE dunning_settings
        SET dunning_state = ?1, dunning_state_changed_at = datetime('now'), updated_at = datetime('now')
        WHERE license_nonce = ?2 AND dunning_state = ?3`,

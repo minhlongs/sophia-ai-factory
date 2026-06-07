@@ -137,7 +137,7 @@ interface CachedResult {
 /** Return cached result if key exists and not expired, else null. */
 async function checkIdempotency(key: string, refundId: string): Promise<CachedResult | null> {
   try {
-    const db = getD1Raw()
+    const db = await getD1Raw()
     const row = await db
       .prepare(
         `SELECT refund_id, status FROM idempotency_keys
@@ -155,7 +155,7 @@ async function checkIdempotency(key: string, refundId: string): Promise<CachedRe
 /** Persist idempotency key (24h TTL). */
 async function storeIdempotency(key: string, refundId: string, body: CachedResult): Promise<void> {
   try {
-    const db = getD1Raw()
+    const db = await getD1Raw()
     await db
       .prepare(
         `INSERT OR REPLACE INTO idempotency_keys (key, refund_id, status, expires_at)
