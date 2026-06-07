@@ -12,7 +12,7 @@ function genId(): string { return crypto.randomUUID().replace(/-/g, ''); }
 /** List all installations for a user */
 export async function listInstallationsForUser(db: D1Database, userId: string): Promise<SopInstallationRow[]> {
   const { results } = await db
-    .prepare(`SELECT * FROM user_sop_installations WHERE user_id = ?1 ORDER BY created_at DESC`)
+    .prepare(`SELECT * FROM user_sop_installations WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 100`)
     .bind(userId)
     .all<SopInstallationRow>();
   return results;

@@ -108,7 +108,7 @@ export async function getUserLicense(db: D1Database, userId: string, templateId:
 
 /** List all paid licenses for a user */
 export async function listUserLicenses(db: D1Database, userId: string): Promise<SopLicenseRow[]> {
-  const { results } = await db.prepare(`SELECT * FROM sop_licenses WHERE user_id = ?1 AND payment_status = 'paid' ORDER BY purchased_at DESC`)
+  const { results } = await db.prepare(`SELECT * FROM sop_licenses WHERE user_id = ?1 AND payment_status = 'paid' ORDER BY purchased_at DESC LIMIT 100`)
     .bind(userId).all<SopLicenseRow>();
   return results;
 }

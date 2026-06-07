@@ -18,18 +18,11 @@ import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { WizardClient } from './wizard-client';
 import { completeOnboardingAction } from '@/app/actions/complete-onboarding-action';
+import { getD1 } from '@/seed/db/get-d1';
+import type { D1Database } from '@/seed/db/get-d1';
 
 export const dynamic = 'force-dynamic';
 
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[Symbol.for('__cloudflare-context__')];
-    if (ctx?.env?.DB) return ctx.env.DB as D1Database;
-    return null;
-  } catch { return null; }
-}
 
 interface StepStatusRow { cnt: number }
 

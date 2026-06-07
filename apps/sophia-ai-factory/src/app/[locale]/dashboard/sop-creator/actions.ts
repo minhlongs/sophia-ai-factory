@@ -4,15 +4,8 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getTranslations } from 'next-intl/server';
+import { getD1 } from '@/seed/db/get-d1';
 
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch { return null; }
-}
 
 export async function createSopAction(formData: FormData): Promise<{ error?: string; templateId?: string }> {
   const t = await getTranslations('sop.creator.actions');

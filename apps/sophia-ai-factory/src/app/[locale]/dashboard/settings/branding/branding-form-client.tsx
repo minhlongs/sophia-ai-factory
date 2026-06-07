@@ -9,7 +9,8 @@
  * @module app/[locale]/dashboard/settings/branding/branding-form-client
  */
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { BrandingSettings } from '@/seed/tenant-settings/defaults';
 import { BrandingImageUploader } from './branding-image-uploader';
 
@@ -26,10 +27,7 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
   const [branding, setBranding] = useState<BrandingSettings>(initialBranding);
   const [status, setStatus] = useState<SaveStatus>('idle');
 
-  const t = useCallback(
-    (en: string, vi: string) => (isVi ? vi : en),
-    [isVi],
-  );
+  const t = useTranslations('dashboard.settings.branding');
 
   async function savePatch(patch: Partial<BrandingSettings>) {
     setStatus('saving');
@@ -74,31 +72,31 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
       {/* Status bar */}
       {status !== 'idle' && (
         <p className={`text-xs ${status === 'saved' ? 'text-emerald-400' : status === 'error' ? 'text-red-400' : 'text-zinc-400'}`}>
-          {status === 'saving' ? t('Saving…', 'Đang lưu…') : status === 'saved' ? t('Saved', 'Đã lưu') : t('Save failed', 'Lỗi khi lưu')}
+          {status === 'saving' ? t('saving') : status === 'saved' ? t('saved') : t('saveFailed')}
         </p>
       )}
 
       {/* Section 1: Logo */}
-      <Section title={t('Logo', 'Logo')}>
+      <Section title={t('logo')}>
         <BrandingImageUploader
           kind="logo"
           currentUrl={branding.logoUrl}
-          label={t('Upload Logo (PNG, JPG, SVG, WebP — max 2 MB)', 'Tải Logo (PNG, JPG, SVG, WebP — tối đa 2 MB)')}
+          label={t('uploadLogo')}
           onUploaded={(url) => { setBranding((p) => ({ ...p, logoUrl: url })); savePatch({ logoUrl: url }); }}
           onRemoved={() => handleBlur('logoUrl', null)}
         />
       </Section>
 
       {/* Section 2: Brand colors */}
-      <Section title={t('Brand Colors', 'Màu Thương Hiệu')}>
+      <Section title={t('brandColors')}>
         <ColorField
-          label={t('Primary Color', 'Màu Chính')}
+          label={t('primaryColor')}
           value={branding.primaryColor}
           onChange={(v) => handleColorChange('primaryColor', v)}
           onBlur={() => handleColorBlur('primaryColor')}
         />
         <ColorField
-          label={t('Accent Color', 'Màu Phụ')}
+          label={t('accentColor')}
           value={branding.accentColor ?? '#10b981'}
           onChange={(v) => handleColorChange('accentColor', v)}
           onBlur={() => handleColorBlur('accentColor')}
@@ -106,15 +104,15 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
       </Section>
 
       {/* Section 3: Welcome message */}
-      <Section title={t('Welcome Message', 'Lời Chào')}>
+      <Section title={t('welcomeMessage')}>
         <label className="block text-sm text-zinc-300 mb-1">
-          {t('Markdown supported, max 2000 chars', 'Hỗ trợ Markdown, tối đa 2000 ký tự')}
+          {t('welcomeMessageHint')}
         </label>
         <textarea
           className={`${inputCls} min-h-[100px] resize-y`}
           value={branding.welcomeMessage ?? ''}
           maxLength={2000}
-          placeholder={t('Welcome to our platform!', 'Chào mừng đến nền tảng của chúng tôi!')}
+          placeholder={t('welcomeMessagePlaceholder')}
           onChange={(e) => setBranding((p) => ({ ...p, welcomeMessage: e.target.value || null }))}
           onBlur={(e) => handleBlur('welcomeMessage', e.target.value || null)}
         />
@@ -124,22 +122,22 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
       </Section>
 
       {/* Section 4: Email branding */}
-      <Section title={t('Email Branding', 'Thương Hiệu Email')}>
+      <Section title={t('emailBranding')}>
         <TextField
-          label={t('From Name', 'Tên người gửi')}
+          label={t('fromName')}
           value={branding.emailFromName ?? ''}
-          placeholder={t('Acme Corp', 'Công ty ABC')}
+          placeholder={t('fromNamePlaceholder')}
           onBlur={(v) => handleBlur('emailFromName', v || null)}
           inputCls={inputCls}
         />
         <label className="block text-sm text-zinc-300 mb-1 mt-3">
-          {t('Email Footer (Markdown, max 1000 chars)', 'Chân email (Markdown, tối đa 1000 ký tự)')}
+          {t('emailFooter')}
         </label>
         <textarea
           className={`${inputCls} min-h-[80px] resize-y`}
           value={branding.emailFooter ?? ''}
           maxLength={1000}
-          placeholder={t('© 2025 Acme Corp | Unsubscribe', '© 2025 Công ty ABC | Hủy đăng ký')}
+          placeholder={t('emailFooterPlaceholder')}
           onChange={(e) => setBranding((p) => ({ ...p, emailFooter: e.target.value || null }))}
           onBlur={(e) => handleBlur('emailFooter', e.target.value || null)}
         />
@@ -149,33 +147,33 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
       </Section>
 
       {/* Section 5: Favicon */}
-      <Section title={t('Favicon', 'Favicon')}>
+      <Section title={t('favicon')}>
         <BrandingImageUploader
           kind="favicon"
           currentUrl={branding.faviconUrl}
-          label={t('Upload Favicon (PNG, ICO, SVG — max 2 MB)', 'Tải Favicon (PNG, ICO, SVG — tối đa 2 MB)')}
+          label={t('uploadFavicon')}
           onUploaded={(url) => { setBranding((p) => ({ ...p, faviconUrl: url })); savePatch({ faviconUrl: url }); }}
           onRemoved={() => handleBlur('faviconUrl', null)}
         />
       </Section>
 
       {/* Section 6: Social Meta */}
-      <Section title={t('Social Meta (OG / Twitter)', 'Mạng Xã Hội (OG / Twitter)')}>
+      <Section title={t('socialMeta')}>
         <TextField
-          label={t('OG Title', 'Tiêu đề OG')}
+          label={t('ogTitle')}
           value={branding.socialMeta?.title ?? ''}
-          placeholder={t('My Brand — AI Platform', 'Thương Hiệu — Nền Tảng AI')}
+          placeholder={t('ogTitlePlaceholder')}
           onBlur={(v) => handleSocialBlur('title', v || null)}
           inputCls={inputCls}
         />
         <label className="block text-sm text-zinc-300 mb-1 mt-3">
-          {t('OG Description', 'Mô tả OG')}
+          {t('ogDescription')}
         </label>
         <textarea
           className={`${inputCls} min-h-[60px] resize-y`}
           value={branding.socialMeta?.description ?? ''}
           maxLength={500}
-          placeholder={t('Describe your brand in one sentence.', 'Mô tả thương hiệu trong một câu.')}
+          placeholder={t('ogDescriptionPlaceholder')}
           onChange={(e) => {
             const updated = { ...(branding.socialMeta ?? { title: null, description: null, imageUrl: null }), description: e.target.value || null };
             setBranding((p) => ({ ...p, socialMeta: updated }));
@@ -186,7 +184,7 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
           <BrandingImageUploader
             kind="social"
             currentUrl={branding.socialMeta?.imageUrl ?? null}
-            label={t('OG Image (1200×630, max 2 MB)', 'Ảnh OG (1200×630, tối đa 2 MB)')}
+            label={t('ogImage')}
             onUploaded={(url) => {
               const updated = { ...(branding.socialMeta ?? { title: null, description: null, imageUrl: null }), imageUrl: url };
               setBranding((p) => ({ ...p, socialMeta: updated }));
@@ -202,16 +200,16 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
       </Section>
 
       {/* Section 7: Custom Domain */}
-      <Section title={t('Custom Domain', 'Tên Miền Tuỳ Chỉnh')}>
+      <Section title={t('customDomain')}>
         <TextField
-          label={t('Domain', 'Tên miền')}
+          label={t('domain')}
           value={branding.customDomain ?? ''}
           placeholder="app.yourbrand.com"
           onBlur={(v) => handleBlur('customDomain', v || null)}
           inputCls={inputCls}
         />
         <p className="text-xs text-amber-400 mt-2">
-          {t('DNS CNAME setup required after saving. Contact support for instructions.', 'Cần cấu hình DNS CNAME sau khi lưu. Liên hệ hỗ trợ để được hướng dẫn.')}
+          {t('domainHint')}
         </p>
       </Section>
     </div>

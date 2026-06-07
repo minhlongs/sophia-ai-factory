@@ -1053,6 +1053,20 @@
         "back": "Back",
         "submitting": "Submitting",
         "confirm_cancel": "Confirm cancel"
+      },
+      "paymentHistory": {
+        "title": "Lịch Sử Thanh Toán",
+        "description": "Các giao dịch thanh toán gần đây",
+        "loading": "Đang tải lịch sử thanh toán...",
+        "empty": "Chưa có lịch sử thanh toán.",
+        "date": "Ngày",
+        "description_col": "Mô Tả",
+        "status": "Trạng Thái",
+        "amount": "Số Tiền",
+        "paid": "Đã Thanh Toán",
+        "pending": "Chờ Thanh Toán",
+        "refunded": "Đã Hoàn Tiền",
+        "viewAll": "Xem Tất Cả Hóa Đơn"
       }
     },
     "support": {
@@ -1369,7 +1383,16 @@
         "docs_retry_1": "Tối đa 5 lần thử giao mỗi sự kiện.",
         "docs_retry_2": "Khoảng cách: 30s → 2m → 10m → 1h → 6h",
         "docs_retry_3": "Sau 5 lần thất bại, giao hàng được đánh dấu dead-letter."
-      }
+      },
+      "btn_disconnect": "Ngắt kết nối",
+      "platform_tiktok": "TikTok",
+      "platform_youtube": "YouTube",
+      "settings_panel": "Settings panel",
+      "connected": "Connected",
+      "notConnected": "Not Connected",
+      "disconnect": "Disconnect",
+      "connectTiktok": "Connect Tiktok",
+      "connectYoutube": "Connect Youtube"
     },
     "firstCampaign": {
       "title": "Bắt đầu chiến dịch đầu tiên",
@@ -1508,6 +1531,86 @@
     "agiOutcomes": {
       "title": "Title",
       "subtitle": "Subtitle"
+    },
+    "schedule": {
+      "pageTitle": "Lịch chiến dịch",
+      "pageDescription": "Tự động tạo và chạy content theo chu kỳ — quản lý lịch hẹn recurring ở đây.",
+      "createButton": "Tạo lịch mới",
+      "retry": "Thử lại",
+      "refresh": "Làm mới",
+      "countLabel": "lịch hẹn",
+      "activeLabel": "đang chạy",
+      "autoRefresh": "Tự động refresh mỗi 30s",
+      "hasTemplate": "Có template",
+      "table": {
+        "title": "Danh sách lịch hẹn",
+        "topic": "Chủ đề",
+        "interval": "Chu kỳ",
+        "nextRun": "Chạy tiếp theo",
+        "status": "Trạng thái",
+        "actions": "Thao tác"
+      },
+      "status": {
+        "active": "Đang chạy",
+        "paused": "Tạm dừng"
+      },
+      "empty": {
+        "title": "Chưa có lịch hẹn nào",
+        "description": "Tạo lịch để tự động chạy campaign theo chu kỳ"
+      },
+      "pauseTooltip": "Tạm dừng",
+      "activateTooltip": "Kích hoạt",
+      "deleteTooltip": "Xóa lịch",
+      "everyDay": "Mỗi ngày",
+      "threeDays": "3 ngày",
+      "weekly": "Hàng tuần",
+      "twoWeeks": "2 tuần",
+      "monthly": "Hàng tháng",
+      "days": "ngày",
+      "form": {
+        "requiredFields": "Vui lòng điền đầy đủ chủ đề và ngày chạy tiếp theo",
+        "confirmDelete": "Xóa lịch hẹn này? Hành động không thể hoàn tác.",
+        "createTitle": "Tạo lịch chiến dịch mới",
+        "topicLabel": "Chủ đề / Topic",
+        "topicPlaceholder": "VD: Content marketing Q3, Social media strategy...",
+        "intervalLabel": "Chu kỳ lặp lại",
+        "startDateLabel": "Ngày chạy đầu tiên",
+        "cancel": "Hủy",
+        "submit": "Tạo lịch",
+        "autoRunDescription": "Sau lần chạy đầu tiên, hệ thống sẽ tự động tạo campaign mới mỗi <b>{days} ngày</b>.",
+        "days": "Days"
+      }
+    },
+    "settings": {
+      "branding": {
+        "saving": "Đang lưu…",
+        "saved": "Đã lưu",
+        "saveFailed": "Lỗi khi lưu",
+        "logo": "Logo",
+        "uploadLogo": "Tải Logo (PNG, JPG, SVG, WebP — tối đa 2 MB)",
+        "brandColors": "Màu Thương Hiệu",
+        "primaryColor": "Màu Chính",
+        "accentColor": "Màu Phụ",
+        "welcomeMessage": "Lời Chào",
+        "welcomeMessageHint": "Hỗ trợ Markdown, tối đa 2000 ký tự",
+        "welcomeMessagePlaceholder": "Chào mừng đến nền tảng của chúng tôi!",
+        "emailBranding": "Thương Hiệu Email",
+        "fromName": "Tên người gửi",
+        "fromNamePlaceholder": "Công ty ABC",
+        "emailFooter": "Chân email (Markdown, tối đa 1000 ký tự)",
+        "emailFooterPlaceholder": "© 2025 Công ty ABC | Hủy đăng ký",
+        "favicon": "Favicon",
+        "uploadFavicon": "Tải Favicon (PNG, ICO, SVG — tối đa 2 MB)",
+        "socialMeta": "Mạng Xã Hội (OG / Twitter)",
+        "ogTitle": "Tiêu đề OG",
+        "ogTitlePlaceholder": "Thương Hiệu — Nền Tảng AI",
+        "ogDescription": "Mô tả OG",
+        "ogDescriptionPlaceholder": "Mô tả thương hiệu trong một câu.",
+        "ogImage": "Ảnh OG (1200×630, tối đa 2 MB)",
+        "customDomain": "Tên Miền Tuỳ Chỉnh",
+        "domain": "Tên miền",
+        "domainHint": "Cần cấu hình DNS CNAME sau khi lưu. Liên hệ hỗ trợ để được hướng dẫn."
+      }
     }
   },
   "account": {

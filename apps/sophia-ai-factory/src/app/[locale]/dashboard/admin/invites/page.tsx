@@ -8,6 +8,7 @@ import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import { listInvites } from '@/land/sop-marketplace/beta-invites';
 import type { BetaInvite } from '@/land/sop-marketplace/beta-invites';
 import { createInviteAction, revokeInviteAction } from './actions';
+import { getD1 } from '@/seed/db/get-d1';
 
 async function handleCreate(formData: FormData): Promise<void> {
   'use server';
@@ -15,24 +16,15 @@ async function handleCreate(formData: FormData): Promise<void> {
 }
 
 async function handleRevoke(id: string): Promise<void> {
-  'use server';
   await revokeInviteAction(id);
-}
 
+}
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata() {
   return { title: 'Beta Invites | Sophia AI Admin' };
 }
 
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch { return null; }
-}
 
 function formatDate(ms: number | null): string {
   if (!ms) return '—';
@@ -208,7 +200,6 @@ export default async function BetaInvitesPage({ params }: PageProps): Promise<Re
                         <CopyButton code={invite.code} />
                         <form
                           action={async (fd: FormData) => {
-                            'use server';
                             const id = fd.get('id') as string;
                             await handleRevoke(id);
                           }}

@@ -3,11 +3,12 @@
 /**
  * YouTube connection settings panel.
  * Lets users connect / disconnect their YouTube account via OAuth2.
- * Connection status is derived from GET /api/user/youtube-connection-status.
+ * Connection status is derived from GET /api/user/profile.
  * OAuth flow starts via /api/oauth/youtube/connect (server-side redirect).
  */
 
 import { useEffect, useState, useTransition } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface YouTubeConnectionStatus {
   connected: boolean;
@@ -26,6 +27,7 @@ interface UserProfileApiResponse {
 }
 
 export function YouTubeConnectionSettings() {
+  const t = useTranslations('dashboard.integrations');
   const [status, setStatus] = useState<YouTubeConnectionStatus>({ connected: false });
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
@@ -65,7 +67,7 @@ export function YouTubeConnectionSettings() {
           setStatus({ connected: true });
         }
         if (ytError) {
-          setErrorMessage(getErrorMessage(ytError));
+          setErrorMessage(getErrorMessage(ytError, 'YouTube connection error. Please try again.'));
         }
       }, 0);
     }
@@ -118,13 +120,11 @@ export function YouTubeConnectionSettings() {
           {status.connected && status.channelTitle ? (
             <p className="text-xs text-muted-foreground">{status.channelTitle}</p>
           ) : status.connected ? (
-            <p className="text-xs text-green-600">Đã kết nối</p>
+            <p className="text-xs text-green-600">{t('connected')}</p>
           ) : (
-            <p className="text-xs text-muted-foreground">Chưa kết nối</p>
+            <p className="text-xs text-muted-foreground">{t('notConnected')}</p>
           )}
-          {errorMessage && (
-            <p className="text-xs text-red-500 mt-0.5">{errorMessage}</p>
-          )}
+          {errorMessage && <p className="text-xs text-red-500 mt-0.5">{errorMessage}</p>}
         </div>
       </div>
 
@@ -135,7 +135,7 @@ export function YouTubeConnectionSettings() {
           disabled={isPending}
           className="rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent disabled:opacity-50 transition-all duration-150 active:scale-95"
         >
-          Disconnect
+          {t('disconnect')}
         </button>
       ) : (
         <button
@@ -144,14 +144,14 @@ export function YouTubeConnectionSettings() {
           disabled={isPending}
           className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 hover:opacity-95 disabled:opacity-50 transition-all duration-150 active:scale-95"
         >
-          Connect YouTube
+          {t('connectYoutube')}
         </button>
       )}
     </div>
   );
 }
 
-function getErrorMessage(code: string): string {
+function getErrorMessage(code: string, fallback: string): string {
   const messages: Record<string, string> = {
     access_denied: 'YouTube access was denied. Please try again.',
     missing_code: 'OAuth flow failed — missing code. Please try again.',
@@ -160,5 +160,5 @@ function getErrorMessage(code: string): string {
     unauthorized: 'You must be logged in to connect YouTube.',
     server_error: 'An unexpected error occurred. Please try again.',
   };
-  return messages[code] ?? 'An error occurred connecting YouTube.';
+  return messages[code] ?? fallback;
 }

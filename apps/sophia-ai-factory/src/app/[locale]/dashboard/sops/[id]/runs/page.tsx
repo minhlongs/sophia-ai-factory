@@ -13,21 +13,13 @@ import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { InstallationRunsTab } from '@/components/sop/detail/installation-runs-tab';
 import type { SopRunRow } from '@/tree/sop/sop-types';
+import { getD1 } from '@/seed/db/get-d1';
 
 interface RunsPageProps {
   params: Promise<{ id: string; locale: string }>;
 }
 
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch {
-    return null;
-  }
-}
+
 
 export default async function RunsPage({ params }: RunsPageProps) {
   const { id, locale } = await params;

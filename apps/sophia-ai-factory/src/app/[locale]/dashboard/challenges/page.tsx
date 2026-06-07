@@ -13,17 +13,10 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { listActiveChallenges, getUserAllProgress } from '@/land/sop-marketplace/challenges';
 import { claimChallengeRewardAction } from '@/app/actions/challenge-actions';
 import { cookies } from 'next/headers';
+import { getD1 } from '@/seed/db/get-d1';
 
 export const dynamic = 'force-dynamic';
 
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-    return globalDb ?? null;
-  } catch { return null; }
-}
 
 function daysLeft(endsAt: number): number {
   return Math.max(0, Math.ceil((endsAt - Date.now()) / (1000 * 60 * 60 * 24)));

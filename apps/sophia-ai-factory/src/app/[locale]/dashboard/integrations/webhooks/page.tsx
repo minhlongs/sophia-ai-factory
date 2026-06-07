@@ -7,6 +7,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { WebhooksPageClient } from './webhooks-page-client';
+import { getD1 } from '@/seed/db/get-d1';
 import type { WebhookEndpoint } from '@/land/webhooks/types';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +17,7 @@ async function fetchWebhooks(userId: string): Promise<WebhookEndpoint[]> {
     // Use D1 registry directly on server — avoids self-fetch in Workers
     const { listByTenant } = await import('@/land/webhooks/registry');
     // Get D1 binding via the same pattern as other server routes
-    const db = getD1ServerSide();
+    const db = getD1();
     if (!db) return [];
     return await listByTenant(db, userId);
   } catch {
@@ -24,15 +25,6 @@ async function fetchWebhooks(userId: string): Promise<WebhookEndpoint[]> {
   }
 }
 
-function getD1ServerSide(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[Symbol.for('__cloudflare-context__')];
-    if (ctx?.env?.DB) return ctx.env.DB as D1Database;
-    return null;
-  } catch { return null; }
-}
 
 export default async function WebhooksPage() {
   const user = await getCurrentUser();

@@ -1,13 +1,14 @@
 'use client';
 
 /**
- * TikTok connection settings panel.
+ * t("settings_panel")
  * Lets users connect / disconnect their TikTok account via OAuth2.
  * Connection status is fetched from GET /api/user/integrations.
  */
 
 import { useEffect, useState, useTransition } from 'react';
 import { Button } from '@/seed/components/ui/button';
+import { useTranslations } from 'next-intl';
 
 interface Integration {
   network_id: string;
@@ -19,6 +20,7 @@ interface IntegrationsResponse {
 }
 
 export function TikTokConnectionSettings() {
+  const t = useTranslations('dashboard.integrations');
   const [isConnected, setIsConnected] = useState(false);
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -95,13 +97,13 @@ export function TikTokConnectionSettings() {
           T
         </div>
         <div>
-          <p className="text-sm font-medium">TikTok</p>
+          <p className="text-sm font-medium">{t('platform_tiktok')}</p>
           {isConnected && displayName ? (
             <p className="text-xs text-muted-foreground">@{displayName}</p>
           ) : isConnected ? (
-            <p className="text-xs text-green-600">Đã kết nối</p>
+            <p className="text-xs text-green-600">{t('connected')}</p>
           ) : (
-            <p className="text-xs text-muted-foreground">Chưa kết nối</p>
+            <p className="text-xs text-muted-foreground">{t('notConnected')}</p>
           )}
         </div>
       </div>
@@ -114,7 +116,7 @@ export function TikTokConnectionSettings() {
           disabled={isPending}
           className="transition-all duration-150 active:scale-95"
         >
-          Disconnect
+          {t('disconnect')}
         </Button>
       ) : (
         <Button
@@ -123,7 +125,7 @@ export function TikTokConnectionSettings() {
           disabled={isPending}
           className="transition-all duration-150 active:scale-95"
         >
-          Connect TikTok
+          {t('connectTiktok')}
         </Button>
       )}
     </div>

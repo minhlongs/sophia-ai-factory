@@ -5,17 +5,9 @@ import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { localizedHref } from "@/land/i18n/localized-href";
 import { VideoGallery } from "./components/video-gallery";
 import { EmptyState } from "@/seed/components/ui/empty-state";
+import { getD1 } from '@/seed/db/get-d1';
 import { Video } from "lucide-react";
 
-function getD1(): D1Database | null {
-  try {
-    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-    if (env?.DB) return env.DB as D1Database;
-    const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[Symbol.for('__cloudflare-context__')];
-    if (ctx?.env?.DB) return ctx.env.DB as D1Database;
-    return null;
-  } catch { return null; }
-}
 
 export default async function VideosGalleryPage({
   params,
