@@ -160,7 +160,7 @@ export async function transitionDunningState(
      WHERE license_nonce = ?2 AND dunning_state = ?3`,
   ).bind(newState, licenseNonce, oldState).run();
 
-  if (result.changes === 0) {
+  if ((result.meta as { changes?: number })?.changes === 0) {
     // Possible TOCTOU race — re-read current state and retry once
     const retrySettings = await getDunningSettings(licenseNonce);
     const retryState = retrySettings?.dunning_state || 'current';
