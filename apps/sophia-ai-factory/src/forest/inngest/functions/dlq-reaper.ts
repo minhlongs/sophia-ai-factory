@@ -13,6 +13,7 @@
 
 import { inngest } from '@/forest/inngest/client'
 import { getD1Raw } from '@/seed/db/client'
+import type { D1LikeClient } from '@/land/billing/nowpayments-ipn-dead-letter'
 import { logger } from '@/seed/utils/logger-utility'
 import { getStaleDlqEntries, reenqueueDlqEntry } from '@/land/billing/nowpayments-ipn-dead-letter'
 
@@ -24,7 +25,7 @@ export const dlqReaper = inngest.createFunction(
   { cron: '0 * * * *' },
   async ({ step }) => {
     const stale = await step.run('fetch-stale-dlq', async () => {
-      const db = await getD1Raw()
+      const db = getD1Raw() as unknown as D1LikeClient
       return getStaleDlqEntries(db, STALE_AGE_HOURS)
     })
 
@@ -40,7 +41,7 @@ export const dlqReaper = inngest.createFunction(
 
     for (const entry of stale) {
       const result = await step.run(`reenqueue-${entry.event_id}`, async () => {
-        const db = await getD1Raw()
+        const db = getD1Raw() as unknown as D1LikeClient
         const ok = await reenqueueDlqEntry(db, entry.event_id)
         if (!ok) {
           logger.error('[DLQReaper] Re-enqueue failed — alert required', undefined, {
