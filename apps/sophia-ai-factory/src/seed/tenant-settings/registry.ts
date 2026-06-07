@@ -120,6 +120,17 @@ export async function deleteNamespace(
     .run();
 }
 
+/** Delete ALL settings rows for a tenant (full reset). */
+export async function deleteAllForTenant(
+  db: D1Database,
+  tenantId: string,
+): Promise<void> {
+  await db
+    .prepare('DELETE FROM tenant_settings WHERE tenant_id = ?')
+    .bind(tenantId)
+    .run();
+}
+
 /** Fetch all persisted namespaces for a tenant in a single query. */
 export async function listAll(
   db: D1Database,
@@ -172,4 +183,3 @@ export async function bulkExport(
 }
 
 // Re-export error types for convenience
-export { SettingsValidationError, SettingsNotFoundError };
