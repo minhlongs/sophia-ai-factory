@@ -124,11 +124,23 @@ export async function markJwtNonceAsUsed(
   userId: string,
   expiresAt: number
 ): Promise<boolean> {
-  // Update KV cache (fast path)
-  await writeNonceToKv(nonce, { used: true, userId, expiresAt }, expiresAt);
+  // DB first (authoritative) — if this fails, nonce stays usable → fail closed
+  const dbResult = await upsertNonceInDb(nonce, userId, expiresAt);
+  if (!dbResult) {
+    return false; // DB write failed — do not mark as used
+  }
 
-  // Database write (authoritative)
-  return upsertNonceInDb(nonce, userId, expiresAt);
+  // KV second (cache only — failure is non-fatal; DB is authoritative)
+  try {
+    await writeNonceToKv(nonce, { used: true, userId, expiresAt }, expiresAt);
+  } catch {
+    logger.warn(
+      '[JWT Nonce] KV cache write failed after DB success — non-fatal',
+      { nonce: nonce.slice(0, 8) + '...' },
+    );
+  }
+
+  return true;
 }
 
 /**

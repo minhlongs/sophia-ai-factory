@@ -1,6 +1,6 @@
 "use server";
 
-import { getD1Client } from "@/seed/db/client";
+import { getD1Client, createServerClient } from "@/seed/db/client";
 import { sendCampaignCreatedEvent } from "@/land/campaigns/create-campaign-core";
 import { createCampaignSchema } from "@/land/campaigns/validation";
 import { revalidatePath } from "next/cache";
@@ -37,10 +37,22 @@ export async function createCampaign(formData: FormData) {
   } catch { /* Auth session check failed */ }
 
   if (!userId) {
-    return { success: false, message: "Vui lòng đăng nhập để tạo chiến dịch." };
-  }
+ return { success: false, message: "Vui lòng đăng nhập để tạo chiến dịch." };
+}
 
-  const db = await getD1Client();
+// Validate org membership — prevents actions from touching org-scoped tables without membership
+const db = createServerClient();
+const { data: membership } = await db
+.from('org_members')
+.select('org_id')
+.eq('user_id', userId!)
+.maybeSingle();
+
+if (!membership) {
+ return { success: false, message: 'Forbidden: user is not a member of any organization' };
+}
+
+const d1db = await getD1Client();
 
   // TIER CHECK: Multi-channel access
   if (platforms && platforms.length > 1) {

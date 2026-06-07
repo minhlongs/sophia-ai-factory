@@ -6,6 +6,7 @@
 import type { NextRequest } from 'next/server'
 import { logger } from '@/seed/utils/logger-utility'
 import { trackUsage, calculateCredits, hashLicenseKey } from './tracker'
+import { checkQuota } from './usage-rollup-engine'
 import type { UsageEventInput, AiService } from './types'
 import { extractLicenseInfo, shouldExcludeTracking, getSamplingRate, determineServiceFromPath, determineActionFromPath } from './gateway-instrumentation-helpers'
 
@@ -61,8 +62,28 @@ export async function emitUsageEvent(
       errorMessage: response.status >= 400 ? `HTTP ${response.status}` : undefined,
     }
 
-    const result = await trackUsage(event)
-    logger.debug('[Gateway Instrumentation] Emitted usage event', { pathname, status: response.status, tier, credits: creditsUsed, isRateLimited: response.status === 429, idempotencyStatus: result.success ? 'new' : result.reason })
+ // Enforce credit quota before recording - prevents gateway path bypass
+ const quotaOk = await checkQuota(userId, licenseNonce, tier, creditsUsed)
+ if (!quotaOk.allowed) {
+   event.resourceType = 'rate_limited'
+   logger.debug('[Gateway Instrumentation] Quota exceeded, skipping trackUsage', {
+     pathname,
+     tier,
+     credits: creditsUsed,
+     exceeded: quotaOk.exceeded,
+   })
+   return
+ }
+
+ const result = await trackUsage(event)
+ logger.debug('[Gateway Instrumentation] Emitted usage event', {
+   pathname,
+   status: response.status,
+   tier,
+   credits: creditsUsed,
+   isRateLimited: response.status === 429,
+   idempotencyStatus: result.success ? 'new' : result.reason,
+ })
   } catch (error) {
     logger.error('[Gateway Instrumentation] Error emitting usage event', error instanceof Error ? error : new Error(String(error)))
   }

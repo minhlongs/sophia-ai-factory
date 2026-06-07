@@ -8,7 +8,7 @@ import { logger } from '@/seed/utils/logger-utility'
 import { getDb } from './nowpayments-ipn-db'
 import { handleFailed } from './nowpayments-ipn-subscription'
 import { dispatchFinished, dispatchRefunded } from './nowpayments-ipn-dispatch'
-import { enqueueDlqEntry, type D1LikeClient } from './nowpayments-ipn-dead-letter'
+import { enqueueDlqEntry, countUnresolvedDlq, type D1LikeClient } from './nowpayments-ipn-dead-letter'
 
 export interface NowPaymentsIpnPayload {
   payment_id: string
@@ -29,6 +29,7 @@ export interface NowPaymentsIpnPayload {
 }
 
 const MAX_DLQ_RETRIES = 3
+const DLQ_SIZE_CAP = 1000
 
 export async function processNowPaymentsIpn(
   ipn: NowPaymentsIpnPayload,
@@ -80,12 +81,12 @@ export async function processNowPaymentsIpn(
       case 'partially_paid':
         logger.info('[NOWPayments] Partial payment received — holding', { payment_id })
         break
- case 'expired':
- try {
-   await db.from('pending_orders').update({ status: 'expired' }).eq('order_id', ipn.order_id)
- } catch { /* non-fatal */ }
- logger.info('[NOWPayments] Payment expired', { payment_id, order_id: ipn.order_id })
- logger.info('[NOWPayments] Payment expired — marked pending_orders expired', { payment_id, order_id: ipn.order_id })
+      case 'expired':
+        try {
+          await db.from('pending_orders').update({ status: 'expired' }).eq('order_id', ipn.order_id)
+        } catch { /* non-fatal */ }
+        logger.info('[NOWPayments] Payment expired', { payment_id, order_id: ipn.order_id })
+        logger.info('[NOWPayments] Payment expired — marked pending_orders expired', { payment_id, order_id: ipn.order_id })
         break
       default:
         logger.debug('[NOWPayments] Unhandled status', { payment_status, payment_id })
@@ -101,42 +102,58 @@ export async function processNowPaymentsIpn(
     // 3a. Enqueue to DLQ on permanent failure (non-recoverable errors)
     // NOWPayments will retry automatically on network errors; DLQ is for
     // application-level failures that need manual intervention.
-if (isPermanentFailure(err)) {
-  const { data: dlqRow } = await db
-    .from('ipn_dead_letter_queue')
-    .select('retry_count')
-    .eq('event_id', eventId)
-    .maybeSingle()
-  const currentRetries = typeof dlqRow?.retry_count === 'number' ? dlqRow.retry_count : 0
-  if (currentRetries >= MAX_DLQ_RETRIES) {
-    logger.warn('[NOWPayments] DLQ max retries reached — dropping', {
-      eventId,
-      reason: err.message,
-    })
-    return { success: false, message: `Permanent failure after ${MAX_DLQ_RETRIES} retries: ${err.message}` }
-  }
-  try {
-    await enqueueDlqEntry(db as unknown as D1LikeClient, {
-      eventId,
-      paymentId: payment_id,
-      paymentStatus: payment_status,
-      orderId: ipn.order_id ?? '',
-      payload: ipn as unknown as Record<string, unknown>,
-      failureReason: err.message,
-      retryCount: currentRetries,
-    })
-    logger.warn('[NOWPayments] IPN enqueued to DLQ', {
-      event_id: eventId,
-      reason: err.message,
-    })
-  } catch (dlqErr) {
-    logger.error('[NOWPayments] Failed to enqueue DLQ entry', {
-      event_id: eventId,
-      error: String(dlqErr),
-    })
-  }
-  return { success: false, message: `Permanent failure: ${err.message}` }
-}
+    if (isPermanentFailure(err)) {
+      const { data: dlqRow } = await db
+        .from('ipn_dead_letter_queue')
+        .select('retry_count')
+        .eq('event_id', eventId)
+        .maybeSingle()
+      const currentRetries = typeof dlqRow?.retry_count === 'number' ? dlqRow.retry_count : 0
+
+      if (currentRetries >= MAX_DLQ_RETRIES) {
+        logger.error(
+          '[NOWPayments] DLQ_EXHAUSTED — permanent failure, alert required',
+          err,
+          { eventId, payment_id, payment_status, reason: err.message },
+        )
+        return { success: false, message: `Permanent failure after ${MAX_DLQ_RETRIES} retries: ${err.message}` }
+      }
+
+      // DLQ size guard: refuse new entries at cap to prevent unbounded growth
+      const unresolvedDlqCount = await countUnresolvedDlq(db as unknown as D1LikeClient)
+      if (unresolvedDlqCount >= DLQ_SIZE_CAP) {
+        logger.error('[NOWPayments] DLQ_OVERFLOW — rejecting new entry', err, {
+          eventId,
+          unresolvedCount: unresolvedDlqCount,
+        })
+        return {
+          success: false,
+          message: `DLQ at capacity (${unresolvedDlqCount}/${DLQ_SIZE_CAP}); event ${eventId} dropped`,
+        }
+      }
+
+      try {
+        await enqueueDlqEntry(db as unknown as D1LikeClient, {
+          eventId,
+          paymentId: payment_id,
+          paymentStatus: payment_status,
+          orderId: ipn.order_id ?? '',
+          payload: ipn as unknown as Record<string, unknown>,
+          failureReason: err.message,
+          retryCount: currentRetries,
+        })
+        logger.warn('[NOWPayments] IPN enqueued to DLQ', {
+          event_id: eventId,
+          reason: err.message,
+        })
+      } catch (dlqErr) {
+        logger.error('[NOWPayments] Failed to enqueue DLQ entry', {
+          event_id: eventId,
+          error: String(dlqErr),
+        })
+      }
+      return { success: false, message: `Permanent failure: ${err.message}` }
+    }
 
     // 3b. Release the lock on failure to enable retries
     try {

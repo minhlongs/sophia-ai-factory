@@ -78,6 +78,31 @@ export const batchVideoFanout = inngest.createFunction(
       logger.info('[batch-fanout] All waves dispatched', { batchId });
     });
 
-    return { batchId, dispatched: queued.length };
+    await step.run('watchdog-stuck-videos', async () => {
+  await step.sleep('watchdog-wait', 120_000);
+
+  const allVideos = await step.run('watchdog-load-videos', () => getBatchVideos(batchId));
+  const now = Date.now();
+  const STUCK_THRESHOLD_MS = 30 * 60 * 1000;
+
+  let resetCount = 0;
+  for (const v of allVideos) {
+    if (v.status === 'generating') {
+      const updatedAt = new Date(v.updated_at).getTime();
+      if (now - updatedAt > STUCK_THRESHOLD_MS) {
+        await updateBatchVideoStatus(v.id, 'queued', {
+          errorMessage: 'Reset from generating after timeout — will be retried',
+        });
+        resetCount++;
+      }
+    }
+  }
+
+  if (resetCount > 0) {
+    logger.info('[batch-fanout] Watchdog reset stuck videos', { batchId, resetCount });
+  }
+});
+
+return { batchId, dispatched: queued.length };
   },
 );
