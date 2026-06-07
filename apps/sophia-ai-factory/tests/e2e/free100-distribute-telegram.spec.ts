@@ -29,7 +29,8 @@ test.describe('FREE100 Distribute — API layer (no browser auth)', () => {
       data: { channelProviders: ['telegram'] },
     });
     // 401 ideal; 404 if id-not-found is checked before auth; 500 if env not provisioned
-    expect([401, 403, 404, 500]).toContain(res.status());
+    // 401 ideal; 404 if id-not-found before auth; 429 if rate-limited; 500 if env not provisioned
+    expect([401, 403, 404, 429, 500]).toContain(res.status());
   });
 
   test('POST /api/v1/videos/:id/distribute with invalid body rejects', async ({

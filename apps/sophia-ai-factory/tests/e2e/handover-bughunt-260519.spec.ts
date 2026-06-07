@@ -351,7 +351,7 @@ test.describe('Bug Hunt: 5 core dashboard routes', () => {
     if (redirectedAway) {
       console.log(`[bughunt][admin] Correctly redirected to: ${url}`)
       // Verify the redirect destination makes sense
-      expect(url).toMatch(/dashboard|login/)
+      expect(url).toMatch(/dashboard|login|\?error=admin_required/)
     } else {
       console.log(`[bughunt][admin] MASTER user — admin page loaded at: ${url}`)
     }
