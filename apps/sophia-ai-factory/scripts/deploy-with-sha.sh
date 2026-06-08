@@ -77,8 +77,8 @@ fetch_url() {
 
 fetch_status() {
   local url="$1"
-  curl -sS -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || \
-    curl --noproxy '*' -sS -o /dev/null -w "%{http_code}" "$url" 2>/dev/null
+  curl -sSL -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || \
+    curl --noproxy '*' -sSL -o /dev/null -w "%{http_code}" "$url" 2>/dev/null
 }
 
 cache_bust_url() {
