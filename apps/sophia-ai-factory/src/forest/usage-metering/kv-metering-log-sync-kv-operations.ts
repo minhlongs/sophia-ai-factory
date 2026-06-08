@@ -3,7 +3,7 @@
  * @module usage-metering/kv-metering-log-sync-kv-operations
  */
 
-import { getKvClient } from '@/land/redis'
+import { getKvClient } from '@/seed/utils/redis-client'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 import { DEFAULT_KV_METERING_LOG_CONFIG } from './kv-metering-log-sync-types'

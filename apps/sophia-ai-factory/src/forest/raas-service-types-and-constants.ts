@@ -5,7 +5,7 @@
  * Imported by raas-service-key-operations and raas-service.
  */
 
-import { redis } from '@/land/redis';
+import { redis } from '@/seed/utils/redis-client';
 
 /**
  * Supported subscription tiers

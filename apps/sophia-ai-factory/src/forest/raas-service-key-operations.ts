@@ -7,7 +7,7 @@
 
 import { hmacSha256, timingSafeEqual } from '@/tree/audit/crypto-utils';
 import { logger } from '@/seed/utils/logger-utility';
-import { redis } from '@/land/redis';
+import { redis } from '@/seed/utils/redis-client';
 import {
   LICENSE_KEY_PATTERN,
   REDIS_KEYS,

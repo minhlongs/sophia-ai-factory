@@ -9,7 +9,7 @@
  * @module usage-metering/usage-reconciliation
  */
 
-import { getKvClient } from '@/land/redis';
+import { getKvClient } from '@/seed/utils/redis-client';
 import { logger } from '@/seed/utils/logger-utility';
 import { createServerClient } from '@/seed/db/client';
 

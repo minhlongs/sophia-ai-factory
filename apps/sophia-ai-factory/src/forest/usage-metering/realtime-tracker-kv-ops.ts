@@ -5,7 +5,7 @@
 
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
-import { getKvClient } from '@/land/redis'
+import { getKvClient } from '@/seed/utils/redis-client'
 import type { RealTimeUsage } from './realtime-tracker-types'
 
 export async function getRealTimeUsage(
