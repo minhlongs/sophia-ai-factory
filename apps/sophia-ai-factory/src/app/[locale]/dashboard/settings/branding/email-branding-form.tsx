@@ -57,13 +57,13 @@ export function EmailBrandingForm({ locale }: Props) {
   }) {
     return (
       <div>
-        <label className="block text-sm text-zinc-300 mb-1">{label}</label>
+        <label className="block text-sm text-muted-foreground mb-1">{label}</label>
         <input
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+          className="w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500"
         />
       </div>
     )
@@ -99,7 +99,7 @@ export function EmailBrandingForm({ locale }: Props) {
         type="email"
       />
       <div>
-        <label className="block text-sm text-zinc-300 mb-1">
+        <label className="block text-sm text-muted-foreground mb-1">
           {isVi ? 'Màu chủ đạo (hex)' : 'Accent Color (hex)'}
         </label>
         <div className="flex items-center gap-3">
@@ -114,7 +114,7 @@ export function EmailBrandingForm({ locale }: Props) {
             value={accentColor}
             onChange={(e) => setAccentColor(e.target.value)}
             placeholder="#10b981"
-            className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 font-mono focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="flex-1 bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-violet-500"
           />
         </div>
       </div>

@@ -20,7 +20,7 @@ export default async function NotFound() {
 
       <div className="space-y-4 max-w-md mx-auto">
         <h2 className="text-3xl font-bold text-white">{t("heading")}</h2>
-        <p className="text-gray-400 text-lg">{t("description")}</p>
+        <p className="text-muted-foreground text-lg">{t("description")}</p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md justify-center">
@@ -45,7 +45,7 @@ export default async function NotFound() {
         </Link>
       </div>
 
-      <div className="pt-12 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-500 w-full max-w-2xl border-t border-white/10 mt-8">
+      <div className="pt-12 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground w-full max-w-2xl border-t border-border mt-8">
         <Link href="/#features" className="hover:text-[var(--neon-cyan)]">
           {t("features")}
         </Link>

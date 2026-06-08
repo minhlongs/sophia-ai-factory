@@ -120,7 +120,7 @@ function CircularProgressRing({ used, limit }: { used: number; limit: number }) 
 function MetricCard({ title, value, icon, trend, loading, footer, sparklineData, sparklineColor, progressRing }: MetricCardProps) {
   if (loading) {
     return (
-      <Card className="bg-white/[0.02] border-white/10 backdrop-blur-md">
+      <Card className="bg-muted/10 border-border/50 backdrop-blur-md">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-foreground">{title}</CardTitle>
           <Skeleton className="h-4 w-4" />
@@ -134,7 +134,7 @@ function MetricCard({ title, value, icon, trend, loading, footer, sparklineData,
   }
 
   return (
-    <Card className="bg-white/[0.02] border-white/10 backdrop-blur-md transition-all duration-300 hover:border-white/20">
+    <Card className="bg-muted/10 border-border/50 backdrop-blur-md transition-all duration-300 hover:hover:border-border">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-foreground">{title}</CardTitle>
         {icon}
@@ -179,7 +179,7 @@ function MetricCard({ title, value, icon, trend, loading, footer, sparklineData,
 export function MetricsCards({ metrics, period, loading, error, onRetry, userTier }: MetricsCardsProps) {
   if (error) {
     return (
-      <Card className="bg-white/[0.02] border-white/10 backdrop-blur-md">
+      <Card className="bg-muted/10 border-border/50 backdrop-blur-md">
         <CardContent className="flex flex-col items-center justify-center py-8">
           <AlertCircle className="h-8 w-8 text-destructive mb-2" />
           <p className="text-sm text-destructive mb-2">Failed to load metrics</p>

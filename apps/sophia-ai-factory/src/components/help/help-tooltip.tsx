@@ -72,7 +72,7 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center justify-center w-6 h-6 rounded-full text-zinc-400 hover:text-violet-300 hover:bg-violet-500/10 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500"
+        className="inline-flex items-center justify-center w-6 h-6 rounded-full text-muted-foreground hover:text-violet-300 hover:bg-violet-500/10 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500"
         aria-label={
           isVi
             ? `Trợ giúp cho ${pageLabel ?? "trang này"}`
@@ -93,13 +93,13 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
         >
           <div
             ref={modalRef}
-            className="relative w-full max-w-md rounded-2xl border border-zinc-800 bg-zinc-950 shadow-2xl p-6 space-y-4"
+            className="relative w-full max-w-md rounded-2xl border border-border bg-background shadow-2xl p-6 space-y-4"
           >
             {/* Close */}
             <button
               type="button"
               onClick={() => { setOpen(false); triggerRef.current?.focus(); }}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500"
               aria-label={isVi ? "Đóng" : "Close"}
             >
               <X className="w-4 h-4" />
@@ -108,13 +108,13 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
             {/* Header */}
             <div className="flex items-center gap-2 pr-8">
               <HelpCircle className="w-5 h-5 text-violet-400 shrink-0" aria-hidden="true" />
-              <h2 className="text-sm font-semibold text-zinc-100">
+              <h2 className="text-sm font-semibold text-foreground">
                 {isVi ? "Hướng dẫn nhanh" : "Quick guide"}
               </h2>
             </div>
 
             {/* Intro text */}
-            <p className="text-sm text-zinc-300 leading-relaxed">{intro}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">{intro}</p>
 
             {/* Video link */}
             {hasVideo && (
@@ -127,7 +127,7 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
                     {isVi ? "Video hướng dẫn" : "Tutorial video"}
                   </p>
                   {videoTitle && (
-                    <p className="text-xs text-zinc-400 mb-2 truncate">{videoTitle}</p>
+                    <p className="text-xs text-muted-foreground mb-2 truncate">{videoTitle}</p>
                   )}
                   {isPublished ? (
                     <a
@@ -139,7 +139,7 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
                       <ExternalLink className="w-3 h-3" aria-hidden="true" />
                     </a>
                   ) : (
-                    <span className="text-xs text-zinc-500">
+                    <span className="text-xs text-muted-foreground">
                       {isVi ? "Video sắp ra mắt" : "Video coming soon"}
                     </span>
                   )}
@@ -150,7 +150,7 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
             {/* Footer link */}
             <Link
               href="/dashboard/help"
-              className="block text-xs text-center text-zinc-500 hover:text-violet-400 transition-colors"
+              className="block text-xs text-center text-muted-foreground hover:text-violet-400 transition-colors"
               onClick={() => setOpen(false)}
             >
               {isVi ? "Trung tâm trợ giúp" : "Help Center"}

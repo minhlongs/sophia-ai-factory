@@ -65,13 +65,13 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
   }
 
   const inputCls =
-    'w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500';
+    'w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500';
 
   return (
     <div className="space-y-8">
       {/* Status bar */}
       {status !== 'idle' && (
-        <p className={`text-xs ${status === 'saved' ? 'text-emerald-400' : status === 'error' ? 'text-red-400' : 'text-zinc-400'}`}>
+        <p className={`text-xs ${status === 'saved' ? 'text-emerald-400' : status === 'error' ? 'text-red-400' : 'text-muted-foreground'}`}>
           {status === 'saving' ? t('saving') : status === 'saved' ? t('saved') : t('saveFailed')}
         </p>
       )}
@@ -105,7 +105,7 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
 
       {/* Section 3: Welcome message */}
       <Section title={t('welcomeMessage')}>
-        <label className="block text-sm text-zinc-300 mb-1">
+        <label className="block text-sm text-muted-foreground mb-1">
           {t('welcomeMessageHint')}
         </label>
         <textarea
@@ -116,7 +116,7 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
           onChange={(e) => setBranding((p) => ({ ...p, welcomeMessage: e.target.value || null }))}
           onBlur={(e) => handleBlur('welcomeMessage', e.target.value || null)}
         />
-        <p className="text-xs text-zinc-500 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           {(branding.welcomeMessage ?? '').length}/2000
         </p>
       </Section>
@@ -130,7 +130,7 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
           onBlur={(v) => handleBlur('emailFromName', v || null)}
           inputCls={inputCls}
         />
-        <label className="block text-sm text-zinc-300 mb-1 mt-3">
+        <label className="block text-sm text-muted-foreground mb-1 mt-3">
           {t('emailFooter')}
         </label>
         <textarea
@@ -141,7 +141,7 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
           onChange={(e) => setBranding((p) => ({ ...p, emailFooter: e.target.value || null }))}
           onBlur={(e) => handleBlur('emailFooter', e.target.value || null)}
         />
-        <p className="text-xs text-zinc-500 mt-1">
+        <p className="text-xs text-muted-foreground mt-1">
           {(branding.emailFooter ?? '').length}/1000
         </p>
       </Section>
@@ -166,7 +166,7 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
           onBlur={(v) => handleSocialBlur('title', v || null)}
           inputCls={inputCls}
         />
-        <label className="block text-sm text-zinc-300 mb-1 mt-3">
+        <label className="block text-sm text-muted-foreground mb-1 mt-3">
           {t('ogDescription')}
         </label>
         <textarea
@@ -218,8 +218,8 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6 space-y-3">
-      <h2 className="text-sm font-semibold text-zinc-200 uppercase tracking-wide">{title}</h2>
+    <div className="rounded-xl border bg-card border-border p-6 space-y-3">
+      <h2 className="text-sm font-semibold text-foreground uppercase tracking-wide">{title}</h2>
       {children}
     </div>
   );
@@ -237,7 +237,7 @@ function TextField({
   const [local, setLocal] = useState(value);
   return (
     <div>
-      <label className="block text-sm text-zinc-300 mb-1">{label}</label>
+      <label className="block text-sm text-muted-foreground mb-1">{label}</label>
       <input
         type="text"
         className={inputCls}
@@ -260,7 +260,7 @@ function ColorField({
 }) {
   return (
     <div>
-      <label className="block text-sm text-zinc-300 mb-1">{label}</label>
+      <label className="block text-sm text-muted-foreground mb-1">{label}</label>
       <div className="flex items-center gap-3">
         <input
           type="color"
@@ -275,7 +275,7 @@ function ColorField({
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}
           placeholder="#7c3aed"
-          className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 font-mono focus:outline-none focus:ring-2 focus:ring-violet-500"
+          className="flex-1 bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-violet-500"
         />
       </div>
     </div>

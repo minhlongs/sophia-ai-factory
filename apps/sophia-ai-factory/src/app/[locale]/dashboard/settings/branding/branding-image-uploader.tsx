@@ -54,7 +54,7 @@ export function BrandingImageUploader({ kind, currentUrl, label, onUploaded, onR
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm text-zinc-300">{label}</label>
+      <label className="block text-sm text-muted-foreground">{label}</label>
       <div className="flex items-center gap-4">
         {url && (
           <div className="relative">
@@ -62,7 +62,7 @@ export function BrandingImageUploader({ kind, currentUrl, label, onUploaded, onR
             <img
               src={url}
               alt={kind}
-              className="h-14 w-auto max-w-[120px] rounded border border-zinc-700 object-contain bg-zinc-800 p-1"
+              className="h-14 w-auto max-w-[120px] rounded border border-border object-contain bg-muted p-1"
             />
           </div>
         )}
@@ -71,7 +71,7 @@ export function BrandingImageUploader({ kind, currentUrl, label, onUploaded, onR
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="px-3 py-1.5 text-xs bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 rounded-lg text-zinc-100 transition-colors"
+            className="px-3 py-1.5 text-xs bg-muted hover:bg-muted/80 disabled:opacity-50 rounded-lg text-foreground transition-colors"
           >
             {uploading ? 'Uploading…' : url ? 'Replace' : 'Upload'}
           </button>

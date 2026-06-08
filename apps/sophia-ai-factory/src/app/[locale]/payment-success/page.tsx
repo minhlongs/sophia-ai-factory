@@ -84,7 +84,7 @@ export default async function PaymentSuccessPage({
       ];
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-background via-muted to-background p-4">
       <div className="w-full max-w-lg space-y-6">
         {/* Status poller — shown when order is still pending */}
         {orderStatus === 'pending' && orderId && (
@@ -93,7 +93,7 @@ export default async function PaymentSuccessPage({
 
         {/* Hero card — shown when completed or no order tracking */}
         {(orderStatus === 'completed' || !orderStatus) && (
-          <div className="rounded-2xl border border-emerald-500/20 bg-white/[0.03] backdrop-blur-sm p-8 text-center shadow-2xl">
+          <div className="rounded-2xl border border-emerald-500/20 bg-muted/[0.03] backdrop-blur-sm p-8 text-center shadow-2xl">
             <div className="mb-4 flex items-center justify-center">
               <style dangerouslySetInnerHTML={{__html: `
                 @keyframes stroke {
@@ -162,7 +162,7 @@ export default async function PaymentSuccessPage({
               </div>
             )}
 
-            <p className="mb-1 text-zinc-400 text-sm">
+            <p className="mb-1 text-muted-foreground text-sm">
               {isVi ? "Gói" : "Plan"}:{" "}
               <span className="font-semibold text-emerald-400">
                 {trialDays > 0
@@ -181,8 +181,8 @@ export default async function PaymentSuccessPage({
             )}
 
             {!maskedEmail && (
-              <div className="mt-4 rounded-xl border border-zinc-700 bg-zinc-800/50 px-4 py-3">
-                <p className="text-sm text-zinc-400">
+              <div className="mt-4 rounded-xl border border-border bg-card px-4 py-3">
+                <p className="text-sm text-muted-foreground">
                   {isVi
                     ? "Kiểm tra email để nhận magic link đăng nhập."
                     : "Check your email for a magic login link."}
@@ -194,22 +194,22 @@ export default async function PaymentSuccessPage({
 
         {/* Receipt Details — only when confirmed */}
         {(orderStatus === 'completed' || !orderStatus) && orderId && (
-          <div className="rounded-2xl border border-white/10 bg-white/[0.02] backdrop-blur-sm p-6 space-y-4">
-            <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wider border-b border-white/5 pb-2 text-left">
+          <div className="rounded-2xl border border-border/50 bg-muted/10 backdrop-blur-sm p-6 space-y-4">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/10 pb-2 text-left">
               {isVi ? "Chi tiết hóa đơn" : "Receipt Details"}
             </h2>
             <div className="space-y-2 text-xs md:text-sm text-left">
               <div className="flex justify-between">
-                <span className="text-zinc-400">{isVi ? "Mã đơn hàng" : "Order ID"}:</span>
-                <span className="font-mono text-zinc-200">{orderId}</span>
+                <span className="text-muted-foreground">{isVi ? "Mã đơn hàng" : "Order ID"}:</span>
+                <span className="font-mono text-foreground">{orderId}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-400">{isVi ? "Sản phẩm" : "Plan"}:</span>
+                <span className="text-muted-foreground">{isVi ? "Sản phẩm" : "Plan"}:</span>
                 <span className="font-medium text-emerald-400">{trialDays > 0 ? (isVi ? `Dùng thử ${trialDays} ngày` : `${trialDays}-day free trial`) : tierName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-400">{isVi ? "Chu kỳ thanh toán" : "Billing Cycle"}:</span>
-                <span className="text-zinc-200 capitalize">
+                <span className="text-muted-foreground">{isVi ? "Chu kỳ thanh toán" : "Billing Cycle"}:</span>
+                <span className="text-foreground capitalize">
                   {isVi 
                     ? (period === "lifetime" ? "Trọn đời" : period === "yearly" ? "Năm" : "Tháng") 
                     : period
@@ -217,7 +217,7 @@ export default async function PaymentSuccessPage({
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-400">{isVi ? "Trạng thái giao dịch" : "Transaction Status"}:</span>
+                <span className="text-muted-foreground">{isVi ? "Trạng thái giao dịch" : "Transaction Status"}:</span>
                 <span className="inline-flex items-center gap-1 font-semibold text-emerald-400">
                   <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                   {isVi ? "Thành công" : "Completed"}
@@ -225,7 +225,7 @@ export default async function PaymentSuccessPage({
               </div>
               {sp.via && (
                 <div className="flex justify-between">
-                  <span className="text-zinc-400">{isVi ? "Phương thức" : "Method"}:</span>
+                  <span className="text-muted-foreground">{isVi ? "Phương thức" : "Method"}:</span>
                   <span className="text-violet-300 font-medium">{sp.via === "promo" ? (isVi ? "Mã ưu đãi" : "Promo Code") : sp.via}</span>
                 </div>
               )}
@@ -235,8 +235,8 @@ export default async function PaymentSuccessPage({
 
         {/* Next steps — only when confirmed */}
         {(orderStatus === 'completed' || !orderStatus) && (
-          <div className="rounded-2xl border border-zinc-800 bg-white/[0.02] backdrop-blur-sm p-6">
-            <h2 className="mb-4 text-sm font-semibold text-zinc-300 uppercase tracking-wider text-left">
+          <div className="rounded-2xl border border-border bg-muted/10 backdrop-blur-sm p-6">
+            <h2 className="mb-4 text-sm font-semibold text-muted-foreground uppercase tracking-wider text-left">
               {isVi ? "Bước tiếp theo" : "What happens next"}
             </h2>
             <ol className="space-y-4">
@@ -246,11 +246,11 @@ export default async function PaymentSuccessPage({
                     <step.icon className="h-4 w-4 text-violet-400" />
                   </div>
                   <div className="text-left">
-                    <p className="text-sm font-medium text-zinc-200">
+                    <p className="text-sm font-medium text-foreground">
                       <span className="text-violet-400 mr-1.5">{i + 1}.</span>
                       {step.label}
                     </p>
-                    <p className="text-xs text-zinc-500 mt-0.5">{step.desc}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{step.desc}</p>
                   </div>
                 </li>
               ))}
@@ -269,7 +269,7 @@ export default async function PaymentSuccessPage({
             <p className="text-2xl font-bold text-emerald-400 mb-3">
               {isVi ? "5–10 phút" : "5–10 minutes"}
             </p>
-            <p className="text-xs text-zinc-400 mb-4">
+            <p className="text-xs text-muted-foreground mb-4">
               {isVi
                 ? "Thiết lập API keys → bật SOP đầu tiên → xem video AI của bạn"
                 : "Set up API keys → enable first SOP → watch your AI video generate"}
@@ -294,7 +294,7 @@ export default async function PaymentSuccessPage({
             </Link>
             <Link
               href={`/${locale}/dashboard/settings`}
-              className="inline-block w-full rounded-xl border border-zinc-700 px-6 py-3.5 text-center font-medium text-zinc-300 transition hover:border-zinc-500 hover:text-white"
+              className="inline-block w-full rounded-xl border border-border px-6 py-3.5 text-center font-medium text-muted-foreground transition hover:border-border hover:text-foreground"
             >
               {isVi ? "Cài đặt API Keys" : "Configure API Keys"}
             </Link>
@@ -302,7 +302,7 @@ export default async function PaymentSuccessPage({
         )}
 
         {orderId && (
-          <p className="text-center text-xs text-zinc-600">
+          <p className="text-center text-xs text-muted-foreground">
             {isVi ? "Mã đơn hàng:" : "Order:"} {orderId}
           </p>
         )}

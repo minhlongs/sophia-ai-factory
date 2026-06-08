@@ -38,7 +38,7 @@ function RoiEstimator() {
   const roiMultiplier = sophiaTotal > 0 ? (savings / sophiaTotal) * 100 : 0;
 
   return (
-    <Card className="bg-white/[0.02] border-white/10 backdrop-blur-md">
+    <Card className="bg-muted/10 border-border/50 backdrop-blur-md">
       <CardHeader>
         <CardTitle className="text-lg text-foreground font-semibold flex items-center gap-2">
           <Coins className="h-5 w-5 text-violet-400" />
@@ -76,7 +76,7 @@ function RoiEstimator() {
                 min="1"
                 value={traditionalCost}
                 onChange={(e) => setTraditionalCost(Math.max(1, Number(e.target.value)))}
-                className="w-full bg-zinc-950 border border-white/10 rounded-lg py-1.5 pl-7 pr-3 text-sm text-foreground focus:outline-none focus:border-violet-500/50 font-medium"
+                className="w-full bg-zinc-950 border border-border/50 rounded-lg py-1.5 pl-7 pr-3 text-sm text-foreground focus:outline-none focus:border-violet-500/50 font-medium"
               />
             </div>
           </div>
@@ -90,12 +90,12 @@ function RoiEstimator() {
               min="1"
               value={creditsPerVideo}
               onChange={(e) => setCreditsPerVideo(Math.max(1, Number(e.target.value)))}
-              className="w-full bg-zinc-950 border border-white/10 rounded-lg py-1.5 px-3 text-sm text-foreground focus:outline-none focus:border-violet-500/50 font-medium"
+              className="w-full bg-zinc-950 border border-border/50 rounded-lg py-1.5 px-3 text-sm text-foreground focus:outline-none focus:border-violet-500/50 font-medium"
             />
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3 bg-zinc-950/40 p-4 rounded-xl border border-white/5">
+        <div className="grid gap-4 sm:grid-cols-3 bg-zinc-950/40 p-4 rounded-xl border border-border/10">
           <div className="space-y-1">
             <span className="text-xs text-muted-foreground">Traditional Cost</span>
             <div className="text-lg font-bold text-zinc-400">
@@ -103,7 +103,7 @@ function RoiEstimator() {
             </div>
           </div>
 
-          <div className="space-y-1 border-t sm:border-t-0 sm:border-l border-white/5 sm:pl-4 pt-2 sm:pt-0">
+          <div className="space-y-1 border-t sm:border-t-0 sm:border-l border-border/10 sm:pl-4 pt-2 sm:pt-0">
             <span className="text-xs text-muted-foreground">Sophia AI Cost</span>
             <div className="text-lg font-bold text-violet-400">
               ${sophiaTotal.toFixed(2)}
@@ -113,7 +113,7 @@ function RoiEstimator() {
             </div>
           </div>
 
-          <div className="space-y-1 border-t sm:border-t-0 sm:border-l border-white/5 sm:pl-4 pt-2 sm:pt-0">
+          <div className="space-y-1 border-t sm:border-t-0 sm:border-l border-border/10 sm:pl-4 pt-2 sm:pt-0">
             <span className="text-xs text-muted-foreground">Saved Dollar Metrics</span>
             <div className="text-lg font-bold text-emerald-400 flex items-center gap-1.5">
               ${savings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}

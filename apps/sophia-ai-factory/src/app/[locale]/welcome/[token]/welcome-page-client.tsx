@@ -82,7 +82,7 @@ export function WelcomePageClient({ token, locale }: Props) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 aria-hidden="true" size={32} className="animate-spin text-violet-400" />
         <span className="sr-only">Loading…</span>
       </div>
@@ -96,7 +96,7 @@ export function WelcomePageClient({ token, locale }: Props) {
   const steps = buildOnboardingSteps(data);
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen bg-background">
       {/* Hero */}
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-900/20 via-blue-900/10 to-transparent pointer-events-none" />
@@ -110,7 +110,7 @@ export function WelcomePageClient({ token, locale }: Props) {
             <br />
             <span className="bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">{data.agencyName}</span>
           </h1>
-          <p className="text-zinc-400 text-lg max-w-md mx-auto mb-8">
+          <p className="text-muted-foreground text-lg max-w-md mx-auto mb-8">
             {t('summary')}
           </p>
 
@@ -123,7 +123,7 @@ export function WelcomePageClient({ token, locale }: Props) {
             {started ? <Loader2 aria-hidden="true" size={20} className="animate-spin" /> : <Zap aria-hidden="true" size={20} />}
             {t('getStarted')}
           </button>
-          <p className="text-xs text-zinc-600 mt-3">
+          <p className="text-xs text-muted-foreground mt-3">
             {t('singleUseHint')}
           </p>
         </div>
@@ -137,10 +137,10 @@ export function WelcomePageClient({ token, locale }: Props) {
               <MessageCircle aria-hidden="true" size={20} className="text-blue-300" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-zinc-100 mb-1">
+              <h3 className="font-semibold text-foreground mb-1">
                 {t('telegram.title')}
               </h3>
-              <p className="text-sm text-zinc-400 mb-3">
+              <p className="text-sm text-muted-foreground mb-3">
                 {t('telegram.description')}
               </p>
               {telegramLinked ? (
@@ -167,7 +167,7 @@ export function WelcomePageClient({ token, locale }: Props) {
 
       {/* Roadmap preview — informational, not a progress checklist */}
       <div className="max-w-2xl mx-auto px-6 pb-16">
-        <h2 className="text-sm font-medium text-zinc-400 mb-4 text-center uppercase tracking-wider">
+        <h2 className="text-sm font-medium text-muted-foreground mb-4 text-center uppercase tracking-wider">
           {t('roadmapHeader')}
         </h2>
         <div className="space-y-3">
@@ -223,15 +223,15 @@ function InvalidLinkView({
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div aria-live="polite" className="max-w-md w-full text-center space-y-4">
           <div className="w-16 h-16 rounded-full bg-emerald-900/30 border border-emerald-500/40 flex items-center justify-center mx-auto">
             <CheckCircle2 aria-hidden="true" size={28} className="text-emerald-300" />
           </div>
-          <h1 className="text-xl font-bold text-zinc-100">
+          <h1 className="text-xl font-bold text-foreground">
             {t('invalid.sentTitle')}
           </h1>
-          <p className="text-zinc-400 text-sm">
+          <p className="text-muted-foreground text-sm">
             {t('invalid.sentDescription')}
           </p>
           <a
@@ -246,28 +246,28 @@ function InvalidLinkView({
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="max-w-md w-full">
-        <div className="bg-zinc-900/80 backdrop-blur border border-red-500/30 rounded-2xl p-8 space-y-5">
+        <div className="bg-card backdrop-blur border border-red-500/30 rounded-2xl p-8 space-y-5">
           <div className="text-center space-y-2">
             <div className="w-14 h-14 rounded-full bg-red-900/30 border border-red-500/40 flex items-center justify-center mx-auto">
               <AlertTriangle aria-hidden="true" size={26} className="text-red-300" />
             </div>
-            <h1 className="text-xl font-bold text-zinc-100">
+            <h1 className="text-xl font-bold text-foreground">
               {t('invalid.title')}
             </h1>
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-muted-foreground">
               {message ?? t('invalid.defaultMessage')}
             </p>
           </div>
 
-          <div className="border-t border-zinc-800 pt-5 space-y-3">
-            <p className="text-sm text-zinc-300 text-center">
+          <div className="border-t border-border pt-5 space-y-3">
+            <p className="text-sm text-muted-foreground text-center">
               {t('invalid.resendPrompt')}
             </p>
             <form onSubmit={handleResend} className="space-y-3">
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-zinc-950 border border-zinc-800 focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/40">
-                <Mail aria-hidden="true" size={16} className="text-zinc-500 flex-shrink-0" />
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-background border border-border focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/40">
+                <Mail aria-hidden="true" size={16} className="text-muted-foreground flex-shrink-0" />
                 <input
                   type="email"
                   required
@@ -299,7 +299,7 @@ function InvalidLinkView({
 
           <a
             href={`/${locale}/login`}
-            className="block text-center text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="block text-center text-xs text-muted-foreground hover:text-muted-foreground transition-colors"
           >
             {t('invalid.altLogin')}
           </a>

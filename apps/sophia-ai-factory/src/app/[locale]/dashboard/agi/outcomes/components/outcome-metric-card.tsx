@@ -18,12 +18,12 @@ export function OutcomeMetricCard({
   const isPositive = hasChange && change >= 0;
 
   return (
-    <Card className="border border-slate-800 bg-slate-900/60 backdrop-blur-sm">
+    <Card className="bg-card border-border backdrop-blur-sm">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <p className="text-sm font-medium text-slate-400">{title}</p>
-            <p className="text-2xl font-bold text-slate-50 tabular-nums">
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
+            <p className="text-2xl font-bold text-foreground tabular-nums">
               {value}
             </p>
           </div>

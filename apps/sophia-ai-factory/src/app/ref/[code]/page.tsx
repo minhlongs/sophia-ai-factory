@@ -93,7 +93,7 @@ export default async function ReferralPage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-background text-white">
       {/* Hero */}
       <div className="max-w-3xl mx-auto px-6 py-20 text-center">
         <div className="flex items-center justify-center gap-2 mb-6">
@@ -103,7 +103,7 @@ export default async function ReferralPage({ params }: Props) {
           </h1>
         </div>
 
-        <p className="text-xl text-white/70 mb-8 max-w-xl mx-auto">
+        <p className="text-xl text-foreground/70 mb-8 max-w-xl mx-auto">
           Build, sell, and execute video production SOPs. Join the creator
           economy with AI-powered automation.
         </p>
@@ -140,17 +140,17 @@ export default async function ReferralPage({ params }: Props) {
         ).map((f) => (
           <div
             key={f.title}
-            className="rounded-2xl bg-white/5 border border-white/10 p-6 text-center"
+            className="rounded-2xl bg-muted/20 border border-border p-6 text-center"
           >
             <f.icon className="w-8 h-8 text-violet-400 mx-auto mb-3" />
             <h3 className="font-semibold mb-2">{f.title}</h3>
-            <p className="text-sm text-white/50">{f.desc}</p>
+            <p className="text-sm text-muted-foreground">{f.desc}</p>
           </div>
         ))}
       </div>
 
       {/* Footer */}
-      <div className="text-center pb-10 text-xs text-white/30">
+      <div className="text-center pb-10 text-xs text-muted-foreground/50">
         Sophia AI Factory — Solo Creator SOPs Platform
       </div>
     </div>

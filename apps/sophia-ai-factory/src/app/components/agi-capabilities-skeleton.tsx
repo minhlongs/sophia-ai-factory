@@ -2,7 +2,7 @@ import { Skeleton } from "@/seed/components/ui/skeleton";
 
 export default function AgiCapabilitiesSkeleton() {
   return (
-    <section className="py-20 md:py-32 bg-gradient-to-b from-slate-950 to-slate-900">
+    <section className="py-20 md:py-32 bg-gradient-to-b from-background to-muted">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header skeleton */}
         <div className="flex flex-col items-center mb-16 gap-4">
@@ -16,7 +16,7 @@ export default function AgiCapabilitiesSkeleton() {
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 space-y-3"
+              className="p-6 rounded-2xl bg-muted border border-border space-y-3"
             >
               <Skeleton shimmer className="h-12 w-12 rounded-lg" />
               <Skeleton shimmer className="h-5 w-3/4" />

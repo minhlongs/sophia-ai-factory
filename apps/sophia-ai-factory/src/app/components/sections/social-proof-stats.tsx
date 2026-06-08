@@ -98,7 +98,7 @@ export function StatsBar() {
         <div className="relative grid grid-cols-2 md:grid-cols-4 gap-8 stagger-reveal">
           {stats.map((stat) => (
             <div key={stat.labelKey} className="text-center">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3 bg-white/[0.06]">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-3 bg-muted/30">
                 <span className="material-symbols-outlined text-lg text-neon-cyan/70">{stat.icon}</span>
               </div>
               <p className="text-3xl md:text-4xl font-extrabold mb-1 tracking-tight text-foreground">

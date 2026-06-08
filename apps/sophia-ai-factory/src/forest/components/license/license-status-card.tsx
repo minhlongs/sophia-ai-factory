@@ -101,7 +101,7 @@ export function LicenseStatusCard({ licenseNonce, compact = false }: LicenseStat
     const dotClass =
       statusColor === 'green' ? 'bg-green-500' :
       statusColor === 'red' ? 'bg-red-500' :
-      statusColor === 'yellow' ? 'bg-yellow-500' : 'bg-gray-500';
+      statusColor === 'yellow' ? 'bg-yellow-500' : 'bg-muted';
 
     return (
       <Card>

@@ -45,10 +45,10 @@ export default async function BrandingPage({ params }: Props) {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-100">
+        <h1 className="text-2xl font-bold text-foreground">
           {locale.startsWith('vi') ? 'Tuỳ Chỉnh Thương Hiệu' : 'Brand Customization'}
         </h1>
-        <p className="text-sm text-zinc-400 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           {locale.startsWith('vi')
             ? 'Cá nhân hoá logo, màu sắc, email và metadata cho thương hiệu của bạn.'
             : 'Personalise your logo, colours, email sender, and social metadata.'}

@@ -156,7 +156,7 @@ export function HandoverListClient({ locale }: Props) {
         const expanded = expandedId === h.id;
 
         return (
-          <div key={h.id} className="rounded-xl border border-zinc-800 bg-white/[0.03] backdrop-blur-sm p-5">
+          <div key={h.id} className="rounded-xl border border-border bg-muted/20 backdrop-blur-sm p-5">
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -212,7 +212,7 @@ export function HandoverListClient({ locale }: Props) {
                 { label: isVi ? 'Cài SOP đầu' : 'First SOP Install', ts: h.customer_first_sop_install_at },
                 { label: isVi ? 'Chạy SOP đầu' : 'First Run', ts: h.customer_first_run_at },
               ].map((m) => (
-                <div key={m.label} className="rounded-lg bg-zinc-900/50 border border-zinc-800 p-2 text-center">
+                <div key={m.label} className="rounded-lg bg-zinc-900/50 border border-border p-2 text-center">
                   <div className="mb-1">
                     {m.ts
                       ? <CheckCircle2 size={14} className="mx-auto text-emerald-400" />
@@ -228,7 +228,7 @@ export function HandoverListClient({ locale }: Props) {
 
             {/* Expanded details */}
             {expanded && (
-              <div className="mt-4 pt-4 border-t border-zinc-800 space-y-3">
+              <div className="mt-4 pt-4 border-t border-border space-y-3">
                 <div className="text-xs text-zinc-500">
                   {isVi ? 'SOPs đã cài:' : 'Installed SOPs:'}{' '}
                   {sops.length > 0 ? sops.join(', ') : (isVi ? 'Không có' : 'None')}
