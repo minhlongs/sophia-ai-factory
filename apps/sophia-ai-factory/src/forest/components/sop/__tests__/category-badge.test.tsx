@@ -28,6 +28,6 @@ describe('CategoryBadge', () => {
     expect((salesContainer.firstChild as HTMLElement)?.className).toContain('border-emerald-500');
 
     const { container: socialContainer } = render(<CategoryBadge category="social" />);
-    expect((socialContainer.firstChild as HTMLElement)?.className).toContain('border-violet-500');
+    expect((socialContainer.firstChild as HTMLElement)?.className).toContain('border-primary');
   });
 });
