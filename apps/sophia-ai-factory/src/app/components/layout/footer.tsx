@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/navigation";
 import { Container } from "@/seed/components/ui/container";
 
 const columns = [

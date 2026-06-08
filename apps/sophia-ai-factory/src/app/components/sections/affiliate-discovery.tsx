@@ -7,7 +7,7 @@ import { getAllPrograms } from "@/land/affiliates";
 import { Tier } from "@/seed/types";
 import { TIER_CONFIGS } from "@/seed/config/tiers";
 import { Lock, ExternalLink, Star, TrendingUp } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/navigation";
 
 import { Badge } from "@/seed/components/ui/badge";
 import { Button } from "@/seed/components/ui/button";

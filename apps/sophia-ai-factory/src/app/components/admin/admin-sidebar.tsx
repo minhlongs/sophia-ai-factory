@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/navigation";
 import { usePathname } from "next/navigation";
 import { cn } from '@/seed/utils/cn';
 import {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { Link } from "@/navigation";
 
 const HERO_SCROLL_THRESHOLD = 600;
 

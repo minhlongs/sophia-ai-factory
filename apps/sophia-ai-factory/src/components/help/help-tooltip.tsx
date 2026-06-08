@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
+import { Link } from "@/navigation";
 import { HelpCircle, X, Play, ExternalLink } from "lucide-react";
 
 export interface HelpTooltipContent {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { Link } from "@/navigation";
 import { useTranslations } from "next-intl";
 import { Button } from "@/seed/components/ui/button";
 import { TerminalPreview } from "@/app/components/ui/terminal-preview";

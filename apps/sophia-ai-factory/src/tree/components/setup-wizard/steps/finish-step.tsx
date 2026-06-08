@@ -1,7 +1,7 @@
 import React from "react";
 import { ArrowRight, Check, Rocket, Trophy } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
+import { Link } from "@/navigation";
 
 interface FinishStepProps {
   saveError: string | null;

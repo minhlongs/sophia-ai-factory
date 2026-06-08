@@ -14,7 +14,7 @@
  */
 'use client';
 
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { Infinity as InfinityIcon, BarChart3 } from 'lucide-react';
 import { fetchJson } from '@/seed/utils/fetch-json';

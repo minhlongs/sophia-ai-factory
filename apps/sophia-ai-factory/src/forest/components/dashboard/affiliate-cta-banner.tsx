@@ -10,7 +10,7 @@
 import { useState, useEffect } from "react";
 import { TrendingUp, ArrowRight, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
+import { Link } from "@/navigation";
 
 const DISMISSED_KEY = "affiliate_cta_dismissed";
 
