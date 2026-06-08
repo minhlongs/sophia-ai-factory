@@ -24,11 +24,11 @@ export function MissionControlWidget({ isVi = false }: MissionControlWidgetProps
 	if (isLoading) return <SkeletonCard />;
 	if (error || !data) {
 		return (
-			<div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+			<div className="bg-card border border-border rounded-2xl p-5">
 				<p className="text-red-400 text-sm mb-3">
 					{isVi ? 'Không thể tải dữ liệu điều khiển' : 'Failed to load mission control data'}
 				</p>
-				<p className="text-zinc-500 text-xs mb-4">
+				<p className="text-muted-foreground text-xs mb-4">
 					{error instanceof Error ? error.message : (isVi ? 'Lỗi không xác định' : 'Unknown error')}
 				</p>
 				<button
@@ -38,7 +38,7 @@ export function MissionControlWidget({ isVi = false }: MissionControlWidgetProps
 						setRetrying(false);
 					}}
 					disabled={retrying}
-					className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-violet-600 hover:bg-violet-500 disabled:opacity-60 rounded-lg text-white transition-colors"
+					className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-primary hover:bg-primary disabled:opacity-60 rounded-lg text-white transition-colors"
 				>
 					<RefreshCw className={`w-4 h-4 ${retrying ? 'animate-spin' : ''}`} aria-hidden="true" />
 					{isVi ? 'Thử lại' : 'Retry'}
@@ -55,14 +55,14 @@ export function MissionControlWidget({ isVi = false }: MissionControlWidgetProps
 
 	if (hasNoActivity) {
 		return (
-			<div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+			<div className="bg-card border border-border rounded-2xl p-5">
 				<div className="flex flex-col items-center gap-4 py-6">
-					<p className="text-zinc-400 text-sm text-center">
+					<p className="text-muted-foreground text-sm text-center">
 						{isVi ? 'Chưa có hoạt động — bắt đầu chiến dịch đầu tiên' : 'No activity yet — start your first campaign'}
 					</p>
 					<Link
 						href="/dashboard/campaigns/new"
-						className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-violet-600 to-violet-500 text-white text-sm font-medium shadow shadow-violet-500/20 hover:opacity-90 transition-opacity"
+						className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-medium shadow shadow-primary/20 hover:opacity-90 transition-opacity"
 					>
 						{isVi ? 'Tạo chiến dịch' : 'Create campaign'}
 					</Link>
@@ -73,29 +73,29 @@ export function MissionControlWidget({ isVi = false }: MissionControlWidgetProps
 
 
 	return (
-		<div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+		<div className="bg-card border border-border rounded-2xl p-5">
 			<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				{/* Left: tier + quota */}
 				<div className="flex flex-col gap-3 min-w-0">
 					<div className="flex items-center gap-2">
 						<TierBadge tier={data.tier} href="/dashboard/billing" />
-						<span className="text-zinc-500 text-xs">
+						<span className="text-muted-foreground text-xs">
 							{isVi ? 'Gói hiện tại' : 'Current plan'}
 						</span>
 					</div>
 
 					<div>
 						<div className="flex items-center justify-between mb-1">
-							<span className="text-xs text-zinc-400">
+							<span className="text-xs text-muted-foreground">
 								{isVi ? 'Hạn mức MCU' : 'MCU quota'}
 							</span>
-							<Link href="/dashboard/billing" className="text-xs text-violet-400 hover:underline">
+							<Link href="/dashboard/billing" className="text-xs text-primary hover:underline">
 								<span className="tabular-nums">{data.quota.used.toLocaleString()} / {data.quota.total.toLocaleString()}</span>
 							</Link>
 						</div>
-						<div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden w-48 max-w-full">
+						<div className="h-1.5 bg-muted rounded-full overflow-hidden w-48 max-w-full">
 							<div
-								className={`h-full rounded-full transition-all ${quotaPct > 95 ? 'bg-red-500' : quotaPct > 80 ? 'bg-amber-500' : 'bg-violet-500'}`}
+								className={`h-full rounded-full transition-all ${quotaPct > 95 ? 'bg-red-500' : quotaPct > 80 ? 'bg-amber-500' : 'bg-primary'}`}
 								style={{ width: `${Math.min(quotaPct, 100)}%` }}
 							/>
 						</div>
@@ -105,7 +105,7 @@ export function MissionControlWidget({ isVi = false }: MissionControlWidgetProps
 				{/* Center: sparkline */}
 				<div className="flex flex-col items-start sm:items-center gap-1">
 					<RecentActivitySparkline data={data.last7d} />
-					<span className="text-xs text-zinc-500">
+					<span className="text-xs text-muted-foreground">
 						{weeklyTotal} {isVi ? 'calls / 7 ngày' : 'calls / 7d'}
 					</span>
 				</div>
@@ -121,11 +121,11 @@ export function MissionControlWidget({ isVi = false }: MissionControlWidgetProps
 
 function SkeletonCard() {
 	return (
-		<div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 motion-safe:animate-pulse">
+		<div className="bg-card border border-border rounded-2xl p-5 motion-safe:animate-pulse">
 			<div className="flex gap-4">
-				<div className="h-5 w-20 bg-zinc-800 rounded-full" />
-				<div className="h-5 w-32 bg-zinc-800 rounded" />
-				<div className="ml-auto h-8 w-24 bg-zinc-800 rounded-lg" />
+				<div className="h-5 w-20 bg-muted rounded-full" />
+				<div className="h-5 w-32 bg-muted rounded" />
+				<div className="ml-auto h-8 w-24 bg-muted rounded-lg" />
 			</div>
 		</div>
 	);

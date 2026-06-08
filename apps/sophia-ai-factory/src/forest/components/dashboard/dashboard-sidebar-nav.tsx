@@ -61,11 +61,11 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
   const linkClass = (href: string) => {
     const active = isActive(href);
     return cn(
-      "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
+      "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group min-h-[44px]",
       "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
       active
-        ? "text-foreground bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-        : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
+        ? "text-foreground bg-primary/10 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+        : "text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent"
     );
   };
 
@@ -196,297 +196,105 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
       
       {/* Admin Links */}
       {isAdmin && (
-        <>
-          <div className="pt-2 mt-2 border-t border-border/50">
-            <Link
-              href="/dashboard/admin"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin")}
-              <LayoutDashboard className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">Admin Home</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/admin/ops"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin/ops")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin/ops")}
-              <Activity className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/ops") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">Ops Dashboard</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/admin/funnel"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin/funnel")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin/funnel")}
-              <BarChart2 className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/funnel") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">Activation Funnel</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/admin/crons"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin/crons")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin/crons")}
-              <ServerCog className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/crons") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">Cron Monitor</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/admin/email-outbox"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin/email-outbox")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin/email-outbox")}
-              <Webhook className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/email-outbox") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">Email Outbox</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/admin/affiliate-leaderboard"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin/affiliate-leaderboard")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin/affiliate-leaderboard")}
-              <Coins className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/affiliate-leaderboard") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">Affiliate Leaderboard</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/admin/webhook-deliveries"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin/webhook-deliveries")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin/webhook-deliveries")}
-              <Webhook className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/webhook-deliveries") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">Webhook Deliveries</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/admin/storage"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin/storage")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin/storage")}
-              <Database className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/storage") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">Storage Usage</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/admin/audit-log"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin/audit-log")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin/audit-log")}
-              <FileText className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/audit-log") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">Audit Log</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/admin/api-key-usage"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin/api-key-usage")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin/api-key-usage")}
-              <KeyRound className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/api-key-usage") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">API Key Usage</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/admin/tenant-lookup"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin/tenant-lookup")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin/tenant-lookup")}
-              <Activity className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/tenant-lookup") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">Tenant Lookup</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/admin/cost"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin/cost")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin/cost")}
-              <Coins className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/cost") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">Cost Dashboard</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/admin/migrations"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin/migrations")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin/migrations")}
-              <Database className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/migrations") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">Migrations</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/admin/e2e-smoke"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin/e2e-smoke")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin/e2e-smoke")}
-              <FlaskConical className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/e2e-smoke") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">E2E Smoke</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/admin/heygen-webhooks"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin/heygen-webhooks")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin/heygen-webhooks")}
-              <Webhook className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/heygen-webhooks") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">HeyGen Webhooks</span>
-            </Link>
-            
-            <Link
-              href="/dashboard/admin/deploy-status"
-              className={cn(
-                "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group",
-                "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-                isActive("/dashboard/admin/deploy-status")
-                  ? "text-primary bg-muted/50 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-              )}
-            >
-              {renderActiveIndicator("/dashboard/admin/deploy-status")}
-              <ServerCog className={cn(
-                "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-                isActive("/dashboard/admin/deploy-status") ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-              )} aria-hidden="true" />
-              <span className="font-medium">Deploy Status</span>
-            </Link>
-          </div>
-        </>
+ <>
+ <div className="pt-2 mt-2 border-t border-border/50">
+ <Link href="/dashboard/admin" className={linkClass("/dashboard/admin")}>
+ {renderActiveIndicator("/dashboard/admin")}
+ <LayoutDashboard className={iconClass("/dashboard/admin")} aria-hidden="true" />
+ <span className="font-medium">Admin Home</span>
+ </Link>
+
+ <Link href="/dashboard/admin/ops" className={linkClass("/dashboard/admin/ops")}>
+ {renderActiveIndicator("/dashboard/admin/ops")}
+ <Activity className={iconClass("/dashboard/admin/ops")} aria-hidden="true" />
+ <span className="font-medium">Ops Dashboard</span>
+ </Link>
+
+ <Link href="/dashboard/admin/funnel" className={linkClass("/dashboard/admin/funnel")}>
+ {renderActiveIndicator("/dashboard/admin/funnel")}
+ <BarChart2 className={iconClass("/dashboard/admin/funnel")} aria-hidden="true" />
+ <span className="font-medium">Activation Funnel</span>
+ </Link>
+
+ <Link href="/dashboard/admin/crons" className={linkClass("/dashboard/admin/crons")}>
+ {renderActiveIndicator("/dashboard/admin/crons")}
+ <ServerCog className={iconClass("/dashboard/admin/crons")} aria-hidden="true" />
+ <span className="font-medium">Cron Monitor</span>
+ </Link>
+
+ <Link href="/dashboard/admin/email-outbox" className={linkClass("/dashboard/admin/email-outbox")}>
+ {renderActiveIndicator("/dashboard/admin/email-outbox")}
+ <Webhook className={iconClass("/dashboard/admin/email-outbox")} aria-hidden="true" />
+ <span className="font-medium">Email Outbox</span>
+ </Link>
+
+ <Link href="/dashboard/admin/affiliate-leaderboard" className={linkClass("/dashboard/admin/affiliate-leaderboard")}>
+ {renderActiveIndicator("/dashboard/admin/affiliate-leaderboard")}
+ <Coins className={iconClass("/dashboard/admin/affiliate-leaderboard")} aria-hidden="true" />
+ <span className="font-medium">Affiliate Leaderboard</span>
+ </Link>
+
+ <Link href="/dashboard/admin/webhook-deliveries" className={linkClass("/dashboard/admin/webhook-deliveries")}>
+ {renderActiveIndicator("/dashboard/admin/webhook-deliveries")}
+ <Webhook className={iconClass("/dashboard/admin/webhook-deliveries")} aria-hidden="true" />
+ <span className="font-medium">Webhook Deliveries</span>
+ </Link>
+
+ <Link href="/dashboard/admin/storage" className={linkClass("/dashboard/admin/storage")}>
+ {renderActiveIndicator("/dashboard/admin/storage")}
+ <Database className={iconClass("/dashboard/admin/storage")} aria-hidden="true" />
+ <span className="font-medium">Storage Usage</span>
+ </Link>
+
+ <Link href="/dashboard/admin/audit-log" className={linkClass("/dashboard/admin/audit-log")}>
+ {renderActiveIndicator("/dashboard/admin/audit-log")}
+ <FileText className={iconClass("/dashboard/admin/audit-log")} aria-hidden="true" />
+ <span className="font-medium">Audit Log</span>
+ </Link>
+
+ <Link href="/dashboard/admin/api-key-usage" className={linkClass("/dashboard/admin/api-key-usage")}>
+ {renderActiveIndicator("/dashboard/admin/api-key-usage")}
+ <KeyRound className={iconClass("/dashboard/admin/api-key-usage")} aria-hidden="true" />
+ <span className="font-medium">API Key Usage</span>
+ </Link>
+
+ <Link href="/dashboard/admin/tenant-lookup" className={linkClass("/dashboard/admin/tenant-lookup")}>
+ {renderActiveIndicator("/dashboard/admin/tenant-lookup")}
+ <Activity className={iconClass("/dashboard/admin/tenant-lookup")} aria-hidden="true" />
+ <span className="font-medium">Tenant Lookup</span>
+ </Link>
+
+ <Link href="/dashboard/admin/cost" className={linkClass("/dashboard/admin/cost")}>
+ {renderActiveIndicator("/dashboard/admin/cost")}
+ <Coins className={iconClass("/dashboard/admin/cost")} aria-hidden="true" />
+ <span className="font-medium">Cost Dashboard</span>
+ </Link>
+
+ <Link href="/dashboard/admin/migrations" className={linkClass("/dashboard/admin/migrations")}>
+ {renderActiveIndicator("/dashboard/admin/migrations")}
+ <Database className={iconClass("/dashboard/admin/migrations")} aria-hidden="true" />
+ <span className="font-medium">Migrations</span>
+ </Link>
+
+ <Link href="/dashboard/admin/e2e-smoke" className={linkClass("/dashboard/admin/e2e-smoke")}>
+ {renderActiveIndicator("/dashboard/admin/e2e-smoke")}
+ <FlaskConical className={iconClass("/dashboard/admin/e2e-smoke")} aria-hidden="true" />
+ <span className="font-medium">E2E Smoke</span>
+ </Link>
+
+ <Link href="/dashboard/admin/heygen-webhooks" className={linkClass("/dashboard/admin/heygen-webhooks")}>
+ {renderActiveIndicator("/dashboard/admin/heygen-webhooks")}
+ <Webhook className={iconClass("/dashboard/admin/heygen-webhooks")} aria-hidden="true" />
+ <span className="font-medium">HeyGen Webhooks</span>
+ </Link>
+
+ <Link href="/dashboard/admin/deploy-status" className={linkClass("/dashboard/admin/deploy-status")}>
+ {renderActiveIndicator("/dashboard/admin/deploy-status")}
+ <ServerCog className={iconClass("/dashboard/admin/deploy-status")} aria-hidden="true" />
+ <span className="font-medium">Deploy Status</span>
+ </Link>
+ </div>
+ </>
       )}
       
       {/* Account & Settings */}

@@ -62,7 +62,7 @@ export function InstallationRunsTab({ runs, installationId }: Props) {
               <td className="px-4 py-3">
                 <Link
                   href={`/dashboard/sops/${installationId}/runs/${run.id}`}
-                  className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                  className="text-xs text-primary hover:text-primary transition-colors"
                 >
                   {t('viewMission')} →
                 </Link>

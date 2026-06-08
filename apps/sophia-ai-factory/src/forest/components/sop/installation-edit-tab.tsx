@@ -89,7 +89,7 @@ export function InstallationEditTab({
 
           <Button
             size="sm"
-            className="bg-violet-700 hover:bg-violet-600"
+            className="bg-primary hover:bg-primary/90"
             onClick={handleSaveConfig}
             disabled={isPending}
           >

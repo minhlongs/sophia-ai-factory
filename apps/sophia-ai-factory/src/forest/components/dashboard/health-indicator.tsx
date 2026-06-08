@@ -42,7 +42,7 @@ export function HealthIndicator() {
   return (
     <Link
       href="/dashboard/system-health"
-      className="flex items-center gap-2 px-4 py-2 mt-auto text-sm hover:bg-muted transition-colors rounded-lg group"
+      className="flex items-center gap-2 px-4 py-2 mt-auto text-sm hover:bg-muted/50 transition-colors rounded-lg group min-h-[44px]"
       title={`${statusText} (Last checked: ${lastChecked})`}
     >
       <StatusIcon className={`w-4 h-4 ${statusColor}`} />

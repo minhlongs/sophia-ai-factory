@@ -64,7 +64,7 @@ export function PlaybookMarkdownEditor({ initialValue, onSave }: PlaybookMarkdow
           value={value}
           onChange={(e) => setValue(e.target.value)}
           rows={20}
-          className="w-full p-3 text-sm font-mono bg-zinc-900 border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-violet-500 resize-y"
+          className="w-full p-3 text-sm font-mono bg-muted border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-y"
           spellCheck={false}
         />
       )}
@@ -73,7 +73,7 @@ export function PlaybookMarkdownEditor({ initialValue, onSave }: PlaybookMarkdow
         <Button
           onClick={handleSave}
           disabled={isPending}
-          className="bg-violet-700 hover:bg-violet-600"
+          className="bg-primary hover:bg-primary/90"
         >
           <Save className="w-4 h-4 mr-2" aria-hidden="true" />
           {isPending ? t('saving') : saved ? t('saved') : t('save')}

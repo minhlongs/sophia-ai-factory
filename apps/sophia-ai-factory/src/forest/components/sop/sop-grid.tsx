@@ -53,10 +53,10 @@ function CategorySection({
 
   return (
     <section className="space-y-4">
-      <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 border-b border-white/5 pb-2">
+      <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-2 border-b border-border pb-2">
         <span aria-hidden="true" className="text-base">{icon}</span>
         <span>{t(category)}</span>
-        <span className="text-[10px] text-zinc-500 font-normal normal-case">({templates.length} templates)</span>
+        <span className="text-[10px] text-muted-foreground font-normal normal-case">({templates.length} templates)</span>
       </h2>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {templates.map(tpl => (
@@ -123,8 +123,8 @@ export function SopGrid({ templates, installedTemplateIds, locale, installAction
       {/* Featured section — only when not filtering */}
       {category === 'all' && !query.trim() && featured.length > 0 && (
         <section className="space-y-4">
-          <h2 className="text-xs font-bold text-violet-400 uppercase tracking-widest flex items-center gap-2 border-b border-violet-500/10 pb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
+          <h2 className="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2 border-b border-primary/10 pb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             {t('featuredTitle')}
           </h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -145,7 +145,7 @@ export function SopGrid({ templates, installedTemplateIds, locale, installAction
 
       {/* Main grid */}
       {filtered.length === 0 ? (
-        <div className="flex items-center justify-center py-20 bg-white/[0.01] border border-white/5 rounded-2xl">
+        <div className="flex items-center justify-center py-20 bg-muted/10 border border-border rounded-2xl">
           <p className="text-muted-foreground">{t('noResults')}</p>
         </div>
       ) : showGrouped ? (

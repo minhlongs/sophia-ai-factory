@@ -127,13 +127,13 @@ export function CouponInput({ onDiscountApplied, onDiscountCleared, userId }: Co
             placeholder={tPromo("placeholder")}
             disabled={isApplied || status === "loading"}
             maxLength={32}
-            className="flex-1 rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-60 uppercase tracking-widest"
+            className="flex-1 rounded-lg border border-border bg-muted px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 uppercase tracking-widest"
           />
 
           {isApplied ? (
             <button
               onClick={handleClear}
-              className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:border-white/20 transition-colors"
+              className="rounded-lg border border-border bg-muted px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:border-border transition-colors"
             >
               {t("clear")}
             </button>
@@ -141,7 +141,7 @@ export function CouponInput({ onDiscountApplied, onDiscountCleared, userId }: Co
             <button
               onClick={handleApply}
               disabled={!code.trim() || status === "loading"}
-              className="rounded-lg bg-violet-600 px-5 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {status === "loading" ? t("applying") : t("apply")}
             </button>
@@ -258,7 +258,7 @@ function FreeRedemptionModal({ modal, onClose, tLabel: t }: FreeRedemptionModalP
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4"
       style={{ overscrollBehavior: "contain" }}
       onClick={onClose}
     >
@@ -267,23 +267,23 @@ function FreeRedemptionModal({ modal, onClose, tLabel: t }: FreeRedemptionModalP
         role="dialog"
         aria-modal="true"
         aria-labelledby={freeTitleId}
-        className="w-full max-w-md rounded-2xl border border-emerald-500/20 bg-zinc-950/95 backdrop-blur-xl p-6 shadow-2xl"
+        className="w-full max-w-md rounded-2xl border border-border bg-card backdrop-blur-xl p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleFocusTrap}
       >
         {done ? (
           <div className="text-center space-y-3">
             <div className="text-4xl" aria-hidden="true">🎉</div>
-            <h3 id={freeTitleId} className="text-lg font-bold text-white">{tError("access_activated_title")}</h3>
-            <p className="text-sm text-zinc-400">{tError("access_activated_desc")}</p>
+            <h3 id={freeTitleId} className="text-lg font-bold text-foreground">{tError("access_activated_title")}</h3>
+            <p className="text-sm text-muted-foreground">{tError("access_activated_desc")}</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <h3 id={freeTitleId} className="text-base font-bold text-white mb-1">
+              <h3 id={freeTitleId} className="text-base font-bold text-foreground mb-1">
                 {t("free_cta")} — <span className="text-emerald-400">{modal.code}</span>
               </h3>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted-foreground">
                 {modal.discountType === "free_trial"
                   ? tError("free_trial_days", { days: modal.discountValue })
                   : tError("free_full_label")}
@@ -291,7 +291,7 @@ function FreeRedemptionModal({ modal, onClose, tLabel: t }: FreeRedemptionModalP
             </div>
 
             <div>
-              <label className="block text-xs text-zinc-400 mb-1">{t("free_email_label")}</label>
+              <label className="block text-xs text-muted-foreground mb-1">{t("free_email_label")}</label>
               <input
                 ref={emailRef}
                 type="email"
@@ -299,18 +299,18 @@ function FreeRedemptionModal({ modal, onClose, tLabel: t }: FreeRedemptionModalP
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t("free_email_placeholder")}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs text-zinc-400 mb-1">{t("free_name_label")}</label>
+              <label className="block text-xs text-muted-foreground mb-1">{t("free_name_label")}</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={t("free_name_placeholder")}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
@@ -319,7 +319,7 @@ function FreeRedemptionModal({ modal, onClose, tLabel: t }: FreeRedemptionModalP
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-violet-600 py-3 text-sm font-semibold text-white hover:from-emerald-500 hover:to-violet-500 disabled:opacity-50 transition"
+              className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-violet-600 py-3 text-sm font-semibold text-foreground hover:from-emerald-500 hover:to-violet-500 disabled:opacity-50 transition"
             >
               {submitting ? t("free_submitting") : t("free_submit")}
             </button>

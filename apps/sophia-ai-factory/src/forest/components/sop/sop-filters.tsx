@@ -42,7 +42,7 @@ export function SopFilters({ category, query, onCategoryChange, onQueryChange }:
       <select
         value={category}
         onChange={(e) => onCategoryChange(e.target.value as Category)}
-        className="px-3 py-2 text-sm bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-violet-500"
+        className="px-3 py-2 text-sm bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
         aria-label={tm('filterCategory')}
       >
         {CATEGORIES.map((c) => (
@@ -60,7 +60,7 @@ export function SopFilters({ category, query, onCategoryChange, onQueryChange }:
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder={tm('searchPlaceholder')}
-          className="w-full pl-9 pr-3 py-2 text-sm bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-violet-500"
+          className="w-full pl-9 pr-3 py-2 text-sm bg-card border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </div>
     </div>

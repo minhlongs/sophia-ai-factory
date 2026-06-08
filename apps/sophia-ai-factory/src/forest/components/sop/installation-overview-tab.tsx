@@ -64,7 +64,7 @@ export function InstallationOverviewTab({ installation, onRunNow, onDelete }: Pr
         <Button
           onClick={handleRunNow}
           disabled={isPendingRun || !installation.enabled}
-          className="bg-violet-700 hover:bg-violet-600"
+          className="bg-primary hover:bg-primary/90"
         >
           <Play className="w-4 h-4 mr-2" aria-hidden="true" />
           {isPendingRun ? t('running') : t('runNow')}

@@ -26,7 +26,7 @@ function renderMarkdown(md: string): string {
     const code = block.replace(/^```.*\n?/, '').replace(/\n?```$/, '');
     const idx = codeBlocks.length;
     codeBlocks.push(
-      `<pre class="bg-zinc-900 rounded p-3 text-xs overflow-x-auto my-2"><code>${escapeHtml(code)}</code></pre>`,
+      `<pre class="bg-muted rounded p-3 text-xs overflow-x-auto my-2"><code>${escapeHtml(code)}</code></pre>`,
     );
     return `%%CODEBLOCK_${idx}%%`;
   });
@@ -41,7 +41,7 @@ function renderMarkdown(md: string): string {
     .replace(/^# (.+)$/gm, '<h1 class="text-lg font-bold text-foreground mt-4 mb-2">$1</h1>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/`(.+?)`/g, '<code class="bg-zinc-800 px-1 rounded text-xs">$1</code>')
+    .replace(/`(.+?)`/g, '<code class="bg-muted/50 px-1 rounded text-xs">$1</code>')
     .replace(/^- (.+)$/gm, '<li class="ml-4 list-disc text-sm text-muted-foreground">$1</li>')
     .replace(/\n\n/g, '</p><p class="text-sm text-muted-foreground my-1">');
 

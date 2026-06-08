@@ -97,7 +97,7 @@ export function InstallationActionCell({
     <div className="flex items-center gap-2">
       {isRunning ? (
         <>
-          <Loader2 className="w-4 h-4 animate-spin text-violet-400" />
+          <Loader2 className="w-4 h-4 animate-spin text-primary" />
           <RunStatusBadge status={(runStatus ?? 'pending') as 'pending' | 'running' | 'completed' | 'failed' | 'paused'} />
         </>
       ) : phase === 'done' ? (
@@ -106,7 +106,7 @@ export function InstallationActionCell({
         <Button
           size="sm"
           variant="ghost"
-          className="h-7 px-2 text-xs gap-1 hover:text-violet-300"
+          className="h-7 px-2 text-xs gap-1 hover:text-primary"
           onClick={handleRun}
           title="Run now (manual trigger)"
         >
