@@ -312,7 +312,7 @@ function VideoAssetCard({
         {r2Key ? (
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground truncate max-w-[200px]">{r2Key}</span>
-            <Button variant="ghost" size="icon" onClick={onRemove}>
+            <Button variant="ghost" size="icon" onClick={onRemove} aria-label="Remove asset">
               <Trash2 className="w-4 h-4" />
             </Button>
           </div>
