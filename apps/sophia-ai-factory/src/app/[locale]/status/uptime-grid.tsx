@@ -11,7 +11,7 @@ interface UptimeGridProps {
 }
 
 function uptimeColor(row: DayRollup | undefined): string {
-  if (!row || row.totalChecks === 0) return 'bg-zinc-700';
+  if (!row || row.totalChecks === 0) return 'bg-muted';
   if (row.uptimePct >= 99.5) return 'bg-emerald-600';
   if (row.uptimePct >= 95) return 'bg-amber-600';
   return 'bg-red-700';

@@ -23,9 +23,9 @@ function formatValue(metric: string, value: number): string {
 
 export function OutcomesRecentTable({ rows }: OutcomesRecentTableProps) {
   return (
-    <Card className="border border-slate-800 bg-slate-900/60">
+    <Card className="bg-card border-border">
       <CardHeader>
-        <CardTitle className="text-sm font-medium text-slate-300">
+        <CardTitle className="text-sm font-medium text-muted-foreground">
           Recent Outcomes
         </CardTitle>
       </CardHeader>
@@ -33,22 +33,22 @@ export function OutcomesRecentTable({ rows }: OutcomesRecentTableProps) {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-800">
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">SOP</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Metric</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Value</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Date</th>
+              <tr className="border-b border-border">
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">SOP</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Metric</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Value</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">Date</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-border">
               {rows.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="px-6 py-3 text-slate-200 font-medium">{row.sop}</td>
-                  <td className="px-6 py-3 text-slate-400">{row.metric}</td>
+                <tr key={row.id} className="hover:bg-muted/40 transition-colors">
+                  <td className="px-6 py-3 text-foreground font-medium">{row.sop}</td>
+                  <td className="px-6 py-3 text-muted-foreground">{row.metric}</td>
                   <td className="px-6 py-3 text-right text-cyan-400 font-mono tabular-nums">
                     {formatValue(row.metric, row.value)}
                   </td>
-                  <td className="px-6 py-3 text-right text-slate-500 tabular-nums">{row.date}</td>
+                  <td className="px-6 py-3 text-right text-muted-foreground tabular-nums">{row.date}</td>
                 </tr>
               ))}
             </tbody>

@@ -134,7 +134,7 @@ export function OutcomesDashboardClient({ userId: _userId, tier: _tier }: Outcom
 
   if (recentOutcomes.length === 0 && topSopsData.length === 0) {
     return (
-      <Card className="border border-slate-800 bg-slate-900/60">
+      <Card className="bg-card border-border">
         <CardContent className="p-12 text-center">
           <TrendingUp className="mx-auto mb-4 text-muted-foreground" size={48} />
           <h3 className="text-lg font-medium mb-2">No Outcome Data Yet</h3>
@@ -158,9 +158,9 @@ export function OutcomesDashboardClient({ userId: _userId, tier: _tier }: Outcom
 
       {/* Top SOPs bar chart */}
       {topSopsData.length > 0 && (
-        <Card className="border border-slate-800 bg-slate-900/60">
+        <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300">Top SOPs by Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Top SOPs by Revenue</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[380px]">

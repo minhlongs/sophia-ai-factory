@@ -62,7 +62,7 @@ export default function AgiCapabilitiesSection() {
   return (
     <section
       id="agi-capabilities"
-      className="relative py-20 md:py-32 overflow-hidden bg-gradient-to-b from-slate-950 to-slate-900"
+      className="relative py-20 md:py-32 overflow-hidden bg-gradient-to-b from-background to-muted"
     >
       {/* Background ambient glows */}
       <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-emerald-600 opacity-[0.06] blur-[140px] rounded-full -z-10" />
@@ -79,7 +79,7 @@ export default function AgiCapabilitiesSection() {
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-4 leading-tight">
             {t("title")}
           </h2>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             {t("subtitle")}
           </p>
         </FadeInView>
@@ -97,8 +97,8 @@ export default function AgiCapabilitiesSection() {
                 <div
                   className={[
                     "relative group h-full p-6 rounded-2xl",
-                    "bg-slate-900/50 backdrop-blur-xl",
-                    "border border-slate-800 transition-all duration-300",
+                    "bg-muted backdrop-blur-xl",
+                    "border border-border transition-all duration-300",
                     borderHover,
                     `hover:shadow-lg ${shadowHover}`,
                   ].join(" ")}
@@ -123,7 +123,7 @@ export default function AgiCapabilitiesSection() {
                     </h3>
 
                     {/* Description */}
-                    <p className="text-slate-400 text-sm leading-relaxed">
+                    <p className="text-muted-foreground text-sm leading-relaxed">
                       {t(`${key}_desc` as Parameters<typeof t>[0])}
                     </p>
                   </div>

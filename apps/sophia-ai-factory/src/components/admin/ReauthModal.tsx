@@ -112,13 +112,13 @@ export function useReauth() {
 
   const ReauthModalElement = (
     <Dialog open={state.open} onOpenChange={(open) => { if (!open) handleCancel(); }}>
-      <DialogContent className="max-w-sm bg-zinc-900 border-zinc-700 text-white">
+      <DialogContent className="max-w-sm bg-background border-border text-white">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
             <ShieldCheck className="w-5 h-5 text-cyan-400" />
             Confirm Your Identity
           </DialogTitle>
-          <DialogDescription className="text-zinc-400">
+          <DialogDescription className="text-muted-foreground">
             This action requires re-authentication. Enter your admin password to continue.
           </DialogDescription>
         </DialogHeader>
@@ -132,12 +132,12 @@ export function useReauth() {
               autoComplete="current-password"
               placeholder="Admin password"
               disabled={state.loading}
-              className="w-full px-3 py-2 pr-10 bg-zinc-950 border border-zinc-800 rounded-md text-white placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
+              className="w-full px-3 py-2 pr-10 bg-background border border-border rounded-md text-white placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
             />
             <button
               type="button"
               onClick={() => setState((s) => ({ ...s, showPassword: !s.showPassword }))}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white"
               tabIndex={-1}
               aria-label={state.showPassword ? "Hide password" : "Show password"}
             >
@@ -154,14 +154,14 @@ export function useReauth() {
               type="button"
               onClick={handleCancel}
               disabled={state.loading}
-              className="px-4 py-2 text-sm text-zinc-300 hover:text-white disabled:opacity-50 rounded-md"
+              className="px-4 py-2 text-sm text-muted-foreground hover:text-white disabled:opacity-50 rounded-md"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={state.loading}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-zinc-950 font-medium rounded-md transition text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-background font-medium rounded-md transition text-sm"
             >
               {state.loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {state.loading ? "Verifying…" : "Confirm"}

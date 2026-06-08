@@ -22,9 +22,9 @@ function DrillDownPanel({ drillDownDate, setDrillDownDate, dayDrillDown }: Drill
   if (!drillDownDate || !dayDrillDown) return null;
 
   return (
-    <div className="mt-3 rounded-md border border-gray-200 bg-gray-50 p-3">
+    <div className="mt-3 rounded-md border border-border bg-muted p-3">
       <div className="mb-2 flex items-center justify-between">
-        <h4 className="text-sm font-medium text-gray-700">
+        <h4 className="text-sm font-medium text-foreground">
           {dayDrillDown[0]
             ? new Date(dayDrillDown[0].created_at! * 1000).toLocaleDateString(
                 undefined,
@@ -35,7 +35,7 @@ function DrillDownPanel({ drillDownDate, setDrillDownDate, dayDrillDown }: Drill
         <button
           type="button"
           onClick={() => setDrillDownDate(null)}
-          className="text-xs text-gray-500 hover:text-gray-800 underline"
+          className="text-xs text-foreground hover:text-foreground underline"
         >
           Close
         </button>
@@ -43,7 +43,7 @@ function DrillDownPanel({ drillDownDate, setDrillDownDate, dayDrillDown }: Drill
       <div className="overflow-x-auto">
         <table className="min-w-full text-xs">
           <thead>
-            <tr className="border-b border-gray-200 text-left text-gray-500">
+            <tr className="border-border text-muted-foreground">
               <th className="pb-1 pr-3 font-medium">Run ID</th>
               <th className="pb-1 pr-3 font-medium">Status</th>
               <th className="pb-1 pr-3 font-medium">Trigger</th>
@@ -52,8 +52,8 @@ function DrillDownPanel({ drillDownDate, setDrillDownDate, dayDrillDown }: Drill
           </thead>
           <tbody>
             {dayDrillDown.map((run) => (
-              <tr key={run.id} className="border-b border-gray-100 last:border-0">
-                <td className="py-1.5 pr-3 font-mono text-gray-700">
+              <tr key={run.id} className="border-border">
+                <td className="py-1.5 pr-3 font-mono text-foreground">
                   {run.id.slice(0, 12)}
                 </td>
                 <td className="py-1.5 pr-3">
@@ -62,23 +62,23 @@ function DrillDownPanel({ drillDownDate, setDrillDownDate, dayDrillDown }: Drill
                       inline-flex rounded-full px-2 py-0.5
                       text-[10px] font-medium
                       ${run.status === 'completed'
-                        ? 'bg-green-100 text-green-800'
+                        ? 'bg-emerald-100 text-emerald-700'
                         : run.status === 'running'
-                        ? 'bg-blue-100 text-blue-800'
+                        ? 'bg-blue-100 text-blue-700'
                         : run.status === 'paused'
-                        ? 'bg-yellow-100 text-yellow-800'
+                        ? 'bg-amber-100 text-amber-700'
                         : run.status === 'failed'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-gray-100 text-gray-600'}
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-muted text-muted-foreground'}
                     `}
                   >
                     {run.status}
                   </span>
                 </td>
-                <td className="py-1.5 pr-3 text-gray-600">
+                <td className="py-1.5 pr-3 text-muted-foreground">
                   {run.trigger_type}
                 </td>
-                <td className="py-1.5 text-gray-600">
+                <td className="py-1.5 text-muted-foreground">
                   {run.created_at
                     ? new Date(run.created_at * 1000).toLocaleString()
                     : '—'}
@@ -88,7 +88,7 @@ function DrillDownPanel({ drillDownDate, setDrillDownDate, dayDrillDown }: Drill
           </tbody>
         </table>
         {dayDrillDown.length === 0 && (
-          <p className="py-2 text-xs text-gray-500">
+          <p className="py-2 text-xs text-muted-foreground">
             No runs found for this day.
           </p>
         )}
@@ -125,32 +125,32 @@ export function SopAnalyticsTab({ runs, totalRuns, totalCreditsSpent, template }
     <div className="space-y-6">
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="text-sm text-gray-500">{t('totalRuns')}</div>
-          <div className="mt-1 text-2xl font-semibold text-gray-900">{stats.total}</div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="text-sm text-muted-foreground">{t('totalRuns')}</div>
+          <div className="mt-1 text-2xl font-semibold text-foreground">{stats.total}</div>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="text-sm text-gray-500">{t('successRate')}</div>
-          <div className="mt-1 text-2xl font-semibold text-green-600">{stats.successRate}%</div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="text-sm text-muted-foreground">{t('successRate')}</div>
+          <div className="mt-1 text-2xl font-semibold text-emerald-600">{stats.successRate}%</div>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="text-sm text-gray-500">{t('creditsSpent')}</div>
-          <div className="mt-1 text-2xl font-semibold text-gray-900">{totalCreditsSpent ?? runs.length * creditsPerRun}</div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="text-sm text-muted-foreground">{t('creditsSpent')}</div>
+          <div className="mt-1 text-2xl font-semibold text-foreground">{totalCreditsSpent ?? runs.length * creditsPerRun}</div>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-4">
-          <div className="text-sm text-gray-500">{t('runsLast24h')}</div>
-          <div className="mt-1 text-2xl font-semibold text-gray-900">
+        <div className="rounded-lg border border-border bg-card p-4">
+          <div className="text-sm text-muted-foreground">{t('runsLast24h')}</div>
+          <div className="mt-1 text-2xl font-semibold text-foreground">
             {runs.filter((r) => r.created_at && r.created_at > Math.floor(Date.now() / 1000) - 86400).length}
           </div>
         </div>
       </div>
 
       {/* Breakdown */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-medium text-gray-700">
+      <div className="rounded-lg border border-border bg-card p-4">
+        <h3 className="mb-3 text-sm font-medium text-foreground">
           {t('breakdownTitle')}
         </h3>
-        <div className="flex h-4 overflow-hidden rounded-full bg-gray-100">
+        <div className="flex h-4 overflow-hidden rounded-full bg-muted">
           {stats.completed > 0 && (
             <div className="bg-green-500 transition-all" style={{ width: `${(stats.completed / stats.total) * 100}%` }} title={`Completed: ${stats.completed}`} />
           )}
@@ -164,7 +164,7 @@ export function SopAnalyticsTab({ runs, totalRuns, totalCreditsSpent, template }
             <div className="bg-red-500 transition-all" style={{ width: `${(stats.failed / stats.total) * 100}%` }} title={`Failed: ${stats.failed}`} />
           )}
         </div>
-        <div className="mt-2 flex flex-wrap gap-3 text-xs text-gray-600">
+        <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-green-500" /> {t('statusCompleted')}: {stats.completed}</span>
           <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-500" /> {t('statusRunning')}: {stats.running}</span>
           <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-yellow-500" /> {t('statusPaused')}: {stats.paused}</span>
@@ -173,12 +173,12 @@ export function SopAnalyticsTab({ runs, totalRuns, totalCreditsSpent, template }
       </div>
 
       {/* Recent Runs Timeline with drill-down */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4">
-        <h3 className="mb-3 text-sm font-medium text-gray-700">
+      <div className="rounded-lg border border-border bg-card p-4">
+        <h3 className="mb-3 text-sm font-medium text-foreground">
           {t('recentRuns')}
         </h3>
         {runs.length === 0 ? (
-          <p className="text-sm text-gray-500">{t('runs.empty', { fallback: 'No runs yet.' })}</p>
+          <p className="text-sm text-muted-foreground">{t('runs.empty', { fallback: 'No runs yet.' })}</p>
         ) : (
           <div className="space-y-2">
             {runs.slice(0, 20).map((run) => {
@@ -191,8 +191,8 @@ export function SopAnalyticsTab({ runs, totalRuns, totalCreditsSpent, template }
                   onClick={() => dayLabel && setDrillDownDate(dayLabel)}
                   className={`
                     flex items-center justify-between
-                    rounded border border-gray-100 px-3 py-2
-                    ${dayLabel ? 'cursor-pointer hover:border-blue-300 hover:bg-blue-50' : ''}
+                    rounded border border-border px-3 py-2
+                    ${dayLabel ? 'cursor-pointer hover:border-primary hover:bg-muted' : ''}
                   `}
                 >
                   <div className="flex items-center gap-2">
@@ -200,21 +200,21 @@ export function SopAnalyticsTab({ runs, totalRuns, totalCreditsSpent, template }
                       className={`
                         inline-block h-2 w-2 rounded-full
                         ${run.status === 'completed'
-                          ? 'bg-green-500'
+                          ? 'bg-emerald-500'
                           : run.status === 'running'
                           ? 'bg-blue-500'
                           : run.status === 'paused'
-                          ? 'bg-yellow-500'
+                          ? 'bg-amber-500'
                           : run.status === 'failed'
                           ? 'bg-red-500'
-                          : 'bg-gray-400'}
+                          : 'bg-muted'}
                       `}
                     />
-                    <span className="font-mono text-xs text-gray-600">
+                    <span className="font-mono text-xs text-muted-foreground">
                       {run.id.slice(0, 8)}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span>{run.trigger_type}</span>
                     {run.created_at && (
                       <span>

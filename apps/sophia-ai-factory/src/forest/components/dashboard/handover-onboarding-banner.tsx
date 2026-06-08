@@ -97,7 +97,7 @@ export function HandoverOnboardingBanner({ userId, locale }: Props) {
             style={{ width: `${progressPct}%` }}
           />
         </div>
-        <p className="text-xs text-zinc-400">
+        <p className="text-xs text-muted-foreground">
           {isVi
             ? 'Hoàn thành onboarding để bắt đầu tạo video tự động.'
             : 'Complete onboarding to start creating automated videos.'}
@@ -114,7 +114,7 @@ export function HandoverOnboardingBanner({ userId, locale }: Props) {
 
       <button
         onClick={dismiss}
-        className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-zinc-300 hover:bg-muted transition-colors"
+        className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
         aria-label={isVi ? 'Đóng' : 'Close'}
       >
         <X size={16} aria-hidden="true" />

@@ -97,19 +97,19 @@ export function StepCard({ step }: StepCardProps) {
     : t(`steps.${step.key}.description`);
 
   return (
-    <div className={`rounded-2xl border p-5 transition-colors ${step.done ? 'border-emerald-500/30 bg-emerald-900/10' : 'border-white/10 bg-white/[0.03] backdrop-blur-sm'}`}>
+    <div className={`rounded-2xl border p-5 transition-colors ${step.done ? 'border-emerald-500/30 bg-emerald-900/10' : 'border-border/50 bg-muted/20 backdrop-blur-sm'}`}>
       <div className="flex items-start gap-4">
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${step.done ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-800 text-zinc-500'}`}>
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${step.done ? 'bg-emerald-500/20 text-emerald-400' : 'bg-muted text-muted-foreground'}`}>
           {step.done ? <CheckCircle2 aria-hidden="true" size={20} /> : <Circle aria-hidden="true" size={20} />}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <h3 className={`font-semibold ${step.done ? 'text-emerald-300' : 'text-zinc-100'}`}>
+            <h3 className={`font-semibold ${step.done ? 'text-emerald-300' : 'text-foreground'}`}>
               {t(`steps.${step.key}.title`)}
             </h3>
-            <span className="text-xs text-zinc-600 shrink-0">{t('stepLabel')} {step.id}</span>
+            <span className="text-xs text-muted-foreground shrink-0">{t('stepLabel')} {step.id}</span>
           </div>
-          <p className="text-sm text-zinc-400 mt-1">{description}</p>
+          <p className="text-sm text-muted-foreground mt-1">{description}</p>
         </div>
       </div>
     </div>

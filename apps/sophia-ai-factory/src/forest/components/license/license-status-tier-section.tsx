@@ -19,12 +19,12 @@ export function LicenseStatusTierSection({ tier, status }: LicenseStatusTierSect
   const dotClass =
     statusColor === 'green' ? 'bg-green-500' :
     statusColor === 'red' ? 'bg-red-500' :
-    statusColor === 'yellow' ? 'bg-yellow-500' : 'bg-gray-500';
+    statusColor === 'yellow' ? 'bg-yellow-500' : 'bg-muted';
 
   const textClass =
     statusColor === 'green' ? 'text-green-600' :
     statusColor === 'red' ? 'text-red-600' :
-    statusColor === 'yellow' ? 'text-yellow-600' : 'text-gray-600';
+    statusColor === 'yellow' ? 'text-yellow-600' : 'text-muted-foreground';
 
   return (
     <div className="flex items-center gap-4">

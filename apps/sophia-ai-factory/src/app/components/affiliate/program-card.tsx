@@ -40,7 +40,7 @@ export function ProgramCard({ program, isLocked = false }: ProgramCardProps) {
                 {program.commission}
               </span>
             </div>
-            <p className="text-sm text-gray-400">Commission Rate</p>
+            <p className="text-sm text-muted-foreground">Commission Rate</p>
           </div>
 
           {/* EPC */}
@@ -51,11 +51,11 @@ export function ProgramCard({ program, isLocked = false }: ProgramCardProps) {
                 ${program.epc.toFixed(2)}
               </span>
             </div>
-            <p className="text-sm text-gray-400">EPC (Earnings Per Click)</p>
+            <p className="text-sm text-muted-foreground">EPC (Earnings Per Click)</p>
           </div>
 
           {/* Description */}
-          <p className="text-gray-300 text-sm mb-4 line-clamp-2">
+          <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
             {program.description}
           </p>
 

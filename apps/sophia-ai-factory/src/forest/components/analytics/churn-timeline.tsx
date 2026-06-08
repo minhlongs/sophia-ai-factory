@@ -46,8 +46,8 @@ interface CustomTooltipProps {
 function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white border border-gray-200 rounded shadow-md px-3 py-2 text-xs">
-      <p className="font-medium text-gray-700 mb-1">{label}</p>
+    <div className="bg-muted border-border rounded shadow-md px-3 py-2 text-xs">
+      <p className="font-medium text-muted-foreground mb-1">{label}</p>
       {payload.map(p => (
         <p key={p.name} style={{ color: p.color }}>
           {p.name}: {p.value}
@@ -95,7 +95,7 @@ export function ChurnTimeline({ months = 3 }: ChurnTimelineProps) {
       <CardHeader>
         <CardTitle className="text-base font-semibold">Churn Timeline</CardTitle>
         {data && (
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted-foreground">
             Avg monthly churn rate: {data.avgMonthlyChurnRate}%
           </p>
         )}
@@ -108,7 +108,7 @@ export function ChurnTimeline({ months = 3 }: ChurnTimelineProps) {
         )}
 
         {data && !loading && data.points.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-8">No churn events in this period</p>
+          <p className="text-sm text-muted-foreground text-center py-8">No churn events in this period</p>
         )}
 
         {data && !loading && data.points.length > 0 && (

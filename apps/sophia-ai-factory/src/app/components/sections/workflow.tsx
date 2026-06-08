@@ -88,7 +88,7 @@ export function Workflow() {
         {/* CTA */}
         <FadeInView delay={600} direction="none">
           <div className="text-center mt-16">
-            <p className="text-gray-400 mb-4">
+            <p className="text-muted-foreground mb-4">
               {t('workflow.cta')}
             </p>
           </div>

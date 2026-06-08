@@ -36,7 +36,7 @@ const TERMINAL_LINES: TerminalLine[] = [
 ];
 
 const COLOR_MAP: Record<LineType, string> = {
-  comment: "text-slate-500",
+  comment: "text-muted-foreground",
   command: "text-green-400",
   flag: "text-sky-300",
   response: "text-amber-300",
@@ -78,18 +78,18 @@ function AnimatedTerminal() {
   return (
     <div ref={containerRef} className="w-full max-w-2xl mx-auto">
       {/* Window chrome */}
-      <div className="bg-zinc-800 rounded-t-xl px-4 py-3 flex items-center gap-2">
+      <div className="bg-muted border-border rounded-t-xl px-4 py-3 flex items-center gap-2">
         <div className="w-3 h-3 rounded-full bg-red-400/80" />
         <div className="w-3 h-3 rounded-full bg-yellow-400/80" />
         <div className="w-3 h-3 rounded-full bg-green-400/80" />
-        <span className="ml-3 text-xs text-zinc-400 font-mono">sophia-cli</span>
+        <span className="ml-3 text-xs text-muted-foreground font-mono">sophia-cli</span>
       </div>
       {/* Code body */}
-      <div className="bg-zinc-900 rounded-b-xl p-5 font-mono text-[13px] leading-6 overflow-x-auto border border-zinc-700/50 border-t-0 min-h-[260px]">
+      <div className="bg-background rounded-b-xl p-5 font-mono text-[13px] leading-6 overflow-x-auto border border-border border-t-0 min-h-[260px]">
         {TERMINAL_LINES.slice(0, visibleCount).map((line, i) => (
           <div key={i} className={COLOR_MAP[line.type]}>
             {line.type === "command" && (
-              <span className="text-zinc-500 mr-2 select-none">$</span>
+              <span className="text-muted-foreground mr-2 select-none">$</span>
             )}
             {line.text}
             {/* Blinking cursor on last visible line */}

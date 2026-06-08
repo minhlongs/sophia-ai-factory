@@ -88,17 +88,17 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="absolute inset-0 bg-gradient-to-br from-violet-900/20 via-blue-900/10 to-transparent pointer-events-none" />
       <div className="relative max-w-md w-full">
-        <div className="bg-zinc-900/80 backdrop-blur border border-zinc-800 rounded-2xl shadow-xl p-8">
+        <div className="bg-card/80 backdrop-blur border border-border rounded-2xl shadow-xl p-8">
           <div className="flex items-center justify-center w-14 h-14 mx-auto mb-4 rounded-2xl bg-violet-600/20 border border-violet-500/30">
             <Gift size={26} className="text-violet-300" />
           </div>
           <h1 className="text-2xl font-bold text-white text-center mb-2">
             {isVi ? 'Kích Hoạt Mã Quà Tặng' : 'Redeem Promo Code'}
           </h1>
-          <p className="text-sm text-zinc-400 text-center mb-6">
+          <p className="text-sm text-muted-foreground text-center mb-6">
             {isVi
               ? 'Nhập email và mã của bạn — chúng tôi sẽ tạo tài khoản và gửi link đăng nhập.'
               : 'Enter your email and code — we’ll create the account and email a sign-in link.'}
@@ -113,7 +113,7 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
                 placeholder="FREE100"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-600 font-mono uppercase tracking-wider focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground font-mono uppercase tracking-wider focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                 maxLength={30}
               />
             </Field>
@@ -126,7 +126,7 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
                 placeholder="ban@congty.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                 maxLength={200}
               />
             </Field>
@@ -138,7 +138,7 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
                 placeholder={isVi ? 'Anh/chị Nguyễn Văn A' : 'Your name'}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-zinc-950 border border-zinc-800 text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                 maxLength={100}
               />
             </Field>
@@ -166,7 +166,7 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
             </button>
           </form>
 
-          <p className="text-xs text-zinc-600 text-center mt-6">
+          <p className="text-xs text-muted-foreground text-center mt-6">
             {isVi
               ? 'Bằng việc tiếp tục, anh/chị đồng ý với điều khoản dịch vụ của Sophia AI Factory.'
               : 'By continuing, you agree to Sophia AI Factory’s terms of service.'}
@@ -180,7 +180,7 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-xs font-medium text-zinc-400 mb-1.5">{label}</span>
+      <span className="block text-xs font-medium text-muted-foreground mb-1.5">{label}</span>
       {children}
     </label>
   );
@@ -200,17 +200,17 @@ function SuccessView({
   handoverError?: string;
 }) {
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/20 via-blue-900/10 to-transparent pointer-events-none" />
       <div className="relative max-w-md w-full">
-        <div className="bg-zinc-900/80 backdrop-blur border border-emerald-500/30 rounded-2xl shadow-xl p-8 text-center">
+        <div className="bg-card/80 backdrop-blur border border-emerald-500/30 rounded-2xl shadow-xl p-8 text-center">
           <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-2xl bg-emerald-600/20 border border-emerald-500/30">
             <CheckCircle2 size={30} className="text-emerald-300" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">
             {isVi ? 'Kích hoạt thành công!' : 'Redemption successful!'}
           </h1>
-          <p className="text-sm text-zinc-400 mb-6">
+          <p className="text-sm text-muted-foreground mb-6">
             {isVi
               ? 'Tài khoản đã sẵn sàng. Nhấn nút bên dưới để vào dashboard.'
               : 'Your account is ready. Click below to enter your dashboard.'}
@@ -247,14 +247,14 @@ function SuccessView({
             </p>
           )}
 
-          <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-zinc-950 border border-zinc-800 mb-3">
-            <Mail size={16} className="text-zinc-500 flex-shrink-0" />
-            <span className="text-sm text-zinc-300 truncate">
+          <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-background border border-border mb-3">
+            <Mail size={16} className="text-muted-foreground flex-shrink-0" />
+            <span className="text-sm text-muted-foreground truncate">
               {isVi ? 'Bản sao đã gửi tới ' : 'A copy was emailed to '}{email}
             </span>
           </div>
 
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-muted-foreground">
             {isVi
               ? 'Link có hiệu lực trong 72 giờ và chỉ dùng được 1 lần.'
               : 'The link is valid for 72 hours and is single-use.'}

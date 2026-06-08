@@ -239,8 +239,8 @@ export function MissionDetail({ missionId }: Props) {
 
       {/* Execution Log */}
       {mission.execution_log && mission.execution_log.length > 0 && (
-        <div className="bg-gray-900 rounded-xl p-4">
-          <h3 className="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">{t('execution_log')}</h3>
+        <div className="bg-background rounded-xl p-4">
+          <h3 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">{t('execution_log')}</h3>
           <div className="space-y-1 max-h-48 overflow-y-auto font-mono text-xs text-green-400">
             {mission.execution_log.map((line, i) => <p key={i}>{line}</p>)}
           </div>

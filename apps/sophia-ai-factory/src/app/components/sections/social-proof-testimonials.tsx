@@ -41,7 +41,7 @@ export function TestimonialsGrid() {
                 <p className="text-muted-foreground leading-relaxed text-sm flex-1">
                   &ldquo;{t(`testimonials.${key}.quote`)}&rdquo;
                 </p>
-                <div className="flex items-center gap-3 pt-3 border-t border-white/[0.06]">
+                <div className="flex items-center gap-3 pt-3 border-t border-border/20">
                   <div className="w-10 h-10 rounded-full text-white text-sm font-bold flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)]">
                     {INITIALS_MAP[key]}
                   </div>

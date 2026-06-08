@@ -19,11 +19,11 @@ import type { CohortRetentionMatrix, CohortRow } from '@/seed/types/analytics-co
 function retentionColor(pct: number): string {
   if (pct >= 90) return 'bg-green-700 text-white';
   if (pct >= 75) return 'bg-green-500 text-white';
-  if (pct >= 60) return 'bg-green-400 text-gray-900';
-  if (pct >= 40) return 'bg-green-300 text-gray-900';
-  if (pct >= 20) return 'bg-green-200 text-gray-900';
-  if (pct > 0)   return 'bg-green-100 text-gray-700';
-  return 'bg-gray-100 text-gray-400';
+  if (pct >= 60) return 'bg-green-400 text-foreground';
+  if (pct >= 40) return 'bg-green-300 text-foreground';
+  if (pct >= 20) return 'bg-green-200 text-foreground';
+  if (pct > 0)   return 'bg-green-100 text-foreground';
+  return 'bg-muted text-muted-foreground';
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -92,12 +92,12 @@ export function CohortRetentionChart({ months = 12 }: CohortRetentionChartProps)
             <table className="text-xs border-separate border-spacing-0.5 min-w-max">
               <thead>
                 <tr>
-                  <th className="text-left pr-2 font-medium text-gray-600 whitespace-nowrap">
+                  <th className="text-left pr-2 font-medium text-muted-foreground whitespace-nowrap">
                     Cohort
                   </th>
-                  <th className="px-1 font-medium text-gray-600">Users</th>
+                  <th className="px-1 font-medium text-muted-foreground">Users</th>
                   {colHeaders.map(col => (
-                    <th key={col} className="px-1 font-medium text-gray-600 min-w-[3rem]">
+                    <th key={col} className="px-1 font-medium text-muted-foreground min-w-[3rem]">
                       {col}
                     </th>
                   ))}
@@ -106,10 +106,10 @@ export function CohortRetentionChart({ months = 12 }: CohortRetentionChartProps)
               <tbody>
                 {data.cohorts.map((row: CohortRow) => (
                   <tr key={row.cohortMonth}>
-                    <td className="pr-2 text-gray-700 font-medium whitespace-nowrap">
+                    <td className="pr-2 text-foreground font-medium whitespace-nowrap">
                       {row.cohortMonth}
                     </td>
-                    <td className="px-1 text-center text-gray-600">
+                    <td className="px-1 text-center text-muted-foreground">
                       {row.usersAtStart}
                     </td>
                     {row.retentionByMonth.map((pct, idx) => (
@@ -125,7 +125,7 @@ export function CohortRetentionChart({ months = 12 }: CohortRetentionChartProps)
                 ))}
                 {data.cohorts.length === 0 && (
                   <tr>
-                    <td colSpan={colHeaders.length + 2} className="text-center text-gray-400 py-4">
+                    <td colSpan={colHeaders.length + 2} className="text-center text-muted-foreground py-4">
                       No cohort data available
                     </td>
                   </tr>
