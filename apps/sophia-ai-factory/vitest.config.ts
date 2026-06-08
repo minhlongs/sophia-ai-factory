@@ -7,7 +7,7 @@ import { config } from 'dotenv';
 config({ path: '.env.test' });
 
 export default defineConfig({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  root: __dirname,
   plugins: [react() as any],
   test: {
     environment: 'jsdom',
@@ -44,16 +44,13 @@ export default defineConfig({
         'src/components/ui/**',
         '**/*.d.ts',
         '**/*.config.ts',
-      '.next/**',
-      '.open-next/**',
+        '.next/**',
+        '.open-next/**',
       ],
     },
-    // Mock server-side modules for API route tests
     server: {
       deps: {
-        inline: [
-          // Inline these to allow mocking
-        ],
+        inline: [],
       },
     },
   },
@@ -67,12 +64,10 @@ export default defineConfig({
       'next/navigation': path.resolve(__dirname, './src/test/mocks/next-navigation.ts'),
     },
   },
-  // Define globals for tests
   define: {
     'process.env.NODE_ENV': '"test"',
   },
-  // SSR config for API route mocking
   ssr: {
-    noExternal: ['next/server', 'next/navigation'],
+    noExternal: ['next/server', 'next-intl'],
   },
 });

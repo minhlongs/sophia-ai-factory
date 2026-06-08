@@ -4,13 +4,29 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextIntlClientProvider } from 'next-intl';
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
 
-vi.mock('next/navigation', () => ({ redirect: vi.fn() }));
+vi.mock('next/navigation', () => ({
+  redirect: vi.fn(),
+  permanentRedirect: vi.fn(),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), prefetch: vi.fn(), back: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => '/',
+  useSearchParams: () => new URLSearchParams(),
+  useParams: () => ({}),
+  notFound: () => { throw new Error('Not Found'); },
+}));
 vi.mock('next/headers', () => ({ cookies: vi.fn().mockResolvedValue({ get: vi.fn() }) }));
 vi.mock('next-intl/server', () => ({
   getTranslations: vi.fn().mockResolvedValue((key: string) => key),
+}));
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => key,
+  NextIntlClientProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  Link: ({ href, children, ...props }: React.PropsWithChildren<{ href: string; [k: string]: unknown }>) => (
+    <a href={href} {...props}>{children}</a>
+  ),
 }));
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
