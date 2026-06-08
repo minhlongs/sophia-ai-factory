@@ -185,7 +185,7 @@ describe('NOWPayments webhook: tier_upgraded emission', () => {
       order_id: 'sophia_user-456_1234567890',
       price_amount: 99,
       price_currency: 'USD',
-      invoice_id: 'inv-premium',
+      invoice_id: '4559269964',
     })
 
     const req = new Request('https://sophia.agencyos.network/api/webhooks/nowpayments', {
@@ -199,7 +199,7 @@ describe('NOWPayments webhook: tier_upgraded emission', () => {
     expect(captureSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         distinctId: 'user-456',
-        tier: 'inv-premium',
+        tier: 'PREMIUM',
         amount: 99,
         currency: 'USD',
       }),

@@ -180,8 +180,12 @@ export function getAuth() {
                 subscription_tier: 'BASIC',
               });
 
-              const { addCredits } = await import('@/land/mcu/credits-repo');
-              await addCredits(user.id, 50, 'Signup Bonus');
+const { addCredits } = await import('@/land/mcu/credits-repo');
+try {
+await addCredits(user.id, 50, 'Signup Bonus');
+} catch (creditErr) {
+logger.warn('[databaseHook] signup bonus credits failed', creditErr instanceof Error ? creditErr : new Error(String(creditErr)));
+}
             } catch (err) {
               // Non-critical — org creation failure shouldn't block signup
               logger.error('[databaseHook] org creation failed', err instanceof Error ? err : new Error(String(err)));

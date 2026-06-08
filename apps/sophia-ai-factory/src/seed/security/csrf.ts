@@ -25,6 +25,16 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 // CSP violation reports are POSTed by the browser without a CSRF token —
 // the request is browser-initiated, not user form-initiated. Bypass.
 const CSRF_BYPASS_PREFIXES = ['/api/auth/', '/api/webhooks/', '/api/cron/', '/api/csp-report']
+const SUPPORTED_LOCALES = ['vi', 'en']
+
+function pathnameWithoutLocale(pathname: string): string {
+for (const locale of SUPPORTED_LOCALES) {
+if (pathname === '/' + locale || pathname.startsWith('/' + locale + '/')) {
+return pathname.slice(locale.length + 1) || '/'
+}
+}
+return pathname
+}
 
 /**
  * Generate a 32-byte random hex token using Web Crypto (edge-compatible).
@@ -110,11 +120,13 @@ export function verifyCsrfToken(request: NextRequest): boolean {
  * - Pathname is under a bypass prefix
  */
 export function requiresCsrfCheck(pathname: string, method: string): boolean {
-  if (SAFE_METHODS.has(method.toUpperCase())) return false
-  for (const prefix of CSRF_BYPASS_PREFIXES) {
-    if (pathname.startsWith(prefix)) return false
-  }
-  return true
+if (SAFE_METHODS.has(method.toUpperCase())) return false
+// Strip locale prefix for bypass matching (e.g., /vi/api/auth/... → /api/auth/...)
+const cleanPath = pathnameWithoutLocale(pathname)
+for (const prefix of CSRF_BYPASS_PREFIXES) {
+if (cleanPath.startsWith(prefix)) return false
+}
+return true
 }
 
 /**
