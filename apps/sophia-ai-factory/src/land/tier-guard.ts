@@ -56,4 +56,4 @@ export const tierGuard = {
   },
 };
 
-export { checkTierFeature, type BooleanTierFeature };
+export { checkTierFeature, type BooleanTierFeature, type LimitType, type LimitCheckResult };
