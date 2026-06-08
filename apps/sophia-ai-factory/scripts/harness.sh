@@ -57,7 +57,12 @@ run() {
     return 0
   fi
   info "→ $*"
-  "$@"
+  # Detect env-prefixed commands (e.g. NODE_OPTIONS=... cmd)
+  if [ $# -ge 2 ] && echo "$1" | grep -qE '^[A-Za-z_][A-Za-z0-9_]*='; then
+    env "$@"
+  else
+    "$@"
+  fi
 }
 
 fetch_url() {
@@ -158,7 +163,8 @@ gate_build() {
     warn "SKIP_BUILD=1 — bypassing build gate"
     return 0
   fi
-  if run NODE_OPTIONS=--max-old-space-size=4096 npx next build; then
+  info "→ NODE_OPTIONS=--max-old-space-size=4096 npx next build"
+  if env NODE_OPTIONS=--max-old-space-size=4096 npx next build; then
     pass "Build: compiled successfully"
     GATE_PASS=$((GATE_PASS + 1))
     return 0
