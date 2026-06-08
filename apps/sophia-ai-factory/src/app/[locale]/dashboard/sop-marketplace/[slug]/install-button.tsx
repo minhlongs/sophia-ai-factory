@@ -23,7 +23,7 @@ export function SopDetailInstallButton({ template, locale, alreadyInstalled, ins
 
   if (alreadyInstalled) {
     return (
-      <span className="px-4 py-2 text-sm rounded-lg bg-zinc-800 text-zinc-500 cursor-not-allowed select-none">
+      <span className="px-4 py-2 text-sm rounded-lg bg-muted-800 text-muted-foreground-500 cursor-not-allowed select-none">
         {t('card.installed')}
       </span>
     );
@@ -33,7 +33,7 @@ export function SopDetailInstallButton({ template, locale, alreadyInstalled, ins
     <>
       <Button
         onClick={() => setOpen(true)}
-        className="bg-violet-700 hover:bg-violet-600 shrink-0"
+        className="bg-primary-700 hover:bg-primary-600 shrink-0"
       >
         {t('detail.installNow')}
       </Button>

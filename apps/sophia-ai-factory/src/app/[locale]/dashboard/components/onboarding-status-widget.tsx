@@ -76,13 +76,13 @@ export function OnboardingStatusWidget({ isVi }: Props) {
   const pct = Math.round((completed / steps.length) * 100);
 
   return (
-    <section className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-900/60 backdrop-blur p-5">
+    <section className="mb-6 rounded-2xl border border-border-800 bg-muted-900/60 backdrop-blur p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-sm font-semibold text-zinc-100">
+          <h2 className="text-sm font-semibold text-muted-foreground-100">
             {isVi ? 'Tiến trình kích hoạt' : 'Onboarding progress'}
           </h2>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-muted-foreground-500 mt-0.5">
             {isVi
               ? `Gói ${h.tier} — hoàn thành ${completed}/${steps.length} bước`
               : `${h.tier} plan — ${completed} of ${steps.length} steps complete`}
@@ -100,22 +100,22 @@ export function OnboardingStatusWidget({ isVi }: Props) {
             className={`rounded-lg border p-3 ${
               s.done
                 ? 'border-emerald-500/30 bg-emerald-950/20'
-                : 'border-zinc-800 bg-zinc-950/40'
+                : 'border-border-800 bg-muted-950/40'
             }`}
           >
             <div className="flex items-center gap-2 mb-1">
               {s.done ? (
                 <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
               ) : (
-                <Circle size={14} className="text-zinc-600 flex-shrink-0" />
+                <Circle size={14} className="text-muted-foreground-600 flex-shrink-0" />
               )}
               <span
-                className={`text-xs font-medium ${s.done ? 'text-emerald-300' : 'text-zinc-500'}`}
+                className={`text-xs font-medium ${s.done ? 'text-emerald-300' : 'text-muted-foreground-500'}`}
               >
                 {s.label}
               </span>
             </div>
-            <div className="flex items-center gap-1 text-[10px] text-zinc-600 ml-5">
+            <div className="flex items-center gap-1 text-[10px] text-muted-foreground-600 ml-5">
               <Clock size={10} />
               {s.ts ? formatTs(s.ts, isVi) : isVi ? 'Chưa' : 'Not yet'}
             </div>

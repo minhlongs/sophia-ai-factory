@@ -27,9 +27,9 @@ const plans = [
     annual: "$1,990/yr",
     savings: "Save $398/yr",
     badge: "Getting Started",
-    color: "text-cyan-400",
-    bg: "bg-cyan-500/10",
-    border: "border-cyan-500/30",
+    color: "text-accent-400",
+    bg: "bg-accent-500/10",
+    border: "border-accent-500/30",
     fit: "Just getting started, testing AI video content for your business.",
   },
   {
@@ -38,9 +38,9 @@ const plans = [
     annual: "$3,990/yr",
     savings: "Save $798/yr",
     badge: "Most Popular",
-    color: "text-violet-400",
-    bg: "bg-violet-500/10",
-    border: "border-violet-500/40",
+    color: "text-primary-400",
+    bg: "bg-primary-500/10",
+    border: "border-primary-500/40",
     fit: "Growing business with regular content production needs.",
   },
   {
@@ -145,11 +145,11 @@ export default function PlansGuidePage() {
           </p>
           <ul className="space-y-1.5 pl-4 list-disc">
             <li>
-              <strong className="text-cyan-400">BASIC Annual:</strong> $1,990/yr (save $398 vs
+              <strong className="text-accent-400">BASIC Annual:</strong> $1,990/yr (save $398 vs
               monthly)
             </li>
             <li>
-              <strong className="text-violet-400">PREMIUM Annual:</strong> $3,990/yr (save $798 vs
+              <strong className="text-primary-400">PREMIUM Annual:</strong> $3,990/yr (save $798 vs
               monthly)
             </li>
             <li>
@@ -173,7 +173,7 @@ export default function PlansGuidePage() {
       <div className="grid sm:grid-cols-3 gap-3">
         <Link
           href="/pricing"
-          className="group flex items-center justify-between gap-2 bg-gradient-to-r from-violet-500/20 to-cyan-500/20 border border-violet-500/30 rounded-xl px-4 py-3 text-sm font-medium text-foreground hover:border-violet-500/50 transition-colors"
+          className="group flex items-center justify-between gap-2 bg-gradient-to-r from-violet-500/20 to-cyan-500/20 border border-primary-500/30 rounded-xl px-4 py-3 text-sm font-medium text-foreground hover:border-primary-500/50 transition-colors"
         >
           View Full Pricing
           <ArrowRight className="w-4 h-4" aria-hidden="true" />

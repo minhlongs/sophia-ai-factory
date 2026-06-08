@@ -52,7 +52,7 @@ export default async function CostDashboardPage({ params }: PageProps): Promise<
   return (
     <div className="space-y-6">
       <header className="flex items-start gap-3">
-        <Coins className="w-6 h-6 text-violet-400 mt-1 shrink-0" aria-hidden="true" />
+        <Coins className="w-6 h-6 text-primary-400 mt-1 shrink-0" aria-hidden="true" />
         <div>
           <h1 className="text-2xl font-bold">Cost Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">

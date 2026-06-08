@@ -212,7 +212,7 @@ export function NewsletterWriterTab({ tier: _tier }: NewsletterWriterTabProps) {
               <p className="mt-1 text-sm font-semibold text-foreground">{sanitizedSubject}</p>
             </div>
             <div
-              className="newsletter-preview rounded-lg border border-border bg-white p-4 text-sm text-gray-800 dark:bg-gray-50"
+              className="newsletter-preview rounded-lg border border-border bg-white p-4 text-sm text-foreground dark:bg-gray-50"
               dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
             />
             <p className="text-xs text-muted-foreground">

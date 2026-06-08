@@ -70,11 +70,11 @@ export function HeyGenWebhooksClient({ locale }: Props) {
   return (
     <div className="space-y-6">
       {/* Re-register section */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 space-y-3">
-        <h2 className="text-sm font-semibold text-zinc-200">
+      <div className="rounded-xl border border-border-800 bg-muted-900/50 p-5 space-y-3">
+        <h2 className="text-sm font-semibold text-muted-foreground-200">
           {isVi ? 'Đăng ký lại webhook HeyGen (tài khoản của bạn)' : 'Re-register HeyGen Webhook (your account)'}
         </h2>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted-foreground-500">
           {isVi
             ? 'Chạy lại đăng ký webhook với khóa API HeyGen đã lưu của bạn. Tự động lưu signing secret.'
             : 'Re-runs webhook registration using your stored HeyGen API key. Auto-stores the signing secret.'}
@@ -82,7 +82,7 @@ export function HeyGenWebhooksClient({ locale }: Props) {
         <button
           onClick={reRegister}
           disabled={loading}
-          className="px-4 py-2 bg-violet-700 hover:bg-violet-600 disabled:opacity-50 text-white text-sm rounded-lg font-medium transition-colors"
+          className="px-4 py-2 bg-primary-700 hover:bg-primary-600 disabled:opacity-50 text-white text-sm rounded-lg font-medium transition-colors"
         >
           {loading ? '…' : isVi ? 'Đăng ký lại webhook' : 'Re-register Webhook'}
         </button>
@@ -96,8 +96,8 @@ export function HeyGenWebhooksClient({ locale }: Props) {
       </div>
 
       {/* Debug listing — admin looks up any user's webhooks */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 space-y-3">
-        <h2 className="text-sm font-semibold text-zinc-200">
+      <div className="rounded-xl border border-border-800 bg-muted-900/50 p-5 space-y-3">
+        <h2 className="text-sm font-semibold text-muted-foreground-200">
           {isVi ? 'Xem danh sách webhook của người dùng' : 'Debug: List user webhooks'}
         </h2>
         <div className="flex gap-2">
@@ -106,12 +106,12 @@ export function HeyGenWebhooksClient({ locale }: Props) {
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
             placeholder={isVi ? 'User ID' : 'User ID'}
-            className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="flex-1 bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
           />
           <button
             onClick={fetchWebhooks}
             disabled={loading || !userId.trim()}
-            className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 text-white text-sm rounded-lg font-medium transition-colors"
+            className="px-4 py-2 bg-muted-700 hover:bg-muted-600 disabled:opacity-50 text-white text-sm rounded-lg font-medium transition-colors"
           >
             {loading ? '…' : isVi ? 'Tải' : 'Load'}
           </button>
@@ -122,13 +122,13 @@ export function HeyGenWebhooksClient({ locale }: Props) {
             {listData.success && listData.endpoints ? (
               <div className="space-y-2">
                 {listData.endpoints.length === 0 ? (
-                  <p className="text-xs text-zinc-500">{isVi ? 'Không có webhook nào.' : 'No webhooks registered.'}</p>
+                  <p className="text-xs text-muted-foreground-500">{isVi ? 'Không có webhook nào.' : 'No webhooks registered.'}</p>
                 ) : (
                   listData.endpoints.map((ep) => (
-                    <div key={ep.endpointId} className="rounded-lg bg-zinc-800 p-3 text-xs text-zinc-300 space-y-1">
-                      <div><span className="text-zinc-500">ID:</span> {ep.endpointId}</div>
-                      <div><span className="text-zinc-500">URL:</span> {ep.url}</div>
-                      <div><span className="text-zinc-500">Events:</span> {ep.events.join(', ')}</div>
+                    <div key={ep.endpointId} className="rounded-lg bg-muted-800 p-3 text-xs text-muted-foreground-300 space-y-1">
+                      <div><span className="text-muted-foreground-500">ID:</span> {ep.endpointId}</div>
+                      <div><span className="text-muted-foreground-500">URL:</span> {ep.url}</div>
+                      <div><span className="text-muted-foreground-500">Events:</span> {ep.events.join(', ')}</div>
                     </div>
                   ))
                 )}

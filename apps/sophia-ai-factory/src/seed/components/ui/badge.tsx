@@ -27,15 +27,15 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
               variant === "enterprise",
 
             // Default - Glass
-            "bg-white/5 text-gray-300 border border-white/10":
+            "bg-white/5 text-muted-foreground border border-white/10":
               variant === "default",
 
             // Secondary - Gray (dark theme)
-            "bg-gray-800 text-gray-200 border border-gray-700":
+            "bg-muted-800 text-muted-foreground border border-border-700":
               variant === "secondary",
 
             // Outline - Transparent with border (dark theme)
-            "bg-transparent text-gray-400 border border-gray-600":
+            "bg-transparent text-muted-foreground border border-border-600":
               variant === "outline",
 
             // Destructive - Red (dark theme)

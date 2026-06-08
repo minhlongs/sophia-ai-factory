@@ -45,7 +45,7 @@ export function OutcomesRecentTable({ rows }: OutcomesRecentTableProps) {
                 <tr key={row.id} className="hover:bg-muted/40 transition-colors">
                   <td className="px-6 py-3 text-foreground font-medium">{row.sop}</td>
                   <td className="px-6 py-3 text-muted-foreground">{row.metric}</td>
-                  <td className="px-6 py-3 text-right text-cyan-400 font-mono tabular-nums">
+                  <td className="px-6 py-3 text-right text-accent-400 font-mono tabular-nums">
                     {formatValue(row.metric, row.value)}
                   </td>
                   <td className="px-6 py-3 text-right text-muted-foreground tabular-nums">{row.date}</td>

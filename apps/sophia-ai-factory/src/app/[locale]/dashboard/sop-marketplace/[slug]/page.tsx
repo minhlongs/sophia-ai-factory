@@ -84,7 +84,7 @@ export default async function SopDetailPage({ params }: Props) {
       {/* Agents */}
       <section className="space-y-2">
         <h2 className="text-base font-semibold text-foreground">{t('detail.agentsTitle')}</h2>
-        <pre className="bg-zinc-900 border border-border rounded-lg p-4 text-xs text-zinc-300 overflow-x-auto whitespace-pre-wrap">
+        <pre className="bg-muted-900 border border-border rounded-lg p-4 text-xs text-muted-foreground-300 overflow-x-auto whitespace-pre-wrap">
           {template.agents_yaml}
         </pre>
       </section>
@@ -100,7 +100,7 @@ export default async function SopDetailPage({ params }: Props) {
       {/* Output Schema */}
       <section className="space-y-2">
         <h2 className="text-base font-semibold text-foreground">{t('detail.outputTitle')}</h2>
-        <pre className="bg-zinc-900 border border-border rounded-lg p-4 text-xs text-zinc-300 overflow-x-auto">
+        <pre className="bg-muted-900 border border-border rounded-lg p-4 text-xs text-muted-foreground-300 overflow-x-auto">
           {schemaPretty}
         </pre>
       </section>

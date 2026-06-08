@@ -35,7 +35,7 @@ export function HelpVideosLibrary({ videos, locale }: HelpVideosLibraryProps) {
               key={video.id}
               type="button"
               onClick={() => setSelected(video)}
-              className="group relative rounded-xl overflow-hidden border border-zinc-800 bg-zinc-900/60 hover:border-violet-500/60 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="group relative rounded-xl overflow-hidden border border-border-800 bg-muted-900/60 hover:border-primary-500/60 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-violet-500"
               aria-label={title}
             >
               {/* Thumbnail */}
@@ -50,7 +50,7 @@ export function HelpVideosLibrary({ videos, locale }: HelpVideosLibraryProps) {
                 />
                 {/* Play overlay */}
                 <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-10 h-10 rounded-full bg-violet-500/80 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-full bg-primary-500/80 flex items-center justify-center">
                     <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white" aria-hidden="true">
                       <path d="M8 5v14l11-7z" />
                     </svg>
@@ -58,13 +58,13 @@ export function HelpVideosLibrary({ videos, locale }: HelpVideosLibraryProps) {
                 </div>
                 {/* Coming soon badge for unpublished */}
                 {!isPublished && (
-                  <span className="absolute top-2 right-2 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-zinc-800/90 border border-zinc-700 text-zinc-400">
+                  <span className="absolute top-2 right-2 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-muted-800/90 border border-border-700 text-muted-foreground-400">
                     {isVi ? "Sắp ra mắt" : "Coming soon"}
                   </span>
                 )}
                 {/* Duration badge for published */}
                 {isPublished && video.duration_sec > 0 && (
-                  <span className="absolute bottom-2 right-2 text-[10px] px-1.5 py-0.5 rounded bg-black/70 text-zinc-300 tabular-nums">
+                  <span className="absolute bottom-2 right-2 text-[10px] px-1.5 py-0.5 rounded bg-black/70 text-muted-foreground-300 tabular-nums">
                     {formatDuration(video.duration_sec)}
                   </span>
                 )}
@@ -72,7 +72,7 @@ export function HelpVideosLibrary({ videos, locale }: HelpVideosLibraryProps) {
 
               {/* Title */}
               <div className="p-2.5">
-                <p className="text-xs font-medium text-zinc-200 group-hover:text-white leading-snug line-clamp-2">
+                <p className="text-xs font-medium text-muted-foreground-200 group-hover:text-white leading-snug line-clamp-2">
                   {title}
                 </p>
               </div>

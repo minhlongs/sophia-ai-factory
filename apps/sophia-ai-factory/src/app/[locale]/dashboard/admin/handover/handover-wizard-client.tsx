@@ -123,11 +123,11 @@ export function HandoverWizardClient({ locale }: Props) {
           return (
             <div key={label} className="flex items-center gap-2 flex-1">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-all
-                ${done ? 'bg-violet-600 text-white' : active ? 'bg-violet-500/30 border-2 border-violet-500 text-violet-300' : 'bg-zinc-800 text-zinc-500'}`}>
+                ${done ? 'bg-primary-600 text-white' : active ? 'bg-primary-500/30 border-2 border-primary-500 text-primary-300' : 'bg-muted-800 text-muted-foreground-500'}`}>
                 {done ? <Check size={14} /> : n}
               </div>
-              <span className={`text-xs hidden sm:block ${active ? 'text-zinc-100' : 'text-zinc-500'}`}>{label}</span>
-              {idx < 3 && <div className={`h-px flex-1 ${step > n ? 'bg-violet-600' : 'bg-zinc-800'}`} />}
+              <span className={`text-xs hidden sm:block ${active ? 'text-muted-foreground-100' : 'text-muted-foreground-500'}`}>{label}</span>
+              {idx < 3 && <div className={`h-px flex-1 ${step > n ? 'bg-primary-600' : 'bg-muted-800'}`} />}
             </div>
           );
         })}
@@ -146,15 +146,15 @@ export function HandoverWizardClient({ locale }: Props) {
         )}
 
         {step < 4 && (
-          <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
+          <div className="flex items-center justify-between pt-4 border-t border-border-800">
             {step > 1 ? (
-              <button onClick={() => setStep((prev) => Math.max(prev - 1, 1) as Step)} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-zinc-700 text-zinc-300 text-sm hover:bg-zinc-800 transition-colors">
+              <button onClick={() => setStep((prev) => Math.max(prev - 1, 1) as Step)} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border-700 text-muted-foreground-300 text-sm hover:bg-muted-800 transition-colors">
                 <ChevronLeft size={16} />{isVi ? 'Quay lại' : 'Back'}
               </button>
             ) : <div />}
 
             {step < 3 ? (
-              <button onClick={goNext} className="flex items-center gap-2 px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors">
+              <button onClick={goNext} className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium transition-colors">
                 {isVi ? 'Tiếp theo' : 'Next'}<ChevronRight size={16} />
               </button>
             ) : (

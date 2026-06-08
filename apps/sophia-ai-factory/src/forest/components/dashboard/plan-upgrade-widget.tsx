@@ -92,7 +92,7 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
 
 	if (upgradeTiers.length === 0) {
 		return (
-			<div className="bg-gradient-to-r from-amber-500/10 to-violet-500/10 border border-amber-500/30 rounded-xl p-5">
+			<div className="bg-gradient-to-r from-amber-500/10 to-primary/10 border border-amber-500/30 rounded-xl p-5">
 				<div className="flex items-center gap-2">
 					<Crown className="w-5 h-5 text-amber-400" aria-hidden="true" />
 					<span className="font-semibold text-foreground">Gói {current.name} — Cao Nhất</span>
@@ -113,7 +113,7 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
 		<div className="bg-card border border-border rounded-xl p-5 space-y-4">
 			<div>
 				<div className="flex items-center gap-2">
-					<Crown className="w-5 h-5 text-violet-400" aria-hidden="true" />
+					<Crown className="w-5 h-5 text-primary" aria-hidden="true" />
 					<span className="font-semibold text-foreground">Gói Hiện Tại: {current.name}</span>
 				</div>
 				<p className="text-sm text-muted-foreground mt-1">
@@ -134,7 +134,7 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
 							key={tier}
 							onClick={() => handleUpgrade(tier)}
 							disabled={isLoading || loading !== null}
-							className="flex items-center justify-between px-4 py-3 bg-muted/50 border border-border/50 rounded-lg hover:border-violet-500/40 hover:bg-violet-500/5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-left w-full"
+							className="flex items-center justify-between px-4 py-3 bg-muted/50 border border-border/50 rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-left w-full"
 						>
 							<div>
 								<span className="font-medium text-foreground">{t.name}</span>
@@ -143,8 +143,8 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
 								</span>
 							</div>
 							{isLoading
-								? <Loader2 className="w-4 h-4 text-violet-400 motion-safe:animate-spin" aria-hidden="true" />
-								: <ArrowUp className="w-4 h-4 text-violet-400" aria-hidden="true" />
+								? <Loader2 className="w-4 h-4 text-primary motion-safe:animate-spin" aria-hidden="true" />
+								: <ArrowUp className="w-4 h-4 text-primary" aria-hidden="true" />
 							}
 						</button>
 					);
@@ -155,7 +155,7 @@ export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: P
 				<p className="text-xs text-muted-foreground">
 					<Link
 						href="/dashboard/orders"
-						className="text-violet-400 hover:text-violet-300 underline"
+						className="text-primary hover:text-primary/80 underline"
 					>
 						View past orders
 					</Link>

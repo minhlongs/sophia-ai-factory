@@ -163,7 +163,7 @@ export default async function AffiliateLandingPage({ params }: PageProps) {
         <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
           {(['recurring', 'highEpc', 'transparent', 'noMinimum'] as const).map((key) => (
             <li key={key} className="flex gap-3 items-start">
-              <span className="mt-1.5 inline-block w-1.5 h-1.5 rounded-full bg-violet-400 flex-shrink-0" />
+              <span className="mt-1.5 inline-block w-1.5 h-1.5 rounded-full bg-primary-400 flex-shrink-0" />
               <span className="text-muted-foreground leading-relaxed">{t(`features.${key}`)}</span>
             </li>
           ))}
@@ -190,7 +190,7 @@ export default async function AffiliateLandingPage({ params }: PageProps) {
 function StatCard({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
   return (
     <div className="rounded-xl border border-border bg-card p-6 text-center space-y-2">
-      <div className="inline-flex p-2 rounded-lg bg-violet-500/10 text-violet-400">{icon}</div>
+      <div className="inline-flex p-2 rounded-lg bg-primary-500/10 text-primary-400">{icon}</div>
       <div className="text-2xl font-bold">{value}</div>
       <div className="text-sm text-muted-foreground">{label}</div>
     </div>
@@ -209,7 +209,7 @@ function StepCard({
   return (
     <div className="rounded-xl border border-border bg-card p-6 space-y-2">
       {step !== undefined && (
-        <div className="w-8 h-8 rounded-full bg-violet-500/20 text-violet-400 text-sm font-bold flex items-center justify-center mb-3">
+        <div className="w-8 h-8 rounded-full bg-primary-500/20 text-primary-400 text-sm font-bold flex items-center justify-center mb-3">
           {step}
         </div>
       )}

@@ -64,7 +64,7 @@ export default async function RunsPage({ params }: RunsPageProps) {
         </div>
         <Link
           href={`/${locale}/dashboard/sops/${id}`}
-          className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
+          className="text-sm text-primary-400 hover:text-primary-300 transition-colors"
         >
           {t('runs.backToSop')}
         </Link>

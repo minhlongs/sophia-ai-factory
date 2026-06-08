@@ -64,7 +64,7 @@ export default async function AffiliateDiscoveryPage() {
               href={offer.url}
               target="_blank"
               rel="noopener noreferrer sponsored"
-              className="group rounded-xl border border-border/40 bg-card/50 p-5 space-y-3 hover:border-violet-500/40 hover:bg-card/70 transition-colors"
+              className="group rounded-xl border border-border/40 bg-card/50 p-5 space-y-3 hover:border-primary-500/40 hover:bg-card/70 transition-colors"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
@@ -89,7 +89,7 @@ export default async function AffiliateDiscoveryPage() {
                     {formatCommission(offer.commission_rate)}
                   </span>
                 </span>
-                <span className="flex items-center gap-1 text-emerald-400 group-hover:text-violet-400">
+                <span className="flex items-center gap-1 text-emerald-400 group-hover:text-primary-400">
                   <TrendingUp className="w-3 h-3" aria-hidden="true" />
                   <ExternalLink className="w-3 h-3" aria-hidden="true" />
                 </span>
@@ -106,15 +106,15 @@ export default async function AffiliateDiscoveryPage() {
           </p>
           <Link
             href="/pricing"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/40 px-4 py-2 text-sm font-medium text-violet-400 hover:bg-violet-500/10 transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-primary-500/40 px-4 py-2 text-sm font-medium text-primary-400 hover:bg-primary-500/10 transition-colors"
           >
             Xem Bảng Giá <ArrowRight className="w-4 h-4" aria-hidden="true" />
           </Link>
         </div>
       )}
 
-      <div className="rounded-xl border border-violet-500/30 bg-violet-500/5 p-6 text-center space-y-3">
-        <Search className="w-8 h-8 text-violet-400 mx-auto" aria-hidden="true" />
+      <div className="rounded-xl border border-primary-500/30 bg-primary-500/5 p-6 text-center space-y-3">
+        <Search className="w-8 h-8 text-primary-400 mx-auto" aria-hidden="true" />
         <h2 className="text-lg font-semibold text-foreground">Mở Khóa Sophia Index Đầy Đủ</h2>
         <p className="text-sm text-muted-foreground max-w-md mx-auto">
           Đăng ký gói Growth trở lên để truy cập toàn bộ cơ sở dữ liệu sản phẩm liên kết,

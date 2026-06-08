@@ -56,18 +56,18 @@ export function AdminPricingEditor({ locale }: Props) {
   const skus = data?.skus ?? []
 
   return (
-    <div className="rounded-xl border border-zinc-800 overflow-hidden">
+    <div className="rounded-xl border border-border-800 overflow-hidden">
       <table className="w-full text-sm">
-        <thead className="bg-zinc-900 border-b border-zinc-800">
+        <thead className="bg-muted-900 border-b border-border-800">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase">SKU</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase">
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground-400 uppercase">SKU</th>
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground-400 uppercase">
               {isVi ? 'Mặc định' : 'Default'}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase">
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground-400 uppercase">
               {isVi ? 'Hiện tại' : 'Effective'}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-zinc-400 uppercase">
+            <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground-400 uppercase">
               {isVi ? 'Giá mới (USD)' : 'New Price (USD)'}
             </th>
             <th className="px-4 py-3"></th>
@@ -75,18 +75,18 @@ export function AdminPricingEditor({ locale }: Props) {
         </thead>
         <tbody className="divide-y divide-zinc-800">
           {skus.map((row) => (
-            <tr key={row.sku} className="bg-zinc-950/40 hover:bg-zinc-900/40 transition-colors">
+            <tr key={row.sku} className="bg-muted-950/40 hover:bg-muted-900/40 transition-colors">
               <td className="px-4 py-3">
-                <p className="font-mono text-zinc-200 text-xs">{row.sku}</p>
-                <p className="text-zinc-500 text-xs mt-0.5">{isVi ? row.label_vi : row.label_en}</p>
+                <p className="font-mono text-muted-foreground-200 text-xs">{row.sku}</p>
+                <p className="text-muted-foreground-500 text-xs mt-0.5">{isVi ? row.label_vi : row.label_en}</p>
               </td>
-              <td className="px-4 py-3 text-zinc-400 text-xs">
+              <td className="px-4 py-3 text-muted-foreground-400 text-xs">
                 ${(row.default_price_cents / 100).toFixed(2)}
               </td>
               <td className="px-4 py-3">
-                <span className={`text-xs font-medium ${row.override ? 'text-violet-300' : 'text-zinc-400'}`}>
+                <span className={`text-xs font-medium ${row.override ? 'text-primary-300' : 'text-muted-foreground-400'}`}>
                   ${(row.effective_price_cents / 100).toFixed(2)}
-                  {row.override && <span className="ml-1 text-violet-500">(override)</span>}
+                  {row.override && <span className="ml-1 text-primary-500">(override)</span>}
                 </span>
               </td>
               <td className="px-4 py-3">
@@ -97,7 +97,7 @@ export function AdminPricingEditor({ locale }: Props) {
                   placeholder={(row.effective_price_cents / 100).toFixed(2)}
                   value={editValues[row.sku] ?? ''}
                   onChange={(e) => setEditValues((p) => ({ ...p, [row.sku]: e.target.value }))}
-                  className="w-28 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                  className="w-28 bg-muted-800 border border-border-700 rounded px-2 py-1 text-xs text-muted-foreground-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
                 />
               </td>
               <td className="px-4 py-3">
@@ -105,7 +105,7 @@ export function AdminPricingEditor({ locale }: Props) {
                   <button
                     onClick={() => saveOverride(row.sku)}
                     disabled={saving === row.sku || !editValues[row.sku]}
-                    className="px-3 py-1 bg-violet-700 hover:bg-violet-600 disabled:opacity-50 text-white text-xs rounded font-medium transition-colors"
+                    className="px-3 py-1 bg-primary-700 hover:bg-primary-600 disabled:opacity-50 text-white text-xs rounded font-medium transition-colors"
                   >
                     {saving === row.sku ? '…' : (isVi ? 'Lưu' : 'Save')}
                   </button>
@@ -118,7 +118,7 @@ export function AdminPricingEditor({ locale }: Props) {
           ))}
           {skus.length === 0 && (
             <tr>
-              <td colSpan={5} className="px-4 py-8 text-center text-zinc-500 text-sm">
+              <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground-500 text-sm">
                 {isVi ? 'Đang tải...' : 'Loading...'}
               </td>
             </tr>

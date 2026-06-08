@@ -57,7 +57,7 @@ export function TourOverlay({
         {/* Skip button */}
         <button
           onClick={onSkip}
-          className="absolute top-4 right-4 cursor-pointer p-1 rounded-md text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 transition-colors duration-150"
+          className="absolute top-4 right-4 cursor-pointer p-1 rounded-md text-muted-foreground-500 hover:text-muted-foreground-900 dark:hover:text-muted-foreground-100 transition-colors duration-150"
           aria-label={t('skip')}
         >
           <X className="w-4 h-4" aria-hidden="true" />
@@ -65,8 +65,8 @@ export function TourOverlay({
 
         {/* Header */}
         <div className="mb-5">
-          <h2 id={titleId} className="text-lg font-bold text-slate-900 dark:text-slate-100">{t('title')}</h2>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{t('subtitle')}</p>
+          <h2 id={titleId} className="text-lg font-bold text-muted-foreground-900 dark:text-slate-100">{t('title')}</h2>
+          <p className="text-sm text-muted-foreground-600 dark:text-slate-400 mt-1">{t('subtitle')}</p>
         </div>
 
         {/* Progress dots */}
@@ -75,7 +75,7 @@ export function TourOverlay({
             <div
               key={i}
               className={`h-1.5 rounded-full transition-all duration-150 ${
-                i + 1 === step ? 'w-6 bg-violet-600' : 'w-1.5 bg-slate-300 dark:bg-slate-700'
+                i + 1 === step ? 'w-6 bg-primary-600' : 'w-1.5 bg-muted-300 dark:bg-slate-700'
               }`}
             />
           ))}
@@ -83,13 +83,13 @@ export function TourOverlay({
 
         {/* Step content */}
         <div className="min-h-[90px] mb-4">
-          <p className="text-xs font-medium text-violet-600 dark:text-violet-400 mb-2">
+          <p className="text-xs font-medium text-primary-600 dark:text-violet-400 mb-2">
             {t('progress', { current: step, total: TOTAL_STEPS })}
           </p>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 mb-2">
+          <h3 className="text-base font-semibold text-muted-foreground-900 dark:text-slate-100 mb-2">
             {t(current.titleKey)}
           </h3>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-muted-foreground-600 dark:text-slate-400">
             {step === 1
               ? t('step1_desc', { tier: tier ?? 'BASIC' })
               : t(current.descKey)}
@@ -113,7 +113,7 @@ export function TourOverlay({
         <div className="flex items-center justify-between">
           <button
             onClick={onSkip}
-            className="cursor-pointer text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors duration-150"
+            className="cursor-pointer text-xs text-muted-foreground-500 hover:text-muted-foreground-700 dark:hover:text-muted-foreground-300 transition-colors duration-150"
           >
             {t('skip')}
           </button>

@@ -107,7 +107,7 @@ export function ApiKeysSection({ form, defaultValues }: ApiKeysSectionProps) {
                   href={config.helpUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                 >
                   {t(config.helpKey)}
                   <ExternalLink className="h-3 w-3" />
@@ -139,7 +139,7 @@ export function ApiKeysSection({ form, defaultValues }: ApiKeysSectionProps) {
           );
         })}
 
-        <div className="rounded-lg bg-violet-500/5 border border-violet-500/10 px-4 py-3 mt-4">
+        <div className="rounded-lg bg-primary/5 border border-primary/10 px-4 py-3 mt-4">
           <p className="text-xs text-muted-foreground">
             <strong className="text-foreground">{t('securityNoteLabel')}</strong> {t('securityNoteBody')}
           </p>

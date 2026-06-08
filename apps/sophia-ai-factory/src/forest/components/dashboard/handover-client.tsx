@@ -164,8 +164,8 @@ export function HandoverClient(): React.JSX.Element {
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-violet-500/10 border border-violet-500/20">
-                  <Building2 className="w-5 h-5 text-violet-400" />
+                <div className="p-2 rounded-lg bg-primary-500/10 border border-primary-500/20">
+                  <Building2 className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <h2 className="font-semibold">{handover.agencyName || 'Unnamed Agency'}</h2>
@@ -184,7 +184,7 @@ export function HandoverClient(): React.JSX.Element {
               <span
                 className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                   handover.tier === 'MASTER'
-                    ? 'bg-violet-500/10 text-violet-400 border border-violet-500/20'
+                    ? 'bg-primary/10 text-primary border border-primary/20'
                     : handover.tier === 'ENTERPRISE'
                       ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                       : 'bg-muted text-muted-foreground'

@@ -38,8 +38,8 @@ export function GuideCodeBlock({ code, language, className }: GuideCodeBlockProp
         >
           {copied ? (
             <>
-              <Check className="w-3.5 h-3.5 text-cyan-400" aria-hidden="true" />
-              <span className="text-cyan-400">Đã sao chép!</span>
+              <Check className="w-3.5 h-3.5 text-accent" aria-hidden="true" />
+              <span className="text-accent">Đã sao chép!</span>
             </>
           ) : (
             <>

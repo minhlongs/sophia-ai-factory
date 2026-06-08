@@ -61,8 +61,8 @@ export function AdminActionsConsole({ locale }: Props) {
 
   function Card({ title, children }: { title: string; children: React.ReactNode }) {
     return (
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 space-y-4">
-        <h2 className="text-sm font-semibold text-zinc-200">{title}</h2>
+      <div className="rounded-xl border border-border-800 bg-muted-900/50 p-5 space-y-4">
+        <h2 className="text-sm font-semibold text-muted-foreground-200">{title}</h2>
         {children}
       </div>
     )
@@ -74,7 +74,7 @@ export function AdminActionsConsole({ locale }: Props) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+      className="w-full bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
     />
   )
 
@@ -82,7 +82,7 @@ export function AdminActionsConsole({ locale }: Props) {
     <button
       onClick={action}
       disabled={!!loading || disabled}
-      className="px-4 py-2 bg-violet-700 hover:bg-violet-600 disabled:opacity-50 text-white text-sm rounded-lg font-medium transition-colors"
+      className="px-4 py-2 bg-primary-700 hover:bg-primary-600 disabled:opacity-50 text-white text-sm rounded-lg font-medium transition-colors"
     >
       {loading ? '…' : label}
     </button>
@@ -115,7 +115,7 @@ export function AdminActionsConsole({ locale }: Props) {
           <select
             value={tier}
             onChange={(e) => setTier(e.target.value)}
-            className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
           >
             {TIERS.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
@@ -142,14 +142,14 @@ export function AdminActionsConsole({ locale }: Props) {
       </Card>
 
       <Card title={isVi ? 'Chạy kiểm tra tổng hợp' : 'Run Synthetic E2E'}>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted-foreground-500">
           {isVi ? 'Chạy toàn bộ quy trình fulfillment với dữ liệu tổng hợp.' : 'Run full fulfillment pipeline with synthetic data.'}
         </p>
         <Btn label={isVi ? 'Chạy kiểm tra' : 'Run Synthetic'} action={runSynthetic} />
       </Card>
 
       <Card title={isVi ? 'Phát lại IPN thanh toán' : 'Replay Payment IPN'}>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted-foreground-500">
           {isVi ? 'Dùng khi khách đã thanh toán nhưng IPN bị mất.' : 'Use when customer paid but IPN was lost.'}
         </p>
         <Input value={paymentId} onChange={setPaymentId} placeholder={isVi ? 'Payment ID (NOWPayments)' : 'Payment ID (NOWPayments)'} />

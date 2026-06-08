@@ -102,7 +102,7 @@ export function PricingCard({
       duration={500}
       className={`card-hover relative flex flex-col rounded-2xl border p-8 transition-all duration-300 backdrop-blur-md shadow-2xl ${
         popular
-          ? "border-violet-500/50 bg-gradient-to-b from-violet-600/[0.08] to-violet-950/[0.04] shadow-violet-500/10 hover:shadow-violet-500/25 hover:border-violet-400 hover:scale-[1.02]"
+          ? "border-primary-500/50 bg-gradient-to-b from-violet-600/[0.08] to-violet-950/[0.04] shadow-violet-500/10 hover:shadow-violet-500/25 hover:border-primary-400 hover:scale-[1.02]"
           : "border-border bg-gradient-to-b from-muted/30 to-muted/10 hover:border-primary/30 hover:shadow-primary/5 hover:scale-[1.01]"
       }`}
     >

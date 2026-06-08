@@ -29,7 +29,7 @@ const STATUS_BADGE: Record<HandoverStatus, string> = {
 const SOURCE_CONFIG: Record<HandoverSource, { label: { vi: string; en: string }; style: string; icon: 'zap' | 'user' }> = {
   auto_payment: { label: { vi: 'Tự động', en: 'Auto' }, style: 'bg-emerald-900/40 text-emerald-300 border-emerald-500/30', icon: 'zap' },
   auto_signup:  { label: { vi: 'Tự đăng ký', en: 'Self-signup' }, style: 'bg-blue-900/40 text-blue-300 border-blue-500/30', icon: 'zap' },
-  manual:       { label: { vi: 'Thủ công', en: 'Manual' }, style: 'bg-zinc-800 text-zinc-400 border-zinc-600', icon: 'user' },
+  manual:       { label: { vi: 'Thủ công', en: 'Manual' }, style: 'bg-muted-800 text-muted-foreground-400 border-border-600', icon: 'user' },
 };
 
 const STATUS_LABELS: Record<HandoverStatus, { vi: string; en: string }> = {
@@ -105,7 +105,7 @@ export function HandoverListClient({ locale }: Props) {
 
   if (isLoading) {
     return (
-      <div className="text-zinc-500 text-sm py-12 text-center motion-safe:animate-pulse">
+      <div className="text-muted-foreground-500 text-sm py-12 text-center motion-safe:animate-pulse">
         {isVi ? 'Đang tải...' : 'Loading...'}
       </div>
     );
@@ -123,8 +123,8 @@ export function HandoverListClient({ locale }: Props) {
             onClick={() => setStatusFilter(s)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors
               ${statusFilter === s
-                ? 'bg-violet-600 border-violet-500 text-white'
-                : 'border-zinc-700 text-zinc-400 hover:border-zinc-600'}`}
+                ? 'bg-primary-600 border-primary-500 text-white'
+                : 'border-border-700 text-muted-foreground-400 hover:border-border-600'}`}
           >
             {s === 'all' ? (isVi ? 'Tất cả' : 'All') : (isVi ? STATUS_LABELS[s].vi : STATUS_LABELS[s].en)}
           </button>
@@ -132,9 +132,9 @@ export function HandoverListClient({ locale }: Props) {
       </div>
 
       {handovers.length === 0 && (
-        <div className="rounded-xl border border-dashed border-zinc-700 bg-zinc-900/30 py-12 px-6 text-center">
-          <Inbox size={32} className="mx-auto text-zinc-600 mb-3" />
-          <p className="text-zinc-300 text-sm font-medium mb-1">
+        <div className="rounded-xl border border-dashed border-border-700 bg-muted-900/30 py-12 px-6 text-center">
+          <Inbox size={32} className="mx-auto text-muted-foreground-600 mb-3" />
+          <p className="text-muted-foreground-300 text-sm font-medium mb-1">
             {isVi
               ? statusFilter === 'all'
                 ? 'Chưa có bàn giao nào'
@@ -143,7 +143,7 @@ export function HandoverListClient({ locale }: Props) {
                 ? 'No handovers yet'
                 : 'No handovers in this status'}
           </p>
-          <p className="text-zinc-500 text-xs">
+          <p className="text-muted-foreground-500 text-xs">
             {isVi
               ? 'Khi customer redeem FREE100 hoặc admin tạo handover, sẽ xuất hiện ở đây.'
               : 'Once customers redeem FREE100 or admin creates a handover, it will appear here.'}
@@ -160,11 +160,11 @@ export function HandoverListClient({ locale }: Props) {
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold text-zinc-100">{h.agency_name}</span>
+                  <span className="font-semibold text-muted-foreground-100">{h.agency_name}</span>
                   <span className={`px-2 py-0.5 rounded-full text-xs border font-medium ${STATUS_BADGE[h.status]}`}>
                     {isVi ? STATUS_LABELS[h.status].vi : STATUS_LABELS[h.status].en}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full text-xs bg-violet-900/40 text-violet-300 border border-violet-500/30">
+                  <span className="px-2 py-0.5 rounded-full text-xs bg-primary-900/40 text-primary-300 border border-primary-500/30">
                     {h.tier}
                   </span>
                   {h.source && SOURCE_CONFIG[h.source] && (
@@ -176,7 +176,7 @@ export function HandoverListClient({ locale }: Props) {
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-zinc-500">
+                <div className="text-xs text-muted-foreground-500">
                   {h.agency_type?.replace('_', ' ')} ·{' '}
                   {isVi ? 'Tạo lúc' : 'Created'} {formatTs(h.created_at, isVi)}
                 </div>
@@ -185,7 +185,7 @@ export function HandoverListClient({ locale }: Props) {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setExpandedId(expanded ? null : h.id)}
-                  className="p-1.5 rounded-lg border border-zinc-700 hover:bg-zinc-800 text-zinc-400 transition-colors"
+                  className="p-1.5 rounded-lg border border-border-700 hover:bg-muted-800 text-muted-foreground-400 transition-colors"
                   aria-label={expanded ? 'Collapse' : 'Expand'}
                   aria-expanded={expanded}
                 >
@@ -194,7 +194,7 @@ export function HandoverListClient({ locale }: Props) {
                 <button
                   onClick={() => void resendWelcome(h.id)}
                   disabled={actionLoading === `${h.id}-resend`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-700 text-zinc-300 text-xs hover:bg-zinc-800 disabled:opacity-50 transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-700 text-muted-foreground-300 text-xs hover:bg-muted-800 disabled:opacity-50 transition-colors"
                 >
                   {actionLoading === `${h.id}-resend`
                     ? <RefreshCw size={12} className="motion-safe:animate-spin" />
@@ -212,14 +212,14 @@ export function HandoverListClient({ locale }: Props) {
                 { label: isVi ? 'Cài SOP đầu' : 'First SOP Install', ts: h.customer_first_sop_install_at },
                 { label: isVi ? 'Chạy SOP đầu' : 'First Run', ts: h.customer_first_run_at },
               ].map((m) => (
-                <div key={m.label} className="rounded-lg bg-zinc-900/50 border border-border p-2 text-center">
+                <div key={m.label} className="rounded-lg bg-muted-900/50 border border-border p-2 text-center">
                   <div className="mb-1">
                     {m.ts
                       ? <CheckCircle2 size={14} className="mx-auto text-emerald-400" />
-                      : <Clock size={14} className="mx-auto text-zinc-600" />}
+                      : <Clock size={14} className="mx-auto text-muted-foreground-600" />}
                   </div>
-                  <div className="text-xs text-zinc-400">{m.label}</div>
-                  <div className="text-xs text-zinc-500 mt-0.5">
+                  <div className="text-xs text-muted-foreground-400">{m.label}</div>
+                  <div className="text-xs text-muted-foreground-500 mt-0.5">
                     {m.ts ? formatTs(m.ts, isVi) : '—'}
                   </div>
                 </div>
@@ -229,19 +229,19 @@ export function HandoverListClient({ locale }: Props) {
             {/* Expanded details */}
             {expanded && (
               <div className="mt-4 pt-4 border-t border-border space-y-3">
-                <div className="text-xs text-zinc-500">
+                <div className="text-xs text-muted-foreground-500">
                   {isVi ? 'SOPs đã cài:' : 'Installed SOPs:'}{' '}
                   {sops.length > 0 ? sops.join(', ') : (isVi ? 'Không có' : 'None')}
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs text-zinc-500">{isVi ? 'Đổi trạng thái:' : 'Change status:'}</span>
+                  <span className="text-xs text-muted-foreground-500">{isVi ? 'Đổi trạng thái:' : 'Change status:'}</span>
                   {(['pending', 'active', 'at_risk', 'churned'] as HandoverStatus[]).map((s) => (
                     <button
                       key={s}
                       disabled={h.status === s || !!actionLoading}
                       onClick={() => void updateStatus(h.id, s)}
                       className={`px-2.5 py-1 rounded-lg text-xs border transition-colors disabled:opacity-40
-                        ${h.status === s ? STATUS_BADGE[s] : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'}`}
+                        ${h.status === s ? STATUS_BADGE[s] : 'border-border-700 text-muted-foreground-400 hover:border-border-500'}`}
                     >
                       {isVi ? STATUS_LABELS[s].vi : STATUS_LABELS[s].en}
                     </button>

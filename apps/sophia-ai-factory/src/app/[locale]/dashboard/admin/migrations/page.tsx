@@ -23,10 +23,10 @@ export default async function MigrationsPage({ params }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-100">
+        <h1 className="text-2xl font-bold text-muted-foreground-100">
           {isVi ? 'Supabase Migrations' : 'Supabase Migrations'}
         </h1>
-        <p className="text-sm text-zinc-400 mt-1">
+        <p className="text-sm text-muted-foreground-400 mt-1">
           {isVi
             ? 'Sao chép SQL và áp dụng trong Supabase Dashboard. Đánh dấu đã áp dụng sau khi hoàn tất.'
             : 'Copy SQL and apply in Supabase Dashboard. Mark as applied after completion.'}

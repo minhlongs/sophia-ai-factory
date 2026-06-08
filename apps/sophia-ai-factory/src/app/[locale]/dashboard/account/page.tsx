@@ -55,10 +55,10 @@ export default async function AccountPage({ params }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t('title')}</h1>
+        <h1 className="text-2xl font-bold text-muted-foreground-900 dark:text-slate-100">{t('title')}</h1>
       </div>
 
-      <Suspense fallback={<div className="h-64 motion-safe:animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />}>
+      <Suspense fallback={<div className="h-64 motion-safe:animate-pulse rounded-xl bg-muted-100 dark:bg-slate-800" />}>
         <AccountTabs
           profileData={{
             email: user.email ?? '',

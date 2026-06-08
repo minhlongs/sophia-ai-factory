@@ -95,7 +95,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-xl border border-border/50 bg-zinc-900/40 backdrop-blur-sm p-5 md:p-6 shadow-xl relative overflow-hidden">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-xl border border-border/50 bg-muted-900/40 backdrop-blur-sm p-5 md:p-6 shadow-xl relative overflow-hidden">
         {/* Wizard Stepper */}
         <WizardStepper currentStep={step} steps={stepLabels} />
 
@@ -105,13 +105,13 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
             <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
-                  <label htmlFor="video-prompt" className="text-sm font-semibold flex items-center gap-1.5 text-zinc-200">
-                    <Sparkles className="h-4 w-4 text-violet-400" />
+                  <label htmlFor="video-prompt" className="text-sm font-semibold flex items-center gap-1.5 text-muted-foreground-200">
+                    <Sparkles className="h-4 w-4 text-primary-400" />
                     {isVi ? "Ý tưởng / Chủ đề Video" : "Video Topic / Ideas"}
                   </label>
                   <div className="group relative">
-                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-zinc-300 cursor-help" />
-                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-zinc-950 border border-border/50 p-2 text-[10px] text-zinc-300 shadow-xl z-20">
+                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground-300 cursor-help" />
+                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted-950 border border-border/50 p-2 text-[10px] text-muted-foreground-300 shadow-xl z-20">
                       {isVi 
                         ? "Mô tả ý tưởng ngắn gọn, AI của chúng tôi sẽ viết chi tiết kịch bản video." 
                         : "Describe your video topic. Our AI will automatically compose the script."}
@@ -145,7 +145,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
                   <button
                     type="button"
                     onClick={generateDraftScript}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-violet-400 hover:text-violet-300 transition-colors"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary-400 hover:text-primary-300 transition-colors"
                   >
                     <Sparkles className="h-3 w-3" />
                     {isVi ? "Đặt lại bản nháp AI" : "Regenerate AI Draft"}
@@ -162,12 +162,12 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
           {step === 3 && (
             <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-zinc-200">
+                <span className="text-sm font-semibold text-muted-foreground-200">
                   {isVi ? "Chọn giọng đọc AI" : "Choose AI Voice"}
                 </span>
                 <div className="group relative">
-                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-zinc-300 cursor-help" />
-                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-zinc-950 border border-border/50 p-2 text-[10px] text-zinc-300 shadow-xl z-20">
+                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground-300 cursor-help" />
+                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted-950 border border-border/50 p-2 text-[10px] text-muted-foreground-300 shadow-xl z-20">
                     {isVi 
                       ? "Chọn giọng đọc tiếng Anh hoặc tiếng Việt phù hợp với phong cách thương hiệu." 
                       : "Select the AI voice profile to read your generated video script."}
@@ -186,10 +186,10 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
             <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-2 duration-200">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-zinc-200">{isVi ? "1. Chọn Người đại diện (Avatar)" : "1. Choose Presenter Avatar"}</span>
+                  <span className="text-sm font-semibold text-muted-foreground-200">{isVi ? "1. Chọn Người đại diện (Avatar)" : "1. Choose Presenter Avatar"}</span>
                   <div className="group relative">
-                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-zinc-300 cursor-help" />
-                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-zinc-950 border border-border/50 p-2 text-[10px] text-zinc-300 shadow-xl z-20">
+                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground-300 cursor-help" />
+                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted-950 border border-border/50 p-2 text-[10px] text-muted-foreground-300 shadow-xl z-20">
                       {isVi 
                         ? "Chọn người đại diện kỹ thuật số (AI Avatar) để thể hiện thương hiệu hoặc chủ đề của bạn." 
                         : "Select the digital twin avatar representing your brand or topic."}
@@ -203,10 +203,10 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
               </div>
               <div className="flex flex-col gap-2 border-t border-border/10 pt-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-zinc-200">{isVi ? "2. Chọn Bố cục mẫu" : "2. Choose Layout Template"}</span>
+                  <span className="text-sm font-semibold text-muted-foreground-200">{isVi ? "2. Chọn Bố cục mẫu" : "2. Choose Layout Template"}</span>
                   <div className="group relative">
-                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-zinc-300 cursor-help" />
-                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-zinc-950 border border-border/50 p-2 text-[10px] text-zinc-300 shadow-xl z-20">
+                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground-300 cursor-help" />
+                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted-950 border border-border/50 p-2 text-[10px] text-muted-foreground-300 shadow-xl z-20">
                       {isVi 
                         ? "Chọn bố cục kịch bản phim ảnh (Cinematic) hoặc phong cách tự nhiên (Casual) để tối ưu hiển thị." 
                         : "Choose between cinematic or casual templates to customize the visual theme."}
@@ -224,7 +224,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
           {step === 5 && (
             <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
               <div className="rounded-xl border border-border/50 bg-black/30 p-4 space-y-3">
-                <h4 className="font-bold text-xs text-violet-400 uppercase tracking-wider">{isVi ? "Tóm tắt cấu hình" : "Review Selections"}</h4>
+                <h4 className="font-bold text-xs text-primary-400 uppercase tracking-wider">{isVi ? "Tóm tắt cấu hình" : "Review Selections"}</h4>
                 <div className="space-y-2 text-xs md:text-sm">
                   <div className="flex justify-between border-b border-border/10 pb-1">
                     <span className="text-muted-foreground">{isVi ? "Người đại diện" : "Avatar"}:</span>
@@ -240,7 +240,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
                   </div>
                   <div className="flex flex-col gap-1 pt-1">
                     <span className="text-muted-foreground">{isVi ? "Nội dung kịch bản" : "Script Content"}:</span>
-                    <p className="bg-black/40 border border-border/10 p-3 rounded-lg text-xs font-mono text-zinc-300 max-h-[80px] overflow-y-auto">
+                    <p className="bg-black/40 border border-border/10 p-3 rounded-lg text-xs font-mono text-muted-foreground-300 max-h-[80px] overflow-y-auto">
                       {form.script || (isVi ? "(Trống)" : "(Empty)")}
                     </p>
                   </div>
@@ -275,7 +275,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
                 setStep((s) => s + 1);
               }}
               disabled={step === 1 && !form.prompt.trim()}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 px-5 py-2 text-xs md:text-sm font-semibold text-foreground transition disabled:opacity-50"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-primary-600 hover:bg-primary-500 px-5 py-2 text-xs md:text-sm font-semibold text-foreground transition disabled:opacity-50"
             >
               {isVi ? "Tiếp theo" : "Next"}
               <ArrowRight className="h-4 w-4" />
@@ -295,19 +295,19 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
 
       {/* Live Preview Sidebar */}
       <div className="flex flex-col gap-4">
-        <div className="overflow-hidden rounded-xl border border-border/50 bg-zinc-950 shadow-xl">
+        <div className="overflow-hidden rounded-xl border border-border/50 bg-muted-950 shadow-xl">
           <div className="aspect-video bg-[radial-gradient(circle_at_25%_25%,hsl(var(--primary)/0.15),transparent_40%),linear-gradient(135deg,rgba(15,15,20,0.9),rgba(20,10,35,0.9))] p-4 relative">
-            <div className="flex h-full flex-col justify-between rounded-lg border border-border/50 bg-zinc-900/60 backdrop-blur-md p-4">
+            <div className="flex h-full flex-col justify-between rounded-lg border border-border/50 bg-muted-900/60 backdrop-blur-md p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-violet-400">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-primary-400">
                     {t('video.previewLabel')}
                   </p>
-                  <p className="mt-1 text-xs md:text-sm font-semibold text-zinc-100 line-clamp-1">
+                  <p className="mt-1 text-xs md:text-sm font-semibold text-muted-foreground-100 line-clamp-1">
                     {form.prompt ? `"${form.prompt}"` : t('video.previewPlaceholder')}
                   </p>
                 </div>
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-foreground shadow-lg shadow-violet-500/30">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-foreground shadow-lg shadow-violet-500/30">
                   <Film className="h-4 w-4" aria-hidden="true" />
                 </div>
               </div>
@@ -315,11 +315,11 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
               {/* Dynamic Mock Avatar Frame */}
               <div className="my-2 flex flex-col items-center justify-center border border-dashed border-border/50 rounded p-2 bg-black/40 text-center">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">Presenting Avatar</span>
-                <span className="text-xs font-semibold text-cyan-400 mt-0.5">{form.avatarId}</span>
+                <span className="text-xs font-semibold text-accent-400 mt-0.5">{form.avatarId}</span>
               </div>
 
               <div className="grid grid-cols-3 gap-2 text-center">
-                <div className={`rounded border p-1.5 transition-colors duration-200 ${step === 2 ? 'border-violet-500 bg-violet-500/10' : 'border-border/10 bg-muted/10'}`}>
+                <div className={`rounded border p-1.5 transition-colors duration-200 ${step === 2 ? 'border-primary-500 bg-primary-500/10' : 'border-border/10 bg-muted/10'}`}>
                   <p className="text-[9px] font-medium text-muted-foreground">
                     {isVi ? "Kịch bản" : "Script"}
                   </p>
@@ -327,7 +327,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
                     {form.script ? `${form.script.length} chars` : "-"}
                   </p>
                 </div>
-                <div className={`rounded border p-1.5 transition-colors duration-200 ${step === 3 ? 'border-violet-500 bg-violet-500/10' : 'border-border/10 bg-muted/10'}`}>
+                <div className={`rounded border p-1.5 transition-colors duration-200 ${step === 3 ? 'border-primary-500 bg-primary-500/10' : 'border-border/10 bg-muted/10'}`}>
                   <p className="text-[9px] font-medium text-muted-foreground">
                     {isVi ? "Giọng nói" : "Voice"}
                   </p>
@@ -335,7 +335,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
                     {form.voiceId}
                   </p>
                 </div>
-                <div className={`rounded border p-1.5 transition-colors duration-200 ${step === 4 ? 'border-violet-500 bg-violet-500/10' : 'border-border/10 bg-muted/10'}`}>
+                <div className={`rounded border p-1.5 transition-colors duration-200 ${step === 4 ? 'border-primary-500 bg-primary-500/10' : 'border-border/10 bg-muted/10'}`}>
                   <p className="text-[9px] font-medium text-muted-foreground">
                     {isVi ? "Mẫu" : "Template"}
                   </p>
@@ -349,7 +349,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
         </div>
 
         {missionId && (
-          <div className="flex flex-col gap-2 rounded-xl border border-border/50 bg-zinc-900/40 p-4 shadow-sm animate-in fade-in duration-300">
+          <div className="flex flex-col gap-2 rounded-xl border border-border/50 bg-muted-900/40 p-4 shadow-sm animate-in fade-in duration-300">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-emerald-400" aria-hidden="true" />
               <p className="text-sm font-medium text-foreground">{t('video.missionCreated')}</p>
@@ -357,7 +357,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
             <p className="text-xs text-muted-foreground font-mono bg-black/25 p-2 rounded border border-border/10">{missionId}</p>
             <Link
               href="/dashboard/videos"
-              className="mt-1 inline-flex w-fit cursor-pointer text-xs font-medium text-violet-400 hover:text-violet-300 underline underline-offset-2"
+              className="mt-1 inline-flex w-fit cursor-pointer text-xs font-medium text-primary-400 hover:text-primary-300 underline underline-offset-2"
             >
               {t('video.trackProgress')}
             </Link>

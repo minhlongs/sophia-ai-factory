@@ -69,7 +69,7 @@ export default async function SopDetailPage({ params }: Props) {
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-xl font-bold text-foreground">{name}</h1>
             {template && <CategoryBadge category={template.category} />}
-            <span className={`inline-flex items-center px-2 py-0.5 text-xs rounded-full ${installation.enabled ? 'bg-emerald-900/50 text-emerald-300' : 'bg-zinc-800 text-zinc-500'}`}>
+            <span className={`inline-flex items-center px-2 py-0.5 text-xs rounded-full ${installation.enabled ? 'bg-emerald-900/50 text-emerald-300' : 'bg-muted-800 text-muted-foreground-500'}`}>
               {installation.enabled ? t('detail_page.enabled') : t('detail_page.disabled')}
             </span>
           </div>

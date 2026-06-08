@@ -170,7 +170,7 @@ function StatusBadge({
       <span
         className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
           isNoWinner
-            ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+            ? 'bg-muted-100 text-foreground dark:bg-gray-800 dark:text-muted-foreground'
             : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
         }`}
       >

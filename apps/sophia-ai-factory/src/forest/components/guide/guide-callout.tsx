@@ -14,10 +14,10 @@ const VARIANT_CONFIG: Record<CalloutVariant, {
 }> = {
   tip: {
     icon: Lightbulb,
-    borderColor: "border-l-cyan-500",
-    bgColor: "bg-cyan-500/5",
-    iconColor: "text-cyan-400",
-    titleColor: "text-cyan-300",
+    borderColor: "border-l-accent",
+    bgColor: "bg-accent/5",
+    iconColor: "text-accent",
+    titleColor: "text-accent/80",
     label: "Mẹo Hay",
   },
   warning: {
@@ -39,9 +39,9 @@ const VARIANT_CONFIG: Record<CalloutVariant, {
   important: {
     icon: Zap,
     borderColor: "border-l-violet-500",
-    bgColor: "bg-violet-500/5",
-    iconColor: "text-violet-400",
-    titleColor: "text-violet-300",
+    bgColor: "bg-primary-500/5",
+    iconColor: "text-primary-400",
+    titleColor: "text-primary-300",
     label: "Quan Trọng",
   },
 };

@@ -21,11 +21,11 @@ export function GuideCommandCard({
       className
     )}>
       <div className="flex items-start justify-between gap-3 mb-2">
-        <span className="font-mono text-cyan-400 font-semibold text-sm bg-cyan-500/10 px-2.5 py-1 rounded-md border border-cyan-500/20">
+        <span className="font-mono text-accent font-semibold text-sm bg-accent/10 px-2.5 py-1 rounded-md border border-accent/20">
           {command}
         </span>
         {mcuCost && (
-          <span className="shrink-0 text-xs bg-violet-500/10 text-violet-400 border border-violet-500/20 px-2 py-0.5 rounded-full font-medium">
+          <span className="shrink-0 text-xs bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full font-medium">
             {mcuCost} MCU
           </span>
         )}

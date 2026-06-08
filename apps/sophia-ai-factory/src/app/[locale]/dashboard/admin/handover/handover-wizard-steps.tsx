@@ -52,12 +52,12 @@ export const TIER_LABELS: Record<Tier, string> = {
   MASTER: 'MASTER — 100,000 MCU/mo',
 };
 
-export const inputCls = 'w-full bg-zinc-900/80 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-violet-500 transition-colors';
+export const inputCls = 'w-full bg-muted-900/80 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-600 focus:outline-none focus:border-primary-500 transition-colors';
 
 export function Field({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label className="flex items-center gap-1.5 text-xs font-medium text-zinc-400">{icon}{label}</label>
+      <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground-400">{icon}{label}</label>
       {children}
     </div>
   );
@@ -72,7 +72,7 @@ interface Step1Props {
 export function Step1CustomerInfo({ form, updateForm, isVi }: Step1Props) {
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-zinc-100">{isVi ? 'Thông tin khách hàng' : 'Customer Information'}</h2>
+      <h2 className="text-lg font-semibold text-muted-foreground-100">{isVi ? 'Thông tin khách hàng' : 'Customer Information'}</h2>
       <Field icon={<Building2 size={16} />} label={isVi ? 'Tên Agency' : 'Agency Name'}>
         <input className={inputCls} value={form.agencyName} onChange={(e) => updateForm('agencyName', e.target.value)} placeholder="Mekong Marketing" />
       </Field>
@@ -129,8 +129,8 @@ export function Step2StarterPack({ agencyType, tier, selectedSops, toggleSop, is
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-zinc-100">{isVi ? 'Chọn Starter Pack SOPs' : 'Select Starter Pack SOPs'}</h2>
-        <p className="text-sm text-zinc-400 mt-1">
+        <h2 className="text-lg font-semibold text-muted-foreground-100">{isVi ? 'Chọn Starter Pack SOPs' : 'Select Starter Pack SOPs'}</h2>
+        <p className="text-sm text-muted-foreground-400 mt-1">
           {isVi ? `Gói ${tier} cho phép ${TIER_SOP_COUNTS[tier]} SOPs. Đã chọn: ${selectedSops.length}` : `${tier} allows ${TIER_SOP_COUNTS[tier]} SOPs. Selected: ${selectedSops.length}`}
         </p>
       </div>
@@ -138,9 +138,9 @@ export function Step2StarterPack({ agencyType, tier, selectedSops, toggleSop, is
         {AGENCY_SOP_MAP[agencyType].map((slug) => {
           const checked = selectedSops.includes(slug);
           return (
-            <label key={slug} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${checked ? 'border-violet-500/60 bg-violet-500/10' : 'border-zinc-700 bg-zinc-900/50 hover:border-zinc-600'}`}>
+            <label key={slug} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${checked ? 'border-primary-500/60 bg-primary-500/10' : 'border-border-700 bg-muted-900/50 hover:border-border-600'}`}>
               <input type="checkbox" className="accent-violet-500" checked={checked} onChange={() => toggleSop(slug)} />
-              <span className="text-sm font-mono text-zinc-200">{slug}</span>
+              <span className="text-sm font-mono text-muted-foreground-200">{slug}</span>
             </label>
           );
         })}
@@ -154,28 +154,28 @@ interface Step3Props { form: FormState; selectedSops: string[]; isVi: boolean }
 export function Step3Configuration({ form, selectedSops, isVi }: Step3Props) {
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-zinc-100">{isVi ? 'Cấu hình ban đầu' : 'Initial Configuration'}</h2>
-      <div className="rounded-xl border border-zinc-700 bg-zinc-900/50 p-4 space-y-3">
-        <h3 className="text-sm font-semibold text-zinc-300">{isVi ? 'API Keys (khách hàng cung cấp sau)' : 'API Keys (customer provides later)'}</h3>
+      <h2 className="text-lg font-semibold text-muted-foreground-100">{isVi ? 'Cấu hình ban đầu' : 'Initial Configuration'}</h2>
+      <div className="rounded-xl border border-border-700 bg-muted-900/50 p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-muted-foreground-300">{isVi ? 'API Keys (khách hàng cung cấp sau)' : 'API Keys (customer provides later)'}</h3>
         {[
           { label: 'HeyGen API Key', note: isVi ? 'Khách tự cung cấp qua setup-wizard' : 'Customer provides via setup-wizard' },
           { label: 'Resend API Key', note: isVi ? 'Cùng cách — tùy chọn' : 'Same — optional' },
           { label: 'NOWPayments', note: isVi ? 'Dùng default platform HOẶC khách cung cấp' : 'Platform default OR customer provides' },
         ].map((item) => (
           <div key={item.label} className="flex items-start justify-between gap-2">
-            <span className="text-sm text-zinc-300">{item.label}</span>
-            <span className="text-xs text-zinc-500 text-right max-w-[60%]">{item.note}</span>
+            <span className="text-sm text-muted-foreground-300">{item.label}</span>
+            <span className="text-xs text-muted-foreground-500 text-right max-w-[60%]">{item.note}</span>
           </div>
         ))}
       </div>
       <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
         <h3 className="text-sm font-semibold text-blue-300 mb-2">{isVi ? 'Tóm tắt bàn giao' : 'Handover Summary'}</h3>
-        <div className="space-y-1 text-sm text-zinc-300">
-          <p><span className="text-zinc-500">{isVi ? 'Agency:' : 'Agency:'}</span> {form.agencyName}</p>
-          <p><span className="text-zinc-500">Email:</span> {form.ownerEmail}</p>
-          <p><span className="text-zinc-500">{isVi ? 'Gói:' : 'Tier:'}</span> {form.tier}</p>
-          <p><span className="text-zinc-500">SOPs:</span> {selectedSops.length} {isVi ? 'đã chọn' : 'selected'}</p>
-          <p><span className="text-zinc-500">{isVi ? 'Ngôn ngữ:' : 'Locale:'}</span> {form.locale}</p>
+        <div className="space-y-1 text-sm text-muted-foreground-300">
+          <p><span className="text-muted-foreground-500">{isVi ? 'Agency:' : 'Agency:'}</span> {form.agencyName}</p>
+          <p><span className="text-muted-foreground-500">Email:</span> {form.ownerEmail}</p>
+          <p><span className="text-muted-foreground-500">{isVi ? 'Gói:' : 'Tier:'}</span> {form.tier}</p>
+          <p><span className="text-muted-foreground-500">SOPs:</span> {selectedSops.length} {isVi ? 'đã chọn' : 'selected'}</p>
+          <p><span className="text-muted-foreground-500">{isVi ? 'Ngôn ngữ:' : 'Locale:'}</span> {form.locale}</p>
         </div>
       </div>
     </div>

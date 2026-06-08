@@ -144,10 +144,10 @@ export default async function HelpIndexPage({ params }: Props) {
   return (
     <div className="max-w-5xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-100">
+        <h1 className="text-2xl font-bold text-muted-foreground-100">
           {isVi ? 'Trung tâm trợ giúp' : 'Help Center'}
         </h1>
-        <p className="text-sm text-zinc-400 mt-1">
+        <p className="text-sm text-muted-foreground-400 mt-1">
           {isVi
             ? 'Tự tra cứu trước khi liên hệ — phần lớn câu hỏi đã có sẵn câu trả lời ở đây.'
             : 'Self-serve first — most questions are already answered here.'}
@@ -157,10 +157,10 @@ export default async function HelpIndexPage({ params }: Props) {
       {/* Video library — above FAQ/resources */}
       <section className="space-y-4" id="videos">
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-violet-300">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-primary-300">
             {isVi ? 'Thư viện video hướng dẫn' : 'Tutorial video library'}
           </h2>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-muted-foreground-500 mt-1">
             {isVi
               ? 'Nhà sáng lập đang ghi hình từng video. Video sắp ra mắt sẽ xuất hiện tại đây.'
               : 'The founder is recording each video. Coming-soon videos will appear here as they go live.'}
@@ -169,8 +169,8 @@ export default async function HelpIndexPage({ params }: Props) {
         {helpVideos.length > 0 ? (
           <HelpVideosLibrary videos={helpVideos} locale={locale} />
         ) : (
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-6 text-center">
-            <p className="text-sm text-zinc-400">
+          <div className="rounded-xl border border-border-800 bg-muted-900/40 p-6 text-center">
+            <p className="text-sm text-muted-foreground-400">
               {isVi ? 'Video đang được chuẩn bị. Quay lại sau!' : 'Videos are being prepared. Check back soon!'}
             </p>
           </div>
@@ -178,7 +178,7 @@ export default async function HelpIndexPage({ params }: Props) {
       </section>
 
       <section className="space-y-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-violet-300">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-primary-300">
           {isVi ? 'Bắt đầu nhanh' : 'Quick start'}
         </h2>
         <div className="grid sm:grid-cols-3 gap-3">
@@ -188,15 +188,15 @@ export default async function HelpIndexPage({ params }: Props) {
               <a
                 key={q.href}
                 href={q.href}
-                className="group p-4 rounded-xl border border-zinc-800 bg-gradient-to-br from-violet-950/30 to-zinc-900/50 hover:border-violet-500/60 hover:from-violet-900/40 transition-colors"
+                className="group p-4 rounded-xl border border-border-800 bg-gradient-to-br from-violet-950/30 to-zinc-900/50 hover:border-primary-500/60 hover:from-violet-900/40 transition-colors"
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <Icon className="w-5 h-5 text-violet-300" aria-hidden="true" />
-                  <span className="text-[10px] uppercase tracking-wider text-violet-300/80">
+                  <Icon className="w-5 h-5 text-primary-300" aria-hidden="true" />
+                  <span className="text-[10px] uppercase tracking-wider text-primary-300/80">
                     {q.eta}
                   </span>
                 </div>
-                <p className="text-sm font-medium text-zinc-100 group-hover:text-white">
+                <p className="text-sm font-medium text-muted-foreground-100 group-hover:text-white">
                   {q.title}
                 </p>
               </a>
@@ -212,24 +212,24 @@ export default async function HelpIndexPage({ params }: Props) {
             <a
               key={r.href}
               href={r.href}
-              className="group p-5 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-violet-500/50 hover:bg-zinc-900 transition-colors"
+              className="group p-5 rounded-xl border border-border-800 bg-muted-900/50 hover:border-primary-500/50 hover:bg-muted-900 transition-colors"
             >
               <div className="flex items-start gap-3">
                 <div className="shrink-0 mt-0.5">
-                  <Icon className="w-5 h-5 text-violet-400" aria-hidden="true" />
+                  <Icon className="w-5 h-5 text-primary-400" aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex items-center gap-2">
-                    <h2 className="text-sm font-semibold text-zinc-200 group-hover:text-white">
+                    <h2 className="text-sm font-semibold text-muted-foreground-200 group-hover:text-white">
                       {r.title}
                     </h2>
                     {r.badge && (
-                      <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-violet-500/20 border border-violet-500/40 text-violet-300">
+                      <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary-500/20 border border-primary-500/40 text-primary-300">
                         {r.badge}
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-zinc-400 leading-relaxed">{r.desc}</p>
+                  <p className="text-xs text-muted-foreground-400 leading-relaxed">{r.desc}</p>
                 </div>
               </div>
             </a>
@@ -241,7 +241,7 @@ export default async function HelpIndexPage({ params }: Props) {
         <h3 className="text-sm font-semibold text-amber-300">
           {isVi ? 'Vẫn cần hỗ trợ trực tiếp?' : 'Still need direct help?'}
         </h3>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted-foreground-400">
           {isVi
             ? 'Nếu không tìm được câu trả lời, gửi email tới: '
             : 'If you cannot find an answer, email: '}
@@ -252,7 +252,7 @@ export default async function HelpIndexPage({ params }: Props) {
             support@mekongmind.com
           </a>
         </p>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted-foreground-500">
           {isVi
             ? 'Thời gian phản hồi: trong vòng 1 giờ làm việc.'
             : 'Response time: within 1 business hour.'}

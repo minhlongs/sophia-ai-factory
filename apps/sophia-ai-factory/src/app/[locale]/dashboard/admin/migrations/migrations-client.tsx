@@ -103,7 +103,7 @@ export function MigrationsClient({ locale }: Props) {
   }
 
   if (loading && !data) {
-    return <p className="text-sm text-zinc-500">{isVi ? 'Đang tải...' : 'Loading...'}</p>
+    return <p className="text-sm text-muted-foreground-500">{isVi ? 'Đang tải...' : 'Loading...'}</p>
   }
 
   if (data?.error) {
@@ -118,15 +118,15 @@ export function MigrationsClient({ locale }: Props) {
     <div className="space-y-6">
       {/* Stats */}
       <div className="flex gap-4 text-sm">
-        <span className="text-zinc-400">
-          {isVi ? 'Tổng cộng:' : 'Total:'} <strong className="text-zinc-100">{data?.total ?? 0}</strong>
+        <span className="text-muted-foreground-400">
+          {isVi ? 'Tổng cộng:' : 'Total:'} <strong className="text-muted-foreground-100">{data?.total ?? 0}</strong>
         </span>
-        <span className="text-zinc-400">
+        <span className="text-muted-foreground-400">
           {isVi ? 'Chờ áp dụng:' : 'Pending:'} <strong className="text-yellow-400">{data?.pending ?? 0}</strong>
         </span>
         <button
           onClick={load}
-          className="ml-auto text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="ml-auto text-xs text-muted-foreground-500 hover:text-muted-foreground-300 transition-colors"
         >
           {isVi ? 'Tải lại' : 'Refresh'}
         </button>
@@ -139,16 +139,16 @@ export function MigrationsClient({ locale }: Props) {
             {isVi ? 'Chưa áp dụng' : 'Pending'}
           </h2>
           {pending.map((m) => (
-            <div key={m.filename} className="rounded-xl border border-yellow-900/50 bg-zinc-900/50 p-4 space-y-3">
+            <div key={m.filename} className="rounded-xl border border-yellow-900/50 bg-muted-900/50 p-4 space-y-3">
               <div className="flex items-start justify-between gap-2">
-                <span className="text-sm font-mono text-zinc-200 break-all">{m.filename}</span>
-                <span className="text-xs text-zinc-600 font-mono shrink-0">{m.sha256.slice(0, 8)}</span>
+                <span className="text-sm font-mono text-muted-foreground-200 break-all">{m.filename}</span>
+                <span className="text-xs text-muted-foreground-600 font-mono shrink-0">{m.sha256.slice(0, 8)}</span>
               </div>
 
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => copySQL(m)}
-                  className="px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-white text-xs rounded-lg font-medium transition-colors"
+                  className="px-3 py-1.5 bg-muted-700 hover:bg-muted-600 text-white text-xs rounded-lg font-medium transition-colors"
                 >
                   {copyFeedback === m.filename
                     ? (isVi ? 'Đã sao chép!' : 'Copied!')
@@ -172,7 +172,7 @@ export function MigrationsClient({ locale }: Props) {
                   value={notes[m.filename] ?? ''}
                   onChange={(e) => setNotes((prev) => ({ ...prev, [m.filename]: e.target.value }))}
                   placeholder={isVi ? 'Ghi chú (tùy chọn)' : 'Notes (optional)'}
-                  className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                  className="flex-1 bg-muted-800 border border-border-700 rounded-lg px-3 py-1.5 text-xs text-muted-foreground-100 placeholder:text-muted-foreground-600 focus:outline-none focus:ring-1 focus:ring-violet-500"
                 />
                 <button
                   onClick={() => {
@@ -183,7 +183,7 @@ export function MigrationsClient({ locale }: Props) {
                   }}
                   disabled={markingFile === m.filename}
                   aria-label={isVi ? `Đánh dấu migration ${m.filename} đã áp dụng` : `Mark migration ${m.filename} as applied`}
-                  className="px-3 py-1.5 bg-violet-700 hover:bg-violet-600 disabled:opacity-50 text-white text-xs rounded-lg font-medium transition-colors shrink-0"
+                  className="px-3 py-1.5 bg-primary-700 hover:bg-primary-600 disabled:opacity-50 text-white text-xs rounded-lg font-medium transition-colors shrink-0"
                 >
                   {markingFile === m.filename ? (isVi ? 'Đang xử lý…' : 'Applying…') : (isVi ? 'Đánh dấu đã áp dụng' : 'Mark Applied')}
                 </button>
@@ -196,12 +196,12 @@ export function MigrationsClient({ locale }: Props) {
       {/* Applied migrations */}
       {applied.length > 0 && (
         <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-zinc-500">
+          <h2 className="text-sm font-semibold text-muted-foreground-500">
             {isVi ? 'Đã áp dụng' : 'Applied'}
           </h2>
           {applied.map((m) => (
-            <div key={m.filename} className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-3 flex items-center justify-between gap-2">
-              <span className="text-xs font-mono text-zinc-400 break-all">{m.filename}</span>
+            <div key={m.filename} className="rounded-lg border border-border-800 bg-muted-900/30 p-3 flex items-center justify-between gap-2">
+              <span className="text-xs font-mono text-muted-foreground-400 break-all">{m.filename}</span>
               <span className="text-xs text-emerald-500 shrink-0">
                 {isVi ? 'Đã áp dụng' : 'Applied'}
                 {m.applied_at ? ` — ${new Date(m.applied_at * 1000).toLocaleDateString()}` : ''}

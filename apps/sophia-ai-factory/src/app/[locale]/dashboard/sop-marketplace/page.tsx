@@ -64,7 +64,7 @@ export default async function MarketplacePage({ params }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Store className="w-6 h-6 text-violet-400" aria-hidden="true" />
+        <Store className="w-6 h-6 text-primary-400" aria-hidden="true" />
         <div>
           <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{t('subtitle')}</p>
@@ -73,18 +73,18 @@ export default async function MarketplacePage({ params }: Props) {
       </div>
 
       {isFirstTime && (
-        <div className="rounded-xl border border-violet-500/30 bg-violet-950/20 p-4 flex items-start gap-3">
-          <Sparkles className="w-5 h-5 text-violet-300 shrink-0 mt-0.5" aria-hidden="true" />
+        <div className="rounded-xl border border-primary-500/30 bg-primary-950/20 p-4 flex items-start gap-3">
+          <Sparkles className="w-5 h-5 text-primary-300 shrink-0 mt-0.5" aria-hidden="true" />
           <div className="flex-1 space-y-1">
-            <h2 className="text-sm font-semibold text-violet-100">
+            <h2 className="text-sm font-semibold text-primary-100">
               {t('firstTimeTitle')}
             </h2>
-            <p className="text-xs text-zinc-300 leading-relaxed">
+            <p className="text-xs text-muted-foreground-300 leading-relaxed">
               {t('firstTimeDesc')}
             </p>
             <Link
               href="/dashboard/help/faq"
-              className="inline-block mt-1 text-xs text-violet-300 hover:text-violet-200 underline"
+              className="inline-block mt-1 text-xs text-primary-300 hover:text-primary-200 underline"
             >
               {t('firstTimeFaq')}
             </Link>
@@ -104,7 +104,7 @@ export default async function MarketplacePage({ params }: Props) {
       {/* Community SOPs section */}
       <section className="space-y-4">
         <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-violet-400" aria-hidden="true" />
+          <Users className="w-5 h-5 text-primary-400" aria-hidden="true" />
           <div>
             <h2 className="text-lg font-semibold text-foreground">{tCommunity('title')}</h2>
             <p className="text-xs text-muted-foreground">{tCommunity('subtitle')}</p>
@@ -112,7 +112,7 @@ export default async function MarketplacePage({ params }: Props) {
         </div>
 
         {listings.length === 0 ? (
-          <p className="text-sm text-zinc-500 py-4">{tCommunity('noListings')}</p>
+          <p className="text-sm text-muted-foreground-500 py-4">{tCommunity('noListings')}</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {listings.map(listing => (

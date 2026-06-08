@@ -340,7 +340,7 @@ export default async function SopHelpPage({ params }: Props) {
         </Link>
         <div className="flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500/20 to-cyan-500/20 ring-1 ring-violet-500/30">
-            <BookOpen className="w-6 h-6 text-violet-400" />
+            <BookOpen className="w-6 h-6 text-primary-400" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">{pageTitle}</h1>
@@ -370,7 +370,7 @@ export default async function SopHelpPage({ params }: Props) {
       {sections.map((section) => (
         <section key={section.id} id={section.id} className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-violet-500/10 text-violet-400">
+            <div className="p-2 rounded-lg bg-primary-500/10 text-primary-400">
               {section.icon}
             </div>
             <h2 className="text-lg font-semibold text-foreground">{section.title}</h2>
@@ -393,7 +393,7 @@ export default async function SopHelpPage({ params }: Props) {
                   {step.link && (
                     <Link
                       href={step.link}
-                      className="inline-flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                      className="inline-flex items-center gap-1 text-xs text-primary-400 hover:text-primary-300 transition-colors"
                     >
                       {step.linkLabel} <ArrowRight className="w-3 h-3" />
                     </Link>
@@ -404,9 +404,9 @@ export default async function SopHelpPage({ params }: Props) {
           </div>
 
           {section.tip && (
-            <div className="flex gap-3 rounded-lg bg-cyan-500/5 border border-cyan-500/20 p-3">
-              <AlertCircle className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-              <p className="text-xs text-cyan-300/80 leading-relaxed">
+            <div className="flex gap-3 rounded-lg bg-accent-500/5 border border-accent-500/20 p-3">
+              <AlertCircle className="w-4 h-4 text-accent-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-accent-300/80 leading-relaxed">
                 <span className="font-semibold">Tip:</span> {section.tip}
               </p>
             </div>

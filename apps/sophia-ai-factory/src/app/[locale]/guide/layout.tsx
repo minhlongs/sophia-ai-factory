@@ -111,7 +111,7 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
             {/* Back link */}
             <Link
               href="/dashboard"
-              className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-cyan-400 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-accent-400 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" aria-hidden="true" />
               {t("guide.back_to_dashboard")}
@@ -137,11 +137,11 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
                         className={cn(
                           "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
                           active
-                            ? "bg-violet-500/10 text-violet-300 border border-violet-500/30 shadow-[0_0_10px_0px_rgba(139,92,246,0.15)]"
+                            ? "bg-primary-500/10 text-primary-300 border border-primary-500/30 shadow-[0_0_10px_0px_rgba(139,92,246,0.15)]"
                             : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
                         )}
                       >
-                        <link.icon className={cn("w-4 h-4 shrink-0", active ? "text-violet-400" : "")} aria-hidden="true" />
+                        <link.icon className={cn("w-4 h-4 shrink-0", active ? "text-primary-400" : "")} aria-hidden="true" />
                         {t(`guide.sidebar.${link.labelKey}`)}
                       </Link>
                     );

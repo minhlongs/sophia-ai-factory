@@ -96,18 +96,18 @@ export function ProviderCredentialsStep({
           <p className="text-sm font-semibold text-sky-300">
             🔗 Connect HeyGen Webhook (Optional but Recommended) / Kết nối HeyGen Webhook (Khuyến nghị)
           </p>
-          <ol className="text-xs text-zinc-400 space-y-1.5 list-none">
-            <li>1. Open HeyGen → <span className="text-zinc-300">app.heygen.com</span> → Account → API → Webhooks</li>
+          <ol className="text-xs text-muted-foreground-400 space-y-1.5 list-none">
+            <li>1. Open HeyGen → <span className="text-muted-foreground-300">app.heygen.com</span> → Account → API → Webhooks</li>
             <li>2. Add this URL / Thêm URL này:</li>
             <li>
               <span className="flex items-center gap-2">
-                <code className="flex-1 bg-zinc-900 text-emerald-400 rounded px-2 py-1 text-xs font-mono select-all">
+                <code className="flex-1 bg-muted-900 text-emerald-400 rounded px-2 py-1 text-xs font-mono select-all">
                   https://sophia.agencyos.network/api/webhooks/heygen
                 </code>
                 <button
                   type="button"
                   onClick={() => navigator.clipboard.writeText('https://sophia.agencyos.network/api/webhooks/heygen')}
-                  className="shrink-0 text-xs px-2 py-1 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 rounded transition-colors"
+                  className="shrink-0 text-xs px-2 py-1 bg-muted-700 hover:bg-muted-600 text-muted-foreground-200 rounded transition-colors"
                 >
                   Copy
                 </button>
@@ -155,7 +155,7 @@ export function ProviderCredentialsStep({
       {/* NOWPayments — optional */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+          <span className="text-xs font-bold uppercase tracking-wider bg-muted-100 text-foreground px-2 py-0.5 rounded">
             Advanced / Nâng cao
           </span>
         </div>

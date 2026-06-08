@@ -72,7 +72,7 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center justify-center w-6 h-6 rounded-full text-muted-foreground hover:text-violet-300 hover:bg-violet-500/10 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500"
+        className="inline-flex items-center justify-center w-6 h-6 rounded-full text-muted-foreground hover:text-primary-300 hover:bg-primary-500/10 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500"
         aria-label={
           isVi
             ? `Trợ giúp cho ${pageLabel ?? "trang này"}`
@@ -107,7 +107,7 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
 
             {/* Header */}
             <div className="flex items-center gap-2 pr-8">
-              <HelpCircle className="w-5 h-5 text-violet-400 shrink-0" aria-hidden="true" />
+              <HelpCircle className="w-5 h-5 text-primary-400 shrink-0" aria-hidden="true" />
               <h2 className="text-sm font-semibold text-foreground">
                 {isVi ? "Hướng dẫn nhanh" : "Quick guide"}
               </h2>
@@ -118,12 +118,12 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
 
             {/* Video link */}
             {hasVideo && (
-              <div className="rounded-xl border border-violet-800/40 bg-violet-950/20 p-4 flex items-start gap-3">
-                <div className="shrink-0 w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center">
-                  <Play className="w-4 h-4 text-violet-400" aria-hidden="true" />
+              <div className="rounded-xl border border-primary-800/40 bg-primary-950/20 p-4 flex items-start gap-3">
+                <div className="shrink-0 w-8 h-8 rounded-full bg-primary-500/20 flex items-center justify-center">
+                  <Play className="w-4 h-4 text-primary-400" aria-hidden="true" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-violet-300 mb-1">
+                  <p className="text-xs font-medium text-primary-300 mb-1">
                     {isVi ? "Video hướng dẫn" : "Tutorial video"}
                   </p>
                   {videoTitle && (
@@ -132,7 +132,7 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
                   {isPublished ? (
                     <a
                       href={`/dashboard/help#video-${content.videoSlug}`}
-                      className="inline-flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 hover:underline"
+                      className="inline-flex items-center gap-1 text-xs text-primary-400 hover:text-primary-300 hover:underline"
                       onClick={() => setOpen(false)}
                     >
                       {isVi ? "Xem video" : "Watch video"}
@@ -150,7 +150,7 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
             {/* Footer link */}
             <Link
               href="/dashboard/help"
-              className="block text-xs text-center text-muted-foreground hover:text-violet-400 transition-colors"
+              className="block text-xs text-center text-muted-foreground hover:text-primary-400 transition-colors"
               onClick={() => setOpen(false)}
             >
               {isVi ? "Trung tâm trợ giúp" : "Help Center"}

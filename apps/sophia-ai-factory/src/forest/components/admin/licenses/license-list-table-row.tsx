@@ -33,7 +33,7 @@ const TIER_COLORS: Record<string, string> = {
 const STATUS_COLORS: Record<string, string> = {
   active: 'bg-green-500/10 text-green-400 border-green-500/30',
   revoked: 'bg-red-500/10 text-red-400 border-red-500/30',
-  expired: 'bg-gray-500/10 text-gray-400 border-gray-500/30',
+  expired: 'bg-muted text-muted-foreground border-border',
 };
 
 interface LicenseRowData {

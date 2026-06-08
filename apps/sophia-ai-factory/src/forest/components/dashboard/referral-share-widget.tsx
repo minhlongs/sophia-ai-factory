@@ -36,7 +36,7 @@ export function ReferralShareWidget() {
   return (
     <div className="bg-card border border-border rounded-xl p-5 space-y-3">
       <div className="flex items-center gap-2">
-        <Share2 className="w-5 h-5 text-violet-400" aria-hidden="true" />
+        <Share2 className="w-5 h-5 text-primary-400" aria-hidden="true" />
         <h3 className="font-semibold text-foreground">Giới Thiệu Bạn Bè</h3>
       </div>
       <p className="text-sm text-muted-foreground">

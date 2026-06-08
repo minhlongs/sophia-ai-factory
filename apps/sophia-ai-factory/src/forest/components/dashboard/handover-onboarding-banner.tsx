@@ -81,10 +81,10 @@ export function HandoverOnboardingBanner({ userId, locale }: Props) {
   const remaining = totalSteps - completedSteps;
 
   return (
-    <div className="rounded-xl border border-violet-500/30 bg-gradient-to-r from-violet-900/20 to-blue-900/20 backdrop-blur-sm p-4 flex items-center gap-4">
+    <div className="rounded-xl border border-primary/30 bg-gradient-to-r from-primary/20 to-blue-900/20 backdrop-blur-sm p-4 flex items-center gap-4">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-sm font-semibold text-violet-300">
+          <span className="text-sm font-semibold text-primary/80">
             {isVi ? 'Chào mừng đến Sophia!' : 'Welcome to Sophia!'}
           </span>
           <span className="text-xs text-muted-foreground">
@@ -93,7 +93,7 @@ export function HandoverOnboardingBanner({ userId, locale }: Props) {
         </div>
         <div className="h-1.5 rounded-full bg-muted mb-2">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-violet-500 to-blue-500 transition-all"
+            className="h-full rounded-full bg-gradient-to-r from-primary to-blue-500 transition-all"
             style={{ width: `${progressPct}%` }}
           />
         </div>
@@ -106,7 +106,7 @@ export function HandoverOnboardingBanner({ userId, locale }: Props) {
 
       <a
         href={`/${locale}/welcome`}
-        className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors"
+        className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-primary/80 text-white text-sm font-medium transition-colors"
       >
         {isVi ? 'Xem hướng dẫn' : 'View Guide'}
         <ChevronRight size={14} />

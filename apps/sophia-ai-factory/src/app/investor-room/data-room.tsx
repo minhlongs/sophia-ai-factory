@@ -99,7 +99,7 @@ export default function DataRoom() {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-8 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-800 px-6 py-8 text-white shadow-lg">
         <h1 className="text-3xl font-bold tracking-tight">Investor Data Room</h1>
-        <p className="mt-2 text-slate-300">
+        <p className="mt-2 text-muted-foreground-300">
           Restricted access — all documents are confidential and intended for qualified investors only.
           Downloading implies acceptance of our NDA terms.
         </p>
@@ -110,10 +110,10 @@ export default function DataRoom() {
           placeholder="Search documents…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none"
+          className="w-full rounded-lg border border-border-300 bg-white px-4 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none"
         />
       </div>
-      <div className="mb-6 flex flex-wrap gap-2 border-b border-slate-200 pb-2">
+      <div className="mb-6 flex flex-wrap gap-2 border-b border-border-200 pb-2">
         {visibleTabs.map((tab) => (
           <button
             key={tab.key}
@@ -121,7 +121,7 @@ export default function DataRoom() {
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === tab.key
                 ? "bg-blue-600 text-white"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                : "bg-muted-100 text-muted-foreground-700 hover:bg-muted-200"
             }`}
           >
             <span className="mr-1">{tab.icon}</span>

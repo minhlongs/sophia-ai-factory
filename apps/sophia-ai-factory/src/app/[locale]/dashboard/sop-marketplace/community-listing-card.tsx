@@ -61,15 +61,15 @@ export function CommunityListingCard({
   }
 
   return (
-    <div className="rounded-xl border border-zinc-700/60 bg-zinc-900/60 p-4 flex flex-col gap-3 hover:border-violet-500/40 transition-colors">
+    <div className="rounded-xl border border-border bg-muted/60 p-4 flex flex-col gap-3 hover:border-primary/40 transition-colors">
       <div className="flex items-start justify-between gap-2">
-        <h3 className="text-sm font-semibold text-zinc-100 leading-snug">{displayName}</h3>
+        <h3 className="text-sm font-semibold text-foreground leading-snug">{displayName}</h3>
         <span className="shrink-0 text-xs font-bold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded-full">
           ${priceUsd}
         </span>
       </div>
 
-      <div className="flex items-center gap-1 text-xs text-zinc-500">
+      <div className="flex items-center gap-1 text-xs text-muted-foreground">
         {creatorLabel && (
           <>
             <User className="w-3 h-3" aria-hidden="true" />
@@ -77,7 +77,7 @@ export function CommunityListingCard({
           </>
         )}
         {listing.total_sales > 0 && (
-          <span className="ml-auto text-zinc-600">{listing.total_sales} sales</span>
+          <span className="ml-auto text-muted-foreground">{listing.total_sales} sales</span>
         )}
       </div>
 
@@ -94,7 +94,7 @@ export function CommunityListingCard({
         <button
           onClick={handleBuy}
           disabled={pending}
-          className="mt-auto flex items-center justify-center gap-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 text-xs font-semibold text-white transition-colors"
+          className="mt-auto flex items-center justify-center gap-1.5 rounded-lg bg-primary hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 text-xs font-semibold text-white transition-colors"
         >
           <ShoppingCart className="w-3.5 h-3.5" aria-hidden="true" />
           {pending ? '...' : `${buyLabel} $${priceUsd}`}

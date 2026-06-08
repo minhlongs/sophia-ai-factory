@@ -77,8 +77,8 @@ export default async function CreatorDashboardPage({ params }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-500/20">
-            <Palette className="w-5 h-5 text-violet-400" aria-hidden="true" />
+          <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-500/20">
+            <Palette className="w-5 h-5 text-primary-400" aria-hidden="true" />
           </div>
           <div>
             <h1 className="text-xl font-semibold text-white">{t('title')}</h1>
@@ -87,7 +87,7 @@ export default async function CreatorDashboardPage({ params }: Props) {
         </div>
         <Link
           href="/dashboard/sop-creator/new"
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-sm font-medium text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-sm font-medium text-white transition-colors"
         >
           <Plus className="w-4 h-4" aria-hidden="true" />
           {t('newSop')}
@@ -97,7 +97,7 @@ export default async function CreatorDashboardPage({ params }: Props) {
       {/* Earnings summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: t('totalEarned'), value: formatUsd(earnings.totalEarned), icon: DollarSign, color: 'text-violet-400' },
+          { label: t('totalEarned'), value: formatUsd(earnings.totalEarned), icon: DollarSign, color: 'text-primary-400' },
           { label: t('pending'), value: formatUsd(earnings.pending), icon: TrendingUp, color: 'text-yellow-400' },
           { label: t('payable'), value: formatUsd(earnings.payable), icon: TrendingUp, color: 'text-green-400' },
           { label: t('paid'), value: formatUsd(earnings.paid), icon: DollarSign, color: 'text-white/60' },
@@ -126,7 +126,7 @@ export default async function CreatorDashboardPage({ params }: Props) {
             <p className="text-xs text-white/30 mt-1 mb-4">{t('noSopsDesc')}</p>
             <Link
               href="/dashboard/sop-creator/new"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-sm font-medium text-white transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-sm font-medium text-white transition-colors"
             >
               <Plus className="w-4 h-4" aria-hidden="true" />
               {t('createFirst')}
@@ -152,7 +152,7 @@ export default async function CreatorDashboardPage({ params }: Props) {
                       <td className="px-5 py-3">
                         <Link
                           href={`/dashboard/sop-creator/${tpl.id}`}
-                          className="font-medium text-white hover:text-violet-300 transition-colors"
+                          className="font-medium text-white hover:text-primary-300 transition-colors"
                         >
                           {tpl.name_en}
                         </Link>

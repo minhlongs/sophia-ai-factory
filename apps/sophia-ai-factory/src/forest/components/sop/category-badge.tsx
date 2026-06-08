@@ -25,7 +25,7 @@ const CATEGORY_COLORS: Record<Category, string> = {
   content:   'bg-primary/10 text-primary border-primary',
   leads:     'bg-emerald-500/10 text-emerald-400 border-emerald-500',
   email:     'bg-blue-500/10 text-blue-400 border-blue-500',
-  analytics: 'bg-cyan-500/10 text-cyan-400 border-cyan-500',
+  analytics: 'bg-accent/10 text-accent border-accent',
   proposals: 'bg-amber-500/10 text-amber-400 border-amber-500',
   crisis:    'bg-rose-500/10 text-rose-400 border-rose-500',
   sales:     'bg-emerald-500/10 text-emerald-400 border-emerald-500',

@@ -21,13 +21,13 @@ const dashboardFeatures: GuideFeatureItem[] = [
     icon: LayoutDashboard,
     title: "Dashboard Tổng Quan",
     description: "Xem nhanh tổng số video, chiến dịch đang chạy, và tỷ lệ hoàn thành. URL: /dashboard",
-    iconColor: "text-violet-400",
+    iconColor: "text-primary-400",
   },
   {
     icon: PlusCircle,
     title: "Tạo Chiến Dịch",
     description: "Tạo video mới bằng cách chọn mẫu, nhập nội dung và giọng nói. URL: /dashboard/create",
-    iconColor: "text-cyan-400",
+    iconColor: "text-accent-400",
   },
   {
     icon: ListVideo,
@@ -97,7 +97,7 @@ export default function ScreensGuidePage() {
       {/* Page index */}
       <div>
         <h2 className="text-xl font-bold text-foreground mb-4 flex items-center gap-2">
-          <Search className="w-5 h-5 text-cyan-400" aria-hidden="true" />
+          <Search className="w-5 h-5 text-accent-400" aria-hidden="true" />
           Bản Đồ Trang
         </h2>
         <div className="border border-border/40 rounded-xl overflow-hidden">
@@ -128,8 +128,8 @@ export default function ScreensGuidePage() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {[
             { name: "Starter", price: "$199/tháng", limit: "10 chiến dịch/tháng", color: "border-border/40" },
-            { name: "Growth", price: "$399/tháng", limit: "50 chiến dịch/tháng", color: "border-violet-500/40" },
-            { name: "Premium", price: "$799/tháng", limit: "Không giới hạn", color: "border-cyan-500/40" },
+            { name: "Growth", price: "$399/tháng", limit: "50 chiến dịch/tháng", color: "border-primary-500/40" },
+            { name: "Premium", price: "$799/tháng", limit: "Không giới hạn", color: "border-accent-500/40" },
             { name: "Master", price: "$4,999 (trọn đời)", limit: "Không giới hạn", color: "border-amber-500/40" },
           ].map((tier) => (
             <div key={tier.name} className={`bg-card/50 border ${tier.color} rounded-xl p-4`}>

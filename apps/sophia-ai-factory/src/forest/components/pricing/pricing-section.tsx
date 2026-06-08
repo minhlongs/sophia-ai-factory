@@ -224,7 +224,7 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
             Thanh toán qua ngân hàng nội địa Việt Nam — QR code + chuyển khoản
           </p>
         ) : (
-          <p className="mt-2 text-center text-xs text-violet-400/70">
+          <p className="mt-2 text-center text-xs text-primary-400/70">
             Secure, global checkout using NOWPayments USDT & Crypto Gateway
           </p>
         )}

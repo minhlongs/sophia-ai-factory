@@ -53,8 +53,8 @@ export default async function OrdersPage({ params }: OrdersPageProps) {
             <ShoppingBag className="w-5 h-5 text-orange-600 dark:text-orange-400" aria-hidden="true" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{t('title')}</h2>
-            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{t('desc')}</p>
+            <h2 className="text-base font-semibold text-muted-foreground-900 dark:text-slate-100">{t('title')}</h2>
+            <p className="text-sm text-muted-foreground-600 dark:text-slate-400 mt-1">{t('desc')}</p>
           </div>
           <Link
             href="/pricing"

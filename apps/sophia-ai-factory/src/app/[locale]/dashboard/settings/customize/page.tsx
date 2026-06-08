@@ -21,8 +21,8 @@ export default async function CustomizeSettingsPage() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-gray-900">Customize</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-xl font-semibold text-foreground">Customize</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Manage per-tenant settings — branding, scoring weights, geo rules, cron schedules, and more.
         </p>
       </div>

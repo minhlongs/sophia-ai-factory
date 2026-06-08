@@ -49,7 +49,7 @@ const StatusBadge = ({ status }: { status: ServiceHealth['status'] }) => {
       );
     default:
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted-100 dark:bg-gray-800 text-foreground dark:text-muted-foreground">
           <AlertCircle className="w-3.5 h-3.5" aria-hidden="true" />
           Unknown
         </span>

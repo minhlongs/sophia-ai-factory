@@ -22,10 +22,10 @@ export default async function HandoverListPage({ params }: Props) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-100">
+          <h1 className="text-2xl font-bold text-muted-foreground-100">
             {isVi ? 'Theo Dõi Bàn Giao' : 'Handover Tracking'}
           </h1>
-          <p className="text-sm text-zinc-400 mt-1">
+          <p className="text-sm text-muted-foreground-400 mt-1">
             {isVi
               ? 'Theo dõi hành trình kích hoạt của từng khách hàng.'
               : 'Track activation journey for every customer.'}
@@ -33,7 +33,7 @@ export default async function HandoverListPage({ params }: Props) {
         </div>
         <a
           href={`/${locale}/dashboard/admin/handover`}
-          className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors"
+          className="px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-sm font-medium transition-colors"
         >
           {isVi ? '+ Bàn giao mới' : '+ New Handover'}
         </a>

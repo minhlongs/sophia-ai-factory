@@ -92,8 +92,8 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
       <div className="absolute inset-0 bg-gradient-to-br from-violet-900/20 via-blue-900/10 to-transparent pointer-events-none" />
       <div className="relative max-w-md w-full">
         <div className="bg-card/80 backdrop-blur border border-border rounded-2xl shadow-xl p-8">
-          <div className="flex items-center justify-center w-14 h-14 mx-auto mb-4 rounded-2xl bg-violet-600/20 border border-violet-500/30">
-            <Gift size={26} className="text-violet-300" />
+          <div className="flex items-center justify-center w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary-600/20 border border-primary-500/30">
+            <Gift size={26} className="text-primary-300" />
           </div>
           <h1 className="text-2xl font-bold text-white text-center mb-2">
             {isVi ? 'Kích Hoạt Mã Quà Tặng' : 'Redeem Promo Code'}
@@ -113,7 +113,7 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
                 placeholder="FREE100"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground font-mono uppercase tracking-wider focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground font-mono uppercase tracking-wider focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-violet-500"
                 maxLength={30}
               />
             </Field>
@@ -126,7 +126,7 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
                 placeholder="ban@congty.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-violet-500"
                 maxLength={200}
               />
             </Field>
@@ -138,7 +138,7 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
                 placeholder={isVi ? 'Anh/chị Nguyễn Văn A' : 'Your name'}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-violet-500"
                 maxLength={100}
               />
             </Field>

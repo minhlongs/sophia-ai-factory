@@ -174,9 +174,9 @@ export default function TemplatesPage() {
             <Link
               key={item.href}
               href={item.href}
-              className="group bg-card/50 border border-border/40 rounded-xl p-4 hover:border-violet-500/40 hover:bg-violet-500/5 transition-colors"
+              className="group bg-card/50 border border-border/40 rounded-xl p-4 hover:border-primary-500/40 hover:bg-primary-500/5 transition-colors"
             >
-              <div className="text-sm font-medium text-foreground group-hover:text-violet-300 transition-colors flex items-center gap-1.5">
+              <div className="text-sm font-medium text-foreground group-hover:text-primary-300 transition-colors flex items-center gap-1.5">
                 {item.label}
                 <ArrowRight
                   className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity"

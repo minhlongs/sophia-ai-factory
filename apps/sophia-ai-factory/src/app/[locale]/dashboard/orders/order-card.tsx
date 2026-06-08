@@ -79,12 +79,12 @@ export function OrderCard({ purchaseId, initialOrder, locale }: OrderCardProps) 
   )
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
+    <div className="bg-muted-900 border border-border-800 rounded-xl p-5 space-y-4">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h3 className="text-base font-semibold text-zinc-100">{skuLabel(order.sku)}</h3>
-          <p className="text-xs text-zinc-500 mt-0.5">{order.purchaseId.slice(0, 12)}…</p>
+          <h3 className="text-base font-semibold text-muted-foreground-100">{skuLabel(order.sku)}</h3>
+          <p className="text-xs text-muted-foreground-500 mt-0.5">{order.purchaseId.slice(0, 12)}…</p>
         </div>
         <span className="text-xs font-medium px-2 py-1 rounded-full bg-green-900 text-green-300">
           {creditsLabel(order.creditsRemaining, isVi)}

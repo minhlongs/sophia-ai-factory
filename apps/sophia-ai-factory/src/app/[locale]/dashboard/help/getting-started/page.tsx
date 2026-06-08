@@ -78,10 +78,10 @@ export default async function GettingStartedPage({ params }: Props) {
   return (
     <div className="max-w-2xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-100">
+        <h1 className="text-2xl font-bold text-muted-foreground-100">
           {isVi ? 'Hướng Dẫn Bắt Đầu' : 'Getting Started Guide'}
         </h1>
-        <p className="text-sm text-zinc-400 mt-1">
+        <p className="text-sm text-muted-foreground-400 mt-1">
           {isVi
             ? 'Làm theo 4 bước đơn giản để tạo video AI đầu tiên của bạn với Sophia AI.'
             : 'Follow these 4 simple steps to create your first AI video with Sophia AI.'}
@@ -92,17 +92,17 @@ export default async function GettingStartedPage({ params }: Props) {
         {steps.map((step, i) => (
           <div
             key={i}
-            className="flex gap-4 p-5 rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-zinc-700 transition-colors"
+            className="flex gap-4 p-5 rounded-xl border border-border-800 bg-muted-900/50 hover:border-border-700 transition-colors"
           >
             <div className="shrink-0 mt-0.5">
-              <CheckCircle className="w-5 h-5 text-violet-400" aria-hidden="true" />
+              <CheckCircle className="w-5 h-5 text-primary-400" aria-hidden="true" />
             </div>
             <div className="space-y-1">
-              <h2 className="text-sm font-semibold text-zinc-200">{step.title}</h2>
-              <p className="text-sm text-zinc-400">{step.desc}</p>
+              <h2 className="text-sm font-semibold text-muted-foreground-200">{step.title}</h2>
+              <p className="text-sm text-muted-foreground-400">{step.desc}</p>
               <a
                 href={step.link}
-                className="inline-block mt-2 text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-violet-300 rounded-lg transition-colors"
+                className="inline-block mt-2 text-xs px-3 py-1.5 bg-muted-800 hover:bg-muted-700 text-primary-300 rounded-lg transition-colors"
               >
                 {step.linkLabel} →
               </a>
@@ -115,7 +115,7 @@ export default async function GettingStartedPage({ params }: Props) {
         <h3 className="text-sm font-semibold text-amber-300">
           {isVi ? 'Cần hỗ trợ?' : 'Need Help?'}
         </h3>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted-foreground-400">
           {isVi
             ? 'Liên hệ đội ngũ hỗ trợ qua email: '
             : 'Contact our support team via email: '}

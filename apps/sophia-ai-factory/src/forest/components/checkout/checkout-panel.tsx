@@ -257,14 +257,14 @@ export function CheckoutPanel({
                     className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-muted/30 py-2.5 text-xs font-semibold hover:bg-muted/50 transition disabled:opacity-50"
                   >
                     {checking ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-violet-400" />
+                      <Loader2 className="h-4 w-4 animate-spin text-primary-400" />
                     ) : (
                       paymentStatus === "completed" ? (
                         <ShieldCheck className="h-4 w-4 text-emerald-400" />
                       ) : paymentStatus === "failed" ? (
                         <ShieldAlert className="h-4 w-4 text-rose-400" />
                       ) : (
-                        <Globe className="h-4 w-4 text-cyan-400" />
+                        <Globe className="h-4 w-4 text-accent-400" />
                       )
                     )}
                     {checking
@@ -279,7 +279,7 @@ export function CheckoutPanel({
               </>
             ) : (
               <div className="flex flex-col items-center justify-center h-full space-y-2 py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
                 <p className="text-xs text-muted-foreground">
                   {isVi ? "Đang khởi tạo cổng thanh toán..." : "Initializing gateway..."}
                 </p>

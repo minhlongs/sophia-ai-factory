@@ -11,14 +11,14 @@ const RAAS_FEATURES = [
   {
     key: "proposal",
     icon: FileText,
-    colorClass: "text-violet-400",
-    bgClass: "bg-violet-500/10 border-violet-500/20",
+    colorClass: "text-primary-400",
+    bgClass: "bg-primary-500/10 border-primary-500/20",
   },
   {
     key: "lead",
     icon: Users,
-    colorClass: "text-cyan-400",
-    bgClass: "bg-cyan-500/10 border-cyan-500/20",
+    colorClass: "text-accent-400",
+    bgClass: "bg-accent-500/10 border-accent-500/20",
   },
   {
     key: "email",
@@ -40,8 +40,8 @@ export function RaaSShowcase() {
   return (
     <section id="raas" className="py-20 md:py-32 relative overflow-hidden">
       {/* Background glow — violet theme to distinguish from features section */}
-      <div className="absolute top-1/2 left-1/4 w-[600px] h-[600px] bg-violet-600 opacity-[0.08] blur-[140px] rounded-full -z-10" />
-      <div className="absolute bottom-0 right-1/3 w-[400px] h-[400px] bg-cyan-500 opacity-[0.08] blur-[100px] rounded-full -z-10" />
+      <div className="absolute top-1/2 left-1/4 w-[600px] h-[600px] bg-primary-600 opacity-[0.08] blur-[140px] rounded-full -z-10" />
+      <div className="absolute bottom-0 right-1/3 w-[400px] h-[400px] bg-accent-500 opacity-[0.08] blur-[100px] rounded-full -z-10" />
       {/* Top border accent */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
 
@@ -49,7 +49,7 @@ export function RaaSShowcase() {
         {/* Badge — shown FIRST to signal this is a distinct product */}
         <FadeInView duration={400}>
           <div className="flex justify-center mb-8">
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-violet-400 bg-violet-500/10 rounded-full border border-violet-500/20">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary-400 bg-primary-500/10 rounded-full border border-primary-500/20">
               <Zap className="w-3.5 h-3.5" aria-hidden="true" />
               {t("badge")}
             </span>

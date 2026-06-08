@@ -37,16 +37,16 @@ export default async function OpsPage({ params }: OpsPageProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-start gap-3">
-        <Activity className="w-6 h-6 text-violet-400 mt-1 shrink-0" aria-hidden="true" />
+        <Activity className="w-6 h-6 text-primary-400 mt-1 shrink-0" aria-hidden="true" />
         <div>
-          <h1 className="text-2xl font-bold text-zinc-100">{title}</h1>
-          <p className="text-sm text-zinc-400 mt-1">{subtitle}</p>
+          <h1 className="text-2xl font-bold text-muted-foreground-100">{title}</h1>
+          <p className="text-sm text-muted-foreground-400 mt-1">{subtitle}</p>
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-1">
-        <div className="rounded-lg bg-zinc-950/60 p-4">
-          <p className="text-xs text-zinc-500 mb-4">
+      <div className="rounded-xl border border-border-800 bg-muted-900/50 p-1">
+        <div className="rounded-lg bg-muted-950/60 p-4">
+          <p className="text-xs text-muted-foreground-500 mb-4">
             {isVi
               ? 'Dữ liệu tự động làm mới mỗi 30 giây. Chỉ hiển thị cho admin.'
               : 'Auto-refreshes every 30 seconds. Visible to admins only.'}
@@ -55,8 +55,8 @@ export default async function OpsPage({ params }: OpsPageProps) {
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 p-4 space-y-2">
-        <h2 className="text-sm font-semibold text-zinc-300">
+      <div className="rounded-xl border border-border-800 p-4 space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground-300">
           {isVi ? 'Hành động nhanh' : 'Quick Actions'}
         </h2>
         <div className="flex flex-wrap gap-2">
@@ -64,14 +64,14 @@ export default async function OpsPage({ params }: OpsPageProps) {
           <a
             href="/api/admin/circuit-breaker/reset"
             data-method="POST"
-            className="text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition-colors"
+            className="text-xs px-3 py-1.5 bg-muted-800 hover:bg-muted-700 text-muted-foreground-300 rounded-lg transition-colors"
           >
             {isVi ? 'Reset Circuit Breaker' : 'Reset Circuit Breaker'}
           </a>
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- API endpoint, not navigation; admin shortcut. Refactor to <button onClick={fetch}> tracked separately. */}
           <a
             href="/api/admin/run-synthetic-fulfillment"
-            className="text-xs px-3 py-1.5 bg-violet-900/50 hover:bg-violet-800/60 text-violet-300 rounded-lg transition-colors"
+            className="text-xs px-3 py-1.5 bg-primary-900/50 hover:bg-primary-800/60 text-primary-300 rounded-lg transition-colors"
           >
             {isVi ? 'Chạy kiểm tra tổng hợp' : 'Run Synthetic E2E'}
           </a>

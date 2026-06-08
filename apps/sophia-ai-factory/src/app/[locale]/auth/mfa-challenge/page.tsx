@@ -59,8 +59,8 @@ export default function MfaChallengePage() {
       <div className="w-full max-w-md space-y-8">
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-violet-500/10 flex items-center justify-center">
-            <ShieldCheck aria-hidden="true" className="w-7 h-7 text-violet-400" />
+          <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-primary-500/10 flex items-center justify-center">
+            <ShieldCheck aria-hidden="true" className="w-7 h-7 text-primary-400" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
             {t("title")}
@@ -128,7 +128,7 @@ export default function MfaChallengePage() {
                 setCode("");
                 setError(null);
               }}
-              className="text-sm text-violet-400 hover:text-violet-300 transition-colors focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none rounded"
+              className="text-sm text-primary-400 hover:text-primary-300 transition-colors focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none rounded"
             >
               {useBackup ? t("use_totp") : t("use_backup")}
             </button>
