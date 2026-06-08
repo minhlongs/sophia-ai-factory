@@ -123,7 +123,7 @@ export function BrandAssetsTab({ tier }: BrandAssetsTabProps) {
           {kit?.logo_r2_key ? (
             <div className="flex items-center justify-between">
               <BrandAssetCard type="logo" label={t('logo')} value={kit.logo_r2_key} />
-              <Button variant="ghost" size="icon" onClick={() => handleRemove('logo')}>
+              <Button variant="ghost" size="icon" onClick={() => handleRemove('logo')} aria-label="Remove logo">
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>
@@ -197,7 +197,7 @@ export function BrandAssetsTab({ tier }: BrandAssetsTabProps) {
           {kit?.font_r2_key ? (
             <div className="flex items-center justify-between">
               <BrandAssetCard type="font" label={t('font')} value={kit.font_r2_key} />
-              <Button variant="ghost" size="icon" onClick={() => handleRemove('font')}>
+              <Button variant="ghost" size="icon" onClick={() => handleRemove('font')} aria-label="Remove font">
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>
