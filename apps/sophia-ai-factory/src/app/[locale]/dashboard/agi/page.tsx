@@ -42,7 +42,7 @@ export default async function AgiHubPage() {
     },
     {
       href: "/dashboard/agi/agents",
-      icon: <Bot className="w-6 h-6 text-violet-400" aria-hidden="true" />,
+      icon: <Bot className="w-6 h-6 text-primary-400" aria-hidden="true" />,
       title: t("agents_title"),
       description: t("agents_description"),
       comingSoon: false,

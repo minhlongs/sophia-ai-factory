@@ -24,10 +24,10 @@ export default async function GoLiveChecklistPage({ params }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-100">
+        <h1 className="text-2xl font-bold text-muted-foreground-100">
           {isVi ? 'Checklist Ra Mắt' : 'Go-Live Checklist'}
         </h1>
-        <p className="text-sm text-zinc-400 mt-1">
+        <p className="text-sm text-muted-foreground-400 mt-1">
           {isVi
             ? 'Kiểm tra sức khoẻ hệ thống trước khi ra mắt chính thức.'
             : 'Verify system health before official launch.'}

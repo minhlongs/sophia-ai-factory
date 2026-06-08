@@ -22,8 +22,8 @@ const USE_CASES = [
   {
     href: "/guide/use-cases/ceo-marketing",
     icon: TrendingUp,
-    iconColor: "text-violet-400",
-    iconBg: "bg-violet-500/10",
+    iconColor: "text-primary-400",
+    iconBg: "bg-primary-500/10",
     gradientFrom: "from-violet-500/20",
     gradientTo: "to-violet-500/5",
     title: "CEO Video Marketing",
@@ -35,8 +35,8 @@ const USE_CASES = [
   {
     href: "/guide/use-cases/ecommerce",
     icon: ShoppingBag,
-    iconColor: "text-cyan-400",
-    iconBg: "bg-cyan-500/10",
+    iconColor: "text-accent-400",
+    iconBg: "bg-accent-500/10",
     gradientFrom: "from-cyan-500/20",
     gradientTo: "to-cyan-500/5",
     title: "E-commerce Product Videos",

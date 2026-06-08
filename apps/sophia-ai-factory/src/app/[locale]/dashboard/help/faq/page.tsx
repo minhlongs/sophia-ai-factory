@@ -216,10 +216,10 @@ export default async function FAQPage({ params }: Props) {
   return (
     <div className="max-w-3xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-100">
+        <h1 className="text-2xl font-bold text-muted-foreground-100">
           {isVi ? 'Câu hỏi thường gặp' : 'Frequently Asked Questions'}
         </h1>
-        <p className="text-sm text-zinc-400 mt-1">
+        <p className="text-sm text-muted-foreground-400 mt-1">
           {isVi
             ? 'Tổng hợp 15 câu hỏi phổ biến nhất từ partner.'
             : 'The 15 most common partner questions.'}
@@ -228,30 +228,30 @@ export default async function FAQPage({ params }: Props) {
 
       {sections.map((section) => (
         <section key={section.heading} className="space-y-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-violet-300">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-primary-300">
             {section.heading}
           </h2>
           <div className="space-y-3">
             {section.items.map((item, i) => (
               <details
                 key={i}
-                className="group rounded-xl border border-zinc-800 bg-zinc-900/50 hover:border-zinc-700 transition-colors"
+                className="group rounded-xl border border-border-800 bg-muted-900/50 hover:border-border-700 transition-colors"
               >
                 <summary className="flex items-start gap-3 p-4 cursor-pointer list-none">
                   <HelpCircle
-                    className="w-4 h-4 text-violet-400 shrink-0 mt-0.5"
+                    className="w-4 h-4 text-primary-400 shrink-0 mt-0.5"
                     aria-hidden="true"
                   />
-                  <span className="text-sm font-medium text-zinc-200 group-open:text-white">
+                  <span className="text-sm font-medium text-muted-foreground-200 group-open:text-white">
                     {item.q}
                   </span>
                 </summary>
                 <div className="px-4 pb-4 pl-11 space-y-2">
-                  <p className="text-sm text-zinc-400 leading-relaxed">{item.a}</p>
+                  <p className="text-sm text-muted-foreground-400 leading-relaxed">{item.a}</p>
                   {item.link && (
                     <a
                       href={item.link.href}
-                      className="inline-block mt-2 text-xs px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-violet-300 rounded-lg transition-colors"
+                      className="inline-block mt-2 text-xs px-3 py-1.5 bg-muted-800 hover:bg-muted-700 text-primary-300 rounded-lg transition-colors"
                     >
                       {item.link.label} →
                     </a>
@@ -263,21 +263,21 @@ export default async function FAQPage({ params }: Props) {
         </section>
       ))}
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 text-center">
-        <p className="text-sm text-zinc-400">
+      <div className="rounded-xl border border-border-800 bg-muted-900/30 p-4 text-center">
+        <p className="text-sm text-muted-foreground-400">
           {isVi
             ? 'Không thấy câu trả lời? Vào '
             : "Don't see your question? Visit "}
           <Link
             href="/dashboard/help/troubleshooting"
-            className="text-violet-400 hover:underline"
+            className="text-primary-400 hover:underline"
           >
             {isVi ? 'Khắc phục sự cố' : 'Troubleshooting'}
           </Link>
           {isVi ? ' hoặc email ' : ' or email '}
           <a
             href="mailto:support@mekongmind.com"
-            className="text-violet-400 hover:underline"
+            className="text-primary-400 hover:underline"
           >
             support@mekongmind.com
           </a>

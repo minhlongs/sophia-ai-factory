@@ -115,7 +115,7 @@ export function useReauth() {
       <DialogContent className="max-w-sm bg-background border-border text-white">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-white">
-            <ShieldCheck className="w-5 h-5 text-cyan-400" />
+            <ShieldCheck className="w-5 h-5 text-accent-400" />
             Confirm Your Identity
           </DialogTitle>
           <DialogDescription className="text-muted-foreground">
@@ -161,7 +161,7 @@ export function useReauth() {
             <button
               type="submit"
               disabled={state.loading}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 disabled:opacity-50 text-background font-medium rounded-md transition text-sm"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-accent-500 hover:bg-accent-400 disabled:opacity-50 text-background font-medium rounded-md transition text-sm"
             >
               {state.loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {state.loading ? "Verifying…" : "Confirm"}

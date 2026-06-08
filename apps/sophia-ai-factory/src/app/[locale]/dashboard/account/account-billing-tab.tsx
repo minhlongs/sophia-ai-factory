@@ -58,7 +58,7 @@ export function AccountBillingTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('tab_billing')}</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground-900 dark:text-slate-100">{t('tab_billing')}</h2>
         <Select value={filter} onValueChange={v => setFilter(v)}>
           <SelectTrigger className="w-36 cursor-pointer">
             <SelectValue />
@@ -72,34 +72,34 @@ export function AccountBillingTab() {
       </div>
 
       {loading ? (
-        <div className="py-10 text-center text-sm text-slate-500">Loading…</div>
+        <div className="py-10 text-center text-sm text-muted-foreground-500">Loading…</div>
       ) : purchases.length === 0 ? (
-        <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">{t('billing_empty')}</div>
+        <div className="py-10 text-center text-sm text-muted-foreground-500 dark:text-slate-400">{t('billing_empty')}</div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700/50">
+        <div className="overflow-x-auto rounded-xl border border-border-200 dark:border-slate-700/50">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 dark:bg-slate-800/40">
+            <thead className="bg-muted-50 dark:bg-slate-800/40">
               <tr>
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-600 dark:text-slate-400">{t('billing_date')}</th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-600 dark:text-slate-400">{t('billing_desc')}</th>
-                <th className="px-4 py-2.5 text-right text-xs font-medium text-slate-600 dark:text-slate-400">{t('billing_amount')}</th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium text-slate-600 dark:text-slate-400">{t('billing_status')}</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground-600 dark:text-slate-400">{t('billing_date')}</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground-600 dark:text-slate-400">{t('billing_desc')}</th>
+                <th className="px-4 py-2.5 text-right text-xs font-medium text-muted-foreground-600 dark:text-slate-400">{t('billing_amount')}</th>
+                <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground-600 dark:text-slate-400">{t('billing_status')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
               {purchases.map(p => (
-                <tr key={p.id} className="bg-white dark:bg-transparent hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors duration-150">
-                  <td className="px-4 py-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                <tr key={p.id} className="bg-white dark:bg-transparent hover:bg-muted-50/50 dark:hover:bg-muted-800/20 transition-colors duration-150">
+                  <td className="px-4 py-3 text-muted-foreground-700 dark:text-slate-300 whitespace-nowrap">
                     {new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(p.created_at * 1000))}
                   </td>
-                  <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                    {p.sku} <span className="text-xs text-slate-500">({p.kind})</span>
+                  <td className="px-4 py-3 text-muted-foreground-700 dark:text-slate-300">
+                    {p.sku} <span className="text-xs text-muted-foreground-500">({p.kind})</span>
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-slate-900 dark:text-slate-100 whitespace-nowrap">
+                  <td className="px-4 py-3 text-right font-medium text-muted-foreground-900 dark:text-slate-100 whitespace-nowrap">
                     {formatAmount(p.amount_cents)}
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`capitalize text-xs font-medium ${STATUS_COLOR[p.status] ?? 'text-slate-500'}`}>
+                    <span className={`capitalize text-xs font-medium ${STATUS_COLOR[p.status] ?? 'text-muted-foreground-500'}`}>
                       {p.status}
                     </span>
                   </td>

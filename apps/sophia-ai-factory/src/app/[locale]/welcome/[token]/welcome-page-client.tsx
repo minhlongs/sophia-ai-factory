@@ -83,7 +83,7 @@ export function WelcomePageClient({ token, locale }: Props) {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 aria-hidden="true" size={32} className="animate-spin text-violet-400" />
+        <Loader2 aria-hidden="true" size={32} className="animate-spin text-primary-400" />
         <span className="sr-only">Loading…</span>
       </div>
     );
@@ -101,7 +101,7 @@ export function WelcomePageClient({ token, locale }: Props) {
       <div className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-900/20 via-blue-900/10 to-transparent pointer-events-none" />
         <div className="max-w-2xl mx-auto px-6 pt-16 pb-10 text-center relative">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-violet-500/20 border border-violet-500/40 text-violet-300 text-xs mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-500/20 border border-primary-500/40 text-primary-300 text-xs mb-6">
             <Video aria-hidden="true" size={12} />
             {t('tierActivated', { tier: data.tier })}
           </div>
@@ -236,7 +236,7 @@ function InvalidLinkView({
           </p>
           <a
             href={`/${locale}`}
-            className="inline-block px-6 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 transition-colors"
+            className="inline-block px-6 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-500 transition-colors"
           >
             {t('invalid.backHome')}
           </a>
@@ -266,7 +266,7 @@ function InvalidLinkView({
               {t('invalid.resendPrompt')}
             </p>
             <form onSubmit={handleResend} className="space-y-3">
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-background border border-border focus-within:border-violet-500 focus-within:ring-2 focus-within:ring-violet-500/40">
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-background border border-border focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-violet-500/40">
                 <Mail aria-hidden="true" size={16} className="text-muted-foreground flex-shrink-0" />
                 <input
                   type="email"
@@ -289,7 +289,7 @@ function InvalidLinkView({
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full px-4 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none"
+                className="w-full px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none"
               >
                 {submitting ? <Loader2 aria-hidden="true" size={16} className="animate-spin" /> : null}
                 {t('invalid.submit')}

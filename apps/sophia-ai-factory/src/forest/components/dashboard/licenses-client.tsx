@@ -219,7 +219,7 @@ function ActionBtn({ icon: Icon, label, onClick, busy }: {
 
 function getTierColor(tier: string): string {
   switch (tier) {
-    case 'MASTER': return 'bg-violet-500/10 text-violet-400 border border-violet-500/20';
+    case 'MASTER': return 'bg-primary/10 text-primary border border-primary/20';
     case 'ENTERPRISE': return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
     case 'PREMIUM': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
     default: return 'bg-muted text-muted-foreground';

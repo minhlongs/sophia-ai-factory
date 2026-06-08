@@ -45,7 +45,7 @@ export default async function TelegramGuidePage({ params }: { params: Promise<{ 
   ];
 
   const mono = (chunks: React.ReactNode) => (
-    <span className="font-mono text-cyan-400 text-xs">{chunks}</span>
+    <span className="font-mono text-accent-400 text-xs">{chunks}</span>
   );
   const strong = (chunks: React.ReactNode) => (
     <strong className="text-foreground">{chunks}</strong>
@@ -107,7 +107,7 @@ export default async function TelegramGuidePage({ params }: { params: Promise<{ 
         </div>
         {commandTable.map((row) => (
           <div key={row.cmd} className="grid grid-cols-[auto_1fr] px-5 py-3 text-sm border-b border-border/30 last:border-0 hover:bg-muted/20 transition-colors gap-6 items-center">
-            <span className="font-mono text-cyan-400 text-xs bg-cyan-500/10 px-2 py-0.5 rounded border border-cyan-500/20 whitespace-nowrap">{row.cmd}</span>
+            <span className="font-mono text-accent-400 text-xs bg-accent-500/10 px-2 py-0.5 rounded border border-accent-500/20 whitespace-nowrap">{row.cmd}</span>
             <span className="text-muted-foreground">{row.desc}</span>
           </div>
         ))}
@@ -127,7 +127,7 @@ export default async function TelegramGuidePage({ params }: { params: Promise<{ 
           <div>{t.rich("supportLine1", { mono })}</div>
           <div>{t.rich("supportLine2", { mono })}</div>
           <div>
-            {t("supportSeeAlso")} → <Link href="/guide/faq" className="text-cyan-400 hover:underline">{t("supportFaqLink")}</Link>
+            {t("supportSeeAlso")} → <Link href="/guide/faq" className="text-accent-400 hover:underline">{t("supportFaqLink")}</Link>
           </div>
         </div>
       </div>

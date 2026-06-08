@@ -250,7 +250,7 @@ export function AdminBillingClient({
       {/* Dunning Search */}
       <section className="rounded-xl border border-border bg-card p-5 space-y-4">
         <h2 className="text-sm font-medium flex items-center gap-2">
-          <Shield className="w-4 h-4 text-violet-400" />
+          <Shield className="w-4 h-4 text-primary-400" />
           Dunning Management
         </h2>
         <div className="flex gap-2">
@@ -268,7 +268,7 @@ export function AdminBillingClient({
           <button
             onClick={searchDunning}
             disabled={dunningLoading}
-            className="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm hover:bg-violet-500 transition-colors disabled:opacity-50"
+            className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm hover:bg-primary-500 transition-colors disabled:opacity-50"
           >
             {dunningLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />

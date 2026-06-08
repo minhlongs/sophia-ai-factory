@@ -41,7 +41,7 @@ function RoiEstimator() {
     <Card className="bg-muted/10 border-border/50 backdrop-blur-md">
       <CardHeader>
         <CardTitle className="text-lg text-foreground font-semibold flex items-center gap-2">
-          <Coins className="h-5 w-5 text-violet-400" />
+          <Coins className="h-5 w-5 text-primary-400" />
           ROI Estimator & Cost Calculator
         </CardTitle>
       </CardHeader>
@@ -61,7 +61,7 @@ function RoiEstimator() {
               max="100"
               value={videoCount}
               onChange={(e) => setVideoCount(Number(e.target.value))}
-              className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-violet-500"
+              className="w-full h-1.5 bg-muted-800 rounded-lg appearance-none cursor-pointer accent-violet-500"
             />
           </div>
 
@@ -70,13 +70,13 @@ function RoiEstimator() {
               Traditional Cost / Video
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-2 text-sm text-zinc-500">$</span>
+              <span className="absolute left-3 top-2 text-sm text-muted-foreground-500">$</span>
               <input
                 type="number"
                 min="1"
                 value={traditionalCost}
                 onChange={(e) => setTraditionalCost(Math.max(1, Number(e.target.value)))}
-                className="w-full bg-zinc-950 border border-border/50 rounded-lg py-1.5 pl-7 pr-3 text-sm text-foreground focus:outline-none focus:border-violet-500/50 font-medium"
+                className="w-full bg-muted-950 border border-border/50 rounded-lg py-1.5 pl-7 pr-3 text-sm text-foreground focus:outline-none focus:border-primary-500/50 font-medium"
               />
             </div>
           </div>
@@ -90,24 +90,24 @@ function RoiEstimator() {
               min="1"
               value={creditsPerVideo}
               onChange={(e) => setCreditsPerVideo(Math.max(1, Number(e.target.value)))}
-              className="w-full bg-zinc-950 border border-border/50 rounded-lg py-1.5 px-3 text-sm text-foreground focus:outline-none focus:border-violet-500/50 font-medium"
+              className="w-full bg-muted-950 border border-border/50 rounded-lg py-1.5 px-3 text-sm text-foreground focus:outline-none focus:border-primary-500/50 font-medium"
             />
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-3 bg-zinc-950/40 p-4 rounded-xl border border-border/10">
+        <div className="grid gap-4 sm:grid-cols-3 bg-muted-950/40 p-4 rounded-xl border border-border/10">
           <div className="space-y-1">
             <span className="text-xs text-muted-foreground">Traditional Cost</span>
-            <div className="text-lg font-bold text-zinc-400">
+            <div className="text-lg font-bold text-muted-foreground-400">
               ${traditionalTotal.toLocaleString()}
             </div>
           </div>
 
           <div className="space-y-1 border-t sm:border-t-0 sm:border-l border-border/10 sm:pl-4 pt-2 sm:pt-0">
             <span className="text-xs text-muted-foreground">Sophia AI Cost</span>
-            <div className="text-lg font-bold text-violet-400">
+            <div className="text-lg font-bold text-primary-400">
               ${sophiaTotal.toFixed(2)}
-              <span className="text-[10px] text-zinc-500 font-normal ml-1">
+              <span className="text-[10px] text-muted-foreground-500 font-normal ml-1">
                 ({videoCount * creditsPerVideo} credits)
               </span>
             </div>

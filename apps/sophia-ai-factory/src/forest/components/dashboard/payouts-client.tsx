@@ -447,7 +447,7 @@ function StatPill({
   color: 'violet' | 'emerald' | 'amber';
 }): React.JSX.Element {
   const colors: Record<string, string> = {
-    violet: 'text-violet-400 bg-violet-500/10 border-violet-500/20',
+    violet: 'text-primary-400 bg-primary-500/10 border-primary-500/20',
     emerald: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
     amber: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
   };

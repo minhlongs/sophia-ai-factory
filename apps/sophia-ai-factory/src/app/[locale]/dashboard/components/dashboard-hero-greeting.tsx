@@ -24,8 +24,8 @@ export async function DashboardHeroGreeting({ name, tier }: DashboardHeroGreetin
         <User2 className="w-5 h-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
       </div>
       <div>
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">{greeting}</h1>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+        <h1 className="text-xl font-bold text-muted-foreground-900 dark:text-slate-100">{greeting}</h1>
+        <p className="text-sm text-muted-foreground-600 dark:text-slate-400 mt-0.5">
           {tier} plan
         </p>
       </div>

@@ -71,7 +71,7 @@ function RequestForm({ t }: { t: TFn }) {
           <p className="text-xs text-muted-foreground/70">{t("spam_note")}</p>
           <Link
             href="/login"
-            className="inline-flex items-center gap-1.5 text-sm text-violet-400 hover:text-violet-300 transition-colors"
+            className="inline-flex items-center gap-1.5 text-sm text-primary-400 hover:text-primary-300 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" aria-hidden="true" />
             {t("back_to_login")}
@@ -232,7 +232,7 @@ function ConfirmForm({
             <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
             {error}
             {error === t("error_token_expired") && (
-              <Link href="/reset-password" className="ml-1 underline text-violet-400 hover:text-violet-300">
+              <Link href="/reset-password" className="ml-1 underline text-primary-400 hover:text-primary-300">
                 {t("request_new_link")}
               </Link>
             )}

@@ -63,7 +63,7 @@ export function RefundRequestForm({ purchaseId, locale }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm text-zinc-300 mb-1">
+        <label className="block text-sm text-muted-foreground-300 mb-1">
           {isVi ? 'Lý do yêu cầu hoàn tiền *' : 'Reason for refund *'}
         </label>
         <textarea
@@ -74,12 +74,12 @@ export function RefundRequestForm({ purchaseId, locale }: Props) {
           onChange={(e) => setReason(e.target.value)}
           rows={4}
           placeholder={isVi ? 'Mô tả lý do bạn muốn hoàn tiền...' : 'Describe why you need a refund...'}
-          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
+          className="w-full bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
         />
       </div>
 
       <div>
-        <label className="block text-sm text-zinc-300 mb-1">
+        <label className="block text-sm text-muted-foreground-300 mb-1">
           {isVi ? 'Địa chỉ ví TRC20 (USDT) *' : 'TRC20 wallet address (USDT) *'}
         </label>
         <input
@@ -90,7 +90,7 @@ export function RefundRequestForm({ purchaseId, locale }: Props) {
           value={wallet}
           onChange={(e) => setWallet(e.target.value)}
           placeholder={isVi ? 'TRC20 địa chỉ ví của bạn...' : 'Your TRC20 wallet address...'}
-          className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono"
+          className="w-full bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono"
         />
       </div>
 
@@ -101,7 +101,7 @@ export function RefundRequestForm({ purchaseId, locale }: Props) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-2.5 bg-violet-700 hover:bg-violet-600 disabled:opacity-50 text-white rounded-lg text-sm font-semibold transition-colors"
+        className="w-full py-2.5 bg-primary-700 hover:bg-primary-600 disabled:opacity-50 text-white rounded-lg text-sm font-semibold transition-colors"
       >
         {loading
           ? (isVi ? 'Đang gửi...' : 'Submitting...')

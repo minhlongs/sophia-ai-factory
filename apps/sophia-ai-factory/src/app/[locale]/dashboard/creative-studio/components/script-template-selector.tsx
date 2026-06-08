@@ -163,7 +163,7 @@ export function ScriptTemplateSelector({
         {/* Search + category filters */}
         <div className="flex flex-col gap-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground-500" />
             <input
               type="text"
               value={searchQuery}
@@ -181,8 +181,8 @@ export function ScriptTemplateSelector({
                 onClick={() => setActiveCategory(cat.key)}
                 className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                   activeCategory === cat.key
-                    ? 'bg-violet-600 text-white'
-                    : 'bg-white/5 text-zinc-400 hover:bg-white/10 border border-white/10'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-white/5 text-muted-foreground-400 hover:bg-white/10 border border-white/10'
                 }`}
               >
                 {activeCategory === cat.key && <Filter className="h-3 w-3" />}
@@ -195,7 +195,7 @@ export function ScriptTemplateSelector({
         {/* Template cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[420px] overflow-y-auto pr-1">
           {filtered.length === 0 ? (
-            <div className="col-span-full py-8 text-center text-zinc-500 text-sm">
+            <div className="col-span-full py-8 text-center text-muted-foreground-500 text-sm">
               {isVi ? 'Khong tim thay mau phu hop' : 'No matching templates'}
             </div>
           ) : (
@@ -208,36 +208,36 @@ export function ScriptTemplateSelector({
                   onClick={() => handleSelect(tmpl)}
                   className={`text-left rounded-xl border p-4 transition-all group ${
                     isSelected
-                      ? 'border-violet-500/60 bg-violet-500/10 shadow-lg shadow-violet-500/10'
-                      : 'border-white/10 bg-zinc-900/30 hover:border-white/20 hover:bg-zinc-900/50'
+                      ? 'border-primary-500/60 bg-primary-500/10 shadow-lg shadow-violet-500/10'
+                      : 'border-white/10 bg-muted-900/30 hover:border-white/20 hover:bg-muted-900/50'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{tmpl.icon}</span>
                       <div>
-                        <p className={`text-sm font-semibold ${isSelected ? 'text-violet-200' : 'text-zinc-200'}`}>
+                        <p className={`text-sm font-semibold ${isSelected ? 'text-primary-200' : 'text-muted-foreground-200'}`}>
                           {tmpl.name}
                         </p>
-                        <p className="text-[11px] text-zinc-500 mt-0.5 line-clamp-2">
+                        <p className="text-[11px] text-muted-foreground-500 mt-0.5 line-clamp-2">
                           {tmpl.description}
                         </p>
                       </div>
                     </div>
                     {isSelected && (
-                      <CheckCircle2 className="h-4 w-4 text-violet-400 flex-shrink-0 mt-0.5" />
+                      <CheckCircle2 className="h-4 w-4 text-primary-400 flex-shrink-0 mt-0.5" />
                     )}
                   </div>
 
                   {/* Meta pills */}
                   <div className="flex flex-wrap items-center gap-2 mt-3">
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-zinc-500 border border-white/5">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground-500 border border-white/5">
                       {isVi ? (CATEGORY_LABELS[tmpl.category]?.vi ?? tmpl.category) : (CATEGORY_LABELS[tmpl.category]?.en ?? tmpl.category)}
                     </span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-zinc-500 border border-white/5 font-mono">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground-500 border border-white/5 font-mono">
                       ~{tmpl.defaults.suggestedDuration}s
                     </span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-zinc-500 border border-white/5">
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground-500 border border-white/5">
                       {isVi ? 'Tu:' : 'Tone:'} {tmpl.defaults.tone}
                     </span>
                   </div>
@@ -249,9 +249,9 @@ export function ScriptTemplateSelector({
       </div>
 
       {/* ── Topic & brand inputs ──────────────────────────────── */}
-      <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-zinc-900/30 p-4 space-y-4">
+      <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-muted-900/30 p-4 space-y-4">
         <div>
-          <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+          <label className="block text-xs font-medium text-muted-foreground-400 mb-1.5">
             {isVi ? 'Chu de / Topic' : 'Topic'} <span className="text-red-400">*</span>
           </label>
           <input
@@ -269,7 +269,7 @@ export function ScriptTemplateSelector({
             }
             className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
           />
-          <p className="text-[10px] text-zinc-600 mt-1">
+          <p className="text-[10px] text-muted-foreground-600 mt-1">
             {isVi
               ? `Dien vao mau: ${selectedTemplate?.defaults.audience ?? ''}`
               : `Target: ${selectedTemplate?.defaults.audience ?? ''}`}
@@ -277,7 +277,7 @@ export function ScriptTemplateSelector({
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-zinc-400 mb-1.5">
+          <label className="block text-xs font-medium text-muted-foreground-400 mb-1.5">
             {isVi ? 'Ten thuong hieu' : 'Brand Name'}
           </label>
           <input
@@ -293,7 +293,7 @@ export function ScriptTemplateSelector({
         <button
           type="button"
           onClick={() => setShowAdvanced((v) => !v)}
-          className="inline-flex items-center gap-1 text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors"
+          className="inline-flex items-center gap-1 text-[11px] text-muted-foreground-500 hover:text-muted-foreground-300 transition-colors"
         >
           <Sparkles className="h-3 w-3" />
           {isVi ? 'Tuy chon nang cao' : 'Advanced options'}
@@ -307,7 +307,7 @@ export function ScriptTemplateSelector({
         {showAdvanced && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 animate-in fade-in duration-200">
             <div>
-              <label className="block text-[11px] font-medium text-zinc-500 mb-1">
+              <label className="block text-[11px] font-medium text-muted-foreground-500 mb-1">
                 {isVi ? 'Thoi luong (giay)' : 'Duration (sec)'}
               </label>
               <input
@@ -321,7 +321,7 @@ export function ScriptTemplateSelector({
               />
             </div>
             <div>
-              <label className="block text-[11px] font-medium text-zinc-500 mb-1">
+              <label className="block text-[11px] font-medium text-muted-foreground-500 mb-1">
                 {isVi ? 'Tong giong' : 'Tone'}
               </label>
               <input
@@ -333,7 +333,7 @@ export function ScriptTemplateSelector({
               />
             </div>
             <div>
-              <label className="block text-[11px] font-medium text-zinc-500 mb-1">
+              <label className="block text-[11px] font-medium text-muted-foreground-500 mb-1">
                 {isVi ? 'Ngon ngu' : 'Language'}
               </label>
               <select

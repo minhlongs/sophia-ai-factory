@@ -157,7 +157,7 @@ export default async function PaymentSuccessPage({
             </h1>
 
             {viaPromo && promoCode && (
-              <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-mono font-semibold text-violet-300">
+              <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-primary-500/30 bg-primary-500/10 px-3 py-1 text-xs font-mono font-semibold text-primary-300">
                 {promoCode}
               </div>
             )}
@@ -226,7 +226,7 @@ export default async function PaymentSuccessPage({
               {sp.via && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{isVi ? "Phương thức" : "Method"}:</span>
-                  <span className="text-violet-300 font-medium">{sp.via === "promo" ? (isVi ? "Mã ưu đãi" : "Promo Code") : sp.via}</span>
+                  <span className="text-primary-300 font-medium">{sp.via === "promo" ? (isVi ? "Mã ưu đãi" : "Promo Code") : sp.via}</span>
                 </div>
               )}
             </div>
@@ -242,12 +242,12 @@ export default async function PaymentSuccessPage({
             <ol className="space-y-4">
               {steps.map((step, i) => (
                 <li key={i} className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-500/15 border border-violet-500/20 mt-0.5">
-                    <step.icon className="h-4 w-4 text-violet-400" />
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-500/15 border border-primary-500/20 mt-0.5">
+                    <step.icon className="h-4 w-4 text-primary-400" />
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-medium text-foreground">
-                      <span className="text-violet-400 mr-1.5">{i + 1}.</span>
+                      <span className="text-primary-400 mr-1.5">{i + 1}.</span>
                       {step.label}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">{step.desc}</p>

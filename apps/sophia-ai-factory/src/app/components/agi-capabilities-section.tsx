@@ -17,10 +17,10 @@ const CAPABILITIES = [
   {
     key: "confidence",
     icon: Brain,
-    iconColor: "text-cyan-400",
-    borderHover: "hover:border-cyan-500/50",
+    iconColor: "text-accent-400",
+    borderHover: "hover:border-accent-500/50",
     shadowHover: "hover:shadow-cyan-500/20",
-    glowColor: "bg-cyan-500/10",
+    glowColor: "bg-accent-500/10",
   },
   {
     key: "multi_agent",
@@ -41,10 +41,10 @@ const CAPABILITIES = [
   {
     key: "feedback",
     icon: Zap,
-    iconColor: "text-cyan-400",
-    borderHover: "hover:border-cyan-500/50",
+    iconColor: "text-accent-400",
+    borderHover: "hover:border-accent-500/50",
     shadowHover: "hover:shadow-cyan-500/20",
-    glowColor: "bg-cyan-500/10",
+    glowColor: "bg-accent-500/10",
   },
   {
     key: "compliance",
@@ -66,7 +66,7 @@ export default function AgiCapabilitiesSection() {
     >
       {/* Background ambient glows */}
       <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-emerald-600 opacity-[0.06] blur-[140px] rounded-full -z-10" />
-      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-cyan-500 opacity-[0.06] blur-[120px] rounded-full -z-10" />
+      <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-accent-500 opacity-[0.06] blur-[120px] rounded-full -z-10" />
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
 
       <Container>

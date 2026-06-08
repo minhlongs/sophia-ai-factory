@@ -24,10 +24,10 @@ export default async function AdminRefundsPage({ params }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-100">
+        <h1 className="text-2xl font-bold text-muted-foreground-100">
           {isVi ? 'Quản Lý Hoàn Tiền' : 'Refund Management'}
         </h1>
-        <p className="text-sm text-zinc-400 mt-1">
+        <p className="text-sm text-muted-foreground-400 mt-1">
           {isVi
             ? 'Xem xét và xử lý yêu cầu hoàn tiền từ khách hàng'
             : 'Review and process customer refund requests'}

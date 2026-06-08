@@ -80,7 +80,7 @@ export function DeployStatusClient({ locale }: Props) {
   }
 
   if (!data && loading) {
-    return <p className="text-sm text-zinc-500">{isVi ? 'Đang tải...' : 'Loading...'}</p>
+    return <p className="text-sm text-muted-foreground-500">{isVi ? 'Đang tải...' : 'Loading...'}</p>
   }
 
   if (!data) return null
@@ -90,15 +90,15 @@ export function DeployStatusClient({ locale }: Props) {
   return (
     <div className="space-y-4">
       {/* Deploy info */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 space-y-3">
+      <div className="rounded-xl border border-border-800 bg-muted-900/50 p-5 space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-zinc-200">
+          <h2 className="text-sm font-semibold text-muted-foreground-200">
             {isVi ? 'Thông tin deploy' : 'Last Deploy'}
           </h2>
           <button
             onClick={load}
             disabled={loading}
-            className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+            className="text-xs text-muted-foreground-500 hover:text-muted-foreground-300 transition-colors"
           >
             {isVi ? 'Tải lại' : 'Refresh'}
           </button>
@@ -106,20 +106,20 @@ export function DeployStatusClient({ locale }: Props) {
         {deploy.sha ? (
           <div className="space-y-1 text-sm">
             <div className="flex gap-2">
-              <span className="text-zinc-500 w-24">SHA:</span>
-              <code className="text-violet-400 font-mono">{deploy.sha}</code>
+              <span className="text-muted-foreground-500 w-24">SHA:</span>
+              <code className="text-primary-400 font-mono">{deploy.sha}</code>
             </div>
             <div className="flex gap-2">
-              <span className="text-zinc-500 w-24">{isVi ? 'Thời gian:' : 'Deployed:'}</span>
-              <span className="text-zinc-300">{deploy.deployedAt}</span>
+              <span className="text-muted-foreground-500 w-24">{isVi ? 'Thời gian:' : 'Deployed:'}</span>
+              <span className="text-muted-foreground-300">{deploy.deployedAt}</span>
             </div>
             <div className="flex gap-2">
-              <span className="text-zinc-500 w-24">Branch:</span>
-              <span className="text-zinc-300">{deploy.branch}</span>
+              <span className="text-muted-foreground-500 w-24">Branch:</span>
+              <span className="text-muted-foreground-300">{deploy.branch}</span>
             </div>
           </div>
         ) : (
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-muted-foreground-500">
             {isVi
               ? 'Chưa có thông tin deploy (chạy deploy-with-sha.sh để cập nhật).'
               : 'No deploy metadata found. Run deploy-with-sha.sh to populate.'}
@@ -128,8 +128,8 @@ export function DeployStatusClient({ locale }: Props) {
       </div>
 
       {/* Cron health */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 space-y-2">
-        <h2 className="text-sm font-semibold text-zinc-200">{isVi ? 'Cron health' : 'Cron Health'}</h2>
+      <div className="rounded-xl border border-border-800 bg-muted-900/50 p-5 space-y-2">
+        <h2 className="text-sm font-semibold text-muted-foreground-200">{isVi ? 'Cron health' : 'Cron Health'}</h2>
         <div className="flex items-center gap-2 text-sm">
           <StatusDot ok={cron.healthy} />
           <span className={cron.healthy ? 'text-emerald-400' : 'text-red-400'}>
@@ -139,7 +139,7 @@ export function DeployStatusClient({ locale }: Props) {
           </span>
         </div>
         {cron.lastFiredIso && (
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-muted-foreground-500">
             {isVi ? 'Lần cuối:' : 'Last:'} {cron.lastFiredIso}
             {cron.secondsSinceLast !== null && ` (${cron.secondsSinceLast}s ago)`}
           </p>
@@ -147,8 +147,8 @@ export function DeployStatusClient({ locale }: Props) {
       </div>
 
       {/* Services */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 space-y-3">
-        <h2 className="text-sm font-semibold text-zinc-200">{isVi ? 'Dịch vụ' : 'Services'}</h2>
+      <div className="rounded-xl border border-border-800 bg-muted-900/50 p-5 space-y-3">
+        <h2 className="text-sm font-semibold text-muted-foreground-200">{isVi ? 'Dịch vụ' : 'Services'}</h2>
         <div className="space-y-2 text-sm">
           {[
             { key: 'heygen', label: 'HeyGen API Key', ok: services.heygen },
@@ -157,7 +157,7 @@ export function DeployStatusClient({ locale }: Props) {
           ].map(({ key, label, ok }) => (
             <div key={key} className="flex items-center gap-2">
               <StatusDot ok={ok} />
-              <span className="text-zinc-300">{label}</span>
+              <span className="text-muted-foreground-300">{label}</span>
               <span className={`text-xs ${ok ? 'text-emerald-500' : 'text-red-500'}`}>
                 {ok ? (isVi ? 'Đã cấu hình' : 'Configured') : (isVi ? 'Thiếu' : 'Missing')}
               </span>
@@ -167,31 +167,31 @@ export function DeployStatusClient({ locale }: Props) {
       </div>
 
       {/* CI/CD — honest limitation */}
-      <div className="rounded-xl border border-red-900/50 bg-zinc-900/50 p-5 space-y-3">
+      <div className="rounded-xl border border-red-900/50 bg-muted-900/50 p-5 space-y-3">
         <div className="flex items-center gap-2">
           <StatusDot ok={false} />
           <h2 className="text-sm font-semibold text-red-400">
             {isVi ? 'GitHub Actions (bị vô hiệu hóa)' : 'GitHub Actions (Disabled)'}
           </h2>
         </div>
-        <p className="text-xs text-zinc-400">{cicd.note}</p>
+        <p className="text-xs text-muted-foreground-400">{cicd.note}</p>
         <div className="space-y-1">
-          <p className="text-xs text-zinc-500 font-medium">
+          <p className="text-xs text-muted-foreground-500 font-medium">
             {isVi ? 'Lệnh deploy thủ công:' : 'Manual deploy command:'}
           </p>
           <div className="flex gap-2">
-            <code className="flex-1 text-xs bg-zinc-800 px-3 py-2 rounded-lg text-violet-300 font-mono break-all">
+            <code className="flex-1 text-xs bg-muted-800 px-3 py-2 rounded-lg text-primary-300 font-mono break-all">
               {cicd.manualDeployCmd}
             </code>
             <button
               onClick={() => copyCmd(cicd.manualDeployCmd)}
-              className="px-3 py-1 text-xs bg-zinc-700 hover:bg-zinc-600 text-zinc-300 rounded-lg shrink-0"
+              className="px-3 py-1 text-xs bg-muted-700 hover:bg-muted-600 text-muted-foreground-300 rounded-lg shrink-0"
             >
               {copied ? (isVi ? 'Đã sao chép!' : 'Copied!') : (isVi ? 'Sao chép' : 'Copy')}
             </button>
           </div>
         </div>
-        <p className="text-xs text-zinc-600">
+        <p className="text-xs text-muted-foreground-600">
           {isVi
             ? 'Để khôi phục: mở https://github.com/settings/billing → kiểm tra giới hạn Actions → hoặc liên hệ GitHub Support.'
             : 'To restore: open https://github.com/settings/billing → check Actions usage → or contact GitHub Support.'}

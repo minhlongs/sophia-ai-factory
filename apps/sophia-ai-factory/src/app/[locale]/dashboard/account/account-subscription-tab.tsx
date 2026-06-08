@@ -55,14 +55,14 @@ export function AccountSubscriptionTab({ tier, tierLabel, features }: Subscripti
     <div className="space-y-6 max-w-lg">
       {/* Current plan card */}
       <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg rounded-xl p-5">
-        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">{t('sub_current_plan')}</p>
-        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">{tierLabel}</h2>
+        <p className="text-xs font-medium text-muted-foreground-500 dark:text-slate-400 mb-1">{t('sub_current_plan')}</p>
+        <h2 className="text-xl font-bold text-muted-foreground-900 dark:text-slate-100 mb-4">{tierLabel}</h2>
 
         <div className="space-y-2">
           {features.map(feat => (
             <div key={feat} className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" aria-hidden="true" />
-              <span className="text-sm text-slate-700 dark:text-slate-300">{feat}</span>
+              <span className="text-sm text-muted-foreground-700 dark:text-slate-300">{feat}</span>
             </div>
           ))}
         </div>

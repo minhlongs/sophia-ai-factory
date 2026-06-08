@@ -24,7 +24,7 @@ const services: GuideFeatureItem[] = [
     icon: Brain,
     title: "OpenRouter — Viết Kịch Bản AI",
     description: "Cung cấp trí tuệ nhân tạo để viết kịch bản video tự động, tối ưu cho từng sản phẩm.",
-    iconColor: "text-cyan-400",
+    iconColor: "text-accent-400",
   },
   {
     icon: Mic,
@@ -36,7 +36,7 @@ const services: GuideFeatureItem[] = [
     icon: Video,
     title: "D-ID — Avatar Video",
     description: "Tạo người dẫn ảo AI trình bày nội dung video, không cần quay camera thật.",
-    iconColor: "text-violet-400",
+    iconColor: "text-primary-400",
   },
   {
     icon: Database,
@@ -85,7 +85,7 @@ export default function IntegrationsGuidePage() {
       {/* OpenRouter */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Brain className="w-5 h-5 text-cyan-400" aria-hidden="true" /> OpenRouter — Não AI Viết Kịch Bản
+          <Brain className="w-5 h-5 text-accent-400" aria-hidden="true" /> OpenRouter — Não AI Viết Kịch Bản
         </h2>
 
         <div className="grid sm:grid-cols-3 gap-3 text-sm">
@@ -146,7 +146,7 @@ export default function IntegrationsGuidePage() {
       {/* D-ID */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Video className="w-5 h-5 text-violet-400" aria-hidden="true" /> D-ID — Avatar Video AI
+          <Video className="w-5 h-5 text-primary-400" aria-hidden="true" /> D-ID — Avatar Video AI
         </h2>
 
         <div className="grid sm:grid-cols-3 gap-3 text-sm">
@@ -200,7 +200,7 @@ export default function IntegrationsGuidePage() {
         </h2>
         <GuideCallout variant="important">
           Xem hướng dẫn chi tiết tại trang{" "}
-          <Link href="/guide/telegram" className="underline text-violet-300 hover:text-violet-200">
+          <Link href="/guide/telegram" className="underline text-primary-300 hover:text-primary-200">
             Kết Nối Telegram Bot
           </Link>{" "}
           — tích hợp này cho phép tạo và theo dõi chiến dịch ngay trên điện thoại.

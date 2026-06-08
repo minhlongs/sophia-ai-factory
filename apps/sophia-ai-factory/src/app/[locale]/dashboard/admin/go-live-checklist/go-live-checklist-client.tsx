@@ -50,7 +50,7 @@ export function GoLiveChecklist({ locale }: Props) {
         </div>
         <button
           onClick={() => mutate()}
-          className="flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+          className="flex items-center gap-1 text-xs text-muted-foreground-400 hover:text-muted-foreground-200 transition-colors"
         >
           <RefreshCw className="w-3 h-3" aria-hidden="true" />
           {isVi ? 'Làm mới' : 'Refresh'}
@@ -69,9 +69,9 @@ export function GoLiveChecklist({ locale }: Props) {
                 : <XCircle className="w-4 h-4 text-red-400" aria-hidden="true" />}
             </div>
             <div>
-              <p className="text-sm text-zinc-200">{isVi ? check.label_vi : check.label_en}</p>
+              <p className="text-sm text-muted-foreground-200">{isVi ? check.label_vi : check.label_en}</p>
               {check.detail && (
-                <p className="text-xs text-zinc-500 mt-0.5">{check.detail}</p>
+                <p className="text-xs text-muted-foreground-500 mt-0.5">{check.detail}</p>
               )}
             </div>
           </div>
@@ -79,7 +79,7 @@ export function GoLiveChecklist({ locale }: Props) {
       </div>
 
       {data?.timestamp && (
-        <p className="text-xs text-zinc-600 text-right">
+        <p className="text-xs text-muted-foreground-600 text-right">
           {isVi ? 'Cập nhật lúc' : 'Updated at'}: {new Date(data.timestamp * 1000).toLocaleTimeString()}
         </p>
       )}

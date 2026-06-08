@@ -52,8 +52,8 @@ export function HandoverStatsPanel({ isVi }: Props) {
       key: 'total',
       label: isVi ? 'Tổng' : 'Total',
       value: s.total,
-      icon: <Users size={16} className="text-zinc-300" />,
-      accent: 'border-zinc-700',
+      icon: <Users size={16} className="text-muted-foreground-300" />,
+      accent: 'border-border-700',
     },
     {
       key: 'pending',
@@ -95,7 +95,7 @@ export function HandoverStatsPanel({ isVi }: Props) {
     {
       label: isVi ? 'Đã đăng nhập' : 'Logged in',
       value: s.first_login,
-      icon: <PlayCircle size={14} className="text-violet-400" />,
+      icon: <PlayCircle size={14} className="text-primary-400" />,
       sub: isVi ? `Chạy SOP: ${runPct}%` : `Run: ${runPct}%`,
     },
     {
@@ -121,10 +121,10 @@ export function HandoverStatsPanel({ isVi }: Props) {
             className={`rounded-xl border ${c.accent} p-3 flex flex-col gap-1`}
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs text-zinc-400">{c.label}</span>
+              <span className="text-xs text-muted-foreground-400">{c.label}</span>
               {c.icon}
             </div>
-            <span className="text-2xl font-bold text-zinc-100 tabular-nums">{c.value}</span>
+            <span className="text-2xl font-bold text-muted-foreground-100 tabular-nums">{c.value}</span>
           </div>
         ))}
       </div>
@@ -133,15 +133,15 @@ export function HandoverStatsPanel({ isVi }: Props) {
         {dropoff.map((d) => (
           <div
             key={d.label}
-            className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-3 flex flex-col gap-1"
+            className="rounded-xl border border-border-800 bg-muted-900/40 p-3 flex flex-col gap-1"
           >
             <div className="flex items-center justify-between">
-              <span className="text-[11px] text-zinc-500">{d.label}</span>
+              <span className="text-[11px] text-muted-foreground-500">{d.label}</span>
               {d.icon}
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-lg font-semibold text-zinc-100 tabular-nums">{d.value}</span>
-              <span className="text-[10px] text-zinc-500">{d.sub}</span>
+              <span className="text-lg font-semibold text-muted-foreground-100 tabular-nums">{d.value}</span>
+              <span className="text-[10px] text-muted-foreground-500">{d.sub}</span>
             </div>
           </div>
         ))}

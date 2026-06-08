@@ -97,7 +97,7 @@ export default async function ReferralPage({ params }: Props) {
       {/* Hero */}
       <div className="max-w-3xl mx-auto px-6 py-20 text-center">
         <div className="flex items-center justify-center gap-2 mb-6">
-          <Sparkles className="w-8 h-8 text-violet-400" />
+          <Sparkles className="w-8 h-8 text-primary-400" />
           <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent">
             Sophia AI
           </h1>
@@ -110,7 +110,7 @@ export default async function ReferralPage({ params }: Props) {
 
         <Link
           href="/en/register"
-          className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-violet-600 hover:bg-violet-500 text-lg font-semibold transition-colors"
+          className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary-600 hover:bg-primary-500 text-lg font-semibold transition-colors"
         >
           Get Started Free
           <ArrowRight className="w-5 h-5" />
@@ -142,7 +142,7 @@ export default async function ReferralPage({ params }: Props) {
             key={f.title}
             className="rounded-2xl bg-muted/20 border border-border p-6 text-center"
           >
-            <f.icon className="w-8 h-8 text-violet-400 mx-auto mb-3" />
+            <f.icon className="w-8 h-8 text-primary-400 mx-auto mb-3" />
             <h3 className="font-semibold mb-2">{f.title}</h3>
             <p className="text-sm text-muted-foreground">{f.desc}</p>
           </div>

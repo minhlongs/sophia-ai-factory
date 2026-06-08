@@ -73,7 +73,7 @@ export default async function CreditsPage() {
         <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-amber-300/50 dark:border-amber-700/40 shadow-lg rounded-xl p-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" aria-hidden="true" />
-            <p className="text-sm text-slate-700 dark:text-slate-300">
+            <p className="text-sm text-muted-foreground-700 dark:text-slate-300">
               {tBanner('message')}
             </p>
           </div>

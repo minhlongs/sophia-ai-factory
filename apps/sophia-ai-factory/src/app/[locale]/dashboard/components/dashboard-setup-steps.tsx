@@ -54,8 +54,8 @@ export async function DashboardSetupSteps({ hasApiKeys, sopCount }: DashboardSet
   return (
     <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg rounded-xl p-6 space-y-4">
       <div className="text-center mb-6">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t('setup_title')}</h2>
-        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{t('setup_subtitle')}</p>
+        <h2 className="text-xl font-bold text-muted-foreground-900 dark:text-slate-100">{t('setup_title')}</h2>
+        <p className="text-sm text-muted-foreground-600 dark:text-slate-400 mt-1">{t('setup_subtitle')}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -67,7 +67,7 @@ export async function DashboardSetupSteps({ hasApiKeys, sopCount }: DashboardSet
               className={`relative rounded-lg border p-4 transition-colors duration-150 ${
                 step.completed
                   ? 'border-green-200 bg-green-50/50 dark:border-green-800/40 dark:bg-green-900/10'
-                  : 'border-slate-200 dark:border-slate-700/50 bg-slate-50/50 dark:bg-slate-800/30'
+                  : 'border-border-200 dark:border-slate-700/50 bg-muted-50/50 dark:bg-slate-800/30'
               }`}
             >
               {step.completed && (
@@ -80,13 +80,13 @@ export async function DashboardSetupSteps({ hasApiKeys, sopCount }: DashboardSet
               }`}>
                 <Icon className={`w-4 h-4 ${step.completed ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`} />
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-500 mb-0.5">
+              <p className="text-xs text-muted-foreground-500 dark:text-slate-500 mb-0.5">
                 Step {index + 1}
               </p>
-              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-1">
+              <h3 className="text-sm font-semibold text-muted-foreground-900 dark:text-slate-100 mb-1">
                 {t(step.titleKey as Parameters<typeof t>[0])}
               </h3>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+              <p className="text-xs text-muted-foreground-600 dark:text-slate-400 mb-3">
                 {t(step.descKey as Parameters<typeof t>[0])}
               </p>
               {!step.completed && (

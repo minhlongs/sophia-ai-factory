@@ -52,13 +52,13 @@ export default function FirstVideoPage() {
           description={
             <span>
               Go to{" "}
-              <span className="font-mono text-cyan-400 text-xs bg-cyan-500/10 px-1.5 py-0.5 rounded">
+              <span className="font-mono text-accent-400 text-xs bg-accent-500/10 px-1.5 py-0.5 rounded">
                 sophia.agencyos.network
               </span>{" "}
               and create your account. Takes about{" "}
               <strong className="text-foreground">2 minutes</strong>. /{" "}
               Truy cập{" "}
-              <span className="font-mono text-cyan-400 text-xs bg-cyan-500/10 px-1.5 py-0.5 rounded">
+              <span className="font-mono text-accent-400 text-xs bg-accent-500/10 px-1.5 py-0.5 rounded">
                 sophia.agencyos.network
               </span>{" "}
               và tạo tài khoản. Chỉ mất khoảng 2 phút.
@@ -114,7 +114,7 @@ export default function FirstVideoPage() {
               the video. Takes{" "}
               <strong className="text-foreground">2–5 minutes</strong>. You
               will see a{" "}
-              <strong className="text-cyan-400">green status</strong> when
+              <strong className="text-accent-400">green status</strong> when
               done. /{" "}
               Sophia tự động: viết kịch bản → tạo giọng nói → tạo video. Chờ
               2–5 phút. Trạng thái xanh = xong.
@@ -171,9 +171,9 @@ export default function FirstVideoPage() {
             <Link
               key={item.href}
               href={item.href}
-              className="group bg-card/50 border border-border/40 rounded-xl p-4 hover:border-violet-500/40 hover:bg-violet-500/5 transition-colors"
+              className="group bg-card/50 border border-border/40 rounded-xl p-4 hover:border-primary-500/40 hover:bg-primary-500/5 transition-colors"
             >
-              <div className="text-sm font-medium text-foreground group-hover:text-violet-300 transition-colors flex items-center gap-1.5">
+              <div className="text-sm font-medium text-foreground group-hover:text-primary-300 transition-colors flex items-center gap-1.5">
                 {item.label}
                 <ArrowRight
                   className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity"

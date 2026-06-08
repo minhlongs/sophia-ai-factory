@@ -23,10 +23,10 @@ export default async function E2ESmokePage({ params }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-100">
+        <h1 className="text-2xl font-bold text-muted-foreground-100">
           {isVi ? 'Kiểm Tra E2E Tổng Hợp' : 'E2E Smoke Test'}
         </h1>
-        <p className="text-sm text-zinc-400 mt-1">
+        <p className="text-sm text-muted-foreground-400 mt-1">
           {isVi
             ? 'Kiểm tra toàn bộ chuỗi thanh toán → IPN → fulfillment → email mà không tốn tiền thật.'
             : 'Validates full chain: Pay → IPN → Queue → Render → Email without spending real money.'}

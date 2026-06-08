@@ -148,7 +148,7 @@ export function WebhookForm({ endpoint, onSuccess, onCancel }: Props) {
                 type="checkbox"
                 checked={events.has(ev)}
                 onChange={() => toggleEvent(ev)}
-                className="rounded border-gray-400"
+                className="rounded border-border-400"
               />
               <span className="text-sm font-mono">{ev}</span>
             </label>

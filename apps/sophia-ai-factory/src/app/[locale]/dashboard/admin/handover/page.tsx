@@ -22,10 +22,10 @@ export default async function HandoverPage({ params }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-100">
+        <h1 className="text-2xl font-bold text-muted-foreground-100">
           {isVi ? 'Wizard Bàn Giao Khách Hàng' : 'Customer Handover Wizard'}
         </h1>
-        <p className="text-sm text-zinc-400 mt-1">
+        <p className="text-sm text-muted-foreground-400 mt-1">
           {isVi
             ? 'Tạo tài khoản khách hàng mới, cài đặt SOPs, gửi email chào mừng trong 3 phút.'
             : 'Create new customer account, install SOPs, send welcome email in 3 minutes.'}

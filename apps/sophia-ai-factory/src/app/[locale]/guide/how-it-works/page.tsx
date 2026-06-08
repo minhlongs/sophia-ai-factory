@@ -18,8 +18,8 @@ export const metadata: Metadata = {
 };
 
 const flowSteps = [
-  { icon: User, label: "Bạn nhập nội dung", color: "text-violet-400", bg: "bg-violet-500/10" },
-  { icon: Brain, label: "AI viết kịch bản", color: "text-cyan-400", bg: "bg-cyan-500/10" },
+  { icon: User, label: "Bạn nhập nội dung", color: "text-primary-400", bg: "bg-primary-500/10" },
+  { icon: Brain, label: "AI viết kịch bản", color: "text-accent-400", bg: "bg-accent-500/10" },
   { icon: Mic, label: "AI tạo giọng nói", color: "text-blue-400", bg: "bg-blue-500/10" },
   { icon: Video, label: "Video hoàn chỉnh", color: "text-emerald-400", bg: "bg-emerald-500/10" },
 ];
@@ -29,7 +29,7 @@ const features: GuideFeatureItem[] = [
     icon: Brain,
     title: "OpenRouter — Viết Kịch Bản",
     description: "AI phân tích chủ đề và tự động viết kịch bản video chuyên nghiệp, tối ưu cho từng sản phẩm.",
-    iconColor: "text-cyan-400",
+    iconColor: "text-accent-400",
   },
   {
     icon: Mic,
@@ -41,7 +41,7 @@ const features: GuideFeatureItem[] = [
     icon: Video,
     title: "D-ID — Avatar Video",
     description: "Tạo người dẫn ảo AI (AI avatar) trình bày nội dung, không cần quay camera thật.",
-    iconColor: "text-violet-400",
+    iconColor: "text-primary-400",
   },
   {
     icon: User,
@@ -124,7 +124,7 @@ export default function HowItWorksPage() {
             >
               <span className="font-medium text-foreground">{row.step}</span>
               <span className="text-muted-foreground">{row.time}</span>
-              <span className="text-cyan-400 text-xs font-medium">{row.freq}</span>
+              <span className="text-accent-400 text-xs font-medium">{row.freq}</span>
             </div>
           ))}
         </div>

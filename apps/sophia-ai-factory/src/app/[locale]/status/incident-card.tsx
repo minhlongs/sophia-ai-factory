@@ -39,7 +39,7 @@ export function IncidentCard({ incident }: IncidentCardProps) {
         <span>{new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(incident.startedAt * 1000))}</span>
         <span>Duration: {durationLabel}</span>
         {incident.postmortemUrl && (
-          <a href={incident.postmortemUrl} className="text-violet-400 hover:underline" target="_blank" rel="noopener noreferrer">
+          <a href={incident.postmortemUrl} className="text-primary-400 hover:underline" target="_blank" rel="noopener noreferrer">
             Post-mortem
           </a>
         )}

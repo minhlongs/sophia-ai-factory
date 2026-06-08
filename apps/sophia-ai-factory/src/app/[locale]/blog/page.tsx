@@ -113,14 +113,14 @@ export default function BlogPage() {
           <Link
             key={post.slug}
             href={post.href}
-            className="group block bg-card/50 border border-border/40 rounded-xl p-6 hover:border-violet-500/40 hover:bg-violet-500/5 transition-colors"
+            className="group block bg-card/50 border border-border/40 rounded-xl p-6 hover:border-primary-500/40 hover:bg-primary-500/5 transition-colors"
           >
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
               <time dateTime={post.date}>{new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(post.date))}</time>
               <span aria-hidden="true">·</span>
               <span>{post.readTime}</span>
             </div>
-            <h2 className="text-lg font-semibold text-foreground group-hover:text-violet-300 transition-colors flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-foreground group-hover:text-primary-300 transition-colors flex items-center gap-2">
               {post.title}
               <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
             </h2>

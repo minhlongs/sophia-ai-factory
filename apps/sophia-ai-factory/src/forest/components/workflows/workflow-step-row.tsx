@@ -24,7 +24,7 @@ const STATUS_CLASSES: Record<string, string> = {
   queued:    'bg-muted text-muted-foreground',
   blocked:   'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
   planning:  'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-  executing: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+  executing: 'bg-primary-100 text-primary-700 dark:bg-violet-900/30 dark:text-violet-400',
   verifying: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
   completed: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   failed:    'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',

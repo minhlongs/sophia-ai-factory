@@ -49,7 +49,7 @@ export function CreatorDetailClient({ templateId, status }: Props) {
             type="button"
             onClick={handlePublish}
             disabled={isPending}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-white transition-colors"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-500 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-white transition-colors"
           >
             <Send className="w-4 h-4" aria-hidden="true" />
             {isPending ? t('publishing') : t('submitForReview')}

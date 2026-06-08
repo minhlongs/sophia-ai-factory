@@ -47,8 +47,8 @@ function Card({
 
   return (
     <div className={`rounded-xl border ${border} ${bg} p-4 space-y-2`}>
-      <h3 className="font-semibold text-zinc-200 text-sm">
-        {title} <span className="text-zinc-500 font-normal">/ {titleVi}</span>
+      <h3 className="font-semibold text-muted-foreground-200 text-sm">
+        {title} <span className="text-muted-foreground-500 font-normal">/ {titleVi}</span>
       </h3>
       {children}
     </div>
@@ -71,7 +71,7 @@ export function OpsSnapshotCard({ locale }: Props) {
 
   if (isLoading) {
     return (
-      <div className="text-zinc-400 text-sm motion-safe:animate-pulse py-8 text-center">
+      <div className="text-muted-foreground-400 text-sm motion-safe:animate-pulse py-8 text-center">
         {isVi ? 'Đang tải dữ liệu vận hành...' : 'Loading ops data...'}
       </div>
     )
@@ -121,12 +121,12 @@ export function OpsSnapshotCard({ locale }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted-foreground-500">
           {isVi ? 'Cập nhật lúc' : 'Updated at'}: {new Date(data.generatedAt).toLocaleTimeString()}
         </p>
         <button
           onClick={() => mutate()}
-          className="text-xs text-zinc-400 hover:text-zinc-200 transition-colors"
+          className="text-xs text-muted-foreground-400 hover:text-muted-foreground-200 transition-colors"
         >
           {isVi ? 'Làm mới' : 'Refresh'}
         </button>
@@ -136,38 +136,38 @@ export function OpsSnapshotCard({ locale }: Props) {
 
         {/* Version */}
         <Card title="Deployment" titleVi="Phiên bản" health={versionHealth}>
-          <p className="text-xs text-zinc-300">
+          <p className="text-xs text-muted-foreground-300">
             SHA: <code className="font-mono">{data.version.sha.slice(0, 8)}</code>
           </p>
-          <p className="text-xs text-zinc-400">
+          <p className="text-xs text-muted-foreground-400">
             {isVi ? 'Triển khai' : 'Deployed'}: {new Date(data.version.deployedAt).toLocaleString()}
           </p>
-          <p className="text-xs text-zinc-500">OpenNext: {data.version.opennextVersion}</p>
+          <p className="text-xs text-muted-foreground-500">OpenNext: {data.version.opennextVersion}</p>
         </Card>
 
         {/* Queue */}
         <Card title="Queue" titleVi="Hàng đợi" health={queueHealth}>
           <div className="flex gap-4 text-sm">
             <div>
-              <span className="text-zinc-400 text-xs">{isVi ? 'Chờ' : 'Queued'}</span>
-              <p className={`font-bold ${data.activeQueue.queued > 20 ? 'text-red-400' : 'text-zinc-200'}`}>
+              <span className="text-muted-foreground-400 text-xs">{isVi ? 'Chờ' : 'Queued'}</span>
+              <p className={`font-bold ${data.activeQueue.queued > 20 ? 'text-red-400' : 'text-muted-foreground-200'}`}>
                 {data.activeQueue.queued}
               </p>
             </div>
             <div>
-              <span className="text-zinc-400 text-xs">{isVi ? 'Đang xử lý' : 'Processing'}</span>
-              <p className="font-bold text-zinc-200">{data.activeQueue.processing}</p>
+              <span className="text-muted-foreground-400 text-xs">{isVi ? 'Đang xử lý' : 'Processing'}</span>
+              <p className="font-bold text-muted-foreground-200">{data.activeQueue.processing}</p>
             </div>
             <div>
-              <span className="text-zinc-400 text-xs">{isVi ? 'Tổng' : 'Total'}</span>
-              <p className="font-bold text-zinc-200">{data.activeQueue.total}</p>
+              <span className="text-muted-foreground-400 text-xs">{isVi ? 'Tổng' : 'Total'}</span>
+              <p className="font-bold text-muted-foreground-200">{data.activeQueue.total}</p>
             </div>
           </div>
         </Card>
 
         {/* Reconcile */}
         <Card title="Reconcile 24h" titleVi="Đối soát 24h" health={reconcileHealth}>
-          <div className="text-xs text-zinc-300 space-y-1">
+          <div className="text-xs text-muted-foreground-300 space-y-1">
             <p>
               <StatusDot ok={true} />
               {isVi ? 'Đã trả' : 'Paid'}: <strong>{data.reconcile24h.paid}</strong>
@@ -190,20 +190,20 @@ export function OpsSnapshotCard({ locale }: Props) {
         {/* Cron Runs */}
         <Card title="Cron Runs" titleVi="Lịch cron" health={cronHealth}>
           {data.cronRuns.length === 0 ? (
-            <p className="text-xs text-zinc-500">{isVi ? 'Chưa có lịch sử' : 'No cron history'}</p>
+            <p className="text-xs text-muted-foreground-500">{isVi ? 'Chưa có lịch sử' : 'No cron history'}</p>
           ) : (
             <div className="space-y-1 max-h-48 overflow-y-auto">
               {data.cronRuns.map((run) => (
                 <div key={run.cron_name} className="text-xs">
                   <button
-                    className="flex items-center gap-1 w-full text-left hover:text-zinc-100 transition-colors"
+                    className="flex items-center gap-1 w-full text-left hover:text-muted-foreground-100 transition-colors"
                     onClick={() =>
                       setExpandedCron(expandedCron === run.cron_name ? null : run.cron_name)
                     }
                   >
                     <StatusDot ok={run.last_status !== 'failure'} />
-                    <span className="font-mono text-zinc-300 truncate flex-1">{run.cron_name}</span>
-                    <span className="text-zinc-500 shrink-0">#{run.run_count}</span>
+                    <span className="font-mono text-muted-foreground-300 truncate flex-1">{run.cron_name}</span>
+                    <span className="text-muted-foreground-500 shrink-0">#{run.run_count}</span>
                   </button>
                   {expandedCron === run.cron_name && run.last_error && (
                     <p className="ml-4 mt-1 text-red-400 break-all">{run.last_error}</p>
@@ -225,13 +225,13 @@ export function OpsSnapshotCard({ locale }: Props) {
               <StatusDot ok={hgOk} />
               {isVi ? 'Cầu dao' : 'Circuit'}: <strong className={`ml-1 ${data.circuitBreaker.state === 'open' ? 'text-red-400' : data.circuitBreaker.state === 'half-open' ? 'text-yellow-400' : 'text-green-400'}`}>{data.circuitBreaker.state}</strong>
             </p>
-            <p className="text-zinc-500">
+            <p className="text-muted-foreground-500">
               {isVi ? 'Lỗi gần đây' : 'Recent failures'}: {data.circuitBreaker.recentFailures}
               {' / '}
               {isVi ? 'Thành công' : 'Successes'}: {data.circuitBreaker.recentSuccesses}
             </p>
             {data.circuitBreaker.openedAt && (
-              <p className="text-zinc-500">
+              <p className="text-muted-foreground-500">
                 {isVi ? 'Mở lúc' : 'Opened at'}: {new Date(data.circuitBreaker.openedAt).toLocaleTimeString()}
               </p>
             )}

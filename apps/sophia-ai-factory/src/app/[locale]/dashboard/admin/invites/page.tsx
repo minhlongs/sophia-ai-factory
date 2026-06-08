@@ -59,7 +59,7 @@ function statusBadge(invite: BetaInvite): React.JSX.Element {
     );
   }
   return (
-    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs border bg-violet-500/10 text-violet-400 border-violet-500/20">
+    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs border bg-primary-500/10 text-primary-400 border-primary-500/20">
       Active
     </span>
   );
@@ -80,8 +80,8 @@ export default async function BetaInvitesPage({ params }: PageProps): Promise<Re
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-violet-500/20">
-          <Ticket className="w-5 h-5 text-violet-400" aria-hidden="true" />
+        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary-500/20">
+          <Ticket className="w-5 h-5 text-primary-400" aria-hidden="true" />
         </div>
         <div>
           <h1 className="text-xl font-semibold text-white">Beta Invites</h1>
@@ -135,7 +135,7 @@ export default async function BetaInvitesPage({ params }: PageProps): Promise<Re
           <div className="sm:col-span-3 flex items-center gap-3">
             <button
               type="submit"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-sm font-medium text-white transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-sm font-medium text-white transition-colors"
             >
               <Ticket className="w-4 h-4" aria-hidden="true" />
               Create Invite
@@ -178,7 +178,7 @@ export default async function BetaInvitesPage({ params }: PageProps): Promise<Re
                 {invites.map((invite) => (
                   <tr key={invite.id} className="hover:bg-white/5 transition-colors">
                     <td className="px-5 py-3">
-                      <code className="font-mono text-violet-300 bg-violet-500/10 px-2 py-0.5 rounded text-xs">
+                      <code className="font-mono text-primary-300 bg-primary-500/10 px-2 py-0.5 rounded text-xs">
                         {invite.code}
                       </code>
                     </td>

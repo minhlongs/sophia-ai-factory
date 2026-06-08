@@ -104,24 +104,24 @@ export function OrderTimeline({ order, locale }: OrderTimelineProps) {
                     ? 'bg-green-800 text-green-300 border border-green-600'
                     : isCurrent
                     ? 'bg-yellow-800 text-yellow-300 border border-yellow-600 motion-safe:animate-pulse'
-                    : 'bg-zinc-800 text-zinc-500 border border-zinc-700',
+                    : 'bg-muted-800 text-muted-foreground-500 border border-border-700',
                 ].join(' ')}
               >
                 {step.done && !step.failed ? '✓' : step.failed ? '✗' : idx + 1}
               </div>
               {idx < steps.length - 1 && (
-                <div className="w-px h-4 bg-zinc-700 mt-1" />
+                <div className="w-px h-4 bg-muted-700 mt-1" />
               )}
             </div>
             <div className="pt-0.5">
               <span className={[
                 'text-sm',
-                step.failed ? 'text-red-400' : step.done ? 'text-green-400' : isCurrent ? 'text-yellow-300' : 'text-zinc-500',
+                step.failed ? 'text-red-400' : step.done ? 'text-green-400' : isCurrent ? 'text-yellow-300' : 'text-muted-foreground-500',
               ].join(' ')}>
                 {label}
               </span>
               {step.timestamp && (
-                <span className="text-xs text-zinc-500 ml-2">{formatTime(step.timestamp, locale)}</span>
+                <span className="text-xs text-muted-foreground-500 ml-2">{formatTime(step.timestamp, locale)}</span>
               )}
             </div>
           </li>

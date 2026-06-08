@@ -90,7 +90,7 @@ export default function VndPaymentGuidePage() {
       <GuideCallout variant="info" title="Vietnam Only / Chỉ Dành Cho Việt Nam">
         This option is only available for Vietnam-based users. Tùy chọn này chỉ dành cho người
         dùng tại Việt Nam. International users should use{" "}
-        <Link href="/guide/payments/usdt" className="text-cyan-400 hover:underline">
+        <Link href="/guide/payments/usdt" className="text-accent-400 hover:underline">
           USDT crypto payment
         </Link>
         .

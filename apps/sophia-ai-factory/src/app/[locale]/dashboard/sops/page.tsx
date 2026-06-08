@@ -51,7 +51,7 @@ export default async function SopsListPage({ params }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <BookOpen className="w-5 h-5 text-violet-400" aria-hidden="true" />
+        <BookOpen className="w-5 h-5 text-primary-400" aria-hidden="true" />
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold text-foreground">{t('title')}</h1>
@@ -87,7 +87,7 @@ async function FirstSopCallout({ locale }: { locale: string }) {
         <h2 className="text-sm font-semibold text-emerald-100">
           {t('firstInstallTitle')}
         </h2>
-        <p className="text-xs text-zinc-300 leading-relaxed">
+        <p className="text-xs text-muted-foreground-300 leading-relaxed">
           {t('firstInstallDesc')}
         </p>
       </div>

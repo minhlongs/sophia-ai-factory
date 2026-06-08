@@ -268,7 +268,7 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex items-center gap-3">
-                  <div className="bg-muted/20 border border-border/10 p-2 rounded-lg text-violet-400">
+                  <div className="bg-muted/20 border border-border/10 p-2 rounded-lg text-primary-400">
                     <Icon className="h-5 w-5" />
                   </div>
                   <div>
@@ -292,7 +292,7 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
                       onChange={(e) => handleInputChange(p, e.target.value)}
                       placeholder={pInfo.hint}
                       disabled={isPending}
-                      className="w-full rounded-lg border-border bg-background px-3 py-1.5 text-xs text-foreground font-mono placeholder:text-muted-foreground focus:outline-none focus:border-violet-500/50"
+                      className="w-full rounded-lg border-border bg-background px-3 py-1.5 text-xs text-foreground font-mono placeholder:text-muted-foreground focus:outline-none focus:border-primary-500/50"
                     />
                     {keyInputs[p]?.trim() && !validations[p]?.ok && validations[p]?.errorKey && (
                       <p className="text-[10px] text-rose-400 mt-1" role="alert">
@@ -314,7 +314,7 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
                     <button
                       type="submit"
                       disabled={isPending || !validations[p]?.ok}
-                      className="flex-1 bg-violet-600 hover:bg-violet-500 text-xs font-semibold text-foreground h-8 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      className="flex-1 bg-primary-600 hover:bg-primary-500 text-xs font-semibold text-foreground h-8 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       {isPending ? 'Saving...' : 'Save Key'}
                     </button>

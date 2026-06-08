@@ -54,12 +54,12 @@ export default function CommandsGuidePage() {
           Lệnh Bot Telegram
         </h1>
         <p className="text-muted-foreground leading-relaxed">
-          Bot <span className="font-mono text-cyan-400 text-sm">@Sophia_Bbot</span> giúp bạn quản lý chiến dịch ngay trên điện thoại, 24/7.
+          Bot <span className="font-mono text-accent-400 text-sm">@Sophia_Bbot</span> giúp bạn quản lý chiến dịch ngay trên điện thoại, 24/7.
         </p>
       </div>
 
       <GuideCallout variant="tip" title="Bắt đầu nhanh">
-        Tìm <span className="font-mono text-cyan-400 text-xs">@Sophia_Bbot</span> trên Telegram → nhấn <strong className="text-foreground">START</strong> → nhập <span className="font-mono text-cyan-400 text-xs">/email ban@email.com</span> để liên kết tài khoản.
+        Tìm <span className="font-mono text-accent-400 text-xs">@Sophia_Bbot</span> trên Telegram → nhấn <strong className="text-foreground">START</strong> → nhập <span className="font-mono text-accent-400 text-xs">/email ban@email.com</span> để liên kết tài khoản.
       </GuideCallout>
 
       {/* Commands by category */}

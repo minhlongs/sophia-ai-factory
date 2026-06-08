@@ -97,7 +97,7 @@ export function SignupForm({ t }: SignupFormProps) {
         </div>
         <p className="font-semibold text-foreground">{t.success_title}</p>
         <p className="text-sm text-muted-foreground">{t.success_message}</p>
-        <Loader2 className="w-4 h-4 motion-safe:animate-spin text-violet-400" aria-hidden="true" />
+        <Loader2 className="w-4 h-4 motion-safe:animate-spin text-primary-400" aria-hidden="true" />
       </div>
     );
   }

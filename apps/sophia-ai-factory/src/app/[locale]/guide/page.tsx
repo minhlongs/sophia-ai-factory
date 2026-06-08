@@ -35,7 +35,7 @@ export default function GuidePage() {
           description={
             <span>
               Mở trình duyệt và vào{" "}
-              <span className="font-mono text-cyan-400 text-xs bg-cyan-500/10 px-1.5 py-0.5 rounded">
+              <span className="font-mono text-accent-400 text-xs bg-accent-500/10 px-1.5 py-0.5 rounded">
                 sophia.agencyos.network
               </span>
               . Nhấn <strong className="text-foreground">Đăng Nhập</strong> ở góc trên bên phải,
@@ -84,7 +84,7 @@ export default function GuidePage() {
           description={
             <span>
               Video xử lý trong <strong className="text-foreground">2–5 phút</strong>.
-              Khi trạng thái hiển thị <strong className="text-cyan-400">Hoàn Thành</strong>,
+              Khi trạng thái hiển thị <strong className="text-accent-400">Hoàn Thành</strong>,
               nhấn vào chiến dịch để xem trước và tải file MP4 về máy.
             </span>
           }
@@ -96,12 +96,12 @@ export default function GuidePage() {
           description={
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <Bot className="w-3.5 h-3.5 text-cyan-400" aria-hidden="true" />
-                <span>Telegram: <span className="font-mono text-cyan-400 text-xs">@Sophia_Bbot</span></span>
+                <Bot className="w-3.5 h-3.5 text-accent-400" aria-hidden="true" />
+                <span>Telegram: <span className="font-mono text-accent-400 text-xs">@Sophia_Bbot</span></span>
               </div>
               <div className="flex items-center gap-2">
-                <MessageCircle className="w-3.5 h-3.5 text-violet-400" aria-hidden="true" />
-                <span>Email: <span className="font-mono text-violet-400 text-xs">support@mekongmind.com</span></span>
+                <MessageCircle className="w-3.5 h-3.5 text-primary-400" aria-hidden="true" />
+                <span>Email: <span className="font-mono text-primary-400 text-xs">support@mekongmind.com</span></span>
               </div>
             </div>
           }
@@ -120,9 +120,9 @@ export default function GuidePage() {
             <Link
               key={item.href}
               href={item.href}
-              className="group bg-card/50 border border-border/40 rounded-xl p-4 hover:border-violet-500/40 hover:bg-violet-500/5 transition-colors"
+              className="group bg-card/50 border border-border/40 rounded-xl p-4 hover:border-primary-500/40 hover:bg-primary-500/5 transition-colors"
             >
-              <div className="text-sm font-medium text-foreground group-hover:text-violet-300 transition-colors flex items-center gap-1.5">
+              <div className="text-sm font-medium text-foreground group-hover:text-primary-300 transition-colors flex items-center gap-1.5">
                 {item.label}
                 <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
               </div>

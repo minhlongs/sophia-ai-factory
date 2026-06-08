@@ -24,10 +24,10 @@ export default async function HeyGenWebhooksPage({ params }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-100">
+        <h1 className="text-2xl font-bold text-muted-foreground-100">
           {isVi ? 'Webhook HeyGen' : 'HeyGen Webhooks'}
         </h1>
-        <p className="text-sm text-zinc-400 mt-1">
+        <p className="text-sm text-muted-foreground-400 mt-1">
           {isVi
             ? 'Đăng ký tự động webhook HeyGen khi lưu API key. Xem danh sách webhook của người dùng để gỡ lỗi.'
             : 'Auto-register HeyGen webhooks when saving API key. Debug endpoint listing per user.'}

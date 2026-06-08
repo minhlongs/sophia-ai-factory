@@ -27,7 +27,7 @@ export function OutcomeMetricCard({
               {value}
             </p>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-500/10 text-accent-400">
             {icon}
           </div>
         </div>

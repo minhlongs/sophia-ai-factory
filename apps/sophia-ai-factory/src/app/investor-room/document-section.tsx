@@ -37,20 +37,20 @@ export function DocumentSection({ group }: { group: DocumentGroup }) {
     <div>
       <div className="mb-4 flex items-center gap-2">
         <span className="text-2xl">{group.icon}</span>
-        <h2 className="text-xl font-semibold text-slate-900">{group.label}</h2>
+        <h2 className="text-xl font-semibold text-muted-foreground-900">{group.label}</h2>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         {docs.map((doc) => (
           <a
             key={doc.path + doc.name}
             href={doc.path}
-            className="group rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
+            className="group rounded-xl border border-border-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
           >
             <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-900">{doc.name}</h3>
+              <h3 className="text-sm font-semibold text-muted-foreground-900">{doc.name}</h3>
               <AccessBadge access={doc.access} />
             </div>
-            <p className="mb-3 text-xs text-slate-600">{doc.description}</p>
+            <p className="mb-3 text-xs text-muted-foreground-600">{doc.description}</p>
             <span className="inline-flex items-center text-xs font-medium text-blue-600 group-hover:text-blue-800">
               Download PDF →
             </span>

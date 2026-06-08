@@ -27,7 +27,7 @@ export function GuideAccordionFaq({ items, className }: GuideAccordionFaqProps) 
             className={cn(
               "border rounded-xl overflow-hidden transition-colors",
               isOpen
-                ? "border-violet-500/40 bg-violet-500/5"
+                ? "border-primary/40 bg-primary/5"
                 : "border-border/40 bg-card/50 hover:border-border/70"
             )}
           >
@@ -41,7 +41,7 @@ export function GuideAccordionFaq({ items, className }: GuideAccordionFaqProps) 
               </span>
               <span className="shrink-0">
                 {isOpen
-                  ? <Minus className="w-4 h-4 text-violet-400" aria-hidden="true" />
+                  ? <Minus className="w-4 h-4 text-primary" aria-hidden="true" />
                   : <Plus className="w-4 h-4 text-muted-foreground" aria-hidden="true" />
                 }
               </span>

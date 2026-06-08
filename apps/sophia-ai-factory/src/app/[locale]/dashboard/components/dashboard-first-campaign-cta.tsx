@@ -38,20 +38,20 @@ export function DashboardFirstCampaignCta() {
     <div className="space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-white">{t('dashboard.firstCampaign.title')}</h2>
-        <p className="text-sm text-slate-400 mt-1">{t('dashboard.firstCampaign.description')}</p>
+        <p className="text-sm text-muted-foreground-400 mt-1">{t('dashboard.firstCampaign.description')}</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {ACTIONS.map(({ key, href, titleKey, icon }) => (
-          <Card key={key} className="bg-slate-800/60 border-slate-700 hover:border-slate-500 transition-colors">
+          <Card key={key} className="bg-muted-800/60 border-border-700 hover:border-border-500 transition-colors">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-200 flex items-center gap-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground-200 flex items-center gap-2">
                 <span aria-hidden="true">{icon}</span>
                 {t(titleKey)}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Button asChild variant="outline" size="sm" className="w-full border-slate-600 text-slate-300 hover:bg-slate-700">
+              <Button asChild variant="outline" size="sm" className="w-full border-border-600 text-muted-foreground-300 hover:bg-muted-700">
                 <Link href={href}>{t(titleKey)}</Link>
               </Button>
             </CardContent>

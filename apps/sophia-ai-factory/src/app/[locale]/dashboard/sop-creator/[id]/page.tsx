@@ -118,7 +118,7 @@ export default async function CreatorDetailPage({ params }: Props) {
         {/* Metadata grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2 border-t border-white/5">
           <div className="flex items-start gap-2">
-            <Coins className="w-4 h-4 text-violet-400 mt-0.5 shrink-0" aria-hidden="true" />
+            <Coins className="w-4 h-4 text-primary-400 mt-0.5 shrink-0" aria-hidden="true" />
             <div>
               <p className="text-xs text-white/40">{t('creditsPerRun')}</p>
               <p className="text-sm font-medium text-white">{template.credits_per_run}</p>

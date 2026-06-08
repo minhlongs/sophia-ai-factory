@@ -128,7 +128,7 @@ export function EmailBrandingForm({ locale }: Props) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full py-2.5 bg-violet-700 hover:bg-violet-600 disabled:opacity-50 text-white rounded-lg text-sm font-semibold transition-colors"
+        className="w-full py-2.5 bg-primary-700 hover:bg-primary-600 disabled:opacity-50 text-white rounded-lg text-sm font-semibold transition-colors"
       >
         {loading ? (isVi ? 'Đang lưu...' : 'Saving...') : (isVi ? 'Lưu thương hiệu' : 'Save Branding')}
       </button>

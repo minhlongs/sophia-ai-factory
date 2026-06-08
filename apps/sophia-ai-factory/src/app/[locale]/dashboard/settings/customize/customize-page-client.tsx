@@ -42,7 +42,7 @@ interface McpServer {
 
 function PlaceholderPanel({ name }: { name: string }) {
   return (
-    <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center text-gray-500">
+    <div className="rounded-lg border border-dashed border-border p-8 text-center text-muted-foreground">
       <p className="text-sm font-medium">{name}</p>
       <p className="mt-1 text-xs">Coming soon — Agent will fill this panel.</p>
     </div>
@@ -109,8 +109,8 @@ function ChannelsPanel() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-700">Channel Templates</h3>
-        <label className="flex items-center gap-2 text-xs text-gray-600">
+        <h3 className="text-sm font-semibold text-foreground">Channel Templates</h3>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
           <input
             type="checkbox"
             checked={preferTemplateOverAI}
@@ -129,7 +129,7 @@ function ChannelsPanel() {
             className={`rounded px-2 py-1 text-xs capitalize ${
               activeChannel === ch
                 ? 'bg-indigo-600 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                : 'bg-muted-100 text-muted-foreground hover:bg-muted-200'
             }`}
           >
             {ch}
@@ -140,7 +140,7 @@ function ChannelsPanel() {
       <div className="space-y-3">
         {(['titleTemplate', 'captionTemplate', 'hashtagsTemplate', 'ctaTemplate'] as const).map(field => (
           <div key={field}>
-            <label className="block text-xs font-medium text-gray-600 capitalize">
+            <label className="block text-xs font-medium text-muted-foreground capitalize">
               {field.replace('Template', ' Template')}
             </label>
             <textarea
@@ -148,7 +148,7 @@ function ChannelsPanel() {
               onChange={e => updateField(activeChannel, field, e.target.value)}
               rows={field === 'captionTemplate' ? 3 : 2}
               placeholder="Use {productName}, {commission}, {network}, {ctaUrl}, {tenantName}…"
-              className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
             />
           </div>
         ))}
@@ -157,7 +157,7 @@ function ChannelsPanel() {
       <div className="flex gap-2">
         <button
           onClick={handlePreview}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50"
+          className="rounded-md border border-border px-3 py-1.5 text-xs text-foreground hover:bg-muted"
         >
           Preview Caption
         </button>
@@ -171,8 +171,8 @@ function ChannelsPanel() {
       </div>
 
       {preview && (
-        <div className="rounded bg-gray-50 p-3 text-xs text-gray-700">
-          <p className="font-medium text-gray-500 mb-1">Preview ({activeChannel}):</p>
+        <div className="rounded bg-muted-50 p-3 text-xs text-foreground">
+          <p className="font-medium text-muted-foreground mb-1">Preview ({activeChannel}):</p>
           <p className="whitespace-pre-wrap">{preview}</p>
         </div>
       )}
@@ -245,12 +245,12 @@ function McpPanel() {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-sm font-semibold text-gray-700">Custom MCP Servers</h3>
+      <h3 className="text-sm font-semibold text-foreground">Custom MCP Servers</h3>
 
       {servers.length > 0 && (
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b text-left text-gray-500">
+            <tr className="border-b text-left text-muted-foreground">
               <th className="pb-1 pr-4">Name</th>
               <th className="pb-1 pr-4">URL</th>
               <th className="pb-1 pr-4">Auth</th>
@@ -262,7 +262,7 @@ function McpPanel() {
             {servers.map(s => (
               <tr key={s.name} className="border-b last:border-0">
                 <td className="py-1.5 pr-4 font-medium">{s.name}</td>
-                <td className="py-1.5 pr-4 text-gray-500 truncate max-w-[160px]">{s.url}</td>
+                <td className="py-1.5 pr-4 text-muted-foreground truncate max-w-[160px]">{s.url}</td>
                 <td className="py-1.5 pr-4">{s.authType}</td>
                 <td className="py-1.5 pr-4">
                   {testResult[s.name] ? (
@@ -270,7 +270,7 @@ function McpPanel() {
                       {testResult[s.name]}
                     </span>
                   ) : (
-                    <span className="text-gray-400">{s.enabled ? 'enabled' : 'disabled'}</span>
+                    <span className="text-muted-foreground">{s.enabled ? 'enabled' : 'disabled'}</span>
                   )}
                 </td>
                 <td className="py-1.5 flex gap-2">
@@ -291,33 +291,33 @@ function McpPanel() {
         </table>
       )}
 
-      <div className="rounded-lg border border-gray-200 p-4 space-y-3">
-        <p className="text-xs font-semibold text-gray-600">Add / Update Server</p>
+      <div className="rounded-lg border border-border-200 p-4 space-y-3">
+        <p className="text-xs font-semibold text-muted-foreground">Add / Update Server</p>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-gray-500">Name</label>
+            <label className="block text-xs text-muted-foreground">Name</label>
             <input
               value={form.name ?? ''}
               onChange={e => handleFormChange('name', e.target.value)}
               placeholder="my-analytics"
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-xs"
+              className="mt-1 w-full rounded border border-border px-2 py-1.5 text-xs"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500">URL (HTTPS)</label>
+            <label className="block text-xs text-muted-foreground">URL (HTTPS)</label>
             <input
               value={form.url ?? ''}
               onChange={e => handleFormChange('url', e.target.value)}
               placeholder="https://mcp.example.com"
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-xs"
+              className="mt-1 w-full rounded border border-border px-2 py-1.5 text-xs"
             />
           </div>
           <div>
-            <label className="block text-xs text-gray-500">Auth Type</label>
+            <label className="block text-xs text-muted-foreground">Auth Type</label>
             <select
               value={form.authType ?? 'none'}
               onChange={e => handleFormChange('authType', e.target.value)}
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-xs"
+              className="mt-1 w-full rounded border border-border px-2 py-1.5 text-xs"
             >
               <option value="none">None</option>
               <option value="bearer">Bearer Token</option>
@@ -326,13 +326,13 @@ function McpPanel() {
           </div>
           {form.authType !== 'none' && (
             <div>
-              <label className="block text-xs text-gray-500">Auth Value</label>
+              <label className="block text-xs text-muted-foreground">Auth Value</label>
               <input
                 type="password"
                 value={form.authValue ?? ''}
                 onChange={e => handleFormChange('authValue', e.target.value)}
                 placeholder="Token / value"
-                className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-xs"
+                className="mt-1 w-full rounded border border-border px-2 py-1.5 text-xs"
               />
             </div>
           )}
@@ -496,14 +496,14 @@ function StoragePanel() {
   }
 
   if (loading) {
-    return <div className="text-xs text-gray-500">Loading storage settings…</div>;
+    return <div className="text-xs text-muted-foreground">Loading storage settings…</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-700">Storage Settings (R2 BYOS)</h3>
-        <label className="flex items-center gap-2 text-xs text-gray-600">
+        <h3 className="text-sm font-semibold text-foreground">Storage Settings (R2 BYOS)</h3>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground">
           <input
             type="checkbox"
             checked={form.useTenantStorage}
@@ -522,7 +522,7 @@ function StoragePanel() {
 
       <div className="space-y-3">
         <div>
-          <label className="block text-xs font-medium text-gray-600">
+          <label className="block text-xs font-medium text-muted-foreground">
             R2 Access Key ID
           </label>
           <input
@@ -530,12 +530,12 @@ function StoragePanel() {
             value={form.r2AccessKeyId}
             onChange={e => handleChangeKey('r2AccessKeyId', e.target.value)}
             placeholder="Enter R2 Access Key ID"
-            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600">
+          <label className="block text-xs font-medium text-muted-foreground">
             R2 Secret Access Key
           </label>
           <input
@@ -543,12 +543,12 @@ function StoragePanel() {
             value={form.r2SecretAccessKey}
             onChange={e => handleChangeKey('r2SecretAccessKey', e.target.value)}
             placeholder="Enter R2 Secret Access Key"
-            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600">
+          <label className="block text-xs font-medium text-muted-foreground">
             R2 Bucket Name
           </label>
           <input
@@ -556,12 +556,12 @@ function StoragePanel() {
             value={form.r2BucketName}
             onChange={e => handleChangeField('r2BucketName', e.target.value)}
             placeholder="e.g. my-bucket"
-            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600">
+          <label className="block text-xs font-medium text-muted-foreground">
             R2 Endpoint URL
           </label>
           <input
@@ -569,12 +569,12 @@ function StoragePanel() {
             value={form.r2Endpoint}
             onChange={e => handleChangeField('r2Endpoint', e.target.value)}
             placeholder="e.g. https://<account-id>.r2.cloudflarestorage.com"
-            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600">
+          <label className="block text-xs font-medium text-muted-foreground">
             R2 Public Base URL
           </label>
           <input
@@ -582,7 +582,7 @@ function StoragePanel() {
             value={form.r2PublicBaseUrl}
             onChange={e => handleChangeField('r2PublicBaseUrl', e.target.value)}
             placeholder="e.g. https://pub-12345.r2.dev or custom domain"
-            className="mt-1 block w-full rounded border border-gray-300 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
           />
         </div>
       </div>
@@ -661,8 +661,8 @@ function ExportImportPanel() {
   return (
     <div className="space-y-8">
       <div>
-        <h3 className="text-sm font-semibold text-gray-700">Export Settings</h3>
-        <p className="mt-1 text-xs text-gray-500">Download all your settings as a JSON file.</p>
+        <h3 className="text-sm font-semibold text-foreground">Export Settings</h3>
+        <p className="mt-1 text-xs text-muted-foreground">Download all your settings as a JSON file.</p>
         <button
           onClick={handleExport}
           className="mt-3 rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"
@@ -672,17 +672,17 @@ function ExportImportPanel() {
       </div>
 
       <div>
-        <h3 className="text-sm font-semibold text-gray-700">Import Settings</h3>
-        <p className="mt-1 text-xs text-gray-500">Upload a previously exported JSON file to restore settings.</p>
+        <h3 className="text-sm font-semibold text-foreground">Import Settings</h3>
+        <p className="mt-1 text-xs text-muted-foreground">Upload a previously exported JSON file to restore settings.</p>
         <input
           ref={fileRef}
           type="file"
           accept=".json,application/json"
           onChange={handleImport}
           disabled={importing}
-          className="mt-3 block text-sm text-gray-600 file:mr-4 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-indigo-700"
+          className="mt-3 block text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-indigo-700"
         />
-        {importing && <p className="mt-2 text-xs text-gray-400">Importing…</p>}
+        {importing && <p className="mt-2 text-xs text-muted-foreground">Importing…</p>}
         {importResult && (
           <p className="mt-2 text-xs text-green-600">
             Imported {importResult.imported} namespace(s).
@@ -693,7 +693,7 @@ function ExportImportPanel() {
 
       <div className="border-t pt-6">
         <h3 className="text-sm font-semibold text-red-600">Danger Zone</h3>
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-muted-foreground">
           Reset all settings back to system defaults. This cannot be undone.
         </p>
         <button
@@ -718,7 +718,7 @@ function ExportImportPanel() {
         {resetStep > 0 && !resetting && (
           <button
             onClick={() => setResetStep(0)}
-            className="ml-3 text-xs text-gray-400 hover:underline"
+            className="ml-3 text-xs text-muted-foreground hover:underline"
           >
             Cancel
           </button>
@@ -754,7 +754,7 @@ export function CustomizePageClient() {
                 className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
                   active === item.id
                     ? 'bg-indigo-100 font-medium text-indigo-700'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    : 'text-muted-foreground hover:bg-muted-100'
                 }`}
               >
                 {item.label}

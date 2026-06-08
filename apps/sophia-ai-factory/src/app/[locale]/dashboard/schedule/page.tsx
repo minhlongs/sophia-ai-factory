@@ -170,7 +170,7 @@ export default function SchedulePage(): React.JSX.Element {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-500 transition-colors"
         >
           <Plus className="w-4 h-4" />
           {t('createButton')}
@@ -202,7 +202,7 @@ export default function SchedulePage(): React.JSX.Element {
           <div className="rounded-xl border border-border bg-card p-6 w-full max-w-lg shadow-2xl space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-violet-400" />
+                <Calendar className="w-5 h-5 text-primary-400" />
                 {t('form.createTitle')}
               </h2>
               <button
@@ -279,7 +279,7 @@ export default function SchedulePage(): React.JSX.Element {
                 <button
                   type="submit"
                   disabled={submitting || !topic.trim() || !nextRun}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-500 transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-500 transition-colors disabled:opacity-50"
                 >
                   {submitting ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -297,7 +297,7 @@ export default function SchedulePage(): React.JSX.Element {
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="px-5 py-3 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-violet-400" />
+            <Calendar className="w-4 h-4 text-primary-400" />
             <h2 className="text-sm font-medium">{t('table.title')}</h2>
           </div>
           <button
