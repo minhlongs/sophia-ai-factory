@@ -21,7 +21,7 @@ describe('UpgradeBanner', () => {
     expect(screen.getByText('Upgrade to Growth')).toBeDefined();
 
     const link = screen.getByRole('link', { name: /Upgrade to Growth/i });
-    expect(link.getAttribute('href')).toBe('/en/pricing');
+    expect(link.getAttribute('href')).toBe('/pricing');
   });
 
   it('renders Contact Sales message for ENTERPRISE requirement', () => {

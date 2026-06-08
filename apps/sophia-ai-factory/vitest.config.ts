@@ -62,6 +62,7 @@ export default defineConfig({
       '@/forest': path.resolve(__dirname, './src/forest'),
       '@/land': path.resolve(__dirname, './src/land'),
       'next/navigation': path.resolve(__dirname, './src/test/mocks/next-navigation.ts'),
+      'next-intl/navigation': path.resolve(__dirname, './src/test/mocks/next-intl-navigation.tsx'),
     },
   },
   define: {
