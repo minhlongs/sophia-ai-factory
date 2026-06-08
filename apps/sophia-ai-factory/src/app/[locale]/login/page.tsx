@@ -143,8 +143,8 @@ export default function LoginPage() {
       <div className="min-h-screen flex items-center justify-center bg-background px-4 pt-16">
         <div className="w-full max-w-md space-y-8 text-center">
           <div className="rounded-xl border border-border bg-card p-8 shadow-sm space-y-4">
-            <div className="mx-auto w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center">
-              <CheckCircle aria-hidden="true" className="w-7 h-7 text-green-400" />
+            <div className="mx-auto w-14 h-14 rounded-full bg-emerald-400/10 flex items-center justify-center">
+              <CheckCircle aria-hidden="true" className="w-7 h-7 text-emerald-400" />
             </div>
             <h2 className="text-lg font-semibold text-foreground">Kiểm Tra Email Của Bạn</h2>
             <p className="text-sm text-muted-foreground">
@@ -156,7 +156,7 @@ export default function LoginPage() {
             </p>
             <button
               onClick={() => { setMagicSent(false); setMode("password"); }}
-              className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
+              className="text-sm text-accent hover:text-accent transition-colors"
             >
               Quay lại đăng nhập
             </button>
@@ -188,7 +188,7 @@ export default function LoginPage() {
               onClick={() => switchTab("signin")}
               className={`flex-1 py-2 text-sm font-medium transition-colors ${
                 pageTab === "signin"
-                  ? "bg-violet-600 text-white"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -199,7 +199,7 @@ export default function LoginPage() {
               onClick={() => switchTab("signup")}
               className={`flex-1 py-2 text-sm font-medium transition-colors ${
                 pageTab === "signup"
-                  ? "bg-violet-600 text-white"
+                  ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -218,7 +218,7 @@ export default function LoginPage() {
                   onClick={() => { setMode("password"); setError(null); }}
                   className={`flex-1 py-2 text-sm font-medium transition-colors ${
                     mode === "password"
-                      ? "bg-violet-600/60 text-white"
+                      ? "bg-primary/60 text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -229,7 +229,7 @@ export default function LoginPage() {
                   onClick={() => { setMode("magic"); setError(null); }}
                   className={`flex-1 py-2 text-sm font-medium transition-colors ${
                     mode === "magic"
-                      ? "bg-violet-600/60 text-white"
+                      ? "bg-primary/60 text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -239,7 +239,7 @@ export default function LoginPage() {
 
               {/* Error */}
               {error && (
-                <div role="alert" aria-live="polite" className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+                <div role="alert" aria-live="polite" className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
                   {error}
                 </div>
               )}
@@ -262,7 +262,7 @@ export default function LoginPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="ban@example.com"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                       />
                     </div>
                   </div>
@@ -281,7 +281,7 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                       />
                     </div>
                   </div>
@@ -289,7 +289,7 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-accent px-4 py-3 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
                   >
                     {loading ? (
                       <><Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" /> Đang đăng nhập…</>
@@ -303,7 +303,7 @@ export default function LoginPage() {
                   <p className="text-sm text-muted-foreground">
                     Nhập email để nhận link đăng nhập. Không cần mật khẩu.
                     <br />
-                    <span className="text-violet-400">Chưa có tài khoản? Magic link sẽ tự động tạo cho bạn.</span>
+                    <span className="text-accent">Chưa có tài khoản? Magic link sẽ tự động tạo cho bạn.</span>
                   </p>
                   <div className="space-y-1">
                     <label htmlFor="email-magic" className="text-sm font-medium text-foreground">
@@ -321,7 +321,7 @@ export default function LoginPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="ban@example.com"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                       />
                     </div>
                   </div>
@@ -329,7 +329,7 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-accent px-4 py-3 text-sm font-medium text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
                   >
                     {loading ? (
                       <><Loader2 aria-hidden="true" className="w-4 h-4 animate-spin" /> Đang gửi…</>
@@ -341,47 +341,47 @@ export default function LoginPage() {
               )}
             </>
           )}
+        </div>
 
-          {/* Divider */}
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="bg-card px-2 text-muted-foreground">Hoặc liên hệ hỗ trợ</span>
-            </div>
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border" />
           </div>
-
-          {/* Fallback contact */}
-          <div className="space-y-2">
-            <a
-              href="https://t.me/Sophia_Bbot"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full rounded-lg border border-border px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
-            >
-              Telegram Bot @Sophia_Bbot
-            </a>
-            <a
-              href="mailto:support@mekongmind.com"
-              className="flex items-center justify-center gap-2 w-full rounded-lg border border-border px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            >
-              <Mail aria-hidden="true" className="w-4 h-4" />
-              support@mekongmind.com
-            </a>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-card px-2 text-muted-foreground">Hoặc liên hệ hỗ trợ</span>
           </div>
         </div>
 
-        {/* Back link */}
-        <div className="text-center">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        {/* Fallback contact */}
+        <div className="space-y-2">
+          <a
+            href="https://t.me/Sophia_Bbot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full rounded-lg border border-border px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
           >
-            <ArrowLeft aria-hidden="true" className="w-4 h-4" />
-            Quay lại trang chủ
-          </Link>
+            Telegram Bot @Sophia_Bbot
+          </a>
+          <a
+            href="mailto:support@mekongmind.com"
+            className="flex items-center justify-center gap-2 w-full rounded-lg border border-border px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+          >
+            <Mail aria-hidden="true" className="w-4 h-4" />
+            support@mekongmind.com
+          </a>
         </div>
+      </div>
+
+      {/* Back link */}
+      <div className="text-center">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <ArrowLeft aria-hidden="true" className="w-4 h-4" />
+          Quay lại trang chủ
+        </Link>
       </div>
     </div>
   );

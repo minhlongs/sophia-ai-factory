@@ -118,7 +118,7 @@ export function SopInstallModal({ template, locale, open, onClose, installAction
                   onClick={() => setSelectedPreset(p.key)}
                   className={`px-3 py-2 text-sm rounded-lg border transition-colors ${
                     selectedPreset === p.key
-                      ? 'border-violet-500 bg-violet-900/40 text-violet-200'
+                      ? 'border-primary bg-primary/20 text-primary'
                       : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted'
                   }`}
                 >
@@ -134,9 +134,9 @@ export function SopInstallModal({ template, locale, open, onClose, installAction
               role="switch"
               aria-checked={enabled}
               onClick={() => setEnabled(!enabled)}
-              className={`relative w-10 h-5 rounded-full transition-colors ${enabled ? 'bg-violet-600' : 'bg-zinc-700'}`}
+              className={`relative w-10 h-5 rounded-full transition-colors ${enabled ? 'bg-primary' : 'bg-muted'}`}
             >
-              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${enabled ? 'translate-x-5' : ''}`} />
+              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-background rounded-full shadow transition-transform ${enabled ? 'translate-x-5' : ''}`} />
             </div>
             <span className="text-sm text-foreground">{t('enable')}</span>
           </label>
@@ -161,7 +161,7 @@ export function SopInstallModal({ template, locale, open, onClose, installAction
                   onChange={(e) => setCustomizations(e.target.value)}
                   placeholder={t('customizationsPlaceholder')}
                   rows={6}
-                  className="w-full px-3 py-2 text-sm bg-zinc-900 border border-border rounded-lg text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none"
+                  className="w-full px-3 py-2 text-sm bg-muted border border-border rounded-lg text-foreground font-mono focus:outline-none focus:ring-1 focus:ring-primary resize-none"
                 />
               </div>
             )}
@@ -170,7 +170,7 @@ export function SopInstallModal({ template, locale, open, onClose, installAction
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isPending}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={isPending} className="bg-violet-700 hover:bg-violet-600">
+          <Button onClick={handleSubmit} disabled={isPending} className="bg-primary hover:bg-primary/90">
             {isPending ? t('submitting') : t('submit')}
           </Button>
         </DialogFooter>

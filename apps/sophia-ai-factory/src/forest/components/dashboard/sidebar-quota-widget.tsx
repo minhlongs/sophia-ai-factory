@@ -51,7 +51,7 @@ export function SidebarQuotaWidget() {
   return (
     <Link
       href="/dashboard/billing"
-      className="block rounded-lg border border-border bg-muted/30 px-3 py-2.5 hover:bg-muted/60 transition-colors"
+      className="block rounded-lg border border-border bg-muted/30 px-3 py-2.5 hover:bg-muted/50 transition-colors min-h-[44px]"
       aria-label={t('viewBilling')}
       data-testid="sidebar-quota-widget"
     >

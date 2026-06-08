@@ -76,14 +76,14 @@ export default async function CheckoutFailurePage({
         <div className="flex flex-col gap-3">
           <Link
             href={`/${locale}/pricing`}
-            className="inline-flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-6 py-3.5 text-center font-semibold text-foreground transition hover:from-violet-500 hover:to-blue-500"
+            className="inline-flex items-center justify-center gap-2 w-full rounded-xl bg-gradient-to-r from-primary to-accent px-6 py-3.5 text-center font-semibold text-primary-foreground transition hover:from-primary/90 hover:to-accent/90"
           >
             <RefreshCw className="h-4 w-4" />
             {isVi ? "Thử lại" : "Try again"}
           </Link>
           <a
             href="mailto:support@mekongmind.com"
-            className="inline-flex items-center justify-center gap-2 w-full rounded-xl border border-border px-6 py-3.5 text-center font-medium text-foreground transition hover:border-zinc-500 hover:text-foreground"
+            className="inline-flex items-center justify-center gap-2 w-full rounded-xl border border-border px-6 py-3.5 text-center font-medium text-foreground transition hover:border-primary/50 hover:text-foreground"
           >
             <MessageCircle className="h-4 w-4" />
             {isVi ? "Liên hệ hỗ trợ" : "Contact support"}

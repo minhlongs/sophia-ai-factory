@@ -87,11 +87,11 @@ export function HandoverOnboardingBanner({ userId, locale }: Props) {
           <span className="text-sm font-semibold text-violet-300">
             {isVi ? 'Chào mừng đến Sophia!' : 'Welcome to Sophia!'}
           </span>
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-muted-foreground">
             {isVi ? `${remaining} bước còn lại` : `${remaining} steps remaining`}
           </span>
         </div>
-        <div className="h-1.5 rounded-full bg-zinc-800 mb-2">
+        <div className="h-1.5 rounded-full bg-muted mb-2">
           <div
             className="h-full rounded-full bg-gradient-to-r from-violet-500 to-blue-500 transition-all"
             style={{ width: `${progressPct}%` }}
@@ -114,7 +114,7 @@ export function HandoverOnboardingBanner({ userId, locale }: Props) {
 
       <button
         onClick={dismiss}
-        className="shrink-0 p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition-colors"
+        className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-zinc-300 hover:bg-muted transition-colors"
         aria-label={isVi ? 'Đóng' : 'Close'}
       >
         <X size={16} aria-hidden="true" />

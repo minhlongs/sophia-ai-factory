@@ -30,7 +30,7 @@ export function MobileNav() {
   };
 
   return (
-    <nav aria-label="Dashboard navigation" className="bg-zinc-950/60 backdrop-blur-xl border border-white/10 rounded-2xl mx-4 mb-4 shadow-xl fixed bottom-0 left-0 right-0 z-50 md:hidden p-1">
+    <nav aria-label="Dashboard navigation" className="bg-background/60 backdrop-blur-xl border border-border rounded-2xl mx-4 mb-4 shadow-xl fixed bottom-0 left-0 right-0 z-50 md:hidden p-1">
       <div className="flex items-center justify-around h-12 px-2">
         {links.map(({ href, label, icon: Icon }) => {
           const isActive = isLinkActive(href);
@@ -41,7 +41,7 @@ export function MobileNav() {
               aria-current={isActive ? "page" : undefined}
               className={`flex flex-col items-center justify-center flex-1 gap-1 hover:scale-105 active:scale-95 transition-all duration-200 ${
                 isActive
-                  ? "text-[var(--neon-cyan)]"
+                  ? "text-primary"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >

@@ -53,7 +53,7 @@ function FieldInput({
   required: boolean;
   onChange: (v: unknown) => void;
 }) {
-  const baseClass = 'w-full px-3 py-2 text-sm bg-zinc-900 border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-violet-500';
+  const baseClass = 'w-full px-3 py-2 text-sm bg-muted border border-border rounded-lg text-foreground focus:outline-none focus:ring-1 focus:ring-primary';
   const strVal = value != null ? String(value) : '';
 
   if (prop.type === 'boolean') {
@@ -63,7 +63,7 @@ function FieldInput({
           type="checkbox"
           checked={Boolean(value)}
           onChange={(e) => onChange(e.target.checked)}
-          className="w-4 h-4 accent-violet-600"
+          className="w-4 h-4 accent-primary"
         />
         <span className="text-sm text-muted-foreground">{prop.description ?? ''}</span>
       </label>

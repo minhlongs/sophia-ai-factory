@@ -82,14 +82,14 @@ export function PaymentStatusPoller({ orderId, locale }: PaymentStatusPollerProp
         <p className="font-semibold text-amber-300 mb-2">
           {isVi ? 'Vẫn đang xử lý...' : 'Still processing...'}
         </p>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted-foreground">
           {isVi
             ? 'Blockchain đang xác nhận giao dịch của bạn. Chúng tôi sẽ gửi email khi hoàn tất.'
             : 'The blockchain is confirming your transaction. We\'ll email you when it\'s done.'}
         </p>
         <a
           href="mailto:support@mekongmind.com"
-          className="mt-4 inline-block text-sm text-violet-400 hover:text-violet-300 underline"
+          className="mt-4 inline-block text-sm text-primary hover:text-primary/80 underline"
         >
           {isVi ? 'Liên hệ hỗ trợ' : 'Contact support'}
         </a>
@@ -98,14 +98,14 @@ export function PaymentStatusPoller({ orderId, locale }: PaymentStatusPollerProp
   }
 
   return (
-    <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.07] p-6 text-center">
+    <div className="rounded-xl border border-border bg-muted/30 p-6 text-center">
       <div className="flex items-center justify-center gap-2 mb-3">
-        <Loader2 className="h-5 w-5 text-blue-400 motion-safe:animate-spin" />
-        <p className="font-semibold text-blue-300">
+        <Loader2 className="h-5 w-5 text-primary motion-safe:animate-spin" />
+        <p className="font-semibold text-foreground">
           {isVi ? 'Đang xác nhận thanh toán...' : 'Confirming payment...'}
         </p>
       </div>
-      <p className="text-sm text-zinc-400">
+      <p className="text-sm text-muted-foreground">
         {isVi
           ? `Crypto mất 2-5 phút để xác nhận. Đang kiểm tra... (${attempt}/${MAX_ATTEMPTS})`
           : `Crypto confirmations take 2-5 min. Checking... (${attempt}/${MAX_ATTEMPTS})`}

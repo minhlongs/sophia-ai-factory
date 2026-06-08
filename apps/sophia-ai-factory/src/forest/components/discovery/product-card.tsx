@@ -60,8 +60,8 @@ export function ProductCard({ product }: ProductCardProps) {
             <div className="flex items-center gap-1">
               <span className="text-sm font-medium text-muted-foreground">SPS</span>
               <span className={`text-xl font-bold ${
-                (product.sps_score || 0) >= 80 ? 'text-green-600' :
-                (product.sps_score || 0) >= 50 ? 'text-amber-600' : 'text-slate-600'
+                (product.sps_score || 0) >= 80 ? 'text-emerald-400' :
+                (product.sps_score || 0) >= 50 ? 'text-amber-400' : 'text-muted-foreground'
               }`}>
                 {product.sps_score?.toFixed(0) || '-'}
               </span>
@@ -83,7 +83,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           </div>
           <div className="flex flex-col justify-center items-center sm:items-start pt-2 sm:pt-0">
-             <div className="flex items-center gap-1 text-xs text-green-600 font-medium bg-green-50 px-2 py-1 rounded-full sm:bg-transparent sm:px-0 sm:py-0">
+             <div className="flex items-center gap-1 text-xs text-emerald-400 font-medium bg-emerald-500/10 px-2 py-1 rounded-full sm:bg-transparent sm:px-0 sm:py-0">
                <TrendingUp className="h-3 w-3" aria-hidden="true" />
                <span>High Velocity</span>
              </div>

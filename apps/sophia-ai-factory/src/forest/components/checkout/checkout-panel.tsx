@@ -109,16 +109,16 @@ export function CheckoutPanel({
     : "";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm transition-opacity">
       <div 
-        className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-zinc-900 to-zinc-950 p-6 md:p-8 shadow-2xl shadow-violet-500/10 text-white animate-in fade-in zoom-in-95 duration-200"
+        className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-background to-card p-6 md:p-8 shadow-2xl shadow-violet-500/10 text-foreground animate-in fade-in zoom-in-95 duration-200"
         role="dialog"
         aria-modal="true"
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-lg p-1.5 text-zinc-400 hover:bg-white/5 hover:text-white transition-colors"
+          className="absolute right-4 top-4 rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
           aria-label="Close dialog"
         >
           <X className="h-5 w-5" />
@@ -126,14 +126,14 @@ export function CheckoutPanel({
 
         {/* Header */}
         <div className="flex items-center gap-2 mb-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-600/15 border border-violet-500/30 text-violet-400 shadow-[0_0_15px_rgba(139,92,246,0.15)]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 border border-primary/30 text-primary shadow-[0_0_15px_rgba(139,92,246,0.15)]">
             <Lock className="h-5 w-5" />
           </div>
           <div>
             <h2 className="text-xl font-bold tracking-tight">
               {isVi ? "Thanh toán an toàn" : "Secure Checkout"}
             </h2>
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-muted-foreground">
               {isVi ? "Giao dịch mã hóa SSL 256-bit bảo mật" : "SSL Encrypted Transaction"}
             </p>
           </div>
@@ -142,20 +142,20 @@ export function CheckoutPanel({
         <div className="grid grid-cols-1 md:grid-cols-[1.1fr_0.9fr] gap-8">
           {/* Order Details & Summary */}
           <div className="space-y-6">
-            <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4 space-y-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-violet-400">
+            <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-4">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">
                 {isVi ? "Tóm tắt đơn hàng" : "Order Summary"}
               </h3>
               <div className="flex justify-between">
                 <div>
-                  <p className="font-semibold text-zinc-200">{planNames[tier] || tier}</p>
-                  <p className="text-xs text-zinc-400 capitalize">
+                  <p className="font-semibold text-foreground">{planNames[tier] || tier}</p>
+                  <p className="text-xs text-muted-foreground capitalize">
                     {isVi ? `Chu kỳ: ${period === "lifetime" ? "Trọn đời" : period === "yearly" ? "Năm" : "Tháng"}` : `Billing: ${period}`}
                   </p>
                 </div>
                 <div className="text-right">
                   {discountedPriceCents !== undefined && (
-                    <p className="text-xs line-through text-zinc-500">{originalPriceFormatted}</p>
+                    <p className="text-xs line-through text-muted-foreground/50">{originalPriceFormatted}</p>
                   )}
                   <p className="font-bold text-lg text-emerald-400">{finalPriceFormatted}</p>
                 </div>
@@ -171,8 +171,8 @@ export function CheckoutPanel({
               )}
 
               {paymentMethod === "payos" && (
-                <div className="border-t border-white/5 pt-3 flex justify-between items-center text-xs">
-                  <span className="text-zinc-400">{isVi ? "Số tiền quy đổi VND" : "VND conversion"}:</span>
+                <div className="border-t border-border pt-3 flex justify-between items-center text-xs">
+                  <span className="text-muted-foreground">{isVi ? "Số tiền quy đổi VND" : "VND conversion"}:</span>
                   <span className="font-bold text-amber-400">{vndFormatted}</span>
                 </div>
               )}
@@ -180,11 +180,11 @@ export function CheckoutPanel({
 
             {/* Trust and Policy */}
             <div className="space-y-3">
-              <div className="flex items-start gap-2 text-xs text-zinc-400">
+              <div className="flex items-start gap-2 text-xs text-muted-foreground">
                 <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
                 <span>{t("pricing.refund_master_title")}: {t("pricing.refund_master_desc")}</span>
               </div>
-              <div className="flex items-start gap-2 text-xs text-zinc-400">
+              <div className="flex items-start gap-2 text-xs text-muted-foreground">
                 <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
                 <span>
                   {isVi
@@ -218,12 +218,12 @@ export function CheckoutPanel({
           </div>
 
           {/* Payment & QR Scanner Area */}
-          <div className="flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-white/10 pt-6 md:pt-0 md:pl-8 text-center space-y-4">
+          <div className="flex flex-col items-center justify-center border-t md:border-t-0 md:border-l border-border pt-6 md:pt-0 md:pl-8 text-center space-y-4">
             {checkoutUrl ? (
               <>
                 <div className="relative group">
                   <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 opacity-20 blur group-hover:opacity-30 transition duration-300"></div>
-                  <div className="relative rounded-xl border border-white/10 bg-white p-3 shadow-xl">
+                  <div className="relative rounded-xl border border-border bg-muted p-3 shadow-xl">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                       src={qrCodeSrc} 
@@ -237,7 +237,7 @@ export function CheckoutPanel({
                   <p className="text-sm font-semibold">
                     {isVi ? "Quét mã QR để thanh toán" : "Scan QR to Pay"}
                   </p>
-                  <p className="text-[11px] text-zinc-400 px-4">
+                  <p className="text-[11px] text-muted-foreground px-4">
                     {paymentMethod === "nowpayments"
                       ? isVi 
                         ? "Hỗ trợ USDT (TRC20/ERC20) hoặc Bitcoin qua NOWPayments"
@@ -254,7 +254,7 @@ export function CheckoutPanel({
                   <button
                     onClick={handleVerifyStatus}
                     disabled={checking}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2.5 text-xs font-semibold hover:bg-white/10 transition disabled:opacity-50"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-muted/30 py-2.5 text-xs font-semibold hover:bg-muted/50 transition disabled:opacity-50"
                   >
                     {checking ? (
                       <Loader2 className="h-4 w-4 animate-spin text-violet-400" />
@@ -280,7 +280,7 @@ export function CheckoutPanel({
             ) : (
               <div className="flex flex-col items-center justify-center h-full space-y-2 py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
-                <p className="text-xs text-zinc-400">
+                <p className="text-xs text-muted-foreground">
                   {isVi ? "Đang khởi tạo cổng thanh toán..." : "Initializing gateway..."}
                 </p>
               </div>
@@ -289,7 +289,7 @@ export function CheckoutPanel({
         </div>
 
         {/* Footer badges */}
-        <div className="mt-8 border-t border-white/5 pt-4 flex items-center justify-between text-[10px] text-zinc-500">
+        <div className="mt-8 border-t border-border pt-4 flex items-center justify-between text-[10px] text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <Lock className="h-3 w-3" />
             <span>SSL Secured Connection</span>

@@ -22,14 +22,14 @@ export const CATEGORY_ICONS: Record<Category, string> = {
 };
 
 const CATEGORY_COLORS: Record<Category, string> = {
-  content:   'bg-violet-500/10 text-violet-400 border-violet-500',
+  content:   'bg-primary/10 text-primary border-primary',
   leads:     'bg-emerald-500/10 text-emerald-400 border-emerald-500',
   email:     'bg-blue-500/10 text-blue-400 border-blue-500',
   analytics: 'bg-cyan-500/10 text-cyan-400 border-cyan-500',
   proposals: 'bg-amber-500/10 text-amber-400 border-amber-500',
   crisis:    'bg-rose-500/10 text-rose-400 border-rose-500',
   sales:     'bg-emerald-500/10 text-emerald-400 border-emerald-500',
-  social:    'bg-violet-500/10 text-violet-400 border-violet-500',
+  social:    'bg-primary/10 text-primary border-primary',
 };
 
 interface CategoryBadgeProps {
@@ -39,7 +39,7 @@ interface CategoryBadgeProps {
 
 export function CategoryBadge({ category, className = '' }: CategoryBadgeProps) {
   const t = useTranslations('sop.categories');
-  const colors = CATEGORY_COLORS[category] ?? 'bg-zinc-800 text-zinc-300 border-zinc-700';
+  const colors = CATEGORY_COLORS[category] ?? 'bg-muted text-muted-foreground border-border';
   const icon = CATEGORY_ICONS[category];
 
   return (

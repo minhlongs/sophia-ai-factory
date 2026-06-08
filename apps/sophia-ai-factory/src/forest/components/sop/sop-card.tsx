@@ -33,8 +33,8 @@ export function SopCard({ template, locale, alreadyInstalled, onInstallClick, fe
   const isFeatured = template.is_featured === 1 || featured;
 
   const cardClassName = isFeatured
-    ? 'bg-gradient-to-br from-violet-950/20 via-zinc-900/40 to-cyan-950/20 border border-violet-500/35 ring-1 ring-violet-500/20 shadow-[0_0_15px_rgba(139,92,246,0.1)] backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-violet-500/50 hover:shadow-[0_0_20px_rgba(139,92,246,0.15)] rounded-xl p-5 flex flex-col gap-4 relative overflow-hidden'
-    : 'bg-white/[0.02] border border-white/10 backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-violet-500/50 hover:shadow-[0_0_20px_rgba(139,92,246,0.15)] rounded-xl p-5 flex flex-col gap-4';
+    ? 'bg-gradient-to-br from-muted/20 via-muted/30 to-accent/10 border border-primary/35 ring-1 ring-primary/20 shadow-[0_0_15px_rgba(var(--primary-rgb),0.1)] backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-primary/50 hover:shadow-[0_0_20px_rgba(var(--primary-rgb),0.15)] rounded-xl p-5 flex flex-col gap-4 relative overflow-hidden'
+    : 'bg-muted/10 border border-border backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:border-primary/50 hover:shadow-[0_0_20px_rgba(var(--primary-rgb),0.15)] rounded-xl p-5 flex flex-col gap-4';
 
   return (
     <div className={cardClassName}>
@@ -42,7 +42,7 @@ export function SopCard({ template, locale, alreadyInstalled, onInstallClick, fe
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
             {isFeatured && (
-              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded bg-amber-900/40 text-amber-300 border border-amber-700/50">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs rounded bg-primary/20 text-primary border border-primary/50">
                 <Star className="w-2.5 h-2.5 animate-pulse" aria-hidden="true" />
                 {t('card.featured')}
               </span>
@@ -60,7 +60,7 @@ export function SopCard({ template, locale, alreadyInstalled, onInstallClick, fe
           {t('card.creditsPerRun', { n: template.credits_per_run })}
         </span>
         <span className="flex items-center gap-1">
-          <Clock className="w-3.5 h-3.5 text-violet-400" aria-hidden="true" />
+          <Clock className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
           {t('card.setupTime', { n: setupTime })}
         </span>
       </div>
@@ -68,7 +68,7 @@ export function SopCard({ template, locale, alreadyInstalled, onInstallClick, fe
       <div className="flex gap-2 mt-auto">
         <Link
           href={`/dashboard/sop-marketplace/${template.slug}`}
-          className="flex-1 text-center text-sm px-3 py-2 rounded-lg border border-white/10 bg-white/[0.01] hover:bg-white/[0.05] text-muted-foreground hover:text-foreground transition-all duration-200 hover:border-violet-500/50"
+          className="flex-1 text-center text-sm px-3 py-2 rounded-lg border border-border bg-muted/10 hover:bg-muted/30 text-muted-foreground hover:text-foreground transition-all duration-200 hover:border-primary/50"
         >
           {t('card.viewDetails')}
         </Link>
@@ -88,7 +88,7 @@ export function SopCard({ template, locale, alreadyInstalled, onInstallClick, fe
         ) : (
           <Button
             size="sm"
-            className="flex-1 bg-violet-600 hover:bg-violet-500 hover:shadow-[0_0_12px_rgba(139,92,246,0.4)] active:scale-[0.98] transition-all duration-200"
+            className="flex-1 bg-primary hover:bg-primary/90 active:scale-[0.98] transition-all duration-200"
             onClick={() => onInstallClick(template)}
           >
             {t('card.install')}

@@ -34,28 +34,19 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer
- className="border-t border-border"
-    >
+    <footer className="border-t border-border">
       <Container>
         <div className="py-14">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2.5 mb-4">
-                <div
-                  className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ background: "rgba(0,240,255,0.1)" }}
-                >
-                  <span
-                    className="material-symbols-outlined text-lg"
-                    style={{ color: "var(--neon-cyan)" }}
-                    aria-hidden="true"
-                  >
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-accent/10">
+                  <span className="material-symbols-outlined text-lg text-accent" aria-hidden="true">
                     smart_toy
                   </span>
                 </div>
-                <span className="font-bold text-base tracking-tight bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
+                <span className="font-bold text-base tracking-tight bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
                   Sophia AI Factory
                 </span>
               </div>
@@ -64,18 +55,12 @@ export function Footer() {
               </p>
               {/* Trust badges */}
               <div className="flex gap-2 flex-wrap">
-                <span
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-muted-foreground border"
-                  style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" }}
-                >
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-muted-foreground border bg-muted/5 border-border">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-400" />
                   99.9% Uptime
                 </span>
-                <span
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-muted-foreground border"
-                  style={{ background: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.08)" }}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--neon-cyan)" }} />
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs text-muted-foreground border bg-muted/5 border-border">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                   CF Workers
                 </span>
               </div>
@@ -93,7 +78,6 @@ export function Footer() {
                       <Link
                         href={link.href}
                         className="text-muted-foreground text-sm transition-colors hover:text-foreground"
-                        style={{ ["--hover-color" as string]: "var(--neon-cyan)" }}
                       >
                         {link.label}
                       </Link>
@@ -105,15 +89,13 @@ export function Footer() {
           </div>
 
           {/* Bottom bar */}
-          <div
-            className="border-t border-border pt-6 flex flex-col md:flex-row items-center justify-between gap-4"
-          >
+          <div className="border-t border-border pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-muted-foreground text-xs">
               &copy; {currentYear} Sophia AI Factory. All rights reserved.
             </p>
             <p className="text-muted-foreground text-xs">
               Powered by{" "}
-              <span style={{ color: "var(--neon-cyan)" }}>Mekong CLI</span>
+              <span className="text-accent">Mekong CLI</span>
             </p>
           </div>
         </div>

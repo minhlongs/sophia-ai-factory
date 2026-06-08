@@ -41,12 +41,12 @@ function TypingRotator() {
       );
     }, speed);
     return () => clearTimeout(timer);
-  }, [displayed, isDeleting, index]);
+  }, [displayed, index]);
 
   return (
-    <span className="font-mono text-neon-cyan">
+    <span className="font-mono text-accent">
       {displayed}
-      <span className="animate-blink text-neon-cyan/70">|</span>
+      <span className="animate-blink text-accent/70">|</span>
     </span>
   );
 }
@@ -58,8 +58,8 @@ export function Hero() {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background pt-16">
       {/* Gradient orbs — 2 orbs for ambient lighting */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute top-1/4 left-1/5 w-[500px] h-[500px] rounded-full blur-[120px] animate-float bg-neon-cyan/[0.07]" />
-        <div className="absolute bottom-1/4 right-1/5 w-[400px] h-[400px] rounded-full blur-[100px] animate-float-delayed bg-neon-purple/[0.08]" />
+        <div className="absolute top-1/4 left-1/5 w-[500px] h-[500px] rounded-full blur-[120px] animate-float bg-accent/[0.07]" />
+        <div className="absolute bottom-1/4 right-1/5 w-[400px] h-[400px] rounded-full blur-[100px] animate-float-delayed bg-primary/[0.08]" />
       </div>
 
       {/* Dot grid overlay */}
@@ -68,8 +68,8 @@ export function Hero() {
       <div className="relative container mx-auto px-4 pt-12 pb-20 text-center">
         <div className="max-w-4xl mx-auto">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-5 py-2 mb-10 text-sm font-medium rounded-full border backdrop-blur-md animate-fade-in-up bg-white/[0.04] border-neon-cyan/15 text-neon-cyan">
-            <span className="w-2 h-2 rounded-full bg-green-400 animate-glow-pulse" />
+          <div className="inline-flex items-center gap-2 px-5 py-2 mb-10 text-sm font-medium rounded-full border backdrop-blur-md animate-fade-in-up bg-muted/20 border-accent/15 text-accent">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-glow-pulse" />
             {t("badge")}
           </div>
 
@@ -103,7 +103,7 @@ export function Hero() {
             style={{ animationDelay: "0.4s" }}
           >
             <Link href="/dashboard">
-              <Button variant="glow" size="lg" className="glow-primary rounded-full px-8 text-base w-full sm:w-auto shadow-lg shadow-neon-cyan/20">
+              <Button variant="glow" size="lg" className="glow-primary rounded-full px-8 text-base w-full sm:w-auto shadow-lg shadow-accent/20">
                 {t("cta_start")}
                 <span className="ml-2 hidden sm:inline text-xs opacity-70 font-normal">→</span>
               </Button>
@@ -136,12 +136,12 @@ export function Hero() {
             style={{ animationDelay: "0.6s" }}
           >
             <span className="flex items-center gap-2 text-sm font-medium text-foreground/70">
-              <span className="w-2 h-2 rounded-full bg-green-400" />
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
               {t("trust_uptime")}
             </span>
             <span className="text-border/40 hidden sm:block">•</span>
             <span className="flex items-center gap-2 text-sm font-medium text-foreground/70">
-              <span className="w-2 h-2 rounded-full bg-neon-cyan" />
+              <span className="w-2 h-2 rounded-full bg-accent" />
               {t("trust_response")}
             </span>
             <span className="text-border/40 hidden sm:block">•</span>
@@ -151,7 +151,7 @@ export function Hero() {
             </span>
             <span className="text-border/40 hidden sm:block">•</span>
             <span className="flex items-center gap-2 text-sm font-medium text-foreground/70">
-              <span className="w-2 h-2 rounded-full bg-neon-purple" />
+              <span className="w-2 h-2 rounded-full bg-primary" />
               {t("trust_edge")}
             </span>
           </div>
@@ -160,8 +160,8 @@ export function Hero() {
 
       {/* Scroll indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 motion-safe:animate-bounce-slow" aria-hidden="true">
-        <div className="w-6 h-10 border-2 rounded-full flex items-start justify-center p-2 border-neon-cyan/20">
-          <div className="w-1 h-3 rounded-full bg-neon-cyan/40" />
+        <div className="w-6 h-10 border-2 rounded-full flex items-start justify-center p-2 border-accent/20">
+          <div className="w-1 h-3 rounded-full bg-accent/40" />
         </div>
       </div>
     </section>

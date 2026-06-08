@@ -14,13 +14,13 @@ const CTA_CONFIG = {
     labelVi: 'Nâng cấp ngay',
     labelEn: 'Upgrade now',
     href: '/pricing',
-    className: 'bg-violet-600 hover:bg-violet-700 text-white',
+    className: 'bg-primary hover:bg-violet-700 text-white',
   },
   explore_sops: {
     labelVi: 'Khám phá SOP',
     labelEn: 'Explore SOPs',
     href: '/dashboard/sop-marketplace',
-    className: 'bg-zinc-700 hover:bg-zinc-600 text-white',
+    className: 'bg-muted hover:bg-zinc-600 text-white',
   },
   renew: {
     labelVi: 'Gia hạn',

@@ -66,11 +66,11 @@ export function AgentSidebar() {
 
   return (
     <aside
-      className="fixed right-0 top-0 z-30 flex h-full w-80 flex-col border-l border-white/10 bg-zinc-950/60 backdrop-blur-xl shadow-2xl transition-all"
+      className="fixed right-0 top-0 z-30 flex h-full w-80 flex-col border-l border-border bg-background/60 backdrop-blur-xl shadow-2xl transition-all"
       aria-label={t('title')}
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+      <div className="flex items-center justify-between border-b border-border/50 px-4 py-3">
         <div className="flex items-center gap-2">
           <Bot className="h-4 w-4 text-primary" />
           <span className="text-sm font-semibold">{t('title')}</span>
@@ -81,7 +81,7 @@ export function AgentSidebar() {
             onClick={clearMessages}
             aria-label={t('newChat')}
             title={t('newChat')}
-            className="flex h-7 w-7 items-center justify-center rounded hover:bg-white/[0.05] hover:scale-105 active:scale-95 text-muted-foreground hover:text-foreground transition-all duration-200"
+            className="flex h-11 w-11 min-w-[44px] items-center justify-center rounded hover:bg-muted/30 hover:scale-105 active:scale-95 text-muted-foreground hover:text-foreground transition-all duration-200"
           >
             <RotateCcw className="h-3.5 w-3.5" />
           </button>
@@ -89,7 +89,7 @@ export function AgentSidebar() {
             onClick={toggle}
             aria-label={t('collapse')}
             title={t('collapse')}
-            className="flex h-7 w-7 items-center justify-center rounded hover:bg-white/[0.05] hover:scale-105 active:scale-95 text-muted-foreground hover:text-foreground transition-all duration-200"
+            className="flex h-11 w-11 min-w-[44px] items-center justify-center rounded hover:bg-muted/30 hover:scale-105 active:scale-95 text-muted-foreground hover:text-foreground transition-all duration-200"
           >
             <X className="h-4 w-4" />
           </button>

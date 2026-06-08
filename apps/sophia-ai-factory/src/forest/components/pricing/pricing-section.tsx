@@ -160,7 +160,7 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
         {/* ── Billing period toggle (Monthly / Annual) ──────────────────────────── */}
  <div role="group" aria-label="Chu kỳ thanh toán">
         <div className="mt-6 flex justify-center">
-          <div className="inline-flex items-center rounded-xl border border-violet-500/20 bg-card p-1 gap-1 shadow-[0_0_15px_rgba(139,92,246,0.12)]">
+          <div className="inline-flex items-center rounded-xl border border-border bg-card p-1 gap-1 shadow-[0_0_15px_rgba(139,92,246,0.12)]">
             <button
               type="button"
               onClick={() => setBillingPeriod("monthly")}
@@ -193,7 +193,7 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
         {/* ── Payment method selector ──────────────────────────────────────────── */}
  <div role="group" aria-label="Phương thức thanh toán">
         <div className="mt-6 flex justify-center">
-          <div className="inline-flex rounded-xl border border-violet-500/20 bg-card p-1 gap-1 shadow-[0_0_15px_rgba(139,92,246,0.12)]">
+          <div className="inline-flex rounded-xl border border-border bg-card p-1 gap-1 shadow-[0_0_15px_rgba(139,92,246,0.12)]">
             <button
               type="button"
               onClick={() => setPaymentMethod("nowpayments")}
@@ -242,12 +242,12 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
 			</div>
 		)}
         {/* ── 100% Risk-Free Refund Policy Banner ── */}
-        <div className="mt-8 mx-auto max-w-xl rounded-2xl border border-violet-500/20 bg-gradient-to-r from-violet-950/20 via-violet-900/10 to-cyan-950/20 p-4 text-center shadow-lg backdrop-blur-sm">
-          <p className="flex items-center justify-center gap-2 text-xs md:text-sm text-zinc-300">
+        <div className="mt-8 mx-auto max-w-xl rounded-2xl border border-border bg-gradient-to-r from-violet-950/20 via-violet-900/10 to-cyan-950/20 p-4 text-center shadow-lg backdrop-blur-sm">
+          <p className="flex items-center justify-center gap-2 text-xs md:text-sm text-muted-foreground">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
               <Check className="h-3 w-3" />
             </span>
- <span className="font-semibold text-zinc-100">{t("pricing.refund_master_title")}</span> {t("pricing.refund_master_desc")}
+ <span className="font-semibold text-foreground">{t("pricing.refund_master_title")}</span> {t("pricing.refund_master_desc")}
           </p>
         </div>
 

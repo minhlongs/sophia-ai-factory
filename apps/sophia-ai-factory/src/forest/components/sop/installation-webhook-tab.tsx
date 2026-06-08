@@ -56,7 +56,7 @@ export function InstallationWebhookTab({ installationId, onRegenSecret }: Props)
       <div className="space-y-1">
         <p className="text-xs text-muted-foreground">{t('url')}</p>
         <div className="flex gap-2">
-          <code className="flex-1 px-3 py-2 text-sm font-mono bg-zinc-900 border border-border rounded-lg text-zinc-300 truncate">
+          <code className="flex-1 px-3 py-2 text-sm font-mono bg-muted border border-border rounded-lg text-muted-foreground truncate">
             {webhookUrl}
           </code>
           <Button size="sm" variant="outline" onClick={handleCopy}>

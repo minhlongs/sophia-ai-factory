@@ -30,7 +30,7 @@ const BACKOFF_INTERVAL_MS = 5_000;
 
 function StepIcon({ index }: { index: number }) {
   return (
-    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-zinc-800 border border-border flex items-center justify-center text-xs font-mono text-muted-foreground">
+    <div className="flex-shrink-0 w-7 h-7 rounded-full bg-muted/50 border border-border flex items-center justify-center text-xs font-mono text-muted-foreground">
       {index + 1}
     </div>
   );
@@ -92,7 +92,7 @@ export function SopRunTimeline({ initialRun }: SopRunTimelineProps) {
                 </div>
                 <Link
                   href={`/dashboard/missions/${missionId}`}
-                  className="inline-flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 transition-colors shrink-0"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary transition-colors shrink-0"
                 >
                   {t('viewMission')}
                   <ExternalLink className="w-3 h-3" aria-hidden="true" />

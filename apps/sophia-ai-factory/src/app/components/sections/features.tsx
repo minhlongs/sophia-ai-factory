@@ -15,11 +15,11 @@ export function Features() {
 
   return (
     <section id="features" className="py-28 relative overflow-hidden">
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full blur-[150px] -z-10 bg-neon-purple/[0.06]" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full blur-[150px] -z-10 bg-primary/[0.06]" />
 
       <div className="container mx-auto px-4">
         <ScrollReveal className="text-center mb-20">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-5 text-xs font-semibold uppercase tracking-wider rounded-full border text-neon-cyan bg-neon-cyan/5 border-neon-cyan/10">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-5 text-xs font-semibold uppercase tracking-wider rounded-full border border-accent/10 text-accent bg-accent/5">
             <span className="material-symbols-outlined text-sm">category</span>
             {t("badge_label")}
           </span>
@@ -36,11 +36,11 @@ export function Features() {
             <ScrollReveal key={card.key} delay={i * 100} className={card.span}>
               <div className="group gradient-border card-hover h-full cursor-pointer">
                 <div className="relative h-full p-7 rounded-[16px] bg-card">
-                  <div className={`absolute inset-0 rounded-[16px] bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                  <div className={`absolute inset-0 rounded-[16px] bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
                   <div className="relative">
                     <div className="flex items-start gap-4 mb-4">
-                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 bg-neon-cyan/10">
-                        <span className="material-symbols-outlined text-xl text-neon-cyan">
+                      <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 bg-accent/10">
+                        <span className="material-symbols-outlined text-xl text-accent">
                           {card.icon}
                         </span>
                       </div>
@@ -48,7 +48,7 @@ export function Features() {
                         <h3 className="text-lg font-bold text-foreground tracking-tight">
                           {t(`items.${card.key}.title`)}
                         </h3>
-                        <span className="inline-block mt-1 text-xs font-semibold px-2 py-0.5 rounded-full text-neon-cyan bg-neon-cyan/[0.06]">
+                        <span className="inline-block mt-1 text-xs font-semibold px-2 py-0.5 rounded-full text-accent bg-accent/[0.06]">
                           {t(`items.${card.key}.badge`)}
                         </span>
                       </div>

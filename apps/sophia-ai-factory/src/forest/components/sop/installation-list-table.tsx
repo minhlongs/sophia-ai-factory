@@ -45,7 +45,7 @@ export function InstallationListTable({ installations, locale }: InstallationLis
         <p className="text-muted-foreground">{t('empty')}</p>
         <Link
           href="/dashboard/sop-marketplace"
-          className="inline-flex items-center px-4 py-2 text-sm bg-violet-700 hover:bg-violet-600 text-white rounded-lg transition-colors"
+          className="inline-flex items-center px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors"
         >
           {t('emptyAction')}
         </Link>
@@ -84,7 +84,7 @@ export function InstallationListTable({ installations, locale }: InstallationLis
                 <td className="px-4 py-3 text-muted-foreground">{formatDate(inst.last_run_at)}</td>
                 <td className="px-4 py-3 text-muted-foreground">{inst.run_count}</td>
                 <td className="px-4 py-3">
-                  <span className={`inline-flex h-2 w-2 rounded-full ${inst.enabled ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
+                  <span className={`inline-flex h-2 w-2 rounded-full ${inst.enabled ? 'bg-emerald-400' : 'bg-muted-foreground'}`} />
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
