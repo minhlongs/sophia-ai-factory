@@ -165,34 +165,34 @@ export function ConfidenceMonitorClient({ userId: _userId }: ConfidenceMonitorCl
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card glass hover>
           <CardContent className="p-5 flex items-center gap-4">
-            <Shield className="text-[#00f0ff] shrink-0" size={28} />
+            <Shield className="text-agi-confidence shrink-0" size={28} />
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Avg Confidence</p>
-              <p className="text-2xl font-bold text-[#00f0ff]">{formatPct(avgScore)}</p>
+              <p className="text-2xl font-bold text-agi-confidence">{formatPct(avgScore)}</p>
             </div>
           </CardContent>
         </Card>
         <Card glass hover>
           <CardContent className="p-5 flex items-center gap-4">
-            <AlertTriangle className="text-[#ff00ff] shrink-0" size={28} />
+            <AlertTriangle className="text-agi-danger shrink-0" size={28} />
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Below Threshold</p>
-              <p className="text-2xl font-bold text-[#ff00ff]">{belowThreshold} steps</p>
+              <p className="text-2xl font-bold text-agi-danger">{belowThreshold} steps</p>
             </div>
           </CardContent>
         </Card>
         <Card glass hover>
           <CardContent className="p-5 flex items-center gap-4">
-            <TrendingUp className="text-[#7000ff] shrink-0" size={28} />
+            <TrendingUp className="text-agi-escalation shrink-0" size={28} />
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Escalation Rate</p>
-              <p className="text-2xl font-bold text-[#7000ff]">{escalationRate}%</p>
+              <p className="text-2xl font-bold text-agi-escalation">{escalationRate}%</p>
             </div>
           </CardContent>
         </Card>
         <Card glass hover>
           <CardContent className="p-5 flex items-center gap-4">
-            <CheckCircle className="text-[#00f0ff] shrink-0" size={28} />
+            <CheckCircle className="text-agi-confidence shrink-0" size={28} />
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Escalations</p>
               <p className="text-2xl font-bold">{escalations.length}</p>
@@ -206,7 +206,7 @@ export function ConfidenceMonitorClient({ userId: _userId }: ConfidenceMonitorCl
         <Card glass>
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
-              <Shield size={16} className="text-[#00f0ff]" />
+              <Shield size={16} className="text-agi-confidence" />
               Overall Confidence Score
             </CardTitle>
           </CardHeader>
@@ -218,7 +218,7 @@ export function ConfidenceMonitorClient({ userId: _userId }: ConfidenceMonitorCl
         <Card glass>
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
-              <TrendingUp size={16} className="text-[#7000ff]" />
+              <TrendingUp size={16} className="text-agi-escalation" />
               Confidence Trend (7 days)
             </CardTitle>
           </CardHeader>
@@ -251,7 +251,7 @@ export function ConfidenceMonitorClient({ userId: _userId }: ConfidenceMonitorCl
       <Card glass>
         <CardHeader>
           <CardTitle className="text-sm flex items-center gap-2">
-            <AlertTriangle size={16} className="text-[#ff00ff]" />
+            <AlertTriangle size={16} className="text-agi-danger" />
             Recent Escalation Requests
           </CardTitle>
         </CardHeader>

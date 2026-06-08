@@ -13,6 +13,7 @@
 
 import type { R2Bucket } from '@cloudflare/workers-types';
 import type { R2BucketRef } from '@/land/video/r2-binding';
+import { logger } from '@/seed/utils/logger-utility';
 
 /**
  * Per-table delete instruction.
@@ -168,7 +169,7 @@ async function deleteR2Objects(
       await bucket.delete(key);
       deleted++;
     } catch (err) {
-      console.error(
+      logger.error(
         `[cascade-delete] R2 delete failed for key "${key}":`,
         err instanceof Error ? err.message : String(err),
       );

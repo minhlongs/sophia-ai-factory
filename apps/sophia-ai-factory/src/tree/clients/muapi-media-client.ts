@@ -9,6 +9,7 @@
  */
 
 import { toError } from '@/seed/utils/to-error'
+import { logger } from '@/seed/utils/logger-utility';
 
 const MUAPI_BASE = 'https://api.muapi.ai/v1'
 
@@ -89,7 +90,7 @@ export async function submitMediaJob(
 
     if (!res.ok) {
       const errBody = await res.text().catch(() => '')
-      console.error(`[MuAPI] ${res.status} error body:`, errBody)
+      logger.error(`[MuAPI] ${res.status} error body: ${errBody}`)
       const snippet = errBody.length > 200 ? `${errBody.slice(0, 200)}…` : errBody
    return { success: false, error: `MuAPI ${res.status}${snippet ? ` ${snippet}` : ''}` }
     }

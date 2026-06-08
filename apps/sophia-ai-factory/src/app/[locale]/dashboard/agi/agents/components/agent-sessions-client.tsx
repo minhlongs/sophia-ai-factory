@@ -197,16 +197,16 @@ export function AgentSessionsClient({ userId: _userId }: AgentSessionsClientProp
       <div className="grid gap-4 md:grid-cols-3">
         <Card glass hover>
           <CardContent className="p-5 flex items-center gap-4">
-            <Activity className="text-[#00f0ff] shrink-0" size={28} />
+            <Activity className="text-agi-confidence shrink-0" size={28} />
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Active Sessions</p>
-              <p className="text-2xl font-bold text-[#00f0ff]">{stats.active}</p>
+              <p className="text-2xl font-bold text-agi-confidence">{stats.active}</p>
             </div>
           </CardContent>
         </Card>
         <Card glass hover>
           <CardContent className="p-5 flex items-center gap-4">
-            <CheckCircle2 className="text-[#00f0ff] shrink-0" size={28} />
+            <CheckCircle2 className="text-agi-confidence shrink-0" size={28} />
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Completed</p>
               <p className="text-2xl font-bold">{stats.completed}</p>
@@ -215,10 +215,10 @@ export function AgentSessionsClient({ userId: _userId }: AgentSessionsClientProp
         </Card>
         <Card glass hover>
           <CardContent className="p-5 flex items-center gap-4">
-            <XCircle className="text-[#ff00ff] shrink-0" size={28} />
+            <XCircle className="text-agi-danger shrink-0" size={28} />
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Failed</p>
-              <p className="text-2xl font-bold text-[#ff00ff]">{stats.failed}</p>
+              <p className="text-2xl font-bold text-agi-danger">{stats.failed}</p>
             </div>
           </CardContent>
         </Card>
@@ -229,7 +229,7 @@ export function AgentSessionsClient({ userId: _userId }: AgentSessionsClientProp
         <Card glass>
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
-              <Users size={16} className="text-[#7000ff]" />
+              <Users size={16} className="text-agi-escalation" />
               Agent Role Distribution
             </CardTitle>
           </CardHeader>
@@ -261,7 +261,7 @@ export function AgentSessionsClient({ userId: _userId }: AgentSessionsClientProp
         <Card glass>
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
-              <Bot size={16} className="text-[#00f0ff]" />
+              <Bot size={16} className="text-agi-confidence" />
               All Sessions
             </CardTitle>
           </CardHeader>
