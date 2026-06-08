@@ -70,8 +70,11 @@ export function verifyTotp(secret: string, code: string, window = 1): boolean {
 export function generateBackupCodes(count = BACKUP_CODE_COUNT): string[] {
   const codes: Set<string> = new Set();
   while (codes.size < count) {
-    const part1 = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const part2 = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const buf = new Uint8Array(4);
+    crypto.getRandomValues(buf);
+    const part1 = buf.slice(0, 2).reduce((s, b) => s + b.toString(16).padStart(2, '0').toUpperCase(), '');
+    crypto.getRandomValues(buf);
+    const part2 = buf.slice(0, 2).reduce((s, b) => s + b.toString(16).padStart(2, '0').toUpperCase(), '');
     codes.add(`${part1}-${part2}`);
   }
   return Array.from(codes);

@@ -21,15 +21,15 @@
 > sophia-ai-factory@0.1.0 test
 > vitest
 
-◇ injected env (13) from .env.test // tip: ⌘ enable debugging { debug: true }
+◇ injected env (13) from .env.test // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
 
  RUN  v4.1.7 /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory
 
-(node:37729) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(node:92088) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
 
  Test Files  595 passed | 1 skipped (596)
       Tests  5776 passed | 34 skipped (5810)
-   Start at  17:57:50
-   Duration  81.60s (transform 33.11s, setup 31.11s, import 63.16s, tests 93.06s, environment 387.91s)
+   Start at  19:06:36
+   Duration  74.34s (transform 34.21s, setup 32.81s, import 62.90s, tests 92.45s, environment 334.28s)
 

@@ -39,7 +39,7 @@ const mockKv = {
   })
 };
 
-vi.mock('@/land/redis', () => ({ getKvClient: () => mockKv }));
+vi.mock('@/seed/utils/redis-client', () => ({ getKvClient: () => mockKv }));
 
 // Mock the circuit breaker to always succeed
 vi.mock('./realtime-tracker-circuit-breaker', () => ({

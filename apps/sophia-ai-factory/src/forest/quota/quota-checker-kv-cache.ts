@@ -1,6 +1,6 @@
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import { getKvClient as getRedisClient } from '@/land/redis';
+import { getKvClient as getRedisClient } from '@/seed/utils/redis-client';
 import type { CachedQuota } from './quota-checker-types';
 
 /**
@@ -23,7 +23,7 @@ return 1`;
 
 /**
  * Atomically increment quota fields and refresh TTL in a single Redis round-trip.
- * Uses Upstash Redis (via @/land/redis) which supports Lua eval — guarantees
+ * Uses Upstash Redis (via @/seed/utils/redis-client) which supports Lua eval — guarantees
  * HINCRBY + EXPIRE are both-or-neither. Falls back to fail-open on unavailability.
  */
 export async function atomicIncrementQuota(

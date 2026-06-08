@@ -15,7 +15,10 @@ import { NAMESPACE_DEFAULTS } from './defaults';
 
 /** Generates a simple unique ID (timestamp + random, no external dep). */
 function generateId(): string {
-  return `ts_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  const buf = new Uint8Array(4);
+  crypto.getRandomValues(buf);
+  const rand = Array.from(buf, b => b.toString(16).padStart(2, '0')).join('');
+  return `ts_${Date.now().toString(36)}_${rand}`;
 }
 
 /** Retrieve the current value for a namespace, or null if not set. */

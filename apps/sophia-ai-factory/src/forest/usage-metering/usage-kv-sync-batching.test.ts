@@ -11,10 +11,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { flushKvCounters } from './usage-kv-sync';
 
-// Mock @/land/redis KV client
+// Mock @/seed/utils/redis-client KV client
 const mockKvGet = vi.fn();
 const mockKvSet = vi.fn();
-vi.mock('@/land/redis', () => ({
+vi.mock('@/seed/utils/redis-client', () => ({
   getKvClient: () => ({
     get: mockKvGet,
     set: mockKvSet,
@@ -117,7 +117,7 @@ describe('flushKvCounters — KV batching', () => {
   });
 
   it('does nothing when KV client is unavailable', async () => {
-    vi.doMock('@/land/redis', () => ({
+    vi.doMock('@/seed/utils/redis-client', () => ({
       getKvClient: () => null,
     }));
 
