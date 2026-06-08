@@ -14,17 +14,17 @@ async function main() {
     baseUrl: process.env.SOPHIA_BASE_URL ?? 'https://sophia.agencyos.network',
   });
 
-  // Check credits first
+  // Check credits first — all output to stderr so stdout stays clean
   const balance = await sophia.credits.getBalance();
-  console.log(`MCU Balance: ${balance.credits_remaining} credits remaining`);
+  console.error(`MCU Balance: ${balance.credits_remaining} credits remaining`);
 
   if (balance.credits_remaining < 5) {
     console.error('Insufficient credits. Visit https://sophia.agencyos.network/dashboard/credits to top up.');
     process.exit(1);
-  }
+   }
 
-  // Run campaign pipeline (lead:find → email:campaign)
-  console.log('\nLaunching campaign pipeline...');
+   // Run campaign pipeline (lead:find → email:campaign) — output to stderr
+  console.error('\nLaunching campaign pipeline...');
   const mission = await sophia.missions.create({
     command: 'campaign:run',
     params: {
@@ -32,22 +32,22 @@ async function main() {
       lead_count: 20,
       subject: 'Exclusive offer for SaaS teams',
       body: '<h1>Grow faster with AI</h1><p>Sophia AI Factory automates your content creation pipeline.</p>',
-    },
+     },
     webhook_url: process.env.WEBHOOK_URL,
-  });
+   });
 
-  console.log(`Campaign mission: ${mission.id}`);
+  console.error(`Campaign mission: ${mission.id}`);
 
-  // Poll with SSE stream
+   // Poll with SSE stream — output to stderr
   for await (const event of sophia.missions.stream(mission.id)) {
     if (event.event === 'status') {
-      console.log(`  Status: ${(event.data as { status: string }).status}`);
-    }
+      console.error(`  Status: ${(event.data as { status: string }).status}`);
+     }
     if (event.event === 'done') break;
-  }
+   }
 
   const final = await sophia.missions.get(mission.id);
-  console.log('\nCampaign complete:', final.result);
+  console.error('\nCampaign complete:', final.result);
 }
 
 main().catch(console.error);

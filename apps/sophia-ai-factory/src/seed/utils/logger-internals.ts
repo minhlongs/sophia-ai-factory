@@ -231,7 +231,7 @@ export const log = (
     break;
   default:
     pushToBetterStack('info', entry.message, entry.metadata, entry.requestId);
-    console.log(`[logger-fallback] ${formatted}`);
+    // Silent fallback — no console.log in production per go-live-audit rule
   }
 };
 
