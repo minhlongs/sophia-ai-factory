@@ -42,6 +42,11 @@
 
   --radius: 0.5rem;
 
+/* AGI Confidence Monitor */
+--agi-confidence: 190 100% 50%;
+--agi-danger: 300 100% 50%;
+--agi-escalation: 270 100% 44%;
+
   /* Chart Colors */
   --chart-1: #e76e50;
   --chart-2: #2a9d8f;

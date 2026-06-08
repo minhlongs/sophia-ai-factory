@@ -218,31 +218,31 @@ export function RevenueAdvisorClient({ userId: _userId }: RevenueAdvisorClientPr
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card glass hover>
           <CardContent className="p-5 flex items-center gap-4">
-            <DollarSign className="text-[#00f0ff] shrink-0" size={28} />
+            <DollarSign className="text-agi-confidence shrink-0" size={28} />
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">ARR</p>
-              <p className="text-2xl font-bold text-[#00f0ff]">{fmtUsd(snapshot.arr)}</p>
+              <p className="text-2xl font-bold text-agi-confidence">{fmtUsd(snapshot.arr)}</p>
             </div>
           </CardContent>
         </Card>
         <Card glass hover>
           <CardContent className="p-5 flex items-center gap-4">
-            <DollarSign className="text-[#7000ff] shrink-0" size={28} />
+            <DollarSign className="text-agi-escalation shrink-0" size={28} />
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">MRR</p>
-              <p className="text-2xl font-bold text-[#7000ff]">{fmtUsd(snapshot.mrr)}</p>
+              <p className="text-2xl font-bold text-agi-escalation">{fmtUsd(snapshot.mrr)}</p>
             </div>
           </CardContent>
         </Card>
         <Card glass hover>
           <CardContent className="p-5 flex items-center gap-4">
             {growthPositive
-              ? <TrendingUp className="text-[#10b981] shrink-0" size={28} />
-              : <TrendingDown className="text-[#ff00ff] shrink-0" size={28} />
+              ? <TrendingUp className="text-emerald-500 shrink-0" size={28} />
+              : <TrendingDown className="text-agi-danger shrink-0" size={28} />
             }
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">MRR Growth</p>
-              <p className={`text-2xl font-bold ${growthPositive ? 'text-[#10b981]' : 'text-[#ff00ff]'}`}>
+              <p className={`text-2xl font-bold ${growthPositive ? 'text-emerald-500' : 'text-agi-danger'}`}>
                 {fmtPct(snapshot.mrrGrowthPct)}
               </p>
             </div>
@@ -250,7 +250,7 @@ export function RevenueAdvisorClient({ userId: _userId }: RevenueAdvisorClientPr
         </Card>
         <Card glass hover>
           <CardContent className="p-5 flex items-center gap-4">
-            <Users className="text-[#f59e0b] shrink-0" size={28} />
+            <Users className="text-amber-500 shrink-0" size={28} />
             <div>
               <p className="text-xs text-muted-foreground uppercase tracking-wider">Customers</p>
               <p className="text-2xl font-bold">{totalCustomers}</p>
@@ -264,7 +264,7 @@ export function RevenueAdvisorClient({ userId: _userId }: RevenueAdvisorClientPr
         <Card glass>
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
-              <TrendingUp size={16} className="text-[#00f0ff]" />
+              <TrendingUp size={16} className="text-agi-confidence" />
               Revenue Trend (30d)
             </CardTitle>
           </CardHeader>
@@ -273,8 +273,8 @@ export function RevenueAdvisorClient({ userId: _userId }: RevenueAdvisorClientPr
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={trendData} margin={{ top: 4, right: 16, left: -8, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
                   <Tooltip
                     contentStyle={{ background: 'rgba(15,23,42,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
                     labelStyle={{ color: '#e2e8f0' }}
@@ -283,10 +283,10 @@ export function RevenueAdvisorClient({ userId: _userId }: RevenueAdvisorClientPr
                   <Line
                     type="monotone"
                     dataKey="mrr"
-                    stroke="#00f0ff"
+                    stroke="hsl(var(--agi-confidence))"
                     strokeWidth={2}
-                    dot={{ fill: '#00f0ff', r: 3 }}
-                    activeDot={{ r: 5, fill: '#00f0ff', filter: 'drop-shadow(0 0 6px #00f0ff)' }}
+                    dot={{ fill: 'hsl(var(--agi-confidence))', r: 3 }}
+                    activeDot={{ r: 5, fill: 'hsl(var(--agi-confidence))', filter: 'drop-shadow(0 0 6px #00f0ff)' }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -299,7 +299,7 @@ export function RevenueAdvisorClient({ userId: _userId }: RevenueAdvisorClientPr
         <Card glass>
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
-              <Users size={16} className="text-[#7000ff]" />
+              <Users size={16} className="text-agi-escalation" />
               Tier Breakdown
             </CardTitle>
           </CardHeader>
@@ -317,8 +317,8 @@ export function RevenueAdvisorClient({ userId: _userId }: RevenueAdvisorClientPr
                   margin={{ top: 4, right: 16, left: 8, bottom: 0 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" horizontal={false} />
-                  <XAxis type="number" tick={{ fontSize: 11, fill: '#94a3b8' }} />
-                  <YAxis dataKey="tier" type="category" width={100} tick={{ fontSize: 11, fill: '#94a3b8' }} />
+                  <XAxis type="number" tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis dataKey="tier" type="category" width={100} tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} />
                   <Tooltip
                     contentStyle={{ background: 'rgba(15,23,42,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
                     labelStyle={{ color: '#e2e8f0' }}
@@ -343,7 +343,7 @@ export function RevenueAdvisorClient({ userId: _userId }: RevenueAdvisorClientPr
         <Card glass>
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
-              <Wallet size={16} className="text-[#10b981]" />
+              <Wallet size={16} className="text-emerald-500" />
               Affiliate Commission Summary
             </CardTitle>
           </CardHeader>
@@ -374,7 +374,7 @@ export function RevenueAdvisorClient({ userId: _userId }: RevenueAdvisorClientPr
           <Card glass>
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
-                <DollarSign size={16} className="text-[#f59e0b]" />
+                <DollarSign size={16} className="text-amber-500" />
                 Revenue by Vertical (30d)
               </CardTitle>
             </CardHeader>
@@ -392,7 +392,7 @@ export function RevenueAdvisorClient({ userId: _userId }: RevenueAdvisorClientPr
               </div>
               <div className="flex items-center justify-between pt-2 border-t border-white/10">
                 <span className="text-sm font-medium">Total</span>
-                <span className="text-sm font-bold text-[#00f0ff]">{fmtUsd(unified.totalThisMonth)}</span>
+                <span className="text-sm font-bold text-agi-confidence">{fmtUsd(unified.totalThisMonth)}</span>
               </div>
             </CardContent>
           </Card>
@@ -404,7 +404,7 @@ export function RevenueAdvisorClient({ userId: _userId }: RevenueAdvisorClientPr
         <Card glass>
           <CardHeader>
             <CardTitle className="text-sm flex items-center gap-2">
-              <Lightbulb size={16} className="text-[#f59e0b]" />
+              <Lightbulb size={16} className="text-amber-500" />
               Growth Recommendations
             </CardTitle>
           </CardHeader>
@@ -412,7 +412,7 @@ export function RevenueAdvisorClient({ userId: _userId }: RevenueAdvisorClientPr
             <div className="space-y-3">
               {recommendations.map((rec, i) => (
                 <div key={i} className="flex items-start gap-3 p-3 rounded-lg bg-white/5">
-                  <span className="mt-0.5 text-[#f59e0b]">{rec.icon}</span>
+                  <span className="mt-0.5 text-amber-500">{rec.icon}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-sm font-medium">{rec.title}</span>

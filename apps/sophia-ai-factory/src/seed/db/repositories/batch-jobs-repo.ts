@@ -45,6 +45,8 @@ export async function createBatchJob(input: {
   idempotencyKey?: string;
 }): Promise<CreateBatchJobResult> {
   const db = await getD1Raw();
+
+  // Idempotency: if key provided, check existing first
   if (input.idempotencyKey) {
     const existing = await getBatchJobByIdempotencyKey(input.idempotencyKey);
     if (existing) return { job: existing, created: false };
@@ -52,37 +54,9 @@ export async function createBatchJob(input: {
 
   const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
 
-  if (input.idempotencyKey) {
-    await db
-      .prepare(
-        `INSERT OR IGNORE INTO batch_jobs
-          (id, user_id, name, total_videos, estimated_cost_cents, input_r2_key, idempotency_key)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      )
-      .bind(
-        id,
-        input.userId,
-        input.name,
-        input.totalVideos,
-        input.estimatedCostCents,
-        input.inputR2Key ?? null,
-        input.idempotencyKey,
-      )
-      .run();
-
-    const job = await getBatchJobByIdempotencyKey(input.idempotencyKey);
-    if (!job) throw new Error('Failed to create batch job');
-    const created = job.id === id;
-    if (created) {
-      logger.info('[batch-jobs-repo] Created batch job', { id, userId: input.userId, totalVideos: input.totalVideos });
-    }
-    return { job, created };
-  }
-
   await db
     .prepare(
-      `INSERT INTO batch_jobs (id, user_id, name, total_videos, estimated_cost_cents, input_r2_key)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO batch_jobs (id, user_id, name, total_videos, estimated_cost_cents, input_r2_key) VALUES (?, ?, ?, ?, ?, ?)`,
     )
     .bind(id, input.userId, input.name, input.totalVideos, input.estimatedCostCents, input.inputR2Key ?? null)
     .run();

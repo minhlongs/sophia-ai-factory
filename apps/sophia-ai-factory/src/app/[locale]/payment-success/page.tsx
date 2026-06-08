@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CheckCircle, Mail, KeyRound, PlayCircle, BarChart3 } from "lucide-react";
 import { getOrderById } from "@/land/orders/pending-order-repo";
 import { PaymentStatusPoller } from "@/forest/components/checkout/payment-status-poller";
+import { TIER_CONFIGS, type Tier } from "@/seed/config/tiers";
 
 export const metadata: Metadata = {
   title: "Payment Confirmed — Sophia AI Factory",
@@ -38,21 +39,24 @@ export default async function PaymentSuccessPage({
   const sp = await searchParams;
 
   const isVi = locale?.startsWith("vi") ?? true;
-  const tier = sp.tier ?? sp.sku ?? "BASIC";
-  const orderId = sp.order_id ?? "";
-  const rawEmail = sp.email ? decodeURIComponent(sp.email) : "";
-  const maskedEmail = rawEmail ? maskEmail(rawEmail) : "";
-  const viaPromo = sp.via === "promo";
-  const promoCode = sp.code ?? "";
-  const trialDays = sp.trial_days ? parseInt(sp.trial_days) : 0;
+  // Validate tier against known config — reject tampered values
+  const validTiers = Object.keys(TIER_CONFIGS) as Tier[]
+  const tierRaw = sp.tier ?? sp.sku ?? "BASIC"
+  const tier = validTiers.includes(tierRaw as Tier) ? (tierRaw as Tier) : "BASIC"
+  const orderId = sp.order_id ?? ""
+  const rawEmail = sp.email ? decodeURIComponent(sp.email) : ""
+  const maskedEmail = rawEmail ? maskEmail(rawEmail) : ""
+  const viaPromo = sp.via === "promo"
+  const promoCode = sp.code ?? ""
+  const trialDays = sp.trial_days ? Math.min(parseInt(sp.trial_days), 365) : 0
   const period = sp.period ?? (tier === "MASTER" ? "lifetime" : "monthly");
 
   // Status-aware rendering: poll pending_orders if order_id present
-  let orderStatus: 'pending' | 'completed' | 'failed' | null = null;
+  let orderStatus: 'pending' | 'completed' | 'failed' | null = null
   if (orderId.startsWith('sophia_')) {
     try {
-      const order = await getOrderById(orderId);
-      orderStatus = order ? (order.status === 'expired' ? 'failed' : order.status as 'pending' | 'completed' | 'failed') : null;
+      const order = await getOrderById(orderId)
+      orderStatus = order ? (order.status === 'expired' ? 'failed' : order.status as 'pending' | 'completed' | 'failed') : null
     } catch { /* non-fatal — show success UI */ }
   }
 
