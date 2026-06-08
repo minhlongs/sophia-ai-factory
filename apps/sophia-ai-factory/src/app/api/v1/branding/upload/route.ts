@@ -2,8 +2,8 @@
  * POST /api/v1/branding/upload — Upload logo, favicon, or social image to R2.
  *
  * Form fields:
- *   kind: 'logo' | 'favicon' | 'social'
- *   file: File (image/png, image/jpeg, image/webp, image/svg+xml; favicon also image/x-icon)
+ * kind: 'logo' | 'favicon' | 'social'
+ * file: File (image/png, image/jpeg, image/webp, image/svg+xml; favicon also image/x-icon)
  *
  * Returns: { url: string, kind: string }
  *
@@ -22,8 +22,6 @@ import {
   safeStorageKey,
   FileUploadPolicyError,
 } from '@/seed/security/file-upload-policy';
-import { getVideoBucket } from '@/land/video/r2-binding';
-import { uploadToR2 } from '@/land/video/r2-multipart-upload';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';
@@ -78,7 +76,7 @@ function matchesMagicBytes(head: Uint8Array, mime: string): boolean {
   if (mime === 'image/jpeg') {
     return head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
   }
-  // WebP: 52 49 46 46 .. 57 45 42 50  (RIFF....WEBP)
+  // WebP: 52 49 46 46 .. 57 45 42 50 (RIFF....WEBP)
   if (mime === 'image/webp') {
     return (
       head[0] === 0x52 && head[1] === 0x49 && head[2] === 0x46 && head[3] === 0x46 &&
@@ -102,6 +100,24 @@ function extFromMime(mime: string): string {
     'image/x-icon': 'ico',
   };
   return map[mime] ?? 'bin';
+}
+
+// Lazy-import helpers to avoid pulling @opennextjs/cloudflare (heavy) at
+// module-load time. The test suite does `await import('../upload/route')` and
+// times out when these top-level imports eagerly initialize the CF runtime.
+async function getBucket() {
+  const { getVideoBucket } = await import('@/land/video/r2-binding');
+  return getVideoBucket();
+}
+
+async function putR2(params: {
+  bucket: R2Bucket;
+  key: string;
+  data: ArrayBuffer;
+  contentType: string;
+}) {
+  const { uploadToR2 } = await import('@/land/video/r2-multipart-upload');
+  return uploadToR2(params);
 }
 
 async function postHandler(req: NextRequest): Promise<NextResponse> {
@@ -150,7 +166,7 @@ async function postHandler(req: NextRequest): Promise<NextResponse> {
     throw err;
   }
 
-  const bucketRef = await getVideoBucket();
+  const bucketRef = await getBucket();
   if (!bucketRef) {
     return NextResponse.json({ error: 'Storage unavailable' }, { status: 503 });
   }
@@ -179,7 +195,7 @@ async function postHandler(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    await uploadToR2({
+    await putR2({
       bucket: bucketRef.bucket,
       key: r2Key,
       data: buffer,

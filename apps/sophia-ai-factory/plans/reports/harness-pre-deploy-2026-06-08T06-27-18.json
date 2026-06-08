@@ -1,0 +1,104 @@
+{
+  "harnessVersion": "1.0.0",
+  "phase": "pre-deploy",
+  "timestamp": "2026-06-08T06:27:18.555Z",
+  "project": "sophia-ai-factory",
+  "appDir": "apps/sophia-ai-factory",
+  "commitSha": "ddc163b58",
+  "branch": "main",
+  "overall": "RED",
+  "gates": [
+    {
+      "name": "git-preconditions",
+      "status": "failed",
+      "durationMs": 58,
+      "detail": "FAIL: dirty working tree",
+      "error": "exit 1",
+      "script": "bash -c commits=$(git log origin/main..HEAD --oneline 2>/dev/null | grep -c . || true); if [ \"$commits\" -gt 0 ]; then echo \"FAIL: $commits unpushed commits\"; exit 1; fi; dirty=$(git diff-index --quiet HEAD -- 2>/dev/null; echo $?); if [ \"$dirty\" -ne 0 ]; then echo \"FAIL: dirty working tree\"; exit 1; fi; echo \"PASS: HEAD == origin/main, clean tree\""
+    },
+    {
+      "name": "typecheck",
+      "status": "passed",
+      "durationMs": 9625,
+      "detail": "> sophia-ai-factory@0.1.0 ci:typecheck\n> tsc --noEmit",
+      "error": null,
+      "script": "npm run ci:typecheck"
+    },
+    {
+      "name": "lint",
+      "status": "passed",
+      "durationMs": 35005,
+      "detail": "factory/src/tree/telegram/telegram-auth-middleware.ts\n  100:43  warning  '_chatId' is defined but never used  @typescript-eslint/no-unused-vars\n\n/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/telegram/telegram-bot-campaign-handlers.ts\n  42:11  warning  'UserProfileD1Row' is defined but never used  @typescript-eslint/no-unused-vars\n  63:54  warning  '_topic' is defined but never used            @typescript-eslint/no-unused-vars\n\n✖ 356 problems (0 errors, 356 warnings)",
+      "error": null,
+      "script": "npm run lint"
+    },
+    {
+      "name": "vitest",
+      "status": "failed",
+      "durationMs": 132586,
+      "detail": "FAIL  src/app/[locale]/dashboard/onboarding/__tests__/page.test.tsx [ src/app/[locale]/dashboard/onboarding/__tests__/page.test.tsx ]\nError: Cannot find module '/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/node_modules/next/navigation' imported from /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/node_modules/next-intl/dist/esm/development/navigation/react-client/createNavigation.js\nDid you mean to import \"next/navigation.js\"?\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯",
+      "error": "FAIL  src/app/[locale]/dashboard/onboarding/__tests__/page.test.tsx [ src/app/[locale]/dashboard/onboarding/__tests__/page.test.tsx ]\nError: Cannot find module '/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/node_modules/next/navigation' imported from /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/node_modules/next-intl/dist/esm/development/navigation/react-client/createNavigation.js\nDid you mean to import \"next/navigation.js\"?\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯",
+      "script": "npm test -- --run"
+    },
+    {
+      "name": "build",
+      "status": "passed",
+      "durationMs": 50850,
+      "detail": "hooks/stripe-connect\n├ ƒ /api/webhooks/telegram\n├ ƒ /api/webhooks/tiktok-notification\n├ ƒ /api/webhooks/tiktok-shop\n├ ƒ /api/webhooks/youtube-notification\n├ ƒ /api/welcome/milestone\n├ ƒ /api/welcome/resend\n├ ƒ /api/welcome/status\n├ ƒ /api/welcome/validate/[token]\n├ ƒ /auth/callback\n├ ƒ /blog/feed.xml\n├ ƒ /investor-room\n├ ƒ /ref/[code]\n├ ○ /robots.txt\n├ ○ /sitemap.xml\n└ ƒ /sop-marketplace\n\n\nƒ Proxy (Middleware)\n\n○  (Static)   prerendered as static content\nƒ  (Dynamic)  server-rendered on demand",
+      "error": null,
+      "script": "npm run build"
+    },
+    {
+      "name": "i18n-validate",
+      "status": "passed",
+      "durationMs": 1359,
+      "detail": "> sophia-ai-factory@0.1.0 i18n:validate\n> node scripts/validate-i18n-keys.mjs\n\n🔍 Scanning for i18n keys...\n\n📊 Summary:\n   Total t() calls: 3476\n   Unique static keys: 1557\n   Dynamic key prefixes: 19\n   Missing static keys: 0\n   Unresolved dynamic prefixes: 0\n\n✅ All translation keys found!",
+      "error": null,
+      "script": "npm run i18n:validate"
+    },
+    {
+      "name": "get-side-effects",
+      "status": "passed",
+      "durationMs": 3627,
+      "detail": "✅ No GET routes with DB write side effects found.",
+      "error": null,
+      "script": "bash /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/scripts/ci-check-get-side-effects.sh"
+    },
+    {
+      "name": "migration-coverage",
+      "status": "passed",
+      "durationMs": 151,
+      "detail": "Migration coverage check:\n  D1 files checked:       0\n  Postgres files skipped: 0\n  Orphan tables:          0\nOK — all D1 CREATE TABLE statements in src/**/*.sql have canonical migrations/ matches.",
+      "error": null,
+      "script": "bash /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/scripts/check-migration-coverage.sh"
+    },
+    {
+      "name": "video-factory-proof",
+      "status": "passed",
+      "durationMs": 47310,
+      "detail": "run ci:typecheck\n\n> sophia-ai-factory@0.1.0 ci:typecheck\n> tsc --noEmit\n\n\n==> ESLint zero-error gate\n$ node --max-old-space-size=14336 ./node_modules/eslint/bin/eslint.js src --quiet\nEvidence written: /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/plans/reports/core-video-factory-proof-2026-06-08T06-27-18.json\n\nPROOF PASS: core video factory verified end-to-end without real provider keys.\nBoundary: live provider callbacks and production publish still require real credentials.",
+      "error": null,
+      "script": "node scripts/verify-core-video-factory.mjs"
+    }
+  ],
+  "summary": {
+    "total": 9,
+    "passed": 7,
+    "failed": 2,
+    "skipped": 0,
+    "warnings": 0,
+    "durationMs": 280571
+  },
+  "failures": [
+    {
+      "gate": "git-preconditions",
+      "error": "FAIL: dirty working tree",
+      "hint": null
+    },
+    {
+      "gate": "vitest",
+      "error": "FAIL  src/app/[locale]/dashboard/onboarding/__tests__/page.test.tsx [ src/app/[locale]/dashboard/onboarding/__tests__/page.test.tsx ]\nError: Cannot find module '/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/node_modules/next/navigation' imported from /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/node_modules/next-intl/dist/esm/development/navigation/react-client/createNavigation.js\nDid you mean to import \"next/navigation.js\"?\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯",
+      "hint": "npm test -- --run"
+    }
+  ]
+}

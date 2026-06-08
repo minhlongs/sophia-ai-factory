@@ -1,5 +1,7 @@
 import { getRequestConfig } from 'next-intl/server';
 
+import { logger } from '@/seed/utils/logger-utility';
+
 // Can be imported from a shared config
 const locales = ['en', 'vi'] as const;
 const defaultLocale: (typeof locales)[number] = 'vi';
@@ -27,11 +29,7 @@ function reportMissingKeys(missing: string[], locale: string): void {
   const sample = missing.slice(0, 5).join(', ');
   const suffix = missing.length > 5 ? ` (and ${missing.length - 5} more)` : '';
   const msg = `[i18n] Missing ${missing.length} key(s) in locale "${locale}": ${sample}${suffix}`;
-  if (process.env.NODE_ENV !== 'production') {
-    console.warn(msg);
-  } else {
-    console.warn(`[i18n][prod] ${msg}`);
-  }
+  logger.warn(msg);
 }
 
 export default getRequestConfig(async ({ requestLocale }) => {
