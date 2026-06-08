@@ -80,11 +80,11 @@
       "webhookWarning": "HeyGen webhook not registered — videos won't receive auto-notifications."
     },
     "finish": {
-      "subtitle": "Subtitle",
+      "subtitle": "Everything is ready. Start creating AI videos now!",
       "errorOccurred": "Error Occurred",
       "readyToUse": "Ready To Use",
-      "launchBtn": "Launch Btn",
-      "continueToChallenges": "Continue To Challenges"
+      "launchBtn": "Launch",
+      "continueToChallenges": "Continue to Challenges"
     }
   },
   "landing": {
@@ -369,9 +369,9 @@
       "lifetime_suffix": "Lifetime suffix",
       "total_costs": "Total costs",
       "net_profit": "Net profit",
-      "roi_payback": "Roi payback",
-      "roi_label": "Roi label",
-      "payback_label": "Payback label",
+      "roi_payback": "Payback Period",
+      "roi_label": "ROI",
+      "payback_label": "Months to Break Even",
       "days": "Days",
       "annual_revenue": "Annual revenue",
       "annual_costs": "Annual costs",
@@ -385,14 +385,14 @@
       "monthly_fee": "Monthly fee",
       "cost_per_video": "Cost per video",
       "channel_scale": "Channel scale",
-      "channels_label": "Channels label",
-      "videos_week": "Videos week",
-      "avg_views": "Avg views",
-      "affiliate_params": "Affiliate params",
-      "click_rate": "Click rate",
-      "avg_commission": "Avg commission",
-      "email_capture": "Email capture",
-      "full_cost_disclaimer": "Full cost disclaimer",
+      "channels_label": "Channels",
+      "videos_week": "Videos/Week",
+      "avg_views": "Avg Views",
+      "affiliate_params": "Affiliate Settings",
+      "click_rate": "Click Rate",
+      "avg_commission": "Avg Commission",
+      "email_capture": "Email Capture Rate",
+      "full_cost_disclaimer": "Manual production: editor, footage, software, and revisions.",
       "manual_cost_desc": "Manual production costs: hire editor, stock footage, software licenses, and revisions.",
       "savings_monthly": "Monthly savings",
       "savings_annual": "Annual savings",
@@ -540,10 +540,10 @@
       }
     },
     "creative_studio": {
-      "badge": "Badge",
-      "title": "Title",
-      "subtitle": "Subtitle",
-      "cta": "Cta",
+      "badge": "AI Creative Studio",
+      "title": "AI Video Factory",
+      "subtitle": "Create scroll-stopping videos with AI scripts, voice-over, and auto-publish.",
+      "cta": "Start Creating",
       "tabs": {
         "video": {
           "title": "AI Video Factory",
@@ -601,6 +601,18 @@
           "cta": "Explore Templates"
         }
       }
+    },
+    "agiOutcomes": {
+      "title": "Real Results",
+      "subtitle": "Watch Sophia automate your entire content pipeline"
+    },
+    "runs": {
+      "subtitle": "Track every mission, every video, every result"
+    },
+    "challenges": {
+      "title": "Earn While You Learn",
+      "subtitle": "Complete missions, build your portfolio, unlock rewards",
+      "badge": "Gamified Onboarding"
     }
   },
   "dashboard": {
@@ -1038,7 +1050,7 @@
         "success_immediate": "Success immediate",
         "success_eoc": "Success eoc",
         "close": "Close",
-        "step1_title": "Step1 title",
+        "step1_title": "Review Your Plan",
         "lose_section_title": "Lose section title",
         "mode_title": "Mode title",
         "mode_eoc_label": "Mode eoc label",
@@ -1047,7 +1059,7 @@
         "mode_immediate_desc": "Mode immediate desc",
         "keep_plan": "Keep plan",
         "continue": "Continue",
-        "step2_title": "Step2 title",
+        "step2_title": "Confirm Cancellation",
         "step2_desc_immediate": "Step2 desc immediate",
         "step2_desc_eoc": "Step2 desc eoc",
         "back": "Back",
@@ -1529,8 +1541,8 @@
       "tooltip_total": "Total"
     },
     "agiOutcomes": {
-      "title": "Title",
-      "subtitle": "Subtitle"
+      "title": "AI Outcomes",
+      "subtitle": "Your automated results at a glance"
     },
     "schedule": {
       "pageTitle": "Campaign Schedule",
@@ -1960,7 +1972,7 @@
     "more_options": "More options",
     "clear": "Clear"
   },
-  "title": "Title",
+  "title": "Sophia AI Factory — AI Video & Revenue Automation",
   "topic": "Topic",
   "na": "Na",
   "audience": "Audience",
@@ -2261,7 +2273,7 @@
       "notScheduled": "Not scheduled",
       "runs": {
         "pageTitleSimple": "Run History",
-        "subtitle": "Subtitle",
+        "subtitle": "Execution history for this SOP",
         "backToSop": "Back To Sop"
       },
       "analytics": {
@@ -2469,7 +2481,7 @@
   },
   "header": {
     "brand": "Brand",
-    "title": "Title"
+    "title": "Dashboard"
   },
   "sidebar": {
     "overview": "Overview",
@@ -2651,26 +2663,26 @@
       "disclaimer": "Commission rates and terms subject to change. See affiliate agreement for details."
     },
     "earnings": {
-      "title": "Title",
-      "tier_col": "Tier col",
-      "price_col": "Price col",
-      "your_cut_col": "Your cut col",
-      "note": "Note"
+      "title": "Your Earnings",
+      "tier_col": "Tier",
+      "price_col": "Price",
+      "your_cut_col": "Your Commission",
+      "note": "Commissions are tracked automatically and paid monthly."
     },
     "onboarding": {
-      "title": "Title",
-      "step1_title": "Step1 title",
-      "step1_desc": "Step1 desc",
-      "step2_title": "Step2 title",
-      "step2_desc": "Step2 desc",
-      "step3_title": "Step3 title",
-      "step3_desc": "Step3 desc"
+      "title": "Start Earning in 3 Steps",
+      "step1_title": "Sign Up Free",
+      "step1_desc": "Create your account in 2 minutes.",
+      "step2_title": "Share Your Link",
+      "step2_desc": "Get your unique referral link and share it.",
+      "step3_title": "Earn Commissions",
+      "step3_desc": "Earn up to 40% on every sale. Paid monthly."
     },
     "copyLink": {
-      "title": "Title",
+      "title": "Your Referral Link",
       "loginHint": "Login Hint",
       "generating": "Generating",
-      "cta": "Cta",
+      "cta": "Copy Link",
       "copied": "Copied",
       "copy": "Copy"
     }
@@ -2810,13 +2822,13 @@
     "coming_soon": "Coming soon"
   },
   "challenges": {
-    "title": "Title",
-    "subtitle": "Subtitle",
+    "title": "Complete Missions, Earn Rewards",
+    "subtitle": "Level up your agency with hands-on AI challenges",
     "noChallenges": "No Challenges",
     "claimed": "Claimed",
     "completed": "Completed",
     "progress": "Progress",
-    "badge": "Badge",
+    "badge": "🎯 Gamified Learning",
     "credits": "Credits",
     "commissionBoost": "Commission Boost",
     "daysLeft": "Days Left",
@@ -2935,8 +2947,9 @@
       }
     },
     "eyebrow": "Eyebrow",
-    "title": "Title",
-    "subtitle": "Subtitle"
+    "title": "AI Creative Studio",
+    "subtitle": "Generate thumbnails, banners, and marketing visuals with AI",
+    "badge": "🎨 Visual AI"
   },
   "publish": {
     "publish": "Publish",
@@ -2944,7 +2957,7 @@
     "publishSuccess": "Publish Success",
     "platform": "Platform",
     "noPlatforms": "No Platforms",
-    "title": "Title",
+    "title": "Publish Everywhere",
     "description": "Description",
     "tags": "Tags",
     "tagsPlaceholder": "Tags Placeholder",
@@ -2952,7 +2965,8 @@
     "private": "Private",
     "unlisted": "Unlisted",
     "public": "Public",
-    "publishNow": "Publish Now"
+    "publishNow": "Publish Now",
+    "subtitle": "One-click publishing to YouTube, TikTok, Instagram, and more"
   },
   "analytics": {
     "syncNow": "Sync Now",
@@ -2966,8 +2980,9 @@
     "watchTime": "Watch Time",
     "ctr": "Ctr",
     "engagement": "Engagement",
-    "title": "Title",
-    "last": {}
+    "title": "Smart Analytics",
+    "last": {},
+    "subtitle": "Track performance across all your channels in one dashboard"
   },
   "batch": {
     "cancel": "Cancel",
@@ -2986,8 +3001,9 @@
     "estimatedCost": "Estimated Cost",
     "validate": "Validate",
     "startBatch": "Start Batch",
-    "title": "Title",
-    "description": "Description"
+    "title": "Batch Processing",
+    "description": "Description",
+    "subtitle": "Process multiple videos simultaneously with AI"
   },
   "thumbnails": {
     "abTest": "Ab Test",
@@ -2995,14 +3011,15 @@
     "winner": "Winner"
   },
   "repurpose": {
-    "title": "Title",
+    "title": "Content Repurposing",
     "selectVideo": "Select Video",
     "analyzeForClips": "Analyze For Clips",
     "analyzing": "Analyzing",
     "clipsReady": "Clips Ready",
     "clipScore": "Clip Score",
     "generateClips": "Generate Clips",
-    "noClips": "No Clips"
+    "noClips": "No Clips",
+    "subtitle": "Turn one video into 10 pieces of content automatically"
   },
   "notFoundPage": {
     "heading": "Heading",
@@ -3015,8 +3032,8 @@
     "contactSupport": "Contact Support"
   },
   "agi_showcase": {
-    "title": "Title",
-    "subtitle": "Subtitle",
+    "title": "AI in Action",
+    "subtitle": "See how Sophia automates your entire content workflow",
     "outcome_tracking_title": "Real Outcome Tracking",
     "outcome_tracking_desc": "Measure campaign performance across channels with a real-time dashboard.",
     "confidence_title": "High Confidence",
@@ -3039,10 +3056,10 @@
     "dismiss": "Dismiss"
   },
   "affiliate": {
-    "cta_banner_title": "Cta banner title",
-    "cta_banner_description": "Cta banner description",
-    "cta_banner_cta": "Cta banner cta",
-    "cta_banner_dismiss": "Cta banner dismiss",
+    "cta_banner_title": "Unlock High-Ticket Commissions",
+    "cta_banner_description": "Join our affiliate program and earn up to 40% commission on every sale.",
+    "cta_banner_cta": "Join Affiliate Program",
+    "cta_banner_dismiss": "Dismiss",
     "refer_earn_nav": "Refer & Earn",
     "commission_badge": "Up to 40% Commission",
     "earnings_table_title": "Affiliate Earnings Table",

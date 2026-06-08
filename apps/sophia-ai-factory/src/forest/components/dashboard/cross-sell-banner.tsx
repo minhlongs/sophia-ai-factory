@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { Link } from "@/navigation";
 import { X, Zap, Video } from "lucide-react";
 import { useTranslations } from "next-intl";
 

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/navigation";
 import { ArrowRight, Lock } from "lucide-react";
 import { Button } from "@/seed/components/ui/button";
 import { Card, CardContent } from "@/seed/components/ui/card";

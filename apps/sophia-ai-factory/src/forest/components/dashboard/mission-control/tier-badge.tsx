@@ -4,7 +4,7 @@
  * @module components/dashboard/mission-control/tier-badge
  */
 
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import type { Tier } from '@/seed/types';
 import { TIER_CONFIG } from '@/seed/config/tiers';
 

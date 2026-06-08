@@ -80,11 +80,11 @@
       "webhookWarning": "HeyGen webhook chưa đăng ký — video sẽ không nhận thông báo tự động."
     },
     "finish": {
-      "subtitle": "Subtitle",
-      "errorOccurred": "Error Occurred",
-      "readyToUse": "Ready To Use",
-      "launchBtn": "Launch Btn",
-      "continueToChallenges": "Continue To Challenges"
+      "subtitle": "Mọi thứ đã sẵn sàng. Bắt đầu tạo video AI ngay!",
+      "errorOccurred": "Đã Xảy Ra Lỗi",
+      "readyToUse": "Sẵn Sàng Sử Dụng",
+      "launchBtn": "Khởi Động",
+      "continueToChallenges": "Tiếp Tục Thử Thách"
     }
   },
   "landing": {
@@ -369,9 +369,9 @@
       "lifetime_suffix": "Trọn đời",
       "total_costs": "Tổng chi phí",
       "net_profit": "Lợi nhuận ròng",
-      "roi_payback": "Hoàn vốn ROI",
+      "roi_payback": "Thời Gian Hoàn Vốn",
       "roi_label": "ROI",
-      "payback_label": "Hoàn vốn",
+      "payback_label": "Tháng Hoàn Vốn",
       "days": "Ngày",
       "annual_revenue": "Doanh thu năm",
       "annual_costs": "Chi phí năm",
@@ -386,13 +386,13 @@
       "cost_per_video": "Chi phí/video",
       "channel_scale": "Quy mô kênh",
       "channels_label": "Kênh",
-      "videos_week": "Video/tuần",
-      "avg_views": "Lượt xem TB",
-      "affiliate_params": "Thông số affiliate",
-      "click_rate": "Tỷ lệ click",
-      "avg_commission": "Hoa hồng TB",
-      "email_capture": "Thu thập email",
-      "full_cost_disclaimer": "Tuyên bố đầy đủ về chi phí",
+      "videos_week": "Video/Tuần",
+      "avg_views": "Lượt Xem TB",
+      "affiliate_params": "Cài Đặt Affiliate",
+      "click_rate": "Tỷ Lệ Click",
+      "avg_commission": "Hoa Hồng TB",
+      "email_capture": "Tỷ Lệ Bắt Email",
+      "full_cost_disclaimer": "Sản xuất thủ công: editor, footage, phần mềm và chỉnh sửa.",
       "manual_cost_desc": "Chi phí sản xuất thủ công: thuê editor, mua stock footage, phần mềm.",
       "savings_monthly": "Tiết kiệm hàng tháng",
       "savings_annual": "Tiết kiệm hàng năm",
@@ -540,10 +540,10 @@
       }
     },
     "creative_studio": {
-      "badge": "Badge",
-      "title": "Title",
-      "subtitle": "Subtitle",
-      "cta": "Cta",
+      "badge": "Studio Sáng Tạo AI",
+      "title": "Nhà Máy Video AI",
+      "subtitle": "Tạo video thu hút với kịch bản AI, giọng đọc và xuất bản tự động.",
+      "cta": "Bắt Đầu Tạo Video",
       "tabs": {
         "video": {
           "title": "AI Video Factory",
@@ -601,6 +601,18 @@
           "cta": "Khám Phá Templates"
         }
       }
+    },
+    "agiOutcomes": {
+      "title": "Kết Quả Thực Tế",
+      "subtitle": "Nhìn Sophia tự động vận hành toàn bộ pipeline nội dung"
+    },
+    "runs": {
+      "subtitle": "Theo dõi từng nhiệm vụ, từng video, từng kết quả"
+    },
+    "challenges": {
+      "title": "Học mà Kiếm",
+      "subtitle": "Hoàn thành nhiệm vụ, xây portfolio, nhận thưởng",
+      "badge": "Onboarding Game Hóa"
     }
   },
   "dashboard": {
@@ -1038,7 +1050,7 @@
         "success_immediate": "Success immediate",
         "success_eoc": "Success eoc",
         "close": "Close",
-        "step1_title": "Step1 title",
+        "step1_title": "Xem Lại Gói Của Bạn",
         "lose_section_title": "Lose section title",
         "mode_title": "Mode title",
         "mode_eoc_label": "Mode eoc label",
@@ -1047,7 +1059,7 @@
         "mode_immediate_desc": "Mode immediate desc",
         "keep_plan": "Keep plan",
         "continue": "Continue",
-        "step2_title": "Step2 title",
+        "step2_title": "Xác Nhận Hủy",
         "step2_desc_immediate": "Step2 desc immediate",
         "step2_desc_eoc": "Step2 desc eoc",
         "back": "Back",
@@ -1529,8 +1541,8 @@
       "tooltip_total": "Tổng"
     },
     "agiOutcomes": {
-      "title": "Title",
-      "subtitle": "Subtitle"
+      "title": "Kết Quả AI",
+      "subtitle": "Kết quả tự động của bạn trong một cái nhìn"
     },
     "schedule": {
       "pageTitle": "Lịch chiến dịch",
@@ -1960,7 +1972,7 @@
     "more_options": "Tùy chọn khác",
     "clear": "Xóa"
   },
-  "title": "Title",
+  "title": "Sophia AI Factory — Tự Động Video & Doanh Thu Bằng AI",
   "topic": "Topic",
   "na": "Na",
   "audience": "Audience",
@@ -2261,7 +2273,7 @@
       "notScheduled": "Không có lịch",
       "runs": {
         "pageTitleSimple": "Lịch Sử Chạy",
-        "subtitle": "Subtitle",
+        "subtitle": "Lịch sử thực thi SOP này",
         "backToSop": "Back To Sop"
       },
       "analytics": {
@@ -2469,7 +2481,7 @@
   },
   "header": {
     "brand": "Brand",
-    "title": "Title"
+    "title": "Bảng Điều Khiển"
   },
   "sidebar": {
     "overview": "Overview",
@@ -2651,26 +2663,26 @@
       "disclaimer": "Tỷ lệ hoa hồng và điều khoản có thể thay đổi. Xem chi tiết trong thỏa thuận affiliate."
     },
     "earnings": {
-      "title": "Title",
-      "tier_col": "Tier col",
-      "price_col": "Price col",
-      "your_cut_col": "Your cut col",
-      "note": "Note"
+      "title": "Thu Nhập Của Bạn",
+      "tier_col": "Gói",
+      "price_col": "Giá",
+      "your_cut_col": "Hoa Hồng",
+      "note": "Hoa hồng được theo dõi tự động và thanh toán hàng tháng."
     },
     "onboarding": {
-      "title": "Title",
-      "step1_title": "Step1 title",
-      "step1_desc": "Step1 desc",
-      "step2_title": "Step2 title",
-      "step2_desc": "Step2 desc",
-      "step3_title": "Step3 title",
-      "step3_desc": "Step3 desc"
+      "title": "Bắt Đầu Kiếm Tiền Trong 3 Bước",
+      "step1_title": "Đăng Ký Miễn Phí",
+      "step1_desc": "Tạo tài khoản trong 2 phút — không cần thẻ tín dụng.",
+      "step2_title": "Chia Sẻ Link",
+      "step2_desc": "Nhận link giới thiệu duy nhất và chia sẻ với khán giả.",
+      "step3_title": "Nhận Hoa Hồng",
+      "step3_desc": "Kiếm đến 40% mỗi đơn hàng. Thanh toán hàng tháng, không tối thiểu."
     },
     "copyLink": {
-      "title": "Title",
+      "title": "Link Giới Thiệu Của Bạn",
       "loginHint": "Login Hint",
       "generating": "Generating",
-      "cta": "Cta",
+      "cta": "Sao Chép Link",
       "copied": "Copied",
       "copy": "Copy"
     }
@@ -2810,13 +2822,13 @@
     "coming_soon": "Coming soon"
   },
   "challenges": {
-    "title": "Title",
-    "subtitle": "Subtitle",
+    "title": "Hoàn Thành Nhiệm Vụ, Nhận Thưởng",
+    "subtitle": "Nâng cấp agency của bạn với thử thách AI thực tế",
     "noChallenges": "No Challenges",
     "claimed": "Claimed",
     "completed": "Completed",
     "progress": "Progress",
-    "badge": "Badge",
+    "badge": "🎯 Học Qua Game",
     "credits": "Credits",
     "commissionBoost": "Commission Boost",
     "daysLeft": "Days Left",
@@ -2935,8 +2947,9 @@
       }
     },
     "eyebrow": "Eyebrow",
-    "title": "Title",
-    "subtitle": "Subtitle"
+    "title": "Studio Sáng Tạo AI",
+    "subtitle": "Tạo thumbnail, banner và hình ảnh marketing với AI",
+    "badge": "🎨 AI Hình Ảnh"
   },
   "publish": {
     "publish": "Publish",
@@ -2944,7 +2957,7 @@
     "publishSuccess": "Publish Success",
     "platform": "Platform",
     "noPlatforms": "No Platforms",
-    "title": "Title",
+    "title": "Xuất Bản Đa Kênh",
     "description": "Description",
     "tags": "Tags",
     "tagsPlaceholder": "Tags Placeholder",
@@ -2952,7 +2965,8 @@
     "private": "Private",
     "unlisted": "Unlisted",
     "public": "Public",
-    "publishNow": "Publish Now"
+    "publishNow": "Publish Now",
+    "subtitle": "Xuất bản một-click đến YouTube, TikTok, Instagram và hơn nữa"
   },
   "analytics": {
     "syncNow": "Sync Now",
@@ -2966,8 +2980,9 @@
     "watchTime": "Watch Time",
     "ctr": "Ctr",
     "engagement": "Engagement",
-    "title": "Title",
-    "last": {}
+    "title": "Phân Tích Thông Minh",
+    "last": {},
+    "subtitle": "Theo dõi hiệu suất trên tất cả kênh trong một dashboard"
   },
   "batch": {
     "cancel": "Cancel",
@@ -2986,8 +3001,9 @@
     "estimatedCost": "Estimated Cost",
     "validate": "Validate",
     "startBatch": "Start Batch",
-    "title": "Title",
-    "description": "Description"
+    "title": "Xử Lý Hàng Loạt",
+    "description": "Description",
+    "subtitle": "Xử lý nhiều video cùng lúc với AI"
   },
   "thumbnails": {
     "abTest": "Ab Test",
@@ -2995,14 +3011,15 @@
     "winner": "Winner"
   },
   "repurpose": {
-    "title": "Title",
+    "title": "Tái Sử Dụng Nội Dung",
     "selectVideo": "Select Video",
     "analyzeForClips": "Analyze For Clips",
     "analyzing": "Analyzing",
     "clipsReady": "Clips Ready",
     "clipScore": "Clip Score",
     "generateClips": "Generate Clips",
-    "noClips": "No Clips"
+    "noClips": "No Clips",
+    "subtitle": "Biến 1 video thành 10 nội dung tự động"
   },
   "notFoundPage": {
     "heading": "Heading",
@@ -3015,8 +3032,8 @@
     "contactSupport": "Contact Support"
   },
   "agi_showcase": {
-    "title": "Title",
-    "subtitle": "Subtitle",
+    "title": "AI Trong Thực Tế",
+    "subtitle": "Xem Sophia tự động hóa toàn bộ workflow nội dung của bạn",
     "outcome_tracking_title": "Theo Dõi Kết Quả Thực Tế",
     "outcome_tracking_desc": "Đo lường hiệu quả chiến dịch từng kênh với dashboard theo thời gian thực.",
     "confidence_title": "Độ Tin Cậy Cao",
@@ -3039,10 +3056,10 @@
     "dismiss": "Đóng"
   },
   "affiliate": {
-    "cta_banner_title": "Cta banner title",
-    "cta_banner_description": "Cta banner description",
-    "cta_banner_cta": "Cta banner cta",
-    "cta_banner_dismiss": "Cta banner dismiss",
+    "cta_banner_title": "Mở Khóa Hoa Hồng Cao",
+    "cta_banner_description": "Tham gia chương trình liên kết và kiếm hoa hồng đến 40% mỗi đơn hàng.",
+    "cta_banner_cta": "Tham Gia Ngay",
+    "cta_banner_dismiss": "Đóng",
     "refer_earn_nav": "Giới Thiệu & Kiếm Tiền",
     "commission_badge": "Hoa Hồng Đến 40%",
     "earnings_table_title": "Bảng Thu Nhập Affiliate",

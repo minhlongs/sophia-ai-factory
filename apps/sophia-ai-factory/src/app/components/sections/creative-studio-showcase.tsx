@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { Link } from "@/navigation";
 import { useTranslations } from "next-intl";
 import { ScrollReveal } from "@/seed/components/ui/scroll-reveal";
 import { Button } from "@/seed/components/ui/button";

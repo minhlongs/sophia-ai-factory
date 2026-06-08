@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { TierBadge } from './mission-control/tier-badge';
 import { RecentActivitySparkline } from './mission-control/recent-activity-sparkline';
 import { PrimaryCtaButton } from './mission-control/primary-cta';

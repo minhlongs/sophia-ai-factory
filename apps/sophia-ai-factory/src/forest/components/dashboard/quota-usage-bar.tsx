@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
+import { Link } from "@/navigation";
 import { BarChart3, ArrowUpRight } from "lucide-react";
 import { Button } from "@/seed/components/ui/button";
 
