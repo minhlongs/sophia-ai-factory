@@ -52,7 +52,11 @@
     "ci:get-side-effects": "bash scripts/ci-check-get-side-effects.sh",
     "ci:secrets": "secretlint --secretlintignore .secretlintignore 'src/**/*.{ts,tsx,js,mjs,json}' 'scripts/**/*.{ts,js,mjs,sh}' '*.{json,toml,yaml,yml,sh}'",
     "ci:audit": "npm audit --audit-level=high || true",
-    "prepare": "husky"
+    "harness": "./scripts/harness.sh",
+  "harness:ci": "./scripts/harness.sh ci",
+  "harness:deploy": "./scripts/harness.sh deploy",
+  "harness:verify": "./scripts/harness.sh verify",
+  "prepare": "husky"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
