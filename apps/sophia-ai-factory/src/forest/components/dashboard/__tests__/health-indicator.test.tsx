@@ -2,18 +2,21 @@ import { render, screen } from '@testing-library/react';
 import { HealthIndicator } from '../health-indicator';
 import { useQuery } from '@tanstack/react-query';
 import { vi, describe, it, expect, beforeEach, type Mock } from 'vitest';
+import { NextIntlClientProvider } from 'next-intl';
 
-// Mock useQuery
+const messages: Record<string, Record<string, string>> = {};
+
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <NextIntlClientProvider locale="en" messages={messages}>{children}</NextIntlClientProvider>
+);
+
 vi.mock('@tanstack/react-query', () => ({
   useQuery: vi.fn(),
 }));
 
-// Mock Link
 vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: React.PropsWithChildren<{ href: string }>) => (
-    <a href={href} {...props}>
-      {children}
-    </a>
+    <a href={href} {...props}>{children}</a>
   ),
 }));
 
@@ -29,7 +32,7 @@ describe('HealthIndicator', () => {
       isError: false,
     });
 
-    const { container } = render(<HealthIndicator />);
+    const { container } = render(<HealthIndicator />, { wrapper });
     expect(container.firstChild).toBeNull();
   });
 
@@ -44,7 +47,7 @@ describe('HealthIndicator', () => {
       isError: false,
     });
 
-    render(<HealthIndicator />);
+    render(<HealthIndicator />, { wrapper });
     expect(screen.getByText('System Status')).toBeDefined();
     expect(screen.getByTitle(/System Operational/)).toBeDefined();
   });
@@ -60,7 +63,7 @@ describe('HealthIndicator', () => {
       isError: false,
     });
 
-    render(<HealthIndicator />);
+    render(<HealthIndicator />, { wrapper });
     expect(screen.getByTitle(/System Degraded/)).toBeDefined();
   });
 
@@ -71,7 +74,7 @@ describe('HealthIndicator', () => {
       isError: true,
     });
 
-    render(<HealthIndicator />);
+    render(<HealthIndicator />, { wrapper });
     expect(screen.getByTitle(/Status Unknown/)).toBeDefined();
   });
 });
