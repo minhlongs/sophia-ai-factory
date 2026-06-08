@@ -57,7 +57,7 @@ vi.mock('@/seed/db/client', () => {
         _table: table,
         _action: undefined as string | undefined,
         _updates: undefined as Record<string, unknown> | undefined,
-        _filters: [] as Array<{ col: string; val: any }>,
+        _filters: [] as Array<{ col: string; val: unknown }>,
         insert: vi.fn(async (row: any) => {
   console.log("[DEBUG insert] table=" + table + " eventId=" + (row.event_id ?? "n/a"))
           if (table === 'payos_events') {

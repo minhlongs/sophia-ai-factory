@@ -83,7 +83,7 @@ import { batchIngestUsage } from '@/forest/usage-metering/aggregator';
 const mockBatchIngestUsage = vi.mocked(batchIngestUsage);
 
 describe('Batch Usage Ingestion API - Authentication', () => {
-  const createMockRequest = (body: any = {}, headers: Record<string, string> = {}) => {
+  const createMockRequest = (body: unknown = {} as Record<string, unknown>, headers: Record<string, string> = {}) => {
     return {
       json: () => Promise.resolve(body),
       headers: new Headers(headers),
@@ -108,7 +108,7 @@ describe('Batch Usage Ingestion API - Authentication', () => {
 });
 
 describe('Batch Usage Ingestion API - Request Validation', () => {
-  const createAuthorizedRequest = (body: any = {}) => {
+  const createAuthorizedRequest = (body: unknown = {} as Record<string, unknown>) => {
     return {
       json: () => Promise.resolve(body),
       headers: new Headers({ 'x-api-key': 'test-api-key' }),
@@ -168,7 +168,7 @@ describe('Batch Usage Ingestion API - Request Validation', () => {
 });
 
 describe('Batch Usage Ingestion API - Successful Processing', () => {
-  const createAuthorizedRequest = (body: any = {}) => {
+  const createAuthorizedRequest = (body: unknown = {} as Record<string, unknown>) => {
     return {
       json: () => Promise.resolve(body),
       headers: new Headers({ 'x-api-key': 'test-api-key' }),
@@ -317,7 +317,7 @@ describe('Batch Usage Ingestion API - OPTIONS handler', () => {
 });
 
 describe('Batch Usage Ingestion API - Error Handling', () => {
-  const createAuthorizedRequest = (body: any = {}) => {
+  const createAuthorizedRequest = (body: unknown = {} as Record<string, unknown>) => {
     return {
       json: () => Promise.resolve(body),
       headers: new Headers({ 'x-api-key': 'test-api-key' }),

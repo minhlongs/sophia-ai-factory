@@ -1,4 +1,1 @@
 
-> sophia-ai-factory@0.1.0 type-check
-> node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit
-

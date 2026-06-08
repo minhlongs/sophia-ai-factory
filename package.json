@@ -13,7 +13,12 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
     "type-check": "tsc --noEmit",
-    "clean": "rm -rf .next node_modules"
+    "clean": "rm -rf .next node_modules",
+    "harness": "bash scripts/harness/harness.sh",
+    "harness:audit": "bash scripts/harness/harness.sh audit",
+    "harness:fix": "bash scripts/harness/harness.sh fix",
+    "harness:report": "bash scripts/harness/harness.sh report",
+    "i18n:validate": "node scripts/validate-i18n-keys.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.3",
