@@ -19,6 +19,7 @@ export interface LimitCheckResult {
   limit: number;
   currentusage: number;
   requiredTier: Tier;
+  currentTier?: Tier;
   message?: string;
 }
 

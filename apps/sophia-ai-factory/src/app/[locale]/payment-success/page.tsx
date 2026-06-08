@@ -4,7 +4,8 @@ import Link from "next/link";
 import { CheckCircle, Mail, KeyRound, PlayCircle, BarChart3 } from "lucide-react";
 import { getOrderById } from "@/land/orders/pending-order-repo";
 import { PaymentStatusPoller } from "@/forest/components/checkout/payment-status-poller";
-import { TIER_CONFIGS, type Tier } from "@/seed/config/tiers";
+import { TIER_CONFIGS } from "@/seed/config/tiers";
+import type { Tier } from "@/seed/types";
 
 export const metadata: Metadata = {
   title: "Payment Confirmed — Sophia AI Factory",
