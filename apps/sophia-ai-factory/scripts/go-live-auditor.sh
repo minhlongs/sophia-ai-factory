@@ -88,7 +88,7 @@ fi
 # CHECK 3: Zero `:any` types in production code [1.5 pts]
 # ─────────────────────────
 echo ""
-echo -e "${CYAN}━━━ CHECK 3: No `:any` in Production Code (max 1.5 points) ━━━${NC}"
+printf '%s\n' "━━━ CHECK 3: No ':any' in Production Code (max 1.5 points) ━━━" | sed 's/^/'"${CYAN}"'/;s/$/'"${NC}"'/'
 
 ANY_RESULTS=""
 # Skip node_modules, .next, build output dirs
