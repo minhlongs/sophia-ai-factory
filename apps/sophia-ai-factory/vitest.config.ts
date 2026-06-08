@@ -64,6 +64,7 @@ export default defineConfig({
       '@/tree': path.resolve(__dirname, './src/tree'),
       '@/forest': path.resolve(__dirname, './src/forest'),
       '@/land': path.resolve(__dirname, './src/land'),
+      'next/navigation': path.resolve(__dirname, './src/test/mocks/next-navigation.ts'),
     },
   },
   // Define globals for tests
@@ -72,6 +73,6 @@ export default defineConfig({
   },
   // SSR config for API route mocking
   ssr: {
-    noExternal: ['next/server'],
+    noExternal: ['next/server', 'next/navigation'],
   },
 });

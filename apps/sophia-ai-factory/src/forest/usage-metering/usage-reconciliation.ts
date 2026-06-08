@@ -9,8 +9,9 @@
  * @module usage-metering/usage-reconciliation
  */
 
-import { logger } from '@/seed/utils/logger-utility';
 import { getKvClient } from '@/land/redis';
+import { logger } from '@/seed/utils/logger-utility';
+import { createServerClient } from '@/seed/db/client';
 
 // ---------------------------------------------------------------------------
 // KV counter keys
@@ -248,7 +249,7 @@ async function scanTenantIds(kv: ReturnType<typeof getKvClient>, window: string)
 
   try {
     // Upstash Redis SCAN returns an array of matching keys
-    // @ts-ignore — pre-existing: kv null-check handled by caller
+    // @ts-expect-error — Upstash Redis SCAN returns an unknown shape; null-check handled by caller
 const keys: unknown = await kv.scan(pattern);
     const keyArray = Array.isArray(keys) ? keys : [];
     for (const rawKey of keyArray) {
@@ -271,7 +272,7 @@ const keys: unknown = await kv.scan(pattern);
 function getD1Client(): ReturnType<typeof import('@/seed/db/client').createServerClient> | null {
   try {
     // createServerClient is synchronous — do NOT await
-    return require('@/seed/db/client').createServerClient() as any;
+    return createServerClient();
   } catch {
     return null;
   }
@@ -294,14 +295,15 @@ async function queryUsageEventCount(
   const windowEnd = windowStart + 86400;
 
   try {
-    const res = await db!
+    // createServerClient is synchronous — do NOT await
+    const res = (await db!
       .from('usage_events')
-      .select({ count: 'id' } as any)
+      .select('id')
       .eq('user_id', tenantId)
       .gte('created_at', windowStart)
-      .lt('created_at', windowEnd);
+      .lt('created_at', windowEnd)) as { data?: Array<{ id?: number }> };
     // D1 returns { data, error } — count is in data rows
-    const rows = (res as { data?: Array<{ id?: number }> }).data;
+    const rows = res.data;
     return rows?.length ?? 0;
   } catch {
     return 0;

@@ -287,11 +287,6 @@ const eslintConfig = defineConfig([
 "src/forest/raas-service-types-and-constants.ts",
 "src/forest/raas-service.ts",
 // usage-metering — reads land/redis for KV ops (mekong-exempt: infra)
-"src/forest/usage-metering/kv-metering-log-sync-kv-operations.ts",
-"src/forest/usage-metering/kv-metering-log-sync.ts",
-"src/forest/usage-metering/realtime-tracker-circuit-breaker.ts",
-"src/forest/usage-metering/realtime-tracker-kv-ops.ts",
-"src/forest/usage-metering/usage-kv-sync.ts",
 // quota — reads land/redis for KV cache ops (mekong-exempt: infra)
 "src/forest/quota/quota-checker-kv-cache.ts",
     "src/forest/agents/runner.ts",
@@ -329,6 +324,10 @@ const eslintConfig = defineConfig([
 "src/tree/sop/solo-orchestrator.ts",
 // sop/webhook-hmac — reads land/webhooks for signature verification (mekong-exempt)
 "src/tree/sop/webhook-hmac.ts",
+				// usage-metering — KV client from land/redis (mekong-exempt: infra access pattern)
+				"src/forest/usage-metering/**/*.ts",
+				// dlq-reaper — reads land/billing/nowpayments-ipn-dead-letter for DLQ ops (mekong-exempt: orchestration)
+				"src/forest/inngest/functions/dlq-reaper.ts",
       // Test files
       "src/forest/**/*.test.ts",
       "src/forest/**/*.test.tsx",
