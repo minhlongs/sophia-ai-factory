@@ -1,0 +1,2400 @@
+
+> sophia-ai-factory@0.1.0 lint
+> node --max-old-space-size=14336 ./node_modules/eslint/bin/eslint.js src
+
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/api/billing/payment-history/route.ts
+  1:10  warning  'NextRequest' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/account/account-billing-tab.tsx
+  51:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/account/account-billing-tab.tsx:51:5
+  49 |
+  50 |   useEffect(() => {
+> 51 |     fetchHistory(filter).catch(() => setLoading(false));
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  52 |   }, [filter, fetchHistory]);
+  53 |
+  54 |   function formatAmount(cents: number) {  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/account/account-danger-zone.tsx
+  59:10  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/account/account-danger-zone.tsx:59:10
+  57 |
+  58 |   useEffect(() => {
+> 59 |     void refreshStatus();
+     |          ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  60 |   }, []);
+  61 |
+  62 |   async function handleRequest() {  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/account/account-profile-tab.tsx
+  51:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/account/account-profile-tab.tsx:51:7
+  49 |   useEffect(() => {
+  50 |     if (searchParams.get('ok') === 'email-changed') {
+> 51 |       setEmailStatus({ kind: 'changed' });
+     |       ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  52 |     } else if (searchParams.get('error')?.startsWith('email-change-')) {
+  53 |       setEmailStatus({ kind: 'error', message: t('email_change_invalid') });
+  54 |     }  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/account/page.tsx
+  32:19  warning  '_locale' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx
+   99:8   warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:99:8
+   97 |       )}
+   98 |
+>  99 |       <Card title={isVi ? 'Cấp thêm credits' : 'Grant Credits'}>
+      |        ^^^^ This component is created during render
+  100 |         <div className="grid gap-2 sm:grid-cols-2">
+  101 |           <Input value={email} onChange={setEmail} placeholder={isVi ? 'Email khách hàng' : 'Customer email'} />
+  102 |           <Input value={creditAmount} onChange={(v) => setCreditAmount(Number(v))} placeholder={isVi ? 'Số credits' : 'Credits amount'} type="number" />
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:62:3
+  60 |   }
+  61 |
+> 62 |   function Card({ title, children }: { title: string; children: React.ReactNode }) {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 63 |     return (
+     | ^^^^^^^^^^^^
+> 64 |       <div className="rounded-xl border border-border-800 bg-muted-900/50 p-5 space-y-4">
+     | ^^^^^^^^^^^^
+> 65 |         <h2 className="text-sm font-semibold text-muted-foreground-200">{title}</h2>
+     | ^^^^^^^^^^^^
+> 66 |         {children}
+     | ^^^^^^^^^^^^
+> 67 |       </div>
+     | ^^^^^^^^^^^^
+> 68 |     )
+     | ^^^^^^^^^^^^
+> 69 |   }
+     | ^^^^ The component is created during render here
+  70 |
+  71 |   const Input = ({ value, onChange, placeholder, type = 'text' }: { value: string | number; onChange: (v: string) => void; placeholder: string; type?: string }) => (
+  72 |     <input                                                                                                                                                                                                                                                                                                                                                                                                          react-hooks/static-components
+  101:12  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:101:12
+   99 |       <Card title={isVi ? 'Cấp thêm credits' : 'Grant Credits'}>
+  100 |         <div className="grid gap-2 sm:grid-cols-2">
+> 101 |           <Input value={email} onChange={setEmail} placeholder={isVi ? 'Email khách hàng' : 'Customer email'} />
+      |            ^^^^^ This component is created during render
+  102 |           <Input value={creditAmount} onChange={(v) => setCreditAmount(Number(v))} placeholder={isVi ? 'Số credits' : 'Credits amount'} type="number" />
+  103 |         </div>
+  104 |         <Input value={creditReason} onChange={setCreditReason} placeholder={isVi ? 'Lý do cấp credits' : 'Reason for granting credits'} />
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:71:17
+  69 |   }
+  70 |
+> 71 |   const Input = ({ value, onChange, placeholder, type = 'text' }: { value: string | number; onChange: (v: string) => void; placeholder: string; type?: string }) => (
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 72 |     <input
+     | ^^^^^^^^^^
+> 73 |       type={type}
+     | ^^^^^^^^^^
+> 74 |       value={value}
+     | ^^^^^^^^^^
+> 75 |       onChange={(e) => onChange(e.target.value)}
+     | ^^^^^^^^^^
+> 76 |       placeholder={placeholder}
+     | ^^^^^^^^^^
+> 77 |       className="w-full bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+     | ^^^^^^^^^^
+> 78 |     />
+     | ^^^^^^^^^^
+> 79 |   )
+     | ^^^^ The component is created during render here
+  80 |
+  81 |   const Btn = ({ label, action, disabled }: { label: string; action: () => void; disabled?: boolean }) => (
+  82 |     <button  react-hooks/static-components
+  102:12  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:102:12
+  100 |         <div className="grid gap-2 sm:grid-cols-2">
+  101 |           <Input value={email} onChange={setEmail} placeholder={isVi ? 'Email khách hàng' : 'Customer email'} />
+> 102 |           <Input value={creditAmount} onChange={(v) => setCreditAmount(Number(v))} placeholder={isVi ? 'Số credits' : 'Credits amount'} type="number" />
+      |            ^^^^^ This component is created during render
+  103 |         </div>
+  104 |         <Input value={creditReason} onChange={setCreditReason} placeholder={isVi ? 'Lý do cấp credits' : 'Reason for granting credits'} />
+  105 |         <Btn
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:71:17
+  69 |   }
+  70 |
+> 71 |   const Input = ({ value, onChange, placeholder, type = 'text' }: { value: string | number; onChange: (v: string) => void; placeholder: string; type?: string }) => (
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 72 |     <input
+     | ^^^^^^^^^^
+> 73 |       type={type}
+     | ^^^^^^^^^^
+> 74 |       value={value}
+     | ^^^^^^^^^^
+> 75 |       onChange={(e) => onChange(e.target.value)}
+     | ^^^^^^^^^^
+> 76 |       placeholder={placeholder}
+     | ^^^^^^^^^^
+> 77 |       className="w-full bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+     | ^^^^^^^^^^
+> 78 |     />
+     | ^^^^^^^^^^
+> 79 |   )
+     | ^^^^ The component is created during render here
+  80 |
+  81 |   const Btn = ({ label, action, disabled }: { label: string; action: () => void; disabled?: boolean }) => (
+  82 |     <button                                                      react-hooks/static-components
+  104:10  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:104:10
+  102 |           <Input value={creditAmount} onChange={(v) => setCreditAmount(Number(v))} placeholder={isVi ? 'Số credits' : 'Credits amount'} type="number" />
+  103 |         </div>
+> 104 |         <Input value={creditReason} onChange={setCreditReason} placeholder={isVi ? 'Lý do cấp credits' : 'Reason for granting credits'} />
+      |          ^^^^^ This component is created during render
+  105 |         <Btn
+  106 |           label={isVi ? 'Cấp credits' : 'Grant Credits'}
+  107 |           action={() => callAction({ action: 'grant_credits', userEmail: email, amount: creditAmount, reason: creditReason })}
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:71:17
+  69 |   }
+  70 |
+> 71 |   const Input = ({ value, onChange, placeholder, type = 'text' }: { value: string | number; onChange: (v: string) => void; placeholder: string; type?: string }) => (
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 72 |     <input
+     | ^^^^^^^^^^
+> 73 |       type={type}
+     | ^^^^^^^^^^
+> 74 |       value={value}
+     | ^^^^^^^^^^
+> 75 |       onChange={(e) => onChange(e.target.value)}
+     | ^^^^^^^^^^
+> 76 |       placeholder={placeholder}
+     | ^^^^^^^^^^
+> 77 |       className="w-full bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+     | ^^^^^^^^^^
+> 78 |     />
+     | ^^^^^^^^^^
+> 79 |   )
+     | ^^^^ The component is created during render here
+  80 |
+  81 |   const Btn = ({ label, action, disabled }: { label: string; action: () => void; disabled?: boolean }) => (
+  82 |     <button                                     react-hooks/static-components
+  105:10  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:105:10
+  103 |         </div>
+  104 |         <Input value={creditReason} onChange={setCreditReason} placeholder={isVi ? 'Lý do cấp credits' : 'Reason for granting credits'} />
+> 105 |         <Btn
+      |          ^^^ This component is created during render
+  106 |           label={isVi ? 'Cấp credits' : 'Grant Credits'}
+  107 |           action={() => callAction({ action: 'grant_credits', userEmail: email, amount: creditAmount, reason: creditReason })}
+  108 |           disabled={!email || !creditReason || creditAmount <= 0}
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:81:15
+  79 |   )
+  80 |
+> 81 |   const Btn = ({ label, action, disabled }: { label: string; action: () => void; disabled?: boolean }) => (
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 82 |     <button
+     | ^^^^^^^^^^^
+> 83 |       onClick={action}
+     | ^^^^^^^^^^^
+> 84 |       disabled={!!loading || disabled}
+     | ^^^^^^^^^^^
+> 85 |       className="px-4 py-2 bg-primary-700 hover:bg-primary-600 disabled:opacity-50 text-white text-sm rounded-lg font-medium transition-colors"
+     | ^^^^^^^^^^^
+> 86 |     >
+     | ^^^^^^^^^^^
+> 87 |       {loading ? '…' : label}
+     | ^^^^^^^^^^^
+> 88 |     </button>
+     | ^^^^^^^^^^^
+> 89 |   )
+     | ^^^^ The component is created during render here
+  90 |
+  91 |   return (
+  92 |     <div className="space-y-4">                                                                                                                                                                                                                                                                                                                                                                                                       react-hooks/static-components
+  112:8   warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:112:8
+  110 |       </Card>
+  111 |
+> 112 |       <Card title={isVi ? 'Đặt lại tier' : 'Reset Tier'}>
+      |        ^^^^ This component is created during render
+  113 |         <div className="grid gap-2 sm:grid-cols-2">
+  114 |           <Input value={email} onChange={setEmail} placeholder={isVi ? 'Email khách hàng' : 'Customer email'} />
+  115 |           <select
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:62:3
+  60 |   }
+  61 |
+> 62 |   function Card({ title, children }: { title: string; children: React.ReactNode }) {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 63 |     return (
+     | ^^^^^^^^^^^^
+> 64 |       <div className="rounded-xl border border-border-800 bg-muted-900/50 p-5 space-y-4">
+     | ^^^^^^^^^^^^
+> 65 |         <h2 className="text-sm font-semibold text-muted-foreground-200">{title}</h2>
+     | ^^^^^^^^^^^^
+> 66 |         {children}
+     | ^^^^^^^^^^^^
+> 67 |       </div>
+     | ^^^^^^^^^^^^
+> 68 |     )
+     | ^^^^^^^^^^^^
+> 69 |   }
+     | ^^^^ The component is created during render here
+  70 |
+  71 |   const Input = ({ value, onChange, placeholder, type = 'text' }: { value: string | number; onChange: (v: string) => void; placeholder: string; type?: string }) => (
+  72 |     <input                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  react-hooks/static-components
+  114:12  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:114:12
+  112 |       <Card title={isVi ? 'Đặt lại tier' : 'Reset Tier'}>
+  113 |         <div className="grid gap-2 sm:grid-cols-2">
+> 114 |           <Input value={email} onChange={setEmail} placeholder={isVi ? 'Email khách hàng' : 'Customer email'} />
+      |            ^^^^^ This component is created during render
+  115 |           <select
+  116 |             value={tier}
+  117 |             onChange={(e) => setTier(e.target.value)}
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:71:17
+  69 |   }
+  70 |
+> 71 |   const Input = ({ value, onChange, placeholder, type = 'text' }: { value: string | number; onChange: (v: string) => void; placeholder: string; type?: string }) => (
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 72 |     <input
+     | ^^^^^^^^^^
+> 73 |       type={type}
+     | ^^^^^^^^^^
+> 74 |       value={value}
+     | ^^^^^^^^^^
+> 75 |       onChange={(e) => onChange(e.target.value)}
+     | ^^^^^^^^^^
+> 76 |       placeholder={placeholder}
+     | ^^^^^^^^^^
+> 77 |       className="w-full bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+     | ^^^^^^^^^^
+> 78 |     />
+     | ^^^^^^^^^^
+> 79 |   )
+     | ^^^^ The component is created during render here
+  80 |
+  81 |   const Btn = ({ label, action, disabled }: { label: string; action: () => void; disabled?: boolean }) => (
+  82 |     <button                                                                                                                                                                                                                           react-hooks/static-components
+  123:10  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:123:10
+  121 |           </select>
+  122 |         </div>
+> 123 |         <Btn
+      |          ^^^ This component is created during render
+  124 |           label={isVi ? 'Đặt lại tier' : 'Reset Tier'}
+  125 |           action={() => callAction({ action: 'reset_tier', userEmail: email, tier })}
+  126 |           disabled={!email}
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:81:15
+  79 |   )
+  80 |
+> 81 |   const Btn = ({ label, action, disabled }: { label: string; action: () => void; disabled?: boolean }) => (
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 82 |     <button
+     | ^^^^^^^^^^^
+> 83 |       onClick={action}
+     | ^^^^^^^^^^^
+> 84 |       disabled={!!loading || disabled}
+     | ^^^^^^^^^^^
+> 85 |       className="px-4 py-2 bg-primary-700 hover:bg-primary-600 disabled:opacity-50 text-white text-sm rounded-lg font-medium transition-colors"
+     | ^^^^^^^^^^^
+> 86 |     >
+     | ^^^^^^^^^^^
+> 87 |       {loading ? '…' : label}
+     | ^^^^^^^^^^^
+> 88 |     </button>
+     | ^^^^^^^^^^^
+> 89 |   )
+     | ^^^^ The component is created during render here
+  90 |
+  91 |   return (
+  92 |     <div className="space-y-4">                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-hooks/static-components
+  130:8   warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:130:8
+  128 |       </Card>
+  129 |
+> 130 |       <Card title={isVi ? 'Tạm dừng / Kích hoạt lại tài khoản' : 'Pause / Resume Account'}>
+      |        ^^^^ This component is created during render
+  131 |         <Input value={email} onChange={setEmail} placeholder={isVi ? 'Email khách hàng' : 'Customer email'} />
+  132 |         <div className="flex gap-2">
+  133 |           <Btn label={isVi ? 'Tạm dừng' : 'Pause'} action={() => callAction({ action: 'pause_user', userEmail: email })} disabled={!email} />
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:62:3
+  60 |   }
+  61 |
+> 62 |   function Card({ title, children }: { title: string; children: React.ReactNode }) {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 63 |     return (
+     | ^^^^^^^^^^^^
+> 64 |       <div className="rounded-xl border border-border-800 bg-muted-900/50 p-5 space-y-4">
+     | ^^^^^^^^^^^^
+> 65 |         <h2 className="text-sm font-semibold text-muted-foreground-200">{title}</h2>
+     | ^^^^^^^^^^^^
+> 66 |         {children}
+     | ^^^^^^^^^^^^
+> 67 |       </div>
+     | ^^^^^^^^^^^^
+> 68 |     )
+     | ^^^^^^^^^^^^
+> 69 |   }
+     | ^^^^ The component is created during render here
+  70 |
+  71 |   const Input = ({ value, onChange, placeholder, type = 'text' }: { value: string | number; onChange: (v: string) => void; placeholder: string; type?: string }) => (
+  72 |     <input                                                                                                                                                                                                                                                                                                                                                                                                     react-hooks/static-components
+  131:10  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:131:10
+  129 |
+  130 |       <Card title={isVi ? 'Tạm dừng / Kích hoạt lại tài khoản' : 'Pause / Resume Account'}>
+> 131 |         <Input value={email} onChange={setEmail} placeholder={isVi ? 'Email khách hàng' : 'Customer email'} />
+      |          ^^^^^ This component is created during render
+  132 |         <div className="flex gap-2">
+  133 |           <Btn label={isVi ? 'Tạm dừng' : 'Pause'} action={() => callAction({ action: 'pause_user', userEmail: email })} disabled={!email} />
+  134 |           <button
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:71:17
+  69 |   }
+  70 |
+> 71 |   const Input = ({ value, onChange, placeholder, type = 'text' }: { value: string | number; onChange: (v: string) => void; placeholder: string; type?: string }) => (
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 72 |     <input
+     | ^^^^^^^^^^
+> 73 |       type={type}
+     | ^^^^^^^^^^
+> 74 |       value={value}
+     | ^^^^^^^^^^
+> 75 |       onChange={(e) => onChange(e.target.value)}
+     | ^^^^^^^^^^
+> 76 |       placeholder={placeholder}
+     | ^^^^^^^^^^
+> 77 |       className="w-full bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+     | ^^^^^^^^^^
+> 78 |     />
+     | ^^^^^^^^^^
+> 79 |   )
+     | ^^^^ The component is created during render here
+  80 |
+  81 |   const Btn = ({ label, action, disabled }: { label: string; action: () => void; disabled?: boolean }) => (
+  82 |     <button                                                                                                                                             react-hooks/static-components
+  133:12  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:133:12
+  131 |         <Input value={email} onChange={setEmail} placeholder={isVi ? 'Email khách hàng' : 'Customer email'} />
+  132 |         <div className="flex gap-2">
+> 133 |           <Btn label={isVi ? 'Tạm dừng' : 'Pause'} action={() => callAction({ action: 'pause_user', userEmail: email })} disabled={!email} />
+      |            ^^^ This component is created during render
+  134 |           <button
+  135 |             onClick={() => callAction({ action: 'resume_user', userEmail: email })}
+  136 |             disabled={!!loading || !email}
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:81:15
+  79 |   )
+  80 |
+> 81 |   const Btn = ({ label, action, disabled }: { label: string; action: () => void; disabled?: boolean }) => (
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 82 |     <button
+     | ^^^^^^^^^^^
+> 83 |       onClick={action}
+     | ^^^^^^^^^^^
+> 84 |       disabled={!!loading || disabled}
+     | ^^^^^^^^^^^
+> 85 |       className="px-4 py-2 bg-primary-700 hover:bg-primary-600 disabled:opacity-50 text-white text-sm rounded-lg font-medium transition-colors"
+     | ^^^^^^^^^^^
+> 86 |     >
+     | ^^^^^^^^^^^
+> 87 |       {loading ? '…' : label}
+     | ^^^^^^^^^^^
+> 88 |     </button>
+     | ^^^^^^^^^^^
+> 89 |   )
+     | ^^^^ The component is created during render here
+  90 |
+  91 |   return (
+  92 |     <div className="space-y-4">                                                                                                                                                                                                                                                                                                                                                                                   react-hooks/static-components
+  144:8   warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:144:8
+  142 |       </Card>
+  143 |
+> 144 |       <Card title={isVi ? 'Chạy kiểm tra tổng hợp' : 'Run Synthetic E2E'}>
+      |        ^^^^ This component is created during render
+  145 |         <p className="text-xs text-muted-foreground-500">
+  146 |           {isVi ? 'Chạy toàn bộ quy trình fulfillment với dữ liệu tổng hợp.' : 'Run full fulfillment pipeline with synthetic data.'}
+  147 |         </p>
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:62:3
+  60 |   }
+  61 |
+> 62 |   function Card({ title, children }: { title: string; children: React.ReactNode }) {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 63 |     return (
+     | ^^^^^^^^^^^^
+> 64 |       <div className="rounded-xl border border-border-800 bg-muted-900/50 p-5 space-y-4">
+     | ^^^^^^^^^^^^
+> 65 |         <h2 className="text-sm font-semibold text-muted-foreground-200">{title}</h2>
+     | ^^^^^^^^^^^^
+> 66 |         {children}
+     | ^^^^^^^^^^^^
+> 67 |       </div>
+     | ^^^^^^^^^^^^
+> 68 |     )
+     | ^^^^^^^^^^^^
+> 69 |   }
+     | ^^^^ The component is created during render here
+  70 |
+  71 |   const Input = ({ value, onChange, placeholder, type = 'text' }: { value: string | number; onChange: (v: string) => void; placeholder: string; type?: string }) => (
+  72 |     <input                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react-hooks/static-components
+  148:10  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:148:10
+  146 |           {isVi ? 'Chạy toàn bộ quy trình fulfillment với dữ liệu tổng hợp.' : 'Run full fulfillment pipeline with synthetic data.'}
+  147 |         </p>
+> 148 |         <Btn label={isVi ? 'Chạy kiểm tra' : 'Run Synthetic'} action={runSynthetic} />
+      |          ^^^ This component is created during render
+  149 |       </Card>
+  150 |
+  151 |       <Card title={isVi ? 'Phát lại IPN thanh toán' : 'Replay Payment IPN'}>
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:81:15
+  79 |   )
+  80 |
+> 81 |   const Btn = ({ label, action, disabled }: { label: string; action: () => void; disabled?: boolean }) => (
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 82 |     <button
+     | ^^^^^^^^^^^
+> 83 |       onClick={action}
+     | ^^^^^^^^^^^
+> 84 |       disabled={!!loading || disabled}
+     | ^^^^^^^^^^^
+> 85 |       className="px-4 py-2 bg-primary-700 hover:bg-primary-600 disabled:opacity-50 text-white text-sm rounded-lg font-medium transition-colors"
+     | ^^^^^^^^^^^
+> 86 |     >
+     | ^^^^^^^^^^^
+> 87 |       {loading ? '…' : label}
+     | ^^^^^^^^^^^
+> 88 |     </button>
+     | ^^^^^^^^^^^
+> 89 |   )
+     | ^^^^ The component is created during render here
+  90 |
+  91 |   return (
+  92 |     <div className="space-y-4">                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    react-hooks/static-components
+  151:8   warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:151:8
+  149 |       </Card>
+  150 |
+> 151 |       <Card title={isVi ? 'Phát lại IPN thanh toán' : 'Replay Payment IPN'}>
+      |        ^^^^ This component is created during render
+  152 |         <p className="text-xs text-muted-foreground-500">
+  153 |           {isVi ? 'Dùng khi khách đã thanh toán nhưng IPN bị mất.' : 'Use when customer paid but IPN was lost.'}
+  154 |         </p>
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:62:3
+  60 |   }
+  61 |
+> 62 |   function Card({ title, children }: { title: string; children: React.ReactNode }) {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 63 |     return (
+     | ^^^^^^^^^^^^
+> 64 |       <div className="rounded-xl border border-border-800 bg-muted-900/50 p-5 space-y-4">
+     | ^^^^^^^^^^^^
+> 65 |         <h2 className="text-sm font-semibold text-muted-foreground-200">{title}</h2>
+     | ^^^^^^^^^^^^
+> 66 |         {children}
+     | ^^^^^^^^^^^^
+> 67 |       </div>
+     | ^^^^^^^^^^^^
+> 68 |     )
+     | ^^^^^^^^^^^^
+> 69 |   }
+     | ^^^^ The component is created during render here
+  70 |
+  71 |   const Input = ({ value, onChange, placeholder, type = 'text' }: { value: string | number; onChange: (v: string) => void; placeholder: string; type?: string }) => (
+  72 |     <input                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              react-hooks/static-components
+  155:10  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:155:10
+  153 |           {isVi ? 'Dùng khi khách đã thanh toán nhưng IPN bị mất.' : 'Use when customer paid but IPN was lost.'}
+  154 |         </p>
+> 155 |         <Input value={paymentId} onChange={setPaymentId} placeholder={isVi ? 'Payment ID (NOWPayments)' : 'Payment ID (NOWPayments)'} />
+      |          ^^^^^ This component is created during render
+  156 |         <Btn
+  157 |           label={isVi ? 'Phát lại IPN' : 'Replay IPN'}
+  158 |           action={() => callAction({ action: 'replay_ipn', paymentId })}
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:71:17
+  69 |   }
+  70 |
+> 71 |   const Input = ({ value, onChange, placeholder, type = 'text' }: { value: string | number; onChange: (v: string) => void; placeholder: string; type?: string }) => (
+     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 72 |     <input
+     | ^^^^^^^^^^
+> 73 |       type={type}
+     | ^^^^^^^^^^
+> 74 |       value={value}
+     | ^^^^^^^^^^
+> 75 |       onChange={(e) => onChange(e.target.value)}
+     | ^^^^^^^^^^
+> 76 |       placeholder={placeholder}
+     | ^^^^^^^^^^
+> 77 |       className="w-full bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+     | ^^^^^^^^^^
+> 78 |     />
+     | ^^^^^^^^^^
+> 79 |   )
+     | ^^^^ The component is created during render here
+  80 |
+  81 |   const Btn = ({ label, action, disabled }: { label: string; action: () => void; disabled?: boolean }) => (
+  82 |     <button                                                                                                                                         react-hooks/static-components
+  156:10  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:156:10
+  154 |         </p>
+  155 |         <Input value={paymentId} onChange={setPaymentId} placeholder={isVi ? 'Payment ID (NOWPayments)' : 'Payment ID (NOWPayments)'} />
+> 156 |         <Btn
+      |          ^^^ This component is created during render
+  157 |           label={isVi ? 'Phát lại IPN' : 'Replay IPN'}
+  158 |           action={() => callAction({ action: 'replay_ipn', paymentId })}
+  159 |           disabled={!paymentId}
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/actions/admin-actions-console.tsx:81:15
+  79 |   )
+  80 |
+> 81 |   const Btn = ({ label, action, disabled }: { label: string; action: () => void; disabled?: boolean }) => (
+     |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 82 |     <button
+     | ^^^^^^^^^^^
+> 83 |       onClick={action}
+     | ^^^^^^^^^^^
+> 84 |       disabled={!!loading || disabled}
+     | ^^^^^^^^^^^
+> 85 |       className="px-4 py-2 bg-primary-700 hover:bg-primary-600 disabled:opacity-50 text-white text-sm rounded-lg font-medium transition-colors"
+     | ^^^^^^^^^^^
+> 86 |     >
+     | ^^^^^^^^^^^
+> 87 |       {loading ? '…' : label}
+     | ^^^^^^^^^^^
+> 88 |     </button>
+     | ^^^^^^^^^^^
+> 89 |   )
+     | ^^^^ The component is created during render here
+  90 |
+  91 |   return (
+  92 |     <div className="space-y-4">                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react-hooks/static-components
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/affiliate-leaderboard/page.tsx
+  50:26  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/affiliate-leaderboard/page.tsx:50:26
+  48 |     : 'epc';
+  49 |
+> 50 |   const now = Math.floor(Date.now() / 1000);
+     |                          ^^^^^^^^^^ Cannot call impure function
+  51 |   const fromTs = now - 30 * 86400;
+  52 |
+  53 |   let rows: LeaderboardRow[] = [];  react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/api-key-usage/page.tsx
+  48:26  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/api-key-usage/page.tsx:48:26
+  46 |   await requireMasterTier();
+  47 |
+> 48 |   const now = Math.floor(Date.now() / 1000);
+     |                          ^^^^^^^^^^ Cannot call impure function
+  49 |   const fromTs = now - 30 * 86400;
+  50 |
+  51 |   let rows: ApiKeyUsageRow[] = [];  react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/audit-log/page.tsx
+  52:26  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/audit-log/page.tsx:52:26
+  50 |   const { tenantId, action } = await searchParams;
+  51 |
+> 52 |   const now = Math.floor(Date.now() / 1000);
+     |                          ^^^^^^^^^^ Cannot call impure function
+  53 |   const fromTs = now - TOP_WINDOW_SEC;
+  54 |
+  55 |   let rows: AuditLogRow[] = [];  react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/cost/page.tsx
+  41:26  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/cost/page.tsx:41:26
+  39 |   await requireMasterTier();
+  40 |
+> 41 |   const now = Math.floor(Date.now() / 1000);
+     |                          ^^^^^^^^^^ Cannot call impure function
+  42 |   const fromTs = now - 30 * 86400;
+  43 |
+  44 |   let snapshot: CostSnapshot | null = null;  react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/deploy-status/deploy-status-client.tsx
+  65:26  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/deploy-status/deploy-status-client.tsx:65:26
+  63 |   }, [])
+  64 |
+> 65 |   useEffect(() => { void load() }, [load])
+     |                          ^^^^ Avoid calling setState() directly within an effect
+  66 |
+  67 |   async function copyCmd(cmd: string) {
+  68 |     try {  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/funnel/page.tsx
+  32:26  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/funnel/page.tsx:32:26
+  30 |   await requireMasterTier();
+  31 |
+> 32 |   const now = Math.floor(Date.now() / 1000);
+     |                          ^^^^^^^^^^ Cannot call impure function
+  33 |   const [d30, d60, d90] = await Promise.all([
+  34 |     getActivationFunnel(now - 30 * DAY_SEC, now),
+  35 |     getActivationFunnel(now - 60 * DAY_SEC, now),  react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/handover/handover-wizard-step4-result.tsx
+  23:39  warning  'form' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/handover/handover-wizard-steps.tsx
+  13:25  warning  'CreateHandoverInput' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/heygen-webhooks/heygen-webhooks-client.tsx
+  11:20  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/migrations/migrations-client.tsx
+  59:26  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/migrations/migrations-client.tsx:59:26
+  57 |   }, [isVi])
+  58 |
+> 59 |   useEffect(() => { void load() }, [load])
+     |                          ^^^^ Avoid calling setState() directly within an effect
+  60 |
+  61 |   function decodeContent(b64: string): string {
+  62 |     try {  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/page.tsx
+  60:26  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/admin/page.tsx:60:26
+  58 |   await requireMasterTier();
+  59 |
+> 60 |   const now = Math.floor(Date.now() / 1000);
+     |                          ^^^^^^^^^^ Cannot call impure function
+  61 |   const fromTs = now - 30 * 86400;
+  62 |
+  63 |   // Each primitive may throw if its table is missing; isolate so one broken  react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/advisor/components/revenue-advisor-client.tsx
+   24:3   warning  'ArrowDownRight' is defined but never used  @typescript-eslint/no-unused-vars
+   34:32  warning  'TierRevenueRow' is defined but never used  @typescript-eslint/no-unused-vars
+   34:48  warning  'ARRTrendPoint' is defined but never used   @typescript-eslint/no-unused-vars
+  149:48  warning  '_userId' is defined but never used         @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/affiliate/page.tsx
+  56:26  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/affiliate/page.tsx:56:26
+  54 |   }
+  55 |
+> 56 |   const now = Math.floor(Date.now() / 1000);
+     |                          ^^^^^^^^^^ Cannot call impure function
+  57 |   const fromTs = now - 30 * 86400;
+  58 |
+  59 |   // Each fetch wrapped independently so one bad table does not crash the dashboard  react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/agi/agents/components/agent-sessions-client.tsx
+  134:47  warning  '_userId' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/agi/confidence/components/confidence-monitor-client.tsx
+  96:51  warning  '_userId' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/agi/outcomes/components/outcomes-dashboard-client.tsx
+   5:3   warning  'LineChart' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   6:3   warning  'Line' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+  65:51  warning  '_userId' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+  65:66  warning  '_tier' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  73:5   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/agi/outcomes/components/outcomes-dashboard-client.tsx:73:5
+  71 |
+  72 |   useEffect(() => {
+> 73 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  74 |   }, []);
+  75 |
+  76 |   useEffect(() => {  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/agi/outcomes/page.tsx
+   2:8   warning  'dynamic' is defined but never used           @typescript-eslint/no-unused-vars
+  15:10  warning  'OutcomesSkeleton' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/analytics/components/analytics-dashboard-client.tsx
+  96:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/analytics/components/analytics-dashboard-client.tsx:96:5
+  94 |
+  95 |   useEffect(() => {
+> 96 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  97 |   }, []);
+  98 |
+  99 |   const canViewRevenue = isAdmin || userTier === 'ENTERPRISE' || userTier === 'MASTER';  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/analytics/page.tsx
+  2:8   warning  'dynamic' is defined but never used   @typescript-eslint/no-unused-vars
+  8:10  warning  'Skeleton' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/billing/billing-client.tsx
+  47:9  warning  'queryClient' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/components/master-welcome-banner.tsx
+  32:9   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/components/master-welcome-banner.tsx:32:9
+  30 |       const dismissed = localStorage.getItem(STORAGE_KEY);
+  31 |       if (dismissed !== STORAGE_VERSION) {
+> 32 |         setVisible(true);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  33 |       }
+  34 |     } catch {
+  35 |       // localStorage unavailable (SSR guard or privacy mode) — skip banner  react-hooks/set-state-in-effect
+  75:50  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/components/master-welcome-banner.tsx:75:50
+  73 |         <h2 className="text-lg font-bold text-foreground">{t('title')}</h2>
+  74 |         <p className="text-sm text-muted-foreground mt-0.5">{t('subtitle')}</p>
+> 75 |         {trialEndsAt && trialEndsAt > Math.floor(Date.now() / 1000) && (
+     |                                                  ^^^^^^^^^^ Cannot call impure function
+  76 |           <p className="text-xs text-[var(--neon-cyan)] mt-2 font-medium">
+  77 |             {t('expiresAt', {
+  78 |               date: new Intl.DateTimeFormat(locale === 'vi' ? 'vi-VN' : 'en-US', {                                                                                                                                                                    react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/components/onboarding-tour/use-tour.ts
+  31:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/components/onboarding-tour/use-tour.ts:31:7
+  29 |     if (!dismissed || replay) {
+  30 |       triggerRef.current = document.activeElement as HTMLElement;
+> 31 |       setVisible(true);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  32 |     }
+  33 |   }, []);
+  34 |  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/components/trial-banner.tsx
+  21:29  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/components/trial-banner.tsx:21:29
+  19 |   const t = useTranslations("dashboard.trialBanner");
+  20 |   const locale = useLocale();
+> 21 |   const nowSec = Math.floor(Date.now() / 1000);
+     |                             ^^^^^^^^^^ Cannot call impure function
+  22 |
+  23 |   const daysLeft = useMemo(() => {
+  24 |     const diff = trialEndsAt - nowSec;  react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/creative-studio/components/brand-asset-card.tsx
+  35:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/creative-studio/components/brand-assets-tab.tsx
+  226:3  warning  'assetType' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/creative-studio/components/image-gallery.tsx
+   73:5   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/creative-studio/components/image-gallery.tsx:73:5
+  71 |
+  72 |   useEffect(() => {
+> 73 |     fetchHistory();
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  74 |   }, [fetchHistory]);
+  75 |
+  76 |   const historyIds = new Set(historyImages.map((img) => img.id));  react-hooks/set-state-in-effect
+  117:3   warning  'setBrokenImages' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  127:9   warning  'isBroken' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  171:13  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @next/next/no-img-element
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/creative-studio/components/image-generator-tab.tsx
+  34:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/creative-studio/components/image-generator-tab.tsx:34:5
+  32 |     if (polling.status === 'idle') return;
+  33 |
+> 34 |     setSessionImages((prev) =>
+     |     ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  35 |       prev.map((img) =>
+  36 |         img.id === pollingJobId
+  37 |           ? {  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/creative-studio/components/newsletter-writer-tab.tsx
+  21:45  warning  '_tier' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/creative-studio/components/script-preview-panel.tsx
+  21:32  warning  'ScriptScene' is defined but never used  @typescript-eslint/no-unused-vars
+  79:9   warning  't' is assigned a value but never used   @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/creative-studio/components/script-template-selector.tsx
+   12:2  warning  'X' is defined but never used                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   76:3  warning  'tier' is defined but never used                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+   93:9  warning  't' is assigned a value but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+  135:6  warning  React Hook useEffect has missing dependencies: 'onToneChange' and 'tone'. Either include them or remove the dependency array. If 'onToneChange' changes too often, find the parent component that defines it and wrap that definition in useCallback                                         react-hooks/exhaustive-deps
+  151:5  warning  React Hook useCallback has missing dependencies: 'onDurationChange', 'onTemplateChange', and 'onToneChange'. Either include them or remove the dependency array. If 'onTemplateChange' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/creative-studio/components/video-script-template-selector.tsx
+   3:33  warning  'useRef' is defined but never used       @typescript-eslint/no-unused-vars
+   3:41  warning  'useEffect' is defined but never used    @typescript-eslint/no-unused-vars
+   5:26  warning  'Sparkles' is defined but never used     @typescript-eslint/no-unused-vars
+   5:72  warning  'ChevronUp' is defined but never used    @typescript-eslint/no-unused-vars
+   5:83  warning  'ChevronDown' is defined but never used  @typescript-eslint/no-unused-vars
+   5:96  warning  'Wand2' is defined but never used        @typescript-eslint/no-unused-vars
+  56:9   warning  't' is assigned a value but never used   @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/creative-studio/hooks/use-image-generation.ts
+   77:11  warning  Error: Cannot access variable before it is declared
+
+`scheduleNext` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/creative-studio/hooks/use-image-generation.ts:77:11
+  75 |         if (res.status === 429) {
+  76 |           pollIntervalRef.current = Math.min(pollIntervalRef.current * 2, BACKOFF_MAX_MS);
+> 77 |           scheduleNext(id, pollIntervalRef.current);
+     |           ^^^^^^^^^^^^ `scheduleNext` accessed before it is declared
+  78 |           return;
+  79 |         }
+  80 |         // Non-fatal server hiccup (>=500) — keep polling
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/creative-studio/hooks/use-image-generation.ts:127:3
+  125 |   }, [stopPolling]);
+  126 |
+> 127 |   function scheduleNext(id: string, delay?: number) {
+      |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 128 |     const effectiveDelay = delay ?? pollIntervalRef.current;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 129 |     timerRef.current = setTimeout(() => {
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 130 |       if (activeJobIdRef.current === id) {
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 131 |         pollOnce(id);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 132 |       }
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 133 |     }, effectiveDelay);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 134 |   }
+      | ^^^^ `scheduleNext` is declared here
+  135 |
+  136 |   useEffect(() => {
+  137 |     if (!jobId) {  react-hooks/immutability
+  138:7   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/creative-studio/hooks/use-image-generation.ts:138:7
+  136 |   useEffect(() => {
+  137 |     if (!jobId) {
+> 138 |       stopPolling();
+      |       ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  139 |       setState({
+  140 |         status: 'idle',
+  141 |         resultUrl: null,                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/help/sops/page.tsx
+  18:3   warning  'Webhook' is defined but never used  @typescript-eslint/no-unused-vars
+  18:12  warning  'Clock' is defined but never used    @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/integrations/affiliate-networks/affiliate-networks-client.tsx
+  161:26  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/integrations/affiliate-networks/affiliate-networks-client.tsx:161:26
+  159 |   }, [notify]);
+  160 |
+> 161 |   useEffect(() => { void fetchNetworks(); }, [fetchNetworks]);
+      |                          ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  162 |
+  163 |   async function handleSave(network: string) {
+  164 |     setSaving(true);  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/integrations/channels/channels-client.tsx
+  63:42  warning  'userId' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  84:10  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/integrations/channels/channels-client.tsx:84:10
+  82 |
+  83 |   useEffect(() => {
+> 84 |     void fetchChannels();
+     |          ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  85 |     // Re-fetch after OAuth redirect returns (hash or query param signal)
+  86 |     const onFocus = () => { void fetchChannels(); };
+  87 |     window.addEventListener('focus', onFocus);  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/leaderboard/page.tsx
+  88:26  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/leaderboard/page.tsx:88:26
+  86 |   const period = ['7d', '30d', 'all'].includes(sp.period ?? '') ? (sp.period as string) : '30d';
+  87 |
+> 88 |   const now = Math.floor(Date.now() / 1000);
+     |                          ^^^^^^^^^^ Cannot call impure function
+  89 |   const fromTs = PERIOD_SECONDS[period] ? now - PERIOD_SECONDS[period] : 0;
+  90 |   const toTs = now;
+  91 |  react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/missions/missions-client.tsx
+  25:32  warning  '_templateId' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/onboarding/page.tsx
+  60:3  warning  '_props' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/schedule/page.tsx
+   73:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/schedule/page.tsx:73:5
+  71 |
+  72 |   useEffect(() => {
+> 73 |     fetchSchedules();
+     |     ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  74 |     pollingRef.current = setInterval(fetchSchedules, 30000);
+  75 |     return () => {
+  76 |       if (pollingRef.current) clearInterval(pollingRef.current);  react-hooks/set-state-in-effect
+  155:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/schedule/page.tsx:155:7
+  153 |       const tomorrow = new Date();
+  154 |       tomorrow.setDate(tomorrow.getDate() + 1);
+> 155 |       setNextRun(tomorrow.toISOString().slice(0, 10));
+      |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  156 |     }
+  157 |   }, []);
+  158 |                             react-hooks/set-state-in-effect
+  157:6  warning  React Hook useEffect has a missing dependency: 'nextRun'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-hooks/exhaustive-deps
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/settings/branding/branding-form-client.tsx
+  26:9  warning  'isVi' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/settings/branding/email-branding-form.tsx
+  74:8  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/settings/branding/email-branding-form.tsx:74:8
+  72 |   return (
+  73 |     <form onSubmit={handleSave} className="space-y-4">
+> 74 |       <Field
+     |        ^^^^^ This component is created during render
+  75 |         label={isVi ? 'Tên người gửi' : 'Sender Name'}
+  76 |         value={senderName}
+  77 |         onChange={setSenderName}
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/settings/branding/email-branding-form.tsx:55:3
+  53 |   }
+  54 |
+> 55 |   function Field({ label, value, onChange, placeholder, type = 'text' }: {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 56 |     label: string; value: string; onChange: (v: string) => void; placeholder: string; type?: string
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 57 |   }) {
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 69 |     )
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 70 |   }
+     | ^^^^ The component is created during render here
+  71 |
+  72 |   return (
+  73 |     <form onSubmit={handleSave} className="space-y-4">                react-hooks/static-components
+  80:8  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/settings/branding/email-branding-form.tsx:80:8
+  78 |         placeholder={isVi ? 'VD: Công ty ABC' : 'e.g. Acme Corp'}
+  79 |       />
+> 80 |       <Field
+     |        ^^^^^ This component is created during render
+  81 |         label={isVi ? 'Email người gửi' : 'Sender Email'}
+  82 |         value={senderEmail}
+  83 |         onChange={setSenderEmail}
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/settings/branding/email-branding-form.tsx:55:3
+  53 |   }
+  54 |
+> 55 |   function Field({ label, value, onChange, placeholder, type = 'text' }: {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 56 |     label: string; value: string; onChange: (v: string) => void; placeholder: string; type?: string
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 57 |   }) {
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 69 |     )
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 70 |   }
+     | ^^^^ The component is created during render here
+  71 |
+  72 |   return (
+  73 |     <form onSubmit={handleSave} className="space-y-4">  react-hooks/static-components
+  87:8  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/settings/branding/email-branding-form.tsx:87:8
+  85 |         type="email"
+  86 |       />
+> 87 |       <Field
+     |        ^^^^^ This component is created during render
+  88 |         label={isVi ? 'URL logo (https)' : 'Logo URL (https)'}
+  89 |         value={logoUrl}
+  90 |         onChange={setLogoUrl}
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/settings/branding/email-branding-form.tsx:55:3
+  53 |   }
+  54 |
+> 55 |   function Field({ label, value, onChange, placeholder, type = 'text' }: {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 56 |     label: string; value: string; onChange: (v: string) => void; placeholder: string; type?: string
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 57 |   }) {
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 69 |     )
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 70 |   }
+     | ^^^^ The component is created during render here
+  71 |
+  72 |   return (
+  73 |     <form onSubmit={handleSave} className="space-y-4">                                                  react-hooks/static-components
+  94:8  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/settings/branding/email-branding-form.tsx:94:8
+  92 |         type="url"
+  93 |       />
+> 94 |       <Field
+     |        ^^^^^ This component is created during render
+  95 |         label={isVi ? 'Email hỗ trợ' : 'Support Email'}
+  96 |         value={supportEmail}
+  97 |         onChange={setSupportEmail}
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/settings/branding/email-branding-form.tsx:55:3
+  53 |   }
+  54 |
+> 55 |   function Field({ label, value, onChange, placeholder, type = 'text' }: {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 56 |     label: string; value: string; onChange: (v: string) => void; placeholder: string; type?: string
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 57 |   }) {
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 69 |     )
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 70 |   }
+     | ^^^^ The component is created during render here
+  71 |
+  72 |   return (
+  73 |     <form onSubmit={handleSave} className="space-y-4">                                                 react-hooks/static-components
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/settings/crypto-compliance-tab.tsx
+  19:44  warning  'isChannelBannedForCrypto' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/sops/page.tsx
+  81:34  warning  'locale' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/videos/analytics/components/analytics-dashboard.tsx
+  52:5  warning  Error: Cannot access variable before it is declared
+
+`loadDashboard` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/videos/analytics/components/analytics-dashboard.tsx:52:5
+  50 |
+  51 |   useEffect(() => {
+> 52 |     loadDashboard();
+     |     ^^^^^^^^^^^^^ `loadDashboard` accessed before it is declared
+  53 |   }, [range]);
+  54 |
+  55 |   async function loadDashboard() {
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/videos/analytics/components/analytics-dashboard.tsx:55:3
+  53 |   }, [range]);
+  54 |
+> 55 |   async function loadDashboard() {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 56 |     setLoading(true);
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 57 |     const dateRange = DATE_RANGES[range]();
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 68 |     setLoading(false);
+     | ^^^^^^^^^^^^^^^^^^^^^
+> 69 |   }
+     | ^^^^ `loadDashboard` is declared here
+  70 |
+  71 |   async function handleSync() {
+  72 |     setSyncing(true);  react-hooks/immutability
+  53:6  warning  React Hook useEffect has a missing dependency: 'loadDashboard'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react-hooks/exhaustive-deps
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/videos/batch/components/batch-progress-dashboard.tsx
+  40:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/dashboard/videos/batch/components/batch-progress-dashboard.tsx:40:5
+  38 |
+  39 |   useEffect(() => {
+> 40 |     refresh();
+     |     ^^^^^^^ Avoid calling setState() directly within an effect
+  41 |     const isActive = (s: string) => ['pending', 'processing'].includes(s);
+  42 |     const interval = setInterval(() => {
+  43 |       if (batch && isActive(batch.status)) refresh();  react-hooks/set-state-in-effect
+  46:6  warning  React Hook useEffect has a missing dependency: 'batch'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-hooks/exhaustive-deps
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/guide/screens/page.tsx
+  2:61  warning  'Settings' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/layout.tsx
+  130:9  warning  Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged. See: https://nextjs.org/docs/messages/no-page-custom-font  @next/next/no-page-custom-font
+  134:9  warning  Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged. See: https://nextjs.org/docs/messages/no-page-custom-font  @next/next/no-page-custom-font
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/payment-success/page.tsx
+  4:10  warning  'CheckCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/redeem/redeem-page-client.tsx
+  190:11  warning  '_locale' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/settings/security/mfa/page.tsx
+  148:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/[locale]/status/page.tsx
+  12:15  warning  'DayRollup' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/actions/campaigns.ts
+  55:7  warning  'd1db' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/actions/publish-video-action.ts
+    8:3   warning  'getVideoPublish' is defined but never used  @typescript-eslint/no-unused-vars
+   20:10  warning  'inngest' is defined but never used          @typescript-eslint/no-unused-vars
+  104:15  warning  'logger' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/account/export/route.ts
+  36:27  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/admin/audit/receipt/verify/route.ts
+  14:3  warning  'verifyReceipt' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/admin/heygen/list-webhooks/route.ts
+  11:10  warning  'ByokKeyRotatedError' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/admin/licenses/create/route.ts
+  104:11  warning  'license' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/admin/licenses/route.ts
+  10:15  warning  'LicenseTier' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/admin/usage/customer-linkage/route.ts
+  16:15  warning  'RaasLicenseUpdate' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/admin/usage/reconciliation/reconciliation-analysis.ts
+  144:3  warning  '_licenseInfo' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/affiliate/payout-method/route.ts
+  94:27  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/alerts/preferences/route.ts
+  27:27  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/alerts/rules/route.ts
+  32:27  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/analytics/licenses/route.ts
+  22:15  warning  'LicenseStatus' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/analytics/realtime/route.ts
+  25:27  warning  '_request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/analytics/tier-adoption/route.ts
+  37:11  warning  'LicenseRow' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/analytics/usage/route.ts
+  25:29  warning  'AnalyticsGranularity' is defined but never used  @typescript-eslint/no-unused-vars
+  25:51  warning  'AiService' is defined but never used             @typescript-eslint/no-unused-vars
+  81:11  warning  'now' is assigned a value but never used          @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/auth/login/route.ts
+  12:28  warning  '_request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/auth/signup/route.ts
+  12:28  warning  '_request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/billing/usage-summary/route.ts
+  100:27  warning  'req' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/checkout/route.ts
+  16:10  warning  'track' is defined but never used            @typescript-eslint/no-unused-vars
+  17:10  warning  'D1Events' is defined but never used         @typescript-eslint/no-unused-vars
+  74:9   warning  'appUrl' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/creative-studio/scripts/templates/route.ts
+  142:11  warning  'userRank' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  264:3   warning  'isVi' is defined but never used               @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/cron/status-rollup/route.ts
+  40:29  warning  'req' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/cron/subscription-reminders/route.ts
+  50:16  warning  'getExpiringSubs' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/cron/workflow-stepper/workflow-stepper-runtime-utils.ts
+  1:10  warning  'NextRequest' is defined but never used  @typescript-eslint/no-unused-vars
+  2:10  warning  'logger' is defined but never used       @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/graphql/analytics/route.ts
+   11:10  warning  'typeDefs' is defined but never used       @typescript-eslint/no-unused-vars
+   32:3   warning  'operationName' is defined but never used  @typescript-eslint/no-unused-vars
+   61:3   warning  'variables' is defined but never used      @typescript-eslint/no-unused-vars
+  169:27  warning  'request' is defined but never used        @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/health/heygen/route.ts
+  75:22  warning  '_req' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/payos/ipn/route.ts
+  52:30  warning  'description' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/payos/route.ts
+  33:11  warning  'appUrl' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/raas/templates/route.ts
+  18:27  warning  '_request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/schedule/route.ts
+  67:27  warning  'req' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/setup-wizard/heygen/auto-register/route.ts
+  12:10  warning  'ByokKeyRotatedError' is defined but never used  @typescript-eslint/no-unused-vars
+  18:28  warning  'request' is defined but never used              @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/setup-wizard/list-credentials/route.ts
+  20:27  warning  '_request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/user/wallet/route.ts
+  45:27  warning  '_req' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/v1/factory/url-to-revenue/[jobId]/route.ts
+  21:31  warning  'r' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/v1/settings/[namespace]/route.ts
+  13:10  warning  'z' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/v1/settings/storage/route.ts
+  12:24  warning  'set' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/v1/sops/route.ts
+  27:27  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/v1/tracking/links/[id]/route.ts
+  25:31  warning  'r' is defined but never used  @typescript-eslint/no-unused-vars
+  55:31  warning  'r' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/v1/tracking/links/route.ts
+  64:53  warning  '_request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/v1/usage/batch/route.ts
+  118:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/v1/usage/route.ts
+  23:10  warning  'createServerClient' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/components/agi-capabilities-section.tsx
+  4:29  warning  'Shield' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/components/layout/navbar.tsx
+  36:16  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/components/sections/hero.tsx
+  31:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/components/sections/hero.tsx:31:7
+  29 |     }
+  30 |     if (isDeleting && displayed === "") {
+> 31 |       setIsDeleting(false);
+     |       ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  32 |       setIndex((i) => (i + 1) % rotatingCommands.length);
+  33 |       return;
+  34 |     }  react-hooks/set-state-in-effect
+  44:6  warning  React Hook useEffect has a missing dependency: 'isDeleting'. Either include it or remove the dependency array. You can also replace multiple useState variables with useReducer if 'setDisplayed' needs the current value of 'isDeleting'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        react-hooks/exhaustive-deps
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/components/sections/production-cost-calculator.tsx
+   9:34  warning  'API_COSTS' is defined but never used    @typescript-eslint/no-unused-vars
+   9:45  warning  'INFRA_COSTS' is defined but never used  @typescript-eslint/no-unused-vars
+  11:32  warning  'MetricCard' is defined but never used   @typescript-eslint/no-unused-vars
+  11:44  warning  'fmt' is defined but never used          @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/ref/[code]/page.tsx
+  87:69  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/ref/[code]/page.tsx:87:69
+  85 |          VALUES (?1, 'default', ?2, ?3, NULL, NULL, NULL, NULL, ?4)`,
+  86 |       )
+> 87 |       .bind(crypto.randomUUID(), link.id, link.offer_id, Math.floor(Date.now() / 1000))
+     |                                                                     ^^^^^^^^^^ Cannot call impure function
+  88 |       .run()
+  89 |   } catch (err) {
+  90 |     logger.warn('[ref-page] click_events insert failed', {  react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/sop-marketplace/marketplace-client.tsx
+  115:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/sop/detail/analytics-tab.tsx
+  143:75  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/sop/detail/analytics-tab.tsx:143:75
+  141 |           <div className="text-sm text-muted-foreground">{t('runsLast24h')}</div>
+  142 |           <div className="mt-1 text-2xl font-semibold text-foreground">
+> 143 |             {runs.filter((r) => r.created_at && r.created_at > Math.floor(Date.now() / 1000) - 86400).length}
+      |                                                                           ^^^^^^^^^^ Cannot call impure function
+  144 |           </div>
+  145 |         </div>
+  146 |       </div>  react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/affiliates/scout/client-mock.ts
+  52:15  warning  '_env' is defined but never used       @typescript-eslint/no-unused-vars
+  52:31  warning  '_tenantId' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/affiliates/scout/scoring.ts
+  159:10  warning  'scoreCryptoVolume' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/affiliates/scout/writer.ts
+  28:38  warning  'isCategoryAllowed' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/agent-chat/llm-router.ts
+  10:10  warning  'getUserCredential' is defined but never used  @typescript-eslint/no-unused-vars
+  20:39  warning  'userId' is defined but never used             @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/ai/elevenlabs-api-client.ts
+  8:10  warning  'logger' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/ai/llm-router.ts
+  82:3  warning  '_hasLocalMode' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/alerts/realtime-alert-triggers.ts
+  119:30  warning  'error' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/analytics/queries/revenue-unified-query.ts
+  55:10  warning  'tierMrr' is defined but never used         @typescript-eslint/no-unused-vars
+  60:11  warning  'LicenseDateRow' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/analytics/roi-calculator.ts
+  8:10  warning  'logger' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/analytics/youtube-analytics-fetcher.ts
+  30:11  warning  'YtApiRow' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/admin/licenses/audit-log-table.tsx
+  83:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/admin/licenses/audit-log-table.tsx:83:5
+  81 |
+  82 |   useEffect(() => {
+> 83 |     fetchLogs();
+     |     ^^^^^^^^^ Avoid calling setState() directly within an effect
+  84 |   }, [page, actionFilter, licenseId]);
+  85 |
+  86 |   const getActionColor = (action: string): string => {  react-hooks/set-state-in-effect
+  84:6  warning  React Hook useEffect has a missing dependency: 'fetchLogs'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react-hooks/exhaustive-deps
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/admin/licenses/license-extend-dialog.tsx
+  122:29  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/admin/licenses/license-extend-dialog.tsx:122:29
+  120 |                 <span className="text-sm text-muted-foreground">New Expiration:</span>
+  121 |                 <span className="text-sm text-foreground">
+> 122 |                   {new Date(Date.now() + (selectedOption ? selectedOption.days : 30) * 24 * 60 * 60 * 1000).toLocaleDateString()}
+      |                             ^^^^^^^^^^ Cannot call impure function
+  123 |                 </span>
+  124 |               </div>
+  125 |             </div>  react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/admin/licenses/use-license-list-actions.ts
+  79:21  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/admin/licenses/use-license-list-actions.ts:79:21
+  77 |   };
+  78 |
+> 79 |   useEffect(() => { fetchLicenses(); }, [page, tierFilter, statusFilter]);
+     |                     ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  80 |
+  81 |   // Debounced search
+  82 |   useEffect(() => {  react-hooks/set-state-in-effect
+  79:41  warning  React Hook useEffect has a missing dependency: 'fetchLicenses'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react-hooks/exhaustive-deps
+  85:6   warning  React Hook useEffect has a missing dependency: 'fetchLicenses'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react-hooks/exhaustive-deps
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/analytics/ErrorRateChart.tsx
+  141:30  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/analytics/ErrorRateChart.tsx:141:30
+  139 |             domain={[0, 100]}
+  140 |           />
+> 141 |           <Tooltip content={<CustomTooltip />} />
+      |                              ^^^^^^^^^^^^^ This component is created during render
+  142 |           <Legend />
+  143 |           <Bar
+  144 |             yAxisId="left"
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/analytics/ErrorRateChart.tsx:73:25
+   71 |   };
+   72 |
+>  73 |   const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+      |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  74 |     if (active && payload && payload.length) {
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  75 |       const errors = payload[0]?.payload?.errors || 0;
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 103 |     return null;
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 104 |   };
+      | ^^^^ The component is created during render here
+  105 |
+  106 |   if (!data || data.length === 0) {
+  107 |     return (  react-hooks/static-components
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/analytics/UsageChart.tsx
+   13:3   warning  'LineChart' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   14:3   warning  'Line' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   40:3   warning  'showTokens' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+  140:30  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/analytics/UsageChart.tsx:140:30
+  138 |             className="text-muted-foreground"
+  139 |           />
+> 140 |           <Tooltip content={<CustomTooltip />} />
+      |                              ^^^^^^^^^^^^^ This component is created during render
+  141 |           <Legend />
+  142 |           <Area
+  143 |             yAxisId="left"
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/analytics/UsageChart.tsx:77:25
+  75 |   };
+  76 |
+> 77 |   const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+     |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 78 |     if (active && payload && payload.length) {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 79 |       return (
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 92 |     return null;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 93 |   };
+     | ^^^^ The component is created during render here
+  94 |
+  95 |   if (!data || data.length === 0) {
+  96 |     return (  react-hooks/static-components
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/analytics/export-button.tsx
+  35:3  warning  'dateRange' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/analytics/license-metrics-cell-renderers.tsx
+  40:26  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/analytics/license-metrics-cell-renderers.tsx:40:26
+  38 |   overageCount?: number;
+  39 | }) {
+> 40 |   const now = Math.floor(Date.now() / 1000);
+     |                          ^^^^^^^^^^ Cannot call impure function
+  41 |   const isExpired = expiresAt !== null && expiresAt < now;
+  42 |
+  43 |   if (isExpired) {  react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/analytics/ltv-calculator.tsx
+  66:21  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/analytics/ltv-calculator.tsx:66:21
+  64 |   }, []);
+  65 |
+> 66 |   useEffect(() => { load(); }, [load]);
+     |                     ^^^^ Avoid calling setState() directly within an effect
+  67 |
+  68 |   function handleCacChange(tier: Tier, value: string) {
+  69 |     setCac(prev => ({ ...prev, [tier]: value }));  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/analytics/tier-adoption-chart.tsx
+  84:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/analytics/tier-adoption-chart.tsx:84:5
+  82 |   useEffect(() => {
+  83 |     let cancelled = false;
+> 84 |     setLoading(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  85 |     setError(null);
+  86 |
+  87 |     fetch(`/api/analytics/tier-adoption?from=${from}&to=${to}`)  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/analytics/tier-filter.tsx
+  4:10  warning  'Check' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/analytics/usage-chart.tsx
+  145:9  warning  'off' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/community-cta-banner.tsx
+  26:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/community-cta-banner.tsx:26:7
+  24 |     try {
+  25 |       const dismissed = localStorage.getItem(DISMISSED_KEY);
+> 26 |       setVisible(dismissed !== "1");
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  27 |     } catch {
+  28 |       // localStorage unavailable (SSR guard / private browsing) — show banner
+  29 |       setVisible(true);  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/admin-billing-client.tsx
+   21:3   warning  'ArrowUpDown' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   24:3   warning  'ExternalLink' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  112:26  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/admin-billing-client.tsx:112:26
+  110 |
+  111 |   useEffect(() => {
+> 112 |     if (!initialSummary) fetchSummary();
+      |                          ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  113 |   }, [initialSummary, fetchSummary]);
+  114 |
+  115 |   async function searchDunning() {  react-hooks/set-state-in-effect
+  182:12  warning  'pct' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/affiliate-cta-banner.tsx
+  26:7  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/affiliate-cta-banner.tsx:26:7
+  24 |     try {
+  25 |       const dismissed = localStorage.getItem(DISMISSED_KEY);
+> 26 |       setVisible(dismissed !== "1");
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  27 |     } catch {
+  28 |       // localStorage unavailable (SSR guard / private browsing) — show banner
+  29 |       setVisible(true);  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/cross-sell-banner.tsx
+  27:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/cross-sell-banner.tsx:27:5
+  25 |     const key = variant === "raas" ? DISMISS_KEY_RAAS : DISMISS_KEY_VIDEO;
+  26 |     const isDismissed = localStorage.getItem(key) === "1";
+> 27 |     setDismissed(isDismissed);
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  28 |   }, [variant]);
+  29 |
+  30 |   function handleDismiss() {  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/dashboard-sidebar-nav.tsx
+  14:3   warning  'Code' is defined but never used        @typescript-eslint/no-unused-vars
+  19:3   warning  'GitBranch' is defined but never used   @typescript-eslint/no-unused-vars
+  26:3   warning  'Brain' is defined but never used       @typescript-eslint/no-unused-vars
+  27:3   warning  'TrendingUp' is defined but never used  @typescript-eslint/no-unused-vars
+  28:3   warning  'Shield' is defined but never used      @typescript-eslint/no-unused-vars
+  29:3   warning  'Bot' is defined but never used         @typescript-eslint/no-unused-vars
+  31:3   warning  'Share2' is defined but never used      @typescript-eslint/no-unused-vars
+  47:48  warning  'isVi' is defined but never used        @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/handover-client.tsx
+  14:3  warning  'ExternalLink' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  53:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/handover-client.tsx:53:5
+  51 |
+  52 |   useEffect(() => {
+> 53 |     fetchHandover();
+     |     ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  54 |   }, []);
+  55 |
+  56 |   function fmtDate(ts: string | null): string {  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/handover-onboarding-banner.tsx
+  12:27  warning  'Loader2' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+  41:7   warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/handover-onboarding-banner.tsx:41:7
+  39 |     const dismissedKey = `${DISMISS_KEY}_${userId}`;
+  40 |     if (typeof window !== 'undefined' && localStorage.getItem(dismissedKey)) {
+> 41 |       setLoading(false);
+     |       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  42 |       setDismissed(true);
+  43 |       return;
+  44 |     }  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/licenses-client.tsx
+   54:21  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/licenses-client.tsx:54:21
+  52 |   }, [search, tierFilter]);
+  53 |
+> 54 |   useEffect(() => { fetchLicenses(); }, [fetchLicenses]);
+     |                     ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  55 |
+  56 |   async function handleAction(licenseId: string, action: 'extend' | 'reactivate' | 'regenerate') {
+  57 |     setActionId(licenseId);  react-hooks/set-state-in-effect
+  220:10  warning  'getTierColor' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+  229:10  warning  'getStatusColor' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/payouts-client.tsx
+   12:3   warning  'Clock' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   14:3   warning  'Search' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   17:3   warning  'ChevronLeft' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+   46:7   warning  'PAYMENT_METHODS' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+   62:10  warning  'markingId' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   62:21  warning  'setMarkingId' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   97:23  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/payouts-client.tsx:97:23
+   95 |
+   96 |   useEffect(() => {
+>  97 |     if (!initialData) fetchQueue();
+      |                       ^^^^^^^^^^ Avoid calling setState() directly within an effect
+   98 |   }, [initialData, fetchQueue]);
+   99 |
+  100 |   function openMarkPaidModal(item: QueueItem) {  react-hooks/set-state-in-effect
+  148:9   warning  'PAYOUT_METHOD_LABELS' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/plan-upgrade-widget.tsx
+  67:5  warning  Error: This value cannot be modified
+
+Modifying a variable defined outside a component or hook is not allowed. Consider using an effect.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/plan-upgrade-widget.tsx:67:5
+  65 |
+  66 | 			if (res.status === 401 && data.redirectTo) {
+> 67 | 				window.location.href = data.redirectTo;
+     | 				^^^^^^^^^^^^^^^ value cannot be modified
+  68 | 				return;
+  69 | 			}
+  70 | 			if (data.status === 'free_order_completed') {                                                                  react-hooks/immutability
+  71:5  warning  Error: This value cannot be modified
+
+Modifying a variable defined outside a component or hook is not allowed. Consider using an effect.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/plan-upgrade-widget.tsx:71:5
+  69 | 			}
+  70 | 			if (data.status === 'free_order_completed') {
+> 71 | 				window.location.href = `/${locale}/dashboard?handover=${data.handoverId}`;
+     | 				^^^^^^^^^^^^^^^ value cannot be modified
+  72 | 			} else if (data.url) {
+  73 | 				window.location.href = data.url;
+  74 | 			} else {                react-hooks/immutability
+  73:5  warning  Error: This value cannot be modified
+
+Modifying a variable defined outside a component or hook is not allowed. Consider using an effect.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/dashboard/plan-upgrade-widget.tsx:73:5
+  71 | 				window.location.href = `/${locale}/dashboard?handover=${data.handoverId}`;
+  72 | 			} else if (data.url) {
+> 73 | 				window.location.href = data.url;
+     | 				^^^^^^^^^^^^^^^ value cannot be modified
+  74 | 			} else {
+  75 | 				alert(data.error || 'Checkout failed. Please try again.');
+  76 | 			}  react-hooks/immutability
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/license/license-alert-item.tsx
+  77:14  warning  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/license/license-alert-item.tsx:77:14
+  75 |         <div className="flex items-start gap-3 flex-1">
+  76 |           <div className={`p-2 rounded-full ${getSeverityColor(alert.severity)}`}>
+> 77 |             <Icon className="h-4 w-4" />
+     |              ^^^^ This component is created during render
+  78 |           </div>
+  79 |           <div className="flex-1 space-y-1">
+  80 |             <div className="flex items-center gap-2">
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/license/license-alert-item.tsx:66:16
+  64 |   alert, onMarkRead, onDismiss, markReadPending, dismissPending,
+  65 | }: LicenseAlertItemProps) {
+> 66 |   const Icon = getAlertIcon(alert.type);
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^ The component is created during render here
+  67 |
+  68 |   return (
+  69 |     <div  react-hooks/static-components
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/license/license-status-info-grid.tsx
+  18:50  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/license/license-status-info-grid.tsx:18:50
+  16 | export function LicenseStatusInfoGrid({ nonce, expiresAt, rateLimit }: LicenseStatusInfoGridProps) {
+  17 |   const daysUntilExpiry = expiresAt
+> 18 |     ? Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+     |                                                  ^^^^^^^^^^ Cannot call impure function
+  19 |     : null;
+  20 |
+  21 |   return (  react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/missions/agent-team-panel.tsx
+  40:10  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/missions/agent-team-panel.tsx:40:10
+  38 |
+  39 |   useEffect(() => {
+> 40 |     void fetchAgents();
+     |          ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  41 |     const interval = setInterval(() => { void fetchAgents(); }, 30_000); // throttled: was 5s, now 30s minimum
+  42 |     return () => clearInterval(interval);
+  43 |   }, [fetchAgents]);  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/missions/mission-control-header.tsx
+  49:6  warning  React Hook useCallback has a missing dependency: 'csrfHeaders'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/pricing/one-time-bundle-card.tsx
+  168:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/pricing/one-time-bundle-card.tsx:168:5
+  166 |   // P0.5: On mount, check for unexpired pending purchase in sessionStorage
+  167 |   useEffect(() => {
+> 168 |     setPendingPurchase(readPendingPurchase())
+      |     ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  169 |   }, []);
+  170 |
+  171 |   const handleBuy = async () => {  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/raas/api-key-list.tsx
+  111:21  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/raas/api-key-list.tsx:111:21
+  109 |   }
+  110 |
+> 111 |   useEffect(() => { load(); }, [refreshTrigger]);
+      |                     ^^^^ Avoid calling setState() directly within an effect
+  112 |
+  113 |   async function handleRevoke(id: string, keyName: string) {
+  114 |     const msg = `Revoke API key "${keyName}"? This will immediately invalidate the key and cannot be undone.`;  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/sop/installation-list-table.tsx
+  14:10  warning  'Play' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/sop/sop-config-form.tsx
+  44:3  warning  'fieldKey' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/sop/sop-run-timeline.tsx
+  15:24  warning  'CheckCircle' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+  15:46  warning  'Clock' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  42:27  warning  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/components/sop/sop-run-timeline.tsx:42:27
+  40 |   const t = useTranslations('sop.run');
+  41 |   const [run, setRun] = useState(initialRun);
+> 42 |   const startRef = useRef(Date.now());
+     |                           ^^^^^^^^^^ Cannot call impure function
+  43 |
+  44 |   const isTerminal = TERMINAL_STATUSES.has(run.status);
+  45 |  react-hooks/purity
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/email/onboarding-emails.ts
+  38:3  warning  '_videoUrl' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/email/templates/onboarding-nudge.ts
+  6:61  warning  'BASE_URL' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/hooks/use-agent-stream.ts
+  83:37  warning  Error: Cannot access variable before it is declared
+
+`connect` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/hooks/use-agent-stream.ts:83:37
+  81 |       if (retriesRef.current >= MAX_RETRIES) return;
+  82 |       retriesRef.current += 1;
+> 83 |       timerRef.current = setTimeout(connect, RECONNECT_MS);
+     |                                     ^^^^^^^ `connect` accessed before it is declared
+  84 |     };
+  85 |   }, []);
+  86 |
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/hooks/use-agent-stream.ts:40:3
+  38 |   const mountedRef = useRef(true);
+  39 |
+> 40 |   const connect = useCallback(() => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 41 |     if (!mountedRef.current) return;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 42 |
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 84 |     };
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 85 |   }, []);
+     | ^^^^^^^^^^ `connect` is declared here
+  86 |
+  87 |   useEffect(() => {
+  88 |     mountedRef.current = true;  react-hooks/immutability
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/inngest/functions/dlq-reaper.ts
+  21:7  warning  'MAX_REENQUEUE_ATTEMPTS' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/inngest/functions/generate-campaign-refund-notify.ts
+  71:97  warning  'rawError' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/inngest/functions/generate-campaign.ts
+   9:32  warning  'DistributionResult' is defined but never used  @typescript-eslint/no-unused-vars
+  50:11  warning  'VideoAssets' is defined but never used         @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/inngest/functions/video-publish.ts
+  30:11  warning  'AutoPublishConfig' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/inngest/functions/video-scripting.ts
+  15:10  warning  'logger' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/middleware/rate-limit-wrapper.ts
+  173:9  warning  'clientKey' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/middleware/tenant-isolation-resource-resolver.ts
+  8:3  warning  '_request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/missions/dispatcher.ts
+  52:16  warning  'withRetry' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/openclaw/llm-router.ts
+  12:10  warning  'MODEL_COSTS' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/openclaw/spawn-agent-fleet-executor.ts
+  19:3  warning  '_tenantId' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/publishing/bluesky.ts
+  117:20  warning  '_externalPostId' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/publishing/instagram-adapter.ts
+  5:7  warning  'MAX_DURATION_SEC' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/publishing/tiktok-publisher.ts
+  16:10  warning  'withAdPrefix' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/quota/quota-api-helpers.ts
+  70:3  warning  'tier' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/quota/quota-checker-db.ts
+  15:11  warning  'CreditsUsedRow' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/quota/quota-checker.ts
+  13:26  warning  'updateCachedUsage' is defined but never used     @typescript-eslint/no-unused-vars
+  13:45  warning  'invalidateQuotaCache' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/raas-key-generator.ts
+  23:10  warning  'Tier' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/raas-service.ts
+  21:3  warning  'generateNonce' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/raas/tier-guard.ts
+  2:10  warning  'getTierConfig' is defined but never used      @typescript-eslint/no-unused-vars
+  2:25  warning  'UNIFIED_TIERS' is defined but never used      @typescript-eslint/no-unused-vars
+  2:45  warning  'UnifiedTierLimits' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/webhooks/heygen-webhook-secret-resolver.ts
+  18:10  warning  'ByokKeyRotatedError' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/worker/lib/auth-middleware.ts
+  53:10  warning  'base64UrlEncode' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/worker/lib/enrichment-logger.ts
+  15:3  warning  'LOGGER_CONFIG' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/worker/lib/kv-license-cache.ts
+  157:37  warning  'kv' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/worker/lib/metering-reconciler-steps.ts
+  127:3  warning  'ctx' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/worker/lib/quota-counter.ts
+  8:11  warning  'Env' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/worker/lib/r2-report-read-ops.ts
+  101:3  warning  '_expiresIn' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/worker/lib/realtime-alert-dispatcher.ts
+  19:73  warning  'kv' is defined but never used   @typescript-eslint/no-unused-vars
+  19:97  warning  'ctx' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/worker/lib/usage-emitter.ts
+   8:28  warning  'getTierPricing' is defined but never used         @typescript-eslint/no-unused-vars
+  93:36  warning  'maxBatchSize' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/worker/middleware/raas-auth-middleware.ts
+  26:76  warning  'ctx' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/worker/worker-handlers.ts
+  8:10  warning  'checkQuota' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/account/cascade-delete.ts
+  15:15  warning  'R2BucketRef' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/affiliates/scout/client-mock.ts
+  52:15  warning  '_env' is defined but never used       @typescript-eslint/no-unused-vars
+  52:31  warning  '_tenantId' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/affiliates/scout/scoring.ts
+  159:10  warning  'scoreCryptoVolume' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/affiliates/scout/writer.ts
+  28:38  warning  'isCategoryAllowed' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/agent-chat/llm-router.ts
+  10:10  warning  'getUserCredential' is defined but never used  @typescript-eslint/no-unused-vars
+  20:39  warning  'userId' is defined but never used             @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/alerts/realtime-alert-triggers.ts
+  119:30  warning  'error' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/analytics/queries/revenue-unified-query.ts
+  55:10  warning  'tierMrr' is defined but never used         @typescript-eslint/no-unused-vars
+  60:11  warning  'LicenseDateRow' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/analytics/roi-calculator.ts
+  8:10  warning  'logger' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/analytics/youtube-analytics-fetcher.ts
+  30:11  warning  'YtApiRow' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/billing/dunning/dunning-actions.ts
+  20:8  warning  'DunningState' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/billing/email/send-bundle-render-failed-email.ts
+  14:8  warning  'BundleRenderFailedContext' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/billing/email/templates/bundle-generating.ts
+  10:7  warning  'APP_URL' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/billing/email/templates/refund-emails.ts
+  9:7  warning  'APP_URL' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/billing/nowpayments-ipn-subscription.ts
+  337:15  warning  'creditJson' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/enterprise-features.ts
+  147:9  warning  'base' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/feature-flags/index.ts
+  9:10  warning  'createServerClient' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/fulfillment/complete-video-from-webhook.ts
+  24:3  warning  'markPermanentFailureCAS' is defined but never used  @typescript-eslint/no-unused-vars
+  25:3  warning  'recordAttemptCAS' is defined but never used         @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/heygen/heygen-client.ts
+  4:22  warning  'hashLicenseKey' is defined but never used   @typescript-eslint/no-unused-vars
+  5:10  warning  'getUsageContext' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/openclaw/automation-hooks.ts
+  20:10  warning  'routeLLM' is defined but never used         @typescript-eslint/no-unused-vars
+  22:27  warning  'classifyMission' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/openclaw/llm-router.ts
+  12:10  warning  'MODEL_COSTS' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/openclaw/openclaw-namespace.ts
+  14:27  warning  'OpenclawTenantMissingError' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/openclaw/spawn-agent-fleet-executor.ts
+  19:3  warning  '_tenantId' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/payments/payos.ts
+  172:17  warning  'userId' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/services/template-service.ts
+  7:22  warning  '_userId' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/sop-marketplace/beta-invites.ts
+  121:3  warning  '_userId' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/tier-guard.ts
+   2:10  warning  'getTierConfig' is defined but never used      @typescript-eslint/no-unused-vars
+   2:25  warning  'UNIFIED_TIERS' is defined but never used      @typescript-eslint/no-unused-vars
+   2:45  warning  'UnifiedTierLimits' is defined but never used  @typescript-eslint/no-unused-vars
+   4:10  warning  'templateService' is defined but never used    @typescript-eslint/no-unused-vars
+  36:11  warning  'userTier' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/video/composer-ffmpeg.ts
+  144:28  warning  'audioR2Key' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  144:40  warning  'visualR2Key' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/video/video-render-provider.ts
+  58:3  warning  'input' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/land/webhooks/heygen-webhook-secret-resolver.ts
+  18:10  warning  'ByokKeyRotatedError' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/elevenlabs-api-client.ts
+  8:10  warning  'logger' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/llm-router.ts
+  82:3  warning  '_hasLocalMode' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/components/ui/calendar.tsx
+  4:10  warning  'ChevronLeft' is defined but never used   @typescript-eslint/no-unused-vars
+  4:23  warning  'ChevronRight' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/db/client.ts
+  203:34  warning  '_token' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/hooks/use-distribute-jobs-polling.ts
+  86:5  warning  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/hooks/use-distribute-jobs-polling.ts:86:5
+  84 |     stoppedRef.current = false;
+  85 |     startTimeRef.current = Date.now();
+> 86 |     setIsPolling(true);
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  87 |     let timerId: ReturnType<typeof setTimeout> | null = null;
+  88 |
+  89 |     const tick = async () => {  react-hooks/set-state-in-effect
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/security/api-key-validator-crypto.ts
+  8:10  warning  'logger' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/security/jwt-validator.ts
+  14:15  warning  'EnrichedJwtClaims' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/security/prompt-guard.ts
+  92:42  warning  'i' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/security/rate-limiter.ts
+  10:10  warning  'createServerClient' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/security/rate-limiting-middleware.ts
+  9:10  warning  'logger' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/sop/executor/output-validator.ts
+  31:13  warning  '_data' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/tenant-settings/registry.ts
+  12:3  warning  'SettingsNotFoundError' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/utils/currency.ts
+  20:54  warning  'currency' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/test/setup.tsx
+  122:12  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/audit/checks/i18n-coverage.ts
+  53:37  warning  '_env' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/audit/checks/security-audit.ts
+  67:19  warning  '_baseUrl' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/audit/checks/test-coverage.ts
+  39:45  warning  '_env' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/audit/report-formatters.ts
+  15:3  warning  'filters' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/audit/report-storage-delivery.ts
+  73:3  warning  'format' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/audit/usage-event-tracker.ts
+  12:10  warning  'hashIpAddress' is defined but never used             @typescript-eslint/no-unused-vars
+  12:25  warning  'generateUserPseudonym' is defined but never used     @typescript-eslint/no-unused-vars
+  44:7   warning  'AUDIT_HASH_SALT' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/gateway/openclaw-gateway.ts
+  61:9  warning  'running' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/handover/handover-account-setup.ts
+  9:10  warning  'randomPassword' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/sop/executor/output-validator.ts
+  31:13  warning  '_data' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/sop/sop-repo-runs.ts
+  12:10  warning  'logger' is defined but never used           @typescript-eslint/no-unused-vars
+  13:10  warning  'getErrorMessage' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/telegram/telegram-auth-middleware.ts
+  100:43  warning  '_chatId' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/telegram/telegram-bot-campaign-handlers.ts
+  42:11  warning  'UserProfileD1Row' is defined but never used  @typescript-eslint/no-unused-vars
+  63:54  warning  '_topic' is defined but never used            @typescript-eslint/no-unused-vars
+
+✖ 356 problems (0 errors, 356 warnings)
+
