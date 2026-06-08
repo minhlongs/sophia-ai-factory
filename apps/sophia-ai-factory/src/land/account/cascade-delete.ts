@@ -171,7 +171,7 @@ async function deleteR2Objects(
     } catch (err) {
       logger.error(
         `[cascade-delete] R2 delete failed for key "${key}":`,
-        err instanceof Error ? err.message : String(err),
+        err instanceof Error ? err : { message: String(err) },
       );
       // continue deleting remaining keys — partial R2 failure is acceptable
     }
