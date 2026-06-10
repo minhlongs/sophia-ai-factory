@@ -156,6 +156,7 @@ if (table === 'payos_events' && queryBuilder._action === 'delete') {
       return queryBuilder
     }),
     createServerClient: vi.fn(() => mockDb),
+    getD1: vi.fn(() => { if (processShouldThrow) throw new Error('D1 connection failure'); return mockDb }),
     getD1Raw: vi.fn(async () => {
       if (processShouldThrow) throw new Error('D1 connection failure')
       return {
