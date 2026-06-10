@@ -8,11 +8,11 @@
  */
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Loader2, CheckCircle2, AlertTriangle, Gift, Mail, ArrowRight } from 'lucide-react';
 
 interface Props {
   locale: string;
-  isVi: boolean;
   initialCode: string;
 }
 
@@ -32,13 +32,16 @@ interface RedeemError {
   hint?: string;
 }
 
-export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) {
+export function RedeemPageClient({ locale: _locale, initialCode }: Props) {
+  const t = useTranslations("redeem");
   const [code, setCode] = useState(initialCode);
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<RedeemSuccess | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const isVi = _locale.startsWith('vi');
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -63,13 +66,16 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
       if (!res.ok || !('success' in data)) {
         const err = data as RedeemError;
         const reason = err.reason ?? err.error;
-        setErrorMsg(translateReason(reason, isVi) ?? err.hint ?? (isVi ? 'Có lỗi xảy ra. Vui lòng thử lại.' : 'Something went wrong. Please try again.'));
+        const reasonKey = reason ? `reason.${reason}` : null;
+        setErrorMsg(
+          reasonKey ? t(reasonKey) : t('error_generic'),
+        );
         return;
       }
 
       setSuccess(data);
     } catch {
-      setErrorMsg(isVi ? 'Lỗi kết nối. Vui lòng thử lại.' : 'Connection error. Please try again.');
+      setErrorMsg(t('error_connection'));
     } finally {
       setSubmitting(false);
     }
@@ -79,7 +85,6 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
     return (
       <SuccessView
         locale={_locale}
-        isVi={isVi}
         email={email}
         magicLink={success.magicLink ?? null}
         handoverError={success.handoverError}
@@ -95,17 +100,11 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
           <div className="flex items-center justify-center w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary-600/20 border border-primary-500/30">
             <Gift size={26} className="text-primary-300" />
           </div>
-          <h1 className="text-2xl font-bold text-white text-center mb-2">
-            {isVi ? 'Kích Hoạt Mã Quà Tặng' : 'Redeem Promo Code'}
-          </h1>
-          <p className="text-sm text-muted-foreground text-center mb-6">
-            {isVi
-              ? 'Nhập email và mã của bạn — chúng tôi sẽ tạo tài khoản và gửi link đăng nhập.'
-              : 'Enter your email and code — we’ll create the account and email a sign-in link.'}
-          </p>
+          <h1 className="text-2xl font-bold text-white text-center mb-2">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground text-center mb-6">{t('subtitle')}</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Field label={isVi ? 'Mã quà tặng' : 'Promo code'}>
+            <Field label={t('promo_code')}>
               <input
                 type="text"
                 required
@@ -118,7 +117,7 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
               />
             </Field>
 
-            <Field label={isVi ? 'Email' : 'Email'}>
+            <Field label={t('email')}>
               <input
                 type="email"
                 required
@@ -131,11 +130,11 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
               />
             </Field>
 
-            <Field label={isVi ? 'Tên (không bắt buộc)' : 'Name (optional)'}>
+            <Field label={t('name')}>
               <input
                 type="text"
                 autoComplete="name"
-                placeholder={isVi ? 'Anh/chị Nguyễn Văn A' : 'Your name'}
+                placeholder={t('name_placeholder')}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-violet-500"
@@ -159,18 +158,14 @@ export function RedeemPageClient({ locale: _locale, isVi, initialCode }: Props) 
                 <Loader2 size={18} className="motion-safe:animate-spin" />
               ) : (
                 <>
-                  {isVi ? 'Kích hoạt ngay' : 'Redeem now'}
+                  {t('submit')}
                   <ArrowRight size={18} />
                 </>
               )}
             </button>
           </form>
 
-          <p className="text-xs text-muted-foreground text-center mt-6">
-            {isVi
-              ? 'Bằng việc tiếp tục, anh/chị đồng ý với điều khoản dịch vụ của Sophia AI Factory.'
-              : 'By continuing, you agree to Sophia AI Factory’s terms of service.'}
-          </p>
+          <p className="text-xs text-muted-foreground text-center mt-6">{t('terms')}</p>
         </div>
       </div>
     </div>
@@ -188,17 +183,17 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function SuccessView({
   locale: _locale,
-  isVi,
   email,
   magicLink,
   handoverError,
 }: {
   locale: string;
-  isVi: boolean;
   email: string;
   magicLink: string | null;
   handoverError?: string;
 }) {
+  const t = useTranslations("redeem");
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
       <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/20 via-blue-900/10 to-transparent pointer-events-none" />
@@ -207,30 +202,20 @@ function SuccessView({
           <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-2xl bg-emerald-600/20 border border-emerald-500/30">
             <CheckCircle2 size={30} className="text-emerald-300" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">
-            {isVi ? 'Kích hoạt thành công!' : 'Redemption successful!'}
-          </h1>
-          <p className="text-sm text-muted-foreground mb-6">
-            {isVi
-              ? 'Tài khoản đã sẵn sàng. Nhấn nút bên dưới để vào dashboard.'
-              : 'Your account is ready. Click below to enter your dashboard.'}
-          </p>
+          <h1 className="text-2xl font-bold text-white mb-2">{t('success_title')}</h1>
+          <p className="text-sm text-muted-foreground mb-6">{t('success_subtitle')}</p>
 
           {magicLink ? (
             <a
               href={magicLink}
               className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold text-base shadow-lg shadow-violet-900/30 transition-all focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none mb-4"
             >
-              {isVi ? 'Bắt đầu ngay' : 'Get Started'}
+              {t('get_started')}
               <ArrowRight size={18} />
             </a>
           ) : handoverError ? (
             <div className="mb-4 px-4 py-3 rounded-lg bg-amber-950/30 border border-amber-500/30 text-left">
-              <p className="text-sm text-amber-300 mb-3">
-                {isVi
-                  ? 'Liên kết kích hoạt chưa được tạo. Vui lòng liên hệ hỗ trợ để nhận link đăng nhập.'
-                  : 'Activation link not generated. Please contact support to receive your sign-in link.'}
-              </p>
+              <p className="text-sm text-amber-300 mb-3">{t('activation_error')}</p>
               <a
                 href="mailto:support@mekongmind.com"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600/20 border border-amber-500/30 text-amber-200 text-sm font-medium hover:bg-amber-600/30 transition-colors"
@@ -241,56 +226,20 @@ function SuccessView({
             </div>
           ) : (
             <p className="text-sm text-amber-300 mb-4">
-              {isVi
-                ? 'Link đã được tạo nhưng tạm thời không hiển thị. Vui lòng kiểm tra email hoặc liên hệ hỗ trợ.'
-                : 'Link generated but not displayed. Please check your email or contact support.'}
+              {t('link_generated_but_not_displayed')}
             </p>
           )}
 
           <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-background border border-border mb-3">
             <Mail size={16} className="text-muted-foreground flex-shrink-0" />
             <span className="text-sm text-muted-foreground truncate">
-              {isVi ? 'Bản sao đã gửi tới ' : 'A copy was emailed to '}{email}
+              {t('copy_emailed_to')} {email}
             </span>
           </div>
 
-          <p className="text-xs text-muted-foreground">
-            {isVi
-              ? 'Link có hiệu lực trong 72 giờ và chỉ dùng được 1 lần.'
-              : 'The link is valid for 72 hours and is single-use.'}
-          </p>
+          <p className="text-xs text-muted-foreground">{t('link_validity')}</p>
         </div>
       </div>
     </div>
   );
-}
-
-/** Map backend reason codes to friendly bilingual messages. */
-function translateReason(reason: string | undefined, isVi: boolean): string | null {
-  if (!reason) return null;
-  const map: Record<string, { vi: string; en: string }> = {
-    invalid_code: {
-      vi: 'Mã không hợp lệ hoặc đã hết hạn.',
-      en: 'Invalid or expired code.',
-    },
-    max_uses: {
-      vi: 'Mã đã hết lượt sử dụng. Vui lòng liên hệ ban tổ chức.',
-      en: 'This code has reached its max redemptions. Please contact support.',
-    },
-    expired: {
-      vi: 'Mã đã hết hạn.',
-      en: 'This code has expired.',
-    },
-    already_redeemed: {
-      vi: 'Email này đã sử dụng mã trước đó.',
-      en: 'This email has already redeemed this code.',
-    },
-    user_create_failed: {
-      vi: 'Không tạo được tài khoản. Email có thể đã tồn tại — vui lòng đăng nhập.',
-      en: 'Could not create account. Email may already exist — try signing in.',
-    },
-  };
-  const entry = map[reason];
-  if (!entry) return null;
-  return isVi ? entry.vi : entry.en;
 }

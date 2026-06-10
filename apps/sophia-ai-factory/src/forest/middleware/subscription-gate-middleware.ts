@@ -40,7 +40,7 @@ export async function checkSubscriptionGate(
       authorized: false,
       currentTier: 'BASIC',
       requiredTier,
-      message: `This feature requires a ${requiredTier === 'ENTERPRISE' ? 'Premium' : 'Growth'} subscription.`,
+      message: `This feature requires a ${TIER_CONFIG[requiredTier]?.label ?? requiredTier} subscription.`,
     }
   }
 

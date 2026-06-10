@@ -32,13 +32,10 @@ export function CheckoutPanel({
   orderId,
   locale,
 }: CheckoutPanelProps) {
-  const t = useTranslations("landing");
-  const isVi = locale.startsWith("vi");
-
+  const t = useTranslations("checkoutPanel");
   const [checking, setChecking] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<"pending" | "completed" | "failed" | null>(null);
 
-  // Auto-close overlay when clicking Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -62,7 +59,6 @@ export function CheckoutPanel({
     minimumFractionDigits: 0,
   }).format(finalPriceCents / 100);
 
-  // Conversion rate (pinned display value)
   const USD_TO_VND_DISPLAY = 25500;
   const vndAmount = Math.round(((finalPriceCents / 100) * USD_TO_VND_DISPLAY) / 1000) * 1000;
   const vndFormatted = new Intl.NumberFormat("vi-VN", {
@@ -80,7 +76,6 @@ export function CheckoutPanel({
         const data = (await res.json()) as { status: string };
         if (data.status === "completed") {
           setPaymentStatus("completed");
-          // Redirect to success page
           setTimeout(() => {
             window.location.href = `/${locale}/payment-success?tier=${tier}&order_id=${orderId}`;
           }, 1500);
@@ -97,20 +92,16 @@ export function CheckoutPanel({
     }
   };
 
-  const planNames: Record<string, string> = {
-    BASIC: isVi ? "Gói Starter" : "Starter Plan",
-    PREMIUM: isVi ? "Gói Growth" : "Growth Plan",
-    ENTERPRISE: isVi ? "Gói Premium" : "Premium Plan",
-    MASTER: "Master Plan",
-  };
-
-  const qrCodeSrc = checkoutUrl
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(checkoutUrl)}&color=0-0-0&bgcolor=255-255-255`
-    : "";
+  const periodLabel =
+    period === "lifetime"
+      ? t("billing_period_lifetime")
+      : period === "yearly"
+        ? t("billing_period_yearly")
+        : t("billing_period_monthly");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm transition-opacity">
-      <div 
+      <div
         className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-background to-card p-6 md:p-8 shadow-2xl shadow-violet-500/10 text-foreground animate-in fade-in zoom-in-95 duration-200"
         role="dialog"
         aria-modal="true"
@@ -130,12 +121,8 @@ export function CheckoutPanel({
             <Lock className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold tracking-tight">
-              {isVi ? "Thanh toán an toàn" : "Secure Checkout"}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              {isVi ? "Giao dịch mã hóa SSL 256-bit bảo mật" : "SSL Encrypted Transaction"}
-            </p>
+            <h2 className="text-xl font-bold tracking-tight">{t("secure_title")}</h2>
+            <p className="text-xs text-muted-foreground">{t("secure_desc")}</p>
           </div>
         </div>
 
@@ -143,14 +130,12 @@ export function CheckoutPanel({
           {/* Order Details & Summary */}
           <div className="space-y-6">
             <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">
-                {isVi ? "Tóm tắt đơn hàng" : "Order Summary"}
-              </h3>
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">{t("order_summary")}</h3>
               <div className="flex justify-between">
                 <div>
-                  <p className="font-semibold text-foreground">{planNames[tier] || tier}</p>
+                  <p className="font-semibold text-foreground">{tier}</p>
                   <p className="text-xs text-muted-foreground capitalize">
-                    {isVi ? `Chu kỳ: ${period === "lifetime" ? "Trọn đời" : period === "yearly" ? "Năm" : "Tháng"}` : `Billing: ${period}`}
+                    {t("billing_period", { period: periodLabel })}
                   </p>
                 </div>
                 <div className="text-right">
@@ -164,15 +149,13 @@ export function CheckoutPanel({
               {couponCode && (
                 <div className="flex justify-between items-center text-xs bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-lg text-emerald-300">
                   <span className="font-semibold">🎟️ Coupon: {couponCode}</span>
-                  <span>
-                    {isVi ? "Đã áp dụng giảm giá" : "Discount Applied"}
-                  </span>
+                  <span>{t("discount_applied")}</span>
                 </div>
               )}
 
               {paymentMethod === "payos" && (
                 <div className="border-t border-border pt-3 flex justify-between items-center text-xs">
-                  <span className="text-muted-foreground">{isVi ? "Số tiền quy đổi VND" : "VND conversion"}:</span>
+                  <span className="text-muted-foreground">{t("vnd_conversion")}:</span>
                   <span className="font-bold text-amber-400">{vndFormatted}</span>
                 </div>
               )}
@@ -182,15 +165,13 @@ export function CheckoutPanel({
             <div className="space-y-3">
               <div className="flex items-start gap-2 text-xs text-muted-foreground">
                 <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span>{t("pricing.refund_master_title")}: {t("pricing.refund_master_desc")}</span>
+                <span>
+                  {t("pricing.refund_master_title")}: {t("pricing.refund_master_desc")}
+                </span>
               </div>
               <div className="flex items-start gap-2 text-xs text-muted-foreground">
                 <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span>
-                  {isVi
-                    ? "Hỗ trợ 24/7 qua cổng chat Telegram @Sophia_Bbot."
-                    : "Premium 24/7 dedicated support via Telegram."}
-                </span>
+                <span>{t("support_247")}</span>
               </div>
             </div>
 
@@ -210,7 +191,7 @@ export function CheckoutPanel({
                   rel="noopener noreferrer"
                   className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 px-5 py-3 font-semibold text-white transition hover:from-violet-500 hover:to-cyan-400 shadow-lg shadow-violet-500/20 active:scale-[0.98]"
                 >
-                  {isVi ? "Mở trang thanh toán an toàn" : "Go to Payment Page"}
+                  {t("go_to_payment")}
                   <ExternalLink className="h-4 w-4" />
                 </a>
               </div>
@@ -225,27 +206,20 @@ export function CheckoutPanel({
                   <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 opacity-20 blur group-hover:opacity-30 transition duration-300"></div>
                   <div className="relative rounded-xl border border-border bg-muted p-3 shadow-xl">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img 
-                      src={qrCodeSrc} 
-                      alt="Payment QR Code" 
+                    <img
+                      src={qrCodeSrc}
+                      alt="Payment QR Code"
                       className="h-[180px] w-[180px]"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold">
-                    {isVi ? "Quét mã QR để thanh toán" : "Scan QR to Pay"}
-                  </p>
+                  <p className="text-sm font-semibold">{t("scan_qr")}</p>
                   <p className="text-[11px] text-muted-foreground px-4">
                     {paymentMethod === "nowpayments"
-                      ? isVi 
-                        ? "Hỗ trợ USDT (TRC20/ERC20) hoặc Bitcoin qua NOWPayments"
-                        : "Supports USDT (TRC20/ERC20) or Bitcoin via NOWPayments"
-                      : isVi
-                        ? "Hỗ trợ tất cả ngân hàng Việt Nam qua PayOS"
-                        : "Supports all Vietnamese banks via PayOS"
-                    }
+                      ? t("qr_nowpayments")
+                      : t("qr_payos")}
                   </p>
                 </div>
 
@@ -258,31 +232,27 @@ export function CheckoutPanel({
                   >
                     {checking ? (
                       <Loader2 className="h-4 w-4 animate-spin text-primary-400" />
+                    ) : paymentStatus === "completed" ? (
+                      <ShieldCheck className="h-4 w-4 text-emerald-400" />
+                    ) : paymentStatus === "failed" ? (
+                      <ShieldAlert className="h-4 w-4 text-rose-400" />
                     ) : (
-                      paymentStatus === "completed" ? (
-                        <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                      ) : paymentStatus === "failed" ? (
-                        <ShieldAlert className="h-4 w-4 text-rose-400" />
-                      ) : (
-                        <Globe className="h-4 w-4 text-accent-400" />
-                      )
+                      <Globe className="h-4 w-4 text-accent-400" />
                     )}
                     {checking
-                      ? (isVi ? "Đang xác thực giao dịch..." : "Verifying transaction...")
+                      ? t("verifying")
                       : paymentStatus === "completed"
-                      ? (isVi ? "Thanh toán thành công!" : "Payment Successful!")
-                      : paymentStatus === "failed"
-                      ? (isVi ? "Giao dịch lỗi/Hết hạn" : "Transaction failed/expired")
-                      : (isVi ? "Kiểm tra trạng thái thanh toán" : "Verify Payment Status")}
+                        ? t("payment_success")
+                        : paymentStatus === "failed"
+                          ? t("payment_failed")
+                          : t("verify_status")}
                   </button>
                 </div>
               </>
             ) : (
               <div className="flex flex-col items-center justify-center h-full space-y-2 py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
-                <p className="text-xs text-muted-foreground">
-                  {isVi ? "Đang khởi tạo cổng thanh toán..." : "Initializing gateway..."}
-                </p>
+                <p className="text-xs text-muted-foreground">{t("initializing")}</p>
               </div>
             )}
           </div>
@@ -292,10 +262,12 @@ export function CheckoutPanel({
         <div className="mt-8 border-t border-border pt-4 flex items-center justify-between text-[10px] text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <Lock className="h-3 w-3" />
-            <span>SSL Secured Connection</span>
+            <span>{t("ssl_secured")}</span>
           </div>
           {orderId && (
-            <span>ID: {orderId}</span>
+            <span>
+              ID: {orderId}
+            </span>
           )}
         </div>
       </div>

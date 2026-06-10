@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyPayOsWebhook, payOsIpnSchema, FEATURE_PAYOS, getPayOsTierConfig } from '@/land/payments/payos'
 import { logger } from '@/seed/utils/logger-utility'
-import { createServerClient, getD1Raw } from '@/seed/db/client'
+import { createServerClient, getD1 } from '@/seed/db/client'
 import { UNIFIED_TIERS } from '@/seed/config/tiers'
 import { recordAudit } from '@/seed/db/audit/audit-log'
 import { markOrderCompleted, markOrderFailed } from '@/land/orders/pending-order-repo'
@@ -58,13 +58,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
+  // EC4: Timestamp validation — reject replayed webhooks (>5 min old)
+  const eventTimestamp = ((bodyJson as Record<string, unknown>)?.data as Record<string, unknown> | undefined)?.timestamp ?? (bodyJson as Record<string, unknown>)?.timestamp as number | undefined;
+  if (eventTimestamp && typeof eventTimestamp === 'number') {
+    const age = Math.abs(Math.floor(Date.now() / 1000) - eventTimestamp);
+    if (age > 300) {
+      return NextResponse.json({ error: 'REPLAY_DETECTED' }, { status: 400 });
+    }
+  }
+
   const eventId = `payos_${orderCode}`
   const db = createServerClient()
 
   // 1. Atomically insert event row; ON CONFLICT DO NOTHING ensures only one
   // webhook caller wins the race. The RETURNING clause gives us the processed
   // flag in a single round-trip, eliminating the TOCTOU between INSERT and SELECT.
-  const d1 = await getD1Raw()
+  const d1 = getD1()
+  if (!d1) return NextResponse.json({ error: 'Database unavailable' }, { status: 500 })
   const { results: insertResults } = await d1
     .prepare(
       `INSERT INTO payos_events (event_id, order_code, status, amount, currency, payload, processed, created_at)
@@ -208,7 +218,8 @@ export async function POST(request: NextRequest) {
 
     // Activate tier atomically via D1 batch
     try {
-      const d1 = await getD1Raw()
+      const d1 = getD1()
+  if (!d1) return NextResponse.json({ error: 'Database unavailable' }, { status: 500 })
       const { data: existingSub } = await db.from('subscriptions').select('id').eq('org_id', orgId ?? '').single()
 
       const stmts = orgId
@@ -236,14 +247,14 @@ if (stmts.length > 0) await d1.batch(stmts)
  logger.warn('[PayOS IPN] Batch failed, verifying state before fallback', { error: String(batchErr) })
  // FIX 3: Verify actual DB state before applying fallback mutations
  try {
-  const d1State = await getD1Raw()
-  const subRow = await d1State.prepare(
+  const d1State = getD1()
+  const subRow = await d1State!.prepare(
    'SELECT plan, status FROM subscriptions WHERE org_id = ?1 LIMIT 1'
   ).bind(orgId).first()
   if (!subRow || (subRow as Record<string, string | null>)?.status !== 'active') {
    await db.from('subscriptions').update({ plan: tier.toLowerCase(), status: 'active', current_period_end: periodEnd, updated_at: now }).eq('org_id', orgId)
   }
-  const orgRow = await d1State.prepare(
+  const orgRow = await d1State!.prepare(
    'SELECT plan FROM organizations WHERE id = ?1 LIMIT 1'
   ).bind(orgId).first()
   if (!orgRow || (orgRow as Record<string, string | null>)?.plan !== tier.toLowerCase()) {
@@ -262,7 +273,8 @@ if (stmts.length > 0) await d1.batch(stmts)
 
 // Audit trail (non-fatal)
 try {
-  const d1 = await getD1Raw()
+  const d1 = getD1()
+  if (!d1) return NextResponse.json({ error: 'Database unavailable' }, { status: 500 })
   await recordAudit(d1, {
     tableName: 'subscriptions',
     rowId: orgId ?? userId,
