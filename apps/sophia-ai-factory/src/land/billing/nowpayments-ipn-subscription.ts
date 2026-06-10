@@ -406,15 +406,40 @@ export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<void> 
 }
 
 export async function handleFailed(ipn: NowPaymentsIpnPayload): Promise<void> {
-  const userId = parseUserIdFromOrderId(ipn.order_id || '')
-  logger.info('[NOWPayments] Payment failed', { userId, paymentId: ipn.payment_id, amount: ipn.price_amount, currency: ipn.price_currency })
+const userId = parseUserIdFromOrderId(ipn.order_id || '')
+logger.info('[NOWPayments] Payment failed', { userId, paymentId: ipn.payment_id, amount: ipn.price_amount, currency: ipn.price_currency })
 
-  // Mark pending order as failed
-  if (ipn.order_id) {
-    try {
-      await markOrderFailed(ipn.order_id, `payment_status=${ipn.payment_status}`)
-    } catch (err) {
-      logger.warn('[NOWPayments] markOrderFailed error (non-fatal)', { orderId: ipn.order_id, error: String(err) })
-    }
-  }
+// Mark pending order as failed
+if (ipn.order_id) {
+try {
+await markOrderFailed(ipn.order_id, `payment_status=${ipn.payment_status}`)
+} catch (err) {
+logger.warn('[NOWPayments] markOrderFailed error (non-fatal)', { orderId: ipn.order_id, error: String(err) })
+}
+}
+
+// Wire up dunning state machine — trigger grace period on payment failure (EC4)
+if (userId) {
+try {
+const db = getDb()
+const lic = await db
+.prepare('SELECT nonce, tier FROM raas_licenses WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 1')
+.bind(userId)
+.first<{ nonce: string; tier: string }>()
+if (lic?.nonce) {
+const { handlePaymentFailure } = await import('./dunning/dunning-actions')
+await handlePaymentFailure({
+userId,
+licenseNonce: lic.nonce,
+tier: (lic.tier || 'BASIC').toUpperCase() as Tier,
+amount: ipn.price_amount ?? 0,
+currency: ipn.price_currency ?? 'USD',
+failureReason: ipn.payment_status || 'unknown',
+paymentProvider: 'nowpayments',
+})
+}
+} catch (err) {
+logger.warn('[NOWPayments] Dunning trigger failed (non-fatal)', { userId, error: String(err) })
+}
+}
 }
