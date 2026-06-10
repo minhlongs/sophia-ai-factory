@@ -9,16 +9,16 @@ import {
   CheckCircle2,
   Loader2,
   AlertCircle,
- X,
- ChevronUp,
- ChevronDown,
+  X,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 import { CAMPAIGN_TEMPLATES } from '@/land/templates/campaign-templates';
 import type { Tier } from '@/seed/types';
 import { Button } from '@/seed/components/ui/button';
 
 /* ------------------------------------------------------------------ */
-/*  Types                                                              */
+/* Types */
 /* ------------------------------------------------------------------ */
 
 interface TemplateOption {
@@ -55,22 +55,10 @@ interface ScriptTemplateSelectorProps {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Category labels (Vietnamese + English)                            */
+/* Component */
 /* ------------------------------------------------------------------ */
 
-const CATEGORY_LABELS: Record<string, { vi: string; en: string }> = {
-  welcome:     { vi: 'Chao don',     en: 'Welcome' },
-  product:     { vi: 'San pham',    en: 'Product Launch' },
-  seasonal:    { vi: 'Theo mua',    en: 'Seasonal' },
-  promotion:   { vi: 'Khuyen mai',  en: 'Promotion' },
-  viral:       { vi: 'Noi dung viral', en: 'Viral Content' },
-};
-
-type FilterCategory = 'all' | string;
-
-/* ------------------------------------------------------------------ */
-/*  Component                                                          */
-/* ------------------------------------------------------------------ */
+const CATEGORY_KEYS = ['welcome', 'product', 'seasonal', 'promotion', 'viral'] as const;
 
 export function ScriptTemplateSelector({
   tier,
@@ -90,22 +78,22 @@ export function ScriptTemplateSelector({
   generating = false,
   error = null,
 }: ScriptTemplateSelectorProps) {
-  const t = useTranslations('creativeStudio');
+  const t = useTranslations('creativeStudio.templateSelector');
   const locale = useLocale();
   const isVi = locale.startsWith('vi');
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState<FilterCategory>('all');
+  const [activeCategory, setActiveCategory] = useState<string>('all');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const templates = CAMPAIGN_TEMPLATES;
 
   /* Derive unique categories */
   const categories: { key: string; label: string }[] = [
-    { key: 'all', label: isVi ? 'Tat ca' : 'All' },
-    ...Object.entries(CATEGORY_LABELS).map(([key, labels]) => ({
+    { key: 'all', label: t('filter_all') },
+    ...CATEGORY_KEYS.map((key) => ({
       key,
-      label: isVi ? labels.vi : labels.en,
+      label: t(`category_${key}`),
     })),
   ];
 
@@ -151,10 +139,7 @@ export function ScriptTemplateSelector({
     [selectedTemplateId, targetDuration, tone],
   );
 
-  const canGenerate =
-    selectedTemplateId !== null &&
-    topic.trim().length >= 2 &&
-    !generating;
+  const canGenerate = selectedTemplateId !== null && topic.trim().length >= 2 && !generating;
 
   return (
     <div className="flex flex-col gap-5">
@@ -168,7 +153,7 @@ export function ScriptTemplateSelector({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={isVi ? 'Tim kiem mau...' : 'Search templates...'}
+              placeholder={t('search_placeholder')}
               className="w-full rounded-lg border border-white/10 bg-black/40 pl-9 pr-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
             />
           </div>
@@ -196,7 +181,7 @@ export function ScriptTemplateSelector({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[420px] overflow-y-auto pr-1">
           {filtered.length === 0 ? (
             <div className="col-span-full py-8 text-center text-muted-foreground-500 text-sm">
-              {isVi ? 'Khong tim thay mau phu hop' : 'No matching templates'}
+              {t('no_templates')}
             </div>
           ) : (
             filtered.map((tmpl) => {
@@ -232,13 +217,13 @@ export function ScriptTemplateSelector({
                   {/* Meta pills */}
                   <div className="flex flex-wrap items-center gap-2 mt-3">
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground-500 border border-white/5">
-                      {isVi ? (CATEGORY_LABELS[tmpl.category]?.vi ?? tmpl.category) : (CATEGORY_LABELS[tmpl.category]?.en ?? tmpl.category)}
+                      {t(`category_${tmpl.category}`)}
                     </span>
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground-500 border border-white/5 font-mono">
                       ~{tmpl.defaults.suggestedDuration}s
                     </span>
                     <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground-500 border border-white/5">
-                      {isVi ? 'Tu:' : 'Tone:'} {tmpl.defaults.tone}
+                      {t('tone_label')} {tmpl.defaults.tone}
                     </span>
                   </div>
                 </button>
@@ -252,7 +237,7 @@ export function ScriptTemplateSelector({
       <div className="flex flex-col gap-3 rounded-xl border border-white/10 bg-muted-900/30 p-4 space-y-4">
         <div>
           <label className="block text-xs font-medium text-muted-foreground-400 mb-1.5">
-            {isVi ? 'Chu de / Topic' : 'Topic'} <span className="text-red-400">*</span>
+            {t('topic_label')} <span className="text-red-400">{t('topic_required')}</span>
           </label>
           <input
             type="text"
@@ -260,31 +245,27 @@ export function ScriptTemplateSelector({
             onChange={(e) => onTopicChange(e.target.value)}
             placeholder={
               selectedTemplate
-                ? isVi
-                  ? `VD: ${selectedTemplate.defaults.title}...`
-                  : `e.g. ${selectedTemplate.defaults.title}...`
-                : isVi
-                  ? 'Nhap chu de video cua ban...'
-                  : 'Enter your video topic...'
+                ? t('topic_placeholder_template', { title: selectedTemplate.defaults.title })
+                : t('topic_placeholder_default')
             }
             className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
           />
           <p className="text-[10px] text-muted-foreground-600 mt-1">
-            {isVi
-              ? `Dien vao mau: ${selectedTemplate?.defaults.audience ?? ''}`
-              : `Target: ${selectedTemplate?.defaults.audience ?? ''}`}
+            {selectedTemplate
+              ? t('topic_hint_template', { audience: selectedTemplate.defaults.audience })
+              : ''}
           </p>
         </div>
 
         <div>
           <label className="block text-xs font-medium text-muted-foreground-400 mb-1.5">
-            {isVi ? 'Ten thuong hieu' : 'Brand Name'}
+            {t('brand_label')}
           </label>
           <input
             type="text"
             value={brandName}
             onChange={(e) => onBrandNameChange(e.target.value)}
-            placeholder={isVi ? 'Ten thuong hieu / kenh cua ban...' : 'Your brand or channel name...'}
+            placeholder={t('brand_placeholder')}
             className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
           />
         </div>
@@ -296,7 +277,7 @@ export function ScriptTemplateSelector({
           className="inline-flex items-center gap-1 text-[11px] text-muted-foreground-500 hover:text-muted-foreground-300 transition-colors"
         >
           <Sparkles className="h-3 w-3" />
-          {isVi ? 'Tuy chon nang cao' : 'Advanced options'}
+          {t('advanced_options')}
           {showAdvanced ? (
             <ChevronUp className="h-3 w-3" />
           ) : (
@@ -308,7 +289,7 @@ export function ScriptTemplateSelector({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 animate-in fade-in duration-200">
             <div>
               <label className="block text-[11px] font-medium text-muted-foreground-500 mb-1">
-                {isVi ? 'Thoi luong (giay)' : 'Duration (sec)'}
+                {t('duration_label')}
               </label>
               <input
                 type="number"
@@ -322,19 +303,19 @@ export function ScriptTemplateSelector({
             </div>
             <div>
               <label className="block text-[11px] font-medium text-muted-foreground-500 mb-1">
-                {isVi ? 'Tong giong' : 'Tone'}
+                {t('tone_label')}
               </label>
               <input
                 type="text"
                 value={tone}
                 onChange={(e) => onToneChange(e.target.value)}
-                placeholder={isVi ? 'VD: chuyen nghiep, than thien...' : 'e.g. professional, casual...'}
+                placeholder={t('tone_placeholder')}
                 className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
               />
             </div>
             <div>
               <label className="block text-[11px] font-medium text-muted-foreground-500 mb-1">
-                {isVi ? 'Ngon ngu' : 'Language'}
+                {t('language_label')}
               </label>
               <select
                 value={language}
@@ -367,12 +348,12 @@ export function ScriptTemplateSelector({
         {generating ? (
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            {isVi ? 'Dang tao kich ban...' : 'Generating script...'}
+            {t('generating')}
           </>
         ) : (
           <>
             <Sparkles className="h-4 w-4 mr-2" />
-            {isVi ? 'Tao kich ban' : 'Generate Script'}
+            {t('generate')}
           </>
         )}
       </Button>

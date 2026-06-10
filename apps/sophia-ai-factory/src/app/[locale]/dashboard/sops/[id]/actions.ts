@@ -19,7 +19,7 @@ import { runSop } from '@/tree/sop/executor/sop-runner';
 import { createRun } from '@/tree/sop/sop-repo-runs';
 import { logger } from '@/seed/utils/logger-utility';
 import type { SopCustomizations } from '@/tree/sop/sop-types';
-import { getD1 } from '@/seed/db/get-d1';
+import { getD1 } from '@/seed/db/client';
 
 
 async function assertOwner(id: string) {

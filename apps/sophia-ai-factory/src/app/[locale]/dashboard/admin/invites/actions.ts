@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { requireMasterTier } from '@/seed/auth/require-master-tier';
 import { createBetaInvite, revokeInvite } from '@/land/sop-marketplace/beta-invites';
-import { getD1 } from '@/seed/db/get-d1';
+import { getD1 } from '@/seed/db/client';
 
 export async function createInviteAction(formData: FormData): Promise<{ error?: string }> {
   const user = await requireMasterTier();

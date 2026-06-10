@@ -15,7 +15,7 @@ import { getTemplateBySlug, createInstallation, setEnabled, deleteInstallation, 
 import { generateWebhookSecret } from '@/tree/sop/webhook-hmac';
 import { installInputSchema } from '@/tree/sop/install-input-schema';
 import type { SopCustomizations } from '@/tree/sop/sop-types';
-import { getD1 } from '@/seed/db/get-d1';
+import { getD1 } from '@/seed/db/client';
 
 // ---------------------------------------------------------------------------
 // D1 access — mirror pattern from trigger route
