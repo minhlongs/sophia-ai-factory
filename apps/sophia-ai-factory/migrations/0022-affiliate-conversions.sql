@@ -29,3 +29,4 @@ CREATE INDEX IF NOT EXISTS idx_conv_campaign ON affiliate_conversions(campaign_i
 CREATE INDEX IF NOT EXISTS idx_conv_click ON affiliate_conversions(click_id);
 CREATE INDEX IF NOT EXISTS idx_conv_payout ON affiliate_conversions(payout_status, available_at);
 CREATE INDEX IF NOT EXISTS idx_conv_created ON affiliate_conversions(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_conv_user_payout ON affiliate_conversions(user_id, payout_status);
