@@ -5,9 +5,11 @@
  * the D1 binding at runtime. DB binding: sophia-raas-db
  */
 
-import { D1Client } from '@/seed/db/d1-query-builder';
+import { D1Client } from '@/seed/db/d1-client-rpc';
 import { toError } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
+import type { D1Database } from '@cloudflare/workers-types';
+export type { D1Database };
 
 // Lazy dynamic load of local D1 mock to prevent Edge runtime bundle contamination
 let getLocalD1Mock: (() => unknown) | null = null;
@@ -18,6 +20,67 @@ if (process.env.NEXT_RUNTIME !== 'edge') {
   } catch {
     // ignore if not in Node.js context or file missing
   }
+}
+
+/**
+ * Get D1Database binding synchronously from CF request context.
+ * Returns null if binding is unavailable (non-fatal).
+ * Consolidated here as the single canonical accessor.
+ */
+export function getD1(): D1Database | null {
+  try {
+    // Primary: globalThis.__env (set by opennextjs-cloudflare worker)
+    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
+    if (env?.DB) return env.DB as D1Database;
+
+    // Fallback: Cloudflare context symbol
+    const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[
+      Symbol.for('__cloudflare-context__')
+    ];
+    if (ctx?.env?.DB) return ctx.env.DB as D1Database;
+
+    // Fallback: global test binding
+    const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
+    if (globalDb) return globalDb;
+
+    // Fallback: local dev sqlite mock
+    if (getLocalD1Mock) {
+      const mockDb = getLocalD1Mock();
+      if (mockDb) {
+        (globalThis as Record<string, unknown>).__D1_DB = mockDb;
+        return mockDb as D1Database;
+      }
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * @deprecated Use getD1() — async wrapper for backward compatibility.
+ */
+export async function getD1Raw(): Promise<D1Database> {
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
+  return db;
+}
+
+/**
+ * @deprecated Use getD1() — async wrapper for backward compatibility.
+ */
+export async function getD1Safe(): Promise<D1Database | null> {
+  return getD1();
+}
+
+/**
+ * @deprecated Use createServerClient() instead.
+ */
+export async function getD1Client(override?: D1Database): Promise<D1Client> {
+  const db = override ?? getD1();
+  if (!db) throw new Error('D1 database binding not available');
+  return new D1Client(db);
 }
 
 /**
@@ -65,7 +128,9 @@ async function getD1Async(): Promise<D1Database> {
     const cfCtx = await getCloudflareContext();
     const db = (cfCtx.env as Record<string, unknown>).DB as D1Database;
     if (db) return db;
-  } catch { /* not available */ }
+  } catch {
+    /* not available */
+  }
 
   return getD1Sync();
 }
@@ -158,41 +223,6 @@ class LazyQueryChain {
       logger.error('[D1Client] LazyQueryChain execution failed', d1Err);
       throw d1Err;
     }
-  }
-}
-
-/**
- * Create D1 client from explicit binding.
- */
-export function createClientFromBinding(db: D1Database): D1Client {
-  return new D1Client(db);
-}
-
-/**
- * Async version — guaranteed to return a real D1Client.
- */
-export async function getD1Client(): Promise<D1Client> {
-  const db = await getD1Async();
-  return new D1Client(db);
-}
-
-/**
- * Get raw D1Database binding (async).
- * Use this when you need the binding directly (e.g., for audit helpers).
- */
-export async function getD1Raw(): Promise<D1Database> {
-  return getD1Async();
-}
-
-/**
- * Get D1Database binding, returning null on failure (non-fatal).
- * Use this when the caller can gracefully degrade if D1 is unavailable.
- */
-export async function getD1Safe(): Promise<D1Database | null> {
-  try {
-    return await getD1Async();
-  } catch {
-    return null;
   }
 }
 

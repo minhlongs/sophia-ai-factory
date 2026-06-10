@@ -29,6 +29,7 @@
 import { Tier, TIER_RANK } from '@/seed/types'
 import { getUserTier } from './get-user-tier'
 
+import { getD1 } from './get-d1';
 /** Commission threshold (USD) required to qualify for each tier via affiliate earnings */
 const AFFILIATE_TIER_THRESHOLDS: Record<Tier, number> = {
   BASIC: 0,
@@ -38,14 +39,6 @@ const AFFILIATE_TIER_THRESHOLDS: Record<Tier, number> = {
 }
 
 /** affiliate_conversions.gross_amount stores the ClickBank amount in USD */
-function getD1(): D1Database | null {
-  const env = globalThis as unknown as Record<string, Record<string, unknown>>
-  if (env?.__env?.DB) return env.__env.DB as D1Database
-  const ctx = globalThis as Record<symbol, { env?: Record<string, unknown> }>
-  if (ctx[Symbol.for('__cloudflare-context__')]?.env?.DB)
-    return ctx[Symbol.for('__cloudflare-context__')].env!.DB as D1Database
-  return null
-}
 
 /**
  * Compute tier from total commission volume in affiliate_conversions.

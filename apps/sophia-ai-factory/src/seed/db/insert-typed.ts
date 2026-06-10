@@ -24,6 +24,16 @@
 
 import type { D1QueryChain } from '@/seed/db/d1-query-builder'
 
-export function insertTyped<R, T>(chain: D1QueryChain<R>, payload: T): D1QueryChain<R> {
-  return chain.insert(payload as unknown as Record<string, unknown>)
+export function insertTyped<R, T>(
+  chain: D1QueryChain<R>,
+  payload: T,
+): D1QueryChain<R> {
+  // Validate required fields are present (non-null, non-undefined)
+  const record = payload as Record<string, unknown>;
+  for (const [key, value] of Object.entries(record)) {
+    if (value === null || value === undefined) {
+      throw new Error(`[insertTyped] Required field "${key}" is null/undefined in insert payload`);
+    }
+  }
+  return chain.insert(record)
 }

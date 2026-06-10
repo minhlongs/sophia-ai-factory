@@ -16,7 +16,8 @@ import { decryptApiKey, encryptApiKey } from '@/tree/byok/byok-crypto'
 export type ByokProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'heygen' | 'muapi' | 'apollo' | 'hunter'
 
 interface KeyRow {
-  encrypted_key: ArrayBuffer | Uint8Array
+ encrypted_key: ArrayBuffer | Uint8Array
+ key_validated_at?: number | null
 }
 
 function toBytes(blob: ArrayBuffer | Uint8Array): Uint8Array {
@@ -42,13 +43,14 @@ export async function setUserApiKey(
 
   await d1
     .prepare(
-      `INSERT INTO user_api_keys (user_id, provider, encrypted_key, updated_at)
-       VALUES (?, ?, ?, datetime('now'))
+      `INSERT INTO user_api_keys (user_id, provider, encrypted_key, key_validated_at, updated_at)
+       VALUES (?, ?, ?, ?, datetime('now'))
        ON CONFLICT(user_id, provider) DO UPDATE SET
          encrypted_key = excluded.encrypted_key,
+  key_validated_at = excluded.key_validated_at,
          updated_at    = datetime('now')`,
     )
-    .bind(userId, provider, encrypted)
+    .bind(userId, provider, encrypted, Date.now())
     .run()
 }
 
