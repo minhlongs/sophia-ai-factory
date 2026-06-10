@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getTranslations } from 'next-intl/server';
-import { getD1 } from '@/seed/db/get-d1';
+import { getD1 } from '@/seed/db/client';
 
 
 export async function createSopAction(formData: FormData): Promise<{ error?: string; templateId?: string }> {
