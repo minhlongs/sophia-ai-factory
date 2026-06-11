@@ -2996,7 +2996,9 @@
       "intro": "Intro",
       "uploadIntro": "Upload Intro",
       "outro": "Outro",
+"uploadOutro": "Upload Outro",
       "uploadOutro": "Upload Outro",
+    "introPosition": "Intro Position",
       "font": "Font",
       "uploadFont": "Upload Font",
       "saving": "Saving"
@@ -3720,14 +3722,15 @@
       "credits": "MCU Credits",
       "affiliate-networks": "Affiliate Networks"
     },
-    "aria_trigger_default": "Aria trigger default",
+    "aria_trigger_default": "Help",
     "close": "Close",
     "dialog_label": "Dialog label",
     "header": "Header",
     "help_center": "Help center",
     "tutorial_video": "Tutorial video",
     "video_coming_soon": "Video coming soon",
-    "watch_video": "Watch video"
+    "watch_video": "Watch video",
+    "aria_trigger": "Help for {label}"
   },
   "checkoutPanel": {
     "secure_title": "Secure Checkout",

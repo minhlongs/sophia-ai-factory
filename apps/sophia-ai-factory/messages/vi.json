@@ -2192,7 +2192,7 @@
       "title": "Title",
       "subtitle": "Subtitle",
       "marketingTitle": "Marketing Title",
-      "marketingDesc": "Marketing Desc",
+      "marketingDesc": "Mô tả tiếp thị",
       "securityTitle": "Security Title",
       "securityDesc": "Security Desc",
       "telegramTitle": "Telegram Title",
@@ -3347,10 +3347,10 @@
     "configure_keys": "Cấu hình Keys",
     "order_label": "Đơn hàng"
   },
-  "All settings reset to defaults": {
+  "Đã đặt lại tất cả cài đặt về mặc định": {
     "": ""
   },
-  "Network error": {
+  "Lỗi mạng": {
     " Please try again": {
       "": ""
     }
@@ -3720,14 +3720,15 @@
       "credits": "MCU Credits",
       "affiliate-networks": "Mạng lưới Affiliate"
     },
-    "aria_trigger_default": "Mở trợ giúp",
+    "aria_trigger_default": "Trợ giúp",
     "close": "Đóng",
     "dialog_label": "Hộp thoại",
     "header": "Tiêu đề",
     "help_center": "Trung tâm trợ giúp",
     "tutorial_video": "Video hướng dẫn",
     "video_coming_soon": "Video sắp ra mắt",
-    "watch_video": "Xem video"
+    "watch_video": "Xem video",
+    "aria_trigger": "Trợ giúp cho {label}"
   },
   "checkoutPanel": {
     "secure_title": "Thanh toán an toàn",

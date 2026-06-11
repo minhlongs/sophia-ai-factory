@@ -28,11 +28,11 @@ export function insertTyped<R, T>(
   chain: D1QueryChain<R>,
   payload: T,
 ): D1QueryChain<R> {
-  // Validate required fields are present (non-null, non-undefined)
+  // Validate required fields are present (undefined = missing; null is valid for nullable columns)
   const record = payload as Record<string, unknown>;
   for (const [key, value] of Object.entries(record)) {
-    if (value === null || value === undefined) {
-      throw new Error(`[insertTyped] Required field "${key}" is null/undefined in insert payload`);
+    if (value === undefined) {
+      throw new Error(`[insertTyped] Required field "${key}" is undefined in insert payload`);
     }
   }
   return chain.insert(record)

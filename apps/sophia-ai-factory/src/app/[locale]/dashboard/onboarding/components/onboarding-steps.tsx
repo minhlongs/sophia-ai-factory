@@ -108,7 +108,7 @@ export function OnboardingSteps({ step1Done, step2Done, step3Done }: OnboardingS
       title: t('step3_title'),
       description: t('step3_desc'),
       ctaLabel: t('step3_cta'),
-      ctaHref: '/dashboard/videos',
+      ctaHref: '/dashboard/videos/upload',
     },
   ];
 
