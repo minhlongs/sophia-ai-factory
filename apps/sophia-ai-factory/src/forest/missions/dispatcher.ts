@@ -5,6 +5,9 @@
  * routes to the correct handler, updates the row with result/error/credits,
  * and fires the webhook if configured.
  *
+ * Phase 01 (OpenMontage port): Checkpoint persistence — save/load intermediate
+ * state so interrupted missions can resume instead of restarting.
+ *
  * Designed for use with Workers executionCtx.waitUntil().
  */
 
@@ -14,6 +17,54 @@ import { getCommand } from './command-registry';
 import { fireMissionWebhook } from './fire-webhook';
 import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult } from './handlers/types';
+import { clearMissionCheckpoint, loadMissionCheckpoint, saveMissionCheckpoint } from './checkpoint-persistence';
+
+// ── Checkpoint persistence (inline for dispatcher) ─────────────────────────────
+
+interface MissionCheckpoint {
+  stepOrder: number;
+  stepType: string;
+  savedAt: string;
+  partialResult?: Record<string, unknown>;
+  tokensUsed?: number;
+  provider?: string;
+  model?: string;
+  retryCount: number;
+  state?: Record<string, unknown>;
+}
+
+async function saveCp(db: D1Database, missionId: string, cp: MissionCheckpoint): Promise<void> {
+  try {
+    const json = JSON.stringify(cp);
+    if (json.length > 48 * 1024) {
+      const trimmed: MissionCheckpoint = { ...cp, state: undefined, partialResult: cp.partialResult ? Object.fromEntries(Object.entries(cp.partialResult).slice(0, 20)) : undefined };
+      const trimmedJson = JSON.stringify(trimmed);
+      if (trimmedJson.length > 48 * 1024) {
+        logger.warn('[Dispatcher] Checkpoint too large after trim, skipping save', { missionId, size: trimmedJson.length });
+        return;
+      }
+      await db.from('engine_missions').update({ checkpoint_json: trimmedJson, updated_at: Math.floor(Date.now() / 1000) }).eq('id', missionId);
+      return;
+    }
+    await db.from('engine_missions').update({ checkpoint_json: json, updated_at: Math.floor(Date.now() / 1000) }).eq('id', missionId);
+  } catch (err) {
+    logger.warn('[Dispatcher] Checkpoint save failed', { missionId, err: err instanceof Error ? err.message : String(err) });
+  }
+}
+
+async function loadCp(db: D1Database, missionId: string): Promise<MissionCheckpoint | null> {
+  try {
+    const { data } = await db.from('engine_missions').select('checkpoint_json').eq('id', missionId).single() as { data: { checkpoint_json: string | null } | null };
+    if (data?.checkpoint_json) {
+      return JSON.parse(data.checkpoint_json) as MissionCheckpoint;
+    }
+  } catch {
+    // Column may not exist yet (pre-migration) — graceful fallback
+  }
+  return null;
+}
+
+// ── Handler loading ────────────────────────────────────────────────────────────
 
 // Lazy-load handlers to keep bundle splits clean
 async function loadHandler(command: string): Promise<((ctx: import('./handlers/types').MissionContext) => Promise<MissionHandlerResult>) | null> {
@@ -48,25 +99,7 @@ async function loadHandler(command: string): Promise<((ctx: import('./handlers/t
   }
 }
 
-/** Retry wrapper: attempt up to `maxAttempts` with `delayMs` between tries. */
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  maxAttempts: number,
-  delayMs: number,
-): Promise<T> {
-  let lastErr: unknown;
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      lastErr = err;
-      if (attempt < maxAttempts - 1) {
-        await new Promise<void>((r) => setTimeout(r, delayMs));
-      }
-    }
-  }
-  throw lastErr;
-}
+// ── Types ──────────────────────────────────────────────────────────────────────
 
 interface MissionRow {
   id: string;
@@ -76,6 +109,8 @@ interface MissionRow {
   status: string;
   webhook_url: string | null;
 }
+
+// ── dispatchMission ────────────────────────────────────────────────────────────
 
 /**
  * Execute a mission asynchronously.
@@ -125,12 +160,7 @@ export async function dispatchMission(missionId: string): Promise<void> {
   if (!commandDef) {
     await db
       .from('engine_missions')
-      .update({
-        status: 'failed',
-        error: `Unknown command: ${mission.command}`,
-        updated_at: Math.floor(Date.now() / 1000),
-        completed_at: Math.floor(Date.now() / 1000),
-      })
+      .update({ status: 'failed', error: `Unknown command: ${mission.command}`, updated_at: Math.floor(Date.now() / 1000), completed_at: Math.floor(Date.now() / 1000) })
       .eq('id', missionId);
     return;
   }
@@ -138,12 +168,7 @@ export async function dispatchMission(missionId: string): Promise<void> {
   if (!handler) {
     await db
       .from('engine_missions')
-      .update({
-        status: 'failed',
-        error: `Handler module failed to load for command: ${mission.command}`,
-        updated_at: Math.floor(Date.now() / 1000),
-        completed_at: Math.floor(Date.now() / 1000),
-      })
+      .update({ status: 'failed', error: `Handler module failed to load for command: ${mission.command}`, updated_at: Math.floor(Date.now() / 1000), completed_at: Math.floor(Date.now() / 1000) })
       .eq('id', missionId);
     return;
   }
@@ -156,35 +181,30 @@ export async function dispatchMission(missionId: string): Promise<void> {
       missionId,
       raw: mission.params?.slice(0, 200),
       error: parseErr instanceof Error ? parseErr.message : String(parseErr),
-    })
-    params = {}
+    });
+    params = {};
   }
 
   const creditsUsed = commandDef.credits;
 
   // R2-6: Deduct credits BEFORE handler execution to prevent TOCTOU double-spend.
-  // deductCredits is atomic (WHERE credits_remaining >= amount); if it returns false,
-  // the user raced another request and lost — skip handler to avoid consuming LLM/API resources.
   if (creditsUsed > 0) {
     const deducted = await deductCredits(mission.user_id, creditsUsed, missionId, `command:${mission.command}`);
     if (!deducted) {
-      logger.warn('[Dispatcher] Credit deduction failed — insufficient balance at dispatch time', { missionId, creditsUsed });
+      logger.warn('[Dispatcher] Credit deduction failed', { missionId, creditsUsed });
       await db
         .from('engine_missions')
-        .update({
-          status: 'failed',
-          error: 'insufficient_credits',
-          updated_at: Math.floor(Date.now() / 1000),
-          completed_at: Math.floor(Date.now() / 1000),
-        })
+        .update({ status: 'failed', error: 'insufficient_credits', updated_at: Math.floor(Date.now() / 1000), completed_at: Math.floor(Date.now() / 1000) })
         .eq('id', missionId);
       return;
     }
   }
 
-  // R2-10: Wrap handler in a 25-second timeout to prevent indefinite CF Worker I/O hangs.
-  // If handler fails after credits were deducted, credits are intentionally not refunded
-  // (attempted work = cost incurred); reaper will NOT refund timed-out missions.
+  // Phase 01: Load checkpoint for resume support
+  const existingCheckpoint = await loadCp(db, missionId);
+  const resumeTokensUsed = existingCheckpoint?.tokensUsed ?? 0;
+
+  // R2-10: Wrap handler in timeout to prevent indefinite CF Worker I/O hangs.
   const HANDLER_TIMEOUT_MS = 25_000;
   let handlerResult: MissionHandlerResult;
   try {
@@ -194,11 +214,33 @@ export async function dispatchMission(missionId: string): Promise<void> {
         userId: mission.user_id,
         command: mission.command,
         params,
+        checkpoint: existingCheckpoint
+          ? {
+              partialResult: existingCheckpoint.partialResult,
+              tokensUsed: existingCheckpoint.tokensUsed,
+              provider: existingCheckpoint.provider,
+              model: existingCheckpoint.model,
+              state: existingCheckpoint.state,
+            }
+          : undefined,
+        onProgress: async (stepData) => {
+          await saveCp(db, missionId, {
+            stepOrder: stepData.stepOrder,
+            stepType: stepData.stepType,
+            savedAt: new Date().toISOString(),
+            partialResult: stepData.partialResult,
+            tokensUsed: resumeTokensUsed + (stepData.tokensUsed ?? 0),
+            provider: stepData.provider,
+            model: stepData.model,
+            retryCount: 0,
+            state: stepData.state,
+          });
+        },
       }),
       new Promise<MissionHandlerResult>((_, reject) =>
-        setTimeout(() => reject(new Error('Mission handler timeout')), HANDLER_TIMEOUT_MS)
-      ),
-    ]);
+        setTimeout(() => reject(new Error('Mission handler timeout')), HANDLER_TIMEOUT_MS),
+    ),
+  ]);
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : 'Handler threw unexpected error';
     handlerResult = {
@@ -212,24 +254,16 @@ export async function dispatchMission(missionId: string): Promise<void> {
   if (handlerResult.ok) {
     await db
       .from('engine_missions')
-      .update({
-        status: 'succeeded',
-        result: JSON.stringify(handlerResult.data ?? {}),
-        credits_used: creditsUsed,
-        updated_at: nowAfter,
-        completed_at: nowAfter,
-      })
+      .update({ status: 'succeeded', result: JSON.stringify(handlerResult.data ?? {}), credits_used: creditsUsed, updated_at: nowAfter, completed_at: nowAfter })
       .eq('id', missionId);
+    // Clear checkpoint on success
+    await clearMissionCheckpoint(missionId);
   } else {
     await db
       .from('engine_missions')
-      .update({
-        status: 'failed',
-        error: handlerResult.error ?? 'Unknown error',
-        updated_at: nowAfter,
-        completed_at: nowAfter,
-      })
+      .update({ status: 'failed', error: handlerResult.error ?? 'Unknown error', updated_at: nowAfter, completed_at: nowAfter })
       .eq('id', missionId);
+    // Keep checkpoint on failure for potential resume
   }
 
   // Fire webhook if configured
@@ -244,33 +278,35 @@ export async function dispatchMission(missionId: string): Promise<void> {
   logger.debug('[Dispatcher] Mission complete', { missionId, command: mission.command, ok: handlerResult.ok });
 }
 
+// ── Stuck mission recovery ─────────────────────────────────────────────────────
+
 /**
  * Detect missions stuck in 'running' state beyond the timeout threshold.
  * Called by a cron job to recover orphaned dispatches.
  */
 export async function recoverStuckMissions(stuckThresholdSeconds = 300): Promise<number> {
-    const db = createServerClient();
-    const cutoff = Math.floor(Date.now() / 1000) - stuckThresholdSeconds;
-    try {
-        const { data } = await db
-            .from('engine_missions')
-            .select('id')
-            .eq('status', 'running')
-            .lt('updated_at', cutoff)
-            .limit(50);
-        const stuck = (data as { id: string }[] | null) ?? [];
-        for (const m of stuck) {
-            await db.from('engine_missions').update({
-                status: 'failed',
-                error: 'stuck:recovered_by_reaper',
-                updated_at: Math.floor(Date.now() / 1000),
-                completed_at: Math.floor(Date.now() / 1000),
-            }).eq('id', m.id);
-        }
-        if (stuck.length) logger.info('[Dispatcher] Recovered stuck missions', { count: stuck.length });
-        return stuck.length;
-    } catch (err) {
-        logger.error('[Dispatcher] recoverStuckMissions failed', { err });
-        return 0;
+  const db = createServerClient();
+  const cutoff = Math.floor(Date.now() / 1000) - stuckThresholdSeconds;
+  try {
+    const { data } = await db
+      .from('engine_missions')
+      .select('id')
+      .eq('status', 'running')
+      .lt('updated_at', cutoff)
+      .limit(50);
+    const stuck = (data as { id: string }[] | null) ?? [];
+    for (const m of stuck) {
+      await db.from('engine_missions').update({
+        status: 'failed',
+        error: 'stuck:recovered_by_reaper',
+        updated_at: Math.floor(Date.now() / 1000),
+        completed_at: Math.floor(Date.now() / 1000),
+      }).eq('id', m.id);
     }
+    if (stuck.length) logger.info('[Dispatcher] Recovered stuck missions', { count: stuck.length });
+    return stuck.length;
+  } catch (err) {
+    logger.error('[Dispatcher] recoverStuckMissions failed', { err });
+    return 0;
+  }
 }

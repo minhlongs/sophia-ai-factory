@@ -14,8 +14,16 @@ import {
 } from '@/tree/audit/audit-query-logger'
 
 // Mock Supabase admin client
+const mockFrom = {
+  insert: vi.fn().mockReturnThis(),
+  select: vi.fn().mockReturnThis(),
+  single: vi.fn(),
+  eq: vi.fn().mockReturnThis(),
+}
 vi.mock('@/seed/db/client', () => ({
-  createServerClient: vi.fn(),
+  createServerClient: vi.fn(() => ({
+    from: vi.fn(() => mockFrom),
+  })),
 }))
 
 // Mock logger

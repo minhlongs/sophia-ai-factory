@@ -49,8 +49,9 @@ vi.mock('@/land/payments/payos', () => ({
   }),
 }))
 
+// Single unified mock for @/seed/db/client — includes from/createServerClient AND getD1
 vi.mock('@/seed/db/client', () => {
-  let queryBuilder: any;
+  let queryBuilder: any
   const mockDb = {
     from: vi.fn((table: string) => {
       queryBuilder = {
@@ -59,18 +60,16 @@ vi.mock('@/seed/db/client', () => {
         _updates: undefined as Record<string, unknown> | undefined,
         _filters: [] as Array<{ col: string; val: unknown }>,
         insert: vi.fn(async (row: any) => {
-  console.log("[DEBUG insert] table=" + table + " eventId=" + (row.event_id ?? "n/a"))
           if (table === 'payos_events') {
             if (mockDbEvents.has(row.event_id)) {
               return { error: new Error('UNIQUE constraint failed') }
             }
             mockDbEvents.set(row.event_id, { ...row })
-    console.log("[DEBUG insert] STORED. size=" + mockDbEvents.size + " keys=" + JSON.stringify([...mockDbEvents.keys()]))
             return { error: null }
           }
           return { error: null }
         }),
-        select: vi.fn((cols?: string) => {
+        select: vi.fn((_cols?: string) => {
           queryBuilder._action = 'select'
           return queryBuilder
         }),
@@ -83,7 +82,7 @@ vi.mock('@/seed/db/client', () => {
           queryBuilder._action = 'delete'
           return queryBuilder
         }),
-  limit: vi.fn(() => queryBuilder),
+        limit: vi.fn(() => queryBuilder),
         eq: vi.fn((col: string, val: any) => {
           if (!queryBuilder._filters) queryBuilder._filters = []
           queryBuilder._filters.push({ col, val })
@@ -100,13 +99,13 @@ vi.mock('@/seed/db/client', () => {
           if (table === 'org_members') {
             return { data: orgIdForUser ? { org_id: orgIdForUser } : null, error: null }
           }
- if (table === 'pending_orders') {
- const allOrders: any[] = []
- for (const [uid, orders] of mockPendingOrders.entries()) {
- allOrders.push(...orders.map((o: any) => ({ ...o, user_id: uid })))
- }
- return { data: allOrders, error: null }
- }
+          if (table === 'pending_orders') {
+            const allOrders: any[] = []
+            for (const [uid, orders] of mockPendingOrders.entries()) {
+              allOrders.push(...orders.map((o: any) => ({ ...o, user_id: uid })))
+            }
+            return { data: allOrders, error: null }
+          }
           if (table === 'subscriptions') {
             return { data: existingSubId ? { id: existingSubId } : null, error: null }
           }
@@ -130,14 +129,14 @@ vi.mock('@/seed/db/client', () => {
           if (selectFailMode) throw new Error('SELECT failed')
           const eventIdFilter = queryBuilder._filters?.find((f: any) => f.col === 'event_id')
           const row = eventIdFilter ? mockDbEvents.get(eventIdFilter.val) : null
-          return { data: row ? { processed: row.processed } : null, error: null }
+          return { data: row ? [{ processed: row.processed }] : [], error: null }
         }
-if (table === 'payos_events' && queryBuilder._action === 'delete') {
-  const eventIdFilter = queryBuilder._filters?.find((f: any) => f.col === 'event_id')
-  if (eventIdFilter) mockDbEvents.delete(eventIdFilter.val)
-    return { error: null }
-}
- if (table === 'payos_events' && queryBuilder._action === 'update') {
+        if (table === 'payos_events' && queryBuilder._action === 'delete') {
+          const eventIdFilter = queryBuilder._filters?.find((f: any) => f.col === 'event_id')
+          if (eventIdFilter) mockDbEvents.delete(eventIdFilter.val)
+          return { error: null }
+        }
+        if (table === 'payos_events' && queryBuilder._action === 'update') {
           const eventIdFilter = queryBuilder._filters?.find((f: any) => f.col === 'event_id')
           if (eventIdFilter) {
             const row = mockDbEvents.get(eventIdFilter.val)
@@ -156,29 +155,36 @@ if (table === 'payos_events' && queryBuilder._action === 'delete') {
       return queryBuilder
     }),
     createServerClient: vi.fn(() => mockDb),
-    getD1: vi.fn(() => { if (processShouldThrow) throw new Error('D1 connection failure'); return mockDb }),
-    getD1Raw: vi.fn(async () => {
+    getD1: vi.fn(() => {
       if (processShouldThrow) throw new Error('D1 connection failure')
       return {
         prepare: vi.fn((sql: string) => {
           const stmt: any = {
             _sql: sql,
             _bindArgs: undefined as string[] | undefined,
-            bind: vi.fn(function(this: any, ...args: any[]) {
+            bind: vi.fn(function (this: any, ...args: any[]) {
               this._bindArgs = args
               return this
             }),
             all: vi.fn(async () => {
-              const eventId = stmt._bindArgs?.[0]
-              const isDup = eventId && mockDbEvents.has(eventId)
-              if (!isDup && eventId) {
-                mockDbEvents.set(eventId, {
-                  event_id: eventId,
-                  processed: 0,
-                  amount: stmt._bindArgs?.[3] || 0,
-                  status: stmt._bindArgs?.[2] || 'PAID',
-                })
-                return { results: [{ event_id: eventId, processed: 0 }], success: true }
+              const sqlLower = (stmt._sql || '').toLowerCase()
+              const tableMatch = sqlLower.match(/(?:insert into|update|select|delete from)\s+(\w+)/)
+              const qTable = tableMatch ? tableMatch[1] : ''
+              if (qTable === 'payos_events') {
+                const eventId = stmt._bindArgs?.[0]
+                const isDup = eventId && mockDbEvents.has(eventId)
+                if (!isDup && eventId) {
+                  mockDbEvents.set(eventId, {
+                    event_id: eventId, processed: 0,
+                    amount: stmt._bindArgs?.[3] || 0,
+                    status: stmt._bindArgs?.[2] || 'PAID',
+                  })
+                  return { results: [{ event_id: eventId, processed: 0 }], success: true }
+                }
+                return { results: [], success: true }
+              }
+              if (qTable === 'subscriptions' && sqlLower.includes('insert')) {
+                return { results: [{ processed: 0 }], success: true }
               }
               return { results: [], success: true }
             }),
@@ -193,16 +199,10 @@ if (table === 'payos_events' && queryBuilder._action === 'delete') {
               }
               return null
             }),
-  batch: vi.fn(async (stmts: any[]) => {
-    return stmts.map(s => s)
-  }),
+            batch: vi.fn(async (stmts: any[]) => stmts.map(s => s)),
             run: vi.fn(async () => ({ success: true })),
           }
           return stmt
-        }),
-        batch: vi.fn(async (stmts: any[]) => {
-          if (batchFailMode) throw new Error('Batch statement error')
-          return []
         }),
       }
     }),
@@ -244,12 +244,11 @@ describe('POST /api/payos/ipn', () => {
 
   it('successfully processes new webhook and locks it', async () => {
     mockPendingOrders.set('user123', [
-      { order_id: 'sophia_user123_123', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly' }
+      { order_id: 'sophia_user123_123', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly' },
     ])
 
     const req = makeRequest({ orderCode: 123456, amount: 4975000, success: true })
     const res = await POST(req)
-// Event state verified below
     expect(res.status).toBe(200)
 
     const event = mockDbEvents.get('payos_123456')
@@ -291,7 +290,7 @@ describe('POST /api/payos/ipn', () => {
 
   it('releases lock and returns 400 when amount mismatches expected tier price', async () => {
     mockPendingOrders.set('user123', [
-      { order_id: 'sophia_user123_123', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly' }
+      { order_id: 'sophia_user123_123', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly' },
     ])
 
     const req = makeRequest({ orderCode: 123456, amount: 10000, success: true })
@@ -300,7 +299,6 @@ describe('POST /api/payos/ipn', () => {
     const body = await res.json() as any
     expect(body.error).toBe('Amount mismatch')
 
-    // Lock must be deleted
     expect(mockDbEvents.has('payos_123456')).toBe(false)
   })
 
@@ -313,13 +311,12 @@ describe('POST /api/payos/ipn', () => {
     const body = await res.json() as any
     expect(body.error).toBe('No pending orders')
 
-    // Lock must be deleted
     expect(mockDbEvents.has('payos_123456')).toBe(false)
   })
 
   it('releases lock and returns 500 when downstream processing throws an exception', async () => {
     mockPendingOrders.set('user123', [
-      { order_id: 'sophia_user123_123', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly' }
+      { order_id: 'sophia_user123_123', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly' },
     ])
     batchFailMode = true
 
@@ -327,13 +324,12 @@ describe('POST /api/payos/ipn', () => {
     const res = await POST(req)
     expect(res.status).toBe(500)
 
-    // Lock must be deleted
     expect(mockDbEvents.has('payos_123456')).toBe(false)
   })
 
   it('successfully processes cancelled payment and marks order failed', async () => {
     mockPendingOrders.set('user123', [
-      { order_id: 'sophia_user123_123', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly' }
+      { order_id: 'sophia_user123_123', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly' },
     ])
 
     const req = makeRequest({ orderCode: 123456, amount: 4975000, success: false })
