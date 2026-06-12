@@ -17,7 +17,7 @@ import { buildOfferKeyboard, formatOfferList, extractOfferIdFromCallback } from 
 // affiliate program lookup as a domain primitive (not a workflow). The refactor
 // (move affiliate lookup to forest layer + inject into FSM) is tracked as future
 // work — see handover-260513-0549-gap-90to100.md CA-2.
-import { getTopPrograms, getProgramById } from '@/land/affiliates';
+import { getTopPrograms, getProgramById } from '@/tree/affiliates';
 import { getUserProfile, mapTier, type CampaignFsmContext } from '@/tree/telegram/telegram-bot-campaign-fsm-helpers';
 import { insertCampaignWithOffer } from '@/tree/telegram/telegram-bot-campaign-fsm-confirm';
 
