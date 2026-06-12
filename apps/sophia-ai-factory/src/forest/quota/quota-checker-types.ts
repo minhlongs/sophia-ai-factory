@@ -1,4 +1,9 @@
-import type { QuotaCheckResult } from '@/forest/usage-metering/types';
+/**
+ * Quota checker types
+ *
+ * Backward compat: QuotaCheckResult re-exported from seed/types/ (canonical location).
+ */
+import type { QuotaCheckResult } from '@/seed/types/quota-types';
 
 export type ExceededType = 'hourly_credits' | 'daily_credits' | 'monthly_credits' | 'daily_requests';
 

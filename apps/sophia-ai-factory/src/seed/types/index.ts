@@ -177,3 +177,11 @@ export interface Campaign {
   created_at: string;
   updated_at: string;
 }
+
+// ── Cross-layer types (moved from forest/land to seed for layer compliance) ──
+
+export type { AiService, UsageEventInput, UsageEventDB } from './ai-service';
+export type { ChannelProvider, PublishStatus, ChannelStatus, PublishMeta, MetricsJson, Publisher } from './channel-provider';
+export type { QuotaLimit, QuotaCheckResult, CreditRule, ExportOptions } from './quota-types';
+export type { CachedQuota, QuotaCheckContext, QuotaConfig } from './quota-types';
+export { D1Events } from './d1-events';
