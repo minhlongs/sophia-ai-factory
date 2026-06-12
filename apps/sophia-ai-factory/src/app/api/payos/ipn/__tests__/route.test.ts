@@ -157,54 +157,61 @@ vi.mock('@/seed/db/client', () => {
     createServerClient: vi.fn(() => mockDb),
     getD1: vi.fn(() => {
       if (processShouldThrow) throw new Error('D1 connection failure')
-      return {
-        prepare: vi.fn((sql: string) => {
-          const stmt: any = {
-            _sql: sql,
-            _bindArgs: undefined as string[] | undefined,
-            bind: vi.fn(function (this: any, ...args: any[]) {
-              this._bindArgs = args
-              return this
-            }),
-            all: vi.fn(async () => {
-              const sqlLower = (stmt._sql || '').toLowerCase()
-              const tableMatch = sqlLower.match(/(?:insert into|update|select|delete from)\s+(\w+)/)
-              const qTable = tableMatch ? tableMatch[1] : ''
-              if (qTable === 'payos_events') {
-                const eventId = stmt._bindArgs?.[0]
-                const isDup = eventId && mockDbEvents.has(eventId)
-                if (!isDup && eventId) {
-                  mockDbEvents.set(eventId, {
-                    event_id: eventId, processed: 0,
-                    amount: stmt._bindArgs?.[3] || 0,
-                    status: stmt._bindArgs?.[2] || 'PAID',
-                  })
-                  return { results: [{ event_id: eventId, processed: 0 }], success: true }
-                }
-                return { results: [], success: true }
-              }
-              if (qTable === 'subscriptions' && sqlLower.includes('insert')) {
-                return { results: [{ processed: 0 }], success: true }
+      const d1Root: any = {
+        batch: vi.fn(async (stmts: any[]) => {
+          if (batchFailMode) throw new Error('batch failed')
+          return stmts.map((s: any) => ({ success: true, ...s }))
+        }),
+        run: vi.fn(async () => ({ success: true })),
+        exec: vi.fn(async () => ({ success: true })),
+      }
+      d1Root.prepare = vi.fn((sql: string) => {
+        const stmt: any = {
+          _sql: sql,
+          _bindArgs: undefined as string[] | undefined,
+          bind: vi.fn(function (this: any, ...args: any[]) {
+            this._bindArgs = args
+            return this
+          }),
+          all: vi.fn(async () => {
+            const sqlLower = (stmt._sql || '').toLowerCase()
+            const tableMatch = sqlLower.match(/(?:insert into|update|select|delete from)\s+(\w+)/)
+            const qTable = tableMatch ? tableMatch[1] : ''
+            if (qTable === 'payos_events') {
+              const eventId = stmt._bindArgs?.[0]
+              const isDup = eventId && mockDbEvents.has(eventId)
+              if (!isDup && eventId) {
+                mockDbEvents.set(eventId, {
+                  event_id: eventId, processed: 0,
+                  amount: stmt._bindArgs?.[3] || 0,
+                  status: stmt._bindArgs?.[2] || 'PAID',
+                })
+                return { results: [{ event_id: eventId, processed: 0 }], success: true }
               }
               return { results: [], success: true }
-            }),
-            first: vi.fn(async () => {
-              if (stmt._sql.includes('payos_events') && stmt._sql.includes('processed')) {
-                if (selectFailMode) throw new Error('SELECT failed')
-                const eventId = stmt._bindArgs?.[0]
-                if (eventId) {
-                  const row = mockDbEvents.get(eventId)
-                  if (row) return { processed: row.processed }
-                }
+            }
+            if (qTable === 'subscriptions' && sqlLower.includes('insert')) {
+              return { results: [{ processed: 0 }], success: true }
+            }
+            return { results: [], success: true }
+          }),
+          first: vi.fn(async () => {
+            if (stmt._sql.includes('payos_events') && stmt._sql.includes('processed')) {
+              if (selectFailMode) throw new Error('SELECT failed')
+              const eventId = stmt._bindArgs?.[0]
+              if (eventId) {
+                const row = mockDbEvents.get(eventId)
+                if (row) return { processed: row.processed }
               }
-              return null
-            }),
-            batch: vi.fn(async (stmts: any[]) => stmts.map(s => s)),
-            run: vi.fn(async () => ({ success: true })),
-          }
-          return stmt
-        }),
-      }
+            }
+            return null
+          }),
+          batch: vi.fn(async (stmts: any[]) => stmts.map(s => s)),
+          run: vi.fn(async () => ({ success: true })),
+        }
+        return stmt
+      })
+      return d1Root
     }),
   }
   return mockDb

@@ -1,4 +1,4 @@
-process.env.PAYOS_CHECKSUM_KEY = 'test-checksum-key'
+vi.hoisted(() => { process.env.PAYOS_CHECKSUM_KEY = 'test-checksum-key' })
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
@@ -82,7 +82,8 @@ vi.mock('@/seed/db/client', () => {
           this._action = 'delete'
           return this
         },
-        async then(resolve: any) {
+        then(resolve: any, reject: any) {
+          const result = (() => {
           // Handle payos_events INSERT (lock acquisition)
           if (this._table === 'payos_events' && this._action === 'insert') {
             if (selectFailMode) throw new Error('SELECT failed')
@@ -171,23 +172,76 @@ vi.mock('@/seed/db/client', () => {
             }
             return { error: null }
           }
+          // Handle payos_events UPDATE (mark processed)
+          if (this._table === 'payos_events' && this._action === 'update') {
+            const eventIdFilter = this._filters?.find((f: any) => f.col === 'event_id')
+            if (eventIdFilter) {
+              const row = mockDbEvents.get(eventIdFilter.val)
+              if (row) {
+                Object.assign(row, this._updates)
+                mockDbEvents.set(eventIdFilter.val, row)
+              }
+            }
+            return { error: null }
+          }
           return { data: [], error: null }
+          })()
+          resolve(result)
         },
       }
       return queryBuilder
     }),
-    prepare(sql: string) {
-      return {
+  }
+  const d1Root: any = {
+    batch: vi.fn(async (stmts: any[]) => {
+      if (batchFailMode) throw new Error('batch failed')
+      return stmts.map((s: any) => ({ success: true, ...s }))
+    }),
+    run: vi.fn(async () => ({ success: true })),
+    exec: vi.fn(async () => ({ success: true })),
+    prepare: vi.fn((sql: string) => {
+      const stmt: any = {
+        _sql: sql,
         bind(...args: any[]) {
-          return {
-            first() { return Promise.resolve(null) },
-            all() { return Promise.resolve({ results: [], error: null }) },
+          stmt._bindArgs = args
+          return stmt
+        },
+        first() {
+          if (stmt._sql?.includes('subscriptions') && stmt._sql?.includes('SELECT')) {
+            return Promise.resolve(existingSubId ? { id: existingSubId } : null)
           }
+          if (stmt._sql?.includes('payos_events') && stmt._sql?.includes('SELECT')) {
+            const eventId = stmt._bindArgs?.[0]
+            const row = eventId ? mockDbEvents.get(eventId) : null
+            return Promise.resolve(row ? { processed: row.processed } : null)
+          }
+          return Promise.resolve(null)
+        },
+        all() {
+          if (stmt._sql?.toLowerCase().includes('insert into payos_events')) {
+            const eventId = stmt._bindArgs?.[0]
+            if (!eventId) return Promise.resolve({ results: [], error: null })
+            if (mockDbEvents.has(eventId)) return Promise.resolve({ results: [], error: null })
+            const row = {
+              event_id: eventId,
+              order_code: stmt._bindArgs?.[1],
+              status: stmt._bindArgs?.[2],
+              amount: stmt._bindArgs?.[3],
+              currency: stmt._bindArgs?.[4],
+              payload: stmt._bindArgs?.[5],
+              processed: 0,
+              created_at: stmt._bindArgs?.[6],
+            }
+            mockDbEvents.set(eventId, row)
+            return Promise.resolve({ results: [row], error: null })
+          }
+          return Promise.resolve({ results: [], error: null })
         },
       }
-    },
+      return stmt
+    }),
   }
-  return { createServerClient: vi.fn(() => mockDb), getD1: vi.fn(() => mockDb.prepare('')) }
+  return { createServerClient: vi.fn(() => mockDb), getD1: vi.fn(() => d1Root) }
 })
 
 // Mock audit log
@@ -219,14 +273,11 @@ describe('PayOS IPN Debug', () => {
 
   it('successfully processes new webhook', async () => {
     mockPendingOrders.set('user123', [
-      { order_id: 'sophia_user123_123', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly' },
+      { order_id: 'sophia_user123_123', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly', payment_method: 'payos', status: 'pending' },
     ])
 
     const req = makeRequest({ orderCode: 123456, amount: 4975000, success: true })
     const res = await POST(req)
-    console.log('STATUS:', res.status)
-    console.log('BODY:', await res.json())
-
     expect(res.status).toBe(200)
 
     const event = mockDbEvents.get('payos_123456')
