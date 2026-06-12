@@ -5,8 +5,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const store = {
-  milestones: new Map<string, { milestone: string; achieved_at: string; achieved_by: string; notes: string | null }[]>(),
-  tenants: new Map<string, { onboarding_status: string; onboarding_progress_pct: number; onboarding_paused_reason: string | null; created_at: string }>(),
+  _extra: true as boolean,
+  milestones: new Map<string, { milestone: string; achieved_at: string; achieved_by: string; notes: string | null; tenant_id?: string }[]>(),
+  tenants: new Map<string, { id?: string; onboarding_status: string; onboarding_progress_pct: number; onboarding_paused_reason: string | null; created_at: string }>(),
 };
 
 function buildMockDb() {

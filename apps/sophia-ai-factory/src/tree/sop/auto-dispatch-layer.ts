@@ -13,7 +13,7 @@
  * so the rest of the system stays unchanged.
  */
 
-import { routeLLM } from '@/land/openclaw/llm-router';
+import { routeLLM } from '@/tree/openclaw';
 import { logger } from '@/seed/utils/logger-utility';
 
 // ---------------------------------------------------------------------------
