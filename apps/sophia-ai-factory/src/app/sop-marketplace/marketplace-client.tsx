@@ -21,6 +21,8 @@ type Template = {
   shortDescription: string;
 };
 
+export type { Template };
+
 type Props = {
   initialTemplates: Template[];
   categories: readonly string[];

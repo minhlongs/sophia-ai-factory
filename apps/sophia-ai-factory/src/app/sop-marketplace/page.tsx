@@ -5,7 +5,7 @@
  * and renders a searchable / filterable card grid via MarketplaceClient.
  */
 import { Metadata } from 'next';
-import MarketplaceClient from './marketplace-client';
+import MarketplaceClient, { type Template } from './marketplace-client';
 
 export const metadata: Metadata = {
   title: 'SOP Marketplace | Sophia AI Factory',
@@ -26,18 +26,16 @@ const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number];
 
-type PageTemplate = Record<string, unknown>;
-
 export default async function SopMarketplacePage() {
-  let templates: PageTemplate[] = [];
+  let templates: Template[] = [];
   try {
     const base = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const res = await fetch(`${base}/api/sop-marketplace?limit=100`, {
       next: { revalidate: 60 },
     });
     if (res.ok) {
-      const json = (await res.json().catch(() => ({}))) as Record<string, unknown>;
-      templates = (json.templates as PageTemplate[]) ?? [];
+      const json = (await res.json().catch(() => ({}))) as { templates?: Template[] };
+      templates = json.templates ?? [];
     }
   } catch {
     templates = [];
@@ -53,7 +51,7 @@ export default async function SopMarketplacePage() {
         </p>
       </div>
 
-      <MarketplaceClient initialTemplates={templates as any} categories={CATEGORIES} />
+      <MarketplaceClient initialTemplates={templates} categories={CATEGORIES} />
     </div>
   );
 }
