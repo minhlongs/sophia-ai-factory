@@ -1,33 +1,12 @@
 /**
  * Core interfaces for the multi-channel publisher pipeline.
+ *
+ * Base types: @/seed/types/channel-provider
+ * D1 row types: defined here (forest-specific persistence shapes).
  */
+import type { ChannelProvider, PublishStatus, ChannelStatus, PublishMeta, MetricsJson, Publisher } from '@/seed/types/channel-provider';
 
-export type ChannelProvider = 'tiktok' | 'youtube' | 'instagram' | 'pinterest' | 'linkedin' | 'zalo' | 'facebook' | 'twitter' | 'threads' | 'reddit' | 'bluesky' | 'mastodon' | 'telegram';
-export type PublishStatus = 'scheduled' | 'uploading' | 'processing' | 'live' | 'failed';
-/** Channel status — 'expired' consistently (not 'suspended') */
-export type ChannelStatus = 'active' | 'disconnected' | 'expired';
-
-export interface PublishMeta {
-  caption: string;
-  hashtags: string[];
-  title?: string;
-  productLink?: string;
-}
-
-export interface MetricsJson {
-  views: number;
-  likes: number;
-  comments?: number;
-  shares?: number;
-  reach?: number;
-  [key: string]: number | string | undefined;
-}
-
-export interface Publisher {
-  upload(videoUrl: string, meta: PublishMeta): Promise<string>;
-  pollStatus(externalPostId: string): Promise<PublishStatus>;
-  getMetrics(externalPostId: string): Promise<MetricsJson>;
-}
+export { ChannelProvider, PublishStatus, ChannelStatus, PublishMeta, MetricsJson, Publisher };
 
 /** D1 row for publishing_channels table */
 export interface PublishingChannel {

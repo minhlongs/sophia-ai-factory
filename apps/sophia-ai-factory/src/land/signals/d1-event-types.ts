@@ -1,6 +1,13 @@
 /**
  * D1 Signal Layer — Event types and per-event Zod schemas
  *
+ * Backward compat: D1Events re-exported from seed/types/ (canonical location).
+ * Zod schemas remain here (land-specific).
+ */
+
+/**
+ * D1 Signal Layer — Event types and per-event Zod schemas
+ *
  * Separate from PostHog event-types.ts to avoid coupling.
  * Whitelist-based schemas prevent PII / API key leakage into props_json.
  */
