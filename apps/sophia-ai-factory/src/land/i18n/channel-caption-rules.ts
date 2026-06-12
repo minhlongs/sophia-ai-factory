@@ -12,7 +12,7 @@
  * @module lib/i18n/channel-caption-rules
  */
 
-import type { ChannelProvider } from '@/forest/publishing/publisher-interface'
+import type { ChannelProvider } from '@/seed/types/channel-provider'
 import { z } from 'zod'
 
 // ---------------------------------------------------------------------------
