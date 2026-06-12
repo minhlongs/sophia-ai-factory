@@ -106,7 +106,7 @@ const MAX_SYSTEM_PROMPT_CHARS = 8_000;
 
 export async function createAgent(params: {
   teamId: string;
-  role: 'CEO' | 'Developer';
+  role: 'CEO' | 'Developer' | 'QA' | 'Ops' | 'Marketing';
   name: string;
   systemPrompt: string;
   model?: string;
@@ -142,6 +142,32 @@ export async function getAgentById(agentId: string): Promise<Agent | null> {
     .maybeSingle();
   if (error || !data) return null;
   return mapAgent(data as unknown as AgentRow);
+}
+
+export async function updateAgent(
+  agentId: string,
+  params: {
+    name?: string;
+    systemPrompt?: string;
+    model?: string;
+    enabled?: boolean;
+  },
+): Promise<void> {
+  const db = createServerClient();
+  const update: Record<string, unknown> = {};
+  if (params.name !== undefined) update.name = params.name;
+  if (params.systemPrompt !== undefined)
+    update.system_prompt = params.systemPrompt;
+  if (params.model !== undefined) update.model = params.model;
+  if (params.enabled !== undefined) update.enabled = params.enabled ? 1 : 0;
+  const { error } = await db.from('agents').update(update).eq('id', agentId);
+  if (error) throw new Error(`updateAgent failed: ${String(error)}`);
+}
+
+export async function deleteAgent(agentId: string): Promise<void> {
+  const db = createServerClient();
+  const { error } = await db.from('agents').delete().eq('id', agentId);
+  if (error) throw new Error(`deleteAgent failed: ${String(error)}`);
 }
 
 // ── Tasks ─────────────────────────────────────────────────────────────────

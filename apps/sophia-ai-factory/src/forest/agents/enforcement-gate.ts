@@ -19,6 +19,9 @@ const TIER_ORDER: string[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
 const ROLE_MIN_TIER: Record<AgentRole, string> = {
   CEO: 'PREMIUM',
   Developer: 'PREMIUM',
+  QA: 'ENTERPRISE',
+  Ops: 'ENTERPRISE',
+  Marketing: 'ENTERPRISE',
 };
 
 /** Structured error thrown when user's tier blocks agent execution. */
