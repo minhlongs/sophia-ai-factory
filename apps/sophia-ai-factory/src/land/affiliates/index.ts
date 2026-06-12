@@ -13,7 +13,5 @@ export * from './conversion-attributor';
 export * from './dashboard-stats';
 export * from './promo-library';
 export * from './leaderboard';
-// offer-sync-cron moved to forest/jobs — re-exported for back-compat
-export { offerSyncCron } from '@/forest/jobs/offer-sync-cron';
 export * from './provider-interface';
 export * from './trending-discovery';

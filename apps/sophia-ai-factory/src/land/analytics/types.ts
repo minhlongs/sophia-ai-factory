@@ -5,8 +5,8 @@
  */
 
 // Re-export AiService from usage-metering for use in API routes
-export type { AiService } from '@/forest/usage-metering/types';
-import type { AiService } from '@/forest/usage-metering/types';
+export type { AiService } from '@/seed/types/ai-service';
+import type { AiService } from '@/seed/types/ai-service';
 
 // ============================================================================
 // Usage Metrics Types
