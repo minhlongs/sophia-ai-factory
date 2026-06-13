@@ -12,7 +12,7 @@ import { useTranslations } from 'next-intl';
 import { MissionDashboard } from '@/forest/components/raas/mission-dashboard';
 import { MissionLauncher } from '@/forest/components/raas/mission-launcher';
 import { MissionControlHeader } from '@/forest/components/missions/mission-control-header';
-import { AgentTeamPanel } from '@/forest/components/missions/agent-team-panel';
+import { AgentTeamConfigurator } from '@/forest/components/missions/agent-team-configurator';
 import { TaskFeed } from '@/forest/components/missions/task-feed';
 import { useRouter } from 'next/navigation';
 
@@ -56,7 +56,7 @@ export default function MissionsClient() {
 
       {/* Agent Team Panel + Live Task Feed */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <AgentTeamPanel />
+        <AgentTeamConfigurator />
         <TaskFeed />
       </div>
 
