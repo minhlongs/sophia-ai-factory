@@ -3375,14 +3375,6 @@
     "configure_keys": "Configure Keys",
     "order_label": "Order"
   },
-  "All settings reset to defaults": {
-    "": ""
-  },
-  "Network error": {
-    " Please try again": {
-      "": ""
-    }
-  },
   "actions": {
     "back": "Back",
     "launch": "Launch",
@@ -4189,5 +4181,7 @@
     "reason.already_redeemed": "This email has already redeemed this code.",
     "reason.user_create_failed": "Could not create account. Email may already exist — try signing in.",
     "link_generated_but_not_displayed": "Link generated but not displayed. Please check your email or contact support."
-  }
+  },
+  "All settings reset to defaults.": "All settings reset to defaults.",
+  "Network error. Please try again.": "Network error. Please try again."
 }

@@ -3026,7 +3026,8 @@
       "uploadOutro": "Tải kết thúc",
       "font": "Font chữ",
       "uploadFont": "Tải font lên",
-      "saving": "Đang lưu"
+      "saving": "Đang lưu",
+      "introPosition": "Vị trí giới thiệu"
     },
     "image": {
       "generateFirst": "Tạo ảnh đầu tiên",
@@ -3373,14 +3374,6 @@
     "go_dashboard": "Đến Dashboard",
     "configure_keys": "Cấu hình Keys",
     "order_label": "Đơn hàng"
-  },
-  "Đã đặt lại tất cả cài đặt về mặc định": {
-    "": ""
-  },
-  "Lỗi mạng": {
-    " Please try again": {
-      "": ""
-    }
   },
   "actions": {
     "back": "Back",
@@ -4189,5 +4182,13 @@
     "reason.user_create_failed": "Không tạo được tài khoản. Email có thể đã tồn tại — vui lòng đăng nhập.",
     "link_generated_but_not_displayed": "Link đã được tạo nhưng tạm thời không hiển thị. Vui lòng kiểm tra email hoặc liên hệ hỗ trợ."
   },
-  "missions": {}
+  "missions": {},
+  "All settings reset to defaults": {
+    "": "TODO"
+  },
+  "Network error": {
+    " Please try again": {
+      "": "TODO"
+    }
+  }
 }
