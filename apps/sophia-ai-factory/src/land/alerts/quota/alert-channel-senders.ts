@@ -8,7 +8,7 @@
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import { sendWebhookAlert, createQuotaThresholdPayload } from '@/forest/alerts/webhook-notification-service';
+import { sendWebhookAlert, createQuotaThresholdPayload } from '@/forest/orchestration';
 import type { AlertTemplate, QuotaAlertContext } from './alert-rule-evaluator';
 
 /**

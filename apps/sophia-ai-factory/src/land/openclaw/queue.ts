@@ -9,7 +9,7 @@
  *  - Audit log on enqueue
  */
 
-import { inngest } from '@/forest/inngest/client';
+import { inngest } from '@/forest/orchestration';
 import { audit } from './audit';
 
 export interface EnqueueOptions {

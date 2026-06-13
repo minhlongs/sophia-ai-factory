@@ -17,7 +17,7 @@ import { triggerAutoHandover } from '@/tree/handover/auto-handover'
 import { markOrderCompleted, markOrderFailed, getOrderById } from '@/land/orders/pending-order-repo'
 import { findReservedRedemption, finalizeRedemption, incrementUsedCount } from '@/land/promo/promo-repo'
 import { sendReceiptEmail } from './email/receipt-email-sender'
-import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox'
+import { enqueueWelcomeEmail } from '@/forest/orchestration'
 import { UNDERPAYMENT_THRESHOLD } from './nowpayments-ipn-underpaid'
 
 // Amount mismatch tolerance: 1% of expected price — prevents price-manipulation attacks
