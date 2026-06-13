@@ -99,4 +99,5 @@ export async function linkTelegramUser(
  */
 export async function invalidateAuthCache(_chatId: string): Promise<void> {
   // No-op: SQL storage is always current
+  void _chatId; // mark as intentionally used to satisfy linter
 }
