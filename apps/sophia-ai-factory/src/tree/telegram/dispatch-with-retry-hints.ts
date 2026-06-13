@@ -20,7 +20,7 @@ import {
   TelegramApiError,
   type TelegramPublishInput,
   type TelegramPublishResult,
-} from '@/forest/publishing/providers/telegram-publisher';
+} from '@/tree/publishing';
 import { logger } from '@/seed/utils/logger-utility';
 
 const DEFAULT_RETRY_AFTER_SEC = 60;
