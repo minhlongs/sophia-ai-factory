@@ -1,6 +1,6 @@
 import { TelegramFSM, BotState } from '@/tree/telegram/telegram-fsm-state-manager'
 import { createServerClient } from '@/seed/db/client'
-import { inngest } from '@/forest/inngest/client'
+import { inngest } from '@/tree/inngest'
 import { Tier } from '@/seed/types'
 import { backupSessionState } from '@/tree/telegram/telegram-state-backup-service'
 import { sendMessage } from '@/tree/telegram/handlers/utils'
