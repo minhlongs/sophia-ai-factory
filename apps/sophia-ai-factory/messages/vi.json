@@ -729,7 +729,34 @@
         "no_agents": "Chưa có agent nào",
         "connected": "Đã kết nối",
         "disconnected": "Mất kết nối",
-        "paused_count": "Đã dừng {count} tác vụ"
+        "paused_count": "Đã dừng {count} tác vụ",
+        "configure_team": "Cấu Hình Đội",
+        "add_agent": "Thêm Agent",
+        "create_agent_title": "Tạo Agent Mới",
+        "edit_agent_title": "Chỉnh Sửa Agent",
+        "agent_role": "Vai Trò",
+        "agent_name": "Tên Agent",
+        "agent_name_placeholder": "VD: Content Writer",
+        "system_prompt": "System Prompt",
+        "system_prompt_placeholder": "Mô tả vai trò và hành vi của agent...",
+        "model": "Model",
+        "model_placeholder": "VD: openai/gpt-4o-mini",
+        "cancel": "Hủy",
+        "create": "Tạo",
+        "save": "Lưu",
+        "agent_created": "Đã tạo agent",
+        "agent_updated": "Đã cập nhật agent",
+        "agent_enabled": "Đã bật agent",
+        "agent_disabled": "Đã tắt agent",
+        "edit": "Sửa",
+        "delete": "Xóa",
+        "delete_confirm": "Xóa agent \"{name}\"?",
+        "agent_deleted": "Đã xóa agent",
+        "role_ceo": "Giám Đốc",
+        "role_developer": "Lập Trình Viên",
+        "role_qa": "Kiểm Thử",
+        "role_ops": "Vận Hành",
+        "role_marketing": "Marketing"
       }
     },
     "apiKeys": {
@@ -4161,5 +4188,6 @@
     "reason.already_redeemed": "Email này đã sử dụng mã trước đó.",
     "reason.user_create_failed": "Không tạo được tài khoản. Email có thể đã tồn tại — vui lòng đăng nhập.",
     "link_generated_but_not_displayed": "Link đã được tạo nhưng tạm thời không hiển thị. Vui lòng kiểm tra email hoặc liên hệ hỗ trợ."
-  }
+  },
+  "missions": {}
 }

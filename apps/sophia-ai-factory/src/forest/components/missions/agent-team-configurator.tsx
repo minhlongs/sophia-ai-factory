@@ -400,7 +400,7 @@ export function AgentTeamConfigurator() {
                 variant="ghost"
                 className="h-8 w-8"
                 onClick={() => handleToggle(agent)}
-                title={agent.enabled ? t('disable') : t('enable')}
+                title={agent.enabled ? t('agent_disabled') : t('agent_enabled')}
               >
                 <Power
                   className={`w-4 h-4 ${
