@@ -31,5 +31,5 @@ export default async function RedeemPage({ params, searchParams }: Props) {
   const { code } = await searchParams;
   const isVi = locale.startsWith('vi');
 
-  return <RedeemPageClient locale={locale} isVi={isVi} initialCode={code ?? ''} />;
+  return <RedeemPageClient locale={locale} initialCode={code ?? ''} />;
 }

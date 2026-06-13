@@ -420,12 +420,13 @@ logger.warn('[NOWPayments] markOrderFailed error (non-fatal)', { orderId: ipn.or
 
 // Wire up dunning state machine — trigger grace period on payment failure (EC4)
 if (userId) {
-try {
-const db = getDb()
-const lic = await db
-.prepare('SELECT nonce, tier FROM raas_licenses WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 1')
-.bind(userId)
-.first<{ nonce: string; tier: string }>()
+  try {
+    const db = getDb()
+    const rawDb = db.unwrap()
+    const lic = await rawDb
+      .prepare('SELECT nonce, tier FROM raas_licenses WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 1')
+      .bind(userId)
+      .first<{ nonce: string; tier: string }>()
 if (lic?.nonce) {
 const { handlePaymentFailure } = await import('./dunning/dunning-actions')
 await handlePaymentFailure({

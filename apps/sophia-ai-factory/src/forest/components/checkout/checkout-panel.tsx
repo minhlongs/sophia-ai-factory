@@ -59,6 +59,10 @@ export function CheckoutPanel({
     minimumFractionDigits: 0,
   }).format(finalPriceCents / 100);
 
+  const qrCodeSrc = checkoutUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(checkoutUrl)}`
+    : "";
+
   const USD_TO_VND_DISPLAY = 25500;
   const vndAmount = Math.round(((finalPriceCents / 100) * USD_TO_VND_DISPLAY) / 1000) * 1000;
   const vndFormatted = new Intl.NumberFormat("vi-VN", {

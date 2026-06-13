@@ -38,7 +38,7 @@ vi.mock('./command-registry', () => ({
   getCommand: mockGetCommand,
 }));
 
-vi.mock('./fire-webhook', () => ({
+vi.mock('../fire-webhook', () => ({
   fireMissionWebhook: mockFireWebhook,
 }));
 
@@ -77,15 +77,22 @@ import { dispatchMission, recoverStuckMissions } from '../dispatcher';
 
 // ── Chain factory ─────────────────────────────────────────────────────────────
 
-function makeChain(singleResult: { data: unknown }): Record<string, unknown> {
-  return {
+function makeChain(singleResult: { data: unknown }): any {
+  const chain: any = {
     select: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
+    neq: vi.fn().mockReturnThis(),
     lt: vi.fn().mockReturnThis(),
+    gt: vi.fn().mockReturnThis(),
     limit: vi.fn().mockReturnThis(),
     single: vi.fn().mockResolvedValue(singleResult),
+    // Make chain thenable for cases where code awaits without .single()
+    then: vi.fn().mockImplementation((resolve) => resolve(singleResult)),
   };
+  return chain;
 }
 
 // Queue chains — called INSIDE each test after vi.clearAllMocks()

@@ -11,35 +11,9 @@ import { checkQuotaWithOverage, DEFAULT_CONFIG } from './quota-checker'
 import type { QuotaCheckContext, EnhancedQuotaCheckResult } from './quota-checker'
 import { canAccessApi } from '@/land/billing/dunning-workflow'
 import { createQuotaExceededResponse, createDunningBlockResponse } from './quota-enforcer-response'
-import {
- checkVideoQuota as atomicCheckVideoQuota,
- reserveVideoSlot as atomicReserveVideoSlot,
- VIDEO_QUOTA_BY_TIER,
-} from './video-quota'
 
 export type { QuotaExceededResponse } from './quota-enforcer-response'
 export { getQuotaStatus, getUserIdFromLicense } from './quota-enforcer-status'
-
-// Phase 11: video quota enforcement — migrated to atomic video-quota.ts
-// Compatibility wrappers preserve old API (throw on exceed) over new atomic API (return status)
-
-/** @deprecated Use atomicCheckVideoQuota from video-quota.ts directly. Throws QuotaExceededError when limit reached. */
-export async function checkVideoQuota(tenantId: string, tier: string): Promise<void> {
- const status = await atomicCheckVideoQuota(tenantId, tier)
- if (!status.allowed) {
-  throw new QuotaExceededError(
-   `Video quota exceeded: ${status.used}/${status.limit} videos this month.`,
-   tier,
-   status.limit,
-   status.used,
-  )
- }
-}
-
-/** @deprecated Use atomicReserveVideoSlot from video-quota.ts for atomic reservation. */
-export async function debitVideoQuota(tenantId: string): Promise<void> {
- await atomicReserveVideoSlot(tenantId, VIDEO_QUOTA_BY_TIER['BASIC'] ?? 0)
-}
 
 export class QuotaExceededError extends Error {
  public readonly status = 429;
