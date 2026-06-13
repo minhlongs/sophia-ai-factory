@@ -39,12 +39,6 @@ interface CampaignD1Row {
   updated_at: string;
 }
 
-interface UserProfileD1Row {
-  user_id: string;
-  subscription_tier: 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER' | null;
-  telegram_chat_id: string | null;
-}
-
 // -------------------------------------------------------------------------
 // Helpers
 // -------------------------------------------------------------------------
@@ -61,6 +55,7 @@ function getDb() {
  * Handle /campaign command — starts multi-step FSM flow (topic → audience → offer → confirm).
  */
 export async function handleCampaign(chatId: string, _topic?: string) {
+  void _topic; // reserved for future FSM resume
   try {
     await startCampaignFsm(chatId);
   } catch {
