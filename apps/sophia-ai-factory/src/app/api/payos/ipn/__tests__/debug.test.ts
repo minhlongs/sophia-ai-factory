@@ -35,7 +35,7 @@ vi.mock('@/land/payments/payos', () => ({
 
 // Shared mock state — declared OUTSIDE mock factory so test can reference it
 const mockDbEvents = new Map<string, any>()
-const mockPendingOrders = new Map<string, Array<{ order_id: string; tier: string; invoice_url: string | null; period: string }>>()
+const mockPendingOrders = new Map<string, Array<{ order_id: string; tier: string; invoice_url: string | null; period: string; status?: string; payment_method: string }>>()
 let orgIdForUser: string | null = 'org_123'
 let existingSubId: string | null = 'sub_123'
 let batchFailMode = false
@@ -273,7 +273,7 @@ describe('PayOS IPN Debug', () => {
 
   it('successfully processes new webhook', async () => {
     mockPendingOrders.set('user123', [
-      { order_id: 'sophia_user123_123', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly', payment_method: 'payos', status: 'pending' },
+      { order_id: 'sophia_user123_123', tier: 'BASIC', invoice_url: 'link_123', period: 'monthly', status: 'pending', payment_method: 'payos' },
     ])
 
     const req = makeRequest({ orderCode: 123456, amount: 4975000, success: true })

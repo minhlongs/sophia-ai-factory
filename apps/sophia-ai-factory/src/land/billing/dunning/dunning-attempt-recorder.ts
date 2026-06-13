@@ -41,7 +41,7 @@ export interface PaymentFailureContext {
   amount: number;
   currency: string;
   failureReason: string;
-  paymentProvider: 'stripe';
+  paymentProvider: 'stripe' | 'nowpayments' | 'payos';
   stripeInvoiceId?: string;
   ipAddress?: string;
   userAgent?: string;

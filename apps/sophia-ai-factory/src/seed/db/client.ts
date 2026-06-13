@@ -10,6 +10,7 @@ import { toError } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
 import type { D1Database } from '@cloudflare/workers-types';
 export type { D1Database };
+export { D1Client };
 
 // Lazy dynamic load of local D1 mock to prevent Edge runtime bundle contamination
 let getLocalD1Mock: (() => unknown) | null = null;

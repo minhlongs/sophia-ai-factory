@@ -11,7 +11,7 @@
  * Designed for use with Workers executionCtx.waitUntil().
  */
 
-import { createServerClient } from '@/seed/db/client';
+import { createServerClient, type D1Client } from '@/seed/db/client';
 import { deductCredits } from '@/land/mcu/credits-repo';
 import { getCommand } from './command-registry';
 import { fireMissionWebhook } from './fire-webhook';
@@ -33,7 +33,7 @@ interface MissionCheckpoint {
   state?: Record<string, unknown>;
 }
 
-async function saveCp(db: D1Database, missionId: string, cp: MissionCheckpoint): Promise<void> {
+async function saveCp(db: D1Client, missionId: string, cp: MissionCheckpoint): Promise<void> {
   try {
     const json = JSON.stringify(cp);
     if (json.length > 48 * 1024) {
@@ -52,7 +52,7 @@ async function saveCp(db: D1Database, missionId: string, cp: MissionCheckpoint):
   }
 }
 
-async function loadCp(db: D1Database, missionId: string): Promise<MissionCheckpoint | null> {
+async function loadCp(db: D1Client, missionId: string): Promise<MissionCheckpoint | null> {
   try {
     const { data } = await db.from('engine_missions').select('checkpoint_json').eq('id', missionId).single() as { data: { checkpoint_json: string | null } | null };
     if (data?.checkpoint_json) {
@@ -243,6 +243,11 @@ export async function dispatchMission(missionId: string): Promise<void> {
   ]);
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : 'Handler threw unexpected error';
+    if (errMsg === 'Mission handler timeout') {
+      logger.error('[Dispatcher] Mission handler timeout', { missionId });
+    } else {
+      logger.error('[Dispatcher] Handler threw unexpected error', { missionId, error: errMsg });
+    }
     handlerResult = {
       ok: false,
       error: errMsg === 'Mission handler timeout' ? 'handler_timeout' : errMsg,
