@@ -6,7 +6,7 @@
  */
 
 import { getD1Client } from '@/seed/db/client';
-import { inngest } from '@/forest/inngest/client';
+import { inngest } from '@/forest/orchestration';
 import { logger } from '@/seed/utils/logger-utility';
 import { checkVideoBudget, type RenderPath } from './cost-guardrail';
 
