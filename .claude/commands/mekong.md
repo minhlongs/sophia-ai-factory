@@ -71,6 +71,23 @@ Typical flow:
 7. `mekong-cli` runs: `mekong eval-agent cmo` → assess CMO output quality after rollout
 8. `/mekong metrics` → view unified observability dashboard (Sophia Better Stack + Mekong Grafana)
 
+## Agent Teams Routing
+
+| Sophia Team | C-Level Agents Invoked | Primary Use Case |
+|---|---|---|
+| `ceo` | `cto`, `cso`, `cmo`, `coo` | Strategic synthesis, founder decisions |
+| `marketing-team` | `cmo`, `cso` | Go-to-market campaigns, pricing, positioning |
+| `tech-team` | `cto`, `coo` | Code quality, infra, incident response |
+
+**Usage:**
+```bash
+/sophia "ceo: review Q3 roadmap with market data"
+/sophia "marketing-team: launch affiliate program"
+/sophia "tech-team: scale video pipeline to 100k users"
+```
+
+Orchestrator auto-detects `ENABLE_AGENT_TEAMS=true` and routes to team agent definitions in `.sophia-factory/agents/`.
+
 ## Observability bridge (when Docker activated on M1 Max)
 
 Sophia's Better Stack logs + Mekong's Grafana metrics CAN merge:
