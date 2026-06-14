@@ -111,6 +111,33 @@ Rationale: {1-sentence reason}
 - JWT: `eyJ[a-zA-Z0-9+/=]{20,}` → `[REDACTED-JWT]`
 - Email: `[\w.+-]+@[\w-]+\.[\w.]+` → `[REDACTED-EMAIL]`
 
+## Team Mode (Phase 07)
+
+When `ENABLE_AGENT_TEAMS=true` in `.env`, orchestrator supports team-based routing:
+
+| Team Flag | Agent Definition | Composition | Use Case |
+|-----------|------------------|-------------|----------|
+| `--team ceo` | `ceo` | Orchestrator with strategic synthesis | Complex cross-domain strategy |
+| `--team marketing` | `marketing-team` | CMO + CSO (unified) | Campaigns, pricing, messaging |
+| `--team tech` | `cto` | Direct CTO | Technical domain (no team needed) |
+| `--team ops` | `coo` | Direct COO | Operations domain (no team needed) |
+
+**Team Workflow:**
+1. Parse `--team <name>` from mekong invocation
+2. Load team definition from `.sophia-factory/agents/<team>.md`
+3. Spawn team agent (may internally spawn sub-agents per team config)
+4. Synthesize team output → founder
+
+**Fallback:** Omit `--team` or unknown team → legacy orchestrator routing (single C-Level agents).
+
+**Example:**
+```bash
+mekong --team marketing "launch Q3 campaign"
+mekong --team ceo "optimize pricing strategy"
+```
+
+---
+
 ## Escalation Rules
 
 1. If both primary + secondary return conflicting outputs → present both, ask founder to decide.
