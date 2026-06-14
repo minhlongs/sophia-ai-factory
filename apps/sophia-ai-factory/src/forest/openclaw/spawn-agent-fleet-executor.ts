@@ -9,20 +9,63 @@ import {
 } from "@/seed/validators/agent-prompt-contracts";
 import { withBreaker, BreakerOpenError, getBreakerState } from "@/seed/utils/circuit-breaker";
 import { withRetry } from "@/seed/utils/retry-with-backoff";
+import { logger } from "@/seed/utils/logger-utility";
 import type { AgentTask, AgentResult } from "./spawn-agent-fleet";
 
 export const FLEET_BREAKER = "agent-fleet";
 
-/** Local task executor — runs the task prompt through a simple handler. */
+/**
+ * OpenRouter-powered task executor — runs prompts through OpenRouter API.
+ * Falls back to stub if OPENROUTER_API_KEY is not configured (BYOK).
+ */
+import { resolveUserApiKey } from "@/tree/byok/resolve-user-api-key";
+
 export async function localExecutor(
   task: AgentTask,
-  _tenantId: string,
+  tenantId: string,
 ): Promise<unknown> {
+  const apiKey = await resolveUserApiKey(tenantId, "openrouter");
+
+  if (!apiKey) {
+    // BYOK: no key configured — return stub queued status
+    return {
+      taskId: task.id,
+      status: "queued",
+      prompt: task.prompt,
+      tier: task.tier ?? "standard",
+      note: "OpenRouter API key not configured. Configure via Setup Wizard.",
+    };
+  }
+
+  // Real LLM execution via OpenRouter
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: task.tier === "max" ? "anthropic/claude-opus-4" : "anthropic/claude-sonnet-4",
+      messages: [{ role: "user", content: task.prompt }],
+      max_tokens: 4096,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`OpenRouter API error ${response.status}: ${errorText}`);
+  }
+
+  const data = (await response.json()) as {
+    choices: Array<{ message: { content: string } }>;
+  };
+
   return {
     taskId: task.id,
-    status: "queued",
+    status: "completed",
     prompt: task.prompt,
     tier: task.tier ?? "standard",
+    output: data.choices[0]?.message?.content ?? "",
   };
 }
 
@@ -31,9 +74,16 @@ export async function runTask(
   tenantId: string,
 ): Promise<AgentResult> {
   const start = Date.now();
+  logger.info("executing_task", {
+    taskId: task.id,
+    tenantId,
+    agentRole: task.agentRole,
+    tier: task.tier,
+  });
 
   // Fail-fast if breaker is already open — no point dispatching
   if (getBreakerState(FLEET_BREAKER) === "open") {
+    logger.warn("task_skipped_breaker_open", { taskId: task.id });
     return {
       taskId: task.id,
       success: false,
@@ -64,14 +114,31 @@ export async function runTask(
       { maxRetries: 3, baseDelayMs: 1_000, maxDelayMs: 10_000 },
     );
 
+    const durationMs = Date.now() - start;
+    logger.success("task_completed", {
+      taskId: task.id,
+      agentRole: task.agentRole,
+      durationMs,
+      retryCount: attempts > 0 ? attempts - 1 : 0,
+    });
+
     return {
       taskId: task.id,
       success: true,
       output,
-      durationMs: Date.now() - start,
+      durationMs,
       retryCount: attempts > 0 ? attempts - 1 : 0,
     };
   } catch (err) {
+    const durationMs = Date.now() - start;
+    logger.error("task_failed", {
+      taskId: task.id,
+      agentRole: task.agentRole,
+      error: err instanceof Error ? err.message : String(err),
+      durationMs,
+      retryCount: attempts > 0 ? attempts - 1 : 0,
+    });
+
     return {
       taskId: task.id,
       success: false,
@@ -80,7 +147,7 @@ export async function runTask(
         : err instanceof PromptContractError
           ? `Contract validation: ${err.message}`
           : String(err),
-      durationMs: Date.now() - start,
+      durationMs,
       retryCount: attempts > 0 ? attempts - 1 : 0,
     };
   }
