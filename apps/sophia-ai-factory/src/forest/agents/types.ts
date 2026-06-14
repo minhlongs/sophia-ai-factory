@@ -3,7 +3,16 @@
  * Tables: agent_teams, agents, agent_tasks, agent_logs
  */
 
-export type AgentRole = 'CEO' | 'Developer' | 'QA' | 'Ops' | 'Marketing';
+export type AgentRole =
+  | 'CEO'
+  | 'CTO'
+  | 'CSO'
+  | 'CMO'
+  | 'COO'
+  | 'Developer'
+  | 'QA'
+  | 'Ops'
+  | 'Marketing';
 export type AgentTaskStatus = 'queued' | 'running' | 'completed' | 'failed';
 
 export interface AgentTeam {
