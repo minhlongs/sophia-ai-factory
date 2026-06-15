@@ -28,7 +28,12 @@ const nextConfig: NextConfig = {
   serverExternalPackages: [
     // Pure client-side libs (never used in server code)
     'html2canvas', 'jszip', 'framer-motion',
-    'd3', 'd3-*',
+    'd3', 'd3-*', 'recharts',
+    // Telemetry/monitoring
+    '@sentry/core', '@sentry/react', '@sentry/nextjs',
+    '@sentry/node', '@sentry/profiling',
+    // Bot/integration clients
+    'telegraf',
     // DB/cache clients that are incompatible with Cloudflare Workers
     'better-sqlite3',
     // Alternative clients not in use
