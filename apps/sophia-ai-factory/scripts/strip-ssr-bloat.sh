@@ -10,13 +10,15 @@ CHUNKS_DIR=".next/server/chunks/ssr"
 STANDALONE_CHUNKS=".next/standalone/.next/server/chunks/ssr"
 NON_SSR_CHUNKS=".next/server/chunks"
 STANDALONE_NON_SSR=".next/standalone/.next/server/chunks"
+OPENNEXT_CHUNKS=".open-next/server-functions/default/.next/server/chunks/ssr"
+OPENNEXT_NON_SSR=".open-next/server-functions/default/.next/server/chunks"
 
 strip_pattern() {
   local pattern="$1"
   local label="$2"
   local saved=0
 
-  for dir in "$CHUNKS_DIR" "$STANDALONE_CHUNKS" "$NON_SSR_CHUNKS" "$STANDALONE_NON_SSR"; do
+  for dir in "$CHUNKS_DIR" "$STANDALONE_CHUNKS" "$NON_SSR_CHUNKS" "$STANDALONE_NON_SSR" "$OPENNEXT_CHUNKS" "$OPENNEXT_NON_SSR"; do
     if [ -d "$dir" ]; then
       for f in $(find "$dir" -name "$pattern" -type f ! -name "*.map" 2>/dev/null); do
         local size=$(wc -c < "$f")
@@ -37,7 +39,7 @@ strip_by_content() {
   local min_size="${3:-100000}"
   local saved=0
 
-  for dir in "$CHUNKS_DIR" "$STANDALONE_CHUNKS" "$NON_SSR_CHUNKS" "$STANDALONE_NON_SSR"; do
+  for dir in "$CHUNKS_DIR" "$STANDALONE_CHUNKS" "$NON_SSR_CHUNKS" "$STANDALONE_NON_SSR" "$OPENNEXT_CHUNKS" "$OPENNEXT_NON_SSR"; do
     if [ -d "$dir" ]; then
       for f in $(find "$dir" -name "*.js" ! -name "*.map" -size +"${min_size}c" -type f 2>/dev/null); do
         if grep -q "$needle" "$f"; then
@@ -63,6 +65,20 @@ strip_pattern "*jszip*" "jszip"
 strip_pattern "*framer*motion*" "framer-motion"
 strip_pattern "*d3-*" "d3 (recharts dep)"
 
+# Heavy server-side libraries that can be stubbed for size reduction
+# These are only needed for specific routes; their full code bloats the default function
+strip_pattern "*telegraf*" "telegraf (Telegram bot)"
+strip_pattern "*stripe*" "stripe (payments)"
+strip_pattern "*resend*" "resend (email)"
+strip_pattern "*redis*" "redis (cache client)"
+strip_pattern "*ioredis*" "ioredis (cache client)"
+strip_pattern "*graphql*" "graphql (client library)"
+strip_pattern "*kysely*" "kysely (DB abstraction - using direct D1)"
+strip_pattern "*better-sqlite3*" "better-sqlite3 (not used on Cloudflare)"
+strip_pattern "*@upstash/redis*" "@upstash/redis (alternative redis client)"
+strip_pattern "*inngest*" "inngest (job orchestrator - uses separate functions)"
+strip_pattern "*posthog-js*" "posthog-js (analytics client)"
+
 # Heavy libs identified by content signature (filenames are hashed)
 # strip_by_content "immer-nothing" "immer" 200000
 # strip_by_content "SentryHttpInstrumentation" "sentry-sdk-heavy" 100000
@@ -74,7 +90,7 @@ strip_sentry() {
   local label="sentry-sdk"
   local saved=0
 
-  for dir in "$CHUNKS_DIR" "$STANDALONE_CHUNKS" "$NON_SSR_CHUNKS" "$STANDALONE_NON_SSR"; do
+  for dir in "$CHUNKS_DIR" "$STANDALONE_CHUNKS" "$NON_SSR_CHUNKS" "$STANDALONE_NON_SSR" "$OPENNEXT_CHUNKS" "$OPENNEXT_NON_SSR"; do
     if [ -d "$dir" ]; then
       # Only target files where sentry dominates (>90% of content). These are
       # standalone sentry chunks, not bundles mixing sentry with app code.
