@@ -26,10 +26,12 @@ const nextConfig: NextConfig = {
   // M1 16GB workaround: reactCompiler doubles webpack memory pressure. Disable when SKIP_RC=1.
   reactCompiler: process.env.SKIP_RC === '1' ? false : true,
   serverExternalPackages: [
-    'redis', 'ioredis', '@redis/client',
-    'html2canvas', 'recharts', 'jszip',
-    'framer-motion', 'd3', 'd3-*',
+    // Pure client-side libs (never used in server code)
+    'html2canvas', 'jszip', 'framer-motion',
+    'd3', 'd3-*',
+    // DB/cache clients that are incompatible with Cloudflare Workers
     'better-sqlite3',
+    // Alternative clients not in use
     '@upstash/redis',
   ],
   experimental: {
