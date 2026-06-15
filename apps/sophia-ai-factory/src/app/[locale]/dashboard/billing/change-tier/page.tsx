@@ -9,7 +9,7 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
-import { ChangeTierClient } from '@/components/billing/change-tier-client';
+import ChangeTierClient from '@/components/billing/change-tier-client';
 
 interface PageProps {
   params: Promise<{ locale: string }>;

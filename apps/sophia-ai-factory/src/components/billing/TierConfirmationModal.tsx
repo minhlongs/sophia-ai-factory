@@ -12,7 +12,8 @@ import {
 } from '@/seed/components/ui/dialog';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { UNIFIED_TIERS } from '@/seed/config/tiers';
-import type { Tier, ChangeTierTiming } from '@/seed/types';
+import type { Tier } from '@/seed/types';
+import type { ChangeTierTiming } from '@/app/actions/billing';
 
 interface TierConfirmationModalProps {
   open: boolean;
@@ -31,6 +32,8 @@ const TIER_LOSS_KEYS: Record<Tier, string[]> = {
   ENTERPRISE: ['lose_enterprise_unlimited', 'lose_enterprise_integrations', 'lose_enterprise_seo', 'lose_enterprise_strategy'],
   MASTER: ['lose_master_lifetime', 'lose_master_vip', 'lose_master_all'],
 };
+
+const BASIC: Tier = 'BASIC';
 
 function LoseItem({ text }: { text: string }) {
   return (
@@ -52,7 +55,7 @@ export default function TierConfirmationModal({
   submitting,
 }: TierConfirmationModalProps) {
   const t = useTranslations('dashboard.billing.changeTier');
-  const tierLabel = UNIFIED_TIERS[selectedTier ?? BASIC]?.label ?? selectedTier;
+  const tierLabel = UNIFIED_TIERS[selectedTier ?? BASIC]?.name ?? selectedTier;
   const lossKeys = selectedTier ? TIER_LOSS_KEYS[selectedTier] ?? TIER_LOSS_KEYS.BASIC : [];
 
   function handleClose() {

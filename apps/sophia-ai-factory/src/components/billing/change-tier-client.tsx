@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { Button } from '@/seed/components/ui/button';
 import { Card, CardContent } from '@/seed/components/ui/card';
 import { CheckCircle2, Loader2, ArrowUpRight } from 'lucide-react';
 import { changeTierAction, type ChangeTierTiming } from '@/app/actions/billing';
@@ -120,11 +121,11 @@ export default function ChangeTierClient({ currentTier }: { currentTier: Tier })
             <p className="text-xs text-muted-foreground">{t('master_hint')}</p>
           </div>
           <a href="/pricing" className="shrink-0">
-            <button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" asChild>
               <a href="/pricing">
                 {t('master_cta')} <ArrowUpRight className="ml-1 h-3.5 w-3.5" aria-hidden="true" />
               </a>
-            </button>
+            </Button>
           </a>
         </CardContent>
       </Card>
@@ -198,7 +199,9 @@ export default function ChangeTierClient({ currentTier }: { currentTier: Tier })
         currentTier={currentTier}
         timing={timing}
         onTimingChange={setTiming}
-        onConfirm={() => selectedTier && void submit(selectedTier, timing)}
+        onConfirm={async () => {
+          if (selectedTier) await submit(selectedTier, timing);
+        }}
         submitting={submitState.status === 'loading'}
       />
     </>

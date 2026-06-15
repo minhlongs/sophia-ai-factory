@@ -16,6 +16,8 @@ import { getActivationFunnel } from '@/land/analytics/funnel-stats';
 import AdminAlertsStrip from '@/components/admin/AdminAlertsStrip';
 import AdminStatsCard from '@/components/admin/AdminStatsCard';
 import AdminQuickTools from '@/components/admin/AdminQuickTools';
+import type { PanelRow } from '@/components/admin/AdminStatsCard';
+import type { ComponentType } from 'react';
 import { AlertTriangle, Activity, BarChart2, Coins, Database, Inbox, KeyRound, ServerCog, Webhook } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -117,15 +119,15 @@ export default async function AdminHomePage() {
     });
   }
 
-  const statsCards = [
+  const statsCards: Array<{ icon: ComponentType<{ className?: string }>; title: string; href: string; rows: PanelRow[] }> = [
     {
       icon: ServerCog,
       title: 'Crons',
       href: '/dashboard/admin/crons',
       rows: [
-        ['Tracked', crons.length.toString()],
-        ['Failing', failingCrons.toString(), failingCrons > 0 ? 'bad' : 'ok'],
-        ['Stale (>24h)', staleCrons.toString(), staleCrons > 0 ? 'warn' : 'ok'],
+        { label: 'Tracked', value: crons.length.toString() },
+        { label: 'Failing', value: failingCrons.toString(), tone: failingCrons > 0 ? 'bad' : 'ok' },
+        { label: 'Stale (>24h)', value: staleCrons.toString(), tone: staleCrons > 0 ? 'warn' : 'ok' },
       ],
     },
     {
@@ -133,9 +135,9 @@ export default async function AdminHomePage() {
       title: 'Email outbox',
       href: '/dashboard/admin/email-outbox',
       rows: [
-        ['Sent', String(outbox?.totals.find((t) => t.status === 'sent')?.count ?? 0)],
-        ['Pending', String(outbox?.totals.find((t) => t.status === 'pending')?.count ?? 0)],
-        ['Failed', String(failedOutbox), failedOutbox > 0 ? 'bad' : 'ok'],
+        { label: 'Sent', value: String(outbox?.totals.find((t) => t.status === 'sent')?.count ?? 0) },
+        { label: 'Pending', value: String(outbox?.totals.find((t) => t.status === 'pending')?.count ?? 0) },
+        { label: 'Failed', value: String(failedOutbox), tone: failedOutbox > 0 ? 'bad' : 'ok' },
       ],
     },
     {
@@ -143,9 +145,9 @@ export default async function AdminHomePage() {
       title: 'Webhook deliveries',
       href: '/dashboard/admin/webhook-deliveries',
       rows: [
-        ['Active endpoints', `${webhooks?.endpoints.activeEndpoints ?? 0} / ${webhooks?.endpoints.totalEndpoints ?? 0}`],
-        ['Dead-letter', String(deadLetters), deadLetters > 0 ? 'bad' : 'ok'],
-        ['Unhealthy', String(unhealthy), unhealthy > 0 ? 'warn' : 'ok'],
+        { label: 'Active endpoints', value: `${webhooks?.endpoints.activeEndpoints ?? 0} / ${webhooks?.endpoints.totalEndpoints ?? 0}` },
+        { label: 'Dead-letter', value: String(deadLetters), tone: deadLetters > 0 ? 'bad' : 'ok' },
+        { label: 'Unhealthy', value: String(unhealthy), tone: unhealthy > 0 ? 'warn' : 'ok' },
       ],
     },
     {
@@ -153,9 +155,9 @@ export default async function AdminHomePage() {
       title: 'R2 storage',
       href: '/dashboard/admin/storage',
       rows: [
-        ['Tenants', (storage?.global.tenantCount ?? 0).toString()],
-        ['Total', fmtBytes(storage?.global.totalBytes ?? 0)],
-        ['Stale', String(staleStorage), staleStorage > 0 ? 'warn' : 'ok'],
+        { label: 'Tenants', value: (storage?.global.tenantCount ?? 0).toString() },
+        { label: 'Total', value: fmtBytes(storage?.global.totalBytes ?? 0) },
+        { label: 'Stale', value: String(staleStorage), tone: staleStorage > 0 ? 'warn' : 'ok' },
       ],
     },
     {
@@ -163,9 +165,9 @@ export default async function AdminHomePage() {
       title: 'Provider cost (30d)',
       href: '/dashboard/admin/cost',
       rows: [
-        ['Spent', fmtUsd(cost?.global.totalCostUsd ?? 0)],
-        ['Monthly projection', fmtUsd(cost?.monthlyProjectionUsd ?? 0)],
-        ['Jobs billed', (cost?.global.jobCount ?? 0).toString()],
+        { label: 'Spent', value: fmtUsd(cost?.global.totalCostUsd ?? 0) },
+        { label: 'Monthly projection', value: fmtUsd(cost?.monthlyProjectionUsd ?? 0) },
+        { label: 'Jobs billed', value: (cost?.global.jobCount ?? 0).toString() },
       ],
     },
     {
@@ -173,9 +175,9 @@ export default async function AdminHomePage() {
       title: 'Activation funnel (30d)',
       href: '/dashboard/admin/funnel',
       rows: [
-        ['Signups', (funnel?.signups ?? 0).toString()],
-        ['First video', `${funnel?.firstVideo ?? 0} (${pctRow(funnel?.conversions.loginToVideo ?? 0)})`],
-        ['First conversion', `${funnel?.firstConversion ?? 0} (${pctRow(funnel?.conversions.videoToConversion ?? 0)})`],
+        { label: 'Signups', value: (funnel?.signups ?? 0).toString() },
+        { label: 'First video', value: `${funnel?.firstVideo ?? 0} (${pctRow(funnel?.conversions.loginToVideo ?? 0)})` },
+        { label: 'First conversion', value: `${funnel?.firstConversion ?? 0} (${pctRow(funnel?.conversions.videoToConversion ?? 0)})` },
       ],
     },
   ];

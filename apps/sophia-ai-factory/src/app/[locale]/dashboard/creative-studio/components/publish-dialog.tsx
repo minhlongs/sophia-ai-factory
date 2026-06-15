@@ -34,7 +34,7 @@ export function PublishDialog({ videoId, videoUrl, videoTitle }: PublishDialogPr
   const t = useTranslations('publish');
   const [open, setOpen] = useState(false);
   const [platforms, setPlatforms] = useState<Array<{ platform: string; channelName: string | null }>>([]);
-  const [selectedPlatform, setSelectedPlatform] = useState<string>('youtube');
+  const [selectedPlatform, setSelectedPlatform] = useState<'youtube' | 'tiktok' | 'instagram'>('youtube');
   const [title, setTitle] = useState(videoTitle ?? '');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
@@ -46,7 +46,10 @@ export function PublishDialog({ videoId, videoUrl, videoTitle }: PublishDialogPr
   useEffect(() => {
     if (open) {
       getConnectedPlatformsAction().then((res) => {
-        if (res.success) setPlatforms(res.data);
+        if (res.success && res.data) {
+          // Cast platform to the expected union type (backend returns string)
+          setPlatforms(res.data as Array<{ platform: 'youtube' | 'tiktok' | 'instagram'; channelName: string | null }>);
+        }
       });
     }
   }, [open]);
@@ -58,7 +61,7 @@ export function PublishDialog({ videoId, videoUrl, videoTitle }: PublishDialogPr
     const result = await publishVideoAction({
       videoId,
       videoUrl,
-      platform: selectedPlatform as 'youtube' | 'tiktok' | 'instagram',
+      platform: selectedPlatform,
       title,
       description,
       tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
@@ -110,7 +113,7 @@ export function PublishDialog({ videoId, videoUrl, videoTitle }: PublishDialogPr
                         key={p.platform}
                         variant={selectedPlatform === p.platform ? 'default' : 'outline'}
                         size="sm"
-                        onClick={() => setSelectedPlatform(p.platform)}
+                        onClick={() => setSelectedPlatform(p.platform as 'youtube' | 'tiktok' | 'instagram')}
                         className="gap-1"
                       >
                         <Icon className="w-3 h-3" />

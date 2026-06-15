@@ -1,11 +1,10 @@
 'use client';
 
-import { useActionState } from 'react-dom';
-import type { ReactNode } from 'react';
+import { useActionState, type ReactNode } from 'react';
 
 interface FormProps {
   /** Server Action to call on form submission */
-  action: (formData: FormData) => Promise<{ success?: boolean; message?: string } | void>;
+  action: (formData: FormData) => Promise<{ success?: boolean; message?: string } | void | null>;
   /** Form content */
   children: ReactNode;
   /** Optional CSS class for the form element */
@@ -17,7 +16,7 @@ interface FormProps {
  *
  * Features:
  * - Automatically displays non-field errors from action response
- * - Uses React DOM's useActionState for progressive enhancement
+ * - Uses React's useActionState for progressive enhancement
  * - Consistent error styling across forms
  *
  * @example
@@ -29,7 +28,17 @@ interface FormProps {
  * ```
  */
 export function Form({ action, children, className }: FormProps) {
-  const [state, formAction] = useActionState(action, null);
+  // Wrapper that adapts (formData) => result to (state, formData) => result
+  const adaptedAction = async (
+    _state: { success?: boolean; message?: string } | null,
+    formData: FormData
+  ): Promise<{ success?: boolean; message?: string } | null> => {
+    const result = await action(formData);
+    // Normalize: treat undefined/void as null (no message to display)
+    return result ?? null;
+  };
+
+  const [state, formAction] = useActionState(adaptedAction, null);
 
   return (
     <form action={formAction} className={className}>

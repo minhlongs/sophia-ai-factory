@@ -12,7 +12,7 @@ import { toError } from '@/seed/utils/to-error';
 /**
  * Internal session shape from Better Auth
  */
-interface BetterAuthSession {
+export interface BetterAuthSession {
   user: {
     id: string;
     email?: string;
@@ -22,7 +22,7 @@ interface BetterAuthSession {
   };
   session: {
     id: string;
-    expiresAt?: string | number;
+    expiresAt?: number;
     // ... other fields not needed for middleware
   };
 }
@@ -47,9 +47,21 @@ export async function getSessionFromRequest(
       return { authenticated: false };
     }
 
+    // Normalize expiresAt to number (timestamp) if it's a Date
+    const rawSession = result.session;
+    const expiresAt = rawSession.expiresAt instanceof Date
+      ? rawSession.expiresAt.getTime()
+      : (rawSession.expiresAt as number | undefined);
+
     return {
       authenticated: true,
-      session: result as BetterAuthSession,
+      session: {
+        ...result,
+        session: {
+          ...rawSession,
+          expiresAt,
+        },
+      } as BetterAuthSession,
     };
   } catch (error) {
     logger.error('[Middleware Auth] Session check failed:', toError(error));
