@@ -10,6 +10,7 @@ import {
   buildScriptUserPrompt,
   SCRIPT_SYSTEM_PROMPT,
   type AffiliateOfferCta,
+  type ScriptOutput,
 } from './script-prompt-builders';
 
 export type { ScriptOutput } from './script-prompt-builders';
@@ -120,11 +121,13 @@ export async function generateScript(input: GenerateScriptInput) {
       creditsUsed: 1, // rough estimate
     });
 
-    if (!parsed.title || !Array.isArray(parsed.scenes) || parsed.scenes.length === 0) {
+    // Validate structure (type narrowing)
+    const validated = parsed as unknown as { title: string; scenes: Array<{ narration: string }> };
+    if (!validated.title || !Array.isArray(validated.scenes) || validated.scenes.length === 0) {
       throw new Error('Invalid script format from API');
     }
 
-    return parsed;
+    return parsed as ScriptOutput;
 
   } catch (error) {
     const responseTime = stopTimer();

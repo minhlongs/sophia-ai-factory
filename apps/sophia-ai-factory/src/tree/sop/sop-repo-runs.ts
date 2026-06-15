@@ -9,8 +9,6 @@
  */
 
 import type { SopRunRow, UpdateRunFields } from './sop-types';
-import { logger } from '@/seed/utils/logger-utility';
-import { getErrorMessage } from '@/seed/utils/to-error';
 
 function nowSec(): number { return Math.floor(Date.now() / 1000); }
 function genId(): string { return crypto.randomUUID().replace(/-/g, ''); }
