@@ -97,7 +97,7 @@ describe('generateScript — Phase 7B BYOK wire', () => {
     })
 
     expect(out).toEqual(expect.objectContaining({
-      script: expect.stringContaining('golang'),
+      title: expect.stringContaining('golang'),
     }))
   }, 15000)
 })
