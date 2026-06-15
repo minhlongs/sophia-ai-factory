@@ -58,7 +58,7 @@ describe('enhanceNicheScoreWithAI()', () => {
       status: 200,
       headers: { get: () => null },
       json: async () => ({ choices: [{ message: { content: '72' } }] }),
-    } as Response);
+    } as unknown as Response);
 
     const score = await enhanceNicheScoreWithAI(program, 'fintech');
 
@@ -75,7 +75,7 @@ describe('enhanceNicheScoreWithAI()', () => {
       status: 200,
       headers: { get: () => null },
       json: async () => ({ choices: [{ message: { content: '91' } }] }),
-    } as Response);
+    } as unknown as Response);
 
     const score = await enhanceNicheScoreWithAI(program, 'fintech', 'user-xyz');
 
