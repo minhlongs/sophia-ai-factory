@@ -39,15 +39,15 @@ const nextConfig: NextConfig = {
     // Alternative clients not in use
     '@upstash/redis',
   ],
-  experimental: {
-    optimizePackageImports: [
-      'better-auth', 'date-fns', 'lucide-react', 'zod',
-      '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu',
-      '@radix-ui/react-popover', '@radix-ui/react-select', '@radix-ui/react-tabs',
-      '@radix-ui/react-tooltip', '@tanstack/react-query',
-      'cmdk', 'sonner', 'next-intl',
-    ],
-  },
+  // experimental: {
+  //   optimizePackageImports: [
+  //     'better-auth', 'date-fns', 'lucide-react', 'zod',
+  //     '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu',
+  //     '@radix-ui/react-popover', '@radix-ui/react-select', '@radix-ui/react-tabs',
+  //     '@radix-ui/react-tooltip', '@tanstack/react-query',
+  //     'cmdk', 'sonner', 'next-intl',
+  //   ],
+  //   },
   typescript: {
     // Gated by scripts/deploy-with-sha.sh Step 0.5 (`npm run type-check`).
     // Next's in-build typecheck is redundant once the gate runs — and was the
