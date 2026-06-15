@@ -10,13 +10,14 @@ const config = {
       proxyExternalRequest: "fetch",
       incrementalCache: "dummy",
       tagCache: d1NextTagCache,
-      // Externalize heavy client-only packages (not needed on server)
+      // Externalize heavy/unused packages (external = keep as require() at runtime)
       external: [
         "html2canvas", "recharts", "jszip", "framer-motion",
         "d3", "d3-*",
         "telegraf",
         "@sentry/core", "@sentry/react", "@sentry/nextjs", "@sentry/node",
         "better-sqlite3",
+        "@upstash/redis", "upstash", "uncrypto",
       ],
     },
   },
