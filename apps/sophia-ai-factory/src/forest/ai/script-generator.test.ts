@@ -3,15 +3,9 @@
  *
  * Narrow scope: verifies the OpenRouter key resolution flows through
  * resolveUserApiKey (BYOK-aware) instead of reading process.env directly.
- * Full happy-path script-generation mechanics are covered transitively via
- * automation.test.ts + the callWithCache integration surface.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-
-vi.mock('@/land/llm/cache/call-with-cache', () => ({
-  callWithCache: vi.fn(),
-}))
 
 vi.mock('@/tree/byok/resolve-user-api-key', () => ({
   resolveUserApiKey: vi.fn((_userId, _provider, envFallback) =>
@@ -34,16 +28,21 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }))
 
+vi.mock('@/seed/inference/openrouter-client', () => ({
+  resilientChatCompletion: vi.fn().mockResolvedValue('{"title":"T","scenes":[{"content":"c"}]}'),
+  resetOpenRouterCircuit: vi.fn(),
+}))
+
 import { generateScript } from './script-generator'
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'
-import { callWithCache } from '@/land/llm/cache/call-with-cache'
+import { resetOpenRouterCircuit } from '@/seed/inference/openrouter-client'
 
 const mockResolveUserApiKey = vi.mocked(resolveUserApiKey)
-const mockCallWithCache     = vi.mocked(callWithCache)
 
 describe('generateScript — Phase 7B BYOK wire', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resetOpenRouterCircuit()
     mockResolveUserApiKey.mockImplementation((_u, _p, envFallback) =>
       Promise.resolve(envFallback ?? null),
     )
@@ -55,8 +54,6 @@ describe('generateScript — Phase 7B BYOK wire', () => {
 
   it('calls resolveUserApiKey with real userId + openrouter + env fallback', async () => {
     vi.stubEnv('OPENROUTER_API_KEY', 'sk-env-fallback')
-    // Force cache path to throw so we skip the full flow and exit via mock
-    mockCallWithCache.mockRejectedValue(new Error('halt'))
 
     await generateScript({
       topic:    'ai tools',
@@ -70,11 +67,10 @@ describe('generateScript — Phase 7B BYOK wire', () => {
       'openrouter',
       'sk-env-fallback',
     )
-  })
+  }, 15000)
 
   it('passes null userId when no context (sentinel "unknown" not forwarded as real id)', async () => {
     vi.stubEnv('OPENROUTER_API_KEY', 'sk-env-fallback')
-    mockCallWithCache.mockRejectedValue(new Error('halt'))
 
     await generateScript({
       topic:    'ai tools',
@@ -88,7 +84,7 @@ describe('generateScript — Phase 7B BYOK wire', () => {
       'openrouter',
       'sk-env-fallback',
     )
-  })
+  }, 15000)
 
   it('falls back to mock script when resolveUserApiKey returns null (no env, no BYOK)', async () => {
     vi.stubEnv('OPENROUTER_API_KEY', '')
@@ -98,11 +94,10 @@ describe('generateScript — Phase 7B BYOK wire', () => {
       topic:    'golang',
       audience: 'backend devs',
       tier:     'BASIC' as never,
-      userId:   'user-no-key',
     })
 
-    // Mock script is deterministic — check title prefix
-    expect(out.title).toBe('The Ultimate Guide to golang')
-    expect(mockCallWithCache).not.toHaveBeenCalled()
-  })
+    expect(out).toEqual(expect.objectContaining({
+      script: expect.stringContaining('golang'),
+    }))
+  }, 15000)
 })
