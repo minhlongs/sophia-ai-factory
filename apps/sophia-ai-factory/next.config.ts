@@ -44,21 +44,11 @@ const nextConfig: NextConfig = {
     // DB/cache clients that are incompatible with Cloudflare Workers
     'better-sqlite3',
   ],
-} as any;
-  // experimental: {
-  //   optimizePackageImports: [
-  //     'better-auth', 'date-fns', 'lucide-react', 'zod',
-  //     '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu',
-  //     '@radix-ui/react-popover', '@radix-ui/react-select', '@radix-ui/react-tabs',
-  //     '@radix-ui/react-tooltip', '@tanstack/react-query',
-  //     'cmdk', 'sonner', 'next-intl',
-  //   ],
-  //   },
+  // Gated by scripts/deploy-with-sha.sh Step 0.5 (`npm run type-check`).
+  // Next's in-build typecheck is redundant once the gate runs — and was the
+  // M1 16GB OOM trigger during deploy:full. Removing it from the inner build
+  // requires the deploy script to enforce tsc --noEmit BEFORE next build.
   typescript: {
-    // Gated by scripts/deploy-with-sha.sh Step 0.5 (`npm run type-check`).
-    // Next's in-build typecheck is redundant once the gate runs — and was the
-    // M1 16GB OOM trigger during deploy:full. Removing it from the inner build
-    // requires the deploy script to enforce tsc --noEmit BEFORE next build.
     ignoreBuildErrors: true,
   },
   images: {
@@ -74,14 +64,11 @@ const nextConfig: NextConfig = {
       }
     ],
   },
-  // Wave 12 G1: zod tree-shaking via optimizePackageImports above.
-  // resolve.dedupe is not a valid webpack field — removed (was a no-op).
-  // Actual zod savings come from Next.js experimental.optimizePackageImports.
-  async redirects() {
+  // Auth aliases — /signup intentionally NOT redirected: [locale]/signup/page.tsx
+  // handles it with query-param preservation (affiliate refs, tab=signup).
+  // A blanket next.config redirect strips locale AND query params.
+  redirects() {
     return [
-      // Auth aliases — /signup intentionally NOT redirected: [locale]/signup/page.tsx
-      // handles it with query-param preservation (affiliate refs, tab=signup).
-      // A blanket next.config redirect strips locale AND query params.
       { source: '/register', destination: '/login', permanent: false, locale: false },
       { source: '/sign-up', destination: '/login', permanent: false, locale: false },
       { source: '/signin', destination: '/login', permanent: false, locale: false },
@@ -105,7 +92,7 @@ const nextConfig: NextConfig = {
       // Locale prefix always present via next-intl localePrefix: 'always'.
     ];
   },
-  async headers() {
+  headers() {
     return [
       // Immutable cache for hashed static assets (CDN Layer 9)
       {
@@ -174,7 +161,7 @@ const nextConfig: NextConfig = {
       }
     ];
   },
-};
+} as any;
 
 const composedConfig = withPWA(withAnalyzer(withNextIntl(nextConfig)));
 
