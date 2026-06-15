@@ -45,6 +45,15 @@ const config = {
       converter: "edge",
       proxyExternalRequest: "fetch",
       incrementalCache: "dummy",
+      // Also externalize from middleware bundle
+      external: [
+        "html2canvas", "recharts", "jszip", "framer-motion",
+        "d3", "d3-*",
+        "telegraf",
+        "@sentry/*",
+        "better-sqlite3",
+        "@upstash/redis", "upstash", "uncrypto",
+      ],
     },
   },
   // Disable config validation due to known tagCache type issue in ensure-cf-config.js
