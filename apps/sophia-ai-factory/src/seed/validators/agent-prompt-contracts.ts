@@ -9,7 +9,7 @@
  */
 
 import { z } from 'zod';
-import type { AgentRole } from '@/seed/types/multi-agent';
+import type { SOPAgentRole } from '@/seed/types/multi-agent';
 
 // ---------------------------------------------------------------------------
 // Base schema — fields common to all roles
@@ -79,7 +79,7 @@ export const supervisorSchema = promptContractBase.extend({
 // Role → schema lookup map
 // ---------------------------------------------------------------------------
 
-const ROLE_SCHEMAS: Record<AgentRole, z.ZodTypeAny> = {
+const ROLE_SCHEMAS: Record<SOPAgentRole, z.ZodTypeAny> = {
   supervisor: supervisorSchema,
   script_writer: scriptWriterSchema,
   voice_generator: voiceGeneratorSchema,
@@ -98,7 +98,7 @@ const ROLE_SCHEMAS: Record<AgentRole, z.ZodTypeAny> = {
  */
 export class PromptContractError extends Error {
   constructor(
-    public readonly role: AgentRole,
+    public readonly role: SOPAgentRole,
     public readonly issues: z.ZodIssue[],
   ) {
     const summary = issues
@@ -122,7 +122,7 @@ export class PromptContractError extends Error {
  * @throws         PromptContractError with field-level details on failure
  */
 export function validatePromptContract(
-  role: AgentRole,
+  role: SOPAgentRole,
   contract: unknown,
 ): Record<string, unknown> {
   const schema = ROLE_SCHEMAS[role];

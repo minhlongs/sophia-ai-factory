@@ -4,7 +4,7 @@
  * @module seed/db/repositories/sop-template-repo
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type { SOPGraph } from '@/seed/types/sop-dag';
@@ -59,7 +59,9 @@ export async function createTemplate(params: {
   name: string; description?: string; graphJson: SOPGraph;
   category?: string; createdBy: string;
 }): Promise<string> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const id = crypto.randomUUID();
   const now = Math.floor(Date.now() / 1000);
 
@@ -86,7 +88,9 @@ export async function createTemplate(params: {
 /** Fetch template by ID. Parses graph_json. Returns null if not found or on error. */
 export async function getTemplate(id: string): Promise<SopTemplateRow | null> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
     const raw = await db
       .prepare(
         `SELECT id, name, description, graph_json, version, is_active,
@@ -110,7 +114,9 @@ export async function listTemplates(opts: {
   activeOnly?: boolean; limit?: number;
 } = {}): Promise<SopTemplateSummary[]> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
     const conditions: string[] = [];
     const bindings: unknown[] = [];
     let idx = 1;
@@ -147,7 +153,9 @@ export async function updateTemplate(
   id: string,
   updates: { name?: string; description?: string; graphJson?: SOPGraph; category?: string; isActive?: boolean },
 ): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000);
   const sets: string[] = ['updated_at = ?1'];
   const bindings: unknown[] = [now];
@@ -172,7 +180,9 @@ export async function updateTemplate(
 
 /** Archive a template (is_active = 0). Preserves history. Throws on D1 error. */
 export async function deactivateTemplate(id: string): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000);
 
   await db

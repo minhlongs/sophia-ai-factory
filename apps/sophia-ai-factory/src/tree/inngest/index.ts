@@ -1,1 +1,2 @@
-export { inngest } from '@/forest/inngest/client';
+// Tree wrapper — redirect through local module
+export * from './client';

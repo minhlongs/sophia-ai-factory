@@ -106,7 +106,7 @@ const MAX_SYSTEM_PROMPT_CHARS = 8_000;
 
 export async function createAgent(params: {
   teamId: string;
-  role: 'CEO' | 'Developer' | 'QA' | 'Ops' | 'Marketing';
+  role: 'CEO' | 'CTO' | 'CSO' | 'CMO' | 'COO' | 'Developer' | 'QA' | 'Ops' | 'Marketing';
   name: string;
   systemPrompt: string;
   model?: string;

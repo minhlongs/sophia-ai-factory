@@ -5,5 +5,5 @@
  * Re-exports from land/openclaw (canonical implementation).
  */
 export { routeLLM } from '@/land/openclaw/llm-router';
-export { spawnAgentFleet } from '@/land/openclaw/spawn-agent-fleet';
-export type { AgentTask } from '@/land/openclaw/spawn-agent-fleet';
+export { spawnAgentFleet } from '@/forest/openclaw/spawn-agent-fleet';
+export type { AgentTask } from '@/forest/openclaw/spawn-agent-fleet';

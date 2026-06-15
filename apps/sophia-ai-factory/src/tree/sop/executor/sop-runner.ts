@@ -13,12 +13,12 @@ import { getInstallation } from '../sop-repo-installations';
 import { getTemplateById } from '../sop-repo-templates';
 import { createRun, updateRunStatus, appendMissionId } from '../sop-repo-runs';
 import { advanceSchedule } from '../sop-repo-installations';
-import { parseAgentsYaml } from './agents-yaml-parser';
+import { parseAgentsYaml } from '@/seed/sop/executor/agents-yaml-parser';
 import { parsePlaybook } from './playbook-parser';
 import { validateOutput } from './output-validator';
 import { resolveArgs } from './arg-resolver';
-import type { RunContext, RunResult, StepResult } from './types';
-import { StepFailed } from './types';
+import type { RunContext, RunResult, StepResult } from '@/seed/sop/executor/types';
+import { StepFailed } from '@/seed/sop/executor/types';
 import type { SopCustomizations } from '../sop-types';
 
 function nowSec(): number { return Math.floor(Date.now() / 1000); }

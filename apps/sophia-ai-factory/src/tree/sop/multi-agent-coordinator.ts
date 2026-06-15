@@ -5,10 +5,10 @@
  * Layer: tree (domain-reusable, imports seed only)
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
-import type { AgentRole, AgentSessionWithTasks } from '@/seed/types/multi-agent'
+import type { SOPAgentRole, AgentSessionWithTasks } from '@/seed/types/multi-agent'
 import { rowToSession, rowToTask, nowSec, buildSettleSessionStmt } from './multi-agent-coordinator-helpers'
 export { saveCheckpoint, loadCheckpoint } from './multi-agent-coordinator-checkpoint'
 
@@ -25,7 +25,8 @@ export async function createSession(params: {
   supervisorAgent?: string
   config?: Record<string, unknown>
 }): Promise<string> {
-  const db = await getD1Raw()
+  const db = getD1()
+  if (!db) throw new Error('D1 database binding not available')
   const id = crypto.randomUUID()
   const ts = nowSec()
 
@@ -64,11 +65,12 @@ export async function createSession(params: {
  */
 export async function assignTask(params: {
   sessionId: string
-  agentRole: AgentRole
+  agentRole: SOPAgentRole
   stepIndex: number
   input?: Record<string, unknown>
 }): Promise<string> {
-  const db = await getD1Raw()
+  const db = getD1()
+  if (!db) throw new Error('D1 database binding not available')
   const taskId = crypto.randomUUID()
   const ts = nowSec()
 
@@ -109,7 +111,8 @@ export async function assignTask(params: {
  * Increments session completed_count; settles session when all workers are done.
  */
 export async function completeTask(taskId: string, output: Record<string, unknown>): Promise<void> {
-  const db = await getD1Raw()
+  const db = getD1()
+  if (!db) throw new Error('D1 database binding not available')
   const ts = nowSec()
 
   try {
@@ -139,7 +142,8 @@ export async function completeTask(taskId: string, output: Record<string, unknow
  * Increments session failed_count; settles session when all workers are done.
  */
 export async function failTask(taskId: string, errorMessage: string): Promise<void> {
-  const db = await getD1Raw()
+  const db = getD1()
+  if (!db) throw new Error('D1 database binding not available')
   const ts = nowSec()
 
   try {
@@ -172,7 +176,8 @@ export async function failTask(taskId: string, errorMessage: string): Promise<vo
  * Return the session record with all its task assignments.
  */
 export async function getSessionStatus(sessionId: string): Promise<AgentSessionWithTasks> {
-  const db = await getD1Raw()
+  const db = getD1()
+  if (!db) throw new Error('D1 database binding not available')
 
   try {
     const [sessionRow, taskResults] = await Promise.all([
@@ -197,7 +202,8 @@ export async function getSessionStatus(sessionId: string): Promise<AgentSessionW
  * Cancel a session — marks all pending/running tasks as 'cancelled' and the session itself.
  */
 export async function cancelSession(sessionId: string): Promise<void> {
-  const db = await getD1Raw()
+  const db = getD1()
+  if (!db) throw new Error('D1 database binding not available')
   const ts = nowSec()
 
   try {

@@ -15,7 +15,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { setUserCredential } from '@/tree/credentials/user-credentials-repo'
 import { registerHeyGenWebhook } from '@/land/heygen/webhook-registrar'
 import { logger } from '@/seed/utils/logger-utility'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox'
 import type { ProviderType } from '@/tree/credentials/user-credentials-repo'
 import { sanitizeCredential } from '@/tree/byok/key-format-validators'
@@ -114,7 +114,9 @@ export async function POST(request: NextRequest) {
 
   // Mark onboarding complete in DB (primary) — cookie fallback handled by /api/setup/save
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+    if (!_db) throw new Error('D1 unavailable');
+    const db = _db;
     const nowSec = Math.floor(Date.now() / 1000)
     await db
       .prepare('UPDATE user_profiles SET onboarding_completed_at = ? WHERE user_id = ?')

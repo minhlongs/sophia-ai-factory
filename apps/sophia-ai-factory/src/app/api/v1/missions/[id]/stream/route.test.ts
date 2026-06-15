@@ -30,6 +30,7 @@ vi.mock('@/forest/missions/api-key-auth', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: () => ({ from: mockDbFrom }),
 }));
 

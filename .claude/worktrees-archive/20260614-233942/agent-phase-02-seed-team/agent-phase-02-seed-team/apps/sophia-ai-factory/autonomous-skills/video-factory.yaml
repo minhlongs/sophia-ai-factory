@@ -1,0 +1,62 @@
+name: sophia-video-factory
+description: |
+  A skill for interacting with the Sophia AI Video Factory.
+  Allows agents to generate video scripts, create videos from scripts, and retrieve performance statistics.
+  This skill integrates with the n8n automation pipeline and Airtable backend.
+
+commands:
+  - name: generate-script
+    description: Generate a short video script for TikTok/Reels using AI
+    arguments:
+      topic:
+        type: string
+        description: The main topic or hook of the video (e.g., "5 tips for productivity", "Why AI is the future")
+        required: true
+      audience:
+        type: string
+        description: Target audience for the video (e.g., "Students", "Entrepreneurs", "Gamers")
+        required: true
+      tier:
+        type: string
+        description: The user subscription tier (BASIC, PREMIUM, ENTERPRISE)
+        required: false
+        default: "BASIC"
+      userId:
+        type: string
+        description: The ID of the user requesting the script
+        required: true
+
+  - name: create-video
+    description: Create a video from an approved script using AI avatars
+    arguments:
+      scriptId:
+        type: string
+        description: The ID of the script record in Airtable
+        required: true
+      avatarId:
+        type: string
+        description: ID of the avatar to use (optional, uses default if omitted)
+        required: false
+
+  - name: get-stats
+    description: Retrieve ROI and performance statistics for a specific user
+    arguments:
+      userId:
+        type: string
+        description: The ID of the user
+        required: true
+      period:
+        type: string
+        description: Time period for stats (last_7_days, last_30_days, all_time)
+        required: false
+        default: "last_30_days"
+
+example_usage: |
+  # Generate a script about AI
+  /skill:sophia-video-factory:generate-script topic="How to use ChatGPT for coding" audience="Developers" userId="user_123"
+
+  # Create video from script
+  /skill:sophia-video-factory:create-video scriptId="rec123456789"
+
+  # Check stats
+  /skill:sophia-video-factory:get-stats userId="user_123" period="last_30_days"

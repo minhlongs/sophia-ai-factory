@@ -16,6 +16,7 @@
 import { z } from 'zod'
 import { logger } from '@/seed/utils/logger-utility'
 import { enforceCharCap } from './channel-caption-rules'
+import { resilientChatCompletion } from '@/seed/inference/openrouter-client'
 
 // ---------------------------------------------------------------------------
 // Schema + Types
@@ -50,7 +51,6 @@ export interface TranslateCaptionResult {
 // ---------------------------------------------------------------------------
 
 const CACHE_TTL_SECONDS = 2_592_000 // 30 days
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 // Use haiku for cost efficiency; openrouter/auto also acceptable
 const TRANSLATION_MODEL = 'anthropic/claude-haiku-4-5'
 
@@ -107,25 +107,7 @@ async function getKv(): Promise<KVNamespace | null> {
 // OpenRouter translation call
 // ---------------------------------------------------------------------------
 
-interface OpenRouterChoice {
-  message: { content: string | null }
-}
-
-async function fetchWithTimeout(
-  input: RequestInfo,
-  init: RequestInit & { timeoutMs?: number },
-): Promise<Response> {
-  const { timeoutMs = 20_000, ...rest } = init
-  const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), timeoutMs)
-  try {
-    return await fetch(input, { ...rest, signal: controller.signal })
-  } finally {
-    clearTimeout(timer)
-  }
-}
-
-async function callOpenRouter(
+async function translateWithOpenRouter(
   source: string,
   targetLocale: string,
   apiKey: string,
@@ -137,45 +119,24 @@ Rules:
 - Preserve emojis
 - Keep brand names, product names, URLs unchanged
 - Match the tone: casual for social, professional for LinkedIn
-- Return ONLY the translated caption text, nothing else`
+- Return ONLY the translated caption text, nothing else`;
 
   try {
-    const res = await fetchWithTimeout(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://sophia.agencyos.network',
-        'X-Title': 'Sophia AI Factory — Caption Translator',
-      },
-      body: JSON.stringify({
+    const content = await resilientChatCompletion(
+      `System: ${systemPrompt}\n\nUser: ${source}`,
+      {
+        openRouterKey: apiKey,
+        anthropicKey: undefined,
+        enableFallback: false,
         model: TRANSLATION_MODEL,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: source },
-        ],
-        max_tokens: 500,
-        temperature: 0.3,
-      }),
-      timeoutMs: 20_000,
-    })
-
-    if (!res.ok) {
-      const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } }
-      logger.warn(
-        `[caption-translator] OpenRouter error ${res.status}: ${err.error?.message ?? 'unknown'}`,
-      )
-      return null
-    }
-
-    const data = (await res.json()) as { choices?: OpenRouterChoice[] }
-    const text = data.choices?.[0]?.message?.content?.trim()
-    return text ?? null
+      }
+    );
+    return content.trim() || null;
   } catch (err) {
     logger.warn(
-      `[caption-translator] OpenRouter call failed: ${err instanceof Error ? err.message : String(err)}`,
-    )
-    return null
+      `[caption-translator] Translation failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return null;
   }
 }
 
@@ -240,7 +201,7 @@ export async function translateCaption(
   }
 
   // Call OpenRouter
-  const translated = await callOpenRouter(source, targetLocale, byokKey)
+  const translated = await translateWithOpenRouter(source, targetLocale, byokKey)
 
   if (!translated) {
     return {

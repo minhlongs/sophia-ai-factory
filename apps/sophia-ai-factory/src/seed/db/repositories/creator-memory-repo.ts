@@ -17,7 +17,7 @@
  * @module seed/db/repositories/creator-memory-repo
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type {
@@ -42,7 +42,9 @@ export async function addMemory(params: {
   sourceExecutionId?: string;
   expiresAt?: number;
 }): Promise<string> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const id = crypto.randomUUID();
   const now = Date.now();
 
@@ -97,7 +99,9 @@ export async function getRelevantMemories(
   },
 ): Promise<CreatorMemoryDbRow[]> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const now = Date.now();
 
     const conditions: string[] = [
@@ -158,7 +162,9 @@ export async function updateMemoryRelevance(
   id: string,
   relevanceScore: number,
 ): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const clamped = Math.max(0.0, Math.min(1.0, relevanceScore));
   const now = Date.now();
 
@@ -184,7 +190,9 @@ export async function updateMemoryRelevance(
  */
 export async function pruneExpiredMemories(): Promise<number> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const now = Date.now();
 
     const result = await db

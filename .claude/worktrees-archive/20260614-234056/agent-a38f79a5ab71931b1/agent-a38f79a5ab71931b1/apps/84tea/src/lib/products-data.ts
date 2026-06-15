@@ -1,0 +1,137 @@
+export const products = [
+  {
+    id: "tra-shan-6",
+    slug: "tra-shan-6",
+    name: "Shan Tuyết Cổ Thụ",
+    nameEn: "Ancient Shan Tuyet",
+    category: "84 LIMITED",
+    weight: "6g",
+    price: 35,
+    priceVnd: 500000,
+    description: "Trà lên men từ cây cổ thụ 100+ năm",
+    descriptionFull:
+      "Được hái từ cây trà cổ thụ Shan Tuyết trên 100 năm tuổi, lên men theo phương pháp truyền thống. Hương vị đậm đà, thanh mát với notes trái cây và hoa.",
+    origin: "Tây Bắc, Việt Nam",
+    altitude: "1,500m",
+    harvest: "Xuân 2025",
+    brewing: "90°C, 3-5 phút, 3-5 lần pha",
+    featured: true,
+    hero: true,
+    image: "🍵",
+    benefits: [
+      "Giàu probiotics tự nhiên",
+      "Tăng cường miễn dịch",
+      "Hỗ trợ tiêu hóa",
+      "Năng lượng bền vững",
+    ],
+  },
+  {
+    id: "tra-luc-80",
+    slug: "tra-luc-80",
+    name: "Lục Trà Cổ Thụ",
+    nameEn: "Ancient Green Tea",
+    category: "CLASSIC",
+    weight: "80g",
+    price: 25,
+    priceVnd: 350000,
+    description: "Trà xanh tươi mát, bổ dưỡng",
+    descriptionFull:
+      "Lục trà từ búp non cây cổ thụ, không lên men. Giữ nguyên màu xanh tự nhiên và hàm lượng antioxidant cao.",
+    origin: "Tây Bắc, Việt Nam",
+    altitude: "1,200m",
+    harvest: "Xuân 2025",
+    brewing: "80°C, 2-3 phút, 2-3 lần pha",
+    featured: true,
+    hero: false,
+    image: "🌿",
+    benefits: ["Chống oxy hóa mạnh", "Tăng tập trung", "Giảm stress", "Đẹp da"],
+  },
+  {
+    id: "tra-co-80",
+    slug: "tra-co-80",
+    name: "Trà Cổ Thụ Lên Men",
+    nameEn: "Fermented Ancient Tea",
+    category: "PREMIUM",
+    weight: "80g",
+    price: 45,
+    priceVnd: 650000,
+    description: "Trà lên men vùng cao nguyên",
+    descriptionFull:
+      "Trà từ cây cổ thụ vùng cao 1,500m, lên men 6 tháng. Vị ngọt hậu, hương trầm ấm.",
+    origin: "Cao nguyên, Việt Nam",
+    altitude: "1,500m",
+    harvest: "Thu 2024",
+    brewing: "95°C, 5-7 phút, 5-7 lần pha",
+    featured: true,
+    hero: false,
+    image: "🏔️",
+    benefits: [
+      "Probiotics sống",
+      "Cải thiện tiêu hóa",
+      "Giảm cholesterol",
+      "Tốt cho tim mạch",
+    ],
+  },
+  {
+    id: "tra-banh",
+    slug: "tra-banh",
+    name: "Men Sống Bánh",
+    nameEn: "Living Culture Cake",
+    category: "84 LIMITED",
+    weight: "357g",
+    price: 65,
+    priceVnd: 950000,
+    description: "Bánh trà truyền thống, quà tặng cao cấp",
+    descriptionFull:
+      "Bánh trà nén theo phương pháp cổ truyền, có thể bảo quản và ủ thêm theo thời gian.",
+    origin: "Tây Bắc, Việt Nam",
+    altitude: "1,400m",
+    harvest: "2024",
+    brewing: "100°C, 7-10 phút, 10+ lần pha",
+    featured: false,
+    hero: false,
+    image: "🎁",
+    benefits: [
+      "Ủ được theo thời gian",
+      "Quà tặng cao cấp",
+      "Giá trị tăng theo năm",
+      "Hương vị phức hợp",
+    ],
+  },
+  {
+    id: "tra-soi",
+    slug: "tra-soi",
+    name: "Trà Sợi Thượng Hạng",
+    nameEn: "Premium Loose Leaf",
+    category: "CLASSIC",
+    weight: "100g",
+    price: 28,
+    priceVnd: 400000,
+    description: "Trà sợi rời, tiện lợi sử dụng",
+    descriptionFull:
+      "Trà sợi rời đóng gói tiện lợi, phù hợp cho sử dụng hàng ngày.",
+    origin: "Tây Bắc, Việt Nam",
+    altitude: "1,000m",
+    harvest: "Xuân 2025",
+    brewing: "85°C, 3-4 phút, 3-4 lần pha",
+    featured: false,
+    hero: false,
+    image: "🍃",
+    benefits: [
+      "Tiện lợi hàng ngày",
+      "Giá trị tốt",
+      "Chất lượng ổn định",
+      "Phù hợp gia đình",
+    ],
+  },
+];
+
+export type Product = (typeof products)[0];
+
+export function getProductBySlug(slug: string): Product | undefined {
+  return products.find((p) => p.slug === slug);
+}
+
+export function getFeaturedProducts(): Product[] {
+  return products.filter((p) => p.featured);
+}

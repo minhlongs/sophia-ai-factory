@@ -26,7 +26,7 @@ function makeD1Mock(overrides?: {
 }
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
 }))
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -49,9 +49,9 @@ vi.mock('@/tree/byok/resolve-user-api-key', () => ({
 // Global fetch mock
 const globalFetch = global.fetch;
 
-async function getD1RawMock() {
-  const { getD1Raw } = await import('@/seed/db/client')
-  return getD1Raw as ReturnType<typeof vi.fn>
+async function getD1Mock() {
+  const { getD1 } = await import('@/seed/db/client')
+  return getD1 as ReturnType<typeof vi.fn>
 }
 
 describe('performance-feedback-engine', () => {
@@ -63,8 +63,8 @@ describe('performance-feedback-engine', () => {
   describe('createFeedbackCycle', () => {
     it('should insert a pending feedback cycle into D1', async () => {
       const { db, stmt } = makeD1Mock()
-      const mock = await getD1RawMock()
-      mock.mockResolvedValue(db)
+      const mock = await getD1Mock()
+      mock.mockReturnValue(db)
 
       const id = await createFeedbackCycle({
         executionId: 'exec-1',
@@ -83,8 +83,8 @@ describe('performance-feedback-engine', () => {
   describe('evaluatePerformance', () => {
     it('should update status and metrics/evaluation JSON', async () => {
       const { db, stmt } = makeD1Mock()
-      const mock = await getD1RawMock()
-      mock.mockResolvedValue(db)
+      const mock = await getD1Mock()
+      mock.mockReturnValue(db)
 
       const metrics = {
         actual_views: 120,
@@ -107,8 +107,8 @@ describe('performance-feedback-engine', () => {
   describe('suggestAndApplyOptimization', () => {
     it('should suggest optimization and apply it successfully', async () => {
       const { db, stmt } = makeD1Mock()
-      const mock = await getD1RawMock()
-      mock.mockResolvedValue(db)
+      const mock = await getD1Mock()
+      mock.mockReturnValue(db)
 
       const optId = await suggestOptimization({
         cycleId: 'cycle-1',
@@ -183,8 +183,8 @@ describe('performance-feedback-engine', () => {
         }),
       }
 
-      const mockD1 = await getD1RawMock()
-      mockD1.mockResolvedValue(db)
+      const mockD1 = await getD1Mock()
+      mockD1.mockReturnValue(db)
 
       // Mock fetch for OpenRouter API
       const mockFetch = vi.fn().mockResolvedValue({

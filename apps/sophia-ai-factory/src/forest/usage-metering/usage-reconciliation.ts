@@ -165,7 +165,7 @@ export async function reconcileUsage(
   const kvCounts = await Promise.all(kvReads);
 
   // 3. Batch-query usage_events count for the same window
-  const db = getD1Client();
+  const db = createServerClient();
   const eventCounts: Map<string, number> = new Map();
   if (db) {
     const queries = kvCounts.map(({ tenantId }) =>
@@ -268,22 +268,12 @@ const keys: unknown = await kv.scan(pattern);
   return tenantIds;
 }
 
-/** Get D1 client synchronously (per project convention) */
-function getD1Client(): ReturnType<typeof import('@/seed/db/client').createServerClient> | null {
-  try {
-    // createServerClient is synchronous — do NOT await
-    return createServerClient();
-  } catch {
-    return null;
-  }
-}
-
 /**
  * Count usage_events rows for a tenant within a specific UTC day.
  * Window start/end derived from YYYYMMDD string.
  */
 async function queryUsageEventCount(
-  db: ReturnType<typeof getD1Client>,
+  db: ReturnType<typeof createServerClient>,
   tenantId: string,
   window: string,
 ): Promise<number> {

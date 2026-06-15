@@ -9,7 +9,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 async function verifyTikTokSignature(request: Request, body: string): Promise<boolean> {
@@ -77,7 +77,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ ok: true }); // Ignore unrecognized events
     }
 
-    const db = await getD1Client();
+    const db = createServerClient();
 
     // Find result by channel_post_id
     const { data: resultData } = await db

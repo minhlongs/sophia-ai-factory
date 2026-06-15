@@ -9,7 +9,9 @@ const mocks = vi.hoisted(() => {
         }),
       }),
       update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+        eq: vi.fn().mockReturnValue({
+          run: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+        }),
       }),
     }),
   };
@@ -49,8 +51,8 @@ vi.mock('../token-crypto', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Client: vi.fn().mockResolvedValue(mocks.mockDb),
-  getD1Raw: vi.fn().mockResolvedValue(mocks.mockRawDb),
+  getD1: vi.fn(() => mocks.mockRawDb),
+  createServerClient: vi.fn(() => mocks.mockDb),
 }));
 
 vi.mock('@/land/tiktok/tiktok-token-manager', () => ({
@@ -110,7 +112,9 @@ describe('oauth-token-refresher', () => {
         }),
       }),
       update: vi.fn().mockReturnValue({
-        eq: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+        eq: vi.fn().mockReturnValue({
+          run: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+        }),
       }),
     });
     mocks.mockRawDb.prepare.mockReturnValue({

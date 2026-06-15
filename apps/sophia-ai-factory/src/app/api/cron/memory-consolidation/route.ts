@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { consolidateEpisodicToSemantic } from '@/seed/db/repositories/creator-memory-repo';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -12,7 +12,8 @@ async function handleConsolidate(request: NextRequest): Promise<NextResponse> {
   if (authError) return authError;
 
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const activeUsers = await db
       .prepare(
         `SELECT DISTINCT user_id FROM creator_memory

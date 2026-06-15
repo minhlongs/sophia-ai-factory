@@ -5,7 +5,7 @@
  */
 
 import { getTranslations } from 'next-intl/server';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { getRollup, getActiveIncident, listResolvedIncidents } from '@/land/status/status-store';
 import { UptimeGrid } from './uptime-grid';
 import { IncidentCard } from './incident-card';
@@ -16,7 +16,8 @@ export const dynamic = 'force-static';
 
 async function getStatusData() {
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const [rollup, active, resolved] = await Promise.all([
       getRollup(db, 90),
       getActiveIncident(db),

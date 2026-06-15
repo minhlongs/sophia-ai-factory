@@ -4,7 +4,7 @@
  * @module lib/handover/handover-magic-link
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type { CustomerHandoverRow } from '@/tree/handover/handover-types';
 
@@ -25,7 +25,9 @@ export async function createMagicLinkToken(
   handoverId: string,
   opts?: { ttlHours?: number; source?: string },
 ): Promise<string> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const token = generateToken();
   const ttl = opts?.ttlHours
     ?? (opts?.source === 'auto_signup' || opts?.source === 'auto_payment'
@@ -50,7 +52,9 @@ export async function validateMagicLinkToken(
   token: string,
 ): Promise<CustomerHandoverRow | null> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
     const row = await db
       .prepare(
         `SELECT * FROM customer_handovers
@@ -79,7 +83,9 @@ export async function validateMagicLinkToken(
  * means only the first writer's UPDATE has changes>0 — the loser must abort.
  */
 export async function consumeMagicLink(handoverId: string, token: string): Promise<boolean> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000);
 
   const result = await db
@@ -102,7 +108,9 @@ export async function consumeMagicLink(handoverId: string, token: string): Promi
  */
 export async function markFirstRun(customerUserId: string): Promise<void> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 binding not available');
+    const db = _db;
     const now = Math.floor(Date.now() / 1000);
     await db
       .prepare(
@@ -125,7 +133,9 @@ export async function markFirstRun(customerUserId: string): Promise<void> {
  */
 export async function markFirstSopInstall(customerUserId: string): Promise<void> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 binding not available');
+    const db = _db;
     const now = Math.floor(Date.now() / 1000);
     await db
       .prepare(

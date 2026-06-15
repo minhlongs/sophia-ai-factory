@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { logger } from '@/seed/utils/logger-utility'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 
 async function verifyHmac(body: string, signature: string, secret: string): Promise<boolean> {
   if (!body || !signature || !secret) return false
@@ -70,13 +70,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const conversionId = payload.conversion_id
   if (!conversionId) return NextResponse.json({ ok: true, skipped: 'no_conversion_id' })
 
-  let db: D1Database
-  try {
-    db = await getD1Raw()
-  } catch {
-    logger.warn('[accesstrade-webhook] D1 unavailable')
-    return NextResponse.json({ ok: true, skipped: 'db_unavailable' })
+  const _db = getD1();
+  if (!_db) {
+    logger.warn('[accesstrade-webhook] D1 unavailable');
+    return NextResponse.json({ ok: true, skipped: 'db_unavailable' });
   }
+  const db = _db;
 
   const subId = payload.sub_id ?? ''
   const linkRow = subId

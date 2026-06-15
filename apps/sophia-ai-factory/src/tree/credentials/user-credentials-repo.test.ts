@@ -13,18 +13,19 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 const TEST_HEX_KEY = 'b'.repeat(64)
 
-// Mock getD1Raw
+// Mock getD1
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
 }))
 
-// Mock encryption to avoid Web Crypto complexity in unit tests
-vi.mock('./encryption', () => ({
-  encryptValue: vi.fn(async (plain: string) => `enc:${plain}`),
-  decryptValue: vi.fn(async (enc: string) => enc.replace(/^enc:/, '')),
+// Mock encryption to return deterministic values
+vi.mock('@/tree/credentials/encryption', () => ({
+  encryptValue: vi.fn().mockImplementation(async (plaintext: string) => `enc:${plaintext}`),
+  decryptValue: vi.fn().mockImplementation(async (ciphertext: string) => ciphertext.replace(/^enc:/, '')),
 }))
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
+const mockedGetD1 = vi.mocked(getD1)
 
 describe('lib/credentials/user-credentials-repo', () => {
   beforeEach(() => {
@@ -42,7 +43,7 @@ describe('lib/credentials/user-credentials-repo', () => {
         bind: vi.fn().mockReturnValue({ first: vi.fn().mockResolvedValue(null) }),
       }),
     }
-    vi.mocked(getD1Raw).mockResolvedValue(mockD1 as unknown as D1Database)
+    mockedGetD1.mockReturnValue(mockD1 as unknown as D1Database)
 
     const { getUserCredential } = await import('./user-credentials-repo')
     const result = await getUserCredential('user-1', 'heygen')
@@ -58,7 +59,7 @@ describe('lib/credentials/user-credentials-repo', () => {
         }),
       }),
     }
-    vi.mocked(getD1Raw).mockResolvedValue(mockD1 as unknown as D1Database)
+    mockedGetD1.mockReturnValue(mockD1 as unknown as D1Database)
 
     const { getUserCredential } = await import('./user-credentials-repo')
     const result = await getUserCredential('user-1', 'heygen')
@@ -75,7 +76,7 @@ describe('lib/credentials/user-credentials-repo', () => {
     const mockD1 = {
       prepare: vi.fn().mockReturnValue(mockPrepare),
     }
-    vi.mocked(getD1Raw).mockResolvedValue(mockD1 as unknown as D1Database)
+    mockedGetD1.mockReturnValue(mockD1 as unknown as D1Database)
 
     const { getUserCredential } = await import('./user-credentials-repo')
     const result = await getUserCredential('user-1', 'heygen')
@@ -89,7 +90,7 @@ describe('lib/credentials/user-credentials-repo', () => {
         bind: vi.fn().mockReturnValue({ run: runMock }),
       }),
     }
-    vi.mocked(getD1Raw).mockResolvedValue(mockD1 as unknown as D1Database)
+    mockedGetD1.mockReturnValue(mockD1 as unknown as D1Database)
 
     const { setUserCredential } = await import('./user-credentials-repo')
     await setUserCredential('user-1', 'resend', 're_testkey')
@@ -112,7 +113,7 @@ describe('lib/credentials/user-credentials-repo', () => {
         bind: vi.fn().mockReturnValue({ all: vi.fn().mockResolvedValue({ results: rows }) }),
       }),
     }
-    vi.mocked(getD1Raw).mockResolvedValue(mockD1 as unknown as D1Database)
+    mockedGetD1.mockReturnValue(mockD1 as unknown as D1Database)
 
     const { listUserProviders } = await import('./user-credentials-repo')
     const result = await listUserProviders('user-1')

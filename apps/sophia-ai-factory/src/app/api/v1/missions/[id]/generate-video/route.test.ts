@@ -60,6 +60,7 @@ const mockSelect = vi.fn(() => ({ eq: mockEq1 }));
 mockDbFrom.mockReturnValue({ select: mockSelect });
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: () => ({ from: mockDbFrom }),
 }));
 

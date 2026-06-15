@@ -4,7 +4,7 @@
  * @module seed/db/repositories/outcome-tracking-repo
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type {
@@ -51,7 +51,9 @@ export async function recordOutcome(params: {
   metricValue: number;
   source?: string;
 }): Promise<string> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const id = crypto.randomUUID();
   const now = Math.floor(Date.now() / 1000);
 
@@ -94,7 +96,9 @@ export async function recordBatchOutcomes(
 ): Promise<string[]> {
   if (outcomes.length === 0) return [];
 
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const now = Math.floor(Date.now() / 1000);
   const ids: string[] = [];
 
@@ -120,7 +124,9 @@ export async function recordBatchOutcomes(
 /** Fetch all outcome rows for a given execution. Returns empty array on error. */
 export async function getExecutionOutcomes(executionId: string): Promise<OutcomeMetric[]> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const result = await db
       .prepare(
         `SELECT id, execution_id, sop_id, user_id, metric_type, metric_value, source, recorded_at
@@ -141,7 +147,9 @@ export async function getExecutionOutcomes(executionId: string): Promise<Outcome
 /** Fetch recent outcome rows for a user. Returns [] on error. */
 export async function getRecentOutcomes(userId: string, limit = 20): Promise<OutcomeMetric[]> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const result = await db
       .prepare(
         `SELECT id, execution_id, sop_id, user_id, metric_type, metric_value, source, recorded_at
@@ -164,7 +172,9 @@ export async function getTopSopsByRevenue(
   limit = 5,
 ): Promise<Array<{ sopId: string; totalRevenue: number }>> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const result = await db
       .prepare(
         `SELECT sop_id, SUM(metric_value) AS total_revenue
@@ -198,7 +208,9 @@ export async function getSOPOutcomeSummary(
   opts: { fromDate?: number; toDate?: number } = {},
 ): Promise<OutcomeSummary> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const conditions = ['sop_id = ?1'];
     const bindings: unknown[] = [sopId];
     let idx = 2;
@@ -261,7 +273,9 @@ export async function getCreatorOutcomeSummary(
   opts: { fromDate?: number; toDate?: number; limit?: number } = {},
 ): Promise<CreatorSopOutcome[]> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const conditions = ['user_id = ?1'];
     const bindings: unknown[] = [userId];
     let idx = 2;

@@ -1,0 +1,124 @@
+{
+  "harnessVersion": "1.0.0",
+  "phase": "pre-deploy",
+  "timestamp": "2026-06-08T05:33:26.931Z",
+  "project": "sophia-ai-factory",
+  "appDir": "apps/sophia-ai-factory",
+  "commitSha": "ddc163b58",
+  "branch": "main",
+  "overall": "RED",
+  "gates": [
+    {
+      "name": "git-preconditions",
+      "status": "failed",
+      "durationMs": 44,
+      "detail": "FAIL: dirty working tree",
+      "error": "exit 1",
+      "script": "bash -c commits=$(git log origin/main..HEAD --oneline 2>/dev/null | grep -c . || true); if [ \"$commits\" -gt 0 ]; then echo \"FAIL: $commits unpushed commits\"; exit 1; fi; dirty=$(git diff-index --quiet HEAD -- 2>/dev/null; echo $?); if [ \"$dirty\" -ne 0 ]; then echo \"FAIL: dirty working tree\"; exit 1; fi; echo \"PASS: HEAD == origin/main, clean tree\""
+    },
+    {
+      "name": "typecheck",
+      "status": "failed",
+      "durationMs": 9560,
+      "detail": "4: Cannot find name 'logger'.\nsrc/forest/usage-metering/usage-reconciliation.ts(228,5): error TS2304: Cannot find name 'logger'.\nsrc/forest/usage-metering/usage-reconciliation.ts(263,5): error TS2304: Cannot find name 'logger'.\nsrc/forest/usage-metering/usage-reconciliation.ts(273,12): error TS2304: Cannot find name 'createServerClient'.\nsrc/forest/usage-metering/usage-reconciliation.ts(299,15): error TS2345: Argument of type '{ count: string; }' is not assignable to parameter of type 'string'.",
+      "error": "exit 2",
+      "script": "npm run ci:typecheck"
+    },
+    {
+      "name": "lint",
+      "status": "failed",
+      "durationMs": 35281,
+      "detail": "factory/src/tree/telegram/telegram-auth-middleware.ts\n  100:43  warning  '_chatId' is defined but never used  @typescript-eslint/no-unused-vars\n\n/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/telegram/telegram-bot-campaign-handlers.ts\n  42:11  warning  'UserProfileD1Row' is defined but never used  @typescript-eslint/no-unused-vars\n  63:54  warning  '_topic' is defined but never used            @typescript-eslint/no-unused-vars\n\n✖ 359 problems (3 errors, 356 warnings)",
+      "error": "exit 1",
+      "script": "npm run lint"
+    },
+    {
+      "name": "vitest",
+      "status": "failed",
+      "durationMs": 180072,
+      "detail": "(node:83836) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)",
+      "error": "(node:83836) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)",
+      "script": "npm test -- --run"
+    },
+    {
+      "name": "build",
+      "status": "failed",
+      "durationMs": 6752,
+      "detail": "Warning: Custom Cache-Control headers detected for the following routes:\n  - /_next/static/:path*\n\nSetting a custom Cache-Control header can break Next.js development behavior.\n⨯ Another next build process is already running.\n\n  This could be:\n  - A next build still in progress\n  - A previous build that didn't exit cleanly",
+      "error": "Warning: Custom Cache-Control headers detected for the following routes:\n  - /_next/static/:path*\n\nSetting a custom Cache-Control header can break Next.js development behavior.\n⨯ Another next build process is already running.\n\n  This could be:\n  - A next build still in progress\n  - A previous build that didn't exit cleanly",
+      "script": "npm run build"
+    },
+    {
+      "name": "i18n-validate",
+      "status": "passed",
+      "durationMs": 8930,
+      "detail": "> sophia-ai-factory@0.1.0 i18n:validate\n> node scripts/validate-i18n-keys.mjs\n\n🔍 Scanning for i18n keys...\n\n📊 Summary:\n   Total t() calls: 3476\n   Unique static keys: 1557\n   Dynamic key prefixes: 19\n   Missing static keys: 0\n   Unresolved dynamic prefixes: 0\n\n✅ All translation keys found!",
+      "error": null,
+      "script": "npm run i18n:validate"
+    },
+    {
+      "name": "get-side-effects",
+      "status": "passed",
+      "durationMs": 5923,
+      "detail": "✅ No GET routes with DB write side effects found.",
+      "error": null,
+      "script": "bash /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/scripts/ci-check-get-side-effects.sh"
+    },
+    {
+      "name": "migration-coverage",
+      "status": "passed",
+      "durationMs": 212,
+      "detail": "Migration coverage check:\n  D1 files checked:       0\n  Postgres files skipped: 0\n  Orphan tables:          0\nOK — all D1 CREATE TABLE statements in src/**/*.sql have canonical migrations/ matches.",
+      "error": null,
+      "script": "bash /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/scripts/check-migration-coverage.sh"
+    },
+    {
+      "name": "video-factory-proof",
+      "status": "failed",
+      "durationMs": 15863,
+      "detail": "(node:94251) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n(node:94256) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n\nFAIL: TypeScript compile exited with code 2",
+      "error": "(node:94251) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n(node:94256) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n\nFAIL: TypeScript compile exited with code 2",
+      "script": "node scripts/verify-core-video-factory.mjs"
+    }
+  ],
+  "summary": {
+    "total": 9,
+    "passed": 3,
+    "failed": 6,
+    "skipped": 0,
+    "warnings": 0,
+    "durationMs": 262637
+  },
+  "failures": [
+    {
+      "gate": "git-preconditions",
+      "error": "FAIL: dirty working tree",
+      "hint": null
+    },
+    {
+      "gate": "typecheck",
+      "error": "4: Cannot find name 'logger'.\nsrc/forest/usage-metering/usage-reconciliation.ts(228,5): error TS2304: Cannot find name 'logger'.\nsrc/forest/usage-metering/usage-reconciliation.ts(263,5): error TS2304: Cannot find name 'logger'.\nsrc/forest/usage-metering/usage-reconciliation.ts(273,12): error TS2304: Cannot find name 'createServerClient'.\nsrc/forest/usage-metering/usage-reconciliation.ts(299,15): error TS2345: Argument of type '{ count: string; }' is not assignable to parameter of type 'string'.",
+      "hint": "npm run ci:typecheck"
+    },
+    {
+      "gate": "lint",
+      "error": "factory/src/tree/telegram/telegram-auth-middleware.ts\n  100:43  warning  '_chatId' is defined but never used  @typescript-eslint/no-unused-vars\n\n/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/telegram/telegram-bot-campaign-handlers.ts\n  42:11  warning  'UserProfileD1Row' is defined but never used  @typescript-eslint/no-unused-vars\n  63:54  warning  '_topic' is defined but never used            @typescript-eslint/no-unused-vars\n\n✖ 359 problems (3 errors, 356 warnings)",
+      "hint": "npm run lint -- --fix"
+    },
+    {
+      "gate": "vitest",
+      "error": "(node:83836) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)",
+      "hint": "npm test -- --run"
+    },
+    {
+      "gate": "build",
+      "error": "Warning: Custom Cache-Control headers detected for the following routes:\n  - /_next/static/:path*\n\nSetting a custom Cache-Control header can break Next.js development behavior.\n⨯ Another next build process is already running.\n\n  This could be:\n  - A next build still in progress\n  - A previous build that didn't exit cleanly",
+      "hint": "npm run build"
+    },
+    {
+      "gate": "video-factory-proof",
+      "error": "(node:94251) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n(node:94256) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n\nFAIL: TypeScript compile exited with code 2",
+      "hint": null
+    }
+  ]
+}

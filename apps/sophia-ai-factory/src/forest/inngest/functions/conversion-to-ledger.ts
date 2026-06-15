@@ -12,7 +12,7 @@ import { inngest } from '@/forest/inngest/client'
 import { calculateCommission } from '@/land/affiliates/commission-calculator'
 import { insertPendingLedger } from '@/land/payouts/commission-ledger'
 import { toCents } from '@/land/payouts/commission-cents'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 
 const CLAWBACK_WINDOW_DAYS = 14
 const SECONDS_PER_DAY = 86400
@@ -40,7 +40,9 @@ export const conversionToLedger = inngest.createFunction(
     const { conversionEventId, tenantId } = event.data
 
     const conversion = await step.run('fetch-conversion', async () => {
-      const db = await getD1Raw()
+      const _db = getD1();
+      if (!_db) throw new Error('D1 database binding not available');
+      const db = _db;
       return db
         .prepare(
           `SELECT ce.id, ce.tenant_id, ce.gross_amount_usd, ce.commission_usd,
@@ -65,7 +67,9 @@ export const conversionToLedger = inngest.createFunction(
     }
 
     const tenantTier = await step.run('fetch-tenant-tier', async () => {
-      const db = await getD1Raw()
+      const _db = getD1();
+      if (!_db) throw new Error('D1 database binding not available');
+      const db = _db;
       const row = await db
         .prepare(`SELECT tier FROM users WHERE id = ? LIMIT 1`)
         .bind(conversion.affiliate_id)
@@ -79,7 +83,9 @@ export const conversionToLedger = inngest.createFunction(
     // schema (`vn_pit_enabled` column on tenant_settings) was never deployed to
     // remote D1, so this is the only working source of truth.
     const vnPitEnabled = await step.run('fetch-tenant-vn-pit', async () => {
-      const db = await getD1Raw()
+      const _db = getD1();
+      if (!_db) throw new Error('D1 database binding not available');
+      const db = _db;
       const row = await db
         .prepare(
           `SELECT value FROM tenant_settings WHERE tenant_id = ? AND namespace = 'vn_pit' LIMIT 1`,

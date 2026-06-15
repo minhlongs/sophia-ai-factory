@@ -25,6 +25,7 @@ const mockSupabase = {
 process.env.API_KEY_SECRET = 'test-secret-for-unit-tests-only'
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: () => mockSupabase,
 }))
 

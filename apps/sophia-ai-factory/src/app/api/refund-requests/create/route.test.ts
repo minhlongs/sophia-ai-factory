@@ -14,7 +14,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 
 const dbFirst = vi.fn()
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: async () => ({
+  getD1: () => ({
     prepare: () => ({
       bind: () => ({
         first: dbFirst,

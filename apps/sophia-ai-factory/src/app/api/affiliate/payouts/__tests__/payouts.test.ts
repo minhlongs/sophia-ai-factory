@@ -10,12 +10,12 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 }))
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
   createServerClient: vi.fn(),
 }))
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { GET } from '../route'
 
 function buildRequest(query: Record<string, string> = {}): NextRequest {
@@ -49,7 +49,7 @@ describe('GET /api/affiliate/payouts', () => {
 
   it('converts total_cents → total_usd in response', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>)
-    vi.mocked(getD1Raw).mockResolvedValue(mockD1Returning([
+    vi.mocked(getD1).mockReturnValue(mockD1Returning([
       {
         id: 'b1',
         total_cents: 2550, // $25.50
@@ -79,7 +79,7 @@ describe('GET /api/affiliate/payouts', () => {
   it('caps limit at 100', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>)
     const d1 = mockD1Returning([])
-    vi.mocked(getD1Raw).mockResolvedValue(d1 as unknown as D1Database)
+    vi.mocked(getD1).mockReturnValue(d1 as unknown as D1Database)
     await GET(buildRequest({ limit: '999' }))
     const prepared = d1.prepare.mock.results[0].value
     // Third bind arg is limit
@@ -88,7 +88,7 @@ describe('GET /api/affiliate/payouts', () => {
 
   it('returns empty list cleanly', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>)
-    vi.mocked(getD1Raw).mockResolvedValue(mockD1Returning([]) as unknown as D1Database)
+    vi.mocked(getD1).mockReturnValue(mockD1Returning([]) as unknown as D1Database)
     const resp = await GET(buildRequest())
     const body = (await resp.json()) as { batches: unknown[] }
     expect(body.batches).toEqual([])
@@ -96,7 +96,7 @@ describe('GET /api/affiliate/payouts', () => {
 
   it('handles stripe_connect payment_method rows', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>)
-    vi.mocked(getD1Raw).mockResolvedValue(mockD1Returning([
+    vi.mocked(getD1).mockReturnValue(mockD1Returning([
       {
         id: 'b2',
         total_cents: 10000,

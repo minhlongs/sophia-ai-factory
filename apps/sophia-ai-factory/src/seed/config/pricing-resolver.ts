@@ -6,7 +6,7 @@
  * @module lib/config/pricing-resolver
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { ONE_TIME_SKUS } from '@/seed/config/one-time-skus'
 import { logger } from '@/seed/utils/logger-utility'
 
@@ -23,7 +23,9 @@ interface PricingOverrideRow {
  */
 export async function getEffectiveSkuPrice(skuId: string): Promise<number> {
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
     const row = await db
       .prepare('SELECT sku, price_cents, enabled FROM pricing_overrides WHERE sku = ?1')
       .bind(skuId)
@@ -49,7 +51,9 @@ export async function setSkuPrice(
   priceCents: number,
   adminUserId: string,
 ): Promise<void> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   await db
     .prepare(
       `INSERT INTO pricing_overrides (sku, price_cents, enabled, updated_at, updated_by_user_id)
@@ -69,7 +73,9 @@ export async function setSkuPrice(
  */
 export async function listPricingOverrides(): Promise<PricingOverrideRow[]> {
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
     const result = await db.prepare('SELECT * FROM pricing_overrides ORDER BY sku').all<PricingOverrideRow>()
     return result.results ?? []
   } catch {
@@ -83,7 +89,9 @@ export async function listPricingOverrides(): Promise<PricingOverrideRow[]> {
 export async function getAllEffectivePrices(): Promise<Record<string, number>> {
   const overrides: Record<string, number> = {}
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+    if (!_db) throw new Error('D1 binding not available');
+    const db = _db;
     const result = await db.prepare('SELECT sku, price_cents, enabled FROM pricing_overrides').all<PricingOverrideRow>()
     for (const row of result.results ?? []) {
       if (row.enabled === 1) overrides[row.sku] = row.price_cents

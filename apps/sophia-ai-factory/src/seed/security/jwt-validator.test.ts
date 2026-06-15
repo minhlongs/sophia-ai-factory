@@ -20,6 +20,7 @@ vi.mock('jose', () => ({
 
 // Mock Supabase client
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(() => ({
     auth: {
       getUser: vi.fn(),

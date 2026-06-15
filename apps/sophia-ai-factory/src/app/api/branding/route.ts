@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getUserOrganization } from '@/seed/db/auth';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { getOrgBranding, upsertOrgBranding } from '@/tree/branding/org-branding-repo';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -25,7 +25,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const org = await getUserOrganization(user.id);
   if (!org) return NextResponse.json({ branding: null });
 
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const branding = await getOrgBranding(db, org.id);
   return NextResponse.json({ branding, orgId: org.id });
 }
@@ -63,7 +64,8 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const branding = await upsertOrgBranding(db, org.id, body);
     logger.info('[Branding/PUT] updated', { orgId: org.id, by: user.id });
     return NextResponse.json({ branding });

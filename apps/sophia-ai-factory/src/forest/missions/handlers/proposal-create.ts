@@ -9,6 +9,7 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 import type { MissionHandlerResult, MissionContext } from './types';
 
 const PROPOSAL_SYSTEM_PROMPT = `You are an expert business proposal writer.
@@ -35,32 +36,13 @@ Tone: professional, persuasive
 Length: 500-800 words`;
 
   try {
-    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://sophia.agencyos.network',
-        'X-Title': 'Sophia AI Factory',
-      },
-      body: JSON.stringify({
-        model: 'openai/gpt-4o-mini',
-        messages: [
-          { role: 'system', content: PROPOSAL_SYSTEM_PROMPT },
-          { role: 'user', content: userPrompt },
-        ],
-        max_tokens: 1200,
-        temperature: 0.7,
-      }),
+    const combinedPrompt = `${PROPOSAL_SYSTEM_PROMPT}\n\nUser: ${userPrompt}`;
+    const content = await resilientChatCompletion(combinedPrompt, {
+      openRouterKey: apiKey,
+      anthropicKey: undefined,
+      enableFallback: false,
+      model: 'openai/gpt-4o-mini',
     });
-
-    if (!resp.ok) {
-      const errText = await resp.text();
-      return { ok: false, error: `OpenRouter error: ${resp.status} ${errText.slice(0, 200)}` };
-    }
-
-    const json = await resp.json() as { choices: Array<{ message: { content: string } }> };
-    const content = json.choices?.[0]?.message?.content ?? '';
 
     // Save to proposals table
     const db = createServerClient();

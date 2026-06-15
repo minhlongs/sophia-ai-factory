@@ -31,7 +31,7 @@ const {
   mockDbEq,
   mockDbSingle,
   mockDbMaybeSingle,
-  mockGetD1Client,
+  mockCreateServerClient,
 } = vi.hoisted(() => {
   const mockDbEq = vi.fn();
   const mockDbSingle = vi.fn();
@@ -58,7 +58,7 @@ const {
   mockDbUpdate.mockReturnValue({ eq: mockDbEq });
   mockDbInsert.mockReturnValue({ eq: mockDbEq });
 
-  const mockGetD1Client = vi.fn();
+  const mockCreateServerClient = vi.fn();
   const mockPublishToTelegram = vi.fn();
 
   return {
@@ -70,13 +70,13 @@ const {
     mockDbEq,
     mockDbSingle,
     mockDbMaybeSingle,
-    mockGetD1Client,
+    mockCreateServerClient,
   };
 });
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
-vi.mock('@/seed/db/client', () => ({ getD1Client: mockGetD1Client }));
+vi.mock('@/seed/db/client', () => ({ createServerClient: mockCreateServerClient }));
 vi.mock('@/forest/publishing/providers/telegram-publisher', () => ({
   publishToTelegram: mockPublishToTelegram,
 }));

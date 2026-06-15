@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { encryptToken } from '@/tree/crypto/token-crypto';
 import { exchangeCodeForTokens, getUserInfo } from '@/forest/publishing/threads-oauth-client';
 import { logger } from '@/seed/utils/logger-utility';
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
   // Long-lived token lasts 60 days
   const expiresAt = now + (tokens.expires_in ?? 5184000);
 
-  const db = await getD1Client();
+  const db = createServerClient();
   const tenantId = user.id;
 
   const { data: existing } = await db

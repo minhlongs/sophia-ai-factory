@@ -12,7 +12,7 @@
  */
 
 import { inngest } from '@/forest/inngest/client'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { fromCents } from '@/land/payouts/commission-cents'
 
@@ -30,7 +30,9 @@ interface ReconcileResult {
 }
 
 async function reconcileTenant(tenantId: string): Promise<ReconcileResult> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
 
   const ledgerRow = await db
     .prepare(
@@ -71,7 +73,9 @@ export const reconciliationCron = inngest.createFunction(
   },
   { cron: '0 4 * * *' },
   async ({ step }) => {
-    const db = await getD1Raw()
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
 
     const tenants = await step.run('fetch-tenants', async () => {
       const result = await db

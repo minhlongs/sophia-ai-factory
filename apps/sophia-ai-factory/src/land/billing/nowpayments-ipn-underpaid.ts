@@ -9,7 +9,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { recordAudit } from '@/seed/db/audit/audit-log'
 import type { OneTimeSku } from '@/seed/types'
 
@@ -28,7 +28,9 @@ export async function markUnderpaid(
   actuallyPaid: number,
 ): Promise<void> {
   try {
-    const d1 = await getD1Raw()
+    const _d1 = getD1();
+    if (!_d1) throw new Error('D1 database binding not available');
+    const d1 = _d1;
     const amountCents = Math.round(actuallyPaid * 100)
     const now = Math.floor(Date.now() / 1000)
 

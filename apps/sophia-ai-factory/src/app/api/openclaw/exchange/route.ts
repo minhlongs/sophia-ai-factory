@@ -25,7 +25,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { generateJti, hmacBase64url } from '@/seed/auth/openclaw-token';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 
@@ -160,12 +160,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const retryAfterSec = RATE_WINDOW_SECONDS;
 
   let db: D1Database;
-  try {
-    db = await getD1Raw();
-  } catch (err) {
-    logger.error('[openclaw/exchange] D1 unavailable', toError(err));
+  const _db = getD1();
+  if (!_db) {
+    logger.error('[openclaw/exchange] D1 unavailable');
     return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
   }
+  db = _db;
 
   try {
     const [userCount, ipCount] = await Promise.all([

@@ -1,4 +1,4 @@
-import { createServerClient, getD1Raw } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { QUOTA_LIMITS } from '@/forest/usage-metering/aggregator';
@@ -67,7 +67,9 @@ export async function calculateCurrentUsage(
   const monthStart = Math.floor(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1) / 1000);
 
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
     const result = await db
       .prepare(
         `SELECT

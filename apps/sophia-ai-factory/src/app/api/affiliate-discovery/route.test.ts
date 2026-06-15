@@ -35,6 +35,7 @@ let mockRowChain: ReturnType<typeof makeChain>
 let mockCountChain: ReturnType<typeof makeChain>
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(() => ({
     from: vi.fn((table: string) => {
       if (table === 'affiliate_offers_catalog') {

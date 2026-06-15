@@ -10,7 +10,7 @@
  * @module land/affiliates/dashboard-stats
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 export interface AffiliateClickStats {
   /** Total click_events rows scoped to (tenantId, affiliateId) within window. */
@@ -47,7 +47,8 @@ export async function getAffiliateClickStats(
   fromTs: number,
   toTs: number,
 ): Promise<AffiliateClickStats> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   const clickRow = await db
     .prepare(
@@ -95,7 +96,8 @@ export async function getRecentConversions(
 ): Promise<ConversionFeedRow[]> {
   const safeLimit = Math.max(1, Math.min(200, Math.floor(limit)));
   const safeOffset = Math.max(0, Math.floor(offset));
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   const result = await db
     .prepare(

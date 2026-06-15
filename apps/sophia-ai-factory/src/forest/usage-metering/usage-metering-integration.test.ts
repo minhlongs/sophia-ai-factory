@@ -24,6 +24,7 @@ import type { UsageEventInput } from './types';
 
 // Mock Supabase admin client
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: () => ({
     from: vi.fn((table: string) => ({
       select: vi.fn(() => ({

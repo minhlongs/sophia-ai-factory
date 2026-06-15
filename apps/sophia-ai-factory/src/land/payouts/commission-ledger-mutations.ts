@@ -7,7 +7,7 @@
  * @module payouts/commission-ledger-mutations
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 
 /**
  * Atomic claim: flip payable rows → paying with batch_id (C3).
@@ -19,7 +19,9 @@ export async function claimLedgerRows(
   batchId: string,
 ): Promise<number> {
   if (ledgerIds.length === 0) return 0
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const placeholders = ledgerIds.map(() => '?').join(',')
   const now = Math.floor(Date.now() / 1000)
   const result = await db
@@ -41,7 +43,9 @@ export async function markLedgerPaid(
   batchId: string,
 ): Promise<void> {
   if (ledgerIds.length === 0) return
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000)
   const placeholders = ledgerIds.map(() => '?').join(',')
   await db
@@ -59,7 +63,9 @@ export async function markLedgerPaid(
  * Allows next cron run to retry the same affiliate.
  */
 export async function rollbackPayingRows(batchId: string): Promise<void> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000)
   await db
     .prepare(
@@ -75,7 +81,9 @@ export async function rollbackPayingRows(batchId: string): Promise<void> {
  * Sum all paid net cents (commission - withheld) for reconciliation (C1).
  */
 export async function sumPaidCommissionsCents(tenantId: string): Promise<number> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const result = await db
     .prepare(
       `SELECT COALESCE(SUM(commission_cents - withheld_cents), 0) AS total
@@ -93,7 +101,9 @@ export async function sumPaidCommissionsCents(tenantId: string): Promise<number>
 export async function getPaidBatchSummary(
   tenantId: string,
 ): Promise<{ payout_batch_id: string; total_cents: number }[]> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const result = await db
     .prepare(
       `SELECT payout_batch_id,

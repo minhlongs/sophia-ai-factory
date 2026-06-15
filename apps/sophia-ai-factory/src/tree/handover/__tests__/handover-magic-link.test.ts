@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
 }));
 
 import {
@@ -18,7 +18,7 @@ import {
   markFirstSopInstall,
   generateToken,
 } from '@/tree/handover/handover-magic-link';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 interface CapturedCall {
   sql: string;
@@ -61,7 +61,7 @@ describe('createMagicLinkToken', () => {
 
   it('uses 24h TTL by default', async () => {
     const captured: CapturedCall[] = [];
-    vi.mocked(getD1Raw).mockResolvedValue(makeDbCapturing(captured));
+    vi.mocked(getD1).mockReturnValue(makeDbCapturing(captured));
 
     const before = Math.floor(Date.now() / 1000);
     await createMagicLinkToken('h1');
@@ -73,7 +73,7 @@ describe('createMagicLinkToken', () => {
 
   it('uses 72h TTL for auto_signup source', async () => {
     const captured: CapturedCall[] = [];
-    vi.mocked(getD1Raw).mockResolvedValue(makeDbCapturing(captured));
+    vi.mocked(getD1).mockReturnValue(makeDbCapturing(captured));
 
     const before = Math.floor(Date.now() / 1000);
     await createMagicLinkToken('h1', { source: 'auto_signup' });
@@ -85,7 +85,7 @@ describe('createMagicLinkToken', () => {
 
   it('uses 72h TTL for auto_payment source', async () => {
     const captured: CapturedCall[] = [];
-    vi.mocked(getD1Raw).mockResolvedValue(makeDbCapturing(captured));
+    vi.mocked(getD1).mockReturnValue(makeDbCapturing(captured));
 
     const before = Math.floor(Date.now() / 1000);
     await createMagicLinkToken('h1', { source: 'auto_payment' });
@@ -95,7 +95,7 @@ describe('createMagicLinkToken', () => {
 
   it('explicit ttlHours override wins', async () => {
     const captured: CapturedCall[] = [];
-    vi.mocked(getD1Raw).mockResolvedValue(makeDbCapturing(captured));
+    vi.mocked(getD1).mockReturnValue(makeDbCapturing(captured));
 
     const before = Math.floor(Date.now() / 1000);
     await createMagicLinkToken('h1', { ttlHours: 1, source: 'auto_signup' });
@@ -107,7 +107,7 @@ describe('createMagicLinkToken', () => {
 describe('consumeMagicLink (P0: single-use enforcement)', () => {
   it('clears magic_link_token AND magic_link_expires_at', async () => {
     const captured: CapturedCall[] = [];
-    vi.mocked(getD1Raw).mockResolvedValue(makeDbCapturing(captured));
+    vi.mocked(getD1).mockReturnValue(makeDbCapturing(captured));
 
     await consumeMagicLink('h-1', 'token-xyz');
 
@@ -120,7 +120,7 @@ describe('consumeMagicLink (P0: single-use enforcement)', () => {
 
   it('uses COALESCE on customer_first_login_at to keep first-time stamp', async () => {
     const captured: CapturedCall[] = [];
-    vi.mocked(getD1Raw).mockResolvedValue(makeDbCapturing(captured));
+    vi.mocked(getD1).mockReturnValue(makeDbCapturing(captured));
 
     await consumeMagicLink('h-1', 'token-xyz');
 
@@ -131,7 +131,7 @@ describe('consumeMagicLink (P0: single-use enforcement)', () => {
 describe('markFirstRun', () => {
   it('uses COALESCE so subsequent calls are no-ops', async () => {
     const captured: CapturedCall[] = [];
-    vi.mocked(getD1Raw).mockResolvedValue(makeDbCapturing(captured));
+    vi.mocked(getD1).mockReturnValue(makeDbCapturing(captured));
 
     await markFirstRun('user-1');
 
@@ -140,7 +140,7 @@ describe('markFirstRun', () => {
   });
 
   it('swallows DB errors (non-fatal)', async () => {
-    vi.mocked(getD1Raw).mockRejectedValue(new Error('boom'));
+    vi.mocked(getD1).mockRejectedValue(new Error('boom'));
     await expect(markFirstRun('user-1')).resolves.toBeUndefined();
   });
 });
@@ -148,7 +148,7 @@ describe('markFirstRun', () => {
 describe('markFirstSopInstall', () => {
   it('uses COALESCE on customer_first_sop_install_at', async () => {
     const captured: CapturedCall[] = [];
-    vi.mocked(getD1Raw).mockResolvedValue(makeDbCapturing(captured));
+    vi.mocked(getD1).mockReturnValue(makeDbCapturing(captured));
 
     await markFirstSopInstall('user-1');
 
@@ -156,7 +156,7 @@ describe('markFirstSopInstall', () => {
   });
 
   it('swallows DB errors', async () => {
-    vi.mocked(getD1Raw).mockRejectedValue(new Error('boom'));
+    vi.mocked(getD1).mockRejectedValue(new Error('boom'));
     await expect(markFirstSopInstall('user-1')).resolves.toBeUndefined();
   });
 });

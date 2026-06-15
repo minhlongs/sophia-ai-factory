@@ -1,0 +1,31 @@
+{
+  "_comment": "Canary feature flags registry. Provider: Statsig free tier (or StubFeatureFlag if no STATSIG_SERVER_KEY).",
+  "_activate": "Set FEATURE_FLAG_PROVIDER=statsig and STATSIG_SERVER_KEY=server-xxx to enable live flags.",
+  "flags": [
+    {
+      "name": "mekong_spec_command_v2",
+      "description": "Enable v2 spec command flow with structured output validation",
+      "rollout_pct": 10,
+      "status": "canary",
+      "created": "2026-04-16",
+      "owner": "phase-03"
+    },
+    {
+      "name": "telemetry_sampled_10pct",
+      "description": "Sample only 10% of missions for PostHog emit (cost control)",
+      "rollout_pct": 10,
+      "status": "canary",
+      "created": "2026-04-16",
+      "owner": "phase-03"
+    },
+    {
+      "name": "signals_posthog_enabled",
+      "description": "Master gate for PostHog online sink. Enable at 50+ customers.",
+      "rollout_pct": 0,
+      "status": "off",
+      "created": "2026-04-16",
+      "owner": "phase-03",
+      "activate_condition": "paying_customers >= 50"
+    }
+  ]
+}

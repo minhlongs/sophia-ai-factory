@@ -9,7 +9,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 const { mockCreateServerClient } = vi.hoisted(() => ({ mockCreateServerClient: vi.fn() }))
-vi.mock('@/seed/db/client', () => ({ createServerClient: mockCreateServerClient }))
+vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
+  createServerClient: mockCreateServerClient,
+}))
 
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },

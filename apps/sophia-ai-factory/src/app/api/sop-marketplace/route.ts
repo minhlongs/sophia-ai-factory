@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getD1Raw } from "@/seed/db/client";
+import { getD1 } from "@/seed/db/client";
 import { listPublishedListings } from "@/tree/sop/sop-repo-marketplace";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,9 @@ type Template = Record<string, unknown>;
 
 export async function GET(request: NextRequest) {
  try {
-  const db = await getD1Raw();
+   const _db = getD1();
+   if (!_db) throw new Error('D1 binding not available');
+   const db = _db;
   const { searchParams } = new URL(request.url);
   const category = searchParams.get("category") || undefined;
   const limit = Math.min(200, Math.max(1, parseInt(searchParams.get("limit") || "50", 10) || 50));

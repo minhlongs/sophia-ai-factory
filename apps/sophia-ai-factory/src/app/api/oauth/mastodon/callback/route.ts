@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getD1Client, getD1Raw } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import { encryptToken } from '@/tree/crypto/token-crypto';
 import { exchangeCodeForTokens, getAccountInfo } from '@/forest/publishing/mastodon-oauth-client';
 import { consumeOauthState } from '@/seed/auth/oauth-state-store';
@@ -30,7 +30,9 @@ export async function GET(request: NextRequest) {
   }
 
   // Resolve state nonce from server-side store (consumes it — single-use)
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const statePayload = await consumeOauthState(stateNonce, db);
   if (!statePayload) {
     return NextResponse.json({ error: 'Invalid or expired state' }, { status: 400 });
@@ -68,7 +70,7 @@ export async function GET(request: NextRequest) {
   // Mastodon tokens don't expire by default — store with synthetic 1-year window
   const expiresAt = now + 365 * 24 * 3600;
 
-  const supaDb = await getD1Client();
+  const supaDb = createServerClient();
   const tenantId = user.id;
 
   // Compound external account id includes instance for uniqueness across instances

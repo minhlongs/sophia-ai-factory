@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { ByokKeyRotatedError, getUserCredential } from '@/tree/credentials/user-credentials-repo'
 import { listHeyGenWebhooks } from '@/land/heygen/webhook-registrar'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,7 +26,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   // Verify user exists
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const user = await db.prepare('SELECT id, email FROM user WHERE id = ?1').bind(userId).first<UserRow>()
   if (!user) {
     return NextResponse.json({ error: 'User not found' }, { status: 404 })

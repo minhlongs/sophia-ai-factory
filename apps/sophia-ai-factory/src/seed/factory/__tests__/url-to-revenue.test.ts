@@ -9,11 +9,12 @@ import type { URLToRevenueRequest } from '../url-to-revenue';
 // Mocks
 // ---------------------------------------------------------------------------
 
-const mockInsert = vi.fn().mockResolvedValue({ data: null, error: null });
+const mockInsert = vi.fn().mockResolvedValue(undefined);
 const mockSingle = vi.fn();
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Client: vi.fn().mockResolvedValue({
+  getD1: vi.fn(),
+  createServerClient: vi.fn(() => ({
     from: vi.fn().mockReturnValue({
       insert: mockInsert,
       select: vi.fn().mockReturnValue({
@@ -24,7 +25,7 @@ vi.mock('@/seed/db/client', () => ({
         }),
       }),
     }),
-  }),
+  })),
 }));
 
 vi.mock('../url-product-extractor', () => ({

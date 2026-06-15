@@ -8,7 +8,7 @@
 
 import { NextRequest } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { runFullAuditEager } from '@/tree/audit/zero-gap-runner'
 import { calculateAuditScore, countByStatus } from '@/tree/audit/audit-score-calculator'
 import type { AuditEnv } from '@/tree/audit/zero-gap-types'
@@ -41,7 +41,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       let auditId = `audit-${Date.now()}`
 
       try {
-        const d1 = await getD1Raw()
+        const d1 = getD1();
+        if (!d1) throw new Error('D1 database binding not available');
 
         // Create audit run record
         const idRow = await d1

@@ -29,7 +29,7 @@ function makeD1Chain(firstResult: unknown, remainingResult: unknown = null) {
 }
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
   createServerClient: vi.fn(),
 }));
 
@@ -50,10 +50,10 @@ vi.mock('../handover-email-service', () => ({
 }));
 
 vi.mock('@/forest/outbox/email-outbox', () => ({
-  enqueueWelcomeEmail: vi.fn().mockResolvedValue(undefined),
+  enqueueWelcomeEmail: vi.fn().mockReturnValue(undefined),
 }));
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 // ── Helper ─────────────────────────────────────────────────────────────────────
 
@@ -89,7 +89,7 @@ describe('triggerAutoHandover', () => {
   it('skips on duplicate paymentId (idempotency)', async () => {
     // First call: handover already exists for this paymentId
     const db = makeDbWithResponses([{ id: 'existing-handover' }]);
-    vi.mocked(getD1Raw).mockResolvedValue(db);
+    vi.mocked(getD1).mockReturnValue(db);
 
     const result = await triggerAutoHandover({
       paymentId: 'pay_dup123',
@@ -112,7 +112,7 @@ describe('triggerAutoHandover', () => {
       null,           // getExistingHandoverId → no prior handover
       { cnt: 1 },     // countUserPurchases → 1
     ]);
-    vi.mocked(getD1Raw).mockResolvedValue(db);
+    vi.mocked(getD1).mockReturnValue(db);
     vi.mocked(accountSetup.createCustomerUser).mockResolvedValue('new-user-id');
 
     const result = await triggerAutoHandover({
@@ -136,7 +136,7 @@ describe('triggerAutoHandover', () => {
       { id: 'existing-hov' },    // getExistingHandoverId → has prior handover
       { cnt: 3 },                // countUserPurchases → 3 (upgrade)
     ]);
-    vi.mocked(getD1Raw).mockResolvedValue(db);
+    vi.mocked(getD1).mockReturnValue(db);
 
     const result = await triggerAutoHandover({
       paymentId: 'pay_upg001',
@@ -154,7 +154,7 @@ describe('triggerAutoHandover', () => {
 
   it('returns skipped if createCustomerUser throws', async () => {
     const db = makeDbWithResponses([null, null]); // not found, not found
-    vi.mocked(getD1Raw).mockResolvedValue(db);
+    vi.mocked(getD1).mockReturnValue(db);
     vi.mocked(accountSetup.createCustomerUser).mockRejectedValue(new Error('DB constraint'));
 
     const result = await triggerAutoHandover({
@@ -170,7 +170,7 @@ describe('triggerAutoHandover', () => {
 
   it('generates magic link and attaches to result', async () => {
     const db = makeDbWithResponses([null, null, null, { cnt: 1 }]);
-    vi.mocked(getD1Raw).mockResolvedValue(db);
+    vi.mocked(getD1).mockReturnValue(db);
     vi.mocked(accountSetup.createCustomerUser).mockResolvedValue('usr-magic');
     vi.mocked(magicLink.createMagicLinkToken).mockResolvedValue('tok_magic999');
 

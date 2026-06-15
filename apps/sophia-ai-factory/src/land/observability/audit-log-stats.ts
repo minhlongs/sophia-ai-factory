@@ -10,7 +10,7 @@
  * @module land/observability/audit-log-stats
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 export interface AuditLogRow {
   id: number;
@@ -92,7 +92,8 @@ export async function searchAuditLog(input: AuditSearchInput): Promise<AuditLogR
                LIMIT ? OFFSET ?`;
   binds.push(limit, offset);
 
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const result = await db.prepare(sql).bind(...binds).all<RawRow>();
   return (result.results ?? []).map((r) => ({
     id: Number(r.id),
@@ -120,7 +121,8 @@ export async function getTopActions(
   limit: number = 20,
 ): Promise<ActionFrequency[]> {
   const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const result = await db
     .prepare(
       `SELECT action, COUNT(*) AS n

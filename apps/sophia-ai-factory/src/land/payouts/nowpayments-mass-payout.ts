@@ -9,7 +9,7 @@
  * @module payouts/nowpayments-mass-payout
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { decryptSecret } from '@/tree/crypto/encrypt-secret'
 import { fromCents, sanitizeErrorText } from './commission-cents'
 import { logger } from '@/seed/utils/logger-utility'
@@ -95,7 +95,9 @@ export interface BatchQueueInput {
  * Converts cents → USDT float at API call boundary.
  */
 export async function queueBatch(input: BatchQueueInput): Promise<{ externalPaymentId: string }> {
-  const db = await getD1Raw()  // F29 fix: getD1Raw() is synchronous — no await
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const apiKey = process.env.NOWPAYMENTS_API_KEY
 
   // Check if already sent or in-flight (idempotency — short-circuit for confirmed or sending)

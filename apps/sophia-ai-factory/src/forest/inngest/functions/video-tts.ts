@@ -8,7 +8,7 @@
  */
 
 import { inngest } from '@/forest/inngest/client';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { recordCost } from '@/land/video/cost-ledger';
 import { assertValidTransition } from '@/land/video/video-job-fsm';
 import type { VideoJobStatus } from '@/land/video/video-job-fsm';
@@ -32,7 +32,7 @@ export const videoTTS = inngest.createFunction(
     };
 
     await step.run('transition-to-tts-pending', async () => {
-      const db = await getD1Client();
+      const db = createServerClient();
       const { data } = await db
         .from('video_jobs')
         .select('status, script_text, prompt, audio_r2_key')
@@ -52,7 +52,7 @@ export const videoTTS = inngest.createFunction(
     });
 
     const { r2Key, durationSec, costUsd } = await step.run('synthesize-audio', async () => {
-      const db = await getD1Client();
+      const db = createServerClient();
       const { data } = await db
         .from('video_jobs')
         .select('script_text, prompt, audio_r2_key')

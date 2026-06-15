@@ -4,7 +4,7 @@
  * @module seed/db/repositories/sop-execution-analytics/sop-execution-log-repo
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type { SopExecutionLogRow } from './types';
@@ -27,7 +27,9 @@ export async function logStepExecution(params: {
   costCents?: number;
   errorMessage?: string;
 }): Promise<string> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const id = crypto.randomUUID();
   const now = Date.now();
 
@@ -77,7 +79,9 @@ export async function getExecutionSteps(
   executionId: string,
 ): Promise<SopExecutionLogRow[]> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const result = await db
       .prepare(
         `SELECT id, execution_id, sop_template_id, user_id, step_index, step_name,

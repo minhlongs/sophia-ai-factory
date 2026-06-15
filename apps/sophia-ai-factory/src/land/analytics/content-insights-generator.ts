@@ -8,6 +8,7 @@
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { logger } from '@/seed/utils/logger-utility';
 import type { AnalyticsSummary } from '@/seed/db/repositories/video-analytics-repo';
+import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 
 export interface ContentInsight {
   insight: string;
@@ -22,9 +23,6 @@ interface TopVideoMetric {
   watchTimeSec: number;
 }
 
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const DEFAULT_MODEL = 'openai/gpt-4o-mini';
-
 /**
  * Generate content insights by comparing top vs bottom performers.
  * Returns 3-5 structured recommendations.
@@ -35,41 +33,26 @@ export async function generateContentInsights(
   topVideos: TopVideoMetric[],
 ): Promise<ContentInsight[]> {
   const apiKey = await resolveUserApiKey(userId, 'openrouter', process.env.OPENROUTER_API_KEY);
-  if (!apiKey) {
-    logger.warn('[content-insights-generator] No OpenRouter key', { userId });
+  const anthropicKey = process.env.ANTHROPIC_API_KEY ?? undefined;
+
+  if (!apiKey && !anthropicKey) {
+    logger.warn('[content-insights-generator] No API keys configured');
     return [];
   }
 
   const prompt = buildInsightsPrompt(summary, topVideos);
 
   try {
-    const res = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://sophia.agencyos.network',
-      },
-      body: JSON.stringify({
-        model: DEFAULT_MODEL,
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
-        temperature: 0.3,
-        max_tokens: 800,
-      }),
+    const content = await resilientChatCompletion(prompt, {
+      openRouterKey: apiKey,
+      anthropicKey,
+      enableFallback: !!anthropicKey,
     });
 
-    if (!res.ok) {
-      logger.warn('[content-insights-generator] API error', { status: res.status });
-      return [];
-    }
-
-    const json = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-    const content = json.choices?.[0]?.message?.content ?? '';
     const parsed = JSON.parse(content) as { insights?: ContentInsight[] };
     return Array.isArray(parsed.insights) ? parsed.insights.slice(0, 5) : [];
   } catch (err) {
-    logger.error('[content-insights-generator] Failed', { err: String(err) });
+    logger.warn('[content-insights-generator] AI call failed', { error: String(err) });
     return [];
   }
 }

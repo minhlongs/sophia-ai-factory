@@ -53,7 +53,7 @@ vi.mock('@/seed/db/client', () => ({
       upsert: vi.fn().mockResolvedValue({ data: null }),
     }),
   })),
-  getD1Raw: vi.fn(async () => ({
+  getD1: vi.fn(() => ({
     prepare: (sql: string) => ({
       bind: (...args: unknown[]) => {
         batchStmtsSeen.push(sql)

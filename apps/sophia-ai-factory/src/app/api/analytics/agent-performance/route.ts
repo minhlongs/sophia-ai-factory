@@ -17,7 +17,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
 import {
   resolveAgentPerformance,
-  getD1RawForAnalytics,
+  getD1ForAnalytics,
   type WindowOption,
   type AgentPerformanceReport,
 } from '@/land/analytics/agent-performance-resolver';
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     let report: AgentPerformanceReport;
     try {
-      const db = getD1RawForAnalytics();
+      const db = getD1ForAnalytics();
       report = await resolveAgentPerformance(db, orgId, win as WindowOption, role);
     } catch (error) {
       logger.warn('[Analytics AgentPerformance] Returning empty report', {

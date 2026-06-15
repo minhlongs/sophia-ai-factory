@@ -23,7 +23,7 @@ import {
   finishCronCheckIn,
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in'
-import { getD1Raw, createServerClient } from '@/seed/db/client'
+import { getD1, createServerClient } from '@/seed/db/client'
 import { createHeyGenVideo } from '@/land/video/heygen-helpers'
 import { getHeyGenKey } from '@/tree/credentials/get-provider-key'
 import { logger } from '@/seed/utils/logger-utility'
@@ -189,7 +189,9 @@ export async function GET(req: NextRequest) {
   const cronCtx = startCronCheckIn(CRON_NAME)
   let db: D1Database
   try {
-    db = await getD1Raw()
+    const _db = getD1()
+    if (!_db) throw new Error('D1 database binding not available')
+    db = _db
   } catch (err) {
     logger.error('[fulfillment-retry] D1 unavailable', err instanceof Error ? err : undefined)
     failCronCheckIn(cronCtx, CRON_NAME, err)

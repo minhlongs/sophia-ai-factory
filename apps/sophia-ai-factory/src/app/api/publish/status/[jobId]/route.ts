@@ -7,7 +7,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserOrOpenClaw, isAuthError } from '@/seed/auth/get-current-user-or-openclaw';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import type { PublishingJob, PublishingResult } from '@/forest/publishing/publisher-interface';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -25,7 +25,7 @@ export async function GET(
     }
 
     const tenantId = auth.userId;
-    const db = await getD1Client();
+    const db = createServerClient();
 
     const { data: jobData } = await db
       .from('publishing_jobs')

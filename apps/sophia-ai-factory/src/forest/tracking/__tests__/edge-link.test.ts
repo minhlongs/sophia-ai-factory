@@ -11,19 +11,20 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Mocks
 // ---------------------------------------------------------------------------
 
-const mockInsert = vi.fn().mockResolvedValue({ data: null, error: null });
+const mockInsert = vi.fn().mockResolvedValue(undefined);
 const mockSingle = vi.fn();
-const mockFromChain = {
-  insert: mockInsert,
-  select: vi.fn().mockReturnThis(),
-  eq: vi.fn().mockReturnThis(),
-  single: mockSingle,
-};
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Client: vi.fn().mockResolvedValue({
-    from: vi.fn().mockReturnValue(mockFromChain),
-  }),
+  getD1: vi.fn(),
+  createServerClient: vi.fn(() => ({
+    from: vi.fn().mockReturnValue({
+      insert: mockInsert,
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnThis(),
+        single: mockSingle,
+      }),
+    }),
+  })),
 }));
 
 // Mock Web Crypto for deterministic ID tests

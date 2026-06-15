@@ -1,0 +1,109 @@
+{
+  "harnessVersion": "1.0.0",
+  "phase": "pre-deploy",
+  "timestamp": "2026-06-13T09:16:00.133Z",
+  "project": "sophia-ai-factory",
+  "appDir": "apps/sophia-ai-factory",
+  "commitSha": "029e61330",
+  "branch": "main",
+  "overall": "RED",
+  "gates": [
+    {
+      "name": "git-preconditions",
+      "status": "failed",
+      "durationMs": 17,
+      "detail": "FAIL: 10 unpushed commits",
+      "error": "exit 1",
+      "script": "bash -c commits=$(git log origin/main..HEAD --oneline 2>/dev/null | grep -c . || true); if [ \"$commits\" -gt 0 ]; then echo \"FAIL: $commits unpushed commits\"; exit 1; fi; dirty=$(git diff-index --quiet HEAD -- 2>/dev/null; echo $?); if [ \"$dirty\" -ne 0 ]; then echo \"FAIL: dirty working tree\"; exit 1; fi; echo \"PASS: HEAD == origin/main, clean tree\""
+    },
+    {
+      "name": "typecheck",
+      "status": "passed",
+      "durationMs": 5926,
+      "detail": "> sophia-ai-factory@0.1.0 ci:typecheck\n> tsc --noEmit",
+      "error": null,
+      "script": "npm run ci:typecheck"
+    },
+    {
+      "name": "lint",
+      "status": "failed",
+      "durationMs": 25934,
+      "detail": "actory/src/tree/telegram/telegram-auth-middleware.ts\n  100:43  warning  '_chatId' is defined but never used  @typescript-eslint/no-unused-vars\n\n/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/telegram/telegram-bot-campaign-handlers.ts\n  42:11  warning  'UserProfileD1Row' is defined but never used  @typescript-eslint/no-unused-vars\n  63:54  warning  '_topic' is defined but never used            @typescript-eslint/no-unused-vars\n\n✖ 393 problems (28 errors, 365 warnings)",
+      "error": "exit 1",
+      "script": "npm run lint"
+    },
+    {
+      "name": "vitest",
+      "status": "passed",
+      "durationMs": 61412,
+      "detail": "tic keys: 0\n   Unresolved dynamic prefixes: 0\n\n✅ All translation keys found!\n\n\n> sophia-ai-factory@0.1.0 test\n> vitest --run\n\n◇ injected env (13) from .env.test // tip: ⌁ auth for agents [www.vestauth.com]\n\n RUN  v4.1.7 /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory\n\n\n Test Files  599 passed | 1 skipped (600)\n      Tests  5811 passed | 34 skipped (5845)\n   Start at  16:13:37\n   Duration  59.99s (transform 20.17s, setup 19.91s, import 41.73s, tests 95.48s, environment 262.83s)",
+      "error": null,
+      "script": "npm test -- --run"
+    },
+    {
+      "name": "build",
+      "status": "passed",
+      "durationMs": 30992,
+      "detail": "hooks/stripe-connect\n├ ƒ /api/webhooks/telegram\n├ ƒ /api/webhooks/tiktok-notification\n├ ƒ /api/webhooks/tiktok-shop\n├ ƒ /api/webhooks/youtube-notification\n├ ƒ /api/welcome/milestone\n├ ƒ /api/welcome/resend\n├ ƒ /api/welcome/status\n├ ƒ /api/welcome/validate/[token]\n├ ƒ /auth/callback\n├ ƒ /blog/feed.xml\n├ ƒ /investor-room\n├ ƒ /ref/[code]\n├ ○ /robots.txt\n├ ○ /sitemap.xml\n└ ƒ /sop-marketplace\n\n\nƒ Proxy (Middleware)\n\n○  (Static)   prerendered as static content\nƒ  (Dynamic)  server-rendered on demand",
+      "error": null,
+      "script": "npm run build"
+    },
+    {
+      "name": "i18n-validate",
+      "status": "passed",
+      "durationMs": 927,
+      "detail": "> sophia-ai-factory@0.1.0 i18n:validate\n> node scripts/validate-i18n-keys.mjs\n\n🔍 Scanning for i18n keys...\n\n📊 Summary:\n   Total t() calls: 3794\n   Unique static keys: 1714\n   Dynamic key prefixes: 20\n   Missing static keys: 0\n   Unresolved dynamic prefixes: 0\n\n✅ All translation keys found!",
+      "error": null,
+      "script": "npm run i18n:validate"
+    },
+    {
+      "name": "get-side-effects",
+      "status": "passed",
+      "durationMs": 2527,
+      "detail": "✅ No GET routes with DB write side effects found.",
+      "error": null,
+      "script": "bash /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/scripts/ci-check-get-side-effects.sh"
+    },
+    {
+      "name": "migration-coverage",
+      "status": "passed",
+      "durationMs": 98,
+      "detail": "Migration coverage check:\n  D1 files checked:       0\n  Postgres files skipped: 0\n  Orphan tables:          0\nOK — all D1 CREATE TABLE statements in src/**/*.sql have canonical migrations/ matches.",
+      "error": null,
+      "script": "bash /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/scripts/check-migration-coverage.sh"
+    },
+    {
+      "name": "video-factory-proof",
+      "status": "failed",
+      "durationMs": 48208,
+      "detail": "(node:77298) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n(node:77551) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n\nFAIL: ESLint zero-error gate exited with code 1",
+      "error": "(node:77298) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n(node:77551) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n\nFAIL: ESLint zero-error gate exited with code 1",
+      "script": "node scripts/verify-core-video-factory.mjs"
+    }
+  ],
+  "summary": {
+    "total": 9,
+    "passed": 6,
+    "failed": 3,
+    "skipped": 0,
+    "warnings": 0,
+    "durationMs": 176041
+  },
+  "failures": [
+    {
+      "gate": "git-preconditions",
+      "error": "FAIL: 10 unpushed commits",
+      "hint": null
+    },
+    {
+      "gate": "lint",
+      "error": "actory/src/tree/telegram/telegram-auth-middleware.ts\n  100:43  warning  '_chatId' is defined but never used  @typescript-eslint/no-unused-vars\n\n/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/tree/telegram/telegram-bot-campaign-handlers.ts\n  42:11  warning  'UserProfileD1Row' is defined but never used  @typescript-eslint/no-unused-vars\n  63:54  warning  '_topic' is defined but never used            @typescript-eslint/no-unused-vars\n\n✖ 393 problems (28 errors, 365 warnings)",
+      "hint": "npm run lint -- --fix"
+    },
+    {
+      "gate": "video-factory-proof",
+      "error": "(node:77298) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n(node:77551) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.\n(Use `node --trace-deprecation ...` to show where the warning was created)\n\nFAIL: ESLint zero-error gate exited with code 1",
+      "hint": null
+    }
+  ]
+}

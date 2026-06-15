@@ -20,7 +20,7 @@ import {
   finishCronCheckIn,
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in';
-import { getD1Raw, createServerClient } from '@/seed/db/client';
+import { getD1, createServerClient } from '@/seed/db/client';
 import { getHeyGenClient } from '@/land/heygen/heygen-client';
 import { downloadAndStore } from '@/land/video/video-storage-service';
 import { logger } from '@/seed/utils/logger-utility';
@@ -136,7 +136,8 @@ export async function GET(req: NextRequest) {
 
   let db: D1Database | null = null;
   try {
-    db = await getD1Raw();
+    db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
   } catch (err) {
     logger.error('[video-status-sync] D1 unavailable', err instanceof Error ? err : undefined);
     failCronCheckIn(cronCtx, CRON_NAME, err);

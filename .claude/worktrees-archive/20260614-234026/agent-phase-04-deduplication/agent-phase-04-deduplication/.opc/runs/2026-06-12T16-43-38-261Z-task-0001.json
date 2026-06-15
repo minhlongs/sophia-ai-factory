@@ -1,0 +1,22 @@
+{
+  "id": "2026-06-12T16-43-38-261Z-task-0001",
+  "taskId": "task-0001",
+  "runner": "claude-stable",
+  "project": "/Users/macbook/projects/sophia-ai-factory",
+  "startedAt": "2026-06-12T16:43:38.262Z",
+  "finishedAt": "2026-06-12T16:43:44.156Z",
+  "claude": {
+    "status": 0,
+    "signal": null,
+    "stdout": "opc-loop-smoke-ok\n",
+    "stderr": ""
+  },
+  "verify": {
+    "command": "test -f package.json",
+    "status": 0,
+    "signal": null,
+    "stdout": "",
+    "stderr": ""
+  },
+  "nextStatus": "done"
+}

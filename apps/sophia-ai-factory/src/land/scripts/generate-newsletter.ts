@@ -10,6 +10,7 @@
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 
 export interface GenerateNewsletterInput {
   userId: string;
@@ -58,7 +59,6 @@ function sanitizePrompt(input: string): string {
 }
 
 const DEFAULT_MODEL = 'meta-llama/llama-3.1-8b-instruct:free';
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 function buildPrompt(input: GenerateNewsletterInput): string {
   const lang = input.language === 'vi' ? 'Vietnamese' : 'English';
@@ -149,29 +149,16 @@ export async function generateNewsletter(
   const model = input.model ?? DEFAULT_MODEL;
 
   try {
-    const res = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${keyOrNull}`,
-        'Content-Type': 'application/json',
-        'X-Title': 'Sophia newsletter-writer',
-      },
-      body: JSON.stringify({
+    const content = await resilientChatCompletion(
+      buildPrompt(input),
+      {
+        openRouterKey: keyOrNull,
+        anthropicKey: undefined,
+        enableFallback: false,
         model,
-        messages: [{ role: 'user', content: buildPrompt(input) }],
-        temperature: 0.7,
-        max_tokens: 2000,
-      }),
-    });
-
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      logger.warn('[generate-newsletter] OpenRouter non-2xx', { status: res.status, body: body.slice(0, 200) });
-      throw new Error(`LLM provider returned ${res.status}`);
-    }
-
-    const json = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-    const raw = json.choices?.[0]?.message?.content?.trim() ?? '';
+      }
+    );
+    const raw = content.trim();
     if (raw.length === 0) {
       throw new Error('LLM provider returned empty body');
     }

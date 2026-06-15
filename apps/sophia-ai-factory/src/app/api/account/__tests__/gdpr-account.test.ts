@@ -11,8 +11,8 @@ import { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => {
   const mockGetCurrentUser = vi.fn();
-  const mockGetD1Raw = vi.fn();
-  return { mockGetCurrentUser, mockGetD1Raw };
+  const mockGetD1 = vi.fn();
+  return { mockGetCurrentUser, mockGetD1 };
 });
 
 vi.mock('@/seed/auth/better-auth-session', () => ({
@@ -20,7 +20,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: mocks.mockGetD1Raw,
+  getD1: mocks.mockGetD1,
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -59,7 +59,7 @@ describe('GDPR Account Export — GET /api/account/export', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.mockGetCurrentUser.mockResolvedValue({ id: 'user-1', tenantId: TENANT_ID });
-    mocks.mockGetD1Raw.mockResolvedValue(makeD1Mock());
+    mocks.mockGetD1.mockReturnValue(makeD1Mock());
   });
 
   it('returns 401 when unauthenticated', async () => {
@@ -87,7 +87,7 @@ describe('GDPR Account Export — GET /api/account/export', () => {
   });
 
   it('returns 503 when D1 unavailable', async () => {
-    mocks.mockGetD1Raw.mockRejectedValue(new Error('D1 not configured'));
+    mocks.mockGetD1.mockReturnValue(null);
     const req = new NextRequest('http://localhost/api/account/export');
     const res = await GET(req);
     expect(res.status).toBe(503);
@@ -113,7 +113,7 @@ describe('GDPR Account Deletion — DELETE /api/account (cooldown gated)', () =>
 
   it('returns 401 when unauthenticated', async () => {
     mocks.mockGetCurrentUser.mockResolvedValue(null);
-    mocks.mockGetD1Raw.mockResolvedValue(makeD1Mock());
+    mocks.mockGetD1.mockReturnValue(makeD1Mock());
     const req = new NextRequest('http://localhost/api/account', {
       method: 'DELETE',
       headers: { 'x-confirm-delete': 'DELETE_MY_ACCOUNT' },
@@ -123,7 +123,7 @@ describe('GDPR Account Deletion — DELETE /api/account (cooldown gated)', () =>
   });
 
   it('returns 400 without confirmation header', async () => {
-    mocks.mockGetD1Raw.mockResolvedValue(makeD1Mock());
+    mocks.mockGetD1.mockReturnValue(makeD1Mock());
     const req = new NextRequest('http://localhost/api/account', { method: 'DELETE' });
     const res = await DELETE(req);
     expect(res.status).toBe(400);
@@ -132,7 +132,7 @@ describe('GDPR Account Deletion — DELETE /api/account (cooldown gated)', () =>
   });
 
   it('returns 412 when no active deletion request exists', async () => {
-    mocks.mockGetD1Raw.mockResolvedValue(makeD1Mock(null));
+    mocks.mockGetD1.mockReturnValue(makeD1Mock(null));
     const req = new NextRequest('http://localhost/api/account', {
       method: 'DELETE',
       headers: { 'x-confirm-delete': 'DELETE_MY_ACCOUNT' },
@@ -145,7 +145,7 @@ describe('GDPR Account Deletion — DELETE /api/account (cooldown gated)', () =>
 
   it('returns 412 when cooldown not elapsed', async () => {
     const futureTs = Math.floor(Date.now() / 1000) + 86400; // +1 day
-    mocks.mockGetD1Raw.mockResolvedValue(
+    mocks.mockGetD1.mockReturnValue(
       makeD1Mock({ confirmed_at: futureTs - 60_000, cancelled_at: null, scheduled_at: futureTs }),
     );
     const req = new NextRequest('http://localhost/api/account', {
@@ -160,7 +160,7 @@ describe('GDPR Account Deletion — DELETE /api/account (cooldown gated)', () =>
 
   it('returns 200 when cooldown elapsed + confirmed', async () => {
     const pastTs = Math.floor(Date.now() / 1000) - 60;
-    mocks.mockGetD1Raw.mockResolvedValue(
+    mocks.mockGetD1.mockReturnValue(
       makeD1Mock({ confirmed_at: pastTs - 86400, cancelled_at: null, scheduled_at: pastTs }),
     );
     const req = new NextRequest('http://localhost/api/account', {
@@ -177,7 +177,7 @@ describe('GDPR Account Deletion — DELETE /api/account (cooldown gated)', () =>
 
   it('returns 200 with override header + env flag (admin path)', async () => {
     process.env.ALLOW_COOLDOWN_OVERRIDE = '1';
-    mocks.mockGetD1Raw.mockResolvedValue(makeD1Mock(null));
+    mocks.mockGetD1.mockReturnValue(makeD1Mock(null));
     const req = new NextRequest('http://localhost/api/account', {
       method: 'DELETE',
       headers: {
@@ -190,7 +190,7 @@ describe('GDPR Account Deletion — DELETE /api/account (cooldown gated)', () =>
   });
 
   it('returns 503 when D1 unavailable', async () => {
-    mocks.mockGetD1Raw.mockRejectedValue(new Error('D1 not configured'));
+    mocks.mockGetD1.mockReturnValue(null);
     const req = new NextRequest('http://localhost/api/account', {
       method: 'DELETE',
       headers: { 'x-confirm-delete': 'DELETE_MY_ACCOUNT' },

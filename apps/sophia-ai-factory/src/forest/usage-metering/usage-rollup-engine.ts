@@ -7,7 +7,7 @@
  * @module usage-metering/usage-rollup-engine
  */
 
-import { createServerClient, getD1Raw } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { aggregateUsageEvents, buildHourlySummary, buildDailySummary } from './usage-event-collector';
 import type {
@@ -179,7 +179,9 @@ export async function reserveCreditSlot(
 
   const yearMonth = currentYearMonth();
   const now = new Date().toISOString();
-  const d1 = await getD1Raw();
+  const _d1 = getD1();
+  if (!_d1) throw new Error('D1 database binding not available');
+  const d1 = _d1;
 
   // Atomic UPSERT: creates row (count=requestedCredits) on first use,
   // increments on subsequent use, WHERE prevents overflow past limit.

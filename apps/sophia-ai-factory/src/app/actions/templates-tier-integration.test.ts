@@ -23,7 +23,7 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Client: vi.fn().mockResolvedValue({ from: mocks.from }),
+  getD1: vi.fn(),
   createServerClient: vi.fn().mockReturnValue({ from: mocks.from }),
 }));
 

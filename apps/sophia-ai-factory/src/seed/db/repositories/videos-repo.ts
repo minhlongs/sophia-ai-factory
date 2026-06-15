@@ -6,7 +6,7 @@
  * @module lib/db/repositories/videos-repo
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 
@@ -54,7 +54,9 @@ export interface EnqueueVideoInput {
  * previous SELECT-then-INSERT pattern.
  */
 export async function enqueueVideo(input: EnqueueVideoInput): Promise<string> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000)
   const id = crypto.randomUUID()
 
@@ -94,7 +96,9 @@ export async function enqueueVideo(input: EnqueueVideoInput): Promise<string> {
  * → completed via HeyGen webhook (see complete-video-from-webhook.ts).
  */
 export async function markVideoCompletedSynthetic(videoId: string): Promise<void> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000)
 
   await db
@@ -116,7 +120,9 @@ export async function markVideoCompletedSynthetic(videoId: string): Promise<void
  * Sets heygen_job_id, increments attempt_count, records last_attempt_at.
  */
 export async function markVideoProcessing(videoId: string, heygenJobId: string): Promise<void> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000)
 
   await db
@@ -141,7 +147,9 @@ export async function markVideoProcessing(videoId: string, heygenJobId: string):
  * For concurrent webhook + cron paths, use recordAttemptCAS instead.
  */
 export async function recordAttempt(videoId: string, errorMsg: string): Promise<void> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000)
 
   await db
@@ -168,7 +176,9 @@ export async function recordAttemptCAS(
   videoId: string,
   errorMsg: string,
 ): Promise<number | null> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000)
 
   const result = await db
@@ -193,7 +203,9 @@ export async function recordAttemptCAS(
  * Non-CAS variant. Safe for single-caller paths (e.g. video-status-sync timeout).
  */
 export async function markPermanentFailure(videoId: string, reason: string): Promise<void> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000)
 
   await db
@@ -221,7 +233,9 @@ export async function markPermanentFailureCAS(
   reason: string,
   minAttemptCount: number,
 ): Promise<boolean> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000)
 
   const result = await db
@@ -250,7 +264,9 @@ export async function recordWebhookAttemptCAS(
   videoId: string,
   errorMsg: string,
 ): Promise<number | null> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000)
 
   const result = await db
@@ -279,7 +295,9 @@ export async function markWebhookPermanentFailureCAS(
   reason: string,
   minAttemptCount: number,
 ): Promise<boolean> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000)
 
   const result = await db
@@ -306,7 +324,9 @@ export async function markWebhookPermanentFailureCAS(
  * Called atomically with markRefunded in the refund IPN handler.
  */
 export async function revokeAccessByPurchaseId(purchaseId: string): Promise<void> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000)
 
   await db
@@ -354,7 +374,9 @@ export interface InsertAiPromptVideoResult {
 export async function insertAiPromptVideo(
   input: InsertAiPromptVideoInput,
 ): Promise<InsertAiPromptVideoResult> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000)
   // Use missionId directly as videos.id — deterministic, genuinely idempotent on PK
   const videoId = input.missionId
@@ -400,7 +422,9 @@ export async function findByHeygenJobId(
   userId?: string | null,
 ): Promise<VideoRow | null> {
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
     let query = `SELECT id, user_id, purchase_id, heygen_job_id, title, status,
                         script, locale, provider, attempt_count, last_attempt_at,
                         last_error, created_at
@@ -436,7 +460,9 @@ export async function findByHeygenJobId(
  */
 export async function findByPurchaseId(purchaseId: string): Promise<VideoRow | null> {
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
     const row = await db
       .prepare(
         `SELECT id, user_id, purchase_id, heygen_job_id, title, status,
@@ -462,7 +488,9 @@ export async function findByPurchaseId(purchaseId: string): Promise<VideoRow | n
  */
 export async function listQueuedForRetry(maxAttempts: number, limit: number): Promise<VideoRow[]> {
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
     const result = await db
       .prepare(
         `SELECT id, user_id, purchase_id, title, script, locale, provider,

@@ -7,7 +7,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { getVideoBucket } from '@/land/video/r2-binding';
 import type { VideoJobStatus } from '@/land/video/video-job-fsm';
 
@@ -40,7 +40,7 @@ export async function GET(
   const { jobId } = await params;
   const tenantId = user.id;
 
-  const db = await getD1Client();
+  const db = createServerClient();
   const { data, error } = await db
     .from('video_jobs')
     .select('*')

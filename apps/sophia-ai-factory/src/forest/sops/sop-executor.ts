@@ -12,7 +12,7 @@
  */
 
 import { inngest } from '@/forest/inngest/client';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { buildSOPGraph } from '@/tree/sop/dag-builder';
 import type { LinearStep } from '@/tree/sop/dag-builder';
@@ -146,7 +146,7 @@ export const sopExecute = inngest.createFunction(
 
     // ── Step 1: Load template ──────────────────────────────────────────────
     const template = await step.run('load-template', async () => {
-      const db = await getD1Client();
+      const db = createServerClient();
       const { data, error } = await db
         .from('sop_templates')
         .select('id, name_en, steps_json, credits_per_run')
@@ -160,7 +160,7 @@ export const sopExecute = inngest.createFunction(
 
     if (!template) {
       await step.run('mark-failed-no-template', async () => {
-        const db = await getD1Client();
+        const db = createServerClient();
         await db.from('sop_executions').update({
           status: 'failed',
           error_message: `Template not found: ${sopTemplateId}`,
@@ -174,7 +174,7 @@ export const sopExecute = inngest.createFunction(
 
     // ── Step 2: Mark running ───────────────────────────────────────────────
     await step.run('mark-running', async () => {
-      const db = await getD1Client();
+      const db = createServerClient();
       await db.from('sop_executions').update({
         status: 'running',
         current_step: 0,
@@ -191,7 +191,7 @@ export const sopExecute = inngest.createFunction(
     } catch (parseErr) {
       const errMsg = parseErr instanceof Error ? parseErr.message : 'Invalid JSON in steps_json';
       await step.run('mark-failed-bad-json', async () => {
-        const db = await getD1Client();
+        const db = createServerClient();
         await db.from('sop_executions').update({
           status: 'failed',
           error_message: `Failed to parse template steps: ${errMsg}`,
@@ -206,8 +206,9 @@ export const sopExecute = inngest.createFunction(
     // ── Apply Prompt Optimizations ─────────────────────────────────────────
     sopSteps = await step.run('apply-prompt-optimizations', async () => {
       try {
-        const { getD1Raw } = await import('@/seed/db/client');
-        const db = await getD1Raw();
+        const _db = getD1();
+        if (!_db) throw new Error('D1 database binding not available');
+        const db = _db;
         const { results } = await db
           .prepare(
             `SELECT step_index, suggested_prompt FROM prompt_optimization_log
@@ -285,7 +286,7 @@ export const sopExecute = inngest.createFunction(
         );
         // Persist wave progress
         const allSoFar = [...stepResults, ...results];
-        const db = await getD1Client();
+        const db = createServerClient();
         await db.from('sop_executions').update({
           current_step: allSoFar.length,
           step_results: JSON.stringify(allSoFar),
@@ -300,7 +301,7 @@ export const sopExecute = inngest.createFunction(
       const failedStep = waveResults.find(r => r.status === 'failed');
       if (failedStep) {
         await step.run('mark-failed-step-error', async () => {
-          const db = await getD1Client();
+          const db = createServerClient();
           await db.from('sop_executions').update({
             status: 'failed',
             error_message: failedStep.error ?? 'Step execution failed',
@@ -325,7 +326,7 @@ export const sopExecute = inngest.createFunction(
 
     // ── Final: Mark completed + analytics + memory ─────────────────────────
     await step.run('mark-completed', async () => {
-      const db = await getD1Client();
+      const db = createServerClient();
       const creditsUsed = template.credits_per_run ?? 1;
       await db.from('sop_executions').update({
         status: 'completed',

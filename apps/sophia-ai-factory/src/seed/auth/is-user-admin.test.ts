@@ -11,6 +11,7 @@ import type { User } from '@/seed/db/client';
 const mockSingle = vi.fn();
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: () => ({
     from: () => ({
       select: () => ({

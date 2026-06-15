@@ -1,19 +1,19 @@
 /**
  * Unit tests for resolve-payout-method.ts
- * Mocks getD1Raw to simulate the two D1 lookup paths.
+ * Mocks getD1 to simulate the two D1 lookup paths.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
   createServerClient: vi.fn(),
 }))
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { resolvePayoutMethod } from '../resolve-payout-method'
 
-const mockedGetD1Raw = vi.mocked(getD1Raw)
+const mockedGetD1 = vi.mocked(getD1)
 
 interface FirstStub {
   stripe?: unknown
@@ -27,14 +27,14 @@ interface FirstStub {
 function makeD1Mock(stub: FirstStub) {
   const firstFn = vi
     .fn()
-    .mockResolvedValueOnce(stub.stripe ?? null)
-    .mockResolvedValueOnce(stub.crypto ?? null)
+    .mockReturnValueOnce(stub.stripe ?? null)
+    .mockReturnValueOnce(stub.crypto ?? null)
 
   const prepared = {
     bind: vi.fn().mockReturnThis(),
     first: firstFn,
-    all: vi.fn().mockResolvedValue({ results: [], success: true }),
-    run: vi.fn().mockResolvedValue({ success: true }),
+    all: vi.fn().mockReturnValue({ results: [], success: true }),
+    run: vi.fn().mockReturnValue({ success: true }),
   }
   return {
     prepare: vi.fn().mockReturnValue(prepared),
@@ -49,7 +49,7 @@ describe('resolvePayoutMethod', () => {
   })
 
   it('prefers Stripe when stripe_payout_enabled=1 and stripe_account_id set', async () => {
-    mockedGetD1Raw.mockResolvedValue(
+    mockedGetD1.mockReturnValue(
       makeD1Mock({ stripe: { stripe_account_id: 'acct_abc' } }) as unknown as D1Database,
     )
     const result = await resolvePayoutMethod('tenant-1', 'aff-1')
@@ -57,7 +57,7 @@ describe('resolvePayoutMethod', () => {
   })
 
   it('falls back to USDT crypto when Stripe not enabled', async () => {
-    mockedGetD1Raw.mockResolvedValue(
+    mockedGetD1.mockReturnValue(
       makeD1Mock({
         stripe: null,
         crypto: {
@@ -77,7 +77,7 @@ describe('resolvePayoutMethod', () => {
   })
 
   it('defaults network to TRC20 when crypto row has null network', async () => {
-    mockedGetD1Raw.mockResolvedValue(
+    mockedGetD1.mockReturnValue(
       makeD1Mock({
         stripe: null,
         crypto: {
@@ -92,7 +92,7 @@ describe('resolvePayoutMethod', () => {
   })
 
   it('returns null when neither Stripe nor crypto method is set', async () => {
-    mockedGetD1Raw.mockResolvedValue(
+    mockedGetD1.mockReturnValue(
       makeD1Mock({ stripe: null, crypto: null }) as unknown as D1Database,
     )
     const result = await resolvePayoutMethod('tenant-1', 'aff-4')
@@ -101,7 +101,7 @@ describe('resolvePayoutMethod', () => {
 
   it('treats stripe row with null stripe_account_id as missing (SQL guard)', async () => {
     // SQL filters this out, but defense-in-depth: even if row sneaks through, fall back
-    mockedGetD1Raw.mockResolvedValue(
+    mockedGetD1.mockReturnValue(
       makeD1Mock({
         stripe: null, // simulating the guarded SQL returning nothing
         crypto: {

@@ -16,7 +16,7 @@
  *
  * @module land/stats/live-stats-counters
  */
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 
@@ -42,7 +42,9 @@ const FLOORS = {
 
 async function tryCount(sql: string): Promise<number> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
     const row = await db.prepare(sql).first<{ n: number | string }>();
     if (!row || row.n === undefined || row.n === null) return 0;
     const n = typeof row.n === 'string' ? Number(row.n) : row.n;

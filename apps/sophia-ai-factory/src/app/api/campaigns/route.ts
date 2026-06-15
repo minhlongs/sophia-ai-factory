@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { Campaign } from '@/seed/types';
 
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const db = await getD1Client();
+    const db = createServerClient();
     const { searchParams } = new URL(req.url);
     const campaignId = searchParams.get('id');
 
@@ -86,7 +86,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Missing campaign id' }, { status: 400 });
     }
 
-    const db = await getD1Client();
+    const db = createServerClient();
     const { data: existing, error: lookupError } = await db
       .from('campaigns')
       .select('id')

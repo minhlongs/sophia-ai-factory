@@ -157,27 +157,64 @@ const eslintConfig = defineConfig([
       // tightly coupled to forest infra; mekong-exempt to avoid invasive relocation.
       // Long-term: move file to src/forest/inngest/ alongside other Inngest helpers.
       "src/tree/telegram/dispatch-with-retry-hints.ts",
-// admin/synthetic-fulfillment-runner — reads land/fulfillment for fulfillment logic (mekong-exempt)
-"src/tree/admin/synthetic-fulfillment-runner.ts",
-// byok/with-timeout — reads land/signals for telemetry (mekong-exempt)
-"src/tree/byok/with-timeout.ts",
-// clients/nowpayments-client — reads land/webhooks for IPN signature (mekong-exempt)
-"src/tree/clients/nowpayments-client.ts",
-// gateway/adapters — reads land/tiktok, land/youtube for channel OAuth (mekong-exempt)
-"src/tree/gateway/adapters/tiktok-channel-adapter.ts",
-"src/tree/gateway/adapters/youtube-channel-adapter.ts",
-// gateway/checkpoint-supabase-persistence — reads land/supabase/admin (mekong-exempt)
-"src/tree/gateway/checkpoint-supabase-persistence.ts",
-// gateway/openclaw-gateway — reads land/signals for orchestration telemetry (mekong-exempt)
-"src/tree/gateway/openclaw-gateway.ts",
-// sop/auto-dispatch-layer — reads land/openclaw for LLM routing (mekong-exempt)
-"src/tree/sop/auto-dispatch-layer.ts",
-// sop/executor/sop-runner — reads forest/missions for dispatching (mekong-exempt)
-"src/tree/sop/executor/sop-runner.ts",
-// sop/solo-orchestrator — reads land/openclaw for agent orchestration (mekong-exempt)
-"src/tree/sop/solo-orchestrator.ts",
-// sop/webhook-hmac — reads land/webhooks for signature verification (mekong-exempt)
-"src/tree/sop/webhook-hmac.ts",
+      // ── Tree wrapper modules (re-export public API from forest/ or land/) ─────
+      // These are intentional facade modules — tree domain's public interface.
+      // affiliates domain wrapper
+      "src/tree/affiliates/credentials.ts",
+      "src/tree/affiliates/index.ts",
+      "src/tree/affiliates/scout/**/*.ts",
+      // agents domain wrapper
+      "src/tree/agents/agent-health-resolver.ts",
+      "src/tree/agents/enforcement-gate.ts",
+      "src/tree/agents/prompts.ts",
+      "src/tree/agents/repository.ts",
+      "src/tree/agents/runner.ts",
+      "src/tree/agents/seed-default-team.ts",
+      "src/tree/agents/types.ts",
+      // email domain wrapper
+      "src/tree/email/email-templates.ts",
+      "src/tree/email/index.ts",
+      "src/tree/email/lifecycle-email-rules.ts",
+      "src/tree/email/onboarding-emails.ts",
+      "src/tree/email/render-email.ts",
+      "src/tree/email/sender.ts",
+      "src/tree/email/week-stats.ts",
+      // llm domain wrapper (re-exports from land/openclaw)
+      "src/tree/llm/index.ts",
+      // missions wrapper (re-exports forest/missions dispatcher)
+      "src/tree/missions/dispatcher.ts",
+      "src/tree/missions/fire-webhook.ts",
+      // openclaw gateway wrapper (re-exports land + forest)
+      "src/tree/openclaw/index.ts",
+      // outbox wrapper
+      "src/tree/outbox/email-outbox.ts",
+      // publishing wrapper
+      "src/tree/publishing/providers/telegram-publisher.ts",
+      // fulfillment wrapper (re-exports from land/fulfillment)
+      "src/tree/fulfillment/index.ts",
+      // inngest client wrapper (re-exports from forest/inngest)
+      "src/tree/inngest/client.ts",
+      // admin/synthetic-fulfillment-runner — reads land/fulfillment for fulfillment logic (mekong-exempt)
+      "src/tree/admin/synthetic-fulfillment-runner.ts",
+      // byok/with-timeout — reads land/signals for telemetry (mekong-exempt)
+      "src/tree/byok/with-timeout.ts",
+      // clients/nowpayments-client — reads land/webhooks for IPN signature (mekong-exempt)
+      "src/tree/clients/nowpayments-client.ts",
+      // gateway/adapters — reads land/tiktok, land/youtube for channel OAuth (mekong-exempt)
+      "src/tree/gateway/adapters/tiktok-channel-adapter.ts",
+      "src/tree/gateway/adapters/youtube-channel-adapter.ts",
+      // gateway/checkpoint-supabase-persistence — reads land/supabase/admin (mekong-exempt)
+      "src/tree/gateway/checkpoint-supabase-persistence.ts",
+      // gateway/openclaw-gateway — reads land/signals for orchestration telemetry (mekong-exempt)
+      "src/tree/gateway/openclaw-gateway.ts",
+      // sop/auto-dispatch-layer — reads land/openclaw for LLM routing (mekong-exempt)
+      "src/tree/sop/auto-dispatch-layer.ts",
+      // sop/executor/sop-runner — reads forest/missions for dispatching (mekong-exempt)
+      "src/tree/sop/executor/sop-runner.ts",
+      // sop/solo-orchestrator — reads land/openclaw for agent orchestration (mekong-exempt)
+      "src/tree/sop/solo-orchestrator.ts",
+      // sop/webhook-hmac — reads land/webhooks for signature verification (mekong-exempt)
+      "src/tree/sop/webhook-hmac.ts",
       // Test files
       "src/tree/**/*.test.ts",
       "src/tree/**/*.test.tsx",
@@ -324,10 +361,10 @@ const eslintConfig = defineConfig([
 "src/tree/sop/solo-orchestrator.ts",
 // sop/webhook-hmac — reads land/webhooks for signature verification (mekong-exempt)
 "src/tree/sop/webhook-hmac.ts",
-				// usage-metering — KV client from land/redis (mekong-exempt: infra access pattern)
-				"src/forest/usage-metering/**/*.ts",
-				// dlq-reaper — reads land/billing/nowpayments-ipn-dead-letter for DLQ ops (mekong-exempt: orchestration)
-				"src/forest/inngest/functions/dlq-reaper.ts",
+// usage-metering — KV client from land/redis (mekong-exempt: infra access pattern)
+"src/forest/usage-metering/**/*.ts",
+// dlq-reaper — reads land/billing/nowpayments-ipn-dead-letter for DLQ ops (mekong-exempt: orchestration)
+"src/forest/inngest/functions/dlq-reaper.ts",
       // Test files
       "src/forest/**/*.test.ts",
       "src/forest/**/*.test.tsx",
@@ -372,7 +409,7 @@ const eslintConfig = defineConfig([
 "src/lib/publishing/__tests__/fake-d1-sqlite.ts",
 // SOP marketplace — any cast for server→client template hydration (mekong-exempt)
 "src/app/sop-marketplace/page.tsx",
-]),
+  ]),
 ]);
 
 export default eslintConfig;

@@ -1,6 +1,6 @@
 "use server";
 
-import { getD1Client } from "@/seed/db/client";
+import { createServerClient } from "@/seed/db/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { tierGuard } from "@/land/tier-guard";
@@ -20,7 +20,7 @@ export const createTemplateSchema = z.object({
 });
 
 export async function createTemplate(data: z.infer<typeof createTemplateSchema>) {
-  const db = await getD1Client();
+  const db = createServerClient();
 
   // Get current user — for now derive from first user in dev
   // In production this should come from a validated auth token/session

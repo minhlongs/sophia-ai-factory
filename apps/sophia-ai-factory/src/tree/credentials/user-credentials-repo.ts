@@ -10,7 +10,7 @@
  * @module lib/credentials/user-credentials-repo
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { encryptValue, decryptValue } from '@/tree/credentials/encryption'
 
 // M11: error thrown when stored credential cannot be decrypted (key rotated)
@@ -58,13 +58,9 @@ export async function getUserCredential(
 ): Promise<string | null> {
   if (!userId || !provider) return null
   let d1: D1Database
-  try {
-    d1 = await getD1Raw()
-  } catch (err) {
-    // M11: distinguish decryption failure (key rotated) from row-not-found
-    if (err instanceof ByokKeyRotatedError) throw err
-    return null
-  }
+  const db = getD1()
+  if (!db) throw new Error('D1 database binding not available')
+  d1 = db
 
   try {
     const row = await d1
@@ -111,7 +107,8 @@ export async function setUserCredential(
   if (!userId || !provider || !plaintext) {
     throw new Error('setUserCredential: userId, provider and plaintext are required')
   }
-  const d1 = await getD1Raw()
+  const d1 = getD1();
+  if (!d1) throw new Error('D1 database binding not available');
   const encryptedValue = await encryptValue(plaintext, userId)
   const displayHint = makeDisplayHint(plaintext)
   const now = Math.floor(Date.now() / 1000)
@@ -139,7 +136,8 @@ export async function deleteUserCredential(
   provider: ProviderType,
 ): Promise<void> {
   if (!userId || !provider) throw new Error('deleteUserCredential: userId and provider required')
-  const d1 = await getD1Raw()
+  const d1 = getD1();
+  if (!d1) throw new Error('D1 database binding not available');
   await d1
     .prepare(`DELETE FROM user_provider_credentials WHERE user_id = ?1 AND provider = ?2`)
     .bind(userId, provider)
@@ -152,11 +150,9 @@ export async function deleteUserCredential(
 export async function listUserProviders(userId: string): Promise<CredentialSummary[]> {
   if (!userId) return []
   let d1: D1Database
-  try {
-    d1 = await getD1Raw()
-  } catch {
-    return []
-  }
+  const db = getD1()
+  if (!db) throw new Error('D1 database binding not available')
+  d1 = db
 
   try {
     const { results } = await d1

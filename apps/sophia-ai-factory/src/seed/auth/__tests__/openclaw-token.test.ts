@@ -15,7 +15,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ── Mocks (factories must not reference outer variables — hoisted by vitest) ──
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -31,9 +31,9 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 }));
 
 import { verifyOpenclawToken, revokeOpenclawToken, hmacBase64url, generateJti } from '@/seed/auth/openclaw-token';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
-const mockGetD1Raw = vi.mocked(getD1Raw);
+const mockGetD1 = vi.mocked(getD1);
 const TEST_SECRET = 'test-secret-for-openclaw-token-tests';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -76,7 +76,7 @@ let revokedSet: Set<string>;
 beforeEach(() => {
   vi.clearAllMocks();
   revokedSet = new Set<string>();
-  mockGetD1Raw.mockResolvedValue(makeD1Mock(revokedSet) as unknown as D1Database);
+  mockGetD1.mockReturnValue(makeD1Mock(revokedSet) as unknown as D1Database);
   process.env.BETTER_AUTH_SECRET = TEST_SECRET;
   delete process.env.JWT_SECRET=REDACTED;
 });
@@ -154,7 +154,7 @@ describe('verifyOpenclawToken — revocation', () => {
 describe('revokeOpenclawToken', () => {
   it('calls D1 INSERT for the given JTI', async () => {
     const mockDb = makeD1Mock(revokedSet);
-    mockGetD1Raw.mockResolvedValue(mockDb as unknown as D1Database);
+    mockGetD1.mockReturnValue(mockDb as unknown as D1Database);
 
     await revokeOpenclawToken('test-jti-to-revoke', 'test reason');
 

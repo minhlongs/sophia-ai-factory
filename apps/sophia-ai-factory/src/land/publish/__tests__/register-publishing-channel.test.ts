@@ -4,17 +4,17 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-const { mockFirst, mockRun, mockBind, mockPrepare, mockGetD1Raw } = vi.hoisted(() => {
+const { mockFirst, mockRun, mockBind, mockPrepare, mockGetD1 } = vi.hoisted(() => {
   const first = vi.fn();
   const run = vi.fn().mockResolvedValue({ success: true });
   const bind = vi.fn(() => ({ first, run }));
   const prepare = vi.fn(() => ({ bind }));
-  const getD1Raw = vi.fn().mockResolvedValue({ prepare });
-  return { mockFirst: first, mockRun: run, mockBind: bind, mockPrepare: prepare, mockGetD1Raw: getD1Raw };
+  const getD1 = vi.fn(() => ({ prepare }));
+  return { mockFirst: first, mockRun: run, mockBind: bind, mockPrepare: prepare, mockGetD1: getD1 };
 });
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: mockGetD1Raw,
+  getD1: mockGetD1,
 }));
 
 import {
@@ -60,7 +60,7 @@ describe('registerPublishingChannel', () => {
     vi.resetAllMocks();
     // AES-256-GCM requires a 32-byte (64 hex-char) key for every register call.
     process.env.OAUTH_TOKEN_ENC_KEY = 'c'.repeat(64);
-    mockGetD1Raw.mockResolvedValue({ prepare: mockPrepare });
+    mockGetD1.mockReturnValue({ prepare: mockPrepare });
     mockBind.mockImplementation(() => ({ first: mockFirst, run: mockRun }));
     mockPrepare.mockImplementation(() => ({ bind: mockBind }));
     mockRun.mockResolvedValue({ success: true });

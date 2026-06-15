@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { validateMagicLinkToken, consumeMagicLink } from '@/tree/handover/handover-magic-link';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { getAuth } from '@/seed/auth/better-auth-server';
 import { logger } from '@/seed/utils/logger-utility';
 import { writeAuditLog } from '@/tree/admin/audit-log';
@@ -28,7 +28,9 @@ export async function GET(_request: NextRequest, { params }: RouteParams): Promi
   }
 
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
     const userRow = await db
       .prepare(`SELECT email, name FROM user WHERE id = ?1 LIMIT 1`)
       .bind(handover.customer_user_id)
@@ -147,7 +149,9 @@ export async function POST(request: NextRequest, ctx: RouteParams): Promise<Next
   // Look up customer email for audit log (hashed for PII protection)
   let emailHash: string | null = null;
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
     const u = await db
       .prepare(`SELECT email FROM user WHERE id = ?1 LIMIT 1`)
       .bind(handover.customer_user_id)

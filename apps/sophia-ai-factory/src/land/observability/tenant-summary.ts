@@ -8,7 +8,7 @@
  * @module land/observability/tenant-summary
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 export interface TenantUserInfo {
   id: string;
@@ -78,7 +78,8 @@ interface RawAudit {
  */
 export async function getTenantSummary(tenantId: string): Promise<TenantSummary | null> {
   if (!tenantId) return null;
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   const user = await db
     .prepare(

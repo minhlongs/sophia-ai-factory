@@ -82,7 +82,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       requestId,
       content: {
         hook: script.scenes[0]?.narration ?? "",
-        body: script.scenes.slice(1, -1).map((s) => s.narration).join(" "),
+        body: script.scenes.slice(1, -1).map((s: { narration: string }) => s.narration).join(" "),
         cta: script.scenes[script.scenes.length - 1]?.narration ?? "",
       },
       metadata: {

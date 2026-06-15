@@ -1,19 +1,14 @@
 /**
  * OpenRouter-powered semantic niche matching for affiliate programs.
  *
- * Degrades gracefully: returns null when OPENROUTER_API_KEY is not set
+ * Degrades gracefully: returns null when OpenRouter key is not set
  * or when the API call fails. Callers should fall back to deterministic
  * scoring from affiliate-ai-scorer.ts.
  */
 
 import type { AffiliateProgram } from "@/seed/types";
-import { withTimeout } from "@/tree/byok/with-timeout";
 import { resolveUserApiKey } from "@/tree/byok/resolve-user-api-key";
-
-/** OpenRouter response shape for chat completions */
-interface OpenRouterChoice {
-  message: { content: string };
-}
+import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 
 /** Build the user-content prompt — shared between local + cloud paths so
  *  the model sees identical input regardless of which backend served it. */
@@ -47,7 +42,7 @@ export async function enhanceNicheScoreWithAI(
 ): Promise<number | null> {
   const prompt = buildPrompt(program, niche);
 
-  // Phase 7C: BYOK-aware — prefer user's stored OpenRouter key; fall back to env.
+  // BYOK-aware — prefer user's stored OpenRouter key; fall back to env.
   const apiKey = await resolveUserApiKey(
     userId ?? null,
     "openrouter",
@@ -56,35 +51,13 @@ export async function enhanceNicheScoreWithAI(
   if (!apiKey) return null;
 
   try {
-    const response = await withTimeout("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "You are a niche-matching analyst. Return ONLY a number 0-100.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        max_tokens: 10,
-      }),
-      provider: 'openrouter',
+    const content = await resilientChatCompletion(prompt, {
+      openRouterKey: apiKey,
+      anthropicKey: undefined,
+      enableFallback: false,
+      model: 'openai/gpt-4o-mini',
     });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = (await response.json()) as { choices?: OpenRouterChoice[] };
-    return parseScore(data.choices?.[0]?.message?.content);
+    return parseScore(content);
   } catch {
     return null;
   }

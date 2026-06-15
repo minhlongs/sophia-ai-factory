@@ -4,7 +4,7 @@
  * @module seed/db/repositories/confidence-escalation-repo
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type { ConfidenceFactors, ConfidenceScore, EscalationRequest, EscalationStatus } from '@/seed/types/confidence';
@@ -68,7 +68,9 @@ export async function logConfidence(params: {
   score: number;
   factors: ConfidenceFactors;
 }): Promise<string> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const id = crypto.randomUUID();
   const now = Math.floor(Date.now() / 1000);
 
@@ -87,7 +89,9 @@ export async function logConfidence(params: {
 /** Fetch all confidence scores for an execution. Returns [] on error. */
 export async function getConfidenceForExecution(executionId: string): Promise<ConfidenceScore[]> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const result = await db
       .prepare(
         `SELECT id, execution_id, step_index, score, factors_json, created_at
@@ -110,7 +114,9 @@ export async function createEscalation(params: {
   stepIndex: number;
   reason: string;
 }): Promise<string> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const id = crypto.randomUUID();
   const now = Math.floor(Date.now() / 1000);
 
@@ -132,7 +138,9 @@ export async function resolveEscalation(
   resolvedBy: string,
   status: Extract<EscalationStatus, 'approved' | 'rejected' | 'auto_resolved'>,
 ): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const now = Math.floor(Date.now() / 1000);
 
   await db
@@ -148,7 +156,9 @@ export async function resolveEscalation(
 /** Fetch recent confidence scores across all executions. Returns [] on error. */
 export async function getRecentScores(limit = 50): Promise<ConfidenceScore[]> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const result = await db
       .prepare(
         `SELECT id, execution_id, step_index, score, factors_json, created_at
@@ -166,7 +176,9 @@ export async function getRecentScores(limit = 50): Promise<ConfidenceScore[]> {
 /** Fetch recent escalations across all executions. Returns [] on error. */
 export async function getRecentEscalations(limit = 50): Promise<EscalationRequest[]> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const result = await db
       .prepare(
         `SELECT id, execution_id, step_index, reason, status, resolved_by, resolved_at, created_at
@@ -184,7 +196,9 @@ export async function getRecentEscalations(limit = 50): Promise<EscalationReques
 /** Fetch pending escalations ordered by created_at DESC. Returns [] on error. */
 export async function getPendingEscalations(limit = 50): Promise<EscalationRequest[]> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const result = await db
       .prepare(
         `SELECT id, execution_id, step_index, reason, status, resolved_by, resolved_at, created_at

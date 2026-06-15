@@ -40,7 +40,7 @@ vi.mock('@/seed/db/client', () => {
 
   return {
     createServerClient: vi.fn(mockDb),
-    getD1Raw: vi.fn(async () => ({
+    getD1: vi.fn(() => ({
       prepare: (sql: string) => ({
         bind: (...args: unknown[]) => ({ _sql: sql, _args: args }),
       }),

@@ -18,6 +18,7 @@ import {
 
 // Mock Supabase admin client
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(() => ({
     from: vi.fn((table: string) => ({
       insert: vi.fn((data: unknown) => ({

@@ -1,6 +1,6 @@
 /**
  * Unit tests for order-query.ts
- * Mocks getD1Raw to avoid live D1 dependency.
+ * Mocks getD1 to avoid live D1 dependency.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -11,24 +11,23 @@ import { getUserOrders } from '../order-query'
 function makeD1Mock(rows: unknown[]) {
   const prepared = {
     bind: vi.fn().mockReturnThis(),
-    all: vi.fn().mockResolvedValue({ results: rows, success: true }),
-    first: vi.fn().mockResolvedValue(null),
-    run: vi.fn().mockResolvedValue({ success: true }),
+    all: vi.fn().mockReturnValue({ results: rows, success: true }),
+    first: vi.fn().mockReturnValue(null),
+    run: vi.fn().mockReturnValue({ success: true }),
   }
   return {
     prepare: vi.fn().mockReturnValue(prepared),
-    batch: vi.fn().mockResolvedValue([]),
-    exec: vi.fn().mockResolvedValue({ count: 0, duration: 0 }),
+    batch: vi.fn().mockReturnValue([]),
+    exec: vi.fn().mockReturnValue({ count: 0, duration: 0 }),
   }
 }
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(),
-  createServerClient: vi.fn(),
+  getD1: vi.fn(),
 }))
 
-import { getD1Raw } from '@/seed/db/client'
-const mockedGetD1Raw = vi.mocked(getD1Raw)
+import { getD1 } from '@/seed/db/client'
+const mockedGetD1 = vi.mocked(getD1)
 
 describe('getUserOrders', () => {
   beforeEach(() => {
@@ -36,13 +35,13 @@ describe('getUserOrders', () => {
   })
 
   it('returns empty array for user with no purchases', async () => {
-    mockedGetD1Raw.mockResolvedValue(makeD1Mock([]) as unknown as D1Database)
+    mockedGetD1.mockReturnValue(makeD1Mock([]) as unknown as D1Database)
     const result = await getUserOrders('user-123')
     expect(result).toEqual([])
   })
 
   it('maps a purchase row with no video to null videoStatus', async () => {
-    mockedGetD1Raw.mockResolvedValue(makeD1Mock([
+    mockedGetD1.mockReturnValue(makeD1Mock([
       {
         purchase_id: 'p-1',
         sku: 'starter-10',
@@ -67,7 +66,7 @@ describe('getUserOrders', () => {
   })
 
   it('maps a purchase row with queued video correctly', async () => {
-    mockedGetD1Raw.mockResolvedValue(makeD1Mock([
+    mockedGetD1.mockReturnValue(makeD1Mock([
       {
         purchase_id: 'p-2',
         sku: 'growth-20',
@@ -89,7 +88,7 @@ describe('getUserOrders', () => {
   })
 
   it('returns empty array and logs on DB error', async () => {
-    mockedGetD1Raw.mockRejectedValue(new Error('D1 unavailable'))
+    mockedGetD1.mockRejectedValue(new Error('D1 unavailable'))
     const result = await getUserOrders('user-xyz')
     expect(result).toEqual([])
   })

@@ -46,6 +46,7 @@ let mockSupabaseSingleResult: any = null;
 let mockSupabaseQueryResult: any = { data: [], error: null };
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: () => ({
     from: vi.fn((table: string) => ({
       select: vi.fn((columns?: string) => {

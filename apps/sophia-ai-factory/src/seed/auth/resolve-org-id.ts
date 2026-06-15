@@ -12,17 +12,10 @@
  * `api/raas/workflows/route.ts` and `api/raas/workflows/[id]/route.ts`.
  */
 
+import { getD1 } from '@/seed/db/client'
+
 export function getD1Raw(): D1Database | null {
-  const envHolder = globalThis as unknown as Record<string, Record<string, unknown>>
-  const env = envHolder.__env
-  if (env?.DB) return env.DB as D1Database
-
-  const ctxSymbol = Symbol.for('__cloudflare-context__')
-  const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[ctxSymbol]
-  if (ctx?.env?.DB) return ctx.env.DB as D1Database
-
-  const g = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined
-  return g ?? null
+  return getD1();
 }
 
 export async function resolveOrgId(

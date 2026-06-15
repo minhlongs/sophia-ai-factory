@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
   getCurrentUser: vi.fn(),
-  getD1Client: vi.fn(),
+  createServerClient: vi.fn(),
   loggerError: vi.fn(),
 }));
 
@@ -12,7 +12,8 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Client: mocks.getD1Client,
+  getD1: vi.fn(),
+  createServerClient: mocks.createServerClient,
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -109,7 +110,7 @@ describe('/api/schedule validation', () => {
 
   it('normalizes datetime-local input to a date-only next_run_date', async () => {
     const { db, calls } = makeDb();
-    mocks.getD1Client.mockResolvedValue(db);
+    mocks.createServerClient.mockReturnValue(db);
 
     const res = await POST(makeJsonRequest('POST', {
       topic: 'Weekly media plan',
@@ -131,7 +132,7 @@ describe('/api/schedule validation', () => {
 
   it('rejects invalid interval and impossible dates', async () => {
     const { db } = makeDb();
-    mocks.getD1Client.mockResolvedValue(db);
+    mocks.createServerClient.mockReturnValue(db);
 
     const res = await POST(makeJsonRequest('POST', {
       topic: 'Bad schedule',
@@ -146,7 +147,7 @@ describe('/api/schedule validation', () => {
 
   it('rejects date strings with a valid-looking prefix and trailing garbage', async () => {
     const { db, calls } = makeDb();
-    mocks.getD1Client.mockResolvedValue(db);
+    mocks.createServerClient.mockReturnValue(db);
 
     const res = await POST(makeJsonRequest('POST', {
       topic: 'Bad date suffix',
@@ -162,7 +163,7 @@ describe('/api/schedule validation', () => {
 
   it('normalizes PATCH next_run_date and scopes update by user', async () => {
     const { db, calls } = makeDb();
-    mocks.getD1Client.mockResolvedValue(db);
+    mocks.createServerClient.mockReturnValue(db);
 
     const res = await PATCH(makeJsonRequest('PATCH', {
       id: 'sched-1',
@@ -183,7 +184,7 @@ describe('/api/schedule validation', () => {
 
   it('returns 404 when PATCH matches no current-user schedule', async () => {
     const { db } = makeDb({ patchRows: [] });
-    mocks.getD1Client.mockResolvedValue(db);
+    mocks.createServerClient.mockReturnValue(db);
 
     const res = await PATCH(makeJsonRequest('PATCH', {
       id: 'missing-sched',
@@ -197,7 +198,7 @@ describe('/api/schedule validation', () => {
 
   it('checks ownership before DELETE and returns 404 for missing schedules', async () => {
     const { db, calls } = makeDb({ deleteExisting: null });
-    mocks.getD1Client.mockResolvedValue(db);
+    mocks.createServerClient.mockReturnValue(db);
 
     const res = await DELETE(new NextRequest('https://sophia.agencyos.network/api/schedule?id=missing-sched', {
       method: 'DELETE',

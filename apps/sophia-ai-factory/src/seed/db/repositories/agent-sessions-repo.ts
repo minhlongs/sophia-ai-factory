@@ -4,10 +4,10 @@
  * @module seed/db/repositories/agent-sessions-repo
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
-import type { AgentSession, AgentTaskAssignment, AgentRole, AgentStatus } from '@/seed/types/multi-agent';
+import type { AgentSession, AgentTaskAssignment, SOPAgentRole, AgentStatus } from '@/seed/types/multi-agent';
 
 // ── Raw row types ─────────────────────────────────────────────────────────────
 
@@ -61,7 +61,7 @@ function mapTask(r: RawTaskRow): AgentTaskAssignment {
   return {
     id: r.id,
     sessionId: r.session_id,
-    agentRole: r.agent_role as AgentRole,
+    agentRole: r.agent_role as SOPAgentRole,
     stepIndex: r.step_index,
     status: r.status as AgentStatus,
     input: r.input_json ? (JSON.parse(r.input_json) as Record<string, unknown>) : undefined,
@@ -78,7 +78,8 @@ function mapTask(r: RawTaskRow): AgentTaskAssignment {
 /** Fetch recent sessions ordered by created_at DESC. Returns [] on error. */
 export async function getRecentSessions(limit = 20): Promise<AgentSession[]> {
   try {
-    const db = await getD1Raw();
+    const db = getD1()
+    if (!db) throw new Error('D1 database binding not available')
     const result = await db
       .prepare(
         `SELECT id, execution_id, supervisor_agent, status, worker_count,
@@ -98,7 +99,8 @@ export async function getRecentSessions(limit = 20): Promise<AgentSession[]> {
 /** Fetch all task assignments for a session. Returns [] on error. */
 export async function getTasksForSession(sessionId: string): Promise<AgentTaskAssignment[]> {
   try {
-    const db = await getD1Raw();
+    const db = getD1()
+    if (!db) throw new Error('D1 database binding not available')
     const result = await db
       .prepare(
         `SELECT id, session_id, agent_role, step_index, status, input_json,
@@ -119,7 +121,8 @@ export async function getTasksForSession(sessionId: string): Promise<AgentTaskAs
 export async function getTasksForSessions(sessionIds: string[]): Promise<Record<string, AgentTaskAssignment[]>> {
   if (sessionIds.length === 0) return {};
   try {
-    const db = await getD1Raw();
+    const db = getD1()
+    if (!db) throw new Error('D1 database binding not available')
     const placeholders = sessionIds.map((_, i) => `?${i + 1}`).join(',');
     const result = await db
       .prepare(
@@ -148,7 +151,8 @@ export async function getTasksForSessions(sessionIds: string[]): Promise<Record<
 /** Get aggregate session counts. */
 export async function getSessionStats(): Promise<{ active: number; completed: number; failed: number }> {
   try {
-    const db = await getD1Raw();
+    const db = getD1()
+    if (!db) throw new Error('D1 database binding not available')
     const result = await db
       .prepare(
         `SELECT status, COUNT(*) as cnt FROM agent_execution_sessions GROUP BY status`,

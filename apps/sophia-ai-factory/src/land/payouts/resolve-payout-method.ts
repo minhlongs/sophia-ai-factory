@@ -9,7 +9,7 @@
  * @module payouts/resolve-payout-method
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 
 export type ResolvedPayoutMethod =
   | { kind: 'stripe'; stripeAccountId: string }
@@ -34,7 +34,9 @@ export async function resolvePayoutMethod(
   tenantId: string,
   affiliateId: string,
 ): Promise<ResolvedPayoutMethod | null> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
 
   const stripeRow = await db
     .prepare(

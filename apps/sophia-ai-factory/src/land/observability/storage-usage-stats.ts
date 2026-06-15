@@ -9,7 +9,7 @@
  * @module land/observability/storage-usage-stats
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 export interface StorageGlobalSummary {
   /** Number of tenant rows in the usage table. */
@@ -64,7 +64,8 @@ export async function getStorageSnapshot(
   const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
   const nowSec = Math.floor(Date.now() / 1000);
   const staleCutoff = nowSec - staleAfterSec;
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   const [summaryRow, topRes] = await Promise.all([
     db

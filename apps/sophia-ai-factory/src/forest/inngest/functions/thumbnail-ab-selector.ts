@@ -1,5 +1,5 @@
 import { inngest } from '@/forest/inngest/client';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 interface ThumbnailVariantRow {
@@ -17,7 +17,9 @@ export const thumbnailAbSelector = inngest.createFunction(
   { cron: '0 */12 * * *' },
   async ({ step }) => {
     const pendingVideos = await step.run('find-pending-ab-tests', async () => {
-      const db = await getD1Raw();
+      const _db = getD1();
+      if (!_db) throw new Error('D1 database binding not available');
+      const db = _db;
       const result = await db
         .prepare(
           `SELECT DISTINCT video_id, user_id FROM thumbnail_variants
@@ -32,7 +34,9 @@ export const thumbnailAbSelector = inngest.createFunction(
     let selected = 0;
     for (const video of pendingVideos) {
       await step.run(`select-winner-${video.video_id}`, async () => {
-        const db = await getD1Raw();
+        const _db = getD1();
+        if (!_db) throw new Error('D1 database binding not available');
+        const db = _db;
         const variants = await db
           .prepare('SELECT * FROM thumbnail_variants WHERE video_id = ? ORDER BY variant_index')
           .bind(video.video_id)
@@ -44,7 +48,7 @@ export const thumbnailAbSelector = inngest.createFunction(
           return bCtr > aCtr ? b : a;
         });
 
-        await db
+        await _db
           .prepare('UPDATE thumbnail_variants SET is_selected = 1 WHERE id = ?')
           .bind(best.id)
           .run();

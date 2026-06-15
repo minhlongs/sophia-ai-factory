@@ -10,8 +10,8 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-const { mockGetD1Raw } = vi.hoisted(() => ({ mockGetD1Raw: vi.fn() }))
-vi.mock('@/seed/db/client', () => ({ getD1Raw: mockGetD1Raw }))
+const { mockGetD1 } = vi.hoisted(() => ({ mockGetD1: vi.fn() }))
+vi.mock('@/seed/db/client', () => ({ getD1: mockGetD1 }))
 
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -122,7 +122,7 @@ beforeEach(() => {
 describe('triggerAutoHandover — idempotency', () => {
   it('skips with duplicate_payment_id when handover already exists for paymentId', async () => {
     const { db } = createMockD1({ handoverByPayment: { id: 'prev-handover' } })
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
 
     const result = await triggerAutoHandover(baseOpts)
 
@@ -142,7 +142,7 @@ describe('triggerAutoHandover — idempotency', () => {
 describe('triggerAutoHandover — user resolution', () => {
   it('uses provided userId directly (no email lookup, no create)', async () => {
     const { db } = createMockD1()
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
 
     const result = await triggerAutoHandover({ ...baseOpts, userId: 'user-existing' })
 
@@ -153,7 +153,7 @@ describe('triggerAutoHandover — user resolution', () => {
 
   it('finds user by email when userId omitted (no create)', async () => {
     const { db } = createMockD1({ userByEmail: { id: 'user-by-email' } })
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
 
     const result = await triggerAutoHandover(baseOpts)
 
@@ -164,7 +164,7 @@ describe('triggerAutoHandover — user resolution', () => {
 
   it('creates new customer when not found by id or email', async () => {
     const { db } = createMockD1()
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
 
     const result = await triggerAutoHandover(baseOpts)
 
@@ -174,7 +174,7 @@ describe('triggerAutoHandover — user resolution', () => {
 
   it('falls back to email local-part for fullName when not provided', async () => {
     const { db } = createMockD1()
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
 
     await triggerAutoHandover({ ...baseOpts, email: 'jane.doe@example.com' })
 
@@ -183,7 +183,7 @@ describe('triggerAutoHandover — user resolution', () => {
 
   it('returns user_create_failed when createCustomerUser throws', async () => {
     const { db } = createMockD1()
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
     mockCreateCustomerUser.mockRejectedValueOnce(new Error('FK fail'))
 
     const result = await triggerAutoHandover(baseOpts)
@@ -196,7 +196,7 @@ describe('triggerAutoHandover — user resolution', () => {
 
   it('fires non-blocking installStarterSop for MASTER tier on new user', async () => {
     const { db } = createMockD1()
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
 
     await triggerAutoHandover({ ...baseOpts, tier: 'MASTER' })
 
@@ -205,7 +205,7 @@ describe('triggerAutoHandover — user resolution', () => {
 
   it('does NOT fire installStarterSop for non-MASTER new users', async () => {
     const { db } = createMockD1()
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
 
     await triggerAutoHandover({ ...baseOpts, tier: 'PREMIUM' })
 
@@ -220,7 +220,7 @@ describe('triggerAutoHandover — tier upgrade short-circuit', () => {
       existingHandover: { id: 'old-handover' },
       purchaseCount: 2,
     })
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
 
     const result = await triggerAutoHandover({ ...baseOpts, isFirstPurchase: false })
 
@@ -247,7 +247,7 @@ describe('triggerAutoHandover — tier upgrade short-circuit', () => {
       existingHandover: { id: 'old-handover' },
       purchaseCount: 2,
     })
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
 
     await triggerAutoHandover({ ...baseOpts, isFirstPurchase: true })
 
@@ -261,7 +261,7 @@ describe('triggerAutoHandover — tier upgrade short-circuit', () => {
       existingHandover: { id: 'old-handover' },
       purchaseCount: 1,
     })
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
 
     await triggerAutoHandover({ ...baseOpts, isFirstPurchase: false })
 
@@ -275,7 +275,7 @@ describe('triggerAutoHandover — tier upgrade short-circuit', () => {
       existingHandover: { id: 'old-handover' },
       purchaseCount: 2,
     })
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
     mockSendTierUpgradeEmail.mockRejectedValueOnce(new Error('resend down'))
 
     const result = await triggerAutoHandover({ ...baseOpts, isFirstPurchase: false })
@@ -291,7 +291,7 @@ describe('triggerAutoHandover — tier upgrade short-circuit', () => {
 describe('triggerAutoHandover — first handover full flow', () => {
   it('installs SOPs, creates record, generates magic link, enqueues welcome email', async () => {
     const { db } = createMockD1()
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
 
     const result = await triggerAutoHandover(baseOpts)
 
@@ -322,7 +322,7 @@ describe('triggerAutoHandover — first handover full flow', () => {
 
   it('returns record_create_failed when createHandoverRecord throws', async () => {
     const { db } = createMockD1()
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
     mockCreateHandoverRecord.mockRejectedValueOnce(new Error('D1 down'))
 
     const result = await triggerAutoHandover(baseOpts)
@@ -335,7 +335,7 @@ describe('triggerAutoHandover — first handover full flow', () => {
 
   it('continues without magic link when token generation fails (sets error field)', async () => {
     const { db } = createMockD1()
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
     mockCreateMagicLinkToken.mockRejectedValueOnce(new Error('token table missing'))
 
     const result = await triggerAutoHandover(baseOpts)
@@ -349,7 +349,7 @@ describe('triggerAutoHandover — first handover full flow', () => {
 
   it('falls back to /login URL in welcome email payload when magic link unavailable', async () => {
     const { db } = createMockD1()
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
     mockCreateMagicLinkToken.mockRejectedValueOnce(new Error('fail'))
 
     await triggerAutoHandover(baseOpts)
@@ -360,7 +360,7 @@ describe('triggerAutoHandover — first handover full flow', () => {
 
   it('swallows enqueue failure (non-fatal warn)', async () => {
     const { db } = createMockD1()
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
     mockEnqueueWelcomeEmail.mockRejectedValueOnce(new Error('outbox table missing'))
 
     const result = await triggerAutoHandover(baseOpts)
@@ -376,7 +376,7 @@ describe('triggerAutoHandover — first handover full flow', () => {
 describe('triggerAutoHandover — locale path prefix', () => {
   it('omits locale prefix when locale=en (avoid middleware 307 redirect)', async () => {
     const { db } = createMockD1()
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
 
     const result = await triggerAutoHandover({ ...baseOpts, locale: 'en' })
 
@@ -386,7 +386,7 @@ describe('triggerAutoHandover — locale path prefix', () => {
 
   it('includes /vi prefix for non-default locale', async () => {
     const { db } = createMockD1()
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
 
     const result = await triggerAutoHandover({ ...baseOpts, locale: 'vi' })
 
@@ -395,7 +395,7 @@ describe('triggerAutoHandover — locale path prefix', () => {
 
   it('defaults locale to vi when not provided', async () => {
     const { db } = createMockD1()
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
 
     const result = await triggerAutoHandover(baseOpts)
 
@@ -405,7 +405,7 @@ describe('triggerAutoHandover — locale path prefix', () => {
   it('uses NEXT_PUBLIC_APP_URL when set', async () => {
     vi.stubEnv('NEXT_PUBLIC_APP_URL', 'https://custom.example')
     const { db } = createMockD1()
-    mockGetD1Raw.mockResolvedValue(db)
+    mockGetD1.mockReturnValue(db)
 
     const result = await triggerAutoHandover({ ...baseOpts, locale: 'en' })
 

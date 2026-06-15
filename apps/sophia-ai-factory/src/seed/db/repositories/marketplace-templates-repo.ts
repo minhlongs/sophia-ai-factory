@@ -1,4 +1,4 @@
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 export interface MarketplaceTemplate {
   id: string;
@@ -23,7 +23,9 @@ export async function createMarketplaceTemplate(input: {
   previewR2Key?: string;
   priceCents?: number;
 }): Promise<MarketplaceTemplate> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
 
   await db
@@ -38,7 +40,9 @@ export async function createMarketplaceTemplate(input: {
 }
 
 export async function getMarketplaceTemplate(templateId: string): Promise<MarketplaceTemplate | null> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   return db
     .prepare('SELECT * FROM marketplace_templates WHERE id = ?')
     .bind(templateId)
@@ -49,7 +53,9 @@ export async function listPublicTemplates(
   limit: number = 20,
   offset: number = 0,
 ): Promise<MarketplaceTemplate[]> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const result = await db
     .prepare('SELECT * FROM marketplace_templates WHERE is_public = 1 ORDER BY downloads DESC LIMIT ? OFFSET ?')
     .bind(limit, offset)
@@ -58,7 +64,9 @@ export async function listPublicTemplates(
 }
 
 export async function listUserTemplates(userId: string): Promise<MarketplaceTemplate[]> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const result = await db
     .prepare('SELECT * FROM marketplace_templates WHERE creator_id = ? ORDER BY created_at DESC')
     .bind(userId)
@@ -71,7 +79,9 @@ export async function updateTemplateVisibility(
   creatorId: string,
   isPublic: boolean,
 ): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   await db
     .prepare('UPDATE marketplace_templates SET is_public = ? WHERE id = ? AND creator_id = ?')
     .bind(isPublic ? 1 : 0, templateId, creatorId)
@@ -79,7 +89,9 @@ export async function updateTemplateVisibility(
 }
 
 export async function incrementTemplateDownloads(templateId: string): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   await db
     .prepare('UPDATE marketplace_templates SET downloads = downloads + 1 WHERE id = ?')
     .bind(templateId)
@@ -87,7 +99,9 @@ export async function incrementTemplateDownloads(templateId: string): Promise<vo
 }
 
 export async function updateTemplateRating(templateId: string, newRating: number): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   await db
     .prepare(
       `UPDATE marketplace_templates

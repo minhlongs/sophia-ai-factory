@@ -9,7 +9,7 @@ import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 import { isInternalOrStatic, pathnameWithoutLocale } from './middleware-helpers'
 import { handleApiRoute } from './middleware-api-handler'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import {
   generateCsrfToken,
   setCsrfCookie,
@@ -113,7 +113,7 @@ export async function proxy(request: NextRequest) {
     const isSensitiveApi = SENSITIVE_API_PREFIXES.some(prefix => pathname.startsWith(prefix))
     if (isSensitiveApi) {
       try {
-        const auth = getAuth()
+        const auth = await getAuth()
         if (auth) {
           const session = await auth.api.getSession({ headers: request.headers })
           if (session?.session?.id) {
@@ -150,7 +150,7 @@ export async function proxy(request: NextRequest) {
 
   if (cleanPath.startsWith('/dashboard')) {
     try {
-      const auth = getAuth()
+      const auth = await getAuth()
       if (!auth) return NextResponse.redirect(new URL('/login', request.url))
       const session = await auth.api.getSession({ headers: request.headers })
       if (!session) return NextResponse.redirect(new URL('/login', request.url))
@@ -178,9 +178,11 @@ export async function proxy(request: NextRequest) {
           // Inline D1 query — `getUserTier()` (from seed/db/get-user-tier.ts)
           // reads D1 via globalThis.__env.DB which is undefined at the edge
           // middleware runtime, silently falling back to 'BASIC' and locking
-          // legitimate MASTER users out of admin pages. `getD1Raw()` resolves
-          // the binding through the Cloudflare context which works here.
-          const db = await getD1Raw()
+          // legitimate MASTER users out of admin pages. `getD1()` resolves
+          // the binding through global env / Cloudflare context and returns null
+          // at the edge, so missing DB means no MASTER override here.
+          const db = getD1()
+          if (!db) return false
           const row = await db
             .prepare(
               `SELECT tier, plan FROM subscriptions

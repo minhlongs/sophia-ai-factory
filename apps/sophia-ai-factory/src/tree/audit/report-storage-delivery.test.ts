@@ -7,12 +7,12 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-const { mockCreateServerClient } = vi.hoisted(() => ({ mockCreateServerClient: vi.fn() }))
-vi.mock('@/seed/db/client', () => ({ createServerClient: mockCreateServerClient }))
-
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
+
+const { mockCreateServerClient } = vi.hoisted(() => ({ mockCreateServerClient: vi.fn() }))
+vi.mock('@/seed/db/client', () => ({ createServerClient: mockCreateServerClient }))
 
 import { storeReport, downloadStoredReport } from './report-storage-delivery'
 import { logger } from '@/seed/utils/logger-utility'

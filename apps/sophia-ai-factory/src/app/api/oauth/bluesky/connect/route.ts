@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { encryptToken } from '@/tree/crypto/token-crypto';
 import { createAtprotoSession } from '@/forest/publishing/bluesky';
 import { logger } from '@/seed/utils/logger-utility';
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // AT Protocol access JWTs expire in ~2h; refresh JWTs last ~90d
     const expiresAt = now + 7200;
 
-    const db = await getD1Client();
+    const db = createServerClient();
     const tenantId = user.id;
 
     const { data: existing } = await db

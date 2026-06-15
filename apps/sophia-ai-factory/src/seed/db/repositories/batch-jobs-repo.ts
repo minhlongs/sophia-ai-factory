@@ -1,4 +1,4 @@
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 export interface BatchJob {
@@ -44,7 +44,9 @@ export async function createBatchJob(input: {
   inputR2Key?: string;
   idempotencyKey?: string;
 }): Promise<CreateBatchJobResult> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
 
   // Idempotency: if key provided, check existing first
   if (input.idempotencyKey) {
@@ -68,12 +70,16 @@ export async function createBatchJob(input: {
 }
 
 export async function getBatchJob(id: string): Promise<BatchJob | null> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   return db.prepare('SELECT * FROM batch_jobs WHERE id = ?').bind(id).first<BatchJob>() ?? null;
 }
 
 export async function getBatchJobByIdempotencyKey(idempotencyKey: string): Promise<BatchJob | null> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   return db
     .prepare('SELECT * FROM batch_jobs WHERE idempotency_key = ? LIMIT 1')
     .bind(idempotencyKey)
@@ -81,7 +87,9 @@ export async function getBatchJobByIdempotencyKey(idempotencyKey: string): Promi
 }
 
 export async function listBatchJobs(userId: string): Promise<BatchJob[]> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const result = await db
     .prepare('SELECT * FROM batch_jobs WHERE user_id = ? ORDER BY created_at DESC LIMIT 50')
     .bind(userId)
@@ -94,7 +102,9 @@ export async function updateBatchJobStatus(
   status: string,
   completedAt?: string,
 ): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   if (completedAt) {
     await db
       .prepare('UPDATE batch_jobs SET status = ?, completed_at = ? WHERE id = ?')
@@ -113,7 +123,9 @@ export async function incrementBatchProgress(
   field: 'completed_videos' | 'failed_videos',
   costCents?: number,
 ): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const costClause = costCents ? `, actual_cost_cents = actual_cost_cents + ${costCents}` : '';
   await db
     .prepare(`UPDATE batch_jobs SET ${field} = ${field} + 1${costClause} WHERE id = ?`)
@@ -125,7 +137,9 @@ export async function insertBatchVideos(
   batchId: string,
   rows: Array<{ rowIndex: number; inputData: string }>,
 ): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const CHUNK_SIZE = 50;
 
   for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
@@ -148,7 +162,9 @@ export async function insertBatchVideos(
 }
 
 export async function getBatchVideos(batchId: string): Promise<BatchVideo[]> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const result = await db
     .prepare('SELECT * FROM batch_videos WHERE batch_id = ? ORDER BY row_index ASC')
     .bind(batchId)
@@ -161,7 +177,9 @@ export async function updateBatchVideoStatus(
   status: string,
   extra?: { missionId?: string; outputVideoUrl?: string; errorMessage?: string },
 ): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const completedAt = ['done', 'failed', 'cancelled'].includes(status) ? new Date().toISOString() : null;
 
   await db
@@ -186,7 +204,9 @@ export async function updateBatchVideoStatus(
 }
 
 export async function cancelPendingBatchVideos(batchId: string): Promise<number> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const result = await db
     .prepare(
       `UPDATE batch_videos SET status = 'cancelled', completed_at = datetime('now')

@@ -4,7 +4,7 @@ import { CSRF_COOKIE_NAME, CSRF_HEADER_NAME } from '@/seed/security/csrf';
 
 const mocks = vi.hoisted(() => ({
   getCurrentUserFromHeaders: vi.fn(),
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
 }));
 
 vi.mock('@/seed/auth/better-auth-session', () => ({
@@ -12,7 +12,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: mocks.getD1Raw,
+  getD1: mocks.getD1,
 }));
 
 import { POST } from './route';
@@ -61,19 +61,19 @@ describe('POST /api/coupons/activate', () => {
 
     expect(res.status).toBe(403);
     expect(mocks.getCurrentUserFromHeaders).not.toHaveBeenCalled();
-    expect(mocks.getD1Raw).not.toHaveBeenCalled();
+    expect(mocks.getD1).not.toHaveBeenCalled();
   });
 
   it('activates a valid coupon with canonical raw D1 binding', async () => {
     const d1 = d1Mock();
-    mocks.getD1Raw.mockResolvedValue(d1);
+    mocks.getD1.mockReturnValue(d1);
 
     const res = await POST(request({ coupon: 'FREE50', tier: 'MASTER' }));
     const body = await res.json() as { success: boolean; tier: string; mcuBonus: number };
 
     expect(res.status).toBe(200);
     expect(body).toMatchObject({ success: true, tier: 'MASTER', mcuBonus: 1000 });
-    expect(mocks.getD1Raw).toHaveBeenCalledTimes(1);
+    expect(mocks.getD1).toHaveBeenCalledTimes(1);
     expect(d1.batch).toHaveBeenCalledTimes(1);
     expect(d1.batch.mock.calls[0][0]).toHaveLength(4);
     expect(d1.bind).toHaveBeenCalledWith('org-1', 1000);
@@ -81,7 +81,7 @@ describe('POST /api/coupons/activate', () => {
 
   it('preserves starter org balance when auto-creating an organization', async () => {
     const d1 = d1Mock({ orgRow: null, subscriptionRow: null });
-    mocks.getD1Raw.mockResolvedValue(d1);
+    mocks.getD1.mockReturnValue(d1);
 
     const res = await POST(request({ coupon: 'FREE50', tier: 'MASTER' }));
 
@@ -97,12 +97,12 @@ describe('POST /api/coupons/activate', () => {
 
     expect(res.status).toBe(400);
     expect(body).toEqual({ success: false, error: 'Invalid tier' });
-    expect(mocks.getD1Raw).not.toHaveBeenCalled();
+    expect(mocks.getD1).not.toHaveBeenCalled();
   });
 
   it('returns 500 when atomic activation batch fails', async () => {
     const d1 = d1Mock({ rejectBatch: true });
-    mocks.getD1Raw.mockResolvedValue(d1);
+    mocks.getD1.mockReturnValue(d1);
 
     const res = await POST(request({ coupon: 'FREE50', tier: 'MASTER' }));
     const body = await res.json() as { success: boolean; error: string };

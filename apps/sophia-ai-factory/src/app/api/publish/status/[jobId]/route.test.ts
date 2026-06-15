@@ -9,7 +9,7 @@ import type { OpenClawAuthResult, OpenClawAuthError } from '@/seed/auth/get-curr
 const mocks = vi.hoisted(() => ({
   getCurrentUserOrOpenClaw: vi.fn(),
   isAuthError: vi.fn(),
-  getD1Client: vi.fn(),
+  createServerClient: vi.fn(),
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
@@ -18,7 +18,10 @@ vi.mock('@/seed/auth/get-current-user-or-openclaw', () => ({
   getCurrentUserOrOpenClaw: mocks.getCurrentUserOrOpenClaw,
   isAuthError: mocks.isAuthError,
 }));
-vi.mock('@/seed/db/client', () => ({ getD1Client: mocks.getD1Client }));
+vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
+  createServerClient: mocks.createServerClient,
+}));
 
 const MOCK_JOB = { id: 'job-123', tenant_id: 'u1', status: 'pending' };
 
@@ -48,7 +51,7 @@ describe('GET /api/publish/status/[jobId] — dual-auth', () => {
     const maybeSingle = vi.fn().mockResolvedValue({ data: null });
     const eqChain = { single, maybeSingle, eq: vi.fn().mockReturnThis() };
     const from = vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue(eqChain) });
-    mocks.getD1Client.mockResolvedValue({ from });
+    mocks.createServerClient.mockReturnValue({ from });
   });
 
   it('returns 401 when no auth', async () => {

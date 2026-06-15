@@ -3,7 +3,7 @@
  * @module inngest/functions/generate-campaign-db
  */
 
-import { getD1Client, getD1Raw } from '@/seed/db/client'
+import { createServerClient, getD1 } from '@/seed/db/client'
 import { sendMessage as sendTelegramMessage } from '@/tree/telegram/handlers/utils'
 import { CampaignStatus } from '@/seed/types'
 import { logger } from '@/seed/utils/logger-utility'
@@ -21,13 +21,13 @@ export async function updateCampaignStatus(
   if (data?.thumbnail_url) updatePayload.thumbnail_url = data.thumbnail_url
   if (data?.error_message) updatePayload.error_message = data.error_message
 
-  const db = await getD1Client()
+  const db = createServerClient();
   const { error } = await db.from('campaigns').update(updatePayload).eq('id', campaignId)
   if (error) throw new Error(`Failed to update status: ${(error as { message?: string }).message}`)
 }
 
 export async function notifyUserByTelegram(userId: string, message: string): Promise<void> {
-  const db = await getD1Client()
+  const db = createServerClient();
   const { data, error } = await db.from('user_profiles').select('telegram_chat_id, settings').eq('user_id', userId).single()
 
   const profile = data as {
@@ -50,14 +50,16 @@ export async function markEngineMissionFailed(
   errorMessage: string,
 ): Promise<void> {
   try {
-    const db = await getD1Raw()
-    const nowSec = Math.floor(Date.now() / 1000)
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
+    const nowSec = Math.floor(Date.now() / 1000);
     await db
       .prepare(
         'UPDATE engine_missions SET status=\'failed\', error=?1, updated_at=?2 WHERE id=?3',
       )
       .bind(errorMessage.slice(0, 500), nowSec, missionId)
-      .run()
+      .run();
   } catch (dbErr) {
     logger.warn('[markEngineMissionFailed] DB update failed', {
       missionId,

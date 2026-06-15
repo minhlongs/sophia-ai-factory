@@ -9,7 +9,7 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { sha256Hex, safeCompareHex, isHashedToken } from '@/seed/security/token-hash';
 
@@ -35,7 +35,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   let db: D1Database;
   try {
-    db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    db = _db;
   } catch (err) {
     logger.warn('[change-email/verify] D1 unavailable', { error: String(err) });
     return failureRedirect('email-change-unavailable');

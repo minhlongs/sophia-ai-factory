@@ -1,8 +1,8 @@
 /**
- * Affiliates layer — tree wrapper for cross-layer access.
- *
- * Tree code imports from '@/tree/affiliates' instead of '@/land/affiliates'.
- * Re-exports from land/affiliates (canonical implementation).
+ * @module tree/affiliates
+ * Domain wrapper re-exports — actual implementations in forest/affiliates
  */
-export { getTopPrograms, getProgramById } from '@/land/affiliates';
-export { generateShortCode } from '@/land/affiliate-shortlink/short-code-generator';
+export * from './credentials';
+export * from './scout';
+export * from '@/forest/affiliates/shortcode';
+export * from '@/land/affiliates';

@@ -17,8 +17,8 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { enhanceNicheScoreWithAI } from '@/tree/discovery/affiliate-openrouter-niche-enhancer'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
-import { track } from '@/land/signals/track'
-import { D1Events } from '@/land/signals/d1-event-types'
+import { track } from '@/tree/signals/track'
+import { D1Events } from '@/tree/signals/d1-event-types'
 import type { AffiliateProgram } from '@/seed/types'
 
 const ProgramSchema = z.object({

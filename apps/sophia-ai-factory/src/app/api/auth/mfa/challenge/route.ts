@@ -28,7 +28,7 @@ interface MfaSecretsRow {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const auth = getAuth();
+  const auth = await getAuth();
   if (!auth) {
     return NextResponse.json({ error: 'auth_unavailable' }, { status: 503 });
   }

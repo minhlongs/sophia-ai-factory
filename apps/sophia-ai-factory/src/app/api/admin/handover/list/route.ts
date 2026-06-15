@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/seed/auth/require-admin';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -61,7 +61,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const offset = Number(url.searchParams.get('offset') ?? '0');
 
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
 
     if (wantStats) {
       const row = await db

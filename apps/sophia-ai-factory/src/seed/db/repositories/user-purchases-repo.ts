@@ -5,7 +5,7 @@
  * @module lib/db/repositories/user-purchases-repo
  */
 
-import { createServerClient, getD1Raw } from '@/seed/db/client'
+import { createServerClient, getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import type { UserPurchase, PurchaseKind, PurchaseStatus } from '@/seed/types'
@@ -178,7 +178,9 @@ export async function markRefunded(paymentId: string): Promise<void> {
  * Returns true if decrement succeeded (credits were available), false if zero.
  */
 export async function decrementCredits(purchaseId: string): Promise<boolean> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000)
 
   // Fetch current credits first

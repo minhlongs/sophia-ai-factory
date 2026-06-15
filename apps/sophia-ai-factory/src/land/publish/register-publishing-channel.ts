@@ -13,7 +13,7 @@
  *
  * @module land/publish/register-publishing-channel
  */
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { encryptToken } from '@/tree/crypto/token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -91,7 +91,8 @@ export async function registerPublishingChannel(
   input: RegisterChannelInput,
 ): Promise<RegisterChannelResult> {
   validateRegisterInput(input);
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const nowSec = Math.floor(Date.now() / 1000);
 
   // Encrypt tokens before any DB write so plaintext never touches the store.

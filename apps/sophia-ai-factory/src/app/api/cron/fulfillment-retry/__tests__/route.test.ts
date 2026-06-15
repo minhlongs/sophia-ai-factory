@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { GET } from '../route'
 import { NextRequest } from 'next/server'
+import { getD1 } from '@/seed/db/client'
 
 // Mock dependencies
 vi.mock('@/seed/security/cron-auth', () => ({
@@ -27,7 +28,7 @@ vi.mock('@/seed/observability/cron-check-in', () => ({
 }))
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn().mockResolvedValue({}),
+  getD1: vi.fn(),
   createServerClient: vi.fn(),
 }))
 
@@ -74,6 +75,18 @@ import { sendBundleRenderFailedEmail } from '@/land/billing/email/send-bundle-re
 describe('fulfillment-retry cron route', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+
+    // Mock getD1() to return raw D1Database with prepare() for wasRecentlyRun/recordCronRun
+    const mockRawDb = {
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnValue({
+          first: vi.fn().mockResolvedValue(null),
+          run: vi.fn().mockResolvedValue({}),
+        }),
+      }),
+    }
+    vi.mocked(getD1).mockReturnValue(mockRawDb as any)
+
     const makeSingle = (data: unknown) =>
       vi.fn().mockResolvedValue({ data, error: null })
     const mockDb = {

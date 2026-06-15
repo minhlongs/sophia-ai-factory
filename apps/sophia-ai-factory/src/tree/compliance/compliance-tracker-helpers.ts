@@ -5,7 +5,7 @@
  * @module tree/compliance/compliance-tracker-helpers
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import type { ComplianceRecord, ComplianceType, Platform } from '@/seed/types/compliance';
 
 export function nowSec(): number {
@@ -51,7 +51,9 @@ export interface InsertParams {
 
 /** Insert a compliance_metadata row; returns the generated UUID. */
 export async function insertComplianceRecord(params: InsertParams): Promise<string> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const id = crypto.randomUUID();
   const ts = nowSec();
 

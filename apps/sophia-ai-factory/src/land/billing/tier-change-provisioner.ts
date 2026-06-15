@@ -7,7 +7,7 @@
  * @module land/billing/tier-change-provisioner
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { UNIFIED_TIERS } from '@/seed/config/tiers'
 import { logger } from '@/seed/utils/logger-utility'
 import type { Tier } from '@/seed/types'
@@ -82,7 +82,9 @@ export async function provisionTierChange(params: {
   const isDowngrade = TIER_RANK[targetTier] < TIER_RANK[currentTier]
   const eventType = isDowngrade ? 'downgrade' : 'upgrade'
 
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
 
   const sub = await db
     .prepare('SELECT id, org_id, plan, status, current_period_start, current_period_end FROM subscriptions WHERE org_id = ?1 LIMIT 1')

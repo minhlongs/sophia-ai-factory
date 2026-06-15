@@ -1,0 +1,9 @@
+{
+  "rules": [
+    {
+      "action": "Delete",
+      "filter": { "prefix": "" },
+      "expirationDays": 30
+    }
+  ]
+}

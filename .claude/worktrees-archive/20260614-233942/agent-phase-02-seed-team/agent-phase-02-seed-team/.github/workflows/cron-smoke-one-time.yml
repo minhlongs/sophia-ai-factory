@@ -1,0 +1,19 @@
+name: Smoke Monitor — One-Time Fulfillment
+
+on:
+  schedule:
+    # Every 15 minutes — synthetic end-to-end fulfillment check.
+    - cron: '*/15 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger smoke-one-time cron
+        run: |
+          curl -fsS \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            "https://sophia.agencyos.network/api/cron/smoke-one-time" \
+            || echo "::warning::smoke-one-time curl failed (non-blocking)"

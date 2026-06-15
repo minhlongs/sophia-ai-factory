@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createTrackingLink } from '@/land/tracking/edge-link';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
@@ -68,7 +68,7 @@ export const GET = withRateLimit(async function GET(_request: NextRequest): Prom
   }
 
   try {
-    const db = await getD1Client();
+    const db = createServerClient();
     const { data, error } = await db
       .from('tracking_links')
       .select('id,destination_url,affiliate_id,campaign_id,active,created_at')

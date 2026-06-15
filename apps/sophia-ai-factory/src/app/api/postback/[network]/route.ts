@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { recordConversion } from '@/land/tracking/edge-link';
 import { logger } from '@/seed/utils/logger-utility';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { resolveNetworkSecret } from '@/land/postback/network-secret-resolver';
 import {
   verifyHmacSha256Hex,
@@ -176,9 +176,14 @@ export async function POST(
   const route = `/api/postback/${network}`;
 
   // HMAC signature verification (P0 security gate)
-  let db: D1Database | null = null;
+  let db: D1Database;
+  const _db = getD1();
+  if (!_db) {
+    logger.error('[postback] D1 unavailable');
+    return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
+  }
+  db = _db;
   try {
-    db = await getD1Raw();
     const valid = await verifyPostbackSignature(
       db,
       network,

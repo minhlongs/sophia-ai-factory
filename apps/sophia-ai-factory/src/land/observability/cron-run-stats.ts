@@ -10,7 +10,7 @@
  * @module land/observability/cron-run-stats
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 export type CronStatus = 'success' | 'failure' | 'skipped';
 
@@ -34,7 +34,8 @@ interface CronRowRaw {
 
 /** All cron rows ordered by most recent run first. */
 export async function listCronRunSummaries(): Promise<CronRunSummary[]> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const result = await db
     .prepare(
       `SELECT cron_name, last_run_at, last_status, last_error, run_count

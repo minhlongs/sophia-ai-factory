@@ -1,4 +1,4 @@
-import { createServerClient, getD1Raw } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import { getHeyGenKey } from '@/tree/credentials/get-provider-key';
 import { createHeyGenVideo } from '@/land/video/heygen-helpers';
 import { logger } from '@/seed/utils/logger-utility';
@@ -12,7 +12,9 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
   const script = (params?.script as string) ?? 'Hello, this is your AI avatar video.';
   const title = (params?.title as string) ?? 'AI Video';
 
-  const rawDb = await getD1Raw();
+  const _rawDb = getD1();
+  if (!_rawDb) throw new Error('D1 database binding not available');
+  const rawDb = _rawDb;
   const db = createServerClient();
 
   // 1. Check storage settings for R2 BYOS and local CheetahClaws rendering

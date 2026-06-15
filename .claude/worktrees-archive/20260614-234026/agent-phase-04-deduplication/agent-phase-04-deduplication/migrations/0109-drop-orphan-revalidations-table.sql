@@ -1,0 +1,16 @@
+-- Migration 0109: Drop orphan revalidations table from sophia-raas-db
+--
+-- Context: Phase 5 (commit 8582c044) attempted to alias sophia-raas-db with
+-- two binding names (DB + NEXT_TAG_CACHE_D1). Wrangler rejected duplicate
+-- database_id with different bindings — see Phase 5 revert (ca8107ab).
+-- Phase 5.1 (8d525481) pivoted to dedicated sophia-tag-cache D1 instance
+-- (migration 0108-opennext-tag-cache.sql applied there).
+--
+-- The `revalidations` table created on sophia-raas-db during Phase 5 attempt
+-- is now orphan — no binding references it, no app code writes to it. This
+-- migration cleans it up to keep schema state consistent.
+--
+-- Applied directly via `wrangler d1 execute sophia-raas-db --remote
+-- --command="DROP TABLE IF EXISTS revalidations;"` on 2026-05-13. This file
+-- exists for audit trail only — re-applying is idempotent (IF EXISTS).
+DROP TABLE IF EXISTS revalidations;

@@ -18,7 +18,7 @@ export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import {
   deriveAccountStatus,
   verifyWebhookSignature,
@@ -127,10 +127,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
-  const db = await getD1Raw();
-  if (!db) {
+  const _db = getD1();
+  if (!_db) {
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
   }
+  const db = _db;
 
   const { alreadyProcessed } = await checkIdempotency(db, event);
   if (alreadyProcessed) {

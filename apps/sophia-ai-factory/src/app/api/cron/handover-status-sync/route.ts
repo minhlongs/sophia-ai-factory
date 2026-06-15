@@ -14,7 +14,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { recordCronRun } from '@/land/cron/run-tracker';
@@ -52,7 +52,8 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   const cronCtx = startCronCheckIn(CRON_NAME);
   const startedAt = Date.now();
   const counts: UpdateCounts = { to_active: 0, to_at_risk: 0, to_churned: 0, unchanged: 0 };
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   try {
     const now = Math.floor(Date.now() / 1000);

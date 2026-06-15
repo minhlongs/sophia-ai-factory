@@ -32,7 +32,7 @@ const {
   mockDbSingle,
   mockDbMaybeSingle,
   mockDbFrom,
-  mockGetD1Client,
+  mockCreateServerClient,
   mockLoggerWarn,
   mockDecryptToken,
   mockUpload,
@@ -60,7 +60,7 @@ const {
   mockDbUpdate.mockReturnValue({ eq: mockDbEq });
   mockDbInsert.mockReturnValue({});
 
-  const mockGetD1Client = vi.fn();
+  const mockCreateServerClient = vi.fn();
   const mockGetCanonicalVideoUrl = vi.fn();
   const mockPublishToTelegram = vi.fn();
   const mockLoggerWarn = vi.fn();
@@ -77,7 +77,7 @@ const {
     mockDbSingle,
     mockDbMaybeSingle,
     mockDbFrom,
-    mockGetD1Client,
+    mockCreateServerClient,
     mockLoggerWarn,
     mockDecryptToken,
     mockUpload,
@@ -115,7 +115,10 @@ vi.mock('@/land/video/get-canonical-video-url', () => {
   };
 });
 
-vi.mock('@/seed/db/client', () => ({ getD1Client: mockGetD1Client }));
+vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
+  createServerClient: mockCreateServerClient,
+}));
 vi.mock('@/forest/publishing/providers/telegram-publisher', () => ({
   publishToTelegram: mockPublishToTelegram,
 }));
@@ -218,7 +221,7 @@ describe('Wave 17 Phase 02 — publishExecute video URL resolution', () => {
     process.env.R2_PUBLIC_HOSTNAME = 'pub-test.r2.dev';
     process.env.TELEGRAM_BOT_TOKEN = 'bot-token-test';
 
-    mockGetD1Client.mockResolvedValue({ from: mockDbFrom });
+    mockCreateServerClient.mockReturnValue({ from: mockDbFrom });
     mockDecryptToken.mockResolvedValue('decrypted-token');
     mockUpload.mockResolvedValue('ext-post-001');
   });

@@ -1,4 +1,4 @@
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 export interface PlatformCredential {
@@ -19,7 +19,9 @@ export async function getPlatformCredential(
   userId: string,
   platform: string,
 ): Promise<PlatformCredential | null> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   return db
     .prepare('SELECT * FROM platform_credentials WHERE user_id = ? AND platform = ?')
     .bind(userId, platform)
@@ -36,7 +38,9 @@ export async function upsertPlatformCredential(input: {
   platformChannelName?: string;
   scopes?: string;
 }): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
 
   await db
@@ -75,7 +79,9 @@ export async function deletePlatformCredential(
   userId: string,
   platform: string,
 ): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   await db
     .prepare('DELETE FROM platform_credentials WHERE user_id = ? AND platform = ?')
     .bind(userId, platform)
@@ -85,7 +91,9 @@ export async function deletePlatformCredential(
 export async function listPlatformCredentials(
   userId: string,
 ): Promise<PlatformCredential[]> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const result = await db
     .prepare('SELECT * FROM platform_credentials WHERE user_id = ? ORDER BY platform ASC')
     .bind(userId)

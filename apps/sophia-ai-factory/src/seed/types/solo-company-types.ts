@@ -4,7 +4,7 @@
  * Layer: seed (foundational — no business logic, no side effects)
  */
 
-import type { AgentRole } from './multi-agent'
+import type { SOPAgentRole } from './multi-agent'
 
 // Extended roles for Solo Company pattern
 export type SoloCompanyRole =
@@ -18,7 +18,7 @@ export type SoloCompanyRole =
   | 'analyst'
 
 // Combined role type covering both content-pipeline and solo-company agents
-export type UnifiedAgentRole = AgentRole | SoloCompanyRole
+export type UnifiedAgentRole = SOPAgentRole | SoloCompanyRole
 
 // Agent think→act→observe loop state — CEO's structured analysis output
 export interface AgentThought {

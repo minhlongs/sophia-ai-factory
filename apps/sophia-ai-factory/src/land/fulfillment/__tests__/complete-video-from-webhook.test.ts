@@ -20,7 +20,7 @@ vi.mock('@/seed/db/repositories/videos-repo', () => ({
 }))
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
   createServerClient: vi.fn(),
 }))
 
@@ -59,7 +59,7 @@ import {
   recordWebhookAttemptCAS,
   markWebhookPermanentFailureCAS,
 } from '@/seed/db/repositories/videos-repo'
-import { getD1Raw, createServerClient } from '@/seed/db/client'
+import { getD1, createServerClient } from '@/seed/db/client'
 import { sendOneTimeBundleReadyEmail } from '@/land/billing/email/send-one-time-bundle-ready-email'
 import { sendBundleRenderFailedEmail } from '@/land/billing/email/send-bundle-render-failed-email'
 import { grantCompensationCredit } from '@/land/fulfillment/compensation'
@@ -131,7 +131,7 @@ function makeDb(
 describe('completeVideoFromWebhook', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getD1Raw).mockResolvedValue(makeD1() as unknown as D1Database)
+    vi.mocked(getD1).mockReturnValue(makeD1() as unknown as D1Database)
     vi.mocked(createServerClient).mockReturnValue(makeDb() as unknown as ReturnType<typeof createServerClient>)
   })
 
@@ -156,7 +156,7 @@ describe('completeVideoFromWebhook', () => {
     })
 
     // D1 should NOT have been called to update
-    expect(getD1Raw).not.toHaveBeenCalled()
+    expect(getD1).not.toHaveBeenCalled()
   })
 
   it('returns early and does not send email when heygen_job_id unknown', async () => {
@@ -197,7 +197,7 @@ describe('completeVideoFromWebhook', () => {
 describe('failVideoFromWebhook', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getD1Raw).mockResolvedValue(makeD1() as unknown as D1Database)
+    vi.mocked(getD1).mockReturnValue(makeD1() as unknown as D1Database)
     vi.mocked(createServerClient).mockReturnValue(makeDb() as unknown as ReturnType<typeof createServerClient>)
     vi.mocked(markPermanentFailureCAS).mockResolvedValue(true)
     vi.mocked(recordAttemptCAS).mockResolvedValue(2)

@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import type { CheckResult } from '@/tree/audit/zero-gap-types'
 
 export const dynamic = 'force-dynamic'
@@ -36,7 +36,8 @@ export async function GET(
   const { id } = await params
 
   try {
-    const d1 = await getD1Raw()
+    const d1 = getD1();
+    if (!d1) throw new Error('D1 database binding not available');
     const row = await d1
       .prepare(`SELECT * FROM audit_runs WHERE id = ?1`)
       .bind(id)

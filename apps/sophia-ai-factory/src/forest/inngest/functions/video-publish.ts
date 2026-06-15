@@ -13,7 +13,7 @@
  */
 
 import { inngest } from '@/forest/inngest/client';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { recordCost } from '@/land/video/cost-ledger';
 import { assertValidTransition } from '@/land/video/video-job-fsm';
 import type { VideoJobStatus } from '@/land/video/video-job-fsm';
@@ -41,7 +41,7 @@ export const videoPublish = inngest.createFunction(
     const { jobId, tenantId, userId } = event.data;
 
     await step.run('transition-to-published', async () => {
-      const db = await getD1Client();
+      const db = createServerClient();
       const { data } = await db
         .from('video_jobs')
         .select('status')
@@ -64,7 +64,7 @@ export const videoPublish = inngest.createFunction(
 
     // Check for auto-publish config and create publishing jobs
     await step.run('dispatch-publishing-jobs', async () => {
-      const db = await getD1Client();
+      const db = createServerClient();
 
       // Look up active auto-publish channels for this tenant
       // Uses publishing_channels with an auto-publish flag pattern:

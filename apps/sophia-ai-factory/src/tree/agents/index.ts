@@ -1,7 +1,20 @@
 /**
- * tree/agents — Tree wrapper for forest/agents
- *
- * Re-exports agent factory primitives from forest/agents.
- * Tree code imports from here; forest/agents/ remains the canonical source.
+ * @module tree/agents
+ * Domain wrapper re-exports — actual implementations in forest/agents
+ * Import direction: tree → forest (via wrappers)
  */
-export * from '@/forest/agents';
+
+// Core types
+export * from './types';
+
+// Data access layer
+export * from './repository';
+
+// Agent runtime
+export * from './runner';
+export * from './prompts';
+export { seedDefaultTeam } from './seed-default-team';
+
+// Health monitoring
+export * from './agent-health-resolver';
+export * from './enforcement-gate';

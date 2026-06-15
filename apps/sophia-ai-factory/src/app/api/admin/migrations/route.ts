@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { SUPABASE_MIGRATIONS_MANIFEST } from '@/tree/admin/supabase-migrations-manifest'
 
 export const dynamic = 'force-dynamic'
@@ -26,7 +26,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request)
   if (auth instanceof NextResponse) return auth
 
-  const db = await getD1Raw()
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const { results } = await db
     .prepare(`SELECT filename, applied_at, applied_by_user_id, notes FROM supabase_migrations_applied`)
     .all<AppliedRow>()

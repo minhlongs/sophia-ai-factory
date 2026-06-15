@@ -37,7 +37,7 @@ vi.mock('@/land/billing/nowpayments-ipn-db', () => {
   // Combined D1Database-like mock supporting both:
   //  - PostgREST-style: db.from('t').select().eq().single() / .insert({}) / .update({}).eq()
   //  - D1 SQL-style:    d1.prepare(sql).bind().run()
-  // Used by: ipn-db.ts (getDb/getD1Raw), ipn-one-time.ts, ipn-handlers.ts, ipn-dispatch.ts,
+  // Used by: ipn-db.ts (getDb/getD1), ipn-one-time.ts, ipn-handlers.ts, ipn-dispatch.ts,
   //          audit-log.ts (recordAudit).
   // Every op is async and returns safe defaults; tests verify behavior via repo mocks.
   const always = async () => ({ data: null, error: null })
@@ -80,7 +80,7 @@ vi.mock('@/land/billing/nowpayments-ipn-db', () => {
 
   return {
     getDb: vi.fn(() => makeChainable()),
-    getD1Raw: vi.fn(() => makeChainable()),
+    getD1: vi.fn(() => makeChainable()),
     parseUserIdFromOrderId: (orderId: string) => {
       const parts = orderId.split('_')
       return parts.length >= 3 && parts[0] === 'sophia' ? parts[1] : null

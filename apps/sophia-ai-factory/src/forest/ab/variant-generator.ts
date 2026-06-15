@@ -12,6 +12,7 @@
 
 import { z } from 'zod';
 import { logger } from '@/seed/utils/logger-utility';
+import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 
 // ---------------------------------------------------------------------------
 // Input / Output schemas
@@ -49,9 +50,6 @@ const LlmResponseSchema = z.object({
   variant_a_thumb_prompt: z.string().min(1).max(300),
   variant_b_thumb_prompt: z.string().min(1).max(300),
 });
-
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const LLM_MODEL = 'openai/gpt-4o-mini';
 
 // ---------------------------------------------------------------------------
 // Core generator
@@ -107,36 +105,21 @@ Return ONLY valid JSON with keys: variant_a_caption, variant_b_caption, variant_
     input.offerDescription ? `\nOffer description: "${input.offerDescription}"` : ''
   }`;
 
-  const resp = await fetch(OPENROUTER_API_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${input.byokOpenRouterKey}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://sophia.agencyos.network',
-    },
-    body: JSON.stringify({
-      model: LLM_MODEL,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userContent },
-      ],
-      temperature: 0.8,
-      max_tokens: 512,
-      response_format: { type: 'json_object' },
-    }),
+  const content = await resilientChatCompletion(userContent, {
+    openRouterKey: input.byokOpenRouterKey ?? null,
+    anthropicKey: undefined,
+    enableFallback: false,
+    model: 'openai/gpt-4o-mini',
   });
 
-  if (!resp.ok) {
-    throw new Error(`OpenRouter ${resp.status}: ${await resp.text()}`);
-  }
-
-  const body = (await resp.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const content = body.choices?.[0]?.message?.content;
-  if (!content) throw new Error('Empty LLM response');
-
   const parsed = LlmResponseSchema.parse(JSON.parse(content));
+
+  return {
+    variantACaption: parsed.variant_a_caption,
+    variantBCaption: parsed.variant_b_caption,
+    variantAThumbPrompt: parsed.variant_a_thumb_prompt,
+    variantBThumbPrompt: parsed.variant_b_thumb_prompt,
+  };
 
   return {
     variantACaption: parsed.variant_a_caption,

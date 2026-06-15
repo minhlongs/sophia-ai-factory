@@ -24,7 +24,10 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock('@/seed/utils/logger-utility', () => ({ logger: mocks.logger }));
-vi.mock('@/seed/db/client', () => ({ getD1Client: vi.fn().mockResolvedValue(mocks.db) }));
+vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
+  createServerClient: vi.fn().mockReturnValue(mocks.db),
+}));
 
 import { POST } from './route';
 

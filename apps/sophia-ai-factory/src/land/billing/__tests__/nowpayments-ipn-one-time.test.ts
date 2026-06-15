@@ -21,7 +21,7 @@ vi.mock('@/seed/db/repositories/videos-repo')
 vi.mock('@/land/fulfillment/one-time-fulfillment')
 vi.mock('@/seed/db/audit/audit-log')
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(async () => ({})),
+  getD1: vi.fn(() => ({})),
 }))
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: {

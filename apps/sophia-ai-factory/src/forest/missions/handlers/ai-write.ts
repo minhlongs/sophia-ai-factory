@@ -55,7 +55,7 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
       orgId: userId,
     });
 
-    const script = scriptOutput.scenes.map((scene) => scene.narration).join('\n\n');
+    const script = scriptOutput.scenes.map((scene: { narration: string }) => scene.narration).join('\n\n');
     const caption = makeCaption(topic, tone);
     const hashtags = [
       `#${slugTag(topic) || 'raas'}`,

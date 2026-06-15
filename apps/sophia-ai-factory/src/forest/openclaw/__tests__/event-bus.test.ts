@@ -7,13 +7,13 @@ import { onEvent, emit, _clearHandlers } from '../event-bus';
 
 // Mock D1 for persistHook tests
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn().mockResolvedValue({
+  getD1: vi.fn(() => ({
     prepare: vi.fn().mockReturnValue({
       bind: vi.fn().mockReturnThis(),
       run: vi.fn().mockResolvedValue({ success: true }),
       all: vi.fn().mockResolvedValue({ results: [] }),
     }),
-  }),
+  })),
 }));
 
 describe('event-bus', () => {

@@ -16,7 +16,7 @@
  * @module seed/auth/openclaw-token
  */
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import type { User } from '@/seed/db/client';
@@ -121,7 +121,8 @@ export async function verifyOpenclawToken(raw: string): Promise<VerifiedOpenclaw
 
   // JTI revocation check.
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const revoked = await db
       .prepare('SELECT 1 FROM openclaw_revoked_tokens WHERE jti = ?1 LIMIT 1')
       .bind(parts.jti)
@@ -143,7 +144,8 @@ export async function verifyOpenclawToken(raw: string): Promise<VerifiedOpenclaw
  * When an endpoint is added it MUST be admin-only.
  */
 export async function revokeOpenclawToken(jti: string, reason?: string): Promise<void> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const nowSec = Math.floor(Date.now() / 1000);
   await db
     .prepare('INSERT OR IGNORE INTO openclaw_revoked_tokens (jti, revoked_at, reason) VALUES (?1, ?2, ?3)')
@@ -173,7 +175,8 @@ export async function getCurrentUserOrOpenclawBearer(headers: Headers): Promise<
     const verified = await verifyOpenclawToken(bearer);
     if (verified) {
       try {
-        const db = await getD1Raw();
+        const db = getD1();
+        if (!db) throw new Error('D1 database binding not available');
         const row = await db
           .prepare(
             'SELECT id, email, name, role, "emailVerified" AS email_verified FROM user WHERE id = ?1 LIMIT 1',

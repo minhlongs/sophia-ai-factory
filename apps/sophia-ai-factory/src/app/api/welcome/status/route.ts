@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -33,7 +33,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) {
+      logger.error('[Welcome/Status] D1 unavailable');
+      return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
+    }
+    const db = _db;
     const row = await db
       .prepare(
         `SELECT customer_first_login_at, customer_first_sop_install_at,

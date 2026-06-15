@@ -1,4 +1,65 @@
 {
   "version": 1,
-  "lanes": []
+  "lanes": [
+    {
+      "name": "main",
+      "description": "Lane chính - production-ready code với CI/CD full pipeline",
+      "branch": "main",
+      "protection": {
+        "requiredReviews": 2,
+        "requiredStatusChecks": ["type-check", "test:unit", "test:integration", "build"],
+        "enforceAdmins": false
+      },
+      "deploy": {
+        "auto": true,
+        "environments": ["production"],
+        "conditions": ["allChecksPass", "noPendingChanges"]
+      }
+    },
+    {
+      "name": "staging",
+      "description": "Pre-production environment - integration testing và staging deploy",
+      "branch": "staging",
+      "protection": {
+        "requiredReviews": 1,
+        "requiredStatusChecks": ["type-check", "test:integration", "build"],
+        "enforceAdmins": false
+      },
+      "deploy": {
+        "auto": true,
+        "environments": ["staging"],
+        "conditions": ["allChecksPass"]
+      }
+    },
+    {
+      "name": "experimental",
+      "description": "R&D lane cho AI experiments, new chains, và RaaS features",
+      "branch": "experimental",
+      "protection": {
+        "requiredReviews": 0,
+        "requiredStatusChecks": ["type-check"],
+        "enforceAdmins": true
+      },
+      "deploy": {
+        "auto": false,
+        "environments": []
+      }
+    },
+    {
+      "name": "hotfix",
+      "description": "Emergency fixes - bypass normal reviews, auto-deploy to production",
+      "branch": "hotfix/*",
+      "protection": {
+        "requiredReviews": 0,
+        "requiredStatusChecks": ["type-check", "test:critical"],
+        "enforceAdmins": true
+      },
+      "deploy": {
+        "auto": true,
+        "environments": ["production"],
+        "conditions": ["allChecksPass"],
+        "mergeAfterDeploy": true
+      }
+    }
+  ]
 }

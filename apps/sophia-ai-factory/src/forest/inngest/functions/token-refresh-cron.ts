@@ -1,14 +1,16 @@
 import { inngest } from '@/forest/inngest/client';
 import { refreshExpiredTokensForUser } from '@/forest/publishing/token-refresh-service';
 import { logger } from '@/seed/utils/logger-utility';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client'
 
 export const tokenRefreshCron = inngest.createFunction(
   { id: 'token-refresh-cron' },
   { cron: '0 3 * * *' },
   async ({ step }) => {
     const userIds = await step.run('get-users-with-credentials', async () => {
-      const db = await getD1Raw();
+      const _db = getD1();
+      if (!_db) throw new Error('D1 database binding not available');
+      const db = _db;
       const result = await db
         .prepare('SELECT DISTINCT user_id FROM platform_credentials')
         .all<{ user_id: string }>();

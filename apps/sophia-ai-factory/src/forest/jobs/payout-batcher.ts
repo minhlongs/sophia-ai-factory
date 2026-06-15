@@ -15,7 +15,7 @@
  */
 
 import { inngest } from '@/forest/inngest/client'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import {
   getPayableAggregates,
@@ -39,7 +39,9 @@ export const payoutBatcher = inngest.createFunction(
   },
   { cron: '0 12 * * 0' },
   async ({ step }) => {
-    const db = await getD1Raw()
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
 
     const tenants = await step.run('fetch-tenants', async () => {
       const result = await db
@@ -94,7 +96,9 @@ export const payoutBatcher = inngest.createFunction(
         }
 
         await step.run(`insert-batch-${batchId}`, async () => {
-          const innerDb = await getD1Raw()
+          const _db = getD1();
+          if (!_db) throw new Error('D1 database binding not available');
+          const innerDb = _db;
           await innerDb
             .prepare(
               `INSERT OR IGNORE INTO payout_batches

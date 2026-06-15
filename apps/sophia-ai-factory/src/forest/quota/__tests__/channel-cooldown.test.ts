@@ -17,7 +17,7 @@ import {
 
 // Mock D1 client so tests always use in-memory path
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn().mockResolvedValue(null),
+  getD1: vi.fn(() => null),
 }));
 
 const TENANT = 'tenant-1';

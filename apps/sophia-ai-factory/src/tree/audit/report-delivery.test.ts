@@ -15,6 +15,7 @@ import type { ScheduledReport } from '@/tree/audit/report-scheduler'
 
 // Mock Supabase admin client
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(),
 }))
 

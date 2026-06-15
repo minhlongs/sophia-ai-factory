@@ -1,0 +1,234 @@
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal: .claude
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal: .cleo
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal: .env
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal: .env.local
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/.eslintrc.json and /Users/macbook/mekong-cli/apps/sophia-proposal/.eslintrc.json differ
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal: .github
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/.gitignore and /Users/macbook/mekong-cli/apps/sophia-proposal/.gitignore differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/CLAUDE.md and /Users/macbook/mekong-cli/apps/sophia-proposal/CLAUDE.md differ
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/agi-sops: data
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/agi-sops: docs
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/agi-sops: plans
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/agi-sops/sops/procedures/rag-test-sop: 1.0.0
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/agi-sops/sops: templates
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/agi-sops: src
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/agi-sops: tests
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/(auth)/layout.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/app/(auth)/layout.tsx differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/(dashboard): health
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/(dashboard): layout.tsx
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/(dashboard)/missions/[id]/page.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/app/(dashboard)/missions/[id]/page.tsx differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/(dashboard)/missions: new
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/(dashboard)/missions/page.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/app/(dashboard)/missions/page.tsx differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/(dashboard): page.tsx
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/(dashboard)/proposals/[id]/page.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/app/(dashboard)/proposals/[id]/page.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/(dashboard)/proposals/new/page.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/app/(dashboard)/proposals/new/page.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/(dashboard)/proposals/page.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/app/(dashboard)/proposals/page.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/(dashboard)/usage/page.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/app/(dashboard)/usage/page.tsx differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/(marketing): landing
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/(marketing)/pricing/page.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/app/(marketing)/pricing/page.tsx differ
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/app/admin: analytics
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/admin: page.tsx
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api: admin
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/affiliate/clicks/stats/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/affiliate/clicks/stats/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/affiliate/content/generate/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/affiliate/content/generate/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/affiliate/content/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/affiliate/content/route.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/auth: callback
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/auth/login/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/auth/login/route.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/auth: session
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/auth/signup/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/auth/signup/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/crm/callback/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/crm/callback/route.ts differ
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/crm: contacts
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api: cron
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/feedback/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/feedback/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/health/deep/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/health/deep/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/onboarding/progress/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/onboarding/progress/route.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/onboarding: route.ts
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/onboarding/status/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/onboarding/status/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/proposals/[id]/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/proposals/[id]/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/proposals/generate/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/proposals/generate/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/proposals/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/proposals/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/raas/execute/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/raas/execute/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/raas/keys/[id]/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/raas/keys/[id]/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/raas/keys/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/raas/keys/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/raas/missions/[id]/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/raas/missions/[id]/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/raas/missions/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/raas/missions/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/raas/templates/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/raas/templates/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/raas/usage/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/raas/usage/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/templates/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/templates/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/usage/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/usage/route.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/v1: demo
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/v1/missions/[id]/stream/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/v1/missions/[id]/stream/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/v1/missions/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/v1/missions/route.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/v1: route.ts
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/video/webhook/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/video/webhook/route.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/api/webhooks/polar/route.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/app/api/webhooks/polar/route.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app: blog
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/app: chat
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/app: components
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/dashboard/layout.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/app/dashboard/layout.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/dashboard/page.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/app/dashboard/page.tsx differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/dashboard: referrals
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/demo/page.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/app/demo/page.tsx differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/docs/api: api-command-reference-table.tsx
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/docs/api/page.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/app/docs/api/page.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/globals.css and /Users/macbook/mekong-cli/apps/sophia-proposal/app/globals.css differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/layout.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/app/layout.tsx differ
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/app: lib
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app: not-found.tsx
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/page.test.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/app/page.test.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app/page.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/app/page.tsx differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app: pilot
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app: privacy
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app: robots.ts
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app: sitemap.ts
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app: status
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/app: terms
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal: claudedocs
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/auth/auth-provider.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/auth/auth-provider.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/auth/self-serve-signup-form.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/auth/self-serve-signup-form.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/billing/plan-card.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/billing/plan-card.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/billing/upgrade-button.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/billing/upgrade-button.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/dashboard/missions-list.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/dashboard/missions-list.tsx differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/dashboard: new-mission-form.tsx
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/dashboard: referral-dashboard.tsx
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/dashboard/usage-dashboard.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/dashboard/usage-dashboard.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing/__tests__/proposal-generator-section.test.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/landing/__tests__/proposal-generator-section.test.tsx differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing: cta-section.tsx
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing: demo-section.tsx
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing: exit-intent-popup.tsx
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing: faq-section.tsx
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing/features-section.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/landing/features-section.tsx differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing: footer.tsx
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing/hero-section.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/landing/hero-section.tsx differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing: how-it-works-section.tsx
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing/index.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/components/landing/index.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing: navbar.tsx
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing/pricing-section.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/landing/pricing-section.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing/proposal-generator-section.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/landing/proposal-generator-section.tsx differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing: social-proof-section.tsx
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing: sticky-mobile-cta.tsx
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/landing: terminal-preview.tsx
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/onboarding/org-setup-form.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/onboarding/org-setup-form.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/pricing/pricing-cards.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/pricing/pricing-cards.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/proposals/ai-generate-form.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/proposals/ai-generate-form.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/proposals/proposal-editor.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/proposals/proposal-editor.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/raas/api-key-manager.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/raas/api-key-manager.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/raas/mcu-balance-widget.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/raas/mcu-balance-widget.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/raas/mission-dashboard.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/raas/mission-dashboard.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/raas/mission-launcher.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/raas/mission-launcher.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/ui/button.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/ui/button.tsx differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/ui: scroll-reveal.tsx
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/ui: toast-provider.tsx
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/components/video/video-list.tsx and /Users/macbook/mekong-cli/apps/sophia-proposal/components/video/video-list.tsx differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/docs/SETUP.md and /Users/macbook/mekong-cli/apps/sophia-proposal/docs/SETUP.md differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/docs/api-docs.md and /Users/macbook/mekong-cli/apps/sophia-proposal/docs/api-docs.md differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/docs: cloud-infrastructure.md
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/docs/codebase-summary.md and /Users/macbook/mekong-cli/apps/sophia-proposal/docs/codebase-summary.md differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/docs/deployment-guide.md and /Users/macbook/mekong-cli/apps/sophia-proposal/docs/deployment-guide.md differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/docs/project-changelog.md and /Users/macbook/mekong-cli/apps/sophia-proposal/docs/project-changelog.md differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/docs/project-overview-pdr.md and /Users/macbook/mekong-cli/apps/sophia-proposal/docs/project-overview-pdr.md differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/docs/system-architecture.md and /Users/macbook/mekong-cli/apps/sophia-proposal/docs/system-architecture.md differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/affiliate/content/blog-generator.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/affiliate/content/blog-generator.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/affiliate/content/social-generator.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/affiliate/content/social-generator.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/affiliate/content/video-generator.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/affiliate/content/video-generator.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/ai: claude-engine.ts
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/ai/claude-proposal-generator.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/ai/claude-proposal-generator.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/ai/claude-sales-intelligence.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/ai/claude-sales-intelligence.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/ai/client.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/ai/client.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/ai: command-model-routing.ts
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/ai: lead-hunter.ts
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/ai: llm-router.ts
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/ai: prompts
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/billing/pilot-onboarding.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/billing/pilot-onboarding.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/billing/polar-client.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/billing/polar-client.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/billing/polar-order-handlers.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/billing/polar-order-handlers.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/billing/polar-subscription-handlers.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/billing/polar-subscription-handlers.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib: blog
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/db/auth-verify.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/db/auth-verify.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/db/auth.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/db/auth.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/db/client.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/db/client.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/db/d1-query-builder.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/db/d1-query-builder.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib: email
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib: logger.ts
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib: monitoring
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/openclaw/engine.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/openclaw/engine.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/raas: auth-context.ts
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/raas/command-router.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/raas/command-router.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/raas: lead-email-commands.ts
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/raas/onboarding.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/lib/raas/onboarding.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib/raas: resolve-token.ts
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/lib: referral
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/middleware.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/middleware.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal: migrations
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal: next-env.d.ts
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/next.config.js and /Users/macbook/mekong-cli/apps/sophia-proposal/next.config.js differ
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal: out
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal: package-lock.json
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/package.json and /Users/macbook/mekong-cli/apps/sophia-proposal/package.json differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/packages/raas-sdk/README.md and /Users/macbook/mekong-cli/apps/sophia-proposal/packages/raas-sdk/README.md differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/packages/raas-sdk/package-lock.json and /Users/macbook/mekong-cli/apps/sophia-proposal/packages/raas-sdk/package-lock.json differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/packages/raas-sdk/package.json and /Users/macbook/mekong-cli/apps/sophia-proposal/packages/raas-sdk/package.json differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/packages/raas-sdk/src/client.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/packages/raas-sdk/src/client.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/packages/raas-sdk/src/index.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/packages/raas-sdk/src/index.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/packages/raas-sdk/src/types.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/packages/raas-sdk/src/types.ts differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/packages/raas-sdk/src: webhooks.ts
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260204-1824-auto-discovery-affiliate
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260301-fix-build-missing-fonts
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260311-1806-ship-production-green
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260311-1819-agi-sops-local-llms
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260311-1938-cloudflare-deploy
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260311-1945-sophia-ship-green
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260311-2007-q1-2026-completion
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260312-0142-phase-2a-utility-tests
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260312-0638-phase-2b-api-tests
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260312-1148-sophia-deploy
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260312-1934-security-audit
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260312-1945-integration-test
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260312-1948-chaos-hardening
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260313-1445-100-100-binh-phap
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260316-1042-recommendation-engine
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: 260316-content-engine
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans/260320-0247-video-ai-pipeline: reports
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/plans/260322-0706-1m-arr-raas-sprint/plan.md and /Users/macbook/mekong-cli/apps/sophia-proposal/plans/260322-0706-1m-arr-raas-sprint/plan.md differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/plans/260322-0950-phase6-revenue-acceleration/plan.md and /Users/macbook/mekong-cli/apps/sophia-proposal/plans/260322-0950-phase6-revenue-acceleration/plan.md differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/plans: 260325-1207-phase2-wire-ai-ship-product
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/plans: 260325-1234-phase3-convert-visitors-to-customers
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans: day1
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/plans/reports: debugger-260326-1542-openclaw-api-check.md
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/plans/reports: fullstack-developer-260325-0553-phase2-real-ai-engine.md
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/plans/reports: fullstack-developer-260325-0554-landing-page-conversion-optimization.md
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/plans/reports: fullstack-developer-260325-0554-phase3-enterprise-dashboard-enhancement.md
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/plans/reports: fullstack-developer-260325-0622-supabase-to-d1-docs-migration.md
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/plans/reports: fullstack-developer-260325-1212-email-auth-magic-link-middleware.md
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/plans/reports: fullstack-developer-260325-1215-sse-streaming-dashboard-polish.md
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/plans/reports: fullstack-developer-260326-1639-cicd-backup-cdn-audit-improvements.md
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/plans/reports: fullstack-developer-260326-1639-monitoring-layer7-sentry-logger.md
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/plans/reports: marketing
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal: pnpm-lock.yaml
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal: postcss.config.js
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/public: fonts
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/public: sophia-postman-collection.json
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/reports: marketing
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/reports: portfolio
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/reports: sales
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/reports: sprint
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal: sentry.client.config.ts
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal: sentry.edge.config.ts
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal: sentry.server.config.ts
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal: src
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal: sync-m1-max.sh
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal: tailwind.config.js
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal: tasks
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/tests/billing/balance-checker.test.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/tests/billing/balance-checker.test.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/tests/collaboration/collaboration.test.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/tests/collaboration/collaboration.test.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/tests/crm/hubspot-client.test.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/tests/crm/hubspot-client.test.ts differ
+Only in /Users/macbook/mekong-cli/apps/sophia-proposal/tests: e2e
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/tests: email
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/tests: monitoring
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/tests: raas
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/tests/setup.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/tests/setup.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/tsconfig.json and /Users/macbook/mekong-cli/apps/sophia-proposal/tsconfig.json differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/types/raas.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/types/raas.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/vitest.config.ts and /Users/macbook/mekong-cli/apps/sophia-proposal/vitest.config.ts differ
+Files /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal/wrangler.toml and /Users/macbook/mekong-cli/apps/sophia-proposal/wrangler.toml differ
+Only in /Users/macbook/projects/sophia-ai-factory/apps/sophia-proposal: wrangler.toml.bak

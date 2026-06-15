@@ -1,0 +1,91 @@
+/**
+ * Usage Metering - Debug Logger
+ *
+ * Console-based debug logging for usage metering development.
+ * Edge Runtime compatible (no fs/path imports).
+ */
+
+import { logger } from '@/seed/utils/logger-utility';
+import { getErrorMessage } from '@/seed/utils/to-error';
+
+const DEBUG_ENABLED = process.env.DEBUG_USAGE_METERING === 'true';
+
+/**
+ * Debug logger for usage metering
+ */
+export const debugLogger = {
+  log(message: string, data?: unknown): void {
+    if (!DEBUG_ENABLED) return;
+    logger.info('[Usage Debug]', { message, ...(data ? { data } : {}) });
+  },
+
+  clear(): void {
+    // No-op in Edge-compatible mode
+  },
+
+  isEnabled(): boolean {
+    return DEBUG_ENABLED;
+  },
+
+  getLogFilePath(): string {
+    return '(console-only)';
+  },
+};
+
+/**
+ * Decorator for logging function calls
+ */
+export function logFunctionCall<T extends (...args: unknown[]) => unknown>(
+  target: Record<string, unknown>,
+  propertyKey: string,
+  descriptor: TypedPropertyDescriptor<T>
+): TypedPropertyDescriptor<T> {
+  const originalMethod = descriptor.value;
+
+  if (!originalMethod) {
+    return descriptor;
+  }
+
+  // Cast at assignment because TS can't prove the generic T (an arbitrary
+  // function shape) is structurally compatible with our `(...args: unknown[])
+  // => unknown` wrapper, even though it always is at runtime. Two-step cast
+  // through `unknown` lands on T cleanly.
+  const wrapper = function (this: unknown, ...args: unknown[]) {
+    if (!DEBUG_ENABLED) {
+      return originalMethod.apply(this, args);
+    }
+
+    const startTime = Date.now();
+    debugLogger.log(`[Function Call] ${propertyKey}() called`, { args });
+
+    try {
+      const result = originalMethod.apply(this, args);
+
+      if (result instanceof Promise) {
+        return result.then(resolvedResult => {
+          debugLogger.log(`[Function Return] ${propertyKey}() completed`, {
+            duration: Date.now() - startTime,
+            result: resolvedResult,
+          });
+          return resolvedResult;
+        });
+      }
+
+      debugLogger.log(`[Function Return] ${propertyKey}() completed`, {
+        duration: Date.now() - startTime,
+        result,
+      });
+      return result;
+    } catch (error) {
+      debugLogger.log(`[Function Error] ${propertyKey}() failed`, {
+        duration: Date.now() - startTime,
+        error: getErrorMessage(error),
+      });
+      throw error;
+    }
+  };
+
+  descriptor.value = wrapper as unknown as T;
+
+  return descriptor;
+}

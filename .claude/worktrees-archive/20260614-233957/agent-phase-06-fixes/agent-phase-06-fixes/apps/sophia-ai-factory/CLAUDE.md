@@ -1,0 +1,130 @@
+# Sophia AI Factory
+
+Next.js 16 App Router + React 19 + TypeScript + Tailwind CSS 4.
+Cloudflare Workers deployment via wrangler CLI direct (CF-direct doctrine, effective 2026-05-03).
+
+## Production
+
+```
+PROD_URL="https://sophia.agencyos.network"
+GITHUB_REPO="longtho638-jpg/sophia-ai-factory"
+```
+
+## Deploy Verification (MANDATORY for git-manager / any agent reporting GREEN)
+
+**MUST READ:** `apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md`
+
+Hard rules:
+- Workflow `Tests & Deploy` có 2 jobs — TẤT CẢ phải success (không chỉ check `gh run list -L 1`)
+- Verify deploy SHA via `curl -s https://sophia.agencyos.network/api/version` — phải khớp `git rev-parse HEAD | cut -c1-8`
+- HTTP 200 KHÔNG đủ — có thể là deploy CŨ. Phải SHA match.
+- Báo cáo "Vercel auto-deployed" = SAI 100% (project là Cloudflare Workers, không có vercel.json)
+
+## Commands
+
+```bash
+npm run dev      # Dev server :3000
+npm run build    # Production build (0 errors required)
+npm run lint     # ESLint
+npm test         # Vitest (844+ tests)
+```
+
+## Architecture (post-consolidation 2026-04-14)
+
+### Auth
+- **Single source:** `@/seed/auth/better-auth-session` for `getCurrentUser()`
+- **Tier lookup:** `@/seed/db/get-user-tier` for `getUserTier(userId)`
+- DELETED: `lib/auth.ts`, `lib/subscription.ts`, `lib/db/auth-verify.ts`, `lib/clients/`
+
+### Database
+- **Primary:** Cloudflare D1 via `createServerClient()` from `@/seed/db/client`
+- `createServerClient()` is **synchronous** — do NOT `await` it
+- **Supabase exceptions (keep):** OAuth callbacks (tiktok, youtube), admin invite, checkpoint persistence
+- DELETED: direct `@/lib/supabase/admin` and `@/lib/supabase/server` imports (shims remain for exceptions)
+
+### Tier Config
+- **Single source:** `@/seed/config/tiers` (barrel re-exporting from `seed/config/tiers/`)
+- Exports: `TIER_CONFIGS`, `TIER_CONFIG`, `TIER_DB_MAPPING`, `DB_TIER_MAPPING`, `UNIFIED_TIERS`
+- DELETED: `lib/tier-gate.ts`, `lib/unified-tier-config.ts`
+
+### Modularized Services
+Giant files split into focused modules with barrel re-exports:
+- `lib/billing/email/*` — email templates, delivery, tracking
+- `lib/billing/dunning/*` — state machine, actions, admin ops
+- `lib/alerts/quota/*` — rule evaluator, delivery, scheduling
+- `lib/usage-metering/` — event collector, rollup engine, KV sync
+- `lib/raas/*` — audit logging, permissions, invoice generation
+
+### Payments
+- **Primary:** NOWPayments (USDT crypto) — IPN webhook → tier activation
+- **Backup:** PayOS (Vietnam domestic)
+- **BANNED:** Polar.sh (rejected this product), PayPal
+
+## Product Doctrine (2026-05-15)
+
+**Sophia is no-code / no-tech RaaS** for non-technical CEOs. Implications:
+- **Customer self-input everything** (BYOK): API keys, payment providers, affiliate networks, AI services — all configured by customer via Setup Wizard.
+- **Operator manages PLATFORM ONLY** — no third-party cron registrations, no operator observability tokens, no operator-side credentials required for the platform to ship production-ready.
+- **Out-of-scope** features: any work requiring operator to provide a third-party credential to make the platform "fully green". Reroute these to either (a) UI self-config, or (b) customer side, or (c) reject as scope creep.
+
+**Full doctrine:** `.claude/rules/sophia-no-tech-doctrine.md` — required read before proposing any operator-action gates.
+
+## Protected Flows (DO NOT BREAK)
+
+1. **Setup Wizard** — API key onboarding (OpenRouter, ElevenLabs, D-ID)
+2. **Telegram Bot** — @Sophia_Bbot (/campaign, /status, /results)
+3. **Payment Flow** — NOWPayments IPN webhook → tier activation
+
+## Quality Gates
+
+- `npm run build` → 0 TypeScript errors
+- `npm test` → 844+ tests pass
+- Zero `:any` types in production code
+- Zero `console.log` in production code
+- Zod validation on all API inputs
+- Server Actions for data mutations
+- Tier enum: `BASIC | PREMIUM | ENTERPRISE | MASTER` (uppercase)
+
+## Canonical Deploy Flow (CF-direct doctrine)
+
+```bash
+# Step 0 (MANDATORY since 2026-05-15): push to origin before deploy
+# Prevents prod/git divergence (see plans/260515-0830-gap-91to93/phase-01)
+git push origin main
+git push gitlab main  # optional mirror
+
+# Step 1: Build + inject SHA + deploy
+cd apps/sophia-ai-factory
+npm run deploy:full
+
+# Step 2: Verify SHA match
+curl -s https://sophia.agencyos.network/api/version | jq .shortSha
+# Must match: git rev-parse HEAD | cut -c1-8
+```
+
+**MUST READ for full verify sequence:** `apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md`
+
+Hard rules:
+- **Push BEFORE deploy** — `deploy-with-sha.sh` rejects with exit 2 if `git log origin/main..HEAD` is non-empty. Bypass only with `ALLOW_UNPUSHED_DEPLOY=1` for emergency hotfixes; document the reason in deploy log.
+- SHA match is MANDATORY — HTTP 200 alone is not sufficient (may be stale deploy)
+- `npm run deploy:full` applies changed canonical D1 migrations from `migrations/` before replacing the Worker. Do not run `npm run deploy:migrations` again after a successful `deploy:full` unless you are intentionally applying a separate migration range.
+- Do NOT use `gh run list` as deploy check — GitHub Actions is intentionally disabled
+
+## Green Production Rule
+
+After every `npm run deploy:full`, verify:
+1. **Deploy script:** exit code 0 (wrangler output shows success)
+2. **SHA match:** `curl -s $PROD_URL/api/version | jq .shortSha` == `git rev-parse HEAD | cut -c1-8`
+3. **HTTP:** `curl -sI "$PROD_URL" | head -3` → HTTP 200
+4. **Report:** Build/Tests/Deploy/SHA/Production status lines required
+
+## Historical Note: GitHub Actions (disabled by design since 2026-05-03)
+
+**Status:** Account `longtho638-jpg` had Actions disabled at user level (free-tier minutes exhausted or account review). Workflow `test.yml` archived as `.github/workflows/test.yml.disabled`.
+
+The team evaluated this and decided to adopt CF-direct (wrangler CLI) as the permanent canonical deploy path rather than restore CI. This is faster, simpler, and removes the dependency on GitHub Actions availability.
+
+**Proof-of-path (5 successful manual deploys before doctrine change):**
+`d84f3a6e`, `e53c7dd2`, `aafd1ba4`, `0520585b`, `f418f3df`
+
+To re-enable GitHub Actions CI in future: rename `.github/workflows/test.yml.disabled` back to `.github/workflows/test.yml`.

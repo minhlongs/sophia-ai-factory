@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { buildTraceId, recordLlmCall } from './llm-trace'
 
 // Mock track() so we can assert props without a real D1 binding.
-vi.mock('@/land/signals/track', () => ({
+vi.mock('@/tree/signals/track', () => ({
   track: vi.fn(),
 }))
 
@@ -12,8 +12,8 @@ vi.mock('./langfuse-client', () => ({
   sendToLangfuse: vi.fn().mockResolvedValue(undefined),
 }))
 
-import { track } from '@/land/signals/track'
-import { D1Events } from '@/land/signals/d1-event-types'
+import { track } from '@/tree/signals/track'
+import { D1Events } from '@/tree/signals/d1-event-types'
 import { sendToLangfuse } from './langfuse-client'
 
 describe('llm-trace', () => {
@@ -205,7 +205,7 @@ describe('llm-trace', () => {
 
   describe('D1 schema compatibility', () => {
     it('emits fields that match LlmCallTraceSchema', async () => {
-      const { schemaForEvent } = await import('@/land/signals/d1-event-types')
+      const { schemaForEvent } = await import('@/tree/signals/d1-event-types')
       const schema = schemaForEvent(D1Events.LLM_CALL_TRACE)
 
       recordLlmCall(
@@ -227,7 +227,7 @@ describe('llm-trace', () => {
     })
 
     it('rejects step_order > 3 via schema (guards bad callers)', async () => {
-      const { schemaForEvent } = await import('@/land/signals/d1-event-types')
+      const { schemaForEvent } = await import('@/tree/signals/d1-event-types')
       const schema = schemaForEvent(D1Events.LLM_CALL_TRACE)
 
       expect(() =>

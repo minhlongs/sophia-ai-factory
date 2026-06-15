@@ -40,7 +40,7 @@ const mockFrom = vi.fn((table: string) => {
 })
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(),
+  getD1: vi.fn().mockReturnValue({ prepare: vi.fn() }),
   createServerClient: vi.fn(() => ({
     from: mockFrom,
   })),
@@ -87,7 +87,7 @@ vi.mock('@/seed/db/get-user-credits', () => ({
 }))
 
 import { GET } from './route'
-import { getD1Raw, createServerClient } from '@/seed/db/client'
+import { getD1, createServerClient } from '@/seed/db/client'
 import { getHeyGenClient } from '@/land/heygen/heygen-client'
 import { downloadAndStore } from '@/land/video/video-storage-service'
 import { grantCompensationCredit } from '@/land/fulfillment/compensation'
@@ -145,7 +145,7 @@ describe('GET /api/cron/video-status-sync', () => {
   })
 
   it('returns 500 when D1 unavailable', async () => {
-    vi.mocked(getD1Raw).mockRejectedValueOnce(new Error('D1 down'))
+    vi.mocked(getD1).mockReturnValueOnce(null)
     const res = await GET(buildRequest('Bearer test-secret'))
     expect(res.status).toBe(500)
     const body = (await res.json()) as { error: string }
@@ -155,7 +155,7 @@ describe('GET /api/cron/video-status-sync', () => {
   it('returns ok with errors when user has no HeyGen key', async () => {
     // Per-row BYOK: each row resolves its own key; null means skip that row
     const db = buildMockDb([VIDEO_ROW])
-    vi.mocked(getD1Raw).mockResolvedValueOnce(db as unknown as D1Database)
+    vi.mocked(getD1).mockReturnValueOnce(db as unknown as D1Database)
     vi.mocked(getHeyGenClient).mockResolvedValueOnce(null) // user has no key
 
     const res = await GET(buildRequest('Bearer test-secret'))
@@ -167,7 +167,7 @@ describe('GET /api/cron/video-status-sync', () => {
 
   it('does not update D1 when video is still processing', async () => {
     const db = buildMockDb([VIDEO_ROW])
-    vi.mocked(getD1Raw).mockResolvedValueOnce(db as unknown as D1Database)
+    vi.mocked(getD1).mockReturnValueOnce(db as unknown as D1Database)
     vi.mocked(getHeyGenClient).mockResolvedValueOnce({
       getVideoStatus: vi.fn().mockResolvedValue({ status: 'processing' }),
     } as unknown as Awaited<ReturnType<typeof getHeyGenClient>>)
@@ -186,7 +186,7 @@ describe('GET /api/cron/video-status-sync', () => {
 
   it('calls downloadAndStore and writes r2_key when video completes', async () => {
     const db = buildMockDb([VIDEO_ROW])
-    vi.mocked(getD1Raw).mockResolvedValueOnce(db as unknown as D1Database)
+    vi.mocked(getD1).mockReturnValueOnce(db as unknown as D1Database)
     vi.mocked(getHeyGenClient).mockResolvedValueOnce({
       getVideoStatus: vi.fn().mockResolvedValue({
         status: 'completed',
@@ -223,7 +223,7 @@ describe('GET /api/cron/video-status-sync', () => {
 
   it('still updates D1 (r2_key null) when R2 copy fails', async () => {
     const db = buildMockDb([VIDEO_ROW])
-    vi.mocked(getD1Raw).mockResolvedValueOnce(db as unknown as D1Database)
+    vi.mocked(getD1).mockReturnValueOnce(db as unknown as D1Database)
     vi.mocked(getHeyGenClient).mockResolvedValueOnce({
       getVideoStatus: vi.fn().mockResolvedValue({
         status: 'completed',
@@ -253,7 +253,7 @@ describe('GET /api/cron/video-status-sync', () => {
       created_at: Math.floor((Date.now() - 25 * 60 * 60 * 1000) / 1000), // 25h ago
     }
     const db = buildMockDb([oldRow])
-    vi.mocked(getD1Raw).mockResolvedValueOnce(db as unknown as D1Database)
+    vi.mocked(getD1).mockReturnValueOnce(db as unknown as D1Database)
 
     const res = await GET(buildRequest('Bearer test-secret'))
     expect(res.status).toBe(200)
@@ -269,7 +269,7 @@ describe('GET /api/cron/video-status-sync', () => {
       purchase_id: 'purch-paid-001',
     }
     const db = buildMockDb([bundleRow])
-    vi.mocked(getD1Raw).mockResolvedValueOnce(db as unknown as D1Database)
+    vi.mocked(getD1).mockReturnValueOnce(db as unknown as D1Database)
     vi.mocked(getHeyGenClient).mockResolvedValueOnce({
       getVideoStatus: vi.fn().mockResolvedValue({
         status: 'failed',
@@ -309,7 +309,7 @@ describe('GET /api/cron/video-status-sync', () => {
       purchase_id: 'purch-refunded-001',
     }
     const db = buildMockDb([bundleRow])
-    vi.mocked(getD1Raw).mockResolvedValueOnce(db as unknown as D1Database)
+    vi.mocked(getD1).mockReturnValueOnce(db as unknown as D1Database)
     vi.mocked(getHeyGenClient).mockResolvedValueOnce({
       getVideoStatus: vi.fn().mockResolvedValue({
         status: 'failed',

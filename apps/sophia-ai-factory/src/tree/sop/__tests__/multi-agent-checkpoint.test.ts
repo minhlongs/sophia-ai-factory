@@ -28,7 +28,7 @@ function makeD1Mock(overrides?: {
 }
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
 }))
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -48,9 +48,9 @@ vi.mock('@/seed/utils/to-error', () => ({
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function getD1RawMock() {
-  const { getD1Raw } = await import('@/seed/db/client')
-  return getD1Raw as ReturnType<typeof vi.fn>
+async function getD1Mock() {
+  const { getD1 } = await import('@/seed/db/client')
+  return getD1 as ReturnType<typeof vi.fn>
 }
 
 // ---------------------------------------------------------------------------
@@ -64,8 +64,8 @@ describe('saveCheckpoint', () => {
 
   it('persists checkpoint JSON for a running task', async () => {
     const { db, stmt } = makeD1Mock()
-    const mock = await getD1RawMock()
-    mock.mockResolvedValue(db)
+    const mock = await getD1Mock()
+    mock.mockReturnValue(db)
 
     const checkpoint = { step: 3, partialOutput: { lines: 12 } }
     await saveCheckpoint('task-abc', checkpoint)
@@ -91,8 +91,8 @@ describe('saveCheckpoint', () => {
   it('propagates D1 errors', async () => {
     const { db, stmt } = makeD1Mock()
     stmt.run.mockRejectedValue(new Error('D1 write error'))
-    const mock = await getD1RawMock()
-    mock.mockResolvedValue(db)
+    const mock = await getD1Mock()
+    mock.mockReturnValue(db)
 
     await expect(saveCheckpoint('task-fail', { step: 1 })).rejects.toThrow('D1 write error')
   })
@@ -110,8 +110,8 @@ describe('loadCheckpoint', () => {
   it('returns parsed checkpoint when one exists', async () => {
     const stored = { step: 5, state: 'partial' }
     const { db } = makeD1Mock({ firstResult: { checkpoint_json: JSON.stringify(stored) } })
-    const mock = await getD1RawMock()
-    mock.mockResolvedValue(db)
+    const mock = await getD1Mock()
+    mock.mockReturnValue(db)
 
     const result = await loadCheckpoint('task-abc')
     expect(result).toEqual(stored)
@@ -119,8 +119,8 @@ describe('loadCheckpoint', () => {
 
   it('returns null when no checkpoint row exists', async () => {
     const { db } = makeD1Mock({ firstResult: null })
-    const mock = await getD1RawMock()
-    mock.mockResolvedValue(db)
+    const mock = await getD1Mock()
+    mock.mockReturnValue(db)
 
     const result = await loadCheckpoint('task-missing')
     expect(result).toBeNull()
@@ -128,8 +128,8 @@ describe('loadCheckpoint', () => {
 
   it('returns null when checkpoint_json is null', async () => {
     const { db } = makeD1Mock({ firstResult: { checkpoint_json: null } })
-    const mock = await getD1RawMock()
-    mock.mockResolvedValue(db)
+    const mock = await getD1Mock()
+    mock.mockReturnValue(db)
 
     const result = await loadCheckpoint('task-no-checkpoint')
     expect(result).toBeNull()
@@ -137,8 +137,8 @@ describe('loadCheckpoint', () => {
 
   it('returns null and logs on malformed JSON (does not throw)', async () => {
     const { db } = makeD1Mock({ firstResult: { checkpoint_json: '{bad json' } })
-    const mock = await getD1RawMock()
-    mock.mockResolvedValue(db)
+    const mock = await getD1Mock()
+    mock.mockReturnValue(db)
 
     const { logger } = await import('@/seed/utils/logger-utility')
 
@@ -153,8 +153,8 @@ describe('loadCheckpoint', () => {
   it('propagates D1 query errors', async () => {
     const { db, stmt } = makeD1Mock()
     stmt.first.mockRejectedValue(new Error('D1 read error'))
-    const mock = await getD1RawMock()
-    mock.mockResolvedValue(db)
+    const mock = await getD1Mock()
+    mock.mockReturnValue(db)
 
     await expect(loadCheckpoint('task-fail')).rejects.toThrow('D1 read error')
   })
@@ -190,8 +190,8 @@ describe('completeTask clears checkpoint', () => {
       batch: vi.fn().mockResolvedValue([]),
     }
 
-    const mock = await getD1RawMock()
-    mock.mockResolvedValue(db)
+    const mock = await getD1Mock()
+    mock.mockReturnValue(db)
 
     const { completeTask } = await import('../multi-agent-coordinator')
     await completeTask(taskId, { result: 'ok' })

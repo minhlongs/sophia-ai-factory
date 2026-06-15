@@ -11,7 +11,7 @@
  */
 
 import { audit } from "./audit";
-import type { AgentRole, IterationLimits } from "@/seed/types/multi-agent";
+import type { SOPAgentRole, IterationLimits } from "@/seed/types/multi-agent";
 import { DEFAULT_ITERATION_LIMITS } from "@/seed/types/multi-agent";
 import { checkIterationBudget } from "@/tree/sop/multi-agent-coordinator-helpers";
 import { logger } from "@/seed/utils/logger-utility";
@@ -39,7 +39,7 @@ export interface AgentTask {
    */
   promptContract?: Record<string, unknown>;
   /** Agent role used for prompt contract schema lookup */
-  agentRole?: AgentRole;
+  agentRole?: SOPAgentRole;
 }
 
 export interface AgentResult {

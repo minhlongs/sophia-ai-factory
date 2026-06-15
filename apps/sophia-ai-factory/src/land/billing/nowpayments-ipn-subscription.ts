@@ -7,7 +7,7 @@
 import { getTierByInvoiceId, NOWPAYMENTS_TIERS } from '@/tree/clients/nowpayments-client'
 import { logger } from '@/seed/utils/logger-utility'
 import { UNIFIED_TIERS } from '@/seed/config/tiers'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { recordAudit } from '@/seed/db/audit/audit-log'
 import type { Tier } from '@/seed/types'
 import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
@@ -58,7 +58,9 @@ export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> 
 
   const db = getDb()
   // Cache D1 binding — resolves Cloudflare context once; reuse for all subsequent D1 queries in this handler
-  const d1 = await getD1Raw()
+  const _d1 = getD1();
+  if (!_d1) throw new Error('D1 database binding not available');
+  const d1 = _d1;
   const tier: Tier = tierConfig.tier
 
   // SECURITY: Cross-check IPN amount against expected tier price (Issue 3 fix)
@@ -384,7 +386,9 @@ export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<void> 
 
   const db = getDb()
   // Cache D1 binding — resolves Cloudflare context once; reuse for all subsequent D1 queries in this handler
-  const d1 = await getD1Raw()
+  const _d1 = getD1();
+  if (!_d1) throw new Error('D1 database binding not available');
+  const d1 = _d1;
   const { data: membership } = await db.from('org_members').select('org_id').eq('user_id', userId).single()
   if (membership?.org_id) {
     await db.from('subscriptions').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('org_id', membership.org_id)

@@ -1,0 +1,131 @@
+/**
+ * Alert Rules API
+ *
+ * GET /api/alerts/rules - Fetch user's alert rules
+ * POST /api/alerts/rules - Create/update alert rule
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@/seed/db/client';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
+
+interface AlertRulePayload {
+  licenseNonce?: string;
+  thresholdPercent?: number;
+  enabled?: boolean;
+  channels?: string[];
+  webhookUrl?: string;
+  webhookSecret?: string;
+}
+
+interface AlertRuleRow {
+  id: string;
+  [key: string]: unknown;
+}
+
+/**
+ * GET /api/alerts/rules
+ * Fetch all alert rules for current user
+ */
+export async function GET(request: NextRequest) {
+  try {
+    // Get current user
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    const supabase = createServerClient();
+
+    // Fetch alert rules
+    const { data: rules, error } = await supabase
+      .from('alert_rules')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('threshold_percent', { ascending: true });
+
+    if (error) throw error;
+
+    return NextResponse.json({ rules: rules || [] });
+  } catch (error) {
+    logger.error('[Alert Rules API] GET error', toError(error));
+    return NextResponse.json(
+      { error: 'Failed to fetch alert rules' },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/alerts/rules
+ * Create or update an alert rule
+ */
+export async function POST(request: NextRequest) {
+  try {
+    // Get current user
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    const supabase = createServerClient();
+
+    // Parse request body
+    const body = (await request.json().catch(() => ({}))) as AlertRulePayload;
+    const {
+      licenseNonce,
+      thresholdPercent,
+      enabled = true,
+      channels = ['email'],
+      webhookUrl,
+      webhookSecret,
+    } = body;
+
+    // Validation
+    if (!thresholdPercent || thresholdPercent < 0 || thresholdPercent > 100) {
+      return NextResponse.json(
+        { error: 'thresholdPercent must be between 0 and 100' },
+        { status: 400 }
+      );
+    }
+
+    // Upsert alert rule
+    const { data: rawRule, error } = await supabase
+      .from('alert_rules')
+      .upsert({
+        user_id: user.id,
+        license_nonce: licenseNonce,
+        threshold_percent: thresholdPercent,
+        enabled,
+        channels,
+        webhook_url: webhookUrl,
+        webhook_secret: webhookSecret,
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+    const rule = rawRule as AlertRuleRow | null;
+
+    if (error) throw error;
+
+    logger.info('[Alert Rules API] Rule created/updated', {
+      userId: user.id,
+      ruleId: rule?.id,
+      threshold: thresholdPercent,
+    });
+
+    return NextResponse.json({ rule });
+  } catch (error) {
+    logger.error('[Alert Rules API] POST error', toError(error));
+    return NextResponse.json(
+      { error: 'Failed to create/update alert rule' },
+      { status: 500 }
+    );
+  }
+}

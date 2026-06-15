@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock dependencies before importing the module under test
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(),
 }));
 

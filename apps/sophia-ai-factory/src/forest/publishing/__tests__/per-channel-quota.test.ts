@@ -2,8 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Mock DB client so tryGetRawDb always returns null -> memStore fallback
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn().mockRejectedValue(new Error('D1 not available in tests')),
-  getD1Client: vi.fn().mockRejectedValue(new Error('D1 not available in tests')),
+  getD1: vi.fn(() => null),
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({

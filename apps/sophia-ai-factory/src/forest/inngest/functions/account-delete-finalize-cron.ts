@@ -18,7 +18,7 @@
  */
 
 import { inngest } from '@/forest/inngest/client';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client'
 import { sendEmail } from '@/forest/email/sender';
 import { logger } from '@/seed/utils/logger-utility';
 import { cascadeDeleteAccount } from '@/land/account';
@@ -37,7 +37,9 @@ export const accountDeleteFinalizeCron = inngest.createFunction(
   { cron: '0 */6 * * *' },
   async ({ step }) => {
     const pending = await step.run('fetch-pending', async (): Promise<PendingRow[]> => {
-      const db = await getD1Raw();
+      const _db = getD1();
+      if (!_db) throw new Error('D1 database binding not available');
+      const db = _db;
       const rs = await db
         .prepare(
           `SELECT adr.user_id AS user_id, adr.tenant_id AS tenant_id, u.email AS user_email
@@ -57,7 +59,9 @@ export const accountDeleteFinalizeCron = inngest.createFunction(
 
     for (const row of pending) {
       const result = await step.run(`cascade-${row.user_id}`, async () => {
-        const db = await getD1Raw();
+        const _db = getD1();
+        if (!_db) throw new Error('D1 database binding not available');
+        const db = _db;
         return cascadeDeleteAccount(db, row.user_id, row.tenant_id);
       });
       totalDeleted += result.totalDeleted;

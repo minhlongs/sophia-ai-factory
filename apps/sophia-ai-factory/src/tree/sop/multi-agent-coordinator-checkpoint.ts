@@ -5,7 +5,7 @@
  * Layer: tree (imports seed only)
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 
@@ -30,7 +30,9 @@ export async function saveCheckpoint(
     )
   }
 
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   try {
     await db
       .prepare(
@@ -56,7 +58,9 @@ export async function saveCheckpoint(
 export async function loadCheckpoint(
   taskId: string,
 ): Promise<Record<string, unknown> | null> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   try {
     const row = await db
       .prepare(`SELECT checkpoint_json FROM agent_task_assignments WHERE id = ?`)

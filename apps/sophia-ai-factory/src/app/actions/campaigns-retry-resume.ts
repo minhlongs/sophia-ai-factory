@@ -8,7 +8,7 @@
  * @module app/actions/campaigns-retry-resume
  */
 
-import { getD1Client } from "@/seed/db/client";
+import { createServerClient } from "@/seed/db/client";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { sendCampaignCreatedEvent } from "@/land/campaigns/create-campaign-core";
 import { revalidatePath } from "next/cache";
@@ -32,7 +32,7 @@ export async function retryCampaign(campaignId: string) {
       return { success: false, message: "Unauthorized" };
     }
 
-    const db = await getD1Client();
+    const db = createServerClient();
 
     const { data: campaign, error: fetchError } = await db
       .from("campaigns")
@@ -100,7 +100,7 @@ export async function resumeCampaign(campaignId: string) {
       return { success: false, message: "Unauthorized" };
     }
 
-    const db = await getD1Client();
+    const db = createServerClient();
 
     const { data: campaign, error: fetchError } = await db
       .from("campaigns")

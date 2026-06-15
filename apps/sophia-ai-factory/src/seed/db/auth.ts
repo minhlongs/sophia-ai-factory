@@ -5,7 +5,7 @@
  * Removed: custom JWT, password hashing, signIn/signUp, magic link.
  */
 
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 
 // Re-export getCurrentUser from Better Auth session module (backward compat)
 export { getCurrentUser } from '@/seed/auth/better-auth-session';
@@ -15,7 +15,7 @@ export async function createOrganization(
   userId: string, name: string, slug: string,
 ): Promise<{ orgId: string | null; error: string | null }> {
   try {
-    const db = await getD1Client();
+    const db = createServerClient();
     const orgId = crypto.randomUUID();
 
     await db.from('organizations').insert({ id: orgId, name, slug });
@@ -32,7 +32,7 @@ export async function getUserOrganization(
   userId: string,
 ): Promise<{ id: string; name: string; slug: string; role: string } | null> {
   try {
-    const db = await getD1Client();
+    const db = createServerClient();
     const { data: member } = await db
       .from('org_members')
       .select('org_id, role')

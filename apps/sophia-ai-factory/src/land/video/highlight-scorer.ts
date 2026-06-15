@@ -5,6 +5,8 @@
 
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
+import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 
 export interface TranscriptSegment {
   text: string;
@@ -46,7 +48,6 @@ interface LlmClipResponse {
   }>;
 }
 
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const SCORE_MODEL = 'openai/gpt-4o-mini';
 
 function buildTranscriptText(segments: TranscriptSegment[]): string {
@@ -114,58 +115,39 @@ export async function scoreHighlights(
   const transcriptText = buildTranscriptText(transcript);
   const prompt = buildScorePrompt(transcriptText);
 
-  const response = await fetch(OPENROUTER_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-      'HTTP-Referer': 'https://sophia.agencyos.network',
-      'X-Title': 'Sophia AI Factory',
-    },
-    body: JSON.stringify({
-      model: SCORE_MODEL,
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
-      max_tokens: 2000,
-    }),
-  });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`OpenRouter scoring failed: ${response.status} ${errText}`);
-  }
-
-  const result = (await response.json()) as { choices: Array<{ message: { content: string } }> };
-  const content = result.choices?.[0]?.message?.content ?? '';
-
-  let parsed: LlmClipResponse;
   try {
-    // Strip markdown code fences if present
-    const jsonText = content.replace(/^```[a-z]*\n?/m, '').replace(/\n?```$/m, '').trim();
-    parsed = JSON.parse(jsonText) as LlmClipResponse;
-  } catch (err) {
-    logger.error('[highlight-scorer] Failed to parse LLM response', { content, err });
-    throw new Error(`Failed to parse highlight scoring response: ${String(err)}`);
-  }
-
-  const clips = (parsed.clips ?? [])
-    .filter((c) => c.end_ms - c.start_ms >= 15_000 && c.end_ms - c.start_ms <= 60_000)
-    .map((c) => {
-      const hook = c.hook_score ?? 0.5;
-      const pacing = c.pacing_score ?? 0.5;
-      const retention = c.retention_score ?? 0.5;
-      const cta = c.cta_score ?? 0.5;
-      const calculatedScore = c.score ?? (hook + pacing + retention + cta) / 4;
-      return {
-        ...c,
-        score: Math.round(calculatedScore * 100) / 100,
-        hook_score: hook,
-        pacing_score: pacing,
-        retention_score: retention,
-        cta_score: cta,
-      };
+    const content = await resilientChatCompletion(prompt, {
+      openRouterKey: apiKey,
+      anthropicKey: undefined,
+      enableFallback: false,
+      model: SCORE_MODEL,
     });
 
-  logger.info('[highlight-scorer] Scored highlights', { userId, clipsFound: clips.length });
-  return clips;
+    const jsonText = content.replace(/^```[a-z]*\n?/m, '').replace(/\n?```$/m, '').trim();
+    const parsed = JSON.parse(jsonText) as LlmClipResponse;
+
+    const clips = (parsed.clips ?? [])
+      .filter((c) => c.end_ms - c.start_ms >= 15_000 && c.end_ms - c.start_ms <= 60_000)
+      .map((c) => {
+        const hook = c.hook_score ?? 0.5;
+        const pacing = c.pacing_score ?? 0.5;
+        const retention = c.retention_score ?? 0.5;
+        const cta = c.cta_score ?? 0.5;
+        const calculatedScore = c.score ?? (hook + pacing + retention + cta) / 4;
+        return {
+          ...c,
+          score: Math.round(calculatedScore * 100) / 100,
+          hook_score: hook,
+          pacing_score: pacing,
+          retention_score: retention,
+          cta_score: cta,
+        };
+      });
+
+    logger.info('[highlight-scorer] Scored highlights', { userId, clipsFound: clips.length });
+    return clips;
+  } catch (err) {
+    logger.error('[highlight-scorer] failed', toError(err), { userId });
+    throw err;
+  }
 }

@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { encryptToken } from '@/tree/crypto/token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 import { randomUUID } from 'crypto';
@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
   // Page Access Tokens never expire when user is admin — store with expires_at=null.
   const encryptedPageToken = await encryptToken(page.access_token);
   const now = Math.floor(Date.now() / 1000);
-  const db = await getD1Client();
+  const db = createServerClient();
   const tenantId = user.id;
 
   const { data: existing } = await db

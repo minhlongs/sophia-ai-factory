@@ -6,7 +6,7 @@
  * All keys are tenant-scoped.
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 export type MemoryType = 'session' | 'long-term' | 'agent' | 'skill';
 
@@ -23,7 +23,9 @@ async function d1Store(
   key: string,
   value: unknown,
 ): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const id = `${tenantId}:${type}:${key}`;
   const now = Date.now();
   const json = JSON.stringify(value);
@@ -42,7 +44,9 @@ async function d1Query(
   type: MemoryType,
   key: string,
 ): Promise<unknown | null> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const row = await db
     .prepare(
       'SELECT value_json FROM memory_kv WHERE tenant_id = ? AND type = ? AND key_name = ?',

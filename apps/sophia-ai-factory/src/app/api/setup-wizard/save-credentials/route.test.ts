@@ -27,7 +27,7 @@ const mockBind = vi.fn(() => ({ run: mockRun, first: mockFirst }));
 const mockPrepare = vi.fn(() => ({ bind: mockBind }));
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(() => Promise.resolve({ prepare: mockPrepare })),
+  getD1: vi.fn(() => ({ prepare: mockPrepare })),
 }));
 
 vi.mock('@/forest/outbox/email-outbox', () => ({

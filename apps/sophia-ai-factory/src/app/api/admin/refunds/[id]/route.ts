@@ -11,7 +11,7 @@ import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin'
 import { getRefundById, updateRefundStatus } from '@/land/refunds/refund-repo'
 import { writeAuditLog } from '@/tree/admin/audit-log'
 import { sendRefundApprovedEmail, sendRefundRejectedEmail } from '@/land/billing/email/send-refund-emails'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { logger } from '@/seed/utils/logger-utility'
 
@@ -58,7 +58,8 @@ export async function PATCH(
     })
 
     // Fetch user email for notification
-    const db = await getD1Raw()
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const userRow = await db.prepare('SELECT email FROM user WHERE id = ?1').bind(refund.user_id).first<UserRow>()
     if (userRow) {
       if (body.action === 'approve') {

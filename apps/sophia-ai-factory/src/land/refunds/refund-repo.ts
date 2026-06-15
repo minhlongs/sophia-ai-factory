@@ -5,7 +5,7 @@
  * @module lib/refunds/refund-repo
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 
 export interface RefundRequest {
@@ -32,7 +32,8 @@ export async function createRefundRequest(params: {
   reason: string
   customerWalletAddress: string
 }): Promise<string> {
-  const db = await getD1Raw()
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const id = crypto.randomUUID().replace(/-/g, '')
   await db
     .prepare(
@@ -46,7 +47,8 @@ export async function createRefundRequest(params: {
 }
 
 export async function listPendingRefunds(): Promise<RefundRequest[]> {
-  const db = await getD1Raw()
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const result = await db
     .prepare(`SELECT * FROM refund_requests ORDER BY created_at DESC LIMIT 200`)
     .all<RefundRequest>()
@@ -54,7 +56,8 @@ export async function listPendingRefunds(): Promise<RefundRequest[]> {
 }
 
 export async function getRefundById(id: string): Promise<RefundRequest | null> {
-  const db = await getD1Raw()
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const row = await db
     .prepare(`SELECT * FROM refund_requests WHERE id = ?1`)
     .bind(id)
@@ -69,7 +72,8 @@ export async function updateRefundStatus(params: {
   adminNotes?: string
   refundTxHash?: string
 }): Promise<void> {
-  const db = await getD1Raw()
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   await db
     .prepare(
       `UPDATE refund_requests
@@ -95,7 +99,8 @@ export async function getRefundByPurchaseAndUser(
   purchaseId: string,
   userId: string,
 ): Promise<RefundRequest | null> {
-  const db = await getD1Raw()
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const row = await db
     .prepare(
       `SELECT * FROM refund_requests WHERE purchase_id = ?1 AND user_id = ?2 LIMIT 1`,

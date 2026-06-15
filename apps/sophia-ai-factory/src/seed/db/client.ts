@@ -140,35 +140,11 @@ async function getD1Async(): Promise<D1Database> {
  * Create a server-side D1 client.
  * Drop-in replacement for Supabase createServerClient().
  */
-export function createServerClient(): D1Client {
-  try {
-    const db = getD1Sync();
-    return new D1Client(db);
-  } catch {
-    // Sync not available — return async-resolving proxy
-  }
+export function createServerClient(override?: D1Database): D1Client {
+  const db = override ?? getD1Sync();
+  if (!db) throw new Error('D1 database binding not available');
 
-  return new Proxy({} as D1Client, {
-    get(_target, prop) {
-      if (prop === 'then') return undefined;
-
-      if (prop === 'from') {
-        return (table: string) => {
-          return new LazyQueryChain(table, getD1Async);
-        };
-      }
-
-      if (prop === 'rpc') {
-        return async (fn: string, params: Record<string, unknown>) => {
-          const db = await getD1Async();
-          const client = new D1Client(db);
-          return client.rpc(fn, params);
-        };
-      }
-
-      return undefined;
-    },
-  });
+  return new D1Client(db);
 }
 
 /**

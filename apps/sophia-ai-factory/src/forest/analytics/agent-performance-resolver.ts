@@ -11,6 +11,8 @@
  * SECURITY: aggregate counts only — no PII, no raw prompts.
  */
 
+import { getD1 } from '@/seed/db/client';
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type WindowOption = '24h' | '7d'
@@ -169,17 +171,9 @@ export async function resolveAgentPerformance(
   }
 }
 
-/** Raw D1 accessor — mirrors track.ts pattern for test mocking compatibility */
-export function getD1RawForAnalytics(): D1Database {
-  const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env
-  if (env?.DB) return env.DB as D1Database
-
-  const ctxSymbol = Symbol.for('__cloudflare-context__')
-  const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[ctxSymbol]
-  if (ctx?.env?.DB) return ctx.env.DB as D1Database
-
-  const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined
-  if (globalDb) return globalDb
-
-  throw new Error('[analytics/agent-performance] D1 binding not available')
+/** Get D1 database — canonical pattern */
+export function getD1ForAnalytics(): D1Database {
+  const _db = getD1();
+  if (!_db) throw new Error('[analytics/agent-performance] D1 binding not available');
+  return _db;
 }

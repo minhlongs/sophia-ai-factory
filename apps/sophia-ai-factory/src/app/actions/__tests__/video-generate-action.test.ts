@@ -50,6 +50,7 @@ vi.mock('@/forest/missions/emit-video-generate', () => ({
 const mockInsert = vi.fn().mockResolvedValue({ error: null });
 const mockFrom = vi.fn(() => ({ insert: mockInsert }));
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(() => ({ from: mockFrom })),
 }));
 

@@ -11,7 +11,7 @@
  * agent fleet orchestrator. Not affiliated with the public project at
  * github.com/openclaw/openclaw (a personal AI assistant gateway).
  */
-import { spawnAgentFleet, OpenclawTenantMissingError } from './spawn-agent-fleet';
+import { spawnAgentFleet, OpenclawTenantMissingError } from '@/forest/openclaw/spawn-agent-fleet';
 import { withTenantScope, runAsTenant } from './with-tenant';
 import { onEvent, emit } from './event-bus';
 import { activateSkill } from './skill-loader';
@@ -19,7 +19,7 @@ import { scheduleAgent } from './schedule';
 import { memory } from './memory-adapter';
 import { mcp } from './mcp-gateway';
 import { enqueue } from './queue';
-import { audit } from './audit';
+import { audit } from '@/tree/agent-fleet/audit';
 import { rateLimitGate } from './rate-limit';
 import { routeLLM } from './llm-router';
 

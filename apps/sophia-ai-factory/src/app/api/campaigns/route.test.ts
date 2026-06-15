@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
   getCurrentUser: vi.fn(),
-  getD1Client: vi.fn(),
+  createServerClient: vi.fn(),
   loggerError: vi.fn(),
 }));
 
@@ -12,7 +12,8 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Client: mocks.getD1Client,
+  getD1: vi.fn(),
+  createServerClient: mocks.createServerClient,
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -80,7 +81,7 @@ describe('/api/campaigns DELETE', () => {
 
   it('returns 404 when campaign is not owned by current user', async () => {
     const { db, calls } = makeDb(null);
-    mocks.getD1Client.mockResolvedValue(db);
+    mocks.createServerClient.mockReturnValue(db);
 
     const res = await DELETE(makeDelete('missing-campaign'));
     const body = await res.json() as { error: string };
@@ -97,7 +98,7 @@ describe('/api/campaigns DELETE', () => {
 
   it('deletes only after a user-scoped campaign lookup succeeds', async () => {
     const { db, calls } = makeDb({ id: 'campaign-1' });
-    mocks.getD1Client.mockResolvedValue(db);
+    mocks.createServerClient.mockReturnValue(db);
 
     const res = await DELETE(makeDelete('campaign-1'));
     const body = await res.json() as { success: boolean };

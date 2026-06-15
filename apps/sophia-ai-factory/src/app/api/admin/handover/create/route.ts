@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { writeAuditLog } from '@/tree/admin/audit-log';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
@@ -47,7 +47,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid input', details: getErrorMessage(err) }, { status: 400 });
   }
 
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   // Check duplicate email
   const existing = await db

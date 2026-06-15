@@ -15,7 +15,7 @@ import { getRefundById } from '@/land/refunds/refund-repo'
 import { revokeAccessByPurchaseId } from '@/seed/db/repositories/videos-repo'
 import { writeAuditLog } from '@/tree/admin/audit-log'
 import { sendRefundCompletedEmail } from '@/land/billing/email/send-refund-emails'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { logger } from '@/seed/utils/logger-utility'
 
@@ -69,7 +69,8 @@ export async function POST(
     }
 
     // Atomic check-and-update: only update if still approved (prevents race with concurrent IPN)
-    const d1 = await getD1Raw()
+    const d1 = getD1();
+    if (!d1) throw new Error('D1 database binding not available');
     const updateResult = await d1
       .prepare(
         `UPDATE refund_requests
@@ -99,7 +100,8 @@ export async function POST(
       payload: { refundId: id, purchaseId: refund.purchase_id, txHash: body.tx_hash },
     })
 
-    const db = await getD1Raw()
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const userRow = await db.prepare('SELECT email FROM user WHERE id = ?1').bind(refund.user_id).first<UserRow>()
     if (userRow) {
       sendRefundCompletedEmail({
@@ -137,7 +139,8 @@ interface CachedResult {
 /** Return cached result if key exists and not expired, else null. */
 async function checkIdempotency(key: string, refundId: string): Promise<CachedResult | null> {
   try {
-    const db = await getD1Raw()
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const row = await db
       .prepare(
         `SELECT refund_id, status FROM idempotency_keys
@@ -155,7 +158,8 @@ async function checkIdempotency(key: string, refundId: string): Promise<CachedRe
 /** Persist idempotency key (24h TTL). */
 async function storeIdempotency(key: string, refundId: string, body: CachedResult): Promise<void> {
   try {
-    const db = await getD1Raw()
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     await db
       .prepare(
         `INSERT OR REPLACE INTO idempotency_keys (key, refund_id, status, expires_at)

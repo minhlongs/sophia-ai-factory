@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { encryptToken } from '@/tree/crypto/token-crypto';
 import { exchangeCodeForTokens, getChannelInfo } from '@/land/youtube/youtube-oauth-client';
 import { logger } from '@/seed/utils/logger-utility';
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
   const now = Math.floor(Date.now() / 1000);
   const expiresAt = now + tokens.expires_in;
 
-  const db = await getD1Client();
+  const db = createServerClient();
   const tenantId = user.id;
 
   const { data: existing } = await db

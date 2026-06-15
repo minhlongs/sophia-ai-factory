@@ -13,7 +13,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 
 export interface AttributionResult {
   clickId: string
@@ -57,12 +57,10 @@ export async function attributeClick(tid: string): Promise<AttributionResult | n
     return null
   }
 
-  let db: D1Database
-  try {
-    db = await getD1Raw()
-  } catch {
-    logger.warn('[conversion-attributor] D1 binding not available')
-    return null
+  const db = getD1();
+  if (!db) {
+    logger.warn('[conversion-attributor] D1 binding not available');
+    return null;
   }
 
   try {
@@ -114,12 +112,10 @@ export async function attributeByNetwork(
     return null
   }
 
-  let db: D1Database
-  try {
-    db = await getD1Raw()
-  } catch {
-    logger.warn('[conversion-attributor] D1 binding not available', { network })
-    return null
+  const db = getD1();
+  if (!db) {
+    logger.warn('[conversion-attributor] D1 binding not available', { network });
+    return null;
   }
 
   try {

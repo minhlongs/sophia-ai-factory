@@ -67,7 +67,7 @@ if (table === 'org_members') {
 });
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Client: vi.fn().mockResolvedValue({ from: mocks.from }),
+  getD1: vi.fn().mockReturnValue({ prepare: vi.fn() }),
   createServerClient: vi.fn().mockReturnValue({ from: mocks.from }),
 }));
 

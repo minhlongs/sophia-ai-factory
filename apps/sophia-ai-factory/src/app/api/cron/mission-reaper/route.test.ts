@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   getD1Safe: mocks.getD1Safe,
 }));
 
@@ -70,7 +71,7 @@ describe('GET /api/cron/mission-reaper', () => {
   });
 
   it('returns 503 when D1 binding is unavailable', async () => {
-    mocks.getD1Safe.mockResolvedValue(null);
+    mocks.getD1Safe.mockReturnValue(null);
 
     const res = await GET(request());
 
@@ -78,7 +79,7 @@ describe('GET /api/cron/mission-reaper', () => {
   });
 
   it('marks stuck missions failed and refunds recorded credits', async () => {
-    mocks.getD1Safe.mockResolvedValue(dbWithOneStuckMission());
+    mocks.getD1Safe.mockReturnValue(dbWithOneStuckMission());
 
     const res = await GET(request());
     const body = await res.json() as { ok: boolean; reaped: number; credits_refunded: number };
@@ -94,7 +95,7 @@ describe('GET /api/cron/mission-reaper', () => {
   });
 
   it('does not count refunded credits when refund credit write fails', async () => {
-    mocks.getD1Safe.mockResolvedValue(dbWithOneStuckMission());
+    mocks.getD1Safe.mockReturnValue(dbWithOneStuckMission());
     mocks.addCredits.mockResolvedValue(false);
 
     const res = await GET(request());
@@ -105,7 +106,7 @@ describe('GET /api/cron/mission-reaper', () => {
   });
 
   it('does not count or refund a mission that was resolved before the guarded update', async () => {
-    mocks.getD1Safe.mockResolvedValue(dbWithOneStuckMission(0));
+    mocks.getD1Safe.mockReturnValue(dbWithOneStuckMission(0));
 
     const res = await GET(request());
     const body = await res.json() as { ok: boolean; reaped: number; credits_refunded: number };

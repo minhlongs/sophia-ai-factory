@@ -13,7 +13,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { sendEmail } from '@/forest/email/sender';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -53,7 +53,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   let db: D1Database;
   try {
-    db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    db = _db;
   } catch (err) {
     logger.warn('[acct-delete] D1 unavailable', { error: String(err) });
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });

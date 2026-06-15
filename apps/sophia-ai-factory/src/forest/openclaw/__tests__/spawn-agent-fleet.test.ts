@@ -18,6 +18,8 @@ vi.mock('../audit', () => ({
 vi.mock('@/seed/utils/circuit-breaker', () => ({
   withBreaker: vi.fn((_name: string, fn: () => Promise<unknown>) => fn()),
   getBreakerState: vi.fn(() => 'closed'),
+  resetBreaker: vi.fn(),
+  FLEET_BREAKER: 'agent-fleet-spawner',
   BreakerOpenError: class BreakerOpenError extends Error {
     constructor() { super('breaker open'); this.name = 'BreakerOpenError'; }
   },
@@ -189,7 +191,7 @@ describe('spawnAgentFleet — circuit breaker + retry', () => {
       { tenantId: 'tenant-breaker' },
     );
     expect(vi.mocked(withBreaker)).toHaveBeenCalledWith(
-      'agent-fleet',
+      'agent-fleet-spawner',
       expect.any(Function),
     );
   });

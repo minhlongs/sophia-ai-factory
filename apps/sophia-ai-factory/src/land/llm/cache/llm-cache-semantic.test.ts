@@ -21,6 +21,7 @@ import type { CacheKey } from './llm-cache'
 import { createServerClient } from '@/seed/db/client'
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(),
 }))
 

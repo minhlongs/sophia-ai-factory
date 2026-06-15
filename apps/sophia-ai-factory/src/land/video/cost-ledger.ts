@@ -5,7 +5,7 @@
  * the cumulative cost_usd on the video_jobs row.
  */
 
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 export type CostStage =
@@ -34,7 +34,7 @@ export async function recordCost(record: CostRecord): Promise<void> {
   const { jobId, stage, provider, units, costUsd } = record;
   const recordedAt = Math.floor(Date.now() / 1000);
 
-  const db = await getD1Client();
+  const db = createServerClient();
 
   try {
     await db

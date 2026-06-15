@@ -6,7 +6,7 @@
  * Cloudflare D1 binding instead of a Supabase service-role client.
  */
 
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import type { D1Client } from '@/seed/db/d1-query-builder';
 
 /**
@@ -14,7 +14,7 @@ import type { D1Client } from '@/seed/db/d1-query-builder';
  * Async because D1 binding resolution may be async on first call.
  */
 export async function createAdminClient(): Promise<D1Client> {
-  return getD1Client();
+  return createServerClient();
 }
 
 /**

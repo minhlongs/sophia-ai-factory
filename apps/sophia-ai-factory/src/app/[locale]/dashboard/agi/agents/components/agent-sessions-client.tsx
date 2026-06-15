@@ -26,7 +26,7 @@ import {
 import { Badge } from '@/seed/components/ui/badge';
 import { Skeleton } from '@/seed/components/ui/skeleton';
 import type {
-  AgentRole,
+  SOPAgentRole,
   AgentSession,
   AgentStatus,
   AgentTaskAssignment,
@@ -34,9 +34,9 @@ import type {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const ROLES: AgentRole[] = ['supervisor', 'script_writer', 'voice_generator', 'video_producer', 'publisher', 'analyst'];
+const ROLES: SOPAgentRole[] = ['supervisor', 'script_writer', 'voice_generator', 'video_producer', 'publisher', 'analyst'];
 
-const ROLE_COLORS: Record<AgentRole, string> = {
+const ROLE_COLORS: Record<SOPAgentRole, string> = {
   supervisor:      '#00f0ff',
   script_writer:   '#7000ff',
   voice_generator: '#ff00ff',
