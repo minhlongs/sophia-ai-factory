@@ -13,6 +13,8 @@ async function loadRedis() {
   }
 }
 
+import { logger } from '@/seed/utils/logger-utility'
+
 function createRedis(): any {
   const url = process.env.UPSTASH_REDIS_REST_URL
   const token = process.env.UPSTASH_REDIS_REST_TOKEN
