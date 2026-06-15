@@ -10,6 +10,15 @@ const config = {
       proxyExternalRequest: "fetch",
       incrementalCache: "dummy",
       tagCache: d1NextTagCache,
+      // Externalize heavy/unused packages to reduce bundle size
+      external: [
+        "html2canvas", "recharts", "jszip", "framer-motion",
+        "d3", "d3-*",
+        "telegraf",
+        "@sentry/core", "@sentry/react", "@sentry/nextjs", "@sentry/node",
+        "better-sqlite3",
+        "@upstash/redis", "upstash", "uncrypto",
+      ],
     },
   },
   // API function for node-based routes to split from default
