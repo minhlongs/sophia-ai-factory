@@ -7,18 +7,12 @@ import {
   validatePromptContract,
   PromptContractError,
 } from "@/seed/validators/agent-prompt-contracts";
-import { withBreaker, BreakerOpenError, getBreakerState } from "@/seed/utils/circuit-breaker";
+import { withBreaker, BreakerOpenError, getBreakerState, FLEET_BREAKER } from "@/seed/utils/circuit-breaker";
 import { withRetry } from "@/seed/utils/retry-with-backoff";
 import { logger } from "@/seed/utils/logger-utility";
-import type { AgentTask, AgentResult } from "./spawn-agent-fleet";
-
-export const FLEET_BREAKER = "agent-fleet";
-
-/**
- * OpenRouter-powered task executor — runs prompts through OpenRouter API.
- * Falls back to stub if OPENROUTER_API_KEY is not configured (BYOK).
- */
+import { resilientChatCompletion } from "@/seed/inference/openrouter-client";
 import { resolveUserApiKey } from "@/tree/byok/resolve-user-api-key";
+import type { AgentTask, AgentResult } from "./spawn-agent-fleet";
 
 export async function localExecutor(
   task: AgentTask,
@@ -37,35 +31,20 @@ export async function localExecutor(
     };
   }
 
-  // Real LLM execution via OpenRouter
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: task.tier === "max" ? "anthropic/claude-opus-4" : "anthropic/claude-sonnet-4",
-      messages: [{ role: "user", content: task.prompt }],
-      max_tokens: 4096,
-    }),
+  const model = task.tier === "max" ? "anthropic/claude-opus-4" : "anthropic/claude-sonnet-4";
+  const content = await resilientChatCompletion(task.prompt, {
+    openRouterKey: apiKey,
+    anthropicKey: undefined,
+    enableFallback: false,
+    model,
   });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`OpenRouter API error ${response.status}: ${errorText}`);
-  }
-
-  const data = (await response.json()) as {
-    choices: Array<{ message: { content: string } }>;
-  };
 
   return {
     taskId: task.id,
     status: "completed",
     prompt: task.prompt,
     tier: task.tier ?? "standard",
-    output: data.choices[0]?.message?.content ?? "",
+    output: content,
   };
 }
 
@@ -115,7 +94,7 @@ export async function runTask(
     );
 
     const durationMs = Date.now() - start;
-    logger.success("task_completed", {
+    logger.info("task_completed", {
       taskId: task.id,
       agentRole: task.agentRole,
       durationMs,

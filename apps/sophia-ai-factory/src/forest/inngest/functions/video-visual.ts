@@ -10,7 +10,7 @@
  */
 
 import { inngest } from '@/forest/inngest/client';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { recordCost } from '@/land/video/cost-ledger';
 import { assertValidTransition } from '@/land/video/video-job-fsm';
 import { createHeyGenVideo } from '@/land/video/heygen-helpers';
@@ -31,7 +31,7 @@ export const videoVisual = inngest.createFunction(
     const { jobId, tenantId, userId } = event.data;
 
     const job = await step.run('load-job', async () => {
-      const db = await getD1Client();
+      const db = createServerClient();
       const { data } = await db
         .from('video_jobs')
         .select('status, script_text, audio_r2_key, prompt')
@@ -45,7 +45,7 @@ export const videoVisual = inngest.createFunction(
 
     await step.run('transition-to-visual-pending', async () => {
       assertValidTransition(job.status, 'visual_pending');
-      const db = await getD1Client();
+      const db = createServerClient();
       await db
         .from('video_jobs')
         .update({ status: 'visual_pending', updated_at: Math.floor(Date.now() / 1000) })
@@ -61,7 +61,7 @@ export const videoVisual = inngest.createFunction(
       const script = job.script_text || job.prompt || '';
       const { videoId } = await createHeyGenVideo({ script, apiKey });
       logger.info('[videoVisual] HeyGen video submitted', { jobId, videoId });
-      const db = await getD1Client();
+      const db = createServerClient();
       await db
         .from('video_jobs')
         .update({

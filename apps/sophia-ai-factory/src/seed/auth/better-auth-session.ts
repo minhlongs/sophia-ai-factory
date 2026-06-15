@@ -33,7 +33,7 @@ export async function getSession() {
     const requestHeaders = await headers();
     if (!hasAuthCredential(requestHeaders)) return null;
 
-    const auth = getAuth();
+    const auth = await getAuth();
     if (!auth) return null;
     const session = await auth.api.getSession({
       headers: requestHeaders,
@@ -80,7 +80,7 @@ export async function getCurrentUserFromHeaders(
   try {
     if (!hasAuthCredential(reqHeaders)) return null;
 
-    const auth = getAuth();
+    const auth = await getAuth();
     if (!auth) return null;
     const session = await auth.api.getSession({ headers: reqHeaders });
     if (!session) return null;

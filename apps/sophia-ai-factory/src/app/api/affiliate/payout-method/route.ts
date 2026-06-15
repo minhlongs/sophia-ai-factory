@@ -12,9 +12,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { encryptSecret } from '@/tree/crypto/encrypt-secret'
 import { validateUsdtAddress, type UsdtMethod } from '@/land/payouts/usdt-addr-validator'
+import { logger } from '@/seed/utils/logger-utility'
 
 const PostSchema = z.object({
   method: z.enum(['usdt_trc20', 'usdt_erc20', 'bank_account']),
@@ -59,7 +60,12 @@ export async function POST(request: NextRequest) {
 
   const tenantId = user.id
   const affiliateId = user.id
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) {
+    logger.error('[Affiliate/PayoutMethod] D1 unavailable');
+    return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
+  }
+  const db = _db;
   const id = `pm_${tenantId}_${Date.now()}`
   const now = Math.floor(Date.now() / 1000)
 
@@ -99,7 +105,12 @@ export async function GET(request: NextRequest) {
 
   const tenantId = user.id
   const affiliateId = user.id
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) {
+    logger.error('[Affiliate/PayoutMethod/GET] D1 unavailable');
+    return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
+  }
+  const db = _db;
 
   const result = await db
     .prepare(
@@ -135,7 +146,12 @@ export async function DELETE(request: NextRequest) {
 
   const tenantId = user.id
   const affiliateId = user.id
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) {
+    logger.error('[Affiliate/PayoutMethod/DELETE] D1 unavailable');
+    return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
+  }
+  const db = _db;
 
   const result = await db
     .prepare(

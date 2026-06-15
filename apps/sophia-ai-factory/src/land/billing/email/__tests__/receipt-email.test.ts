@@ -8,6 +8,7 @@ import { renderReceipt } from '../receipt-email-template'
 const receiptSentMap = vi.hoisted(() => new Map<string, number>())
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: () => ({
     from: () => ({
       select: vi.fn(() => ({

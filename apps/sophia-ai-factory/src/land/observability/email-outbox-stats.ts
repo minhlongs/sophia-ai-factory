@@ -10,7 +10,7 @@
  * @module land/observability/email-outbox-stats
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 export type OutboxStatus = 'pending' | 'sent' | 'failed';
 
@@ -74,7 +74,8 @@ function mapRecent(r: RawRecent): OutboxRecentRow {
 
 /** Aggregate snapshot of the email outbox. */
 export async function getEmailOutboxSnapshot(): Promise<OutboxSnapshot> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const nowSec = Math.floor(Date.now() / 1000);
 
   const [totalsRes, dueRow, futureRow, failuresRes, sendsRes] = await Promise.all([

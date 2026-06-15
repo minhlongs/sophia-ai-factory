@@ -1,0 +1,77 @@
+{
+	// NOTE: D1 database_id is required by Wrangler CLI — not a secret.
+	// D1 access requires Cloudflare account authentication.
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": "apps/sophia-ai-factory/.open-next/worker.js",
+	"name": "sophia-ai-factory",
+	"compatibility_date": "2026-03-17",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"assets": {
+		"directory": "apps/sophia-ai-factory/.open-next/assets",
+		"binding": "ASSETS"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "sophia-raas-db",
+			"database_id": "78bd1961-b62d-43bb-b551-0c5d7d389506"
+		}
+	],
+	"services": [
+		{
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "sophia-ai-factory"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "NEXT_INC_CACHE_R2_BUCKET",
+			"bucket_name": "sophia-ai-factory-opennext-cache"
+		}
+	],
+	"images": {
+		"binding": "IMAGES"
+	},
+	// === P4-AI-BEGIN ===
+	// Phase 4E.2: Workers AI for semantic cache embeddings.
+	// Model: @cf/baai/bge-base-en-v1.5 (768 dims).
+	"ai": {
+		"binding": "AI"
+	},
+	// === P4-AI-END ===
+	// === P1-VARS-BEGIN ===
+	"vars": {
+		"NEXT_PUBLIC_IS_CONFIGURED": "true",
+		"IS_CONFIGURED": "true"
+	},
+	// === P1-VARS-END ===
+	// === P3-KV-BEGIN ===
+	// EXPERIMENT_KV: PostHog feature flag + A/B variant cache (60s TTL)
+	// Run: wrangler kv namespace create EXPERIMENT_KV  →  paste id below
+	"kv_namespaces": [
+		{
+			"binding": "EXPERIMENT_KV",
+			"id": "c3857792e4014334ba31b62b19d2f32a",
+			"preview_id": "1f440b4e8566471d841aff66e90644ff"
+		}
+	],
+	// === P3-KV-END ===
+	// === P2-CRONS-BEGIN ===
+	// (P2 cron triggers are in wrangler.toml; jsonc consolidated triggers below)
+	// === P2-CRONS-END ===
+	// === P3-CRONS-BEGIN ===
+	// "0 6 * * 1" — Monday 06:00 UTC → /api/cron/weekly-signals-digest
+	// === P01-CRONS-BEGIN ===
+	// NEW cron patterns added by plan 260502-0733-cron-infra-go-live:
+	// "*/2 * * * *"  — every 2 min  → /api/cron/fulfillment-retry
+	// "*/15 * * * *" — every 15 min → /api/cron/smoke-one-time
+	// "0 6 * * *"    — daily 06:00 UTC (all days) → /api/cron/fulfillment-reconcile
+	"triggers": {
+		"crons": ["*/5 * * * *", "5 * * * *", "0 1 * * *", "0 2 * * *", "0 3 * * *", "0 4 * * *", "0 6 * * 1", "*/2 * * * *", "*/15 * * * *", "0 6 * * *", "0 0 1 * *"]
+	}
+	// === P01-CRONS-END ===
+	// === P3-CRONS-END ===
+}

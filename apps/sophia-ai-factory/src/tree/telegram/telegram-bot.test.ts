@@ -35,6 +35,7 @@ const createChainableMock = () => {
 
 // Mock D1 shim client creation
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: () => mockSupabase,
   createClient: () => mockSupabase,
 }))

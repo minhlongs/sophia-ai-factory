@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { getD1Client } from '@/seed/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { createFakeD1 } from '@/forest/publishing/__tests__/fake-d1-sqlite'
 import type { D1Database } from '@cloudflare/workers-types'
 
@@ -33,7 +33,7 @@ const SCHEMA = [
 describe('D1Client.upsert — array payload integration', () => {
   it('runs N independent INSERT ... ON CONFLICT statements for an array', async () => {
     const fake = createFakeD1(SCHEMA)
-    const db = await getD1Client(fake as unknown as D1Database)
+    const db = await createServerClient(fake as unknown as D1Database)
 
     const rows = [
       { id: 'p1', name: 'Alpha', price: 100, updated_at: '2026-05-11' },
@@ -54,7 +54,7 @@ describe('D1Client.upsert — array payload integration', () => {
 
   it('preserves column names — never serialises numeric array indices as columns', async () => {
     const fake = createFakeD1(SCHEMA)
-    const db = await getD1Client(fake as unknown as D1Database)
+    const db = await createServerClient(fake as unknown as D1Database)
 
     // Regression guard: pre-fix `execUpsert` did `Object.keys(payload)` on
     // the raw array, generating SQL like `INSERT INTO products (0, 1, 2)`.
@@ -82,7 +82,7 @@ describe('D1Client.upsert — array payload integration', () => {
 
   it('empty array `[]` is a no-op (does not throw, persists nothing)', async () => {
     const fake = createFakeD1(SCHEMA)
-    const db = await getD1Client(fake as unknown as D1Database)
+    const db = await createServerClient(fake as unknown as D1Database)
 
     const { error } = await db.from('products').upsert([])
     expect(error).toBeNull()
@@ -93,7 +93,7 @@ describe('D1Client.upsert — array payload integration', () => {
 
   it('length-1 array stays an array (distinct from single-row payload return contract)', async () => {
     const fake = createFakeD1(SCHEMA)
-    const db = await getD1Client(fake as unknown as D1Database)
+    const db = await createServerClient(fake as unknown as D1Database)
 
     const result = await db.from('products').upsert([
       { id: 'len1', name: 'Solo-in-Array', price: 42 },
@@ -108,7 +108,7 @@ describe('D1Client.upsert — array payload integration', () => {
 
   it('ON CONFLICT updates existing rows on second upsert', async () => {
     const fake = createFakeD1(SCHEMA)
-    const db = await getD1Client(fake as unknown as D1Database)
+    const db = await createServerClient(fake as unknown as D1Database)
 
     await db.from('products').upsert([
       { id: 'x', name: 'Initial', price: 10 },
@@ -128,7 +128,7 @@ describe('D1Client.upsert — array payload integration', () => {
 
   it('still accepts a single-row payload (no array)', async () => {
     const fake = createFakeD1(SCHEMA)
-    const db = await getD1Client(fake as unknown as D1Database)
+    const db = await createServerClient(fake as unknown as D1Database)
 
     const { error } = await db.from('products').upsert({
       id: 'solo',
@@ -143,7 +143,7 @@ describe('D1Client.upsert — array payload integration', () => {
 
   it('upserts onto a composite UNIQUE key (network_id, external_id)', async () => {
     const fake = createFakeD1(SCHEMA)
-    const db = await getD1Client(fake as unknown as D1Database)
+    const db = await createServerClient(fake as unknown as D1Database)
 
     await db.from('network_products').upsert([
       { network_id: 'cb', external_id: 'a', title: 'First', score: 1 },
@@ -164,7 +164,7 @@ describe('D1Client.upsert — array payload integration', () => {
 
   it('rejects array > D1_BATCH_LIMIT (501) with BATCH_LIMIT_EXCEEDED code', async () => {
     const fake = createFakeD1(SCHEMA)
-    const db = await getD1Client(fake as unknown as D1Database)
+    const db = await createServerClient(fake as unknown as D1Database)
 
     const rows = Array.from({ length: 501 }, (_, i) => ({
       id: `cap-${i}`,
@@ -185,7 +185,7 @@ describe('D1Client.upsert — array payload integration', () => {
 
   it('accepts exactly D1_BATCH_LIMIT (500) rows at the boundary', async () => {
     const fake = createFakeD1(SCHEMA)
-    const db = await getD1Client(fake as unknown as D1Database)
+    const db = await createServerClient(fake as unknown as D1Database)
 
     const rows = Array.from({ length: 500 }, (_, i) => ({
       id: `edge-${i}`,
@@ -202,7 +202,7 @@ describe('D1Client.upsert — array payload integration', () => {
 
   it('insert path also enforces D1_BATCH_LIMIT', async () => {
     const fake = createFakeD1(SCHEMA)
-    const db = await getD1Client(fake as unknown as D1Database)
+    const db = await createServerClient(fake as unknown as D1Database)
 
     const rows = Array.from({ length: 501 }, (_, i) => ({
       id: `ins-${i}`,

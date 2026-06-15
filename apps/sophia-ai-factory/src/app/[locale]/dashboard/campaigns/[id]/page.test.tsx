@@ -52,7 +52,7 @@ mockSelect.mockReturnValue({ eq: mockEq });
 mockEq.mockReturnValue({ eq: mockEq, single: mockSingle });
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Client: vi.fn(async () => mockDb),
+  createServerClient: vi.fn(() => mockDb),
 }));
 
 vi.mock('next-intl/server', () => ({

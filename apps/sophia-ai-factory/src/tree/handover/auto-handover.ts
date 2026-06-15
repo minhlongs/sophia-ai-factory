@@ -6,7 +6,7 @@
  * @module lib/handover/auto-handover
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { createCustomerUser, upsertUserTier, preInstallSops, createHandoverRecord } from '@/tree/handover/handover-account-setup'
@@ -124,7 +124,9 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
   } = opts
   const fullName = opts.fullName ?? email.split('@')[0].split('.').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
 
   // Idempotency — skip if already processed this paymentId
   const alreadyProcessed = await handoverExistsForPayment(db, paymentId)

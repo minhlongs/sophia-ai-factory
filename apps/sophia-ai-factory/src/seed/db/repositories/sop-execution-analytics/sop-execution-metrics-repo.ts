@@ -4,7 +4,7 @@
  * @module seed/db/repositories/sop-execution-analytics/sop-execution-metrics-repo
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type { SOPPerformanceSummary, CreatorPerformanceSummary } from './types';
@@ -25,7 +25,9 @@ export async function logExecutionCompletion(params: {
   stepsFailed: number;
   qualityScore?: number;
 }): Promise<string> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const id = crypto.randomUUID();
   const now = Date.now();
 
@@ -82,7 +84,9 @@ export async function rateExecution(
   rating: number,
   feedbackText?: string,
 ): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const now = Date.now();
 
   await db
@@ -109,7 +113,9 @@ export async function getSOPPerformanceMetrics(
   limit = 100,
 ): Promise<SOPPerformanceSummary | null> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const row = await db
       .prepare(
         `SELECT
@@ -165,7 +171,9 @@ export async function getCreatorPerformanceMetrics(
   limit = 100,
 ): Promise<CreatorPerformanceSummary | null> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const row = await db
       .prepare(
         `SELECT

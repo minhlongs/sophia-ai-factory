@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getExpiredTrialUsers } from '@/land/promo/promo-repo';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { logger } from '@/seed/utils/logger-utility';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { Resend } from 'resend';
 import {
   startCronCheckIn,
@@ -149,7 +149,8 @@ export async function GET(request: NextRequest) {
   let failed = 0;
 
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
 
     // 1. Downgrade expired trials
     const expiredUsers = await getExpiredTrialUsers(nowSec);

@@ -9,7 +9,7 @@
  * is canonical — excluded here. Import directly from
  * '@/land/openclaw/event-bus' for the internal event bus.
  */
-export * from './audit';
+export * from '@/tree/agent-fleet/audit';
 // event-bus excluded — `emit` conflicts with land/webhooks/emitter
 export * from './llm-cost-tracker';
 export * from './llm-router';
@@ -19,8 +19,8 @@ export * from './queue';
 export * from './rate-limit';
 export * from './schedule';
 export * from './skill-loader';
-export * from './spawn-agent-fleet-executor';
-export * from './spawn-agent-fleet';
+export * from '@/forest/openclaw/spawn-agent-fleet-executor';
+export * from '@/forest/openclaw/spawn-agent-fleet';
 export * from './with-tenant';
 // Namespace object defined in land/openclaw (canonical, no lib dependency)
 export { openclaw } from './openclaw-namespace';

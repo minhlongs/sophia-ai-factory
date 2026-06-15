@@ -9,14 +9,17 @@ import type { OpenClawAuthResult, OpenClawAuthError } from '@/seed/auth/get-curr
 const mocks = vi.hoisted(() => ({
   getCurrentUserOrOpenClaw: vi.fn(),
   isAuthError: vi.fn(),
-  getD1Client: vi.fn(),
+  createServerClient: vi.fn(),
 }));
 
 vi.mock('@/seed/auth/get-current-user-or-openclaw', () => ({
   getCurrentUserOrOpenClaw: mocks.getCurrentUserOrOpenClaw,
   isAuthError: mocks.isAuthError,
 }));
-vi.mock('@/seed/db/client', () => ({ getD1Client: mocks.getD1Client }));
+vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
+  createServerClient: mocks.createServerClient,
+}));
 vi.mock('@/land/video/video-job-fsm', () => ({
   STATUS_PROGRESS: { queued: 0, processing: 50, done: 100, error: 0 },
 }));
@@ -49,7 +52,7 @@ describe('GET /api/videos/status/[jobId] — dual-auth', () => {
     });
     const eqChain = { eq: vi.fn().mockReturnThis(), single };
     const from = vi.fn().mockReturnValue({ select: vi.fn().mockReturnValue(eqChain) });
-    mocks.getD1Client.mockResolvedValue({ from });
+    mocks.createServerClient.mockReturnValue({ from });
   });
 
   it('returns 401 when no auth', async () => {

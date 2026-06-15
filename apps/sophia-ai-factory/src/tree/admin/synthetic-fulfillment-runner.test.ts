@@ -1,7 +1,7 @@
 /**
  * Unit tests for synthetic-fulfillment-runner.
  *
- * Mocks: DB (insertPurchase, markPaid, findByPurchaseId, getD1Raw),
+ * Mocks: DB (insertPurchase, markPaid, findByPurchaseId, getD1),
  *        triggerOneTimeFulfillment, billing_events check.
  *
  * Covers: happy path, timeout, fulfillment error.
@@ -34,7 +34,7 @@ const mockD1Prep = vi.fn(() => ({ bind: mockD1PrepBind }))
 const mockD1: D1Database = { prepare: mockD1Prep } as unknown as D1Database
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(async () => mockD1),
+  getD1: vi.fn(() => mockD1),
 }))
 
 import { insertPurchase, markPaid } from '@/seed/db/repositories/user-purchases-repo'

@@ -8,7 +8,7 @@
  * Instagram: uses FB long-lived token re-exchange (no refresh_token — HIGH fix).
  */
 
-import { getD1Client, getD1Raw } from '@/seed/db/client';
+import { getD1, createServerClient } from '@/seed/db/client';
 import { encryptToken, decryptToken } from './token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -135,7 +135,9 @@ async function refreshZaloToken(
  */
 async function acquireRefreshLock(channelId: string, now: number): Promise<boolean> {
   const staleBefore = now - LOCK_STALE_S;
-  const rawDb = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const rawDb = _db;
   const result = await rawDb
     .prepare(
       'UPDATE publishing_channels SET refreshing_at = ? WHERE id = ? AND (refreshing_at IS NULL OR refreshing_at < ?)',
@@ -316,7 +318,7 @@ export async function refreshChannelToken(channel: PublishingChannel): Promise<n
       updatePatch.refresh_token = await encryptToken(rotatedRefreshToken);
     }
 
-    const db = await getD1Client();
+    const db = createServerClient();
     await db
       .from('publishing_channels')
       .update(updatePatch)
@@ -335,7 +337,7 @@ export async function refreshChannelToken(channel: PublishingChannel): Promise<n
  * Called by Inngest cron every 30 minutes.
  */
 export async function refreshExpiringTokens(): Promise<{ refreshed: number; failed: number; skipped: number }> {
-  const db = await getD1Client();
+  const db = createServerClient();
   const threshold = Math.floor(Date.now() / 1000) + ONE_HOUR_S;
 
   const { data } = await db

@@ -11,7 +11,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { setUserApiKey } from '@/tree/byok/user-api-key-store';
 import type { ByokProvider } from '@/tree/byok/user-api-key-store';
 import { z } from 'zod';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { validateProviderKey, sanitizeCredential } from '@/tree/byok/key-format-validators';
 import type { ValidatorProvider } from '@/tree/byok/key-format-validators';
@@ -97,21 +97,22 @@ export async function POST(request: NextRequest) {
 
     // Mark onboarding complete in DB (primary) and cookie (fallback resilience)
     try {
-      const db = await getD1Raw()
+      const db = getD1()
+      if (!db) throw new Error('D1 database binding not available')
       const nowMs = Date.now()
-      await db
+      db
         .prepare(
           'UPDATE user_profiles SET onboarding_completed_at = ? WHERE user_id = ?',
         )
         .bind(nowMs, user.id)
         .run()
-  // H1: Auto-enable pre-installed SOPs after CEO completes BYOK wizard
-  await db
-    .prepare(
-      'UPDATE user_sop_installations SET enabled = 1 WHERE user_id = ? AND enabled = 0',
-    )
-    .bind(user.id)
-    .run()
+      // H1: Auto-enable pre-installed SOPs after CEO completes BYOK wizard
+      db
+        .prepare(
+          'UPDATE user_sop_installations SET enabled = 1 WHERE user_id = ? AND enabled = 0',
+        )
+        .bind(user.id)
+        .run()
     } catch (dbErr) {
       // Non-fatal — cookie fallback below ensures wizard gate is satisfied
       logger.warn('[SetupSave] Failed to set onboarding_completed_at in DB', { error: dbErr })

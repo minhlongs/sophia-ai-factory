@@ -67,6 +67,7 @@ describe('buildBundleGeneratingEmail', () => {
 // ── Sender idempotency test (mocks DB only) ───────────────────────────────────
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(),
 }))
 

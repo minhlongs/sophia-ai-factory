@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { createRefundRequest, getRefundByPurchaseAndUser } from '@/land/refunds/refund-repo'
 import { sendRefundReceivedEmail } from '@/land/billing/email/send-refund-emails'
 import { logger } from '@/seed/utils/logger-utility'
@@ -49,7 +49,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     // Verify purchase ownership
-    const db = await getD1Raw()
+    const db = getD1()
+    if (!db) throw new Error('D1 database binding not available')
     const purchase = await db
       .prepare(`SELECT id, user_id, payment_id, amount_cents, status, created_at, paid_at FROM user_purchases WHERE id = ?1 AND kind = 'one_time'`)
       .bind(body.purchaseId)

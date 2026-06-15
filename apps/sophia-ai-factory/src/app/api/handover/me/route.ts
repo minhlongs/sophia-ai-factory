@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserOrOpenclawBearer } from '@/seed/auth/openclaw-token';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type { CustomerHandoverRow } from '@/tree/handover/handover-types';
 
@@ -23,7 +23,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const row = await db
       .prepare(
         `SELECT id, agency_name, tier, customer_first_login_at,

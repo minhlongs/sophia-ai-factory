@@ -1,4 +1,4 @@
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 export interface VideoPublish {
@@ -22,7 +22,8 @@ export async function createVideoPublish(input: {
   metadata?: string;
   scheduledAt?: string;
 }): Promise<VideoPublish> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
 
   await db
@@ -38,7 +39,8 @@ export async function createVideoPublish(input: {
 }
 
 export async function getVideoPublish(id: string): Promise<VideoPublish | null> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   return db.prepare('SELECT * FROM video_publishes WHERE id = ?').bind(id).first<VideoPublish>() ?? null;
 }
 
@@ -47,7 +49,8 @@ export async function updateVideoPublishStatus(
   status: string,
   extra?: { platformVideoId?: string; errorMessage?: string; publishedAt?: string },
 ): Promise<void> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   await db
     .prepare(
       `UPDATE video_publishes SET
@@ -71,7 +74,8 @@ export async function listVideoPublishes(
   userId: string,
   videoId?: string,
 ): Promise<VideoPublish[]> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   if (videoId) {
     const result = await db
       .prepare('SELECT * FROM video_publishes WHERE user_id = ? AND video_id = ? ORDER BY created_at DESC')
@@ -87,7 +91,8 @@ export async function listVideoPublishes(
 }
 
 export async function getPendingPublishes(): Promise<VideoPublish[]> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const result = await db
     .prepare(
       `SELECT * FROM video_publishes

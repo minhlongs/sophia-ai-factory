@@ -1,4 +1,4 @@
-import { getD1Client } from "@/seed/db/client";
+import { createServerClient } from "@/seed/db/client";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { logger } from "@/seed/utils/logger-utility";
 import { notFound, redirect } from "next/navigation";
@@ -38,7 +38,7 @@ export default async function CampaignDetailPage({ params }: PageProps) {
 
   if (user?.id) {
     try {
-      const db = await getD1Client();
+      const db = createServerClient();
       const { data, error } = await db
         .from("campaigns")
         .select("*")

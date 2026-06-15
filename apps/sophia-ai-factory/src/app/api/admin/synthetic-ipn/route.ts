@@ -22,6 +22,24 @@ import { getOneTimeSkuById } from '@/seed/config/one-time-skus'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 
+function getCloudflareEnv(): Record<string, unknown> | null {
+  try {
+    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env
+    if (env) return env
+    const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[Symbol.for('__cloudflare-context__')]
+    return ctx?.env ?? null
+  } catch {
+    return null
+  }
+}
+
+function getNowPaymentsIpnSecret(): string | null {
+  const env = getCloudflareEnv()
+  const secret = env?.NOWPAYMENTS_IPN_SECRET
+  if (typeof secret === 'string') return secret
+  return process.env.NOWPAYMENTS_IPN_SECRET ?? null
+}
+
 export const dynamic = 'force-dynamic'
 
 const bodySchema = z.object({
@@ -52,8 +70,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request)
   if (auth instanceof NextResponse) return auth
 
-  const ipnSecret = process.env.NOWPAYMENTS_IPN_SECRET
-  if (!ipnSecret) {
+  const nowPaymentsIpnSecret = getNowPaymentsIpnSecret()
+  if (!nowPaymentsIpnSecret) {
     return NextResponse.json({ error: 'NOWPAYMENTS_IPN_SECRET not configured' }, { status: 500 })
   }
 
@@ -94,7 +112,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   let signature: string
   try {
-    signature = await buildIpnSignature(ipnPayload, ipnSecret)
+    signature = await buildIpnSignature(ipnPayload, nowPaymentsIpnSecret)
   } catch (err) {
     logger.error('[SyntheticIPN] Signature build failed', err instanceof Error ? err : undefined)
     return NextResponse.json({ error: 'Signature build failed' }, { status: 500 })

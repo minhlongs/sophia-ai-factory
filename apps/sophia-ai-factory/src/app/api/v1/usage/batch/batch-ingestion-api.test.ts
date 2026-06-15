@@ -34,6 +34,7 @@ vi.mock('next/server', () => ({
 
 // Mock DB client
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: () => ({
     from: vi.fn((table: string) => ({
       select: vi.fn(() => ({

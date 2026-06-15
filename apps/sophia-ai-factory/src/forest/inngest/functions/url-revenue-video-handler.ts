@@ -11,7 +11,7 @@
  */
 
 import { inngest } from '@/forest/inngest/client';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { randomUUID } from 'crypto';
 
@@ -23,7 +23,7 @@ export const urlRevenueVideoHandler = inngest.createFunction(
 
     // Create a video_jobs row so the existing scripting→tts→compose→upload chain can pick it up.
     const videoJobId = await step.run('create-video-job', async () => {
-      const db = await getD1Client();
+      const db = createServerClient();
       const newJobId = randomUUID();
       const now = new Date().toISOString();
 

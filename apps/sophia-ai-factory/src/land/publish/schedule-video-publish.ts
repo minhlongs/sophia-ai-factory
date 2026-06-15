@@ -18,7 +18,7 @@
  *
  * @module land/publish/schedule-video-publish
  */
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 
@@ -85,7 +85,8 @@ export async function schedulePublish(
     );
   }
 
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   // RBAC: video must belong to caller
   const video = await db

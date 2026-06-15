@@ -8,28 +8,36 @@ import { verifyIpnSignature, lookupInvoice } from '@/tree/clients/nowpayments-cl
 import { processNowPaymentsIpn } from '@/land/billing/nowpayments-ipn-handlers'
 import { ipnPayloadSchema } from '@/land/billing/ipn-payload-schema'
 import { logger } from '@/seed/utils/logger-utility'
-import { captureTierUpgraded } from '@/land/signals/posthog-capture'
-import { track } from '@/land/signals/track'
-import { D1Events } from '@/land/signals/d1-event-types'
+import { captureTierUpgraded } from '@/tree/signals/posthog-capture'
+import { track } from '@/tree/signals/track'
+import { D1Events } from '@/tree/signals/d1-event-types'
 import { emit } from '@/land/webhooks/emitter'
 import { resolveUserTier } from '@/seed/db/resolve-user-tier'
+import { getD1 } from '@/seed/db/client'
 
-function getD1ForWebhooks(): D1Database | null {
-try {
-const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-if (env?.DB) return env.DB as D1Database;
-const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[Symbol.for('__cloudflare-context__')];
-if (ctx?.env?.DB) return ctx.env.DB as D1Database;
-return null;
-} catch { return null; }
+function getCloudflareEnv(): Record<string, unknown> | null {
+  try {
+    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env
+    if (env) return env
+    const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[Symbol.for('__cloudflare-context__')]
+    return ctx?.env ?? null
+  } catch {
+    return null
+  }
 }
 
-const NOWPAYMENTS_IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET
+function getNowPaymentsIpnSecret(): string | null {
+  const env = getCloudflareEnv()
+  const secret = env?.NOWPAYMENTS_IPN_SECRET
+  if (typeof secret === 'string') return secret
+  return process.env.NOWPAYMENTS_IPN_SECRET ?? null
+}
 
 const MAX_BODY_BYTES = 64 * 1024 // 64KB limit — prevent memory exhaustion
 
 export async function POST(request: NextRequest) {
-if (!NOWPAYMENTS_IPN_SECRET) {
+const nowPaymentsIpnSecret = getNowPaymentsIpnSecret()
+if (!nowPaymentsIpnSecret) {
 logger.error('[NOWPayments Webhook] NOWPAYMENTS_IPN_SECRET not configured')
 return NextResponse.json({ error: 'Configuration error' }, { status: 500 })
 }
@@ -71,7 +79,7 @@ logger.warn('[NOWPayments Webhook] Missing x-nowpayments-sig header')
 return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
 }
 
-const isValid = await verifyIpnSignature(rawBody, signature, NOWPAYMENTS_IPN_SECRET)
+const isValid = await verifyIpnSignature(rawBody, signature, nowPaymentsIpnSecret)
 if (!isValid) {
 logger.warn('[NOWPayments Webhook] Invalid IPN signature')
 return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
@@ -126,7 +134,7 @@ logger.warn('[NOWPayments Webhook] resolveUserTier failed, using fallback', tier
 track(D1Events.TIER_CONVERSION, userId, { from_tier: fromTier, to_tier: tierName, amount_usd: ipn.price_amount, provider: 'nowpayments' }, userId)
 
 // Emit outbound webhook event (fire-and-forget)
-const db = getD1ForWebhooks();
+const db = getD1();
 if (db) {
 emit({ DB: db }, 'payment.received', {
 tenantId: userId,

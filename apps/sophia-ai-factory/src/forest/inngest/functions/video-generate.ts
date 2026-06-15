@@ -20,7 +20,7 @@
  */
 
 import { inngest } from '@/forest/inngest/client';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { getVideoBucket } from '@/land/video/r2-binding';
 import { recordCost } from '@/land/video/cost-ledger';
 import { logger } from '@/seed/utils/logger-utility';
@@ -72,7 +72,7 @@ export const videoGenerate = inngest.createFunction(
     const data = event.data as VideoGenerateRequestedEvent;
 
  // ── Idempotency guard: skip if mission already succeeded or running ─────
- const idempotencyDb = await getD1Client();
+ const idempotencyDb = createServerClient();
  const { data: existingMission } = await idempotencyDb
    .from('engine_missions')
    .select('id, status')
@@ -231,7 +231,7 @@ export const videoGenerate = inngest.createFunction(
 
     // ── Step 7: Update engine_mission ─────────────────────────────────────
     await step.run('update-mission', async () => {
-      const db = await getD1Client();
+      const db = createServerClient();
       await db
         .from('engine_missions')
         .update({

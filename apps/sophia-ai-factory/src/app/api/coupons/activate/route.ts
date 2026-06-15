@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { toError } from '@/seed/utils/to-error';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { csrfForbiddenResponse, verifyCsrfToken } from '@/seed/security/csrf';
 
 interface CouponActivateRequest {
@@ -56,7 +56,9 @@ export async function POST(request: NextRequest) {
 
     let d1: D1Database;
     try {
-      d1 = await getD1Raw();
+      const _d1 = getD1();
+      if (!_d1) throw new Error('D1 database binding not available');
+      d1 = _d1;
     } catch {
       return NextResponse.json({ success: false, error: 'Database unavailable' }, { status: 500 });
     }

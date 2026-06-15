@@ -17,7 +17,7 @@
 
 import type { Tier } from '@/seed/types'
 import { normalizePlanToTier } from '@/seed/db/resolve-user-tier'
-import { getD1Raw } from '@/seed/auth/resolve-org-id'
+import { getD1 } from '@/seed/db/client';
 
 export interface TenantContext {
   orgId: string
@@ -34,7 +34,7 @@ export async function getTenantContext(
   db?:    D1Database | null,
 ): Promise<TenantContext | null> {
   if (!userId) return null
-  const d1 = db ?? getD1Raw()
+  const d1 = db ?? getD1()
   if (!d1) return null
 
   try {

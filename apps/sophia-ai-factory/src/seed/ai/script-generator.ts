@@ -1,6 +1,6 @@
 import { Tier } from "@/seed/types";
 import { getErrorMessage } from '@/seed/utils/to-error';
-import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/forest/usage-metering';
+import { trackUsage, hashLicenseKey, startTimer } from '@/forest/usage-metering';
 import { getUsageContext } from '@/forest/usage-metering/context';
 import { callWithCache } from '@/land/llm/cache/call-with-cache';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
@@ -25,14 +25,12 @@ interface GenerateScriptInput {
   userId?: string;
   licenseKey?: string;
   licenseNonce?: string;
-  /** Tenant scope for LLM cache (Phase 4F). Empty/omitted → cache skipped. */
   orgId?: string;
-  /** Optional affiliate offer — injects CTA into last scene of generated script. */
   affiliateOffer?: AffiliateOfferCta;
 }
 
 /**
- * Generates a video script using OpenRouter API.
+ * Generates a video script using OpenRouter via resilient client.
  * Falls back to mock if API key is not configured.
  */
 export async function generateScript(input: GenerateScriptInput) {
@@ -45,7 +43,6 @@ export async function generateScript(input: GenerateScriptInput) {
   const finalLicenseNonce = licenseNonce || context?.licenseNonce || 'unknown';
   const licenseKeyHash = hashLicenseKey(finalLicenseKey || 'unknown');
 
-  // Phase 7B: BYOK — prefer user's stored OpenRouter key; fallback to env key.
   const resolvedUserId = finalUserId === 'unknown' ? null : finalUserId;
   const apiKey = await resolveUserApiKey(
     resolvedUserId,
@@ -70,98 +67,58 @@ export async function generateScript(input: GenerateScriptInput) {
     return mockResult;
   }
 
+  const model = selectModelForTier(tier);
+  const messages = [
+    { role: 'system', content: SCRIPT_SYSTEM_PROMPT },
+    { role: 'user',   content: buildScriptUserPrompt(topic, audience, affiliateOffer) },
+  ];
+
   try {
-    const model = selectModelForTier(tier);
-    const messages = [
-      { role: 'system', content: SCRIPT_SYSTEM_PROMPT },
-      { role: 'user',   content: buildScriptUserPrompt(topic, audience, affiliateOffer) },
-    ];
-
-    const cached = await callWithCache(
-      { provider: 'openrouter', model, messages, orgId: orgId ?? '' },
-      async () => {
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${apiKey}`,
-            'HTTP-Referer': process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network',
-            'X-Title':      'Sophia AI Factory',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model,
-            messages,
-            response_format: { type: 'json_object' },
-            temperature: 0.7,
-            max_tokens:  1000,
-          }),
-        });
-
-        const responseTime = stopTimer();
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          await trackUsage({
-            userId:         finalUserId,
-            licenseKeyHash,
-            licenseNonce:   finalLicenseNonce,
-            service:        'openrouter',
-            endpoint:       '/chat/completions',
-            action:         'chat_completion',
-            tierAtRequest:  tier,
-            statusCode:     response.status,
-            errorMessage:   errorText,
-            responseTimeMs: responseTime,
-            creditsUsed:    0,
-          });
-          if (response.status === 401 || response.status === 403) {
-            throw new ProviderInvalidKeyError('openrouter', errorText);
-          }
-          if (response.status === 429 || response.status === 402) {
-            throw new ProviderQuotaExceededError('openrouter', errorText);
-          }
-          throw new Error(`OpenRouter API failed: ${response.status}`);
-        }
-
-        const data = await response.json() as {
-          choices?: { message?: { content?: string } }[];
-          usage?: { prompt_tokens?: number; completion_tokens?: number };
-          model?: string;
-          id?: string;
-        };
-        const content = data.choices?.[0]?.message?.content;
-
-        if (!content) throw new Error('No content in OpenRouter response');
-
-        const usage = data.usage;
-        const tokensTotal = (usage?.prompt_tokens ?? 0) + (usage?.completion_tokens ?? 0);
-
-        await trackUsage({
-          userId:         finalUserId,
-          licenseKeyHash,
-          licenseNonce:   finalLicenseNonce,
-          service:        'openrouter',
-          endpoint:       '/chat/completions',
-          action:         'chat_completion',
-          tokensInput:    usage?.prompt_tokens     ?? 0,
-          tokensOutput:   usage?.completion_tokens ?? 0,
-          creditsUsed:    calculateCredits('openrouter', 'chatCompletion', tokensTotal, tier),
-          modelName:      data.model,
-          requestId:      data.id,
-          tierAtRequest:  tier,
-          statusCode:     response.status,
-          responseTimeMs: responseTime,
-        });
-
-        return {
-          response:     content as string,
-          inputTokens:  usage?.prompt_tokens     ?? 0,
-          outputTokens: usage?.completion_tokens ?? 0,
-        };
-      },
+    const content = await (await import('@/seed/inference/openrouter-client')).resilientChatCompletion(
+      messages.map(m => `${m.role === 'user' ? 'User' : 'System'}: ${m.content}`).join('\n\n'),
+      {
+        openRouterKey: apiKey,
+        anthropicKey: undefined,
+        enableFallback: false,
+        model,
+      }
     );
 
-    const parsed = JSON.parse(cached.response) as import('./script-prompt-builders').ScriptOutput;
+    const responseTime = stopTimer();
+
+    // Try parse JSON
+    let parsed: any;
+    try {
+      parsed = JSON.parse(content);
+    } catch (e) {
+      await trackUsage({
+        userId: finalUserId,
+        licenseKeyHash,
+        licenseNonce: finalLicenseNonce,
+        service: 'openrouter',
+        endpoint: '/chat/completions',
+        action: 'chat_completion',
+        tierAtRequest: tier,
+        errorMessage: 'JSON parse failed',
+        responseTimeMs: responseTime,
+        creditsUsed: 0,
+      });
+      throw new Error('Invalid JSON from LLM');
+    }
+
+    // Minimal tracking on success
+    await trackUsage({
+      userId: finalUserId,
+      licenseKeyHash,
+      licenseNonce: finalLicenseNonce,
+      service: 'openrouter',
+      endpoint: '/chat/completions',
+      action: 'chat_completion',
+      tierAtRequest: tier,
+      statusCode: 200,
+      responseTimeMs: responseTime,
+      creditsUsed: 1, // rough estimate
+    });
 
     if (!parsed.title || !Array.isArray(parsed.scenes) || parsed.scenes.length === 0) {
       throw new Error('Invalid script format from API');
@@ -170,19 +127,24 @@ export async function generateScript(input: GenerateScriptInput) {
     return parsed;
 
   } catch (error) {
+    const responseTime = stopTimer();
     await trackUsage({
       userId: finalUserId,
-      licenseKeyHash: licenseKeyHash,
+      licenseKeyHash,
       licenseNonce: finalLicenseNonce,
       service: 'openrouter',
       endpoint: '/chat/completions',
       action: 'chat_completion',
       tierAtRequest: tier,
       errorMessage: getErrorMessage(error),
-      responseTimeMs: stopTimer(),
+      responseTimeMs: responseTime,
       creditsUsed: 0,
     });
 
+    // Determine if we should throw or fallback to mock
+    if (error instanceof ProviderInvalidKeyError || error instanceof ProviderQuotaExceededError) {
+      throw error; // Let caller handle auth/rate errors
+    }
     return generateMockScript(topic, audience);
   }
 }

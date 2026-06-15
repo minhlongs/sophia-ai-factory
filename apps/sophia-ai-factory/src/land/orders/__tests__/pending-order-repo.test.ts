@@ -32,6 +32,7 @@ const BASE_INPUT = {
 const orderStore = new Map<string, PendingOrder>()
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: () => ({
     from: (table: string) => {
       if (table !== 'pending_orders') throw new Error(`Unexpected table: ${table}`)

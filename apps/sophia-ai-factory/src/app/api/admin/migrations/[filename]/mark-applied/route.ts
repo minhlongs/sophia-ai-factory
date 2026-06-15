@@ -13,7 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { writeAuditLog } from '@/tree/admin/audit-log'
 import { getErrorMessage } from '@/seed/utils/to-error'
 
@@ -45,7 +45,9 @@ export async function POST(
   }
 
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
     await db
       .prepare(
         `INSERT INTO supabase_migrations_applied (filename, applied_by_user_id, notes)
@@ -82,7 +84,9 @@ export async function GET(
 
   const { filename } = await params
 
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const row = await db
     .prepare(`SELECT * FROM supabase_migrations_applied WHERE filename = ?1`)
     .bind(filename)

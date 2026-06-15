@@ -10,11 +10,27 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyIpnSignature } from '@/tree/clients/nowpayments-client'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { inngest } from '@/forest/inngest/client'
 import { logger } from '@/seed/utils/logger-utility'
 
-const IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET
+function getCloudflareEnv(): Record<string, unknown> | null {
+  try {
+    const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env
+    if (env) return env
+    const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[Symbol.for('__cloudflare-context__')]
+    return ctx?.env ?? null
+  } catch {
+    return null
+  }
+}
+
+function getNowPaymentsIpnSecret(): string | null {
+  const env = getCloudflareEnv()
+  const secret = env?.NOWPAYMENTS_IPN_SECRET
+  if (typeof secret === 'string') return secret
+  return process.env.NOWPAYMENTS_IPN_SECRET ?? null
+}
 
 interface PayoutIpnPayload {
   withdrawal_id: string
@@ -25,7 +41,8 @@ interface PayoutIpnPayload {
 }
 
 export async function POST(request: NextRequest) {
-  if (!IPN_SECRET) {
+  const nowPaymentsIpnSecret = getNowPaymentsIpnSecret()
+  if (!nowPaymentsIpnSecret) {
     logger.error('[NOWPayments Payout IPN] NOWPAYMENTS_IPN_SECRET not configured')
     return NextResponse.json({ error: 'Configuration error' }, { status: 500 })
   }
@@ -37,7 +54,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing signature' }, { status: 401 })
   }
 
-  const isValid = await verifyIpnSignature(rawBody, signature, IPN_SECRET)
+  const isValid = await verifyIpnSignature(rawBody, signature, nowPaymentsIpnSecret)
   if (!isValid) {
     logger.warn('[NOWPayments Payout IPN] Invalid HMAC signature')
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
@@ -64,8 +81,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true, action: 'no-op', reason: 'no batch id' })
   }
 
-  const db = await getD1Raw()
-  const now = Math.floor(Date.now() / 1000)
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
+  const now = Math.floor(Date.now() / 1000);
 
   // H4: idempotent — do NOT overwrite finalized_at on IPN re-receipt
   await db

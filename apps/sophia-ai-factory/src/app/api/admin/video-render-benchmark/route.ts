@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getD1Raw } from '@/seed/auth/resolve-org-id';
+import { getD1 } from '@/seed/db/client';
 import { computeVideoRenderBenchmark } from '@/land/analytics/video-render-benchmark';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import { timingSafeEqual } from '@/seed/security/crypto-utils';
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const windowSeconds = windowSecondsRaw ? Math.max(60, Number(windowSecondsRaw)) : undefined;
 
   try {
-    const d1 = getD1Raw();
+    const d1 = getD1();
     if (!d1) {
       return NextResponse.json({ ok: false, reason: 'D1_UNAVAILABLE', ts }, { status: 200 });
     }

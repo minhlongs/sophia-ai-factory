@@ -10,7 +10,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -23,7 +23,7 @@ import {
   VideoUnauthorizedError,
   VideoNotMirroredError,
 } from '../get-canonical-video-url';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -57,7 +57,7 @@ describe('getCanonicalVideoUrl', () => {
   });
 
   it('returns canonical R2 URL when video exists and is owned by user', async () => {
-    vi.mocked(getD1Raw).mockResolvedValue(
+    vi.mocked(getD1).mockReturnValue(
       makeD1({ id: VIDEO_ID, user_id: USER_ID, r2_key: R2_KEY }),
     );
 
@@ -66,7 +66,7 @@ describe('getCanonicalVideoUrl', () => {
   });
 
   it('throws VideoNotFoundError when row does not exist', async () => {
-    vi.mocked(getD1Raw).mockResolvedValue(makeD1(null));
+    vi.mocked(getD1).mockReturnValue(makeD1(null));
 
     await expect(getCanonicalVideoUrl(VIDEO_ID, USER_ID)).rejects.toThrow(
       VideoNotFoundError,
@@ -74,7 +74,7 @@ describe('getCanonicalVideoUrl', () => {
   });
 
   it('throws VideoUnauthorizedError when user_id does not match', async () => {
-    vi.mocked(getD1Raw).mockResolvedValue(
+    vi.mocked(getD1).mockReturnValue(
       makeD1({ id: VIDEO_ID, user_id: 'other-user', r2_key: R2_KEY }),
     );
 
@@ -84,7 +84,7 @@ describe('getCanonicalVideoUrl', () => {
   });
 
   it('throws VideoNotMirroredError when r2_key is null', async () => {
-    vi.mocked(getD1Raw).mockResolvedValue(
+    vi.mocked(getD1).mockReturnValue(
       makeD1({ id: VIDEO_ID, user_id: USER_ID, r2_key: null }),
     );
 
@@ -96,7 +96,7 @@ describe('getCanonicalVideoUrl', () => {
   it('throws generic Error when R2_PUBLIC_HOSTNAME is not configured', async () => {
     delete process.env.R2_PUBLIC_HOSTNAME;
 
-    vi.mocked(getD1Raw).mockResolvedValue(
+    vi.mocked(getD1).mockReturnValue(
       makeD1({ id: VIDEO_ID, user_id: USER_ID, r2_key: R2_KEY }),
     );
 

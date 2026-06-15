@@ -8,7 +8,7 @@
  *   - In-memory dispatch for low-latency same-request events
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client'
 
 export type EventHandler<T = unknown> = (payload: T, tenantId: string) => Promise<void> | void;
 
@@ -68,7 +68,9 @@ export async function persistHook(
 ): Promise<void> {
   const id = `${tenantId}:${event}:${handlerModule}`;
   const now = Date.now();
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   await db
     .prepare(
       `INSERT INTO hooks_registry (id, tenant_id, event, handler_module, enabled, created_at)
@@ -86,7 +88,9 @@ export async function loadHooks(
   tenantId: string,
   event: string,
 ): Promise<string[]> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const result = await db
     .prepare(
       'SELECT handler_module FROM hooks_registry WHERE tenant_id = ? AND event = ? AND enabled = 1',

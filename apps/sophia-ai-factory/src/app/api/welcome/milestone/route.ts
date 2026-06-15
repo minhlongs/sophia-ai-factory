@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -37,7 +37,12 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const nowMs = Date.now();
 
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) {
+      logger.error('[Welcome/Milestone] D1 unavailable');
+      return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
+    }
+    const db = _db;
     await db
       .prepare(
         `UPDATE customer_handovers

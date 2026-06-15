@@ -9,7 +9,7 @@
  *   This ensures account safety without losing the publish request.
  */
 
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { inngest } from '@/forest/inngest/client';
 import { consumeQuota } from './per-channel-quota';
 import { checkCooldown } from '@/forest/quota/channel-cooldown';
@@ -175,7 +175,7 @@ export function getOptimalPublishTime(scheduledAtSec: number, tz: string): numbe
  * Validate tenant owns the requested channels, check quota, insert jobs.
  */
 export async function schedulePublish(input: SchedulePublishInput): Promise<SchedulePublishResult> {
-  const db = await getD1Client();
+  const db = createServerClient();
   const {
     videoJobId,
     tenantId,

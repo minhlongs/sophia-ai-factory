@@ -29,6 +29,7 @@ const {
 // ── Module mocks ────────────────────────────────────────────────────────────
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: () => ({ from: mockDbFrom }),
 }));
 

@@ -9,7 +9,7 @@
  * - addCredits always succeeds (INSERT OR REPLACE + UPDATE)
  */
 
-import { createServerClient, getD1Raw } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility';
 
 export interface McuBalance {
@@ -64,7 +64,9 @@ export async function deductCredits(
   if (amount <= 0) return true;
 
   try {
-    const d1 = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const d1 = _db;
 
     const stmt = d1.prepare(
       `UPDATE user_mcu_balance
@@ -105,7 +107,9 @@ export async function addCredits(
   if (amount <= 0) return true;
 
   try {
-    const d1 = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const d1 = _db;
 
     // Upsert balance row
     await d1.prepare(

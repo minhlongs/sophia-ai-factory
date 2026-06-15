@@ -16,7 +16,7 @@ vi.mock('@/land/llm/cache/call-with-cache', () => ({
   callWithCache: vi.fn(),
 }))
 
-vi.mock('@/land/signals/track', () => ({
+vi.mock('@/tree/signals/track', () => ({
   track: vi.fn(),
 }))
 

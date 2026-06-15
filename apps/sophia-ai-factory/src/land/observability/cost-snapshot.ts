@@ -13,7 +13,7 @@
  * @module land/observability/cost-snapshot
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 export interface CostGlobalSummary {
   totalCostUsd: number;
@@ -79,7 +79,8 @@ export async function getCostSnapshot(
 ): Promise<CostSnapshot> {
   if (fromTs > toTs) throw new Error('fromTs must be <= toTs');
   const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   // Window filter shared by all queries — recorded_at is unix seconds.
   const [globalRow, stageRes, providerRes, tenantRes] = await Promise.all([

@@ -4,20 +4,20 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockGetD1Raw, mockFirst } = vi.hoisted(() => {
+const { mockGetD1, mockFirst } = vi.hoisted(() => {
   const first = vi.fn();
   return {
     mockFirst: first,
-    mockGetD1Raw: vi.fn().mockResolvedValue({
+    mockGetD1: vi.fn(() => ({
       prepare: () => ({
         first,
       }),
-    }),
+    })),
   };
 });
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: mockGetD1Raw,
+  getD1: mockGetD1,
 }));
 
 import { getLiveStats } from '@/land/stats/live-stats-counters';
@@ -51,9 +51,9 @@ describe('getLiveStats', () => {
   });
 
   it('falls back to floor when D1 throws', async () => {
-    mockGetD1Raw.mockRejectedValueOnce(new Error('D1 down'));
-    mockGetD1Raw.mockRejectedValueOnce(new Error('D1 down'));
-    mockGetD1Raw.mockRejectedValueOnce(new Error('D1 down'));
+    (mockGetD1 as any).mockReturnValueOnce(null);
+    (mockGetD1 as any).mockReturnValueOnce(null);
+    (mockGetD1 as any).mockReturnValueOnce(null);
     const s = await getLiveStats();
     expect(s.missionsCompleted).toBe(500);
     expect(s.paidAgencies).toBe(50);

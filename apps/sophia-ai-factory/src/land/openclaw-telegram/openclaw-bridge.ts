@@ -22,7 +22,7 @@
  *
  * @module tree/telegram/openclaw-bridge
  */
-import { createServerClient, getD1Raw } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import { getQuotaStatus } from '@/forest/orchestration';
 import { QUOTA_LIMITS } from '@/forest/orchestration';
 import type { QuotaLimit } from '@/seed/types/quota-types';
@@ -255,7 +255,8 @@ export interface HandoverSummary {
 
 export async function callGetHandover(userId: string): Promise<HandoverSummary | null> {
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const row = await db
       .prepare(
         `SELECT id, agency_name, tier, customer_first_login_at,
@@ -470,7 +471,8 @@ export async function callRedeemFree100(input: RedeemFree100Input): Promise<Rede
       return { success: false, error: 'Code requires payment' };
     }
 
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     let userId: string | null = null;
     try {
       const existing = await db

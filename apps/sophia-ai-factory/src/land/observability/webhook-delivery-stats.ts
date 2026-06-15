@@ -12,7 +12,7 @@
  * @module land/observability/webhook-delivery-stats
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 export type WebhookAttemptStatus = 'pending' | 'success' | 'failed' | 'dead_letter';
 
@@ -79,7 +79,8 @@ function mapAttempt(r: RawAttempt): WebhookAttemptRow {
 
 /** Aggregate snapshot of webhook delivery health. */
 export async function getWebhookDeliverySnapshot(): Promise<WebhookDeliverySnapshot> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   const [endpointRow, totalsRes, failuresRes, successesRes] = await Promise.all([
     db

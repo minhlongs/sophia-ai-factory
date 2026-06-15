@@ -4,7 +4,7 @@ import {
   incrementRepurposeProgress,
 } from '@/seed/db/repositories/repurpose-jobs-repo';
 import { logger } from '@/seed/utils/logger-utility';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { generateSubtitles } from '@/land/video/subtitle-generator';
 import { composeFinalVideo, applyBrandKit } from '@/land/video/composer-ffmpeg';
 
@@ -17,7 +17,9 @@ export const repurposeClipGenerate = inngest.createFunction(
     return await step.run('generate-clip', async () => {
       await updateRepurposeClipStatus(clipId, 'generating');
 
-      const db = await getD1Raw();
+      const _db = getD1();
+      if (!_db) throw new Error('D1 database binding not available');
+      const db = _db;
       const job = await db
         .prepare('SELECT source_video_id FROM repurpose_jobs WHERE id = ? LIMIT 1')
         .bind(jobId)

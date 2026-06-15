@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createFakeD1 } from '@/forest/publishing/__tests__/fake-d1-sqlite';
-import { getD1Raw, createServerClient } from '@/seed/db/client';
+import { getD1, createServerClient } from '@/seed/db/client';
 import { D1Client } from '@/seed/db/d1-query-builder';
 import type { D1Database } from '@cloudflare/workers-types';
 
@@ -28,7 +28,7 @@ let mockFakeD1Client: D1Client | undefined;
 
 vi.mock('@/seed/db/client', () => {
   return {
-    getD1Raw: vi.fn().mockImplementation(async () => {
+    getD1: vi.fn().mockImplementation(() => {
       if (!mockFakeD1) {
         mockFakeD1 = createFakeD1(mockSchema);
       }
@@ -51,7 +51,7 @@ import { calculateCurrentUsage, getEffectiveQuotaLimits } from '../quota-checker
 describe('quota-checker-db', () => {
   beforeEach(async () => {
     // Clear tables before each test
-    const db = (await getD1Raw()) as any;
+    const db = (getD1()) as any;
     db._db.prepare('DELETE FROM usage_events').run();
     db._db.prepare('DELETE FROM quota_limits').run();
   });
@@ -64,7 +64,7 @@ describe('quota-checker-db', () => {
     });
 
     it('returns custom overrides if present in quota_limits table', async () => {
-      const db = (await getD1Raw()) as any;
+      const db = (getD1()) as any;
       // Insert a custom limit
       db._db.prepare(
         `INSERT INTO quota_limits (id, license_nonce, custom_daily_credits, custom_hourly_credits, custom_monthly_credits, custom_daily_requests, created_at)
@@ -91,7 +91,7 @@ describe('quota-checker-db', () => {
       const dateObj = new Date();
       const monthStart = Math.floor(new Date(dateObj.getFullYear(), dateObj.getMonth(), 1).getTime() / 1000);
 
-      const db = (await getD1Raw()) as any;
+      const db = (getD1()) as any;
 
       // 1. Hourly event (also daily, monthly)
       db._db.prepare(

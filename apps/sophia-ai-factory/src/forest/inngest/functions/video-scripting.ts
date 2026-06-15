@@ -9,10 +9,11 @@
  */
 
 import { inngest } from '@/forest/inngest/client';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { recordCost } from '@/land/video/cost-ledger';
 import { assertValidTransition } from '@/land/video/video-job-fsm';
 import { logger } from '@/seed/utils/logger-utility';
+import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 import type { VideoJobStatus } from '@/land/video/video-job-fsm';
 
 interface VideoJobRow {
@@ -25,29 +26,18 @@ Write a concise, engaging video script (60-90 seconds when spoken) based on the 
 Include scene descriptions in [brackets] and narrator text.
 Output in Vietnamese by default unless the prompt is in English.`;
 
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
-
-async function callOpenRouter(prompt: string): Promise<string> {
+async function generateScript(prompt: string): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error('[videoScripting] OPENROUTER_API_KEY not configured — job cannot proceed');
   }
-  const res = await fetch(OPENROUTER_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model: 'openai/gpt-4o-mini',
-      messages: [
-        { role: 'system', content: SCRIPT_SYSTEM_PROMPT },
-        { role: 'user', content: `Write a video script for: ${prompt}` },
-      ],
-      max_tokens: 800,
-    }),
-    signal: AbortSignal.timeout(30_000),
+  const content = await resilientChatCompletion(`Write a video script for: ${prompt}`, {
+    openRouterKey: apiKey,
+    anthropicKey: undefined,
+    enableFallback: false,
+    model: 'openai/gpt-4o-mini',
   });
-  if (!res.ok) throw new Error(`OpenRouter ${res.status}: ${await res.text().catch(() => '')}`);
-  const json = await res.json() as { choices?: Array<{ message?: { content?: string } }> };
-  return json.choices?.[0]?.message?.content ?? '[Empty response]';
+  return content;
 }
 
 export const videoScripting = inngest.createFunction(
@@ -57,7 +47,7 @@ export const videoScripting = inngest.createFunction(
     const { jobId, tenantId, userId } = event.data;
 
     const job = await step.run('load-job', async () => {
-      const db = await getD1Client();
+      const db = createServerClient();
       const { data } = await db
         .from('video_jobs')
         .select('status, prompt')
@@ -71,7 +61,7 @@ export const videoScripting = inngest.createFunction(
 
     await step.run('transition-to-scripting', async () => {
       assertValidTransition(job.status, 'scripting');
-      const db = await getD1Client();
+      const db = createServerClient();
       await db
         .from('video_jobs')
         .update({ status: 'scripting', updated_at: Math.floor(Date.now() / 1000) })
@@ -80,8 +70,8 @@ export const videoScripting = inngest.createFunction(
 
     let scriptText: string;
     await step.run('generate-script', async () => {
-      scriptText = await callOpenRouter(job.prompt);
-      const db = await getD1Client();
+      scriptText = await generateScript(job.prompt);
+      const db = createServerClient();
       await db
         .from('video_jobs')
         .update({ script_text: scriptText, updated_at: Math.floor(Date.now() / 1000) })

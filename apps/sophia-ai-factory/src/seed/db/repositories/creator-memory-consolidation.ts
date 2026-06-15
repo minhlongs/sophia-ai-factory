@@ -7,7 +7,7 @@
  * @module seed/db/repositories/creator-memory-consolidation
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type { CreatorMemoryDbRow } from '@/seed/db/types';
 import { addMemory } from './creator-memory-repo';
@@ -31,7 +31,9 @@ export async function consolidateEpisodicToSemantic(
   userId: string,
   opts?: { sincMs?: number; limit?: number },
 ): Promise<ConsolidationSummary> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const now = Date.now();
   const since = opts?.sincMs ?? now - 86_400_000;
   const limit = opts?.limit ?? 200;

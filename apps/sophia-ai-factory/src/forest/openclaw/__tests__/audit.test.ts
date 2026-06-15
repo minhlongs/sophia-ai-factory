@@ -13,10 +13,10 @@ const { mockRun, mockBind, mockPrepare, mockAll } = vi.hoisted(() => {
 });
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn().mockResolvedValue({
+  getD1: vi.fn(() => ({
     prepare: mockPrepare,
     all: mockAll,
-  }),
+  })),
 }));
 
 import { audit } from '../audit';

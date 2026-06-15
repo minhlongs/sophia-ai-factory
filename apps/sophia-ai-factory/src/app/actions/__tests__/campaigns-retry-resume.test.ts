@@ -47,7 +47,8 @@ function buildQueryStub(resolvedValue: unknown) {
 }
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Client: vi.fn(async () => ({
+  getD1: vi.fn(),
+  createServerClient: vi.fn(() => ({
     from: mockDbSelect,
   })),
 }));

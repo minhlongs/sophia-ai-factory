@@ -49,8 +49,8 @@ export interface GeneratedProposal {
   };
 }
 
-const DEFAULT_MODEL = 'openai/gpt-4o-mini';
-const OPENROUTER_ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
+import { logger } from '@/seed/utils/logger-utility';
+import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 
 export async function generateProposal(
   params: ProposalGenerationParams,
@@ -65,47 +65,24 @@ export async function generateProposal(
   const startTime = Date.now();
   const systemPrompt = buildSystemPrompt(params.tone, params.length);
   const userPrompt = buildUserPrompt(params);
+  const fullPrompt = `System: ${systemPrompt}\n\nUser: ${userPrompt}`;
 
-  const resp = await fetch(OPENROUTER_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://sophia.agencyos.network',
-      'X-Title': 'Sophia AI Factory',
-    },
-    body: JSON.stringify({
-      model: DEFAULT_MODEL,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      max_tokens: 4000,
-      temperature: 0.7,
-    }),
+  const content = await resilientChatCompletion(fullPrompt, {
+    openRouterKey: apiKey,
+    anthropicKey: undefined,
+    enableFallback: false,
+    model: 'openai/gpt-4o-mini',
   });
 
-  if (!resp.ok) {
-    const errText = await resp.text();
-    throw new Error(`OpenRouter error: ${resp.status} ${errText.slice(0, 200)}`);
-  }
-
-  const json = (await resp.json()) as {
-    choices: Array<{ message: { content: string } }>;
-    usage?: { prompt_tokens: number; completion_tokens: number };
-    model?: string;
-  };
-
-  const content = json.choices?.[0]?.message?.content ?? '';
-  const parsed = parseProposalContent(content);
   const endTime = Date.now();
+  const parsed = parseProposalContent(content);
 
   return {
     ...parsed,
     metadata: {
-      tokenCount: (json.usage?.prompt_tokens ?? 0) + (json.usage?.completion_tokens ?? 0),
+      tokenCount: content.length / 4, // rough estimate
       generationTimeMs: endTime - startTime,
-      model: json.model ?? DEFAULT_MODEL,
+      model: 'openrouter-model',
     },
   };
 }

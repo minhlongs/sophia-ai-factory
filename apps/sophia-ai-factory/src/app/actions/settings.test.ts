@@ -8,6 +8,7 @@ import { requireOrgMembership } from '@/seed/db/org-membership';
 
 // Mock dependencies
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(),
 }));
 

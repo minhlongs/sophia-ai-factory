@@ -22,6 +22,7 @@
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 
 export interface GenerateSeoScriptInput {
   userId: string;
@@ -54,7 +55,6 @@ export class SeoScriptConfigurationError extends Error {
 }
 
 const DEFAULT_MODEL = 'meta-llama/llama-3.1-8b-instruct:free';
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 function buildPrompt(
   topic: string,
@@ -77,10 +77,6 @@ function buildPrompt(
   ]
     .filter((s) => s.length > 0)
     .join('\n');
-}
-
-interface OpenRouterResponse {
-  choices?: Array<{ message?: { content?: string } }>;
 }
 
 /**
@@ -189,27 +185,16 @@ export async function generateSeoScript(
   const model = input.model ?? DEFAULT_MODEL;
 
   try {
-    const res = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${keyOrNull}`,
-        'Content-Type': 'application/json',
-        'X-Title': 'Sophia generate-seo-script',
-      },
-      body: JSON.stringify({
+    const content = await resilientChatCompletion(
+      buildPrompt(topic, keywords, language, min, max),
+      {
+        openRouterKey: keyOrNull,
+        anthropicKey: undefined,
+        enableFallback: false,
         model,
-        messages: [{ role: 'user', content: buildPrompt(topic, keywords, language, min, max) }],
-        temperature: 0.5,
-        max_tokens: 1200,
-      }),
-    });
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      logger.warn('[generate-seo-script] OpenRouter non-2xx', { status: res.status, body: body.slice(0, 200) });
-      throw new Error(`LLM provider returned ${res.status}`);
-    }
-    const json = (await res.json()) as OpenRouterResponse;
-    const raw = json.choices?.[0]?.message?.content?.trim() ?? '';
+      }
+    );
+    const raw = content.trim();
     if (raw.length === 0) {
       throw new Error('LLM provider returned empty body');
     }

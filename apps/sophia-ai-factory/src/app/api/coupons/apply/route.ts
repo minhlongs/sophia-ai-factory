@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { z } from 'zod';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -81,7 +81,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check per-user redemption in D1
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const existing = await db
       .prepare('SELECT id FROM coupon_redemptions WHERE user_id = ? AND coupon_code = ? LIMIT 1')
       .bind(user.id, code)

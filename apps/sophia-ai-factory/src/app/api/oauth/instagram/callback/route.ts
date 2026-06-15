@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { encryptToken } from '@/tree/crypto/token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 import { randomUUID } from 'crypto';
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
   // Long-lived token expires in ~60 days
   const expiresAt = now + (longLivedData.expires_in ?? 60 * 24 * 3600);
 
-  const db = await getD1Client();
+  const db = createServerClient();
   const tenantId = user.id; // Adjust if tenantId differs from userId in your model
 
   // Upsert channel

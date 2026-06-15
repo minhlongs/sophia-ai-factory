@@ -101,6 +101,7 @@ function makeDbStubV2() {
 }
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: () => makeDbStubV2(),
 }));
 

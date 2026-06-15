@@ -14,7 +14,7 @@ import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getTopAffiliates } from '@/land/affiliates/leaderboard';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { TabSwitcher } from './tab-switcher';
@@ -45,7 +45,8 @@ const PERIOD_SECONDS: Record<string, number> = {
 };
 
 async function fetchCreators(fromTs: number, toTs: number): Promise<CreatorRow[]> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const whereClause =
     fromTs > 0
       ? `AND l.created_at >= ${fromTs} AND l.created_at <= ${toTs}`

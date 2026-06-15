@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 interface ScheduledCampaignRow {
@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const db = await getD1Client();
+    const db = createServerClient();
     const { data, error } = await db
       .from('scheduled_campaigns')
       .select('*')
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
     }
     const { topic, template_script, interval_days, next_run_date } = parsed.data;
 
-    const db = await getD1Client();
+    const db = createServerClient();
     const { data, error } = await db
       .from('scheduled_campaigns')
       .insert({
@@ -182,7 +182,7 @@ export async function PATCH(req: NextRequest) {
     if (typeof next_run_date === 'string') updateData.next_run_date = next_run_date;
     if (typeof topic === 'string') updateData.topic = topic;
 
-    const db = await getD1Client();
+    const db = createServerClient();
     const { data, error } = await db
       .from('scheduled_campaigns')
       .update(updateData)
@@ -228,7 +228,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Missing schedule id' }, { status: 400 });
     }
 
-    const db = await getD1Client();
+    const db = createServerClient();
     const { data: existing, error: lookupError } = await db
       .from('scheduled_campaigns')
       .select('id')

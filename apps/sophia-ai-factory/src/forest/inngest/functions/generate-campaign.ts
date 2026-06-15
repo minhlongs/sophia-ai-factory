@@ -4,7 +4,7 @@ import { logger } from '@/seed/utils/logger-utility'
 import { ServiceFactory } from '@/land/services/factory'
 import { MissingCredentialsError, ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/land/services/errors'
 import { startVideoGeneration } from '@/seed/ai/video-generator'
-import { getD1Client } from '@/seed/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { Tier, TIER_RANK } from '@/seed/types'
 import { OpenClawGateway, type DistributionResult } from '@/tree/gateway/openclaw-gateway'
 import { SmartResumeEngine } from '@/tree/gateway/smart-resume-engine'
@@ -90,7 +90,7 @@ export const generateCampaign = inngest.createFunction(
 
     // ── Idempotency guard: skip if campaign already processing or completed ────
     if (!resume) {
-      const idempotencyDb = await getD1Client()
+      const idempotencyDb = createServerClient()
       const { data: existingCampaign } = await idempotencyDb
         .from('campaigns')
         .select('id, status')
@@ -118,7 +118,7 @@ export const generateCampaign = inngest.createFunction(
       // Load affiliate offer selection (if user picked one during campaign creation)
       const affiliateOffer = await step.run('load-affiliate-offer', async () => {
         try {
-          const db = await getD1Client()
+          const db = createServerClient()
           const { data } = await db
             .from('affiliate_offers_selected')
             .select('short_code, offer_name, affiliate_link')
@@ -136,7 +136,7 @@ export const generateCampaign = inngest.createFunction(
 
       const script = await runStepSafely('generate-script', async () => {
         if (resume && (resumeFrom === 'tts' || resumeFrom === 'video' || resumeFrom === 'finalize')) {
-          const db = await getD1Client()
+          const db = createServerClient()
           const { data: campaign } = await db.from('campaigns').select('script_content').eq('id', campaignId as string).single()
           const typedCampaign = campaign as { script_content: Record<string, unknown> | null } | null
           if (!typedCampaign?.script_content) throw new Error('Cannot resume: script content not found')
@@ -176,7 +176,7 @@ export const generateCampaign = inngest.createFunction(
 
       await runStepSafely('generate-voiceover', async () => {
         if (resume && (resumeFrom === 'video' || resumeFrom === 'finalize')) {
-          const db = await getD1Client()
+          const db = createServerClient()
           const { data: campaign } = await db.from('campaigns').select('audio_url').eq('id', campaignId as string).single()
           const typedCampaign = campaign as { audio_url: string | null } | null
           if (!typedCampaign?.audio_url) throw new Error('Cannot resume: audio URL not found')
@@ -234,7 +234,7 @@ export const generateCampaign = inngest.createFunction(
 
       const videoAssets = await runStepSafely('poll-video-status', async () => {
         if (resume && resumeFrom === 'finalize') {
-          const db = await getD1Client()
+          const db = createServerClient()
           const { data: campaign } = await db.from('campaigns').select('video_url, thumbnail_url').eq('id', campaignId as string).single()
           const typedCampaign = campaign as { video_url: string | null; thumbnail_url: string | null } | null
           if (!typedCampaign?.video_url) throw new Error('Cannot resume: video URL not found')

@@ -59,6 +59,7 @@ vi.mock('@/land/promo/bulk-generator', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn().mockReturnValue({
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnThis(),

@@ -23,6 +23,7 @@ vi.mock('@/land/analytics/rbac', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(),
 }));
 

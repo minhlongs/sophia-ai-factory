@@ -6,7 +6,7 @@
  * Provides runAsTenant() helper for callback-scoped tenant context.
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 /** Immutable tenant context attached to every agent operation. */
 export interface TenantContext {
@@ -51,6 +51,7 @@ export async function withTenantScope<T>(
   tenantId: string,
   fn: (db: D1Database) => Promise<T>,
 ): Promise<T> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   return fn(db);
 }

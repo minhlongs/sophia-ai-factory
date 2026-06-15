@@ -71,7 +71,7 @@ export async function POST(request: Request): Promise<Response> {
     body: bodyText,
   });
 
-  const auth = getAuth();
+  const auth = await getAuth();
   if (!auth) {
     return NextResponse.json({ error: 'Authentication service unavailable' }, { status: 503 });
   }

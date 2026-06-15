@@ -1,6 +1,6 @@
 "use server";
 
-import { getD1Client, createServerClient } from "@/seed/db/client";
+import { getD1, createServerClient } from "@/seed/db/client";
 import { sendCampaignCreatedEvent } from "@/land/campaigns/create-campaign-core";
 import { createCampaignSchema } from "@/land/campaigns/validation";
 import { revalidatePath } from "next/cache";
@@ -52,7 +52,8 @@ if (!membership) {
  return { success: false, message: 'Forbidden: user is not a member of any organization' };
 }
 
-const d1db = await getD1Client();
+const d1db = getD1();
+if (!d1db) throw new Error('D1 database binding not available');
 
   // TIER CHECK: Multi-channel access
   if (platforms && platforms.length > 1) {

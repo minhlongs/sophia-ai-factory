@@ -7,7 +7,7 @@ import { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
   mockGetCurrentUser: vi.fn(),
-  mockGetD1Raw: vi.fn(),
+  mockGetD1: vi.fn(),
   mockSendEmail: vi.fn(),
 }));
 
@@ -16,7 +16,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: mocks.mockGetD1Raw,
+  getD1: mocks.mockGetD1,
 }));
 
 vi.mock('@/forest/email/sender', () => ({
@@ -100,7 +100,7 @@ describe('POST /api/account/delete/request — request action', () => {
 
   it('creates request, sends email, returns 200', async () => {
     const { db, calls } = makeDb({ existingActive: null });
-    mocks.mockGetD1Raw.mockResolvedValue(db);
+    mocks.mockGetD1.mockReturnValue(db);
     const req = new NextRequest('http://localhost/api/account/delete/request', {
       method: 'POST',
       body: JSON.stringify({ action: 'request' }),
@@ -122,7 +122,7 @@ describe('POST /api/account/delete/request — request action', () => {
         cancelled_at: null, scheduled_at: 9_999_999_999,
       },
     });
-    mocks.mockGetD1Raw.mockResolvedValue(db);
+    mocks.mockGetD1.mockReturnValue(db);
     const req = new NextRequest('http://localhost/api/account/delete/request', {
       method: 'POST',
       body: JSON.stringify({ action: 'request' }),
@@ -134,7 +134,7 @@ describe('POST /api/account/delete/request — request action', () => {
 
   it('rolls back row on email send failure (502)', async () => {
     const { db, calls } = makeDb({ existingActive: null });
-    mocks.mockGetD1Raw.mockResolvedValue(db);
+    mocks.mockGetD1.mockReturnValue(db);
     mocks.mockSendEmail.mockRejectedValue(new Error('SMTP boom'));
     const req = new NextRequest('http://localhost/api/account/delete/request', {
       method: 'POST',
@@ -150,7 +150,7 @@ describe('POST /api/account/delete/request — request action', () => {
 describe('POST /api/account/delete/request — cancel action', () => {
   it('returns 200 when active request cancelled', async () => {
     const { db } = makeDb({ cancelChanges: 1 });
-    mocks.mockGetD1Raw.mockResolvedValue(db);
+    mocks.mockGetD1.mockReturnValue(db);
     const req = new NextRequest('http://localhost/api/account/delete/request', {
       method: 'POST',
       body: JSON.stringify({ action: 'cancel' }),
@@ -164,7 +164,7 @@ describe('POST /api/account/delete/request — cancel action', () => {
 
   it('returns 404 when no active request to cancel', async () => {
     const { db } = makeDb({ cancelChanges: 0 });
-    mocks.mockGetD1Raw.mockResolvedValue(db);
+    mocks.mockGetD1.mockReturnValue(db);
     const req = new NextRequest('http://localhost/api/account/delete/request', {
       method: 'POST',
       body: JSON.stringify({ action: 'cancel' }),
@@ -190,7 +190,7 @@ describe('GET /api/account/delete/confirm', () => {
         confirmed_at: null, cancelled_at: null, scheduled_at: 9_999_999_999,
       },
     });
-    mocks.mockGetD1Raw.mockResolvedValue(db);
+    mocks.mockGetD1.mockReturnValue(db);
     const req = new NextRequest(
       'http://localhost/api/account/delete/confirm?token=good-token&userId=user-1',
     );
@@ -207,7 +207,7 @@ describe('GET /api/account/delete/confirm', () => {
         confirmed_at: null, cancelled_at: null, scheduled_at: 9_999_999_999,
       },
     });
-    mocks.mockGetD1Raw.mockResolvedValue(db);
+    mocks.mockGetD1.mockReturnValue(db);
     const req = new NextRequest(
       'http://localhost/api/account/delete/confirm?token=wrong&userId=user-1',
     );
@@ -222,7 +222,7 @@ describe('GET /api/account/delete/confirm', () => {
         confirmed_at: null, cancelled_at: 1, scheduled_at: 9_999_999_999,
       },
     });
-    mocks.mockGetD1Raw.mockResolvedValue(db);
+    mocks.mockGetD1.mockReturnValue(db);
     const req = new NextRequest(
       'http://localhost/api/account/delete/confirm?token=good&userId=user-1',
     );
@@ -234,7 +234,7 @@ describe('GET /api/account/delete/confirm', () => {
 describe('GET /api/account/delete/status', () => {
   it('returns state=none when no row', async () => {
     const { db } = makeDb({ rowForStatus: null });
-    mocks.mockGetD1Raw.mockResolvedValue(db);
+    mocks.mockGetD1.mockReturnValue(db);
     const res = await StatusGET();
     const body = await res.json() as { state: string };
     expect(body.state).toBe('none');
@@ -247,7 +247,7 @@ describe('GET /api/account/delete/status', () => {
         confirmed_at: null, cancelled_at: null, scheduled_at: 100, requested_at: 50,
       },
     });
-    mocks.mockGetD1Raw.mockResolvedValue(db);
+    mocks.mockGetD1.mockReturnValue(db);
     const res = await StatusGET();
     const body = await res.json() as { state: string; scheduledAt: number };
     expect(body.state).toBe('pending');
@@ -261,7 +261,7 @@ describe('GET /api/account/delete/status', () => {
         confirmed_at: 60, cancelled_at: null, scheduled_at: 100, requested_at: 50,
       },
     });
-    mocks.mockGetD1Raw.mockResolvedValue(db);
+    mocks.mockGetD1.mockReturnValue(db);
     const res = await StatusGET();
     const body = await res.json() as { state: string };
     expect(body.state).toBe('confirmed');
@@ -274,7 +274,7 @@ describe('GET /api/account/delete/status', () => {
         confirmed_at: null, cancelled_at: 70, scheduled_at: 100, requested_at: 50,
       },
     });
-    mocks.mockGetD1Raw.mockResolvedValue(db);
+    mocks.mockGetD1.mockReturnValue(db);
     const res = await StatusGET();
     const body = await res.json() as { state: string };
     expect(body.state).toBe('cancelled');
@@ -294,7 +294,7 @@ describe('Wave 22 P01 — sha256 hash token verification', () => {
         scheduled_at: 9_999_999_999,
       },
     });
-    mocks.mockGetD1Raw.mockResolvedValue(db);
+    mocks.mockGetD1.mockReturnValue(db);
     const req = new NextRequest(
       'http://localhost/api/account/delete/confirm?token=mytoken&userId=user-1',
     );
@@ -316,7 +316,7 @@ describe('Wave 22 P01 — sha256 hash token verification', () => {
         scheduled_at: 9_999_999_999,
       },
     });
-    mocks.mockGetD1Raw.mockResolvedValue(db);
+    mocks.mockGetD1.mockReturnValue(db);
     const req = new NextRequest(
       'http://localhost/api/account/delete/confirm?token=mytoken&userId=user-1',
     );
@@ -329,7 +329,7 @@ describe('Wave 22 P03 — invalid email URL throws', () => {
   it('returns 502 + rolls back row when NEXT_PUBLIC_APP_URL has invalid scheme', async () => {
     process.env.NEXT_PUBLIC_APP_URL = 'ftp://bad-host';
     const { db, calls } = makeDb({ existingActive: null });
-    mocks.mockGetD1Raw.mockResolvedValue(db);
+    mocks.mockGetD1.mockReturnValue(db);
     const req = new NextRequest('http://localhost/api/account/delete/request', {
       method: 'POST',
       body: JSON.stringify({ action: 'request' }),

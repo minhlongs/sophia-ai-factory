@@ -17,14 +17,14 @@ vi.mock('@/tree/handover/handover-magic-link', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn().mockResolvedValue({
+  getD1: vi.fn(() => ({
     prepare: vi.fn().mockReturnValue({
       bind: vi.fn().mockReturnValue({
         first: vi.fn().mockResolvedValue({ email: 'e2e-test@sophia.local', name: 'E2E User' }),
         run: vi.fn().mockResolvedValue({ success: true }),
       }),
     }),
-  }),
+  })),
 }));
 
 vi.mock('@/seed/auth/better-auth-server', () => ({

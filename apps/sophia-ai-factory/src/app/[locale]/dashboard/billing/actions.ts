@@ -11,7 +11,7 @@
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { revalidatePath } from 'next/cache';
 import { logger } from '@/seed/utils/logger-utility';
@@ -199,7 +199,8 @@ export async function listRefundablePurchasesAction(): Promise<RefundablePurchas
   if (!user) return [];
 
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const nowSec = Math.floor(Date.now() / 1000);
     const cutoff = nowSec - REFUND_WINDOW_DAYS * SECONDS_PER_DAY;
 

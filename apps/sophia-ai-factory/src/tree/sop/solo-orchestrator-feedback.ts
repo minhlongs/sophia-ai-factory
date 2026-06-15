@@ -3,7 +3,7 @@
  * Layer: tree (domain-reusable, imports seed only)
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import type { FeedbackSignal } from '@/seed/types/solo-company-types'
@@ -33,7 +33,9 @@ interface MetricRow {
 // Returns empty array if table doesn't exist (graceful fallback).
 async function fetchMetrics(userId: string): Promise<MetricRow[]> {
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
     const result = await db
       .prepare(

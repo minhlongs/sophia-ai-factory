@@ -13,7 +13,7 @@
  * See tracking-README.md for DNS + Wrangler route setup.
  */
 
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -99,7 +99,7 @@ export async function createTrackingLink(
   const id = generateShortId();
   const now = new Date().toISOString();
 
-  const db = await getD1Client();
+  const db = createServerClient();
   await db.from('tracking_links').insert({
     id,
     tenant_id: params.tenantId,
@@ -123,7 +123,7 @@ export async function recordClick(
   linkId: string,
   request: Request,
 ): Promise<string> {
-  const db = await getD1Client();
+  const db = createServerClient();
 
   // Fetch link with tenant for privacy scope
   const { data, error } = await db
@@ -179,7 +179,7 @@ export async function recordConversion(
   const conversionId = generateShortId() + generateShortId();
   const now = new Date().toISOString();
 
-  const db = await getD1Client();
+  const db = createServerClient();
   await db.from('tracking_conversions').insert({
     id: conversionId,
     link_id: linkId,
@@ -198,7 +198,7 @@ export async function getTrackingLink(
   tenantId: string,
   linkId: string,
 ): Promise<TrackingLink | null> {
-  const db = await getD1Client();
+  const db = createServerClient();
   const { data, error } = await db
     .from('tracking_links')
     .select('id,tenant_id,destination_url,affiliate_id,campaign_id,active,created_at')

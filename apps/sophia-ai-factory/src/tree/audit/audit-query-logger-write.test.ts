@@ -38,12 +38,27 @@ function setupMock(opts: {
   throwInInsert?: boolean
 } = {}) {
   const captured: Captured = { table: '', payload: {} }
-  mockCreateServerClient.mockReturnValue({
-    from: (table: string) => {
-      captured.table = table
-      return { __table: table }
-    },
+  const fromMock = vi.fn((table: string) => {
+    captured.table = table
+    return {
+      __table: table,
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn(),
+        single: vi.fn(),
+      }),
+      insert: vi.fn().mockReturnValue({
+        values: vi.fn().mockReturnThis(),
+      }),
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnThis(),
+      }),
+      delete: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnThis(),
+      }),
+    }
   })
+  mockCreateServerClient.mockReturnValue({ from: fromMock })
   mockInsertTyped.mockImplementation((_builder: unknown, payload: Record<string, unknown>) => {
     captured.payload = payload
     if (opts.throwInInsert) throw new Error('insert threw sync')

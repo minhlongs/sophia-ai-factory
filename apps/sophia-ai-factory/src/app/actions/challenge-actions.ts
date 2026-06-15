@@ -1,7 +1,7 @@
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { claimChallengeReward } from '@/land/sop-marketplace/challenges';
 import { revalidatePath } from 'next/cache';
 
@@ -13,7 +13,8 @@ export async function claimChallengeRewardAction(formData: FormData): Promise<vo
     return;
   }
 
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   const challenge = await db
     .prepare(`SELECT id, reward_type, reward_value FROM sop_challenges WHERE id = ?1`)

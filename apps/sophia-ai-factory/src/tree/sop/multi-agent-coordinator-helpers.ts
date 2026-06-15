@@ -6,7 +6,7 @@
  */
 
 import type {
-  AgentRole,
+  SOPAgentRole,
   AgentSession,
   AgentTaskAssignment,
   IterationLimits,
@@ -36,7 +36,7 @@ export function rowToTask(row: Record<string, unknown>): AgentTaskAssignment {
   return {
     id: row.id as string,
     sessionId: row.session_id as string,
-    agentRole: row.agent_role as AgentRole,
+    agentRole: row.agent_role as SOPAgentRole,
     stepIndex: row.step_index as number,
     status: row.status as AgentTaskAssignment['status'],
     input: row.input_json

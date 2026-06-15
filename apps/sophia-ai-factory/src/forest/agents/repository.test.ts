@@ -43,6 +43,7 @@ function makeDb(singleData: unknown = null, listData: unknown[] = []) {
 }
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(),
 }));
 

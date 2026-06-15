@@ -13,7 +13,7 @@ import { SidebarQuotaWidget } from "@/forest/components/dashboard/sidebar-quota-
 import { TrialBanner } from "./components/trial-banner";
 import { CommunityCTABanner } from "@/forest/components/community-cta-banner";
 import { AffiliateCTABanner } from "@/forest/components/dashboard/affiliate-cta-banner";
-import { getD1Raw } from "@/seed/db/client";
+import { getD1 } from "@/seed/db/client";
 import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import { SignOutButton } from "@/seed/auth/sign-out-button";
 import { DashboardSidebarNav } from "@/forest/components/dashboard/dashboard-sidebar-nav";
@@ -24,7 +24,8 @@ export const metadata: Metadata = {
 
 async function getUserTrialEndsAt(userId: string): Promise<number | null> {
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const row = await db
       .prepare(`SELECT trial_ends_at FROM subscriptions WHERE user_id = ?1 LIMIT 1`)
       .bind(userId)
@@ -37,7 +38,8 @@ async function getUserTrialEndsAt(userId: string): Promise<number | null> {
 
 async function getRedeemedPromoCode(userId: string): Promise<string | null> {
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const row = await db
       .prepare(
         `SELECT promo_code FROM promo_code_redemptions

@@ -17,7 +17,7 @@ const { mockSingle, mockFrom } = vi.hoisted(() => {
 
 vi.mock('@/seed/db/client', () => ({
   createServerClient: () => ({ from: mockFrom }),
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
 }));
 
 vi.mock('@/forest/quota/quota-checker-overage', () => ({
@@ -151,20 +151,20 @@ describe('openclaw-bridge', () => {
 
   it('propagates magicLink on free-promo success path', async () => {
     vi.mocked(validatePromoCode).mockResolvedValue({ valid: true, discountType: 'free_full', appliesToTier: 'MASTER' } as Awaited<ReturnType<typeof validatePromoCode>>);
-    // applyPromoCode is the leaf; createCustomerUser is mocked indirectly via getD1Raw mock setup
+    // applyPromoCode is the leaf; createCustomerUser is mocked indirectly via getD1 mock setup
     vi.mocked(applyPromoCode).mockResolvedValue({
       redemptionId: 'r1',
       magicLink: 'https://sophia.agencyos.network/auth/magic/abc',
       handoverId: 'h1',
       trialDaysGranted: 7,
     } as Awaited<ReturnType<typeof applyPromoCode>>);
-    // Avoid the D1 lookup path — emulate user already exists by stubbing getD1Raw.
-    const { getD1Raw } = await import('@/seed/db/client');
-    vi.mocked(getD1Raw).mockResolvedValue({
+    // Avoid the D1 lookup path — emulate user already exists by stubbing getD1.
+    const { getD1 } = await import('@/seed/db/client');
+    vi.mocked(getD1).mockReturnValue({
       prepare: () => ({
         bind: () => ({ first: async () => ({ id: 'user-x' }) }),
       }),
-    } as unknown as Awaited<ReturnType<typeof getD1Raw>>);
+    } as any);
     const result = await callRedeemFree100({ code: 'FREE100', email: 'new@test.com' });
     expect(result.success).toBe(true);
     expect(result.magicLink).toBe('https://sophia.agencyos.network/auth/magic/abc');

@@ -14,7 +14,7 @@
  */
 
 import { randomUUID } from 'crypto';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { extractProductInfo } from './url-product-extractor';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -154,7 +154,7 @@ export async function startUrlToRevenue(
   }
 
   // Persist job to D1
-  const db = await getD1Client();
+  const db = createServerClient();
   await db.from('url_to_revenue_jobs').insert({
     id: jobId,
     tenant_id: req.tenantId,
@@ -213,7 +213,7 @@ export async function getJobStatus(
   tenantId: string,
   jobId: string,
 ): Promise<URLToRevenueResult> {
-  const db = await getD1Client();
+  const db = createServerClient();
   const { data, error } = await db
     .from('url_to_revenue_jobs')
     .select('id,status,variants_json')

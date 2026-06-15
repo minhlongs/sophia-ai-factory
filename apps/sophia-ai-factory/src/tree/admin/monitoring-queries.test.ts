@@ -11,6 +11,7 @@ import { createServerClient } from '@/seed/db/client'
 import type { TraceRow } from '@/tree/admin/trace-aggregator'
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(),
 }))
 

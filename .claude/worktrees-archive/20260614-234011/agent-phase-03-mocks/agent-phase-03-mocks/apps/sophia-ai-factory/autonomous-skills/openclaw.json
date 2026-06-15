@@ -1,0 +1,379 @@
+{
+  "name": "sophia-ai-factory",
+  "version": "1.0.0",
+  "description": "Autonomous AI video factory with affiliate discovery, content generation, and multi-platform publishing",
+
+  "heartbeat": {
+    "enabled": true,
+    "interval": 300,
+    "health_check_endpoints": [
+      "/api/health",
+      "/api/airtable/health",
+      "/api/openrouter/health"
+    ],
+    "max_consecutive_failures": 5,
+    "alert_on_failure": true
+  },
+
+  "skills": [
+    {
+      "name": "affiliate-scout",
+      "path": "skills/affiliate-scout/SKILL.md",
+      "enabled": true,
+      "tier_requirement": "PREMIUM",
+      "schedule": {
+        "type": "interval",
+        "frequency": "every_4_hours",
+        "start_time": "00:00 UTC"
+      },
+      "resources": {
+        "memory_limit": "512mb",
+        "timeout": 1800,
+        "max_retries": 3
+      },
+      "dependencies": [
+        "airtable_connection",
+        "impact_radius_api",
+        "partnerstack_api",
+        "cj_affiliate_api"
+      ]
+    },
+    {
+      "name": "content-producer",
+      "path": "skills/content-producer/SKILL.md",
+      "enabled": true,
+      "tier_requirement": "PREMIUM",
+      "schedule": {
+        "type": "cron",
+        "expression": "0 6 * * *",
+        "timezone": "UTC",
+        "description": "Daily at 6am UTC (1pm Vietnam)"
+      },
+      "resources": {
+        "memory_limit": "2gb",
+        "timeout": 3600,
+        "max_retries": 2
+      },
+      "dependencies": [
+        "airtable_connection",
+        "openrouter_api",
+        "elevenlabs_api",
+        "d_id_api",
+        "cloudflare_r2"
+      ],
+      "rate_limiting": {
+        "max_videos_per_day": 10,
+        "max_concurrent_generations": 2
+      }
+    },
+    {
+      "name": "auto-publisher",
+      "path": "skills/auto-publisher/SKILL.md",
+      "enabled": true,
+      "tier_requirement": "ENTERPRISE",
+      "schedule": {
+        "type": "event_driven",
+        "trigger": "video_ready",
+        "polling_interval": 300,
+        "source": "airtable",
+        "table": "Videos",
+        "filter": "status = 'video_ready' AND published = false"
+      },
+      "resources": {
+        "memory_limit": "1gb",
+        "timeout": 1800,
+        "max_retries": 3
+      },
+      "dependencies": [
+        "airtable_connection",
+        "youtube_api",
+        "tiktok_api",
+        "instagram_api",
+        "openrouter_api"
+      ]
+    }
+  ],
+
+  "orchestration": {
+    "pipeline_flow": {
+      "1_discover_affiliates": {
+        "skill": "affiliate-scout",
+        "output": "airtable.Affiliates"
+      },
+      "2_generate_content": {
+        "skill": "content-producer",
+        "input": "airtable.Affiliates (where tier >= PREMIUM)",
+        "output": "airtable.Videos",
+        "depends_on": "1_discover_affiliates",
+        "wait_for_completion": true
+      },
+      "3_publish_content": {
+        "skill": "auto-publisher",
+        "input": "airtable.Videos (where status = 'video_ready')",
+        "depends_on": "2_generate_content",
+        "trigger": "event_driven"
+      }
+    },
+    "conflict_resolution": {
+      "locking_strategy": "optimistic",
+      "lock_timeout": 300
+    },
+    "priority_order": [
+      "auto-publisher",
+      "content-producer",
+      "affiliate-scout"
+    ]
+  },
+
+  "notifications": {
+    "telegram": {
+      "enabled": true,
+      "bot_token": "${TELEGRAM_BOT_TOKEN}",
+      "chat_id": "${TELEGRAM_ADMIN_CHAT_ID}",
+      "alerts": {
+        "critical": "immediate",
+        "warning": "daily_digest",
+        "info": "weekly_digest"
+      },
+      "daily_digest_time": "09:00 Asia/Ho_Chi_Minh"
+    },
+    "slack": {
+      "enabled": true,
+      "webhook_url": "${SLACK_WEBHOOK_URL}",
+      "channel": "#sophia-ai-alerts",
+      "alerts": {
+        "critical": true,
+        "warning": true,
+        "info": false
+      }
+    },
+    "email": {
+      "enabled": true,
+      "smtp": {
+        "host": "smtp.gmail.com",
+        "port": 587,
+        "username": "${SMTP_USERNAME}",
+        "password": "${SMTP_PASSWORD}"
+      },
+      "recipients": {
+        "critical": "admin@sophiaai.com",
+        "weekly_report": "team@sophiaai.com"
+      }
+    }
+  },
+
+  "cost_management": {
+    "daily_limits": {
+      "total": 100,
+      "openrouter": 50,
+      "elevenlabs": 15,
+      "d_id": 5,
+      "cloudflare": 10,
+      "youtube": 0,
+      "tiktok": 0,
+      "instagram": 0
+    },
+    "monthly_limits": {
+      "total": 3000,
+      "openrouter": 1500,
+      "elevenlabs": 450,
+      "d_id": 150,
+      "cloudflare": 300
+    },
+    "alerts": {
+      "at_80_percent": "warning",
+      "at_95_percent": "critical",
+      "at_100_percent": "pause_all_spending"
+    },
+    "optimization": {
+      "auto_switch_to_cheaper_models": true,
+      "cache_api_responses": true,
+      "batch_requests": true
+    }
+  },
+
+  "monitoring": {
+    "health_checks": {
+      "airtable": {
+        "endpoint": "/api/airtable/health",
+        "frequency": 300,
+        "timeout": 10,
+        "expected_status": 200
+      },
+      "openrouter": {
+        "endpoint": "https://openrouter.ai/api/v1/models",
+        "frequency": 900,
+        "timeout": 10,
+        "expected_status": 200
+      },
+      "elevenlabs": {
+        "endpoint": "https://api.elevenlabs.io/v1/user",
+        "frequency": 900,
+        "timeout": 10,
+        "expected_status": 200
+      },
+      "cloudflare_r2": {
+        "endpoint": "/api/storage/health",
+        "frequency": 600,
+        "timeout": 10,
+        "expected_status": 200
+      }
+    },
+    "metrics": {
+      "track": [
+        "total_videos_created",
+        "total_affiliates_discovered",
+        "total_videos_published",
+        "total_revenue_generated",
+        "total_cost",
+        "roi_percentage",
+        "avg_engagement_rate",
+        "top_performing_topics",
+        "top_performing_affiliates"
+      ],
+      "aggregation_frequency": "daily",
+      "aggregation_time": "08:00 UTC",
+      "retention": {
+        "detailed": 90,
+        "aggregated": 365
+      }
+    },
+    "dashboard_url": "/admin/heartbeat/analytics"
+  },
+
+  "logging": {
+    "level": "info",
+    "destinations": [
+      {
+        "type": "airtable",
+        "table": "Activity",
+        "fields": [
+          "timestamp",
+          "skill_name",
+          "status",
+          "duration",
+          "error_message",
+          "cost"
+        ]
+      },
+      {
+        "type": "file",
+        "path": "/var/log/sophia-ai/heartbeat.log",
+        "rotation": {
+          "max_size": "100mb",
+          "max_files": 10
+        }
+      }
+    ]
+  },
+
+  "maintenance": {
+    "scheduled": {
+      "day": "sunday",
+      "time": "02:00 UTC",
+      "duration": 7200,
+      "actions": [
+        "database_optimization",
+        "log_cleanup",
+        "quota_reset",
+        "cost_report_generation"
+      ]
+    },
+    "automatic": {
+      "low_disk_space": {
+        "threshold": 90,
+        "action": "cleanup_old_videos"
+      },
+      "high_memory_usage": {
+        "threshold": 85,
+        "action": "restart_workers"
+      }
+    }
+  },
+
+  "disaster_recovery": {
+    "backup": {
+      "airtable": {
+        "frequency": "daily",
+        "time": "03:00 UTC",
+        "retention": 30,
+        "destination": "cloudflare_r2"
+      },
+      "configuration": {
+        "frequency": "on_change",
+        "destination": "github_repository"
+      }
+    },
+    "failover": {
+      "on_total_failure": {
+        "action": "notify_admin",
+        "pause_all_skills": true,
+        "manual_intervention_required": true
+      },
+      "on_partial_failure": {
+        "action": "continue_with_available_skills",
+        "notify_admin": true
+      }
+    }
+  },
+
+  "security": {
+    "api_keys": {
+      "rotation_policy": 90,
+      "storage": "env_variables",
+      "encryption": "aes_256"
+    },
+    "access_control": {
+      "admin_only_endpoints": [
+        "/admin/heartbeat",
+        "/admin/analytics",
+        "/api/heartbeat/pause",
+        "/api/heartbeat/resume"
+      ],
+      "basic_auth_required": true
+    },
+    "rate_limiting": {
+      "per_ip": 100,
+      "per_api_key": 1000
+    }
+  },
+
+  "environments": {
+    "production": {
+      "skills_enabled": "all",
+      "monitoring": "full",
+      "alerts": "all",
+      "cost_limits": "strict"
+    },
+    "staging": {
+      "skills_enabled": "all",
+      "monitoring": "basic",
+      "alerts": "critical_only",
+      "cost_limits": "relaxed"
+    },
+    "development": {
+      "skills_enabled": "manual_trigger_only",
+      "monitoring": "none",
+      "alerts": "none",
+      "cost_limits": "none"
+    }
+  },
+
+  "status": {
+    "endpoint": "/api/heartbeat/status",
+    "public": false,
+    "auth_required": true,
+    "data": {
+      "overall_health": "healthy|degraded|critical",
+      "active_skills": "count",
+      "last_24h_videos": "count",
+      "last_24h_affiliates": "count",
+      "total_cost_today": "usd",
+      "current_errors": "count",
+      "next_scheduled_run": {
+        "affiliate-scout": "timestamp",
+        "content-producer": "timestamp"
+      }
+    }
+  }
+}

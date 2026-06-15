@@ -36,7 +36,23 @@ function setupMock(opts: { id?: string; error?: Error } = {}) {
   const captured: CapturedInsert = { table: '', payload: {} }
   const fromMock = vi.fn((table: string) => {
     captured.table = table
-    return { __table: table }
+    return {
+      __table: table,
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnThis(),
+        maybeSingle: vi.fn(),
+        single: vi.fn(),
+      }),
+      insert: vi.fn().mockReturnValue({
+        values: vi.fn().mockReturnThis(),
+      }),
+      update: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnThis(),
+      }),
+      delete: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnThis(),
+      }),
+    }
   })
   mockCreateServerClient.mockReturnValue({ from: fromMock })
   mockInsertTyped.mockImplementation((_builder: unknown, payload: Record<string, unknown>) => {

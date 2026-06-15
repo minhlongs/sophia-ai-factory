@@ -10,7 +10,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ---------------------------------------------------------------------------
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn().mockResolvedValue({
+  getD1: vi.fn(() => ({
     prepare: vi.fn().mockReturnValue({
       bind: vi.fn().mockReturnValue({
         first: vi.fn().mockResolvedValue(null),
@@ -18,10 +18,10 @@ vi.mock('@/seed/db/client', () => ({
       }),
       all: vi.fn().mockResolvedValue({ results: [] }),
     }),
-  }),
+  })),
 }));
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -90,7 +90,7 @@ describe('HelpVideoSchema', () => {
 describe('listAllHelpVideos', () => {
   beforeEach(() => {
     const db = makeMockDb({ allResults: [SAMPLE_ROW] });
-    vi.mocked(getD1Raw).mockResolvedValue(db as unknown as D1Database);
+    vi.mocked(getD1).mockReturnValue(db as unknown as D1Database);
   });
 
   it('returns parsed rows', async () => {
@@ -104,7 +104,7 @@ describe('listAllHelpVideos', () => {
     // Override all to return null results
     const allFn = vi.fn().mockResolvedValue({ results: null });
     const bindFn = vi.fn().mockReturnValue({ first: vi.fn(), all: allFn });
-    vi.mocked(getD1Raw).mockResolvedValue({
+    vi.mocked(getD1).mockReturnValue({
       prepare: vi.fn().mockReturnValue({ bind: bindFn, all: allFn }),
     } as unknown as D1Database);
 
@@ -117,7 +117,7 @@ describe('listAllHelpVideos', () => {
 describe('listPublishedHelpVideos', () => {
   beforeEach(() => {
     const db = makeMockDb({ allResults: [] });
-    vi.mocked(getD1Raw).mockResolvedValue(db as unknown as D1Database);
+    vi.mocked(getD1).mockReturnValue(db as unknown as D1Database);
   });
 
   it('returns empty when no published videos', async () => {
@@ -130,7 +130,7 @@ describe('listPublishedHelpVideos', () => {
 describe('getHelpVideoBySlug', () => {
   beforeEach(() => {
     const db = makeMockDb({ firstResult: SAMPLE_ROW });
-    vi.mocked(getD1Raw).mockResolvedValue(db as unknown as D1Database);
+    vi.mocked(getD1).mockReturnValue(db as unknown as D1Database);
   });
 
   it('returns video for valid slug', async () => {
@@ -147,7 +147,7 @@ describe('getHelpVideoBySlug', () => {
 
   it('returns null when row not found', async () => {
     const db = makeMockDb({ firstResult: null });
-    vi.mocked(getD1Raw).mockResolvedValue(db as unknown as D1Database);
+    vi.mocked(getD1).mockReturnValue(db as unknown as D1Database);
     const { getHelpVideoBySlug } = await import('./help-video-store');
     const video = await getHelpVideoBySlug('nonexistent');
     expect(video).toBeNull();

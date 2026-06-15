@@ -12,7 +12,7 @@
  * @module seed/db/repositories/sop-repo
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type {
@@ -31,7 +31,9 @@ export async function getSopTemplates(
   filters?: { category?: string; status?: string },
 ): Promise<SopTemplateDbRow[]> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
 
     const conditions: string[] = [];
     const bindings: unknown[] = [];
@@ -78,7 +80,9 @@ export async function getSopTemplates(
  */
 export async function getSopTemplateBySlug(slug: string): Promise<SopTemplateDbRow | null> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const row = await db
       .prepare(
         `SELECT id, slug, name_vi, name_en, description_vi, description_en,
@@ -106,7 +110,9 @@ export async function getSopTemplateBySlug(slug: string): Promise<SopTemplateDbR
  */
 export async function getSopTemplateById(id: string): Promise<SopTemplateDbRow | null> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const row = await db
       .prepare(
         `SELECT id, slug, name_vi, name_en, description_vi, description_en,
@@ -136,7 +142,9 @@ export async function getSopTemplateById(id: string): Promise<SopTemplateDbRow |
 export async function insertSopTemplate(
   template: Omit<SopTemplateDbRow, 'created_at' | 'updated_at'>,
 ): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const now = Date.now();
 
   await db
@@ -191,7 +199,9 @@ export async function getUserInstallations(
   orgId: string,
 ): Promise<UserSopInstallationDbRow[]> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const result = await db
       .prepare(
         `SELECT id, user_id, org_id, sop_template_id, config_overrides,
@@ -221,7 +231,9 @@ export async function installSop(
   orgId: string,
   sopTemplateId: string,
 ): Promise<string> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const id = crypto.randomUUID();
   const now = Date.now();
 
@@ -244,7 +256,9 @@ export async function installSop(
  * Throws on D1 error; no-op if row does not exist.
  */
 export async function uninstallSop(installationId: string): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   await db
     .prepare(`DELETE FROM user_sop_installations WHERE id = ?1`)
     .bind(installationId)
@@ -267,7 +281,9 @@ export async function createExecution(params: {
   inputJson: string;
   totalSteps: number;
 }): Promise<string> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const id = crypto.randomUUID();
   const now = Date.now();
 
@@ -310,7 +326,9 @@ export async function createExecution(params: {
  */
 export async function getExecution(executionId: string): Promise<SopExecutionDbRow | null> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const row = await db
       .prepare(
         `SELECT id, user_id, org_id, sop_template_id, installation_id,
@@ -341,7 +359,9 @@ export async function updateExecutionStep(
   stepResults: string,
   status?: string,
 ): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const resolvedStatus = status ?? 'running';
 
   await db
@@ -365,7 +385,9 @@ export async function completeExecution(
   outputJson: string,
   creditsUsed: number,
 ): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const now = Date.now();
 
   await db
@@ -392,7 +414,9 @@ export async function failExecution(
   executionId: string,
   errorMessage: string,
 ): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   const now = Date.now();
 
   await db
@@ -418,7 +442,9 @@ export async function getUserExecutions(
   limit = 20,
 ): Promise<SopExecutionDbRow[]> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
     const result = await db
       .prepare(
         `SELECT id, user_id, org_id, sop_template_id, installation_id,

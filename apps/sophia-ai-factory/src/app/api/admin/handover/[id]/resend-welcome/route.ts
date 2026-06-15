@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/seed/auth/require-admin';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { writeAuditLog } from '@/tree/admin/audit-log';
 import { logger } from '@/seed/utils/logger-utility';
 import { createMagicLinkToken } from '@/tree/handover/handover-magic-link';
@@ -26,7 +26,8 @@ export async function POST(request: NextRequest, { params }: RouteParams): Promi
   const { user: admin } = auth;
 
   const { id } = await params;
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   const handover = await db
     .prepare(`SELECT * FROM customer_handovers WHERE id = ?1 LIMIT 1`)

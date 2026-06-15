@@ -10,7 +10,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import {
   insertPurchase,
   markPaid,
@@ -59,7 +59,9 @@ interface VideoRow {
 
 async function checkEmailSent(purchaseId: string): Promise<number | null> {
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+    if (!_db) throw new Error('D1 binding not available');
+    const db = _db;
     const row = await db
       .prepare(
         `SELECT event_type FROM billing_events
@@ -212,7 +214,9 @@ export async function runSyntheticFulfillment(
     await new Promise<void>((r) => setTimeout(r, POLL_INTERVAL_MS))
 
     try {
-      const db = await getD1Raw()
+      const _db = getD1();
+    if (!_db) throw new Error('D1 binding not available');
+    const db = _db;
       const row = await db
         .prepare(
           `SELECT id, status FROM videos WHERE id = ?1 LIMIT 1`,

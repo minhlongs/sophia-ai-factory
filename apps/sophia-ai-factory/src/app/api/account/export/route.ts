@@ -10,7 +10,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 /** Tables that hold tenant-scoped user data for GDPR export */
@@ -43,7 +43,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   let db: D1Database;
   try {
-    db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    db = _db;
   } catch (err) {
     logger.warn('[gdpr-export] D1 unavailable', { error: String(err) });
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });

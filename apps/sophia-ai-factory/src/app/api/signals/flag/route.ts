@@ -5,8 +5,8 @@
  */
 
 import { NextRequest } from 'next/server'
-import { requireAuth } from '@/land/signals/auth-helper'
-import { flag } from '@/land/signals/feature-flags'
+import { requireAuth } from '@/tree/signals/auth-helper'
+import { flag } from '@/tree/signals/feature-flags'
 
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req)

@@ -12,37 +12,11 @@ import { magicLink } from 'better-auth/plugins';
 // dynamic import inside the relevant Better Auth callbacks below. Static top-level imports
 // were removed to satisfy the seed→(forest|tree) layer boundary rule.
 // See plans/260512-2001-mekong-sops-gap-bridge/phase-03-layer-fix.md.
-import { getD1Client } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { requireMfaIfEnabled, markSessionMfaPending } from '@/seed/auth/mfa/login-challenge';
 import { escapeHtml } from '@/seed/security/input-sanitization-utilities';
+import { getD1, createServerClient } from '@/seed/db/client';
 
-/** Resolve D1 binding from CF Workers context */
-function getD1(): D1Database {
-  const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-  if (env?.DB) return env.DB as D1Database;
-
-  const ctxSymbol = Symbol.for('__cloudflare-context__');
-  const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[ctxSymbol];
-  if (ctx?.env?.DB) return ctx.env.DB as D1Database;
-
-  const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-  if (globalDb) return globalDb;
-
-  // Fallback: local dev sqlite mock
-  if (process.env.NEXT_RUNTIME !== 'edge') {
-    try {
-      /* eslint-disable-next-line @typescript-eslint/no-require-imports */
-      const mockDb = require('../db/local-d1-mock').getLocalD1Mock();
-      if (mockDb) {
-        (globalThis as Record<string, unknown>).__D1_DB = mockDb;
-        return mockDb as D1Database;
-      }
-    } catch {}
-  }
-
-  throw new Error('D1 database binding not available');
-}
 
 // Use `any` here to escape Better Auth's deeply-nested generic inference. The
 // public surface (`getAuth()` return + `getCurrentUser()` consumers) re-narrows
@@ -58,6 +32,7 @@ export function getAuth() {
   if (_auth) return _auth;
 
   const d1 = getD1();
+  if (!d1) throw new Error('D1 database binding not available');
   const secret = process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET;
   if (!secret) throw new Error('BETTER_AUTH_SECRET or JWT_SECRET must be set');
 
@@ -144,7 +119,8 @@ export function getAuth() {
         create: {
           after: async (user) => {
             try {
-              const db = await getD1Client();
+              const db = createServerClient();
+              if (!db) throw new Error('D1 database binding not available');
               const orgId = crypto.randomUUID();
               const prefix = user.email.split('@')[0]
                 .replace(/[^a-z0-9]/gi, '-').toLowerCase();

@@ -1,0 +1,117 @@
+{
+  "name": "Sophia Video Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "baseId": "appSophiaFactory",
+        "table": "Scripts",
+        "triggerField": "Status",
+        "triggerValue": "video_generating"
+      },
+      "name": "Airtable Trigger",
+      "type": "n8n-nodes-base.airtableTrigger",
+      "typeVersion": 1,
+      "position": [
+        100,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.d-id.com/talks",
+        "authentication": "headerAuth",
+        "headerAuth": {
+          "item": [
+            {
+              "key": "Authorization",
+              "value": "Basic {{$env.DID_API_KEY}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "source_url",
+              "value": "https://path-to-avatar-image.jpg"
+            },
+            {
+              "name": "script",
+              "value": {
+                "type": "audio",
+                "audio_url": "={{$json.AudioUrl}}"
+              }
+            }
+          ]
+        }
+      },
+      "name": "D-ID API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        300,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "baseId": "appSophiaFactory",
+        "table": "Scripts",
+        "id": "={{$node[\"Airtable Trigger\"].json.id}}",
+        "columnsUi": {
+          "columnValues": [
+            {
+              "fieldId": "VideoUrl",
+              "value": "={{$json.result_url}}"
+            },
+            {
+              "fieldId": "Status",
+              "value": "video_ready"
+            }
+          ]
+        }
+      },
+      "name": "Update Airtable",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Airtable Trigger": {
+      "main": [
+        [
+          {
+            "node": "D-ID API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "D-ID API": {
+      "main": [
+        [
+          {
+            "node": "Update Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

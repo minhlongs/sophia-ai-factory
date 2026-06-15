@@ -13,6 +13,7 @@ vi.mock('@/land/affiliate-shortlink/click-logger', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(),
 }));
 

@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -45,7 +45,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   // Cron last firing within 5 min
   try {
-    const db = await getD1Raw()
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const lastCron = await db
       .prepare(`SELECT MAX(started_at) AS last_at FROM cron_run_log`)
       .first<{ last_at: number | null }>()

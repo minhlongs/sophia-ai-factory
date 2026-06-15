@@ -48,6 +48,7 @@ vi.mock('jose', () => ({
 
 // Mock Supabase admin client
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: () => ({
     from: (table: string) => ({
       select: () => ({

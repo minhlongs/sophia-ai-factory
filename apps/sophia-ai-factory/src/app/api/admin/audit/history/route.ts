@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,7 +33,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const offset = parseInt(url.searchParams.get('offset') ?? '0', 10)
 
   try {
-    const d1 = await getD1Raw()
+    const d1 = getD1();
+    if (!d1) throw new Error('D1 database binding not available');
     const rows = await d1
       .prepare(
         `SELECT id, triggered_by_user_id, started_at, completed_at,

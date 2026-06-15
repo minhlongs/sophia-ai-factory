@@ -10,7 +10,7 @@
  * @module lib/video/get-canonical-video-url
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 // ── Error types ───────────────────────────────────────────────────────────────
@@ -66,7 +66,8 @@ export async function getCanonicalVideoUrl(
   videoId: string,
   userId: string,
 ): Promise<string> {
-  const db = await getD1Raw();
+  const db = getD1()
+  if (!db) throw new Error('D1 database binding not available');
 
   const row = await db
     .prepare(

@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { registerMastodonApp, getAuthorizationUrl } from '@/forest/publishing/mastodon-oauth-client';
 import { storeOauthState } from '@/seed/auth/oauth-state-store';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { isSafeUrl } from '@/seed/utils/is-safe-url';
 
@@ -45,7 +45,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
     const creds = await registerMastodonApp(normalized);
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 binding not available');
+    const db = _db;
 
     // Store sensitive payload server-side; put only opaque nonce in URL state
     const stateNonce = await storeOauthState(

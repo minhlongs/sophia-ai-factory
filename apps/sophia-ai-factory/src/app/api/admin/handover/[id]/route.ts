@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdmin, requireAdminWithRecentAuth } from '@/seed/auth/require-admin';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { writeAuditLog } from '@/tree/admin/audit-log';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
@@ -29,7 +29,8 @@ if (auth instanceof NextResponse) return auth;
   const { id } = await params;
 
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const row = await db
       .prepare(`SELECT * FROM customer_handovers WHERE id = ?1 LIMIT 1`)
       .bind(id)
@@ -61,7 +62,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams): Prom
   }
 
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const result = await db
       .prepare(`UPDATE customer_handovers SET status = ?1 WHERE id = ?2`)
       .bind(body.status, id)

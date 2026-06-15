@@ -12,11 +12,19 @@ vi.mock('@/seed/db/client', () => {
   const fromMock = vi.fn(() => buildChain());
   return {
     createServerClient: vi.fn(() => ({ from: fromMock })),
-    getD1Raw: vi.fn(),
+    getD1: vi.fn(() => ({
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnValue({
+          first: vi.fn().mockResolvedValue(null),
+          all: vi.fn().mockResolvedValue({ results: [] }),
+          run: vi.fn().mockResolvedValue({}),
+        }),
+      }),
+    })),
   };
 });
 
-import { createServerClient, getD1Raw } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import {
   VIDEO_QUOTA_BY_TIER,
   reserveVideoSlot,
@@ -61,7 +69,7 @@ describe('reserveVideoSlot — MASTER boundary', () => {
 
   beforeEach(() => {
     prepareSpy = vi.fn();
-    vi.mocked(getD1Raw).mockResolvedValue({ prepare: prepareSpy } as never);
+    vi.mocked(getD1).mockReturnValue({ prepare: prepareSpy } as never);
   });
 
   afterEach(() => {
@@ -107,7 +115,7 @@ describe('reserveVideoSlot', () => {
 
   beforeEach(() => {
     prepareSpy = vi.fn();
-    vi.mocked(getD1Raw).mockResolvedValue({ prepare: prepareSpy } as never);
+    vi.mocked(getD1).mockReturnValue({ prepare: prepareSpy } as never);
   });
 
   afterEach(() => {
@@ -173,7 +181,7 @@ describe('releaseVideoSlot', () => {
   it('issues a guarded UPDATE that floors at zero', async () => {
     const stub = makePrepared([]);
     const prepareSpy = vi.fn<(sql: string) => PreparedStub>(() => stub);
-    vi.mocked(getD1Raw).mockResolvedValue({ prepare: prepareSpy } as never);
+    vi.mocked(getD1).mockReturnValue({ prepare: prepareSpy } as never);
 
     await releaseVideoSlot('user-1');
 

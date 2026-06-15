@@ -12,7 +12,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -24,7 +24,7 @@ vi.mock('@/seed/utils/to-error', () => ({
 }));
 
 import { insertAiPromptVideo } from '../videos-repo';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -33,7 +33,7 @@ function makeD1Success(changes: number) {
   return {
     prepare: () => ({
       bind: () => ({
-        run: vi.fn().mockResolvedValue({ meta: { changes } }),
+        run: vi.fn().mockReturnValue({ meta: { changes } }),
       }),
     }),
   } as unknown as D1Database;
@@ -65,7 +65,7 @@ describe('insertAiPromptVideo', () => {
   });
 
   it('returns videoId equal to missionId on new insert', async () => {
-    vi.mocked(getD1Raw).mockResolvedValue(makeD1Success(1));
+    vi.mocked(getD1).mockReturnValue(makeD1Success(1));
 
     const result = await insertAiPromptVideo(INPUT);
     expect(result.videoId).toBe('mission-xyz');
@@ -74,7 +74,7 @@ describe('insertAiPromptVideo', () => {
 
   it('returns alreadyExisted=true when row existed (INSERT OR IGNORE no-op)', async () => {
     // D1 returns meta.changes=0 when INSERT OR IGNORE skipped the row
-    vi.mocked(getD1Raw).mockResolvedValue(makeD1Success(0));
+    vi.mocked(getD1).mockReturnValue(makeD1Success(0));
 
     const result = await insertAiPromptVideo(INPUT);
     expect(result.videoId).toBe('mission-xyz');
@@ -83,19 +83,19 @@ describe('insertAiPromptVideo', () => {
 
   it('calling twice with same missionId returns alreadyExisted on second call', async () => {
     // First call: insert succeeds (changes=1)
-    vi.mocked(getD1Raw).mockResolvedValueOnce(makeD1Success(1));
+    vi.mocked(getD1).mockReturnValueOnce(makeD1Success(1));
     const first = await insertAiPromptVideo(INPUT);
     expect(first.alreadyExisted).toBe(false);
 
     // Second call: INSERT OR IGNORE no-op (changes=0)
-    vi.mocked(getD1Raw).mockResolvedValueOnce(makeD1Success(0));
+    vi.mocked(getD1).mockReturnValueOnce(makeD1Success(0));
     const second = await insertAiPromptVideo(INPUT);
     expect(second.videoId).toBe(first.videoId);
     expect(second.alreadyExisted).toBe(true);
   });
 
   it('accepts custom title without error', async () => {
-    vi.mocked(getD1Raw).mockResolvedValue(makeD1Success(1));
+    vi.mocked(getD1).mockReturnValue(makeD1Success(1));
 
     const result = await insertAiPromptVideo({ ...INPUT, title: 'My Custom Video' });
     expect(result.videoId).toBe('mission-xyz');
@@ -103,7 +103,7 @@ describe('insertAiPromptVideo', () => {
   });
 
   it('propagates D1 throw (real error contract — no .error field)', async () => {
-    vi.mocked(getD1Raw).mockResolvedValue(
+    vi.mocked(getD1).mockReturnValue(
       makeD1Throws('D1_ERROR: UNIQUE constraint failed: videos.id'),
     );
 

@@ -14,7 +14,7 @@
  * @module lib/analytics/queries/revenue-unified-query
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { TIER_CONFIGS } from '@/seed/config/tiers';
 import type { Tier } from '@/seed/types';
 
@@ -151,7 +151,8 @@ function buildDateSeries(
 export async function fetchUnifiedRevenue(
   periodDays: 7 | 30 | 90,
 ): Promise<UnifiedRevenueSummary> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   const toDate = new Date();
   const fromDate = new Date(toDate);

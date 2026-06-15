@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { getBuildMetadata } from '@/seed/health/build-metadata'
 import { isHeyGenHealthy } from '@/seed/health/heygen-health-check'
 import { getCircuitState } from '@/land/fulfillment/circuit-breaker'
@@ -98,7 +98,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   let db: D1Database
   try {
-    db = await getD1Raw()
+    const _db = getD1()
+    if (!_db) throw new Error('D1 database binding not available')
+    db = _db
   } catch (err) {
     logger.error('[OpsSnapshot] D1 unavailable', err instanceof Error ? err : undefined)
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 })

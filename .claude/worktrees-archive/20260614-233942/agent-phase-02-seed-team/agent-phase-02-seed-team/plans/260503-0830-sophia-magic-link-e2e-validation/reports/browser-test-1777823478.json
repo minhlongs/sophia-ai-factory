@@ -1,0 +1,17 @@
+[E2E] Navigating to: https://sophia.agencyos.network/vi/welcome/66a544bfe729932ae0021cad09434f63b0e737a8f31df8d89524d6cbf0618866
+[E2E] WARNING: no Set-Cookie header on validate response
+[E2E] Fatal error: TimeoutError: Navigation timeout of 20000 ms exceeded
+    at new Deferred (/Users/macbook/.claude/skills/chrome-devtools/scripts/node_modules/puppeteer-core/lib/cjs/puppeteer/util/Deferred.js:60:34)
+    at Deferred.create (/Users/macbook/.claude/skills/chrome-devtools/scripts/node_modules/puppeteer-core/lib/cjs/puppeteer/util/Deferred.js:21:16)
+    at new LifecycleWatcher (/Users/macbook/.claude/skills/chrome-devtools/scripts/node_modules/puppeteer-core/lib/cjs/puppeteer/cdp/LifecycleWatcher.js:73:60)
+    at CdpFrame.goto (/Users/macbook/.claude/skills/chrome-devtools/scripts/node_modules/puppeteer-core/lib/cjs/puppeteer/cdp/Frame.js:149:29)
+    at CdpFrame.<anonymous> (/Users/macbook/.claude/skills/chrome-devtools/scripts/node_modules/puppeteer-core/lib/cjs/puppeteer/util/decorators.js:109:27)
+    at CdpPage.goto (/Users/macbook/.claude/skills/chrome-devtools/scripts/node_modules/puppeteer-core/lib/cjs/puppeteer/api/Page.js:580:43)
+    at run (file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/scripts/e2e/run-magic-link-browser-test.mjs:96:16)
+{
+  "verdict": "FAIL",
+  "finalUrl": "https://sophia.agencyos.network/vi/welcome/66a544bfe729932ae0021cad09434f63b0e737a8f31df8d89524d6cbf0618866",
+  "cookies": [],
+  "statusChain": [],
+  "error": "Navigation timeout of 20000 ms exceeded"
+}

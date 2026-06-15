@@ -24,7 +24,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -37,10 +37,10 @@ vi.mock('@/seed/utils/to-error', () => ({
 
 import { POST } from '@/app/api/openclaw/exchange/route';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 const mockGetUser = vi.mocked(getCurrentUserFromHeaders);
-const mockGetD1Raw = vi.mocked(getD1Raw);
+const mockGetD1 = vi.mocked(getD1);
 
 const baseUser = { id: 'user-123', email: 'test@example.com', name: 'Test', role: 'user', emailVerified: true };
 
@@ -84,7 +84,7 @@ beforeEach(() => {
   mintCounts = {};
   process.env.BETTER_AUTH_SECRET = 'test-secret-route';
   mockGetUser.mockResolvedValue(baseUser as never);
-  mockGetD1Raw.mockResolvedValue(makeD1Mock() as unknown as D1Database);
+  mockGetD1.mockReturnValue(makeD1Mock() as unknown as D1Database);
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

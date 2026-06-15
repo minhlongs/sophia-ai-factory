@@ -28,7 +28,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }))
 
-vi.mock('@/land/signals/track', () => ({
+vi.mock('@/tree/signals/track', () => ({
   track: vi.fn(),
 }))
 
@@ -36,8 +36,8 @@ import { POST } from './route'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { enhanceNicheScoreWithAI } from '@/tree/discovery/affiliate-openrouter-niche-enhancer'
 import { logger } from '@/seed/utils/logger-utility'
-import { track } from '@/land/signals/track'
-import { D1Events } from '@/land/signals/d1-event-types'
+import { track } from '@/tree/signals/track'
+import { D1Events } from '@/tree/signals/d1-event-types'
 import { RATE_LIMITS } from '@/seed/security/sql-rate-limiter'
 
 const mockGetCurrentUser    = vi.mocked(getCurrentUser)

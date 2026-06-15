@@ -66,32 +66,23 @@ async function callOpenRouter(fingerprints: ErrorRow[]): Promise<string> {
     count: r.c,
   }));
 
-  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openRouterKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'openai/gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are a production reliability assistant. Given error fingerprints and counts (no raw messages), identify the top 3 error classes to investigate. Be concise — 3 bullet points max.',
-        },
-        {
-          role: 'user',
-          content: JSON.stringify(input),
-        },
-      ],
-      max_tokens: 256,
-    }),
-  });
+  const systemPrompt = 'You are a production reliability assistant. Given error fingerprints and counts (no raw messages), identify the top 3 error classes to investigate. Be concise — 3 bullet points max.';
+  const userPrompt = JSON.stringify(input);
 
-  if (!response.ok) return `OpenRouter error: ${response.status}`;
-  const data = (await response.json()) as { choices?: { message?: { content?: string } }[] };
-  return data.choices?.[0]?.message?.content ?? 'No summary available.';
+  try {
+    const content = await (await import('@/seed/inference/openrouter-client')).resilientChatCompletion(
+      `System: ${systemPrompt}\n\nUser: ${userPrompt}`,
+      {
+        openRouterKey,
+        anthropicKey: undefined,
+        enableFallback: false,
+        model: 'openai/gpt-4o-mini',
+      }
+    );
+    return content.trim() || 'No summary available.';
+  } catch (err) {
+    return `OpenRouter error: ${err instanceof Error ? err.message : String(err)}`;
+  }
 }
 
 async function sendTelegram(message: string): Promise<void> {

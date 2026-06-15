@@ -21,7 +21,7 @@ import type { UserPurchase } from '@/seed/types'
 // Mock the database client
 vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
 }))
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -338,7 +338,7 @@ describe('decrementCredits — use 1 credit (for 1 video)', () => {
     })
     const prepareFn = vi.fn().mockReturnValue({ bind: bindFn })
     const rawDb = { prepare: prepareFn }
-    vi.mocked(dbClient.getD1Raw).mockResolvedValue(rawDb as unknown as any)
+    vi.mocked(dbClient.getD1).mockReturnValue(rawDb as unknown as any)
     return { prepareFn, bindFn, firstFn, runFn }
   }
 

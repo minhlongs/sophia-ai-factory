@@ -1,6 +1,6 @@
 /**
- * Tree-level agent fleet — re-export from land for backward compat.
+ * Tree-level agent fleet — wrapper for spawn-agent-fleet (moved from land/openclaw)
  */
-export { spawnAgentFleet } from '@/land/openclaw/spawn-agent-fleet';
-export { OpenclawTenantMissingError } from '@/land/openclaw/spawn-agent-fleet';
-export type { AgentTask, AgentResult, SpawnFleetOptions } from '@/land/openclaw/spawn-agent-fleet';
+export { spawnAgentFleet } from './spawn-agent-fleet';
+export { OpenclawTenantMissingError } from './spawn-agent-fleet';
+export type { AgentTask, AgentResult, SpawnFleetOptions } from './spawn-agent-fleet';

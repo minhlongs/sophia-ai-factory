@@ -20,7 +20,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 
 vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
-  getD1Raw: vi.fn(async () => ({
+  getD1: vi.fn(() => ({
     prepare: (_sql: string) => ({
       bind: (..._args: unknown[]) => ({
         run: mockRun,

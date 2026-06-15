@@ -11,7 +11,7 @@
  * the surface YAGNI and works against the existing schema.
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility';
 import { resolveOrgId, resolveOrgOwnerUserId } from '@/seed/auth/resolve-org-id';
 
@@ -60,10 +60,11 @@ export async function checkMissionQuota(
   const resetAt = nextMonthResetAtIso();
 
   try {
-    const d1 = await getD1Raw();
-    if (!d1) {
+    const _d1 = getD1();
+    if (!_d1) {
       return { allowed: true, used: 0, limit, resetAt };
     }
+    const d1 = _d1;
 
     let orgId = '';
     let userId = '';

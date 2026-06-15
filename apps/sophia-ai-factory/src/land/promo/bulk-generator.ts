@@ -10,7 +10,7 @@
  * @module land/promo/bulk-generator
  */
 
-import { getD1Raw } from "@/seed/db/client";
+import { getD1 } from "@/seed/db/client";
 import { randomBase32 } from "@/seed/utils/random-base32";
 import { getCodeByCode } from "./promo-repo";
 import type { PromoCodeRow } from "./promo-types";
@@ -144,7 +144,9 @@ function makeCandidates(baseCode: string, count: number): string[] {
  */
 async function findExistingCodes(codes: string[]): Promise<Set<string>> {
   if (codes.length === 0) return new Set();
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;;
   try {
     const placeholders = codes.map((_, i) => `?${i + 1}`).join(",");
     const stmt = db
@@ -178,7 +180,9 @@ interface BatchInsertInput {
  * Returns the generated ids in the same order as `input.codes`.
  */
 async function batchInsertCodes(input: BatchInsertInput): Promise<string[]> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;;
   const nowSec = Math.floor(Date.now() / 1000);
   const metadata = JSON.stringify({ batchId: input.batchId });
   const ids: string[] = input.codes.map(() => randomHexId(16));
@@ -231,7 +235,9 @@ interface AuditPayload {
 }
 
 async function writeAuditLog(p: AuditPayload): Promise<void> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;;
   await db
     .prepare(
       `INSERT INTO admin_audit_log (actor_user_id, action_type, payload, created_at)
@@ -260,7 +266,9 @@ async function findRecentIdempotentBatch(
   adminId: string,
   idempotencyKey: string,
 ): Promise<string | null> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;;
   const cutoff = Math.floor(Date.now() / 1000) - IDEMPOTENCY_WINDOW_SEC;
   // payload is JSON-encoded; SQLite LIKE on the key-quoted substring is enough
   // (batchId differs per invocation but idempotencyKey is constant for a retry).

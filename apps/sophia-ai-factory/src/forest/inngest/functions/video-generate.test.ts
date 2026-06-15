@@ -21,7 +21,7 @@ const {
   mockGetJobStatus,
   mockR2Put,
   mockRecordCost,
-  mockGetD1Client,
+  mockCreateServerClient,
   mockGetVideoBucket,
   mockGetBrandKit,
   mockGenerateSubtitles,
@@ -32,7 +32,7 @@ const {
   mockGetJobStatus: vi.fn(),
   mockR2Put: vi.fn(),
   mockRecordCost: vi.fn(),
-  mockGetD1Client: vi.fn(),
+  mockCreateServerClient: vi.fn(),
   mockGetVideoBucket: vi.fn(),
   mockGetBrandKit: vi.fn(),
   mockGenerateSubtitles: vi.fn(),
@@ -47,7 +47,7 @@ vi.mock('@/forest/inngest/client', () => ({
   },
 }));
 
-vi.mock('@/seed/db/client', () => ({ getD1Client: mockGetD1Client }));
+vi.mock('@/seed/db/client', () => ({ createServerClient: mockCreateServerClient }));
 vi.mock('@/land/video/r2-binding', () => ({ getVideoBucket: mockGetVideoBucket }));
 vi.mock('@/land/video/cost-ledger', () => ({ recordCost: mockRecordCost }));
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -119,7 +119,7 @@ describe('videoGenerate Inngest function', () => {
     mockGetJobStatus.mockReset();
     mockR2Put.mockReset();
     mockRecordCost.mockReset();
-    mockGetD1Client.mockReset();
+    mockCreateServerClient.mockReset();
     mockGetVideoBucket.mockReset();
     mockGetBrandKit.mockReset();
     mockGenerateSubtitles.mockReset();
@@ -153,7 +153,7 @@ describe('videoGenerate Inngest function', () => {
         };
     }),
  };
-    mockGetD1Client.mockResolvedValue(dbMock);
+    mockCreateServerClient.mockReturnValue(dbMock);
 
     // R2 mock
     mockR2Put.mockResolvedValue(undefined);

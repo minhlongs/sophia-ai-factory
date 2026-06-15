@@ -21,6 +21,7 @@ const mockFrom = {
   eq: vi.fn().mockReturnThis(),
 }
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(() => ({
     from: vi.fn(() => mockFrom),
   })),

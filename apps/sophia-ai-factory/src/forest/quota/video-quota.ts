@@ -12,7 +12,7 @@
  * to exceed tier quotas.
  */
 
-import { createServerClient, getD1Raw } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
 
 /** Monthly video quota by tier. BASIC gets 0 (blocked upstream by 402 gate). */
 export const VIDEO_QUOTA_BY_TIER: Record<string, number> = {
@@ -99,7 +99,9 @@ export async function reserveVideoSlot(
   }
 
   const now = new Date().toISOString();
-  const d1 = await getD1Raw();
+  const _d1 = getD1();
+  if (!_d1) throw new Error('D1 database binding not available');
+  const d1 = _d1;
   const { results } = await d1
     .prepare(
       `INSERT INTO video_usage_monthly (user_id, year_month, count, updated_at)
@@ -136,7 +138,9 @@ export async function reserveVideoSlot(
 export async function releaseVideoSlot(userId: string): Promise<void> {
   const yearMonth = currentYearMonth();
   const now = new Date().toISOString();
-  const d1 = await getD1Raw();
+  const _d1 = getD1();
+  if (!_d1) throw new Error('D1 database binding not available');
+  const d1 = _d1;
   await d1
     .prepare(
       `UPDATE video_usage_monthly
@@ -159,7 +163,9 @@ export async function releaseVideoSlot(userId: string): Promise<void> {
 export async function incrementVideoUsage(userId: string): Promise<void> {
   const yearMonth = currentYearMonth();
   const now = new Date().toISOString();
-  const d1 = await getD1Raw();
+  const _d1 = getD1();
+  if (!_d1) throw new Error('D1 database binding not available');
+  const d1 = _d1;
   await d1
     .prepare(
       `INSERT INTO video_usage_monthly (user_id, year_month, count, updated_at)

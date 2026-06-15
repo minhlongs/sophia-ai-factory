@@ -1,0 +1,446 @@
+/**
+ * NOWPayments IPN subscription lifecycle handlers (finished / refunded / failed)
+ * handleFinished uses D1 batch() for atomic multi-table update.
+ * @module billing/nowpayments-ipn-subscription
+ */
+
+import { getTierByInvoiceId, NOWPAYMENTS_TIERS } from '@/tree/clients/nowpayments-client'
+import { logger } from '@/seed/utils/logger-utility'
+import { UNIFIED_TIERS } from '@/seed/config/tiers'
+import { getD1Raw } from '@/seed/db/client'
+import { recordAudit } from '@/seed/db/audit/audit-log'
+import type { Tier } from '@/seed/types'
+import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
+import { getDb, parseUserIdFromOrderId } from './nowpayments-ipn-db'
+import { createOnboardingVideo, ONBOARDING_TIERS } from '@/land/video/onboarding-video'
+import { triggerAutoHandover } from '@/tree/handover/auto-handover'
+import { markOrderCompleted, markOrderFailed, getOrderById } from '@/land/orders/pending-order-repo'
+import { findReservedRedemption, finalizeRedemption, incrementUsedCount } from '@/land/promo/promo-repo'
+import { sendReceiptEmail } from './email/receipt-email-sender'
+import { enqueueWelcomeEmail } from '@/forest/orchestration'
+import { UNDERPAYMENT_THRESHOLD } from './nowpayments-ipn-underpaid'
+
+// Amount mismatch tolerance: 1% of expected price — prevents price-manipulation attacks
+const AMOUNT_MISMATCH_THRESHOLD = 0.01
+
+export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> {
+  // Underpayment guard — reject if actually_paid < price_amount * 0.99
+  const actuallyPaid = ipn.actually_paid
+  if (actuallyPaid !== undefined && actuallyPaid !== null) {
+    const required = ipn.price_amount * UNDERPAYMENT_THRESHOLD
+    if (actuallyPaid < required) {
+      logger.warn('[NOWPayments] Subscription underpayment — not activating', {
+        paymentId: ipn.payment_id,
+        priceAmount: ipn.price_amount,
+        actuallyPaid,
+        required,
+      })
+      return
+    }
+  }
+
+  // Log overpaid transactions (>1% above expected — rounding/gas fee anomaly)
+  if (actuallyPaid !== undefined && actuallyPaid > ipn.price_amount * 1.01) {
+    logger.warn('[NOWPayments] Overpaid', {
+      payment_id: ipn.payment_id,
+      expected: ipn.price_amount,
+      actual: actuallyPaid,
+    })
+  }
+  const invoiceId = ipn.invoice_id
+  if (!invoiceId) { logger.warn('[NOWPayments] finished: missing invoice_id', { paymentId: ipn.payment_id }); return }
+
+  const tierConfig = getTierByInvoiceId(invoiceId)
+  if (!tierConfig) { logger.warn('[NOWPayments] finished: unknown invoice_id', { invoiceId, paymentId: ipn.payment_id }); return }
+
+  const userId = parseUserIdFromOrderId(ipn.order_id || '')
+  if (!userId) { logger.warn('[NOWPayments] finished: cannot parse userId from order_id', { orderId: ipn.order_id }); return }
+
+  const db = getDb()
+  // Cache D1 binding — resolves Cloudflare context once; reuse for all subsequent D1 queries in this handler
+  const d1 = await getD1Raw()
+  const tier: Tier = tierConfig.tier
+
+  // SECURITY: Cross-check IPN amount against expected tier price (Issue 3 fix)
+  // Prevents price-manipulation attacks where attacker sends IPN with lower amount
+  const expectedPrice = NOWPAYMENTS_TIERS[tier]?.price
+  if (expectedPrice !== undefined && ipn.price_amount !== undefined) {
+    const deviation = Math.abs(ipn.price_amount - expectedPrice)
+    const tolerance = expectedPrice * AMOUNT_MISMATCH_THRESHOLD
+    if (deviation > tolerance) {
+      logger.warn('[NOWPayments] Amount mismatch — rejecting subscription activation', {
+        paymentId: ipn.payment_id,
+        tier,
+        expectedPrice,
+        receivedAmount: ipn.price_amount,
+        deviation,
+        tolerance,
+      })
+      return
+    }
+  }
+
+  const isLifetime = UNIFIED_TIERS[tier]?.billingType === 'lifetime'
+
+  // Resolve billing period from pending_orders (monthly/yearly/lifetime)
+  let billingPeriod: 'monthly' | 'yearly' | 'lifetime' = isLifetime ? 'lifetime' : 'monthly'
+  if (ipn.order_id) {
+    try {
+      const pendingOrder = await getOrderById(ipn.order_id)
+      if (pendingOrder?.period === 'yearly') billingPeriod = 'yearly'
+      else if (pendingOrder?.period === 'lifetime') billingPeriod = 'lifetime'
+    } catch { /* fallback to monthly */ }
+  }
+
+  const periodEnd = billingPeriod === 'lifetime'
+    ? new Date('2099-12-31T23:59:59Z').toISOString()
+    : billingPeriod === 'yearly'
+      ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+  const now = new Date().toISOString()
+
+  const { data: membership } = await db.from('org_members').select('org_id').eq('user_id', userId).single()
+  const orgId = membership?.org_id as string | undefined
+
+  if (orgId) {
+    // ── Atomic D1 batch: subscription + organization + pending_orders ──────
+    try {
+      const { data: currentSub } = await db.from('subscriptions').select('plan').eq('org_id', orgId).single()
+      const currentPlan = (currentSub as { plan?: string } | null)?.plan ?? ''
+      // Out-of-order IPN guard: generalized downgrade protection.
+      // Previously only blocked MASTER->non-MASTER; now covers all tiers.
+      const TIER_RANK: Record<string, number> = { basic: 0, premium: 1, enterprise: 2, master: 3 }
+      const currentRank = TIER_RANK[currentPlan.toLowerCase()] ?? -1
+      const newRank = TIER_RANK[tier.toLowerCase()] ?? -1
+      const wouldDowngrade = currentRank > newRank
+      // const isDowngrade replaced by generalized wouldDowngrade check above
+      const stmts = currentSub
+        ? wouldDowngrade
+          ? [
+            d1.prepare('UPDATE subscriptions SET current_period_end=?, updated_at=? WHERE org_id=?')
+              .bind(periodEnd, now, orgId),
+            d1.prepare("UPDATE organizations SET updated_at=? WHERE id=?")
+              .bind(now, orgId),
+            d1.prepare('UPDATE tier_change_events SET resolved=?, resolved_at=?, note=? WHERE org_id=? AND resolved=?')
+              .bind(1, now, 'Blocked: admin-set MASTER tier protected from webhook downgrade', orgId, 0),
+          ]
+          : [
+            d1.prepare('UPDATE subscriptions SET plan=?, status=?, current_period_end=?, updated_at=? WHERE org_id=?')
+              .bind(tier.toLowerCase(), 'active', periodEnd, now, orgId),
+            d1.prepare('UPDATE organizations SET plan=?, updated_at=? WHERE id=?')
+              .bind(tier.toLowerCase(), now, orgId),
+          ]
+        : [
+          d1.prepare('INSERT INTO subscriptions (org_id, plan, status, current_period_start, current_period_end) VALUES (?,?,?,?,?)')
+            .bind(orgId, tier.toLowerCase(), 'active', now, periodEnd),
+          d1.prepare('UPDATE organizations SET plan=?, updated_at=? WHERE id=?')
+            .bind(tier.toLowerCase(), now, orgId),
+        ]
+
+      // Mark pending order completed in same batch if order_id present
+      if (ipn.order_id) {
+        stmts.push(
+          d1.prepare('UPDATE pending_orders SET status=?, payment_id=?, completed_at=? WHERE order_id=?')
+            .bind('completed', ipn.payment_id, now, ipn.order_id)
+        )
+      }
+
+      await d1.batch(stmts)
+    } catch (batchErr) {
+      // Fallback to individual statements if batch fails (e.g. test environment)
+      logger.warn('[NOWPayments] D1 batch failed, falling back to individual updates', batchErr instanceof Error ? batchErr : { message: String(batchErr) })
+      try {
+        const { data: existingSub2 } = await db.from('subscriptions').select('id').eq('org_id', orgId).single()
+        if (existingSub2) {
+          await db.from('subscriptions').update({ plan: tier.toLowerCase(), status: 'active', current_period_end: periodEnd, updated_at: now }).eq('org_id', orgId)
+        } else {
+          await db.from('subscriptions').insert({ org_id: orgId, plan: tier.toLowerCase(), status: 'active', current_period_start: now, current_period_end: periodEnd })
+        }
+        await db.from('organizations').update({ plan: tier.toLowerCase(), updated_at: now }).eq('id', orgId)
+        if (ipn.order_id) {
+          await markOrderCompleted(ipn.order_id, ipn.payment_id)
+        }
+      } catch (fallbackErr) {
+        logger.error('[NOWPayments] Fallback sequential writes also failed', fallbackErr instanceof Error ? fallbackErr : { message: String(fallbackErr) })
+        throw new Error('Subscription activation failed — both batch and fallback')
+      }
+    }
+  } else {
+    logger.warn('[NOWPayments] No org membership found for userId, creating new org', { userId })
+    const { data: newOrg } = await db.from('organizations').insert({ name: `User ${userId}`, plan: tier.toLowerCase() }).select('id').single()
+    if (newOrg?.id) {
+      await db.from('org_members').insert({ org_id: newOrg.id, user_id: userId, role: 'owner' })
+      await db.from('subscriptions').insert({ org_id: newOrg.id, plan: tier.toLowerCase(), status: 'active', current_period_start: now, current_period_end: periodEnd })
+    }
+    if (ipn.order_id) {
+      await markOrderCompleted(ipn.order_id, ipn.payment_id)
+    }
+  }
+
+  // Audit trail — record tier activation event (non-fatal)
+  try {
+    await recordAudit(d1, {
+      tableName: 'subscriptions',
+      rowId: orgId ?? userId,
+      action: 'update',
+      actorId: userId,
+      after: { tier, plan: tier.toLowerCase(), status: 'active', periodEnd, paymentId: ipn.payment_id },
+    })
+  } catch { /* non-fatal */ }
+
+  // Finalize promo code redemption if order had a promo (non-fatal)
+  if (ipn.order_id) {
+    try {
+      const pendingOrder = await getOrderById(ipn.order_id)
+      if (pendingOrder?.promo_code) {
+        const reserved = await findReservedRedemption(userId, pendingOrder.promo_code)
+        if (reserved) {
+          // Increment promo usage AFTER payment confirmed to prevent TOCTOU:
+          // abandoned checkouts should not consume promo quota.
+          await incrementUsedCount(reserved.promo_code_id)
+          await finalizeRedemption(reserved.id, ipn.payment_id)
+          logger.info('[NOWPayments] Promo redemption finalized', {
+            promoCode: pendingOrder.promo_code,
+            redemptionId: reserved.id,
+            discountCents: reserved.discount_applied_cents,
+            paymentId: ipn.payment_id,
+          })
+        }
+      }
+    } catch (err) {
+      logger.warn('[NOWPayments] Promo finalization failed (non-fatal)', { orderId: ipn.order_id, error: String(err) })
+    }
+  }
+
+  // Trigger onboarding video for Premium+/MASTER new purchases (non-fatal)
+  if (ONBOARDING_TIERS.has(tier)) {
+    try {
+      const { data: userData } = await db.from('user').select('email').eq('id', userId).single()
+      const userEmail = (userData as { email?: string } | null)?.email ?? ''
+      if (userEmail) {
+        await createOnboardingVideo({
+          userId,
+          orgId,
+          tier,
+          paymentId: ipn.payment_id,
+          userEmail,
+        })
+      }
+    } catch (err) {
+      logger.warn('[NOWPayments] Onboarding video trigger failed (non-fatal)', { userId, error: String(err) })
+    }
+  }
+
+  // Auto-handover — magic link email (non-fatal)
+  try {
+    const { data: userRow } = await db.from('user').select('email,name').eq('id', userId).single()
+    const userEmail = (userRow as { email?: string; name?: string } | null)?.email ?? ''
+    const userName = (userRow as { email?: string; name?: string } | null)?.name ?? undefined
+    if (userEmail) {
+      const purchaseCount = await d1
+        .prepare(`SELECT COUNT(*) as cnt FROM user_purchases WHERE user_id = ?1 AND status = 'paid'`)
+        .bind(userId)
+        .first<{ cnt: number }>()
+      const isFirstPurchase = (purchaseCount?.cnt ?? 0) <= 1
+      await triggerAutoHandover({
+        paymentId: ipn.payment_id,
+        userId,
+        email: userEmail,
+        fullName: userName,
+        tier,
+        isFirstPurchase,
+      })
+    }
+  } catch (err) {
+    logger.warn('[NOWPayments] Auto-handover failed (non-fatal)', { userId, error: String(err) })
+  }
+
+  // Invalidate license KV cache so next quota check reads fresh tier data
+  try {
+    const lic = await d1
+      .prepare('SELECT nonce FROM raas_licenses WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 1')
+      .bind(userId)
+      .first<{ nonce: string }>()
+    if (lic?.nonce) {
+      const kv = globalThis.KV_KV as KVNamespace | undefined
+      await kv?.delete(`license:${lic.nonce}`).catch(() => { /* fail-open */ })
+    }
+  } catch { /* non-fatal */ }
+
+  // Receipt email (non-fatal)
+  try {
+    const { data: userRow } = await db.from('user').select('email,name').eq('id', userId).single()
+    const userEmail = (userRow as { email?: string; name?: string } | null)?.email ?? ''
+    if (userEmail) {
+      await sendReceiptEmail({
+        email: userEmail,
+        tier,
+        period: billingPeriod,
+        amountUsd: ipn.price_amount,
+        paymentId: ipn.payment_id,
+        paymentMethod: 'nowpayments',
+        orderId: ipn.order_id ?? '',
+        locale: 'en',
+      })
+    }
+  } catch (err) {
+    logger.warn('[NOWPayments] Receipt email failed (non-fatal)', { userId, err: String(err) })
+  }
+
+  // Post-purchase welcome email via outbox (non-fatal)
+  try {
+    const { data: userRow } = await db.from('user').select('email,name').eq('id', userId).single()
+    const userEmail = (userRow as { email?: string; name?: string } | null)?.email ?? ''
+    const userName = (userRow as { email?: string; name?: string } | null)?.name ?? ''
+    if (userEmail) {
+      await enqueueWelcomeEmail(d1, {
+        paymentId: `post_purchase_welcome_${ipn.payment_id}`,
+        toEmail: userEmail,
+        template: 'post-purchase-welcome',
+        payload: {
+          ownerFullName: userName || userEmail.split('@')[0],
+          tier,
+          locale: 'vi',
+        },
+      })
+    }
+  } catch (err) {
+    logger.warn('[NOWPayments] Post-purchase welcome email enqueue failed (non-fatal)', { userId, error: String(err) })
+  }
+
+  // Credit referrer reward if this user was referred (non-fatal)
+  // SECURITY FIX (Issue 2): Atomic D1 UPDATE to prevent lost-update race condition
+  // Previously used read-modify-write on JSON blob — two concurrent IPNs could overwrite each other's credit
+  try {
+    const { data: userProfile } = await db.from('user_profiles').select('settings').eq('user_id', userId).single()
+    const settings = userProfile?.settings
+      ? (typeof userProfile.settings === 'string' ? JSON.parse(userProfile.settings as string) : userProfile.settings) as Record<string, unknown>
+      : null
+    const referrerId = settings?.referred_by as string | undefined
+    if (referrerId && referrerId !== userId) {
+      // Check if this payment was already rewarded (idempotency guard)
+      const existingReward = await d1
+        .prepare('SELECT id FROM referral_rewards WHERE payment_id = ?1 AND referrer_id = ?2')
+        .bind(ipn.payment_id, referrerId)
+        .first<{ id: string }>()
+
+      if (existingReward) {
+        logger.info('[NOWPayments] Referral reward already credited — skipping', { referrerId, paymentId: ipn.payment_id })
+      } else {
+        // Atomic increment: D1 json_set directly in SQL — no read-modify-write race
+        const rewardCents = UNIFIED_TIERS[tier]
+          ? Math.round(UNIFIED_TIERS[tier].price * 100 * 0.10)
+          : 1990
+
+        // Use json_set to atomically increment account_credit_cents in the JSON blob
+        // This avoids the lost-update race where two concurrent IPNs read the same value and overwrite
+        const creditJson = JSON.stringify({
+          account_credit_cents: rewardCents,
+          last_referral_reward_at: new Date().toISOString(),
+        })
+
+        // Build the payment tracking entry
+        const rewardedAt = new Date().toISOString()
+
+        // Atomic: insert reward record (UNIQUE constraint prevents double-credit)
+        // AND increment credit in user_profiles settings JSON atomically
+        await d1.batch([
+          d1.prepare(
+            `INSERT INTO referral_rewards (id, referrer_id, referred_user_id, payment_id, reward_cents, created_at)
+             VALUES (?, ?, ?, ?, ?, ?)`
+          ).bind(crypto.randomUUID().replace(/-/g, ''), referrerId, userId, ipn.payment_id, rewardCents, rewardedAt),
+          // Atomically increment account_credit_cents in the JSON settings blob
+          // json_set path: $.account_credit_cents = COALESCE($.account_credit_cents, 0) + ?
+          // Note: D1 doesn't support json_set, so we use a transaction-safe approach:
+          // Read current credit, then update — but the UNIQUE constraint on referral_rewards
+          // prevents the actual double-credit race.
+          d1.prepare(
+            `UPDATE user_profiles SET settings = json_set(
+               COALESCE(settings, '{}'),
+               '$.account_credit_cents',
+               CAST(COALESCE(json_extract(settings, '$.account_credit_cents'), '0') AS INTEGER) + ?
+             ), settings = json_set(
+               settings,
+               '$.last_referral_reward_at',
+               ?
+             )
+             WHERE user_id = ?`
+          ).bind(rewardCents, rewardedAt, referrerId),
+        ])
+
+        logger.info('[NOWPayments] Referral reward credited (atomic)', { referrerId, referredUserId: userId, rewardCents })
+      }
+    }
+  } catch (err) {
+    logger.warn('[NOWPayments] Referral reward credit failed (non-fatal)', { userId, error: String(err) })
+  }
+
+  logger.info('[NOWPayments] Payment finished — subscription activated', { userId, orgId, tier, isLifetime, periodEnd, paymentId: ipn.payment_id })
+}
+
+export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<void> {
+  const userId = parseUserIdFromOrderId(ipn.order_id || '')
+  if (!userId) { logger.warn('[NOWPayments] refunded: cannot parse userId', { orderId: ipn.order_id }); return }
+
+  const db = getDb()
+  // Cache D1 binding — resolves Cloudflare context once; reuse for all subsequent D1 queries in this handler
+  const d1 = await getD1Raw()
+  const { data: membership } = await db.from('org_members').select('org_id').eq('user_id', userId).single()
+  if (membership?.org_id) {
+    await db.from('subscriptions').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('org_id', membership.org_id)
+  }
+
+  // Invalidate license KV cache so next quota check reads fresh tier data (mirrors activation path)
+  try {
+    const lic = await d1
+      .prepare('SELECT nonce FROM raas_licenses WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 1')
+      .bind(userId)
+      .first<{ nonce: string }>()
+    if (lic?.nonce) {
+      const kv = globalThis.KV_KV as KVNamespace | undefined
+      await kv?.delete(`license:${lic.nonce}`).catch(() => { /* fail-open */ })
+    }
+  } catch { /* non-fatal */ }
+
+  logger.info('[NOWPayments] Payment refunded — subscription cancelled', { userId, paymentId: ipn.payment_id })
+}
+
+export async function handleFailed(ipn: NowPaymentsIpnPayload): Promise<void> {
+const userId = parseUserIdFromOrderId(ipn.order_id || '')
+logger.info('[NOWPayments] Payment failed', { userId, paymentId: ipn.payment_id, amount: ipn.price_amount, currency: ipn.price_currency })
+
+// Mark pending order as failed
+if (ipn.order_id) {
+try {
+await markOrderFailed(ipn.order_id, `payment_status=${ipn.payment_status}`)
+} catch (err) {
+logger.warn('[NOWPayments] markOrderFailed error (non-fatal)', { orderId: ipn.order_id, error: String(err) })
+}
+}
+
+// Wire up dunning state machine — trigger grace period on payment failure (EC4)
+if (userId) {
+  try {
+    const db = getDb()
+    const rawDb = db.unwrap()
+    const lic = await rawDb
+      .prepare('SELECT nonce, tier FROM raas_licenses WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 1')
+      .bind(userId)
+      .first<{ nonce: string; tier: string }>()
+if (lic?.nonce) {
+const { handlePaymentFailure } = await import('./dunning/dunning-actions')
+await handlePaymentFailure({
+userId,
+licenseNonce: lic.nonce,
+tier: (lic.tier || 'BASIC').toUpperCase() as Tier,
+amount: ipn.price_amount ?? 0,
+currency: ipn.price_currency ?? 'USD',
+failureReason: ipn.payment_status || 'unknown',
+paymentProvider: 'nowpayments',
+})
+}
+} catch (err) {
+logger.warn('[NOWPayments] Dunning trigger failed (non-fatal)', { userId, error: String(err) })
+}
+}
+}

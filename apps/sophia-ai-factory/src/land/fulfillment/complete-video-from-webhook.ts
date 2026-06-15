@@ -13,7 +13,7 @@
 
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
-import { getD1Raw, createServerClient } from '@/seed/db/client'
+import { getD1, createServerClient } from '@/seed/db/client'
 import { downloadAndStore } from '@/land/video/video-storage-service'
 import { sendOneTimeBundleReadyEmail } from '@/land/billing/email/send-one-time-bundle-ready-email'
 import { getUserCredits } from '@/seed/db/get-user-credits'
@@ -97,8 +97,9 @@ export async function completeVideoFromWebhook(
     return
   }
 
-  const d1 = await getD1Raw()
-  const now = Math.floor(Date.now() / 1000)
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
+  const now = Math.floor(Date.now() / 1000);
 
   // Copy to R2 (best-effort)
   let r2Key: string | null = null
@@ -118,7 +119,7 @@ export async function completeVideoFromWebhook(
   // now is unix-epoch INTEGER; updated_at column happens to be TEXT, so we keep the existing
   // datetime('now') default by binding `now` as INTEGER cast to TEXT via SQLite implicit conversion.
   const nowEpoch = Math.floor(Date.now() / 1000)
-  const result = await d1
+  const result = await db
     .prepare(
       `UPDATE videos
        SET status = 'completed',

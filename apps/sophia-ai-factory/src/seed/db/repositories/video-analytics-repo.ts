@@ -5,7 +5,7 @@
  * @module seed/db/repositories/video-analytics-repo
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 export interface VideoAnalyticsRow {
@@ -58,7 +58,8 @@ export interface AnalyticsSummary {
 }
 
 export async function upsertVideoAnalytics(data: UpsertVideoAnalyticsInput): Promise<void> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   await db
     .prepare(
       `INSERT INTO video_analytics
@@ -95,7 +96,8 @@ export async function getVideoAnalytics(
   platform?: string,
   dateRange?: DateRange,
 ): Promise<VideoAnalyticsRow[]> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   let sql = 'SELECT * FROM video_analytics WHERE user_id = ? AND video_id = ?';
   const params: unknown[] = [userId, videoId];
 
@@ -116,7 +118,8 @@ export async function getTopVideos(
   limit: number,
   dateRange?: DateRange,
 ): Promise<{ videoId: string; platformVideoId: string; platform: string; total: number }[]> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const col = metric === 'ctr'
     ? 'CASE WHEN SUM(impressions) > 0 THEN CAST(SUM(clicks) AS REAL) / SUM(impressions) ELSE 0 END'
     : metric === 'watch_time' ? 'SUM(watch_time_sec)' : 'SUM(views)';
@@ -142,7 +145,8 @@ export async function getTopVideos(
 }
 
 export async function getAnalyticsSummary(userId: string, dateRange: DateRange): Promise<AnalyticsSummary> {
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const row = await db
     .prepare(
       `SELECT SUM(views) AS totalViews, SUM(watch_time_sec) AS totalWatchTimeSec,

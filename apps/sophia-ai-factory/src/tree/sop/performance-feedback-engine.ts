@@ -3,7 +3,7 @@
  * Layer: tree (domain-reusable, imports seed only)
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import type { FeedbackCycle, EvaluationResult, PromptOptimization } from '@/seed/types/performance-feedback'
@@ -33,7 +33,9 @@ export async function createFeedbackCycle(params: {
   const evaluateAt = params.publishedAt + EVALUATE_AFTER_SECONDS
 
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
     await db
       .prepare(
         `INSERT INTO performance_feedback_cycles
@@ -58,7 +60,9 @@ export async function getPendingEvaluations(now?: number): Promise<FeedbackCycle
   const cutoff = now ?? Math.floor(Date.now() / 1000)
 
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
     const { results } = await db
       .prepare(
         `SELECT * FROM performance_feedback_cycles
@@ -93,7 +97,9 @@ export async function evaluatePerformance(
   const evaluation = computeEvaluation(metrics)
 
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
     await db
       .prepare(
         `UPDATE performance_feedback_cycles
@@ -126,7 +132,9 @@ export async function suggestOptimization(params: {
   const now = Math.floor(Date.now() / 1000)
 
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
     await db
       .prepare(
         `INSERT INTO prompt_optimization_log
@@ -155,7 +163,9 @@ export async function applyOptimization(optimizationId: string): Promise<void> {
   const now = Math.floor(Date.now() / 1000)
 
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
     await db
       .prepare(`UPDATE prompt_optimization_log SET applied = 1, applied_at = ? WHERE id = ?`)
       .bind(now, optimizationId)
@@ -173,7 +183,9 @@ export async function applyOptimization(optimizationId: string): Promise<void> {
  */
 export async function getOptimizationsForSOP(sopId: string): Promise<PromptOptimization[]> {
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
     const { results } = await db
       .prepare(
         `SELECT * FROM prompt_optimization_log
@@ -201,7 +213,9 @@ export async function runPerformanceFeedbackAndOptimization(): Promise<number> {
     return 0;
   }
 
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;;
   let processedCount = 0;
 
   for (const cycle of pending) {

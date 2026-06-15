@@ -10,7 +10,7 @@ import { NextRequest } from 'next/server';
 
 const mocks = vi.hoisted(() => ({
   mockGetCurrentUser: vi.fn(),
-  mockGetD1Raw: vi.fn(),
+  mockGetD1: vi.fn(),
   mockSendEmail: vi.fn(),
 }));
 
@@ -19,7 +19,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: mocks.mockGetD1Raw,
+  getD1: mocks.mockGetD1,
 }));
 
 vi.mock('@/forest/email/sender', () => ({
@@ -101,7 +101,7 @@ describe('POST /api/account/change-email', () => {
   });
 
   it('rejects when newEmail already taken', async () => {
-    mocks.mockGetD1Raw.mockResolvedValue(buildDb([
+    mocks.mockGetD1.mockReturnValue(buildDb([
       stmt({ first: { id: 'other-user', email: 'taken@example.com' } }),
     ]));
     const req = new NextRequest('http://localhost/api/account/change-email', {
@@ -113,7 +113,7 @@ describe('POST /api/account/change-email', () => {
   });
 
   it('happy path inserts verification + sends email', async () => {
-    mocks.mockGetD1Raw.mockResolvedValue(buildDb([
+    mocks.mockGetD1.mockReturnValue(buildDb([
       stmt({ first: null }),  // existing-email lookup
       stmt(),                  // DELETE existing pending
       stmt(),                  // INSERT verification
@@ -131,7 +131,7 @@ describe('POST /api/account/change-email', () => {
   });
 
   it('returns 502 if sendEmail throws', async () => {
-    mocks.mockGetD1Raw.mockResolvedValue(buildDb([
+    mocks.mockGetD1.mockReturnValue(buildDb([
       stmt({ first: null }),
       stmt(),
       stmt(),
@@ -158,7 +158,7 @@ describe('GET /api/account/change-email/verify', () => {
   });
 
   it('redirects to error when token row not found', async () => {
-    mocks.mockGetD1Raw.mockResolvedValue(buildDb([stmt({ first: null })]));
+    mocks.mockGetD1.mockReturnValue(buildDb([stmt({ first: null })]));
     const res = await VERIFY_GET(makeReq('token=abc&userId=user-1'));
     expect(res.headers.get('location')).toContain('error=email-change-invalid');
   });
@@ -166,7 +166,7 @@ describe('GET /api/account/change-email/verify', () => {
   it('redirects to error and deletes row when expired', async () => {
     const expired = new Date(Date.now() - 1000).toISOString();
     const deleteStmt = stmt();
-    mocks.mockGetD1Raw.mockResolvedValue(buildDb([
+    mocks.mockGetD1.mockReturnValue(buildDb([
       stmt({ first: { id: 'v-1', value: 'new@example.com:tok-x', expiresAt: expired } }),
       deleteStmt,
     ]));
@@ -177,7 +177,7 @@ describe('GET /api/account/change-email/verify', () => {
 
   it('redirects to error when stored token mismatch', async () => {
     const future = new Date(Date.now() + 60_000).toISOString();
-    mocks.mockGetD1Raw.mockResolvedValue(buildDb([
+    mocks.mockGetD1.mockReturnValue(buildDb([
       stmt({ first: { id: 'v-1', value: 'new@example.com:other-token', expiresAt: future } }),
     ]));
     const res = await VERIFY_GET(makeReq('token=tok-x&userId=user-1'));
@@ -190,7 +190,7 @@ describe('GET /api/account/change-email/verify', () => {
     const future = new Date(Date.now() + 60_000).toISOString();
     const updateStmt = stmt({ run: { meta: { changes: 0 } } });
     const deleteStmt = stmt();
-    mocks.mockGetD1Raw.mockResolvedValue(buildDb([
+    mocks.mockGetD1.mockReturnValue(buildDb([
       stmt({ first: { id: 'v-1', value: 'new@example.com:tok-x', expiresAt: future } }),
       updateStmt,
       deleteStmt,
@@ -207,7 +207,7 @@ describe('GET /api/account/change-email/verify', () => {
     const future = new Date(Date.now() + 60_000).toISOString();
     const updateStmt = stmt({ run: { meta: { changes: 0 } } });
     const deleteStmt = stmt();
-    mocks.mockGetD1Raw.mockResolvedValue(buildDb([
+    mocks.mockGetD1.mockReturnValue(buildDb([
       stmt({ first: { id: 'v-1', value: 'new@example.com:tok-x', expiresAt: future } }),
       updateStmt,
       deleteStmt,
@@ -222,7 +222,7 @@ describe('GET /api/account/change-email/verify', () => {
     const future = new Date(Date.now() + 60_000).toISOString();
     const updateStmt = stmt({ run: { meta: { changes: 1 } } });
     const deleteStmt = stmt();
-    mocks.mockGetD1Raw.mockResolvedValue(buildDb([
+    mocks.mockGetD1.mockReturnValue(buildDb([
       stmt({ first: { id: 'v-1', value: 'new@example.com:tok-x', expiresAt: future } }),
       updateStmt,
       deleteStmt,
@@ -244,7 +244,7 @@ describe('Wave 22 P01 — sha256 hash token verification', () => {
     const future = new Date(Date.now() + 60_000).toISOString();
     const tokenHash = await sha256Hex('hashtest-token');
     const updateStmt = stmt({ run: { meta: { changes: 1 } } });
-    mocks.mockGetD1Raw.mockResolvedValue(buildDb([
+    mocks.mockGetD1.mockReturnValue(buildDb([
       stmt({ first: { id: 'v-1', value: `new@example.com:${tokenHash}`, expiresAt: future } }),
       updateStmt,
       stmt(),
@@ -257,7 +257,7 @@ describe('Wave 22 P01 — sha256 hash token verification', () => {
   it('rejects when stored hash does not match hashed incoming token', async () => {
     const future = new Date(Date.now() + 60_000).toISOString();
     const wrongHash = await sha256Hex('different-token');
-    mocks.mockGetD1Raw.mockResolvedValue(buildDb([
+    mocks.mockGetD1.mockReturnValue(buildDb([
       stmt({ first: { id: 'v-1', value: `new@example.com:${wrongHash}`, expiresAt: future } }),
     ]));
     const res = await VERIFY_GET(makeVerifyReq('token=hashtest-token&userId=user-1'));
@@ -268,7 +268,7 @@ describe('Wave 22 P01 — sha256 hash token verification', () => {
 describe('P03 — invalid email URL throws', () => {
   it('returns 502 when NEXT_PUBLIC_APP_URL has invalid scheme', async () => {
     process.env.NEXT_PUBLIC_APP_URL = 'ftp://bad-host';
-    mocks.mockGetD1Raw.mockResolvedValue(buildDb([
+    mocks.mockGetD1.mockReturnValue(buildDb([
       stmt({ first: null }),
       stmt(),
       stmt(),

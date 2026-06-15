@@ -7,7 +7,7 @@
  * @module payouts/commission-ledger
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { toCents, fromCents } from './commission-cents'
 
 export type LedgerStatus =
@@ -60,7 +60,9 @@ export interface InsertLedgerInput {
  * Converts USD → cents. Idempotent via IGNORE on UNIQUE(conversion_event_id).
  */
 export async function insertPendingLedger(input: InsertLedgerInput): Promise<void> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000)
   await db
     .prepare(
@@ -84,7 +86,9 @@ export async function insertPendingLedger(input: InsertLedgerInput): Promise<voi
  * Flip pending → payable for rows whose payable_at has passed.
  */
 export async function flipPendingToPayable(nowTs: number): Promise<number> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const result = await db
     .prepare(
       `UPDATE commission_ledger SET status = 'payable', updated_at = ?
@@ -102,7 +106,9 @@ export async function flipPendingToPayable(nowTs: number): Promise<number> {
 export async function getPayableAggregates(
   tenantId: string,
 ): Promise<{ affiliate_id: string; total_cents: number; row_count: number }[]> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const result = await db
     .prepare(
       `SELECT affiliate_id,
@@ -125,7 +131,9 @@ export async function getPayableLedgerIds(
   tenantId: string,
   affiliateId: string,
 ): Promise<string[]> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const result = await db
     .prepare(
       `SELECT id FROM commission_ledger
@@ -145,7 +153,9 @@ export async function getEarningsSummary(
   fromTs: number,
   toTs: number,
 ): Promise<{ status: LedgerStatus; total_usd: number; count: number }[]> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const result = await db
     .prepare(
       `SELECT status,

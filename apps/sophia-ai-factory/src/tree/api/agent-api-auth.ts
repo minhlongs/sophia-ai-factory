@@ -7,7 +7,7 @@
  * @module tree/api/agent-api-auth
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type {
@@ -63,7 +63,9 @@ export async function generateApiKey(
   const now = Math.floor(Date.now() / 1000);
 
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 binding not available');
+    const db = _db;
     await db
       .prepare(
         `INSERT INTO api_keys
@@ -89,7 +91,9 @@ export async function generateApiKey(
 export async function validateApiKey(rawKey: string): Promise<ApiKey | null> {
   try {
     const keyHash = await sha256Hex(rawKey);
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 binding not available');
+    const db = _db;
     const now = Math.floor(Date.now() / 1000);
 
     const row = await db
@@ -123,7 +127,9 @@ export async function validateApiKey(rawKey: string): Promise<ApiKey | null> {
  */
 export async function checkRateLimit(apiKeyId: string): Promise<RateLimitResult> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 binding not available');
+    const db = _db;
     const now = Math.floor(Date.now() / 1000);
     const windowStart = now - 60;
 
@@ -168,7 +174,9 @@ export async function logApiRequest(params: {
   ipAddress?: string;
 }): Promise<void> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 binding not available');
+    const db = _db;
     await db
       .prepare(
         `INSERT INTO api_request_log
@@ -200,7 +208,9 @@ export async function logApiRequest(params: {
 /** Revoke an API key (set is_active = 0). */
 export async function revokeApiKey(keyId: string): Promise<void> {
   try {
-    const db = await getD1Raw();
+    const _db = getD1();
+    if (!_db) throw new Error('D1 binding not available');
+    const db = _db;
     await db.prepare(`UPDATE api_keys SET is_active = 0 WHERE id = ?`).bind(keyId).run();
     logger.info('API key revoked', { keyId });
   } catch (err) {

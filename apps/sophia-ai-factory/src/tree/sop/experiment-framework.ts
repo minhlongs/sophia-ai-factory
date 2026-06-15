@@ -1,6 +1,6 @@
 /** SOP Experiment Framework — A/B testing for SOP prompt variants and parameters. */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 
@@ -48,7 +48,9 @@ export async function createExperiment(params: {
   trafficPct?: number
   createdBy: string
 }): Promise<string> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const id = crypto.randomUUID()
   const now = Math.floor(Date.now() / 1000)
   const trafficPct = params.trafficPct ?? 100
@@ -72,7 +74,9 @@ export async function createExperiment(params: {
 
 /** Fetch all active experiments for a given SOP template. */
 export async function getActiveExperiments(sopTemplateId: string): Promise<SopExperiment[]> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   try {
     const { results } = await db
       .prepare(
@@ -97,7 +101,9 @@ export async function assignVariant(params: {
   userId: string
   executionId?: string
 }): Promise<{ variantKey: string; variantValue: unknown } | null> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const { experimentId, userId, executionId } = params
 
   const [existing, expRow] = await Promise.all([
@@ -148,7 +154,9 @@ export async function recordOutcome(params: {
   executionId: string
   outcomeJson: Record<string, unknown>
 }): Promise<void> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   try {
     await db
       .prepare(
@@ -166,7 +174,9 @@ export async function recordOutcome(params: {
 
 /** Aggregate assignment outcomes per variant for an experiment. */
 export async function evaluateExperiment(experimentId: string): Promise<ExperimentEvaluation> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const { results } = await db
     .prepare(
       `SELECT variant_key, COUNT(*) as count,

@@ -13,6 +13,7 @@ vi.mock('@/seed/db/resolve-user-tier', () => ({
 
 const fromSelectEqGte = vi.fn();
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: () => ({
     from: () => ({
       select: () => ({

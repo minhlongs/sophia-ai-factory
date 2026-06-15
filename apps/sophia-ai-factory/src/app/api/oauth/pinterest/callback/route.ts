@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { encryptToken } from '@/tree/crypto/token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 import { randomUUID } from 'crypto';
@@ -159,7 +159,7 @@ export async function GET(request: NextRequest) {
   // Pinterest access tokens: 1 hour by default, refresh tokens: 365 days
   const expiresAt = now + (tokenData.expires_in ?? 3600);
 
-  const db = await getD1Client();
+  const db = createServerClient();
   const tenantId = user.id;
 
   const displayName = meData.username

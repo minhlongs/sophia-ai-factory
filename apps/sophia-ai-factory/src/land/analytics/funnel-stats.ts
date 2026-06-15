@@ -22,7 +22,7 @@
  * @module land/analytics/funnel-stats
  */
 
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 
 export interface ActivationFunnel {
   /** Unix seconds, inclusive. */
@@ -103,7 +103,8 @@ export async function getActivationFunnel(
   toTs: number,
 ): Promise<ActivationFunnel> {
   if (fromTs > toTs) throw new Error('fromTs must be <= toTs');
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   const fromIso = new Date(fromTs * 1000).toISOString();
   const toIso = new Date(toTs * 1000).toISOString();
@@ -180,7 +181,8 @@ export async function getTierConversionRates(
   toTs: number,
 ): Promise<TierConversionRates> {
   if (fromTs > toTs) throw new Error('fromTs must be <= toTs');
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   const fromIso = new Date(fromTs * 1000).toISOString();
   const toIso = new Date(toTs * 1000).toISOString();
@@ -247,7 +249,8 @@ export async function getPromoCodeEffectiveness(
   limit = 10,
 ): Promise<PromoCodeEffectiveness> {
   if (fromTs > toTs) throw new Error('fromTs must be <= toTs');
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   // promo_code_redemptions.redeemed_at is Unix epoch INTEGER
   const fromEpoch = fromTs;
@@ -315,7 +318,8 @@ export async function getCheckoutAbandonmentRate(
   toTs: number,
 ): Promise<CheckoutAbandonmentRate> {
   if (fromTs > toTs) throw new Error('fromTs must be <= toTs');
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   // signals_events.ts is Unix milliseconds
   const fromMs = fromTs * 1000;

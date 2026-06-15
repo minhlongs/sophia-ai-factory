@@ -7,7 +7,7 @@
  */
 
 import { inngest } from '@/forest/inngest/client';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getDecryptedCredentials, storeCredentials } from '@/forest/publishing/credential-manager';
 import { refreshAccessToken } from '@/land/youtube/youtube-oauth-client';
@@ -35,7 +35,9 @@ export const analyticsSync = inngest.createFunction(
   async ({ step }) => {
     // Fetch all users with published YouTube videos
     const publishedVideos = await step.run('fetch-published-videos', async () => {
-      const db = await getD1Raw();
+      const _db = getD1();
+      if (!_db) throw new Error('D1 database binding not available');
+      const db = _db;
       const { results } = await db
         .prepare(
           `SELECT DISTINCT user_id, video_id, platform_video_id, platform

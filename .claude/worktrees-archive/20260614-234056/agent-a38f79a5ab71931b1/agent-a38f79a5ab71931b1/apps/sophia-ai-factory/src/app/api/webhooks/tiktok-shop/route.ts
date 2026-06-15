@@ -1,0 +1,114 @@
+/**
+ * TikTok Shop Webhook Handler
+ *
+ * Receives order/conversion postbacks from TikTok Shop Partner API.
+ * HMAC-SHA256 verification via X-Tts-Signature header.
+ * Idempotent on network_transaction_id (UNIQUE constraint in conversion_events).
+ *
+ * Always returns 200 after sig check to prevent retry storms.
+ *
+ * @module app/api/webhooks/tiktok-shop/route
+ */
+
+import { NextRequest, NextResponse } from 'next/server'
+import { logger } from '@/seed/utils/logger-utility'
+import { getD1Raw } from '@/seed/db/client'
+
+async function verifyHmac(body: string, signature: string, secret: string): Promise<boolean> {
+  if (!body || !signature || !secret) return false
+  try {
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    )
+    const buf = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(body))
+    const computed = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('')
+    // Constant-time compare
+    const a = new TextEncoder().encode(computed)
+    const b = new TextEncoder().encode(signature.trim().toLowerCase())
+    if (a.length !== b.length) return false
+    let diff = 0
+    for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i]
+    return diff === 0
+  } catch {
+    return false
+  }
+}
+
+interface TikTokOrderPayload {
+  order_id?: string
+  commission_amount?: number
+  settlement_amount?: number
+  sub_id?: string
+  status?: string
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  const secret = process.env.TIKTOK_SHOP_WEBHOOK_SECRET
+  if (!secret) {
+    logger.warn('[tiktok-shop-webhook] TIKTOK_SHOP_WEBHOOK_SECRET not configured')
+    return NextResponse.json({ ok: true, skipped: 'config' })
+  }
+
+  const rawBody = await request.text()
+  const signature = request.headers.get('x-tts-signature') ?? ''
+
+  const isValid = await verifyHmac(rawBody, signature, secret)
+  if (!isValid) {
+    logger.warn('[tiktok-shop-webhook] invalid signature')
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+  }
+
+  let payload: TikTokOrderPayload
+  try {
+    payload = JSON.parse(rawBody) as TikTokOrderPayload
+  } catch {
+    return NextResponse.json({ ok: true, skipped: 'parse_error' })
+  }
+
+  const orderId = payload.order_id
+  if (!orderId) return NextResponse.json({ ok: true, skipped: 'no_order_id' })
+
+  let db: D1Database
+  try {
+    db = await getD1Raw()
+  } catch {
+    logger.warn('[tiktok-shop-webhook] D1 unavailable')
+    return NextResponse.json({ ok: true, skipped: 'db_unavailable' })
+  }
+
+  // Lookup link by sub_id if present
+  const subId = payload.sub_id ?? ''
+  const linkRow = subId
+    ? await db.prepare('SELECT id, tenant_id FROM affiliate_links WHERE sub_id = ? LIMIT 1')
+        .bind(subId).first<{ id: string; tenant_id: string }>()
+    : null
+
+  const tenantId = linkRow?.tenant_id ?? (process.env.SOPHIA_TENANT_ID ?? 'sophia-global')
+  const linkId = linkRow?.id ?? 'unknown'
+  const grossAmount = payload.settlement_amount ?? 0
+  const commissionUsd = payload.commission_amount ?? 0
+  const now = Math.floor(Date.now() / 1000)
+
+  try {
+    // Atomic idempotency: INSERT OR IGNORE + rows_written check (eliminates SELECT pre-check race)
+    const result = await db.prepare(
+      `INSERT OR IGNORE INTO conversion_events
+        (id, tenant_id, link_id, click_id, network_transaction_id,
+         gross_amount_usd, commission_usd, status, attributed_at)
+       VALUES (?, ?, ?, NULL, ?, ?, ?, 'pending', ?)`
+    ).bind(
+      crypto.randomUUID(), tenantId, linkId, orderId, grossAmount, commissionUsd, now
+    ).run()
+    if (!result.meta.rows_written || result.meta.rows_written === 0) {
+      return NextResponse.json({ ok: true, skipped: 'duplicate' })
+    }
+  } catch (err) {
+    logger.warn('[tiktok-shop-webhook] insert error', { error: err instanceof Error ? err.message : String(err) })
+  }
+
+  return NextResponse.json({ ok: true })
+}

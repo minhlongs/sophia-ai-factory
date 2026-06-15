@@ -18,6 +18,10 @@ const TIER_ORDER: string[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
  */
 const ROLE_MIN_TIER: Record<AgentRole, string> = {
   CEO: 'PREMIUM',
+  CTO: 'ENTERPRISE',
+  CSO: 'ENTERPRISE',
+  CMO: 'ENTERPRISE',
+  COO: 'ENTERPRISE',
   Developer: 'PREMIUM',
   QA: 'ENTERPRISE',
   Ops: 'ENTERPRISE',

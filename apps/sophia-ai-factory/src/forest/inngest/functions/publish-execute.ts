@@ -9,7 +9,7 @@
  */
 
 import { inngest } from '@/forest/inngest/client';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { refreshChannelToken } from '@/forest/publishing/oauth-token-refresher';
 import { decryptToken } from '@/tree/crypto/token-crypto';
 import { TikTokPublisher } from '@/forest/publishing/tiktok-publisher';
@@ -80,7 +80,7 @@ async function resolveVideoUrlOrFail(args: {
   jobId: string;
   videoId: string;
   userId: string;
-  db: Awaited<ReturnType<typeof import('@/seed/db/client').getD1Client>>;
+  db: ReturnType<typeof createServerClient>;
   logTag: string;
 }): Promise<string> {
   const { jobId, videoId, userId, db, logTag } = args;
@@ -200,7 +200,7 @@ export const publishExecute = inngest.createFunction(
 
     // Step 1: Atomic claim + upload
     const claimResult = await step.run('claim-and-upload', async (): Promise<ClaimResult> => {
-      const db = await getD1Client();
+      const db = createServerClient();
 
       const { data: jobData } = await db
         .from('publishing_jobs')
@@ -388,7 +388,7 @@ export const publishExecute = inngest.createFunction(
       });
 
       await step.run('telegram-finalize', async () => {
-        const db = await getD1Client();
+        const db = createServerClient();
         const finishedAt = Math.floor(Date.now() / 1000);
 
         await db.from('publishing_jobs').update({
@@ -443,7 +443,7 @@ export const publishExecute = inngest.createFunction(
       }
 
       const pollResult = await step.run(`poll-status-${pollIdx}`, async () => {
-        const db = await getD1Client();
+        const db = createServerClient();
         const { data: chData } = await db
           .from('publishing_channels')
           .select('provider,access_token,external_account_id')
@@ -467,7 +467,7 @@ export const publishExecute = inngest.createFunction(
 
     // Finalize
     await step.run('finalize', async () => {
-      const db = await getD1Client();
+      const db = createServerClient();
       const finishedAt = Math.floor(Date.now() / 1000);
 
       await db.from('publishing_jobs').update({

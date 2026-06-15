@@ -18,7 +18,7 @@
 
 import { emit, onEvent } from '@/land/openclaw/event-bus';
 import { routeLLM } from '@/land/openclaw/llm-router';
-import { spawnAgentFleet } from '@/land/openclaw/spawn-agent-fleet';
+import { spawnAgentFleet } from '@/forest/openclaw/spawn-agent-fleet';
 import { canAutoDispatch, classifyMission } from '@/tree/sop/auto-dispatch-layer';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';

@@ -16,7 +16,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { createMagicLinkToken } from '@/tree/handover/handover-magic-link';
 import { sendAutoHandoverWelcomeEmail, sendWelcomeEmail } from '@/tree/handover/handover-email-service';
 import { generateHandoverDoc } from '@/tree/handover/handover-doc-generator';
@@ -52,7 +52,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   });
   if (rateLimited) return rateLimited;
 
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) {
+    logger.error('[Welcome/Resend] D1 unavailable');
+    return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
+  }
+  const db = _db;
 
   // Look up user → most recent handover
   const userRow = await db

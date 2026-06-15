@@ -15,6 +15,7 @@ import { NextRequest } from 'next/server';
 // We mock the DB client so we never hit a real D1 instance.
 const mockFrom = vi.fn();
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: () => ({ from: mockFrom }),
 }));
 

@@ -35,7 +35,7 @@ vi.mock('@/seed/db/client', () => {
     createServerClient: vi.fn(() => ({
       from: vi.fn(() => buildChain()),
     })),
-    getD1Raw: vi.fn(),
+    getD1: vi.fn(),
   };
 });
 

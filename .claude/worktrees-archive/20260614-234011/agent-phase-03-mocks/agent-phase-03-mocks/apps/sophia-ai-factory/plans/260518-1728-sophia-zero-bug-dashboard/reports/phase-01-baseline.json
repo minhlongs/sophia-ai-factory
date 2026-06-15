@@ -1,0 +1,28 @@
+{
+  "capturedAt": "2026-05-18T17:09Z",
+  "scope": "src/app/[locale]/dashboard/**",
+  "vitestVersion": "4.1.6",
+  "testRun": {
+    "files": { "total": 455, "passed": 454, "skipped": 1 },
+    "tests": { "total": 4563, "passed": 4529, "skipped": 34, "failed": 0 },
+    "durationSec": 51.49
+  },
+  "coverage": {
+    "lines": { "total": 3600, "covered": 145, "pct": 4.02 },
+    "statements": { "total": 4053, "covered": 149, "pct": 3.67 },
+    "functions": { "total": 1058, "covered": 31, "pct": 2.93 },
+    "branches": { "total": 3710, "covered": 153, "pct": 4.12 }
+  },
+  "regressionGuardThresholds": {
+    "lines": 4,
+    "branches": 4,
+    "functions": 2,
+    "statements": 3,
+    "note": "Floor at observed - prevents regression only. Ratcheted to 65/50/60/65 in Phase 03 Track B step 11."
+  },
+  "notes": [
+    "NOWPayments payout flake fix verified: 5/5 consecutive runs pass, duration 4593ms -> ~85ms (mock inngest client).",
+    "Dashboard surface has 86% pages untested at page level (per researcher-01); coverage baseline reflects this.",
+    "Phase 03 will ratchet thresholds in lockstep with new unit/integration/E2E coverage."
+  ]
+}

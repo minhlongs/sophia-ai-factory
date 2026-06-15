@@ -2,12 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   prepare: vi.fn(),
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
 }));
 
 vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
-  getD1Raw: mocks.getD1Raw,
+  getD1: mocks.getD1,
 }));
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -28,7 +28,7 @@ function mockRun(changes = 1) {
 describe('credits-repo', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getD1Raw.mockResolvedValue({ prepare: mocks.prepare });
+    mocks.getD1.mockReturnValue({ prepare: mocks.prepare });
   });
 
   it('deductCredits uses raw D1 atomic update and writes a debit ledger row', async () => {
@@ -67,7 +67,7 @@ describe('credits-repo', () => {
   });
 
   it('addCredits returns false when raw D1 is unavailable', async () => {
-    mocks.getD1Raw.mockRejectedValueOnce(new Error('missing binding'));
+    mocks.getD1.mockReturnValue(null);
 
     await expect(addCredits('user-1', 3, 'reaper_refund')).resolves.toBe(false);
   });

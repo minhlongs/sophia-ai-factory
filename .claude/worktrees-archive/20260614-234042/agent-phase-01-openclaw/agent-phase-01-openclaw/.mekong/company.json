@@ -1,0 +1,94 @@
+{
+  "name": "Sophia AI Factory",
+  "tagline": "AI Video Factory — Robot-as-a-Service cho sản xuất video tự động",
+  "stage": "zero_psf",
+  "stage_label": "Zero → Problem-Solution Fit",
+  "founded": "2026-03",
+  "domain": "sophia.agencyos.network",
+  "region": "VN/SEA",
+  "industry": "AI SaaS / Video Production / RaaS",
+  "business_model": {
+    "type": "B2B SaaS + RaaS (Robot-as-a-Service)",
+    "revenue_streams": [
+      "Subscription tiers (BASIC $199, PREMIUM $399, ENTERPRISE $799, MASTER $4,999)",
+      "AI credit metering (MCU — Mission Credit Unit)",
+      "BYOK platform fee (customers bring own API keys)"
+    ],
+    "payment_providers": ["NOWPayments (USDT crypto)", "PayOS (Vietnam domestic)"],
+    "pricing_model": "Tiered subscription + usage metering"
+  },
+  "tech_stack": {
+    "frontend": "Next.js 16, React 19, TypeScript, Tailwind CSS 4",
+    "backend": "Cloudflare Workers (Edge), D1 SQLite, R2 Storage",
+    "ai_services": ["HeyGen (avatar video)", "ElevenLabs (voice)", "MuAPI (100+ media models)", "OpenRouter (LLM)"],
+    "auth": "Custom JWT + D1 (magic link + password)",
+    "email": "Resend (mekongmind.com domain, verified)",
+    "bot": "Telegram (@Sophia_Bbot)",
+    "deployment": "Cloudflare Workers via GitHub Actions",
+    "monitoring": "Sentry"
+  },
+  "product": {
+    "core_value": "Non-technical users create professional AI videos without editing skills",
+    "key_features": [
+      "AI video generation (HeyGen avatars, text-to-video)",
+      "Voice synthesis (ElevenLabs, 50+ languages)",
+      "Media generation (Midjourney, Kling, Suno via MuAPI)",
+      "Campaign management dashboard",
+      "BYOK — users bring their own API keys",
+      "Telegram bot interface",
+      "ROI calculator for customer cost estimation"
+    ],
+    "target_users": [
+      "Vietnamese SMBs needing video content",
+      "Marketing agencies automating video production",
+      "Content creators scaling output",
+      "Non-technical CEOs/founders"
+    ]
+  },
+  "team": {
+    "structure": "Solo founder + AI agents (OpenClaw CTO)",
+    "roles": {
+      "founder": "Strategic decisions, customer development",
+      "openclaw_cto": "Architecture, code, deployment, operations",
+      "ai_agents": "Content creation, video production, customer support"
+    }
+  },
+  "metrics": {
+    "current": {
+      "mrr": 0,
+      "paying_customers": 0,
+      "total_users": "early access",
+      "tests_passing": 863,
+      "deployment_status": "live",
+      "prod_url": "https://sophia.agencyos.network"
+    },
+    "targets_q2_2026": {
+      "mrr": 5000,
+      "paying_customers": 15,
+      "target_tier_mix": "10 BASIC + 3 PREMIUM + 2 ENTERPRISE"
+    }
+  },
+  "competitive_advantages": [
+    "Zero-infrastructure for customers (BYOK = no vendor lock-in)",
+    "Vietnamese market focus (localized UX, PayOS for domestic payments)",
+    "AI-operated company (minimal human overhead, 24/7 delivery)",
+    "Crypto payments (NOWPayments USDT — global accessibility)",
+    "Cloudflare-only stack ($0 hosting, global edge)"
+  ],
+  "risks": [
+    "Single founder dependency",
+    "AI API cost volatility (HeyGen, ElevenLabs pricing changes)",
+    "Customer acquisition in early market",
+    "BYOK complexity for non-technical users",
+    "Payment provider limitations (NOWPayments crypto-only international)"
+  ],
+  "next_milestones": [
+    "First paying customer",
+    "10 BASIC tier subscriptions",
+    "Telegram bot onboarding automation",
+    "Video generation pipeline E2E test",
+    "Landing page SEO + content marketing launch"
+  ],
+  "generated_at": "2026-04-10T15:40:00Z",
+  "generated_by": "OpenClaw CTO via /idea command"
+}

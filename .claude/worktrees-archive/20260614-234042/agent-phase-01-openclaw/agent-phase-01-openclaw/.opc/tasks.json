@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "task-0001",
+      "title": "Harness smoke no-edit",
+      "prompt": "Do not edit files. Reply exactly: opc-loop-smoke-ok",
+      "verifyCommand": "test -f package.json",
+      "status": "done",
+      "stable": true,
+      "createdAt": "2026-06-12T16:42:58.110Z",
+      "updatedAt": "2026-06-12T16:43:44.156Z",
+      "lastRunId": "2026-06-12T16-43-38-261Z-task-0001"
+    }
+  ]
+}

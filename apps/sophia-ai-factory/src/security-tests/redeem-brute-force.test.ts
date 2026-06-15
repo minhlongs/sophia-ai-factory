@@ -45,13 +45,13 @@ vi.mock('@/seed/auth/better-auth-server', () => ({
 
 vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
-  getD1Raw: vi.fn().mockResolvedValue({
+  getD1: vi.fn(() => ({
     prepare: vi.fn().mockReturnValue({
       bind: vi.fn().mockReturnValue({
         first: vi.fn().mockResolvedValue(null),
       }),
     }),
-  }),
+  })),
 }));
 
 vi.mock('@/tree/handover/handover-account-setup', () => ({

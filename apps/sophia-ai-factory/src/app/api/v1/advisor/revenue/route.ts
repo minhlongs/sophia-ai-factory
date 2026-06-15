@@ -9,7 +9,7 @@ import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { checkAdmin, canAccessRevenue } from '@/land/analytics/rbac';
 import { fetchRevenueSnapshot } from '@/land/analytics/queries/revenue-nowpayments';
 import { fetchUnifiedRevenue } from '@/land/analytics/queries/revenue-unified-query';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type { Tier } from '@/seed/types';
@@ -24,7 +24,9 @@ interface CommissionSummary {
 }
 
 async function getCommissionAggregate(): Promise<CommissionSummary> {
-  const db = await getD1Raw();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 binding not available');
+  const db = _db;
   const result = await db
     .prepare(
       `SELECT status,

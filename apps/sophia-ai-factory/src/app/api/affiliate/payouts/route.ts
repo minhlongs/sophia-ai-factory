@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { fromCents } from '@/land/payouts/commission-cents'
 
 interface BatchRow {
@@ -43,7 +43,8 @@ export async function GET(request: NextRequest) {
 
   const tenantId = user.id
   const affiliateId = user.id
-  const db = await getD1Raw()
+  const db = getD1()
+  if (!db) throw new Error('D1 database binding not available')
 
   const result = await db
     .prepare(

@@ -9,7 +9,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 async function verifyHmac(request: Request, body: string): Promise<boolean> {
@@ -67,7 +67,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ ok: true }); // Ignore pings without videoId
     }
 
-    const db = await getD1Client();
+    const db = createServerClient();
 
     // Find the publishing_result by channel_post_id = videoId
     const { data: resultData } = await db

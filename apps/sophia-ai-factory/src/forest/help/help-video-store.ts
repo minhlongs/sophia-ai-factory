@@ -4,7 +4,7 @@
  * Layer: forest (read-only; no user mutations needed).
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { z } from 'zod'
 
 // ---------------------------------------------------------------------------
@@ -47,7 +47,9 @@ export type HelpVideoCategory = z.infer<typeof HelpVideoCategorySchema>
 
 /** Fetch all videos ordered by order_index. Includes unpublished (for admin). */
 export async function listAllHelpVideos(): Promise<HelpVideo[]> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const rows = await db
     .prepare(`SELECT * FROM help_videos ORDER BY order_index ASC`)
     .all<HelpVideo>()
@@ -56,7 +58,9 @@ export async function listAllHelpVideos(): Promise<HelpVideo[]> {
 
 /** Fetch published videos only (for public library page). */
 export async function listPublishedHelpVideos(): Promise<HelpVideo[]> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const rows = await db
     .prepare(`SELECT * FROM help_videos WHERE published = 1 ORDER BY order_index ASC`)
     .all<HelpVideo>()
@@ -68,7 +72,9 @@ export async function getHelpVideoBySlug(slug: string): Promise<HelpVideo | null
   const safe = z.string().min(1).max(100).safeParse(slug)
   if (!safe.success) return null
 
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const row = await db
     .prepare(`SELECT * FROM help_videos WHERE slug = ?1 LIMIT 1`)
     .bind(safe.data)
@@ -87,7 +93,9 @@ export async function getHelpVideoForTooltip(slug: string): Promise<HelpVideo | 
 export async function listHelpVideosByCategory(
   category: HelpVideoCategory,
 ): Promise<HelpVideo[]> {
-  const db = await getD1Raw()
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const rows = await db
     .prepare(`SELECT * FROM help_videos WHERE category = ?1 ORDER BY order_index ASC`)
     .bind(category)

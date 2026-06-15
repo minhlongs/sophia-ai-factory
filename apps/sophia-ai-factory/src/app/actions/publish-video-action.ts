@@ -100,9 +100,10 @@ export async function publishVideoAction(input: {
 
     // Auto-create performance feedback cycle if video corresponds to a Campaign or SOP Execution
     try {
-      const { getD1Raw } = await import('@/seed/db/client');
+      const { getD1 } = await import('@/seed/db/client');
       const { logger } = await import('@/seed/utils/logger-utility');
-      const db = await getD1Raw();
+      const db = getD1();
+      if (!db) throw new Error('D1 database binding not available');
       const sopExec = await db.prepare(
         `SELECT id, user_id, sop_template_id FROM sop_executions WHERE id = ?1 LIMIT 1`
       ).bind(input.videoId).first<{ id: string; user_id: string; sop_template_id: string }>();

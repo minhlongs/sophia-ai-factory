@@ -17,7 +17,7 @@
  * @module lib/video/video-access-control
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getVideoBucket } from './r2-binding'
 
@@ -52,7 +52,8 @@ const DB_ERROR_SENTINEL = Symbol('db_error');
  */
 async function getVideoAccessRow(videoId: string): Promise<VideoAccessRow | null | typeof DB_ERROR_SENTINEL> {
   try {
-    const db = await getD1Raw()
+  const db = getD1()
+  if (!db) throw new Error('D1 database binding not available')
     return await db
       .prepare(
         `SELECT id, user_id, r2_key, access_revoked

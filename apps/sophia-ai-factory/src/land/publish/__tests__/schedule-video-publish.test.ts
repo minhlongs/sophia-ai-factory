@@ -4,23 +4,23 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockFirst, mockRun, mockBind, mockPrepare, mockGetD1Raw } = vi.hoisted(() => {
+const { mockFirst, mockRun, mockBind, mockPrepare, mockGetD1 } = vi.hoisted(() => {
   const first = vi.fn();
   const run = vi.fn().mockResolvedValue({ success: true });
   const bind = vi.fn(() => ({ first, run }));
   const prepare = vi.fn(() => ({ bind }));
-  const getD1Raw = vi.fn().mockResolvedValue({ prepare });
+  const getD1 = vi.fn(() => ({ prepare }));
   return {
     mockFirst: first,
     mockRun: run,
     mockBind: bind,
     mockPrepare: prepare,
-    mockGetD1Raw: getD1Raw,
+    mockGetD1: getD1,
   };
 });
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: mockGetD1Raw,
+  getD1: mockGetD1,
 }));
 
 import {
@@ -35,7 +35,7 @@ describe('schedulePublish', () => {
     // resetAllMocks clears queued mockResolvedValueOnce values — clearAllMocks
     // leaves them queued and causes spillover between tests.
     vi.resetAllMocks();
-    mockGetD1Raw.mockResolvedValue({ prepare: mockPrepare });
+    mockGetD1.mockReturnValue({ prepare: mockPrepare });
     mockBind.mockImplementation(() => ({ first: mockFirst, run: mockRun }));
     mockPrepare.mockImplementation(() => ({ bind: mockBind }));
     mockRun.mockResolvedValue({ success: true });

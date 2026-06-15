@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("@/seed/db/client", () => ({
-  getD1Raw: vi.fn(),
+  getD1: vi.fn(),
 }));
 
 vi.mock("../promo-repo", () => ({
   getCodeByCode: vi.fn(),
 }));
 
-import { getD1Raw } from "@/seed/db/client";
+import { getD1 } from "@/seed/db/client";
 import { getCodeByCode } from "../promo-repo";
 import {
   bulkGeneratePromoCodes,
@@ -53,8 +53,8 @@ function buildD1Mock(): MockD1 {
     return { bind };
   });
   const batch = vi.fn().mockResolvedValue([]);
-  vi.mocked(getD1Raw).mockResolvedValue(
-    { prepare, batch } as unknown as Awaited<ReturnType<typeof getD1Raw>>,
+  vi.mocked(getD1).mockReturnValue(
+    { prepare, batch } as any,
   );
   return {
     prepare,

@@ -16,8 +16,8 @@ import { createServerClient } from '@/seed/db/client'
 import { UNIFIED_TIERS } from '@/seed/config/tiers'
 import type { Tier } from '@/seed/types'
 import { markOrderCompleted, findPendingOrderByUserAndMethod } from '@/land/orders/pending-order-repo'
-import { track } from '@/land/signals/track'
-import { D1Events } from '@/land/signals/d1-event-types'
+import { track } from '@/tree/signals/track'
+import { D1Events } from '@/tree/signals/d1-event-types'
 
 const PAYOS_CHECKSUM_KEY = process.env.PAYOS_CHECKSUM_KEY
 

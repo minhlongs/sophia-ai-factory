@@ -6,9 +6,9 @@
 
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
-import { requireAuth } from '@/land/signals/auth-helper'
-import { captureServer } from '@/land/signals/posthog-capture'
-import { isServerOnly, type EventName } from '@/land/signals/event-types'
+import { requireAuth } from '@/tree/signals/auth-helper'
+import { captureServer } from '@/tree/signals/posthog-capture'
+import { isServerOnly, type EventName } from '@/tree/signals/event-types'
 
 const TrackBodySchema = z.object({
   event: z.string().min(1).max(100),

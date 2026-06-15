@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 
 // Mock dependencies
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(),
 }));
 

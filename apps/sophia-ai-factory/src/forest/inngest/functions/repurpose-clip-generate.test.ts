@@ -26,7 +26,7 @@ vi.mock('@/seed/db/repositories/repurpose-jobs-repo', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(async () => ({
+  getD1: vi.fn(() => ({
     prepare: mockPrepare,
   })),
 }));

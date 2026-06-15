@@ -5,7 +5,7 @@
  * @module lib/admin/audit-log
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 
 export type AuditActionType =
@@ -36,7 +36,9 @@ export async function writeAuditLog(params: {
   payload?: Record<string, unknown>
 }): Promise<void> {
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
     await db
       .prepare(
         `INSERT INTO admin_audit_log (actor_user_id, action_type, target_user_id, payload)

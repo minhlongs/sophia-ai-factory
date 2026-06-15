@@ -15,13 +15,14 @@ const mockRun = vi.fn().mockResolvedValue({});
 const mockBind = vi.fn(() => ({ run: mockRun }));
 const mockPrepare = vi.fn(() => ({ bind: mockBind }));
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: vi.fn(() => Promise.resolve({ prepare: mockPrepare })),
+  getD1: vi.fn(() => ({ prepare: mockPrepare })),
 }));
 
 import { getHeyGenKey } from '@/tree/credentials/get-provider-key';
 import { createHeyGenVideo } from '@/land/video/heygen-helpers';
 import { submitByokVideo, RenderByokVideoError } from '@/land/video/render-byok-video';
 
+const mockedGetD1 = vi.mocked(await import('@/seed/db/client')).getD1;
 const mockedGetHeyGenKey = vi.mocked(getHeyGenKey);
 const mockedCreateHeyGen = vi.mocked(createHeyGenVideo);
 

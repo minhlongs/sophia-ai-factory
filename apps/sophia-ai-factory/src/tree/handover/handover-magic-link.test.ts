@@ -9,10 +9,10 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-const { mockGetD1Raw } = vi.hoisted(() => ({ mockGetD1Raw: vi.fn() }))
+const { mockGetD1 } = vi.hoisted(() => ({ mockGetD1: vi.fn() }))
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Raw: mockGetD1Raw,
+  getD1: mockGetD1,
 }))
 
 vi.mock('@/seed/utils/logger-utility', () => ({
@@ -62,7 +62,7 @@ function createMockD1(opts: MockD1Options = {}) {
     }
     return bound
   }
-  const db = { prepare: stmt } as unknown as Awaited<ReturnType<typeof import('@/seed/db/client').getD1Raw>>
+  const db = { prepare: stmt } as unknown as Awaited<ReturnType<typeof import('@/seed/db/client').getD1>>
   return { db, executed }
 }
 
@@ -93,7 +93,7 @@ describe('generateToken', () => {
 describe('createMagicLinkToken', () => {
   it('persists token + ISO-seconds expiry (default 24h) on customer_handovers', async () => {
     const { db, executed } = createMockD1()
-    mockGetD1Raw.mockResolvedValueOnce(db)
+    mockGetD1.mockReturnValue(db);
 
     const token = await createMagicLinkToken('hand-1')
 
@@ -108,7 +108,7 @@ describe('createMagicLinkToken', () => {
 
   it('uses 72h expiry for source=auto_signup', async () => {
     const { db, executed } = createMockD1()
-    mockGetD1Raw.mockResolvedValueOnce(db)
+    mockGetD1.mockReturnValue(db);
 
     await createMagicLinkToken('hand-1', { source: 'auto_signup' })
 
@@ -117,7 +117,7 @@ describe('createMagicLinkToken', () => {
 
   it('uses 72h expiry for source=auto_payment', async () => {
     const { db, executed } = createMockD1()
-    mockGetD1Raw.mockResolvedValueOnce(db)
+    mockGetD1.mockReturnValue(db);
 
     await createMagicLinkToken('hand-1', { source: 'auto_payment' })
 
@@ -126,7 +126,7 @@ describe('createMagicLinkToken', () => {
 
   it('honors explicit ttlHours override (wins over source defaulting)', async () => {
     const { db, executed } = createMockD1()
-    mockGetD1Raw.mockResolvedValueOnce(db)
+    mockGetD1.mockReturnValue(db);
 
     await createMagicLinkToken('hand-1', { ttlHours: 1, source: 'auto_signup' })
 
@@ -135,7 +135,7 @@ describe('createMagicLinkToken', () => {
 
   it('uses 24h default for unknown source values', async () => {
     const { db, executed } = createMockD1()
-    mockGetD1Raw.mockResolvedValueOnce(db)
+    mockGetD1.mockReturnValue(db);
 
     await createMagicLinkToken('hand-1', { source: 'manual' })
 
@@ -147,7 +147,7 @@ describe('validateMagicLinkToken', () => {
   it('returns handover row when token found + not expired', async () => {
     const row = { id: 'hand-1', customer_user_id: 'user-1', magic_link_token: 'tok' }
     const { db, executed } = createMockD1({ firstRow: row })
-    mockGetD1Raw.mockResolvedValueOnce(db)
+    mockGetD1.mockReturnValue(db);
 
     const result = await validateMagicLinkToken('tok-abc')
 
@@ -160,7 +160,7 @@ describe('validateMagicLinkToken', () => {
 
   it('returns null when no row matches (expired or wrong token)', async () => {
     const { db } = createMockD1({ firstRow: null })
-    mockGetD1Raw.mockResolvedValueOnce(db)
+    mockGetD1.mockReturnValue(db);
 
     const result = await validateMagicLinkToken('expired-tok')
 
@@ -169,7 +169,7 @@ describe('validateMagicLinkToken', () => {
 
   it('returns null + logs error when DB query throws (no propagation)', async () => {
     const { db } = createMockD1({ firstError: new Error('D1 timeout') })
-    mockGetD1Raw.mockResolvedValueOnce(db)
+    mockGetD1.mockReturnValue(db);
 
     const result = await validateMagicLinkToken('tok')
 
@@ -184,7 +184,7 @@ describe('validateMagicLinkToken', () => {
 describe('consumeMagicLink (single-use semantics)', () => {
   it('returns true when UPDATE affects a row (caller won the race)', async () => {
     const { db, executed } = createMockD1({ runMeta: { changes: 1 } })
-    mockGetD1Raw.mockResolvedValueOnce(db)
+    mockGetD1.mockReturnValue(db);
 
     const won = await consumeMagicLink('hand-1', 'tok-abc')
 
@@ -199,7 +199,7 @@ describe('consumeMagicLink (single-use semantics)', () => {
 
   it('returns false when UPDATE changes 0 rows (race lost / already consumed)', async () => {
     const { db } = createMockD1({ runMeta: { changes: 0 } })
-    mockGetD1Raw.mockResolvedValueOnce(db)
+    mockGetD1.mockReturnValue(db);
 
     const won = await consumeMagicLink('hand-1', 'stale-tok')
 
@@ -208,7 +208,7 @@ describe('consumeMagicLink (single-use semantics)', () => {
 
   it('returns false when meta is absent (defensive default to 0 changes)', async () => {
     const { db } = createMockD1({ runMeta: {} })
-    mockGetD1Raw.mockResolvedValueOnce(db)
+    mockGetD1.mockReturnValue(db);
 
     const won = await consumeMagicLink('hand-1', 'tok-abc')
 
@@ -219,7 +219,7 @@ describe('consumeMagicLink (single-use semantics)', () => {
 describe('markFirstRun (idempotent stamp)', () => {
   it('issues COALESCE UPDATE bound to customer_user_id', async () => {
     const { db, executed } = createMockD1()
-    mockGetD1Raw.mockResolvedValueOnce(db)
+    mockGetD1.mockReturnValue(db);
 
     await markFirstRun('user-1')
 
@@ -230,7 +230,7 @@ describe('markFirstRun (idempotent stamp)', () => {
 
   it('swallows errors with warn-level log (never blocks caller)', async () => {
     const { db } = createMockD1({ runError: new Error('table missing') })
-    mockGetD1Raw.mockResolvedValueOnce(db)
+    mockGetD1.mockReturnValue(db);
 
     await expect(markFirstRun('user-1')).resolves.toBeUndefined()
     expect(logger.warn).toHaveBeenCalledWith(
@@ -243,7 +243,7 @@ describe('markFirstRun (idempotent stamp)', () => {
 describe('markFirstSopInstall (idempotent stamp)', () => {
   it('issues COALESCE UPDATE on customer_first_sop_install_at', async () => {
     const { db, executed } = createMockD1()
-    mockGetD1Raw.mockResolvedValueOnce(db)
+    mockGetD1.mockReturnValue(db);
 
     await markFirstSopInstall('user-1')
 
@@ -255,7 +255,7 @@ describe('markFirstSopInstall (idempotent stamp)', () => {
 
   it('swallows errors with warn-level log (never blocks caller)', async () => {
     const { db } = createMockD1({ runError: new Error('connection lost') })
-    mockGetD1Raw.mockResolvedValueOnce(db)
+    mockGetD1.mockReturnValue(db);
 
     await expect(markFirstSopInstall('user-1')).resolves.toBeUndefined()
     expect(logger.warn).toHaveBeenCalledWith(

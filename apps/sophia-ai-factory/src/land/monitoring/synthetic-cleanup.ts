@@ -6,7 +6,7 @@
  * @module lib/monitoring/synthetic-cleanup
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 
@@ -16,7 +16,9 @@ import { getErrorMessage } from '@/seed/utils/to-error'
  */
 export async function cleanupSyntheticArtifacts(purchaseId: string): Promise<void> {
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
 
     // Delete videos rows linked to this purchase (there may be 0 or 1)
     await db

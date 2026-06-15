@@ -11,7 +11,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { recordAudit } from '@/seed/db/audit/audit-log'
 import { insertPurchase, markPaid, markRefunded, getByPaymentId } from '@/seed/db/repositories/user-purchases-repo'
 import { revokeAccessByPurchaseId } from '@/seed/db/repositories/videos-repo'
@@ -97,7 +97,9 @@ export async function handleOneTimeFinished(
 
   // Audit trail
   try {
-    const d1 = await getD1Raw()
+    const _d1 = getD1();
+    if (!_d1) throw new Error('D1 database binding not available');
+    const d1 = _d1;
     await recordAudit(d1, {
       tableName: 'user_purchases',
       rowId: purchaseId,
@@ -199,7 +201,9 @@ export async function handleOneTimeRefunded(
 
   // Audit trail
   try {
-    const d1 = await getD1Raw()
+    const _d1 = getD1();
+    if (!_d1) throw new Error('D1 database binding not available');
+    const d1 = _d1;
     await recordAudit(d1, {
       tableName: 'user_purchases',
       rowId: ipn.payment_id,
@@ -219,7 +223,9 @@ export async function handleOneTimeRefunded(
   // The user's tier was set by the one-time purchase (e.g. FREE100 → MASTER).
   // A full refund should undo that upgrade.
   try {
-    const d1 = await getD1Raw()
+    const _d1 = getD1();
+    if (!_d1) throw new Error('D1 database binding not available');
+    const d1 = _d1;
   const nowSec = Math.floor(Date.now() / 1000)
     // Update subscriptions table
  const subResult = await d1.prepare('UPDATE subscriptions SET plan = ?, updated_at = ? WHERE user_id = ? AND plan != ?')

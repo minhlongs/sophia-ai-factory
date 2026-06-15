@@ -12,7 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { createOnboardLink } from '@/land/payouts/stripe-connect';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
@@ -41,11 +41,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body', detail: getErrorMessage(err) }, { status: 400 });
   }
 
-  const db = await getD1Raw();
-  if (!db) {
-    return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
-  }
-
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
   const existing = (await db
     .prepare('SELECT stripe_account_id FROM user_payout_settings WHERE user_id = ?')
     .bind(user.id)

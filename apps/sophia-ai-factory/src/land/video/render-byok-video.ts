@@ -11,7 +11,7 @@
  * @module land/video/render-byok-video
  */
 import { getHeyGenKey } from '@/tree/credentials/get-provider-key';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { createHeyGenVideo } from '@/land/video/heygen-helpers';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -84,7 +84,8 @@ export async function submitByokVideo(
 
   const videoId = newVideoId();
   try {
-    const db = await getD1Raw();
+    const db = getD1()
+  if (!db) throw new Error('D1 database binding not available');
     await db
       .prepare(
         `INSERT INTO videos (id, user_id, heygen_job_id, title, status)

@@ -8,7 +8,7 @@
  */
 
 import { inngest } from '@/forest/orchestration';
-import { audit } from './audit';
+import { audit } from '@/tree/agent-fleet/audit';
 
 export interface ScheduleOptions {
   tenantId: string;

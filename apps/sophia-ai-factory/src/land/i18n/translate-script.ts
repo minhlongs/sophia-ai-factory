@@ -19,6 +19,7 @@
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 
 export interface TranslateScriptInput {
   userId: string;
@@ -49,7 +50,6 @@ export class TranslateConfigurationError extends Error {
 }
 
 const DEFAULT_MODEL = 'meta-llama/llama-3.1-8b-instruct:free';
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const MAX_INPUT_CHARS = 8000;
 
 function buildPrompt(text: string, fromLang: string, toLang: string, tone: 'literal' | 'natural'): string {
@@ -67,15 +67,8 @@ function buildPrompt(text: string, fromLang: string, toLang: string, tone: 'lite
   ].join('\n');
 }
 
-interface OpenRouterChoice {
-  message?: { content?: string };
-}
-interface OpenRouterResponse {
-  choices?: OpenRouterChoice[];
-}
-
 /**
- * Translate `input.text`. Pure compose around fetch — returns a structured
+ * Translate `input.text`. Pure compose around resilient client — returns a structured
  * result the caller can persist or render.
  */
 export async function translateScript(
@@ -105,28 +98,16 @@ export async function translateScript(
   const source: 'user' | 'platform' = process.env.OPENROUTER_API_KEY === keyOrNull ? 'platform' : 'user';
 
   try {
-    const res = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${keyOrNull}`,
-        'Content-Type': 'application/json',
-        // OpenRouter accepts an optional X-Title for cost analytics
-        'X-Title': 'Sophia translate-script',
-      },
-      body: JSON.stringify({
+    const content = await resilientChatCompletion(
+      buildPrompt(safeText, input.fromLang, input.toLang, tone),
+      {
+        openRouterKey: keyOrNull,
+        anthropicKey: undefined,
+        enableFallback: false,
         model,
-        messages: [{ role: 'user', content: buildPrompt(safeText, input.fromLang, input.toLang, tone) }],
-        temperature: tone === 'literal' ? 0.1 : 0.3,
-        max_tokens: 2000,
-      }),
-    });
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      logger.warn('[translate-script] OpenRouter non-2xx', { status: res.status, body: body.slice(0, 200) });
-      throw new Error(`Translation provider returned ${res.status}`);
-    }
-    const json = (await res.json()) as OpenRouterResponse;
-    const translated = json.choices?.[0]?.message?.content?.trim() ?? '';
+      }
+    );
+    const translated = content.trim();
     if (translated.length === 0) {
       throw new Error('Translation provider returned empty body');
     }

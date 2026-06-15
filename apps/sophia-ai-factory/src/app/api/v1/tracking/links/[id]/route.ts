@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getTrackingLink } from '@/land/tracking/edge-link';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
@@ -36,7 +36,7 @@ export async function GET(
 
     let clickCount = 0;
     try {
-      const db = await getD1Client();
+      const db = createServerClient();
       const { data: clicks } = await db
         .from('tracking_clicks')
         .select('id')
@@ -66,7 +66,7 @@ export async function DELETE(
     }
 
     try {
-      const db = await getD1Client();
+      const db = createServerClient();
       await db
         .from('tracking_links')
         .update({ active: 0 })

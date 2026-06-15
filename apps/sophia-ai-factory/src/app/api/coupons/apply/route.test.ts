@@ -14,6 +14,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(() => ({
     prepare: vi.fn(() => ({
       bind: vi.fn(),

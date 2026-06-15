@@ -8,7 +8,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { createServerClient, getD1Raw } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import { localizedHref } from '@/land/i18n/localized-href';
 import { getUserChannels } from '@/seed/db/get-user-channels';
 import { DistributePanel } from './distribute-panel';
@@ -52,7 +52,8 @@ export default async function DistributePage({
   }
 
   // Load all user channels (active + inactive) to show connect status
-  const d1 = await getD1Raw();
+  const d1 = getD1();
+  if (!d1) throw new Error('D1 database binding not available');
   const channels = await getUserChannels(d1, user.id, false);
 
   const videoDetailHref = localizedHref(locale, `/dashboard/videos/${videoId}`);

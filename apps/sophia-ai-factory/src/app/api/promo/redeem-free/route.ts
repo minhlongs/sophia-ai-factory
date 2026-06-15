@@ -13,7 +13,7 @@ import { validatePromoCode } from '@/land/promo/promo-validator';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getAuth } from '@/seed/auth/better-auth-server';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { createCustomerUser } from '@/tree/handover/handover-account-setup';
 import { sendEmail } from '@/forest/email/sender';
 import { sendHandoverTelegramDm } from '@/tree/telegram/telegram-handover-notifier';
@@ -37,7 +37,7 @@ async function findOrResolveUser(
   // Read full Better-Auth session to access emailVerified flag (the wrapped
   // User type from getCurrentUserFromHeaders strips it).
   try {
-    const auth = getAuth();
+    const auth = await getAuth();
     if (auth) {
       const session = await auth.api.getSession({ headers: request.headers });
       const sUser = session?.user as { id?: string; emailVerified?: boolean } | undefined;
@@ -55,8 +55,12 @@ async function findOrResolveUser(
   } catch { /* not logged in */ }
 
   // Look up by email in D1
+  const _db = getD1();
+  if (!_db) {
+    return { userId: null, sessionEmailVerified: false };
+  }
+  const db = _db;
   try {
-    const db = await getD1Raw();
     const row = await db
       .prepare(`SELECT id FROM user WHERE email = ?1 LIMIT 1`)
       .bind(email)
@@ -143,7 +147,11 @@ export const POST = withRateLimit(
       // (matches endpoint contract: "Creates user if not found, fires auto-handover")
       if (!userId) {
         try {
-          const db = await getD1Raw();
+          const _db = getD1();
+          if (!_db) {
+            throw new Error('D1 unavailable');
+          }
+          const db = _db;
           const resolvedName = fullName?.trim() || email.split('@')[0];
           userId = await createCustomerUser(db, email, resolvedName);
           logger.info('[RedeemFree] Auto-created customer user', { userId, email });

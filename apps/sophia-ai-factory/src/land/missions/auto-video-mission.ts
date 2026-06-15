@@ -20,7 +20,7 @@ import { translateScript, TranslateConfigurationError } from '@/land/i18n/transl
 import { buildVideoDescription } from '@/land/affiliates/video-description-injector';
 import { schedulePublish, PublishConfigurationError } from '@/land/publish/schedule-video-publish';
 import { submitByokVideo, RenderByokVideoError } from '@/land/video/render-byok-video';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 
@@ -89,7 +89,8 @@ async function insertMissionRow(
 ): Promise<string> {
   const id = newMissionId();
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     await db
       .prepare(
         `INSERT INTO engine_missions (id, user_id, command, params, status)
@@ -106,7 +107,8 @@ async function insertMissionRow(
 
 async function markMissionFailed(missionId: string, errCode: string, errMessage: string): Promise<void> {
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     await db
       .prepare(
         `UPDATE engine_missions
@@ -122,7 +124,8 @@ async function markMissionFailed(missionId: string, errCode: string, errMessage:
 
 async function markMissionSucceeded(missionId: string, result: AutoVideoMissionResult): Promise<void> {
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     await db
       .prepare(
         `UPDATE engine_missions

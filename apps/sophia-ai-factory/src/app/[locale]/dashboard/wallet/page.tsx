@@ -7,7 +7,7 @@
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { TierGateCard } from '@/seed/components/ui/tier-gate-card';
 import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
@@ -51,7 +51,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 async function fetchWalletData(userId: string): Promise<WalletResult> {
   try {
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
 
     const wallet = await db
       .prepare(`SELECT * FROM user_wallets WHERE user_id = ?`)

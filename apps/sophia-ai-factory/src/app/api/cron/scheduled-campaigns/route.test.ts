@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: mocks.createServerClient,
   getD1Safe: mocks.getD1Safe,
 }))
@@ -145,7 +146,7 @@ describe('GET /api/cron/scheduled-campaigns', () => {
     vi.clearAllMocks()
     mocks.verifyCronAuth.mockReturnValue(null)
     mocks.wasRecentlyRun.mockResolvedValue(false)
-    mocks.getD1Safe.mockResolvedValue(null)
+    mocks.getD1Safe.mockReturnValue(null)
   })
 
   afterEach(() => {
@@ -215,7 +216,7 @@ describe('GET /api/cron/scheduled-campaigns', () => {
     ], null, { insertError: { message: 'UNIQUE constraint failed: campaigns.id' } })
     mocks.createServerClient.mockReturnValue(db)
     const d1 = {}
-    mocks.getD1Safe.mockResolvedValue(d1)
+    mocks.getD1Safe.mockReturnValue(d1)
 
     const res = await GET(makeRequest())
     const body = await res.json() as { success: boolean; created: number; total: number; failures?: string[] }
@@ -283,7 +284,7 @@ describe('GET /api/cron/scheduled-campaigns', () => {
     ], null, { updateError: { message: 'database is locked' } })
     mocks.createServerClient.mockReturnValue(db)
     const d1 = {}
-    mocks.getD1Safe.mockResolvedValue(d1)
+    mocks.getD1Safe.mockReturnValue(d1)
 
     const res = await GET(makeRequest())
     const body = await res.json() as { success: boolean; created: number; total: number; failures: string[] }
@@ -322,7 +323,7 @@ describe('GET /api/cron/scheduled-campaigns', () => {
     ], null, { insertError: { message: 'CHECK constraint failed: campaigns.status' } })
     mocks.createServerClient.mockReturnValue(db)
     const d1 = {}
-    mocks.getD1Safe.mockResolvedValue(d1)
+    mocks.getD1Safe.mockReturnValue(d1)
 
     const res = await GET(makeRequest())
     const body = await res.json() as { success: boolean; created: number; total: number; failures: string[] }
@@ -381,7 +382,7 @@ describe('GET /api/cron/scheduled-campaigns', () => {
     const { db, calls } = makeDb([], { message: 'no such table: scheduled_campaigns' })
     const d1 = {}
     mocks.createServerClient.mockReturnValue(db)
-    mocks.getD1Safe.mockResolvedValue(d1)
+    mocks.getD1Safe.mockReturnValue(d1)
 
     const res = await GET(makeRequest())
     const body = await res.json() as { success: boolean; created: number; message: string }
@@ -404,7 +405,7 @@ describe('GET /api/cron/scheduled-campaigns', () => {
     const { db } = makeDb([])
     const d1 = {}
     mocks.createServerClient.mockReturnValue(db)
-    mocks.getD1Safe.mockResolvedValue(d1)
+    mocks.getD1Safe.mockReturnValue(d1)
 
     const res = await GET(makeRequest())
     const body = await res.json() as { success: boolean; created: number; message: string }

@@ -9,7 +9,7 @@
  */
 
 import { inngest } from '@/forest/inngest/client';
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { recordCost } from '@/land/video/cost-ledger';
 import { assertValidTransition } from '@/land/video/video-job-fsm';
 import { tenantScopedKey } from '@/land/video/r2-binding';
@@ -27,7 +27,7 @@ export const videoCompose = inngest.createFunction(
     const { jobId, tenantId, userId } = event.data;
 
     const job = await step.run('load-job', async () => {
-      const db = await getD1Client();
+      const db = createServerClient();
       const { data } = await db
         .from('video_jobs')
         .select('status, visual_r2_key')
@@ -41,7 +41,7 @@ export const videoCompose = inngest.createFunction(
 
     await step.run('transition-to-composing', async () => {
       assertValidTransition(job.status, 'composing');
-      const db = await getD1Client();
+      const db = createServerClient();
       await db
         .from('video_jobs')
         .update({ status: 'composing', updated_at: Math.floor(Date.now() / 1000) })
@@ -53,7 +53,7 @@ export const videoCompose = inngest.createFunction(
       const finalKey = job.visual_r2_key.startsWith('http')
         ? job.visual_r2_key
         : tenantScopedKey(tenantId, jobId, 'final.mp4');
-      const db = await getD1Client();
+      const db = createServerClient();
       await db
         .from('video_jobs')
         .update({ final_r2_key: finalKey, updated_at: Math.floor(Date.now() / 1000) })

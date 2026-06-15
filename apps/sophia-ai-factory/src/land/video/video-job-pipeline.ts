@@ -5,7 +5,7 @@
  * Inserts a video_jobs row and fires the initial Inngest event.
  */
 
-import { getD1Client } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 import { inngest } from '@/forest/orchestration';
 import { logger } from '@/seed/utils/logger-utility';
 import { checkVideoBudget, type RenderPath } from './cost-guardrail';
@@ -65,7 +65,7 @@ export async function createVideoJob(
   const jobId = crypto.randomUUID();
   const now = Math.floor(Date.now() / 1000);
 
-  const db = await getD1Client();
+  const db = createServerClient();
 
   await db.from('video_jobs').insert({
     id: jobId,

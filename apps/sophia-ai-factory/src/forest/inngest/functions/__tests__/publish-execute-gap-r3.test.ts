@@ -26,7 +26,7 @@ const {
   mockDbEq,
   mockDbSingle,
   mockDbMaybeSingle,
-  mockGetD1Client,
+  mockCreateServerClient,
   mockDispatchTelegram,
 } = vi.hoisted(() => {
   const mockDbEq = vi.fn();
@@ -55,7 +55,17 @@ const {
   mockDbInsert.mockReturnValue({ eq: mockDbEq });
   mockDbUpsert.mockReturnValue({ eq: mockDbEq });
 
-  const mockGetD1Client = vi.fn();
+  const mockCreateServerClient = vi.fn().mockReturnValue({
+    from: vi.fn().mockReturnValue({
+      select: mockDbSelect,
+      update: mockDbUpdate,
+      insert: mockDbInsert,
+      upsert: mockDbUpsert,
+      eq: mockDbEq,
+      single: mockDbSingle,
+      maybeSingle: mockDbMaybeSingle,
+    })
+  });
   const mockDispatchTelegram = vi.fn();
 
   return {
@@ -67,14 +77,17 @@ const {
     mockDbEq,
     mockDbSingle,
     mockDbMaybeSingle,
-    mockGetD1Client,
+    mockCreateServerClient,
     mockDispatchTelegram,
   };
 });
 
 // ── Module mocks ─────────────────────────────────────────────────────────────
 
-vi.mock('@/seed/db/client', () => ({ getD1Client: mockGetD1Client }));
+vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
+  createServerClient: mockCreateServerClient,
+}));
 vi.mock('@/tree/telegram/dispatch-with-retry-hints', () => ({
   dispatchTelegramWithRetryHints: mockDispatchTelegram,
 }));
@@ -160,7 +173,7 @@ describe('GAP-R3-b — telegram-finalize uses deterministic result PK', () => {
     process.env.R2_PUBLIC_HOSTNAME = 'pub-test.r2.dev';
 
     // Provide DB client
-    mockGetD1Client.mockResolvedValue({ from: mockDbFrom });
+    mockCreateServerClient.mockReturnValue({ from: mockDbFrom });
 
     // job row: telegram provider, not yet at max retries
     mockDbSingle.mockResolvedValue({
@@ -300,7 +313,7 @@ describe('GAP-R3-e — max retries exceeded → status=failed, no publishing_res
     vi.clearAllMocks();
     process.env.R2_PUBLIC_HOSTNAME = 'pub-test.r2.dev';
 
-    mockGetD1Client.mockResolvedValue({ from: mockDbFrom });
+    mockCreateServerClient.mockReturnValue({ from: mockDbFrom });
 
     // Job has retry_count = MAX_RETRIES (3) — should be terminated
     mockDbSingle.mockResolvedValue({

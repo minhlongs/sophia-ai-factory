@@ -18,7 +18,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyCronAuth } from '@/seed/security/cron-auth'
 import { recordCronRun } from '@/land/cron/run-tracker'
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { runReconcileQueries } from '@/land/monitoring/reconcile-query'
@@ -44,7 +44,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const cronCtx = startCronCheckIn(CRON_NAME)
   let db: D1Database
   try {
-    db = await getD1Raw()
+    const _db = getD1()
+    if (!_db) throw new Error('D1 database binding not available')
+    db = _db
   } catch (err) {
     logger.error('[Reconcile] D1 unavailable', err instanceof Error ? err : undefined)
     failCronCheckIn(cronCtx, CRON_NAME, err)

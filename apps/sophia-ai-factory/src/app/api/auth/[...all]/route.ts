@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    const auth = getAuth();
+    const auth = await getAuth();
     if (!auth) {
       return NextResponse.json({ error: 'Authentication service unavailable' }, { status: 503 });
     }
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const auth = getAuth();
+    const auth = await getAuth();
     if (!auth) {
       return NextResponse.json({ error: 'Authentication service unavailable' }, { status: 503 });
     }

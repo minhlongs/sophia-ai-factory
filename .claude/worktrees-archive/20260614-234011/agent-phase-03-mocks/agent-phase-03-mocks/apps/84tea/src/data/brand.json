@@ -1,0 +1,75 @@
+{
+  "brand": {
+    "name": "84tea",
+    "domain": "84tea.com",
+    "slogan": {
+      "vi": "Trà Năng Lượng Việt",
+      "en": "Vietnamese Energy Tea"
+    },
+    "tagline": "Premium Vietnamese Tea",
+    "country_code": "+84",
+    "description": "84tea là thương hiệu trà cao cấp Việt Nam, mang đến những dòng sản phẩm tuyển chọn từ các nhà sản xuất uy tín."
+  },
+  "product_lines": [
+    {
+      "id": "84-limited",
+      "name": "84 Limited",
+      "tagline": "Limited Edition Collection",
+      "description": "Dòng trà lên men cổ thụ cao cấp, sản xuất bởi 3704 Co., LTD",
+      "oem": "3704 Co., LTD (tralenmen.vn)",
+      "featured": true,
+      "products": ["tra-shan-6", "tra-luc-80", "tra-co-80", "tra-banh", "tra-soi"]
+    },
+    {
+      "id": "84-classic",
+      "name": "84 Classic",
+      "tagline": "Everyday Premium",
+      "description": "Dòng trà truyền thống phù hợp cho sử dụng hàng ngày",
+      "oem": "TBD",
+      "featured": false,
+      "products": []
+    },
+    {
+      "id": "84-wellness",
+      "name": "84 Wellness",
+      "tagline": "Health & Vitality",
+      "description": "Dòng trà chức năng, bổ sung dinh dưỡng",
+      "oem": "TBD",
+      "featured": false,
+      "products": []
+    }
+  ],
+  "oem_partners": [
+    {
+      "id": "3704",
+      "company": "3704 Co., LTD",
+      "registration": "011 070 44 89",
+      "founded": "2024-05-04",
+      "founder": "Lương Tuấn Anh",
+      "address": "134 Nguyễn Hoàng Tôn, Phú Thượng, Hà Nội",
+      "phone": "+84 988 030204",
+      "email": "okla.guru@gmail.com",
+      "website": "https://tralenmen.vn",
+      "specialty": "Trà lên men cổ thụ Shan Tuyết",
+      "product_lines": ["84-limited"]
+    }
+  ],
+  "colors": {
+    "imperial_green": "#0A5E47",
+    "gold_leaf": "#C5A962",
+    "ivory_silk": "#FDF6E9",
+    "deep_rosewood": "#4A2C2A",
+    "velvet_green": "#1A4D3E",
+    "champagne": "#F7E7CE"
+  },
+  "typography": {
+    "display": "Playfair Display",
+    "body": "Source Sans Pro",
+    "chinese": "Noto Serif SC"
+  },
+  "social": {
+    "instagram": "@84tea",
+    "facebook": "84tea",
+    "tiktok": "@84tea"
+  }
+}

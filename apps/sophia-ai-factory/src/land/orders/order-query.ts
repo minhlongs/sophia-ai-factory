@@ -6,7 +6,7 @@
  * @module lib/orders/order-query
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import type { OrderTimelineRow, VideoStatusType, PurchaseStatusType } from './order-types'
 
@@ -50,7 +50,9 @@ function toOrderTimelineRow(raw: RawOrderRow): OrderTimelineRow {
  */
 export async function getUserOrders(userId: string): Promise<OrderTimelineRow[]> {
   try {
-    const db = await getD1Raw()
+    const _db = getD1();
+    if (!_db) throw new Error('D1 database binding not available');
+    const db = _db;
     const result = await db
       .prepare(
         `SELECT

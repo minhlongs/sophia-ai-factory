@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { getActiveIncident, getRollup } from '@/land/status/status-store';
 import { applyCorsHeaders } from '@/seed/security/cors-security-configuration';
 
@@ -13,8 +13,16 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const origin = request.headers.get('origin');
+  const _db = getD1();
+  if (!_db) {
+    const response = NextResponse.json(
+      { status: 'unknown', uptime90d: null, incident: null },
+      { status: 500 },
+    );
+    return applyCorsHeaders(response, origin);
+  }
+  const db = _db;
   try {
-    const db = await getD1Raw();
     const [active, rollup] = await Promise.all([
       getActiveIncident(db),
       getRollup(db, 90),

@@ -10,7 +10,7 @@
  */
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { StripeConnectCard } from './stripe-connect-card';
@@ -31,7 +31,8 @@ export default async function AffiliatePayoutsPage(): Promise<React.JSX.Element>
     redirect('/login');
   }
 
-  const db = await getD1Raw();
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   const stripeRow = (await db
     .prepare(

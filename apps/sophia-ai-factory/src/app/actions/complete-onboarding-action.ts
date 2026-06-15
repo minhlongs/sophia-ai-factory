@@ -13,7 +13,7 @@
 
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getD1Raw } from '@/seed/db/client';
+import { getD1 } from '@/seed/db/client';
 import { revalidatePath } from 'next/cache';
 
 const inputSchema = z.object({
@@ -41,12 +41,13 @@ export async function completeOnboardingAction(
   const nowMs = Date.now(); // INTEGER unix-ms to match migration 0062
 
   try {
-    // UPSERT — many fresh MASTER FREE100 users have no user_profiles row yet
+    // INSERT ON CONFLICT — many fresh MASTER FREE100 users have no user_profiles row yet
     // (the BYOK setup wizard creates that row only when keys are saved). A
     // plain UPDATE silently no-ops for those users and leaves them stuck in
     // the /dashboard → /dashboard/onboarding redirect loop. Insert-on-conflict
     // makes the flag durable regardless of prior profile state.
-    const db = await getD1Raw();
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     await db
       .prepare(
         `INSERT INTO user_profiles (user_id, onboarding_completed_at)

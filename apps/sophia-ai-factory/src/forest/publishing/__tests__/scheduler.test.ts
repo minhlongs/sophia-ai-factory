@@ -13,7 +13,8 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({
-  getD1Client: vi.fn().mockResolvedValue(mocks.mockDb),
+  getD1: vi.fn().mockReturnValue({ prepare: vi.fn() }),
+  createServerClient: vi.fn().mockReturnValue(mocks.mockDb),
 }));
 
 vi.mock('../per-channel-quota', () => ({

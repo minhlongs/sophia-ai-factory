@@ -8,7 +8,7 @@
  * All money values are in cents (integer) to avoid floating-point errors.
  */
 
-import { getD1Raw } from '@/seed/db/client'
+import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import type {
@@ -50,7 +50,8 @@ export async function createBillingEvent(params: {
   const now = Math.floor(Date.now() / 1000)
 
   try {
-    const db = await getD1Raw()
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     await db
       .prepare(
         `INSERT INTO outcome_billing_events
@@ -82,7 +83,8 @@ export async function createBillingEvent(params: {
 export async function settleBillingEvent(eventId: string): Promise<void> {
   const now = Math.floor(Date.now() / 1000)
   try {
-    const db = await getD1Raw()
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     await db
       .prepare(
         `UPDATE outcome_billing_events
@@ -125,7 +127,8 @@ export async function getCreatorBillingSummary(
       : 'all-time'
 
   try {
-    const db = await getD1Raw()
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const row = await db
       .prepare(
         `SELECT
@@ -160,7 +163,8 @@ export async function getCreatorBillingSummary(
 
 export async function getActivePricingTiers(): Promise<OutcomePricingTier[]> {
   try {
-    const db = await getD1Raw()
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
     const result = await db
       .prepare(
         `SELECT id, name, percentage, min_revenue_cents, max_revenue_cents,

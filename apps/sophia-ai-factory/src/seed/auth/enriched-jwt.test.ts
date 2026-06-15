@@ -42,6 +42,7 @@ const mockFrom = vi.fn(() => ({ select: mockSelect, insert: mockInsert }))
 const mockSupabaseClient = { from: mockFrom }
 
 vi.mock('@/seed/db/client', () => ({
+  getD1: vi.fn(),
   createServerClient: vi.fn(() => mockSupabaseClient),
 }))
 
