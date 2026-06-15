@@ -26,7 +26,7 @@ import {
 } from '@/seed/components/ui/select';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { DEFAULT_REFUND_WINDOW_DAYS } from '@/config/refund-policy';
-import type { RefundablePurchase } from '../actions';
+import type { RefundablePurchase } from '@/app/actions/billing';
 
 const REASON_KEYS = [
   'reason_not_working',

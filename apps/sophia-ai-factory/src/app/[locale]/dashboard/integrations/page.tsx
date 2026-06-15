@@ -45,7 +45,7 @@ export default async function IntegrationsPage() {
       <Section title={t('section_channels')} desc={t('section_channels_desc')}>
         <IntegrationCard name="YouTube" icon="smart_display" status="beta" isConnected={connected.has('youtube_oauth')} href="/dashboard/settings" t={t} />
         <IntegrationCard name="TikTok" icon="videocam" status="beta" isConnected={connected.has('tiktok_oauth')} href="/dashboard/settings" t={t} />
-        <IntegrationCard name="Instagram" icon="photo_camera" status="beta" isConnected={connected.has('instagram_oauth')} href="/setup-wizard" t={t} />
+        <IntegrationCard name="Instagram" icon="photo_camera" status="beta" isConnected={connected.has('instagram_oauth')} href="/dashboard/onboarding" t={t} />
         <IntegrationCard name="Pinterest" icon="push_pin" status="coming_soon" isConnected={false} href="#" badge={t('badge_new')} t={t} />
         <IntegrationCard name="LinkedIn" icon="work" status="coming_soon" isConnected={false} href="#" badge={t('badge_new')} t={t} />
         <IntegrationCard name="Zalo" icon="chat" status="coming_soon" isConnected={false} href="#" badge={t('badge_new')} t={t} />
@@ -67,8 +67,8 @@ export default async function IntegrationsPage() {
 
       {/* Affiliate Networks */}
       <Section title={t('section_affiliates')} desc={t('section_affiliates_desc')}>
-        <IntegrationCard name="Impact" icon="swap_horiz" status="beta" isConnected={connected.has('impact')} href="/setup-wizard" t={t} />
-        <IntegrationCard name="PartnerStack" icon="group_work" status="beta" isConnected={connected.has('partnerstack')} href="/setup-wizard" t={t} />
+        <IntegrationCard name="Impact" icon="swap_horiz" status="beta" isConnected={connected.has('impact')} href="/dashboard/onboarding" t={t} />
+        <IntegrationCard name="PartnerStack" icon="group_work" status="beta" isConnected={connected.has('partnerstack')} href="/dashboard/onboarding" t={t} />
         <IntegrationCard name="Binance Affiliate" icon="currency_bitcoin" status="coming_soon" isConnected={false} href="#" t={t} />
         <IntegrationCard name="Bybit Affiliate" icon="show_chart" status="coming_soon" isConnected={false} href="#" t={t} />
         <IntegrationCard name="Bitget Affiliate" icon="trending_up" status="coming_soon" isConnected={false} href="#" t={t} />

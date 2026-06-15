@@ -91,6 +91,48 @@ export function Button({ className, ...props }: ButtonProps) {
 }
 ```
 
+### Design System Usage
+
+The seed UI component library (`@/seed/components/ui/`) provides reusable, theme-aware components built on Radix UI primitives. Use these instead of custom Tailwind implementations for common UI patterns to ensure consistency and accessibility.
+
+**Available Components**:
+
+- **Primitives**: Button, Card, Input, Label, Textarea, Select, Switch, Progress, Skeleton, Badge, Tooltip, Popover, Dialog, DropdownMenu, Tabs, Table, Breadcrumb, Pagination.
+- **Composite**: Form (Server Action wrapper), TierGateCard, EmptyState, MobileNav, etc.
+
+**Import Pattern**:
+
+```tsx
+import { Button, Card, CardHeader, CardTitle, CardContent } from '@/seed/components/ui';
+```
+
+**When to Use**:
+
+- ✅ Use design system components for standard UI elements (buttons, forms, tables, navigation).
+- ✅ Use CSS variables (`--primary`, `--muted`, `--radius`) for custom styling to maintain theme consistency.
+- ✅ Use `className` prop to customize component appearance as needed.
+- ❌ Avoid arbitrary Tailwind values (`bg-[#1a1a1a]`, `rounded-[12px]`, `text-[11px]`) — prefer design tokens or existing Tailwind scale.
+- ❌ Avoid reimplementing common components (Table, Tabs, Breadcrumb, Pagination) from scratch; use the design system.
+
+**Button Variants**:
+
+Standardize on:
+- Primary action: `<Button variant="default" size="lg">`
+- Secondary: `<Button variant="outline">` or `variant="secondary"`
+- Destructive: `<Button variant="destructive">`
+- Ghost/Link: for low emphasis
+
+**Arbitrary Value Replacement**:
+
+Instead of hardcoded values, use:
+- `rounded-[16px]` → `rounded-2xl`
+- `text-[11px]` → `text-xs` (12px)
+- `bg-[#1a1a1a]` → `bg-muted` or `bg-card` (check contrast)
+
+**Adopting the Design System**:
+
+New code should use design system components by default. Existing pages should be gradually migrated. Run `grep` to find arbitrary Tailwind usage and refactor to tokens or components.
+
 ### Error Handling & Logging
 - Use `try/catch` blocks in Server Actions and API routes.
 - Log errors via `logger.error()` from `@/lib/logger` (routes through observability stack).

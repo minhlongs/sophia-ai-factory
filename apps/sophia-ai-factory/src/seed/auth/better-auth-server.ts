@@ -193,7 +193,7 @@ function buildWelcomeHtml(nameOrEmail: string): string {
   <p>Hi ${name},</p>
   <p>Your account is ready. Here's how to get started:</p>
   <ol>
-    <li>Set up your API keys in <a href="https://sophia.agencyos.network/setup-wizard" style="color:#6750A4;">Settings</a></li>
+    <li>Set up your API keys in <a href="https://sophia.agencyos.network/dashboard/onboarding" style="color:#6750A4;">Onboarding</a></li>
     <li>Create your first AI video campaign</li>
     <li>Connect Telegram bot @Sophia_Bbot for mobile access</li>
   </ol>

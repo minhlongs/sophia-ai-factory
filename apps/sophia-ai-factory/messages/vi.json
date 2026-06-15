@@ -1042,6 +1042,7 @@
         "timing_immediate_desc": "Thay đổi có hiệu lực ngay",
         "timing_eoc_label": "Cuối chu kỳ",
         "timing_eoc_desc": "Thay đổi có hiệu lực khi hết chu kỳ",
+        "mode_title": "Thời điểm hạ cấp",
         "submitting": "Đang xử lý",
         "submit": "Gửi",
         "confirm_downgrade_title": "Xác nhận hạ cấp",
@@ -1656,7 +1657,8 @@
         "cancel": "Hủy",
         "submit": "Tạo lịch",
         "autoRunDescription": "Sau lần chạy đầu tiên, hệ thống sẽ tự động tạo campaign mới mỗi <b>{days} ngày</b>.",
-        "days": "Ngày"
+        "days": "Ngày",
+        "submitting": "Đang lưu..."
       }
     },
     "settings": {
@@ -2162,7 +2164,9 @@
     "degraded": "Degraded",
     "uptime90d": "Uptime90d",
     "noData": "No Data",
-    "pastIncidents": "Past Incidents"
+    "pastIncidents": "Past Incidents",
+    "active": "Active",
+    "paused": "Paused"
   },
   "progress": "Tiến độ",
   "system_info": "Thông tin hệ thống",
@@ -2257,7 +2261,43 @@
       "error_password_too_short": "Mật khẩu phải có ít nhất 8 ký tự",
       "error_email_exists": "Email này đã được đăng ký. Hãy thử đăng nhập.",
       "error_generic": "Đăng ký thất bại. Vui lòng thử lại.",
-      "have_account": "Đã có tài khoản?"
+      "have_account": "Đã có tài khoản?",
+      "error_coupon_failed": "Error coupon failed",
+      "check_email_title": "Check email title",
+      "check_spam_note": "Check spam note",
+      "back_to_login": "Back to login",
+      "sign_in": "Sign in",
+      "create_account": "Create account",
+      "tab_signin": "Tab signin",
+      "tab_signup": "Tab signup",
+      "mode_password": "Mode password",
+      "mode_magic": "Mode magic",
+      "or_contact_support": "Or contact support",
+      "back_to_home": "Back to home"
+    },
+    "login": {
+      "error_magic_failed": "Gửi magic link thất bại",
+      "error_connection": "Lỗi kết nối. Vui lòng thử lại.",
+      "magic_link_description": "Nhập email để nhận link đăng nhập. Không cần mật khẩu.<br/><span class=\"text-accent\">Chưa có tài khoản? Magic link sẽ tự động tạo cho bạn.</span>",
+      "email_label": "Email",
+      "sending_magic": "Đang gửi magic link…",
+      "send_magic_link": "Gửi Magic Link",
+      "error_login_failed": "Đăng nhập thất bại",
+      "password_label": "Mật khẩu",
+      "logging_in": "Đang đăng nhập…",
+      "sign_in": "Đăng Nhập",
+      "error_coupon_failed": "Kích hoạt coupon thất bại",
+      "check_email_title": "Kiểm Tra Email Của Bạn",
+      "check_email_message": "Chúng tôi đã gửi link đăng nhập đến <strong>{email}</strong>. Link có hiệu lực trong 15 phút.",
+      "check_spam_note": "Không thấy email? Kiểm tra thư mục Spam/Junk hoặc tab Promotions.",
+      "back_to_login": "Quay lại đăng nhập",
+      "create_account": "Tạo Tài Khoản",
+      "tab_signin": "Đăng Nhập",
+      "tab_signup": "Đăng Ký",
+      "mode_password": "Mật khẩu",
+      "mode_magic": "Magic Link",
+      "or_contact_support": "hoặc liên hệ hỗ trợ",
+      "back_to_home": "Quay về trang chủ"
     },
     "mfa_challenge": {
       "title": "Xác Thực Hai Yếu Tố",
@@ -3492,7 +3532,8 @@
     "startDateLabel": "Start Date Label",
     "submit": "Submit",
     "topicLabel": "Topic Label",
-    "topicPlaceholder": "Topic Placeholder"
+    "topicPlaceholder": "Topic Placeholder",
+    "submitting": "Submitting"
   },
   "generate": {
     "languageEn": "Language En",
@@ -4190,5 +4231,43 @@
     " Please try again": {
       "": "TODO"
     }
-  }
+  },
+  "error_magic_failed": "Error magic failed",
+  "error_connection": "Error connection",
+  "magic_link_description": "Magic link description",
+  "email_label": "Email label",
+  "sending_magic": "Sending magic",
+  "send_magic_link": "Send magic link",
+  "error_login_failed": "Error login failed",
+  "password_label": "Password label",
+  "logging_in": "Logging in",
+  "sign_in": "Sign in",
+  "mode_title": "Mode title",
+  "mode_eoc_label": "Mode eoc label",
+  "mode_eoc_desc": "Mode eoc desc",
+  "mode_immediate_label": "Mode immediate label",
+  "mode_immediate_desc": "Mode immediate desc",
+  "confirm_downgrade_title": "Confirm downgrade title",
+  "confirm_lose_title": "Confirm lose title",
+  "timing_eoc_label": "Timing eoc label",
+  "timing_eoc_desc": "Timing eoc desc",
+  "timing_immediate_label": "Timing immediate label",
+  "confirm_immediate_downgrade_warning": "Confirm immediate downgrade warning",
+  "cancel": "Cancel",
+  "submitting": "Submitting",
+  "confirm_downgrade_confirm": "Confirm downgrade confirm",
+  "badge_current": "Badge current",
+  "badge_downgrade": "Badge downgrade",
+  "everyDay": "Every Day",
+  "threeDays": "Three Days",
+  "weekly": "Weekly",
+  "twoWeeks": "Two Weeks",
+  "refresh": "Refresh",
+  "hasTemplate": "Has Template",
+  "pauseTooltip": "Pause Tooltip",
+  "activateTooltip": "Activate Tooltip",
+  "deleteTooltip": "Delete Tooltip",
+  "countLabel": "Count Label",
+  "activeLabel": "Active Label",
+  "autoRefresh": "Auto Refresh"
 }

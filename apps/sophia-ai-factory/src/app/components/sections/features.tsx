@@ -35,8 +35,8 @@ export function Features() {
           {FEATURE_CARDS.map((card, i) => (
             <ScrollReveal key={card.key} delay={i * 100} className={card.span}>
               <div className="group gradient-border card-hover h-full cursor-pointer">
-                <div className="relative h-full p-7 rounded-[16px] bg-card">
-                  <div className={`absolute inset-0 rounded-[16px] bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                <div className="relative h-full p-7 rounded-2xl bg-card">
+                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${card.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
                   <div className="relative">
                     <div className="flex items-start gap-4 mb-4">
                       <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 bg-accent/10">

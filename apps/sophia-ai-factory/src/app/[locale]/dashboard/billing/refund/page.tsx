@@ -8,7 +8,7 @@
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { listRefundablePurchasesAction } from '../actions';
+import { listRefundablePurchasesAction } from '@/app/actions/billing';
 import { RefundFormClient } from './refund-form-client';
 
 interface PageProps {

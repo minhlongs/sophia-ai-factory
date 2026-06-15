@@ -226,11 +226,11 @@ export function PricingCard({
 
       {/* ── Secure Payment & Trust Seals ── */}
       <div className="mt-4 flex flex-col items-center gap-2 border-t border-border/50 pt-4">
-        <p className="text-[9px] text-muted-foreground uppercase tracking-widest font-semibold">
+        <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">
           Secure Crypto & Card Checkout
         </p>
         <div className="flex items-center gap-2.5 opacity-60 hover:opacity-90 transition-opacity">
-          <span className="text-[9px] bg-primary/5 border border-primary/10 px-1.5 py-0.5 rounded text-primary font-bold">
+          <span className="text-xs bg-primary/5 border border-primary/10 px-1.5 py-0.5 rounded text-primary font-bold">
             NOWPayments
           </span>
           <svg className="h-3.5 w-auto text-muted-foreground" viewBox="0 0 24 15" fill="currentColor">
@@ -241,10 +241,10 @@ export function PricingCard({
             <circle cx="8.3" cy="5.2" r="3.2" opacity="0.6"/>
             <circle cx="15.7" cy="5.2" r="3.2" opacity="0.6"/>
           </svg>
-          <span className="text-[9px] bg-emerald-400/15 border border-emerald-400/20 px-1 rounded text-emerald-400 font-bold">
+          <span className="text-xs bg-emerald-400/15 border border-emerald-400/20 px-1 rounded text-emerald-400 font-bold">
             USDT
           </span>
-          <span className="text-[9px] bg-amber-400/15 border border-amber-400/20 px-1 rounded text-amber-400 font-bold">
+          <span className="text-xs bg-amber-400/15 border border-amber-400/20 px-1 rounded text-amber-400 font-bold">
             BTC
           </span>
         </div>

@@ -9,6 +9,15 @@ import { listInvites } from '@/land/sop-marketplace/beta-invites';
 import type { BetaInvite } from '@/land/sop-marketplace/beta-invites';
 import { createInviteAction, revokeInviteAction } from './actions';
 import { getD1 } from '@/seed/db/get-d1';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/seed/components/ui/table';
+import { Button } from '@/seed/components/ui/button';
 
 async function handleCreate(formData: FormData): Promise<void> {
   'use server';
@@ -161,64 +170,64 @@ export default async function BetaInvitesPage({ params }: PageProps): Promise<Re
             <p className="text-xs text-white/30 mt-1">Create your first beta invite above</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-white/5 text-xs text-white/40">
-                  <th className="px-5 py-3 text-left font-medium">Invite Code</th>
-                  <th className="px-4 py-3 text-left font-medium">Email</th>
-                  <th className="px-4 py-3 text-left font-medium">Used</th>
-                  <th className="px-4 py-3 text-left font-medium">Expires</th>
-                  <th className="px-4 py-3 text-left font-medium">Created</th>
-                  <th className="px-4 py-3 text-left font-medium">Status</th>
-                  <th className="px-4 py-3 text-left font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {invites.map((invite) => (
-                  <tr key={invite.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-5 py-3">
-                      <code className="font-mono text-primary-300 bg-primary-500/10 px-2 py-0.5 rounded text-xs">
-                        {invite.code}
-                      </code>
-                    </td>
-                    <td className="px-4 py-3 text-white/60 text-xs">
-                      {invite.email ?? <span className="text-white/30">—</span>}
-                    </td>
-                    <td className="px-4 py-3 text-white/70 text-xs">
-                      {invite.used_count} / {invite.max_uses}
-                    </td>
-                    <td className="px-4 py-3 text-white/60 text-xs">
-                      {formatDate(invite.expires_at)}
-                    </td>
-                    <td className="px-4 py-3 text-white/60 text-xs">
-                      {formatDate(invite.created_at)}
-                    </td>
-                    <td className="px-4 py-3">{statusBadge(invite)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <CopyButton code={invite.code} />
-                        <form
-                          action={async (fd: FormData) => {
-                            const id = fd.get('id') as string;
-                            await handleRevoke(id);
-                          }}
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-xs text-left font-medium px-5 py-3">Invite Code</TableHead>
+                <TableHead className="text-xs text-left font-medium px-4 py-3">Email</TableHead>
+                <TableHead className="text-xs text-left font-medium px-4 py-3">Used</TableHead>
+                <TableHead className="text-xs text-left font-medium px-4 py-3">Expires</TableHead>
+                <TableHead className="text-xs text-left font-medium px-4 py-3">Created</TableHead>
+                <TableHead className="text-xs text-left font-medium px-4 py-3">Status</TableHead>
+                <TableHead className="text-xs text-left font-medium px-4 py-3">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {invites.map((invite) => (
+                <TableRow key={invite.id}>
+                  <td className="px-5 py-3">
+                    <code className="font-mono text-primary-300 bg-primary-500/10 px-2 py-0.5 rounded text-xs">
+                      {invite.code}
+                    </code>
+                  </td>
+                  <td className="px-4 py-3 text-white/60 text-xs">
+                    {invite.email ?? <span className="text-white/30">—</span>}
+                  </td>
+                  <td className="px-4 py-3 text-white/70 text-xs">
+                    {invite.used_count} / {invite.max_uses}
+                  </td>
+                  <td className="px-4 py-3 text-white/60 text-xs">
+                    {formatDate(invite.expires_at)}
+                  </td>
+                  <td className="px-4 py-3 text-white/60 text-xs">
+                    {formatDate(invite.created_at)}
+                  </td>
+                  <td className="px-4 py-3">{statusBadge(invite)}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <CopyButton code={invite.code} />
+                      <form
+                        action={async (fd: FormData) => {
+                          const id = fd.get('id') as string;
+                          await handleRevoke(id);
+                        }}
+                      >
+                        <input type="hidden" name="id" value={invite.id} />
+                        <Button
+                          type="submit"
+                          variant="destructive"
+                          size="sm"
+                          className="text-xs"
                         >
-                          <input type="hidden" name="id" value={invite.id} />
-                          <button
-                            type="submit"
-                            className="text-xs text-red-400 hover:text-red-300 transition-colors px-2 py-1 rounded hover:bg-red-500/10"
-                          >
-                            Revoke
-                          </button>
-                        </form>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                          Revoke
+                        </Button>
+                      </form>
+                    </div>
+                  </td>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         )}
       </div>
     </div>

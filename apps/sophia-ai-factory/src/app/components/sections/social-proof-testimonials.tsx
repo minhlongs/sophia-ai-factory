@@ -32,7 +32,7 @@ export function TestimonialsGrid() {
         {TESTIMONIAL_KEYS.map((key, i) => (
           <ScrollReveal key={key} delay={i * 100}>
             <div className="gradient-border h-full cursor-pointer group">
-              <div className="p-6 rounded-[16px] bg-card h-full flex flex-col gap-4">
+              <div className="p-6 rounded-2xl bg-card h-full flex flex-col gap-4">
                 <div className="flex gap-0.5">
                   {[...Array(5)].map((_, j) => (
                     <span key={`star-${key}-${j}`} className="material-symbols-outlined text-base text-amber-400" aria-hidden="true">star</span>

@@ -50,14 +50,14 @@ export function IntegrationCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
             <span className="font-medium text-sm">{name}</span>
-            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${statusClass}`}>{statusLabel}</span>
+            <span className={`text-xs px-1.5 py-0.5 rounded-full ${statusClass}`}>{statusLabel}</span>
             {badge && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">
                 {badge}
               </span>
             )}
             {isConnected && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                 {t('status_connected')}
               </span>
             )}

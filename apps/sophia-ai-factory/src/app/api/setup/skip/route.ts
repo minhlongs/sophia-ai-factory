@@ -1,7 +1,7 @@
 /**
- * GET /api/setup/skip — auto-complete setup wizard for users who already have
+ * GET /api/setup/skip — auto-complete onboarding for users who already have
  * LLM keys configured. Route handlers can mutate cookies (Server Components cannot
- * since Next.js 15), which is why this lives outside the setup-wizard layout.
+ * since Next.js 15), which is why this lives outside the onboarding layout.
  *
  * @module app/api/setup/skip/route
  */
@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
   if (!user) {
-    return NextResponse.redirect(new URL('/login?redirect=/setup-wizard', request.url));
+    return NextResponse.redirect(new URL('/login?redirect=/dashboard/onboarding', request.url));
   }
 
   let hasLlmKey = false;
@@ -25,11 +25,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     hasLlmKey = providers.includes('openrouter') || providers.includes('anthropic');
   } catch (err) {
     logger.error('[setup/skip] listUserApiKeyProviders failed', err instanceof Error ? err : undefined);
-    return NextResponse.redirect(new URL('/setup-wizard?error=lookup', request.url));
+    return NextResponse.redirect(new URL('/dashboard/onboarding?error=lookup', request.url));
   }
 
   if (!hasLlmKey) {
-    return NextResponse.redirect(new URL('/setup-wizard', request.url));
+    return NextResponse.redirect(new URL('/dashboard/onboarding', request.url));
   }
 
   const response = NextResponse.redirect(new URL('/dashboard', request.url));

@@ -52,7 +52,7 @@ export function LocalSetupGuide({ apiKey, locale }: Props) {
         {/* Step 1: API Key */}
         <div className="flex gap-3">
           <div className="flex flex-col items-center">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-800 text-[10px] font-bold text-muted-foreground-400 border border-border-700">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-800 text-xs font-bold text-muted-foreground-400 border border-border-700">
               1
             </span>
             <div className="w-[1px] flex-1 bg-muted-800 my-1"></div>
@@ -62,7 +62,7 @@ export function LocalSetupGuide({ apiKey, locale }: Props) {
               <Key size={12} className="text-indigo-400" />
               {isVi ? 'Lấy API Key kết nối' : 'Get Connection API Key'}
             </h3>
-            <p className="text-[11px] text-muted-foreground-500 mt-1">
+            <p className="text-xs text-muted-foreground-500 mt-1">
               {isVi
                 ? 'Dùng để xác thực trình render cục bộ của bạn với hệ thống Sophia.'
                 : 'Used to authenticate your local renderer with the Sophia platform.'}
@@ -70,7 +70,7 @@ export function LocalSetupGuide({ apiKey, locale }: Props) {
 
             <div className="mt-2">
               {apiKey ? (
-                <div className="flex items-center justify-between rounded-lg bg-muted-950 border border-border-800 px-3 py-1.5 font-mono text-[11px] text-muted-foreground-300 max-w-md">
+                <div className="flex items-center justify-between rounded-lg bg-muted-950 border border-border-800 px-3 py-1.5 font-mono text-xs text-muted-foreground-300 max-w-md">
                   <span>{apiKey}</span>
                   <button
                     onClick={() => copyToClipboard(apiKey, setCopiedKey)}
@@ -82,14 +82,14 @@ export function LocalSetupGuide({ apiKey, locale }: Props) {
                 </div>
               ) : (
                 <div className="rounded-lg border border-yellow-900/30 bg-yellow-950/10 p-3 max-w-md">
-                  <p className="text-[11px] text-yellow-500/90 leading-normal">
+                  <p className="text-xs text-yellow-500/90 leading-normal">
                     {isVi
                       ? 'Không tìm thấy API Key đang hoạt động. Bạn cần có API Key để kết nối engine cục bộ.'
                       : 'No active connection API key found. You need an API key to connect your local engine.'}
                   </p>
                   <Link
                     href={`/${locale}/dashboard/api-keys`}
-                    className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
+                    className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
                   >
                     {isVi ? 'Tạo API Key mới' : 'Generate API Key'}
                     <ExternalLink size={10} />
@@ -103,7 +103,7 @@ export function LocalSetupGuide({ apiKey, locale }: Props) {
         {/* Step 2: Run command */}
         <div className="flex gap-3">
           <div className="flex flex-col items-center">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-800 text-[10px] font-bold text-muted-foreground-400 border border-border-700">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-800 text-xs font-bold text-muted-foreground-400 border border-border-700">
               2
             </span>
             <div className="w-[1px] flex-1 bg-muted-800 my-1"></div>
@@ -112,13 +112,13 @@ export function LocalSetupGuide({ apiKey, locale }: Props) {
             <h3 className="text-xs font-semibold text-muted-foreground-200">
               {isVi ? 'Chạy lệnh cài đặt' : 'Run Installation Command'}
             </h3>
-            <p className="text-[11px] text-muted-foreground-500 mt-1">
+            <p className="text-xs text-muted-foreground-500 mt-1">
               {isVi
                 ? 'Sao chép và chạy lệnh bên dưới trong Terminal của máy Mac (hỗ trợ chip Apple Silicon M1/M2/M3).'
                 : 'Copy and run the installer command in your Mac terminal (supports Apple Silicon M1/M2/M3).'}
             </p>
 
-            <div className="mt-2 flex items-center justify-between rounded-lg bg-muted-950 border border-border-800 px-3 py-2 font-mono text-[11px] text-muted-foreground-300 max-w-xl overflow-x-auto">
+            <div className="mt-2 flex items-center justify-between rounded-lg bg-muted-950 border border-border-800 px-3 py-2 font-mono text-xs text-muted-foreground-300 max-w-xl overflow-x-auto">
               <span className="whitespace-nowrap select-all">{command}</span>
               <button
                 onClick={() => copyToClipboard(command, setCopiedCommand)}
@@ -134,7 +134,7 @@ export function LocalSetupGuide({ apiKey, locale }: Props) {
         {/* Step 3: Run Engine */}
         <div className="flex gap-3">
           <div className="flex flex-col items-center">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-800 text-[10px] font-bold text-muted-foreground-400 border border-border-700">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted-800 text-xs font-bold text-muted-foreground-400 border border-border-700">
               3
             </span>
           </div>
@@ -142,7 +142,7 @@ export function LocalSetupGuide({ apiKey, locale }: Props) {
             <h3 className="text-xs font-semibold text-muted-foreground-200">
               {isVi ? 'Khởi chạy và Render' : 'Start Engine & Render'}
             </h3>
-            <p className="text-[11px] text-muted-foreground-500 mt-1 leading-normal">
+            <p className="text-xs text-muted-foreground-500 mt-1 leading-normal">
               {isVi
                 ? 'Nhập API key kết nối khi trình cài đặt yêu cầu hoặc cấu hình trong file .env. Engine sẽ tự động nhận diện và xử lý các tác vụ render của bạn.'
                 : 'Input your connection API key when prompted by the installer, or configure it in the .env file. The engine will run in the background and auto-process your render jobs.'}

@@ -9,6 +9,14 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getD1 } from '@/seed/db/client';
 import { TierGateCard } from '@/seed/components/ui/tier-gate-card';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/seed/components/ui/table';
 import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -208,49 +216,47 @@ export default async function WalletPage() {
             </Link>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">{t('thDate')}</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">{t('thType')}</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">{t('thGross')}</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">{t('thYourCut')}</th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground uppercase">{t('thStatus')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.recent_conversions.map((row) => {
-                  const statusKey = row.payout_status;
-                  let statusLabel: string;
-                  try {
-                    statusLabel = t(`status.${statusKey}` as never);
-                  } catch {
-                    statusLabel = statusKey;
-                  }
-                  return (
-                    <tr key={row.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                      <td className="py-3 px-4 text-sm text-muted-foreground">
-                        {new Date(row.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-foreground">{row.event_type}</td>
-                      <td className="py-3 px-4 text-sm text-foreground">
-                        ${row.gross_amount.toFixed(2)}
-                      </td>
-                      <td className="py-3 px-4 text-sm font-semibold text-[var(--neon-cyan)]">
-                        ${row.commission_user.toFixed(2)}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`text-xs font-medium ${STATUS_COLORS[statusKey] ?? 'text-muted-foreground'}`}>
-                          {statusLabel}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-left text-xs font-semibold uppercase py-3 px-4">{t('thDate')}</TableHead>
+                <TableHead className="text-left text-xs font-semibold uppercase py-3 px-4">{t('thType')}</TableHead>
+                <TableHead className="text-left text-xs font-semibold uppercase py-3 px-4">{t('thGross')}</TableHead>
+                <TableHead className="text-left text-xs font-semibold uppercase py-3 px-4">{t('thYourCut')}</TableHead>
+                <TableHead className="text-left text-xs font-semibold uppercase py-3 px-4">{t('thStatus')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.recent_conversions.map((row) => {
+                const statusKey = row.payout_status;
+                let statusLabel: string;
+                try {
+                  statusLabel = t(`status.${statusKey}` as never);
+                } catch {
+                  statusLabel = statusKey;
+                }
+                return (
+                  <TableRow key={row.id}>
+                    <TableCell className="py-3 px-4 text-sm text-muted-foreground">
+                      {new Date(row.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="py-3 px-4 text-sm text-foreground">{row.event_type}</TableCell>
+                    <TableCell className="py-3 px-4 text-sm text-foreground">
+                      ${row.gross_amount.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="py-3 px-4 text-sm font-semibold text-[var(--neon-cyan)]">
+                      ${row.commission_user.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="py-3 px-4">
+                      <span className={`text-xs font-medium ${STATUS_COLORS[statusKey] ?? 'text-muted-foreground'}`}>
+                        {statusLabel}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         )}
       </div>
     </div>

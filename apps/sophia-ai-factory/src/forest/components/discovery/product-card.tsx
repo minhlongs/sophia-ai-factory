@@ -71,11 +71,11 @@ export function ProductCard({ product }: ProductCardProps) {
 
         <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-border/50 pt-4">
           <div className="flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-start">
-            <p className="text-[10px] font-medium uppercase text-muted-foreground">Commission</p>
+            <p className="text-xs font-medium uppercase text-muted-foreground">Commission</p>
             <p className="mt-0.5 text-sm font-semibold">{formattedPrice}</p>
           </div>
           <div className="flex flex-row sm:flex-col justify-between sm:justify-start items-center sm:items-start">
-            <p className="text-[10px] font-medium uppercase text-muted-foreground">Metrics</p>
+            <p className="text-xs font-medium uppercase text-muted-foreground">Metrics</p>
             <div className="mt-0.5 flex items-center gap-1 text-sm font-medium">
                {/* Placeholder for gravity/rank */}
                {/* We assume raw_metrics exists but it's JSON */}

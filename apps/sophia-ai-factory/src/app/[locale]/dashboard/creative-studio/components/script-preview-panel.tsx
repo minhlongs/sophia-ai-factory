@@ -167,10 +167,10 @@ export function ScriptPreviewPanel({
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-primary-400">
+              <span className="text-xs font-semibold uppercase tracking-wider text-primary-400">
                 {script.templateName}
               </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/20 text-muted-foreground-500 font-mono">
+              <span className="text-xs px-1.5 py-0.5 rounded bg-muted/20 text-muted-foreground-500 font-mono">
                 {script.language === 'vi' ? 'VI' : 'EN'}
               </span>
             </div>
@@ -194,7 +194,7 @@ export function ScriptPreviewPanel({
         </div>
 
         {/* Meta row */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground-500">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground-500">
           <span>
             {isVi ? 'Tong giong:' : 'Tone:'} <span className="text-muted-foreground-300">{script.tone}</span>
           </span>
@@ -208,25 +208,25 @@ export function ScriptPreviewPanel({
 
         {/* Action bar */}
         <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/10">
-          <Button variant="ghost" size="sm" onClick={expandAll} className="h-7 px-2 text-[11px]">
+          <Button variant="ghost" size="sm" onClick={expandAll} className="h-7 px-2 text-xs">
             <ChevronDown className="h-3 w-3 mr-1" />
             {isVi ? 'Mo tat ca' : 'Expand all'}
           </Button>
-          <Button variant="ghost" size="sm" onClick={collapseAll} className="h-7 px-2 text-[11px]">
+          <Button variant="ghost" size="sm" onClick={collapseAll} className="h-7 px-2 text-xs">
             <ChevronUp className="h-3 w-3 mr-1" />
             {isVi ? 'Thu gon' : 'Collapse'}
           </Button>
           <div className="flex-1" />
-          <Button variant="ghost" size="sm" onClick={() => setShowFullScript((v) => !v)} className="h-7 px-2 text-[11px]">
+          <Button variant="ghost" size="sm" onClick={() => setShowFullScript((v) => !v)} className="h-7 px-2 text-xs">
             {showFullScript ? <EyeOff className="h-3 w-3 mr-1" /> : <Eye className="h-3 w-3 mr-1" />}
             {showFullScript ? (isVi ? 'An ban day du' : 'Hide full script') : (isVi ? 'Xem ban day du' : 'View full script')}
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleCopy} className="h-7 px-2 text-[11px]">
+          <Button variant="ghost" size="sm" onClick={handleCopy} className="h-7 px-2 text-xs">
             {copied ? <Check className="h-3 w-3 mr-1 text-emerald-400" /> : <Copy className="h-3 w-3 mr-1" />}
             {copied ? (isVi ? 'Da sao chep' : 'Copied!') : (isVi ? 'Sao chep' : 'Copy')}
           </Button>
           {onRegenerate && (
-            <Button variant="ghost" size="sm" onClick={onRegenerate} className="h-7 px-2 text-[11px]">
+            <Button variant="ghost" size="sm" onClick={onRegenerate} className="h-7 px-2 text-xs">
               <RefreshCw className="h-3 w-3 mr-1" />
               {isVi ? 'Tao lai' : 'Regenerate'}
             </Button>
@@ -261,20 +261,20 @@ export function ScriptPreviewPanel({
                 className="w-full flex items-center gap-3 px-4 py-3 text-left cursor-pointer hover:bg-muted/10 transition-colors"
               >
                 {/* Scene number */}
-                <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-muted/20 text-[11px] font-bold text-muted-foreground font-mono">
+                <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-muted/20 text-xs font-bold text-muted-foreground font-mono">
                   {idx + 1}
                 </span>
 
                 {/* Type badge */}
                 <span
-                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${labels.color}`}
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-semibold border ${labels.color}`}
                 >
                   <span>{TYPE_ICONS[scene.type] ?? '📄'}</span>
                   {isVi ? labels.vi : labels.en}
                 </span>
 
                 {/* Duration */}
-                <span className="flex items-center gap-1 text-[11px] text-muted-foreground-500 font-mono">
+                <span className="flex items-center gap-1 text-xs text-muted-foreground-500 font-mono">
                   <Clock className="h-3 w-3" />
                   {fmtDuration(scene.durationSec)}
                 </span>
@@ -305,7 +305,7 @@ export function ScriptPreviewPanel({
                   <div className="flex items-start gap-2 rounded-lg bg-primary-500/5 border border-primary-500/10 p-3">
                     <Play className="h-3.5 w-3.5 text-primary-400 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-[10px] font-semibold text-primary-400 uppercase tracking-wider mb-0.5">
+                      <p className="text-xs font-semibold text-primary-400 uppercase tracking-wider mb-0.5">
                         {isVi ? 'Goi y hinh anh' : 'Visual Hint'}
                       </p>
                       <p className="text-xs text-muted-foreground">{scene.visualHint}</p>

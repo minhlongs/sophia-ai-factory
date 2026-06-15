@@ -14,6 +14,14 @@ import {
   getTenantSummary,
   type TenantSummary,
 } from '@/land/observability/tenant-summary';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from '@/seed/components/ui/table';
 
 export const dynamic = 'force-dynamic';
 
@@ -167,25 +175,25 @@ function SummaryView({ summary }: { summary: TenantSummary }): React.JSX.Element
             No audit entries for this tenant.
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-lg border border-border bg-card">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/40 text-left text-muted-foreground">
-                <tr>
-                  <th scope="col" className="px-4 py-3 font-medium">When</th>
-                  <th scope="col" className="px-4 py-3 font-medium">Action</th>
-                  <th scope="col" className="px-4 py-3 font-medium">Resource</th>
-                </tr>
-              </thead>
-              <tbody>
+          <div className="rounded-lg border border-border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="text-left font-medium px-4 py-3">When</TableHead>
+                  <TableHead className="text-left font-medium px-4 py-3">Action</TableHead>
+                  <TableHead className="text-left font-medium px-4 py-3">Resource</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {recentAudit.map((r) => (
-                  <tr key={r.id} className="border-t border-border">
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{fmtAge(r.ts)}</td>
-                    <td className="px-4 py-3 font-mono text-xs">{r.action}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground">{r.resource ?? '—'}</td>
-                  </tr>
+                  <TableRow key={r.id}>
+                    <TableCell className="px-4 py-3 text-xs text-muted-foreground">{fmtAge(r.ts)}</TableCell>
+                    <TableCell className="px-4 py-3 font-mono text-xs">{r.action}</TableCell>
+                    <TableCell className="px-4 py-3 text-xs text-muted-foreground">{r.resource ?? '—'}</TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         )}
       </section>
