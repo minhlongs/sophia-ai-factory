@@ -5,22 +5,18 @@
  */
 
 import { getTask, getAgentById, updateTaskStatus, updateTaskResult, appendLog } from './repository';
-import { track } from '@/land/signals/track';
-import { D1Events } from '@/land/signals/d1-event-types';
-import { assignVariant } from '@/land/signals/ab-experiment';
+import { track } from '@/tree/signals/track';
+import { D1Events } from '@/tree/signals/d1-event-types';
+import { assignVariant } from '@/tree/signals/ab-experiment';
 import { resolvePrompt, experimentName } from './prompt-variants';
 import { assertTierAllowsAgent, AgentTierBlockedError } from './enforcement-gate';
 import { reportError } from '@/land/telemetry/error-tracker';
+import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
+import { trackUsage } from '@/forest/usage-metering';
+import { calculateCredits } from '@/seed/billing/credits-calculator';
 import type { AgentTask } from './types';
 
-const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const COST_PER_TOKEN = 0.000001; // ~$1 / 1M tokens (gpt-4o-mini estimate)
-
-interface OpenRouterResponse {
-  choices?: Array<{ message?: { content?: string } }>;
-  usage?: { prompt_tokens?: number; completion_tokens?: number };
-  error?: { message?: string };
-}
 
 /**
  * Run an agent task inline (sync for Cloudflare Workers free tier).
@@ -109,67 +105,62 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
   const startMs = Date.now();
 
   try {
-    const res = await fetch(OPENROUTER_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        // H6 fix: read from env so staging/preview don't leak prod referer to OpenRouter analytics
-        'HTTP-Referer': process.env.PROD_URL ?? process.env.NEXT_PUBLIC_SITE_URL ?? 'https://sophia.agencyos.network',
-      },
-      body: JSON.stringify({
-        model: agent.model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: task.input },
-        ],
-        max_tokens: 1000,
-      }),
+    const prompt = `System: ${systemPrompt}\n\nUser: ${task.input}`;
+    const output = await resilientChatCompletion(prompt, {
+      openRouterKey: apiKey,
+      anthropicKey: undefined,
+      enableFallback: false,
+      model: agent.model,
     });
 
-    const data = await res.json() as OpenRouterResponse;
+    const responseTime = Date.now() - startMs;
+    const estimatedTokens = Math.ceil(output.length / 4); // rough estimate
 
-    if (!res.ok || data.error) {
-      const errMsg = data.error?.message ?? `OpenRouter HTTP ${res.status}`;
-      await updateTaskResult(taskId, orgId, { output: '', tokensUsed: 0, costUsd: 0, status: 'failed', errorMessage: errMsg });
-      await appendLog({ taskId, action: 'error', payload: { error: errMsg } });
+    // Track success
+    await trackUsage({
+      userId:         orgId, // using orgId as proxy
+      licenseKeyHash: 'agent-runner',
+      licenseNonce:   'n/a',
+      service:        'openrouter',
+      endpoint:       '/chat/completions',
+      action:         'chat_completion',
+      tokensInput:    estimatedTokens / 2,
+      tokensOutput:   estimatedTokens / 2,
+      creditsUsed:    calculateCredits('openrouter', 'chatCompletion', estimatedTokens, userTier as any),
+      modelName:      agent.model,
+      tierAtRequest:  userTier,
+      statusCode:     200,
+      responseTimeMs: responseTime,
+    });
 
-      // Phase 03: emit AGENT_TASK_FAIL (fire-and-forget)
-      void track(D1Events.AGENT_TASK_FAIL, orgId, {
-        task_id: taskId,
-        agent_role: agent.role,
-        variant,
-        error_class: 'OpenRouterError',
-      }, orgId);
+    await updateTaskResult(taskId, orgId, {
+      output,
+      tokensUsed: estimatedTokens,
+      costUsd: COST_PER_TOKEN * estimatedTokens,
+      status: 'completed',
+    });
 
-      throw new Error(errMsg);
-    }
-
-    const output = data.choices?.[0]?.message?.content ?? '';
-    const promptTokens = data.usage?.prompt_tokens ?? 0;
-    const completionTokens = data.usage?.completion_tokens ?? 0;
-    const tokensUsed = promptTokens + completionTokens;
-    const costUsd = tokensUsed * COST_PER_TOKEN;
-    const durationMs = Date.now() - startMs;
-
-    await updateTaskResult(taskId, orgId, { output, tokensUsed, costUsd, status: 'completed' });
+    // Log the LLM invocation with usage metrics
     await appendLog({
       taskId,
       action: 'invoke',
-      payload: { model: agent.model, promptTokens, completionTokens, costUsd },
+      payload: { tokens: estimatedTokens, cost: COST_PER_TOKEN * estimatedTokens },
     });
 
-    // Phase 03: emit AGENT_TASK_COMPLETE (fire-and-forget)
+    // Emit success signal
     void track(D1Events.AGENT_TASK_COMPLETE, orgId, {
       task_id: taskId,
       agent_role: agent.role,
+      agent_id: agent.id,
       variant,
-      duration_ms: durationMs,
-      tokens_used: tokensUsed,
+      responseTimeMs: responseTime,
+      tokensUsed: estimatedTokens,
     }, orgId);
 
-    const updated = await getTask(taskId, orgId);
-    return updated ?? { ...task, output, tokensUsed, costUsd, status: 'completed', completedAt: new Date().toISOString() };
+    return {
+      ...task,
+      result: { output, tokensUsed: estimatedTokens, costUsd: COST_PER_TOKEN * estimatedTokens, status: 'completed' },
+    } as AgentTask;
   } catch (err) {
     const errMsg = err instanceof Error ? err.message : String(err);
     const errorClass = err instanceof Error ? err.constructor.name : 'UnknownError';

@@ -49,12 +49,22 @@ function getOrCreate(name: string, config?: Partial<BreakerConfig>): BreakerInst
   return b;
 }
 
-/** Inspect the current breaker state — exposed for observability. */
+/** Named breaker for agent fleet spawner */
+export const FLEET_BREAKER = 'agent-fleet-spawner';
+
+/** Get breaker state — returns just the state string */
 export function getBreakerState(name: string): BreakerState {
-  return breakers.get(name)?.state ?? 'closed';
+  const b = getOrCreate(name);
+  return b.state;
 }
 
-/** Reset a breaker (used by tests + manual ops). */
+/** Get breaker detailed state (for monitoring/debugging) */
+export function getBreakerDetails(name: string): { failures: number; state: BreakerState; openedAt: number } {
+  const b = getOrCreate(name);
+  return { failures: b.failures, state: b.state, openedAt: b.openedAt };
+}
+
+/** Reset a breaker (used by tests + manual ops) */
 export function resetBreaker(name: string): void {
   breakers.delete(name);
 }

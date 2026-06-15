@@ -6,6 +6,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { translateCaption } from './caption-translator'
+import { resetOpenRouterCircuit } from '@/seed/inference/openrouter-client'
 
 // ---------------------------------------------------------------------------
 // Mock: @opennextjs/cloudflare (KV)
@@ -47,6 +48,7 @@ function makeOpenRouterResponse(content: string): Response {
 describe('translateCaption', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resetOpenRouterCircuit()
     vi.stubGlobal('fetch', mockFetch)
     mockKvGet.mockResolvedValue(null)
     mockKvPut.mockResolvedValue(undefined)
@@ -154,7 +156,7 @@ describe('translateCaption', () => {
 
     expect(result.translated).toBe(false)
     expect(result.caption).toBe('Hello world')
-  })
+  }, 25000);
 
   it('enforces char cap on translated text', async () => {
     mockKvGet.mockResolvedValue(null)

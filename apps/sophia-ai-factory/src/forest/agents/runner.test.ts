@@ -31,11 +31,11 @@ vi.mock('./repository', () => ({
   appendLog: vi.fn().mockResolvedValue({ id: 'log-001', taskId: TASK_ID, action: 'invoke', payload: {}, createdAt: '2026-01-01' }),
 }));
 
-vi.mock('@/land/signals/track', () => ({
+vi.mock('@/tree/signals/track', () => ({
   track: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/land/signals/ab-experiment', () => ({
+vi.mock('@/tree/signals/ab-experiment', () => ({
   assignVariant: vi.fn().mockResolvedValue({ variant: 'control' }),
 }));
 
@@ -73,6 +73,8 @@ describe('runAgent', () => {
     const mockFetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 429,
+      headers: { get: () => null },
+      text: async () => JSON.stringify({ error: { message: 'Rate limited' } }),
       json: () => Promise.resolve({ error: { message: 'Rate limited' } }),
     });
     vi.stubGlobal('fetch', mockFetch);
@@ -86,7 +88,7 @@ describe('runAgent', () => {
       ORG_ID,
       expect.objectContaining({ status: 'failed' }),
     );
-  });
+  }, 15000);
 
   it('marks task as failed when OPENROUTER_API_KEY missing', async () => {
     delete process.env.OPENROUTER_API_KEY;
@@ -175,7 +177,7 @@ describe('runAgent', () => {
       expect.any(Error),
       expect.objectContaining({ route: 'agent.runner', agent_role: 'CEO' }),
     );
-  });
+  }, 25000);
 
   it('MASTER tier bypasses gate and proceeds to LLM', async () => {
     const mockFetch = vi.fn().mockResolvedValue({

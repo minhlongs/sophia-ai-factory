@@ -88,9 +88,17 @@ describe('ZaloPublisher', () => {
     it('uploads video and returns broadcast_id', async () => {
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-      // Source video fetch
+      // Source video fetch - mock with proper stream support for Node
+      const videoBlob = new Blob(['videobytes'], { type: 'video/mp4' });
+      // Add stream method for Node compatibility
+      videoBlob.stream = () => new ReadableStream({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('videobytes'));
+          controller.close();
+        }
+      });
       fetchSpy.mockResolvedValueOnce(
-        new Response(new Blob(['videobytes'], { type: 'video/mp4' }), {
+        new Response(videoBlob, {
           status: 200,
           headers: { 'Content-Type': 'video/mp4' },
         }),
@@ -117,6 +125,7 @@ describe('ZaloPublisher', () => {
       });
 
       expect(id).toBe('bcast_456');
+      // 3 fetches: video fetch + upload + broadcast
       expect(fetchSpy).toHaveBeenCalledTimes(3);
       fetchSpy.mockRestore();
     });

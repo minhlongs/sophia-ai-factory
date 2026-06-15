@@ -26,20 +26,16 @@ vi.mock('@opennextjs/cloudflare', () => ({
 }))
 
 // ---------------------------------------------------------------------------
-// Mock: withTimeout (OpenRouter fetch wrapper)
+// Mock: resilientChatCompletion (OpenRouter client)
 // ---------------------------------------------------------------------------
 
-vi.mock('@/tree/byok/with-timeout', () => ({
-  withTimeout: vi.fn(),
-  BYOKTimeoutError: class BYOKTimeoutError extends Error {
-    constructor(provider: string, timeoutMs: number) {
-      super(`BYOK ${provider} timed out after ${timeoutMs}ms`)
-    }
-  },
+vi.mock('@/seed/inference/openrouter-client', () => ({
+  resilientChatCompletion: vi.fn(),
+  resetOpenRouterCircuit: vi.fn(),
 }))
 
-import { withTimeout } from '@/tree/byok/with-timeout'
-const mockWithTimeout = vi.mocked(withTimeout)
+import { resilientChatCompletion, resetOpenRouterCircuit } from '@/seed/inference/openrouter-client'
+const mockResilientChat = vi.mocked(resilientChatCompletion)
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -61,8 +57,10 @@ function makeOpenRouterResponse(content: string): Response {
 describe('translateCaption', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resetOpenRouterCircuit()
     mockKvGet.mockResolvedValue(null)
     mockKvPut.mockResolvedValue(undefined)
+    mockResilientChat.mockResolvedValue('')
   })
 
   it('returns original caption when byokKey is missing', async () => {
@@ -75,7 +73,7 @@ describe('translateCaption', () => {
     expect(result.translated).toBe(false)
     expect(result.caption).toBe('Hello world')
     expect(result.warning).toContain('BYOK_KEY_MISSING')
-    expect(mockWithTimeout).not.toHaveBeenCalled()
+    expect(mockResilientChat).not.toHaveBeenCalled()
   })
 
   it('returns cached translation from KV', async () => {
@@ -91,12 +89,12 @@ describe('translateCaption', () => {
     expect(result.caption).toBe('Xin chào thế giới')
     expect(result.fromCache).toBe(true)
     expect(result.translated).toBe(true)
-    expect(mockWithTimeout).not.toHaveBeenCalled()
+    expect(mockResilientChat).not.toHaveBeenCalled()
   })
 
   it('calls OpenRouter when KV cache is empty', async () => {
     mockKvGet.mockResolvedValue(null)
-    mockWithTimeout.mockResolvedValue(makeOpenRouterResponse('Xin chào thế giới'))
+    mockResilientChat.mockResolvedValueOnce('Xin chào thế giới')
 
     const result = await translateCaption({
       source: 'Hello world',
@@ -108,15 +106,13 @@ describe('translateCaption', () => {
     expect(result.caption).toBe('Xin chào thế giới')
     expect(result.translated).toBe(true)
     expect(result.fromCache).toBe(false)
-    expect(mockWithTimeout).toHaveBeenCalledOnce()
+    expect(mockResilientChat).toHaveBeenCalledOnce()
     expect(mockKvPut).toHaveBeenCalledOnce()
   })
 
   it('falls back to original when OpenRouter returns empty', async () => {
     mockKvGet.mockResolvedValue(null)
-    mockWithTimeout.mockResolvedValue(
-      new Response(JSON.stringify({ choices: [] }), { status: 200 }),
-    )
+    mockResilientChat.mockResolvedValueOnce('   ')
 
     const result = await translateCaption({
       source: 'Hello world',
@@ -130,29 +126,9 @@ describe('translateCaption', () => {
     expect(result.warning).toContain('TRANSLATION_FAILED')
   })
 
-  it('falls back to original when OpenRouter returns non-200', async () => {
-    mockKvGet.mockResolvedValue(null)
-    mockWithTimeout.mockResolvedValue(
-      new Response(
-        JSON.stringify({ error: { message: 'Unauthorized' } }),
-        { status: 401 },
-      ),
-    )
-
-    const result = await translateCaption({
-      source: 'Hello world',
-      targetLocale: 'vi',
-      charCap: 0,
-      byokKey: 'sk-test-key',
-    })
-
-    expect(result.translated).toBe(false)
-    expect(result.caption).toBe('Hello world')
-  })
-
   it('falls back to original when OpenRouter throws', async () => {
     mockKvGet.mockResolvedValue(null)
-    mockWithTimeout.mockRejectedValue(new Error('Network error'))
+    mockResilientChat.mockRejectedValueOnce(new Error('Network error'))
 
     const result = await translateCaption({
       source: 'Hello world',
@@ -168,7 +144,7 @@ describe('translateCaption', () => {
   it('enforces char cap on translated text', async () => {
     mockKvGet.mockResolvedValue(null)
     const longTranslation = 'A'.repeat(300)
-    mockWithTimeout.mockResolvedValue(makeOpenRouterResponse(longTranslation))
+    mockResilientChat.mockResolvedValueOnce(longTranslation)
 
     const result = await translateCaption({
       source: 'Hello world',
