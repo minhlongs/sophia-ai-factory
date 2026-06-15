@@ -26,9 +26,9 @@ const nextConfig: NextConfig = {
   // M1 16GB workaround: reactCompiler doubles webpack memory pressure. Disable when SKIP_RC=1.
   reactCompiler: process.env.SKIP_RC === '1' ? false : true,
   serverExternalPackages: [
-    // Pure client-side libs (never used in server code)
+    // Pure client-side libs (never used in server code) - only those causing bundle bloat
     'html2canvas', 'jszip', 'framer-motion',
-    'd3', 'd3-*', 'recharts',
+    'd3', 'd3-*',
     // Telemetry/monitoring
     '@sentry/core', '@sentry/react', '@sentry/nextjs',
     '@sentry/node', '@sentry/profiling',
