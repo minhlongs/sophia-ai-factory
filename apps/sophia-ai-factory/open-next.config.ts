@@ -20,6 +20,7 @@ const config = {
       proxyExternalRequest: "fetch",
       incrementalCache: "dummy",
       tagCache: d1NextTagCache,
+      runtime: "nodejs",
     },
   },
   // Route mapping: more specific patterns first

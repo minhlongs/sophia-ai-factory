@@ -278,18 +278,35 @@ fi
 # sentry-sdk, etc.) into SSR chunks. Replace them with stubs BEFORE OpenNext's
 # esbuild bundles everything into handler.mjs. Without this, the final worker.js
 # gzip exceeds the CF Workers 10 MiB limit. Added 2026-05-24.
-echo "==> strip-ssr-bloat"
-bash scripts/strip-ssr-bloat.sh
+# IMPORTANT: strip runs AFTER fix-instrumentation-standalone (which creates
+# .next/standalone/) so both .next/server/ and .next/standalone/ get stripped.
 
 # ─── Step 2: OpenNext + instrumentation fixes ────────────────────────────────
 echo "==> fix-instrumentation-standalone"
 node scripts/fix-instrumentation-standalone.mjs
+
+echo "==> strip-ssr-bloat (post-standalone)"
+bash scripts/strip-ssr-bloat.sh
 
 echo "==> opennextjs/cloudflare build"
 npx @opennextjs/cloudflare build --skipNextBuild --noMinify
 
 echo "==> inject-scheduled-handler"
 node scripts/inject-scheduled-handler.mjs
+
+# ─── Step 2.5: Strip bloat from OpenNext output (post-build) ─────────────────
+# OpenNext bundles from .next/standalone/ which already has stripped chunks.
+# However, esbuild may still include full library code in non-SSR chunks.
+# Strip heavy libs from the final .open-next/ output before deploy.
+echo "==> strip-ssr-bloat (post-opennext)"
+bash scripts/strip-ssr-bloat.sh
+
+# ─── Step 2.5: Post-build strip on OpenNext output ──────────────────────────
+# OpenNext bundles .next/standalone into .open-next/server-functions/default/.
+# Strip heavy client-only libs from the bundled handler AFTER OpenNext build
+# but BEFORE deploy. This reduces the final worker size.
+echo "==> strip-ssr-bloat (post-opennext)"
+bash scripts/strip-ssr-bloat.sh --post-opennext 2>/dev/null || bash scripts/strip-ssr-bloat.sh
 
 # ─── Step 3b: Pre-deploy E2E smoke (opt-in, Phase 03 Track C) ───────────────
 # Gate: RUN_PREDEPLOY_E2E=1 ./scripts/deploy-with-sha.sh
