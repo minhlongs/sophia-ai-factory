@@ -34,7 +34,7 @@ import { generateScript } from './script-generator'
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'
 import { resetOpenRouterCircuit } from '@/seed/inference/openrouter-client'
 
-const mockResolveUserApiKey = vi.moted(resolveUserApiKey)
+const mockResolveUserApiKey = vi.mocked(resolveUserApiKey)
 
 describe('generateScript — Phase 7B BYOK wire', () => {
   beforeEach(() => {
