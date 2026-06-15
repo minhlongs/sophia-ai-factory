@@ -123,7 +123,7 @@
     "@axe-core/playwright": "^4.11.3",
     "@cloudflare/workers-types": "^4.20250204.0",
     "@next/bundle-analyzer": "^16.2.6",
-    "@opennextjs/cloudflare": "^1.19.11",
+    "@opennextjs/cloudflare": "^1.19.9",
     "@playwright/test": "^1.58.1",
     "@secretlint/secretlint-rule-preset-recommend": "^13.0.0",
     "@tailwindcss/postcss": "^4",
