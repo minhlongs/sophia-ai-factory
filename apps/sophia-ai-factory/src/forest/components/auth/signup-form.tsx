@@ -30,7 +30,7 @@ interface SignupFormProps {
 
 /**
  * Signup form — email + password registration via Better Auth.
- * On success redirects to /setup-wizard for BYOK configuration.
+ * On success redirects to /dashboard/onboarding for BYOK configuration.
  */
 export function SignupForm({ t }: SignupFormProps) {
   const router = useRouter();
@@ -65,7 +65,7 @@ export function SignupForm({ t }: SignupFormProps) {
         name,
         email,
         password,
-        callbackURL: "/setup-wizard",
+        callbackURL: "/dashboard/onboarding",
       });
 
       if (authError) {
@@ -80,7 +80,7 @@ export function SignupForm({ t }: SignupFormProps) {
 
       setSuccess(true);
       trackSignupComplete({ method: 'email' });
-      router.push("/setup-wizard");
+      router.push("/dashboard/onboarding");
       router.refresh();
     } catch {
       setError(t.error_generic);

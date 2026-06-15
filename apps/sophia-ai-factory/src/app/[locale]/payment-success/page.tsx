@@ -246,7 +246,7 @@ export default async function PaymentSuccessPage({
             <p className="text-2xl font-bold text-emerald-400 mb-3">5–10 {t("minutes_label")}</p>
             <p className="text-xs text-muted-foreground mb-4">{t("setup_cta")}</p>
             <Link
-              href={`/${locale}/setup-wizard`}
+              href={`/${locale}/dashboard/onboarding`}
               className="inline-block rounded-lg bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors duration-150"
             >
               {t("start_setup")}

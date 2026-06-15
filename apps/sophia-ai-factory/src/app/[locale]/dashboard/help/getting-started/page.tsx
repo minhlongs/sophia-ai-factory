@@ -19,14 +19,14 @@ export const metadata = {
 const STEPS_VI = [
   {
     title: 'Bước 1: Cấu hình khóa API',
-    desc: 'Vào Setup Wizard để nhập khóa HeyGen (bắt buộc) và Resend (tùy chọn).',
-    link: '/setup-wizard',
-    linkLabel: 'Mở Setup Wizard',
+    desc: 'Vào Onboarding Wizard để nhập khóa HeyGen (bắt buộc) và Resend (tùy chọn).',
+    link: '/dashboard/onboarding',
+    linkLabel: 'Mở Onboarding Wizard',
   },
   {
     title: 'Bước 2: Kiểm tra kết nối',
-    desc: 'Trong Setup Wizard, nhấn nút "Kiểm tra" để xác nhận khóa HeyGen hoạt động.',
-    link: '/setup-wizard',
+    desc: 'Trong Onboarding Wizard, nhấn nút "Kiểm tra" để xác nhận khóa HeyGen hoạt động.',
+    link: '/dashboard/onboarding',
     linkLabel: 'Kiểm tra ngay',
   },
   {
@@ -46,14 +46,14 @@ const STEPS_VI = [
 const STEPS_EN = [
   {
     title: 'Step 1: Configure API Keys',
-    desc: 'Go to the Setup Wizard to enter your HeyGen API key (required) and Resend key (optional).',
-    link: '/setup-wizard',
-    linkLabel: 'Open Setup Wizard',
+    desc: 'Go to the Onboarding Wizard to enter your HeyGen API key (required) and Resend key (optional).',
+    link: '/dashboard/onboarding',
+    linkLabel: 'Open Onboarding Wizard',
   },
   {
     title: 'Step 2: Test Connection',
-    desc: 'In the Setup Wizard, click "Test" to verify your HeyGen key is working.',
-    link: '/setup-wizard',
+    desc: 'In the Onboarding Wizard, click "Test" to verify your HeyGen key is working.',
+    link: '/dashboard/onboarding',
     linkLabel: 'Test Now',
   },
   {

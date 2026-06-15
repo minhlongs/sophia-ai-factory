@@ -1,35 +1,20 @@
 'use server';
 
 /**
- * Server actions for billing self-serve flows:
- *  - changeTierAction  — tier upgrade or downgrade with atomic D1 provisioning
- *  - cancelSubscriptionAction — cancel subscription (end-of-cycle or immediate)
- *  - listRefundablePurchasesAction — list user's purchases eligible for refund
+ * Billing Actions — Subscription Management
  *
- * @module app/[locale]/dashboard/billing/actions
+ * Consolidated server actions for subscription cancellation and refund queries.
+ * Moved from app/[locale]/dashboard/billing/actions.ts
  */
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { createServerClient } from '@/seed/db/client';
-import { getD1 } from '@/seed/db/client';
-import { resolveUserTier } from '@/seed/db/resolve-user-tier';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import { revalidatePath } from 'next/cache';
 import { logger } from '@/seed/utils/logger-utility';
-import { provisionTierChange } from '@/land/billing/tier-change-provisioner';
-import type { Tier } from '@/seed/types';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-export type ChangeTierTiming = 'immediate' | 'end_of_cycle';
-
-export interface ChangeTierResult {
-  success: boolean;
-  error?: string;
-  creditCents?: number;
-  effectiveAt?: string;
-}
 
 export interface CancelSubscriptionResult {
   success: boolean;
@@ -48,87 +33,8 @@ export interface RefundablePurchase {
   days_remaining: number;
 }
 
-const VALID_TIERS: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
 const REFUND_WINDOW_DAYS = 30;
 const SECONDS_PER_DAY = 86_400;
-
-// ---------------------------------------------------------------------------
-// changeTierAction
-// ---------------------------------------------------------------------------
-
-/**
- * Provisions a tier change atomically in D1.
- * Immediate: updates subscriptions + organizations + calculates pro-rata credit.
- * End-of-cycle: stores pending request for cron pickup at period end.
- *
- * MASTER is one-time purchase — upgrades to MASTER require payment flow.
- */
-export async function changeTierAction(
-  targetTier: Tier,
-  timing: ChangeTierTiming,
-): Promise<ChangeTierResult> {
-  const user = await getCurrentUser();
-  if (!user) return { success: false, error: 'Unauthorized' };
-
-  if (!VALID_TIERS.includes(targetTier)) {
-    return { success: false, error: 'invalid_tier' };
-  }
-  if (targetTier === 'MASTER') {
-    return { success: false, error: 'master_requires_payment' };
-  }
-
-  try {
-    const currentTier = await resolveUserTier(user.id);
-    if (currentTier === targetTier) {
-      return { success: false, error: 'already_on_tier' };
-    }
-
-    // Resolve org membership
-    const db = createServerClient();
-    const { data: membership } = await db
-      .from('org_members')
-      .select('org_id')
-      .eq('user_id', user.id)
-      .single();
-
-    const orgId = (membership as { org_id?: string } | null)?.org_id;
-    if (!orgId) {
-      return { success: false, error: 'no_organization' };
-    }
-
-    const result = await provisionTierChange({
-      userId: user.id,
-      orgId,
-      currentTier,
-      targetTier,
-      timing,
-    });
-
-    if (!result.success) {
-      return { success: false, error: result.error };
-    }
-
-    logger.info('[changeTierAction] Tier change provisioned', {
-      userId: user.id,
-      from: currentTier,
-      to: targetTier,
-      timing,
-      creditCents: result.creditCents,
-    });
-
-  revalidatePath('/dashboard/billing');
-  revalidatePath('/dashboard');
-
-    return {
-      success: true,
-      creditCents: result.creditCents,
-      effectiveAt: result.effectiveAt,
-    };
-  } catch (err) {
-    logger.error('[changeTierAction] Unexpected error', err instanceof Error ? err : undefined);
-    return { success: false, error: 'internal_error' };
-  }
-}
 
 // ---------------------------------------------------------------------------
 // cancelSubscriptionAction
@@ -136,8 +42,14 @@ export async function changeTierAction(
 
 /**
  * Records a cancellation request in user_profiles settings.
- * Supports end_of_cycle (plan stays active) and immediate cancellation.
- * Actual deactivation handled by billing ops.
+ *
+ * Supports:
+ * - end_of_cycle: plan stays active until period end
+ * - immediate: subscription cancelled immediately (access until period end)
+ *
+ * Actual deactivation handled by billing ops/cron.
+ *
+ * @param mode - Cancellation timing mode
  */
 export async function cancelSubscriptionAction(
   mode: 'end_of_cycle' | 'immediate',
@@ -178,7 +90,8 @@ export async function cancelSubscriptionAction(
       userId: user.id,
       mode,
     });
-  revalidatePath('/dashboard/billing');
+
+    revalidatePath('/dashboard/billing');
     return { success: true };
   } catch (err) {
     logger.error('[cancelSubscriptionAction] Unexpected error', err instanceof Error ? err : undefined);
@@ -191,8 +104,14 @@ export async function cancelSubscriptionAction(
 // ---------------------------------------------------------------------------
 
 /**
- * Returns user's one-time purchases eligible for refund (within 30-day window,
- * status = 'paid', no existing refund request).
+ * Returns user's one-time purchases eligible for refund.
+ *
+ * Eligibility:
+ * - Within 30-day refund window
+ * - Status = 'paid'
+ * - No existing refund request
+ *
+ * Used by billing page to show refundable purchases.
  */
 export async function listRefundablePurchasesAction(): Promise<RefundablePurchase[]> {
   const user = await getCurrentUser();
@@ -201,6 +120,7 @@ export async function listRefundablePurchasesAction(): Promise<RefundablePurchas
   try {
     const db = getD1();
     if (!db) throw new Error('D1 database binding not available');
+
     const nowSec = Math.floor(Date.now() / 1000);
     const cutoff = nowSec - REFUND_WINDOW_DAYS * SECONDS_PER_DAY;
 
@@ -229,7 +149,7 @@ export async function listRefundablePurchasesAction(): Promise<RefundablePurchas
         paid_at: number | null;
       }>();
 
-    return (result.results ?? []).map((row) => {
+    const purchases = (result.results ?? []).map((row) => {
       const purchaseEpoch = row.paid_at ?? row.created_at;
       const daysSince = (nowSec - purchaseEpoch) / SECONDS_PER_DAY;
       return {
@@ -237,8 +157,24 @@ export async function listRefundablePurchasesAction(): Promise<RefundablePurchas
         days_remaining: Math.max(0, Math.ceil(REFUND_WINDOW_DAYS - daysSince)),
       };
     });
+
+    return purchases;
   } catch (err) {
     logger.error('[listRefundablePurchases] Failed', err instanceof Error ? err : undefined);
     return [];
   }
+}
+
+// ---------------------------------------------------------------------------
+// reinstateSubscriptionAction (placeholder for future)
+// ---------------------------------------------------------------------------
+
+/**
+ * Reinstate a cancelled subscription.
+ *
+ * Future: implement when user can restart cancelled subscription.
+ */
+export async function reinstateSubscriptionAction(): Promise<CancelSubscriptionResult> {
+  // Not implemented yet — will be added when needed
+  return { success: false, error: 'not_implemented' };
 }

@@ -282,7 +282,7 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
               {isEditing ? (
                 <form onSubmit={(e) => handleSingleSubmit(e, p)} className="space-y-3">
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       API Key
                     </label>
                     <input
@@ -295,12 +295,12 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
                       className="w-full rounded-lg border-border bg-background px-3 py-1.5 text-xs text-foreground font-mono placeholder:text-muted-foreground focus:outline-none focus:border-primary-500/50"
                     />
                     {keyInputs[p]?.trim() && !validations[p]?.ok && validations[p]?.errorKey && (
-                      <p className="text-[10px] text-rose-400 mt-1" role="alert">
+                      <p className="text-xs text-rose-400 mt-1" role="alert">
                         {t(stripNamespace(validations[p]!.errorKey!))}
                       </p>
                     )}
                     {validations[p]?.ok && validations[p]?.autoEncoded && (
-                      <p className="text-[10px] text-amber-400 mt-1">
+                      <p className="text-xs text-amber-400 mt-1">
                         {t('validate.did.auto_encoded')}
                       </p>
                     )}

@@ -49,8 +49,8 @@ export function CreativeStudioShowcase() {
             return (
               <ScrollReveal key={key} delay={i * 80}>
                 <div className="group gradient-border h-full cursor-pointer">
-                  <div className="relative h-full p-5 rounded-[16px] bg-card">
-                    <div className={`absolute inset-0 rounded-[16px] bg-gradient-to-br ${TAB_GRADIENTS[key]} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                  <div className="relative h-full p-5 rounded-2xl bg-card">
+                    <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${TAB_GRADIENTS[key]} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                     <div className="relative">
                       <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3 bg-neon-pink/10 group-hover:scale-110 transition-transform duration-300">
                         <span className="material-symbols-outlined text-lg text-neon-pink">{TAB_ICONS[key]}</span>

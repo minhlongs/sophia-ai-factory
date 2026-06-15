@@ -106,7 +106,7 @@ export function VideoScriptTemplateSelector({
           className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
         />
         {selectedTemplate && (
-          <p className="text-[10px] text-muted-foreground-600 mt-0.5">
+          <p className="text-xs text-muted-foreground-600 mt-0.5">
             {isVi ? `Dien vao mau: ${selectedTemplate.defaults.audience}` : `Target: ${selectedTemplate.defaults.audience}`}
           </p>
         )}
@@ -170,10 +170,10 @@ export function VideoScriptTemplateSelector({
                   {isSelected && <CheckCircle2 className="h-4 w-4 text-primary-400 flex-shrink-0 mt-0.5" />}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 mt-3">
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground-500 border border-white/5">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground-500 border border-white/5">
                     {isVi ? (CATEGORY_LABELS[tmpl.category]?.vi ?? tmpl.category) : (CATEGORY_LABELS[tmpl.category]?.en ?? tmpl.category)}
                   </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground-500 border border-white/5 font-mono">
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground-500 border border-white/5 font-mono">
                     ~{tmpl.defaults.suggestedDuration}s
                   </span>
                 </div>

@@ -105,7 +105,7 @@ export default async function PricingPage() {
               </span>
             </p>
             <Link
-              href="/setup-wizard"
+              href="/dashboard/onboarding"
               className="cursor-pointer inline-block rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold px-5 py-2 text-sm transition-colors duration-150"
             >
               Configure HeyGen Key / Cấu hình HeyGen

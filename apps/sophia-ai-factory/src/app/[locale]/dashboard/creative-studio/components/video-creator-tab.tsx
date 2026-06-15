@@ -113,7 +113,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
                   </label>
                   <div className="group relative">
                     <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground-300 cursor-help" />
-                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted-950 border border-border/50 p-2 text-[10px] text-muted-foreground-300 shadow-xl z-20">
+                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted-950 border border-border/50 p-2 text-xs text-muted-foreground-300 shadow-xl z-20">
                       {t('step1_hint')}
                     </span>
                   </div>
@@ -183,7 +183,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
                   <span className="text-sm font-semibold text-muted-foreground-200">{t('step4_label1')}</span>
                   <div className="group relative">
                     <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground-300 cursor-help" />
-                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted-950 border border-border/50 p-2 text-[10px] text-muted-foreground-300 shadow-xl z-20">
+                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted-950 border border-border/50 p-2 text-xs text-muted-foreground-300 shadow-xl z-20">
                       {t('step4_hint1')}
                     </span>
                   </div>
@@ -198,7 +198,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
                   <span className="text-sm font-semibold text-muted-foreground-200">{t('step4_label2')}</span>
                   <div className="group relative">
                     <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground-300 cursor-help" />
-                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted-950 border border-border/50 p-2 text-[10px] text-muted-foreground-300 shadow-xl z-20">
+                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted-950 border border-border/50 p-2 text-xs text-muted-foreground-300 shadow-xl z-20">
                       {t('step4_hint2')}
                     </span>
                   </div>
@@ -310,19 +310,19 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
 
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className={`rounded border p-1.5 transition-colors duration-200 ${step === 2 ? 'border-primary-500 bg-primary-500/10' : 'border-border/10 bg-muted/10'}`}>
-                  <p className="text-[9px] font-medium text-muted-foreground">{t('preview_script')}</p>
+                  <p className="text-xs font-medium text-muted-foreground">{t('preview_script')}</p>
                   <p className="text-[10px] font-bold text-foreground truncate">
                     {form.script ? `${form.script.length} chars` : "-"}
                   </p>
                 </div>
                 <div className={`rounded border p-1.5 transition-colors duration-200 ${step === 3 ? 'border-primary-500 bg-primary-500/10' : 'border-border/10 bg-muted/10'}`}>
-                  <p className="text-[9px] font-medium text-muted-foreground">{t('preview_voice')}</p>
+                  <p className="text-xs font-medium text-muted-foreground">{t('preview_voice')}</p>
                   <p className="text-[10px] font-bold text-foreground truncate">
                     {form.voiceId}
                   </p>
                 </div>
                 <div className={`rounded border p-1.5 transition-colors duration-200 ${step === 4 ? 'border-primary-500 bg-primary-500/10' : 'border-border/10 bg-muted/10'}`}>
-                  <p className="text-[9px] font-medium text-muted-foreground">{t('preview_template')}</p>
+                  <p className="text-xs font-medium text-muted-foreground">{t('preview_template')}</p>
                   <p className="text-[10px] font-bold text-foreground truncate capitalize">
                     {form.template}
                   </p>
