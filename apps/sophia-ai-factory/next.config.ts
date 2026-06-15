@@ -44,6 +44,7 @@ const nextConfig: NextConfig = {
     // DB/cache clients that are incompatible with Cloudflare Workers
     'better-sqlite3',
   ],
+} as any;
   // experimental: {
   //   optimizePackageImports: [
   //     'better-auth', 'date-fns', 'lucide-react', 'zod',
