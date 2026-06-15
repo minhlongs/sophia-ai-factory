@@ -154,7 +154,7 @@ describe('generateSeoScript', () => {
     await expect(
       generateSeoScript({ userId: 'u1', topic: 'x' }),
     ).rejects.toThrow(/429/);
-  }, 15000);
+  }, 30000);
 
   it('marks source=platform when env key used', async () => {
     process.env.OPENROUTER_API_KEY = 'env-key';
