@@ -25,7 +25,13 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.resolve(__dirname),
   // M1 16GB workaround: reactCompiler doubles webpack memory pressure. Disable when SKIP_RC=1.
   reactCompiler: process.env.SKIP_RC === '1' ? false : true,
-  serverExternalPackages: ['redis', 'ioredis', '@redis/client'],
+  serverExternalPackages: [
+    'redis', 'ioredis', '@redis/client',
+    'html2canvas', 'recharts', 'jszip',
+    'framer-motion', 'd3', 'd3-*',
+    'better-sqlite3',
+    '@upstash/redis',
+  ],
   experimental: {
     optimizePackageImports: [
       'better-auth', 'date-fns', 'lucide-react', 'zod',
