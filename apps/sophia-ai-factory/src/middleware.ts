@@ -17,6 +17,7 @@ import {
 } from '@/seed/security/csrf';
 import { buildCSPHeader } from '@/seed/security/content-security-policy-configuration';
 import { CSP_NONCE_HEADER } from '@/seed/security/get-csp-nonce';
+import { generateNonce } from '@/forest/raas-service';
 
 // Modular middleware components
 import { isSensitiveApiRoute } from './middleware/sensitive-routes';
@@ -102,7 +103,7 @@ export async function proxy(request: NextRequest) {
 
     // MFA gate for sensitive API routes (webhooks and public routes are excluded)
     if (isSensitiveApiRoute(pathname)) {
-      const authResult = await requireAuth(request);
+      const authResult = await requireAuth(request, pathLocale ?? 'vi');
       if (authResult instanceof NextResponse) {
         return authResult;
       }
@@ -154,7 +155,7 @@ export async function proxy(request: NextRequest) {
 
   if (cleanPath.startsWith('/dashboard')) {
     // Authentication check
-    const authResult = await requireAuth(request);
+    const authResult = await requireAuth(request, pathLocale ?? 'vi');
     if (authResult instanceof NextResponse) {
       return authResult;
     }

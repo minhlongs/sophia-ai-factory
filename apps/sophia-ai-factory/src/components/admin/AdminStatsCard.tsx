@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Activity, BarChart2, Coins, Database, Inbox, KeyRound, ServerCog, Webhook } from 'lucide-react';
 
-interface PanelRow {
+export interface PanelRow {
   label: string;
   value: string;
   tone?: 'ok' | 'warn' | 'bad';
@@ -31,7 +31,7 @@ export default function AdminStatsCard({ icon: Icon, title, href, rows }: AdminS
         <span className="text-[11px] text-muted-foreground">drill in →</span>
       </header>
       <dl className="space-y-1.5">
-        {rows.map(([label, value, tone]) => (
+        {rows.map(({ label, value, tone }) => (
           <div key={label} className="flex items-baseline justify-between text-sm">
             <dt className="text-muted-foreground">{label}</dt>
             <dd

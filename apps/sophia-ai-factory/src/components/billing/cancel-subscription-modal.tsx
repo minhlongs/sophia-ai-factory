@@ -25,7 +25,7 @@ interface Props {
   onSuccess?: () => void;
 }
 
-type CancelMode = 'end_of_cycle' | 'immediate';
+export type CancelMode = 'end_of_cycle' | 'immediate';
 
 type SubmitState =
   | { status: 'idle' }

@@ -17,7 +17,7 @@ type ActionResult<T = unknown> =
 export async function publishVideoAction(input: {
   videoId: string;
   videoUrl: string;
-  platform: 'youtube' | 'tiktok' | 'telegram';
+  platform: 'youtube' | 'tiktok' | 'instagram';
   title: string;
   description: string;
   tags?: string[];
@@ -34,7 +34,7 @@ export async function publishVideoAction(input: {
       {
         videoId: input.videoId,
         videoUrl: input.videoUrl,
-        platform: input.platform as 'youtube' | 'tiktok', // telegram not supported for video publishing
+        platform: input.platform,
         title: input.title,
         description: input.description,
         tags: input.tags,

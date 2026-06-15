@@ -33,7 +33,7 @@ export type VideoGenerateResult =
 export type VideoPublishInput = {
   videoId: string;
   videoUrl: string;
-  platform: 'youtube' | 'tiktok' | 'telegram';
+  platform: 'youtube' | 'tiktok' | 'instagram';
   title: string;
   description: string;
   tags?: string[];
@@ -333,7 +333,7 @@ export async function publishVideo(
     const publish = await createVideoPublish({
       userId,
       videoId: input.videoId,
-      platform: input.platform as 'youtube' | 'tiktok' | 'telegram',
+      platform: input.platform,
       metadata: JSON.stringify({
         title: input.title,
         description: input.description,
