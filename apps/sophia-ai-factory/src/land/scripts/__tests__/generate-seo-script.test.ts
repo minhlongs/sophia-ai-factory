@@ -19,6 +19,7 @@ import {
   scoreSeo,
   SeoScriptConfigurationError,
 } from '@/land/scripts/generate-seo-script';
+import { resetOpenRouterCircuit } from '@/seed/inference/openrouter-client';
 
 const ORIGINAL_FETCH = globalThis.fetch;
 const ORIGINAL_ENV = { ...process.env };
@@ -31,6 +32,7 @@ function stubFetch(content: string, ok = true, status = 200): void {
   globalThis.fetch = vi.fn().mockResolvedValue({
     ok,
     status,
+    headers: { get: () => null },
     json: async () => ({ choices: [{ message: { content } }] }),
     text: async () => content,
   }) as unknown as typeof globalThis.fetch;
@@ -98,6 +100,7 @@ describe('scoreSeo', () => {
 describe('generateSeoScript', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetOpenRouterCircuit();
     mockResolveUserApiKey.mockResolvedValue('user-key');
     delete process.env.OPENROUTER_API_KEY;
   });
@@ -147,10 +150,11 @@ describe('generateSeoScript', () => {
 
   it('bubbles non-2xx upstream', async () => {
     stubFetch('rate limited', false, 429);
+    // 429 triggers retries; allow enough time for backoff (max ~7s)
     await expect(
       generateSeoScript({ userId: 'u1', topic: 'x' }),
     ).rejects.toThrow(/429/);
-  });
+  }, 15000);
 
   it('marks source=platform when env key used', async () => {
     process.env.OPENROUTER_API_KEY = 'env-key';

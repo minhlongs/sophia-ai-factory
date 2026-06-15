@@ -18,6 +18,7 @@ import {
   translateScript,
   TranslateConfigurationError,
 } from '@/land/i18n/translate-script';
+import { resetOpenRouterCircuit } from '@/seed/inference/openrouter-client';
 
 const ORIGINAL_FETCH = globalThis.fetch;
 const ORIGINAL_ENV = { ...process.env };
@@ -31,6 +32,7 @@ function stubFetch(json: unknown, status = 200): void {
   globalThis.fetch = vi.fn().mockResolvedValue({
     ok: status >= 200 && status < 300,
     status,
+    headers: { get: () => null },
     text: async () => JSON.stringify(json),
     json: async () => json,
   }) as unknown as typeof globalThis.fetch;
@@ -39,6 +41,7 @@ function stubFetch(json: unknown, status = 200): void {
 describe('translateScript', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetOpenRouterCircuit();
     mockResolveUserApiKey.mockResolvedValue('user-or-key');
     delete process.env.OPENROUTER_API_KEY;
   });
@@ -106,7 +109,7 @@ describe('translateScript', () => {
     await expect(
       translateScript({ userId: 'u1', text: 'Hello', fromLang: 'en', toLang: 'vi' }),
     ).rejects.toThrow(/400/);
-  });
+  }, 15000);
 
   it('rejects empty translation body', async () => {
     stubFetch({ choices: [{ message: { content: '   ' } }] });

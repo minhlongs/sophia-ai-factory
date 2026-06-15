@@ -18,7 +18,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 }));
 
 import { runSop } from './sop-runner';
-import type { RunContext } from './types';
+import type { RunContext } from '@/seed/sop/executor/types';
 
 // ---------------------------------------------------------------------------
 // D1 Mock

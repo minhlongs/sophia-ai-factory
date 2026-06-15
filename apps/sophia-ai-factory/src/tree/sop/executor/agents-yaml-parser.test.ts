@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseAgentsYaml } from './agents-yaml-parser';
+import { parseAgentsYaml } from '@/seed/sop/executor/agents-yaml-parser';
 
 const VALID_YAML = `
 agents:
