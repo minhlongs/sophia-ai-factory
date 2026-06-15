@@ -1,6 +1,5 @@
 /** * Account and SOP setup helpers for handover creation. * Extracted from create/route for file size compliance. * @module lib/handover/handover-account-setup */
 import { logger } from '@/seed/utils/logger-utility';
-import { getErrorMessage } from '@/seed/utils/to-error';
 
 function genId(): string {
   return crypto.randomUUID().replace(/-/g, '');
@@ -157,7 +156,7 @@ export async function preInstallSops(
         installed.push(slug);
       }
     } catch (err) {
-      logger.warn('[HandoverSetup] SOP install skipped', { slug, err: getErrorMessage(err) });
+      logger.warn('[HandoverSetup] SOP install skipped', { slug, err: err instanceof Error ? err.message : String(err) });
     }
   }
   return installed;

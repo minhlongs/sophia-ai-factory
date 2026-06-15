@@ -26,7 +26,7 @@ function createRedis(): any {
     }
     logger.warn('Redis: env vars missing, using dummy fallback (dev/build only)')
     // In dev, we still want to load the module if available
-    return { get: async () => null, set: async () => null, del: async () => null } as any
+    return { url: '', token: '' }
   }
 
   return { url, token }
@@ -45,7 +45,7 @@ export const redis = new Proxy({} as any, {
       }
       _redis = new RedisCls(createRedis() || { url: '', token: '' })
     }
-    return Reflect.get(_redis, prop, receiver)
+    return Reflect.get(_redis as Record<string, unknown>, prop, receiver)
   },
 })
 

@@ -1,8 +1,9 @@
 import { Tier } from "@/seed/types";
+import type { ScriptOutput } from "@/seed/ai/script-prompt-builders";
+export type { ScriptOutput };
 
 // --- Script Service Types ---
 
-/** Affiliate offer CTA to inject into script prompt */
 export interface AffiliateOfferCta {
   productName: string;
   shortUrl: string;
@@ -12,11 +13,8 @@ export interface GenerateScriptInput {
   topic: string;
   audience: string;
   tier: Tier;
-  /** Tenant scope for LLM cache (Phase 4F). Empty/omitted → cache skipped. */
   orgId?: string;
-  /** Owner userId for BYOK key resolution (Phase 7B). */
   userId?: string;
-  /** Optional affiliate offer — injects CTA into last scene of generated script. */
   affiliateOffer?: AffiliateOfferCta;
 }
 
@@ -25,12 +23,6 @@ export interface ScriptScene {
   visual_description: string;
   narration: string;
   duration_estimate: number;
-}
-
-export interface ScriptOutput {
-  title: string;
-  scenes: ScriptScene[];
-  total_duration: number;
 }
 
 export interface IScriptService {
@@ -48,7 +40,7 @@ export interface GenerateVoiceoverInput {
 
 export interface VoiceoverOutput {
   audio_url: string;
-  duration: number; // in seconds
+  duration: number;
 }
 
 export interface IVoiceService {
@@ -88,7 +80,7 @@ export interface Voice {
 }
 
 export interface IVideoService {
-  createVideo(params: CreateVideoParams): Promise<string>; // returns videoId
+  createVideo(params: CreateVideoParams): Promise<string>;
   getVideoStatus(videoId: string): Promise<VideoStatus>;
   listAvatars(): Promise<Avatar[]>;
   listVoices(): Promise<Voice[]>;
@@ -97,7 +89,7 @@ export interface IVideoService {
 // --- Payment Service Types ---
 
 export interface CreateCheckoutParams {
-  productIds: string[]; // Array of product IDs (supports multi-product checkout)
+  productIds: string[];
   successUrl: string;
   customerEmail?: string;
   metadata?: Record<string, string>;

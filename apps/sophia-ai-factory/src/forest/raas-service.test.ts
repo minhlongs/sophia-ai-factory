@@ -9,6 +9,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createHmac } from 'crypto';
 import { hmacSha256 } from '@/tree/audit/crypto-utils';
+import type { Redis } from '@upstash/redis';
 
 // Mock Redis - must be defined inside vi.mock factory
 vi.mock('./redis', () => ({
@@ -213,7 +214,7 @@ describe('RaaS Service', () => {
       mockRedisClient.get.mockResolvedValue(null);
       mockRedisClient.set.mockResolvedValue('OK');
 
-      const result = await checkNonce('new-nonce-123', mockRedisClient as unknown as typeof redis);
+      const result = await checkNonce('new-nonce-123', mockRedisClient as unknown as Redis);
       expect(result).toBe(false);
       expect(mockRedisClient.get).toHaveBeenCalledWith('raas:nonce:new-nonce-123');
       expect(mockRedisClient.set).toHaveBeenCalled();
@@ -222,7 +223,7 @@ describe('RaaS Service', () => {
     it('should return true for reused nonce (replay attack)', async () => {
       mockRedisClient.get.mockResolvedValue('1');
 
-      const result = await checkNonce('reused-nonce-456', mockRedisClient as unknown as typeof redis);
+      const result = await checkNonce('reused-nonce-456', mockRedisClient as unknown as Redis);
       expect(result).toBe(true);
       expect(mockRedisClient.get).toHaveBeenCalledWith('raas:nonce:reused-nonce-456');
     });
@@ -230,7 +231,7 @@ describe('RaaS Service', () => {
     it('should fail open when Redis is unavailable', async () => {
       mockRedisClient.get.mockRejectedValue(new Error('Redis connection failed'));
 
-      const result = await checkNonce('test-nonce', mockRedisClient as unknown as typeof redis);
+      const result = await checkNonce('test-nonce', mockRedisClient as unknown as Redis);
       expect(result).toBe(false);
     });
 
@@ -239,7 +240,7 @@ describe('RaaS Service', () => {
       mockRedisClient.get.mockResolvedValue(null);
       mockRedisClient.set.mockResolvedValue('OK');
 
-      await checkNonce('test-nonce', mockRedisClient as unknown as typeof redis);
+      await checkNonce('test-nonce', mockRedisClient as unknown as Redis);
 
       expect(mockRedisClient.set).toHaveBeenCalledWith(
         'raas:nonce:test-nonce',
@@ -260,21 +261,21 @@ describe('RaaS Service', () => {
     it('should return false for active key', async () => {
       mockRedisClient.get.mockResolvedValue(null);
 
-      const result = await checkRevocation('raas_premium_key', mockRedisClient as unknown as typeof redis);
+      const result = await checkRevocation('raas_premium_key', mockRedisClient as unknown as Redis);
       expect(result).toBe(false);
     });
 
     it('should return true for revoked key', async () => {
       mockRedisClient.get.mockResolvedValue('1');
 
-      const result = await checkRevocation('raas_premium_key', mockRedisClient as unknown as typeof redis);
+      const result = await checkRevocation('raas_premium_key', mockRedisClient as unknown as Redis);
       expect(result).toBe(true);
     });
 
     it('should fail open when Redis is unavailable', async () => {
       mockRedisClient.get.mockRejectedValue(new Error('Redis connection failed'));
 
-      const result = await checkRevocation('raas_premium_key', mockRedisClient as unknown as typeof redis);
+      const result = await checkRevocation('raas_premium_key', mockRedisClient as unknown as Redis);
       expect(result).toBe(false);
     });
   });
@@ -300,7 +301,7 @@ describe('RaaS Service', () => {
       vi.stubEnv('NODE_ENV', 'development');
       vi.stubEnv('RAAS_BYPASS_DEV', 'true');
 
-      const result = await validateLicenseKey('invalid-key', { redisClient: mockRedisClient as unknown as typeof redis });
+      const result = await validateLicenseKey('invalid-key', { redisClient: mockRedisClient as unknown as Redis });
       expect(result.valid).toBe(true);
       expect(result.reason).toBe('dev-bypass');
     });
@@ -309,7 +310,7 @@ describe('RaaS Service', () => {
       vi.stubEnv('NODE_ENV', 'production');
       vi.stubEnv('RAAS_BYPASS_DEV', 'false');
 
-      const result = await validateLicenseKey('invalid-key', { redisClient: mockRedisClient as unknown as typeof redis });
+      const result = await validateLicenseKey('invalid-key', { redisClient: mockRedisClient as unknown as Redis });
       expect(result.valid).toBe(false);
       expect(result.reason).toBe('invalid-format');
     });
@@ -318,7 +319,7 @@ describe('RaaS Service', () => {
       vi.stubEnv('RAAS_LICENSE_SECRET', undefined);
 
       const key = 'raas_premium_1735689600_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6_e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
-      const result = await validateLicenseKey(key, { redisClient: mockRedisClient as unknown as typeof redis });
+      const result = await validateLicenseKey(key, { redisClient: mockRedisClient as unknown as Redis });
 
       expect(result.valid).toBe(false);
       expect(result.reason).toBe('missing-secret');
@@ -331,7 +332,7 @@ describe('RaaS Service', () => {
       const invalidHmac = '0000000000000000000000000000000000000000000000000000000000000000';
 
       const key = `raas_${tier}_${timestamp}_${nonce}_${invalidHmac}`;
-      const result = await validateLicenseKey(key, { redisClient: mockRedisClient as unknown as typeof redis });
+      const result = await validateLicenseKey(key, { redisClient: mockRedisClient as unknown as Redis });
 
       expect(result.valid).toBe(false);
       expect(result.reason).toBe('invalid-signature');
@@ -351,7 +352,7 @@ describe('RaaS Service', () => {
       mockRedisClient.get.mockResolvedValue(null);
       mockRedisClient.set.mockResolvedValue('OK');
 
-      const result = await validateLicenseKey(key, { redisClient: mockRedisClient as unknown as typeof redis });
+      const result = await validateLicenseKey(key, { redisClient: mockRedisClient as unknown as Redis });
       expect(result.valid).toBe(false);
       expect(result.reason).toBe('expired');
     });
@@ -363,7 +364,7 @@ describe('RaaS Service', () => {
       mockRedisClient.get.mockResolvedValue(null);
       mockRedisClient.set.mockResolvedValue('OK');
 
-      const result = await validateLicenseKey(key, { redisClient: mockRedisClient as unknown as typeof redis });
+      const result = await validateLicenseKey(key, { redisClient: mockRedisClient as unknown as Redis });
       expect(result.valid).toBe(true);
       expect(result.tier).toBe('premium');
     });
@@ -374,7 +375,7 @@ describe('RaaS Service', () => {
 
       mockRedisClient.get.mockResolvedValue('1');
 
-      const result = await validateLicenseKey(key, { redisClient: mockRedisClient as unknown as typeof redis });
+      const result = await validateLicenseKey(key, { redisClient: mockRedisClient as unknown as Redis });
       expect(result.valid).toBe(false);
       expect(result.reason).toBe('replay-attack');
     });
@@ -390,7 +391,7 @@ describe('RaaS Service', () => {
         return Promise.resolve(null);
       });
 
-      const result = await validateLicenseKey(key, { redisClient: mockRedisClient as unknown as typeof redis });
+      const result = await validateLicenseKey(key, { redisClient: mockRedisClient as unknown as Redis });
       expect(result.valid).toBe(false);
       expect(result.reason).toBe('revoked');
     });
@@ -402,7 +403,7 @@ describe('RaaS Service', () => {
       mockRedisClient.get.mockResolvedValue(null);
       mockRedisClient.set.mockResolvedValue('OK');
 
-      const result = await validateLicenseKey(key, { redisClient: mockRedisClient as unknown as typeof redis });
+      const result = await validateLicenseKey(key, { redisClient: mockRedisClient as unknown as Redis });
       expect(result.valid).toBe(true);
       expect(result.tier).toBe('master');
     });
@@ -419,7 +420,7 @@ describe('RaaS Service', () => {
     it('should add key to revocation set', async () => {
       mockRedisClient.set.mockResolvedValue('OK');
 
-      await revokeLicenseKey('raas_premium_test', mockRedisClient as unknown as typeof redis);
+      await revokeLicenseKey('raas_premium_test', mockRedisClient as unknown as Redis);
 
       expect(mockRedisClient.set).toHaveBeenCalledWith(
         'raas:revoked:raas_premium_test',
@@ -431,7 +432,7 @@ describe('RaaS Service', () => {
     it('should throw error when Redis fails', async () => {
       mockRedisClient.set.mockRejectedValue(new Error('Redis write failed'));
 
-      await expect(revokeLicenseKey('raas_premium_test', mockRedisClient as unknown as typeof redis))
+      await expect(revokeLicenseKey('raas_premium_test', mockRedisClient as unknown as Redis))
         .rejects.toThrow('Redis write failed');
     });
   });

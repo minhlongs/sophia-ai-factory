@@ -4,6 +4,7 @@ import { logger } from '@/seed/utils/logger-utility'
 import { ServiceFactory } from '@/land/services/factory'
 import { MissingCredentialsError, ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/land/services/errors'
 import { startVideoGeneration } from '@/seed/ai/video-generator'
+import { generateScript, type ScriptOutput } from '@/seed/ai/script-generator'
 import { createServerClient } from '@/seed/db/client'
 import { Tier, TIER_RANK } from '@/seed/types'
 import { OpenClawGateway, type DistributionResult } from '@/tree/gateway/openclaw-gateway'
@@ -214,7 +215,7 @@ export const generateCampaign = inngest.createFunction(
         await updateStatus('processing_video', 70)
         if (!resume) await notifyUser('🎤 Voiceover ready! Now rendering video...')
         try {
-          return await startVideoGeneration({ script, tier, userId })
+          return await startVideoGeneration({ script: script as ScriptOutput, tier, userId })
         } catch (err) {
           if (err instanceof MissingCredentialsError) {
             await notifyRefundRequired(userId, campaignId, err.key)

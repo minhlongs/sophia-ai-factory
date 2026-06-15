@@ -1,9 +1,10 @@
 import { Tier } from "@/seed/types";
+import type { ScriptOutput } from "./script-prompt-builders";
 import { ServiceFactory } from "@/land/services/factory";
 import { VideoStatus } from "@/land/services/types";
 
 interface GenerateVideoInput {
-  script: unknown; // typed as ScriptOutput in practice
+  script: ScriptOutput;
   tier: Tier;
   userId?: string;
 }
@@ -18,11 +19,10 @@ interface VideoOutput {
  * Returns a job ID (for HeyGen) or a mock ID.
  */
 export async function startVideoGeneration(input: GenerateVideoInput): Promise<string> {
-  const { script: rawScript, userId } = input;
+  const { script, userId } = input;
   const videoService = await ServiceFactory.getVideoService(userId);
 
   // Extract narration from script
-  const script = rawScript as { scenes: Array<{ narration: string }> };
   const fullNarration = script.scenes.map(s => s.narration).join(' ');
 
   const avatarId = 'default_avatar_001'; // Replace with a valid default ID

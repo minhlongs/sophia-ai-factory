@@ -9,7 +9,6 @@ import {
   type TenantSettingRow,
   SETTINGS_NAMESPACES,
   SettingsValidationError,
-  SettingsNotFoundError,
 } from './types';
 import { NAMESPACE_DEFAULTS } from './defaults';
 
