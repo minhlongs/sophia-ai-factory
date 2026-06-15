@@ -23,6 +23,13 @@ const nextConfig: NextConfig = {
   /* config options here */
   output: 'standalone',
   outputFileTracingRoot: path.resolve(__dirname),
+  // Replace @upstash/redis with stub to avoid uncrypto bundling issues on Cloudflare
+  // (Redis not used in production on Sophia — features disabled via env)
+  resolve: {
+    alias: {
+      '@upstash/redis': path.resolve(__dirname, 'src/lib/redis-stub.ts'),
+    },
+  },
   // M1 16GB workaround: reactCompiler doubles webpack memory pressure. Disable when SKIP_RC=1.
   reactCompiler: process.env.SKIP_RC === '1' ? false : true,
   serverExternalPackages: [
@@ -36,8 +43,6 @@ const nextConfig: NextConfig = {
     'telegraf',
     // DB/cache clients that are incompatible with Cloudflare Workers
     'better-sqlite3',
-    // Alternative clients not in use
-    '@upstash/redis',
   ],
   // experimental: {
   //   optimizePackageImports: [

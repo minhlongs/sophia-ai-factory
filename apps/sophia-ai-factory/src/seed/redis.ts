@@ -1,37 +1,53 @@
-import { Redis } from '@upstash/redis'
-import { logger } from '@/seed/utils/logger-utility'
+// Dynamic import to avoid bundling @upstash/redis in SSR bundle
+let Redis: any = null
 
-let _redis: Redis | null = null
+async function loadRedis() {
+  if (Redis) return Redis
+  try {
+    const mod = await import('@upstash/redis')
+    Redis = mod.Redis
+    return Redis
+  } catch (e) {
+    console.warn('Redis module not available:', e)
+    return null
+  }
+}
 
-function createRedis(): Redis {
+function createRedis(): any {
   const url = process.env.UPSTASH_REDIS_REST_URL
   const token = process.env.UPSTASH_REDIS_REST_TOKEN
 
   if (!url || !token) {
     if (process.env.NODE_ENV === 'production') {
-      throw new Error('Redis: UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN must be set in production')
+      logger.warn('Redis: UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN not set — Redis features disabled')
+      return null
     }
     logger.warn('Redis: env vars missing, using dummy fallback (dev/build only)')
-    return new Redis({
-      url: 'https://dummy-url.upstash.io',
-      token: 'dummy_token',
-    })
+    // In dev, we still want to load the module if available
+    return { get: async () => null, set: async () => null, del: async () => null } as any
   }
 
-  return new Redis({ url, token })
+  return { url, token }
 }
 
-export const redis: Redis = new Proxy({} as Redis, {
-  get(_target, prop, receiver) {
-    if (!_redis) {
-      _redis = createRedis()
+let _redis: any = null
+
+export const redis = new Proxy({} as any, {
+  async get(_target, prop, receiver) {
+    if (_redis === null || _redis === undefined) {
+      const RedisCls = await loadRedis()
+      if (!RedisCls) {
+        // No-op for disabled Redis
+        const noop = () => undefined
+        return noop
+      }
+      _redis = new RedisCls(createRedis() || { url: '', token: '' })
     }
     return Reflect.get(_redis, prop, receiver)
   },
 })
 
-/** Returns the Redis client or null if env vars are missing (non-production) */
-export function getKvClient(): Redis | null {
+export function getKvClient() {
   const url = process.env.UPSTASH_REDIS_REST_URL
   const token = process.env.UPSTASH_REDIS_REST_TOKEN
   if (!url || !token) return null
