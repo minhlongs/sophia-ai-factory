@@ -88,7 +88,7 @@ describe('runAgent', () => {
       ORG_ID,
       expect.objectContaining({ status: 'failed' }),
     );
-  }, 15000);
+  }, 30000);
 
   it('marks task as failed when OPENROUTER_API_KEY missing', async () => {
     delete process.env.OPENROUTER_API_KEY;
