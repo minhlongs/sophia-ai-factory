@@ -38,6 +38,7 @@ export type {
   RateLimitOptions
 } from './rate-limit-wrapper'
 
+export type { AuthGuardOptions } from './auth-guard';
 export {
   withAuth,
   requireAuthJson,
@@ -45,5 +46,4 @@ export {
   checkAuth,
   isPublicApiRoute,
   AuthError,
-  AuthGuardOptions,
-} from './auth-guard'
+} from './auth-guard';
