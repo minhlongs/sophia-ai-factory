@@ -3,9 +3,9 @@
  * Used to keep bundle size down on Cloudflare Workers.
  */
 export class Redis {
-  constructor(_opts?: any) {}
+  constructor(_opts?: unknown) {}
   async get(_key: string) { return null }
-  async set(_key: string, _value: string, _opts?: any) { return true }
+  async set(_key: string, _value: string, _opts?: unknown) { return true }
   async del(_key: string) { return 1 }
   async keys(_pattern: string) { return [] }
   async expire(_key: string, _ttl: number) { return 1 }
