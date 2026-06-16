@@ -4218,12 +4218,14 @@
     "activation_error": "Activation link not generated. Please contact support to receive your sign-in link.",
     "copy_emailed_to": "A copy was emailed to",
     "link_validity": "The link is valid for 72 hours and is single-use.",
-    "reason.invalid_code": "Invalid or expired code.",
-    "reason.max_uses": "This code has reached its max redemptions. Please contact support.",
-    "reason.expired": "This code has expired.",
-    "reason.already_redeemed": "This email has already redeemed this code.",
-    "reason.user_create_failed": "Could not create account. Email may already exist — try signing in.",
-    "link_generated_but_not_displayed": "Link generated but not displayed. Please check your email or contact support."
+    "link_generated_but_not_displayed": "Link generated but not displayed. Please check your email or contact support.",
+    "reason": {
+      "invalid_code": "Invalid or expired code.",
+      "max_uses": "This code has reached its max redemptions. Please contact support.",
+      "expired": "This code has expired.",
+      "already_redeemed": "This email has already redeemed this code.",
+      "user_create_failed": "Could not create account. Email may already exist — try signing in."
+    }
   },
   "All settings reset to defaults.": "All settings reset to defaults.",
   "Network error. Please try again.": "Network error. Please try again.",

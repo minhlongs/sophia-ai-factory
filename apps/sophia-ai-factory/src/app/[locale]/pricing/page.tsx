@@ -11,6 +11,7 @@ import { getUserCredential } from "@/tree/credentials/user-credentials-repo";
 import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import Link from "next/link";
 import { buildAllProductSchemas, buildBreadcrumbSchema, BREADCRUMBS } from "@/land/seo/schema-org";
+import { logger } from "@/seed/utils/logger-utility";
 
 // Pricing page — cache 1 hour at the edge. PricingSection reads HeyGen health
 // per request; we accept it may be 1h stale at peak. Calculator + FAQ are
@@ -23,21 +24,79 @@ export const metadata = {
 };
 
 export default async function PricingPage() {
-  const [t, heygenHealthy, user] = await Promise.all([
-    getTranslations("pricing"),
-    isHeyGenHealthy().catch(() => false),
-    getCurrentUser().catch(() => null),
-  ]);
+  let t;
+  let heygenHealthy = false;
+  let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
+  let userHeyGenConfigured = false;
+  let currentTier: Awaited<ReturnType<typeof resolveUserTier>> = null;
+  let productSchemas;
+  let breadcrumbSchema;
+  let error: Error | null = null;
 
-  // Check if the logged-in user has configured their HeyGen key
-  const userHeyGenConfigured = user
-    ? Boolean(await getUserCredential(user.id, 'heygen').catch(() => null))
-    : false;
+  try {
+    [t, heygenHealthy, user] = await Promise.all([
+      getTranslations("pricing"),
+      isHeyGenHealthy().catch(() => false),
+      getCurrentUser().catch(() => null),
+    ]);
 
-  const currentTier = user ? await resolveUserTier(user.id).catch(() => null) : null;
+    // Check if the logged-in user has configured their HeyGen key
+    userHeyGenConfigured = user
+      ? Boolean(await getUserCredential(user.id, 'heygen').catch((e) => {
+          logger.warn('[PricingPage] getUserCredential failed', e);
+          return null;
+        }))
+      : false;
 
-  const productSchemas = buildAllProductSchemas();
-  const breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing);
+    currentTier = user ? await resolveUserTier(user.id).catch((e) => {
+      logger.warn('[PricingPage] resolveUserTier failed', e);
+      return null;
+    }) : null;
+
+    // Build schemas with individual error isolation
+    try {
+      productSchemas = buildAllProductSchemas();
+      logger.info('[PricingPage] buildAllProductSchemas success', { count: productSchemas.length });
+    } catch (e) {
+      logger.error('[PricingPage] buildAllProductSchemas FAILED', e as Error);
+      productSchemas = [];
+    }
+
+    try {
+      breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing);
+      logger.info('[PricingPage] buildBreadcrumbSchema success');
+    } catch (e) {
+      logger.error('[PricingPage] buildBreadcrumbSchema FAILED', e as Error);
+      // Last resort fallback
+      try {
+        breadcrumbSchema = buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://sophia.agencyos.network' },
+          { name: 'Pricing', url: 'https://sophia.agencyos.network/pricing' },
+        ]);
+      } catch {
+        breadcrumbSchema = null;
+      }
+    }
+  } catch (err) {
+    error = err instanceof Error ? err : new Error(String(err));
+    logger.error('[PricingPage] Failed to load data', error, {
+      hasUser: !!user,
+      hasTier: !!currentTier,
+      productSchemasBuilt: productSchemas ? productSchemas.length : 0,
+      breadcrumbBuilt: !!breadcrumbSchema,
+    });
+    // Fallback values to still render something
+    t = (key: string) => key;
+    heygenHealthy = false;
+    userHeyGenConfigured = false;
+    currentTier = null;
+    productSchemas = [];
+    try {
+      breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing);
+    } catch {
+      breadcrumbSchema = null;
+    }
+  }
 
   return (
     <main id="main-content" className="min-h-screen bg-gradient-to-b from-background to-card pt-16">
@@ -64,6 +123,11 @@ export default async function PricingPage() {
               <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-300">
                 {t("current_plan_badge")}: {currentTier}
               </span>
+            </div>
+          )}
+          {error && (
+            <div className="mb-3 p-3 bg-yellow-900/20 border border-yellow-500/30 rounded text-yellow-200 text-xs">
+              ⚠️ Some pricing data may be temporarily unavailable. Please try again in a few minutes.
             </div>
           )}
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">

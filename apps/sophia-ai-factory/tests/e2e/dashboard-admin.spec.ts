@@ -14,9 +14,9 @@
  */
 
 import { mergeTests, expect } from '@playwright/test'
-import { test as authTest } from './_fixtures/auth-fixture'
-import { test as a11yTest } from './_fixtures/a11y-test'
-import { test as visualTest } from './_fixtures/visual-test'
+import { test as authTest } from './fixtures/auth-fixture'
+import { test as a11yTest } from './fixtures/a11y-test'
+import { test as visualTest } from './fixtures/visual-test'
 
 const test = mergeTests(authTest, a11yTest, visualTest)
 

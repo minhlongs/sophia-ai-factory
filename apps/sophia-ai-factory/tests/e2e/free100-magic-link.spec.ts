@@ -26,7 +26,7 @@
  * every request, so a directly-inserted SQLite row could never be accepted.
  */
 
-import { test, expect } from './_fixtures/auth-fixture';
+import { test, expect } from './fixtures/auth-fixture';
 
 test.describe('FREE100 Magic-Link Auth', () => {
   test('/login shows magic-link email form', async ({ page }) => {
