@@ -17,10 +17,13 @@ import {
   TableHead,
   TableCell,
 } from '@/seed/components/ui/table';
+import { Button } from '@/seed/components/ui/button';
+import { Alert, AlertTitle, AlertDescription } from '@/seed/components/ui/alert';
+import { EmptyState } from '@/seed/components/ui/empty-state';
 import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowRight, AlertTriangle } from 'lucide-react';
+import { ArrowRight, AlertTriangle, Video } from 'lucide-react';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -133,22 +136,16 @@ export default async function WalletPage() {
           <h1 className="text-3xl font-bold text-foreground mb-2">{t('title')}</h1>
           <p className="text-muted-foreground">{t('subtitle')}</p>
         </div>
-        <div
-          role="alert"
-          className="bg-card border border-red-500/30 rounded-xl p-6 flex items-start gap-3"
-        >
-          <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" aria-hidden="true" />
-          <div className="flex-1">
-            <p className="font-semibold text-foreground">{t('errorTitle')}</p>
-            <p className="text-sm text-muted-foreground mt-1">{t('errorHint')}</p>
+        <Alert variant="destructive" role="alert">
+          <AlertTriangle className="h-4 w-4" aria-hidden="true" />
+          <AlertTitle>{t('errorTitle')}</AlertTitle>
+          <AlertDescription>{t('errorHint')}</AlertDescription>
+          <div className="mt-4">
+            <Button onClick={() => window.location.reload()}>
+              {t('errorRetry')}
+            </Button>
           </div>
-          <Link
-            href="/dashboard/wallet"
-            className="px-3 py-1.5 rounded-lg border border-border text-sm hover:bg-muted/30 transition-colors"
-          >
-            {t('errorRetry')}
-          </Link>
-        </div>
+        </Alert>
       </div>
     );
   }
@@ -202,19 +199,15 @@ export default async function WalletPage() {
         </div>
 
         {data.recent_conversions.length === 0 ? (
-          <div className="p-12 text-center space-y-4">
-            <div>
-              <p className="text-foreground font-medium">{t('emptyTitle')}</p>
-              <p className="text-sm text-muted-foreground mt-1">{t('emptyHint')}</p>
-            </div>
-            <Link
-              href="/dashboard/integrations/affiliate-networks"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[var(--neon-cyan)]/20 to-[var(--neon-purple)]/20 border border-[var(--neon-cyan)]/40 text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 transition-colors text-sm font-medium"
-            >
-              {t('emptyCta')}
-              <ArrowRight className="w-4 h-4" aria-hidden="true" />
-            </Link>
-          </div>
+          <EmptyState
+            icon={Video}
+            title={t('emptyTitle')}
+            description={t('emptyHint')}
+            cta={{
+              label: t('emptyCta'),
+              href: '/dashboard/integrations/affiliate-networks',
+            }}
+          />
         ) : (
           <Table>
             <TableHeader>

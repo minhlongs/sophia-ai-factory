@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { localizedHref } from "@/land/i18n/localized-href";
 import { VideoGallery } from "./components/video-gallery";
 import { EmptyState } from "@/seed/components/ui/empty-state";
+import { Button } from "@/seed/components/ui/button";
 import { getD1 } from '@/seed/db/get-d1';
 import { Video } from "lucide-react";
 
@@ -45,12 +46,11 @@ export default async function VideosGalleryPage({
           <h1 className="text-2xl font-semibold">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Link
-          href={localizedHref(locale, "/dashboard/videos/new")}
-          className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium hover:opacity-90 min-h-[44px] inline-flex items-center"
-        >
-          {t("newVideo")}
-        </Link>
+        <Button asChild>
+          <Link href={localizedHref(locale, "/dashboard/videos/new")}>
+            {t("newVideo")}
+          </Link>
+        </Button>
       </header>
 
       {videoCount === 0 ? (
