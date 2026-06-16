@@ -12,7 +12,7 @@ import {
   _clearMCPRegistry,
 } from '../mcp-gateway';
 import { set } from '@/seed/tenant-settings/registry';
-import { createFakeD1 } from '../../publishing/__tests__/fake-d1-sqlite';
+import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';
 import type { D1Database } from '@cloudflare/workers-types';
 
 const SCHEMA = [

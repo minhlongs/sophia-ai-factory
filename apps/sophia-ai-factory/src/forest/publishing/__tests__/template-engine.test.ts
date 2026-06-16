@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderTemplate, getEffectiveCaption, getEffectiveTitle, getEffectiveHashtags } from '../template-engine';
 import { set } from '@/seed/tenant-settings/registry';
-import { createFakeD1 } from './fake-d1-sqlite';
+import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';
 import type { D1Database } from '@cloudflare/workers-types';
 
 const SCHEMA = [

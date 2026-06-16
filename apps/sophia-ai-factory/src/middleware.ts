@@ -24,6 +24,7 @@ import { isSensitiveApiRoute } from './middleware/sensitive-routes';
 import { requireAuth, type BetterAuthSession } from './middleware/auth';
 import { enforceMfaGate } from './middleware/mfa';
 import { handleCorsPrelight, applyCorsHeaders } from './middleware/cors';
+import { withAuth, isPublicApiRoute } from '@/forest/middleware/auth-guard';
 
 const SUPPORTED_LOCALES = ['en', 'vi'] as const;
 
@@ -100,6 +101,12 @@ export async function proxy(request: NextRequest) {
   if (pathname.startsWith('/api')) {
     const blocked = await handleApiRoute(request, pathname, startTime);
     if (blocked) return blocked;
+
+    // Auth guard for protected API routes (exclude public: health, webhooks, auth, oauth, etc.)
+    if (!isPublicApiRoute(pathname)) {
+      const authResponse = await withAuth(request);
+      if (authResponse) return authResponse;
+    }
 
     // MFA gate for sensitive API routes (webhooks and public routes are excluded)
     if (isSensitiveApiRoute(pathname)) {
