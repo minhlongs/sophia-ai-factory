@@ -12,7 +12,13 @@ import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import type { Tier } from "@/seed/types";
 import Link from "next/link";
 import { buildAllProductSchemas, buildBreadcrumbSchema, BREADCRUMBS } from "@/land/seo/schema-org";
-import { logger } from "@/seed/utils/logger-utility";
+// logger temporarily disabled for debugging
+// import { logger } from "@/seed/utils/logger-utility";
+const logger = {
+  warn: () => {},
+  info: () => {},
+  error: () => {},
+};
 
 // Pricing page — cache 1 hour at the edge. PricingSection reads HeyGen health
 // per request; we accept it may be 1h stale at peak. Calculator + FAQ are
