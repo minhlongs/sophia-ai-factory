@@ -30,8 +30,8 @@ export default async function PricingPage() {
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let userHeyGenConfigured = false;
   let currentTier: Tier | null = null;
-  let productSchemas: Array<Record<string, unknown>> = [];
-  let breadcrumbSchema: Record<string, unknown> | null = null;
+  let productSchemas: unknown[] = [];
+  let breadcrumbSchema: unknown | null = null;
   let error: Error | null = null;
 
   try {
@@ -57,7 +57,7 @@ export default async function PricingPage() {
 
     // Build schemas with individual error isolation
     try {
-      productSchemas = buildAllProductSchemas();
+      productSchemas = buildAllProductSchemas() as unknown[];
       logger.info('[PricingPage] buildAllProductSchemas success', { count: productSchemas.length });
     } catch (e) {
       logger.error('[PricingPage] buildAllProductSchemas FAILED', e as Error);
@@ -65,7 +65,7 @@ export default async function PricingPage() {
     }
 
     try {
-      breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing) as Record<string, unknown>;
+      breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing);
       logger.info('[PricingPage] buildBreadcrumbSchema success');
     } catch (e) {
       logger.error('[PricingPage] buildBreadcrumbSchema FAILED', e as Error);
@@ -74,7 +74,7 @@ export default async function PricingPage() {
         breadcrumbSchema = buildBreadcrumbSchema([
           { name: 'Home', url: 'https://sophia.agencyos.network' },
           { name: 'Pricing', url: 'https://sophia.agencyos.network/pricing' },
-        ]) as Record<string, unknown>;
+        ]);
       } catch {
         breadcrumbSchema = null;
       }
@@ -94,7 +94,7 @@ export default async function PricingPage() {
     currentTier = null;
     productSchemas = [];
     try {
-      breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing) as Record<string, unknown>;
+      breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing);
     } catch {
       breadcrumbSchema = null;
     }
