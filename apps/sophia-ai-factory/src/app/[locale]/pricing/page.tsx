@@ -15,9 +15,9 @@ import { buildAllProductSchemas, buildBreadcrumbSchema, BREADCRUMBS } from "@/la
 // logger temporarily disabled for debugging
 // import { logger } from "@/seed/utils/logger-utility";
 const logger = {
-  warn: () => {},
-  info: () => {},
-  error: () => {},
+  warn: (..._args: unknown[]) => {},
+  info: (..._args: unknown[]) => {},
+  error: (..._args: unknown[]) => {},
 };
 
 // Pricing page — cache 1 hour at the edge. PricingSection reads HeyGen health
