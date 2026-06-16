@@ -24,6 +24,9 @@ const CampaignList = dynamic(
   }
 );
 
+// Campaigns are user-specific but update infrequently — ISR with 60s revalidate
+export const revalidate = 60;
+
 export default async function CampaignsPage() {
   const t = await getTranslations('dashboard');
   const tEmpty = await getTranslations('dashboard.emptyState.campaigns');

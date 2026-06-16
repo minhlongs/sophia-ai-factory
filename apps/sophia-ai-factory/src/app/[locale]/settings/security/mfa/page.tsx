@@ -12,6 +12,7 @@
 
 import { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import QRCode from 'qrcode';
 
 type MfaStatus = 'idle' | 'setup' | 'backup_codes' | 'disable';
@@ -145,7 +146,12 @@ export default function MfaPage() {
             <h2 className="font-semibold">{t('setup_title')}</h2>
             <p className="text-sm text-muted-foreground">{t('setup_description')}</p>
             <div className="flex justify-center">
-              <img src={setupData.qrDataUrl} alt="TOTP QR Code" width={200} height={200} />
+              <Image
+                src={setupData.qrDataUrl}
+                alt="TOTP QR Code"
+                width={200}
+                height={200}
+              />
             </div>
             <p className="text-xs text-center font-mono break-all text-muted-foreground">{setupData.secret}</p>
             <div className="space-y-2">

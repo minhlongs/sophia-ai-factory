@@ -24,8 +24,36 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
  */
 // CSP violation reports are POSTed by the browser without a CSRF token —
 // the request is browser-initiated, not user form-initiated. Bypass.
-const CSRF_BYPASS_PREFIXES = ['/api/auth/', '/api/webhooks/', '/api/cron/', '/api/csp-report']
+const CSRF_BYPASS_PREFIXES = ['/api/auth/', '/api/webhooks/', '/api/csp-report']
+const CRON_PREFIX = '/api/cron/'
 const SUPPORTED_LOCALES = ['vi', 'en']
+
+/**
+ * Verify that a cron request is authentic.
+ * Cron endpoints bypass CSRF but require either:
+ * - Cloudflare Cron header (cf-cron-trigger) OR
+ * - Internal cron secret (x-internal-cron-secret)
+ */
+export function validateCronRequest(request: NextRequest): boolean {
+  const pathname = new URL(request.url).pathname
+  if (!pathname.startsWith(CRON_PREFIX)) {
+    return false // Not a cron route
+  }
+
+  // Check Cloudflare Cron header (when triggered by CF Scheduler)
+  if (request.headers.get('cf-cron-trigger')) {
+    return true
+  }
+
+  // Check internal cron secret for manual/alternative triggers
+  const cronSecret = request.headers.get('x-internal-cron-secret')
+  const expectedSecret = process.env.INTERNAL_CRON_SECRET
+  if (cronSecret && expectedSecret && timingSafeEqual(cronSecret, expectedSecret)) {
+    return true
+  }
+
+  return false
+}
 
 function pathnameWithoutLocale(pathname: string): string {
 for (const locale of SUPPORTED_LOCALES) {
@@ -120,13 +148,15 @@ export function verifyCsrfToken(request: NextRequest): boolean {
  * - Pathname is under a bypass prefix
  */
 export function requiresCsrfCheck(pathname: string, method: string): boolean {
-if (SAFE_METHODS.has(method.toUpperCase())) return false
-// Strip locale prefix for bypass matching (e.g., /vi/api/auth/... → /api/auth/...)
-const cleanPath = pathnameWithoutLocale(pathname)
-for (const prefix of CSRF_BYPASS_PREFIXES) {
-if (cleanPath.startsWith(prefix)) return false
-}
-return true
+	if (SAFE_METHODS.has(method.toUpperCase())) return false
+	// Strip locale prefix for bypass matching (e.g., /vi/api/auth/... → /api/auth/...)
+	const cleanPath = pathnameWithoutLocale(pathname)
+	for (const prefix of CSRF_BYPASS_PREFIXES) {
+	if (cleanPath.startsWith(prefix)) return false
+	}
+	// Cron endpoints use separate validation (validateCronRequest)
+	if (cleanPath.startsWith(CRON_PREFIX)) return false
+	return true
 }
 
 /**

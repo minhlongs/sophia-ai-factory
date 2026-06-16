@@ -11,6 +11,8 @@
 // @ts-ignore: require returns the CJS module with all constructable signatures
 const Database = require('better-sqlite3');
 
+import type { Database as SqliteDb } from 'better-sqlite3';
+
 export interface FakeD1RunResult {
   success: true;
   meta: {
@@ -32,7 +34,7 @@ export interface FakeD1Statement {
 
 export interface FakeD1 {
   prepare(sql: string): FakeD1Statement;
-  _db: any;
+  _db: SqliteDb;
 }
 
 export function createFakeD1(schemaStatements: string[] = []): FakeD1 {

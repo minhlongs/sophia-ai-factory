@@ -148,6 +148,187 @@ async function acquireRefreshLock(channelId: string, now: number): Promise<boole
 }
 
 /**
+ * Refresh Facebook (Page Access Token) — tokens don't expire when derived from long-lived user token.
+ * No-op refresh: keep existing token, return synthetic 1-year window.
+ */
+function buildFacebookRefreshResult(decryptedToken: string): { accessToken: string; expiresIn: number; rotatedRefreshToken: string | null } {
+  return { accessToken: decryptedToken, expiresIn: 365 * 24 * 3600, rotatedRefreshToken: null };
+}
+
+/**
+ * Handle Twitter token refresh with refresh_token rotation.
+ */
+function buildTwitterRefreshResult(apiResult: { access_token: string; expires_in: number; refresh_token?: string }): { accessToken: string; expiresIn: number; rotatedRefreshToken: string | null } {
+  return {
+    accessToken: apiResult.access_token,
+    expiresIn: apiResult.expires_in,
+    rotatedRefreshToken: apiResult.refresh_token ?? null,
+  };
+}
+
+/**
+ * Handle Threads long-lived token re-exchange via th_refresh_token grant (60d TTL).
+ */
+function buildThreadsRefreshResult(apiResult: { access_token: string; expires_in?: number }): { accessToken: string; expiresIn: number; rotatedRefreshToken: string | null } {
+  return { accessToken: apiResult.access_token, expiresIn: apiResult.expires_in ?? 60 * 24 * 3600, rotatedRefreshToken: null };
+}
+
+/**
+ * Handle Bluesky AT Protocol refresh — uses refreshJwt stored as refresh_token to get new accessJwt.
+ * refreshJwt rotates on each refresh — persist new value when different.
+ */
+function buildBlueskyRefreshResult(apiResult: { accessJwt: string; refreshJwt: string; originalRefreshToken: string }): { accessToken: string; expiresIn: number; rotatedRefreshToken: string | null } {
+  const rotated = apiResult.refreshJwt !== apiResult.originalRefreshToken ? apiResult.refreshJwt : null;
+  return { accessToken: apiResult.accessJwt, expiresIn: 2 * 3600, rotatedRefreshToken: rotated };
+}
+
+/**
+ * Refresh Mastodon token via OAuth2 refresh_token grant.
+ * Instance URL is encoded in external_account_id as "<instanceUrl>|<accountId>".
+ * Returns null for rotated refresh token if not present or credentials not configured.
+ */
+async function refreshMastodonToken(
+  channel: PublishingChannel,
+  decryptedToken: string,
+  refreshToken: string | null,
+): Promise<{ accessToken: string; expiresIn: number; rotatedRefreshToken: string | null }> {
+  if (!refreshToken) {
+    // No refresh_token — treat as perpetual token (most Mastodon instances)
+    return { accessToken: decryptedToken, expiresIn: 365 * 24 * 3600, rotatedRefreshToken: null };
+  }
+
+  const { instanceUrl } = parseMastodonAccountId(channel.external_account_id);
+  const normalizedInstance = instanceUrl.replace(/\/$/, '');
+  const mastodonClientId = process.env.MASTODON_CLIENT_ID;
+  const mastodonClientSecret = process.env.MASTODON_CLIENT_SECRET;
+
+  if (!mastodonClientId || !mastodonClientSecret) {
+    return { accessToken: decryptedToken, expiresIn: 365 * 24 * 3600, rotatedRefreshToken: null };
+  }
+
+  const res = await fetch(`${normalizedInstance}/oauth/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: mastodonClientId,
+      client_secret: mastodonClientSecret,
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Mastodon token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+  }
+
+  const data = (await res.json()) as { access_token?: string; expires_in?: number; refresh_token?: string };
+  if (!data.access_token) throw new Error('Mastodon token refresh returned no access_token');
+
+  return {
+    accessToken: data.access_token,
+    expiresIn: data.expires_in ?? 365 * 24 * 3600,
+    rotatedRefreshToken: data.refresh_token && data.refresh_token !== refreshToken ? data.refresh_token : null,
+  };
+}
+
+/**
+ * Dispatch token refresh based on provider.
+ * Returns the new token, expiry, and optionally a rotated refresh token.
+ */
+async function dispatchProviderRefresh(
+  channel: PublishingChannel,
+  decryptedToken: string,
+  refreshToken: string | null,
+): Promise<{ accessToken: string; expiresIn: number; rotatedRefreshToken: string | null }> {
+  switch (channel.provider) {
+    case 'tiktok': {
+      if (!refreshToken) throw new Error('TikTok refresh token missing');
+      const r = await refreshTikTok(refreshToken);
+      return { accessToken: r.access_token, expiresIn: r.expires_in, rotatedRefreshToken: null };
+    }
+    case 'youtube': {
+      if (!refreshToken) throw new Error('YouTube refresh token missing');
+      const r = await refreshYouTube(refreshToken);
+      return { accessToken: r.access_token, expiresIn: r.expires_in, rotatedRefreshToken: null };
+    }
+    case 'instagram': {
+      const r = await refreshInstagramLongLivedToken(decryptedToken);
+      return { accessToken: r.access_token, expiresIn: r.expires_in, rotatedRefreshToken: null };
+    }
+    case 'pinterest': {
+      if (!refreshToken) throw new Error('Pinterest refresh token missing');
+      const r = await refreshPinterestToken(refreshToken);
+      return { accessToken: r.access_token, expiresIn: r.expires_in, rotatedRefreshToken: null };
+    }
+    case 'linkedin': {
+      if (!refreshToken) throw new Error('LinkedIn refresh token missing');
+      const r = await refreshLinkedInToken(refreshToken);
+      return { accessToken: r.access_token, expiresIn: r.expires_in, rotatedRefreshToken: null };
+    }
+    case 'zalo': {
+      if (!refreshToken) throw new Error('Zalo refresh token missing');
+      const r = await refreshZaloToken(refreshToken);
+      return { accessToken: r.access_token, expiresIn: r.expires_in, rotatedRefreshToken: null };
+    }
+    case 'facebook': {
+      return buildFacebookRefreshResult(decryptedToken);
+    }
+    case 'twitter': {
+      if (!refreshToken) throw new Error('Twitter refresh token missing');
+      const r = await refreshTwitter(refreshToken);
+      return buildTwitterRefreshResult(r);
+    }
+    case 'threads': {
+      const r = await refreshThreadsToken(decryptedToken);
+      return buildThreadsRefreshResult(r);
+    }
+    case 'reddit': {
+      if (!refreshToken) throw new Error('Reddit refresh token missing');
+      const r = await refreshReddit(refreshToken);
+      return { accessToken: r.access_token, expiresIn: r.expires_in, rotatedRefreshToken: null };
+    }
+    case 'bluesky': {
+      if (!refreshToken) throw new Error('Bluesky refresh token (refreshJwt) missing');
+      const r = await refreshAtprotoSession(refreshToken);
+      return buildBlueskyRefreshResult({ ...r, originalRefreshToken: refreshToken });
+    }
+    case 'mastodon': {
+      const result = await refreshMastodonToken(channel, decryptedToken, refreshToken);
+      return result;
+    }
+    default:
+      throw new Error(`Unknown provider: ${channel.provider}`);
+  }
+}
+
+/**
+ * Update channel token in database.
+ */
+async function updateChannelToken(
+  channelId: string,
+  newAccessToken: string,
+  newExpiresAt: number,
+  rotatedRefreshToken: string | null,
+): Promise<void> {
+  const db = createServerClient();
+  const updatePatch: Record<string, unknown> = {
+    access_token: await encryptToken(newAccessToken),
+    expires_at: newExpiresAt,
+    updated_at: Math.floor(Date.now() / 1000),
+    refreshing_at: null,
+  };
+  if (rotatedRefreshToken !== null) {
+    updatePatch.refresh_token = await encryptToken(rotatedRefreshToken);
+  }
+
+  await db
+    .from('publishing_channels')
+    .update(updatePatch)
+    .eq('id', channelId);
+}
+
+/**
  * Refresh a single channel's token with row-lock.
  * Returns the new expiry timestamp (Unix seconds) or throws.
  */
@@ -169,160 +350,10 @@ export async function refreshChannelToken(channel: PublishingChannel): Promise<n
     const decrypted = await decryptToken(channel.access_token);
     const refreshToken = channel.refresh_token ? await decryptToken(channel.refresh_token) : null;
 
-    let newAccessToken: string;
-    let expiresIn: number;
-    let rotatedRefreshToken: string | null = null;
-
-    switch (channel.provider) {
-      case 'tiktok': {
-        if (!refreshToken) throw new Error('TikTok refresh token missing');
-        const r = await refreshTikTok(refreshToken);
-        newAccessToken = r.access_token;
-        expiresIn = r.expires_in;
-        break;
-      }
-      case 'youtube': {
-        if (!refreshToken) throw new Error('YouTube refresh token missing');
-        const r = await refreshYouTube(refreshToken);
-        newAccessToken = r.access_token;
-        expiresIn = r.expires_in;
-        break;
-      }
-      case 'instagram': {
-        // FB long-lived token re-exchange — no refresh_token concept
-        const r = await refreshInstagramLongLivedToken(decrypted);
-        newAccessToken = r.access_token;
-        expiresIn = r.expires_in;
-        break;
-      }
-      case 'pinterest': {
-        if (!refreshToken) throw new Error('Pinterest refresh token missing');
-        const r = await refreshPinterestToken(refreshToken);
-        newAccessToken = r.access_token;
-        expiresIn = r.expires_in;
-        break;
-      }
-      case 'linkedin': {
-        if (!refreshToken) throw new Error('LinkedIn refresh token missing');
-        const r = await refreshLinkedInToken(refreshToken);
-        newAccessToken = r.access_token;
-        expiresIn = r.expires_in;
-        break;
-      }
-      case 'zalo': {
-        if (!refreshToken) throw new Error('Zalo refresh token missing');
-        const r = await refreshZaloToken(refreshToken);
-        newAccessToken = r.access_token;
-        expiresIn = r.expires_in;
-        break;
-      }
-      case 'facebook': {
-        // Page Access Tokens don't expire when derived from long-lived user token.
-        // No-op refresh: keep existing token, return synthetic 1-year window.
-        newAccessToken = decrypted;
-        expiresIn = 365 * 24 * 3600;
-        break;
-      }
-      case 'twitter': {
-        if (!refreshToken) throw new Error('Twitter refresh token missing');
-        const r = await refreshTwitter(refreshToken);
-        newAccessToken = r.access_token;
-        expiresIn = r.expires_in;
-        // X rotates refresh_token — persist new value when present.
-        if (r.refresh_token) rotatedRefreshToken = r.refresh_token;
-        break;
-      }
-      case 'threads': {
-        // Threads long-lived token re-exchange via th_refresh_token grant (60d TTL)
-        const r = await refreshThreadsToken(decrypted);
-        newAccessToken = r.access_token;
-        // Threads API returns expires_in in seconds; default 60d if absent
-        expiresIn = r.expires_in ?? 60 * 24 * 3600;
-        break;
-      }
-      case 'reddit': {
-        // Reddit permanent refresh_token — access tokens expire in 1h
-        if (!refreshToken) throw new Error('Reddit refresh token missing');
-        const r = await refreshReddit(refreshToken);
-        newAccessToken = r.access_token;
-        expiresIn = r.expires_in;
-        break;
-      }
-      case 'bluesky': {
-        // AT Protocol: use refreshJwt stored as refresh_token to get new accessJwt
-        if (!refreshToken) throw new Error('Bluesky refresh token (refreshJwt) missing');
-        const r = await refreshAtprotoSession(refreshToken);
-        newAccessToken = r.accessJwt;
-        // AT Protocol JWTs expire in ~2h; Bluesky API doesn't return explicit expires_in
-        expiresIn = 2 * 3600;
-        // refreshJwt rotates on each refresh — persist new value
-        if (r.refreshJwt !== refreshToken) rotatedRefreshToken = r.refreshJwt;
-        break;
-      }
-      case 'mastodon': {
-        // Mastodon: tokens rarely expire but support refresh_token grant per RFC 6749
-        // Instance URL is encoded in external_account_id as "<instanceUrl>|<accountId>"
-        if (!refreshToken) {
-          // No refresh_token — treat as perpetual token (most Mastodon instances)
-          newAccessToken = decrypted;
-          expiresIn = 365 * 24 * 3600;
-          break;
-        }
-        const { instanceUrl } = parseMastodonAccountId(channel.external_account_id);
-        const normalizedInstance = instanceUrl.replace(/\/$/, '');
-        const mastodonClientId = process.env.MASTODON_CLIENT_ID;
-        const mastodonClientSecret = process.env.MASTODON_CLIENT_SECRET;
-        if (!mastodonClientId || !mastodonClientSecret) {
-          // Credentials not configured — fall back to treating token as perpetual
-          newAccessToken = decrypted;
-          expiresIn = 365 * 24 * 3600;
-          break;
-        }
-        const res = await fetch(`${normalizedInstance}/oauth/token`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            client_id: mastodonClientId,
-            client_secret: mastodonClientSecret,
-            grant_type: 'refresh_token',
-            refresh_token: refreshToken,
-          }),
-        });
-        if (!res.ok) {
-          const body = await res.text().catch(() => '');
-          throw new Error(`Mastodon token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
-        }
-        const data = (await res.json()) as { access_token?: string; expires_in?: number; refresh_token?: string };
-        if (!data.access_token) throw new Error('Mastodon token refresh returned no access_token');
-        newAccessToken = data.access_token;
-        expiresIn = data.expires_in ?? 365 * 24 * 3600;
-        if (data.refresh_token && data.refresh_token !== refreshToken) {
-          rotatedRefreshToken = data.refresh_token;
-        }
-        break;
-      }
-      default:
-        throw new Error(`Unknown provider: ${channel.provider}`);
-    }
-
+    const { accessToken, expiresIn, rotatedRefreshToken } = await dispatchProviderRefresh(channel, decrypted, refreshToken);
     const newExpiresAt = Math.floor(Date.now() / 1000) + expiresIn;
-    const encrypted = await encryptToken(newAccessToken);
 
-    const updatePatch: Record<string, unknown> = {
-      access_token: encrypted,
-      expires_at: newExpiresAt,
-      updated_at: Math.floor(Date.now() / 1000),
-      refreshing_at: null,
-    };
-    if (rotatedRefreshToken !== null) {
-      updatePatch.refresh_token = await encryptToken(rotatedRefreshToken);
-    }
-
-    const db = createServerClient();
-    await db
-      .from('publishing_channels')
-      .update(updatePatch)
-      .eq('id', channel.id);
+    await updateChannelToken(channel.id, accessToken, newExpiresAt, rotatedRefreshToken);
 
     return newExpiresAt;
   } catch (err) {

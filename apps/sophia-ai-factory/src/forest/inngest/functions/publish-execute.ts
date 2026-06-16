@@ -33,6 +33,28 @@ import {
 } from '@/land/video/get-canonical-video-url';
 import { logger } from '@/seed/utils/logger-utility';
 import type { PublishingChannel, PublishingJob, Publisher } from '@/forest/publishing/publisher-interface';
+
+interface Step {
+  sleep(name: string, duration: string): Promise<void>;
+  run<T>(name: string, fn: () => Promise<T>): Promise<unknown>;
+}
+
+interface InngestEventData {
+  jobId: string;
+  tenantId: string;
+  userId: string;
+  [key: string]: unknown;
+}
+
+interface InngestEvent {
+  id?: string;
+  name: string;
+  data: InngestEventData;
+  ts?: number;
+  user?: unknown;
+  v?: string;
+}
+
 const MAX_RETRIES = 3;
 const RETRY_DELAYS_S = [120, 600, 1800];
 const POLL_MAX_ATTEMPTS = 6; // 6 * 60s = 6 min via step.sleep
@@ -66,15 +88,6 @@ function assertSafeVideoUrl(url: string): void {
 /**
  * Resolves a canonical R2 video URL for a publishing job, mapping typed
  * resolution errors to the publishing_jobs.status terminal state.
- *
- * - VideoNotFoundError    → update DB status=failed "Video not found", re-throw
- * - VideoUnauthorizedError → Sentry warn + update DB status=failed "Permission denied", re-throw
- * - VideoNotMirroredError → re-throw immediately (transient — Inngest retries)
- * - Other errors          → re-throw
- *
- * Callers must wrap in try/catch: terminal errors (VideoNotFoundError /
- * VideoUnauthorizedError) should be caught and converted to a `return` so the
- * Inngest step emits a controlled ClaimResult rather than an unhandled throw.
  */
 async function resolveVideoUrlOrFail(args: {
   jobId: string;
@@ -122,11 +135,8 @@ function buildPublisher(channel: Pick<PublishingChannel, 'provider' | 'external_
     case 'twitter':
       return new TwitterPublisher(accessToken);
     case 'pinterest':
-      // external_account_id stores the user's default board id (set in OAuth callback).
       return new PinterestPublisher(accessToken, channel.external_account_id);
     case 'linkedin':
-      // LinkedIn /v2/posts requires URN format. Callback stores raw profile.id;
-      // wrap to URN at construction so callers don't need to know the API quirk.
       return new LinkedInPublisher(
         accessToken,
         channel.external_account_id.startsWith('urn:li:')
@@ -136,16 +146,12 @@ function buildPublisher(channel: Pick<PublishingChannel, 'provider' | 'external_
     case 'zalo':
       return new ZaloPublisher(accessToken);
     case 'threads':
-      // external_account_id stores the Threads user id (numeric string from Meta API).
       return new ThreadsPublisher(accessToken, channel.external_account_id);
     case 'reddit':
-      // external_account_id stores Reddit username (stored in callback for posting to u_<username>).
       return new RedditPublisher(accessToken, channel.external_account_id);
     case 'bluesky':
-      // external_account_id stores the AT Protocol DID (did:plc:xxx).
       return new BlueskyPublisher(accessToken, channel.external_account_id);
     case 'mastodon':
-      // external_account_id stores "<instanceUrl>|<accountId>" compound key.
       return new MastodonPublisher(accessToken, channel.external_account_id);
     default:
       throw new Error(`Unknown provider: ${channel.provider}`);
@@ -172,17 +178,6 @@ type ClaimResult =
   | { skipped: false; jobId: string; status: 'failed' | 'scheduled'; externalPostId: ''; provider: ''; error?: string }
   | { skipped: false; jobId: string; status: 'processing'; externalPostId: string; provider: string }
   | { skipped: false; jobId: string; status: 'live'; externalPostId: string; provider: string }
-  /**
-   * Wave 23 P01 fix: retries raised to 3 (matches project standard for publish
-   * functions). publishing_results PKs now derived from event.id to be
-   * idempotent across Inngest replays — Inngest memoizes step output so the
-   * telegram-send step won't re-execute on finalize-step retries, but the DB
-   * insert PK must be stable to survive a replay of telegram-finalize itself.
-   *
-   * 429 path: dispatchTelegramWithRetryHints already throws RetryAfterError
-   * which Inngest honors. With retries: 3 those errors now actually trigger
-   * step-level retries instead of permanent-failing silently.
-   */
   | {
       skipped: false;
       jobId: string;
@@ -192,332 +187,422 @@ type ClaimResult =
       telegramPayload: { videoUrl: string; chatId: string; caption: string };
     };
 
+async function findJobById(db: ReturnType<typeof createServerClient>, jobId: string): Promise<PublishingJob> {
+  const { data: jobData } = await db
+    .from('publishing_jobs')
+    .select('*')
+    .eq('id', jobId)
+    .single();
+  const job = jobData as PublishingJob | null;
+  if (!job) throw new Error(`[publishExecute] Job not found: ${jobId}`);
+  return job;
+}
+
+async function checkAndMarkMaxRetries(db: ReturnType<typeof createServerClient>, jobId: string, job: PublishingJob): Promise<boolean> {
+  if (job.retry_count >= MAX_RETRIES) {
+    await db.from('publishing_jobs').update({
+      status: 'failed',
+      error: 'Max retries exceeded',
+      finished_at: Math.floor(Date.now() / 1000),
+    }).eq('id', jobId);
+    return true;
+  }
+  return false;
+}
+
+async function atomicClaimJob(db: ReturnType<typeof createServerClient>, jobId: string): Promise<{ claimed: boolean; status: string }> {
+  const now = Math.floor(Date.now() / 1000);
+  const claimUpdate = await db.from('publishing_jobs').update({
+    status: 'uploading',
+    started_at: now,
+  }).eq('id', jobId).eq('status', 'scheduled');
+
+  const claimChanges = (claimUpdate as { meta?: { changes?: number } })?.meta?.changes ?? 0;
+  if (claimChanges === 0) {
+    return { claimed: false, status: 'scheduled' };
+  }
+  return { claimed: true, status: 'uploading' };
+}
+
+async function handleTelegramClaim(args: {
+  db: ReturnType<typeof createServerClient>;
+  job: PublishingJob;
+  jobId: string;
+  tenantId: string;
+}): Promise<ClaimResult> {
+  const { db, job, jobId, tenantId } = args;
+
+  let videoUrl: string;
+  try {
+    videoUrl = await resolveVideoUrlOrFail({ jobId, videoId: job.video_id, userId: tenantId, db, logTag: 'publishExecute/telegram' });
+  } catch (urlErr) {
+    if (urlErr instanceof VideoNotFoundError || urlErr instanceof VideoUnauthorizedError) {
+      return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
+    }
+    throw urlErr;
+  }
+  assertSafeVideoUrl(videoUrl);
+
+  const pairingRow = await db
+    .from('telegram_paired_chats')
+    .select('chat_id')
+    .eq('chat_id', job.channel_id)
+    .eq('paired_by', tenantId)
+    .maybeSingle();
+
+  if (!pairingRow?.data) {
+    throw new Error(
+      `[publishExecute/telegram] Pairing not found or revoked for chat_id ${job.channel_id}. ` +
+      'Re-pair via /start in @Sophia_Bbot.',
+    );
+  }
+
+  return {
+    skipped: false,
+    jobId,
+    status: 'telegram-claimed',
+    provider: 'telegram',
+    externalPostId: '',
+    telegramPayload: { videoUrl, chatId: job.channel_id, caption: job.caption ?? '' },
+  };
+}
+
+async function fetchChannelForJob(db: ReturnType<typeof createServerClient>, job: PublishingJob, tenantId: string): Promise<PublishingChannel> {
+  const { data: channelData } = await db
+    .from('publishing_channels')
+    .select('*')
+    .eq('id', job.channel_id)
+    .eq('tenant_id', tenantId)
+    .single();
+
+  const channel = channelData as PublishingChannel | null;
+  if (!channel) throw new Error(`[publishExecute] Channel not found: ${job.channel_id}`);
+  return channel;
+}
+
+async function ensureFreshToken(db: ReturnType<typeof createServerClient>, channel: PublishingChannel, now: number): Promise<string> {
+  if (channel.expires_at && channel.expires_at < now + 3600) {
+    await refreshChannelToken(channel);
+    const { data: refreshed } = await db
+      .from('publishing_channels')
+      .select('access_token')
+      .eq('id', channel.id)
+      .single();
+    if (refreshed) {
+      channel.access_token = (refreshed as { access_token: string }).access_token;
+    }
+  }
+  if (!channel.access_token) {
+    throw new Error(`[publishExecute] Channel ${channel.id} missing access_token`);
+  }
+  return await decryptToken(channel.access_token);
+}
+
+async function uploadToProvider(args: {
+  channel: PublishingChannel;
+  accessToken: string;
+  videoUrl: string;
+  job: PublishingJob;
+  db: ReturnType<typeof createServerClient>;
+  jobId: string;
+  retryCount: number;
+}): Promise<{ externalPostId: string; shouldRetry: boolean; error?: string }> {
+  const { channel, accessToken, videoUrl, job, db, jobId, retryCount } = args;
+  const publisher = buildPublisher(channel, accessToken);
+  const hashtags = job.hashtags_json ? (JSON.parse(job.hashtags_json) as string[]) : [];
+
+  try {
+    const externalPostId = await publisher.upload(videoUrl, {
+      caption: job.caption ?? '',
+      hashtags,
+      productLink: job.product_link ?? undefined,
+    });
+    return { externalPostId, shouldRetry: false };
+  } catch (uploadErr) {
+    const errorMsg = sanitizeError(uploadErr);
+    const nextStatus = retryCount >= MAX_RETRIES ? 'failed' : 'scheduled';
+
+    await db.from('publishing_jobs').update({
+      status: nextStatus,
+      retry_count: retryCount,
+      error: errorMsg,
+      finished_at: nextStatus === 'failed' ? Math.floor(Date.now() / 1000) : null,
+    }).eq('id', jobId);
+
+    return { externalPostId: '', shouldRetry: nextStatus === 'scheduled', error: errorMsg };
+  }
+}
+
+async function scheduleRetry(event: InngestEvent, retryCount: number): Promise<void> {
+  const delayS = RETRY_DELAYS_S[retryCount - 1] ?? 1800;
+  logger.warn('[publishExecute] Upload failed, scheduling retry', { jobId: event.data.jobId, retryCount, delayS });
+  await inngest.send({
+    id: `publish-${event.data.jobId}-retry-${retryCount}`,
+    name: 'publish.scheduled',
+    data: { jobId: event.data.jobId, tenantId: event.data.tenantId, userId: event.data.userId, attempt: retryCount },
+  } as any);
+}
+
+async function pollStatusUntilFinal(args: {
+  step: Step;
+  tenantId: string;
+  provider: string;
+  externalPostId: string;
+}): Promise<'live' | 'failed'> {
+  const { step, tenantId, provider, externalPostId } = args;
+  let finalStatus: 'live' | 'failed' = 'failed';
+
+  for (let pollIdx = 0; pollIdx < POLL_MAX_ATTEMPTS; pollIdx++) {
+    if (pollIdx > 0) {
+      await step.sleep(`poll-wait-${pollIdx}`, '60s');
+    }
+
+    const pollResult = await step.run(`poll-status-${pollIdx}`, async () => {
+      const db = createServerClient();
+      const { data: chData } = await db
+        .from('publishing_channels')
+        .select('provider,access_token,external_account_id')
+        .eq('tenant_id', tenantId)
+        .eq('provider', provider)
+        .single();
+
+      const ch = chData as Pick<PublishingChannel, 'provider' | 'access_token' | 'external_account_id'> | null;
+      if (!ch?.access_token) return 'failed';
+
+      const tok = await decryptToken(ch.access_token);
+      const pub = buildPublisher(ch, tok);
+      return pub.pollStatus(externalPostId);
+    }) as 'live' | 'failed' | 'pending';
+
+    if (pollResult === 'live' || pollResult === 'failed') {
+      finalStatus = pollResult as 'live' | 'failed';
+      break;
+    }
+  }
+
+  return finalStatus;
+}
+
+async function collectMetricsAndBuildUrl(args: {
+  db: ReturnType<typeof createServerClient>;
+  tenantId: string;
+  provider: string;
+  externalPostId: string;
+}): Promise<{ postUrl: string | null; metricsJson: string | null }> {
+  const { db, tenantId, provider, externalPostId } = args;
+  let metricsJson: string | null = null;
+  let externalAccountIdForUrl: string | undefined;
+
+  try {
+    const { data: chData } = await db
+      .from('publishing_channels')
+      .select('provider,access_token,external_account_id')
+      .eq('tenant_id', tenantId)
+      .eq('provider', provider)
+      .single();
+    const ch = chData as Pick<PublishingChannel, 'provider' | 'access_token' | 'external_account_id'> | null;
+    if (ch?.access_token) {
+      externalAccountIdForUrl = ch.external_account_id;
+      const tok = await decryptToken(ch.access_token);
+      const pub = buildPublisher(ch, tok);
+      const metrics = await pub.getMetrics(externalPostId);
+      metricsJson = JSON.stringify(metrics);
+    }
+  } catch {
+    // Non-fatal
+  }
+
+  const postUrl = buildPostUrl(provider, externalPostId, externalAccountIdForUrl);
+  return { postUrl, metricsJson };
+}
+
+async function finalizePublishResult(args: {
+  step: Step;
+  db: ReturnType<typeof createServerClient>;
+  jobId: string;
+  tenantId: string;
+  provider: string;
+  externalPostId: string;
+  finalStatus: 'live' | 'failed';
+  event: InngestEvent;
+}): Promise<void> {
+  const { step, db, jobId, tenantId, provider, externalPostId, finalStatus, event } = args;
+  const finishedAt = Math.floor(Date.now() / 1000);
+
+  await db.from('publishing_jobs').update({
+    status: finalStatus,
+    finished_at: finishedAt,
+    error: finalStatus === 'failed' ? 'Publish polling timed out or failed' : null,
+  }).eq('id', jobId);
+
+  let metricsJson: string | null = null;
+  let postUrl: string | null = null;
+  if (finalStatus === 'live') {
+    const metricsResult = await collectMetricsAndBuildUrl({ db, tenantId, provider, externalPostId });
+    postUrl = metricsResult.postUrl;
+    metricsJson = metricsResult.metricsJson;
+  }
+
+  const resultId = `${event.id!}:finalize`;
+  await db.from('publishing_results').upsert({
+    id: resultId,
+    publishing_job_id: jobId,
+    tenant_id: tenantId,
+    channel_post_id: externalPostId,
+    post_url: postUrl,
+    metrics_json: metricsJson,
+    published_at: finishedAt,
+  });
+
+  logger.info('[publishExecute] Job finalized', { jobId, status: finalStatus, externalPostId });
+}
+
+async function dispatchTelegramAndFinalize(args: {
+  step: Step;
+  db: ReturnType<typeof createServerClient>;
+  jobId: string;
+  tenantId: string;
+  videoUrl: string;
+  chatId: string;
+  caption: string;
+  event: InngestEvent;
+}): Promise<{ externalPostId: string; externalUrl: string }> {
+  const { step, db, jobId, tenantId, videoUrl, chatId, caption, event } = args;
+  const sendResult = await step.run('telegram-send', async () =>
+    dispatchTelegramWithRetryHints({ jobId, userId: tenantId, videoUrl, caption, chatId })
+  ) as { externalPostId: string; externalUrl: string };
+  await step.run('telegram-finalize', async () => {
+    const finishedAt = Math.floor(Date.now() / 1000);
+    await db.from('publishing_jobs').update({ status: 'live', finished_at: finishedAt }).eq('id', jobId);
+    const resultId = `${event.id!}:telegram-finalize`;
+    await db.from('publishing_results').upsert({
+      id: resultId,
+      publishing_job_id: jobId,
+      tenant_id: tenantId,
+      channel_post_id: sendResult.externalPostId,
+      post_url: sendResult.externalUrl,
+      metrics_json: null,
+      published_at: finishedAt,
+    });
+    logger.info('[publishExecute/telegram] Posted and finalized', { jobId, chatId, tgPostId: sendResult.externalPostId });
+  });
+  return { externalPostId: sendResult.externalPostId, externalUrl: sendResult.externalUrl };
+}
+
+async function handleTelegramFlow(args: {
+  db: ReturnType<typeof createServerClient>;
+  job: PublishingJob;
+  jobId: string;
+  tenantId: string;
+  step: Step;
+  event: InngestEvent;
+}): Promise<ClaimResult> {
+  const { db, job, jobId, tenantId, step, event } = args;
+  const telegramResult = await handleTelegramClaim({ db, job, jobId, tenantId });
+  if (telegramResult.status === 'failed') {
+    return telegramResult;
+  }
+  if (telegramResult.status === 'telegram-claimed') {
+    const payload = (telegramResult as { telegramPayload: { videoUrl: string; chatId: string; caption: string } }).telegramPayload;
+    const { externalPostId } = await dispatchTelegramAndFinalize({
+      step, db, jobId, tenantId, videoUrl: payload.videoUrl, chatId: payload.chatId, caption: payload.caption, event,
+    });
+    return { skipped: false, jobId, status: 'live' as const, externalPostId, provider: 'telegram' };
+  }
+  return telegramResult;
+}
+
+async function processStandardProvider(args: {
+  db: ReturnType<typeof createServerClient>;
+  jobId: string;
+  job: PublishingJob;
+  tenantId: string;
+  event: InngestEvent;
+  step: Step;
+  now: number;
+}) {
+  const { db, jobId, job, tenantId, event, step, now } = args;
+
+  const channel = await fetchChannelForJob(db, job, tenantId);
+  const accessToken = await ensureFreshToken(db, channel, now);
+
+  let videoUrl: string;
+  try {
+    videoUrl = await resolveVideoUrlOrFail({ jobId, videoId: job.video_id, userId: tenantId, db, logTag: 'publishExecute' });
+  } catch (urlErr) {
+    if (urlErr instanceof VideoNotFoundError || urlErr instanceof VideoUnauthorizedError) {
+      return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
+    }
+    throw urlErr;
+  }
+  assertSafeVideoUrl(videoUrl);
+
+  const retryCount = job.retry_count + 1;
+  const { externalPostId, shouldRetry, error } = await uploadToProvider({
+    channel, accessToken, videoUrl, job, db, jobId, retryCount,
+  });
+
+  if (shouldRetry) {
+    await scheduleRetry(event, retryCount);
+    return { skipped: false, jobId, status: 'scheduled', externalPostId: '', provider: '', error };
+  }
+
+  if (!externalPostId) {
+    return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '', error };
+  }
+
+  await db.from('publishing_jobs').update({ status: 'processing' }).eq('id', jobId);
+
+  const finalStatus = await pollStatusUntilFinal({ step, tenantId, provider: channel.provider, externalPostId });
+
+  await finalizePublishResult({
+    step, db, jobId, tenantId, provider: channel.provider, externalPostId, finalStatus, event,
+  });
+
+  return { skipped: false, jobId, status: finalStatus, externalPostId };
+}
+
 export const publishExecute = inngest.createFunction(
   { id: 'publish-execute', retries: 3 },
   { event: 'publish.scheduled' },
   async ({ event, step }) => {
     const { jobId, tenantId } = event.data as { jobId: string; tenantId: string; userId?: string; attempt?: number };
+    const db = createServerClient();
+    const now = Math.floor(Date.now() / 1000);
 
-    // Step 1: Atomic claim + upload
-    const claimResult = await step.run('claim-and-upload', async (): Promise<ClaimResult> => {
-      const db = createServerClient();
+    // Step 1: Find and validate job
+    const job = await findJobById(db, jobId);
 
-      const { data: jobData } = await db
-        .from('publishing_jobs')
-        .select('*')
-        .eq('id', jobId)
-        .eq('tenant_id', tenantId)
-        .single();
-
-      const job = jobData as PublishingJob | null;
-      if (!job) throw new Error(`[publishExecute] Job not found: ${jobId}`);
-
-      if (job.retry_count >= MAX_RETRIES) {
-        await db.from('publishing_jobs').update({
-          status: 'failed',
-          error: 'Max retries exceeded',
-          finished_at: Math.floor(Date.now() / 1000),
-        }).eq('id', jobId);
-        return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
-      }
-
-      // CAS: only proceed if row was actually updated (C3)
-      const now = Math.floor(Date.now() / 1000);
-      const claimUpdate = await db.from('publishing_jobs').update({
-        status: 'uploading',
-        started_at: now,
-      }).eq('id', jobId).eq('status', 'scheduled');
-
-      const claimChanges = (claimUpdate as { meta?: { changes?: number } })?.meta?.changes ?? 0;
-      if (claimChanges === 0) {
-        logger.info('[publishExecute] Already claimed by another worker', { jobId, status: job.status });
-        return { skipped: true, jobId, status: job.status as string, externalPostId: '', provider: '' };
-      }
-
-      // ── Telegram claim (Wave 20 Phase 02) ─────────────────────────────────────
-      // job.provider='telegram' is set by schedule-publish when distribute route submits
-      // a Telegram channel. channel_id stores telegram_paired_chats.chat_id as surrogate.
-      //
-      // Step 1 (here) ONLY does the idempotent prep work: CAS, video URL resolve,
-      // pairing check, SSRF guard. The actual Bot-API call + DB finalization happen
-      // in separate `step.run` calls below, so Inngest can retry the dispatch on
-      // 429/5xx without re-firing the CAS check (which would bail because status
-      // is already 'uploading').
-      //
-      // publishing_jobs.video_id stores videos.id (Wave 20 Phase 05 / migration 0101).
-      const jobProvider = job.provider ?? '';
-      if (jobProvider === 'telegram') {
-        let videoUrl: string;
-        try {
-          videoUrl = await resolveVideoUrlOrFail({ jobId, videoId: job.video_id, userId: tenantId, db, logTag: 'publishExecute/telegram' });
-        } catch (urlErr) {
-          if (urlErr instanceof VideoNotFoundError || urlErr instanceof VideoUnauthorizedError) {
-            return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
-          }
-          throw urlErr; // VideoNotMirroredError (transient) + unknown
-        }
-        assertSafeVideoUrl(videoUrl); // SSRF guard
-
-        // Verify pairing still exists and belongs to this tenant (cross-user posting prevention)
-        const pairingRow = await db
-          .from('telegram_paired_chats')
-          .select('chat_id')
-          .eq('chat_id', job.channel_id)
-          .eq('paired_by', tenantId)
-          .maybeSingle();
-
-        if (!pairingRow?.data) {
-          throw new Error(
-            `[publishExecute/telegram] Pairing not found or revoked for chat_id ${job.channel_id}. ` +
-              'Re-pair via /start in @Sophia_Bbot.',
-          );
-        }
-
-        // Hand off to follow-up steps (telegram-send + telegram-finalize).
-        return {
-          skipped: false,
-          jobId,
-          status: 'telegram-claimed',
-          provider: 'telegram',
-          externalPostId: '',
-          telegramPayload: { videoUrl, chatId: job.channel_id, caption: job.caption ?? '' },
-        };
-      }
-      // ── End Telegram claim ─────────────────────────────────────────────────────
-
-      const { data: channelData } = await db
-        .from('publishing_channels')
-        .select('*')
-        .eq('id', job.channel_id)
-        .eq('tenant_id', tenantId)
-        .single();
-
-      const channel = channelData as PublishingChannel | null;
-      if (!channel) throw new Error(`[publishExecute] Channel not found: ${job.channel_id}`);
-
-      // Refresh token if expiring within 1 hour
-      if (channel.expires_at && channel.expires_at < now + 3600) {
-        await refreshChannelToken(channel);
-        const { data: refreshed } = await db
-          .from('publishing_channels')
-          .select('access_token')
-          .eq('id', channel.id)
-          .single();
-        if (refreshed) {
-          channel.access_token = (refreshed as { access_token: string }).access_token;
-        }
-      }
-
-      // Wave 17 Phase 02: resolve video URL from videos table via canonical helper.
-      // publishing_jobs.video_id stores videos.id (renamed from video_job_id in
-      // Wave 20 Phase 05; see migration 0101).
-      let videoUrl: string;
-      try {
-        videoUrl = await resolveVideoUrlOrFail({ jobId, videoId: job.video_id, userId: tenantId, db, logTag: 'publishExecute' });
-      } catch (urlErr) {
-        if (urlErr instanceof VideoNotFoundError || urlErr instanceof VideoUnauthorizedError) {
-          return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
-        }
-        throw urlErr; // VideoNotMirroredError (transient) + unknown
-      }
-      assertSafeVideoUrl(videoUrl); // SSRF guard
-
-      if (!channel.access_token) {
-        throw new Error(`[publishExecute] Channel ${channel.id} missing access_token`);
-      }
-      const accessToken = await decryptToken(channel.access_token);
-      const publisher = buildPublisher(channel, accessToken);
-
-      const hashtags = job.hashtags_json ? (JSON.parse(job.hashtags_json) as string[]) : [];
-
-      let externalPostId: string;
-      try {
-        externalPostId = await publisher.upload(videoUrl, {
-          caption: job.caption ?? '',
-          hashtags,
-          productLink: job.product_link ?? undefined,
-        });
-      } catch (uploadErr) {
-        const retryCount = job.retry_count + 1;
-        const errorMsg = sanitizeError(uploadErr); // C5: strip secrets
-        const nextStatus = retryCount >= MAX_RETRIES ? 'failed' : 'scheduled';
-
-        await db.from('publishing_jobs').update({
-          status: nextStatus,
-          retry_count: retryCount,
-          error: errorMsg,
-          finished_at: nextStatus === 'failed' ? Math.floor(Date.now() / 1000) : null,
-        }).eq('id', jobId);
-
-        if (nextStatus === 'scheduled') {
-          const delayS = RETRY_DELAYS_S[retryCount - 1] ?? 1800;
-          logger.warn('[publishExecute] Upload failed, scheduling retry', { jobId, retryCount, delayS });
-          // C8: idempotency id per job + retry count
-          await inngest.send({
-            id: `publish-${jobId}-retry-${retryCount}`,
-            name: 'publish.scheduled',
-            data: { jobId, tenantId, userId: event.data.userId, attempt: retryCount },
-          });
-        }
-        return { skipped: false, jobId, status: nextStatus as 'failed' | 'scheduled', externalPostId: '', provider: '', error: errorMsg };
-      }
-
-      await db.from('publishing_jobs').update({ status: 'processing' }).eq('id', jobId);
-
-      return { skipped: false, jobId, status: 'processing', externalPostId, provider: channel.provider };
-    });
-
-    // ── Wave 20 Phase 02: Telegram dispatch as separate steps ────────────────
-    // Inngest memoizes step output, so the CAS-claim step (above) won't replay
-    // on retry — only the failing step does. Splitting send + finalize also
-    // prevents the rare "API succeeded → DB write failed → retry double-sends"
-    // failure mode (step 'telegram-send' result is memoized for finalize retry).
-    if (!claimResult.skipped && claimResult.status === 'telegram-claimed') {
-      const { videoUrl, chatId, caption } = claimResult.telegramPayload;
-
-      const sendResult = await step.run('telegram-send', async () => {
-        // Helper throws RetryAfterError on 429 (Inngest honors Telegram retry_after),
-        // NonRetriableError on 4xx, plain Error on 5xx/network.
-        return dispatchTelegramWithRetryHints({
-          jobId,
-          userId: tenantId,
-          videoUrl,
-          caption,
-          chatId,
-        });
-      });
-
-      await step.run('telegram-finalize', async () => {
-        const db = createServerClient();
-        const finishedAt = Math.floor(Date.now() / 1000);
-
-        await db.from('publishing_jobs').update({
-          status: 'live',
-          finished_at: finishedAt,
-        }).eq('id', jobId);
-
-        // Deterministic PK: event.id + step name → idempotent across Inngest replays.
-        // Inngest memoizes telegram-send output, so sendResult is stable on finalize
-        // retries. Using a fixed PK means a replayed finalize step hits a unique
-        // constraint (not an error — we treat it as already-done and move on).
-        const resultId = `${event.id}:telegram-finalize`;
-        await db.from('publishing_results').upsert({
-          id: resultId,
-          publishing_job_id: jobId,
-          tenant_id: tenantId,
-          channel_post_id: sendResult.externalPostId,
-          post_url: sendResult.externalUrl,
-          metrics_json: null,
-          published_at: finishedAt,
-        });
-
-        logger.info('[publishExecute/telegram] Posted and finalized', {
-          jobId,
-          chatId,
-          tgPostId: sendResult.externalPostId,
-        });
-      });
-
-      return {
-        skipped: false,
-        jobId,
-        status: 'live' as const,
-        externalPostId: sendResult.externalPostId,
-        provider: 'telegram',
-      };
+    // Check max retries
+    const maxRetriesExceeded = await checkAndMarkMaxRetries(db, jobId, job);
+    if (maxRetriesExceeded) {
+      return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
     }
 
-    // Exit early if upload didn't complete OR no further work needed
-    if (claimResult.skipped || claimResult.status === 'live' || claimResult.status !== 'processing' || !claimResult.externalPostId) {
-      return claimResult;
+    // Atomic claim
+    const { claimed, status: claimStatus } = await atomicClaimJob(db, jobId);
+    if (!claimed) {
+      logger.info('[publishExecute] Already claimed by another worker', { jobId, status: job.status });
+      return { skipped: true, jobId, status: job.status as string, externalPostId: '', provider: '' };
     }
 
-    const { externalPostId, provider } = claimResult;
-
-    // Steps 2-N: One poll per step.run, 60s sleep between (C4)
-    let finalStatus: 'live' | 'failed' = 'failed';
-
-    for (let pollIdx = 0; pollIdx < POLL_MAX_ATTEMPTS; pollIdx++) {
-      if (pollIdx > 0) {
-        await step.sleep(`poll-wait-${pollIdx}`, '60s');
+    // Telegram special path
+    const jobProvider = job.provider ?? '';
+    if (jobProvider === 'telegram') {
+      const telegramResult = await handleTelegramClaim({ db, job, jobId, tenantId });
+      if (telegramResult.status === 'failed') {
+        return telegramResult;
       }
-
-      const pollResult = await step.run(`poll-status-${pollIdx}`, async () => {
-        const db = createServerClient();
-        const { data: chData } = await db
-          .from('publishing_channels')
-          .select('provider,access_token,external_account_id')
-          .eq('tenant_id', tenantId)
-          .eq('provider', provider)
-          .single();
-
-        const ch = chData as Pick<PublishingChannel, 'provider' | 'access_token' | 'external_account_id'> | null;
-        if (!ch?.access_token) return 'failed';
-
-        const tok = await decryptToken(ch.access_token);
-        const pub = buildPublisher(ch, tok);
-        return pub.pollStatus(externalPostId);
-      });
-
-      if (pollResult === 'live' || pollResult === 'failed') {
-        finalStatus = pollResult as 'live' | 'failed';
-        break;
+      if (telegramResult.status === 'telegram-claimed') {
+        const payload = (telegramResult as { telegramPayload: { videoUrl: string; chatId: string; caption: string } }).telegramPayload;
+        const { externalPostId, externalUrl } = await dispatchTelegramAndFinalize({
+          step, db, jobId, tenantId, videoUrl: payload.videoUrl, chatId: payload.chatId, caption: payload.caption, event,
+        });
+        return { skipped: false, jobId, status: 'live' as const, externalPostId, provider: 'telegram' };
       }
     }
 
-    // Finalize
-    await step.run('finalize', async () => {
-      const db = createServerClient();
-      const finishedAt = Math.floor(Date.now() / 1000);
-
-      await db.from('publishing_jobs').update({
-        status: finalStatus,
-        finished_at: finishedAt,
-        error: finalStatus === 'failed' ? 'Publish polling timed out or failed' : null,
-      }).eq('id', jobId);
-
-      let metricsJson: string | null = null;
-      let externalAccountIdForUrl: string | undefined;
-      if (finalStatus === 'live') {
-        try {
-          const { data: chData } = await db
-            .from('publishing_channels')
-            .select('provider,access_token,external_account_id')
-            .eq('tenant_id', tenantId)
-            .eq('provider', provider)
-            .single();
-          const ch = chData as Pick<PublishingChannel, 'provider' | 'access_token' | 'external_account_id'> | null;
-          if (ch?.access_token) {
-            externalAccountIdForUrl = ch.external_account_id;
-            const tok = await decryptToken(ch.access_token);
-            const pub = buildPublisher(ch, tok);
-            const metrics = await pub.getMetrics(externalPostId);
-            metricsJson = JSON.stringify(metrics);
-          }
-        } catch {
-          // Non-fatal
-        }
-      }
-
-      const postUrl = finalStatus === 'live' ? buildPostUrl(provider, externalPostId, externalAccountIdForUrl) : null;
-
-      // C2: column names match SQL schema.
-      // Deterministic PK: event.id + 'finalize' — idempotent on Inngest step replay.
-      const resultId = `${event.id}:finalize`;
-      await db.from('publishing_results').upsert({
-        id: resultId,
-        publishing_job_id: jobId,
-        tenant_id: tenantId,
-        channel_post_id: externalPostId,
-        post_url: postUrl,
-        metrics_json: metricsJson,
-        published_at: finishedAt,
-      });
-
-      logger.info('[publishExecute] Job finalized', { jobId, status: finalStatus, externalPostId });
-    });
-
-    return { skipped: false, jobId, status: finalStatus, externalPostId };
+    return await processStandardProvider({ db, jobId, job, tenantId, event, step, now });
   },
 );
 

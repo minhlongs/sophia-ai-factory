@@ -9,7 +9,7 @@ import { ArrowRight } from 'lucide-react';
 
 // Blog list is fully static — cache aggressively at the edge.
 // `force-static` opts out of dynamic rendering inherited from the [locale] segment.
-export const revalidate = 300;
+export const revalidate = 3600;
 export const dynamic = 'force-static';
 
 export const metadata: Metadata = {

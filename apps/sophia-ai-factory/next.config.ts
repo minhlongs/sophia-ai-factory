@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import type { Configuration } from "webpack";
 import path from 'node:path';
 import createNextIntlPlugin from 'next-intl/plugin';
 import withBundleAnalyzer from '@next/bundle-analyzer';
@@ -25,10 +26,9 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: path.resolve(__dirname),
   // Replace @upstash/redis with stub to avoid uncrypto bundling issues on Cloudflare
   // (Redis not used in production on Sophia — features disabled via env)
-  resolve: {
-    alias: {
-      '@upstash/redis': path.resolve(__dirname, 'src/lib/redis-stub.ts'),
-    },
+  webpack: (config: Configuration) => {
+    (config.resolve!.alias as Record<string, string>)['@upstash/redis'] = path.resolve(__dirname, 'src/lib/redis-stub.ts');
+    return config;
   },
   // M1 16GB workaround: reactCompiler doubles webpack memory pressure. Disable when SKIP_RC=1.
   reactCompiler: process.env.SKIP_RC === '1' ? false : true,

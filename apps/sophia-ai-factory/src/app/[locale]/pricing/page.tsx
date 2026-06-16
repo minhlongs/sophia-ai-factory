@@ -12,10 +12,10 @@ import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import Link from "next/link";
 import { buildAllProductSchemas, buildBreadcrumbSchema, BREADCRUMBS } from "@/land/seo/schema-org";
 
-// Pricing page — cache 60s at the edge. PricingSection reads HeyGen health
-// per request; we accept it may be 60s stale at peak. Calculator + FAQ are
+// Pricing page — cache 1 hour at the edge. PricingSection reads HeyGen health
+// per request; we accept it may be 1h stale at peak. Calculator + FAQ are
 // pure-static and benefit most from caching.
-export const revalidate = 60;
+export const revalidate = 3600;
 
 export const metadata = {
   title: "Pricing — Sophia AI Factory | Plans from $199",

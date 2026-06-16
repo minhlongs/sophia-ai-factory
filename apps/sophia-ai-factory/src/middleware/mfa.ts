@@ -39,13 +39,30 @@ export function requiresMfaCheck(pathname: string): boolean {
     return false;
   }
 
-  // Only dashboard and sensitive API routes require MFA
-  return pathname.startsWith('/dashboard') ||
-         pathname.startsWith('/api/account') ||
-         pathname.startsWith('/api/checkout') ||
-         pathname.startsWith('/api/admin') ||
-         pathname.startsWith('/api/billing') ||
-         pathname.startsWith('/api/v1/settings');
+  // Dashboard and user-facing sensitive pages
+  if (pathname.startsWith('/dashboard') ||
+      pathname.startsWith('/auth/setup-wizard') ||
+      pathname.startsWith('/onboarding')) {
+    return true;
+  }
+
+  // API: Account, billing, payments, subscriptions, checkout
+  if (pathname.startsWith('/api/account') ||
+      pathname.startsWith('/api/billing') ||
+      pathname.startsWith('/api/payments') ||
+      pathname.startsWith('/api/subscriptions') ||
+      pathname.startsWith('/api/checkout') ||
+      pathname.startsWith('/api/affiliates/payout-method') ||
+      pathname.startsWith('/api/v1/settings')) {
+    return true;
+  }
+
+  // Admin routes (all subpaths)
+  if (pathname.startsWith('/api/admin')) {
+    return true;
+  }
+
+  return false;
 }
 
 /**

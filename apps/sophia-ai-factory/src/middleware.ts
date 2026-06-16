@@ -14,6 +14,7 @@ import {
   requiresCsrfCheck,
   csrfForbiddenResponse,
   CSRF_COOKIE_NAME,
+  validateCronRequest,
 } from '@/seed/security/csrf';
 import { buildCSPHeader } from '@/seed/security/content-security-policy-configuration';
 import { CSP_NONCE_HEADER } from '@/seed/security/get-csp-nonce';
@@ -99,6 +100,16 @@ export async function proxy(request: NextRequest) {
 
   // API routes
   if (pathname.startsWith('/api')) {
+    // Cron secret validation (cron routes bypass CSRF but require internal secret)
+    if (pathname.startsWith('/api/cron')) {
+      if (!validateCronRequest(request)) {
+        return NextResponse.json(
+          { error: 'Cron authentication failed', detail: 'Invalid or missing cron secret' },
+          { status: 403 }
+        );
+      }
+    }
+
     const blocked = await handleApiRoute(request, pathname, startTime);
     if (blocked) return blocked;
 

@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: 'Browse and install verified SOP templates for your agency workflows.',
 };
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 const CATEGORIES = [
   'all',
