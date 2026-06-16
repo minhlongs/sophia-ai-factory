@@ -18,6 +18,7 @@ type VideoJobPayload = {
     jobId: string;
     tenantId: string;
     userId: string;
+    attempt?: number;
   };
 };
 

@@ -11,7 +11,7 @@ import {
   SCRIPT_SYSTEM_PROMPT,
   type AffiliateOfferCta,
   type ScriptOutput,
-} from './script-prompt-builders';
+} from '@/seed/ai/script-prompt-builders';
 
 export type { ScriptOutput } from './script-prompt-builders';
 
@@ -88,9 +88,9 @@ export async function generateScript(input: GenerateScriptInput) {
     const responseTime = stopTimer();
 
     // Try parse JSON
-    let parsed: any;
+    let parsed: ScriptOutput;
     try {
-      parsed = JSON.parse(content);
+      parsed = JSON.parse(content) as ScriptOutput;
     } catch (e) {
       await trackUsage({
         userId: finalUserId,

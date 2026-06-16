@@ -1,5 +1,5 @@
 // Dynamic import to avoid bundling @upstash/redis in SSR bundle
-let Redis: any = null
+let Redis: unknown = null
 
 async function loadRedis() {
   if (Redis) return Redis
@@ -15,7 +15,7 @@ async function loadRedis() {
 
 import { logger } from '@/seed/utils/logger-utility'
 
-function createRedis(): any {
+function createRedis(): { url: string; token: string } | null {
   const url = process.env.UPSTASH_REDIS_REST_URL
   const token = process.env.UPSTASH_REDIS_REST_TOKEN
 
@@ -32,9 +32,9 @@ function createRedis(): any {
   return { url, token }
 }
 
-let _redis: any = null
+let _redis: unknown = null
 
-export const redis = new Proxy({} as any, {
+export const redis = new Proxy({} as object, {
   async get(_target, prop, receiver) {
     if (_redis === null || _redis === undefined) {
       const RedisCls = await loadRedis()
@@ -43,7 +43,7 @@ export const redis = new Proxy({} as any, {
         const noop = () => undefined
         return noop
       }
-      _redis = new RedisCls(createRedis() || { url: '', token: '' })
+      _redis = new (RedisCls as { new (config: { url: string; token: string }): unknown })(createRedis() || { url: '', token: '' })
     }
     return Reflect.get(_redis as Record<string, unknown>, prop, receiver)
   },

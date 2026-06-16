@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Check, ShieldAlert, ShieldCheck, Loader2, X, Globe, Lock, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
+import Image from "next/image";
 import { CryptoPaymentExplainer } from "./crypto-payment-explainer";
 
 interface CheckoutPanelProps {
@@ -209,10 +210,11 @@ export function CheckoutPanel({
                 <div className="relative group">
                   <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 opacity-20 blur group-hover:opacity-30 transition duration-300"></div>
                   <div className="relative rounded-xl border border-border bg-muted p-3 shadow-xl">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={qrCodeSrc}
                       alt="Payment QR Code"
+                      width={180}
+                      height={180}
                       className="h-[180px] w-[180px]"
                     />
                   </div>

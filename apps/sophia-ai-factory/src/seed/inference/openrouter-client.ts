@@ -105,7 +105,7 @@ async function callOpenRouter(
       if (res.status === 401 || res.status === 403) {
         // Auth failure - don't retry, key invalid
         recordFailure({ status: res.status, message: `Auth failed: ${res.status}` });
-        (lastError as any).retryable = false;
+        (lastError as { retryable?: boolean }).retryable = false;
         throw lastError;
       }
 
@@ -121,7 +121,7 @@ async function callOpenRouter(
       }
 
       // Other errors (4xx besides 429/401/403) - don't retry
-      (lastError as any).retryable = false;
+      (lastError as { retryable?: boolean }).retryable = false;
       throw lastError;
 
     } catch (err) {

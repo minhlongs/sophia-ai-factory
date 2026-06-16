@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { Download, Copy, AlertCircle, ImageIcon } from 'lucide-react';
 import { Card } from '@/seed/components/ui/card';
 import { Skeleton } from '@/seed/components/ui/skeleton';
@@ -168,9 +169,10 @@ function ImageCard({
         )}
         {isCompleted && (
           <>
-            <img
+            <Image
               src={image.resultUrl!}
               alt={image.prompt}
+              fill
               className="w-full h-full object-cover"
               loading="lazy"
               onError={() => setImgError(true)}

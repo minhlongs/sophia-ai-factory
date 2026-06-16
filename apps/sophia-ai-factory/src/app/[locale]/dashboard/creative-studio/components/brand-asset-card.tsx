@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { Card, CardContent } from '@/seed/components/ui/card';
 import { Button } from '@/seed/components/ui/button';
 import { Copy, Check, ImageOff } from 'lucide-react';
@@ -32,7 +33,7 @@ export function BrandAssetCard({ type, label, value, preview }: BrandAssetCardPr
         <div className="flex items-center justify-center h-16 rounded-md bg-muted overflow-hidden">
           {type === 'logo' && (
             preview
-              ? <img src={preview} alt={label} className="h-full object-contain" />
+              ? <Image src={preview} alt={label} width={64} height={64} className="h-full object-contain" />
               : <ImageOff className="w-6 h-6 text-muted-foreground" />
           )}
           {type === 'color' && (

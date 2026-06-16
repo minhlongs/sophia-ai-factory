@@ -4,7 +4,7 @@ import { ArrowRight, Bot, MessageCircle } from "lucide-react";
 import { GuideStepCard } from "@/forest/components/guide/guide-step-card";
 import { GuideCallout } from "@/forest/components/guide/guide-callout";
 
-export const revalidate = 60;
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Hướng Dẫn Bắt Đầu — Sophia AI Factory",

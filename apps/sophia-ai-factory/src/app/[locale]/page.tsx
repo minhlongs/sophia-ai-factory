@@ -98,7 +98,7 @@ const CreativeStudioShowcase = dynamic(
   { loading: () => <SectionSkeleton /> }
 );
 const AgiCapabilitiesSection = dynamic(
-  () => import("@/app/components/agi-capabilities-section"),
+  () => import("@/app/components/agi-capabilities-section").then(m => m),
   { loading: () => <Skeleton className="h-96 w-full rounded-xl" /> }
 );
 const Footer = dynamic(

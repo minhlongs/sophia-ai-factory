@@ -8,6 +8,7 @@
  */
 
 import { useMemo, useState } from 'react';
+import Image from 'next/image';
 
 type Template = {
   id: string;
@@ -114,9 +115,11 @@ export default function MarketplaceClient({ initialTemplates, categories }: Prop
               className="rounded-lg border bg-card p-4 flex flex-col gap-2 hover:shadow-md transition-shadow"
             >
               {t.thumbnailUrl && (
-                <img
+                <Image
                   src={t.thumbnailUrl}
-                  alt=""
+                  alt={t.title}
+                  width={300}
+                  height={128}
                   className="h-32 w-full rounded-md object-cover bg-muted"
                 />
               )}
