@@ -74,8 +74,10 @@ export async function signIn(opts: SignInOptions): Promise<SignInResult> {
       throw new Error(`Failed to load CSRF token: HTTP ${csrfResp.status()}`)
     }
 
-    // Extract CSRF token from cookies
-    const csrfCookie = csrfResp.headers()['set-cookie']?.find(c => c.startsWith('better-auth.csrf='))
+    // Extract CSRF token from Set-Cookie headers (may be string or array)
+    const setCookieHeaders = csrfResp.headers()['set-cookie']
+    const cookiesList = Array.isArray(setCookieHeaders) ? setCookieHeaders : (setCookieHeaders ? [setCookieHeaders] : [])
+    const csrfCookie = cookiesList.find((c: string) => c.startsWith('better-auth.csrf='))
     const csrfToken = csrfCookie
       ? decodeURIComponent(csrfCookie.split(';')[0].split('=')[1] || '')
       : ''
