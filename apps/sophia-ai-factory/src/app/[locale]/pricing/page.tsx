@@ -30,8 +30,8 @@ export default async function PricingPage() {
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let userHeyGenConfigured = false;
   let currentTier: Tier | null = null;
-  let productSchemas: unknown[] = [];
-  let breadcrumbSchema: unknown | null = null;
+  let productSchemas: any[] = [];
+  let breadcrumbSchema: any = null;
   let error: Error | null = null;
 
   try {
