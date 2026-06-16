@@ -45,7 +45,7 @@ describe('land/redis', () => {
     expect(client).toBeDefined();
     // Trigger lazy initialization of the proxy
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    client.get;
+    client!.get;
     expect(Redis).toHaveBeenCalledWith({ url: 'https://redis.example.com', token: 'secret' });
   });
 
