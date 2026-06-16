@@ -107,13 +107,13 @@ export default async function PricingPage() {
         <script
           key={i}
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) as string }}
         />
       ))}
       {breadcrumbSchema && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) as string }}
         />
       )}
       {/* Combined value messaging header */}
