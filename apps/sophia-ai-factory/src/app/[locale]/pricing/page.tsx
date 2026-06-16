@@ -15,6 +15,9 @@ export const metadata = {
   description: "Video Factory + AI Automation — One Platform. Plans from $199/month to $4,999 lifetime. USDT/crypto payments accepted.",
 };
 
+// Fallback component that renders nothing but matches React.ComponentType signature
+const EmptyComponent = (() => null) as React.ComponentType<Record<string, unknown>>;
+
 export default async function PricingPage() {
   let t: (key: string) => string = (key) => key;
   let heygenHealthy = false;
@@ -23,15 +26,14 @@ export default async function PricingPage() {
   let currentTier: Tier | null = null;
   let productSchemas: any[] = [];
   let breadcrumbSchema: any = null;
-  let error: Error | null = null;
 
-  // Components loaded dynamically to isolate module errors
-  let PricingSectionComponent: React.ComponentType<any> = () => null;
-  let PricingComparisonTableComponent: React.ComponentType<any> = () => null;
-  let PricingFaqComponent: React.ComponentType<any> = () => null;
-  let ProductionCostCalculatorComponent: React.ComponentType<any> = () => null;
-  let OneTimeBundleCardComponent: React.ComponentType<any> = () => null;
-  let CryptoPaymentExplainerComponent: React.ComponentType<any> = () => null;
+  // Components (initially set to fallback)
+  let PricingSectionComponent: React.ComponentType<any> = EmptyComponent;
+  let PricingComparisonTableComponent: React.ComponentType<any> = EmptyComponent;
+  let PricingFaqComponent: React.ComponentType<any> = EmptyComponent;
+  let ProductionCostCalculatorComponent: React.ComponentType<any> = EmptyComponent;
+  let OneTimeBundleCardComponent: React.ComponentType<any> = EmptyComponent;
+  let CryptoPaymentExplainerComponent: React.ComponentType<any> = EmptyComponent;
 
   try {
     [t, heygenHealthy, user] = await Promise.all([
@@ -40,7 +42,6 @@ export default async function PricingPage() {
       getCurrentUser().catch(() => null),
     ]);
 
-    // Check if the logged-in user has configured their HeyGen key
     userHeyGenConfigured = user
       ? Boolean(await getUserCredential(user.id, 'heygen').catch(() => null))
       : false;
@@ -48,16 +49,15 @@ export default async function PricingPage() {
     const resolvedTier = user ? await resolveUserTier(user.id).catch(() => null) : null;
     if (resolvedTier) currentTier = resolvedTier as Tier;
 
-    // Build schemas
     try {
       productSchemas = buildAllProductSchemas() as unknown[];
-    } catch (e) {
+    } catch {
       productSchemas = [];
     }
 
     try {
       breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing);
-    } catch (e) {
+    } catch {
       try {
         breadcrumbSchema = buildBreadcrumbSchema([
           { name: 'Home', url: 'https://sophia.agencyos.network' },
@@ -68,52 +68,44 @@ export default async function PricingPage() {
       }
     }
 
-    // Dynamically import UI components (isolated — failures won't break entire page)
-    const modules = await import(
-      /* webpackChunkName: "pricing-page" */
-      {
-        // Use dynamic import with multiple imports
-        // We'll import each separately for better error isolation
-      }
-    );
-    // Instead, use individual dynamic imports
-    const [{ default: PricingSection }, { default: PricingComparisonTable }, { default: PricingFaq }, { default: ProductionCostCalculator }, { default: OneTimeBundleCard }, { default: CryptoPaymentExplainer }] = await Promise.allSettled([
-      import("@/forest/components/pricing/pricing-section"),
-      import("@/forest/components/pricing/pricing-comparison-table"),
-      import("@/forest/components/pricing/pricing-faq"),
-      import("@/app/components/sections/production-cost-calculator"),
-      import("@/forest/components/pricing/one-time-bundle-card"),
-      import("@/forest/components/checkout/crypto-payment-explainer"),
+    // Dynamic imports — each independent, failures isolated
+    const [
+      pricingSection,
+      pricingComparisonTable,
+      pricingFaq,
+      productionCostCalc,
+      oneTimeBundle,
+      cryptoExplainer,
+    ] = await Promise.allSettled<React.ComponentType<any> | null>([
+      import("@/forest/components/pricing/pricing-section").then(m => m.PricingSection ?? null),
+      import("@/forest/components/pricing/pricing-comparison-table").then(m => m.PricingComparisonTable ?? null),
+      import("@/forest/components/pricing/pricing-faq").then(m => m.PricingFaq ?? null),
+      import("@/app/components/sections/production-cost-calculator").then(m => m.ProductionCostCalculator ?? null),
+      import("@/forest/components/pricing/one-time-bundle-card").then(m => m.OneTimeBundleCard ?? null),
+      import("@/forest/components/checkout/crypto-payment-explainer").then(m => m.CryptoPaymentExplainer ?? null),
     ]);
 
-    // Extract defaults, falling back to a minimal component if import fails
-    PricingSectionComponent = PricingSection.status === 'fulfilled' && PricingSection.value ? PricingSection.value.default : () => null;
-    PricingComparisonTableComponent = PricingComparisonTable.status === 'fulfilled' && PricingComparisonTable.value ? PricingComparisonTable.value.default : () => null;
-    PricingFaqComponent = PricingFaq.status === 'fulfilled' && PricingFaq.value ? PricingFaq.value.default : () => null;
-    ProductionCostCalculatorComponent = ProductionCostCalculator.status === 'fulfilled' && ProductionCostCalculator.value ? ProductionCostCalculator.value.default : () => null;
-    OneTimeBundleCardComponent = OneTimeBundleCard.status === 'fulfilled' && OneTimeBundleCard.value ? OneTimeBundleCard.value.default : () => null;
-    CryptoPaymentExplainerComponent = CryptoPaymentExplainer.status === 'fulfilled' && CryptoPaymentExplainer.value ? CryptoPaymentExplainer.value.default : () => null;
-
-  } catch (err) {
-    error = err instanceof Error ? err : new Error(String(err));
-    // Set fallback components that render nothing
-    PricingSectionComponent = () => null;
-    PricingComparisonTableComponent = () => null;
-    PricingFaqComponent = () => null;
-    ProductionCostCalculatorComponent = () => null;
-    OneTimeBundleCardComponent = () => null;
-    CryptoPaymentExplainerComponent = () => null;
-    // Ensure basic data is available
-    t = (key: string) => key;
-    heygenHealthy = false;
-    userHeyGenConfigured = false;
-    currentTier = null;
-    productSchemas = [];
-    try {
-      breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing);
-    } catch {
-      breadcrumbSchema = null;
+    if (pricingSection.status === 'fulfilled' && pricingSection.value) {
+      PricingSectionComponent = pricingSection.value;
     }
+    if (pricingComparisonTable.status === 'fulfilled' && pricingComparisonTable.value) {
+      PricingComparisonTableComponent = pricingComparisonTable.value;
+    }
+    if (pricingFaq.status === 'fulfilled' && pricingFaq.value) {
+      PricingFaqComponent = pricingFaq.value;
+    }
+    if (productionCostCalc.status === 'fulfilled' && productionCostCalc.value) {
+      ProductionCostCalculatorComponent = productionCostCalc.value;
+    }
+    if (oneTimeBundle.status === 'fulfilled' && oneTimeBundle.value) {
+      OneTimeBundleCardComponent = oneTimeBundle.value;
+    }
+    if (cryptoExplainer.status === 'fulfilled' && cryptoExplainer.value) {
+      CryptoPaymentExplainerComponent = cryptoExplainer.value;
+    }
+
+  } catch {
+    // All components already default to EmptyComponent; other data gets defaults inline
   }
 
   return (
@@ -137,11 +129,6 @@ export default async function PricingPage() {
               <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-300">
                 {t("current_plan_badge")}: {currentTier}
               </span>
-            </div>
-          )}
-          {error && (
-            <div className="mb-3 p-3 bg-yellow-900/20 border border-yellow-500/30 rounded text-yellow-200 text-xs">
-              ⚠️ Some pricing data may be temporarily unavailable. Please try again in a few minutes.
             </div>
           )}
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">{t("combined_title")}</h1>
