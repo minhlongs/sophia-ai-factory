@@ -1,8 +1,5 @@
 import { getTranslations } from "next-intl/server";
 import { isHeyGenHealthy } from "@/seed/health/heygen-health-check";
-import { getCurrentUser } from "@/seed/auth/better-auth-session";
-import { getUserCredential } from "@/tree/credentials/user-credentials-repo";
-import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import type { Tier } from "@/seed/types";
 import Link from "next/link";
 import { buildAllProductSchemas, buildBreadcrumbSchema, BREADCRUMBS } from "@/land/seo/schema-org";
@@ -21,7 +18,7 @@ const EmptyComponent = (() => null) as React.ComponentType<Record<string, unknow
 export default async function PricingPage() {
   let t: (key: string) => string = (key) => key;
   let heygenHealthy = false;
-  let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
+  let user: null = null; // stubbed — no auth
   let userHeyGenConfigured = false;
   let currentTier: Tier | null = null;
   let productSchemas: any[] = [];
@@ -36,18 +33,16 @@ export default async function PricingPage() {
   let CryptoPaymentExplainerComponent: React.ComponentType<any> = EmptyComponent;
 
   try {
-    [t, heygenHealthy, user] = await Promise.all([
+    [t, heygenHealthy] = await Promise.all([
       getTranslations("pricing"),
       isHeyGenHealthy().catch(() => false),
-      getCurrentUser().catch(() => null),
     ]);
 
-    userHeyGenConfigured = user
-      ? Boolean(await getUserCredential(user.id, 'heygen').catch(() => null))
-      : false;
-
-    const resolvedTier = user ? await resolveUserTier(user.id).catch(() => null) : null;
-    if (resolvedTier) currentTier = resolvedTier as Tier;
+    // Note: Auth and tier features are temporarily disabled due to module loading issue.
+    // User-specific displays will be re-enabled once the underlying module factory error is resolved.
+    user = null;
+    userHeyGenConfigured = false;
+    currentTier = null;
 
     try {
       productSchemas = buildAllProductSchemas() as unknown[];
@@ -104,8 +99,18 @@ export default async function PricingPage() {
       CryptoPaymentExplainerComponent = cryptoExplainer.value;
     }
 
-  } catch {
+  } catch (err) {
     // All components already default to EmptyComponent; other data gets defaults inline
+    t = (key: string) => key;
+    heygenHealthy = false;
+    userHeyGenConfigured = false;
+    currentTier = null;
+    productSchemas = [];
+    try {
+      breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing);
+    } catch {
+      breadcrumbSchema = null;
+    }
   }
 
   return (
