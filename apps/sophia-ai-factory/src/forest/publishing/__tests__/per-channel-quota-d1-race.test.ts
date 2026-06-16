@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { createFakeD1 } from './fake-d1-sqlite';
+import { createFakeD1 } from '@/seed/testing/fake-d1-sqlite';
 
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS channel_quotas (

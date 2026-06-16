@@ -1,0 +1,11 @@
+{
+  "totalFiles": 2058,
+  "totalViolations": 0,
+  "byLayer": {
+    "seed": [],
+    "tree": [],
+    "forest": [],
+    "land": []
+  },
+  "violations": []
+}

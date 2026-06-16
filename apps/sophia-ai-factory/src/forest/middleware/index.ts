@@ -37,3 +37,13 @@ export {
 export type {
   RateLimitOptions
 } from './rate-limit-wrapper'
+
+export {
+  withAuth,
+  requireAuthJson,
+  requireAuthOrThrow,
+  checkAuth,
+  isPublicApiRoute,
+  AuthError,
+  AuthGuardOptions,
+} from './auth-guard'
