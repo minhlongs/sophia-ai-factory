@@ -9,6 +9,7 @@ import { isHeyGenHealthy } from "@/seed/health/heygen-health-check";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { getUserCredential } from "@/tree/credentials/user-credentials-repo";
 import { resolveUserTier } from "@/seed/db/resolve-user-tier";
+import type { Tier } from "@/seed/types";
 import Link from "next/link";
 import { buildAllProductSchemas, buildBreadcrumbSchema, BREADCRUMBS } from "@/land/seo/schema-org";
 import { logger } from "@/seed/utils/logger-utility";
@@ -24,13 +25,13 @@ export const metadata = {
 };
 
 export default async function PricingPage() {
-  let t;
+  let t: (key: string) => string = (key) => key;
   let heygenHealthy = false;
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let userHeyGenConfigured = false;
-  let currentTier: Awaited<ReturnType<typeof resolveUserTier>> = null;
-  let productSchemas;
-  let breadcrumbSchema;
+  let currentTier: Tier | null = null;
+  let productSchemas: Array<Record<string, unknown>> = [];
+  let breadcrumbSchema: Record<string, unknown> | null = null;
   let error: Error | null = null;
 
   try {
@@ -48,10 +49,11 @@ export default async function PricingPage() {
         }))
       : false;
 
-    currentTier = user ? await resolveUserTier(user.id).catch((e) => {
+    const resolvedTier = user ? await resolveUserTier(user.id).catch((e) => {
       logger.warn('[PricingPage] resolveUserTier failed', e);
       return null;
     }) : null;
+    if (resolvedTier) currentTier = resolvedTier as Tier;
 
     // Build schemas with individual error isolation
     try {
@@ -63,7 +65,7 @@ export default async function PricingPage() {
     }
 
     try {
-      breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing);
+      breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing) as Record<string, unknown>;
       logger.info('[PricingPage] buildBreadcrumbSchema success');
     } catch (e) {
       logger.error('[PricingPage] buildBreadcrumbSchema FAILED', e as Error);
@@ -72,7 +74,7 @@ export default async function PricingPage() {
         breadcrumbSchema = buildBreadcrumbSchema([
           { name: 'Home', url: 'https://sophia.agencyos.network' },
           { name: 'Pricing', url: 'https://sophia.agencyos.network/pricing' },
-        ]);
+        ]) as Record<string, unknown>;
       } catch {
         breadcrumbSchema = null;
       }
@@ -82,7 +84,7 @@ export default async function PricingPage() {
     logger.error('[PricingPage] Failed to load data', error, {
       hasUser: !!user,
       hasTier: !!currentTier,
-      productSchemasBuilt: productSchemas ? productSchemas.length : 0,
+      productSchemasBuilt: productSchemas.length,
       breadcrumbBuilt: !!breadcrumbSchema,
     });
     // Fallback values to still render something
@@ -92,7 +94,7 @@ export default async function PricingPage() {
     currentTier = null;
     productSchemas = [];
     try {
-      breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing);
+      breadcrumbSchema = buildBreadcrumbSchema(BREADCRUMBS.pricing) as Record<string, unknown>;
     } catch {
       breadcrumbSchema = null;
     }
@@ -101,17 +103,19 @@ export default async function PricingPage() {
   return (
     <main id="main-content" className="min-h-screen bg-gradient-to-b from-background to-card pt-16">
       {/* Structured data — 4x Product schemas + BreadcrumbList */}
-      {productSchemas.map((schema, i) => (
+      {productSchemas && productSchemas.map((schema, i) => (
         <script
           key={i}
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
         />
       ))}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
+      {breadcrumbSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        />
+      )}
       {/* Combined value messaging header */}
       <div className="border-b border-border bg-gradient-to-r from-violet-900/30 to-blue-900/30 px-6 py-8 text-center">
         <div className="mx-auto max-w-3xl">
