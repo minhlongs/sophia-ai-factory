@@ -103,7 +103,7 @@ export default async function PricingPage() {
   return (
     <main id="main-content" className="min-h-screen bg-gradient-to-b from-background to-card pt-16">
       {/* Structured data — 4x Product schemas + BreadcrumbList */}
-      {productSchemas && productSchemas.map((schema, i) => (
+      {productSchemas.map((schema, i) => (
         <script
           key={i}
           type="application/ld+json"
