@@ -69,6 +69,8 @@ const nextConfig: NextConfig = {
   // A blanket next.config redirect strips locale AND query params.
   redirects() {
     return [
+      // Root redirect to default locale (vi)
+      { source: '/', destination: '/vi', permanent: false },
       { source: '/register', destination: '/login', permanent: false, locale: false },
       { source: '/sign-up', destination: '/login', permanent: false, locale: false },
       { source: '/signin', destination: '/login', permanent: false, locale: false },
