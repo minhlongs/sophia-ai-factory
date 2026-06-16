@@ -18,7 +18,7 @@ const EmptyComponent = (() => null) as React.ComponentType<Record<string, unknow
 export default async function PricingPage() {
   let t: (key: string) => string = (key) => key;
   let heygenHealthy = false;
-  let user: null = null; // stubbed — no auth
+  let user: unknown = null;
   let userHeyGenConfigured = false;
   let currentTier: Tier | null = null;
   let productSchemas: any[] = [];
@@ -38,11 +38,29 @@ export default async function PricingPage() {
       isHeyGenHealthy().catch(() => false),
     ]);
 
-    // Note: Auth and tier features are temporarily disabled due to module loading issue.
-    // User-specific displays will be re-enabled once the underlying module factory error is resolved.
+    // Auth and tier lookup are loaded dynamically to isolate module factory errors
     user = null;
     userHeyGenConfigured = false;
     currentTier = null;
+
+    try {
+      const { getCurrentUser } = await import("@/seed/auth/better-auth-session");
+      const { getUserCredential } = await import("@/tree/credentials/user-credentials-repo");
+      const { resolveUserTier } = await import("@/seed/db/resolve-user-tier");
+
+      const fetchedUser = await getCurrentUser().catch(() => null);
+      user = fetchedUser;
+
+      if (fetchedUser) {
+        const hasCredential = await getUserCredential(fetchedUser.id, 'heygen').catch(() => null);
+        userHeyGenConfigured = Boolean(hasCredential);
+        const resolvedTier = await resolveUserTier(fetchedUser.id).catch(() => null);
+        if (resolvedTier) currentTier = resolvedTier as Tier;
+      }
+    } catch (authErr) {
+      // Auth subsystem unavailable — page continues without user-specific UI
+      console.warn('[pricing] auth modules unavailable:', authErr);
+    }
 
     try {
       productSchemas = buildAllProductSchemas() as unknown[];
@@ -138,7 +156,7 @@ export default async function PricingPage() {
           )}
           <h1 className="text-2xl font-bold text-foreground sm:text-3xl">{t("combined_title")}</h1>
           <p className="mt-2 text-sm text-muted-foreground">{t("combined_subtitle")}</p>
-          {user && (
+          {user != null && (
             <div className="mt-4">
               <Link href="/dashboard" className="cursor-pointer text-xs text-accent hover:text-accent transition-colors duration-150">
                 &larr; {t("nav_dashboard")}
@@ -152,7 +170,7 @@ export default async function PricingPage() {
       <PricingSectionComponent />
       <div className="mx-auto max-w-2xl px-6 pb-6"><CryptoPaymentExplainerComponent /></div>
       <section className="mx-auto max-w-md px-6 pb-12 pt-4">
-        {user && !userHeyGenConfigured ? (
+        {user != null && !userHeyGenConfigured ? (
           <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-6 text-center space-y-3">
             <p className="text-sm font-medium text-amber-300">
               Configure your HeyGen API key to unlock video generation bundles.
