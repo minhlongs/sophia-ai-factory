@@ -2273,7 +2273,8 @@
       "mode_password": "Mode password",
       "mode_magic": "Mode magic",
       "or_contact_support": "Or contact support",
-      "back_to_home": "Back to home"
+      "back_to_home": "Back to home",
+      "tagline": "Tagline"
     },
     "login": {
       "error_magic_failed": "Gửi magic link thất bại",
@@ -2297,7 +2298,8 @@
       "mode_password": "Mật khẩu",
       "mode_magic": "Magic Link",
       "or_contact_support": "hoặc liên hệ hỗ trợ",
-      "back_to_home": "Quay về trang chủ"
+      "back_to_home": "Quay về trang chủ",
+      "tagline": "Sophia AI — Nhà Máy Video & AI Tự Động"
     },
     "mfa_challenge": {
       "title": "Xác Thực Hai Yếu Tố",

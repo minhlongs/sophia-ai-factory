@@ -2273,7 +2273,8 @@
       "mode_password": "Mode password",
       "mode_magic": "Mode magic",
       "or_contact_support": "Or contact support",
-      "back_to_home": "Back to home"
+      "back_to_home": "Back to home",
+      "tagline": "Tagline"
     },
     "login": {
       "error_magic_failed": "Failed to send magic link",
@@ -2297,7 +2298,8 @@
       "mode_password": "Password",
       "mode_magic": "Magic Link",
       "or_contact_support": "Or contact support",
-      "back_to_home": "Back to home"
+      "back_to_home": "Back to home",
+      "tagline": "Sophia AI — Video Factory & AI Automation"
     },
     "mfa_challenge": {
       "title": "Two-Factor Authentication",

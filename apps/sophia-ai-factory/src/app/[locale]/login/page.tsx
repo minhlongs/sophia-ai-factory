@@ -100,7 +100,7 @@ function LoginPageContent() {
             {pageTab === 'signin' ? t('sign_in') : t('create_account')}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Sophia AI — Nhà Máy Video &amp; AI Tự Động
+            {t('tagline')}
           </p>
         </div>
 
