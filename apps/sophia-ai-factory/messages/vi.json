@@ -4218,12 +4218,14 @@
     "activation_error": "Liên kết kích hoạt chưa được tạo. Vui lòng liên hệ hỗ trợ để nhận link đăng nhập.",
     "copy_emailed_to": "Bản sao đã gửi tới",
     "link_validity": "Link có hiệu lực trong 72 giờ và chỉ dùng được 1 lần.",
-    "reason.invalid_code": "Mã không hợp lệ hoặc đã hết hạn.",
-    "reason.max_uses": "Mã đã hết lượt sử dụng. Vui lòng liên hệ ban tổ chức.",
-    "reason.expired": "Mã đã hết hạn.",
-    "reason.already_redeemed": "Email này đã sử dụng mã trước đó.",
-    "reason.user_create_failed": "Không tạo được tài khoản. Email có thể đã tồn tại — vui lòng đăng nhập.",
-    "link_generated_but_not_displayed": "Link đã được tạo nhưng tạm thời không hiển thị. Vui lòng kiểm tra email hoặc liên hệ hỗ trợ."
+    "link_generated_but_not_displayed": "Link đã được tạo nhưng tạm thời không hiển thị. Vui lòng kiểm tra email hoặc liên hệ hỗ trợ.",
+    "reason": {
+      "invalid_code": "Mã không hợp lệ hoặc đã hết hạn.",
+      "max_uses": "Mã đã hết lượt sử dụng. Vui lòng liên hệ ban tổ chức.",
+      "expired": "Mã đã hết hạn.",
+      "already_redeemed": "Email này đã sử dụng mã trước đó.",
+      "user_create_failed": "Không tạo được tài khoản. Email có thể đã tồn tại — vui lòng đăng nhập."
+    }
   },
   "missions": {},
   "All settings reset to defaults": {

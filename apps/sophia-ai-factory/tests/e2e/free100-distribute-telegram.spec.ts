@@ -17,9 +17,9 @@ import {
   seedCompletedVideo,
   seedTelegramPairing,
   tearDown,
-} from './_fixtures/free100-fixtures';
-import { injectLocalAuthCookie } from './_fixtures/auth-helpers';
-import { mockTelegramBotApi } from './_fixtures/telegram-mock';
+} from './fixtures/free100-fixtures';
+import { injectLocalAuthCookie } from './fixtures/auth-helpers';
+import { mockTelegramBotApi } from './fixtures/telegram-mock';
 
 test.describe('FREE100 Distribute — API layer (no browser auth)', () => {
   test('POST /api/v1/videos/:id/distribute without auth rejects', async ({

@@ -3,7 +3,7 @@
  * a real signed Better Auth session.
  *
  * Usage:
- *   import { test, expect } from '../_fixtures/auth-fixture'
+ *   import { test, expect } from './auth-fixture'  (from tests/e2e/fixtures/)
  *
  *   test('only-logged-in users see X', async ({ authenticatedPage }) => {
  *     await authenticatedPage.goto('/dashboard')

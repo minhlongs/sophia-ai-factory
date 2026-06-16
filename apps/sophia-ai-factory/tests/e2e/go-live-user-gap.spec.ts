@@ -7,7 +7,7 @@
  * scripts/e2e-go-live-user-gap.sh, which sets E2E_REQUIRE_AUTH=1.
  */
 
-import { test, expect } from './_fixtures/auth-fixture'
+import { test, expect } from './fixtures/auth-fixture'
 
 test.describe('@go-live user GAP', () => {
   test('signed-in user reaches dashboard and has a live session', async ({

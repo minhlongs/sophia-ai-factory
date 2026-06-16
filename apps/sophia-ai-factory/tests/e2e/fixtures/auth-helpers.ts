@@ -59,13 +59,34 @@ interface SignInResponseBody {
 /**
  * Sign in a user against Better Auth and return cookies + session metadata.
  * Throws on non-2xx so test authors don't get silently unauthenticated tests.
+ *
+ * CSRF handling: Better Auth requires a CSRF token for POST /sign-in.
+ * We first GET /api/auth/sign-in to establish a session and extract the
+ * CSRF token from the `better-auth.csrf` cookie, then include it in the
+ * POST request headers.
  */
 export async function signIn(opts: SignInOptions): Promise<SignInResult> {
   const api = await createRequestContext.newContext({ baseURL: opts.baseURL })
   try {
+    // Step 1: GET sign-in page to establish session and get CSRF token
+    const csrfResp = await api.get('/api/auth/sign-in')
+    if (!csrfResp.ok()) {
+      throw new Error(`Failed to load CSRF token: HTTP ${csrfResp.status()}`)
+    }
+
+    // Extract CSRF token from cookies
+    const csrfCookie = csrfResp.headers()['set-cookie']?.find(c => c.startsWith('better-auth.csrf='))
+    const csrfToken = csrfCookie
+      ? decodeURIComponent(csrfCookie.split(';')[0].split('=')[1] || '')
+      : ''
+
+    // Step 2: POST credentials with CSRF token
     const resp = await api.post('/api/auth/sign-in/email', {
       data: { email: opts.email, password: opts.password },
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
+      },
     })
 
     if (!resp.ok()) {

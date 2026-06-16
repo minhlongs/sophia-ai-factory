@@ -29,10 +29,10 @@
  *   generateVideoAction or an MSW/fetch-mock of the action.
  */
 
-import { test, expect } from './_fixtures/auth-fixture';
-import { injectLocalAuthCookie } from './_fixtures/auth-helpers';
-import { seedTestUser, tearDown } from './_fixtures/free100-fixtures';
-import { mockSseStreamWildcard } from './_fixtures/sse-mock';
+import { test, expect } from './fixtures/auth-fixture';
+import { injectLocalAuthCookie } from './fixtures/auth-helpers';
+import { seedTestUser, tearDown } from './fixtures/free100-fixtures';
+import { mockSseStreamWildcard } from './fixtures/sse-mock';
 
 const MOCK_VIDEO_URL =
   'https://pub-e2e-mock.r2.cloudflarestorage.com/e2e-videos/output.mp4';

@@ -10,7 +10,7 @@
  *   3. `npm run test:e2e -- authenticated-smoke`
  */
 
-import { test, expect } from './_fixtures/auth-fixture'
+import { test, expect } from './fixtures/auth-fixture'
 
 test.describe('Auth fixture — smoke', () => {
   test('signs in and reaches dashboard without redirect', async ({ authenticatedPage }) => {

@@ -26,7 +26,7 @@
  */
 
 import { test, expect, type Page } from '@playwright/test'
-import { signIn, type SignInResult } from './_fixtures/auth-helpers'
+import { signIn, type SignInResult } from './fixtures/auth-helpers'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
