@@ -23,6 +23,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders, AuthSystemError } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 
 /**
  * Options for auth guard behavior
@@ -108,7 +109,7 @@ export async function withAuth(
     return null; // Authenticated, continue
   } catch (err) {
     // System error — return 503 with retry hint
-    logger.error('[AuthGuard] System failure', err);
+    logger.error('[AuthGuard] System failure', toError(err));
     return NextResponse.json(
       {
         error: 'Service unavailable',
@@ -254,5 +255,3 @@ export function isPublicApiRoute(pathname: string): boolean {
   return false;
 }
 
-// Export for programmatic access
-export { checkAccess } from '@/seed/auth/better-auth-session';

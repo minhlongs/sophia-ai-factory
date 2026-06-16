@@ -2,7 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { redis, getKvClient } from './redis';
 
 vi.mock('@upstash/redis', () => ({
-  Redis: vi.fn().mockImplementation(() => ({ get: vi.fn(), set: vi.fn() })),
+  Redis: vi.fn().mockImplementation(function(this: any, opts: any) {
+    this.get = vi.fn();
+    this.set = vi.fn();
+    // optionally store opts for assertions
+    this.opts = opts;
+  }),
 }));
 import { Redis } from '@upstash/redis';
 
@@ -12,13 +17,21 @@ const originalToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 describe('land/redis', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.UPSTASH_REDIS_REST_URL = undefined;
-    process.env.UPSTASH_REDIS_REST_TOKEN = undefined;
+    delete process.env.UPSTASH_REDIS_REST_URL;
+    delete process.env.UPSTASH_REDIS_REST_TOKEN;
   });
 
   afterEach(() => {
-    process.env.UPSTASH_REDIS_REST_URL = originalUrl;
-    process.env.UPSTASH_REDIS_REST_TOKEN = originalToken;
+    if (originalUrl === undefined) {
+      delete process.env.UPSTASH_REDIS_REST_URL;
+    } else {
+      process.env.UPSTASH_REDIS_REST_URL = originalUrl;
+    }
+    if (originalToken === undefined) {
+      delete process.env.UPSTASH_REDIS_REST_TOKEN;
+    } else {
+      process.env.UPSTASH_REDIS_REST_TOKEN = originalToken;
+    }
   });
 
   it('getKvClient returns null when env vars missing', () => {
@@ -30,6 +43,9 @@ describe('land/redis', () => {
     process.env.UPSTASH_REDIS_REST_TOKEN = 'secret';
     const client = getKvClient();
     expect(client).toBeDefined();
+    // Trigger lazy initialization of the proxy
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    client.get;
     expect(Redis).toHaveBeenCalledWith({ url: 'https://redis.example.com', token: 'secret' });
   });
 

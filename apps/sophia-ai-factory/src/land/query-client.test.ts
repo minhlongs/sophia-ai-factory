@@ -18,13 +18,16 @@ describe('query-client', () => {
     it('applies default query configuration', () => {
       const client = createQueryClient();
       const defaultOptions = client.getDefaultOptions();
+      const queries = defaultOptions.queries;
+      if (!queries) {
+        throw new Error('Expected defaultOptions.queries to be defined');
+      }
 
-      expect(defaultOptions.queries).toBeDefined();
-      expect(defaultOptions.queries.staleTime).toBe(30_000);
-      expect(defaultOptions.queries.gcTime).toBe(5 * 60 * 1000);
-      expect(defaultOptions.queries.refetchOnWindowFocus).toBe(false);
-      expect(defaultOptions.queries.retry).toBe(2);
-      expect(defaultOptions.queries.refetchOnReconnect).toBe(true);
+      expect(queries.staleTime).toBe(30_000);
+      expect(queries.gcTime).toBe(5 * 60 * 1000);
+      expect(queries.refetchOnWindowFocus).toBe(false);
+      expect(queries.retry).toBe(2);
+      expect(queries.refetchOnReconnect).toBe(true);
     });
 
     it('does not mutate config between instances', () => {
