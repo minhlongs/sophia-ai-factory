@@ -77,3 +77,4 @@ docs/audit/*/
 .open-next/
 node_modules/
 plans/reports/*.md
+.sbom/
