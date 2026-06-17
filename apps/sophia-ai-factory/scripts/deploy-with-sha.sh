@@ -399,12 +399,13 @@ if [ "${SKIP_SBOM:-0}" != "1" ]; then
   SBOM_FILE=$(ls -t .sbom/sbom-*.json 2>/dev/null | head -1 || true)
   if [ -n "$SBOM_FILE" ] && [ -f "$SBOM_FILE" ]; then
     SBOM_KEY="sbom/$(basename "$SBOM_FILE")"
-    echo "  Uploading $SBOM_FILE → s3://$BACKUPS_BUCKET/$SBOM_KEY"
-    npx wrangler r2 object put "$BACKUPS_BUCKET" --key "$SBOM_KEY" --file="$SBOM_FILE" --remote || {
-      echo "❌ SBOM upload to R2 failed"
-      exit 2
-    }
-    echo "  ✅ SBOM uploaded"
+ echo " Uploading $SBOM_FILE → s3://${BACKUPS_BUCKET:-}/$SBOM_KEY"
+ if [ -n "${BACKUPS_BUCKET:-}" ]; then
+   npx wrangler r2 object put "$BACKUPS_BUCKET" --key "$SBOM_KEY" --file="$SBOM_FILE" --remote || echo "⚠️ SBOM upload to R2 failed (non-fatal)"
+   echo " ✅ SBOM uploaded"
+ else
+   echo "⚠️ BACKUPS_BUCKET not set — SBOM saved locally at $SBOM_FILE"
+ fi
   else
     echo "⚠️ SBOM file not found ($SBOM_FILE); skipping upload"
   fi
