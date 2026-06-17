@@ -4,7 +4,7 @@
  * so client/server/edge cannot drift apart (Round-11 F-PC-11 / Wave-10 Q2).
  */
 import * as Sentry from '@sentry/nextjs';
-import { buildClientOptions } from '@/land/observability/sentry-options';
+import { buildClientOptions } from '@/seed/observability/sentry-options';
 
 Sentry.init({
   ...buildClientOptions(),

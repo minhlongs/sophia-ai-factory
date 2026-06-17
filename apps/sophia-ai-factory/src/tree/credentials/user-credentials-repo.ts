@@ -57,10 +57,9 @@ export async function getUserCredential(
   provider: ProviderType,
 ): Promise<string | null> {
   if (!userId || !provider) return null
-  let d1: D1Database
   const db = getD1()
   if (!db) throw new Error('D1 database binding not available')
-  d1 = db
+  const d1 = db
 
   try {
     const row = await d1
@@ -149,10 +148,9 @@ export async function deleteUserCredential(
  */
 export async function listUserProviders(userId: string): Promise<CredentialSummary[]> {
   if (!userId) return []
-  let d1: D1Database
   const db = getD1()
   if (!db) throw new Error('D1 database binding not available')
-  d1 = db
+  const d1 = db
 
   try {
     const { results } = await d1

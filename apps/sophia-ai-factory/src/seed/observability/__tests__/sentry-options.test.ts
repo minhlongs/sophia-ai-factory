@@ -16,7 +16,7 @@ describe('sentry-options', () => {
   it('buildClientOptions sets correct tracesSampleRate in production', async () => {
     vi.stubEnv('NODE_ENV', 'production');
     vi.stubEnv('NEXT_PUBLIC_SENTRY_DSN', 'https://test@sentry.io/123');
-    const { buildClientOptions } = await import('./sentry-options');
+    const { buildClientOptions } = await import('../sentry-options');
     const opts = buildClientOptions();
     expect(opts.tracesSampleRate).toBe(0.02);
     expect(opts.environment).toBe('production');
@@ -24,14 +24,14 @@ describe('sentry-options', () => {
 
   it('buildClientOptions sets 100% tracesSampleRate in development', async () => {
     vi.stubEnv('NODE_ENV', 'development');
-    const { buildClientOptions } = await import('./sentry-options');
+    const { buildClientOptions } = await import('../sentry-options');
     const opts = buildClientOptions();
     expect(opts.tracesSampleRate).toBe(1.0);
   });
 
   it('buildServerOptions uses COMMIT_SHA as release', async () => {
     vi.stubEnv('COMMIT_SHA', 'abc12345');
-    const { buildServerOptions } = await import('./sentry-options');
+    const { buildServerOptions } = await import('../sentry-options');
     const opts = buildServerOptions();
     expect(opts.release).toBe('abc12345');
   });
@@ -39,14 +39,14 @@ describe('sentry-options', () => {
   it('buildEdgeOptions uses SENTRY_RELEASE as release fallback', async () => {
     vi.stubEnv('COMMIT_SHA', '');
     vi.stubEnv('SENTRY_RELEASE', 'v1.0.0');
-    const { buildEdgeOptions } = await import('./sentry-options');
+    const { buildEdgeOptions } = await import('../sentry-options');
     const opts = buildEdgeOptions();
     expect(opts.release).toBe('v1.0.0');
   });
 
   it('beforeSend drops 4xx events', async () => {
     vi.stubEnv('NODE_ENV', 'production');
-    const { buildServerOptions } = await import('./sentry-options');
+    const { buildServerOptions } = await import('../sentry-options');
     const opts = buildServerOptions();
     const fakeEvent = {
       contexts: { response: { status_code: 404 } },
@@ -57,7 +57,7 @@ describe('sentry-options', () => {
 
   it('beforeSend allows 5xx events through', async () => {
     vi.stubEnv('NODE_ENV', 'production');
-    const { buildServerOptions } = await import('./sentry-options');
+    const { buildServerOptions } = await import('../sentry-options');
     const opts = buildServerOptions();
     const fakeEvent = {
       contexts: { response: { status_code: 500 } },
@@ -68,7 +68,7 @@ describe('sentry-options', () => {
 
   it('beforeSend strips token fields from extra', async () => {
     vi.stubEnv('NODE_ENV', 'production');
-    const { buildClientOptions } = await import('./sentry-options');
+    const { buildClientOptions } = await import('../sentry-options');
     const opts = buildClientOptions();
     const fakeEvent = {
       extra: { authToken: 'secret', userId: '123' },
@@ -91,7 +91,7 @@ describe('shouldKeepSseBreadcrumb', () => {
   });
 
   it('always keeps error-level SSE breadcrumbs regardless of rate', async () => {
-    const { shouldKeepSseBreadcrumb } = await import('./sentry-options');
+    const { shouldKeepSseBreadcrumb } = await import('../sentry-options');
     // Call many times — all should pass because level=error
     for (let i = 0; i < 100; i++) {
       expect(shouldKeepSseBreadcrumb({ mission_id: 'mission-error-test' }, 'error')).toBe(true);
@@ -99,14 +99,14 @@ describe('shouldKeepSseBreadcrumb', () => {
   });
 
   it('always keeps the first SSE breadcrumb per mission per second window', async () => {
-    const { shouldKeepSseBreadcrumb } = await import('./sentry-options');
+    const { shouldKeepSseBreadcrumb } = await import('../sentry-options');
     // Fresh module → fresh bucket; first call must return true
     const kept = shouldKeepSseBreadcrumb({ mission_id: 'mission-first-event' }, 'info');
     expect(kept).toBe(true);
   });
 
   it('drops SSE breadcrumbs beyond MAX_SSE_PER_SECOND (10) in the same window', async () => {
-    const { shouldKeepSseBreadcrumb } = await import('./sentry-options');
+    const { shouldKeepSseBreadcrumb } = await import('../sentry-options');
     const missionId = 'mission-rate-test';
 
     // Simulate 50 SSE breadcrumbs in the same second for the same mission.
@@ -129,7 +129,7 @@ describe('shouldKeepSseBreadcrumb', () => {
 
   it('resets the window and keeps the first event in a new second', async () => {
     vi.useFakeTimers();
-    const { shouldKeepSseBreadcrumb } = await import('./sentry-options');
+    const { shouldKeepSseBreadcrumb } = await import('../sentry-options');
     const missionId = 'mission-window-reset';
 
     // Fill the current window
@@ -156,19 +156,19 @@ describe('buildBeforeBreadcrumb SSE sampling integration', () => {
   });
 
   it('drops unknown category breadcrumbs', async () => {
-    const { buildBeforeBreadcrumb } = await import('./sentry-options');
+    const { buildBeforeBreadcrumb } = await import('../sentry-options');
     const result = buildBeforeBreadcrumb({ category: 'custom-unknown', data: {} });
     expect(result).toBeNull();
   });
 
   it('passes non-SSE breadcrumbs without sampling', async () => {
-    const { buildBeforeBreadcrumb } = await import('./sentry-options');
+    const { buildBeforeBreadcrumb } = await import('../sentry-options');
     const result = buildBeforeBreadcrumb({ category: 'fetch', data: {} });
     expect(result).not.toBeNull();
   });
 
   it('passes SSE error breadcrumbs always', async () => {
-    const { buildBeforeBreadcrumb } = await import('./sentry-options');
+    const { buildBeforeBreadcrumb } = await import('../sentry-options');
     // Error-level SSE breadcrumbs must never be dropped
     for (let i = 0; i < 20; i++) {
       const result = buildBeforeBreadcrumb({
@@ -181,7 +181,7 @@ describe('buildBeforeBreadcrumb SSE sampling integration', () => {
   });
 
   it('sampling drops SSE info breadcrumbs beyond rate limit', async () => {
-    const { buildBeforeBreadcrumb } = await import('./sentry-options');
+    const { buildBeforeBreadcrumb } = await import('../sentry-options');
     const missionId = 'mission-sse-sampling';
     let dropped = 0;
     // Send 50 SSE breadcrumbs — beyond 10/s cap, remainder must be dropped

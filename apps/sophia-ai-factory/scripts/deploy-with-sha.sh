@@ -365,13 +365,22 @@ retry_cf "secret put COMMIT_SHA"   bash -c "echo '$COMMIT_SHA' | npx wrangler se
 retry_cf "secret put DEPLOYED_AT"  bash -c "echo '$DEPLOYED_AT' | npx wrangler secret put DEPLOYED_AT"
 retry_cf "secret put DEPLOY_BRANCH" bash -c "echo '$DEPLOY_BRANCH' | npx wrangler secret put DEPLOY_BRANCH"
 
-# ─── Step 5: Upload Sentry source maps (non-fatal) ──────────────────────────
+# ─── Step 5: Upload Sentry source maps (fail-fast) ───────────────────────────
 # Bakes symbolicated stack traces into prod errors. Script gracefully skips
-# when SENTRY_AUTH_TOKEN is unset. Failure here MUST NOT fail the deploy —
-# the worker is already live by this point.
+# when SENTRY_AUTH_TOKEN is unset. Failure here will fail the deploy — we
+# want fail-fast on Sentry upload issues to maintain observability guarantees.
 if [ -x scripts/ci/sentry-upload-sourcemaps.sh ]; then
   echo "==> sentry-upload-sourcemaps"
-  bash scripts/ci/sentry-upload-sourcemaps.sh || echo "warn: sentry sourcemap upload failed (non-fatal)"
+  bash scripts/ci/sentry-upload-sourcemaps.sh
+
+  # Post-deploy probe: verify release exists with artifacts
+  RELEASE="${SENTRY_RELEASE:-$COMMIT_SHORT}"
+  if npx @sentry/cli releases info "$RELEASE" --org "$SENTRY_ORG" --project "$SENTRY_PROJECT" >/dev/null 2>&1; then
+    echo "✅ Sentry release $RELEASE verified"
+  else
+    echo "❌ Sentry release $RELEASE not found or missing artifacts"
+    exit 2
+  fi
 fi
 
 # ─── Step 5.2: Mandatory live deploy verification ──────────────────────────

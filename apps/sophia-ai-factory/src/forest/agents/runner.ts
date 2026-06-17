@@ -10,7 +10,7 @@ import { D1Events } from '@/tree/signals/d1-event-types';
 import { assignVariant } from '@/tree/signals/ab-experiment';
 import { resolvePrompt, experimentName } from './prompt-variants';
 import { assertTierAllowsAgent, AgentTierBlockedError } from './enforcement-gate';
-import { reportError } from '@/land/telemetry/error-tracker';
+import { reportError } from '@/seed/observability/telemetry/error-tracker';
 import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 import { trackUsage } from '@/forest/usage-metering';
 import { calculateCredits } from '@/seed/billing/credits-calculator';

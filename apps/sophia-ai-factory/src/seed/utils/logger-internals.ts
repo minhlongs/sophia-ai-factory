@@ -7,7 +7,7 @@
  * are captured via captureToSentry (Sentry SDK captureException path).
  */
 
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 
 export interface LogEntry {
   timestamp: string;
@@ -25,14 +25,14 @@ export interface LogEntry {
   };
 }
 
-import { forwardToSentry } from '@/land/observability/sentry-forwarder';
-import { scrubPII, scrubPIIDeep } from '@/land/telemetry/pii-scrubber';
+import { forwardToSentry } from '@/seed/observability/sentry-forwarder';
+import { scrubPII, scrubPIIDeep } from '@/seed/observability/telemetry/pii-scrubber';
 
 // Better Stack bridge. The central logger is synchronous, so shipment is
 // best-effort and must never affect request execution.
-import { safeLog } from '@/land/telemetry/safe-log';
-import { LogBuffer } from '@/land/telemetry/log-buffer';
-import { pushBatch, type BetterStackConfig } from '@/land/telemetry/better-stack-client';
+import { safeLog } from '@/seed/observability/telemetry/safe-log';
+import { LogBuffer } from '@/seed/observability/telemetry/log-buffer';
+import { pushBatch, type BetterStackConfig } from '@/seed/observability/telemetry/better-stack-client';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -184,6 +184,21 @@ export const log = (
     };
   }
 
+  // Wire structured logging to Sentry: add breadcrumb for every log entry
+  // Include error details in breadcrumb data for context when an error occurs
+  const breadcrumbMetadata = safeMetadata ? { ...safeMetadata } : {};
+  if (entry.error) {
+    breadcrumbMetadata.error = {
+      name: entry.error.name,
+      message: entry.error.message,
+      ...(entry.error.stack && { stack: entry.error.stack }),
+      ...(entry.error.code !== undefined && { code: entry.error.code }),
+      ...(entry.error.details !== undefined && { details: entry.error.details }),
+      ...(entry.error.hint !== undefined && { hint: entry.error.hint }),
+    };
+  }
+  addLogBreadcrumbToSentry(level, safeMessage, breadcrumbMetadata);
+
   const formatted = formatLogEntry(entry);
 
   /** Push a typed payload to the Better Stack buffer. */
@@ -236,7 +251,7 @@ export const log = (
 };
 
 // Module-level cache so dynamic import runs once per module lifetime
-let _sentryModule: { captureException: (err: unknown, ctx?: Record<string, unknown>) => unknown } | null = null;
+let _sentryModule: { captureException: (err: unknown, ctx?: Record<string, unknown>) => unknown; addBreadcrumb: (breadcrumb: Parameters<typeof import('@sentry/core').addBreadcrumb>[0]) => void } | null = null;
 let _sentryLoadAttempted = false;
 
 async function captureToSentry(
@@ -250,11 +265,59 @@ async function captureToSentry(
       // Dynamic import prevents circular dep (Sentry -> logger -> Sentry)
       const sentry = await import('@sentry/nextjs');
       // Narrow shape to only what we use — full module has 230+ exports
-      _sentryModule = { captureException: sentry.captureException };
+      _sentryModule = { captureException: sentry.captureException, addBreadcrumb: sentry.addBreadcrumb };
     }
     _sentryModule?.captureException(error, { extra: metadata });
   } catch {
     _sentryModule = null; // mark as unavailable
+  }
+}
+
+/** Map internal log level to Sentry severity level */
+function toSentrySeverity(level: LogLevel): 'debug' | 'info' | 'warning' | 'error' | 'fatal' {
+  switch (level) {
+    case 'debug': return 'debug';
+    case 'info': return 'info';
+    case 'warn': return 'warning';
+    case 'error': return 'error';
+    case 'fatal': return 'fatal';
+  }
+}
+
+/** Add a log entry as a breadcrumb to Sentry for contextual tracing.
+ * Fire-and-forget: never blocks the caller. Silently fails if SDK unavailable.
+ */
+function addLogBreadcrumbToSentry(
+  level: LogLevel,
+  message: string,
+  metadata?: Record<string, unknown>
+): void {
+  if (_sentryLoadAttempted && !_sentryModule) return; // SDK absent, skip
+  try {
+    if (!_sentryLoadAttempted) {
+      _sentryLoadAttempted = true;
+      // Lazy-load to avoid circular dependency at module init time
+      import('@sentry/nextjs').then(sentry => {
+        _sentryModule = { captureException: sentry.captureException, addBreadcrumb: sentry.addBreadcrumb };
+        _sentryModule?.addBreadcrumb({
+          message,
+          level: toSentrySeverity(level),
+          category: 'log',
+          data: metadata,
+        });
+      }).catch(() => {
+        _sentryModule = null;
+      });
+      return;
+    }
+    _sentryModule?.addBreadcrumb({
+      message,
+      level: toSentrySeverity(level),
+      category: 'log',
+      data: metadata,
+    });
+  } catch {
+    // Breadcrumb failures must never affect logging flow
   }
 }
 
