@@ -39,6 +39,7 @@
     "deploy": "npm run build && node scripts/fix-instrumentation-standalone.mjs && npx @opennextjs/cloudflare build --skipNextBuild && node scripts/inject-scheduled-handler.mjs && npx opennextjs-cloudflare deploy --config wrangler.toml",
     "deploy:build": "npm run build && node scripts/fix-instrumentation-standalone.mjs && npx @opennextjs/cloudflare build --skipNextBuild && node scripts/inject-scheduled-handler.mjs",
     "deploy:full": "./scripts/deploy-with-sha.sh",
+    "deploy:guard": "node scripts/deploy/guard-deploy.js",
     "deploy:migrations": "bash scripts/apply-migrations.sh",
     "deploy:verify": "node scripts/sophia-doctor.mjs",
     "deploy:all": "npm run deploy:full && npm run deploy:verify",
@@ -54,6 +55,8 @@
     "ci:get-side-effects": "bash scripts/ci-check-get-side-effects.sh",
     "ci:secrets": "secretlint --secretlintignore .secretlintignore 'src/**/*.{ts,tsx,js,mjs,json}' 'scripts/**/*.{ts,js,mjs,sh}' '*.{json,toml,yaml,yml,sh}'",
     "ci:audit": "npm audit --audit-level=high || true",
+    "sbom": "node scripts/supply-chain/generate-sbom.mjs",
+    "audit:fail": "node scripts/security/audit-high-cves.mjs",
     "harness": "./scripts/harness.sh",
     "harness:ci": "./scripts/harness.sh ci",
     "harness:deploy": "./scripts/harness.sh deploy",
@@ -61,8 +64,10 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@cyclonedx/cyclonedx-npm": "^5.0.0",
     "@ducanh2912/next-pwa": "^10.2.9",
     "@hookform/resolvers": "^5.2.2",
+    "@opentelemetry/instrumentation-fetch": "^0.219.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-label": "^2.1.8",
@@ -125,6 +130,7 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
     "@cloudflare/workers-types": "^4.20250204.0",
+    "@cyclonedx/bom": "^4.1.5",
     "@next/bundle-analyzer": "^16.2.6",
     "@opennextjs/cloudflare": "^1.19.9",
     "@playwright/test": "^1.58.1",

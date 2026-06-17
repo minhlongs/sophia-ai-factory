@@ -14,6 +14,7 @@ export * from './generate-campaign-refund-notify';
 export * from './generate-campaign-video-poller';
 export * from './generate-campaign';
 export * from './hello-world';
+export * from './key-rotation-reencrypt';
 export * from './publish-execute';
 export * from './repurpose-analyze';
 export * from './repurpose-clip-generate';

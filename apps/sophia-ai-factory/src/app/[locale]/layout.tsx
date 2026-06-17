@@ -14,6 +14,7 @@ import { getMessages } from 'next-intl/server';
 import { getCspNonce } from '@/seed/security/get-csp-nonce';
 import { buildOrganizationSchema } from '@/land/seo/schema-org';
 import { Ga4Script } from '@/land/analytics/ga4-script';
+import { initializeOTel } from '@/seed/telemetry/opentelemetry-setup';
 
 // JSON-LD schema — explicit type to avoid TypeScript stack overflow
 const JSONLD_SCHEMA: Record<string, unknown> = {
@@ -115,6 +116,9 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
 }>) {
+  // Initialize OpenTelemetry (idempotent, safe to call on every request)
+  initializeOTel();
+
   const { locale: rawLocale } = await params;
   const locale = rawLocale === 'vi' || rawLocale === 'en' ? rawLocale : 'vi';
   const messages = await getMessages();

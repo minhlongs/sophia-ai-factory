@@ -41,5 +41,41 @@ npm run ci:test
 echo "[pre-push] G4 secrets (secretlint full tree)..."
 npm run ci:secrets
 
+# ─── G5.5: Deploy guard dry-run (PR approval check) ─────────────────────────────
+# SOC 2 CC6.1: Verify PR has approval before push (will be enforced at deploy time)
+# This is a dry-run warning, not blocking — actual enforcement happens in guard-deploy.js
+echo "[pre-push] G5.5 deploy guard dry-run (PR approval check)..."
+if node scripts/deploy/guard-deploy.js --dry-run 2>/dev/null; then
+  echo "[pre-push] ✅ Deploy guard: PR checks OK (or no PR — attestation required at deploy)"
+else
+  guardExit=$?
+  if [ $guardExit -eq 1 ]; then
+    echo "[pre-push] ⚠️  Deploy guard: PR NOT ready for deploy (missing approval or CI failing)"
+    echo "[pre-push]   Fix: obtain PR approval or use --override at deploy time (emergency)"
+  else
+    echo "[pre-push] ⚠️  Deploy guard: Could not check (gh CLI unavailable?)"
+  fi
+fi
+
+
+# G5 audit (HIGH vulns) — BLOCKING (Phase 06)
 echo "[pre-push] G5 audit (npm audit --audit-level=high)..."
-npm audit --audit-level=high || echo "[pre-push] WARN: high-severity transitive vulns present (non-blocking, see SOP 9)"
+npm audit --audit-level=high || {
+  echo "[pre-push] ❌ BLOCK: HIGH severity vulnerabilities found"
+  echo "[pre-push] Run: npm audit fix or review manually"
+  exit 1
+}
+
+# G6: SBOM generation (non-blocking for pre-push, enforced at deploy)
+echo "[pre-push] G6 SBOM generation..."
+npm run sbom > /dev/null 2>&1 || echo "[pre-push] WARN: SBOM generation failed (non-blocking, will be enforced at deploy)"
+
+# G7: Commit signature verification (BLOCKING on main branch)
+echo "[pre-push] G7 commit signature verification..."
+node scripts/supply-chain/verify-signed-commits.mjs || {
+  echo "[pre-push] ❌ BLOCK: Unsigned commits detected on main branch."
+  echo "[pre-push] Please sign your commits: git commit -S -m 'your message'"
+  echo "[pre-push] See: docs/security/commit-signing-guide.md"
+  exit 1
+}
+

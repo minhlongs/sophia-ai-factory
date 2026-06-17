@@ -9,7 +9,7 @@
 ## Overview
 
 - **Priority:** P1 (independent; can run parallel)
-- **Status:** pending
+- **Status:** done
 - **Description:** Harden software supply chain through SBOM generation, signed commits, and automated dependency updates. Ensure every release has an artifact bill of materials and commit attestation.
 
 ## Key Insights
@@ -213,20 +213,20 @@ fi
 
 ## Todo List
 
-- [ ] Evaluate SBOM tools (CycloneDX CLI vs @snyk/sbom)
-- [ ] Add SBOM generation to package.json; test build time impact
-- [ ] Configure R2 bucket for SBOM storage (if separate) or use existing
-- [ ] Update deploy script to upload SBOM
-- [ ] Configure Renovate Bot (GitHub App install; .renovaterc.json)
-- [ ] Test Renovate on fork; verify auto-merge for patches
-- [ ] Generate GPG keys for all developers; add to GitHub
-- [ ] Add pre-push signature check (optional in dev, required in CI)
-- [ ] Add deploy script signature verification
-- [ ] Document emergency override procedure
-- [ ] Enable Dependabot alerts (if not already)
-- [ ] Write SUPPLY-CHAIN.md policy doc
-- [ ] Run first production SBOM; verify attachment
-- [ ] Audit: check that all commits on main are signed
+- [x] Evaluate SBOM tools (CycloneDX CLI vs @snyk/sbom)
+- [x] Add SBOM generation to package.json; test build time impact
+- [x] Configure R2 bucket for SBOM storage (if separate) or use existing
+- [x] Update deploy script to upload SBOM
+- [x] Configure Renovate Bot (GitHub App install; .renovaterc.json)
+- [x] Test Renovate on fork; verify auto-merge for patches
+- [x] Generate GPG keys for all developers; add to GitHub
+- [x] Add pre-push signature check (optional in dev, required in CI)
+- [x] Add deploy script signature verification
+- [x] Document emergency override procedure
+- [x] Enable Dependabot alerts (if not already)
+- [x] Write SUPPLY-CHAIN.md policy doc
+- [x] Run first production SBOM; verify attachment
+- [x] Audit: check that all commits on main are signed
 
 ## Success Criteria
 

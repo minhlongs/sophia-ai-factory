@@ -69,12 +69,12 @@ Duration: 6-12 months
 
 | # | Phase | File | Scope | Effort | Score Δ | Status |
 |---|-------|------|-------|--------|---------|--------|
-| 1 | SOC 2 Type I Preparation | phase-01-soc2-type1-prep.md | Controls, audit log, SoD, runbooks | 3w | +3.0 Security | pending |
-| 2 | DR Drill Cadence & Off-site Backup | phase-02-dr-drill-cadence.md | Monthly restore tests, R2→S3 mirror | 2w | +3.0 Reliability | pending |
-| 3 | Real APM Implementation | phase-03-real-apm-implementation.md | OpenTelemetry, traces, SLO, alerts | 3w | +2.0 Observability | pending |
+| 1 | SOC 2 Type I Preparation | phase-01-soc2-type1-prep.md | Controls, audit log, SoD, runbooks | 3w | +3.0 Security | in-progress |
+| 2 | DR Drill Cadence & Off-site Backup | phase-02-dr-drill-cadence.md | Monthly restore tests, R2→S3 mirror | 2w | +3.0 Reliability | done |
+| 3 | Real APM Implementation | phase-03-real-apm-implementation.md | OpenTelemetry, traces, SLO, alerts | 3w | +2.0 Observability | in-progress |
 | 4 | Key Rotation Infrastructure | phase-04-key-rotation-infra.md | Versioned keys, dual-decrypt, runbook | 2w | +1.5 Security | pending |
-| 5 | Per-Organization Quotas | phase-05-per-org-quotas.md | Quota enforcement + audit overruns | 2w | +1.0 Reliability | pending |
-| 6 | Supply-Chain Hardening | phase-06-supply-chain-hardening.md | SBOM, signed commits, Renovate | 3w | +1.5 Infra | pending |
+| 5 | Per-Organization Quotas | phase-05-per-org-quotas.md | Quota enforcement + audit overruns | 2w | +1.0 Reliability | done |
+| 6 | Supply-Chain Hardening | phase-06-supply-chain-hardening.md | SBOM, signed commits, Renovate | 3w | +1.5 Infra | in-progress |
 | 7 | Multi-Region Strategy | phase-07-multi-region-strategy.md | D1 read replicas or risk acceptance | 4w | +1.5 Scalability | pending |
 | 8 | Crypto Compliance Framework | phase-08-crypto-compliance.md | AML/KYT, sanctions, NOWPayments review | 3w | +1.0 Security | pending |
 | 9 | Operator Enablement | phase-09-operator-enablement.md | Second-operator test, backup builder runbook | 2w | +1.0 DevEx | pending |
@@ -167,13 +167,13 @@ Phase 10 (Track Record) → ongoing after Phase 2/3/9 complete
 
 **Phases in progress:**
 - ✅ Phase 2 (DR) — Drill completed 2026-05-18, RTO=13s, RPO=0s
+- ✅ Phase 5 (Org Quotas) — Org quota infrastructure delivered, admin override API, migration ready (`0182_org_quota_overrides.sql`). Code review fixed: migration numbering, webhook table name.
 - 🟡 Phase 1 (SOC2) — Control evaluation code done; audit_log migration pending
 - 🟡 Phase 3 (APM) — Sentry fail-fast wired; OpenTelemetry pending
 - 🟡 Phase 6 (Supply Chain) — Migration guards enhanced; SBOM/Renovate pending
 
 **Phases pending:**
 - Phase 4 (Key Rotation) — Not started
-- Phase 5 (Org Quotas) — Ready to start (quick win)
 - Phase 7 (Multi-Region) — Not started
 - Phase 8 (Crypto Compliance) — Not started
 - Phase 9 (Operator Enablement) — Not started

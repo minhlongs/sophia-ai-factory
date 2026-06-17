@@ -5,6 +5,7 @@ import { logger } from "@/seed/utils/logger-utility";
 import { toError } from "@/seed/utils/to-error";
 import { sendCampaignCreatedEvent } from "@/land/campaigns/create-campaign-core";
 import { withRateLimit } from "@/forest/middleware/rate-limit-wrapper";
+import { UNIFIED_TIERS } from "@/seed/config/tiers/unified-limits";
 
 // POST /api/v1/campaigns/create
 // Headers: Authorization: Bearer <raas_api_key>
@@ -134,33 +135,50 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
     const userId = keyUserId;
     const { script, title } = parsed.data;
 
-    // TIER CHECK: Monthly campaign limit
+    // ── Org-aware quota check ────────────────────────────────────────────────
     const { resolveUserTier } = await import("@/seed/db/resolve-user-tier");
-    const { UNIFIED_TIERS } = await import("@/seed/config/tiers");
     const tier = await resolveUserTier(userId);
-    const monthLimit = UNIFIED_TIERS[tier].campaignsPerMonth;
 
-    if (monthLimit < 999) {
-      const db = createServerClient();
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
+    // Determine org context (if any)
+    const { getOrgIdForUser } = await import("@/forest/quota/org-quota-checker");
+    const orgId = await getOrgIdForUser(userId);
+    const useOrgQuota = process.env.ENABLE_ORG_QUOTAS === '1' && orgId !== null;
 
-      const { data: countData } = await db
-        .from("campaigns")
-        .select("id")
-        .eq("user_id", userId)
-        .gte("created_at", startOfMonth.toISOString());
+    let monthLimit: number;
+    let currentCount: number;
 
-      const currentCount = (countData as { id: string }[] | null)?.length ?? 0;
-      if (currentCount >= monthLimit) {
-        log.warn("RaaS campaign create: monthly limit reached", { userId, currentCount, monthLimit });
-        return NextResponse.json(
-          { error: `Monthly campaign limit reached (${monthLimit}). Upgrade your plan for more.` },
-          { status: 429 }
-        );
+    if (useOrgQuota) {
+      const { checkCampaignQuota } = await import("@/forest/quota/org-quota-checker");
+      const result = await checkCampaignQuota(userId, orgId, tier);
+      monthLimit = result.limit;
+      currentCount = result.current;
+    } else {
+      // Legacy per-user check
+      monthLimit = UNIFIED_TIERS[tier].campaignsPerMonth;
+      if (monthLimit < 999) {
+        const db = createServerClient();
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        const { data } = await db
+          .from("campaigns")
+          .select("id")
+          .eq("user_id", userId)
+          .gte("created_at", startOfMonth.toISOString());
+        currentCount = (data as { id: string }[] | null)?.length ?? 0;
+      } else {
+        currentCount = 0; // high tier effectively unlimited
       }
     }
+
+    if (monthLimit < 999 && currentCount >= monthLimit) {
+      log.warn("RaaS campaign create: monthly limit reached", { userId, orgId: orgId ?? undefined, currentCount, monthLimit });
+      return NextResponse.json(
+        { error: `Monthly campaign limit reached (${monthLimit}). Upgrade your plan for more.` },
+        { status: 429 }
+      );
+    }
+    // ─────────────────────────────────────────────────────────────────────────────
 
     const db = createServerClient();
     const { data: rawCampaign, error: insertError } = await db
