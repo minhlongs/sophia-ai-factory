@@ -85,9 +85,10 @@ describe('lib/credentials/user-credentials-repo', () => {
 
   it('setUserCredential calls D1 upsert with encrypted value', async () => {
     const runMock = vi.fn().mockResolvedValue(undefined)
+  const firstMock = vi.fn().mockResolvedValue({ version: 1 })
     const mockD1 = {
       prepare: vi.fn().mockReturnValue({
-        bind: vi.fn().mockReturnValue({ run: runMock }),
+        bind: vi.fn().mockReturnValue({ run: runMock }), first: firstMock,
       }),
     }
     mockedGetD1.mockReturnValue(mockD1 as unknown as D1Database)

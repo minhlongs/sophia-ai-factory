@@ -11,6 +11,7 @@
  */
 
 import { getD1 } from '@/seed/db/client'
+import { getActiveKeyVersion } from '@/tree/byok/byok-crypto'
 import { encryptValue, decryptValue } from '@/tree/credentials/encryption'
 
 // M11: error thrown when stored credential cannot be decrypted (key rotated)
@@ -32,6 +33,7 @@ export interface CredentialSummary {
 
 interface CredentialRow {
   encrypted_value: string
+  key_version: number | null
   status: string
 }
 
@@ -64,7 +66,7 @@ export async function getUserCredential(
   try {
     const row = await d1
       .prepare(
-        `SELECT encrypted_value, status FROM user_provider_credentials
+        `SELECT encrypted_value, key_version, status FROM user_provider_credentials
          WHERE user_id = ?1 AND provider = ?2 LIMIT 1`,
       )
       .bind(userId, provider)
@@ -73,7 +75,7 @@ export async function getUserCredential(
     if (!row?.encrypted_value) return null
     if (row.status !== 'active') return null
 
-    const plaintext = await decryptValue(row.encrypted_value, userId)
+    const plaintext = await decryptValue(row.encrypted_value, userId, row.key_version ?? undefined)
 
     // Fire-and-forget last_used_at update
     d1.prepare(
@@ -109,21 +111,23 @@ export async function setUserCredential(
   const d1 = getD1();
   if (!d1) throw new Error('D1 database binding not available');
   const encryptedValue = await encryptValue(plaintext, userId)
+  const keyVersion = await getActiveKeyVersion()
   const displayHint = makeDisplayHint(plaintext)
   const now = Math.floor(Date.now() / 1000)
 
   await d1
     .prepare(
       `INSERT INTO user_provider_credentials
-         (user_id, provider, encrypted_value, display_hint, created_at, updated_at, status)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?5, 'active')
+         (user_id, provider, encrypted_value, key_version, display_hint, created_at, updated_at, status)
+       VALUES (?1, ?2, ?3, ?6, ?4, ?5, ?5, 'active')
        ON CONFLICT(user_id, provider) DO UPDATE SET
          encrypted_value = excluded.encrypted_value,
+         key_version = excluded.key_version,
          display_hint    = excluded.display_hint,
          updated_at      = excluded.updated_at,
          status          = 'active'`,
     )
-    .bind(userId, provider, encryptedValue, displayHint, now)
+    .bind(userId, provider, encryptedValue, displayHint, now, keyVersion)
     .run()
 }
 
