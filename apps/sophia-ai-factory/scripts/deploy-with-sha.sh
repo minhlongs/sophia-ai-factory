@@ -427,14 +427,17 @@ if [ -x scripts/ci/sentry-upload-sourcemaps.sh ]; then
   echo "==> sentry-upload-sourcemaps"
   bash scripts/ci/sentry-upload-sourcemaps.sh
 
-  # Post-deploy probe: verify release exists with artifacts
-  RELEASE="${SENTRY_RELEASE:-$COMMIT_SHORT}"
-  if npx @sentry/cli releases info "$RELEASE" --org "$SENTRY_ORG" --project "$SENTRY_PROJECT" >/dev/null 2>&1; then
-    echo "✅ Sentry release $RELEASE verified"
-  else
-    echo "❌ Sentry release $RELEASE not found or missing artifacts"
-    exit 2
-  fi
+# Post-deploy probe: verify release exists with artifacts (skip if SENTRY_ORG/SENTRY_PROJECT unset)
+if [ -n "${SENTRY_ORG:-}" ] && [ -n "${SENTRY_PROJECT:-}" ]; then
+RELEASE="${SENTRY_RELEASE:-$COMMIT_SHORT}"
+if npx @sentry/cli releases info "$RELEASE" --org "$SENTRY_ORG" --project "$SENTRY_PROJECT" >/dev/null 2>&1; then
+echo "✅ Sentry release $RELEASE verified"
+else
+echo "❌ Sentry release $RELEASE not found or missing artifacts"
+exit 2
+fi
+else
+echo "⚠️ SENTRY_ORG/SENTRY_PROJECT not set — skipping Sentry release verification (sourcemaps optional per no-tech doctrine)"
 fi
 
 # ─── Step 5.2: Mandatory live deploy verification ──────────────────────────
