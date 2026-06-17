@@ -19,8 +19,8 @@ RELEASE="${SENTRY_RELEASE:-$(git rev-parse --short HEAD 2>/dev/null || echo 'loc
 
 echo "Sentry: releasing $RELEASE for $SENTRY_ORG/$SENTRY_PROJECT"
 
-# Create release
-npx @sentry/cli releases new "$RELEASE" --org "$SENTRY_ORG" --project "$SENTRY_PROJECT" || { echo "warn: releases new failed (non-fatal)"; exit 0; }
+# Create release (fail-fast)
+npx @sentry/cli releases new "$RELEASE" --org "$SENTRY_ORG" --project "$SENTRY_PROJECT"
 
 # Upload Next.js client + server source maps
 if [ -d ".next" ]; then
@@ -28,7 +28,7 @@ if [ -d ".next" ]; then
     --release "$RELEASE" \
     --org "$SENTRY_ORG" \
     --project "$SENTRY_PROJECT" \
-    .next/ || echo "warn: .next/ map upload failed (non-fatal)"
+    .next/
 fi
 
 # Upload OpenNext worker source maps (server bundle)
@@ -37,16 +37,16 @@ if [ -d ".open-next" ]; then
     --release "$RELEASE" \
     --org "$SENTRY_ORG" \
     --project "$SENTRY_PROJECT" \
-    .open-next/ || echo "warn: .open-next/ map upload failed (non-fatal)"
+    .open-next/
 fi
 
 # Link to git commits (needs full history — ensure fetch-depth: 0 in CI)
 npx @sentry/cli releases set-commits "$RELEASE" \
   --org "$SENTRY_ORG" \
-  --auto || echo "warn: set-commits failed (non-fatal)"
+  --auto
 
 # Finalize release
 npx @sentry/cli releases finalize "$RELEASE" \
-  --org "$SENTRY_ORG" || echo "warn: finalize failed (non-fatal)"
+  --org "$SENTRY_ORG"
 
 echo "Sentry: release $RELEASE finalized"

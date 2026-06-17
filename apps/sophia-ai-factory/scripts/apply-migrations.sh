@@ -176,9 +176,9 @@ for m in $MIGRATIONS; do
 
   MIGRATION_NAME=$(basename "$m" .sql)
 
-  # Guard: skip migrations already recorded in D1 _migrations table
+  # Guard: skip migrations already recorded in D1 d1_migrations table
   TMP_SQL=$(mktemp -t migration-check)
-  echo "SELECT COUNT(*) AS cnt FROM _migrations WHERE name = '${MIGRATION_NAME}'" > "$TMP_SQL"
+  echo "SELECT COUNT(*) AS cnt FROM d1_migrations WHERE name = '${MIGRATION_NAME}'" > "$TMP_SQL"
   APPLIED_COUNT_DB=$(npx wrangler d1 execute "$DB_NAME" \
     --config "$WRANGLER_CONFIG" \
     --remote \

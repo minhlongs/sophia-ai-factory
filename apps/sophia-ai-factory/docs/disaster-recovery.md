@@ -306,11 +306,16 @@ curl -s https://sophia.agencyos.network/api/experiments | jq '.flags'
 
 ## Recovery Test Cadence
 
-### Quarterly DR Drill (Next: Q3 2026)
+### Quarterly DR Drill (Next: September 1, 2026)
 
 **Objective:** Verify recovery procedures work end-to-end.
 
-**Schedule:** First Tuesday of Q3, Q4 (e.g., July 1, Oct 1)
+**Schedule:** First Tuesday of Q3, Q4 (e.g., September 1, December 1)
+
+**Participants:**
+- Tech lead (recovery captain)
+- DevOps engineer (execution)
+- Product (communication)
 
 **Participants:**
 - Tech lead (recovery captain)
@@ -428,7 +433,9 @@ wrangler tail --name sophia-ai-factory
 | Date | Author | Changes |
 |------|--------|---------|
 | 2026-04-28 | DevOps Team | Initial draft — DR procedures + RTO/RPO definitions |
+| 2026-05-18 | debugger agent | Full DR drill completed — RTO = 13s, RPO = 0s |
+| 2026-06-17 | Claude Opus 4.8 | Quarterly verification drill — infrastructure audit, schema analysis, next drill scheduled |
 
-**Last reviewed:** 2026-04-28
-**Next review:** 2026-05-28 (monthly)
-**Next drill:** 2026-07-01 (quarterly)
+**Last reviewed:** 2026-06-17
+**Next review:** 2026-09-01 (quarterly)
+**Next drill:** 2026-09-01 (Q3 full restore test)

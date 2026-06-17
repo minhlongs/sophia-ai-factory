@@ -185,12 +185,14 @@ const finalConfig = process.env.SKIP_SENTRY_BUILD === '1'
   authToken: process.env.SENTRY_AUTH_TOKEN,
   // Don't print Sentry logs during build (reduce CI noise)
   silent: true,
-  // Keep source maps out of client bundle — upload to Sentry then strip
-  sourcemaps: { disable: true },
+  // Upload source maps to Sentry then strip from bundle (fail-fast on upload errors)
+  sourcemaps: {},
   // Upload wider set of client-side source maps
   widenClientFileUpload: true,
   // Disable telemetry in CI builds; Sentry v8 auto-skips plugin in dev
   telemetry: false,
+  // Note: The plugin's default behavior is to throw on upload errors (fail-fast).
+  // No explicit `throwOnError` option exists; errors propagate naturally.
 });
 
 export default finalConfig;

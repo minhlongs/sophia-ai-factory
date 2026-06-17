@@ -24,7 +24,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }))
 
-vi.mock('@/land/telemetry/llm-trace', () => ({
+vi.mock('@/seed/observability/telemetry/llm-trace', () => ({
   recordLlmCall: vi.fn(),
   buildTraceId:  vi.fn(),
 }))
@@ -49,7 +49,7 @@ vi.mock('@/tree/byok/resolve-user-api-key', () => ({
 import { executeStep } from './route'
 import { callWithCache } from '@/land/llm/cache/call-with-cache'
 import { logger } from '@/seed/utils/logger-utility'
-import { recordLlmCall } from '@/land/telemetry/llm-trace'
+import { recordLlmCall } from '@/seed/observability/telemetry/llm-trace'
 import { route as routeLlm } from '@/seed/ai/llm-router'
 import { callAnthropic } from '@/seed/ai/anthropic-adapter'
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'

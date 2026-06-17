@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { snapshot } from '@/land/telemetry/metrics';
+import { snapshot } from '@/seed/observability/telemetry/metrics';
 
 export const dynamic = 'force-dynamic';
 

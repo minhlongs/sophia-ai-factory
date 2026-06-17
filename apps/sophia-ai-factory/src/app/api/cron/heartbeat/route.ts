@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { pushHeartbeat, pushFatalLog } from '@/land/telemetry/better-stack-client';
+import { pushHeartbeat, pushFatalLog } from '@/seed/observability/telemetry/better-stack-client';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/land/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
