@@ -215,6 +215,17 @@ else
   echo "⚠️ SOC 2 CC6.1: Re-attest within 24h or next business day"
 fi
 
+# ─── Step 0.75: Record deploy audit log entry (SOC 2 immutable audit) ─────────────
+# All production deploys must be recorded in raas_audit_logs with hash chain integrity.
+# We POST to the internal /api/admin/audit/deploy endpoint which writes the audit entry.
+# This is non-fatal: if the endpoint fails, the deploy continues (manual backfill possible).
+echo "==> Recording deploy audit log entry"
+# Build JSON payload for audit log
+AUDIT_PAYLOAD=$(node -e "const fs=require('fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const [commit_sha,branch,timestamp,operator_host,operator_user,diff_summary,files_changed]=process.argv.slice(1); console.log(JSON.stringify({event:'DEPLOY',commit_sha,branch,timestamp,operator_host,operator_user,diff_summary,files_changed:Number(files_changed),manifest:{commit_sha,branch,timestamp,operator_host,operator_user,diff_summary,files_changed:Number(files_changed),opennext_version:pkg.dependencies['@opennextjs/cloudflare']?.match(/\\^([0-9.]+)/)?.[1]||'unknown',attestation_count:${ATTESTATION_COUNT},skip_attestation:${SKIP_ATTESTATION:-0},skip_tests:${SKIP_TESTS:-0},skip_tsc:${SKIP_TSC:-0}}));" "$COMMIT_SHA" "$DEPLOY_BRANCH" "$DEPLOYED_AT" "$OPERATOR_HOST" "$OPERATOR_USER" "$DIFF_STAT" "$FILES_CHANGED")
+# Fire-and-forget: deploy must not fail if audit endpoint is temporarily unreachable
+curl -fsS -X POST "https://sophia.agencyos.network/api/admin/audit/deploy" \
+  -H "Content-Type: application/json" \
+  -d "$AUDIT_PAYLOAD" 2>/dev/null || echo "⚠️  Deploy audit log POST failed (non-fatal — manual backfill via /admin/audit recommended)"
 echo "Deploying SHA $COMMIT_SHORT (branch: $DEPLOY_BRANCH)"
 echo "Deployed at: $DEPLOYED_AT"
 
@@ -260,6 +271,18 @@ else
   echo "⚠️  SKIP_TESTS=1 — bypassing test gate (emergency hotfix)"
 fi
 
+# ─── Step 0.7: Verify commit signatures (Supply Chain Hardening) ───────────────
+# Block deploy if any commits since origin/main are not GPG-signed.
+if [ "${SKIP_SIGNATURE_CHECK:-0}" != "1" ]; then
+  echo "==> verify commit signatures (GPG)"
+  node scripts/supply-chain/verify-signed-commits.mjs || {
+    echo "❌ Unsigned commits detected — aborting deploy"
+    exit 2
+  }
+else
+  echo "⚠️ SKIP_SIGNATURE_CHECK=1 — bypassing commit signature check"
+fi
+
 # ─── Step 1: Next.js build ───────────────────────────────────────────────────
 # NEXT_PUBLIC_* vars are baked into the client bundle at build time.
 if [ "${SKIP_NEXT_BUILD:-0}" = "1" ]; then
@@ -271,6 +294,18 @@ if [ "${SKIP_NEXT_BUILD:-0}" = "1" ]; then
 else
   echo "==> npm run build"
   npm run build
+fi
+
+# ─── Step 1.5: Generate SBOM (Supply Chain Hardening) ──────────────────────
+# Create CycloneDX SBOM for traceability. Upload to R2 after deploy succeeds.
+if [ "${SKIP_SBOM:-0}" != "1" ]; then
+  echo "==> generate SBOM (supply-chain hardening)"
+  npm run sbom || {
+    echo "❌ SBOM generation failed"
+    exit 2
+  }
+else
+  echo "⚠️ SKIP_SBOM=1 — skipping SBOM generation"
 fi
 
 # ─── Step 1.5: Strip client-only bloat from SSR chunks ──────────────────────
@@ -356,6 +391,24 @@ echo "==> OpenNext Cloudflare deploy"
 # OpenNext 1.19+ deploys the generated worker from its adapter output.
 # Direct wrangler deploy still points at the legacy .open-next/worker.js path.
 retry_cf "opennext deploy" npx opennextjs-cloudflare deploy --config wrangler.toml
+
+# ─── Step 4.5: Upload SBOM to R2 ───────────────────────────────────────────────
+# Store SBOM in BACKUPS_BUCKET for supply chain artifacts.
+if [ "${SKIP_SBOM:-0}" != "1" ]; then
+  echo "==> upload SBOM to R2"
+  SBOM_FILE=$(ls -t .sbom/sbom-*.json 2>/dev/null | head -1 || true)
+  if [ -n "$SBOM_FILE" ] && [ -f "$SBOM_FILE" ]; then
+    SBOM_KEY="sbom/$(basename "$SBOM_FILE")"
+    echo "  Uploading $SBOM_FILE → s3://$BACKUPS_BUCKET/$SBOM_KEY"
+    npx wrangler r2 object put "$BACKUPS_BUCKET" --key "$SBOM_KEY" --file="$SBOM_FILE" --remote || {
+      echo "❌ SBOM upload to R2 failed"
+      exit 2
+    }
+    echo "  ✅ SBOM uploaded"
+  else
+    echo "⚠️ SBOM file not found ($SBOM_FILE); skipping upload"
+  fi
+fi
 
 # ─── Step 4.5: Inject secrets AFTER deploy ──────────────────────────────────
 # Secrets are applied at Worker level; setting them after wrangler deploy
@@ -443,3 +496,5 @@ if [ "${RUN_POSTDEPLOY_E2E:-0}" = "1" ]; then
     }
   echo "[deploy] ✅ Post-deploy smoke passed"
 fi
+
+

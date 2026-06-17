@@ -19,6 +19,8 @@ import {
 import { buildCSPHeader } from '@/seed/security/content-security-policy-configuration';
 import { CSP_NONCE_HEADER } from '@/seed/security/get-csp-nonce';
 import { generateNonce } from '@/forest/raas-service';
+import { getTracer } from '@/seed/telemetry/opentelemetry-setup';
+import { record as recordMetrics } from '@/seed/observability/telemetry/metrics';
 
 // Modular middleware components
 import { isSensitiveApiRoute } from './middleware/sensitive-routes';
@@ -56,11 +58,9 @@ function attachCspHeaders(response: NextResponse, nonce: string): void {
 }
 
 /**
- * Main middleware orchestrator
- *
- * Handles: locale routing, CORS, CSRF, auth, MFA, CSP, intl, usage metering.
+ * Original middleware implementation — now wrapped with OTel tracing.
  */
-export async function proxy(request: NextRequest) {
+async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
   const origin = request.headers.get('origin');
   const startTime = Date.now();
@@ -270,6 +270,45 @@ export async function proxy(request: NextRequest) {
   attachCspHeaders(finalResponse, nonce);
   if (needsCsrfSeed) setCsrfCookie(finalResponse, generateCsrfToken());
   return finalResponse;
+}
+
+/**
+ * OTel-instrumented middleware wrapper
+ */
+export async function proxy(request: NextRequest): Promise<NextResponse> {
+  const startTime = Date.now();
+  const tracer = getTracer();
+  const span = tracer.startSpan('middleware.proxy', {
+    attributes: {
+      'http.method': request.method,
+      'http.route': request.nextUrl.pathname,
+      'component': 'middleware',
+    },
+  });
+
+  let isError = false;
+  let status = 200;
+
+  try {
+    const response = await proxyImpl(request);
+    status = response.status;
+    isError = status >= 400;
+    return response;
+  } catch (err) {
+    isError = true;
+    span.recordException(err as Error);
+    span.setStatus({ code: 1, message: (err as Error).message });
+    throw err;
+  } finally {
+    const duration = Date.now() - startTime;
+    span.setAttribute('duration_ms', duration);
+    span.setAttribute('http.status_code', status);
+    span.end();
+
+    // Record metrics (in-memory ring buffer) for all requests
+    const route = request.nextUrl.pathname;
+    recordMetrics(route, duration, isError);
+  }
 }
 
 export const middleware = proxy;

@@ -140,9 +140,18 @@ type RepurposeClipGenerateEvent = {
   };
 };
 
+type KeyRotationRequestedEvent = {
+  data: {
+    keyVersion: number;
+    reason?: string;
+  };
+};
+
 type Events = {
   "campaign.created": CampaignCreatedEvent;
   "test/hello.world": { data: Record<string, unknown> };
+  // Key rotation infrastructure (Phase 4)
+  "key.rotation.requested": KeyRotationRequestedEvent;
   // URL-to-Revenue pipeline events (Master tier)
   "url_revenue.video.requested": UrlRevenueVideoRequestedEvent;
   // Video pipeline events (Phase 06)

@@ -336,6 +336,83 @@ curl -s https://sophia.agencyos.network/api/admin/audit-log \
 
 ---
 
+## Hash Chain Integrity Breach
+
+**Goal:** Detect and respond to tampering of the immutable audit log.
+
+**Severity:** P0 (Critical) — SOC 2 CC7.2 compromise
+
+**Detection:** `scripts/audit/verify-hash-chain.js` returns `valid: false`
+**Impact:** Audit trail integrity compromised — potential undetected tampering of compliance records.
+
+```bash
+# Step 1: Isolate
+# Halt new writes to raas_audit_logs by enabling maintenance mode or rate limiting
+echo "Isolating audit log write path..."
+# Temporarily block /api/admin/audit/* routes via CF firewall rule or maintenance page
+# (Procedure: update wrangler.toml with maintenance route, deploy emergency patch)
+
+# Step 2: Preserve evidence
+# Export full audit log table for forensic analysis (do NOT delete or truncate)
+mkdir -p /tmp/incident-audit-$(date +%Y%m%d-%H%M%S)
+cd /tmp/incident-audit-$(date +%Y%m%d-%H%M%S)
+npx wrangler d1 export sophia-raas-db --table raas_audit_logs --output=raas_audit_logs-full-export.json
+# Verify export succeeded: file should contain all rows
+ls -lh raas_audit_logs-full-export.json
+
+# Step 3: Identify break point
+# Run verification with extended timeframe to find earliest broken entry
+node scripts/audit/verify-hash-chain.js --since 2026-01-01 --export=verification-result.json
+cat verification-result.json
+# Note: firstInvalidIndex indicates which row breaks the chain
+
+# Step 4: Investigate
+# Check for:
+# - Direct SQL edits: Query Cloudflare Logs for D1 API calls modifying raas_audit_logs
+#   npx wrangler tail --format json | grep -i 'raas_audit_logs.*UPDATE\|DELETE'
+# - Compromised operator credentials: Review admin_audit_log for suspicious admin actions
+# - Application bug: Check deploy history around break point date for code changes to audit-logger.ts
+#
+# Pull relevant rows from export (before/after break) for manual review
+jq ".results[] | select(.id >= <break_id> - 10 and .id <= <break_id> + 10)" raas_audit_logs-full-export.json > break-neighborhood.json
+
+# Step 5: Remediate decision
+# Option A: Rebuild chain (if break was due to system error, not malicious)
+#   - Identify the last valid entry before the break
+#   - Recompute content_hash for all subsequent entries from that point forward
+#   - Requires: A script to backfill content_hash and previous_log_hash sequentially
+#   - Run: node scripts/audit/rebuild-hash-chain.js --from <valid_entry_id>
+#
+# Option B: Flag entries as invalid (if tampering confirmed but cannot rebuild)
+#   - Update hash_chain_valid = 0 for all entries from break point onward
+#   - Document rationale in incident report
+#   - SOC 2 note: invalid entries must be disclosed to auditor with compensating controls
+#
+# Option C: Full audit log reset (extreme case — only if entire chain corrupted)
+#   - Archive current raas_audit_logs table as evidence
+#   - Create new empty table (migration)
+#   - Gap period: [date range] — must be documented and justified to auditor
+
+# Step 6: Post-incident
+# - Update audit-logger.ts to add additional safeguards (e.g., DB trigger to prevent UPDATE/DELETE)
+# - Rotate AUDIT_HASH_SALT secret in CF Workers
+# - Add alerting: daily cron runs verify-hash-chain.js and sends Slack alert on failure
+# - Run full forensic review with compliance officer
+
+# Step 7: Notification
+# If customer data exposure is possible (based on investigation), notify:
+# - Compliance officer
+# - Legal team
+# - Affected customers (per DPA breach notification requirements)
+```
+
+**Known gaps:**
+- No automated daily hash chain verification (add to cron)
+- No DB-level protection against UPDATE/DELETE on raas_audit_logs (application-only)
+- No alerting on chain breaks (Phase 4 candidate)
+
+---
+
 ## War-Room Template
 
 **Incident:** [P0/P1] [Service] — [Brief description]  
