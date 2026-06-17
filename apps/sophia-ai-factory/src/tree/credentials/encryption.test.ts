@@ -29,7 +29,7 @@ describe('lib/credentials/encryption', () => {
     const plaintext = 'hk_test_heygen_api_key_12345'
     const encrypted = await encryptValue(plaintext)
 
-    expect(encrypted).toMatch(/^[A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+$/)
+    expect(encrypted).toMatch(/^v?\d*:[A-Za-z0-9+/=]+:[A-Za-z0-9+/=]+$/)
     const decrypted = await decryptValue(encrypted)
     expect(decrypted).toBe(plaintext)
   })

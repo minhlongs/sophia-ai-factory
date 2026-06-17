@@ -23,10 +23,10 @@ const TEST_MASTER_KEY = 'QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI='
 
 function makeD1() {
   const first = vi.fn().mockResolvedValue(null)
-  const all   = vi.fn().mockResolvedValue({ results: [] })
-  const run   = vi.fn().mockResolvedValue({ success: true })
-  const bind  = vi.fn().mockReturnValue({ first, all, run })
-  const prepare = vi.fn().mockReturnValue({ bind })
+  const all = vi.fn().mockResolvedValue({ results: [] })
+  const run = vi.fn().mockResolvedValue({ success: true })
+  const bind = vi.fn().mockReturnValue({ first, all, run })
+  const prepare = vi.fn().mockReturnValue({ bind, first })
   return { d1: { prepare } as any, prepare, bind, first, all, run }
 }
 
@@ -53,19 +53,26 @@ describe('user-api-key-store', () => {
 
       await setUserApiKey('u-1', 'anthropic', 'sk-ant-secret')
 
-      expect(prepare).toHaveBeenCalledTimes(1)
-      const sql = prepare.mock.calls[0][0] as string
-      expect(sql).toMatch(/INSERT INTO user_api_keys/i)
+      // prepare called for getActiveKeyVersion + ensureKeyVersionRow check + INSERT
+      expect(prepare).toHaveBeenCalled()
+      // Find the INSERT INTO user_api_keys call
+      const insertCall = prepare.mock.calls.find((c: string[]) => c[0].includes('INSERT INTO user_api_keys'))
+      expect(insertCall).toBeDefined()
+      const sql = insertCall![0] as string
       expect(sql).toMatch(/ON CONFLICT\(user_id, provider\) DO UPDATE/i)
 
-      const [userId, provider, encrypted] = bind.mock.calls[0] as unknown[]
+      // Find the bind call that matches the user_api_keys INSERT (has 5 args: userId, provider, encrypted, keyVersion, timestamp)
+      const userApiKeyBindCall = bind.mock.calls.find((c: unknown[]) => (c as unknown[]).length >= 5)
+      expect(userApiKeyBindCall).toBeDefined()
+      const [userId, provider, encrypted] = userApiKeyBindCall! as unknown[]
       expect(userId).toBe('u-1')
       expect(provider).toBe('anthropic')
       expect(encrypted).toBeInstanceOf(Uint8Array)
       // Plaintext MUST NOT appear verbatim in the blob
       const asString = new TextDecoder().decode(encrypted as Uint8Array)
       expect(asString).not.toContain('sk-ant-secret')
-      expect(run).toHaveBeenCalledTimes(1)
+      // run called for ensureKeyVersionRow INSERT + setUserApiKey INSERT
+      expect(run).toHaveBeenCalledTimes(2)
     })
   })
 
@@ -84,20 +91,47 @@ describe('user-api-key-store', () => {
     })
 
     it('round-trips (set → get returns original)', async () => {
-      // Simulate D1 by capturing upsert row and returning it on subsequent select
-      let stored: Uint8Array | null = null
-      const prepare = vi.fn().mockImplementation((sql: string) => ({
-        bind: (...args: unknown[]) => ({
-          run: async () => {
-            if (sql.includes('INSERT INTO')) stored = args[2] as Uint8Array
-            return { success: true }
-          },
-          first: async () => (stored ? { encrypted_key: stored } : null),
-          all:   async () => ({ results: [] }),
-        }),
-      }))
-      vi.mocked(getD1).mockReturnValue({ prepare } as any)
+      // Stateful mock: capture INSERT blob, return it on SELECT
+      const storedBlob: { encrypted_key: Uint8Array; key_version: number } | null = null
+      const captured = { blob: null as Uint8Array | null, keyVersion: 0 }
 
+      const prepare = vi.fn().mockImplementation(() => {
+        const sql = prepare.mock.calls[prepare.mock.calls.length - 1]?.[0] as string | undefined
+
+        // key_versions queries → return version 1
+        if (sql?.includes('key_versions')) {
+          return {
+            bind: vi.fn().mockReturnThis(),
+            first: async () => ({ version: 1 }),
+            all: vi.fn().mockResolvedValue({ results: [] }),
+            run: vi.fn().mockResolvedValue({ success: true }),
+          }
+        }
+
+        // user_api_keys INSERT → capture the encrypted blob
+        if (sql?.includes('INSERT INTO user_api_keys')) {
+          return {
+            bind: vi.fn().mockImplementation((...args: unknown[]) => {
+              captured.blob = args[2] as Uint8Array
+              captured.keyVersion = args[3] as number
+              return { first: async () => null, all: vi.fn().mockResolvedValue({ results: [] }), run: vi.fn().mockResolvedValue({ success: true }) }
+            }),
+            first: async () => null,
+            all: vi.fn().mockResolvedValue({ results: [] }),
+            run: vi.fn().mockResolvedValue({ success: true }),
+          }
+        }
+
+        // user_api_keys SELECT → return captured blob
+        return {
+          bind: vi.fn().mockReturnThis(),
+          first: async () => captured.blob ? { encrypted_key: captured.blob, key_version: captured.keyVersion } : null,
+          all: vi.fn().mockResolvedValue({ results: [] }),
+          run: vi.fn().mockResolvedValue({ success: true }),
+        }
+      })
+
+      vi.mocked(getD1).mockReturnValue({ prepare } as any)
       const plain = 'sk-or-v1-roundtrip-xyz'
       await setUserApiKey('u-42', 'openrouter', plain)
       const got = await getUserApiKey('u-42', 'openrouter')

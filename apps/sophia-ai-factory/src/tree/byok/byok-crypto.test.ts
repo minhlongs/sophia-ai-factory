@@ -55,6 +55,14 @@ describe('byok-crypto', () => {
       expect(back).toBe(plain)
     })
 
+    it('decrypts legacy iv+ciphertext blobs when legacyFormat is true', async () => {
+      const plain = 'sk-legacy-1234567890abcdef'
+      const blob = await encryptApiKey(plain, 'u-legacy')
+      const legacyBlob = blob.slice(1)
+      const back = await decryptApiKey(legacyBlob, 'u-legacy', undefined, true)
+      expect(back).toBe(plain)
+    })
+
     it('handles unicode plaintext losslessly', async () => {
       const plain = 'sk-📡 émoji and açcénts €'
       const blob  = await encryptApiKey(plain)

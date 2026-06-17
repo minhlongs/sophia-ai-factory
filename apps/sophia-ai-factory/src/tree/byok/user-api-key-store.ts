@@ -10,13 +10,14 @@
  */
 
 import { getD1 } from '@/seed/db/client';
-import { decryptApiKey, encryptApiKey } from '@/tree/byok/byok-crypto'
+import { getActiveKeyVersion, decryptApiKey, encryptApiKey } from '@/tree/byok/byok-crypto'
 
 /** All providers that can be stored in user_api_keys. 'heygen' is server-managed (not user-settable via admin UI). */
 export type ByokProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'heygen' | 'muapi' | 'apollo' | 'hunter'
 
 interface KeyRow {
  encrypted_key: ArrayBuffer | Uint8Array
+ key_version: number | null
  key_validated_at?: number | null
 }
 
@@ -42,17 +43,19 @@ export async function setUserApiKey(
   if (!d1) throw new Error('BYOK_D1_UNAVAILABLE')
 
   const encrypted = await encryptApiKey(plainKey, userId)
+  const keyVersion = await getActiveKeyVersion()
 
   await d1
     .prepare(
-      `INSERT INTO user_api_keys (user_id, provider, encrypted_key, key_validated_at, updated_at)
-       VALUES (?, ?, ?, ?, datetime('now'))
+      `INSERT INTO user_api_keys (user_id, provider, encrypted_key, key_version, key_validated_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, datetime('now'))
        ON CONFLICT(user_id, provider) DO UPDATE SET
          encrypted_key = excluded.encrypted_key,
-  key_validated_at = excluded.key_validated_at,
+         key_version = excluded.key_version,
+         key_validated_at = excluded.key_validated_at,
          updated_at    = datetime('now')`,
     )
-    .bind(userId, provider, encrypted, Date.now())
+    .bind(userId, provider, encrypted, keyVersion, Date.now())
     .run()
 }
 
@@ -77,14 +80,19 @@ export async function getUserApiKey(
   try {
     const row = await d1
       .prepare(
-        `SELECT encrypted_key FROM user_api_keys
+        `SELECT encrypted_key, key_version FROM user_api_keys
          WHERE user_id = ? AND provider = ? LIMIT 1`,
       )
       .bind(userId, provider)
       .first<KeyRow>()
 
     if (!row?.encrypted_key) return null
-    return await decryptApiKey(toBytes(row.encrypted_key), userId)
+    return await decryptApiKey(
+      toBytes(row.encrypted_key),
+      userId,
+      row.key_version ?? undefined,
+      row.key_version == null,
+    )
   } catch {
     return null
   }
