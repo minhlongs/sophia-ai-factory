@@ -440,6 +440,7 @@ else
 echo "⚠️ SENTRY_ORG/SENTRY_PROJECT not set — skipping Sentry release verification (sourcemaps optional per no-tech doctrine)"
 fi
 
+fi
 # ─── Step 5.2: Mandatory live deploy verification ──────────────────────────
 # HTTP 200 alone can be a stale worker. /api/version must expose the exact
 # COMMIT_SHA secret injected above before this deploy can be reported GREEN.
