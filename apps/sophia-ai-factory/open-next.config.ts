@@ -62,6 +62,7 @@ const config = {
   cloudflare: {
     dangerousDisableConfigValidation: true,
   },
-} as any;
+};
+	// @ts-expect-error - known type incompatibility with OpenNext CloudflareOverrides
 
 export default defineCloudflareConfig(config);
