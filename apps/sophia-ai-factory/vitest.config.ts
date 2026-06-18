@@ -8,7 +8,7 @@ config({ path: '.env.test' });
 
 export default defineConfig({
   root: __dirname,
-  plugins: [react() as any],
+  plugins: [react()],
   test: {
     environment: 'jsdom',
     globals: true,

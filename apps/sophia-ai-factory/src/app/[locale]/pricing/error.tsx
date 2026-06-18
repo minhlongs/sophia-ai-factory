@@ -14,7 +14,7 @@ export default function PricingError({
           Pricing temporarily unavailable
         </h2>
         <p className="text-muted-foreground mb-6">
-          We're experiencing technical difficulties with the pricing page.
+          We&apos;re experiencing technical difficulties with the pricing page.
           Please try again in a few minutes.
         </p>
         <button

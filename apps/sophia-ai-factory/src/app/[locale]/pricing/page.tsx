@@ -21,16 +21,16 @@ export default async function PricingPage() {
   let user: unknown = null;
   let userHeyGenConfigured = false;
   let currentTier: Tier | null = null;
-  let productSchemas: any[] = [];
-  let breadcrumbSchema: any = null;
+  let productSchemas: object[] = [];
+  let breadcrumbSchema: unknown = null;
 
   // Components (initially set to fallback)
-  let PricingSectionComponent: React.ComponentType<any> = EmptyComponent;
-  let PricingComparisonTableComponent: React.ComponentType<any> = EmptyComponent;
-  let PricingFaqComponent: React.ComponentType<any> = EmptyComponent;
-  let ProductionCostCalculatorComponent: React.ComponentType<any> = EmptyComponent;
-  let OneTimeBundleCardComponent: React.ComponentType<any> = EmptyComponent;
-  let CryptoPaymentExplainerComponent: React.ComponentType<any> = EmptyComponent;
+  let PricingSectionComponent: React.ComponentType<{}> = EmptyComponent as React.ComponentType<{}>;
+  let PricingComparisonTableComponent: React.ComponentType<{ currentTier: Tier | null }> = EmptyComponent as React.ComponentType<{ currentTier: Tier | null }>;
+  let PricingFaqComponent: React.ComponentType<{}> = EmptyComponent as React.ComponentType<{}>;
+  let ProductionCostCalculatorComponent: React.ComponentType<{}> = EmptyComponent as React.ComponentType<{}>;
+  let OneTimeBundleCardComponent: React.ComponentType<{ heygenHealthy: boolean }> = EmptyComponent as React.ComponentType<{ heygenHealthy: boolean }>;
+  let CryptoPaymentExplainerComponent: React.ComponentType<{}> = EmptyComponent as React.ComponentType<{}>;
 
   try {
     [t, heygenHealthy] = await Promise.all([
@@ -59,11 +59,11 @@ export default async function PricingPage() {
       }
     } catch (authErr) {
       // Auth subsystem unavailable — page continues without user-specific UI
-      console.warn('[pricing] auth modules unavailable:', authErr);
+      // console.warn('[pricing] auth modules unavailable:', authErr);
     }
 
     try {
-      productSchemas = buildAllProductSchemas() as unknown[];
+      productSchemas = buildAllProductSchemas();
     } catch {
       productSchemas = [];
     }
@@ -99,22 +99,22 @@ export default async function PricingPage() {
     ]);
 
     if (pricingSection.status === 'fulfilled' && pricingSection.value) {
-      PricingSectionComponent = pricingSection.value;
+      PricingSectionComponent = pricingSection.value as React.ComponentType<{}>;
     }
     if (pricingComparisonTable.status === 'fulfilled' && pricingComparisonTable.value) {
-      PricingComparisonTableComponent = pricingComparisonTable.value;
+      PricingComparisonTableComponent = pricingComparisonTable.value as React.ComponentType<{ currentTier: Tier | null }>;
     }
     if (pricingFaq.status === 'fulfilled' && pricingFaq.value) {
-      PricingFaqComponent = pricingFaq.value;
+      PricingFaqComponent = pricingFaq.value as React.ComponentType<{}>;
     }
     if (productionCostCalc.status === 'fulfilled' && productionCostCalc.value) {
-      ProductionCostCalculatorComponent = productionCostCalc.value;
+      ProductionCostCalculatorComponent = productionCostCalc.value as React.ComponentType<{}>;
     }
     if (oneTimeBundle.status === 'fulfilled' && oneTimeBundle.value) {
-      OneTimeBundleCardComponent = oneTimeBundle.value;
+      OneTimeBundleCardComponent = oneTimeBundle.value as React.ComponentType<{ heygenHealthy: boolean }>;
     }
     if (cryptoExplainer.status === 'fulfilled' && cryptoExplainer.value) {
-      CryptoPaymentExplainerComponent = cryptoExplainer.value;
+      CryptoPaymentExplainerComponent = cryptoExplainer.value as React.ComponentType<{}>;
     }
 
   } catch (err) {
@@ -135,11 +135,11 @@ export default async function PricingPage() {
     <main id="main-content" className="min-h-screen bg-gradient-to-b from-background to-card pt-16">
       {/* Structured data */}
       {productSchemas.map((schema, i) => (
-        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+        <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) ?? '' }} />
       ))}
-      {breadcrumbSchema && (
+      {breadcrumbSchema ? (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      )}
+      ) : null}
 
       {/* Header */}
       <div className="border-b border-border bg-gradient-to-r from-violet-900/30 to-blue-900/30 px-6 py-8 text-center">
