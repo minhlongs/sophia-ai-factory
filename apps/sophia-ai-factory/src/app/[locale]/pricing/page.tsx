@@ -25,12 +25,12 @@ export default async function PricingPage() {
   let breadcrumbSchema: unknown = null;
 
   // Components (initially set to fallback)
-  let PricingSectionComponent: React.ComponentType<{}> = EmptyComponent as React.ComponentType<{}>;
+  let PricingSectionComponent: React.ComponentType<object> = EmptyComponent as React.ComponentType<object>;
   let PricingComparisonTableComponent: React.ComponentType<{ currentTier: Tier | null }> = EmptyComponent as React.ComponentType<{ currentTier: Tier | null }>;
-  let PricingFaqComponent: React.ComponentType<{}> = EmptyComponent as React.ComponentType<{}>;
-  let ProductionCostCalculatorComponent: React.ComponentType<{}> = EmptyComponent as React.ComponentType<{}>;
+  let PricingFaqComponent: React.ComponentType<object> = EmptyComponent as React.ComponentType<object>;
+  let ProductionCostCalculatorComponent: React.ComponentType<object> = EmptyComponent as React.ComponentType<object>;
   let OneTimeBundleCardComponent: React.ComponentType<{ heygenHealthy: boolean }> = EmptyComponent as React.ComponentType<{ heygenHealthy: boolean }>;
-  let CryptoPaymentExplainerComponent: React.ComponentType<{}> = EmptyComponent as React.ComponentType<{}>;
+  let CryptoPaymentExplainerComponent: React.ComponentType<object> = EmptyComponent as React.ComponentType<object>;
 
   try {
     [t, heygenHealthy] = await Promise.all([
@@ -89,7 +89,7 @@ export default async function PricingPage() {
       productionCostCalc,
       oneTimeBundle,
       cryptoExplainer,
-    ] = await Promise.allSettled<React.ComponentType<any> | null>([
+    ] = await Promise.allSettled<React.ComponentType<object> | null>([
       import("@/forest/components/pricing/pricing-section").then(m => m.PricingSection ?? null),
       import("@/forest/components/pricing/pricing-comparison-table").then(m => m.PricingComparisonTable ?? null),
       import("@/forest/components/pricing/pricing-faq").then(m => m.PricingFaq ?? null),
@@ -99,23 +99,23 @@ export default async function PricingPage() {
     ]);
 
     if (pricingSection.status === 'fulfilled' && pricingSection.value) {
-      PricingSectionComponent = pricingSection.value as React.ComponentType<{}>;
+      PricingSectionComponent = pricingSection.value as React.ComponentType<object>;
     }
     if (pricingComparisonTable.status === 'fulfilled' && pricingComparisonTable.value) {
       PricingComparisonTableComponent = pricingComparisonTable.value as React.ComponentType<{ currentTier: Tier | null }>;
     }
     if (pricingFaq.status === 'fulfilled' && pricingFaq.value) {
-      PricingFaqComponent = pricingFaq.value as React.ComponentType<{}>;
+      PricingFaqComponent = pricingFaq.value as React.ComponentType<object>;
     }
     if (productionCostCalc.status === 'fulfilled' && productionCostCalc.value) {
-      ProductionCostCalculatorComponent = productionCostCalc.value as React.ComponentType<{}>;
+      ProductionCostCalculatorComponent = productionCostCalc.value as React.ComponentType<object>;
     }
     if (oneTimeBundle.status === 'fulfilled' && oneTimeBundle.value) {
       OneTimeBundleCardComponent = oneTimeBundle.value as React.ComponentType<{ heygenHealthy: boolean }>;
     }
     if (cryptoExplainer.status === 'fulfilled' && cryptoExplainer.value) {
-      CryptoPaymentExplainerComponent = cryptoExplainer.value as React.ComponentType<{}>;
-    }
+      CryptoPaymentExplainerComponent = cryptoExplainer.value as React.ComponentType<object>;
+     }
 
   } catch (err) {
     // All components already default to EmptyComponent; other data gets defaults inline
