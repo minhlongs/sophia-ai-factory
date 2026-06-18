@@ -323,5 +323,5 @@ export const middleware = proxy;
  * - static files (.*\..*)
  */
 export const config = {
-  matcher: ['/((?!_next|_worker|auth/callback|api/version|.*\\..*).*)'],
+  matcher: ['/((?!_next|_worker|auth/callback|api/version|api/.*|.*\\..*).*)'],
 };
