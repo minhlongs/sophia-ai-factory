@@ -6,6 +6,7 @@
     "dev": "next dev",
     "dev:mock": "NEXT_PUBLIC_MOCK_AI_SERVICES=true next dev",
     "build": "NODE_OPTIONS=--max-old-space-size=4096 next build",
+    "postbuild": "bash scripts/upload-symbols.sh",
     "start": "next start",
     "lint": "node --max-old-space-size=14336 ./node_modules/eslint/bin/eslint.js src",
     "type-check": "node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit",
