@@ -163,7 +163,7 @@ const nextConfig: NextConfig = {
       }
     ];
   },
-} as any;
+};
 
 const composedConfig = withPWA(withAnalyzer(withNextIntl(nextConfig)));
 
