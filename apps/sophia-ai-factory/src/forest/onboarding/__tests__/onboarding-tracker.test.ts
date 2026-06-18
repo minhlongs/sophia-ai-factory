@@ -4,27 +4,63 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+type Row = Record<string, unknown>;
+type QueryResult = { data: Row | Row[] | null };
+
+interface MockChain {
+  select: ReturnType<typeof vi.fn>;
+  eq: ReturnType<typeof vi.fn>;
+  gte: ReturnType<typeof vi.fn>;
+  maybeSingle: ReturnType<typeof vi.fn>;
+  order: ReturnType<typeof vi.fn>;
+  upsert: ReturnType<typeof vi.fn>;
+  update: ReturnType<typeof vi.fn>;
+  all: ReturnType<typeof vi.fn>;
+  first: ReturnType<typeof vi.fn>;
+  bind: ReturnType<typeof vi.fn>;
+  run: ReturnType<typeof vi.fn>;
+  then: (onFulfilled?: (v: unknown) => unknown, onRejected?: (e: unknown) => unknown) => Promise<unknown>;
+}
+
 const store = {
   _extra: true as boolean,
-  milestones: new Map<string, { milestone: string; achieved_at: string; achieved_by: string; notes: string | null; tenant_id?: string }[]>(),
-  tenants: new Map<string, { id?: string; onboarding_status: string; onboarding_progress_pct: number; onboarding_paused_reason: string | null; created_at: string }>(),
+  milestones: new Map<string, Row[]>(),
+  tenants: new Map<string, Row>(),
 };
 
 function buildMockDb() {
-  const from = vi.fn().mockImplementation((table: string) => {
-    const chain: any = {};
+  const from = vi.fn().mockImplementation((table: string): MockChain => {
+    const allFn = vi.fn().mockReturnThis();
+    const firstFn = vi.fn().mockReturnThis();
+    const bindFn = vi.fn().mockReturnThis();
+    const runFn = vi.fn().mockResolvedValue({ success: true });
+
+    const chain: MockChain = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      gte: vi.fn(),
+      maybeSingle: vi.fn(),
+      order: vi.fn(),
+      upsert: vi.fn(),
+      update: vi.fn(),
+      all: allFn,
+      first: firstFn,
+      bind: bindFn,
+      run: runFn,
+      then: function(_onFulfilled?: (v: unknown) => unknown, _onRejected?: (e: unknown) => unknown) { return Promise.resolve({ data: [] }); },
+    };
     let _pk: string | null = null;
     let _gteCol: string | null = null;
     let _gteVal: string | null = null;
 
-    function computeRows(): any[] {
+    function computeRows(): Row[] {
       if (table === 'onboarding_progress') {
         if (_gteCol === 'achieved_at' && _gteVal !== null) {
           const cutoff = _gteVal;
           const seen = new Set<string>();
-          const rows: any[] = [];
+          const rows: Row[] = [];
           for (const [tid, ms] of store.milestones) {
-            const hasRecent = ms.some((m: any) => m.achieved_at >= cutoff);
+            const hasRecent = ms.some((m) => typeof m.achieved_at === 'string' && m.achieved_at >= cutoff);
             if (hasRecent && !seen.has(tid)) { seen.add(tid); rows.push({ tenant_id: tid }); }
           }
           return rows;
@@ -33,61 +69,72 @@ function buildMockDb() {
         return [];
       }
       if (table === 'tenants') {
-        return _pk ? [store.tenants.get(_pk)].filter(Boolean) : [...store.tenants.values()];
+        return _pk ? (store.tenants.get(_pk) !== undefined ? [store.tenants.get(_pk)!] : []) : [...store.tenants.values()];
       }
       return [];
     }
 
-    chain.select = vi.fn().mockReturnValue(chain);
-    chain.eq = vi.fn().mockImplementation((_col: string, val: any) => { _pk = val; return chain; });
-    chain.gte = vi.fn().mockImplementation((col: string, val: string) => { _gteCol = col; _gteVal = val; return chain; });
-    chain.maybeSingle = vi.fn().mockImplementation(() => {
+    chain.select.mockImplementation(() => chain);
+    chain.eq.mockImplementation((_col: string, val: string) => { _pk = val; return chain; });
+    chain.gte.mockImplementation((col: string, val: string) => { _gteCol = col; _gteVal = val; return chain; });
+    chain.maybeSingle.mockImplementation((): QueryResult => {
       if (table === 'tenants') {
-        const t = _pk ? store.tenants.get(_pk) : null;
+        const t = _pk ? store.tenants.get(_pk) : undefined;
         return { data: t ?? null };
       }
       const rows = _pk ? (store.milestones.get(_pk) ?? []) : [];
       return { data: rows.length > 0 ? rows[rows.length - 1] : null };
     });
-    chain.order = vi.fn().mockImplementation(() => {
+    chain.order.mockImplementation(() => {
       const rows = _pk ? (store.milestones.get(_pk) ?? []).slice() : [];
-      rows.sort((a: any, b: any) => a.achieved_at.localeCompare(b.achieved_at));
+      rows.sort((a, b) => String(a.achieved_at).localeCompare(String(b.achieved_at)));
       return { data: rows };
     });
-    chain.upsert = vi.fn().mockImplementation((data: any) => {
-      const existing = store.milestones.get(data.tenant_id) ?? [];
-      const idx = existing.findIndex((m: any) => m.milestone === data.milestone);
-      const row = { tenant_id: data.tenant_id, milestone: data.milestone, achieved_at: data.achieved_at, achieved_by: data.achieved_by, notes: data.notes ?? null };
+    chain.upsert.mockImplementation((data: Row) => {
+      const tenantId = String(data.tenant_id);
+      const existing = store.milestones.get(tenantId) ?? [];
+      const milestone = String(data.milestone);
+      const idx = existing.findIndex((m) => m.milestone === milestone);
+      const row = { tenant_id: tenantId, milestone, achieved_at: data.achieved_at, achieved_by: data.achieved_by, notes: data.notes ?? null };
       if (idx >= 0) existing[idx] = row;
       else existing.push(row);
-      store.milestones.set(data.tenant_id, existing);
+      store.milestones.set(tenantId, existing);
       return chain;
     });
-    chain.update = vi.fn().mockImplementation((data: any) => {
+    chain.update.mockImplementation((data: Row) => {
       if (_pk && table === 'tenants') {
         const existing = store.tenants.get(_pk);
         if (existing) store.tenants.set(_pk, { ...existing, ...data });
       }
       return chain;
     });
-    chain.all = vi.fn().mockImplementation(() => ({ data: computeRows() }));
-    // D1QueryChain is thenable — await calls .then(), not .all()
-    chain.then = function(onFulfilled: any, onRejected: any) {
+    chain.all.mockImplementation((): QueryResult => ({ data: computeRows() }));
+    chain.then = function(onFulfilled?: (value: unknown) => unknown, onRejected?: (reason?: unknown) => unknown) {
       return Promise.resolve({ data: computeRows() }).then(onFulfilled, onRejected);
     };
     return chain;
   });
 
   const unwrap = vi.fn().mockReturnValue({
-    prepare: vi.fn().mockImplementation((_sql: string) => {
-      const c: any = {
+    prepare: vi.fn().mockImplementation((_sql: string): MockChain => {
+      const allFn = vi.fn().mockReturnThis();
+      const firstFn = vi.fn().mockReturnThis();
+      const c: MockChain = {
+        select: vi.fn(),
+        eq: vi.fn(),
+        gte: vi.fn(),
+        maybeSingle: vi.fn(),
+        order: vi.fn(),
+        upsert: vi.fn(),
+        update: vi.fn(),
+        all: allFn,
+        then: function(_onFulfilled?: (v: unknown) => unknown, _onRejected?: (e: unknown) => unknown) { return Promise.resolve({ data: [] }); },
         bind: vi.fn().mockReturnThis(),
-        all: vi.fn().mockReturnThis(),
-        first: vi.fn().mockReturnThis(),
+        first: firstFn,
         run: vi.fn().mockResolvedValue({ success: true }),
       };
-      c.all.mockImplementation(() => ({ results: [] }));
-      c.first.mockImplementation(() => null);
+      allFn.mockImplementation(() => ({ results: [] }));
+      firstFn.mockImplementation(() => null);
       return c;
     }),
   });
