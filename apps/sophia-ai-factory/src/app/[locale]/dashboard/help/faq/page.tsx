@@ -7,7 +7,7 @@
  */
 
 import { getTranslations } from 'next-intl/server';
-import HelpPage from '@/components/help/HelpPage';
+import HelpPage, { type HelpData } from '@/components/help/HelpPage';
 import faqData from '@/data/help-content/faq.json';
 
 interface Props {
@@ -21,11 +21,12 @@ export const metadata = {
 
 export default async function FAQPage({ params }: Props) {
   const { locale } = await params;
+  const data = faqData as unknown as HelpData;
 
   return (
     <HelpPage
       locale={locale}
-      data={faqData as any}
+      data={data}
       pageTitle={locale.startsWith('vi') ? 'Câu hỏi thường gặp' : 'Frequently Asked Questions'}
       pageSubtitle={
         locale.startsWith('vi')

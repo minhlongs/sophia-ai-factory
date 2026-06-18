@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { buildTraceId, recordLlmCall } from './llm-trace'
 
 // Mock track() so we can assert props without a real D1 binding.
-vi.mock('@/tree/signals/track', () => ({
+vi.mock('./track', () => ({
   track: vi.fn(),
 }))
 
@@ -12,8 +12,8 @@ vi.mock('./langfuse-client', () => ({
   sendToLangfuse: vi.fn().mockResolvedValue(undefined),
 }))
 
-import { track } from '@/tree/signals/track'
-import { D1Events } from '@/tree/signals/d1-event-types'
+import { track } from './track';
+import { D1Events } from '@/tree/signals/d1-event-types';
 import { sendToLangfuse } from './langfuse-client'
 
 describe('llm-trace', () => {

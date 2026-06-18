@@ -340,7 +340,7 @@ async function scheduleRetry(event: InngestEvent, retryCount: number): Promise<v
     id: `publish-${event.data.jobId}-retry-${retryCount}`,
     name: 'publish.scheduled',
     data: { jobId: event.data.jobId, tenantId: event.data.tenantId, userId: event.data.userId, attempt: retryCount },
-  } as any);
+  });
 }
 
 async function pollStatusUntilFinal(args: {

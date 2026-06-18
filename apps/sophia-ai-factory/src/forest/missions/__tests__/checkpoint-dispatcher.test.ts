@@ -78,7 +78,7 @@ import { dispatchMission, recoverStuckMissions } from '../dispatcher';
 
 // ── Chain factory ─────────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- test double factory
+ 
 function makeChain(singleResult: { data: unknown }): Record<string, any> {
   const chain: Record<string, any> = {
     select: vi.fn().mockReturnThis(),

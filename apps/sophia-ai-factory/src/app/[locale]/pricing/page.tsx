@@ -1,3 +1,4 @@
+import type { ComponentType } from "react";
 import { getTranslations } from "next-intl/server";
 import { isHeyGenHealthy } from "@/seed/health/heygen-health-check";
 import type { Tier } from "@/seed/types";
@@ -12,9 +13,6 @@ export const metadata = {
   description: "Video Factory + AI Automation — One Platform. Plans from $199/month to $4,999 lifetime. USDT/crypto payments accepted.",
 };
 
-// Fallback component that renders nothing but matches React.ComponentType signature
-const EmptyComponent = (() => null) as React.ComponentType<Record<string, unknown>>;
-
 export default async function PricingPage() {
   let t: (key: string) => string = (key) => key;
   let heygenHealthy = false;
@@ -24,13 +22,22 @@ export default async function PricingPage() {
   let productSchemas: object[] = [];
   let breadcrumbSchema: unknown = null;
 
-  // Components (initially set to fallback)
-  let PricingSectionComponent: React.ComponentType<{}> = EmptyComponent as React.ComponentType<{}>;
-  let PricingComparisonTableComponent: React.ComponentType<{ currentTier: Tier | null }> = EmptyComponent as React.ComponentType<{ currentTier: Tier | null }>;
-  let PricingFaqComponent: React.ComponentType<{}> = EmptyComponent as React.ComponentType<{}>;
-  let ProductionCostCalculatorComponent: React.ComponentType<{}> = EmptyComponent as React.ComponentType<{}>;
-  let OneTimeBundleCardComponent: React.ComponentType<{ heygenHealthy: boolean }> = EmptyComponent as React.ComponentType<{ heygenHealthy: boolean }>;
-  let CryptoPaymentExplainerComponent: React.ComponentType<{}> = EmptyComponent as React.ComponentType<{}>;
+  type ImportedPricingModules = {
+    PricingSection?: ComponentType<Record<string, never>>;
+    PricingComparisonTable?: ComponentType<{ currentTier: Tier | null }>;
+    PricingFaq?: ComponentType<Record<string, never>>;
+    ProductionCostCalculator?: ComponentType<Record<string, never>>;
+    OneTimeBundleCard?: ComponentType<{ heygenHealthy: boolean }>;
+    CryptoPaymentExplainer?: ComponentType<Record<string, never>>;
+  };
+
+  // Components (initially absent until dynamic imports resolve)
+  let PricingSectionComponent: ComponentType<Record<string, never>> | null = null;
+  let PricingComparisonTableComponent: ComponentType<{ currentTier: Tier | null }> | null = null;
+  let PricingFaqComponent: ComponentType<Record<string, never>> | null = null;
+  let ProductionCostCalculatorComponent: ComponentType<Record<string, never>> | null = null;
+  let OneTimeBundleCardComponent: ComponentType<{ heygenHealthy: boolean }> | null = null;
+  let CryptoPaymentExplainerComponent: ComponentType<Record<string, never>> | null = null;
 
   try {
     [t, heygenHealthy] = await Promise.all([
@@ -57,9 +64,9 @@ export default async function PricingPage() {
         const resolvedTier = await resolveUserTier(fetchedUser.id).catch(() => null);
         if (resolvedTier) currentTier = resolvedTier as Tier;
       }
-    } catch (authErr) {
+    } catch {
       // Auth subsystem unavailable — page continues without user-specific UI
-      // console.warn('[pricing] auth modules unavailable:', authErr);
+      // console.warn('[pricing] auth modules unavailable:', err);
     }
 
     try {
@@ -89,35 +96,35 @@ export default async function PricingPage() {
       productionCostCalc,
       oneTimeBundle,
       cryptoExplainer,
-    ] = await Promise.allSettled<React.ComponentType<any> | null>([
-      import("@/forest/components/pricing/pricing-section").then(m => m.PricingSection ?? null),
-      import("@/forest/components/pricing/pricing-comparison-table").then(m => m.PricingComparisonTable ?? null),
-      import("@/forest/components/pricing/pricing-faq").then(m => m.PricingFaq ?? null),
-      import("@/app/components/sections/production-cost-calculator").then(m => m.ProductionCostCalculator ?? null),
-      import("@/forest/components/pricing/one-time-bundle-card").then(m => m.OneTimeBundleCard ?? null),
-      import("@/forest/components/checkout/crypto-payment-explainer").then(m => m.CryptoPaymentExplainer ?? null),
+    ] = await Promise.allSettled<ImportedPricingModules>([
+      import("@/forest/components/pricing/pricing-section").then(m => ({ PricingSection: m.PricingSection })),
+      import("@/forest/components/pricing/pricing-comparison-table").then(m => ({ PricingComparisonTable: m.PricingComparisonTable })),
+      import("@/forest/components/pricing/pricing-faq").then(m => ({ PricingFaq: m.PricingFaq })),
+      import("@/app/components/sections/production-cost-calculator").then(m => ({ ProductionCostCalculator: m.ProductionCostCalculator })),
+      import("@/forest/components/pricing/one-time-bundle-card").then(m => ({ OneTimeBundleCard: m.OneTimeBundleCard })),
+      import("@/forest/components/checkout/crypto-payment-explainer").then(m => ({ CryptoPaymentExplainer: m.CryptoPaymentExplainer })),
     ]);
 
-    if (pricingSection.status === 'fulfilled' && pricingSection.value) {
-      PricingSectionComponent = pricingSection.value as React.ComponentType<{}>;
+    if (pricingSection.status === 'fulfilled' && pricingSection.value.PricingSection) {
+      PricingSectionComponent = pricingSection.value.PricingSection;
     }
-    if (pricingComparisonTable.status === 'fulfilled' && pricingComparisonTable.value) {
-      PricingComparisonTableComponent = pricingComparisonTable.value as React.ComponentType<{ currentTier: Tier | null }>;
+    if (pricingComparisonTable.status === 'fulfilled' && pricingComparisonTable.value.PricingComparisonTable) {
+      PricingComparisonTableComponent = pricingComparisonTable.value.PricingComparisonTable;
     }
-    if (pricingFaq.status === 'fulfilled' && pricingFaq.value) {
-      PricingFaqComponent = pricingFaq.value as React.ComponentType<{}>;
+    if (pricingFaq.status === 'fulfilled' && pricingFaq.value.PricingFaq) {
+      PricingFaqComponent = pricingFaq.value.PricingFaq;
     }
-    if (productionCostCalc.status === 'fulfilled' && productionCostCalc.value) {
-      ProductionCostCalculatorComponent = productionCostCalc.value as React.ComponentType<{}>;
+    if (productionCostCalc.status === 'fulfilled' && productionCostCalc.value.ProductionCostCalculator) {
+      ProductionCostCalculatorComponent = productionCostCalc.value.ProductionCostCalculator;
     }
-    if (oneTimeBundle.status === 'fulfilled' && oneTimeBundle.value) {
-      OneTimeBundleCardComponent = oneTimeBundle.value as React.ComponentType<{ heygenHealthy: boolean }>;
+    if (oneTimeBundle.status === 'fulfilled' && oneTimeBundle.value.OneTimeBundleCard) {
+      OneTimeBundleCardComponent = oneTimeBundle.value.OneTimeBundleCard;
     }
-    if (cryptoExplainer.status === 'fulfilled' && cryptoExplainer.value) {
-      CryptoPaymentExplainerComponent = cryptoExplainer.value as React.ComponentType<{}>;
+    if (cryptoExplainer.status === 'fulfilled' && cryptoExplainer.value.CryptoPaymentExplainer) {
+      CryptoPaymentExplainerComponent = cryptoExplainer.value.CryptoPaymentExplainer;
     }
 
-  } catch (err) {
+  } catch {
     // All components already default to EmptyComponent; other data gets defaults inline
     t = (key: string) => key;
     heygenHealthy = false;
@@ -167,8 +174,10 @@ export default async function PricingPage() {
       </div>
 
       {/* Components */}
-      <PricingSectionComponent />
-      <div className="mx-auto max-w-2xl px-6 pb-6"><CryptoPaymentExplainerComponent /></div>
+      {PricingSectionComponent ? <PricingSectionComponent /> : null}
+      {CryptoPaymentExplainerComponent ? (
+        <div className="mx-auto max-w-2xl px-6 pb-6"><CryptoPaymentExplainerComponent /></div>
+      ) : null}
       <section className="mx-auto max-w-md px-6 pb-12 pt-4">
         {user != null && !userHeyGenConfigured ? (
           <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-6 text-center space-y-3">
@@ -181,13 +190,13 @@ export default async function PricingPage() {
               Configure HeyGen Key / Cấu hình HeyGen
             </Link>
           </div>
-        ) : (
+        ) : OneTimeBundleCardComponent ? (
           <OneTimeBundleCardComponent heygenHealthy={heygenHealthy} />
-        )}
+        ) : null}
       </section>
-      <PricingComparisonTableComponent currentTier={currentTier} />
-      <ProductionCostCalculatorComponent />
-      <PricingFaqComponent />
+      {PricingComparisonTableComponent ? <PricingComparisonTableComponent currentTier={currentTier} /> : null}
+      {ProductionCostCalculatorComponent ? <ProductionCostCalculatorComponent /> : null}
+      {PricingFaqComponent ? <PricingFaqComponent /> : null}
     </main>
   );
 }

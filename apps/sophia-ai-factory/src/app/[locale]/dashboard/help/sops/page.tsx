@@ -8,7 +8,7 @@
  */
 
 import { getTranslations } from 'next-intl/server';
-import HelpPage from '@/components/help/HelpPage';
+import HelpPage, { type HelpData } from '@/components/help/HelpPage';
 import sopsData from '@/data/help-content/sops.json';
 
 export const metadata = {
@@ -20,11 +20,12 @@ export default async function SopHelpPage({ params }: { params: Promise<{ locale
   const { locale } = await params;
   const t = await getTranslations('dashboard.help.sops');
   const isVi = locale.startsWith('vi');
+  const data = sopsData as HelpData;
 
   return (
     <HelpPage
       locale={locale}
-      data={sopsData as any}
+      data={data}
       pageTitle={isVi ? 'Hướng Dẫn Vận Hành SOP' : 'SOP Operations Guide'}
       pageSubtitle={
         isVi

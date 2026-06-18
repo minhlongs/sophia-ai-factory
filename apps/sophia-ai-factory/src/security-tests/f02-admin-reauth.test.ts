@@ -283,7 +283,10 @@ describe('POST /api/admin/promo-codes/bulk-generate — F02 gate', () => {
 
     const token = await mintAdminChallengeToken('admin_1', TEST_SECRET);
     const dotIdx = token.lastIndexOf('.');
-    const tampered = token.slice(0, dotIdx + 1) + 'X' + token.slice(dotIdx + 2);
+    // Ensure the replacement character is different from the original to guarantee tampering.
+    const originalChar = token[dotIdx + 1];
+    const replacement = originalChar === 'X' ? 'Y' : 'X';
+    const tampered = token.slice(0, dotIdx + 1) + replacement + token.slice(dotIdx + 2);
 
     const { POST } = await import('@/app/api/admin/promo-codes/bulk-generate/route');
     const req = makeBulkRequest(tampered);
