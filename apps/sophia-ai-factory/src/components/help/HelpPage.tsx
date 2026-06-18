@@ -4,7 +4,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ArrowRight, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
 
-type HelpData = {
+export type HelpData = {
   sections?: Array<{
     id: string;
     icon: string;

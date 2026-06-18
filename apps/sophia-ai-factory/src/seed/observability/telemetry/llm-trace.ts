@@ -9,10 +9,25 @@
  */
 
  
-import { track } from '@/tree/signals/track'
- 
-import { D1Events } from '@/tree/signals/d1-event-types'
+import { z } from 'zod';
+import { D1Events } from '@/seed/types/d1-events';
+import { track } from './track'
 import { sendToLangfuse } from './langfuse-client'
+
+const LlmCallTracePropsSchema = z.object({
+  trace_id: z.string(),
+  workflow_id: z.string(),
+  step_order: z.number().int().min(1).max(3),
+  step_type: z.string(),
+  provider: z.string(),
+  model: z.string(),
+  duration_ms: z.number().nonnegative(),
+  ok: z.boolean(),
+  error_class: z.string().optional(),
+  input_tokens: z.number().int().nonnegative().optional(),
+  output_tokens: z.number().int().nonnegative().optional(),
+  cost_usd: z.number().nonnegative().optional(),
+});
 
 export interface LlmCallTrace {
   workflowId:    string
@@ -69,7 +84,8 @@ export function recordLlmCall(
   )
 
   try {
-    track(D1Events.LLM_CALL_TRACE, actor, cleaned, orgId)
+    const safe = LlmCallTracePropsSchema.parse(cleaned);
+    track(D1Events.LLM_CALL_TRACE, actor, safe, orgId);
   } catch {
     // Telemetry must never break caller. Swallow.
   }

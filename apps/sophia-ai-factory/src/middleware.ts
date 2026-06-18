@@ -296,8 +296,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return response;
   } catch (err) {
     isError = true;
-    span.recordException(err as Error);
-    span.setStatus({ code: 1, message: (err as Error).message });
+    const error = err instanceof Error ? err : new Error(String(err));
+    span.recordException(error);
+    span.setStatus({ code: 1, message: error.message });
     throw err;
   } finally {
     const duration = Date.now() - startTime;

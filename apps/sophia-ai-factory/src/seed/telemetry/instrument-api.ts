@@ -9,6 +9,16 @@ import { record as recordMetrics } from '@/seed/observability/telemetry/metrics'
 /**
  * Options for instrumenting a route.
  */
+type AsyncHandler = (...args: never[]) => Promise<unknown>;
+
+function getResponseStatus(result: unknown): number {
+  if (typeof result === 'object' && result !== null && 'status' in result) {
+    const status = (result as { status?: unknown }).status;
+    if (typeof status === 'number') return status;
+  }
+  return 200;
+}
+
 export interface InstrumentationOptions {
   /** Route path pattern (e.g., '/api/campaigns') */
   route: string;
@@ -23,7 +33,7 @@ export interface InstrumentationOptions {
  *     // handler logic
  *   });
  */
-export function instrumentRoute<T extends (...args: any[]) => any>(
+export function instrumentRoute<T extends AsyncHandler>(
   options: InstrumentationOptions,
   handler: T
 ): T {
@@ -43,21 +53,22 @@ export function instrumentRoute<T extends (...args: any[]) => any>(
     // Attach span context to request headers for downstream fetch propagation
     // (Next.js doesn't provide request object modification, but OTel fetch instrumentation picks up from context)
 
-    let result: any;
+    let result: unknown;
     return handler(...args)
-      .then((res: any) => {
+      .then((res: unknown) => {
         result = res;
         // Record status based on response code if available
-        const status = result?.status ?? 200;
+        const status = getResponseStatus(result);
         if (status >= 400) {
           span.setStatus({ code: 1 /* ERROR */, message: `HTTP ${status}` });
         }
         span.setAttribute('http.status_code', status);
         return result;
       })
-      .catch((err: Error) => {
-        span.recordException(err);
-        span.setStatus({ code: 1 /* ERROR */, message: err.message });
+      .catch((err: unknown) => {
+        const error = err instanceof Error ? err : new Error(String(err));
+        span.recordException(error);
+        span.setStatus({ code: 1 /* ERROR */, message: error.message });
         throw err;
       })
       .finally(() => {
@@ -66,9 +77,9 @@ export function instrumentRoute<T extends (...args: any[]) => any>(
         span.end();
 
         // Record metrics (in-memory ring buffer)
-        const isError = typeof result !== 'undefined' ? (result?.status ?? 200) >= 400 : true;
+        const isError = typeof result !== 'undefined' ? getResponseStatus(result) >= 400 : true;
         recordMetrics(options.route, duration, isError);
-      }) as any;
+      });
   }) as T;
 }
 

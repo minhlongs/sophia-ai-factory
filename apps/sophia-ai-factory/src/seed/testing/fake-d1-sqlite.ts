@@ -7,11 +7,10 @@
  * Does NOT implement batch(), dump(), or exec().
  */
 
-// better-sqlite3 uses `export =` in @types, incompatible with ESM default import under isolatedModules
-// @ts-ignore: require returns the CJS module with all constructable signatures
-const Database = require('better-sqlite3');
-
+import DatabaseConstructor from 'better-sqlite3';
 import type { Database as SqliteDb } from 'better-sqlite3';
+
+const Database = DatabaseConstructor;
 
 export interface FakeD1RunResult {
   success: true;

@@ -85,7 +85,7 @@ export default function TierConfirmationModal({
               {t('confirm_lose_title')}
             </p>
             {lossKeys.map((key) => (
-              <LoseItem key={key} text={t(key as any)} />
+              <LoseItem key={key} text={t(key)} />
             ))}
           </div>
         )}

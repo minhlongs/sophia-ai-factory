@@ -176,13 +176,11 @@ export async function POST(
   const route = `/api/postback/${network}`;
 
   // HMAC signature verification (P0 security gate)
-  let db: D1Database;
-  const _db = getD1();
-  if (!_db) {
+  const db = getD1();
+  if (!db) {
     logger.error('[postback] D1 unavailable');
     return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
   }
-  db = _db;
   try {
     const valid = await verifyPostbackSignature(
       db,

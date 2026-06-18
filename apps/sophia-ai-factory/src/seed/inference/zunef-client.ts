@@ -9,6 +9,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
+import * as fs from 'fs';
 
 const ZUNEF_BASE_URL = 'https://claude.zunef.com'
 const DEVICE_ID_FILE = '/Users/macbook/.claude/zunef-device-id'
@@ -178,22 +179,15 @@ export async function zunefChatCompletion(
 
 // Helpers (polyfill Node fs/crypto if running in browser)
 function fileExists(path: string): boolean {
-  try {
-    // @ts-ignore
-    return require('fs').existsSync(path)
-  } catch {
-    return false
-  }
+  return fs.existsSync(path)
 }
 
 function readFile(path: string): string {
-  // @ts-ignore
-  return require('fs').readFileSync(path, 'utf-8')
+  return fs.readFileSync(path, 'utf-8')
 }
 
 function writeFile(path: string, content: string): void {
-  // @ts-ignore
-  require('fs').writeFileSync(path, content)
+  fs.writeFileSync(path, content)
 }
 
 function sleep(ms: number): Promise<void> {

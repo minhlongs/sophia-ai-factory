@@ -13,7 +13,9 @@ import { startSpan, getTracer } from '@/seed/telemetry/opentelemetry-setup';
  *     // handler logic
  *   });
  */
-export function instrumentInngest<T extends (...args: any[]) => any>(
+type AsyncHandler = (...args: never[]) => Promise<unknown>;
+
+export function instrumentInngest<T extends AsyncHandler>(
   eventName: string,
   handler: T
 ): T {
@@ -27,24 +29,20 @@ export function instrumentInngest<T extends (...args: any[]) => any>(
     });
 
     const startTime = Date.now();
-    let isError = false;
 
     return handler(...args)
-      .then((result: any) => {
-        isError = false;
-        return result;
-      })
-      .catch((err: Error) => {
-        isError = true;
-        span.recordException(err);
-        span.setStatus({ code: 1, message: err.message });
+      .then((result: unknown) => result)
+      .catch((err: unknown) => {
+        const error = err instanceof Error ? err : new Error(String(err));
+        span.recordException(error);
+        span.setStatus({ code: 1, message: error.message });
         throw err;
       })
       .finally(() => {
         const duration = Date.now() - startTime;
         span.setAttribute('duration_ms', duration);
         span.end();
-      }) as any;
+      });
   }) as T;
 }
 

@@ -15,6 +15,7 @@ import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 import { trackUsage } from '@/forest/usage-metering';
 import { calculateCredits } from '@/seed/billing/credits-calculator';
 import type { AgentTask } from './types';
+import type { Tier } from '@/seed/types';
 
 const COST_PER_TOKEN = 0.000001; // ~$1 / 1M tokens (gpt-4o-mini estimate)
 
@@ -126,7 +127,7 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
       action:         'chat_completion',
       tokensInput:    estimatedTokens / 2,
       tokensOutput:   estimatedTokens / 2,
-      creditsUsed:    calculateCredits('openrouter', 'chatCompletion', estimatedTokens, userTier as any),
+      creditsUsed:    calculateCredits('openrouter', 'chatCompletion', estimatedTokens, userTier as Tier),
       modelName:      agent.model,
       tierAtRequest:  userTier,
       statusCode:     200,
