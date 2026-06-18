@@ -30,7 +30,19 @@
 		{
 			"binding": "NEXT_INC_CACHE_R2_BUCKET",
 			"bucket_name": "sophia-ai-factory-opennext-cache"
+		},
+		// === SHIP-UPGRADE-BEGIN ===
+		// 100/100 upgrade: D1 backup bucket (L10: 7→10)
+		{
+			"binding": "BACKUPS_BUCKET",
+			"bucket_name": "sophia-backups"
+		},
+		// 100/100 upgrade: Symbol server bucket (L7: 8→10)
+		{
+			"binding": "SYMBOLS_BUCKET",
+			"bucket_name": "sophia-symbols"
 		}
+		// === SHIP-UPGRADE-END ===
 	],
 	"images": {
 		"binding": "IMAGES"
