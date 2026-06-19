@@ -19,7 +19,7 @@ vi.mock('@/seed/db/client', () => ({
   getD1: mocks.mockGetD1,
 }));
 
-vi.mock('@/forest/email/sender', () => ({
+vi.mock('@/tree/email/sender', () => ({
   sendEmail: mocks.mockSendEmail,
 }));
 
