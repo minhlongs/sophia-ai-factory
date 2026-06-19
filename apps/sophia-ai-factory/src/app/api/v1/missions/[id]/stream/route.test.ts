@@ -25,7 +25,7 @@ const { mockValidateKey, mockDbFrom, mockAddBreadcrumb, mockLogger } = vi.hoiste
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
-vi.mock('@/forest/missions/api-key-auth', () => ({
+vi.mock('@/tree/missions/api-key-auth', () => ({
   validateMissionApiKey: mockValidateKey,
 }));
 

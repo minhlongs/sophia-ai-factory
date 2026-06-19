@@ -44,7 +44,7 @@ vi.mock('@/forest/quota/video-quota', () => ({
   releaseVideoSlot: mockReleaseVideoSlot,
 }));
 
-vi.mock('@/forest/inngest/client', () => ({
+vi.mock('@/seed/inngest/client', () => ({
   inngest: { send: mockInngestSend },
 }));
 
