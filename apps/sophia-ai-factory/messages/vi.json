@@ -1794,7 +1794,12 @@
         "open_video_new_tab": "Mở video trong tab mới",
         "template_id": "Mẫu ID",
         "close": "Đóng",
-        "watch_video": "Xem Video"
+        "watch_video": "Xem Video",
+        "field": {
+          "audience": "Audience",
+          "not_specified": "Not specified",
+          "updated": "Updated"
+        }
       }
     }
   },
@@ -4450,7 +4455,9 @@
         "noAccount": "Don't have an account?",
         "signUp": "Sign up",
         "googleSignIn": "Google",
-        "githubSignIn": "GitHub"
+        "githubSignIn": "GitHub",
+        "hidePassword": "Hide Password",
+        "showPassword": "Show Password"
       },
       "register": {
         "title": "Create Your Account",
@@ -4471,7 +4478,14 @@
         "submit": "Create Account",
         "orContinueWith": "or continue with",
         "hasAccount": "Already have an account?",
-        "signIn": "Sign in"
+        "signIn": "Sign in",
+        "successTitle": "Success Title",
+        "successMessage": "Success Message",
+        "goToLogin": "Go To Login",
+        "and": "And",
+        "or": "Or",
+        "googleSignIn": "Google Sign In",
+        "githubSignIn": "Github Sign In"
       }
     },
     "pricing": {
