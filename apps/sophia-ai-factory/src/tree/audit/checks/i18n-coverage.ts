@@ -33,7 +33,6 @@ function flattenKeys(obj: Record<string, unknown>, prefix = ''): string[] {
 }
 
 function loadMessageKeys(locale: string): string[] | null {
-  // Path resolved at call time; MESSAGES_DIR defined at module level for reuse in error message.
   const path = join(MESSAGES_DIR, `${locale}.json`)
   if (!existsSync(path)) return null
   try {
