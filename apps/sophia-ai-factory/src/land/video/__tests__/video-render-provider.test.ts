@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { submitVideoRender, RenderProviderError } from '../video-render-provider';
+import { submitVideoRender, RenderProviderError } from '../generation/video-render-provider';
 
 describe('video-render-provider', () => {
   const originalEnv = process.env;

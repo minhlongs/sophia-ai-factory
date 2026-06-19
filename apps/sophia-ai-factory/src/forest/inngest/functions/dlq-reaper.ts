@@ -11,7 +11,7 @@
  * @module forest/inngest/functions/dlq-reaper
  */
 
-import { inngest } from '@/forest/inngest/client'
+import { inngest } from '@/seed/inngest/client'
 import { getD1 } from '@/seed/db/client'
 import type { D1LikeClient } from '@/land/billing/nowpayments-ipn-dead-letter'
 import { logger } from '@/seed/utils/logger-utility'

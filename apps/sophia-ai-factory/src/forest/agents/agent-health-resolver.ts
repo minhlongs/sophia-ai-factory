@@ -1,150 +1,87 @@
 /**
- * Agent Health Resolver — aggregates agent metrics from D1.
- * Sources: signals_events (success/fail counts) + error_log (error class breakdown).
- * 24-hour rolling window. Tolerates zero rows (Phase 03 may not be populated).
+ * Agent Health Resolver — Computes agent health metrics
+ * Layer: forest
+ * Purpose: Aggregates agent task outcomes to produce health summaries for dashboard
  */
+
+import { getD1 } from '@/seed/db/client';
+import type { AgentRoleHealth, AgentHealthSummary } from './types';
+
+// Re-export types for consumers
+export type { AgentHealthSummary, AgentRoleHealth };
 
 /**
- * Raw D1Database access — agent-health-resolver uses native .prepare() API,
- * not the Supabase-style D1Client wrapper from createServerClient().
+ * Default time window for health metrics (24 hours)
  */
-function getD1(): D1Database {
-  const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-  if (env?.DB) return env.DB as D1Database;
+const HEALTH_WINDOW_HOURS = 24;
 
-  const ctxSymbol = Symbol.for('__cloudflare-context__');
-  const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[ctxSymbol];
-  if (ctx?.env?.DB) return ctx.env.DB as D1Database;
-
-  const globalDb = (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined;
-  if (globalDb) return globalDb;
-
-  throw new Error('[agent-health-resolver] D1 binding not available');
+/**
+ * Build the date range for the health query
+ */
+function getTimeWindow() {
+  const now = new Date();
+  const start = new Date(now.getTime() - HEALTH_WINDOW_HOURS * 60 * 60 * 1000);
+  return { start, end: now };
 }
 
-export interface AgentRoleHealth {
-  role: string;
-  successCount: number;
-  failCount: number;
-  totalCount: number;
-  successRate: number; // 0–1
-  lastFailureAt: string | null;
-}
-
-export interface AgentHealthSummary {
-  roles: AgentRoleHealth[];
-  totalErrors24h: number;
-  resolvedAt: string;
-}
-
-interface SignalsEventRow {
-  role: string;
-  success_count: number;
-  fail_count: number;
-}
-
-interface LastFailRow {
-  role: string;
-  last_failure_at: string;
-}
-
-interface ErrorCountRow {
-  agent_role: string;
-  error_count: number;
-}
-
-/** In-memory cache to avoid hammering D1 on every 30s poll */
-let cache: { summary: AgentHealthSummary; expires: number } | null = null;
-const CACHE_TTL_MS = 30_000;
-
-export async function resolveAgentHealth(): Promise<AgentHealthSummary> {
-  const now = Date.now();
-  if (cache && cache.expires > now) return cache.summary;
-
+/**
+ * Fetch agent health summary from database
+ * Aggregates task statistics by agent role over the last 24 hours
+ */
+export async function getAgentHealthSummary(): Promise<AgentHealthSummary> {
   const db = getD1();
-  const since = new Date(now - 24 * 60 * 60 * 1000).toISOString();
+  if (!db) throw new Error('Database not available');
 
-  // Success/fail counts per role from signals_events
-  let signalRows: SignalsEventRow[] = [];
-  try {
-    const result = await db
-      .prepare(
-        `SELECT
-           json_extract(payload, '$.agent_role') AS role,
-           SUM(CASE WHEN event_type = 'agent_task_complete' THEN 1 ELSE 0 END) AS success_count,
-           SUM(CASE WHEN event_type = 'agent_task_fail' THEN 1 ELSE 0 END) AS fail_count
-         FROM signals_events
-         WHERE ts >= ? AND json_extract(payload, '$.agent_role') IS NOT NULL
-         GROUP BY json_extract(payload, '$.agent_role')`
-      )
-      .bind(since)
-      .all();
-    signalRows = (result.results ?? []) as unknown as SignalsEventRow[];
-  } catch {
-    // signals_events may not exist yet — return zeroed metrics
-  }
+  const { start, end } = getTimeWindow();
 
-  // Last failure timestamp per role from signals_events
-  const lastFailMap = new Map<string, string>();
-  try {
-    const result = await db
-      .prepare(
-        `SELECT
-           json_extract(payload, '$.agent_role') AS role,
-           MAX(ts) AS last_failure_at
-         FROM signals_events
-         WHERE event_type = 'agent_task_fail'
-           AND ts >= ?
-           AND json_extract(payload, '$.agent_role') IS NOT NULL
-         GROUP BY json_extract(payload, '$.agent_role')`
-      )
-      .bind(since)
-      .all();
-    for (const row of (result.results ?? []) as unknown as LastFailRow[]) {
-      if (row.role) lastFailMap.set(row.role, row.last_failure_at);
-    }
-  } catch { /* tolerate */ }
+  // Query agent_tasks joined with agents to get roles using raw SQL
+  const sql = `
+    SELECT
+      a.role,
+      COUNT(t.id) as total_count,
+      SUM(CASE WHEN t.status = 'completed' THEN 1 ELSE 0) as completed_count,
+      MAX(CASE WHEN t.status = 'failed' THEN t.completed_at ELSE NULL) as last_failure
+    FROM agent_tasks t
+    JOIN agents a ON t.agent_id = a.id
+    WHERE t.created_at >= ?
+      AND t.created_at <= ?
+    GROUP BY a.role
+  `;
 
-  // Error count per agent_role from error_log (ctx_json field)
-  let totalErrors24h = 0;
-  try {
-    const result = await db
-      .prepare(
-        `SELECT
-           json_extract(ctx_json, '$.agent_role') AS agent_role,
-           COUNT(*) AS error_count
-         FROM error_log
-         WHERE ts >= ?
-           AND json_extract(ctx_json, '$.agent_role') IS NOT NULL
-         GROUP BY json_extract(ctx_json, '$.agent_role')`
-      )
-      .bind(since)
-      .all();
-    for (const row of (result.results ?? []) as unknown as ErrorCountRow[]) {
-      totalErrors24h += Number(row.error_count ?? 0);
-    }
-  } catch { /* tolerate */ }
+  const stmt = db.prepare(sql).bind(start.toISOString(), end.toISOString());
+  const result = await stmt.all();
 
-  const roles: AgentRoleHealth[] = signalRows.map((row) => {
-    const success = Number(row.success_count ?? 0);
-    const fail = Number(row.fail_count ?? 0);
-    const total = success + fail;
+  const rows = result.results || [];
+
+  const roles: AgentRoleHealth[] = rows.map((row: Record<string, unknown>) => {
+    const totalCount = Number(row.total_count) || 0;
+    const completedCount = Number(row.completed_count) || 0;
+    const successRate = totalCount > 0 ? completedCount / totalCount : 1;
+
     return {
-      role: row.role,
-      successCount: success,
-      failCount: fail,
-      totalCount: total,
-      successRate: total > 0 ? success / total : 0,
-      lastFailureAt: lastFailMap.get(row.role) ?? null,
+      role: row.role as AgentRoleHealth['role'],
+      totalCount,
+      successRate,
+      lastFailureAt: (row.last_failure as string | null) || null,
     };
   });
 
-  const summary: AgentHealthSummary = {
+  // Calculate total errors in the window
+  const errorCountResult = await db
+    .prepare('SELECT COUNT(*) as cnt FROM agent_tasks WHERE status = ? AND created_at >= ? AND created_at <= ?')
+    .bind('failed', start.toISOString(), end.toISOString())
+    .first<{ cnt: number }>();
+
+  const totalErrors24h = errorCountResult?.cnt || 0;
+
+  return {
     roles,
     totalErrors24h,
     resolvedAt: new Date().toISOString(),
   };
-
-  cache = { summary, expires: now + CACHE_TTL_MS };
-  return summary;
 }
+
+/**
+ * Health data type returned by the /api/health/agents endpoint
+ */
+export type AgentHealthResponse = AgentHealthSummary;

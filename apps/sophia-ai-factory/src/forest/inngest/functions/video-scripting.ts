@@ -8,13 +8,13 @@
  * Emits: video.script.ready
  */
 
-import { inngest } from '@/forest/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import { createServerClient } from '@/seed/db/client';
-import { recordCost } from '@/land/video/cost-ledger';
-import { assertValidTransition } from '@/land/video/video-job-fsm';
+import { recordCost } from '@/land/video/templates/cost-ledger';
+import { assertValidTransition } from '@/land/video/generation/video-job-fsm';
 import { logger } from '@/seed/utils/logger-utility';
 import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
-import type { VideoJobStatus } from '@/land/video/video-job-fsm';
+import type { VideoJobStatus } from '@/land/video/generation/video-job-fsm';
 
 interface VideoJobRow {
   status: VideoJobStatus;

@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyIpnSignature } from '@/tree/clients/nowpayments-client'
 import { getD1 } from '@/seed/db/client'
-import { inngest } from '@/forest/inngest/client'
+import { inngest } from '@/seed/inngest/client'
 import { logger } from '@/seed/utils/logger-utility'
 
 function getCloudflareEnv(): Record<string, unknown> | null {

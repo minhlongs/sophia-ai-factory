@@ -178,10 +178,46 @@ export interface Campaign {
   updated_at: string;
 }
 
+/**
+ * Filter for campaign list views
+ */
+export type CampaignFilter = CampaignStatus | 'all';
+
+// ── Core Primitives ─────────────────────────────────────────────────────────────
+
+export type { Json } from './json';
+export type { Database } from './database';
+
+// ── Domain Types ───────────────────────────────────────────────────────────────
+
+// User domain (profiles, sessions, telegram mappings)
+export * from './user';
+
+// Affiliate domain (offers, integrations, metrics)
+export * from './affiliate';
+
+// Video domain (campaigns, usage, quota tracking)
+export * from './video';
+
+// Billing domain (events, dunning, overage, quota limits)
+export * from './billing';
+
+// RaaS domain (licenses, API keys, audit logs)
+export * from './raas';
+
+// Infrastructure domain (rate limiting, summaries)
+export * from './infra';
+
 // ── Cross-layer types (moved from forest/land to seed for layer compliance) ──
 
 export type { AiService, UsageEventInput, UsageEventDB } from './ai-service';
 export type { ChannelProvider, PublishStatus, ChannelStatus, PublishMeta, MetricsJson, Publisher } from './channel-provider';
 export type { QuotaLimit, QuotaCheckResult, CreditRule, ExportOptions } from './quota-types';
 export type { CachedQuota, QuotaCheckContext, QuotaConfig } from './quota-types';
+export type {
+  PublishingChannel,
+  PublishingJob,
+  PublishingResult,
+} from './publishing-persistence';
+export type { VideoGenerateRequestedEvent } from './video-events';
 export { D1Events } from './d1-events';

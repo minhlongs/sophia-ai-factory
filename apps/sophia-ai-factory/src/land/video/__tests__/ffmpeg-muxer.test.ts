@@ -18,7 +18,7 @@ const { mockGetVideoBucket } = vi.hoisted(() => ({
   mockGetVideoBucket: vi.fn(),
 }));
 
-vi.mock('@/land/video/r2-binding', () => ({
+vi.mock('@/land/video/storage/r2-binding', () => ({
   getVideoBucket: mockGetVideoBucket,
 }));
 
@@ -28,8 +28,8 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 
 // ── Import SUT after mocks ────────────────────────────────────────────────────
 
-import { muxVideoAudio } from '../ffmpeg-muxer';
-import type { R2BucketRef } from '@/land/video/r2-binding';
+import { muxVideoAudio } from '../assembly/ffmpeg-muxer';
+import type { R2BucketRef } from '@/land/video/storage/r2-binding';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 

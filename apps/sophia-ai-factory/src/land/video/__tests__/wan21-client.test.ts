@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { WanVideoClient, WanVideoClientError } from '../wan21-client';
+import { WanVideoClient, WanVideoClientError } from '../generation/wan21-client';
 
 const TEST_API_KEY = 'r8_test_key';
 

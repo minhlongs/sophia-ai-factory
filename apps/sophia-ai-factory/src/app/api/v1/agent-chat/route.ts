@@ -18,7 +18,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveLlmRoute } from '@/land/agent-chat/llm-router';
 import { formatStream, serializeSseEvent, openAiStreamToChunks } from '@/land/agent-chat/stream-formatter';
 import { buildSystemPrompt } from '@/land/agent-chat/system-prompt';
-import { deductCredits, getBalance } from '@/land/mcu/credits-repo';
+import { deductCredits, getBalance } from '@/tree/mcu/credits-repo';
 import type { ChatMessage, ChatContext, SseEvent } from '@/land/agent-chat/types';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 

@@ -17,7 +17,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
-import { addCredits } from '@/land/mcu/credits-repo';
+import { addCredits } from '@/tree/mcu/credits-repo';
 import { logger } from '@/seed/utils/logger-utility';
 import { getD1Safe } from '@/seed/db/client';
 

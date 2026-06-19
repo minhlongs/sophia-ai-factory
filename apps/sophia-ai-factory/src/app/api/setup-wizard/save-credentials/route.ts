@@ -16,7 +16,7 @@ import { setUserCredential } from '@/tree/credentials/user-credentials-repo'
 import { registerHeyGenWebhook } from '@/land/heygen/webhook-registrar'
 import { logger } from '@/seed/utils/logger-utility'
 import { getD1 } from '@/seed/db/client'
-import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox'
+import { enqueueWelcomeEmail } from '@/tree/email/outbox'
 import type { ProviderType } from '@/tree/credentials/user-credentials-repo'
 import { sanitizeCredential } from '@/tree/byok/key-format-validators'
 

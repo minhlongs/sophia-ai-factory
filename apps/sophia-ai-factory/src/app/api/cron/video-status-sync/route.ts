@@ -22,7 +22,7 @@ import {
 } from '@/seed/observability/cron-check-in';
 import { getD1, createServerClient } from '@/seed/db/client';
 import { getHeyGenClient } from '@/land/heygen/heygen-client';
-import { downloadAndStore } from '@/land/video/video-storage-service';
+import { downloadAndStore } from '@/land/video/storage/video-storage-service';
 import { logger } from '@/seed/utils/logger-utility';
 import { sendOneTimeBundleReadyEmail } from '@/land/billing/email/send-one-time-bundle-ready-email';
 import { sendBundleRenderFailedEmail } from '@/land/billing/email/send-bundle-render-failed-email';

@@ -19,19 +19,19 @@
  * AI_VIDEO_UNAVAILABLE so this function never runs without keys provisioned.
  */
 
-import { inngest } from '@/forest/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import { createServerClient } from '@/seed/db/client';
-import { getVideoBucket } from '@/land/video/r2-binding';
-import { recordCost } from '@/land/video/cost-ledger';
+import { getVideoBucket } from '@/land/video/storage/r2-binding';
+import { recordCost } from '@/land/video/templates/cost-ledger';
 import { logger } from '@/seed/utils/logger-utility';
-import { WanVideoClient } from '@/land/video/wan21-client';
-import { FishSpeechClient } from '@/land/video/fish-speech-client';
-import { muxVideoAudio } from '@/land/video/ffmpeg-muxer';
+import { WanVideoClient } from '@/land/video/generation/wan21-client';
+import { FishSpeechClient } from '@/land/video/generation/fish-speech-client';
+import { muxVideoAudio } from '@/land/video/assembly/ffmpeg-muxer';
 import { insertAiPromptVideo } from '@/seed/db/repositories/videos-repo';
 import { getBrandKit } from '@/seed/db/repositories/brand-kits-repo';
-import { generateSubtitles } from '@/land/video/subtitle-generator';
-import { composeFinalVideo, applyBrandKit } from '@/land/video/composer-ffmpeg';
-import type { VideoGenerateRequestedEvent } from '@/land/video/types';
+import { generateSubtitles } from '@/land/video/assembly/subtitle-generator';
+import { composeFinalVideo, applyBrandKit } from '@/land/video/assembly/composer-ffmpeg';
+import type { VideoGenerateRequestedEvent, ProviderVideoJobStatus } from '@/land/video/templates/types';
 
 const POLL_INTERVAL_MS = 20_000; // 20s between polls
 const POLL_MAX_ATTEMPTS = 18;    // 18 × 20s = 6 min max wait
@@ -116,12 +116,13 @@ export const videoGenerate = inngest.createFunction(
     });
 
     // ── Step 3: Submit Video Generation ───────────────────────────────────
-    const { wanJobId } = await step.run('generate-video', async () => {
+    const result1 = await step.run('generate-video', async () => {
       const wanClient = getWanClient();
       const { jobId } = await wanClient.generateVideo({ prompt });
       logger.info('[videoGenerate] Wan 2.1 job submitted', { wanJobId: jobId });
       return { wanJobId: jobId };
     });
+    const wanJobId = result1.wanJobId;
 
     // ── Step 4: Poll Until Video Ready ────────────────────────────────────
     let finalVideoUrl: string | undefined;
@@ -132,7 +133,7 @@ export const videoGenerate = inngest.createFunction(
       const statusResult = await step.run(`poll-video-status-${attempt}`, async () => {
         const wanClient = getWanClient();
         return wanClient.getJobStatus(wanJobId);
-      });
+      }) as ProviderVideoJobStatus;
 
       if (statusResult.status === 'succeeded' && statusResult.videoUrl) {
         finalVideoUrl = statusResult.videoUrl;

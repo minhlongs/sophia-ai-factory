@@ -7,7 +7,7 @@
  *  2. Writes an audit row for the schedule operation
  */
 
-import { inngest } from '@/forest/orchestration';
+import { inngest } from '@/tree/inngest/client';
 import { audit } from '@/tree/agent-fleet/audit';
 
 export interface ScheduleOptions {

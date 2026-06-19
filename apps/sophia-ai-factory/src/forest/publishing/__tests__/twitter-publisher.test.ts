@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { TwitterPublisher } from '../twitter-publisher';
+import { TwitterPublisher } from '@/land/video/publishing/providers/twitter-publisher';
 
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },

@@ -8,12 +8,13 @@ async function loadRedis() {
     Redis = mod.Redis
     return Redis
   } catch (e) {
-    console.warn('Redis module not available:', e)
-    return null
+   logger.warn('Redis: dynamic import failed — Redis features disabled', toError(e))
+   return null
   }
 }
 
 import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 
 function createRedis(): { url: string; token: string } | null {
   const url = process.env.UPSTASH_REDIS_REST_URL

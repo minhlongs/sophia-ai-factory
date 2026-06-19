@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
-import { flushOutbox } from '@/forest/outbox/email-outbox';
+import { flushOutbox } from '@/tree/email/outbox';
 import { logger } from '@/seed/utils/logger-utility';
 import {
   startCronCheckIn,

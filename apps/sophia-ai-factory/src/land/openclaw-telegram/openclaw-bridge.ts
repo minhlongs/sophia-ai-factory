@@ -23,10 +23,10 @@
  * @module tree/telegram/openclaw-bridge
  */
 import { createServerClient, getD1 } from '@/seed/db/client';
-import { getQuotaStatus } from '@/forest/orchestration';
-import { QUOTA_LIMITS } from '@/forest/orchestration';
+import { getQuotaStatus } from '@/tree/quota/quota-checker';
+import { QUOTA_LIMITS } from '@/seed/config/quota-limits';
 import type { QuotaLimit } from '@/seed/types/quota-types';
-import type { CachedQuota } from '@/forest/orchestration';
+import type { CachedQuota } from '@/seed/types';
 import { getRecentConversions } from '@/land/affiliates/dashboard-stats';
 import { applyPromoCode } from '@/land/promo/promo-applier';
 import { validatePromoCode } from '@/land/promo/promo-validator';

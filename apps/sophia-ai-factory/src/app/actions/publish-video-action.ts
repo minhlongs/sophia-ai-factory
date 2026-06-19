@@ -2,7 +2,7 @@
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getErrorMessage } from '@/seed/utils/to-error';
-import { videoService } from '@/land/video/video-service';
+import { publishVideo } from '@/land/video/publishing/video-publishing.service';
 
 type ActionResult<T = unknown> =
   | { success: true; data: T }
@@ -30,7 +30,7 @@ export async function publishVideoAction(input: {
   }
 
   try {
-    const result = await videoService.publishVideo(
+    const result = await publishVideo(
       {
         videoId: input.videoId,
         videoUrl: input.videoUrl,

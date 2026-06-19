@@ -9,11 +9,6 @@ import { existsSync, readFileSync } from 'fs'
 import { join } from 'path'
 import type { CheckResult, AuditEnv } from '@/tree/audit/zero-gap-types'
 
-const TEST_RESULT_PATHS = [
-  join(process.cwd(), 'test-results.json'),
-  join(process.cwd(), '.vitest-results.json'),
-]
-
 interface VitestResult {
   numPassedTests?: number
   numFailedTests?: number
@@ -23,6 +18,13 @@ interface VitestResult {
 }
 
 function readTestResults(): VitestResult | null {
+  // File system operations moved inside function to avoid NFT (Next File Tracing)
+  // from capturing the entire project during build
+  const TEST_RESULT_PATHS = [
+    join(process.cwd(), 'test-results.json'),
+    join(process.cwd(), '.vitest-results.json'),
+  ]
+
   for (const p of TEST_RESULT_PATHS) {
     if (existsSync(p)) {
       try {

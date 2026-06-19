@@ -32,7 +32,7 @@ vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(),
 }))
 
-vi.mock('@/land/video/heygen-helpers', () => ({
+vi.mock('@/land/video/templates/heygen-helpers', () => ({
   createHeyGenVideo: vi.fn().mockResolvedValue({ videoId: 'heygen-job-1' }),
 }))
 
@@ -52,7 +52,7 @@ vi.mock('@/land/fulfillment/retry-backoff', () => ({
   isRetryDue: vi.fn().mockReturnValue(true),
 }))
 
-vi.mock('@/land/fulfillment/circuit-breaker', () => ({
+vi.mock('@/seed/utils/circuit-breaker', () => ({
   shouldDispatch: vi.fn().mockResolvedValue({ allowed: true }),
   recordHeyGenAttempt: vi.fn().mockResolvedValue(true),
 }))
@@ -67,7 +67,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 
 import { listQueuedForRetry, markPermanentFailureCAS } from '@/seed/db/repositories/videos-repo'
 import { isRetryDue } from '@/land/fulfillment/retry-backoff'
-import { createHeyGenVideo } from '@/land/video/heygen-helpers'
+import { createHeyGenVideo } from '@/land/video/templates/heygen-helpers'
 import { createServerClient } from '@/seed/db/client'
 import { grantCompensationCredit } from '@/land/fulfillment/compensation'
 import { sendBundleRenderFailedEmail } from '@/land/billing/email/send-bundle-render-failed-email'

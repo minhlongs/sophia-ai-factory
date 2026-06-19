@@ -4,8 +4,9 @@
  * Onboarding Wizard — BYOK (Bring Your Own Keys) configuration client.
  * Canonical URL: /dashboard/onboarding
  *
- * Handles 5-step API key setup: System Check → AI Keys → Provider Credentials
- * → Local Mode → Finish. Persists step number (not keys) to localStorage.
+ * Handles 5-step API key setup: Welcome → System Check → AI Keys
+ * → Provider Credentials → Review & Finish.
+ * Persists step number (not keys) to localStorage.
  *
  * Formerly lived at /[locale]/setup-wizard/page.tsx. Consolidated here per
  * plan 260519-0300-handover-funnel-critical-fixes/phase-02.
@@ -21,8 +22,9 @@ import { WizardStepper } from '@/tree/components/setup-wizard/wizard-stepper';
 import { ArrowRight, Save, Loader2, AlertTriangle } from 'lucide-react';
 import { SystemCheckStep } from '@/tree/components/setup-wizard/steps/system-check-step';
 import { ApiKeysStep } from '@/tree/components/setup-wizard/steps/api-keys-step';
-import { FinishStep } from '@/tree/components/setup-wizard/steps/finish-step';
 import { ProviderCredentialsStep, type ProviderConfig } from '@/tree/components/setup-wizard/steps/provider-credentials-step';
+import { WelcomeStep } from '@/tree/components/setup-wizard/steps/welcome-step';
+import { ReviewStep } from '@/tree/components/setup-wizard/steps/review-step';
 import type { CredentialSummary } from '@/tree/credentials/user-credentials-repo';
 import { completeOnboardingAction } from '@/app/actions/complete-onboarding-action';
 
@@ -264,6 +266,17 @@ export function WizardClient() {
   const handleNext = () => {
     setNextError(null);
     if (step === 2) {
+      // System Check always passes - it's informational
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setStep(prev => prev + 1);
+        setIsTransitioning(false);
+      }, 0);
+      return;
+    }
+
+    if (step === 3) {
+      // AI Keys validation
       const hasInvalid = Object.values(status).some(v => v === 'invalid');
       if (hasInvalid) {
         setNextError(t('alerts.invalidKey'));
@@ -278,7 +291,8 @@ export function WizardClient() {
       }
     }
 
-    if (step === 3) {
+    if (step === 4) {
+      // Provider Credentials validation
       const heygenSaved = savedCredentials.find((c) => c.provider === 'heygen');
       const heygenEntered = providerConfig.HEYGEN_API_KEY.trim().length > 0;
       if (!heygenSaved && !heygenEntered) {
@@ -410,18 +424,21 @@ export function WizardClient() {
             <WizardStepper
                 currentStep={step}
                 steps={[
+                    t('stepper.welcome'),
                     t('stepper.system'),
                     t('stepper.aiKeys'),
                     t('stepper.providers'),
-                    t('stepper.finish'),
+                    t('stepper.review'),
                 ]}
             />
         </div>
 
         <div className="p-8 min-h-[400px]">
-            {step === 1 && <SystemCheckStep />}
+            {step === 1 && <WelcomeStep onNext={handleNext} />}
 
-            {step === 2 && (
+            {step === 2 && <SystemCheckStep />}
+
+            {step === 3 && (
               <ApiKeysStep
                 config={config}
                 updateConfig={updateConfig}
@@ -432,7 +449,7 @@ export function WizardClient() {
               />
             )}
 
-            {step === 3 && (
+            {step === 4 && (
               <>
                 {webhookWarning && (
                   <div className="mb-4 flex items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm text-primary max-w-xs">
@@ -452,30 +469,19 @@ export function WizardClient() {
               </>
             )}
 
-            {step === 4 && (
-              <>
-                {saveError && retryCount > 0 && (
-                  <div className="mb-4 rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm text-primary max-w-xs">
-                    {saveError}
-                  </div>
-                )}
-                {saveFailed && (
-                  <div className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive max-w-xs">
-                    <p className="font-medium">{saveError}</p>
-                    <p className="mt-2">
-                      <Link href="/dashboard/settings" className="underline underline-offset-2 hover:opacity-80 font-medium">
-                        {t('save.manualSetup')}
-                      </Link>
-                    </p>
-                  </div>
-                )}
-                <FinishStep saveError={saveFailed ? saveError : null} saveFailed={saveFailed} onRetry={() => void handleSave(1)} />
-              </>
+            {step === 5 && (
+              <ReviewStep
+                config={config}
+                providerConfig={providerConfig}
+                onConfirm={() => void handleSave(1)}
+                onBack={() => { setNextError(null); setStep(prev => prev - 1); }}
+                loading={loading}
+              />
             )}
         </div>
 
         <div className="bg-muted/50 px-8 py-6 flex justify-between items-center border-t border-border">
-            {step > 1 && step < 4 && (
+            {step > 1 && (
                 <button
                     onClick={() => { setNextError(null); setStep(prev => prev - 1); }}
                     className="text-muted-foreground hover:text-foreground font-medium px-4 py-2"
@@ -496,7 +502,7 @@ export function WizardClient() {
               </div>
             )}
 
-            {step < 4 ? (
+            {step < 5 ? (
                 <button
                     onClick={handleNext}
                     disabled={isTransitioning}
@@ -508,27 +514,7 @@ export function WizardClient() {
                         <>{t('actions.next')} <ArrowRight className="w-4 h-4" aria-hidden="true" /></>
                     )}
                 </button>
-            ) : (
-                <button
-                    onClick={() => void handleSave(1)}
-                    disabled={loading}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 rounded-lg font-bold flex items-center gap-2 transition-transform hover:scale-105 ml-auto w-full justify-center sm:w-auto"
-                >
-                    {loading ? (
-                        <>
-                          {retryCount > 0
-                            ? (locale === 'vi'
-                                ? `Đang thử lại (${retryCount}/3)…`
-                                : `Retrying (${retryCount}/3)…`)
-                            : t('actions.saving')
-                          }
-                          <Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden="true" />
-                        </>
-                    ) : (
-                        <>{t('actions.launch')} <Save className="w-4 h-4" aria-hidden="true" /></>
-                    )}
-                </button>
-            )}
+            ) : null}
         </div>
       </div>
 

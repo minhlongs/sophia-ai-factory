@@ -68,4 +68,6 @@ id = "f2cf595dec5543dc96f6370bebbc8754"
 [vars]
 ENVIRONMENT = "staging"
 NEXT_PUBLIC_DISTRIBUTE_ENABLED = "1"
+BETTER_AUTH_URL = "https://sophia-ai-factory-staging.agencyos-openclaw.workers.dev"
+APP_URL = "https://sophia-ai-factory-staging.agencyos-openclaw.workers.dev"
 # COMMIT_SHA + DEPLOYED_AT are injected via deploy script as secrets, not vars.

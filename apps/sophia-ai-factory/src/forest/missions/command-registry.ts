@@ -1,142 +1,70 @@
 /**
- * Mission Command Registry — 18 AI Commands
- *
- * Defines all commands available via POST /api/v1/missions.
- * Each entry specifies credit cost and live/beta status.
- *
- * LIVE = real implementation via integrated provider
- * BETA = stub returning realistic mock data (upgrade_path comment included in result)
+ * Command Registry — Registers and dispatches mission handlers
+ * Layer: forest
+ * Purpose: Central registry for all mission commands and their handlers
  */
 
-export type CommandStatus = 'live' | 'beta';
-
-export interface CommandDefinition {
-  /** MCU credits charged per execution (0 = free) */
-  credits: number;
-  /** 'live' uses real integrations; 'beta' returns stubs */
-  status: CommandStatus;
-  /** Human-readable description */
-  description: string;
-}
-
-export const COMMANDS: Record<string, CommandDefinition> = {
-  'ai:write': {
-    credits: 1,
-    status: 'live',
-    description: 'Generate SOP-ready scripts, captions, hashtags, and copy blocks',
-  },
-  'social:publish': {
-    credits: 1,
-    status: 'live',
-    description: 'Schedule a video or content asset to connected distribution channels',
-  },
-  'video:create': {
-    credits: 5,
-    status: 'live',
-    description: 'Create an AI avatar video via HeyGen',
-  },
-  'video:create_heygen': {
-    credits: 5,
-    status: 'live',
-    description: 'Legacy alias for video:create via HeyGen',
-  },
-  'video:status': {
-    credits: 0,
-    status: 'live',
-    description: 'Check video generation status',
-  },
-  'proposal:create': {
-    credits: 3,
-    status: 'live',
-    description: 'Generate a business proposal using LLM',
-  },
-  'proposal:list': {
-    credits: 0,
-    status: 'live',
-    description: 'List saved proposals',
-  },
-  'lead:find': {
-    credits: 2,
-    status: 'live',
-    description: 'Find leads matching a niche via Apollo.io People Search (BYOK; stub fallback)',
-  },
-  'lead:enrich': {
-    credits: 1,
-    status: 'live',
-    description: 'Enrich a lead via Hunter.io email-finder + verifier (BYOK; stub fallback)',
-  },
-  'lead:export': {
-    credits: 1,
-    status: 'live',
-    description: 'Export leads to CSV via Apollo.io bulk search (BYOK; stub fallback)',
-  },
-  'email:campaign': {
-    credits: 5,
-    status: 'live',
-    description: 'Send bulk email campaign via Resend',
-  },
-  'email:test': {
-    credits: 0,
-    status: 'live',
-    description: 'Send a test email',
-  },
-  'email:templates': {
-    credits: 0,
-    status: 'live',
-    description: 'List saved email templates',
-  },
-  'youtube:publish': {
-    credits: 3,
-    status: 'live',
-    description: 'Publish video to a specific YouTube channel (multi-account; channel_id required)',
-  },
-  'youtube:list-channels': {
-    credits: 0,
-    status: 'live',
-    description: 'List all connected YouTube channels with their publishing_channels.id',
-  },
-  'voice:clone': {
-    credits: 10,
-    status: 'live',
-    description: 'Clone a voice via ElevenLabs Instant Voice Cloning (BYOK + sample_urls required)',
-  },
-  'avatar:create-did': {
-    credits: 8,
-    status: 'live',
-    description: 'Generate a talking avatar video via D-ID (BYOK D-ID key required)',
-  },
-  'subtitle:generate': {
-    credits: 1,
-    status: 'live',
-    description: 'Generate SRT subtitles from audio via Whisper',
-  },
-  'campaign:run': {
-    credits: 5,
-    status: 'live',
-    description: 'Run a full lead-find → email-campaign pipeline',
-  },
-  'analytics:report': {
-    credits: 1,
-    status: 'live',
-    description: 'Generate usage + mission analytics report',
-  },
-  'webhook:test': {
-    credits: 0,
-    status: 'live',
-    description: 'Ping your webhook URL to verify it responds',
-  },
-} as const;
+import type { MissionDefinition, MissionHandler, MissionContext, MissionHandlerResult } from './types';
 
 /**
- * Check if a command exists in the registry.
+ * Global registry storage
  */
-export function isValidCommand(command: string): boolean {
-  return command in COMMANDS;
+const registry = new Map<string, MissionDefinition>();
+
+/**
+ * Register a mission handler
+ */
+export function registerMission(def: MissionDefinition): void {
+  if (registry.has(def.command)) {
+    throw new Error(`Mission command "${def.command}" is already registered`);
+  }
+  registry.set(def.command, def);
 }
 
 /**
- * Get command definition or undefined if not found.
+ * Get a mission definition by command
  */
-export function getCommand(command: string): CommandDefinition | undefined {
-  return COMMANDS[command];
+export function getMission(command: string): MissionDefinition | undefined {
+  return registry.get(command);
+}
+
+/**
+ * Execute a mission by command name
+ */
+export async function executeMission(
+  ctx: MissionContext
+): Promise<MissionHandlerResult> {
+  const def = registry.get(ctx.command);
+  if (!def) {
+    return {
+      ok: false,
+      error: `Unknown mission command: ${ctx.command}`,
+      errorCode: 'unknown_command',
+    };
+  }
+
+  try {
+    const result = await def.handler(ctx);
+    return result;
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : 'Handler failed',
+      errorCode: 'handler_error',
+    };
+  }
+}
+
+/**
+ * List all registered commands
+ */
+export function listCommands(): string[] {
+  return Array.from(registry.keys());
+}
+
+/**
+ * Clear the registry (useful for testing)
+ */
+export function clearRegistry(): void {
+  registry.clear();
 }

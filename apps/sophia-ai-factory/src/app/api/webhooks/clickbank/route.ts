@@ -15,7 +15,7 @@ import { verifyClickBankSignature } from '@/land/affiliates/clickbank-signature-
 import { parsePostback } from '@/land/affiliates/clickbank-postback-parser'
 import { attributeClick } from '@/land/affiliates/conversion-attributor'
 import { calcCommission } from '@/land/affiliates/commission-calculator'
-import { notifyConversionEarned } from '@/forest/inngest/functions/generate-campaign-db'
+import { notifyConversionEarned } from '@/land/affiliates/conversion-notifier'
 import { checkRateLimit } from '@/tree/telegram/sql-rate-limiter'
 import { logger } from '@/seed/utils/logger-utility'
 

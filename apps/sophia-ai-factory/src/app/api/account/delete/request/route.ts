@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
-import { sendEmail } from '@/forest/email/sender';
+import { sendEmail } from '@/tree/email/sender';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { sha256Hex } from '@/seed/security/token-hash';

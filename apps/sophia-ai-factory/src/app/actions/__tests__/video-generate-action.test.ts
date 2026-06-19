@@ -41,7 +41,7 @@ vi.mock('@/forest/quota/video-quota', () => ({
   releaseVideoSlot: vi.fn().mockResolvedValue(undefined),
 }));
 
-vi.mock('@/forest/missions/emit-video-generate', () => ({
+vi.mock('@/forest/video/missions/emit-video-generate', () => ({
   emitVideoGenerate: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -59,7 +59,7 @@ vi.mock('@/seed/db/client', () => ({
 import { generateVideoAction } from '../video-generate-action';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { reserveVideoSlot, releaseVideoSlot } from '@/forest/quota/video-quota';
-import { emitVideoGenerate } from '@/forest/missions/emit-video-generate';
+import { emitVideoGenerate } from '@/forest/video/missions/emit-video-generate';
 
 const mockGetCurrentUser = vi.mocked(getCurrentUser);
 const mockReserveVideoSlot = vi.mocked(reserveVideoSlot);

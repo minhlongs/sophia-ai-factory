@@ -1,130 +1,172 @@
-# Sophia AI Factory
+# CLAUDE.md
 
-Next.js 16 App Router + React 19 + TypeScript + Tailwind CSS 4.
-Cloudflare Workers deployment via wrangler CLI direct (CF-direct doctrine, effective 2026-05-03).
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Production
+---
 
-```
-PROD_URL="https://sophia.agencyos.network"
-GITHUB_REPO="longtho638-jpg/sophia-ai-factory"
-```
+## Identity
 
-## Deploy Verification (MANDATORY for git-manager / any agent reporting GREEN)
+This is **Sophia AI Factory** — a Next.js 16 App Router SaaS platform for AI video generation, deployed to Cloudflare Workers via CF-direct doctrine. Work in `apps/sophia-ai-factory/`.
 
-**MUST READ:** `apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md`
-
-Hard rules:
-- Workflow `Tests & Deploy` có 2 jobs — TẤT CẢ phải success (không chỉ check `gh run list -L 1`)
-- Verify deploy SHA via `curl -s https://sophia.agencyos.network/api/version` — phải khớp `git rev-parse HEAD | cut -c1-8`
-- HTTP 200 KHÔNG đủ — có thể là deploy CŨ. Phải SHA match.
-- Báo cáo "Vercel auto-deployed" = SAI 100% (project là Cloudflare Workers, không có vercel.json)
+---
 
 ## Commands
 
+All commands run from `apps/sophia-ai-factory/`:
+
 ```bash
-npm run dev      # Dev server :3000
-npm run build    # Production build (0 errors required)
-npm run lint     # ESLint
-npm test         # Vitest (844+ tests)
+npm run dev              # Next.js dev server on :3000
+npm run build            # Production build (0 TypeScript errors required)
+npm run lint             # ESLint (src/**)
+npm run type-check       # TypeScript compiler check (--noEmit)
+npm test                 # Vitest (runs pretest i18n:validate)
+npm run test:watch       # Vitest watch mode
+npx vitest run <path>    # Run specific test file or pattern
+npm run test:coverage    # Coverage report (html, json-summary, text)
+npm run test:e2e         # Playwright E2E (requires NEXT_PUBLIC_MOCK_AI_SERVICES=true)
+npm run verify           # Full verification script (build, tests, secrets audit)
+npm run deploy:full      # CF-direct deploy with SHA verification (MANDATORY)
+npm run deploy:verify    # Run sophia-doctor.mjs health checks
+npm run ci               # CI gate (typecheck, lint, test, secrets, audit)
 ```
 
-## Architecture (post-consolidation 2026-04-14)
+---
 
-### Auth
-- **Single source:** `@/seed/auth/better-auth-session` for `getCurrentUser()`
-- **Tier lookup:** `@/seed/db/get-user-tier` for `getUserTier(userId)`
-- DELETED: `lib/auth.ts`, `lib/subscription.ts`, `lib/db/auth-verify.ts`, `lib/clients/`
+## Architecture (4-Layer Model)
 
-### Database
-- **Primary:** Cloudflare D1 via `createServerClient()` from `@/seed/db/client`
-- `createServerClient()` is **synchronous** — do NOT `await` it
-- **Supabase exceptions (keep):** OAuth callbacks (tiktok, youtube), admin invite, checkpoint persistence
-- DELETED: direct `@/lib/supabase/admin` and `@/lib/supabase/server` imports (shims remain for exceptions)
+Code organization in `src/` follows strict layer boundaries:
 
-### Tier Config
-- **Single source:** `@/seed/config/tiers` (barrel re-exporting from `seed/config/tiers/`)
-- Exports: `TIER_CONFIGS`, `TIER_CONFIG`, `TIER_DB_MAPPING`, `DB_TIER_MAPPING`, `UNIFIED_TIERS`
-- DELETED: `lib/tier-gate.ts`, `lib/unified-tier-config.ts`
+| Layer | Purpose | Import Path | Example |
+|-------|---------|-------------|---------|
+| **seed** | Foundational primitives (auth, DB, config, types) | `@/seed/...` | `@/seed/auth/better-auth-session` |
+| **tree** | Domain-specific reusable logic | `@/tree/...` | `@/tree/byok/`, `@/tree/telegram/` |
+| **forest** | Infrastructure orchestrators | `@/forest/...` | `@/forest/inngest/`, `@/forest/quota/` |
+| **land** | Business workflows | `@/land/...` | `@/land/billing/`, `@/land/payouts/` |
 
-### Modularized Services
-Giant files split into focused modules with barrel re-exports:
-- `lib/billing/email/*` — email templates, delivery, tracking
-- `lib/billing/dunning/*` — state machine, actions, admin ops
-- `lib/alerts/quota/*` — rule evaluator, delivery, scheduling
-- `lib/usage-metering/` — event collector, rollup engine, KV sync
-- `lib/raas/*` — audit logging, permissions, invoice generation
+**Import rules:**
+- `seed` → importable by ALL layers (foundational)
+- `tree` → imports `seed` only
+- `forest` → imports `seed`, `tree` (+ may CALL `land` for orchestration)
+- `land` → imports `seed`, `tree`, `forest`
 
-### Payments
-- **Primary:** NOWPayments (USDT crypto) — IPN webhook → tier activation
-- **Backup:** PayOS (Vietnam domestic)
-- **BANNED:** Polar.sh (rejected this product), PayPal
+**Forbidden:** `seed` → `tree/forest/land`; `tree` → `forest/land`; `land` → `forest` (circular).
 
-## Product Doctrine (2026-05-15)
+See `.claude/rules/sophia-layer-architecture.md` for full details.
 
-**Sophia is no-code / no-tech RaaS** for non-technical CEOs. Implications:
-- **Customer self-input everything** (BYOK): API keys, payment providers, affiliate networks, AI services — all configured by customer via Setup Wizard.
-- **Operator manages PLATFORM ONLY** — no third-party cron registrations, no operator observability tokens, no operator-side credentials required for the platform to ship production-ready.
-- **Out-of-scope** features: any work requiring operator to provide a third-party credential to make the platform "fully green". Reroute these to either (a) UI self-config, or (b) customer side, or (c) reject as scope creep.
+---
 
-**Full doctrine:** `.claude/rules/sophia-no-tech-doctrine.md` — required read before proposing any operator-action gates.
+## Canonical Import Paths (POST-2026-04-14 CONSOLIDATION)
+
+These are the **single sources of truth**. Old paths are deleted; do not create new ones.
+
+| Concern | Import |
+|---------|--------|
+| Auth session | `import { getCurrentUser } from '@/seed/auth/better-auth-session'` |
+| DB client (sync) | `import { createServerClient } from '@/seed/db/client'` (DO NOT await) |
+| Tier lookup | `import { getUserTier } from '@/seed/db/get-user-tier'` |
+| Tier config | `import { TIER_CONFIGS, TIER_CONFIG } from '@/seed/config/tiers'` |
+
+**BANNED imports:** `@/lib/auth`, `@/lib/subscription`, `@/lib/unified-tier-config`, `@/lib/tier-gate`.
+
+---
 
 ## Protected Flows (DO NOT BREAK)
 
-1. **Setup Wizard** — API key onboarding (OpenRouter, ElevenLabs, D-ID)
-2. **Telegram Bot** — @Sophia_Bbot (/campaign, /status, /results)
+1. **Setup Wizard** — BYOK API key onboarding (OpenRouter, ElevenLabs, D-ID)
+2. **Telegram Bot** — @Sophia_Bbot commands (`/campaign`, `/status`, `/results`)
 3. **Payment Flow** — NOWPayments IPN webhook → tier activation
+
+Any change touching these requires explicit validation.
+
+---
+
+## Deployment Contract (CF-Direct Doctrine)
+
+**Effective:** 2026-05-03. GitHub Actions is disabled by design.
+
+Production deploy flow:
+
+```bash
+# Step 0: Push first (deploy-with-sha.sh rejects unpushed commits)
+git push origin main
+
+# Step 1: Build + deploy from app package
+cd apps/sophia-ai-factory
+npm run deploy:full
+
+# Step 2: Verify SHA match (NOT just HTTP 200)
+LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
+LIVE_SHA=$(curl -s https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4)
+echo "Local: $LOCAL_SHA  Live: $LIVE_SHA"  # must match
+```
+
+**Green report requires:**
+- `npm run deploy:full` exit 0
+- `/api/version` `shortSha` matches local commit
+- HTTP 200 on production URL
+- Any new D1 migrations applied via `bash scripts/apply-migrations.sh`
+
+Full verification spec: `.claude/rules/sophia-deploy-verify.md`.
+
+---
+
+## Product Doctrine (No-Code / No-Tech)
+
+Sophia serves non-technical CEOs. Implications:
+
+- **Customer self-input everything** (BYOK): API keys, payment providers, affiliate networks — all via Setup Wizard.
+- **Operator manages PLATFORM ONLY**: No third-party cron registrations, no operator observability tokens, no operator-side credentials required for production.
+
+If a feature requires operator-provided third-party credentials to be "complete", it is **out of scope** until made self-configuring or moved to customer side.
+
+Full doctrine: `.claude/rules/sophia-no-tech-doctrine.md`.
+
+---
 
 ## Quality Gates
 
 - `npm run build` → 0 TypeScript errors
-- `npm test` → 844+ tests pass
+- `npm test` → all tests pass (844+ tests)
 - Zero `:any` types in production code
-- Zero `console.log` in production code
+- Zero `console.log`/`console.warn`/`console.error` — use logger utility
 - Zod validation on all API inputs
-- Server Actions for data mutations
-- Tier enum: `BASIC | PREMIUM | ENTERPRISE | MASTER` (uppercase)
+- Server Actions for data mutations (preferred over API routes)
+- Tier enum values: `BASIC | PREMIUM | ENTERPRISE | MASTER` (uppercase only)
 
-## Canonical Deploy Flow (CF-direct doctrine)
+---
 
-```bash
-# Step 0 (MANDATORY since 2026-05-15): push to origin before deploy
-# Prevents prod/git divergence (see plans/260515-0830-gap-91to93/phase-01)
-git push origin main
-git push gitlab main  # optional mirror
+## Database
 
-# Step 1: Build + inject SHA + deploy
-cd apps/sophia-ai-factory
-npm run deploy:full
+- **Primary:** Cloudflare D1 via `createServerClient()` (synchronous, do not `await`)
+- **Secondary:** Supabase only for specific exceptions (OAuth callbacks, legacy shared flows)
+- Migrations live in `apps/sophia-ai-factory/migrations/`. Apply via `scripts/apply-migrations.sh`.
 
-# Step 2: Verify SHA match
-curl -s https://sophia.agencyos.network/api/version | jq .shortSha
-# Must match: git rev-parse HEAD | cut -c1-8
-```
+---
 
-**MUST READ for full verify sequence:** `apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md`
+## i18n
 
-Hard rules:
-- **Push BEFORE deploy** — `deploy-with-sha.sh` rejects with exit 2 if `git log origin/main..HEAD` is non-empty. Bypass only with `ALLOW_UNPUSHED_DEPLOY=1` for emergency hotfixes; document the reason in deploy log.
-- SHA match is MANDATORY — HTTP 200 alone is not sufficient (may be stale deploy)
-- `npm run deploy:full` applies changed canonical D1 migrations from `migrations/` before replacing the Worker. Do not run `npm run deploy:migrations` again after a successful `deploy:full` unless you are intentionally applying a separate migration range.
-- Do NOT use `gh run list` as deploy check — GitHub Actions is intentionally disabled
+Bilingual Vietnamese + English required for all customer-facing content. Uses `next-intl` with locale segment `[locale]`.
 
-## Green Production Rule
+---
 
-After every `npm run deploy:full`, verify:
-1. **Deploy script:** exit code 0 (wrangler output shows success)
-2. **SHA match:** `curl -s $PROD_URL/api/version | jq .shortSha` == `git rev-parse HEAD | cut -c1-8`
-3. **HTTP:** `curl -sI "$PROD_URL" | head -3` → HTTP 200
-4. **Report:** Build/Tests/Deploy/SHA/Production status lines required
+## Key Files to Read
 
-## Historical Note: GitHub Actions (disabled by design since 2026-05-03)
+Before substantive work, read in order:
 
-**Status:** Account `longtho638-jpg` had Actions disabled at user level (free-tier minutes exhausted or account review). Workflow `test.yml` archived as `.github/workflows/test.yml.disabled`.
+1. `apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md`
+2. `apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md`
+3. `apps/sophia-ai-factory/.claude/rules/sophia-no-tech-doctrine.md`
+4. `apps/sophia-ai-factory/.claude/rules/sophia-handover-rules.md`
+5. `apps/sophia-ai-factory/.claude/rules/cross-layer-orchestration.md`
+6. `docs/code-standards.md`
+7. `docs/deployment-guide.md`
+8. `docs/testing.md`
 
-The team evaluated this and decided to adopt CF-direct (wrangler CLI) as the permanent canonical deploy path rather than restore CI. This is faster, simpler, and removes the dependency on GitHub Actions availability.
+---
 
-**Proof-of-path (5 successful manual deploys before doctrine change):**
-`d84f3a6e`, `e53c7dd2`, `aafd1ba4`, `0520585b`, `f418f3df`
+## Notes
 
-To re-enable GitHub Actions CI in future: rename `.github/workflows/test.yml.disabled` back to `.github/workflows/test.yml`.
+- **Root package.json** is tooling only. Always run commands from `apps/sophia-ai-factory/`.
+- `src/lib/` exists for compatibility; new primitives belong in `seed/`, `tree/`, `forest/`, or `land/`.
+- Inngest owns long-running workflows (video generation, multi-step processes). Do not run these in request path.
+- NOWPayments is primary payment provider; PayOS is Vietnam domestic backup. Polar.sh and PayPal are banned for Sophia billing.

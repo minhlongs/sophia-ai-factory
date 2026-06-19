@@ -10,7 +10,7 @@
  * @module seed/utils/retry-with-backoff
  */
 
-import { BreakerOpenError } from './circuit-breaker';
+import { BreakerOpenError } from './in-memory-circuit-breaker';
 
 export interface RetryConfig {
   /** Max number of retry attempts (not counting the first attempt). Default: 3 */

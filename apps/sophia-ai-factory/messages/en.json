@@ -61,15 +61,16 @@
       "subtitle": "Complete the steps below to activate your AI platform"
     },
     "stepper": {
+      "welcome": "Welcome",
       "system": "System Check",
       "aiKeys": "AI Keys",
       "providers": "Providers",
-      "localMode": "Local Mode",
-      "finish": "Finish"
+      "review": "Review"
     },
     "actions": {
       "back": "Back",
       "next": "Continue",
+      "confirm": "Confirm & Save",
       "saving": "Saving",
       "launch": "Launch",
       "continueToChallenges": "Continue To Challenges",
@@ -91,6 +92,66 @@
       "readyToUse": "Ready To Use",
       "launchBtn": "Launch",
       "continueToChallenges": "Continue to Challenges"
+    },
+    "welcome": {
+      "title": "Welcome to Sophia AI Factory",
+      "subtitle": "Let's get your AI video platform up and running in about 5 minutes.",
+      "features": {
+        "keys": {
+          "title": "Your Keys, Your Control",
+          "description": "Every API key stays in your possession. Sophia never stores or uses your credentials on our side."
+        },
+        "security": {
+          "title": "Secure by Design",
+          "description": "All keys are encrypted and stored securely. You can rotate or revoke them anytime."
+        },
+        "launch": {
+          "title": "Ready to Launch",
+          "description": "Once setup is complete, you'll have a fully functional AI video factory at your fingertips."
+        }
+      },
+      "whatYouNeed": {
+        "title": "What you'll need:",
+        "items": [
+          "OpenRouter or Anthropic API key (for AI/LLM)",
+          "ElevenLabs API key (for voice synthesis)",
+          "D-ID API key (for avatar generation)",
+          "HeyGen API key (for video generation)",
+          "A few minutes of your time"
+        ]
+      },
+      "getStarted": "Get Started"
+    },
+    "review": {
+      "title": "Review Your Configuration",
+      "subtitle": "Please verify your API keys before saving. All keys are stored encrypted.",
+      "sections": {
+        "llmKeys": "AI/LLM Keys",
+        "mediaKeys": "Voice & Avatar Keys",
+        "providerKeys": "Provider Credentials"
+      },
+      "keys": {
+        "openrouter": "OpenRouter",
+        "anthropic": "Anthropic",
+        "elevenlabs": "ElevenLabs",
+        "did": "D-ID",
+        "muapi": "MuAPI"
+      },
+      "providers": {
+        "heygen": "HeyGen",
+        "heygenWebhook": "HeyGen Webhook",
+        "resend": "Resend",
+        "nowpayments": "NOWPayments"
+      },
+      "securityNote": "Your API keys will be encrypted using AES-256 before storage. You can update them anytime in Settings.",
+      "actions": {
+        "back": "Back",
+        "confirm": "Confirm & Save"
+      },
+      "missingRequired": {
+        "title": "Missing Required Keys",
+        "description": "Some required API keys are missing. Please go back and enter the missing keys to continue."
+      }
     }
   },
   "landing": {
@@ -842,7 +903,9 @@
     "stats": {
       "total_campaigns": "Total Campaigns",
       "active_campaigns": "Active Campaigns",
-      "completed_campaigns": "Completed"
+      "completed_campaigns": "Completed",
+      "failed_campaigns": "Failed Campaigns",
+      "draft_campaigns": "Draft Campaigns"
     },
     "buttons": {
       "upgrade": "Upgrade",
@@ -1691,6 +1754,47 @@
         "domain": "Domain",
         "domainHint": "DNS CNAME setup required after saving. Contact support for instructions.",
         "domainPlaceholder": "yourbrand.com"
+      }
+    },
+    "campaigns": {
+      "title": "Campaigns",
+      "subtitle": "Create and manage your automated video campaigns",
+      "buttons": {
+        "new_campaign": "New Campaign"
+      },
+      "filters_aria_label": "Filter campaigns by status",
+      "stats_aria_label": "Campaign statistics",
+      "grid_aria_label": "Campaign grid",
+      "showing_count": "{count} of {total} campaigns",
+      "filters": {
+        "all": "All",
+        "draft": "Draft",
+        "queued": "Queued",
+        "processing_script": "Script Processing",
+        "processing_video": "Video Processing",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "card": {
+        "view_campaign": "View campaign",
+        "progress": "Progress",
+        "watch_video": "Watch",
+        "view_details": "Details"
+      },
+      "modal": {
+        "created_on": "Created on {date}",
+        "field_audience": "Target Audience",
+        "field_not_specified": "Not specified",
+        "field_updated": "Last updated",
+        "progress": "Progress",
+        "error_title": "Error occurred",
+        "script_title": "Generated Script",
+        "video_title": "Generated Video",
+        "video_unsupported": "Your browser does not support video playback.",
+        "open_video_new_tab": "Open video in new tab",
+        "template_id": "Template ID",
+        "close": "Close",
+        "watch_video": "Watch Video"
       }
     }
   },
@@ -4266,5 +4370,311 @@
   "deleteTooltip": "Delete Tooltip",
   "countLabel": "Count Label",
   "activeLabel": "Active Label",
-  "autoRefresh": "Auto Refresh"
+  "autoRefresh": "Auto Refresh",
+  "stitch": {
+    "common": {
+      "search": "Search",
+      "searchPlaceholder": "Search...",
+      "filter": "Filter",
+      "export": "Export",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel",
+      "loading": "Loading...",
+      "error": "Error",
+      "retry": "Retry",
+      "success": "Success",
+      "actions": "Actions",
+      "viewAll": "View All",
+      "noData": "No data available",
+      "confirmDelete": "Are you sure you want to delete this?",
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "paid": "Paid",
+      "failed": "Failed"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "subtitle": "Welcome back. Here's what's happening with your workspace today.",
+      "metrics": {
+        "revenue": "Total Revenue",
+        "subscribers": "Active Subscribers",
+        "growth": "Monthly Growth",
+        "commission": "Commission Paid"
+      },
+      "revenueChart": {
+        "title": "Revenue Over Time",
+        "subtitle": "Total sales performance this quarter",
+        "period": "Last 30 Days"
+      },
+      "topAffiliates": {
+        "title": "Top Affiliates",
+        "viewAll": "View All",
+        "invite": "Invite New Affiliate"
+      },
+      "recentTransactions": {
+        "title": "Recent Transactions",
+        "subtitle": "Latest subscriber payments and refunds",
+        "showing": "Showing {from}-{to} of {total} transactions",
+        "columns": {
+          "date": "Date",
+          "customer": "Customer",
+          "amount": "Amount",
+          "status": "Status",
+          "action": "Action"
+        }
+      }
+    },
+    "auth": {
+      "login": {
+        "title": "Sign In to Sophia",
+        "subtitle": "AI-Powered Revenue Automation Platform",
+        "emailLabel": "Email Address",
+        "emailPlaceholder": "name@company.com",
+        "passwordLabel": "Password",
+        "passwordPlaceholder": "Enter your password",
+        "rememberMe": "Remember this device for 30 days",
+        "forgotPassword": "Forgot password?",
+        "submit": "Sign In to Sophia",
+        "orContinueWith": "or continue with",
+        "noAccount": "Don't have an account?",
+        "signUp": "Sign up",
+        "googleSignIn": "Google",
+        "githubSignIn": "GitHub"
+      },
+      "register": {
+        "title": "Create Your Account",
+        "subtitle": "Start your AI-powered revenue journey today",
+        "nameLabel": "Full Name",
+        "namePlaceholder": "John Doe",
+        "emailLabel": "Email Address",
+        "emailPlaceholder": "name@company.com",
+        "companyLabel": "Company Name",
+        "companyPlaceholder": "Your Company",
+        "passwordLabel": "Create Password",
+        "passwordPlaceholder": "Create a strong password",
+        "confirmPasswordLabel": "Confirm Password",
+        "confirmPasswordPlaceholder": "Re-enter your password",
+        "termsPrefix": "By creating an account, you agree to our",
+        "termsLink": "Terms of Service",
+        "privacyLink": "Privacy Policy",
+        "submit": "Create Account",
+        "orContinueWith": "or continue with",
+        "hasAccount": "Already have an account?",
+        "signIn": "Sign in"
+      }
+    },
+    "pricing": {
+      "title": "Simple, Transparent Pricing",
+      "subtitle": "Choose the plan that fits your business. All plans include a 30-day money-back guarantee.",
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "savePercent": "(Save 20%)",
+      "currentPlan": "Current Plan",
+      "popular": "Most Popular",
+      "plans": {
+        "basic": {
+          "name": "Basic",
+          "price": "$199",
+          "period": "/month",
+          "description": "Perfect for getting started",
+          "features": {
+            "videos": "100 videos per month",
+            "affiliates": "5 affiliate programs",
+            "support": "Email support",
+            "aiModels": "Access to standard AI models"
+          }
+        },
+        "premium": {
+          "name": "Premium",
+          "price": "$399",
+          "period": "/month",
+          "description": "For growing businesses",
+          "features": {
+            "videos": "500 videos per month",
+            "affiliates": "Unlimited affiliate programs",
+            "support": "Priority email support",
+            "aiModels": "Access to premium AI models",
+            "custom": "Custom branding"
+          }
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "price": "$799",
+          "period": "/month",
+          "description": "For large-scale operations",
+          "features": {
+            "videos": "Unlimited videos",
+            "affiliates": "Unlimited everything",
+            "support": "24/7 dedicated support",
+            "aiModels": "Full AI model access",
+            "custom": "White-label solution",
+            "integration": "Custom integrations"
+          }
+        }
+      },
+      "questions": "Have questions about pricing?",
+      "contactSales": "Contact Sales"
+    },
+    "products": {
+      "title": "Products",
+      "subtitle": "Manage your video products and pricing",
+      "newProduct": "New Product",
+      "allProducts": "All Products",
+      "columns": {
+        "name": "Product",
+        "type": "Type",
+        "price": "Price",
+        "subscribers": "Subscribers",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "actions": {
+        "view": "View",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "searchPlaceholder": "Search products..."
+    },
+    "subscribers": {
+      "title": "Subscribers",
+      "subtitle": "Manage your customer subscriptions",
+      "total": "Total",
+      "active": "Active",
+      "canceled": "Canceled",
+      "mrr": "MRR",
+      "searchPlaceholder": "Search subscribers by name or email...",
+      "columns": {
+        "subscriber": "Subscriber",
+        "plan": "Plan",
+        "status": "Status",
+        "joined": "Joined",
+        "actions": "Actions"
+      }
+    },
+    "payments": {
+      "title": "Payments",
+      "subtitle": "Track transactions and revenue",
+      "download": "Download Report",
+      "searchPlaceholder": "Search payments...",
+      "summary": {
+        "title": "Payment Summary"
+      },
+      "columns": {
+        "date": "Date",
+        "customer": "Customer",
+        "amount": "Amount",
+        "method": "Method",
+        "status": "Status",
+        "actions": "Actions"
+      }
+    },
+    "affiliates": {
+      "title": "Affiliates",
+      "subtitle": "Manage your affiliate partnerships",
+      "newAffiliate": "Add Affiliate",
+      "totalAffiliates": "Total Affiliates",
+      "active": "Active",
+      "totalCommission": "Total Commission Paid",
+      "pending": "Pending",
+      "searchPlaceholder": "Search affiliates...",
+      "inviteEmail": "Invite via Email",
+      "columns": {
+        "affiliate": "Affiliate",
+        "status": "Status",
+        "sales": "Sales",
+        "commission": "Commission"
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Manage your workspace preferences",
+      "profile": "Profile Settings",
+      "notifications": "Notification Preferences",
+      "appearance": "Appearance",
+      "security": "Security",
+      "team": "Team Management",
+      "integrations": "Integrations",
+      "workspaceName": "Workspace Name",
+      "timezone": "Timezone",
+      "description": "Description",
+      "saveChanges": "Save Changes"
+    },
+    "checkout": {
+      "payment": {
+        "title": "Complete Your Purchase",
+        "subtitle": "You're just one step away from unlocking premium features",
+        "yourPlan": "Your Plan",
+        "orderSummary": "Order Summary",
+        "monthlySubscription": "Monthly subscription",
+        "taxes": "Taxes",
+        "total": "Total",
+        "payNow": "Pay Now",
+        "processing": "Processing..."
+      },
+      "success": {
+        "title": "Payment Successful!",
+        "subtitle": "Your account has been upgraded. Welcome to {plan}!",
+        "dashboardLink": "Go to Dashboard",
+        "emailConfirmation": "A confirmation email has been sent to your inbox."
+      }
+    },
+    "webhook": {
+      "title": "Webhook Configuration",
+      "subtitle": "Configure incoming webhooks from external services",
+      "newWebhook": "New Webhook",
+      "webhookName": "Webhook Name",
+      "endpointUrl": "Endpoint URL",
+      "eventsToSubscribe": "Events to Subscribe",
+      "saveWebhook": "Save Webhook",
+      "edit": "Edit",
+      "delete": "Delete",
+      "subscribedEvents": "Subscribed Events",
+      "signingSecret": "Signing Secret",
+      "testing": "Testing Webhooks",
+      "description": "Configure webhooks to receive real-time notifications when events occur in your integrated services."
+    },
+    "admin": {
+      "title": "Admin Panel",
+      "subtitle": "System administration and oversight",
+      "platformStats": {
+        "title": "Platform Statistics",
+        "revenue": "Total Revenue",
+        "users": "Total Users",
+        "videos": "Videos Created",
+        "uptime": "System Uptime"
+      },
+      "systemHealth": {
+        "title": "System Health",
+        "database": "Database",
+        "api": "API Gateway",
+        "workers": "Edge Workers",
+        "storage": "Object Storage"
+      },
+      "quickActions": "Quick Actions",
+      "recentActivity": "Recent Activity",
+      "latency": "Latency",
+      "status": "Status"
+    },
+    "affiliatePortal": {
+      "title": "Affiliate Portal",
+      "subtitle": "Track your earnings and referrals",
+      "totalEarnings": "Total Earnings",
+      "pending": "Pending",
+      "clicks": "Clicks",
+      "conversions": "Conversions",
+      "conversionRate": "Conv. Rate",
+      "yourReferralLink": "Your Referral Link",
+      "copyLink": "Copy Link",
+      "copied": "Copied!",
+      "recentReferrals": "Recent Referrals",
+      "noReferrals": "No referrals yet. Share your link to start earning!",
+      "resources": "Marketing Resources",
+      "banners": "Banner Images",
+      "links": "Deep Links"
+    }
+  }
 }

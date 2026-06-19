@@ -35,6 +35,16 @@ function getNowPaymentsIpnSecret(): string | null {
 
 const MAX_BODY_BYTES = 64 * 1024 // 64KB limit — prevent memory exhaustion
 
+/** Health check — ensures webhook endpoint is reachable */
+export async function GET() {
+  return NextResponse.json({
+    status: 'ok',
+    service: 'nowpayments-ipn',
+    timestamp: new Date().toISOString(),
+    methods: ['POST'],
+  })
+}
+
 export async function POST(request: NextRequest) {
 const nowPaymentsIpnSecret = getNowPaymentsIpnSecret()
 if (!nowPaymentsIpnSecret) {

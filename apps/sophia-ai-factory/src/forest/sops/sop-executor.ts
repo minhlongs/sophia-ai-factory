@@ -11,7 +11,7 @@
  *   4. mark-complete  — finalize status, fire analytics + memory (non-fatal)
  */
 
-import { inngest } from '@/forest/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import { createServerClient, getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { buildSOPGraph } from '@/tree/sop/dag-builder';

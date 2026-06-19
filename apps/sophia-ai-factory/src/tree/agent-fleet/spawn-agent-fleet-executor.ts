@@ -7,23 +7,44 @@ import {
   validatePromptContract,
   PromptContractError,
 } from "@/seed/validators/agent-prompt-contracts";
-import { withBreaker, BreakerOpenError, getBreakerState } from "@/seed/utils/circuit-breaker";
+import { withBreaker, BreakerOpenError, getBreakerState, FLEET_BREAKER } from "@/seed/utils/in-memory-circuit-breaker";
 import { withRetry } from "@/seed/utils/retry-with-backoff";
 import { logger } from "@/seed/utils/logger-utility";
+import { resilientChatCompletion } from "@/seed/inference/openrouter-client";
+import { resolveUserApiKey } from "@/tree/byok/resolve-user-api-key";
 import type { AgentTask, AgentResult } from "./spawn-agent-fleet";
 
-export const FLEET_BREAKER = "agent-fleet";
-
-/** Local task executor — runs the task prompt through a simple handler. */
 export async function localExecutor(
   task: AgentTask,
-  _tenantId: string,
+  tenantId: string,
 ): Promise<unknown> {
+  const apiKey = await resolveUserApiKey(tenantId, "openrouter");
+
+  if (!apiKey) {
+    // BYOK: no key configured — return stub queued status
+    return {
+      taskId: task.id,
+      status: "queued",
+      prompt: task.prompt,
+      tier: task.tier ?? "standard",
+      note: "OpenRouter API key not configured. Configure via Setup Wizard.",
+    };
+  }
+
+  const model = task.tier === "max" ? "anthropic/claude-opus-4" : "anthropic/claude-sonnet-4";
+  const content = await resilientChatCompletion(task.prompt, {
+    openRouterKey: apiKey,
+    anthropicKey: undefined,
+    enableFallback: false,
+    model,
+  });
+
   return {
     taskId: task.id,
-    status: "queued",
+    status: "completed",
     prompt: task.prompt,
     tier: task.tier ?? "standard",
+    output: content,
   };
 }
 
@@ -32,20 +53,16 @@ export async function runTask(
   tenantId: string,
 ): Promise<AgentResult> {
   const start = Date.now();
-  logger.debug("[spawnAgentFleet] Task start", {
+  logger.info("executing_task", {
     taskId: task.id,
     tenantId,
-    role: task.agentRole,
+    agentRole: task.agentRole,
     tier: task.tier,
-    promptLength: task.prompt.length,
   });
 
   // Fail-fast if breaker is already open — no point dispatching
   if (getBreakerState(FLEET_BREAKER) === "open") {
-    logger.warn("[spawnAgentFleet] Circuit breaker open — task skipped", {
-      taskId: task.id,
-      tenantId,
-    });
+    logger.warn("task_skipped_breaker_open", { taskId: task.id });
     return {
       taskId: task.id,
       success: false,
@@ -77,10 +94,9 @@ export async function runTask(
     );
 
     const durationMs = Date.now() - start;
-    logger.info("[spawnAgentFleet] Task completed", {
+    logger.info("task_completed", {
       taskId: task.id,
-      tenantId,
-      success: true,
+      agentRole: task.agentRole,
       durationMs,
       retryCount: attempts > 0 ? attempts - 1 : 0,
     });
@@ -94,9 +110,9 @@ export async function runTask(
     };
   } catch (err) {
     const durationMs = Date.now() - start;
-    logger.error("[spawnAgentFleet] Task failed", {
+    logger.error("task_failed", {
       taskId: task.id,
-      tenantId,
+      agentRole: task.agentRole,
       error: err instanceof Error ? err.message : String(err),
       durationMs,
       retryCount: attempts > 0 ? attempts - 1 : 0,
@@ -121,48 +137,14 @@ export async function runWithConcurrency(
   tenantId: string,
   maxConcurrency: number,
 ): Promise<AgentResult[]> {
-  const results: AgentResult[] = new Array(tasks.length);
-  const semaphore = new Array(maxConcurrency).fill(null);
-  let nextIndex = 0;
-
-  logger.info("[spawnAgentFleet] Starting concurrent execution", {
-    tenantId,
-    totalTasks: tasks.length,
-    maxConcurrency,
-  });
-
-  const workers = Array.from({ length: maxConcurrency }).map(async (_, workerId) => {
-    while (true) {
-      const taskIndex = nextIndex++;
-      if (taskIndex >= tasks.length) break;
-
-      const task = tasks[taskIndex];
-      const result = await runTask(task, tenantId);
-      results[taskIndex] = result;
-
-      const completedCount = results.filter((r): r is AgentResult => r !== undefined).length;
-      logger.debug("[spawnAgentFleet] Task finished", {
-        tenantId,
-        workerId,
-        taskIndex,
-        taskId: task.id,
-        success: result.success,
-        completedCount,
-        totalTasks: tasks.length,
-      });
-    }
-  });
-
-  await Promise.all(workers);
-
-  const successCount = results.filter((r) => r.success).length;
-  const failCount = results.length - successCount;
-  logger.info("[spawnAgentFleet] All tasks completed", {
-    tenantId,
-    total: tasks.length,
-    success: successCount,
-    failed: failCount,
-  });
-
+  const results: AgentResult[] = [];
+  const chunks: AgentTask[][] = [];
+  for (let i = 0; i < tasks.length; i += maxConcurrency) {
+    chunks.push(tasks.slice(i, i + maxConcurrency));
+  }
+  for (const chunk of chunks) {
+    const chunkResults = await Promise.all(chunk.map((t) => runTask(t, tenantId)));
+    results.push(...chunkResults);
+  }
   return results;
 }

@@ -2,7 +2,7 @@ import { listPlatformCredentials } from '@/seed/db/repositories/platform-credent
 import { getDecryptedCredentials, storeCredentials, getClientCredentials } from './credential-manager';
 import { youtubeAdapter } from './youtube-adapter';
 import { tiktokAdapter } from './tiktok-adapter';
-import { instagramAdapter } from './instagram-adapter';
+import { instagramAdapter } from '@/land/video/publishing/providers/instagram-adapter';
 import { logger } from '@/seed/utils/logger-utility';
 import type { Platform, PlatformAdapter } from './platform-adapter';
 

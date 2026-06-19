@@ -31,11 +31,11 @@ vi.mock('@/seed/db/client', () => ({
   })),
 }));
 
-vi.mock('@/land/video/subtitle-generator', () => ({
+vi.mock('@/land/video/assembly/subtitle-generator', () => ({
   generateSubtitles: mockGenerateSubtitles,
 }));
 
-vi.mock('@/land/video/composer-ffmpeg', () => ({
+vi.mock('@/land/video/assembly/composer-ffmpeg', () => ({
   composeFinalVideo: mockComposeFinalVideo,
   applyBrandKit: vi.fn((_userId, input) => Promise.resolve(input)),
 }));

@@ -3,7 +3,7 @@
  */
 
 import type { SopChallengeRow, UserChallengeProgressRow } from '@/tree/sop/sop-types';
-import { addCredits } from '@/land/mcu/credits-repo';
+import { addCredits } from '@/tree/mcu/credits-repo';
 
 /** Claim a completed challenge reward. Supports: 'credits' | 'badge' | 'commission_boost'. */
 export async function claimChallengeReward(

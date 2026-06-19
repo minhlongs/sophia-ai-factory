@@ -20,6 +20,7 @@ export * from './monitoring';
 export * from './observability';
 export * from './openclaw';
 export * from './openclaw-telegram';
+export * from './operations';
 export * from './orders';
 export * from './payouts';
 export * from './postback';

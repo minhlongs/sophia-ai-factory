@@ -1,12 +1,12 @@
-import { inngest } from '@/forest/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import {
   updateRepurposeClipStatus,
   incrementRepurposeProgress,
 } from '@/seed/db/repositories/repurpose-jobs-repo';
 import { logger } from '@/seed/utils/logger-utility';
 import { getD1 } from '@/seed/db/client';
-import { generateSubtitles } from '@/land/video/subtitle-generator';
-import { composeFinalVideo, applyBrandKit } from '@/land/video/composer-ffmpeg';
+import { generateSubtitles } from '@/land/video/assembly/subtitle-generator';
+import { composeFinalVideo, applyBrandKit } from '@/land/video/assembly/composer-ffmpeg';
 
 export const repurposeClipGenerate = inngest.createFunction(
   { id: 'repurpose-clip-generate', retries: 2, concurrency: { limit: 3 } },

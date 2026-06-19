@@ -86,14 +86,17 @@ strip_pattern "*posthog-js*" "posthog-js (analytics client)"
 # Sentry: truncate to just re-export stubs, keeping Turbopack module wrapper intact.
 # Previous approach replaced the entire file, destroying co-bundled non-sentry modules
 # and causing "module factory is not available" SSR crashes.
+# IMPORTANT: Only strip sentry files that are LARGE (>100KB). Smaller sentry chunks
+# are part of the module graph and must NOT be stripped or the hashed module references
+# will break (Cannot find module '@sentry/nextjs-xxxxx').
 strip_sentry() {
   local label="sentry-sdk"
   local saved=0
 
   for dir in "$CHUNKS_DIR" "$STANDALONE_CHUNKS" "$NON_SSR_CHUNKS" "$STANDALONE_NON_SSR" "$OPENNEXT_CHUNKS" "$OPENNEXT_NON_SSR"; do
     if [ -d "$dir" ]; then
-      # Only target files where sentry dominates (>90% of content). These are
-      # standalone sentry chunks, not bundles mixing sentry with app code.
+      # Only target files where sentry dominates size-wise (>100KB).
+      # These are standalone sentry chunks, not bundles mixing sentry with app code.
       for f in $(find "$dir" -name "*sentry*" -o -name "*SENTRY*" -type f ! -name "*.map" 2>/dev/null); do
         [ -f "$f" ] || continue
         local size=$(wc -c < "$f")

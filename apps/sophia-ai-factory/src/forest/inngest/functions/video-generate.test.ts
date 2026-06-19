@@ -48,13 +48,16 @@ vi.mock('@/forest/inngest/client', () => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({ createServerClient: mockCreateServerClient }));
-vi.mock('@/land/video/r2-binding', () => ({ getVideoBucket: mockGetVideoBucket }));
-vi.mock('@/land/video/cost-ledger', () => ({ recordCost: mockRecordCost }));
+vi.mock('@/land/video/storage/r2-binding', () => ({
+  getVideoBucket: mockGetVideoBucket,
+  tenantScopedKey: vi.fn((tenantId: string, jobId: string, filename: string) => `video-jobs/${tenantId}/${jobId}/${filename}`),
+}));
+vi.mock('@/land/video/templates/cost-ledger', () => ({ recordCost: mockRecordCost }));
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock('@/land/video/wan21-client', () => {
+vi.mock('@/land/video/generation/wan21-client', () => {
   function MockWanVideoClient() {
     return { generateVideo: mockGenerateVideo, getJobStatus: mockGetJobStatus };
   }
@@ -64,7 +67,7 @@ vi.mock('@/land/video/wan21-client', () => {
   };
 });
 
-vi.mock('@/land/video/fish-speech-client', () => {
+vi.mock('@/land/video/generation/fish-speech-client', () => {
   function MockFishSpeechClient() {
     return { generateSpeech: mockGenerateSpeech };
   }
@@ -78,11 +81,11 @@ vi.mock('@/seed/db/repositories/brand-kits-repo', () => ({
   getBrandKit: mockGetBrandKit,
 }));
 
-vi.mock('@/land/video/subtitle-generator', () => ({
+vi.mock('@/land/video/assembly/subtitle-generator', () => ({
   generateSubtitles: mockGenerateSubtitles,
 }));
 
-vi.mock('@/land/video/composer-ffmpeg', () => ({
+vi.mock('@/land/video/assembly/composer-ffmpeg', () => ({
   composeFinalVideo: mockComposeFinalVideo,
   applyBrandKit: vi.fn((userId, input) => Promise.resolve(input)),
 }));

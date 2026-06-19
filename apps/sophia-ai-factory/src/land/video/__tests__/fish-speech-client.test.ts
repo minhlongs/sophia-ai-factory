@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { FishSpeechClient, FishSpeechClientError } from '../fish-speech-client';
+import { FishSpeechClient, FishSpeechClientError } from '../generation/fish-speech-client';
 
 const TEST_API_KEY = 'fal_test_key_abc';
 

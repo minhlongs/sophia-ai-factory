@@ -5,13 +5,13 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-vi.mock('@/land/video/r2-binding', () => ({
+vi.mock('@/land/video/storage/r2-binding', () => ({
   tenantScopedKey: (tenantId: string, jobId: string, stage: string) =>
     `tenants/${tenantId}/videos/${jobId}/${stage}`,
   getVideoBucket: vi.fn(),
 }));
 
-vi.mock('@/land/video/cost-ledger', () => ({
+vi.mock('@/land/video/templates/cost-ledger', () => ({
   recordCost: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -19,11 +19,11 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-import { composeFinalVideo } from '../composer-ffmpeg';
-import { getVideoBucket } from '@/land/video/r2-binding';
-import { recordCost } from '@/land/video/cost-ledger';
-import type { R2BucketRef } from '@/land/video/r2-binding';
-import { resetBreaker } from '@/land/video/circuit-breaker';
+import { composeFinalVideo } from '../assembly/composer-ffmpeg';
+import { getVideoBucket } from '@/land/video/storage/r2-binding';
+import { recordCost } from '@/land/video/templates/cost-ledger';
+import type { R2BucketRef } from '@/land/video/storage/r2-binding';
+import { resetBreaker } from '@/land/video/templates/circuit-breaker';
 
 const mockPut = vi.fn().mockResolvedValue(undefined);
 const mockBucketRef = { bucket: { put: mockPut }, publicBaseUrl: null } as unknown as R2BucketRef;

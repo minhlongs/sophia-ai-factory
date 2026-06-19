@@ -9,8 +9,13 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'fs'
 import { join } from 'path'
 import type { CheckResult, AuditEnv } from '@/tree/audit/zero-gap-types'
 
-const MESSAGES_DIR = join(process.cwd(), 'messages')
-const APP_SRC_DIR = join(process.cwd(), 'src', 'app')
+interface VitestResult {
+  numPassedTests?: number
+  numFailedTests?: number
+  numTotalTests?: number
+  success?: boolean
+  testResults?: Array<{ status: string; numPassingAsserts?: number }>
+}
 
 function flattenKeys(obj: Record<string, unknown>, prefix = ''): string[] {
   const keys: string[] = []
@@ -26,6 +31,8 @@ function flattenKeys(obj: Record<string, unknown>, prefix = ''): string[] {
 }
 
 function loadMessageKeys(locale: string): string[] | null {
+  // Compute paths at call time to avoid NFT module-level tracing
+  const MESSAGES_DIR = join(process.cwd(), 'messages')
   const path = join(MESSAGES_DIR, `${locale}.json`)
   if (!existsSync(path)) return null
   try {
@@ -52,6 +59,9 @@ function collectTsxFiles(dir: string): string[] {
 
 export async function runI18nChecks(_env: AuditEnv): Promise<CheckResult[]> {
   const start = Date.now()
+
+  // Compute path at runtime to avoid NFT module-level tracing
+  const APP_SRC_DIR = join(process.cwd(), 'src', 'app')
 
   const viKeys = loadMessageKeys('vi')
   const enKeys = loadMessageKeys('en')

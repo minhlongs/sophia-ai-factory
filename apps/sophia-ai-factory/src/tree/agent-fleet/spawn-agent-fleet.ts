@@ -82,7 +82,7 @@ export async function spawnAgentFleet(
     tenantId,
     actor = "system",
     parallel = true,
-    maxConcurrency = 100,
+    maxConcurrency = 5,
     iterationLimits = DEFAULT_ITERATION_LIMITS,
   } = opts;
 

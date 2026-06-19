@@ -8,7 +8,7 @@
  * @module inngest/functions/conversion-to-ledger
  */
 
-import { inngest } from '@/forest/inngest/client'
+import { inngest } from '@/seed/inngest/client'
 import { calculateCommission } from '@/land/affiliates/commission-calculator'
 import { insertPendingLedger } from '@/land/payouts/commission-ledger'
 import { toCents } from '@/land/payouts/commission-cents'

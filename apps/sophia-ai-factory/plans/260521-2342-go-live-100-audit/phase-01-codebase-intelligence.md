@@ -12,7 +12,7 @@
 ## Overview
 
 - **Priority:** P1 — blocks all downstream phases
-- **Status:** pending
+- **Status:** completed
 - **Description:** Observe, map, verify. Produce architecture/dependency/risk artifacts that Phase 2-5 consume. Resolve unpushed HEAD + dirty tree before any further work.
 
 ## Key Insights
@@ -77,14 +77,14 @@ Synthesizer (planner) produces `reports/phase-01-codebase-map.md` with consolida
 
 ## Todo List
 
-- [ ] Triage dirty tree; decide ship/abandon for handover-doc changes
-- [ ] Commit + push to clear deploy-guard
-- [ ] Verify `/api/version` against local HEAD; record drift
-- [ ] Dispatch 6 parallel researchers (R1-R6)
-- [ ] Reconcile test-file count discrepancy
-- [ ] Build top-30 imported-module list
-- [ ] Synthesize `reports/phase-01-codebase-map.md`
-- [ ] Pre-flag Phase 4 carryovers (OPENNEXT_VERSION + any new finds)
+- [x] Triage dirty tree; decide ship/abandon for handover-doc changes
+- [x] Commit + push to clear deploy-guard
+- [x] Verify `/api/version` against local HEAD; record drift
+- [x] Dispatch 6 parallel researchers (R1-R6)
+- [x] Reconcile test-file count discrepancy
+- [x] Build top-30 imported-module list
+- [x] Synthesize `reports/phase-01-codebase-map.md`
+- [x] Pre-flag Phase 4 carryovers (OPENNEXT_VERSION + any new finds)
 
 ## Success Criteria
 

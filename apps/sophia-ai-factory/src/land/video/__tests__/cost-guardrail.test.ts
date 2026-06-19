@@ -9,8 +9,8 @@ vi.mock('@/land/mcu/credits-repo', () => ({
   getBalance: vi.fn(),
 }));
 
-import { checkVideoBudget } from '../cost-guardrail';
-import { getBalance } from '@/land/mcu/credits-repo';
+import { checkVideoBudget } from '../templates/cost-guardrail';
+import { getBalance } from '@/tree/mcu/credits-repo';
 
 const mockBalance = vi.mocked(getBalance);
 

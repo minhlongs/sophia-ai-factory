@@ -101,7 +101,7 @@ vi.mock('@/forest/publishing/oauth-token-refresher', () => ({
 vi.mock('@/tree/crypto/token-crypto', () => ({
   decryptToken: vi.fn().mockResolvedValue('decrypted-token'),
 }));
-vi.mock('@/land/video/get-canonical-video-url', () => ({
+vi.mock('@/land/video/storage/get-canonical-video-url', () => ({
   getCanonicalVideoUrl: vi.fn().mockResolvedValue('https://pub-test.r2.dev/vid.mp4'),
   VideoNotFoundError: class VideoNotFoundError extends Error {},
   VideoUnauthorizedError: class VideoUnauthorizedError extends Error {},

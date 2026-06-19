@@ -141,7 +141,7 @@ vi.mock('@/forest/inngest/client', () => ({
 
 const publisherObj = { upload: mockUpload, pollStatus: vi.fn().mockResolvedValue('processing'), getMetrics: vi.fn().mockResolvedValue({}) };
 vi.mock('@/forest/publishing/tiktok-publisher', () => ({ TikTokPublisher: vi.fn().mockImplementation(() => publisherObj) }));
-vi.mock('@/forest/publishing/youtube-publisher', () => ({ YouTubePublisher: vi.fn().mockImplementation(() => publisherObj) }));
+vi.mock('@/land/video/publishing/providers/youtube-publisher', () => ({ YouTubePublisher: vi.fn().mockImplementation(() => publisherObj) }));
 vi.mock('@/forest/publishing/instagram-publisher', () => ({ InstagramPublisher: vi.fn().mockImplementation(() => publisherObj) }));
 vi.mock('@/forest/publishing/facebook-publisher', () => ({ FacebookPublisher: vi.fn().mockImplementation(() => publisherObj) }));
 vi.mock('@/forest/publishing/twitter-publisher', () => ({ TwitterPublisher: vi.fn().mockImplementation(() => publisherObj) }));
@@ -159,7 +159,7 @@ import {
   VideoNotFoundError,
   VideoUnauthorizedError,
   VideoNotMirroredError,
-} from '@/land/video/get-canonical-video-url';
+} from '@/land/video/storage/get-canonical-video-url';
 
 // ── Shared test fixtures ───────────────────────────────────────────────────────
 

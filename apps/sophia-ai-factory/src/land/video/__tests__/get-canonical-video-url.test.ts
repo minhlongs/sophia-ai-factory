@@ -22,7 +22,7 @@ import {
   VideoNotFoundError,
   VideoUnauthorizedError,
   VideoNotMirroredError,
-} from '../get-canonical-video-url';
+} from '../storage/get-canonical-video-url';
 import { getD1 } from '@/seed/db/client';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────

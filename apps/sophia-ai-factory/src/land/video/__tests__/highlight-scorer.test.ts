@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { scoreHighlights } from '../highlight-scorer';
+import { scoreHighlights } from '../generation/highlight-scorer';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 
 vi.mock('@/tree/byok/resolve-user-api-key', () => ({

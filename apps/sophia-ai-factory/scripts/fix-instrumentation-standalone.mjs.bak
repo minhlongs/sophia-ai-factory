@@ -1,0 +1,65 @@
+/**
+ * fix-instrumentation-standalone.mjs
+ *
+ * Next.js 16+ does not copy instrumentation.js into the standalone output.
+ * OpenNext's copyTracedFiles expects it there (alongside instrumentation.js.nft.json).
+ * This script copies the missing file(s) before @opennextjs/cloudflare processes the bundle.
+ *
+ * Run: node scripts/fix-instrumentation-standalone.mjs
+ * Called automatically by deploy/deploy:build scripts (between next build and opennext build).
+ */
+
+import { copyFileSync, existsSync, mkdirSync, cpSync, rmSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const appRoot = join(__dirname, '..');
+
+// OpenNext expects files at .next/server/
+const serverDir = join(appRoot, '.next', 'server');
+// Turbopack outputs to .next/standalone/.next/server/
+const turbopackServerDir = join(appRoot, '.next', 'standalone', '.next', 'server');
+
+console.log('[debug] appRoot:', appRoot);
+console.log('[debug] serverDir (target):', serverDir);
+console.log('[debug] turbopackServerDir (source):', turbopackServerDir);
+
+// Clean and recreate .next/server/ from Turbopack output
+if (existsSync(serverDir)) {
+  rmSync(serverDir, { recursive: true, force: true });
+}
+mkdirSync(serverDir, { recursive: true });
+
+// Copy entire server directory structure
+cpSync(turbopackServerDir, serverDir, { recursive: true });
+console.log('[fix-instrumentation] Copied entire server directory from Turbopack output to .next/server/');
+
+// Also copy instrumentation to standalone/server/ for backward compatibility
+const standaloneServerDir = join(appRoot, '.next', 'standalone', 'server');
+mkdirSync(standaloneServerDir, { recursive: true });
+
+const filesToCopy = [
+  'instrumentation.js',
+  'instrumentation.js.map',
+  'chunks/instrumentation_ts_0zq9-xz._.js',
+  'chunks/instrumentation_ts_0zq9-xz._.js.map',
+];
+
+for (const file of filesToCopy) {
+  const src = join(turbopackServerDir, file);
+  const dest = join(standaloneServerDir, file);
+
+  if (!existsSync(src)) {
+    continue; // instrumentation may not exist in all builds
+  }
+
+  if (existsSync(dest)) {
+    continue;
+  }
+
+  copyFileSync(src, dest);
+  console.log(`[fix-instrumentation] COPIED ${file} → .next/standalone/server/`);
+}
+
+console.log(`[fix-instrumentation] Done: ${copied} copied, ${skipped} skipped.`);

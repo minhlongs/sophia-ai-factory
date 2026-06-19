@@ -2,7 +2,7 @@
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
-import { getVideoBucket } from '@/land/video/r2-binding';
+import { getVideoBucket } from '@/land/video/storage/r2-binding';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import {
   createBatchJob,
@@ -13,8 +13,8 @@ import {
   updateBatchJobStatus,
   cancelPendingBatchVideos,
 } from '@/seed/db/repositories/batch-jobs-repo';
-import { parseBatchCsv, parseBatchJson, estimateBatchCost } from '@/land/video/batch-csv-parser';
-import { inngest } from '@/forest/inngest/client';
+import { parseBatchCsv, parseBatchJson, estimateBatchCost } from '@/land/video/templates/batch-csv-parser';
+import { inngest } from '@/seed/inngest/client';
 import type { BatchJob, BatchVideo } from '@/seed/db/repositories/batch-jobs-repo';
 
 const BATCH_LIMITS: Record<string, number> = {

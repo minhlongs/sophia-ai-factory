@@ -87,6 +87,7 @@ export async function signIn(opts: SignInOptions): Promise<SignInResult> {
       data: { email: opts.email, password: opts.password },
       headers: {
         'content-type': 'application/json',
+        origin: opts.baseURL,
         ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
       },
     })

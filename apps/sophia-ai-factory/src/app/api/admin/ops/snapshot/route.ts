@@ -13,7 +13,7 @@ import { requireAdmin } from '@/seed/auth/require-admin'
 import { getD1 } from '@/seed/db/client'
 import { getBuildMetadata } from '@/seed/health/build-metadata'
 import { isHeyGenHealthy } from '@/seed/health/heygen-health-check'
-import { getCircuitState } from '@/land/fulfillment/circuit-breaker'
+import { getCircuitState } from '@/seed/utils/circuit-breaker'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 

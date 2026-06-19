@@ -9,7 +9,7 @@ vi.mock('@opennextjs/cloudflare', () => ({
   getCloudflareContext: vi.fn(),
 }));
 
-vi.mock('@/land/video/r2-binding', () => ({
+vi.mock('@/land/video/storage/r2-binding', () => ({
   getVideoBucket: vi.fn(),
 }));
 
@@ -17,9 +17,9 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
-import { generateSubtitles } from '../subtitle-generator';
+import { generateSubtitles } from '../assembly/subtitle-generator';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
-import { getVideoBucket } from '@/land/video/r2-binding';
+import { getVideoBucket } from '@/land/video/storage/r2-binding';
 
 const mockArrayBuffer = () => Promise.resolve(new ArrayBuffer(1024));
 const mockR2Obj = { arrayBuffer: mockArrayBuffer };

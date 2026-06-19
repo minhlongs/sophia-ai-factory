@@ -11,8 +11,8 @@ import {
   assertValidTransition,
   STATUS_PROGRESS,
   TERMINAL_STATES,
-} from '../video-job-fsm';
-import type { VideoJobStatus } from '../video-job-fsm';
+} from '../generation/video-job-fsm';
+import type { VideoJobStatus } from '../generation/video-job-fsm';
 
 describe('VideoJobFSM', () => {
   describe('isValidTransition', () => {

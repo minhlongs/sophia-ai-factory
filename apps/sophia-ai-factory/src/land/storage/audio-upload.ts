@@ -11,7 +11,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
-import { getVideoBucket } from '@/land/video/r2-binding';
+import { getVideoBucket } from '@/land/video/storage/r2-binding';
 
 /**
  * Upload an audio buffer to R2 and return the public URL.

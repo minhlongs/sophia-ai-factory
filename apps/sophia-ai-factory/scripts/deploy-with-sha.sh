@@ -94,6 +94,7 @@ extract_short_sha() {
   node -e "let input=''; process.stdin.on('data', c => input += c); process.stdin.on('end', () => { try { const parsed = JSON.parse(input); if (typeof parsed.shortSha === 'string') process.stdout.write(parsed.shortSha); } catch {} });"
 }
 
+
 # ─── Step 0: Push precondition (2026-05-15 — prevent prod/git divergence) ────
 # Reject deploy if local HEAD has commits not yet on origin/main. Latent divergence
 # is the root cause of incident 2026-05-13/15 where prod ran code that existed
@@ -213,6 +214,12 @@ else
   echo "⚠️ SKIP_ATTESTATION=1 — BYPASSING deploy attestation (emergency hotfix)"
   echo "⚠️ Document bypass reason: date, operator, reason, rollback plan"
   echo "⚠️ SOC 2 CC6.1: Re-attest within 24h or next business day"
+  # Set defaults for audit payload when skipping attestation
+  ATTESTATION_COUNT=0
+  OPERATOR_HOST=$(hostname)
+  OPERATOR_USER=$(whoami)
+  DIFF_STAT=$(git -C "$REPO_ROOT" diff --stat origin/main...HEAD 2>/dev/null | tail -1 || echo "0 files changed")
+  FILES_CHANGED=$(git -C "$REPO_ROOT" diff --name-only origin/main...HEAD 2>/dev/null | wc -l | tr -d ' ')
 fi
 
 # ─── Step 0.75: Record deploy audit log entry (SOC 2 immutable audit) ─────────────
@@ -294,6 +301,8 @@ if [ "${SKIP_NEXT_BUILD:-0}" = "1" ]; then
 else
   echo "==> npm run build"
   npm run build
+  # Brief pause to ensure filesystem consistency before subsequent steps
+  sleep 5
 fi
 
 # ─── Step 1.5: Generate SBOM (Supply Chain Hardening) ──────────────────────
@@ -317,8 +326,43 @@ fi
 # .next/standalone/) so both .next/server/ and .next/standalone/ get stripped.
 
 # ─── Step 2: OpenNext + instrumentation fixes ────────────────────────────────
-echo "==> fix-instrumentation-standalone"
-node scripts/fix-instrumentation-standalone.mjs
+echo "==> ensure instrumentation in standalone"
+
+# Wait for instrumentation.js to appear after build (filesystem consistency fix)
+wait_for_file() {
+  local file="$1"
+  local max_wait="${2:-15}"
+  local elapsed=0
+  while [ $elapsed -lt $max_wait ]; do
+    if [ -f "$file" ]; then
+      return 0
+    fi
+    sleep 1
+    elapsed=$((elapsed+1))
+  done
+  return 1
+}
+
+# Copy instrumentation files from .next/server to .next/standalone/.next/server
+# This is needed because Next.js standalone output does not include instrumentation.js
+mkdir -p ".next/standalone/.next/server/chunks"
+if ! wait_for_file ".next/server/instrumentation.js" 60; then
+  echo "ERROR: .next/server/instrumentation.js never appeared after build (filesystem cache delay)"
+  exit 1
+fi
+cp -f ".next/server/instrumentation.js" ".next/standalone/.next/server/"
+echo "  Copied instrumentation.js"
+if [ -f ".next/server/instrumentation.js.map" ]; then
+  cp -f ".next/server/instrumentation.js.map" ".next/standalone/.next/server/"
+  echo "  Copied instrumentation.js.map"
+fi
+# Copy instrumentation chunks if present (with wait)
+if ! wait_for_file ".next/server/chunks/instrumentation_ts_*" 5; then
+  echo "  No instrumentation chunks found (optional)"
+else
+  cp -f ".next/server/chunks/instrumentation_ts_*" ".next/standalone/.next/server/chunks/" 2>/dev/null || true
+  echo "  Copied instrumentation chunks"
+fi
 
 echo "==> strip-ssr-bloat (post-standalone)"
 bash scripts/strip-ssr-bloat.sh

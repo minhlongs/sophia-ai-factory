@@ -4,7 +4,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
-import { YouTubePublisher } from '../youtube-publisher';
+import { YouTubePublisher } from '@/land/video/publishing/providers/youtube-publisher';
 
 describe('YouTubePublisher', () => {
   beforeEach(() => {

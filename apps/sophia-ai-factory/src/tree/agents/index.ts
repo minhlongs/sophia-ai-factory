@@ -1,20 +1,12 @@
 /**
- * @module tree/agents
- * Domain wrapper re-exports — actual implementations in forest/agents
- * Import direction: tree → forest (via wrappers)
+ * @module agents
+ * Barrel re-exports.
  */
-
-// Core types
-export * from './types';
-
-// Data access layer
-export * from './repository';
-
-// Agent runtime
-export * from './runner';
-export * from './prompts';
-export { seedDefaultTeam } from './seed-default-team';
-
-// Health monitoring
 export * from './agent-health-resolver';
 export * from './enforcement-gate';
+export * from './prompt-variants';
+export * from './prompts';
+export * from './repository';
+export * from './runner';
+export * from './seed-default-team';
+export * from './types';

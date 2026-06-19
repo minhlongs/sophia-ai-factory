@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { withRetry } from '../retry-with-backoff';
-import { BreakerOpenError } from '../circuit-breaker';
+import { BreakerOpenError } from '../in-memory-circuit-breaker';
 
 // Replace real setTimeout with vitest fake timers for delay tests
 describe('withRetry', () => {

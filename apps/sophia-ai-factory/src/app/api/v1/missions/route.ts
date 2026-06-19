@@ -10,9 +10,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient } from '@/seed/db/client';
-import { validateMissionApiKey, apiKeyAuthErrorResponse } from '@/forest/missions/api-key-auth';
-import { isValidCommand, getCommand } from '@/forest/missions/command-registry';
-import { getBalance } from '@/land/mcu/credits-repo';
+import { validateMissionApiKey, apiKeyAuthErrorResponse } from '@/tree/missions/api-key-auth';
+import { isValidCommand, getCommand } from '@/tree/missions/command-registry';
+import { getBalance } from '@/tree/mcu/credits-repo';
 import { dispatchMission } from '@/forest/missions/dispatcher';
 import { checkAiCommandQuota } from '@/seed/auth/enforce-ai-command-quota';
 import { logger } from '@/seed/utils/logger-utility';
@@ -62,7 +62,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
   const { command, params, webhook_url } = parsed.data;
 
   if (!isValidCommand(command)) {
-    const { COMMANDS } = await import('@/forest/missions/command-registry');
+    const { COMMANDS } = await import('@/tree/missions/command-registry');
     // R2-8: Filter out any commands with status 'internal' to avoid leaking private endpoints.
     const publicCommands = Object.entries(COMMANDS)
       .filter(([, def]) => (def.status as string) !== 'internal')

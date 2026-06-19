@@ -1,44 +1,22 @@
 /**
- * Agent Enforcement Gate — tier-based pre-task access control.
- * Called before any LLM invocation in the runner.
- * Throws AgentTierBlockedError if user's tier does not permit the agent role.
+ * Enforcement Gate — Tier-based access control for AI agents
+ * Layer: forest
+ * Purpose: Validates that a user's subscription tier allows the requested agent role
  */
 
-import type { AgentRole } from './types';
-
-/** Tier hierarchy (ascending) */
-const TIER_ORDER: string[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
+import type { Tier } from '@/seed/types';
 
 /**
- * Maps each agent role to the minimum tier required to run it.
- * BASIC: no agent execution permitted.
- * PREMIUM: CEO + Developer roles.
- * ENTERPRISE: all current roles.
- * MASTER: unlimited (bypass all gates).
+ * Error thrown when a tier cannot run a specific agent role
  */
-const ROLE_MIN_TIER: Record<AgentRole, string> = {
-  CEO: 'PREMIUM',
-  CTO: 'ENTERPRISE',
-  CSO: 'ENTERPRISE',
-  CMO: 'ENTERPRISE',
-  COO: 'ENTERPRISE',
-  Developer: 'PREMIUM',
-  QA: 'ENTERPRISE',
-  Ops: 'ENTERPRISE',
-  Marketing: 'ENTERPRISE',
-};
-
-/** Structured error thrown when user's tier blocks agent execution. */
 export class AgentTierBlockedError extends Error {
-  readonly agentRole: string;
-  readonly requiredTier: string;
-  readonly userTier: string;
-  readonly errorClass = 'tier_blocked';
+  public readonly agentRole: string;
+  public readonly requiredTier: string;
+  public readonly userTier: string;
+  public readonly errorClass = 'tier_blocked';
 
   constructor(agentRole: string, requiredTier: string, userTier: string) {
-    super(
-      `Agent role '${agentRole}' requires ${requiredTier} tier (current: ${userTier})`
-    );
+    super(`Agent role "${agentRole}" requires tier "${requiredTier}", but user has "${userTier}"`);
     this.name = 'AgentTierBlockedError';
     this.agentRole = agentRole;
     this.requiredTier = requiredTier;
@@ -47,27 +25,45 @@ export class AgentTierBlockedError extends Error {
 }
 
 /**
- * Assert that the user's tier permits running the given agent role.
- * Throws AgentTierBlockedError (→ HTTP 403) if not.
- * MASTER tier bypasses all gates.
- * Unknown roles default to ENTERPRISE requirement (fail-safe deny).
+ * Role-to-tier requirement mapping
+ * Returns a COPY to prevent mutations from affecting gate logic
  */
-export function assertTierAllowsAgent(userTier: string, agentRole: string): void {
-  // MASTER bypasses everything
-  if (userTier === 'MASTER') return;
-
-  const requiredTier = ROLE_MIN_TIER[agentRole as AgentRole] ?? 'ENTERPRISE';
-
-  const userIdx = TIER_ORDER.indexOf(userTier);
-  const requiredIdx = TIER_ORDER.indexOf(requiredTier);
-
-  // Unknown tier → deny
-  if (userIdx === -1 || userIdx < requiredIdx) {
-    throw new AgentTierBlockedError(agentRole, requiredTier, userTier);
-  }
+export function getAgentRoleTierMap(): Record<string, Tier> {
+  return {
+    CEO: 'PREMIUM',
+    CTO: 'ENTERPRISE',
+    CSO: 'ENTERPRISE',
+    CMO: 'ENTERPRISE',
+    COO: 'ENTERPRISE',
+    Developer: 'PREMIUM',
+    QA: 'BASIC',
+    Ops: 'BASIC',
+    Marketing: 'PREMIUM',
+  };
 }
 
-/** Read-only role→tier map for UI display (Mission Control). */
-export function getAgentRoleTierMap(): Record<string, string> {
-  return { ...ROLE_MIN_TIER };
+/**
+ * Determines if a given user tier can run an agent with the specified role
+ * @throws AgentTierBlockedError if the combination is not allowed
+ */
+export function assertTierAllowsAgent(userTier: Tier, agentRole: string): void {
+  const roleMap = getAgentRoleTierMap();
+  const requiredTier = roleMap[agentRole] ?? 'ENTERPRISE';
+
+  // MASTER bypasses all checks
+  if (userTier === 'MASTER') {
+    return;
+  }
+
+  // Compare tier ranks
+  const tierRanks: Record<Tier, number> = {
+    BASIC: 0,
+    PREMIUM: 1,
+    ENTERPRISE: 2,
+    MASTER: 3,
+  };
+
+  if (tierRanks[userTier] < tierRanks[requiredTier]) {
+    throw new AgentTierBlockedError(agentRole, requiredTier, userTier);
+  }
 }

@@ -19,7 +19,7 @@ import { generateSeoScript, SeoScriptConfigurationError } from '@/land/scripts/g
 import { translateScript, TranslateConfigurationError } from '@/land/i18n/translate-script';
 import { buildVideoDescription } from '@/land/affiliates/video-description-injector';
 import { schedulePublish, PublishConfigurationError } from '@/land/publish/schedule-video-publish';
-import { submitByokVideo, RenderByokVideoError } from '@/land/video/render-byok-video';
+import { submitByokVideo, RenderByokVideoError } from '@/land/video/generation/render-byok-video';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';

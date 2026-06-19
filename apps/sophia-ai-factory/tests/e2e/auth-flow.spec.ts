@@ -24,9 +24,9 @@ test.describe('Auth pages', () => {
     const hasPasswordInput = await page.locator('input[type="password"]').isVisible();
     const hasEmailInput = await page.locator('input[type="email"]').isVisible();
     expect(hasEmailInput).toBeTruthy();
-    // Submit button visible
-    const submitBtn = page.locator('button[type="submit"]').or(page.locator('button').filter({ hasText: /đăng nhập|login|tiếp tục/i }));
-    await expect(submitBtn.first()).toBeVisible();
+    // Submit button visible — target the form's submit button, not navbar buttons
+    const submitBtn = page.locator('form button[type="submit"]').first();
+    await expect(submitBtn).toBeVisible();
   });
 
   test('/setup-wizard page loads with step indicator', async ({ page }) => {
@@ -57,11 +57,9 @@ test.describe('Auth pages', () => {
       await passwordInput.fill('wrongpassword123');
     }
 
-    // Submit
-    const submitBtn = page.locator('button[type="submit"]').or(
-      page.locator('button').filter({ hasText: /đăng nhập|login/i })
-    );
-    await submitBtn.first().click();
+    // Submit — target form's submit button specifically
+    const submitBtn = page.locator('form button[type="submit"]').first();
+    await submitBtn.click();
 
     // Wait for error response — either an error message or the form stays
     await page.waitForTimeout(2000);

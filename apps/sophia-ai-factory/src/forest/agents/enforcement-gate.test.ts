@@ -5,10 +5,11 @@
 
 import { describe, it, expect } from 'vitest';
 import { assertTierAllowsAgent, AgentTierBlockedError, getAgentRoleTierMap } from './enforcement-gate';
+import type { Tier } from '@/seed/types';
 
 describe('assertTierAllowsAgent', () => {
   // Cases that SHOULD be allowed
-  const allowedCases: [string, string][] = [
+  const allowedCases: [Tier, string][] = [
     ['PREMIUM', 'CEO'],
     ['PREMIUM', 'Developer'],
     ['ENTERPRISE', 'CEO'],
@@ -26,7 +27,7 @@ describe('assertTierAllowsAgent', () => {
   }
 
   // Cases that SHOULD be blocked
-  const blockedCases: [string, string][] = [
+  const blockedCases: [Tier, string][] = [
     ['BASIC', 'CEO'],
     ['BASIC', 'Developer'],
     ['BASIC', 'UnknownRole'],
@@ -41,7 +42,7 @@ describe('assertTierAllowsAgent', () => {
 
   it('throws AgentTierBlockedError with correct metadata', () => {
     try {
-      assertTierAllowsAgent('BASIC', 'CEO');
+      assertTierAllowsAgent('BASIC' as Tier, 'CEO');
       expect.fail('should have thrown');
     } catch (err) {
       expect(err).toBeInstanceOf(AgentTierBlockedError);
@@ -61,8 +62,8 @@ describe('assertTierAllowsAgent', () => {
   });
 
   it('treats unknown tier as blocked', () => {
-    // 'STARTER' is not a valid tier
-    expect(() => assertTierAllowsAgent('STARTER', 'CEO')).toThrow(AgentTierBlockedError);
+    // 'STARTER' is not a valid tier - cast to Tier to bypass type check (intentional test)
+    expect(() => assertTierAllowsAgent('STARTER' as Tier, 'CEO')).toThrow(AgentTierBlockedError);
   });
 });
 

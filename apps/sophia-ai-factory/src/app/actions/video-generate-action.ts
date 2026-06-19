@@ -1,7 +1,7 @@
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { videoService } from '@/land/video/video-service';
+import { generateVideo } from '@/land/video/publishing/video-generation.service';
 
 type ActionResult<T = unknown> =
   | { success: true; data: T }
@@ -41,7 +41,7 @@ export async function generateVideoAction(
     };
   }
 
-  const result = await videoService.generateVideo(
+  const result = await generateVideo(
     {
       prompt,
       style: style as 'cinematic' | 'casual' | 'educational' | undefined,

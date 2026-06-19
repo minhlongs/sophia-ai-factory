@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getTask } from '@/forest/agents/repository';
+import { getTask } from '@/tree/agents/repository';
 
 export const dynamic = 'force-dynamic';
 

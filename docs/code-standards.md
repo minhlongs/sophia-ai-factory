@@ -128,6 +128,208 @@ function checkQuota(result: QuotaResult) {
 
 **Reference:** Phase 11 fixed latent severity-routing bug by properly narrowing `exceeded_type` discriminant, ensuring hourly-credits violations correctly route to `'critical'` instead of defaulting to `'high'`.
 
+### Prompt Injection Guard Pattern (Phase 4)
+**Purpose:** Heuristic detection of prompt injection attacks at ingress points.
+
+**Location:** `src/lib/security/prompt-guard.ts` (legacy path; consider migrating to `@/seed/security/`)
+
+**Usage:**
+```typescript
+import { detectInjection } from '@/lib/security/prompt-guard';
+
+const result = detectInjection(userPrompt);
+if (result.flagged && result.severity === 'high') {
+  return { error: 'prompt_injection_detected', reasons: result.reasons };
+}
+```
+
+**Attack Patterns Detected:**
+- Role-switch: "ignore above", "you are now", "new instructions:"
+- System-leak: "print your system prompt", "reveal instructions"
+- Instruction-override: "forget previous", "disregard"
+- Markdown-injection: excessive code fences
+- Delimiter-spam: >20 backticks or >10 consecutive `===`
+- Unicode-homoglyph: mixing Cyrillic with Latin characters
+
+**Integration Point:** `POST /api/raas/workflows` before `createWorkflow`. Emits `PROMPT_INJECTION_DETECTED` D1 event for analytics.
+
+### Smart LLM Router Pattern (Phase 4)
+**Purpose:** Classify prompt complexity and select optimal provider/model.
+
+**Location:** `src/forest/ai/llm-router.ts`
+
+**Usage:**
+```typescript
+import { route } from '@/forest/ai/llm-router';
+
+const decision = route(prompt);
+// { provider: 'openrouter' | 'anthropic', model: string, complexity: 'simple' | 'medium' | 'complex' }
+```
+
+**Routing Matrix:**
+| Complexity | Provider | Model |
+|------------|----------|-------|
+| simple | openrouter | gpt-4o-mini |
+| medium | openrouter | gpt-4o-mini |
+| complex | anthropic | claude-sonnet-4-6 |
+
+**Classifier Heuristic:**
+- Keywords (EN+VN) for complexity scoring
+- Length thresholds: >500 chars → complex, >200 chars → medium
+- Complex score ≥ 2 → complex
+
+**Note:** Local-mode mekongd support was deprecated; all routes go to cloud providers.
+
+### Langfuse Observability Pattern (Phase 4)
+**Purpose:** Fire-and-forget secondary sink for LLM traces (observability only, not compliance source of truth).
+
+**Location:** `src/lib/telemetry/langfuse-client.ts`
+
+**Design:**
+- D1 `LLM_CALL_TRACE` remains primary (source of truth)
+- Langfuse is best-effort mirror for human inspection
+- Env-gated: both `LANGFUSE_PUBLIC_KEY` and `LANGFUSE_SECRET_KEY` required
+- 2-second timeout to prevent Worker starvation
+- PII scrubbing before external transmission
+- Failures never throw; D1 trace preserved
+
+**Integration:** `src/lib/telemetry/llm-trace.ts` calls `sendToLangfuse(...).catch()` after `track()`.
+
+### LLM Cache Pattern (Phase 4)
+**Purpose:** Exact-match cache to reduce LLM costs on deterministic prompts.
+
+**Location:**
+- Cache API: `src/land/llm/cache/llm-cache.ts`
+- Wrapper primitive: `src/land/llm/cache/call-with-cache.ts`
+
+**Cache Key Composition:**
+```typescript
+interface CacheKey {
+  orgId: string;        // multi-tenant isolation
+  provider: string;
+  model: string;
+  messages: {role: string; content: string}[];
+}
+```
+
+**Hash Algorithm:** SHA-256 via `crypto.subtle.digest` on normalized JSON.
+
+**Usage Pattern:**
+```typescript
+import { callWithCache } from '@/land/llm/cache/call-with-cache';
+
+const result = await callWithCache(
+  { orgId, provider, model, messages },
+  () => liveLlMFetch()
+);
+// result.fromCache === true if cache hit
+```
+
+**Env Gate:** `LLM_CACHE_ENABLED=1` activates; OFF by default in production.
+
+**Org Scoping (H-1 Fix):**
+- Migration `0009-llm-cache-org-scoping.sql` added `org_id NOT NULL`
+- Composite PK `(hash, org_id)` prevents cross-tenant leakage
+- `weekly-signals-digest` passes `'system'` sentinel orgId
+
+**Call Site Wiring:** `src/lib/ai/script-generator.ts` — the hottest LLM caller in prod.
+
+### Self-Dispatch via Service Binding Pattern (Phase 4)
+**Purpose:** Internal cron handlers invoke protected routes via service binding with Bearer auth.
+
+**Location:** `scripts/inject-scheduled-handler.mjs`
+
+**Implementation:**
+```typescript
+const req = new Request('https://self/api/cron/email-drip', {
+  method: 'POST',
+  headers: { 'Authorization': `Bearer ${env.CRON_SECRET}` },
+});
+const res = await env.WORKER_SELF_REFERENCE.fetch(req);
+```
+
+**Requirements:**
+- `wrangler.toml` service binding: `[[services]] binding = "WORKER_SELF_REFERENCE"`
+- `CRON_SECRET` set via `wrangler secret put`
+- Route must call `verifyCronAuth(request, env)`
+
+**Critical:** Cloudflare Workers Modules format requires `scheduled` as method on `default export`, NOT named export:
+```javascript
+export default {
+  fetch(request, env, ctx) { /* ... */ },
+  scheduled(event, env, ctx) { /* ... */ }
+};
+```
+
+### RaaS Gateway Pattern (Phase 6)
+**Purpose:** Authenticate and authorize all API requests against RaaS licenses.
+
+**Location:** `src/land/raas-gateway-client.ts`, `src/forest/raas/`
+
+**Integration:** Middleware applies to all `/api/*` routes (except health, setup, webhooks, auth).
+
+**License Format:** `raas_{tier}_{payload}` or HMAC-validated.
+
+**Failure Modes:**
+- Missing/invalid license → 403 Forbidden
+- Expired license → 403 Forbidden
+- Quota exceeded → 429 Too Many Requests
+- Dunning suspended → 403 with dunning state
+
+**Quota Enforcement Flow:**
+```
+Request → Middleware → RaaS Gate → Quota Check → Dunning Check → Allow/Block
+```
+
+### Quota Enforcer with Dunning Integration Pattern (Phase 6)
+**Purpose:** Hard usage limits combined with dunning workflow state checks.
+
+**Location:** `src/forest/quota/quota-enforcer.ts`
+
+**Two-Stage Check:**
+1. `canAccessApi(licenseNonce)` from dunning workflow — blocks if `suspended`
+2. `checkQuotaWithOverage()` — blocks if quota exceeded
+
+**Response Creation:**
+- `createQuotaExceededResponse()` — includes `retryAfter` from tier config
+- `createDunningBlockResponse()` — includes dunning state and recovery info
+
+**Logging:** All blocks logged with `userId`, `licenseNonce` (truncated), and reason.
+
+### Dunning Workflow State Machine (Phase 6)
+**Purpose:** Graceful degradation for payment failures with exponential backoff.
+
+**Location:** `src/land/billing/dunning-workflow/` (sub-modules), re-exported via `dunning-workflow.ts`
+
+**State Transitions:**
+`current` → `past_due` → `delinquent` → `suspended`
+
+**Tier-Based Grace Periods:** Configured in `DUNNING_TIER_CONFIGS`.
+
+**Events:**
+- `payment_failed` → advance state, schedule retry, send email
+- `payment_success` → restore access, reset state
+- `dunning_suspended` → block API access
+
+**Email Service:** Resend integration for notifications.
+
+**Cron Jobs:** Hourly overage billing reconciliation (`/api/cron/overage-billing`).
+
+### Overage Billing Reconciliation Pattern (Phase 6)
+**Purpose:** Calculate and bill for usage beyond quota limits.
+
+**Location:** `src/land/billing/overage-billing-reconciler.ts`
+
+**Flow:**
+1. Scan `usage_events` for quota-exceeded requests
+2. Calculate `credits_over` per user/tier
+3. Create `overage_billing` records
+4. Integrate with Polar metered billing
+
+**Polar Integration:** `src/lib/billing/polar-metered-billing.ts` sends usage to Polar.
+
+**Idempotency:** Overage events deduped by unique constraints.
+
 ---
 
 ## Testing Standards
@@ -436,6 +638,19 @@ bash scripts/set-cron-secret.sh  # Generates 32-byte random secret + sets via wr
 
 | Phase | Pattern | Location |
 |-------|---------|----------|
+| 4 | Prompt injection guard | `src/lib/security/prompt-guard.ts` |
+| 4 | Smart LLM Router | `src/forest/ai/llm-router.ts` |
+| 4 | Langfuse observability sink | `src/lib/telemetry/langfuse-client.ts` |
+| 4 | LLM cache API (exact-match) | `src/land/llm/cache/llm-cache.ts` |
+| 4 | Cache wrapper primitive | `src/land/llm/cache/call-with-cache.ts` |
+| 4 | Org-scoped cache keys | Migration `0009-llm-cache-org-scoping.sql` |
+| 4 | Service binding self-dispatch | `scripts/inject-scheduled-handler.mjs` |
+| 5 | Tier-gated analytics | `src/forest/analytics/` |
+| 5 | ROI calculator service | `src/lib/analytics/roi-calculator.ts` |
+| 6 | RaaS Gateway Client | `src/land/raas-gateway-client.ts` |
+| 6 | Quota Enforcer with dunning | `src/forest/quota/quota-enforcer.ts` |
+| 6 | Dunning workflow state machine | `src/land/billing/dunning-workflow/` |
+| 6 | Overage billing reconciliation | `src/land/billing/overage-billing-reconciler.ts` |
 | 9 | Module types extraction | `src/tree/audit/types.ts` |
 | 10 | D1Response<T> generic | `src/forest/usage-metering/types.ts` (promoted Phase 12) |
 | 11 | Discriminated union narrowing | `src/forest/raas/raas-rate-limiter.ts` |
@@ -444,9 +659,9 @@ bash scripts/set-cron-secret.sh  # Generates 32-byte random secret + sets via wr
 | 12 | D1Response canonical location | `src/seed/db/types.ts` |
 | 13 | Commission ledger append-only | `src/land/payouts/commission-ledger.ts` |
 | 13 | 14-day clawback window | `src/land/payouts/clawback-handler.ts` |
-| 14 | **FTC #ad overlay (FFmpeg)** | **`src/lib/video/ftc-ad-overlay.ts`** |
-| 14 | **GDPR account routes** | **`src/app/api/account/`** |
-| 14 | **GDPR redaction helpers** | **`src/tree/audit/gdpr-redaction.ts`** |
+| 14 | FTC #ad overlay (FFmpeg) | `src/lib/video/ftc-ad-overlay.ts` |
+| 14 | GDPR account routes | `src/app/api/account/` |
+| 14 | GDPR redaction helpers | `src/tree/audit/gdpr-redaction.ts` |
 | - | Tier normalization | `src/lib/auth/normalize-tier.ts` |
 | - | BYOK encryption | `src/lib/byok/*` |
 | - | Org resolution | `src/lib/auth/resolve-org-id.ts` |

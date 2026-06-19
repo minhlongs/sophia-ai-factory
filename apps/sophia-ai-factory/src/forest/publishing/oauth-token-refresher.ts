@@ -14,11 +14,11 @@ import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { refreshAccessToken as refreshTikTok } from '@/land/tiktok/tiktok-token-manager';
 import { refreshAccessToken as refreshYouTube } from '@/land/youtube/youtube-oauth-client';
-import { refreshAccessToken as refreshTwitter } from './twitter-oauth-client';
-import { refreshLongLivedToken as refreshThreadsToken } from './threads-oauth-client';
-import { refreshAccessToken as refreshReddit } from './reddit-oauth-client';
-import { refreshAtprotoSession } from './bluesky';
-import { parseExternalAccountId as parseMastodonAccountId } from './mastodon';
+import { refreshAccessToken as refreshTwitter } from '@/land/video/publishing/providers/twitter-oauth-client';
+import { refreshLongLivedToken as refreshThreadsToken } from '@/land/video/publishing/providers/threads';
+import { refreshAccessToken as refreshReddit } from '@/land/video/publishing/providers/reddit';
+import { refreshAtprotoSession } from '@/land/video/publishing/providers/bluesky';
+import { parseExternalAccountId as parseMastodonAccountId } from '@/land/video/publishing/providers/mastodon';
 import type { PublishingChannel } from './publisher-interface';
 
 const ONE_HOUR_S = 3600;

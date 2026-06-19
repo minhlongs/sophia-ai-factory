@@ -5,7 +5,7 @@
  * so the full mission orchestrator can be tested without real API keys.
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { VideoRenderProviderResult } from '@/land/video/video-render-provider';
+import type { VideoRenderProviderResult } from '@/land/video/generation/video-render-provider';
 
 // --- D1 mock ----------------------------------------------------------------
 const mockRun = vi.fn().mockResolvedValue({});
@@ -16,7 +16,7 @@ vi.mock('@/seed/db/client', () => ({
 }));
 
 // --- Provider mock ----------------------------------------------------------
-vi.mock('@/land/video/video-render-provider', () => ({
+vi.mock('@/land/video/generation/video-render-provider', () => ({
   submitVideoRender: vi.fn(),
   RenderProviderError: class extends Error {
     code: string;
@@ -87,7 +87,7 @@ vi.mock('@/land/publish/schedule-video-publish', () => ({
 
 // --- Import after mocks ------------------------------------------------------
 import { runAutoVideoMission, AutoVideoMissionError } from '@/land/missions/auto-video-mission';
-import { submitVideoRender } from '@/land/video/video-render-provider';
+import { submitVideoRender } from '@/land/video/generation/video-render-provider';
 import { buildVideoDescription } from '@/land/affiliates/video-description-injector';
 const mockedSubmitVideoRender = vi.mocked(submitVideoRender);
 const mockedBuildVideoDescription = vi.mocked(buildVideoDescription);
