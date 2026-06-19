@@ -132,7 +132,7 @@ vi.mock('@/forest/publishing/oauth-token-refresher', () => ({
 vi.mock('@/tree/crypto/token-crypto', () => ({
   decryptToken: mockDecryptToken,
 }));
-vi.mock('@/forest/inngest/client', () => ({
+vi.mock('@/seed/inngest/client', () => ({
   inngest: {
     createFunction: vi.fn(),
     send: vi.fn(),

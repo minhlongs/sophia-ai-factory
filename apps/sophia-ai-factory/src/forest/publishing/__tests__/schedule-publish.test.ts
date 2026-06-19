@@ -16,7 +16,7 @@ const { mockInngestSend } = vi.hoisted(() => ({
   mockInngestSend: vi.fn(),
 }));
 
-vi.mock('@/forest/inngest/client', () => ({
+vi.mock('@/seed/inngest/client', () => ({
   inngest: { send: mockInngestSend },
 }));
 

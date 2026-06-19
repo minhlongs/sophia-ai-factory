@@ -41,7 +41,7 @@ const {
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
-vi.mock('@/forest/inngest/client', () => ({
+vi.mock('@/seed/inngest/client', () => ({
   inngest: {
     createFunction: (_cfg: unknown, _evt: unknown, handler: (...args: unknown[]) => unknown) => handler,
   },
