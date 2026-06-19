@@ -153,19 +153,41 @@ export async function createTestUser(
 ): Promise<TestUser> {
   const userData = TestDataFactory.generateUser({ email, password });
 
-  // Sign up the user
-  const signupResp = await fetch(`${baseURL}/api/auth/sign-up/email`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({
-      email: userData.email,
-      password: userData.password,
-      name: userData.name,
-    }),
-  });
+  const { request: createRequest } = await import('@playwright/test');
+  const api = await createRequest.newContext({ baseURL });
+  try {
+    // Step 1: GET sign-in page to establish session and get CSRF token
+    const csrfResp = await api.get('/api/auth/sign-in');
+    if (!csrfResp.ok()) {
+      throw new Error(`Failed to load CSRF token: HTTP ${csrfResp.status()}`);
+    }
 
-  if (!signupResp.ok && !/already.*exists/i.test(await signupResp.text().catch(() => ''))) {
-    throw new Error(`Failed to create test user: HTTP ${signupResp.status}`);
+    // Extract CSRF token from Set-Cookie headers (may be string or array)
+    const setCookieHeaders = csrfResp.headers()['set-cookie'];
+    const cookiesList = Array.isArray(setCookieHeaders) ? setCookieHeaders : (setCookieHeaders ? [setCookieHeaders] : []);
+    const csrfCookie = cookiesList.find((c: string) => c.startsWith('better-auth.csrf='));
+    const csrfToken = csrfCookie
+      ? decodeURIComponent(csrfCookie.split(';')[0].split('=')[1] || '')
+      : '';
+
+    // Step 2: POST sign-up with CSRF token
+    const signupResp = await api.post('/api/auth/sign-up', {
+      data: {
+        email: userData.email,
+        password: userData.password,
+        name: userData.name,
+      },
+      headers: {
+        'content-type': 'application/json',
+        ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
+      },
+    });
+
+    if (!signupResp.ok && !/already.*exists/i.test(await signupResp.text().catch(() => ''))) {
+      throw new Error(`Failed to create test user: HTTP ${signupResp.status}`);
+    }
+  } finally {
+    await api.dispose();
   }
 
   // If admin role, we'd need to update user metadata via admin API or direct DB

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { PinterestPublisher } from '../pinterest-publisher';
+import { PinterestPublisher } from '@/land/video/publishing/providers/pinterest-publisher';
 
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },

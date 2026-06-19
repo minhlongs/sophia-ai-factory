@@ -1,138 +1,138 @@
 /**
- * RaaS (Robot-as-a-Service) Types
+ * RaaS Domain Types
  *
- * Adapted from sophia-proposal/types/raas.ts
- * TypeScript interfaces for missions, templates, PEV execution system.
+ * Database row types for RaaS license management, API keys, audit logs.
+ * Extracted from supabase-types.ts for modular organization.
+ *
+ * @module seed/types/raas
  */
 
-// ── Enums / Unions ─────────────────────────────────────────────────────────────
+import { Json } from './json';
 
-export type MissionStatus =
-  | 'queued'
-  | 'planning'
-  | 'executing'
-  | 'verifying'
-  | 'completed'
-  | 'failed';
-
-export type MissionPriority = 'low' | 'normal' | 'high' | 'urgent';
-
-export type MissionCategory =
-  | 'proposal'
-  | 'video'
-  | 'affiliate'
-  | 'content'
-  | 'analytics'
-  | 'sales'
-  | 'leads'
-  | 'email';
-
-export type MissionCommand =
-  | 'proposal:create'
-  | 'video:create'
-  | 'video:create_heygen'
-  | 'affiliate:generate'
-  | 'affiliate:scrape'
-  | 'content:blog'
-  | 'content:social'
-  | 'crm:sync'
-  | 'analytics:export'
-  | 'gtm:campaign'
-  | 'sales:battlecard'
-  | 'sales:proposal-deck'
-  | 'sales:roi-calculator'
-  | 'sales:competitor-analysis'
-  | 'sales:pricing-optimizer'
-  | 'sales:outreach-sequence'
-  | 'lead:generate'
-  | 'email:send';
-
-// ── Core Table Types ───────────────────────────────────────────────────────────
-
-export interface Mission {
+// RaaS License keys
+export interface RaasLicenseRow {
   id: string;
-  org_id: string;
-  title: string;
-  description: string | null;
-  command: MissionCommand;
-  params: Record<string, unknown>;
-  status: MissionStatus;
-  priority: MissionPriority;
-  mcu_cost: number;
-  mcu_reserved: number;
-  result: MissionResult | null;
-  error_message: string | null;
-  plan: PEVPlan | null;
-  execution_log: PEVStep[];
-  started_at: string | null;
-  completed_at: string | null;
-  created_at: string;
-  updated_at: string;
-  max_retries: number;
-  retry_count: number;
-  parent_mission_id: string | null;
-  webhook_url: string | null;
-  is_sub_mission: boolean;
+  key_hash: string;
+  tier: string;
+  expires_at: number | null;
+  nonce: string;
+  is_revoked: boolean;
+  revoked_at: number | null;
+  revoked_by: string | null;
+  created_by: string | null;
+  created_at: number;
+  metadata: Json;
+  updated_at: number | null;
+  stripe_customer_id: string | null;
 }
 
-export interface MissionTemplate {
+export interface RaasLicenseInsert {
+  key_hash: string;
+  tier: string;
+  expires_at?: number | null;
+  nonce: string;
+  is_revoked?: boolean;
+  revoked_at?: number | null;
+  revoked_by?: string | null;
+  created_by?: string | null;
+  created_at?: number;
+  metadata?: Json;
+}
+
+export interface RaasLicenseUpdate {
+  tier?: string;
+  expires_at?: number | null;
+  is_revoked?: boolean;
+  revoked_at?: number | null;
+  revoked_by?: string | null;
+  metadata?: Json;
+  updated_at?: number;
+  stripe_customer_id?: string | null;
+  [key: string]: string | number | boolean | Json | null | undefined
+}
+
+// RaaS Audit Log (immutable audit trail)
+export interface RaasAuditLogRow {
   id: string;
-  name: string;
-  command: MissionCommand;
-  description: string | null;
-  default_params: Record<string, unknown>;
-  mcu_cost: number;
-  category: MissionCategory;
-  is_active: boolean;
-  icon: string | null;
+  action: string;
+  license_id: string | null;
+  license_nonce: string | null;
+  user_id: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  details: Json;
+  created_at: number;
+  // Hash chain fields for immutable audit trail
+  content_hash: string;
+  previous_log_hash: string | null;
+  hash_chain_valid: boolean;
+  // Usage tracking fields (Phase 6 Advanced Audit Logging)
+  model_name: string | null;
+  token_count: number | null;
+  ip_address_hash: string | null;
+  user_pseudonym: string | null;
+}
+
+export interface RaasAuditLogInsert {
+  action: string;
+  license_id?: string | null;
+  license_nonce?: string | null;
+  user_id?: string | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  details?: Json;
+  created_at?: number;
+  // Usage tracking fields (optional on insert)
+  model_name?: string | null;
+  token_count?: number | null;
+  ip_address_hash?: string | null;
+  user_pseudonym?: string | null;
+  // Note: content_hash, previous_log_hash, hash_chain_valid are auto-computed by trigger
+}
+
+// RaaS API Keys (for /api/audit endpoint authentication)
+export interface RaasApiKeyRow {
+  id: string;
+  key_id: string;
+  key_hash: string;
+  owner_id: string;
+  permissions: Json;
   created_at: string;
+  expires_at: number | null;
+  revoked_at: number | null;
+  last_used_at: number | null;
+  rate_limit_per_min: number;
 }
 
-// ── PEV Types (Plan → Execute → Verify) ───────────────────────────────────────
-
-export interface PEVStep {
-  step: string;
-  status: 'pending' | 'running' | 'done' | 'failed';
-  started_at?: string;
-  completed_at?: string;
-  details?: string;
+export interface RaasApiKeyInsert {
+  key_id: string;
+  key_hash: string;
+  owner_id: string;
+  permissions: Json;
+  created_at?: string;
+  expires_at?: number | null;
+  revoked_at?: number | null;
+  last_used_at?: number | null;
+  rate_limit_per_min?: number;
 }
 
-export interface PEVPlan {
-  command: string;
-  steps: PEVStep[];
-  estimated_duration_ms: number;
+export interface RaasApiKeyUpdate {
+  key_id?: string;
+  key_hash?: string;
+  owner_id?: string;
+  permissions?: Json;
+  expires_at?: number | null;
+  revoked_at?: number | null;
+  last_used_at?: number | null;
+  rate_limit_per_min?: number;
+  [key: string]: string | number | boolean | Json | null | undefined
 }
 
-// ── Result Type ────────────────────────────────────────────────────────────────
+// ── Additional UI-facing types (used by RaaS components) ─────────────────────────
 
-export interface MissionResult {
-  success: boolean;
-  data?: Record<string, unknown>;
-  error?: string;
-  output_url?: string;
-  summary?: string;
-}
-
-// ── API Request/Response ───────────────────────────────────────────────────────
-
-export interface CreateMissionRequest {
-  title: string;
-  command: MissionCommand;
-  params?: Record<string, unknown>;
-  priority?: MissionPriority;
-  description?: string;
-}
-
-export interface MissionListResponse {
-  missions: Mission[];
-  total: number;
-  page: number;
-  page_size: number;
-}
-
-// ── API Key Types ──────────────────────────────────────────────────────────────
-
+/**
+ * API key info for UI display
+ */
 export interface ApiKeyInfo {
   id: string;
   name: string;
@@ -145,26 +145,20 @@ export interface ApiKeyInfo {
   expires_at: string | null;
 }
 
+/**
+ * Usage statistics for API keys
+ */
 export interface UsageStats {
-  total_calls: number;
+  calls_by_day: Array<{
+    date: string; // YYYY-MM-DD
+    count: number;
+  }>;
   total_mcu: number;
   avg_response_ms: number;
-  calls_by_day: { date: string; count: number; mcu: number }[];
 }
 
-// ── OpenClaw Engine Types ──────────────────────────────────────────────────────
+/**
+ * Mission status for RaaS dashboard
+ */
+export type MissionStatus = 'queued' | 'planning' | 'executing' | 'verifying' | 'completed' | 'failed';
 
-export interface SubMissionDef {
-  command: MissionCommand;
-  title: string;
-  params: Record<string, unknown>;
-  dependency_type: 'sequential' | 'parallel';
-}
-
-export interface MissionDependency {
-  id: string;
-  parent_mission_id: string;
-  child_mission_id: string;
-  dependency_type: 'sequential' | 'parallel';
-  created_at: string;
-}

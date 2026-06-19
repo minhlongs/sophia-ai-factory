@@ -12,7 +12,7 @@
  */
 
 import type { R2Bucket } from '@cloudflare/workers-types';
-import type { R2BucketRef } from '@/land/video/r2-binding';
+import type { R2BucketRef } from '@/land/video/storage/r2-binding';
 import { logger } from '@/seed/utils/logger-utility';
 
 /**

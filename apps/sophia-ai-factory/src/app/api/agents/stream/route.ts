@@ -7,7 +7,7 @@
 import { NextRequest } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
-import type { AgentTaskRow } from '@/forest/agents/types';
+import type { AgentTaskRow } from '@/tree/agents/types';
 
 export const dynamic = 'force-dynamic';
 

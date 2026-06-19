@@ -9,9 +9,10 @@ export * from './analytics-sync';
 export * from './auto-discover-affiliates';
 export * from './batch-video-fanout';
 export * from './conversion-to-ledger';
-export * from './generate-campaign-db';
-export * from './generate-campaign-refund-notify';
-export * from './generate-campaign-video-poller';
+// Helpers moved to land/video/generation/
+export * from '@/land/video/generation/generate-campaign-db';
+export * from '@/land/video/generation/generate-campaign-refund-notify';
+export * from '@/land/video/generation/generate-campaign-video-poller';
 export * from './generate-campaign';
 export * from './hello-world';
 export * from './key-rotation-reencrypt';

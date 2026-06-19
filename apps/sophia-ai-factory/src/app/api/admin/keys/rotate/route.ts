@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { inngest } from '@/forest/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import { getD1 } from '@/seed/db/client';
 import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin';
 import { generateMasterKey } from '@/tree/byok/byok-crypto';

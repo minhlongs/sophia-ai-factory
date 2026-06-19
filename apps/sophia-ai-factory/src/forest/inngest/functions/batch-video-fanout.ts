@@ -1,4 +1,4 @@
-import { inngest } from '@/forest/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import {
   getBatchVideos,
   updateBatchVideoStatus,
@@ -6,7 +6,7 @@ import {
   incrementBatchProgress,
 } from '@/seed/db/repositories/batch-jobs-repo';
 import { logger } from '@/seed/utils/logger-utility';
-import type { BatchVideoRow } from '@/land/video/batch-csv-parser';
+import type { BatchVideoRow } from '@/land/video/templates/batch-csv-parser';
 
 const WAVE_SIZE = 50;
 const WAVE_DELAY_MS = 5_000;

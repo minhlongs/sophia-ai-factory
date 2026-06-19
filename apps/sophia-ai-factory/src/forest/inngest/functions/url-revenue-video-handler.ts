@@ -10,7 +10,7 @@
  * Registered in src/app/api/inngest/route.ts.
  */
 
-import { inngest } from '@/forest/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { randomUUID } from 'crypto';

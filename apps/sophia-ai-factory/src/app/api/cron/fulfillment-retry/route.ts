@@ -24,7 +24,7 @@ import {
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in'
 import { getD1, createServerClient } from '@/seed/db/client'
-import { createHeyGenVideo } from '@/land/video/heygen-helpers'
+import { createHeyGenVideo } from '@/land/video/templates/heygen-helpers'
 import { getHeyGenKey } from '@/tree/credentials/get-provider-key'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
@@ -38,7 +38,7 @@ import {
 import { MAX_ATTEMPTS, isRetryDue } from '@/land/fulfillment/retry-backoff'
 import { grantCompensationCredit } from '@/land/fulfillment/compensation'
 import { sendBundleRenderFailedEmail, type SendBundleRenderFailedInput } from '@/land/billing/email/send-bundle-render-failed-email'
-import { shouldDispatch, recordHeyGenAttempt } from '@/land/fulfillment/circuit-breaker'
+import { shouldDispatch, recordHeyGenAttempt } from '@/seed/utils/circuit-breaker'
 
 export const dynamic = 'force-dynamic'
 

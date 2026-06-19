@@ -20,7 +20,7 @@
 
 import * as Sentry from '@sentry/nextjs';
 import { NextRequest, NextResponse } from 'next/server';
-import { validateMissionApiKey, apiKeyAuthErrorResponse } from '@/forest/missions/api-key-auth';
+import { validateMissionApiKey, apiKeyAuthErrorResponse } from '@/tree/missions/api-key-auth';
 import { createServerClient } from '@/seed/db/client';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { logger } from '@/seed/utils/logger-utility';

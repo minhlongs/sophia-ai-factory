@@ -10,7 +10,7 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import { inngest } from '@/forest/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import { consumeQuota } from './per-channel-quota';
 import { checkCooldown } from '@/forest/quota/channel-cooldown';
 import { logger } from '@/seed/utils/logger-utility';

@@ -10,7 +10,7 @@ import {
   getBreakerState,
   resetBreaker,
   BreakerOpenError,
-} from '../circuit-breaker';
+} from '../templates/circuit-breaker';
 
 const NAME = 'test-breaker';
 const CFG = { failureThreshold: 3, resetTimeoutMs: 10_000 };

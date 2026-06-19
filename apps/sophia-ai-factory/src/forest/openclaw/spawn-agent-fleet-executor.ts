@@ -7,7 +7,7 @@ import {
   validatePromptContract,
   PromptContractError,
 } from "@/seed/validators/agent-prompt-contracts";
-import { withBreaker, BreakerOpenError, getBreakerState, FLEET_BREAKER } from "@/seed/utils/circuit-breaker";
+import { withBreaker, BreakerOpenError, getBreakerState, FLEET_BREAKER } from "@/seed/utils/in-memory-circuit-breaker";
 import { withRetry } from "@/seed/utils/retry-with-backoff";
 import { logger } from "@/seed/utils/logger-utility";
 import { resilientChatCompletion } from "@/seed/inference/openrouter-client";

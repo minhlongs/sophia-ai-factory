@@ -106,7 +106,7 @@ function extFromMime(mime: string): string {
 // module-load time. The test suite does `await import('../upload/route')` and
 // times out when these top-level imports eagerly initialize the CF runtime.
 async function getBucket() {
-  const { getVideoBucket } = await import('@/land/video/r2-binding');
+  const { getVideoBucket } = await import('@/land/video/storage/r2-binding');
   return getVideoBucket();
 }
 
@@ -116,7 +116,7 @@ async function putR2(params: {
   data: ArrayBuffer;
   contentType: string;
 }) {
-  const { uploadToR2 } = await import('@/land/video/r2-multipart-upload');
+  const { uploadToR2 } = await import('@/land/video/storage/r2-multipart-upload');
   return uploadToR2(params);
 }
 

@@ -14,7 +14,7 @@
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { getD1, createServerClient } from '@/seed/db/client'
-import { downloadAndStore } from '@/land/video/video-storage-service'
+import { downloadAndStore } from '@/land/video/storage/video-storage-service'
 import { sendOneTimeBundleReadyEmail } from '@/land/billing/email/send-one-time-bundle-ready-email'
 import { getUserCredits } from '@/seed/db/get-user-credits'
 import { grantCompensationCredit } from '@/land/fulfillment/compensation'
@@ -27,7 +27,7 @@ import {
   markWebhookPermanentFailureCAS,
 } from '@/seed/db/repositories/videos-repo'
 import { MAX_ATTEMPTS } from '@/land/fulfillment/retry-backoff'
-import { recordHeyGenAttempt } from '@/land/fulfillment/circuit-breaker'
+import { recordHeyGenAttempt } from '@/seed/utils/circuit-breaker'
 
 // ── Types ───────────────────────────────────────────────────────────────────
 

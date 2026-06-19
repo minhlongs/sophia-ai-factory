@@ -6,7 +6,7 @@
 
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { resolveAgentHealth } from '@/forest/agents/agent-health-resolver';
+import { resolveAgentHealth } from '@/tree/agents/agent-health-resolver';
 
 
 export async function GET(): Promise<NextResponse> {

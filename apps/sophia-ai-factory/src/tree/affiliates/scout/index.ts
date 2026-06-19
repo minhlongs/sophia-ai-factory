@@ -1,4 +1,10 @@
 /**
- * Tree wrapper: re-export scout/index from forest/affiliates
+ * Affiliate Scout — barrel export.
+ * @module lib/affiliates/scout
  */
-export * from '@/forest/affiliates/scout/index';
+
+export { runAffiliateScout } from './writer';
+export type { ScoutEnv, Affiliate, Network, ScoutResult, NetworkClient } from './types';
+export { shareasaleClient } from './client-shareasale';
+export { awinSaasClient } from './client-awin';
+export { rakutenClient } from './client-rakuten';

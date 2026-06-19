@@ -6,7 +6,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
-import { getVideoBucket } from '@/land/video/r2-binding';
+import { getVideoBucket } from '@/land/video/storage/r2-binding';
 
 /**
  * Delete video (and optionally audio) artifacts from R2 for a permanently failed job.

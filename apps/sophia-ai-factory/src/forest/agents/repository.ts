@@ -1,33 +1,43 @@
 /**
- * Agent Factory — D1 CRUD repository
- * Uses createServerClient() sync pattern.
+ * Agent Repository — Data access layer for AI agents
+ * Layer: forest
+ * Purpose: Provides CRUD operations for agents, teams, tasks, and logs using D1
  */
 
 import { createServerClient } from '@/seed/db/client';
 import type {
-  AgentTeam, Agent, AgentTask, AgentLog,
-  AgentTeamRow, AgentRow, AgentTaskRow, AgentLogRow,
-  AgentTaskStatus,
+  AgentTeam,
+  Agent,
+  AgentTask,
+  AgentLog,
+  AgentTeamRow,
+  AgentRow,
+  AgentTaskRow,
+  AgentLogRow,
 } from './types';
 
-// ── Row mappers ────────────────────────────────────────────────────────────
-
-function mapTeam(row: AgentTeamRow): AgentTeam {
+/**
+ * Maps an AgentTeamRow to an AgentTeam
+ */
+function mapAgentTeam(row: AgentTeamRow): AgentTeam {
   return {
     id: row.id,
     orgId: row.org_id,
     name: row.name,
-    config: safeParseJson(row.config),
+    config: JSON.parse(row.config || '{}'),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
 }
 
+/**
+ * Maps an AgentRow to an Agent
+ */
 function mapAgent(row: AgentRow): Agent {
   return {
     id: row.id,
     teamId: row.team_id,
-    role: row.role,
+    role: row.role as Agent['role'],
     name: row.name,
     systemPrompt: row.system_prompt,
     model: row.model,
@@ -36,222 +46,177 @@ function mapAgent(row: AgentRow): Agent {
   };
 }
 
+/**
+ * Maps an AgentTaskRow to an AgentTask
+ */
 function mapTask(row: AgentTaskRow): AgentTask {
   return {
     id: row.id,
     orgId: row.org_id,
     agentId: row.agent_id,
     input: row.input,
-    output: row.output,
-    status: row.status,
-    errorMessage: row.error_message,
+    output: row.output || '',
+    status: row.status as AgentTask['status'],
+    errorMessage: row.error_message || null,
     tokensUsed: row.tokens_used,
     costUsd: row.cost_usd,
     createdAt: row.created_at,
-    completedAt: row.completed_at,
+    completedAt: row.completed_at || null,
   };
 }
 
-function safeParseJson(value: string): Record<string, unknown> {
-  try { return JSON.parse(value) as Record<string, unknown>; }
-  catch { return {}; }
-}
-
-// ── Team ──────────────────────────────────────────────────────────────────
-
-export async function getTeamByOrgId(orgId: string): Promise<AgentTeam | null> {
-  const db = createServerClient();
-  const { data, error } = await db
-    .from('agent_teams')
-    .select('*')
-    .eq('org_id', orgId)
-    .maybeSingle();
-  if (error || !data) return null;
-  return mapTeam(data as unknown as AgentTeamRow);
-}
-
-export async function createTeam(orgId: string, name = 'My AI Company'): Promise<AgentTeam> {
-  const db = createServerClient();
-  const { data, error } = await db
-    .from('agent_teams')
-    .insert({ org_id: orgId, name, config: '{}' })
-    .select()
-    .single();
-  if (error || !data) throw new Error(`createTeam failed: ${String(error)}`);
-  return mapTeam(data as unknown as AgentTeamRow);
-}
-
-export async function getOrCreateTeam(orgId: string): Promise<AgentTeam> {
-  const existing = await getTeamByOrgId(orgId);
-  if (existing) return existing;
-  return createTeam(orgId);
-}
-
-// ── Agents ────────────────────────────────────────────────────────────────
-
-export async function listAgents(teamId: string): Promise<Agent[]> {
-  const db = createServerClient();
-  const { data, error } = await db
-    .from('agents')
-    .select('*')
-    .eq('team_id', teamId)
-    .eq('enabled', 1);
-  if (error || !data) return [];
-  return (data as unknown as AgentRow[]).map(mapAgent);
-}
-
-// H5 fix: cap system_prompt length so admin-injected prompts can't blow
-// the context window or run up unbounded LLM cost.
-const MAX_SYSTEM_PROMPT_CHARS = 8_000;
-
-export async function createAgent(params: {
-  teamId: string;
-  role: 'CEO' | 'CTO' | 'CSO' | 'CMO' | 'COO' | 'Developer' | 'QA' | 'Ops' | 'Marketing';
-  name: string;
-  systemPrompt: string;
-  model?: string;
-}): Promise<Agent> {
-  if (params.systemPrompt.length > MAX_SYSTEM_PROMPT_CHARS) {
-    throw new Error(
-      `createAgent failed: systemPrompt exceeds ${MAX_SYSTEM_PROMPT_CHARS} chars (got ${params.systemPrompt.length})`,
-    );
-  }
-  const db = createServerClient();
-  const { data, error } = await db
-    .from('agents')
-    .insert({
-      team_id: params.teamId,
-      role: params.role,
-      name: params.name,
-      system_prompt: params.systemPrompt,
-      model: params.model ?? 'openai/gpt-4o-mini',
-      enabled: 1,
-    })
-    .select()
-    .single();
-  if (error || !data) throw new Error(`createAgent failed: ${String(error)}`);
-  return mapAgent(data as unknown as AgentRow);
-}
-
-export async function getAgentById(agentId: string): Promise<Agent | null> {
-  const db = createServerClient();
-  const { data, error } = await db
-    .from('agents')
-    .select('*')
-    .eq('id', agentId)
-    .maybeSingle();
-  if (error || !data) return null;
-  return mapAgent(data as unknown as AgentRow);
-}
-
-export async function updateAgent(
-  agentId: string,
-  params: {
-    name?: string;
-    systemPrompt?: string;
-    model?: string;
-    enabled?: boolean;
-  },
-): Promise<void> {
-  const db = createServerClient();
-  const update: Record<string, unknown> = {};
-  if (params.name !== undefined) update.name = params.name;
-  if (params.systemPrompt !== undefined)
-    update.system_prompt = params.systemPrompt;
-  if (params.model !== undefined) update.model = params.model;
-  if (params.enabled !== undefined) update.enabled = params.enabled ? 1 : 0;
-  const { error } = await db.from('agents').update(update).eq('id', agentId);
-  if (error) throw new Error(`updateAgent failed: ${String(error)}`);
-}
-
-export async function deleteAgent(agentId: string): Promise<void> {
-  const db = createServerClient();
-  const { error } = await db.from('agents').delete().eq('id', agentId);
-  if (error) throw new Error(`deleteAgent failed: ${String(error)}`);
-}
-
-// ── Tasks ─────────────────────────────────────────────────────────────────
-
-export async function createTask(params: {
-  orgId: string;
-  agentId: string;
-  input: string;
-}): Promise<AgentTask> {
-  const db = createServerClient();
-  const { data, error } = await db
-    .from('agent_tasks')
-    .insert({ org_id: params.orgId, agent_id: params.agentId, input: params.input, status: 'queued' })
-    .select()
-    .single();
-  if (error || !data) throw new Error(`createTask failed: ${String(error)}`);
-  return mapTask(data as unknown as AgentTaskRow);
-}
-
-export async function getTask(taskId: string, orgId: string): Promise<AgentTask | null> {
-  const db = createServerClient();
-  const { data, error } = await db
-    .from('agent_tasks')
-    .select('*')
-    .eq('id', taskId)
-    .eq('org_id', orgId)
-    .maybeSingle();
-  if (error || !data) return null;
-  return mapTask(data as unknown as AgentTaskRow);
-}
-
-// H1 fix (defense-in-depth): both writes require orgId filter so a leaked
-// task_id alone cannot mutate another tenant's row.
-export async function updateTaskStatus(
-  taskId: string,
-  orgId: string,
-  status: AgentTaskStatus,
-): Promise<void> {
-  const db = createServerClient();
-  await db.from('agent_tasks').update({ status }).eq('id', taskId).eq('org_id', orgId);
-}
-
-export async function updateTaskResult(taskId: string, orgId: string, params: {
-  output: string;
-  tokensUsed: number;
-  costUsd: number;
-  status: AgentTaskStatus;
-  errorMessage?: string;
-}): Promise<void> {
-  const db = createServerClient();
-  await db.from('agent_tasks').update({
-    output: params.output,
-    tokens_used: params.tokensUsed,
-    cost_usd: params.costUsd,
-    status: params.status,
-    error_message: params.errorMessage ?? null,
-    completed_at: new Date().toISOString(),
-  }).eq('id', taskId).eq('org_id', orgId);
-}
-
-// ── Logs ──────────────────────────────────────────────────────────────────
-
-export async function appendLog(params: {
-  taskId: string;
-  action: string;
-  payload?: Record<string, unknown>;
-}): Promise<AgentLog> {
-  const db = createServerClient();
-  const { data, error } = await db
-    .from('agent_logs')
-    .insert({
-      task_id: params.taskId,
-      action: params.action,
-      payload: JSON.stringify(params.payload ?? {}),
-    })
-    .select()
-    .single();
-  if (error || !data) throw new Error(`appendLog failed: ${String(error)}`);
-  const row = data as unknown as AgentLogRow;
+/**
+ * Maps an AgentLogRow to an AgentLog
+ */
+function mapLog(row: AgentLogRow): AgentLog {
   return {
     id: row.id,
     taskId: row.task_id,
     action: row.action,
-    payload: safeParseJson(row.payload),
+    payload: JSON.parse(row.payload || '{}'),
     createdAt: row.created_at,
   };
+}
+
+/**
+ * Get a team by organization ID
+ */
+export async function getTeamByOrgId(orgId: string): Promise<AgentTeam | null> {
+  const db = createServerClient();
+  const { data, error } = await db
+    .from<AgentTeamRow>('agent_teams')
+    .select('*')
+    .eq('org_id', orgId)
+    .single();
+
+  if (error || !data) return null;
+  return mapAgentTeam(data);
+}
+
+/**
+ * Get an agent by ID
+ */
+export async function getAgentById(agentId: string): Promise<Agent | null> {
+  const db = createServerClient();
+  const { data, error } = await db
+    .from<AgentRow>('agents')
+    .select('*')
+    .eq('id', agentId)
+    .single();
+
+  if (error || !data) return null;
+  return mapAgent(data);
+}
+
+/**
+ * Get a task by ID
+ */
+export async function getTask(taskId: string, orgId: string): Promise<AgentTask | null> {
+  const db = createServerClient();
+  const { data, error } = await db
+    .from<AgentTaskRow>('agent_tasks')
+    .select('*')
+    .eq('id', taskId)
+    .eq('org_id', orgId)
+    .single();
+
+  if (error || !data) return null;
+  return mapTask(data);
+}
+
+/**
+ * List all agents for a team
+ */
+export async function listAgents(teamId: string): Promise<Agent[]> {
+  const db = createServerClient();
+  const { data, error } = await db
+    .from<AgentRow>('agents')
+    .select('*')
+    .eq('team_id', teamId)
+    .order('created_at', { ascending: true });
+
+  if (error || !data) return [];
+  return data.map(mapAgent);
+}
+
+/**
+ * Append a log entry for a task
+ */
+export async function appendLog(data: {
+  taskId: string;
+  action: string;
+  payload: Record<string, unknown>;
+}): Promise<AgentLog> {
+  const db = createServerClient();
+  const payloadStr = JSON.stringify(data.payload);
+
+  const { data: insertData, error } = await db
+    .from<AgentLogRow>('agent_logs')
+    .insert({
+      task_id: data.taskId,
+      action: data.action,
+      payload: payloadStr,
+    })
+    .select('*')
+    .single();
+
+  if (error || !insertData) throw new Error('Failed to insert log');
+  return mapLog(insertData);
+}
+
+/**
+ * Update task status
+ */
+export async function updateTaskStatus(
+  taskId: string,
+  orgId: string,
+  updates: { status: AgentTask['status']; errorMessage?: string | null }
+): Promise<void> {
+  const db = createServerClient();
+  const updateData: Record<string, unknown> = {
+    status: updates.status,
+  };
+  if (updates.errorMessage !== undefined) {
+    updateData.error_message = updates.errorMessage;
+  }
+  if (updates.status === 'completed' || updates.status === 'failed') {
+    updateData.completed_at = new Date().toISOString();
+  }
+
+  await db
+    .from('agent_tasks')
+    .update(updateData)
+    .eq('id', taskId)
+    .eq('org_id', orgId);
+}
+
+/**
+ * Update task result (output, status, tokens, cost)
+ */
+export async function updateTaskResult(
+  taskId: string,
+  orgId: string,
+  result: {
+    status: AgentTask['status'];
+    output: string;
+    tokensUsed?: number;
+    costUsd?: number;
+    errorMessage?: string | null;
+  }
+): Promise<void> {
+  const db = createServerClient();
+  const updateData: Record<string, unknown> = {
+    status: result.status,
+    output: result.output,
+    completed_at: new Date().toISOString(),
+  };
+  if (result.tokensUsed !== undefined) updateData.tokens_used = result.tokensUsed;
+  if (result.costUsd !== undefined) updateData.cost_usd = result.costUsd;
+  if (result.errorMessage !== undefined) updateData.error_message = result.errorMessage;
+
+  await db
+    .from('agent_tasks')
+    .update(updateData)
+    .eq('id', taskId)
+    .eq('org_id', orgId);
 }

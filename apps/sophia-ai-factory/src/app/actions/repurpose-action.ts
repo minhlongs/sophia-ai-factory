@@ -8,7 +8,7 @@ import {
   listRepurposeJobs,
   getRepurposeClips,
 } from '@/seed/db/repositories/repurpose-jobs-repo';
-import { inngest } from '@/forest/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import type { RepurposeJob, RepurposeClip } from '@/seed/db/repositories/repurpose-jobs-repo';
 
 type ActionResult<T = unknown> =

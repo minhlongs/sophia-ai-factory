@@ -9,7 +9,7 @@ import {
   getAnalyticsSummary,
   type DateRange,
 } from '@/seed/db/repositories/video-analytics-repo';
-import { inngest } from '@/forest/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 
 function resolveRange(dateRange?: { start: string; end: string }): DateRange {
   if (dateRange) return dateRange;

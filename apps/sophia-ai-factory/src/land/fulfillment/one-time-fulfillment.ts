@@ -15,9 +15,9 @@
 
 import { logger } from '@/seed/utils/logger-utility'
 import { createServerClient } from '@/seed/db/client'
-import { createHeyGenVideo } from '@/land/video/heygen-helpers'
+import { createHeyGenVideo } from '@/land/video/templates/heygen-helpers'
 import { getHeyGenKey } from '@/tree/credentials/get-provider-key'
-import { getOneTimeWelcomeScript } from '@/land/video/one-time-welcome-script'
+import { getOneTimeWelcomeScript } from '@/land/video/generation/one-time-welcome-script'
 import {
   findByPurchaseId,
   enqueueVideo,
@@ -26,7 +26,7 @@ import {
   recordAttempt,
 } from '@/seed/db/repositories/videos-repo'
 import { sendBundleGeneratingEmail } from '@/land/billing/email/send-bundle-generating-email'
-import { shouldDispatch, recordHeyGenAttempt } from '@/land/fulfillment/circuit-breaker'
+import { shouldDispatch, recordHeyGenAttempt } from '@/seed/utils/circuit-breaker'
 import { isSyntheticMonitoringUser } from '@/seed/config/synthetic-monitoring'
 import type { OneTimeSku } from '@/seed/types'
 

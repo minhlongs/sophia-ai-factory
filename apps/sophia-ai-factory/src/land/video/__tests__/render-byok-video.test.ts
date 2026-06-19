@@ -7,7 +7,7 @@ vi.mock('@/tree/credentials/get-provider-key', () => ({
   getHeyGenKey: vi.fn(),
 }));
 
-vi.mock('@/land/video/heygen-helpers', () => ({
+vi.mock('@/land/video/templates/heygen-helpers', () => ({
   createHeyGenVideo: vi.fn(),
 }));
 
@@ -19,8 +19,8 @@ vi.mock('@/seed/db/client', () => ({
 }));
 
 import { getHeyGenKey } from '@/tree/credentials/get-provider-key';
-import { createHeyGenVideo } from '@/land/video/heygen-helpers';
-import { submitByokVideo, RenderByokVideoError } from '@/land/video/render-byok-video';
+import { createHeyGenVideo } from '@/land/video/templates/heygen-helpers';
+import { submitByokVideo, RenderByokVideoError } from '@/land/video/generation/render-byok-video';
 
 const mockedGetD1 = vi.mocked(await import('@/seed/db/client')).getD1;
 const mockedGetHeyGenKey = vi.mocked(getHeyGenKey);

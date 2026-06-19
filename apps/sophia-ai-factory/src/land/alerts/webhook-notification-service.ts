@@ -6,7 +6,7 @@
 import crypto from 'crypto'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError, getErrorMessage } from '@/seed/utils/to-error'
-import { triggerWebhookFailedAlert } from '@/forest/orchestration'
+import { triggerWebhookFailedAlert } from '@/tree/alerts/realtime-alert-triggers'
 import { generateWebhookSignature } from './webhook-notification-signature'
 import type { WebhookPayload, WebhookDeliveryResult, WebhookMetadata } from './webhook-notification-types'
 

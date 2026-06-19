@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { synthesize } from '../tts-client';
+import { synthesize } from '../generation/tts-client';
 
 const MOCK_WAV = new ArrayBuffer(44); // minimal buffer
 

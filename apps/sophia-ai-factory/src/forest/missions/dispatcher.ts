@@ -12,12 +12,12 @@
  */
 
 import { createServerClient, type D1Client } from '@/seed/db/client';
-import { deductCredits } from '@/land/mcu/credits-repo';
-import { getCommand } from './command-registry';
-import { fireMissionWebhook } from './fire-webhook';
+import { deductCredits } from '@/tree/mcu/credits-repo';
+import { getCommand } from '@/tree/missions/command-registry';
+import { fireMissionWebhook } from '@/forest/webhooks/missions/fire-webhook';
 import { logger } from '@/seed/utils/logger-utility';
-import type { MissionHandlerResult } from './handlers/types';
-import { clearMissionCheckpoint, loadMissionCheckpoint, saveMissionCheckpoint } from './checkpoint-persistence';
+import type { MissionHandlerResult, MissionContext } from '@/tree/missions/types';
+import { clearMissionCheckpoint, loadMissionCheckpoint, saveMissionCheckpoint } from '@/tree/missions/checkpoint-persistence';
 
 // ── Checkpoint persistence (inline for dispatcher) ─────────────────────────────
 
@@ -67,30 +67,30 @@ async function loadCp(db: D1Client, missionId: string): Promise<MissionCheckpoin
 // ── Handler loading ────────────────────────────────────────────────────────────
 
 // Lazy-load handlers to keep bundle splits clean
-async function loadHandler(command: string): Promise<((ctx: import('./handlers/types').MissionContext) => Promise<MissionHandlerResult>) | null> {
+async function loadHandler(command: string): Promise<((ctx: MissionContext) => Promise<MissionHandlerResult>) | null> {
   try {
     switch (command) {
-      case 'ai:write': return (await import('./handlers/ai-write')).handle;
-      case 'social:publish': return (await import('./handlers/social-publish')).handle;
-      case 'video:create': return (await import('./handlers/video-create')).handle;
-      case 'video:create_heygen': return (await import('./handlers/video-create')).handle;
-      case 'video:status': return (await import('./handlers/video-status')).handle;
-      case 'proposal:create': return (await import('./handlers/proposal-create')).handle;
-      case 'proposal:list': return (await import('./handlers/proposal-list')).handle;
-      case 'lead:find': return (await import('./handlers/lead-find')).handle;
-      case 'lead:enrich': return (await import('./handlers/lead-enrich')).handle;
-      case 'lead:export': return (await import('./handlers/lead-export')).handle;
-      case 'email:campaign': return (await import('./handlers/email-campaign')).handle;
-      case 'email:test': return (await import('./handlers/email-test')).handle;
-      case 'email:templates': return (await import('./handlers/email-templates')).handle;
-      case 'youtube:publish': return (await import('./handlers/youtube-publish')).handle;
-      case 'youtube:list-channels': return (await import('./handlers/youtube-list-channels')).handle;
-      case 'voice:clone': return (await import('./handlers/voice-clone')).handle;
-      case 'avatar:create-did': return (await import('./handlers/avatar-create-did')).handle;
-      case 'subtitle:generate': return (await import('./handlers/subtitle-generate')).handle;
-      case 'campaign:run': return (await import('./handlers/campaign-run')).handle;
-      case 'analytics:report': return (await import('./handlers/analytics-report')).handle;
-      case 'webhook:test': return (await import('./handlers/webhook-test')).handle;
+      case 'ai:write': return (await import('../ai/missions/ai-write')).handle;
+      case 'social:publish': return (await import('../publishing/missions/social-publish')).handle;
+      case 'video:create': return (await import('../video/missions/video-create')).handle;
+      case 'video:create_heygen': return (await import('../video/missions/video-create')).handle;
+      case 'video:status': return (await import('../video/missions/video-status')).handle;
+      case 'proposal:create': return (await import('../workflows/missions/proposal-create')).handle;
+      case 'proposal:list': return (await import('../workflows/missions/proposal-list')).handle;
+      case 'lead:find': return (await import('../leads/missions/lead-find')).handle;
+      case 'lead:enrich': return (await import('../leads/missions/lead-enrich')).handle;
+      case 'lead:export': return (await import('../leads/missions/lead-export')).handle;
+      case 'email:campaign': return (await import('../../tree/email/missions/email-campaign')).handle;
+      case 'email:test': return (await import('../../tree/email/missions/email-test')).handle;
+      case 'email:templates': return (await import('../../tree/email/missions/email-templates')).handle;
+      case 'campaign:run': return (await import('../../tree/email/missions/campaign-run')).handle;
+      case 'youtube:publish': return (await import('../youtube/missions/youtube-publish')).handle;
+      case 'youtube:list-channels': return (await import('../youtube/missions/youtube-list-channels')).handle;
+      case 'voice:clone': return (await import('../voice/missions/voice-clone')).handle;
+      case 'avatar:create-did': return (await import('../did/missions/avatar-create-did')).handle;
+      case 'subtitle:generate': return (await import('../video/missions/subtitle-generate')).handle;
+      case 'analytics:report': return (await import('../analytics/missions/analytics-report')).handle;
+      case 'webhook:test': return (await import('../webhooks/missions/webhook-test')).handle;
       default: return null;
     }
   } catch (err) {

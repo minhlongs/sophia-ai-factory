@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { getChannelCaptionRule, enforceCharCap } from './channel-caption-rules'
-import type { ChannelProvider } from '@/forest/publishing/publisher-interface'
+import type { ChannelProvider } from '@/seed/types';
 
 describe('getChannelCaptionRule', () => {
   it('maps zalo to vi locale with mixed_vi_en hashtag style', () => {

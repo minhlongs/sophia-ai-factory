@@ -7,7 +7,6 @@
  * '@/land/fulfillment/retry-backoff' if needed.
  */
 export * from './circuit-breaker-comms';
-export * from './circuit-breaker';
 export * from './compensation';
 export * from './complete-video-from-webhook';
 export * from './one-time-fulfillment';

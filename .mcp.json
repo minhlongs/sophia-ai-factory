@@ -13,6 +13,15 @@
       "env": {
         "MUAPI_API_KEY": "${MUAPI_API_KEY}"
       }
+    },
+    "stitch": {
+      "command": "npx",
+      "args": ["-y", "stitch-mcp"],
+      "env": {
+        "GOOGLE_CLOUD_PROJECT": "${GOOGLE_CLOUD_PROJECT}",
+        "GOOGLE_APPLICATION_CREDENTIALS": "${GOOGLE_APPLICATION_CREDENTIALS}",
+        "STITCH_API_ENDPOINT": "${STITCH_API_ENDPOINT:-https://aiplatform.googleapis.com}"
+      }
     }
   }
 }

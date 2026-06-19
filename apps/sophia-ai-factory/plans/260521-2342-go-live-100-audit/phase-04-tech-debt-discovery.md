@@ -11,7 +11,7 @@
 ## Overview
 
 - **Priority:** P1
-- **Status:** pending (blocked-by Phase 1)
+- **Status:** completed
 - **Description:** Discover (don't speculate) tech debt across dead code, anti-patterns, hidden coupling, drift. Classify critical/high/med/low. Each finding cites file:line and proposes minimal fix.
 
 ## Key Insights
@@ -81,16 +81,16 @@ Single consolidated report: `reports/phase-04-tech-debt-inventory.md`. Findings 
 
 ## Todo List
 
-- [ ] Dead-code scan (ts-prune)
-- [ ] Circular-dep scan (madge)
-- [ ] Banned-import audit
-- [ ] Cross-layer violation grep
-- [ ] `:any` + `@ts-ignore` + `console.*` inventory
-- [ ] Migration-drift check vs remote D1
-- [ ] OPENNEXT_VERSION defect entry + fix recipe
-- [ ] TODO/FIXME count + classify
-- [ ] Synthesize inventory report
-- [ ] Emit Phase-5 severity-tagged input
+- [x] Dead-code scan (ts-prune)
+- [x] Circular-dep scan (madge)
+- [x] Banned-import audit
+- [x] Cross-layer violation grep
+- [x] `:any` + `@ts-ignore` + `console.*` inventory
+- [x] Migration-drift check vs remote D1
+- [x] OPENNEXT_VERSION defect entry + fix recipe
+- [x] TODO/FIXME count + classify
+- [x] Synthesize inventory report
+- [x] Emit Phase-5 severity-tagged input
 
 ## Success Criteria
 

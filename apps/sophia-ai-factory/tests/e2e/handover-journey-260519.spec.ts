@@ -45,9 +45,27 @@ async function signUpNewUser(baseURL: string): Promise<SignInResult> {
   const { request: createRequest } = await import('@playwright/test')
   const api = await createRequest.newContext({ baseURL })
   try {
-    const resp = await api.post('/api/auth/sign-up/email', {
+    // Step 1: GET sign-in page to establish session and get CSRF token
+    const csrfResp = await api.get('/api/auth/sign-in')
+    if (!csrfResp.ok()) {
+      throw new Error(`Failed to load CSRF token: HTTP ${csrfResp.status()}`)
+    }
+
+    // Extract CSRF token from Set-Cookie headers (may be string or array)
+    const setCookieHeaders = csrfResp.headers()['set-cookie']
+    const cookiesList = Array.isArray(setCookieHeaders) ? setCookieHeaders : (setCookieHeaders ? [setCookieHeaders] : [])
+    const csrfCookie = cookiesList.find((c: string) => c.startsWith('better-auth.csrf='))
+    const csrfToken = csrfCookie
+      ? decodeURIComponent(csrfCookie.split(';')[0].split('=')[1] || '')
+      : ''
+
+    // Step 2: POST sign-up with CSRF token
+    const resp = await api.post('/api/auth/sign-up', {
       data: { email, password, name: `Journey User ${timestamp}` },
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
+      },
     })
 
     if (!resp.ok()) {

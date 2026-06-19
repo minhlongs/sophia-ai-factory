@@ -5,5 +5,5 @@
 export * from './api-key-auth';
 export * from './command-registry';
 export * from './dispatcher';
-export * from './emit-video-generate';
-export * from './fire-webhook';
+export * from '../video/missions/emit-video-generate';
+export * from '../webhooks/missions/fire-webhook';

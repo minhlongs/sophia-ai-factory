@@ -8,8 +8,8 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
-import { getVideoBucket } from '@/land/video/r2-binding';
-import type { VideoJobStatus } from '@/land/video/video-job-fsm';
+import { getVideoBucket } from '@/land/video/storage/r2-binding';
+import type { VideoJobStatus } from '@/land/video/generation/video-job-fsm';
 
 interface VideoJobRow {
   id: string;

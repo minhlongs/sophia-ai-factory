@@ -11,7 +11,7 @@
  * @module forest/jobs/offer-sync-cron
  */
 
-import { inngest } from '@/forest/inngest/client'
+import { inngest } from '@/seed/inngest/client'
 import { TikTokShopProvider } from '@/land/affiliates/providers/tiktok-shop'
 import { AccessTradeProvider } from '@/land/affiliates/providers/accesstrade'
 import { ClickBankProvider } from '@/land/affiliates/providers/clickbank'

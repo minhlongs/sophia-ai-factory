@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { seedDefaultTeam } from '@/forest/agents/seed-default-team';
-import { getAgentById, deleteAgent, listAgents } from '@/forest/agents/repository';
+import { seedDefaultTeam } from '@/tree/agents/seed-default-team';
+import { getAgentById, deleteAgent, listAgents } from '@/tree/agents/repository';
 import { z } from 'zod';
 
 const Schema = z.object({ agentId: z.string().min(1) });

@@ -14,7 +14,7 @@ vi.mock('@/land/tiktok/tiktok-oauth-client', () => ({
   checkPublishStatus: tiktokMocks.checkPublishStatus,
 }));
 
-import { TikTokPublisher } from '../tiktok-publisher';
+import { TikTokPublisher } from '@/land/video/publishing/providers/tiktok-publisher';
 
 describe('TikTokPublisher', () => {
   beforeEach(() => {

@@ -10,7 +10,7 @@
 ## Overview
 
 - **Priority:** P1
-- **Status:** pending (blocked-by Phase 1-4)
+- **Status:** completed
 - **Description:** Produce honest /100 scorecard across 10 enterprise categories, deltas vs 87.5 baseline, blocker/high/med/low fix list with effort + impact. This phase produces NO code changes — fixes are scheduled, not applied.
 
 ## Key Insights

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ONBOARDING_TIERS, createOnboardingVideo } from '../onboarding-video';
+import { ONBOARDING_TIERS, createOnboardingVideo } from '../templates/onboarding-video';
 
 describe('OnboardingVideo', () => {
   describe('ONBOARDING_TIERS', () => {

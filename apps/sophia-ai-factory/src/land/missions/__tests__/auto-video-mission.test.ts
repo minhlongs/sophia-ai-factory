@@ -47,7 +47,7 @@ vi.mock('@/land/publish/schedule-video-publish', () => ({
   },
 }));
 
-vi.mock('@/land/video/render-byok-video', () => ({
+vi.mock('@/land/video/generation/render-byok-video', () => ({
   submitByokVideo: vi.fn(),
   RenderByokVideoError: class extends Error {
     code: 'BYOK_REQUIRED' | 'EMPTY_SCRIPT' | 'HEYGEN_SUBMIT_FAILED' | 'PERSIST_FAILED';
@@ -70,7 +70,7 @@ import { generateSeoScript, SeoScriptConfigurationError } from '@/land/scripts/g
 import { translateScript } from '@/land/i18n/translate-script';
 import { buildVideoDescription } from '@/land/affiliates/video-description-injector';
 import { schedulePublish, PublishConfigurationError } from '@/land/publish/schedule-video-publish';
-import { submitByokVideo, RenderByokVideoError } from '@/land/video/render-byok-video';
+import { submitByokVideo, RenderByokVideoError } from '@/land/video/generation/render-byok-video';
 import {
   runAutoVideoMission,
   AutoVideoMissionError,

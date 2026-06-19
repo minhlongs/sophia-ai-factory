@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { composeWithDisclosure, _setExecFileAsync, _resetExecFileAsync } from '../ftc-disclosure-overlay';
+import { composeWithDisclosure, _setExecFileAsync, _resetExecFileAsync } from '../assembly/ftc-disclosure-overlay';
 
 // The mock function that replaces execFile(Async)
 const execFileMock = vi.fn();

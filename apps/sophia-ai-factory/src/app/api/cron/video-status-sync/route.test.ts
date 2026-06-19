@@ -50,7 +50,7 @@ vi.mock('@/land/heygen/heygen-client', () => ({
   getHeyGenClient: vi.fn(),
 }))
 
-vi.mock('@/land/video/video-storage-service', () => ({
+vi.mock('@/land/video/storage/video-storage-service', () => ({
   downloadAndStore: vi.fn(),
 }))
 
@@ -89,7 +89,7 @@ vi.mock('@/seed/db/get-user-credits', () => ({
 import { GET } from './route'
 import { getD1, createServerClient } from '@/seed/db/client'
 import { getHeyGenClient } from '@/land/heygen/heygen-client'
-import { downloadAndStore } from '@/land/video/video-storage-service'
+import { downloadAndStore } from '@/land/video/storage/video-storage-service'
 import { grantCompensationCredit } from '@/land/fulfillment/compensation'
 import { sendBundleRenderFailedEmail } from '@/land/billing/email/send-bundle-render-failed-email'
 

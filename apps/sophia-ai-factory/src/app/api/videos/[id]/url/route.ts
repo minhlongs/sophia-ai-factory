@@ -21,7 +21,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
-import { authorizeVideoAccess } from '@/land/video/video-access-control'
+import { authorizeVideoAccess } from '@/land/video/publishing/video-access-control'
 import { logger } from '@/seed/utils/logger-utility'
 
 export const dynamic = 'force-dynamic'

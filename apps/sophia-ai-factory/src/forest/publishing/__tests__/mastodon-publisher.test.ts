@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { MastodonPublisher, parseExternalAccountId } from '../mastodon';
+import { MastodonPublisher, parseExternalAccountId } from '@/land/video/publishing/providers/mastodon';
 
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },

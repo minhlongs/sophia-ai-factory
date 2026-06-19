@@ -10,7 +10,7 @@
 ## Overview
 
 - **Priority:** P1
-- **Status:** pending (blocked-by Phase 1)
+- **Status:** completed
 - **Description:** Backfill missing or stale enterprise documentation. Eight target docs covering quickstart through incident response. Update existing docs against verified Phase 1 maps — do NOT create parallel "enhanced" files.
 
 ## Key Insights

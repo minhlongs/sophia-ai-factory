@@ -11,7 +11,7 @@
  * @module forest/jobs/reconciliation
  */
 
-import { inngest } from '@/forest/inngest/client'
+import { inngest } from '@/seed/inngest/client'
 import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { fromCents } from '@/land/payouts/commission-cents'

@@ -7,7 +7,7 @@
  */
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { seedDefaultTeam } from '@/forest/agents/seed-default-team';
+import { seedDefaultTeam } from '@/tree/agents/seed-default-team';
 import {
   createAgent,
   updateAgent,
@@ -15,8 +15,8 @@ import {
   getAgentById,
   listAgents,
   getTeamByOrgId,
-} from '@/forest/agents/repository';
-import type { Agent } from '@/forest/agents/types';
+} from '@/tree/agents/repository';
+import type { Agent } from '@/tree/agents/types';
 
 // ── Schemas ──────────────────────────────────────────────────────────────────
 

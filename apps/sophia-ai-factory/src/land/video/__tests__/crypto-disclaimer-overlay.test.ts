@@ -9,7 +9,7 @@ import {
   composeWithCryptoDisclaimer,
   _setExecFileAsync,
   _resetExecFileAsync,
-} from '../crypto-disclaimer-overlay';
+} from '../assembly/crypto-disclaimer-overlay';
 
 const execFileMock = vi.fn();
 

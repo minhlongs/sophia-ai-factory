@@ -33,8 +33,8 @@ describe.skipIf(!hasSecrets)('video-generate E2E (requires real API keys)', () =
   it(
     'muxes silent video + Fish Speech audio into a valid mp4',
     async () => {
-      const { FishSpeechClient } = await import('@/land/video/fish-speech-client');
-      const { muxVideoAudio } = await import('@/land/video/ffmpeg-muxer');
+      const { FishSpeechClient } = await import('@/land/video/generation/fish-speech-client');
+      const { muxVideoAudio } = await import('@/land/video/assembly/ffmpeg-muxer');
 
       const apiKey = process.env.FAL_API_KEY!;
       const tts = new FishSpeechClient({ apiKey });

@@ -21,7 +21,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }));
 
-import { TikTokPublisher } from '../tiktok-publisher';
+import { TikTokPublisher } from '@/land/video/publishing/providers/tiktok-publisher';
 
 describe('TikTokPublisher — FTC caption prefix', () => {
   beforeEach(() => {

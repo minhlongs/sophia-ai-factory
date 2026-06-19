@@ -1,5 +1,5 @@
 import { NonRetriableError } from 'inngest'
-import { inngest } from '@/forest/inngest/client'
+import { inngest } from '@/seed/inngest/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { ServiceFactory } from '@/land/services/factory'
 import { MissingCredentialsError, ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/land/services/errors'
@@ -14,9 +14,10 @@ import { TikTokChannelAdapter } from '@/tree/gateway/adapters/tiktok-channel-ada
 import { TelegramNotificationAdapter } from '@/tree/gateway/adapters/telegram-notification-adapter'
 import { resolveOrgId } from '@/seed/auth/resolve-org-id'
 import { resolveUserTier } from '@/seed/db/resolve-user-tier'
-import { updateCampaignStatus, notifyUserByTelegram, markEngineMissionFailed } from './generate-campaign-db'
-import { notifyRefundRequired, notifyProviderError } from './generate-campaign-refund-notify'
-import { pollVideoStatus } from './generate-campaign-video-poller'
+import { updateCampaignStatus, markEngineMissionFailed } from '@/land/video/generation/generate-campaign-db'
+import { notifyUserByTelegram } from '@/tree/telegram/user-notifier'
+import { notifyRefundRequired, notifyProviderError } from '@/land/video/generation/generate-campaign-refund-notify'
+import { pollVideoStatus } from '@/land/video/generation/generate-campaign-video-poller'
 import { emit } from '@/land/webhooks/emitter'
 
 /** Resolve D1 binding for webhook emission (best-effort, no throw) */

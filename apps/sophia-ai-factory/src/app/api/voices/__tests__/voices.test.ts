@@ -27,17 +27,17 @@ vi.mock('@/seed/db/client', () => ({
 }));
 
 // Mock R2
-vi.mock('@/land/video/r2-binding', () => ({
+vi.mock('@/land/video/storage/r2-binding', () => ({
   getVideoBucket: vi.fn(),
   tenantScopedKey: vi.fn((t: string, j: string, s: string) => `tenants/${t}/videos/${j}/${s}`),
 }));
 
-vi.mock('@/land/video/r2-multipart-upload', () => ({
+vi.mock('@/land/video/storage/r2-multipart-upload', () => ({
   uploadToR2: vi.fn().mockResolvedValue('tenants/t1/voices/v1/ref.wav'),
 }));
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getVideoBucket } from '@/land/video/r2-binding';
+import { getVideoBucket } from '@/land/video/storage/r2-binding';
 import { createServerClient } from '@/seed/db/client';
 import { POST, GET } from '../route';
 import { DELETE } from '../[id]/route';

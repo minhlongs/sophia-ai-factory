@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin'
-import { resetCircuit, getCircuitState } from '@/land/fulfillment/circuit-breaker'
+import { resetCircuit, getCircuitState } from '@/seed/utils/circuit-breaker'
 import { logger } from '@/seed/utils/logger-utility'
 
 export const dynamic = 'force-dynamic'

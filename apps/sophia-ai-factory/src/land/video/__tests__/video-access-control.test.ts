@@ -12,7 +12,7 @@ vi.mock('@/seed/db/client', () => ({
   getD1: vi.fn(),
 }))
 
-vi.mock('../r2-binding', () => ({
+vi.mock('../storage/r2-binding', () => ({
   getVideoBucket: vi.fn(),
 }))
 
@@ -20,11 +20,11 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }))
 
-import { authorizeVideoAccess } from '../video-access-control'
+import { authorizeVideoAccess } from '../publishing/video-access-control'
 import { getD1 } from '@/seed/db/client'
-import { getVideoBucket } from '../r2-binding'
+import { getVideoBucket } from '../storage/r2-binding'
 
-// Mock '../r2-binding' to match the source's `./r2-binding` import
+// Mock '../storage/r2-binding' to match the source's ../storage/r2-binding` import
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

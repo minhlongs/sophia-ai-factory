@@ -9,47 +9,59 @@
  * Called automatically by deploy/deploy:build scripts (between next build and opennext build).
  */
 
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, cpSync, rmSync, statSync, unlinkSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const appRoot = join(__dirname, '..');
 
+// OpenNext expects files at .next/server/ (this is the main build output - already populated)
 const serverDir = join(appRoot, '.next', 'server');
+// Turbopack standalone output is at .next/standalone/.next/server/ (missing instrumentation/middleware)
 const standaloneServerDir = join(appRoot, '.next', 'standalone', '.next', 'server');
+
+console.log('[debug] appRoot:', appRoot);
+console.log('[debug] serverDir (source):', serverDir);
+console.log('[debug] standaloneServerDir (target):', standaloneServerDir);
+
+// Copy missing instrumentation and middleware files from full build to standalone
+if (!existsSync(standaloneServerDir)) {
+  mkdirSync(standaloneServerDir, { recursive: true });
+}
 
 const filesToCopy = [
   'instrumentation.js',
   'instrumentation.js.map',
-  'chunks/instrumentation_ts_0zq9-xz._.js',
-  'chunks/instrumentation_ts_0zq9-xz._.js.map',
+  'instrumentation.js.nft.json',
+  'middleware',
+  'middleware-build-manifest.js',
+  'middleware-manifest.json',
 ];
 
-mkdirSync(standaloneServerDir, { recursive: true });
-
-let copied = 0;
-let skipped = 0;
-
+let copyCount = 0;
 for (const file of filesToCopy) {
   const src = join(serverDir, file);
   const dest = join(standaloneServerDir, file);
 
   if (!existsSync(src)) {
-    console.log(`[fix-instrumentation] SKIP ${file} — not in .next/server/ (optional)`);
-    skipped++;
-    continue;
+    continue; // file may not exist in all builds
   }
 
   if (existsSync(dest)) {
-    console.log(`[fix-instrumentation] SKIP ${file} — already in standalone`);
-    skipped++;
-    continue;
+    // If dest exists and is a directory, skip; if file exists, skip
+    if (statSync(dest).isDirectory()) continue;
+    // Remove existing file to replace
+    unlinkSync(dest);
   }
 
-  copyFileSync(src, dest);
-  console.log(`[fix-instrumentation] COPIED ${file} → standalone`);
-  copied++;
+  if (statSync(src).isDirectory()) {
+    cpSync(src, dest, { recursive: true });
+  } else {
+    copyFileSync(src, dest);
+  }
+  console.log(`[fix-instrumentation] COPIED ${file} → .next/standalone/.next/server/`);
+  copyCount++;
 }
 
-console.log(`[fix-instrumentation] Done: ${copied} copied, ${skipped} skipped.`);
+console.log(`[fix-instrumentation] Done: ${copyCount} items copied.`);

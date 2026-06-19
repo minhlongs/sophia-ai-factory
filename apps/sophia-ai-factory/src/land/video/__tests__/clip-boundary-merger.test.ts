@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { mergeClipBoundaries } from '../clip-boundary-merger';
-import type { HighlightClip } from '../highlight-scorer';
-import type { SceneBoundary } from '../scene-detector';
-import type { TranscriptWord } from '../clip-boundary-merger';
+import { mergeClipBoundaries } from '../assembly/clip-boundary-merger';
+import type { HighlightClip } from '../generation/highlight-scorer';
+import type { SceneBoundary } from '../templates/scene-detector';
+import type { ClipTranscriptWord, MergedClip } from '../assembly/clip-boundary-merger';
 
 describe('clip-boundary-merger', () => {
   it('snaps highlights to nearest word boundaries when no sentence boundary is close', () => {
-    const mockWordsFar: TranscriptWord[] = [
+    const mockWordsFar: ClipTranscriptWord[] = [
       { text: 'word1', start: 0, end: 500, confidence: 0.99 },
       { text: 'word2', start: 5000, end: 5400, confidence: 0.99 },
       { text: 'word3', start: 16000, end: 16700, confidence: 0.99 },
@@ -30,7 +30,7 @@ describe('clip-boundary-merger', () => {
   });
 
   it('snaps highlights to sentence boundaries when within 3000ms', () => {
-    const mockWords: TranscriptWord[] = [
+    const mockWords: ClipTranscriptWord[] = [
       { text: 'Hello', start: 1000, end: 1500, confidence: 0.99 },
       { text: 'world.', start: 1600, end: 2000, confidence: 0.99 }, // sentence end at 2000, sentence start at 5000
       { text: 'This', start: 5000, end: 5500, confidence: 0.99 },
@@ -56,7 +56,7 @@ describe('clip-boundary-merger', () => {
   });
 
   it('aligns to scene boundaries only if they do not cut inside words', () => {
-    const mockWords: TranscriptWord[] = [
+    const mockWords: ClipTranscriptWord[] = [
       { text: 'start', start: 2000, end: 3000, confidence: 0.99 },
       { text: 'middle', start: 7000, end: 8000, confidence: 0.99 },
       { text: 'word3', start: 10000, end: 11000, confidence: 0.99 }, // silence gap 11000 to 13000
@@ -85,7 +85,7 @@ describe('clip-boundary-merger', () => {
   });
 
   it('does not snap to scene boundary if it cuts a word', () => {
-    const mockWords: TranscriptWord[] = [
+    const mockWords: ClipTranscriptWord[] = [
       { text: 'start', start: 2000, end: 3000, confidence: 0.99 },
       { text: 'cutting', start: 11500, end: 12500, confidence: 0.99 }, // 12000ms scene boundary cuts inside this word!
       { text: 'end', start: 13000, end: 14000, confidence: 0.99 },

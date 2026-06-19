@@ -8,8 +8,8 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUserOrOpenClaw, isAuthError } from '@/seed/auth/get-current-user-or-openclaw';
 import { createServerClient } from '@/seed/db/client';
-import { STATUS_PROGRESS } from '@/land/video/video-job-fsm';
-import type { VideoJobStatus } from '@/land/video/video-job-fsm';
+import { STATUS_PROGRESS } from '@/land/video/generation/video-job-fsm';
+import type { VideoJobStatus } from '@/land/video/generation/video-job-fsm';
 
 interface VideoJobStatusRow {
   status: VideoJobStatus;

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { evaluateLifecycleEmails } from '@/forest/email/lifecycle-email-rules';
+import { evaluateLifecycleEmails } from '@/tree/email/lifecycle-email-rules';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const BASE_NOW = Date.now();

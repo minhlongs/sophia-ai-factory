@@ -7,8 +7,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { validateMissionApiKey, apiKeyAuthErrorResponse } from '@/forest/missions/api-key-auth';
-import { getBalance, listTransactions } from '@/land/mcu/credits-repo';
+import { validateMissionApiKey, apiKeyAuthErrorResponse } from '@/tree/missions/api-key-auth';
+import { getBalance, listTransactions } from '@/tree/mcu/credits-repo';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 
 export const dynamic = 'force-dynamic';

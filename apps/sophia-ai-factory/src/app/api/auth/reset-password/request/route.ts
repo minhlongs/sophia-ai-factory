@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { signResetToken } from '@/seed/auth/reset-password-token';
-import { sendEmail } from '@/forest/email/sender';
+import { sendEmail } from '@/tree/email/sender';
 import { logger } from '@/seed/utils/logger-utility';
 import { globalRateLimiter, getClientIdentifier, createRateLimitResponse } from '@/forest/middleware/rate-limiter';
 import { getD1 } from '@/seed/db/client';

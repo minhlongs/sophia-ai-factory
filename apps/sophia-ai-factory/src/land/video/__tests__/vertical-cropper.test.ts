@@ -4,7 +4,7 @@ import {
   getVerticalCropFilterComplex,
   buildPanningExpr,
   FocalPoint,
-} from '../vertical-cropper';
+} from '../assembly/vertical-cropper';
 
 describe('vertical-cropper', () => {
   describe('buildPanningExpr', () => {

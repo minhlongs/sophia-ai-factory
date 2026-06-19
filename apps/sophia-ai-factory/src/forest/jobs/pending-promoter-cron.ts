@@ -11,7 +11,7 @@
  * @module forest/jobs/pending-promoter-cron
  */
 
-import { inngest } from '@/forest/inngest/client'
+import { inngest } from '@/seed/inngest/client'
 import { flipPendingToPayable } from '@/land/payouts/commission-ledger'
 
 export const pendingPromoterCron = inngest.createFunction(

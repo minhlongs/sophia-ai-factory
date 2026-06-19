@@ -12,9 +12,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServerClient } from '@/seed/db/client';
-import { getVideoBucket } from '@/land/video/r2-binding';
-import { tenantScopedKey } from '@/land/video/r2-binding';
-import { uploadToR2 } from '@/land/video/r2-multipart-upload';
+import { getVideoBucket } from '@/land/video/storage/r2-binding';
+import { tenantScopedKey } from '@/land/video/storage/r2-binding';
+import { uploadToR2 } from '@/land/video/storage/r2-multipart-upload';
 import { logger } from '@/seed/utils/logger-utility';
 import { getVoicePreset } from '@/seed/voices/presets';
 

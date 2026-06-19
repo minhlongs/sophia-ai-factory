@@ -1,8 +1,8 @@
 /**
- * @module tree/affiliates
- * Domain wrapper re-exports — actual implementations in forest/affiliates
+ * Affiliate domain — tree layer (core domain logic)
  */
 export * from './credentials';
 export * from './scout';
-export * from '@/forest/affiliates/shortcode';
-export * from '@/land/affiliates';
+export * from './shortcode';
+// Temporary re-exports from land until affiliate logic moves to tree
+export { getTopPrograms, getProgramById, getCategories, getTags, getAllPrograms, getProgramsByTier, getProgramsByCategory, getProgramsByTag, searchPrograms, sortProgramsByEPC } from '@/land/affiliates';

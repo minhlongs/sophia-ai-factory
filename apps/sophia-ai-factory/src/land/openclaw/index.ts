@@ -19,8 +19,8 @@ export * from './queue';
 export * from './rate-limit';
 export * from './schedule';
 export * from './skill-loader';
-export * from '@/forest/openclaw/spawn-agent-fleet-executor';
-export * from '@/forest/openclaw/spawn-agent-fleet';
+export * from '@/tree/agent-fleet/spawn-agent-fleet-executor';
+export * from '@/tree/agent-fleet/spawn-agent-fleet';
 export * from './with-tenant';
 // Namespace object defined in land/openclaw (canonical, no lib dependency)
 export { openclaw } from './openclaw-namespace';

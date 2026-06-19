@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { seedDefaultTeam } from '@/forest/agents/seed-default-team';
-import { listAgents } from '@/forest/agents/repository';
+import { seedDefaultTeam } from '@/tree/agents/seed-default-team';
+import { listAgents } from '@/tree/agents/repository';
 
 export const dynamic = 'force-dynamic';
 

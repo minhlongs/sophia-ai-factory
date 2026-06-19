@@ -10,6 +10,7 @@ export * from './clickbank-postback-parser';
 export * from './clickbank-signature-verifier';
 export * from './commission-calculator';
 export * from './conversion-attributor';
+export * from './conversion-notifier';
 export * from './dashboard-stats';
 export * from './promo-library';
 export * from './leaderboard';

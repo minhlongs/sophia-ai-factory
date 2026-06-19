@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { routeVisualPath } from '../visual-router';
+import { routeVisualPath } from '../templates/visual-router';
 
 describe('routeVisualPath', () => {
   it('routes free tier to template path', () => {

@@ -35,11 +35,11 @@ Future sessions: this reversal is local to this plan. The doctrine file is NOT b
 
 | # | Phase | File | Status |
 |---|---|---|---|
-| 1 | Codebase intelligence + dirty-tree triage | [phase-01-codebase-intelligence.md](./phase-01-codebase-intelligence.md) | pending |
-| 2 | Documentation backfill (README/QUICKSTART/ARCH/RUNBOOKS/INCIDENT/SECURITY) | [phase-02-documentation-backfill.md](./phase-02-documentation-backfill.md) | pending |
-| 3 | Production-readiness audit (reliability/scale/security/observability/devex/infra) | [phase-03-production-readiness-audit.md](./phase-03-production-readiness-audit.md) | pending |
-| 4 | Tech-debt discovery (dead code, anti-patterns, hidden coupling, classified) | [phase-04-tech-debt-discovery.md](./phase-04-tech-debt-discovery.md) | pending |
-| 5 | Go-Live gap analysis — 10-category /100 scorecard + blocker fix list | [phase-05-go-live-scorecard.md](./phase-05-go-live-scorecard.md) | pending |
+| 1 | Codebase intelligence + dirty-tree triage | [phase-01-codebase-intelligence.md](./phase-01-codebase-intelligence.md) | completed |
+| 2 | Documentation backfill (README/QUICKSTART/ARCH/RUNBOOKS/INCIDENT/SECURITY) | [phase-02-documentation-backfill.md](./phase-02-documentation-backfill.md) | completed |
+| 3 | Production-readiness audit (reliability/scale/security/observability/devex/infra) | [phase-03-production-readiness-audit.md](./phase-03-production-readiness-audit.md) | completed |
+| 4 | Tech-debt discovery (dead code, anti-patterns, hidden coupling, classified) | [phase-04-tech-debt-discovery.md](./phase-04-tech-debt-discovery.md) | completed |
+| 5 | Go-Live gap analysis — 10-category /100 scorecard + blocker fix list | [phase-05-go-live-scorecard.md](./phase-05-go-live-scorecard.md) | completed |
 
 ## Dependencies
 

@@ -1,4 +1,8 @@
-// Tree wrappers — redirect imports through local modules to avoid layer violation
-export * from './dispatcher';
-export * from './fire-webhook';
+/**
+ * Missions domain — tree layer
+ * Core domain logic: types, command registry, auth, checkpoint persistence
+ */
+export * from './types';
+export * from './command-registry';
+export * from './api-key-auth';
 export * from './checkpoint-persistence';

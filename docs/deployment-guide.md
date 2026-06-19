@@ -99,6 +99,20 @@ git checkout main
 
 ---
 
+## Optional Feature Flags (Dark Launch)
+
+Phase 4 introduced env-gated features that remain inert until explicitly activated:
+
+| Feature | Secret | Default | Activation |
+|---------|--------|---------|------------|
+| LLM Cache (exact-match) | `LLM_CACHE_ENABLED` | not set (off) | `npx wrangler secret put LLM_CACHE_ENABLED "1"` |
+| Langfuse telemetry sink | `LANGFUSE_PUBLIC_KEY` + `LANGFUSE_SECRET_KEY` | unset | Set both keys to enable |
+| Prompt injection guard | `PROMPT_GUARD_ENABLED` (if implemented) | implicit (always on) | N/A — enabled by code |
+
+**Note:** These features are designed for zero-risk dark launch. Missing secrets = feature stays inert. No code changes required to activate.
+
+---
+
 ## Cron Setup
 
 Most scheduled endpoints are defined in `wrangler.toml` under `[triggers]` and activate automatically on deploy. The D1 backup route is the exception: `/api/cron/d1-backup` is triggered by external scheduler (Upstash QStash) and writes SQL dumps to the R2 `sophia-backups` bucket.
@@ -117,11 +131,20 @@ npx wrangler secret put CRON_SECRET
 ```
 
 Representative cron jobs:
-- `*/5 * * * *` — uptime, video status sync, SOP scheduler
-- `5 * * * *` — usage export
-- `0 0 * * *` — clearance promotion, promo trial expiry
-- `0 6 * * 1` — weekly signals digest
-- External scheduler — D1 backup to R2 via `/api/cron/d1-backup`
+
+| Schedule | Route | Purpose |
+|----------|-------|---------|
+| `*/5 * * * *` | `/api/cron/uptime-check` | Self-monitoring + Telegram alert |
+| `5 * * * *` | `/api/cron/usage-export` | Hourly usage rollup |
+| `0 1 * * *` | `/api/cron/dunning` | Dunning state machine (Phase 6) |
+| `0 7 * * *` | `/api/cron/llm-cache-purge` | Expire-then-delete llm_cache rows (Phase 4E.3) |
+| `0 */4 * * *` | `/api/cron/affiliate-scout` | Affiliate network discovery (PREMIUM+) |
+| `0 6 * * 1` | `/api/cron/weekly-signals-digest` | PostHog signals digest |
+| `0 0 1 * *` | `/api/cron/mcu-monthly-reset` | Monthly MCU credit top-up |
+| External | `/api/cron/d1-backup` | Daily D1 → R2 backup (triggered by Upstash QStash) |
+| `0 * * * *` | `/api/cron/overage-billing` | Hourly overage reconciliation (Phase 6) |
+
+Full list: See `wrangler.toml` `[triggers]` section comments.
 
 ---
 
@@ -130,23 +153,40 @@ Representative cron jobs:
 Set all required secrets before first deploy:
 
 ```bash
+# Phase 4+ LLM Observability (optional — Langfuse mirror only)
+npx wrangler secret put LANGFUSE_PUBLIC_KEY   # optional
+npx wrangler secret put LANGFUSE_SECRET_KEY   # optional
+
+# Core AI Services
 npx wrangler secret put OPENROUTER_API_KEY
 npx wrangler secret put ELEVENLABS_API_KEY
 npx wrangler secret put HEYGEN_API_KEY
 npx wrangler secret put HEYGEN_WEBHOOK_SECRET
+
+# Payment Providers
 npx wrangler secret put NOWPAYMENTS_API_KEY
 npx wrangler secret put NOWPAYMENTS_IPN_SECRET
+
+# Communications
 npx wrangler secret put TELEGRAM_BOT_TOKEN
-npx wrangler secret put CRON_SECRET
 npx wrangler secret put RESEND_API_KEY
+
+# Security & Auth
+npx wrangler secret put CRON_SECRET
 npx wrangler secret put BETTER_AUTH_SECRET
-npx wrangler secret put CREDENTIALS_MASTER_KEY   # 64 hex chars (AES-GCM-256 for BYOK)
+
+# BYOK Encryption (per-user keys)
+npx wrangler secret put CREDENTIALS_MASTER_KEY   # 64 hex chars (AES-GCM-256)
 npx wrangler secret put BYOK_MASTER_KEY          # base64 32 bytes (LLM/media BYOK)
+
+# Optional Features
+npx wrangler secret put LLM_CACHE_ENABLED       # "1" to enable exact-match cache
+npx wrangler secret put LLM_CACHE_TTL_SECONDS   # default 86400 (24h)
 ```
 
 Optional (for source map upload to Sentry):
 ```bash
-npx wrangler secret put SENTRY_AUTH_TOKEN        # optional — missing = errors captured but not symbolicated
+npx wrangler secret put SENTRY_AUTH_TOKEN        # missing = errors captured but not symbolicated
 ```
 
 Verify secrets are set:
@@ -178,6 +218,12 @@ npx wrangler d1 execute sophia-raas-db --command="SELECT migration_name FROM d1_
 - **Primary:** NOWPayments (USDT crypto) — set `NOWPAYMENTS_API_KEY` + `NOWPAYMENTS_IPN_SECRET`
 - **Backup:** PayOS (Vietnam VietQR) — configured via Setup Wizard by customer
 - **REJECTED:** Polar.sh — do NOT add Polar to Sophia
+
+**Billing Architecture (Phase 6):**
+- NOWPayments IPN triggers tier activation in `raas_licenses` table
+- RaaS Gateway middleware enforces quota + dunning state on all `/api/*` routes
+- Overage billing cron (`0 * * * *`) reconciles usage beyond quota
+- Dunning workflow state machine (`0 1 * * *`) manages payment failure grace periods
 
 IPN webhook URL (set in NOWPayments dashboard):
 ```

@@ -36,6 +36,20 @@ export function getAuth() {
   const secret = process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET;
   if (!secret) throw new Error('BETTER_AUTH_SECRET or JWT_SECRET must be set');
 
+  // Determine baseURL and trusted origins
+  const isProduction = process.env.NODE_ENV === 'production';
+  const baseURL =
+    process.env.BETTER_AUTH_URL ||
+    process.env.APP_URL ||
+    (isProduction
+      ? 'https://sophia.agencyos.network'
+      : 'http://localhost:3000');
+
+  // Build trustedOrigins: in development, accept both localhost and 127.0.0.1
+  const trustedOrigins = isProduction
+    ? [baseURL]
+    : [baseURL, 'http://localhost:3000', 'http://127.0.0.1:3000'];
+
   // Better Auth's deep generic inference produces a narrower Auth<...> than
   // the default `Auth<BetterAuthOptions>` carried by `ReturnType<typeof betterAuth>`.
   // Two structurally-equivalent Prettify types appear in the diagnostic, so we
@@ -43,10 +57,9 @@ export function getAuth() {
   _auth = betterAuth({
     database: d1,
     secret,
-    baseURL: process.env.BETTER_AUTH_URL
-      || process.env.APP_URL
-      || 'https://sophia.agencyos.network',
+    baseURL,
     basePath: '/api/auth',
+    trustedOrigins,
     emailAndPassword: {
       enabled: true,
       autoSignIn: true,
@@ -89,7 +102,7 @@ export function getAuth() {
           // Better-Auth callback doesn't expose locale; ship a bilingual template
           // (EN heading + VI subheading) so users in either locale recognize it.
           // Lazy import keeps seed layer free of static forest dependency.
-          const { sendEmail } = await import('@/forest/email/sender');
+          const { sendEmail } = await import('@/tree/email/sender');
           await sendEmail({
             to: email,
             subject: 'Sign in to Sophia AI Factory · Đăng nhập Sophia AI',
@@ -168,7 +181,7 @@ logger.warn('[databaseHook] signup bonus credits failed', creditErr instanceof E
             }
 
             // Send welcome email (non-blocking)
-            import('@/forest/email/sender').then(({ sendEmail }) => {
+            import('@/tree/email/sender').then(({ sendEmail }) => {
               sendEmail({
                 to: user.email,
                 subject: 'Welcome to Sophia AI Factory!',

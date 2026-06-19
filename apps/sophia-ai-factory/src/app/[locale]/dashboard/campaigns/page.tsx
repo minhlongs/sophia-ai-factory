@@ -1,35 +1,19 @@
+/**
+ * Campaign Dashboard page — server component.
+ * Fetches campaigns and renders the client-side interactive dashboard.
+ */
+
 import { createServerClient } from "@/seed/db/client";
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { redirect } from "next/navigation";
 import { logger } from "@/seed/utils/logger-utility";
-import dynamic from "next/dynamic";
-import { Button } from "@/seed/components/ui/button";
-import { Skeleton } from "@/seed/components/ui/skeleton";
-import { EmptyState } from "@/seed/components/ui/empty-state";
-import Link from "next/link";
-import { Plus, Megaphone } from "lucide-react";
+import { CampaignsClientWrapper } from "../components/campaigns-client-wrapper";
 import { Campaign } from "@/seed/types";
-import { getTranslations } from 'next-intl/server';
-
-const CampaignList = dynamic(
-  () => import("../components/campaign-list").then(m => ({ default: m.CampaignList })),
-  {
-    loading: () => (
-      <div className="space-y-4">
-        {[1, 2, 3].map(i => (
-          <Skeleton key={i} className="h-24 w-full rounded-xl" />
-        ))}
-      </div>
-    ),
-  }
-);
 
 // Campaigns are user-specific but update infrequently — ISR with 60s revalidate
 export const revalidate = 60;
 
 export default async function CampaignsPage() {
-  const t = await getTranslations('dashboard');
-  const tEmpty = await getTranslations('dashboard.emptyState.campaigns');
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
@@ -53,33 +37,5 @@ export default async function CampaignsPage() {
     }
   }
 
-  return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{t('sidebar.campaigns')}</h1>
-          <p className="text-muted-foreground">{t('subtitle')}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard/create">
-            <Button className="flex items-center gap-2">
-              <Plus className="w-4 h-4" aria-hidden="true" />
-              {t('buttons.new_campaign')}
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {campaigns.length === 0 ? (
-        <EmptyState
-          icon={Megaphone}
-          title={tEmpty('title')}
-          description={tEmpty('description')}
-          cta={{ label: tEmpty('cta'), href: '/dashboard/create' }}
-        />
-      ) : (
-        <CampaignList initialCampaigns={campaigns} />
-      )}
-    </div>
-  );
+  return <CampaignsClientWrapper initialCampaigns={campaigns} />;
 }

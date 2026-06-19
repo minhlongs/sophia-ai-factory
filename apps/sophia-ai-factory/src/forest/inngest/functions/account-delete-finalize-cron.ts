@@ -17,9 +17,9 @@
  * @module forest/inngest/functions/account-delete-finalize-cron
  */
 
-import { inngest } from '@/forest/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import { getD1 } from '@/seed/db/client'
-import { sendEmail } from '@/forest/email/sender';
+import { sendEmail } from '@/tree/email/sender';
 import { logger } from '@/seed/utils/logger-utility';
 import { cascadeDeleteAccount } from '@/land/account';
 import { buildDeletionCompleteHtml } from './account-delete-finalize-email';

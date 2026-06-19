@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { encryptToken } from '@/tree/crypto/token-crypto';
-import { createAtprotoSession } from '@/forest/publishing/bluesky';
+import { createAtprotoSession } from '@/land/video/publishing/providers/bluesky';
 import { logger } from '@/seed/utils/logger-utility';
 import { randomUUID } from 'crypto';
 

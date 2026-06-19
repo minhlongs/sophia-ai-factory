@@ -1,27 +1,31 @@
-# Tech Stack Specification — Sophia AI Factory
+# Tech Stack: Sophia AI Factory (Coverage Enforcement)
 
-This document details the approved technology stack for the Sophia AI Factory SaaS platform.
+The project uses a cutting-edge AI SaaS stack optimized for edge performance and high reliability.
 
-## Core Framework
-* **Next.js 16:** App Router architecture.
-* **React 19:** Utilizing Server Actions for state mutations and React Server Components (RSC) for data rendering.
-* **TypeScript:** Enforced strict mode, zero-tolerance for `:any` types.
+## Core Stack
+- **Frontend**: Next.js 16 (App Router), React 19, TypeScript.
+- **Styling**: Tailwind CSS 4.
+- **Internationalization**: `next-intl` (EN/VN).
+- **Backend/Edge**: Cloudflare Workers (Wrangler).
+- **Background Jobs**: Inngest.
+- **Authentication**: Better Auth.
+- **Database**: 
+  - Cloudflare D1 (SQLite) for edge/auth.
+  - Supabase (Postgres) for rich data/admin.
+- **Infrastructure**: Cloudflare Pages/Workers, Fly.io (for Python services).
 
-## Database & Caching
-* **Cloudflare D1:** Distributed SQLite database serving as the primary persistent layer.
-* **Supabase:** Used for Postgres OAuth callbacks and admin invites.
-* **Upstash Redis:** Used for transient state caching.
+## AI & External Integration
+- **Video/Audio**: HeyGen, ElevenLabs, MuAPI.
+- **LLMs**: OpenRouter.
+- **Payments**: NOWPayments (Crypto), PayOS (VN).
 
-## Authentication & Authorization
-* **Better Auth v1.6.2:** D1 Kysely adapter for email/password, magic links, and multi-tenant organization boundaries.
+## Tooling & Quality Assurance
+- **Unit Testing**: Vitest (Goal: 60% coverage for core logic).
+- **E2E Testing**: Playwright.
+- **Load Testing**: k6.
+- **CI/CD**: Cloudflare-direct deployment (moving towards structured pipeline).
 
-## Payments & Revenue
-* **NOWPayments:** USDT crypto subscriptions (BASIC, PREMIUM, ENTERPRISE, MASTER).
-* **PayOS:** Vietnam domestic payment gateway backup.
-* **Self-hosted / BYOK:** Customers bring their own API keys (HeyGen, ElevenLabs, OpenRouter).
-
-## Styling & Layout
-* **Tailwind CSS 4:** CSS variables-first design system with custom interactive animations.
-
-## Deployment & Hosting
-* **Cloudflare Workers:** Direct deployment via Wrangler CLI (`npm run deploy:full`).
+## Architecture Principles
+- **BYOK (Bring Your Own Key)**: Minimize operational overhead and vendor lock-in.
+- **SOP-Driven**: Automated playbooks via `lib/sop` engine.
+- **YAGNI / KISS / DRY**: Core engineering constraints.

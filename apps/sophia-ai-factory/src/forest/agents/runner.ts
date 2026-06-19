@@ -1,39 +1,38 @@
 /**
- * Agent Factory — Runner
- * Loads a task + agent from D1, calls OpenRouter, writes result.
- * Phase 03: emits signals (AGENT_TASK_START/COMPLETE/FAIL) fire-and-forget.
+ * Agent Runner — Executes AI agent tasks
+ * Layer: forest
+ * Purpose: Runs agent tasks by calling OpenRouter and handling results
  */
 
-import { getTask, getAgentById, updateTaskStatus, updateTaskResult, appendLog } from './repository';
-import { track } from '@/tree/signals/track';
-import { D1Events } from '@/tree/signals/d1-event-types';
-import { assignVariant } from '@/tree/signals/ab-experiment';
-import { resolvePrompt, experimentName } from './prompt-variants';
-import { assertTierAllowsAgent, AgentTierBlockedError } from './enforcement-gate';
-import { reportError } from '@/seed/observability/telemetry/error-tracker';
-import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
-import { trackUsage } from '@/forest/usage-metering';
-import { calculateCredits } from '@/seed/billing/credits-calculator';
-import type { AgentTask } from './types';
+import type { AgentTask, Agent } from './types';
 import type { Tier } from '@/seed/types';
+import { assertTierAllowsAgent, AgentTierBlockedError } from './enforcement-gate';
+import {
+  getTask,
+  getAgentById,
+  updateTaskResult,
+  appendLog,
+} from './repository';
+import { reportError } from '@/seed/observability/telemetry/error-tracker';
+import { track } from '@/tree/signals/track';
+import { assignVariant } from '@/tree/signals/ab-experiment';
+import { D1Events } from '@/tree/signals/d1-event-types';
 
-const COST_PER_TOKEN = 0.000001; // ~$1 / 1M tokens (gpt-4o-mini estimate)
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 
 /**
- * Run an agent task inline (sync for Cloudflare Workers free tier).
- * Updates task row with result / error.
- *
- * Phase 03: track() calls are fire-and-forget (void) — never block the runner.
- * Phase 04: assertTierAllowsAgent gate runs before any LLM call.
- *           reportError wraps LLM failures (non-blocking).
- *
- * @param userTier - caller's tier (BASIC|PREMIUM|ENTERPRISE|MASTER). Pass 'MASTER' for system calls.
+ * Executes an agent task
+ * @param taskId - The task ID to execute
+ * @param orgId - The organization ID (for auth)
+ * @param userTier - The user's subscription tier
+ * @returns Promise resolving to the agent output
  */
-export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'): Promise<AgentTask> {
-  // Mark as running
-  await updateTaskStatus(taskId, orgId, 'running');
-  await appendLog({ taskId, action: 'start', payload: { taskId } });
-
+export async function runAgent(
+  taskId: string,
+  orgId: string,
+  userTier: string
+): Promise<string> {
+  // Validate tier allows this agent role
   const task = await getTask(taskId, orgId);
   if (!task) {
     throw new Error(`Task ${taskId} not found`);
@@ -41,154 +40,141 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
 
   const agent = await getAgentById(task.agentId);
   if (!agent) {
-    await updateTaskResult(taskId, orgId, {
-      output: '',
-      tokensUsed: 0,
-      costUsd: 0,
-      status: 'failed',
-      errorMessage: `Agent ${task.agentId} not found`,
-    });
     throw new Error(`Agent ${task.agentId} not found`);
   }
 
-  // Phase 04: Enforcement gate — block if tier does not permit agent role
+  // Check tier permission
   try {
-    assertTierAllowsAgent(userTier, agent.role);
-  } catch (gateErr) {
-    if (gateErr instanceof AgentTierBlockedError) {
-      await updateTaskResult(taskId, orgId, {
-        output: '',
-        tokensUsed: 0,
-        costUsd: 0,
-        status: 'failed',
-        errorMessage: gateErr.message,
-      });
-      // Emit tier_blocked signal (fire-and-forget)
-      void track(D1Events.AGENT_TASK_FAIL, orgId, {
-        task_id: taskId,
-        agent_role: agent.role,
-        variant: 'control',
-        error_class: 'tier_blocked',
-      }, orgId);
-      throw gateErr;
-    }
-    throw gateErr;
-  }
-
-  const apiKey = process.env.OPENROUTER_API_KEY;
-  if (!apiKey) {
-    const errMsg = 'OPENROUTER_API_KEY not configured';
-    await updateTaskResult(taskId, orgId, { output: '', tokensUsed: 0, costUsd: 0, status: 'failed', errorMessage: errMsg });
-    throw new Error(errMsg);
-  }
-
-  // Phase 03: resolve A/B variant before LLM call (falls back to 'control' on error)
-  const expName = experimentName(agent.role);
-  let variant = 'control';
-  try {
-    const result = await assignVariant(expName, orgId);
-    variant = result.variant;
-  } catch {
-    // assignVariant already logs — keep 'control'
-  }
-
-  // Resolve system prompt for this variant
-  const systemPrompt = resolvePrompt(agent.role, variant) || agent.systemPrompt;
-
-  // Phase 03: emit AGENT_TASK_START (fire-and-forget)
-  void track(D1Events.AGENT_TASK_START, orgId, {
-    task_id: taskId,
-    agent_role: agent.role,
-    agent_id: agent.id,
-    variant,
-  }, orgId);
-
-  const startMs = Date.now();
-
-  try {
-    const prompt = `System: ${systemPrompt}\n\nUser: ${task.input}`;
-    const output = await resilientChatCompletion(prompt, {
-      openRouterKey: apiKey,
-      anthropicKey: undefined,
-      enableFallback: false,
-      model: agent.model,
-    });
-
-    const responseTime = Date.now() - startMs;
-    const estimatedTokens = Math.ceil(output.length / 4); // rough estimate
-
-    // Track success
-    await trackUsage({
-      userId:         orgId, // using orgId as proxy
-      licenseKeyHash: 'agent-runner',
-      licenseNonce:   'n/a',
-      service:        'openrouter',
-      endpoint:       '/chat/completions',
-      action:         'chat_completion',
-      tokensInput:    estimatedTokens / 2,
-      tokensOutput:   estimatedTokens / 2,
-      creditsUsed:    calculateCredits('openrouter', 'chatCompletion', estimatedTokens, userTier as Tier),
-      modelName:      agent.model,
-      tierAtRequest:  userTier,
-      statusCode:     200,
-      responseTimeMs: responseTime,
-    });
-
+    assertTierAllowsAgent(userTier as Tier, agent.role);
+  } catch (err) {
+    // Gate failed - record and throw
     await updateTaskResult(taskId, orgId, {
-      output,
-      tokensUsed: estimatedTokens,
-      costUsd: COST_PER_TOKEN * estimatedTokens,
-      status: 'completed',
+      status: 'failed',
+      output: '',
+      errorMessage: err instanceof AgentTierBlockedError ? err.message : 'Tier gate blocked',
+    });
+    throw err;
+  }
+
+  // Check API key
+  if (!OPENROUTER_API_KEY) {
+    await updateTaskResult(taskId, orgId, {
+      status: 'failed',
+      output: '',
+      errorMessage: 'OPENROUTER_API_KEY not configured',
+    });
+    throw new Error('OPENROUTER_API_KEY environment variable is required');
+  }
+
+  // Build OpenRouter request
+  const messages = [
+    { role: 'system', content: agent.systemPrompt },
+    { role: 'user', content: task.input },
+  ];
+
+  // Get A/B experiment variant for this agent
+  const { variant } = await assignVariant(`agent-${agent.id}`, orgId);
+
+  // Adjust model or parameters based on variant
+  let model = agent.model;
+  let temperature = 0.7;
+  switch (variant) {
+    case 'temperature-high':
+      temperature = 1.0;
+      break;
+    case 'model-gpt4':
+      model = 'openai/gpt-4o';
+      break;
+  }
+
+  try {
+    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+        'HTTP-Referer': process.env.APP_URL || 'https://sophia.agencyos.network',
+        'X-Title': 'Sophia AI Factory',
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature,
+        stream: false,
+      }),
     });
 
-    // Log the LLM invocation with usage metrics
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(`OpenRouter error ${response.status}: ${errorBody}`);
+    }
+
+    const data = await response.json() as {
+      choices?: { message?: { content: string } }[];
+      usage?: { completion_tokens: number; prompt_tokens: number; cost?: number };
+    };
+    const output = data.choices?.[0]?.message?.content || '';
+
+    // Update task with success
+    await updateTaskResult(taskId, orgId, {
+      status: 'completed',
+      output,
+      tokensUsed: (data.usage?.completion_tokens || 0) + (data.usage?.prompt_tokens || 0),
+      costUsd: data.usage?.cost || 0,
+    });
+
+    // Track success (fire-and-forget)
+    track(D1Events.AGENT_TASK_COMPLETE, orgId, {
+      agentId: agent.id,
+      agentRole: agent.role,
+      taskId,
+      tokens: (data.usage?.completion_tokens || 0) + (data.usage?.prompt_tokens || 0),
+      model,
+      variant,
+    });
+
+    // Append invoke log
     await appendLog({
       taskId,
       action: 'invoke',
-      payload: { tokens: estimatedTokens, cost: COST_PER_TOKEN * estimatedTokens },
+      payload: {
+        model,
+        temperature,
+        tokens: data.usage,
+        variant,
+      },
     });
 
-    // Emit success signal
-    void track(D1Events.AGENT_TASK_COMPLETE, orgId, {
-      task_id: taskId,
-      agent_role: agent.role,
-      agent_id: agent.id,
-      variant,
-      responseTimeMs: responseTime,
-      tokensUsed: estimatedTokens,
-    }, orgId);
-
-    return {
-      ...task,
-      result: { output, tokensUsed: estimatedTokens, costUsd: COST_PER_TOKEN * estimatedTokens, status: 'completed' },
-    } as AgentTask;
+    return output;
   } catch (err) {
-    const errMsg = err instanceof Error ? err.message : String(err);
-    const errorClass = err instanceof Error ? err.constructor.name : 'UnknownError';
+    // Record failure
+    const error = err instanceof Error ? err : new Error(String(err));
+    const errorMessage = error.message;
 
-    // Phase 03: emit AGENT_TASK_FAIL (fire-and-forget) — only if not already emitted above
-    if (!errMsg.startsWith('OpenRouter HTTP') && !errMsg.includes('Rate limited')) {
-      void track(D1Events.AGENT_TASK_FAIL, orgId, {
-        task_id: taskId,
-        agent_role: agent.role,
-        variant,
-        error_class: errorClass,
-      }, orgId);
-    }
+    await updateTaskResult(taskId, orgId, {
+      status: 'failed',
+      output: '',
+      errorMessage,
+    });
 
-    // Phase 04: report error (non-blocking — fire-and-forget)
-    const reportableErr = err instanceof Error ? err : new Error(errMsg);
-    void reportError(reportableErr, {
+    // Report to error tracker
+    await reportError(error, {
       route: 'agent.runner',
       agent_role: agent.role,
       task_id: taskId,
-      variant,
+      org_id: orgId,
     });
 
-    // Don't double-update if already written above
-    try {
-      await updateTaskResult(taskId, orgId, { output: '', tokensUsed: 0, costUsd: 0, status: 'failed', errorMessage: errMsg });
-    } catch { /* best-effort */ }
-    throw err;
+    // Append error log
+    await appendLog({
+      taskId,
+      action: 'error',
+      payload: {
+        error: errorMessage,
+        stack: error.stack,
+      },
+    });
+
+    throw error;
   }
 }

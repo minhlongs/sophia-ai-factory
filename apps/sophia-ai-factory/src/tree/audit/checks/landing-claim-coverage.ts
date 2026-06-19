@@ -9,8 +9,6 @@ import { existsSync } from 'fs'
 import { join } from 'path'
 import type { CheckResult, AuditEnv } from '@/tree/audit/zero-gap-types'
 
-const APP_ROOT = join(process.cwd(), 'src')
-
 interface ClaimCheck {
   claim: string
   description: string
@@ -18,6 +16,8 @@ interface ClaimCheck {
 }
 
 function fileExists(relativePath: string): boolean {
+  // Compute APP_ROOT at call time to avoid NFT module-level tracing
+  const APP_ROOT = join(process.cwd(), 'src')
   return existsSync(join(APP_ROOT, relativePath))
 }
 

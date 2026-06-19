@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ZaloPublisher, ZaloVerificationRequiredError } from '../zalo-publisher';
+import { ZaloPublisher, ZaloVerificationRequiredError } from '@/land/video/publishing/providers/zalo-publisher';
 
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },

@@ -15,7 +15,7 @@ import { getAuth } from '@/seed/auth/better-auth-server';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { getD1 } from '@/seed/db/client';
 import { createCustomerUser } from '@/tree/handover/handover-account-setup';
-import { sendEmail } from '@/forest/email/sender';
+import { sendEmail } from '@/tree/email/sender';
 import { sendHandoverTelegramDm } from '@/tree/telegram/telegram-handover-notifier';
 import { createServerClient } from '@/seed/db/client';
 import type { Tier } from '@/seed/types';

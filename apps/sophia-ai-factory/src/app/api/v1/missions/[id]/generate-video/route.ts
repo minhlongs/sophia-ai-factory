@@ -13,7 +13,7 @@ import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { createServerClient } from '@/seed/db/client';
-import { inngest } from '@/forest/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { reserveVideoSlot, releaseVideoSlot } from '@/forest/quota/video-quota';
 

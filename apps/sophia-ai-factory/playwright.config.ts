@@ -34,10 +34,12 @@ export default defineConfig({
   webServer: isRemote
     ? undefined
     : {
-        command: 'npm run dev',
+        command: process.env.E2E_PREBUILT === '1'
+          ? 'npx wrangler dev --local --port 3000'
+          : 'bash -c "export $(grep -v \'^\' .env.local | xargs) && npm run build && node scripts/fix-instrumentation-standalone.mjs && npx @opennextjs/cloudflare build --skipNextBuild && npx wrangler dev --local --port 3000"',
         url: BASE_URL,
         reuseExistingServer: !process.env.CI,
-        timeout: 120 * 1000,
+        timeout: process.env.E2E_PREBUILT === '1' ? 60 * 1000 : 300 * 1000,
       },
   globalSetup: require.resolve('./tests/e2e/global-setup'),
 });

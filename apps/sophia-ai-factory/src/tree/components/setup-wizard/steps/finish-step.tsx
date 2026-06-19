@@ -3,7 +3,7 @@ import { ArrowRight, Check, Rocket, Trophy } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/navigation";
 
-interface FinishStepProps {
+export interface FinishStepProps {
   saveError: string | null;
   saveFailed?: boolean;
   onRetry?: () => void;

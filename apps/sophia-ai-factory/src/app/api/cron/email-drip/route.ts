@@ -15,7 +15,7 @@ import {
   finishCronCheckIn,
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in';
-import { enqueueWelcomeEmail } from '@/forest/outbox/email-outbox';
+import { enqueueWelcomeEmail } from '@/tree/email/outbox';
 import {
   evaluateLifecycleEmails,
   evaluateAffiliateLifecycleEmails,
@@ -25,8 +25,8 @@ import {
   evaluateWinBackEmails,
   evaluatePostPurchaseNudgeEmails,
   evaluatePostPurchaseFirstSuccessEmails,
-} from '@/forest/email/lifecycle-email-rules';
-import { computeWeekStats } from '@/forest/email/week-stats';
+} from '@/tree/email/lifecycle-email-rules';
+import { computeWeekStats } from '@/tree/email/week-stats';
 import { getAffiliateClickStats } from '@/land/affiliates/dashboard-stats';
 
 export const dynamic = 'force-dynamic';

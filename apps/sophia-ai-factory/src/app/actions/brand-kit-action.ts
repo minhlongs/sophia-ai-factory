@@ -6,7 +6,7 @@ import {
   upsertBrandKit,
   deleteBrandKitAsset,
 } from '@/seed/db/repositories/brand-kits-repo';
-import { getVideoBucket } from '@/land/video/r2-binding';
+import { getVideoBucket } from '@/land/video/storage/r2-binding';
 import { getErrorMessage } from '@/seed/utils/to-error';
 
 type BrandKitResult =

@@ -9,7 +9,7 @@ import { triggerAutoHandover } from '@/tree/handover/auto-handover';
 import * as accountSetup from '@/tree/handover/handover-account-setup';
 import * as magicLink from '@/tree/handover/handover-magic-link';
 import * as emailService from '@/tree/handover/handover-email-service';
-import * as emailOutbox from '@/forest/outbox/email-outbox';
+import * as emailOutbox from '@/tree/email/outbox';
 
 // ── Shared mock state ──────────────────────────────────────────────────────────
 
