@@ -9,6 +9,8 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'fs'
 import { join } from 'path'
 import type { CheckResult, AuditEnv } from '@/tree/audit/zero-gap-types'
 
+const MESSAGES_DIR = join(process.cwd(), 'messages')
+
 interface VitestResult {
   numPassedTests?: number
   numFailedTests?: number
@@ -31,8 +33,7 @@ function flattenKeys(obj: Record<string, unknown>, prefix = ''): string[] {
 }
 
 function loadMessageKeys(locale: string): string[] | null {
-  // Compute paths at call time to avoid NFT module-level tracing
-  const MESSAGES_DIR = join(process.cwd(), 'messages')
+  // Path resolved at call time; MESSAGES_DIR defined at module level for reuse in error message.
   const path = join(MESSAGES_DIR, `${locale}.json`)
   if (!existsSync(path)) return null
   try {
