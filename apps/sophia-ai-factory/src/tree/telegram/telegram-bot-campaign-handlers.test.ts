@@ -17,7 +17,7 @@ vi.mock('@/seed/db/client', () => ({
   createServerClient: () => mockDb,
 }))
 
-vi.mock('@/forest/inngest/client', () => ({
+vi.mock('@/seed/inngest/client', () => ({
   inngest: { send: vi.fn().mockResolvedValue(undefined) },
 }))
 

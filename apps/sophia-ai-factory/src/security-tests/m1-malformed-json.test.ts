@@ -58,7 +58,7 @@ vi.mock('@/tree/handover/handover-account-setup', () => ({
   createCustomerUser: vi.fn().mockResolvedValue('user_test'),
 }));
 
-vi.mock('@/forest/email/sender', () => ({
+vi.mock('@/tree/email/sender', () => ({
   sendEmail: vi.fn().mockResolvedValue({ success: true }),
 }));
 

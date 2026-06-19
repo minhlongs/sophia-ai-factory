@@ -107,7 +107,7 @@ vi.mock('@/land/video/storage/get-canonical-video-url', () => ({
   VideoUnauthorizedError: class VideoUnauthorizedError extends Error {},
   VideoNotMirroredError: class VideoNotMirroredError extends Error {},
 }));
-vi.mock('@/forest/inngest/client', () => ({
+vi.mock('@/seed/inngest/client', () => ({
   inngest: {
     createFunction: vi.fn((_cfg, _event, handler) => ({ _handler: handler, ..._cfg })),
     send: vi.fn(),

@@ -75,7 +75,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/forest/inngest/client', () => ({
+vi.mock('@/seed/inngest/client', () => ({
   inngest: { send: vi.fn() }
 }));
 

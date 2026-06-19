@@ -25,7 +25,7 @@ vi.mock('@/forest/quota/channel-cooldown', () => ({
   checkCooldown: vi.fn().mockResolvedValue({ allowed: true }),
 }));
 
-vi.mock('@/forest/inngest/client', () => ({
+vi.mock('@/seed/inngest/client', () => ({
   inngest: {
     send: vi.fn().mockResolvedValue({}),
   },

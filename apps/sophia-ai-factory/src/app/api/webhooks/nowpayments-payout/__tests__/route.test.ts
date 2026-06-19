@@ -23,7 +23,7 @@ vi.mock('@opennextjs/cloudflare', () => ({
 // at end of the route handler; without this mock, the SDK attempts a network
 // call to the local inngest dev server and hangs the test until 5s timeout
 // (intermittent — depends on whether the SDK chooses to retry vs reject).
-vi.mock('@/forest/inngest/client', () => ({
+vi.mock('@/seed/inngest/client', () => ({
   inngest: {
     send: vi.fn().mockResolvedValue({ ids: ['test-event-id'] }),
   },
