@@ -1,10 +1,27 @@
 # Observability Runbook — Sophia AI Factory (P2)
 
-Phase 2 observability via Better Stack. All logs PII-scrubbed before ship.
+Phase 2 observability via Better Stack (logs) and Honeycomb (traces/metrics). All logs PII-scrubbed before ship.
 
 ---
 
-## Environment Variables
+## Table of Contents
+
+- [Better Stack Logs](#better-stack-logs)
+- [Honeycomb OpenTelemetry](#honeycomb-opentelemetry)
+- [Cron Schedule](#cron-schedule)
+- [CF Subrequest Budget](#cf-subrequest-budget-red-team-9)
+- [Log Structure](#log-structure)
+- [Heartbeat Monitors](#heartbeat-monitors)
+- [Alert Rules](#alert-rules)
+- [OTLP Local Verification](#otlp-local-verification)
+- [D1 error_log Retention](#d1-error_log-retention)
+- [/api/metrics Endpoint](#apimetrics-endpoint)
+- [Error Digest Cron](#error-digest-cron)
+- [Smoke Test](#smoke-test)
+
+---
+
+## Better Stack Logs
 
 | Variable | Where | Description |
 |---|---|---|
@@ -23,6 +40,126 @@ wrangler secret put CRON_SECRET
 wrangler secret put INTROSPECT_TOKEN
 wrangler secret put FOUNDER_EMAIL
 ```
+
+---
+
+## Honeycomb OpenTelemetry
+
+Traces and metrics are exported to Honeycomb via OTLP HTTP protocol. The OpenTelemetry SDK is initialized in `src/app/[locale]/layout.tsx` and instruments all API routes via middleware.
+
+### Environment Variables
+
+| Variable | Where | Description |
+|---|---|---|
+| `HONEYCOMB_API_KEY` | CF Worker secret / `.env.local` | Honeycomb API key with write permissions |
+| `HONEYCOMB_DATASET` | CF var (optional) | Dataset name (default: `sophia-prod`) |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | CF var (optional) | OTLP endpoint (default: `https://api.honeycomb.io`) |
+| `OTEL_SERVICE_NAME` | CF var (optional) | Service identifier (default: `sophia-api`) |
+| `OTEL_SAMPLERATE` | CF var (optional) | Trace sampling rate 0-1 (default: `0.01` = 1%) |
+
+**Provision via:**
+```bash
+# Local development - add to .env.local
+echo "HONEYCOMB_API_KEY=your_key" >> .env.local
+echo "HONEYCOMB_DATASET=sophia-prod" >> .env.local
+
+# Production - Cloudflare Worker secrets
+cd apps/sophia-ai-factory
+npx wrangler secret put HONEYCOMB_API_KEY
+npx wrangler secret put HONEYCOMB_DATASET
+npx wrangler secret put OTEL_SERVICE_NAME
+npx wrangler secret put OTEL_SAMPLERATE
+```
+
+### Architecture
+
+- **Tracer**: Global tracer provider with `BasicTracerProvider` and `SimpleSpanProcessor`
+- **Exporter**: `OTLPTraceExporter` (HTTP) sending to `/v1/traces`
+- **Metrics**: `MeterProvider` with `PeriodicExportingMetricReader` (60s interval) to `/v1/metrics`
+- **Instrumentation**: `FetchInstrumentation` auto-instruments outgoing HTTP requests
+- **Resource Attributes**: `service.name`, `service.version` (from `COMMIT_SHA`), `deployment.environment`
+
+### Sampler Configuration
+
+Default sampler is `TraceIdRatioBasedSampler(0.01)` - traces 1% of requests in production.
+For debugging, set `OTEL_SAMPLERATE=1.0` to trace 100% of requests temporarily.
+
+### Key Spans
+
+| Span Name | Origin | Attributes |
+|---|---|---|
+| `middleware.proxy` | `middleware.ts` | `http.method`, `http.route`, `component`, `duration_ms`, `http.status_code` |
+| `inngest.<event>` | `instrument-inngest.ts` | `event.name`, `runId`, `stepName` |
+| `api.<handler>` | `instrument-api.ts` | `handler`, `http.method`, `http.route` |
+
+### Honeycomb Queries
+
+**Recent traces (last 15 min):**
+```
+https://ui.honeycomb.io/ datasets/sophia-prod /?query_type=traces&time=15m
+```
+
+**Slow requests (p95 > 1000ms):**
+```
+https://ui.honeycomb.io/ datasets/sophia-prod /?query_type=traces&granularity=1m&breakdowns=service.name&calculations=avg%28duration_ms%29&time=1h
+```
+
+---
+
+## OTLP Local Verification
+
+Task #32: Verify traces export from local machine to vendor endpoint.
+
+### Prerequisites
+
+1. Install OTel dependencies:
+```bash
+cd apps/sophia-ai-factory
+npm install
+```
+
+2. Configure environment variables:
+```bash
+# .env.local
+HONEYCOMB_API_KEY=your_honeycomb_api_key
+HONEYCOMB_DATASET=sophia-prod
+OTEL_SAMPLERATE=1.0  # trace all for verification
+```
+
+### Run Verification Script
+
+```bash
+npm run verify:otlp
+```
+
+The script will:
+1. Initialize OTel with test configuration
+2. Create a test span named `verify-otlp-test`
+3. Export the span to Honeycomb OTLP endpoint
+4. Report success/failure
+
+### Manual Verification Steps
+
+1. Start the dev server: `npm run dev`
+2. Make a few requests to your local app (e.g., visit http://localhost:3000)
+3. Run the verification script: `npm run verify:otlp`
+4. Open Honeycomb UI: https://ui.honeycomb.io
+5. Select your dataset
+6. Search for `span.name="verify-otlp-test"`
+7. Verify span appears with attributes:
+   - `test.purpose = "otlp-export-verification"`
+   - `local.dev = true`
+   - `service.name = "sophia-api"` (or your `OTEL_SERVICE_NAME`)
+
+### Troubleshooting
+
+| Symptom | Check |
+|---|---|
+| Script fails with "dependencies missing" | Run `npm install @opentelemetry/sdk-trace-base @opentelemetry/exporter-trace-otlp-http @opentelemetry/sdk-metrics @opentelemetry/exporter-metrics-otlp-http` |
+| Script fails with "API key required" | Verify `HONEYCOMB_API_KEY` is set in `.env.local` |
+| Spans not appearing in Honeycomb | Check dataset name and API key permissions |
+| Network timeout | Verify no firewall blocking `https://api.honeycomb.io` |
+| No spans from middleware | Confirm `initializeOTel()` is called in `layout.tsx` |
 
 ---
 
@@ -165,4 +302,27 @@ curl -X POST https://sophia.agencyos.network/api/cron/heartbeat \
 curl https://sophia.agencyos.network/api/metrics \
   -H "Authorization: Bearer $INTROSPECT_TOKEN"
 # → JSON with route stats
+
+# Verify OTLP trace export (local dev)
+npm run verify:otlp
+# → Should print "✅ Trace export successful!"
+# Then verify span appears in Honeycomb UI
 ```
+
+---
+
+## Appendix: OTel Dependencies
+
+Required packages (all at version ^0.219.0):
+- `@opentelemetry/api`
+- `@opentelemetry/sdk-trace-base`
+- `@opentelemetry/sdk-metrics`
+- `@opentelemetry/exporter-trace-otlp-http`
+- `@opentelemetry/exporter-metrics-otlp-http`
+- `@opentelemetry/resources`
+- `@opentelemetry/semantic-conventions`
+- `@opentelemetry/instrumentation-fetch`
+- `@opentelemetry/sdk-trace-web` (transitive)
+
+Installed via npm in `apps/sophia-ai-factory/package.json`.
+

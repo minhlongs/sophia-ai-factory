@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Link2, Copy, Check, BarChart3, ExternalLink } from 'lucide-react';
 import { Card, CardHeader, CardContent, Button, Badge, Input } from '@/components/stitch';
 
@@ -25,6 +26,7 @@ const banners = [
 ];
 
 export default function AffiliatePortalPage() {
+  const t = useTranslations('stitch.affiliatePortal');
   const [copiedLink, setCopiedLink] = React.useState(false);
 
   const affiliateLink = 'https://sophia.agencyos.network/ref/abc123';
@@ -41,33 +43,33 @@ export default function AffiliatePortalPage() {
         {/* Header */}
         <div className="text-center mb-xl">
           <h1 className="font-headline-xl text-headline-xl text-on-surface mb-sm">
-            Affiliate Portal
+            {t('title')}
           </h1>
           <p className="font-body-lg text-body-lg text-on-surface-variant">
-            Share Sophia AI and earn 30% recurring commission on all referrals
+            {t('subtitle')}
           </p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-md mb-xl">
           <Card padding="md">
-            <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Total Earnings</p>
+            <p className="font-label-md text-label-md text-on-surface-variant mb-xs">{t('stats.totalEarnings')}</p>
             <p className="font-headline-md text-headline-md text-primary">{affiliateStats.totalEarnings}</p>
           </Card>
           <Card padding="md">
-            <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Pending</p>
+            <p className="font-label-md text-label-md text-on-surface-variant mb-xs">{t('stats.pending')}</p>
             <p className="font-headline-md text-headline-md text-amber-600">{affiliateStats.pending}</p>
           </Card>
           <Card padding="md">
-            <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Clicks</p>
+            <p className="font-label-md text-label-md text-on-surface-variant mb-xs">{t('stats.clicks')}</p>
             <p className="font-headline-md text-headline-md text-on-surface">{affiliateStats.clicks}</p>
           </Card>
           <Card padding="md">
-            <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Conversions</p>
+            <p className="font-label-md text-label-md text-on-surface-variant mb-xs">{t('stats.conversions')}</p>
             <p className="font-headline-md text-headline-md text-on-surface">{affiliateStats.conversions}</p>
           </Card>
           <Card padding="md">
-            <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Conv. Rate</p>
+            <p className="font-label-md text-label-md text-on-surface-variant mb-xs">{t('stats.conversionRate')}</p>
             <p className="font-headline-md text-headline-md text-emerald-600">{affiliateStats.conversionRate}</p>
           </Card>
         </div>
@@ -75,9 +77,9 @@ export default function AffiliatePortalPage() {
         {/* Referral Link */}
         <Card className="mb-xl" padding="lg">
           <CardHeader>
-            <h3 className="font-headline-sm text-headline-sm text-on-surface">Your Referral Link</h3>
+            <h3 className="font-headline-sm text-headline-sm text-on-surface">{t('referralLink.title')}</h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant">
-              Share this link with your audience to earn commissions
+              {t('referralLink.subtitle')}
             </p>
           </CardHeader>
           <CardContent>
@@ -86,7 +88,7 @@ export default function AffiliatePortalPage() {
                 <Input value={affiliateLink} readOnly className="font-mono text-sm" />
               </div>
               <Button onClick={handleCopyLink} iconLeft={copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}>
-                {copiedLink ? 'Copied!' : 'Copy'}
+                {copiedLink ? t('referralLink.copied') : t('referralLink.copy')}
               </Button>
             </div>
           </CardContent>
@@ -96,7 +98,7 @@ export default function AffiliatePortalPage() {
           {/* Referrals */}
           <Card padding="lg">
             <CardHeader>
-              <h3 className="font-headline-sm text-headline-sm text-on-surface">Recent Referrals</h3>
+              <h3 className="font-headline-sm text-headline-sm text-on-surface">{t('referrals.title')}</h3>
             </CardHeader>
             <CardContent>
               <div className="space-y-md">
@@ -115,7 +117,7 @@ export default function AffiliatePortalPage() {
                           ref.status === 'paid' ? 'primary' : 'warning'
                         }
                       >
-                        {ref.status}
+                        {t(`referrals.status.${ref.status}`)}
                       </Badge>
                     </div>
                   </div>
@@ -127,7 +129,7 @@ export default function AffiliatePortalPage() {
           {/* Marketing Materials */}
           <Card padding="lg">
             <CardHeader>
-              <h3 className="font-headline-sm text-headline-sm text-on-surface">Marketing Materials</h3>
+              <h3 className="font-headline-sm text-headline-sm text-on-surface">{t('marketing.title')}</h3>
             </CardHeader>
             <CardContent>
               <div className="space-y-md">
@@ -139,23 +141,23 @@ export default function AffiliatePortalPage() {
                     <div className="flex-1">
                       <p className="font-label-md text-on-surface">{banner.name}</p>
                       <p className="text-sm text-on-surface-variant">
-                        {banner.impressions} impressions • {banner.clicks} clicks
+                        {t('marketing.impressions', { count: banner.impressions })} • {t('marketing.clicks', { count: banner.clicks })}
                       </p>
                     </div>
                     <Button variant="ghost" size="sm" iconLeft={<ExternalLink className="w-4 h-4" />}>
-                      Get Code
+                      {t('marketing.getCode')}
                     </Button>
                   </div>
                 ))}
               </div>
               <div className="mt-lg pt-lg border-t border-outline-variant">
-                <p className="font-label-sm text-label-sm text-on-surface-variant mb-sm">Commission Structure</p>
+                <p className="font-label-sm text-label-sm text-on-surface-variant mb-sm">{t('commission.title')}</p>
                 <div className="bg-primary/5 rounded-xl p-md">
                   <div className="flex items-center gap-md mb-sm">
                     <BarChart3 className="w-8 h-8 text-primary" />
                     <div>
-                      <p className="font-label-lg text-primary">30% Recurring</p>
-                      <p className="text-sm text-on-surface-variant">Earn 30% of all subscription revenue for 24 months</p>
+                      <p className="font-label-lg text-primary">{t('commission.rate')}</p>
+                      <p className="text-sm text-on-surface-variant">{t('commission.description')}</p>
                     </div>
                   </div>
                 </div>
@@ -167,11 +169,16 @@ export default function AffiliatePortalPage() {
         {/* Resources */}
         <Card className="mt-xl" padding="lg">
           <CardHeader>
-            <h3 className="font-headline-sm text-headline-sm text-on-surface">Resources</h3>
+            <h3 className="font-headline-sm text-headline-sm text-on-surface">{t('resources.title')}</h3>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
-              {['Getting Started Guide', 'Best Practices', 'Creative Assets', 'FAQ'].map((resource, idx) => (
+              {[
+                t('resources.gettingStarted'),
+                t('resources.bestPractices'),
+                t('resources.creativeAssets'),
+                t('resources.faq')
+              ].map((resource, idx) => (
                 <Button key={idx} variant="outline" className="h-auto py-md flex-col">
                   <Link2 className="w-5 h-5 mb-sm" />
                   {resource}

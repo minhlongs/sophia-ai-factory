@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Search, Mail, Plus, MoreVertical, TrendingUp, DollarSign } from 'lucide-react';
 import { DashboardLayout, Card, CardHeader, CardContent, Button, Badge, Table, Input, Avatar } from '@/components/stitch';
 
@@ -48,15 +49,16 @@ const mockAffiliates = [
 ];
 
 export default function AffiliatesPage() {
+  const t = useTranslations('stitch.affiliates');
   const [search, setSearch] = useState('');
 
   return (
     <DashboardLayout
-      title="Affiliates"
-      subtitle="Manage your affiliate partners and track commissions"
+      title={t('title')}
+      subtitle={t('subtitle')}
       actions={
         <Button iconLeft={<Plus className="w-4 h-4" />}>
-          Invite Affiliate
+          {t('newAffiliate')}
         </Button>
       }
     >
@@ -68,21 +70,21 @@ export default function AffiliatesPage() {
               <TrendingUp className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-label-md text-label-md text-on-surface-variant">Total Affiliates</p>
+              <p className="font-label-md text-label-md text-on-surface-variant">{t('totalAffiliates')}</p>
               <p className="font-headline-md text-headline-md text-on-surface">24</p>
             </div>
           </div>
         </Card>
         <Card padding="md">
-          <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Active</p>
+          <p className="font-label-md text-label-md text-on-surface-variant mb-xs">{t('active')}</p>
           <p className="font-headline-md text-headline-md text-emerald-600">18</p>
         </Card>
         <Card padding="md">
-          <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Total Commission</p>
+          <p className="font-label-md text-label-md text-on-surface-variant mb-xs">{t('totalCommission')}</p>
           <p className="font-headline-md text-headline-md text-on-surface">$8,200</p>
         </Card>
         <Card padding="md">
-          <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Pending</p>
+          <p className="font-label-md text-label-md text-on-surface-variant mb-xs">{t('pending')}</p>
           <p className="font-headline-md text-headline-md text-amber-600">$1,980</p>
         </Card>
       </div>
@@ -93,14 +95,14 @@ export default function AffiliatesPage() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-outline" />
             <Input
-              placeholder="Search affiliates..."
+              placeholder={t('searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
             />
           </div>
           <Button variant="outline" iconLeft={<Mail className="w-4 h-4" />}>
-            Email All
+            {t('emailAll')}
           </Button>
         </div>
       </Card>
@@ -110,7 +112,7 @@ export default function AffiliatesPage() {
         <Table
           data={mockAffiliates}
           columns={[
-            { key: 'affiliate', header: 'Affiliate', cell: (row) => (
+            { key: 'affiliate', header: t('columns.affiliate'), cell: (row) => (
               <div className="flex items-center gap-md">
                 <Avatar src={row.avatar} alt={row.name} initials={row.name} size="md" />
                 <div>
@@ -119,24 +121,24 @@ export default function AffiliatesPage() {
                 </div>
               </div>
             ) },
-            { key: 'status', header: 'Status', cell: (row) => (
+            { key: 'status', header: t('columns.status'), cell: (row) => (
               <Badge variant="soft" color={row.status === 'active' ? 'success' : 'warning'}>
                 {row.status}
               </Badge>
             ), align: 'center' },
-            { key: 'sales', header: 'Sales', cell: (row) => (
+            { key: 'sales', header: t('columns.sales'), cell: (row) => (
               <div className="text-right">
                 <p className="font-label-md text-on-surface">{row.totalSales}</p>
                 <p className="text-[12px] text-on-surface-variant">orders</p>
               </div>
             ), align: 'right' },
-            { key: 'commission', header: 'Commission', cell: (row) => (
+            { key: 'commission', header: t('columns.commission'), cell: (row) => (
               <div className="text-right">
                 <p className="font-label-md text-on-surface">{row.totalCommission}</p>
                 <p className="text-[12px] text-on-surface-variant">earned</p>
               </div>
             ), align: 'right' },
-            { key: 'pending', header: 'Pending', cell: (row) => (
+            { key: 'pending', header: t('pending'), cell: (row) => (
               <span className="font-body-sm text-amber-600">{row.pending}</span>
             ), align: 'right' },
             { key: 'actions', header: '', cell: () => (

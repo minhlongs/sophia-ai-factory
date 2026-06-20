@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Search, Filter, Download, ArrowUpRight, ArrowDownRight, Eye } from 'lucide-react';
 import { DashboardLayout, Card, CardHeader, CardContent, Button, Badge, Table, Input } from '@/components/stitch';
 
@@ -69,24 +70,30 @@ const summaryStats = [
 ];
 
 export default function PaymentsPage() {
+  const t = useTranslations('stitch.payments');
   const [search, setSearch] = useState('');
 
   return (
     <DashboardLayout
-      title="Payments"
-      subtitle="Track transactions, refunds, and revenue"
+      title={t('title')}
+      subtitle={t('subtitle')}
       actions={
         <Button variant="outline" iconLeft={<Download className="w-4 h-4" />}>
-          Export
+          {t('download')}
         </Button>
       }
     >
       {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-md mb-xl">
-        {summaryStats.map((stat, idx) => (
+        {[
+          { key: 'totalRevenue', value: '$124,500', change: '+4.5%', trend: 'up' },
+          { key: 'thisMonth', value: '$18,250', change: '+12.3%', trend: 'up' },
+          { key: 'pending', value: '$3,420', change: '2 items', trend: 'neutral' },
+          { key: 'refunded', value: '$1,240', change: '-2.1%', trend: 'down' },
+        ].map((stat, idx) => (
           <Card key={idx} padding="md">
             <p className="font-label-md text-label-md text-on-surface-variant mb-xs">
-              {stat.label}
+              {t(`summary.${stat.key}`)}
             </p>
             <div className="flex items-baseline gap-sm">
               <p className="font-headline-md text-headline-md text-on-surface">{stat.value}</p>
@@ -116,14 +123,14 @@ export default function PaymentsPage() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-outline" />
             <Input
-              placeholder="Search payments..."
+              placeholder={t('searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-10"
             />
           </div>
           <Button variant="outline" iconLeft={<Filter className="w-4 h-4" />}>
-            Filter
+            {t('filter')}
           </Button>
         </div>
       </Card>
@@ -133,22 +140,22 @@ export default function PaymentsPage() {
         <Table
           data={mockPayments}
           columns={[
-            { key: 'date', header: 'Date', cell: (row) => (
+            { key: 'date', header: t('columns.date'), cell: (row) => (
               <span className="font-body-sm text-on-surface-variant">{row.date}</span>
             ) },
-            { key: 'customer', header: 'Customer', cell: (row) => (
+            { key: 'customer', header: t('columns.customer'), cell: (row) => (
               <div>
                 <p className="font-label-md text-on-surface">{row.customer}</p>
                 <p className="text-[12px] text-on-surface-variant">{row.email}</p>
               </div>
             ) },
-            { key: 'amount', header: 'Amount', cell: (row) => (
+            { key: 'amount', header: t('columns.amount'), cell: (row) => (
               <span className="font-semibold text-on-surface">{row.amount}</span>
             ), align: 'right' },
-            { key: 'method', header: 'Method', cell: (row) => (
+            { key: 'method', header: t('columns.method'), cell: (row) => (
               <span className="font-body-sm text-on-surface-variant">{row.method}</span>
             ), align: 'center' },
-            { key: 'status', header: 'Status', cell: (row) => (
+            { key: 'status', header: t('columns.status'), cell: (row) => (
               <Badge
                 variant="soft"
                 color={
@@ -160,9 +167,9 @@ export default function PaymentsPage() {
                 {row.status}
               </Badge>
             ), align: 'center' },
-            { key: 'actions', header: '', cell: () => (
+            { key: 'actions', header: t('columns.actions'), cell: () => (
               <Button variant="ghost" size="sm" iconLeft={<Eye className="w-4 h-4" />}>
-                View
+                {t('actions.view')}
               </Button>
             ), align: 'right' },
           ]}

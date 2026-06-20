@@ -1,14 +1,16 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Save } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { Plus, Save, ExternalLink, Link2, Copy, Check } from 'lucide-react';
 import { Card, CardHeader, CardContent, Button, Input, Textarea, Badge } from '@/components/stitch';
 
 export default function WebhookConfigPage() {
+  const t = useTranslations('stitch.webhook');
   const [webhooks, setWebhooks] = useState([
     {
       id: '1',
-      name: 'Payment Events',
+      name: t('examples.paymentEvents'),
       url: 'https://your-app.com/api/webhooks/payments',
       events: ['payment.succeeded', 'payment.failed'],
       secret: 'whsec_xxx',
@@ -16,7 +18,7 @@ export default function WebhookConfigPage() {
     },
     {
       id: '2',
-      name: 'Subscription Updates',
+      name: t('examples.subscriptionUpdates'),
       url: 'https://your-app.com/api/webhooks/subscriptions',
       events: ['subscription.created', 'subscription.updated', 'subscription.canceled'],
       secret: 'whsec_yyy',
@@ -42,32 +44,32 @@ export default function WebhookConfigPage() {
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center justify-between mb-xl">
           <div>
-            <h1 className="font-headline-lg text-headline-lg text-on-surface">Webhook Configuration</h1>
+            <h1 className="font-headline-lg text-headline-lg text-on-surface">{t('title')}</h1>
             <p className="font-body-md text-body-md text-on-surface-variant">
-              Configure webhook endpoints to receive real-time event notifications
+              {t('subtitle')}
             </p>
           </div>
           <Button iconLeft={<Plus className="w-4 h-4" />} onClick={() => setShowForm(true)}>
-            Add Webhook
+            {t('newWebhook')}
           </Button>
         </div>
 
         {showForm && (
           <Card className="mb-xl" padding="lg">
             <CardHeader>
-              <h3 className="font-headline-sm text-headline-sm text-on-surface">New Webhook</h3>
+              <h3 className="font-headline-sm text-headline-sm text-on-surface">{t('newWebhook')}</h3>
             </CardHeader>
             <CardContent className="space-y-lg">
               <div className="space-y-sm">
-                <label className="font-label-md text-label-md text-on-surface">Webhook Name</label>
-                <Input placeholder="e.g., Payment Events" />
+                <label className="font-label-md text-label-md text-on-surface">{t('webhookName')}</label>
+                <Input placeholder={t('namePlaceholder')} />
               </div>
               <div className="space-y-sm">
-                <label className="font-label-md text-label-md text-on-surface">Endpoint URL</label>
-                <Input placeholder="https://your-app.com/api/webhooks/events" />
+                <label className="font-label-md text-label-md text-on-surface">{t('endpointUrl')}</label>
+                <Input placeholder={t('urlPlaceholder')} />
               </div>
               <div className="space-y-sm">
-                <label className="font-label-md text-label-md text-on-surface">Events to Subscribe</label>
+                <label className="font-label-md text-label-md text-on-surface">{t('eventsToSubscribe')}</label>
                 <div className="flex flex-wrap gap-sm">
                   {availableEvents.map((event) => (
                     <label
@@ -82,9 +84,9 @@ export default function WebhookConfigPage() {
               </div>
               <div className="flex gap-sm justify-end pt-md border-t border-outline-variant">
                 <Button variant="outline" onClick={() => setShowForm(false)}>
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
-                <Button iconLeft={<Save className="w-4 h-4" />}>Save Webhook</Button>
+                <Button iconLeft={<Save className="w-4 h-4" />}>{t('saveWebhook')}</Button>
               </div>
             </CardContent>
           </Card>
@@ -103,16 +105,16 @@ export default function WebhookConfigPage() {
                   </div>
                   <div className="flex items-center gap-sm">
                     <Badge variant={webhook.active ? 'soft' : 'outline'} color={webhook.active ? 'success' : 'neutral'}>
-                      {webhook.active ? 'Active' : 'Disabled'}
+                      {webhook.active ? t('common.active') : t('common.inactive')}
                     </Badge>
-                    <Button variant="ghost" size="sm">Edit</Button>
-                    <Button variant="ghost" size="sm" className="text-destructive">Delete</Button>
+                    <Button variant="ghost" size="sm">{t('edit')}</Button>
+                    <Button variant="ghost" size="sm" className="text-destructive">{t('delete')}</Button>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="!p-0 mt-lg">
                 <div className="bg-surface rounded-xl p-md">
-                  <p className="font-label-sm text-label-sm text-on-surface-variant mb-sm">Subscribed Events</p>
+                  <p className="font-label-sm text-label-sm text-on-surface-variant mb-sm">{t('subscribedEvents')}</p>
                   <div className="flex flex-wrap gap-xs">
                     {webhook.events.map((event) => (
                       <span
@@ -125,7 +127,7 @@ export default function WebhookConfigPage() {
                   </div>
                 </div>
                 <div className="mt-md pt-md border-t border-outline-variant">
-                  <p className="font-label-sm text-label-sm text-on-surface-variant">Signing Secret</p>
+                  <p className="font-label-sm text-label-sm text-on-surface-variant">{t('signingSecret')}</p>
                   <code className="font-mono text-sm text-on-surface bg-surface p-sm rounded block mt-xs">
                     {webhook.secret}
                   </code>
@@ -137,9 +139,9 @@ export default function WebhookConfigPage() {
 
         <Card className="mt-xl" padding="lg">
           <CardHeader>
-            <h3 className="font-headline-sm text-headline-sm text-on-surface">Testing Webhooks</h3>
+            <h3 className="font-headline-sm text-headline-sm text-on-surface">{t('testing')}</h3>
             <p className="font-body-sm text-body-sm text-on-surface-variant">
-              Use our CLI tool to test webhook delivery from your local machine
+              {t('testingDescription')}
             </p>
           </CardHeader>
           <CardContent>
