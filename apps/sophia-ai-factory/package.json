@@ -2,6 +2,7 @@
   "name": "sophia-ai-factory",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "dev:mock": "NEXT_PUBLIC_MOCK_AI_SERVICES=true next dev",
