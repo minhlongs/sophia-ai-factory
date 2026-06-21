@@ -4424,10 +4424,10 @@
         "pending": "Đang chờ"
       },
       "metrics": {
-        "revenue": "Tổng doanh thu",
-        "subscribers": "Đăng ký hoạt động",
-        "growth": "Tăng trưởng tháng",
-        "commission": "Hoa hồng đã trả"
+        "total_campaigns": "Tổng Chiến Dịch",
+        "active_campaigns": "Chiến Dịch Đang Chạy",
+        "videos_generated": "Video Đã Tạo",
+        "success_rate": "Tỷ Lệ Thành Công"
       },
       "revenueChart": {
         "title": "Doanh thu theo thời gian",

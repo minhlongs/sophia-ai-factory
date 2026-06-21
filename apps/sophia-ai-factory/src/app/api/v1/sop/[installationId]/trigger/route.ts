@@ -16,7 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getInstallation } from '@/tree/sop/sop-repo-installations';
 import { verifySignature } from '@/tree/sop/webhook-hmac';
-import { runSop } from '@/tree/sop/executor/sop-runner';
+import { runSop } from '@/forest/missions/sop-runner';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { getSopD1 } from '@/tree/sop/d1';

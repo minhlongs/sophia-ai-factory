@@ -6,6 +6,7 @@
  */
 
 import { requireMasterTier } from '@/seed/auth/require-master-tier'
+import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { approvalService } from '@/forest/deploy-guard'
 import DeployGuardApprovalDetail from './page.client'
 
@@ -30,5 +31,8 @@ export default async function DeployGuardApprovalPage({ params }: PageProps) {
     )
   }
 
-  return <DeployGuardApprovalDetail locale={locale} approval={approval} />
+  const user = await getCurrentUser()
+  const userId = user?.id || 'unknown'
+
+  return <DeployGuardApprovalDetail locale={locale} approval={approval} userId={userId} />
 }

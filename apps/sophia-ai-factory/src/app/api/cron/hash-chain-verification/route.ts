@@ -62,7 +62,7 @@ async function handler(request: NextRequest) {
     // Run the verification script
     const result = spawnSync(
       'node',
-      ['scripts/audit/verify-hash-chain.js', '--since', '30 days ago'],
+      ['scripts/audit/verify-hash-chain.mjs', '--since', '30 days ago'],
       {
         encoding: 'utf-8',
         stdio: 'pipe',

@@ -83,7 +83,7 @@ async function loadHandler(command: string): Promise<((ctx: MissionContext) => P
       case 'email:campaign': return (await import('../../tree/email/missions/email-campaign')).handle;
       case 'email:test': return (await import('../../tree/email/missions/email-test')).handle;
       case 'email:templates': return (await import('../../tree/email/missions/email-templates')).handle;
-      case 'campaign:run': return (await import('../../tree/email/missions/campaign-run')).handle;
+      case 'campaign:run': return (await import('./campaign-run')).handle;
       case 'youtube:publish': return (await import('../youtube/missions/youtube-publish')).handle;
       case 'youtube:list-channels': return (await import('../youtube/missions/youtube-list-channels')).handle;
       case 'voice:clone': return (await import('../voice/missions/voice-clone')).handle;

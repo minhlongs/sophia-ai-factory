@@ -4417,10 +4417,10 @@
         "pending": "Pending"
       },
       "metrics": {
-        "revenue": "Total Revenue",
-        "subscribers": "Active Subscribers",
-        "growth": "Monthly Growth",
-        "commission": "Commission Paid"
+        "total_campaigns": "Total Campaigns",
+        "active_campaigns": "Active Campaigns",
+        "videos_generated": "Videos Generated",
+        "success_rate": "Success Rate"
       },
       "revenueChart": {
         "title": "Revenue Over Time",

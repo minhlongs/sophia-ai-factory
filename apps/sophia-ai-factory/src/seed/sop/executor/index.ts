@@ -2,7 +2,7 @@
  * SOP Executor — barrel re-export
  */
 
-export { runSop } from './sop-runner';
+// Note: runSop is not part of seed; it's in forest/missions.
 export { parseAgentsYaml } from './agents-yaml-parser';
 export { parsePlaybook } from './playbook-parser';
 export { validateOutput, clearValidatorCache } from './output-validator';

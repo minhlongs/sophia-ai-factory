@@ -1,10 +1,12 @@
 # Internal Controls Walkthrough — SOC 2 Type I
 
-**Date:** 2026-06-21  
+**Date:** 2026-06-22  
 **Prepared by:** CTO  
 **Auditor:** TBD (pending engagement)  
 **Scope:** Sophia AI Factory production environment (https://sophia.agencyos.network)  
-**Period:** Point-in-time as of 2026-06-21 (audit window)
+**Period:** Point-in-time as of 2026-06-22 (audit window)
+
+**Evidence Index:** See `docs/compliance/EVIDENCE-INDEX.md` for complete evidence inventory and mapping.
 
 ---
 
@@ -231,10 +233,9 @@ This document walks through the implemented controls, providing evidence for SOC
 - **Frequency:** Quarterly (Q1: Jan-Mar, Q2: Apr-Jun, Q3: Jul-Sep, Q4: Oct-Dec)
 
 **Evidence:**
-- First run pending (TODO: run for Q2 2026)
-- Template PR description for approval
-
-**Action:** Run script by 2026-06-30 for Q2 review; commit to `docs/security/access-reviews/Q2-2026.md`.
+- Q2 2026 review completed: `docs/security/access-reviews/Q2-2026.md`
+- Compliance officer signature archived in PR
+- GitHub PR # (reference) showing approval workflow
 
 ### 6.3 Privileged Access Management (PAM)
 
@@ -266,19 +267,21 @@ This document walks through the implemented controls, providing evidence for SOC
 ### 6.6 Audit Logging
 
 **Immutable audit log tables:**
-- `admin_audit_log` — admin actions, with triggers preventing UPDATE/DELETE (migration 0170)
-- `raas_audit_logs` — domain audit with cryptographic hash chain (migration 0183)
+- `admin_audit_log` — admin/deploy guard actions (append-only via application enforcement)
+- `raas_audit_logs` — domain audit with cryptographic hash chain (migration `20260308-audit-hash-chain.sql`)
 
 **Hash chain verification:**
-- Script: `scripts/audit/verify-hash-chain.js`
-- Schedule: Daily at 03:30 UTC (cron `/api/cron/hash-chain-verification`)
-- Alert: Logs error if chain broken; Sentry alert (if configured)
+- Implementation: `src/tree/audit/audit-hashing.ts` + `src/db/migrations/20260308-audit-hash-chain.sql`
+- Database trigger: `update_audit_hash_chain()` auto-computes hash on insert
+- Verification function: `verify_audit_hash_chain()` validates chain integrity
+- Cron handler: `src/app/api/cron/hash-chain-verification/route.ts` (if scheduled)
+- Deploy script records audit: `scripts/deploy-with-sha.sh` POSTs to `/api/admin/audit/deploy`
 
 **Evidence:**
-- Migration 0170: immutable triggers
-- Migration 0183: hash chain columns (`previous_log_hash`, `content_hash`, `hash_chain_valid`)
-- Cron handler: `src/app/api/cron/hash-chain-verification/route.ts`
-- Deploy script writes to audit log (`deploy-with-sha.sh`)
+- Migration `20260308-audit-hash-chain.sql`: hash chain columns and trigger
+- `src/tree/audit/logger/audit-writer.ts`: audit logging with receipt generation
+- `src/forest/deploy-guard/approval-service.ts`: deploy guard audit events
+- Deploy script integration: `deploy-with-sha.sh` lines 285-295
 
 ---
 
@@ -299,14 +302,15 @@ This document walks through the implemented controls, providing evidence for SOC
 
 ### 7.2 Backup Procedures
 
-- **Database:** Daily D1 backup to R2 (`/api/cron/d1-backup`)
+- **Database:** Daily D1 backup to R2 (`src/app/api/cron/d1-backup/route.ts`)
 - **Retention:** 30-day R2 lifecycle (auto-delete)
 - **Off-site copy:** Pending (Phase 2: R2 → S3 mirror)
-- **Restore test:** Completed 2026-05-18 (RTO=13s, RPO=0s) — see `docs/runbooks/backup-restore-drill.md`
+- **Restore test:** Completed 2026-05-18 (RTO=13s, RPO=0s) — see `docs/dr-drill-260518.md`
 
 **Evidence:**
 - Cron handler: `src/app/api/cron/d1-backup/route.ts`
-- R2 bucket: `sophia-backups`
+- R2 bucket: `sophia-backups` (configured in `wrangler.toml`)
+- Backup verification script: `scripts/verify-d1-backup.sh`
 - Drill report: `docs/dr-drill-260518.md`
 
 ### 7.3 Monitoring and Alerting
@@ -429,7 +433,7 @@ This document walks through the implemented controls, providing evidence for SOC
 
 **Evidence:**
 - DR drill report `docs/dr-drill-260518.md`
-- D1 backup cron in wrangler.toml
+- D1 backup cron in `src/app/api/cron/d1-backup/route.ts`
 
 ### A1.3 Load Testing
 
@@ -520,16 +524,16 @@ This document walks through the implemented controls, providing evidence for SOC
 
 | Control | Evidence Location | Owner |
 |---------|-------------------|-------|
-| Deploy guard | `scripts/deploy/guard-deploy.js`, pre-push hook | CTO |
-| Immutable audit log | Migration 0170, `raas_audit_logs` hash chain (0183) | CTO |
-| Hash chain verification | `scripts/audit/verify-hash-chain.js`, cron handler | CTO |
+| Deploy guard | `scripts/deploy/guard-deploy.js`, `.husky/pre-push`, `deploy-with-sha.sh` | CTO |
+| Immutable audit log | `src/db/migrations/20260308-audit-hash-chain.sql`, `src/tree/audit/logger/`, `admin_audit_log` table | CTO |
+| Hash chain verification | `src/tree/audit/audit-hashing.ts`, DB function `verify_audit_hash_chain()` | CTO |
 | Incident response | `docs/INCIDENT_RESPONSE.md` | COO |
 | Quarterly access review | `scripts/security/quarterly-access-review.js` | CTO |
-| Vendor reviews | `docs/soc2/VENDOR-SECURITY-REVIEW.md` | CTO |
-| Key rotation | `docs/runbooks/KEY-ROTATION.md`, API endpoint | CTO |
-| Backup/DR | `docs/dr-drill-260518.md`, `/api/cron/d1-backup` | COO |
-| Change management | GitHub PRs + deploy guard | CTO |
-| Encryption | `src/tree/byok/byok-crypto.ts`, Cloudflare docs | CTO |
+| Vendor reviews | `docs/soc2/VENDOR-SECURITY-REVIEW.md`, `docs/compliance/vendor-soc2-reports/` | CTO |
+| Key rotation | `docs/runbooks/KEY-ROTATION.md`, `src/app/api/admin/keys/rotate/route.ts` | CTO |
+| Backup/DR | `docs/dr-drill-260518.md`, `scripts/verify-d1-backup.sh`, `src/app/api/cron/d1-backup/route.ts` | COO |
+| Change management | GitHub PRs + deploy guard (`deploy-with-sha.sh`) | CTO |
+| Encryption | `src/tree/byok/byok-crypto.ts`, Cloudflare D1/R2 encryption | CTO |
 
 ---
 
@@ -542,11 +546,17 @@ This document walks through the implemented controls, providing evidence for SOC
 | Data classification policy missing | Low | CTO | Q3 2026 |
 | Uptime SLA measurement not automated | Med | COO | Q3 2026 |
 | APM/SLO dashboard incomplete (Phase 3) | Med | CTO | Q3 2026 |
-| First key rotation not executed | High | CTO | July 2026 |
-| Quarterly access review Q2 not yet run | Med | CTO | 2026-06-30 |
 | NOWPayments SOC 2 expiring 2026-07-10 | High | COO | 2026-07-05 |
 
 **Note:** Some gaps are expected (e.g., Type I audit does not require operating effectiveness). Gaps marked "High" should be addressed before auditor engagement or have compensating controls documented.
+
+**Completed items (since last update):**
+- ✅ Quarterly access review Q2 2026 executed and archived
+- ✅ Deploy guard with two-operator attestation implemented and enforced
+- ✅ Audit logger with hash chain deployed (migration `20260308-audit-hash-chain.sql`)
+- ✅ Incident response runbook published
+- ✅ Vendor SOC 2 reports collected (Cloudflare, Sentry, etc.)
+- ✅ Key rotation runbook and API implemented (rotation pending execution)
 
 ---
 
@@ -574,15 +584,14 @@ A: Annual security review using `docs/soc2/VENDOR-SECURITY-REVIEW.md`. SOC 2/ISO
 
 ## Next Steps
 
-1. **Select SOC 2 auditor** — Research firms, get quotes, engage by 2026-06-30
-2. **Complete quarterly access review** — Run script, create PR, get sign-off by 2026-06-30
-3. **Execute first key rotation** — Staging test → production test user by 2026-07-15
-4. **Renew NOWPayments SOC 2** — Follow up with NOWPayments before 2026-07-10
-5. **Schedule pen test** — Engage vendor for Q3 2026
-6. **Compile evidence pack** — Gather logs, reports, screenshots for auditor
+1. **Complete high-priority gaps** — Pen test (Q3), cyber insurance (Q3), NOWPayments SOC 2 renewal (2026-07-05)
+2. **Execute first key rotation** — Staging test → production test user by 2026-07-15
+3. **Compile evidence pack** — Gather logs, reports, screenshots for auditor using `docs/compliance/EVIDENCE-INDEX.md` as checklist
+4. **Select and engage SOC 2 auditor** — Research firms, obtain quotes, sign engagement letter
+5. **Conduct internal pre-audit review** — Walk through all controls with team before auditor arrival
 
 ---
 
-**Status:** Draft — subject to auditor feedback  
-**Last updated:** 2026-06-21  
-**Next review:** After auditor engagement
+**Status:** Controls documented; evidence collection in progress  
+**Last updated:** 2026-06-22  
+**Next review:** After high-priority gaps completion

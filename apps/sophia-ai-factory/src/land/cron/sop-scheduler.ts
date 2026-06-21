@@ -9,7 +9,7 @@
  */
 
 import { claimDueInstallations } from '@/tree/sop/sop-repo-installations';
-import { runSop } from '@/tree/sop/executor/sop-runner';
+import { runSop } from '@/forest/missions/sop-runner';
 import { logger } from '@/seed/utils/logger-utility';
 
 const MAX_PER_TICK = 20;

@@ -29,9 +29,10 @@ interface Approval {
 interface Props {
   locale: string
   approval: Approval
+  userId: string
 }
 
-export default function DeployGuardApprovalDetail({ locale, approval: initialApproval }: Props) {
+export default function DeployGuardApprovalDetail({ locale, approval: initialApproval, userId }: Props) {
   const isVi = locale.startsWith('vi')
   const [approval, setApproval] = useState(initialApproval)
   const [attesting, setAttesting] = useState(false)
@@ -58,7 +59,7 @@ export default function DeployGuardApprovalDetail({ locale, approval: initialApp
         branch: approval.branch,
         timestamp: new Date().toISOString(),
         operator_host: window.location.hostname,
-        operator_user: 'admin', // TODO: get actual user ID
+        operator_user: userId,
         diff_summary: approval.diff_summary || '',
         files_changed: approval.files_changed || 0,
         required_attestations: approval.requiredAttestations
