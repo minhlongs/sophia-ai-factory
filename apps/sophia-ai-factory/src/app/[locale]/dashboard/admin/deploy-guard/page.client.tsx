@@ -10,6 +10,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Shield, CheckCircle, XCircle, AlertTriangle, Clock, History, Eye } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import type { ApprovalDetailDto } from '@/forest/deploy-guard'
+import { logger } from '@/seed/utils/logger-utility'
 
 interface Approval {
   id: string
@@ -22,6 +24,8 @@ interface Approval {
   requiredAttestations: number
   createdAt: number
   attestations: Array<{ operatorId: string }>
+  diff_summary?: string
+  files_changed?: number
 }
 
 interface HistoryEntry {
@@ -57,10 +61,10 @@ export default function DeployGuardClient({ locale }: DeployGuardClientProps) {
         fetch('/api/admin/deploy-guard/pending?limit=50').then(r => r.json()),
         fetch('/api/admin/deploy-guard/history?limit=50').then(r => r.json())
       ])
-      setPendingApprovals(pendingRes.approvals || [])
-      setHistory(historyRes.entries || [])
+      setPendingApprovals((pendingRes as { approvals: Approval[] }).approvals || [])
+      setHistory((historyRes as { entries: HistoryEntry[] }).entries || [])
     } catch (error) {
-      console.error('Failed to fetch:', error)
+      logger.error('Failed to fetch deploy-guard data', error instanceof Error ? error : { error: String(error) })
     } finally {
       setLoading(false)
     }
@@ -80,7 +84,7 @@ export default function DeployGuardClient({ locale }: DeployGuardClientProps) {
     try {
       // Get approval details to compute manifest
       const approvalRes = await fetch(`/api/admin/deploy-guard/approvals/${approvalId}`)
-      const approval = await approvalRes.json()
+      const approval = (await approvalRes.json()) as Approval
 
       // Build manifest (must match deploy-with-sha.sh structure)
       const manifest = {
@@ -126,7 +130,7 @@ export default function DeployGuardClient({ locale }: DeployGuardClientProps) {
         setToast({ message: isVi ? 'Đã ghi nhận chữ ký' : 'Attestation recorded', type: 'success' })
         await fetchData()
       } else {
-        const err = await res.json()
+        const err = (await res.json()) as { error?: string }
         setToast({ message: err.error || (isVi ? 'Ghi nhận thất bại' : 'Attestation failed'), type: 'error' })
       }
     } catch (error) {
@@ -156,7 +160,7 @@ export default function DeployGuardClient({ locale }: DeployGuardClientProps) {
         setRejectReason('')
         await fetchData()
       } else {
-        const err = await res.json()
+        const err = (await res.json()) as { error?: string }
         setToast({ message: err.error || (isVi ? 'Từ chối thất bại' : 'Rejection failed'), type: 'error' })
       }
     } catch (error) {
@@ -182,7 +186,7 @@ export default function DeployGuardClient({ locale }: DeployGuardClientProps) {
         setOverrideReason('')
         await fetchData()
       } else {
-        const err = await res.json()
+        const err = (await res.json()) as { error?: string }
         setToast({ message: err.error || (isVi ? 'Override thất bại' : 'Override failed'), type: 'error' })
       }
     } catch (error) {

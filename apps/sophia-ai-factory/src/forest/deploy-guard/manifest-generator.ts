@@ -72,18 +72,37 @@ export async function computeSignature(
 /**
  * Verify an operator's signature against the manifest.
  * Returns true if signature is valid.
+ * Uses Web Crypto API for constant-time verification.
  */
 export async function verifySignature(
   manifest: DeployManifest,
   signature: string,
   secret: string
 ): Promise<boolean> {
-  const expected = await computeSignature(manifest, secret)
-  // Constant-time comparison to prevent timing attacks
-  return crypto.timingSafeEqual(
-    Buffer.from(expected, 'hex'),
-    Buffer.from(signature, 'hex')
+  const data = getSigningString(manifest)
+  const encoder = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['verify']
   )
+  // Convert hex signature to Uint8Array
+  const sigBytes = hexToUint8Array(signature)
+  // @ts-expect-error Web Crypto subtle.verify accepts BufferSource; Uint8Array is valid
+  return crypto.subtle.verify('HMAC', key, sigBytes, encoder.encode(data))
+}
+
+/**
+ * Helper: convert hex string to Uint8Array
+ */
+function hexToUint8Array(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2)
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i >> 1] = parseInt(hex.slice(i, i + 2), 16)
+  }
+  return bytes
 }
 
 /**

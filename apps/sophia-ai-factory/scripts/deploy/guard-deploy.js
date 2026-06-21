@@ -18,7 +18,7 @@
 
 import { spawnSync } from 'node:child_process';
 
-function runGhApi(args: string[]): any {
+function runGhApi(args) {
   const result = spawnSync('gh', ['api', ...args], { encoding: 'utf-8', stdio: 'pipe' });
   if (result.status !== 0) {
     return null;
@@ -30,7 +30,7 @@ function runGhApi(args: string[]): any {
   }
 }
 
-function findOpenPRForBranch(branch: string): { number: number; reviews: any[]; status: string } | null {
+function findOpenPRForBranch(branch) {
   const prs = runGhApi([
     '/repos/longtho638-jpg/sophia-ai-factory/pulls',
     '--jq', `.[] | select(.headRefName == "${branch}") | {number: .number, state: .state, baseRefName: .baseRefName, reviews: .reviews, status: .status}`
@@ -54,7 +54,7 @@ function findOpenPRForBranch(branch: string): { number: number; reviews: any[]; 
   return null;
 }
 
-function checkPR(pr: { number: number; reviews: any[]; status: string }): { allowed: boolean; reason?: string } {
+function checkPR(pr) {
   // Check CI status
   if (pr.status !== 'success') {
     return {
@@ -64,7 +64,7 @@ function checkPR(pr: { number: number; reviews: any[]; status: string }): { allo
   }
 
   // Count APPROVED reviews
-  const approvedCount = pr.reviews.filter((r: any) => r.state === 'APPROVED').length;
+  const approvedCount = pr.reviews.filter((r) => r.state === 'APPROVED').length;
   if (approvedCount < 1) {
     return {
       allowed: false,
@@ -132,7 +132,7 @@ function main() {
   }
 }
 
-function getCurrentBranch(): string {
+function getCurrentBranch() {
   const result = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { encoding: 'utf-8' });
   return result.stdout.trim() || 'main';
 }

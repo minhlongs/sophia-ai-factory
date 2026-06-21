@@ -1,6 +1,7 @@
-import { describe, it, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { CampaignCard } from '../campaign-card';
+import type { Campaign } from '@/seed/types';
 
 vi.mock('next-intl', () => ({
   useTranslations: () => (key: string) => key,
@@ -39,13 +40,13 @@ vi.mock('lucide-react', () => ({
   PlayCircle: () => <div data-testid="icon-play" />,
 }));
 
-const mockCampaign = {
+const mockCampaign: Campaign = {
   id: '1',
   user_id: 'user1',
   title: 'Test Campaign',
   topic: null,
   audience: 'General audience',
-  status: 'draft' as const,
+  status: 'draft',
   progress: 0,
   error_message: null,
   script_content: null,
@@ -76,20 +77,20 @@ describe('CampaignCard', () => {
   });
 
   it('shows progress bar for processing status', () => {
-    const processingCampaign = { ...mockCampaign, status: 'processing_script', progress: 45 };
+    const processingCampaign: Campaign = { ...mockCampaign, status: 'processing_script', progress: 45 };
     render(<CampaignCard campaign={processingCampaign} onSelect={() => {}} />);
     expect(screen.getByText('45%')).toBeDefined();
     expect(screen.getByRole('progressbar')).toBeDefined();
   });
 
   it('displays error message when present', () => {
-    const errorCampaign = { ...mockCampaign, status: 'failed', error_message: 'Something broke' };
+    const errorCampaign: Campaign = { ...mockCampaign, status: 'failed', error_message: 'Something broke' };
     render(<CampaignCard campaign={errorCampaign} onSelect={() => {}} />);
     expect(screen.getByText('Something broke')).toBeDefined();
   });
 
   it('shows watch video link when video_url exists', () => {
-    const completedCampaign = { ...mockCampaign, status: 'completed', video_url: 'https://example.com/video' };
+    const completedCampaign: Campaign = { ...mockCampaign, status: 'completed', video_url: 'https://example.com/video' };
     render(<CampaignCard campaign={completedCampaign} onSelect={() => {}} />);
     expect(screen.getByText('watch_video')).toBeDefined();
   });

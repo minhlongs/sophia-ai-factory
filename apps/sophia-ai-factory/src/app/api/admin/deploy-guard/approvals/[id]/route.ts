@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { approvalService } from '@/forest/deploy-guard'
+import { logger } from '@/seed/utils/logger-utility'
 
 export async function GET(
   request: NextRequest,
@@ -27,7 +28,7 @@ export async function GET(
 
     return NextResponse.json(approval)
   } catch (error) {
-    console.error('Failed to get approval:', error)
+    logger.error('Failed to get approval', error instanceof Error ? error : { error: String(error) })
     return NextResponse.json(
       { error: 'Failed to get approval', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }

@@ -4411,6 +4411,11 @@
     "dashboard": {
       "title": "Dashboard",
       "subtitle": "Welcome back. Here's what's happening with your workspace today.",
+      "common": {
+        "paid": "Paid",
+        "failed": "Failed",
+        "pending": "Pending"
+      },
       "metrics": {
         "revenue": "Total Revenue",
         "subscribers": "Active Subscribers",

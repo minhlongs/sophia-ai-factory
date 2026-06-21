@@ -77,7 +77,7 @@ const {
 // ── Module mocks ──────────────────────────────────────────────────────────────
 
 vi.mock('@/seed/db/client', () => ({ createServerClient: mockCreateServerClient }));
-vi.mock('@/forest/publishing/providers/telegram-publisher', () => ({
+vi.mock('@/tree/publishing/providers/telegram-publisher', () => ({
   publishToTelegram: mockPublishToTelegram,
 }));
 vi.mock('@/seed/utils/logger-utility', () => ({

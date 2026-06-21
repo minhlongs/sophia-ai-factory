@@ -1,6 +1,7 @@
-import { describe, it, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { CampaignGrid } from '../campaign-grid';
+import type { Campaign } from '@/seed/types';
 
 vi.mock('../campaign-card', () => ({
   CampaignCard: ({ campaign, onSelect }: any) => (
@@ -10,10 +11,10 @@ vi.mock('../campaign-card', () => ({
   ),
 }));
 
-const mockCampaigns = [
-  { id: '1', title: 'Camp 1', status: 'draft' as const, progress: 0, created_at: '', user_id: '' },
-  { id: '2', title: 'Camp 2', status: 'completed' as const, progress: 100, created_at: '', user_id: '' },
-  { id: '3', title: 'Camp 3', status: 'processing_script' as const, progress: 50, created_at: '', user_id: '' },
+const mockCampaigns: Campaign[] = [
+  { id: '1', title: 'Camp 1', status: 'draft', progress: 0, created_at: '', updated_at: '', user_id: '' },
+  { id: '2', title: 'Camp 2', status: 'completed', progress: 100, created_at: '', updated_at: '', user_id: '' },
+  { id: '3', title: 'Camp 3', status: 'processing_script', progress: 50, created_at: '', updated_at: '', user_id: '' },
 ];
 
 describe('CampaignGrid', () => {

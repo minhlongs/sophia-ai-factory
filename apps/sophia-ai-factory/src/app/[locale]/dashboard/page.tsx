@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 /**
  * Dashboard home page — server component.
  * First-time: shows setup steps.
@@ -28,11 +30,7 @@ import { OnboardingStatusWidget } from './components/onboarding-status-widget';
 import { LocalSetupGuide } from './components/local-setup-guide';
 import { MissionControlWidget } from '@/forest/components/dashboard/mission-control-widget';
 import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
-import { cookies } from 'next/headers';
 import { getD1 } from '@/seed/db/get-d1';
-
-export const dynamic = 'force-dynamic';
-
 
 interface SopRunRow {
   id: string;
@@ -46,9 +44,7 @@ interface ProfileRow {
   onboarding_completed_at: number | null;
 }
 
-
-
-export default async function DashboardPage() {
+export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
@@ -118,12 +114,12 @@ export default async function DashboardPage() {
     }
   }
 
-   const tierLabel = TIER_CONFIG[tier]?.label ?? tier;
- // H3: firstRun = true when user has never executed any SOP (zero-run)
- // Ensures first-campaign CTA shows for MASTER users regardless of pre-installed SOP count
- const firstRun = recentRuns.length === 0;
-  const jar = await cookies();
-  const isVi = jar.get('NEXT_LOCALE')?.value !== 'en';
+  const tierLabel = TIER_CONFIG[tier]?.label ?? tier;
+  // H3: firstRun = true when user has never executed any SOP (zero-run)
+  // Ensures first-campaign CTA shows for MASTER users regardless of pre-installed SOP count
+  const firstRun = recentRuns.length === 0;
+  const { locale } = await params;
+  const isVi = locale === 'vi';
 
   return (
     <div className="space-y-6">
@@ -141,24 +137,22 @@ export default async function DashboardPage() {
       <OnboardingStatusWidget isVi={isVi} />
       <LocalSetupGuide apiKey={activeApiKey || null} locale={isVi ? 'vi' : 'en'} />
 
-
-
- {showFirstTimeSteps && sopCount === 0 ? (
- <DashboardSetupSteps hasApiKeys={hasApiKeys} sopCount={sopCount} />
- ) : sopCount === 0 && !firstRun ? (
- // Onboarding done but no SOPs installed yet and not first run — show quick-action CTA
- <DashboardFirstCampaignCta />
- ) : firstRun ? (
- // H3: Zero-run user (regardless of pre-installed SOP count) — show first-campaign CTA
- <DashboardFirstCampaignCta />
- ) : (
- <DashboardReturningUser
- sopCount={sopCount}
- mcuRemaining={balance.credits_remaining}
- videosThisMonth={videosThisMonth}
- recentRuns={recentRuns}
- />
- )}
- </div>
- );
+     {showFirstTimeSteps && sopCount === 0 ? (
+     <DashboardSetupSteps hasApiKeys={hasApiKeys} sopCount={sopCount} />
+     ) : sopCount === 0 && !firstRun ? (
+      // Onboarding done but no SOPs installed yet and not first run — show quick-action CTA
+      <DashboardFirstCampaignCta />
+     ) : firstRun ? (
+      // H3: Zero-run user (regardless of pre-installed SOP count) — show first-campaign CTA
+      <DashboardFirstCampaignCta />
+     ) : (
+      <DashboardReturningUser
+        sopCount={sopCount}
+        mcuRemaining={balance.credits_remaining}
+        videosThisMonth={videosThisMonth}
+        recentRuns={recentRuns}
+      />
+     )}
+    </div>
+  );
 }

@@ -4418,6 +4418,11 @@
     "dashboard": {
       "title": "Tổng quan",
       "subtitle": "Chào mừng trở lại. Tổng quan hoạt động hôm nay.",
+      "common": {
+        "paid": "Đã thanh toán",
+        "failed": "Thất bại",
+        "pending": "Đang chờ"
+      },
       "metrics": {
         "revenue": "Tổng doanh thu",
         "subscribers": "Đăng ký hoạt động",

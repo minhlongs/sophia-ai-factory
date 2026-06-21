@@ -44,7 +44,7 @@ export default function DeployGuardApprovalDetail({ locale, approval: initialApp
   const fetchUpdated = async () => {
     const res = await fetch(`/api/admin/deploy-guard/approvals/${approval.id}`)
     if (res.ok) {
-      const data = await res.json()
+      const data = await res.json() as Approval
       setApproval(data)
     }
   }
@@ -93,7 +93,7 @@ export default function DeployGuardApprovalDetail({ locale, approval: initialApp
         setToast({ message: isVi ? 'Đã ghi nhận chữ ký' : 'Attestation recorded', type: 'success' })
         await fetchUpdated()
       } else {
-        const err = await res.json()
+        const err = (await res.json()) as { error?: string }
         setToast({ message: err.error || (isVi ? 'Ghi nhận thất bại' : 'Attestation failed'), type: 'error' })
       }
     } catch (error) {
@@ -117,7 +117,7 @@ export default function DeployGuardApprovalDetail({ locale, approval: initialApp
         setRejectReason('')
         await fetchUpdated()
       } else {
-        const err = await res.json()
+        const err = (await res.json()) as { error?: string }
         setToast({ message: err.error || (isVi ? 'Từ chối thất bại' : 'Rejection failed'), type: 'error' })
       }
     } catch (error) {

@@ -20,23 +20,16 @@ vi.mock('@/seed/db/client', () => ({ getD1: mockGetD1 }));
 // Mock @cloudflare/d1
 vi.mock('@cloudflare/d1', () => ({}));
 
-// Mock inngest with full API
-const mockInngestSend = vi.fn().mockResolvedValue({});
-const mockInngestCreateFunction = vi.fn().mockImplementation((opts, eventSpec, handler) => {
-  return {
-    ...opts,
-    handler,
-  };
-});
+// Mock inngest - return handler directly (matches other Inngest function tests)
 vi.mock('@/seed/inngest/client', () => ({
   inngest: {
-    send: mockInngestSend,
-    createFunction: mockInngestCreateFunction,
+    send: vi.fn().mockResolvedValue({}),
+    createFunction: (_cfg: unknown, _evt: unknown, handler: (...args: unknown[]) => unknown) => handler,
   },
 }));
 
-// Mock audit logger
-const mockLogAuditEvent = vi.fn().mockResolvedValue(undefined);
+// Mock audit logger using hoisted
+const { mockLogAuditEvent } = vi.hoisted(() => ({ mockLogAuditEvent: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/tree/audit/logger/audit-query', () => ({
   logAuditEvent: mockLogAuditEvent,
 }));
@@ -62,7 +55,15 @@ import {
 } from '@/tree/byok/byok-crypto';
 
 import { logAuditEvent } from '@/tree/audit/logger/audit-query';
+
+// Import mocked inngest for assertions
 import { inngest } from '@/seed/inngest/client';
+
+// Type for Inngest handler (matches function signature)
+type InngestHandler<TEvent, TReturn> = (ctx: {
+  event: TEvent;
+  step: { run: (name: string, fn: () => Promise<unknown>) => Promise<unknown> };
+}) => Promise<TReturn>;
 
 // Helper to create mock D1 database
 function makeD1Database() {
@@ -176,7 +177,7 @@ describe('key-rotation', () => {
       const bindCalls = mockBind.mock.calls;
       const insertCall = bindCalls.find((args: any[]) => args[0] === 'master');
       expect(insertCall).toBeDefined();
-      expect(insertCall[1]).toBe(2); // version
+      expect(insertCall![1]).toBe(2); // version
 
       // Verify Inngest event sent with both versions
       expect(inngest.send).toHaveBeenCalledWith(
@@ -259,8 +260,16 @@ describe('key-rotation', () => {
       vi.mocked(decryptApiKey).mockImplementation(mockDecrypt);
       vi.mocked(encryptApiKey).mockImplementation(mockEncrypt);
 
-      // Import the job function
+      // Import the job function (handler after mocking) and cast to callable
       const { keyRotationReencrypt } = await import('@/forest/inngest/functions/key-rotation-reencrypt');
+      const handler = keyRotationReencrypt as unknown as InngestHandler<{ data: { keyVersion: number; oldVersion: number; reason?: string } }, {
+        keyVersion: number;
+        oldVersion: number;
+        userApiKeys: number;
+        providerCredentials: number;
+        platformCredentials: number;
+        total: number;
+      }>;
 
       // Mock event with oldVersion and newVersion
       const mockEvent = {
@@ -277,7 +286,7 @@ describe('key-rotation', () => {
       });
       const mockStep = { run: mockStepRun };
 
-      const result = await keyRotationReencrypt({ event: mockEvent, step: mockStep } as any);
+      const result = await handler({ event: mockEvent, step: mockStep });
 
       // Verify re-encryption counts
       expect(result).toEqual(
@@ -324,13 +333,22 @@ describe('key-rotation', () => {
       vi.mocked(decryptApiKey).mockImplementation(vi.fn().mockResolvedValue('plaintext'));
       vi.mocked(encryptApiKey).mockImplementation(vi.fn().mockReturnValue(new Uint8Array([1])));
 
-      const { keyRotationReencrypt } = await import('@/forest/inngest/functions/key-rotation-reencrypt');
+      const { keyRotationReencrypt: _rawHandler } = await import('@/forest/inngest/functions/key-rotation-reencrypt');
+      // Cast to callable handler (mock returns raw function)
+      const handler = _rawHandler as unknown as InngestHandler<{ data: { keyVersion: number; oldVersion: number } }, {
+        keyVersion: number;
+        oldVersion: number;
+        userApiKeys: number;
+        providerCredentials: number;
+        platformCredentials: number;
+        total: number;
+      }>;
 
       const mockEvent = { data: { keyVersion: 2, oldVersion: 1 } };
       const mockStepRun = vi.fn().mockImplementation(async (name: string, fn: () => Promise<number>) => fn());
       const mockStep = { run: mockStepRun };
 
-      const result = await keyRotationReencrypt({ event: mockEvent, step: mockStep } as any);
+      const result = await handler({ event: mockEvent, step: mockStep });
 
       expect(result).toEqual(
         expect.objectContaining({

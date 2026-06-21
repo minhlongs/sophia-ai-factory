@@ -13,6 +13,7 @@
 import { DeployApproval, DeployAttestation, DeployOverride, DeployApprovalStatus, QuorumStatus, ApprovalDetailDto, DeployManifest, CreateApprovalPayload } from './types'
 import { createManifest, generateApprovalId, generateAttestationId } from './manifest-generator'
 import { getD1 } from '@/seed/db/client'
+import { logger } from '@/seed/utils/logger-utility'
 
 /**
  * ApprovalService singleton (stateless, DB-backed)
@@ -105,7 +106,7 @@ export class ApprovalService {
     const attestationRows = await db
       .prepare('SELECT * FROM deploy_attestations WHERE approval_id = ? ORDER BY signed_at ASC')
       .bind(approvalId)
-      .all() as DeployAttestation[]
+      .all() as unknown as DeployAttestation[]
 
     return {
       ...approvalRow,
@@ -208,7 +209,8 @@ export class ApprovalService {
       action: 'approved',
       operatorId: 'system',
       operatorName: 'system',
-      reason: 'Quorum reached or manual approval'
+      reason: 'Quorum reached or manual approval',
+      metadata: {}
     })
   }
 
@@ -307,7 +309,7 @@ export class ApprovalService {
         LIMIT ? OFFSET ?
       `)
       .bind(Math.floor(Date.now() / 1000), limit, offset)
-      .all() as DeployApproval[]
+      .all() as unknown as DeployApproval[]
 
     return rows
   }
@@ -341,14 +343,20 @@ export class ApprovalService {
       params.unshift(cursor, limit)
     }
 
-    const rows = await db.prepare(query).bind(...params).all()
+    const rows = await db.prepare(query).bind(...params).all() as unknown as Array<{
+      id: string
+      actor_user_id: string
+      action_type: string
+      payload: string | null
+      created_at: number
+    }>
 
     // Transform to HistoryEntry shape
-    const entries = rows.map((row: any) => {
+    const entries = rows.map((row) => {
       const action = row.action_type.replace('DEPLOY_GUARD_', '').toLowerCase()
-      let payload = {}
+      let payload: Record<string, unknown> = {}
       try {
-        payload = row.payload ? JSON.parse(row.payload) : {}
+        payload = row.payload ? (JSON.parse(row.payload) as Record<string, unknown>) : {}
       } catch {
         payload = {}
       }
@@ -356,11 +364,11 @@ export class ApprovalService {
         id: row.id,
         timestamp: row.created_at,
         action,
-        commit_sha: payload.commitSha as string | undefined,
+        commit_sha: typeof payload.commitSha === 'string' ? payload.commitSha : undefined,
         operator_id: row.actor_user_id,
         operator_name: row.actor_user_id,
-        reason: payload.reason as string | null,
-        metadata: payload.metadata as Record<string, any> | null
+        reason: typeof payload.reason === 'string' ? payload.reason : null,
+        metadata: (payload.metadata as Record<string, unknown> | null) ?? null
       }
     })
 
@@ -407,7 +415,7 @@ export class ApprovalService {
         .run()
     } catch (error) {
       // Log but do not throw - audit failures should not block operations
-      console.error('Failed to write audit log:', error)
+      logger.error('Failed to write audit log', error instanceof Error ? error : { error: String(error) })
     }
   }
 

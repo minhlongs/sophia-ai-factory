@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { POST as CreateApprovalPOST } from '../create-approval/route'
 import { GET as PendingGET } from '../pending/route'
 import { POST as RejectPOST } from '../reject/route'
@@ -57,19 +57,26 @@ describe('Deploy Guard API', () => {
 
       const response = await CreateApprovalPOST(request)
       expect(response.status).toBe(201)
-      const data = await response.json()
+      const data = await response.json() as { approvalId: string; status: string }
       expect(data.approvalId).toBe('abc123')
     })
 
     it('returns 401 if unauthorized', async () => {
       const { requireAdminOrDeploy } = await import('@/seed/auth/require-admin')
-      const errorResponse = new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+      const errorResponse = NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       ;(requireAdminOrDeploy as any).mockResolvedValue(errorResponse)
 
+      const body = {
+        commitSha: 'abc123',
+        branch: 'main',
+        operatorHost: 'host',
+        operatorUser: 'alice'
+      }
       const request = new NextRequest('http://localhost/api/admin/deploy-guard/create-approval', {
         method: 'POST',
-        body: JSON.stringify({})
+        body: JSON.stringify(body)
       })
+      request.headers.set('Content-Type', 'application/json')
 
       const response = await CreateApprovalPOST(request)
       expect(response.status).toBe(401)
@@ -101,14 +108,14 @@ describe('Deploy Guard API', () => {
       const request = new NextRequest('http://localhost/api/admin/deploy-guard/pending?limit=10')
       const response = await PendingGET(request)
       expect(response.status).toBe(200)
-      const data = await response.json()
+      const data = await response.json() as { approvals: any[]; count: number; limit: number; offset: number }
       expect(data.approvals).toHaveLength(1)
     })
   })
 
   describe('POST /api/admin/deploy-guard/reject', () => {
     it('rejects a pending approval', async () => {
-      const mockAuth = { userId: 'admin1', isDeployToken: false }
+      const mockAuth = { user: { id: 'admin1' } }
       const { requireAdmin } = await import('@/seed/auth/require-admin')
       ;(requireAdmin as any).mockResolvedValue(mockAuth)
 
@@ -127,13 +134,13 @@ describe('Deploy Guard API', () => {
 
       const response = await RejectPOST(request)
       expect(response.status).toBe(200)
-      const data = await response.json()
+      const data = await response.json() as { success: boolean }
       expect(data.success).toBe(true)
       expect(approvalService.rejectApproval).toHaveBeenCalledWith('approval123', 'admin1', 'Not ready for production')
     })
 
     it('returns 400 if missing fields', async () => {
-      const mockAuth = { userId: 'admin1', isDeployToken: false }
+      const mockAuth = { user: { id: 'admin1' } }
       const { requireAdmin } = await import('@/seed/auth/require-admin')
       ;(requireAdmin as any).mockResolvedValue(mockAuth)
 
@@ -149,7 +156,7 @@ describe('Deploy Guard API', () => {
 
     it('returns 401 if unauthorized', async () => {
       const { requireAdmin } = await import('@/seed/auth/require-admin')
-      const errorResponse = new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
+      const errorResponse = NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       ;(requireAdmin as any).mockResolvedValue(errorResponse)
 
       const request = new NextRequest('http://localhost/api/admin/deploy-guard/reject', {

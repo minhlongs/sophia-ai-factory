@@ -12,7 +12,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NonRetriableError, RetryAfterError } from 'inngest';
 import { dispatchTelegramWithRetryHints } from '../dispatch-with-retry-hints';
-import type { TelegramPublishInput } from '@/forest/publishing/providers/telegram-publisher';
+import type { TelegramPublishInput } from '@/tree/publishing/providers/telegram-publisher';
 
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
