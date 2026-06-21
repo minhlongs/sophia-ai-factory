@@ -31,12 +31,12 @@ CREATE INDEX IF NOT EXISTS idx_key_versions_created
 
 -- 2. key_version column on user_api_keys (BYOK Phase 4G)
 ALTER TABLE user_api_keys
-  ADD COLUMN IF NOT EXISTS key_version INTEGER DEFAULT 1;
+  ADD COLUMN key_version INTEGER DEFAULT 1;
 
 -- 3. key_version column on user_provider_credentials (BYOK Phase BYOK-Refactor)
 ALTER TABLE user_provider_credentials
-  ADD COLUMN IF NOT EXISTS key_version INTEGER DEFAULT 1;
+  ADD COLUMN key_version INTEGER DEFAULT 1;
 
 -- 4. key_version column on platform_credentials (multi-channel publishing)
 ALTER TABLE platform_credentials
-  ADD COLUMN IF NOT EXISTS key_version INTEGER DEFAULT 1;
+  ADD COLUMN key_version INTEGER DEFAULT 1;

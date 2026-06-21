@@ -17,9 +17,10 @@
 --   idx_raas_audit_logs_chain_valid  — for filtering invalid entries
 
 -- 1. Add hash chain columns (nullable initially for backfill compatibility)
-ALTER TABLE raas_audit_logs ADD COLUMN IF NOT EXISTS previous_log_hash TEXT;
-ALTER TABLE raas_audit_logs ADD COLUMN IF NOT EXISTS content_hash TEXT NOT NULL DEFAULT '';
-ALTER TABLE raas_audit_logs ADD COLUMN IF NOT EXISTS hash_chain_valid INTEGER DEFAULT 1;  -- SQLite: 0=false, 1=true
+-- Note: SQLite/D1 does not support ADD COLUMN IF NOT EXISTS, so migrations must be applied in order
+ALTER TABLE raas_audit_logs ADD COLUMN previous_log_hash TEXT;
+ALTER TABLE raas_audit_logs ADD COLUMN content_hash TEXT NOT NULL DEFAULT '';
+ALTER TABLE raas_audit_logs ADD COLUMN hash_chain_valid INTEGER DEFAULT 1;  -- SQLite: 0=false, 1=true
 
 -- 2. Indexes for chain verification queries
 CREATE INDEX IF NOT EXISTS idx_raas_audit_logs_content_hash ON raas_audit_logs(content_hash);
