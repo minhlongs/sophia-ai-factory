@@ -169,7 +169,8 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
     return NextResponse.json(healthStatus, {
       status: responseStatus,
     });
-  } catch {
+  } catch (err) {
+    console.error('Health check failed:', err);
     return NextResponse.json({ status: 'unhealthy', error: 'Health check failed' }, { status: 500 });
   }
 }, { addHeaders: true, config: { intervalMs: 60000, maxRequests: 300 } });
