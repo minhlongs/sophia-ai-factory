@@ -11,7 +11,13 @@
  */
 
 import type { KVNamespace } from '@cloudflare/workers-types';
-import type { HeyGenHealthResponse } from '@/app/api/health/heygen/route';
+
+interface HeyGenHealthResponse {
+  healthy: boolean;
+  providerStatus: 'ok' | 'degraded' | 'down';
+  checkedAt: string;
+  details?: string;
+}
 
 const KV_CACHE_KEY = 'health:heygen';
 const KV_CACHE_TTL_SECONDS = 60;

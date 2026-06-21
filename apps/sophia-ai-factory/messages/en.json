@@ -1800,6 +1800,13 @@
           "not_specified": "Not specified",
           "updated": "Updated"
         }
+      },
+      "metrics": {
+        "total_campaigns": "Total Campaigns",
+        "active_campaigns": "Active Campaigns",
+        "completed_campaigns": "Completed",
+        "failed_campaigns": "Failed Campaigns",
+        "success_rate": "Success Rate"
       }
     }
   },
@@ -4413,7 +4420,12 @@
       "revenueChart": {
         "title": "Revenue Over Time",
         "subtitle": "Total sales performance this quarter",
-        "period": "Last 30 Days"
+        "period": "Last 30 Days",
+        "periods": {
+          "30d": "Last 30 Days",
+          "6m": "Last 6 Months",
+          "ytd": "Year to Date"
+        }
       },
       "topAffiliates": {
         "title": "Top Affiliates",
@@ -4431,6 +4443,10 @@
           "status": "Status",
           "action": "Action"
         }
+      },
+      "actions": {
+        "exportData": "Export Data",
+        "addProduct": "Add Product"
       }
     },
     "auth": {

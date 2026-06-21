@@ -9,7 +9,7 @@
  * @module quota/quota-api-helpers
  */
 
-import type { QuotaLimit } from '@/forest/usage-metering/types';
+import type { QuotaLimit } from '@/seed/types/quota-limit';
 
 /**
  * Quota status levels

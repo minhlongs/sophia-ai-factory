@@ -149,6 +149,53 @@ export async function requireRecentAuth(
 }
 
 /**
+ * Check if request has valid deploy automation token.
+ * Set DEPLOY_GUARD_API_TOKEN in environment for deploy-with-sha.sh.
+ */
+export function hasDeployToken(request: NextRequest | Request): boolean {
+  const token = request.headers.get('X-Deploy-Guard-Token')
+  const expected = process.env.DEPLOY_GUARD_API_TOKEN
+  return !!expected && token === expected
+}
+
+/**
+ * Get operator identifier from request.
+ * For deploy script: X-Deploy-Operator header.
+ * For web UI: will extract from user object after requireAdmin.
+ */
+export function getOperatorId(request: NextRequest | Request): string {
+  const deployOperator = request.headers.get('X-Deploy-Operator')
+  if (deployOperator) return deployOperator
+  // Fallback: could be set by requireAdmin's user
+  return 'unknown'
+}
+
+/**
+ * Require admin (via session) OR valid deploy token.
+ * Returns { userId: string, isDeployToken: boolean } on success,
+ * or NextResponse on failure.
+ *
+ * Deploy token allows automated scripts to call admin APIs without session.
+ */
+export async function requireAdminOrDeploy(request: NextRequest | Request): Promise<{ userId: string; isDeployToken: boolean } | NextResponse> {
+  // Try admin first
+  const adminResult = await requireAdmin(request)
+  if (!(adminResult instanceof NextResponse)) {
+    return { userId: adminResult.user.id, isDeployToken: false }
+  }
+
+  // Not admin — check deploy token
+  if (hasDeployToken(request)) {
+    const operatorId = getOperatorId(request)
+    if (operatorId) {
+      return { userId: operatorId, isDeployToken: true }
+    }
+  }
+
+  return adminResult // return the original 401/403
+}
+
+/**
  * Combined gate: require admin role AND recent authentication challenge.
  * This is the ASVS V3.5.1 enforcement helper for destructive admin mutations.
  *

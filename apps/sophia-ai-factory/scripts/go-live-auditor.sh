@@ -29,7 +29,10 @@ echo ""
 
 # ─── CHECK 1: TypeScript Build (2 pts) ────
 echo -e "${CYAN}━━━ CHECK 1: TypeScript Build (max 2 points) ━━━${NC}"
-BUILD_OUTPUT=$(npm run build 2>&1 || true)
+# Skip slow postbuild (symbol upload to R2 takes 30+ min on 3400+ files).
+# Postbuild is verified separately by deploy:verify; the auditor only needs
+# to validate that `next build` itself compiles cleanly.
+SKIP_SYMBOL_UPLOAD=1 BUILD_OUTPUT=$(SKIP_SYMBOL_UPLOAD=1 npm run build 2>&1 || true)
 BUILD_EXIT=${PIPESTATUS[0]}
 
 if [ "$BUILD_EXIT" -eq 0 ]; then
@@ -62,10 +65,14 @@ if echo "$TEST_OUTPUT" | grep -qE "[0-9]+ test.*passed"; then
     TEST_COUNT=$(echo "$TEST_OUTPUT" | grep -oE "[0-9]+ test.*passed" | head -1)
 elif echo "$TEST_OUTPUT" | grep -qE "[0-9]+ total"; then
     TEST_COUNT=$(echo "$TEST_OUTPUT" | grep -oE "[0-9]+ total" | head -1)
+elif echo "$TEST_OUTPUT" | grep -qE "Tests\s+[0-9]+ passed"; then
+    # vitest default reporter emits "Tests  N failed | M passed | K skipped (TOTAL)"
+    TEST_COUNT=$(echo "$TEST_OUTPUT" | grep -oE "Tests +[0-9]+ passed" | head -1)
 fi
 
 if [ -n "$TEST_COUNT" ]; then
-    COUNT_NUM=$(echo "$TEST_COUNT" | grep -oE "^[0-9]+" || true)
+    # Extract the leading integer (handles "5744 passed", "5744 tests passed", "Tests 5744 passed", "5744 total")
+    COUNT_NUM=$(echo "$TEST_COUNT" | grep -oE "[0-9]+" | head -1 || true)
     if [ "${COUNT_NUM:-0}" -ge 844 ]; then
         log_pass "Test suite: $TEST_COUNT (≥ 844 required)"
     else

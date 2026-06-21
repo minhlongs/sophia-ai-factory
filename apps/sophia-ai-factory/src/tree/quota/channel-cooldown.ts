@@ -19,7 +19,7 @@
  * @module forest/quota/channel-cooldown
  */
 
-import type { ChannelProvider } from '@/forest/publishing/publisher-interface';
+import type { ChannelProvider } from '@/seed/types/channel-provider';
 import {
   CHANNEL_COOLDOWN_SECONDS,
   BURST_LIMIT_PER_HOUR,

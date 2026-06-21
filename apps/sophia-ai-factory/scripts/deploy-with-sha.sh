@@ -150,6 +150,9 @@ VERSION_BASE_URL="${VERSION_URL:-$PROD_URL/api/version}"
 PREVIOUS_VERSION_URL=$(cache_bust_url "$VERSION_BASE_URL" "pre-${COMMIT_SHORT}-$(date +%s)")
 VERIFY_VERSION_URL=$(cache_bust_url "$VERSION_BASE_URL" "sha-${COMMIT_SHORT}")
 
+# Initialize approval tracking
+APPROVAL_ID=""
+
 # Capture the currently deployed SHA before replacing the worker. This is the
 # authoritative migration range for CF-direct deploys: any D1 migration changed
 # between previous-live and HEAD must be applied before this script may report
@@ -180,6 +183,35 @@ if [ "${SKIP_ATTESTATION:-0}" != "1" ]; then
   echo "Deploy manifest:"
   echo "  $MANIFEST"
 
+  # If Deploy Guard API integration is enabled, create approval record
+  if [ -n "${DEPLOY_GUARD_API_TOKEN:-}" ]; then
+    echo "==> Creating Deploy Guard approval record"
+    # Default operator IDs for each key if not provided
+    for K in 1 2 3 4 5; do
+      VAR="DEPLOY_OPERATOR_${K}"
+      if [ -z "${!VAR:-}" ]; then
+        eval "export DEPLOY_OPERATOR_${K}=\"operator-${K}\""
+      fi
+    done
+    CREATE_APPROVAL_RESPONSE=$(curl -fsS -X POST "https://sophia.agencyos.network/api/admin/deploy-guard/create-approval" \
+      -H "Content-Type: application/json" \
+      -H "X-Deploy-Guard-Token: ${DEPLOY_GUARD_API_TOKEN}" \
+      -H "X-Deploy-Operator: ${OPERATOR_USER}" \
+      -d "{\"commitSha\":\"${COMMIT_SHA}\",\"branch\":\"${DEPLOY_BRANCH}\",\"operatorHost\":\"${OPERATOR_HOST}\",\"operatorUser\":\"${OPERATOR_USER}\",\"diffSummary\":\"${DIFF_STAT}\",\"filesChanged\":${FILES_CHANGED},\"requiredAttestations\":2}" 2>/dev/null) || {
+      echo "  ⚠️ Failed to create Deploy Guard approval (non-fatal — continuing without UI tracking)"
+      APPROVAL_ID=""
+    }
+    if [ -n "$CREATE_APPROVAL_RESPONSE" ]; then
+      APPROVAL_ID=$(echo "$CREATE_APPROVAL_RESPONSE" | node -e "try{const p=JSON.parse(require('fs').readFileSync(0,'utf8')); process.stdout.write(p.approvalId||'')}catch(e){process.stdout.write('')}")
+      if [ -n "$APPROVAL_ID" ]; then
+        echo "  ✅ Approval created: ${APPROVAL_ID}"
+      else
+        echo "  ⚠️ Could not parse approval ID from response"
+        APPROVAL_ID=""
+      fi
+    fi
+  fi
+
   # Require at least two distinct operator attestations
   ATTESTATION_COUNT=0
   for KEY_NUM in 1 2 3 4 5; do
@@ -190,6 +222,20 @@ if [ "${SKIP_ATTESTATION:-0}" != "1" ]; then
       if [ "$EXPECTED" = "${!SIGNED_VAR}" ]; then
         echo "  ✅ Attestation ${KEY_NUM} verified (operator key ${KEY_NUM})"
         ATTESTATION_COUNT=$((ATTESTATION_COUNT + 1))
+
+        # Record attestation via Deploy Guard API if integration enabled
+        if [ -n "${DEPLOY_GUARD_API_TOKEN:-}" ] && [ -n "${APPROVAL_ID:-}" ]; then
+          OPERATOR_ID_VAR="DEPLOY_OPERATOR_${KEY_NUM}"
+          OPERATOR_ID="${!OPERATOR_ID_VAR:-operator-${KEY_NUM}}"
+          echo "  Recording attestation ${KEY_NUM} (operator: ${OPERATOR_ID})..."
+          curl -fsS -X POST "https://sophia.agencyos.network/api/admin/deploy-guard/attest" \
+            -H "Content-Type: application/json" \
+            -H "X-Deploy-Guard-Token: ${DEPLOY_GUARD_API_TOKEN}" \
+            -H "X-Deploy-Operator: ${OPERATOR_ID}" \
+            -d "{\"approvalId\":\"${APPROVAL_ID}\",\"signature\":\"${!SIGNED_VAR}\"}" 2>/dev/null || {
+            echo "  ⚠️ Failed to record attestation ${KEY_NUM} (non-fatal)"
+          }
+        fi
       else
         echo "  ❌ Attestation ${KEY_NUM} INVALID — signature mismatch"
         echo "  Bypass: SKIP_ATTESTATION=1 ./scripts/deploy-with-sha.sh (emergency only — document reason)"
@@ -220,6 +266,20 @@ else
   OPERATOR_USER=$(whoami)
   DIFF_STAT=$(git -C "$REPO_ROOT" diff --stat origin/main...HEAD 2>/dev/null | tail -1 || echo "0 files changed")
   FILES_CHANGED=$(git -C "$REPO_ROOT" diff --name-only origin/main...HEAD 2>/dev/null | wc -l | tr -d ' ')
+
+  # Record emergency override if Deploy Guard integration enabled
+  if [ -n "${DEPLOY_GUARD_API_TOKEN:-}" ]; then
+    echo "==> Recording Deploy Guard emergency override"
+    # Read reason from environment or prompt? For automation, use SKIP_ATTESTATION_REASON env var
+    OVERRIDE_REASON="${SKIP_ATTESTATION_REASON:-Emergency bypass: SKIP_ATTESTATION=1}"
+    curl -fsS -X POST "https://sophia.agencyos.network/api/admin/deploy-guard/override" \
+      -H "Content-Type: application/json" \
+      -H "X-Deploy-Guard-Token: ${DEPLOY_GUARD_API_TOKEN}" \
+      -H "X-Deploy-Operator: ${OPERATOR_USER}" \
+      -d "{\"commitSha\":\"${COMMIT_SHA}\",\"reason\":\"${OVERRIDE_REASON}\"}" 2>/dev/null || {
+      echo "  ⚠️ Failed to record Deploy Guard override (non-fatal)"
+    }
+  fi
 fi
 
 # ─── Step 0.75: Record deploy audit log entry (SOC 2 immutable audit) ─────────────

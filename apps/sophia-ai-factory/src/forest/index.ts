@@ -6,6 +6,7 @@
 export * from './ab';
 export * from './agents';
 export * from './alerts';
+export * from './dashboard';
 export * from './email';
 export * from './hooks';
 export * from './jobs';

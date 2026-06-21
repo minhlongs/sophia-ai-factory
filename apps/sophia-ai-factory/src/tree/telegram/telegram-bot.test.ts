@@ -18,7 +18,7 @@ const mockSupabase = vi.hoisted(() => ({
 
 // Helper for chainable mocks
 const createChainableMock = () => {
-  const mock: any = {
+  const mock: Record<string, any> = {
     select: vi.fn().mockReturnThis(),
     insert: vi.fn().mockReturnThis(),
     update: vi.fn().mockReturnThis(),

@@ -53,7 +53,7 @@ export function AgentSidebar() {
   }, []);
 
   const handleSend = useCallback(
-    (content: string) => sendMessage(content, pathname),
+    (content: string) => sendMessage(content, pathname ?? undefined),
     [sendMessage, pathname],
   );
 

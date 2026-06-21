@@ -2,6 +2,7 @@ import { inngest } from '@/seed/inngest/client';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { decryptApiKey, encryptApiKey } from '@/tree/byok/byok-crypto';
+import { logAuditEvent } from '@/tree/audit/logger/audit-query';
 
 const BATCH_SIZE = 250;
 
@@ -29,18 +30,17 @@ interface PlatformCredentialRow {
   key_version: number | null;
 }
 
-interface RotationPayload {
-  data: {
-    keyVersion: number;
-    reason?: string;
-  };
+interface RotationPayloadData {
+  keyVersion: number;
+  oldVersion: number;
+  reason?: string;
 }
 
 function toBytes(blob: ArrayBuffer | Uint8Array): Uint8Array {
   return blob instanceof Uint8Array ? blob : new Uint8Array(blob);
 }
 
-async function reencryptUserApiKeys(keyVersion: number): Promise<number> {
+async function reencryptUserApiKeys(keyVersion: number, oldVersion: number): Promise<number> {
   const db = getD1();
   if (!db) throw new Error('D1 database binding not available');
 
@@ -52,10 +52,11 @@ async function reencryptUserApiKeys(keyVersion: number): Promise<number> {
       .prepare(
         `SELECT user_id, provider, encrypted_key, key_version
          FROM user_api_keys
+         WHERE key_version = ?
          ORDER BY user_id, provider
          LIMIT ? OFFSET ?`,
       )
-      .bind(BATCH_SIZE, offset)
+      .bind(oldVersion, BATCH_SIZE, offset)
       .all<UserApiKeyRow>();
 
     if (!rows.results || rows.results.length === 0) break;
@@ -85,7 +86,7 @@ async function reencryptUserApiKeys(keyVersion: number): Promise<number> {
   return total;
 }
 
-async function reencryptProviderCredentials(keyVersion: number): Promise<number> {
+async function reencryptProviderCredentials(keyVersion: number, oldVersion: number): Promise<number> {
   const db = getD1();
   if (!db) throw new Error('D1 database binding not available');
 
@@ -97,10 +98,11 @@ async function reencryptProviderCredentials(keyVersion: number): Promise<number>
       .prepare(
         `SELECT id, user_id, provider, encrypted_value, key_version
          FROM user_provider_credentials
+         WHERE key_version = ?
          ORDER BY user_id, provider
          LIMIT ? OFFSET ?`,
       )
-      .bind(BATCH_SIZE, offset)
+      .bind(oldVersion, BATCH_SIZE, offset)
       .all<ProviderCredentialRow>();
 
     if (!rows.results || rows.results.length === 0) break;
@@ -130,7 +132,7 @@ async function reencryptProviderCredentials(keyVersion: number): Promise<number>
   return total;
 }
 
-async function reencryptPlatformCredentials(keyVersion: number): Promise<number> {
+async function reencryptPlatformCredentials(keyVersion: number, oldVersion: number): Promise<number> {
   const db = getD1();
   if (!db) throw new Error('D1 database binding not available');
 
@@ -142,10 +144,11 @@ async function reencryptPlatformCredentials(keyVersion: number): Promise<number>
       .prepare(
         `SELECT id, user_id, platform, access_token_encrypted, refresh_token_encrypted, key_version
          FROM platform_credentials
+         WHERE key_version = ?
          ORDER BY user_id, platform
          LIMIT ? OFFSET ?`,
       )
-      .bind(BATCH_SIZE, offset)
+      .bind(oldVersion, BATCH_SIZE, offset)
       .all<PlatformCredentialRow>();
 
     if (!rows.results || rows.results.length === 0) break;
@@ -185,35 +188,84 @@ export const keyRotationReencrypt = inngest.createFunction(
   { id: 'key-rotation-reencrypt', retries: 3 },
   { event: 'key.rotation.requested' },
   async ({ event, step }) => {
-    const payload = event as RotationPayload;
-    const { keyVersion } = payload.data;
+    const { keyVersion, oldVersion, reason } = event.data as RotationPayloadData;
 
-    logger.info('[key-rotation] Starting re-encrypt job', { keyVersion });
+    logger.info('[key-rotation] Starting re-encrypt job', { keyVersion, oldVersion });
+
+    // SOC 2 CC7.2: Audit log for re-encrypt job start
+    await logAuditEvent({
+      action: 'key_rotation.reencrypt_start',
+      userId: 'system',
+      metadata: {
+        keyVersion,
+        oldVersion,
+        reason,
+        actorType: 'system',
+      },
+    }).catch((err) => {
+      logger.error('[key-rotation] Audit log (start) failed', { error: err });
+      // Non-blocking
+    });
 
     const userApiKeys = await step.run('reencrypt-user-api-keys', async () => {
-      return reencryptUserApiKeys(keyVersion);
+      return reencryptUserApiKeys(keyVersion, oldVersion);
     });
 
     const providerCredentials = await step.run('reencrypt-provider-credentials', async () => {
-      return reencryptProviderCredentials(keyVersion);
+      return reencryptProviderCredentials(keyVersion, oldVersion);
     });
 
     const platformCredentials = await step.run('reencrypt-platform-credentials', async () => {
-      return reencryptPlatformCredentials(keyVersion);
+      return reencryptPlatformCredentials(keyVersion, oldVersion);
     });
 
     const total = userApiKeys + providerCredentials + platformCredentials;
 
     logger.info('[key-rotation] Re-encrypt job complete', {
       keyVersion,
+      oldVersion,
       userApiKeys,
       providerCredentials,
       platformCredentials,
       total,
     });
 
+    // 1. Retire old key version (set is_active=0, rotated_at=NOW)
+    await step.run('retire-old-version', async () => {
+      const db = getD1();
+      if (!db) throw new Error('D1 database binding not available');
+      const now = Math.floor(Date.now() / 1000);
+      await db
+        .prepare(
+          `UPDATE key_versions
+           SET is_active = 0, rotated_at = datetime(?, 'unixepoch')
+           WHERE version = ? AND is_active = 1`,
+        )
+        .bind(now, oldVersion)
+        .run();
+    });
+
+    // SOC 2 CC7.2: Audit log for re-encrypt job completion
+    await logAuditEvent({
+      action: 'key_rotation.reencrypt_complete',
+      userId: 'system',
+      metadata: {
+        keyVersion,
+        oldVersion,
+        userApiKeys,
+        providerCredentials,
+        platformCredentials,
+        total,
+        reason,
+        actorType: 'system',
+      },
+    }).catch((err) => {
+      logger.error('[key-rotation] Audit log (complete) failed', { error: err });
+    });
+
     return {
       keyVersion,
+      oldVersion,
       userApiKeys,
       providerCredentials,
       platformCredentials,

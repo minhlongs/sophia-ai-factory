@@ -49,7 +49,8 @@ Expected response:
 {
   "success": true,
   "keyVersion": 2,
-  "dualDecryptWindowMs": 86400000,
+  "oldVersion": 1,
+  "dualDecryptWindowMs": 604800000,
   "message": "Key rotation queued. Re-encryption will run asynchronously."
 }
 ```
@@ -64,14 +65,15 @@ Check the Inngest dashboard for `key.rotation.requested` and confirm:
 ### 3.3 Verify key version table
 
 ```sql
-SELECT key_type, version, is_active, rotated_by
+SELECT key_type, version, is_active, rotated_at
 FROM key_versions
 ORDER BY version DESC;
 ```
 
 Expected:
 - The new version is `is_active = 1`
-- The old version is `is_active = 0`
+- The old version is `is_active = 0` (set after re-encrypt completes)
+- `rotated_at` timestamp populated for old version
 
 ### 3.4 Verify credential rows
 
@@ -83,6 +85,7 @@ SELECT COUNT(*) FROM platform_credentials WHERE key_version = <NEW_VERSION>;
 
 Expected:
 - All eligible rows have been updated to the new version after the re-encrypt job completes.
+- No rows remain on old version unless explicitly excluded (e.g., null key_version).
 
 ---
 
@@ -161,11 +164,12 @@ Then re-run the read-path verification.
 
 - Confirm `key_versions` has exactly one active version.
 - Confirm no credentials remain on the old version unless explicitly excluded.
-- Confirm the 24h dual-decrypt window is respected.
+- **Confirm the 7-day dual-decrypt window is enforced** (check `byok-crypto.ts` constant).
 - Confirm monitoring has no new errors for 30 minutes.
+- Document rotation in `docs/project-changelog.md` with keyVersion and reason.
 
 **Sau khi xoay khóa:**
 - Xác nhận chỉ có một phiên bản active trong `key_versions`.
 - Xác nhận không còn credential nào ở phiên bản cũ nếu không có lý do ngoại lệ.
-- Xác nhận cửa sổ dual-decrypt 24h được tôn trọng.
+- **Xác nhận cửa sổ dual-decrypt 7 ngày được tôn trọng** (kiểm tra constant `DUAL_DECRYPT_WINDOW_MS`).
 - Xác nhận monitoring không có lỗi mới trong 30 phút.

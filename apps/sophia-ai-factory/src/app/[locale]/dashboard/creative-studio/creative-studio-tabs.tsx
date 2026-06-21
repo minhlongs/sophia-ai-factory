@@ -84,7 +84,8 @@ export function CreativeStudioTabs({ tier, activeTab, locale }: CreativeStudioTa
   void locale;
 
   function handleTabChange(value: string) {
-    const params = new URLSearchParams(searchParams.toString());
+    const sp = searchParams!;
+    const params = new URLSearchParams(sp.toString());
     params.set('tab', value);
     router.push(`?${params.toString()}`, { scroll: false });
   }

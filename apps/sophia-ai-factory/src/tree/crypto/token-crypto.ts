@@ -7,7 +7,7 @@
  * Decryption will try current key first, then fall back to previous key (read-repair on success).
  * Encrypted output uses version prefix "aes:v1:" to distinguish key versions.
  *
- * MIGRATION NOTE: any rows encrypted with the old base64 "enc:" prefix must be
+ * MIGRATION NOTE: rows encrypted with the old base64 "enc:" prefix must be
  * re-encrypted. Run: scripts/reencrypt-publishing-tokens.ts before deploying.
  */
 
