@@ -37,7 +37,7 @@ vi.mock('@/tree/audit/logger/audit-query', () => ({
 
 // Mock BYOK crypto: keep real implementations for DB logic, mock heavy crypto
 vi.mock('@/tree/byok/byok-crypto', async (importOriginal) => {
-  const actual = await importOriginal();
+  const actual = await importOriginal() as typeof import('@/tree/byok/byok-crypto');
   return {
     ...actual,
     // Mock heavy crypto functions, keep getActiveKeyVersion real (uses mocked D1)
@@ -172,8 +172,8 @@ describe('key-rotation', () => {
       (generateMasterKey as any).mockResolvedValue(mockEncryptedKey);
 
       // Configure admin auth mock BEFORE importing route
-      const mockUser = { id: 'admin-123', role: 'admin' };
-      vi.mocked(requireAdminWithRecentAuth).mockResolvedValue({ user: mockUser });
+      const mockUser = { id: 'admin-123', email: 'admin@example.com', role: 'admin' };
+      vi.mocked(requireAdminWithRecentAuth).mockResolvedValue({ user: mockUser, recentAuth: true });
 
       // Import the POST handler after mocks are configured
       const { POST } = await import('@/app/api/admin/keys/rotate/route');
