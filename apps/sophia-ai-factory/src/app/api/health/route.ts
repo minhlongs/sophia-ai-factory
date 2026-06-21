@@ -3,6 +3,7 @@ import { getBuildMetadata } from '@/seed/health';
 import type { D1Database, R2Bucket, KVNamespace } from '@cloudflare/workers-types';
 import type { HealthResponse } from '@/seed/types/health';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
+import { logger } from '@/seed/utils/logger-utility';
 
 // Wrap handler with rate limiting (300 requests per minute for health checks).
 //
@@ -170,7 +171,7 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
       status: responseStatus,
     });
   } catch (err) {
-    console.error('Health check failed:', err);
+    logger.error('Health check failed', err as Error);
     return NextResponse.json({ status: 'unhealthy', error: 'Health check failed' }, { status: 500 });
   }
 }, { addHeaders: true, config: { intervalMs: 60000, maxRequests: 300 } });
