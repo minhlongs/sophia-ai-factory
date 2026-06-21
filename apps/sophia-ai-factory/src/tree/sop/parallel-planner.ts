@@ -93,7 +93,7 @@ export function planExecution(graph: SOPGraph): ExecutionPlan {
 
   const waveOf = assignWaves(graph.nodes)
 
-  // Detect cycle: any node not assigned a wave
+  // Detect cycle: nodes not assigned a wave
   const nodeById = new Map(graph.nodes.map(n => [n.id, n]))
   for (const node of graph.nodes) {
     if (!waveOf.has(node.id)) {

@@ -2,7 +2,7 @@ import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { triggerUsageThresholdAlert } from '@/forest/alerts/realtime-alert-service';
-import type { QuotaLimit } from '@/forest/usage-metering/types';
+import type { QuotaLimit } from '@/seed/types/quota-limit';
 import type { QuotaCheckContext, QuotaConfig, CachedQuota } from './quota-checker-types';
 import { DEFAULT_CONFIG } from './quota-checker-types';
 import { getEffectiveQuotaLimits, calculateCurrentUsage } from './quota-checker-db';

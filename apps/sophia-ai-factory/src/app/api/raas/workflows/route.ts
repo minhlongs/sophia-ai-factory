@@ -3,7 +3,7 @@
  * GET  /api/raas/workflows — list workflows for authenticated org (newest first)
  *
  * Auth: getCurrentUser() (Better Auth session required)
- * Input: Zod-validated. No :any types.
+ * Input: Zod-validated. No untyped any annotations.
  */
 
 import { NextRequest, NextResponse } from 'next/server'

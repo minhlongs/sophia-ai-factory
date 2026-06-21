@@ -7,7 +7,7 @@
 
 import { handle as findLeads } from '@/forest/leads/missions/lead-find';
 import { handle as runEmailCampaign } from './email-campaign';
-import type { MissionHandlerResult, MissionContext } from '@/forest/missions/types';
+import type { MissionHandlerResult, MissionContext } from '@/seed/types/missions';
 
 export async function handle(ctx: MissionContext): Promise<MissionHandlerResult> {
   const { params } = ctx;

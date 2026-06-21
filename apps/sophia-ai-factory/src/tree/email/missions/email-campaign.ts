@@ -7,7 +7,7 @@
 
 import { getResendKey } from '@/tree/credentials/get-provider-key';
 import { logger } from '@/seed/utils/logger-utility';
-import type { MissionHandlerResult, MissionContext } from '@/forest/missions/types';
+import type { MissionHandlerResult, MissionContext } from '@/seed/types/missions';
 
 export async function handle(ctx: MissionContext): Promise<MissionHandlerResult> {
   const { userId, params } = ctx;

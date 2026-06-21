@@ -102,6 +102,7 @@ function main() {
     // No PR found — could be direct push to main
     console.log(`⚠️  No open PR found for branch "${branch}"`);
     console.log('→ Will require 2-operator attestation at deploy time (separation-of-duties)');
+    console.log('→ Attest via admin UI: https://sophia.agencyos.network/dashboard/admin/deploy-guard');
     if (dryRun) {
       console.log('[dry-run] Deploy would be allowed with 2-operator attestation.');
     }
@@ -123,6 +124,7 @@ function main() {
     console.log(`❌ Deploy guard blocked: ${check.reason}`);
     console.log('→ Fix: obtain PR approval or fix failing CI checks');
     console.log('→ Emergency: use --override "reason" (will be audited)');
+    console.log('→ Manage overrides: https://sophia.agencyos.network/dashboard/admin/deploy-guard');
     if (dryRun) {
       console.log('[dry-run] Deploy would be BLOCKED by guard.');
     }

@@ -47,9 +47,10 @@ export function AccountProfileTab({ initial }: AccountProfileTabProps) {
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
-    if (searchParams.get('ok') === 'email-changed') {
+    const sp = searchParams!;
+    if (sp.get('ok') === 'email-changed') {
       setEmailStatus({ kind: 'changed' });
-    } else if (searchParams.get('error')?.startsWith('email-change-')) {
+    } else if (sp.get('error')?.startsWith('email-change-')) {
       setEmailStatus({ kind: 'error', message: t('email_change_invalid') });
     }
   }, [searchParams, t]);

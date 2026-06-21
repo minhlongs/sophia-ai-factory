@@ -1800,6 +1800,13 @@
           "not_specified": "Not specified",
           "updated": "Updated"
         }
+      },
+      "metrics": {
+        "total_campaigns": "Tổng Chiến Dịch",
+        "active_campaigns": "Chiến Dịch Đang Chạy",
+        "completed_campaigns": "Đã Hoàn Thành",
+        "failed_campaigns": "Chiến Dịch Thất Bại",
+        "success_rate": "Tỷ Lệ Thành Công"
       }
     }
   },
@@ -4409,35 +4416,44 @@
       "failed": "Failed"
     },
     "dashboard": {
-      "title": "Dashboard",
-      "subtitle": "Welcome back. Here's what's happening with your workspace today.",
+      "title": "Tổng quan",
+      "subtitle": "Chào mừng trở lại. Tổng quan hoạt động hôm nay.",
       "metrics": {
-        "revenue": "Total Revenue",
-        "subscribers": "Active Subscribers",
-        "growth": "Monthly Growth",
-        "commission": "Commission Paid"
+        "revenue": "Tổng doanh thu",
+        "subscribers": "Đăng ký hoạt động",
+        "growth": "Tăng trưởng tháng",
+        "commission": "Hoa hồng đã trả"
       },
       "revenueChart": {
-        "title": "Revenue Over Time",
-        "subtitle": "Total sales performance this quarter",
-        "period": "Last 30 Days"
+        "title": "Doanh thu theo thời gian",
+        "subtitle": "Hiệu suất bán hàng quý này",
+        "period": "30 ngày qua",
+        "periods": {
+          "30d": "30 ngày qua",
+          "6m": "6 tháng qua",
+          "ytd": "Năm hiện tại"
+        }
       },
       "topAffiliates": {
-        "title": "Top Affiliates",
-        "viewAll": "View All",
-        "invite": "Invite New Affiliate"
+        "title": "Đối tác hàng đầu",
+        "viewAll": "Xem tất cả",
+        "invite": "Mời đối tác mới"
       },
       "recentTransactions": {
-        "title": "Recent Transactions",
-        "subtitle": "Latest subscriber payments and refunds",
-        "showing": "Showing {from}-{to} of {total} transactions",
+        "title": "Giao dịch gần đây",
+        "subtitle": "Thanh toán và hoàn tiền đăng ký mới nhất",
+        "showing": "Hiển thị {from}-{to} trong tổng số {total} giao dịch",
         "columns": {
-          "date": "Date",
-          "customer": "Customer",
-          "amount": "Amount",
-          "status": "Status",
-          "action": "Action"
+          "date": "Ngày",
+          "customer": "Khách hàng",
+          "amount": "Số tiền",
+          "status": "Trạng thái",
+          "action": "Hành động"
         }
+      },
+      "actions": {
+        "exportData": "Xuất dữ liệu",
+        "addProduct": "Thêm sản phẩm"
       }
     },
     "auth": {

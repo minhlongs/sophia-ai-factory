@@ -23,10 +23,11 @@ export function TabSwitcher({ activeTab, activePeriod, tabLabels, periodLabels }
 
   const navigate = useCallback(
     (tab: string, period: string) => {
-      const params = new URLSearchParams(searchParams.toString());
+      const sp = searchParams!;
+      const params = new URLSearchParams(sp.toString());
       params.set('tab', tab);
       params.set('period', period);
-      router.push(`${pathname}?${params.toString()}`);
+      router.push(`${pathname!}?${params.toString()}`);
     },
     [router, pathname, searchParams],
   );

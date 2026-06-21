@@ -18,7 +18,7 @@ export default function ResetPasswordPage() {
   const t = useTranslations("resetPassword");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const token = searchParams!.get("token");
 
   return token ? (
     <ConfirmForm token={token} t={t} router={router} />

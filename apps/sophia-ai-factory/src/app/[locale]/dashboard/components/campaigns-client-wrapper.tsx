@@ -3,8 +3,8 @@
 import React from 'react';
 import { Campaign, CampaignFilter } from '@/seed/types';
 import { useTranslations } from 'next-intl';
-import { CampaignFilterTabs } from '../components/campaign-filter-tabs';
-import { CampaignGrid } from '../components/campaign-grid';
+import { CampaignFilterTabs } from '@/forest/dashboard/campaign/campaign-filter-tabs';
+import { CampaignGrid } from '@/forest/dashboard/campaign/campaign-grid';
 import { CampaignDetailModal } from '../components/campaign-detail-modal';
 import { Button } from '@/seed/components/ui/button';
 import { Plus, Megaphone } from 'lucide-react';

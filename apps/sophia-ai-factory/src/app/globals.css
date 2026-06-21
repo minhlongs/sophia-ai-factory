@@ -42,6 +42,30 @@
 
   --radius: 0.5rem;
 
+  /* Stitch Design System — Material Design 3 tokens */
+  --primary-container: 222.2 47.4% 90%;
+  --on-primary-container: 222.2 47.4% 20%;
+  --secondary-container: 210 40% 98%;
+  --on-secondary-container: 222.2 47.4% 11.2%;
+  --tertiary: 221 83% 53%;
+  --tertiary-container: 221 83% 90%;
+  --on-tertiary: 0 0% 100%;
+  --on-tertiary-container: 221 83% 20%;
+  --surface-container: var(--card);
+  --surface-container-lowest: var(--card);
+  --surface-container-low: var(--muted);
+  --surface-container-high: var(--muted);
+  --surface-container-highest: var(--muted);
+  --surface-bright: var(--background-secondary);
+  --surface-dim: var(--muted);
+  --surface-variant: var(--muted);
+  --inverse-surface: var(--popover);
+  --inverse-primary: var(--primary);
+  --outline: var(--border);
+  --outline-variant: var(--border);
+  --error-container: var(--destructive);
+  --on-error-container: var(--destructive-foreground);
+
 /* AGI Confidence Monitor */
 --agi-confidence: 190 100% 50%;
 --agi-danger: 300 100% 50%;

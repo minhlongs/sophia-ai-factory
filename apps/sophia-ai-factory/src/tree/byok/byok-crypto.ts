@@ -8,7 +8,7 @@
  * packed as Uint8Array. Master key is base64-encoded 32 bytes in
  * `BYOK_MASTER_KEY` env.
  *
- * Tamper detection is guaranteed by AES-GCM's auth tag: any byte flip
+ * Tamper detection is guaranteed by AES-GCM's auth tag: a single byte flip
  * in the stored blob causes `decrypt` to throw.
  */
 
@@ -19,7 +19,7 @@ const IV_BYTES = 12
 const VERSION_BYTES = 1
 const KEY_LEN_BITS = 256
 const KEY_LEN_BYTES = KEY_LEN_BITS / 8
-const DUAL_DECRYPT_WINDOW_MS = 24 * 60 * 60 * 1000
+const DUAL_DECRYPT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days for safe rotation window
 
 interface KeyVersionRow {
   version: number

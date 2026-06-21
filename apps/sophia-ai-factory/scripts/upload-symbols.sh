@@ -4,6 +4,13 @@ set -euo pipefail
 # Upload Source Maps to R2 Symbol Server
 # Postbuild script for Sophia AI Factory 100/100 upgrade (L7: 8→10).
 
+# Allow CI/audit runs to skip the actual upload (saves 30+ min on 3400+ files).
+# Set SKIP_SYMBOL_UPLOAD=1 to skip the wrangler uploads entirely.
+if [ "${SKIP_SYMBOL_UPLOAD:-0}" = "1" ]; then
+  echo "⏭️  SKIP_SYMBOL_UPLOAD=1 — skipping source map upload (audit mode)"
+  exit 0
+fi
+
 # Resolve commit SHA
 COMMIT_SHA="${GIT_COMMIT_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
 if [ "$COMMIT_SHA" = "unknown" ]; then
@@ -16,9 +23,12 @@ NEXT_DIR=".next"
 
 echo "🚀 Uploading source maps for commit $COMMIT_SHA to R2 bucket '$R2_BUCKET'"
 
-# Find all .js.map files
-shopt -s globstar nullglob
-map_files=("$NEXT_DIR"/**/*.js.map)
+# Find all .js.map files (portable across bash/sh via find)
+# shellcheck disable=SC2207
+map_files=()
+while IFS= read -r f; do
+  map_files+=("$f")
+done < <(find "$NEXT_DIR" -type f -name '*.js.map' 2>/dev/null)
 
 if [ ${#map_files[@]} -eq 0 ]; then
   echo "⚠️  No source map files found in $NEXT_DIR — skipping upload"

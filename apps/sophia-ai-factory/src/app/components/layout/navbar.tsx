@@ -44,7 +44,7 @@ export function Navbar() {
     return () => controller.abort();
   }, [pathname]);
 
-  const cleanPath = pathname.replace(/^\/(en|vi)/, "") || "/";
+  const cleanPath = (pathname ?? "").replace(/^\/(en|vi)/, "") || "/";
   const isHomePage = cleanPath === "/";
   const isDashboard = cleanPath.startsWith("/dashboard");
 

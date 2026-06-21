@@ -75,8 +75,8 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const t = useTranslations("landing");
 
-  // Strip locale prefix for matching
-  const cleanPath = pathname.replace(/^\/(en|vi)/, "");
+  // Strip locale prefix for matching (pathname never null in production)
+  const cleanPath = (pathname ?? "").replace(/^\/(en|vi)/, "");
 
   const isActive = (href: string) => {
     if (href === "/guide") return cleanPath === "/guide";

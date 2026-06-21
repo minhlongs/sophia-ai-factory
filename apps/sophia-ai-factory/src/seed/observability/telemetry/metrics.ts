@@ -50,7 +50,7 @@ export interface RouteSnapshot {
 /** Return current stats snapshot across all recorded routes. */
 export function snapshot(): RouteSnapshot[] {
   const result: RouteSnapshot[] = [];
-  for (const [route, s] of statsMap.entries()) {
+  for (const [route, s] of Array.from(statsMap.entries())) {
     const sorted = s.durations.slice().sort((a, b) => a - b);
     result.push({
       route,

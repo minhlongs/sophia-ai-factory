@@ -9,14 +9,23 @@
  *   - generateMasterKey produces valid 32-byte base64
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   encryptApiKey,
   decryptApiKey,
   generateMasterKey,
+  getActiveKeyVersion,
+  ensureKeyVersionRow,
   ByokMissingMasterKeyError,
   ByokInvalidMasterKeyError,
 } from '@/tree/byok/byok-crypto'
+
+// Mock D1 client for getActiveKeyVersion tests
+const { mockGetD1 } = vi.hoisted(() => ({ mockGetD1: vi.fn() }))
+vi.mock('@/seed/db/client', () => ({ getD1: mockGetD1 }))
+
+// Mock @cloudflare/d1
+vi.mock('@cloudflare/d1', () => ({}))
 
 // 32 bytes of `0x42` base64-encoded (well-known test key, never prod).
 const TEST_MASTER_KEY = 'QkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkI='
@@ -133,6 +142,19 @@ describe('byok-crypto', () => {
       const a = await generateMasterKey()
       const b = await generateMasterKey()
       expect(a).not.toBe(b)
+    })
+  })
+
+  describe('key version management', () => {
+    beforeEach(() => {
+      delete process.env.BYOK_MASTER_KEY
+      vi.clearAllMocks()
+    })
+
+    it('getActiveKeyVersion returns 1 when DB unavailable', async () => {
+      mockGetD1.mockReturnValue(null)
+      const version = await getActiveKeyVersion()
+      expect(version).toBe(1)
     })
   })
 })

@@ -2,7 +2,7 @@
  * GET / PUT /api/branding
  *
  * Org-scoped branding (agency name, logo URL, watermark policy).
- * Read: any authenticated org member.
+ * Read: every authenticated org member.
  * Write: org owner / admin role.
  *
  * @module app/api/branding/route

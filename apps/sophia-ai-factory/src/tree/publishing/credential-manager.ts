@@ -4,7 +4,7 @@ import {
   upsertPlatformCredential,
 } from '@/seed/db/repositories/platform-credentials-repo';
 import { logger } from '@/seed/utils/logger-utility';
-import type { Platform } from '@/forest/publishing/platform-adapter';
+import type { Platform } from '@/seed/types/channel-provider';
 
 export interface DecryptedCredentials {
   accessToken: string;

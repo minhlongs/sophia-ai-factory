@@ -4,7 +4,7 @@
  * Replaces /setup-wizard as the single onboarding URL per plan
  * 260519-0300-handover-funnel-critical-fixes/phase-02-setup-wizard-locale-routing.md.
  *
- * Auth gate: any authenticated user lands here (any tier).
+ * Auth gate: every authenticated user lands here (all tiers).
  * MASTER users who have completed all 3 post-activation milestones are
  * auto-completed and redirected to /dashboard (protected flow preserved).
  * All other authenticated users see the BYOK setup wizard.

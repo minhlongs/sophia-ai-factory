@@ -8,7 +8,7 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import type { MissionHandlerResult, MissionContext } from '@/forest/missions/types';
+import type { MissionHandlerResult, MissionContext } from '@/seed/types/missions';
 
 const BUILT_IN_TEMPLATES = [
   {

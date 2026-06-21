@@ -8,7 +8,7 @@
 import { getResendKey } from '@/tree/credentials/get-provider-key';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import type { MissionHandlerResult, MissionContext } from '@/forest/missions/types';
+import type { MissionHandlerResult, MissionContext } from '@/seed/types/missions';
 
 interface UserRow {
   email: string;

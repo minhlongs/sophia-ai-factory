@@ -35,7 +35,7 @@ const TIER_ORDER: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
 export function PlanUpgradeWidget({ currentTier, periodEnd, showHistoryLink }: Props) {
 	const locale = useLocale();
 	const params = useSearchParams();
-	const handoverId = params.get('handover');
+	const handoverId = params!.get('handover');
 	const [loading, setLoading] = useState<Tier | null>(null);
 
 	// FREE100 handover: if ?handover=<id> is in URL, treat as MASTER active
