@@ -7,15 +7,17 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { ApprovalService } from '../approval-service'
 import { DeployApproval } from '../types'
 
-// Mock the D1 client with proper chaining
+// Mock the D1 client with proper chaining (prepare -> bind -> {run,first,all})
 const createMockDb = () => {
-  const chain = {
+  const bindChain = {
     run: vi.fn(),
     first: vi.fn(),
     all: vi.fn()
   }
-  const prepare = vi.fn(() => chain)
-  return { prepare, chain }
+  const prepare = vi.fn(() => ({
+    bind: vi.fn(() => bindChain)
+  }))
+  return { prepare, bindChain }
 }
 
 let mockDb: ReturnType<typeof createMockDb>
@@ -37,7 +39,7 @@ describe('approval-service', () => {
     it('creates a pending approval record', async () => {
       const now = Math.floor(Date.now() / 1000)
       // Mock the INSERT's run() to succeed
-      mockDb.chain.run.mockReturnValue({ success: true } as any)
+      mockDb.bindChain.run.mockReturnValue({ success: true } as any)
 
       const result = await service.createApproval({
         commitSha: 'abc123',
@@ -51,7 +53,7 @@ describe('approval-service', () => {
 
       expect(result.approvalId).toBeDefined()
       expect(result.status).toBe('pending')
-      expect(mockDb.chain.run).toHaveBeenCalled()
+      expect(mockDb.bindChain.run).toHaveBeenCalled()
       // Verify the INSERT includes the new columns
       expect(mockDb.prepare).toHaveBeenCalledWith(
         expect.stringContaining('diff_summary')
@@ -64,7 +66,7 @@ describe('approval-service', () => {
 
   describe('getApproval', () => {
     it('returns null if not found', async () => {
-      mockDb.chain.first.mockReturnValue(undefined)
+      mockDb.bindChain.first.mockReturnValue(undefined)
 
       const result = await service.getApproval('nonexistent')
       expect(result).toBeNull()
@@ -100,9 +102,9 @@ describe('approval-service', () => {
       ]
 
       // First call: SELECT * FROM deploy_guard_approvals
-      mockDb.chain.first.mockReturnValueOnce(mockApproval)
+      mockDb.bindChain.first.mockReturnValueOnce(mockApproval)
       // Second call: SELECT * FROM deploy_attestations
-      mockDb.chain.all.mockReturnValueOnce(mockAttestations)
+      mockDb.bindChain.all.mockReturnValueOnce(mockAttestations)
 
       const result = await service.getApproval('test-id')
       expect(result).toEqual({
@@ -116,16 +118,16 @@ describe('approval-service', () => {
   describe('isDeploymentAllowed', () => {
     it('allows if override exists', async () => {
       // Override query returns a row
-      mockDb.chain.first.mockReturnValueOnce({ id: 'ov1' }) // override exists
+      mockDb.bindChain.first.mockReturnValueOnce({ id: 'ov1' }) // override exists
       const result = await service.isDeploymentAllowed('abc123')
       expect(result.allowed).toBe(true)
     })
 
     it('blocks if approval is pending with remaining attestations', async () => {
       // No override
-      mockDb.chain.first.mockReturnValueOnce(undefined)
+      mockDb.bindChain.first.mockReturnValueOnce(undefined)
       // Approval query: pending
-      mockDb.chain.first.mockReturnValueOnce({
+      mockDb.bindChain.first.mockReturnValueOnce({
         status: 'pending',
         requiredAttestations: 2,
         attestationCount: 1
@@ -136,8 +138,8 @@ describe('approval-service', () => {
     })
 
     it('allows if approval is approved', async () => {
-      mockDb.chain.first.mockReturnValueOnce(undefined) // override
-      mockDb.chain.first.mockReturnValueOnce({
+      mockDb.bindChain.first.mockReturnValueOnce(undefined) // override
+      mockDb.bindChain.first.mockReturnValueOnce({
         status: 'approved'
       } as DeployApproval)
       const result = await service.isDeploymentAllowed('abc123')
@@ -145,8 +147,8 @@ describe('approval-service', () => {
     })
 
     it('blocks if approval is rejected', async () => {
-      mockDb.chain.first.mockReturnValueOnce(undefined) // override
-      mockDb.chain.first.mockReturnValueOnce({
+      mockDb.bindChain.first.mockReturnValueOnce(undefined) // override
+      mockDb.bindChain.first.mockReturnValueOnce({
         status: 'rejected'
       } as DeployApproval)
       const result = await service.isDeploymentAllowed('abc123')
@@ -159,7 +161,7 @@ describe('approval-service', () => {
     it('should reject a pending approval', async () => {
       const now = Math.floor(Date.now() / 1000)
       // Mock approval for SELECT
-      mockDb.chain.first.mockReturnValueValueOnce({
+      mockDb.bindChain.first.mockReturnValueOnce({
         id: 'approval123',
         commitSha: 'def456',
         branch: 'main',
@@ -175,24 +177,27 @@ describe('approval-service', () => {
         expiresAt: null
       } as DeployApproval)
       // Mock UPDATE run
-      mockDb.chain.run.mockReturnValue({ success: true } as any)
+      mockDb.bindChain.run.mockReturnValue({ success: true } as any)
 
       await service.rejectApproval('approval123', 'rejecter', 'Testing rejection')
 
-      // Verify UPDATE was called with rejected status
-      const lastPrepareCall = mockDb.prepare.mock.calls[mockDb.prepare.mock.calls.length - 1][0] as string
-      expect(lastPrepareCall).toContain('UPDATE')
-      expect(mockDb.chain.run).toHaveBeenCalled()
+      // Verify UPDATE was called (there should be at least one UPDATE query)
+      const calls = mockDb.prepare.mock.calls as any[][]
+      const updateCalls = calls.filter(
+        call => typeof call[0] === 'string' && call[0].includes('UPDATE deploy_guard_approvals')
+      )
+      expect(updateCalls.length).toBeGreaterThan(0)
+      expect(mockDb.bindChain.run).toHaveBeenCalled()
     })
 
     it('should throw if approval not found', async () => {
-      mockDb.chain.first.mockReturnValue(undefined)
+      mockDb.bindChain.first.mockReturnValue(undefined)
       await expect(service.rejectApproval('nonexistent', 'admin', 'reason'))
         .rejects.toThrow('Approval not found')
     })
 
     it('should throw if approval is not pending', async () => {
-      mockDb.chain.first.mockReturnValue({
+      mockDb.bindChain.first.mockReturnValue({
         id: 'test-id',
         status: 'approved'
       } as DeployApproval)
@@ -204,7 +209,7 @@ describe('approval-service', () => {
 
   describe('auditEvent', () => {
     it('should insert into admin_audit_log', async () => {
-      mockDb.chain.run.mockReturnValue({ success: true } as any)
+      mockDb.bindChain.run.mockReturnValue({ success: true } as any)
 
       // Directly call auditEvent
       await service['auditEvent']({
@@ -217,7 +222,8 @@ describe('approval-service', () => {
       })
 
       // Check that INSERT into admin_audit_log was attempted
-      const insertCalls = mockDb.prepare.mock.calls.filter(
+      const calls = mockDb.prepare.mock.calls as any[][]
+      const insertCalls = calls.filter(
         call => typeof call[0] === 'string' && call[0].includes('INSERT INTO admin_audit_log')
       )
       expect(insertCalls.length).toBeGreaterThan(0)

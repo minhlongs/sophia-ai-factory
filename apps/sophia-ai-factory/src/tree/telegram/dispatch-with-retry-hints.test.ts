@@ -9,9 +9,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NonRetriableError, RetryAfterError } from 'inngest'
 
-vi.mock('@/forest/publishing/providers/telegram-publisher', async () => {
-  const actual = await vi.importActual<typeof import('@/forest/publishing/providers/telegram-publisher')>(
-    '@/forest/publishing/providers/telegram-publisher'
+vi.mock('@/tree/publishing/providers/telegram-publisher', async () => {
+  const actual = await vi.importActual<typeof import('@/tree/publishing/providers/telegram-publisher')>(
+    '@/tree/publishing/providers/telegram-publisher'
   )
   return {
     ...actual,
@@ -33,7 +33,7 @@ import {
   publishToTelegram,
   TelegramApiError,
   type TelegramPublishInput,
-} from '@/forest/publishing/providers/telegram-publisher'
+} from '@/tree/publishing/providers/telegram-publisher'
 import { logger } from '@/seed/utils/logger-utility'
 
 const mockPublish = vi.mocked(publishToTelegram)

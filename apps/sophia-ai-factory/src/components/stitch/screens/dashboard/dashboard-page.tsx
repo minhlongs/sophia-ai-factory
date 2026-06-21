@@ -146,7 +146,7 @@ export default function DashboardPage({ initialData }: DashboardPageProps) {
                     </Badge>
                   )}
                   {metric.trend === 'down' && (
-                    <Badge variant="soft" color="destructive" size="sm">
+                    <Badge variant="soft" color="error" size="sm">
                       <ArrowDownRight className="w-3 h-3 mr-0.5" />
                       {metric.change}
                     </Badge>
@@ -295,7 +295,7 @@ export default function DashboardPage({ initialData }: DashboardPageProps) {
               { key: 'status', header: t('recentTransactions.columns.status'), cell: (row) => (
                 <Badge
                   variant="soft"
-                  color={row.status === 'paid' ? 'success' : row.status === 'failed' ? 'destructive' : 'neutral'}
+                  color={row.status === 'paid' ? 'success' : row.status === 'failed' ? 'error' : 'neutral'}
                   size="sm"
                 >
                   {t(`common.${row.status}`)}

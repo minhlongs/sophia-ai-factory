@@ -1,5 +1,7 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata, Viewport } from "next";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import localFont from "next/font/local";
 import "../globals.css";
 import { Navbar } from "@/app/components/layout/navbar";
@@ -39,13 +41,13 @@ const JSONLD_SCHEMA: Record<string, unknown> = {
   }
 };
 
-const Toaster = dynamic(
+const Toaster = nextDynamic(
   () => import("sonner").then(m => ({ default: m.Toaster }))
 );
-const FloatingHelpButton = dynamic(
+const FloatingHelpButton = nextDynamic(
   () => import("@/forest/components/guide/floating-help-button").then(m => ({ default: m.FloatingHelpButton }))
 );
-const CrispWidget = dynamic(
+const CrispWidget = nextDynamic(
   () => import("@/forest/components/support/crisp-widget").then(m => ({ default: m.CrispWidget }))
 );
 

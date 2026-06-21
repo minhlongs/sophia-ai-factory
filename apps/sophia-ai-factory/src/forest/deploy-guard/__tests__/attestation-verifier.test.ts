@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { verifySignature, computeClientSignature } from '../attestation-verifier'
+import { verifySignature, computeSignature } from '../manifest-generator'
 import { createManifest } from '../manifest-generator'
 
 describe('attestation-verifier', () => {
@@ -20,13 +20,13 @@ describe('attestation-verifier', () => {
 
   it('computes signature consistent with manifest', async () => {
     const manifest = createManifest(payload)
-    const sig = await computeClientSignature(manifest, secret)
+    const sig = await computeSignature(manifest, secret)
     expect(sig).toHaveLength(64) // hex string
   })
 
   it('verifies a valid signature', async () => {
     const manifest = createManifest(payload)
-    const sig = await computeClientSignature(manifest, secret)
+    const sig = await computeSignature(manifest, secret)
     const isValid = await verifySignature(manifest, sig, secret)
     expect(isValid).toBe(true)
   })

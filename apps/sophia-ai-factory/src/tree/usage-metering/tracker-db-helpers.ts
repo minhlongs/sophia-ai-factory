@@ -11,9 +11,8 @@ import { logger } from '@/seed/utils/logger-utility';
 import { insertTyped } from '@/seed/db/insert-typed';
 import type { UsageEventInput, IngestionResult } from './types';
 import type { D1Response } from '@/seed/db/types';
-import type { RaasLicense } from '@/forest/raas-schema';
-import { invalidateQuotaCache } from '@/forest/quota/quota-checker-kv-cache';
-import { invalidateRealTimeCache } from '@/forest/usage-metering/realtime-tracker-kv-ops';
+import { invalidateQuotaCache } from '@/tree/quota/quota-checker-kv-cache';
+import { invalidateRealTimeCache } from '@/tree/usage-metering/realtime-tracker-kv-ops';
 
 /**
  * Resolve external customer ID from license metadata
@@ -27,7 +26,7 @@ export async function resolveExternalCustomerId(licenseNonce: string): Promise<s
       .from('raas_licenses')
       .select('metadata')
       .eq('nonce', licenseNonce)
-      .single() as unknown as D1Response<Pick<RaasLicense, 'metadata'>>;
+      .single() as unknown as D1Response<{ metadata: Record<string, unknown> }>;
 
     if (error || !license) {
       logger.debug('[External Customer ID] License not found', { licenseNonce });

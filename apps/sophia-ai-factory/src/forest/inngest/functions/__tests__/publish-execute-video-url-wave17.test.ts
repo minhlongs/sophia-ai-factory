@@ -119,7 +119,7 @@ vi.mock('@/seed/db/client', () => ({
   getD1: vi.fn(),
   createServerClient: mockCreateServerClient,
 }));
-vi.mock('@/forest/publishing/providers/telegram-publisher', () => ({
+vi.mock('@/tree/publishing/providers/telegram-publisher', () => ({
   publishToTelegram: mockPublishToTelegram,
 }));
 vi.mock('@/seed/utils/logger-utility', () => ({

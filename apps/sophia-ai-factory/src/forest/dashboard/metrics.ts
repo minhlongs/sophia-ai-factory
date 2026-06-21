@@ -64,28 +64,24 @@ export async function fetchDashboardData(
     const metrics: DashboardMetric[] = [
       {
         id: 'total_campaigns',
-        label: 'Total Campaigns',
         value: campaignMetricsResult.data.totalCampaigns.toString(),
         trend: 'neutral',
         icon: 'Megaphone',
       },
       {
         id: 'active_campaigns',
-        label: 'Active Campaigns',
         value: campaignMetricsResult.data.activeCampaigns.toString(),
         trend: campaignMetricsResult.data.activeCampaigns > 0 ? 'up' : 'neutral',
         icon: 'Play',
       },
       {
         id: 'videos_generated',
-        label: 'Videos Generated',
         value: campaignMetricsResult.data.totalVideosGenerated.toString(),
         trend: 'up',
         icon: 'Video',
       },
       {
         id: 'success_rate',
-        label: 'Success Rate',
         value: `${campaignMetricsResult.data.successRate.toFixed(1)}%`,
         trend: campaignMetricsResult.data.successRate >= 80 ? 'up' : 'down',
         icon: 'TrendingUp',

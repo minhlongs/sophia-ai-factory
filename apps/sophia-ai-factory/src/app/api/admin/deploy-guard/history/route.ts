@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { approvalService } from '@/forest/deploy-guard'
+import { logger } from '@/seed/utils/logger-utility'
 
 export async function GET(request: NextRequest): Promise<Response> {
   const auth = await requireAdmin(request)
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest): Promise<Response> {
 
     return NextResponse.json(result)
   } catch (error) {
-    console.error('Failed to get history:', error)
+    logger.error('Failed to get history', error instanceof Error ? error : { error: String(error) })
     return NextResponse.json(
       { error: 'Failed to get history', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }

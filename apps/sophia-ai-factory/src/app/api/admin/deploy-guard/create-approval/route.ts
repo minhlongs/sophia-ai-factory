@@ -8,13 +8,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminOrDeploy } from '@/seed/auth/require-admin'
 import { approvalService } from '@/forest/deploy-guard'
+import { logger } from '@/seed/utils/logger-utility'
 
 export async function POST(request: NextRequest): Promise<Response> {
   const auth = await requireAdminOrDeploy(request)
   if (auth instanceof NextResponse) return auth
 
   try {
-    const body = await request.json()
+    const body = await request.json() as {
+      commitSha: string
+      branch: string
+      operatorHost: string
+      diffSummary: string
+      filesChanged: number
+      requiredAttestations?: number
+    }
 
     // For automated deploys, operator identity comes from X-Deploy-Operator header
     // For web UI, use the logged-in admin's user ID
@@ -34,7 +42,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     return NextResponse.json(result, { status: 201 })
   } catch (error) {
-    console.error('Failed to create approval:', error)
+    logger.error('Failed to create approval', error instanceof Error ? error : { error: String(error) })
     return NextResponse.json(
       { error: 'Failed to create approval', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }

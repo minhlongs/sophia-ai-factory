@@ -6,14 +6,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { approvalService } from '@/forest/deploy-guard'
+import { logger } from '@/seed/utils/logger-utility'
 
 export async function POST(request: NextRequest): Promise<Response> {
   const auth = await requireAdmin(request)
   if (auth instanceof NextResponse) return auth
 
   try {
-    const body = await request.json()
-    const operatorId = auth.userId || 'unknown'
+    const body = await request.json() as { approvalId: string; reason: string }
+    const operatorId = auth.user.id || 'unknown'
 
     if (!body.approvalId || !body.reason) {
       return NextResponse.json(
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Failed to reject approval:', error)
+    logger.error('Failed to reject approval', error instanceof Error ? error : { error: String(error) })
     return NextResponse.json(
       { error: 'Failed to reject approval', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }

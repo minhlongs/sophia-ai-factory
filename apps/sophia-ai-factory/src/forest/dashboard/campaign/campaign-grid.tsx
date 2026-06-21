@@ -3,7 +3,8 @@
 import React from 'react';
 import { cn } from '@/seed/utils/cn';
 import { CampaignCard } from './campaign-card';
-import { Campaign, CampaignGridProps } from './types';
+import type { Campaign } from '@/seed/types';
+import { CampaignGridProps } from './types';
 
 export function CampaignGrid({
   campaigns,
