@@ -39,9 +39,10 @@ interface HistoryEntry {
 
 interface DeployGuardClientProps {
   locale: string
+  userId: string
 }
 
-export default function DeployGuardClient({ locale }: DeployGuardClientProps) {
+export default function DeployGuardClient({ locale, userId }: DeployGuardClientProps) {
   const [pendingApprovals, setPendingApprovals] = useState<Approval[]>([])
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -92,7 +93,7 @@ export default function DeployGuardClient({ locale }: DeployGuardClientProps) {
         branch: approval.branch,
         timestamp: new Date().toISOString(),
         operator_host: window.location.hostname,
-        operator_user: 'admin', // TODO: get actual user ID from auth
+        operator_user: userId,
         diff_summary: approval.diff_summary || '',
         files_changed: approval.files_changed || 0,
         required_attestations: approval.requiredAttestations

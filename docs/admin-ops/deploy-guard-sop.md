@@ -105,6 +105,7 @@ Deploy Guard là cơ chế kiểm soát deployment, đảm bảo tuân thủ SOC
 
 - Trang `/dashboard/admin/deploy-guard` có tab Recent History (lấy từ `admin_audit_log`).
 - Lọc: các action bắt đầu bằng `DEPLOY_GUARD_`.
+- **Lưu ý:** Operator identity (user ID) được trích xuất tự động từ session admin khi thực hiện attest/reject/override, do đó audit log ghi nhận chính xác ai đã thực hiện hành động.
 
 ---
 

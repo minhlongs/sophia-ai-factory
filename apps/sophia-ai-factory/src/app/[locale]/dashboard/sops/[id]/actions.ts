@@ -15,7 +15,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getInstallation, deleteInstallation, updateCustomizations, updateConfigValues } from '@/tree/sop/sop-repo';
 import { generateWebhookSecret } from '@/tree/sop/webhook-hmac';
 import { customizationInputSchema } from '@/tree/sop/install-input-schema';
-import { runSop } from '@/tree/sop/executor/sop-runner';
+import { runSop } from '@/forest/missions/sop-runner';
 import { createRun } from '@/tree/sop/sop-repo-runs';
 import { logger } from '@/seed/utils/logger-utility';
 import type { SopCustomizations } from '@/tree/sop/sop-types';

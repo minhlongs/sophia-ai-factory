@@ -12,6 +12,7 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { z } from 'zod';
+import { NextResponse } from 'next/server';
 
 // Mock D1 client at top level
 const { mockGetD1 } = vi.hoisted(() => ({ mockGetD1: vi.fn() }));
@@ -34,18 +35,24 @@ vi.mock('@/tree/audit/logger/audit-query', () => ({
   logAuditEvent: mockLogAuditEvent,
 }));
 
-// Mock BYOK crypto with real implementations where needed
-vi.mock('@/tree/byok/byok-crypto', () => {
-  const original = vi.importActual('@/tree/byok/byok-crypto');
+// Mock BYOK crypto: keep real implementations for DB logic, mock heavy crypto
+vi.mock('@/tree/byok/byok-crypto', async (importOriginal) => {
+  const actual = await importOriginal();
   return {
-    ...original,
-    // Override with mocks for isolation
-    getActiveKeyVersion: vi.fn(),
+    ...actual,
+    // Mock heavy crypto functions, keep getActiveKeyVersion real (uses mocked D1)
     encryptApiKey: vi.fn(),
     decryptApiKey: vi.fn(),
     generateMasterKey: vi.fn().mockResolvedValue('encrypted-key-base64'),
   };
 });
+
+// Mock require-admin for API tests
+vi.mock('@/seed/auth/require-admin', () => ({
+  requireAdminWithRecentAuth: vi.fn(),
+}));
+
+import { requireAdminWithRecentAuth } from '@/seed/auth/require-admin';
 
 import {
   getActiveKeyVersion,
@@ -86,18 +93,22 @@ describe('key-rotation', () => {
 
   describe('getActiveKeyVersion', () => {
     it('returns 1 when no key_versions table exists', async () => {
-      const db = makeD1Database();
-      mockGetD1.mockReturnValue(db);
-      db.first.mockResolvedValue(null); // No active row
+      const mockFirst = vi.fn().mockResolvedValue(null);
+      const mockDb = {
+        prepare: vi.fn().mockReturnValue({ first: mockFirst }),
+      };
+      mockGetD1.mockReturnValue(mockDb as any);
 
       const version = await getActiveKeyVersion();
       expect(version).toBe(1);
     });
 
     it('returns the highest active version', async () => {
-      const db = makeD1Database();
-      mockGetD1.mockReturnValue(db);
-      db.first.mockResolvedValue({ version: 2 });
+      const mockFirst = vi.fn().mockResolvedValue({ version: 2 });
+      const mockDb = {
+        prepare: vi.fn().mockReturnValue({ first: mockFirst }),
+      };
+      mockGetD1.mockReturnValue(mockDb as any);
 
       const version = await getActiveKeyVersion();
       expect(version).toBe(2);
@@ -125,38 +136,53 @@ describe('key-rotation', () => {
   });
 
   describe('rotation API', () => {
+    beforeEach(() => {
+      vi.resetModules(); // Clear module cache for fresh imports per test
+    });
+
+    // Helper to create a more accurate D1 mock
+    function makeD1Mock() {
+      const calls: Array<{ sql: string; bindArgs: unknown[] }> = [];
+      const run = vi.fn().mockResolvedValue({ success: true, meta: { changes: 1 } });
+      const first = vi.fn().mockResolvedValue(null);
+
+      const bind = vi.fn().mockReturnValue({ run, first });
+
+      const prepare = vi.fn().mockImplementation((sql: string, ...args: unknown[]) => {
+        calls.push({ sql, bindArgs: args });
+        return { bind, first, run };
+      });
+
+      return { prepare, bind, first, run, calls, reset: () => { calls.length = 0; vi.clearAllMocks(); } };
+    }
+
     it('queues rotation with oldVersion and newVersion', async () => {
-      const db = makeD1Database();
-      mockGetD1.mockReturnValue(db);
+      const db = makeD1Mock();
+      mockGetD1.mockReturnValue(db as any);
 
-      // Mock current active version query
-      db.first
-        .mockResolvedValueOnce({ version: 1 }) // First call: get current active version
-        .mockResolvedValueOnce({ next_version: 2 }) // Second call: get next version
-        .mockResolvedValueOnce(null); // Third call: maybe something else
+      // Mock SELECT current active version -> returns version 1
+      db.first.mockResolvedValueOnce({ version: 1 });
+      // Mock SELECT next version -> returns 2
+      db.first.mockResolvedValueOnce({ next_version: 2 });
+      // Mock INSERT result
+      db.run.mockResolvedValueOnce({ success: true, meta: { changes: 1 } });
 
-      // Mock prepare to return bind for INSERT
-      const mockRun = vi.fn().mockResolvedValue({ success: true });
-      const mockBind = vi.fn().mockReturnValue({ run: mockRun });
-      const mockPrepare = vi.fn().mockReturnValue({ bind: mockBind });
-      db.prepare = mockPrepare;
+      // Mock generateMasterKey
+      const mockEncryptedKey = 'encrypted-key-base64';
+      (generateMasterKey as any).mockResolvedValue(mockEncryptedKey);
 
-      // Import the POST handler dynamically to use fresh mocks
+      // Configure admin auth mock BEFORE importing route
+      const mockUser = { id: 'admin-123', role: 'admin' };
+      vi.mocked(requireAdminWithRecentAuth).mockResolvedValue({ user: mockUser });
+
+      // Import the POST handler after mocks are configured
       const { POST } = await import('@/app/api/admin/keys/rotate/route');
 
-      // Create mock request with admin user
-      const mockUser = { id: 'admin-123', role: 'admin' };
       const mockRequest = {
         json: async () => ({ reason: 'scheduled rotation' }),
         headers: new Headers(),
       } as any;
 
-      // Mock requireAdminWithRecentAuth to return user
-      vi.doMock('@/seed/auth/require-admin', () => ({
-        requireAdminWithRecentAuth: vi.fn().mockResolvedValue({ user: mockUser }),
-      }));
-
-      // Re-import after mock
       const response = await POST(mockRequest);
       const body = await response.json();
 
@@ -169,17 +195,26 @@ describe('key-rotation', () => {
         message: 'Key rotation queued. Re-encryption will run asynchronously.',
       });
 
-      // Verify key_versions INSERT called with new version
-      expect(mockPrepare).toHaveBeenCalledWith(
-        `INSERT INTO key_versions (key_type, version, encrypted_key, rotated_by) VALUES (?, ?, ?, ?)`,
-      );
-      // Check bind args: key_type='master', version=2, encryptedKey, rotated_by='admin-123'
-      const bindCalls = mockBind.mock.calls;
-      const insertCall = bindCalls.find((args: any[]) => args[0] === 'master');
-      expect(insertCall).toBeDefined();
-      expect(insertCall![1]).toBe(2); // version
+      // Verify SELECT queries
+      const selectCalls = db.calls.filter(c => c.sql.includes('SELECT'));
+      expect(selectCalls).toHaveLength(2);
+      // Check first SELECT: active version lookup
+      expect(selectCalls[0].sql).toContain('SELECT version');
+      expect(selectCalls[0].sql).toContain('key_versions');
+      expect(selectCalls[0].sql).toContain('is_active = 1');
+      // Check second SELECT: next version calculation
+      expect(selectCalls[1].sql).toContain('SELECT COALESCE(MAX(version)');
 
-      // Verify Inngest event sent with both versions
+      // Verify INSERT with correct parameters via bind
+      expect(db.bind).toHaveBeenCalledTimes(1);
+      expect(db.bind).toHaveBeenCalledWith(
+        'master',
+        2,
+        mockEncryptedKey,
+        'admin-123'
+      );
+
+      // Verify Inngest event
       expect(inngest.send).toHaveBeenCalledWith(
         expect.objectContaining({
           name: 'key.rotation.requested',
@@ -205,11 +240,8 @@ describe('key-rotation', () => {
     });
 
     it('rejects non-admin users', async () => {
-      // Mock requireAdminWithRecentAuth to return 403 response
-      const mockForbiddenResponse = new Response('Forbidden', { status: 403 });
-      vi.doMock('@/seed/auth/require-admin', () => ({
-        requireAdminWithRecentAuth: vi.fn().mockResolvedValue(mockForbiddenResponse),
-      }));
+      const mockForbiddenResponse = NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      vi.mocked(requireAdminWithRecentAuth).mockResolvedValue(mockForbiddenResponse);
 
       const { POST } = await import('@/app/api/admin/keys/rotate/route');
       const mockRequest = {
@@ -225,9 +257,9 @@ describe('key-rotation', () => {
   describe('Inngest re-encrypt job', () => {
     it('re-encrypts all credential types and retires old version', async () => {
       const db = makeD1Database();
-      mockGetD1.mockReturnValue(db);
+      mockGetD1.mockReturnValue(db as any);
 
-      // Mock row queries for each table
+      // Mock row queries for each table (each will make 1 call since BATCH_SIZE > row count)
       const mockUserApiKeys = {
         results: [
           { user_id: 'user-1', provider: 'openrouter', encrypted_key: 'enc1', key_version: 1 },
@@ -245,14 +277,11 @@ describe('key-rotation', () => {
         ],
       };
 
-      // Setup all to return results then empty
+      // Each table's query will call all() once (batch size 250 > row counts)
       db.all
-        .mockResolvedValueOnce(mockUserApiKeys) // user_api_keys first batch
-        .mockResolvedValueOnce({ results: [] }) // user_api_keys second batch (end)
-        .mockResolvedValueOnce(mockProviderCreds) // user_provider_credentials first batch
-        .mockResolvedValueOnce({ results: [] })
-        .mockResolvedValueOnce(mockPlatformCreds) // platform_credentials first batch
-        .mockResolvedValueOnce({ results: [] });
+        .mockResolvedValueOnce(mockUserApiKeys) // user_api_keys
+        .mockResolvedValueOnce(mockProviderCreds) // user_provider_credentials
+        .mockResolvedValueOnce(mockPlatformCreds); // platform_credentials
 
       // Mock decrypt/encrypt
       const mockDecrypt = vi.fn().mockResolvedValue('plaintext');
@@ -289,16 +318,14 @@ describe('key-rotation', () => {
       const result = await handler({ event: mockEvent, step: mockStep });
 
       // Verify re-encryption counts
-      expect(result).toEqual(
-        expect.objectContaining({
-          keyVersion: 2,
-          oldVersion: 1,
-          userApiKeys: 2,
-          providerCredentials: 1,
-          platformCredentials: 1,
-          total: 4,
-        }),
-      );
+      expect(result).toEqual({
+        keyVersion: 2,
+        oldVersion: 1,
+        userApiKeys: 2,
+        providerCredentials: 1,
+        platformCredentials: 1,
+        total: 4,
+      });
 
       // Verify retirement of old version (is_active=0, rotated_at set)
       expect(db.prepare).toHaveBeenCalledWith(

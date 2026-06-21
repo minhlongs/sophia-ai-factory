@@ -2,15 +2,16 @@
 
 import React from 'react';
 import {
-  DollarSign,
-  Users,
+  Megaphone,
+  Play,
+  Video,
   TrendingUp,
-  Handshake,
   ArrowUpRight,
   ArrowDownRight,
   MoreVertical,
   Filter,
   ArrowRight,
+  DollarSign,
 } from 'lucide-react';
 import {
   DashboardLayout,
@@ -29,12 +30,12 @@ interface DashboardPageProps {
   initialData?: DashboardData;
 }
 
-// Icon mapping for standard metrics
+// Icon mapping for campaign metrics
 const metricIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  revenue: DollarSign,
-  subscribers: Users,
-  growth: TrendingUp,
-  commission: Handshake,
+  total_campaigns: Megaphone,
+  active_campaigns: Play,
+  videos_generated: Video,
+  success_rate: TrendingUp,
 };
 
 export default function DashboardPage({ initialData }: DashboardPageProps) {
@@ -42,10 +43,10 @@ export default function DashboardPage({ initialData }: DashboardPageProps) {
 
   // Merge provided data with fallbacks
   const metrics: DashboardMetric[] = initialData?.metrics || [
-    { id: 'revenue', value: '$124,500', change: '+4.5%', trend: 'up', icon: 'DollarSign' },
-    { id: 'subscribers', value: '1,240', change: '+12%', trend: 'up', icon: 'Users' },
-    { id: 'growth', value: '12.5%', change: '+12.5%', trend: 'up', icon: 'TrendingUp' },
-    { id: 'commission', value: '$8,200', change: 'Weekly', trend: 'neutral', icon: 'Handshake' },
+    { id: 'total_campaigns', value: '0', change: '0%', trend: 'neutral', icon: 'Megaphone' },
+    { id: 'active_campaigns', value: '0', change: '0%', trend: 'neutral', icon: 'Play' },
+    { id: 'videos_generated', value: '0', change: '0%', trend: 'neutral', icon: 'Video' },
+    { id: 'success_rate', value: '0%', change: '0%', trend: 'neutral', icon: 'TrendingUp' },
   ];
 
   const topAffiliates = initialData?.topAffiliates || [

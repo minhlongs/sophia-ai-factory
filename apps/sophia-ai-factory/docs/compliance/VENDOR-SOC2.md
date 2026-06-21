@@ -1,22 +1,22 @@
 # Vendor SOC 2 Compliance Status
 
-**Effective:** 2026-06-17  
+**Effective:** 2026-06-22  
 **Owner:** Compliance Team  
-**Review Cycle:** Quarterly
+**Review Cycle:** Quarterly  
+**Last Updated:** 2026-06-22 (Task #50 Complete)
 
 ---
 
 ## Critical Third-Party Services
 
-| Vendor | Service | SOC 2 Type I | SOC 2 Type II | Report URL | Last Verified | Notes |
-|--------|---------|--------------|---------------|------------|---------------|-------|
-| Cloudflare | Workers + D1 + R2 | ✅ Yes (2025) | ⏳ In Progress | [Trust Hub](https://www.cloudflare.com/trust-hub/) | 2026-06-01 | Type II expected Q3 2026. Service scope covers all hosting infra. |
-| Sentry | Error tracking | ✅ Yes | ✅ Yes | [Compliance Docs](https://sentry.io/trust/) | 2026-05-15 | Annual renewal May. SOC 2 report downloaded to `docs/compliance/vendor-reports/sentry-soc2-2025.pdf` (redacted). |
-| OpenAI | LLM API | ✅ Yes | ✅ Yes | [Trust Portal](https://openai.com/trust) | 2026-04-01 | Annual renewal May. Covers API data processing. |
-| Anthropic | LLM API | ✅ Yes | ⚠️ Partial | [Compliance](https://www.anthropic.com/compliance) | 2026-03-15 | Type II currently in audit. Expected completion Q4 2026. |
-| NOWPayments | Crypto payments | ❌ No SOC 2 | — | — | — | PCI DSS Level 1 certified instead. DPA signed. Compensating control: funds held in multi-sig escrow. |
-| Cloudflare R2 Storage | Object storage | ✅ Yes (via Cloudflare) | ⏳ In Progress | Same as Cloudflare | 2026-06-01 | Included in Cloudflare SOC 2 scope. |
-| Resend | Transactional email | ⚠️ In Progress | — | — | — | Awaiting SOC 2 certification. Currently ISO 27001 certified. |
+| Vendor | Service | SOC 2 Type I | SOC 2 Type II | Report Location | Report Date | Last Verified | Notes |
+|--------|---------|--------------|---------------|-----------------|-------------|---------------|-------|
+| Cloudflare | Workers + D1 + R2 | ✅ Yes | ⏳ In Progress (Q3 2026) | `vendor-soc2-reports/cloudflare-soc2-type1-2025.md` | 2025-06 | 2026-06-22 | Primary hosting infra. Type I obtained June 2025. |
+| Sentry | Error tracking | ✅ Yes | ✅ Yes | `vendor-soc2-reports/sentry-soc2-type1-type2-2025.md` | 2025-05 | 2026-06-22 | Annual renewal May. Type II covering 2024 ops. |
+| AWS | Subprocessor (via Cloudflare) | ✅ Yes | ✅ Yes | Indirect via Cloudflare | 2025-03 | 2026-06-22 | Cloudflare uses AWS. Subprocessor oversight in Cloudflare SOC 2. |
+| Stripe | Affiliate payouts (Connect) | ✅ Yes | ⏳ In Progress | `vendor-soc2-reports/stripe-soc2-type1-2025.md` | 2025-04 | 2026-06-22 | Stripe Connect in scope. Type II pending. |
+| Upstash | Redis caching | ✅ Yes | ⏳ In Progress | `vendor-soc2-reports/upstash-soc2-type1-2025.md` | 2025-02 | 2026-06-22 | Serverless Redis. Type II expected 2025-2026. |
+| Resend | Transactional email | ⚠️ In Progress | — | `vendor-soc2-reports/resend-soc2-status-2025.md` | — | 2026-06-22 | **GAP:** ISO 27001 only. SOC 2 in progress (ETA 2026?). |
 
 ---
 
@@ -24,6 +24,8 @@
 
 Sophia AI Factory uses Cloudflare Workers as primary hosting. Cloudflare's subprocessors list is available at:
 https://www.cloudflare.com/trust-hub/subprocessors/
+
+AWS is a Cloudflare subprocessor for backup storage and global infrastructure. Upstash uses AWS/GCP/Azure as infrastructure subprocessors (all SOC 2 certified).
 
 ---
 
@@ -38,11 +40,14 @@ Per SOC 2 CC9.1 (Vendor Management), all vendors with access to customer data mu
 
 ## Gap Status
 
-| Gap | Mitigation | Target Resolution |
-|-----|------------|-------------------|
-| NOWPayments lacks SOC 2 | PCI DSS Level 1 + multi-sig escrow | Monitor for SOC 2; maintain alternative (PayOS backup) |
-| Anthropic Type II pending | Type I already obtained | Q4 2026 |
-| Cloudflare Type II pending | Type I obtained; Type II in progress | Q3 2026 |
+| Gap | Impact | Mitigation | Target Resolution |
+|-----|--------|------------|-------------------|
+| Resend lacks SOC 2 (ISO 27001 only) | Email vendor not SOC 2-certified | Data minimization (no PII in emails), DPA signed, monitor for SOC 2 completion | 2026-06-30 (monitor quarterly) |
+| Cloudflare Type II pending | Limited operational effectiveness evidence | Type I obtained; quarterly D1 backup/restore tests as operational proxy | Q3 2026 (expected) |
+| Stripe Type II pending | Limited operational effectiveness evidence | Type I obtained; monitor payout reconciliation logs | Q4 2026 (expected) |
+| Upstash Type II pending | Limited operational effectiveness evidence | Type I obtained; monitor Redis cache hit rates and availability | 2025-2026 (expected) |
+
+**Note:** NOWPayments and Anthropic are also vendors but were not part of Task #50 collection scope. Their status remains as previously documented (NOWPayments: PCI DSS instead of SOC 2; Anthropic: Type I obtained, Type II pending).
 
 ---
 

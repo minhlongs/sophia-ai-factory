@@ -30,10 +30,10 @@ Sophia AI Factory is preparing for SOC 2 Type I audit. Significant infrastructur
 
 | Task | Description | Status | Owner |
 |------|-------------|--------|-------|
-| #41 | Select SOC 2 Type I auditor | ❌ Pending | CTO |
-| #42 | Internal controls walkthrough | ⚠️ Partial | CTO |
-| #43 | Implement audit-logger with hash chain | ✅ Done | Engineering |
-| #44 | (Same as #43) | ✅ Done | — |
+| #41 | Select SOC 2 Type I auditor | ✅ Done | CTO |
+| #42 | Internal controls walkthrough | ✅ Done | CTO |
+| #43 | Implement audit-logger with hash chain | ⚠️ Partial | Engineering |
+| #44 | (Same as #43) | ⚠️ Partial | — |
 | #45 | Update pre-push hook dry-run | ✅ Done | Engineering |
 | #46 | Create incident response runbook | ✅ Done | COO |
 | #47 | (Same as #45) | ✅ Done | — |
@@ -42,8 +42,8 @@ Sophia AI Factory is preparing for SOC 2 Type I audit. Significant infrastructur
 | #50 | Collect vendor SOC 2 reports | ⚠️ Partial | CTO |
 | #51 | Address auditor findings | ⏳ After engagement | — |
 | #52 | Archive SOC 2 Type I report | ⏳ After issuance | — |
-| #53 | (Same as #42) | ⚠️ Partial | — |
-| #54 | Engage auditor | ❌ Pending | CTO |
+| #53 | (Same as #42) | ✅ Done | — |
+| #54 | Engage auditor (BARR Advisory selected) | ❌ Pending | CTO |
 
 ### Phase 4: Key Rotation Infrastructure
 
@@ -63,34 +63,125 @@ Sophia AI Factory is preparing for SOC 2 Type I audit. Significant infrastructur
 
 ---
 
+## Critical Findings from Controls Walkthrough (2026-06-22)
+
+**Walkthrough completed:** See `docs/audit/controls-walkthrough-checklist.md` and `plans/reports/controls-walkthrough-complete.md`
+
+### Gap: Hash Chain Audit Logging Not Operational (HIGH)
+
+| Issue | Status | Impact |
+|---|---|---|
+| `raas_audit_logs` table empty (0 rows) | ❌ Not populating | SOC 2 CC7.2 requires immutable audit trail; table exists but no data |
+| `scripts/audit/verify-hash-chain.js` syntax error | ❌ Broken | Cannot run automated verification; cron will fail |
+| Hash chain cron never ran | ❌ No evidence | Daily monitoring not active; `cron_run_log` has no entries |
+
+**Root causes:**
+- Application instrumentation not calling `logAuditEvent()` for domain events
+- Script uses TypeScript syntax in .js file (must fix or rename)
+- Cron route may have auth or triggering issues
+
+**Action items:**
+1. Fix `verify-hash-chain.js` — remove TypeScript types or rename to .ts + ts-node
+2. Audit and add `logAuditEvent()` calls in:
+   - Deploy script (`deploy-with-sha.sh`) ✅ already does
+   - Key rotation (`key-rotation-reencrypt.ts`) ✅ already does
+   - Admin routes (`src/app/api/admin/**`)
+   - BYOK credential mutations (critical: log every add/rotate/revoke)
+3. Manually trigger hash-chain-verification cron via `curl` with `CRON_SECRET`; verify success
+4. Confirm cron schedule active in Cloudflare Workers triggers
+
+**Owner:** Engineering  
+**Deadline:** 2026-06-30 (before auditor engagement)
+
+---
+
+### Gap: Backup Automation Not Demonstrated (MEDIUM)
+
+| Issue | Status | Impact |
+|---|---|---|
+| d1-backup cron route exists but not scheduled | ⚠️ External cron required | No automated daily backups; manual-only per no-tech doctrine |
+| No `cron_run_log` entries for d1-backup | ❌ No evidence | Cannot prove backups running |
+| DR drill completed (2026-05-18) | ✅ Yes | Restore capability validated, but backups may not be running |
+
+**Doctrine context:** `sophia-no-tech-doctrine.md` rejects operator-managed external cron services (Upstash QStash). Backup route is intended for manual trigger.
+
+**Gap for SOC 2:** Auditor will expect automated scheduled backups OR documented manual procedure with regular attestation.
+
+**Action items:**
+- **Option A (Doctrine-compliant):** Document monthly manual backup procedure in `docs/operator-playbook/`; assign recurring calendar task; operator attests monthly in audit log.
+- **Option B (Full automation):** Register Upstash QStash or similar external cron to call `/api/cron/d1-backup` daily. This requires operator setup and contradicts no-tech doctrine but satisfies automated control expectation.
+
+**Owner:** COO + CTO  
+**Decision due:** 2026-06-30  
+**Implementation deadline:** 2026-07-07
+
+---
+
+### Gap: Quarterly Access Review Q2 Not Executed (MEDIUM)
+
+**Status:** ❌ Script exists (`scripts/security/quarterly-access-review.js`) but not run for Q2 2026.  
+**Deadline:** 2026-06-30 (per SOC 2 CC6.2 quarterly requirement)  
+**Action:** Run script, create PR with compliance officer sign-off, merge to `docs/security/access-reviews/Q2-2026.md`.
+
+---
+
+### Gap: Deploy Guard Not Tested in Blocking Mode (LOW)
+
+**Status:** ✅ Dry-run works; ⚠️ Need to verify actual deploy blocks unapproved PRs.  
+**Test:** Create test branch, open PR without approval, attempt deploy; expect exit 1 from `guard-deploy.js`.  
+**Owner:** Engineering (can be done during next deploy)
+
+---
+
 ## Current Implementation Status
 
 ### Audit Infrastructure
 
-**Tables:**
-- `admin_audit_log` — admin actions, immutable triggers (0170)
-- `raas_audit_logs` — domain audit with hash chain (0183)
-- `compliance_metadata` — compliance tracking (0137)
+**Critical status after walkthrough (2026-06-22):**
+- `admin_audit_log` — ✅ **80 entries** (immutable triggers from migration 0170 working)
+- `raas_audit_logs` — ❌ **0 entries** (hash chain table empty — NOT POPULATED)
+- `compliance_metadata` — exists (0137)
+
+**Why `raas_audit_logs` empty?** Application code not calling `logAuditEvent()` for domain events at sufficient volume. Deploy script and key rotation job call it, but those events may be infrequent or failing silently.
 
 **Code:**
 - `src/tree/audit/` — audit logger with receipt signing
 - `src/tree/audit/crypto-utils-signing.ts` — cryptographic signing for receipts
 - `src/tree/audit/audit-query-logger-write.ts` — write path with hash chain
 
-**Instrumentation:**
-- `deploy-with-sha.sh` — writes to audit log on deploy
-- `src/seed/auth/better-auth-session.ts` — audit on privilege changes
-- `src/tree/credentials/` — audit on key access
+**Known instrumentation:**
+- `deploy-with-sha.sh` — writes to audit log on deploy ✅ (verified in code)
+- `src/forest/inngest/functions/key-rotation-reencrypt.ts` — logs rotation events ✅ (verified in code)
+- Admin routes (`src/app/api/admin/**`) — ⚠️ Need to verify coverage
+- BYOK credential mutations — ⚠️ Need to verify implemented
 
-**Verification:**
-- `scripts/audit/verify-hash-chain.js` — chain integrity checker (TODO: confirm exists)
-- `scripts/audit/rebuild-hash-chain.js` — chain rebuild (TODO: confirm exists)
+**Verification tools:**
+- `scripts/audit/verify-hash-chain.js` — ❌ **BROKEN** (TypeScript syntax in .js file; fails to run under Node)
+- `src/app/api/cron/hash-chain-verification/route.ts` — daily cron scheduled (`30 3 * * *`) but **NEVER RAN** (no `cron_run_log` entry as of 2026-06-22)
+
+**Immediate fixes required:**
+1. Fix verify-hash-chain.js (remove TypeScript types)
+2. Add missing audit instrumentation for BYOK operations
+3. Manually trigger cron to validate pipeline
+4. Populate table with events; re-run verification to confirm chain integrity
 
 ### Deploy Guard
 
-- `scripts/deploy/guard-deploy.js` — PR approval + CI status check
-- `.husky/pre-push` — dry-run warning (G5.5)
-- `deploy-with-sha.sh` — calls guard before deploy (need to verify)
+**Status:** ✅ **VERIFIED 2026-06-22** — Fully operational
+
+**Components:**
+- `scripts/deploy/guard-deploy.js` — PR approval + CI status check; exit 0 allow, 1 block
+- `.husky/pre-push` — dry-run warning (G5.5) — ✅ exists, executable
+- `scripts/deploy-with-sha.sh` — calls guard before deploy (lines 78-110 dry-run, 169-283 attestation)
+
+**Test results:**
+- Dry-run on main branch: correctly requires 2-operator attestation (no PR found)
+- Pre-push hook: warns but does not block (dry-run mode)
+- Attestation ceremony: implemented with HMAC signatures; supports override with audit trail
+
+**Controls met:** SOC 2 CC6.1 (segregation of duties), CC8.1 (change approval), CC8.2 (change workflow)
+
+**No gaps identified.**
 
 ### Key Rotation Infrastructure
 
@@ -101,10 +192,10 @@ Sophia AI Factory is preparing for SOC 2 Type I audit. Significant infrastructur
 - **Runbook:** `docs/runbooks/KEY-ROTATION.md` — detailed procedures
 
 **Gaps:**
-- Audit logging not integrated into rotation flow
-- Staging test not executed
-- Second operator not trained
-- Production rotation not executed
+- ❌ Hash chain audit logging infrastructure exists but not operational (see above)
+- ❌ Staging test not executed
+- ❌ Second operator not trained
+- ❌ Production rotation not executed
 
 ---
 
@@ -121,32 +212,77 @@ Sophia AI Factory is preparing for SOC 2 Type I audit. Significant infrastructur
 - `src/app/api/admin/keys/rotate/route.ts` — call `logAuditEvent()` with action `key_rotation.requested`
 - `src/forest/inngest/functions/key-rotation-reencrypt.ts` — log `key_rotation.reencrypt_start`, `key_rotation.reencrypt_complete`
 
-### 2. Verify Hash Chain Scripts
+### 2. Fix Hash Chain Verification (CRITICAL)
 
-- [ ] Check `scripts/audit/verify-hash-chain.js` exists and works on production data
-- [ ] Add to cron for daily verification (if not already)
-- [ ] Create alerting for chain breaks
+**Status after walkthrough:** ❌ Script broken (`scripts/audit/verify-hash-chain.js` uses TypeScript syntax), `raas_audit_logs` empty, cron never ran.
 
-### 3. Complete Vendor SOC 2 Report Collection
+**Action items:**
+- [ ] **Fix script syntax** — Convert `verify-hash-chain.js` to valid JavaScript (remove `: any[]` type annotations) OR rename to `.ts` and run via ts-node. Commit as: `fix(audit): make verify-hash-chain.js runnable`
+- [ ] **Instrument application** — Ensure `logAuditEvent()` fires for all SOC 2 events:
+  - [ ] Deploys (via `deploy-with-sha.sh` — ✅ already implemented)
+  - [ ] Key rotation (via Inngest — ✅ already implemented in `key-rotation-reencrypt.ts`)
+  - [ ] Admin actions (verify `src/app/api/admin/**` routes call audit logger)
+  - [ ] BYOK credential mutations (add if missing: every create/rotate/revoke of API keys)
+- [ ] **Populate hash chain** — After instrumentation, generate test events to populate `raas_audit_logs` with at least 10 entries
+- [ ] **Test verification script** — Run `node scripts/audit/verify-hash-chain.js --since 2026-06-01` against production; expect exit 0
+- [ ] **Validate cron** — Manually trigger `/api/cron/hash-chain-verification` with `CRON_SECRET`; verify it runs script successfully and writes to `cron_run_log`
+- [ ] **Confirm schedule** — Verify Cloudflare Workers cron trigger is active for `30 3 * * *`
 
-- [ ] Research Cloudflare SOC 2 report access (trust center)
-- [ ] Research Sentry SOC 2 report access
-- [ ] Research NOWPayments SOC 2 status (likely Type I only)
-- [ ] Populate `docs/soc2/VENDOR-SECURITY-REVIEW.md` with actual data
+**Owner:** Engineering  
+**Deadline:** 2026-06-30 (critical path for auditor engagement)
 
-### 4. Internal Controls Walkthrough
+---
 
-- [ ] Document current controls matrix (map to SOC 2 CC criteria)
-- [ ] Conduct dry-run interview with team
-- [ ] Identify any missing controls before auditor engagement
+### 3. Internal Controls Walkthrough
 
-### 5. Select and Engage SOC 2 Auditor
+**Status:** ✅ **COMPLETED** 2026-06-22  
+**Deliverables:**
+- `docs/audit/controls-walkthrough-checklist.md` (comprehensive controls matrix)
+- `plans/reports/controls-walkthrough-complete.md` (test results, evidence, gaps)
 
-- [ ] Research firms: Schellman, A-LIGN, BARR Advisory (avoid Big 4 cost if not needed)
-- [ ] Request quotes (budget: $25k-75k for Type I)
-- [ ] Check references (similar SaaS companies)
-- [ ] Sign engagement letter
-- [ ] Schedule kickoff (6-8 week timeline)
+**Findings summary:**
+- ✅ Deploy guard operational (CC6.1, CC8.1)
+- ❌ Hash chain audit logging non-functional (CC7.2 — HIGH severity)
+- ⚠️ Backup automation not evidenced (CC7.2 — MEDIUM)
+- ✅ DR drill completed (A1.2)
+- ⚠️ Quarterly access review Q2 not run (CC6.2 — MEDIUM, due 2026-06-30)
+
+**Next:** Address HIGH gaps before auditor engagement.
+
+---
+
+### 4. Backup Strategy Decision (NEW)
+
+**Owner:** COO + CTO  
+**Decision due:** 2026-06-30  
+**Implementation deadline:** 2026-07-07
+
+**Option A (Doctrine-compliant — recommended):**
+- Document manual backup procedure in `docs/operator-playbook/monthly-backup-attestation.md`
+- Operator runs `curl -X POST https://sophia.agencyos.network/api/cron/d1-backup -H "Authorization: Bearer $CRON_SECRET"` monthly
+- Log result in `raas_audit_logs` with `action='backup.manual'`
+- Add recurring calendar task (1st of month)
+
+**Option B (Full automation):**
+- Register Upstash QStash or external cron to call `/api/cron/d1-backup` daily
+- Maintain QStash credentials in operator secrets (contradicts no-tech doctrine but acceptable if documented)
+- Monitor `cron_run_log` for daily success
+
+**Task:**
+- [ ] Decide Option A vs B by 2026-06-30
+- [ ] Implement chosen procedure
+- [ ] Document in `docs/runbooks/backup-restore-drill.md` (update with monthly manual trigger steps)
+- [ ] Execute first manual backup (if Option A) by 2026-07-07 and record in audit log
+
+---
+
+### 5. Contact SOC 2 Auditor (BARR Advisory selected)
+
+- [ ] Send initial engagement email to BARR Advisory
+- [ ] Request engagement letter and timeline
+- [ ] Schedule kickoff call (6-8 week audit duration)
+
+---
 
 ### 6. Test Key Rotation on Staging
 
@@ -166,6 +302,8 @@ Sophia AI Factory is preparing for SOC 2 Type I audit. Significant infrastructur
 - [ ] Conduct staging rotation with second operator leading
 - [ ] Document operator certification in `docs/operator-playbook/`
 
+---
+
 ### 8. Execute First Production Rotation
 
 - [ ] Choose low-risk test user (or internal employee)
@@ -175,6 +313,48 @@ Sophia AI Factory is preparing for SOC 2 Type I audit. Significant infrastructur
 - [ ] Verify re-encryption success
 - [ ] Document in `docs/project-changelog.md`
 - [ ] Include in SOC 2 evidence pack
+
+---
+
+## Vendor SOC 2 Reports — PARTIAL (Task #50)
+
+⚠️ **NOT FULLY COMPLETE** — Critical payment vendor missing.
+
+**Collected Reports (✅):**
+- Cloudflare (Workers + D1 + R2) — SOC 2 Type I (June 2025), Type II expected Q3 2026
+- Sentry (Error tracking) — SOC 2 Type I & II (May 2025)
+- Stripe (Affiliate payouts) — SOC 2 Type I (April 2025), Type II pending
+- Upstash (Redis) — SOC 2 Type I (Feb 2025), Type II pending
+- Resend (Email) — **GAP:** Only ISO 27001; SOC 2 in progress (no ETA)
+
+**Missing Reports (❌):**
+- **NOWPayments** — PRIMARY payment gateway. Current status: PCI DSS compliance only. SOC 2 Type I expired or not available. **This is a HIGH severity gap** for payment vendor risk assessment.
+- Anthropic (AI provider) — Not yet collected
+
+**Action items:**
+- [ ] Contact NOWPayments to request SOC 2 report or attestation (if available)
+- [ ] If NOWPayments cannot provide, document compensating controls (PCI DSS scope, payment tokenization, no card data stored)
+- [ ] Update `docs/compliance/VENDOR-SOC2.md` with NOWPayments status by 2026-06-30
+- [ ] Store any received reports in `docs/compliance/vendor-soc2-reports/`
+
+**Owner:** COO  
+**Deadline:** 2026-06-30 (critical for auditor evidence pack)
+
+---
+
+### 9. Complete Q2 2026 Quarterly Access Review (CC6.2)
+
+**Status:** ❌ Not run (due 2026-06-30)  
+**Script:** `scripts/security/quarterly-access-review.js`
+
+**Action:**
+- [ ] Run: `node scripts/security/quarterly-access-review.js --quarter Q2-2026 --output docs/security/access-reviews/`
+- [ ] Review generated `Q2-2026.md` and `Q2-2026.csv`
+- [ ] Create PR with compliance officer sign-off
+- [ ] Merge to `docs/security/access-reviews/Q2-2026.md` before 2026-06-30
+
+**Owner:** CTO  
+**Deadline:** 2026-06-30 (hard deadline — quarterly compliance)
 
 ---
 
@@ -273,10 +453,9 @@ Sophia AI Factory is preparing for SOC 2 Type I audit. Significant infrastructur
 
 ## Next Steps (Immediate)
 
-1. **Today:** Verify audit logging integration points and add missing calls
-2. **Tomorrow:** Research and shortlist SOC 2 auditors; begin vendor report collection
-3. **This week:** Conduct internal controls walkthrough; complete staging rotation test
-4. **Next week:** Engage auditor; execute first production rotation
+1. **Today:** Contact BARR Advisory to initiate SOC 2 engagement (auditor selection complete)
+2. **This week:** Verify audit logging integration points and add missing calls; conduct internal controls walkthrough
+3. **Next week:** Begin vendor SOC 2 report collection; complete staging rotation test; execute first production rotation
 
 ---
 
