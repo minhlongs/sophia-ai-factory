@@ -2,7 +2,8 @@
 
 > This file is an index. Full entries are split by quarter for faster loading.
 
-**Last entry:** 2026-05-28 (Edge Runtime & OOM fixes, 4868/4868 tests, SHA e5239a5b)
+**Last entry:** 2026-06-22 (OTEL Staging Verified, SOC2 Prep, Deploy Guard Live)  
+**Current Production SHA:** 7c8dc4c5 (deployed 2026-06-21)
 
 ---
 
@@ -18,11 +19,10 @@
 
 ## Recent Entries (Q2 2026 — latest 5)
 
-- **2026-05-28** — Edge Runtime & OOM fixes: resolved module factory Edge runtime crashes by bypassing Sentry wrapping and commenting out destructive `strip_by_content` rules for `immer`/`sentry` in `strip-ssr-bloat.sh`. Optimized heap limits for compilation (type-check = 12GB, OpenNext build = 4GB) to prevent sandbox OOM. Verified HTTP 200 live on all primary routes. 4868 tests, SHA e5239a5b.
-- **2026-05-17** — Next Sweep Phase 01-04: Inngest cleanup + lead:export live + 10-layer hardening + operator playbooks. 4431 tests, SHA 4bca4710.
-- **2026-05-17** — 4-backlog sweep: Telegram copy + workflow + Apollo/Hunter + video benchmark. SHA 9f40a39b.
-- **2026-05-17** — P13 multi-account YouTube live. 4409 tests, SHA e6821599.
-- **2026-05-16** — RaaS zero-bug handover: promise matrix 17 PASS / 0 FAIL / 4 PARTIAL. SHA c7aab382.
-- **2026-05-13** — Admin ops consistency batch: support/billing surface + NOWPayments normalization.
+- **2026-06-22** — OpenTelemetry Staging Verified: Full OTel instrumentation deployed to staging with Honeycomb integration verified. Production rollout prepared with 1% samplerate. SOC 2 controls walkthrough documented, auditor engagement complete. Deploy guard multi-operator approvals now live. BYOK rotation framework prepared with versioning infrastructure.
+- **2026-06-21** — Production Deploy: CF-direct deployment with latest fixes and verification. SHA 7c8dc4c5.
+- **2026-06-15** — Parallel Execution Framework: Ultracode parallel agent orchestration implemented with 5-model distribution (opus-4-8, opus-4-7, sonnet-4-6, haiku-4-5, sonnet-4.5-lite). Automatic task routing based on complexity.
+- **2026-06-14** — Stitch MCP Integration: Campaign Dashboard UI with Pencil design system integration. i18n support for VN+EN. Design overrides for missing pages.
+- **2026-06-08** — Deploy Guard Finalization: Multi-operator approval workflows, admin UI, CI gate integration, comprehensive test coverage, and documentation complete.
 
 See [changelog/2026-Q2.md](changelog/2026-Q2.md) for full history.

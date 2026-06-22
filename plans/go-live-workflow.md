@@ -431,6 +431,68 @@ Overage Flow:
 - [ ] 10.11 Configure error digest cron
 - [ ] 10.12 Test all alert rules fire correctly
 
+---
+
+## BYOK Key Rotation Preflight
+
+**Priority:** P0 — **Duration:** 30 min — **Mục tiêu:** Verify rotation infrastructure is production-ready
+
+### Overview
+
+Before executing any BYOK key rotation in production, run the preflight check script to validate:
+
+- Master key validity and accessibility
+- Database schema (key_versions table + key_version columns)
+- Inngest function health
+- Backup availability
+- Audit logging configuration
+- Admin API accessibility
+
+### Commands
+
+```bash
+# Local preflight (no production checks)
+cd apps/sophia-ai-factory
+npm run byok:preflight
+
+# Full preflight including production health checks
+npm run byok:preflight:prod
+```
+
+### Success Criteria
+
+- ✅ All CRITICAL checks pass (exit code 0)
+- ✅ BYOK_MASTER_KEY is set and valid in production secrets
+- ✅ key_versions table exists with active version
+- ✅ All credential tables have key_version column
+- ✅ Inngest key-rotation-reencrypt function is registered
+- ✅ Admin rotation API is accessible
+- ✅ Dual-decrypt window is 7 days (604800000 ms)
+- ✅ D1 backup route is configured
+- ✅ Audit logging is active
+
+### Preflight Checklist
+
+- [ ] Run `npm run byok:preflight:prod` from app package
+- [ ] Verify all critical checks pass (exit 0)
+- [ ] Confirm BYOK_MASTER_KEY is set in wrangler secrets
+- [ ] Verify D1 backup exists and is recent (< 24h)
+- [ ] Test rotation dry-run with a test user credential
+- [ ] Confirm Inngest queue is healthy (no backlog)
+- [ ] Ensure operators have admin access and recent auth
+
+### Troubleshooting
+
+| Check | Failure | Fix |
+|-------|---------|-----|
+| BYOK_MASTER_KEY | Not set | `npx wrangler secret put BYOK_MASTER_KEY` |
+| key_versions table | Missing | Apply migration 0184: `npm run deploy:migrations` |
+| key_version columns | Missing | Verify 0184 migration applied to all tables |
+| Inngest function | Not found | Check `forest/inngest/functions/key-rotation-reencrypt.ts` |
+| Admin API | 403/404 | Verify admin auth and route exists at `/api/admin/keys/rotate` |
+
+---
+
 
 ---
 
@@ -518,6 +580,17 @@ Overage Flow:
 - [ ] Inngest: all queues registered
 - [ ] Environment variables: all set in wrangler secrets
 - [ ] Domain: `sophia.agencyos.network` DNS configured
+
+### Gate 11: BYOK Rotation Readiness
+- [ ] BYOK_MASTER_KEY set in production secrets
+- [ ] `key_versions` table exists with active version
+- [ ] All credential tables have `key_version` column (migration 0184 applied)
+- [ ] Inngest `key-rotation-reencrypt` function registered and healthy
+- [ ] Admin rotation API accessible (`/api/admin/keys/rotate`)
+- [ ] Dual-decrypt window configured (7 days)
+- [ ] D1 backup route operational
+- [ ] Audit logging active for rotation events
+- [ ] `npm run byok:preflight:prod` passes with 0 critical failures
 
 ## Deployment Steps
 

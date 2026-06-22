@@ -1,33 +1,60 @@
 /**
  * Hourly Rollup - Aggregate raw usage events into per-hour summaries
+ * Uses SQL GROUP BY to replace JS rollup for performance.
  */
 
-import { createServerClient } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
-import type { HourlySummaryRecord, ServiceBreakdownItem, UsageEventRow } from './rollup-utils';
+import type { HourlySummaryRecord, ServiceBreakdownItem } from './rollup-utils';
 import { calcAvgResponseTime } from './rollup-utils';
 
+interface HourlyGroupRow {
+  user_id: string;
+  license_nonce: string;
+  external_customer_id: string | null;
+  service_name: string;
+  total_requests: number;
+  total_credits: number;
+  total_tokens_input: number;
+  total_tokens_output: number;
+  total_errors: number;
+  avg_response_time_ms: number | null;
+}
+
 /**
- * Calculate hourly rollup from raw usage events
+ * Calculate hourly rollup from raw usage events using SQL aggregation
  *
  * @param hourTimestamp - Unix timestamp of hour start
  * @returns Array of hourly summary records grouped by tenant + license
  */
 export async function calculateHourlyRollup(hourTimestamp: number): Promise<HourlySummaryRecord[]> {
-  const db = createServerClient();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const hourStart = hourTimestamp;
   const hourEnd = hourTimestamp + 3600;
 
-  const { data: events, error } = await db
-    .from('usage_events')
-    .select(`
-      user_id, license_nonce, external_customer_id,
-      service_name, credits_used, tokens_input, tokens_output,
-      status_code, response_time_ms
+  // SQL GROUP BY replaces in-memory rollup: aggregates per tenant+license+service in a single query
+  const { data: groupedRows, error } = await db
+    .prepare(`
+      SELECT
+        user_id,
+        license_nonce,
+        external_customer_id,
+        service_name,
+        COUNT(*) as total_requests,
+        SUM(credits_used) as total_credits,
+        SUM(tokens_input) as total_tokens_input,
+        SUM(tokens_output) as total_tokens_output,
+        SUM(CASE WHEN status_code >= 400 THEN 1 ELSE 0 END) as total_errors,
+        AVG(response_time_ms) as avg_response_time_ms
+      FROM usage_events
+      WHERE created_at >= ? AND created_at < ?
+      GROUP BY user_id, license_nonce, external_customer_id, service_name
     `)
-    .gte('created_at', hourStart)
-    .lt('created_at', hourEnd) as unknown as { data: UsageEventRow[] | null; error: unknown };
+    .bind(hourStart, hourEnd)
+    .all<HourlyGroupRow>() as unknown as { data: HourlyGroupRow[] | null; error: unknown };
 
   if (error) {
     const err = error instanceof Error ? error : new Error(String(error));
@@ -35,13 +62,13 @@ export async function calculateHourlyRollup(hourTimestamp: number): Promise<Hour
     throw err;
   }
 
-  if (!events || events.length === 0) {
+  if (!groupedRows || groupedRows.length === 0) {
     logger.info('[Rollup Service] No events to aggregate for hour', { hourTimestamp });
     return [];
   }
 
-  // Group by tenant + license
-  const grouped = new Map<string, {
+  // Group by tenant + license to build final summaries with service breakdown
+  const summaryMap = new Map<string, {
     tenantId: string;
     licenseNonce: string;
     externalCustomerId: string | null;
@@ -58,47 +85,51 @@ export async function calculateHourlyRollup(hourTimestamp: number): Promise<Hour
     }>;
   }>();
 
-  for (const event of events) {
-    const key = `${event.user_id}:${event.license_nonce}`;
-    let group = grouped.get(key);
+  for (const row of groupedRows) {
+    const key = `${row.user_id}:${row.license_nonce}`;
+    let group = summaryMap.get(key);
 
     if (!group) {
       group = {
-        tenantId: event.user_id,
-        licenseNonce: event.license_nonce,
-        externalCustomerId: event.external_customer_id || null,
+        tenantId: row.user_id,
+        licenseNonce: row.license_nonce,
+        externalCustomerId: row.external_customer_id,
         requests: 0, credits: 0, tokensInput: 0, tokensOutput: 0,
         errors: 0, responseTimeSum: 0,
         serviceMap: new Map(),
       };
-      grouped.set(key, group);
+      summaryMap.set(key, group);
     }
 
-    group.requests += 1;
-    group.credits += event.credits_used || 0;
-    group.tokensInput += event.tokens_input || 0;
-    group.tokensOutput += event.tokens_output || 0;
-    if (event.status_code && event.status_code >= 400) group.errors += 1;
-    if (event.response_time_ms) group.responseTimeSum += event.response_time_ms;
+    group.requests += row.total_requests;
+    group.credits += row.total_credits;
+    group.tokensInput += row.total_tokens_input;
+    group.tokensOutput += row.total_tokens_output;
+    group.errors += row.total_errors;
+    if (row.avg_response_time_ms !== null) {
+      group.responseTimeSum += row.avg_response_time_ms * row.total_requests;
+    }
 
     // Per-service aggregation
-    let svc = group.serviceMap.get(event.service_name);
+    let svc = group.serviceMap.get(row.service_name);
     if (!svc) {
       svc = { requests: 0, credits: 0, tokensInput: 0, tokensOutput: 0, errors: 0, responseTimeSum: 0 };
-      group.serviceMap.set(event.service_name, svc);
+      group.serviceMap.set(row.service_name, svc);
     }
-    svc.requests += 1;
-    svc.credits += event.credits_used || 0;
-    svc.tokensInput += event.tokens_input || 0;
-    svc.tokensOutput += event.tokens_output || 0;
-    if (event.status_code && event.status_code >= 400) svc.errors += 1;
-    if (event.response_time_ms) svc.responseTimeSum += event.response_time_ms;
+    svc.requests += row.total_requests;
+    svc.credits += row.total_credits;
+    svc.tokensInput += row.total_tokens_input;
+    svc.tokensOutput += row.total_tokens_output;
+    svc.errors += row.total_errors;
+    if (row.avg_response_time_ms !== null) {
+      svc.responseTimeSum += row.avg_response_time_ms * row.total_requests;
+    }
   }
 
-  // Convert grouped map to summary records
+  // Convert map to array of summaries
   const results: HourlySummaryRecord[] = [];
 
-  for (const [, group] of grouped.entries()) {
+  for (const [, group] of summaryMap.entries()) {
     const serviceBreakdown: ServiceBreakdownItem[] = Array.from(group.serviceMap.entries()).map(
       ([serviceName, stats]) => ({
         service: serviceName,
@@ -129,7 +160,7 @@ export async function calculateHourlyRollup(hourTimestamp: number): Promise<Hour
   logger.info('[Rollup Service] Calculated hourly rollup', {
     hourTimestamp,
     tenantCount: results.length,
-    totalEvents: events.length,
+    eventGroups: groupedRows.length,
   });
 
   return results;

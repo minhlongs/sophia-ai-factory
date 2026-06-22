@@ -10,6 +10,7 @@ export const publishExecute = inngest.createFunction(
       jobId,
       tenantId,
       userId,
+      eventId: event.id,
       step,
       scheduleRetry: async (jobId, tenantId, userId, attempt) => {
         await inngest.send({

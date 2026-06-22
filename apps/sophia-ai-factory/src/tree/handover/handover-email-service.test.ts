@@ -32,11 +32,11 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 
 const { mockRenderEmail } = vi.hoisted(() => ({ mockRenderEmail: vi.fn() }))
 
-vi.mock('@/forest/email/render-email', () => ({
+vi.mock('@/tree/email', () => ({
   renderEmail: mockRenderEmail,
 }))
 
-vi.mock('@/forest/email/templates/shared-layout', () => ({
+vi.mock('@/tree/email/templates/shared-layout', () => ({
   SENDER_FROM: 'Sophia AI <noreply@test>',
 }))
 

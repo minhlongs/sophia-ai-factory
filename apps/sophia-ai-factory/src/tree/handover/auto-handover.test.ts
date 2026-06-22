@@ -46,7 +46,7 @@ vi.mock('@/tree/handover/handover-email-service', () => ({
 }))
 
 const { mockEnqueueWelcomeEmail } = vi.hoisted(() => ({ mockEnqueueWelcomeEmail: vi.fn() }))
-vi.mock('@/forest/outbox/email-outbox', () => ({
+vi.mock('@/tree/outbox', () => ({
   enqueueWelcomeEmail: mockEnqueueWelcomeEmail,
 }))
 

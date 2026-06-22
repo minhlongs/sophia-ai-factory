@@ -115,15 +115,16 @@ export function getAuth() {
     databaseHooks: {
       session: {
         create: {
-          after: async (session) => {
+          before: async (session) => {
             try {
               const { required } = await requireMfaIfEnabled(session.userId);
               if (required) {
                 await markSessionMfaPending(session.id);
               }
             } catch (err) {
-              // Non-blocking — log but don't prevent session creation
-              logger.error('[databaseHook] MFA pending check failed', err instanceof Error ? err : new Error(String(err)));
+              // Fail-closed: on any MFA check error, abort session creation
+              logger.error('[databaseHook] MFA pre-session check failed', err instanceof Error ? err : new Error(String(err)));
+              throw new Error('MFA verification setup failed');
             }
           },
         },

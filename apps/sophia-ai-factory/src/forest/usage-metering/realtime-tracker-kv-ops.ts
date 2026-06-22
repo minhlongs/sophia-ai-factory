@@ -144,18 +144,27 @@ export async function incrementRealTimeUsage(
   }
 }
 
+/**
+ * Atomic HSET + EXPIRE via Lua script.
+ * Eliminates the hset-then-expire failure mode where a connection drop after
+ * hset leaves the key updated but without TTL, causing ghost credits.
+ * Guarantees both-or-neither in a single round-trip.
+ */
+const ATOMIC_SET_EXPIRE_LUA = `redis.call('HSET', KEYS[1], ARGV[1], ARGV[2]); redis.call('EXPIRE', KEYS[1], ARGV[3]); return 1`;
+
 export async function updateRealTimeUsage(usage: RealTimeUsage, ttlSeconds: number = 3600): Promise<void> {
-  const kv = getKvClient()
+  const kv = getKvClient();
   if (!kv) {
-    logger.debug('[Real-Time Tracker] Redis not available, skipping counter update')
-    return
+    logger.debug('[Real-Time Tracker] Redis not available, skipping counter update');
+    return;
   }
   try {
-    const key = `usage:${usage.userId}:${usage.licenseNonce}`
-    await kv.hset(key, { [usage.windowStart.toString()]: usage.currentCredits })
-    await kv.expire(key, ttlSeconds)
+    const key = `usage:${usage.userId}:${usage.licenseNonce}`;
+    const field = usage.windowStart.toString();
+    const value = usage.currentCredits.toString();
+    await kv.eval(ATOMIC_SET_EXPIRE_LUA, [key], [field, value, ttlSeconds.toString()]);
   } catch (error) {
-    logger.error('[Real-Time Tracker] Redis write error', toError(error))
+    logger.error('[Real-Time Tracker] Redis write error', toError(error));
   }
 }
 

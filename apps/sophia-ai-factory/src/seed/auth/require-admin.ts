@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { isUserAdmin } from '@/seed/auth/is-user-admin';
+import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 import type { User } from '@/seed/db/client';
 
 export type RequireAdminResult = { user: User } | NextResponse;
@@ -262,8 +265,11 @@ export async function requireAdminWithRecentAuth(
 }
 
 /**
- * Gate a route on Better Auth session + role === 'admin'.
- * Returns { user } on success, or a NextResponse with 401/403 on failure.
+ * Gate a route on Better Auth session + current DB admin role.
+ * Returns { user } on success, or a NextResponse with 401/403/503 on failure.
+ *
+ * This check queries the database to prevent stale session role cache
+ * (e.g., admin demotion not reflected in session cookie).
  *
  * Usage:
  *   const auth = await requireAdmin(request);
@@ -277,15 +283,36 @@ export async function requireAdmin(
     request instanceof Request
       ? request.headers
       : (request as NextRequest).headers;
-  const user = await getCurrentUserFromHeaders(headers);
+
+  let user: User | null;
+  try {
+    user = await getCurrentUserFromHeaders(headers);
+  } catch (err) {
+    logger.error('[requireAdmin] Auth lookup failed', toError(err));
+    return NextResponse.json(
+      { error: 'Authentication service temporarily unavailable' },
+      { status: 503 }
+    );
+  }
+
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-  if (user.role !== 'admin') {
+
+  try {
+    const admin = await isUserAdmin(user);
+    if (!admin) {
+      return NextResponse.json(
+        { error: 'Forbidden: admin role required' },
+        { status: 403 }
+      );
+    }
+    return { user };
+  } catch (err) {
+    logger.error('[requireAdmin] Admin check failed', toError(err));
     return NextResponse.json(
-      { error: 'Forbidden: admin role required' },
-      { status: 403 },
+      { error: 'Authentication service temporarily unavailable' },
+      { status: 503 }
     );
   }
-  return { user };
 }

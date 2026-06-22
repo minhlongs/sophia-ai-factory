@@ -25,6 +25,7 @@ export async function writeOrder(input: PendingOrderInput): Promise<PendingOrder
     promo_code: input.promo_code ?? null,
     customer_email: input.customer_email ?? null,
     invoice_url: input.invoice_url ?? null,
+    provider_payment_id: input.provider_payment_id ?? null,
     status: input.status ?? 'pending',
     payment_id: null,
     created_at: new Date().toISOString(),

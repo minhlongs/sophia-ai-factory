@@ -99,7 +99,7 @@ describe('repository: getTask', () => {
     const { getTask } = await import('./repository');
     const task = await getTask(TASK_ID, ORG_ID) as AgentTask;
     expect(task.status).toBe('queued');
-    expect(task.output).toBeNull();
+    expect(task.output).toBe('');  // null → '' per mapTask coalescing
     expect(task.orgId).toBe(ORG_ID);
   });
 });

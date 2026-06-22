@@ -31,7 +31,7 @@ vi.mock('@/seed/db/client', () => ({
   createServerClient: () => ({ from: mockDbFrom }),
 }));
 
-vi.mock('@/land/mcu/credits-repo', () => ({
+vi.mock('@/tree/mcu/credits-repo', () => ({
   deductCredits: mockDeductCredits,
 }));
 
@@ -39,7 +39,7 @@ vi.mock('./command-registry', () => ({
   getCommand: mockGetCommand,
 }));
 
-vi.mock('../fire-webhook', () => ({
+vi.mock('@/forest/webhooks/missions/fire-webhook', () => ({
   fireMissionWebhook: mockFireWebhook,
 }));
 
@@ -52,7 +52,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   },
 }));
 
-vi.mock('../handlers/ai-write', () => ({ handle: mockHandleAiWrite }));
+vi.mock('@/forest/ai/missions/ai-write', () => ({ handle: mockHandleAiWrite }));
 vi.mock('../handlers/social-publish', () => ({ handle: vi.fn() }));
 vi.mock('../handlers/video-create', () => ({ handle: vi.fn() }));
 vi.mock('../handlers/video-status', () => ({ handle: vi.fn() }));

@@ -13,7 +13,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/land/mcu/credits-repo', () => ({
+vi.mock('@/tree/mcu/credits-repo', () => ({
   getBalance: vi.fn(),
   deductCredits: vi.fn(),
 }));

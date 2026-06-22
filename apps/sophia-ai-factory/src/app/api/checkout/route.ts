@@ -321,6 +321,7 @@ if (promoCode && validation?.valid && calc.isFreeOrder && validation.discountTyp
             promo_code: promoCode,
             customer_email: customerEmail,
             invoice_url: payOsResult.checkoutUrl,
+            provider_payment_id: payOsResult.paymentLinkId,
           });
         } catch (dbErr) {
           logger.warn('[Checkout/PayOS] Failed to write pending_order (non-fatal)', {

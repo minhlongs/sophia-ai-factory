@@ -49,6 +49,8 @@
     "db:gen-sop-seed": "node scripts/generate-sop-seed-sql.mjs",
     "db:gen-sop-seed-v2": "node scripts/generate-sop-seed-sql-v2.mjs",
     "doctor": "node scripts/sophia-doctor.mjs",
+    "byok:preflight": "node scripts/byok-rotation-preflight.mjs",
+    "byok:preflight:prod": "node scripts/byok-rotation-preflight.mjs --prod",
     "check:bundle-size": "bash scripts/check-bundle-size.sh",
     "ci": "npm run ci:typecheck && npm run ci:lint && npm run ci:test && npm run ci:get-side-effects && npm run ci:secrets && npm run ci:audit",
     "ci:typecheck": "tsc --noEmit",

@@ -115,9 +115,8 @@ export async function completeVideoFromWebhook(
     })
   }
 
-  // completed_at is set ONCE on terminal transition (P27 honest benchmark — migration 0113).
-  // now is unix-epoch INTEGER; updated_at column happens to be TEXT, so we keep the existing
-  // datetime('now') default by binding `now` as INTEGER cast to TEXT via SQLite implicit conversion.
+  // Atomic CAS: only transition from 'processing' to 'completed'
+  // If the status changed concurrently (e.g., already completed or failed), the UPDATE affects 0 rows.
   const nowEpoch = Math.floor(Date.now() / 1000)
   const result = await db
     .prepare(
@@ -129,15 +128,16 @@ export async function completeVideoFromWebhook(
            r2_size_bytes = ?5,
            updated_at = ?6,
            completed_at = COALESCE(completed_at, ?7)
-       WHERE id = ?1 AND status != 'completed' AND status != 'failed_permanent'`,
+       WHERE id = ?1 AND status = 'processing'`,
     )
     .bind(row.id, videoUrl, thumbnailUrl ?? null, r2Key, r2SizeBytes, now, nowEpoch)
     .run()
 
   const updated = (result.meta?.changes ?? 0) > 0
   if (!updated) {
-    logger.warn('[WebhookComplete] CAS lost — video already completed or failed permanently', {
+    logger.warn('[WebhookComplete] CAS lost — video status not processing (may have been completed or failed by another caller)', {
       videoId: row.id,
+      currentStatus: row.status,
     })
     return
   }

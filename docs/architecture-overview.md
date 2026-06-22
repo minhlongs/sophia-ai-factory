@@ -80,3 +80,66 @@ Asynchronous workflows are handled via **Inngest**, avoiding long-running node p
 2. **NOWPayments IPN Callback:** Processes subscription upgrades at [route.ts](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/webhooks/nowpayments/route.ts) using HMAC SHA-512 checks.
 3. **Telegram Bot webhook:** Processes bot updates at [route.ts](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/webhooks/telegram/route.ts) using pairing logic linked to JWT tokens.
 4. **MoviePy Rendering Microservice:** Heavy video processing (crops, subtitles) is routed to the microservice [services/moviepy-render/server.py](file:///Users/macbook/projects/sophia-ai-factory/services/moviepy-render/server.py) from [composer-ffmpeg.ts](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/lib/video/composer-ffmpeg.ts). This route is protected by a circuit breaker to avoid Worker timeouts.
+
+---
+
+## 6. Security & Compliance
+
+### BYOK (Bring Your Own Key)
+Customers supply their own API keys via Setup Wizard. Keys are encrypted using AES-256-GCM and stored in `user_provider_credentials`. Runtime decryption happens in-memory only.
+
+### BYOK Rotation Framework
+Key versioning infrastructure with dual-decrypt window. Inngest background job handles re-encryption. Framework complete, staging test in progress (2026-06).
+
+### Audit Logging with Hash Chain
+All critical operations logged to `raas_audit_logs` with cryptographic hash chaining for tamper-evidence (migration `0183`).
+
+### SOC 2 Type I (In Progress)
+- Auditor engaged Q2 2026
+- Controls walkthrough completed
+- Evidence collection in progress
+- Target completion: Q3 2026
+
+---
+
+## 7. Deploy Pipeline & Guard
+
+**Deploy Doctrine:** CF-direct (GitHub Actions disabled by design since 2026-05-03).
+
+```
+git push origin main
+  ↓
+cd apps/sophia-ai-factory && npm run deploy:full
+  (type-check + build + OpenNext + SHA injection + wrangler deploy)
+  ↓
+Verify: /api/version shortSha matches local git SHA
+```
+
+**Deploy Guard (2026-06):** Multi-operator approval required for production deploys.
+- 2 distinct admin approvals required
+- Pre-push hook opens request
+- Admin UI: `/dashboard/admin/deploy-guard`
+- 24h TTL on approval requests
+- All events logged with hash chain
+
+**Rollback:** `npx wrangler rollback --name sophia-ai-factory`
+
+---
+
+## 8. Observability
+
+### Production Stack
+- **Better Stack:** Structured logging, daily error digests, 5min heartbeats
+- **Sentry:** Frontend, server, edge error tracking
+- **PostHog:** Event tracking, A/B testing, funnel analysis
+
+### OpenTelemetry (Staging Complete)
+- **Vendor:** Honeycomb
+- **SDK:** `@opentelemetry/api` v1.9.1
+- **Status:** Staging verified 2026-06-22; production rollout pending `HONEYCOMB_API_KEY`
+- **Instrumentation:** API routes, Inngest functions, fetch calls
+- **Report:** See `OTEL-STAGING-VERIFICATION-REPORT.md`
+
+**Runbooks:** `docs/apm-runbook.md`, `docs/observability-runbook.md`
+
+---

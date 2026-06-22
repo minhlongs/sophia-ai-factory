@@ -1,144 +1,171 @@
-# Client Handover Documentation Package
-# Tai Lieu Ban Giao Cho Khach Hang
+# Sophia AI Factory — Handover Documentation Index
 
-> Sophia AI Video Factory — Complete Documentation Set
-> Bo Tai Lieu Day Du Cho Sophia AI Video Factory
-
-**Last Updated / Cap Nhat:** 2026-05-21
+**Last Updated:** 2026-06-22  
+**Purpose:** Centralized index for all handover and operational documentation
 
 ---
 
-## Documents / Tai Lieu
+## Quick Start (Read First)
 
-| # | Document / Tai Lieu | Description / Mo Ta | Audience / Doi Tuong |
-|---|---|---|---|
-| 1 | [User Journey Visual Guide](./user-journey-visual-guide.md) | A-Z hanh trinh nguoi dung / Complete user journey with screen maps | CEO, All Users |
-| 2 | [Getting Started](./getting-started.md) | Huong dan bat dau / First steps guide | New Users |
-| 3 | [Telegram Bot Guide](./telegram-bot-guide.md) | Huong dan su dung bot / Bot commands & setup | All Users |
-| 4 | [Pricing & Tiers](./pricing-and-tiers.md) | Bang gia goi dich vu / Plan comparison ($199-$4,999) | CEO, Sales |
-| 5 | [FAQ](./faq.md) | Cau hoi thuong gap / Common questions | All Users |
-| 6 | [Troubleshooting](./troubleshooting.md) | Xu ly su co / Issue resolution | All Users |
-| 7 | [Deployment Guide](./deployment-guide.md) | Huong dan deploy CF-direct / Cloudflare deploy doctrine | Developers, Ops |
-| 8 | [System Architecture](./system-architecture.md) | Kien truc he thong / Component diagram & data flow | Developers |
-| 9 | [Credentials Handover](./credentials-handover.md) | Thong tin dang nhap & quyen truy cap / Access checklist | CEO, Admin |
-| 10 | [Support Escalation](./support-escalation.md) | Ho tro & cam ket dich vu / Support tiers & SLA | CEO, All Users |
+| Document | Audience | Purpose |
+|----------|----------|---------|
+| [CEO-QUICK-START.md](../CEO-QUICK-START.md) | CEO / New Operator | 5-minute onboarding — deploy, verify, run agents |
+| [EXECUTIVE-SUMMARY.md](../EXECUTIVE-SUMMARY.md) | Executive Stakeholders | High-level delivery confirmation and status |
+| [HANDOVER-MANIFEST.md](../HANDOVER-MANIFEST.md) | Handoff Recipient | Complete inventory of artifacts and verification checklist |
 
 ---
 
-## Admin Ops Source of Truth / Nguon Su That Van Hanh
+## Architecture & Code
 
-| # | Document / Tai Lieu | Description / Mo Ta | Audience / Doi Tuong |
-|---|---|---|---|
-| 1 | [Admin Ops Activation Checklist](./admin-ops/activation-checklist.md) | Go-live evidence tracker | Founder, Ops |
-| 2 | [Payment & Pricing Source of Truth](./admin-ops/payment-pricing-source-of-truth.md) | Canonical billing and pricing rules | Founder, Sales, Ops |
-| 3 | [Support Ticket SOP](./admin-ops/support-ticket-sop.md) | Ticket lifecycle, severity, escalation | Ops, Support |
-| 4 | [Vendor Register](./admin-ops/vendor-register.md) | Production vendors, owners, secret locations | Founder, Ops |
-| 5 | [Compliance Obligation Register](./admin-ops/compliance-obligation-register.md) | Legal and policy obligations | Founder, Ops |
-| 6 | [First Customer Close SOP](./admin-ops/first-customer-close-sop.md) | Lead → payment → activation workflow | Founder, Sales, Ops |
-
----
-
-## Technical Modules / Module Ky Thuat
-
-| # | Module | Description / Mo Ta | Location |
-|---|---|---|---|
-| 1 | OpenClaw Gateway | Tu dong phan phoi noi dung da kenh / Multi-channel content distribution with self-healing retry | `src/tree/gateway/`, `src/lib/openclaw/` |
-| 2 | Smart Resume Engine | Luu diem kiem tra / Checkpoint-based pipeline recovery for failed campaigns | `src/tree/gateway/smart-resume-engine.ts` |
-| 3 | Auto-Discovery Scoring | Cham diem san pham lien ket / SPS scoring engine for affiliate products (Inngest cron, daily 8AM UTC) | `src/lib/discovery/affiliate-ai-scorer.ts` |
-| 4 | Channel Adapters | Bo chuyen doi kenh / ClickBank, ShareASale ingestion + YouTube, TikTok, Telegram distribution | `src/tree/gateway/adapters/` |
-| 5 | Campaign Pipeline | Quy trinh chien dich / Script → Voiceover → Video → Distribute (Inngest orchestration) | `src/forest/inngest/functions/generate-campaign.ts` |
+| Document | Purpose | Last Updated |
+|----------|---------|--------------|
+| [docs/system-architecture.md](system-architecture.md) | Full system design, layers, data flow, API reference | 2026-05-20 |
+| [docs/codebase-summary.md](codebase-summary.md) | Comprehensive 740-line codebase overview | 2026-05-22 |
+| [docs/code-standards.md](code-standards.md) | Type safety, architectural patterns, quality gates | 2026-06-20 |
+| [CLAUDE.md](../CLAUDE.md) | Project constitution — rules, doctrine, commands | 2026-06-21 |
+| [ARCHITECTURE.md](../ARCHITECTURE.md) | System summary and layer model | 2026-05-30 |
 
 ---
 
-## Screenshots / Hinh Chup Man Hinh
+## Deployment & Operations
 
-Screenshots captured from the actual app at `docs/screenshots/`:
-
-| # | File | Screen / Man Hinh |
-|---|---|---|
-| 1 | `screenshots/01-setup-wizard-step1-system-check.png` | Setup Wizard — System Check (Buoc 1) |
-| 2 | `screenshots/02-setup-wizard-step2-api-keys.png` | Setup Wizard — API Keys (Buoc 2) |
-| 3 | `screenshots/03-landing-page-hero.png` | Landing Page — Full Page (Trang Chu) |
-| 4 | `screenshots/04-pricing-page.png` | Pricing — 3 Plans (Bang Gia) |
-| 5 | `screenshots/05-dashboard-main.png` | Dashboard — Stats & Campaigns (Tong Quan) |
-| 6 | `screenshots/06-campaign-creation.png` | Campaign Creation — Templates (Tao Chien Dich) |
-| 7 | `screenshots/07-campaigns-list.png` | Campaigns List (Danh Sach Chien Dich) |
-| 8 | `screenshots/08-analytics.png` | Analytics — Charts & Metrics (Phan Tich) |
-| 9 | `screenshots/09-settings.png` | Settings — Dashboard Layout (Cai Dat) |
+| Document | Purpose | Last Updated |
+|----------|---------|--------------|
+| [docs/operator-quick-reference.md](operator-quick-reference.md) | **Operator quick reference — one-page cheat sheet** | 2026-06-22 |
+| [docs/deployment-guide.md](deployment-guide.md) | CF-direct deploy flow, secrets, cron setup | 2026-06-20 |
+| [docs/ops-runbook.md](ops-runbook.md) | Daily operations, health checks, cron jobs | 2026-05-30 |
+| [docs/observability-runbook.md](observability-runbook.md) | APM, Honeycomb, SLOs, alert response | 2026-06-20 |
+| [docs/incident-response.md](incident-response.md) | Incident handling, escalation, postmortem | 2026-06-22 |
+| [docs/disaster-recovery.md](disaster-recovery.md) | Backup strategy, restore procedures, DR drills | 2026-05-21 |
+| [apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md](../../apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md) | Mandatory deploy verification sequence | 2026-05-03 |
 
 ---
 
-## Quick Access / Truy Cap Nhanh
+## Security & Compliance
 
-| What / Gi | Where / O Dau |
-|---|---|
-| Production Site | https://sophia.agencyos.network |
+| Document | Purpose | Last Updated |
+|----------|---------|--------------|
+| [docs/security.md](../SECURITY.md) | Security standards, auth, encryption, compliance | 2026-05-30 |
+| [docs/compliance/](compliance/) | SOC 2 evidence, audit logs, access reviews | 2026-06-22 |
+| [docs/audit/](audit/) | Audit reports, findings, remediation tracking | 2026-06-22 |
+| [apps/sophia-ai-factory/.claude/rules/sophia-no-tech-doctrine.md](../../apps/sophia-ai-factory/.claude/rules/sophia-no-tech-doctrine.md) | No-code/no-tech positioning and implications | 2026-05-15 |
+| [docs/secret-rotation-runbook.md](secret-rotation-runbook.md) | Credential rotation procedures | 2026-05-30 |
+
+---
+
+## Agent System
+
+| Document | Purpose |
+|----------|---------|
+| [.sophia-factory/orchestrator.md](../../.sophia-factory/orchestrator.md) | Auto-routing logic — which agent handles what |
+| [.sophia-factory/agents/cto.md](../../.sophia-factory/agents/cto.md) | CTO agent — tech, security, infra, QA |
+| [.sophia-factory/agents/cmo.md](../../.sophia-factory/agents/cmo.md) | CMO agent — marketing, content, SEO (VN+EN) |
+| [.sophia-factory/agents/cso.md](../../.sophia-factory/agents/cso.md) | CSO agent — sales, pricing, churn |
+| [.sophia-factory/agents/coo.md](../../.sophia-factory/agents/coo.md) | COO agent — ops, support, capacity |
+| [.sophia-factory/agents/mekong-cli.md](../../.sophia-factory/agents/mekong-cli.md) | Mekong CLI — cross-repo SDLC, eval |
+| [.sophia-factory/CLAUDE.specification.md](../../.sophia-factory/CLAUDE.specification.md) | Agent specification format |
+
+---
+
+## Recent Completions (as of 2026-06-22)
+
+| Feature | Status | Documentation |
+|---------|--------|---------------|
+| **OTEL Staging** | ✅ Verified | [OTEL-STAGING-VERIFICATION-REPORT.md](../OTEL-STAGING-VERIFICATION-REPORT.md) |
+| **SOC 2 Type I** | 🔄 In Progress | [docs/compliance/soc2/](compliance/soc2/) |
+| **Deploy Guard** | ✅ Production | [docs/deployment-guide.md](deployment-guide.md#deploy-guard) |
+| **BYOK Rotation** | 🔄 Framework Ready | [docs/security.md](../SECURITY.md#byok-encryption) |
+| **Audit Logging** | ✅ Hash Chain Active | [docs/audit/](audit/) |
+
+---
+
+## Runbooks & Troubleshooting
+
+| Document | Purpose |
+|----------|---------|
+| [docs/troubleshooting.md](troubleshooting.md) | Debugging guide for common issues |
+| [docs/runbooks/](runbooks/) | Operational runbooks (cron, backups, monitoring) |
+| [docs/handover/](handover/) | Founder-specific guides (DNS, email, Sentry setup) |
+| [docs/postmortems/](postmortems/) | Past incident analysis and lessons learned |
+
+---
+
+## Testing & Quality
+
+| Document | Purpose |
+|----------|---------|
+| [docs/testing.md](../apps/sophia-ai-factory/docs/testing-guide.md) | Test execution, coverage, E2E |
+| [apps/sophia-ai-factory/docs/](../../apps/sophia-ai-factory/docs/) | Engineering-internal runbooks and migration notes |
+
+---
+
+## Configuration Reference
+
+| File | Purpose |
+|------|---------|
+| [package.json](../package.json) | Root tooling scripts |
+| [apps/sophia-ai-factory/package.json](../../apps/sophia-ai-factory/package.json) | App dependencies and scripts |
+| [apps/sophia-ai-factory/wrangler.jsonc](../../apps/sophia-ai-factory/wrangler.jsonc) | Cloudflare Workers configuration |
+| [apps/sophia-ai-factory/tsconfig.json](../../apps/sophia-ai-factory/tsconfig.json) | TypeScript strict mode config |
+| [.claude/settings.json](../../.claude/settings.json) | Claude Code harness settings |
+
+---
+
+## Key Canonical Paths
+
+These are the single sources of truth for core concerns:
+
+| Concern | Import Path |
+|---------|-------------|
+| Auth session | `@/seed/auth/better-auth-session` |
+| DB client | `@/seed/db/client` (sync, do not await) |
+| Tier lookup | `@/seed/db/get-user-tier` |
+| Tier config | `@/seed/config/tiers` |
+| Logger | `@/seed/utils/logger-utility` |
+| OTel setup | `@/seed/telemetry/opentelemetry-setup` |
+
+See [docs/code-standards.md](code-standards.md) for complete standards.
+
+---
+
+## Important URLs
+
+| Purpose | URL |
+|---------|-----|
+| Production | https://sophia.agencyos.network |
+| Health Check | https://sophia.agencyos.network/api/health |
+| Version (SHA) | https://sophia.agencyos.network/api/version |
+| Status Page | https://sophia.agencyos.network/status |
 | Telegram Bot | @Sophia_Bbot |
+| Staging (OTEL) | https://sophia-ai-factory-staging.agencyos-openclaw.workers.dev |
+| Honeycomb Staging | Dataset: `sophia-staging` |
+| Honeycomb Prod | Dataset: `sophia-prod` (1% samplerate) |
+| **Operator Quick Ref** | [`docs/operator-quick-reference.md`](operator-quick-reference.md) |
 
 ---
 
-## App Screen Map / Ban Do Man Hinh
+## Contact & Support
 
-```
-sophia.agencyos.network
-├── / ........................ Landing Page (Trang Chu)
-│   ├── Hero Section
-│   ├── Workflow Section
-│   ├── Features Section
-│   ├── Pricing Section
-│   ├── Affiliate Discovery
-│   ├── ROI Calculator
-│   ├── FAQ Section
-│   └── Footer
-│
-├── /setup-wizard ........... Setup Wizard (Thiet Lap)
-│   ├── Step 1: System Check
-│   ├── Step 2: AI Keys (OpenRouter + ElevenLabs + D-ID)
-│   ├── Step 3: Database (Airtable)
-│   └── Step 4: Finish & Launch
-│
-├── /dashboard .............. Dashboard (Trung Tam Dieu Khien)
-│   ├── Stats Cards (Total / Active / Completed)
-│   ├── Campaign List
-│   ├── /dashboard/create .......... Create Campaign
-│   ├── /dashboard/campaigns ....... Campaigns List
-│   ├── /dashboard/campaigns/[id] .. Campaign Detail
-│   ├── /dashboard/analytics ....... Analytics & Reports
-│   └── /dashboard/settings ........ Settings & API Keys
-│
-├── /pricing ................ Pricing Page (Bang Gia)
-│   ├── Starter — $199/thang
-│   ├── Growth — $399/thang
-│   ├── Premium — $799/thang
-│   └── Master — $4,999 (mot lan)
-│
-└── /admin .................. Admin Panel (Quan Tri)
-    ├── Dashboard
-    ├── Affiliates
-    ├── Features
-    └── Settings & Integrations
-```
+| Need | How to Get Help |
+|------|-----------------|
+| Technical issues | `mekong --agent cto` |
+| Content/docs | `mekong --agent cmo` |
+| Support/ops | `mekong --agent coo` |
+| Pricing/billing | `mekong --agent cso` |
+| Routing help | `mekong --agent sophia-orchestrator` |
 
 ---
 
-## Tier Comparison / So Sanh Goi
+## Document Maintenance
 
-| Feature | Starter ($199/mo) | Growth ($399/mo) | Premium ($799/mo) | Master ($4,999) |
-|---|---|---|---|---|
-| YouTube Channels | 1 | 3 | Unlimited | Unlimited |
-| Campaigns/month | 10 | 50 | Unlimited | Unlimited |
-| MCU credits | 1,000/mo | 5,000/mo | 20,000/mo | 100,000 |
-| Templates | 5 | Unlimited | Unlimited + Custom | Unlimited + Custom |
-| Support | Email 48h | Priority 24h | Priority 12h + Account Manager | Priority Technical 4h |
-| Data Export | No | CSV, PDF | CSV, PDF, API | Full Access |
-| API Access | No | Yes | Yes | Yes |
-| Source Code | No | No | No | Yes |
+This index should be updated when:
+- New major features are shipped
+- Documentation is added, moved, or deprecated
+- Handover status changes
+- Production URLs or contact methods change
+
+**Maintainer:** Project team via `docs/` directory updates
 
 ---
 
-## Support Contacts / Lien He Ho Tro
-
-- **Telegram Bot:** @Sophia_Bbot (type `/help`)
-- **Priority Support:** Growth, Premium, and Master plans
-- **Fastest SLA:** Master plan
-- **See:** [Support Escalation Guide](./support-escalation.md)
+*End of Handover Documentation Index*

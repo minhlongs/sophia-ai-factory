@@ -327,54 +327,51 @@ describe('decrementCredits — use 1 credit (for 1 video)', () => {
     vi.clearAllMocks()
   })
 
-  function mockD1(creditsRemaining: number | null, changes = 1) {
-    const firstFn = vi.fn().mockResolvedValue(creditsRemaining !== null ? { credits_remaining: creditsRemaining } : null)
+  function mockD1(changes = 1) {
     const runFn = vi.fn().mockResolvedValue({ success: true, meta: { changes } })
-    const bindFn = vi.fn().mockImplementation((..._args: any[]) => {
-      return {
-        first: firstFn,
-        run: runFn,
-      }
-    })
+    const bindFn = vi.fn().mockReturnValue({ run: runFn })
     const prepareFn = vi.fn().mockReturnValue({ bind: bindFn })
     const rawDb = { prepare: prepareFn }
     vi.mocked(dbClient.getD1).mockReturnValue(rawDb as unknown as any)
-    return { prepareFn, bindFn, firstFn, runFn }
+    return { prepareFn, bindFn, runFn }
   }
 
-  it('no credits left: returns false, no decrement', async () => {
+  it('no credits available or invalid purchase: returns false (UPDATE affects 0 rows)', async () => {
     const { runFn } = mockD1(0)
 
     const result = await decrementCredits('purchase_123')
 
     expect(result).toBe(false)
-    expect(runFn).not.toHaveBeenCalled()
-  })
-
-  it('purchase not found: returns false', async () => {
-    const { runFn } = mockD1(null)
-
-    const result = await decrementCredits('purchase_123')
-
-    expect(result).toBe(false)
-    expect(runFn).not.toHaveBeenCalled()
+    expect(runFn).toHaveBeenCalledTimes(1)
   })
 
   it('happy path: decrements credits and returns true', async () => {
-    const { runFn } = mockD1(5, 1)
+    const { prepareFn, runFn } = mockD1(1)
 
     const result = await decrementCredits('purchase_123')
 
     expect(result).toBe(true)
-    expect(runFn).toHaveBeenCalled()
+    expect(prepareFn).toHaveBeenCalledTimes(1)
+    const sql = prepareFn.mock.calls[0][0] as string
+    expect(sql).toContain('UPDATE user_purchases')
+    expect(sql).toContain('SET credits_remaining = credits_remaining - 1')
+    expect(sql).toContain('WHERE id = ?')
+    expect(sql).toContain("status = 'paid'")
+    expect(sql).toContain('credits_remaining > 0')
+    // also check for expiry guard (the placeholder may be ?2)
+    expect(sql).toContain('expires_at IS NULL')
+    expect(sql).toContain('expires_at >')
+    expect(runFn).toHaveBeenCalledTimes(1)
   })
 
-  it('collision case: changes is 0, returns false', async () => {
-    const { runFn } = mockD1(5, 0)
+  it('ensures atomicity: concurrent updates cannot over-decrement due to single UPDATE with guards', async () => {
+    // Simulate a race where another request already consumed the last credit
+    // The UPDATE will affect 0 rows because credits_remaining would be 0 at time of update.
+    const { runFn } = mockD1(0)
 
     const result = await decrementCredits('purchase_123')
 
     expect(result).toBe(false)
-    expect(runFn).toHaveBeenCalled()
+    expect(runFn).toHaveBeenCalledTimes(1)
   })
 })

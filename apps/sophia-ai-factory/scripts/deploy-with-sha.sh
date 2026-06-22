@@ -523,6 +523,10 @@ retry_cf "secret put COMMIT_SHA"   bash -c "echo '$COMMIT_SHA' | npx wrangler se
 retry_cf "secret put DEPLOYED_AT"  bash -c "echo '$DEPLOYED_AT' | npx wrangler secret put DEPLOYED_AT"
 retry_cf "secret put DEPLOY_BRANCH" bash -c "echo '$DEPLOY_BRANCH' | npx wrangler secret put DEPLOY_BRANCH"
 
+# Also set for health worker (fix: propagate SHA to health environment)
+npx wrangler secret put COMMIT_SHA --name sophia-ai-factory --env health
+npx wrangler secret put DEPLOYED_AT --name sophia-ai-factory --env health
+
 # ─── Step 5: Upload Sentry source maps (fail-fast) ───────────────────────────
 # Bakes symbolicated stack traces into prod errors. Script gracefully skips
 # when SENTRY_AUTH_TOKEN is unset. Failure here will fail the deploy — we
