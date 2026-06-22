@@ -66,9 +66,38 @@ Customers supply their own API keys via the Setup Wizard.
 4. The encrypted credentials are saved in the `user_provider_credentials` table.
 5. At runtime, the keys are decrypted on-demand in-memory, ensuring plaintext credentials never write to disk or database logs.
 
+**Rotation Framework (2026-06):** Key versioning infrastructure with dual-decrypt window and Inngest re-encryption job. Framework complete, staging test in progress.
+
 ---
 
-## 5. Architectural Layers
+## 5. Deploy Guard (Multi-Operator Approvals)
+
+Production deployment requires 2-party approval:
+- **Gate**: Pre-deploy approval workflow in `/dashboard/admin/deploy-guard`
+- **CI Integration**: Pre-push hook checks approval status
+- **Audit**: All deploy events logged with cryptographic hash chain
+- **TTL**: Approvals expire after 24 hours
+
+**Workflow:** Push → Open request → Second admin approves → Deploy allowed
+
+---
+
+## 6. Observability & APM
+
+**Production Stack:**
+- Better Stack for structured logging (PII-safe)
+- Sentry for error tracking (frontend, server, edge)
+- PostHog for product analytics and A/B testing
+- Daily error digest cron + uptime heartbeats (5min)
+
+**OpenTelemetry (Staging Complete):**
+- Honeycomb OTLP exporter, 100% sampling on staging
+- Auto-instrumentation for API routes, Inngest, fetch
+- Production rollout pending `HONEYCOMB_API_KEY`
+
+---
+
+## 7. Architectural Layers
 
 The codebase is organized into four distinct inward-facing layers:
 * **`seed`**: Base configuration, database clients, authentication hooks, and system logging utilities.

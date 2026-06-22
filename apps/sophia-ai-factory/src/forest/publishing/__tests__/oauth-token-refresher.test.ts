@@ -63,15 +63,15 @@ vi.mock('@/land/youtube/youtube-oauth-client', () => ({
   refreshAccessToken: mocks.refreshYouTube,
 }));
 
-vi.mock('../threads-oauth-client', () => ({
+vi.mock('@/land/video/publishing/providers/threads', () => ({
   refreshLongLivedToken: mocks.refreshThreadsToken,
 }));
 
-vi.mock('../reddit-oauth-client', () => ({
+vi.mock('@/land/video/publishing/providers/reddit', () => ({
   refreshAccessToken: mocks.refreshReddit,
 }));
 
-vi.mock('../bluesky', () => ({
+vi.mock('@/land/video/publishing/providers/bluesky', () => ({
   refreshAtprotoSession: mocks.refreshAtprotoSession,
 }));
 

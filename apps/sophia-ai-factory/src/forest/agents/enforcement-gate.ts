@@ -55,7 +55,7 @@ export function assertTierAllowsAgent(userTier: Tier, agentRole: string): void {
     return;
   }
 
-  // Compare tier ranks
+  // Validate userTier is a known tier
   const tierRanks: Record<Tier, number> = {
     BASIC: 0,
     PREMIUM: 1,
@@ -63,7 +63,12 @@ export function assertTierAllowsAgent(userTier: Tier, agentRole: string): void {
     MASTER: 3,
   };
 
-  if (tierRanks[userTier] < tierRanks[requiredTier]) {
+  const userTierRank = tierRanks[userTier];
+  if (userTierRank === undefined) {
+    throw new AgentTierBlockedError(agentRole, requiredTier, userTier);
+  }
+
+  if (userTierRank < tierRanks[requiredTier]) {
     throw new AgentTierBlockedError(agentRole, requiredTier, userTier);
   }
 }

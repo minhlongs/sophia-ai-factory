@@ -4,7 +4,7 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import { refreshChannelToken } from '@/tree/publishing/oauth-token-refresher';
+import { refreshChannelToken } from '@/forest/publishing/oauth-token-refresher';
 import { decryptToken } from '@/tree/crypto/token-crypto';
 import { TikTokPublisher } from '@/land/video/publishing/providers/tiktok-publisher';
 import { YouTubePublisher } from '@/land/video/publishing/providers/youtube-publisher';
@@ -37,6 +37,7 @@ export interface ExecutePublishWorkflowArgs {
   jobId: string;
   tenantId: string;
   userId: string;
+  eventId?: string;
   step: Step;
   scheduleRetry: (jobId: string, tenantId: string, userId: string, attempt: number) => Promise<void>;
 }
@@ -549,7 +550,7 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
 
   const jobProvider = job.provider ?? '';
   if (jobProvider === 'telegram') {
-    const telegramResult = await handleTelegramFlow({ db, job, jobId, tenantId, step });
+    const telegramResult = await handleTelegramFlow({ db, job, jobId, tenantId, step, eventId: args.eventId });
     if (telegramResult.status === 'failed') {
       return telegramResult;
     }

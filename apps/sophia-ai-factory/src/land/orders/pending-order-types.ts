@@ -24,6 +24,7 @@ export interface PendingOrder {
   payment_id: string | null
   created_at: string | null
   completed_at: string | null
+  provider_payment_id?: string | null // For PayOS paymentLinkId direct lookup
 }
 
 export const pendingOrderInputSchema = z.object({
@@ -36,7 +37,8 @@ export const pendingOrderInputSchema = z.object({
   promo_code: z.string().optional(),
   customer_email: z.string().email().optional(),
   invoice_url: z.string().url().optional(),
- status: z.enum(["pending", "completed", "failed", "expired"]).default("pending").optional(),
+  provider_payment_id: z.string().optional(),
+  status: z.enum(["pending", "completed", "failed", "expired"]).default("pending").optional(),
 })
 
 export type PendingOrderInput = z.infer<typeof pendingOrderInputSchema>

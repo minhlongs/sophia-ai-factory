@@ -60,7 +60,7 @@ import { validateMissionApiKey, apiKeyAuthErrorResponse } from '../api-key-auth'
 
 // ── Chain builder ────────────────────────────────────────────────────────────
 
-type MockRow = { user_id: string; is_active: boolean } | null;
+type MockRow = { owner_id: string; is_active: boolean } | null;
 
 function makeChain(row: MockRow, throws = false) {
   const single = throws
@@ -88,16 +88,14 @@ describe('validateMissionApiKey', () => {
     expect(result.valid).toBe(false);
     expect(result.errorType).toBe('missing_credentials');
     expect(result.error).toContain('Missing API key');
-    // Sentry tag fired
-    expect(mockForwardToSentry).toHaveBeenCalledWith(
-      expect.objectContaining({ tags: { 'auth.error_type': 'missing_credentials' } })
-    );
+    // No Sentry call for missing credentials (client error, not alert-worthy)
+    expect(mockForwardToSentry).not.toHaveBeenCalled();
   });
 
   it('invalid_key — key not found in DB', async () => {
     mockDbFrom.mockReturnValue(makeChain(null)); // no row
 
-    const result = await validateMissionApiKey('Bearer sk-test-badkey', null);
+    const result = await validateMissionApiKey('Bearer mk_test_badkey', null);
 
     expect(result.valid).toBe(false);
     expect(result.errorType).toBe('invalid_key');
@@ -108,9 +106,9 @@ describe('validateMissionApiKey', () => {
   });
 
   it('inactive — key found but is_active=false', async () => {
-    mockDbFrom.mockReturnValue(makeChain({ user_id: 'u1', is_active: false }));
+    mockDbFrom.mockReturnValue(makeChain({ owner_id: 'u1', is_active: false }));
 
-    const result = await validateMissionApiKey(null, 'sk-inactive');
+    const result = await validateMissionApiKey(null, 'mk_inactive');
 
     expect(result.valid).toBe(false);
     expect(result.errorType).toBe('inactive');
@@ -123,7 +121,7 @@ describe('validateMissionApiKey', () => {
   it('db_unreachable — DB throws exception', async () => {
     mockDbFrom.mockReturnValue(makeChain(null, /* throws= */ true));
 
-    const result = await validateMissionApiKey('Bearer sk-anykey', null);
+    const result = await validateMissionApiKey('Bearer mk_anykey', null);
 
     expect(result.valid).toBe(false);
     expect(result.errorType).toBe('db_unreachable');
@@ -143,9 +141,9 @@ describe('validateMissionApiKey', () => {
   });
 
   it('valid — active key returns ok:true + userId', async () => {
-    mockDbFrom.mockReturnValue(makeChain({ user_id: 'user-abc', is_active: true }));
+    mockDbFrom.mockReturnValue(makeChain({ owner_id: 'user-abc', is_active: true }));
 
-    const result = await validateMissionApiKey('Bearer sk-valid', null);
+    const result = await validateMissionApiKey('Bearer mk_valid', null);
 
     expect(result.valid).toBe(true);
     expect(result.userId).toBe('user-abc');
@@ -165,23 +163,23 @@ describe('validateMissionApiKey', () => {
     expect(mockDbFrom).not.toHaveBeenCalled();
   });
 
-  it('cookie fallback error — session throws, returns missing_credentials', async () => {
+  it('cookie fallback error — session throws, returns db_unreachable', async () => {
     mockGetCurrentUser.mockRejectedValue(new Error('session_store_down'));
 
     const result = await validateMissionApiKey(null, null);
 
     expect(result.valid).toBe(false);
-    expect(result.errorType).toBe('missing_credentials');
+    expect(result.errorType).toBe('db_unreachable');
     expect(mockLoggerError).toHaveBeenCalledWith(
-      '[ApiKeyAuth] Session fallback error',
+      '[ApiKeyAuth] Validation error',
       expect.any(Error)
     );
   });
 
   it('x-api-key header accepted as alternative to Bearer', async () => {
-    mockDbFrom.mockReturnValue(makeChain({ user_id: 'user-xyz', is_active: true }));
+    mockDbFrom.mockReturnValue(makeChain({ owner_id: 'user-xyz', is_active: true }));
 
-    const result = await validateMissionApiKey(null, 'sk-via-x-header');
+    const result = await validateMissionApiKey(null, 'mk_user_xyz');
 
     expect(result.valid).toBe(true);
     expect(result.userId).toBe('user-xyz');

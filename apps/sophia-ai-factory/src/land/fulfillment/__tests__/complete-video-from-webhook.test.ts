@@ -190,6 +190,28 @@ describe('completeVideoFromWebhook', () => {
     // Email must NOT be sent post-refund
     expect(sendOneTimeBundleReadyEmail).not.toHaveBeenCalled()
   })
+
+  it('CAS lost: row not in processing state (e.g., queued) results in 0 updates, no email', async () => {
+    // Row is in 'queued' state (some other process changed it)
+    const rowQueued = { ...processingRow, status: 'queued' as const }
+    vi.mocked(findByHeygenJobId).mockResolvedValue(rowQueued)
+
+    // Mock D1 to return 0 rows affected for the UPDATE
+    const runFn = vi.fn().mockResolvedValue({ success: true, meta: { changes: 0 } })
+    const bindFn = vi.fn().mockReturnValue({ run: runFn })
+    const prepareFn = vi.fn().mockReturnValue({ bind: bindFn })
+    vi.mocked(getD1).mockReturnValue({ prepare: prepareFn } as unknown as D1Database)
+
+    await completeVideoFromWebhook({
+      video_id: 'heygen-abc',
+      video_url: 'https://cdn.heygen.com/video.mp4',
+    }, 'user-1')
+
+    // Should have attempted update but 0 rows affected, no email sent
+    expect(prepareFn).toHaveBeenCalledTimes(1)
+    expect(runFn).toHaveBeenCalledTimes(1)
+    expect(sendOneTimeBundleReadyEmail).not.toHaveBeenCalled()
+  })
 })
 
 // ── failVideoFromWebhook ────────────────────────────────────────────────────

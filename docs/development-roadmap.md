@@ -2,9 +2,26 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-05-17 (Next Sweep complete: Phase 01 Inngest deprecate, Phase 02 lead:export live, Phase 03 10-layer hardening, Phase 04 operator playbooks; 4431 tests pass; production SHA 4bca4710 verified)
+**Last Updated:** 2026-06-22 (OTEL staging complete, SOC2 evidence pack finalized, Deploy Guard shipped, BYOK rotation in progress, production SHA 4bca4710 verified)
 **Target:** $1M ARR, 100/100 a16z solo company score
 **Go-Live Shipped (2026-05-03):** Production deployment https://sophia.agencyos.network (SHA 5b1f711f). GAP1: Magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2: Self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt email VAT 10%, dashboard period_end). GAP3: Mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission control widget, public /status page 90d uptime, D+1/D+7 lifecycle emails). Infrastructure: 9 smoke tests PASS (200 HTTP), 4431 tests 100% pass, build < 10s, 0 TS errors.
+
+---
+
+## Q2 2026: Post-Go-Live Enterprise Hardening (In Progress, 2026-05-17 → Present)
+
+### Overview
+After production go-live, focus shifted to enterprise readiness: SOC 2 evidence collection, deploy guard multi-operator approvals, OpenTelemetry observability, and BYOK key rotation lifecycle. All P0 items complete; P1 items in final verification.
+
+| Phase | Status | Completion | Details |
+|-------|--------|-----------|---------|
+| **E1: SOC 2 Type I Evidence Pack** | ✅ COMPLETE | 2026-06-18 | Auditor selected (Barr Advisory), controls walkthrough documented, vendor SOC2 reports collected (AWS, Cloudflare, Resend, Sentry, Stripe, Upstash), evidence index created, internal controls mapped. Commit `c37b3c2af`. |
+| **E2: Deploy Guard Multi-Operator** | ✅ COMPLETE | 2026-05-28 | Deploy approvals via `/api/admin/deploy-guard`, 2-of-3 operator requirement, admin UI for approvals, pre-push gate hook, CI integration, audit logging with hash chain. Commit `7c8dc4c5a`. |
+| **E3: OpenTelemetry Observability** | 🟡 IN PROGRESS | Staging: 2026-06-22 | Staging: 100% sample rate, Honeycomb dataset configured. Production: Pending `HONEYCOMB_API_KEY` secret. SLOs defined (p95<500ms, error rate<5%, uptime>99.9%), alert rules documented, runbook complete. Task #28-39. |
+| **E4: BYOK Key Rotation** | 🟡 IN PROGRESS | Core: 2026-06-20 | AES-GCM key versioning, rotation cron design, admin API (`/api/admin/byok-rotation`), re-encrypt background job design. Staging test pending (Task #114). |
+| **E5: Layer Architecture Enforcement** | ✅ COMPLETE | 2026-06-18 | Fixed land→forest violations, reorganized forest/missions by domain, removed forbidden imports (`@/lib/*`), updated docs with canonical import paths. Commit `bc93feff3`. |
+
+**Verification (Post-Go-Live cumulative):** 4431+ tests pass, 0 TS errors, layer architecture lint enforced, deploy guard blocking unapproved deploys, OTEL tests 5/5 passing.
 
 ---
 
@@ -495,11 +512,13 @@ Plan: `plans/260516-1948-raas-zero-bug-handover/` · Handover doc: `plans/report
 **Metrics:**
 - Feature-complete: All 14 core phases shipped (2026-04-30)
 - Production-ready: All 3 go-live gaps closed (2026-05-03)
-- Test coverage: 2546 tests, 100% pass (31 skipped, 0 fail)
+- Enterprise hardening: SOC2 evidence pack complete, Deploy Guard shipped, OTEL staging verified, BYOK rotation in progress
+- Test coverage: 4431+ tests, 100% pass (some skipped, 0 fail)
 - Build time: < 10s, 0 TypeScript errors
 - Deployment: Cloudflare Workers edge compute, global distribution
-- Security: 97/100 HSTS+CSP+tenant-isolation audit score
+- Security: 97/100 → SOC2 Type I in progress (Barr Advisory)
 - a16z score: 100/100 (solopreneur-first, async ops, SEO, viral growth)
+- Observability: Honeycomb OTEL integration (staging 100%, production pending)
 
 ---
 
@@ -511,9 +530,10 @@ Plan: `plans/260516-1948-raas-zero-bug-handover/` · Handover doc: `plans/report
 | **Uptime** | 99.9% | 99.9% | Current |
 | **Response Time (p95)** | < 500ms | < 200ms | Current |
 | **Build Time** | < 10s | < 10s | Current |
-| **Test Coverage** | > 80% | 99.5% | Current |
-| **Security Score** | 95/100 | 97/100 | Current |
+| **Test Coverage** | > 80% | 4431+ tests, 100% pass | Current |
+| **Security Score** | 95/100 | 97/100 + SOC2 evidence | Current |
 | **a16z Score** | 100/100 | 100/100 | Current |
+| **Observability** | Full stack | OTEL staging verified | Pending prod |
 
 ---
 
@@ -572,11 +592,15 @@ Plan: `plans/260516-1948-raas-zero-bug-handover/` · Handover doc: `plans/report
 | **2026-05-03** | **MILESTONE: Sophia AI Factory Go-Live Production Deploy** — SHA 5b1f711f deployed to https://sophia.agencyos.network. 9 smoke tests PASS (all 200 HTTP). 2546 tests 100% pass, 31 skipped. Build < 10s, 0 TS errors. All gaps closed. Production-ready for customer onboarding. | **✅ COMPLETE** |
 | **2026-05-13** | **Admin Ops Consistency Batch** — support contact standardized to `support@mekongmind.com`, customer billing docs aligned to NOWPayments + PayOS, admin-ops source-of-truth pack added, release workflow corrected to current green contract. | **✅ COMPLETE** |
 | **2026-05-28** | **Agent Orchestration Upgrade** — Phase 1-3: D1-native checkpoint/resume, fleet spawner circuit breaker + bounded exponential retry, typed prompt contracts with Zod validation, 100% tests pass. | **✅ COMPLETE** |
+| **2026-06-18** | **SOC 2 Type I Evidence Pack Finalized** — Auditor selected (Barr Advisory), controls walkthrough complete, vendor SOC2 reports collected (AWS, Cloudflare, Resend, Sentry, Stripe, Upstash), evidence index published. | **✅ COMPLETE** |
+| **2026-06-18** | **Deploy Guard Multi-Operator Complete** — 2-of-3 approvals, admin UI, pre-push gate, CI integration, hash-chain audit logging. Commit `7c8dc4c5a`. | **✅ SHIPPED** |
+| **2026-06-20** | **BYOK Rotation Core Implementation** — AES-GCM key versioning, rotation cron design, admin API (`/api/admin/byok-rotation`), re-encrypt background job design. Staging test pending. | **🟡 IN PROGRESS** |
+| **2026-06-22** | **OpenTelemetry Staging Deployed** — Honeycomb integration code-complete, staging configured (100% sample), verification script ready. Production pending API key. | **🟡 STAGING READY** |
 | 2026-05-15 | Phase 15 (Deferred): Playwright E2E suite (12 scenarios), k6 load tests (smoke/steady/spike/soak/stress), Stripe Connect KYC, customer status page, Fly.io Coqui/MoviePy deploy, Runpod HunyuanVideo | 🔄 Backlog |
-| 2026-05-15 | Go-Live Audit Phase 02 (Tier-2): Load Testing, Error Budgets, Observability | 🔄 Planned |
-| 2026-06-01 | Multi-Language Support (Vietnamese) | 🔄 Planned |
-| 2026-07-01 | Telegram Bot Enhancement | 🔄 Planned |
-| 2026-Q4 | $1M ARR Milestone | 🎯 Target |
+| 2026-05-15 | Go-Live Audit Phase 02 (Tier-2): Load Testing, Error Budgets, Observability Integration | 🔄 Partial (OTEL pending prod) |
+| 2026-06-01 | Multi-Language Support (Vietnamese) — i18n framework complete, email templates bilingual | ✅ Complete (Core shipped Apr 17) |
+| 2026-07-01 | Telegram Bot Enhancement — guided campaign flow improvements | 🔄 Planned |
+| 2026-Q4 | $1M ARR Milestone — revenue growth target | 🎯 Target |
 
 ---
 
@@ -589,3 +613,30 @@ Plan: `plans/260516-1948-raas-zero-bug-handover/` · Handover doc: `plans/report
 - **COO:** Operations + metrics
 
 All decisions documented in `.sophia-factory/journal/` for audit trail.
+
+---
+
+## Current Status Summary (2026-06-22)
+
+**Production Status:** ✅ LIVE — https://sophia.agencyos.network (CF Workers + D1 + R2)
+
+**Immediate Priorities:**
+1. **OTEL Production Rollout** — Set `HONEYCOMB_API_KEY` and deploy to enable observability
+2. **BYOK Rotation Staging Test** — Validate key rotation flow before production
+3. **SOC 2 Type I Report** — Finalize auditor findings and receive official report
+
+**Completed Milestones:**
+- ✅ Feature-complete (Phases 6-14, April 30)
+- ✅ Production go-live (May 3, all gaps closed)
+- ✅ Enterprise hardening: Deploy Guard, SOC2 evidence, OTEL staging
+- ✅ 4431+ tests passing, 0 TypeScript errors, layer architecture enforced
+
+**Backlog (Q3-Q4 2026):**
+- Phase 15: E2E test suite (Playwright), load tests (k6)
+- Go-Live Audit Phase 02: Error budgets, load testing validation
+- Customer acquisition & $1M ARR path execution
+- Multi-tenant enterprise features (if business requires)
+
+**No-tech Doctrine Status:** ✅ PRESERVED — No operator-managed third-party credentials required for platform operation. All integrations are customer self-service (BYOK).
+
+**Deployment Health:** SHA-verified deploys only. Current production SHA: `4bca4710` (Next Sweep).

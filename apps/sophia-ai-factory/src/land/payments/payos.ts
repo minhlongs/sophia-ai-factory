@@ -10,8 +10,12 @@ import { FEATURE_PAYOS } from '@/seed/config/flags'
 import type { Tier } from '@/seed/types'
 import { verifyInboundWebhook } from '@/land/webhooks/signature'
 
-// ── USD to VND conversion (pin via env, fallback to market rate) ──────────────
-const USD_TO_VND = Number(process.env.USD_TO_VND ?? '25000')
+// ── USD to VND conversion (must be set explicitly, no fallback) ───────────────
+const usdToVndEnv = process.env.USD_TO_VND
+if (!usdToVndEnv) {
+  throw new Error('USD_TO_VND environment variable is required for PayOS')
+}
+const USD_TO_VND = Number(usdToVndEnv)
 
 // ── Tier VND prices (USD * USD_TO_VND, rounded to nearest 1000 VND) ─────────
 const TIER_USD_PRICES: Record<Tier, number> = {

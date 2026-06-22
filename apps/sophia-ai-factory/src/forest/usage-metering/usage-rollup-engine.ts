@@ -24,8 +24,6 @@ export { QUOTA_LIMITS };
 /** Maximum date range for queries (90 days) — prevents expensive full-table scans */
 const MAX_DATE_RANGE_DAYS = 90;
 
-interface UsageDataRow { credits_used: number; }
-
 /**
  * Check quota limits for a tenant
  */
@@ -36,7 +34,9 @@ export async function checkQuota(
   requestedCredits: number = 1
 ): Promise<QuotaCheckResult> {
   const quotaLimit = QUOTA_LIMITS[tier] || QUOTA_LIMITS.BASIC;
-  const db = createServerClient();
+  const _db = getD1();
+  if (!_db) throw new Error('D1 database binding not available');
+  const db = _db;
   const now = Math.floor(Date.now() / 1000);
 
   const hourStart = Math.floor(now / 3600) * 3600;
@@ -44,20 +44,35 @@ export async function checkQuota(
   const monthStart = Math.floor(new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1)).getTime() / 1000);
 
   try {
-    type QuotaQuery = D1Response<UsageDataRow[]>;
-    const [hourlyRes, dailyRes, monthlyRes] = await Promise.all([
-      (db.from('usage_events').select('credits_used').eq('user_id', tenantId).eq('license_nonce', licenseNonce).gte('created_at', hourStart).lt('created_at', hourStart + 3600) as unknown as QuotaQuery),
-      (db.from('usage_events').select('credits_used').eq('user_id', tenantId).eq('license_nonce', licenseNonce).gte('created_at', dayStart).lt('created_at', dayStart + 86400) as unknown as QuotaQuery),
-      (db.from('usage_events').select('credits_used').eq('user_id', tenantId).eq('license_nonce', licenseNonce).gte('created_at', monthStart) as unknown as QuotaQuery),
-    ]);
+    // Single aggregated query replaces three separate queries and JS rollup
+    const result = await db
+      .prepare(`
+        SELECT
+          SUM(CASE WHEN created_at >= ? AND created_at < ? THEN credits_used ELSE 0 END) AS hourly_credits,
+          SUM(CASE WHEN created_at >= ? AND created_at < ? THEN credits_used ELSE 0 END) AS daily_credits,
+          SUM(CASE WHEN created_at >= ? THEN credits_used ELSE 0 END) AS monthly_credits,
+          COUNT(CASE WHEN created_at >= ? AND created_at < ? THEN 1 END) AS daily_requests
+        FROM usage_events
+        WHERE user_id = ? AND license_nonce = ? AND created_at >= ?
+      `)
+      .bind(
+        hourStart, hourStart + 3600,
+        dayStart, dayStart + 86400,
+        monthStart,
+        dayStart, dayStart + 86400,
+        tenantId, licenseNonce, monthStart
+      )
+      .first<{
+        hourly_credits: number | null;
+        daily_credits: number | null;
+        monthly_credits: number | null;
+        daily_requests: number | null;
+      }>();
 
-    const sum = (data: UsageDataRow[] | null) =>
-      (data || []).reduce((s: number, r: UsageDataRow) => s + (r.credits_used || 0), 0);
-
-    const hourlyCredits = sum(hourlyRes.data as UsageDataRow[]);
-    const dailyCredits = sum(dailyRes.data as UsageDataRow[]);
-    const monthlyCredits = sum(monthlyRes.data as UsageDataRow[]);
-    const dailyRequests = dailyRes.data?.length || 0;
+    const hourlyCredits = result?.hourly_credits ?? 0;
+    const dailyCredits = result?.daily_credits ?? 0;
+    const monthlyCredits = result?.monthly_credits ?? 0;
+    const dailyRequests = result?.daily_requests ?? 0;
 
     const remaining = {
       dailyCredits: Math.max(0, quotaLimit.dailyCredits - dailyCredits),

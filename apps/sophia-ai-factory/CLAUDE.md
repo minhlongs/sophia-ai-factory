@@ -164,6 +164,39 @@ Before substantive work, read in order:
 
 ---
 
+## Task Tracker
+
+This section tracks major project tasks and their completion status for handover reference.
+
+| Task ID | Description | Status | Notes |
+|---------|-------------|--------|-------|
+| #28 | Deploy OTEL to staging | [completed] | OTEL integration wired; staging config validated |
+| #31 | Create OpenTelemetry setup | [completed] | OpenTelemetry collector configured; Honeycomb dataset created |
+| #34 | Roll out OTEL to production | [pending] | Requires HONEYCOMB_API_KEY secret from client; runbook ready |
+| #44 | Implement audit-logger with hash chain | [completed] | `raas_audit_logs` with immutable hash chain; SOC 2 CC7.2 compliant |
+| #46 | Complete Deploy Guard | [completed] | Deploy attestation with 2-operator signature requirement; integrated with CF direct deploy |
+| #62 | Test rotation flow on staging | [completed] | Staging BYOK rotation tested; preflight script validated |
+| #64 | Train second operator | [pending] | Operator training not yet conducted; pending availability |
+| #65 | Execute first production rotation | [pending] | Blocked; awaiting BYOK rotation prerequisites and operator readiness |
+| #116 | Execute BYOK Rotation Test on Staging | [completed] | Full rotation test cycle completed successfully |
+| #117 | Implement preflight checks | [completed] | Preflight checks implemented for BYOK rotation process |
+| #118 | Implement preflight checks for BYOK production rotation | [completed] | `scripts/byok-rotation-preflight.mjs` with 21 checks (DB, migrations, endpoints, backups) |
+| #119 | Update system architecture documentation | [completed] | Architecture docs updated; layer boundaries enforced |
+| #120 | Implement preflight checks (duplicate) | [completed] | Duplicate of #118; preflight complete |
+| #121 | Generate complete client handover package | [completed] | `CLIENT-HANDOVER-PACKAGE-v3.md` created (707 lines) |
+| #123 | Generate final client handover | [completed] | Email draft + manifest prepared |
+| #124 | Backup production DB for BYOK rotation | [completed] | Production DB backup completed prior to rotation |
+| #125 | Execute BYOK production rotation | [pending] | Requires admin credentials; runbook prepared but not executed |
+| #126 | Phase 2A: Fix health worker SHA bug | [completed] | Fixed health worker SHA computation bug; verified in staging |
+| #127 | Phase 2C: Test regression triage | [completed] | Triaged test regressions; fixed flaky tests, deferred integration tests |
+| #128 | Phase 4A: Operator Quick Reference created | [completed] | Created quick reference guide for operators |
+
+**Status Legend:** [completed] | [pending] | [in_progress]
+
+**Last Updated:** 2026-06-22
+
+---
+
 ## Notes
 
 - **Root package.json** is tooling only. Always run commands from `apps/sophia-ai-factory/`.

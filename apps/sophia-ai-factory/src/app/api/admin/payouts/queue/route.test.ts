@@ -17,11 +17,17 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUserFromHeaders: vi.fn(),
 }));
 
+vi.mock('@/seed/auth/is-user-admin', () => ({
+  isUserAdmin: vi.fn(),
+}));
+
 import { GET } from './route';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { isUserAdmin } from '@/seed/auth/is-user-admin';
 import { NextRequest } from 'next/server';
 
 const mockGetCurrentUserFromHeaders = vi.mocked(getCurrentUserFromHeaders);
+const mockIsUserAdmin = vi.mocked(isUserAdmin);
 
 type SessionUser = NonNullable<Awaited<ReturnType<typeof getCurrentUserFromHeaders>>>
 
@@ -43,6 +49,7 @@ beforeEach(() => {
   (globalThis as unknown as { __env: Record<string, unknown> }).__env = { DB: mockDb };
   mockAll.mockResolvedValue({ results: [] });
   mockGetCurrentUserFromHeaders.mockResolvedValue(adminUser);
+  mockIsUserAdmin.mockResolvedValue(true);
 });
 
 describe('GET /api/admin/payouts/queue', () => {
@@ -55,6 +62,7 @@ describe('GET /api/admin/payouts/queue', () => {
 
   it('returns 403 when user is not admin', async () => {
     mockGetCurrentUserFromHeaders.mockResolvedValue({ id: 'user-1', email: 'user@test.com', role: 'user' } as unknown as SessionUser);
+    mockIsUserAdmin.mockResolvedValue(false);
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(403);

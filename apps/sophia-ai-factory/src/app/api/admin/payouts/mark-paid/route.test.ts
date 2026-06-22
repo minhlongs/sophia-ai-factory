@@ -25,13 +25,19 @@ vi.mock('@/land/wallet/payout-telegram-notify', () => ({
   notifyPayoutSent: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock('@/seed/auth/is-user-admin', () => ({
+  isUserAdmin: vi.fn(),
+}));
+
 import { POST } from './route';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { isUserAdmin } from '@/seed/auth/is-user-admin';
 import { markUserPaid } from '@/land/wallet/payout-processor';
 import { notifyPayoutSent } from '@/land/wallet/payout-telegram-notify';
 import { NextRequest } from 'next/server';
 
 const mockGetCurrentUserFromHeaders = vi.mocked(getCurrentUserFromHeaders);
+const mockIsUserAdmin = vi.mocked(isUserAdmin);
 
 type SessionUser = NonNullable<Awaited<ReturnType<typeof getCurrentUserFromHeaders>>>
 
@@ -59,6 +65,7 @@ function makeRequest(body: unknown = validBody): NextRequest {
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetCurrentUserFromHeaders.mockResolvedValue(adminUser);
+  mockIsUserAdmin.mockResolvedValue(true);
   (markUserPaid as ReturnType<typeof vi.fn>).mockResolvedValue({ payoutId: 'payout-123' });
 });
 
@@ -72,6 +79,7 @@ describe('POST /api/admin/payouts/mark-paid', () => {
 
   it('returns 403 when user is not admin', async () => {
     mockGetCurrentUserFromHeaders.mockResolvedValue({ id: 'user-1', email: 'user@test.com', role: 'user' } as unknown as SessionUser);
+    mockIsUserAdmin.mockResolvedValue(false);
 
     const res = await POST(makeRequest());
     expect(res.status).toBe(403);

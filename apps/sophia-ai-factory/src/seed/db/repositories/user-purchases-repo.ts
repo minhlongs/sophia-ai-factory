@@ -175,36 +175,36 @@ export async function markRefunded(paymentId: string): Promise<void> {
 
 /**
  * Atomically decrement credits_remaining by 1 (for 1-credit = 1 video render).
- * Returns true if decrement succeeded (credits were available), false if zero.
+ * Uses a single atomic UPDATE with CAS guard to prevent over-consumption.
+ * Returns true if decrement succeeded (credits were available and purchase valid), false otherwise.
+ *
+ * Verification includes:
+ * - status = 'paid' (excludes pending, refunded, failed)
+ * - credits_remaining > 0
+ * - (expires_at IS NULL OR expires_at > current_timestamp) — not expired
+ *
+ * This implementation eliminates the TOCTOU race in the previous SELECT-then-UPDATE pattern.
  */
 export async function decrementCredits(purchaseId: string): Promise<boolean> {
   const _db = getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
-  const now = Math.floor(Date.now() / 1000)
+  const now = Math.floor(Date.now() / 1000);
 
-  // Fetch current credits first
-  const row = await db
-    .prepare(
-      `SELECT credits_remaining
-       FROM user_purchases
-       WHERE id = ?1 AND status = 'paid'
-       LIMIT 1`,
-    )
-    .bind(purchaseId)
-    .first<{ credits_remaining: number }>()
-
-  if (!row || row.credits_remaining <= 0) return false
-
+  // Atomic UPDATE with all necessary guards in the WHERE clause.
+  // The UPDATE affects exactly 1 row if and only if the purchase is valid and has credits.
   const result = await db
     .prepare(
       `UPDATE user_purchases
        SET credits_remaining = credits_remaining - 1,
            updated_at = ?2
-       WHERE id = ?1 AND status = 'paid' AND credits_remaining = ?3 AND credits_remaining > 0`,
+       WHERE id = ?1
+         AND status = 'paid'
+         AND credits_remaining > 0
+         AND (expires_at IS NULL OR expires_at > ?2)`,
     )
-    .bind(purchaseId, now, row.credits_remaining)
-    .run()
+    .bind(purchaseId, now)
+    .run();
 
-  return (result.meta?.changes ?? 0) > 0
+  return (result.meta?.changes ?? 0) > 0;
 }

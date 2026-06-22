@@ -6,48 +6,26 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import {
-verifyPayOsWebhook,
-payOsIpnSchema,
-parseUserIdFromPayOsDescription,
-FEATURE_PAYOS,
-} from '@/land/payments/payos'
+  verifyPayOsWebhook,
+  payOsIpnSchema,
+  parseUserIdFromPayOsDescription,
+  FEATURE_PAYOS,
+  getPayOsTierConfig,
+  } from '@/land/payments/payos'
 import { logger } from '@/seed/utils/logger-utility'
-import { createServerClient } from '@/seed/db/client'
+import { createServerClient, getD1Raw } from '@/seed/db/client'
 import { UNIFIED_TIERS } from '@/seed/config/tiers'
+import { recordAudit } from '@/seed/db/audit/audit-log'
+import { markOrderCompleted, markOrderFailed } from '@/land/orders/pending-order-repo'
 import type { Tier } from '@/seed/types'
-import { markOrderCompleted, findPendingOrderByUserAndMethod } from '@/land/orders/pending-order-repo'
+import type { PendingOrder } from '@/land/orders/pending-order-types'
 import { track } from '@/tree/signals/track'
 import { D1Events } from '@/tree/signals/d1-event-types'
 
 const PAYOS_CHECKSUM_KEY = process.env.PAYOS_CHECKSUM_KEY
 
-/** Map PayOS description amount to the correct tier.
- *  Picks the tier whose expected VND amount is closest to the received amount.
- *  Rejects if the closest tier is more than 0.5% off (prevents tier confusion from
- *  underpayments that fall within another tier's wider 1% tolerance window). */
-function resolveTierFromAmount(amountVnd: number): Tier | null {
-  const USD_TO_VND = Number(process.env.USD_TO_VND ?? '25000')
-  const TIER_USD: Record<Tier, number> = {
-    BASIC: 199,
-    PREMIUM: 399,
-    ENTERPRISE: 799,
-    MASTER: 4999,
-  }
-  let closest: Tier | null = null
-  let closestDiff = Infinity
-  for (const [tier, usd] of Object.entries(TIER_USD) as [Tier, number][]) {
-    const expected = Math.round((usd * USD_TO_VND) / 1000) * 1000
-    const diff = Math.abs(amountVnd - expected)
-    if (diff < closestDiff) {
-      closestDiff = diff
-      closest = tier
-    }
-  }
-  if (!closest) return null
-  const expectedForClosest = Math.round((TIER_USD[closest] * USD_TO_VND) / 1000) * 1000
-  if (closestDiff > expectedForClosest * 0.005) return null
-  return closest
-}
+// Underpayment threshold: accept as full if >= 99% of expected amount
+const UNDERPAYMENT_THRESHOLD = 0.99
 
 /** F-06: Log a lost payment event to the DLQ (payment_events table) for later recovery. */
 async function logToDlq(db: ReturnType<typeof createServerClient>, payload: {
@@ -79,6 +57,7 @@ async function logToDlq(db: ReturnType<typeof createServerClient>, payload: {
     logger.error('[PayOS DLQ] Failed to record DLQ entry', err instanceof Error ? err : undefined)
   }
 }
+
 
 export async function POST(request: NextRequest) {
   if (!FEATURE_PAYOS) {
@@ -125,21 +104,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true })
   }
 
-  const { orderCode, amount, description, paymentLinkId } = ipn.data
-
-  const userId = parseUserIdFromPayOsDescription(description)
-  if (!userId) {
-    logger.warn('[PayOS Webhook] Cannot parse userId from description', { description, orderCode })
-    return NextResponse.json({ error: 'Cannot resolve user' }, { status: 422 })
-  }
-
-  const tier = resolveTierFromAmount(amount)
-  if (!tier) {
-    logger.warn('[PayOS Webhook] Cannot resolve tier from amount', { amount, orderCode })
-    return NextResponse.json({ error: 'Cannot resolve tier' }, { status: 422 })
-  }
-
   const db = createServerClient()
+  const { orderCode, amount, description, paymentLinkId } = ipn.data
 
   // Idempotency: INSERT-first with UNIQUE constraint check (F1 fix — eliminates SELECT-then-upsert race)
   try {
@@ -173,11 +139,63 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const userId = parseUserIdFromPayOsDescription(description)
+  if (!userId) {
+    logger.warn('[PayOS Webhook] Cannot parse userId from description', { description, orderCode })
+    return NextResponse.json({ error: 'Cannot resolve user' }, { status: 422 })
+  }
+
+  // Reserve the order by direct lookup using provider_payment_id
+  const { data: orderRow } = await db
+    .from('pending_orders')
+    .select('*')
+    .eq('provider_payment_id', paymentLinkId)
+    .eq('status', 'pending')
+    .single()
+
+  const order = orderRow as PendingOrder | null
+  if (!order) {
+    logger.warn('[PayOS Webhook] No pending order found for paymentLinkId', { paymentLinkId, orderCode })
+    // Release lock and ack to prevent infinite retries; this is a config issue
+    await db.from('payment_events').delete().eq('event_id', `payos_${paymentLinkId}`)
+    return NextResponse.json({ error: 'Order not found' }, { status: 400 })
+  }
+
+  const tier = order.tier as Tier
+  const orderId = order.order_id
+  const orderPeriod = order.period
+
+  // Expected amount verification with underpayment tolerance
+  const expectedVndAmount = getPayOsTierConfig(tier).vndAmount
+
+  if (amount < expectedVndAmount * UNDERPAYMENT_THRESHOLD) {
+    logger.warn('[PayOS Webhook] Underpayment detected', {
+      orderCode,
+      orderId,
+      amount,
+      expected: expectedVndAmount,
+      threshold: UNDERPAYMENT_THRESHOLD,
+    })
+    // Mark order as failed due to underpayment
+    await markOrderFailed(orderId, 'underpaid')
+    // Mark event as processed to prevent retry
+    await db.from('payment_events').update({ processed: 1 }).eq('event_id', `payos_${paymentLinkId}`)
+    return NextResponse.json({ received: true, status: 'underpaid' })
+  }
+
+  // Log overpayment (info only)
+  if (amount > expectedVndAmount * 1.01) {
+    logger.warn('[PayOS Webhook] Overpaid', { orderCode, expected: expectedVndAmount, actual: amount })
+  }
+
+  // Determine period end based on tier and order period
   const isLifetime = UNIFIED_TIERS[tier]?.billingType === 'lifetime'
   const now = new Date().toISOString()
   const periodEnd = isLifetime
     ? new Date('2099-12-31T23:59:59Z').toISOString()
-    : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    : orderPeriod === 'yearly'
+      ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
 
   try {
     const { data: membership } = await db
@@ -185,12 +203,12 @@ export async function POST(request: NextRequest) {
       .select('org_id')
       .eq('user_id', userId)
       .single()
-    const orgId = membership?.org_id as string | undefined
+    let orgId = membership?.org_id as string | undefined
 
     if (orgId) {
       const { data: existingSub } = await db
         .from('subscriptions')
-        .select('org_id')
+        .select('id')
         .eq('org_id', orgId)
         .single()
 
@@ -213,28 +231,37 @@ export async function POST(request: NextRequest) {
         .from('organizations')
         .update({ plan: tier.toLowerCase(), updated_at: now })
         .eq('id', orgId)
-    }
-
-    // F-03: order_id in pending_orders uses sophia_{userId}_{timestamp}, not payos_{paymentLinkId}
-    // Look up the most recent pending order by userId + payment_method='payos'
-    const found = await findPendingOrderByUserAndMethod(userId, 'payos')
-    if (found) {
-      await markOrderCompleted(found.order_id, `payos_${paymentLinkId}`)
     } else {
-      // F-06: No pending order — log to DLQ for later recovery instead of silently ignoring
-      await logToDlq(db, {
-        orderCode: String(orderCode),
-        paymentLinkId,
-        userId,
-        tier,
-        amount,
-        rawBody,
-        reason: 'pending_order_not_found',
-      })
+      // No org membership: create new org and subscription
+      logger.warn('[PayOS Webhook] No org membership found for userId, creating new org', { userId })
+      const insertResult = await db.from('organizations').insert({ name: `User ${userId}`, plan: tier.toLowerCase() }).select('id').single()
+      const newOrg = insertResult.data as { id: string } | null
+      if (newOrg?.id) {
+        orgId = newOrg.id
+        await db.from('org_members').insert({ org_id: newOrg.id, user_id: userId, role: 'owner' })
+        await db.from('subscriptions').insert({ org_id: newOrg.id, plan: tier.toLowerCase(), status: 'active', current_period_start: now, current_period_end: periodEnd })
+      }
     }
 
+    // Complete the pending order
+    await markOrderCompleted(orderId, `payos_${paymentLinkId}`)
+
+    // Mark event as processed
     await db.from('payment_events').update({ processed: 1 }).eq('event_id', `payos_${paymentLinkId}`)
 
+    // Audit trail
+    try {
+      const d1 = await getD1Raw()
+      await recordAudit(d1, {
+        tableName: 'subscriptions',
+        rowId: orgId ?? userId,
+        action: 'update',
+        actorId: userId,
+        after: { tier, plan: tier.toLowerCase(), status: 'active', periodEnd, paymentId: `payos_${paymentLinkId}`, provider: 'payos', amountVnd: amount },
+      })
+    } catch { /* non-fatal */ }
+
+    // Telemetry
     track(D1Events.PAYMENT_SUCCESS, 'webhook', {
       provider: 'payos',
       payment_link_id: paymentLinkId,
@@ -249,9 +276,16 @@ export async function POST(request: NextRequest) {
 
     logger.info('[PayOS Webhook] Tier activated', { userId, tier, orgId, isLifetime, periodEnd })
     return NextResponse.json({ received: true })
+
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
     logger.error('[PayOS Webhook] Activation failed', new Error(msg), { userId, tier })
+    // Release lock on failure to enable retry
+    try {
+      await db.from('payment_events').delete().eq('event_id', `payos_${paymentLinkId}`)
+    } catch (delErr) {
+      logger.warn('[PayOS Webhook] Failed to release lock on failure', { paymentLinkId, error: String(delErr) })
+    }
     return NextResponse.json({ error: `Activation failed: ${msg}` }, { status: 500 })
   }
 }

@@ -50,7 +50,15 @@ export async function processNowPaymentsIpn(
     })
 
   if (insertError) {
-    // Unique constraint violation or other error
+    // Check if this is a unique constraint violation (duplicate event)
+    const isUniqueViolation = insertError.code === '23505' || insertError.message?.toLowerCase().includes('unique constraint')
+
+    if (!isUniqueViolation) {
+      // Real error, not a duplicate
+      return { success: false, message: `Database error: ${insertError.message}` }
+    }
+
+    // Duplicate: another process already inserted this event. Check if already processed.
     const { data: existing, error: selectError } = await db
       .from('payment_events')
       .select('processed, created_at')
@@ -60,16 +68,20 @@ export async function processNowPaymentsIpn(
     if (selectError || !existing) {
       return { success: false, message: 'Database query failure' }
     }
- if (existing.processed === 1 || existing.processed === true) {
- return { success: true, message: 'Already processed' }
- }
- // Stale lock recovery: if lock >5 min old, delete and allow re-processing
- const lockAgeMs = Date.now() - new Date((existing as { created_at?: string }).created_at ?? new Date().toISOString()).getTime()
- if (lockAgeMs > 5 * 60 * 1000) {
-   try { await db.from('payment_events').delete().eq('event_id', eventId) } catch { /* non-fatal */ }
-   return { success: true, message: 'Stale lock cleared, retry' }
- }
- return { success: false, message: 'Already processing' }
+
+    if (existing.processed === 1 || existing.processed === true) {
+      return { success: true, message: 'Already processed' }
+    }
+
+    // Stale lock recovery: if lock >5 min old, delete and allow re-processing
+    const lockAgeMs = Date.now() - new Date((existing as { created_at?: string }).created_at ?? new Date().toISOString()).getTime()
+    if (lockAgeMs > 5 * 60 * 1000) {
+      try { await db.from('payment_events').delete().eq('event_id', eventId) } catch { /* non-fatal */ }
+      return { success: true, message: 'Stale lock cleared, retry' }
+    }
+
+    // Another process is currently handling this event
+    return { success: false, message: 'Already processing' }
   }
 
   try {

@@ -450,7 +450,7 @@ describe('executeStep — Phase 4G gate', () => {
   it('anthropic + no ANTHROPIC_API_KEY → warn + mock fallback + recordLlmCall ok:false', async () => {
     vi.stubEnv('WORKFLOW_REAL_LLM_ENABLED', '1')
     vi.stubEnv('OPENROUTER_API_KEY', 'sk-or-unused')
-    // ANTHROPIC_API_KEY intentionally not set
+    vi.stubEnv('ANTHROPIC_API_KEY', '')  // explicitly empty
 
     const anthropicDecision: RouteDecision = {
       provider:   'anthropic',

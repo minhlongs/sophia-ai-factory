@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@/land/mcu/credits-repo', () => ({
+vi.mock('@/tree/mcu/credits-repo', () => ({
   getBalance: vi.fn(),
 }));
 

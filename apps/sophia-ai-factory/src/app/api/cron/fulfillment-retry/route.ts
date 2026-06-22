@@ -82,103 +82,112 @@ async function processRowRetry(
 ): Promise<void> {
   summary.retried++
 
-  // Per-row: resolve this user's HeyGen key (customer must have own key)
-  const keyResult = await getHeyGenKey({ userId: row.user_id, fallbackToPlatform: false })
-  if (!keyResult) {
-    await recordAttemptCAS(row.id, 'no_user_heygen_key')
-    summary.failed++
-    return
-  }
-  const rowApiKey = keyResult.key
-
-  const script = row.script ?? ''
-  const title = `Welcome Bundle — ${row.id.slice(0, 8)}`
-  const callbackUrl =
-    process.env.NODE_ENV === 'production'
-      ? `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/webhooks/heygen`
-      : undefined
-
   try {
-    const { videoId: heygenJobId } = await createHeyGenVideo({ script, title, apiKey: rowApiKey, callbackUrl })
-    await markVideoProcessing(row.id, heygenJobId)
-    try { await recordHeyGenAttempt(true) } catch { /* non-fatal */ }
-    summary.succeeded++
+    // Per-row: resolve this user's HeyGen key (customer must have own key)
+    const keyResult = await getHeyGenKey({ userId: row.user_id, fallbackToPlatform: false })
+    if (!keyResult) {
+      await recordAttemptCAS(row.id, 'no_user_heygen_key')
+      summary.failed++
+      return
+    }
+    const rowApiKey = keyResult.key
 
-    logger.info('[fulfillment-retry] Retry succeeded', {
-      videoId: row.id,
-      purchaseId: row.purchase_id,
-      heygenJobId,
-    })
-  } catch (err) {
-    const errMsg = getErrorMessage(err)
-    const nextAttemptCount = row.attempt_count + 1
-    try { await recordHeyGenAttempt(false) } catch { /* non-fatal */ }
+    const script = row.script ?? ''
+    const title = `Welcome Bundle — ${row.id.slice(0, 8)}`
+    const callbackUrl =
+      process.env.NODE_ENV === 'production'
+        ? `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/webhooks/heygen`
+        : undefined
 
-    if (nextAttemptCount >= MAX_ATTEMPTS) {
-      // M2 CAS: only the caller that wins the race sends email + compensation
-      const won = await markPermanentFailureCAS(row.id, errMsg, nextAttemptCount - 1)
-      if (!won) {
-        logger.info('[fulfillment-retry] CAS lost — permanent failure already set', {
-          videoId: row.id,
-        })
-        summary.skipped++
-        return
-      }
+    try {
+      const { videoId: heygenJobId } = await createHeyGenVideo({ script, title, apiKey: rowApiKey, callbackUrl })
+      await markVideoProcessing(row.id, heygenJobId)
+      try { await recordHeyGenAttempt(true) } catch { /* non-fatal */ }
+      summary.succeeded++
 
-      summary.permanent++
-
-      logger.warn('[fulfillment-retry] Permanent failure — compensating', {
+      logger.info('[fulfillment-retry] Retry succeeded', {
         videoId: row.id,
         purchaseId: row.purchase_id,
-        attempts: nextAttemptCount,
+        heygenJobId,
       })
+    } catch (err) {
+      const errMsg = getErrorMessage(err)
+      const nextAttemptCount = row.attempt_count + 1
+      try { await recordHeyGenAttempt(false) } catch { /* non-fatal */ }
 
-      if (row.purchase_id) {
-        const clientDb = createServerClient()
-        const { data: purchaseData } = await clientDb
-          .from('user_purchases')
-          .select('status')
-          .eq('id', row.purchase_id)
-          .single()
-        const purchase = purchaseData as { status?: string } | null
-        if (purchase?.status === 'refunded') {
-          logger.info('[fulfillment-retry] Skipping email and compensation — purchase refunded', {
+      if (nextAttemptCount >= MAX_ATTEMPTS) {
+        // M2 CAS: only the caller that wins the race sends email + compensation
+        const won = await markPermanentFailureCAS(row.id, errMsg, nextAttemptCount - 1)
+        if (!won) {
+          logger.info('[fulfillment-retry] CAS lost — permanent failure already set', {
             videoId: row.id,
-            purchaseId: row.purchase_id,
           })
+          summary.skipped++
           return
         }
 
-        await grantCompensationCredit(row.purchase_id, 'render_failed_permanent')
+        summary.permanent++
 
-        const userInfo = await fetchUserEmail(row.user_id)
-        const failedEmailInput: SendBundleRenderFailedInput = {
-          userEmail: userInfo?.email,
-          userId: row.user_id,
-          purchaseId: row.purchase_id,
-          locale: userInfo?.locale ?? row.locale ?? 'vi',
-        }
-        await sendBundleRenderFailedEmail(failedEmailInput)
-      }
-    } else {
-      // M2 CAS: increment only if still in 'queued' state
-      const newCount = await recordAttemptCAS(row.id, errMsg)
-      if (newCount === null) {
-        logger.info('[fulfillment-retry] CAS lost — row already transitioned, skipping', {
+        logger.warn('[fulfillment-retry] Permanent failure — compensating', {
           videoId: row.id,
+          purchaseId: row.purchase_id,
+          attempts: nextAttemptCount,
         })
-        summary.skipped++
-        return
-      }
-      summary.failed++
 
-      logger.warn('[fulfillment-retry] Attempt failed', {
-        videoId: row.id,
-        purchaseId: row.purchase_id,
-        attempt: newCount,
-        error: errMsg,
-      })
+        if (row.purchase_id) {
+          const clientDb = createServerClient()
+          const { data: purchaseData } = await clientDb
+            .from('user_purchases')
+            .select('status')
+            .eq('id', row.purchase_id)
+            .single()
+          const purchase = purchaseData as { status?: string } | null
+          if (purchase?.status === 'refunded') {
+            logger.info('[fulfillment-retry] Skipping email and compensation — purchase refunded', {
+              videoId: row.id,
+              purchaseId: row.purchase_id,
+            })
+            return
+          }
+
+          await grantCompensationCredit(row.purchase_id, 'render_failed_permanent')
+
+          const userInfo = await fetchUserEmail(row.user_id)
+          const failedEmailInput: SendBundleRenderFailedInput = {
+            userEmail: userInfo?.email,
+            userId: row.user_id,
+            purchaseId: row.purchase_id,
+            locale: userInfo?.locale ?? row.locale ?? 'vi',
+          }
+          await sendBundleRenderFailedEmail(failedEmailInput)
+        }
+      } else {
+        // M2 CAS: increment only if still in 'queued' state
+        const newCount = await recordAttemptCAS(row.id, errMsg)
+        if (newCount === null) {
+          logger.info('[fulfillment-retry] CAS lost — row already transitioned, skipping', {
+            videoId: row.id,
+          })
+          summary.skipped++
+          return
+        }
+        summary.failed++
+
+        logger.warn('[fulfillment-retry] Attempt failed', {
+          videoId: row.id,
+          purchaseId: row.purchase_id,
+          attempt: newCount,
+          error: errMsg,
+        })
+      }
     }
+  } catch (unexpectedErr) {
+    // Catch any unhandled errors to prevent one row from failing the entire batch
+    summary.failed++
+    logger.error('[fulfillment-retry] Unexpected error processing row', {
+      videoId: row.id,
+      error: getErrorMessage(unexpectedErr),
+    })
   }
 }
 
@@ -230,7 +239,7 @@ export async function GET(req: NextRequest) {
     const MAX_WALL_TIME_MS = 20000 // 20 seconds threshold
 
     for (let i = 0; i < dueRows.length; i += CHUNK_SIZE) {
-      // Wall-time safety check before starting the next chunk
+      // Pre-check wall time before starting next chunk
       if (Date.now() - startTime > MAX_WALL_TIME_MS) {
         logger.warn('[fulfillment-retry] Wall-time safety threshold reached; aborting remaining chunks', {
           elapsedMs: Date.now() - startTime,
@@ -244,6 +253,16 @@ export async function GET(req: NextRequest) {
       await Promise.all(
         chunk.map((row) => processRowRetry(row, now, summary))
       )
+
+      // Post-check wall time after completing the chunk to stop early if needed
+      if (Date.now() - startTime > MAX_WALL_TIME_MS) {
+        logger.warn('[fulfillment-retry] Wall-time threshold reached after chunk; stopping', {
+          elapsedMs: Date.now() - startTime,
+          processedChunks: Math.floor(i / CHUNK_SIZE) + 1,
+          totalChunks: Math.ceil(dueRows.length / CHUNK_SIZE),
+        })
+        break
+      }
     }
 
     await recordCronRun(db, CRON_NAME, 'success')

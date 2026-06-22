@@ -32,6 +32,7 @@ Here's everything you need to get started:
 
 📖 Reference docs
    CEO Handoff Package: {{PDF_URL}}
+   Customer Onboarding Guide: {{ONBOARDING_GUIDE_URL}}
    Quick Reference Card: {{QUICKREF_PDF_URL}}
 
 💬 Join our shared Slack
@@ -68,6 +69,7 @@ Account Manager, Sophia
 | `TEMP_PASSWORD` | Generated, force reset on first login |
 | `LOOM_VIDEO_N_URL` | `public/handover/loom-scripts/` |
 | `PDF_URL` | `docs/CEO-HANDOFF-PACKAGE-v3.pdf` |
+| `ONBOARDING_GUIDE_URL` | `docs/onboarding/CUSTOMER-ONBOARDING-GUIDE.md` |
 | `QUICKREF_PDF_URL` | `docs/runbooks/INCIDENT-RESPONSE-QUICKREF.pdf` |
 | `SLACK_INVITE_URL` | Generated per tenant |
 | `TENANT_SLUG` | Lowercase, hyphenated company name |
@@ -88,6 +90,7 @@ Before sending:
 - [ ] Slack channel created (`#sophia-{tenant-slug}`)
 - [ ] All Loom videos uploaded + URLs generated
 - [ ] PDFs generated + uploaded to public storage
+- [ ] Customer Onboarding Guide uploaded + URL generated
 - [ ] Temp password generated (16+ chars, alphanumeric)
 - [ ] Variables all populated correctly
 - [ ] Test send to AM's email first (preview)

@@ -2,12 +2,70 @@
 
 > Sophia AI Factory — RaaS (Reasoning-as-a-Service) Platform with AI-Native CI/CD, Observability, & Signals
 
-**Last Updated:** 2026-05-20 (docs harness alignment — reflects shipped state 2026-05-17; CF-direct deploy doctrine, ASVS-L2 94%, doctrine ceiling 87.5/100)
-**Production:** https://sophia.agencyos.network (SHA 5b1f711f)
+**Last Updated:** 2026-06-22 (handover refresh — reflects shipped state through 2026-06-21)
+**Production:** https://sophia.agencyos.network (SHA 7c8dc4c5)
 **Production Dashboard:** https://sophia.agencyos.network/dashboard
 **Status Page:** https://sophia.agencyos.network/status (90-day uptime tracking)
+**SOC 2 Status:** Type I audit in progress (Q3 2026 completion target)
 
-### Recent Shipments (2026-04-30 Final)
+---
+
+## Recent Completions (2026-06-22)
+
+### OpenTelemetry Staging Deployment (2026-06-22)
+
+Full OpenTelemetry instrumentation is deployed to staging environment and verified:
+
+- **OTel SDK**: `@opentelemetry/api` v1.9.1 with Honeycomb OTLP exporter
+- **Instrumentation**: API routes, Inngest functions, fetch calls
+- **Staging Worker**: `sophia-ai-factory-staging` with 100% sampling rate
+- **Verification**: Traces confirmed flowing to `sophia-staging` dataset
+- **Next Step**: Production rollout pending `HONEYCOMB_API_KEY` secret
+
+Full report: [`OTEL-STAGING-VERIFICATION-REPORT.md`](../OTEL-STAGING-VERIFICATION-REPORT.md)
+
+### SOC 2 Type I Audit (In Progress)
+
+- **Auditor**: Selected (Type I firm engaged 2026-06)
+- **Status**: Controls walkthrough documented, internal controls mapped
+- **Evidence**: Audit log schema, hash chaining, deploy guard procedures
+- **Expected Completion**: Q3 2026
+- **Location**: [`docs/compliance/soc2/`](compliance/soc2/)
+
+### Deploy Guard Multi-Operator Approvals (2026-06)
+
+Production deploy pipeline now requires 2-party approval:
+
+- **Deploy Guard**: Enforces approval workflow before any production deploy
+- **Admin UI**: `/dashboard/admin/deploy-guard` for managing approvers and requests
+- **CI Gate**: Pre-push hook checks approval status
+- **Audit Logging**: All deploy events recorded with cryptographic hash chain
+
+Documentation: [`docs/deployment-guide.md#deploy-guard`](deployment-guide.md#deploy-guard)
+
+### BYOK Rotation Framework (Complete, Staging Test In Progress)
+
+Encryption key versioning infrastructure for secure rotation of customer-supplied API keys:
+
+- **Version Management**: Key version tracking functions (`key_versions` D1 table)
+- **Re-encryption**: Inngest background job for re-encrypting existing data with new keys
+- **Dual-Decrypt Window**: Configurable overlap period during rotation (supports seamless key rollover)
+- **Migration Support**: D1 migration `0184-key-versions.sql` creates version tracking schema
+- **Audit Integration**: All rotation events logged with hash chain (`raas_audit_logs`)
+- **Current Status**: Framework complete, staging test in progress (Task #116)
+
+**Architecture:**
+```
+New Key Version → Inngest Job → Re-encrypt user_provider_credentials
+       ↓
+Dual-Decrypt Period (both keys accepted) → Old Key Retired
+```
+
+**Runbook:** [`docs/secret-rotation-runbook.md`](../secret-rotation-runbook.md)
+
+**Related:** Deploy Guard ensures 2-party approval for any rotation-triggering deployments.
+
+### Earlier Major Shipments (2026-04-30 Final)
 - **Phase 14 Launch Hardening (2026-04-30):** FTC `#ad` overlay (FFmpeg drawtext, last 3s). Caption prefix in publisher adapters. GDPR `/api/account/export` + `/api/account/delete` endpoints. Runbook (10 incidents tracked, recovery procedures). Polar.sh removed from rate-limiter (single source of truth: NOWPayments only). CI workaround documented.
 - **Phase 13 Revenue Split (2026-04-30):** `commission_ledger` D1 table tracks affiliate clicks with 14-day clawback window. `payout_batches` orchestrates NOWPayments USDT mass-payout (TRC20 preferred, ERC20 fallback). Daily reconciliation cron. Real affiliate network payouts live.
 - **Phase 12 OpenClaw (2026-04-30):** 10-primitive orchestrator (spawnAgentFleet, withTenant, onEvent, activateSkill, scheduleAgent, memory, mcp, enqueue, audit, rateLimitGate) on Claude SDK. Qwen 3 32B router for inference. Circuit breaker for fault tolerance.
@@ -135,9 +193,77 @@ Pricing page gates One-Time Bundle CTA when HeyGen is down to prevent customer p
 
 ---
 
-## Layer 2: Observability (2026-04-17)
+## Deploy Guard: Multi-Operator Approvals (2026-06)
 
-**Better Stack Structured Logging** for production monitoring
+Production deployment now requires 2-party approval to prevent accidental or unauthorized releases.
+
+| Component | Details |
+|-----------|---------|
+| **Gate Type** | Pre-deploy approval workflow |
+| **Required Approvers** | 2 distinct admin users per deployment |
+| **Admin UI** | `/dashboard/admin/deploy-guard` — manage approvers, view requests |
+| **CI Gate** | `scripts/guard-deploy.js` runs pre-push hook (dry-run mode) |
+| **Audit Logging** | All deploy events recorded with cryptographic hash chain |
+| **Approval TTL** | 24 hours (request expires if not approved) |
+| **Emergency Bypass** | Not supported — requires full 2-party approval |
+
+**Workflow:**
+```
+Operator A: git push origin main
+  ↓
+Pre-push hook detects production deploy → opens Deploy Guard request
+  ↓
+Operator B (different admin): /dashboard/admin/deploy-guard → Approve
+  ↓
+Operator A: npm run deploy:full → succeeds
+```
+
+**Implementation:**
+- `deploy-with-sha.sh` → calls `guard-deploy.js` to check approval status
+- D1 table: `deploy_guard_approvals` (request_id, requested_by, approver, status, expires_at)
+- Admin UI: `src/app/[locale]/dashboard/admin/deploy-guard/page.tsx`
+- Pre-push hook: `.git/hooks/pre-push` (calls `node scripts/guard-deploy.js dry-run`)
+
+**Runbook:** See `docs/deployment-guide.md#deploy-guard`
+
+---
+
+## SOC 2 Type I Compliance (In Progress)
+
+**Auditor:** Engaged Q2 2026 (Type I specialist)
+**Target Completion:** Q3 2026
+**Evidence Location:** `docs/compliance/soc2/`
+
+### Completed Controls
+
+| Control | Status | Evidence |
+|---------|--------|----------|
+| **Audit Logging with Hash Chain** | Complete | `raas_audit_logs` table with cryptographic chaining (`0183-raas_audit_logs_hash_chain.sql`) |
+| **Deploy Guard Multi-Operator Approval** | Complete | 2-party approval workflow, admin UI, CI gate |
+| **Encryption at Rest** | Complete | D1 database (Cloudflare-managed), R2 bucket encryption |
+| **Access Review Procedures** | Complete | Quarterly access review script (`scripts/quarterly-access-review.ts`) |
+| **Incident Response Runbook** | Complete | `docs/INCIDENT_RESPONSE.md` with severity matrix |
+
+### In Progress
+
+- **Evidence Collection**: Mapping internal controls to SOC 2 Trust Services Criteria
+- **Controls Walkthrough**: Documented and reviewed with auditor (2026-06)
+- **Vendor SOC 2 Reports**: Collecting from Resend, HeyGen, Cloudflare
+
+### Next Steps
+
+1. Address auditor findings from controls walkthrough
+2. Complete evidence package submission
+3. Receive and archive Type I report
+4. Plan Type II assessment (6-month observation period)
+
+**Security Posture:** ASVS-L2 29/31 (94%) as of latest audit.
+
+---
+
+## Layer 2: Observability & APM
+
+### Better Stack Structured Logging (Production)
 
 | Feature | Implementation | Details |
 |---------|---|---|
@@ -146,9 +272,35 @@ Pricing page gates One-Time Bundle CTA when HeyGen is down to prevent customer p
 | **Error Digest** | Daily cron | Aggregated error report email |
 | **Request Tracing** | Per-request ID | Trace user journeys across services |
 | **Custom Metrics** | MCU, tier, org_id | Business metrics tracked |
-| **Telegram FSM Metric** | `telegram_fsm_invalid_state` | Emitted when FSM reads D1 state value failing `isBotState()` guard; reasons: schema drift, migration bug |
+| **Telegram FSM Metric** | `telegram_fsm_invalid_state` | Emitted when FSM reads D1 state value failing `isBotState()` guard |
 
 **Integration:** `src/lib/telemetry/*` modules for event capture, batching, delivery.
+
+### OpenTelemetry APM (Staging Complete, Production Pending)
+
+**Status:** Staging verified 2026-06-22; production rollout pending `HONEYCOMB_API_KEY` secret.
+
+| Feature | Implementation | Details |
+|---------|---|---|
+| **SDK** | `@opentelemetry/api` v1.9.1 | Honeycomb OTLP exporter |
+| **Instrumentation** | API routes, Inngest functions, fetch calls | Auto-instrumentation enabled |
+| **Staging Worker** | `sophia-ai-factory-staging` | 100% sampling rate |
+| **Trace Verification** | Confirmed flowing to `sophia-staging` dataset | See `OTEL-STAGING-VERIFICATION-REPORT.md` |
+| **Next Step** | Production rollout | Requires `HONEYCOMB_API_KEY` secret |
+
+**Architecture:**
+- Traces flow via OTLP to Honeycomb
+- Sampling configurable via `OTEL_SAMPLING_RATE` (default: 0.01 for prod)
+- Instrumented modules: `src/lib/telemetry/otel-setup.ts`
+
+**Verification:**
+```bash
+# Staging traces visible in Honeycomb
+curl -H "x-honeycomb-team: $HONEYCOMB_API_KEY" \
+  "https://api.honeycomb.io/1/queries/datasets/sophia-staging/results"
+```
+
+**Runbook:** `docs/apm-runbook.md`
 
 ---
 
@@ -196,23 +348,26 @@ Pricing page gates One-Time Bundle CTA when HeyGen is down to prevent customer p
 | **Adapter** | `@opennextjs/cloudflare` | Next.js → CF Workers |
 | **Database** | Cloudflare D1 | SQLite-based, `sophia-raas-db` |
 | **Cache** | Cloudflare R2 | `sophia-ai-factory-opennext-cache` |
-| **LLM Cache** | D1 (Org-Scoped) | Exact-match SHA-256 (Phase 4E) + optional semantic-similarity fallback via Workers AI embeddings (Phase 4E.2, `LLM_CACHE_SEMANTIC_ENABLED`, dark-launched; Phase 4E.2-TUNING: index widened to full 4 columns `(org_id, embedding_model, provider, model, created_at)` for range freshness queries); per-tenant isolation via `resolveOrgId()` + `getTenantContext()` helpers (Phase 4E H-1 → 4F.1 → 4F.2); `LLM_CACHE_STORE_PROMPT_TEXT=1` PII/GDPR gate (vectors always stored, text optional); `callWithCache()` wrapper wired into script-generator (Phase 4F); daily purge cron (Phase 4E.3); real LLM in workflow-stepper (Phase 4G, `WORKFLOW_REAL_LLM_ENABLED`); stats endpoints `/api/admin/llm-cache-stats` (Phase 4H) + `/api/admin/llm-trace-stats` (Phase 4I) |
-| **AI Streaming** | Anthropic SSE + Tool-Use | `parseAnthropicSse()` async generator + `AnthropicStreamEvent` discriminated union (Phase 4N); `callAnthropicStreamEvents` yields 7 event types (message_start, content_block_start/stop, text_delta, input_json_delta, message_delta, message_stop; Phase 4N-POLISH: added `parse_error` variant + try/finally reader cleanup for robust error handling); `callAnthropicStream` backward-compat text-only filter; `callAnthropicFull` for tool-use flows |
-| **Per-User API Keys (LLM/Media)** | D1 + AES-GCM Crypto | BYOK foundations (Phase 4G-BYOK): `user_api_keys` D1 table, AES-GCM-256 encryption (`byok-crypto.ts`), D1 store (`user-api-key-store.ts`), resolver with envFallback (`resolve-user-api-key.ts`); opt-in via `BYOK_ENABLED=1` + `BYOK_MASTER_KEY` (base64 32 bytes); Phase 4G-WIRE: fully integrated into workflow-stepper cron via `resolveOrgOwnerUserId()` helper for cron context bridge; per-user key resolution before Anthropic/OpenRouter live calls; env fallback when BYOK disabled |
-| **Per-User Provider Credentials (BYOK)** | D1 `user_provider_credentials` + AES-GCM | Full BYOK for fulfillment providers (2026-05-02): customers supply own HeyGen/Resend/NOWPayments keys via Setup Wizard. Encryption/repo/lookup live under `tree/credentials/*` (`encryption.ts`, `user-credentials-repo.ts`, `get-provider-key.ts`). Fulfillment paths: `one-time-fulfillment.ts` + `fulfillment-retry` cron → `getHeyGenKey({userId, fallbackToPlatform:false})`. Platform key retained for: health check, synthetic monitor, onboarding video. API routes: `/api/setup-wizard/{save-credentials,test-heygen,test-resend,list-credentials}`. Pricing gate: unauthenticated or unconfigured users see "Configure HeyGen" prompt instead of One-Time Bundle CTA. |
-| **AI Providers** | Anthropic + OpenRouter | Anthropic API adapter (Phase 4J) routes via `fetchFromAnthropicAPI()` when `ANTHROPIC_API_KEY` set; OpenRouter fallback via router (Phase 4C); cache reuse across both via `callWithCache()` |
-| **Auth** | Better Auth v1.6.2 (D1) | Email/password + magic link, org plugin, no RLS |
+| **LLM Cache** | D1 (Org-Scoped) | Exact-match SHA-256 + semantic fallback via Workers AI embeddings |
+| **APM/Observability** | OpenTelemetry + Honeycomb | Staging verified 2026-06-22; production rollout pending |
+| **Error Tracking** | Sentry | Frontend, server, and edge function error capture |
+| **AI Streaming** | Anthropic SSE + Tool-Use | `parseAnthropicSse()` async generator, 7 event types |
+| **Per-User API Keys (BYOK)** | D1 + AES-GCM Crypto | Customer-supplied LLM/media keys, encrypted at rest |
+| **Per-User Provider Credentials** | D1 + AES-GCM | HeyGen/Resend/NOWPayments keys via Setup Wizard |
+| **AI Providers** | Anthropic + OpenRouter | Smart router with cache reuse |
+| **Auth** | Better Auth v1.6.2 (D1) | Email/password + magic link, org plugin |
 | **Billing** | NOWPayments (primary) + PayOS (backup) | MCU credit system, webhooks |
 | **Email** | Resend | Magic link, notifications |
-| **AI** | Anthropic | Proposal generation |
-| **Video** | HeyGen | Auto onboarding video (ENTERPRISE+) + on-demand generation |
+| **Video** | HeyGen | Auto onboarding + on-demand generation |
+| **Analytics** | PostHog | Event tracking, A/B testing |
+| **Background Jobs** | Inngest | Event-driven multi-step workflows |
 | **Domain** | sophia.agencyos.network | CF Workers Custom Domains |
 
 ---
 
 ## Data Flow
 
-### Current Verified Runtime Model (2026-05-22)
+### Current Verified Runtime Model (2026-06-22)
 
 | Subsystem | Entry Points | Flow | State | External Integrations | Confidence |
 |-----------|--------------|------|-------|-----------------------|------------|

@@ -16,7 +16,7 @@ vi.mock('@/seed/security/cron-auth', () => ({
   verifyCronAuth: mocks.verifyCronAuth,
 }));
 
-vi.mock('@/land/mcu/credits-repo', () => ({
+vi.mock('@/tree/mcu/credits-repo', () => ({
   addCredits: mocks.addCredits,
 }));
 
