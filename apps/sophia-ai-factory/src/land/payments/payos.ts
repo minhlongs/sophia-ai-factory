@@ -11,11 +11,20 @@ import type { Tier } from '@/seed/types'
 import { verifyInboundWebhook } from '@/land/webhooks/signature'
 
 // ── USD to VND conversion (must be set explicitly, no fallback) ───────────────
-const usdToVndEnv = process.env.USD_TO_VND
-if (!usdToVndEnv) {
-  throw new Error('USD_TO_VND environment variable is required for PayOS')
+// Defer env var check until runtime to avoid build-time crash during static page
+// collection. The check will occur when PayOS functions are actually invoked.
+let USD_TO_VND: number | null = null
+
+function getUsdToVnd(): number {
+  if (USD_TO_VND === null) {
+    const usdToVndEnv = process.env.USD_TO_VND
+    if (!usdToVndEnv) {
+      throw new Error('USD_TO_VND environment variable is required for PayOS')
+    }
+    USD_TO_VND = Number(usdToVndEnv)
+  }
+  return USD_TO_VND
 }
-const USD_TO_VND = Number(usdToVndEnv)
 
 // ── Tier VND prices (USD * USD_TO_VND, rounded to nearest 1000 VND) ─────────
 const TIER_USD_PRICES: Record<Tier, number> = {
@@ -33,7 +42,8 @@ export interface PayOsTierConfig {
 
 export function getPayOsTierConfig(tier: Tier): PayOsTierConfig {
   const usd = TIER_USD_PRICES[tier]
-  const vnd = Math.round((usd * USD_TO_VND) / 1000) * 1000 // round to 1000 VND
+  const usdToVnd = getUsdToVnd()
+  const vnd = Math.round((usd * usdToVnd) / 1000) * 1000 // round to 1000 VND
   return { tier, vndAmount: vnd, usdAmount: usd }
 }
 
