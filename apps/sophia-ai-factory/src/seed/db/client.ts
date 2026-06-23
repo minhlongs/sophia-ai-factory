@@ -30,7 +30,12 @@ if (process.env.NEXT_RUNTIME !== 'edge') {
  */
 export function getD1(): D1Database | null {
   try {
-    // Primary: globalThis.__env (set by opennextjs-cloudflare worker)
+    // Primary: globalThis.__env__ (set by OpenNext Cloudflare worker)
+    // NOTE: OpenNext uses double-underscore __env__, not single __env.
+    const envDouble = (globalThis as unknown as Record<string, Record<string, unknown>>).__env__;
+    if (envDouble?.DB) return envDouble.DB as D1Database;
+
+    // Fallback: legacy single underscore (pre-OpenNext adapters)
     const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
     if (env?.DB) return env.DB as D1Database;
 
@@ -88,11 +93,19 @@ export async function getD1Client(override?: D1Database): Promise<D1Client> {
  * Get D1 database binding synchronously from CF request context.
  */
 function getD1Sync(): D1Database {
-  // Try globalThis.__env (set by opennextjs-cloudflare worker)
-  const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-  if (env?.DB) return env.DB as D1Database;
+  // Try globalThis.__env__ first (OpenNext Cloudflare)
+  const envDouble = (globalThis as unknown as Record<string, Record<string, unknown>>).__env__;
+  if (envDouble?.DB && typeof (envDouble.DB as D1Database).prepare === 'function') {
+    return envDouble.DB as D1Database;
+  }
 
-  // Try process.env style (some CF adapters)
+  // Fallback: globalThis.__env (legacy)
+  const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
+  if (env?.DB && typeof (env.DB as D1Database).prepare === 'function') {
+    return env.DB as D1Database;
+  }
+
+  // Fallback: process.env style (some CF adapters)
   const procEnv = (process as unknown as Record<string, Record<string, unknown>>).env;
   if (procEnv?.DB && typeof (procEnv.DB as D1Database).prepare === 'function') {
     return procEnv.DB as D1Database;
