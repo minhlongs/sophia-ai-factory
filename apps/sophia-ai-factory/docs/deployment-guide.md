@@ -149,63 +149,156 @@ If issues arise post-deploy:
 
 ## 2. Production Deployment (Cloudflare Workers)
 
-Sophia AI Factory deploys to **Cloudflare Workers** (not Vercel). GitHub Actions automatically builds, tests, and deploys on `git push origin main`.
+Sophia AI Factory deploys to **Cloudflare Workers** via **CF-direct doctrine** — manual `wrangler` CLI from the app package. GitHub Actions is disabled by design.
 
-### Step 1: Push to GitHub
-Ensure your code is committed and pushed to `origin main`.
+### Prerequisites
 
-### Step 2: GitHub Actions (Automatic)
-The workflow **Tests & Deploy** runs automatically:
-1. **Lint & Build & Test** job: Verifies code quality
-2. **Deploy to Cloudflare Workers** job: Builds OpenNext worker + applies D1 migrations + deploys
+- `wrangler` authenticated (`npx wrangler whoami` succeeds)
+- `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` in environment
+- Code pushed to `origin/main` (precondition enforced by deploy script)
+
+### Step 1: Push to Remote
+
+```bash
+git push origin main
+```
+
+The deploy script will reject if local HEAD is not equal to origin/main.
+
+### Step 2: Run Deploy Script
+
+```bash
+cd apps/sophia-ai-factory
+npm run deploy:full
+```
+
+This script (`scripts/deploy-with-sha.sh`) performs:
+
+1. **Push preconditions** — verifies working tree clean and HEAD == origin/main
+2. **Pre-deploy gate** — runs `scripts/pre-deploy-gate.mjs`:
+   - Git status check
+   - `npm test` (skip with `SKIP_TESTS=1`)
+   - `npm run build`
+   - `npm run type-check` (skip with `SKIP_TSC=1`)
+   - D1 migration review (ensures unreviewed migrations have approval comments)
+   - Required secrets check (`OPENROUTER_API_KEY`, `NOWPAYMENTS_API_KEY`, `TELEGRAM_BOT_TOKEN`, `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`)
+3. **Build** — `npm run build` (Next.js → OpenNext worker)
+4. **Deploy** — `npx opennextjs-cloudflare deploy --config wrangler.toml`
+5. **Inject secrets** — `COMMIT_SHA`, `DEPLOYED_AT`, `DEPLOY_BRANCH` into Worker
+6. **Verify SHA match** — poll `/api/version` until `shortSha` matches local commit
+7. **HTTP health check** — verify `https://sophia.agencyos.network` returns 200
+8. **Post-deploy smoke** — run `scripts/post-deploy-smoke.mjs` (health + version checks)
+
+**Emergency bypasses** (use sparingly):
+
+```bash
+SKIP_PRE_DEPLOY_GATE=1 npm run deploy:full     # skip gate checks
+SKIP_SMOKE_TEST=1 npm run deploy:full          # skip post-deploy smoke
+ALLOW_UNPUSHED_DEPLOY=1 npm run deploy:full    # deploy even if not pushed
+```
 
 ### Step 3: Verify Deployment
+
+The deploy script outputs verification results. Manual verification:
+
 ```bash
-# Check CI/CD status
-gh run list --repo longtho638-jpg/sophia-ai-factory -L 1
+# Check version endpoint
+curl -s https://sophia.agencyos.network/api/version | jq
 
-# Verify production health
-curl -s https://sophia.agencyos.network/api/version
-# Should output: { shortSha: "abc12345", deployedAt: "...", opennextVersion: "..." }
-
-# Verify commit SHA matches
+# Compare SHA
 LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
 LIVE_SHA=$(curl -s https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4)
 echo "Local: $LOCAL_SHA  Live: $LIVE_SHA"
+# Both must match
 ```
 
-### Step 4: Configure Secrets & D1 Migrations
-After first deploy, follow **Sprint M Revenue Path Deployment Requirements** section above to:
-1. Apply D1 migrations
-2. Set Cloudflare Secrets
-3. Configure ClickBank vendor INS URL
+### Step 4: Apply D1 Migrations (if any)
 
-### Step 5: Production Setup Wizard (CLI)
-
-After deploying, run the interactive production setup wizard to verify connections and configure third-party services (NOWPayments, Telegram, Supabase).
+If this deploy includes new SQL migrations in `migrations/`, apply them:
 
 ```bash
-# Run locally against your production environment credentials
+cd apps/sophia-ai-factory
+bash scripts/apply-migrations.sh
+```
+
+The script will backup the database before applying any new migrations.
+
+### Step 5: Production Setup (First Deploy Only)
+
+After the first successful deploy, run the production setup wizard:
+
+```bash
 npm run setup:production
 ```
 
-This wizard will:
-1. **Verify Environment Variables**: Checks for missing keys.
-2. **Supabase**: Tests connection and verifies required tables exist.
-3. **NOWPayments**: Verifies API key access and IPN webhook configuration.
-4. **Telegram**: Verifies Bot Token and configures the Webhook URL.
-5. **Report**: Generates a `production-setup-report.md` with the status of your system.
+This verifies third-party integrations and generates a setup report.
 
-## 3. Automation Setup (n8n)
+---
 
-The "Brain" of the factory runs on n8n. You need to connect your local/deployed app to an n8n instance.
+## 3. Automated Deployment & Monitoring
 
-### Option A: n8n Cloud (Recommended)
-1. Sign up for n8n Cloud.
-2. Import the workflows from the `workflows/` directory in this project.
-3. Activate the workflows.
-4. Copy the **Production Webhook URLs**.
-5. Add these URLs to your Sophia Factory configuration (via Wizard or .env).
+### CI/CD (Disabled by Design)
+
+The GitHub Actions workflow `.github/workflows/test.yml` is archived (disabled). All production deployments are manual via CF-direct. This ensures operator oversight and prevents accidental deploys.
+
+### Post-Deploy Smoke Tests
+
+Two levels of smoke testing:
+
+1. **Basic** (mandatory, runs automatically) — `scripts/post-deploy-smoke.mjs`
+   - Checks `/api/health` (authenticated)
+   - Verifies `/api/version` SHA match
+   - Writes JSON report if `SMOKE_REPORT_PATH` set
+
+2. **E2E** (optional, Playwright) — enable with `RUN_POSTDEPLOY_E2E=1`
+   ```bash
+   RUN_POSTDEPLOY_E2E=1 npm run deploy:full
+   ```
+   Runs `@smoke` tagged Playwright tests against production.
+
+### Alerts & Runbooks
+
+- **Sentry** — error tracking and alerts (source maps uploaded during deploy)
+- **Honeycomb** — distributed tracing (optional)
+- **Telegram Bot** — operational notifications
+
+See:
+- `docs/alerting-setup.md` — configure alerts
+- `docs/incident-runbook.md` — incident response
+- `docs/runbooks/` — specific failure scenarios
+
+---
+
+## 4. Rollback
+
+If the deployment introduces issues:
+
+```bash
+cd apps/sophia-ai-factory
+npx wrangler rollback --name sophia-ai-factory --yes
+```
+
+This reverts to the previous Worker version. Then investigate and fix before redeploying.
+
+---
+
+## 5. Load Testing
+
+Basic load test utility:
+
+```bash
+node scripts/load-test.mjs https://sophia.agencyos.network 10 100
+# 10 concurrent workers, 100 requests each = 1000 total
+```
+
+For comprehensive load testing, use k6 scripts:
+
+```bash
+npm run test:load:steady   # baseline sustained load
+npm run test:load:spike    # spike test
+npm run test:load:soak     # soak test (duration)
+```
+
 
 ### Option B: Self-Hosted n8n
 1. Run n8n using Docker:

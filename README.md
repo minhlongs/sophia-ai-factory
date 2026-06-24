@@ -52,6 +52,9 @@ There is no active root `packages/` workspace. Treat the root package as orchest
 - **URL**: https://sophia.agencyos.network
 - **Deploy doctrine**: GitHub Actions deploy is disabled by design; push first, run `npm run deploy:full` from `apps/sophia-ai-factory`, then verify `/api/version` SHA.
 - **Validation**: `npm run type-check`, `npm run build`, `npm run ci:test`, and Playwright smoke suites live in the app package.
+- **Pre-deploy gate**: Runs automatically before deploy via `scripts/pre-deploy-gate.mjs` — checks git clean, tests, typecheck, secrets, migrations.
+- **Post-deploy smoke**: Basic health checks run after deploy (`scripts/post-deploy-smoke.mjs`). Full E2E smoke can be enabled with `RUN_POSTDEPLOY_E2E=1`.
+- **Runbooks**: Incident response procedures in `apps/sophia-ai-factory/docs/runbooks/`.
 
 ## Canonical Runtime Paths
 

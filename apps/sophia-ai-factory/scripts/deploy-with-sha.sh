@@ -350,6 +350,20 @@ else
   echo "⚠️ SKIP_SIGNATURE_CHECK=1 — bypassing commit signature check"
 fi
 
+# ─── Step 0.9: Pre-deploy gate (tests, typecheck, secrets, migrations) ────────
+# Blocks deploy if critical checks fail. Emergency bypass: SKIP_PRE_DEPLOY_GATE=1
+if [ "${SKIP_PRE_DEPLOY_GATE:-0}" != "1" ]; then
+  echo "==> pre-deploy gate validation"
+  if ! node scripts/pre-deploy-gate.mjs; then
+    echo "❌ Pre-deploy gate failed — aborting deploy"
+    echo "Fix the issues above or bypass with SKIP_PRE_DEPLOY_GATE=1 (emergency only)"
+    exit 1
+  fi
+  echo "✅ pre-deploy gate passed"
+else
+  echo "⚠️ SKIP_PRE_DEPLOY_GATE=1 — bypassing pre-deploy gate"
+fi
+
 # ─── Step 1: Next.js build ───────────────────────────────────────────────────
 # NEXT_PUBLIC_* vars are baked into the client bundle at build time.
 if [ "${SKIP_NEXT_BUILD:-0}" = "1" ]; then
@@ -578,6 +592,22 @@ if [ "$HTTP_STATUS" != "200" ]; then
   exit 2
 fi
 echo "✅ Production HTTP: $HTTP_STATUS"
+
+# ─── Step 5.7: Basic post-deploy smoke (health + version) ─────────────────────
+# Runs minimal health checks; write report if SMOKE_REPORT_PATH set.
+# Bypass: SKIP_SMOKE_TEST=1
+if [ "${SKIP_SMOKE_TEST:-0}" != "1" ]; then
+  echo "==> post-deploy smoke checks"
+  SMOKE_OUTPUT="${SMOKE_REPORT_PATH:-}"
+  if node scripts/post-deploy-smoke.mjs "$PROD_URL" "$COMMIT_SHORT" "$SMOKE_OUTPUT"; then
+    echo "✅ post-deploy smoke passed"
+  else
+    echo "❌ post-deploy smoke FAILED — review logs, consider rollback"
+    # Non-fatal: script continues; operator decides on rollback per runbook
+  fi
+else
+  echo "⚠️ SKIP_SMOKE_TEST=1 — skipping post-deploy smoke"
+fi
 
 echo ""
 echo "Deploy complete."
