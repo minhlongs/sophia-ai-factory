@@ -26,7 +26,7 @@ export async function withMiddleware(
   // Rate limit check
   const rateLimit = await checkRateLimit(chatId)
   if (!rateLimit.allowed) {
-    await sendMessage(chatId, formatRateLimitMessage(rateLimit.resetInSeconds))
+    await sendMessage(chatId, formatRateLimitMessage(rateLimit.retryAfter))
     return
   }
   await handler()

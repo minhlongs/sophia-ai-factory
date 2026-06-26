@@ -1,6 +1,7 @@
 import { toError } from '@/seed/utils/to-error';
 import type { QueryResult } from '@/seed/db/d1-query-types';
 import { D1QueryChain } from '@/seed/db/d1-query-chain';
+import type { D1Database, D1PreparedStatement, D1Result } from '@cloudflare/workers-types';
 
 /**
  * D1 Client — drop-in replacement for Supabase createServerClient()
@@ -12,14 +13,23 @@ export class D1Client {
     this.db = db;
   }
 
-  /**
-   * Returns the underlying D1Database binding.
-   * Use sparingly — prefer the typed query methods on D1Client.
-   * Currently only consumed by code paths that bridge to legacy raw-D1
-   * helpers (e.g., schedule-publish.ts) pending full migration.
-   */
+  /** Raw D1Database binding — use sparingly */
   unwrap(): D1Database {
     return this.db;
+  }
+
+  /** Compatibility: forward prepare() for legacy code */
+  prepare(sql: string): D1PreparedStatement {
+    return this.db.prepare(sql);
+  }
+
+  /** Compatibility: direct execute for raw SQL */
+  async execute(sql: string, params?: unknown[]): Promise<D1Result> {
+    const stmt = this.db.prepare(sql);
+    if (params && params.length > 0) {
+      stmt.bind(...params);
+    }
+    return stmt.run();
   }
 
   from<T = Record<string, unknown>>(table: string): D1QueryChain<T> {
