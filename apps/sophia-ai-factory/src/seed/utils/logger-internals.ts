@@ -34,7 +34,7 @@ import { safeLog } from '@/seed/observability/telemetry/safe-log';
 import { LogBuffer } from '@/seed/observability/telemetry/log-buffer';
 import { pushBatch, type BetterStackConfig } from '@/seed/observability/telemetry/better-stack-client';
 
-const isDevelopment = process.env.NODE_ENV === 'development';
+const isDevelopment = process.env.NODE_ENV !== 'production';
 
 // Lazy-constructed Better Stack buffer. Kept for callers that explicitly flush.
 declare global {
@@ -122,7 +122,7 @@ export const formatLogEntry = (entry: LogEntry): string => {
     let output = parts.join(' ');
 
     if (entry.metadata && Object.keys(entry.metadata).length > 0) {
-      output += `\n  Metadata: ${JSON.stringify(entry.metadata, null, 2)}`;
+      output += `\n  Metadata: ${JSON.stringify(entry.metadata)}`;
     }
 
     if (entry.error) {
@@ -132,7 +132,7 @@ export const formatLogEntry = (entry: LogEntry): string => {
       if (entry.error.details !== undefined) extras.details = entry.error.details;
       if (entry.error.hint !== undefined) extras.hint = entry.error.hint;
       if (Object.keys(extras).length > 0) {
-        output += `\n  Details: ${JSON.stringify(extras, null, 2)}`;
+        output += `\n  Details: ${JSON.stringify(extras)}`;
       }
       if (entry.error.stack) {
         output += `\n${entry.error.stack}`;
@@ -221,14 +221,12 @@ export const log = (
 
   switch (level) {
   case 'error':
-    console.error(formatted); // LEGIT FALLBACK — do not replace
+    if (isDevelopment) console.log(formatted);
+    console.error(formatted);
     pushToBetterStack('error', entry.message, entry.metadata, entry.requestId, entry.error ? { name: entry.error.name, message: entry.error.message, stack: entry.error.stack } : undefined);
     if (error) {
-      // SDK path: captureException with full stack trace
       captureToSentry(error, entry.metadata).catch(() => { /* no-op */ });
     } else {
-      // C2: message-only errors (no Error object) -> forwardToSentry HTTP forwarder
-      // fire-and-forget; never blocks caller
       void forwardToSentry({
         level: 'error',
         message: entry.message,
@@ -237,16 +235,18 @@ export const log = (
     }
     break;
   case 'warn':
-    pushToBetterStack('warn', entry.message, entry.metadata, entry.requestId);
+    if (isDevelopment) console.log(formatted);
     console.warn(`[logger-fallback] ${formatted}`);
+    pushToBetterStack('warn', entry.message, entry.metadata, entry.requestId);
     break;
   case 'debug':
+    if (isDevelopment) console.log(formatted);
     pushToBetterStack('debug', entry.message, entry.metadata, entry.requestId);
-    if (isDevelopment) console.debug(formatted);
+    console.debug(formatted);
     break;
   default:
+    if (isDevelopment) console.log(formatted);
     pushToBetterStack('info', entry.message, entry.metadata, entry.requestId);
-    // Silent fallback — no console.log in production per go-live-audit rule
   }
 };
 
@@ -350,5 +350,7 @@ export function dispatch(
   const meta3 = typeof arg3 === 'object' ? arg3 : undefined;
   const reqId3 = typeof arg3 === 'string' ? arg3 : arg4;
   const { err, meta, reqId } = resolveErrorArgs(arg2, meta3, reqId3);
-  log(level, message, meta, err, reqId);
+  // Merge context (meta3) with additional metadata (meta) from args
+  const mergedMeta = meta && meta3 ? { ...meta3, ...meta } : (meta || meta3);
+  log(level, message, mergedMeta, err, reqId);
 }

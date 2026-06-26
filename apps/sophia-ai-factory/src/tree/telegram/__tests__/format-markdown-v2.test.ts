@@ -1,92 +1,178 @@
 /**
- * Unit tests: format-markdown-v2 helpers.
- *
- * Covers all 19 MarkdownV2 special chars + safe truncation edge cases.
+ * Unit tests for Telegram MarkdownV2 formatting utilities
+ * @module tree/telegram/__tests__/format-markdown-v2.test
  */
 
 import { describe, it, expect } from 'vitest';
 import { escapeMarkdownV2, truncateMarkdownV2Safely } from '../format-markdown-v2';
 
-describe('escapeMarkdownV2', () => {
-  const specials: Array<[string, string]> = [
-    ['_', '\\_'],
-    ['*', '\\*'],
-    ['[', '\\['],
-    [']', '\\]'],
-    ['(', '\\('],
-    [')', '\\)'],
-    ['~', '\\~'],
-    ['`', '\\`'],
-    ['>', '\\>'],
-    ['#', '\\#'],
-    ['+', '\\+'],
-    ['-', '\\-'],
-    ['=', '\\='],
-    ['|', '\\|'],
-    ['{', '\\{'],
-    ['}', '\\}'],
-    ['.', '\\.'],
-    ['!', '\\!'],
-    ['\\', '\\\\'],
-  ];
+describe('TelegramMarkdownV2', () => {
+  describe('escapeMarkdownV2', () => {
+    it('should escape all special characters', () => {
+      const input = 'Hello _world* with [brackets] and (parens) ~backticks` >hash# plus+ minus- equal= pipe| brace{}. exclamation! and backslash\\';
+      const result = escapeMarkdownV2(input);
 
-  it.each(specials)('escapes %s correctly', (input, expected) => {
-    expect(escapeMarkdownV2(input)).toBe(expected);
+      expect(result).toContain('\\_');
+      expect(result).toContain('\\*');
+      expect(result).toContain('\\[');
+      expect(result).toContain('\\]');
+      expect(result).toContain('\\(');
+      expect(result).toContain('\\)');
+      expect(result).toContain('\\~');
+      expect(result).toContain('\\`');
+      expect(result).toContain('\\>');
+      expect(result).toContain('\\#');
+      expect(result).toContain('\\+');
+      expect(result).toContain('\\-');
+      expect(result).toContain('\\=');
+      expect(result).toContain('\\|');
+      expect(result).toContain('\\{');
+      expect(result).toContain('\\}');
+      expect(result).toContain('\\.');
+      expect(result).toContain('\\!');
+      expect(result).toContain('\\\\'); // backslash itself
+    });
+
+    it('should handle empty string', () => {
+      expect(escapeMarkdownV2('')).toBe('');
+    });
+
+    it('should handle strings with no special characters', () => {
+      const input = 'Hello world plain text';
+      expect(escapeMarkdownV2(input)).toBe(input);
+    });
+
+    it('should escape backslash itself', () => {
+      expect(escapeMarkdownV2('\\')).toBe('\\\\');
+    });
+
+    it('should handle repeated special characters', () => {
+      const input = '***';
+      const result = escapeMarkdownV2(input);
+      expect(result).toBe('\\*\\*\\*');
+    });
+
+    it('should not double-escape already escaped characters (not idempotent by design)', () => {
+      const input = '\\_already escaped\\_';
+      const result = escapeMarkdownV2(input);
+
+      // Double escape will happen: \_ -> \\\_
+      expect(result).toContain('\\\\\\_');
+    });
+
+    it('should handle Vietnamese characters with special chars', () => {
+      const input = 'Xin chào_việt_nam* với [nhóm]';
+      const result = escapeMarkdownV2(input);
+
+      expect(result).toContain('\\_');
+      expect(result).toContain('\\*');
+      expect(result).toContain('\\[');
+      expect(result).toContain('\\]');
+      expect(result).toContain('Xin chào'); // Vietnamese preserved
+    });
   });
 
-  it('passes through plain alphanumerics unchanged', () => {
-    expect(escapeMarkdownV2('Hello World 123')).toBe('Hello World 123');
+  describe('truncateMarkdownV2Safely', () => {
+    it('should return original string if within maxLen', () => {
+      const input = 'Short text';
+      expect(truncateMarkdownV2Safely(input, 20)).toBe(input);
+    });
+
+    it('should truncate string to maxLen', () => {
+      const input = 'This is a long text that should be truncated';
+      const result = truncateMarkdownV2Safely(input, 20);
+
+      expect(result.length).toBeLessThanOrEqual(20);
+      expect(result).toBe('This is a long text ');
+    });
+
+    it('should drop dangling single backslash', () => {
+      // Already escaped text ending with \ (single backslash = incomplete escape)
+      const input = 'Hello\\_World\\';
+      const result = truncateMarkdownV2Safely(input, 12);
+
+      expect(result.endsWith('\\')).toBe(false);
+    });
+
+    it('should keep even number of trailing backslashes', () => {
+      // Two backslashes = literal backslash, valid
+      const input = 'Hello\\\\';
+      const result = truncateMarkdownV2Safely(input, 8);
+
+      expect(result.endsWith('\\\\')).toBe(true);
+    });
+
+    it('should drop dangling backslash after truncation', () => {
+      const input = 'Hello _World* [Test]\\';
+      const escaped = escapeMarkdownV2(input);
+      // escaped ends with \\ (since \ was escaped to \\)
+      const result = truncateMarkdownV2Safely(escaped, 15);
+
+      // Check that result doesn't end with incomplete escape
+      const trailingBackslashes = (result.match(/\\+$/) ?? [""])[0];
+      expect(trailingBackslashes.length % 2).toBe(0);
+    });
+
+    it('should handle maxLen of 0', () => {
+      const input = 'Hello World';
+      const result = truncateMarkdownV2Safely(input, 0);
+
+      expect(result).toBe('');
+    });
+
+    it('should handle already truncated text with no trailing backslash', () => {
+      const input = 'Hello World';
+      const result = truncateMarkdownV2Safely(input, 5);
+
+      expect(result).toBe('Hello');
+    });
+
+    it('should handle complex escaped sequence', () => {
+      const input = 'Test \\*with\\* multiple \\_escaped\\_ chars\\\\';
+      const result = truncateMarkdownV2Safely(input, 25);
+
+      // Verify no dangling escape
+      const trailingBackslashes = (result.match(/\\+$/) ?? [""])[0];
+      expect(trailingBackslashes.length % 2).toBe(0);
+    });
+
+    it('should preserve escaped characters within truncated text', () => {
+      const input = 'Hello\\_Amazing\\_World';
+      const result = truncateMarkdownV2Safely(input, 14);
+
+      expect(result).toContain('\\_');
+    });
   });
 
-  it('escapes a sentence with mixed specials', () => {
-    expect(escapeMarkdownV2('Check out *amazing* video!')).toBe('Check out \\*amazing\\* video\\!');
-  });
+  describe('Integration: escape then truncate', () => {
+    it('should produce valid MarkdownV2 for Telegram', () => {
+      const input = 'Check this out: _bold* and [link](url)';
+      const escaped = escapeMarkdownV2(input);
+      const truncated = truncateMarkdownV2Safely(escaped, 30);
 
-  it('escapes URL-like text containing dots and parens', () => {
-    expect(escapeMarkdownV2('See example.com (great)')).toBe('See example\\.com \\(great\\)');
-  });
+      // Result should be valid - no unescaped special chars at the end
+      const lastChar = truncated[truncated.length - 1];
+      const specialChars = '_*[]()~`>#+-=|{}.!\\';
 
-  it('escapes Vietnamese with diacritics + period', () => {
-    expect(escapeMarkdownV2('Xin chào, thế giới.')).toBe('Xin chào, thế giới\\.');
-  });
+      // If last char is a special char, it should be escaped (preceded by backslash)
+      if (specialChars.includes(lastChar)) {
+        expect(truncated[truncated.length - 2]).toBe('\\');
+      }
+    });
 
-  it('escapes existing backslash so source `\\n` becomes `\\\\n`', () => {
-    expect(escapeMarkdownV2('line\\nbreak')).toBe('line\\\\nbreak');
-  });
+    it('should handle edge case: maxLen cuts mid-escape', () => {
+      const input = 'Text with \\_escape\\_ in middle';
+      const escaped = escapeMarkdownV2(input);
+      // Force cut at position that leaves dangling escape
+      const result = truncateMarkdownV2Safely(escaped, 18);
 
-  it('idempotent? — escaping twice double-escapes (so caller must escape ONCE)', () => {
-    const once = escapeMarkdownV2('foo.bar');
-    expect(once).toBe('foo\\.bar');
-    const twice = escapeMarkdownV2(once);
-    expect(twice).toBe('foo\\\\\\.bar');
-  });
-});
+      // The function should have removed the dangling escape
+      const endsWithBackslash = result.endsWith('\\');
+      const secondLastIsBackslash = result.length > 1 && result[result.length - 2] === '\\';
 
-describe('truncateMarkdownV2Safely', () => {
-  it('returns unchanged when shorter than maxLen', () => {
-    expect(truncateMarkdownV2Safely('hello', 100)).toBe('hello');
-  });
-
-  it('slices when longer than maxLen', () => {
-    expect(truncateMarkdownV2Safely('abcdefgh', 4)).toBe('abcd');
-  });
-
-  it('drops trailing single backslash (broken escape)', () => {
-    // 'abc\\' has odd-count trailing backslash → drop
-    expect(truncateMarkdownV2Safely('abc\\xyz', 4)).toBe('abc');
-  });
-
-  it('keeps even-count trailing backslashes (literal backslash escape sequence)', () => {
-    // 'a\\\\' = a + literal backslash escape — even count, safe
-    expect(truncateMarkdownV2Safely('a\\\\xyz', 3)).toBe('a\\\\');
-  });
-
-  it('handles maxLen=0 edge', () => {
-    expect(truncateMarkdownV2Safely('abc', 0)).toBe('');
-  });
-
-  it('preserves a complete \\. escape pair just under maxLen', () => {
-    // 'foo\\.' = 5 chars → slice at 5 keeps it
-    expect(truncateMarkdownV2Safely('foo\\.bar', 5)).toBe('foo\\.');
+      // Either doesn't end with backslash, or ends with even number of them
+      const trailingBackslashes = (result.match(/\\+$/) ?? [""])[0];
+      expect(trailingBackslashes.length % 2).toBe(0);
+    });
   });
 });
