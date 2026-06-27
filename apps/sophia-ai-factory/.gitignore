@@ -79,3 +79,4 @@ docs/audit/*/
 node_modules/
 plans/reports/*.md
 .sbom/
+.claude/worktrees/
