@@ -5,6 +5,7 @@
  */
 export * from './admin';
 export * from './audit';
+export * from './budget';
 export * from './byok';
 export * from './clients';
 export * from './compliance';

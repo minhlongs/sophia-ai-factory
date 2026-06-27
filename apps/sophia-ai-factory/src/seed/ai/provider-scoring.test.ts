@@ -433,3 +433,357 @@ describe('formatRanking', () => {
     expect(formatRanking([])).toBe('');
   });
 });
+
+// ── Keyword overlap ────────────────────────────────────────────────────────────
+
+describe('keyword overlap', () => {
+  it('returns modest default for empty bestFor with non-empty intent', () => {
+    const score = scoreProvider(makeTool({ bestFor: [] }), makeContext({ intent: 'cinematic video production' }));
+    expect(score.task_fit).toBeGreaterThanOrEqual(0.3);
+  });
+
+  it('returns high overlap when intent is subset of best_for', () => {
+    const tool = makeTool({ bestFor: ['cinematic video', 'film production', 'movie trailer'] });
+    const score = scoreProvider(tool, makeContext({ intent: 'cinematic video' }));
+    expect(score.task_fit).toBeGreaterThan(0.6);
+  });
+
+  it('returns low overlap when intent has no matching terms', () => {
+    const tool = makeTool({ bestFor: ['image generation', 'photo editing'] });
+    const score = scoreProvider(tool, makeContext({ intent: 'cinematic video production' }));
+    expect(score.task_fit).toBeLessThan(0.4);
+  });
+
+  it('handles partial overlap correctly', () => {
+    const tool = makeTool({ bestFor: ['social media', 'tiktok', 'instagram reels'] });
+    const score = scoreProvider(tool, makeContext({ intent: 'social media content' }));
+    expect(score.task_fit).toBeGreaterThan(0.3);
+    expect(score.task_fit).toBeLessThan(0.9);
+  });
+
+  it('is case-insensitive', () => {
+    const tool = makeTool({ bestFor: ['Cinematic Video', 'FILM Production'] });
+    const score = scoreProvider(tool, makeContext({ intent: 'CINEMATIC VIDEO' }));
+    expect(score.task_fit).toBeGreaterThan(0.6);
+  });
+
+  it('handles punctuation in tokens (hyphenated tokens match)', () => {
+    const tool = makeTool({ bestFor: ['video-generation', 'film-making'] });
+    const score = scoreProvider(tool, makeContext({ intent: 'video generation' }));
+    expect(score.task_fit).toBeGreaterThan(0.3);
+  });
+});
+
+// ── Synonym expansion ──────────────────────────────────────────────────────────
+
+describe('synonym expansion', () => {
+  it('expands "trailer" via cinematic cluster', () => {
+    const tool = makeTool({ bestFor: ['cinematic content', 'film production'] });
+    const score = scoreProvider(tool, makeContext({ intent: 'movie trailer' }));
+    expect(score.task_fit).toBeGreaterThan(0.5);
+  });
+
+  it('expands "lesson" via educational cluster', () => {
+    const tool = makeTool({ bestFor: ['educational content', 'tutorial videos'] });
+    const score = scoreProvider(tool, makeContext({ intent: 'teaching lesson' }));
+    expect(score.task_fit).toBeGreaterThan(0.5);
+  });
+
+  it('expands "viral" via social cluster', () => {
+    const tool = makeTool({ bestFor: ['tiktok videos', 'social media'] });
+    const score = scoreProvider(tool, makeContext({ intent: 'viral social content' }));
+    expect(score.task_fit).toBeGreaterThan(0.5);
+  });
+
+  it('expands "motion" via animation cluster', () => {
+    const tool = makeTool({ bestFor: ['animated content', 'motion graphics'] });
+    const score = scoreProvider(tool, makeContext({ intent: 'motion design' }));
+    expect(score.task_fit).toBeGreaterThan(0.5);
+  });
+
+  it('expands "speech" via voiceover cluster', () => {
+    const tool = makeTool({ bestFor: ['voiceover', 'narration'] });
+    const score = scoreProvider(tool, makeContext({ intent: 'speech synthesis' }));
+    expect(score.task_fit).toBeGreaterThan(0.5);
+  });
+
+  it('expands "ambient" via music cluster', () => {
+    const tool = makeTool({ bestFor: ['music', 'soundtrack'] });
+    const score = scoreProvider(tool, makeContext({ intent: 'ambient background' }));
+    expect(score.task_fit).toBeGreaterThan(0.5);
+  });
+
+  it('no synonym match when no cluster words present', () => {
+    const tool = makeTool({ bestFor: ['data processing', 'analytics'] });
+    const score = scoreProvider(tool, makeContext({ intent: 'random unrelated words xyz' }));
+    expect(score.task_fit).toBeLessThan(0.4);
+  });
+
+  it('synonym expansion applies to styleKeywords', () => {
+    const tool = makeTool({ bestFor: ['cinematic video', 'film production'] });
+    const score = scoreProvider(tool, makeContext({
+      intent: 'create content',
+      styleKeywords: ['dramatic', 'epic'],
+    }));
+    expect(score.task_fit).toBeGreaterThan(0.3);
+  });
+});
+
+// ── Weighted score calculation ─────────────────────────────────────────────────
+
+describe('weighted score calculation', () => {
+  it('all weighted_scores are within [0, 1]', () => {
+    const tools = [
+      makeTool({ stability: 'production', bestFor: ['cinematic video'] }),
+      makeTool({ stability: 'experimental', bestFor: [] }),
+      makeTool({ stability: 'beta', bestFor: ['social media'] }),
+    ];
+    for (const s of rankProviders(tools, makeContext())) {
+      expect(s.weighted_score).toBeGreaterThanOrEqual(0);
+      expect(s.weighted_score).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('higher task_fit yields higher weighted_score', () => {
+    const ctx = makeContext({ intent: 'cinematic video', styleKeywords: ['dramatic'] });
+    const highFit = scoreProvider(
+      makeTool({ bestFor: ['cinematic video', 'film production'], stability: 'production' }),
+      ctx,
+    );
+    const lowFit = scoreProvider(
+      makeTool({ bestFor: ['image generation', 'photo editing'], stability: 'production' }),
+      ctx,
+    );
+    expect(highFit.weighted_score).toBeGreaterThan(lowFit.weighted_score);
+  });
+
+  it('higher reliability yields higher weighted_score', () => {
+    const ctx = makeContext({ intent: 'cinematic video' });
+    const prodScore = scoreProvider(
+      makeTool({ stability: 'production', bestFor: ['cinematic video'] }),
+      ctx,
+    );
+    const expScore = scoreProvider(
+      makeTool({ stability: 'experimental', bestFor: ['cinematic video'] }),
+      ctx,
+    );
+    expect(prodScore.weighted_score).toBeGreaterThan(expScore.weighted_score);
+  });
+
+  it('cost efficiency affects weighted_score', () => {
+    const ctx = makeContext({ intent: 'cinematic video', budgetRemainingUsd: 10 });
+    const cheapScore = scoreProvider(
+      makeTool({ bestFor: ['cinematic video'], estimateCost: () => 0.01 }),
+      ctx,
+    );
+    const expensiveScore = scoreProvider(
+      makeTool({ bestFor: ['cinematic video'], estimateCost: () => 5.0 }),
+      ctx,
+    );
+    expect(cheapScore.cost_efficiency).toBeGreaterThan(expensiveScore.cost_efficiency);
+    expect(cheapScore.weighted_score).toBeGreaterThan(expensiveScore.weighted_score);
+  });
+
+  it('task_fit weight dominates composite when fit differs greatly', () => {
+    const perfectFit = scoreProvider(
+      makeTool({ bestFor: ['cinematic video', 'film production', 'movie trailer', 'dramatic content'] }),
+      makeContext({ intent: 'cinematic video production' }),
+    );
+    const poorFit = scoreProvider(
+      makeTool({ bestFor: ['image generation'] }),
+      makeContext({ intent: 'cinematic video production' }),
+    );
+    expect(perfectFit.weighted_score - poorFit.weighted_score).toBeGreaterThan(0.15);
+  });
+
+  it('continuity bonus increases score for locked providers', () => {
+    const lockedCtx = makeContext({ lockedProviders: ['openrouter'] });
+    const lockedScore = scoreProvider(
+      makeTool({ provider: 'openrouter', bestFor: ['cinematic video'] }),
+      lockedCtx,
+    );
+    const unlockedScore = scoreProvider(
+      makeTool({ provider: 'anthropic', bestFor: ['cinematic video'] }),
+      lockedCtx,
+    );
+    expect(lockedScore.continuity).toBeGreaterThan(unlockedScore.continuity);
+    expect(lockedScore.weighted_score).toBeGreaterThan(unlockedScore.weighted_score);
+  });
+
+  it('motionRequired penalty reduces task_fit for image-only tools', () => {
+    const videoCtx = makeContext({ motionRequired: true, assetType: 'video' });
+    const imageScore = scoreProvider(
+      makeTool({ capability: 'image_generation', bestFor: ['image creation'] }),
+      videoCtx,
+    );
+    const videoScore = scoreProvider(
+      makeTool({ capability: 'video_generation', bestFor: ['video creation'] }),
+      videoCtx,
+    );
+    expect(imageScore.task_fit).toBeLessThan(videoScore.task_fit);
+    expect(imageScore.task_fit).toBeLessThan(0.3);
+  });
+});
+
+// ── Rank ordering ──────────────────────────────────────────────────────────────
+
+describe('rank ordering', () => {
+  it('sorts descending by weighted_score', () => {
+    const tools = [
+      makeTool({ name: 'Worst', stability: 'experimental', bestFor: [] }),
+      makeTool({ name: 'Best', stability: 'production', bestFor: ['cinematic video', 'film production'] }),
+      makeTool({ name: 'Mid', stability: 'beta', bestFor: ['video content'] }),
+    ];
+    const rankings = rankProviders(tools, makeContext());
+    expect(rankings[0]!.toolName).toBe('Best');
+    expect(rankings[1]!.toolName).toBe('Mid');
+    expect(rankings[2]!.toolName).toBe('Worst');
+  });
+
+  it('single tool returns single-element array', () => {
+    const rankings = rankProviders([makeTool()], makeContext());
+    expect(rankings).toHaveLength(1);
+    expect(rankings[0]!.provider).toBe('test-provider');
+  });
+
+  it('rankings include all dimensions', () => {
+    const rankings = rankProviders([makeTool()], makeContext());
+    const score = rankings[0]!;
+    expect(score).toHaveProperty('provider');
+    expect(score).toHaveProperty('toolName');
+    expect(score).toHaveProperty('task_fit');
+    expect(score).toHaveProperty('output_quality');
+    expect(score).toHaveProperty('control');
+    expect(score).toHaveProperty('reliability');
+    expect(score).toHaveProperty('cost_efficiency');
+    expect(score).toHaveProperty('latency');
+    expect(score).toHaveProperty('continuity');
+    expect(score).toHaveProperty('weighted_score');
+  });
+
+  it('top-ranked has highest score in a large set', () => {
+    const tools = Array.from({ length: 20 }, (_, i) =>
+      makeTool({
+        name: `Provider${i}`,
+        stability: i < 10 ? 'production' : 'experimental',
+        bestFor: i < 10 ? ['cinematic video', 'film'] : ['unrelated'],
+      }),
+    );
+    const rankings = rankProviders(tools, makeContext());
+    expect(rankings[0]!.weighted_score).toBeGreaterThan(rankings[rankings.length - 1]!.weighted_score);
+  });
+});
+
+// ── Cost efficiency scoring ────────────────────────────────────────────────────
+
+describe('cost efficiency scoring', () => {
+  it('free tool gets cost_efficiency of 1.0', () => {
+    const score = scoreProvider(makeTool({ estimateCost: () => 0 }), makeContext());
+    expect(score.cost_efficiency).toBe(1.0);
+  });
+
+  it('no estimateCost function defaults to 1.0', () => {
+    const score = scoreProvider(makeTool(), makeContext());
+    expect(score.cost_efficiency).toBe(1.0);
+  });
+
+  it('cost under $0.05 with no budget info gets 0.9', () => {
+    const score = scoreProvider(
+      makeTool({ estimateCost: () => 0.01 }),
+      makeContext({ budgetRemainingUsd: undefined }),
+    );
+    expect(score.cost_efficiency).toBeCloseTo(0.9, 1);
+  });
+
+  it('cost $0.05-$0.20 gets 0.7', () => {
+    const score = scoreProvider(
+      makeTool({ estimateCost: () => 0.15 }),
+      makeContext({ budgetRemainingUsd: undefined }),
+    );
+    expect(score.cost_efficiency).toBeCloseTo(0.7, 1);
+  });
+
+  it('cost $0.20-$1.00 gets 0.5', () => {
+    const score = scoreProvider(
+      makeTool({ estimateCost: () => 0.50 }),
+      makeContext({ budgetRemainingUsd: undefined }),
+    );
+    expect(score.cost_efficiency).toBeCloseTo(0.5, 1);
+  });
+
+  it('cost over $1.00 gets 0.3', () => {
+    const score = scoreProvider(
+      makeTool({ estimateCost: () => 2.0 }),
+      makeContext({ budgetRemainingUsd: undefined }),
+    );
+    expect(score.cost_efficiency).toBeCloseTo(0.3, 1);
+  });
+
+  it('zero remaining budget gives 0.0 efficiency', () => {
+    const score = scoreProvider(
+      makeTool({ estimateCost: () => 0.10 }),
+      makeContext({ budgetRemainingUsd: 0 }),
+    );
+    expect(score.cost_efficiency).toBe(0.0);
+  });
+
+  it('cost > 50% of remaining budget gives 0.1', () => {
+    const score = scoreProvider(
+      makeTool({ estimateCost: () => 0.60 }),
+      makeContext({ budgetRemainingUsd: 1.0 }),
+    );
+    expect(score.cost_efficiency).toBeCloseTo(0.1, 1);
+  });
+
+  it('cost 20-50% of remaining budget gives 0.5', () => {
+    const score = scoreProvider(
+      makeTool({ estimateCost: () => 0.30 }),
+      makeContext({ budgetRemainingUsd: 1.0 }),
+    );
+    expect(score.cost_efficiency).toBeCloseTo(0.5, 1);
+  });
+
+  it('cost under 20% of remaining budget gives 0.8', () => {
+    const score = scoreProvider(
+      makeTool({ estimateCost: () => 0.10 }),
+      makeContext({ budgetRemainingUsd: 1.0 }),
+    );
+    expect(score.cost_efficiency).toBeCloseTo(0.8, 1);
+  });
+
+  it('estimateCost throwing does not crash scoring', () => {
+    const tool = makeTool({
+      estimateCost: () => {
+        throw new Error('cost estimation failed');
+      },
+    });
+    expect(() => scoreProvider(tool, makeContext())).not.toThrow();
+    const score = scoreProvider(tool, makeContext());
+    expect(score.cost_efficiency).toBe(1.0);
+  });
+});
+
+// ── DIMENSION_WEIGHTS invariants ───────────────────────────────────────────────
+
+describe('DIMENSION_WEIGHTS invariants', () => {
+  it('all weights are non-negative', () => {
+    for (const w of Object.values(DIMENSION_WEIGHTS)) {
+      expect(w).toBeGreaterThanOrEqual(0);
+    }
+  });
+
+  it('all weights are at most 1', () => {
+    for (const w of Object.values(DIMENSION_WEIGHTS)) {
+      expect(w).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('task_fit is the largest weight', () => {
+    expect(DIMENSION_WEIGHTS.task_fit).toBeGreaterThanOrEqual(DIMENSION_WEIGHTS.output_quality);
+    expect(DIMENSION_WEIGHTS.task_fit).toBeGreaterThanOrEqual(DIMENSION_WEIGHTS.control);
+    expect(DIMENSION_WEIGHTS.task_fit).toBeGreaterThanOrEqual(DIMENSION_WEIGHTS.reliability);
+    expect(DIMENSION_WEIGHTS.task_fit).toBeGreaterThanOrEqual(DIMENSION_WEIGHTS.cost_efficiency);
+    expect(DIMENSION_WEIGHTS.task_fit).toBeGreaterThanOrEqual(DIMENSION_WEIGHTS.latency);
+    expect(DIMENSION_WEIGHTS.task_fit).toBeGreaterThanOrEqual(DIMENSION_WEIGHTS.continuity);
+  });
+});

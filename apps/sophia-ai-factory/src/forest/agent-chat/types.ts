@@ -23,6 +23,8 @@ export interface ChatContext {
 export type SseEvent =
   | { type: 'token'; data: string }
   | { type: 'reasoning'; data: string }
+  | { type: 'tool_call'; data: { id: string; name: string; args: Record<string, unknown> } }
+  | { type: 'tool_result'; data: { id: string; name: string; success: boolean; content: string | Record<string, unknown>; error?: string } }
   | { type: 'done' }
   | { type: 'error'; message: string };
 
