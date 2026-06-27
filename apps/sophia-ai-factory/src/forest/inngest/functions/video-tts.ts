@@ -5,14 +5,52 @@
  * Listens: video.script.ready
  * Transition: scripting → tts_pending → (dispatches video.tts.ready)
  * Calls Coqui XTTS v2 via /api/internal/tts proxy.
+ * Emits: video.tts.ready, campaign.progress (SSE)
  */
 
 import { inngest } from '@/seed/inngest/client';
 import { createServerClient } from '@/seed/db/client';
 import { recordCost } from '@/land/video/templates/cost-ledger';
 import { assertValidTransition } from '@/land/video/generation/video-job-fsm';
+import { logger } from '@/seed/utils/logger-utility';
 import type { VideoJobStatus } from '@/land/video/generation/video-job-fsm';
 import { synthesize } from '@/land/video/generation/tts-client';
+
+/** Progress payload emitted via inngest.send for SSE streaming */
+interface ProgressPayload {
+  type: 'campaign.progress';
+  campaignId: string;
+  step: 'scripting' | 'tts' | 'visual' | 'compose' | 'publish' | 'complete' | 'error';
+  progress: number;
+  message: string;
+  timestamp: number;
+}
+
+/**
+ * Emit a campaign.progress event for SSE subscribers.
+ * Uses inngest.send() for cross-function event delivery.
+ */
+async function emitProgress(
+  campaignId: string,
+  step: ProgressPayload['step'],
+  progress: number,
+  message: string,
+): Promise<void> {
+  const payload: ProgressPayload = {
+    type: 'campaign.progress',
+    campaignId,
+    step,
+    progress,
+    message,
+    timestamp: Date.now(),
+  };
+  await inngest.send({
+    id: `progress-${campaignId}-${step}-${payload.timestamp}`,
+    name: 'campaign.progress',
+    data: payload,
+  });
+  logger.info('[videoTTS] Progress emitted', { campaignId, step, progress, message });
+}
 
 interface VideoJobRow {
   status: VideoJobStatus;
@@ -30,6 +68,9 @@ export const videoTTS = inngest.createFunction(
       tenantId: string;
       userId: string;
     };
+
+    // Emit: TTS started
+    await emitProgress(jobId, 'tts', 15, 'Bắt đầu tổng hợp giọng nói / Starting TTS synthesis');
 
     await step.run('transition-to-tts-pending', async () => {
       const db = createServerClient();
@@ -88,6 +129,9 @@ export const videoTTS = inngest.createFunction(
 
       return result;
     });
+
+    // Emit: TTS complete (25%)
+    await emitProgress(jobId, 'tts', 25, 'Giọng nói đã tổng hợp xong / TTS synthesis complete');
 
     await step.run('record-cost', async () => {
       await recordCost({ jobId, stage: 'tts', provider: 'coqui', units: durationSec, costUsd });

@@ -6,7 +6,7 @@
  * Transition: tts_pending → visual_pending
  * Generates talking-head video via HeyGen API (shared helpers).
  * Falls back to placeholder if HeyGen key not configured.
- * Emits: video.visual.ready
+ * Emits: video.visual.ready, campaign.progress (SSE)
  */
 
 import { inngest } from '@/seed/inngest/client';
@@ -16,6 +16,42 @@ import { assertValidTransition } from '@/land/video/generation/video-job-fsm';
 import { createHeyGenVideo } from '@/land/video/templates/heygen-helpers';
 import { logger } from '@/seed/utils/logger-utility';
 import type { VideoJobStatus } from '@/land/video/generation/video-job-fsm';
+
+/** Progress payload emitted via inngest.send for SSE streaming */
+interface ProgressPayload {
+  type: 'campaign.progress';
+  campaignId: string;
+  step: 'scripting' | 'tts' | 'visual' | 'compose' | 'publish' | 'complete' | 'error';
+  progress: number;
+  message: string;
+  timestamp: number;
+}
+
+/**
+ * Emit a campaign.progress event for SSE subscribers.
+ * Uses inngest.send() for cross-function event delivery.
+ */
+async function emitProgress(
+  campaignId: string,
+  step: ProgressPayload['step'],
+  progress: number,
+  message: string,
+): Promise<void> {
+  const payload: ProgressPayload = {
+    type: 'campaign.progress',
+    campaignId,
+    step,
+    progress,
+    message,
+    timestamp: Date.now(),
+  };
+  await inngest.send({
+    id: `progress-${campaignId}-${step}-${payload.timestamp}`,
+    name: 'campaign.progress',
+    data: payload,
+  });
+  logger.info('[videoVisual] Progress emitted', { campaignId, step, progress, message });
+}
 
 interface VideoJobRow {
   status: VideoJobStatus;
@@ -29,6 +65,9 @@ export const videoVisual = inngest.createFunction(
   { event: 'video.tts.ready' },
   async ({ event, step }) => {
     const { jobId, tenantId, userId } = event.data;
+
+    // Emit: visual started
+    await emitProgress(jobId, 'visual', 30, 'Bắt đầu tạo video / Starting visual generation');
 
     const job = await step.run('load-job', async () => {
       const db = createServerClient();
@@ -70,6 +109,9 @@ export const videoVisual = inngest.createFunction(
         })
         .eq('id', jobId);
     });
+
+    // Emit: visual complete (40%)
+    await emitProgress(jobId, 'visual', 40, 'Video đã tạo xong / Visual generation complete');
 
     await step.run('record-cost', async () => {
       await recordCost({ jobId, stage: 'visual_pending', provider: 'heygen', units: 1, costUsd: 0.50 });

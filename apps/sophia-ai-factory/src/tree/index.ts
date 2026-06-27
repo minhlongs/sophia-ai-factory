@@ -13,5 +13,6 @@ export * from './crypto';
 export * from './discovery';
 export * from './gateway';
 export * from './handover';
+export * from './memory';
 export * from './sop';
 export * from './telegram';

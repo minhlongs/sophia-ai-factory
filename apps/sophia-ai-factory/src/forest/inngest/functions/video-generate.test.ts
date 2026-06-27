@@ -9,6 +9,7 @@
  * - Missing missionId throws in parse-input
  * - Wan job failure propagates error
  * - R2 key convention: video-jobs/{missionId}/{audio.mp3,video.mp4}
+ * - Progress events emitted via inngest.send
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -26,6 +27,7 @@ const {
   mockGetBrandKit,
   mockGenerateSubtitles,
   mockComposeFinalVideo,
+  mockInngestSend,
 } = vi.hoisted(() => ({
   mockGenerateSpeech: vi.fn(),
   mockGenerateVideo: vi.fn(),
@@ -37,6 +39,7 @@ const {
   mockGetBrandKit: vi.fn(),
   mockGenerateSubtitles: vi.fn(),
   mockComposeFinalVideo: vi.fn(),
+  mockInngestSend: vi.fn().mockResolvedValue(undefined),
 }));
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
@@ -44,6 +47,7 @@ const {
 vi.mock('@/seed/inngest/client', () => ({
   inngest: {
     createFunction: (_cfg: unknown, _evt: unknown, handler: (...args: unknown[]) => unknown) => handler,
+    send: mockInngestSend,
   },
 }));
 
@@ -127,35 +131,42 @@ describe('videoGenerate Inngest function', () => {
     mockGetBrandKit.mockReset();
     mockGenerateSubtitles.mockReset();
     mockComposeFinalVideo.mockReset();
+    mockInngestSend.mockReset();
 
     mockGetBrandKit.mockResolvedValue(null);
-    mockGenerateSubtitles.mockResolvedValue({ srt: '1\n00:00:00,000 --> 00:00:05,000\nHello' });
-    mockComposeFinalVideo.mockResolvedValue({ finalR2Key: 'final.mp4', costUsd: 0.07, metadata: { durationSeconds: 10 } });
+    mockGenerateSubtitles.mockResolvedValue({
+      srt: '1\n00:00:00,000 --> 00:00:05,000\nHello',
+    });
+    mockComposeFinalVideo.mockResolvedValue({
+      finalR2Key: 'final.mp4',
+      costUsd: 0.07,
+      metadata: { durationSeconds: 10 },
+    });
 
     process.env.WAN_API_KEY = 'test-wan-key';
     process.env.FISH_SPEECH_API_KEY = 'test-fish-key';
 
     // D1 mock
- const dbMock = {
-    from: vi.fn((table: string) => {
-        if (table === "engine_missions") {
-            return {
-                select: vi.fn((cols: string) => ({
-                    eq: vi.fn((col: string, val: string) => ({
-                        single: vi.fn().mockResolvedValue({ data: null, error: null }),
-                    })),
-                })),
-                update: vi.fn().mockReturnThis(),
-                eq: vi.fn().mockReturnThis(),
-            };
-        }
-        return {
-            select: vi.fn().mockReturnThis(),
+    const dbMock = {
+      from: vi.fn((table: string) => {
+        if (table === 'engine_missions') {
+          return {
+            select: vi.fn((cols: string) => ({
+              eq: vi.fn((col: string, val: string) => ({
+                single: vi.fn().mockResolvedValue({ data: null, error: null }),
+              })),
+            })),
             update: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnThis(),
+          update: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
         };
-    }),
- };
+      }),
+    };
     mockCreateServerClient.mockReturnValue(dbMock);
 
     // R2 mock

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useMemo, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useFormatter } from 'next-intl';
 import {
@@ -28,7 +28,11 @@ import {
   Clock,
   Loader2,
 } from 'lucide-react';
-import { cn } from '@/seed/utils/cn';
+import { useCampaignStream } from '@/forest/hooks/use-campaign-stream';
+import { StepIndicator, Step } from '@/forest/components/progress/step-indicator';
+import { createLogger } from '@/seed/utils/logger-utility';
+
+const logger = createLogger('app/dashboard/components/campaign-detail-modal');
 
 interface CampaignDetailModalProps {
   campaign: Campaign | null;
@@ -70,30 +74,129 @@ function getProgressStatus(status: string | undefined): 'active' | 'complete' | 
   if (status === 'completed') return 'complete';
   if (status === 'failed') return 'error';
   if (status?.includes('processing') || status === 'queued') return 'active';
-  // Default for any other status (shouldn't happen with progress bar shown)
   return 'active';
 }
+
+/** Maps campaign status to the active pipeline step index for the step indicator. */
+function statusToStepIndex(status: string): number {
+  switch (status) {
+    case 'processing_script': return 0;
+    case 'processing_video': return 1;
+    case 'processing_visual': return 2;
+    case 'processing_compose': return 3;
+    case 'publishing': return 4;
+    case 'completed': return 5;
+    case 'failed': return -1;
+    default: return -1;
+  }
+}
+
+/** Derives overall pipeline status from stream events and campaign status. */
+function deriveStreamStatus(
+  campaignStatus: string,
+  events: { type: string; finalStatus?: string; terminal?: boolean }[],
+  connected: boolean,
+): 'active' | 'complete' | 'error' {
+  if (campaignStatus === 'failed') return 'error';
+  if (campaignStatus === 'completed') return 'complete';
+  const streamEnd = events.find((e) => e.type === 'stream_end');
+  if (streamEnd?.finalStatus === 'failed') return 'error';
+  if (streamEnd?.finalStatus === 'completed') return 'complete';
+  const terminalError = events.find((e) => e.type === 'error' && e.terminal);
+  if (terminalError) return 'error';
+  if (connected || campaignStatus.includes('processing') || campaignStatus === 'queued') return 'active';
+  return 'active';
+}
+
+/** Extracts the latest progress value from stream events. */
+function deriveProgress(events: { type: string; progress?: number }[], fallback: number): number {
+  const latest = events.find((e) => e.type === 'progress_update');
+  if (latest?.progress != null) return Math.min(100, Math.max(0, latest.progress));
+  return fallback;
+}
+
+/** Extracts the latest status message from stream events. */
+function deriveStatusMessage(events: { type: string; label?: string; message?: string }[]): string | undefined {
+  const latest = events.find((e) => e.type === 'progress_update');
+  if (latest?.label) return latest.label;
+  const latestError = events.find((e) => e.type === 'error');
+  if (latestError?.message) return latestError.message;
+  return undefined;
+}
+
+const PIPELINE_STEPS: Step[] = [
+  { id: 'script', label: 'Scripting', i18nKey: 'streaming.steps.script' },
+  { id: 'tts', label: 'Text-to-Speech', i18nKey: 'streaming.steps.tts' },
+  { id: 'visual', label: 'Visual Generation', i18nKey: 'streaming.steps.visual' },
+  { id: 'compose', label: 'Compositing', i18nKey: 'streaming.steps.compose' },
+  { id: 'publish', label: 'Publishing', i18nKey: 'streaming.steps.publish' },
+];
 
 export function CampaignDetailModal({ campaign, isOpen, onClose }: CampaignDetailModalProps) {
   const t = useTranslations('dashboard.campaigns.modal');
   const tStatus = useTranslations('campaign.status');
   const format = useFormatter();
 
+  // Connect to SSE stream when the modal is open and we have a campaign
+  const { events, connected, error: streamError, clearEvents } = useCampaignStream(
+    isOpen && campaign ? campaign.id : null,
+  );
+
+  // Derive live state from stream events, falling back to campaign props
+  const streamedStatus = useMemo(
+    () => deriveStreamStatus(campaign?.status ?? '', events, connected),
+    [campaign?.status, events, connected],
+  );
+
+  const streamedProgress = useMemo(
+    () => deriveProgress(events, campaign?.progress ?? 0),
+    [events, campaign?.progress],
+  );
+
+  const statusMessage = useMemo(
+    () => deriveStatusMessage(events),
+    [events],
+  );
+
+  const activeStepIndex = statusToStepIndex(campaign?.status ?? '');
+  const isProcessing = campaign?.status?.includes('processing') || campaign?.status === 'queued';
+  const isFailed = streamedStatus === 'error' || campaign?.status === 'failed';
+  const isCompleted = streamedStatus === 'complete' || campaign?.status === 'completed';
+
+  // Clear stale events when switching campaigns
+  useEffect(() => {
+    clearEvents();
+  }, [campaign?.id, clearEvents]);
+
+  // Log stream state for debugging
+  useEffect(() => {
+    if (campaign && isOpen) {
+      logger.info('CampaignDetailModal stream state', {
+        campaignId: campaign.id,
+        connected,
+        streamError,
+        eventCount: events.length,
+        derivedStatus: streamedStatus,
+        derivedProgress: streamedProgress,
+      });
+    }
+  }, [connected, streamError, events.length, campaign, isOpen, streamedStatus, streamedProgress]);
+
   if (!campaign) return null;
 
-  const progress = campaign.progress || 0;
-  const statusLabel = ['draft', 'queued', 'processing_script', 'processing_video', 'completed', 'failed'].includes(campaign.status as any)
+  const progress = streamedProgress;
+  const statusLabel = ['draft', 'queued', 'processing_script', 'processing_video', 'completed', 'failed'].includes(campaign.status as string)
     ? tStatus(campaign.status)
     : campaign.status?.replace(/_/g, ' ') || 'Unknown';
   const progressStatus = getProgressStatus(campaign.status);
   const hasVideo = !!campaign.video_url;
   const hasScript = !!campaign.script_content;
 
-  const formatDate = (timestamp: string | number | undefined) => {
+  const formatDate = useCallback((timestamp: string | number | undefined) => {
     if (!timestamp) return '-';
     const date = typeof timestamp === 'number'
-      ? new Date(timestamp * 1000) // Convert Unix timestamp (seconds) to ms
-      : new Date(timestamp); // ISO string
+      ? new Date(timestamp * 1000)
+      : new Date(timestamp);
     return format.dateTime(date, {
       year: 'numeric',
       month: 'long',
@@ -101,7 +204,16 @@ export function CampaignDetailModal({ campaign, isOpen, onClose }: CampaignDetai
       hour: '2-digit',
       minute: '2-digit',
     });
-  };
+  }, [format]);
+
+  // Determine the error message to display
+  const displayError = useMemo(() => {
+    if (campaign.error_message) return campaign.error_message;
+    const streamErr = events.find((e) => e.type === 'error');
+    if (streamErr?.message) return streamErr.message;
+    if (streamError) return streamError;
+    return undefined;
+  }, [campaign.error_message, events, streamError]);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -128,28 +240,31 @@ export function CampaignDetailModal({ campaign, isOpen, onClose }: CampaignDetai
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Progress Section */}
-          {(campaign.status?.includes('processing') || campaign.status === 'queued') && (
+          {/* Live Progress Section with Step Indicator */}
+          {isProcessing && (
             <Card className="bg-muted/50">
               <CardContent className="pt-6">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{t('progress')}</span>
-                    <span className="font-semibold text-foreground">{progress}%</span>
+                <div className="space-y-4">
+                  {/* Progress bar */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">{t('progress')}</span>
+                      <span className="font-semibold text-foreground">{progress}%</span>
+                    </div>
+                    <Progress
+                      value={progress}
+                      className="h-3"
+                      aria-label={`${t('progress')}: ${progress}%`}
+                    />
                   </div>
-                  <Progress
-                    value={progress}
-                    className={cn(
-                      "h-3",
-                      progressStatus === 'active' && "bg-blue-100 dark:bg-blue-900/30",
-                      progressStatus === 'complete' && "bg-green-100 dark:bg-green-900/30",
-                      progressStatus === 'error' && "bg-red-100 dark:bg-red-900/30"
-                    )}
-                    indicatorClassName={cn(
-                      progressStatus === 'active' && "bg-blue-600 dark:bg-blue-400",
-                      progressStatus === 'complete' && "bg-green-600 dark:bg-green-400",
-                      progressStatus === 'error' && "bg-red-600 dark:bg-red-400"
-                    )}
+
+                  {/* Step indicator — shows pipeline stages */}
+                  <StepIndicator
+                    steps={PIPELINE_STEPS}
+                    activeStep={activeStepIndex}
+                    status={streamedStatus}
+                    statusMessage={statusMessage}
+                    progress={progress}
                   />
                 </div>
               </CardContent>
@@ -157,7 +272,7 @@ export function CampaignDetailModal({ campaign, isOpen, onClose }: CampaignDetai
           )}
 
           {/* Error Message */}
-          {campaign.error_message && (
+          {displayError && (
             <Card className="bg-destructive/10 border-destructive/30">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-3">
@@ -166,7 +281,7 @@ export function CampaignDetailModal({ campaign, isOpen, onClose }: CampaignDetai
                     <h4 className="font-medium text-destructive mb-1">
                       {t('error_title')}
                     </h4>
-                    <p className="text-sm text-destructive/80">{campaign.error_message}</p>
+                    <p className="text-sm text-destructive/80">{displayError}</p>
                   </div>
                 </div>
               </CardContent>

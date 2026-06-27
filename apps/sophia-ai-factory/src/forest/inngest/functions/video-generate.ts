@@ -5,14 +5,14 @@
  *
  * Event: 'video/generate.requested'
  * Steps:
- *   1. parse-input — extract prompt + voiceover text
- *   2. generate-tts — Fish Speech → upload audio to R2
- *   3. generate-video — Wan 2.1 submit job
- *   4. poll-video-ready — sleep+poll until succeeded/failed
- *   5. download-video — fetch video URL → upload to R2
- *   6. mux-audio-video — Cloudconvert REST API → muxed final.mp4 in R2
- *   7. update-mission — mark engine_mission completed with output URLs
- *   8. emit-usage — log MCU cost via recordCost
+ * 1. parse-input — extract prompt + voiceover text
+ * 2. generate-tts — Fish Speech → upload audio to R2
+ * 3. generate-video — Wan 2.1 submit job
+ * 4. poll-video-ready — sleep+poll until succeeded/failed
+ * 5. download-video — fetch video URL → upload to R2
+ * 6. mux-audio-video — Cloudconvert REST API → muxed final.mp4 in R2
+ * 7. update-mission — mark engine_mission completed with output URLs
+ * 8. emit-usage — log MCU cost via recordCost
  *
  * Operator env vars required: WAN_API_KEY, FISH_SPEECH_API_KEY, CLOUDCONVERT_API_KEY.
  * If absent the upstream `generateVideoAction` short-circuits with
@@ -33,8 +33,44 @@ import { generateSubtitles } from '@/land/video/assembly/subtitle-generator';
 import { composeFinalVideo, applyBrandKit } from '@/land/video/assembly/composer-ffmpeg';
 import type { VideoGenerateRequestedEvent, ProviderVideoJobStatus } from '@/land/video/templates/types';
 
+/** Progress payload emitted via inngest.send for SSE streaming */
+interface ProgressPayload {
+  type: 'campaign.progress';
+  campaignId: string;
+  step: 'scripting' | 'tts' | 'visual' | 'compose' | 'publish' | 'complete' | 'error';
+  progress: number;
+  message: string;
+  timestamp: number;
+}
+
+/**
+ * Emit a campaign.progress event for SSE subscribers.
+ * Uses inngest.send() for cross-function event delivery.
+ */
+async function emitProgress(
+  campaignId: string,
+  step: ProgressPayload['step'],
+  progress: number,
+  message: string,
+): Promise<void> {
+  const payload: ProgressPayload = {
+    type: 'campaign.progress',
+    campaignId,
+    step,
+    progress,
+    message,
+    timestamp: Date.now(),
+  };
+  await inngest.send({
+    id: `progress-${campaignId}-${step}-${payload.timestamp}`,
+    name: 'campaign.progress',
+    data: payload,
+  });
+  logger.info('[videoGenerate] Progress emitted', { campaignId, step, progress, message });
+}
+
 const POLL_INTERVAL_MS = 20_000; // 20s between polls
-const POLL_MAX_ATTEMPTS = 18;    // 18 × 20s = 6 min max wait
+const POLL_MAX_ATTEMPTS = 18; // 18 × 20s = 6 min max wait
 
 function getWanClient(): WanVideoClient {
   const apiKey = process.env.WAN_API_KEY;
@@ -71,32 +107,34 @@ export const videoGenerate = inngest.createFunction(
   async ({ event, step }) => {
     const data = event.data as VideoGenerateRequestedEvent;
 
- // ── Idempotency guard: skip if mission already succeeded or running ─────
- const idempotencyDb = createServerClient();
- const { data: existingMission } = await idempotencyDb
-   .from('engine_missions')
-   .select('id, status')
-   .eq('id', data.missionId)
-   .single();
- if (existingMission && (existingMission.status === 'succeeded' || existingMission.status === 'running')) {
-   logger.info('[videoGenerate] Mission already processed — skipping', { missionId: data.missionId, status: existingMission.status });
-   return { skipped: true, missionId: data.missionId };
- }
+    // ── Idempotency guard: skip if mission already succeeded or running ─────
+    const idempotencyDb = createServerClient();
+    const { data: existingMission } = await idempotencyDb
+      .from('engine_missions')
+      .select('id, status')
+      .eq('id', data.missionId)
+      .single();
+    if (existingMission && (existingMission.status === 'succeeded' || existingMission.status === 'running')) {
+      logger.info('[videoGenerate] Mission already processed — skipping', { missionId: data.missionId, status: existingMission.status });
+      return { skipped: true, missionId: data.missionId };
+    }
 
- // ── Step 1: Parse Input ────────────────────────────────────────────────arse Input ────────────────────────────────────────────────
-    const { missionId, prompt, voiceoverText, tenantId, userId, language } =
-      await step.run('parse-input', async () => {
-        if (!data.missionId) throw new Error('[videoGenerate] missionId is required');
-        if (!data.prompt) throw new Error('[videoGenerate] prompt is required');
-        return {
-          missionId: data.missionId,
-          prompt: data.prompt,
-          voiceoverText: data.voiceoverText ?? data.prompt,
-          tenantId: data.tenantId,
-          userId: data.userId,
-          language: data.language ?? 'en',
-        };
-      });
+    // Emit: pipeline started
+    await emitProgress(data.missionId, 'tts', 5, 'Bắt đầu tạo video / Starting video generation pipeline');
+
+    // ── Step 1: Parse Input ────────────────────────────────────────────────
+    const { missionId, prompt, voiceoverText, tenantId, userId, language } = await step.run('parse-input', async () => {
+      if (!data.missionId) throw new Error('[videoGenerate] missionId is required');
+      if (!data.prompt) throw new Error('[videoGenerate] prompt is required');
+      return {
+        missionId: data.missionId,
+        prompt: data.prompt,
+        voiceoverText: data.voiceoverText ?? data.prompt,
+        tenantId: data.tenantId,
+        userId: data.userId,
+        language: data.language ?? 'en',
+      };
+    });
 
     // ── Step 2: Generate TTS ───────────────────────────────────────────────
     const audioR2Key = `video-jobs/${missionId}/audio.mp3`;
@@ -115,6 +153,9 @@ export const videoGenerate = inngest.createFunction(
       return durationSec;
     });
 
+    // Emit: TTS complete (15%)
+    await emitProgress(missionId, 'tts', 15, 'Giọng nói đã tổng hợp / TTS synthesis complete');
+
     // ── Step 3: Submit Video Generation ───────────────────────────────────
     const result1 = await step.run('generate-video', async () => {
       const wanClient = getWanClient();
@@ -123,6 +164,9 @@ export const videoGenerate = inngest.createFunction(
       return { wanJobId: jobId };
     });
     const wanJobId = result1.wanJobId;
+
+    // Emit: video generation submitted (25%)
+    await emitProgress(missionId, 'visual', 25, 'Đang tạo video AI / AI video generation in progress');
 
     // ── Step 4: Poll Until Video Ready ────────────────────────────────────
     let finalVideoUrl: string | undefined;
@@ -140,6 +184,7 @@ export const videoGenerate = inngest.createFunction(
         break;
       }
       if (statusResult.status === 'failed' || statusResult.status === 'canceled') {
+        await emitProgress(missionId, 'error', 0, `Lỗi tạo video / Video generation failed: ${statusResult.status}`);
         throw new Error(
           `[videoGenerate] Wan job ${wanJobId} ended with status: ${statusResult.status} — ${statusResult.error ?? ''}`,
         );
@@ -147,8 +192,12 @@ export const videoGenerate = inngest.createFunction(
     }
 
     if (!finalVideoUrl) {
+      await emitProgress(missionId, 'error', 0, `Hết thời gian chờ / Video generation timed out after ${POLL_MAX_ATTEMPTS} polls`);
       throw new Error(`[videoGenerate] Wan job ${wanJobId} did not complete after ${POLL_MAX_ATTEMPTS} polls`);
     }
+
+    // Emit: video generation complete (40%)
+    await emitProgress(missionId, 'visual', 40, 'Video AI đã tạo xong / AI video generation complete');
 
     // ── Step 5: Download + Upload Video to R2 ────────────────────────────
     const videoR2Key = `video-jobs/${missionId}/video.mp4`;
@@ -172,6 +221,9 @@ export const videoGenerate = inngest.createFunction(
         return '';
       }
     });
+
+    // Emit: composing started (50%)
+    await emitProgress(missionId, 'compose', 50, 'Đang ghép audio + video / Composing audio and video');
 
     // ── Step 6: Mux Audio + Video via Cloudconvert or MoviePy Compose ────────
     const muxOutputKey = `video-jobs/${missionId}/final.mp4`;
@@ -229,6 +281,9 @@ export const videoGenerate = inngest.createFunction(
 
       return result;
     });
+
+    // Emit: compose complete (70%)
+    await emitProgress(missionId, 'compose', 70, 'Ghép hoàn tất / Composition complete');
 
     // ── Step 7: Update engine_mission ─────────────────────────────────────
     await step.run('update-mission', async () => {
@@ -292,6 +347,9 @@ export const videoGenerate = inngest.createFunction(
       }
     });
 
+    // Emit: publish ready (80%)
+    await emitProgress(missionId, 'publish', 80, 'Sẵn sàng xuất bản / Ready for publishing');
+
     // ── Step 8: Emit Usage ────────────────────────────────────────────────
     await step.run('emit-usage', async () => {
       await recordCost({
@@ -304,6 +362,9 @@ export const videoGenerate = inngest.createFunction(
       });
       logger.info('[videoGenerate] Usage cost recorded', { missionId, costUsd: 0.06 });
     });
+
+    // Emit: complete (100%)
+    await emitProgress(missionId, 'complete', 100, 'Video đã tạo xong / Video generation complete');
 
     return {
       missionId,

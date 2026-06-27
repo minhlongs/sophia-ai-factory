@@ -5,11 +5,16 @@
 export * from './anthropic-adapter';
 export * from './anthropic-sse-parser';
 export * from './elevenlabs-api-client';
-export * from './llm-router';
-export * from './proposal-generator';
+export * from './provider-scoring';
+export * from './provider-registry';
 export * from './proposal-quality-check';
 export * from './proposal-templates';
 export * from './script-generator';
 export * from './script-prompt-builders';
 export * from './text-to-speech-generator-elevenlabs';
 export * from './video-generator';
+
+// ── Context window & token management (Phase 7) ───────────────────────────────
+export * from './context-window';
+export * from './token-counter';
+export * from './conversation-summarizer';
