@@ -56,7 +56,7 @@ describe('D1Client', () => {
       const mockResult = { id: 'user123', email: 'test@example.com' };
       const mockStmt = createMockStmt();
       vi.mocked(mockStmt.first).mockResolvedValue(mockResult);
-      mockDb.prepare.mockReturnValue(mockStmt);
+      vi.mocked(mockDb.prepare).mockReturnValue(mockStmt);
 
       const client = new D1Client(mockDb);
       const result = await client.prepare('SELECT * FROM users WHERE id = ?')
@@ -72,36 +72,52 @@ describe('D1Client', () => {
         { id: 'user2', email: 'test2@example.com' },
       ];
       const mockStmt = createMockStmt();
-      vi.mocked(mockStmt.all).mockResolvedValue(mockResults);
-      mockDb.prepare.mockReturnValue(mockStmt);
+      vi.mocked(mockStmt.all).mockResolvedValue({
+        success: true,
+        results: mockResults,
+        meta: { changes: 0, duration: 0, size_after: 0, rows_read: 0, rows_written: 0, last_row_id: 0, changed_db: false }
+      });
+      vi.mocked(mockDb.prepare).mockReturnValue(mockStmt);
 
       const client = new D1Client(mockDb);
       const result = await client.prepare('SELECT * FROM users')
         .bind()
         .all();
 
-      expect(result).toEqual(mockResults);
+      expect(result).toEqual({
+        success: true,
+        results: mockResults,
+        meta: { changes: 0, duration: 0, size_after: 0, rows_read: 0, rows_written: 0, last_row_id: 0, changed_db: false }
+      });
     });
 
     it('should execute write queries with run()', async () => {
       const mockResult = { success: true, changes: 1 };
       const mockStmt = createMockStmt();
-      vi.mocked(mockStmt.run).mockResolvedValue(mockResult);
-      mockDb.prepare.mockReturnValue(mockStmt);
+      vi.mocked(mockStmt.run).mockResolvedValue({
+        success: true,
+        results: [],
+        meta: { changes: 1, last_row_id: 0, duration: 0, size_after: 0, rows_read: 0, rows_written: 0, changed_db: false }
+      });
+      vi.mocked(mockDb.prepare).mockReturnValue(mockStmt);
 
       const client = new D1Client(mockDb);
       const result = await client.prepare('INSERT INTO users (email) VALUES (?)')
         .bind('test@example.com')
         .run();
 
-      expect(result).toEqual(mockResult);
+      expect(result).toEqual({
+        success: true,
+        results: [],
+        meta: { changes: 1, last_row_id: 0, duration: 0, size_after: 0, rows_read: 0, rows_written: 0, changed_db: false }
+      });
     });
 
     it('should handle query errors', async () => {
       const mockError = new Error('SQL error');
       const mockStmt = createMockStmt();
       vi.mocked(mockStmt.first).mockRejectedValue(mockError);
-      mockDb.prepare.mockReturnValue(mockStmt);
+      vi.mocked(mockDb.prepare).mockReturnValue(mockStmt);
 
       const client = new D1Client(mockDb);
 
