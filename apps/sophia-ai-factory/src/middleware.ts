@@ -28,6 +28,7 @@ import { requireAuth, type BetterAuthSession } from './middleware/auth';
 import { enforceMfaGate } from './middleware/mfa';
 import { handleCorsPrelight, applyCorsHeaders } from './middleware/cors';
 import { withAuth, isPublicApiRoute } from '@/forest/middleware/auth-guard';
+import { getSizeLimit, rejectOversizedRequest } from './middleware/request-size-limit';
 
 const SUPPORTED_LOCALES = ['en', 'vi'] as const;
 
@@ -109,6 +110,11 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
         );
       }
     }
+
+  // Request size limit — reject oversized payloads before handler runs
+  const sizeLimit = getSizeLimit(pathname);
+  const sizeRejected = rejectOversizedRequest(request, sizeLimit);
+  if (sizeRejected) return sizeRejected;
 
     const blocked = await handleApiRoute(request, pathname, startTime);
     if (blocked) return blocked;
