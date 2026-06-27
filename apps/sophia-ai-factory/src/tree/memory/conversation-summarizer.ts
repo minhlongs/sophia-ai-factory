@@ -1,12 +1,12 @@
 /**
  * @module tree/memory/conversation-summarizer
- *
+
  * ConversationSummarizer — LLM-backed conversation history compression.
- *
+
  * Compresses long message histories into concise summaries using an
  * OpenAI-compatible /chat/completions endpoint. Falls back to
  * extractive summarization when no LLM is configured.
- *
+
  * Layer rule: tree → seed only. No imports from forest/ or land/.
  */
 
@@ -27,6 +27,16 @@ export interface SummaryResult {
   messagesSummarized: number;
   /** Whether the LLM was used (true) or extractive fallback (false). */
   usedLLM: boolean;
+  /** Extracted key topics from the conversation. */
+  topics: string[];
+  /** Decisions made during the conversation. */
+  decisions: string[];
+  /** User preferences stated in the conversation. */
+  userPreferences: string[];
+  /** Action items or next steps agreed upon. */
+  actionItems: string[];
+  /** Estimated token count (alias for tokenCount, for backward compat). */
+  estimatedTokens: number;
 }
 
 // ── Summarization prompt ───────────────────────────────────────────────────────
@@ -43,15 +53,45 @@ const SUMMARIZATION_USER_TEMPLATE = (
   messageCount: number,
 ): string => `Summarize the following ${messageCount} chat messages:\n\n`;
 
+// ── Keyword patterns for extraction ───────────────────────────────────────────
+
+const TOPIC_KEYWORDS = [
+  'docker', 'kubernetes', 'k8s', 'react', 'next.js', 'nextjs',
+  'typescript', 'javascript', 'python', 'node.js', 'nodejs',
+  'aws', 'terraform', 'ansible', 'nginx', 'stripe', 'cloudflare',
+  'e-commerce', 'ecommerce', 'saas', 'video', 'deployment',
+  'ci/cd', 'cicd', 'database', 'auth', 'authentication',
+  'api', 'microservices', 'monorepo', 'dark mode', 'blue',
+];
+
+const DECISION_PATTERNS = [
+  /(?:let'?s go with|we decided on|going with|selected|chosen|we chose|decided to use|picked|opted for)\s+(.+?)(?:\.|$)/i,
+  /(?:decision|chose|selected):\s*(.+?)(?:\.|$)/i,
+];
+
+const PREFERENCE_PATTERNS = [
+  /(?:i prefer|i like|i want|prefer|would like)\s+(.+?)(?:\.|$)/i,
+];
+
+const ACTION_PATTERNS = [
+  /(?:need to|must|should|remember to|make sure to|don'?t forget to)\s+(.+?)(?:\.|$)/i,
+  /(?:i will|we will|let me|i'?ll)\s+(.+?)(?:\.|$)/i,
+];
+
+const MAX_TOPICS = 5;
+const MAX_DECISIONS = 5;
+const MAX_PREFERENCES = 5;
+const MAX_ACTIONS = 5;
+
 // ── ConversationSummarizer ─────────────────────────────────────────────────────
 
 /**
  * LLM-backed conversation summarizer.
- *
+
  * Sends message history to an OpenAI-compatible /chat/completions endpoint
  * for compression. Falls back to extractive summarization when no API
  * key or endpoint is configured.
- *
+
  * All LLM calls go through fetch — no provider adapter dependency,
  * keeping this module lightweight and tree-layer-safe.
  */
@@ -85,25 +125,36 @@ export class ConversationSummarizer {
 
   /**
    * Summarize a message history into a concise text summary.
-   *
+
    * Uses the configured LLM when available; falls back to extractive
    * summarization (first/last user messages) when no API key is set.
-   *
+
    * @param messages — Chat messages to summarize.
    * @param maxTokens — Optional override for max summary tokens.
    * @returns SummaryResult with summary text, token count, and metadata.
    */
-  async summarize(messages: ChatMessage[], maxTokens?: number): Promise<SummaryResult> {
+  async summarize(
+    messages: ChatMessage[],
+    maxTokens?: number,
+  ): Promise<SummaryResult> {
     const effectiveMax = maxTokens ?? this.maxSummaryTokens;
 
     if (messages.length === 0) {
       return {
-        summary: '',
-        tokenCount: 0,
+        summary: 'No messages to summarize.',
+        tokenCount: 3,
         messagesSummarized: 0,
         usedLLM: false,
+        topics: [],
+        decisions: [],
+        userPreferences: [],
+        actionItems: [],
+        estimatedTokens: 3,
       };
     }
+
+    // Extract key points from the conversation
+    const keyPoints = this.extractKeyPoints(messages);
 
     // Attempt LLM summarization when configured.
     if (this.apiKey) {
@@ -113,7 +164,14 @@ export class ConversationSummarizer {
           messagesSummarized: result.messagesSummarized,
           tokenCount: result.tokenCount,
         });
-        return result;
+        return {
+          ...result,
+          topics: keyPoints.topics,
+          decisions: keyPoints.decisions,
+          userPreferences: keyPoints.userPreferences,
+          actionItems: keyPoints.actionItems,
+          estimatedTokens: result.tokenCount,
+        };
       } catch (err) {
         logger.warn('[ConversationSummarizer] LLM summarization failed, using fallback', undefined, {
           error: err instanceof Error ? err.message : String(err),
@@ -127,7 +185,55 @@ export class ConversationSummarizer {
       messagesSummarized: fallback.messagesSummarized,
       tokenCount: fallback.tokenCount,
     });
-    return fallback;
+    return {
+      ...fallback,
+      topics: keyPoints.topics,
+      decisions: keyPoints.decisions,
+      userPreferences: keyPoints.userPreferences,
+      actionItems: keyPoints.actionItems,
+      estimatedTokens: fallback.tokenCount,
+    };
+  }
+
+  // ── Key point extraction ────────────────────────────────────────────────────
+
+  /**
+   * Extract structured key points from a conversation: topics, decisions,
+   * user preferences, and action items.
+   *
+   * Uses keyword matching and pattern extraction — no LLM required.
+   */
+  extractKeyPoints(messages: ChatMessage[]): {
+    topics: string[];
+    decisions: string[];
+    userPreferences: string[];
+    actionItems: string[];
+  } {
+    if (messages.length === 0) {
+      return {
+        topics: [],
+        decisions: [],
+        userPreferences: [],
+        actionItems: [],
+      };
+    }
+
+    const allText = messages
+      .filter((m) => m.role === 'user')
+      .map((m) => m.content)
+      .join(' ');
+
+    const topics = this.extractTopics(allText);
+    const decisions = this.extractDecisions(allText);
+    const userPreferences = this.extractPreferences(allText);
+    const actionItems = this.extractActions(allText);
+
+    return {
+      topics: this.deduplicate(topics).slice(0, MAX_TOPICS),
+      decisions: this.deduplicate(decisions).slice(0, MAX_DECISIONS),
+      userPreferences: this.deduplicate(userPreferences).slice(0, MAX_PREFERENCES),
+      actionItems: this.deduplicate(actionItems).slice(0, MAX_ACTIONS),
+    };
   }
 
   // ── LLM summarization ───────────────────────────────────────────────────────
@@ -139,7 +245,7 @@ export class ConversationSummarizer {
   private async summarizeWithLLM(
     messages: ChatMessage[],
     maxTokens: number,
-  ): Promise<SummaryResult> {
+  ): Promise<Omit<SummaryResult, 'topics' | 'decisions' | 'userPreferences' | 'actionItems' | 'estimatedTokens'>> {
     if (!this.apiKey) {
       throw new Error('No API key configured for LLM summarization');
     }
@@ -198,13 +304,13 @@ export class ConversationSummarizer {
 
   /**
    * Produce a lightweight summary without LLM calls.
-   *
+
    * Uses the first and last user messages as anchors, plus a count.
    */
   private summarizeExtractive(
     messages: ChatMessage[],
     maxTokens: number,
-  ): SummaryResult {
+  ): Omit<SummaryResult, 'topics' | 'decisions' | 'userPreferences' | 'actionItems' | 'estimatedTokens'> {
     const userMessages = messages.filter((m) => m.role === 'user');
 
     if (userMessages.length === 0) {
@@ -239,19 +345,90 @@ export class ConversationSummarizer {
     };
   }
 
+  // ── Extraction helpers ──────────────────────────────────────────────────────
+
+  private extractTopics(text: string): string[] {
+    const found: string[] = [];
+    const lowerText = text.toLowerCase();
+    for (const kw of TOPIC_KEYWORDS) {
+      if (lowerText.includes(kw)) {
+        found.push(kw);
+      }
+    }
+    return found;
+  }
+
+  private extractDecisions(text: string): string[] {
+    const found: string[] = [];
+    for (const pattern of DECISION_PATTERNS) {
+      const matches = text.match(pattern);
+      if (matches) {
+        const decision = matches[1]?.trim();
+        if (decision && decision.length > 2) {
+          found.push(decision);
+        }
+      }
+    }
+    return found;
+  }
+
+  private extractPreferences(text: string): string[] {
+    const found: string[] = [];
+    for (const pattern of PREFERENCE_PATTERNS) {
+      const matches = text.match(pattern);
+      if (matches) {
+        const pref = matches[1]?.trim();
+        if (pref && pref.length > 2) {
+          found.push(pref);
+        }
+      }
+    }
+    return found;
+  }
+
+  private extractActions(text: string): string[] {
+    const found: string[] = [];
+    for (const pattern of ACTION_PATTERNS) {
+      const matches = text.match(pattern);
+      if (matches) {
+        const action = matches[1]?.trim();
+        if (action && action.length > 2) {
+          found.push(action);
+        }
+      }
+    }
+    return found;
+  }
+
+  private deduplicate(items: string[]): string[] {
+    const seen = new Set<string>();
+    const result: string[] = [];
+    for (const item of items) {
+      const normalized = item.toLowerCase().trim();
+      if (!seen.has(normalized)) {
+        seen.add(normalized);
+        result.push(item);
+      }
+    }
+    return result;
+  }
+
   // ── Token estimation ────────────────────────────────────────────────────────
 
   /**
    * Estimate token count for text.
-   *
+
    * Vietnamese: ~2.5 chars/token. English: ~4 chars/token.
    * CJK: ~1.3 chars/token.
    */
   private estimateTokens(text: string): number {
     if (text.length === 0) return 0;
 
-    const vietnameseChars = (text.match(/[À-ɏẠ-ỿ]/g) ?? []).length;
-    const cjkChars = (text.match(/[一-鿿㐀-䶿぀-ゟ゠-ヿ가-힯]/g) ?? []).length;
+    // Use split-based counting to avoid lastIndex mutation from global regex
+    const VI_PATTERN = '[À-ỿ]';
+    const CJK_PATTERN = '[一-鿿㐀-䶿぀-ゟ゠-ヿ가-힯]';
+    const vietnameseChars = text.split(new RegExp(VI_PATTERN)).length - 1;
+    const cjkChars = text.split(new RegExp(CJK_PATTERN)).length - 1;
     const remaining = text.length - vietnameseChars - cjkChars;
 
     const tokens =

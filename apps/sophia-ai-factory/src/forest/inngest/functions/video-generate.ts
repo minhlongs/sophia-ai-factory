@@ -31,6 +31,7 @@ import { insertAiPromptVideo } from '@/seed/db/repositories/videos-repo';
 import { getBrandKit } from '@/seed/db/repositories/brand-kits-repo';
 import { generateSubtitles } from '@/land/video/assembly/subtitle-generator';
 import { composeFinalVideo, applyBrandKit } from '@/land/video/assembly/composer-ffmpeg';
+import { CheckpointService } from '@/forest/pipeline';
 import type { VideoGenerateRequestedEvent, ProviderVideoJobStatus } from '@/land/video/templates/types';
 
 /** Progress payload emitted via inngest.send for SSE streaming */
@@ -71,6 +72,33 @@ async function emitProgress(
 
 const POLL_INTERVAL_MS = 20_000; // 20s between polls
 const POLL_MAX_ATTEMPTS = 18; // 18 × 20s = 6 min max wait
+
+/**
+ * Write a non-blocking checkpoint for the current pipeline stage.
+ * Failures are logged but never thrown — checkpoint is observability, not control flow.
+ */
+async function writeStageCheckpoint(
+  pipelineId: string,
+  stage: string,
+  status: 'in_progress' | 'completed' | 'failed' | 'skipped',
+  tenantId: string,
+  artifacts: Record<string, unknown> = {},
+  error?: string,
+): Promise<void> {
+  try {
+    const svc = new CheckpointService(tenantId);
+    await svc.writeCheckpoint(pipelineId, stage, status, artifacts, {
+      pipelineType: 'video_generation',
+      error,
+    });
+  } catch (err) {
+    logger.warn('[videoGenerate] Checkpoint write failed (non-fatal)', {
+      pipelineId,
+      stage,
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
 
 function getWanClient(): WanVideoClient {
   const apiKey = process.env.WAN_API_KEY;
@@ -136,6 +164,11 @@ export const videoGenerate = inngest.createFunction(
       };
     });
 
+    // Checkpoint: parse-input completed
+    await writeStageCheckpoint(missionId, 'parse_input', 'completed', tenantId, {
+      research_brief: { prompt, voiceoverText, language },
+    });
+
     // ── Step 2: Generate TTS ───────────────────────────────────────────────
     const audioR2Key = `video-jobs/${missionId}/audio.mp3`;
 
@@ -156,6 +189,15 @@ export const videoGenerate = inngest.createFunction(
     // Emit: TTS complete (15%)
     await emitProgress(missionId, 'tts', 15, 'Giọng nói đã tổng hợp / TTS synthesis complete');
 
+    // Checkpoint: generate-tts completed
+    await writeStageCheckpoint(missionId, 'generate_tts', 'completed', tenantId, {
+      asset_manifest: {
+        audioR2Key,
+        brandKitApplied: false,
+        assets: [{ type: 'audio', r2Key: audioR2Key, mimeType: 'audio/mpeg' }],
+      },
+    });
+
     // ── Step 3: Submit Video Generation ───────────────────────────────────
     const result1 = await step.run('generate-video', async () => {
       const wanClient = getWanClient();
@@ -167,6 +209,19 @@ export const videoGenerate = inngest.createFunction(
 
     // Emit: video generation submitted (25%)
     await emitProgress(missionId, 'visual', 25, 'Đang tạo video AI / AI video generation in progress');
+
+    // Checkpoint: generate-video submitted
+    await writeStageCheckpoint(missionId, 'generate_video', 'completed', tenantId, {
+      asset_manifest: {
+        audioR2Key,
+        brandKitApplied: false,
+        assets: [
+          { type: 'audio', r2Key: audioR2Key, mimeType: 'audio/mpeg' },
+          { type: 'video', r2Key: '', mimeType: 'video/mp4' },
+        ],
+      },
+      metadata: { wanJobId },
+    });
 
     // ── Step 4: Poll Until Video Ready ────────────────────────────────────
     let finalVideoUrl: string | undefined;
@@ -185,6 +240,7 @@ export const videoGenerate = inngest.createFunction(
       }
       if (statusResult.status === 'failed' || statusResult.status === 'canceled') {
         await emitProgress(missionId, 'error', 0, `Lỗi tạo video / Video generation failed: ${statusResult.status}`);
+        await writeStageCheckpoint(missionId, 'poll_video_ready', 'failed', tenantId, {}, statusResult.status);
         throw new Error(
           `[videoGenerate] Wan job ${wanJobId} ended with status: ${statusResult.status} — ${statusResult.error ?? ''}`,
         );
@@ -193,8 +249,22 @@ export const videoGenerate = inngest.createFunction(
 
     if (!finalVideoUrl) {
       await emitProgress(missionId, 'error', 0, `Hết thời gian chờ / Video generation timed out after ${POLL_MAX_ATTEMPTS} polls`);
+      await writeStageCheckpoint(missionId, 'poll_video_ready', 'failed', tenantId, {}, 'timeout');
       throw new Error(`[videoGenerate] Wan job ${wanJobId} did not complete after ${POLL_MAX_ATTEMPTS} polls`);
     }
+
+    // Checkpoint: poll-video-ready succeeded
+    await writeStageCheckpoint(missionId, 'poll_video_ready', 'completed', tenantId, {
+      asset_manifest: {
+        audioR2Key,
+        brandKitApplied: false,
+        assets: [
+          { type: 'audio', r2Key: audioR2Key, mimeType: 'audio/mpeg' },
+          { type: 'video', r2Key: '', mimeType: 'video/mp4' },
+        ],
+      },
+      metadata: { wanJobId, finalVideoUrl },
+    });
 
     // Emit: video generation complete (40%)
     await emitProgress(missionId, 'visual', 40, 'Video AI đã tạo xong / AI video generation complete');
@@ -206,6 +276,19 @@ export const videoGenerate = inngest.createFunction(
       const videoBuffer = await downloadToBuffer(finalVideoUrl!);
       await uploadBufferToR2(videoR2Key, videoBuffer, 'video/mp4');
       logger.info('[videoGenerate] Video uploaded to R2', { videoR2Key });
+    });
+
+    // Checkpoint: download-video completed
+    await writeStageCheckpoint(missionId, 'download_video', 'completed', tenantId, {
+      asset_manifest: {
+        audioR2Key,
+        videoR2Key,
+        brandKitApplied: false,
+        assets: [
+          { type: 'audio', r2Key: audioR2Key, mimeType: 'audio/mpeg' },
+          { type: 'video', r2Key: videoR2Key, mimeType: 'video/mp4' },
+        ],
+      },
     });
 
     // ── Step 5.5: Generate Subtitles ────────────────────────────────────
@@ -285,6 +368,27 @@ export const videoGenerate = inngest.createFunction(
     // Emit: compose complete (70%)
     await emitProgress(missionId, 'compose', 70, 'Ghép hoàn tất / Composition complete');
 
+    // Checkpoint: mux-audio-video completed
+    await writeStageCheckpoint(missionId, 'mux_audio_video', 'completed', tenantId, {
+      render_report: {
+        finalR2Key: muxOutputKey,
+        finalUrl: muxed.url,
+        durationMs: muxed.durationMs,
+        muxedAt: new Date().toISOString(),
+        brandKitApplied: false,
+      },
+      asset_manifest: {
+        audioR2Key,
+        videoR2Key,
+        brandKitApplied: false,
+        assets: [
+          { type: 'audio', r2Key: audioR2Key, mimeType: 'audio/mpeg' },
+          { type: 'video', r2Key: videoR2Key, mimeType: 'video/mp4' },
+          { type: 'video', r2Key: muxOutputKey, mimeType: 'video/mp4' },
+        ],
+      },
+    });
+
     // ── Step 7: Update engine_mission ─────────────────────────────────────
     await step.run('update-mission', async () => {
       const db = createServerClient();
@@ -307,6 +411,17 @@ export const videoGenerate = inngest.createFunction(
         .eq('id', missionId);
 
       logger.info('[videoGenerate] engine_mission updated to succeeded', { missionId });
+    });
+
+    // Checkpoint: update-mission completed
+    await writeStageCheckpoint(missionId, 'update_mission', 'completed', tenantId, {
+      render_report: {
+        finalR2Key: muxOutputKey,
+        finalUrl: muxed.url,
+        durationMs: muxed.durationMs,
+        muxedAt: new Date().toISOString(),
+        brandKitApplied: false,
+      },
     });
 
     // ── Step 7b: Insert videos row ────────────────────────────────────────
@@ -349,6 +464,17 @@ export const videoGenerate = inngest.createFunction(
 
     // Emit: publish ready (80%)
     await emitProgress(missionId, 'publish', 80, 'Sẵn sàng xuất bản / Ready for publishing');
+
+    // Checkpoint: emit-usage completed (pipeline complete)
+    await writeStageCheckpoint(missionId, 'emit_usage', 'completed', tenantId, {
+      render_report: {
+        finalR2Key: muxOutputKey,
+        finalUrl: muxed.url,
+        durationMs: muxed.durationMs,
+        muxedAt: new Date().toISOString(),
+        brandKitApplied: false,
+      },
+    });
 
     // ── Step 8: Emit Usage ────────────────────────────────────────────────
     await step.run('emit-usage', async () => {

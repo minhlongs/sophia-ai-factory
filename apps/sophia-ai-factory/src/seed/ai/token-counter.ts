@@ -38,8 +38,8 @@ export interface TokenEstimate {
  * Covers: À-ẮẲẴẶẤẦẨẪẬẺẼỀỀỂỄỆỈỊỌỎỜỜỞỠỢỤỦỨỪỬỮỰỲỴỶỸ
  *          à-ắẳẵặấầẩẫậẻẽềềểễệỉịọỏờờởỡợụủứừửữựỳỵỷỹ
  */
-const VIETNAMESE_REGEX = /[À-ɏẠ-ỿ]/;
-const CJK_REGEX = /[一-鿿㐀-䶿぀-ゟ゠-ヿ가-힯]/;
+const VIETNAMESE_PATTERN = '[À-ỿ]';
+const CJK_PATTERN = '[一-鿿㐀-䶿぀-ゟ゠-ヿ가-힯]';
 
 /**
  * Detect the dominant language in a text sample.
@@ -48,9 +48,10 @@ const CJK_REGEX = /[一-鿿㐀-䶿぀-ゟ゠-ヿ가-힯]/;
  * @returns 'vi' | 'en' | 'mixed' | 'unknown'.
  */
 function detectLanguage(text: string): string {
-  const vietnameseChars = (text.match(VIETNAMESE_REGEX) ?? []).length;
-  const cjkChars = (text.match(CJK_REGEX) ?? []).length;
-  const totalAlpha = text.replace(/[^a-zA-ZÀ-ỿ一-鿿]/g, '').length;
+  // Use fresh RegExp instances to avoid lastIndex mutation from prior .match()/.replace() calls
+  const vietnameseChars = (text.match(new RegExp(VIETNAMESE_PATTERN, 'g')) ?? []).length;
+  const cjkChars = (text.match(new RegExp(CJK_PATTERN, 'g')) ?? []).length;
+  const totalAlpha = text.replace(/[^a-zA-ZÀ-ỿ一-鿿㐀-䶿぀-ゟ゠-ヿ가-힯]/g, '').length;
 
   if (totalAlpha === 0) return 'unknown';
 

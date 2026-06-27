@@ -4,5 +4,6 @@
  */
 export * from './use-agent-stream';
 export * from './use-analytics-data';
+export * from './use-campaign-stream';
 export * from './use-raas-analytics';
 export * from './use-toast';
