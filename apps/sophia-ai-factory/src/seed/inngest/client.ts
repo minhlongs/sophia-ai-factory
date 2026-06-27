@@ -147,8 +147,19 @@ type KeyRotationRequestedEvent = {
   };
 };
 
+type CampaignProgressEvent = {
+  data: {
+    campaignId: string;
+    step: 'scripting' | 'tts' | 'visual' | 'compose' | 'publish' | 'complete' | 'error';
+    progress: number;
+    message: string;
+    timestamp: number;
+  };
+};
+
 type Events = {
   "campaign.created": CampaignCreatedEvent;
+  "campaign.progress": CampaignProgressEvent;
   "test/hello.world": { data: Record<string, unknown> };
   // Key rotation infrastructure (Phase 4)
   "key.rotation.requested": KeyRotationRequestedEvent;

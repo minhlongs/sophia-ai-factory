@@ -1,5 +1,27 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+
+// Mock next-intl — StepIndicator uses useTranslations internally
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string, opts?: Record<string, unknown>) => {
+    if (opts?.fallback) return String(opts.fallback);
+    return key;
+  },
+  useFormatter: () => ({
+    dateTime: (date: Date) => date.toISOString(),
+  }),
+}));
+
+// Mock useCampaignStream — return stable empty state for unit tests
+vi.mock('@/forest/hooks/use-campaign-stream', () => ({
+  useCampaignStream: () => ({
+    events: [],
+    connected: false,
+    error: null,
+    clearEvents: () => {},
+  }),
+}));
+
 import { VideoPreview } from './video-preview';
 
 describe('VideoPreview Component', () => {
@@ -15,15 +37,16 @@ describe('VideoPreview Component', () => {
     expect(screen.getByText('No video available')).toBeDefined();
   });
 
-  it('renders loading state for processing', () => {
+  it('renders loading state for processing with step indicator', () => {
     render(<VideoPreview {...defaultProps} status="processing_video" progress={45} />);
-    expect(screen.getByText(/Generating your video... 45%/)).toBeDefined();
-    expect(screen.getByText('Rendering video avatar...')).toBeDefined();
+    // StepIndicator renders pipeline steps for active processing states
+    expect(screen.getByText('Scripting')).toBeDefined();
   });
 
   it('renders loading state for queuing', () => {
     render(<VideoPreview {...defaultProps} status="queued" />);
-    expect(screen.getByText('Queued for generation...')).toBeDefined();
+    // Queued also shows step indicator with pipeline steps
+    expect(screen.getByText('Scripting')).toBeDefined();
   });
 
   it('renders failed state', () => {

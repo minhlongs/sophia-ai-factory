@@ -38,7 +38,7 @@ describe('resolveLlmRoute', () => {
 
     const route = await resolveLlmRoute('user-1');
     expect(route.provider).toBe('anthropic');
-    expect(route.model).toBe('claude-3-5-sonnet-20241022');
+    expect(route.model).toBe('claude-sonnet-4-20250514');
     expect(route.apiKey).toBe('ant-key-456');
   });
 

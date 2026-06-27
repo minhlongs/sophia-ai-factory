@@ -5,24 +5,32 @@
  * Uses plain fetch (Cloudflare Workers compatible — no SDK).
  *
  * Exports:
- *   - callAnthropic:             simple text-only call, returns first text block.
- *   - callAnthropicFull:         returns full response (for tool-use + multi-block).
- *   - callAnthropicStream:       SSE streaming, yields text_delta chunks (string).
- *   - callAnthropicStreamEvents: SSE streaming, yields structured events (tool-use capable).
+ * - callAnthropic: simple text-only call, returns first text block.
+ * - callAnthropicFull: returns full response (for tool-use + multi-block).
+ * - callAnthropicStream: SSE streaming, yields text_delta chunks (string).
+ * - callAnthropicStreamEvents: SSE streaming, yields structured events (tool-use capable).
+ *
+ * Migration note (Phase 6+): `callAnthropic` (simple path) delegates to
+ * `AnthropicProvider` from the provider abstraction layer. The full/streaming
+ * paths retain direct fetch for raw API access (tool_use blocks, SSE parsing).
+ * Existing callers see no change — same signatures, same return types.
  */
 
+import type { ChatMessage, ChatOptions } from '@/seed/ai/provider-interface'
 import {
   parseAnthropicSse,
   type AnthropicStreamEvent,
 } from './anthropic-sse-parser'
 import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/seed/services/errors'
+import { AnthropicProvider } from './anthropic-provider'
 
 export type { AnthropicStreamEvent } from './anthropic-sse-parser'
 
 // ── Message & content types ──────────────────────────────────────────────────
+// (These types are part of the public API — kept unchanged for backward compat)
 
 export interface AnthropicMessage {
-  role:    'user' | 'assistant'
+  role: 'user' | 'assistant'
   content: string
 }
 
@@ -32,65 +40,65 @@ export interface AnthropicTextBlock {
 }
 
 export interface AnthropicToolUseBlock {
-  type:  'tool_use'
-  id:    string
-  name:  string
+  type: 'tool_use'
+  id: string
+  name: string
   input: Record<string, unknown>
 }
 
 export type AnthropicContentBlock = AnthropicTextBlock | AnthropicToolUseBlock
 
 export interface AnthropicTool {
-  name:         string
+  name: string
   description?: string
   input_schema: Record<string, unknown>
 }
 
 export interface AnthropicResponse {
-  id:      string
-  type:    string
-  role:    string
+  id: string
+  type: string
+  role: string
   content: AnthropicContentBlock[]
-  model:   string
-  stop_reason:    string | null
-  stop_sequence:  string | null
+  model: string
+  stop_reason: string | null
+  stop_sequence: string | null
   usage: {
-    input_tokens:  number
+    input_tokens: number
     output_tokens: number
   }
 }
 
 export interface CallAnthropicParams {
-  model:      string
-  messages:   AnthropicMessage[]
-  apiKey:     string
-  maxTokens?: number   // default 1024
-  tools?:     AnthropicTool[]
-  system?:    string
+  model: string
+  messages: AnthropicMessage[]
+  apiKey: string
+  maxTokens?: number // default 1024
+  tools?: AnthropicTool[]
+  system?: string
 }
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
 const DEFAULT_MAX_TOKENS = 1024
-const API_URL             = 'https://api.anthropic.com/v1/messages'
-const API_VERSION         = '2023-06-01'
-const ERROR_BODY_MAX_LEN  = 500   // Phase 4N L-1: truncate upstream body echoes
+const API_URL = 'https://api.anthropic.com/v1/messages'
+const API_VERSION = '2023-06-01'
+const ERROR_BODY_MAX_LEN = 500 // Phase 4N L-1: truncate upstream body echoes
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function buildHeaders(apiKey: string): Record<string, string> {
   return {
-    'x-api-key':         apiKey,
+    'x-api-key': apiKey,
     'anthropic-version': API_VERSION,
-    'content-type':      'application/json',
+    'content-type': 'application/json',
   }
 }
 
 function buildBody(params: CallAnthropicParams, stream: boolean): string {
   const body: Record<string, unknown> = {
-    model:      params.model,
+    model: params.model,
     max_tokens: params.maxTokens ?? DEFAULT_MAX_TOKENS,
-    messages:   params.messages,
+    messages: params.messages,
   }
   if (params.system) body.system = params.system
   if (params.tools && params.tools.length > 0) body.tools = params.tools
@@ -113,6 +121,7 @@ async function httpError(response: Response): Promise<never> {
 }
 
 // ── Full call: returns full response (for tool-use + multi-block) ───────────
+// (Retained for raw API access — tool_use blocks, multi-block responses)
 
 export async function callAnthropicFull(params: CallAnthropicParams): Promise<AnthropicResponse> {
   if (!params.apiKey) {
@@ -120,9 +129,9 @@ export async function callAnthropicFull(params: CallAnthropicParams): Promise<An
   }
 
   const response = await fetch(API_URL, {
-    method:  'POST',
+    method: 'POST',
     headers: buildHeaders(params.apiKey),
-    body:    buildBody(params, false),
+    body: buildBody(params, false),
   })
 
   if (!response.ok) await httpError(response)
@@ -135,19 +144,47 @@ export async function callAnthropicFull(params: CallAnthropicParams): Promise<An
 }
 
 // ── Simple call: returns first text block ────────────────────────────────────
+// (Delegates to AnthropicProvider — same return type, same behavior)
 
 export async function callAnthropic(params: CallAnthropicParams): Promise<string> {
-  const data = await callAnthropicFull(params)
-  const firstText = data.content.find(
-    (b): b is AnthropicTextBlock => b.type === 'text',
-  )?.text
-  if (!firstText) {
-    throw new Error('ANTHROPIC_EMPTY_RESPONSE: content array has no text block')
+  // Validate apiKey early (preserves original error message for test compat)
+  if (!params.apiKey) {
+    throw new Error('ANTHROPIC_MISSING_API_KEY: apiKey is required')
   }
-  return firstText
+
+  // Delegate to AnthropicProvider (provider abstraction layer)
+  // System prompt injected as a message since ChatOptions has no `system` field.
+  const provider = new AnthropicProvider({ apiKey: params.apiKey })
+  const chatMessages: ChatMessage[] = []
+  if (params.system) {
+    chatMessages.push({ role: 'system', content: params.system })
+  }
+  for (const m of params.messages) {
+    chatMessages.push({ role: m.role as ChatMessage['role'], content: m.content })
+  }
+
+  try {
+    const response = await provider.chat(chatMessages, {
+      model: params.model,
+      apiKey: params.apiKey,
+      maxTokens: params.maxTokens,
+      timeoutMs: 120_000,
+    } as ChatOptions)
+    if (!response.content) {
+      throw new Error('ANTHROPIC_EMPTY_RESPONSE: content array has no text block')
+    }
+    return response.content
+  } catch (err) {
+    // Normalize error messages to match original ANTHROPIC_ prefix format
+    const message = err instanceof Error ? err.message : String(err)
+    // Convert "Anthropic HTTP 500: ..." → "ANTHROPIC_HTTP_500: ..." for backward compat
+    const normalized = message.replace(/^Anthropic HTTP (\d+)/, 'ANTHROPIC_HTTP_$1')
+    throw new Error(normalized)
+  }
 }
 
 // ── Streaming: yields structured events (text + tool_use) ────────────────────
+// (Retained for raw SSE access — tool_use events, parse_error handling)
 
 export async function* callAnthropicStreamEvents(
   params: CallAnthropicParams,
@@ -157,9 +194,9 @@ export async function* callAnthropicStreamEvents(
   }
 
   const response = await fetch(API_URL, {
-    method:  'POST',
+    method: 'POST',
     headers: buildHeaders(params.apiKey),
-    body:    buildBody(params, true),
+    body: buildBody(params, true),
   })
 
   if (!response.ok) await httpError(response)

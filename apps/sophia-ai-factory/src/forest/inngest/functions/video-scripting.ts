@@ -5,7 +5,7 @@
  * Listens: video.requested
  * Transition: queued → scripting
  * Generates video script via OpenRouter API (real LLM call).
- * Emits: video.script.ready
+ * Emits: video.script.ready, campaign.progress (SSE)
  */
 
 import { inngest } from '@/seed/inngest/client';
@@ -15,6 +15,42 @@ import { assertValidTransition } from '@/land/video/generation/video-job-fsm';
 import { logger } from '@/seed/utils/logger-utility';
 import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 import type { VideoJobStatus } from '@/land/video/generation/video-job-fsm';
+
+/** Progress payload emitted via inngest.send for SSE streaming */
+interface ProgressPayload {
+  type: 'campaign.progress';
+  campaignId: string;
+  step: 'scripting' | 'tts' | 'visual' | 'compose' | 'publish' | 'complete' | 'error';
+  progress: number;
+  message: string;
+  timestamp: number;
+}
+
+/**
+ * Emit a campaign.progress event for SSE subscribers.
+ * Uses inngest.send() for cross-function event delivery.
+ */
+async function emitProgress(
+  campaignId: string,
+  step: ProgressPayload['step'],
+  progress: number,
+  message: string,
+): Promise<void> {
+  const payload: ProgressPayload = {
+    type: 'campaign.progress',
+    campaignId,
+    step,
+    progress,
+    message,
+    timestamp: Date.now(),
+  };
+  await inngest.send({
+    id: `progress-${campaignId}-${step}-${payload.timestamp}`,
+    name: 'campaign.progress',
+    data: payload,
+  });
+  logger.info('[videoScripting] Progress emitted', { campaignId, step, progress, message });
+}
 
 interface VideoJobRow {
   status: VideoJobStatus;
@@ -45,6 +81,9 @@ export const videoScripting = inngest.createFunction(
   { event: 'video.requested' },
   async ({ event, step }) => {
     const { jobId, tenantId, userId } = event.data;
+
+    // Emit: scripting started
+    await emitProgress(jobId, 'scripting', 0, 'Bắt đầu tạo kịch bản / Starting script generation');
 
     const job = await step.run('load-job', async () => {
       const db = createServerClient();
@@ -77,6 +116,9 @@ export const videoScripting = inngest.createFunction(
         .update({ script_text: scriptText, updated_at: Math.floor(Date.now() / 1000) })
         .eq('id', jobId);
     });
+
+    // Emit: scripting complete (10%)
+    await emitProgress(jobId, 'scripting', 10, 'Kịch bản đã tạo xong / Script generated');
 
     await step.run('record-cost', async () => {
       await recordCost({ jobId, stage: 'scripting', provider: 'openrouter', units: 1, costUsd: 0.002 });
