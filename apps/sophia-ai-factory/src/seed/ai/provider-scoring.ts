@@ -146,7 +146,7 @@ export interface ToolInfo {
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
 /** Regex matching lowercase alphanumeric tokens with common punctuation. */
-const TOKEN_RE = /[a-z0-9][a-z0-9+._-]*/g;
+const TOKEN_RE = /[a-z0-9]+(?:[a-z0-9+._]*)/g;
 
 /**
  * Tokenise a string into lowercase tokens.
@@ -181,7 +181,7 @@ function expandSynonyms(words: Set<string>): Set<string> {
  * fully covers the intent. Overlap coefficient answers the relevant question:
  * "is the intent a subset of what this tool advertises?"
  */
-function keywordOverlap(setA: Set<string>, setB: Set<string>): number {
+export function keywordOverlap(setA: Set<string>, setB: Set<string>): number {
   if (setA.size === 0 || setB.size === 0) return 0;
   const lowerA = new Set([...setA].map((s) => s.toLowerCase().trim()));
   const lowerB = new Set([...setB].map((s) => s.toLowerCase().trim()));
