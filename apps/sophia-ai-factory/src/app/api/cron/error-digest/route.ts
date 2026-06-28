@@ -5,7 +5,8 @@
  * RED-TEAM #2: ONLY fingerprints+counts shipped to OpenRouter — NEVER raw stacks/messages.
  * RED-TEAM #3: CRON_SECRET auth required.
  * RED-TEAM #5: D1 failure → push fatal log to Better Stack, return early.
- * TODO: future migration to CF scheduled() handler removes HTTP exposure.
+ * Architecture note: currently triggered via wrangler cron (HTTP GET/POST).
+ * Future: migrate to CF Workers scheduled() handler to remove HTTP exposure entirely.
  */
 
 import { NextRequest, NextResponse } from 'next/server';

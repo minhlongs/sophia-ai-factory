@@ -221,7 +221,7 @@ export async function* campaignStream(
   campaignId: string,
 ): AsyncGenerator<CampaignStreamEvent, void, unknown> {
   const startedAt = Date.now();
-  let state = createInitialState();
+  const state = createInitialState();
   let consecutiveErrors = 0;
 
   // Initial connected event

@@ -28,7 +28,7 @@
  * single-tenant admin model. Promo codes are global platform resources,
  * not per-agency resources that could be enumerated across tenant boundaries.
  *
- * TODO (if multi-tenancy is added later):
+ * PLANNED (if multi-tenancy is added later):
  *   - Add `agency_id` column to `promo_codes` (new migration)
  *   - Add `agency_id` scoping to `updateCodeStatus` and `listRedemptionsByCode`
  *   - Scope PATCH /[id]/status and GET /[id]/redemptions by session.agency_id

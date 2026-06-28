@@ -83,7 +83,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // LIMITATION: Amazon's `tag` is a shared Associates ID across all clicks from the same account.
   // Per-click attribution requires a composite tag suffix (e.g. `${PARTNER_TAG}-${linkIdShort}`)
   // appended at redirect time and stored as sub_id. Without that, we match the first link with
-  // this tag — cross-attribution is possible. TODO(phase-13): implement per-click tag suffix.
+  // PLANNED(phase-13): implement per-click tag suffix for accurate per-link attribution.
+ // Current behavior: matches first link with matching tag; cross-attribution possible.
   const tag = payload.tag ?? ''
   const linkRow = tag
     ? await db.prepare('SELECT id, tenant_id FROM affiliate_links WHERE sub_id = ? LIMIT 1')

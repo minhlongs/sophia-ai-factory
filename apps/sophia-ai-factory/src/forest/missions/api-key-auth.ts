@@ -7,6 +7,7 @@
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 import { forwardToSentry } from '@/seed/observability/sentry-forwarder';
 import { sha256 } from '@/tree/audit/crypto-utils';
 
@@ -90,7 +91,7 @@ export async function validateMissionApiKey(
       .single();
 
     if (error) {
-      logger.error('[ApiKeyAuth] DB error', error as Error);
+      logger.error('[ApiKeyAuth] DB error', toError(error));
       await forwardToSentry({
         level: 'error',
         message: 'DB error during API key validation',

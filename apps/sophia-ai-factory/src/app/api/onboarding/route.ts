@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { z } from 'zod';
+import { logger } from '@/seed/utils/logger-utility';
 
 const startSchema = z.object({
   tenantId: z.string().min(1),
@@ -161,7 +162,7 @@ async function sendWelcomeEmail(
   ceoName: string,
   amEmail: string,
 ): Promise<void> {
-  // TODO: Wire to email service (Resend/SendGrid) in Phase 3
-  // Template: docs/onboarding/templates/welcome-email.md
-  console.info(`[onboarding] Welcome email queued for ${ceoEmail} (AM: ${amEmail})`);
+ // PLANNED: Wire to email service (Resend/SendGrid) in Phase 3
+ // Template: docs/onboarding/templates/welcome-email.md
+ logger.info('[onboarding] Welcome email queued', { ceoEmail, amEmail });
 }
