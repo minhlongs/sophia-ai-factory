@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { Buffer } from 'node:buffer';
 
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
@@ -51,7 +52,7 @@ describe('YouTubePublisher', () => {
 
       // Mock source video fetch
       fetchSpy.mockResolvedValueOnce(
-        new Response(new Blob(['videobytes'], { type: 'video/mp4' }), {
+        new Response(Buffer.from('videobytes'), {
           status: 200,
           headers: { 'Content-Type': 'video/mp4' },
         }),

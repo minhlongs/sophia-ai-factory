@@ -211,7 +211,7 @@ export class ContextManager {
       budget,
       recentCount: recentMessages.length,
     });
-    let trimmed: { role: string; content: string }[] = [];
+    const trimmed: { role: string; content: string }[] = [];
     let tokens = this.estimateTokens([{ role: 'system', content: systemPrompt }]);
     for (const m of [...recentMessages].reverse()) {
       const mTokens = this.estimateTokens([m]);

@@ -7,6 +7,7 @@ import { CampaignFilterTabs } from '@/forest/dashboard/campaign/campaign-filter-
 import { CampaignGrid } from '@/forest/dashboard/campaign/campaign-grid';
 import { CampaignDetailModal } from '../components/campaign-detail-modal';
 import { Button } from '@/seed/components/ui/button';
+import Link from 'next/link';
 import { Plus, Megaphone } from 'lucide-react';
 import { EmptyState } from '@/seed/components/ui/empty-state';
 import { cn } from '@/seed/utils/cn';
@@ -36,10 +37,10 @@ export function CampaignsClientWrapper({ initialCampaigns }: CampaignsClientWrap
           </div>
           <div className="flex items-center gap-3">
             <Button asChild className="flex items-center gap-2">
-              <a href="/dashboard/create">
+              <Link href="/dashboard/create">
                 <Plus className="w-4 h-4" aria-hidden="true" />
                 {t('buttons.new_campaign')}
-              </a>
+              </Link>
             </Button>
           </div>
         </div>
@@ -62,10 +63,10 @@ export function CampaignsClientWrapper({ initialCampaigns }: CampaignsClientWrap
         </div>
         <div className="flex items-center gap-3">
           <Button asChild className="flex items-center gap-2">
-            <a href="/dashboard/create">
+            <Link href="/dashboard/create">
               <Plus className="w-4 h-4" aria-hidden="true" />
               {t('buttons.new_campaign')}
-            </a>
+            </Link>
           </Button>
         </div>
       </div>

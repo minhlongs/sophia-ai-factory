@@ -182,16 +182,6 @@ export function CampaignDetailModal({ campaign, isOpen, onClose }: CampaignDetai
     }
   }, [connected, streamError, events.length, campaign, isOpen, streamedStatus, streamedProgress]);
 
-  if (!campaign) return null;
-
-  const progress = streamedProgress;
-  const statusLabel = ['draft', 'queued', 'processing_script', 'processing_video', 'completed', 'failed'].includes(campaign.status as string)
-    ? tStatus(campaign.status)
-    : campaign.status?.replace(/_/g, ' ') || 'Unknown';
-  const progressStatus = getProgressStatus(campaign.status);
-  const hasVideo = !!campaign.video_url;
-  const hasScript = !!campaign.script_content;
-
   const formatDate = useCallback((timestamp: string | number | undefined) => {
     if (!timestamp) return '-';
     const date = typeof timestamp === 'number'
@@ -208,12 +198,22 @@ export function CampaignDetailModal({ campaign, isOpen, onClose }: CampaignDetai
 
   // Determine the error message to display
   const displayError = useMemo(() => {
-    if (campaign.error_message) return campaign.error_message;
+    if (campaign?.error_message) return campaign.error_message;
     const streamErr = events.find((e) => e.type === 'error');
     if (streamErr?.message) return streamErr.message;
     if (streamError) return streamError;
     return undefined;
-  }, [campaign.error_message, events, streamError]);
+  }, [campaign?.error_message, events, streamError]);
+
+  if (!campaign) return null;
+
+  const progress = streamedProgress;
+  const statusLabel = ['draft', 'queued', 'processing_script', 'processing_video', 'completed', 'failed'].includes(campaign.status as string)
+    ? tStatus(campaign.status)
+    : campaign.status?.replace(/_/g, ' ') || 'Unknown';
+  const progressStatus = getProgressStatus(campaign.status);
+  const hasVideo = !!campaign.video_url;
+  const hasScript = !!campaign.script_content;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

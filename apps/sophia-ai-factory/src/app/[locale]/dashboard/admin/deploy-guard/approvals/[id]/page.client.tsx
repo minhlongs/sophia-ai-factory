@@ -65,7 +65,7 @@ export default function DeployGuardApprovalDetail({ locale, approval: initialApp
         required_attestations: approval.requiredAttestations
       }
 
-      const secret = (window as any).DEPLOY_KEY || process.env?.DEPLOY_KEY
+      const secret = (window as unknown as { DEPLOY_KEY?: string }).DEPLOY_KEY || process.env?.DEPLOY_KEY
       if (!secret) {
         setToast({ message: isVi ? 'DEPLOY_KEY chưa được cấu hình' : 'DEPLOY_KEY not configured', type: 'error' })
         return

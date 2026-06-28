@@ -52,7 +52,8 @@ export function TopAppBar({
   navItems = [],
   pathname: providedPathname,
 }: TopAppBarProps) {
-  const pathname = providedPathname || usePathname();
+  const pathnameFromHook = usePathname();
+  const pathname = providedPathname || pathnameFromHook;
 
   const activeItems = navItems.map(item => ({
     ...item,

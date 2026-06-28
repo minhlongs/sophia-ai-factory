@@ -1,0 +1,1 @@
+/Users/macbook/.claude/rules/manus-layer-2-run-mode.md

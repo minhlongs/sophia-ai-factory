@@ -1,0 +1,8 @@
+.next
+!next/lock
+out
+node_modules
+.env*
+dist
+coverage
+__snapshots__

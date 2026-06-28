@@ -286,7 +286,7 @@ function extractToolCallsFromEvents(events: SseEvent[]): ParsedToolCall[] {
     if (pending.id && pending.name) {
       calls.push({
         id: pending.id,
-        name: pending.name as any, // AgentToolName
+        name: pending.name as AgentToolName,
         args: pending.args ? JSON.parse(pending.args) : {},
       });
     }

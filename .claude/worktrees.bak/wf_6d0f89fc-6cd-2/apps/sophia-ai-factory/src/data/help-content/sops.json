@@ -1,0 +1,141 @@
+{
+  "sections": [
+    {
+      "id": "browse-install",
+      "icon": "Store",
+      "title": "1. Browse & Install SOPs",
+      "intro": "SOPs are automation playbooks — pre-built workflows that generate videos, manage content, or run analytics automatically.",
+      "steps": [
+        {
+          "title": "Open SOP Marketplace",
+          "desc": "Go to SOP Marketplace from the sidebar. Browse 30+ official and community SOPs by category.",
+          "link": "/dashboard/sop-marketplace",
+          "linkLabel": "Open Marketplace"
+        },
+        {
+          "title": "Preview a SOP",
+          "desc": "Click any SOP card to see its description, steps, required inputs, and pricing. Official SOPs are free."
+        },
+        {
+          "title": "Install",
+          "desc": "Click \"Install\" (or \"Purchase\" for community SOPs). The SOP appears in your \"My SOPs\" page instantly.",
+          "link": "/dashboard/sops",
+          "linkLabel": "View My SOPs"
+        }
+      ],
+      "tip": "Start with the \"Video Generation Starter\" SOP — it's pre-installed for all users and demonstrates the full workflow."
+    },
+    {
+      "id": "configure",
+      "icon": "Settings",
+      "title": "2. Configure Your SOP",
+      "intro": "Each installed SOP can be customized before running.",
+      "steps": [
+        {
+          "title": "Open SOP Detail",
+          "desc": "Click any installed SOP in \"My SOPs\" to open its detail page with tabs: Overview, Runs, Edit, Webhook."
+        },
+        {
+          "title": "Edit Configuration",
+          "desc": "Go to the \"Edit\" tab. Fill in the configuration form (niche, language, style, etc.). Each SOP has different options."
+        },
+        {
+          "title": "Customize Playbook (Advanced)",
+          "desc": "The playbook is the step-by-step instruction set. Advanced users can edit the playbook markdown to change the SOP's behavior."
+        }
+      ],
+      "tip": "You can always reset to the default configuration by re-installing the SOP."
+    },
+    {
+      "id": "run",
+      "icon": "Play",
+      "title": "3. Run SOPs",
+      "intro": "Three ways to trigger a SOP run:",
+      "steps": [
+        {
+          "title": "Manual Run",
+          "desc": "Click \"Run Now\" on the SOP detail page (Overview tab). The SOP executes immediately and you can watch progress in real-time."
+        },
+        {
+          "title": "Webhook Trigger",
+          "desc": "Go to the \"Webhook\" tab to get your webhook URL and secret. Send a POST request to trigger the SOP from external tools (Zapier, Make, n8n, etc.)."
+        },
+        {
+          "title": "Scheduled (Cron)",
+          "desc": "Some SOPs support automatic scheduling. When enabled, the server runs the SOP on a set schedule (e.g., daily at 6 AM)."
+        }
+      ],
+      "tip": "Webhook format: POST to the webhook URL with header \"x-sop-secret: YOUR_SECRET\". Body is optional JSON with input overrides."
+    },
+    {
+      "id": "results",
+      "icon": "BarChart2",
+      "title": "4. View Results & History",
+      "intro": "Track every SOP execution with detailed logs.",
+      "steps": [
+        {
+          "title": "Run History",
+          "desc": "Go to the \"Runs\" tab on any SOP detail page. See all past runs with trigger type (manual/webhook/cron), status, start time, and duration."
+        },
+        {
+          "title": "Run Detail & Timeline",
+          "desc": "Click \"View Mission →\" on any run to see the step-by-step execution timeline. Each step shows its status, output, and timing."
+        },
+        {
+          "title": "Run Statuses",
+          "desc": "Pending = queued, Running = in progress, Completed = success, Failed = error occurred. Failed runs show error details in the timeline."
+        }
+      ]
+    },
+    {
+      "id": "create",
+      "icon": "Sparkles",
+      "title": "5. Create Custom SOPs (MASTER)",
+      "intro": "MASTER-tier users can create and sell custom SOPs on the marketplace.",
+      "steps": [
+        {
+          "title": "Open SOP Creator",
+          "desc": "Go to \"SOP Creator\" in the sidebar (MASTER only). Click \"Create New SOP\".",
+          "link": "/dashboard/sop-creator",
+          "linkLabel": "Open SOP Creator"
+        },
+        {
+          "title": "Define Your SOP",
+          "desc": "Fill in the name (EN + VI), category, description, and playbook. The playbook defines each step the SOP will execute."
+        },
+        {
+          "title": "Set Pricing",
+          "desc": "Free or paid. For paid SOPs, set a price and earn commission on every sale through the marketplace."
+        },
+        {
+          "title": "Publish",
+          "desc": "Save as draft to test, then publish to make it available on the marketplace for all users."
+        }
+      ],
+      "tip": "Test your SOP thoroughly before publishing. Install it yourself first and run it to verify all steps work correctly."
+    },
+    {
+      "id": "challenges",
+      "icon": "Target",
+      "title": "6. Challenges & Rewards",
+      "intro": "Complete challenges to earn rewards and boost your earnings.",
+      "steps": [
+        {
+          "title": "View Active Challenges",
+          "desc": "Go to \"Challenges\" in the sidebar. See all active challenges with progress bars and deadlines.",
+          "link": "/dashboard/challenges",
+          "linkLabel": "View Challenges"
+        },
+        {
+          "title": "Track Progress",
+          "desc": "Each challenge tracks your progress automatically. Run SOPs, make sales, or earn commission to advance."
+        },
+        {
+          "title": "Claim Rewards",
+          "desc": "When you complete a challenge, claim your reward: badges, MCU credits, or commission boosts."
+        }
+      ],
+      "tip": "Challenges refresh periodically. Check back regularly for new opportunities."
+    }
+  ]
+}

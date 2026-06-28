@@ -1,0 +1,21 @@
+/**
+ * /investor-room — Investor data room.
+ *
+ * Server Component: renders the client DataRoom shell.
+ *
+ * Access is gated via the client-side NDA prompt.
+ * In production this would be behind auth + invite-only.
+ */
+import { Metadata } from "next";
+import DataRoom from "./data-room";
+
+export const revalidate = 3600;
+
+export const metadata: Metadata = {
+  title: "Investor Data Room | Sophia AI Factory",
+  description: "Confidential investor documents. Access restricted to qualified investors.",
+};
+
+export default function InvestorRoomPage() {
+  return <DataRoom />;
+}

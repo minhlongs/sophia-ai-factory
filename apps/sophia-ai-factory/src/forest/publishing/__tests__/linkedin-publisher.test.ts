@@ -53,7 +53,7 @@ describe('LinkedInPublisher', () => {
 
       // Source video fetch
       fetchSpy.mockResolvedValueOnce(
-        new Response(new Blob(['videobytes'], { type: 'video/mp4' }), {
+        new Response('videobytes', {
           status: 200,
           headers: { 'Content-Type': 'video/mp4' },
         }),
@@ -104,7 +104,7 @@ describe('LinkedInPublisher', () => {
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       fetchSpy.mockResolvedValueOnce(
-        new Response(new Blob(['v']), { status: 200, headers: { 'Content-Type': 'video/mp4' } }),
+        new Response('v', { status: 200, headers: { 'Content-Type': 'video/mp4' } }),
       );
       fetchSpy.mockResolvedValueOnce(new Response('Forbidden', { status: 403 }));
 
@@ -131,7 +131,7 @@ describe('LinkedInPublisher', () => {
       const longCaption = 'x'.repeat(4000);
 
       fetchSpy.mockResolvedValueOnce(
-        new Response(new Blob(['v']), { status: 200, headers: { 'Content-Type': 'video/mp4' } }),
+        new Response('v', { status: 200, headers: { 'Content-Type': 'video/mp4' } }),
       );
       fetchSpy.mockResolvedValueOnce(
         new Response(

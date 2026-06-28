@@ -88,21 +88,13 @@ describe('ZaloPublisher', () => {
     it('uploads video and returns broadcast_id', async () => {
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
-      // Source video fetch - mock with proper stream support for Node
-      const videoBlob = new Blob(['videobytes'], { type: 'video/mp4' });
-      // Add stream method for Node compatibility
-      videoBlob.stream = () => new ReadableStream({
-        start(controller) {
-          controller.enqueue(new TextEncoder().encode('videobytes'));
-          controller.close();
-        }
+      // Source video fetch - use string body + override blob() for jsdom FormData compat
+      const videoRes = new Response('videobytes', {
+        status: 200,
+        headers: { 'Content-Type': 'video/mp4' },
       });
-      fetchSpy.mockResolvedValueOnce(
-        new Response(videoBlob, {
-          status: 200,
-          headers: { 'Content-Type': 'video/mp4' },
-        }),
-      );
+      vi.spyOn(videoRes, 'blob').mockResolvedValue(new Blob(['videobytes'], { type: 'video/mp4' }));
+      fetchSpy.mockResolvedValueOnce(videoRes);
       // Upload to Zalo OA
       fetchSpy.mockResolvedValueOnce(
         new Response(

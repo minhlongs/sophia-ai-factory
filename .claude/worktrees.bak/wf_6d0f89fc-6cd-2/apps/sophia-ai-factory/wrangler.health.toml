@@ -1,0 +1,23 @@
+name = "sophia-ai-factory-health"
+main = "src/workers/health-worker.ts"
+compatibility_date = "2026-03-17"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# These will be injected by deploy script
+COMMIT_SHA = "unknown"
+DEPLOYED_AT = "unknown"
+HEALTH_CHECK_SECRET = ""
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sophia-raas-db"
+database_id = "78bd1961-b62d-43bb-b551-0c5d7d389506"
+
+[[r2_buckets]]
+binding = "NEXT_INC_CACHE_R2_BUCKET"
+bucket_name = "sophia-ai-factory-opennext-cache"
+
+[[kv_namespaces]]
+binding = "EXPERIMENT_KV"
+id = "c3857792e4014334ba31b62b19d2f32a"
