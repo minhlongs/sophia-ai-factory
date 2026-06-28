@@ -11,7 +11,7 @@ import { execSync } from 'child_process';
 import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 
-const ROOT = resolve(process.cwd(), 'apps/sophia-ai-factory');
+const ROOT = process.cwd(); // deploy script cd's here before invoking this gate
 const REQUIRED_SECRETS = [
   'OPENROUTER_API_KEY',
   'NOWPAYMENTS_API_KEY',
