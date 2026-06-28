@@ -52,7 +52,9 @@ export function useCampaignStream(
   const campaignIdRef = useRef(campaignId);
 
   // Keep ref in sync so the reconnect callback always sees the latest id
-  campaignIdRef.current = campaignId;
+  useEffect(() => {
+    campaignIdRef.current = campaignId;
+  }, [campaignId]);
 
   const parseEvent = useCallback(
     (raw: string): CampaignStreamEvent | null => {

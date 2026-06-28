@@ -129,8 +129,7 @@ if (!d1db) throw new Error('D1 database binding not available');
             affiliate_link: program.link,
             short_code: shortCode,
             network: 'clickbank',
-            // TODO(M5): source actual commission % from network API — program.epc is EPC not commission rate
-            commission_rate: null,
+        commission_rate: parseFloat(program.commission) / 100,
           });
           if (!offerError) break;
           if (attempt === 2) {

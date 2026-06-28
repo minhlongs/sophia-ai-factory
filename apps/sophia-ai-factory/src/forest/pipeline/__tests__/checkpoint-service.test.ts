@@ -1,6 +1,6 @@
-// @ts-nocheck - test file with SQLite mock using intentional any types
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CheckpointService } from '@/forest/pipeline';
+import Database from 'better-sqlite3';
 
 // ── In-memory SQLite D1 mock ──────────────────────────────────────────────────
 // Cache the DB instance so createServerClient() calls share state.
@@ -8,7 +8,6 @@ import { CheckpointService } from '@/forest/pipeline';
 let cachedDb: any = null;
 
 function createMockD1Client() {
-  const Database = require('better-sqlite3');
   if (!cachedDb) {
     cachedDb = new Database(':memory:');
     cachedDb.exec(`CREATE TABLE IF NOT EXISTS pipeline_checkpoints (
@@ -28,7 +27,7 @@ function createMockD1Client() {
   }
   const db = cachedDb;
 
-function makeStmt(sql, stmt) {
+function makeStmt(sql: string, stmt: { bind: (...vals: unknown[]) => { run: (...v: unknown[]) => { changes: number; lastInsertRowid: number | bigint | null }; get: (...v: unknown[]) => unknown; all: () => unknown[] }; run: (...v: unknown[]) => { changes: number; lastInsertRowid: number | bigint | null }; get: (...v: unknown[]) => unknown; all: () => unknown[] }) {
   const isInsert = sql.trim().toUpperCase().startsWith('INSERT');
 
   const bind = (...vals: unknown[]) => {

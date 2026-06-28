@@ -9,7 +9,8 @@
  * Observability: records run result to cron_run_log via run-tracker (migration 0026).
  * Idempotency: skips execution if run within last 5 minutes.
  *
- * TODO: future migration to CF scheduled() handler removes HTTP exposure.
+ * Architecture note: currently triggered via wrangler cron (HTTP GET/POST).
+ * Future: migrate to CF Workers scheduled() handler to remove HTTP exposure entirely.
  */
 
 import { NextRequest, NextResponse } from 'next/server';

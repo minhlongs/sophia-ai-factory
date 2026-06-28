@@ -25,7 +25,7 @@ import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { mintAdminChallengeToken } from '@/seed/auth/require-admin';
 
-// TODO(F02): Better Auth does not expose a public verify-only password API.
+// NOTE(F02): Better Auth does not expose a public verify-only password API.
 // We resolve the stored credential hash from the D1 `account` table directly
 // (providerId = 'credential', password column holds the PBKDF2 hash written by
 // our own hashPassword() in tree/crypto/password-hash.ts).

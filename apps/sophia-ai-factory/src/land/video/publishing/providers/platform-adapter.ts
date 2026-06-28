@@ -30,8 +30,8 @@ export function isPlatformAdapter(
     typeof pub === 'object' &&
     pub !== null &&
     'setAccessToken' in pub &&
-    typeof (pub as any).setAccessToken === 'function' &&
+    typeof (pub as PlatformAdapter).setAccessToken === 'function' &&
     'refreshAccessToken' in pub &&
-    typeof (pub as any).refreshAccessToken === 'function'
+    typeof (pub as PlatformAdapter).refreshAccessToken === 'function'
   );
 }

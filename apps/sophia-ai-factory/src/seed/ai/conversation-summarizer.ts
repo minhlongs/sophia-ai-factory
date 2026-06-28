@@ -432,7 +432,7 @@ export class ConversationSummarizer {
     }
     segments.push(`Total: ${messages.length} messages exchanged.`);
 
-    let result = segments.join(' ');
+    const result = segments.join(' ');
     return this.truncateToTokenBudget(result, maxTokens);
   }
 

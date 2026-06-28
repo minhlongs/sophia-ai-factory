@@ -318,7 +318,7 @@ export class ApprovalService {
    * Get approval history (audit trail of deploy guard actions).
    * Queries admin_audit_log for DEPLOY_GUARD_* actions.
    */
-  async getHistory(limit: number = 100, cursor?: string): Promise<{ entries: any[]; nextCursor: string | null }> {
+  async getHistory(limit: number = 100, cursor?: string): Promise<{ entries: Record<string, unknown>[]; nextCursor: string | null }> {
     const db = getD1()
     if (!db) return { entries: [], nextCursor: null }
 
@@ -330,7 +330,7 @@ export class ApprovalService {
       ORDER BY id DESC
       LIMIT ?
     `
-    const params: any[] = [limit]
+    const params: (string | number)[] = [limit]
 
     if (cursor) {
       query = `
@@ -387,7 +387,7 @@ export class ApprovalService {
     operatorId: string
     operatorName: string
     reason: string
-    metadata: Record<string, any> | null
+    metadata: Record<string, unknown> | null
   }): Promise<void> {
     const db = getD1()
     if (!db) return // non-fatal if DB unavailable

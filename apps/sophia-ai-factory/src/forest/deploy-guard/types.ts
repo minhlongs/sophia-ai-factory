@@ -116,7 +116,7 @@ export interface DeployGuardHistoryEntry {
   operatorId: string
   operatorName: string
   reason: string | null
-  metadata: Record<string, any> | null
+  metadata: Record<string, unknown> | null
 }
 
 /**

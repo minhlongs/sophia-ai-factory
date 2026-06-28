@@ -2,13 +2,13 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { BudgetTracker, BudgetMode, EntryStatus, BudgetExceededError, ApprovalRequiredError } from '@/tree/budget';
+import Database from 'better-sqlite3';
 
 // ── In-memory SQLite D1 mock ────────────────────────────────────────────────────
 
 let db: ReturnType<typeof import('better-sqlite3')>;
 
 function createMockD1Client() {
-  const Database = require('better-sqlite3');
   db = new Database(':memory:');
 
   db.exec(`CREATE TABLE IF NOT EXISTS memory_kv (

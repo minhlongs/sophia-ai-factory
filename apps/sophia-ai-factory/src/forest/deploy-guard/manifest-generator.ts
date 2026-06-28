@@ -12,7 +12,7 @@ import { DeployManifest, CreateApprovalPayload } from './types'
  * Generate a canonical JSON string for signing.
  * Uses sorted keys, no whitespace, consistent timestamp format.
  */
-export function canonicalize(obj: any): string {
+export function canonicalize(obj: object): string {
   return JSON.stringify(obj, Object.keys(obj).sort())
 }
 

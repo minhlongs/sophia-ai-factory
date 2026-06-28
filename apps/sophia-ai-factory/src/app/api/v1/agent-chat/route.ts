@@ -23,6 +23,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveLlmRoute, type ResolveLlmRouteOptions } from '@/forest/agent-chat/llm-router';
+import { AgentToolName } from '@/forest/agent-chat/tool-registry';
 import { formatStream, serializeSseEvent, openAiStreamToChunks } from '@/forest/agent-chat/stream-formatter';
 import { buildSystemPrompt } from '@/forest/agent-chat/system-prompt';
 import { deductCredits, getBalance } from '@/tree/mcu/credits-repo';
