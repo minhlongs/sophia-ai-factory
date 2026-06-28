@@ -113,7 +113,7 @@ if [ "${ALLOW_UNPUSHED_DEPLOY:-0}" != "1" ]; then
   # index is refreshed. Without this, a freshly-built tree (where Next.js/OpenNext
   # touched files) reports false-positive uncommitted changes. Cheap (<1s), safe.
   git -C "$REPO_ROOT" update-index --refresh > /dev/null 2>&1 || true
-STATUS_PORCELAIN=$(git -C "$REPO_ROOT" status --porcelain | grep -vE "^[? ][?MD ] \.cleo(/)?$|^[?m? ][?MD ] \.claude/worktrees/" || true)
+STATUS_PORCELAIN=$(git -C "$REPO_ROOT" status --porcelain | grep -vE "^[? ][?MD ] \.cleo(/)?$|^[?m? ][?MD ] \.claude/worktrees(/|\.bak/)" || true)
   if [ -n "$STATUS_PORCELAIN" ]; then
     echo "❌ Refusing to deploy: git status reports a dirty working tree."
     echo "Affected files:"
@@ -128,7 +128,7 @@ STATUS_PORCELAIN=$(git -C "$REPO_ROOT" status --porcelain | grep -vE "^[? ][?MD 
     echo "Commit or stash first."
     exit 2
   fi
-  UNTRACKED=$(git -C "$REPO_ROOT" ls-files --others --exclude-standard | grep -vE '^\.cleo(/)?$' || true)
+  UNTRACKED=$(git -C "$REPO_ROOT" ls-files --others --exclude-standard | grep -vE '^\.cleo(/)?$|^\.claude/worktrees(/|\.bak/)' || true)
   if [ -n "$UNTRACKED" ]; then
     echo "❌ Refusing to deploy: untracked files in working tree."
     echo "Affected files:"
