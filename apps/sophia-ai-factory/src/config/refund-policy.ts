@@ -1,15 +1,8 @@
 /**
  * Refund policy constants for Sophia AI Factory.
  *
- * IMPORTANT — Product decision pending (PG-001):
- * The MASTER tier refund policy has NOT been finalized.
- * Long must decide: final-sale (no refund) | 30-day window | 14-day window.
- *
- * UNRESOLVED(PG-001): MASTER tier refund policy requires product decision.
- * Options: final-sale (no refund) | 30-day window | 14-day window.
- * Current: MASTER inherits DEFAULT_REFUND_WINDOW_DAYS (30 days) as safe default.
- * Tracking: plans/260520-2216-gap-go-live/punch-list.md → PG-001.
- * Resolution required from: Long (product owner)
+ * PG-001 RESOLVED (2026-06-29): MASTER tier = 14-day refund window.
+ * BASIC/PREMIUM/ENTERPRISE = 30-day default window.
  */
 
 import type { Tier } from '@/seed/types';
@@ -19,14 +12,13 @@ export const DEFAULT_REFUND_WINDOW_DAYS = 30;
 
 /**
  * Per-tier refund windows.
- * MASTER uses DEFAULT_REFUND_WINDOW_DAYS pending PG-001 product decision.
+ * MASTER: 14 days (decided 2026-06-29 — tighter window for high-value tier).
  */
 export const TIER_REFUND_WINDOWS: Record<Tier, number> = {
   BASIC: DEFAULT_REFUND_WINDOW_DAYS,
   PREMIUM: DEFAULT_REFUND_WINDOW_DAYS,
   ENTERPRISE: DEFAULT_REFUND_WINDOW_DAYS,
-  // UNRESOLVED(PG-001): MASTER policy — awaiting product decision from Long
-  MASTER: DEFAULT_REFUND_WINDOW_DAYS,
+  MASTER: 14,
 };
 
 /**
