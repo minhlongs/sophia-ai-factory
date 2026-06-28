@@ -113,7 +113,7 @@ if [ "${ALLOW_UNPUSHED_DEPLOY:-0}" != "1" ]; then
   # index is refreshed. Without this, a freshly-built tree (where Next.js/OpenNext
   # touched files) reports false-positive uncommitted changes. Cheap (<1s), safe.
   git -C "$REPO_ROOT" update-index --refresh > /dev/null 2>&1 || true
-  STATUS_PORCELAIN=$(git -C "$REPO_ROOT" status --porcelain | grep -vE '^[? ][?MD ] \.cleo(/)?$' || true)
+  STATUS_PORCELAIN=$(git -C "$REPO_ROOT" status --porcelain | grep -vE '^[? ][?MD ] \.cleo(/)?$|^[?m? ][?MD ] \.claude/worktrees/ || true)
   if [ -n "$STATUS_PORCELAIN" ]; then
     echo "❌ Refusing to deploy: git status reports a dirty working tree."
     echo "Affected files:"
