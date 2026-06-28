@@ -49,7 +49,7 @@ describe('PinterestPublisher', () => {
 
       // Source video fetch
       fetchSpy.mockResolvedValueOnce(
-        new Response(new Blob(['videobytes'], { type: 'video/mp4' }), {
+        new Response('videobytes', {
           status: 200,
           headers: { 'Content-Type': 'video/mp4' },
         }),
@@ -94,7 +94,7 @@ describe('PinterestPublisher', () => {
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       fetchSpy.mockResolvedValueOnce(
-        new Response(new Blob(['v']), { status: 200, headers: { 'Content-Type': 'video/mp4' } }),
+        new Response('v', { status: 200, headers: { 'Content-Type': 'video/mp4' } }),
       );
       fetchSpy.mockResolvedValueOnce(
         new Response('Unauthorized', { status: 401 }),
@@ -123,7 +123,7 @@ describe('PinterestPublisher', () => {
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
       fetchSpy.mockResolvedValueOnce(
-        new Response(new Blob(['v']), { status: 200, headers: { 'Content-Type': 'video/mp4' } }),
+        new Response('v', { status: 200, headers: { 'Content-Type': 'video/mp4' } }),
       );
       fetchSpy.mockResolvedValueOnce(
         new Response(JSON.stringify({ upload_id: 'uid', upload_url: 'https://s3.upload' }), { status: 200 }),

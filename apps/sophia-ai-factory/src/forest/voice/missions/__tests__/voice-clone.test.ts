@@ -48,8 +48,12 @@ describe('voice:clone handler', () => {
   it('calls ElevenLabs and returns live voice_id on success', async () => {
     mockResolve.mockResolvedValueOnce('eleven-key-xxx')
     const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>
+
+    // Mock audio fetch: use string body and override blob() for jsdom FormData compat
+    const audioRes = new Response('fake-audio', { status: 200 })
+    vi.spyOn(audioRes, 'blob').mockResolvedValue(new Blob(['fake-audio']))
     fetchMock
-      .mockResolvedValueOnce(new Response(new Blob(['fake-audio']), { status: 200 }))
+      .mockResolvedValueOnce(audioRes)
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ voice_id: 'voice-real-123', name: 'Test Voice', status: 'ready' }), {
           status: 200,
@@ -70,8 +74,11 @@ describe('voice:clone handler', () => {
   it('returns ok=false with elevenlabs_<status> on API error', async () => {
     mockResolve.mockResolvedValueOnce('eleven-key-xxx')
     const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>
+
+    const audioRes = new Response('x', { status: 200 })
+    vi.spyOn(audioRes, 'blob').mockResolvedValue(new Blob(['x']))
     fetchMock
-      .mockResolvedValueOnce(new Response(new Blob(['x']), { status: 200 }))
+      .mockResolvedValueOnce(audioRes)
       .mockResolvedValueOnce(new Response('Bad Request', { status: 400 }))
 
     const result = await handle({

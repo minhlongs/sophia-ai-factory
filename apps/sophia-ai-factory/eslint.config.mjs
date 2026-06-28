@@ -108,6 +108,8 @@ const eslintConfig = defineConfig([
 "src/seed/types/audit-log.ts",
 // seed/utils — reads land/observability + land/telemetry for logging infra (mekong-exempt)
 "src/seed/utils/logger-internals.ts",
+// seed/utils/circuit-breaker — reads land/monitoring + land/fulfillment for alerting (mekong-exempt: infra alerting)
+"src/seed/utils/circuit-breaker.ts",
       "src/seed/telemetry/llm-trace.ts",
       // Test files (may import mocks from any layer)
       "src/seed/**/*.test.ts",
@@ -215,6 +217,8 @@ const eslintConfig = defineConfig([
       "src/tree/sop/solo-orchestrator.ts",
       // sop/webhook-hmac — reads land/webhooks for signature verification (mekong-exempt)
       "src/tree/sop/webhook-hmac.ts",
+      // alerts/webhook-notification-signature — reads land/webhooks for HMAC (mekong-exempt)
+      "src/tree/alerts/webhook-notification-signature.ts",
       // Test files
       "src/tree/**/*.test.ts",
       "src/tree/**/*.test.tsx",
@@ -365,6 +369,23 @@ const eslintConfig = defineConfig([
 "src/forest/usage-metering/**/*.ts",
 // dlq-reaper — reads land/billing/nowpayments-ipn-dead-letter for DLQ ops (mekong-exempt: orchestration)
 "src/forest/inngest/functions/dlq-reaper.ts",
+// agent-chat — orchestrator that uses land/openclaw memory adapter (mekong-exempt: orchestration)
+"src/forest/agent-chat/memory-consolidation-service.ts",
+"src/forest/agent-chat/tool-executor.ts",
+// did/missions — orchestrates land/did for avatar creation (mekong-exempt)
+"src/forest/did/missions/avatar-create-did.ts",
+// leads/missions — orchestrates land/hunter for lead enrichment (mekong-exempt)
+"src/forest/leads/missions/lead-enrich.ts",
+// publishing — token refresh uses land/instagram adapter (mekong-exempt: OAuth)
+"src/forest/publishing/token-refresh-service.ts",
+// video/missions — video pipeline orchestrators that call land services (mekong-exempt)
+"src/forest/video/missions/caption-generate.ts",
+"src/forest/video/missions/emit-video-generate.ts",
+"src/forest/video/missions/subtitle-generate.ts",
+"src/forest/video/missions/thumbnail-generate.ts",
+"src/forest/video/missions/video-create.ts",
+// youtube/missions — orchestrates land/youtube publisher (mekong-exempt)
+"src/forest/youtube/missions/youtube-publish.ts",
       // Test files
       "src/forest/**/*.test.ts",
       "src/forest/**/*.test.tsx",

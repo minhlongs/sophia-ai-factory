@@ -60,7 +60,7 @@ export function CampaignCard({ campaign, onSelect }: CampaignCardProps) {
   const tStatus = useTranslations('campaign.status');
   const format = useFormatter();
 
-  const statusLabel = ['draft', 'queued', 'processing_script', 'processing_video', 'completed', 'failed'].includes(campaign.status as any)
+  const statusLabel = ['draft', 'queued', 'processing_script', 'processing_video', 'completed', 'failed'].includes(campaign.status as string)
     ? tStatus(campaign.status)
     : campaign.status?.replace(/_/g, ' ') || 'Unknown';
 

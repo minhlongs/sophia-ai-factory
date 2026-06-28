@@ -13,11 +13,11 @@ import { spawnSync } from 'node:child_process';
 import { logger } from '@/seed/utils/logger-utility';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { recordCronRun, wasRecentlyRun } from '@/land/cron/run-tracker';
-import {
-  startCronCheckIn,
+import { startCronCheckIn,
   finishCronCheckIn,
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in';
+import { toError } from '@/seed/utils/to-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -146,7 +146,7 @@ async function handler(request: NextRequest) {
     if (db) {
       await recordCronRun(db as D1Database, CRON_NAME, 'failure', String(error)).catch(() => {});
     }
-    failCronCheckIn(cronCtx, CRON_NAME, error as Error);
+    failCronCheckIn(cronCtx, CRON_NAME, toError(error));
 
     return NextResponse.json({
       error: 'Verification failed',
