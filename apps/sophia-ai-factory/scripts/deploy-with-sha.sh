@@ -121,7 +121,7 @@ STATUS_PORCELAIN=$(git -C "$REPO_ROOT" status --porcelain | grep -vE "^[? ][?MD 
     echo "Commit, stash, or ignore generated files first."
     exit 2
   fi
-  if ! git -C "$REPO_ROOT" diff-index --quiet HEAD --; then
+  if ! git -C "$REPO_ROOT" diff-index --quiet HEAD -- --ignore-submodules=dirty; then
     echo "❌ Refusing to deploy: uncommitted changes in working tree."
     echo "Affected files:"
     git -C "$REPO_ROOT" diff-index --name-only HEAD -- | head -10
