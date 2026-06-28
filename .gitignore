@@ -90,3 +90,6 @@ sync-*.sh
 .vercel/
 .open-next/
 .wrangler/
+
+# Claude worktree backups (generated operational artifacts)
+.claude/worktrees.bak/

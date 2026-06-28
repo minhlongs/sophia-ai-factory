@@ -1,8 +1,0 @@
-name = "sophia-edge-probe"
-main = "worker.ts"
-compatibility_date = "2026-03-17"
-
-# No bindings — this Worker only does outbound fetches.
-# Deploys to <subdomain>.workers.dev automatically once published.
-[observability]
-enabled = true

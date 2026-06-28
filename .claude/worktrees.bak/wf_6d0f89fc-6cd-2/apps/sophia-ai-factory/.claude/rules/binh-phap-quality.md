@@ -1,1 +1,0 @@
-/Users/macbook/.claude/rules/binh-phap-quality.md
