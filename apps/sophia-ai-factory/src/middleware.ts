@@ -55,7 +55,6 @@ function redirectToDefault(request: NextRequest): NextResponse {
 function attachCspHeaders(response: NextResponse, nonce: string): void {
   response.headers.set('Content-Security-Policy', buildCSPHeader(nonce));
   response.headers.set(CSP_NONCE_HEADER, nonce);
-  response.headers.set('Cache-Control', 'no-store');
 }
 
 /**
