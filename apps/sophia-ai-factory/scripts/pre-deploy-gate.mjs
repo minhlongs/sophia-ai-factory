@@ -73,6 +73,9 @@ async function checkBuild() {
     skip('Build', 'SKIP_BUILD=1');
     return;
   }
+  // Clean test artifacts before build — vitest run may leave .next/ in a state
+  // that conflicts with production build (Turbopack cache, instrumentation files)
+  execSync('rm -rf .next', { cwd: ROOT, stdio: 'ignore' });
   const ok = runCommand('npm run build', ROOT);
   if (ok) pass('Build');
   else fail('Build', 'npm run build failed — fix build errors before deploy');
