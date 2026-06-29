@@ -67,6 +67,6 @@ export async function getUserTier(userId: string): Promise<Tier> {
 
     return normalizePlanToTier(orgSub?.plan);
   } catch {
-    return null
+    return 'BASIC' as Tier
   }
 }
