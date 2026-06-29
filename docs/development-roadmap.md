@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-06-22 (OTEL staging complete, SOC2 evidence pack finalized, Deploy Guard shipped, BYOK rotation in progress, production SHA 4bca4710 verified)
+**Last Updated:** 2026-06-29 (Deploy speedup shipped, health worker fixed, production SHA b868840b verified)
 **Target:** $1M ARR, 100/100 a16z solo company score
 **Go-Live Shipped (2026-05-03):** Production deployment https://sophia.agencyos.network (SHA 5b1f711f). GAP1: Magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2: Self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt email VAT 10%, dashboard period_end). GAP3: Mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission control widget, public /status page 90d uptime, D+1/D+7 lifecycle emails). Infrastructure: 9 smoke tests PASS (200 HTTP), 4431 tests 100% pass, build < 10s, 0 TS errors.
 
@@ -21,7 +21,7 @@ After production go-live, focus shifted to enterprise readiness: SOC 2 evidence 
 | **E4: BYOK Key Rotation** | 🟡 IN PROGRESS | Core: 2026-06-20 | AES-GCM key versioning, rotation cron design, admin API (`/api/admin/byok-rotation`), re-encrypt background job design. Staging test pending (Task #114). |
 | **E5: Layer Architecture Enforcement** | ✅ COMPLETE | 2026-06-18 | Fixed land→forest violations, reorganized forest/missions by domain, removed forbidden imports (`@/lib/*`), updated docs with canonical import paths. Commit `bc93feff3`. |
 
-**Verification (Post-Go-Live cumulative):** 4431+ tests pass, 0 TS errors, layer architecture lint enforced, deploy guard blocking unapproved deploys, OTEL tests 5/5 passing.
+**Verification (Post-Go-Live cumulative):** 6225 tests pass, 0 TS errors, layer architecture lint enforced, deploy guard blocking unapproved deploys, OTEL tests 5/5 passing, deploy speedup saves ~30 min per deploy.
 
 ---
 
