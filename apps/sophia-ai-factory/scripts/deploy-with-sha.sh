@@ -14,6 +14,8 @@
 #   SKIP_PWA=1            Skip service-worker generation (next-pwa webpack plugin).
 #                         Cost: offline mode breaks. Only for local dev.
 #   SKIP_RC=1             Disable React Compiler. Cost: lose RC perf opts. Local dev only.
+# SKIP_SYMBOL_UPLOAD=1 Skip R2 source map upload (saves 30+ min on 3500+ files).
+# Cost: Sentry errors remain minified. Allowed per no-tech doctrine.
 #   SKIP_SENTRY_BUILD=1   Skip Sentry build-time wrap (no source-map upload).
 #                         Cost: prod stack traces remain minified. Doctrine allows it
 #                         (sourcemaps optional per sophia-no-tech-doctrine.md), but
@@ -374,7 +376,7 @@ if [ "${SKIP_NEXT_BUILD:-0}" = "1" ]; then
   echo "⚠️  SKIP_NEXT_BUILD=1 — reusing existing .next build artifact"
 else
   echo "==> npm run build"
-  npm run build
+SKIP_SYMBOL_UPLOAD=1 npm run build
   # Brief pause to ensure filesystem consistency before subsequent steps
   sleep 5
 fi
