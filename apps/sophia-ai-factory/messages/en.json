@@ -2108,7 +2108,9 @@
         "name": "Name"
       }
     },
-    "title": "Title"
+    "title": "Title",
+    "heygen_configure_prompt": "Configure your HeyGen API key to unlock video generation bundles.",
+    "heygen_configure_cta": "Configure HeyGen Key"
   },
   "campaign": {
     "template_selection": {
@@ -3681,7 +3683,32 @@
     "sops": "Sops"
   },
   "guide": {
-    "back_to_dashboard": "Back to dashboard"
+    "back_to_dashboard": "Back to dashboard",
+    "gettingStarted": {
+      "hero_title": "Getting Started with Sophia",
+      "hero_subtitle": "Follow these simple steps to create your first AI video. No technical skills needed — Sophia handles everything automatically.",
+      "steps_title": "Setup Steps",
+      "step1_title": "Access the Dashboard",
+      "step1_desc": "Open your browser and go to sophia.agencyos.network. Click Sign In in the top-right corner, then enter your registered email and password.",
+      "callout_no_account": "No account yet? Click Sign Up and follow the guide — it only takes 2 minutes.",
+      "step2_title": "Set Up API Keys",
+      "step2_desc": "Sophia needs 3 API keys to create videos: OpenRouter (AI scriptwriting), ElevenLabs (AI voice), and D-ID (video avatar). Go to Settings → API Keys to enter them.",
+      "callout_keys_info": "Each service has a free tier to get started. API Keys only need to be entered once and are securely encrypted.",
+      "step3_title": "Create Your First Campaign",
+      "step3_desc": "In the Dashboard, click the + New Campaign button. Enter a campaign name, choose a video template, input your main content, and select a voice. Click Create Campaign.",
+      "step4_title": "View and Download Video",
+      "step4_desc": "Videos process in 2–5 minutes. When the status shows Completed, click the campaign to preview and download the MP4 file.",
+      "step5_title": "Need Help?",
+      "step5_telegram": "Telegram: @Sophia_Bbot",
+      "step5_email": "Email: support@mekongmind.com",
+      "next_steps_title": "Next Steps",
+      "next_step_telegram": "Connect Telegram Bot",
+      "next_step_telegram_desc": "Create videos from your phone",
+      "next_step_how": "How It Works",
+      "next_step_how_desc": "Understand Sophia's workflow",
+      "next_step_faq": "FAQ",
+      "next_step_faq_desc": "Get answers to common questions"
+    }
   },
   "hero": {
     "ctaPrimary": "Cta Primary",

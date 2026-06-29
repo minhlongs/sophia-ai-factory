@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
+import { Link, useRouter } from '@/navigation';
 import { useTranslations } from 'next-intl';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { Button, Input, Card, CardHeader } from '@/components/stitch';
@@ -9,6 +9,7 @@ import { authClient } from '@/seed/auth/better-auth-client';
 
 export default function LoginPage() {
   const t = useTranslations('stitch.auth.login');
+  const router = useRouter();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,7 +28,7 @@ export default function LoginPage() {
         setError(t('invalidCredentials') || 'Invalid email or password');
         setLoading(false);
       } else {
-        window.location.href = '/dashboard';
+        router.push('/dashboard');
       }
     } catch {
       setError(t('networkError') || 'Network error. Please try again.');
@@ -69,6 +70,7 @@ export default function LoginPage() {
             <Input
               id="email"
               type="email"
+              autoComplete="email"
               placeholder={t('emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -91,6 +93,7 @@ export default function LoginPage() {
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
                 placeholder={t('passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

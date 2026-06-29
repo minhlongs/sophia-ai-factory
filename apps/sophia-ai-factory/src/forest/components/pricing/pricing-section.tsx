@@ -163,6 +163,8 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
           <div className="inline-flex items-center rounded-xl border border-border bg-card p-1 gap-1 shadow-[0_0_15px_rgba(139,92,246,0.12)]">
             <button
               type="button"
+          role="switch"
+          aria-checked={billingPeriod === "monthly"}
               onClick={() => setBillingPeriod("monthly")}
               className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
                 billingPeriod === "monthly"
@@ -174,6 +176,8 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
             </button>
             <button
               type="button"
+          role="switch"
+          aria-checked={billingPeriod === "annual"}
               onClick={() => setBillingPeriod("annual")}
               className={`relative rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
                 billingPeriod === "annual"
