@@ -13,7 +13,7 @@
 import { logger } from '@/seed/utils/logger-utility'
 import { getD1 } from '@/seed/db/client'
 import { recordAudit } from '@/seed/db/audit/audit-log'
-import { insertPurchase, markPaid, markRefunded, getByPaymentId, markOrderCompleted } from '@/seed/db/repositories/user-purchases-repo'
+import { insertPurchase, markPaid, markRefunded, getByPaymentId} from '@/seed/db/repositories/user-purchases-repo'
 import { revokeAccessByPurchaseId } from '@/seed/db/repositories/videos-repo'
 import { triggerOneTimeFulfillment } from '@/land/fulfillment/one-time-fulfillment'
 import { markUnderpaid, UNDERPAYMENT_THRESHOLD } from './nowpayments-ipn-underpaid'
