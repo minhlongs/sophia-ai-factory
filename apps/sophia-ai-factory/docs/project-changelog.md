@@ -1,6 +1,35 @@
 # Project Changelog
 
-**Last Updated:** 2026-05-20 | **Current Version:** 1.28.1 | **Honest Score:** 87.5/100 (doctrine ceiling per v1.28.1)
+**Last Updated:** 2026-06-29 | **Current Version:** 0.1.4 | **Honest Score:** 87.5/100 (doctrine ceiling)
+
+---
+
+## 2026-06-29 — Bug-Fix Sprint (12 bugs: 1 CRITICAL, 5 HIGH, 6 MEDIUM)
+
+**Severity: RELEASE | Type: Production bug fixes | Status: SHIPPED (SHA 31f7596d)**
+
+Comprehensive bug hunt identified and fixed 12 bugs across auth, billing, publishers, i18n, and infrastructure layers. All fixes deployed to production via CF-direct doctrine.
+
+**CRITICAL:**
+- SG-001 — middleware matcher excluded ALL `/api/*` routes from auth guard, CSRF, CORS, MFA (negative lookahead `api/.*` removed)
+
+**HIGH:**
+- Auth: login form `signIn` was commented out → permanent loading spinner (restored Better Auth client)
+- Billing: NOWPayments sandbox mode unreachable (added `NOWPAYMENTS_CHECKOUT_BASE` env var)
+- Billing: IPN stale-lock retry loop via `delete()` → re-entrancy (changed to `update({processed: 1})`)
+- Billing: dunning handler crash via `db.unwrap()` (D1Client has no such method)
+- Publishers: 5 publisher providers (instagram, threads, facebook, reddit, linkedin) mapped HTTP 401/403/500 to `'processing'` forever → now correctly return `'failed'`
+
+**MEDIUM:**
+- Billing: `parseUserIdFromOrderId` broke on userId with underscores (now uses `startsWith` + split on first underscore only)
+- Billing: one-time IPN never updated `pending_orders` after `markPaid` (added UPDATE)
+- i18n: auth layout default locale was `'en'` → changed to `'vi'` (Vietnamese default)
+- i18n: `require-master-tier` redirect default was `/login` → `/vi/login`
+- DB: `get-user-tier` catch returned `null` → downstream null-dereference crashes (now returns `'BASIC'`)
+- i18n: hardcoded `/en/register` in ref page, hardcoded `/vi/` in audit table (use locale-aware `Link` from `@/navigation`)
+- Infrastructure: dashboard + BYOK pages crash if D1 unavailable (wrapped `createServerClient` in try/catch)
+
+**Verification:** Build 0 TS errors, 6225 tests passed, 0 failures, i18n 4080 t() calls 0 missing keys.
 
 ---
 
