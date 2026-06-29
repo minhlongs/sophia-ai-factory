@@ -131,7 +131,7 @@ const userId = ipn.order_id.split('_')[1] ?? ipn.order_id
 const tierLookup = ipn.invoice_id ? lookupInvoice(ipn.invoice_id) : null
 const tierName = (tierLookup?.kind === 'subscription') ? tierLookup.tier : 'unknown'
 
-void captureTierUpgraded({ distinctId: userId, tier: tierName, amount: ipn.price_amount, currency: ipn.price_currency })
+void captureTierUpgraded({ distinctId: userId, tier: tierName, amount: ipn.price_amount, currency: ipn.price_currency }).catch((e) => logger.warn('[NOWPayments Webhook] captureTierUpgraded failed', { error: String(e) }))
 track(D1Events.PAYMENT_SUCCESS, 'webhook', { amount_usd: ipn.price_amount, currency: ipn.price_currency, provider: 'nowpayments', payment_id: ipn.payment_id }, userId)
 
 // resolveUserTier can throw if D1 binding unavailable in webhook context — guard it

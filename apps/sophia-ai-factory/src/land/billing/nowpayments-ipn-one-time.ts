@@ -11,6 +11,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
+import { safeCatch } from '@/seed/utils/safe-catch'
 import { getD1 } from '@/seed/db/client'
 import { recordAudit } from '@/seed/db/audit/audit-log'
 import { insertPurchase, markPaid, markRefunded, getByPaymentId} from '@/seed/db/repositories/user-purchases-repo'
@@ -101,7 +102,7 @@ export async function handleOneTimeFinished(
   if (_d1b) {
   await _d1b.prepare('UPDATE pending_orders SET status=?, payment_id=?, completed_at=? WHERE order_id=?').bind('completed', ipn.payment_id, Math.floor(Date.now() / 1000), ipn.order_id)
   }
-  } catch { /* non-fatal */ }
+  } catch (e) { safeCatch('One-time pending_orders mark complete')(e) }
 
   // Audit trail
   try {

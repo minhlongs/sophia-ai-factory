@@ -13,6 +13,8 @@
  * @module billing/nowpayments-ipn-dead-letter
  */
 
+import { safeCatch } from '@/seed/utils/safe-catch'
+
 /**
  * DLQ entry — mirrors the subset of ipn_dead_letter_queue we need for recovery.
  */
@@ -121,15 +123,22 @@ export async function resolveDlqEntry(
 export async function getStaleDlqEntries(
   db: D1LikeClient,
   maxAgeHours: number = 24,
+  limit?: number,
 ): Promise<DeadLetterEntry[]> {
   const cutoff = new Date(Date.now() - maxAgeHours * 60 * 60 * 1000).toISOString();
 
-  const { data, error } = await db
+  let query = db
     .from(DLQ_TABLE)
     .select('*')
     .eq('resolved', 0)
     .lt('last_attempted_at', cutoff)
     .order('first_failed_at', { ascending: true });
+
+  if (limit) {
+    query = query.limit(limit);
+  }
+
+  const { data, error } = await query;
 
   if (error || !data) {
     return [];
@@ -140,9 +149,7 @@ export async function getStaleDlqEntries(
     let payload: Record<string, unknown> = {};
     try {
       payload = JSON.parse(r.payload as string) as Record<string, unknown>;
-    } catch {
-      // leave as empty object on parse failure
-    }
+    } catch (e) { safeCatch('DLQ payload parse')(e) }
     return {
       event_id: r.event_id as string,
       payment_id: r.payment_id as string,
