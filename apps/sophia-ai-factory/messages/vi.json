@@ -604,6 +604,29 @@
         "supportLine2": "Vẫn không được → Email: <mono>support@mekongmind.com</mono>",
         "supportSeeAlso": "Xem thêm",
         "supportFaqLink": "Câu hỏi thường gặp"
+      },
+      "gettingStarted": {
+        "hero_title": "Bắt Đầu Với Sophia AI Factory",
+        "hero_subtitle": "Làm theo các bước sau để thiết lập quy trình tạo video AI và bắt đầu tạo video YouTube không gương mặt quy mô lớn.",
+        "next_step_telegram": "Bot Telegram",
+        "next_step_telegram_desc": "Điều khiển Sophia từ điện thoại",
+        "next_step_how": "Cách Hoạt Động",
+        "next_step_how_desc": "Hiểu về quy trình xử lý",
+        "next_step_faq": "Câu Hỏi Thường Gặp",
+        "next_step_faq_desc": "Giải đáp thắc mắc phổ biến",
+        "steps_title": "Các Bước Thiết Lập",
+        "step1_title": "Tạo Tài Khoản",
+        "step2_title": "Kết Nối Nhà Cung Cấp AI",
+        "step3_title": "Cấu Hình Cài Đặt Video",
+        "step4_title": "Thiết Lập Phân Phối",
+        "step5_title": "Ra Mắt Chiến Dịch Đầu Tiên",
+        "next_steps_title": "Các Bước Tiếp Theo",
+        "step1_desc": "Truy cập {strong}Sophia AI Factory{/strong}, đăng ký tài khoản miễn phí và xác nhận email.",
+        "callout_no_account": "Chưa có tài khoản? Đăng ký miễn phí trong 30 giây — không cần thẻ tín dụng.",
+        "step2_desc": "Sau khi đăng nhập, vào {strong}Cài đặt → API Keys{/strong} để thêm OpenRouter key. Chúng tôi mã hóa và lưu trữ an toàn.",
+        "callout_keys_info": "Bạn cần API key từ OpenRouter. Nếu chưa có, đăng ký tại openrouter.ai — nhận $5 miễn phí khi tạo tài khoản mới.",
+        "step3_desc": "Tạo {strong}video campaign{/strong} đầu tiên: chọn niche, nhập chủ đề, Sophia tự động tạo kịch bản + lồng tiếng + hình ảnh.",
+        "step4_desc": "Xem trước video, chỉnh sửa nếu cần, và xuất bản trực tiếp lên YouTube hoặc tải xuống. Mọi thứ đều tự động."
       }
     },
     "creative_studio": {

@@ -604,6 +604,29 @@
         "supportLine2": "Still not working → Email: <mono>support@mekongmind.com</mono>",
         "supportSeeAlso": "See also",
         "supportFaqLink": "Frequently Asked Questions"
+      },
+      "gettingStarted": {
+        "hero_title": "Getting Started with Sophia AI Factory",
+        "hero_subtitle": "Follow these steps to set up your AI video generation workflow and start creating faceless YouTube videos at scale.",
+        "next_step_telegram": "Telegram Bot",
+        "next_step_telegram_desc": "Control Sophia from your phone",
+        "next_step_how": "How It Works",
+        "next_step_how_desc": "Understand the pipeline",
+        "next_step_faq": "FAQ",
+        "next_step_faq_desc": "Common questions answered",
+        "steps_title": "Setup Steps",
+        "step1_title": "Create Your Account",
+        "step2_title": "Connect Your AI Provider",
+        "step3_title": "Configure Video Settings",
+        "step4_title": "Set Up Distribution",
+        "step5_title": "Launch Your First Campaign",
+        "next_steps_title": "Next Steps",
+        "step1_desc": "Visit {strong}Sophia AI Factory{/strong}, sign up for a free account, and confirm your email.",
+        "callout_no_account": "No account yet? Sign up for free in 30 seconds — no credit card required.",
+        "step2_desc": "After logging in, go to {strong}Settings → API Keys{/strong} to add your OpenRouter key. We encrypt and store it safely.",
+        "callout_keys_info": "You need an API key from OpenRouter. If you don't have one, sign up at openrouter.ai — get $5 free when creating a new account.",
+        "step3_desc": "Create your first {strong}video campaign{/strong}: pick a niche, enter a topic, and Sophia auto-generates script + voiceover + visuals.",
+        "step4_desc": "Preview the video, edit if needed, and publish directly to YouTube or download. Everything is automated."
       }
     },
     "creative_studio": {
