@@ -5,6 +5,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
+import { safeCatch } from '@/seed/utils/safe-catch'
 import { getDb } from './nowpayments-ipn-db'
 import { handleFailed } from './nowpayments-ipn-subscription'
 import { dispatchFinished, dispatchRefunded } from './nowpayments-ipn-dispatch'
@@ -37,53 +38,52 @@ export async function processNowPaymentsIpn(
   const { payment_id, payment_status } = ipn
   const eventId = `nowpayments_${payment_id}_${payment_status}`
   const db = getDb()
+  const now = new Date().toISOString()
 
-  // 1. Atomically reserve event (lock mechanism via UNIQUE constraint on event_id)
-  const { error: insertError } = await db
-    .from('payment_events')
-    .insert({
-      event_id: eventId,
-      event_type: `nowpayments.${payment_status}`,
-      payload: JSON.stringify(ipn),
-      processed: 0,
-      created_at: new Date().toISOString(),
-    })
+  // ── 1. Atomic lock via INSERT ... ON CONFLICT DO NOTHING ──────────────────
+  // PayOS-style pattern: single INSERT determines lock ownership atomically.
+  // No INSERT-then-SELECT window — the INSERT IS the lock operation on D1 SQLite.
+  const lockResult = await db
+    .prepare(
+      `INSERT INTO payment_events (event_id, event_type, payload, processed, created_at)
+       VALUES (?1, ?2, ?3, 0, ?4)
+       ON CONFLICT(event_id) DO NOTHING`,
+    )
+    .bind(eventId, `nowpayments.${payment_status}`, JSON.stringify(ipn), now)
+    .run()
 
-  if (insertError) {
-    // Check if this is a unique constraint violation (duplicate event)
-    const isUniqueViolation = insertError.code === '23505' || insertError.message?.toLowerCase().includes('unique constraint')
+  // meta.changes === 0 means ON CONFLICT DO NOTHING fired — another request owns the lock
+  if (!lockResult.meta?.changes) {
+    const existing = await db
+      .prepare('SELECT processed, created_at FROM payment_events WHERE event_id = ?1')
+      .bind(eventId)
+      .first<{ processed: number | boolean; created_at: string }>()
 
-    if (!isUniqueViolation) {
-      // Real error, not a duplicate
-      return { success: false, message: `Database error: ${insertError.message}` }
-    }
-
-    // Duplicate: another process already inserted this event. Check if already processed.
-    const { data: existing, error: selectError } = await db
-      .from('payment_events')
-      .select('processed, created_at')
-      .eq('event_id', eventId)
-      .single()
-
-    if (selectError || !existing) {
+    if (!existing) {
       return { success: false, message: 'Database query failure' }
     }
 
-    if (existing.processed === 1 || existing.processed === true) {
+    if (existing.processed === 1) {
       return { success: true, message: 'Already processed' }
     }
 
- // Stale lock recovery: if lock >5 min old, mark processed (was: delete → re-entrancy risk)
-    const lockAgeMs = Date.now() - new Date((existing as { created_at?: string }).created_at ?? new Date().toISOString()).getTime()
+    // Stale lock recovery: if lock > 5 min old, mark processed to unblock
+    const lockAgeMs = Date.now() - new Date(existing.created_at ?? now).getTime()
     if (lockAgeMs > 5 * 60 * 1000) {
- try { await db.from('payment_events').update({ processed: 1 }).eq('event_id', eventId) } catch { /* non-fatal */ }
-    return { success: true, message: 'Stale lock cleared (marked processed)' }
+      try {
+        await db
+          .prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1')
+          .bind(eventId)
+          .run()
+      } catch (e) { safeCatch('Stale lock update')(e) }
+      return { success: true, message: 'Stale lock cleared (marked processed)' }
     }
 
-    // Another process is currently handling this event
+    // Another process is currently handling this event — back off
     return { success: false, message: 'Already processing' }
   }
 
+  // ── 2. This process owns the lock — dispatch to handlers ──────────────────
   try {
     switch (payment_status) {
       case 'finished':
@@ -98,18 +98,18 @@ export async function processNowPaymentsIpn(
       case 'partially_paid':
         logger.info('[NOWPayments] Partial payment received — holding', { payment_id })
         break
-  case 'waiting':
-  case 'confirming':
-  case 'confirmed':
-  case 'sending':
-    logger.debug('[NOWPayments] Intermediate status, waiting for final', {
-      payment_status, payment_id, order_id: ipn.order_id,
-    })
-    break
+      case 'waiting':
+      case 'confirming':
+      case 'confirmed':
+      case 'sending':
+        logger.debug('[NOWPayments] Intermediate status, waiting for final', {
+          payment_status, payment_id, order_id: ipn.order_id,
+        })
+        break
       case 'expired':
         try {
           await db.from('pending_orders').update({ status: 'expired' }).eq('order_id', ipn.order_id)
-        } catch { /* non-fatal */ }
+        } catch (e) { safeCatch('Expired order mark')(e) }
         logger.info('[NOWPayments] Payment expired', { payment_id, order_id: ipn.order_id })
         logger.info('[NOWPayments] Payment expired — marked pending_orders expired', { payment_id, order_id: ipn.order_id })
         break
@@ -117,37 +117,58 @@ export async function processNowPaymentsIpn(
         logger.debug('[NOWPayments] Unhandled status', { payment_status, payment_id })
     }
 
-    // 2. Mark event as processed on success
-    await db.from('payment_events').update({ processed: 1 }).eq('event_id', eventId)
+    // Mark event as processed — lock released
+    await db
+      .prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1')
+      .bind(eventId)
+      .run()
     return { success: true, message: `Processed ${payment_status}` }
   } catch (error) {
     const err = error instanceof Error ? error : new Error(String(error))
     logger.error('[NOWPayments] IPN processing failed', err, { payment_id, payment_status })
 
-    // 3a. Enqueue to DLQ on permanent failure (non-recoverable errors)
-    // NOWPayments will retry automatically on network errors; DLQ is for
-    // application-level failures that need manual intervention.
+    // ── 3a. Enqueue to DLQ on permanent failure ────────────────────────────
     if (isPermanentFailure(err)) {
-      const { data: dlqRow } = await db
+      const dlqRow = await db
         .from('ipn_dead_letter_queue')
         .select('retry_count')
         .eq('event_id', eventId)
         .maybeSingle()
-      const currentRetries = typeof dlqRow?.retry_count === 'number' ? dlqRow.retry_count : 0
+      const currentRetries = typeof dlqRow?.data?.retry_count === 'number'
+        ? dlqRow.data.retry_count
+        : 0
 
       if (currentRetries >= MAX_DLQ_RETRIES) {
         logger.error(
           '[NOWPayments] DLQ_EXHAUSTED — permanent failure, alert required',
-          err,
           { eventId, payment_id, payment_status, reason: err.message },
         )
         return { success: false, message: `Permanent failure after ${MAX_DLQ_RETRIES} retries: ${err.message}` }
       }
 
-      // DLQ size guard: refuse new entries at cap to prevent unbounded growth
+      // DLQ size guard with graduated thresholds (Phase 5)
       const unresolvedDlqCount = await countUnresolvedDlq(db as unknown as D1LikeClient)
+
+      // 50% warning threshold — operator should investigate
+      if (unresolvedDlqCount >= DLQ_SIZE_CAP * 0.5 && unresolvedDlqCount < DLQ_SIZE_CAP * 0.9) {
+        logger.warn('[NOWPayments] DLQ capacity warning', {
+          unresolvedCount: unresolvedDlqCount,
+          capacity: DLQ_SIZE_CAP,
+          pct: Math.round((unresolvedDlqCount / DLQ_SIZE_CAP) * 100),
+        })
+      }
+
+      // 90% critical threshold — near overflow, urgent action needed
+      if (unresolvedDlqCount >= DLQ_SIZE_CAP * 0.9 && unresolvedDlqCount < DLQ_SIZE_CAP) {
+        logger.error('[NOWPayments] DLQ capacity critical', {
+          unresolvedCount: unresolvedDlqCount,
+          capacity: DLQ_SIZE_CAP,
+          pct: Math.round((unresolvedDlqCount / DLQ_SIZE_CAP) * 100),
+        })
+      }
+
       if (unresolvedDlqCount >= DLQ_SIZE_CAP) {
-        logger.error('[NOWPayments] DLQ_OVERFLOW — rejecting new entry', err, {
+        logger.error('[NOWPayments] DLQ_OVERFLOW — rejecting new entry', {
           eventId,
           unresolvedCount: unresolvedDlqCount,
         })
@@ -180,9 +201,12 @@ export async function processNowPaymentsIpn(
       return { success: false, message: `Permanent failure: ${err.message}` }
     }
 
-    // 3b. Release the lock on failure to enable retries
+    // ── 3b. Release lock on transient failure (enable retries) ─────────────
     try {
-      await db.from('payment_events').delete().eq('event_id', eventId)
+      await db
+        .prepare('DELETE FROM payment_events WHERE event_id = ?1')
+        .bind(eventId)
+        .run()
     } catch (delErr) {
       logger.warn('[NOWPayments] Failed to release lock on failure', {
         payment_id,

@@ -10,54 +10,71 @@ import { processNowPaymentsIpn } from '../nowpayments-ipn-handlers'
 const handleFinishedSpy = vi.fn().mockResolvedValue(undefined)
 const handleFailedSpy = vi.fn().mockResolvedValue(undefined)
 
-// processed state per payment_id
-const mockDbEvents = new Map<string, { event_id: string; processed: number }>()
-let selectShouldFail = false
+// processed state per payment_id (eventId → { processed, created_at })
+const mockDbEvents = new Map<string, { event_id: string; processed: number; created_at: string }>()
+let selectShouldReturnNull = false
 
-vi.mock('../nowpayments-ipn-db', () => ({
-  getDb: vi.fn(() => ({
+function buildMockDb() {
+  return {
     from: vi.fn((table: string) => {
+      if (table === 'pending_orders') {
+        return {
+          update: vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) })),
+        }
+      }
       if (table !== 'payment_events') {
         throw new Error(`Unexpected table mock: ${table}`)
       }
       return {
-        insert: vi.fn(async (row: { event_id: string; processed: number }) => {
-          if (mockDbEvents.has(row.event_id)) {
-            return { error: new Error('Unique constraint violation') }
-          }
-          mockDbEvents.set(row.event_id, { ...row })
-          return { error: null }
-        }),
         select: vi.fn(() => ({
-          eq: vi.fn((col: string, val: string) => ({
-            single: vi.fn(async () => {
-              if (selectShouldFail) {
-                return { data: null, error: new Error('Select failed') }
-              }
-              const row = mockDbEvents.get(val)
-              return { data: row ? { processed: row.processed } : null, error: null }
-            })
-          }))
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn(async () => ({ data: null, error: null })),
+          })),
         })),
-        update: vi.fn((updates: { processed: number }) => ({
-          eq: vi.fn(async (col: string, val: string) => {
-            const row = mockDbEvents.get(val)
-            if (row) {
-              row.processed = updates.processed
-              mockDbEvents.set(val, row)
-            }
-            return { error: null }
-          })
-        })),
-        delete: vi.fn(() => ({
-          eq: vi.fn(async (col: string, val: string) => {
-            mockDbEvents.delete(val)
-            return { error: null }
-          })
-        }))
       }
-    })
-  })),
+    }),
+    // Phase 2 PayOS-style: raw SQL via prepare()
+    prepare: vi.fn((sql: string) => ({
+      bind: vi.fn((...args: unknown[]) => {
+        // Extract eventId from INSERT args (arg ?1) or SELECT args (arg ?1)
+        const eventId = args[0] as string
+        return {
+          /** INSERT ... ON CONFLICT DO NOTHING → { meta: { changes } } */
+          run: vi.fn(async () => {
+            if (sql.includes('INSERT INTO payment_events')) {
+              if (mockDbEvents.has(eventId)) {
+                // Duplicate — ON CONFLICT DO NOTHING fires
+                return { meta: { changes: 0 } }
+              }
+              // Fresh insert — lock acquired
+              mockDbEvents.set(eventId, { event_id: eventId, processed: 0, created_at: new Date().toISOString() })
+              return { meta: { changes: 1 } }
+            }
+            if (sql.includes('UPDATE payment_events')) {
+              const row = mockDbEvents.get(eventId)
+              if (row) row.processed = 1
+              return { success: true }
+            }
+            if (sql.includes('DELETE FROM payment_events')) {
+              mockDbEvents.delete(eventId)
+              return { success: true }
+            }
+            return { success: true }
+          }),
+          /** SELECT processed, created_at → row or null */
+          first: vi.fn(async () => {
+            if (selectShouldReturnNull) return null
+            const row = mockDbEvents.get(eventId)
+            return row ? { processed: row.processed, created_at: row.created_at } : null
+          }),
+        }
+      }),
+    })),
+  }
+}
+
+vi.mock('../nowpayments-ipn-db', () => ({
+  getDb: vi.fn(() => buildMockDb()),
   parseUserIdFromOrderId: vi.fn(() => 'user123'),
 }))
 
@@ -85,7 +102,7 @@ beforeEach(() => {
   mockDbEvents.clear()
   handleFinishedSpy.mockClear()
   handleFailedSpy.mockClear()
-  selectShouldFail = false
+  selectShouldReturnNull = false
 })
 
 describe('IPN idempotency', () => {
@@ -135,7 +152,7 @@ describe('IPN idempotency', () => {
   it('returns success=false and message "Already processing" when processed = 0', async () => {
     // Insert event with processed = 0
     const eventId = `nowpayments_${baseIpn.payment_id}_${baseIpn.payment_status}`
-    mockDbEvents.set(eventId, { event_id: eventId, processed: 0 })
+    mockDbEvents.set(eventId, { event_id: eventId, processed: 0, created_at: new Date().toISOString() })
 
     const result = await processNowPaymentsIpn(baseIpn)
     expect(result.success).toBe(false)
@@ -143,10 +160,10 @@ describe('IPN idempotency', () => {
   })
 
   it('returns success=false and message "Database query failure" when db select fails', async () => {
-    // Insert event with processed = 0 to trigger select fallback
+    // Insert event with processed = 0 to trigger ON CONFLICT path
     const eventId = `nowpayments_${baseIpn.payment_id}_${baseIpn.payment_status}`
-    mockDbEvents.set(eventId, { event_id: eventId, processed: 0 })
-    selectShouldFail = true
+    mockDbEvents.set(eventId, { event_id: eventId, processed: 0, created_at: new Date().toISOString() })
+    selectShouldReturnNull = true
 
     const result = await processNowPaymentsIpn(baseIpn)
     expect(result.success).toBe(false)

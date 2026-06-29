@@ -5,6 +5,7 @@
 
 import { createServerClient } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
+import { safeCatch } from '@/seed/utils/safe-catch'
 import { getErrorMessage } from '@/seed/utils/to-error'
 
 export function getDb() {
@@ -31,7 +32,7 @@ export async function isPaymentProcessed(paymentId: string): Promise<boolean> {
       .eq('event_id', `nowpayments_${paymentId}`)
       .single()
     return data?.processed === 1 || data?.processed === true
-  } catch { return false }
+  } catch (e) { safeCatch('isPaymentProcessed')(e); return false }
 }
 
 export async function recordIpnEvent(paymentId: string, status: string, payload: Record<string, unknown>, processed: boolean): Promise<void> {

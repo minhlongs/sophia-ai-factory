@@ -9,6 +9,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
+import { safeCatch } from '@/seed/utils/safe-catch'
 import { lookupInvoice } from '@/tree/clients/nowpayments-client'
 import { handleFinished, handleRefunded } from './nowpayments-ipn-subscription'
 import { handleOneTimeFinished, handleOneTimeRefunded } from './nowpayments-ipn-one-time'
@@ -75,9 +76,10 @@ export async function dispatchFinished(ipn: NowPaymentsIpnPayload): Promise<void
         })
         return
       }
-    } catch {
+    } catch (e) {
       // Non-fatal: if dedup check fails, proceed with processing (better to double-process
       // than to silently drop a legitimate payment)
+      safeCatch('Dedup check')(e)
       logger.warn('[IPNDispatch] Dedup check failed (non-fatal) — proceeding with processing', {
         userId,
         tier: lookup.tier,

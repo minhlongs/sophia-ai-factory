@@ -6,6 +6,7 @@
 
 import { getTierByInvoiceId, NOWPAYMENTS_TIERS } from '@/tree/clients/nowpayments-client'
 import { logger } from '@/seed/utils/logger-utility'
+import { safeCatch } from '@/seed/utils/safe-catch'
 import { UNIFIED_TIERS } from '@/seed/config/tiers'
 import { getD1 } from '@/seed/db/client'
 import { recordAudit } from '@/seed/db/audit/audit-log'
@@ -151,9 +152,7 @@ async function resolveBillingPeriod(ipn: NowPaymentsIpnPayload, isLifetime: bool
       const pendingOrder = await getOrderById(ipn.order_id)
       if (pendingOrder?.period === 'yearly') billingPeriod = 'yearly'
       else if (pendingOrder?.period === 'lifetime') billingPeriod = 'lifetime'
-    } catch {
-      // fallback to monthly
-    }
+    } catch (e) { safeCatch('Billing period lookup')(e) }
   }
   return billingPeriod
 }
@@ -338,9 +337,7 @@ async function safelyRecordAudit(
       actorId: userId,
       after: { tier, plan: tier.toLowerCase(), status: 'active', periodEnd, paymentId: ipn.payment_id },
     })
-  } catch {
-    // non-fatal
-  }
+  } catch (e) { safeCatch('Audit record')(e) }
 }
 
 async function safelyFinalizePromoRedemption(
@@ -435,11 +432,9 @@ async function invalidateLicenseCache(userId: string, d1: D1Database): Promise<v
       .first<{ nonce: string }>()
     if (lic?.nonce) {
       const kv = globalThis.KV_KV as KVNamespace | undefined
-      await kv?.delete(`license:${lic.nonce}`).catch(() => { /* fail-open */ })
+      await kv?.delete(`license:${lic.nonce}`).catch((e) => { safeCatch('KV license cache delete')(e) })
     }
-  } catch {
-    // non-fatal
-  }
+  } catch (e) { safeCatch('License cache invalidation')(e) }
 }
 
 async function safelySendReceiptEmail(
@@ -578,6 +573,21 @@ export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<void> 
   if (!_d1) throw new Error('D1 database binding not available')
   const d1 = _d1!
 
+  // ── Refund idempotency guard ──────────────────────────────────────────────
+  // Phase 3: check if this refund was already processed before mutating state.
+  // The IPN handler (Phase 2) provides event-level dedup, but if handleRefunded
+  // is ever called outside that path, this prevents double-refund.
+  const refundEventId = `nowpayments_${ipn.payment_id}_refunded`
+  const existing = await db
+    .prepare('SELECT processed FROM payment_events WHERE event_id = ?1')
+    .bind(refundEventId)
+    .first<{ processed: number }>()
+
+  if (existing && existing.processed === 1) {
+    logger.info('[NOWPayments] Refund already processed — skipping duplicate', { paymentId: ipn.payment_id })
+    return
+  }
+
   const { data: membership } = await db.from('org_members').select('org_id').eq('user_id', userId).single()
   if (membership?.org_id) {
     await db.from('subscriptions').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('org_id', membership.org_id)
@@ -596,11 +606,9 @@ async function invalidateLicenseCacheOnRefund(userId: string, d1: D1Database): P
       .first<{ nonce: string }>()
     if (lic?.nonce) {
       const kv = globalThis.KV_KV as KVNamespace | undefined
-      await kv?.delete(`license:${lic.nonce}`).catch(() => { /* fail-open */ })
+      await kv?.delete(`license:${lic.nonce}`).catch((e) => { safeCatch('KV license cache delete')(e) })
     }
-  } catch {
-    // non-fatal
-  }
+  } catch (e) { safeCatch('License cache invalidation')(e) }
 }
 
 export async function handleFailed(ipn: NowPaymentsIpnPayload): Promise<void> {
