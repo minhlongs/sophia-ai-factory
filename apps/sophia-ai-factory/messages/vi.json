@@ -2108,7 +2108,9 @@
         "name": "Name"
       }
     },
-    "title": "Title"
+    "title": "Title",
+    "heygen_configure_prompt": "Vui lòng cấu hình HeyGen API key để mở khóa gói video.",
+    "heygen_configure_cta": "Cấu hình HeyGen Key"
   },
   "campaign": {
     "template_selection": {
@@ -3681,7 +3683,32 @@
     "sops": "Sops"
   },
   "guide": {
-    "back_to_dashboard": "Back to dashboard"
+    "back_to_dashboard": "Back to dashboard",
+    "gettingStarted": {
+      "hero_title": "Bắt Đầu Với Sophia",
+      "hero_subtitle": "Làm theo các bước đơn giản dưới đây để tạo video AI đầu tiên của bạn. Bạn không cần biết kỹ thuật — Sophia xử lý mọi thứ tự động.",
+      "steps_title": "Các Bước Thiết Lập",
+      "step1_title": "Truy Cập Dashboard",
+      "step1_desc": "Mở trình duyệt và vào sophia.agencyos.network. Nhấn Đăng Nhập ở góc trên bên phải, nhập email và mật khẩu đã đăng ký.",
+      "callout_no_account": "Chưa có tài khoản? Nhấn Đăng Ký và làm theo hướng dẫn — chỉ mất 2 phút.",
+      "step2_title": "Thiết Lập API Keys",
+      "step2_desc": "Sophia cần 3 API keys để tạo video: OpenRouter (viết kịch bản AI), ElevenLabs (giọng nói AI), và D-ID (video avatar). Vào Cài Đặt → API Keys để nhập.",
+      "callout_keys_info": "Mỗi dịch vụ có gói miễn phí để bắt đầu. API Keys chỉ cần nhập 1 lần duy nhất và được mã hóa an toàn.",
+      "step3_title": "Tạo Chiến Dịch Đầu Tiên",
+      "step3_desc": "Trong Dashboard, nhấn nút + Tạo Chiến Dịch Mới. Nhập tên chiến dịch, chọn mẫu video, nhập nội dung chính và chọn giọng nói. Nhấn Tạo Chiến Dịch.",
+      "step4_title": "Xem Và Tải Video",
+      "step4_desc": "Video xử lý trong 2–5 phút. Khi trạng thái hiển thị Hoàn Thành, nhấn vào chiến dịch để xem trước và tải file MP4 về máy.",
+      "step5_title": "Cần Hỗ Trợ?",
+      "step5_telegram": "Telegram: @Sophia_Bbot",
+      "step5_email": "Email: support@mekongmind.com",
+      "next_steps_title": "Bước Tiếp Theo",
+      "next_step_telegram": "Kết nối Telegram Bot",
+      "next_step_telegram_desc": "Tạo video từ điện thoại",
+      "next_step_how": "Cách Hoạt Động",
+      "next_step_how_desc": "Hiểu quy trình của Sophia",
+      "next_step_faq": "Câu Hỏi Thường Gặp",
+      "next_step_faq_desc": "Giải đáp thắc mắc"
+    }
   },
   "hero": {
     "ctaPrimary": "Cta Primary",

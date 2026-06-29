@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server";
+import { useTranslations } from "next-intl";
 import { isHeyGenHealthy } from "@/seed/health/heygen-health-check";
 import type { Tier } from "@/seed/types";
 import Link from "next/link";
@@ -115,7 +116,7 @@ export default async function PricingPage() {
     }
     if (cryptoExplainer.status === 'fulfilled' && cryptoExplainer.value) {
       CryptoPaymentExplainerComponent = cryptoExplainer.value as React.ComponentType<object>;
-     }
+    }
 
   } catch (err) {
     // All components already default to EmptyComponent; other data gets defaults inline
@@ -173,12 +174,10 @@ export default async function PricingPage() {
         {user != null && !userHeyGenConfigured ? (
           <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-6 text-center space-y-3">
             <p className="text-sm font-medium text-amber-300">
-              Configure your HeyGen API key to unlock video generation bundles.
-              <br />
-              <span className="text-amber-400/80">Vui lòng cấu hình HeyGen API key để mở khóa gói video.</span>
+              {t("heygen_configure_prompt")}
             </p>
             <Link href="/dashboard/onboarding" className="cursor-pointer inline-block rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold px-5 py-2 text-sm transition-colors duration-150">
-              Configure HeyGen Key / Cấu hình HeyGen
+              {t("heygen_configure_cta")}
             </Link>
           </div>
         ) : (
