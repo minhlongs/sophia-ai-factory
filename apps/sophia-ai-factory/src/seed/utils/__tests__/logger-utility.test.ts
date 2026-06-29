@@ -3,7 +3,7 @@
  * @module seed/utils/__tests__/logger-utility.test
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createLogger, Logger } from '../logger-utility';
 
 describe('LoggerUtility', () => {
