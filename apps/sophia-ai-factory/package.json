@@ -11,6 +11,7 @@
     "start": "next start",
     "lint": "node --max-old-space-size=14336 ./node_modules/eslint/bin/eslint.js src",
     "type-check": "node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit",
+    "sbom": "mkdir -p .sbom && npx @cyclonedx/cyclonedx-npm --output-file .sbom/sbom-$(date +%Y%m%d-%H%M%S).json --output-format json",
     "setup": "./scripts/setup.sh",
     "verify": "./scripts/verify.sh",
     "verify:green": "./scripts/verify.sh",
