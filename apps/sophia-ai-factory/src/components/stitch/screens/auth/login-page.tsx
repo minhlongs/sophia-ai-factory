@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { Button, Input, Card, CardHeader } from '@/components/stitch';
+import { authClient } from '@/seed/auth/better-auth-client';
 
 export default function LoginPage() {
   const t = useTranslations('stitch.auth.login');
@@ -14,12 +15,24 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Integrate with Sophia's better-auth session
-    // await signIn('credentials', { email, password });
+    setError(null);
+    try {
+      const result = await authClient.signIn.email({ email, password });
+      if (result.error) {
+        setError(t('invalidCredentials') || 'Invalid email or password');
+        setLoading(false);
+      } else {
+        window.location.href = '/dashboard';
+      }
+    } catch {
+      setError(t('networkError') || 'Network error. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (

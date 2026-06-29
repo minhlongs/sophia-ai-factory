@@ -51,7 +51,8 @@ export const NOWPAYMENTS_TIERS: Record<string, NowPaymentsTierConfig> = {
   },
 }
 
-const NOWPAYMENTS_CHECKOUT_BASE = 'https://nowpayments.io/payment'
+const NOWPAYMENTS_CHECKOUT_BASE =
+  process.env.NOWPAYMENTS_CHECKOUT_BASE || 'https://nowpayments.io/payment'
 
 /**
  * Build NOWPayments invoice checkout URL with order_id for tracking.

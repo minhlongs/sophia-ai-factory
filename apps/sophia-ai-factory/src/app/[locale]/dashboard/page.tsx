@@ -48,17 +48,27 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const db = createServerClient();
-  const d1 = getD1();
+ let db: ReturnType<typeof createServerClient> | null = null;
+ let profile: ProfileRow | null = null;
+ try {
+   db = createServerClient();
+   const profileResult = await db
+     .from('user_profiles')
+     .select('api_keys,onboarding_completed_at')
+     .eq('user_id', user.id)
+     .single();
+   profile = profileResult.data as ProfileRow | null;
+ } catch (e) {
+   logger.error('[dashboard] createServerClient or profile query failed', e instanceof Error ? e : new Error(String(e)));
+ }
 
-  // Fetch profile, tier, balance in parallel
-  const [profileResult, tier, balance] = await Promise.all([
-    db.from('user_profiles').select('api_keys,onboarding_completed_at').eq('user_id', user.id).single(),
-    resolveUserTier(user.id),
-    getBalance(user.id).catch(() => ({ credits_remaining: 0, credits_total_purchased: 0, credits_total_used: 0 })),
-  ]);
+ const d1 = getD1();
 
-  const profile = profileResult.data as ProfileRow | null;
+ // Fetch tier and balance (profile may be null if D1 was unavailable)
+ const [tier, balance] = await Promise.all([
+   resolveUserTier(user.id),
+   getBalance(user.id).catch(() => ({ credits_remaining: 0, credits_total_purchased: 0, credits_total_used: 0 })),
+ ]);
 
   // MASTER-tier FREE100 users: redirect to guided onboarding until completed
   if (tier === 'MASTER' && !profile?.onboarding_completed_at) {

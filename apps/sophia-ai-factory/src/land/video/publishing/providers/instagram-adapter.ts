@@ -39,6 +39,11 @@ export const instagramAdapter: PlatformAdapter = {
       const statusRes = await fetch(
         `${IG_API}/${container.id}?fields=status_code&access_token=${token}`,
       );
+        if (!statusRes.ok) {
+          throw new Error(
+            `Instagram status check failed: HTTP ${statusRes.status}`,
+          );
+        }
       const statusData = await statusRes.json() as { status_code: string };
       if (statusData.status_code === 'FINISHED') {
         ready = true;

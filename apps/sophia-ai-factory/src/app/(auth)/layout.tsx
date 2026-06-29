@@ -8,7 +8,7 @@ export default async function AuthLayout({
   children: React.ReactNode;
   params: Promise<{ locale?: string }>;
 }) {
-  const { locale = 'en' } = await params;
+  const { locale = 'vi' } = await params;
   const messages = await getMessages({ locale });
 
   return (

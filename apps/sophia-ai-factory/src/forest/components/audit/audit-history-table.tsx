@@ -6,7 +6,8 @@
  * @module components/audit/audit-history-table
  */
 
-import Link from 'next/link'
+import { useTranslations } from 'next-intl'
+import { Link } from '@/navigation'
 import { Clock, ExternalLink } from 'lucide-react'
 import { cn } from '@/seed/utils/cn'
 
@@ -41,10 +42,12 @@ function formatDate(ts: number): string {
 }
 
 export function AuditHistoryTable({ runs }: AuditHistoryTableProps) {
+  const t = useTranslations('audit')
+
   if (runs.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground text-sm">
-        No audit runs yet. Run your first audit above.
+        {t('noRuns')}
       </div>
     )
   }
@@ -54,11 +57,11 @@ export function AuditHistoryTable({ runs }: AuditHistoryTableProps) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-white/10 bg-white/5">
-            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Date</th>
-            <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">Score</th>
-            <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">Checks</th>
-            <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">P/W/F</th>
-            <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Detail</th>
+            <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('date')}</th>
+            <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('score')}</th>
+            <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('checks')}</th>
+            <th className="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('pwf')}</th>
+            <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t('detail')}</th>
           </tr>
         </thead>
         <tbody>
@@ -81,10 +84,10 @@ export function AuditHistoryTable({ runs }: AuditHistoryTableProps) {
               </td>
               <td className="px-4 py-3 text-right">
                 <Link
-                  href={`/vi/admin/zero-gap-audit/${run.id}`}
+                  href={`/dashboard/admin/zero-gap-audit/${run.id}`}
                   className="inline-flex items-center gap-1 text-xs text-[var(--neon-cyan)] hover:underline"
                 >
-                  View <ExternalLink className="w-3 h-3" aria-hidden="true" />
+                  {t('view')} <ExternalLink className="w-3 h-3" aria-hidden="true" />
                 </Link>
               </td>
             </tr>

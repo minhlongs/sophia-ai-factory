@@ -54,8 +54,8 @@ describe('requireMasterTier', () => {
     getCurrentUserMock.mockResolvedValue(null);
     const { requireMasterTier } = await import('../require-master-tier');
 
-    await expect(requireMasterTier()).rejects.toThrow(/NEXT_REDIRECT:\/login/);
-    expect(redirectMock).toHaveBeenCalledWith('/login');
+    await expect(requireMasterTier()).rejects.toThrow(/NEXT_REDIRECT:\/vi\/login/);
+    expect(redirectMock).toHaveBeenCalledWith('/vi/login');
     expect(resolveUserTierMock).not.toHaveBeenCalled();
   });
 

@@ -71,7 +71,7 @@ export class FacebookPublisher implements Publisher {
       `${GRAPH_BASE}/${externalPostId}?fields=status&access_token=${this.pageAccessToken}`,
     );
 
-    if (!res.ok) return 'processing';
+    if (!res.ok) return 'failed';
 
     const data = (await res.json()) as FBVideoResponse;
     const code = data.status?.video_status;
