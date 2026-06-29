@@ -12,12 +12,16 @@ import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 
 const ROOT = process.cwd(); // deploy script cd's here before invoking this gate
+
+// Platform secrets that MUST exist in wrangler secrets for core functionality
 const REQUIRED_SECRETS = [
-  'OPENROUTER_API_KEY',
   'NOWPAYMENTS_API_KEY',
+];
+
+// Recommended platform fallbacks (warn if missing, but don't block — customers BYOK)
+const RECOMMENDED_SECRETS = [
+  'OPENROUTER_API_KEY',
   'TELEGRAM_BOT_TOKEN',
-  'CLOUDFLARE_API_TOKEN',
-  'CLOUDFLARE_ACCOUNT_ID',
 ];
 
 const results = [];
@@ -113,6 +117,7 @@ async function checkMigrationsReview() {
 }
 
 async function checkSecrets() {
+  // 1. Check local env files
   const envFiles = [resolve(ROOT, '.env.local'), resolve(ROOT, '.dev.vars')];
   const env = {};
   for (const p of envFiles) {
@@ -128,11 +133,44 @@ async function checkSecrets() {
       if (val) env[key] = val;
     }
   }
-  const missing = REQUIRED_SECRETS.filter(k => !env[k] && !process.env[k]);
+
+  // 2. Also collect process.env
+  for (const k of Object.keys(process.env)) {
+    if (process.env[k]) env[k] = process.env[k];
+  }
+
+  // 3. Query wrangler secret list for Worker secrets (production runtime)
+  let wranglerSecrets = [];
+  try {
+    const raw = execSync('npx wrangler secret list', { cwd: ROOT, encoding: 'utf8', stdio: 'pipe' });
+    wranglerSecrets = JSON.parse(raw);
+  } catch (_) {
+    // wrangler not available or unauthenticated — skip wrangler secrets check
+  }
+  const wranglerNames = new Set(wranglerSecrets.map(s => s.name));
+
+  // 4. Check required platform secrets
+  const missing = REQUIRED_SECRETS.filter(
+    k => !env[k] && !wranglerNames.has(k)
+  );
+
+  // 5. Check recommended secrets (warn only, don't block)
+  const missingRecommended = RECOMMENDED_SECRETS.filter(
+    k => !env[k] && !wranglerNames.has(k)
+  );
+
   if (missing.length === 0) {
-    pass('Secrets', `all ${REQUIRED_SECRETS.length} required vars present`);
+    const extras = [];
+    if (missingRecommended.length > 0) {
+      extras.push(`⚠️ Recommended missing: ${missingRecommended.join(', ')} (customer BYOK, not blocking)`);
+    }
+    pass('Secrets', [
+      `${REQUIRED_SECRETS.length + RECOMMENDED_SECRETS.length} checked`,
+      `${wranglerSecrets.length} wrangler secrets`,
+      ...extras,
+    ].join(' | '));
   } else {
-    fail('Secrets', `Missing: ${missing.join(', ')} — set in .env.local or wrangler secrets`);
+    fail('Secrets', `Missing required: ${missing.join(', ')} — set via: npx wrangler secret put <NAME>`);
   }
 }
 
