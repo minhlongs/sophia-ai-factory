@@ -13,7 +13,7 @@
 import { logger } from '@/seed/utils/logger-utility'
 import { getD1 } from '@/seed/db/client'
 import { recordAudit } from '@/seed/db/audit/audit-log'
-import { insertPurchase, markPaid, markRefunded, getByPaymentId } from '@/seed/db/repositories/user-purchases-repo'
+import { insertPurchase, markPaid, markRefunded, getByPaymentId, markOrderCompleted } from '@/seed/db/repositories/user-purchases-repo'
 import { revokeAccessByPurchaseId } from '@/seed/db/repositories/videos-repo'
 import { triggerOneTimeFulfillment } from '@/land/fulfillment/one-time-fulfillment'
 import { markUnderpaid, UNDERPAYMENT_THRESHOLD } from './nowpayments-ipn-underpaid'
@@ -94,6 +94,14 @@ export async function handleOneTimeFinished(
 
   // Mark paid + set credits_remaining
   await markPaid(ipn.payment_id, sku.credits, expiresAt)
+
+  // Update pending_orders to completed (FIX: was never updated for one-time)
+  try {
+  const _d1b = getD1()
+  if (_d1b) {
+  await _d1b.prepare('UPDATE pending_orders SET status=?, payment_id=?, completed_at=? WHERE order_id=?').bind('completed', ipn.payment_id, Math.floor(Date.now() / 1000), ipn.order_id)
+  }
+  } catch { /* non-fatal */ }
 
   // Audit trail
   try {

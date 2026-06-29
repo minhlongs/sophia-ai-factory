@@ -3,15 +3,16 @@
  *
  * Public page (no auth required). Resolves an affiliate link by code,
  * records a click event in D1, sets a 30-day `ref` attribution cookie,
- * then renders a marketing landing page with CTA to /en/register.
+ * then renders a marketing landing page with CTA to /register.
  *
  * Invalid codes → redirect to homepage.
  */
 
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
-import Link from 'next/link'
+import { Link } from '@/navigation'
 import { cookies } from 'next/headers'
+import { getTranslations } from 'next-intl/server'
 import { Sparkles, Zap, TrendingUp, ArrowRight } from 'lucide-react'
 import { getD1Raw } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
@@ -22,23 +23,21 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { code } = await params
+  const t = await getTranslations('landing.ref')
   return {
-    title: 'Sophia AI — Solo Creator SOPs Platform',
-    description:
-      'Build, sell, and execute video production SOPs. Join the creator economy with AI-powered automation.',
+    title: t('brand'),
+    description: t('subtitle'),
     openGraph: {
-      title: 'Sophia AI — Solo Creator SOPs Platform',
-      description:
-        'Build, sell, and execute video production SOPs with AI automation.',
+      title: t('brand'),
+      description: t('subtitle'),
       url: `https://sophia.agencyos.network/ref/${code}`,
       siteName: 'Sophia AI Factory',
       type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
-      title: 'Sophia AI — Solo Creator SOPs Platform',
-      description:
-        'Build, sell, and execute video production SOPs with AI automation.',
+      title: t('brand'),
+      description: t('subtitle'),
     },
   }
 }
@@ -51,6 +50,7 @@ interface AffiliateLinkRow {
 
 export default async function ReferralPage({ params }: Props) {
   const { code } = await params
+  const t = await getTranslations('landing.ref')
 
   let db: D1Database
   try {
@@ -81,8 +81,8 @@ export default async function ReferralPage({ params }: Props) {
     await db
       .prepare(
         `INSERT OR IGNORE INTO click_events
-          (id, tenant_id, link_id, offer_id, ip_hash, ua, referrer, country, clicked_at)
-         VALUES (?1, 'default', ?2, ?3, NULL, NULL, NULL, NULL, ?4)`,
+      (id, tenant_id, link_id, offer_id, ip_hash, ua, referrer, country, clicked_at)
+      VALUES (?1, 'default', ?2, ?3, NULL, NULL, NULL, NULL, ?4)`,
       )
       .bind(crypto.randomUUID(), link.id, link.offer_id, Math.floor(Date.now() / 1000))
       .run()
@@ -99,20 +99,19 @@ export default async function ReferralPage({ params }: Props) {
         <div className="flex items-center justify-center gap-2 mb-6">
           <Sparkles className="w-8 h-8 text-primary-400" />
           <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent">
-            Sophia AI
+            {t('brand')}
           </h1>
         </div>
 
         <p className="text-xl text-foreground/70 mb-8 max-w-xl mx-auto">
-          Build, sell, and execute video production SOPs. Join the creator
-          economy with AI-powered automation.
+          {t('subtitle')}
         </p>
 
         <Link
-          href="/en/register"
+          href="/register"
           className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-primary-600 hover:bg-primary-500 text-lg font-semibold transition-colors"
         >
-          Get Started Free
+          {t('cta')}
           <ArrowRight className="w-5 h-5" />
         </Link>
       </div>
@@ -123,18 +122,18 @@ export default async function ReferralPage({ params }: Props) {
           [
             {
               icon: Zap,
-              title: 'AI Video SOPs',
-              desc: 'Step-by-step automation for faceless YouTube, TikTok, and UGC content',
+              title: 'landing.features.items.ai_engine.title',
+              desc: 'landing.features.items.ai_engine.description',
             },
             {
               icon: TrendingUp,
-              title: 'Earn Revenue',
-              desc: 'Create SOPs, sell on marketplace, earn 70% commission on every sale',
+              title: 'landing.features.items.video_factory.title',
+              desc: 'landing.features.items.video_factory.description',
             },
             {
               icon: Sparkles,
-              title: 'Community',
-              desc: 'Join creators earning $1K–$50K/mo with AI-powered video production',
+              title: 'landing.features.items.api.title',
+              desc: 'landing.features.items.api.description',
             },
           ] as const
         ).map((f) => (
@@ -151,7 +150,7 @@ export default async function ReferralPage({ params }: Props) {
 
       {/* Footer */}
       <div className="text-center pb-10 text-xs text-muted-foreground/50">
-        Sophia AI Factory — Solo Creator SOPs Platform
+        {t('footer')}
       </div>
     </div>
   )

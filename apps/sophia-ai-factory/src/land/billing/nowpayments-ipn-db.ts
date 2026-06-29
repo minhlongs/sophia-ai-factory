@@ -12,9 +12,14 @@ export function getDb() {
 }
 
 export function parseUserIdFromOrderId(orderId: string): string | null {
-  const parts = orderId.split('_')
-  if (parts.length >= 3 && parts[0] === 'sophia') return parts[1]
-  return null
+  // Format: sophia_{userId}_{timestamp}
+  // userId may contain underscores, so we split on first 2 underscores only
+  if (!orderId.startsWith('sophia_')) return null
+  const rest = orderId.slice('sophia_'.length)
+  const firstUnderscore = rest.indexOf('_')
+  if (firstUnderscore === -1) return null
+  const userId = rest.slice(0, firstUnderscore)
+  return userId || null
 }
 
 export async function isPaymentProcessed(paymentId: string): Promise<boolean> {

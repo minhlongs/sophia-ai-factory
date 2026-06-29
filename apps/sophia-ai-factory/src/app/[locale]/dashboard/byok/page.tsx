@@ -16,6 +16,7 @@ import { listUserApiKeyProviders } from '@/tree/byok/user-api-key-store'
 import { ByokKeyForm, type UserSettableProvider } from '@/forest/components/byok/byok-key-form'
 import { RouteHelpTooltip } from '@/components/help/route-help-tooltip'
 import { cookies } from 'next/headers'
+import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic'
 
@@ -29,12 +30,16 @@ export default async function ByokPage() {
   const jar = await cookies()
   const locale = jar.get('NEXT_LOCALE')?.value === 'en' ? 'en' : 'vi'
 
-  const allConfigured = await listUserApiKeyProviders(user.id)
-  // Filter to only user-settable providers (exclude server-managed ones like heygen)
-  const configured = allConfigured.filter((p): p is UserSettableProvider =>
-    USER_SETTABLE.includes(p as UserSettableProvider),
-  )
-
+ let allConfigured: ByokProvider[] = [];
+ try {
+   allConfigured = await listUserApiKeyProviders(user.id);
+ } catch (e) {
+   logger.error('[byok] listUserApiKeyProviders failed', e instanceof Error ? e : new Error(String(e)));
+ }
+ // Filter to only user-settable providers (exclude server-managed ones like heygen)
+ const configured = allConfigured.filter((p): p is UserSettableProvider =>
+   USER_SETTABLE.includes(p as UserSettableProvider),
+ )
   return (
     <div className="space-y-6">
       <div>

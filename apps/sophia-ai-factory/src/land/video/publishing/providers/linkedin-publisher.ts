@@ -174,7 +174,7 @@ export class LinkedInPublisher implements Publisher {
     });
 
     if (res.status === 404) return 'failed';
-    if (!res.ok) return 'processing';
+    if (!res.ok) return 'failed';
     return 'live';
   }
 

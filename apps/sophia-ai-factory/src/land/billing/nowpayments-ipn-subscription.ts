@@ -626,8 +626,7 @@ async function triggerDunningOnFailure(
 
   try {
     const db = getDb()
-    const rawDb = db.unwrap()
-    const lic = await rawDb
+  const lic = await db
       .prepare('SELECT nonce, tier FROM raas_licenses WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 1')
       .bind(userId)
       .first<{ nonce: string; tier: string }>()

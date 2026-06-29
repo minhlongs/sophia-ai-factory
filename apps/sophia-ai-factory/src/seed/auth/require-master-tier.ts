@@ -37,7 +37,7 @@ export interface RequireMasterTierOptions {
 export async function requireMasterTier(
   opts: RequireMasterTierOptions = {},
 ): Promise<User> {
-  const loginRedirect = opts.loginRedirect ?? '/login';
+  const loginRedirect = opts.loginRedirect ?? '/vi/login';
   const denyRedirect = opts.denyRedirect ?? '/dashboard?error=admin_required';
 
   const user = await getCurrentUser();

@@ -680,6 +680,12 @@
       "title": "Earn While You Learn",
       "subtitle": "Complete missions, build your portfolio, unlock rewards",
       "badge": "Gamified Onboarding"
+    },
+    "ref": {
+      "brand": "Sophia AI",
+      "subtitle": "Build, sell, and execute video production SOPs. Join the creator economy with AI-powered automation.",
+      "cta": "Get Started Free",
+      "footer": "Sophia AI Factory — Solo Creator SOPs Platform"
     }
   },
   "dashboard": {
@@ -4471,7 +4477,9 @@
         "googleSignIn": "Google",
         "githubSignIn": "GitHub",
         "hidePassword": "Hide Password",
-        "showPassword": "Show Password"
+        "showPassword": "Show Password",
+        "invalidCredentials": "Invalid email or password",
+        "networkError": "Network error. Please try again."
       },
       "register": {
         "title": "Create Your Account",
@@ -4711,5 +4719,14 @@
       "banners": "Banner Images",
       "links": "Deep Links"
     }
+  },
+  "audit": {
+    "noRuns": "No audit runs yet. Run your first audit above.",
+    "date": "Date",
+    "score": "Score",
+    "checks": "Checks",
+    "pwf": "P/W/F",
+    "detail": "Detail",
+    "view": "View"
   }
 }

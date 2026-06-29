@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/navigation";
 import { getTranslations } from "next-intl/server";
 import { Button } from "@/seed/components/ui/button";
 import { ArrowLeft, Home } from "lucide-react";

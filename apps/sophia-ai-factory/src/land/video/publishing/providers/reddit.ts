@@ -137,8 +137,8 @@ export class RedditPublisher implements Publisher {
       },
     });
     if (res.status === 404) return 'failed';
-    if (res.ok) return 'live';
-    return 'processing';
+    if (!res.ok) return 'failed';
+    return 'live';
   }
 
   async getMetrics(externalPostId: string): Promise<MetricsJson> {

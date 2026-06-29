@@ -680,6 +680,12 @@
       "title": "Học mà Kiếm",
       "subtitle": "Hoàn thành nhiệm vụ, xây portfolio, nhận thưởng",
       "badge": "Onboarding Game Hóa"
+    },
+    "ref": {
+      "brand": "Sophia AI",
+      "subtitle": "Xây dựng, bán và thực thi SOP sản xuất video. Tham gia nền kinh tế nhà sáng tạo với tự động hóa AI.",
+      "cta": "Bắt Đầu Miễn Phí",
+      "footer": "Sophia AI Factory — Nền Tảng SOP Nhà Sáng Tạo Độc Lập"
     }
   },
   "dashboard": {
@@ -4478,7 +4484,9 @@
         "googleSignIn": "Google",
         "githubSignIn": "GitHub",
         "hidePassword": "Hide Password",
-        "showPassword": "Show Password"
+        "showPassword": "Show Password",
+        "invalidCredentials": "Email hoặc mật khẩu không đúng",
+        "networkError": "Lỗi mạng. Vui lòng thử lại."
       },
       "register": {
         "title": "Create Your Account",
@@ -4718,5 +4726,14 @@
       "banners": "Banner Images",
       "links": "Deep Links"
     }
+  },
+  "audit": {
+    "noRuns": "Chưa có lần audit nào. Chạy audit đầu tiên ở trên.",
+    "date": "Ngày",
+    "score": "Điểm",
+    "checks": "Kiểm Tra",
+    "pwf": "T/C/L",
+    "detail": "Chi Tiết",
+    "view": "Xem"
   }
 }

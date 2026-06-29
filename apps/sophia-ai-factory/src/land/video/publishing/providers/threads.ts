@@ -120,8 +120,8 @@ export class ThreadsPublisher implements Publisher {
       `${THREADS_BASE}/${externalPostId}?fields=id,status&access_token=${this.accessToken}`,
     );
     if (res.status === 404) return 'failed';
-    if (res.ok) return 'live';
-    return 'processing';
+    if (!res.ok) return 'failed';
+    return 'live';
   }
 
   async getMetrics(externalPostId: string): Promise<MetricsJson> {

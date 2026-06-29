@@ -73,11 +73,11 @@ export async function processNowPaymentsIpn(
       return { success: true, message: 'Already processed' }
     }
 
-    // Stale lock recovery: if lock >5 min old, delete and allow re-processing
+ // Stale lock recovery: if lock >5 min old, mark processed (was: delete → re-entrancy risk)
     const lockAgeMs = Date.now() - new Date((existing as { created_at?: string }).created_at ?? new Date().toISOString()).getTime()
     if (lockAgeMs > 5 * 60 * 1000) {
-      try { await db.from('payment_events').delete().eq('event_id', eventId) } catch { /* non-fatal */ }
-      return { success: true, message: 'Stale lock cleared, retry' }
+ try { await db.from('payment_events').update({ processed: 1 }).eq('event_id', eventId) } catch { /* non-fatal */ }
+    return { success: true, message: 'Stale lock cleared (marked processed)' }
     }
 
     // Another process is currently handling this event
@@ -98,6 +98,14 @@ export async function processNowPaymentsIpn(
       case 'partially_paid':
         logger.info('[NOWPayments] Partial payment received — holding', { payment_id })
         break
+  case 'waiting':
+  case 'confirming':
+  case 'confirmed':
+  case 'sending':
+    logger.debug('[NOWPayments] Intermediate status, waiting for final', {
+      payment_status, payment_id, order_id: ipn.order_id,
+    })
+    break
       case 'expired':
         try {
           await db.from('pending_orders').update({ status: 'expired' }).eq('order_id', ipn.order_id)
