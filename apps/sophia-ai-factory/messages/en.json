@@ -1080,7 +1080,15 @@
       "24h": "24h",
       "accept-language": "Accept-Language",
       "csv": "Csv",
-      "png": "Png"
+      "png": "Png",
+      "recent_campaigns_title": "Recent Campaigns",
+      "recent_name": "Name",
+      "recent_status": "Status",
+      "recent_created": "Created",
+      "recent_completed": "Completed",
+      "recent_actions": "Actions",
+      "recent_view": "View",
+      "recent_empty": "No campaigns found"
     },
     "trialBanner": {
       "title": "Your trial expires tomorrow! Upgrade now to keep access →",
@@ -2410,6 +2418,18 @@
       "fullNamePlaceholder": "Full Name Placeholder",
       "email": "Email",
       "emailManagedNote": "Email Managed Note"
+    },
+    "changeEmail": {
+      "title": "Change Email",
+      "subtitle": "Request an email change. A verification link will be sent to your new address.",
+      "currentEmail": "Current Email",
+      "newEmail": "New Email",
+      "newEmailPlaceholder": "Enter your new email",
+      "sendVerification": "Send Verification",
+      "sending": "Sending...",
+      "checkEmail": "Verification link sent to {email}. Please check your inbox.",
+      "unknownError": "An unknown error occurred. Please try again.",
+      "networkError": "Network error. Please check your connection and try again."
     }
   },
   "auth": {

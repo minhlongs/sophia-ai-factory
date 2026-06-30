@@ -33,7 +33,12 @@ export async function handleApiPipeline(
 
   // Request size limit
   const sizeRejected = rejectOversizedRequest(request, getSizeLimit(pathname));
-  if (sizeRejected) return sizeRejected;
+  if (sizeRejected) {
+    emitUsageEvent(request, { status: sizeRejected.status, headers: sizeRejected.headers }, { tier: request.headers.get('x-raas-tier') || 'BASIC' }).catch(
+      (err) => { logger.error('[Proxy] Failed to emit size limit usage event', err); },
+    );
+    return sizeRejected;
+  }
 
   // Rate limiting, RaaS gate, tenant isolation, webhook pinning
   const blocked = await handleApiRoute(request, pathname, startTime);
@@ -42,15 +47,30 @@ export async function handleApiPipeline(
   // Auth guard for protected API routes
   if (!isPublicApiRoute(pathname)) {
     const authResponse = await withAuth(request);
-    if (authResponse) return authResponse;
+    if (authResponse) {
+      emitUsageEvent(request, { status: authResponse.status, headers: authResponse.headers }, { tier: request.headers.get('x-raas-tier') || 'BASIC' }).catch(
+        (err) => { logger.error('[Proxy] Failed to emit auth failure usage event', err); },
+      );
+      return authResponse;
+    }
   }
 
   // MFA gate for sensitive API routes
   if (isSensitiveApiRoute(pathname)) {
     const authResult = await requireAuth(request, pathLocale ?? 'vi');
-    if (authResult instanceof NextResponse) return authResult;
+    if (authResult instanceof NextResponse) {
+      emitUsageEvent(request, { status: authResult.status, headers: authResult.headers }, { tier: request.headers.get('x-raas-tier') || 'BASIC' }).catch(
+        (err) => { logger.error('[Proxy] Failed to emit MFA auth failure usage event', err); },
+      );
+      return authResult;
+    }
     const mfaResponse = await enforceMfaGate(authResult.session.session.id, pathname, request);
-    if (mfaResponse) return mfaResponse;
+    if (mfaResponse) {
+      emitUsageEvent(request, { status: mfaResponse.status, headers: mfaResponse.headers }, { tier: request.headers.get('x-raas-tier') || 'BASIC' }).catch(
+        (err) => { logger.error('[Proxy] Failed to emit MFA gate failure usage event', err); },
+      );
+      return mfaResponse;
+    }
   }
 
   // Build API response with usage headers

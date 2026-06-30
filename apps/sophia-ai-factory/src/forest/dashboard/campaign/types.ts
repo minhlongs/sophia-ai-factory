@@ -66,3 +66,65 @@ export interface CampaignMetricsCardProps {
   metrics: CampaignDashboardMetrics;
   className?: string;
 }
+
+/**
+ * Analytics summary for campaign dashboard
+ */
+export interface CampaignAnalytics {
+  totalCampaigns: number;
+  successRate: number; // %
+  avgCompletionTimeHours: number;
+  statusDistribution: Record<string, number>;
+  recentCampaigns: CampaignSummary[];
+  completedCount: number;
+  failedCount: number;
+}
+
+/**
+ * Summary of a single campaign for table display
+ */
+export interface CampaignSummary {
+  id: string;
+  name: string;
+  status: string;
+  platform: string;
+  createdAt: string;
+  completedAt: string | null;
+}
+
+/**
+ * Props for AnalyticsStatsCards
+ */
+export interface AnalyticsStatsCardsProps {
+  totalCampaigns: number;
+  successRate: number;
+  avgCompletionTimeHours: number;
+  completedCount: number;
+  failedCount: number;
+  className?: string;
+}
+
+/**
+ * Props for AnalyticsStatusChart
+ */
+export interface AnalyticsStatusChartProps {
+  data: { name: string; value: number }[];
+  className?: string;
+}
+
+/**
+ * Props for AnalyticsPerformanceChart
+ */
+export interface AnalyticsPerformanceChartProps {
+  data: { name: string; duration: number }[];
+  className?: string;
+}
+
+/**
+ * Props for AnalyticsRecentCampaigns
+ */
+export interface AnalyticsRecentCampaignsProps {
+  campaigns: CampaignSummary[];
+  maxRows?: number;
+  className?: string;
+}

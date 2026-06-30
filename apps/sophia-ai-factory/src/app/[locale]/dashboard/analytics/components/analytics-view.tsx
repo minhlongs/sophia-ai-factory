@@ -4,23 +4,17 @@ import React from "react";
 import { Campaign, Tier } from "@/seed/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/seed/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/seed/components/ui/tabs";
-import { BarChart3, CheckCircle2, Clock, Loader2, Lock, BarChart as BarChartIcon } from "lucide-react";
+import { BarChart3, Lock, Loader2, BarChart as BarChartIcon } from "lucide-react";
 import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
 import { useAnalyticsData } from "../hooks/use-analytics-data";
 import { UsageAnalyticsView } from "./usage-analytics-view";
+import { AnalyticsRecentCampaigns } from "@/forest/dashboard/campaign/analytics-recent-campaigns";
+import { AnalyticsStatsCards } from "@/forest/dashboard/campaign/analytics-stats-cards";
+import { AnalyticsStatusChart } from "@/forest/dashboard/campaign/analytics-status-chart";
+import { AnalyticsPerformanceChart } from "@/forest/dashboard/campaign/analytics-performance-chart";
 
 // Lazy load chart components
-const StatusDistributionChart = dynamic(
-  () => import('./charts').then(mod => mod.StatusDistributionChart),
-  { loading: () => <div className="h-[300px] w-full flex items-center justify-center"><Loader2 className="h-8 w-8 motion-safe:animate-spin text-muted-foreground" /></div>, ssr: false }
-);
-
-const CompletionTimeChart = dynamic(
-  () => import('./charts').then(mod => mod.CompletionTimeChart),
-  { loading: () => <div className="h-[300px] w-full flex items-center justify-center"><Loader2 className="h-8 w-8 motion-safe:animate-spin text-muted-foreground" /></div>, ssr: false }
-);
-
 const CampaignsByTypeChart = dynamic(
   () => import('./charts').then(mod => mod.CampaignsByTypeChart),
   { loading: () => <div className="h-[300px] w-full flex items-center justify-center"><Loader2 className="h-8 w-8 motion-safe:animate-spin text-muted-foreground" /></div>, ssr: false }
@@ -36,6 +30,11 @@ export function AnalyticsView({ campaigns, userTier, userId }: AnalyticsViewProp
   const t = useTranslations('dashboard.analytics');
   const isAdvanced = userTier !== "BASIC";
   const { stats, statusData, recentPerformanceData, typeData } = useAnalyticsData(campaigns);
+
+  const completedCount = campaigns.filter(c => c.status === 'completed').length;
+  const failedCount = campaigns.filter(c => c.status === 'failed').length;
+  const avgCompletionTimeMinutes = parseFloat(stats.avgTime);
+  const successRate = parseFloat(stats.successRate);
 
   return (
     <div className="space-y-6">
@@ -58,38 +57,13 @@ export function AnalyticsView({ campaigns, userTier, userId }: AnalyticsViewProp
         <TabsContent value="campaigns" className="mt-6">
           <div className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card className="bg-muted/10 border-border/50 backdrop-blur-md transition-all duration-300 hover:hover:border-border">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-foreground">{t('total_campaigns')}</CardTitle>
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-foreground">{stats.total}</div>
-                  <p className="text-xs text-muted-foreground">{t('all_time')}</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-muted/10 border-border/50 backdrop-blur-md transition-all duration-300 hover:hover:border-border">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-foreground">{t('success_rate')}</CardTitle>
-                  <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-foreground">{stats.successRate}%</div>
-                  <p className="text-xs text-muted-foreground">{t('completed_campaigns')}</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-muted/10 border-border/50 backdrop-blur-md transition-all duration-300 hover:hover:border-border">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-foreground">{t('avg_completion_time')}</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-foreground">{stats.avgTime}m</div>
-                  <p className="text-xs text-muted-foreground">{t('per_completed')}</p>
-                </CardContent>
-              </Card>
-            </div>
+            <AnalyticsStatsCards
+              totalCampaigns={stats.total}
+              successRate={successRate}
+              avgCompletionTimeHours={avgCompletionTimeMinutes}
+              completedCount={completedCount}
+              failedCount={failedCount}
+            />
 
             {/* Charts */}
             <div className="grid gap-6 md:grid-cols-2">
@@ -98,7 +72,7 @@ export function AnalyticsView({ campaigns, userTier, userId }: AnalyticsViewProp
                   <CardTitle className="text-lg text-foreground">{t('status_distribution')}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <StatusDistributionChart data={statusData} />
+                  <AnalyticsStatusChart data={statusData} />
                 </CardContent>
               </Card>
 
@@ -114,7 +88,7 @@ export function AnalyticsView({ campaigns, userTier, userId }: AnalyticsViewProp
                           <p className="text-xs">Upgrade to Growth or higher to unlock detailed performance charts</p>
                       </div>
                   ) : recentPerformanceData.length > 0 ? (
-                      <CompletionTimeChart data={recentPerformanceData} />
+                      <AnalyticsPerformanceChart data={recentPerformanceData} />
                   ) : (
                       <div className="h-[300px] w-full flex items-center justify-center text-muted-foreground border border-dashed border-border/50 rounded-lg">
                           {t('no_completed_data')}
@@ -134,6 +108,20 @@ export function AnalyticsView({ campaigns, userTier, userId }: AnalyticsViewProp
                 </Card>
               )}
             </div>
+
+            {/* Recent Campaigns Table */}
+            <AnalyticsRecentCampaigns
+              campaigns={campaigns.map((c) => ({
+                id: c.id,
+                name: c.title,
+                status: c.status,
+                platform: '',
+                createdAt: c.created_at,
+                completedAt:
+                  c.status === 'completed' ? c.updated_at : null,
+              }))}
+              maxRows={10}
+            />
           </div>
         </TabsContent>
       </Tabs>

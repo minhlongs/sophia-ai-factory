@@ -1,16 +1,23 @@
 /**
  * Message formatter utilities for Telegram bot
- * Formats messages with Markdown for consistent bot responses
+ * Formats messages with MarkdownV2 for consistent bot responses
+ *
+ * Wave 20 Phase 01 (7A): all user-provided values are escaped with escapeMarkdownV2
+ * to prevent MarkdownV2 parse failures. Formatting syntax (*bold*, _italic_)
+ * is preserved in template strings.
  */
+
+import { escapeMarkdownV2 } from '@/tree/telegram/format-markdown-v2';
 
 /**
  * Format welcome message with subscription status
  */
 export function formatWelcomeMessage(isSubscribed: boolean, tierName?: string): string {
+  const safeTier = tierName ? escapeMarkdownV2(tierName) : 'Active';
   if (isSubscribed) {
     return `🚀 *Welcome back to Sophia AI Factory!*
 
-Your plan: *${tierName || 'Active'}*
+Your plan: *${safeTier}*
 
 What would you like to do?
 • /discover - Find trending products
@@ -45,11 +52,12 @@ export function formatSubscriptionStatus(
 ): string {
   const statusEmoji = isActive ? '✅' : '❌'
   const statusText = isActive ? 'Active' : 'Expired'
+  const safeTier = escapeMarkdownV2(tier);
 
   let message = `📊 *Subscription Status*
 
 ${statusEmoji} Status: ${statusText}
-📋 Plan: ${tier}`
+📋 Plan: ${safeTier}`
 
   if (daysRemaining !== null) {
     message += `\n⏰ Days remaining: ${daysRemaining}`
@@ -64,11 +72,13 @@ ${statusEmoji} Status: ${statusText}
 
 /**
  * Format error message for user-friendly display
+ * User-provided context is escaped for MarkdownV2 safety.
  */
 export function formatErrorMessage(context: string): string {
+  const safeContext = escapeMarkdownV2(context);
   return `⚠️ *Something went wrong*
 
-${context}
+${safeContext}
 
 Please try again or contact support.
 Type /help for assistance.`
@@ -88,15 +98,17 @@ Please wait ${resetInSeconds} seconds before trying again.`
  * Format premium feature gate message
  */
 export function formatPremiumGateMessage(requiredTier: string): string {
+  const safeTier = escapeMarkdownV2(requiredTier);
   return `🔒 *Premium Feature*
 
-This feature requires a *${requiredTier}* subscription.
+This feature requires a *${safeTier}* subscription.
 
 Use /subscribe to upgrade your plan.`
 }
 
 /**
  * Format discovery results
+ * User-provided trend names are escaped for MarkdownV2 safety.
  */
 export function formatDiscoveryResults(
   trends: Array<{ name: string; score: number; niche: string }>
@@ -108,9 +120,11 @@ export function formatDiscoveryResults(
   let message = '🔍 *Top Trending Products*\n\n'
 
   trends.forEach((trend, i) => {
+    const safeName = escapeMarkdownV2(trend.name);
+    const safeNiche = escapeMarkdownV2(trend.niche);
     const emoji = i < 3 ? '🔥' : '📈'
-    message += `${emoji} *${i + 1}.* ${trend.name}\n`
-    message += `   Score: ${trend.score}/100 | Niche: ${trend.niche}\n\n`
+    message += `${emoji} *${i + 1}.* ${safeName}\n`
+    message += `   Score: ${trend.score}/100 | Niche: ${safeNiche}\n\n`
   })
 
   return message
