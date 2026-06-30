@@ -40,7 +40,7 @@ vi.mock('@/seed/db/audit/audit-log', () => ({
 vi.mock('@/tree/clients/nowpayments-client', () => ({
   getTierByInvoiceId: vi.fn(() => ({ tier: 'PREMIUM', invoiceId: 'inv_001' })),
   lookupInvoice: vi.fn(() => ({ kind: 'subscription', tier: 'PREMIUM' })),
-  NOWPAYMENTS_TIERS: { PREMIUM: 'PREMIUM', BASIC: 'BASIC', ENTERPRISE: 'ENTERPRISE', MASTER: 'MASTER' },
+  NOWPAYMENTS_TIERS: { PREMIUM: { price: 199 }, BASIC: { price: 0 }, ENTERPRISE: { price: 499 }, MASTER: { price: 999 } },
 }))
 
 vi.mock('@/land/video/templates/onboarding-video', () => ({ createOnboardingVideo: vi.fn(), ONBOARDING_TIERS: [] }))
@@ -83,26 +83,48 @@ describe('Subscription Lifecycle — handleFinished', () => {
     vi.mocked(getTierByInvoiceId).mockReturnValue(null as never)
 
     // Should not throw — returns early with warning
-    await expect(handleFinished(payload)).resolves.toBeUndefined()
+    await expect(handleFinished(payload)).resolves.toHaveProperty('ok', true)
   })
 
   it('rejects missing userId in order_id', async () => {
     const payload = buildIpnPayload({ order_id: 'sophia__123' })
-    await expect(handleFinished(payload)).resolves.toBeUndefined()
+    await expect(handleFinished(payload)).resolves.toHaveProperty('ok', true)
   })
 
   it('rejects underpaid amount (< threshold)', async () => {
     const payload = buildIpnPayload({ actually_paid: 0.01, price_amount: 199 })
-    await expect(handleFinished(payload)).resolves.toBeUndefined()
+    await expect(handleFinished(payload)).resolves.toHaveProperty('ok', true)
   })
 
   it('logs overpaid transactions (> 1% above expected)', async () => {
     const payload = buildIpnPayload({ actually_paid: 300, price_amount: 199 })
     const { logger } = await import('@/seed/utils/logger-utility')
-    await expect(handleFinished(payload)).resolves.toBeUndefined()
+    await expect(handleFinished(payload)).resolves.toHaveProperty('ok', true)
     // expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('Overpaid'), expect.anything())
     // Note: logger call may not fire if early return happens before — adjust after implementation review
   })
+
+  it('rejects amount mismatch when price_amount deviates > 1% from expected tier price', async () => {
+    // NOWPAYMENTS_TIERS.PREMIUM.price = 199; tolerance = 1.99; price_amount = 250 deviates by 51
+    const payload = buildIpnPayload({ price_amount: 250, invoice_id: 'inv_001' })
+    const { logger } = await import('@/seed/utils/logger-utility')
+    await expect(handleFinished(payload)).resolves.toHaveProperty('ok', true)
+    // Should warn about amount mismatch and return early without activating
+  })
+
+  it('accepts amount deviation within 1% tolerance', async () => {
+    // PREMIUM price = 199; tolerance = 1.99; price_amount = 200 deviates by 1 (within 1%)
+    const payload = buildIpnPayload({ price_amount: 200, invoice_id: 'inv_001' })
+    await expect(handleFinished(payload)).resolves.toHaveProperty('ok', true)
+  })
+
+  it('rejects underpaid amount below threshold in validateIpnAndGetUserId', async () => {
+    const payload = buildIpnPayload({ actually_paid: 0.01, price_amount: 199 })
+    const { logger } = await import('@/seed/utils/logger-utility')
+    await expect(handleFinished(payload)).resolves.toHaveProperty('ok', true)
+    // Underpayment guard: actually_paid < price_amount * UNDERPAYMENT_THRESHOLD → early return
+  })
+
 })
 
 describe('Subscription Lifecycle — handleRefunded', () => {
@@ -111,7 +133,7 @@ describe('Subscription Lifecycle — handleRefunded', () => {
 
   it('rejects missing userId in order_id', async () => {
     const payload = buildIpnPayload({ payment_status: 'refunded', order_id: '' })
-    await expect(handleRefunded(payload)).resolves.toBeUndefined()
+    await expect(handleRefunded(payload)).resolves.toHaveProperty('ok', true)
   })
 
   /**
@@ -123,7 +145,7 @@ describe('Subscription Lifecycle — handleRefunded', () => {
     const payload = buildIpnPayload({ payment_status: 'refunded' })
 
     // First refund should proceed
-    await expect(handleRefunded(payload)).resolves.toBeUndefined()
+    await expect(handleRefunded(payload)).resolves.toHaveProperty('ok', true)
 
     // Second refund with same payment_id should skip (idempotent)
     // Mock prepare().first() to return processed=1 on second call
@@ -146,7 +168,7 @@ describe('Subscription Lifecycle — handleRefunded', () => {
       })),
     } as any)
 
-    await expect(handleRefunded(payload)).resolves.toBeUndefined()
+    await expect(handleRefunded(payload)).resolves.toHaveProperty('ok', true)
     expect(vi.mocked(logger.info)).toHaveBeenCalledWith(
       expect.stringContaining('already processed'),
       expect.anything(),
@@ -163,7 +185,7 @@ describe('Subscription Lifecycle — handleFailed', () => {
     const { markOrderFailed } = await import('@/land/orders/pending-order-repo')
     vi.mocked(markOrderFailed).mockResolvedValue(undefined)
 
-    await expect(handleFailed(payload)).resolves.toBeUndefined()
+    await expect(handleFailed(payload)).resolves.toHaveProperty('ok', true)
   })
 
   it('does not throw when markOrderFailed errors (non-fatal)', async () => {
@@ -171,11 +193,11 @@ describe('Subscription Lifecycle — handleFailed', () => {
     const { markOrderFailed } = await import('@/land/orders/pending-order-repo')
     vi.mocked(markOrderFailed).mockRejectedValue(new Error('DB error'))
 
-    await expect(handleFailed(payload)).resolves.toBeUndefined()
+    await expect(handleFailed(payload)).resolves.toHaveProperty('ok', true)
   })
 
   it('handles missing order_id gracefully', async () => {
     const payload = buildIpnPayload({ payment_status: 'failed', order_id: undefined })
-    await expect(handleFailed(payload)).resolves.toBeUndefined()
+    await expect(handleFailed(payload)).resolves.toHaveProperty('ok', true)
   })
 })

@@ -66,7 +66,10 @@ export async function createDidTalk(apiKey: string, req: DidTalkRequest): Promis
   })
 
   if (!res.ok) {
-    const body = await res.text().catch(() => '<unreadable>')
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read response text', { error: String(err), context: 'createDidTalk' });
+      return '<unreadable>';
+    })
     logger.warn('[did-client] /talks rejected', { status: res.status, body: body.slice(0, 500) })
     const err: DidErrorResponse = {
       code: `did_${res.status}`,

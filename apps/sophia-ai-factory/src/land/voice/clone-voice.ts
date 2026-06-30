@@ -137,7 +137,10 @@ export async function cloneVoice(input: CloneVoiceInput): Promise<CloneVoiceResu
       body: form,
     });
     if (!res.ok) {
-      const body = await res.text().catch(() => '');
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read response body', { error: String(err), context: 'cloneVoice' });
+        return '';
+      });
       logger.warn('[clone-voice] ElevenLabs non-2xx', { status: res.status, body: body.slice(0, 200) });
       throw new Error(`Voice provider returned ${res.status}`);
     }

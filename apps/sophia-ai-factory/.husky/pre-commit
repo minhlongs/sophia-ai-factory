@@ -1,7 +1,8 @@
 #!/usr/bin/env sh
 # Sophia AI Factory pre-commit gate
-# Runs lint-staged: ESLint + tsc on staged TS/TSX + secretlint scan
+# Runs lint-staged: ESLint + tsc on staged TS/TSX + secretlint scan + layer boundary check
 # Bypass: git commit --no-verify (DISCOURAGED — see docs/dev-sops.md SOP 6)
 set -e
 cd "$(git rev-parse --show-toplevel)/apps/sophia-ai-factory"
 npx lint-staged
+npm run check:boundaries

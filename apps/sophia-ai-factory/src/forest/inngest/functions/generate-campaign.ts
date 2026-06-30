@@ -19,6 +19,9 @@ import { notifyUserByTelegram } from '@/tree/telegram/user-notifier'
 import { notifyRefundRequired, notifyProviderError } from '@/land/video/generation/generate-campaign-refund-notify'
 import { pollVideoStatus } from '@/land/video/generation/generate-campaign-video-poller'
 import { emit } from '@/land/webhooks/emitter'
+import { uploadVideo, refreshAccessToken } from '@/forest/youtube/youtube-oauth-client'
+import { publishVideo, checkPublishStatus } from '@/forest/tiktok/tiktok-oauth-client'
+import type { YouTubeOAuthClient, TikTokOAuthClient } from '@/tree/types/oauth-client-types'
 
 /** Resolve D1 binding for webhook emission (best-effort, no throw) */
 function getD1ForWebhooks(): D1Database | null {
@@ -35,10 +38,13 @@ function getD1ForWebhooks(): D1Database | null {
 
 const resumeEngine = new SmartResumeEngine()
 
+const youtubeOAuthClient: YouTubeOAuthClient = { uploadVideo, refreshAccessToken }
+const tiktokOAuthClient: TikTokOAuthClient = { publishVideo, checkPublishStatus }
+
 function createGateway(): OpenClawGateway {
   const gateway = new OpenClawGateway({ maxRetries: 2, baseDelayMs: 2000 })
-  gateway.registerChannel({ id: 'youtube', name: 'YouTube', adapter: new YouTubeChannelAdapter(), enabled: true, rateLimitPerHour: 6 })
-  gateway.registerChannel({ id: 'tiktok', name: 'TikTok', adapter: new TikTokChannelAdapter(), enabled: true, rateLimitPerHour: 10 })
+  gateway.registerChannel({ id: 'youtube', name: 'YouTube', adapter: new YouTubeChannelAdapter(youtubeOAuthClient), enabled: true, rateLimitPerHour: 6 })
+  gateway.registerChannel({ id: 'tiktok', name: 'TikTok', adapter: new TikTokChannelAdapter(tiktokOAuthClient), enabled: true, rateLimitPerHour: 10 })
   gateway.registerChannel({ id: 'telegram', name: 'Telegram Notifications', adapter: new TelegramNotificationAdapter(), enabled: true, rateLimitPerHour: 60 })
   return gateway
 }
@@ -81,11 +87,25 @@ export const generateCampaign = inngest.createFunction(
         if (rawErr instanceof NonRetriableError) throw rawErr
         const errMsg = rawErr instanceof Error ? rawErr.message : String(rawErr)
         await markEngineMissionFailed(campaignId, `[${stepName}] ${errMsg}`).catch(
-          () => undefined,
+          (err) => {
+            logger.warn('Failed to mark engine mission failed', {
+              error: String(err),
+              context: 'runStepSafely',
+              campaignId,
+              stepName,
+            });
+          },
         )
         await notifyUser(
           `\u{1F4E9} Campaign failed at step "${stepName}". Contact support for assistance.`,
-        ).catch(() => undefined)
+        ).catch((err) => {
+          logger.warn('Failed to notify user of campaign failure', {
+            error: String(err),
+            context: 'runStepSafely',
+            campaignId,
+            stepName,
+          });
+        })
         throw new NonRetriableError(`[${stepName}] ${errMsg}`, { cause: rawErr })
       }
     }
@@ -266,7 +286,13 @@ export const generateCampaign = inngest.createFunction(
    })
    await updateCampaignStatus(campaignId, 'failed', 0, {
      error_message: `Tier downgraded mid-flight from ${tier} to ${currentTier}. Campaign aborted.`,
-   }).catch(() => undefined)
+   }).catch((err) => {
+     logger.warn('Failed to update campaign status after tier downgrade', {
+       error: String(err),
+       context: 'generateCampaign',
+       campaignId,
+     });
+   })
    throw new NonRetriableError(
      `Tier downgrade mid-flight: ${tier} → ${currentTier}. Please re-run with an active tier.`,
    )
@@ -334,7 +360,13 @@ export const generateCampaign = inngest.createFunction(
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err)
       await updateCampaignStatus(campaignId, 'failed', 0, { error_message: errorMessage })
-      await notifyUser(`❌ **Campaign Failed**\nYour campaign for "${topic}" encountered an error:\n${errorMessage}`).catch(() => undefined)
+      await notifyUser(`❌ **Campaign Failed**\nYour campaign for "${topic}" encountered an error:\n${errorMessage}`).catch((err) => {
+        logger.warn('Failed to notify user of campaign failure in outer catch', {
+          error: String(err),
+          context: 'generateCampaign',
+          campaignId,
+        });
+      })
       throw new NonRetriableError(`Campaign generation failed: ${errorMessage}`, { cause: err })
     }
   },

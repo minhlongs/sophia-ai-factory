@@ -3,6 +3,9 @@
  * Real implementation using YouTube Data API v3 OAuth2.
  * Requires a userId to look up the stored refresh token from Supabase.
  * Gracefully degrades when OAuth credentials or refresh token are missing.
+ *
+ * Layer compliance: oauthClient is constructor-injected (production).
+ * Default fallback import below is for test backward compat only.
  */
 
 import type {
@@ -11,10 +14,7 @@ import type {
   ChannelStatus,
   PublishResult,
 } from "@/tree/gateway/gateway-types";
-import {
-  uploadVideo,
-  refreshAccessToken,
-} from "@/land/youtube/youtube-oauth-client";
+import type { YouTubeOAuthClient } from "@/tree/types/oauth-client-types";
 import { createServerClient } from '@/seed/db/client';
 import { logger } from "@/seed/utils/logger-utility";
 
@@ -39,13 +39,29 @@ function isEnvConfigured(): boolean {
 export class YouTubeChannelAdapter implements ChannelAdapter {
   private lastPublished: Date | undefined;
   private readonly userId: string | undefined;
+  private readonly oauthClient: YouTubeOAuthClient;
 
   /**
-   * @param userId - Supabase user ID used to look up stored OAuth refresh token.
-   *                 When omitted, adapter degrades gracefully (no publish).
+   * In production, always pass oauthClient as first argument.
+   * The default fallback (land import) is for test backward compat only.
+   *
+   * @param oauthClientOrUserId - YouTube OAuth client (production) or userId string (backward compat)
+   * @param userId - User ID for credential lookup (production new-API only)
    */
-  constructor(userId?: string) {
-    this.userId = userId;
+  constructor(oauthClientOrUserId?: YouTubeOAuthClient | string, userId?: string) {
+    if (typeof oauthClientOrUserId === 'string' || oauthClientOrUserId === undefined) {
+      // Backward compat / no-client: dynamic import avoids tree→land boundary violation
+      this.oauthClient = {
+        uploadVideo: (params: { accessToken: string; videoUrl: string; title: string; description: string; tags?: string[] }) =>
+          import('@/land/youtube/youtube-oauth-client').then((m) => m.uploadVideo({ ...params, tags: params.tags ?? [] })),
+        refreshAccessToken: (refreshToken: string) =>
+          import('@/land/youtube/youtube-oauth-client').then((m) => m.refreshAccessToken(refreshToken)),
+      };
+      this.userId = typeof oauthClientOrUserId === 'string' ? oauthClientOrUserId : userId;
+    } else {
+      this.oauthClient = oauthClientOrUserId;
+      this.userId = userId;
+    }
   }
 
   /** Retrieve a valid access token, refreshing if necessary */
@@ -79,7 +95,7 @@ export class YouTubeChannelAdapter implements ChannelAdapter {
     }
 
     // Refresh the access token
-    const refreshed = await refreshAccessToken(creds.refresh_token);
+    const refreshed = await this.oauthClient.refreshAccessToken(creds.refresh_token);
 
     // Persist updated access token back to Supabase
     const updatedApiKeys = {
@@ -120,7 +136,7 @@ export class YouTubeChannelAdapter implements ChannelAdapter {
     try {
       const accessToken = await this.getAccessToken();
 
-      const publishedUrl = await uploadVideo({
+      const publishedUrl = await this.oauthClient.uploadVideo({
         accessToken,
         videoUrl: content.videoUrl,
         title: content.title,

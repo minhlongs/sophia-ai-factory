@@ -15,6 +15,8 @@ import { handleFinished, handleRefunded } from './nowpayments-ipn-subscription'
 import { handleOneTimeFinished, handleOneTimeRefunded } from './nowpayments-ipn-one-time'
 import type { NowPaymentsIpnPayload } from './nowpayments-ipn-handlers'
 import { getDb, parseUserIdFromOrderId } from './nowpayments-ipn-db'
+import { IPNError } from './nowpayments-ipn-errors'
+import { type Result } from '@/seed/types/result'
 
 // ── dispatchFinished ──────────────────────────────────────────────────────────
 
@@ -30,7 +32,7 @@ export async function dispatchFinished(ipn: NowPaymentsIpnPayload): Promise<void
     logger.warn('[IPNDispatch] finished: missing invoice_id — falling through to subscription handler', {
       paymentId: ipn.payment_id,
     })
-    await handleFinished(ipn)
+    await throwOnError(handleFinished(ipn))
     return
   }
 
@@ -43,7 +45,7 @@ export async function dispatchFinished(ipn: NowPaymentsIpnPayload): Promise<void
 
   if (lookup.kind === 'one_time') {
     logger.info('[IPNDispatch] Routing to one-time handler', { invoiceId, skuId: lookup.sku.id })
-    await handleOneTimeFinished(ipn, lookup.sku)
+    await throwOnError(handleOneTimeFinished(ipn, lookup.sku))
     return
   }
 
@@ -89,7 +91,7 @@ export async function dispatchFinished(ipn: NowPaymentsIpnPayload): Promise<void
   }
 
   logger.info('[IPNDispatch] Routing to subscription handler', { invoiceId, tier: lookup.tier })
-  await handleFinished(ipn)
+  await throwOnError(handleFinished(ipn))
 }
 
 // ── dispatchRefunded ──────────────────────────────────────────────────────────
@@ -102,7 +104,7 @@ export async function dispatchRefunded(ipn: NowPaymentsIpnPayload): Promise<void
 
   if (!invoiceId) {
     // No invoice_id on refund — fall through to subscription handler
-    await handleRefunded(ipn)
+    await throwOnError(handleRefunded(ipn))
     return
   }
 
@@ -111,15 +113,24 @@ export async function dispatchRefunded(ipn: NowPaymentsIpnPayload): Promise<void
   if (!lookup) {
     logger.warn('[IPNDispatch] refunded: unknown invoice_id', { invoiceId, paymentId: ipn.payment_id })
     // Still fall through — subscription handler is safe on unknown
-    await handleRefunded(ipn)
+    await throwOnError(handleRefunded(ipn))
     return
   }
 
   if (lookup.kind === 'one_time') {
     logger.info('[IPNDispatch] Routing refund to one-time handler', { invoiceId })
-    await handleOneTimeRefunded(ipn)
+    await throwOnError(handleOneTimeRefunded(ipn))
     return
   }
 
-  await handleRefunded(ipn)
+  await throwOnError(handleRefunded(ipn))
+}
+
+/**
+ * Unwrap a Result<void, E> promise or throw the error.
+ * Bridges the Result pattern to the legacy throw-based error flow in handlers.ts.
+ */
+async function throwOnError<E>(promise: Promise<Result<void, E>>): Promise<void> {
+  const result = await promise;
+  if (!result.ok) throw result.error;
 }

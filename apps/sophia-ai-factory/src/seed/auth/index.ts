@@ -12,7 +12,7 @@ export * from './account-lockout-hook';
 export * from './better-auth-client';
 export * from './better-auth-server';
 export * from './enforce-ai-command-quota';
-export * from './enforce-tier-quota';
+// enforce-tier-quota removed (was re-export from forest). Import from @/forest/auth/enforce-tier-quota directly.
 export * from './enriched-jwt-billing';
 export * from './enriched-jwt-entitlements';
 // enriched-jwt excluded from wildcard — re-exports EnrichedJwtClaims from enriched-jwt-types.

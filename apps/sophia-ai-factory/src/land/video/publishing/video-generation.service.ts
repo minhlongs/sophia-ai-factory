@@ -128,7 +128,9 @@ export async function generateVideo(
     }) as { error: { message: string } | null };
 
   if (insertError) {
-    await releaseVideoSlot(userId).catch(() => undefined);
+    await releaseVideoSlot(userId).catch((err) => {
+      logger.warn('Failed to release video slot on insert error', { error: String(err), context: 'generateVideo' });
+    });
     return {
       success: false,
       error: `Failed to create mission: ${insertError.message}`,

@@ -9,6 +9,8 @@
  * Docs: https://hunter.io/api-documentation/v2.
  */
 
+import { logger } from '@/seed/utils/logger-utility';
+
 const HUNTER_BASE = 'https://api.hunter.io/v2';
 
 export interface HunterEmailFinderRequest {
@@ -72,7 +74,10 @@ async function callHunter<T>(path: string, params: Record<string, string | undef
   });
 
   if (!res.ok) {
-    const text = await res.text().catch(() => '');
+    const text = await res.text().catch((err) => {
+      logger.warn('Failed to read Hunter response', { error: String(err), context: 'callHunter' });
+      return '';
+    });
     const err: HunterErrorResponse = Object.assign(new Error(`Hunter HTTP ${res.status}`), {
       code: `hunter_${res.status}`,
       status: res.status,

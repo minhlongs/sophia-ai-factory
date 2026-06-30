@@ -14,7 +14,7 @@
  * NOTE: Both functions are now async (Web Crypto API, edge-runtime safe).
  */
 
-import { signWebhook, verifyWebhook } from '@/land/webhooks/signature';
+import { signWebhook, verifyWebhook } from '@/seed/security/signature';
 import { logger } from '@/seed/utils/logger-utility';
 
 /**

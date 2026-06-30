@@ -32,6 +32,7 @@ import { getMemoryConsolidationService } from '@/forest/agent-chat/memory-consol
 import { ToolRegistry, SophiaToolExecutor, ToolUseLoop, MAX_TOOL_ROUNDS, type ParsedToolCall, hasToolUse } from '@/forest/agent-chat/tool-use-loop';
 import type { ChatMessage, ChatContext, SseEvent } from '@/forest/agent-chat/types';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
+import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
 
@@ -128,7 +129,10 @@ async function callLlmWithTools(options: LlmCallOptions): Promise<{
   });
 
   if (!response.ok || !response.body) {
-    const errText = await response.text().catch(() => 'upstream error');
+    const errText = await response.text().catch((err) => {
+      logger.warn('Failed to read response text', { error: String(err), context: 'callLlmWithTools' });
+      return 'upstream error';
+    });
     throw new Error(`LLM upstream error: ${errText}`);
   }
 
@@ -512,7 +516,10 @@ async function postHandler(request: NextRequest): Promise<Response> {
           });
 
           if (!response.ok || !response.body) {
-            const errText = await response.text().catch(() => 'upstream error');
+            const errText = await response.text().catch((err) => {
+              logger.warn('Failed to read response text', { error: String(err), context: 'agentChatStream' });
+              return 'upstream error';
+            });
             controller.enqueue(encoder.encode(emit({ type: 'error', message: errText })));
             controller.close();
             return;

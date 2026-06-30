@@ -84,8 +84,8 @@ vi.mock('../nowpayments-ipn-dispatch', () => ({
 }))
 
 vi.mock('../nowpayments-ipn-subscription', () => ({
-  handleFailed: vi.fn(async () => handleFailedSpy()),
-  handleRefunded: vi.fn().mockResolvedValue(undefined),
+  handleFailed: vi.fn(async () => { await handleFailedSpy(); return { ok: true, value: undefined } }),
+  handleRefunded: vi.fn().mockResolvedValue({ ok: true, value: undefined } as const),
 }))
 
 const baseIpn = {

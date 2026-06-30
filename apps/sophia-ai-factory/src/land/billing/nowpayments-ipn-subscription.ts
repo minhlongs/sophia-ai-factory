@@ -21,22 +21,29 @@ import { findReservedRedemption, finalizeRedemption, incrementUsedCount } from '
 import { sendReceiptEmail } from './email/receipt-email-sender'
 import { enqueueWelcomeEmail } from '@/tree/email/outbox'
 import { UNDERPAYMENT_THRESHOLD } from './nowpayments-ipn-underpaid'
+import { success, failure, type Result } from '@/seed/types/result'
+import { IPNError } from './nowpayments-ipn-errors'
 
 // Amount mismatch tolerance: 1% of expected price — prevents price-manipulation attacks
 const AMOUNT_MISMATCH_THRESHOLD = 0.01
 
-export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<void> {
-  const userId = await validateIpnAndGetUserId(ipn)
-  if (!userId) return
+export async function handleFinished(ipn: NowPaymentsIpnPayload): Promise<Result<void, IPNError>> {
+  try {
+    const userId = await validateIpnAndGetUserId(ipn)
+    if (!userId) return success(undefined)
 
-  const ctx = await setupDatabaseAndContext(ipn, userId)
-  if (!ctx) return
+    const ctx = await setupDatabaseAndContext(ipn, userId)
+    if (!ctx) return success(undefined)
 
-  const { d1, db, tier, billingPeriod, periodEnd, now, orgId } = ctx
-  await activateSubscriptionForOrg(orgId, userId, tier, billingPeriod, periodEnd, now, ipn, d1, db)
-  await runPostActivationWorkflow(userId, tier, billingPeriod, periodEnd, orgId, ipn, d1, db)
+    const { d1, db, tier, billingPeriod, periodEnd, now, orgId } = ctx
+    await activateSubscriptionForOrg(orgId, userId, tier, billingPeriod, periodEnd, now, ipn, d1, db)
+    await runPostActivationWorkflow(userId, tier, billingPeriod, periodEnd, orgId, ipn, d1, db)
 
-  logger.info('[NOWPayments] Payment finished — subscription activated', { userId, orgId, tier, isLifetime: billingPeriod === 'lifetime', periodEnd, paymentId: ipn.payment_id })
+    logger.info('[NOWPayments] Payment finished — subscription activated', { userId, orgId, tier, isLifetime: billingPeriod === 'lifetime', periodEnd, paymentId: ipn.payment_id })
+    return success(undefined)
+  } catch (err) {
+    return failure(new IPNError('HANDLE_FINISHED_FAILED', err))
+  }
 }
 
 async function validateIpnAndGetUserId(ipn: NowPaymentsIpnPayload): Promise<string | null> {
@@ -561,41 +568,46 @@ async function creditReferralRewardAtomically(
   logger.info('[NOWPayments] Referral reward credited (atomic)', { referrerId, referredUserId: userId, rewardCents })
 }
 
-export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<void> {
-  const userId = parseUserIdFromOrderId(ipn.order_id || '')
-  if (!userId) {
-    logger.warn('[NOWPayments] refunded: cannot parse userId', { orderId: ipn.order_id })
-    return
+export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<Result<void, IPNError>> {
+  try {
+    const userId = parseUserIdFromOrderId(ipn.order_id || '')
+    if (!userId) {
+      logger.warn('[NOWPayments] refunded: cannot parse userId', { orderId: ipn.order_id })
+      return success(undefined)
+    }
+
+    const db = getDb()
+    const _d1 = getD1()
+    if (!_d1) return failure(new IPNError('D1_BINDING_UNAVAILABLE'))
+    const d1 = _d1!
+
+    // ── Refund idempotency guard ──────────────────────────────────────────────
+    // Phase 3: check if this refund was already processed before mutating state.
+    // The IPN handler (Phase 2) provides event-level dedup, but if handleRefunded
+    // is ever called outside that path, this prevents double-refund.
+    const refundEventId = `nowpayments_${ipn.payment_id}_refunded`
+    const existing = await db
+      .prepare('SELECT processed FROM payment_events WHERE event_id = ?1')
+      .bind(refundEventId)
+      .first<{ processed: number }>()
+
+    if (existing && existing.processed === 1) {
+      logger.info('[NOWPayments] Refund already processed — skipping duplicate', { paymentId: ipn.payment_id })
+      return success(undefined)
+    }
+
+    const { data: membership } = await db.from('org_members').select('org_id').eq('user_id', userId).single()
+    if (membership?.org_id) {
+      await db.from('subscriptions').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('org_id', membership.org_id)
+    }
+
+    await invalidateLicenseCacheOnRefund(userId, d1)
+
+    logger.info('[NOWPayments] Payment refunded — subscription cancelled', { userId, paymentId: ipn.payment_id })
+    return success(undefined)
+  } catch (err) {
+    return failure(new IPNError('HANDLE_REFUNDED_FAILED', err))
   }
-
-  const db = getDb()
-  const _d1 = getD1()
-  if (!_d1) throw new Error('D1 database binding not available')
-  const d1 = _d1!
-
-  // ── Refund idempotency guard ──────────────────────────────────────────────
-  // Phase 3: check if this refund was already processed before mutating state.
-  // The IPN handler (Phase 2) provides event-level dedup, but if handleRefunded
-  // is ever called outside that path, this prevents double-refund.
-  const refundEventId = `nowpayments_${ipn.payment_id}_refunded`
-  const existing = await db
-    .prepare('SELECT processed FROM payment_events WHERE event_id = ?1')
-    .bind(refundEventId)
-    .first<{ processed: number }>()
-
-  if (existing && existing.processed === 1) {
-    logger.info('[NOWPayments] Refund already processed — skipping duplicate', { paymentId: ipn.payment_id })
-    return
-  }
-
-  const { data: membership } = await db.from('org_members').select('org_id').eq('user_id', userId).single()
-  if (membership?.org_id) {
-    await db.from('subscriptions').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('org_id', membership.org_id)
-  }
-
-  await invalidateLicenseCacheOnRefund(userId, d1)
-
-  logger.info('[NOWPayments] Payment refunded — subscription cancelled', { userId, paymentId: ipn.payment_id })
 }
 
 async function invalidateLicenseCacheOnRefund(userId: string, d1: D1Database): Promise<void> {
@@ -611,19 +623,24 @@ async function invalidateLicenseCacheOnRefund(userId: string, d1: D1Database): P
   } catch (e) { safeCatch('License cache invalidation')(e) }
 }
 
-export async function handleFailed(ipn: NowPaymentsIpnPayload): Promise<void> {
-  const userId = parseUserIdFromOrderId(ipn.order_id || '')
-  logger.info('[NOWPayments] Payment failed', { userId, paymentId: ipn.payment_id, amount: ipn.price_amount, currency: ipn.price_currency })
+export async function handleFailed(ipn: NowPaymentsIpnPayload): Promise<Result<void, IPNError>> {
+  try {
+    const userId = parseUserIdFromOrderId(ipn.order_id || '')
+    logger.info('[NOWPayments] Payment failed', { userId, paymentId: ipn.payment_id, amount: ipn.price_amount, currency: ipn.price_currency })
 
-  if (ipn.order_id) {
-    try {
-      await markOrderFailed(ipn.order_id, `payment_status=${ipn.payment_status}`)
-    } catch (err) {
-      logger.warn('[NOWPayments] markOrderFailed error (non-fatal)', { orderId: ipn.order_id, error: String(err) })
+    if (ipn.order_id) {
+      try {
+        await markOrderFailed(ipn.order_id, `payment_status=${ipn.payment_status}`)
+      } catch (err) {
+        logger.warn('[NOWPayments] markOrderFailed error (non-fatal)', { orderId: ipn.order_id, error: String(err) })
+      }
     }
-  }
 
-  await triggerDunningOnFailure(userId, ipn)
+    await triggerDunningOnFailure(userId, ipn)
+    return success(undefined)
+  } catch (err) {
+    return failure(new IPNError('HANDLE_FAILED_FAILED', err))
+  }
 }
 
 async function triggerDunningOnFailure(

@@ -166,7 +166,7 @@ describe('Tier transition matrix (16 cases)', () => {
           actually_paid: TIER_PRICES[toTier],
         }
         // Should not throw
-        await expect(handleFinished(ipn)).resolves.toBeUndefined()
+        await expect(handleFinished(ipn)).resolves.toHaveProperty('ok', true)
         // subscription was updated to target tier (via batch or fallback)
         expect(lastSubscriptionUpdate.plan ?? toTier.toLowerCase()).toBe(toTier.toLowerCase())
       })

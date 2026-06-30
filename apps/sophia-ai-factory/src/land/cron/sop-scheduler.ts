@@ -9,16 +9,21 @@
  */
 
 import { claimDueInstallations } from '@/tree/sop/sop-repo-installations';
-import { runSop } from '@/forest/missions/sop-runner';
 import { logger } from '@/seed/utils/logger-utility';
+import type { RunContext, RunResult } from '@/seed/sop/executor/types';
 
 const MAX_PER_TICK = 20;
 
 /**
  * Handle a single SOP scheduler cron tick.
  * Returns count of installations processed.
+ *
+ * @param runSopFn - Injected runSop callback (to avoid land→forest import violation)
  */
-export async function handleSopSchedulerTick(db: D1Database): Promise<{ processed: number }> {
+export async function handleSopSchedulerTick(
+  db: D1Database,
+  runSopFn?: (db: D1Database, ctx: RunContext) => Promise<RunResult>,
+): Promise<{ processed: number }> {
   const now = Math.floor(Date.now() / 1000);
 
   let due;
@@ -34,11 +39,16 @@ export async function handleSopSchedulerTick(db: D1Database): Promise<{ processe
     return { processed: 0 };
   }
 
+  if (!runSopFn) {
+    logger.error('[sop-scheduler] runSopFn callback required but not provided');
+    return { processed: 0 };
+  }
+
   logger.info('[sop-scheduler] Claimed installations', { count: due.length });
 
   const results = await Promise.allSettled(
     due.map(inst =>
-      runSop(db, {
+      runSopFn(db, {
         installationId: inst.id,
         runId: '',           // created inside runSop
         userId: inst.user_id,

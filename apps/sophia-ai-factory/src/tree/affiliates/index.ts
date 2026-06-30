@@ -3,5 +3,6 @@
  */
 export * from './credentials';
 export * from './shortcode';
-// Temporary re-exports from land until affiliate logic moves to tree
-export { getTopPrograms, getProgramById, getCategories, getTags, getAllPrograms, getProgramsByTier, getProgramsByCategory, getProgramsByTag, searchPrograms, sortProgramsByEPC } from '@/land/affiliates';
+// NOTE: getTopPrograms, getProgramById and other affiliate program functions
+// that were previously re-exported from @/land/affiliates have been removed.
+// Import them directly from @/land/affiliates

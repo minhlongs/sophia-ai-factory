@@ -102,6 +102,9 @@ export function buildD1Mock(config: D1MockConfig = {}) {
       // If called with count options, return count-style result
       if (args.length > 1 && typeof args[1] === 'object' && (args[1] as Record<string, unknown>)?.count) {
         resolveValue = config.selectCountResult ?? { count: 0, error: null }
+      } else if (config.selectListResult) {
+        // For list queries: select('*') then chain .eq().lt().order()
+        resolveValue = config.selectListResult as unknown as Record<string, unknown>
       }
       return eqChain
     },
@@ -118,13 +121,11 @@ export function buildD1Mock(config: D1MockConfig = {}) {
       },
       update: (obj: Record<string, unknown>) => {
         insertLog.push(obj)
+        const updateResult = config.updateResult ?? { count: 1, error: null }
         return {
           eq: (_col: string, _val: unknown) => ({
-            eq: (_c2: string, _v2: unknown) => ({
-              eq: () => makeThenable(config.updateResult ?? { count: 1, error: null }),
-              select: () => eqChain,
-            }),
-            neq: () => makeThenable(config.updateResult ?? { count: 1, error: null }),
+            eq: (_c2: string, _v2: unknown) => makeThenable(updateResult),
+            neq: () => makeThenable(updateResult),
             select: () => eqChain,
             limit: () => eqChain,
             order: () => makeThenable({ data: config.selectListResult?.data ?? [], error: null }),

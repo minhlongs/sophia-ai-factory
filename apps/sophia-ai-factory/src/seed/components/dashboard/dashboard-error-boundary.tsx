@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation';
 import { AlertTriangle, RefreshCw, LogIn, Wifi, Server, Home } from 'lucide-react';
-import { localizedHref } from '@/land/i18n/localized-href';
+import { localizedHref } from '@/seed/utils/localized-href';
 
 type ErrorKind = 'auth' | 'network' | 'db' | 'unknown';
 

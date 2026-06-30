@@ -14,6 +14,8 @@
  */
 
 import { safeCatch } from '@/seed/utils/safe-catch'
+import { success, failure, type Result } from '@/seed/types/result'
+import { DLQError } from './nowpayments-ipn-errors'
 
 /**
  * DLQ entry — mirrors the subset of ipn_dead_letter_queue we need for recovery.
@@ -59,46 +61,52 @@ const DLQ_TABLE = 'ipn_dead_letter_queue';
 export async function enqueueDlqEntry(
   db: D1LikeClient,
   opts: EnqueueDlqOptions,
-): Promise<void> {
-  const now = new Date().toISOString();
-  const payloadJson = JSON.stringify(opts.payload);
+): Promise<Result<void, DLQError>> {
+  try {
+    const now = new Date().toISOString();
+    const payloadJson = JSON.stringify(opts.payload);
 
-  // Try INSERT first (idempotent — UNIQUE constraint handles replays)
-  const { error: insertError } = await db
-    .from(DLQ_TABLE)
-    .insert({
-      event_id: opts.eventId,
-      payment_id: opts.paymentId,
-      payment_status: opts.paymentStatus,
-      order_id: opts.orderId,
-      payload: payloadJson,
-      failure_reason: opts.failureReason,
-      retry_count: opts.retryCount,
-      first_failed_at: now,
-      last_attempted_at: now,
-      resolved: 0,
-    });
-
-  if (insertError) {
-    // UNIQUE violation on event_id — update existing row
-    const isUniqueViolation =
-      typeof insertError === 'object' &&
-      insertError !== null &&
-      'code' in insertError &&
-      (insertError as { code?: string }).code === '23505';
-
-    if (isUniqueViolation || typeof insertError === 'string') {
-      await db
-        .from(DLQ_TABLE)
-        .update({
-          retry_count: opts.retryCount + 1,
-          failure_reason: opts.failureReason,
-          last_attempted_at: now,
+    // Try INSERT first (idempotent — UNIQUE constraint handles replays)
+    const { error: insertError } = await db
+      .from(DLQ_TABLE)
+      .insert({
+        event_id: opts.eventId,
+        payment_id: opts.paymentId,
+        payment_status: opts.paymentStatus,
+        order_id: opts.orderId,
+        payload: payloadJson,
+        failure_reason: opts.failureReason,
+        retry_count: opts.retryCount,
         first_failed_at: now,
-        })
-        .eq('event_id', opts.eventId)
-        .eq('resolved', 0);
+        last_attempted_at: now,
+        resolved: 0,
+      });
+
+    if (insertError) {
+      // UNIQUE violation on event_id — update existing row
+      const isUniqueViolation =
+        typeof insertError === 'object' &&
+        insertError !== null &&
+        'code' in insertError &&
+        (insertError as { code?: string }).code === '23505';
+
+      if (isUniqueViolation || typeof insertError === 'string') {
+        await db
+          .from(DLQ_TABLE)
+          .update({
+            retry_count: opts.retryCount + 1,
+            failure_reason: opts.failureReason,
+            last_attempted_at: now,
+          first_failed_at: now,
+          })
+          .eq('event_id', opts.eventId)
+          .eq('resolved', 0);
+      }
     }
+
+    return success(undefined);
+  } catch (err) {
+    return failure(new DLQError('ENQUEUE_DLQ_FAILED', err));
   }
 }
 

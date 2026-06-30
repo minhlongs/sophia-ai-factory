@@ -2,11 +2,6 @@
  * OpenClaw Orchestrator — Public API barrel
  * Phase 12: 10 primitives for the Sophia AI Factory agent substrate
  *
- * Usage:
- *   import { openclaw } from '@/land/openclaw'
- *   await openclaw.spawnAgentFleet([...], { tenantId })
- *   await openclaw.audit({ tenantId, action: 'video.gen.started' })
- *
  * Naming: "OpenClaw" here is an internal Sophia codename for the Phase 12
  * agent fleet orchestrator. Not affiliated with the public project at
  * github.com/openclaw/openclaw (a personal AI assistant gateway).

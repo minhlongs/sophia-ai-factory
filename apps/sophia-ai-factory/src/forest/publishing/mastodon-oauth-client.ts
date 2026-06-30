@@ -45,7 +45,10 @@ export async function registerMastodonApp(instanceUrl: string): Promise<Mastodon
     }),
   });
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read Mastodon app registration response', { error: String(err), context: 'registerApp' });
+      return '';
+    });
     throw new Error(`Mastodon app registration failed on ${normalizedInstance}: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
   const data = (await res.json()) as { client_id?: string; client_secret?: string; redirect_uri?: string };
@@ -98,7 +101,10 @@ export async function exchangeCodeForTokens(
     }),
   });
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read Mastodon token exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
+      return '';
+    });
     throw new Error(`Mastodon token exchange failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
   return res.json() as Promise<MastodonTokenResponse>;

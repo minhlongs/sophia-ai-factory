@@ -13,7 +13,7 @@
  * from lib/webhooks/signature. acceptLegacy=true for 1 release cycle (~14 days).
  */
 
-import { signWebhook, verifyWebhook } from '@/land/webhooks/signature';
+import { signWebhook, verifyWebhook } from '@/seed/security/signature';
 import { logger } from '@/seed/utils/logger-utility';
 
 /** Generate a random 32-byte webhook secret (hex-encoded) */

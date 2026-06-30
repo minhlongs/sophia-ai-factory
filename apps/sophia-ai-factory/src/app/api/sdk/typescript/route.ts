@@ -33,7 +33,7 @@ const DEFAULT_BASE = "https://sophia.agencyos.network";
 async function call<T>(base: string, path: string, init: RequestInit, opts: RequestOptions): Promise<T> {
   const res = await fetch(base + path, { ...init, signal: opts.signal });
   if (!res.ok) {
-    const body = await res.text().catch(() => "");
+    const body = await res.text().catch(() => "<failed to read response body>");
     throw new Error(\`sophia[\${res.status}] \${path}: \${body.slice(0, 200)}\`);
   }
   return (await res.json()) as T;

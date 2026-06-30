@@ -89,7 +89,10 @@ export async function submitMediaJob(
     })
 
     if (!res.ok) {
-      const errBody = await res.text().catch(() => '')
+      const errBody = await res.text().catch((err) => {
+        logger.warn('Failed to read MuAPI error response', { error: String(err), context: 'submitMediaJob' });
+        return '';
+      })
       logger.error(`[MuAPI] ${res.status} error body: ${errBody}`)
       const snippet = errBody.length > 200 ? `${errBody.slice(0, 200)}…` : errBody
    return { success: false, error: `MuAPI ${res.status}${snippet ? ` ${snippet}` : ''}` }

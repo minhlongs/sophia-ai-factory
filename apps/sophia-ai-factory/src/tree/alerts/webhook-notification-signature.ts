@@ -8,7 +8,7 @@
  * Outbound generate uses signWebhook and returns the `t=<ts>,v1=<hex>` header.
  */
 
-import { signWebhook, verifyWebhook } from '@/land/webhooks/signature'
+import { signWebhook, verifyWebhook } from '@/seed/security/signature'
 import { logger } from '@/seed/utils/logger-utility'
 import type { WebhookPayload } from './webhook-notification-types'
 

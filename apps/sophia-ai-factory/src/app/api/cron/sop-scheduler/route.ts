@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { handleSopSchedulerTick } from '@/land/cron/sop-scheduler';
+import { runSop } from '@/forest/missions/sop-runner';
 import { logger } from '@/seed/utils/logger-utility';
 import {
   startCronCheckIn,
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const { processed } = await handleSopSchedulerTick(db);
+    const { processed } = await handleSopSchedulerTick(db, runSop);
     logger.info('[cron/sop-scheduler] Complete', { processed });
     finishCronCheckIn(cronCtx, CRON_NAME);
     return NextResponse.json({ ok: true, processed });

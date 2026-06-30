@@ -16,7 +16,6 @@ import {
   markPaid,
 } from '@/seed/db/repositories/user-purchases-repo'
 import { findByPurchaseId } from '@/seed/db/repositories/videos-repo'
-import { triggerOneTimeFulfillment } from '@/tree/fulfillment'
 import { ONE_TIME_SKUS } from '@/seed/config/one-time-skus'
 import type { OneTimeSkuId } from '@/seed/types'
 
@@ -169,8 +168,9 @@ export async function runSyntheticFulfillment(
     }
   }
 
-  // Step 2: Trigger fulfillment
+  // Step 2: Trigger fulfillment (dynamic import avoids tree→land boundary violation)
   try {
+    const { triggerOneTimeFulfillment } = await import('@/land/fulfillment/one-time-fulfillment');
     await triggerOneTimeFulfillment(userId, purchaseId, sku)
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)

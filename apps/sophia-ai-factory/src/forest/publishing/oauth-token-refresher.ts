@@ -40,7 +40,10 @@ async function refreshInstagramLongLivedToken(
     `https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${currentToken}`,
   );
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
+      return '';
+    });
     throw new Error(`Instagram token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
   return res.json() as Promise<{ access_token: string; expires_in: number }>;
@@ -65,7 +68,10 @@ async function refreshPinterestToken(
     body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken }),
   });
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
+      return '';
+    });
     throw new Error(`Pinterest token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
   return res.json() as Promise<{ access_token: string; expires_in: number }>;
@@ -91,7 +97,10 @@ async function refreshLinkedInToken(
     }),
   });
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
+      return '';
+    });
     throw new Error(`LinkedIn token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
   return res.json() as Promise<{ access_token: string; expires_in: number }>;
@@ -119,7 +128,10 @@ async function refreshZaloToken(
     }),
   });
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
+      return '';
+    });
     throw new Error(`Zalo token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
   const data = (await res.json()) as { access_token?: string; expires_in?: number; error?: number; message?: string };
@@ -218,7 +230,10 @@ async function refreshMastodonToken(
   });
 
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
+      return '';
+    });
     throw new Error(`Mastodon token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
 

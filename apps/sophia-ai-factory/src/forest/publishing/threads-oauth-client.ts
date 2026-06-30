@@ -61,7 +61,10 @@ export async function exchangeCodeForTokens(code: string): Promise<ThreadsTokenR
     }),
   });
   if (!shortRes.ok) {
-    const body = await shortRes.text().catch(() => '');
+    const body = await shortRes.text().catch((err) => {
+      logger.warn('Failed to read Threads short-lived exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
+      return '';
+    });
     throw new Error(`Threads short-lived exchange failed: HTTP ${shortRes.status} — ${body.slice(0, 200)}`);
   }
   const short = (await shortRes.json()) as ThreadsTokenResponse;
@@ -78,7 +81,10 @@ export async function exchangeCodeForTokens(code: string): Promise<ThreadsTokenR
     }),
   });
   if (!longRes.ok) {
-    const body = await longRes.text().catch(() => '');
+    const body = await longRes.text().catch((err) => {
+      logger.warn('Failed to read Threads long-lived exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
+      return '';
+    });
     throw new Error(`Threads long-lived exchange failed: HTTP ${longRes.status} — ${body.slice(0, 200)}`);
   }
   return longRes.json() as Promise<ThreadsTokenResponse>;
@@ -98,7 +104,10 @@ export async function refreshLongLivedToken(currentToken: string): Promise<Threa
     }),
   });
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read Threads token refresh response', { error: String(err), context: 'refreshLongLivedToken' });
+      return '';
+    });
     throw new Error(`Threads token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
   return res.json() as Promise<ThreadsTokenResponse>;

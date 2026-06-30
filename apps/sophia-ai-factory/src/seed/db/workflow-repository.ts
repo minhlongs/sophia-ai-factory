@@ -5,7 +5,7 @@
  * All queries are org_id-scoped to prevent cross-tenant leakage.
  */
 
-import { SUPERVISOR_STEPS, type WorkflowStep, WORKFLOW_PRESETS } from '@/land/workflows/supervisor-steps'
+import { SUPERVISOR_STEPS, WORKFLOW_PRESETS, type WorkflowStep } from '@/seed/config/workflow-presets'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -71,13 +71,15 @@ export async function createWorkflow(
   orgId: string,
   prompt: string,
   presetName?: string,
+  workflowPresets?: Record<string, { id: string; name: string; description: string; mode: string; steps: WorkflowStep[] }>,
 ): Promise<WorkflowWithSteps> {
   const db = getD1()
   const workflowId = newId()
   const now = new Date().toISOString()
 
   // Resolve steps from preset or fall back to default
-  const preset = presetName ? WORKFLOW_PRESETS[presetName] : undefined
+  const resolvedPresets = workflowPresets ?? WORKFLOW_PRESETS
+  const preset = presetName ? resolvedPresets[presetName] : undefined
   const effectivePresetName = preset?.id ?? 'default'
   const steps: WorkflowStep[] = preset?.steps ?? (SUPERVISOR_STEPS as unknown as WorkflowStep[])
   const stepIds = steps.map(() => newId())

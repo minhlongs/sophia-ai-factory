@@ -100,7 +100,10 @@ async function callOpenRouter(
         return content
       }
 
-      const errorBody = await res.text().catch(() => '')
+      const errorBody = await res.text().catch((err) => {
+        logger.warn('Failed to read OpenRouter error response', { error: String(err), context: 'callOpenRouter' });
+        return '';
+      })
       const retryAfter = res.headers.get('Retry-After')
         ? parseInt(res.headers.get('Retry-After')!, 10)
         : undefined
@@ -168,7 +171,10 @@ async function callAnthropicFallback(
   })
 
   if (!res.ok) {
-    const errorBody = await res.text().catch(() => '')
+    const errorBody = await res.text().catch((err) => {
+      logger.warn('Failed to read Anthropic error response', { error: String(err), context: 'callAnthropicFallback' });
+      return '';
+    })
     throw new Error(`Anthropic HTTP ${res.status}: ${errorBody.slice(0, 200)}`)
   }
 

@@ -108,10 +108,10 @@ vi.mock('@/tree/handover/auto-handover', () => ({
 // Mock the subscription sub-router so handleFailed/handleExpired are no-ops
 // (avoids touching D1 via getDb().from(...) in tests that only exercise the one-time path).
 vi.mock('@/land/billing/nowpayments-ipn-subscription', () => ({
-  handleFailed: vi.fn(async () => {}),
-  handleExpired: vi.fn(async () => {}),
-  handlePartiallyPaid: vi.fn(async () => {}),
-  handleFinished: vi.fn(async () => {}),
+  handleFailed: vi.fn(async () => ({ ok: true, value: undefined })),
+  handleExpired: vi.fn(async () => ({ ok: true, value: undefined })),
+  handlePartiallyPaid: vi.fn(async () => ({ ok: true, value: undefined })),
+  handleFinished: vi.fn(async () => ({ ok: true, value: undefined })),
 }))
 
 // ── Shared constants ──────────────────────────────────────────────────────────
@@ -257,9 +257,9 @@ describe("Section 2 — Idempotency", () => {
       handleOneTimeFinished(payload, STARTER_SKU),
     ])
 
-    // Exactly one call succeeded; one rejected with constraint error
-    const succeeded = results.filter((r) => r.status === "fulfilled").length
-    expect(succeeded).toBe(1)
+    // Exactly one call returned ok; one returned failure with constraint error
+    const okCount = results.filter((r) => r.status === "fulfilled").filter((r) => { const v = (r as PromiseFulfilledResult<{ ok: boolean }>).value; return v && typeof v === 'object' && v.ok === true }).length
+    expect(okCount).toBe(1)
     expect(userPurchasesRepo.insertPurchase).toHaveBeenCalledTimes(2)
   }, 10_000)
 })
@@ -377,10 +377,10 @@ describe("Section 6 — DLQ error classification", () => {
     vi.mocked(userPurchasesRepo.markPaid).mockResolvedValue(undefined)
     vi.mocked(fulfillment.triggerOneTimeFulfillment).mockResolvedValue(undefined)
 
-    // Handler lets error bubble up (outer layer catches and logs)
+    // Handler returns failure Result with error info
     await expect(
       handleOneTimeFinished(payload, STARTER_SKU),
-    ).rejects.toThrow()
+    ).resolves.toHaveProperty('ok', false)
 
     // No side-effects after insert throws: no markPaid, no fulfillment
     expect(userPurchasesRepo.markPaid).not.toHaveBeenCalled()

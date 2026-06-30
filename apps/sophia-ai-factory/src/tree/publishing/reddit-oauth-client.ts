@@ -62,7 +62,10 @@ export async function exchangeCodeForTokens(code: string): Promise<RedditTokenRe
     }),
   });
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read Reddit token exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
+      return '';
+    });
     throw new Error(`Reddit token exchange failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
   return res.json() as Promise<RedditTokenResponse>;
@@ -82,7 +85,10 @@ export async function refreshAccessToken(refreshToken: string): Promise<RedditTo
     }),
   });
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read Reddit token refresh response', { error: String(err), context: 'refreshAccessToken' });
+      return '';
+    });
     throw new Error(`Reddit token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
   return res.json() as Promise<RedditTokenResponse>;

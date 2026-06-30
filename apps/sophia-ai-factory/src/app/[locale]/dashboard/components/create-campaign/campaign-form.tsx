@@ -1,6 +1,6 @@
 import { Button } from "@/seed/components/ui/button";
 import { Loader2, Sparkles } from "lucide-react";
-import { CampaignTemplate } from "@/seed/templates/campaign-templates";
+import { CampaignTemplate } from "@/land/templates/campaign-templates";
 import { UpgradeBanner } from "@/forest/components/UpgradeBanner";
 import { AffiliateProgram, Tier } from "@/seed/types";
 import { FormEvent } from "react";

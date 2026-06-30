@@ -4,7 +4,6 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import { refreshChannelToken } from '@/forest/publishing/oauth-token-refresher';
 import { decryptToken } from '@/tree/crypto/token-crypto';
 import { TikTokPublisher } from '@/land/video/publishing/providers/tiktok-publisher';
 import { YouTubePublisher } from '@/land/video/publishing/providers/youtube-publisher';
@@ -40,6 +39,7 @@ export interface ExecutePublishWorkflowArgs {
   eventId?: string;
   step: Step;
   scheduleRetry: (jobId: string, tenantId: string, userId: string, attempt: number) => Promise<void>;
+  refreshToken?: (channel: PublishingChannel) => Promise<number>;
 }
 
 const MAX_RETRIES = 3;
@@ -246,9 +246,17 @@ async function fetchChannelForJob(db: ReturnType<typeof createServerClient>, job
   return channel;
 }
 
-async function ensureFreshToken(db: ReturnType<typeof createServerClient>, channel: PublishingChannel, now: number): Promise<string> {
+async function ensureFreshToken(
+  db: ReturnType<typeof createServerClient>,
+  channel: PublishingChannel,
+  now: number,
+  refreshToken?: (channel: PublishingChannel) => Promise<number>,
+): Promise<string> {
   if (channel.expires_at && channel.expires_at < now + 3600) {
-    await refreshChannelToken(channel);
+    if (!refreshToken) {
+      throw new Error('[publishExecute] refreshToken callback required but not provided');
+    }
+    await refreshToken(channel);
     const { data: refreshed } = await db
       .from('publishing_channels')
       .select('access_token')
@@ -484,11 +492,12 @@ async function processStandardProvider(args: {
   step: Step;
   now: number;
   scheduleRetry: (jobId: string, tenantId: string, userId: string, attempt: number) => Promise<void>;
+  refreshToken?: (channel: PublishingChannel) => Promise<number>;
 }): Promise<ClaimResult> {
-  const { db, jobId, job, tenantId, userId, step, now, scheduleRetry } = args;
+  const { db, jobId, job, tenantId, userId, step, now, scheduleRetry, refreshToken } = args;
 
   const channel = await fetchChannelForJob(db, job, tenantId);
-  const accessToken = await ensureFreshToken(db, channel, now);
+  const accessToken = await ensureFreshToken(db, channel, now, refreshToken);
 
   let videoUrl: string;
   try {
@@ -531,7 +540,7 @@ async function processStandardProvider(args: {
 }
 
 export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): Promise<ClaimResult> {
-  const { jobId, tenantId, userId, step, scheduleRetry } = args;
+  const { jobId, tenantId, userId, step, scheduleRetry, refreshToken } = args;
   const db = createServerClient();
   const now = Math.floor(Date.now() / 1000);
 
@@ -558,6 +567,6 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
   }
 
   return await processStandardProvider({
-    db, jobId, job, tenantId, userId, step, now, scheduleRetry,
+    db, jobId, job, tenantId, userId, step, now, scheduleRetry, refreshToken,
   });
 }

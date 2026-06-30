@@ -1,7 +1,10 @@
-const DEFAULT_LOCALE = "en";
+/**
+ * Locale-aware href utility.
+ *
+ * Canonical implementation moved to @/seed/utils/localized-href.
+ * This file re-exports for backward compatibility.
+ *
+ * @deprecated Import from @/seed/utils/localized-href
+ */
 
-export function localizedHref(locale: string | undefined, path: string): string {
-  if (!locale || locale === DEFAULT_LOCALE) return path;
-  if (path.startsWith("/")) return `/${locale}${path}`;
-  return `/${locale}/${path}`;
-}
+export { localizedHref } from '@/seed/utils/localized-href';

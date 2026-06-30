@@ -66,7 +66,10 @@ export async function refreshAccessToken(refreshToken: string): Promise<RedditTo
     }),
   });
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read Reddit token refresh response', { error: String(err), context: 'refreshAccessToken' });
+      return '';
+    });
     throw new Error(`Reddit token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
   return res.json() as Promise<RedditTokenResponse>;
@@ -112,7 +115,10 @@ export class RedditPublisher implements Publisher {
     });
 
     if (!res.ok) {
-      const text = await res.text().catch(() => '');
+      const text = await res.text().catch((err) => {
+        logger.warn('Failed to read Reddit submit response', { error: String(err), context: 'RedditPublisher.upload' });
+        return '';
+      });
       throw new Error(`Reddit /api/submit failed (${res.status}): ${text.slice(0, 300)}`);
     }
 

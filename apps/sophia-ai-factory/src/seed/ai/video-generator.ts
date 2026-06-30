@@ -1,7 +1,5 @@
 import { Tier } from "@/seed/types";
 import type { ScriptOutput } from "./script-prompt-builders";
-import { ServiceFactory } from "@/land/services/factory";
-import { VideoStatus } from "@/land/services/types";
 
 interface GenerateVideoInput {
   script: ScriptOutput;
@@ -14,20 +12,33 @@ interface VideoOutput {
   thumbnail_url: string;
 }
 
+interface VideoService {
+  createVideo(params: { avatarId: string; voiceId: string; script: string; title: string }): Promise<string>;
+  getVideoStatus(jobId: string): Promise<{ status: string; video_url?: string; thumbnail_url?: string; error?: string }>;
+}
+
 /**
  * Starts a video generation job.
  * Returns a job ID (for HeyGen) or a mock ID.
+ *
+ * @param getVideoService - Factory for creating VideoService instances (injected to avoid layer violation)
  */
-export async function startVideoGeneration(input: GenerateVideoInput): Promise<string> {
+export async function startVideoGeneration(
+  input: GenerateVideoInput,
+  getVideoService?: (userId?: string) => Promise<VideoService>,
+): Promise<string> {
   const { script, userId } = input;
-  const videoService = await ServiceFactory.getVideoService(userId);
 
-  // Extract narration from script
+  if (!getVideoService) {
+    throw new Error('Video generation requires a getVideoService factory — import from @/land/services/factory');
+  }
+
+  const videoService = await getVideoService(userId);
+
   const fullNarration = script.scenes.map(s => s.narration).join(' ');
 
-  const avatarId = 'default_avatar_001'; // Replace with a valid default ID
-  const voiceId = 'en-US-1'; // Replace with a valid default Voice ID
-
+  const avatarId = 'default_avatar_001';
+  const voiceId = 'en-US-1';
 
   return await videoService.createVideo({
     avatarId,
@@ -40,12 +51,20 @@ export async function startVideoGeneration(input: GenerateVideoInput): Promise<s
 /**
  * Checks the status of a video generation job.
  */
- 
-export async function checkVideoGenerationStatus(jobId: string, _tier: Tier, userId?: string): Promise<{ status: 'processing' | 'completed' | 'failed'; output?: VideoOutput; error?: string }> {
-  const videoService = await ServiceFactory.getVideoService(userId);
+export async function checkVideoGenerationStatus(
+  jobId: string,
+  _tier: Tier,
+  userId?: string,
+  getVideoService?: (userId?: string) => Promise<VideoService>,
+): Promise<{ status: 'processing' | 'completed' | 'failed'; output?: VideoOutput; error?: string }> {
+  if (!getVideoService) {
+    return { status: 'failed', error: 'Video service not available — import from @/land/services/factory' };
+  }
+
+  const videoService = await getVideoService(userId);
 
   try {
-    const status: VideoStatus = await videoService.getVideoStatus(jobId);
+    const status = await videoService.getVideoStatus(jobId);
 
     if (status.status === 'completed') {
       if (!status.video_url) return { status: 'failed', error: 'Completed but no URL' };
@@ -64,23 +83,23 @@ export async function checkVideoGenerationStatus(jobId: string, _tier: Tier, use
 
     return { status: 'processing' };
   } catch {
-    // Return processing on transient errors so we retry
     return { status: 'processing' };
   }
 }
 
 /**
- * Legacy wrapper for backward compatibility if needed,
- * but Inngest function should use start/check pattern.
+ * Legacy wrapper for backward compatibility if needed.
  */
-export async function generateVideo(input: GenerateVideoInput): Promise<VideoOutput> {
-  const jobId = await startVideoGeneration(input);
+export async function generateVideo(
+  input: GenerateVideoInput,
+  getVideoService?: (userId?: string) => Promise<VideoService>,
+): Promise<VideoOutput> {
+  const jobId = await startVideoGeneration(input, getVideoService);
 
-  // Poll until done
   const maxAttempts = 60;
   for (let i = 0; i < maxAttempts; i++) {
     await new Promise(resolve => setTimeout(resolve, 5000));
-    const result = await checkVideoGenerationStatus(jobId, input.tier);
+    const result = await checkVideoGenerationStatus(jobId, input.tier, input.userId, getVideoService);
 
     if (result.status === 'completed' && result.output) {
       return result.output;
@@ -93,5 +112,3 @@ export async function generateVideo(input: GenerateVideoInput): Promise<VideoOut
 
   throw new Error('Video generation timed out');
 }
-
-

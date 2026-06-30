@@ -3,16 +3,19 @@
  * @module auth/enriched-jwt-entitlements
  */
 
-import { getAccessibleFeatures } from '@/land/features'
+import type { Tier, FeatureFlag } from '@/seed/types'
 import type { FeatureLimit } from '@/seed/auth/enriched-jwt-types'
 
-export function getDefaultEntitlements(tier: string): string[] {
+export function getDefaultEntitlements(
+  tier: string,
+  getAccessibleFeaturesFn?: (tier: Tier) => FeatureFlag[],
+): string[] {
   const tierMap: Record<string, 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER'> = {
     'free': 'BASIC', 'basic': 'BASIC', 'pro': 'PREMIUM',
     'premium': 'PREMIUM', 'enterprise': 'ENTERPRISE', 'master': 'MASTER',
   }
   const mappedTier = tierMap[tier.toLowerCase()] || 'BASIC'
-  const features = getAccessibleFeatures(mappedTier)
+  const features = getAccessibleFeaturesFn?.(mappedTier) ?? []
   const featureKeys: string[] = [
     'heygen.createVideo', 'heygen.getVideoStatus',
     'elevenlabs.synthesize', 'elevenlabs.getAudioStatus',

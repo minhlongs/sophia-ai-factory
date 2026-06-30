@@ -10,6 +10,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { logger } from '@/seed/utils/logger-utility';
 
 const FAST_INTERVAL_MS = 4_000;
 const SLOW_INTERVAL_MS = 10_000;
@@ -59,7 +60,14 @@ export function useDistributeJobsPolling(videoId: string): UseDistributeJobsPoll
         cache: 'no-store',
       });
       if (!res.ok) {
-        const body = await res.text().catch(() => '');
+        const body = await res.text().catch((err) => {
+          logger.warn('Failed to read distribute job status error body', {
+            error: String(err),
+            context: 'fetchJobs',
+            videoId,
+          });
+          return '';
+        });
         setLastError(`HTTP ${res.status}: ${body.slice(0, 100)}`);
         return null;
       }

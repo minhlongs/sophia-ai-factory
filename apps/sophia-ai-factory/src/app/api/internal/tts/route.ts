@@ -152,7 +152,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     if (!coquiResp.ok) {
-      const errText = await coquiResp.text().catch(() => 'unknown');
+      const errText = await coquiResp.text().catch((err) => {
+        logger.warn('Failed to read response text', { error: String(err), context: 'ttsInternal' });
+        return 'unknown';
+      });
       logger.warn('[TTS] Coqui error', { status: coquiResp.status, errText, jobId });
       return NextResponse.json(
         { error: `Coqui TTS failed: ${coquiResp.status}` },
