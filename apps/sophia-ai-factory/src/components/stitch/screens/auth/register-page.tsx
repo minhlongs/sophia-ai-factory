@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { useTranslations } from 'next-intl';
 import { Mail, Lock, User, CheckCircle } from 'lucide-react';
 import { Button, Input, Card, CardContent, CardHeader } from '@/components/stitch';
+import { authClient } from '@/seed/auth/better-auth-client';
 
 export default function RegisterPage() {
   const t = useTranslations('stitch.auth.register');
@@ -16,13 +17,47 @@ export default function RegisterPage() {
   const [companyName, setCompanyName] = useState('');
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    if (password !== confirmPassword) {
+      setError(t('errorPasswordMismatch') || 'Passwords do not match');
+      return;
+    }
+
+    if (password.length < 8) {
+      setError(t('errorPasswordTooShort') || 'Password must be at least 8 characters');
+      return;
+    }
+
     setLoading(true);
-    // Simulate registration
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setStep('success');
+    try {
+      const result = await authClient.signUp.email({
+        name: companyName,
+        email,
+        password,
+        callbackURL: '/dashboard/onboarding',
+      });
+
+      if (result.error) {
+        const msg = result.error.message?.toLowerCase() ?? '';
+        if (msg.includes('already') || msg.includes('exist') || msg.includes('duplicate')) {
+          setError(t('errorEmailExists') || 'An account with this email already exists');
+        } else {
+          setError(result.error.message ?? (t('errorGeneric') || 'Registration failed. Please try again.'));
+        }
+        return;
+      }
+
+      setStep('success');
+    } catch {
+      setError(t('errorGeneric') || 'Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (step === 'success') {
@@ -82,6 +117,13 @@ export default function RegisterPage() {
         </CardHeader>
 
         <form className="space-y-lg" onSubmit={handleSubmit}>
+          {/* Error banner */}
+          {error && (
+            <div role="alert" className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+              {error}
+            </div>
+          )}
+
           {/* Company Name */}
           <div className="space-y-sm">
             <label htmlFor="company" className="font-label-md text-label-md text-on-surface">

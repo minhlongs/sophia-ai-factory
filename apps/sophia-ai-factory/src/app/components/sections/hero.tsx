@@ -55,7 +55,7 @@ export function Hero() {
   const t = useTranslations("landing.hero");
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background pt-16">
+    <section className="hero relative min-h-screen flex items-center justify-center overflow-hidden bg-background pt-16" data-testid="hero">
       {/* Gradient orbs — 2 orbs for ambient lighting */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         <div className="absolute top-1/4 left-1/5 w-[500px] h-[500px] rounded-full blur-[120px] animate-float bg-accent/[0.07]" />
@@ -102,10 +102,15 @@ export function Hero() {
             className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up"
             style={{ animationDelay: "0.4s" }}
           >
-            <Link href="/dashboard">
+            <Link href="/signup">
               <Button variant="glow" size="lg" className="glow-primary rounded-full px-8 text-base w-full sm:w-auto shadow-lg shadow-accent/20">
                 {t("cta_start")}
                 <span className="ml-2 hidden sm:inline text-xs opacity-70 font-normal">→</span>
+              </Button>
+            </Link>
+            <Link href="/pricing">
+              <Button variant="outline" size="lg" className="rounded-full px-8 text-base w-full sm:w-auto">
+                {t("cta_pricing")}
               </Button>
             </Link>
             <Link href="/redeem">

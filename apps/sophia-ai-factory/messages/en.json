@@ -167,7 +167,7 @@
       "brand": "Sophia AI Factory"
     },
     "hero": {
-      "title_1": "Video Factory + AI Automation",
+      "title_1": "Sophia Video Factory + AI Automation",
       "title_2": "One Platform — Infinite Scale",
       "subtitle": "Create videos, generate leads, send campaigns — all automated with AI.",
       "cta_start": "Start Free",
@@ -184,7 +184,8 @@
       "trust_uptime": "Edge-deployed reliability",
       "trust_response": "Edge response",
       "trust_security": "Edge-secured by Cloudflare",
-      "trust_edge": "Edge Deployed"
+      "trust_edge": "Edge Deployed",
+      "cta_pricing": "See Pricing"
     },
     "workflow": {
       "title": "Your Automated Content Factory",
@@ -4557,7 +4558,11 @@
         "and": "And",
         "or": "Or",
         "googleSignIn": "Google Sign In",
-        "githubSignIn": "Github Sign In"
+        "githubSignIn": "Github Sign In",
+        "errorPasswordMismatch": "Passwords do not match",
+        "errorPasswordTooShort": "Password must be at least 8 characters",
+        "errorEmailExists": "An account with this email already exists",
+        "errorGeneric": "Registration failed. Please try again."
       }
     },
     "pricing": {
@@ -4778,5 +4783,15 @@
     "pwf": "P/W/F",
     "detail": "Detail",
     "view": "View"
+  },
+  "setup_wizard": {
+    "system_check": {
+      "title": "System Check",
+      "cloudflare_workers": "Cloudflare Workers",
+      "cloudflare_desc": "System running on edge (global)",
+      "security": "Security",
+      "security_desc": "API keys encrypted with AES-256 at rest",
+      "next_step": "Next: enter API keys for AI services. You can skip and add later in Settings."
+    }
   }
 }
