@@ -1,7 +1,7 @@
 ---
 title: "Revenue & Trust Sprint — 4 Parallel Tracks"
 description: "TDD hardening for 4 subsystems: refund backend, overage billing, self-service billing portal, affiliate pipeline"
-status: pending
+status: complete
 priority: P1
 effort: 6-10d (parallel)
 branch: main
@@ -44,24 +44,48 @@ created: 2026-07-01
 
 | # | Phase | Tracks | Status | Effort | Depends On |
 |---|-------|--------|--------|--------|------------|
-| 01 | Track D — Refund Backend Contract Tests | D | pending | 2h | — |
-| 02 | Track D — Refund Backend Implementation | D | pending | 4h | Phase 01 |
-| 03 | Track C — Affiliate Contract Tests | C | pending | 3h | — |
-| 04 | Track C — Affiliate Hardening | C | pending | 6h | Phase 03 |
-| 05 | Track A1 — Overage Billing Contract Tests | A1 | pending | 3h | — |
-| 06 | Track A1 — Overage Billing Implementation | A1 | pending | 8h | Phase 05 |
-| 07 | Track A2 — Self-Service Billing Portal Tests | A2 | pending | 2h | — |
-| 08 | Track A2 — Self-Service Billing Portal | A2 | pending | 6h | Phase 07 |
-| 09 | Integration Tests + Cross-Track Validation | All | pending | 4h | Phase 02,04,06,08 |
-| 10 | Build + Deploy + Verify | All | pending | 1h | Phase 09 |
+| 01 | Track D — Refund Backend Contract Tests | D | completed | 2h | — |
+| 02 | Track D — Refund Backend Implementation | D | completed | 4h | Phase 01 |
+| 03 | Track C — Affiliate Contract Tests | C | completed | 3h | — |
+| 04 | Track C — Affiliate Hardening | C | completed | 6h | Phase 03 |
+| 05 | Track A1 — Overage Billing Contract Tests | A1 | completed | 3h | — |
+| 06 | Track A1 — Overage Billing Implementation | A1 | completed | 8h | Phase 05 |
+| 07 | Track A2 — Self-Service Billing Portal Tests | A2 | completed | 2h | — |
+| 08 | Track A2 — Self-Service Billing Portal | A2 | completed | 6h | Phase 07 |
+| 09 | Integration Tests + Cross-Track Validation | All | completed | 4h | Phase 02,04,06,08 |
+| 10 | Build + Deploy + Verify | All | completed | 1h | Phase 09 |
+| 11 | Code Review Fixes (i18n, layer violations, types) | All | completed | 1h | Phase 10 |
 
 **Parallel execution possible:** Phases 01,03,05,07 can start simultaneously. Phases within each track are sequential.
 
 ## Success Criteria
 
-- [] All new tests pass (target: 50+ contract + integration tests)
-- [] `npm run build` → 0 TypeScript errors
-- [] Protected flows verified unchanged (NOWPayments IPN, Setup Wizard, Telegram Bot)
-- [] Zero `:any` types in new code
-- [] Bilingual VI+EN for all customer-facing UI strings
-- [] `npm run deploy:full` exit 0, SHA verified on production
+- [x] All new tests pass (target: 50+ contract + integration tests)
+- [x] `npm run build` → 0 TypeScript errors
+- [x] Protected flows verified unchanged (NOWPayments IPN, Setup Wizard, Telegram Bot)
+- [x] Zero `:any` types in new code
+- [x] Bilingual VI+EN for all customer-facing UI strings
+- [x] `npm run deploy:full` exit 0, SHA verified on production
+
+## Phase 11 — Code Review Fixes
+
+Post-implementation code review of the 4-track Revenue & Trust Sprint (SHA 04d01ab60) identified findings in i18n coverage, layer architecture compliance, and type safety. All resolved in SHA 5265c0a5a.
+
+**i18n Fixes:**
+- `billing.creditBar` — Added Vietnamese translations; was rendering English to VI users (creditBar used only Vietnamese `fa-solid` icons but English text labels)
+- `dashboard.billing` — Replaced English placeholder copy (`"Upgrade to access all features..."`) with real bilingual copy in self-serve portal keys
+
+**Layer Violations (3 items moved from forest/quota to seed/):**
+- `markEventsAsBillable` → `seed/db/overage-billing-ops.ts` (re-exported from forest/quota and tree/quota via barrel index)
+- `invalidateQuotaCache` → `seed/kv/quota-cache-ops.ts` (re-exported from forest/quota and tree/quota)
+- `TOPUP_PRICE_PER_MCU` → `seed/config/tiers/tier-configs.ts` (consumed by forest/quota/quota-enforcer-response.ts)
+
+**Type Safety:**
+- `TopupIpnPayload` interface updated to match Zod schema: added `actually_paid` and `invoice_id` fields
+- Removed `eslint-disable-next-line` and `as unknown as` cast in `overage-topup.ts`
+
+**Code Hygiene:**
+- Added `@param _customerWalletAddress` JSDoc to `refund-processor.ts` (explicitly documents intentionally unused parameter)
+- Deleted orphaned `src/land/heygen/heygen-client.ts.new` backup file (223 LOC, leftover from prior refactor)
+
+**Verification:** Build 0 TS errors, i18n 4080+ keys verified bilingual, layer lint passes (no seed→forest imports).
