@@ -15,8 +15,8 @@ import { createServerClient } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 import { createNowPaymentsSDK } from '@/tree/clients/nowpayments-client'
-import { markEventsAsBillable } from '@/forest/quota/overage-logger-ops'
-import { invalidateQuotaCache } from '@/forest/quota/quota-checker'
+import { markEventsAsBillable } from '@/seed/db/overage-billing-ops'
+import { invalidateQuotaCache } from '@/seed/kv/quota-cache-ops'
 import {
   type TopupInvoice,
   type TopupIpnPayload,
@@ -169,9 +169,7 @@ export async function processTopupIpn(
     }
 
     // ── 3. Verify payment amount (underpayment guard) ───────────────────────
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ipnAny = ipn as unknown as Record<string, unknown>
-    const actuallyPaid = ipnAny.actually_paid as number | undefined
+    const actuallyPaid = ipn.actually_paid
     const required = price_amount * UNDERPAYMENT_THRESHOLD
 
     if (actuallyPaid !== undefined && actuallyPaid !== null && actuallyPaid < required) {
@@ -202,7 +200,7 @@ export async function processTopupIpn(
     }
 
     // Parse invoice_id from the IPN or find the pending topup
-    const ipnInvoiceId = ipnAny.invoice_id as string | undefined
+    const ipnInvoiceId = ipn.invoice_id
     const pendingTopupId = `topup_${ipnInvoiceId ?? payment_id}`
     const pendingTopup = await db
       .prepare('SELECT id, user_id, mcu_amount, price_cents, status FROM pending_topups WHERE id = ?1')

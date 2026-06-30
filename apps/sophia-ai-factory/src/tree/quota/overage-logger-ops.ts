@@ -54,15 +54,5 @@ export async function getOverageSummary(licenseNonce: string, periodStart: numbe
   return { totalOverageEvents: data?.length || 0, totalOverageCredits: data?.reduce((sum, e) => sum + (e.exceeded_by || 0), 0) || 0, byType, billableEvents: data?.filter(e => e.billable).length || 0 }
 }
 
-export async function markEventsAsBillable(eventIds: string[], pricePerCredit: number): Promise<number> {
-  if (eventIds.length === 0) return 0
-  try {
-    const db = createServerClient()
-    await db.from('overage_events').update({ billable: true }).in('id', eventIds)
-    logger.info('[Overage Logger] Marked events as billable', { count: eventIds.length, pricePerCredit })
-    return eventIds.length
-  } catch (error) {
-    logger.error('[Overage Logger] Error marking events as billable', toError(error))
-    return 0
-  }
-}
+// Re-export from seed for backward compatibility — canonical location is seed/db/overage-billing-ops
+export { markEventsAsBillable } from '@/seed/db/overage-billing-ops'

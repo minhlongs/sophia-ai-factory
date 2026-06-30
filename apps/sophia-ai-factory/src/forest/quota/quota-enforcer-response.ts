@@ -5,7 +5,7 @@
 
 import type { EnhancedQuotaCheckResult, QuotaCheckContext } from './quota-checker'
 import type { DunningState } from '@/seed/types/billing-contracts'
-import { TOPUP_PRICE_PER_MCU } from '@/land/billing/overage-topup-types'
+import { TOPUP_PRICE_PER_MCU } from '@/seed/config/tiers/tier-configs'
 
 export interface QuotaExceededResponse {
   error: string
