@@ -129,7 +129,7 @@ interface QuotaGaugeListProps {
 
 export function QuotaGaugeList({ quotas, columns = 3 }: QuotaGaugeListProps) {
   return (
-    <div className={`grid gap-6 ${columns === 2 ? 'grid-cols-2' : columns === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>
+    <div className={`grid gap-6 ${columns === 2 ? 'grid-cols-1 sm:grid-cols-2' : columns === 3 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4'}`}>
       {quotas.map((quota, index) => (
         <div
           key={index}

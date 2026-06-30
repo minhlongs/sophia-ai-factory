@@ -20,7 +20,7 @@ export default async function HandoverListPage({ params }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-muted-foreground-100">
             {isVi ? 'Theo Dõi Bàn Giao' : 'Handover Tracking'}

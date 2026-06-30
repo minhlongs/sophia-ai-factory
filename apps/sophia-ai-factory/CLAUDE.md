@@ -54,6 +54,51 @@ Full rules: `.claude/rules/sophia-layer-architecture.md`
 
 ---
 
+## Financial Code Patterns (Proven)
+
+These patterns are battle-tested across Payment Pipeline Hardening + Revenue & Trust Sprint. Use them for ALL financial/money code.
+
+### Atomic Lock (Idempotency)
+
+D1 SQLite has no transactions. Use INSERT ON CONFLICT DO NOTHING for atomic ownership:
+
+```sql
+INSERT INTO payment_events (event_id, event_type, payload, processed, created_at)
+VALUES (?1, ?2, ?3, 0, ?4)
+ON CONFLICT(event_id) DO NOTHING
+```
+
+Check `meta.changes`: 0 = lock already held (duplicate). 1 = this caller owns the lock.
+Pattern used in: `refund_events`, `commission_events`, `payment_events`, `topup_events`.
+
+### Result<T,E> for Error Discrimination
+
+Never `throw` in financial code. Return `Result<T,E>` so callers handle each error variant:
+
+```typescript
+import { success, failure, type Result } from '@/seed/types/result'
+// success(data) / failure({ code: 'SPECIFIC_ERROR', message: '...' })
+```
+
+### Event ID Formats
+
+- Payments: `nowpayments_{payment_id}_{status}`
+- ClickBank: `clickbank_{receipt}_{transactionType}`
+- Top-ups: `topup_{payment_id}_{status}`
+- Refunds: `refund_{purchase_id}`
+
+### Stale Lock Recovery
+
+After 5 min, treat unprocessed locks as stale — mark processed and retry:
+
+```typescript
+if (lockAgeMs > 5 * 60 * 1000) {
+  await db.prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1').bind(eventId).run()
+}
+```
+
+---
+
 ## Canonical Import Paths (POST-2026-04-14 CONSOLIDATION)
 
 Single sources of truth. Old paths deleted; do not create new ones.
@@ -64,6 +109,10 @@ Single sources of truth. Old paths deleted; do not create new ones.
 | DB client (sync) | `import { createServerClient } from '@/seed/db/client'` (DO NOT await) |
 | Tier lookup | `import { getUserTier } from '@/seed/db/get-user-tier'` |
 | Tier config | `import { TIER_CONFIGS, TIER_CONFIG } from '@/seed/config/tiers'` |
+| Tier pricing | `import { TOPUP_PRICE_PER_MCU } from '@/seed/config/tiers/tier-configs'` |
+| Result type | `import { success, failure, type Result } from '@/seed/types/result'` |
+| Overage billing ops | `import { markEventsAsBillable } from '@/seed/db/overage-billing-ops'` |
+| Quota cache ops | `import { invalidateQuotaCache } from '@/seed/kv/quota-cache-ops'` |
 | Locale-aware Link | `import { Link } from '@/navigation'` (named export) |
 
 **BANNED imports:** `@/lib/auth`, `@/lib/subscription`, `@/lib/unified-tier-config`, `@/lib/tier-gate`.
@@ -145,11 +194,14 @@ Full doctrine: `.claude/rules/sophia-no-tech-doctrine.md`
 ## Quality Gates
 
 - `npm run build` → 0 TypeScript errors
-- `npm test` → all tests pass (6200+ tests)
+- `npm test` → all tests pass (6694+ tests)
 - Zero `:any` types in production code
 - Zero `console.log`/`console.warn`/`console.error` — use `@/seed/utils/logger-utility`
 - Zod validation on all API inputs
+- Server Actions (`'use server'`) for data mutations — preferred over API routes. Auth via `getCurrentUser()`.
 - Tier enum: `BASIC | PREMIUM | ENTERPRISE | MASTER` (uppercase only)
+- No land→forest imports (enforced by ESLint `no-restricted-imports`). Run `npm run lint` to catch.
+- Deploy: working tree must be clean (`deploy-with-sha.sh` rejects dirty trees). Commit docs before deploy.
 
 ---
 
@@ -173,3 +225,6 @@ Full doctrine: `.claude/rules/sophia-no-tech-doctrine.md`
 - Inngest owns long-running workflows (video generation, multi-step processes). Do not run these in request path.
 - NOWPayments is primary payment provider; PayOS is Vietnam domestic backup. Polar.sh and PayPal are banned.
 - `src/navigation.ts` exports `{ Link, redirect, usePathname, useRouter }` from `next-intl/navigation` — use for locale-aware navigation.
+- CLEO pre-push hook requires task IDs in commit subjects. Use `git push --no-verify` only for docs/hotfixes.
+- `npm run deploy:full` runs pre-deploy type-check + test gate + SHA verification automatically. Dirty working tree = rejected.
+- `src/land/billing/actions/` holds `'use server'` billing portal actions (change-tier, cancel-subscription, resubscribe).

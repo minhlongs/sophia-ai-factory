@@ -37,7 +37,7 @@ export function AdminSidebar() {
     <aside className="w-64 bg-card border-r border-border flex flex-col">
       {/* Header */}
       <div className="p-6 border-b border-border">
-        <h1 className="text-xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
+        <h1 className="text-xl font-bold text-primary">
           Sophia Admin
         </h1>
         <p className="text-xs text-muted-foreground mt-1">Internal Dashboard</p>
@@ -56,7 +56,7 @@ export function AdminSidebar() {
                   className={cn(
                     "flex items-center gap-3 px-4 py-3 rounded-lg transition-all",
                     isActive
-                      ? "bg-[var(--neon-cyan)]/10 text-[var(--neon-cyan)] border border-[var(--neon-cyan)]/30"
+                      ? "bg-primary/10 text-primary border border-primary/30"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >

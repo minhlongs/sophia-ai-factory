@@ -24,7 +24,7 @@ export function CampaignFilterTabs({
 
   return (
     <Tabs value={value} onValueChange={(v) => onChange(v as CampaignFilter)}>
-      <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-muted p-1 gap-1">
+      <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-muted p-1 gap-1 overflow-x-auto max-w-full">
         {FILTER_TABS.map((tab) => (
           <TabsTrigger
             key={tab.value}

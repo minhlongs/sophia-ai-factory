@@ -102,7 +102,7 @@ export function ApiKeysSection({ form, defaultValues }: ApiKeysSectionProps) {
           const keyValue = form.watch(`apiKeys.${config.id}`) ?? '';
           return (
             <div key={config.id} className="space-y-1.5 relative">
-              <div className="absolute right-0 top-0 flex items-center justify-end z-10">
+              <div className="sm:absolute sm:right-0 sm:top-0 flex items-center justify-end z-10">
                 <a
                   href={config.helpUrl}
                   target="_blank"

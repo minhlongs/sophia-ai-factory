@@ -15,7 +15,7 @@ interface ProgramCardProps {
 export function ProgramCard({ program, isLocked = false }: ProgramCardProps) {
   return (
     <FadeInView direction="up" distance={20} duration={400}>
-      <Card glass className="h-full hover:shadow-[0_0_30px_rgba(0,240,255,0.15)] transition-all">
+      <Card glass className="h-full hover:shadow-[0_0_30px_hsl(var(--primary)/0.15)] transition-all">
         <CardContent className="p-6">
           {/* Header */}
           <div className="flex items-start justify-between mb-4">

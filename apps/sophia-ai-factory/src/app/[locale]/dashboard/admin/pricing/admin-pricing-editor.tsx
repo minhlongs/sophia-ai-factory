@@ -56,7 +56,7 @@ export function AdminPricingEditor({ locale }: Props) {
   const skus = data?.skus ?? []
 
   return (
-    <div className="rounded-xl border border-border-800 overflow-hidden">
+    <div className="rounded-xl border border-border-800 overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-muted-900 border-b border-border-800">
           <tr>

@@ -113,17 +113,16 @@ export function Navbar() {
         <Link href="/" className="flex items-center gap-2.5 group hover:scale-105 active:scale-95 transition-transform duration-200">
           <div
             className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-300"
-            style={{ background: "rgba(0,240,255,0.1)" }}
+            style={{ background: "hsl(var(--primary) / 0.12)" }}
           >
             <span
-              className="material-symbols-outlined text-lg"
-              style={{ color: "var(--neon-cyan)" }}
+              className="material-symbols-outlined text-lg text-primary"
               aria-hidden="true"
             >
               smart_toy
             </span>
           </div>
-          <span className="font-bold text-base tracking-tight bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
+          <span className="font-bold text-base tracking-tight text-primary">
             {t("nav.brand")}
           </span>
         </Link>
@@ -189,7 +188,7 @@ export function Navbar() {
         <div
           className="lg:hidden border-t px-5 py-5 flex flex-col gap-3 rounded-b-2xl"
           style={{
-            background: "rgba(2,8,23,0.97)",
+            background: "hsl(var(--background) / 0.97)",
             borderColor: "rgba(255,255,255,0.06)",
           }}
         >

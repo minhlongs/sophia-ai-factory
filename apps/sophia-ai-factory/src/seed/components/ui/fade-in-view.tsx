@@ -76,7 +76,7 @@ export function FadeInView({
       style={{
         opacity: isVisible ? 1 : 0,
         transform: isVisible ? "none" : directions[direction],
-        transition: `opacity ${duration}ms ease-out ${delay}ms, transform ${duration}ms ease-out ${delay}ms`,
+        transition: `opacity ${duration}ms cubic-bezier(0.16,1,0.3,1) ${delay}ms, transform ${duration}ms cubic-bezier(0.16,1,0.3,1) ${delay}ms`,
         willChange: "opacity, transform",
       }}
     >

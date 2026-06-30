@@ -170,7 +170,7 @@ export const stitchTypography = {
     fontSize: '14px',
     lineHeight: '1.5',
     fontWeight: '400',
-    fontFamily: 'var(--font-geist-mono), monospace',
+    fontFamily: 'var(--font-jetbrains-mono), monospace',
   },
 };
 

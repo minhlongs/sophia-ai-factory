@@ -11,18 +11,20 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
     <div
       ref={ref}
       className={cn(
-        "rounded-xl border bg-card text-card-foreground shadow",
+        // Saigon Factory — letterpress bordered card, no glow
+        "rounded-lg border bg-card text-card-foreground",
+        // Inner highlight gives the stamped/letterpress effect
+        "shadow-[inset_0_1px_0_0_hsl(var(--border)),0_1px_3px_0_rgba(0,0,0,0.06)]",
         glass && [
-          "bg-white/5 backdrop-blur-lg",
-          "border border-white/10",
+          "bg-background/80 backdrop-blur-lg",
+          "border-border",
           "text-foreground"
         ],
         hover && [
-          "transition-colors transition-shadow transition-transform duration-300 motion-reduce:transition-none",
-          "hover:bg-white/10",
-          "hover:border-white/20",
-          "hover:shadow-[0_0_30px_rgba(0,240,255,0.2)]",
-          "hover:scale-[1.02]",
+          "transition-all duration-300 motion-reduce:transition-none",
+          "hover:-translate-y-0.5",
+          "hover:shadow-[inset_0_1px_0_0_hsl(var(--primary)/0.3),0_6px_20px_rgba(0,0,0,0.1)]",
+          "hover:border-primary/30",
         ],
         className
       )}

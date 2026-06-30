@@ -68,7 +68,7 @@ export default async function CronMonitorPage({ params }: PageProps): Promise<Re
         </div>
       )}
 
-      <section className="grid grid-cols-3 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <SummaryCard label="Crons tracked" value={crons.length.toString()} />
         <SummaryCard label="Currently failing" value={failing.toString()} tone={failing > 0 ? 'bad' : 'ok'} />
         <SummaryCard label="Stale (>24h)" value={stale.toString()} tone={stale > 0 ? 'warn' : 'ok'} />

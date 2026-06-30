@@ -50,7 +50,7 @@ export default async function SopsListPage({ params }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <BookOpen className="w-5 h-5 text-primary-400" aria-hidden="true" />
         <div className="flex-1">
           <div className="flex items-center gap-2">

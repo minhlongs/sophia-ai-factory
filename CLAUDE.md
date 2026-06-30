@@ -126,7 +126,7 @@ Full doctrine: `.claude/rules/sophia-no-tech-doctrine.md`.
 ## Quality Gates
 
 - `npm run build` → 0 TypeScript errors
-- `npm test` → all tests pass (844+ tests)
+- `npm test` → all tests pass (6694+ tests)
 - Zero `:any` types in production code
 - Zero `console.log`/`console.warn`/`console.error` — use logger utility
 - Zod validation on all API inputs

@@ -46,7 +46,7 @@ export function DocumentSection({ group }: { group: DocumentGroup }) {
             href={doc.path}
             className="group rounded-xl border border-border-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
           >
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-sm font-semibold text-muted-foreground-900">{doc.name}</h3>
               <AccessBadge access={doc.access} />
             </div>

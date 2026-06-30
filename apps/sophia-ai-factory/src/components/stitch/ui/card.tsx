@@ -26,12 +26,14 @@ export function Card({
   ...props
 }: CardProps) {
   const baseStyles = cn(
-    'bg-surface-container-lowest rounded-xl border border-outline-variant',
+    // Saigon Factory — letterpress bordered card replaces generic shadow
+    'bg-surface-container-lowest rounded-lg border border-outline-variant',
+    'shadow-[inset_0_1px_0_0_hsl(var(--border)),0_1px_3px_0_rgba(0,0,0,0.06)]',
     'transition-all duration-200'
   );
 
   const variants = {
-    elevated: 'custom-shadow-md',
+    elevated: '',  // letterpress is the default now
     outlined: 'border-2',
     filled: 'bg-surface-container',
   };
@@ -45,7 +47,7 @@ export function Card({
   };
 
   const hoverStyles = hoverable
-    ? 'hover:-translate-y-0.5 hover:border-primary hover:shadow-lg'
+    ? 'hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[inset_0_1px_0_0_hsl(var(--primary)/0.3),0_6px_20px_rgba(0,0,0,0.1)]'
     : '';
 
   return (

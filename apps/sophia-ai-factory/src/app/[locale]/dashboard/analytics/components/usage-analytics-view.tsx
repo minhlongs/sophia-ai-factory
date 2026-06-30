@@ -280,7 +280,7 @@ export function UsageAnalyticsView({ userTier }: UsageAnalyticsViewProps) {
             />
           ) : (
             <Select value={dateRangePreset} onValueChange={(v: string) => setDateRangePreset(v as '24h' | '7d' | '30d' | '90d')}>
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-full sm:w-[140px]">
                 <SelectValue placeholder={t('date_range')} />
               </SelectTrigger>
               <SelectContent>
@@ -314,7 +314,7 @@ export function UsageAnalyticsView({ userTier }: UsageAnalyticsViewProps) {
         <div className="flex items-center gap-2">
           {/* Metric Selector */}
           <Select value={metric} onValueChange={(v: string) => setMetric(v as UsageMetric)}>
-            <SelectTrigger className="w-[120px]">
+            <SelectTrigger className="w-full sm:w-[120px]">
               <SelectValue placeholder="Metric" />
             </SelectTrigger>
             <SelectContent>

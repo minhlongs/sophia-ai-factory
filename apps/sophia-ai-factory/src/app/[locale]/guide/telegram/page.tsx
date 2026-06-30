@@ -100,7 +100,7 @@ export default async function TelegramGuidePage({ params }: { params: Promise<{ 
         <GuideCodeBlock code={BOT_COMMANDS} language="telegram" />
       </div>
 
-      <div className="border border-border/40 rounded-xl overflow-hidden">
+      <div className="border border-border/40 rounded-xl overflow-x-auto">
         <div className="grid grid-cols-[auto_1fr] bg-muted/30 px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/40 gap-6">
           <span>{t("tableHeaderCmd")}</span>
           <span>{t("tableHeaderDesc")}</span>

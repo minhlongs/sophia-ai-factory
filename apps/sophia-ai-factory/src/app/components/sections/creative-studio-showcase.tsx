@@ -79,7 +79,7 @@ export function CreativeStudioShowcase() {
 
         <ScrollReveal className="text-center">
           <Link href="/dashboard/creative-studio">
-            <Button variant="glow" size="lg" className="glow-primary rounded-full px-8">
+            <Button variant="glow" size="lg" className="rounded-full px-8">
               {t("cta")}
             </Button>
           </Link>

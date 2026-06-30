@@ -46,7 +46,7 @@ export function Step4Result({ result, form, isVi, copied, onCopy, onDownload, on
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 text-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
         <div className="rounded-lg bg-muted-900/50 border border-border-700 p-3 text-center">
           <div className="text-lg font-bold text-primary-400">{result.installedSops.length}</div>
           <div className="text-muted-foreground-500 text-xs mt-0.5">{isVi ? 'SOPs đã cài' : 'SOPs Installed'}</div>

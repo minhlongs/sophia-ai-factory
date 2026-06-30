@@ -167,7 +167,7 @@ export function RevenueCard({ snapshot, loading }: RevenueCardProps) {
         {snapshot.byTier.length > 0 && (
           <div>
             <p className="text-sm font-medium text-muted-foreground mb-2">Tier Breakdown</p>
-            <div className="rounded-lg border overflow-hidden">
+            <div className="rounded-lg border overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-muted/50">
                   <tr>

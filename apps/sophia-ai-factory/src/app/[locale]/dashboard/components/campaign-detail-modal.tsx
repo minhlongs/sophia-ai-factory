@@ -289,7 +289,7 @@ export function CampaignDetailModal({ campaign, isOpen, onClose }: CampaignDetai
           )}
 
           {/* Details Grid */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card className="bg-muted/30">
               <CardContent className="pt-6">
                 <div className="flex items-center gap-3">

@@ -70,7 +70,7 @@ export function BillingOverageTable({ data, formatCurrency }: Props) {
             </TableBody>
           </Table>
 
-          <div className="flex items-center justify-between mt-4 pt-4 border-t">
+          <div className="flex flex-wrap items-center justify-between gap-4 mt-4 pt-4 border-t">
             <div>
               <p className="text-sm text-muted-foreground">Tổng Credits Vượt</p>
               <p className="text-lg font-semibold">{overageEvents.totalCredits.toLocaleString()}</p>

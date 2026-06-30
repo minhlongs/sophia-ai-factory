@@ -111,7 +111,7 @@ export default function HowItWorksPage() {
       {/* Timeline */}
       <div>
         <h2 className="text-xl font-bold text-foreground mb-4">Thời Gian Thực Tế</h2>
-        <div className="border border-border/40 rounded-xl overflow-hidden">
+        <div className="border border-border/40 rounded-xl overflow-x-auto">
           <div className="grid grid-cols-3 bg-muted/30 px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/40">
             <span>Bước</span>
             <span>Thời Gian</span>

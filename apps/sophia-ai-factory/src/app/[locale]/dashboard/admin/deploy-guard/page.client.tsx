@@ -237,7 +237,7 @@ export default function DeployGuardClient({ locale, userId }: DeployGuardClientP
 
       {/* Pending Approvals */}
       <section className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-lg font-semibold">
             {isVi ? 'Pending Approvals' : 'Pending Approvals'}
           </h2>
@@ -254,7 +254,7 @@ export default function DeployGuardClient({ locale, userId }: DeployGuardClientP
             </p>
           </div>
         ) : (
-          <div className="rounded-lg border border-border-800 overflow-hidden">
+          <div className="rounded-lg border border-border-800 overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted-900/50">
                 <tr>
@@ -453,7 +453,7 @@ export default function DeployGuardClient({ locale, userId }: DeployGuardClientP
             </p>
           </div>
         ) : (
-          <div className="rounded-lg border border-border-800 overflow-hidden">
+          <div className="rounded-lg border border-border-800 overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted-900/50">
                 <tr>

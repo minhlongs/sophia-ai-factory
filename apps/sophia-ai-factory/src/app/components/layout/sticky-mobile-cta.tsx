@@ -50,9 +50,9 @@ export function StickyMobileCta() {
     >
       <Link
         href="/dashboard"
-        className="inline-flex items-center justify-center w-full rounded-full font-medium text-white transition-all focus:ring-2 focus:outline-none px-8 py-4 text-base h-14 cursor-pointer glow-primary"
+        className="inline-flex items-center justify-center w-full rounded-full font-medium text-white transition-all focus:ring-2 focus:outline-none px-8 py-4 text-base h-14 cursor-pointer"
         style={{
-          background: "linear-gradient(to right, var(--neon-cyan), var(--neon-purple))",
+          background: "linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)))",
         }}
       >
         Bắt Đầu Miễn Phí &rarr;

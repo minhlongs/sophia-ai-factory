@@ -91,7 +91,7 @@ export function DeployStatusClient({ locale }: Props) {
     <div className="space-y-4">
       {/* Deploy info */}
       <div className="rounded-xl border border-border-800 bg-muted-900/50 p-5 space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-sm font-semibold text-muted-foreground-200">
             {isVi ? 'Thông tin deploy' : 'Last Deploy'}
           </h2>

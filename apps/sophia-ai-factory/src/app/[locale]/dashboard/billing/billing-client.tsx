@@ -107,10 +107,10 @@ export default function BillingClient({ params }: { params: Promise<{ locale: st
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center gap-3">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{t('pageTitle')}</h1>
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{t('pageTitle')}</h1>
             <p className="text-muted-foreground mt-1">{t('pageSubtitle')}</p>
           </div>
           {usageData.license.tier === 'MASTER' && (
@@ -123,7 +123,7 @@ export default function BillingClient({ params }: { params: Promise<{ locale: st
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-2" />{t('exportButton')}</Button>
           {usageData.license.tier !== 'MASTER' && (
             <Button size="sm"><CreditCard className="h-4 w-4 mr-2" />{t('upgradeButton')}</Button>

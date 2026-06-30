@@ -24,7 +24,7 @@ export function IncidentCard({ incident }: IncidentCardProps) {
 
   return (
     <div className="border-l-2 border-border pl-4">
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="text-sm font-medium text-foreground">{incident.title}</p>
           {incident.description && (
@@ -35,7 +35,7 @@ export function IncidentCard({ incident }: IncidentCardProps) {
           {incident.severity}
         </span>
       </div>
-      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-3 mt-1 text-xs text-muted-foreground">
         <span>{new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(incident.startedAt * 1000))}</span>
         <span>Duration: {durationLabel}</span>
         {incident.postmortemUrl && (
