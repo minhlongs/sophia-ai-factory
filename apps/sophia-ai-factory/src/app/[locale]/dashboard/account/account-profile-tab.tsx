@@ -12,6 +12,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
+import { useCsrfToken } from '@/seed/security/use-csrf-token';
 import { Button } from '@/seed/components/ui/button';
 import { Input } from '@/seed/components/ui/input';
 import { Label } from '@/seed/components/ui/label';
@@ -38,6 +39,7 @@ type EmailStatus =
 
 export function AccountProfileTab({ initial }: AccountProfileTabProps) {
   const t = useTranslations('account');
+  const csrfHeaders = useCsrfToken();
   const searchParams = useSearchParams();
   const [form, setForm] = useState<ProfileData>(initial);
   const [emailDraft, setEmailDraft] = useState(initial.email);
@@ -83,7 +85,7 @@ export function AccountProfileTab({ initial }: AccountProfileTabProps) {
     try {
       const res = await fetch('/api/account/change-email', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders },
         body: JSON.stringify({ newEmail }),
       });
       const body = (await res.json().catch(() => ({}))) as { error?: string };

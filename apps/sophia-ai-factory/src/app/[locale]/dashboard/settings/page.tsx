@@ -7,6 +7,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { ReferralShareWidget } from '@/forest/components/dashboard/referral-share-widget';
 import { PlanUpgradeWidget } from '@/forest/components/dashboard/plan-upgrade-widget';
+import { ChangeEmailSection } from '@/forest/components/settings/sections/change-email-section';
 import { getSubscriptionPeriodEnd } from '@/land/billing/subscription-expiry';
 import { countCompletedOrders } from '@/land/orders/order-counts';
 
@@ -37,6 +38,7 @@ export default async function SettingsPage() {
       <Suspense fallback={<SettingsSkeleton />}>
         <SettingsForm defaultValues={profile} />
       </Suspense>
+      <ChangeEmailSection currentEmail={user.email ?? ''} />
       <PlanUpgradeWidget
         currentTier={currentTier}
         periodEnd={periodEnd}

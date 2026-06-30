@@ -1080,7 +1080,15 @@
       "24h": "24h",
       "accept-language": "Accept-Language",
       "csv": "CSV",
-      "png": "PNG"
+      "png": "PNG",
+      "recent_campaigns_title": "Chiến Dịch Gần Đây",
+      "recent_name": "Tên",
+      "recent_status": "Trạng Thái",
+      "recent_created": "Ngày Tạo",
+      "recent_completed": "Hoàn Thành",
+      "recent_actions": "Hành Động",
+      "recent_view": "Xem",
+      "recent_empty": "Không tìm thấy chiến dịch"
     },
     "trialBanner": {
       "title": "Gói dùng thử của bạn hết hạn vào ngày mai! Nâng cấp ngay để giữ tính năng →",
@@ -2410,6 +2418,18 @@
       "fullNamePlaceholder": "Full Name Placeholder",
       "email": "Email",
       "emailManagedNote": "Email Managed Note"
+    },
+    "changeEmail": {
+      "title": "Đổi Email",
+      "subtitle": "Yêu cầu đổi email. Một liên kết xác nhận sẽ được gửi đến địa chỉ email mới của bạn.",
+      "currentEmail": "Email Hiện Tại",
+      "newEmail": "Email Mới",
+      "newEmailPlaceholder": "Nhập email mới của bạn",
+      "sendVerification": "Gửi Xác Nhận",
+      "sending": "Đang gửi...",
+      "checkEmail": "Liên kết xác nhận đã được gửi đến {email}. Vui lòng kiểm tra hộp thư của bạn.",
+      "unknownError": "Đã xảy ra lỗi không xác định. Vui lòng thử lại.",
+      "networkError": "Lỗi mạng. Vui lòng kiểm tra kết nối và thử lại."
     }
   },
   "auth": {

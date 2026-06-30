@@ -79,7 +79,7 @@ describe('dispatchTelegramWithRetryHints', () => {
       )
     })
 
-    it('falls back to DEFAULT_RETRY_AFTER_SEC (60) when retryAfterSec is null', async () => {
+    it('falls back to DEFAULT_RETRY_AFTER_SEC (30) when retryAfterSec is null', async () => {
       const apiErr = new TelegramApiError('Rate limited (429)', {
         status: 429,
         retryAfterSec: null,
@@ -90,6 +90,41 @@ describe('dispatchTelegramWithRetryHints', () => {
         await dispatchTelegramWithRetryHints(baseInput)
         expect.fail('should have thrown')
       } catch (err) {
+        const cause = (err as Error & { cause?: { retryAfterSec?: number } }).cause
+        expect(cause?.retryAfterSec).toBe(30)
+      }
+    })
+
+    it('throws plain Error (not RetryAfterError) when retryAfterSec exceeds 60s cap', async () => {
+      const apiErr = new TelegramApiError('Rate limited (429)', {
+        status: 429,
+        retryAfterSec: 120,
+      })
+      mockPublish.mockRejectedValue(apiErr)
+
+      try {
+        await dispatchTelegramWithRetryHints(baseInput)
+        expect.fail('should have thrown')
+      } catch (err) {
+        // Must NOT be RetryAfterError — throws plain Error so Inngest uses exponential backoff.
+        expect(err).toBeInstanceOf(Error)
+        expect(err).not.toBeInstanceOf(RetryAfterError)
+        expect(err).not.toBeInstanceOf(NonRetriableError)
+      }
+    })
+
+    it('accepts retryAfterSec exactly at 60s cap', async () => {
+      const apiErr = new TelegramApiError('Rate limited (429)', {
+        status: 429,
+        retryAfterSec: 60,
+      })
+      mockPublish.mockRejectedValue(apiErr)
+
+      try {
+        await dispatchTelegramWithRetryHints(baseInput)
+        expect.fail('should have thrown')
+      } catch (err) {
+        expect(err).toBeInstanceOf(RetryAfterError)
         const cause = (err as Error & { cause?: { retryAfterSec?: number } }).cause
         expect(cause?.retryAfterSec).toBe(60)
       }

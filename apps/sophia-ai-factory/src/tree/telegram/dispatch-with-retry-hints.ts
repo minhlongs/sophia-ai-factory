@@ -23,12 +23,17 @@ import {
 } from '@/tree/publishing';
 import { logger } from '@/seed/utils/logger-utility';
 
-const DEFAULT_RETRY_AFTER_SEC = 60;
+const MAX_RETRY_AFTER_SEC = 60;
+const DEFAULT_RETRY_AFTER_SEC = 30;
 
 /**
  * Wraps the publisher call and re-throws errors with Inngest retry hints.
  *
  * Returns the publisher result on success. Throws on any failure.
+ *
+ * Wave 20 Phase 02: retry_after is capped at MAX_RETRY_AFTER_SEC (60s).
+ * If Telegram requests >60s wait, falls back to plain Error so Inngest
+ * applies its default exponential backoff instead of an excessive wait.
  */
 export async function dispatchTelegramWithRetryHints(
   input: TelegramPublishInput,
@@ -38,10 +43,23 @@ export async function dispatchTelegramWithRetryHints(
   } catch (err) {
     if (err instanceof TelegramApiError) {
       // 429: tell Inngest to wait Telegram-supplied retryAfterSec before next attempt.
-      // Wave 20 Phase 02: switched from plain Error → RetryAfterError so Inngest honors
-      // the bot-API-suggested delay instead of using default exponential backoff.
       if (err.status === 429) {
-        const retryAfterSec = err.retryAfterSec ?? DEFAULT_RETRY_AFTER_SEC;
+        const rawRetryAfterSec = err.retryAfterSec ?? DEFAULT_RETRY_AFTER_SEC;
+
+        // If Telegram asks for an impractically long wait, let Inngest's exponential
+        // backoff handle it instead of single-blocking for >1min.
+        if (rawRetryAfterSec > MAX_RETRY_AFTER_SEC) {
+          logger.warn('[telegram-dispatch] Rate limited with excessive retry_after, using exponential backoff', {
+            jobId: input.jobId,
+            rawRetryAfterSec,
+            maxCap: MAX_RETRY_AFTER_SEC,
+          });
+          throw new Error(`[telegram-dispatch] Rate limited (429) retry_after=${rawRetryAfterSec}s exceeds cap`, {
+            cause: err,
+          });
+        }
+
+        const retryAfterSec = rawRetryAfterSec;
         logger.warn('[telegram-dispatch] Rate limited, will retry', {
           jobId: input.jobId,
           retryAfterSec,
