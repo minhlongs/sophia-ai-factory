@@ -3,7 +3,7 @@
  * generate-supabase-migrations-manifest.mjs
  *
  * Reads supabase/migrations/*.sql → writes
- * src/lib/admin/supabase-migrations-manifest.ts
+ * src/tree/admin/supabase-migrations-manifest.ts
  * with base64 content + SHA-256 hash.
  *
  * Run at deploy time (called by deploy-with-sha.sh).
@@ -20,7 +20,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(__dirname, '..')
 
 const migrationsDir = path.join(root, 'supabase', 'migrations')
-const outFile = path.join(root, 'src', 'lib', 'admin', 'supabase-migrations-manifest.ts')
+const outFile = path.join(root, 'src', 'tree', 'admin', 'supabase-migrations-manifest.ts')
 
 function sha256(content) {
   return createHash('sha256').update(content, 'utf8').digest('hex')
