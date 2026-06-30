@@ -404,11 +404,14 @@
         }
       },
       "per_year": "Mỗi năm",
+      "per_year_short": "/năm",
+      "per_month_short": "/tháng",
       "subscribe_now": "Đăng ký ngay",
       "monthly_label": "Theo tháng",
       "annual_label": "Theo năm",
       "subscribe_now_master": "Đăng ký Master",
       "save_percent": "Tiết kiệm {percent}%",
+      "one_time_label": "một lần",
       "refund_master_title": "Gói MASTER — Hoàn Tiền Đầy Đủ Trong 14 Ngày",
       "refund_master_desc": "Gói MASTER ($4,999 một lần) được hoàn tiền đầy đủ trong 14 ngày kể từ ngày thanh toán, không cần lý do.",
       "refund_master_conditions": "Gói MASTER (một lần) — không áp dụng lần upgrade. Yêu cầu trong vòng 14 ngày kể từ ngày thanh toán.",
@@ -417,7 +420,9 @@
       "refund_non_refundable": "Credits đã dùng, video đã tạo, và phí API không được hoàn lại.",
       "faq_3_a": "Gói MASTER ($4,999 một lần) được hoàn tiền đầy đủ trong 14 ngày — không cần lý do. BASIC/PREMIUM/ENTERPRISE được hoàn tiền 100% trong 7 ngày cho lần subscribe đầu tiên. Các gói tháng không hoàn tiền cho thời gian đã sử dụng; hủy bất cứ lúc nào và giữ quyền truy cập đến hết kỳ thanh toán.",
       "faq_3_q": "Chính sách hoàn tiền của bạn là gì?",
-      "tier_selection_label": "Chọn gói dịch vụ"
+      "tier_selection_label": "Chọn gói dịch vụ",
+      "billing_cycle_aria_label": "Chu kỳ thanh toán",
+      "payment_method_aria_label": "Phương thức thanh toán"
     },
     "roi": {
       "title": "Tính Toán Doanh Thu Tiềm Năng",
@@ -4007,8 +4012,8 @@
     "initializing": "Đang khởi tạo cổng thanh toán...",
     "ssl_secured": "SSL Secured Connection",
     "pricing": {
-      "refund_master_title": "Refund master title",
-      "refund_master_desc": "Refund master desc"
+      "refund_master_title": "Gói MASTER — Hoàn Tiền Đầy Đủ Trong 14 Ngày",
+      "refund_master_desc": "Gói MASTER ($4,999 một lần) được hoàn tiền đầy đủ trong 14 ngày kể từ ngày thanh toán, không cần lý do."
     }
   },
   "1:1": "1:1",
@@ -4553,6 +4558,7 @@
         "signUp": "Sign up",
         "googleSignIn": "Google",
         "githubSignIn": "GitHub",
+        "ssoComingSoon": "Sắp có mặt — vui lòng dùng email để đăng nhập",
         "hidePassword": "Hide Password",
         "showPassword": "Show Password",
         "invalidCredentials": "Email hoặc mật khẩu không đúng",

@@ -172,7 +172,7 @@ export function PricingCard({
         {showVnd && (
           <p className="mt-1 text-xs text-amber-400/80">
             ≈ {formatVnd(centsToVnd(discountedPriceCents ?? (isAnnual ? annualPriceCents! : monthlyPrice)))}
-            {isAnnual ? "/năm" : "/tháng"}
+            {isAnnual ? t("pricing.per_year_short") : t("pricing.per_month_short")}
           </p>
         )}
         {!isAnnual && (
