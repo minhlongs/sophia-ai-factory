@@ -4587,7 +4587,8 @@
         "errorPasswordMismatch": "Passwords do not match",
         "errorPasswordTooShort": "Password must be at least 8 characters",
         "errorEmailExists": "An account with this email already exists",
-        "errorGeneric": "Registration failed. Please try again."
+        "errorGeneric": "Registration failed. Please try again.",
+        "ssoComingSoon": "Coming soon — please use email to sign in"
       }
     },
     "pricing": {
