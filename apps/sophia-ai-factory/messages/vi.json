@@ -4594,7 +4594,8 @@
         "errorPasswordMismatch": "Mật khẩu không khớp",
         "errorPasswordTooShort": "Mật khẩu phải có ít nhất 8 ký tự",
         "errorEmailExists": "Email này đã được đăng ký",
-        "errorGeneric": "Đăng ký thất bại. Vui lòng thử lại."
+        "errorGeneric": "Đăng ký thất bại. Vui lòng thử lại.",
+        "ssoComingSoon": "Sắp có mặt — vui lòng dùng email để đăng ký"
       }
     },
     "pricing": {

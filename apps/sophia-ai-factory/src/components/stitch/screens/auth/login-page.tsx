@@ -173,7 +173,7 @@ export default function LoginPage() {
         {/* Sign Up Link */}
         <p className="text-center mt-xl font-body-sm text-body-sm text-on-surface-variant">
           {t('noAccount')}{' '}
-          <Link href="/register" className="text-primary font-semibold hover:underline">
+          <Link href="/signup" className="text-primary font-semibold hover:underline">
             {t('signUp')}
           </Link>
         </p>
