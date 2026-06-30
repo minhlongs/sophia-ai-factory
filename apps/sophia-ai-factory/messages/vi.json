@@ -422,7 +422,8 @@
       "faq_3_q": "Chính sách hoàn tiền của bạn là gì?",
       "tier_selection_label": "Chọn gói dịch vụ",
       "billing_cycle_aria_label": "Chu kỳ thanh toán",
-      "payment_method_aria_label": "Phương thức thanh toán"
+      "payment_method_aria_label": "Phương thức thanh toán",
+      "offline_payment_received": "Đã nhận đơn hàng — đội ngũ sẽ liên hệ xác nhận thanh toán"
     },
     "roi": {
       "title": "Tính Toán Doanh Thu Tiềm Năng",

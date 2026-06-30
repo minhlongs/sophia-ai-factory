@@ -422,7 +422,8 @@
       "faq_3_q": "What is your refund policy?",
       "tier_selection_label": "Select a plan",
       "billing_cycle_aria_label": "Billing cycle",
-      "payment_method_aria_label": "Payment method"
+      "payment_method_aria_label": "Payment method",
+      "offline_payment_received": "Offline payment received"
     },
     "roi": {
       "title": "Calculate Your Potential Revenue",
