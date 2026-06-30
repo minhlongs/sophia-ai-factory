@@ -15,14 +15,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 
 // Hoisted mocks for dependencies
-const { mockVerifyIpnSignature, mockProcessIpn, mockLogger } = vi.hoisted(() => ({
-  mockVerifyIpnSignature: vi.fn(),
+const { mockParseIpnWebhook, mockProcessIpn, mockLogger } = vi.hoisted(() => ({
+  mockParseIpnWebhook: vi.fn(),
   mockProcessIpn: vi.fn(),
   mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 
 vi.mock('@/tree/clients/nowpayments-client', () => ({
-  verifyIpnSignature: mockVerifyIpnSignature,
+  parseIpnWebhook: mockParseIpnWebhook,
   lookupInvoice: vi.fn(),
 }))
 
@@ -73,12 +73,25 @@ const VALID_PAYLOAD = JSON.stringify({
   invoice_id: '5710519960',
 })
 
+/** Build a valid IPN result matching the parsed payload shape. */
+function validIpnResult(raw: Record<string, unknown>) {
+  return {
+    payment_id: String(raw.payment_id ?? 'test-id'),
+    payment_status: raw.payment_status ?? 'finished',
+    price_amount: Number(raw.price_amount ?? 199),
+    price_currency: String(raw.price_currency ?? 'USD'),
+    order_id: raw.order_id as string | undefined,
+    invoice_id: raw.invoice_id as string | undefined,
+  }
+}
+
 beforeEach(() => {
   vi.resetModules()
   vi.stubEnv('NOWPAYMENTS_IPN_SECRET', TEST_SECRET)
-  mockVerifyIpnSignature.mockReset()
+  mockParseIpnWebhook.mockReset()
   mockProcessIpn.mockReset()
-  mockVerifyIpnSignature.mockResolvedValue(true)
+  // Default: parseIpnWebhook returns valid result (simulating successful SDK verification)
+  mockParseIpnWebhook.mockImplementation((payload: Record<string, unknown>) => validIpnResult(payload))
   mockProcessIpn.mockResolvedValue({ success: true, message: 'Processed finished' })
 })
 
@@ -109,7 +122,6 @@ describe('contract: POST body parsing', () => {
     const req = makePostRequest(null, 'any-sig')
     const res = await POST(req)
     expect(res.status).toBe(400)
-    // Route tries JSON.parse('') which throws "Invalid JSON"
   })
 
   it('returns 400 for requests with malformed JSON body', async () => {
@@ -132,8 +144,10 @@ describe('contract: signature verification', () => {
     expect(body.error).toMatch(/missing signature/i)
   })
 
-  it('returns 400 when signature verification fails', async () => {
-    mockVerifyIpnSignature.mockResolvedValue(false)
+  it('returns 400 when SDK verification throws (invalid signature)', async () => {
+    mockParseIpnWebhook.mockImplementation(() => {
+      throw new Error('Invalid webhook signature')
+    })
     const { POST } = await import('../route')
     const req = makePostRequest(VALID_PAYLOAD, 'invalid-signature')
     const res = await POST(req)
@@ -164,9 +178,11 @@ describe('contract: valid IPN processing', () => {
   })
 
   it('returns 400 when payload schema validation fails', async () => {
-    const badPayload = JSON.stringify({ payment_id: '', payment_status: 'invalid', price_amount: -1, price_currency: '' })
+    const badPayload = { payment_id: '', payment_status: 'invalid', price_amount: -1, price_currency: '' }
+    // parseIpnWebhook returns the bad data — Zod should catch it
+    mockParseIpnWebhook.mockReturnValue(badPayload)
     const { POST } = await import('../route')
-    const req = makePostRequest(badPayload, 'valid-sig')
+    const req = makePostRequest(JSON.stringify(badPayload), 'valid-sig')
     const res = await POST(req)
     expect(res.status).toBe(400)
     const body = await res.json() as { error: string }

@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyIpnSignature, lookupInvoice } from '@/tree/clients/nowpayments-client'
+import { parseIpnWebhook, lookupInvoice } from '@/tree/clients/nowpayments-client'
 import { processNowPaymentsIpn } from '@/land/billing/nowpayments-ipn-handlers'
 import { ipnPayloadSchema } from '@/land/billing/ipn-payload-schema'
 import { logger } from '@/seed/utils/logger-utility'
@@ -89,21 +89,25 @@ logger.warn('[NOWPayments Webhook] Missing x-nowpayments-sig header')
 return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
 }
 
-const isValid = await verifyIpnSignature(rawBody, signature, nowPaymentsIpnSecret)
-if (!isValid) {
-logger.warn('[NOWPayments Webhook] Invalid IPN signature')
-return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
-}
-
-// Parse and validate IPN payload with Zod
-let parsed: ReturnType<typeof ipnPayloadSchema.safeParse>
+// Parse JSON body
+let rawPayload: Record<string, unknown>
 try {
-const raw = JSON.parse(rawBody) as unknown
-parsed = ipnPayloadSchema.safeParse(raw)
+rawPayload = JSON.parse(rawBody) as Record<string, unknown>
 } catch {
 return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
 }
 
+// SDK parseWebhook handles signature verification + parsing in one call
+let sdkResult: ReturnType<typeof parseIpnWebhook>
+try {
+sdkResult = parseIpnWebhook(rawPayload, signature)
+} catch (err) {
+logger.warn('[NOWPayments Webhook] SDK verification failed', { error: String(err) })
+return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
+}
+
+// Defense-in-depth: Zod validation still applied after SDK parsing
+const parsed = ipnPayloadSchema.safeParse(sdkResult)
 if (!parsed.success) {
 logger.warn('[NOWPayments Webhook] Invalid payload shape', { errors: parsed.error.flatten() })
 return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })

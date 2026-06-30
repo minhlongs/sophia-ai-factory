@@ -13,7 +13,7 @@
 
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createOneTimeInvoiceUrl } from '@/tree/clients/nowpayments-client';
+import { createOneTimeInvoiceUrl, createOneTimeCheckout } from '@/tree/clients/nowpayments-client';
 import { getOneTimeSkuById, ONE_TIME_SKUS } from '@/seed/config/one-time-skus';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
@@ -119,7 +119,21 @@ export const POST = withRateLimit(async function POST(request: Request) {
       return NextResponse.json({ url: existingUrl, deduplicated: true });
     }
 
-    const url = createOneTimeInvoiceUrl(sku, userId, parsed.data.customerEmail);
+    let url: string
+    try {
+      const result = await createOneTimeCheckout({
+        skuId: sku.id,
+        userId,
+        customerEmail: parsed.data.customerEmail,
+      });
+      url = result.invoiceUrl;
+    } catch (sdkErr) {
+      logger.warn('[one-time-checkout] SDK checkout failed, falling back to pre-created invoice', {
+        error: sdkErr instanceof Error ? sdkErr.message : String(sdkErr),
+        skuId: sku.id,
+      });
+      url = createOneTimeInvoiceUrl(sku, userId, parsed.data.customerEmail);
+    }
     return NextResponse.json({ url });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';

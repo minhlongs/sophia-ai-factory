@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { createInvoiceUrl, NOWPAYMENTS_TIERS } from '@/tree/clients/nowpayments-client';
+import { createInvoiceUrl, createCheckout, NOWPAYMENTS_TIERS } from '@/tree/clients/nowpayments-client';
 import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import { checkoutSchema } from '@/land/schemas';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
@@ -57,7 +57,17 @@ export const GET = withRateLimit(async function GET(request: NextRequest) {
       const redirectUrl = encodeURIComponent(`/api/checkout?tier=${rawTier}`);
       return NextResponse.redirect(`${appUrl}/login?redirect=${redirectUrl}`);
     }
-    const checkoutUrl = createInvoiceUrl(mappedTier, userId);
+    let checkoutUrl: string
+    try {
+      const result = await createCheckout({ tierId: mappedTier, userId });
+      checkoutUrl = result.invoiceUrl;
+    } catch (sdkErr) {
+      logger.warn('[Checkout/GET] SDK checkout failed, falling back to pre-created invoice', {
+        error: sdkErr instanceof Error ? sdkErr.message : String(sdkErr),
+        tier: mappedTier,
+      });
+      checkoutUrl = createInvoiceUrl(mappedTier, userId);
+    }
     return NextResponse.redirect(checkoutUrl);
   } catch {
     return NextResponse.redirect(`${appUrl}/pricing`);
@@ -271,7 +281,17 @@ if (promoCode && validation?.valid && calc.isFreeOrder && validation.discountTyp
         if (paymentMethod === 'nowpayments') {
           const orderId = `sophia_${userId}_${Date.now()}`;
           try {
-            const invoiceUrl = createInvoiceUrl(tier, userId);
+            let invoiceUrl: string
+            try {
+              const result = await createCheckout({ tierId: tier, userId, customerEmail });
+              invoiceUrl = result.invoiceUrl;
+            } catch (sdkErr) {
+              logger.warn('[Checkout/POST] SDK checkout failed, falling back to pre-created invoice', {
+                error: sdkErr instanceof Error ? sdkErr.message : String(sdkErr),
+                tier,
+              });
+              invoiceUrl = createInvoiceUrl(tier, userId);
+            }
             await writeOrder({
               order_id: orderId,
               user_id: userId,
