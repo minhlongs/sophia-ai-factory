@@ -170,7 +170,14 @@ describe('NOWPayments webhook: tier_upgraded emission', () => {
     const captureSpy = vi.spyOn(captureModule, 'captureTierUpgraded').mockResolvedValue(undefined)
 
     const nowpaymentsClient = await import('@/tree/clients/nowpayments-client')
-    const verifySpy = vi.spyOn(nowpaymentsClient, 'verifyIpnSignature').mockResolvedValue(true)
+    vi.spyOn(nowpaymentsClient, 'parseIpnWebhook').mockReturnValue({
+      payment_id: 'pay-123',
+      payment_status: 'finished',
+      order_id: 'sophia_user-456_1234567890',
+      price_amount: 99,
+      price_currency: 'USD',
+      invoice_id: '4559269964',
+    })
 
     const ipnHandlers = await import('@/land/billing/nowpayments-ipn-handlers')
     const processSpy = vi.spyOn(ipnHandlers, 'processNowPaymentsIpn').mockResolvedValue({ success: true, message: 'ok' })
@@ -206,7 +213,7 @@ describe('NOWPayments webhook: tier_upgraded emission', () => {
     )
 
     captureSpy.mockRestore()
-    verifySpy.mockRestore()
+    processSpy.mockRestore()
     processSpy.mockRestore()
   }, 20000)
 })
