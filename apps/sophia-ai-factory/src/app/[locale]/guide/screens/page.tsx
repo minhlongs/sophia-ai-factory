@@ -100,7 +100,7 @@ export default function ScreensGuidePage() {
           <Search className="w-5 h-5 text-accent-400" aria-hidden="true" />
           Bản Đồ Trang
         </h2>
-        <div className="border border-border/40 rounded-xl overflow-hidden">
+        <div className="border border-border/40 rounded-xl overflow-x-auto">
           <div className="grid grid-cols-[auto_1fr_1fr] bg-muted/30 px-5 py-2.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-border/40 gap-4">
             <span>#</span>
             <span>Tên Trang</span>

@@ -58,7 +58,6 @@ const config: Config = {
           DEFAULT: 'var(--destructive)',
           container: 'var(--destructive)',
         },
-        // Chart colors for data visualization
         chart: {
           '1': 'var(--chart-1)',
           '2': 'var(--chart-2)',
@@ -80,24 +79,24 @@ const config: Config = {
         "gradient-neon": "var(--gradient-neon)",
       },
       fontFamily: {
-        // Stitch uses Inter for all text
-        'display-lg': ['Inter', 'var(--font-plus-jakarta)', 'sans-serif'],
-        'headline-xl': ['Inter', 'var(--font-plus-jakarta)', 'sans-serif'],
-        'headline-lg': ['Inter', 'var(--font-plus-jakarta)', 'sans-serif'],
-        'headline-md': ['Inter', 'var(--font-plus-jakarta)', 'sans-serif'],
-        'headline-sm': ['Inter', 'var(--font-plus-jakarta)', 'sans-serif'],
-        'body-lg': ['Inter', 'var(--font-plus-jakarta)', 'sans-serif'],
-        'body-md': ['Inter', 'var(--font-plus-jakarta)', 'sans-serif'],
-        'body-sm': ['Inter', 'var(--font-plus-jakarta)', 'sans-serif'],
-        'label-lg': ['Inter', 'var(--font-plus-jakarta)', 'sans-serif'],
-        'label-md': ['Inter', 'var(--font-plus-jakarta)', 'sans-serif'],
-        'label-sm': ['Inter', 'var(--font-plus-jakarta)', 'sans-serif'],
-        code: ['var(--font-geist-mono)', 'JetBrains Mono', 'monospace'],
-        mono: ['var(--font-geist-mono)', 'monospace'],
-        sans: ['Inter', 'var(--font-plus-jakarta)', 'Arial', 'Helvetica', 'sans-serif'],
+        // Saigon Factory: Be Vietnam Pro (display) + DM Sans (body) + JetBrains Mono (code)
+        'display-lg': ['var(--font-be-vietnam-pro)', 'sans-serif'],
+        'headline-xl': ['var(--font-be-vietnam-pro)', 'sans-serif'],
+        'headline-lg': ['var(--font-be-vietnam-pro)', 'sans-serif'],
+        'headline-md': ['var(--font-be-vietnam-pro)', 'sans-serif'],
+        'headline-sm': ['var(--font-be-vietnam-pro)', 'sans-serif'],
+        'body-lg': ['var(--font-dm-sans)', 'sans-serif'],
+        'body-md': ['var(--font-dm-sans)', 'sans-serif'],
+        'body-sm': ['var(--font-dm-sans)', 'sans-serif'],
+        'label-lg': ['var(--font-dm-sans)', 'sans-serif'],
+        'label-md': ['var(--font-dm-sans)', 'sans-serif'],
+        'label-sm': ['var(--font-dm-sans)', 'sans-serif'],
+        code: ['var(--font-jetbrains-mono)', 'monospace'],
+        mono: ['var(--font-jetbrains-mono)', 'monospace'],
+        sans: ['var(--font-dm-sans)', 'Arial', 'Helvetica', 'sans-serif'],
       },
       fontSize: {
-        // Stitch typography scale
+        // Stitch typography scale (unchanged — font families changed above)
         'display-lg': ['48px', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '700' }],
         'headline-xl': ['36px', { lineHeight: '1.2', letterSpacing: '-0.02em', fontWeight: '700' }],
         'headline-lg': ['32px', { lineHeight: '1.2', letterSpacing: '-0.01em', fontWeight: '600' }],
@@ -110,7 +109,7 @@ const config: Config = {
         'label-lg': ['16px', { lineHeight: '1.5', fontWeight: '500' }],
         'label-md': ['14px', { lineHeight: '1', letterSpacing: '0.01em', fontWeight: '500' }],
         'label-sm': ['12px', { lineHeight: '1', letterSpacing: '0.02em', fontWeight: '600' }],
-        code: ['14px', { lineHeight: '1.5', fontWeight: '400', fontFamily: 'var(--font-geist-mono), monospace' }],
+        code: ['14px', { lineHeight: '1.5', fontWeight: '400', fontFamily: 'var(--font-jetbrains-mono), monospace' }],
       },
     },
   },

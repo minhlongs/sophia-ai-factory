@@ -120,7 +120,7 @@ export function HandoverStatsPanel({ isVi }: Props) {
             key={c.key}
             className={`rounded-xl border ${c.accent} p-3 flex flex-col gap-1`}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs text-muted-foreground-400">{c.label}</span>
               {c.icon}
             </div>
@@ -135,7 +135,7 @@ export function HandoverStatsPanel({ isVi }: Props) {
             key={d.label}
             className="rounded-xl border border-border-800 bg-muted-900/40 p-3 flex flex-col gap-1"
           >
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-[11px] text-muted-foreground-500">{d.label}</span>
               {d.icon}
             </div>

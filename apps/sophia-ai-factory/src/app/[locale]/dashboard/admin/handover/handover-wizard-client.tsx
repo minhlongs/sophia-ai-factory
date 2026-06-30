@@ -146,7 +146,7 @@ export function HandoverWizardClient({ locale }: Props) {
         )}
 
         {step < 4 && (
-          <div className="flex items-center justify-between pt-4 border-t border-border-800">
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-border-800">
             {step > 1 ? (
               <button onClick={() => setStep((prev) => Math.max(prev - 1, 1) as Step)} className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border-700 text-muted-foreground-300 text-sm hover:bg-muted-800 transition-colors">
                 <ChevronLeft size={16} />{isVi ? 'Quay lại' : 'Back'}

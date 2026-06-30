@@ -52,7 +52,7 @@ export function CtaSection() {
                   <Button
                     variant="glow"
                     size="lg"
-                    className="glow-primary rounded-full px-10 text-base w-full sm:w-auto"
+                    className="rounded-full px-10 text-base w-full sm:w-auto"
                   >
                     Bắt Đầu Miễn Phí
                   </Button>

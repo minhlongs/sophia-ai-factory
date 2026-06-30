@@ -97,7 +97,7 @@ export function Step1CustomerInfo({ form, updateForm, isVi }: Step1Props) {
       <Field icon={<Phone size={16} />} label={isVi ? 'Số điện thoại (tùy chọn)' : 'Phone (optional)'}>
         <input className={inputCls} value={form.phone} onChange={(e) => updateForm('phone', e.target.value)} placeholder="+84 ..." />
       </Field>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field icon={<Globe size={16} />} label={isVi ? 'Ngôn ngữ' : 'Locale'}>
           <select className={inputCls} value={form.locale} onChange={(e) => updateForm('locale', e.target.value)}>
             <option value="vi">Tiếng Việt</option>

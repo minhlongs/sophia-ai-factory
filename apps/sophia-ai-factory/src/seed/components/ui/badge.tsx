@@ -12,34 +12,34 @@ const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
         className={cn(
           "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-colors motion-reduce:transition-none",
 
-          // Variant styles
+          // Variant styles — Saigon Factory palette
           {
-            // Basic tier - Cyan
-            "bg-[var(--neon-cyan)]/10 text-[var(--neon-cyan)] border border-[var(--neon-cyan)]/30":
+            // Basic tier — warm amber gold
+            "bg-primary/10 text-primary border border-primary/30":
               variant === "basic",
 
-            // Premium tier - Purple
-            "bg-[var(--neon-purple)]/10 text-[var(--neon-purple)] border border-[var(--neon-purple)]/30":
+            // Premium tier — deep indigo
+            "bg-accent/10 text-accent-foreground border border-accent/30":
               variant === "premium",
 
-            // Enterprise tier - Gradient
-            "bg-gradient-to-r from-[var(--neon-cyan)]/10 to-[var(--neon-purple)]/10 text-white border border-[var(--neon-cyan)]/30":
+            // Enterprise tier — amber→indigo gradient (factory gold + ink)
+            "bg-gradient-to-r from-primary/15 via-primary/10 to-accent/15 text-primary-foreground border border-primary/30":
               variant === "enterprise",
 
-            // Default - Glass
-            "bg-white/5 text-muted-foreground border border-white/10":
+            // Default — warm paper
+            "bg-muted text-muted-foreground border border-border":
               variant === "default",
 
-            // Secondary - Gray (dark theme)
-            "bg-muted-800 text-muted-foreground border border-border-700":
+            // Secondary — muted indigo
+            "bg-accent/5 text-muted-foreground border border-border":
               variant === "secondary",
 
-            // Outline - Transparent with border (dark theme)
-            "bg-transparent text-muted-foreground border border-border-600":
+            // Outline — transparent with border
+            "bg-transparent text-muted-foreground border border-border":
               variant === "outline",
 
-            // Destructive - Red (dark theme)
-            "bg-red-900/40 text-red-300 border border-red-700":
+            // Destructive — red ochre
+            "bg-destructive/10 text-destructive border border-destructive/20":
               variant === "destructive",
           },
 

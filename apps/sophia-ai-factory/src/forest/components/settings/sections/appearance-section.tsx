@@ -30,7 +30,7 @@ export function AppearanceSection({ form }: AppearanceSectionProps) {
       <CardContent>
         <div className="space-y-2">
           <Label>{t('themeLabel')}</Label>
-          <div className="grid grid-cols-3 gap-4" role="radiogroup" aria-label={t('themeAriaLabel')}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4" role="radiogroup" aria-label={t('themeAriaLabel')}>
             <button
               type="button"
               role="radio"

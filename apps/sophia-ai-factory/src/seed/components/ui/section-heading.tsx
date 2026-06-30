@@ -20,7 +20,7 @@ const SectionHeading = React.forwardRef<HTMLDivElement, SectionHeadingProps>(
         ref={ref}
         {...props}
       >
-        <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
+        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary">
           {title}
         </h2>
         {subtitle && (

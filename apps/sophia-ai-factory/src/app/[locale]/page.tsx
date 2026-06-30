@@ -9,6 +9,7 @@ export const revalidate = 60;
 import { Hero } from "@/app/components/sections/hero";
 import { Skeleton } from "@/seed/components/ui/skeleton";
 import { ScrollReveal } from "@/seed/components/ui/scroll-reveal";
+import { PageTransition } from "@/seed/components/ui/page-transition";
 import { StickyMobileCta } from "@/app/components/layout/sticky-mobile-cta";
 import { buildFAQPageSchema, buildOrganizationSchema } from "@/land/seo/schema-org";
 import { buildHomeMetadata } from "./home-metadata";
@@ -143,6 +144,7 @@ export default async function Home({
 
   return (
     <main id="main-content" className="max-w-full overflow-hidden">
+      <PageTransition>
       {/* Organization structured data — global brand signal */}
       <script
         type="application/ld+json"
@@ -193,6 +195,7 @@ export default async function Home({
       </ScrollReveal>
       <Footer />
       <StickyMobileCta />
+      </PageTransition>
     </main>
   );
 }

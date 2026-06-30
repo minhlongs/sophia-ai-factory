@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import type { Metadata, Viewport } from "next";
 import nextDynamic from "next/dynamic";
-import localFont from "next/font/local";
+import { Be_Vietnam_Pro, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "../globals.css";
 import { Navbar } from "@/app/components/layout/navbar";
 import { QueryProvider } from "@/forest/components/providers/query-provider";
@@ -51,16 +51,30 @@ const CrispWidget = nextDynamic(
   () => import("@/forest/components/support/crisp-widget").then(m => ({ default: m.CrispWidget }))
 );
 
-const geistSans = localFont({
-  src: "../fonts/GeistVF.woff2",
-  variable: "--font-geist-sans",
-  weight: "100 900",
+// ── Saigon Factory fonts ───────────────────────────────────────────
+// Be Vietnam Pro → display/headlines — designed for Vietnamese
+// DM Sans → body/labels — clean geometric sans, supports Vietnamese
+// JetBrains Mono → code/data tables — typewriter industrial feel
+
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-be-vietnam-pro",
+  display: "swap",
 });
 
-const geistMono = localFont({
-  src: "../fonts/GeistMonoVF.woff2",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+const dmSans = DM_Sans({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin", "latin-ext"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -137,11 +151,7 @@ export default async function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap"
         />
-        <link
-  rel="stylesheet"
-  href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"
-/>
-<link rel="preconnect" href="https://api.nowpayments.io" />
+        <link rel="preconnect" href="https://api.nowpayments.io" />
         <link rel="dns-prefetch" href="https://api.nowpayments.io" />
         <script
           type="application/ld+json"
@@ -169,7 +179,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${beVietnamPro.variable} ${dmSans.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none">
           Skip to main content

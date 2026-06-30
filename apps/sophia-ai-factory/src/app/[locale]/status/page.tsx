@@ -72,12 +72,12 @@ export default async function StatusPage({ params }: { params: Promise<{ locale:
         )}
 
         <div className="bg-card border border-border rounded-2xl p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <h2 className="font-semibold text-white">{t('uptime90d')}</h2>
             <span className="text-emerald-400 text-sm font-mono">{avg90Uptime}%</span>
           </div>
           <UptimeGrid rollup={rollup} />
-          <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-4 mt-3 text-xs text-muted-foreground">
             <span className="flex items-center gap-1"><span className="w-3 h-3 bg-emerald-600 rounded-sm inline-block" aria-hidden="true" />≥99.5%</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 bg-amber-600 rounded-sm inline-block" aria-hidden="true" />95-99.5%</span>
             <span className="flex items-center gap-1"><span className="w-3 h-3 bg-red-700 rounded-sm inline-block" aria-hidden="true" />&lt;95%</span>

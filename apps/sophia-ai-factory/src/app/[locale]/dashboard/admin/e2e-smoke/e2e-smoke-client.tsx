@@ -160,7 +160,7 @@ export function E2ESmokeClient({ locale }: Props) {
     <div className="space-y-6">
       {/* Status + controls */}
       <div className="rounded-xl border border-border-800 bg-muted-900/50 p-5 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <span className={`text-lg font-semibold ${statusColor}`}>{statusLabel}</span>
             {phase !== 'idle' && (

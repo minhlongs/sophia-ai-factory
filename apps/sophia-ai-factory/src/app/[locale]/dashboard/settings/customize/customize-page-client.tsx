@@ -744,7 +744,7 @@ export function CustomizePageClient() {
   }
 
   return (
-    <div className="flex gap-6">
+    <div className="flex flex-col lg:flex-row gap-6">
       <nav className="w-48 shrink-0">
         <ul className="space-y-1">
           {NAV_ITEMS.map(item => (

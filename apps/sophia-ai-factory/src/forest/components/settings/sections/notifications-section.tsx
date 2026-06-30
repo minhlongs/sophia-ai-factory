@@ -37,7 +37,7 @@ export function NotificationsSection({ form, isPending }: NotificationsSectionPr
         <CardDescription>{t('subtitle')}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex items-center justify-between rounded-lg border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4">
           <div className="space-y-0.5">
             <Label htmlFor="notif-marketing" className="text-base">{t('marketingTitle')}</Label>
             <p className="text-sm text-muted-foreground">{t('marketingDesc')}</p>
@@ -51,7 +51,7 @@ export function NotificationsSection({ form, isPending }: NotificationsSectionPr
             }
           />
         </div>
-        <div className="flex items-center justify-between rounded-lg border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4">
           <div className="space-y-0.5">
             <Label htmlFor="notif-security" className="text-base">{t('securityTitle')}</Label>
             <p className="text-sm text-muted-foreground">{t('securityDesc')}</p>
@@ -65,7 +65,7 @@ export function NotificationsSection({ form, isPending }: NotificationsSectionPr
             }
           />
         </div>
-        <div className="flex items-center justify-between rounded-lg border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4">
           <div className="space-y-0.5">
             <Label htmlFor="notif-telegram" className="text-base">{t('telegramTitle')}</Label>
             <p className="text-sm text-muted-foreground">{t('telegramDesc')}</p>

@@ -94,7 +94,7 @@ export default async function AffiliateLandingPage({ params }: PageProps) {
       {/* Earnings table */}
       <section className="space-y-6">
         <h2 className="text-2xl md:text-3xl font-bold text-center">{t('earnings.title')}</h2>
-        <div className="rounded-xl border border-border bg-card overflow-hidden max-w-lg mx-auto">
+        <div className="rounded-xl border border-border bg-card overflow-x-auto max-w-lg mx-auto">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-muted-foreground text-xs uppercase tracking-wide">
               <tr>

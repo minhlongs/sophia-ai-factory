@@ -174,7 +174,7 @@ export function ApiKeyList({ onCreateKey, refreshTrigger = 0 }: Props) {
       </div>
 
       {/* Key table */}
-      <div className="overflow-hidden rounded-lg border border-border bg-card">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card">
         {keys.length === 0 ? (
           <p className="p-6 text-sm text-muted-foreground">{t('no_keys')}</p>
         ) : (

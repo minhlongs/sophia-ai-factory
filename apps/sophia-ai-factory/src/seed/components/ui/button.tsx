@@ -18,9 +18,9 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        primary: "bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white hover:opacity-90 border-0",
-        glow: "bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white shadow-[0_0_30px_rgba(0,240,255,0.5)] hover:shadow-[0_0_50px_rgba(112,0,255,0.7)] hover:scale-105 border-0",
-        glass: "bg-[var(--glass-bg)] border border-[var(--glass-border)] backdrop-blur-lg text-white hover:bg-white/10",
+        primary: "bg-primary text-primary-foreground shadow-[inset_0_1px_0_0_hsl(var(--primary-foreground)/0.2),0_2px_8px_rgba(0,0,0,0.15)] hover:bg-primary/90 active:scale-[0.98] border-0",
+        glow: "bg-primary text-primary-foreground shadow-[0_0_20px_hsl(var(--primary)/0.4)] hover:shadow-[0_0_35px_hsl(var(--primary)/0.6)] hover:scale-105 active:scale-[0.98] border-0 transition-all",
+        glass: "bg-[var(--glass-bg)] border border-[var(--glass-border)] backdrop-blur-lg text-foreground hover:bg-muted",
       },
       size: {
         default: "h-9 px-4 py-2",

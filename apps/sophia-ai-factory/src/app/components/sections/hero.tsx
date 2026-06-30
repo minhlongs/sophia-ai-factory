@@ -79,7 +79,7 @@ export function Hero() {
             style={{ animationDelay: "0.1s" }}
           >
             {t("title_1")}
-            <span className="block text-gradient mt-1 drop-shadow-[0_0_30px_rgba(0,240,255,0.15)]">{t("title_2")}</span>
+            <span className="block text-gradient mt-1 drop-shadow-[0_0_30px_hsl(var(--primary)/0.2)]">{t("title_2")}</span>
           </h1>
 
           {/* Dynamic command display */}
@@ -103,7 +103,7 @@ export function Hero() {
             style={{ animationDelay: "0.4s" }}
           >
             <Link href="/signup">
-              <Button variant="glow" size="lg" className="glow-primary rounded-full px-8 text-base w-full sm:w-auto shadow-lg shadow-accent/20">
+              <Button variant="glow" size="lg" className="rounded-full px-8 text-base w-full sm:w-auto">
                 {t("cta_start")}
                 <span className="ml-2 hidden sm:inline text-xs opacity-70 font-normal">→</span>
               </Button>

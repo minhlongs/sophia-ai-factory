@@ -200,7 +200,7 @@ export function MigrationsClient({ locale }: Props) {
             {isVi ? 'Đã áp dụng' : 'Applied'}
           </h2>
           {applied.map((m) => (
-            <div key={m.filename} className="rounded-lg border border-border-800 bg-muted-900/30 p-3 flex items-center justify-between gap-2">
+            <div key={m.filename} className="rounded-lg border border-border-800 bg-muted-900/30 p-3 flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-mono text-muted-foreground-400 break-all">{m.filename}</span>
               <span className="text-xs text-emerald-500 shrink-0">
                 {isVi ? 'Đã áp dụng' : 'Applied'}

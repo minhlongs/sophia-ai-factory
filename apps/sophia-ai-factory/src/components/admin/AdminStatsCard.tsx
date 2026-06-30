@@ -23,7 +23,7 @@ export default function AdminStatsCard({ icon: Icon, title, href, rows }: AdminS
       href={href}
       className="block rounded-lg border border-border bg-card p-5 hover:border-foreground/40 transition"
     >
-      <header className="flex items-center justify-between gap-3 mb-3">
+      <header className="flex flex-wrap items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2">
           <Icon className="w-5 h-5 text-primary-400" aria-hidden="true" />
           <h2 className="font-semibold">{title}</h2>

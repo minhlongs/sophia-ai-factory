@@ -17,6 +17,7 @@ import { getD1 } from "@/seed/db/client";
 import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import { SignOutButton } from "@/seed/auth/sign-out-button";
 import { DashboardSidebarNav } from "@/forest/components/dashboard/dashboard-sidebar-nav";
+import { PageTransition } from "@/seed/components/ui/page-transition";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -92,14 +93,14 @@ export default async function DashboardLayout({
     trialEndsAt <= sevenDaysFromNow;
 
   return (
-    <div className="relative min-h-screen flex text-foreground overflow-hidden bg-gradient-to-tr from-[#020817] via-[#080b18] to-[#120a2e] p-0 md:p-1">
-      {/* Fixed Ambient Glow Background */}
+    <div className="relative min-h-screen flex text-foreground overflow-hidden bg-background p-0 md:p-1">
+      {/* Ambient background — warm amber + indigo orbs */}
       <div className="fixed inset-0 -z-50 overflow-hidden pointer-events-none bg-background">
-        {/* Cosmic Primary Orb */}
-        <div className="absolute top-[-10%] left-[-10%] w-[55%] h-[55%] rounded-full bg-primary/5 blur-[130px] animate-float" />
-        {/* Cosmic Secondary Orb */}
-        <div className="absolute bottom-[-10%] right-[-10%] w-[55%] h-[55%] rounded-full bg-accent/5 blur-[130px] animate-float-delayed" />
-        {/* Grid Overlay */}
+        {/* Warm amber orb */}
+        <div className="absolute top-[-10%] left-[-10%] w-[55%] h-[55%] rounded-full bg-primary/[0.04] blur-[130px] animate-float" />
+        {/* Deep indigo orb */}
+        <div className="absolute bottom-[-10%] right-[-10%] w-[55%] h-[55%] rounded-full bg-accent/[0.04] blur-[130px] animate-float-delayed" />
+        {/* Dot grid */}
         <div className="absolute inset-0 dot-grid-overlay opacity-[0.03]" />
       </div>
 
@@ -107,7 +108,7 @@ export default async function DashboardLayout({
       <aside className="w-64 backdrop-blur-xl bg-background/40 border border-border rounded-2xl shadow-2xl hidden md:flex flex-col z-10 my-4 ml-4 mr-2">
         <div className="p-6 border-b border-border">
           <Link href="/" className="flex items-center gap-2 hover:scale-105 active:scale-95 transition-transform duration-200">
-            <span className="text-xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent">
+            <span className="text-xl font-bold text-primary">
               {t('header.brand')}
             </span>
           </Link>
@@ -115,7 +116,7 @@ export default async function DashboardLayout({
             <span
               className={`mt-2 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
                 userTier === 'MASTER'
-                  ? 'bg-gradient-to-r from-violet-500/20 to-cyan-500/20 text-[var(--neon-cyan)] ring-1 ring-[var(--neon-cyan)]/40'
+                  ? 'bg-primary/15 text-primary ring-1 ring-primary/30'
                   : 'bg-muted text-muted-foreground ring-1 ring-border'
               }`}
               aria-label={t('sidebar.tierBadge', { tier: userTier })}
@@ -141,7 +142,7 @@ export default async function DashboardLayout({
           {userTier && userTier !== 'MASTER' && (
             <Link
               href="/pricing"
-              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-gradient-to-r from-violet-500 to-cyan-500 text-white rounded-lg hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_15px_rgba(0,240,255,0.3)] transition-all duration-200"
+              className="flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:scale-[1.02] active:scale-[0.98] hover:shadow-[0_0_15px_hsl(var(--primary)/0.3)] transition-all duration-200"
             >
               {t('sidebar.upgradePlan')}
             </Link>
@@ -155,7 +156,7 @@ export default async function DashboardLayout({
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 bg-background/20 backdrop-blur-md border border-border rounded-2xl shadow-xl overflow-hidden mx-4 my-4 md:my-4 md:mr-4 md:ml-2 z-10">
+      <div className="flex-1 flex flex-col min-w-0 bg-background/20 backdrop-blur-md border border-border rounded-2xl shadow-xl overflow-x-hidden mx-4 my-4 md:my-4 md:mr-4 md:ml-2 z-10">
         {/* Trial banner — shown above content when user has active trial */}
         {showTrialBanner && (
           <TrialBanner trialEndsAt={trialEndsAt!} />
@@ -176,7 +177,9 @@ export default async function DashboardLayout({
         </header>
 
         <main id="main-content" className="flex-1 p-6 md:p-8 overflow-y-auto pb-20 md:pb-8 z-0">
-          {children}
+          <PageTransition key={JSON.stringify(params)}>
+            {children}
+          </PageTransition>
         </main>
       </div>
 

@@ -167,7 +167,7 @@ export default function DeployGuardApprovalDetail({ locale, approval: initialApp
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-4">
           <h2 className="text-lg font-semibold">{isVi ? 'Thông tin cơ bản' : 'Basic Information'}</h2>
-          <dl className="grid grid-cols-2 gap-3 text-sm">
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div>
               <dt className="text-muted-foreground">{isVi ? 'Commit' : 'Commit'}</dt>
               <dd className="font-mono text-primary-300">{approval.commitSha.slice(0, 8)}</dd>

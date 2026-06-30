@@ -155,7 +155,7 @@ export default async function BetaInvitesPage({ params }: PageProps): Promise<Re
       </div>
 
       {/* Invites table */}
-      <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+      <div className="rounded-2xl bg-white/5 border border-white/10 overflow-x-auto">
         <div className="flex items-center gap-2 px-5 py-4 border-b border-white/10">
           <Ticket className="w-4 h-4 text-white/50" aria-hidden="true" />
           <h2 className="text-sm font-medium text-white/80">
