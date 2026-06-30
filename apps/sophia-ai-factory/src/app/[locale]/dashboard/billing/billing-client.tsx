@@ -16,6 +16,10 @@ import { CancelSubscriptionModal } from '@/components/billing/cancel-subscriptio
 import { BillingChargeSummary } from './billing-charge-summary';
 import { BillingOverageTable } from './billing-overage-table';
 import { BillingPaymentHistory } from './billing-payment-history';
+import { SubscriptionPlanCard } from './subscription-plan-card';
+import { InvoiceHistoryTable } from './invoice-history-table';
+import { PaymentMethodDisplay } from './payment-method-display';
+import { TierChangeDialog } from './tier-change-dialog';
 import type { UsageSummaryResponse, DunningStatusResponse } from './billing-page-types';
 import type { Tier } from '@/seed/types';
 
@@ -44,6 +48,7 @@ export default function BillingClient({ params }: { params: Promise<{ locale: st
   const { locale } = use(params);
   const t = useTranslations('dashboard.billing');
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [tierChangeOpen, setTierChangeOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: usageData, isLoading, error } = useQuery<UsageSummaryResponse>({
@@ -138,6 +143,22 @@ export default function BillingClient({ params }: { params: Promise<{ locale: st
 
       <BillingChargeSummary data={usageData} formatCurrency={(c) => formatCurrency(c, locale)} />
 
+      {/* Subscription plan card — self-service plan display */}
+      <SubscriptionPlanCard
+        currentTier={usageData.license.tier as Tier}
+        nextBillingDate={new Date(usageData.period.end * 1000).toISOString()}
+        onOpenChangeTier={() => setTierChangeOpen(true)}
+        onOpenCancel={() => setCancelOpen(true)}
+      />
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <PaymentMethodDisplay
+          hasPaymentMethod={false}
+          updateUrl="./billing/settings"
+        />
+        <InvoiceHistoryTable />
+      </div>
+
       <div>
         <h2 className="text-xl font-semibold mb-4">{t('usageBreakdown')}</h2>
         <FullUsageSummary hourly={hourlyUsage} daily={dailyUsage} monthly={monthlyUsage} />
@@ -221,6 +242,13 @@ export default function BillingClient({ params }: { params: Promise<{ locale: st
         open={cancelOpen}
         onOpenChange={setCancelOpen}
         currentTier={usageData.license.tier as Tier}
+      />
+
+      <TierChangeDialog
+        open={tierChangeOpen}
+        onOpenChange={setTierChangeOpen}
+        currentTier={usageData.license.tier as Tier}
+        onSuccess={() => { queryClient.invalidateQueries(); setTierChangeOpen(false); }}
       />
     </div>
   );

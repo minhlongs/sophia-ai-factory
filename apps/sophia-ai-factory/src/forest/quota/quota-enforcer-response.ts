@@ -5,6 +5,7 @@
 
 import type { EnhancedQuotaCheckResult, QuotaCheckContext } from './quota-checker'
 import type { DunningState } from '@/seed/types/billing-contracts'
+import { TOPUP_PRICE_PER_MCU } from '@/land/billing/overage-topup-types'
 
 export interface QuotaExceededResponse {
   error: string
@@ -14,6 +15,8 @@ export interface QuotaExceededResponse {
   remaining: { dailyCredits: number; hourlyCredits: number; monthlyCredits: number; dailyRequests: number }
   retryAfter: number
   upgradeUrl: string
+  topUpUrl?: string
+  pricePerCredit?: number
   dunningState?: DunningState
   dunningReason?: string
 }
@@ -49,6 +52,8 @@ export function createQuotaExceededResponse(
     remaining: result.remaining,
     retryAfter: retryAfterSeconds,
     upgradeUrl: '/dashboard/billing',
+    topUpUrl: '/dashboard/billing?tab=topup',
+    pricePerCredit: TOPUP_PRICE_PER_MCU,
   }
 }
 

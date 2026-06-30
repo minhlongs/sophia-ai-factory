@@ -4,9 +4,12 @@
  * Verifies HMAC-SHA1 signatures from ClickBank Instant Notification Service (INS).
  * Uses Web Crypto API (compatible with Cloudflare Workers — NOT node:crypto).
  * Timing-safe comparison via constant-time XOR accumulator.
+ * Audit logs verification failures for security monitoring.
  *
  * @module affiliates/clickbank-signature-verifier
  */
+
+import { logger } from '@/seed/utils/logger-utility'
 
 /**
  * Encode a string to Uint8Array with a guaranteed plain ArrayBuffer backing.
@@ -55,7 +58,14 @@ export async function verifyClickBankSignature(
   signature: string,
   secret: string
 ): Promise<boolean> {
-  if (!body || !signature || !secret) return false
+  if (!body || !signature || !secret) {
+    logger.warn('[clickbank-signature] Missing required parameters', {
+      hasBody: !!body,
+      hasSignature: !!signature,
+      hasSecret: !!secret,
+    })
+    return false
+  }
 
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
@@ -70,7 +80,22 @@ export async function verifyClickBankSignature(
 
   const sigClean = signature.trim().toLowerCase()
   // Reject malformed signatures (SHA-1 = 40 hex chars) before timing-safe compare
-  if (!/^[0-9a-f]{40}$/.test(sigClean)) return false
+  if (!/^[0-9a-f]{40}$/.test(sigClean)) {
+    logger.warn('[clickbank-signature] Malformed signature format rejected', {
+      sigLength: sigClean.length,
+      hasNonHex: !/^[0-9a-f]+$/.test(sigClean),
+    })
+    return false
+  }
 
-  return timingSafeEqual(encode(computed), encode(sigClean))
+  const isValid = timingSafeEqual(encode(computed), encode(sigClean))
+
+  if (!isValid) {
+    logger.warn('[clickbank-signature] Signature verification failed', {
+      bodyPreview: body.slice(0, 64),
+      sigPrefix: sigClean.slice(0, 8),
+    })
+  }
+
+  return isValid
 }
