@@ -117,10 +117,10 @@ export async function POST(request: NextRequest) {
     const _db = getD1();
     if (!_db) throw new Error('D1 unavailable');
     const db = _db;
-    const nowSec = Math.floor(Date.now() / 1000)
+    const nowMs = Date.now()
     await db
       .prepare('UPDATE user_profiles SET onboarding_completed_at = ? WHERE user_id = ?')
-      .bind(nowSec, user.id)
+      .bind(nowMs, user.id)
       .run()
 
     // E2 setup-complete lifecycle email — fire ONCE per user (lifecycle_email_log dedup).
@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
           })
           await db
             .prepare('INSERT OR IGNORE INTO lifecycle_email_log (user_id, template, sent_at) VALUES (?1,?2,?3)')
-            .bind(user.id, 'setup-complete', nowSec)
+            .bind(user.id, 'setup-complete', nowMs)
             .run()
         }
       } catch (emailErr) {

@@ -62,6 +62,13 @@ export default function LoginPage() {
         </CardHeader>
 
         <form className="space-y-lg" onSubmit={handleSubmit}>
+          {/* Error banner */}
+          {error && (
+            <div role="alert" className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400">
+              {error}
+            </div>
+          )}
+
           {/* Email Field */}
           <div className="space-y-sm">
             <label htmlFor="email" className="font-label-md text-label-md text-on-surface">
@@ -85,7 +92,7 @@ export default function LoginPage() {
               <label htmlFor="password" className="font-label-md text-label-md text-on-surface">
                 {t('passwordLabel')}
               </label>
-              <Link href="/forgot-password" className="font-label-sm text-label-sm text-primary hover:underline">
+              <Link href="/reset-password" className="font-label-sm text-label-sm text-primary hover:underline">
                 {t('forgotPassword')}
               </Link>
             </div>

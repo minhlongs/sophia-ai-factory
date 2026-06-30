@@ -167,7 +167,7 @@
       "brand": "Sophia AI Factory"
     },
     "hero": {
-      "title_1": "Nhà máy video + Tự động hóa AI",
+      "title_1": "Nhà máy video Sophia + Tự động hóa AI",
       "title_2": "Một Nền Tảng — Vô Hạn Quy Mô",
       "subtitle": "Tạo video, tìm lead, gửi chiến dịch — tất cả tự động hóa bằng AI.",
       "cta_start": "Bắt Đầu Miễn Phí",
@@ -184,7 +184,8 @@
       "trust_uptime": "Hạ tầng edge tin cậy",
       "trust_response": "Phản hồi edge",
       "trust_security": "Bảo mật Cloudflare",
-      "trust_edge": "Triển khai biên"
+      "trust_edge": "Triển khai biên",
+      "cta_pricing": "Xem Bảng Giá"
     },
     "workflow": {
       "title": "Nhà Máy Nội Dung Tự Động Của Bạn",
@@ -4564,7 +4565,11 @@
         "and": "And",
         "or": "Or",
         "googleSignIn": "Google Sign In",
-        "githubSignIn": "Github Sign In"
+        "githubSignIn": "Github Sign In",
+        "errorPasswordMismatch": "Mật khẩu không khớp",
+        "errorPasswordTooShort": "Mật khẩu phải có ít nhất 8 ký tự",
+        "errorEmailExists": "Email này đã được đăng ký",
+        "errorGeneric": "Đăng ký thất bại. Vui lòng thử lại."
       }
     },
     "pricing": {
@@ -4785,5 +4790,15 @@
     "pwf": "T/C/L",
     "detail": "Chi Tiết",
     "view": "Xem"
+  },
+  "setup_wizard": {
+    "system_check": {
+      "title": "Kiểm Tra Hệ Thống",
+      "cloudflare_workers": "Cloudflare Workers",
+      "cloudflare_desc": "Hệ thống đang chạy trên edge (toàn cầu)",
+      "security": "Bảo Mật",
+      "security_desc": "API key được mã hóa AES-256 khi lưu",
+      "next_step": "Bước tiếp theo: nhập API key cho dịch vụ AI. Bạn có thể bỏ qua và thêm sau trong Settings."
+    }
   }
 }

@@ -41,5 +41,5 @@ export default defineConfig({
         reuseExistingServer: !process.env.CI,
         timeout: process.env.E2E_PREBUILT === '1' ? 60 * 1000 : 300 * 1000,
       },
-  globalSetup: require.resolve('./tests/e2e/global-setup'),
+  globalSetup: './tests/e2e/global-setup.ts',
 });
