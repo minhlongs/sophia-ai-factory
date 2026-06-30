@@ -26,7 +26,7 @@ export default async function PricingPage() {
   let breadcrumbSchema: unknown = null;
 
   // Components (initially set to fallback)
-  let PricingSectionComponent: React.ComponentType<object> = EmptyComponent as React.ComponentType<object>;
+  let PricingSectionComponent: React.ComponentType<{ isAuthenticated: boolean }> = EmptyComponent as React.ComponentType<{ isAuthenticated: boolean }>;
   let PricingComparisonTableComponent: React.ComponentType<{ currentTier: Tier | null }> = EmptyComponent as React.ComponentType<{ currentTier: Tier | null }>;
   let PricingFaqComponent: React.ComponentType<object> = EmptyComponent as React.ComponentType<object>;
   let ProductionCostCalculatorComponent: React.ComponentType<object> = EmptyComponent as React.ComponentType<object>;
@@ -100,7 +100,7 @@ export default async function PricingPage() {
     ]);
 
     if (pricingSection.status === 'fulfilled' && pricingSection.value) {
-      PricingSectionComponent = pricingSection.value as React.ComponentType<object>;
+      PricingSectionComponent = pricingSection.value as React.ComponentType<{ isAuthenticated: boolean }>;
     }
     if (pricingComparisonTable.status === 'fulfilled' && pricingComparisonTable.value) {
       PricingComparisonTableComponent = pricingComparisonTable.value as React.ComponentType<{ currentTier: Tier | null }>;
@@ -168,7 +168,7 @@ export default async function PricingPage() {
       </div>
 
       {/* Components */}
-      <PricingSectionComponent />
+      <PricingSectionComponent isAuthenticated={!!user} />
       <div className="mx-auto max-w-2xl px-6 pb-6"><CryptoPaymentExplainerComponent /></div>
       <section className="mx-auto max-w-md px-6 pb-12 pt-4">
         {user != null && !userHeyGenConfigured ? (

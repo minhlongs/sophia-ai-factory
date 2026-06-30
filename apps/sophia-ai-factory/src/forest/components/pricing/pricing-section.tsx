@@ -23,7 +23,7 @@ interface CheckoutResponse {
   magicLink?: string;
 }
 
-export function PricingSection() {
+export function PricingSection({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
   const [loading, setLoading] = useState<string | null>(null);
   const [appliedDiscount, setAppliedDiscount] = useState<PromoDiscount | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("nowpayments");
@@ -67,6 +67,14 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   const handleSelectTier = async (tier: string) => {
     setLoading(tier);
+
+    // Redirect unauthenticated users to login BEFORE opening the popup.
+    // This prevents the confusing popup→flash→redirect UX for non-logged-in visitors.
+    if (!isAuthenticated) {
+      window.location.href = `/login?next=${encodeURIComponent('/pricing')}`;
+      return;
+    }
+
     try {
       // MASTER is always lifetime — never send 'annual' for it
       const period = tier === "MASTER" ? "lifetime" : billingPeriod === "annual" ? "yearly" : "monthly";
@@ -158,7 +166,7 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
         </div>
 
         {/* ── Billing period toggle (Monthly / Annual) ──────────────────────────── */}
- <div role="group" aria-label="Chu kỳ thanh toán">
+ <div role="group" aria-label={t("pricing.billing_cycle_aria_label")}>
         <div className="mt-6 flex justify-center">
           <div className="inline-flex items-center rounded-xl border border-border bg-card p-1 gap-1 shadow-[0_0_15px_rgba(139,92,246,0.12)]">
             <button
@@ -195,7 +203,7 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
     </div>
 
         {/* ── Payment method selector ──────────────────────────────────────────── */}
- <div role="group" aria-label="Phương thức thanh toán">
+ <div role="group" aria-label={t("pricing.payment_method_aria_label")}>
         <div className="mt-6 flex justify-center">
           <div className="inline-flex rounded-xl border border-border bg-card p-1 gap-1 shadow-[0_0_15px_rgba(139,92,246,0.12)]">
             <button
@@ -322,7 +330,7 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
                   {/* VND equivalent for MASTER tier */}
                   {paymentMethod === "payos" && (
                     <p className="mt-1 text-xs text-amber-400/80">
-                      ≈ {formatVnd(centsToVnd(getDiscountedCents(MASTER_TIER.price) ?? MASTER_TIER.price))} một lần
+                      ≈ {formatVnd(centsToVnd(getDiscountedCents(MASTER_TIER.price) ?? MASTER_TIER.price))} {t("pricing.one_time_label")}
                     </p>
                   )}
                   <p className="mt-2 text-sm text-muted-foreground">

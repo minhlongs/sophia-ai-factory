@@ -404,11 +404,14 @@
         }
       },
       "per_year": "Per year",
+      "per_year_short": "/yr",
+      "per_month_short": "/mo",
       "subscribe_now": "Subscribe now",
-      "monthly_label": "Monthly label",
-      "annual_label": "Annual label",
-      "subscribe_now_master": "Subscribe now master",
+      "monthly_label": "Monthly",
+      "annual_label": "Yearly",
+      "subscribe_now_master": "Get Master",
       "save_percent": "Save {percent}%",
+      "one_time_label": "one-time",
       "refund_master_title": "MASTER Plan — Full 14-Day Refund",
       "refund_master_desc": "The MASTER plan ($4,999 one-time) is fully refundable for 14 days from payment, no reason required.",
       "refund_master_conditions": "MASTER plan (one-time) only — upgrades are excluded. Request within 14 days from payment.",
@@ -417,7 +420,9 @@
       "refund_non_refundable": "Used credits, generated videos, and API fees are non-refundable.",
       "faq_3_a": "MASTER ($4,999 one-time) is fully refundable within 14 days, no reason required. BASIC/PREMIUM/ENTERPRISE are eligible for a 100% refund within 7 days for the first subscription. Monthly plans do not refund used billing time; cancel anytime and keep access until the end of the billing period.",
       "faq_3_q": "What is your refund policy?",
-      "tier_selection_label": "Tier selection label"
+      "tier_selection_label": "Select a plan",
+      "billing_cycle_aria_label": "Billing cycle",
+      "payment_method_aria_label": "Payment method"
     },
     "roi": {
       "title": "Calculate Your Potential Revenue",
@@ -4007,8 +4012,8 @@
     "initializing": "Initializing gateway...",
     "ssl_secured": "SSL Secured Connection",
     "pricing": {
-      "refund_master_title": "Refund master title",
-      "refund_master_desc": "Refund master desc"
+      "refund_master_title": "MASTER Plan — Full 14-Day Refund",
+      "refund_master_desc": "The MASTER plan ($4,999 one-time) is fully refundable for 14 days from payment, no reason required."
     }
   },
   "1:1": "1:1",
@@ -4546,6 +4551,7 @@
         "signUp": "Sign up",
         "googleSignIn": "Google",
         "githubSignIn": "GitHub",
+        "ssoComingSoon": "Coming soon — please use email to sign in",
         "hidePassword": "Hide Password",
         "showPassword": "Show Password",
         "invalidCredentials": "Invalid email or password",
