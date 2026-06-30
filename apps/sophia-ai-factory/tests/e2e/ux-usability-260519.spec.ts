@@ -31,8 +31,12 @@
 import { test, expect, type Page, type BrowserContext } from '@playwright/test'
 import * as path from 'path'
 import * as fs from 'fs'
+import { fileURLToPath } from 'url'
 
 // ── Constants ────────────────────────────────────────────────────────────────
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const SCREENSHOT_DIR = path.resolve(
   __dirname,
