@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "@/navigation";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -16,6 +16,7 @@ export function Navbar() {
   const pathname = usePathname();
   const t = useTranslations("landing");
   const tAff = useTranslations("affiliate");
+  const checkedRef = useRef(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
@@ -23,6 +24,7 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Check session on mount + when visibility changes (tab focus), not on every pathname change
   useEffect(() => {
     const controller = new AbortController();
 
@@ -33,6 +35,7 @@ export function Navbar() {
           signal: controller.signal,
         });
         setIsLoggedIn(res.ok);
+        checkedRef.current = true;
       } catch (err) {
         if (!controller.signal.aborted) {
           setIsLoggedIn(false);
@@ -41,8 +44,20 @@ export function Navbar() {
     }
 
     void syncSessionState();
-    return () => controller.abort();
-  }, [pathname]);
+
+    // Re-check session when user returns to this tab
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        void syncSessionState();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    return () => {
+      controller.abort();
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
 
   const cleanPath = (pathname ?? "").replace(/^\/(en|vi)/, "") || "/";
   const isHomePage = cleanPath === "/";
