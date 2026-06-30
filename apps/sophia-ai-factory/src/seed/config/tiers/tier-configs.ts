@@ -148,3 +148,6 @@ export const TIER_DB_MAPPING: Record<Tier, string> = {
 
 /** Tiers that allow video generation (PREMIUM+ required) */
 export const TIER_ALLOWED_VIDEO: Tier[] = ['PREMIUM', 'ENTERPRISE', 'MASTER'];
+
+/** Price per MCU credit for overage top-ups (USD). Canonical location — imported by land and forest layers. */
+export const TOPUP_PRICE_PER_MCU = 0.10;

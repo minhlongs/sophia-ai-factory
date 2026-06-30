@@ -4912,13 +4912,13 @@
   },
   "billing": {
     "creditBar": {
-      "used": "Used",
-      "of": "Of",
-      "thisMonth": "This Month",
-      "atLimit": "At Limit",
-      "nearLimit": "Near Limit",
-      "topUpNow": "Top Up Now",
-      "buyMore": "Buy More"
+      "used": "Đã dùng",
+      "of": "trên",
+      "thisMonth": "MCU tháng này",
+      "atLimit": "Đã hết hạn mức",
+      "nearLimit": "Sắp hết hạn mức",
+      "topUpNow": "Nạp ngay để tiếp tục",
+      "buyMore": "Mua thêm credit"
     }
   }
 }

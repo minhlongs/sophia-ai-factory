@@ -128,18 +128,5 @@ export async function updateCachedUsage(
   }
 }
 
-/** Invalidate quota cache (called after usage event ingestion). */
-export async function invalidateQuotaCache(
-  userId: string,
-  licenseNonce: string
-): Promise<void> {
-  const kv = getKvClient();
-  if (!kv) return;
-
-  try {
-    const key = `quota:${userId}:${licenseNonce}`;
-    await kv.set(key, null as unknown as Parameters<typeof kv.set>[1]);
-  } catch (error) {
-    logger.error('[Quota Checker] Cache invalidation error', toError(error));
-  }
-}
+// Re-export from seed for backward compatibility — canonical location is seed/kv/quota-cache-ops
+export { invalidateQuotaCache } from '@/seed/kv/quota-cache-ops'

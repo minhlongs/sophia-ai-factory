@@ -213,6 +213,11 @@ export async function processRefund(
  * (the refund is still recorded internally — admin must manually process the
  * blockchain refund via NOWPayments dashboard).
  *
+ * @param _paymentId        NOWPayments payment ID to refund
+ * @param _customerWalletAddress Reserved for future API version that supports
+ *   specifying a refund destination address. Currently NOWPayments refunds to
+ *   the original payment source address automatically.
+ *
  * Mock-friendly: the resolveCurrentTier in the test file controls whether
  * this succeeds or returns a NOWPAYMENTS_API_ERROR.
  */

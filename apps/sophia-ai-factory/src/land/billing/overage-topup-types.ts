@@ -25,6 +25,8 @@ export interface TopupIpnPayload {
   order_id: string
   price_amount: number
   price_currency: string
+  invoice_id?: string
+  actually_paid?: number
 }
 
 /** Zod schema for top-up IPN payload — validated at webhook boundary */
@@ -41,8 +43,8 @@ export const topupIpnPayloadSchema = z.object({
   actually_paid: z.number().optional(),
 })
 
-/** Configuration for top-up pricing (MCU → USD) */
-export const TOPUP_PRICE_PER_MCU = 0.10 // $0.10 per MCU credit
+// Re-export from seed for backward compatibility — canonical location is seed/config/tiers/tier-configs
+export { TOPUP_PRICE_PER_MCU } from '@/seed/config/tiers/tier-configs'
 
 /** Minimum top-up amount in MCU */
 export const TOPUP_MIN_MCU = 50
