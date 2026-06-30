@@ -32,12 +32,14 @@ export default async function SopMarketplacePage() {
     const base = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const res = await fetch(`${base}/api/sop-marketplace?limit=100`, {
       next: { revalidate: 60 },
+      signal: AbortSignal.timeout(10_000), // 10s timeout — don't block build
     });
     if (res.ok) {
       const json = (await res.json().catch(() => ({}))) as { templates?: Template[] };
       templates = json.templates ?? [];
     }
   } catch {
+    // Build-time fetch may fail (network, auth) — client fetches fresh data at runtime
     templates = [];
   }
 
