@@ -156,7 +156,7 @@ describe('F1: enqueueDlqEntry handles UNIQUE(event_id) by bumping retry_count', 
     expect(updateLog).toHaveLength(0);
   });
 
-  it('on UNIQUE-violation, calls update with retry_count bumped and first_failed_at set', async () => {
+  it('on UNIQUE-violation, updates retry_count without overwriting first_failed_at', async () => {
     const { enqueueDlqEntry } = await import('../nowpayments-ipn-dead-letter');
     const updateLog: Array<Record<string, unknown>> = [];
     const db = buildD1Client({
@@ -191,9 +191,13 @@ describe('F1: enqueueDlqEntry handles UNIQUE(event_id) by bumping retry_count', 
     // F1 fix: source uses client-side `opts.retryCount + 1` (was: db.raw("retry_count + 1") / SQL)
     expect((dlqUpdate as Record<string, unknown>).retry_count).toBe(4);
 
-    // F3 fix: first_failed_at is present on the retry path
-    expect((dlqUpdate as Record<string, unknown>).first_failed_at).toBeDefined();
-    expect(typeof (dlqUpdate as Record<string, unknown>).first_failed_at).toBe('string');
+    // first_failed_at must NOT be in the update — it preserves the original
+    // failure timestamp from the initial INSERT. Overwriting it would corrupt
+    // the audit trail used by SLA monitoring and getStaleDlqEntries sorting.
+    expect((dlqUpdate as Record<string, unknown>).first_failed_at).toBeUndefined();
+
+    // last_attempted_at should be present (updated on each retry)
+    expect(typeof (dlqUpdate as Record<string, unknown>).last_attempted_at).toBe('string');
   });
 });
 
