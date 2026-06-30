@@ -1,6 +1,27 @@
 # Project Changelog
 
-**Last Updated:** 2026-06-29 | **Current Version:** 0.1.4 | **Honest Score:** 87.5/100 (doctrine ceiling)
+**Last Updated:** 2026-07-01 | **Current Version:** 0.1.4 | **Honest Score:** 87.5/100 (doctrine ceiling)
+
+---
+
+## 2026-07-01 — Revenue & Trust Sprint: Code Review Fixes
+
+**Severity: QUALITY | Type: Code review remediation | Status: SHIPPED (SHA 5265c0a5a)**
+
+Post-implementation code review of the Revenue & Trust Sprint (4 parallel tracks: D-Refund, C-Affiliate, A1-Overage, A2-Billing Portal, SHA 04d01ab60) identified critical i18n issues, layer violations, and type inconsistencies. All findings resolved in this commit.
+
+**Fixed:**
+- i18n: Vietnamese translations for billing.creditBar (was showing English to VI users)
+- i18n: English placeholder text replaced with real copy in dashboard.billing self-serve keys
+- Layer compliance: `markEventsAsBillable` moved from `forest/quota` to `seed/db/overage-billing-ops.ts`
+- Layer compliance: `invalidateQuotaCache` moved from `forest/quota` to `seed/kv/quota-cache-ops.ts`
+- Layer compliance: `TOPUP_PRICE_PER_MCU` constant moved to `seed/config/tiers/tier-configs.ts`
+- Type safety: `TopupIpnPayload` interface now matches Zod schema (`actually_paid`, `invoice_id` fields)
+- Code hygiene: removed `eslint-disable` workaround and `as unknown as` cast in `overage-topup.ts`
+- Code hygiene: added JSDoc for unused `_customerWalletAddress` parameter in `refund-processor.ts`
+- Housekeeping: removed orphaned `src/land/heygen/heygen-client.ts.new` backup file
+
+**Verification:** All layer violations resolved (seed no longer imports from forest/quota), Vietnamese i18n renders correctly for VI users (creditBar), Build 0 TS errors.
 
 ---
 

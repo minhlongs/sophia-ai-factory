@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-06-29 (Deploy speedup shipped, health worker fixed, production SHA b868840b verified)
+**Last Updated:** 2026-07-01 (Revenue & Trust Sprint shipped, code review fixes applied, SHA 5265c0a5a verified)
 **Target:** $1M ARR, 100/100 a16z solo company score
 **Go-Live Shipped (2026-05-03):** Production deployment https://sophia.agencyos.network (SHA 5b1f711f). GAP1: Magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2: Self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt email VAT 10%, dashboard period_end). GAP3: Mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission control widget, public /status page 90d uptime, D+1/D+7 lifecycle emails). Infrastructure: 9 smoke tests PASS (200 HTTP), 4431 tests 100% pass, build < 10s, 0 TS errors.
 
@@ -20,8 +20,9 @@ After production go-live, focus shifted to enterprise readiness: SOC 2 evidence 
 | **E3: OpenTelemetry Observability** | 🟡 IN PROGRESS | Staging: 2026-06-22 | Staging: 100% sample rate, Honeycomb dataset configured. Production: Pending `HONEYCOMB_API_KEY` secret. SLOs defined (p95<500ms, error rate<5%, uptime>99.9%), alert rules documented, runbook complete. Task #28-39. |
 | **E4: BYOK Key Rotation** | 🟡 IN PROGRESS | Core: 2026-06-20 | AES-GCM key versioning, rotation cron design, admin API (`/api/admin/byok-rotation`), re-encrypt background job design. Staging test pending (Task #114). |
 | **E5: Layer Architecture Enforcement** | ✅ COMPLETE | 2026-06-18 | Fixed land→forest violations, reorganized forest/missions by domain, removed forbidden imports (`@/lib/*`), updated docs with canonical import paths. Commit `bc93feff3`. |
+| **E6: Revenue & Trust Sprint** | ✅ COMPLETE | 2026-07-01 | 4 parallel tracks: D-Refund backend completion, C-Affiliate pipeline hardening, A1-Overage billing, A2-Self-service billing portal (SHA 04d01ab60). Post-implementation code review fixed i18n (VI creditBar), layer violations (3 items moved to seed/), and type safety. Commits `04d01ab60`, `5265c0a5a`. |
 
-**Verification (Post-Go-Live cumulative):** 6225 tests pass, 0 TS errors, layer architecture lint enforced, deploy guard blocking unapproved deploys, OTEL tests 5/5 passing, deploy speedup saves ~30 min per deploy.
+**Verification (Post-Go-Live cumulative):** 6225+ tests pass, 0 TS errors, layer architecture lint enforced, deploy guard blocking unapproved deploys, Revenue & Trust Sprint shipped with code review clean.
 
 ---
 
@@ -621,9 +622,10 @@ All decisions documented in `.sophia-factory/journal/` for audit trail.
 **Production Status:** ✅ LIVE — https://sophia.agencyos.network (CF Workers + D1 + R2)
 
 **Immediate Priorities:**
-1. **OTEL Production Rollout** — Set `HONEYCOMB_API_KEY` and deploy to enable observability
-2. **BYOK Rotation Staging Test** — Validate key rotation flow before production
-3. **SOC 2 Type I Report** — Finalize auditor findings and receive official report
+1. **Revenue & Trust Sprint** — Now complete. Code review fixes for i18n, layer violations, and types shipped at SHA 5265c0a5a.
+2. **OTEL Production Rollout** — Set `HONEYCOMB_API_KEY` and deploy to enable observability
+3. **BYOK Rotation Staging Test** — Validate key rotation flow before production
+4. **SOC 2 Type I Report** — Finalize auditor findings and receive official report
 
 **Completed Milestones:**
 - ✅ Feature-complete (Phases 6-14, April 30)
@@ -639,4 +641,4 @@ All decisions documented in `.sophia-factory/journal/` for audit trail.
 
 **No-tech Doctrine Status:** ✅ PRESERVED — No operator-managed third-party credentials required for platform operation. All integrations are customer self-service (BYOK).
 
-**Deployment Health:** SHA-verified deploys only. Current production SHA: `4bca4710` (Next Sweep).
+**Deployment Health:** SHA-verified deploys only. Current production SHA: `5265c0a5a` (Revenue & Trust Sprint — code review fixes).
