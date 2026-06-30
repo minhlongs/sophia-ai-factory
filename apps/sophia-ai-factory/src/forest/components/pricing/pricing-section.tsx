@@ -207,7 +207,7 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <span aria-hidden="true">💎</span> Pay with Crypto (USDT)
+              <span aria-hidden="true">💎</span> {t("pricing.crypto_label")}
             </button>
             <button
               type="button"
@@ -218,18 +218,18 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <span aria-hidden="true">🏦</span> Chuyển khoản VND
+              <span aria-hidden="true">🏦</span> {t("pricing.payos_label")}
             </button>
           </div>
     </div>
         </div>
         {paymentMethod === "payos" ? (
           <p className="mt-2 text-center text-xs text-amber-400/70">
-            Thanh toán qua ngân hàng nội địa Việt Nam — QR code + chuyển khoản
+            {t("pricing.payos_desc")}
           </p>
         ) : (
           <p className="mt-2 text-center text-xs text-primary-400/70">
-            Secure, global checkout using NOWPayments USDT & Crypto Gateway
+            {t("pricing.crypto_desc")}
           </p>
         )}
 

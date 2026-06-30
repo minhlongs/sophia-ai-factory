@@ -329,6 +329,10 @@
       "error_checkout": "Failed to start checkout. Please try again.",
       "error_network": "Network error. Please try again.",
       "dismiss": "Dismiss",
+      "crypto_label": "Pay with Crypto (USDT)",
+      "payos_label": "Bank Transfer VND",
+      "crypto_desc": "Secure global checkout via NOWPayments USDT & Crypto Gateway",
+      "payos_desc": "Pay via Vietnamese domestic bank — QR code + bank transfer",
       "master": {
         "best_value": "Best Value — Save 48%",
         "one_time": "one-time",
@@ -546,14 +550,27 @@
     },
     "guide": {
       "sidebar": {
-        "getting_started": "Getting Started",
+        "section_getting_started": "GETTING STARTED",
+        "section_create_content": "CREATE CONTENT",
+        "section_payments": "PAYMENTS",
+        "section_affiliate": "AFFILIATE",
+        "section_integrations_ref": "INTEGRATIONS & REFERENCE",
+        "section_use_cases": "USE CASES",
+        "section_help": "HELP",
+        "quick_start": "Quick Start",
         "how_it_works": "How It Works",
         "screen_guide": "Screen Guide",
+        "first_video": "First Video",
+        "templates": "Templates",
+        "pay_usdt": "Pay with USDT",
+        "pay_vnd": "Pay with VND",
+        "plans_pricing": "Plans & Pricing",
+        "earn_commission": "Earn Commission",
         "integrations": "Integrations",
-        "commands": "Commands",
-        "faq": "FAQ",
         "telegram": "Telegram Bot",
-        "section_": {}
+        "commands": "Commands",
+        "use_case_library": "Use Case Library",
+        "faq": "FAQ"
       },
       "back_to_dashboard": "Back to Dashboard",
       "title": "User Guide",
@@ -627,7 +644,9 @@
         "step2_desc": "After logging in, go to {strong}Settings → API Keys{/strong} to add your OpenRouter key. We encrypt and store it safely.",
         "callout_keys_info": "You need an API key from OpenRouter. If you don't have one, sign up at openrouter.ai — get $5 free when creating a new account.",
         "step3_desc": "Create your first {strong}video campaign{/strong}: pick a niche, enter a topic, and Sophia auto-generates script + voiceover + visuals.",
-        "step4_desc": "Preview the video, edit if needed, and publish directly to YouTube or download. Everything is automated."
+        "step4_desc": "Preview the video, edit if needed, and publish directly to YouTube or download. Everything is automated.",
+        "step5_telegram": "Telegram: @Sophia_Bbot",
+        "step5_email": "Email: support@mekongmind.com"
       }
     },
     "creative_studio": {
