@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/seed/auth/require-admin'
 import { getRefundById } from '@/land/refunds/refund-repo'
+import { processRefund } from '@/land/refunds/refund-processor'
 import { revokeAccessByPurchaseId } from '@/seed/db/repositories/videos-repo'
 import { writeAuditLog } from '@/tree/admin/audit-log'
 import { sendRefundCompletedEmail } from '@/land/billing/email/send-refund-emails'
@@ -58,36 +59,34 @@ export async function POST(
     const refund = await getRefundById(id)
     if (!refund) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    // SECURITY FIX (Issue 5): Prevent double-processing — check both status and tx_hash
-    // IPN handler may have already processed this refund (setting status='refunded' + refund_tx_hash)
-    // Without this guard, admin could trigger side effects (email, access revocation) twice
+    // SECURITY FIX (Issue 5): Prevent double-processing — check status before calling processor
+    // processRefund has its own atomic lock, but we check early for clear error messages
     if (refund.status !== 'approved') {
       return NextResponse.json({ error: 'Must be approved before marking refunded', status: refund.status }, { status: 409 })
     }
-    if (refund.refund_tx_hash !== null && refund.refund_tx_hash !== undefined) {
-      return NextResponse.json({ error: 'Already refunded — tx_hash already recorded', tx_hash: refund.refund_tx_hash }, { status: 409 })
-    }
 
-    // Atomic check-and-update: only update if still approved (prevents race with concurrent IPN)
-    const d1 = getD1();
-    if (!d1) throw new Error('D1 database binding not available');
-    const updateResult = await d1
-      .prepare(
-        `UPDATE refund_requests
-         SET status = 'refunded', reviewed_at = strftime('%s','now'), reviewed_by_user_id = ?1,
-             admin_notes = COALESCE(?2, admin_notes), refund_tx_hash = ?3
-         WHERE id = ?4 AND status = 'approved' AND (refund_tx_hash IS NULL OR refund_tx_hash = '')`
-      )
-      .bind(auth.user.id, body.notes ?? null, body.tx_hash, id)
-      .run()
+    // Wire processRefund for the full refund pipeline:
+    // - Atomic lock via refund_events INSERT ON CONFLICT DO NOTHING
+    // - NOWPayments refund API call (if crypto)
+    // - Subscription tier rollback to BASIC
+    // - MCU credit clawback to tier base amount
+    // - Refund ledger entry for audit trail
+    // - Mark refund_requests status='refunded' with tx_hash
+    const result = await processRefund({
+      refundRequestId: id,
+      reviewedByUserId: auth.user.id,
+      txHash: body.tx_hash,
+      notes: body.notes,
+    })
 
-    if (updateResult.meta.changes === 0) {
-      // No rows updated — either already refunded by IPN or concurrent admin call
-      const current = await getRefundById(id)
-      if (current?.status === 'refunded') {
-        return NextResponse.json({ error: 'Already refunded', status: 'refunded', tx_hash: current.refund_tx_hash }, { status: 409 })
+    if (!result.ok) {
+      if (result.error.code === 'DUPLICATE_REFUND') {
+        return NextResponse.json({ error: 'Already refunded' }, { status: 409 })
       }
-      return NextResponse.json({ error: 'Failed to update — please retry' }, { status: 409 })
+      if (result.error.code === 'NOT_FOUND') {
+        return NextResponse.json({ error: 'Refund request not found' }, { status: 404 })
+      }
+      return NextResponse.json({ error: result.error.message, code: result.error.code }, { status: 500 })
     }
 
     // Side effects: revoke access, audit log, email (only on successful first update)
@@ -97,7 +96,14 @@ export async function POST(
       actorUserId: auth.user.id,
       actionType: 'refund_marked_refunded',
       targetUserId: refund.user_id,
-      payload: { refundId: id, purchaseId: refund.purchase_id, txHash: body.tx_hash },
+      payload: {
+        refundId: id,
+        purchaseId: refund.purchase_id,
+        txHash: body.tx_hash,
+        tierBefore: result.value.tierBefore,
+        tierAfter: result.value.tierAfter,
+        mcuClawedBack: result.value.mcuClawedBack,
+      },
     })
 
     const db = getD1();
@@ -111,14 +117,28 @@ export async function POST(
       }).catch(() => null)
     }
 
-    const responseBody = { id, status: 'refunded', tx_hash: body.tx_hash }
+    const responseBody = {
+      id,
+      status: 'refunded',
+      tx_hash: body.tx_hash,
+      tier_before: result.value.tierBefore,
+      tier_after: result.value.tierAfter,
+      mcu_clawed_back: result.value.mcuClawedBack,
+      ledger_entry_id: result.value.ledgerEntryId,
+    }
 
     // FIX-10: store idempotency key after successful processing
     if (idempotencyKey) {
-      await storeIdempotency(idempotencyKey, id, responseBody)
+      await storeIdempotency(idempotencyKey, id, { id, status: responseBody.status, tx_hash: responseBody.tx_hash })
     }
 
-    logger.info('[AdminRefunds] Marked refunded', { id, txHash: body.tx_hash })
+    logger.info('[AdminRefunds] Marked refunded via processRefund', {
+      id,
+      txHash: body.tx_hash,
+      tierBefore: result.value.tierBefore,
+      tierAfter: result.value.tierAfter,
+      mcuClawedBack: result.value.mcuClawedBack,
+    })
     return NextResponse.json(responseBody)
   } catch (err) {
     logger.error('[AdminRefunds] mark-refunded failed', err instanceof Error ? err : undefined)

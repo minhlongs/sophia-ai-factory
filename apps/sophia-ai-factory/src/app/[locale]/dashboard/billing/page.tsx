@@ -2,6 +2,8 @@
  * Dashboard Billing Page — server gate
  *
  * Auth-gates via getCurrentUser(); renders BillingClient for authenticated users.
+ *
+ * @module app/[locale]/dashboard/billing/page
  */
 
 import { redirect } from 'next/navigation';

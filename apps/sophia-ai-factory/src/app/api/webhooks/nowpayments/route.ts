@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { parseIpnWebhook, lookupInvoice } from '@/tree/clients/nowpayments-client'
 import { processNowPaymentsIpn } from '@/land/billing/nowpayments-ipn-handlers'
+import { processTopupIpn } from '@/land/billing/overage-topup'
 import { ipnPayloadSchema } from '@/land/billing/ipn-payload-schema'
 import { logger } from '@/seed/utils/logger-utility'
 import { captureTierUpgraded } from '@/tree/signals/posthog-capture'
@@ -115,7 +116,29 @@ return NextResponse.json({ error: 'Invalid payload' }, { status: 400 })
 
 const ipn = parsed.data
 
-// Process the IPN event
+// Route top-up orders (order_id prefixed "topup_") to the top-up handler
+if (ipn.order_id?.startsWith('topup_')) {
+const topupResult = await processTopupIpn({
+payment_id: ipn.payment_id,
+payment_status: ipn.payment_status,
+order_id: ipn.order_id,
+price_amount: ipn.price_amount,
+price_currency: ipn.price_currency,
+})
+
+if (!topupResult.success) {
+logger.error('[NOWPayments Webhook] Top-up IPN processing failed', new Error(topupResult.message), {
+payment_id: ipn.payment_id,
+payment_status: ipn.payment_status,
+order_id: ipn.order_id,
+})
+return NextResponse.json({ error: topupResult.message }, { status: 500 })
+}
+
+return NextResponse.json({ received: true })
+}
+
+// Process the IPN event (subscriptions, one-time purchases)
 const result = await processNowPaymentsIpn(ipn)
 
 if (!result.success) {
