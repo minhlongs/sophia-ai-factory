@@ -1,30 +1,6 @@
 /**
- * Usage Metering Context
- *
- * Async local storage for propagating usage context across async boundaries
+ * @deprecated Canonical copy in @/tree/usage-metering/context.
+ * This file is kept as a re-export for backward compatibility.
+ * Forest → tree import is allowed by 4-layer architecture.
  */
-
-import { AsyncLocalStorage } from 'async_hooks';
-
-export interface UsageContext {
-  userId: string;
-  licenseKeyHash: string;
-  licenseNonce: string;
-  tier: string;
-}
-
-export const usageContextStorage = new AsyncLocalStorage<UsageContext>();
-
-/**
- * Run function with usage context
- */
-export function runWithUsageContext<T>(context: UsageContext, fn: () => T): T {
-  return usageContextStorage.run(context, fn);
-}
-
-/**
- * Get current usage context from async local storage
- */
-export function getUsageContext(): UsageContext | null {
-  return usageContextStorage.getStore() ?? null;
-}
+export * from '@/tree/usage-metering/context';

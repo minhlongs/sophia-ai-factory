@@ -4,14 +4,15 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { resolvePeriodTimestamps, getUsageSummaryForPeriod } from '../usage-period-calculator';
+// Import from canonical tree copy (forest re-exports from tree)
+import { resolvePeriodTimestamps, getUsageSummaryForPeriod } from '@/tree/usage-metering/usage-period-calculator';
 
-// Mock the export module
-vi.mock('../export', () => ({
+// Mock the export module at tree canonical path
+vi.mock('@/tree/usage-metering/export', () => ({
   exportUsage: vi.fn(),
 }));
 
-import { exportUsage } from '../export';
+import { exportUsage } from '@/tree/usage-metering/export';
 
 describe('UsagePeriodCalculator', () => {
   beforeEach(() => {

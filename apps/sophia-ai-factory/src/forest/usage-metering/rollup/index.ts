@@ -1,7 +1,4 @@
 /**
- * @module rollup
- * Barrel re-exports.
+ * @deprecated Canonical copy in @/tree/usage-metering/rollup/index.
  */
-export { calculateDailyRollup } from './daily-rollup-calculator';
-export { runDailyRollup, upsertDailySummary } from './daily-rollup';
-export { calculateHourlyRollup, runHourlyRollup, upsertHourlySummary } from './hourly-rollup';
+export * from '@/tree/usage-metering/rollup/index';
