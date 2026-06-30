@@ -21,6 +21,7 @@ interface CheckoutResponse {
   status?: string;
   handoverId?: string;
   magicLink?: string;
+  message?: string;
 }
 
 export function PricingSection({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
@@ -123,6 +124,25 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
       if (response.status === 401 && data.redirectTo) {
         setIsCheckoutOpen(false);
         window.location.href = data.redirectTo;
+        return;
+      }
+
+      // ── Non-URL success paths (free orders, offline payments) ─────────
+      if (data.status === "free_order_completed") {
+        setIsCheckoutOpen(false);
+        if (data.magicLink) {
+          window.location.href = data.magicLink;
+        } else {
+          window.location.href = `/${locale}/payment-success?tier=${tier}&order_id=${data.orderId || ''}`;
+        }
+        return;
+      }
+
+      if (data.status === "pending_manual_payment") {
+        setIsCheckoutOpen(false);
+        // Show success message instead of error for offline payments
+        setCheckoutError(null);
+        alert(data.message || t("pricing.offline_payment_received"));
         return;
       }
 
