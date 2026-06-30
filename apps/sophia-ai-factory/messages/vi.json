@@ -329,6 +329,10 @@
       "error_checkout": "Không thể bắt đầu thanh toán. Vui lòng thử lại.",
       "error_network": "Lỗi mạng. Vui lòng thử lại.",
       "dismiss": "Đóng",
+      "crypto_label": "Thanh Toán Crypto (USDT)",
+      "payos_label": "Chuyển Khoản VND",
+      "crypto_desc": "Thanh toán toàn cầu an toàn qua NOWPayments USDT & Crypto Gateway",
+      "payos_desc": "Thanh toán qua ngân hàng nội địa Việt Nam — QR code + chuyển khoản",
       "master": {
         "best_value": "Giá Trị Tốt Nhất — Tiết Kiệm 48%",
         "one_time": "một lần",
@@ -546,14 +550,27 @@
     },
     "guide": {
       "sidebar": {
-        "getting_started": "Bắt Đầu",
+        "section_getting_started": "BẮT ĐẦU",
+        "section_create_content": "TẠO NỘI DUNG",
+        "section_payments": "THANH TOÁN",
+        "section_affiliate": "TIẾP THỊ LIÊN KẾT",
+        "section_integrations_ref": "TÍCH HỢP & THAM KHẢO",
+        "section_use_cases": "USE CASE",
+        "section_help": "TRỢ GIÚP",
+        "quick_start": "Bắt Đầu Nhanh",
         "how_it_works": "Cách Hoạt Động",
         "screen_guide": "Hướng Dẫn Giao Diện",
+        "first_video": "Video Đầu Tiên",
+        "templates": "Mẫu Video",
+        "pay_usdt": "Thanh Toán USDT",
+        "pay_vnd": "Thanh Toán VND",
+        "plans_pricing": "Gói & Giá",
+        "earn_commission": "Hoa Hồng",
         "integrations": "Tích Hợp",
-        "commands": "Lệnh",
-        "faq": "Câu Hỏi Thường Gặp",
         "telegram": "Bot Telegram",
-        "section_": {}
+        "commands": "Lệnh",
+        "use_case_library": "Thư Viện Use Case",
+        "faq": "Câu Hỏi Thường Gặp"
       },
       "back_to_dashboard": "Quay Lại Bảng Điều Khiển",
       "title": "Hướng Dẫn Sử Dụng",
@@ -627,7 +644,9 @@
         "step2_desc": "Sau khi đăng nhập, vào {strong}Cài đặt → API Keys{/strong} để thêm OpenRouter key. Chúng tôi mã hóa và lưu trữ an toàn.",
         "callout_keys_info": "Bạn cần API key từ OpenRouter. Nếu chưa có, đăng ký tại openrouter.ai — nhận $5 miễn phí khi tạo tài khoản mới.",
         "step3_desc": "Tạo {strong}video campaign{/strong} đầu tiên: chọn niche, nhập chủ đề, Sophia tự động tạo kịch bản + lồng tiếng + hình ảnh.",
-        "step4_desc": "Xem trước video, chỉnh sửa nếu cần, và xuất bản trực tiếp lên YouTube hoặc tải xuống. Mọi thứ đều tự động."
+        "step4_desc": "Xem trước video, chỉnh sửa nếu cần, và xuất bản trực tiếp lên YouTube hoặc tải xuống. Mọi thứ đều tự động.",
+        "step5_telegram": "Telegram: @Sophia_Bbot",
+        "step5_email": "Email: support@mekongmind.com"
       }
     },
     "creative_studio": {

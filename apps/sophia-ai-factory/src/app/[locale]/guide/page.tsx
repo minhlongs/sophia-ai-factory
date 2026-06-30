@@ -87,13 +87,13 @@ export default async function GuidePage({ params }: { params: Promise<{ locale: 
               <div className="flex items-center gap-2">
                 <Bot className="w-3.5 h-3.5 text-accent-400" aria-hidden="true" />
                 <span>
-                  {t.rich("step5_telegram", { mono })}
+                  {t("step5_telegram")}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <MessageCircle className="w-3.5 h-3.5 text-primary-400" aria-hidden="true" />
                 <span>
-                  {t.rich("step5_email", { mono })}
+                  {t("step5_email")}
                 </span>
               </div>
             </div>
