@@ -20,14 +20,14 @@ const mockHashLicenseKey = vi.fn().mockReturnValue('a'.repeat(64));
 const mockCheckQuota = vi.fn().mockResolvedValue({ allowed: true, remaining: { hourlyCredits: 100, dailyCredits: 1000, monthlyCredits: 10000, dailyRequests: 500 } });
 const mockLogger = { error: vi.fn(), warn: vi.fn(), info: vi.fn(), debug: vi.fn() };
 
-vi.mock('../tracker', () => ({
+vi.mock('@/tree/usage-metering/tracker', () => ({
   trackUsage: mockTrackUsage,
   calculateCredits: mockCalculateCredits,
   hashLicenseKey: mockHashLicenseKey,
   startTimer: vi.fn(() => () => 42),
 }));
 
-vi.mock('../usage-rollup-engine', () => ({
+vi.mock('@/tree/usage-metering/usage-rollup-engine', () => ({
   checkQuota: mockCheckQuota,
 }));
 
@@ -35,8 +35,8 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: mockLogger,
 }));
 
-// Import AFTER mocks
-const { emitUsageEvent } = await import('../gateway-instrumentation');
+// Import from canonical tree copy (forest re-exports from tree)
+const { emitUsageEvent } = await import('@/tree/usage-metering/gateway-instrumentation');
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
