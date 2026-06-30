@@ -3893,6 +3893,10 @@
     "title": "Title",
     "topic": "Topic"
   },
+  "table_tier_growth": "Tăng Trưởng",
+  "table_tier_master": "Master",
+  "table_tier_premium": "Cao Cấp",
+  "table_tier_starter": "Cơ Bản",
   "tabs": {
     "audio": "Audio",
     "brand": "Brand",

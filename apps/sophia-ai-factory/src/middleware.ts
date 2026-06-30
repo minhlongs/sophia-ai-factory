@@ -76,6 +76,29 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
     return redirectToDefault(request);
   }
 
+  // Handle ?tab=signup redirect BEFORE ISR cache.
+  // Homepage has revalidate=60; CDN cache ignores query params, so the page-level
+  // redirect never fires for cached visitors. Middleware runs uncached on every request.
+  const { searchParams: sp } = request.nextUrl;
+  if (sp.get('tab') === 'signup') {
+    const isHomepagePath =
+      pathname === '/' ||
+      (isSupportedLocale(pathLocale) && pathname === `/${pathLocale}`);
+    if (isHomepagePath) {
+      const locale = isSupportedLocale(pathLocale) ? pathLocale! : 'vi';
+      const loginParams = new URLSearchParams({ tab: 'signup' });
+      const coupon = sp.get('coupon');
+      const tier = sp.get('tier');
+      const redirectParam = sp.get('redirect');
+      if (coupon) loginParams.set('coupon', coupon);
+      if (tier) loginParams.set('tier', tier);
+      if (redirectParam) loginParams.set('redirect', redirectParam);
+      return NextResponse.redirect(
+        new URL(`/${locale}/login?${loginParams.toString()}`, request.url),
+      );
+    }
+  }
+
   // CORS preflight
   if (request.method === 'OPTIONS') {
     return handleCorsPrelight(origin);
