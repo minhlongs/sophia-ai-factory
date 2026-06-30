@@ -45,57 +45,20 @@ REPO_ROOT="$(cd "$APP_DIR/../.." && pwd)"
 
 cd "$APP_DIR"
 
+# Source shared deploy utilities (logging, retry, curl wrappers, SHA verification)
+# shellcheck disable=SC1091  # Sourced path is dynamic; shellcheck can't resolve from CWD.
+source "$SCRIPT_DIR/lib/deploy-utils.sh"
+
+# Error trap — logs the line number where an unexpected command failure occurs.
+# Does NOT fire for commands guarded by `if` or `|| true`, so expected failures
+# (grep no-match, optional file copy, transient network errors) are handled
+# explicitly by the call site.
+trap 'log_error "Deploy failed unexpectedly at line $LINENO"' ERR
+
 # ─── Unset proxy for CF API calls (local SOCKS5 proxy breaks wrangler fetch) ──
 # NO_PROXY list doesn't include Cloudflare API hosts; clear all proxy vars so
 # wrangler/opennext can reach api.cloudflare.com/workers directly.
 unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy ALL_PROXY all_proxy
-
-# ─── Retry helper for transient CF API failures (502 Bad Gateway, etc) ───────
-# 3 attempts with exponential backoff (5s, 10s, 20s). Permanent errors
-# (auth, validation, etc) still fail on first attempt — only 5xx and network
-# errors merit retry. CF returned 502 Bad Gateway during `secret put` on
-# 2026-05-17 (commit c1528012 deploy), leaving deploy half-done. Retry
-# eliminates this class of transient failures.
-retry_cf() {
-  local label="$1"; shift
-  local attempt=1 max=3 delay=5
-  while [ $attempt -le $max ]; do
-    if "$@"; then return 0; fi
-    if [ $attempt -eq $max ]; then
-      echo "❌ $label failed after $max attempts — aborting deploy"
-      return 1
-    fi
-    echo "⚠️  $label failed (attempt $attempt/$max), retrying in ${delay}s..."
-    sleep "$delay"
-    attempt=$((attempt + 1))
-    delay=$((delay * 2))
-  done
-}
-
-fetch_url() {
-  local url="$1"
-  curl -fsS "$url" 2>/dev/null || curl --noproxy '*' -fsS "$url" 2>/dev/null
-}
-
-fetch_status() {
-  local url="$1"
-  curl -sSL -o /dev/null -w "%{http_code}" "$url" 2>/dev/null || \
-    curl --noproxy '*' -sSL -o /dev/null -w "%{http_code}" "$url" 2>/dev/null
-}
-
-cache_bust_url() {
-  local url="$1"
-  local nonce="$2"
-  case "$url" in
-    *\?*) printf '%s&deployVerify=%s' "$url" "$nonce" ;;
-    *) printf '%s?deployVerify=%s' "$url" "$nonce" ;;
-  esac
-}
-
-extract_short_sha() {
-  node -e "let input=''; process.stdin.on('data', c => input += c); process.stdin.on('end', () => { try { const parsed = JSON.parse(input); if (typeof parsed.shortSha === 'string') process.stdout.write(parsed.shortSha); } catch {} });"
-}
-
 
 # ─── Step 0: Push precondition (2026-05-15 — prevent prod/git divergence) ────
 # Reject deploy if local HEAD has commits not yet on origin/main. Latent divergence
@@ -103,7 +66,7 @@ extract_short_sha() {
 # only in the deployer's local reflog. See plans/260515-0830-gap-91to93/phase-01.
 # Emergency bypass: ALLOW_UNPUSHED_DEPLOY=1 npm run deploy:full
 if [ "${ALLOW_UNPUSHED_DEPLOY:-0}" != "1" ]; then
-  UNPUSHED=$(git -C "$REPO_ROOT" log origin/main..HEAD --oneline 2>/dev/null | wc -l | tr -d ' ')
+  UNPUSHED=$(git -C "$REPO_ROOT" log origin/main..HEAD --oneline 2>>"$DEPLOY_LOG" | wc -l | tr -d ' ')
   if [ "$UNPUSHED" != "0" ]; then
     echo "❌ Refusing to deploy: $UNPUSHED commit(s) on HEAD but not on origin/main."
     echo "Run: git push origin main && git push gitlab main"
@@ -114,8 +77,11 @@ if [ "${ALLOW_UNPUSHED_DEPLOY:-0}" != "1" ]; then
   # and treats post-build artifacts with unchanged content as "modified" until the
   # index is refreshed. Without this, a freshly-built tree (where Next.js/OpenNext
   # touched files) reports false-positive uncommitted changes. Cheap (<1s), safe.
-  git -C "$REPO_ROOT" update-index --refresh > /dev/null 2>&1 || true
-STATUS_PORCELAIN=$(git -C "$REPO_ROOT" status --porcelain | grep -vE "^[? ][?MD ] \.cleo(/)?$|^[?m? ][?MD ] \.claude/worktrees(/|\.bak/)" || true)
+  if ! git -C "$REPO_ROOT" update-index --refresh > /dev/null 2>>"$DEPLOY_LOG"; then
+    log_info "Git index refresh completed with entries needing update (non-critical — continuing)"
+  fi
+  # grep returns exit 1 when no match (clean working tree) — this is expected behavior.
+  STATUS_PORCELAIN=$(git -C "$REPO_ROOT" status --porcelain 2>>"$DEPLOY_LOG" | grep -vE "^[? ][?MD ] \.cleo(/)?$|^[?m? ][?MD ] \.claude/worktrees(/|\.bak/)" 2>>"$DEPLOY_LOG") || true
   if [ -n "$STATUS_PORCELAIN" ]; then
     echo "❌ Refusing to deploy: git status reports a dirty working tree."
     echo "Affected files:"
@@ -130,7 +96,8 @@ STATUS_PORCELAIN=$(git -C "$REPO_ROOT" status --porcelain | grep -vE "^[? ][?MD 
     echo "Commit or stash first."
     exit 2
   fi
-  UNTRACKED=$(git -C "$REPO_ROOT" ls-files --others --exclude-standard | grep -vE '^\.cleo(/)?$|^\.claude/worktrees(/|\.bak/)' || true)
+  # grep returns exit 1 when no match (no untracked files) — this is expected.
+  UNTRACKED=$(git -C "$REPO_ROOT" ls-files --others --exclude-standard 2>>"$DEPLOY_LOG" | grep -vE '^\.cleo(/)?$|^\.claude/worktrees(/|\.bak/)' 2>>"$DEPLOY_LOG") || true
   if [ -n "$UNTRACKED" ]; then
     echo "❌ Refusing to deploy: untracked files in working tree."
     echo "Affected files:"
@@ -160,8 +127,13 @@ APPROVAL_ID=""
 # between previous-live and HEAD must be applied before this script may report
 # production green.
 PREVIOUS_LIVE_SHA=""
-PREVIOUS_VERSION_JSON=$(fetch_url "$PREVIOUS_VERSION_URL" || true)
-PREVIOUS_LIVE_SHA=$(printf '%s' "$PREVIOUS_VERSION_JSON" | extract_short_sha || true)
+PREVIOUS_VERSION_JSON=""
+if ! PREVIOUS_VERSION_JSON=$(fetch_url "$PREVIOUS_VERSION_URL" 2>>"$DEPLOY_LOG"); then
+  log_warn "Failed to fetch previous version from $PREVIOUS_VERSION_URL (first deploy or transient)"
+fi
+if [ -n "$PREVIOUS_VERSION_JSON" ]; then
+  PREVIOUS_LIVE_SHA=$(printf '%s' "$PREVIOUS_VERSION_JSON" | extract_short_sha 2>>"$DEPLOY_LOG") || true
+fi
 if [ -n "$PREVIOUS_LIVE_SHA" ]; then
   echo "Previous live SHA: $PREVIOUS_LIVE_SHA"
 else
@@ -176,8 +148,13 @@ if [ "${SKIP_ATTESTATION:-0}" != "1" ]; then
   echo "==> Deploy attestation (separation-of-duties)"
 
   # Generate deploy manifest
-  DIFF_STAT=$(git -C "$REPO_ROOT" diff --stat origin/main...HEAD 2>/dev/null | tail -1 || echo "0 files changed")
-  FILES_CHANGED=$(git -C "$REPO_ROOT" diff --name-only origin/main...HEAD 2>/dev/null | wc -l | tr -d ' ')
+  # git diff may fail on first deploy (no origin/main yet) — provide safe defaults.
+  if ! DIFF_STAT=$(git -C "$REPO_ROOT" diff --stat origin/main...HEAD 2>>"$DEPLOY_LOG" | tail -1 2>>"$DEPLOY_LOG"); then
+    DIFF_STAT="0 files changed"
+  fi
+  if ! FILES_CHANGED=$(git -C "$REPO_ROOT" diff --name-only origin/main...HEAD 2>>"$DEPLOY_LOG" | wc -l | tr -d ' '); then
+    FILES_CHANGED="0"
+  fi
   OPERATOR_HOST=$(hostname)
   OPERATOR_USER=$(whoami)
   MANIFEST=$(node -e "const [commit_sha,branch,timestamp,operator_host,operator_user,diff_summary,files_changed]=process.argv.slice(1); console.log(JSON.stringify({commit_sha,branch,timestamp,operator_host,operator_user,diff_summary,files_changed:Number(files_changed)}));" "$COMMIT_SHA" "$DEPLOY_BRANCH" "$DEPLOYED_AT" "$OPERATOR_HOST" "$OPERATOR_USER" "$DIFF_STAT" "$FILES_CHANGED")
@@ -195,14 +172,15 @@ if [ "${SKIP_ATTESTATION:-0}" != "1" ]; then
         eval "export DEPLOY_OPERATOR_${K}=\"operator-${K}\""
       fi
     done
-    CREATE_APPROVAL_RESPONSE=$(curl -fsS -X POST "https://sophia.agencyos.network/api/admin/deploy-guard/create-approval" \
+    if ! CREATE_APPROVAL_RESPONSE=$(curl --fail -fsS -X POST "https://sophia.agencyos.network/api/admin/deploy-guard/create-approval" \
       -H "Content-Type: application/json" \
       -H "X-Deploy-Guard-Token: ${DEPLOY_GUARD_API_TOKEN}" \
       -H "X-Deploy-Operator: ${OPERATOR_USER}" \
-      -d "{\"commitSha\":\"${COMMIT_SHA}\",\"branch\":\"${DEPLOY_BRANCH}\",\"operatorHost\":\"${OPERATOR_HOST}\",\"operatorUser\":\"${OPERATOR_USER}\",\"diffSummary\":\"${DIFF_STAT}\",\"filesChanged\":${FILES_CHANGED},\"requiredAttestations\":2}" 2>/dev/null) || {
-      echo "  ⚠️ Failed to create Deploy Guard approval (non-fatal — continuing without UI tracking)"
+      --retry 3 --retry-delay 5 --connect-timeout 10 --max-time 30 \
+      -d "{\"commitSha\":\"${COMMIT_SHA}\",\"branch\":\"${DEPLOY_BRANCH}\",\"operatorHost\":\"${OPERATOR_HOST}\",\"operatorUser\":\"${OPERATOR_USER}\",\"diffSummary\":\"${DIFF_STAT}\",\"filesChanged\":${FILES_CHANGED},\"requiredAttestations\":2}" 2>>"$DEPLOY_LOG"); then
+      log_info "Failed to create Deploy Guard approval (non-fatal — continuing without UI tracking)"
       APPROVAL_ID=""
-    }
+    fi
     if [ -n "$CREATE_APPROVAL_RESPONSE" ]; then
       APPROVAL_ID=$(echo "$CREATE_APPROVAL_RESPONSE" | node -e "try{const p=JSON.parse(require('fs').readFileSync(0,'utf8')); process.stdout.write(p.approvalId||'')}catch(e){process.stdout.write('')}")
       if [ -n "$APPROVAL_ID" ]; then
@@ -220,7 +198,7 @@ if [ "${SKIP_ATTESTATION:-0}" != "1" ]; then
     SECRET_VAR="DEPLOY_KEY_${KEY_NUM}"
     SIGNED_VAR="DEPLOY_ATTESTATION_${KEY_NUM}"
     if [ -n "${!SECRET_VAR:-}" ] && [ -n "${!SIGNED_VAR:-}" ]; then
-      EXPECTED=$(printf '%s' "$MANIFEST" | openssl dgst -sha256 -hmac "${!SECRET_VAR}" 2>/dev/null | awk '{print $NF}')
+      EXPECTED=$(printf '%s' "$MANIFEST" | openssl dgst -sha256 -hmac "${!SECRET_VAR}" 2>>"$DEPLOY_LOG" | awk '{print $NF}')
       if [ "$EXPECTED" = "${!SIGNED_VAR}" ]; then
         echo "  ✅ Attestation ${KEY_NUM} verified (operator key ${KEY_NUM})"
         ATTESTATION_COUNT=$((ATTESTATION_COUNT + 1))
@@ -230,13 +208,14 @@ if [ "${SKIP_ATTESTATION:-0}" != "1" ]; then
           OPERATOR_ID_VAR="DEPLOY_OPERATOR_${KEY_NUM}"
           OPERATOR_ID="${!OPERATOR_ID_VAR:-operator-${KEY_NUM}}"
           echo "  Recording attestation ${KEY_NUM} (operator: ${OPERATOR_ID})..."
-          curl -fsS -X POST "https://sophia.agencyos.network/api/admin/deploy-guard/attest" \
+          if ! curl --fail -fsS -X POST "https://sophia.agencyos.network/api/admin/deploy-guard/attest" \
             -H "Content-Type: application/json" \
             -H "X-Deploy-Guard-Token: ${DEPLOY_GUARD_API_TOKEN}" \
             -H "X-Deploy-Operator: ${OPERATOR_ID}" \
-            -d "{\"approvalId\":\"${APPROVAL_ID}\",\"signature\":\"${!SIGNED_VAR}\"}" 2>/dev/null || {
-            echo "  ⚠️ Failed to record attestation ${KEY_NUM} (non-fatal)"
-          }
+            --retry 3 --retry-delay 5 --connect-timeout 10 --max-time 30 \
+            -d "{\"approvalId\":\"${APPROVAL_ID}\",\"signature\":\"${!SIGNED_VAR}\"}" 2>>"$DEPLOY_LOG"; then
+            log_info "Failed to record attestation ${KEY_NUM} (non-fatal)"
+          fi
         fi
       else
         echo "  ❌ Attestation ${KEY_NUM} INVALID — signature mismatch"
@@ -266,21 +245,27 @@ else
   ATTESTATION_COUNT=0
   OPERATOR_HOST=$(hostname)
   OPERATOR_USER=$(whoami)
-  DIFF_STAT=$(git -C "$REPO_ROOT" diff --stat origin/main...HEAD 2>/dev/null | tail -1 || echo "0 files changed")
-  FILES_CHANGED=$(git -C "$REPO_ROOT" diff --name-only origin/main...HEAD 2>/dev/null | wc -l | tr -d ' ')
+  # git diff may fail on first deploy (no origin/main yet) — provide safe defaults.
+  if ! DIFF_STAT=$(git -C "$REPO_ROOT" diff --stat origin/main...HEAD 2>>"$DEPLOY_LOG" | tail -1 2>>"$DEPLOY_LOG"); then
+    DIFF_STAT="0 files changed"
+  fi
+  if ! FILES_CHANGED=$(git -C "$REPO_ROOT" diff --name-only origin/main...HEAD 2>>"$DEPLOY_LOG" | wc -l | tr -d ' '); then
+    FILES_CHANGED="0"
+  fi
 
   # Record emergency override if Deploy Guard integration enabled
   if [ -n "${DEPLOY_GUARD_API_TOKEN:-}" ]; then
     echo "==> Recording Deploy Guard emergency override"
     # Read reason from environment or prompt? For automation, use SKIP_ATTESTATION_REASON env var
     OVERRIDE_REASON="${SKIP_ATTESTATION_REASON:-Emergency bypass: SKIP_ATTESTATION=1}"
-    curl -fsS -X POST "https://sophia.agencyos.network/api/admin/deploy-guard/override" \
+    if ! curl --fail -fsS -X POST "https://sophia.agencyos.network/api/admin/deploy-guard/override" \
       -H "Content-Type: application/json" \
       -H "X-Deploy-Guard-Token: ${DEPLOY_GUARD_API_TOKEN}" \
       -H "X-Deploy-Operator: ${OPERATOR_USER}" \
-      -d "{\"commitSha\":\"${COMMIT_SHA}\",\"reason\":\"${OVERRIDE_REASON}\"}" 2>/dev/null || {
-      echo "  ⚠️ Failed to record Deploy Guard override (non-fatal)"
-    }
+      --retry 3 --retry-delay 5 --connect-timeout 10 --max-time 30 \
+      -d "{\"commitSha\":\"${COMMIT_SHA}\",\"reason\":\"${OVERRIDE_REASON}\"}" 2>>"$DEPLOY_LOG"; then
+      log_info "Failed to record Deploy Guard override (non-fatal)"
+    fi
   fi
 fi
 
@@ -292,9 +277,12 @@ echo "==> Recording deploy audit log entry"
 # Build JSON payload for audit log
 AUDIT_PAYLOAD=$(node -e "const fs=require('fs'); const pkg=JSON.parse(fs.readFileSync('package.json','utf8')); const [commit_sha,branch,timestamp,operator_host,operator_user,diff_summary,files_changed]=process.argv.slice(1); var ov=(pkg.dependencies&&pkg.dependencies['@opennextjs/cloudflare'])||''; var om=ov.match(/\^([0-9.]+)/); console.log(JSON.stringify({event:'DEPLOY',commit_sha,branch,timestamp,operator_host,operator_user,diff_summary,files_changed:Number(files_changed),manifest:{commit_sha,branch,timestamp,operator_host,operator_user,diff_summary,files_changed:Number(files_changed),opennext_version:om?om[1]:'unknown',attestation_count:${ATTESTATION_COUNT},skip_attestation:${SKIP_ATTESTATION:-0},skip_tests:${SKIP_TESTS:-0},skip_tsc:${SKIP_TSC:-0}}}));" "$COMMIT_SHA" "$DEPLOY_BRANCH" "$DEPLOYED_AT" "$OPERATOR_HOST" "$OPERATOR_USER" "$DIFF_STAT" "$FILES_CHANGED")
 # Fire-and-forget: deploy must not fail if audit endpoint is temporarily unreachable
-curl -fsS -X POST "https://sophia.agencyos.network/api/admin/audit/deploy" \
+if ! curl --fail -fsS -X POST "https://sophia.agencyos.network/api/admin/audit/deploy" \
   -H "Content-Type: application/json" \
-  -d "$AUDIT_PAYLOAD" 2>/dev/null || echo "⚠️  Deploy audit log POST failed (non-fatal — manual backfill via /admin/audit recommended)"
+  --retry 3 --retry-delay 5 --connect-timeout 10 --max-time 30 \
+  -d "$AUDIT_PAYLOAD" 2>>"$DEPLOY_LOG"; then
+  log_warn "Deploy audit log POST failed (non-fatal — manual backfill via /admin/audit recommended)"
+fi
 echo "Deploying SHA $COMMIT_SHORT (branch: $DEPLOY_BRANCH)"
 echo "Deployed at: $DEPLOYED_AT"
 
@@ -310,7 +298,7 @@ RESOLVED_OPENNEXT=$(node -e "const fs=require('fs'); const path=require('path');
 if [ -n "$RESOLVED_OPENNEXT" ]; then
   OPENNEXT_VER=$(node -p "require('${RESOLVED_OPENNEXT}').version")
   # Only update if wrangler.toml has the placeholder pattern
-  if grep -q 'OPENNEXT_VERSION = "' "$APP_DIR/wrangler.toml" 2>/dev/null; then
+  if grep -q 'OPENNEXT_VERSION = "' "$APP_DIR/wrangler.toml" 2>>"$DEPLOY_LOG"; then
     echo "==> Injecting OPENNEXT_VERSION=$OPENNEXT_VER into wrangler.toml"
     node -e "const fs=require('fs'); const file=process.argv[1]; const version=process.argv[2]; const src=fs.readFileSync(file,'utf8'); fs.writeFileSync(file,src.replace(/OPENNEXT_VERSION = \"[^\"]*\"/,'OPENNEXT_VERSION = \"'+version+'\"'));" "$APP_DIR/wrangler.toml" "$OPENNEXT_VER"
   fi
@@ -404,15 +392,21 @@ fi
 # ─── Step 2: OpenNext + instrumentation fixes ────────────────────────────────
 echo "==> ensure instrumentation in standalone"
 
-# Wait for instrumentation.js to appear after build (filesystem consistency fix)
+# Wait for a file (or glob pattern) to appear after build (filesystem consistency fix).
+# Uses a for loop with unquoted glob expansion so patterns like "instrumentation_ts_*"
+# are matched correctly. Without quotes, the shell expands the glob to matching files,
+# or to the literal string if nullglob is unset (default) and nothing matches.
+# shellcheck disable=SC2144  # Intentional: glob expansion for pattern matching.
 wait_for_file() {
   local file="$1"
   local max_wait="${2:-15}"
   local elapsed=0
-  while [ $elapsed -lt $max_wait ]; do
-    if [ -f "$file" ]; then
-      return 0
-    fi
+  while [ $elapsed -lt "$max_wait" ]; do
+    for f in $file; do
+      if [ -f "$f" ]; then
+        return 0
+      fi
+    done
     sleep 1
     elapsed=$((elapsed+1))
   done
@@ -436,8 +430,13 @@ fi
 if ! wait_for_file ".next/server/chunks/instrumentation_ts_*" 5; then
   echo "  No instrumentation chunks found (optional)"
 else
-  cp -f ".next/server/chunks/instrumentation_ts_*" ".next/standalone/.next/server/chunks/" 2>/dev/null || true
-  echo "  Copied instrumentation chunks"
+  # Copy any matched instrumentation chunks; the glob is checked in wait_for_file above.
+  # shellcheck disable=SC2086  # Intentional: glob expansion for cp source.
+  if cp -f .next/server/chunks/instrumentation_ts_* .next/standalone/.next/server/chunks/ 2>>"$DEPLOY_LOG"; then
+    echo "  Copied instrumentation chunks"
+  else
+    log_warn "No instrumentation chunk files matched the glob (optional — continuing)"
+  fi
 fi
 
 echo "==> strip-ssr-bloat (post-standalone)"
@@ -461,7 +460,11 @@ bash scripts/strip-ssr-bloat.sh
 # Strip heavy client-only libs from the bundled handler AFTER OpenNext build
 # but BEFORE deploy. This reduces the final worker size.
 echo "==> strip-ssr-bloat (post-opennext)"
-bash scripts/strip-ssr-bloat.sh --post-opennext 2>/dev/null || bash scripts/strip-ssr-bloat.sh
+# Try post-opennext mode first; fall back to default mode if --post-opennext flag not supported.
+if ! bash scripts/strip-ssr-bloat.sh --post-opennext 2>>"$DEPLOY_LOG"; then
+  log_info "strip-ssr-bloat --post-opennext not supported, falling back to default mode"
+  bash scripts/strip-ssr-bloat.sh
+fi
 
 # ─── Step 3b: Pre-deploy E2E smoke (opt-in, Phase 03 Track C) ───────────────
 # Gate: RUN_PREDEPLOY_E2E=1 ./scripts/deploy-with-sha.sh
@@ -483,7 +486,7 @@ fi
 # migrations that were not in HEAD~1. Apply before replacing the worker so new
 # code does not run against an old schema. Emergency bypass: SKIP_D1_MIGRATIONS=1.
 if [ "${SKIP_D1_MIGRATIONS:-0}" != "1" ]; then
-  if [ -n "$PREVIOUS_LIVE_SHA" ] && git -C "$REPO_ROOT" rev-parse --verify "$PREVIOUS_LIVE_SHA^{commit}" >/dev/null 2>&1; then
+  if [ -n "$PREVIOUS_LIVE_SHA" ] && git -C "$REPO_ROOT" rev-parse --verify "$PREVIOUS_LIVE_SHA^{commit}" >/dev/null 2>>"$DEPLOY_LOG"; then
     echo "==> apply D1 migrations changed since previous live SHA ($PREVIOUS_LIVE_SHA)"
     bash scripts/apply-migrations.sh "$PREVIOUS_LIVE_SHA"
   elif [ -n "$PREVIOUS_LIVE_SHA" ]; then
@@ -516,12 +519,23 @@ retry_cf "opennext deploy" npx opennextjs-cloudflare deploy --config wrangler.to
 # Store SBOM in BACKUPS_BUCKET for supply chain artifacts.
 if [ "${SKIP_SBOM:-0}" != "1" ]; then
   echo "==> upload SBOM to R2"
-  SBOM_FILE=$(ls -t .sbom/sbom-*.json 2>/dev/null | head -1 || true)
+  # Use nullglob to handle case where no SBOM files exist (glob expands to empty).
+  SBOM_FILE=""
+  shopt -s nullglob
+  sbom_files=(.sbom/sbom-*.json)
+  # Filenames are controlled (sbom-*.json) so non-alphanumeric chars not a concern.
+  # shellcheck disable=SC2012
+  if [ ${#sbom_files[@]} -gt 0 ]; then
+    SBOM_FILE=$(ls -t "${sbom_files[@]}" 2>>"$DEPLOY_LOG" | head -1)
+  fi
+  shopt -u nullglob
   if [ -n "$SBOM_FILE" ] && [ -f "$SBOM_FILE" ]; then
     SBOM_KEY="sbom/$(basename "$SBOM_FILE")"
  echo " Uploading $SBOM_FILE → s3://${BACKUPS_BUCKET:-}/$SBOM_KEY"
  if [ -n "${BACKUPS_BUCKET:-}" ]; then
-   npx wrangler r2 object put "$BACKUPS_BUCKET" --key "$SBOM_KEY" --file="$SBOM_FILE" --remote || echo "⚠️ SBOM upload to R2 failed (non-fatal)"
+   if ! npx wrangler r2 object put "$BACKUPS_BUCKET" --key "$SBOM_KEY" --file="$SBOM_FILE" --remote 2>>"$DEPLOY_LOG"; then
+     log_warn "SBOM upload to R2 failed (non-fatal)"
+   fi
    echo " ✅ SBOM uploaded"
  else
    echo "⚠️ BACKUPS_BUCKET not set — SBOM saved locally at $SBOM_FILE"
@@ -541,8 +555,13 @@ retry_cf "secret put DEPLOY_BRANCH" bash -c "echo '$DEPLOY_BRANCH' | npx wrangle
 
 # Also set for health worker (fix: propagate SHA to health environment)
 # Non-fatal: secret may already exist from previous deploy
-npx wrangler secret put COMMIT_SHA --name sophia-ai-factory --env health 2>/dev/null || true
-npx wrangler secret put DEPLOYED_AT --name sophia-ai-factory --env health 2>/dev/null || true
+# Non-fatal: secret may already exist from previous deploy (already-set error is expected).
+if ! npx wrangler secret put COMMIT_SHA --name sophia-ai-factory --env health 2>>"$DEPLOY_LOG"; then
+  log_info "Health worker COMMIT_SHA may already be set (non-fatal — continuing)"
+fi
+if ! npx wrangler secret put DEPLOYED_AT --name sophia-ai-factory --env health 2>>"$DEPLOY_LOG"; then
+  log_info "Health worker DEPLOYED_AT may already be set (non-fatal — continuing)"
+fi
 
 # ─── Step 5: Upload Sentry source maps (fail-fast) ───────────────────────────
 # Bakes symbolicated stack traces into prod errors. Script gracefully skips
@@ -555,7 +574,7 @@ if [ -x scripts/ci/sentry-upload-sourcemaps.sh ]; then
 # Post-deploy probe: verify release exists with artifacts (skip if SENTRY_ORG/SENTRY_PROJECT unset)
 if [ -n "${SENTRY_ORG:-}" ] && [ -n "${SENTRY_PROJECT:-}" ]; then
 RELEASE="${SENTRY_RELEASE:-$COMMIT_SHORT}"
-if npx @sentry/cli releases info "$RELEASE" --org "$SENTRY_ORG" --project "$SENTRY_PROJECT" >/dev/null 2>&1; then
+if npx @sentry/cli releases info "$RELEASE" --org "$SENTRY_ORG" --project "$SENTRY_PROJECT" >/dev/null 2>>"$DEPLOY_LOG"; then
 echo "✅ Sentry release $RELEASE verified"
 else
 echo "❌ Sentry release $RELEASE not found or missing artifacts"
@@ -570,28 +589,18 @@ fi
 # HTTP 200 alone can be a stale worker. /api/version must expose the exact
 # COMMIT_SHA secret injected above before this deploy can be reported GREEN.
 echo "==> verify deployed SHA via $VERIFY_VERSION_URL"
-LIVE_SHA=""
-for attempt in 1 2 3 4 5 6 7 8 9 10 11 12; do
-  VERSION_JSON=$(fetch_url "$VERIFY_VERSION_URL" || true)
-  LIVE_SHA=$(printf '%s' "$VERSION_JSON" | extract_short_sha || true)
-  if [ "$LIVE_SHA" = "$COMMIT_SHORT" ]; then
-    echo "✅ Deploy SHA match: $LIVE_SHA"
-    break
-  fi
-  echo "⏳ Deploy SHA not visible yet (attempt $attempt/12): local=$COMMIT_SHORT live=${LIVE_SHA:-missing}"
-  sleep 5
-done
-
-if [ "$LIVE_SHA" != "$COMMIT_SHORT" ]; then
-  echo "❌ Deploy SHA mismatch after propagation wait: local=$COMMIT_SHORT live=${LIVE_SHA:-missing}"
-  echo "Version response: ${VERSION_JSON:-<empty>}"
+if ! verify_deploy_sha "$VERIFY_VERSION_URL" "$COMMIT_SHORT" 12; then
   exit 2
 fi
 
 echo "==> verify production HTTP via $PROD_URL"
-HTTP_STATUS=$(fetch_status "$PROD_URL" || true)
+# fetch_status returns non-zero on failure (curl --fail). In that case HTTP_STATUS is empty.
+if ! HTTP_STATUS=$(fetch_status "$PROD_URL" 2>>"$DEPLOY_LOG"); then
+  echo "❌ Production HTTP check failed: curl error (see deploy log)"
+  exit 2
+fi
 if [ "$HTTP_STATUS" != "200" ]; then
-  echo "❌ Production HTTP check failed: ${HTTP_STATUS:-curl-error}"
+  echo "❌ Production HTTP check failed: ${HTTP_STATUS}"
   exit 2
 fi
 echo "✅ Production HTTP: $HTTP_STATUS"
@@ -620,7 +629,7 @@ echo "Verified: $VERIFY_VERSION_URL shortSha == $COMMIT_SHORT"
 # Best-effort mirror. Local doctrine docs `git push gitlab main` as a manual
 # step; auto-pushing here removes operator drift. Non-fatal: a failed mirror
 # (network/auth) MUST NOT fail the deploy because the worker is already live.
-if git -C "$REPO_ROOT" remote get-url gitlab >/dev/null 2>&1; then
+if git -C "$REPO_ROOT" remote get-url gitlab >/dev/null 2>>"$DEPLOY_LOG"; then
   echo "==> git push gitlab $DEPLOY_BRANCH (non-fatal mirror)"
   git -C "$REPO_ROOT" push gitlab "$DEPLOY_BRANCH" || \
     echo "warn: gitlab mirror push failed (non-fatal; deploy already live)"
