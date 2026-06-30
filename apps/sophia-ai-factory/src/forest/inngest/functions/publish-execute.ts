@@ -1,5 +1,6 @@
 import { inngest } from '@/seed/inngest/client';
 import { executePublishWorkflow } from '@/land/video/publishing/execute';
+import { refreshChannelToken } from '@/forest/publishing/oauth-token-refresher';
 
 export const publishExecute = inngest.createFunction(
   { id: 'publish-execute', retries: 3 },
@@ -19,6 +20,7 @@ export const publishExecute = inngest.createFunction(
           data: { jobId, tenantId, userId, attempt },
         });
       },
+      refreshToken: refreshChannelToken,
     });
   },
 );

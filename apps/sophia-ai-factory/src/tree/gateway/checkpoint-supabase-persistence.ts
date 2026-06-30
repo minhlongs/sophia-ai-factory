@@ -5,8 +5,7 @@
  * conversion for the campaign_checkpoints table.
  */
 
-import { createAdminClient } from "@/land/supabase/admin";
-import type { D1Client } from "@/seed/db/d1-query-builder";
+import { createServerClient } from "@/seed/db/client";
 import type { Checkpoint } from "@/tree/gateway/gateway-types";
 
 /** Row shape returned from campaign_checkpoints table */
@@ -19,9 +18,9 @@ export interface CheckpointRow {
 }
 
 /** Get D1 client for checkpoint persistence, null if unavailable */
-export async function getCheckpointSupabase(): Promise<D1Client | null> {
+export async function getCheckpointSupabase(): Promise<ReturnType<typeof createServerClient> | null> {
   try {
-    return await createAdminClient();
+    return createServerClient();
   } catch {
     return null;
   }

@@ -12,6 +12,8 @@ import { logger } from '@/seed/utils/logger-utility'
 import { getD1 } from '@/seed/db/client'
 import { recordAudit } from '@/seed/db/audit/audit-log'
 import type { OneTimeSku } from '@/seed/types'
+import { success, failure, type Result } from '@/seed/types/result'
+import { IPNError } from './nowpayments-ipn-errors'
 
 /** 1% tolerance for crypto gas fees / exchange rounding. */
 export const UNDERPAYMENT_THRESHOLD = 0.99
@@ -26,10 +28,10 @@ export async function markUnderpaid(
   userId: string,
   sku: OneTimeSku,
   actuallyPaid: number,
-): Promise<void> {
+): Promise<Result<void, IPNError>> {
   try {
     const _d1 = getD1();
-    if (!_d1) throw new Error('D1 database binding not available');
+    if (!_d1) return failure(new IPNError('D1_BINDING_UNAVAILABLE'));
     const d1 = _d1;
     const amountCents = Math.round(actuallyPaid * 100)
     const now = Math.floor(Date.now() / 1000)
@@ -66,10 +68,8 @@ export async function markUnderpaid(
       actuallyPaid,
       skuId: sku.id,
     })
+    return success(undefined)
   } catch (err) {
-    logger.error('[IPN/OneTime] Failed to record underpaid purchase', err instanceof Error ? err : undefined, {
-      userId,
-      paymentId,
-    })
+    return failure(new IPNError('MARK_UNDERPAID_FAILED', err))
   }
 }

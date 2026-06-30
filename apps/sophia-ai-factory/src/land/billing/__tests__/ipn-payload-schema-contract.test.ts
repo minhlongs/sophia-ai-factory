@@ -105,6 +105,19 @@ describe('ipnPayloadSchema — invalid inputs', () => {
     expect(result.success).toBe(false)
   })
 
+  it('accepts very long string fields (no length limit in schema)', () => {
+    const longString = 'x'.repeat(10000)
+    const result = ipnPayloadSchema.safeParse(buildIpnPayload({
+      payment_id: longString,
+      price_currency: longString,
+      order_id: longString,
+      order_description: longString,
+      invoice_id: longString,
+    }))
+    // Schema has no maxLength constraint, so very long strings should be accepted
+    expect(result.success).toBe(true)
+  })
+
   it('rejects non-string payment_id', () => {
     const result = ipnPayloadSchema.safeParse(buildIpnPayload({ payment_id: 12345 as unknown as string }))
     expect(result.success).toBe(false)

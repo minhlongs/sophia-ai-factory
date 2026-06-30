@@ -15,7 +15,8 @@ import {
   parseAnthropicSse,
   type AnthropicStreamEvent,
 } from './anthropic-sse-parser'
-import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/land/services/errors'
+import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/seed/services/errors'
+import { logger } from '@/seed/utils/logger-utility'
 
 export type { AnthropicStreamEvent } from './anthropic-sse-parser'
 
@@ -99,7 +100,13 @@ function buildBody(params: CallAnthropicParams, stream: boolean): string {
 }
 
 async function httpError(response: Response): Promise<never> {
-  const raw = await response.text().catch(() => '')
+  const raw = await response.text().catch((err) => {
+    logger.warn('Failed to read Anthropic error response body', {
+      error: String(err),
+      context: 'httpError',
+    });
+    return '';
+  })
   const body = raw.length > ERROR_BODY_MAX_LEN
     ? `${raw.slice(0, ERROR_BODY_MAX_LEN)}...[truncated]`
     : raw

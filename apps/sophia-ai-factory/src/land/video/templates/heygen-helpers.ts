@@ -47,7 +47,10 @@ export async function createHeyGenVideo(params: {
   });
 
   if (!res.ok) {
-    const errText = await res.text().catch(() => '');
+    const errText = await res.text().catch((err) => {
+      logger.warn('Failed to read HeyGen error response', { error: String(err), context: 'createHeyGenVideo' });
+      return '';
+    });
     throw new Error(`HeyGen createVideo ${res.status}: ${errText.slice(0, 200)}`);
   }
 

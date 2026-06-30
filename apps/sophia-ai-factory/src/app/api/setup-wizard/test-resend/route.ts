@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
+import { logger } from '@/seed/utils/logger-utility'
 
 const schema = z.object({
   api_key: z.string().min(1, 'api_key is required'),
@@ -95,7 +96,10 @@ export async function POST(request: NextRequest) {
         message_vi: 'Khoá Resend API không hợp lệ',
       }, { status: 422 })
     }
-    const errText = await res.text().catch(() => '')
+    const errText = await res.text().catch((err) => {
+      logger.warn('Failed to read response body', { error: String(err), context: 'POST /api/setup-wizard/test-resend' });
+      return '';
+    })
     return NextResponse.json(
       {
         ok: false,

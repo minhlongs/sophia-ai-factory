@@ -8,6 +8,8 @@
  * Documented at https://docs.apollo.io/reference/people-search.
  */
 
+import { logger } from '@/seed/utils/logger-utility';
+
 const APOLLO_BASE = 'https://api.apollo.io';
 const SEARCH_PATH = '/api/v1/mixed_people/search';
 const DEFAULT_PAGE_SIZE = 25;
@@ -89,7 +91,12 @@ export async function apolloPeopleSearch(
   });
 
   if (!res.ok) {
-    const text = await res.text().catch(() => '');
+    let text = '';
+    try {
+      text = await res.text();
+    } catch (err) {
+      logger.warn('Failed to read Apollo response body', undefined, { error: String(err), context: 'apolloPeopleSearch' });
+    }
     const err: ApolloErrorResponse = Object.assign(new Error(`Apollo HTTP ${res.status}`), {
       code: `apollo_${res.status}`,
       status: res.status,
@@ -138,7 +145,12 @@ export async function apolloPeopleBulkSearch(
     });
 
     if (!res.ok) {
-      const text = await res.text().catch(() => '');
+      let text = '';
+      try {
+        text = await res.text();
+      } catch (err) {
+        logger.warn('Failed to read Apollo response body', undefined, { error: String(err), context: 'apolloPeopleBulkSearch' });
+      }
       const err: ApolloErrorResponse = Object.assign(new Error(`Apollo HTTP ${res.status}`), {
         code: `apollo_${res.status}`,
         status: res.status,

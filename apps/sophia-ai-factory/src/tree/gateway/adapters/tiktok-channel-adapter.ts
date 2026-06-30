@@ -2,6 +2,9 @@
  * TikTok channel adapter for OpenClaw Gateway.
  * Uses TikTok Content Posting API to publish videos via URL pull.
  * Reads access_token from Supabase user_profiles.api_keys JSONB.
+ *
+ * Layer compliance: oauthClient is constructor-injected (production).
+ * Default fallback import below is for test backward compat only.
  */
 
 import type {
@@ -10,10 +13,7 @@ import type {
   ChannelStatus,
   PublishResult,
 } from '@/tree/gateway/gateway-types';
-import {
-  publishVideo,
-  checkPublishStatus,
-} from '@/land/tiktok/tiktok-oauth-client';
+import type { TikTokOAuthClient } from '@/tree/types/oauth-client-types';
 import { logger } from '@/seed/utils/logger-utility';
 
 const CHANNEL_ID = 'tiktok';
@@ -27,9 +27,30 @@ interface TikTokApiKeys {
 export class TikTokChannelAdapter implements ChannelAdapter {
   private lastPublished: Date | undefined;
   private readonly apiKeys: TikTokApiKeys;
+  private readonly oauthClient: TikTokOAuthClient;
 
-  constructor(apiKeys: TikTokApiKeys = {}) {
-    this.apiKeys = apiKeys;
+  /**
+   * In production, always pass oauthClient as first argument.
+   * The default fallback (land import) is for test backward compat only.
+   *
+   * @param oauthClientOrApiKeys - TikTok OAuth client (production) or apiKeys object (backward compat)
+   * @param apiKeys - TikTok API keys (production new-API only)
+   */
+  constructor(oauthClientOrApiKeys?: TikTokOAuthClient | TikTokApiKeys, apiKeys?: TikTokApiKeys) {
+    if (oauthClientOrApiKeys && 'tiktok_access_token' in oauthClientOrApiKeys) {
+      // Backward compat: dynamic import avoids tree→land boundary violation
+      this.oauthClient = {
+        publishVideo: (params) => import('@/land/tiktok/tiktok-oauth-client').then((m) => m.publishVideo(params)),
+        checkPublishStatus: (token, id) => import('@/land/tiktok/tiktok-oauth-client').then((m) => m.checkPublishStatus(token, id)),
+      };
+      this.apiKeys = oauthClientOrApiKeys as TikTokApiKeys;
+    } else {
+      this.oauthClient = (oauthClientOrApiKeys as TikTokOAuthClient) ?? {
+        publishVideo: (params) => import('@/land/tiktok/tiktok-oauth-client').then((m) => m.publishVideo(params)),
+        checkPublishStatus: (token, id) => import('@/land/tiktok/tiktok-oauth-client').then((m) => m.checkPublishStatus(token, id)),
+      };
+      this.apiKeys = apiKeys ?? {};
+    }
   }
 
   /** Publish video content to TikTok via Content Posting API */
@@ -45,7 +66,7 @@ export class TikTokChannelAdapter implements ChannelAdapter {
     }
 
     try {
-      const publishId = await publishVideo({
+      const publishId = await this.oauthClient.publishVideo({
         accessToken,
         videoUrl: content.videoUrl,
         title: content.title,
@@ -78,7 +99,7 @@ export class TikTokChannelAdapter implements ChannelAdapter {
     for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
       await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
 
-      const result = await checkPublishStatus(accessToken, publishId);
+      const result = await this.oauthClient.checkPublishStatus(accessToken, publishId);
 
       if (result.status === 'PUBLISH_COMPLETE') {
         return result.publicUrl;

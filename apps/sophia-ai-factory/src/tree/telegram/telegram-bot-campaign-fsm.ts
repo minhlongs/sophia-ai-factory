@@ -12,12 +12,6 @@
 import { TelegramFSM, BotState } from '@/tree/telegram/telegram-fsm-state-manager';
 import { sendTelegramMessage, sendTelegramMessageWithKeyboard } from '@/tree/telegram/telegram-client';
 import { buildOfferKeyboard, formatOfferList, extractOfferIdFromCallback } from '@/tree/telegram/telegram-bot-offer-picker';
-// [EXEMPTION: cross-layer] tree→land import. Per `cross-layer-orchestration.md`
-// this direction is normally forbidden, but campaign FSM legitimately needs
-// affiliate program lookup as a domain primitive (not a workflow). The refactor
-// (move affiliate lookup to forest layer + inject into FSM) is tracked as future
-// work — see handover-260513-0549-gap-90to100.md CA-2.
-import { getTopPrograms, getProgramById } from '@/tree/affiliates';
 import { getUserProfile, mapTier, type CampaignFsmContext } from '@/tree/telegram/telegram-bot-campaign-fsm-helpers';
 import { insertCampaignWithOffer } from '@/tree/telegram/telegram-bot-campaign-fsm-confirm';
 
@@ -74,6 +68,7 @@ export async function handleAudienceInput(chatId: string, audience: string): Pro
   }
 
   const tier = mapTier(profile.subscription_tier);
+  const { getTopPrograms } = await import('@/land/affiliates');
   const topPrograms = getTopPrograms(3, tier);
 
   await TelegramFSM.mergeContext(chatId, {
@@ -96,6 +91,7 @@ export async function handleOfferSelection(chatId: string, callbackData: string)
     return;
   }
 
+  const { getProgramById } = await import('@/land/affiliates');
   const program = getProgramById(offerId);
   if (!program) {
     await sendTelegramMessage(chatId, '❌ Offer not found. Please try again.');
@@ -130,6 +126,7 @@ export async function handleCampaignConfirm(chatId: string): Promise<void> {
     return;
   }
 
+  const { getProgramById } = await import('@/land/affiliates');
   const program = getProgramById(context.selectedOfferId);
   if (!program) {
     await sendTelegramMessage(chatId, '❌ Selected offer no longer available.');

@@ -22,6 +22,9 @@ import { markEngineMissionFailed } from './generate-campaign-db';
 import { notifyRefundRequired, notifyProviderError } from './generate-campaign-refund-notify';
 import { pollVideoStatus } from './generate-campaign-video-poller';
 import { emit } from '@/land/webhooks/emitter';
+import { uploadVideo, refreshAccessToken } from '@/land/youtube/youtube-oauth-client';
+import { publishVideo, checkPublishStatus } from '@/land/tiktok/tiktok-oauth-client';
+import type { YouTubeOAuthClient, TikTokOAuthClient } from '@/tree/types/oauth-client-types';
 
 export interface Step {
   sleep(name: string, duration: string): Promise<void>;
@@ -55,10 +58,13 @@ function getD1ForWebhooks(): D1Database | null {
 
 const resumeEngine = new SmartResumeEngine();
 
+const youtubeOAuthClient: YouTubeOAuthClient = { uploadVideo, refreshAccessToken };
+const tiktokOAuthClient: TikTokOAuthClient = { publishVideo, checkPublishStatus };
+
 function createGateway(): OpenClawGateway {
   const gateway = new OpenClawGateway({ maxRetries: 2, baseDelayMs: 2000 });
-  gateway.registerChannel({ id: 'youtube', name: 'YouTube', adapter: new YouTubeChannelAdapter(), enabled: true, rateLimitPerHour: 6 });
-  gateway.registerChannel({ id: 'tiktok', name: 'TikTok', adapter: new TikTokChannelAdapter(), enabled: true, rateLimitPerHour: 10 });
+  gateway.registerChannel({ id: 'youtube', name: 'YouTube', adapter: new YouTubeChannelAdapter(youtubeOAuthClient), enabled: true, rateLimitPerHour: 6 });
+  gateway.registerChannel({ id: 'tiktok', name: 'TikTok', adapter: new TikTokChannelAdapter(tiktokOAuthClient), enabled: true, rateLimitPerHour: 10 });
   gateway.registerChannel({ id: 'telegram', name: 'Telegram Notifications', adapter: new TelegramNotificationAdapter(), enabled: true, rateLimitPerHour: 60 });
   return gateway;
 }
@@ -86,8 +92,12 @@ export async function runCampaignWorkflow(args: RunCampaignWorkflowArgs): Promis
     } catch (rawErr) {
       if (rawErr instanceof NonRetriableError) throw rawErr;
       const errMsg = rawErr instanceof Error ? rawErr.message : String(rawErr);
-      await markEngineMissionFailed(campaignId, `[${stepName}] ${errMsg}`).catch(() => undefined);
-      await notifyUser(`\u{1F4E9} Campaign failed at step "${stepName}". Contact support for assistance.`).catch(() => undefined);
+      await markEngineMissionFailed(campaignId, `[${stepName}] ${errMsg}`).catch((err) => {
+        logger.warn('Failed to mark engine mission failed during step safety net', { error: String(err), context: 'runStepSafely' });
+      });
+      await notifyUser(`\u{1F4E9} Campaign failed at step "${stepName}". Contact support for assistance.`).catch((err) => {
+        logger.warn('Failed to notify user during step safety net', { error: String(err), context: 'runStepSafely' });
+      });
       throw new NonRetriableError(`[${stepName}] ${errMsg}`, { cause: rawErr });
     }
   }
@@ -258,7 +268,9 @@ export async function runCampaignWorkflow(args: RunCampaignWorkflowArgs): Promis
       });
       await updateStatus('failed', 0, {
         error_message: `Tier downgraded mid-flight from ${tier} to ${currentTier}. Campaign aborted.`,
-      }).catch(() => undefined);
+      }).catch((err) => {
+        logger.warn('Failed to update status after tier downgrade', { error: String(err), context: 'runCampaignWorkflow' });
+      });
       throw new NonRetriableError(
         `Tier downgrade mid-flight: ${tier} → ${currentTier}. Please re-run with an active tier.`,
       );
@@ -325,7 +337,9 @@ export async function runCampaignWorkflow(args: RunCampaignWorkflowArgs): Promis
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : String(err);
     await updateStatus('failed', 0, { error_message: errorMessage });
-    await notifyUser(`❌ **Campaign Failed**\nYour campaign for "${topic}" encountered an error:\n${errorMessage}`).catch(() => undefined);
+    await notifyUser(`❌ **Campaign Failed**\nYour campaign for "${topic}" encountered an error:\n${errorMessage}`).catch((err) => {
+      logger.warn('Failed to notify user of campaign failure', { error: String(err), context: 'runCampaignWorkflow' });
+    });
     throw new NonRetriableError(`Campaign generation failed: ${errorMessage}`, { cause: err });
   }
 }

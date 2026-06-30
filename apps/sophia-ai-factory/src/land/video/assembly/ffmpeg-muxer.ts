@@ -146,7 +146,10 @@ async function submitCloudconvertJob(
   });
 
   if (!res.ok) {
-    const text = await res.text().catch(() => '');
+    const text = await res.text().catch((err) => {
+      logger.warn('Failed to read Cloudconvert response text', { error: String(err), context: 'submitCloudconvertJob' });
+      return '';
+    });
     throw new Error(`[FFmpegMuxer] Cloudconvert job creation failed: ${res.status} — ${text}`);
   }
 

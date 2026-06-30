@@ -31,10 +31,7 @@ vi.mock('@opennextjs/cloudflare', () => ({
   })),
 }))
 
-// Mock slack-alert to avoid HTTP calls
-vi.mock('@/land/monitoring/slack-alert', () => ({
-  sendSlackAlert: vi.fn(async () => undefined),
-}))
+// No land mocks needed — circuit breaker uses callback injection
 
 import {
   recordHeyGenAttempt,

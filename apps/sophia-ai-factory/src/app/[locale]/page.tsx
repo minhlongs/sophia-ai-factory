@@ -1,6 +1,6 @@
 import dynamic from "next/dynamic";
 import { getTranslations } from "next-intl/server";
-import { redirect } from "next/navigation";
+import { redirect } from "@/navigation";
 
 // Marketing homepage — cache at the edge for 60s with stale-while-revalidate.
 // Translates to `Cache-Control: s-maxage=60, stale-while-revalidate=...` in Next 16.
@@ -110,22 +110,26 @@ const Footer = dynamic(
 const FAQ_KEYS = ['quality', 'copyright', 'time', 'skills', 'support', 'money', 'tiers', 'refund'] as const;
 
 export default async function Home({
+  params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const { locale } = await params;
   const sp = await searchParams;
 
   // Redirect /?tab=signup → /login?tab=signup so marketing links and
   // bookmarks that land on the homepage with the signup intent parameter
   // reach the register form instead of silently showing the homepage.
+  // Uses locale-aware redirect from @/navigation to avoid double redirect
+  // through middleware (standard next/navigation redirect loses locale prefix).
   if (typeof sp.tab === "string" && sp.tab === "signup") {
     const query = new URLSearchParams({ tab: "signup" });
     if (typeof sp.coupon === "string") query.set("coupon", sp.coupon);
     if (typeof sp.tier === "string") query.set("tier", sp.tier);
     if (typeof sp.redirect === "string") query.set("redirect", sp.redirect);
-    redirect(`/login?${query.toString()}`);
+    redirect({ href: `/login?${query.toString()}`, locale });
   }
 
   const t = await getTranslations('landing');

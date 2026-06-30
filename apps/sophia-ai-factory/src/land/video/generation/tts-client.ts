@@ -46,7 +46,10 @@ export async function synthesize(params: TTSSynthesizeParams): Promise<TTSSynthe
   });
 
   if (!response.ok) {
-    const errorText = await response.text().catch(() => 'unknown');
+    const errorText = await response.text().catch((err) => {
+      logger.warn('Failed to read response text', { error: String(err), context: 'ttsClient' });
+      return 'unknown';
+    });
     throw new Error(`[TTSClient] /api/internal/tts returned ${response.status}: ${errorText}`);
   }
 

@@ -151,7 +151,7 @@ describe('F1: enqueueDlqEntry handles UNIQUE(event_id) by bumping retry_count', 
       failureReason: 'timeout',
       retryCount: 2,
     });
-    expect(err).toBeUndefined();
+    expect(err.ok).toBe(true);
     // Fresh insert path — updateLog stays empty (no UNIQUE-violation branch)
     expect(updateLog).toHaveLength(0);
   });
@@ -179,7 +179,7 @@ describe('F1: enqueueDlqEntry handles UNIQUE(event_id) by bumping retry_count', 
     });
 
     // Unique-violation branch must NOT throw — it must resolve the update
-    expect(err).toBeUndefined();
+    expect(err.ok).toBe(true);
     expect(updateLog.length).toBeGreaterThanOrEqual(1);
 
     // Find the update payload whose shape is the DLQ retry bump
@@ -203,21 +203,16 @@ describe('F1: enqueueDlqEntry handles UNIQUE(event_id) by bumping retry_count', 
 describe('F2: enqueueDlqEntry requires caller-supplied db as first arg', () => {
   it('rejects a missing/undefined db at runtime', async () => {
     const { enqueueDlqEntry } = await import('../nowpayments-ipn-dead-letter');
-    let threw = false;
-    try {
-            await enqueueDlqEntry(undefined as unknown as D1LikeClient, {
-        eventId: 'x',
-        paymentId: 'p',
-        paymentStatus: 'waiting',
-        orderId: 'o',
-        payload: {},
-        failureReason: '',
-        retryCount: 0,
-      });
-    } catch {
-      threw = true;
-    }
-    expect(threw).toBe(true);
+    const result = await enqueueDlqEntry(undefined as unknown as D1LikeClient, {
+      eventId: 'x',
+      paymentId: 'p',
+      paymentStatus: 'waiting',
+      orderId: 'o',
+      payload: {},
+      failureReason: '',
+      retryCount: 0,
+    });
+    expect(result.ok).toBe(false);
   });
 
   it('uses only the provided db — no implicit globals', async () => {
@@ -233,7 +228,7 @@ describe('F2: enqueueDlqEntry requires caller-supplied db as first arg', () => {
       failureReason: '',
       retryCount: 0,
     });
-    expect(err).toBeUndefined();
+    expect(err.ok).toBe(true);
     expect(updateLog).toHaveLength(0);
   });
 });

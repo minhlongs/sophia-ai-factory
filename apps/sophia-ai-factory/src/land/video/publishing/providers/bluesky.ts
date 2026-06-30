@@ -95,7 +95,10 @@ export class BlueskyPublisher implements Publisher {
     });
 
     if (!res.ok) {
-      const body = await res.text().catch(() => '');
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read Bluesky createRecord response', { error: String(err), context: 'BlueskyPublisher.upload' });
+        return '';
+      });
       throw new Error(`Bluesky createRecord failed (${res.status}): ${body.slice(0, 300)}`);
     }
 
@@ -133,7 +136,10 @@ export async function createAtprotoSession(
     body: JSON.stringify({ identifier, password: appPassword }),
   });
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read Bluesky createSession response', { error: String(err), context: 'createAtprotoSession' });
+      return '';
+    });
     throw new Error(`Bluesky createSession failed (${res.status}): ${body.slice(0, 200)}`);
   }
   const data = (await res.json()) as {
@@ -167,7 +173,10 @@ export async function refreshAtprotoSession(
     headers: { Authorization: `Bearer ${refreshJwt}` },
   });
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read Bluesky refreshSession response', { error: String(err), context: 'refreshAtprotoSession' });
+      return '';
+    });
     throw new Error(`Bluesky refreshSession failed (${res.status}): ${body.slice(0, 200)}`);
   }
   const data = (await res.json()) as {

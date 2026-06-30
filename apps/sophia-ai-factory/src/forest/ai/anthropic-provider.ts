@@ -112,7 +112,12 @@ export class AnthropicProvider implements Provider {
     });
 
     if (!response.ok) {
-      const errorBody = await response.text().catch(() => '');
+      let errorBody = '';
+      try {
+        errorBody = await response.text();
+      } catch (err) {
+        logger.warn('Failed to read Anthropic error response body', undefined, { error: String(err), context: 'AnthropicProvider.chat' });
+      }
       const error = new Error(`Anthropic HTTP ${response.status}: ${errorBody.slice(0, 300)}`);
       (error as { status?: number; retryable?: boolean }).status = response.status;
 
@@ -207,7 +212,12 @@ export class AnthropicProvider implements Provider {
     });
 
     if (!response.ok) {
-      const errorBody = await response.text().catch(() => '');
+      let errorBody = '';
+      try {
+        errorBody = await response.text();
+      } catch (err) {
+        logger.warn('Failed to read Anthropic stream error response body', undefined, { error: String(err), context: 'AnthropicProvider.stream' });
+      }
       const error = new Error(`Anthropic HTTP ${response.status}: ${errorBody.slice(0, 300)}`);
       (error as { status?: number; retryable?: boolean }).status = response.status;
 

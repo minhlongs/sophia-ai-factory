@@ -163,7 +163,13 @@ export async function POST(request: NextRequest) {
       type: event.type,
       error: msg,
     });
-    await markEventProcessed(db, event.id, msg).catch(() => undefined);
+    await markEventProcessed(db, event.id, msg).catch((err) => {
+      logger.warn('Failed to mark Stripe event processed after handler failure', {
+        error: String(err),
+        context: 'POST',
+        eventId: event.id,
+      });
+    });
     return NextResponse.json({ error: 'Handler failed' }, { status: 500 });
   }
 }

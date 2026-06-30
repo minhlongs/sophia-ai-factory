@@ -1,10 +1,6 @@
 import { Tier } from "@/seed/types";
 import { getErrorMessage } from '@/seed/utils/to-error';
-import { trackUsage, hashLicenseKey, startTimer } from '@/forest/usage-metering';
-import { getUsageContext } from '@/forest/usage-metering/context';
-import { callWithCache } from '@/land/llm/cache/call-with-cache';
-import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
-import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/land/services/errors';
+import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/seed/services/errors';
 import {
   generateMockScript,
   buildScriptUserPrompt,
@@ -30,41 +26,53 @@ interface GenerateScriptInput {
   affiliateOffer?: AffiliateOfferCta;
 }
 
+interface ScriptGenDeps {
+  resolveUserApiKey?: (userId: string | null, provider: string, fallback?: string) => Promise<string | null>;
+  trackUsage?: (data: Record<string, unknown>) => Promise<void>;
+  hashLicenseKey?: (key: string) => string;
+  startTimer?: () => () => number;
+  getUsageContext?: () => { userId?: string; licenseNonce?: string };
+}
+
 /**
  * Generates a video script using OpenRouter via resilient client.
  * Falls back to mock if API key is not configured.
+ *
+ * @param deps - Injected dependencies to avoid static layer-boundary imports.
  */
-export async function generateScript(input: GenerateScriptInput) {
+export async function generateScript(input: GenerateScriptInput, deps?: ScriptGenDeps) {
   const { topic, audience, tier, userId, licenseKey, licenseNonce, orgId, affiliateOffer } = input;
-  const stopTimer = startTimer();
+  const stopTimer = deps?.startTimer?.();
 
-  const context = getUsageContext();
+  const context = deps?.getUsageContext?.();
   const finalUserId = userId || context?.userId || 'unknown';
   const finalLicenseKey = licenseKey || '';
   const finalLicenseNonce = licenseNonce || context?.licenseNonce || 'unknown';
-  const licenseKeyHash = hashLicenseKey(finalLicenseKey || 'unknown');
+  const licenseKeyHash = deps?.hashLicenseKey?.(finalLicenseKey || 'unknown') || 'unknown';
 
   const resolvedUserId = finalUserId === 'unknown' ? null : finalUserId;
-  const apiKey = await resolveUserApiKey(
-    resolvedUserId,
-    'openrouter',
-    process.env.OPENROUTER_API_KEY,
-  );
+  const apiKey = deps?.resolveUserApiKey
+    ? await deps.resolveUserApiKey(resolvedUserId, 'openrouter', process.env.OPENROUTER_API_KEY)
+    : await import('@/tree/byok/resolve-user-api-key').then(m =>
+        m.resolveUserApiKey(resolvedUserId, 'openrouter', process.env.OPENROUTER_API_KEY)
+      );
 
   if (!apiKey) {
     const mockResult = generateMockScript(topic, audience);
-    await trackUsage({
-      userId: finalUserId,
-      licenseKeyHash: 'mock',
-      licenseNonce: finalLicenseNonce,
-      service: 'openrouter',
-      endpoint: '/mock',
-      action: 'chat_completion_mock',
-      creditsUsed: 1,
-      tierAtRequest: tier,
-      statusCode: 200,
-      responseTimeMs: stopTimer(),
-    });
+    if (deps?.trackUsage) {
+      await deps.trackUsage({
+        userId: finalUserId,
+        licenseKeyHash: 'mock',
+        licenseNonce: finalLicenseNonce,
+        service: 'openrouter',
+        endpoint: '/mock',
+        action: 'chat_completion_mock',
+        creditsUsed: 1,
+        tierAtRequest: tier,
+        statusCode: 200,
+        responseTimeMs: stopTimer?.(),
+      });
+    }
     return mockResult;
   }
 
@@ -85,14 +93,31 @@ export async function generateScript(input: GenerateScriptInput) {
       }
     );
 
-    const responseTime = stopTimer();
+    const responseTime = stopTimer?.() ?? 0;
 
-    // Try parse JSON
     let parsed: ScriptOutput;
     try {
       parsed = JSON.parse(content) as ScriptOutput;
     } catch (e) {
-      await trackUsage({
+      if (deps?.trackUsage) {
+        await deps.trackUsage({
+          userId: finalUserId,
+          licenseKeyHash,
+          licenseNonce: finalLicenseNonce,
+          service: 'openrouter',
+          endpoint: '/chat/completions',
+          action: 'chat_completion',
+          tierAtRequest: tier,
+          errorMessage: 'JSON parse failed',
+          responseTimeMs: responseTime,
+          creditsUsed: 0,
+        });
+      }
+      throw new Error('Invalid JSON from LLM');
+    }
+
+    if (deps?.trackUsage) {
+      await deps.trackUsage({
         userId: finalUserId,
         licenseKeyHash,
         licenseNonce: finalLicenseNonce,
@@ -100,28 +125,12 @@ export async function generateScript(input: GenerateScriptInput) {
         endpoint: '/chat/completions',
         action: 'chat_completion',
         tierAtRequest: tier,
-        errorMessage: 'JSON parse failed',
+        statusCode: 200,
         responseTimeMs: responseTime,
-        creditsUsed: 0,
+        creditsUsed: 1,
       });
-      throw new Error('Invalid JSON from LLM');
     }
 
-    // Minimal tracking on success
-    await trackUsage({
-      userId: finalUserId,
-      licenseKeyHash,
-      licenseNonce: finalLicenseNonce,
-      service: 'openrouter',
-      endpoint: '/chat/completions',
-      action: 'chat_completion',
-      tierAtRequest: tier,
-      statusCode: 200,
-      responseTimeMs: responseTime,
-      creditsUsed: 1, // rough estimate
-    });
-
-    // Validate structure (type narrowing)
     const validated = parsed as unknown as { title: string; scenes: Array<{ narration: string }> };
     if (!validated.title || !Array.isArray(validated.scenes) || validated.scenes.length === 0) {
       throw new Error('Invalid script format from API');
@@ -130,23 +139,24 @@ export async function generateScript(input: GenerateScriptInput) {
     return parsed as ScriptOutput;
 
   } catch (error) {
-    const responseTime = stopTimer();
-    await trackUsage({
-      userId: finalUserId,
-      licenseKeyHash,
-      licenseNonce: finalLicenseNonce,
-      service: 'openrouter',
-      endpoint: '/chat/completions',
-      action: 'chat_completion',
-      tierAtRequest: tier,
-      errorMessage: getErrorMessage(error),
-      responseTimeMs: responseTime,
-      creditsUsed: 0,
-    });
+    const responseTime = stopTimer?.() ?? 0;
+    if (deps?.trackUsage) {
+      await deps.trackUsage({
+        userId: finalUserId,
+        licenseKeyHash,
+        licenseNonce: finalLicenseNonce,
+        service: 'openrouter',
+        endpoint: '/chat/completions',
+        action: 'chat_completion',
+        tierAtRequest: tier,
+        errorMessage: getErrorMessage(error),
+        responseTimeMs: responseTime,
+        creditsUsed: 0,
+      });
+    }
 
-    // Determine if we should throw or fallback to mock
     if (error instanceof ProviderInvalidKeyError || error instanceof ProviderQuotaExceededError) {
-      throw error; // Let caller handle auth/rate errors
+      throw error;
     }
     return generateMockScript(topic, audience);
   }

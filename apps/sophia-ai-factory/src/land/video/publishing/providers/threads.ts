@@ -53,7 +53,10 @@ export async function refreshLongLivedToken(currentToken: string): Promise<Threa
     }),
   });
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read Threads token refresh response', { error: String(err), context: 'refreshLongLivedToken' });
+      return '';
+    });
     throw new Error(`Threads token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
   return res.json() as Promise<ThreadsTokenResponse>;
@@ -85,7 +88,10 @@ export class ThreadsPublisher implements Publisher {
       }),
     });
     if (!containerRes.ok) {
-      const body = await containerRes.text().catch(() => '');
+      const body = await containerRes.text().catch((err) => {
+        logger.warn('Failed to read Threads container response', { error: String(err), context: 'ThreadsPublisher.upload' });
+        return '';
+      });
       throw new Error(`Threads container creation failed (${containerRes.status}): ${body.slice(0, 300)}`);
     }
     const containerData = (await containerRes.json()) as ThreadsCreateResponse;
@@ -103,7 +109,10 @@ export class ThreadsPublisher implements Publisher {
       }),
     });
     if (!publishRes.ok) {
-      const body = await publishRes.text().catch(() => '');
+      const body = await publishRes.text().catch((err) => {
+        logger.warn('Failed to read Threads publish response', { error: String(err), context: 'ThreadsPublisher.upload' });
+        return '';
+      });
       throw new Error(`Threads publish failed (${publishRes.status}): ${body.slice(0, 300)}`);
     }
     const publishData = (await publishRes.json()) as ThreadsCreateResponse;

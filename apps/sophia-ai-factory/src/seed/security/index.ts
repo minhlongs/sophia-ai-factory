@@ -43,4 +43,13 @@ export * from './verify-internal-secret';
 export * from './webhook-rate-limiter';
 export * from './webhook-signature-verification';
 export * from './webhook-validator';
+// signature excluded from wildcard — timingSafeEqual conflicts with crypto-utils.
+export {
+  hexToBytes,
+  computeHmacHex,
+  verifyInboundWebhook,
+  signWebhook,
+  verifyWebhook,
+} from './signature';
+export type { InboundVerifyOptions, VerifyOptions } from './signature';
 

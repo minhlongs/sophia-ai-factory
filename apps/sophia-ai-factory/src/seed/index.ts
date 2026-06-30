@@ -87,9 +87,6 @@ export * from './openapi';
 // ─── security (encryption, JWT, webhook verification) ────────────────────────
 export * from './security';
 
-// ─── templates (email/content templates) ─────────────────────────────────────
-export * from './templates';
-
 // ─── types (shared TypeScript types) ─────────────────────────────────────────
 // User excluded — canonical source is seed/db/client.ts (via ./db barrel).
 // Tier is canonical here — voices/presets.ts also exports Tier, excluded from ./voices below.

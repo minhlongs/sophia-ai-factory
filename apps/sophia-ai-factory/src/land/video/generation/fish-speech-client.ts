@@ -98,7 +98,10 @@ export class FishSpeechClient {
   }
 
   private async handleErrorResponse(response: Response): Promise<never> {
-    const body = await response.text().catch(() => '');
+    const body = await response.text().catch((err) => {
+      logger.warn('Failed to read response body', { error: String(err), context: 'handleErrorResponse' });
+      return '';
+    });
     const code = response.status;
 
     if (code === 429) {

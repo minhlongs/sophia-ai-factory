@@ -101,7 +101,10 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
     })
 
     if (!res.ok) {
-      const errorText = await res.text().catch(() => '<unreadable>')
+      const errorText = await res.text().catch((err) => {
+        logger.warn('Failed to read response text', { error: String(err), context: 'voiceClone' });
+        return '<unreadable>';
+      })
       logger.warn('[voice:clone] ElevenLabs rejected', { status: res.status, body: errorText.slice(0, 500) })
       return {
         ok: false,

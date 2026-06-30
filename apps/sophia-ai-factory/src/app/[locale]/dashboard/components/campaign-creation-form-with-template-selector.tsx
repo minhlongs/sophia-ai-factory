@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createCampaign } from "@/app/actions/campaigns";
 import { createCampaignSchema } from "@/land/campaigns/validation";
-import { CampaignTemplate, applyTemplateDefaults } from "@/seed/templates/campaign-templates";
+import { CampaignTemplate, applyTemplateDefaults } from "@/land/templates/campaign-templates";
 import { AffiliateProgram, Tier } from "@/seed/types";
 import { TemplateSelector } from "./create-campaign/template-selector";
 import { CampaignForm } from "./create-campaign/campaign-form";

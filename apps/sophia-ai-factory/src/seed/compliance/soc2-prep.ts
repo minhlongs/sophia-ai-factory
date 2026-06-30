@@ -28,9 +28,27 @@
  *   P1.1   Privacy notice + consent
  */
 
-import { Tier } from '@/seed/types';
-import { hasTierAccess } from '@/land/feature-flags';
-import { hasMasterAccess, masterHasFeature } from '@/land/enterprise-features';
+import { Tier, FeatureFlag } from '@/seed/types';
+import { tierHasFeature } from '@/seed/config/tiers';
+import { getFeatureFlag } from '@/seed/config/flags';
+
+// ---------------------------------------------------------------------------
+// Local helpers (replacing land-layer wrappers for layer boundary compliance)
+// ---------------------------------------------------------------------------
+
+function hasMasterAccess(tier: Tier): boolean {
+  return tier === 'MASTER';
+}
+
+function masterHasFeature(tier: Tier, flag: string): boolean {
+  if (!hasMasterAccess(tier)) return false;
+  return tierHasFeature(tier, flag as FeatureFlag);
+}
+
+function hasTierAccess(tier: Tier, feature: FeatureFlag): boolean {
+  if (!getFeatureFlag(feature)) return false;
+  return tierHasFeature(tier, feature);
+}
 
 // ---------------------------------------------------------------------------
 // Types

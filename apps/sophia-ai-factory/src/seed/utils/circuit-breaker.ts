@@ -15,7 +15,6 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
-import { sendSlackAlert } from '@/land/monitoring/slack-alert'
 
 export type CircuitState = 'closed' | 'open' | 'half-open'
 
@@ -24,6 +23,13 @@ export interface CircuitStatus {
   openedAt?: number
   recentFailures: number
   recentSuccesses: number
+}
+
+export type CircuitBreakerOptions = {
+  failureThreshold?: number
+  cooldownMs?: number
+  onOpen?: () => void
+  onHalfOpen?: () => void
 }
 
 export interface DispatchDecision {
@@ -94,7 +100,10 @@ function filterWindow(entries: AttemptEntry[]): AttemptEntry[] {
  * Record a HeyGen attempt result (success or failure).
  * Updates the rolling log and may transition circuit state.
  */
-export async function recordHeyGenAttempt(success: boolean): Promise<void> {
+export async function recordHeyGenAttempt(
+  success: boolean,
+  onCircuitOpen?: (context: Record<string, unknown>) => void,
+): Promise<void> {
   const kv = await getKv()
   if (!kv) return
 
@@ -136,51 +145,12 @@ export async function recordHeyGenAttempt(success: boolean): Promise<void> {
           total: recent.length,
           rate: rate.toFixed(2),
         })
-        sendSlackAlert('high', `HeyGen circuit breaker OPENED — failure rate ${(rate * 100).toFixed(0)}%`, {
-          failures,
-          total: recent.length,
-          windowMinutes: WINDOW_MS / 60000,
-        }).catch(() => {})
-
-        // F9-lite: fire customer comms on closed→open edge (waitUntil if available)
-        // Skip in test env to avoid dynamic import side effects in unit tests
-        if (process.env.NODE_ENV !== 'test' && process.env.VITEST !== 'true') {
-          try {
-            fireOutageComms(openedAt)
-          } catch {
-            // Never throw out of recordHeyGenAttempt
-          }
+        if (onCircuitOpen) {
+          onCircuitOpen({ failures, total: recent.length, windowMinutes: WINDOW_MS / 60000 })
         }
       }
     }
   }
-}
-
-/**
- * Fire outage customer notifications fire-and-forget.
- * Uses executionCtx.waitUntil when available (Cloudflare Workers),
- * falls back to untracked promise otherwise (local dev).
- * Dynamic import avoids circular dependency with circuit-breaker-comms.
- */
-function fireOutageComms(openedAt: number): void {
-  const work = import('@/land/fulfillment/circuit-breaker-comms').then(
-    ({ notifyCustomersOnOutage }) => notifyCustomersOnOutage(openedAt),
-  ).catch((err) => {
-    logger.error('[CircuitBreaker] fireOutageComms failed', err instanceof Error ? err : undefined)
-  })
-
-  // Use waitUntil when available to ensure CF Workers runs to completion
-  import('@opennextjs/cloudflare')
-    .then(({ getCloudflareContext }) => getCloudflareContext())
-    .then((cfCtx) => {
-      const ctx = cfCtx as { ctx?: { waitUntil?: (p: Promise<unknown>) => void } }
-      if (ctx.ctx?.waitUntil) {
-        ctx.ctx.waitUntil(work)
-      }
-    })
-    .catch(() => {
-      // No CF context (local dev) — work is already fire-and-forget via Promise
-    })
 }
 
 /**

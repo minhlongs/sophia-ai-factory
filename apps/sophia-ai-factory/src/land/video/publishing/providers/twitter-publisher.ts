@@ -116,7 +116,10 @@ export class TwitterPublisher implements Publisher {
       body: JSON.stringify({ text: buildTweetText(meta), media: { media_ids: [mediaId] } }),
     });
     if (!tweetRes.ok) {
-      const body = await tweetRes.text().catch(() => '');
+      const body = await tweetRes.text().catch((err) => {
+        logger.warn('Failed to read X tweet response', { error: String(err), context: 'TwitterPublisher.upload' });
+        return '';
+      });
       throw new Error(`X /2/tweets failed: HTTP ${tweetRes.status} — ${body.slice(0, 200)}`);
     }
     const tweetData = (await tweetRes.json()) as TweetCreateResponse;

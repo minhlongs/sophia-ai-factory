@@ -175,7 +175,10 @@ export async function publishToTelegram(
   }
 
   if (res.status === 401 || res.status === 403) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read Telegram 401/403 response', { error: String(err), context: 'publishToTelegram' });
+      return '';
+    });
     throw new TelegramApiError(
       `[telegram-publisher] Auth error ${res.status} — token may be invalid or bot lacks admin rights in channel. ` +
         `Token: ${maskToken(token)}. Response: ${body.slice(0, 200)}`,
@@ -187,7 +190,12 @@ export async function publishToTelegram(
   try {
     data = (await res.json()) as TelegramSendVideoResponse;
   } catch {
-    const body = await res.text().catch(() => '');
+    let body = '';
+    try {
+      body = await res.text();
+    } catch (err) {
+      logger.warn('Failed to read Telegram response body after parse failure', undefined, { error: String(err), context: 'publishToTelegram' });
+    }
     throw new TelegramApiError(
       `[telegram-publisher] Failed to parse Telegram response (HTTP ${res.status}): ${body.slice(0, 200)}`,
       { status: res.status, bodySnippet: body.slice(0, 200) },

@@ -9,7 +9,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-vi.mock('@/land/webhooks/signature', () => ({
+vi.mock('@/seed/security/signature', () => ({
   verifyInboundWebhook: vi.fn(),
 }))
 
@@ -21,7 +21,7 @@ import {
   lookupInvoice,
   verifyIpnSignature,
 } from '../nowpayments-client'
-import { verifyInboundWebhook } from '@/land/webhooks/signature'
+import { verifyInboundWebhook } from '@/seed/security/signature'
 import { ONE_TIME_SKUS } from '@/seed/config/one-time-skus'
 
 const mockVerify = vi.mocked(verifyInboundWebhook)

@@ -4,6 +4,7 @@
  * @module lib/webhooks/sender
  */
 
+import { logger } from '@/seed/utils/logger-utility';
 import { signWebhook } from './signature';
 import type { WebhookEndpoint, WebhookEvent, WebhookPayload } from './types';
 
@@ -54,7 +55,10 @@ export async function sendWebhook(
       body,
     });
 
-    const responseBody = await response.text().catch(() => '');
+    const responseBody = await response.text().catch((err) => {
+      logger.warn('Failed to read webhook response body', { error: String(err), context: 'sendWebhook' });
+      return '';
+    });
     const success = response.status >= 200 && response.status < 300;
 
     return {

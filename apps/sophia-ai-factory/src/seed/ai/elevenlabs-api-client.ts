@@ -7,9 +7,7 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { Tier } from '@/seed/types';
-import { withTimeout } from '@/tree/byok/with-timeout';
-import { uploadAudioToR2 } from '@/land/r2/audio-upload';
-import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/land/services/errors';
+import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/seed/services/errors';
 
 /** Get default voice ID based on tier (ElevenLabs pre-made voice IDs) */
 export function getDefaultVoiceId(tier: Tier): string {
@@ -26,17 +24,24 @@ export function getDefaultVoiceId(tier: Tier): string {
  * Upload audio buffer to Cloudflare R2 and return the public URL.
  * Falls back to a data URI when R2 is unavailable or R2_PUBLIC_BASE_URL not set.
  *
- * Key pattern: audio/{userId}/{videoId}/{uuid}.mp3
- * Pass userId and videoId via the options parameter when available.
+ * @param uploadToR2 - R2 upload function (injected to avoid layer violation)
  */
 export async function uploadAudioToStorage(
   audioData: Uint8Array,
-  opts?: { userId?: string; videoId?: string },
+  opts?: { userId?: string; videoId?: string; uploadToR2?: (data: ArrayBuffer, mime: string, key: string) => Promise<string> },
 ): Promise<string> {
   const userId = opts?.userId ?? 'unknown';
   const videoId = opts?.videoId ?? 'unknown';
   const key = `audio/${userId}/${videoId}/${crypto.randomUUID()}.mp3`;
-  return uploadAudioToR2(audioData.buffer as ArrayBuffer, 'audio/mpeg', key);
+
+  if (opts?.uploadToR2) {
+    return opts.uploadToR2(audioData.buffer as ArrayBuffer, 'audio/mpeg', key);
+  }
+
+  // Fallback when no R2 upload function is provided
+  logger.warn('[ElevenLabs] No R2 upload function provided — returning data URI');
+  const base64 = btoa(String.fromCharCode(...new Uint8Array(audioData)));
+  return `data:audio/mpeg;base64,${base64}`;
 }
 
 export interface VoiceoverOutput {
@@ -49,30 +54,57 @@ export async function generateElevenLabsVoiceover(
   text: string,
   tier: Tier,
   apiKey: string,
-  voiceId?: string
+  voiceId?: string,
+  deps?: {
+    withTimeout?: (url: string, options: RequestInit & { provider?: string }) => Promise<Response>;
+    uploadToR2?: (data: ArrayBuffer, mime: string, key: string) => Promise<string>;
+  },
 ): Promise<VoiceoverOutput> {
   const defaultVoiceId = voiceId || getDefaultVoiceId(tier);
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${defaultVoiceId}`;
 
-  const response = await withTimeout(url, {
-    method: 'POST',
-    headers: {
-      'Accept': 'audio/mpeg',
-      'Content-Type': 'application/json',
-      'xi-api-key': apiKey,
-    },
-    body: JSON.stringify({
-      text,
-      model_id: tier === 'ENTERPRISE' ? 'eleven_multilingual_v2' : 'eleven_monolingual_v1',
-      voice_settings: {
-        stability: 0.5,
-        similarity_boost: 0.75,
-        style: tier === 'ENTERPRISE' ? 0.5 : 0.0,
-        use_speaker_boost: tier !== 'BASIC',
+  let response: Response;
+
+  if (deps?.withTimeout) {
+    response = await deps.withTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'audio/mpeg',
+        'Content-Type': 'application/json',
+        'xi-api-key': apiKey,
       },
-    }),
-    provider: 'elevenlabs',
-  });
+      body: JSON.stringify({
+        text,
+        model_id: tier === 'ENTERPRISE' ? 'eleven_multilingual_v2' : 'eleven_monolingual_v1',
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+          style: tier === 'ENTERPRISE' ? 0.5 : 0.0,
+          use_speaker_boost: tier !== 'BASIC',
+        },
+      }),
+      provider: 'elevenlabs',
+    });
+  } else {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'audio/mpeg',
+        'Content-Type': 'application/json',
+        'xi-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        text,
+        model_id: tier === 'ENTERPRISE' ? 'eleven_multilingual_v2' : 'eleven_monolingual_v1',
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+          style: tier === 'ENTERPRISE' ? 0.5 : 0.0,
+          use_speaker_boost: tier !== 'BASIC',
+        },
+      }),
+    });
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -86,7 +118,10 @@ export async function generateElevenLabsVoiceover(
   }
 
   const audioBuffer = await response.arrayBuffer();
-  const audioUrl = await uploadAudioToStorage(new Uint8Array(audioBuffer));
+  const audioUrl = await uploadAudioToStorage(new Uint8Array(audioBuffer), {
+    userId: 'elevenlabs',
+    uploadToR2: deps?.uploadToR2,
+  });
   const estimatedDuration = Math.floor(text.length / 15);
 
   return { audio_url: audioUrl, duration: estimatedDuration };

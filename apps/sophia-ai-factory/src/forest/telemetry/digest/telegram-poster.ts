@@ -80,7 +80,10 @@ export async function postTelegramDigest(
     })
 
     if (!res.ok) {
-      const body = await res.text().catch(() => '')
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read response body', { error: String(err), context: 'postTelegramDigest' });
+        return '';
+      })
       logger.warn('[digest/telegram] sendMessage non-OK', { status: res.status, body: body.slice(0, 200) })
       return { ok: false, reason: `http_${res.status}` }
     }

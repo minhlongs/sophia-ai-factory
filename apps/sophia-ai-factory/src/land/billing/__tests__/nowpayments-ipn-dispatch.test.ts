@@ -56,7 +56,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
       },
     }
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(config)
-    vi.mocked(subscriptionHandler.handleFinished).mockResolvedValue(undefined)
+    vi.mocked(subscriptionHandler.handleFinished).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchFinished(payload)
 
@@ -78,7 +78,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
       },
     }
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(config)
-    vi.mocked(subscriptionHandler.handleFinished).mockResolvedValue(undefined)
+    vi.mocked(subscriptionHandler.handleFinished).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchFinished(payload)
 
@@ -99,7 +99,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
       },
     }
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(config)
-    vi.mocked(subscriptionHandler.handleFinished).mockResolvedValue(undefined)
+    vi.mocked(subscriptionHandler.handleFinished).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchFinished(payload)
 
@@ -120,7 +120,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
       },
     }
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(config)
-    vi.mocked(subscriptionHandler.handleFinished).mockResolvedValue(undefined)
+    vi.mocked(subscriptionHandler.handleFinished).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchFinished(payload)
 
@@ -142,7 +142,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
     }
     const config = { kind: 'one_time' as const, sku }
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(config)
-    vi.mocked(oneTimeHandler.handleOneTimeFinished).mockResolvedValue(undefined)
+    vi.mocked(oneTimeHandler.handleOneTimeFinished).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchFinished(payload)
 
@@ -176,7 +176,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
       },
     }
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(config)
-    vi.mocked(subscriptionHandler.handleFinished).mockResolvedValue(undefined)
+    vi.mocked(subscriptionHandler.handleFinished).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchFinished(payload)
 
@@ -186,7 +186,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
 
   it('case 13: missing invoice_id → fall through to subscription handler', async () => {
     const payload = buildIpnPayload({ invoice_id: undefined })
-    vi.mocked(subscriptionHandler.handleFinished).mockResolvedValue(undefined)
+    vi.mocked(subscriptionHandler.handleFinished).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchFinished(payload)
 
@@ -207,7 +207,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
     }
     const config = { kind: 'one_time' as const, sku }
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(config)
-    vi.mocked(oneTimeHandler.handleOneTimeFinished).mockResolvedValue(undefined)
+    vi.mocked(oneTimeHandler.handleOneTimeFinished).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchFinished(payload)
 
@@ -232,7 +232,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
     }
     const config = { kind: 'one_time' as const, sku }
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(config)
-    vi.mocked(oneTimeHandler.handleOneTimeFinished).mockResolvedValue(undefined)
+    vi.mocked(oneTimeHandler.handleOneTimeFinished).mockResolvedValue({ ok: true, value: undefined })
 
     // Dispatcher doesn't filter by payment_status — routes based on invoice_id
     await dispatchFinished(payload)
@@ -256,7 +256,7 @@ describe('dispatchFinished — subscription + one-time routing', () => {
     }
     const config = { kind: 'one_time' as const, sku }
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(config)
-    vi.mocked(oneTimeHandler.handleOneTimeFinished).mockResolvedValue(undefined)
+    vi.mocked(oneTimeHandler.handleOneTimeFinished).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchFinished(payload)
 
@@ -292,7 +292,7 @@ describe('dispatchRefunded — subscription + one-time refund routing', () => {
       },
     }
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(config)
-    vi.mocked(subscriptionHandler.handleRefunded).mockResolvedValue(undefined)
+    vi.mocked(subscriptionHandler.handleRefunded).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchRefunded(payload)
 
@@ -316,7 +316,7 @@ describe('dispatchRefunded — subscription + one-time refund routing', () => {
       },
     }
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(config)
-    vi.mocked(subscriptionHandler.handleRefunded).mockResolvedValue(undefined)
+    vi.mocked(subscriptionHandler.handleRefunded).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchRefunded(payload)
 
@@ -340,7 +340,7 @@ describe('dispatchRefunded — subscription + one-time refund routing', () => {
       },
     }
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(config)
-    vi.mocked(subscriptionHandler.handleRefunded).mockResolvedValue(undefined)
+    vi.mocked(subscriptionHandler.handleRefunded).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchRefunded(payload)
 
@@ -364,7 +364,7 @@ describe('dispatchRefunded — subscription + one-time refund routing', () => {
       },
     }
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(config)
-    vi.mocked(subscriptionHandler.handleRefunded).mockResolvedValue(undefined)
+    vi.mocked(subscriptionHandler.handleRefunded).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchRefunded(payload)
 
@@ -389,7 +389,7 @@ describe('dispatchRefunded — subscription + one-time refund routing', () => {
     }
     const config = { kind: 'one_time' as const, sku }
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(config)
-    vi.mocked(oneTimeHandler.handleOneTimeRefunded).mockResolvedValue(undefined)
+    vi.mocked(oneTimeHandler.handleOneTimeRefunded).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchRefunded(payload)
 
@@ -402,7 +402,7 @@ describe('dispatchRefunded — subscription + one-time refund routing', () => {
       invoice_id: undefined,
       payment_status: 'refunded',
     })
-    vi.mocked(subscriptionHandler.handleRefunded).mockResolvedValue(undefined)
+    vi.mocked(subscriptionHandler.handleRefunded).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchRefunded(payload)
 
@@ -415,7 +415,7 @@ describe('dispatchRefunded — subscription + one-time refund routing', () => {
       payment_status: 'refunded',
     })
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(null)
-    vi.mocked(subscriptionHandler.handleRefunded).mockResolvedValue(undefined)
+    vi.mocked(subscriptionHandler.handleRefunded).mockResolvedValue({ ok: true, value: undefined })
 
     await dispatchRefunded(payload)
 

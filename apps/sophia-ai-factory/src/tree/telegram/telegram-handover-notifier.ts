@@ -65,7 +65,10 @@ export async function sendHandoverTelegramDm(
     );
 
     if (!response.ok) {
-      const body = await response.text().catch(() => '');
+      const body = await response.text().catch((err) => {
+        logger.warn('Failed to read response body', { error: String(err), context: 'sendHandoverTelegramDm' });
+        return '';
+      });
       logger.error('[telegram-handover] Telegram API error', {
         status: response.status,
         body,

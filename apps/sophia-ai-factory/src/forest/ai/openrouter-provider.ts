@@ -133,7 +133,12 @@ export class OpenRouterProvider implements Provider {
     });
 
     if (!response.ok) {
-      const errorBody = await response.text().catch(() => '');
+      let errorBody = '';
+      try {
+        errorBody = await response.text();
+      } catch (err) {
+        logger.warn('Failed to read OpenRouter error response body', undefined, { error: String(err), context: 'OpenRouterProvider.chat' });
+      }
       const error = new Error(`OpenRouter HTTP ${response.status}: ${errorBody.slice(0, 300)}`);
       (error as { status?: number; retryable?: boolean }).status = response.status;
       if (response.status === 401 || response.status === 403) {
@@ -197,7 +202,12 @@ export class OpenRouterProvider implements Provider {
     });
 
     if (!response.ok) {
-      const errorBody = await response.text().catch(() => '');
+      let errorBody = '';
+      try {
+        errorBody = await response.text();
+      } catch (err) {
+        logger.warn('Failed to read OpenRouter stream error response body', undefined, { error: String(err), context: 'OpenRouterProvider.stream' });
+      }
       const error = new Error(`OpenRouter HTTP ${response.status}: ${errorBody.slice(0, 300)}`);
       (error as { status?: number; retryable?: boolean }).status = response.status;
       if (response.status === 401 || response.status === 403) {

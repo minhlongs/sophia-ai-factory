@@ -16,6 +16,7 @@ import { createServerClient } from '@/seed/db/client';
 import { inngest } from '@/seed/inngest/client';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { reserveVideoSlot, releaseVideoSlot } from '@/forest/quota/video-quota';
+import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
 
@@ -122,7 +123,14 @@ export async function POST(
         jobId = ids[0] ?? null;
       } catch (err) {
         // Release the slot we just reserved — the job never queued.
-        await releaseVideoSlot(userId).catch(() => undefined);
+        await releaseVideoSlot(userId).catch((err) => {
+          logger.warn('Failed to release video slot after queuing error', {
+            error: String(err),
+            context: 'POST',
+            missionId,
+            userId,
+          });
+        });
         throw err;
       }
 

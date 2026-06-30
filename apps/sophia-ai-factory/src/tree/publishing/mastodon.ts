@@ -81,7 +81,12 @@ export class MastodonPublisher implements Publisher {
     });
 
     if (!res.ok) {
-      const body = await res.text().catch(() => '');
+      let body = '';
+      try {
+        body = await res.text();
+      } catch (err) {
+        logger.warn('Failed to read Mastodon response body', undefined, { error: String(err), context: 'MastodonPublisher.upload' });
+      }
       throw new Error(`Mastodon /api/v1/statuses failed (${res.status}): ${body.slice(0, 300)}`);
     }
 

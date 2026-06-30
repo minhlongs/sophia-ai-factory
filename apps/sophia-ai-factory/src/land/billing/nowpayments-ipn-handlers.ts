@@ -10,6 +10,7 @@ import { getDb } from './nowpayments-ipn-db'
 import { handleFailed } from './nowpayments-ipn-subscription'
 import { dispatchFinished, dispatchRefunded } from './nowpayments-ipn-dispatch'
 import { enqueueDlqEntry, countUnresolvedDlq, type D1LikeClient } from './nowpayments-ipn-dead-letter'
+import { type Result } from '@/seed/types/result'
 
 export interface NowPaymentsIpnPayload {
   payment_id: string
@@ -92,9 +93,11 @@ export async function processNowPaymentsIpn(
       case 'refunded':
         await dispatchRefunded(ipn)
         break
-      case 'failed':
-        await handleFailed(ipn)
+      case 'failed': {
+        const failResult = await handleFailed(ipn)
+        if (!failResult.ok) throw failResult.error
         break
+      }
       case 'partially_paid':
         logger.info('[NOWPayments] Partial payment received — holding', { payment_id })
         break
@@ -178,24 +181,24 @@ export async function processNowPaymentsIpn(
         }
       }
 
-      try {
-        await enqueueDlqEntry(db as unknown as D1LikeClient, {
-          eventId,
-          paymentId: payment_id,
-          paymentStatus: payment_status,
-          orderId: ipn.order_id ?? '',
-          payload: ipn as unknown as Record<string, unknown>,
-          failureReason: err.message,
-          retryCount: currentRetries,
-        })
+      const dlqResult = await enqueueDlqEntry(db as unknown as D1LikeClient, {
+        eventId,
+        paymentId: payment_id,
+        paymentStatus: payment_status,
+        orderId: ipn.order_id ?? '',
+        payload: ipn as unknown as Record<string, unknown>,
+        failureReason: err.message,
+        retryCount: currentRetries,
+      })
+      if (dlqResult.ok) {
         logger.warn('[NOWPayments] IPN enqueued to DLQ', {
           event_id: eventId,
           reason: err.message,
         })
-      } catch (dlqErr) {
+      } else {
         logger.error('[NOWPayments] Failed to enqueue DLQ entry', {
           event_id: eventId,
-          error: String(dlqErr),
+          error: String(dlqResult.error),
         })
       }
       return { success: false, message: `Permanent failure: ${err.message}` }

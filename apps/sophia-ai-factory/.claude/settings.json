@@ -1,0 +1,22 @@
+{
+  "includeCoAuthoredBy": false,
+  "statusLine": {
+    "type": "command",
+    "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/statusline.cjs",
+    "padding": 0
+  },
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "true",
+    "SOPHIA_APP_DIR": "apps/sophia-ai-factory"
+  },
+  "agents": [
+    {
+      "name": "sophia-cto",
+      "path": "~/.claude/agents/sophia-cto.md"
+    },
+    {
+      "name": "sophia-orchestrator",
+      "path": "~/.claude/agents/sophia-orchestrator.md"
+    }
+  ]
+}

@@ -7,6 +7,7 @@
  */
 
 import { toError } from '@/seed/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
 
 export interface EmailParams {
   to: string;
@@ -52,7 +53,10 @@ export async function sendEmail(params: EmailParams): Promise<EmailResult> {
     });
 
     if (!res.ok) {
-      const errBody = await res.text().catch(() => '');
+      const errBody = await res.text().catch((err) => {
+        logger.warn('Failed to read Resend error response body', { error: String(err), context: 'sendEmail' });
+        return '';
+      });
       return { success: false, error: `Resend ${res.status}: ${errBody.slice(0, 200)}`, provider: 'resend' };
     }
 

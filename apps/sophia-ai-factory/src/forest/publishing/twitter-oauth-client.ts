@@ -83,7 +83,10 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string):
     }),
   });
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read X token exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
+      return '';
+    });
     throw new Error(`X token exchange failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
   return res.json() as Promise<TwitterTokenResponse>;
@@ -102,7 +105,10 @@ export async function refreshAccessToken(refreshToken: string): Promise<TwitterT
     }),
   });
   if (!res.ok) {
-    const body = await res.text().catch(() => '');
+    const body = await res.text().catch((err) => {
+      logger.warn('Failed to read X token refresh response', { error: String(err), context: 'refreshAccessToken' });
+      return '';
+    });
     throw new Error(`X token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
   return res.json() as Promise<TwitterTokenResponse>;

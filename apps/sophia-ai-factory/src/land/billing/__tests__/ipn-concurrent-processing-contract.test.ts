@@ -19,7 +19,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 const { mockDispatchFinished, mockDispatchRefunded, mockHandleFailed, mockLogger } = vi.hoisted(() => ({
   mockDispatchFinished: vi.fn().mockResolvedValue(undefined),
   mockDispatchRefunded: vi.fn().mockResolvedValue(undefined),
-  mockHandleFailed: vi.fn().mockResolvedValue(undefined),
+  mockHandleFailed: vi.fn().mockResolvedValue({ ok: true, value: undefined }),
   mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }))
 

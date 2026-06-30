@@ -240,7 +240,7 @@ describe('handleOneTimeRefunded — purchase refund handling', () => {
     vi.mocked(auditLog.recordAudit).mockRejectedValue(new Error('Audit DB down'))
 
     // Should not throw
-    await expect(handleOneTimeRefunded(payload)).resolves.toBeUndefined()
+    await expect(handleOneTimeRefunded(payload)).resolves.toHaveProperty('ok', true)
 
     // But markRefunded should still complete
     expect(userPurchasesRepo.markRefunded).toHaveBeenCalled()
