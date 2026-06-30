@@ -581,20 +581,11 @@ export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<Result
     if (!_d1) return failure(new IPNError('D1_BINDING_UNAVAILABLE'))
     const d1 = _d1!
 
-    // ── Refund idempotency guard ──────────────────────────────────────────────
-    // Phase 3: check if this refund was already processed before mutating state.
-    // The IPN handler (Phase 2) provides event-level dedup, but if handleRefunded
-    // is ever called outside that path, this prevents double-refund.
-    const refundEventId = `nowpayments_${ipn.payment_id}_refunded`
-    const existing = await db
-      .prepare('SELECT processed FROM payment_events WHERE event_id = ?1')
-      .bind(refundEventId)
-      .first<{ processed: number }>()
-
-    if (existing && existing.processed === 1) {
-      logger.info('[NOWPayments] Refund already processed — skipping duplicate', { paymentId: ipn.payment_id })
-      return success(undefined)
-    }
+    // Idempotency: the atomic lock in processNowPaymentsIpn (INSERT ON CONFLICT
+    // DO NOTHING with event_id = nowpayments_${payment_id}_refunded) already
+    // guarantees exactly-once processing per (payment_id, status) pair.
+    // The previous SELECT-based check here was redundant and introduced
+    // its own TOCTOU window. Trust the atomic lock as the single source of truth.
 
     const { data: membership } = await db.from('org_members').select('org_id').eq('user_id', userId).single()
     if (membership?.org_id) {

@@ -14,6 +14,7 @@
  */
 
 import { safeCatch } from '@/seed/utils/safe-catch'
+import { logger } from '@/seed/utils/logger-utility'
 import { success, failure, type Result } from '@/seed/types/result'
 import { DLQError } from './nowpayments-ipn-errors'
 
@@ -91,16 +92,24 @@ export async function enqueueDlqEntry(
         (insertError as { code?: string }).code === '23505';
 
       if (isUniqueViolation || typeof insertError === 'string') {
+        // Update retry metadata only — first_failed_at must NOT be overwritten
+        // (it preserves the original failure timestamp for SLA monitoring)
         await db
           .from(DLQ_TABLE)
           .update({
             retry_count: opts.retryCount + 1,
             failure_reason: opts.failureReason,
             last_attempted_at: now,
-          first_failed_at: now,
           })
           .eq('event_id', opts.eventId)
           .eq('resolved', 0);
+      } else {
+        // Non-unique, non-string error — log and fail rather than silently swallowing
+        logger.error('[DLQ] Insert failed with unexpected error', {
+          eventId: opts.eventId,
+          error: insertError,
+        })
+        return failure(new DLQError('ENQUEUE_DLQ_FAILED', insertError))
       }
     }
 

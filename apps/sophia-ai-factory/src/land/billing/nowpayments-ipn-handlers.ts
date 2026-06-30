@@ -10,6 +10,7 @@ import { getDb } from './nowpayments-ipn-db'
 import { handleFailed } from './nowpayments-ipn-subscription'
 import { dispatchFinished, dispatchRefunded } from './nowpayments-ipn-dispatch'
 import { enqueueDlqEntry, countUnresolvedDlq, type D1LikeClient } from './nowpayments-ipn-dead-letter'
+import { recordDroppedEvent } from './nowpayments-ipn-dropped-events'
 import { type Result } from '@/seed/types/result'
 
 export interface NowPaymentsIpnPayload {
@@ -68,9 +69,14 @@ export async function processNowPaymentsIpn(
       return { success: true, message: 'Already processed' }
     }
 
-    // Stale lock recovery: if lock > 5 min old, mark processed to unblock
+    // Stale lock recovery: if lock > 5 min old, mark processed to unblock.
+    // The original event is NOT re-dispatched — the payment may be lost.
+    // Operators should investigate stale lock events in logs.
     const lockAgeMs = Date.now() - new Date(existing.created_at ?? now).getTime()
     if (lockAgeMs > 5 * 60 * 1000) {
+      logger.error('[NOWPayments] Stale lock cleared — payment may be lost', {
+        eventId, payment_id, payment_status, lockAgeMs,
+      })
       try {
         await db
           .prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1')
@@ -171,13 +177,30 @@ export async function processNowPaymentsIpn(
       }
 
       if (unresolvedDlqCount >= DLQ_SIZE_CAP) {
-        logger.error('[NOWPayments] DLQ_OVERFLOW — rejecting new entry', {
+        // Record dropped event durably before rejecting — enables admin
+        // reconciliation and replay via GET/POST /api/admin/dlq/reconciliation
+        try {
+          await recordDroppedEvent(db as unknown as D1LikeClient, {
+            eventId,
+            paymentId: payment_id,
+            paymentStatus: payment_status,
+            orderId: ipn.order_id ?? '',
+            payload: ipn as unknown as Record<string, unknown>,
+            failureReason: err.message,
+            dlqSize: unresolvedDlqCount,
+          })
+        } catch (recordErr) {
+          // Non-fatal: failure to record drop does not block rejection
+          safeCatch('Record dropped event')(recordErr)
+        }
+
+        logger.error('[NOWPayments] DLQ_OVERFLOW — event recorded as dropped', {
           eventId,
           unresolvedCount: unresolvedDlqCount,
         })
         return {
           success: false,
-          message: `DLQ at capacity (${unresolvedDlqCount}/${DLQ_SIZE_CAP}); event ${eventId} dropped`,
+          message: `DLQ at capacity (${unresolvedDlqCount}/${DLQ_SIZE_CAP}); event ${eventId} recorded as dropped`,
         }
       }
 

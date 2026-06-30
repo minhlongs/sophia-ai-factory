@@ -137,42 +137,19 @@ describe('Subscription Lifecycle — handleRefunded', () => {
   })
 
   /**
-   * Phase 3: handleRefunded now checks payment_events for an already-processed
-   * refund before cancelling the subscription. Prevents double-refund.
+   * Refund idempotency: handleRefunded delegates idempotency to the atomic lock
+   * in processNowPaymentsIpn (INSERT ON CONFLICT DO NOTHING on payment_events).
+   * handleRefunded no longer runs its own SELECT check — the atomic lock is the
+   * single source of truth for (payment_id, status) dedup.
+   *
+   * Test: handleRefunded processes cancellations without internal idempotency check.
+   * Duplicate prevention is the caller's responsibility (processNowPaymentsIpn).
    */
-  it('skips duplicate refund for same payment_id (idempotent)', async () => {
-    const { logger } = await import('@/seed/utils/logger-utility')
+  it('processes refund without internal idempotency guard (delegates to atomic lock)', async () => {
     const payload = buildIpnPayload({ payment_status: 'refunded' })
 
-    // First refund should proceed
+    // Refund should process successfully — idempotency is handled upstream
     await expect(handleRefunded(payload)).resolves.toHaveProperty('ok', true)
-
-    // Second refund with same payment_id should skip (idempotent)
-    // Mock prepare().first() to return processed=1 on second call
-    const dbMock = await import('../nowpayments-ipn-db')
-    vi.mocked(dbMock.getDb).mockReturnValue({
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({ eq: vi.fn(() => ({
-          single: vi.fn(() => ({ data: { org_id: 'org_test' }, error: null })),
-          maybeSingle: vi.fn(() => ({ data: null, error: null })),
-        })) })),
-        insert: vi.fn(() => ({ error: null })),
-        update: vi.fn(() => ({ eq: vi.fn(() => ({ error: null })) })),
-        delete: vi.fn(() => ({ eq: vi.fn(() => ({ error: null })) })),
-      })),
-      prepare: vi.fn(() => ({
-        bind: vi.fn(() => ({
-          first: vi.fn(() => ({ processed: 1 })),
-          run: vi.fn(),
-        })),
-      })),
-    } as any)
-
-    await expect(handleRefunded(payload)).resolves.toHaveProperty('ok', true)
-    expect(vi.mocked(logger.info)).toHaveBeenCalledWith(
-      expect.stringContaining('already processed'),
-      expect.anything(),
-    )
   })
 })
 
