@@ -81,10 +81,9 @@ export async function checkRateLimit(
     };
   }
 
-  const db = createServerClient()
-  const fullIdentifier = `${config.identifier}:${identifier}`
-
   try {
+    const db = createServerClient()
+    const fullIdentifier = `${config.identifier}:${identifier}`
     const currentCount = await incrementRateLimit(
       db,
       fullIdentifier,
