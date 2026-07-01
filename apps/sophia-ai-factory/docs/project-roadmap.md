@@ -1,6 +1,6 @@
 # Sophia AI Factory — Strategic Roadmap from Open-Source Distillation
 
-**Date:** 2026-04-30 | **Last Sync:** 2026-05-12 | **Research:** 8 OSS projects, 6 monetization patterns, 7 orchestration patterns
+**Date:** 2026-04-30 | **Last Sync:** 2026-07-01 | **Research:** 8 OSS projects, 6 monetization patterns, 7 orchestration patterns
 
 ---
 
@@ -10,7 +10,9 @@ Sophia's architecture is already competitive. Gaps are in **monetization UX** (c
 
 ---
 
-## Status Snapshot (2026-05-18)
+## Status Snapshot (2026-07-01)
+
+**Polish Wave (2026-07-01)** — Middleware Option B fix (API routes through centralized security, skip locale redirect), `/vi/guides` → `/guide` redirect, pricing page code-split (CheckoutPanel dynamic import). Sprint 2 audit confirms all 3 items already implemented. Roadmap synced.
 
 **Phase 05a (2026-05-18)** — **Security Audit + Regression Tests** — ASVS L2 desk-review (31 controls: 26 Pass / 2 Fail / 3 N-A = 84% score). 3 Medium findings (F01/F02/F03) logged; 35 new security regression tests (brute-force, IDOR, privilege escalation patterns). Zero HIGH/CRITICAL vulns. Phase 06 roadmap updated. FREE100 handover progression → CHECKPOINT.
 
@@ -82,15 +84,15 @@ All documented in `docs/handover/founder-cheat-sheet-260512.md`. **These do NOT 
 | 5 | Unified revenue dashboard — SaaS + Crypto + Affiliate | ✅ SHIPPED (Phase 07) | 4h |
 | 6 | Per-jurisdiction crypto compliance — 5 regions, KYC banner + video overlay | ✅ SHIPPED (Phase 08) | 5h |
 
-### 🟡 Sprint 2: A/B Testing & Help Content (next sprint)
+### ✅ Sprint 2: A/B Testing & Help Content (SHIPPED 2026-07-01)
 
-| # | Action | Pattern Source | Effort |
-|---|--------|---------------|--------|
-| 7 | A/B title/thumbnail runner (Phase 06) — decide winner threshold | Internal | 2h |
-| 8 | Help videos library (Phase 09) — founder content recording | Editorial | 2 days |
-| 9 | Credit bar on dashboard — "You've used X/Y videos this month" | PostHog usage-pressure | 2h |
+| # | Action | Pattern Source | Effort | Status |
+|---|--------|---------------|--------|--------|
+| 7 | A/B title/thumbnail runner (Phase 06) — decide winner threshold | Internal | 2h | ✅ SHIPPED — `thumbnail-ab-selector.ts` Inngest cron, CTR comparison, 48h window |
+| 8 | Help videos library (Phase 09) — founder content recording | Editorial | 2 days | ✅ SHIPPED — `dashboard/help/` with video player, FAQ, troubleshooting, SOPs |
+| 9 | Credit bar on dashboard — "You've used X/Y videos this month" | PostHog usage-pressure | 2h | ✅ SHIPPED — `sidebar-quota-widget.tsx` via `/api/quota/status`, video + credit tracking |
 
-### 🟢 Sprint 3: Moonshots (monthly)
+### 🟢 Sprint 3: Moonshots (next sprint)
 
 | # | Action | Pattern Source | Effort |
 |---|--------|---------------|--------|

@@ -84,6 +84,7 @@ const nextConfig: NextConfig = {
       { source: '/app', destination: '/dashboard', permanent: false },
       // Docs & help
       { source: '/docs', destination: '/guide', permanent: false },
+      { source: '/guides', destination: '/guide', permanent: false },
       { source: '/support', destination: '/dashboard/support', permanent: false },
       { source: '/faq', destination: '/guide/faq', permanent: false },
       { source: '/help', destination: '/guide', permanent: false },
