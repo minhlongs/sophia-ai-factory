@@ -1,3 +1,11 @@
+import { initializeOTel } from '@/seed/telemetry/opentelemetry-setup';
+
 export async function register(): Promise<void> {
-  // Disabled register hook to isolate module factory edge crash
+  try {
+    await initializeOTel();
+  } catch (err) {
+    // OTEL failure is non-fatal — app must still serve traffic.
+    // Honeycomb API key may be missing in dev/local; that's expected.
+    console.error('[instrumentation] OTel initialization failed:', err);
+  }
 }

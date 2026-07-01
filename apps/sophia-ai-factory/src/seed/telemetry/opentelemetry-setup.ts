@@ -11,8 +11,10 @@ import { SimpleSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { TraceIdRatioBasedSampler } from '@opentelemetry/sdk-trace-base';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { SEMRESATTRS_SERVICE_NAME } from '@opentelemetry/semantic-conventions';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http/build/esm/platform/browser/OTLPTraceExporter';
-import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http/build/esm/platform/browser/OTLPMetricExporter';
+// Node platform exports — use fetch() (available in Cloudflare Workers).
+// Browser platform exports crash in Workers: reference window/Blob/XMLHttpRequest.
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http/build/esm/platform/node/OTLPTraceExporter';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http/build/esm/platform/node/OTLPMetricExporter';
 import { MeterProvider } from '@opentelemetry/sdk-metrics';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch';
