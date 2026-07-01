@@ -80,3 +80,4 @@ node_modules/
 plans/reports/*.md
 .sbom/
 .claude/worktrees/
+.claude/cache/
