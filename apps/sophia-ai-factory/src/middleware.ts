@@ -46,6 +46,13 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
     if (pathLocale && !isSupportedLocale(pathLocale)) return redirectToDefault(request);
   }
 
+  // /guides → /guide redirect (locale-prefixed paths — next.config redirects don't match on CF Workers)
+  if (pathLocale && isSupportedLocale(pathLocale) && pathname === `/${pathLocale}/guides`) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${pathLocale}/guide`;
+    return NextResponse.redirect(url, 308);
+  }
+
   // ?tab=signup redirect — runs before ISR cache
   const { searchParams: sp } = request.nextUrl;
   if (sp.get('tab') === 'signup') {
