@@ -8,6 +8,7 @@
  */
 
 import type { MetadataRoute } from 'next';
+import { NICHE_SLUGS } from '@/seed/config/niche-list';
 
 const BASE_URL = 'https://sophia.agencyos.network';
 const LOCALES = ['en', 'vi'] as const;
@@ -37,6 +38,8 @@ const staticPages: PageEntry[] = [
   { path: '/affiliate-discovery',      priority: 0.7, changeFrequency: 'monthly' },
   // Affiliate program landing
   { path: '/affiliate',                priority: 0.8, changeFrequency: 'monthly' },
+  // AI Video hub + niche pages
+  { path: '/ai-video',                 priority: 0.9, changeFrequency: 'weekly'  },
   // Auth entry (indexable login page is fine)
   { path: '/login',                    priority: 0.5, changeFrequency: 'monthly' },
   // Legal & utility
@@ -49,6 +52,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date().toISOString();
   const entries: MetadataRoute.Sitemap = [];
 
+  // Static marketing pages
   for (const page of staticPages) {
     for (const locale of LOCALES) {
       entries.push({
@@ -56,6 +60,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
         lastModified: now,
         changeFrequency: page.changeFrequency,
         priority: page.priority,
+      });
+    }
+  }
+
+  // AI video niche landing pages — 25 niches × 2 locales
+  for (const niche of NICHE_SLUGS) {
+    for (const locale of LOCALES) {
+      entries.push({
+        url: `${BASE_URL}/${locale}/ai-video/${niche}`,
+        lastModified: now,
+        changeFrequency: 'monthly' as ChangeFreq,
+        priority: 0.7,
       });
     }
   }

@@ -1,6 +1,6 @@
 # Sophia AI Factory — Strategic Roadmap from Open-Source Distillation
 
-**Date:** 2026-04-30 | **Last Sync:** 2026-07-01 | **Research:** 8 OSS projects, 6 monetization patterns, 7 orchestration patterns
+**Date:** 2026-04-30 | **Last Sync:** 2026-07-02 | **Research:** 8 OSS projects, 6 monetization patterns, 7 orchestration patterns
 
 ---
 
@@ -10,7 +10,9 @@ Sophia's architecture is already competitive. Gaps are in **monetization UX** (c
 
 ---
 
-## Status Snapshot (2026-07-01)
+## Status Snapshot (2026-07-02)
+
+**Sprint 3 Wave (2026-07-02)** — Programmatic landing pages expanded: 10 new niches (25 total, +67% coverage), AI video hub page at `/ai-video` with emoji grid, niche URLs added to sitemap (50 new entries), health endpoint fixed (dead proxy → local check, was returning 500). Code review passed. 6705 tests green. Web test sweep confirmed all 15 existing niche pages return 200, `/vi/guides` redirect works, `/vi/ai-video` now returns 200.
 
 **Polish Wave (2026-07-01)** — Middleware Option B fix (API routes through centralized security, skip locale redirect), `/vi/guides` → `/guide` redirect, pricing page code-split (CheckoutPanel dynamic import). Sprint 2 audit confirms all 3 items already implemented. Roadmap synced.
 
@@ -92,13 +94,13 @@ All documented in `docs/handover/founder-cheat-sheet-260512.md`. **These do NOT 
 | 8 | Help videos library (Phase 09) — founder content recording | Editorial | 2 days | ✅ SHIPPED — `dashboard/help/` with video player, FAQ, troubleshooting, SOPs |
 | 9 | Credit bar on dashboard — "You've used X/Y videos this month" | PostHog usage-pressure | 2h | ✅ SHIPPED — `sidebar-quota-widget.tsx` via `/api/quota/status`, video + credit tracking |
 
-### 🟢 Sprint 3: Moonshots (next sprint)
+### 🟢 Sprint 3: Moonshots (in progress)
 
-| # | Action | Pattern Source | Effort |
-|---|--------|---------------|--------|
-| 10 | Programmatic landing pages for "AI video [niche]" | SEO content strategy | 4h |
-| 11 | Open-source HeyGen alternative (FaceFusion+Wav2Lip+TTS) | SadTalker 13K★ | 2 weeks |
-| 12 | Auto-affiliate product discovery via next agent wave | Agentic next phase | 1 week |
+| # | Action | Pattern Source | Effort | Status |
+|---|--------|---------------|--------|--------|
+| 10 | Programmatic landing pages for "AI video [niche]" | SEO content strategy | 4h | ✅ SHIPPED — 25 niches, hub page, sitemap, health fix |
+| 11 | Open-source HeyGen alternative (FaceFusion+Wav2Lip+TTS) | SadTalker 13K★ | 2 weeks | 🔴 Backlog |
+| 12 | Auto-affiliate product discovery via next agent wave | Agentic next phase | 1 week | 🔴 Backlog |
 
 ---
 

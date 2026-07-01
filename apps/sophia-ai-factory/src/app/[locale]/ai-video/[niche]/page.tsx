@@ -249,7 +249,7 @@ export default async function NicheLandingPage({
               name: 'Sophia AI Factory',
               url: 'https://sophia.agencyos.network',
             },
-          }),
+          }).replace(/<\//g, '<\\/'),
         }}
       />
 
