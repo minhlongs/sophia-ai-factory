@@ -3,7 +3,6 @@ import type { NextRequest } from 'next/server';
 import { generateNonce } from '@/forest/raas-service';
 import { CSP_NONCE_HEADER } from '@/seed/security/get-csp-nonce';
 import { verifyCsrfToken, requiresCsrfCheck, csrfForbiddenResponse, CSRF_COOKIE_NAME } from '@/seed/security/csrf';
-import { getTracer } from '@/seed/telemetry/opentelemetry-setup';
 import { record as recordMetrics } from '@/seed/observability/telemetry/metrics';
 import { isInternalOrStatic } from './middleware-helpers';
 import { handleCorsPrelight } from './middleware/cors';
@@ -88,10 +87,6 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const startTime = Date.now();
-  const tracer = getTracer();
-  const span = tracer.startSpan('middleware.proxy', {
-    attributes: { 'http.method': request.method, 'http.route': request.nextUrl.pathname, component: 'middleware' },
-  });
   let isError = false;
   let status = 200;
   try {
@@ -101,18 +96,12 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return response;
   } catch (err) {
     isError = true;
-    const error = err instanceof Error ? err : new Error(String(err));
-    span.recordException(error);
-    span.setStatus({ code: 1, message: error.message });
     // L2: return a safe error response with security headers instead of throwing
     return applySecurityHeaders(
       NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     );
   } finally {
     const duration = Date.now() - startTime;
-    span.setAttribute('duration_ms', duration);
-    span.setAttribute('http.status_code', status);
-    span.end();
     recordMetrics(request.nextUrl.pathname, duration, isError);
   }
 }
