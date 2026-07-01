@@ -4673,6 +4673,10 @@
         "errorPasswordTooShort": "Password must be at least 8 characters",
         "errorEmailExists": "An account with this email already exists",
         "errorGeneric": "Registration failed. Please try again.",
+        "errorPasswordUppercase": "Password must include at least one uppercase letter",
+        "errorPasswordLowercase": "Password must include at least one lowercase letter",
+        "errorPasswordNumber": "Password must include at least one number",
+        "errorPasswordComplexity": "Password must be at least 8 characters with uppercase, lowercase, and a number",
         "ssoComingSoon": "Coming soon — please use email to sign in"
       }
     },
