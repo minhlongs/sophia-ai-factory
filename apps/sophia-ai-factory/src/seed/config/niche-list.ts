@@ -24,6 +24,16 @@ export const NICHE_SLUGS: readonly string[] = [
   'gaming',
   'music',
   'photography',
+  'beauty',
+  'sports',
+  'pets',
+  'home-services',
+  'dental',
+  'wedding',
+  'saas',
+  'nonprofit',
+  'construction',
+  'logistics',
 ] as const;
 
 export type NicheSlug = (typeof NICHE_SLUGS)[number];
@@ -45,4 +55,14 @@ export const NICHE_LABELS: Record<NicheSlug, { en: string; vi: string }> = {
   gaming: { en: 'Gaming', vi: 'Trò Chơi' },
   music: { en: 'Music', vi: 'Âm Nhạc' },
   photography: { en: 'Photography', vi: 'Nhiếp Ảnh' },
+  beauty: { en: 'Beauty & Salon', vi: 'Thẩm Mỹ & Salon' },
+  sports: { en: 'Sports', vi: 'Thể Thao' },
+  pets: { en: 'Pets & Veterinary', vi: 'Thú Cưng & Thú Y' },
+  'home-services': { en: 'Home Services', vi: 'Dịch Vụ Nhà Cửa' },
+  dental: { en: 'Dental', vi: 'Nha Khoa' },
+  wedding: { en: 'Wedding', vi: 'Cưới Hỏi' },
+  saas: { en: 'SaaS', vi: 'Phần Mềm SaaS' },
+  nonprofit: { en: 'Nonprofit', vi: 'Phi Lợi Nhuận' },
+  construction: { en: 'Construction', vi: 'Xây Dựng' },
+  logistics: { en: 'Logistics', vi: 'Vận Tải & Logistics' },
 };

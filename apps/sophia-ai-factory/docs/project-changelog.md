@@ -1,6 +1,37 @@
 # Project Changelog
 
-**Last Updated:** 2026-07-01 | **Current Version:** 0.1.4 | **Honest Score:** 87.5/100 (doctrine ceiling)
+**Last Updated:** 2026-07-02 | **Current Version:** 0.1.4 | **Honest Score:** 88/100 (doctrine ceiling)
+
+---
+
+## 2026-07-02 — Sprint 3 Wave: Programmatic Landing Pages + Health Fix
+
+**Severity: MEDIUM | Type: Feature + Bugfix | Status: LOCAL**
+
+### Changes
+- **Programmatic landing pages expansion** — 10 new niches added (15→25 total): beauty, sports, pets, home-services, dental, wedding, saas, nonprofit, construction, logistics. Each with bilingual VI/EN labels.
+- **AI Video hub page** — New `/ai-video` index page listing all 25 niches in emoji grid. SEO-optimized with bilingual metadata, hero section, niche cards, CTA. Previously returned 404 on production.
+- **Sitemap expanded** — Added `/ai-video` hub page + all 50 niche URLs (25 niches × 2 locales) to sitemap.xml. Niche pages were completely absent from sitemap before.
+- **Health endpoint fix** — `/api/health` was returning 500 (proxied to dead external worker `sophia-ai-factory-health.agencyos-openclaw.workers.dev`). Replaced with self-contained local health check returning status, uptime, timestamp.
+- **JSON-LD XSS hardening** — Escaped `</` in structured data to prevent script injection from LLM-generated content.
+
+### Files Changed
+| File | Change |
+|------|--------|
+| `src/seed/config/niche-list.ts` | +10 niches (15→25), +10 bilingual label entries |
+| `src/app/[locale]/ai-video/page.tsx` | NEW — hub page with emoji grid |
+| `src/app/sitemap.ts` | +AI video hub + 50 niche URLs |
+| `src/app/api/health/route.ts` | Replaced dead proxy with local health check |
+| `src/app/[locale]/ai-video/[niche]/page.tsx` | XSS fix: escape `</` in JSON-LD |
+| `docs/project-roadmap.md` | Sprint 3 #10 marked shipped |
+| `docs/project-changelog.md` | This entry |
+
+### Quality Gates
+- TypeScript: 0 errors
+- Tests: 6705 passed, 0 failed
+- Code review: ✅ passed (1 High fixed, 2 Medium deferred as pre-existing, 4 Low noted)
+- Web sweep: All 15 existing niche pages 200, `/vi/ai-video` now 200 (was 404), `/api/health` returns 200
+- Deploy: Pending
 
 ---
 
