@@ -69,10 +69,11 @@ describe('POST /api/webhooks/amazon', () => {
     expect(mockRun).toHaveBeenCalled()
   })
 
-  it('returns 200 with skipped:config when secret missing', async () => {
+  it('returns 500 when webhook secret not configured (C4 fix 2026-07-01)', async () => {
     vi.unstubAllEnvs()
     const res = await POST(makeRequest(PAYLOAD, 'any'))
-    const body = await res.json() as { ok: boolean; skipped?: string }
-    expect(body.skipped).toBe('config')
+    expect(res.status).toBe(500)
+    const body = await res.json() as { error?: string }
+    expect(body.error).toBe('Webhook secret not configured')
   })
 })

@@ -47,8 +47,8 @@ interface AwinConversionPayload {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const secret = process.env.AWIN_WEBHOOK_SECRET
   if (!secret) {
-    logger.warn('[awin-webhook] AWIN_WEBHOOK_SECRET not configured')
-    return NextResponse.json({ ok: true, skipped: 'config' })
+    logger.error('[awin-webhook] AWIN_WEBHOOK_SECRET not configured — rejecting unsigned payload')
+    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
   }
 
   const rawBody = await request.text()

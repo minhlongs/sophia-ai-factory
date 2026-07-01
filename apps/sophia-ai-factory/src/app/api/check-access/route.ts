@@ -1,15 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { FeatureFlag, Tier } from "@/seed/types";
 import { checkTierAccess } from "@/land/features";
 import { tierGuard, LimitType } from "@/land/tier-guard";
 import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import { toError } from "@/seed/utils/to-error";
 
+const CheckAccessParams = z.object({
+  feature: z.string().nullable().optional(),
+  limit: z.string().nullable().optional(),
+});
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const feature = searchParams.get("feature") as FeatureFlag | null;
-    const limitType = searchParams.get("limit") as LimitType | null;
+    const parsed = CheckAccessParams.safeParse({
+      feature: searchParams.get("feature"),
+      limit: searchParams.get("limit"),
+    });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid query parameters", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+    const feature = parsed.data.feature as FeatureFlag | null;
+    const limitType = parsed.data.limit as LimitType | null;
 
     // Get user tier from Better Auth session
     let userTier: Tier = "BASIC";

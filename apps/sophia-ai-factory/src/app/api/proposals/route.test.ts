@@ -8,6 +8,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
+const CSRF = 'test-csrf-token';
+const csrfHeaders = { 'x-csrf-token': CSRF, cookie: `csrf-token=${CSRF}` };
+
 // Mock dependencies
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
@@ -56,7 +59,7 @@ function createRequest(body: Record<string, unknown>): NextRequest {
   return new NextRequest(url, {
     method: 'POST',
     body: JSON.stringify(body),
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...csrfHeaders },
   });
 }
 

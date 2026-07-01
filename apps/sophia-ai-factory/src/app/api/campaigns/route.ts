@@ -13,6 +13,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { Campaign } from '@/seed/types';
+import { verifyCsrfToken } from '@/seed/security/csrf';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,6 +74,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  if (!verifyCsrfToken(req)) {
+    return NextResponse.json({ error: 'CSRF token missing or invalid' }, { status: 403 });
+  }
   try {
     const user = await getCurrentUser();
     if (!user) {

@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
+const CSRF = 'test-csrf-token';
+const csrfHeaders = { 'x-csrf-token': CSRF, cookie: `csrf-token=${CSRF}` };
+
 const mocks = vi.hoisted(() => ({
   getCurrentUser: vi.fn(),
   createServerClient: vi.fn(),
@@ -27,6 +30,7 @@ import { DELETE } from './route';
 function makeDelete(id: string): NextRequest {
   return new NextRequest(`https://sophia.agencyos.network/api/campaigns?id=${id}`, {
     method: 'DELETE',
+    headers: csrfHeaders,
   });
 }
 

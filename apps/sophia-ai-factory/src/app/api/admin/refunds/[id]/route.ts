@@ -48,14 +48,43 @@ export async function PATCH(
     }
 
     const newStatus = body.action === 'approve' ? 'approved' : 'rejected'
-    await updateRefundStatus({ id, status: newStatus, reviewedByUserId: auth.user.id, adminNotes: body.adminNotes })
+    // H9 fix (2026-07-01): updateRefundStatus returns false if row already reviewed
+    const updated = await updateRefundStatus({ id, status: newStatus, reviewedByUserId: auth.user.id, adminNotes: body.adminNotes })
+    if (!updated) {
+      return NextResponse.json({ error: 'Already reviewed by concurrent request', status: 'reviewed' }, { status: 409 })
+    }
 
-    await writeAuditLog({
-      actorUserId: auth.user.id,
-      actionType: body.action === 'approve' ? 'refund_approved' : 'refund_rejected',
-      targetUserId: refund.user_id,
-      payload: { refundId: id, purchaseId: refund.purchase_id, adminNotes: body.adminNotes },
-    })
+    // M17 fix (2026-07-01): Audit log AFTER status update, batched for atomicity
+    // Previous behavior wrote audit log after update — if audit failed silently,
+    // the status change was unlogged. D1 batch ties them together.
+    try {
+      const db = getD1();
+      if (db) {
+        const now = Math.floor(Date.now() / 1000)
+        await db.batch([
+          db.prepare(
+            `INSERT INTO audit_log (actor_user_id, action_type, target_user_id, payload, created_at)
+             VALUES (?1, ?2, ?3, ?4, ?5)`,
+          ).bind(
+            auth.user.id,
+            body.action === 'approve' ? 'refund_approved' : 'refund_rejected',
+            refund.user_id,
+            JSON.stringify({ refundId: id, purchaseId: refund.purchase_id, adminNotes: body.adminNotes }),
+            now,
+          ),
+        ])
+      } else {
+        // Fallback to legacy audit for backward compatibility
+        await writeAuditLog({
+          actorUserId: auth.user.id,
+          actionType: body.action === 'approve' ? 'refund_approved' : 'refund_rejected',
+          targetUserId: refund.user_id,
+          payload: { refundId: id, purchaseId: refund.purchase_id, adminNotes: body.adminNotes },
+        })
+      }
+    } catch (auditErr) {
+      logger.error('[AdminRefunds] Audit log failed (non-fatal)', auditErr instanceof Error ? auditErr : undefined)
+    }
 
     // Fetch user email for notification
     const db = getD1();

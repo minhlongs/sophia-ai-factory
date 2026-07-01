@@ -71,11 +71,9 @@ export async function checkRateLimit(
 ): Promise<RateLimitResult> {
   const now = Date.now()
 
-  // Skip rate limiting in test or mock environments to avoid parallel test flakiness (429 errors)
-  if (
-    globalThis.process?.env?.DISABLE_RATE_LIMIT === 'true' ||
-    globalThis.process?.env?.NEXT_PUBLIC_MOCK_AI_SERVICES === 'true'
-  ) {
+  // Skip rate limit only when explicitly disabled (test environments).
+  // NEXT_PUBLIC_MOCK_AI_SERVICES no longer bypasses rate limiting (C3 fix 2026-07-01).
+  if (globalThis.process?.env?.DISABLE_RATE_LIMIT === 'true') {
     return {
       success: true,
       remaining: config.maxRequests,

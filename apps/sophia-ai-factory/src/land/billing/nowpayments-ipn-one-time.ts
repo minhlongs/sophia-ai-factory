@@ -56,6 +56,22 @@ export async function handleOneTimeFinished(
     }
 
     // P0.4: Underpayment guard — reject if actually_paid < price_amount * 0.99
+    // H8 fix (2026-07-01): Cross-check IPN price_amount against SKU price to
+    // prevent manipulated IPN payloads where attacker matches price_amount to actually_paid.
+    const skuPriceUsd = sku.priceUsd ?? ipn.price_amount
+    const ipnPriceUsd = ipn.price_amount
+    const priceDiff = Math.abs(ipnPriceUsd - skuPriceUsd)
+    if (skuPriceUsd > 0 && priceDiff > skuPriceUsd * 0.01) {
+      logger.error('[IPN/OneTime] Price mismatch — IPN amount differs from SKU price', {
+        userId,
+        paymentId: ipn.payment_id,
+        ipnPriceAmount: ipnPriceUsd,
+        skuPriceUsd,
+        priceDiff,
+      })
+      return success(undefined) // Don't fulfill — silently drop mismatched payments
+    }
+
     const actuallyPaid = ipn.actually_paid
     if (actuallyPaid !== undefined && actuallyPaid !== null) {
       const required = ipn.price_amount * UNDERPAYMENT_THRESHOLD
@@ -93,7 +109,9 @@ export async function handleOneTimeFinished(
         paymentId: ipn.payment_id,
         userId,
       })
-      return success(undefined)
+      // H10 fix (2026-07-01): Return failure so NOWPayments retries instead of
+      // silently losing the payment. Previous: success(undefined) = payment lost.
+      return failure(new IPNError('INSERT_PURCHASE_FAILED', new Error('Failed to insert purchase row')))
     }
 
     // Mark paid + set credits_remaining
@@ -199,7 +217,10 @@ export async function handleOneTimeRefunded(
 
     await markRefunded(ipn.payment_id)
 
-    // F10: Revoke video access for ALL videos linked to this purchase
+    // F10: Revoke video access for ALL videos linked to this purchase.
+    // M16 fix (2026-07-01): Moved into main try block — if revocation fails,
+    // the entire refund handler fails and returns an error instead of
+    // silently leaving access intact while claiming refund was processed.
     if (purchaseId) {
       try {
         await revokeAccessByPurchaseId(purchaseId)
@@ -209,11 +230,12 @@ export async function handleOneTimeRefunded(
           paymentId: ipn.payment_id,
         })
       } catch (revokeErr) {
-        logger.error('[IPN/OneTime] Video access revocation failed (non-fatal)', revokeErr instanceof Error ? revokeErr : undefined, {
+        logger.error('[IPN/OneTime] Video access revocation failed', revokeErr instanceof Error ? revokeErr : undefined, {
           userId,
           purchaseId,
           paymentId: ipn.payment_id,
         })
+        throw revokeErr // Propagate to outer catch — refund is incomplete
       }
     }
 

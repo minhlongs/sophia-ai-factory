@@ -107,17 +107,21 @@ describe('verifyCronAuth', () => {
     });
   });
 
-  describe('token query param (?token= for UptimeRobot etc)', () => {
-    it('allows valid ?token= query param', () => {
+  describe('token query param (REMOVED — M3 fix 2026-07-01)', () => {
+    it('rejects ?token= query param (secrets in URLs are logged by proxies)', () => {
       vi.stubEnv('CRON_SECRET', 'uptime-secret');
       const req = makeRequest({ queryParams: { token: 'uptime-secret' } });
-      expect(verifyCronAuth(req)).toBeNull();
+      const result = verifyCronAuth(req);
+      expect(result).not.toBeNull();
+      expect(result!.status).toBe(401);
     });
 
     it('rejects wrong ?token= query param', () => {
       vi.stubEnv('CRON_SECRET', 'uptime-secret');
       const req = makeRequest({ queryParams: { token: 'wrong' } });
-      expect(verifyCronAuth(req)).not.toBeNull();
+      const result = verifyCronAuth(req);
+      expect(result).not.toBeNull();
+      expect(result!.status).toBe(401);
     });
   });
 

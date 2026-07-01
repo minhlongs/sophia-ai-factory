@@ -34,6 +34,7 @@ import { mintAdminChallengeToken } from '@/seed/auth/require-admin';
 import { verifyPassword } from '@/tree/crypto/password-hash';
 import { createServerClient } from '@/seed/db/client';
 import { verifyTotp } from '@/seed/auth/mfa/totp-service';
+import { decryptToken } from '@/seed/crypto/token-crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,7 +52,8 @@ interface AccountRow {
 
 /** Row shape from `mfa_secrets` table. */
 interface MfaSecretsRow {
-  totp_secret: string;
+  totp_secret: string | null;
+  totp_secret_enc: string | null;
   totp_enabled: number;
   is_encrypted: number;
 }
@@ -125,7 +127,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 3b. MFA (TOTP) verification path
     const mfaResult = await db
       .from('mfa_secrets')
-      .select('totp_secret, totp_enabled, is_encrypted')
+      .select('totp_secret, totp_secret_enc, totp_enabled, is_encrypted')
       .eq('user_id', user.id)
       .single();
 
@@ -137,10 +139,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Note: is_encrypted=1 rows use AES-256-GCM — verifyTotpWithLazyEncrypt handles that.
-    // For admin-challenge we use the simpler verifyTotp; encrypted secrets are not yet
-    // decrypted here. If admin users have encrypted TOTP secrets, use verifyTotpWithLazyEncrypt.
-    const mfaOk = verifyTotp(mfaRow.totp_secret, mfaCode);
+    // H2 fix (2026-07-01): Use totp_secret_enc (encrypted) when is_encrypted=1.
+    // Previous code read totp_secret (plaintext old column) and never decrypted.
+    let mfaOk = false;
+    if (mfaRow.is_encrypted === 1 && mfaRow.totp_secret_enc) {
+      const decrypted = await decryptToken(mfaRow.totp_secret_enc);
+      mfaOk = verifyTotp(decrypted, mfaCode);
+    } else {
+      mfaOk = verifyTotp(mfaRow.totp_secret ?? '', mfaCode);
+    }
     if (!mfaOk) {
       return NextResponse.json(
         { error: 'MFA code incorrect', reason: 'wrong_mfa' },

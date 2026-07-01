@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
+const CSRF = 'test-csrf-token';
+const csrfHeaders = { 'x-csrf-token': CSRF, cookie: `csrf-token=${CSRF}` };
+
 const mocks = vi.hoisted(() => ({
   getCurrentUser: vi.fn(),
   createServerClient: vi.fn(),
@@ -27,7 +30,7 @@ import { DELETE, PATCH, POST } from './route';
 function makeJsonRequest(method: string, body: unknown, path = '/api/schedule'): NextRequest {
   return new NextRequest(`https://sophia.agencyos.network${path}`, {
     method,
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', ...csrfHeaders },
     body: JSON.stringify(body),
   });
 }
@@ -202,6 +205,7 @@ describe('/api/schedule validation', () => {
 
     const res = await DELETE(new NextRequest('https://sophia.agencyos.network/api/schedule?id=missing-sched', {
       method: 'DELETE',
+      headers: csrfHeaders,
     }));
     const body = await res.json() as { error: string };
 

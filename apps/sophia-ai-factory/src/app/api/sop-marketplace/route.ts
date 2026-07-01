@@ -9,6 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { getD1 } from "@/seed/db/client";
 import { listPublishedListings } from "@/tree/sop/sop-repo-marketplace";
 
@@ -16,16 +17,32 @@ export const dynamic = "force-dynamic";
 
 type Template = Record<string, unknown>;
 
+const MarketplaceParams = z.object({
+  category: z.string().max(100).optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+  sort: z.enum(["popular", "rating", "newest"]).default("newest"),
+});
+
 export async function GET(request: NextRequest) {
  try {
    const _db = getD1();
    if (!_db) throw new Error('D1 binding not available');
    const db = _db;
   const { searchParams } = new URL(request.url);
-  const category = searchParams.get("category") || undefined;
-  const limit = Math.min(200, Math.max(1, parseInt(searchParams.get("limit") || "50", 10) || 50));
-  const offset = Math.max(0, parseInt(searchParams.get("offset") || "0", 10) || 0);
-  const sort = (searchParams.get("sort") || "newest") as "popular" | "rating" | "newest";
+  const parsed = MarketplaceParams.safeParse({
+    category: searchParams.get("category") || undefined,
+    limit: searchParams.get("limit") || "50",
+    offset: searchParams.get("offset") || "0",
+    sort: searchParams.get("sort") || "newest",
+  });
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid query parameters", details: parsed.error.flatten() },
+      { status: 400 }
+    );
+  }
+  const { category, limit, offset, sort } = parsed.data;
 
   const rows = await listPublishedListings(db, { category, limit, offset });
   const templates: Template[] = rows.map((r) => ({ id: r.id, templateId: r.template_id, name: r.name_en, category: r.category, priceCents: r.price_cents, tags: r.tags ? JSON.parse(r.tags as string) : [], totalSales: r.total_sales, totalRevenueCents: r.total_revenue_cents, ratingAvg: r.rating_avg, ratingCount: r.rating_count, status: r.status, publishedAt: r.published_at, previewMd: r.preview_md, demoVideoUrl: r.demo_video_url, }));

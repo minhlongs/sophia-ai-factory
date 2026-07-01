@@ -66,6 +66,25 @@ export async function insertPurchase(
       .single()
 
     if (error) {
+      // H10 fix (2026-07-01): On UNIQUE violation, a concurrent request already
+      // inserted this purchase. Re-fetch and return the existing ID instead of null.
+      // This prevents the "user pays, gets nothing" scenario where insertPurchase
+      // returns null → caller returns success(undefined) → NOWPayments marks complete.
+      const isDuplicate =
+        typeof error === 'object' && error !== null &&
+        ('code' in error || 'message' in error) &&
+        (String((error as { code?: string }).code ?? '').includes('23505') ||
+         String((error as { message?: string }).message ?? '').toLowerCase().includes('unique') ||
+         String((error as { message?: string }).message ?? '').toLowerCase().includes('duplicate'))
+
+      if (isDuplicate) {
+        logger.warn('[UserPurchasesRepo] Duplicate purchase, re-fetching', {
+          paymentId: input.paymentId,
+        })
+        const existing = await getByPaymentId(input.paymentId)
+        if (existing) return existing.id
+      }
+
       logger.warn('[UserPurchasesRepo] Insert error', {
         paymentId: input.paymentId,
         error: getErrorMessage(error),

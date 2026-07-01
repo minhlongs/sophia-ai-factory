@@ -221,3 +221,4 @@ export type {
 } from './publishing-persistence';
 export type { VideoGenerateRequestedEvent } from './video-events';
 export { D1Events } from './d1-events';
+export * from './landing-page-types';

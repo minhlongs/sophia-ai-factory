@@ -79,9 +79,17 @@ export async function POST(request: NextRequest) {
   try {
     const body = (await request.json().catch(() => ({}))) as TelegramUpdate
 
-    // Verify webhook secret token only when secret is configured
+    // M8 fix: webhook secret mandatory in production; only optional in dev
     const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET
-    if (webhookSecret) {
+    const isDev = process.env.NODE_ENV === 'development'
+    if (isDev && !webhookSecret) {
+      // Dev without secret — warn and allow
+      const { logger } = await import('@/seed/utils/logger-utility')
+      logger.warn('[telegram-webhook] TELEGRAM_WEBHOOK_SECRET not set — accepting all requests (dev only)')
+    } else if (!webhookSecret) {
+      // Production without secret — reject
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
+    } else {
       const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
       if (token !== webhookSecret) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

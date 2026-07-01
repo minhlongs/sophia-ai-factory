@@ -16,6 +16,9 @@ export async function verifySignature(
   headers: Record<string, string | undefined>,
   secret: string
 ): Promise<boolean> {
+  // M9 fix: single canonical signature format — raw secret only.
+  // Removed base64 fallback to prevent downgrade attacks where an attacker
+  // sends a signature valid against the base64 form but not the raw form.
   try {
     const wh = new Webhook(secret);
     const signature = headers['Polar-Signature'] || headers['webhook-signature'];
@@ -32,26 +35,7 @@ export async function verifySignature(
 
     return true;
   } catch {
-    // Try base64-decoded secret
-    try {
-      const base64Secret = Buffer.from(secret).toString('base64');
-      const wh = new Webhook(base64Secret);
-      const signature = headers['Polar-Signature'] || headers['webhook-signature'];
-
-      if (!signature) {
-        return false;
-      }
-
-      wh.verify(body, {
-        'webhook-id': headers['webhook-id'] ?? '',
-        'webhook-timestamp': headers['webhook-timestamp'] ?? '',
-        'webhook-signature': signature
-      });
-
-      return true;
-    } catch {
-      return false;
-    }
+    return false;
   }
 }
 

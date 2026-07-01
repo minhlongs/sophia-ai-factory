@@ -15,6 +15,7 @@ import type { PendingOrderPeriod, PaymentMethod } from '@/land/orders/pending-or
 import { createPayOsInvoice } from '@/land/payments/payos';
 import { track } from '@/tree/signals/track';
 import { D1Events } from '@/tree/signals/d1-event-types';
+import { verifyCsrfToken } from '@/seed/security/csrf';
 
 /**
  * Extract user ID from Better Auth session headers.
@@ -81,6 +82,9 @@ export const GET = withRateLimit(async function GET(request: NextRequest) {
  */
 // @ts-expect-error withRateLimit wraps NextRequest; type mismatch is intentional
 export const POST = withRateLimit(async function POST(request: NextRequest) {
+  if (!verifyCsrfToken(request)) {
+    return NextResponse.json({ error: 'CSRF token missing or invalid' }, { status: 403 });
+  }
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
   try {
     const body = await request.json();
