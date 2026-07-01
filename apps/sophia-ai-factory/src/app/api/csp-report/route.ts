@@ -33,6 +33,14 @@ export async function POST(request: NextRequest) {
     } catch {
       /* keep raw text */
     }
+    // M4: scrub PII (document-uri, referrer may contain auth tokens or private URLs)
+    if (parsed && typeof parsed === 'object' && 'csp-report' in (parsed as Record<string,unknown>)) {
+      const report = (parsed as Record<string,unknown>)['csp-report'] as Record<string,unknown>;
+      if (report) {
+        if (report['document-uri']) report['document-uri'] = '[redacted]';
+        if (report.referrer) report.referrer = '[redacted]';
+      }
+    }
     logger.warn('[csp-report] CSP violation received', {
       ua: request.headers.get('user-agent') ?? 'unknown',
       report: parsed,

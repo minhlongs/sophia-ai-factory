@@ -102,9 +102,27 @@ export async function withEdgeCache(
   return fresh;
 }
 
+/**
+ * L6: strip only dynamic Vary tokens (rsc, next-router-state-tree, etc.) that
+ * fragment the cache key per-request. Preserve functional Vary headers (Origin
+ * for CORS, Accept-Encoding for compression) that define real response variants.
+ */
 function stripDynamicVary(src: Headers): Headers {
   const out = new Headers(src);
-  // Next.js app router emits these on every response; they explode the cache.
-  out.delete('vary');
+  const raw = out.get('vary');
+  if (!raw) return out;
+
+  // Next.js app router emits these dynamic tokens on every response
+  const DYNAMIC_TOKENS = /(^|,\s*)(rsc|next-router-state-tree|next-router-prefetch|next-url)(,\s*|$)/gi;
+  const cleaned = raw.replace(DYNAMIC_TOKENS, (match) => {
+    // Preserve the delimiter structure while removing the token
+    return match.startsWith(',') ? '' : '';
+  }).replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ',').trim();
+
+  if (cleaned) {
+    out.set('vary', cleaned);
+  } else {
+    out.delete('vary');
+  }
   return out;
 }

@@ -14,8 +14,9 @@ export async function GET() {
       status: healthRes.status,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache, no-store, must-revalidate' }
     });
-  } catch (e) {
-    return new Response(JSON.stringify({ status: 'unhealthy', error: 'Proxy failed', details: String(e) }), {
+  } catch {
+    // M5: do not expose internal error details (String(e) leaks stack traces / internal hostnames)
+    return new Response(JSON.stringify({ status: 'unhealthy', error: 'Service temporarily unavailable' }), {
       status: 503,
       headers: { 'Content-Type': 'application/json' }
     });

@@ -11,6 +11,14 @@ import { handleApiPipeline } from './middleware/api-pipeline';
 import { handleDashboardPipeline } from './middleware/dashboard-pipeline';
 import { handlePublicPipeline } from './middleware/public-pipeline';
 
+/** L2: apply security headers to error responses that bypass the normal pipeline */
+function applySecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  return response;
+}
+
 const SUPPORTED_LOCALES = ['en', 'vi'] as const;
 
 function isSupportedLocale(segment: string | undefined): boolean {
@@ -90,7 +98,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     const error = err instanceof Error ? err : new Error(String(err));
     span.recordException(error);
     span.setStatus({ code: 1, message: error.message });
-    throw err;
+    // L2: return a safe error response with security headers instead of throwing
+    return applySecurityHeaders(
+      NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    );
   } finally {
     const duration = Date.now() - startTime;
     span.setAttribute('duration_ms', duration);
