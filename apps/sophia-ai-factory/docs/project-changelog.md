@@ -4,6 +4,31 @@
 
 ---
 
+## 2026-07-01 — Security Audit Fixes: Rate Limiter + Defense-in-Depth
+
+**Severity: SECURITY | Type: Audit remediation | Status: READY TO SHIP**
+
+Cross-referenced 53-finding security audit against committed code. 48 of 53 already fixed in prior commits. Fixed 5 remaining findings + 6 defense-in-depth items. 11 accepted risks documented.
+
+**Fixed (Critical):**
+- C2: D1-backed cross-isolate rate limiter for auth endpoints (`src/seed/security/d1-rate-limiter.ts`). Uses INSERT OR REPLACE pattern for atomic counter in D1 SQLite. Wired into `middleware.ts` before pipeline dispatch. Prevents brute-force distribution across CF Worker isolates.
+
+**Fixed (Low — Defense-in-Depth):**
+- L1: HSTS header on all responses (`Strict-Transport-Security: max-age=31536000; includeSubDomains`)
+- L2: Account lockout fail-closed on DB error (returns `{locked: true}` instead of allowing)
+- L4: Coupon codes from env var `PROMO_COUPON_CODES` with config fallback (`src/seed/config/coupons.ts`)
+- L5: MFA backup code atomic consume via `UPDATE WHERE code = ? AND consumed = 0` + `meta.changes` check
+- L6: PayOS webhook raw body JSON-sanitized before storage
+
+**Verified (Medium):**
+- M6: No MOCK_AI_SERVICES bypass in rate limiters (only comments remain)
+- M16: Access revocation error propagation correct (fails handler on DB error)
+- M18: OTEL CWE-770 documented as accepted risk
+
+**Files:** 9 modified, 3 created | **Tests:** 6704 passed | **Build:** 0 TS errors
+
+---
+
 ## 2026-07-01 — Revenue & Trust Sprint: Code Review Fixes
 
 **Severity: QUALITY | Type: Code review remediation | Status: SHIPPED (SHA 5265c0a5a)**

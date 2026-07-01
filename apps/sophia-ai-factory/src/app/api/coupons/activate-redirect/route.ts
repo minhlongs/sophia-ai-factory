@@ -7,17 +7,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-
-const VALID_COUPONS: Record<string, { mcuBonus: number }> = {
-  FREE50: { mcuBonus: 1000 },
-  LAUNCH25: { mcuBonus: 500 },
-};
+import { getActivateCoupons } from '@/seed/config/coupons';
 
 export async function GET(request: NextRequest) {
   const coupon = (request.nextUrl.searchParams.get('coupon') || '').toUpperCase();
   const tier = (request.nextUrl.searchParams.get('tier') || 'MASTER').toUpperCase();
 
-  if (!VALID_COUPONS[coupon]) {
+  if (!getActivateCoupons()[coupon]) {
     return NextResponse.redirect(new URL('/dashboard?error=invalid_coupon', request.url));
   }
 

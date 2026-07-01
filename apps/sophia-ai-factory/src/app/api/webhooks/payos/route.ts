@@ -85,8 +85,10 @@ export async function POST(request: NextRequest) {
   }
 
   let parsed: ReturnType<typeof payOsIpnSchema.safeParse>
+  let sanitizedBody: string
   try {
     const raw = JSON.parse(rawBody) as unknown
+    sanitizedBody = JSON.stringify(raw) // L6: ensure valid JSON before storage
     parsed = payOsIpnSchema.safeParse(raw)
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
@@ -114,7 +116,7 @@ export async function POST(request: NextRequest) {
       .insert({
         event_id: `payos_${paymentLinkId}`,
         event_type: 'payos.payment_success',
-        payload: rawBody,
+        payload: sanitizedBody,
         processed: 0,
         created_at: new Date().toISOString(),
       })
