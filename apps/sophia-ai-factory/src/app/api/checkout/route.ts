@@ -50,13 +50,13 @@ export const GET = withRateLimit(async function GET(request: NextRequest) {
     const mappedTier = rawTier ? tierMap[rawTier] : undefined;
 
     if (!mappedTier || !NOWPAYMENTS_TIERS[mappedTier]) {
-      return NextResponse.redirect(`${appUrl}/pricing`);
+      return NextResponse.redirect(`${appUrl}/vi/pricing`);
     }
 
     const userId = await getUserId(request);
     if (!userId) {
       const redirectUrl = encodeURIComponent(`/api/checkout?tier=${rawTier}`);
-      return NextResponse.redirect(`${appUrl}/login?redirect=${redirectUrl}`);
+      return NextResponse.redirect(`${appUrl}/vi/login?redirect=${redirectUrl}`);
     }
     let checkoutUrl: string
     try {
@@ -71,7 +71,7 @@ export const GET = withRateLimit(async function GET(request: NextRequest) {
     }
     return NextResponse.redirect(checkoutUrl);
   } catch {
-    return NextResponse.redirect(`${appUrl}/pricing`);
+    return NextResponse.redirect(`${appUrl}/vi/pricing`);
   }
 }, { addHeaders: true, config: { intervalMs: 60000, maxRequests: 10 } });
 
@@ -119,7 +119,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: 'Login required before checkout. Please sign in first.',
-          redirectTo: `/login?next=${encodeURIComponent('/pricing')}`,
+          redirectTo: `/vi/login?next=${encodeURIComponent('/vi/pricing')}`,
         },
         { status: 401 }
       );
