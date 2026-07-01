@@ -105,6 +105,14 @@ function getD1Sync(): D1Database {
     return env.DB as D1Database;
   }
 
+  // Fallback: Cloudflare context symbol (set by OpenNext via AsyncLocalStorage)
+  const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[
+    Symbol.for('__cloudflare-context__')
+  ];
+  if (ctx?.env?.DB && typeof (ctx.env.DB as D1Database).prepare === 'function') {
+    return ctx.env.DB as D1Database;
+  }
+
   // Fallback: process.env style (some CF adapters)
   const procEnv = (process as unknown as Record<string, Record<string, unknown>>).env;
   if (procEnv?.DB && typeof (procEnv.DB as D1Database).prepare === 'function') {
