@@ -1,8 +1,8 @@
-import { redirect } from "@/navigation";
+import { permanentRedirect } from "next/navigation";
 
 /**
  * /[locale]/guides → /[locale]/guide
- * Server-side locale-aware redirect for the plural "guides" URL.
+ * Server-side redirect using native next/navigation for CF Workers compatibility.
  */
 export default async function GuidesPage({
   params,
@@ -10,5 +10,5 @@ export default async function GuidesPage({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  redirect({ href: "/guide", locale });
+  permanentRedirect(`/${locale}/guide`);
 }
