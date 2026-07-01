@@ -8,6 +8,7 @@ import { getBalance, deductCredits } from '@/tree/mcu/credits-repo';
 import { getProposalCost } from '@/land/billing/proposal-mcu-cost-config';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { verifyCsrfToken } from '@/seed/security/csrf';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,9 @@ const COMPANY_PROFILE = {
 };
 
 export async function POST(request: NextRequest) {
+  if (!verifyCsrfToken(request)) {
+    return NextResponse.json({ error: 'CSRF token missing or invalid' }, { status: 403 });
+  }
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: 'Authentication required' }, { status: 401 });

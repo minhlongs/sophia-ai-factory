@@ -89,8 +89,18 @@ export async function isSessionMfaPending(sessionId: string): Promise<boolean> {
   const row = result.data as MfaPendingRow | null;
   if (!row) return false;
 
-  // Treat expired rows as not-pending (they will be cleaned up lazily)
-  return row.expires_at > now;
+  // H1 fix (2026-07-01): Expired pending records mean MFA was required but
+  // never completed. Fail-closed: enforce MFA by returning true, and delete
+  // the session so the user is forced to re-authenticate. Previous behavior
+  // (return false on expired) allowed MFA bypass by waiting 10 minutes.
+  if (row.expires_at > now) return true; // Active MFA pending
+
+  // MFA pending expired — user never completed MFA. Clean up and enforce.
+  logger.warn('[MFA] MFA pending expired without verification — forcing re-auth', { sessionId });
+  try {
+    await db.from('mfa_pending_sessions').delete().eq('session_id', sessionId);
+  } catch { /* non-fatal: cleanup best-effort */ }
+  return true; // Fail closed — force MFA verification
  } catch (dbErr) {
   // FIX 5: Fail-closed - on DB error, assume MFA is pending to prevent bypass
   logger.error('[MFA] isSessionMfaPending DB error, failing closed', toError(dbErr));

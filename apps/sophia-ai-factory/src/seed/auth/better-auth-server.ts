@@ -63,6 +63,8 @@ export function getAuth() {
     emailAndPassword: {
       enabled: true,
       autoSignIn: true,
+      // M10 fix (2026-07-01): Password complexity enforcement.
+      // Better Auth will validate at sign-up and password-reset.
       password: {
         hash: async (password: string) => {
           const { hashPassword } = await import('@/tree/crypto/password-hash');
@@ -71,6 +73,17 @@ export function getAuth() {
         verify: async ({ hash, password }: { hash: string; password: string }) => {
           const { verifyPassword } = await import('@/tree/crypto/password-hash');
           return verifyPassword(password, hash);
+        },
+        validate: (password: string) => {
+          const issues: string[] = [];
+          if (password.length < 8) issues.push('at least 8 characters');
+          if (!/[A-Z]/.test(password)) issues.push('one uppercase letter');
+          if (!/[a-z]/.test(password)) issues.push('one lowercase letter');
+          if (!/[0-9]/.test(password)) issues.push('one number');
+          if (issues.length > 0) {
+            return { success: false, message: `Password requires: ${issues.join(', ')}` };
+          }
+          return { success: true };
         },
       },
     },

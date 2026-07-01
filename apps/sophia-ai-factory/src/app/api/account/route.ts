@@ -19,6 +19,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { cascadeDeleteAccount } from '@/land/account';
+import { verifyCsrfToken } from '@/seed/security/csrf';
 
 interface CooldownRow {
   confirmed_at: number | null;
@@ -30,6 +31,11 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  // H5 fix: CSRF token check alongside custom header (defense-in-depth)
+  if (!verifyCsrfToken(request)) {
+    return NextResponse.json({ error: 'CSRF token missing or invalid' }, { status: 403 });
   }
 
   const confirmHeader = request.headers.get('x-confirm-delete');

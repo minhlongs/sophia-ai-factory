@@ -7,7 +7,7 @@
  *   3. requireMfaIfEnabled — returns required=true when totp_enabled=1
  *   4. markSessionMfaPending — inserts a row with future expires_at
  *   5. isSessionMfaPending — returns true for live pending session
- *   6. isSessionMfaPending — returns false for expired row
+ *   6. isSessionMfaPending — returns true for expired row (fail-closed — H1 fix)
  *   7. isSessionMfaPending — returns false when no row exists
  *   8. clearSessionMfaPending — removes the row so subsequent check returns false
  */
@@ -145,7 +145,7 @@ describe('markSessionMfaPending + isSessionMfaPending', () => {
     expect(pending).toBe(true);
   });
 
-  it('returns false for expired row', async () => {
+  it('returns true for expired row (fail-closed — H1 fix)', async () => {
     const pastExpiry = Math.floor(Date.now() / 1000) - 100;
     mockDb.rows.set('sess-expired', {
       session_id: 'sess-expired',
@@ -153,7 +153,7 @@ describe('markSessionMfaPending + isSessionMfaPending', () => {
       created_at: pastExpiry - 600,
     });
     const pending = await isSessionMfaPending('sess-expired');
-    expect(pending).toBe(false);
+    expect(pending).toBe(true);
   });
 
   it('returns false when no row exists', async () => {

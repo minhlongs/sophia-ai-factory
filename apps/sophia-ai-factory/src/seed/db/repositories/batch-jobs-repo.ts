@@ -126,11 +126,19 @@ export async function incrementBatchProgress(
   const _db = getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
-  const costClause = costCents ? `, actual_cost_cents = actual_cost_cents + ${costCents}` : '';
-  await db
-    .prepare(`UPDATE batch_jobs SET ${field} = ${field} + 1${costClause} WHERE id = ?`)
-    .bind(batchId)
-    .run();
+  // H6 fix: validate costCents is a non-negative integer before SQL interpolation.
+  // Falls back to parameterized bind if value is not a safe integer.
+  if (costCents && Number.isSafeInteger(costCents) && costCents >= 0) {
+    await db
+      .prepare(`UPDATE batch_jobs SET ${field} = ${field} + 1, actual_cost_cents = actual_cost_cents + ? WHERE id = ?`)
+      .bind(costCents, batchId)
+      .run();
+  } else {
+    await db
+      .prepare(`UPDATE batch_jobs SET ${field} = ${field} + 1 WHERE id = ?`)
+      .bind(batchId)
+      .run();
+  }
 }
 
 export async function insertBatchVideos(

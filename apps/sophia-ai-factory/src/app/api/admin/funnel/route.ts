@@ -8,20 +8,16 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { requireAdmin } from '@/seed/auth/require-admin';
 import { getActivationFunnel } from '@/land/analytics/funnel-stats';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const user = await getCurrentUser();
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  if (user.role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const auth = await requireAdmin(request);
+  if (auth instanceof NextResponse) return auth;
+  const { user } = auth;
 
   const { searchParams } = new URL(request.url);
   const fromParam = searchParams.get('from');

@@ -207,7 +207,7 @@ describe('IPN TOCTOU Contract Tests', () => {
   })
 
   describe('Stale lock recovery', () => {
-    it('marks stale locks as processed after 5 minutes', async () => {
+    it('deletes stale lock and returns false for retry (C1 fix 2026-07-01)', async () => {
       const ipn = makeIpn({ payment_id: 'pay_stale_001', payment_status: 'finished' })
       const eventId = `nowpayments_pay_stale_001_finished`
 
@@ -219,11 +219,13 @@ describe('IPN TOCTOU Contract Tests', () => {
       })
 
       const result = await processNowPaymentsIpn(ipn)
-      expect(result.success).toBe(true)
-      expect(result.message).toBe('Stale lock cleared (marked processed)')
+      // C1 fix: stale lock now returns false so NOWPayments retries
+      expect(result.success).toBe(false)
+      expect(result.message).toBe('Stale lock cleared — retry')
 
+      // C1 fix: lock is DELETED (not marked processed) so retry succeeds
       const row = mockDbEvents.get(eventId)
-      expect(row?.processed).toBe(1)
+      expect(row).toBeUndefined()
     })
   })
 })

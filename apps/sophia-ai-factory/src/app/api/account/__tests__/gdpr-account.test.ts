@@ -31,6 +31,8 @@ import { GET } from '../export/route';
 import { DELETE } from '../route';
 
 const TENANT_ID = 'tenant-gdpr-test';
+const CSRF = 'test-csrf-token';
+const csrfHeaders = { 'x-csrf-token': CSRF, cookie: `csrf-token=${CSRF}` };
 
 interface CooldownState {
   confirmed_at: number | null;
@@ -116,7 +118,7 @@ describe('GDPR Account Deletion — DELETE /api/account (cooldown gated)', () =>
     mocks.mockGetD1.mockReturnValue(makeD1Mock());
     const req = new NextRequest('http://localhost/api/account', {
       method: 'DELETE',
-      headers: { 'x-confirm-delete': 'DELETE_MY_ACCOUNT' },
+      headers: { 'x-confirm-delete': 'DELETE_MY_ACCOUNT', ...csrfHeaders },
     });
     const res = await DELETE(req);
     expect(res.status).toBe(401);
@@ -124,7 +126,10 @@ describe('GDPR Account Deletion — DELETE /api/account (cooldown gated)', () =>
 
   it('returns 400 without confirmation header', async () => {
     mocks.mockGetD1.mockReturnValue(makeD1Mock());
-    const req = new NextRequest('http://localhost/api/account', { method: 'DELETE' });
+    const req = new NextRequest('http://localhost/api/account', {
+      method: 'DELETE',
+      headers: csrfHeaders,
+    });
     const res = await DELETE(req);
     expect(res.status).toBe(400);
     const body = await res.json() as { error: string };
@@ -135,7 +140,7 @@ describe('GDPR Account Deletion — DELETE /api/account (cooldown gated)', () =>
     mocks.mockGetD1.mockReturnValue(makeD1Mock(null));
     const req = new NextRequest('http://localhost/api/account', {
       method: 'DELETE',
-      headers: { 'x-confirm-delete': 'DELETE_MY_ACCOUNT' },
+      headers: { 'x-confirm-delete': 'DELETE_MY_ACCOUNT', ...csrfHeaders },
     });
     const res = await DELETE(req);
     expect(res.status).toBe(412);
@@ -150,7 +155,7 @@ describe('GDPR Account Deletion — DELETE /api/account (cooldown gated)', () =>
     );
     const req = new NextRequest('http://localhost/api/account', {
       method: 'DELETE',
-      headers: { 'x-confirm-delete': 'DELETE_MY_ACCOUNT' },
+      headers: { 'x-confirm-delete': 'DELETE_MY_ACCOUNT', ...csrfHeaders },
     });
     const res = await DELETE(req);
     expect(res.status).toBe(412);
@@ -165,7 +170,7 @@ describe('GDPR Account Deletion — DELETE /api/account (cooldown gated)', () =>
     );
     const req = new NextRequest('http://localhost/api/account', {
       method: 'DELETE',
-      headers: { 'x-confirm-delete': 'DELETE_MY_ACCOUNT' },
+      headers: { 'x-confirm-delete': 'DELETE_MY_ACCOUNT', ...csrfHeaders },
     });
     const res = await DELETE(req);
     expect(res.status).toBe(200);
@@ -183,6 +188,7 @@ describe('GDPR Account Deletion — DELETE /api/account (cooldown gated)', () =>
       headers: {
         'x-confirm-delete': 'DELETE_MY_ACCOUNT',
         'x-override-cooldown': 'I_KNOW_WHAT_IM_DOING',
+        ...csrfHeaders,
       },
     });
     const res = await DELETE(req);
@@ -193,7 +199,7 @@ describe('GDPR Account Deletion — DELETE /api/account (cooldown gated)', () =>
     mocks.mockGetD1.mockReturnValue(null);
     const req = new NextRequest('http://localhost/api/account', {
       method: 'DELETE',
-      headers: { 'x-confirm-delete': 'DELETE_MY_ACCOUNT' },
+      headers: { 'x-confirm-delete': 'DELETE_MY_ACCOUNT', ...csrfHeaders },
     });
     const res = await DELETE(req);
     expect(res.status).toBe(503);

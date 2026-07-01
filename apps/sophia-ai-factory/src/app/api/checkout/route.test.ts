@@ -14,6 +14,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
+const CSRF = 'test-csrf-token';
+const csrfHeaders = { 'x-csrf-token': CSRF, cookie: `csrf-token=${CSRF}` };
+
 // --- Mocks ---
 
 vi.mock('@/forest/middleware/rate-limit-wrapper', () => ({
@@ -78,7 +81,7 @@ function makeGetRequest(tier?: string): NextRequest {
 function makePostRequest(body: unknown): NextRequest {
   return new NextRequest('http://localhost/api/checkout', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...csrfHeaders },
     body: JSON.stringify(body),
   });
 }

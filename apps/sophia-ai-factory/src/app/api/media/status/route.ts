@@ -6,9 +6,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getJobStatus } from '@/tree/clients/muapi-media-client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
+
+const StatusParams = z.object({
+  id: z.string().min(1).max(128),
+});
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser()
@@ -17,11 +22,15 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const jobId = req.nextUrl.searchParams.get('id')
-
-    if (!jobId) {
-      return NextResponse.json({ error: 'Missing id parameter' }, { status: 400 })
+    const rawId = req.nextUrl.searchParams.get('id')
+    const parsed = StatusParams.safeParse({ id: rawId });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Missing or invalid id parameter', details: parsed.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+    const { id: jobId } = parsed.data;
 
     if (!process.env.MUAPI_API_KEY) {
       return NextResponse.json(

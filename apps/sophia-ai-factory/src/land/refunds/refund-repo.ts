@@ -72,10 +72,13 @@ export async function updateRefundStatus(params: {
   reviewedByUserId: string
   adminNotes?: string
   refundTxHash?: string
-}): Promise<void> {
+}): Promise<boolean> {
   const db = getD1();
   if (!db) throw new Error('D1 database binding not available');
-  await db
+  // H9 fix (2026-07-01): AND status = 'pending' prevents TOCTOU race
+  // where two concurrent PATCH requests could both pass the status check
+  // in the route handler and overwrite each other's decision.
+  const result = await db
     .prepare(
       `UPDATE refund_requests
        SET status = ?1,
@@ -83,7 +86,7 @@ export async function updateRefundStatus(params: {
            reviewed_by_user_id = ?2,
            admin_notes = COALESCE(?3, admin_notes),
            refund_tx_hash = COALESCE(?4, refund_tx_hash)
-       WHERE id = ?5`,
+       WHERE id = ?5 AND status = 'pending'`,
     )
     .bind(
       params.status,
@@ -93,7 +96,13 @@ export async function updateRefundStatus(params: {
       params.id,
     )
     .run()
-  logger.info('[RefundRepo] Status updated', { id: params.id, status: params.status })
+  const updated = (result.meta?.changes ?? 0) > 0
+  if (updated) {
+    logger.info('[RefundRepo] Status updated', { id: params.id, status: params.status })
+  } else {
+    logger.warn('[RefundRepo] Status update skipped — already reviewed', { id: params.id })
+  }
+  return updated
 }
 
 export async function getRefundByPurchaseAndUser(

@@ -13,3 +13,4 @@ export * from './pricing-resolver';
 export * from './quota-limits';
 export * from './revenue-share';
 export * from './synthetic-monitoring';
+export * from './niche-list';

@@ -62,13 +62,30 @@ async function validateIpnAndGetUserId(ipn: NowPaymentsIpnPayload): Promise<stri
     }
   }
 
-  // Log overpaid transactions
+  // Log overpaid transactions and record audit trail
+  // M15 fix (2026-07-01): Overpayment is now audited durably, not just logged.
   if (actuallyPaid !== undefined && actuallyPaid > ipn.price_amount * 1.01) {
     logger.warn('[NOWPayments] Overpaid', {
       payment_id: ipn.payment_id,
       expected: ipn.price_amount,
       actual: actuallyPaid,
     })
+    try {
+      const db = getDb()
+      await db.from('audit_log').insert({
+        action_type: 'overpayment_detected',
+        target_user_id: ipn.order_id ?? '',
+        payload: JSON.stringify({
+          payment_id: ipn.payment_id,
+          expected: ipn.price_amount,
+          actual: actuallyPaid,
+          overage: actuallyPaid - ipn.price_amount,
+        }),
+        created_at: new Date().toISOString(),
+      })
+    } catch (auditErr) {
+      logger.warn('[NOWPayments] Overpayment audit insert failed (non-fatal)', auditErr instanceof Error ? auditErr : undefined)
+    }
   }
 
   const invoiceId = ipn.invoice_id
@@ -206,7 +223,11 @@ async function processExistingOrgSubscription(
     const stmts = buildSubscriptionUpdateStatements(currentSub, wouldDowngrade, orgId, tier, periodEnd, now, ipn, d1)
     await d1.batch(stmts)
   } catch (batchErr) {
-    await handleBatchFallback(orgId, tier, periodEnd, now, ipn, db, d1, batchErr)
+    // M14 fix (2026-07-01): Removed non-atomic fallback.
+    // D1 batch failure → throw so the IPN handler returns error → NOWPayments retries.
+    // Previous handleBatchFallback could commit partial state (sub active but org not updated).
+    logger.error('[NOWPayments] D1 batch failed — throwing for retry', batchErr instanceof Error ? batchErr : undefined)
+    throw batchErr
   }
 }
 
@@ -587,10 +608,14 @@ export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<Result
     // The previous SELECT-based check here was redundant and introduced
     // its own TOCTOU window. Trust the atomic lock as the single source of truth.
 
-    const { data: membership } = await db.from('org_members').select('org_id').eq('user_id', userId).single()
-    if (membership?.org_id) {
-      await db.from('subscriptions').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('org_id', membership.org_id)
-    }
+    // M13 fix (2026-07-01): Single UPDATE with subquery JOIN eliminates
+    // TOCTOU between SELECT org_id and UPDATE subscriptions. The previous
+    // two-step pattern could miss the subscription if membership changed
+    // between queries.
+    await d1.prepare(
+      `UPDATE subscriptions SET status = 'cancelled', updated_at = ?1
+       WHERE org_id IN (SELECT org_id FROM org_members WHERE user_id = ?2)`
+    ).bind(new Date().toISOString(), userId).run()
 
     await invalidateLicenseCacheOnRefund(userId, d1)
 

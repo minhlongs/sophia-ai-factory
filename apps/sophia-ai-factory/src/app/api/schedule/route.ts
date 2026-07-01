@@ -14,6 +14,7 @@ import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { verifyCsrfToken } from '@/seed/security/csrf';
 
 interface ScheduledCampaignRow {
   id: string;
@@ -97,6 +98,9 @@ export async function GET(req: NextRequest) {
 
 // POST — create a new scheduled campaign
 export async function POST(req: NextRequest) {
+  if (!verifyCsrfToken(req)) {
+    return NextResponse.json({ error: 'CSRF token missing or invalid' }, { status: 403 });
+  }
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -153,6 +157,9 @@ export async function POST(req: NextRequest) {
 
 // PATCH — update a schedule
 export async function PATCH(req: NextRequest) {
+  if (!verifyCsrfToken(req)) {
+    return NextResponse.json({ error: 'CSRF token missing or invalid' }, { status: 403 });
+  }
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -215,6 +222,9 @@ export async function PATCH(req: NextRequest) {
 
 // DELETE — remove a schedule
 export async function DELETE(req: NextRequest) {
+  if (!verifyCsrfToken(req)) {
+    return NextResponse.json({ error: 'CSRF token missing or invalid' }, { status: 403 });
+  }
   try {
     const user = await getCurrentUser();
     if (!user) {

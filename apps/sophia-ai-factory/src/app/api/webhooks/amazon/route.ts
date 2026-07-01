@@ -49,8 +49,8 @@ interface AmazonConversionPayload {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const secret = process.env.AMAZON_WEBHOOK_SECRET
   if (!secret) {
-    logger.warn('[amazon-webhook] AMAZON_WEBHOOK_SECRET not configured')
-    return NextResponse.json({ ok: true, skipped: 'config' })
+    logger.error('[amazon-webhook] AMAZON_WEBHOOK_SECRET not configured — rejecting unsigned payload')
+    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
   }
 
   const rawBody = await request.text()

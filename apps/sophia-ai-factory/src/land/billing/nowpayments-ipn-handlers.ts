@@ -69,21 +69,22 @@ export async function processNowPaymentsIpn(
       return { success: true, message: 'Already processed' }
     }
 
-    // Stale lock recovery: if lock > 5 min old, mark processed to unblock.
-    // The original event is NOT re-dispatched — the payment may be lost.
-    // Operators should investigate stale lock events in logs.
+    // Stale lock recovery (C1+H7 fix 2026-07-01):
+    // DELETE the old lock row and return {success: false} so NOWPayments retries.
+    // The next IPN call will acquire a fresh lock and process normally.
+    // Previous behavior (mark processed=1) destroyed the payment event silently.
     const lockAgeMs = Date.now() - new Date(existing.created_at ?? now).getTime()
     if (lockAgeMs > 5 * 60 * 1000) {
-      logger.error('[NOWPayments] Stale lock cleared — payment may be lost', {
+      logger.error('[NOWPayments] Stale lock recovered — re-enqueuing for retry', {
         eventId, payment_id, payment_status, lockAgeMs,
       })
       try {
         await db
-          .prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1')
+          .prepare('DELETE FROM payment_events WHERE event_id = ?1')
           .bind(eventId)
           .run()
-      } catch (e) { safeCatch('Stale lock update')(e) }
-      return { success: true, message: 'Stale lock cleared (marked processed)' }
+      } catch (e) { safeCatch('Stale lock delete')(e) }
+      return { success: false, message: 'Stale lock cleared — retry' }
     }
 
     // Another process is currently handling this event — back off

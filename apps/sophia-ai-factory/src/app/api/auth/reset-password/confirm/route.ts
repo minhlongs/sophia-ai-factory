@@ -12,7 +12,8 @@ import { z } from 'zod';
 import { consumeResetToken } from '@/seed/auth/reset-password-token';
 import { hashPassword } from '@/tree/crypto/password-hash';
 import { logger } from '@/seed/utils/logger-utility';
-import { globalRateLimiter, getClientIdentifier, createRateLimitResponse } from '@/forest/middleware/rate-limiter';
+import { checkRateLimit, getClientIdentifier as getD1ClientId } from '@/seed/security/sql-rate-limiter';
+import { createRateLimitHeaders } from '@/forest/middleware/rate-limiter';
 import { getD1 } from '@/seed/db/client';
 
 export const dynamic = 'force-dynamic';
@@ -25,12 +26,22 @@ const Body = z.object({
 const GENERIC_TOKEN_ERROR = { ok: false, error: 'Invalid or expired reset link' };
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  // Rate limit: 5 per 15 minutes
-  const rl = globalRateLimiter.checkLimit(
-    getClientIdentifier(request),
-    { intervalMs: 15 * 60_000, maxRequests: 5 },
-  );
-  if (!rl.allowed) return createRateLimitResponse(rl);
+  // Rate limit: 5 per 15 minutes (D1-backed for cross-isolate enforcement, C2 fix 2026-07-01)
+  const clientId = getD1ClientId(request);
+  const rl = await checkRateLimit(clientId, { maxRequests: 5, windowSeconds: 15 * 60, identifier: 'auth' });
+  if (!rl.success) {
+    return new NextResponse(JSON.stringify({
+      error: 'Too Many Requests',
+      message: 'Rate limit exceeded. Please try again later.',
+      retryAfter: Math.ceil((rl.reset - Date.now()) / 1000),
+    }), {
+      status: 429,
+      headers: createRateLimitHeaders({
+        allowed: false, remaining: 0, resetAt: rl.reset,
+        retryAfter: Math.ceil((rl.reset - Date.now()) / 1000),
+      }),
+    });
+  }
 
   const body = await request.json().catch(() => null);
   const parsed = Body.safeParse(body);
