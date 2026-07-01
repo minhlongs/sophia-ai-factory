@@ -8,6 +8,7 @@ import { UNIFIED_TIERS } from "@/seed/config/tiers";
 import { usePricingData } from "./pricing-data";
 import { CouponInput, type PromoDiscount } from "./coupon-input";
 import { CheckoutPanel } from "../checkout/checkout-panel";
+import { useCsrfToken } from "@/seed/security/use-csrf-token";
 import { Check } from "lucide-react";
 
 type PaymentMethod = "nowpayments" | "payos";
@@ -43,6 +44,7 @@ export function PricingSection({ isAuthenticated = false }: { isAuthenticated?: 
 const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const t = useTranslations("landing");
   const locale = useLocale();
+  const csrfHeaders = useCsrfToken();
   const { PRICING_TIERS, MASTER_TIER } = usePricingData();
 
   const handleDiscountApplied = (discount: PromoDiscount) => {
@@ -72,7 +74,7 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
     // Redirect unauthenticated users to login BEFORE opening the popup.
     // This prevents the confusing popup→flash→redirect UX for non-logged-in visitors.
     if (!isAuthenticated) {
-      window.location.href = `/login?next=${encodeURIComponent('/pricing')}`;
+      window.location.href = `/${locale}/login?next=${encodeURIComponent(`/${locale}/pricing`)}`;
       return;
     }
 
@@ -115,15 +117,15 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
       const response = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...csrfHeaders },
         body: JSON.stringify(body),
       });
 
       const data = (await response.json()) as CheckoutResponse;
 
-      if (response.status === 401 && data.redirectTo) {
+      if (response.status === 401) {
         setIsCheckoutOpen(false);
-        window.location.href = data.redirectTo;
+        window.location.href = `/${locale}/login?next=${encodeURIComponent(`/${locale}/pricing`)}`;
         return;
       }
 

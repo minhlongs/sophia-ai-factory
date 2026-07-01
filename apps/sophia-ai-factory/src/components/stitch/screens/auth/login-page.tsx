@@ -7,7 +7,7 @@ import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { Button, Input, Card, CardHeader } from '@/components/stitch';
 import { authClient } from '@/seed/auth/better-auth-client';
 
-export default function LoginPage() {
+export default function LoginPage({ redirectTo }: { redirectTo?: string }) {
   const t = useTranslations('stitch.auth.login');
   const router = useRouter();
 
@@ -28,7 +28,7 @@ export default function LoginPage() {
         setError(t('invalidCredentials') || 'Invalid email or password');
         setLoading(false);
       } else {
-        router.push('/dashboard');
+        router.push(redirectTo || '/dashboard');
       }
     } catch {
       setError(t('networkError') || 'Network error. Please try again.');

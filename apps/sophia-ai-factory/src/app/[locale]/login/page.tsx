@@ -8,12 +8,14 @@ import RegisterPage from '@/components/stitch/screens/auth/register-page';
 function LoginPageContent() {
   const searchParams = useSearchParams();
   const tab = searchParams?.get('tab');
+  // Support both 'next' (from pricing/auth guard) and 'redirect' (from API GET handler)
+  const redirectTo = searchParams?.get('next') || searchParams?.get('redirect') || undefined;
 
   if (tab === 'signup') {
     return <RegisterPage />;
   }
 
-  return <LoginPage />;
+  return <LoginPage redirectTo={redirectTo} />;
 }
 
 /**
