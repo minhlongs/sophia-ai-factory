@@ -16,7 +16,8 @@ import { getMessages } from 'next-intl/server';
 import { getCspNonce } from '@/seed/security/get-csp-nonce';
 import { buildOrganizationSchema } from '@/land/seo/schema-org';
 import { Ga4Script } from '@/land/analytics/ga4-script';
-import { initializeOTel } from '@/seed/telemetry/opentelemetry-setup';
+// OTEL is loaded dynamically to prevent Node.js-dependent packages
+// (@opentelemetry/sdk-trace-base, etc.) from being bundled into Cloudflare Workers.
 
 // JSON-LD schema — explicit type to avoid TypeScript stack overflow
 const JSONLD_SCHEMA: Record<string, unknown> = {
@@ -132,8 +133,15 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: Promise<{ locale: string }>;
 }>) {
-  // Initialize OpenTelemetry (idempotent, safe to call on every request)
-  initializeOTel();
+  // Initialize OpenTelemetry dynamically (idempotent, safe to call on every request).
+  // Dynamic import prevents OTEL's Node.js-dependent packages from being
+  // statically bundled into the Cloudflare Workers server bundle.
+  try {
+    const { initializeOTel } = await import('@/seed/telemetry/opentelemetry-setup');
+    initializeOTel();
+  } catch {
+    // OTEL unavailable in this runtime (e.g., Cloudflare Workers) — non-fatal.
+  }
 
   const { locale: rawLocale } = await params;
   const locale = rawLocale === 'vi' || rawLocale === 'en' ? rawLocale : 'vi';
