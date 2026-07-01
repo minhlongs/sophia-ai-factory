@@ -2,6 +2,8 @@ import type { DunningState } from '@/forest/components/billing/dunning-status-ba
 
 export interface UsageSummaryResponse {
   period: { start: number; end: number };
+  videoCount: number;
+  videoLimit: number;
   usage: { apiCalls: number; videoGenerations: number; storage: number };
   limits: { apiCalls: number; videoGenerations: number; storage: number };
   percentages: { apiCalls: number; videoGenerations: number; storage: number };

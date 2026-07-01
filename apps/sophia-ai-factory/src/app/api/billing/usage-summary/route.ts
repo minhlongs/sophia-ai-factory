@@ -14,6 +14,9 @@ import { getOverageSummary } from '@/forest/quota/overage-logger';
 import { getQuotaStatus } from '@/forest/quota/quota-checker';
 import { QUOTA_LIMITS } from '@/forest/usage-metering/aggregator';
 import { PRICING_TIERS } from '@/land/billing/billing-types';
+import { getCampaignLimit } from '@/seed/config/tiers/campaign-limit';
+import { getD1 } from '@/seed/db/get-d1';
+import type { Tier } from '@/seed/types';
 
 interface UsageSummaryLicenseRow {
   nonce: string;
@@ -31,6 +34,8 @@ function buildBillingUsageSummary(params: {
   apiCallLimit: number;
   apiCallPercentage: number;
   apiCallStatus: BillingUsageStatus;
+  videoCount: number;
+  videoLimit: number;
   overageEvents?: {
     total: number;
     totalCredits: number;
@@ -52,14 +57,16 @@ function buildBillingUsageSummary(params: {
       start: params.periodStart,
       end: params.periodEnd,
     },
+    videoCount: params.videoCount,
+    videoLimit: params.videoLimit,
     usage: {
       apiCalls: params.apiCalls,
-      videoGenerations: 0,
+      videoGenerations: params.videoCount,
       storage: 0,
     },
     limits: {
       apiCalls: params.apiCallLimit,
-      videoGenerations: 0,
+      videoGenerations: params.videoLimit,
       storage: 0,
     },
     percentages: {
@@ -136,6 +143,8 @@ export async function GET(req: NextRequest) {
         apiCallLimit: limits.monthlyCredits,
         apiCallPercentage: 0,
         apiCallStatus: 'ok',
+        videoCount: 0,
+        videoLimit: getCampaignLimit('BASIC'),
         licenseNonce: null,
       }));
     }
@@ -169,6 +178,10 @@ export async function GET(req: NextRequest) {
     // Get base subscription price (from user profile or license)
     const basePriceCents = await getBaseSubscriptionPriceCents(tier);
 
+    // Count campaigns (videos) created this month
+    const videoCount = await getVideoCountThisMonth(user.id);
+    const videoLimit = getCampaignLimit(tier as Tier);
+
     return NextResponse.json(buildBillingUsageSummary({
       periodStart,
       periodEnd,
@@ -179,6 +192,8 @@ export async function GET(req: NextRequest) {
         ? (quotaStatus.usage.requests / quotaStatus.limits.dailyRequests) * 100
         : 0,
       apiCallStatus: quotaStatus.status,
+      videoCount,
+      videoLimit,
       overageEvents: {
         total: overageSummary.totalOverageEvents,
         totalCredits: overageSummary.totalOverageCredits,
@@ -216,4 +231,28 @@ async function getBaseSubscriptionPriceCents(tier: string): Promise<number> {
     MASTER: 29900,     // $299/month
   };
   return prices[tier] || 0;
+}
+
+/**
+ * Count campaigns created this month by a user.
+ * Returns 0 if D1 is unavailable or query fails.
+ */
+async function getVideoCountThisMonth(userId: string): Promise<number> {
+  try {
+    const d1 = getD1();
+    if (!d1) return 0;
+
+    const row = await d1
+      .prepare(
+        `SELECT COUNT(*) as count FROM campaigns
+         WHERE user_id = ?
+         AND strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')`,
+      )
+      .bind(userId)
+      .first<{ count: number }>();
+
+    return row?.count ?? 0;
+  } catch {
+    return 0;
+  }
 }

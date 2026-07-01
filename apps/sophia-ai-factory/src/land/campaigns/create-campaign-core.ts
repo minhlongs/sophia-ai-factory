@@ -29,6 +29,8 @@ export interface CampaignInngestData {
   tier: Tier;
   resume?: boolean;
   resumeFrom?: "script" | "tts" | "video" | "finalize";
+  /** Optional A/B experiment ID created alongside the campaign. */
+  abExperimentId?: string;
 }
 
 /**

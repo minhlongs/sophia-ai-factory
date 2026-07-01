@@ -769,7 +769,8 @@
       "quotaWidget": {
         "title": "This Month",
         "unlimited": "Unlimited",
-        "viewBilling": "View billing details"
+        "viewBilling": "View billing details",
+        "videos": "Videos"
       },
       "creative_studio": "Creative studio",
       "sop_creator": "Sop creator",
@@ -1297,6 +1298,7 @@
         "used": "Used",
         "of": "of",
         "thisMonth": "MCU this month",
+        "videoThisMonth": "videos this month",
         "buyMore": "Buy more credits",
         "topUpNow": "Top up now to continue",
         "nearLimit": "Near limit",
@@ -4908,6 +4910,7 @@
       "used": "Used",
       "of": "Of",
       "thisMonth": "This Month",
+      "videoThisMonth": "videos this month",
       "atLimit": "At Limit",
       "nearLimit": "Near Limit",
       "topUpNow": "Top Up Now",

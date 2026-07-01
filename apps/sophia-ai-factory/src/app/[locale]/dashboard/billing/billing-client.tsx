@@ -17,6 +17,7 @@ import { BillingChargeSummary } from './billing-charge-summary';
 import { BillingOverageTable } from './billing-overage-table';
 import { BillingPaymentHistory } from './billing-payment-history';
 import { SubscriptionPlanCard } from './subscription-plan-card';
+import { CreditBar } from './credit-bar';
 import { InvoiceHistoryTable } from './invoice-history-table';
 import { PaymentMethodDisplay } from './payment-method-display';
 import { TierChangeDialog } from './tier-change-dialog';
@@ -142,6 +143,13 @@ export default function BillingClient({ params }: { params: Promise<{ locale: st
       )}
 
       <BillingChargeSummary data={usageData} formatCurrency={(c) => formatCurrency(c, locale)} />
+
+      {/* Campaign (video) usage this month */}
+      <CreditBar
+        usedCredits={usageData.videoCount}
+        totalCredits={usageData.videoLimit}
+        labelKey="videoThisMonth"
+      />
 
       {/* Subscription plan card — self-service plan display */}
       <SubscriptionPlanCard
