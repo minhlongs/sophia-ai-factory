@@ -64,22 +64,24 @@ vi.mock('@/seed/db/client', () => ({
 
 // ── Test data ─────────────────────────────────────────────────────────────
 
+const FUTURE_PERIOD_END = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
 const ACTIVE_BASIC_SUB = {
   id: 'sub_001', org_id: 'org_001', plan: 'basic', status: 'active',
   current_period_start: '2026-06-01T00:00:00Z',
-  current_period_end: '2026-07-01T00:00:00Z',
+  current_period_end: FUTURE_PERIOD_END,
 };
 
 const ACTIVE_PREMIUM_SUB = {
   id: 'sub_001', org_id: 'org_001', plan: 'premium', status: 'active',
   current_period_start: '2026-06-01T00:00:00Z',
-  current_period_end: '2026-07-01T00:00:00Z',
+  current_period_end: FUTURE_PERIOD_END,
 };
 
 const ACTIVE_ENTERPRISE_SUB = {
   id: 'sub_001', org_id: 'org_001', plan: 'enterprise', status: 'active',
   current_period_start: '2026-06-01T00:00:00Z',
-  current_period_end: '2026-07-01T00:00:00Z',
+  current_period_end: FUTURE_PERIOD_END,
 };
 
 describe('Billing Portal API Contract (self-service)', () => {
@@ -159,7 +161,7 @@ describe('Billing Portal API Contract (self-service)', () => {
     const result = await cancelSubscription();
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.value.endDate).toBe('2026-07-01T00:00:00Z');
+      expect(result.value.endDate).toBe(FUTURE_PERIOD_END);
       expect(result.value.remainingDays).toBeGreaterThan(0);
     }
   });
