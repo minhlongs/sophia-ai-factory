@@ -14,6 +14,7 @@ import { TikTokChannelAdapter } from '@/tree/gateway/adapters/tiktok-channel-ada
 import { TelegramNotificationAdapter } from '@/tree/gateway/adapters/telegram-notification-adapter'
 import { resolveOrgId } from '@/seed/auth/resolve-org-id'
 import { resolveUserTier } from '@/seed/db/resolve-user-tier'
+import { getExperiment } from '@/forest/ab/experiment-store'
 import { updateCampaignStatus, markEngineMissionFailed } from '@/land/video/generation/generate-campaign-db'
 import { notifyUserByTelegram } from '@/tree/telegram/user-notifier'
 import { notifyRefundRequired, notifyProviderError } from '@/land/video/generation/generate-campaign-refund-notify'
@@ -72,8 +73,9 @@ export const generateCampaign = inngest.createFunction(
       tier: Tier
       resume?: boolean
       resumeFrom?: string
+      abExperimentId?: string
     }
-    const { campaignId, userId, topic, audience, tier, resume, resumeFrom } = eventData
+    const { campaignId, userId, topic, audience, tier, resume, resumeFrom, abExperimentId } = eventData
 
     // ── Generic error boundary for step.run calls ─────────────────────────────
     // Defined inside function body so it has access to campaignId/notifyUser/step.
@@ -298,9 +300,22 @@ export const generateCampaign = inngest.createFunction(
    )
  }
 
-      const distributionResult = await runStepSafely('distribute-channels', async () => {
+      // ── Phase 03: Resolve A/B variant A caption as campaign title ──────────────
+    const campaignTitle = await step.run('resolve-ab-title', async () => {
+      if (!abExperimentId) return topic || `Campaign ${campaignId}`;
+      try {
+        const experiment = await getExperiment(abExperimentId);
+        if (experiment?.variantACaption) return experiment.variantACaption;
+      } catch (err) {
+        logger.warn('[generateCampaign] AB experiment lookup failed — using original title', {
+          campaignId, abExperimentId, error: String(err),
+        })
+      }
+      return topic || `Campaign ${campaignId}`;
+    })
+
+    const distributionResult = await runStepSafely('distribute-channels', async () => {
         const gateway = createGateway()
-        const campaignTitle = topic || `Campaign ${campaignId}`
         const baseDesc = `AI-generated video content for ${audience || 'general audience'}`
         const description = affiliateOffer
           ? `${baseDesc}\n\n👉 ${affiliateOffer.shortUrl}`

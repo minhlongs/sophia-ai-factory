@@ -18,6 +18,7 @@ import { TikTokChannelAdapter } from '@/tree/gateway/adapters/tiktok-channel-ada
 import { TelegramNotificationAdapter } from '@/tree/gateway/adapters/telegram-notification-adapter';
 import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
+import { getExperiment } from '@/forest/ab/experiment-store';
 import { markEngineMissionFailed } from './generate-campaign-db';
 import { notifyRefundRequired, notifyProviderError } from './generate-campaign-refund-notify';
 import { pollVideoStatus } from './generate-campaign-video-poller';
@@ -39,6 +40,7 @@ export interface RunCampaignWorkflowArgs {
   tier: Tier;
   resume?: boolean;
   resumeFrom?: string;
+  abExperimentId?: string;
   step: Step;
   updateStatus: (status: string, progress: number, data?: Record<string, unknown>) => Promise<void>;
   notifyUser: (message: string) => Promise<void>;
@@ -81,7 +83,7 @@ interface VideoAssets {
 }
 
 export async function runCampaignWorkflow(args: RunCampaignWorkflowArgs): Promise<{ success: boolean; campaignId: string; skipped?: boolean }> {
-  const { campaignId, userId, topic, audience, tier, resume, resumeFrom, step, updateStatus, notifyUser } = args;
+  const { campaignId, userId, topic, audience, tier, resume, resumeFrom, abExperimentId, step, updateStatus, notifyUser } = args;
 
   async function runStepSafely<T>(
     stepName: string,
@@ -276,9 +278,22 @@ export async function runCampaignWorkflow(args: RunCampaignWorkflowArgs): Promis
       );
     }
 
+    // Phase 03: Resolve A/B variant A caption as campaign title
+    const campaignTitle = (await step.run('resolve-ab-title', async () => {
+      if (!abExperimentId) return topic || `Campaign ${campaignId}`;
+      try {
+        const experiment = await getExperiment(abExperimentId);
+        if (experiment?.variantACaption) return experiment.variantACaption;
+      } catch (err) {
+        logger.warn('[runCampaignWorkflow] AB experiment lookup failed — using original title', {
+          campaignId, abExperimentId, error: String(err),
+        });
+      }
+      return topic || `Campaign ${campaignId}`;
+    })) as string;
+
     const distributionResult = await runStepSafely('distribute-channels', async () => {
       const gateway = createGateway();
-      const campaignTitle = topic || `Campaign ${campaignId}`;
       const baseDesc = `AI-generated video content for ${audience || 'general audience'}`;
       const description = affiliateOffer
         ? `${baseDesc}\n\n👉 ${affiliateOffer.shortUrl}`

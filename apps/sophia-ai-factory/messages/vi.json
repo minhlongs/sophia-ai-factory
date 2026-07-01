@@ -769,7 +769,8 @@
       "quotaWidget": {
         "title": "Tháng này",
         "unlimited": "Không giới hạn",
-        "viewBilling": "Xem chi tiết thanh toán"
+        "viewBilling": "Xem chi tiết thanh toán",
+        "videos": "Video"
       },
       "creative_studio": "Studio sáng tạo",
       "sop_creator": "Tạo SOP",
@@ -1297,6 +1298,7 @@
         "used": "Đã dùng",
         "of": "trên",
         "thisMonth": "MCU tháng này",
+        "videoThisMonth": "video tháng này",
         "buyMore": "Mua thêm credit",
         "topUpNow": "Nạp ngay để tiếp tục",
         "nearLimit": "Sắp hết hạn mức",
@@ -4915,6 +4917,7 @@
       "used": "Đã dùng",
       "of": "trên",
       "thisMonth": "MCU tháng này",
+      "videoThisMonth": "video tháng này",
       "atLimit": "Đã hết hạn mức",
       "nearLimit": "Sắp hết hạn mức",
       "topUpNow": "Nạp ngay để tiếp tục",

@@ -8,15 +8,14 @@
  * - Fetches `/api/quota/status` via TanStack Query (shared cache).
  * - Hides silently when loading/error/no-license (BASIC pre-checkout user).
  * - MASTER tier renders `<used> / ∞` with no progress bar (lifetime/unlimited).
- * - Click anywhere on widget → navigates to `/dashboard/billing`.
+ * - Click anywhere on widget -> navigates to `/dashboard/billing`.
  *
  * @module forest/components/dashboard/sidebar-quota-widget
  */
-'use client';
 
 import { Link } from '@/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { Infinity as InfinityIcon, BarChart3 } from 'lucide-react';
+import { Infinity as InfinityIcon, BarChart3, Film } from 'lucide-react';
 import { fetchJson } from '@/seed/utils/fetch-json';
 import { useTranslations } from 'next-intl';
 
@@ -27,6 +26,10 @@ interface QuotaStatusResponse {
     limits: { hourlyCredits: number; dailyCredits: number; monthlyCredits: number };
     percentages: { hourly: number; daily: number; monthly: number };
     status: 'ok' | 'warning' | 'critical';
+  };
+  video?: {
+    used: number;
+    limit: number;
   };
 }
 
@@ -69,6 +72,25 @@ export function SidebarQuotaWidget() {
         </div>
       ) : (
         <QuotaBar used={used} limit={limit} />
+      )}
+      {data.video && (
+        <div className="mt-2 pt-2 border-t border-border/40">
+          <div className="flex items-center gap-2 mb-1.5">
+            <Film className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {t('videos')}
+            </span>
+          </div>
+          {data.video.limit >= 999 ? (
+            <div className="flex items-baseline gap-1.5 text-foreground">
+              <span className="text-sm font-semibold tabular-nums">{data.video.used}</span>
+              <span className="text-xs text-muted-foreground">/</span>
+              <InfinityIcon className="h-4 w-4 text-amber-400" aria-label={t('unlimited')} />
+            </div>
+          ) : (
+            <QuotaBar used={data.video.used} limit={data.video.limit} />
+          )}
+        </div>
       )}
     </Link>
   );

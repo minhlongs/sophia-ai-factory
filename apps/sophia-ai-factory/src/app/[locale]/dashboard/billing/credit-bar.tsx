@@ -25,6 +25,8 @@ interface CreditBarProps {
   overageAvailable?: boolean;
   /** Top-up URL for redirect */
   topUpUrl?: string;
+  /** i18n key for the metric label (defaults to 'thisMonth' for MCU) */
+  labelKey?: string;
 }
 
 export function CreditBar({
@@ -32,6 +34,7 @@ export function CreditBar({
   totalCredits,
   overageAvailable = false,
   topUpUrl = '/dashboard/billing?tab=topup',
+  labelKey = 'thisMonth',
 }: CreditBarProps) {
   const t = useTranslations('billing.creditBar');
 
@@ -59,7 +62,7 @@ export function CreditBar({
       <CardContent className="pt-6">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm font-medium">
-            {t('used')}: {usedCredits.toLocaleString()} {t('of')} {totalCredits.toLocaleString()} {t('thisMonth')}
+            {t('used')}: {usedCredits.toLocaleString()} {t('of')} {totalCredits.toLocaleString()} {t(labelKey)}
           </span>
           <span className={`text-sm font-bold ${isAtLimit ? 'text-red-500' : isWarning ? 'text-yellow-500' : 'text-green-500'}`}>
             {percentage}%

@@ -139,6 +139,34 @@ if (!d1db) throw new Error('D1 database binding not available');
       }
     }
 
+    // A/B variant generation — best-effort, failure does not block campaign
+    let abExperimentId: string | undefined;
+    try {
+      const { generateVariants } = await import('@/forest/ab/variant-generator');
+      const { createExperiment } = await import('@/forest/ab/experiment-store');
+      const { resolveUserApiKey } = await import('@/tree/byok/resolve-user-api-key');
+
+      const byokKey = await resolveUserApiKey(userId, 'openrouter');
+      const variants = await generateVariants({
+        originalCaption: title!,
+        locale: 'en',
+        byokOpenRouterKey: byokKey ?? undefined,
+      });
+
+      abExperimentId = await createExperiment({
+        videoId: campaignId,
+        tenantId: userId,
+        variantACaption: variants.variantACaption,
+        variantBCaption: variants.variantBCaption,
+        offerId: offerId ?? undefined,
+      });
+    } catch (err) {
+      logger.warn('[createCampaign] AB variant generation failed — campaign continues with original title', {
+        campaignId,
+        error: toError(err).message,
+      });
+    }
+
     try {
       await sendCampaignCreatedEvent({
         campaignId,
@@ -146,6 +174,7 @@ if (!d1db) throw new Error('D1 database binding not available');
         topic: topic || title!,
         audience: audience || "General",
         tier,
+        abExperimentId,
       });
     } catch {
       // Inngest not configured — campaign still created
