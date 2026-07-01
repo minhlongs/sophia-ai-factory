@@ -58,7 +58,7 @@ vi.mock('@/seed/db/client', () => ({
 const ACTIVE_SUB = {
   id: 'sub_001', org_id: 'org_001', plan: 'premium', status: 'active',
   current_period_start: '2026-06-01T00:00:00Z',
-  current_period_end: '2026-07-01T00:00:00Z',
+  current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
   cancel_at_period_end: 0,
   cancellation_date: null,
 };
