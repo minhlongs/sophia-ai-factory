@@ -108,6 +108,25 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
 export const middleware = proxy;
 
+/**
+ * Matcher: apply middleware to page routes only.
+ *
+ * API routes (/api/*) are EXCLUDED because each has its own layered security:
+ *   - CSRF: verifyCsrfToken() in route handler
+ *   - Rate limiting: withRateLimit() wrapper
+ *   - Auth: getCurrentUserFromHeaders() per-route
+ *
+ * Excluding /api/* prevents the locale check (pathLocale='api' → not a
+ * supported locale) from 307-redirecting all API requests to '/'.
+ *
+ * Excluded paths:
+ *   - _next (Next.js internals)
+ *   - _worker (edge functions)
+ *   - auth/callback (handled separately)
+ *   - api/version (health endpoint, public)
+ *   - api/* (all API routes — self-protected)
+ *   - static files (.*\\..*)
+ */
 export const config = {
-  matcher: ['/((?!_next|_worker|auth/callback|api/version|.*\\..*).*)'],
+  matcher: ['/((?!_next|_worker|auth/callback|api/version|api/.*|.*\\..*).*)'],
 };
