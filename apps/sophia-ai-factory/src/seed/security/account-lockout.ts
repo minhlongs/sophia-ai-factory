@@ -16,6 +16,8 @@ export interface AccountLockStatus {
   locked: boolean
   lockedUntil?: number
   attempts: number
+  /** L3: true when the DB lookup failed — caller should treat as temporarily locked */
+  degraded?: boolean
 }
 
 interface UserLockRow {
@@ -80,8 +82,8 @@ export async function checkAccountLock(
     return { locked: false, attempts: row.failed_login_attempts }
   } catch (err) {
     logger.error('checkAccountLock failed', err instanceof Error ? err : new Error(String(err)))
-    // Fail open on read error to avoid blocking legitimate users
-    return { locked: false, attempts: 0 }
+    // L3: degrade to locked state on DB error — fail-closed is safer than fail-open
+    return { locked: true, attempts: -1, degraded: true }
   }
 }
 
