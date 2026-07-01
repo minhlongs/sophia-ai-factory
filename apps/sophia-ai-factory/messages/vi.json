@@ -4680,6 +4680,10 @@
         "errorPasswordTooShort": "Mật khẩu phải có ít nhất 8 ký tự",
         "errorEmailExists": "Email này đã được đăng ký",
         "errorGeneric": "Đăng ký thất bại. Vui lòng thử lại.",
+        "errorPasswordUppercase": "Mật khẩu phải có ít nhất một chữ hoa",
+        "errorPasswordLowercase": "Mật khẩu phải có ít nhất một chữ thường",
+        "errorPasswordNumber": "Mật khẩu phải có ít nhất một chữ số",
+        "errorPasswordComplexity": "Mật khẩu cần ít nhất 8 ký tự, gồm chữ hoa, chữ thường và chữ số",
         "ssoComingSoon": "Sắp có mặt — vui lòng dùng email để đăng ký"
       }
     },

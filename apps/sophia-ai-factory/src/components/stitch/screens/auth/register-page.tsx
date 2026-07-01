@@ -33,6 +33,22 @@ export default function RegisterPage() {
       return;
     }
 
+    // Password complexity must match server-side validate() in better-auth-server.ts
+    // (M10 fix — 2026-07-01). Check BEFORE submitting to avoid confusing English
+    // server error messages reaching the user.
+    if (!/[A-Z]/.test(password)) {
+      setError(t('errorPasswordUppercase') || 'Password must include at least one uppercase letter');
+      return;
+    }
+    if (!/[a-z]/.test(password)) {
+      setError(t('errorPasswordLowercase') || 'Password must include at least one lowercase letter');
+      return;
+    }
+    if (!/[0-9]/.test(password)) {
+      setError(t('errorPasswordNumber') || 'Password must include at least one number');
+      return;
+    }
+
     setLoading(true);
     try {
       const result = await authClient.signUp.email({
@@ -46,6 +62,9 @@ export default function RegisterPage() {
         const msg = result.error.message?.toLowerCase() ?? '';
         if (msg.includes('already') || msg.includes('exist') || msg.includes('duplicate')) {
           setError(t('errorEmailExists') || 'An account with this email already exists');
+        } else if (msg.includes('password')) {
+          // Server-side password validation — translate to user-friendly message
+          setError(t('errorPasswordComplexity') || 'Password must be at least 8 characters with uppercase, lowercase, and a number');
         } else {
           setError(result.error.message ?? (t('errorGeneric') || 'Registration failed. Please try again.'));
         }
