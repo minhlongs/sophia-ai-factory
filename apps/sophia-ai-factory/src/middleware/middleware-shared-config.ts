@@ -26,5 +26,6 @@ export function applySecurityHeaders(
 ): void {
   response.headers.set('Content-Security-Policy', buildCSPHeader(nonce));
   response.headers.set(CSP_NONCE_HEADER, nonce);
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   if (needsCsrfSeed) setCsrfCookie(response, generateCsrfToken());
 }

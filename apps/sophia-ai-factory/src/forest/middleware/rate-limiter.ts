@@ -4,9 +4,18 @@
  *
  * Note: In Cloudflare Workers, each isolate has its own memory.
  * This provides best-effort rate limiting. For strict limits, use Redis/Upstash.
+ *
+ * Dual Rate Limiter Rationale (L3):
+ * - In-memory RateLimiter class (here) is used for general API routes where
+ *   per-isolate counting is acceptable and speed matters (no DB round-trip).
+ * - D1-backed checkD1RateLimit (in sql-rate-limiter.ts) is used for auth
+ *   routes where cross-isolate counting is required to prevent brute-force.
+ * - This is intentional, not accidental duplication. Both are needed for
+ *   their respective use cases under CF Workers' isolate model.
  */
 
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { checkD1RateLimit } from '@/seed/security/d1-rate-limiter'
 
 export interface RateLimitConfig {
   intervalMs: number      // Time window in milliseconds
@@ -206,3 +215,62 @@ export function getClientIdentifier(request: Request): string {
 // Singleton instance for global rate limiting
 // Each Cloudflare Worker isolate will have its own limiter
 export const globalRateLimiter = new RateLimiter()
+
+// ── D1-Backed Auth Endpoint Rate Limiting ─────────────────────────────────
+// Auth endpoints use D1-backed counters for cross-isolate rate limiting.
+// This prevents attackers from bypassing auth rate limits by distributing
+// requests across CF Worker isolates (each isolate has independent memory).
+
+/** Auth endpoint path patterns that use D1-backed cross-isolate rate limiting */
+const AUTH_ENDPOINT_PATTERNS = [
+  '/api/auth/login',
+  '/api/auth/mfa/challenge',
+  '/api/auth/admin/challenge',
+]
+
+/**
+ * Check if a path matches auth endpoint patterns.
+ */
+function isAuthEndpoint(pathname: string): boolean {
+  return AUTH_ENDPOINT_PATTERNS.some(
+    (pattern) => pathname.startsWith(pattern) || pathname === pattern,
+  )
+}
+
+/**
+ * Check rate limit using D1 for auth endpoints (cross-isolate).
+ * Returns a 429 response if rate limited, null if allowed or non-auth route.
+ *
+ * Auth endpoints use D1-backed counters to prevent brute-force attacks
+ * across CF Worker isolates. Non-auth endpoints continue using the
+ * in-memory RateLimiter for speed (no DB round-trip).
+ */
+export async function checkAuthRateLimit(
+  request: NextRequest,
+): Promise<NextResponse | null> {
+  const url = request.nextUrl?.pathname ?? ''
+  const pathname = url || new URL(request.url).pathname
+
+  if (!isAuthEndpoint(pathname)) {
+    return null // Not an auth endpoint, no D1 check needed
+  }
+
+  const clientId = getClientIdentifier(request)
+  const result = await checkD1RateLimit(clientId, {
+    maxRequests: 10,
+    windowSeconds: 60,
+  })
+
+  if (!result.allowed) {
+    return NextResponse.json(
+      {
+        error: 'Too Many Requests',
+        message: 'Rate limit exceeded. Please try again later.',
+        retryAfter: result.resetAt - Math.floor(Date.now() / 1000),
+      },
+      { status: 429 },
+    )
+  }
+
+  return null
+}

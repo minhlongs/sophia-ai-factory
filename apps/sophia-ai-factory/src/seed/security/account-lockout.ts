@@ -117,7 +117,8 @@ export async function incrementFailedLogin(
     return { locked: shouldLock, attempts: next }
   } catch (err) {
     logger.error('incrementFailedLogin failed', err instanceof Error ? err : new Error(String(err)))
-    return { locked: false, attempts: 0 }
+    // L2: fail-closed — treat DB error as locked to prevent brute-force bypass
+    return { locked: true, attempts: -1 }
   }
 }
 
@@ -151,6 +152,7 @@ export async function checkAccountLockByUserId(userId: string): Promise<AccountL
     return checkAccountLock(db, userId)
   } catch (err) {
     logger.error('checkAccountLockByUserId binding error', err instanceof Error ? err : new Error(String(err)))
-    return { locked: false, attempts: 0 }
+    // L2: fail-closed — treat DB error as locked to prevent brute-force bypass
+    return { locked: true, attempts: -1, degraded: true }
   }
 }

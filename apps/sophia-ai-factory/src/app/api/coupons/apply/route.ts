@@ -10,38 +10,13 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
 import { z } from 'zod';
 import { logger } from '@/seed/utils/logger-utility';
+import { getCouponDefinitions, PRICING } from '@/seed/config/coupons';
 
 const applySchema = z.object({
   code: z.string().optional(),
   tier: z.string().optional(),
   project: z.string().optional(),
 });
-
-const COUPONS: Record<string, {
-  discountPercent: number;
-  maxUses: number;
-  expires: string | null;
-  projects: string[];
-}> = {
-  FREE50: {
-    discountPercent: 100,
-    maxUses: 9999,
-    expires: null,
-    projects: ['sophia', 'mekongmind'],
-  },
-  LAUNCH25: {
-    discountPercent: 25,
-    maxUses: 100,
-    expires: '2026-12-31',
-    projects: ['sophia', 'mekongmind'],
-  },
-};
-
-const PRICING: Record<string, number> = {
-  BASIC: 199,
-  PREMIUM: 399,
-  MASTER: 799,
-};
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
@@ -61,7 +36,7 @@ export async function POST(request: NextRequest) {
     const tier = (data.tier || 'BASIC').toUpperCase();
     const project = data.project || 'sophia';
 
-    const coupon = COUPONS[code];
+    const coupon = getCouponDefinitions()[code];
     if (!coupon) {
       return NextResponse.json({
         success: false,

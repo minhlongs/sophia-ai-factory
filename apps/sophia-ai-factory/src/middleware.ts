@@ -10,9 +10,11 @@ import { handleCorsPrelight } from './middleware/cors';
 import { handleApiPipeline } from './middleware/api-pipeline';
 import { handleDashboardPipeline } from './middleware/dashboard-pipeline';
 import { handlePublicPipeline } from './middleware/public-pipeline';
+import { checkAuthRateLimit } from '@/forest/middleware/rate-limiter';
 
 /** L2: apply security headers to error responses that bypass the normal pipeline */
 function applySecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   response.headers.set('X-Content-Type-Options', 'nosniff');
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
@@ -57,6 +59,10 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   }
 
   if (request.method === 'OPTIONS') return handleCorsPrelight(origin);
+
+  // Security: D1-backed auth rate limiting (cross-isolate) before pipeline dispatch
+  const authRateLimitResponse = await checkAuthRateLimit(request);
+  if (authRateLimitResponse) return authRateLimitResponse;
 
   const nonce = generateNonce();
   const requestHeaders = new Headers(request.headers);

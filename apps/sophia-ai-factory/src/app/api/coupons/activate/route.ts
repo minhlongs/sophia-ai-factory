@@ -11,16 +11,12 @@ import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { toError } from '@/seed/utils/to-error';
 import { getD1 } from '@/seed/db/client';
 import { csrfForbiddenResponse, verifyCsrfToken } from '@/seed/security/csrf';
+import { getActivateCoupons } from '@/seed/config/coupons';
 
 interface CouponActivateRequest {
   coupon?: string;
   tier?: string;
 }
-
-const VALID_COUPONS: Record<string, { mcuBonus: number }> = {
-  FREE50: { mcuBonus: 1000 },
-  LAUNCH25: { mcuBonus: 500 },
-};
 
 const TIER_MCU: Record<string, number> = {
   BASIC: 1000,
@@ -46,7 +42,7 @@ export async function POST(request: NextRequest) {
     const coupon = (body.coupon || '').trim().toUpperCase();
     const tier = (body.tier || 'MASTER').toUpperCase();
 
-    const couponDef = VALID_COUPONS[coupon];
+    const couponDef = getActivateCoupons()[coupon];
     if (!couponDef) {
       return NextResponse.json({ success: false, error: 'Invalid coupon' });
     }
