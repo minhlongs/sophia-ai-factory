@@ -123,6 +123,10 @@ export async function shutdown(): Promise<void> {
   }
 }
 
-// Auto-initialize on module load to ensure OTel is ready before any spans are created.
-// This is safe to call multiple times (idempotent).
-initializeOTel();
+// NOTE: Do NOT auto-initialize on module load.
+// OTEL SDK imports Node.js builtins (http, fs, zlib, etc.) that are unavailable
+// in Cloudflare Workers, even with nodejs_compat. Callers in Node.js environments
+// should call initializeOTel() explicitly (e.g., in instrumentation.ts register hook).
+//
+// The layout.tsx import of { initializeOTel } is safe because the function is not
+// called at module load time — it's guarded behind component rendering in Node.js envs.
