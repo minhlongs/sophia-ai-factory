@@ -4,6 +4,26 @@
 
 ---
 
+## 2026-07-01 — Polish Wave: Middleware Fix + Guides Redirect + Pricing Code-Split
+
+**Severity: MEDIUM | Type: Polish | Status: LOCAL (not yet deployed)**
+
+Post-web-test polish addressing 3 of 4 issues from A-Z user flow report.
+
+**Fixed:**
+- Middleware Option B: API routes go through centralized security (CSRF, CORS, rate-limit) but skip locale redirect via `pathname.startsWith('/api/')` guard. Replaces Option A (matcher exclusion) with proper fix.
+- `/vi/guides` 404: Added redirect `{ source: '/guides', destination: '/guide' }` in `next.config.ts`
+- Pricing page performance: `CheckoutPanel` changed to `next/dynamic` lazy import (ssr: false), reducing initial bundle
+
+**Verified:**
+- All 6705 tests pass | Build 0 TS errors | 229/229 pages generated
+- Production API routes confirmed reaching handlers (no 307 redirects)
+- Sprint 2 audit: all 3 items (credit bar, A/B runner, help videos) already shipped in prior waves
+
+**Files:** 3 modified | **Tests:** 6705 passed | **Build:** 0 TS errors
+
+---
+
 ## 2026-07-01 — Security Audit Fixes: Rate Limiter + Defense-in-Depth
 
 **Severity: SECURITY | Type: Audit remediation | Status: READY TO SHIP**

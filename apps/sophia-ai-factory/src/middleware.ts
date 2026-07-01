@@ -40,7 +40,11 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   if (isInternalOrStatic(pathname)) return NextResponse.next();
 
   const pathLocale = pathname.split('/')[1];
-  if (pathLocale && !isSupportedLocale(pathLocale)) return redirectToDefault(request);
+
+  // API routes bypass locale redirect — dispatched through handleApiPipeline below
+  if (!pathname.startsWith('/api/')) {
+    if (pathLocale && !isSupportedLocale(pathLocale)) return redirectToDefault(request);
+  }
 
   // ?tab=signup redirect — runs before ISR cache
   const { searchParams: sp } = request.nextUrl;
@@ -109,24 +113,25 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 export const middleware = proxy;
 
 /**
- * Matcher: apply middleware to page routes only.
+ * Matcher: apply middleware to all routes except Next.js internals and static files.
  *
- * API routes (/api/*) are EXCLUDED because each has its own layered security:
- *   - CSRF: verifyCsrfToken() in route handler
- *   - Rate limiting: withRateLimit() wrapper
- *   - Auth: getCurrentUserFromHeaders() per-route
+ * API routes (/api/*) GO THROUGH middleware for centralized security:
+ *   - CORS preflight handling
+ *   - D1-backed auth rate limiting
+ *   - CSRF token verification (state-changing methods)
+ *   - MFA enforcement, auth guard, size limits (via handleApiPipeline)
  *
- * Excluding /api/* prevents the locale check (pathLocale='api' → not a
- * supported locale) from 307-redirecting all API requests to '/'.
+ * The locale redirect is skipped for /api/* paths (see proxyImpl guard),
+ * so API routes are dispatched to handleApiPipeline instead of being
+ * 307-redirected to '/'.
  *
  * Excluded paths:
  *   - _next (Next.js internals)
  *   - _worker (edge functions)
- *   - auth/callback (handled separately)
- *   - api/version (health endpoint, public)
- *   - api/* (all API routes — self-protected)
+ *   - auth/callback (handled separately in proxyImpl)
+ *   - api/version (health endpoint, public — no auth required)
  *   - static files (.*\\..*)
  */
 export const config = {
-  matcher: ['/((?!_next|_worker|auth/callback|api/version|api/.*|.*\\..*).*)'],
+  matcher: ['/((?!_next|_worker|auth/callback|api/version|.*\\..*).*)'],
 };

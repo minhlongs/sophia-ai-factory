@@ -7,7 +7,12 @@ import { PricingCard, formatPrice, formatVnd, centsToVnd } from "./pricing-card"
 import { UNIFIED_TIERS } from "@/seed/config/tiers";
 import { usePricingData } from "./pricing-data";
 import { CouponInput, type PromoDiscount } from "./coupon-input";
-import { CheckoutPanel } from "../checkout/checkout-panel";
+import dynamic from "next/dynamic";
+
+const CheckoutPanel = dynamic(
+  () => import("../checkout/checkout-panel").then((m) => ({ default: m.CheckoutPanel })),
+  { ssr: false }
+);
 import { useCsrfToken } from "@/seed/security/use-csrf-token";
 import { Check } from "lucide-react";
 
