@@ -128,6 +128,7 @@ export function buildCSPHeader(nonce?: string): string {
     `base-uri ${cspConfig.baseUri.join(' ')}`,
     `form-action ${cspConfig.formAction.join(' ')}`,
     `object-src ${cspConfig.objectSrc.join(' ')}`,
+    `upgrade-insecure-requests`,
     `report-uri ${cspConfig.reportUri.join(' ')}`,
   ];
 
