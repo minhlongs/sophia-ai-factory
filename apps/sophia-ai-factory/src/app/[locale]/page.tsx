@@ -7,6 +7,7 @@ import { redirect } from "@/navigation";
 export const revalidate = 60;
 
 import { Hero } from "@/app/components/sections/hero";
+import { ErrorBoundary } from "@/seed/components/error-boundary";
 import { Skeleton } from "@/seed/components/ui/skeleton";
 import { ScrollReveal } from "@/seed/components/ui/scroll-reveal";
 import { PageTransition } from "@/seed/components/ui/page-transition";
@@ -185,7 +186,9 @@ export default async function Home({
         <AgiCapabilitiesSection />
       </ScrollReveal>
       <ScrollReveal delay={0}>
-        <AffiliateDiscovery />
+        <ErrorBoundary>
+          <AffiliateDiscovery />
+        </ErrorBoundary>
       </ScrollReveal>
       <ScrollReveal delay={0}>
         <FAQ />
