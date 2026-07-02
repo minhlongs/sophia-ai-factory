@@ -1,7 +1,7 @@
 import { inngest } from '@/seed/inngest/client';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { decryptApiKey, encryptApiKey } from '@/tree/byok/byok-crypto';
+import { decryptApiKey, encryptApiKey, generateMasterKey } from '@/tree/byok/byok-crypto';
 import { logAuditEvent } from '@/tree/audit/logger/audit-query';
 
 const BATCH_SIZE = 250;
@@ -270,6 +270,131 @@ export const keyRotationReencrypt = inngest.createFunction(
       providerCredentials,
       platformCredentials,
       total,
+    };
+  },
+);
+
+export const keyRotationCron = inngest.createFunction(
+  { id: 'key-rotation-cron' },
+  { cron: '0 0 1 */3 *' },
+  async ({ step }) => {
+    const latestVersion = await step.run('check-latest-version', async () => {
+      const db = getD1();
+      if (!db) throw new Error('D1 database binding not available');
+
+      const row = await db
+        .prepare(
+          `SELECT version, created_at
+           FROM key_versions
+           ORDER BY version DESC
+           LIMIT 1`,
+        )
+        .first<{ version: number; created_at: string }>();
+
+      return row;
+    });
+
+    // No key versions exist — log and skip
+    if (!latestVersion) {
+      await logAuditEvent({
+        action: 'key_rotation.cron_skip_no_version',
+        userId: 'system',
+        metadata: { actorType: 'system' },
+      }).catch((err) => {
+        logger.error('[key-rotation-cron] Audit log failed', { error: err });
+      });
+
+      logger.info('[key-rotation-cron] Skipped — no key versions exist');
+      return { skipped: true, reason: 'no_key_version' };
+    }
+
+    const ageMs = Date.now() - new Date(latestVersion.created_at).getTime();
+    const ageDays = ageMs / 86_400_000;
+
+    // Key version is younger than 90 days — skip
+    if (ageDays < 90) {
+      await logAuditEvent({
+        action: 'key_rotation.cron_skip_too_young',
+        userId: 'system',
+        metadata: {
+          currentVersion: latestVersion.version,
+          ageDays: Math.round(ageDays * 10) / 10,
+          actorType: 'system',
+        },
+      }).catch((err) => {
+        logger.error('[key-rotation-cron] Audit log failed', { error: err });
+      });
+
+      logger.info('[key-rotation-cron] Skipped — key version too young', {
+        version: latestVersion.version,
+        ageDays,
+      });
+
+      return { skipped: true, reason: 'too_young', version: latestVersion.version, ageDays };
+    }
+
+    // Key version is 90 days or older — trigger rotation
+    const rotationResult = await step.run('create-new-version-and-fire-event', async () => {
+      const db = getD1();
+      if (!db) throw new Error('D1 database binding not available');
+
+      const oldVersion = latestVersion.version;
+
+      // Calculate next version number
+      const nextVersionRow = await db
+        .prepare(
+          `SELECT COALESCE(MAX(version), 0) + 1 AS next_version
+           FROM key_versions`,
+        )
+        .first<{ next_version: number }>();
+
+      const keyVersion = nextVersionRow?.next_version ?? oldVersion + 1;
+      const encryptedKey = await generateMasterKey();
+
+      // Insert new key version (active by default)
+      await db
+        .prepare(
+          `INSERT INTO key_versions (key_type, version, encrypted_key, rotated_by)
+           VALUES (?, ?, ?, ?)`,
+        )
+        .bind('master', keyVersion, encryptedKey, 'system')
+        .run();
+
+      // Fire rotation event so the re-encrypt handler processes the re-encryption
+      await inngest.send({
+        id: `key-rotation-cron-${keyVersion}-${Date.now()}`,
+        name: 'key.rotation.requested',
+        data: { keyVersion, oldVersion, reason: 'auto-rotation-cron' },
+      });
+
+      return { keyVersion, oldVersion };
+    });
+
+    // SOC 2 CC7.2: Audit log for cron-triggered rotation
+    await logAuditEvent({
+      action: 'key_rotation.cron_triggered',
+      userId: 'system',
+      metadata: {
+        keyVersion: rotationResult.keyVersion,
+        oldVersion: rotationResult.oldVersion,
+        ageDays: Math.round(ageDays * 10) / 10,
+        actorType: 'system',
+      },
+    }).catch((err) => {
+      logger.error('[key-rotation-cron] Audit log failed', { error: err });
+    });
+
+    logger.info('[key-rotation-cron] Rotation triggered', {
+      keyVersion: rotationResult.keyVersion,
+      oldVersion: rotationResult.oldVersion,
+      ageDays,
+    });
+
+    return {
+      skipped: false,
+      keyVersion: rotationResult.keyVersion,
+      oldVersion: rotationResult.oldVersion,
+      ageDays,
     };
   },
 );
