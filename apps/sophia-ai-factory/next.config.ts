@@ -33,17 +33,16 @@ const nextConfig: NextConfig = {
   // M1 16GB workaround: reactCompiler doubles webpack memory pressure. Disable when SKIP_RC=1.
   reactCompiler: process.env.SKIP_RC === '1' ? false : true,
   serverExternalPackages: [
-    // Pure client-side libs (never used in server code) - only those causing bundle bloat
+    // Pure client-side libs — traced into server bundle by nft but never
+    // executed on the server. Externalizing lets esbuild stub them safely,
+    // reducing the workerd module compilation footprint.
     'html2canvas', 'jszip', 'framer-motion',
     'd3', 'd3-*',
-    // Telemetry/monitoring
-    '@sentry/core', '@sentry/react', '@sentry/nextjs',
-    '@sentry/node', '@sentry/profiling',
-    '@opentelemetry/api', '@opentelemetry/sdk-trace-base',
-    // Bot/integration clients
-    'telegraf',
-    // DB/cache clients that are incompatible with Cloudflare Workers
+    // DB clients incompatible with Cloudflare Workers (no node:fs)
     'better-sqlite3',
+    // Better Auth — externalized so esbuild can resolve workerd-conditional
+    // sub-path exports (e.g. @better-auth/core/instrumentation) that
+    // copyWorkerdPackages never copies into the output node_modules.
     '@better-auth/kysely-adapter',
     '@better-auth/core',
   ],
