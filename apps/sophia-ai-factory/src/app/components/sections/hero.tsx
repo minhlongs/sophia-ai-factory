@@ -102,7 +102,7 @@ export function Hero() {
             className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up"
             style={{ animationDelay: "0.4s" }}
           >
-            <Link href="/signup">
+            <Link href="/login?tab=signup">
               <Button variant="glow" size="lg" className="rounded-full px-8 text-base w-full sm:w-auto">
                 {t("cta_start")}
                 <span className="ml-2 hidden sm:inline text-xs opacity-70 font-normal">→</span>
