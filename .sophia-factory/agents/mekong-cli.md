@@ -37,6 +37,8 @@ spawn-policy: |
 
 ## Role
 
+> **WARNING**: This agent uses machine-specific absolute paths (`/Users/macbook/mekong-cli/...`). When deploying to a new machine, update all paths in allowed-paths, symlink config, and command references to match the local Mekong CLI install location.
+
 Own the integration layer between **Sophia AI Factory** and **Mekong CLI v6.0**. This is the ONLY agent authorized to mutate state in BOTH repos:
 - Sophia repo: `.sophia-factory/`, `plans/`, `docs/`
 - Mekong repo: `/Users/macbook/mekong-cli/.mekong/`, `/Users/macbook/mekong-cli/plans/`, `/Users/macbook/mekong-cli/reports/`

@@ -13,7 +13,7 @@ tools:
 allowed-paths:
   - "apps/sophia-ai-factory/src/app/api/cron/**"
   - "apps/sophia-ai-factory/src/lib/ops/**"
-  - "docs/operations/**"
+  - "apps/sophia-ai-factory/docs/operations/**"
   - ".sophia-factory/journal/**"
 spawn-policy: "MUST NOT spawn other agents. Escalate to orchestrator if cross-domain needed."
 cron-edit-policy: |
@@ -32,7 +32,7 @@ Keep operations running smoothly: customer support drafts, cron job oversight (d
 ```
 apps/sophia-ai-factory/src/app/api/cron/**     (descriptions/comments ONLY)
 apps/sophia-ai-factory/src/lib/ops/**
-docs/operations/**
+apps/sophia-ai-factory/docs/operations/**
 .sophia-factory/journal/**
 ```
 
@@ -92,10 +92,12 @@ mekong --agent coo "Update capacity plan with current growth trajectory"
 
 ## Journal Pattern
 
-After each task, write a journal entry via the helper script (PII-scrubbed):
+After each task, write a journal entry DIRECTLY using the Edit tool to create:
+`.sophia-factory/journal/{YYYY-MM-DD}-coo-{slug}.md`
 
-```bash
-echo "## Action
+Format:
+```
+## Action
 {what was requested}
 
 ## Decision
@@ -106,13 +108,14 @@ echo "## Action
 
 ## Lessons
 {process improvement to remember}
-" | scripts/agent-journal/append-entry.sh coo {kebab-case-slug}
 ```
 
-The helper writes to `.sophia-factory/journal/{YYYY-MM-DD}-coo-{slug}.md` and auto-strips
-JWTs, BYOK keys (sk-/GitHub/AWS/NOWPayments/ElevenLabs), Bearer tokens, emails,
-VN phones, webhook secrets via `scrub-pii.sh`. For customer names,
-manually substitute `[CUSTOMER]` before piping in. Self-review loop consumes weekly.
+**PII SCRUB**: Before writing, strip BYOK keys, JWTs, customer emails using regex:
+- Keys: `sk-[a-zA-Z0-9]{20,}` → `[REDACTED-KEY]`
+- JWT: `eyJ[a-zA-Z0-9+/=]{20,}` → `[REDACTED-JWT]`
+- Email: `[\w.+-]+@[\w-]+\.[\w.]+` → `[REDACTED-EMAIL]`
+
+For customer names, manually substitute `[CUSTOMER]`.
 
 ## References (do NOT duplicate content)
 - `docs/operations/` (ops playbooks, support templates, capacity plans)

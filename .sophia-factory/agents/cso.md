@@ -82,10 +82,12 @@ mekong --agent cso "Update pricing page copy for new ENTERPRISE tier"
 
 ## Journal Pattern
 
-After each task, write a journal entry via the helper script (PII-scrubbed):
+After each task, write a journal entry DIRECTLY using the Edit tool to create:
+`.sophia-factory/journal/{YYYY-MM-DD}-cso-{slug}.md`
 
-```bash
-echo "## Action
+Format:
+```
+## Action
 {what was requested}
 
 ## Decision
@@ -96,16 +98,17 @@ echo "## Action
 
 ## Lessons
 {conversion insight or objection pattern to remember}
-" | scripts/agent-journal/append-entry.sh cso {kebab-case-slug}
 ```
 
-The helper writes to `.sophia-factory/journal/{YYYY-MM-DD}-cso-{slug}.md` and auto-strips
-JWTs, BYOK keys (sk-/GitHub/AWS/NOWPayments/ElevenLabs), Bearer tokens, emails,
-VN phones, webhook secrets via `scrub-pii.sh`. For customer names/companies, manually
-substitute `[CUSTOMER-A]`, `[CUSTOMER-B]`, etc. before piping in. Self-review loop consumes weekly.
+**PII SCRUB**: Before writing, strip BYOK keys, JWTs, customer emails using regex:
+- Keys: `sk-[a-zA-Z0-9]{20,}` → `[REDACTED-KEY]`
+- JWT: `eyJ[a-zA-Z0-9+/=]{20,}` → `[REDACTED-JWT]`
+- Email: `[\w.+-]+@[\w-]+\.[\w.]+` → `[REDACTED-EMAIL]`
+
+For customer names/companies, manually substitute `[CUSTOMER-A]`, `[CUSTOMER-B]`, etc.
 
 ## References (do NOT duplicate content)
 - `docs/pricing-and-tiers.md` (tier definitions — source of truth)
-- `docs/sales/` (sales playbooks and experiments)
+- `docs/sales/` (sales playbooks and experiments — create directory when first used)
 - `.sophia-factory/CLAUDE.specification.md` (understand feature value before pitching)
 - `.sophia-factory/templates/story.md` (for writing user stories that drive sales narrative)

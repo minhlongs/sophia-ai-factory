@@ -51,7 +51,7 @@ for mapfile in "${map_files[@]}"; do
   bytes=$(wc -c < "$mapfile" | tr -d ' ')
   echo "  ✓ $key ($((bytes / 1024)) KiB)"
   # Upload via wrangler r2 object put (show errors but don't exit)
-  if ! npx wrangler r2 object put "$R2_BUCKET/$key" --file="$mapfile" --content-type "application/json" 2>&1; then
+  if ! npx wrangler r2 object put "$R2_BUCKET/$key" --file="$mapfile" --content-type "application/json" --remote 2>&1; then
     echo "  ✗ failed to upload $mapfile (continuing...)"
     errors=$((errors + 1))
     # Do not exit — continue to upload remaining files
@@ -67,6 +67,5 @@ if [ $uploaded -gt 0 ]; then
 fi
 if [ $errors -gt 0 ]; then
   echo "⚠️  $errors upload(s) failed — check above for details"
-  # Exit 0 anyway — postbuild should not block deploy if some files fail
 fi
-exit 0
+exit $errors
