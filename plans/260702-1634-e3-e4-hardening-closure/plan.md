@@ -1,7 +1,7 @@
 ---
 title: "E3/E4 Hardening Closure — OTel Production + BYOK Rotation"
 description: "Close the remaining E3 (OpenTelemetry production) and E4 (BYOK Key Rotation) roadmap items: set secrets, admin UI, auto-rotation cron, verify + deploy"
-status: pending
+status: partial
 priority: P1
 branch: "main"
 tags: [hardening, observability, security, byok]
@@ -24,10 +24,10 @@ Close the enterprise hardening roadmap (E3 + E4). Both are 90%+ implemented in c
 
 | Phase | Name | Status | Priority | Effort |
 |-------|------|--------|----------|--------|
-| 1 | [OTel Production Activation](./phase-01-otel-production-activation.md) | Pending | P1 | ~15 min |
-| 2 | [BYOK Rotation Admin UI](./phase-02-byok-rotation-admin-ui.md) | Pending | P1 | ~2-3 hr |
-| 3 | [Auto-Rotation Cron](./phase-03-auto-rotation-cron.md) | Pending | P2 | ~1 hr |
-| 4 | [Verify + Deploy](./phase-04-verify-deploy.md) | Pending | P1 | ~30 min |
+| 1 | [OTel Production Activation](./phase-01-otel-production-activation.md) | ⏸️ Blocked (needs key) | P1 | ~15 min |
+| 2 | [BYOK Rotation Admin UI](./phase-02-byok-rotation-admin-ui.md) | ✅ Complete | P1 | ~2-3 hr |
+| 3 | [Auto-Rotation Cron](./phase-03-auto-rotation-cron.md) | ✅ Complete | P2 | ~1 hr |
+| 4 | [Verify + Deploy](./phase-04-verify-deploy.md) | ⏸️ Blocked by P1 | P1 | ~30 min |
 
 ## Dependencies
 
