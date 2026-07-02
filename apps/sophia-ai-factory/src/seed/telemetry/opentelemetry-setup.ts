@@ -18,6 +18,7 @@ import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-http/bu
 import { MeterProvider } from '@opentelemetry/sdk-metrics';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch';
+import { getPlatformConfig } from '@/seed/db/platform-config-repo';
 
 let initialized = false;
 let _meterProvider: MeterProvider | null = null;
@@ -33,8 +34,12 @@ export async function initializeOTel(): Promise<void> {
   const logLevel = process.env.NODE_ENV === 'production' ? DiagLogLevel.ERROR : DiagLogLevel.DEBUG;
   diag.setLogger(new DiagConsoleLogger(), logLevel);
 
-  const apiKey = process.env.HONEYCOMB_API_KEY;
-  const dataset = process.env.HONEYCOMB_DATASET || 'sophia-prod';
+  // Try platform_configs (BYOK) first, fallback to env var for backward compat
+  const configApiKey = await getPlatformConfig('honeycomb_api_key');
+  const configDataset = await getPlatformConfig('honeycomb_dataset');
+
+  const apiKey = configApiKey || process.env.HONEYCOMB_API_KEY;
+  const dataset = configDataset || process.env.HONEYCOMB_DATASET || 'sophia-prod';
   const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'https://api.honeycomb.io';
   const serviceName = process.env.OTEL_SERVICE_NAME || 'sophia-api';
   const samplerate = parseFloat(process.env.OTEL_SAMPLERATE || '0.01');
