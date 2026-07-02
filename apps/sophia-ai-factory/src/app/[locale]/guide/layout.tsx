@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { cn } from '@/seed/utils/cn';
 import {
@@ -10,6 +9,7 @@ import {
   ArrowLeft, Menu, X, Link2, Terminal,
   Play, Layout, Wallet, Banknote, CreditCard, Users, Lightbulb,
 } from "lucide-react";
+import GuideSidebarSearch from "./guide-sidebar-search";
 
 type GuideSection = {
   headingKey: string;
@@ -71,18 +71,8 @@ function getGuideSections(): GuideSection[] {
 }
 
 export default function GuideLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const t = useTranslations("landing");
-
-  // Strip locale prefix for matching (pathname never null in production)
-  const cleanPath = (pathname ?? "").replace(/^\/(en|vi)/, "");
-
-  const isActive = (href: string) => {
-    if (href === "/guide") return cleanPath === "/guide";
-    return cleanPath === href || cleanPath.startsWith(href + "/");
-  };
-
   const sections = getGuideSections();
 
   return (
@@ -117,38 +107,11 @@ export default function GuideLayout({ children }: { children: React.ReactNode })
               {t("guide.back_to_dashboard")}
             </Link>
 
-            {/* Sections */}
-            {sections.map((section) => (
-              <div key={section.headingKey}>
-                <div className="px-3 pb-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
-                    {t(`guide.sidebar.section_${section.headingKey}`)}
-                  </span>
-                </div>
-                <div className="space-y-0.5">
-                  {section.links.map((link) => {
-                    const active = isActive(link.href);
-                    return (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setSidebarOpen(false)}
-                        aria-current={active ? "page" : undefined}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all",
-                          active
-                            ? "bg-primary-500/10 text-primary-300 border border-primary-500/30 shadow-[0_0_10px_0px_rgba(139,92,246,0.15)]"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50 border border-transparent"
-                        )}
-                      >
-                        <link.icon className={cn("w-4 h-4 shrink-0", active ? "text-primary-400" : "")} aria-hidden="true" />
-                        {t(`guide.sidebar.${link.labelKey}`)}
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+            {/* Search + nav links */}
+            <GuideSidebarSearch
+              sections={sections}
+              onLinkClick={() => setSidebarOpen(false)}
+            />
           </div>
         </aside>
 
