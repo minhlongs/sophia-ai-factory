@@ -69,7 +69,8 @@
     "harness:ci": "./scripts/harness.sh ci",
     "harness:deploy": "./scripts/harness.sh deploy",
     "harness:verify": "./scripts/harness.sh verify",
-    "prepare": "husky"
+    "prepare": "husky",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
@@ -173,6 +174,7 @@
     "lint-staged": "^17.0.4",
     "msw": "^2.12.8",
     "node-gyp": "^11.5.0",
+    "patch-package": "^8.0.1",
     "ora": "^9.3.0",
     "secretlint": "^13.0.0",
     "tailwindcss": "^4",
