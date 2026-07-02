@@ -36,6 +36,7 @@ import {
   Mic,
   LayoutTemplate,
   Target,
+  RotateCw,
 } from "lucide-react";
 import { ReplayTourLink } from "@/app/[locale]/dashboard/components/replay-tour-link";
 
@@ -292,6 +293,12 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
  {renderActiveIndicator("/dashboard/admin/deploy-status")}
  <ServerCog className={iconClass("/dashboard/admin/deploy-status")} aria-hidden="true" />
  <span className="font-medium">Deploy Status</span>
+ </Link>
+
+ <Link href="/dashboard/admin/byok-rotation" className={linkClass("/dashboard/admin/byok-rotation")}>
+ {renderActiveIndicator("/dashboard/admin/byok-rotation")}
+ <RotateCw className={iconClass("/dashboard/admin/byok-rotation")} aria-hidden="true" />
+ <span className="font-medium">Key Rotation</span>
  </Link>
  </div>
  </>
