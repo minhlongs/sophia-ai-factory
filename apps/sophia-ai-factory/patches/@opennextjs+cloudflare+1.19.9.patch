@@ -1,8 +1,8 @@
 diff --git a/node_modules/@opennextjs/cloudflare/dist/cli/build/bundle-server.js b/node_modules/@opennextjs/cloudflare/dist/cli/build/bundle-server.js
-index be3f893..0a6b7ee 100644
+index be3f893..315e8ce 100644
 --- a/node_modules/@opennextjs/cloudflare/dist/cli/build/bundle-server.js
 +++ b/node_modules/@opennextjs/cloudflare/dist/cli/build/bundle-server.js
-@@ -26,6 +26,85 @@ import { shimReact } from "./patches/plugins/shim-react.js";
+@@ -26,6 +26,82 @@ import { shimReact } from "./patches/plugins/shim-react.js";
  import { setWranglerExternal } from "./patches/plugins/wrangler-external.js";
  import { copyPackageCliFiles } from "./utils/copy-package-cli-files.js";
  import { needsExperimentalReact } from "./utils/needs-experimental-react.js";
@@ -42,9 +42,6 @@ index be3f893..0a6b7ee 100644
 +        "html2canvas",
 +        "jszip",
 +        "framer-motion",
-+        "telegraf",
-+        "@sentry/core", "@sentry/react", "@sentry/nextjs", "@sentry/node",
-+        "@opentelemetry/api", "@opentelemetry/sdk-trace-base",
 +        "better-sqlite3",
 +        // recharts-d3 interop re-exports (some recharts versions import from these entry points)
 +        "d3archy",
@@ -88,7 +85,7 @@ index be3f893..0a6b7ee 100644
  /** The dist directory of the Cloudflare adapter package */
  const packageDistDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "../..");
  /**
-@@ -97,6 +176,10 @@ export async function bundleServer(buildOpts, projectOpts) {
+@@ -97,6 +173,10 @@ export async function bundleServer(buildOpts, projectOpts) {
              patchDepdDeprecations(updater),
              patchResolveCache(updater, buildOpts),
              patchSetWorkingDirectory(updater, buildOpts),
