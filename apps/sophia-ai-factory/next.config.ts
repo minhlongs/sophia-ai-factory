@@ -39,10 +39,13 @@ const nextConfig: NextConfig = {
     // Telemetry/monitoring
     '@sentry/core', '@sentry/react', '@sentry/nextjs',
     '@sentry/node', '@sentry/profiling',
+    '@opentelemetry/api', '@opentelemetry/sdk-trace-base',
     // Bot/integration clients
     'telegraf',
     // DB/cache clients that are incompatible with Cloudflare Workers
     'better-sqlite3',
+    '@better-auth/kysely-adapter',
+    '@better-auth/core',
   ],
   // Gated by scripts/deploy-with-sha.sh Step 0.5 (`npm run type-check`).
   // Next's in-build typecheck is redundant once the gate runs — and was the
