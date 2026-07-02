@@ -1,6 +1,19 @@
 # Project Changelog
 
-**Last Updated:** 2026-07-02 | **Current Version:** 0.1.4 | **Honest Score:** 88/100 (doctrine ceiling)
+**Last Updated:** 2026-07-03 | **Current Version:** 0.1.4 | **Honest Score:** 88/100 (doctrine ceiling)
+
+---
+
+## 2026-07-03 — Archived 8 stale feature branches (Phases 6-13)
+
+**Severity: MAINTENANCE | Type: Cleanup | Status: COMPLETE**
+
+Archived 8 stale feature branches (Phases 6-13) that forked 1096 commits ago from `9987d596f` (2026-04-29). Main independently implemented ALL features during divergence. Only 1 genuinely-new file was found (`lib/env-validation.ts`), ported to `src/seed/utils/env-validation.ts`. 9 branches deleted including the combined feat/phase-09-12-affiliate-openclaw branch. Phase 11 (tenant isolation) had zero unique code and remains a backlog item.
+
+**Key findings:**
+- 1096 commits of divergence, all features already existed on main
+- OpenClaw orchestrator fully ported at `land/openclaw/` + `tree/agent-fleet/`
+- Phase 11 tenant isolation: deferred, no unique code
 
 ---
 
