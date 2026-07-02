@@ -14,6 +14,7 @@ import { Shield } from 'lucide-react';
 import RotationButton from './components/rotation-button';
 import VersionTable from './components/version-table';
 import StatusLog from './components/status-log';
+import HoneycombSettings from './components/honeycomb-settings';
 
 export const dynamic = 'force-dynamic';
 
@@ -158,6 +159,8 @@ export default async function ByokRotationPage({
       )}
 
       <RotationButton locale={locale} />
+
+      <HoneycombSettings locale={locale} />
 
       <VersionTable versions={versions} isVi={isVi} />
 
