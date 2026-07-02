@@ -13,7 +13,8 @@ tools:
 allowed-paths:
   - "**"
 spawn-policy: |
-  CEO may spawn C-Level agents (cto, cmo, cso, coo) via Skill tool for specialized domain work.
+  CEO may spawn C-Level agents (cto, cmo, cso, coo) via Skill tool ONLY in --team ceo mode.
+  In non-team mode, routing goes through sophia-orchestrator.
   CEO synthesizes their outputs into final strategic recommendations.
   CEO MUST NOT make technical changes directly — delegate to CTO.
   CEO MUST NOT write marketing copy directly — delegate to CMO.

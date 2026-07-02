@@ -439,9 +439,6 @@ else
   fi
 fi
 
-echo "==> strip-ssr-bloat (post-standalone)"
-bash scripts/strip-ssr-bloat.sh
-
 echo "==> opennextjs/cloudflare build"
 npx @opennextjs/cloudflare build --skipNextBuild --noMinify
 
@@ -452,9 +449,6 @@ node scripts/inject-scheduled-handler.mjs
 # OpenNext bundles from .next/standalone/ which already has stripped chunks.
 # However, esbuild may still include full library code in non-SSR chunks.
 # Strip heavy libs from the final .open-next/ output before deploy.
-echo "==> strip-ssr-bloat (post-opennext)"
-bash scripts/strip-ssr-bloat.sh
-
 # ─── Step 2.5: Post-build strip on OpenNext output ──────────────────────────
 # OpenNext bundles .next/standalone into .open-next/server-functions/default/.
 # Strip heavy client-only libs from the bundled handler AFTER OpenNext build

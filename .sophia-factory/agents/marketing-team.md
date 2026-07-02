@@ -89,6 +89,10 @@ mekong --team marketing "write launch blog for new pricing tier"
 - {KPI 2}
 ```
 
+## Path Notes
+
+- `apps/sophia-ai-factory/src/forest/marketing/` — this path does not yet exist. It is aspirational and should be created when marketing modules are implemented.
+
 ## Tools & Patterns
 
 - Use `grep`/`Read` to access recent analytics (`forest/analytics/`)
