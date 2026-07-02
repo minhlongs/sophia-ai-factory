@@ -576,7 +576,9 @@
         "telegram": "Telegram Bot",
         "commands": "Commands",
         "use_case_library": "Use Case Library",
-        "faq": "FAQ"
+        "faq": "FAQ",
+        "search_placeholder": "Search...",
+        "search_no_results": "No results found"
       },
       "back_to_dashboard": "Back to Dashboard",
       "title": "User Guide",

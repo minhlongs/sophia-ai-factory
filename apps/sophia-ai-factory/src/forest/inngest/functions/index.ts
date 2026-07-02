@@ -3,6 +3,7 @@
  * Inngest function registry — re-exports from canonical sources.
  * payout/sop/storage-tracker functions live in forest/jobs/ and forest/sops/.
  */
+export * from './ab-winner-picker-cron';
 export * from './account-delete-finalize-cron';
 export * from './account-delete-finalize-email';
 export * from './analytics-sync';

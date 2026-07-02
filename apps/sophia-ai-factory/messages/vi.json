@@ -576,7 +576,9 @@
         "telegram": "Bot Telegram",
         "commands": "Lệnh",
         "use_case_library": "Thư Viện Use Case",
-        "faq": "Câu Hỏi Thường Gặp"
+        "faq": "Câu Hỏi Thường Gặp",
+        "search_placeholder": "Tìm kiếm...",
+        "search_no_results": "Không tìm thấy kết quả"
       },
       "back_to_dashboard": "Quay Lại Bảng Điều Khiển",
       "title": "Hướng Dẫn Sử Dụng",
