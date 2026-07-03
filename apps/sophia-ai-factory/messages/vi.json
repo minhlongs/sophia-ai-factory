@@ -5000,7 +5000,8 @@
       },
       "deployStatus": {
         "env": "Env"
-      }
+      },
+      "kpi": {}
     },
     "affiliatePortal": {
       "title": "Affiliate Portal",
@@ -5603,5 +5604,7 @@
   "voiceProgress": "Voice Progress",
   "visualStyle": "Visual Style",
   "stepNavigation": "Step Navigation",
-  "continueToVoice": "Continue To Voice"
+  "continueToVoice": "Continue To Voice",
+  "voices": {},
+  "visualStyles": {}
 }
