@@ -642,3 +642,22 @@ All decisions documented in `.sophia-factory/journal/` for audit trail.
 **No-tech Doctrine Status:** ✅ PRESERVED — No operator-managed third-party credentials required for platform operation. All integrations are customer self-service (BYOK).
 
 **Deployment Health:** SHA-verified deploys only. Current production SHA: `5265c0a5a` (Revenue & Trust Sprint — code review fixes).
+
+---
+
+## 2026-07-03 — Night of Deliveries (3 Ships)
+
+**Production Status:** SHA `e7ec20ef7` (Harness PR) | **All 6772 tests passing** | **0 CVEs unfixed**
+
+### Shipped Tonight
+
+| Delivery | SHA | Description |
+|----------|-----|-------------|
+| **Phase 6-13 Archive** | `9e690b4cc` | Archived 9 stale branches (1096 commits behind). Inventoried 153 files — 98 already ported, 1 genuinely-new (env-validation.ts). All 9 branches deleted. |
+| **env-validation.ts** | `9e690b4cc` | Ported environment validation utility from stale branch to `src/seed/utils/` |
+| **Harness Engineering** | `e7ec20ef7` | System health harness: 5 API endpoints, local daemon, dashboard card, Telegram commands. PR #34 merged. Old PR #31 closed (34 days stale). |
+| **CVE Audit** | — | Audited 143 Dependabot alerts — 141 verified already fixed in lockfile. Production posture clean. |
+
+### Immediate Priorities (Updated)
+1. Feature TBD — main is clean and ready for next product push
+2. Tenent isolation remains deferred backlog item

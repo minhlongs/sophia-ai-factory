@@ -37,7 +37,7 @@ export function Workflow() {
     },
   ];
   return (
-    <section className="py-20 md:py-32">
+    <section className="py-20 md:py-32 bg-[#0F0F11]">
       <Container>
         <SectionHeading
           title={t('workflow.title')}
@@ -46,7 +46,7 @@ export function Workflow() {
 
         <div className="grid md:grid-cols-4 gap-8 relative">
           {/* Connecting lines (desktop only) */}
-          <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] opacity-20" />
+          <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-500/40 to-indigo-400/40" />
 
           {steps.map((step, index) => (
             <FadeInView
@@ -58,12 +58,12 @@ export function Workflow() {
               <Card glass hover className="relative z-10 h-full">
                 <CardHeader className="text-center">
                   {/* Step Icon */}
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center text-3xl">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-400 flex items-center justify-center text-3xl">
                     {step.icon}
                   </div>
 
                   {/* Step Number */}
-                  <div className="text-sm text-[var(--neon-cyan)] font-mono mb-2">
+                  <div className="text-sm text-indigo-400 font-mono mb-2">
                     {step.number}
                   </div>
 
@@ -78,7 +78,7 @@ export function Workflow() {
               {/* Arrow indicator (desktop only, except last item) — CSS animation */}
               {index < steps.length - 1 && (
                 <div className="hidden md:block absolute top-1/2 -right-4 z-20 animate-arrow-bounce">
-                  <ArrowRight className="w-6 h-6 text-[var(--neon-cyan)]" />
+                  <ArrowRight className="w-6 h-6 text-indigo-400" />
                 </div>
               )}
             </FadeInView>

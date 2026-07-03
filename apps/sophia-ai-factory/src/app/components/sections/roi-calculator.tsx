@@ -39,7 +39,7 @@ export function ROICalculator() {
             <div>
               <div className="flex justify-between mb-3">
                 <label htmlFor="roi-channels" className="text-foreground/80">{t('roi.labels.channels')}</label>
-                <span className="text-[var(--neon-cyan)] font-bold">{channels}</span>
+                <span className="text-indigo-400 font-bold">{channels}</span>
               </div>
               <input
                 id="roi-channels"
@@ -63,7 +63,7 @@ export function ROICalculator() {
             <div>
               <div className="flex justify-between mb-3">
                 <label htmlFor="roi-videos" className="text-foreground/80">{t('roi.labels.videos_per_week')}</label>
-                <span className="text-[var(--neon-cyan)] font-bold">{videosPerWeek}</span>
+                <span className="text-indigo-400 font-bold">{videosPerWeek}</span>
               </div>
               <input
                 id="roi-videos"
@@ -87,7 +87,7 @@ export function ROICalculator() {
             <div>
               <div className="flex justify-between mb-3">
                 <label htmlFor="roi-views" className="text-foreground/80">{t('roi.labels.avg_views')}</label>
-                <span className="text-[var(--neon-cyan)] font-bold">
+                <span className="text-indigo-400 font-bold">
                   {avgViews.toLocaleString()}
                 </span>
               </div>
@@ -114,7 +114,7 @@ export function ROICalculator() {
             <div className="pt-8 border-t border-border">
               <div className="text-center" aria-live="polite" aria-atomic="true">
                 <p className="text-muted-foreground mb-2">{t('roi.labels.projected_revenue')}</p>
-                <div className="text-5xl font-bold bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] bg-clip-text text-transparent transition-transform duration-200">
+                <div className="text-5xl font-bold bg-gradient-to-r from-indigo-400 to-indigo-600 bg-clip-text text-transparent transition-transform duration-200">
                   ${monthlyRevenue.toLocaleString()}
                 </div>
                 <p className="text-xs text-muted-foreground mt-4">
@@ -153,19 +153,19 @@ export function ROICalculator() {
           width: 20px;
           height: 20px;
           border-radius: 50%;
-          background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+          background: linear-gradient(135deg, #6366F1, #4F46E5);
           cursor: pointer;
-          box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+          box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
         }
 
         .slider::-moz-range-thumb {
           width: 20px;
           height: 20px;
           border-radius: 50%;
-          background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+          background: linear-gradient(135deg, #6366F1, #4F46E5);
           cursor: pointer;
           border: none;
-          box-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+          box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
         }
       `}</style>
       </Container>

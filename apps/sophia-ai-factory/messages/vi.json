@@ -167,25 +167,20 @@
       "brand": "Sophia AI Factory"
     },
     "hero": {
-      "title_1": "Nhà máy video Sophia + Tự động hóa AI",
-      "title_2": "Một Nền Tảng — Vô Hạn Quy Mô",
-      "subtitle": "Tạo video, tìm lead, gửi chiến dịch — tất cả tự động hóa bằng AI.",
+      "eyebrow": "Nhà Máy Video AI cho Doanh Thu Dịch Vụ",
+      "headline": "Xây Dựng Đế Chế Video AI Của Bạn",
+      "subtitle": "Tạo video AI ấn tượng cho YouTube, TikTok và Instagram trong vài phút. Không cần kỹ năng chỉnh sửa.",
       "cta_start": "Bắt Đầu Miễn Phí",
-      "cta_have_code": "Tôi có mã quà tặng",
-      "cta_demo": "Tìm Hiểu Thêm",
-      "stats": {
-        "tools": "Công Cụ AI",
-        "videos": "Video Đã Tạo",
-        "automation": "Tự Động Hóa"
-      },
-      "badge": "✨ Tạo nội dung bằng AI",
-      "cmd_prefix": "Thử:",
-      "cmd_suffix": "→",
-      "trust_uptime": "Hạ tầng edge tin cậy",
-      "trust_response": "Phản hồi edge",
-      "trust_security": "Bảo mật Cloudflare",
-      "trust_edge": "Triển khai biên",
-      "cta_pricing": "Xem Bảng Giá"
+      "cta_demo": "Xem Demo",
+      "trust_creators": "10.000+ nhà sáng tạo",
+      "trust_videos": "1 triệu+ video đã tạo",
+      "trust_rating": "Đánh giá 4.9/5",
+      "card_script_title": "Viết Kịch Bản AI",
+      "card_script_desc": "Tạo kịch bản video hấp dẫn tối ưu cho từng nền tảng chỉ với một cú nhấp chuột.",
+      "card_publish_title": "Xuất Bản Đa Kênh",
+      "card_publish_desc": "Tự động xuất bản lên YouTube, TikTok và Instagram cùng lúc.",
+      "card_revenue_title": "Phân Tích Doanh Thu",
+      "card_revenue_desc": "Theo dõi thu nhập liên kết và hiệu suất video theo thời gian thực."
     },
     "workflow": {
       "title": "Nhà Máy Nội Dung Tự Động Của Bạn",
@@ -236,7 +231,7 @@
         }
       },
       "highlight": "Gói Premium mở khóa tích hợp API với PartnerStack, Impact.com, và tự động phát hiện chương trình liên kết mới mỗi 4 giờ.",
-      "badge_label": "Nhãn tính năng"
+      "badge_label": "Tính Năng Nền Tảng"
     },
     "raas": {
       "title": "Tự Động Hóa Kinh Doanh Bằng AI",
@@ -2084,6 +2079,15 @@
       "free_submitting": "Đang kích hoạt..."
     },
     "current_plan_badge": "Gói Hiện Tại Của Bạn",
+    "save_percent": "Tiết kiệm {percent}%",
+    "for_starters": "Dành cho người mới bắt đầu",
+    "unlimited_features": "Bao gồm tất cả, không giới hạn",
+    "white_label_plan": "White-label dành cho agency",
+    "custom_price": "Theo yêu cầu",
+    "billing_monthly": "Thanh toán theo tháng",
+    "billing_yearly": "Thanh toán theo năm",
+    "get_started": "Bắt Đầu",
+    "contact_sales": "Liên Hệ Kinh Doanh",
     "comparison_title": "So Sánh Tất Cả Gói",
     "feature_compare": "Tính Năng",
     "most_popular": "Phổ Biến Nhất",
@@ -2144,7 +2148,6 @@
     "row_white_label": "White label",
     "row_billing": "Thanh toán",
     "billing_one_time": "Thanh toán một lần",
-    "billing_monthly": "Thanh toán theo tháng",
     "crypto_what_is_usdt": "USDT Là Gì?",
     "crypto_what_is_usdt_desc": "USDT (Tether) là tiền điện tử ổn định, giá trị luôn bằng 1 USD — nghĩa là 1 USDT = $1. Khác với Bitcoin, giá USDT không biến động. Hãy coi đây như USD dạng số.",
     "crypto_wallet_title": "Tạo Ví Crypto",
@@ -2156,10 +2159,10 @@
     "crypto_time_title": "Chờ Xác Nhận (5-30 phút)",
     "crypto_time_desc": "NOWPayments tự động phát hiện giao dịch của bạn (5-30 phút). Gói dịch vụ được kích hoạt ngay khi xác nhận — không cần thao tác thêm. Kiểm tra email để nhận biên lai xác nhận.",
     "dismiss": "Đóng",
-    "annual_label": "Annual label",
-    "commitment": "Commitment",
-    "error_checkout": "Error checkout",
-    "error_network": "Error network",
+    "annual_label": "Theo năm",
+    "commitment": "Thanh toán hàng tháng",
+    "error_checkout": "Không thể bắt đầu thanh toán. Vui lòng thử lại.",
+    "error_network": "Lỗi mạng. Vui lòng thử lại.",
     "features": {
       "api_webhooks": "API & Webhooks",
       "basic_analytics": "Basic Analytics",
@@ -2198,36 +2201,36 @@
       "compare_price": "Compare price",
       "one_time": "One time"
     },
-    "monthly_label": "Monthly label",
-    "per_month": "Per month",
-    "per_year": "Per year",
-    "popular": "Popular",
-    "processing": "Processing",
+    "monthly_label": "Theo tháng",
+    "per_month": "/tháng",
+    "per_year": "/năm",
+    "popular": "Phổ Biến Nhất",
+    "processing": "Đang xử lý...",
     "refund_master_desc": "Refund master desc",
     "refund_master_title": "Refund master title",
-    "subscribe_now": "Subscribe now",
-    "subscribe_now_master": "Subscribe now master",
-    "subtitle": "Subtitle",
-    "tier_selection_label": "Tier selection label",
+    "subscribe_now": "Đăng ký ngay",
+    "subscribe_now_master": "Đăng ký Master",
+    "subtitle": "Bảng giá hàng tháng đơn giản với đầy đủ tính năng",
+    "tier_selection_label": "Chọn gói dịch vụ",
     "tiers": {
-      "growth": {
-        "description": "Description",
-        "name": "Name"
+      "starter": {
+        "description": "Tự động hóa video AI hoàn chỉnh. Thanh toán hàng tháng.",
+        "name": "Starter"
       },
-      "master": {
-        "description": "Description",
-        "name": "Name"
+      "growth": {
+        "description": "Mở rộng sản xuất nội dung. Thanh toán hàng tháng.",
+        "name": "Growth"
       },
       "premium": {
-        "description": "Description",
-        "name": "Name"
+        "description": "Sức mạnh và hỗ trợ doanh nghiệp. Thanh toán hàng tháng.",
+        "name": "Premium"
       },
-      "starter": {
-        "description": "Description",
-        "name": "Name"
+      "master": {
+        "description": "Truy cập trọn đời. Một lần thanh toán. Bao gồm tất cả mãi mãi.",
+        "name": "Master"
       }
     },
-    "title": "Title",
+    "title": "Chọn Gói Của Bạn",
     "heygen_configure_prompt": "Vui lòng cấu hình HeyGen API key để mở khóa gói video.",
     "heygen_configure_cta": "Cấu hình HeyGen Key"
   },
@@ -2492,7 +2495,30 @@
       "checkEmail": "Liên kết xác nhận đã được gửi đến {email}. Vui lòng kiểm tra hộp thư của bạn.",
       "unknownError": "Đã xảy ra lỗi không xác định. Vui lòng thử lại.",
       "networkError": "Lỗi mạng. Vui lòng kiểm tra kết nối và thử lại."
-    }
+    },
+    "profile_description": "Profile description",
+    "upload_avatar": "Upload avatar",
+    "avatar_hint": "Avatar hint",
+    "name": "Name",
+    "email": "Email",
+    "save_changes": "Save changes",
+    "api_keys": "Api keys",
+    "api_keys_description": "Api keys description",
+    "configured": "Configured",
+    "not_configured": "Not configured",
+    "enter_key": "Enter key",
+    "api_key": "Api key",
+    "save_api_keys": "Save api keys",
+    "danger_zone": "Danger zone",
+    "danger_zone_description": "Danger zone description",
+    "delete_account": "Delete account",
+    "delete_account_hint": "Delete account hint",
+    "delete": "Delete",
+    "language": "Language",
+    "language_description": "Language description",
+    "coming_soon": "Coming soon",
+    "settings_title": "Settings title",
+    "settings_subtitle": "Settings subtitle"
   },
   "auth": {
     "signup": {
@@ -2864,7 +2890,28 @@
     "failure_reason_blockchain": "Failure reason blockchain",
     "failure_reason_expired": "Failure reason expired",
     "failure_reason_mismatch": "Failure reason mismatch",
-    "failure_reason_underpayment": "Failure reason underpayment"
+    "failure_reason_underpayment": "Failure reason underpayment",
+    "recommended": "Recommended",
+    "payment_method": "Payment method",
+    "guidance_text": "Guidance text",
+    "wallet_address": "Wallet address",
+    "copied": "Copied",
+    "copy": "Copy",
+    "qr_code": "Qr code",
+    "confirm_payment": "Confirm payment",
+    "nowpayments_redirect": "Nowpayments redirect",
+    "proceed_to_invoice": "Proceed to invoice",
+    "order_summary": "Order summary",
+    "plan_selected": "Plan selected",
+    "subscription": "Subscription",
+    "subscription_price": "Subscription price",
+    "ai_credits": "Ai credits",
+    "ai_credits_price": "Ai credits price",
+    "grand_total": "Grand total",
+    "grand_total_price": "Grand total price",
+    "breadcrumb_billing": "Breadcrumb billing",
+    "breadcrumb_checkout": "Breadcrumb checkout",
+    "page_title": "Page title"
   },
   "onboardingFlow": {
     "title": "Thiết lập Sophia AI",
@@ -3631,7 +3678,33 @@
       "login": "Login",
       "pricing": "Pricing",
       "raas": "Raas"
-    }
+    },
+    "referral_link_title": "Referral link title",
+    "copied": "Copied",
+    "copy_link": "Copy link",
+    "share_link": "Share link",
+    "referral_link_hint": "Referral link hint",
+    "usdt_wallet": "Usdt wallet",
+    "balance": "Balance",
+    "wallet_address": "Wallet address",
+    "copy_address": "Copy address",
+    "withdraw": "Withdraw",
+    "dashboard_title": "Dashboard title",
+    "dashboard_subtitle": "Dashboard subtitle",
+    "refer_a_friend": "Refer a friend",
+    "total_referrals": "Total referrals",
+    "total_referrals_sub": "Total referrals sub",
+    "active_referrals": "Active referrals",
+    "active_referrals_sub": "Active referrals sub",
+    "commission_earned": "Commission earned",
+    "commission_earned_sub": "Commission earned sub",
+    "pending_commission": "Pending commission",
+    "pending_commission_sub": "Pending commission sub",
+    "affiliate_offers": "Affiliate offers",
+    "recent_conversions": "Recent conversions",
+    "referrer": "Referrer",
+    "commission_short": "Commission short",
+    "status": "Status"
   },
   "paymentSuccess": {
     "tier_starter": "Starter",
@@ -4928,6 +5001,67 @@
       "nearLimit": "Sắp hết hạn mức",
       "topUpNow": "Nạp ngay để tiếp tục",
       "buyMore": "Mua thêm credit"
-    }
+    },
+    "paymentHistory": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "failed": "Failed",
+      "title": "Title",
+      "date": "Date",
+      "amount": "Amount",
+      "method": "Method",
+      "status": "Status",
+      "invoice": "Invoice",
+      "downloadInvoice": "Download Invoice"
+    },
+    "currentPlan": {
+      "badge": "Badge",
+      "planName": "Plan Name",
+      "price": "Price",
+      "billedAnnually": "Billed Annually",
+      "status": "Status",
+      "nextBilling": "Next Billing",
+      "changePlan": "Change Plan",
+      "cancel": "Cancel"
+    },
+    "usage": {
+      "title": "Title",
+      "of": "Of",
+      "aiVideos": "Video AI",
+      "campaigns": "Chiến dịch",
+      "storage": "Dung lượng"
+    },
+    "paymentMethods": {
+      "title": "Title",
+      "default": "Default",
+      "addMethod": "Add Method"
+    },
+    "topUp": {
+      "title": "Title",
+      "description": "Description",
+      "button": "Button"
+    },
+    "dangerZone": {
+      "title": "Title",
+      "description": "Description",
+      "deleteButton": "Delete Button",
+      "deleteHint": "Delete Hint",
+      "delete": "Delete"
+    },
+    "pageTitle": "Page Title",
+    "pageSubtitle": "Page Subtitle"
+  },
+  "campaigns": {
+    "all_statuses": "All statuses",
+    "all_channels": "All channels",
+    "search_campaigns": "Search campaigns",
+    "filter_status": "Filter status",
+    "filter_channel": "Filter channel",
+    "filter_date": "Filter date",
+    "no_campaigns": "No campaigns",
+    "no_campaigns_hint": "No campaigns hint",
+    "create_campaign": "Create campaign",
+    "title": "Title",
+    "subtitle": "Subtitle"
   }
 }

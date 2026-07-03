@@ -93,7 +93,7 @@ export function StatsBar() {
 
   return (
     <ScrollReveal>
-      <div className="rounded-3xl p-10 md:p-12 mb-24 relative overflow-hidden bg-section-dark">
+      <div className="rounded-lg p-10 md:p-12 mb-24 relative overflow-hidden bg-section-dark">
         <div className="absolute top-0 right-0 w-64 h-64 rounded-full blur-[100px] pointer-events-none bg-neon-cyan/[0.07]" aria-hidden="true" />
         <div className="relative grid grid-cols-2 md:grid-cols-4 gap-8 stagger-reveal">
           {stats.map((stat) => (

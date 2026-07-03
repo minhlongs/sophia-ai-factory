@@ -16,7 +16,7 @@ export function TestimonialsGrid() {
   return (
     <>
       <ScrollReveal className="text-center mb-14">
-        <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-5 text-xs font-semibold uppercase tracking-wider rounded-full border text-neon-cyan bg-neon-cyan/5 border-neon-cyan/10">
+        <span className="inline-flex items-center gap-2 px-4 py-1.5 mb-5 text-xs font-semibold uppercase tracking-wider rounded-full border text-indigo-500 bg-indigo-500/10 border-indigo-500/20">
           <span className="material-symbols-outlined text-sm">format_quote</span>
           {t("badges.customer_reviews")}
         </span>
@@ -32,7 +32,7 @@ export function TestimonialsGrid() {
         {TESTIMONIAL_KEYS.map((key, i) => (
           <ScrollReveal key={key} delay={i * 100}>
             <div className="gradient-border h-full cursor-pointer group">
-              <div className="p-6 rounded-2xl bg-card h-full flex flex-col gap-4">
+              <div className="p-6 rounded-lg bg-zinc-900 h-full flex flex-col gap-4">
                 <div className="flex gap-0.5">
                   {[...Array(5)].map((_, j) => (
                     <span key={`star-${key}-${j}`} className="material-symbols-outlined text-base text-amber-400" aria-hidden="true">star</span>
@@ -41,8 +41,8 @@ export function TestimonialsGrid() {
                 <p className="text-muted-foreground leading-relaxed text-sm flex-1">
                   &ldquo;{t(`testimonials.${key}.quote`)}&rdquo;
                 </p>
-                <div className="flex items-center gap-3 pt-3 border-t border-border/20">
-                  <div className="w-10 h-10 rounded-full text-white text-sm font-bold flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)]">
+                <div className="flex items-center gap-3 pt-3 border-t border-zinc-800/50">
+                  <div className="w-10 h-10 rounded-full text-white text-sm font-bold flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300 bg-gradient-to-br from-indigo-500 to-indigo-700">
                     {INITIALS_MAP[key]}
                   </div>
                   <div>

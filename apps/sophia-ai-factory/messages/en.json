@@ -167,25 +167,20 @@
       "brand": "Sophia AI Factory"
     },
     "hero": {
-      "title_1": "Sophia Video Factory + AI Automation",
-      "title_2": "One Platform — Infinite Scale",
-      "subtitle": "Create videos, generate leads, send campaigns — all automated with AI.",
+      "eyebrow": "AI Video Factory for Revenue-as-a-Service",
+      "headline": "Build Your AI Video Empire",
+      "subtitle": "Create scroll-stopping AI videos for YouTube, TikTok, and Instagram in minutes. No editing skills needed.",
       "cta_start": "Start Free",
-      "cta_have_code": "I have a code",
-      "cta_demo": "Learn More",
-      "stats": {
-        "tools": "AI Tools",
-        "videos": "Videos Created",
-        "automation": "Automation"
-      },
-      "badge": "✨ AI-Powered Creation",
-      "cmd_prefix": "Try:",
-      "cmd_suffix": "→",
-      "trust_uptime": "Edge-deployed reliability",
-      "trust_response": "Edge response",
-      "trust_security": "Edge-secured by Cloudflare",
-      "trust_edge": "Edge Deployed",
-      "cta_pricing": "See Pricing"
+      "cta_demo": "Watch Demo",
+      "trust_creators": "10,000+ creators",
+      "trust_videos": "1M+ videos generated",
+      "trust_rating": "4.9/5 rating",
+      "card_script_title": "AI Script Writing",
+      "card_script_desc": "Generate engaging video scripts optimized for each platform with one click.",
+      "card_publish_title": "Multi-Channel Publish",
+      "card_publish_desc": "Auto-publish to YouTube, TikTok, and Instagram simultaneously.",
+      "card_revenue_title": "Revenue Analytics",
+      "card_revenue_desc": "Track affiliate earnings and video performance in real-time."
     },
     "workflow": {
       "title": "Your Automated Content Factory",
@@ -236,7 +231,7 @@
         }
       },
       "highlight": "Premium tier unlocks API integrations with PartnerStack, Impact.com, and auto-discovery of new affiliate programs every 4 hours.",
-      "badge_label": "Badge label"
+      "badge_label": "Platform Features"
     },
     "raas": {
       "title": "AI-Powered Business Automation",
@@ -2084,6 +2079,15 @@
       "free_submitting": "Activating..."
     },
     "current_plan_badge": "Your Current Plan",
+    "save_percent": "Save {percent}%",
+    "for_starters": "For starters",
+    "unlimited_features": "Everything included, unlimited",
+    "white_label_plan": "White-label agency plan",
+    "custom_price": "Custom",
+    "billing_monthly": "Billing monthly",
+    "billing_yearly": "Billed yearly",
+    "get_started": "Get Started",
+    "contact_sales": "Contact Sales",
     "comparison_title": "Compare All Plans",
     "feature_compare": "Feature",
     "most_popular": "Most Popular",
@@ -2144,7 +2148,6 @@
     "row_white_label": "Row white label",
     "row_billing": "Row billing",
     "billing_one_time": "Billing one time",
-    "billing_monthly": "Billing monthly",
     "crypto_what_is_usdt": "What is USDT?",
     "crypto_what_is_usdt_desc": "USDT (Tether) is a stable cryptocurrency pegged 1:1 to the US Dollar — so 1 USDT = $1. Unlike Bitcoin, its price doesn't fluctuate. Think of it like digital USD.",
     "crypto_wallet_title": "Get a Crypto Wallet",
@@ -2156,10 +2159,10 @@
     "crypto_time_title": "Wait for Confirmation (5-30 min)",
     "crypto_time_desc": "NOWPayments detects your payment automatically (5-30 min). Your tier activates instantly once confirmed — no manual steps. Check your email for the confirmation receipt.",
     "dismiss": "Dismiss",
-    "annual_label": "Annual label",
-    "commitment": "Commitment",
-    "error_checkout": "Error checkout",
-    "error_network": "Error network",
+    "annual_label": "Yearly",
+    "commitment": "Monthly subscription",
+    "error_checkout": "Failed to start checkout. Please try again.",
+    "error_network": "Network error. Please try again.",
     "features": {
       "api_webhooks": "API & Webhooks",
       "basic_analytics": "Basic Analytics",
@@ -2198,36 +2201,36 @@
       "compare_price": "Compare price",
       "one_time": "One time"
     },
-    "monthly_label": "Monthly label",
+    "monthly_label": "Monthly",
     "per_month": "Per month",
     "per_year": "Per year",
-    "popular": "Popular",
-    "processing": "Processing",
+    "popular": "Most Popular",
+    "processing": "Processing...",
     "refund_master_desc": "Refund master desc",
     "refund_master_title": "Refund master title",
     "subscribe_now": "Subscribe now",
-    "subscribe_now_master": "Subscribe now master",
-    "subtitle": "Subtitle",
+    "subscribe_now_master": "Get Master",
+    "subtitle": "Simple monthly pricing with everything included",
     "tier_selection_label": "Tier selection label",
     "tiers": {
       "growth": {
-        "description": "Description",
-        "name": "Name"
+        "description": "Scale your content production. Monthly subscription.",
+        "name": "Growth"
       },
       "master": {
-        "description": "Description",
-        "name": "Name"
+        "description": "Lifetime access. One payment. Everything included forever.",
+        "name": "Master"
       },
       "premium": {
-        "description": "Description",
-        "name": "Name"
+        "description": "Enterprise power and support. Monthly subscription.",
+        "name": "Premium"
       },
       "starter": {
-        "description": "Description",
-        "name": "Name"
+        "description": "Complete AI video automation. Monthly subscription.",
+        "name": "Starter"
       }
     },
-    "title": "Title",
+    "title": "Choose Your Plan",
     "heygen_configure_prompt": "Configure your HeyGen API key to unlock video generation bundles.",
     "heygen_configure_cta": "Configure HeyGen Key"
   },
@@ -2492,7 +2495,30 @@
       "checkEmail": "Verification link sent to {email}. Please check your inbox.",
       "unknownError": "An unknown error occurred. Please try again.",
       "networkError": "Network error. Please check your connection and try again."
-    }
+    },
+    "profile_description": "Profile description",
+    "upload_avatar": "Upload avatar",
+    "avatar_hint": "Avatar hint",
+    "name": "Name",
+    "email": "Email",
+    "save_changes": "Save changes",
+    "api_keys": "Api keys",
+    "api_keys_description": "Api keys description",
+    "configured": "Configured",
+    "not_configured": "Not configured",
+    "enter_key": "Enter key",
+    "api_key": "Api key",
+    "save_api_keys": "Save api keys",
+    "danger_zone": "Danger zone",
+    "danger_zone_description": "Danger zone description",
+    "delete_account": "Delete account",
+    "delete_account_hint": "Delete account hint",
+    "delete": "Delete",
+    "language": "Language",
+    "language_description": "Language description",
+    "coming_soon": "Coming soon",
+    "settings_title": "Settings title",
+    "settings_subtitle": "Settings subtitle"
   },
   "auth": {
     "signup": {
@@ -2864,7 +2890,28 @@
     "failure_reason_blockchain": "Failure reason blockchain",
     "failure_reason_expired": "Failure reason expired",
     "failure_reason_mismatch": "Failure reason mismatch",
-    "failure_reason_underpayment": "Failure reason underpayment"
+    "failure_reason_underpayment": "Failure reason underpayment",
+    "recommended": "Recommended",
+    "payment_method": "Payment method",
+    "guidance_text": "Guidance text",
+    "wallet_address": "Wallet address",
+    "copied": "Copied",
+    "copy": "Copy",
+    "qr_code": "Qr code",
+    "confirm_payment": "Confirm payment",
+    "nowpayments_redirect": "Nowpayments redirect",
+    "proceed_to_invoice": "Proceed to invoice",
+    "order_summary": "Order summary",
+    "plan_selected": "Plan selected",
+    "subscription": "Subscription",
+    "subscription_price": "Subscription price",
+    "ai_credits": "Ai credits",
+    "ai_credits_price": "Ai credits price",
+    "grand_total": "Grand total",
+    "grand_total_price": "Grand total price",
+    "breadcrumb_billing": "Breadcrumb billing",
+    "breadcrumb_checkout": "Breadcrumb checkout",
+    "page_title": "Page title"
   },
   "onboardingFlow": {
     "title": "Set up Sophia AI",
@@ -3631,7 +3678,33 @@
       "login": "Login",
       "pricing": "Pricing",
       "raas": "Raas"
-    }
+    },
+    "referral_link_title": "Referral link title",
+    "copied": "Copied",
+    "copy_link": "Copy link",
+    "share_link": "Share link",
+    "referral_link_hint": "Referral link hint",
+    "usdt_wallet": "Usdt wallet",
+    "balance": "Balance",
+    "wallet_address": "Wallet address",
+    "copy_address": "Copy address",
+    "withdraw": "Withdraw",
+    "dashboard_title": "Dashboard title",
+    "dashboard_subtitle": "Dashboard subtitle",
+    "refer_a_friend": "Refer a friend",
+    "total_referrals": "Total referrals",
+    "total_referrals_sub": "Total referrals sub",
+    "active_referrals": "Active referrals",
+    "active_referrals_sub": "Active referrals sub",
+    "commission_earned": "Commission earned",
+    "commission_earned_sub": "Commission earned sub",
+    "pending_commission": "Pending commission",
+    "pending_commission_sub": "Pending commission sub",
+    "affiliate_offers": "Affiliate offers",
+    "recent_conversions": "Recent conversions",
+    "referrer": "Referrer",
+    "commission_short": "Commission short",
+    "status": "Status"
   },
   "paymentSuccess": {
     "tier_starter": "Starter",
@@ -4921,6 +4994,67 @@
       "nearLimit": "Near Limit",
       "topUpNow": "Top Up Now",
       "buyMore": "Buy More"
-    }
+    },
+    "paymentHistory": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "failed": "Failed",
+      "title": "Title",
+      "date": "Date",
+      "amount": "Amount",
+      "method": "Method",
+      "status": "Status",
+      "invoice": "Invoice",
+      "downloadInvoice": "Download Invoice"
+    },
+    "currentPlan": {
+      "badge": "Badge",
+      "planName": "Plan Name",
+      "price": "Price",
+      "billedAnnually": "Billed Annually",
+      "status": "Status",
+      "nextBilling": "Next Billing",
+      "changePlan": "Change Plan",
+      "cancel": "Cancel"
+    },
+    "usage": {
+      "title": "Title",
+      "of": "Of",
+      "aiVideos": "AI Videos",
+      "campaigns": "Campaigns",
+      "storage": "Storage"
+    },
+    "paymentMethods": {
+      "title": "Title",
+      "default": "Default",
+      "addMethod": "Add Method"
+    },
+    "topUp": {
+      "title": "Title",
+      "description": "Description",
+      "button": "Button"
+    },
+    "dangerZone": {
+      "title": "Title",
+      "description": "Description",
+      "deleteButton": "Delete Button",
+      "deleteHint": "Delete Hint",
+      "delete": "Delete"
+    },
+    "pageTitle": "Page Title",
+    "pageSubtitle": "Page Subtitle"
+  },
+  "campaigns": {
+    "all_statuses": "All statuses",
+    "all_channels": "All channels",
+    "search_campaigns": "Search campaigns",
+    "filter_status": "Filter status",
+    "filter_channel": "Filter channel",
+    "filter_date": "Filter date",
+    "no_campaigns": "No campaigns",
+    "no_campaigns_hint": "No campaigns hint",
+    "create_campaign": "Create campaign",
+    "title": "Title",
+    "subtitle": "Subtitle"
   }
 }
