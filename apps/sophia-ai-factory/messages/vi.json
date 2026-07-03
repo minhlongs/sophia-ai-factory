@@ -5011,12 +5011,24 @@
         "env": "Env"
       },
       "kpi": {
-        "crons": { "label": "Cron Đã Lên Lịch" },
-        "emails": { "label": "Email Đã Gửi" },
-        "webhooks": { "label": "Điểm Cuối Webhook" },
-        "storage": { "label": "Bộ Nhớ R2" },
-        "cost": { "label": "Chi Phí Nhà Cung Cấp (30 ngày)" },
-        "signups": { "label": "Đăng Ký (30 ngày)" }
+        "crons": {
+          "label": "Cron Đã Lên Lịch"
+        },
+        "emails": {
+          "label": "Email Đã Gửi"
+        },
+        "webhooks": {
+          "label": "Điểm Cuối Webhook"
+        },
+        "storage": {
+          "label": "Bộ Nhớ R2"
+        },
+        "cost": {
+          "label": "Chi Phí Nhà Cung Cấp (30 ngày)"
+        },
+        "signups": {
+          "label": "Đăng Ký (30 ngày)"
+        }
       }
     },
     "affiliatePortal": {
@@ -5051,16 +5063,21 @@
         "users": "Nguoi dung",
         "licenses": "Giay phep",
         "auditLog": "Nhat ky kiem tra",
-        "systemHealth": "He thong"
+        "systemHealth": "He thong",
+        "label": "Label",
+        "logout": "Logout"
       },
       "header": {
         "searchPlaceholder": "Tim kiem chien dich...",
         "upgradePlan": "Nang cap goi",
-        "notifications": "Thong bao"
+        "notifications": "Thong bao",
+        "localeEnglish": "Locale English",
+        "localeVietnamese": "Locale Vietnamese"
       },
       "breadcrumb": {
         "home": "Trang chu",
-        "dashboard": "Tong quan"
+        "dashboard": "Tong quan",
+        "label": "Label"
       },
       "welcome": {
         "heading": "Chao mung tro lai, {name}.",
