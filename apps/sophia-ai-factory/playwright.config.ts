@@ -34,12 +34,16 @@ export default defineConfig({
   webServer: isRemote
     ? undefined
     : {
-        command: process.env.E2E_PREBUILT === '1'
+        command: process.env.NEXT_PUBLIC_MOCK_D1 === 'true'
+          ? 'NEXT_PUBLIC_MOCK_D1=true npm run dev'
+          : process.env.E2E_PREBUILT === '1'
           ? 'npx wrangler dev --local --port 3000'
-          : 'bash -c "export $(grep -v \'^\' .env.local | xargs) && npm run build && node scripts/fix-instrumentation-standalone.mjs && npx @opennextjs/cloudflare build --skipNextBuild && npx wrangler dev --local --port 3000"',
+          : 'bash -c "export $(grep -v \'^#\' .env.local | xargs) && npm run build && node scripts/fix-instrumentation-standalone.mjs && npx @opennextjs/cloudflare build --skipNextBuild && npx wrangler dev --local --port 3000"',
         url: BASE_URL,
         reuseExistingServer: !process.env.CI,
-        timeout: process.env.E2E_PREBUILT === '1' ? 60 * 1000 : 300 * 1000,
+        timeout: process.env.NEXT_PUBLIC_MOCK_D1 === 'true' ? 60 * 1000
+          : process.env.E2E_PREBUILT === '1' ? 60 * 1000
+          : 300 * 1000,
       },
   globalSetup: './tests/e2e/global-setup.ts',
 });

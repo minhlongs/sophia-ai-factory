@@ -1,29 +1,11 @@
-'use client';
-
 import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { LoginPage } from '@/components/stitch/screens/login';
-import RegisterPage from '@/components/stitch/screens/auth/register-page';
-
-function LoginPageContent() {
-  const searchParams = useSearchParams();
-  const tab = searchParams?.get('tab');
-  // Support both 'next' (from pricing/auth guard) and 'redirect' (from API GET handler)
-  const redirectTo = searchParams?.get('next') || searchParams?.get('redirect') || undefined;
-
-  if (tab === 'signup') {
-    return <RegisterPage />;
-  }
-
-  return <LoginPage redirectTo={redirectTo} />;
-}
+import { LoginPageContent } from './login-page-content';
 
 /**
- * Login page with Suspense boundary for useSearchParams().
- * Next.js requires a Suspense wrapper when useSearchParams() is used
- * in a component — otherwise the entire page de-opts from static rendering.
+ * Login page route — Server Component that wraps client-side content
+ * in a Suspense boundary so useSearchParams() works without errors.
  */
-export default function LoginPageWithI18n() {
+export default function LoginPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-background">

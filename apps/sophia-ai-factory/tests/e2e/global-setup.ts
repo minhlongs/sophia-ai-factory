@@ -1,8 +1,14 @@
 /**
  * Global setup for Playwright tests.
  * Runs once before all tests start.
+ *
+ * Responsibilities:
+ * 1. Create test output directories (screenshots, videos).
+ * 2. Bootstrap local D1 database with missing migrations.
+ * 3. Validate environment and report test target.
  */
 
+import { execSync } from 'child_process';
 import { mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 
@@ -32,6 +38,19 @@ export default async () => {
   const isRemote = baseUrl.startsWith('https://');
   if (!isRemote) {
     console.log('🌐 Will start local dev server via webServer config');
+  }
+
+  // Bootstrap local D1 with missing migrations for mock D1 mode
+  if (process.env.NEXT_PUBLIC_MOCK_D1 === 'true') {
+    try {
+      console.log('🗄️  Bootstrapping local D1 database...');
+      const bootstrapScript = join(process.cwd(), 'scripts', 'e2e-bootstrap-d1.sh');
+      execSync(`bash "${bootstrapScript}"`, { stdio: 'pipe', timeout: 120_000 });
+      console.log('✅ Local D1 bootstrap complete');
+    } catch (err) {
+      console.warn('⚠️  D1 bootstrap skipped or failed — tests may have missing tables');
+      if (err instanceof Error) console.warn(`   ${err.message}`);
+    }
   }
 
   // Warn about missing test user credentials

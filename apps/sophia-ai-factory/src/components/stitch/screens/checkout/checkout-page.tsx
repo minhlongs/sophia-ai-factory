@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { CreditCard, Lock, Check } from 'lucide-react';
 import { Button, Card, CardHeader, CardContent, Input } from '@/components/stitch';
 
@@ -11,6 +12,7 @@ const plans = [
 ];
 
 export default function CheckoutPage() {
+  const t = useTranslations('stitch.checkout');
   const [selectedPlan, setSelectedPlan] = React.useState('pro');
   const [step, setStep] = React.useState<'payment' | 'success'>('payment');
 
@@ -30,18 +32,21 @@ export default function CheckoutPage() {
           </div>
           <CardHeader className="!p-0">
             <h1 className="font-headline-xl text-headline-xl text-on-surface mb-sm">
-              Payment Successful!
+              {t('success.title')}
             </h1>
             <p className="font-body-md text-body-md text-on-surface-variant">
-              Thank you for subscribing. Your account has been upgraded and you&apos;ll receive a confirmation email shortly.
+              {t('success.subtitle', { plan: plans.find(p => p.id === selectedPlan)?.name ?? selectedPlan })}
+            </p>
+            <p className="font-body-md text-body-md text-on-surface-variant mt-sm">
+              {t('success.emailConfirmation')}
             </p>
           </CardHeader>
           <CardContent className="!p-0 mt-xl space-y-md">
             <Button fullWidth href="/dashboard">
-              Go to Dashboard
+              {t('success.dashboardLink')}
             </Button>
             <Button variant="outline" fullWidth href="/settings">
-              View Receipt
+              {t('success.viewReceipt')}
             </Button>
           </CardContent>
         </Card>
@@ -54,10 +59,10 @@ export default function CheckoutPage() {
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-xl">
           <h1 className="font-headline-xl text-headline-xl text-on-surface mb-sm">
-            Complete Your Purchase
+            {t('payment.title')}
           </h1>
           <p className="font-body-md text-body-md text-on-surface-variant">
-            You&apos;re just one step away from unlocking premium features
+            {t('payment.subtitle')}
           </p>
         </div>
 
@@ -65,7 +70,7 @@ export default function CheckoutPage() {
           {/* Plan Summary */}
           <div className="lg:col-span-1 space-y-md">
             <Card padding="lg">
-              <h3 className="font-headline-sm text-headline-sm text-on-surface mb-md">Your Plan</h3>
+              <h3 className="font-headline-sm text-headline-sm text-on-surface mb-md">{t('payment.yourPlan')}</h3>
               {plans.map((plan) => (
                 <div
                   key={plan.id}
@@ -92,19 +97,19 @@ export default function CheckoutPage() {
             </Card>
 
             <Card padding="lg">
-              <h3 className="font-headline-sm text-headline-sm text-on-surface mb-md">Order Summary</h3>
+              <h3 className="font-headline-sm text-headline-sm text-on-surface mb-md">{t('payment.orderSummary')}</h3>
               <div className="space-y-sm">
                 <div className="flex justify-between font-body-sm">
-                  <span className="text-on-surface-variant">Monthly subscription</span>
+                  <span className="text-on-surface-variant">{t('payment.monthlySubscription')}</span>
                   <span className="text-on-surface">${plans.find(p => p.id === selectedPlan)?.price}</span>
                 </div>
                 <div className="flex justify-between font-body-sm">
-                  <span className="text-on-surface-variant">Taxes</span>
+                  <span className="text-on-surface-variant">{t('payment.taxes')}</span>
                   <span className="text-on-surface">$0.00</span>
                 </div>
                 <div className="border-t border-outline-variant pt-sm mt-sm">
                   <div className="flex justify-between font-headline-md">
-                    <span className="text-on-surface">Total</span>
+                    <span className="text-on-surface">{t('payment.total')}</span>
                     <span className="text-primary">${plans.find(p => p.id === selectedPlan)?.price}</span>
                   </div>
                 </div>
@@ -117,17 +122,17 @@ export default function CheckoutPage() {
             <Card padding="lg">
               <CardHeader>
                 <h3 className="font-headline-sm text-headline-sm text-on-surface mb-sm">
-                  Payment Details
+                  {t('payment.paymentDetails')}
                 </h3>
                 <p className="font-body-sm text-body-sm text-on-surface-variant">
-                  All transactions are secure and encrypted
+                  {t('payment.secureEncrypted')}
                 </p>
               </CardHeader>
               <CardContent>
                 <form className="space-y-lg" onSubmit={handleSubmit}>
                   <div className="space-y-sm">
                     <label className="font-label-md text-label-md text-on-surface">
-                      Card Number
+                      {t('payment.cardNumber')}
                     </label>
                     <div className="relative">
                       <Input placeholder="1234 5678 9012 3456" />
@@ -141,13 +146,13 @@ export default function CheckoutPage() {
                   <div className="grid grid-cols-2 gap-lg">
                     <div className="space-y-sm">
                       <label className="font-label-md text-label-md text-on-surface">
-                        Expiry Date
+                        {t('payment.expiryDate')}
                       </label>
                       <Input placeholder="MM/YY" />
                     </div>
                     <div className="space-y-sm">
                       <label className="font-label-md text-label-md text-on-surface">
-                        CVC
+                        {t('payment.cvc')}
                       </label>
                       <Input placeholder="123" />
                     </div>
@@ -155,7 +160,7 @@ export default function CheckoutPage() {
 
                   <div className="space-y-sm">
                     <label className="font-label-md text-label-md text-on-surface">
-                      Cardholder Name
+                      {t('payment.cardholderName')}
                     </label>
                     <Input placeholder="John Doe" />
                   </div>
@@ -163,7 +168,7 @@ export default function CheckoutPage() {
                   <div className="bg-surface-container-low rounded-xl p-md flex items-start gap-sm">
                     <Lock className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                     <p className="text-sm text-on-surface-variant">
-                      Your payment information is processed securely. We do not store your card details.
+                      {t('payment.secureEncrypted')}
                     </p>
                   </div>
 
@@ -174,13 +179,13 @@ export default function CheckoutPage() {
                       className="w-4 h-4 text-primary"
                     />
                     <label htmlFor="saveCard" className="font-body-sm text-on-surface-variant">
-                      Save this card for future purchases
+                      {t('payment.saveCard')}
                     </label>
                   </div>
 
                   <Button type="submit" fullWidth size="lg" className="h-12 mt-lg">
                     <CreditCard className="w-5 h-5 mr-2" />
-                    Pay ${plans.find(p => p.id === selectedPlan)?.price}
+                    {t('payment.payNow')} ${plans.find(p => p.id === selectedPlan)?.price}
                   </Button>
                 </form>
               </CardContent>
