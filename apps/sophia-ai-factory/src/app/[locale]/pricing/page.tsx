@@ -1,9 +1,9 @@
 import { getTranslations } from "next-intl/server";
-import { useTranslations } from "next-intl";
 import { isHeyGenHealthy } from "@/seed/health/heygen-health-check";
 import type { Tier } from "@/seed/types";
 import Link from "next/link";
 import { buildAllProductSchemas, buildBreadcrumbSchema, BREADCRUMBS } from "@/land/seo/schema-org";
+import StitchPricingPage from "@/components/stitch/screens/pricing/pricing-page";
 
 // Pricing page — dynamic render with 1 hour edge cache.
 export const dynamic = 'force-dynamic';
@@ -14,9 +14,6 @@ export const metadata = {
   description: "Video Factory + AI Automation — One Platform. Plans from $199/month to $4,999 lifetime. USDT/crypto payments accepted.",
 };
 
-// Fallback component that renders nothing but matches React.ComponentType signature
-const EmptyComponent = (() => null) as React.ComponentType<Record<string, unknown>>;
-
 export default async function PricingPage() {
   let t: (key: string) => string = (key) => key;
   let heygenHealthy = false;
@@ -25,10 +22,6 @@ export default async function PricingPage() {
   let currentTier: Tier | null = null;
   let productSchemas: object[] = [];
   let breadcrumbSchema: unknown = null;
-
-  // Components (initially set to fallback)
-  let PricingStitchSectionComponent: React.ComponentType<{ isAuthenticated?: boolean; currentTier?: string | null }> = EmptyComponent as React.ComponentType<{ isAuthenticated?: boolean; currentTier?: string | null }>;
-  let PricingFaqComponent: React.ComponentType<object> = EmptyComponent as React.ComponentType<object>;
 
   try {
     [t, heygenHealthy] = await Promise.all([
@@ -78,22 +71,6 @@ export default async function PricingPage() {
       }
     }
 
-    // Dynamic imports — each independent, failures isolated
-    const [
-      pricingStitchSection,
-      pricingFaq,
-    ] = await Promise.allSettled<React.ComponentType<object> | null>([
-      import("@/forest/components/pricing/pricing-stitch-section").then(m => m.PricingStitchSection ?? null),
-      import("@/forest/components/pricing/pricing-faq").then(m => m.PricingFaq ?? null),
-    ]);
-
-    if (pricingStitchSection.status === 'fulfilled' && pricingStitchSection.value) {
-      PricingStitchSectionComponent = pricingStitchSection.value as React.ComponentType<{ isAuthenticated?: boolean; currentTier?: string | null }>;
-    }
-    if (pricingFaq.status === 'fulfilled' && pricingFaq.value) {
-      PricingFaqComponent = pricingFaq.value as React.ComponentType<object>;
-    }
-
   } catch (err) {
     // All components already default to EmptyComponent; other data gets defaults inline
     t = (key: string) => key;
@@ -109,7 +86,7 @@ export default async function PricingPage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen bg-[#0F0F11]">
+    <>
       {/* Structured data */}
       {productSchemas.map((schema, i) => (
         <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) ?? '' }} />
@@ -118,8 +95,8 @@ export default async function PricingPage() {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       ) : null}
 
-      {/* Stitch-designed pricing section */}
-      <PricingStitchSectionComponent isAuthenticated={!!user} currentTier={currentTier} />
+      {/* Stitch-designed pricing page — full page (nav, hero, pricing, FAQ, footer) */}
+      <StitchPricingPage />
 
       {/* Heygen configure prompt for authenticated users without a heygen key */}
       {user != null && !userHeyGenConfigured ? (
@@ -134,9 +111,6 @@ export default async function PricingPage() {
           </div>
         </section>
       ) : null}
-
-      {/* FAQ accordion */}
-      <PricingFaqComponent />
-    </main>
+    </>
   );
 }

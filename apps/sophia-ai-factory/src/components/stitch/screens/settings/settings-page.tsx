@@ -46,6 +46,21 @@ interface LocaleOption {
   flag: string;
 }
 
+/* ── Props ─────────────────────────────────────────────────────────────── */
+
+interface SettingsPageProps {
+  /** Server-fetched user display name */
+  userName?: string;
+  /** Server-fetched user email */
+  userEmail?: string;
+  /** Resolved tier (BASIC | PREMIUM | ENTERPRISE | MASTER) */
+  currentTier?: string;
+  /** Subscription period end timestamp (ISO string or null) */
+  periodEnd?: string | null;
+  /** Completed order count */
+  completedOrderCount?: number;
+}
+
 /* ── Constants ─────────────────────────────────────────────────────────── */
 
 const NAV_ITEMS: NavItem[] = [
@@ -68,24 +83,21 @@ const LOCALE_OPTIONS: LocaleOption[] = [
   { id: 'en', labelKey: 'locale.english', flag: '🇺🇸' },
 ];
 
-const MOCK_USER = {
-  name: 'Sophia Anderson',
-  email: 'sophia.anderson@ai-factory.io',
-  avatarUrl:
-    'https://lh3.googleusercontent.com/aida-public/AB6AXuDDdCiGyTtHOrlZLTuZpkus9YgLoQ4fWplffWuOKdSCswEf0Ndfvtdv8wstR5i7nFGQOm3KD_YHG1RDwJQEswbDbVLYHH5dIQ5msZwRVwCSFkM3qxTzgvEvieS6H8e7VdiD7p_f5b2F8af4EPjreZidQcdGoNc1C8xOVLi6ZC63vTCv6N9dSYqQWDClyUA46Msow6RtaHy8_Cb1uETwsV2w7bqa9rca6alDfZkx6qwkTbBgIZrniA9qqjpJBWdz4jeZeViV2Ml2yGg',
-};
-
 /* ══════════════════════════════════════════════════════════════════════════
    SettingsPage
    ══════════════════════════════════════════════════════════════════════════ */
 
-export default function SettingsPage() {
+export default function SettingsPage({
+  userName: propUserName,
+  userEmail: propUserEmail,
+  currentTier: propCurrentTier,
+}: SettingsPageProps = {}) {
   const t = useTranslations('stitch.settingsPage');
   const [activeNav, setActiveNav] = useState('account');
   const [selectedLocale, setSelectedLocale] = useState<'vi' | 'en'>('en');
   const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({});
-  const [userName, setUserName] = useState(MOCK_USER.name);
-  const [userEmail] = useState(MOCK_USER.email);
+  const [userName, setUserName] = useState(propUserName ?? '');
+  const [userEmail] = useState(propUserEmail ?? '');
 
   const toggleKeyVisibility = (id: string) => {
     setVisibleKeys((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -128,7 +140,7 @@ export default function SettingsPage() {
           <Settings className="w-5 h-5 text-primary" aria-hidden="true" />
           <div className="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant">
             <div className="w-full h-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
-              {MOCK_USER.name.charAt(0)}
+              {userName ? userName.charAt(0).toUpperCase() : '?'}
             </div>
           </div>
         </div>
@@ -193,7 +205,7 @@ export default function SettingsPage() {
                   {/* Avatar Upload */}
                   <div className="relative group cursor-pointer w-24 h-24">
                     <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-primary/30 group-hover:border-primary transition-all bg-primary/20 flex items-center justify-center text-primary font-bold text-xl">
-                      {MOCK_USER.name.charAt(0)}
+                      {userName ? userName.charAt(0).toUpperCase() : '?'}
                     </div>
                     <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <Upload className="w-5 h-5 text-white" aria-hidden="true" />

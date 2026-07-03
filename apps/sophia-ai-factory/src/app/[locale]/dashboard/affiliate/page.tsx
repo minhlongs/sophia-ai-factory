@@ -1,17 +1,14 @@
 /**
  * Affiliate Dashboard — /dashboard/affiliate
  *
- * Server Component. Renders for the authenticated affiliate:
- *  - Summary stats (clicks, conversions, EPC, commission) over last 30 days
- *  - Recent conversion feed (latest 50)
- *  - CSV export action
+ * Server Component. Fetches real data for the authenticated affiliate
+ * and renders the Stitch AffiliateDashboardPage component.
  *
  * Data primitives: `getAffiliateClickStats`, `getRecentConversions` from `@/land/affiliates/dashboard-stats`.
  * Uses canonical Sophia tier-gated dashboard pattern (server-fetched, dynamic rendering).
  */
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import {
   getAffiliateClickStats,
@@ -21,6 +18,8 @@ import {
 import { getEarningsSummary } from '@/land/payouts/commission-ledger';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { Users, UserCheck, DollarSign, Clock } from 'lucide-react';
+import { AffiliateDashboardPage as StitchAffiliateDashboard } from '@/components/stitch/screens/affiliate';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,19 +31,25 @@ interface ClickStats {
 
 const EMPTY_STATS: ClickStats = { totalClicks: 0, totalConversions: 0, epc: 0 };
 
-const STATUS_COLORS: Record<ConversionFeedRow['status'], string> = {
-  pending: 'text-yellow-400',
-  approved: 'text-green-400',
-  rejected: 'text-red-400',
-  paid: 'text-[var(--neon-cyan)]',
-};
-
 function fmtUsd(n: number): string {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 }
 
 function fmtDate(unixSec: number): string {
   return new Date(unixSec * 1000).toISOString().slice(0, 16).replace('T', ' ');
+}
+
+/** Map DB conversion status to Stitch display status. */
+function mapStatus(dbStatus: ConversionFeedRow['status']): 'paid' | 'pending' | 'clawback' {
+  switch (dbStatus) {
+    case 'approved':
+    case 'paid':
+      return 'paid';
+    case 'pending':
+      return 'pending';
+    case 'rejected':
+      return 'clawback';
+  }
 }
 
 export default async function AffiliateDashboardPage(): Promise<React.JSX.Element> {
@@ -79,107 +84,38 @@ export default async function AffiliateDashboardPage(): Promise<React.JSX.Elemen
     logger.error('[AffiliateDashboardPage] Failed to load stats', toError(err), { userId: user.id });
   }
 
-  return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <header className="mb-8 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Affiliate Dashboard</h1>
-          <p className="text-muted-foreground">Last 30 days · per-click and conversion performance.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/dashboard/affiliate/payouts"
-            className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted/40 transition"
-          >
-            Payout methods
-          </Link>
-          { }
-          <a
-            href="/api/affiliate/conversions/csv?limit=500"
-            className="inline-flex items-center gap-2 rounded-md border border-[var(--neon-cyan)]/40 bg-[var(--neon-cyan)]/10 px-4 py-2 text-sm font-medium text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 transition"
-            download
-          >
-            Export CSV
-          </a>
-        </div>
-      </header>
+  // Map server data to Stitch KPI metrics
+  const kpiMetrics = [
+    { id: 'totalReferrals', value: stats.totalClicks.toLocaleString(), icon: Users },
+    { id: 'active', value: stats.totalConversions.toLocaleString(), icon: UserCheck },
+    { id: 'commissionEarned', value: fmtUsd(stats.epc), icon: DollarSign },
+    { id: 'pending', value: fmtUsd(pendingEarnings), icon: Clock },
+  ];
 
+  // Map DB conversion rows to Stitch conversion rows
+  const stitchedConversions = conversions.map((c) => ({
+    id: c.conversionId,
+    transactionId: c.networkTransactionId || `#TRX-${c.conversionId.slice(0, 4).toUpperCase()}`,
+    amount: fmtUsd(c.grossAmountUsd),
+    commission: fmtUsd(c.commissionUsd),
+    status: mapStatus(c.status),
+    date: fmtDate(c.attributedAt),
+  }));
+
+  return (
+    <>
       {loadError && (
         <div
           role="alert"
-          className="mb-6 rounded-md border border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200"
+          className="rounded-none border-b border-yellow-500/40 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-200"
         >
           {loadError}
         </div>
       )}
-
-      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-        <StatCard label="Clicks" value={stats.totalClicks.toLocaleString()} hint="last 30d" />
-        <StatCard label="Conversions" value={stats.totalConversions.toLocaleString()} hint="last 30d" />
-        <StatCard label="EPC" value={fmtUsd(stats.epc)} hint="commission ÷ clicks" />
-        <StatCard label="Pending earnings" value={fmtUsd(pendingEarnings)} hint="approved + payable" />
-      </section>
-
-      <section className="rounded-lg border border-border bg-card">
-        <header className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="font-semibold">Recent Conversions</h2>
-          <span className="text-xs text-muted-foreground">
-            {conversions.length} of latest 50
-          </span>
-        </header>
-
-        {conversions.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">
-            No conversions yet. Share your affiliate link to get started.
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <caption className="sr-only">Recent affiliate conversions, newest first</caption>
-              <thead className="bg-muted/40 text-left text-muted-foreground">
-                <tr>
-                  <th scope="col" className="px-4 py-3 font-medium">When</th>
-                  <th scope="col" className="px-4 py-3 font-medium">Offer</th>
-                  <th scope="col" className="px-4 py-3 font-medium text-right">Gross</th>
-                  <th scope="col" className="px-4 py-3 font-medium text-right">Commission</th>
-                  <th scope="col" className="px-4 py-3 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {conversions.map((c) => (
-                  <tr key={c.conversionId} className="border-t border-border">
-                    <td className="px-4 py-3 font-mono text-xs">{fmtDate(c.attributedAt)}</td>
-                    <td className="px-4 py-3 font-mono text-xs">{c.offerId}</td>
-                    <td className="px-4 py-3 text-right">{fmtUsd(c.grossAmountUsd)}</td>
-                    <td className="px-4 py-3 text-right font-medium">{fmtUsd(c.commissionUsd)}</td>
-                    <td className={`px-4 py-3 ${STATUS_COLORS[c.status]}`}>
-                      <span aria-label={`status: ${c.status}`}>{c.status}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  hint,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-}): React.JSX.Element {
-  return (
-    <div className="rounded-lg border border-border bg-card p-5">
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className="mt-2 text-2xl font-semibold">{value}</div>
-      {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
-    </div>
+      <StitchAffiliateDashboard
+        kpiMetrics={kpiMetrics}
+        conversions={stitchedConversions}
+      />
+    </>
   );
 }

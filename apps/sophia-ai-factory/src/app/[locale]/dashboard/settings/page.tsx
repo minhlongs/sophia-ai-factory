@@ -1,18 +1,14 @@
-import { Suspense } from 'react';
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { getUserProfile } from '@/app/actions/settings';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
-import { ReferralShareWidget } from '@/forest/components/dashboard/referral-share-widget';
-import { PlanUpgradeWidget } from '@/forest/components/dashboard/plan-upgrade-widget';
-import { ChangeEmailSection } from '@/forest/components/settings/sections/change-email-section';
 import { getSubscriptionPeriodEnd } from '@/land/billing/subscription-expiry';
 import { countCompletedOrders } from '@/land/orders/order-counts';
 
-const SettingsForm = dynamic(
-  () => import('@/forest/components/settings/settings-form').then(m => ({ default: m.SettingsForm })),
+const StitchSettingsPage = dynamic(
+  () => import('@/components/stitch/screens/settings/settings-page'),
   { loading: () => <SettingsSkeleton /> }
 );
 
@@ -22,6 +18,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
+  // Preserve ALL existing data fetching and business logic
   const [profile, user] = await Promise.all([getUserProfile(), getCurrentUser()]);
   if (!user) redirect('/login');
 
@@ -34,18 +31,13 @@ export default async function SettingsPage() {
     : [null, 0];
 
   return (
-    <div className="container mx-auto max-w-4xl py-10 space-y-6">
-      <Suspense fallback={<SettingsSkeleton />}>
-        <SettingsForm defaultValues={profile} />
-      </Suspense>
-      <ChangeEmailSection currentEmail={user.email ?? ''} />
-      <PlanUpgradeWidget
-        currentTier={currentTier}
-        periodEnd={periodEnd}
-        showHistoryLink={completedOrderCount > 0}
-      />
-      <ReferralShareWidget />
-    </div>
+    <StitchSettingsPage
+      userName={profile.fullName}
+      userEmail={profile.email}
+      currentTier={currentTier}
+      periodEnd={periodEnd}
+      completedOrderCount={completedOrderCount}
+    />
   );
 }
 

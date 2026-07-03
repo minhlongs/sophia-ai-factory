@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sophia AI Factory — Session Recap 2026-07-03</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0F0F11;
+    --bg-card: #18181B;
+    --bg-card-hover: #1F1F23;
+    --border: #27272A;
+    --text: #F4F4F5;
+    --text-muted: #A1A1AA;
+    --accent: #D97706;
+    --accent-light: #F59E0B;
+    --accent-glow: rgba(217,119,6,0.15);
+    --indigo: #6366F1;
+    --green: #22C55E;
+    --red: #EF4444;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --transition: 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  [data-theme="light"] {
+    --bg: #FAFAFA;
+    --bg-card: #FFFFFF;
+    --bg-card-hover: #F4F4F5;
+    --border: #E4E4E7;
+    --text: #18181B;
+    --text-muted: #71717A;
+    --accent-glow: rgba(217,119,6,0.08);
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    transition: background var(--transition), color var(--transition);
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+
+  /* Header */
+  header {
+    padding: 48px 0 32px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(217,119,6,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  header h1 {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+    position: relative;
+  }
+  header .subtitle {
+    font-size: clamp(0.95rem, 2vw, 1.15rem);
+    color: var(--text-muted);
+    margin-top: 8px;
+    font-weight: 400;
+  }
+
+  /* Theme Toggle */
+  .theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--text);
+    transition: all var(--transition);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .theme-toggle:hover {
+    border-color: var(--accent);
+    transform: scale(1.08);
+  }
+
+  /* KPIs */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin: 32px 0;
+  }
+  .kpi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    text-align: center;
+    transition: all var(--transition);
+    animation: fadeUp 0.5s ease forwards;
+    opacity: 0;
+  }
+  .kpi-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px var(--accent-glow);
+  }
+  .kpi-card:nth-child(1) { animation-delay: 0.05s; }
+  .kpi-card:nth-child(2) { animation-delay: 0.10s; }
+  .kpi-card:nth-child(3) { animation-delay: 0.15s; }
+  .kpi-card:nth-child(4) { animation-delay: 0.20s; }
+  .kpi-card:nth-child(5) { animation-delay: 0.25s; }
+  .kpi-card:nth-child(6) { animation-delay: 0.30s; }
+  .kpi-value {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 800;
+    color: var(--accent);
+    line-height: 1.2;
+  }
+  .kpi-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+  }
+  .kpi-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+    margin-top: 6px;
+  }
+  .kpi-badge.green { background: rgba(34,197,94,0.15); color: var(--green); }
+  .kpi-badge.amber { background: var(--accent-glow); color: var(--accent); }
+
+  /* Section */
+  .section {
+    margin: 40px 0;
+    animation: fadeUp 0.5s ease 0.2s both;
+  }
+  .section-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border) 0%, transparent 100%);
+  }
+
+  /* Timeline */
+  .timeline {
+    position: relative;
+    padding-left: 28px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .timeline-item {
+    position: relative;
+    padding: 12px 0 12px 20px;
+    animation: fadeUp 0.4s ease forwards;
+    opacity: 0;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 18px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+  .timeline-item:nth-child(2)::before { background: var(--accent); }
+  .timeline-item:nth-child(3)::before { background: var(--accent); }
+  .timeline-item:nth-child(4)::before { background: var(--accent); }
+  .timeline-item:nth-child(5)::before { background: var(--green); }
+  .timeline-item:nth-child(6)::before { background: var(--green); }
+  .timeline-item:nth-child(7)::before { background: var(--green); }
+  .timeline-item .tl-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .timeline-item .tl-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .timeline-item:nth-child(1) { animation-delay: 0.1s; }
+  .timeline-item:nth-child(2) { animation-delay: 0.15s; }
+  .timeline-item:nth-child(3) { animation-delay: 0.2s; }
+  .timeline-item:nth-child(4) { animation-delay: 0.25s; }
+  .timeline-item:nth-child(5) { animation-delay: 0.3s; }
+  .timeline-item:nth-child(6) { animation-delay: 0.35s; }
+  .timeline-item:nth-child(7) { animation-delay: 0.4s; }
+
+  /* Architecture Diagram */
+  .arch-flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 24px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin: 16px 0;
+  }
+  .arch-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-align: center;
+    transition: border-color var(--transition);
+    white-space: nowrap;
+  }
+  .arch-box:hover { border-color: var(--accent); }
+  .arch-arrow {
+    color: var(--accent);
+    font-size: 1.1rem;
+    font-weight: 700;
+    padding: 0 2px;
+  }
+
+  /* Wins */
+  .wins-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .win-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    transition: all var(--transition);
+    animation: fadeUp 0.4s ease forwards;
+    opacity: 0;
+  }
+  .win-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px var(--accent-glow);
+  }
+  .win-card:nth-child(1) { animation-delay: 0.05s; }
+  .win-card:nth-child(2) { animation-delay: 0.1s; }
+  .win-card:nth-child(3) { animation-delay: 0.15s; }
+  .win-card:nth-child(4) { animation-delay: 0.2s; }
+  .win-card .win-icon { font-size: 1.4rem; margin-bottom: 6px; }
+  .win-card .win-text { font-size: 0.88rem; font-weight: 500; }
+
+  /* Next Steps */
+  .next-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px;
+  }
+  .next-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    position: relative;
+    padding-left: 46px;
+    transition: all var(--transition);
+    animation: fadeUp 0.4s ease forwards;
+    opacity: 0;
+  }
+  .next-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 16px var(--accent-glow);
+  }
+  .next-card:nth-child(1) { animation-delay: 0.05s; }
+  .next-card:nth-child(2) { animation-delay: 0.1s; }
+  .next-card:nth-child(3) { animation-delay: 0.15s; }
+  .next-card:nth-child(4) { animation-delay: 0.2s; }
+  .next-card .next-num {
+    position: absolute;
+    left: 14px;
+    top: 18px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .next-card .next-text { font-size: 0.88rem; font-weight: 500; }
+
+  /* Tech details */
+  .detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 10px;
+  }
+  .detail-chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    transition: border-color var(--transition);
+  }
+  .detail-chip:hover { border-color: var(--accent); }
+  .detail-chip strong { color: var(--accent); }
+
+  /* Table */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 16px 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  th {
+    text-align: left;
+    padding: 12px 16px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg);
+  }
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg-card-hover); }
+  td code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 0.8rem;
+    background: var(--bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent-light);
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 40px 0 32px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--border);
+    margin-top: 48px;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* Animations */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  .pulse-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 1.5s ease infinite;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  /* Mobile */
+  @media (max-width: 640px) {
+    header { padding: 32px 0 20px; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .wins-grid, .next-grid { grid-template-columns: 1fr; }
+    .detail-grid { grid-template-columns: 1fr; }
+    .arch-flow { flex-direction: column; gap: 6px; }
+    .arch-arrow { transform: rotate(90deg); }
+    .theme-toggle { top: 12px; right: 12px; width: 38px; height: 38px; }
+  }
+  @media (max-width: 380px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+    .container { padding: 0 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle theme" role="button" tabindex="0">&#9790;</div>
+
+<header>
+  <div class="container">
+    <h1>Sophia AI Factory &mdash; Session Recap</h1>
+    <p class="subtitle">2026-07-03 &nbsp;|&nbsp; <span style="color:var(--accent);font-weight:600;">5.5h Epic</span></p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- KPIs -->
+  <div class="section">
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-value">10</div>
+        <div class="kpi-label">Screens Converted</div>
+        <span class="kpi-badge amber">Stitch &rarr; Next.js</span>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">5</div>
+        <div class="kpi-label">Commits Pushed</div>
+        <span class="kpi-badge amber">main branch</span>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">6,772</div>
+        <div class="kpi-label">Unit Tests Passing</div>
+        <span class="kpi-badge green">0 failures</span>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">8/8</div>
+        <div class="kpi-label">E2E Auth Tests</div>
+        <span class="kpi-badge green">all passing</span>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value">1</div>
+        <div class="kpi-label">Production Deploy</div>
+        <span class="kpi-badge amber">sophia.agencyos.network</span>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" style="font-size:clamp(1rem,2.5vw,1.5rem);">&nbsp;&#128308; Indigo &rarr; &#128992; Amber</div>
+        <div class="kpi-label">Design System</div>
+        <span class="kpi-badge amber">re-themed</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="section">
+    <h2 class="section-title">What Was Done</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="tl-label">Scout + Brainstorm</div>
+        <div class="tl-desc">Full codebase mapping, strategy decisions</div>
+      </div>
+      <div class="timeline-item">
+        <div class="tl-label">Phase 0 &mdash; Design System Consolidation</div>
+        <div class="tl-desc">4&times; MASTER.md &rarr; 1 unified spec, indigo &rarr; amber</div>
+      </div>
+      <div class="timeline-item">
+        <div class="tl-label">Phase 1&ndash;3 &mdash; 10 Screens Converted</div>
+        <div class="tl-desc">Landing, Pricing, Login, Dashboard, Campaigns, Settings, Admin, Affiliate, Video Creation, Dashboard Overview</div>
+      </div>
+      <div class="timeline-item">
+        <div class="tl-label">Phase 4 &mdash; D1 Static Gen + i18n Audit</div>
+        <div class="tl-desc">11 routes fixed, barrel exports, build 0 errors</div>
+      </div>
+      <div class="timeline-item">
+        <div class="tl-label">Protected: Setup Wizard</div>
+        <div class="tl-desc">Already amber via CSS vars &mdash; verified intact</div>
+      </div>
+      <div class="timeline-item">
+        <div class="tl-label">Protected: Checkout Flow</div>
+        <div class="tl-desc">Amber + i18n bilingual &mdash; verified intact</div>
+      </div>
+      <div class="timeline-item">
+        <div class="tl-label">Protected: Login E2E</div>
+        <div class="tl-desc">8/8 Playwright tests pass &mdash; fully green</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Architecture -->
+  <div class="section">
+    <h2 class="section-title">Architecture</h2>
+    <div class="arch-flow">
+      <span class="arch-box">Stitch REST API</span>
+      <span class="arch-arrow">&rarr;</span>
+      <span class="arch-box">10&times; HTML Exports</span>
+      <span class="arch-arrow">&rarr;</span>
+      <span class="arch-box">stitch-nextjs-components</span>
+      <span class="arch-arrow">&rarr;</span>
+      <span class="arch-box">Next.js 16<br>App Router</span>
+      <span class="arch-arrow">&rarr;</span>
+      <span class="arch-box">Cloudflare Workers<br>Deploy</span>
+    </div>
+  </div>
+
+  <!-- Wins -->
+  <div class="section">
+    <h2 class="section-title">Key Wins</h2>
+    <div class="wins-grid">
+      <div class="win-card">
+        <div class="win-icon">&#128992;</div>
+        <div class="win-text">Saigon Factory amber theme <strong>LIVE</strong> on production</div>
+      </div>
+      <div class="win-card">
+        <div class="win-icon">&#128295;</div>
+        <div class="win-text">Stitch REST API + API key workflow (MCP workaround)</div>
+      </div>
+      <div class="win-card">
+        <div class="win-icon">&#9889;</div>
+        <div class="win-text">E2E dev server &lt;1s startup (MOCK_D1)</div>
+      </div>
+      <div class="win-card">
+        <div class="win-icon">&#127912;</div>
+        <div class="win-text">CSS variable-based design system &mdash; no hardcoded colors</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Next Steps -->
+  <div class="section">
+    <h2 class="section-title">Next Steps</h2>
+    <div class="next-grid">
+      <div class="next-card">
+        <span class="next-num">1</span>
+        <div class="next-text">Remaining indigo cleanup (<code>forest/components/*</code>)</div>
+      </div>
+      <div class="next-card">
+        <span class="next-num">2</span>
+        <div class="next-text">Guide pages (17) conversion</div>
+      </div>
+      <div class="next-card">
+        <span class="next-num">3</span>
+        <div class="next-text">Lighthouse audit</div>
+      </div>
+      <div class="next-card">
+        <span class="next-num">4</span>
+        <div class="next-text">Old component cleanup</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Technical Details -->
+  <div class="section">
+    <h2 class="section-title">Technical Details</h2>
+    <div class="detail-grid">
+      <div class="detail-chip"><strong>Commits</strong><br>f9887b01 &rarr; 15aa3bc50</div>
+      <div class="detail-chip"><strong>Branch</strong><br>main (pushed to origin)</div>
+      <div class="detail-chip"><strong>Accent</strong><br>amber <code>#D97706</code></div>
+      <div class="detail-chip"><strong>Accent Alt</strong><br>indigo <code>#6366F1</code></div>
+      <div class="detail-chip"><strong>Background</strong><br>dark <code>#0F0F11</code></div>
+      <div class="detail-chip"><strong>Stitch Project</strong><br><code>2407265268945504587</code></div>
+    </div>
+  </div>
+
+  <!-- WebServer Modes -->
+  <div class="section">
+    <h2 class="section-title">WebServer Modes</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Mode</th><th>Command</th><th>Startup</th><th>Use</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="pulse-dot"></span> MOCK_D1</td>
+            <td><code>npm run dev</code></td>
+            <td>&lt;1s</td>
+            <td>Dev cycle</td>
+          </tr>
+          <tr>
+            <td>PREBUILT</td>
+            <td><code>wrangler dev</code></td>
+            <td>~5s</td>
+            <td>Test</td>
+          </tr>
+          <tr>
+            <td>Default</td>
+            <td><code>npm run build</code></td>
+            <td>~5min</td>
+            <td>CI</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="container">
+    <p>Sophia AI Factory &mdash; <a href="https://sophia.agencyos.network" target="_blank" rel="noopener">sophia.agencyos.network</a> &mdash; Generated 2026-07-03</p>
+  </div>
+</footer>
+
+<script>
+function toggleTheme() {
+  var html = document.documentElement;
+  var btn = document.getElementById('themeToggle');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', 'light');
+    btn.innerHTML = '&#9728;';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    btn.innerHTML = '&#9790;';
+  }
+}
+</script>
+
+</body>
+</html>

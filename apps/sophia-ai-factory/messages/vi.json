@@ -5001,6 +5001,7 @@
           "status": "Status",
           "actions": "Actions"
         },
+        "showing": "Hiển thị {from}–{to} / {total}",
         "status": {
           "active": "Active",
           "suspended": "Suspended"
@@ -5009,7 +5010,14 @@
       "deployStatus": {
         "env": "Env"
       },
-      "kpi": {}
+      "kpi": {
+        "crons": { "label": "Cron Đã Lên Lịch" },
+        "emails": { "label": "Email Đã Gửi" },
+        "webhooks": { "label": "Điểm Cuối Webhook" },
+        "storage": { "label": "Bộ Nhớ R2" },
+        "cost": { "label": "Chi Phí Nhà Cung Cấp (30 ngày)" },
+        "signups": { "label": "Đăng Ký (30 ngày)" }
+      }
     },
     "affiliatePortal": {
       "title": "Affiliate Portal",

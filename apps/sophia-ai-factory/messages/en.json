@@ -4994,6 +4994,7 @@
           "status": "Status",
           "actions": "Actions"
         },
+        "showing": "Showing {from}–{to} of {total}",
         "status": {
           "active": "Active",
           "suspended": "Suspended"
@@ -5002,7 +5003,14 @@
       "deployStatus": {
         "env": "Env"
       },
-      "kpi": {}
+      "kpi": {
+        "crons": { "label": "Scheduled Crons" },
+        "emails": { "label": "Emails Sent" },
+        "webhooks": { "label": "Webhook Endpoints" },
+        "storage": { "label": "R2 Storage" },
+        "cost": { "label": "Provider Spend (30d)" },
+        "signups": { "label": "Signups (30d)" }
+      }
     },
     "affiliatePortal": {
       "title": "Affiliate Portal",
