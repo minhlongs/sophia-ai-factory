@@ -2608,7 +2608,14 @@
       "firstTimeTitle": "Start with your first SOP",
       "firstTimeDesc": "Browse the marketplace to install SOPs and automate your agency workflows.",
       "firstTimeFaq": "What are SOPs?",
-      "pageTitle": "Page Title"
+      "pageTitle": "Page Title",
+      "sortBy": "Sort by",
+      "sortPopular": "Most Popular",
+      "sortRating": "Highest Rated",
+      "sortNewest": "Newest",
+      "resultsCount": "{count} result(s)",
+      "sales": "sales",
+      "byLabel": "by"
     },
     "card": {
       "creditsPerRun": "{n} credits/run",
@@ -2761,6 +2768,45 @@
       "title": "Creator Dashboard",
       "subtitle": "Manage your SOP templates and earnings",
       "newSop": "Create New SOP",
+      "tabs": {
+        "mySops": "My SOPs",
+        "earnings": "Earnings",
+        "payouts": "Payouts"
+      },
+      "payouts": {
+        "title": "Payout Settings",
+        "walletDesc": "Manage your payout wallet address. Payouts are processed every Sunday at 12:00 UTC.",
+        "nextPayout": "Next scheduled payout: Sunday 12:00 UTC",
+        "payoutHistory": "Payout History",
+        "payoutHistoryDesc": "Your previous payout batches",
+        "noPayouts": "No payouts yet",
+        "noPayoutsDesc": "Payouts are processed automatically every Sunday. You'll see your payout history here once processed.",
+        "amount": "Amount",
+        "date": "Date",
+        "status": "Status",
+        "method": "Method",
+        "totalUsd": "Total (USD)",
+        "ledgerCount": "Transactions",
+        "tryAgain": "Try again",
+        "defaultBadge": "Default",
+        "unverifiedBadge": "Unverified",
+        "removePayoutMethod": "Remove payout method",
+        "addWalletAddress": "Add wallet address",
+        "network": "Network",
+        "networkUsdtTrc20": "USDT (TRC20 — Tron)",
+        "networkUsdtErc20": "USDT (ERC20 — Ethereum)",
+        "bankAccount": "Bank account",
+        "labelOptional": "Label (optional)",
+        "labelPlaceholder": "e.g. Main wallet",
+        "walletAddress": "Wallet address",
+        "placeholderTrc20": "T...",
+        "placeholderErc20": "0x...",
+        "adding": "Adding...",
+        "addWallet": "Add wallet",
+        "cancel": "Cancel",
+        "failedToLoadMethods": "Failed to load payout methods",
+        "failedToAddWallet": "Failed to add wallet"
+      },
       "totalEarned": "Total Earned",
       "pending": "Pending",
       "payable": "Payable",
@@ -2792,7 +2838,7 @@
       },
       "actions": {
         "unauthorized": "You must be logged in to perform this action.",
-        "masterRequired": "MASTER tier is required to manage SOPs.",
+        "creatorAccessRequired": "This action requires creator access. Apply to become a creator.",
         "dbUnavailable": "Database is temporarily unavailable. Please try again later.",
         "requiredFieldsMissing": "Please fill in all required fields.",
         "priceRange": "Price must be between $5 and $999.",
@@ -2818,6 +2864,29 @@
         "publishing": "Publishing...",
         "publishSuccess": "Template published successfully!",
         "draftDescription": "This template is in draft. Submit it for review to publish it to the marketplace."
+      },
+      "apply": {
+        "pageTitle": "Become a Creator",
+        "heading": "Become a SOP Creator",
+        "subtitle": "Turn your expertise into recurring revenue",
+        "valueProp": "70/30 Revenue Split",
+        "valuePropDesc": "You earn 70% of every SOP sale. We handle marketplace, payments, and infrastructure.",
+        "emailLabel": "Email",
+        "emailPlaceholder": "your@email.com",
+        "reasonLabel": "Why do you want to become a creator?",
+        "reasonPlaceholder": "Tell us about your experience and what SOPs you plan to create...",
+        "submit": "Submit Application",
+        "submitting": "Submitting...",
+        "successTitle": "Application Submitted",
+        "successDesc": "Your application is under review. We'll notify you via email once approved.",
+        "errorGeneric": "Something went wrong. Please try again.",
+        "alreadyCreator": "You already have creator access. Redirecting to your dashboard...",
+        "alreadyCreatorLink": "Go to Creator Dashboard"
+      },
+      "newSop": {
+        "back": "Back",
+        "title": "Create New SOP",
+        "subtitle": "Build a reusable SOP template for the marketplace"
       }
     },
     "community": {
@@ -2830,6 +2899,10 @@
     "status": {
       "category": "Category",
       "createFirst": "Create First",
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived",
+      "pending_review": "Pending Review",
       "name": "Name",
       "newSop": "New Sop",
       "noSops": "No Sops",
@@ -5277,11 +5350,7 @@
           "name": "Basic",
           "description": "For starters",
           "period": "/mo",
-          "features": [
-            "10 campaigns",
-            "3 channels",
-            "Basic analytics"
-          ],
+          "features": ["10 campaigns", "3 channels", "Basic analytics"],
           "cta": "Get Started"
         },
         "premium": {

@@ -24,7 +24,7 @@ export interface SopTemplateRow {
   version: number;
   is_official: 0 | 1;
   author_user_id: string | null;
-  status: 'draft' | 'published' | 'archived';
+  status: 'draft' | 'published' | 'archived' | 'pending_review';
   created_at: number;
   updated_at: number;
   /** JSON Schema for no-code config form */

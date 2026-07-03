@@ -2608,7 +2608,14 @@
       "firstTimeTitle": "Bắt đầu với SOP đầu tiên",
       "firstTimeDesc": "Duyệt marketplace để cài đặt SOPs và tự động hóa quy trình agency của bạn.",
       "firstTimeFaq": "SOP là gì?",
-      "pageTitle": "Tiêu đề trang"
+      "pageTitle": "Tiêu đề trang",
+      "sortBy": "Sắp xếp",
+      "sortPopular": "Phổ Biến Nhất",
+      "sortRating": "Đánh Giá Cao Nhất",
+      "sortNewest": "Mới Nhất",
+      "resultsCount": "{count} kết quả",
+      "sales": "lượt mua",
+      "byLabel": "bởi"
     },
     "card": {
       "creditsPerRun": "{n} credit/lần chạy",
@@ -2761,6 +2768,45 @@
       "title": "Bảng điều khiển Creator",
       "subtitle": "Quản lý template SOP và thu nhập của bạn",
       "newSop": "Tạo SOP mới",
+      "tabs": {
+        "mySops": "SOP của tôi",
+        "earnings": "Thu nhập",
+        "payouts": "Thanh toán"
+      },
+      "payouts": {
+        "title": "Cài đặt thanh toán",
+        "walletDesc": "Quản lý địa chỉ ví thanh toán của bạn. Thanh toán được xử lý mỗi Chủ nhật lúc 12:00 UTC.",
+        "nextPayout": "Lần thanh toán tiếp theo: Chủ nhật 12:00 UTC",
+        "payoutHistory": "Lịch sử thanh toán",
+        "payoutHistoryDesc": "Các đợt thanh toán trước đây",
+        "noPayouts": "Chưa có thanh toán nào",
+        "noPayoutsDesc": "Thanh toán được xử lý tự động mỗi Chủ nhật. Bạn sẽ thấy lịch sử thanh toán ở đây sau khi được xử lý.",
+        "amount": "Số tiền",
+        "date": "Ngày",
+        "status": "Trạng thái",
+        "method": "Phương thức",
+        "totalUsd": "Tổng (USD)",
+        "ledgerCount": "Giao dịch",
+        "tryAgain": "Thử lại",
+        "defaultBadge": "Mặc định",
+        "unverifiedBadge": "Chưa xác thực",
+        "removePayoutMethod": "Xóa phương thức thanh toán",
+        "addWalletAddress": "Thêm địa chỉ ví",
+        "network": "Mạng",
+        "networkUsdtTrc20": "USDT (TRC20 — Tron)",
+        "networkUsdtErc20": "USDT (ERC20 — Ethereum)",
+        "bankAccount": "Tài khoản ngân hàng",
+        "labelOptional": "Nhãn (tùy chọn)",
+        "labelPlaceholder": "Ví dụ: Ví chính",
+        "walletAddress": "Địa chỉ ví",
+        "placeholderTrc20": "T...",
+        "placeholderErc20": "0x...",
+        "adding": "Đang thêm...",
+        "addWallet": "Thêm ví",
+        "cancel": "Hủy",
+        "failedToLoadMethods": "Không thể tải phương thức thanh toán",
+        "failedToAddWallet": "Không thể thêm ví"
+      },
       "totalEarned": "Tổng thu nhập",
       "pending": "Chờ xử lý",
       "payable": "Có thể thanh toán",
@@ -2792,7 +2838,7 @@
       },
       "actions": {
         "unauthorized": "Bạn cần đăng nhập để thực hiện hành động này.",
-        "masterRequired": "Cần gói MASTER để quản lý SOP.",
+        "creatorAccessRequired": "Hành động này yêu cầu quyền creator. Đăng ký để trở thành creator.",
         "dbUnavailable": "Cơ sở dữ liệu tạm thời không khả dụng. Vui lòng thử lại sau.",
         "requiredFieldsMissing": "Vui lòng điền đầy đủ các trường bắt buộc.",
         "priceRange": "Giá phải nằm trong khoảng $5 đến $999.",
@@ -2818,6 +2864,29 @@
         "publishing": "Đang xuất bản...",
         "publishSuccess": "Template đã được xuất bản thành công!",
         "draftDescription": "Template này đang ở trạng thái nháp. Gửi đi duyệt để xuất bản lên marketplace."
+      },
+      "apply": {
+        "pageTitle": "Trở thành Creator",
+        "heading": "Trở thành SOP Creator",
+        "subtitle": "Biến chuyên môn của bạn thành thu nhập thụ động",
+        "valueProp": "Chia sẻ doanh thu 70/30",
+        "valuePropDesc": "Bạn nhận 70% từ mỗi SOP bán được. Chúng tôi lo marketplace, thanh toán và hạ tầng.",
+        "emailLabel": "Email",
+        "emailPlaceholder": "email@cua-ban.com",
+        "reasonLabel": "Tại sao bạn muốn trở thành creator?",
+        "reasonPlaceholder": "Chia sẻ kinh nghiệm của bạn và những SOP bạn dự định tạo...",
+        "submit": "Gửi Đơn Đăng Ký",
+        "submitting": "Đang gửi...",
+        "successTitle": "Đã Gửi Đơn",
+        "successDesc": "Đơn đăng ký của bạn đang được xem xét. Chúng tôi sẽ thông báo qua email khi được duyệt.",
+        "errorGeneric": "Có lỗi xảy ra. Vui lòng thử lại.",
+        "alreadyCreator": "Bạn đã có quyền truy cập creator. Đang chuyển hướng...",
+        "alreadyCreatorLink": "Đi đến Bảng điều khiển Creator"
+      },
+      "newSop": {
+        "back": "Quay lại",
+        "title": "Tạo SOP Mới",
+        "subtitle": "Xây dựng mẫu SOP có thể tái sử dụng cho marketplace"
       }
     },
     "community": {
@@ -2830,6 +2899,10 @@
     "status": {
       "category": "Danh mục",
       "createFirst": "Tạo đầu tiên",
+      "draft": "Bản nháp",
+      "published": "Đã xuất bản",
+      "archived": "Đã lưu trữ",
+      "pending_review": "Chờ duyệt",
       "name": "Tên",
       "newSop": "SOP mới",
       "noSops": "Chưa có SOP nào",
@@ -5284,11 +5357,7 @@
           "name": "Cơ bản",
           "description": "Dành cho người mới bắt đầu",
           "period": "/tháng",
-          "features": [
-            "10 chiến dịch",
-            "3 kênh",
-            "Phân tích cơ bản"
-          ],
+          "features": ["10 chiến dịch", "3 kênh", "Phân tích cơ bản"],
           "cta": "Bắt Đầu"
         },
         "premium": {
