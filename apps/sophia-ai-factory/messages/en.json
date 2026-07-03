@@ -5017,6 +5017,87 @@
         "modified": "Modified {time} ago"
       }
     },
+    "affiliate": {
+      "aria": {
+        "mainContent": "Affiliate dashboard main content",
+        "kpiSection": "Key performance indicators",
+        "offersSection": "Affiliate offers",
+        "conversionsSection": "Recent conversions",
+        "conversionsTable": "Recent conversions table",
+        "referralSection": "Referral link",
+        "walletSection": "Wallet"
+      },
+      "common": {
+        "search": "Search",
+        "filter": "Filter",
+        "export": "Export"
+      },
+      "title": "Affiliate Dashboard",
+      "subtitle": "Manage your referrals, track conversions, and maximize your earnings.",
+      "referButton": "Refer a Friend",
+      "kpi": {
+        "totalReferrals": {
+          "label": "Total Referrals"
+        },
+        "active": {
+          "label": "Active"
+        },
+        "commissionEarned": {
+          "label": "Commission Earned"
+        },
+        "pending": {
+          "label": "Pending"
+        }
+      },
+      "offers": {
+        "title": "Affiliate Offers",
+        "viewAll": "View All Offers",
+        "promote": "Promote",
+        "browseMore": "Browse More",
+        "items": {
+          "tiktokShop": {
+            "name": "TikTok Shop",
+            "commission": "15% Comm."
+          },
+          "accessTrade": {
+            "name": "AccessTrade",
+            "commission": "10% Comm."
+          },
+          "clickbank": {
+            "name": "ClickBank",
+            "commission": "20% Comm."
+          }
+        }
+      },
+      "conversions": {
+        "title": "Recent Conversions",
+        "columns": {
+          "id": "ID",
+          "amount": "Amount",
+          "commission": "Comm.",
+          "status": "Status",
+          "date": "Date"
+        },
+        "status": {
+          "paid": "PAID",
+          "pending": "PENDING",
+          "clawback": "CLAWBACK"
+        }
+      },
+      "referral": {
+        "title": "Your Referral Link",
+        "copyButton": "Copy",
+        "copied": "Copied!",
+        "shareLabel": "Share via:"
+      },
+      "wallet": {
+        "title": "USDT Wallet (TRC20)",
+        "availableBalance": "Available Balance",
+        "withdraw": "Withdraw",
+        "minimumWithdrawal": "Minimum withdrawal {amount}",
+        "toggleVisibility": "Toggle wallet address visibility"
+      }
+    },
     "dashboardOverview": {
       "aria": {
         "mainContent": "Dashboard main content",
