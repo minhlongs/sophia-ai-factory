@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sophia AI Factory - Build Your AI Video Empire</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&amp;family=IBMPlex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#000000",
+                        "surface-dim": "#0e0e12",
+                        "surface-container-low": "#131318",
+                        "tertiary-container": "#f5cdf9",
+                        "primary-dim": "#b5b5e0",
+                        "on-tertiary-fixed": "#4c2f52",
+                        "secondary": "#c6c4dd",
+                        "surface-container": "#191920",
+                        "on-primary-fixed": "#303154",
+                        "on-secondary-fixed": "#3d3e51",
+                        "primary-fixed-dim": "#c0c0eb",
+                        "outline-variant": "#484750",
+                        "tertiary-fixed": "#f5cdf9",
+                        "inverse-surface": "#fcf8fe",
+                        "inverse-primary": "#5b5c81",
+                        "surface": "#0e0e12",
+                        "on-surface": "#e7e4f0",
+                        "on-secondary-fixed-variant": "#5a5a6f",
+                        "tertiary-fixed-dim": "#e7bfea",
+                        "on-tertiary-container": "#604266",
+                        "surface-bright": "#2c2b34",
+                        "on-background": "#e7e4f0",
+                        "inverse-on-surface": "#55545a",
+                        "surface-container-high": "#1f1f26",
+                        "on-surface-variant": "#acaab5",
+                        "on-error": "#490013",
+                        "secondary-fixed": "#e2e0f9",
+                        "on-tertiary-fixed-variant": "#6a4b70",
+                        "on-primary-fixed-variant": "#4c4d72",
+                        "tertiary": "#fedeff",
+                        "error-dim": "#c44b5f",
+                        "background": "#0e0e12",
+                        "secondary-container": "#393a4d",
+                        "on-secondary": "#3e3e52",
+                        "surface-tint": "#c3c3ee",
+                        "on-error-container": "#ff97a3",
+                        "on-tertiary": "#694a6f",
+                        "primary-fixed": "#cecefa",
+                        "error": "#f97386",
+                        "on-primary": "#3c3d61",
+                        "primary-container": "#4e4f74",
+                        "on-secondary-container": "#bebdd5",
+                        "surface-variant": "#25252e",
+                        "secondary-fixed-dim": "#d4d2eb",
+                        "primary": "#c3c3ee",
+                        "tertiary-dim": "#e7bfea",
+                        "secondary-dim": "#b8b6cf",
+                        "outline": "#76747f",
+                        "error-container": "#871c34",
+                        "surface-container-highest": "#25252e",
+                        "on-primary-container": "#e2e0ff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Ibm Plex Sans"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0F0F11;
+            color: #e7e4f0;
+            overflow-x: hidden;
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.1) 0%, rgba(15, 15, 17, 0) 70%);
+        }
+        .glass-card {
+            background: rgba(25, 25, 32, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(72, 71, 80, 0.5);
+        }
+        .primary-glow:hover {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+        }
+    </style>
+</head>
+<body class="font-body selection:bg-primary selection:text-on-primary">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-md">
+<nav class="flex justify-between items-center w-full px-8 py-4 max-w-[1200px] mx-auto">
+<!-- Brand Logo -->
+<div class="text-2xl font-headline font-black text-primary dark:text-primary tracking-tighter">
+                Sophia
+            </div>
+<!-- Navigation Links -->
+<div class="hidden md:flex gap-8 items-center">
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-label font-medium text-sm" href="#">Features</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-label font-medium text-sm" href="#">Pricing</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-label font-medium text-sm" href="#">Blog</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-label font-medium text-sm" href="#">Affiliates</a>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-6">
+<button class="text-on-surface-variant hover:text-on-surface transition-colors font-label font-medium text-sm hover:opacity-80 transition-opacity active:scale-95">Sign In</button>
+<button class="bg-primary text-on-primary font-label font-bold px-5 py-2.5 rounded-lg text-sm hover:opacity-90 transition-all primary-glow active:scale-95">Start Free</button>
+</div>
+</nav>
+</header>
+<main class="relative pt-32 pb-24 overflow-hidden">
+<!-- Background Decoration -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full hero-gradient pointer-events-none -z-10"></div>
+<!-- Hero Section Content -->
+<section class="max-w-[1200px] mx-auto px-8 flex flex-col items-center text-center">
+<!-- Decorative Badge -->
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-container/20 border border-primary/20 mb-8 animate-fade-in">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="text-xs font-bold uppercase tracking-widest text-primary">New: Version 2.0 Released</span>
+</div>
+<!-- Headline -->
+<h1 class="text-5xl md:text-[64px] font-black font-headline leading-[1.1] mb-6 tracking-tight max-w-[900px]">
+                Build Your AI <span class="text-primary italic">Video Empire</span>
+</h1>
+<!-- Subheading -->
+<p class="text-xl text-on-surface-variant max-w-[720px] mb-12 leading-relaxed">
+                Generate faceless YouTube channels, run affiliate campaigns, and publish across TikTok, YouTube, and IG — all from one intelligent dashboard.
+            </p>
+<!-- CTA Buttons -->
+<div class="flex flex-col sm:flex-row gap-4 mb-16">
+<button class="bg-primary text-on-primary px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transition-all primary-glow flex items-center gap-2 group">
+                    Start Free 
+                    <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+<button class="border border-outline-variant text-on-surface hover:bg-surface-variant px-8 py-4 rounded-xl font-bold text-lg transition-all flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_circle</span>
+                    Watch Demo
+                </button>
+</div>
+<!-- Trust Bar -->
+<div class="flex flex-col items-center gap-4 mb-24 py-8 px-12 glass-card rounded-2xl">
+<div class="flex -space-x-3">
+<div class="w-10 h-10 rounded-full border-2 border-surface-container overflow-hidden bg-surface-bright">
+<img class="w-full h-full object-cover" data-alt="Close up portrait of a satisfied young professional content creator smiling with high-key lighting in a modern home office setting, ultra-detailed skin textures, soft cinematic lighting, professional photography style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDAuW0W80fs5qron9rDz8zkcE9LOTwcztetaryA3IbBis6LIln71cvQwJB4J4M3EA44LkEbi055OZbWE9KhVFOgCs4TXRY9RD3J4K-Y2zQpJ8QcnNidE2zlSt1Ri3Ou4thLUm7j5D5dX-wPxLg1C12YDhU40YsE0KTbmXVZhUmDxy-g1VXpz71pQaBhD1p7GPasLqb1uNSb5O8xtyvi0uU1Miwr5RFLeDD43UF-floKvCvkv7d2Z2aT04qQKrZIqkWFCHGjlnJh-U"/>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-surface-container overflow-hidden bg-surface-bright">
+<img class="w-full h-full object-cover" data-alt="Portrait of an influential digital marketer in a creative workspace, wearing modern headphones, soft neon ambient lighting in deep indigo and violet, high-end professional DSLR aesthetic, shallow depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC0fuou_NhWYX61uiQrYuhqG9FAY1WczVqOhncma8y2oWZrZb7MPm1cr_PWGaOftmwdiX39_g6bx8YbPyfNNpQ01h0b1rBNsI2t_U5AJ8IfEBixZe_7v3o-kTspGPTdDikfyFyaPDf8MClt_zQhGMM2vyixWr-Axidl6FPNlKO7G4CI-4ZFgJLz1oYnPSbCzfIIxF5vikED94a2uiZfR76R-SeZ0PFA55RjyXyrvTx5kbbEJ7lA4KSokyyo3DUolab1fjxaxZHvi8M"/>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-surface-container overflow-hidden bg-surface-bright">
+<img class="w-full h-full object-cover" data-alt="Close up of a creative entrepreneur looking at camera with a confident expression, soft lighting highlighting features, professional photography, clean dark background matching the SaaS aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAGnFakmBi3mIFzAjqd0UdSOdm2eoo5LshfcllJb36IYWv-SR3jUz2CjXW6sBiAR3fB_kmmSqMfBHFW--7hbA6nqNRmVeRABgVkeJjqFLPoCemHbx-q6FyJ7dhpBQ1LQUbDlJzgAIAIxTpq0HRcUITxMsvNVlmlsUpibpAT7APtoa2k5O_6P0v1b2t8rK5qRk7HvkDEl7qXhA10nGJE3-hrHXLabtKeUA6YaQ0yqRqKYs4jFxPciCFmMsufI3QKj67OIq2YhepMJM"/>
+</div>
+<div class="w-10 h-10 rounded-full border-2 border-surface-container flex items-center justify-center bg-primary text-on-primary text-xs font-bold">+10k</div>
+</div>
+<p class="text-sm font-label font-semibold text-on-surface-variant">
+<span class="text-on-surface">10,000+ creators</span> · 1M+ videos generated
+                </p>
+</div>
+<!-- Features Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-left">
+<!-- Feature 1 -->
+<div class="glass-card p-8 rounded-2xl hover:border-primary/40 transition-colors group">
+<div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl">auto_awesome</span>
+</div>
+<h3 class="text-xl font-bold mb-3 text-on-surface">AI Script Writing</h3>
+<p class="text-on-surface-variant leading-relaxed">
+                        Transform a simple keyword into high-retention video scripts optimized for audience engagement and conversion metrics.
+                    </p>
+</div>
+<!-- Feature 2 -->
+<div class="glass-card p-8 rounded-2xl hover:border-primary/40 transition-colors group">
+<div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl">hub</span>
+</div>
+<h3 class="text-xl font-bold mb-3 text-on-surface">Multi-Channel Publish</h3>
+<p class="text-on-surface-variant leading-relaxed">
+                        Schedule and deploy your content across TikTok, YouTube Shorts, and Instagram Reels simultaneously with one click.
+                    </p>
+</div>
+<!-- Feature 3 -->
+<div class="glass-card p-8 rounded-2xl hover:border-primary/40 transition-colors group">
+<div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 text-primary group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-3xl">query_stats</span>
+</div>
+<h3 class="text-xl font-bold mb-3 text-on-surface">Revenue Analytics</h3>
+<p class="text-on-surface-variant leading-relaxed">
+                        Track affiliate link clicks and revenue generation directly linked to your AI-generated video campaigns in real-time.
+                    </p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-lowest border-t border-outline-variant">
+<div class="flex flex-col md:flex-row justify-between items-center w-full px-8 py-12 max-w-[1200px] mx-auto">
+<div class="flex flex-col items-center md:items-start gap-2 mb-8 md:mb-0">
+<span class="text-xl font-headline font-bold text-on-surface">Sophia</span>
+<p class="font-body text-sm text-on-surface-variant">© 2024 Sophia AI Factory. All rights reserved.</p>
+</div>
+<div class="flex gap-8">
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body text-sm" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body text-sm" href="#">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors font-body text-sm" href="#">Contact Us</a>
+</div>
+</div>
+</footer>
+<script>
+        // Micro-interaction for buttons
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('mousedown', () => {
+                button.style.transform = 'scale(0.95)';
+            });
+            button.addEventListener('mouseup', () => {
+                button.style.transform = 'scale(1)';
+            });
+            button.addEventListener('mouseleave', () => {
+                button.style.transform = 'scale(1)';
+            });
+        });
+
+        // Simple scroll reveal effect for cards
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100', 'translate-y-0');
+                    entry.target.classList.remove('opacity-0', 'translate-y-8');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.classList.add('transition-all', 'duration-700', 'opacity-0', 'translate-y-8');
+            observer.observe(card);
+        });
+    </script>
+</body></html>

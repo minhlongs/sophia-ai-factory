@@ -5,7 +5,8 @@ import type { Tier } from "@/seed/types";
 import Link from "next/link";
 import { buildAllProductSchemas, buildBreadcrumbSchema, BREADCRUMBS } from "@/land/seo/schema-org";
 
-// Pricing page — cache 1 hour at the edge.
+// Pricing page — dynamic render with 1 hour edge cache.
+export const dynamic = 'force-dynamic';
 export const revalidate = 3600;
 
 export const metadata = {

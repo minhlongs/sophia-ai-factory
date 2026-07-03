@@ -1,236 +1,409 @@
 'use client';
 
-import React from 'react';
-import { User, Bell, Lock, CreditCard, Globe, Trash2 } from 'lucide-react';
-import { DashboardLayout, Card, CardHeader, CardContent, Button, Input, Badge } from '@/components/stitch';
+import React, { useState } from 'react';
+import {
+  User,
+  Key,
+  CreditCard,
+  Bell,
+  Users,
+  Palette,
+  LogOut,
+  Eye,
+  EyeOff,
+  Trash2,
+  Plus,
+  Upload,
+  CheckCircle,
+  AlertTriangle,
+  Search,
+  Settings,
+  ChevronRight,
+} from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import { cn } from '@/seed/utils/cn';
+import { Button } from '@/seed/components/ui/button';
+import { Input } from '@/seed/components/ui/input';
 
-const navItems = [
-  { id: 'profile', label: 'Profile', icon: User },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'security', label: 'Security', icon: Lock },
-  { id: 'billing', label: 'Billing', icon: CreditCard },
-  { id: 'integrations', label: 'Integrations', icon: Globe },
+/* ── Types ─────────────────────────────────────────────────────────────── */
+
+interface NavItem {
+  id: string;
+  labelKey: string;
+  icon: React.ComponentType<{ className?: string }>;
+}
+
+interface ApiKeyItem {
+  id: string;
+  nameKey: string;
+  configured: boolean;
+  maskedKey: string;
+}
+
+interface LocaleOption {
+  id: 'vi' | 'en';
+  labelKey: string;
+  flag: string;
+}
+
+/* ── Constants ─────────────────────────────────────────────────────────── */
+
+const NAV_ITEMS: NavItem[] = [
+  { id: 'account', labelKey: 'nav.account', icon: User },
+  { id: 'apiKeys', labelKey: 'nav.apiKeys', icon: Key },
+  { id: 'billing', labelKey: 'nav.billing', icon: CreditCard },
+  { id: 'notifications', labelKey: 'nav.notifications', icon: Bell },
+  { id: 'team', labelKey: 'nav.team', icon: Users },
+  { id: 'appearance', labelKey: 'nav.appearance', icon: Palette },
 ];
 
+const API_KEYS: ApiKeyItem[] = [
+  { id: 'elevenlabs', nameKey: 'apiKeys.elevenLabs', configured: true, maskedKey: 'sk_live_1234567890abcdef' },
+  { id: 'openrouter', nameKey: 'apiKeys.openRouter', configured: true, maskedKey: 'sk_or_0987654321fedcba' },
+  { id: 'did', nameKey: 'apiKeys.did', configured: false, maskedKey: '' },
+];
+
+const LOCALE_OPTIONS: LocaleOption[] = [
+  { id: 'vi', labelKey: 'locale.vietnamese', flag: '🇻🇳' },
+  { id: 'en', labelKey: 'locale.english', flag: '🇺🇸' },
+];
+
+const MOCK_USER = {
+  name: 'Sophia Anderson',
+  email: 'sophia.anderson@ai-factory.io',
+  avatarUrl:
+    'https://lh3.googleusercontent.com/aida-public/AB6AXuDDdCiGyTtHOrlZLTuZpkus9YgLoQ4fWplffWuOKdSCswEf0Ndfvtdv8wstR5i7nFGQOm3KD_YHG1RDwJQEswbDbVLYHH5dIQ5msZwRVwCSFkM3qxTzgvEvieS6H8e7VdiD7p_f5b2F8af4EPjreZidQcdGoNc1C8xOVLi6ZC63vTCv6N9dSYqQWDClyUA46Msow6RtaHy8_Cb1uETwsV2w7bqa9rca6alDfZkx6qwkTbBgIZrniA9qqjpJBWdz4jeZeViV2Ml2yGg',
+};
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SettingsPage
+   ══════════════════════════════════════════════════════════════════════════ */
+
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = React.useState('profile');
+  const t = useTranslations('stitch.settingsPage');
+  const [activeNav, setActiveNav] = useState('account');
+  const [selectedLocale, setSelectedLocale] = useState<'vi' | 'en'>('en');
+  const [visibleKeys, setVisibleKeys] = useState<Record<string, boolean>>({});
+  const [userName, setUserName] = useState(MOCK_USER.name);
+  const [userEmail] = useState(MOCK_USER.email);
+
+  const toggleKeyVisibility = (id: string) => {
+    setVisibleKeys((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   return (
-    <DashboardLayout
-      title="Settings"
-      subtitle="Manage your workspace preferences and configuration"
-    >
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-xl">
-        {/* Sidebar */}
-        <Card className="lg:col-span-1" padding="none">
-          <div className="p-md">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`
-                  w-full flex items-center gap-md px-md py-sm rounded-xl mb-xs
-                  font-body-md text-body-md transition-all duration-200
-                  ${activeTab === item.id
-                    ? 'bg-secondary-container text-on-secondary-container font-semibold'
-                    : 'text-on-surface-variant hover:bg-surface-container-low'}
-                `}
+    <div className="h-screen overflow-hidden flex flex-col bg-background text-on-surface">
+      {/* ════ Top NavBar ════════════════════════════════════════════════════ */}
+      <header className="bg-surface-container-low flex items-center justify-between px-6 py-3 w-full border-b border-outline-variant shadow-sm z-50 shrink-0">
+        <div className="flex items-center gap-8">
+          <span className="text-xl font-black text-primary tracking-tighter">
+            Sophia AI Factory
+          </span>
+          <nav className="hidden md:flex gap-6 items-center" aria-label="Main navigation">
+            {['Projects', 'Assets', 'Templates', 'Community'].map((label) => (
+              <a
+                key={label}
+                href="#"
+                className="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors"
               >
-                <item.icon className="w-5 h-5" />
-                {item.label}
-              </button>
+                {label}
+              </a>
             ))}
-          </div>
-        </Card>
-
-        {/* Content */}
-        <div className="lg:col-span-3">
-          {activeTab === 'profile' && (
-            <Card padding="lg">
-              <CardHeader>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface">Profile Settings</h3>
-                <p className="font-body-md text-body-md text-on-surface-variant">
-                  Update your workspace information and preferences
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-lg">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
-                  <div className="space-y-sm">
-                    <label className="font-label-md text-label-md text-on-surface">Workspace Name</label>
-                    <Input defaultValue="OPC Platform" />
-                  </div>
-                  <div className="space-y-sm">
-                    <label className="font-label-md text-label-md text-on-surface">Timezone</label>
-                    <select className="w-full py-md px-md bg-surface border border-outline-variant rounded-xl font-body-md text-body-md">
-                      <option>UTC-8 (Pacific Time)</option>
-                      <option>UTC-5 (Eastern Time)</option>
-                      <option>UTC+0 (GMT)</option>
-                      <option>UTC+1 (Central Europe)</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="space-y-sm">
-                  <label className="font-label-md text-label-md text-on-surface">Description</label>
-                  <textarea
-                    className="w-full py-md px-md bg-surface border border-outline-variant rounded-xl font-body-md text-body-md resize-none h-24"
-                    placeholder="Describe your workspace..."
-                  />
-                </div>
-                <div className="pt-md border-t border-outline-variant flex justify-end">
-                  <Button>Save Changes</Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {activeTab === 'notifications' && (
-            <Card padding="lg">
-              <CardHeader>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface">Notification Preferences</h3>
-                <p className="font-body-md text-body-md text-on-surface-variant">
-                  Choose how and when you want to be notified
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-lg">
-                {[
-                  { label: 'Payment received', desc: 'Get notified when a payment is received', enabled: true },
-                  { label: 'New subscriber', desc: 'Alert when someone subscribes', enabled: true },
-                  { label: 'Affiliate commission', desc: 'Commission payout notifications', enabled: false },
-                  { label: 'Weekly digest', desc: 'Summary of your activity every Monday', enabled: true },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-label-md text-on-surface">{item.label}</p>
-                      <p className="text-sm text-on-surface-variant">{item.desc}</p>
-                    </div>
-                    <button
-                      className={`
-                        w-12 h-6 rounded-full transition-colors duration-300
-                        ${item.enabled ? 'bg-primary' : 'bg-surface-container-high'}
-                      `}
-                    >
-                      <span
-                        className={`
-                          inline-block w-4 h-4 bg-white rounded-full transition-transform duration-300 mt-1
-                          ${item.enabled ? 'translate-x-7' : 'translate-x-1'}
-                        `}
-                      />
-                    </button>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {activeTab === 'security' && (
-            <Card padding="lg">
-              <CardHeader>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface">Security</h3>
-                <p className="font-body-md text-body-md text-on-surface-variant">
-                  Manage your password and security settings
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-lg">
-                <div className="space-y-sm">
-                  <label className="font-label-md text-label-md text-on-surface">Current Password</label>
-                  <Input type="password" placeholder="••••••••" />
-                </div>
-                <div className="space-y-sm">
-                  <label className="font-label-md text-label-md text-on-surface">New Password</label>
-                  <Input type="password" placeholder="Enter new password" />
-                </div>
-                <div className="space-y-sm">
-                  <label className="font-label-md text-label-md text-on-surface">Confirm Password</label>
-                  <Input type="password" placeholder="Re-enter new password" />
-                </div>
-                <div className="pt-md border-t border-outline-variant flex justify-between items-center">
-                  <div>
-                    <p className="font-label-md text-on-surface">Two-Factor Authentication</p>
-                    <p className="text-sm text-on-surface-variant">Add an extra layer of security</p>
-                  </div>
-                  <Button variant="outline">Enable</Button>
-                </div>
-                <div className="pt-md border-t border-outline-variant flex justify-end">
-                  <Button>Update Password</Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {activeTab === 'billing' && (
-            <Card padding="lg">
-              <CardHeader>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface">Billing & Invoices</h3>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-surface-container-low rounded-xl p-lg mb-lg">
-                  <div className="flex items-center justify-between mb-md">
-                    <div>
-                      <p className="font-label-md text-label-md text-on-surface-variant">Current Plan</p>
-                      <p className="font-headline-md text-headline-md text-on-surface">Professional</p>
-                    </div>
-                    <Button variant="outline">Change Plan</Button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-label-md text-label-md text-on-surface-variant">Next Billing</p>
-                      <p className="font-body-md text-body-md text-on-surface">Nov 24, 2023 ($79)</p>
-                    </div>
-                    <Badge variant="soft" color="success">Active</Badge>
-                  </div>
-                </div>
-                <h4 className="font-label-md text-label-md text-on-surface mb-md">Recent Invoices</h4>
-                <div className="space-y-sm">
-                  {['Oct 2023 - $79', 'Sep 2023 - $79', 'Aug 2023 - $79'].map((invoice, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-md bg-surface rounded-xl">
-                      <span className="font-body-md text-on-surface">{invoice}</span>
-                      <Button variant="ghost" size="sm">Download</Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {activeTab === 'integrations' && (
-            <Card padding="lg">
-              <CardHeader>
-                <h3 className="font-headline-sm text-headline-sm text-on-surface">Integrations</h3>
-                <p className="font-body-md text-body-md text-on-surface-variant">
-                  Connect third-party services to enhance your workspace
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-lg">
-                  {[
-                    { name: 'Slack', desc: 'Send notifications to Slack channels', connected: true },
-                    { name: 'Zapier', desc: 'Automate workflows across apps', connected: false },
-                    { name: 'Webhooks', desc: 'Receive real-time event data', connected: true },
-                    { name: 'Google Analytics', desc: 'Track conversions and events', connected: false },
-                  ].map((integration) => (
-                    <Card key={integration.name} padding="lg" hoverable>
-                      <CardHeader className="!p-0">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-label-lg text-on-surface">{integration.name}</h4>
-                          <Badge variant={integration.connected ? 'soft' : 'outline'} color={integration.connected ? 'success' : 'neutral'}>
-                            {integration.connected ? 'Connected' : 'Not Connected'}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-on-surface-variant mt-xs">{integration.desc}</p>
-                      </CardHeader>
-                      <CardContent className="!p-0 mt-lg">
-                        <Button variant={integration.connected ? 'outline' : 'primary'} fullWidth size="sm">
-                          {integration.connected ? 'Manage' : 'Connect'}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          </nav>
         </div>
+        <div className="flex items-center gap-4">
+          <Button
+            variant="primary"
+            size="sm"
+            className="bg-amber-600 hover:bg-amber-500 shadow-lg shadow-amber-600/20"
+          >
+            {t('topNav.upgradePlan')}
+          </Button>
+          <button
+            className="text-on-surface-variant hover:text-primary transition-colors p-1"
+            aria-label={t('topNav.notifications')}
+          >
+            <Bell className="w-5 h-5" />
+          </button>
+          <Settings className="w-5 h-5 text-primary" aria-hidden="true" />
+          <div className="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant">
+            <div className="w-full h-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
+              {MOCK_USER.name.charAt(0)}
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* ════ Sidebar ══════════════════════════════════════════════════════ */}
+        <aside
+          className="w-[200px] bg-surface-container-low border-r border-outline-variant flex flex-col pt-6 shrink-0"
+          aria-label={t('nav.label')}
+        >
+          <div className="px-4 mb-4">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant/60 px-4 mb-2">
+              {t('nav.title')}
+            </h2>
+          </div>
+          <nav className="flex flex-col gap-1 flex-1">
+            {NAV_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeNav === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveNav(item.id)}
+                  className={cn(
+                    'flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all text-left',
+                    isActive
+                      ? 'bg-gradient-to-r from-amber-600/10 to-transparent text-primary border-l-[3px] border-amber-600'
+                      : 'text-on-surface-variant hover:bg-surface-variant',
+                  )}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                  <span>{t(item.labelKey)}</span>
+                </button>
+              );
+            })}
+          </nav>
+          <div className="mt-auto p-4 border-t border-outline-variant/30">
+            <button className="flex items-center gap-3 text-on-surface-variant text-sm w-full hover:text-destructive transition-colors">
+              <LogOut className="w-5 h-5" aria-hidden="true" />
+              <span>{t('nav.signOut')}</span>
+            </button>
+          </div>
+        </aside>
+
+        {/* ════ Main Content ═════════════════════════════════════════════════ */}
+        <main className="flex-1 overflow-y-auto p-10 bg-background">
+          <div className="max-w-4xl mx-auto">
+            <h1 className="text-[28px] font-bold text-on-surface mb-8 tracking-tight">
+              {t('pageTitle')}
+            </h1>
+
+            <div className="space-y-8 pb-20">
+              {/* Section 1: Profile Details */}
+              <section className="bg-surface-container rounded-xl p-6 shadow-xl border border-outline-variant/20">
+                <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+                  <User className="w-5 h-5 text-primary" aria-hidden="true" />
+                  {t('profile.title')}
+                </h3>
+                <div className="flex flex-col md:flex-row gap-10">
+                  {/* Avatar Upload */}
+                  <div className="relative group cursor-pointer w-24 h-24">
+                    <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-primary/30 group-hover:border-primary transition-all bg-primary/20 flex items-center justify-center text-primary font-bold text-xl">
+                      {MOCK_USER.name.charAt(0)}
+                    </div>
+                    <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Upload className="w-5 h-5 text-white" aria-hidden="true" />
+                    </div>
+                  </div>
+
+                  {/* Form Fields */}
+                  <div className="flex-1 grid grid-cols-1 gap-6">
+                    <div>
+                      <label htmlFor="profile-name" className="block text-sm font-medium text-on-surface-variant mb-2">
+                        {t('profile.name')}
+                      </label>
+                      <Input
+                        id="profile-name"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                        className="bg-surface-container-highest border-outline-variant focus:ring-2 focus:ring-primary/40 focus:border-primary"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="profile-email" className="block text-sm font-medium text-on-surface-variant mb-2">
+                        {t('profile.email')}
+                      </label>
+                      <div className="relative">
+                        <Input
+                          id="profile-email"
+                          type="email"
+                          value={userEmail}
+                          disabled
+                          className="bg-surface-container-low border-outline-variant/30 text-on-surface-variant/50 cursor-not-allowed"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-green-500/10 text-green-500 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-green-500/20">
+                          <CheckCircle className="w-3.5 h-3.5" aria-hidden="true" />
+                          {t('profile.verified')}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="pt-2">
+                      <Button
+                        variant="primary"
+                        className="bg-amber-600 hover:bg-amber-500 shadow-lg shadow-amber-600/20"
+                      >
+                        {t('profile.save')}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* Section 2: API Keys */}
+              <section className="bg-surface-container rounded-xl p-6 shadow-xl border border-outline-variant/20">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Key className="w-5 h-5 text-primary" aria-hidden="true" />
+                    {t('apiKeys.title')}
+                  </h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-primary border-primary/30 hover:bg-primary/10"
+                  >
+                    <Plus className="w-4 h-4 mr-1.5" aria-hidden="true" />
+                    {t('apiKeys.addKey')}
+                  </Button>
+                </div>
+                <div className="space-y-4">
+                  {API_KEYS.map((apiKey) => {
+                    const isVisible = visibleKeys[apiKey.id];
+                    return (
+                      <div
+                        key={apiKey.id}
+                        className="flex items-center justify-between p-4 bg-surface-container-highest/50 rounded-xl border border-outline-variant/30"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-bold text-on-surface">
+                              {t(apiKey.nameKey)}
+                            </span>
+                            {apiKey.configured ? (
+                              <>
+                                <span className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                                <span className="text-[10px] text-green-500 font-bold uppercase tracking-tighter">
+                                  {t('apiKeys.configured')}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+                                <span className="text-[10px] text-red-500 font-bold uppercase tracking-tighter">
+                                  {t('apiKeys.missing')}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                          {apiKey.configured ? (
+                            <div className="flex items-center gap-2 max-w-md">
+                              <input
+                                type={isVisible ? 'text' : 'password'}
+                                readOnly
+                                value={apiKey.maskedKey}
+                                className="bg-transparent border-none p-0 text-sm font-mono text-on-surface-variant flex-1 focus:ring-0 focus:outline-none"
+                                aria-label={t(apiKey.nameKey)}
+                              />
+                              <button
+                                onClick={() => toggleKeyVisibility(apiKey.id)}
+                                className="text-on-surface-variant hover:text-on-surface transition-colors"
+                                aria-label={isVisible ? t('apiKeys.hide') : t('apiKeys.show')}
+                              >
+                                {isVisible ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                              </button>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-on-surface-variant italic">
+                              {t('apiKeys.didHint')}
+                            </p>
+                          )}
+                        </div>
+                        {apiKey.configured ? (
+                          <button
+                            className="p-2 hover:bg-surface-variant rounded-lg transition-colors"
+                            aria-label={t('apiKeys.delete')}
+                          >
+                            <Trash2 className="w-5 h-5 text-on-surface-variant" aria-hidden="true" />
+                          </button>
+                        ) : (
+                          <button className="text-xs font-bold text-primary hover:underline px-4">
+                            {t('apiKeys.connect')}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* Section 3: Locale & Language */}
+              <section className="bg-surface-container rounded-xl p-6 shadow-xl border border-outline-variant/20">
+                <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+                  <ChevronRight className="w-5 h-5 text-primary" aria-hidden="true" />
+                  {t('locale.title')}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {LOCALE_OPTIONS.map((option) => {
+                    const isSelected = selectedLocale === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        onClick={() => setSelectedLocale(option.id)}
+                        className={cn(
+                          'h-[44px] flex items-center justify-between px-4 rounded-xl transition-all',
+                          isSelected
+                            ? 'border-2 border-amber-600 bg-amber-600/10'
+                            : 'border border-outline-variant/30 hover:bg-surface-variant/50',
+                        )}
+                        role="radio"
+                        aria-checked={isSelected}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl" aria-hidden="true">{option.flag}</span>
+                          <span className="text-sm font-medium">{t(option.labelKey)}</span>
+                        </div>
+                        <div
+                          className={cn(
+                            'w-4 h-4 rounded-full border-2',
+                            isSelected
+                              ? 'border-4 border-amber-600 bg-white'
+                              : 'border-outline-variant',
+                          )}
+                          aria-hidden="true"
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* Section 4: Danger Zone */}
+              <section className="bg-surface-container rounded-xl p-6 border-t-4 border-destructive/50 bg-destructive/5 shadow-xl">
+                <h3 className="text-lg font-semibold text-destructive mb-2 flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" aria-hidden="true" />
+                  {t('dangerZone.title')}
+                </h3>
+                <p className="text-[13px] text-on-surface-variant mb-6">
+                  {t('dangerZone.description')}
+                </p>
+                <div className="flex items-center justify-between p-4 rounded-xl border border-destructive/20 bg-destructive/5">
+                  <div>
+                    <h4 className="text-sm font-bold text-on-surface mb-1">
+                      {t('dangerZone.deleteAccount')}
+                    </h4>
+                    <p className="text-[13px] text-on-surface-variant">
+                      {t('dangerZone.deleteDesc')}
+                    </p>
+                    <p className="text-[11px] text-on-surface-variant/60 font-medium mt-1">
+                      {t('dangerZone.irreversible')}
+                    </p>
+                  </div>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    {t('dangerZone.deleteButton')}
+                  </Button>
+                </div>
+              </section>
+            </div>
+          </div>
+        </main>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }

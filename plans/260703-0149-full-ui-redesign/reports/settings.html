@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Settings - Sophia AI Factory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-surface": "#e7e4f0",
+                    "primary-fixed": "#cecefa",
+                    "on-tertiary-fixed-variant": "#6a4b70",
+                    "on-error": "#490013",
+                    "on-tertiary": "#694a6f",
+                    "surface-dim": "#0e0e12",
+                    "primary-dim": "#b5b5e0",
+                    "surface-tint": "#c3c3ee",
+                    "surface-container-highest": "#25252e",
+                    "inverse-primary": "#5b5c81",
+                    "secondary-container": "#393a4d",
+                    "background": "#0e0e12",
+                    "secondary": "#c6c4dd",
+                    "secondary-dim": "#b8b6cf",
+                    "secondary-fixed-dim": "#d4d2eb",
+                    "on-primary": "#3c3d61",
+                    "surface-bright": "#2c2b34",
+                    "primary": "#c3c3ee",
+                    "outline-variant": "#484750",
+                    "on-tertiary-fixed": "#4c2f52",
+                    "surface": "#0e0e12",
+                    "tertiary-fixed": "#f5cdf9",
+                    "inverse-on-surface": "#55545a",
+                    "primary-container": "#4e4f74",
+                    "secondary-fixed": "#e2e0f9",
+                    "on-secondary": "#3e3e52",
+                    "tertiary": "#fedeff",
+                    "error": "#f97386",
+                    "on-background": "#e7e4f0",
+                    "on-primary-fixed-variant": "#4c4d72",
+                    "on-primary-container": "#e2e0ff",
+                    "surface-container": "#191920",
+                    "on-error-container": "#ff97a3",
+                    "primary-fixed-dim": "#c0c0eb",
+                    "on-secondary-fixed-variant": "#5a5a6f",
+                    "on-secondary-fixed": "#3d3e51",
+                    "inverse-surface": "#fcf8fe",
+                    "surface-variant": "#25252e",
+                    "on-secondary-container": "#bebdd5",
+                    "outline": "#76747f",
+                    "surface-container-low": "#131318",
+                    "error-dim": "#c44b5f",
+                    "surface-container-high": "#1f1f26",
+                    "surface-container-lowest": "#000000",
+                    "on-tertiary-container": "#604266",
+                    "tertiary-container": "#f5cdf9",
+                    "tertiary-dim": "#e7bfea",
+                    "on-primary-fixed": "#303154",
+                    "error-container": "#871c34",
+                    "tertiary-fixed-dim": "#e7bfea",
+                    "on-surface-variant": "#acaab5"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "display": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["IBM Plex Sans"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0e0e12;
+            color: #e7e4f0;
+            font-family: 'Inter', sans-serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #484750;
+            border-radius: 10px;
+        }
+        .settings-content-panel {
+            background-color: #18181B;
+            border-radius: 12px;
+        }
+        .sidebar-active {
+            border-left: 3px solid #6366F1;
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.1) 0%, transparent 100%);
+            color: #c3c3ee;
+        }
+    </style>
+</head>
+<body class="overflow-hidden flex flex-col h-screen">
+<!-- TopNavBar (Shared Component) -->
+<header class="bg-surface-container-low dark:bg-surface-container-low flex justify-between items-center px-6 py-3 w-full border-b border-outline-variant shadow-sm z-50">
+<div class="flex items-center gap-8">
+<span class="text-xl font-black text-primary dark:text-primary tracking-tighter">Sophia AI Factory</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="text-on-surface-variant dark:text-on-surface-variant font-label text-label-large hover:text-primary transition-colors" href="#">Projects</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant font-label text-label-large hover:text-primary transition-colors" href="#">Assets</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant font-label text-label-large hover:text-primary transition-colors" href="#">Templates</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant font-label text-label-large hover:text-primary transition-colors" href="#">Community</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="bg-primary text-on-primary font-bold px-4 py-1.5 rounded-lg text-sm scale-95 active:opacity-80 transition-all">Upgrade Plan</button>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">notifications</span>
+<span class="material-symbols-outlined text-primary cursor-pointer transition-colors">settings</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A high-quality studio portrait of a professional woman with a friendly smile, soft cinematic lighting, neutral office background, modern SaaS professional aesthetic, muted indigo and charcoal tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAMJxt8tRX0wBlXyonmFmYQt9PI88TbPbcnc_lTdV3asQxCYWofUwP6VOuU_EGoPOrYI8ESFuPF8Y7NCqYMyT3u2p71MGflMH1-bzknWkJRAKfjHAKxMrEYfjfAvM2nfV8Tr7DFHx26PyCpznZkRPasNfbH0xYQIrb7GDECbkxIWRoUf1STfoRKhkQVbemWni42ejGdMtJu2UDdHvRwvBDNVTLM7cN50-9nhBRN_JFXJ0GZtccefP3RmrRhjOmC3JDuAIvHDMpC2NE"/>
+</div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="w-[200px] bg-surface-container-low border-r border-outline-variant flex flex-col pt-6 shrink-0">
+<div class="px-4 mb-4">
+<h2 class="text-xs font-bold uppercase tracking-widest text-on-surface-variant opacity-60 px-4 mb-2">Settings</h2>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="sidebar-active flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all" href="#">
+<span class="material-symbols-outlined text-[20px]">person</span>
+<span>Account</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-variant flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">key</span>
+<span>API Keys</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-variant flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">payments</span>
+<span>Billing</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-variant flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">notifications</span>
+<span>Notifications</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-variant flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">group</span>
+<span>Team</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-variant flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">palette</span>
+<span>Appearance</span>
+</a>
+</nav>
+<div class="mt-auto p-4 border-t border-outline-variant/30">
+<div class="flex items-center gap-3 text-on-surface-variant text-sm cursor-pointer hover:text-error transition-colors">
+<span class="material-symbols-outlined text-[20px]">logout</span>
+<span>Sign Out</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto custom-scrollbar p-10 bg-background">
+<div class="max-w-4xl mx-auto">
+<h1 class="text-[28px] font-bold text-on-surface mb-8 tracking-tight">Settings</h1>
+<div class="space-y-8 pb-20">
+<!-- Section 1: Profile -->
+<section class="settings-content-panel p-6 shadow-xl border border-outline-variant/20">
+<h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">account_circle</span>
+                            Profile Details
+                        </h3>
+<div class="flex flex-col md:flex-row gap-10">
+<!-- Avatar Upload -->
+<div class="relative group cursor-pointer w-24 h-24">
+<div class="w-24 h-24 rounded-full overflow-hidden border-2 border-primary/30 group-hover:border-primary transition-all">
+<img class="w-full h-full object-cover" data-alt="Close up of a professional user avatar, minimalist styling, high resolution, soft focus studio background, indigo color accents, modern aesthetic for a tech platform profile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDdCiGyTtHOrlZLTuZpkus9YgLoQ4fWplffWuOKdSCswEf0Ndfvtdv8wstR5i7nFGQOm3KD_YHG1RDwJQEswbDbVLYHH5dIQ5msZwRVwCSFkM3qxTzgvEvieS6H8e7VdiD7p_f5b2F8af4EPjreZidQcdGoNc1C8xOVLi6ZC63vTCv6N9dSYqQWDClyUA46Msow6RtaHy8_Cb1uETwsV2w7bqa9rca6alDfZkx6qwkTbBgIZrniA9qqjpJBWdz4jeZeViV2Ml2yGg"/>
+</div>
+<div class="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white">upload</span>
+</div>
+</div>
+<!-- Form Fields -->
+<div class="flex-1 grid grid-cols-1 gap-6">
+<div>
+<label class="block text-sm font-medium text-on-surface-variant mb-2">Name</label>
+<input class="w-full bg-surface-container-highest border border-outline-variant rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary/40 focus:border-primary outline-none transition-all" type="text" value="Sophia Anderson"/>
+</div>
+<div>
+<label class="block text-sm font-medium text-on-surface-variant mb-2">Email Address</label>
+<div class="relative">
+<input class="w-full bg-surface-container-low border border-outline-variant/30 text-on-surface-variant/50 rounded-lg px-4 py-2.5 cursor-not-allowed" disabled="" type="email" value="sophia.anderson@ai-factory.io"/>
+<div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-success/10 text-[#4ade80] px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-[#4ade80]/20">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                                            Verified
+                                        </div>
+</div>
+</div>
+<div class="pt-2">
+<button class="bg-[#6366F1] hover:bg-[#4f46e5] text-white font-semibold px-6 py-2.5 rounded-lg transition-all shadow-lg shadow-indigo-500/20 active:scale-95">Save Changes</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 2: API Keys -->
+<section class="settings-content-panel p-6 shadow-xl border border-outline-variant/20">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-lg font-semibold flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">key</span>
+                                API Keys
+                            </h3>
+<button class="text-primary hover:bg-primary/10 border border-primary/30 px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                                Add Key
+                            </button>
+</div>
+<div class="space-y-4">
+<!-- ElevenLabs -->
+<div class="flex items-center justify-between p-4 bg-surface-container-highest/50 rounded-xl border border-outline-variant/30">
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-sm font-bold text-on-surface">ElevenLabs API Key</span>
+<div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+<span class="text-[10px] text-green-500 font-bold uppercase tracking-tighter">Configured</span>
+</div>
+<div class="flex items-center gap-2 max-w-md">
+<input class="bg-transparent border-none p-0 text-sm font-mono text-on-surface-variant flex-1 focus:ring-0" readonly="" type="password" value="sk_live_1234567890abcdef"/>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-on-surface transition-colors text-[20px]">visibility</span>
+</div>
+</div>
+<button class="p-2 hover:bg-surface-variant rounded-lg transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">delete</span>
+</button>
+</div>
+<!-- OpenRouter -->
+<div class="flex items-center justify-between p-4 bg-surface-container-highest/50 rounded-xl border border-outline-variant/30">
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-sm font-bold text-on-surface">OpenRouter API Key</span>
+<div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+<span class="text-[10px] text-green-500 font-bold uppercase tracking-tighter">Configured</span>
+</div>
+<div class="flex items-center gap-2 max-w-md">
+<input class="bg-transparent border-none p-0 text-sm font-mono text-on-surface-variant flex-1 focus:ring-0" readonly="" type="password" value="sk_or_0987654321fedcba"/>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-on-surface transition-colors text-[20px]">visibility</span>
+</div>
+</div>
+<button class="p-2 hover:bg-surface-variant rounded-lg transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">delete</span>
+</button>
+</div>
+<!-- D-ID -->
+<div class="flex items-center justify-between p-4 bg-surface-container-highest/50 rounded-xl border border-outline-variant/30">
+<div class="flex-1">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-sm font-bold text-on-surface">D-ID API Key</span>
+<div class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></div>
+<span class="text-[10px] text-red-500 font-bold uppercase tracking-tighter">Missing</span>
+</div>
+<p class="text-xs text-on-surface-variant italic">Enter your D-ID secret key to enable video avatar features.</p>
+</div>
+<button class="text-xs font-bold text-primary hover:underline px-4">Connect</button>
+</div>
+</div>
+</section>
+<!-- Section 3: Locale -->
+<section class="settings-content-panel p-6 shadow-xl border border-outline-variant/20">
+<h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">language</span>
+                            Locale &amp; Language
+                        </h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<!-- Vietnamese -->
+<div class="cursor-pointer h-[44px] flex items-center justify-between px-4 rounded-xl border border-outline-variant/30 hover:bg-surface-variant/50 transition-all" id="lang-vn" onclick="selectLanguage('vn')">
+<div class="flex items-center gap-3">
+<span class="text-xl">🇻🇳</span>
+<span class="text-sm font-medium">Vietnamese</span>
+</div>
+<div class="radio-check w-4 h-4 rounded-full border-2 border-outline-variant"></div>
+</div>
+<!-- English -->
+<div class="cursor-pointer h-[44px] flex items-center justify-between px-4 rounded-xl border-2 border-[#6366F1] bg-[#6366F1]/10 transition-all" id="lang-en" onclick="selectLanguage('en')">
+<div class="flex items-center gap-3">
+<span class="text-xl">🇺🇸</span>
+<span class="text-sm font-medium">English (United States)</span>
+</div>
+<div class="radio-check w-4 h-4 rounded-full border-4 border-[#6366F1] bg-white"></div>
+</div>
+</div>
+</section>
+<!-- Section 4: Danger Zone -->
+<section class="settings-content-panel p-6 border-t-4 border-red-500/50 bg-red-500/5 shadow-xl">
+<h3 class="text-lg font-semibold text-error mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined">warning</span>
+                            Danger Zone
+                        </h3>
+<p class="text-[13px] text-on-surface-variant mb-6">Manage high-impact changes to your account. Please proceed with caution.</p>
+<div class="flex items-center justify-between p-4 rounded-xl border border-red-500/20 bg-red-500/5">
+<div>
+<h4 class="text-sm font-bold text-on-surface mb-1">Delete Account</h4>
+<p class="text-[13px] text-on-surface-variant">Permanently remove your account and all associated data.</p>
+<p class="text-[11px] text-on-surface-variant/60 font-medium mt-1">This action is irreversible.</p>
+</div>
+<button class="border border-red-500 text-red-500 hover:bg-red-500 hover:text-white px-6 py-2 rounded-lg text-sm font-bold transition-all active:scale-95">
+                                Delete Account
+                            </button>
+</div>
+</section>
+</div>
+</div>
+</main>
+</div>
+<!-- BottomNavBar (Shared Component - Responsive) -->
+<footer class="md:hidden fixed bottom-0 left-0 w-full z-50 bg-surface-container-high dark:bg-surface-container-high border-t border-outline-variant shadow-lg flex justify-center items-center gap-8 py-4">
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-6 py-1">
+<span class="material-symbols-outlined">description</span>
+<span class="text-[10px] font-label">Script</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-6 py-1">
+<span class="material-symbols-outlined">keyboard_voice</span>
+<span class="text-[10px] font-label">Voice</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant px-6 py-1">
+<span class="material-symbols-outlined">movie_creation</span>
+<span class="text-[10px] font-label">Visual</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-primary text-on-primary rounded-xl px-6 py-1 scale-105 transition-transform">
+<span class="material-symbols-outlined">visibility</span>
+<span class="text-[10px] font-label">Review</span>
+</div>
+</footer>
+<script>
+        function selectLanguage(lang) {
+            const vn = document.getElementById('lang-vn');
+            const en = document.getElementById('lang-en');
+            
+            const activeClasses = ['border-2', 'border-[#6366F1]', 'bg-[#6366F1]/10'];
+            const inactiveClasses = ['border', 'border-outline-variant/30', 'bg-transparent'];
+            
+            const vnCheck = vn.querySelector('.radio-check');
+            const enCheck = en.querySelector('.radio-check');
+
+            if (lang === 'vn') {
+                vn.classList.remove(...inactiveClasses);
+                vn.classList.add(...activeClasses);
+                en.classList.remove(...activeClasses);
+                en.classList.add(...inactiveClasses);
+                
+                vnCheck.classList.remove('border-outline-variant');
+                vnCheck.classList.add('border-4', 'border-[#6366F1]', 'bg-white');
+                enCheck.classList.remove('border-4', 'border-[#6366F1]', 'bg-white');
+                enCheck.classList.add('border-2', 'border-outline-variant');
+            } else {
+                en.classList.remove(...inactiveClasses);
+                en.classList.add(...activeClasses);
+                vn.classList.remove(...activeClasses);
+                vn.classList.add(...inactiveClasses);
+                
+                enCheck.classList.remove('border-outline-variant');
+                enCheck.classList.add('border-4', 'border-[#6366F1]', 'bg-white');
+                vnCheck.classList.remove('border-4', 'border-[#6366F1]', 'bg-white');
+                vnCheck.classList.add('border-2', 'border-outline-variant');
+            }
+        }
+
+        // Handle Eye Toggle Mock
+        document.querySelectorAll('.material-symbols-outlined').forEach(icon => {
+            if (icon.innerText === 'visibility') {
+                icon.addEventListener('click', function() {
+                    const input = this.previousElementSibling;
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        this.innerText = 'visibility_off';
+                    } else {
+                        input.type = 'password';
+                        this.innerText = 'visibility';
+                    }
+                });
+            }
+        });
+    </script>
+</body></html>

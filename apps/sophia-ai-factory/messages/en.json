@@ -4698,6 +4698,8 @@
     "auth": {
       "login": {
         "title": "Sign In to Sophia",
+        "heading": "Welcome back",
+        "description": "Sign in to your account",
         "subtitle": "AI-Powered Revenue Automation Platform",
         "emailLabel": "Email Address",
         "emailPlaceholder": "name@company.com",
@@ -4963,6 +4965,398 @@
       "resources": "Marketing Resources",
       "banners": "Banner Images",
       "links": "Deep Links"
+    },
+    "dashboardShell": {
+      "sidebar": {
+        "main": "Main",
+        "management": "Management",
+        "adminPanel": "Admin Panel",
+        "dashboard": "Dashboard",
+        "campaigns": "Campaigns",
+        "videos": "Videos",
+        "analytics": "Analytics",
+        "billing": "Billing",
+        "affiliates": "Affiliates",
+        "settings": "Settings",
+        "users": "Users",
+        "licenses": "Licenses",
+        "auditLog": "Audit Log",
+        "systemHealth": "System Health"
+      },
+      "header": {
+        "searchPlaceholder": "Search campaigns...",
+        "upgradePlan": "Upgrade Plan",
+        "notifications": "Notifications"
+      },
+      "breadcrumb": {
+        "home": "Home",
+        "dashboard": "Dashboard"
+      },
+      "welcome": {
+        "heading": "Welcome back, {name}.",
+        "description": "Your AI video generator is currently processing <bold>{count} campaigns</bold>. Ready to create something new?",
+        "newProject": "New Project",
+        "viewAnalytics": "View Analytics"
+      },
+      "gpuCredits": {
+        "title": "GPU Rendering Credits",
+        "usage": "{used} / {total}",
+        "resetsIn": "Resets in {days} days.",
+        "buyMore": "Buy more"
+      },
+      "stats": {
+        "impressions": "Total Impressions",
+        "engagement": "Engagement",
+        "avgConversion": "Avg. Conversion",
+        "activeRenders": "Active Renders"
+      },
+      "recentProjects": {
+        "title": "Recent Projects",
+        "viewAll": "View All Projects",
+        "createNew": "Create New",
+        "modified": "Modified {time} ago"
+      }
+    },
+    "dashboardOverview": {
+      "aria": {
+        "mainContent": "Dashboard main content",
+        "kpiSection": "Key performance indicators",
+        "chartSection": "Performance chart",
+        "chartLegend": "Chart legend",
+        "chart": "Performance over last 30 days chart",
+        "sparkline": "Trend sparkline",
+        "campaignsTable": "Recent campaigns table",
+        "quickActions": "Quick actions"
+      },
+      "title": "Dashboard",
+      "subtitle": "Welcome back. Here’s what’s happening with your video production.",
+      "periodSelector": {
+        "label": "Last 30 days",
+        "ariaLabel": "Select date range, currently last 30 days"
+      },
+      "kpi": {
+        "activeCampaigns": {
+          "label": "Active Campaigns"
+        },
+        "totalViews": {
+          "label": "Total Views"
+        },
+        "revenueMtd": {
+          "label": "Revenue MTD"
+        },
+        "creditsUsed": {
+          "label": "Credits Used",
+          "value": "{used} / {total}",
+          "progressLabel": "{used} of {total} credits used"
+        }
+      },
+      "chart": {
+        "title": "Performance — Last 30 Days",
+        "legend": {
+          "views": "Views",
+          "revenue": "Revenue"
+        },
+        "tooltip": {
+          "label": "Chart data point",
+          "date": "Sept 24, 2023",
+          "views": "Views",
+          "viewsValue": "42,391",
+          "revenue": "Revenue",
+          "revenueValue": "$1,104.20"
+        }
+      },
+      "campaigns": {
+        "title": "Recent Campaigns",
+        "viewAll": "View All",
+        "columns": {
+          "name": "Campaign Name",
+          "status": "Status",
+          "views": "Views",
+          "revenue": "Revenue",
+          "lastUpdated": "Last Updated"
+        },
+        "status": {
+          "live": "Live",
+          "paused": "Paused",
+          "draft": "Draft"
+        }
+      },
+      "quickActions": {
+        "title": "Quick Actions",
+        "createCampaign": "Create Campaign",
+        "createCampaignDesc": "Start a new project",
+        "viewAnalytics": "View Analytics",
+        "viewAnalyticsDesc": "Deep dive into data",
+        "generateReport": "Generate Report",
+        "generateReportDesc": "Export monthly PDF",
+        "inviteTeam": "Invite Team Member",
+        "inviteTeamDesc": "Add collaborators"
+      },
+      "storage": {
+        "title": "Storage Usage",
+        "used": "{gb} GB used",
+        "percent": "{pct}%",
+        "progressLabel": "{pct}% storage used",
+        "upgradeHint": "Upgrade to Pro for unlimited cloud rendering and team storage."
+      }
+    },
+    "pricingPage": {
+      "hero": {
+        "title": "Choose Your Plan",
+        "subtitle": "Scale your AI video business with the right plan"
+      },
+      "billing": {
+        "monthly": "Monthly",
+        "yearly": "Yearly",
+        "savePercent": "(Save 20%)"
+      },
+      "popular": "Most Popular",
+      "plans": {
+        "basic": {
+          "name": "Basic",
+          "description": "For starters",
+          "period": "/mo",
+          "features": [
+            "10 campaigns",
+            "3 channels",
+            "Basic analytics"
+          ],
+          "cta": "Get Started"
+        },
+        "premium": {
+          "name": "Premium",
+          "description": "High performance",
+          "period": "/mo",
+          "features": [
+            "100 campaigns",
+            "All channels",
+            "Advanced analytics",
+            "Priority support"
+          ],
+          "cta": "Start Free Trial"
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "description": "Scale without limits",
+          "period": "/mo",
+          "features": [
+            "Unlimited campaigns",
+            "Custom integrations",
+            "API access",
+            "Dedicated manager"
+          ],
+          "cta": "Contact Sales"
+        },
+        "master": {
+          "name": "Master",
+          "description": "For agencies",
+          "price": "Custom",
+          "features": [
+            "Everything unlimited",
+            "White-label platform",
+            "Custom rendering farm"
+          ],
+          "cta": "Talk to Us"
+        }
+      },
+      "faq": {
+        "title": "Frequently Asked Questions",
+        "items": [
+          {
+            "question": "Can I change plans anytime?",
+            "answer": "Yes, you can upgrade or downgrade your plan at any time from your account settings. Changes will be reflected in your next billing cycle."
+          },
+          {
+            "question": "What happens after my free trial?",
+            "answer": "After your 14-day trial ends, you'll be automatically moved to your selected plan unless you cancel beforehand. We'll send you a reminder 3 days before the trial expires."
+          },
+          {
+            "question": "Are there any hidden fees?",
+            "answer": "No hidden fees. The price you see includes all features listed in that plan. Custom API usage beyond limits might incur additional costs on a pay-as-you-go basis."
+          },
+          {
+            "question": "Do you offer discounts for non-profits?",
+            "answer": "Yes! We offer a 50% discount for qualified non-profit organizations and educational institutions. Contact our support team with your credentials to apply."
+          }
+        ]
+      },
+      "nav": {
+        "models": "Models",
+        "gallery": "Gallery",
+        "pricing": "Pricing",
+        "api": "API",
+        "enterprise": "Enterprise",
+        "signIn": "Sign In",
+        "getStarted": "Get Started"
+      },
+      "footer": {
+        "description": "Building the future of generative video intelligence for the global creative economy.",
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service",
+        "security": "Security",
+        "status": "Status",
+        "contact": "Contact",
+        "copyright": "© 2024 Sophia AI Factory. All rights reserved."
+      }
+    },
+    "landing": {
+      "nav": {
+        "features": "Features",
+        "pricing": "Pricing",
+        "blog": "Blog",
+        "affiliates": "Affiliates",
+        "signIn": "Sign In",
+        "startFree": "Start Free"
+      },
+      "badge": "New: Version 2.0 Released",
+      "headline": "Build Your AI",
+      "headlineHighlight": "Video Empire",
+      "subheading": "Generate faceless YouTube channels, run affiliate campaigns, and publish across TikTok, YouTube, and IG — all from one intelligent dashboard.",
+      "cta": {
+        "startFree": "Start Free",
+        "watchDemo": "Watch Demo"
+      },
+      "trustBar": {
+        "label": "Creator community",
+        "creators": "10,000+ creators",
+        "videos": "1M+ videos generated"
+      },
+      "features": {
+        "scriptWriting": {
+          "title": "AI Script Writing",
+          "description": "Transform a simple keyword into high-retention video scripts optimized for audience engagement and conversion metrics."
+        },
+        "multiChannel": {
+          "title": "Multi-Channel Publish",
+          "description": "Schedule and deploy your content across TikTok, YouTube Shorts, and Instagram Reels simultaneously with one click."
+        },
+        "analytics": {
+          "title": "Revenue Analytics",
+          "description": "Track affiliate link clicks and revenue generation directly linked to your AI-generated video campaigns in real-time."
+        }
+      },
+      "footer": {
+        "copyright": "© 2024 Sophia AI Factory. All rights reserved.",
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service",
+        "contact": "Contact Us"
+      }
+    },
+    "settingsPage": {
+      "pageTitle": "Settings",
+      "topNav": {
+        "upgradePlan": "Upgrade Plan",
+        "notifications": "Notifications"
+      },
+      "nav": {
+        "label": "Settings navigation",
+        "title": "Settings",
+        "account": "Account",
+        "apiKeys": "API Keys",
+        "billing": "Billing",
+        "notifications": "Notifications",
+        "team": "Team",
+        "appearance": "Appearance",
+        "signOut": "Sign Out"
+      },
+      "profile": {
+        "title": "Profile Details",
+        "name": "Name",
+        "email": "Email Address",
+        "verified": "Verified",
+        "save": "Save Changes"
+      },
+      "apiKeys": {
+        "title": "API Keys",
+        "addKey": "Add Key",
+        "elevenLabs": "ElevenLabs API Key",
+        "openRouter": "OpenRouter API Key",
+        "did": "D-ID API Key",
+        "configured": "Configured",
+        "missing": "Missing",
+        "didHint": "Enter your D-ID secret key to enable video avatar features.",
+        "show": "Show key",
+        "hide": "Hide key",
+        "delete": "Delete",
+        "connect": "Connect"
+      },
+      "locale": {
+        "title": "Locale & Language",
+        "vietnamese": "Vietnamese",
+        "english": "English (United States)"
+      },
+      "dangerZone": {
+        "title": "Danger Zone",
+        "description": "Manage high-impact changes to your account. Please proceed with caution.",
+        "deleteAccount": "Delete Account",
+        "deleteDesc": "Permanently remove your account and all associated data.",
+        "irreversible": "This action is irreversible.",
+        "deleteButton": "Delete Account"
+      }
+    },
+    "campaigns": {
+      "title": "Campaigns",
+      "subtitle": "Manage and monitor your AI video generations.",
+      "searchPlaceholder": "Search campaigns...",
+      "status": {
+        "live": "Live",
+        "paused": "Paused",
+        "draft": "Draft"
+      },
+      "filter": {
+        "all": "All",
+        "allChannels": "All Channels",
+        "status": "Status",
+        "channel": "Channel",
+        "date": "Date",
+        "last30Days": "Last 30 Days",
+        "clear": "Clear filters"
+      },
+      "actions": {
+        "createCampaign": "Create Campaign",
+        "viewDetails": "View Details",
+        "continueDraft": "Continue Draft"
+      },
+      "metrics": {
+        "views": "Views",
+        "revenue": "Revenue",
+        "ctr": "CTR"
+      },
+      "progress": {
+        "campaign": "Campaign Progress",
+        "generation": "Generation Progress",
+        "aria": "complete"
+      },
+      "pagination": {
+        "showing": "Showing {from}-{to} of {total}"
+      },
+      "placeholder": {
+        "thumbnail": "Processing visuals..."
+      },
+      "emptyState": {
+        "title": "No campaigns yet",
+        "description": "Create your first campaign to start generating AI videos for your social channels.",
+        "cta": "Create Campaign"
+      },
+      "lastPublished": "Last published",
+      "footer": {
+        "poweredBy": "Powered by",
+        "engine": "Sophia Engine v2.4",
+        "apiDocs": "API Documentation",
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service"
+      },
+      "aria": {
+        "filterBar": "Filter campaigns",
+        "searchCampaigns": "Search campaigns",
+        "campaignList": "Campaign list",
+        "pagination": "Campaign pagination",
+        "previousPage": "Previous page",
+        "nextPage": "Next page",
+        "page": "Page {page}",
+        "moreOptions": "More options for",
+        "channelIcons": "Target channels"
+      }
     }
   },
   "audit": {
