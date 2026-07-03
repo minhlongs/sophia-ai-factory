@@ -2,8 +2,8 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Dashboard home page — server component.
- * First-time: shows setup steps.
- * Returning: shows stats, quick actions, recent runs.
+ * Renders the Stitch DashboardShell full-page layout with sidebar navigation,
+ * topbar, stats, and recent projects.
  */
 
 import { redirect } from 'next/navigation';
@@ -14,10 +14,8 @@ import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getBalance } from '@/land/mcu/credits-repo';
 import { logger } from '@/seed/utils/logger-utility';
 import { TIER_CONFIG } from '@/seed/config/tiers';
-import { DashboardHeroGreeting } from './components/dashboard-hero-greeting';
-import { DashboardSetupSteps } from './components/dashboard-setup-steps';
-import { DashboardReturningUser } from './components/dashboard-returning-user';
-import { DashboardFirstCampaignCta } from './components/dashboard-first-campaign-cta';
+import { getD1 } from '@/seed/db/get-d1';
+import { DashboardShell } from '@/components/stitch/screens/dashboard-shell';
 // Round-11 F-PC-4: split heavy on-demand modal+banner+widget out of initial bundle.
 // Onboarding tour is 243 LOC; only renders on first-time MASTER session.
 const OnboardingTourModal = nextDynamic(() =>
@@ -26,11 +24,6 @@ const OnboardingTourModal = nextDynamic(() =>
 const MasterWelcomeBanner = nextDynamic(() =>
   import('./components/master-welcome-banner').then(m => ({ default: m.MasterWelcomeBanner })),
 );
-import { OnboardingStatusWidget } from './components/onboarding-status-widget';
-import { LocalSetupGuide } from './components/local-setup-guide';
-import { MissionControlWidget } from '@/forest/components/dashboard/mission-control-widget';
-import { RouteHelpTooltip } from '@/components/help/route-help-tooltip';
-import { getD1 } from '@/seed/db/get-d1';
 
 interface SopRunRow {
   id: string;
@@ -48,27 +41,27 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   const user = await getCurrentUser();
   if (!user) redirect('/login');
 
- let db: ReturnType<typeof createServerClient> | null = null;
- let profile: ProfileRow | null = null;
- try {
-   db = createServerClient();
-   const profileResult = await db
-     .from('user_profiles')
-     .select('api_keys,onboarding_completed_at')
-     .eq('user_id', user.id)
-     .single();
-   profile = profileResult.data as ProfileRow | null;
- } catch (e) {
-   logger.error('[dashboard] createServerClient or profile query failed', e instanceof Error ? e : new Error(String(e)));
- }
+  let db: ReturnType<typeof createServerClient> | null = null;
+  let profile: ProfileRow | null = null;
+  try {
+    db = createServerClient();
+    const profileResult = await db
+      .from('user_profiles')
+      .select('api_keys,onboarding_completed_at')
+      .eq('user_id', user.id)
+      .single();
+    profile = profileResult.data as ProfileRow | null;
+  } catch (e) {
+    logger.error('[dashboard] createServerClient or profile query failed', e instanceof Error ? e : new Error(String(e)));
+  }
 
- const d1 = getD1();
+  const d1 = getD1();
 
- // Fetch tier and balance (profile may be null if D1 was unavailable)
- const [tier, balance] = await Promise.all([
-   resolveUserTier(user.id),
-   getBalance(user.id).catch(() => ({ credits_remaining: 0, credits_total_purchased: 0, credits_total_used: 0 })),
- ]);
+  // Fetch tier and balance (profile may be null if D1 was unavailable)
+  const [tier, balance] = await Promise.all([
+    resolveUserTier(user.id),
+    getBalance(user.id).catch(() => ({ credits_remaining: 0, credits_total_purchased: 0, credits_total_used: 0 })),
+  ]);
 
   // MASTER-tier FREE100 users: redirect to guided onboarding until completed
   if (tier === 'MASTER' && !profile?.onboarding_completed_at) {
@@ -131,38 +124,32 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   const { locale } = await params;
   const isVi = locale === 'vi';
 
+  // Map recent runs to project cards for the Stitch DashboardShell
+  const projects = recentRuns.map((run) => ({
+    id: run.id,
+    title: run.status === 'completed' ? `Campaign ${run.id.slice(0, 8)}` : `Processing ${run.id.slice(0, 8)}`,
+    thumbnailAlt: 'Campaign thumbnail',
+    thumbnailUrl: '',
+    duration: '0:30',
+    modifiedLabel: new Date(run.created_at * 1000).toLocaleDateString(isVi ? 'vi-VN' : 'en-US'),
+  }));
+
   return (
-    <div className="space-y-6">
+    <>
       <OnboardingTourModal userId={user.id} tier={tierLabel} />
 
       {/* MASTER welcome banner — client-side, auto-dismisses via localStorage */}
       {tier === 'MASTER' && <MasterWelcomeBanner trialEndsAt={trialEndsAt} />}
 
-      <div className="flex items-center gap-2">
-        <DashboardHeroGreeting name={user.full_name} tier={tierLabel} />
-        <RouteHelpTooltip locale={isVi ? 'vi' : 'en'} routeKey="dashboard" />
-      </div>
-      {/* Mission Control Widget — GAP3 composite hero */}
-      <MissionControlWidget isVi={isVi} />
-      <OnboardingStatusWidget isVi={isVi} />
-      <LocalSetupGuide apiKey={activeApiKey || null} locale={isVi ? 'vi' : 'en'} />
-
-     {showFirstTimeSteps && sopCount === 0 ? (
-     <DashboardSetupSteps hasApiKeys={hasApiKeys} sopCount={sopCount} />
-     ) : sopCount === 0 && !firstRun ? (
-      // Onboarding done but no SOPs installed yet and not first run — show quick-action CTA
-      <DashboardFirstCampaignCta />
-     ) : firstRun ? (
-      // H3: Zero-run user (regardless of pre-installed SOP count) — show first-campaign CTA
-      <DashboardFirstCampaignCta />
-     ) : (
-      <DashboardReturningUser
-        sopCount={sopCount}
-        mcuRemaining={balance.credits_remaining}
-        videosThisMonth={videosThisMonth}
-        recentRuns={recentRuns}
+      <DashboardShell
+        userName={user.full_name}
+        userEmail={user.email}
+        welcomeName={user.full_name}
+        activeCampaigns={videosThisMonth}
+        gpuUsed={balance.credits_total_used}
+        gpuTotal={balance.credits_total_purchased}
+        projects={projects}
       />
-     )}
-    </div>
+    </>
   );
 }
