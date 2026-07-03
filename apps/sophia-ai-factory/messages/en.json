@@ -4942,12 +4942,58 @@
         "database": "Database",
         "api": "API Gateway",
         "workers": "Edge Workers",
-        "storage": "Object Storage"
+        "storage": "Object Storage",
+        "status": "Status",
+        "lastPoll": "Last Poll",
+        "lastPollValue": "Last Poll Value"
       },
       "quickActions": "Quick Actions",
       "recentActivity": "Recent Activity",
       "latency": "Latency",
-      "status": "Status"
+      "status": "Status",
+      "pageTitle": "Page Title",
+      "badge": "Badge",
+      "searchPlaceholder": "Search Placeholder",
+      "aria": {
+        "mainContent": "Main Content",
+        "search": "Search",
+        "headerNav": "Header Nav",
+        "notifications": "Notifications",
+        "userMenu": "User Menu",
+        "kpiSection": "Kpi Section",
+        "chartSection": "Chart Section",
+        "chartPeriod": "Chart Period",
+        "chart": "Chart",
+        "systemHealth": "System Health",
+        "signupsTable": "Signups Table",
+        "previousPage": "Previous Page",
+        "nextPage": "Next Page",
+        "deployStatus": "Deploy Status"
+      },
+      "userInitials": "User Initials",
+      "chart": {
+        "title": "Title",
+        "30d": "30d",
+        "90d": "90d"
+      },
+      "recentSignups": {
+        "title": "Title",
+        "viewAll": "View All",
+        "columns": {
+          "user": "User",
+          "tier": "Tier",
+          "signupDate": "Signup Date",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "status": {
+          "active": "Active",
+          "suspended": "Suspended"
+        }
+      },
+      "deployStatus": {
+        "env": "Env"
+      }
     },
     "affiliatePortal": {
       "title": "Affiliate Portal",
@@ -5531,5 +5577,24 @@
     "create_campaign": "Create campaign",
     "title": "Title",
     "subtitle": "Subtitle"
-  }
+  },
+  "stepIndicator": "Step Indicator",
+  "step": "Step",
+  "scriptInput": "Script Input",
+  "aiGenerate": "Ai Generate",
+  "scriptPlaceholder": "Script Placeholder",
+  "generatedPreview": "Generated Preview",
+  "previewPlaceholder1": "Preview Placeholder1",
+  "previewPlaceholder2": "Preview Placeholder2",
+  "previewPlaceholder3": "Preview Placeholder3",
+  "previewPlaceholder4": "Preview Placeholder4",
+  "sidebarLabel": "Sidebar Label",
+  "preview": "Preview",
+  "previewDuration": "Preview Duration",
+  "voicePreview": "Voice Preview",
+  "playVoicePreview": "Play Voice Preview",
+  "voiceProgress": "Voice Progress",
+  "visualStyle": "Visual Style",
+  "stepNavigation": "Step Navigation",
+  "continueToVoice": "Continue To Voice"
 }
