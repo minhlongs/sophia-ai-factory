@@ -5024,6 +5024,87 @@
         "modified": "Sua {time} truoc"
       }
     },
+    "affiliate": {
+      "aria": {
+        "mainContent": "Nội dung chính bảng điều khiển liên kết",
+        "kpiSection": "Chỉ số hiệu suất chính",
+        "offersSection": "Chương trình liên kết",
+        "conversionsSection": "Chuyển đổi gần đây",
+        "conversionsTable": "Bảng chuyển đổi gần đây",
+        "referralSection": "Liên kết giới thiệu",
+        "walletSection": "Ví"
+      },
+      "common": {
+        "search": "Tìm kiếm",
+        "filter": "Bộ lọc",
+        "export": "Xuất"
+      },
+      "title": "Bảng Điều Khiển Liên Kết",
+      "subtitle": "Quản lý lượt giới thiệu, theo dõi chuyển đổi và tối đa hóa thu nhập của bạn.",
+      "referButton": "Giới Thiệu Bạn Bè",
+      "kpi": {
+        "totalReferrals": {
+          "label": "Tổng Lượt Giới Thiệu"
+        },
+        "active": {
+          "label": "Đang Hoạt Động"
+        },
+        "commissionEarned": {
+          "label": "Hoa Hồng Kiếm Được"
+        },
+        "pending": {
+          "label": "Đang Chờ"
+        }
+      },
+      "offers": {
+        "title": "Chương Trình Liên Kết",
+        "viewAll": "Xem Tất Cả",
+        "promote": "Quảng Bá",
+        "browseMore": "Khám Phá Thêm",
+        "items": {
+          "tiktokShop": {
+            "name": "TikTok Shop",
+            "commission": "15% Hoa Hồng"
+          },
+          "accessTrade": {
+            "name": "AccessTrade",
+            "commission": "10% Hoa Hồng"
+          },
+          "clickbank": {
+            "name": "ClickBank",
+            "commission": "20% Hoa Hồng"
+          }
+        }
+      },
+      "conversions": {
+        "title": "Chuyển Đổi Gần Đây",
+        "columns": {
+          "id": "Mã GD",
+          "amount": "Số Tiền",
+          "commission": "Hoa Hồng",
+          "status": "Trạng Thái",
+          "date": "Ngày"
+        },
+        "status": {
+          "paid": "ĐÃ THANH TOÁN",
+          "pending": "ĐANG CHỜ",
+          "clawback": "THU HỒI"
+        }
+      },
+      "referral": {
+        "title": "Liên Kết Giới Thiệu Của Bạn",
+        "copyButton": "Sao Chép",
+        "copied": "Đã Sao Chép!",
+        "shareLabel": "Chia sẻ qua:"
+      },
+      "wallet": {
+        "title": "Ví USDT (TRC20)",
+        "availableBalance": "Số Dư Khả Dụng",
+        "withdraw": "Rút Tiền",
+        "minimumWithdrawal": "Rút tối thiểu {amount}",
+        "toggleVisibility": "Hiện/ẩn địa chỉ ví"
+      }
+    },
     "dashboardOverview": {
       "aria": {
         "mainContent": "Nội dung chính của bảng điều khiển",

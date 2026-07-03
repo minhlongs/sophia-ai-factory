@@ -1,7 +1,7 @@
-import AdminPanelPage from '@/components/stitch/screens/admin/admin-panel-page';
+import { AdminPageContent } from '@/components/stitch/screens/admin';
 
 export const dynamic = 'force-dynamic';
 
 export default function AdminRoute() {
-  return <AdminPanelPage />;
+  return <AdminPageContent />;
 }
