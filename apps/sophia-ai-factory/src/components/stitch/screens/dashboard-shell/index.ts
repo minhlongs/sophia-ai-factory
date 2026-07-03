@@ -1,0 +1,2 @@
+export { default as DashboardShell } from './dashboard-shell';
+export type { DashboardShellProps } from './dashboard-shell';

@@ -2,7 +2,7 @@
 
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import LoginPage from '@/components/stitch/screens/auth/login-page';
+import { LoginPage } from '@/components/stitch/screens/login';
 import RegisterPage from '@/components/stitch/screens/auth/register-page';
 
 function LoginPageContent() {

@@ -4705,6 +4705,8 @@
     "auth": {
       "login": {
         "title": "Sign In to Sophia",
+        "heading": "Chào mừng trở lại",
+        "description": "Đăng nhập vào tài khoản của bạn",
         "subtitle": "AI-Powered Revenue Automation Platform",
         "emailLabel": "Email Address",
         "emailPlaceholder": "name@company.com",
@@ -4970,6 +4972,398 @@
       "resources": "Marketing Resources",
       "banners": "Banner Images",
       "links": "Deep Links"
+    },
+    "dashboardShell": {
+      "sidebar": {
+        "main": "Chinh",
+        "management": "Quan ly",
+        "adminPanel": "Admin Panel",
+        "dashboard": "Tong quan",
+        "campaigns": "Chien dich",
+        "videos": "Video",
+        "analytics": "Phan tich",
+        "billing": "Thanh toan",
+        "affiliates": "Doi tac",
+        "settings": "Cai dat",
+        "users": "Nguoi dung",
+        "licenses": "Giay phep",
+        "auditLog": "Nhat ky kiem tra",
+        "systemHealth": "He thong"
+      },
+      "header": {
+        "searchPlaceholder": "Tim kiem chien dich...",
+        "upgradePlan": "Nang cap goi",
+        "notifications": "Thong bao"
+      },
+      "breadcrumb": {
+        "home": "Trang chu",
+        "dashboard": "Tong quan"
+      },
+      "welcome": {
+        "heading": "Chao mung tro lai, {name}.",
+        "description": "Trinh tao video AI cua ban dang xu ly <bold>{count} chien dich</bold>. San sang tao noi dung moi?",
+        "newProject": "Du an moi",
+        "viewAnalytics": "Xem phan tich"
+      },
+      "gpuCredits": {
+        "title": "GPU Render",
+        "usage": "{used} / {total}",
+        "resetsIn": "Dat lai sau {days} ngay.",
+        "buyMore": "Mua them"
+      },
+      "stats": {
+        "impressions": "Tong luot xem",
+        "engagement": "Tuong tac",
+        "avgConversion": "Chuyen doi TB",
+        "activeRenders": "Dang render"
+      },
+      "recentProjects": {
+        "title": "Du an gan day",
+        "viewAll": "Xem tat ca",
+        "createNew": "Tao moi",
+        "modified": "Sua {time} truoc"
+      }
+    },
+    "dashboardOverview": {
+      "aria": {
+        "mainContent": "Nội dung chính của bảng điều khiển",
+        "kpiSection": "Chỉ số hiệu suất chính",
+        "chartSection": "Biểu đồ hiệu suất",
+        "chartLegend": "Chú thích biểu đồ",
+        "chart": "Biểu đồ hiệu suất 30 ngày qua",
+        "sparkline": "Biểu đồ xu hướng",
+        "campaignsTable": "Bảng chiến dịch gần đây",
+        "quickActions": "Thao tác nhanh"
+      },
+      "title": "Tổng Quan",
+      "subtitle": "Chào mừng trở lại. Dưới đây là tình hình sản xuất video của bạn.",
+      "periodSelector": {
+        "label": "30 ngày qua",
+        "ariaLabel": "Chọn khoảng thời gian, hiện tại 30 ngày qua"
+      },
+      "kpi": {
+        "activeCampaigns": {
+          "label": "Chiến Dịch Đang Chạy"
+        },
+        "totalViews": {
+          "label": "Tổng Lượt Xem"
+        },
+        "revenueMtd": {
+          "label": "Doanh Thu Tháng"
+        },
+        "creditsUsed": {
+          "label": "Credit Đã Dùng",
+          "value": "{used} / {total}",
+          "progressLabel": "Đã dùng {used} trên {total} credit"
+        }
+      },
+      "chart": {
+        "title": "Hiệu Suất — 30 Ngày Qua",
+        "legend": {
+          "views": "Lượt xem",
+          "revenue": "Doanh thu"
+        },
+        "tooltip": {
+          "label": "Điểm dữ liệu biểu đồ",
+          "date": "24 Thg 9, 2023",
+          "views": "Lượt xem",
+          "viewsValue": "42.391",
+          "revenue": "Doanh thu",
+          "revenueValue": "1.104,20 USD"
+        }
+      },
+      "campaigns": {
+        "title": "Chiến Dịch Gần Đây",
+        "viewAll": "Xem Tất Cả",
+        "columns": {
+          "name": "Tên Chiến Dịch",
+          "status": "Trạng Thái",
+          "views": "Lượt Xem",
+          "revenue": "Doanh Thu",
+          "lastUpdated": "Cập Nhật"
+        },
+        "status": {
+          "live": "Đang Chạy",
+          "paused": "Tạm Dừng",
+          "draft": "Bản Nháp"
+        }
+      },
+      "quickActions": {
+        "title": "Thao Tác Nhanh",
+        "createCampaign": "Tạo Chiến Dịch",
+        "createCampaignDesc": "Bắt đầu dự án mới",
+        "viewAnalytics": "Xem Phân Tích",
+        "viewAnalyticsDesc": "Phân tích dữ liệu chuyên sâu",
+        "generateReport": "Tạo Báo Cáo",
+        "generateReportDesc": "Xuất PDF hàng tháng",
+        "inviteTeam": "Mời Thành Viên",
+        "inviteTeamDesc": "Thêm cộng tác viên"
+      },
+      "storage": {
+        "title": "Dung Lượng Lưu Trữ",
+        "used": "Đã dùng {gb} GB",
+        "percent": "{pct}%",
+        "progressLabel": "Đã dùng {pct}% dung lượng",
+        "upgradeHint": "Nâng cấp lên Pro để có dung lượng render đám mây và lưu trữ nhóm không giới hạn."
+      }
+    },
+    "pricingPage": {
+      "hero": {
+        "title": "Chọn Gói Của Bạn",
+        "subtitle": "Mở rộng kinh doanh video AI của bạn với gói phù hợp"
+      },
+      "billing": {
+        "monthly": "Hàng tháng",
+        "yearly": "Hàng năm",
+        "savePercent": "(Tiết kiệm 20%)"
+      },
+      "popular": "Phổ biến nhất",
+      "plans": {
+        "basic": {
+          "name": "Cơ bản",
+          "description": "Dành cho người mới bắt đầu",
+          "period": "/tháng",
+          "features": [
+            "10 chiến dịch",
+            "3 kênh",
+            "Phân tích cơ bản"
+          ],
+          "cta": "Bắt Đầu"
+        },
+        "premium": {
+          "name": "Cao cấp",
+          "description": "Hiệu suất cao",
+          "period": "/tháng",
+          "features": [
+            "100 chiến dịch",
+            "Tất cả kênh",
+            "Phân tích nâng cao",
+            "Hỗ trợ ưu tiên"
+          ],
+          "cta": "Dùng Thử Miễn Phí"
+        },
+        "enterprise": {
+          "name": "Doanh nghiệp",
+          "description": "Mở rộng không giới hạn",
+          "period": "/tháng",
+          "features": [
+            "Chiến dịch không giới hạn",
+            "Tích hợp tùy chỉnh",
+            "Truy cập API",
+            "Quản lý riêng"
+          ],
+          "cta": "Liên hệ Bán hàng"
+        },
+        "master": {
+          "name": "Chuyên gia",
+          "description": "Dành cho đại lý",
+          "price": "Tùy chỉnh",
+          "features": [
+            "Mọi thứ không giới hạn",
+            "Nền tảng thương hiệu trắng",
+            "Trang trại render tùy chỉnh"
+          ],
+          "cta": "Liên hệ Chúng tôi"
+        }
+      },
+      "faq": {
+        "title": "Câu hỏi thường gặp",
+        "items": [
+          {
+            "question": "Tôi có thể thay đổi gói bất cứ lúc nào không?",
+            "answer": "Có, bạn có thể nâng cấp hoặc hạ cấp gói bất kỳ lúc nào từ phần cài đặt tài khoản. Thay đổi sẽ được áp dụng trong chu kỳ thanh toán tiếp theo."
+          },
+          {
+            "question": "Điều gì xảy ra sau khi dùng thử miễn phí?",
+            "answer": "Sau khi kết thúc dùng thử 14 ngày, bạn sẽ tự động chuyển sang gói đã chọn trừ khi bạn hủy trước. Chúng tôi sẽ gửi nhắc nhở 3 ngày trước khi dùng thử hết hạn."
+          },
+          {
+            "question": "Có phí ẩn không?",
+            "answer": "Không có phí ẩn. Giá bạn thấy bao gồm tất cả tính năng được liệt kê trong gói đó. Việc sử dụng API vượt quá hạn mức có thể phát sinh chi phí bổ sung theo hình thức trả theo nhu cầu."
+          },
+          {
+            "question": "Có giảm giá cho tổ chức phi lợi nhuận không?",
+            "answer": "Có! Chúng tôi giảm 50% cho các tổ chức phi lợi nhuận và cơ sở giáo dục đủ điều kiện. Liên hệ đội hỗ trợ với chứng chỉ của bạn để đăng ký."
+          }
+        ]
+      },
+      "nav": {
+        "models": "Mô hình",
+        "gallery": "Thư viện",
+        "pricing": "Bảng giá",
+        "api": "API",
+        "enterprise": "Doanh nghiệp",
+        "signIn": "Đăng nhập",
+        "getStarted": "Bắt đầu"
+      },
+      "footer": {
+        "description": "Xây dựng tương lai của trí tuệ video tạo sinh cho nền kinh tế sáng tạo toàn cầu.",
+        "privacy": "Chính sách bảo mật",
+        "terms": "Điều khoản dịch vụ",
+        "security": "Bảo mật",
+        "status": "Trạng thái",
+        "contact": "Liên hệ",
+        "copyright": "© 2024 Sophia AI Factory. Đã đăng ký bản quyền."
+      }
+    },
+    "landing": {
+      "nav": {
+        "features": "Tính năng",
+        "pricing": "Bảng giá",
+        "blog": "Blog",
+        "affiliates": "Đối tác",
+        "signIn": "Đăng nhập",
+        "startFree": "Dùng thử miễn phí"
+      },
+      "badge": "Mới: Đã phát hành Phiên bản 2.0",
+      "headline": "Xây dựng",
+      "headlineHighlight": "Đế chế Video AI",
+      "subheading": "Tạo kênh YouTube ẩn danh, chạy chiến dịch tiếp thị liên kết, và xuất bản lên TikTok, YouTube, IG — tất cả từ một bảng điều khiển thông minh.",
+      "cta": {
+        "startFree": "Dùng thử miễn phí",
+        "watchDemo": "Xem Demo"
+      },
+      "trustBar": {
+        "label": "Cộng đồng người sáng tạo",
+        "creators": "Hơn 10.000 người sáng tạo",
+        "videos": "Hơn 1 triệu video đã tạo"
+      },
+      "features": {
+        "scriptWriting": {
+          "title": "Viết Kịch bản AI",
+          "description": "Biến một từ khóa đơn giản thành kịch bản video có tỷ lệ giữ chân cao, được tối ưu hóa cho tương tác khán giả và chỉ số chuyển đổi."
+        },
+        "multiChannel": {
+          "title": "Xuất bản Đa kênh",
+          "description": "Lên lịch và triển khai nội dung của bạn lên TikTok, YouTube Shorts và Instagram Reels đồng thời chỉ với một cú nhấp chuột."
+        },
+        "analytics": {
+          "title": "Phân tích Doanh thu",
+          "description": "Theo dõi lượt nhấp vào liên kết tiếp thị liên kết và doanh thu được tạo ra từ các chiến dịch video AI của bạn trong thời gian thực."
+        }
+      },
+      "footer": {
+        "copyright": "© 2024 Sophia AI Factory. Bảo lưu mọi quyền.",
+        "privacy": "Chính sách Bảo mật",
+        "terms": "Điều khoản Dịch vụ",
+        "contact": "Liên hệ"
+      }
+    },
+    "settingsPage": {
+      "pageTitle": "Cài đặt",
+      "topNav": {
+        "upgradePlan": "Nâng cấp",
+        "notifications": "Thông báo"
+      },
+      "nav": {
+        "label": "Điều hướng cài đặt",
+        "title": "Cài đặt",
+        "account": "Tài khoản",
+        "apiKeys": "Khóa API",
+        "billing": "Thanh toán",
+        "notifications": "Thông báo",
+        "team": "Nhóm",
+        "appearance": "Giao diện",
+        "signOut": "Đăng xuất"
+      },
+      "profile": {
+        "title": "Thông tin cá nhân",
+        "name": "Tên",
+        "email": "Địa chỉ Email",
+        "verified": "Đã xác thực",
+        "save": "Lưu thay đổi"
+      },
+      "apiKeys": {
+        "title": "Khóa API",
+        "addKey": "Thêm khóa",
+        "elevenLabs": "Khóa API ElevenLabs",
+        "openRouter": "Khóa API OpenRouter",
+        "did": "Khóa API D-ID",
+        "configured": "Đã cấu hình",
+        "missing": "Thiếu",
+        "didHint": "Nhập khóa bí mật D-ID để kích hoạt tính năng video avatar.",
+        "show": "Hiện khóa",
+        "hide": "Ẩn khóa",
+        "delete": "Xóa",
+        "connect": "Kết nối"
+      },
+      "locale": {
+        "title": "Ngôn ngữ & Vùng miền",
+        "vietnamese": "Tiếng Việt",
+        "english": "English (United States)"
+      },
+      "dangerZone": {
+        "title": "Khu vực nguy hiểm",
+        "description": "Quản lý các thay đổi quan trọng tới tài khoản của bạn. Vui lòng thận trọng.",
+        "deleteAccount": "Xóa tài khoản",
+        "deleteDesc": "Xóa vĩnh viễn tài khoản và tất cả dữ liệu liên quan.",
+        "irreversible": "Hành động này không thể hoàn tác.",
+        "deleteButton": "Xóa tài khoản"
+      }
+    },
+    "campaigns": {
+      "title": "Chiến dịch",
+      "subtitle": "Quản lý và theo dõi các video AI của bạn.",
+      "searchPlaceholder": "Tìm kiếm chiến dịch...",
+      "status": {
+        "live": "Đang chạy",
+        "paused": "Tạm dừng",
+        "draft": "Bản nháp"
+      },
+      "filter": {
+        "all": "Tất cả",
+        "allChannels": "Tất cả kênh",
+        "status": "Trạng thái",
+        "channel": "Kênh",
+        "date": "Ngày",
+        "last30Days": "30 ngày qua",
+        "clear": "Xóa bộ lọc"
+      },
+      "actions": {
+        "createCampaign": "Tạo Chiến dịch",
+        "viewDetails": "Xem Chi tiết",
+        "continueDraft": "Tiếp tục Nháp"
+      },
+      "metrics": {
+        "views": "Lượt xem",
+        "revenue": "Doanh thu",
+        "ctr": "CTR"
+      },
+      "progress": {
+        "campaign": "Tiến độ Chiến dịch",
+        "generation": "Tiến độ Tạo video",
+        "aria": "hoàn thành"
+      },
+      "pagination": {
+        "showing": "Hiển thị {from}-{to} trên {total}"
+      },
+      "placeholder": {
+        "thumbnail": "Đang xử lý hình ảnh..."
+      },
+      "emptyState": {
+        "title": "Chưa có chiến dịch nào",
+        "description": "Tạo chiến dịch đầu tiên để bắt đầu tạo video AI cho các kênh mạng xã hội của bạn.",
+        "cta": "Tạo Chiến dịch"
+      },
+      "lastPublished": "Đăng lần cuối",
+      "footer": {
+        "poweredBy": "Cung cấp bởi",
+        "engine": "Sophia Engine v2.4",
+        "apiDocs": "Tài liệu API",
+        "privacy": "Chính sách Bảo mật",
+        "terms": "Điều khoản Dịch vụ"
+      },
+      "aria": {
+        "filterBar": "Lọc chiến dịch",
+        "searchCampaigns": "Tìm kiếm chiến dịch",
+        "campaignList": "Danh sách chiến dịch",
+        "pagination": "Phân trang chiến dịch",
+        "previousPage": "Trang trước",
+        "nextPage": "Trang sau",
+        "page": "Trang {page}",
+        "moreOptions": "Thêm tùy chọn cho",
+        "channelIcons": "Kênh mục tiêu"
+      }
     }
   },
   "audit": {
