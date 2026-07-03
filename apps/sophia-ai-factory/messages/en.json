@@ -5004,12 +5004,24 @@
         "env": "Env"
       },
       "kpi": {
-        "crons": { "label": "Scheduled Crons" },
-        "emails": { "label": "Emails Sent" },
-        "webhooks": { "label": "Webhook Endpoints" },
-        "storage": { "label": "R2 Storage" },
-        "cost": { "label": "Provider Spend (30d)" },
-        "signups": { "label": "Signups (30d)" }
+        "crons": {
+          "label": "Scheduled Crons"
+        },
+        "emails": {
+          "label": "Emails Sent"
+        },
+        "webhooks": {
+          "label": "Webhook Endpoints"
+        },
+        "storage": {
+          "label": "R2 Storage"
+        },
+        "cost": {
+          "label": "Provider Spend (30d)"
+        },
+        "signups": {
+          "label": "Signups (30d)"
+        }
       }
     },
     "affiliatePortal": {
@@ -5044,16 +5056,21 @@
         "users": "Users",
         "licenses": "Licenses",
         "auditLog": "Audit Log",
-        "systemHealth": "System Health"
+        "systemHealth": "System Health",
+        "label": "Label",
+        "logout": "Logout"
       },
       "header": {
         "searchPlaceholder": "Search campaigns...",
         "upgradePlan": "Upgrade Plan",
-        "notifications": "Notifications"
+        "notifications": "Notifications",
+        "localeEnglish": "Locale English",
+        "localeVietnamese": "Locale Vietnamese"
       },
       "breadcrumb": {
         "home": "Home",
-        "dashboard": "Dashboard"
+        "dashboard": "Dashboard",
+        "label": "Label"
       },
       "welcome": {
         "heading": "Welcome back, {name}.",
