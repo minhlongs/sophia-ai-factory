@@ -4,7 +4,6 @@ import React, { useState, useCallback } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/seed/utils/cn';
-import { Button } from '@/components/stitch';
 
 /* ── Types ──────────────────────────────────────────────────────────────────── */
 
@@ -37,6 +36,22 @@ const NAV_ITEMS = ['models', 'pricing', 'api', 'enterprise'] as const;
 
 const FAQ_INDICES = [0, 1, 2, 3] as const;
 
+/* ── Stitch-themed button base classes (replace seed/ui Button) ───────────── */
+
+const BTN_BASE =
+  'inline-flex items-center justify-center gap-2 font-semibold rounded-lg ' +
+  'transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ' +
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50';
+
+const BTN: Record<string, string> = {
+  primary: 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm',
+  ghost: 'bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100',
+  outline: 'bg-transparent border border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100',
+  sm: 'px-3 py-1.5 text-sm',
+  md: 'px-4 py-2 text-sm',
+  lg: 'px-6 py-3 text-base',
+};
+
 /* ═══════════════════════════════════════════════════════════════════════════════
    PricingPage
    ═══════════════════════════════════════════════════════════════════════════════ */
@@ -58,17 +73,23 @@ export default function PricingPage() {
     return `$${price}`;
   };
 
+  const btnClass = (variant: string, size: string, extra = '') =>
+    cn(BTN_BASE, BTN[variant], BTN[size], extra);
+
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20 selection:text-primary-foreground">
+    <div className="min-h-screen bg-[#18181B] text-zinc-100 selection:bg-amber-500/20">
       {/* ════ Top Navigation ═══════════════════════════════════════════════════ */}
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-zinc-800 bg-[#18181B]/80 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 md:px-8 md:py-4">
           {/* Brand */}
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary text-lg font-bold text-primary-foreground" aria-hidden="true">
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500 text-lg font-bold text-white"
+              aria-hidden="true"
+            >
               S
             </div>
-            <span className="text-xl font-black text-foreground">
+            <span className="text-xl font-black text-zinc-100">
               Sophia AI Factory
             </span>
           </div>
@@ -80,10 +101,10 @@ export default function PricingPage() {
                 key={item}
                 href="#"
                 className={cn(
-                  'text-sm font-medium transition-colors hover:text-primary',
+                  'text-sm font-medium transition-colors hover:text-amber-500',
                   item === 'pricing'
-                    ? 'font-bold text-primary'
-                    : 'text-muted-foreground',
+                    ? 'font-bold text-amber-500'
+                    : 'text-zinc-400',
                 )}
                 aria-current={item === 'pricing' ? 'page' : undefined}
               >
@@ -94,18 +115,18 @@ export default function PricingPage() {
 
           {/* Desktop Auth */}
           <div className="hidden items-center gap-4 md:flex">
-            <Button variant="ghost" size="sm">
+            <button className={btnClass('ghost', 'sm')}>
               {t('nav.signIn')}
-            </Button>
-            <Button variant="primary" size="sm">
+            </button>
+            <button className={btnClass('primary', 'sm')}>
               {t('nav.getStarted')}
-            </Button>
+            </button>
           </div>
 
           {/* Mobile Hamburger */}
           <button
             type="button"
-            className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground hover:text-foreground md:hidden"
+            className="inline-flex items-center justify-center rounded-lg p-2 text-zinc-400 hover:text-zinc-100 md:hidden"
             onClick={() => setMobileNavOpen(!mobileNavOpen)}
             aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
             aria-expanded={mobileNavOpen}
@@ -116,30 +137,33 @@ export default function PricingPage() {
 
         {/* Mobile Nav Dropdown */}
         {mobileNavOpen && (
-          <nav className="border-t border-border bg-background px-4 py-4 md:hidden" aria-label="Mobile navigation">
+          <nav
+            className="border-t border-zinc-800 bg-[#18181B] px-4 py-4 md:hidden"
+            aria-label="Mobile navigation"
+          >
             <div className="flex flex-col gap-3">
               {NAV_ITEMS.map((item) => (
                 <a
                   key={item}
                   href="#"
                   className={cn(
-                    'rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                    'rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     item === 'pricing'
-                      ? 'bg-primary/10 font-bold text-primary'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                      ? 'bg-amber-500/10 font-bold text-amber-500'
+                      : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100',
                   )}
                   aria-current={item === 'pricing' ? 'page' : undefined}
                 >
                   {t(`nav.${item}`)}
                 </a>
               ))}
-              <hr className="my-2 border-border" />
-              <Button variant="ghost" size="sm" className="w-full justify-start">
+              <hr className="my-2 border-zinc-800" />
+              <button className={btnClass('ghost', 'sm', 'w-full justify-start')}>
                 {t('nav.signIn')}
-              </Button>
-              <Button variant="primary" size="sm" className="w-full">
+              </button>
+              <button className={btnClass('primary', 'sm', 'w-full')}>
                 {t('nav.getStarted')}
-              </Button>
+              </button>
             </div>
           </nav>
         )}
@@ -149,17 +173,17 @@ export default function PricingPage() {
       <main className="mx-auto max-w-7xl px-4 pt-28 pb-24 md:px-8">
         {/* ── Hero Section ─────────────────────────────────────────────────── */}
         <section className="mb-16 text-center md:mb-20">
-          <h1 className="mb-3 text-4xl font-bold tracking-tight text-foreground md:text-5xl">
+          <h1 className="mb-3 text-4xl font-bold tracking-tight text-zinc-100 md:text-5xl">
             {t('hero.title')}
           </h1>
-          <p className="mx-auto mb-10 max-w-2xl text-base text-muted-foreground md:text-lg">
+          <p className="mx-auto mb-10 max-w-2xl text-base text-zinc-400 md:text-lg">
             {t('hero.subtitle')}
           </p>
 
-          {/* Billing Toggle */}
+          {/* Billing Toggle — amber active state */}
           <div className="flex items-center justify-center gap-4">
             <div
-              className="inline-flex items-center rounded-full border border-border bg-card p-1"
+              className="inline-flex items-center rounded-full border border-zinc-800 bg-[#18181B] p-1"
               role="radiogroup"
               aria-label="Billing period"
             >
@@ -173,8 +197,8 @@ export default function PricingPage() {
                   className={cn(
                     'rounded-full px-6 py-2 text-sm font-semibold transition-all duration-300',
                     billing === period
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-muted-foreground hover:text-foreground',
+                      ? 'bg-amber-500 text-white shadow-sm'
+                      : 'text-zinc-400 hover:text-zinc-200',
                   )}
                 >
                   {t(`billing.${period}`)}
@@ -206,7 +230,7 @@ export default function PricingPage() {
 
         {/* ── FAQ Section ──────────────────────────────────────────────────── */}
         <section className="mx-auto max-w-3xl" aria-labelledby="faq-heading">
-          <h2 id="faq-heading" className="mb-12 text-center text-3xl font-bold text-foreground">
+          <h2 id="faq-heading" className="mb-12 text-center text-3xl font-bold text-zinc-100">
             {t('faq.title')}
           </h2>
           <div className="space-y-3">
@@ -215,21 +239,21 @@ export default function PricingPage() {
               return (
                 <div
                   key={index}
-                  className="overflow-hidden rounded-lg border border-border bg-card"
+                  className="overflow-hidden rounded-lg border border-zinc-800 bg-[#18181B]"
                 >
                   <button
                     type="button"
                     onClick={() => toggleFaq(index)}
-                    className="flex w-full items-center justify-between px-6 py-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="flex w-full items-center justify-between px-6 py-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
                     aria-expanded={isOpen}
                     aria-controls={`faq-answer-${index}`}
                   >
-                    <span className="text-base font-semibold text-foreground">
+                    <span className="text-base font-semibold text-zinc-100">
                       {t(`faq.items.${index}.question`)}
                     </span>
                     <ChevronDown
                       className={cn(
-                        'h-5 w-5 flex-shrink-0 text-muted-foreground transition-transform duration-300',
+                        'h-5 w-5 flex-shrink-0 text-zinc-500 transition-transform duration-300',
                         isOpen && 'rotate-180',
                       )}
                       aria-hidden="true"
@@ -243,7 +267,7 @@ export default function PricingPage() {
                       isOpen ? 'max-h-96' : 'max-h-0',
                     )}
                   >
-                    <p className="px-6 pb-4 text-sm leading-relaxed text-muted-foreground">
+                    <p className="px-6 pb-4 text-sm leading-relaxed text-zinc-400">
                       {t(`faq.items.${index}.answer`)}
                     </p>
                   </div>
@@ -255,19 +279,22 @@ export default function PricingPage() {
       </main>
 
       {/* ════ Footer ══════════════════════════════════════════════════════════ */}
-      <footer className="border-t border-border bg-muted/50">
+      <footer className="border-t border-zinc-800 bg-zinc-900/50">
         <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-8 px-4 py-12 md:flex-row md:justify-between md:px-8">
           {/* Brand Column */}
           <div className="flex max-w-xs flex-col items-center text-center md:items-start md:text-left">
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground" aria-hidden="true">
+              <div
+                className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 text-sm font-bold text-white"
+                aria-hidden="true"
+              >
                 S
               </div>
-              <span className="text-lg font-bold text-foreground">
+              <span className="text-lg font-bold text-zinc-100">
                 Sophia AI Factory
               </span>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-zinc-400">
               {t('footer.description')}
             </p>
           </div>
@@ -279,13 +306,13 @@ export default function PricingPage() {
                 <a
                   key={link}
                   href="#"
-                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
+                  className="text-sm text-zinc-400 transition-colors hover:text-amber-500"
                 >
                   {t(`footer.${link}`)}
                 </a>
               ))}
             </nav>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-zinc-500">
               {t('footer.copyright')}
             </p>
           </div>
@@ -296,7 +323,7 @@ export default function PricingPage() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   PricingCard — individual tier card
+   PricingCard — individual tier card with Stitch amber styling
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 interface PricingCardProps {
@@ -314,33 +341,43 @@ function PricingCard({ tier, billing, displayPrice, t }: PricingCardProps) {
     (_, i) => t(`plans.${tier.id}.features.${i}`),
   );
 
+  const cardClasses = cn(
+    'relative flex flex-col rounded-lg transition-all duration-300',
+    'bg-[#18181B] p-5', // 20px padding for 20px
+    tier.popular
+      ? 'z-10 border-2 border-amber-500 scale-[1.05] shadow-lg shadow-amber-500/20'
+      : 'border border-zinc-800 hover:border-amber-500/50',
+  );
+
+  const badgeClasses =
+    'absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-500 px-4 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-sm';
+
+  const btnClasses = cn(
+    BTN_BASE,
+    'w-full',
+    tier.ctaVariant === 'primary' ? BTN.primary : BTN.outline,
+    BTN.lg,
+  );
+
   return (
     <div
-      className={cn(
-        'relative flex flex-col rounded-lg border p-8 transition-all duration-300',
-        tier.popular
-          ? 'z-10 border-2 border-primary bg-card shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30'
-          : 'border-border bg-card hover:border-primary/50',
-      )}
+      className={cardClasses}
       role="article"
       aria-label={t(`plans.${tier.id}.name`)}
     >
       {/* Popular Badge */}
       {tier.popular && (
-        <div
-          className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-sm"
-          aria-label={t('popular')}
-        >
+        <div className={badgeClasses} aria-label={t('popular')}>
           {t('popular')}
         </div>
       )}
 
       {/* Name & Description */}
       <div className="mb-6">
-        <h3 className="mb-1 text-xl font-semibold text-foreground">
+        <h3 className="mb-1 text-xl font-semibold text-zinc-100">
           {t(`plans.${tier.id}.name`)}
         </h3>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-zinc-400">
           {t(`plans.${tier.id}.description`)}
         </p>
       </div>
@@ -349,16 +386,16 @@ function PricingCard({ tier, billing, displayPrice, t }: PricingCardProps) {
       <div className="mb-6">
         {hasNumericPrice ? (
           <div className="flex items-baseline gap-1">
-            <span className="text-5xl font-bold text-foreground">
+            <span className="text-5xl font-bold text-zinc-100">
               {displayPrice}
             </span>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-zinc-400">
               {t(`plans.${tier.id}.period`)}
             </span>
           </div>
         ) : (
           <div className="flex items-baseline">
-            <span className="text-5xl font-bold text-foreground">
+            <span className="text-5xl font-bold text-zinc-100">
               {displayPrice}
             </span>
           </div>
@@ -368,9 +405,9 @@ function PricingCard({ tier, billing, displayPrice, t }: PricingCardProps) {
       {/* Features */}
       <ul className="mb-10 flex flex-grow flex-col gap-4">
         {features.map((feature, idx) => (
-          <li key={idx} className="flex items-start gap-3 text-sm text-muted-foreground">
+          <li key={idx} className="flex items-start gap-3 text-sm text-zinc-400">
             <Check
-              className="mt-0.5 h-[18px] w-[18px] flex-shrink-0 text-primary"
+              className="mt-0.5 h-[18px] w-[18px] flex-shrink-0 text-amber-500"
               aria-hidden="true"
               style={{ fill: 'currentColor' }}
             />
@@ -379,14 +416,10 @@ function PricingCard({ tier, billing, displayPrice, t }: PricingCardProps) {
         ))}
       </ul>
 
-      {/* CTA */}
-      <Button
-        variant={tier.ctaVariant}
-        size="lg"
-        fullWidth
-      >
+      {/* CTA button — amber bg for primary, outline with zinc border for others */}
+      <button className={btnClasses}>
         {t(`plans.${tier.id}.cta`)}
-      </Button>
+      </button>
     </div>
   );
 }
