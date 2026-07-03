@@ -1,0 +1,16 @@
+{
+  "theme": "DARK",
+  "primaryColor": "#6366F1",
+  "headlineFont": "INTER",
+  "bodyFont": "INTER",
+  "labelFont": "IBM_PLEX_SANS",
+  "colorVariant": "TONAL_SPOT",
+  "roundness": "ROUND_EIGHT",
+  "spacingScale": 2,
+  "backgroundLight": "#FAFAFA",
+  "backgroundDark": "#0F0F11",
+  "density": "COMFORTABLE",
+  "designMode": "HIGH_FIDELITY",
+  "styleKeywords": ["Clean", "Professional", "Modern", "Focused"],
+  "deviceType": "DESKTOP"
+}

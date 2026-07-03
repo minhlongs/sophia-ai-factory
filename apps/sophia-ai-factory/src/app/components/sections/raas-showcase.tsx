@@ -39,11 +39,11 @@ export function RaaSShowcase() {
 
   return (
     <section id="raas" className="py-20 md:py-32 relative overflow-hidden">
-      {/* Background glow — violet theme to distinguish from features section */}
+      {/* Background glow — indigo theme to distinguish from features section */}
       <div className="absolute top-1/2 left-1/4 w-[600px] h-[600px] bg-primary-600 opacity-[0.08] blur-[140px] rounded-full -z-10" />
       <div className="absolute bottom-0 right-1/3 w-[400px] h-[400px] bg-accent-500 opacity-[0.08] blur-[100px] rounded-full -z-10" />
       {/* Top border accent */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent" />
 
       <Container>
         {/* Badge — shown FIRST to signal this is a distinct product */}
@@ -90,7 +90,7 @@ export function RaaSShowcase() {
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto text-center">
             {(["stat1", "stat2", "stat3", "stat4"] as const).map((key) => (
               <div key={key}>
-                <div className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
+                <div className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
                   {t(`stats.${key}.value`)}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">

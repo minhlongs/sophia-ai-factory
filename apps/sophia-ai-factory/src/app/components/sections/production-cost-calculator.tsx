@@ -100,7 +100,7 @@ export function ProductionCostCalculator() {
                 <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t("service_plan")}>
                   {tiers.map((tier) => (
                     <button key={tier} role="radio" aria-checked={selectedTier === tier} onClick={() => handleTierChange(tier)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${selectedTier === tier ? "bg-[var(--neon-cyan)]/20 border border-[var(--neon-cyan)] text-[var(--neon-cyan)]" : "bg-white/5 border border-white/10 text-muted-foreground hover:bg-white/10"}`}>
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${selectedTier === tier ? "bg-indigo-500/20 border border-indigo-500 text-indigo-400" : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:bg-zinc-800"}`}>
                       {tierLabels[tier]}
                     </button>
                   ))}

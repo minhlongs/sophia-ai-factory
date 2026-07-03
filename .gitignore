@@ -93,3 +93,4 @@ sync-*.sh
 
 # Claude worktree backups (generated operational artifacts)
 .claude/worktrees.bak/
+.stitch-tokens.json

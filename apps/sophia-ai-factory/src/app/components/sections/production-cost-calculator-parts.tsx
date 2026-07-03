@@ -12,7 +12,7 @@ export function SliderInput({
     <div>
       <div className="flex justify-between mb-2">
         <label htmlFor={id} className="text-foreground/80 text-sm">{label}</label>
-        <span className="text-[var(--neon-cyan)] font-bold">{value}</span>
+        <span className="text-indigo-400 font-bold">{value}</span>
       </div>
       <input
         id={id}
@@ -26,7 +26,7 @@ export function SliderInput({
         aria-valuemin={min}
         aria-valuemax={max}
         aria-valuenow={value}
-        className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer slider-cyan"
+        className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
       />
       <div className="flex justify-between text-xs text-muted-foreground mt-1">
         <span>{min}</span>
@@ -41,7 +41,7 @@ export function CostRow({ label, value, highlight }: { label: string; value: str
   return (
     <div className="flex justify-between items-center">
       <span className={highlight ? "text-foreground font-semibold" : "text-foreground/70 text-sm"}>{label}</span>
-      <span className={highlight ? "text-[var(--neon-cyan)] font-bold text-lg" : "text-foreground font-medium"}>{value}</span>
+      <span className={highlight ? "text-indigo-400 font-bold text-lg" : "text-foreground font-medium"}>{value}</span>
     </div>
   );
 }
@@ -49,7 +49,7 @@ export function CostRow({ label, value, highlight }: { label: string; value: str
 /** Metric card */
 export function MetricCard({ label, value, unit }: { label: string; value: string; unit: string }) {
   return (
-    <div className="text-center p-3 bg-white/5 rounded-lg">
+    <div className="text-center p-3 bg-zinc-800/50 rounded-lg">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-xl font-bold text-foreground">{value}</p>
       <p className="text-xs text-muted-foreground">{unit}</p>

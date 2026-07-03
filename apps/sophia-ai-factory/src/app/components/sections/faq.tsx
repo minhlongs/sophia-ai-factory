@@ -46,7 +46,7 @@ export function FAQ() {
                     <span className="font-semibold text-lg pr-8 text-foreground">{faq.question}</span>
                     <ChevronDown
                       aria-hidden="true"
-                      className={`w-5 h-5 text-[var(--neon-cyan)] flex-shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                      className={`w-5 h-5 text-[#6366F1] flex-shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
                     />
                   </button>
 

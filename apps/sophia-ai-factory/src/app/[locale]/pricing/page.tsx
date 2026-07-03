@@ -26,12 +26,8 @@ export default async function PricingPage() {
   let breadcrumbSchema: unknown = null;
 
   // Components (initially set to fallback)
-  let PricingSectionComponent: React.ComponentType<{ isAuthenticated: boolean }> = EmptyComponent as React.ComponentType<{ isAuthenticated: boolean }>;
-  let PricingComparisonTableComponent: React.ComponentType<{ currentTier: Tier | null }> = EmptyComponent as React.ComponentType<{ currentTier: Tier | null }>;
+  let PricingStitchSectionComponent: React.ComponentType<{ isAuthenticated?: boolean; currentTier?: string | null }> = EmptyComponent as React.ComponentType<{ isAuthenticated?: boolean; currentTier?: string | null }>;
   let PricingFaqComponent: React.ComponentType<object> = EmptyComponent as React.ComponentType<object>;
-  let ProductionCostCalculatorComponent: React.ComponentType<object> = EmptyComponent as React.ComponentType<object>;
-  let OneTimeBundleCardComponent: React.ComponentType<{ heygenHealthy: boolean }> = EmptyComponent as React.ComponentType<{ heygenHealthy: boolean }>;
-  let CryptoPaymentExplainerComponent: React.ComponentType<object> = EmptyComponent as React.ComponentType<object>;
 
   try {
     [t, heygenHealthy] = await Promise.all([
@@ -60,7 +56,6 @@ export default async function PricingPage() {
       }
     } catch (authErr) {
       // Auth subsystem unavailable — page continues without user-specific UI
-      // console.warn('[pricing] auth modules unavailable:', authErr);
     }
 
     try {
@@ -84,38 +79,18 @@ export default async function PricingPage() {
 
     // Dynamic imports — each independent, failures isolated
     const [
-      pricingSection,
-      pricingComparisonTable,
+      pricingStitchSection,
       pricingFaq,
-      productionCostCalc,
-      oneTimeBundle,
-      cryptoExplainer,
     ] = await Promise.allSettled<React.ComponentType<object> | null>([
-      import("@/forest/components/pricing/pricing-section").then(m => m.PricingSection ?? null),
-      import("@/forest/components/pricing/pricing-comparison-table").then(m => m.PricingComparisonTable ?? null),
+      import("@/forest/components/pricing/pricing-stitch-section").then(m => m.PricingStitchSection ?? null),
       import("@/forest/components/pricing/pricing-faq").then(m => m.PricingFaq ?? null),
-      import("@/app/components/sections/production-cost-calculator").then(m => m.ProductionCostCalculator ?? null),
-      import("@/forest/components/pricing/one-time-bundle-card").then(m => m.OneTimeBundleCard ?? null),
-      import("@/forest/components/checkout/crypto-payment-explainer").then(m => m.CryptoPaymentExplainer ?? null),
     ]);
 
-    if (pricingSection.status === 'fulfilled' && pricingSection.value) {
-      PricingSectionComponent = pricingSection.value as React.ComponentType<{ isAuthenticated: boolean }>;
-    }
-    if (pricingComparisonTable.status === 'fulfilled' && pricingComparisonTable.value) {
-      PricingComparisonTableComponent = pricingComparisonTable.value as React.ComponentType<{ currentTier: Tier | null }>;
+    if (pricingStitchSection.status === 'fulfilled' && pricingStitchSection.value) {
+      PricingStitchSectionComponent = pricingStitchSection.value as React.ComponentType<{ isAuthenticated?: boolean; currentTier?: string | null }>;
     }
     if (pricingFaq.status === 'fulfilled' && pricingFaq.value) {
       PricingFaqComponent = pricingFaq.value as React.ComponentType<object>;
-    }
-    if (productionCostCalc.status === 'fulfilled' && productionCostCalc.value) {
-      ProductionCostCalculatorComponent = productionCostCalc.value as React.ComponentType<object>;
-    }
-    if (oneTimeBundle.status === 'fulfilled' && oneTimeBundle.value) {
-      OneTimeBundleCardComponent = oneTimeBundle.value as React.ComponentType<{ heygenHealthy: boolean }>;
-    }
-    if (cryptoExplainer.status === 'fulfilled' && cryptoExplainer.value) {
-      CryptoPaymentExplainerComponent = cryptoExplainer.value as React.ComponentType<object>;
     }
 
   } catch (err) {
@@ -133,7 +108,7 @@ export default async function PricingPage() {
   }
 
   return (
-    <main id="main-content" className="min-h-screen bg-gradient-to-b from-background to-card pt-16">
+    <main id="main-content" className="min-h-screen bg-[#0F0F11]">
       {/* Structured data */}
       {productSchemas.map((schema, i) => (
         <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) ?? '' }} />
@@ -142,50 +117,24 @@ export default async function PricingPage() {
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       ) : null}
 
-      {/* Header */}
-      <div className="border-b border-border bg-gradient-to-r from-violet-900/30 to-blue-900/30 px-6 py-8 text-center">
-        <div className="mx-auto max-w-3xl">
-          <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-accent">
-            {t("combined_badge")}
-          </div>
-          {currentTier && (
-            <div className="mb-3">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-medium text-emerald-300">
-                {t("current_plan_badge")}: {currentTier}
-              </span>
-            </div>
-          )}
-          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">{t("combined_title")}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{t("combined_subtitle")}</p>
-          {user != null && (
-            <div className="mt-4">
-              <Link href="/dashboard" className="cursor-pointer text-xs text-accent hover:text-accent transition-colors duration-150">
-                &larr; {t("nav_dashboard")}
-              </Link>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Stitch-designed pricing section */}
+      <PricingStitchSectionComponent isAuthenticated={!!user} currentTier={currentTier} />
 
-      {/* Components */}
-      <PricingSectionComponent isAuthenticated={!!user} />
-      <div className="mx-auto max-w-2xl px-6 pb-6"><CryptoPaymentExplainerComponent /></div>
-      <section className="mx-auto max-w-md px-6 pb-12 pt-4">
-        {user != null && !userHeyGenConfigured ? (
-          <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-6 text-center space-y-3">
-            <p className="text-sm font-medium text-amber-300">
+      {/* Heygen configure prompt for authenticated users without a heygen key */}
+      {user != null && !userHeyGenConfigured ? (
+        <section className="mx-auto max-w-md px-6 pb-12">
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-6 text-center space-y-3">
+            <p className="text-sm font-medium text-amber-400">
               {t("heygen_configure_prompt")}
             </p>
-            <Link href="/dashboard/onboarding" className="cursor-pointer inline-block rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold px-5 py-2 text-sm transition-colors duration-150">
+            <Link href="/dashboard/onboarding" className="inline-block rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-semibold px-5 py-2 text-sm transition-colors duration-150">
               {t("heygen_configure_cta")}
             </Link>
           </div>
-        ) : (
-          <OneTimeBundleCardComponent heygenHealthy={heygenHealthy} />
-        )}
-      </section>
-      <PricingComparisonTableComponent currentTier={currentTier} />
-      <ProductionCostCalculatorComponent />
+        </section>
+      ) : null}
+
+      {/* FAQ accordion */}
       <PricingFaqComponent />
     </main>
   );
