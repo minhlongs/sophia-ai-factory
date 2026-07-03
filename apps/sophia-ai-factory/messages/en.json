@@ -4903,13 +4903,21 @@
         "taxes": "Taxes",
         "total": "Total",
         "payNow": "Pay Now",
-        "processing": "Processing..."
+        "processing": "Processing...",
+        "paymentDetails": "Payment Details",
+        "secureEncrypted": "All transactions are secure and encrypted",
+        "cardNumber": "Card Number",
+        "expiryDate": "Expiry Date",
+        "cvc": "CVC",
+        "cardholderName": "Cardholder Name",
+        "saveCard": "Save this card for future purchases"
       },
       "success": {
         "title": "Payment Successful!",
         "subtitle": "Your account has been upgraded. Welcome to {plan}!",
         "dashboardLink": "Go to Dashboard",
-        "emailConfirmation": "A confirmation email has been sent to your inbox."
+        "emailConfirmation": "A confirmation email has been sent to your inbox.",
+        "viewReceipt": "View Receipt"
       }
     },
     "webhook": {

@@ -47,9 +47,9 @@ function PaymentMethodCard({
       onClick={() => onSelect(method.id)}
       className={cn(
         "flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left transition-all",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950",
         selected
-          ? "border-indigo-500 bg-indigo-500/5"
+          ? "border-amber-500 bg-amber-500/5"
           : "border-zinc-800 bg-zinc-900/50 hover:border-zinc-700"
       )}
       aria-pressed={selected}
@@ -57,7 +57,7 @@ function PaymentMethodCard({
       <span
         className={cn(
           "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
-          selected ? "border-indigo-500 bg-indigo-500" : "border-zinc-600"
+          selected ? "border-amber-500 bg-amber-500" : "border-zinc-600"
         )}
         aria-hidden="true"
       >
@@ -69,7 +69,7 @@ function PaymentMethodCard({
       {method.recommended && (
         <Badge
           variant="default"
-          className="border-indigo-500/30 bg-indigo-500/10 px-2 py-0.5 text-[11px] text-indigo-400"
+          className="border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[11px] text-amber-400"
         >
           {t("recommended")}
         </Badge>
@@ -155,7 +155,7 @@ function PaymentPanel({ t }: { t: (key: string) => string }) {
             </div>
 
             {/* Confirm Button */}
-            <Button className="w-full bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500">
+            <Button className="w-full bg-amber-600 py-2.5 text-sm font-semibold text-white hover:bg-amber-500">
               {t("confirm_payment")}
             </Button>
           </div>
@@ -165,7 +165,7 @@ function PaymentPanel({ t }: { t: (key: string) => string }) {
         {selectedMethod === "nowpayments" && (
           <div className="rounded-lg border border-zinc-800 bg-zinc-950/50 p-4 text-center">
             <p className="text-sm text-zinc-400">{t("nowpayments_redirect")}</p>
-            <Button className="mt-4 w-full bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500">
+            <Button className="mt-4 w-full bg-amber-600 py-2.5 text-sm font-semibold text-white hover:bg-amber-500">
               {t("proceed_to_invoice")}
             </Button>
           </div>
@@ -216,10 +216,10 @@ function OrderSummaryCard({ t }: { t: (key: string) => string }) {
 
         {/* Grand Total */}
         <div className="flex items-center justify-between">
-          <span className="text-lg font-bold text-indigo-400">
+          <span className="text-lg font-bold text-amber-400">
             {t("grand_total")}
           </span>
-          <span className="text-lg font-bold text-indigo-400">
+          <span className="text-lg font-bold text-amber-400">
             {t("grand_total_price")}
           </span>
         </div>

@@ -61,10 +61,16 @@ const path = eval('require')('path');
 const fs = eval('require')('fs');
 
 const cwd = ((globalThis as unknown) as Record<string, { cwd?: () => string }>).process?.cwd?.() || '';
+const homeDir = ((globalThis as unknown) as Record<string, { env?: Record<string, string | undefined> }>).process?.env?.HOME || '';
 const candidates = [
 path.resolve(cwd, '../..', '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
 path.resolve(cwd, '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
 path.resolve(cwd, '..', '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
+// Home-dir wrangler state (wrangler stores local D1 here via `d1 execute --local` / `wrangler dev --local`)
+...(homeDir ? [
+  path.resolve(homeDir, '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
+  path.resolve(homeDir, '.wrangler/state/v3/d1'),
+] : []),
 ];
 
 let newestFile: string | null = null;
@@ -251,6 +257,15 @@ created_at TEXT,
 stripe_invoice_id TEXT,
 polar_order_id TEXT
 );
+
+CREATE TABLE IF NOT EXISTS platform_configs (
+key TEXT PRIMARY KEY,
+encrypted_value TEXT NOT NULL,
+updated_by TEXT,
+updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+CREATE INDEX IF NOT EXISTS idx_platform_configs_updated ON platform_configs(updated_at);
 
 CREATE TABLE IF NOT EXISTS billing_events (
 id TEXT PRIMARY KEY,

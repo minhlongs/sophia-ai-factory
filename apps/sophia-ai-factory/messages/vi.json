@@ -4910,13 +4910,21 @@
         "taxes": "Taxes",
         "total": "Total",
         "payNow": "Pay Now",
-        "processing": "Processing..."
+        "processing": "Processing...",
+        "paymentDetails": "Chi tiết thanh toán",
+        "secureEncrypted": "Mọi giao dịch đều được bảo mật và mã hóa",
+        "cardNumber": "Số thẻ",
+        "expiryDate": "Ngày hết hạn",
+        "cvc": "CVC",
+        "cardholderName": "Tên chủ thẻ",
+        "saveCard": "Lưu thẻ này cho lần mua sau"
       },
       "success": {
         "title": "Payment Successful!",
         "subtitle": "Your account has been upgraded. Welcome to {plan}!",
         "dashboardLink": "Go to Dashboard",
-        "emailConfirmation": "A confirmation email has been sent to your inbox."
+        "emailConfirmation": "A confirmation email has been sent to your inbox.",
+        "viewReceipt": "Xem hóa đơn"
       }
     },
     "webhook": {

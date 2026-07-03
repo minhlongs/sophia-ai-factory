@@ -18,13 +18,18 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 
 // ── Local D1 resolution ──────────────────────────────────────────────────────
 
 export function getLocalD1Path(): string {
+  const homeDir = os.homedir();
   const candidates = [
     path.resolve(__dirname, '../../../.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
     path.resolve(__dirname, '../../../../../.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
+    // Home-dir wrangler state (wrangler stores local D1 here via `d1 execute --local` / `wrangler dev --local`)
+    path.resolve(homeDir, '.wrangler/state/v3/d1/miniflare-D1DatabaseObject'),
+    path.resolve(homeDir, '.wrangler/state/v3/d1'),
   ];
 
   let newestFile: string | null = null;
