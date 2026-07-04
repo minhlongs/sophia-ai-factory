@@ -3,6 +3,7 @@
 import React, { useState, useCallback } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/navigation';
 import { cn } from '@/seed/utils/cn';
 
 /* ── Types ──────────────────────────────────────────────────────────────────── */
@@ -13,44 +14,23 @@ type TierId = 'basic' | 'premium' | 'enterprise' | 'master';
 interface PricingTier {
   id: TierId;
   popular: boolean;
-  ctaVariant: 'primary' | 'outline';
   monthlyPrice: number | null;
   yearlyPrice: number | null;
   featureCount: number;
 }
 
-/* ── Tier data (prices stay in code; text comes from translation) ──────────── */
+/* ── Tier data (prices stay in code; text from translation) ─────────────────── */
 
 const TIERS: PricingTier[] = [
-  { id: 'basic', popular: false, ctaVariant: 'outline', monthlyPrice: 29, yearlyPrice: 23, featureCount: 3 },
-  { id: 'premium', popular: true, ctaVariant: 'primary', monthlyPrice: 79, yearlyPrice: 63, featureCount: 4 },
-  { id: 'enterprise', popular: false, ctaVariant: 'outline', monthlyPrice: 199, yearlyPrice: 159, featureCount: 4 },
-  { id: 'master', popular: false, ctaVariant: 'outline', monthlyPrice: null, yearlyPrice: null, featureCount: 3 },
+  { id: 'basic', popular: false, monthlyPrice: 29, yearlyPrice: 23, featureCount: 3 },
+  { id: 'premium', popular: true, monthlyPrice: 79, yearlyPrice: 63, featureCount: 4 },
+  { id: 'enterprise', popular: false, monthlyPrice: 199, yearlyPrice: 159, featureCount: 4 },
+  { id: 'master', popular: false, monthlyPrice: null, yearlyPrice: null, featureCount: 3 },
 ];
 
-/* ── Navigation items ─────────────────────────────────────────────────────── */
-
-const NAV_ITEMS = ['models', 'pricing', 'api', 'enterprise'] as const;
-
-/* ── FAQ indices ──────────────────────────────────────────────────────────── */
+/* ── FAQ indices ────────────────────────────────────────────────────────────── */
 
 const FAQ_INDICES = [0, 1, 2, 3] as const;
-
-/* ── Stitch-themed button base classes (replace seed/ui Button) ───────────── */
-
-const BTN_BASE =
-  'inline-flex items-center justify-center gap-2 font-semibold rounded-lg ' +
-  'transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ' +
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50';
-
-const BTN: Record<string, string> = {
-  primary: 'bg-amber-500 text-white hover:bg-amber-600 shadow-sm',
-  ghost: 'bg-transparent text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100',
-  outline: 'bg-transparent border border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100',
-  sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-3 text-base',
-};
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    PricingPage
@@ -61,40 +41,28 @@ export default function PricingPage() {
 
   const [billing, setBilling] = useState<BillingPeriod>('monthly');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const toggleFaq = useCallback((index: number) => {
     setOpenFaq((prev) => (prev === index ? null : index));
   }, []);
 
-  const displayPrice = (tier: PricingTier): string => {
-    if (tier.monthlyPrice === null) return t('plans.master.price');
-    const price = billing === 'monthly' ? tier.monthlyPrice : tier.yearlyPrice;
-    return `$${price}`;
-  };
-
-  const btnClass = (variant: string, size: string, extra = '') =>
-    cn(BTN_BASE, BTN[variant], BTN[size], extra);
-
   return (
-    <div className="min-h-screen bg-[#18181B] text-zinc-100 selection:bg-amber-500/20">
-      {/* ════ Top Navigation ═══════════════════════════════════════════════════ */}
-
+    <div className="min-h-screen bg-background text-foreground selection:bg-primary-container selection:text-on-primary-container">
       {/* ════ Main Content ════════════════════════════════════════════════════ */}
-      <main className="mx-auto max-w-7xl px-4 pt-28 pb-24 md:px-8">
+      <main className="mx-auto max-w-7xl px-6 pt-32 pb-24">
         {/* ── Hero Section ─────────────────────────────────────────────────── */}
-        <section className="mb-16 text-center md:mb-20">
-          <h1 className="mb-3 text-4xl font-bold tracking-tight text-zinc-100 md:text-5xl">
+        <section className="mb-20 text-center">
+          <h1 className="mb-4 text-5xl font-bold text-foreground md:text-[48px]">
             {t('hero.title')}
           </h1>
-          <p className="mx-auto mb-10 max-w-2xl text-base text-zinc-400 md:text-lg">
+          <p className="mx-auto mb-10 max-w-2xl text-[18px] text-muted-foreground">
             {t('hero.subtitle')}
           </p>
 
-          {/* Billing Toggle — amber active state */}
+          {/* Billing Toggle */}
           <div className="flex items-center justify-center gap-4">
             <div
-              className="inline-flex items-center rounded-full border border-zinc-800 bg-[#18181B] p-1"
+              className="inline-flex h-[48px] items-center rounded-full border border-border bg-card p-1"
               role="radiogroup"
               aria-label="Billing period"
             >
@@ -108,13 +76,13 @@ export default function PricingPage() {
                   className={cn(
                     'rounded-full px-6 py-2 text-sm font-semibold transition-all duration-300',
                     billing === period
-                      ? 'bg-amber-500 text-white shadow-sm'
-                      : 'text-zinc-400 hover:text-zinc-200',
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
                   {t(`billing.${period}`)}
                   {period === 'yearly' && (
-                    <span className="ml-1 hidden text-xs font-bold md:inline">
+                    <span className="ml-1 text-xs font-bold">
                       {t('billing.savePercent')}
                     </span>
                   )}
@@ -132,7 +100,6 @@ export default function PricingPage() {
                 key={tier.id}
                 tier={tier}
                 billing={billing}
-                displayPrice={displayPrice(tier)}
                 t={t}
               />
             ))}
@@ -141,30 +108,30 @@ export default function PricingPage() {
 
         {/* ── FAQ Section ──────────────────────────────────────────────────── */}
         <section className="mx-auto max-w-3xl" aria-labelledby="faq-heading">
-          <h2 id="faq-heading" className="mb-12 text-center text-3xl font-bold text-zinc-100">
+          <h2 id="faq-heading" className="mb-12 text-center text-3xl font-bold text-foreground">
             {t('faq.title')}
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {FAQ_INDICES.map((index) => {
               const isOpen = openFaq === index;
               return (
                 <div
                   key={index}
-                  className="overflow-hidden rounded-lg border border-zinc-800 bg-[#18181B]"
+                  className="overflow-hidden rounded-lg border border-border bg-card"
                 >
                   <button
                     type="button"
                     onClick={() => toggleFaq(index)}
-                    className="flex w-full items-center justify-between px-6 py-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
+                    className="flex w-full items-center justify-between px-6 py-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-expanded={isOpen}
                     aria-controls={`faq-answer-${index}`}
                   >
-                    <span className="text-base font-semibold text-zinc-100">
+                    <span className="text-[16px] font-semibold text-foreground">
                       {t(`faq.items.${index}.question`)}
                     </span>
                     <ChevronDown
                       className={cn(
-                        'h-5 w-5 flex-shrink-0 text-zinc-500 transition-transform duration-300',
+                        'h-5 w-5 flex-shrink-0 text-muted-foreground transition-transform duration-300',
                         isOpen && 'rotate-180',
                       )}
                       aria-hidden="true"
@@ -178,7 +145,7 @@ export default function PricingPage() {
                       isOpen ? 'max-h-96' : 'max-h-0',
                     )}
                   >
-                    <p className="px-6 pb-4 text-sm leading-relaxed text-zinc-400">
+                    <p className="px-6 pb-4 text-sm text-muted-foreground">
                       {t(`faq.items.${index}.answer`)}
                     </p>
                   </div>
@@ -190,40 +157,40 @@ export default function PricingPage() {
       </main>
 
       {/* ════ Footer ══════════════════════════════════════════════════════════ */}
-      <footer className="border-t border-zinc-800 bg-zinc-900/50">
-        <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-8 px-4 py-12 md:flex-row md:justify-between md:px-8">
+      <footer className="border-t border-border bg-muted">
+        <div className="mx-auto flex w-full max-w-7xl flex-col items-center gap-8 px-8 py-12 md:flex-row md:justify-between">
           {/* Brand Column */}
           <div className="flex max-w-xs flex-col items-center text-center md:items-start md:text-left">
             <div className="mb-4 flex items-center gap-3">
               <div
-                className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500 text-sm font-bold text-white"
+                className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground"
                 aria-hidden="true"
               >
                 S
               </div>
-              <span className="text-lg font-bold text-zinc-100">
+              <span className="text-lg font-bold text-foreground">
                 Sophia AI Factory
               </span>
             </div>
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-muted-foreground">
               {t('footer.description')}
             </p>
           </div>
 
           {/* Links Column */}
           <div className="flex flex-col items-center gap-6 md:items-end">
-            <nav className="flex flex-wrap justify-center gap-6" aria-label="Footer navigation">
+            <nav className="flex flex-wrap justify-center gap-8" aria-label="Footer navigation">
               {(['privacy', 'terms', 'security', 'status', 'contact'] as const).map((link) => (
-                <a
+                <Link
                   key={link}
                   href="#"
-                  className="text-sm text-zinc-400 transition-colors hover:text-amber-500"
+                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
                   {t(`footer.${link}`)}
-                </a>
+                </Link>
               ))}
             </nav>
-            <p className="text-xs text-zinc-500">
+            <p className="text-sm text-muted-foreground">
               {t('footer.copyright')}
             </p>
           </div>
@@ -234,48 +201,57 @@ export default function PricingPage() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   PricingCard — individual tier card with Stitch amber styling
+   PricingCard — individual tier card
    ═══════════════════════════════════════════════════════════════════════════════ */
 
 interface PricingCardProps {
   tier: PricingTier;
   billing: BillingPeriod;
-  displayPrice: string;
   t: ReturnType<typeof useTranslations>;
 }
 
-function PricingCard({ tier, billing, displayPrice, t }: PricingCardProps) {
+function PricingCard({ tier, billing, t }: PricingCardProps) {
   const hasNumericPrice = tier.monthlyPrice !== null;
+
+  const priceNumber = hasNumericPrice
+    ? billing === 'monthly'
+      ? tier.monthlyPrice
+      : tier.yearlyPrice
+    : null;
 
   const features = Array.from(
     { length: tier.featureCount },
     (_, i) => t(`plans.${tier.id}.features.${i}`),
   );
 
+  const isPremium = tier.id === 'premium';
+  const isEnterprise = tier.id === 'enterprise';
+
   const cardClasses = cn(
-    'relative flex flex-col rounded-lg transition-all duration-300',
-    'bg-[#18181B] p-5', // 20px padding for 20px
-    tier.popular
-      ? 'z-10 border-2 border-amber-500 scale-[1.05] shadow-lg shadow-amber-500/20'
-      : 'border border-zinc-800 hover:border-amber-500/50',
+    'relative flex flex-col rounded-lg p-8',
+    'transition-all duration-300',
+    isPremium
+      ? 'z-10 scale-105 border-2 border-primary shadow-lg shadow-primary/20'
+      : 'border border-border hover:border-primary/50',
   );
 
   const badgeClasses =
-    'absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-500 px-4 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-sm';
-
-  const btnClasses = cn(
-    BTN_BASE,
-    'w-full',
-    tier.ctaVariant === 'primary' ? BTN.primary : BTN.outline,
-    BTN.lg,
-  );
+    'absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-sm';
 
   return (
     <div
-      className={cardClasses}
+      className={cn(cardClasses, isPremium && 'group')}
       role="article"
       aria-label={t(`plans.${tier.id}.name`)}
     >
+      {/* Glow effect for premium card (replaces CSS pseudo-element) */}
+      {isPremium && (
+        <div
+          className="pointer-events-none absolute -inset-[1px] -z-10 rounded-lg bg-gradient-to-br from-transparent via-primary to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-50"
+          aria-hidden="true"
+        />
+      )}
+
       {/* Popular Badge */}
       {tier.popular && (
         <div className={badgeClasses} aria-label={t('popular')}>
@@ -284,30 +260,29 @@ function PricingCard({ tier, billing, displayPrice, t }: PricingCardProps) {
       )}
 
       {/* Name & Description */}
-      <div className="mb-6">
-        <h3 className="mb-1 text-xl font-semibold text-zinc-100">
+      <div className="mb-8">
+        <h3 className="mb-2 text-[20px] font-semibold text-foreground">
           {t(`plans.${tier.id}.name`)}
         </h3>
-        <p className="text-sm text-zinc-400">
+        <p className="text-sm text-muted-foreground">
           {t(`plans.${tier.id}.description`)}
         </p>
       </div>
 
       {/* Price */}
-      <div className="mb-6">
-        {hasNumericPrice ? (
-          <div className="flex items-baseline gap-1">
-            <span className="text-5xl font-bold text-zinc-100">
-              {displayPrice}
-            </span>
-            <span className="text-sm text-zinc-400">
+      <div className="mb-8">
+        {priceNumber !== null ? (
+          <div className="flex items-baseline gap-0">
+            <span className="text-4xl font-bold text-foreground">$</span>
+            <span className="text-5xl font-bold text-foreground">{priceNumber}</span>
+            <span className="ml-1 text-sm text-muted-foreground">
               {t(`plans.${tier.id}.period`)}
             </span>
           </div>
         ) : (
           <div className="flex items-baseline">
-            <span className="text-5xl font-bold text-zinc-100">
-              {displayPrice}
+            <span className="text-5xl font-bold text-foreground">
+              {t('plans.master.price')}
             </span>
           </div>
         )}
@@ -316,21 +291,46 @@ function PricingCard({ tier, billing, displayPrice, t }: PricingCardProps) {
       {/* Features */}
       <ul className="mb-10 flex flex-grow flex-col gap-4">
         {features.map((feature, idx) => (
-          <li key={idx} className="flex items-start gap-3 text-sm text-zinc-400">
+          <li key={idx} className="flex items-center gap-3 text-sm text-muted-foreground">
             <Check
-              className="mt-0.5 h-[18px] w-[18px] flex-shrink-0 text-amber-500"
+              className="mt-0.5 h-[18px] w-[18px] flex-shrink-0 text-primary"
               aria-hidden="true"
-              style={{ fill: 'currentColor' }}
             />
             <span>{feature}</span>
           </li>
         ))}
       </ul>
 
-      {/* CTA button — amber bg for primary, outline with zinc border for others */}
-      <button className={btnClasses}>
-        {t(`plans.${tier.id}.cta`)}
-      </button>
+      {/* CTA Button */}
+      {isPremium ? (
+        <button
+          className={cn(
+            'w-full rounded-lg px-4 py-3 text-sm font-bold transition-colors',
+            'bg-primary text-primary-foreground hover:bg-primary/80',
+            'shadow-lg shadow-primary/20',
+          )}
+        >
+          {t(`plans.${tier.id}.cta`)}
+        </button>
+      ) : isEnterprise ? (
+        <button
+          className={cn(
+            'w-full rounded-lg border px-4 py-3 text-sm font-semibold transition-colors',
+            'border-primary text-primary hover:bg-primary/10',
+          )}
+        >
+          {t(`plans.${tier.id}.cta`)}
+        </button>
+      ) : (
+        <button
+          className={cn(
+            'w-full rounded-lg border px-4 py-3 text-sm font-semibold transition-colors',
+            'border-border text-foreground hover:bg-card',
+          )}
+        >
+          {t(`plans.${tier.id}.cta`)}
+        </button>
+      )}
     </div>
   );
 }

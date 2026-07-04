@@ -354,6 +354,7 @@ else
   echo "⚠️ SKIP_PRE_DEPLOY_GATE=1 — bypassing pre-deploy gate"
 fi
 
+
 # ─── Step 1: Next.js build ───────────────────────────────────────────────────
 # NEXT_PUBLIC_* vars are baked into the client bundle at build time.
 if [ "${SKIP_NEXT_BUILD:-0}" = "1" ]; then
