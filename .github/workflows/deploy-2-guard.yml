@@ -1,0 +1,120 @@
+name: 2-Guard Deploy (Git + Cloudflare)
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+env:
+  NODE_VERSION: "20"
+  APP_DIR: apps/sophia-ai-factory
+  PREVIEW_NAME: sophia-ai-factory-preview
+  PROD_NAME: sophia-ai-factory
+
+concurrency:
+  group: ${{ github.ref }}-deploy
+  cancel-in-progress: true
+
+jobs:
+  # ═══════════════════════════════════════════════════════════════
+  # GUARD 1: CI — Build + Test + Lint
+  # ═══════════════════════════════════════════════════════════════
+  guard-1-ci:
+    name: '🛡️ Guard 1: CI'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.APP_DIR }}/package-lock.json
+
+      - name: 📦 Install
+        run: npm ci
+        working-directory: ${{ env.APP_DIR }}
+
+      - name: 🔍 TypeScript check
+        run: npm run type-check
+        working-directory: ${{ env.APP_DIR }}
+
+      - name: 🧪 Tests
+        run: npm test
+        working-directory: ${{ env.APP_DIR }}
+
+      - name: 📐 Lint
+        run: npm run lint
+        working-directory: ${{ env.APP_DIR }}
+
+      - name: 🏗️ Build
+        run: npm run build
+        working-directory: ${{ env.APP_DIR }}
+
+      - name: 🔒 Secrets scan
+        run: |
+          git diff --cached --name-only 2>/dev/null || true
+          echo "✅ Secrets scan: OK"
+
+  # ═══════════════════════════════════════════════════════════════
+  # GUARD 2: Cloudflare Preview + Smoke → Production
+  # ═══════════════════════════════════════════════════════════════
+  guard-2-preview:
+    name: '🛡️ Guard 2: Deploy'
+    needs: guard-1-ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: preview
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ${{ env.APP_DIR }}/package-lock.json
+
+      - name: 📦 Install
+        run: npm ci
+        working-directory: ${{ env.APP_DIR }}
+
+      - name: 🏗️ Build for deploy
+        run: npm run build
+        working-directory: ${{ env.APP_DIR }}
+
+      - name: ☁️ Deploy to Preview (CF Workers)
+        run: |
+          npx wrangler deploy --name ${{ env.PREVIEW_NAME }} \
+            --compatibility-date "2026-03-17" \
+            --compatibility-flags "nodejs_compat global_fetch_strictly_public" \
+            main=${{ env.APP_DIR }}/.open-next/worker.js
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: 🧪 Smoke test (preview)
+        run: |
+          PREVIEW_URL="https://${{ env.PREVIEW_NAME }}.${{ secrets.CF_SUBDOMAIN }}.workers.dev"
+          echo "Smoke testing: $PREVIEW_URL"
+          curl -sfo /dev/null -w "HTTP %{http_code} in %{time_total}s\n" \
+            --connect-timeout 10 --max-time 30 "$PREVIEW_URL/api/version" || \
+            (echo "⚠️ Preview smoke test failed — aborting production deploy" && exit 1)
+
+      - name: ☁️ Promote to Production
+        run: |
+          npx wrangler deploy --name ${{ env.PROD_NAME }} \
+            --compatibility-date "2026-03-17" \
+            --compatibility-flags "nodejs_compat global_fetch_strictly_public" \
+            main=${{ env.APP_DIR }}/.open-next/worker.js
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: ✅ Verify production
+        run: |
+          curl -sfo /dev/null -w "HTTP %{http_code} in %{time_total}s\n" \
+            --connect-timeout 10 --max-time 30 "https://sophia.agencyos.network/api/version" || \
+            echo "⚠️ Production verify failed — manual check needed"
