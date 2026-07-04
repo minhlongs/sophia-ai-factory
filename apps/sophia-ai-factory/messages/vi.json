@@ -5698,7 +5698,8 @@
         "blog": "Blog",
         "affiliates": "Affiliate",
         "signIn": "Đăng nhập",
-        "startFree": "Dùng thử miễn phí"
+        "startFree": "Dùng thử miễn phí",
+        "getStarted": "Bắt Đầu"
       },
       "cta": {
         "startFree": "Dùng Thử Miễn Phí",
@@ -5728,7 +5729,12 @@
           "title": "Cỗ Máy Affiliate",
           "description": "Kết nối 10+ mạng lưới affiliate. Sophia tự động theo dõi hoa hồng."
         }
-      }
+      },
+      "pricing": "Pricing",
+      "guide": "Guide",
+      "affiliates": "Affiliates",
+      "logIn": "Log In",
+      "getStarted": "Get Started"
     },
     "settingsPage": {
       "pageTitle": "Cài đặt",
