@@ -114,7 +114,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
               placeholder={t('emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full h-11 pl-10 pr-3 rounded-lg border border-zinc-700 bg-[#0F0F11] text-zinc-100 text-sm placeholder-zinc-500 transition-colors focus:outline-none focus:ring-2 focus:ring-[#6366F1]/60 focus:border-[#6366F1]/60 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full h-11 pl-10 pr-3 rounded-lg border border-zinc-700 bg-[#0F0F11] text-zinc-100 text-sm placeholder-zinc-500 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary/60 disabled:cursor-not-allowed disabled:opacity-50"
               required
               aria-required="true"
               aria-describedby={error ? 'login-error' : undefined}
@@ -134,7 +134,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
             </label>
             <Link
               href="/reset-password"
-              className="text-xs text-[#6366F1] hover:text-[#818CF8] transition-colors font-medium"
+              className="text-xs text-primary hover:text-primary/80 transition-colors font-medium"
             >
               {t('forgotPassword')}
             </Link>
@@ -151,7 +151,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
               placeholder={t('passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-11 pl-10 pr-10 rounded-lg border border-zinc-700 bg-[#0F0F11] text-zinc-100 text-sm placeholder-zinc-500 transition-colors focus:outline-none focus:ring-2 focus:ring-[#6366F1]/60 focus:border-[#6366F1]/60 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full h-11 pl-10 pr-10 rounded-lg border border-zinc-700 bg-[#0F0F11] text-zinc-100 text-sm placeholder-zinc-500 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary/60 disabled:cursor-not-allowed disabled:opacity-50"
               required
               aria-required="true"
               aria-describedby={error ? 'login-error' : undefined}
@@ -177,7 +177,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-11 inline-flex items-center justify-center rounded-lg bg-[#6366F1] text-white text-sm font-medium transition-all hover:bg-[#5558E6] focus:outline-none focus:ring-2 focus:ring-[#6366F1]/60 focus:ring-offset-2 focus:ring-offset-[#18181B] disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]"
+          className="w-full h-11 inline-flex items-center justify-center rounded-lg bg-primary text-white text-sm font-medium transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-background disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]"
           aria-label={t('submit')}
         >
           {loading ? (
@@ -209,7 +209,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           type="button"
           disabled
           title={t('ssoComingSoon')}
-          className="inline-flex items-center justify-center gap-2 h-11 rounded-lg border border-zinc-700 bg-transparent text-zinc-300 text-sm font-medium transition-colors hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-[#6366F1]/60 disabled:pointer-events-none disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 h-11 rounded-lg border border-zinc-700 bg-transparent text-zinc-300 text-sm font-medium transition-colors hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-primary/60 disabled:pointer-events-none disabled:opacity-50"
           aria-label={t('googleSignIn')}
         >
           <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true" role="img">
@@ -226,7 +226,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           type="button"
           onClick={handleMagicLink}
           disabled={magicLinkLoading}
-          className="inline-flex items-center justify-center gap-2 h-11 rounded-lg border border-zinc-700 bg-transparent text-zinc-300 text-sm font-medium transition-colors hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-[#6366F1]/60 disabled:pointer-events-none disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 h-11 rounded-lg border border-zinc-700 bg-transparent text-zinc-300 text-sm font-medium transition-colors hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-primary/60 disabled:pointer-events-none disabled:opacity-50"
           aria-label="Magic Link"
         >
           {magicLinkLoading ? (
@@ -254,7 +254,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         {t('noAccount')}{' '}
         <Link
           href="/register"
-          className="text-[#6366F1] hover:text-[#818CF8] font-medium transition-colors"
+          className="text-primary hover:text-primary/80 font-medium transition-colors"
         >
           {t('signUp')}
         </Link>

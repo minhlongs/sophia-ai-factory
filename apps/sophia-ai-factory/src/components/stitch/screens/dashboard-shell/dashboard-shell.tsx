@@ -118,7 +118,7 @@ function NavLink({ item }: { item: NavItem }) {
       className={cn(
         'flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all rounded-lg',
         item.active
-          ? 'bg-[#6366F1]/10 text-[#c3c3ee] border-l-[3px] border-[#6366F1]'
+          ? 'bg-primary/10 text-primary border-l-[3px] border-primary'
           : 'text-[#acaab5] hover:text-[#e7e4f0] hover:bg-[#25252e]'
       )}
     >
@@ -149,7 +149,7 @@ function Sidebar({
           <span className="text-2xl font-black text-[#c3c3ee] tracking-tighter">
             Sophia
           </span>
-          <div className="absolute -top-1 -right-1.5 w-1.5 h-1.5 bg-[#6366F1] rounded-full" />
+          <div className="absolute -top-1 -right-1.5 w-1.5 h-1.5 bg-primary rounded-full" />
         </div>
         <span className="text-[10px] uppercase tracking-widest text-[#76747f] font-bold mt-2 ml-1">
           AI Factory
@@ -277,7 +277,7 @@ function TopBar() {
 
         {/* Upgrade + Avatar */}
         <div className="flex items-center gap-3">
-          <button className="bg-[#6366F1] hover:brightness-110 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-lg shadow-[#6366F1]/30 transition-all hover:scale-105 active:scale-95">
+          <button className="bg-primary hover:brightness-110 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-lg shadow-primary/30 transition-all hover:scale-105 active:scale-95">
             {t('header.upgradePlan')}
           </button>
           <div className="w-8 h-8 rounded-full border-2 border-[#484750] bg-[#4e4f74] flex items-center justify-center text-[#c3c3ee] font-bold text-xs" aria-hidden="true">
@@ -347,7 +347,7 @@ function DashboardContent({
               </p>
               <div className="mt-8 flex gap-4 flex-wrap">
                 <button
-                  className="bg-[#6366F1] hover:brightness-110 text-white px-6 py-3 min-h-[44px] rounded-xl font-bold shadow-xl shadow-[#6366F1]/30 active:scale-95 transition-all"
+                  className="bg-primary hover:brightness-110 text-white px-6 py-3 min-h-[44px] rounded-xl font-bold shadow-xl shadow-primary/30 active:scale-95 transition-all"
                   aria-label={t('welcome.newProject')}
                 >
                   <Play className="w-5 h-5 mr-2 inline-block align-middle" aria-hidden="true" />

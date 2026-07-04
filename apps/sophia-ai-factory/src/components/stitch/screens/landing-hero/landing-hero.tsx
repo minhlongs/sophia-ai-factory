@@ -25,24 +25,24 @@ export default function LandingHero() {
       <main
         className="relative min-h-screen pt-24 flex flex-col items-center justify-center overflow-hidden"
         style={{
-          background: 'radial-gradient(circle at 50% -20%, rgba(99, 102, 241, 0.15) 0%, rgba(14, 14, 18, 0) 60%)',
+          background: 'radial-gradient(circle at 50% -20%, hsl(var(--primary) / 0.15) 0%, rgba(14, 14, 18, 0) 60%)',
         }}
       >
         {/* Background decoration */}
         <div
-          className="absolute top-1/4 -left-20 w-96 h-96 bg-[#6366F1]/10 rounded-full blur-[120px] pointer-events-none"
+          className="absolute top-1/4 -left-20 w-96 h-96 bg-primary/10 rounded-full blur-[120px] pointer-events-none"
           aria-hidden="true"
         />
         <div
-          className="absolute bottom-1/4 -right-20 w-96 h-96 bg-[#6366F1]/5 rounded-full blur-[120px] pointer-events-none"
+          className="absolute bottom-1/4 -right-20 w-96 h-96 bg-primary/5 rounded-full blur-[120px] pointer-events-none"
           aria-hidden="true"
         />
 
         <section className="max-w-7xl mx-auto px-4 md:px-8 w-full flex flex-col items-center text-center space-y-8">
           {/* Badge */}
           <ScrollReveal>
-            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#6366F1]/10 border border-[#6366F1]/20">
-              <span className="text-[#6366F1] font-medium text-sm tracking-wide">
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+              <span className="text-primary font-medium text-sm tracking-wide">
                 {t('badge')}
               </span>
             </div>
@@ -51,9 +51,9 @@ export default function LandingHero() {
           {/* Headline */}
           <ScrollReveal delay={100}>
             <h1 className="text-4xl md:text-5xl lg:text-[56px] font-bold leading-tight tracking-tight text-white max-w-4xl"
-                style={{textShadow: '0 0 30px rgba(99, 102, 241, 0.3)'}}>
+                style={{textShadow: '0 0 30px hsl(var(--primary) / 0.3)'}}>
               {t('headline')}{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-indigo-600">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary/80">
                 {t('headlineHighlight')}
               </span>
             </h1>
@@ -71,7 +71,7 @@ export default function LandingHero() {
             <div className="flex flex-col sm:flex-row items-center gap-6 mt-4">
               <Link
                 href="/auth/signup"
-                className="h-12 px-10 rounded-xl bg-[#6366F1] text-white font-semibold hover:bg-[#5558e6] transition-all active:scale-95 shadow-lg shadow-indigo-500/30 flex items-center justify-center"
+                className="h-12 px-10 rounded-xl bg-primary text-white font-semibold hover:bg-primary/90 transition-all active:scale-95 shadow-lg shadow-primary/30 flex items-center justify-center"
               >
                 {t('cta.startFree')}
               </Link>
@@ -80,7 +80,7 @@ export default function LandingHero() {
                 className="group h-12 px-8 rounded-xl border border-outline-variant/50 text-white font-medium hover:bg-surface-container-highest transition-all flex items-center justify-center gap-2 active:scale-95"
                 aria-label={t('cta.watchDemo')}
               >
-                <Play className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" aria-hidden="true" />
+                <Play className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" aria-hidden="true" />
                 {t('cta.watchDemo')}
               </button>
             </div>
@@ -100,7 +100,7 @@ export default function LandingHero() {
                     />
                   ))}
                   <div
-                    className="w-8 h-8 rounded-full border-2 border-background bg-zinc-800 flex items-center justify-center bg-[#6366F1] text-white text-[10px] font-bold"
+                    className="w-8 h-8 rounded-full border-2 border-background bg-zinc-800 flex items-center justify-center bg-primary text-white text-[10px] font-bold"
                     role="listitem"
                   >
                     +10k
@@ -135,14 +135,14 @@ export default function LandingHero() {
             {FEATURES.map(({ key, icon: Icon }) => (
               <div
                 key={key}
-                className="group p-6 rounded-2xl border border-zinc-800/50 hover:border-indigo-500/50 transition-all duration-500 text-left"
+                className="group p-6 rounded-2xl border border-zinc-800/50 hover:border-primary/50 transition-all duration-500 text-left"
                 style={{
                   background: 'rgba(37, 37, 46, 0.4)',
                   backdropFilter: 'blur(12px)',
                 }}
               >
-                <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-5 group-hover:bg-indigo-500/20 transition-colors">
-                  <Icon className="w-6 h-6 text-indigo-400" aria-hidden="true" />
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-5 group-hover:bg-primary/20 transition-colors">
+                  <Icon className="w-6 h-6 text-primary" aria-hidden="true" />
                 </div>
                 <h3 className="text-lg font-bold text-white mb-2">
                   {t(`features.${key}.title`)}

@@ -89,7 +89,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 /* ───────────────────────────────────────────────────────────────
- * Indigo chart gradient ID (#6366F1)
+ * Primary chart gradient ID
  * ─────────────────────────────────────────────────────────────── */
 
 const CHART_GRADIENT_ID = 'indigoChartGradient';
@@ -168,7 +168,7 @@ export default function DashboardOverview({
                     <path
                       d="M0 15 Q 10 5, 20 12 T 40 8 T 60 14 T 80 4 T 100 10"
                       fill="none"
-                      stroke="#6366F1"
+                      stroke="hsl(var(--primary))"
                       strokeWidth="2"
                     />
                   </svg>
@@ -179,7 +179,7 @@ export default function DashboardOverview({
                   value={metric.progressValue}
                   max={metric.progressMax ?? 100}
                   className="w-full h-2"
-                  indicatorClassName="bg-[#6366F1]"
+                  indicatorClassName="bg-primary"
                   aria-label={t('kpi.creditsUsed.progressLabel', {
                     used: metric.value,
                     total: metric.progressMax?.toLocaleString() ?? '10,000',
@@ -202,7 +202,7 @@ export default function DashboardOverview({
           </h3>
           <div className="flex gap-4" role="group" aria-label={t('aria.chartLegend')}>
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-[#6366F1]" aria-hidden="true" />
+              <span className="w-3 h-3 rounded-full bg-primary" aria-hidden="true" />
               <span className="text-xs text-on-surface-variant">{t('chart.legend.views')}</span>
             </div>
             <div className="flex items-center gap-2">
@@ -216,8 +216,8 @@ export default function DashboardOverview({
           <svg className="w-full h-full" preserveAspectRatio="none" role="img" aria-label={t('aria.chart')}>
             <defs>
               <linearGradient id={CHART_GRADIENT_ID} x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#6366F1" stopOpacity="0.3" />
-                <stop offset="100%" stopColor="#6366F1" stopOpacity="0" />
+                <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity="0" />
               </linearGradient>
             </defs>
             {/* Grid Lines */}
@@ -233,7 +233,7 @@ export default function DashboardOverview({
             <path
               d="M0 250 L50 220 L150 180 L250 240 L350 100 L450 160 L550 80 L650 120 L750 60 L850 110 L950 90 L1050 50 L1200 40"
               fill="none"
-              stroke="#6366F1"
+              stroke="hsl(var(--primary))"
               strokeLinecap="round"
               strokeWidth="3"
             />
@@ -241,7 +241,7 @@ export default function DashboardOverview({
 
           {/* Tooltip indicator */}
           <div
-            className="absolute top-10 left-[60%] -translate-x-1/2 p-3 rounded-lg bg-black/60 backdrop-blur-md border border-[#6366F1]/30 shadow-2xl z-10"
+            className="absolute top-10 left-[60%] -translate-x-1/2 p-3 rounded-lg bg-black/60 backdrop-blur-md border border-primary/30 shadow-2xl z-10"
             role="tooltip"
             aria-label={t('chart.tooltip.label')}
           >
@@ -260,7 +260,7 @@ export default function DashboardOverview({
             </div>
           </div>
           <div
-            className="absolute bottom-[240px] left-[60%] -translate-x-1/2 w-3 h-3 rounded-full bg-white border-2 border-[#6366F1] ring-4 ring-[#6366F1]/20"
+            className="absolute bottom-[240px] left-[60%] -translate-x-1/2 w-3 h-3 rounded-full bg-white border-2 border-primary ring-4 ring-primary/20"
             aria-hidden="true"
           />
         </div>
@@ -282,7 +282,7 @@ export default function DashboardOverview({
         >
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-white">{t('campaigns.title')}</h3>
-            <Button variant="link" className="text-[#6366F1] text-sm font-medium hover:underline p-0 h-auto">
+            <Button variant="link" className="text-primary text-sm font-medium hover:underline p-0 h-auto">
               {t('campaigns.viewAll')}
             </Button>
           </div>
@@ -319,7 +319,7 @@ export default function DashboardOverview({
                       <td className="py-4 pr-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg bg-surface-container-highest flex items-center justify-center">
-                            <Icon className="w-5 h-5 text-[#6366F1]" aria-hidden="true" />
+                            <Icon className="w-5 h-5 text-primary" aria-hidden="true" />
                           </div>
                           <span className="font-medium text-white">{row.name}</span>
                         </div>
@@ -352,19 +352,19 @@ export default function DashboardOverview({
           </h3>
 
           <button
-            className="w-full flex items-center justify-between p-4 bg-[#6366F1]/10 border border-[#6366F1]/20 rounded-xl hover:bg-[#6366F1]/20 transition-all group text-left"
+            className="w-full flex items-center justify-between p-4 bg-primary/10 border border-primary/20 rounded-xl hover:bg-primary/20 transition-all group text-left"
             aria-label={t('quickActions.createCampaign')}
           >
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-[#6366F1] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
                 <PlusCircle className="w-5 h-5 text-white" aria-hidden="true" />
               </div>
               <div>
                 <p className="text-white font-bold">{t('quickActions.createCampaign')}</p>
-                <p className="text-xs text-[#6366F1]/80">{t('quickActions.createCampaignDesc')}</p>
+                <p className="text-xs text-primary/80">{t('quickActions.createCampaignDesc')}</p>
               </div>
             </div>
-            <ChevronRight className="w-5 h-5 text-[#6366F1] group-hover:translate-x-1 transition-transform" aria-hidden="true" />
+            <ChevronRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" aria-hidden="true" />
           </button>
 
           <button
@@ -426,7 +426,7 @@ export default function DashboardOverview({
             </div>
             <div className="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
               <div
-                className="bg-[#6366F1] h-full rounded-full"
+                className="bg-primary h-full rounded-full"
                 style={{ width: '82%' }}
                 role="progressbar"
                 aria-valuenow={82}
