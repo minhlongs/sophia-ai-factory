@@ -22,6 +22,8 @@ import { pollVideoStatus } from '@/land/video/generation/generate-campaign-video
 import { emit } from '@/land/webhooks/emitter'
 import { uploadVideo, refreshAccessToken } from '@/forest/youtube/youtube-oauth-client'
 import { publishVideo, checkPublishStatus } from '@/forest/tiktok/tiktok-oauth-client'
+import { captureServer } from '@/forest/telemetry/posthog-capture'
+import { Events } from '@/forest/telemetry/event-types'
 import type { YouTubeOAuthClient, TikTokOAuthClient } from '@/tree/types/oauth-client-types'
 
 /** Resolve D1 binding for webhook emission (best-effort, no throw) */
@@ -238,7 +240,17 @@ export const generateCampaign = inngest.createFunction(
         await updateStatus('processing_video', 70)
         if (!resume) await notifyUser('🎤 Voiceover ready! Now rendering video...')
         try {
-          return await startVideoGeneration({ script: script as ScriptOutput, tier, userId })
+          const jobId = await startVideoGeneration({ script: script as ScriptOutput, tier, userId })
+          // Fire-and-forget PostHog event for first video started
+          void captureServer({
+            event: Events.FIRST_VIDEO_STARTED,
+            distinctId: userId,
+            source: 'server',
+            properties: { campaign_id: campaignId, tier },
+          }).catch((err) => {
+            logger.warn('[generateCampaign] capture first_video_started failed', { error: String(err) })
+          })
+          return jobId
         } catch (err) {
           if (err instanceof MissingCredentialsError) {
             await notifyRefundRequired(userId, campaignId, err.key)
@@ -266,6 +278,16 @@ export const generateCampaign = inngest.createFunction(
         }
         if (!videoJobId) throw new Error('Video Job ID missing')
         return await pollVideoStatus(videoJobId, tier, campaignId, { onUpdate: updateStatus, onNotify: notifyUser, topic })
+      })
+
+      // Fire-and-forget PostHog event for first video completed
+      void captureServer({
+        event: Events.FIRST_VIDEO_COMPLETED,
+        distinctId: userId,
+        source: 'server',
+        properties: { campaign_id: campaignId, tier },
+      }).catch((err) => {
+        logger.warn('[generateCampaign] capture first_video_completed failed', { error: String(err) })
       })
 
       await runStepSafely('checkpoint-video-ready', async () => {
@@ -345,6 +367,20 @@ export const generateCampaign = inngest.createFunction(
           ? `Published to: ${distributedChannels}`
           : `Partially published (${distributedChannels}). Some channels failed.`
         await notifyUser(`✅ **Campaign Ready!**\nYour video for "${topic}" is ready.\n${statusLine}\n[Watch Video](${videoAssets.video_url})`)
+
+        // Fire-and-forget PostHog event for campaign published
+        void captureServer({
+          event: Events.CAMPAIGN_PUBLISHED,
+          distinctId: userId,
+          source: 'server',
+          properties: {
+            campaign_type: topic,
+            channels: distributedChannels,
+          },
+        }).catch((err) => {
+          logger.warn('[generateCampaign] capture campaign_published failed', { error: String(err) })
+        })
+
         await resumeEngine.checkpoint(campaignId, 'finalize-campaign')
         await resumeEngine.clearCheckpoints(campaignId)
 

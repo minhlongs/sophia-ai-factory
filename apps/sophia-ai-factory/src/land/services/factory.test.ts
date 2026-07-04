@@ -21,6 +21,7 @@ describe('ServiceFactory — credential gate', () => {
     delete process.env.OPENROUTER_API_KEY
     delete process.env.ELEVENLABS_API_KEY
     delete process.env.HEYGEN_API_KEY
+    delete process.env.REPLICATE_API_TOKEN
     delete process.env.NOWPAYMENTS_API_KEY
     delete process.env.NEXT_PUBLIC_MOCK_AI_SERVICES
     delete process.env.BYOK_ENABLED
@@ -86,16 +87,15 @@ describe('ServiceFactory — credential gate', () => {
     expect(service).toBeInstanceOf(RealScriptService)
   })
 
-  // Case 5: getVideoService in production with no HEYGEN_API_KEY → throws MissingCredentialsError
-  it('getVideoService throws MissingCredentialsError(HEYGEN_API_KEY) in production', async () => {
+  // Case 5: getVideoService in production with no keys → throws MissingCredentialsError
+  it('getVideoService throws MissingCredentialsError when neither HEYGEN_API_KEY nor REPLICATE_API_TOKEN in production', async () => {
     vi.stubEnv('NODE_ENV', 'production')
-    delete process.env.HEYGEN_API_KEY
 
     const { ServiceFactory } = await import('./factory')
     const { MissingCredentialsError } = await import('./errors')
 
     await expect(ServiceFactory.getVideoService()).rejects.toThrow(MissingCredentialsError)
-    await expect(ServiceFactory.getVideoService()).rejects.toThrow('HEYGEN_API_KEY')
+    await expect(ServiceFactory.getVideoService()).rejects.toThrow('HEYGEN_API_KEY / REPLICATE_API_TOKEN')
   })
 
   // Case 6: whitespace-only OPENROUTER_API_KEY in production → throws MissingCredentialsError

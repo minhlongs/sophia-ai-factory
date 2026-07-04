@@ -94,3 +94,24 @@ export async function captureTierUpgraded(opts: {
     },
   })
 }
+
+/**
+ * Convenience for free quota exhaustion event — always server-side
+ */
+export async function captureFreeQuotaExhaustion(opts: {
+  distinctId: string
+  tier: string
+  used: number
+  limit: number
+}): Promise<void> {
+  await captureServer({
+    event: Events.FREE_QUOTA_EXHAUSTION,
+    distinctId: opts.distinctId,
+    source: 'server',
+    properties: {
+      tier: opts.tier,
+      used: opts.used,
+      limit: opts.limit,
+    },
+  })
+}

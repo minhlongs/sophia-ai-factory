@@ -299,6 +299,9 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
             const annualPriceCents = isAnnual && tierConfig.yearlyPrice > 0
               ? tierConfig.yearlyPrice * 100
               : undefined;
+            const yearlySavingsPercent = isAnnual && tierConfig.yearlyPrice > 0
+              ? tierConfig.yearlySavingsPercent
+              : undefined;
             const baseCents = isAnnual && annualPriceCents ? annualPriceCents : pricing.monthlyPrice;
             const discountedCents = getDiscountedCents(baseCents);
             return (
@@ -317,6 +320,7 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
                 locale={locale}
                 selected={loading === pricing.tier}
                 discountedPriceCents={discountedCents}
+                yearlySavingsPercent={yearlySavingsPercent}
                 showVnd={paymentMethod === "payos"}
               />
             );

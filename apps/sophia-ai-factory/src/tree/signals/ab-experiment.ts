@@ -4,6 +4,7 @@
  */
 
 import { flag } from './feature-flags'
+import { captureServer } from './posthog-capture'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 
@@ -44,6 +45,17 @@ export async function assignVariant(
       error: getErrorMessage(err),
     })
   }
+
+  // Fire-and-forget experiment assignment event to PostHog
+  void captureServer({
+    event: 'experiment_assigned',
+    distinctId,
+    source: 'server',
+    properties: {
+      experiment: experimentName,
+      variant,
+    },
+  })
 
   // Build secure cookie for client/server sync (HttpOnly prevents XSS read)
   const cookieName = `ab_${experimentName}`

@@ -8,6 +8,19 @@ import { logger } from '@/seed/utils/logger-utility'
 
 const getSupabase = () => createServerClient()
 
+// -------------------------------------------------------------------------
+// Campaign row types
+// -------------------------------------------------------------------------
+
+interface CampaignRow {
+  id: string;
+  title: string;
+  status: string | null;
+  progress: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Helper to map Supabase subscription tier to App Tier
 function mapSubscriptionToTier(subTier: 'free' | 'pro' | 'enterprise' | null): Tier {
   switch (subTier) {
@@ -129,5 +142,133 @@ I will notify you when it's ready. Check progress with /status.`
   } catch (error) {
     logger.error('Error executing campaign creation', error instanceof Error ? error : new Error(String(error)))
     await sendMessage(chatId, '❌ An unexpected error occurred while starting your campaign.')
+  }
+}
+
+// -------------------------------------------------------------------------
+// Campaign statuses that are considered "active" (can be cancelled)
+// -------------------------------------------------------------------------
+const ACTIVE_STATUSES = ['queued', 'processing_script', 'processing_video'] as const;
+
+/**
+ * Handle /campaign list — list all campaigns for the user with their statuses.
+ */
+export async function handleCampaignList(chatId: string): Promise<void> {
+  try {
+    const db = getSupabase()
+    const { data: profileData } = await db
+      .from('user_profiles')
+      .select('user_id')
+      .eq('telegram_chat_id', chatId)
+      .single()
+
+    const profile = profileData as { user_id: string } | null
+    if (!profile) {
+      await sendMessage(chatId, '❌ Account not linked. Please use /email to setup.')
+      return
+    }
+
+    const { data: campaignsData } = await db
+      .from('campaigns')
+      .select('id, title, status, progress, created_at')
+      .eq('user_id', profile.user_id)
+      .order('created_at', { ascending: false })
+      .limit(20)
+
+    const campaigns = campaignsData as CampaignRow[] | null
+    if (!campaigns || campaigns.length === 0) {
+      await sendMessage(chatId, '📭 No campaigns found. Start one with /campaign <topic>')
+      return
+    }
+
+    const statusEmoji: Record<string, string> = {
+      draft: '📝',
+      queued: '⏳',
+      processing_script: '⚙️',
+      processing_video: '🎬',
+      completed: '✅',
+      failed: '❌',
+      video_timeout: '⏰',
+    }
+
+    let message = '📋 *All Campaigns:*\n\n'
+    campaigns.forEach((c, i) => {
+      const emoji = statusEmoji[c.status ?? ''] || '❓'
+      const shortId = c.id.slice(0, 8)
+      const date = new Date(c.created_at).toLocaleDateString()
+      message += `${emoji} *${c.title}*\n`
+      message += `  ID: \`${shortId}\` | Status: ${c.status ?? 'unknown'} | Progress: ${c.progress ?? 0}%\n`
+      message += `  Created: ${date}\n`
+      if (i < campaigns.length - 1) message += '\n'
+    })
+
+    await sendMessage(chatId, message)
+  } catch (error) {
+    logger.error('Error listing campaigns', error instanceof Error ? error : new Error(String(error)))
+    await sendMessage(chatId, '❌ Error fetching campaign list.')
+  }
+}
+
+/**
+ * Handle /campaign cancel <id> — cancel a running campaign.
+ * Only active campaigns (queued, processing) can be cancelled.
+ * Uses status= 'failed' with error_message convention since the schema
+ * CHECK constraint only allows: draft, queued, processing_script,
+ * processing_video, completed, failed, video_timeout.
+ */
+export async function handleCampaignCancel(chatId: string, campaignId: string): Promise<void> {
+  try {
+    const db = getSupabase()
+    const { data: profileData } = await db
+      .from('user_profiles')
+      .select('user_id')
+      .eq('telegram_chat_id', chatId)
+      .single()
+
+    const profile = profileData as { user_id: string } | null
+    if (!profile) {
+      await sendMessage(chatId, '❌ Account not linked. Please use /email to setup.')
+      return
+    }
+
+    // Fetch the campaign and verify ownership
+    const { data: campaignData } = await db
+      .from('campaigns')
+      .select('id, title, status')
+      .eq('id', campaignId)
+      .eq('user_id', profile.user_id)
+      .single()
+
+    const campaign = campaignData as { id: string; title: string; status: string } | null
+    if (!campaign) {
+      await sendMessage(chatId, `❌ Campaign \`${campaignId.slice(0, 8)}\` not found or does not belong to you.`)
+      return
+    }
+
+    // Only active campaigns can be cancelled
+    if (!ACTIVE_STATUSES.includes(campaign.status as typeof ACTIVE_STATUSES[number])) {
+      await sendMessage(
+        chatId,
+        `❌ Campaign *${campaign.title}* (status: ${campaign.status}) cannot be cancelled.\n` +
+        `Only active campaigns (queued, processing) can be cancelled.`
+      )
+      return
+    }
+
+    // Set status to failed with cancellation note
+    await db
+      .from('campaigns')
+      .update({
+        status: 'failed',
+        error_message: 'Cancelled by user',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', campaignId)
+      .eq('user_id', profile.user_id)
+
+    await sendMessage(chatId, `✅ Campaign *${campaign.title}* has been cancelled.`)
+  } catch (error) {
+    logger.error('Error cancelling campaign', error instanceof Error ? error : new Error(String(error)))
+    await sendMessage(chatId, '❌ An unexpected error occurred while cancelling the campaign.')
   }
 }

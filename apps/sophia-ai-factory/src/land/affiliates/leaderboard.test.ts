@@ -4,6 +4,7 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { getTopAffiliates } from './leaderboard';
+import type { LeaderboardPeriod } from './leaderboard';
 
 interface RawRow {
   affiliate_id: string;
@@ -120,6 +121,27 @@ describe('getTopAffiliates', () => {
 
     await getTopAffiliates(0, 1000, 10, 'commission');
     expect(sql[2]).toMatch(/ORDER BY total_commission/);
+  });
+
+  it.each([
+    ['monthly', 30],
+    ['weekly', 7],
+  ] as [LeaderboardPeriod, number][])('period=%s computes fromTs as toTs minus %d days', async (period, days) => {
+    const bound: unknown[][] = [];
+    setD1Mock({ rows: [], bindCapture: (...args) => bound.push(args) });
+    const toTs = 1_000_000_000_000;
+    await getTopAffiliates(0, toTs, 10, 'epc', period);
+    const expectedFrom = period === 'monthly' ? toTs - 30 * 86400000 : toTs - 7 * 86400000;
+    expect(bound[0][0]).toBe(expectedFrom);
+    expect(bound[0][1]).toBe(toTs);
+  });
+
+  it('period=all_time uses fromTs=0', async () => {
+    const bound: unknown[][] = [];
+    setD1Mock({ rows: [], bindCapture: (...args) => bound.push(args) });
+    await getTopAffiliates(0, 100_000, 10, 'commission', 'all_time');
+    expect(bound[0][0]).toBe(0);
+    expect(bound[0][1]).toBe(100_000);
   });
 
   it('coerces numeric strings from D1 driver', async () => {

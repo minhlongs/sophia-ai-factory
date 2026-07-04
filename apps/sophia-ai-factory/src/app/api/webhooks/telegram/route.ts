@@ -12,6 +12,9 @@ import {
   handleCallbackQuery,
   handleTicket,
   handleMissions,
+  handleCampaignList,
+  handleCampaignCancel,
+  handleAnalytics,
   withMiddleware,
 } from '@/tree/telegram/telegram-command-handlers'
 import {
@@ -250,14 +253,26 @@ export async function POST(request: NextRequest) {
         const email = text.replace('/email', '').trim()
         await handleEmail(chatId, email)
       } else if (text.startsWith('/campaign')) {
-        const topic = text.replace('/campaign', '').trim()
-        await handleCampaignFsm(chatId, topic)
+        const arg = text.replace('/campaign', '').trim()
+        if (arg === 'list') {
+          await handleCampaignList(chatId)
+        } else if (arg.startsWith('cancel ')) {
+          const id = arg.replace('cancel ', '').trim()
+          await handleCampaignCancel(chatId, id)
+        } else if (arg === 'cancel') {
+          await sendTelegramMessage(chatId, '⚠️ Usage: /campaign cancel <campaign_id>\n\nGet campaign IDs with: /campaign list')
+        } else {
+          const topic = arg
+          await handleCampaignFsm(chatId, topic)
+        }
       } else if (text === '/confirm') {
         await handleConfirmCommand(chatId)
       } else if (text === '/cancel') {
         await TelegramFSM.clearContext(chatId)
       } else if (text === '/status') {
         await handleStatus(chatId)
+      } else if (text === '/analytics') {
+        await handleAnalytics(chatId)
       } else if (text === '/results') {
         await handleResults(chatId)
       } else if (text === '/missions') {

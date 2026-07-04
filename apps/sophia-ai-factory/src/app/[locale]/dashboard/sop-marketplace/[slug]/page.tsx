@@ -10,11 +10,12 @@ import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getTemplateBySlug, listInstallationsForUser } from '@/tree/sop/sop-repo';
+import { fetchAuthorBrandings } from '@/tree/branding/org-branding-repo';
 import { SopPreview } from '@/forest/components/sop/sop-preview';
 import { CategoryBadge } from '@/forest/components/sop/category-badge';
 import { SopDetailInstallButton } from './install-button';
 import { installSopAction } from '../actions';
-import { ArrowLeft, Zap } from 'lucide-react';
+import { ArrowLeft, Building2, Zap } from 'lucide-react';
 import { getD1 } from '@/seed/db/get-d1';
 
 interface Props {
@@ -36,6 +37,18 @@ export default async function SopDetailPage({ params }: Props) {
 
   const template = await getTemplateBySlug(db, slug);
   if (!template) notFound();
+
+  // Fetch author branding
+  let authorBrandName: string | null = null;
+  let authorLogoUrl: string | null = null;
+  if (template.author_user_id) {
+    const brandings = await fetchAuthorBrandings(db, [template.author_user_id]);
+    const branding = brandings.get(template.author_user_id);
+    if (branding) {
+      authorBrandName = branding.agencyName ?? null;
+      authorLogoUrl = branding.logoUrl ?? null;
+    }
+  }
 
   const installations = await listInstallationsForUser(db, user.id);
   const alreadyInstalled = installations.some(i => i.template_id === template.id);
@@ -68,9 +81,21 @@ export default async function SopDetailPage({ params }: Props) {
             <CategoryBadge category={template.category} />
           </div>
           <p className="text-muted-foreground mt-2">{description}</p>
-          <div className="flex items-center gap-1 mt-2 text-sm text-amber-400">
-            <Zap className="w-4 h-4" aria-hidden="true" />
-            <span>{template.credits_per_run} credits/run</span>
+          <div className="mt-2 flex flex-wrap items-center gap-3 text-sm">
+            {authorBrandName && (
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                {authorLogoUrl ? (
+                  <img src={authorLogoUrl} alt={authorBrandName} className="w-4 h-4 rounded object-contain" />
+                ) : (
+                  <Building2 className="w-4 h-4" aria-hidden="true" />
+                )}
+                <span>{t('detail.byAgency', { name: authorBrandName })}</span>
+              </span>
+            )}
+            <span className="flex items-center gap-1 text-amber-400">
+              <Zap className="w-4 h-4" aria-hidden="true" />
+              <span>{template.credits_per_run} credits/run</span>
+            </span>
           </div>
         </div>
         <SopDetailInstallButton

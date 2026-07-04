@@ -24,6 +24,7 @@ import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowRight, AlertTriangle, Video } from 'lucide-react';
+import { hasCreatorAccess } from '@/land/sop-marketplace';
 import { logger } from '@/seed/utils/logger-utility';
 
 export const dynamic = 'force-dynamic';
@@ -108,23 +109,27 @@ export default async function WalletPage() {
   const t = await getTranslations('dashboard.wallet');
   const tier = await resolveUserTier(user.id);
 
-  // Wallet (affiliate earnings/payouts) requires MASTER tier
+  // Wallet requires MASTER tier OR creator marketplace access
   if (tier !== 'MASTER') {
-    return (
-      <div>
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">{t('gateTitle')}</h1>
-          <p className="text-muted-foreground">{t('subtitle')}</p>
+    const db2 = getD1();
+    const hasAccess = db2 ? await hasCreatorAccess(db2, user.id) : false;
+    if (!hasAccess) {
+      return (
+        <div>
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-2">{t('gateTitle')}</h1>
+            <p className="text-muted-foreground">{t('subtitle')}</p>
+          </div>
+          <TierGateCard
+            requiredTier="MASTER"
+            currentTier={tier}
+            featureName={t('gateTitle')}
+          >
+            {null}
+          </TierGateCard>
         </div>
-        <TierGateCard
-          requiredTier="MASTER"
-          currentTier={tier}
-          featureName={t('gateTitle')}
-        >
-          {null}
-        </TierGateCard>
-      </div>
-    );
+      );
+    }
   }
 
   const result = await fetchWalletData(user.id);

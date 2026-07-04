@@ -112,13 +112,14 @@ export async function validateInviteCode(
 }
 
 /**
- * Redeem an invite code for a user — increments used_count.
+ * Redeem an invite code for a user — increments used_count and records
+ * the user-invite mapping in user_beta_invites.
  * Returns updated invite or throws if code is not valid.
  */
 export async function redeemInviteCode(
   db: D1Database,
   code: string,
-  _userId: string,
+  userId: string,
 ): Promise<BetaInvite> {
   const { valid, invite, reason } = await validateInviteCode(db, code);
 
@@ -129,6 +130,15 @@ export async function redeemInviteCode(
   await db
     .prepare('UPDATE beta_invites SET used_count = used_count + 1 WHERE id = ?')
     .bind(invite.id)
+    .run();
+
+  // Record the user-invite mapping so isBetaInviteApproved can find it
+  await db
+    .prepare(
+      `INSERT INTO user_beta_invites (user_id, invite_code, approved, approved_at)
+       VALUES (?, ?, 1, ?)`,
+    )
+    .bind(userId, invite.code, Date.now())
     .run();
 
   return { ...invite, used_count: invite.used_count + 1 };
@@ -151,6 +161,12 @@ export async function listInvites(
     .prepare('SELECT * FROM beta_invites ORDER BY created_at DESC')
     .all<BetaInvite>();
   return result.results ?? [];
+}
+
+/** Check whether a user has an approved beta invite. */
+export async function isBetaInviteApproved(db: D1Database, userId: string): Promise<boolean> {
+  const row = await db.prepare("SELECT approved FROM user_beta_invites WHERE user_id = ?1").bind(userId).first<{ approved: number }>();
+  return row?.approved === 1;
 }
 
 /** Delete an invite by id. */

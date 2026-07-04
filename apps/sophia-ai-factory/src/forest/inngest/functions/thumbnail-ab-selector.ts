@@ -42,7 +42,16 @@ export const thumbnailAbSelector = inngest.createFunction(
           .bind(video.video_id)
           .all<ThumbnailVariantRow>();
 
-        const best = variants.results.reduce((a: ThumbnailVariantRow, b: ThumbnailVariantRow) => {
+        // Require minimum 10 impressions per variant before statistical consideration
+        const eligible = variants.results.filter((v) => v.impressions >= 10);
+        if (eligible.length === 0) {
+          logger.info('[thumbnail-ab] No variant meets minimum 10 impressions, skipping', {
+            videoId: video.video_id,
+          });
+          return;
+        }
+
+        const best = eligible.reduce((a: ThumbnailVariantRow, b: ThumbnailVariantRow) => {
           const aCtr = a.impressions > 0 ? a.clicks / a.impressions : 0;
           const bCtr = b.impressions > 0 ? b.clicks / b.impressions : 0;
           return bCtr > aCtr ? b : a;

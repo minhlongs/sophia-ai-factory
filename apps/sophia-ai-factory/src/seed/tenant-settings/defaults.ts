@@ -18,6 +18,7 @@ export interface BrandingSettings {
   logoUrl: string | null;
   primaryColor: string;
   accentColor: string | null;
+  agencyName: string | null;
   welcomeMessage: string | null;
   customDomain: string | null;
   emailFromName: string | null;
@@ -112,6 +113,7 @@ export const DEFAULT_BRANDING: BrandingSettings = {
   logoUrl: null,
   primaryColor: '#7c3aed',
   accentColor: null,
+  agencyName: null,
   welcomeMessage: null,
   customDomain: null,
   emailFromName: null,

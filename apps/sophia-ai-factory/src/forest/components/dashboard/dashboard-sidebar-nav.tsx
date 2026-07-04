@@ -124,7 +124,13 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
         <BarChart2 className={iconClass("/dashboard/analytics")} aria-hidden="true" />
         <span className="font-medium">{t('sidebar.analytics')}</span>
       </Link>
-      
+
+      <Link href="/dashboard/analytics/funnels" className={linkClass("/dashboard/analytics/funnels")}>
+        {renderActiveIndicator("/dashboard/analytics/funnels")}
+        <BarChart2 className={iconClass("/dashboard/analytics/funnels")} aria-hidden="true" />
+        <span className="font-medium">{t('sidebar.funnels')}</span>
+      </Link>
+
       <Link href="/dashboard/voices" className={linkClass("/dashboard/voices")}>
         {renderActiveIndicator("/dashboard/voices")}
         <Mic className={iconClass("/dashboard/voices")} aria-hidden="true" />

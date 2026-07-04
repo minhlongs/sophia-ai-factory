@@ -8,3 +8,5 @@
 
 export { handleStart, handleHelp, handleEmail, handleUnknown } from './telegram-bot-account-handlers';
 export { handleCampaign, handleStatus, handleResults } from './telegram-bot-campaign-handlers';
+export { handleCampaignList, handleCampaignCancel } from './handlers/campaign-handler';
+export { handleAnalytics } from './handlers/analytics-handler';

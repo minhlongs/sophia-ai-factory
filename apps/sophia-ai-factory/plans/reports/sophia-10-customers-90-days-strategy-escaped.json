@@ -1,0 +1,113 @@
+{
+  "acquisition": {
+    "ideas": [
+      {
+        "idea": "VN Facebook Group Outreach Campaign — Post daily value content in top &apos;kiếm tiền online&apos; and &apos;affiliate marketing Vietnam&apos; groups. Offer free faceless video sample for group members. Track with UTM links.",
+        "effort": "Low (2h/day manual posting)",
+        "impact": "High (VN market is tight-knit, Facebook is primary channel)",
+        "timeframe": "1-30 days"
+      },
+      {
+        "idea": "TikTok Shorts Content Engine — Post 30-60s clips showing faceless channel earnings, automation speed, &apos;before vs after&apos; results. Target VN hashtags #kiemtienonline #affiliate #lamyoutube.",
+        "effort": "Medium (consistent content creation, 1h/day)",
+        "impact": "Medium-High (viral potential, builds brand awareness)",
+        "timeframe": "14-60 days"
+      },
+      {
+        "idea": "Telegram Mastermind Partnerships — Partner with 3-5 existing VN &apos;kiếm tiền online&apos; Telegram groups (10k+ members each). Offer exclusive 50% first-month discount. Revenue share 20% with group admin.",
+        "effort": "Low (DM outreach, simple partnership)",
+        "impact": "High (warm, trusting audience, direct conversion)",
+        "timeframe": "7-21 days"
+      },
+      {
+        "idea": "YouTube Tutorial Funnel (VN focus) — Create &apos;How to start faceless YouTube channel with AI&apos; tutorials in Vietnamese. Top-of-funnel content, bottom-of-funnel CTA to Sophia.",
+        "effort": "High (production, scripting, SEO)",
+        "impact": "High (long-term organic traffic, authority building)",
+        "timeframe": "30-90 days"
+      },
+      {
+        "idea": "Product Hunt + Indie Hackers Launch — Classic SaaS launch targeting creator economy audience. Prepare demo video, written story, targeted outreach to PH hunters in AI/creator space.",
+        "effort": "Medium (assets, prep, community engagement)",
+        "impact": "Medium (brand building, EN audience, one-time spike)",
+        "timeframe": "14-30 days"
+      },
+      {
+        "idea": "Reddit Targeted Value Posts — Post in r/affiliatemarketing, r/passiveincome, r/EntrepreneurRideAlong with detailed &apos;how I automated faceless channels&apos; guides. No hard pitch — lead magnet at end.",
+        "effort": "Low (1 post/week, engage comments)",
+        "impact": "Low-Medium (skeptical audience, slow burn)",
+        "timeframe": "7-60 days"
+      },
+      {
+        "idea": "VN KOC/KOL Micro-Influencer Campaign — Recruit 5-10 VN nano-influencers (1k-10k followers) in affiliate marketing. Give free lifetime access to MASTER tier in exchange for 3 posts/stories and 1 case study video.",
+        "effort": "Medium (vetting, onboarding, follow-up)",
+        "impact": "High (social proof + referrals from trusted voices)",
+        "timeframe": "14-45 days"
+      }
+    ]
+  },
+  "activation": {
+    "ideas": [
+      {
+        "idea": "Instant Sample Video on Signup — On registration, immediately generate a sample faceless video using pre-configured demo API keys (no BYOK needed for demo). Let them see the output before setting up their own keys. This is the single highest-leverage activation improvement.",
+        "effort": "Medium (1-2 weeks dev: demo keys, generation flow, UI)",
+        "impact": "High (solves empty-product problem, creates wow moment)"
+      },
+      {
+        "idea": "Free Starter Tier ($0/mo, 1 campaign, watermarked) — Remove the $199 barrier. Let users run 1 real campaign with watermarked output. Upgrade removes watermark. Convert the $199 BASIC into &apos;remove watermark&apos; step.",
+        "effort": "Low (config and DB change, mostly pricing logic)",
+        "impact": "Very High (massively lowers entry barrier)"
+      },
+      {
+        "idea": "First Month $1 Promotional Pricing — Instead of $199, charge $1 for the first month on BASIC. Requires NOWPayments to support, or build a checkout flow. Creates extreme low-commitment entry.",
+        "effort": "Medium (payment flow change, promotional logic)",
+        "impact": "Very High (extreme low friction, urgency)"
+      },
+      {
+        "idea": "Concierge Setup Hotline — Offer a 15-min video call (Google Meet/Zalo) to help non-tech CEOs set up all API keys. &apos;Chung toi setup giup ban&apos; (We set it up for you). Book via Calendly.",
+        "effort": "Medium (time per customer, 15min each, scalable to 4/day)",
+        "impact": "High (converts tech-fearful CEOs, builds trust)"
+      },
+      {
+        "idea": "Wizard UX Overhaul — Reduce Setup Wizard from 5+ steps to 3. Add screenshot examples of where to find each API key. Bilingual tooltips. Mobile-responsive. Progress saved per step.",
+        "effort": "Medium (UI/UX changes, 1-2 weeks)",
+        "impact": "High (reduces dropoff at critical onboarding step)"
+      },
+      {
+        "idea": "3-Day Onboarding Email Sequence (auto-triggered) — Day 1: &apos;Your Sophia account is ready&apos; with getting-started video in Vietnamese. Day 2: &apos;Setup your first campaign in 2 minutes.&apos; Day 3: &apos;Your first video is generating — here&apos;s what to expect.&apos;",
+        "effort": "Low (email copy, trigger setup in app)",
+        "impact": "Medium (nurtures signups to activation)"
+      },
+      {
+        "idea": "10 Pre-Built Campaign Templates — Offer ready-to-run templates for proven niches (weight loss motivation, finance tips, productivity, quotes, book summaries, etc.). User just clicks &apos;Use Template&apos; and enters their affiliate link.",
+        "effort": "Medium (template content creation, 1-2 weeks)",
+        "impact": "High (reduces time-to-value from hours to minutes)"
+      }
+    ]
+  },
+  "revenue": {
+    "currentPricingAssessment": "Current pricing ($199/mo BASIC) is too high for zero-customer traction. $199/mo is ~5M VND — a significant monthly expense for Vietnamese SMEs and individual creators, especially when customers must ALSO pay for their own API keys (OpenRouter, ElevenLabs, D-ID) on top. Without social proof, case studies, or testimonials, asking $199 upfront creates overwhelming purchase friction. The MASTER tier at $4,999 lifetime is unreachable until the product has proven ROI. Current pricing was designed for scale, not for the 0-to-10-customer bootstrap phase.",
+    "suggestion": "Introduce a $0 &apos;Starter&apos; tier with 1 watermarked campaign to build trust and prove value. For the first 90 days, run a &apos;Launch Special&apos; at $19/mo (BASIC, no watermark) or $1 first month. This matches VN market willingness-to-pay (50k-150k VND/month for SaaS tools). Once 10-20 customers are onboard and generating testimonials/case studies, ratchet pricing toward $49-99/mo for new customers. Grandfather early adopters at launch pricing. EN market can sustain higher pricing ($29-49/mo) from day one via separate pricing track or SKU."
+  },
+  "retention": {
+    "ideas": [
+      "Weekly performance email with campaign analytics and AI tips (VN + EN versions)",
+      "Monthly &apos;What is working in faceless YouTube&apos; newsletter with niche performance benchmarks",
+      "Private Telegram community group for customers to share strategies and results",
+      "New campaign template drops every 2 weeks (keep content fresh)",
+      "Automated usage alerts: low credits, underperforming campaigns, optimization suggestions",
+      "ROI dashboard showing earnings vs subscription + API costs (prove the value)",
+      "Feature request board with voting (customers feel heard, shapes roadmap)",
+      "Quarterly 1-on-1 strategy call for PREMIUM+ customers (high-touch retention)",
+      "In-app achievement/badge system: &apos;First Video Published&apos;, &apos;100k Views&apos;, &apos;First $1,000&apos;"
+    ]
+  },
+  "referral": {
+    "strategy": "Two-sided referral program with cash-based incentives for VN market and credit-based for EN market. Referrer gets 1 month free subscription for each paying referral. Referee gets 50% off first month. For VN users specifically, offer cash referral bonus in VND via bank transfer (more motivating than subscription credits in price-sensitive market). Simple referral link in dashboard with tracking. Top referrer each month gets a spotlight feature and 3 months free.",
+    "details": "Implement a referral endpoint that generates unique referral codes linked to user accounts. On successful payment (confirmed via NOWPayments IPN), credit both parties. VN market: cash payout of 500k VND per successful referral for the first 10 referrals per user (creates urgency to refer early). EN market: 50% of first month&apos;s subscription as account credit. Display a &apos;Your Referrals&apos; dashboard section showing: referral link, clicks, signups, conversions, rewards earned. Launch with email invite + social share buttons pre-filled with referral link."
+  },
+  "top3Priorities": [
+    "Launch a $1 first month promotional pricing + instant demo video on signup — remove ALL financial and psychological friction to becoming a paying customer. This is the single highest-leverage move to get from 0 to 10 customers.",
+    "Aggressive VN Facebook + Telegram outreach through partner group admins (revenue share model) — target 3-5 groups with 10k+ members each. VN market is the fastest path to warm leads because faceless YouTube + affiliate marketing is a proven, popular topic in Vietnamese online business communities.",
+    "Build a free Starter tier with 1 watermarked campaign — lets prospects validate the product&apos;s value before paying. The current $199/mo minimum is the #1 blocker: no one pays $199 for a product they have never seen work. A free tier is standard SaaS growth practice for exactly this reason."
+  ]
+}

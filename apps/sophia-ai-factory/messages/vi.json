@@ -33,12 +33,14 @@
       "elevenlabs": {
         "label": "ElevenLabs API Key (Giọng Nói)",
         "placeholder": "sk_...",
-        "help": "Lấy key tại elevenlabs.io/subscription"
+        "help": "Lấy key tại elevenlabs.io/subscription",
+        "optionalBadge": "Thêm sau"
       },
       "did": {
         "label": "Khóa API D-ID (Avatar)",
         "placeholder": "Cơ bản",
-        "help": "Lấy key tại studio.d-id.com/account-settings"
+        "help": "Lấy key tại studio.d-id.com/account-settings",
+        "optionalBadge": "Thêm sau"
       },
       "anthropic": {
         "label": "Khóa API Anthropic (LLM)",
@@ -48,13 +50,19 @@
       "muapi": {
         "label": "MuAPI Key (Âm Nhạc/Âm Thanh)",
         "placeholder": "mu_...",
-        "help": "Lấy key tại muapi.ai/dashboard/api-keys"
+        "help": "Lấy key tại muapi.ai/dashboard/api-keys",
+        "optionalBadge": "Thêm sau"
+      },
+      "replicate": {
+        "label": "Khóa API Replicate (Video)",
+        "placeholder": "r8_...",
+        "help": "Lấy key tại replicate.com/account/api-tokens",
+        "optionalBadge": "Thêm sau"
       }
     },
     "alerts": {
       "invalidKey": "Khoá API không hợp lệ — vui lòng kiểm tra lại",
-      "missingLlm": "Cần ít nhất một khoá LLM (OpenRouter hoặc Anthropic)",
-      "missingHeygen": "Cần khoá HeyGen để tiếp tục"
+      "missingLlm": "Cần ít nhất một khoá LLM (OpenRouter hoặc Anthropic)"
     },
     "header": {
       "title": "Trợ lý cài đặt Sophia",
@@ -113,10 +121,10 @@
       "whatYouNeed": {
         "title": "Bạn sẽ cần:",
         "items": [
-          "OpenRouter hoặc Anthropic API key (cho AI/LLM)",
-          "ElevenLabs API key (cho tổng hợp giọng nói)",
-          "D-ID API key (cho avatar)",
-          "HeyGen API key (cho tạo video)",
+          "OpenRouter API key (cho AI/LLM) — bắt buộc",
+          "ElevenLabs API key (cho giọng nói) — thêm sau",
+          "D-ID API key (cho avatar) — thêm sau",
+          "HeyGen API key (cho video) — thêm sau",
           "Vài phút thời gian của bạn"
         ]
       },
@@ -135,7 +143,8 @@
         "anthropic": "Anthropic",
         "elevenlabs": "ElevenLabs",
         "did": "D-ID",
-        "muapi": "MuAPI"
+        "muapi": "MuAPI",
+        "replicate": "Replicate"
       },
       "providers": {
         "heygen": "HeyGen",
@@ -742,6 +751,7 @@
       "new_project": "Dự Án Mới",
       "campaigns": "Chiến Dịch",
       "analytics": "Phân Tích",
+      "funnels": "Kênh Chuyển Đổi",
       "my_videos": "Video Của Tôi",
       "voices": "Giọng Đọc",
       "templates": "Mẫu Video",
@@ -1086,7 +1096,13 @@
       "recent_completed": "Hoàn Thành",
       "recent_actions": "Hành Động",
       "recent_view": "Xem",
-      "recent_empty": "Không tìm thấy chiến dịch"
+      "recent_empty": "Không tìm thấy chiến dịch",
+      "funnel_page_title": "Kênh Chuyển Đổi",
+      "funnel_page_desc": "Hình ảnh trực quan về cách người dùng và chiến dịch tiến triển qua từng giai đoạn — từ đăng ký đến chuyển đổi.",
+      "funnel_no_data": "Chưa có dữ liệu — hãy bắt đầu bằng cách tạo chiến dịch đầu tiên của bạn",
+      "funnel_error": "Không thể tải dữ liệu kênh chuyển đổi. Vui lòng thử lại sau.",
+      "funnel_date_range": "Hiển thị dữ liệu từ {days} ngày qua.",
+      "funnel_sidebar": "Kênh Chuyển Đổi"
     },
     "trialBanner": {
       "title": "Gói dùng thử của bạn hết hạn vào ngày mai! Nâng cấp ngay để giữ tính năng →",
@@ -1313,12 +1329,48 @@
     "api_docs": {
       "title": "Tài Liệu API",
       "subtitle": "Tích hợp Sophia AI vào quy trình của bạn",
-      "upgrade_required": "Yêu Cầu Gói Premium",
-      "upgrade_message": "Truy cập API dành cho người dùng gói Premium và Master. Nâng cấp gói để mở khóa tích hợp API.",
-      "view_plans": "Xem Các Gói",
       "api_key": "API Key Của Bạn",
-      "api_key_hint": "Liên hệ hỗ trợ để tạo API key",
-      "endpoints": "Các Endpoint Có Sẵn"
+      "api_key_hint": "Sử dụng API key để xác thực yêu cầu. Giữ bí mật và thay đổi định kỳ.",
+      "create_key": "Tạo Key Mới",
+      "create_key_name": "Tên Key",
+      "create_key_name_placeholder": "VD: Production API Key",
+      "create_key_submit": "Tạo",
+      "create_key_success": "Đã tạo key! Sao chép ngay — bạn sẽ không thấy lại key này.",
+      "revoke_key": "Thu hồi",
+      "revoke_confirm": "Bạn có chắc muốn thu hồi key này?",
+      "no_keys": "Chưa có API key nào. Hãy tạo key mới để bắt đầu.",
+      "key_created": "Ngày tạo",
+      "key_last_used": "Sử dụng gần nhất",
+      "key_never_used": "Chưa sử dụng",
+      "key_active": "Hoạt động",
+      "key_revoked": "Đã thu hồi",
+      "endpoints": "Các Endpoint Có Sẵn",
+      "endpoint_method": "Phương thức",
+      "endpoint_path": "Đường dẫn",
+      "endpoint_description": "Mô tả",
+      "endpoint_auth": "Xác thực",
+      "endpoint_example": "Ví dụ Phản hồi",
+      "section_general": "Chung",
+      "section_checkout": "Thanh toán & Hóa đơn",
+      "section_webhooks": "Webhooks",
+      "section_videos": "Video",
+      "section_agents": "AI Agents",
+      "section_affiliates": "Tiếp thị Liên kết",
+      "section_cron": "Tác vụ Định kỳ (Cron)",
+      "section_sops": "SOP Marketplace",
+      "section_account": "Tài khoản",
+      "section_v1": "API V1",
+      "rate_limits": "Giới Hạn & Sử Dụng",
+      "rate_limits_desc": "Giới hạn API thay đổi theo gói. Header được trả về trong mỗi phản hồi.",
+      "rate_limit_basic": "Basic: 60 yêu cầu/phút",
+      "rate_limit_premium": "Premium: 300 yêu cầu/phút",
+      "rate_limit_enterprise": "Enterprise: 1000 yêu cầu/phút",
+      "rate_limit_master": "Master: 5000 yêu cầu/phút",
+      "rate_limit_headers": "Header giới hạn: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset",
+      "auth_yes": "Có",
+      "auth_no": "Không",
+      "auth_bearer": "Bearer Token",
+      "auth_session": "Phiên"
     },
     "videos": {
       "title": "Video Của Tôi",
@@ -1854,6 +1906,8 @@
         "brandColors": "Màu Thương Hiệu",
         "primaryColor": "Màu Chính",
         "accentColor": "Màu Phụ",
+        "agencyName": "Tên Công Ty / Thương Hiệu",
+        "agencyNamePlaceholder": "Tên công ty của bạn",
         "welcomeMessage": "Lời Chào",
         "welcomeMessageHint": "Hỗ trợ Markdown, tối đa 2000 ký tự",
         "welcomeMessagePlaceholder": "Chào mừng đến nền tảng của chúng tôi!",
@@ -1874,6 +1928,80 @@
         "domain": "Tên miền",
         "domainHint": "Cần cấu hình DNS CNAME sau khi lưu. Liên hệ hỗ trợ để được hướng dẫn.",
         "domainPlaceholder": "ten-mien-cua-ban.com"
+      },
+      "team": {
+        "pageTitle": "Quan Ly Nhom",
+        "pageSubtitle": "Quan ly thanh vien trong to chuc cua ban",
+        "inviteTitle": "Moi Thanh Vien",
+        "inviteEmailPlaceholder": "Nhap email...",
+        "inviteButton": "Moi",
+        "memberListTitle": "Danh Sach Thanh Vien",
+        "noMembers": "Chua co thanh vien nao",
+        "you": "Ban",
+        "removeConfirm": "Ban co chac chan muon xoa thanh vien nay?",
+        "roleOwner": "Chu so huu",
+        "roleAdmin": "Quan tri vien",
+        "roleMember": "Thanh vien",
+        "roleViewer": "Nguoi xem",
+        "successInvited": "Da moi thanh vien thanh cong",
+        "successRemoved": "Da xoa thanh vien",
+        "successRoleUpdated": "Da cap nhat vai tro"
+      }
+    },
+    "affiliate": {
+      "title": "Bảng Điều Khiển Liên Kết",
+      "subtitle": "Quản lý lượt giới thiệu, theo dõi chuyển đổi và tối đa hóa thu nhập của bạn.",
+      "referButton": "Giới Thiệu Bạn Bè",
+      "kpi": {
+        "totalReferrals": {
+          "label": "Tổng Lượt Giới Thiệu"
+        },
+        "active": {
+          "label": "Đang Hoạt Động"
+        },
+        "commissionEarned": {
+          "label": "Hoa Hồng Kiếm Được"
+        },
+        "pending": {
+          "label": "Đang Chờ"
+        }
+      },
+      "referral": {
+        "title": "Liên Kết Giới Thiệu Của Bạn",
+        "subtitle": "Chia sẻ link và nhận thưởng khi bạn bè đăng ký.",
+        "generateButton": "Tạo Link Giới Thiệu",
+        "generating": "Đang tạo...",
+        "copyButton": "Sao Chép",
+        "copied": "Đã Sao Chép!",
+        "shareLabel": "Chia sẻ qua:",
+        "shareWhatsApp": "Chia sẻ qua WhatsApp",
+        "shareTelegram": "Chia sẻ qua Telegram",
+        "shareEmail": "Chia sẻ qua Email",
+        "shareText": "Tham gia Sophia AI Factory và bắt đầu kiếm tiền!",
+        "emailSubject": "Lời mời tham gia Sophia AI Factory"
+      },
+      "wallet": {
+        "title": "Ví USDT (TRC20)",
+        "availableBalance": "Số Dư Khả Dụng",
+        "withdraw": "Rút Tiền",
+        "minimumWithdrawal": "Rút tối thiểu {amount}",
+        "toggleVisibility": "Hiện/ẩn địa chỉ ví"
+      }
+    },
+    "referral": {
+      "backToDashboard": "Quay Lại Bảng Điều Khiển",
+      "pageTitle": "Bảng Điều Khiển Giới Thiệu",
+      "pageSubtitle": "Theo dõi lượt giới thiệu, thu nhập và lịch sử thưởng.",
+      "totalReferrals": "Tổng Lượt Giới Thiệu",
+      "totalEarned": "Đã Kiếm Được",
+      "rewardPerReferral": "Thưởng Mỗi Lượt",
+      "historyTitle": "Lịch Sử Thưởng",
+      "noHistory": "Chưa có thưởng. Chia sẻ link giới thiệu để bắt đầu kiếm tiền!",
+      "statusEarned": "Đã Nhận",
+      "tableColumns": {
+        "date": "Ngày",
+        "reward": "Thưởng",
+        "status": "Trạng Thái"
       }
     },
     "campaigns": {
@@ -1927,6 +2055,33 @@
         "completed_campaigns": "Đã Hoàn Thành",
         "failed_campaigns": "Chiến Dịch Thất Bại",
         "success_rate": "Tỷ Lệ Thành Công"
+      }
+    },
+    "agents": {
+      "onboarding_tour": {
+        "welcome_title": "Gặp Gỡ Hội Đồng AI Executive",
+        "welcome_desc": "Đội ngũ CEO Agent của bạn đã sẵn sàng giúp quản lý chiến dịch, báo cáo và doanh thu — tất cả đều được tự động hóa bằng AI.",
+        "start_tour": "Bắt Đầu Tham Quan",
+        "dismiss": "Bỏ qua",
+        "mini_chat": "Trò chuyện",
+        "mini_briefing": "Báo cáo",
+        "mini_campaigns": "Chiến dịch",
+        "mini_revenue": "Doanh thu",
+        "title": "Hội Đồng AI Executive",
+        "subtitle": "Đội ngũ AI C-level của bạn trong nháy mắt",
+        "skip": "Bỏ Qua",
+        "next": "Tiếp",
+        "back": "Quay Lại",
+        "finish": "Bắt Đầu",
+        "progress": "Bước {current} trên {total}",
+        "tour_step1_title": "Trò Chuyện Với Đội Ngũ AI",
+        "tour_step1_desc": "Sử dụng ngôn ngữ tự nhiên để giao nhiệm vụ, hỏi ý kiến chiến lược và điều khiển hội đồng AI executive — không cần kỹ năng kỹ thuật.",
+        "tour_step2_title": "Báo Cáo Sáng Hàng Ngày",
+        "tour_step2_desc": "Mỗi sáng, CEO Agent của bạn tạo một báo cáo cá nhân hóa với cập nhật doanh thu, hiệu suất chiến dịch và các mục cần hành động.",
+        "tour_step3_title": "Quản Lý Chiến Dịch",
+        "tour_step3_desc": "Theo dõi và quản lý tất cả chiến dịch marketing từ một bảng điều khiển. Đội ngũ AI của bạn tự động chạy trong khi bạn vẫn kiểm soát.",
+        "tour_step4_title": "Bảng Điều Khiển Doanh Thu",
+        "tour_step4_desc": "Theo dõi hiệu suất trên tất cả kênh doanh thu. Xem thu nhập hợp nhất, xu hướng và thông tin chi tiết — tất cả được hỗ trợ bởi các AI agent của bạn."
       }
     }
   },
@@ -2608,7 +2763,14 @@
       "firstTimeTitle": "Bắt đầu với SOP đầu tiên",
       "firstTimeDesc": "Duyệt marketplace để cài đặt SOPs và tự động hóa quy trình agency của bạn.",
       "firstTimeFaq": "SOP là gì?",
-      "pageTitle": "Tiêu đề trang"
+      "pageTitle": "Tiêu đề trang",
+      "sortBy": "Sắp xếp",
+      "sortPopular": "Phổ Biến Nhất",
+      "sortRating": "Đánh Giá Cao Nhất",
+      "sortNewest": "Mới Nhất",
+      "resultsCount": "{count} kết quả",
+      "sales": "lượt mua",
+      "byLabel": "bởi"
     },
     "card": {
       "creditsPerRun": "{n} credit/lần chạy",
@@ -2624,7 +2786,8 @@
       "playbookTitle": "Playbook",
       "outputTitle": "Sơ Đồ Đầu Ra",
       "back": "Quay Lại Kho SOP",
-      "installNow": "Cài Đặt SOP Này"
+      "installNow": "Cài Đặt SOP Này",
+      "byAgency": "bởi {name}"
     },
     "install": {
       "title": "Cài Đặt SOP",
@@ -2760,7 +2923,50 @@
       "pageTitle": "Bảng điều khiển Creator",
       "title": "Bảng điều khiển Creator",
       "subtitle": "Quản lý template SOP và thu nhập của bạn",
-      "newSop": "Tạo SOP mới",
+      "newSop": {
+        "back": "Quay lại",
+        "title": "Tạo SOP Mới",
+        "subtitle": "Xây dựng mẫu SOP có thể tái sử dụng cho marketplace"
+      },
+      "tabs": {
+        "mySops": "SOP của tôi",
+        "earnings": "Thu nhập",
+        "payouts": "Thanh toán"
+      },
+      "payouts": {
+        "title": "Cài đặt thanh toán",
+        "walletDesc": "Quản lý địa chỉ ví thanh toán của bạn. Thanh toán được xử lý mỗi Chủ nhật lúc 12:00 UTC.",
+        "nextPayout": "Lần thanh toán tiếp theo: Chủ nhật 12:00 UTC",
+        "payoutHistory": "Lịch sử thanh toán",
+        "payoutHistoryDesc": "Các đợt thanh toán trước đây",
+        "noPayouts": "Chưa có thanh toán nào",
+        "noPayoutsDesc": "Thanh toán được xử lý tự động mỗi Chủ nhật. Bạn sẽ thấy lịch sử thanh toán ở đây sau khi được xử lý.",
+        "amount": "Số tiền",
+        "date": "Ngày",
+        "status": "Trạng thái",
+        "method": "Phương thức",
+        "totalUsd": "Tổng (USD)",
+        "ledgerCount": "Giao dịch",
+        "tryAgain": "Thử lại",
+        "defaultBadge": "Mặc định",
+        "unverifiedBadge": "Chưa xác thực",
+        "removePayoutMethod": "Xóa phương thức thanh toán",
+        "addWalletAddress": "Thêm địa chỉ ví",
+        "network": "Mạng",
+        "networkUsdtTrc20": "USDT (TRC20 — Tron)",
+        "networkUsdtErc20": "USDT (ERC20 — Ethereum)",
+        "bankAccount": "Tài khoản ngân hàng",
+        "labelOptional": "Nhãn (tùy chọn)",
+        "labelPlaceholder": "Ví dụ: Ví chính",
+        "walletAddress": "Địa chỉ ví",
+        "placeholderTrc20": "T...",
+        "placeholderErc20": "0x...",
+        "adding": "Đang thêm...",
+        "addWallet": "Thêm ví",
+        "cancel": "Hủy",
+        "failedToLoadMethods": "Không thể tải phương thức thanh toán",
+        "failedToAddWallet": "Không thể thêm ví"
+      },
       "totalEarned": "Tổng thu nhập",
       "pending": "Chờ xử lý",
       "payable": "Có thể thanh toán",
@@ -2792,7 +2998,7 @@
       },
       "actions": {
         "unauthorized": "Bạn cần đăng nhập để thực hiện hành động này.",
-        "masterRequired": "Cần gói MASTER để quản lý SOP.",
+        "creatorAccessRequired": "Hành động này yêu cầu quyền creator. Đăng ký để trở thành creator.",
         "dbUnavailable": "Cơ sở dữ liệu tạm thời không khả dụng. Vui lòng thử lại sau.",
         "requiredFieldsMissing": "Vui lòng điền đầy đủ các trường bắt buộc.",
         "priceRange": "Giá phải nằm trong khoảng $5 đến $999.",
@@ -2818,6 +3024,24 @@
         "publishing": "Đang xuất bản...",
         "publishSuccess": "Template đã được xuất bản thành công!",
         "draftDescription": "Template này đang ở trạng thái nháp. Gửi đi duyệt để xuất bản lên marketplace."
+      },
+      "apply": {
+        "pageTitle": "Trở thành Creator",
+        "heading": "Trở thành SOP Creator",
+        "subtitle": "Biến chuyên môn của bạn thành thu nhập thụ động",
+        "valueProp": "Chia sẻ doanh thu 70/30",
+        "valuePropDesc": "Bạn nhận 70% từ mỗi SOP bán được. Chúng tôi lo marketplace, thanh toán và hạ tầng.",
+        "emailLabel": "Email",
+        "emailPlaceholder": "email@cua-ban.com",
+        "reasonLabel": "Tại sao bạn muốn trở thành creator?",
+        "reasonPlaceholder": "Chia sẻ kinh nghiệm của bạn và những SOP bạn dự định tạo...",
+        "submit": "Gửi Đơn Đăng Ký",
+        "submitting": "Đang gửi...",
+        "successTitle": "Đã Gửi Đơn",
+        "successDesc": "Đơn đăng ký của bạn đang được xem xét. Chúng tôi sẽ thông báo qua email khi được duyệt.",
+        "errorGeneric": "Có lỗi xảy ra. Vui lòng thử lại.",
+        "alreadyCreator": "Bạn đã có quyền truy cập creator. Đang chuyển hướng...",
+        "alreadyCreatorLink": "Đi đến Bảng điều khiển Creator"
       }
     },
     "community": {
@@ -2830,6 +3054,10 @@
     "status": {
       "category": "Danh mục",
       "createFirst": "Tạo đầu tiên",
+      "draft": "Bản nháp",
+      "published": "Đã xuất bản",
+      "archived": "Đã lưu trữ",
+      "pending_review": "Chờ duyệt",
       "name": "Tên",
       "newSop": "SOP mới",
       "noSops": "Chưa có SOP nào",
@@ -3111,6 +3339,9 @@
       },
       "muapi": {
         "format": "Key MuAPI là chuỗi 20+ ký tự chữ-số — tìm trong bảng điều khiển MuAPI."
+      },
+      "replicate": {
+        "format": "Khóa Replicate bắt đầu bằng r8_ — sao chép tại replicate.com/account/api-tokens."
       }
     },
     "picker": {
@@ -3209,6 +3440,12 @@
     "summary": "Tài khoản đã sẵn sàng. Nhấn nút bên dưới để vào Setup Wizard cấu hình API keys.",
     "getStarted": "Bắt đầu ngay",
     "singleUseHint": "Link này chỉ dùng 1 lần.",
+    "createFirstVideo": {
+      "title": "Tạo Video Đầu Tiên Ngay Bây Giờ",
+      "description": "Bạn chỉ cần OpenRouter API key để bắt đầu. Các key khác không bắt buộc.",
+      "cta": "Tạo Video Đầu Tiên",
+      "subtitle": "Kiểu text-to-slides — không cần avatar"
+    },
     "roadmapHeader": "Lộ trình kích hoạt",
     "stepLabel": "Bước",
     "errors": {
@@ -3341,7 +3578,23 @@
     "credits": "Credits",
     "commissionBoost": "Tăng hoa hồng",
     "daysLeft": "Ngày còn lại",
-    "claimReward": "Nhận thưởng"
+    "claimReward": "Nhận thưởng",
+    "streak": {
+      "loginTitle": "Chuỗi Đăng Nhập Hàng Ngày",
+      "loginDesc": "Đăng nhập mỗi ngày để duy trì chuỗi và nhận thưởng tăng thêm",
+      "videoTitle": "Chuỗi Video Hàng Tuần",
+      "videoDesc": "Tạo video mỗi tuần để duy trì chuỗi của bạn",
+      "loginBonus": "Thưởng +{multiplier}x khi đạt chuỗi {count} ngày",
+      "videoBonus": "Thưởng +{multiplier}x khi đạt chuỗi {count} tuần",
+      "currentStreak": "Chuỗi Hiện Tại",
+      "longestStreak": "Chuỗi Dài Nhất",
+      "days": "{count} ngày",
+      "weeks": "{count} tuần"
+    },
+    "period": "Khoảng Thời Gian",
+    "weekly": "Hàng Tuần",
+    "monthly": "Hàng Tháng",
+    "allTime": "Tất Cả"
   },
   "creativeStudio": {
     "audio": {
@@ -5158,6 +5411,7 @@
       },
       "conversions": {
         "title": "Chuyển Đổi Gần Đây",
+        "viewAll": "Xem Tất Cả Chuyển Đổi",
         "columns": {
           "id": "Mã GD",
           "amount": "Số Tiền",
@@ -5173,16 +5427,43 @@
       },
       "referral": {
         "title": "Liên Kết Giới Thiệu Của Bạn",
+        "subtitle": "Chia sẻ link và nhận thưởng khi bạn bè đăng ký.",
+        "generateButton": "Tạo Link Giới Thiệu",
+        "generating": "Đang tạo...",
         "copyButton": "Sao Chép",
         "copied": "Đã Sao Chép!",
-        "shareLabel": "Chia sẻ qua:"
+        "shareLabel": "Chia sẻ qua:",
+        "shareWhatsApp": "Chia sẻ qua WhatsApp",
+        "shareTelegram": "Chia sẻ qua Telegram",
+        "shareEmail": "Chia sẻ qua Email",
+        "shareText": "Tham gia Sophia AI Factory và bắt đầu kiếm tiền!",
+        "emailSubject": "Lời mời tham gia Sophia AI Factory",
+        "info": "Referral được theo dõi qua cookie (thời hạn 30 ngày). Phần thưởng đa cấp đang hoạt động cho tài khoản của bạn. Hoa hồng được thanh toán bằng USDT (TRC20)."
       },
       "wallet": {
         "title": "Ví USDT (TRC20)",
+        "addressLabel": "ĐỊA CHỈ TRC20",
+        "editAddress": "Sửa Địa Chỉ",
         "availableBalance": "Số Dư Khả Dụng",
         "withdraw": "Rút Tiền",
         "minimumWithdrawal": "Rút tối thiểu {amount}",
         "toggleVisibility": "Hiện/ẩn địa chỉ ví"
+      }
+    },
+    "referral": {
+      "backToDashboard": "Quay Lại Bảng Điều Khiển",
+      "pageTitle": "Bảng Điều Khiển Giới Thiệu",
+      "pageSubtitle": "Theo dõi lượt giới thiệu, thu nhập và lịch sử thưởng.",
+      "totalReferrals": "Tổng Lượt Giới Thiệu",
+      "totalEarned": "Đã Kiếm Được",
+      "rewardPerReferral": "Thưởng Mỗi Lượt",
+      "historyTitle": "Lịch Sử Thưởng",
+      "noHistory": "Chưa có thưởng. Chia sẻ link giới thiệu để bắt đầu kiếm tiền!",
+      "statusEarned": "Đã Nhận",
+      "tableColumns": {
+        "date": "Ngày",
+        "reward": "Thưởng",
+        "status": "Trạng Thái"
       }
     },
     "dashboardOverview": {
@@ -5368,46 +5649,46 @@
       }
     },
     "landing": {
+      "badge": "⚡ Hơn 10.000 nhà sáng tạo đang sử dụng",
+      "headline": "Xây Dựng Đế Chế Video AI ",
+      "headlineHighlight": " Không Cần Thuê Đội Ngũ",
+      "subheading": "Sophia tự động hóa kênh YouTube faceless, chiến dịch affiliate, và đăng tải đa nền tảng — từ một dashboard và Telegram của bạn. Không cần code. Không cần editor. Không căng thẳng.",
       "nav": {
         "features": "Tính năng",
         "pricing": "Bảng giá",
         "blog": "Blog",
-        "affiliates": "Đối tác",
+        "affiliates": "Affiliate",
         "signIn": "Đăng nhập",
         "startFree": "Dùng thử miễn phí"
       },
-      "badge": "Mới: Đã phát hành Phiên bản 2.0",
-      "headline": "Xây dựng",
-      "headlineHighlight": "Đế chế Video AI",
-      "subheading": "Tạo kênh YouTube ẩn danh, chạy chiến dịch tiếp thị liên kết, và xuất bản lên TikTok, YouTube, IG — tất cả từ một bảng điều khiển thông minh.",
       "cta": {
-        "startFree": "Dùng thử miễn phí",
+        "startFree": "Dùng Thử Miễn Phí",
         "watchDemo": "Xem Demo"
       },
       "trustBar": {
-        "label": "Cộng đồng người sáng tạo",
-        "creators": "Hơn 10.000 người sáng tạo",
-        "videos": "Hơn 1 triệu video đã tạo"
+        "label": "Cộng đồng sáng tạo",
+        "creators": "10.000+ nhà sáng tạo",
+        "videos": "1M+ video đã tạo"
+      },
+      "footer": {
+        "copyright": "© 2026 Sophia AI Factory. Tất cả quyền được bảo lưu.",
+        "privacy": "Chính sách bảo mật",
+        "terms": "Điều khoản dịch vụ",
+        "contact": "Liên hệ"
       },
       "features": {
         "scriptWriting": {
-          "title": "Viết Kịch bản AI",
-          "description": "Biến một từ khóa đơn giản thành kịch bản video có tỷ lệ giữ chân cao, được tối ưu hóa cho tương tác khán giả và chỉ số chuyển đổi."
+          "title": "Nhà Máy Video AI",
+          "description": "Tạo video YouTube faceless từ một kịch bản. Giọng AI, phụ đề tự động, đa ngôn ngữ."
         },
         "multiChannel": {
-          "title": "Xuất bản Đa kênh",
-          "description": "Lên lịch và triển khai nội dung của bạn lên TikTok, YouTube Shorts và Instagram Reels đồng thời chỉ với một cú nhấp chuột."
+          "title": "Điều Khiển Qua Telegram",
+          "description": "Vận hành doanh nghiệp từ Telegram. Khởi chạy chiến dịch, xem thống kê."
         },
         "analytics": {
-          "title": "Phân tích Doanh thu",
-          "description": "Theo dõi lượt nhấp vào liên kết tiếp thị liên kết và doanh thu được tạo ra từ các chiến dịch video AI của bạn trong thời gian thực."
+          "title": "Cỗ Máy Affiliate",
+          "description": "Kết nối 10+ mạng lưới affiliate. Sophia tự động theo dõi hoa hồng."
         }
-      },
-      "footer": {
-        "copyright": "© 2024 Sophia AI Factory. Bảo lưu mọi quyền.",
-        "privacy": "Chính sách Bảo mật",
-        "terms": "Điều khoản Dịch vụ",
-        "contact": "Liên hệ"
       }
     },
     "settingsPage": {
