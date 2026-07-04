@@ -5699,7 +5699,9 @@
         "affiliates": "Affiliate",
         "signIn": "Đăng nhập",
         "startFree": "Dùng thử miễn phí",
-        "getStarted": "Bắt Đầu"
+        "getStarted": "Bắt Đầu",
+        "guide": "Guide",
+        "login": "Login"
       },
       "cta": {
         "startFree": "Dùng Thử Miễn Phí",
