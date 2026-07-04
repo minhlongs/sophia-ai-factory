@@ -10,13 +10,11 @@ import {
   Link,
   Copy,
   Check,
-  Filter,
   Download,
-  PlusCircle,
   Wallet,
-  TrendingUp,
-  ChevronRight,
-  ExternalLink,
+  Globe,
+  GitBranch,
+  Rocket,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/seed/utils/cn';
@@ -31,14 +29,18 @@ interface KpiMetric {
   id: string;
   value: string;
   icon: React.ComponentType<{ className?: string }>;
+  subtext?: string;
+  subtextColor?: string;
 }
 
 interface AffiliateOffer {
   id: string;
   name: string;
+  description: string;
   commissionLabel: string;
-  iconUrl: string;
-  iconAlt: string;
+  icon: React.ComponentType<{ className?: string }>;
+  iconBgClass: string;
+  iconColorClass: string;
 }
 
 interface ConversionRow {
@@ -66,58 +68,93 @@ export interface AffiliateDashboardPageProps {
 const DEFAULT_METRICS: KpiMetric[] = [
   { id: 'totalReferrals', value: '47', icon: Users },
   { id: 'active', value: '32', icon: UserCheck },
-  { id: 'commissionEarned', value: '$3,847', icon: DollarSign },
-  { id: 'pending', value: '$892', icon: Clock },
+  {
+    id: 'commissionEarned',
+    value: '$3,847',
+    icon: DollarSign,
+    subtext: '+12% from last month',
+    subtextColor: 'text-green-400',
+  },
+  {
+    id: 'pending',
+    value: '$892',
+    icon: Clock,
+    subtext: 'Estimated payout: Oct 15',
+    subtextColor: 'text-muted-foreground',
+  },
 ];
 
 const DEFAULT_OFFERS: AffiliateOffer[] = [
   {
     id: 'tiktokShop',
-    name: 'TikTok Shop',
+    name: 'TikTok Shop Global',
+    description: 'Creator marketplace integration',
     commissionLabel: '15% Comm.',
-    iconUrl:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuBnEdqaJgbgsRQRJR7YfbGaoTWoLavohXlUu76qaAymhvnbTJKwjLSAPdiVBGNIR0xFv3GzpNC0WjrsRg2o6gTMazA3LxtU1GWukgPWhUT5epysxqiG3brwOufh3zR4Q3lV107jtBW2lrlRYDU0XRxzvdlhs2LNC_aKprHwiPENyduShmFoY7l3juWuknrnufEO9OC62Hysx9CZ0ReuhKyeBH3kF7Mc8SDFyJmf2vbqknFgGPo31HIJNqr3sQgM1LWY8KYv3-phFq4',
-    iconAlt: 'TikTok logo',
+    icon: Globe,
+    iconBgClass: 'bg-black',
+    iconColorClass: 'text-white',
   },
   {
     id: 'accessTrade',
-    name: 'AccessTrade',
-    commissionLabel: '10% Comm.',
-    iconUrl:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuB9-xL5gMztPKejHq5aUxb9yD8Wyeqy08QZwrtzCz6NArLqwCCndopVFlgtc6DX84mVQAJ4gbyUXrEJSXlHT1yGtqyXayvLdEaT3TFzheJko7A_wLXOIJQV1Ya2nXeHzxZCJ0SyYox10Hby64sIsBMRuSMpDFXy9a-uB3PC8bF4rH5Dupcg66nw5Pg4MKyNPGgJXx-8ikncdcWK_6d6DpgLA-ln5jDrnWBv-kWQu4z1BBibl_uUBO-OzGsMQlZ05UHNENj9uqgjjmU',
-    iconAlt: 'AccessTrade logo',
+    name: 'AccessTrade Network',
+    description: 'E-commerce affiliate bundle',
+    commissionLabel: '12% Comm.',
+    icon: GitBranch,
+    iconBgClass: 'bg-blue-600',
+    iconColorClass: 'text-white',
   },
   {
     id: 'clickbank',
-    name: 'ClickBank',
+    name: 'ClickBank Exclusive',
+    description: 'Digital information products',
     commissionLabel: '20% Comm.',
-    iconUrl:
-      'https://lh3.googleusercontent.com/aida-public/AB6AXuA4CqbdijYkWM5X0W8jIhpkacLQfGnUm9fRHdPySX8ceLZQt2KBD3OLdMAHpaTnBqJ-dnhVgZW2IMsDF_bvLg6LTeWjWsbIqr71EtFd0BkhR5MpRQXLeQGZ4UrnEyl_cPXqUNAvpxOWMA6e8zpuSDmEkDYtT1EYr4beZ6bkILRo3vEG9bQ6l3HY_27L7TcPN02LAFMtuJcZnpLmMTEHaBW743WKIQv9RBWJcq934mak8EwtDRehzV3ACXaXVI_aX0V1J6IgCp_ebrg',
-    iconAlt: 'ClickBank logo',
+    icon: Wallet,
+    iconBgClass: 'bg-slate-100',
+    iconColorClass: 'text-slate-900',
+  },
+  {
+    id: 'sophiaProMax',
+    name: 'Sophia Pro Max',
+    description: 'Flagship AI subscription plan',
+    commissionLabel: '25% Comm.',
+    icon: Rocket,
+    iconBgClass: 'bg-indigo-500/20',
+    iconColorClass: 'text-primary',
   },
 ];
 
 const DEFAULT_CONVERSIONS: ConversionRow[] = [
-  { id: '1', transactionId: '#TRX-9421', amount: '$120.00', commission: '$18.00', status: 'paid', date: 'Oct 24, 2023' },
-  { id: '2', transactionId: '#TRX-9418', amount: '$450.00', commission: '$67.50', status: 'pending', date: 'Oct 23, 2023' },
-  { id: '3', transactionId: '#TRX-9415', amount: '$89.00', commission: '$13.35', status: 'paid', date: 'Oct 22, 2023' },
-  { id: '4', transactionId: '#TRX-9402', amount: '$250.00', commission: '$37.50', status: 'clawback', date: 'Oct 20, 2023' },
-  { id: '5', transactionId: '#TRX-9398', amount: '$1,200.00', commission: '$180.00', status: 'pending', date: 'Oct 19, 2023' },
-  { id: '6', transactionId: '#TRX-9391', amount: '$75.00', commission: '$11.25', status: 'paid', date: 'Oct 18, 2023' },
+  { id: '1', transactionId: '#C-84729', amount: '$499.00', commission: '$74.85', status: 'paid', date: '2023-10-12' },
+  { id: '2', transactionId: '#C-84730', amount: '$129.00', commission: '$15.48', status: 'pending', date: '2023-10-12' },
+  { id: '3', transactionId: '#C-84731', amount: '$2,500.00', commission: '$375.00', status: 'paid', date: '2023-10-11' },
+  { id: '4', transactionId: '#C-84732', amount: '$89.00', commission: '$13.35', status: 'clawback', date: '2023-10-11' },
+  { id: '5', transactionId: '#C-84733', amount: '$499.00', commission: '$74.85', status: 'pending', date: '2023-10-10' },
+  { id: '6', transactionId: '#C-84734', amount: '$1,200.00', commission: '$180.00', status: 'pending', date: '2023-10-10' },
 ];
 
 /* ───────────────────────────────────────────────────────────────────────────
- *  Status badge styles (indigo theme)
+ *  Status badge styles
  * ─────────────────────────────────────────────────────────────────────────── */
 
 const STATUS_STYLES: Record<string, string> = {
-  paid: 'bg-emerald-500/10 text-emerald-400',
-  pending: 'bg-orange-500/10 text-orange-400',
+  paid: 'bg-green-500/10 text-green-400',
+  pending: 'bg-indigo-500/10 text-indigo-400',
   clawback: 'bg-red-500/10 text-red-400',
 };
 
 /* ───────────────────────────────────────────────────────────────────────────
- *  Social platforms (colored brand buttons from Stitch export v3)
+ *  KPI progress bar widths (decorative)
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+const KPI_PROGRESS: Record<string, string> = {
+  totalReferrals: 'w-2/3',
+  active: 'w-1/2',
+  commissionEarned: 'w-3/4',
+  pending: 'w-1/3',
+};
+
+/* ───────────────────────────────────────────────────────────────────────────
+ *  Social platforms
  * ─────────────────────────────────────────────────────────────────────────── */
 
 interface SocialPlatform {
@@ -150,20 +187,9 @@ const SOCIAL_PLATFORMS: SocialPlatform[] = [
     id: 'telegram',
     bg: 'bg-[#0088CC]',
     ariaLabel: 'Share on Telegram',
-    path: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .33z',
+    path: 'M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.303.48-.429-.012-1.253-.245-1.865-.444-.753-.245-1.353-.375-1.3-.79.029-.215.325-.437.888-.667 3.5-1.523 5.837-2.525 7.013-3.007 3.34-1.37 4.034-1.608 4.487-1.616z',
   },
 ];
-
-/* ───────────────────────────────────────────────────────────────────────────
- *  KPI progress bar widths (decorative, from Stitch v1)
- * ─────────────────────────────────────────────────────────────────────────── */
-
-const KPI_PROGRESS: Record<string, string> = {
-  totalReferrals: 'w-2/3',
-  active: 'w-1/2',
-  commissionEarned: 'w-3/4',
-  pending: 'w-1/3',
-};
 
 /* ───────────────────────────────────────────────────────────────────────────
  *  SocialIcon SVG component
@@ -186,7 +212,7 @@ export default function AffiliateDashboardPage({
   offers,
   conversions,
   referralLink = 'https://sophia.agencyos.network/r/jane-8472',
-  walletAddress = 'TY5n...9K2mB7',
+  walletAddress = 'TJ9w8D7s...mK2n9R1v',
   walletBalance = '$247.00',
 }: AffiliateDashboardPageProps) {
   const t = useTranslations('stitch.affiliate');
@@ -204,7 +230,7 @@ export default function AffiliateDashboardPage({
     });
   };
 
-  /* ── Mouse-tracking glow (Stitch v1 atmospheric effect) ───────── */
+  /* ── Mouse-tracking glow ────────────────────────────────────────── */
   useEffect(() => {
     const el = glowRef.current;
     if (!el) return;
@@ -225,7 +251,7 @@ export default function AffiliateDashboardPage({
       className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 relative"
       aria-label={t('aria.mainContent')}
     >
-      {/* ── Mouse-tracking glow overlay ──────────────────────────── */}
+      {/* ── Mouse-tracking glow overlay ────────────────────────────── */}
       <div
         ref={glowRef}
         className="fixed inset-0 pointer-events-none z-0"
@@ -238,7 +264,7 @@ export default function AffiliateDashboardPage({
 
       {/* Content wrapper (above glow) */}
       <div className="relative z-10">
-        {/* ── Header ──────────────────────────────────────────────── */}
+        {/* ── Header ────────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-[28px] font-bold text-foreground tracking-tight">
@@ -261,7 +287,7 @@ export default function AffiliateDashboardPage({
           </div>
         </div>
 
-        {/* ── KPI Section (Stitch v1 with progress bars) ──────────── */}
+        {/* ── KPI Section ───────────────────────────────────────────── */}
         <section
           aria-label={t('aria.kpiSection')}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
@@ -270,12 +296,7 @@ export default function AffiliateDashboardPage({
             const Icon = metric.icon;
             const progressWidth = KPI_PROGRESS[metric.id] || 'w-1/2';
             return (
-              <Card
-                key={metric.id}
-                glass
-                hover
-                className="p-5 group"
-              >
+              <Card key={metric.id} glass hover className="p-5 group">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     {t(`kpi.${metric.id}.label`)}
@@ -287,7 +308,11 @@ export default function AffiliateDashboardPage({
                 <h3 className="text-2xl font-semibold text-foreground">
                   {metric.value}
                 </h3>
-                {/* Progress bar (from Stitch v1 design) */}
+                {metric.subtext && (
+                  <p className={cn('text-[10px] font-medium mt-0.5', metric.subtextColor ?? 'text-muted-foreground')}>
+                    {metric.subtext}
+                  </p>
+                )}
                 <div className="mt-3 h-1 w-full bg-muted rounded-full overflow-hidden">
                   <div
                     className={cn(
@@ -301,59 +326,60 @@ export default function AffiliateDashboardPage({
           })}
         </section>
 
-        {/* ── Main Grid ───────────────────────────────────────────── */}
+        {/* ── Main 2-Column Grid ────────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* ── Left: Affiliate Offers ────────────────────────────── */}
+          {/* ── Left: Affiliate Offers ───────────────────────────────── */}
           <section aria-label={t('aria.offersSection')}>
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary" aria-hidden="true" />
+              <h2 className="text-xl font-bold text-foreground">
                 {t('offers.title')}
               </h2>
               <Button
                 variant="link"
-                className="text-primary text-sm font-medium p-0 h-auto gap-1"
+                className="text-primary text-sm font-medium p-0 h-auto"
                 aria-label={t('offers.viewAll')}
               >
                 {t('offers.viewAll')}
-                <ChevronRight className="w-4 h-4" aria-hidden="true" />
               </Button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {offerItems.map((offer, index) => {
-                const isFeatured = index === 2; // ClickBank as featured
+                const isFeatured = index === 3; // Sophia Pro Max = featured HOT
                 return (
                   <Card
                     key={offer.id}
                     glass
                     hover
                     className={cn(
-                      'p-6 relative overflow-hidden',
-                      isFeatured && 'border-primary/40',
+                      'p-4 relative overflow-hidden',
+                      isFeatured && 'border-primary/30',
                     )}
                   >
-                    {/* HOT badge (from Stitch v1) */}
                     {isFeatured && (
                       <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-[10px] px-3 py-1 rounded-bl-lg font-bold z-10">
                         HOT
                       </div>
                     )}
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="w-12 h-12 rounded-lg bg-surface-container-highest p-2 border border-border shrink-0">
-                        <img
-                          className="w-full h-full object-contain"
-                          src={offer.iconUrl}
-                          alt={offer.iconAlt}
-                        />
+                    <div className="flex items-start justify-between mb-4">
+                      <div
+                        className={cn(
+                          'w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden',
+                          offer.iconBgClass,
+                        )}
+                      >
+                        <offer.icon className={cn('text-2xl', offer.iconColorClass)} />
                       </div>
-                      <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight whitespace-nowrap">
+                      <span className="bg-primary/10 text-primary px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap">
                         {offer.commissionLabel}
                       </span>
                     </div>
-                    <h3 className="font-bold text-foreground mb-4">
+                    <h3 className="font-bold text-foreground group-hover:text-primary transition-colors mb-1">
                       {offer.name}
                     </h3>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      {offer.description}
+                    </p>
                     <Button
                       variant={isFeatured ? 'default' : 'outline'}
                       className={cn(
@@ -368,44 +394,18 @@ export default function AffiliateDashboardPage({
                   </Card>
                 );
               })}
-
-              {/* Browse More card (from Stitch v2/v3) */}
-              <button
-                className="border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center p-6 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all text-muted-foreground group"
-                aria-label={t('offers.browseMore')}
-              >
-                <PlusCircle className="w-7 h-7 mb-2 group-hover:text-primary transition-colors" aria-hidden="true" />
-                <span className="text-sm font-medium group-hover:text-primary transition-colors">
-                  {t('offers.browseMore')}
-                </span>
-              </button>
             </div>
           </section>
 
-          {/* ── Right: Recent Conversions ────────────────────────── */}
+          {/* ── Right: Recent Conversions ───────────────────────────── */}
           <section aria-label={t('aria.conversionsSection')}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-foreground">
                 {t('conversions.title')}
               </h2>
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-lg text-muted-foreground hover:text-foreground"
-                  aria-label={t('common.filter')}
-                >
-                  <Filter className="w-4 h-4" aria-hidden="true" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-lg text-muted-foreground hover:text-foreground"
-                  aria-label={t('common.export')}
-                >
-                  <Download className="w-4 h-4" aria-hidden="true" />
-                </Button>
-              </div>
+              <span className="text-xs text-muted-foreground font-medium">
+                Last 24 hours: 14 sales
+              </span>
             </div>
 
             <Card glass className="overflow-hidden">
@@ -414,20 +414,20 @@ export default function AffiliateDashboardPage({
                   <caption className="sr-only">{t('aria.conversionsTable')}</caption>
                   <thead>
                     <tr className="bg-surface-container-high text-muted-foreground">
-                      <th scope="col" className="px-6 py-4 font-bold uppercase text-[10px] tracking-widest">
-                        {t('conversions.columns.id')}
+                      <th scope="col" className="px-4 py-3 font-bold uppercase text-[10px] tracking-wider">
+                        Conv. ID
                       </th>
-                      <th scope="col" className="px-6 py-4 font-bold uppercase text-[10px] tracking-widest">
-                        {t('conversions.columns.amount')}
+                      <th scope="col" className="px-4 py-3 font-bold uppercase text-[10px] tracking-wider">
+                        Amount
                       </th>
-                      <th scope="col" className="px-6 py-4 font-bold uppercase text-[10px] tracking-widest">
-                        {t('conversions.columns.commission')}
+                      <th scope="col" className="px-4 py-3 font-bold uppercase text-[10px] tracking-wider">
+                        Comm.
                       </th>
-                      <th scope="col" className="px-6 py-4 font-bold uppercase text-[10px] tracking-widest">
-                        {t('conversions.columns.status')}
+                      <th scope="col" className="px-4 py-3 font-bold uppercase text-[10px] tracking-wider text-center">
+                        Status
                       </th>
-                      <th scope="col" className="px-6 py-4 font-bold uppercase text-[10px] tracking-widest">
-                        {t('conversions.columns.date')}
+                      <th scope="col" className="px-4 py-3 font-bold uppercase text-[10px] tracking-wider">
+                        Date
                       </th>
                     </tr>
                   </thead>
@@ -435,28 +435,35 @@ export default function AffiliateDashboardPage({
                     {conversionRows.map((row) => (
                       <tr
                         key={row.id}
-                        className="hover:bg-surface-container-high/50 transition-all duration-200 hover:translate-x-1 cursor-default"
+                        className="hover:bg-surface-container-high/50 transition-colors cursor-default"
                       >
-                        <td className="px-6 py-4 text-foreground whitespace-nowrap font-mono text-[11px]">
+                        <td className="px-4 py-3 text-foreground whitespace-nowrap font-mono text-xs text-primary">
                           {row.transactionId}
                         </td>
-                        <td className="px-6 py-4 font-medium whitespace-nowrap">
+                        <td className="px-4 py-3 font-medium whitespace-nowrap">
                           {row.amount}
                         </td>
-                        <td className="px-6 py-4 text-primary font-bold whitespace-nowrap">
+                        <td
+                          className={cn(
+                            'px-4 py-3 font-bold whitespace-nowrap',
+                            row.status === 'paid' && 'text-green-400',
+                            row.status === 'pending' && 'text-indigo-400',
+                            row.status === 'clawback' && 'text-red-400',
+                          )}
+                        >
                           {row.commission}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-3 text-center">
                           <span
                             className={cn(
-                              'px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight',
+                              'px-2 py-0.5 rounded-full text-[10px] font-bold',
                               STATUS_STYLES[row.status],
                             )}
                           >
                             {t(`conversions.status.${row.status}`)}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-muted-foreground whitespace-nowrap text-xs">
+                        <td className="px-4 py-3 text-muted-foreground whitespace-nowrap text-xs">
                           {row.date}
                         </td>
                       </tr>
@@ -464,45 +471,40 @@ export default function AffiliateDashboardPage({
                   </tbody>
                 </table>
               </div>
-              {/* View All footer (from Stitch v3) */}
-              <div className="bg-surface-container-low px-6 py-3 text-center border-t border-border/30">
-                <Button
-                  variant="link"
-                  className="text-primary text-xs font-bold hover:underline p-0 h-auto"
-                  aria-label={t('conversions.viewAll')}
-                >
-                  {t('conversions.viewAll')}
-                  <ExternalLink className="w-3 h-3 ml-1" aria-hidden="true" />
-                </Button>
+              <div className="bg-surface-container-low px-4 py-3 text-center border-t border-border/30">
+                <button className="text-xs font-bold text-primary hover:underline uppercase tracking-widest">
+                  {t('conversions.downloadReport')}
+                </button>
               </div>
             </Card>
           </section>
         </div>
 
-        {/* ── Referral Link Section ──────────────────────────────── */}
-        <section
-          aria-label={t('aria.referralSection')}
-          className={cn(
-            'p-8 rounded-2xl mb-8',
-            'bg-gradient-to-br from-surface-container-low to-background',
-            'border border-primary/20',
-          )}
-        >
-          <h2 className="text-xl font-bold text-foreground mb-6 flex items-center gap-2">
-            <Link className="w-5 h-5 text-primary" aria-hidden="true" />
-            {t('referral.title')}
-          </h2>
+        {/* ── Bottom 3-Column Grid (Referral + Wallet) ──────────────── */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">
+          {/* ── Referral Link (colspan 2) ────────────────────────────── */}
+          <section
+            aria-label={t('aria.referralSection')}
+            className="xl:col-span-2 bg-surface-container border border-border p-6 rounded-2xl flex flex-col gap-6"
+          >
+            <div>
+              <h3 className="text-lg font-bold text-foreground mb-1">
+                {t('referral.title')}
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {t('referral.description')}
+              </p>
+            </div>
 
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="flex-1 bg-surface-container-highest/50 border border-border rounded-xl flex items-center px-4 py-3">
-              <code className="text-primary font-mono text-sm flex-1 overflow-hidden text-ellipsis whitespace-nowrap">
+            <div className="flex items-center gap-2">
+              <div className="flex-1 bg-surface-container-lowest border border-border rounded-xl px-4 py-3.5 font-mono text-primary text-sm overflow-hidden whitespace-nowrap">
                 {referralLink}
-              </code>
+              </div>
               <Button
                 variant="default"
-                size="sm"
+                size="lg"
                 className={cn(
-                  'ml-4 shrink-0 gap-2 transition-colors',
+                  'shrink-0 gap-2 transition-colors shadow-md shadow-primary/20',
                   copied ? 'bg-green-500 hover:bg-green-600' : '',
                 )}
                 onClick={handleCopyLink}
@@ -516,110 +518,65 @@ export default function AffiliateDashboardPage({
                 <span>{copied ? t('referral.copied') : t('referral.copyButton')}</span>
               </Button>
             </div>
-          </div>
 
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-muted-foreground">
-              {t('referral.shareLabel')}
-            </span>
-            <div className="flex gap-3">
-              {SOCIAL_PLATFORMS.map((platform) => (
-                <button
-                  key={platform.id}
-                  className={cn(
-                    'w-10 h-10 rounded-full flex items-center justify-center text-white',
-                    platform.bg,
-                    'hover:opacity-80 transition-opacity active:scale-90',
-                  )}
-                  aria-label={platform.ariaLabel}
-                >
-                  <SocialIcon path={platform.path} />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Info note (from Stitch v3) */}
-          <div className="mt-6 flex items-center gap-3 text-xs text-muted-foreground bg-surface-container p-4 rounded-xl">
-            <span className="material-symbols-outlined text-sm" aria-hidden="true">info</span>
-            <p>{t('referral.info')}</p>
-          </div>
-        </section>
-
-        {/* ── Wallet Section (Stitch v3 layout) ──────────────────── */}
-        <section
-          aria-label={t('aria.walletSection')}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6"
-        >
-          <div
-            className={cn(
-              'md:col-span-2 p-6 sm:p-8 rounded-2xl border border-border',
-              'bg-surface-container-low',
-            )}
-          >
-            <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                  <Wallet className="w-5 h-5 text-primary" aria-hidden="true" />
-                  {t('wallet.title')}
-                </h3>
-                <p className="text-muted-foreground text-sm mt-1">
-                  {t('wallet.addressLabel')}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-primary border-primary/30 text-xs font-bold"
-                aria-label={t('wallet.editAddress')}
-              >
-                {t('wallet.editAddress')}
-              </Button>
-            </div>
-            <div className="mt-6">
-              <p className="text-[10px] uppercase font-bold text-muted-foreground mb-2 tracking-widest">
-                {t('wallet.addressLabel')}
-              </p>
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-xl text-foreground break-all">
-                  {walletAddress}
-                </span>
-                <span className="text-primary" aria-hidden="true">
-                  <Check className="w-4 h-4" />
-                </span>
+            <div className="flex items-center gap-4">
+              <span className="text-xs font-label text-muted-foreground uppercase tracking-wider">
+                {t('referral.shareLabel')}
+              </span>
+              <div className="flex gap-3">
+                {SOCIAL_PLATFORMS.map((platform) => (
+                  <button
+                    key={platform.id}
+                    className={cn(
+                      'w-10 h-10 rounded-full flex items-center justify-center text-white',
+                      platform.bg,
+                      'hover:opacity-80 transition-opacity active:scale-90',
+                    )}
+                    aria-label={platform.ariaLabel}
+                  >
+                    <SocialIcon path={platform.path} />
+                  </button>
+                ))}
               </div>
             </div>
-          </div>
+          </section>
 
-          <div
-            className={cn(
-              'p-6 sm:p-8 rounded-2xl border border-primary/30 flex flex-col justify-between',
-              'bg-surface-container-low',
-            )}
+          {/* ── Wallet Section ────────────────────────────────────────── */}
+          <section
+            aria-label={t('aria.walletSection')}
+            className="bg-surface-container border border-border p-6 rounded-2xl flex flex-col justify-between"
           >
             <div>
-              <p className="text-sm font-medium text-primary">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                  {t('wallet.title')}
+                </span>
+                <Wallet className="w-5 h-5 text-green-400" aria-hidden="true" />
+              </div>
+              <div className="bg-surface-container-lowest px-3 py-2 rounded-lg border border-border/30 flex items-center justify-between mb-6">
+                <span className="text-xs font-mono text-muted-foreground">{walletAddress}</span>
+                <Copy className="w-3.5 h-3.5 text-muted-foreground cursor-pointer hover:text-primary transition-colors" aria-hidden="true" />
+              </div>
+              <p className="text-xs text-muted-foreground mb-1">
                 {t('wallet.availableBalance')}
               </p>
-              <h4 className="text-4xl font-black text-foreground mt-2">
-                {walletBalance}
-              </h4>
+              <h4 className="text-4xl font-bold text-foreground mb-6">{walletBalance}</h4>
             </div>
-            <div className="space-y-3 mt-6">
+            <div>
               <Button
                 variant="default"
                 size="lg"
-                className="w-full shadow-lg shadow-primary/20 gap-2"
+                className="w-full shadow-md shadow-primary/20 mb-3"
                 aria-label={t('wallet.withdraw')}
               >
                 {t('wallet.withdraw')}
               </Button>
-              <p className="text-[10px] text-center text-muted-foreground italic">
+              <p className="text-[12px] text-center text-muted-foreground italic">
                 {t('wallet.minimumWithdrawal', { amount: '$50.00' })}
               </p>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
     </main>
   );

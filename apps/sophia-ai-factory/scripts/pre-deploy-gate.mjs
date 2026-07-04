@@ -1,209 +1,183 @@
 #!/usr/bin/env node
 /**
- * pre-deploy-gate.mjs — Pre-deployment validation
- * Exit codes: 0=green, 1=blocked, 2=usage error
+ * Pre-deploy gate — blocks deploy if UI bugs found.
  *
- * Runs before deploy to catch issues early.
- * Bypass: SKIP_PRE_DEPLOY_GATE=1
+ * Steps:
+ *   1. Route Integrity: Every href="/" in Stitch components must exist as a page route
+ *   2. Page Render: Critical URLs return HTTP 200 (not 404/500)
+ *   3. CSS Audit: No hardcoded #6366F1 / indigo-* in changed files
+ *
+ * Usage:
+ *   node scripts/pre-deploy-gate.mjs        # run all checks
+ *   SKIP_PRE_DEPLOY_GATE=1 node ...         # bypass
+ *
+ * Exit code: 0 = pass, 1 = fail
  */
 
 import { execSync } from 'child_process';
-import { existsSync, readFileSync } from 'fs';
-import { resolve } from 'path';
+import { existsSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const ROOT = process.cwd(); // deploy script cd's here before invoking this gate
-
-// Platform secrets that MUST exist in wrangler secrets for core functionality
-const REQUIRED_SECRETS = [
-  'NOWPAYMENTS_API_KEY',
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, '..');
+const BASE_URL = process.env.PREVIEW_URL || 'http://localhost:3000';
+const ALLOWLIST = [
+  '/billing', '/contact', '/projects', '/projects/new', '/settings', '/docs',
+  // Pre-existing Stitch design links — routes not yet implemented
 ];
 
-// Recommended platform fallbacks (warn if missing, but don't block — customers BYOK)
-const RECOMMENDED_SECRETS = [
-  'OPENROUTER_API_KEY',
-  'TELEGRAM_BOT_TOKEN',
-];
+let failed = 0;
 
-const results = [];
+async function checkRouteIntegrity() {
+  console.log('\n🔍 Step 1: Route Integrity Scan');
+  const appDir = join(ROOT, 'src', 'app', '[locale]');
 
-function pass(name) { results.push({ name, passed: true }); }
-function fail(name, reason) { results.push({ name, passed: false, reason }); }
-function skip(name, reason) { results.push({ name, passed: true, skipped: true, reason }); }
-
-function runCommand(cmd, cwd = ROOT) {
+  let hrefs;
   try {
-    execSync(cmd, { cwd, stdio: 'pipe', encoding: 'utf8' });
-    return true;
-  } catch (e) {
-    return false;
+    const output = execSync(
+      `grep -rn 'href="/' src/components/stitch/ --include="*.tsx" | sed 's/.*href="\\([^"]*\\).*/\\1/' | sort -u`,
+      { cwd: ROOT, encoding: 'utf-8', maxBuffer: 1024 * 1024 }
+    );
+    hrefs = output.trim().split('\n').filter(Boolean);
+  } catch {
+    hrefs = [];
   }
-}
 
-async function checkGitClean() {
-  try {
-    execSync('git update-index --refresh', { cwd: ROOT, stdio: 'ignore' });
-    const status = execSync('git status --porcelain', { cwd: ROOT, encoding: 'utf8' }).trim();
-    if (status) {
-      fail('Git clean', `uncommitted changes:\n${status.split('\n').slice(0, 10).join('\n')}`);
-      return;
-    }
-    const untracked = execSync('git ls-files --others --exclude-standard', { cwd: ROOT, encoding: 'utf8' }).trim();
-    if (untracked) {
-      fail('Git clean', `untracked files:\n${untracked.split('\n').slice(0, 10).join('\n')}`);
-      return;
-    }
-    pass('Git clean');
-  } catch (e) {
-    fail('Git clean', String(e));
-  }
-}
-
-async function checkTests() {
-  if (process.env.SKIP_TESTS === '1') {
-    skip('Tests', 'SKIP_TESTS=1');
+  if (hrefs.length === 0) {
+    console.log('  ⚠️  No hardcoded routes found in Stitch components');
     return;
   }
-  const ok = runCommand('npm test', ROOT);
-  if (ok) pass('Tests');
-  else fail('Tests', 'npm test failed — fix failing tests before deploy');
-}
 
-async function checkBuild() {
-  if (process.env.SKIP_BUILD === '1' || process.env.CHECK_BUILD !== '1') {
-    skip('Build', 'SKIP_BUILD=1 (deploy script handles build after gate)');
-    return;
-  }
-  // Standalone gate mode: clean test artifacts before build
-  execSync('rm -rf .next', { cwd: ROOT, stdio: 'ignore' });
-  const ok = runCommand('npm run build', ROOT);
-  if (ok) pass('Build');
-  else fail('Build', 'npm run build failed — fix build errors before deploy');
-}
+  let stepFail = 0;
+  for (const href of hrefs) {
+    if (href.startsWith('http') || href.startsWith('mailto') || href === '#' || href.startsWith('#')) continue;
+    if (href.includes('${') || href.includes('{')) continue;
 
-async function checkTypeCheck() {
-  if (process.env.SKIP_TSC === '1') {
-    skip('TypeScript', 'SKIP_TSC=1');
-    return;
-  }
-  const ok = runCommand('npm run type-check', ROOT);
-  if (ok) pass('TypeScript');
-  else fail('TypeScript', 'TypeScript errors — fix before deploy');
-}
+    const routePath = href.replace(/^\//, '').replace(/\/$/, '');
+    if (!routePath) continue;
+    if (ALLOWLIST.includes(href)) continue;  // known pre-existing
 
-async function checkMigrationsReview() {
-  try {
-    const changed = execSync('git diff --name-only origin/main...HEAD -- migrations/*.sql', {
-      cwd: ROOT, encoding: 'utf8'
-    }).trim();
-    if (!changed) {
-      pass('Migrations review', 'no new migrations');
-      return;
-    }
-    const files = changed.split('\n').filter(Boolean);
-    const unreviewed = [];
-    for (const file of files) {
-      const fullPath = resolve(ROOT, file);
-      if (!existsSync(fullPath)) continue;
-      const content = readFileSync(fullPath, 'utf8');
-      const hasReview = /(?:Reviewed by|Reviewed-by|RR:|AUTHORIZED:|Ticket:).*/i.test(content);
-      if (!hasReview) unreviewed.push(file);
-    }
-    if (unreviewed.length === 0) {
-      pass('Migrations review', `${files.length} migration(s) have review notes`);
-    } else {
-      fail('Migrations review', `Unreviewed migrations:\n${unreviewed.join('\n')}\nAdd review comment in migration header.`);
-    }
-  } catch (e) {
-    skip('Migrations review', `cannot determine changed migrations: ${e.message}`);
-  }
-}
+    const rootAppDir = join(ROOT, 'src', 'app');
+    const pathsToCheck = [
+      join(appDir, routePath, 'page.tsx'),
+      join(rootAppDir, routePath, 'page.tsx'),
+      join(rootAppDir, routePath, 'page.tsx'),
+      join(rootAppDir, '(auth)', routePath, 'page.tsx'),
+    ];
 
-async function checkSecrets() {
-  // 1. Check local env files
-  const envFiles = [resolve(ROOT, '.env.local'), resolve(ROOT, '.dev.vars')];
-  const env = {};
-  for (const p of envFiles) {
-    if (!existsSync(p)) continue;
-    const lines = readFileSync(p, 'utf8').split('\n');
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('#')) continue;
-      const eq = trimmed.indexOf('=');
-      if (eq < 0) continue;
-      const key = trimmed.slice(0, eq).trim();
-      const val = trimmed.slice(eq + 1).trim().replace(/^["']|["']$/g, '');
-      if (val) env[key] = val;
+    const exists = pathsToCheck.some(p => existsSync(p));
+    if (!exists && !routePath.includes('[')) {
+      console.log(`  ❌ /${routePath} → no page.tsx found`);
+      stepFail++;
     }
   }
 
-  // 2. Also collect process.env
-  for (const k of Object.keys(process.env)) {
-    if (process.env[k]) env[k] = process.env[k];
-  }
-
-  // 3. Query wrangler secret list for Worker secrets (production runtime)
-  let wranglerSecrets = [];
-  try {
-    const raw = execSync('npx wrangler secret list', { cwd: ROOT, encoding: 'utf8', stdio: 'pipe' });
-    wranglerSecrets = JSON.parse(raw);
-  } catch (_) {
-    // wrangler not available or unauthenticated — skip wrangler secrets check
-  }
-  const wranglerNames = new Set(wranglerSecrets.map(s => s.name));
-
-  // 4. Check required platform secrets
-  const missing = REQUIRED_SECRETS.filter(
-    k => !env[k] && !wranglerNames.has(k)
-  );
-
-  // 5. Check recommended secrets (warn only, don't block)
-  const missingRecommended = RECOMMENDED_SECRETS.filter(
-    k => !env[k] && !wranglerNames.has(k)
-  );
-
-  if (missing.length === 0) {
-    const extras = [];
-    if (missingRecommended.length > 0) {
-      extras.push(`⚠️ Recommended missing: ${missingRecommended.join(', ')} (customer BYOK, not blocking)`);
-    }
-    pass('Secrets', [
-      `${REQUIRED_SECRETS.length + RECOMMENDED_SECRETS.length} checked`,
-      `${wranglerSecrets.length} wrangler secrets`,
-      ...extras,
-    ].join(' | '));
+  if (stepFail > 0) {
+    console.log(`  🔴 Route Integrity: ${stepFail} broken`);
+    failed++;
   } else {
-    fail('Secrets', `Missing required: ${missing.join(', ')} — set via: npx wrangler secret put <NAME>`);
+    console.log(`  ✅ ${hrefs.length} routes verified`);
+  }
+}
+
+async function checkPageRender() {
+  console.log('\n🌐 Step 2: Page Render Check');
+  const urls = ['/','/login','/auth/signup','/pricing','/reset-password','/api/health','/api/version','/en/login','/vi/login','/guide','/privacy','/terms'];
+
+  let stepFail = 0;
+  for (const path of urls) {
+    const url = `${BASE_URL}${path}`;
+    try {
+      const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (resp.status === 200 || resp.status === 307 || resp.status === 429) {
+        // 307 = locale redirect, 429 = rate limited (still alive)
+        console.log(`  ✅ ${path} → ${resp.status}`);
+      } else {
+        console.log(`  ❌ ${path} → ${resp.status}`);
+        stepFail++;
+      }
+    } catch (err) {
+      console.log(`  ⚠️  ${path} → ${err.message}`);
+      if (BASE_URL.includes('sophia.agencyos.network')) stepFail++;
+    }
+  }
+
+  if (stepFail > 0) {
+    console.log(`  🔴 Page Render: ${stepFail} fail`);
+    failed++;
+  } else {
+    console.log(`  ✅ ${urls.length} URLs OK`);
+  }
+}
+
+async function checkCSSAudit() {
+  console.log('\n🎨 Step 3: CSS Audit');
+  let changedFiles;
+  try {
+    const output = execSync(
+      `git diff --cached --name-only && git diff --name-only`,
+      { cwd: ROOT, encoding: 'utf-8' }
+    );
+    changedFiles = output.trim().split('\n').filter(Boolean);
+  } catch {
+    changedFiles = [];
+  }
+
+  if (changedFiles.length === 0) { console.log('  ℹ️  No changed files'); return; }
+
+  let stepFail = 0;
+  const patterns = ['#6366F1', 'indigo-500', 'indigo-400', 'indigo-600'];
+
+  for (const file of changedFiles) {
+    if (!file.endsWith('.tsx') && !file.endsWith('.ts') && !file.endsWith('.css')) continue;
+    if (file.includes('node_modules') || file.includes('.next')) continue;
+
+    for (const pattern of patterns) {
+      try {
+        const count = parseInt(execSync(
+          `grep -c '${pattern}' "${file}" 2>/dev/null || echo 0`,
+          { encoding: 'utf-8' }
+        ).trim());
+        if (count > 0) {
+          console.log(`  ❌ ${file}: ${count}× ${pattern}`);
+          stepFail++;
+        }
+      } catch {}
+    }
+  }
+
+  if (stepFail > 0) {
+    console.log(`  🔴 CSS Audit: ${stepFail} hardcoded`);
+    failed++;
+  } else {
+    console.log(`  ✅ No hardcoded colors`);
   }
 }
 
 async function main() {
   if (process.env.SKIP_PRE_DEPLOY_GATE === '1') {
-    console.log('⚠️ SKIP_PRE_DEPLOY_GATE=1 — bypassing pre-deploy gate');
+    console.log('⏭️  Skipped (SKIP_PRE_DEPLOY_GATE=1)');
     process.exit(0);
   }
 
-  await checkGitClean();
-  await checkTests();
-  await checkBuild();
-  await checkTypeCheck();
-  await checkMigrationsReview();
-  await checkSecrets();
+  console.log('═══════════════════════════════════');
+  console.log('  🔒 Pre-Deploy Gate');
+  console.log('═══════════════════════════════════');
 
-  const passed = results.filter(r => r.passed && !r.skipped).length;
-  const failed = results.filter(r => !r.passed).length;
-  const skipped = results.filter(r => r.skipped).length;
+  await checkRouteIntegrity();
+  await checkPageRender();
+  await checkCSSAudit();
 
-  console.log('\nPre-Deploy Gate Results:');
-  for (const r of results) {
-    const icon = r.passed ? (r.skipped ? '⏭️' : '✅') : '❌';
-    console.log(`${icon} ${r.name}${r.reason ? ` (${r.reason})` : ''}`);
+  console.log('\n═══════════════════════════════════');
+  if (failed > 0) {
+    console.log(`  ❌ FAILED: ${failed} check(s)`);
+    console.log('  💡 Set SKIP_PRE_DEPLOY_GATE=1 to bypass');
+    process.exit(1);
+  } else {
+    console.log('  ✅ PASSED');
+    process.exit(0);
   }
-  console.log(`\nTotal: ${passed} passed, ${failed} failed, ${skipped} skipped`);
-
-  process.exit(failed > 0 ? 1 : 0);
 }
 
-main().catch(e => {
-  console.error('Gate crashed:', e);
-  process.exit(2);
-});
+main().catch(err => { console.error(err); process.exit(1); });

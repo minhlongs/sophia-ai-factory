@@ -16,16 +16,15 @@ import {
   Upload,
   CheckCircle,
   AlertTriangle,
-  Search,
+  Languages,
   Settings,
-  ChevronRight,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/seed/utils/cn';
 import { Button } from '@/seed/components/ui/button';
 import { Input } from '@/seed/components/ui/input';
 
-/* ── Types ─────────────────────────────────────────────────────────────── */
+/* -- Types ----------------------------------------------------------------- */
 
 interface NavItem {
   id: string;
@@ -46,7 +45,7 @@ interface LocaleOption {
   flag: string;
 }
 
-/* ── Props ─────────────────────────────────────────────────────────────── */
+/* -- Props ----------------------------------------------------------------- */
 
 interface SettingsPageProps {
   /** Server-fetched user display name */
@@ -61,7 +60,7 @@ interface SettingsPageProps {
   completedOrderCount?: number;
 }
 
-/* ── Constants ─────────────────────────────────────────────────────────── */
+/* -- Constants ------------------------------------------------------------- */
 
 const NAV_ITEMS: NavItem[] = [
   { id: 'account', labelKey: 'nav.account', icon: User },
@@ -83,9 +82,9 @@ const LOCALE_OPTIONS: LocaleOption[] = [
   { id: 'en', labelKey: 'locale.english', flag: '🇺🇸' },
 ];
 
-/* ══════════════════════════════════════════════════════════════════════════
+/* ==========================================================================
    SettingsPage
-   ══════════════════════════════════════════════════════════════════════════ */
+   ========================================================================== */
 
 export default function SettingsPage({
   userName: propUserName,
@@ -105,7 +104,7 @@ export default function SettingsPage({
 
   return (
     <div className="h-screen overflow-hidden flex flex-col bg-background text-on-surface">
-      {/* ════ Top NavBar ════════════════════════════════════════════════════ */}
+      {/* ===== Top NavBar ==================================================== */}
       <header className="bg-surface-container-low flex items-center justify-between px-6 py-3 w-full border-b border-outline-variant shadow-sm z-50 shrink-0">
         <div className="flex items-center gap-8">
           <span className="text-xl font-black text-primary tracking-tighter">
@@ -124,13 +123,9 @@ export default function SettingsPage({
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          <Button
-            variant="primary"
-            size="sm"
-            className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
-          >
+          <button className="bg-primary hover:bg-primary/90 text-white font-bold px-4 py-1.5 rounded-lg text-sm scale-95 active:opacity-80 transition-all shadow-lg shadow-primary/20">
             {t('topNav.upgradePlan')}
-          </Button>
+          </button>
           <button
             className="text-on-surface-variant hover:text-primary transition-colors p-1"
             aria-label={t('topNav.notifications')}
@@ -147,13 +142,13 @@ export default function SettingsPage({
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* ════ Sidebar ══════════════════════════════════════════════════════ */}
+        {/* ===== Sidebar ===================================================== */}
         <aside
           className="w-[200px] bg-surface-container-low border-r border-outline-variant flex flex-col pt-6 shrink-0"
           aria-label={t('nav.label')}
         >
           <div className="px-4 mb-4">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant/60 px-4 mb-2">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-on-surface-variant opacity-60 px-4 mb-2">
               {t('nav.title')}
             </h2>
           </div>
@@ -166,29 +161,34 @@ export default function SettingsPage({
                   key={item.id}
                   onClick={() => setActiveNav(item.id)}
                   className={cn(
-                    'flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all text-left',
+                    'flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all text-left group',
                     isActive
-                      ? 'bg-gradient-to-r from-primary/10 to-transparent text-primary border-l-[3px] border-primary'
+                      ? 'sidebar-active text-primary border-l-[3px] border-primary bg-gradient-to-r from-primary/10 to-transparent'
                       : 'text-on-surface-variant hover:bg-surface-variant',
                   )}
                   aria-current={isActive ? 'page' : undefined}
                 >
-                  <Icon className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
+                  <Icon className={cn(
+                    'w-5 h-5 flex-shrink-0 transition-colors',
+                    isActive ? 'text-primary' : 'group-hover:text-primary',
+                  )} aria-hidden="true" />
                   <span>{t(item.labelKey)}</span>
                 </button>
               );
             })}
           </nav>
           <div className="mt-auto p-4 border-t border-outline-variant/30">
-            <button className="flex items-center gap-3 text-on-surface-variant text-sm w-full hover:text-destructive transition-colors">
+            <button className="flex items-center gap-3 text-on-surface-variant text-sm w-full hover:text-error transition-colors">
               <LogOut className="w-5 h-5" aria-hidden="true" />
               <span>{t('nav.signOut')}</span>
             </button>
           </div>
         </aside>
 
-        {/* ════ Main Content ═════════════════════════════════════════════════ */}
-        <main className="flex-1 overflow-y-auto p-10 bg-background">
+        {/* ===== Main Content ================================================ */}
+        <main className="flex-1 overflow-y-auto p-10 bg-background custom-scrollbar"
+          style={{ scrollbarWidth: 'thin', scrollbarColor: '#484750 transparent' }}
+        >
           <div className="max-w-4xl mx-auto">
             <h1 className="text-[28px] font-bold text-on-surface mb-8 tracking-tight">
               {t('pageTitle')}
@@ -196,7 +196,7 @@ export default function SettingsPage({
 
             <div className="space-y-8 pb-20">
               {/* Section 1: Profile Details */}
-              <section className="bg-surface-container rounded-xl p-6 shadow-xl border border-outline-variant/20">
+              <section className="bg-[#18181B] rounded-xl p-6 shadow-xl border border-outline-variant/20">
                 <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
                   <User className="w-5 h-5 text-primary" aria-hidden="true" />
                   {t('profile.title')}
@@ -237,39 +237,32 @@ export default function SettingsPage({
                           disabled
                           className="bg-surface-container-low border-outline-variant/30 text-on-surface-variant/50 cursor-not-allowed"
                         />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-green-500/10 text-green-500 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-green-500/20">
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 bg-green-500/10 text-green-400 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border border-green-500/20">
                           <CheckCircle className="w-3.5 h-3.5" aria-hidden="true" />
                           {t('profile.verified')}
                         </div>
                       </div>
                     </div>
                     <div className="pt-2">
-                      <Button
-                        variant="primary"
-                        className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
-                      >
+                      <button className="bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-2.5 rounded-lg transition-all shadow-lg shadow-primary/20 active:scale-95">
                         {t('profile.save')}
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </div>
               </section>
 
               {/* Section 2: API Keys */}
-              <section className="bg-surface-container rounded-xl p-6 shadow-xl border border-outline-variant/20">
+              <section className="bg-[#18181B] rounded-xl p-6 shadow-xl border border-outline-variant/20">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
                     <Key className="w-5 h-5 text-primary" aria-hidden="true" />
                     {t('apiKeys.title')}
                   </h3>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-primary border-primary/30 hover:bg-primary/10"
-                  >
-                    <Plus className="w-4 h-4 mr-1.5" aria-hidden="true" />
+                  <button className="text-primary hover:bg-primary/10 border border-primary/30 px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2">
+                    <Plus className="w-4 h-4" aria-hidden="true" />
                     {t('apiKeys.addKey')}
-                  </Button>
+                  </button>
                 </div>
                 <div className="space-y-4">
                   {API_KEYS.map((apiKey) => {
@@ -342,9 +335,9 @@ export default function SettingsPage({
               </section>
 
               {/* Section 3: Locale & Language */}
-              <section className="bg-surface-container rounded-xl p-6 shadow-xl border border-outline-variant/20">
+              <section className="bg-[#18181B] rounded-xl p-6 shadow-xl border border-outline-variant/20">
                 <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                  <ChevronRight className="w-5 h-5 text-primary" aria-hidden="true" />
+                  <Languages className="w-5 h-5 text-primary" aria-hidden="true" />
                   {t('locale.title')}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -369,10 +362,10 @@ export default function SettingsPage({
                         </div>
                         <div
                           className={cn(
-                            'w-4 h-4 rounded-full border-2',
+                            'w-4 h-4 rounded-full transition-all',
                             isSelected
                               ? 'border-4 border-primary bg-white'
-                              : 'border-outline-variant',
+                              : 'border-2 border-outline-variant',
                           )}
                           aria-hidden="true"
                         />
@@ -383,15 +376,15 @@ export default function SettingsPage({
               </section>
 
               {/* Section 4: Danger Zone */}
-              <section className="bg-surface-container rounded-xl p-6 border-t-4 border-destructive/50 bg-destructive/5 shadow-xl">
-                <h3 className="text-lg font-semibold text-destructive mb-2 flex items-center gap-2">
+              <section className="bg-[#18181B] rounded-xl p-6 border-t-4 border-red-500/50 bg-red-500/5 shadow-xl">
+                <h3 className="text-lg font-semibold text-error mb-2 flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5" aria-hidden="true" />
                   {t('dangerZone.title')}
                 </h3>
                 <p className="text-[13px] text-on-surface-variant mb-6">
                   {t('dangerZone.description')}
                 </p>
-                <div className="flex items-center justify-between p-4 rounded-xl border border-destructive/20 bg-destructive/5">
+                <div className="flex items-center justify-between p-4 rounded-xl border border-red-500/20 bg-red-500/5">
                   <div>
                     <h4 className="text-sm font-bold text-on-surface mb-1">
                       {t('dangerZone.deleteAccount')}
@@ -403,13 +396,9 @@ export default function SettingsPage({
                       {t('dangerZone.irreversible')}
                     </p>
                   </div>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                  >
+                  <button className="border border-red-500 text-red-500 hover:bg-red-500 hover:text-white px-6 py-2 rounded-lg text-sm font-bold transition-all active:scale-95">
                     {t('dangerZone.deleteButton')}
-                  </Button>
+                  </button>
                 </div>
               </section>
             </div>

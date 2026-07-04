@@ -25,7 +25,7 @@ import { cn } from '@/seed/utils/cn';
 /*  Types                                                              */
 /* ------------------------------------------------------------------ */
 
-type CampaignStatus = 'live' | 'paused' | 'draft';
+type CampaignStatus = 'live' | 'paused' | 'draft' | 'done';
 type Channel = 'youtube' | 'instagram' | 'tiktok';
 
 interface CampaignMetric {
@@ -74,6 +74,7 @@ const STATUS_CONFIG: Record<CampaignStatus, { color: 'success' | 'warning' | 'ne
   live: { color: 'success', labelKey: 'status.live' },
   paused: { color: 'warning', labelKey: 'status.paused' },
   draft: { color: 'neutral', labelKey: 'status.draft' },
+  done: { color: 'neutral', labelKey: 'status.done' },
 };
 
 /* ------------------------------------------------------------------ */
@@ -97,7 +98,7 @@ const DEFAULT_CAMPAIGNS: Campaign[] = [
     status: 'live',
     channel: 'Faceless YouTube',
     channels: ['youtube', 'instagram'],
-    thumbnail: null,
+    thumbnail: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCeeqj2_4rdboxlKLaptaCp9MgzO8yqCHoPT3Aj3gcKgw9tAqTikqrPdO0RNtsBV4ioO3iReI9DhE0JY5b-0nNQ67MoIDq3H9WtD7kX71BaV4E_EZJNU2w0TtvgFbYxuVB8mRinsGVgrRpc48aWmgOWAPWUfMnriPM8qRaEDtjspkGPvWW9FMZ83nLMCtRMth6Vrvc2fVMyJ50vJXhFBr9ubU5uZaEPvp6JDaDFUJ_7xNgaOSO3hMaaUUffclhrPOaxO5xw4m-MGzQ',
     metrics: { views: '12.4K', revenue: '$847', ctr: '3.2%' },
     progress: 85,
     progressLabel: 'Campaign Progress',
@@ -111,7 +112,7 @@ const DEFAULT_CAMPAIGNS: Campaign[] = [
     status: 'paused',
     channel: 'Affiliate',
     channels: ['youtube'],
-    thumbnail: null,
+    thumbnail: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYc0D1h8L2M36gkDF4kdzlnmYVwazXfIVC4c1iIS93URw1wCftVWuWUth76X4FibQSS3AaykhyGrq6JG1aShpGe514TpKUR9EHaVHwyji0LlaBaCWsa3u89iV7bF8zanUBDI_zLWEEVicsIrdZa9mXxSt41yoxPUJmYnJHsjFsWgNHMT3GGHb1PFaocmhLX2q7EWgZlcIviUx4uxTVXdnF2wpQfwZW0wHygerdjVwrD1318oscUsxjUIJcI5Hy-bIy24acloMegvE',
     metrics: { views: '4.1K', revenue: '$212', ctr: '1.8%' },
     progress: 40,
     progressLabel: 'Campaign Progress',
@@ -133,6 +134,20 @@ const DEFAULT_CAMPAIGNS: Campaign[] = [
     action: 'Continue Draft',
     actionLabel: 'continueDraft',
   },
+  {
+    id: '4',
+    title: 'ASMR Cooking Series',
+    status: 'done',
+    channel: 'Lifestyle',
+    channels: [],
+    thumbnail: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDbemvJKIApLiEyXcFKMCvpAbVUeDznfH-HrRLwAAfawt94f0_jXPQAQN53oJMpUnWDr0MfHasjLaiUlfVbFF6aDk96k5uLA-EG9vqqmameDRiiOuDorzmsUn7W4ZjZk46yRb3HKpx6TONAe5x_BQ3X-NkuiLzgeJ--7ofnWAXNsz_UauI6b49Ei5b10m-2jh7Sq2VUV8BlD61U1jNQzN90kWbLkbd_HjgMgeLRoqVLmEJrgeYfc4CfXcmzINy8oSO3BBuUMe4-eWA',
+    metrics: { views: '82K', revenue: '$1.2K', ctr: '5.1%' },
+    progress: 100,
+    progressLabel: 'Campaign Progress',
+    lastPublished: '5 hours ago',
+    action: 'View Details',
+    actionLabel: 'viewDetails',
+  },
 ];
 
 /* ------------------------------------------------------------------ */
@@ -149,10 +164,14 @@ function CampaignCard({
   const statusCfg = STATUS_CONFIG[campaign.status];
   const hasMetrics = campaign.metrics.views !== '-';
 
+  const isDone = campaign.status === 'done';
+
   const badgeClass = campaign.status === 'live'
     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
     : campaign.status === 'paused'
     ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+    : isDone
+    ? 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
     : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20';
 
   return (
@@ -161,7 +180,8 @@ function CampaignCard({
         'glass-card rounded-lg',
         'p-4 flex flex-col gap-4',
         'group hover:ring-1 hover:ring-primary/50 transition-all duration-200',
-        !hasMetrics && 'opacity-80'
+        !hasMetrics && 'opacity-80',
+        isDone && 'opacity-80 grayscale-[0.2]'
       )}
       role="article"
       aria-label={campaign.title}
@@ -239,25 +259,36 @@ function CampaignCard({
       </div>
 
       {/* Progress bar */}
-      <div className="space-y-1.5">
-        <div className="flex justify-between text-[11px] font-medium">
-          <span className="text-muted-foreground">{t('progress.' + (campaign.progressLabel === 'Generation Progress' ? 'generation' : 'campaign'))}</span>
-          <span className="text-foreground">{campaign.progress}%</span>
-        </div>
+      {isDone ? (
         <div
-          className="w-full h-1.5 bg-muted rounded-full overflow-hidden"
+          className="w-full h-1.5 bg-primary rounded-full"
           role="progressbar"
-          aria-valuenow={campaign.progress}
+          aria-valuenow={100}
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-label={`${campaign.progress}% ${t('progress.aria')}`}
-        >
+          aria-label="100% complete"
+        />
+      ) : (
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-[11px] font-medium">
+            <span className="text-muted-foreground">{t('progress.' + (campaign.progressLabel === 'Generation Progress' ? 'generation' : 'campaign'))}</span>
+            <span className="text-foreground">{campaign.progress}%</span>
+          </div>
           <div
-            className="h-full bg-primary rounded-full transition-all duration-500"
-            style={{ width: `${campaign.progress}%` }}
-          />
+            className="w-full h-1.5 bg-muted rounded-full overflow-hidden"
+            role="progressbar"
+            aria-valuenow={campaign.progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`${campaign.progress}% ${t('progress.aria')}`}
+          >
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-500"
+              style={{ width: `${campaign.progress}%` }}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Footer */}
       <div className="flex items-center justify-between mt-auto">
@@ -479,6 +510,7 @@ export default function CampaignsPage({
             <option value="live">{t('status.live')}</option>
             <option value="paused">{t('status.paused')}</option>
             <option value="draft">{t('status.draft')}</option>
+            <option value="done">{t('status.done')}</option>
           </select>
         </div>
 

@@ -93,7 +93,7 @@ const STATUS_STYLES: Record<string, string> = {
  * ─────────────────────────────────────────────────────────────── */
 
 const CHART_GRADIENT_ID = 'indigoChartGradient';
-const CHART_LABELS = ['Sept 01', 'Sept 08', 'Sept 15', 'Sept 22', 'Sept 29'];
+const CHART_LABEL_COUNT = 5;
 
 /* ════════════════════════════════════════════════════════════════════
  * DashboardOverview
@@ -140,20 +140,26 @@ export default function DashboardOverview({
         {metrics.map((metric) => (
           <Card
             key={metric.id}
-            className="bg-[#18181B] border-zinc-800 p-6"
+            className="bg-surface-container border-outline-variant/10 p-6"
           >
             <CardHeader className="p-0">
               <p className="text-on-surface-variant text-sm font-medium uppercase tracking-wider">
                 {t(`kpi.${metric.id}.label`)}
               </p>
-              <h3 className="text-[32px] font-bold text-white mt-1">
-                {metric.id === 'creditsUsed' && metric.progressValue != null
-                  ? t('kpi.creditsUsed.value', {
-                      used: metric.value,
-                      total: metric.progressMax?.toLocaleString() ?? '10,000',
-                    })
-                  : metric.value}
-              </h3>
+              {metric.id === 'creditsUsed' && metric.progressValue != null ? (
+                <div className="flex items-baseline gap-1 mt-1">
+                  <h3 className="text-[24px] font-bold text-white">
+                    {metric.value}
+                  </h3>
+                  <span className="text-on-surface-variant text-sm">
+                    / {metric.progressMax?.toLocaleString() ?? '10,000'}
+                  </span>
+                </div>
+              ) : (
+                <h3 className="text-[32px] font-bold text-white mt-1">
+                  {metric.value}
+                </h3>
+              )}
             </CardHeader>
             <CardContent className="p-0 mt-4">
               {metric.trend && (
@@ -221,10 +227,10 @@ export default function DashboardOverview({
               </linearGradient>
             </defs>
             {/* Grid Lines */}
-            <line stroke="#25252e" strokeWidth="1" x1="0" x2="100%" y1="20%" y2="20%" />
-            <line stroke="#25252e" strokeWidth="1" x1="0" x2="100%" y1="40%" y2="40%" />
-            <line stroke="#25252e" strokeWidth="1" x1="0" x2="100%" y1="60%" y2="60%" />
-            <line stroke="#25252e" strokeWidth="1" x1="0" x2="100%" y1="80%" y2="80%" />
+            <line stroke="hsl(var(--muted))" strokeWidth="1" x1="0" x2="100%" y1="20%" y2="20%" />
+            <line stroke="hsl(var(--muted))" strokeWidth="1" x1="0" x2="100%" y1="40%" y2="40%" />
+            <line stroke="hsl(var(--muted))" strokeWidth="1" x1="0" x2="100%" y1="60%" y2="60%" />
+            <line stroke="hsl(var(--muted))" strokeWidth="1" x1="0" x2="100%" y1="80%" y2="80%" />
             {/* Area */}
             <path
               d="M0 250 L50 220 L150 180 L250 240 L350 100 L450 160 L550 80 L650 120 L750 60 L850 110 L950 90 L1050 50 L1200 40 L1200 300 L0 300 Z"
@@ -267,8 +273,8 @@ export default function DashboardOverview({
 
         {/* X-axis labels */}
         <div className="flex justify-between mt-4 text-[11px] text-on-surface-variant px-1">
-          {CHART_LABELS.map((label, idx) => (
-            <span key={idx}>{label}</span>
+          {Array.from({ length: CHART_LABEL_COUNT }, (_, idx) => (
+            <span key={idx}>{t(`chart.labels.${idx}`)}</span>
           ))}
         </div>
       </section>

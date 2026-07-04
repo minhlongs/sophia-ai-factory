@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import VideoCreationWizard from '@/app/components/sections/video-creation-wizard';
+import VideoCreationPage from '@/components/stitch/screens/video-creation/video-creation-page';
 
 interface CreateVideoPageProps {
   params: Promise<{ locale: string }>;
@@ -32,7 +32,7 @@ export async function generateMetadata({
 export default function CreateVideoPage() {
   return (
     <main className="min-h-screen dark stitch-indigo">
-      <VideoCreationWizard />
+      <VideoCreationPage />
     </main>
   );
 }

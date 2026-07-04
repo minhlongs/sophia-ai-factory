@@ -38,10 +38,10 @@ async function* getFiles(dir, pattern) {
  */
 function extractNamespace(content) {
   // Match useTranslations('namespace') or getTranslations("namespace") with dots
-  const stringForm = content.match(/(?:useTranslations|getTranslations)\(['"`]([a-zA-Z_.]+)['"`]\)/);
+  const stringForm = content.match(/(?:useTranslations|getTranslations)\(['"`]([a-zA-Z_.-]+)['"`]\)/);
   if (stringForm) return stringForm[1];
   // Match object form: getTranslations({ locale, namespace: 'name.space' })
-  const objectForm = content.match(/(?:useTranslations|getTranslations)\(\s*\{[^}]*namespace:\s*['"`]([a-zA-Z_.]+)['"`]/);
+  const objectForm = content.match(/(?:useTranslations|getTranslations)\(\s*\{[^}]*namespace:\s*['"`]([a-zA-Z_.-]+)['"`]/);
   return objectForm ? objectForm[1] : null;
 }
 
