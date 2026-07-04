@@ -127,7 +127,7 @@ export default function SettingsPage({
           <Button
             variant="primary"
             size="sm"
-            className="bg-amber-600 hover:bg-amber-500 shadow-lg shadow-amber-600/20"
+            className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
           >
             {t('topNav.upgradePlan')}
           </Button>
@@ -168,7 +168,7 @@ export default function SettingsPage({
                   className={cn(
                     'flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-all text-left',
                     isActive
-                      ? 'bg-gradient-to-r from-amber-600/10 to-transparent text-primary border-l-[3px] border-amber-600'
+                      ? 'bg-gradient-to-r from-primary/10 to-transparent text-primary border-l-[3px] border-primary'
                       : 'text-on-surface-variant hover:bg-surface-variant',
                   )}
                   aria-current={isActive ? 'page' : undefined}
@@ -246,7 +246,7 @@ export default function SettingsPage({
                     <div className="pt-2">
                       <Button
                         variant="primary"
-                        className="bg-amber-600 hover:bg-amber-500 shadow-lg shadow-amber-600/20"
+                        className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
                       >
                         {t('profile.save')}
                       </Button>
@@ -357,7 +357,7 @@ export default function SettingsPage({
                         className={cn(
                           'h-[44px] flex items-center justify-between px-4 rounded-xl transition-all',
                           isSelected
-                            ? 'border-2 border-amber-600 bg-amber-600/10'
+                            ? 'border-2 border-primary bg-primary/10'
                             : 'border border-outline-variant/30 hover:bg-surface-variant/50',
                         )}
                         role="radio"
@@ -371,7 +371,7 @@ export default function SettingsPage({
                           className={cn(
                             'w-4 h-4 rounded-full border-2',
                             isSelected
-                              ? 'border-4 border-amber-600 bg-white'
+                              ? 'border-4 border-primary bg-white'
                               : 'border-outline-variant',
                           )}
                           aria-hidden="true"

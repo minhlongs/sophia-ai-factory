@@ -110,6 +110,33 @@ export async function getKlingKey(
 }
 
 /**
+ * Resolve Replicate API key.
+ * Default: fallbackToPlatform = false (customer fulfillment must use own key).
+ */
+export async function getReplicateKey(
+  opts: GetKeyOptions = {},
+): Promise<ProviderKeyResult | null> {
+  const { userId, fallbackToPlatform = false } = opts
+
+  if (userId) {
+    try {
+      const userKey = await getUserCredential(userId, 'replicate')
+      if (userKey) return { key: userKey, source: 'user' }
+    } catch (err) {
+      // M11: key rotated during active job - fall through to platform/null
+      if (err instanceof ByokKeyRotatedError) return null
+      throw err
+    }
+  }
+
+  if (fallbackToPlatform) {
+    const envKey = process.env.REPLICATE_API_TOKEN
+    if (envKey) return { key: envKey, source: 'platform' }
+  }
+  return null
+}
+
+/**
  * Resolve NOWPayments API key.
  * Default: fallbackToPlatform = true (single payment provider for MVP).
  */

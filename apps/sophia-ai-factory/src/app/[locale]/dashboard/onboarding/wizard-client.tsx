@@ -92,6 +92,7 @@ export function WizardClient() {
     ELEVENLABS_API_KEY: '',
     DID_API_KEY: '',
     MUAPI_API_KEY: '',
+    REPLICATE_API_KEY: '',
   };
 
   const defaultProviderConfig: ProviderConfig = {
@@ -130,6 +131,7 @@ export function WizardClient() {
     ELEVENLABS_API_KEY: 'idle',
     DID_API_KEY: 'idle',
     MUAPI_API_KEY: 'idle',
+    REPLICATE_API_KEY: 'idle',
     HEYGEN_API_KEY: 'idle',
     RESEND_API_KEY: 'idle',
     NOWPAYMENTS_API_KEY: 'idle',
@@ -287,16 +289,6 @@ export function WizardClient() {
         config.ANTHROPIC_API_KEY.trim().length > 0;
       if (!hasLlmKey) {
         setNextError(t('alerts.missingLlm'));
-        return;
-      }
-    }
-
-    if (step === 4) {
-      // Provider Credentials validation
-      const heygenSaved = savedCredentials.find((c) => c.provider === 'heygen');
-      const heygenEntered = providerConfig.HEYGEN_API_KEY.trim().length > 0;
-      if (!heygenSaved && !heygenEntered) {
-        setNextError(t('alerts.missingHeygen'));
         return;
       }
     }

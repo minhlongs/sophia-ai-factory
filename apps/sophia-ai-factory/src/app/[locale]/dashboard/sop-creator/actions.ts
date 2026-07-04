@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { resolveUserTier } from '@/seed/db/resolve-user-tier';
+import { hasCreatorAccess } from '@/land/sop-marketplace';
 import { getTranslations } from 'next-intl/server';
 import { getD1 } from '@/seed/db/client';
 
@@ -12,11 +12,11 @@ export async function createSopAction(formData: FormData): Promise<{ error?: str
   const user = await getCurrentUser();
   if (!user) return { error: t('unauthorized') };
 
-  const tier = await resolveUserTier(user.id);
-  if (tier !== 'MASTER') return { error: t('masterRequired') };
-
   const db = getD1();
   if (!db) return { error: t('dbUnavailable') };
+
+  const hasAccess = await hasCreatorAccess(db, user.id);
+  if (!hasAccess) return { error: t('creatorAccessRequired') };
 
   const nameEn = formData.get('name_en') as string;
   const nameVi = formData.get('name_vi') as string;
@@ -68,12 +68,12 @@ export async function submitForReviewAction(templateId: string): Promise<{ error
   const template = await getTemplateById(db, templateId);
   if (!template || template.author_user_id !== user.id) return { error: t('notYourTemplate') };
 
-  await db.prepare(`UPDATE sop_templates SET status = 'published', updated_at = ?1 WHERE id = ?2`)
+  await db.prepare(`UPDATE sop_templates SET status = 'pending_review', updated_at = ?1 WHERE id = ?2`)
     .bind(Date.now(), templateId).run();
 
   const listing = await getListingByTemplateId(db, templateId);
   if (listing) {
-    await updateListingStatus(db, listing.id, 'published');
+    await updateListingStatus(db, listing.id, 'pending_review');
   }
 
   return {};

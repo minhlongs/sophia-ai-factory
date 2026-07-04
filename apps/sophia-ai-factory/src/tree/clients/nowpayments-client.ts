@@ -52,11 +52,11 @@ export function resetNowPaymentsSDK(): void {
 // 2. Tier Price Config (for SDK checkout — replaces invoiceId-based lookup)
 // ═══════════════════════════════════════════════════════════════════════════
 
-export const TIER_PRICE_CONFIG: Record<string, { price: number; currency: string; name: string }> = {
-  BASIC:      { price: 199,  currency: 'USD', name: 'Starter' },
-  PREMIUM:    { price: 399,  currency: 'USD', name: 'Growth' },
-  ENTERPRISE: { price: 799,  currency: 'USD', name: 'Premium' },
-  MASTER:     { price: 4999, currency: 'USD', name: 'Master' },
+export const TIER_PRICE_CONFIG: Record<string, { price: number; yearlyPrice: number; currency: string; name: string }> = {
+  BASIC:      { price: 199,  yearlyPrice: 1990,  currency: 'USD', name: 'Starter' },
+  PREMIUM:    { price: 399,  yearlyPrice: 3990,  currency: 'USD', name: 'Growth' },
+  ENTERPRISE: { price: 799,  yearlyPrice: 7990,  currency: 'USD', name: 'Premium' },
+  MASTER:     { price: 4999, yearlyPrice: 0,     currency: 'USD', name: 'Master' },
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -67,6 +67,7 @@ export interface CreateCheckoutInput {
   tierId: string
   userId: string
   customerEmail?: string
+  period?: 'monthly' | 'yearly'
 }
 
 export async function createCheckout(input: CreateCheckoutInput): Promise<{
@@ -78,6 +79,12 @@ export async function createCheckout(input: CreateCheckoutInput): Promise<{
   const config = TIER_PRICE_CONFIG[input.tierId]
   if (!config) throw new Error(`Unknown tier: ${input.tierId}`)
 
+  const isYearly = input.period === 'yearly'
+  if (isYearly && config.yearlyPrice === 0) {
+    throw new Error(`Yearly billing not available for tier: ${input.tierId}`)
+  }
+  const priceAmount = isYearly ? config.yearlyPrice : config.price
+
   const timestamp = Date.now()
   const orderId = `sophia_${input.userId}_${timestamp}`
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'
@@ -88,10 +95,10 @@ export async function createCheckout(input: CreateCheckoutInput): Promise<{
   }
 
   const result = await sdk.createCheckout({
-    priceAmount: config.price,
+    priceAmount,
     priceCurrency: config.currency,
     orderId,
-    orderDescription: config.name,
+    orderDescription: `${config.name}${isYearly ? ' (Annual)' : ''}`,
     successUrl,
     cancelUrl: `${appUrl}/pricing`,
   })

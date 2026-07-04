@@ -6,7 +6,7 @@
  */
 
 import { useState, useTransition } from 'react';
-import { ShoppingCart, CheckCircle, User } from 'lucide-react';
+import { ShoppingCart, CheckCircle, User, Building2 } from 'lucide-react';
 import { purchaseSopAction } from './actions';
 
 type ListingWithTemplate = {
@@ -26,6 +26,8 @@ interface CommunityListingCardProps {
   buyLabel: string;
   purchasedLabel: string;
   byLabel: string;
+  brandName?: string | null;
+  brandLogoUrl?: string | null;
 }
 
 export function CommunityListingCard({
@@ -35,6 +37,8 @@ export function CommunityListingCard({
   buyLabel,
   purchasedLabel,
   byLabel,
+  brandName,
+  brandLogoUrl,
 }: CommunityListingCardProps) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -43,10 +47,12 @@ export function CommunityListingCard({
   const isVi = locale.startsWith('vi');
   const displayName = isVi ? listing.name_vi : listing.name_en;
   const priceUsd = (listing.price_cents / 100).toFixed(2);
-  // Show shortened author ID as creator identifier (no PII leak)
-  const creatorLabel = listing.author_user_id
-    ? `${byLabel} #${listing.author_user_id.slice(0, 6)}`
-    : null;
+  // Show brand name if available, otherwise fall back to user ID snippet
+  const creatorLabel = brandName
+    ? `${byLabel} ${brandName}`
+    : listing.author_user_id
+      ? `${byLabel} #${listing.author_user_id.slice(0, 6)}`
+      : null;
 
   function handleBuy() {
     setError(null);
@@ -69,10 +75,20 @@ export function CommunityListingCard({
         </span>
       </div>
 
-      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
         {creatorLabel && (
           <>
-            <User className="w-3 h-3" aria-hidden="true" />
+            {brandLogoUrl ? (
+              <img
+                src={brandLogoUrl}
+                alt={brandName ?? ''}
+                className="w-4 h-4 rounded object-contain"
+              />
+            ) : brandName ? (
+              <Building2 className="w-3 h-3" aria-hidden="true" />
+            ) : (
+              <User className="w-3 h-3" aria-hidden="true" />
+            )}
             <span>{creatorLabel}</span>
           </>
         )}

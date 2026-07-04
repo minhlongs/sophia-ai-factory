@@ -9,5 +9,14 @@ export type {
   CreatorEarnings,
 } from './commission-split';
 export { generateSopAffiliateLink, getSopAffiliateLink, buildSopReferralUrl } from './sop-affiliate-links';
-export { listActiveChallenges, getUserProgress, getUserAllProgress, incrementProgress, seedInitialChallenges } from './challenges';
+export { listActiveChallenges, getUserProgress, getUserAllProgress, incrementProgress, seedInitialChallenges, claimChallengeReward } from './challenges';
 export * from './beta-invites';
+export { hasCreatorAccess } from './creator-access';
+export {
+  updateLoginStreak,
+  updateVideoStreak,
+  getStreakInfo,
+  calculateStreakBonus,
+  applyStreakBonus,
+} from './streaks';
+export type { StreakType, StreakInfo } from './streaks';

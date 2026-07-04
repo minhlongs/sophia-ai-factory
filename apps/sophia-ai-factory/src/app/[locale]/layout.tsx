@@ -16,6 +16,7 @@ import { getMessages } from 'next-intl/server';
 import { getCspNonce } from '@/seed/security/get-csp-nonce';
 import { buildOrganizationSchema } from '@/land/seo/schema-org';
 import { Ga4Script } from '@/land/analytics/ga4-script';
+import { getFeatureFlag } from "@/seed/config/flags";
 // OTEL is loaded dynamically to prevent Node.js-dependent packages
 // (@opentelemetry/sdk-trace-base, etc.) from being bundled into Cloudflare Workers.
 
@@ -151,6 +152,9 @@ export default async function RootLayout({
     ? (process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID ?? '')
     : '';
 
+  const uiRedesignEnabled = getFeatureFlag('enable_ui_redesign');
+  const bodyClassName = `${beVietnamPro.variable} ${dmSans.variable} ${jetbrainsMono.variable} antialiased${uiRedesignEnabled ? ' theme-amber' : ''}`;
+
   return (
     <html lang={locale} className="dark" suppressHydrationWarning>
       <head>
@@ -187,7 +191,7 @@ export default async function RootLayout({
         />
       </head>
       <body
-        className={`${beVietnamPro.variable} ${dmSans.variable} ${jetbrainsMono.variable} antialiased`}
+        className={bodyClassName}
       >
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:outline-none">
           Skip to main content

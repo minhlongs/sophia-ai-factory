@@ -31,7 +31,7 @@ export async function generateMetadata({
 
 export default function CreateVideoPage() {
   return (
-    <main className="min-h-screen bg-[#0F0F11]">
+    <main className="min-h-screen dark stitch-indigo">
       <VideoCreationWizard />
     </main>
   );

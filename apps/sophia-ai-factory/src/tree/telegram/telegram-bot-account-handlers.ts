@@ -24,7 +24,10 @@ I can help you manage your AI video campaigns directly from Telegram.
 *Available commands:*
 /start - Show this welcome message
 /campaign <topic> - Start a new campaign
+/campaign list - List all your campaigns
+/campaign cancel <id> - Stop a running campaign
 /status - Check progress of active campaigns
+/analytics - Campaign performance snapshot
 /results - Get links to your completed videos
 /help - Show all commands
 `
@@ -38,7 +41,10 @@ export async function handleHelp(chatId: string) {
 • /start - Welcome & Setup
 • /email <email> - Link your Sophia account
 • /campaign <topic> - Create a new video campaign (e.g., "/campaign Eco-friendly gadgets")
+• /campaign list - List all your campaigns
+• /campaign cancel <id> - Stop a running campaign
 • /status - Check status of running campaigns
+• /analytics - Campaign performance snapshot
 • /results - View your completed campaigns
 • /help - Show this list
 `

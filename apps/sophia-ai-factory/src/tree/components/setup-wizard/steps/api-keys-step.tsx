@@ -10,6 +10,7 @@ interface ApiKeysStepProps {
     ELEVENLABS_API_KEY: string;
     DID_API_KEY: string;
     MUAPI_API_KEY: string;
+    REPLICATE_API_KEY: string;
   };
   updateConfig: (key: string, value: string) => void;
   verifyKey: (service: string, keyName: string, keyValue: string) => Promise<boolean>;
@@ -46,14 +47,13 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, l
       <div className="space-y-1">
         <ApiKeyInput
           id="elevenlabs"
-          label={t('elevenlabs.label')}
+          label={`${t('elevenlabs.label')}  (${t('elevenlabs.optionalBadge')})`}
           value={config.ELEVENLABS_API_KEY}
           onChange={(v) => updateConfig('ELEVENLABS_API_KEY', v)}
           onVerify={() => verifyKey('elevenlabs', 'ELEVENLABS_API_KEY', config.ELEVENLABS_API_KEY)}
           status={status.ELEVENLABS_API_KEY}
           errorMessage={errors.ELEVENLABS_API_KEY}
           placeholder={t('elevenlabs.placeholder')}
-          required
           helpText={t('elevenlabs.help')}
           latency={latencies?.ELEVENLABS_API_KEY}
         />
@@ -63,14 +63,13 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, l
       <div className="space-y-1">
         <ApiKeyInput
           id="did"
-          label={t('did.label')}
+          label={`${t('did.label')}  (${t('did.optionalBadge')})`}
           value={config.DID_API_KEY}
           onChange={(v) => updateConfig('DID_API_KEY', v)}
           onVerify={() => verifyKey('d-id', 'DID_API_KEY', config.DID_API_KEY)}
           status={status.DID_API_KEY}
           errorMessage={errors.DID_API_KEY}
           placeholder={t('did.placeholder')}
-          required
           helpText={t('did.help')}
           latency={latencies?.DID_API_KEY}
         />
@@ -92,7 +91,7 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, l
 
       <ApiKeyInput
         id="muapi"
-        label={t('muapi.label')}
+        label={`${t('muapi.label')}  (${t('muapi.optionalBadge')})`}
         value={config.MUAPI_API_KEY}
         onChange={(v) => updateConfig('MUAPI_API_KEY', v)}
         onVerify={() => verifyKey('muapi', 'MUAPI_API_KEY', config.MUAPI_API_KEY)}
@@ -102,6 +101,21 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, l
         helpText={t('muapi.help')}
         latency={latencies?.MUAPI_API_KEY}
       />
+
+      <div className="mt-4">
+        <ApiKeyInput
+          id="replicate"
+          label={`${t('replicate.label')}  (${t('replicate.optionalBadge')})`}
+          value={config.REPLICATE_API_KEY}
+          onChange={(v) => updateConfig('REPLICATE_API_KEY', v)}
+          onVerify={() => verifyKey('replicate', 'REPLICATE_API_KEY', config.REPLICATE_API_KEY)}
+          status={status.REPLICATE_API_KEY}
+          errorMessage={errors.REPLICATE_API_KEY}
+          placeholder={t('replicate.placeholder')}
+          helpText={t('replicate.help')}
+          latency={latencies?.REPLICATE_API_KEY}
+        />
+      </div>
     </div>
   );
 }

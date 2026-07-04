@@ -8,6 +8,7 @@
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { requireManagerRole } from '@/seed/db/org-membership';
 import type {
   RaasLicenseRow as RaasLicense,
   RaasLicenseUpdate,
@@ -17,7 +18,43 @@ import { getLicenseByNonce } from './raas-license-crud';
 export type { LicenseCreationParams } from './raas-license-crud';
 export { createLicense, getLicenseByNonce, getLicenses } from './raas-license-crud';
 
-/** Revoke a license by nonce */
+/**
+ * Resolve the org_id for a license by looking up the license owner's org membership.
+ */
+async function getLicenseOrgId(nonce: string): Promise<string | null> {
+  const db = createServerClient();
+  const license = await getLicenseByNonce(nonce);
+  if (!license?.user_id) return null;
+
+  const { data: membership } = await db
+    .from('org_members')
+    .select('org_id')
+    .eq('user_id', license.user_id)
+    .maybeSingle();
+
+  return (membership as { org_id: string } | null)?.org_id ?? null;
+}
+
+/**
+ * Verify that a user has admin/owner access to the license's org.
+ * Throws if the user lacks permission.
+ */
+async function requireLicenseAdmin(nonce: string, userId: string): Promise<void> {
+  if (!userId) throw new Error('Authentication required');
+
+  const result = await requireManagerRole(userId);
+  if (!result.authorized) {
+    throw new Error(result.error);
+  }
+
+  // Verify the user is in the same org as the license owner
+  const licenseOrgId = await getLicenseOrgId(nonce);
+  if (licenseOrgId && result.orgId !== licenseOrgId) {
+    throw new Error('Forbidden: user does not belong to the license owner organization');
+  }
+}
+
+/** Revoke a license by nonce (owner/admin only) */
 export async function revokeLicense(nonce: string, revokedBy?: string): Promise<RaasLicense> {
   const db = createServerClient();
   const revokedAt = Math.floor(Date.now() / 1000);
@@ -25,6 +62,11 @@ export async function revokeLicense(nonce: string, revokedBy?: string): Promise<
   const existingLicense = await getLicenseByNonce(nonce);
   if (!existingLicense) {
     throw new Error(`License not found: ${nonce}`);
+  }
+
+  // Role check: only owner/admin can revoke
+  if (revokedBy) {
+    await requireLicenseAdmin(nonce, revokedBy);
   }
 
   const updateData: RaasLicenseUpdate = {
@@ -43,13 +85,18 @@ export async function revokeLicense(nonce: string, revokedBy?: string): Promise<
   return data as unknown as RaasLicense;
 }
 
-/** Extend license expiration by N days */
+/** Extend license expiration by N days (owner/admin only) */
 export async function extendLicense(nonce: string, days: number, extendedBy?: string): Promise<RaasLicense> {
   const db = createServerClient();
 
   const existingLicense = await getLicenseByNonce(nonce);
   if (!existingLicense) throw new Error(`License not found: ${nonce}`);
   if (existingLicense.is_revoked) throw new Error(`Cannot extend revoked license: ${nonce}`);
+
+  // Role check: only owner/admin can extend
+  if (extendedBy) {
+    await requireLicenseAdmin(nonce, extendedBy);
+  }
 
   const now = Math.floor(Date.now() / 1000);
   const currentExpiresAt = existingLicense.expires_at ?? now;

@@ -15,7 +15,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Loader2, Video, Zap, AlertTriangle, Mail, CheckCircle2, MessageCircle } from 'lucide-react';
+import { Loader2, Video, Zap, AlertTriangle, Mail, CheckCircle2, MessageCircle, PlayCircle } from 'lucide-react';
 import { buildOnboardingSteps, StepCard, type WelcomeData } from './welcome-onboarding-steps';
 import { generateTelegramPairingTokenAction } from '@/app/actions/generate-telegram-pairing-token';
 
@@ -31,6 +31,7 @@ export function WelcomePageClient({ token, locale }: Props) {
   const [started, setStarted] = useState(false);
   const [telegramLinking, setTelegramLinking] = useState(false);
   const [telegramLinked, setTelegramLinked] = useState(false);
+  const [creatingFirstVideo, setCreatingFirstVideo] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -54,6 +55,21 @@ export function WelcomePageClient({ token, locale }: Props) {
     try {
       // Send locale in body so the API can build a locale-aware redirectUrl
       // without relying on Accept-Language header parsing (explicit > implicit).
+      const res = await fetch(`/api/welcome/validate/${token}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ locale }),
+      });
+      const data = await res.json() as { redirectUrl?: string };
+      window.location.href = data.redirectUrl ?? `/${locale}/dashboard`;
+    } catch {
+      window.location.href = `/${locale}/dashboard`;
+    }
+  }
+
+  async function handleCreateFirstVideo() {
+    setCreatingFirstVideo(true);
+    try {
       const res = await fetch(`/api/welcome/validate/${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -126,6 +142,38 @@ export function WelcomePageClient({ token, locale }: Props) {
           <p className="text-xs text-muted-foreground mt-3">
             {t('singleUseHint')}
           </p>
+        </div>
+      </div>
+
+      {/* Create First Video CTA — consume token and go to dashboard, only OpenRouter needed */}
+      <div className="max-w-2xl mx-auto px-6 pb-4">
+        <div className="rounded-2xl border border-violet-500/30 bg-violet-900/10 p-5">
+          <div className="flex items-start gap-4">
+            <div className="w-10 h-10 rounded-full bg-violet-500/20 border border-violet-500/30 flex items-center justify-center shrink-0">
+              <PlayCircle aria-hidden="true" size={20} className="text-violet-300" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold text-foreground mb-1">
+                {t('createFirstVideo.title')}
+              </h3>
+              <p className="text-sm text-muted-foreground mb-1">
+                {t('createFirstVideo.description')}
+              </p>
+              <p className="text-xs text-muted-foreground/70 mb-3 italic">
+                {t('createFirstVideo.subtitle')}
+              </p>
+              <button
+                onClick={() => void handleCreateFirstVideo()}
+                disabled={creatingFirstVideo}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none"
+              >
+                {creatingFirstVideo
+                  ? <Loader2 aria-hidden="true" size={16} className="animate-spin" />
+                  : <PlayCircle aria-hidden="true" size={16} />}
+                {t('createFirstVideo.cta')}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

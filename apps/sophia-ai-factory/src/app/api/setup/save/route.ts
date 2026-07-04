@@ -26,6 +26,7 @@ const setupSaveSchema = z
       MUAPI_API_KEY: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
       APOLLO_API_KEY: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
       HUNTER_API_KEY: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
+      REPLICATE_API_KEY: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
     }),
   })
   .refine(
@@ -62,6 +63,7 @@ const PROVIDER_MAP: Record<string, ByokProvider> = {
   MUAPI_API_KEY: 'muapi',
   APOLLO_API_KEY: 'apollo',
   HUNTER_API_KEY: 'hunter',
+  REPLICATE_API_KEY: 'replicate',
 };
 
 export async function POST(request: NextRequest) {

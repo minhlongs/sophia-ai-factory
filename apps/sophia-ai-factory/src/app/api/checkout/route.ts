@@ -287,7 +287,7 @@ if (promoCode && validation?.valid && calc.isFreeOrder && validation.discountTyp
           try {
             let invoiceUrl: string
             try {
-              const result = await createCheckout({ tierId: tier, userId, customerEmail });
+              const result = await createCheckout({ tierId: tier, userId, customerEmail, period: period === 'monthly' || period === 'yearly' ? period : undefined });
               invoiceUrl = result.invoiceUrl;
             } catch (sdkErr) {
               logger.warn('[Checkout/POST] SDK checkout failed, falling back to pre-created invoice', {
@@ -307,6 +307,7 @@ if (promoCode && validation?.valid && calc.isFreeOrder && validation.discountTyp
               customer_email: customerEmail,
               invoice_url: invoiceUrl,
             });
+
             return NextResponse.json({ url: invoiceUrl, orderId });
           } catch (npErr) {
             const msg = npErr instanceof Error ? npErr.message : String(npErr);

@@ -37,7 +37,7 @@ function SignupLoadingState() {
   return (
     <div className="min-h-screen bg-[#0F0F11] flex flex-col items-center justify-center">
       <h1 className="text-3xl font-bold text-white tracking-tight">
-        Sophia<span className="text-[#6366F1]">.</span>
+        Sophia<span className="text-primary">.</span>
       </h1>
       <p className="mt-4 text-sm text-zinc-400">Redirecting...</p>
     </div>

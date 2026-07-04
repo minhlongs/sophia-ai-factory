@@ -23,6 +23,7 @@ export const BrandingSchema = z.object({
   logoUrl: httpsUrlOrNull,
   primaryColor: hexColorSchema,
   accentColor: hexColorSchema.nullable(),
+  agencyName: z.string().max(200).nullable(),
   welcomeMessage: z.string().max(2000).nullable(),
   customDomain: z.string().nullable(),
   emailFromName: z.string().max(100).nullable(),

@@ -8,6 +8,7 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@/seed/db/client";
 import { getCurrentUserFromHeaders } from "@/seed/auth/better-auth-session";
 import { logger } from "@/seed/utils/logger-utility";
+import { REFERRAL_REWARD_CENTS } from "@/seed/config/tiers/tier-configs";
 
 /** Generate a short alphanumeric referral code */
 function generateCode(length = 8): string {
@@ -80,7 +81,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         code,
         uses: 0,
         max_uses: null,
-        reward_amount: 1990,
+        reward_amount: REFERRAL_REWARD_CENTS,
       })
       .select("code, uses, reward_amount")
       .single();
