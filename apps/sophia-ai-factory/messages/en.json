@@ -5206,15 +5206,15 @@
         "storage": "Object Storage",
         "status": "Status",
         "lastPoll": "Last Poll",
-        "lastPollValue": "Last Poll Value"
+        "lastPollValue": "2 mins ago"
       },
       "quickActions": "Quick Actions",
       "recentActivity": "Recent Activity",
       "latency": "Latency",
       "status": "Status",
-      "pageTitle": "Page Title",
-      "badge": "Badge",
-      "searchPlaceholder": "Search Placeholder",
+      "pageTitle": "Admin",
+      "badge": "System Console",
+      "searchPlaceholder": "Search systems, users, or logs...",
       "aria": {
         "mainContent": "Main Content",
         "search": "Search",
@@ -5229,17 +5229,18 @@
         "signupsTable": "Signups Table",
         "previousPage": "Previous Page",
         "nextPage": "Next Page",
-        "deployStatus": "Deploy Status"
+        "deployStatus": "Deploy Status",
+        "userActions": "Actions for {name}"
       },
-      "userInitials": "User Initials",
+      "userInitials": "U",
       "chart": {
-        "title": "Title",
-        "30d": "30d",
-        "90d": "90d"
+        "title": "User Growth",
+        "30d": "30 DAYS",
+        "90d": "90 DAYS"
       },
       "recentSignups": {
-        "title": "Title",
-        "viewAll": "View All",
+        "title": "Recent Signups",
+        "viewAll": "VIEW ALL",
         "columns": {
           "user": "User",
           "tier": "Tier",
@@ -5247,7 +5248,7 @@
           "status": "Status",
           "actions": "Actions"
         },
-        "showing": "Showing {from}–{to} of {total}",
+        "showing": "Showing {from}–{to} of {total} users",
         "status": {
           "active": "Active",
           "suspended": "Suspended"
@@ -5274,6 +5275,24 @@
         },
         "signups": {
           "label": "Signups (30d)"
+        },
+        "dau": {
+          "label": "DAU"
+        },
+        "mrr": {
+          "label": "MRR"
+        },
+        "activeUsers": {
+          "label": "Active Users"
+        },
+        "serverUptime": {
+          "label": "Server Uptime"
+        },
+        "apiLatency": {
+          "label": "API Latency"
+        },
+        "d1Queries": {
+          "label": "D1 Queries/s"
         }
       }
     },
@@ -5318,7 +5337,8 @@
         "upgradePlan": "Upgrade Plan",
         "notifications": "Notifications",
         "localeEnglish": "Locale English",
-        "localeVietnamese": "Locale Vietnamese"
+        "localeVietnamese": "Locale Vietnamese",
+        "generate": "Generate"
       },
       "breadcrumb": {
         "home": "Home",
@@ -5335,19 +5355,29 @@
         "title": "GPU Rendering Credits",
         "usage": "{used} / {total}",
         "resetsIn": "Resets in {days} days.",
-        "buyMore": "Buy more"
+        "buyMore": "Buy more",
+        "ariaLabel": "GPU usage: {percent}%"
       },
       "stats": {
         "impressions": "Total Impressions",
         "engagement": "Engagement",
         "avgConversion": "Avg. Conversion",
-        "activeRenders": "Active Renders"
+        "activeRenders": "Active Renders",
+        "last30Days": "Last 30 days active campaigns",
+        "industryAvg": "Target industry avg: 3.2%"
       },
       "recentProjects": {
         "title": "Recent Projects",
         "viewAll": "View All Projects",
         "createNew": "Create New",
-        "modified": "Modified {time} ago"
+        "modified": "Modified {time} ago",
+        "startPrompt": "Start from a template or prompt"
+      },
+      "footer": {
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service",
+        "documentation": "Documentation",
+        "copyright": "© {year} Sophia AI Factory. All rights reserved."
       }
     },
     "affiliate": {
@@ -5405,6 +5435,7 @@
       "conversions": {
         "title": "Recent Conversions",
         "viewAll": "View All Conversions",
+        "downloadReport": "Download Report (CSV)",
         "columns": {
           "id": "ID",
           "amount": "Amount",
@@ -5421,6 +5452,7 @@
       "referral": {
         "title": "Your Referral Link",
         "subtitle": "Share your link and earn rewards when friends sign up.",
+        "description": "Share this link to earn commission from new factory creators.",
         "generateButton": "Generate Referral Link",
         "generating": "Generating...",
         "copyButton": "Copy",
@@ -5494,6 +5526,13 @@
       },
       "chart": {
         "title": "Performance — Last 30 Days",
+        "labels": {
+          "0": "Sept 01",
+          "1": "Sept 08",
+          "2": "Sept 15",
+          "3": "Sept 22",
+          "4": "Sept 29"
+        },
         "legend": {
           "views": "Views",
           "revenue": "Revenue"
@@ -5743,7 +5782,8 @@
       "status": {
         "live": "Live",
         "paused": "Paused",
-        "draft": "Draft"
+        "draft": "Draft",
+        "done": "Done"
       },
       "filter": {
         "all": "All",
@@ -5799,6 +5839,48 @@
         "moreOptions": "More options for",
         "channelIcons": "Target channels"
       }
+    },
+    "video-creation": {
+      "title": "Create New Video",
+      "stepIndicator": "Step indicator",
+      "step": "Step",
+      "steps": {
+        "script": "Script",
+        "voice": "Voice",
+        "visual": "Visual",
+        "review": "Review"
+      },
+      "scriptInput": "Script Input",
+      "aiGenerate": "AI Generate",
+      "scriptPlaceholder": "Describe your video topic or paste a script...",
+      "generatedPreview": "Generated Script Preview",
+      "previewPlaceholder1": "Scene 1: Wide shot of Neo-Tokyo skyline. Rain is falling, illuminated by massive neon billboards advertising AI solutions.",
+      "previewPlaceholder2": "Scene 2: Close up on a protagonist's cybernetic eye, reflecting the scrolling code of a mysterious message.",
+      "previewPlaceholder3": "Scene 3: A montage of high-speed data centers, cooling fans spinning rapidly, orange status lights flickering in the dark.",
+      "previewPlaceholder4": "Scene 4: Transition to a calm, white architectural space representing the AI's core consciousness.",
+      "characterCount": "Character count: {current} / {max}",
+      "percentUsed": "{percent}% Used",
+      "characterProgress": "Character progress: {percent}%",
+      "sidebarLabel": "Video creation sidebar",
+      "preview": "Preview",
+      "previewDuration": "3:24",
+      "voicePreview": "Voice Preview",
+      "playVoicePreview": "Play Voice Preview",
+      "voiceProgress": "Voice preview progress",
+      "voices": {
+        "aria": "Aria - Professional Narrator",
+        "marcus": "Marcus - Tech Evangelist",
+        "sophia": "Sophia - Ethereal AI",
+        "nova": "Nova - Energetic Storyteller"
+      },
+      "visualStyle": "Visual Style",
+      "visualStyles": {
+        "cinematic": "Cinematic",
+        "template": "Template"
+      },
+      "stepNavigation": "Step Navigation",
+      "back": "Back",
+      "continueToVoice": "Continue to Voice"
     }
   },
   "audit": {
@@ -5892,26 +5974,5 @@
     "create_campaign": "Create campaign",
     "title": "Title",
     "subtitle": "Subtitle"
-  },
-  "stepIndicator": "Step Indicator",
-  "step": "Step",
-  "scriptInput": "Script Input",
-  "aiGenerate": "Ai Generate",
-  "scriptPlaceholder": "Script Placeholder",
-  "generatedPreview": "Generated Preview",
-  "previewPlaceholder1": "Preview Placeholder1",
-  "previewPlaceholder2": "Preview Placeholder2",
-  "previewPlaceholder3": "Preview Placeholder3",
-  "previewPlaceholder4": "Preview Placeholder4",
-  "sidebarLabel": "Sidebar Label",
-  "preview": "Preview",
-  "previewDuration": "Preview Duration",
-  "voicePreview": "Voice Preview",
-  "playVoicePreview": "Play Voice Preview",
-  "voiceProgress": "Voice Progress",
-  "visualStyle": "Visual Style",
-  "stepNavigation": "Step Navigation",
-  "continueToVoice": "Continue To Voice",
-  "voices": {},
-  "visualStyles": {}
+  }
 }

@@ -4,7 +4,6 @@ import type { Metadata, Viewport } from "next";
 import nextDynamic from "next/dynamic";
 import { Be_Vietnam_Pro, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "../globals.css";
-import { Navbar } from "@/app/components/layout/navbar";
 import { QueryProvider } from "@/forest/components/providers/query-provider";
 import { PostHogProvider } from "@/forest/components/posthog-provider";
 
@@ -207,7 +206,6 @@ export default async function RootLayout({
             nonce={nonce}
           >
             <QueryProvider>
-              <Navbar />
               {children}
               <MockModeIndicator />
               <FloatingHelpButton />

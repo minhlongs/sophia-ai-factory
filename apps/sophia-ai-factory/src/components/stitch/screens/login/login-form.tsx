@@ -93,16 +93,17 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         </div>
       )}
 
+      {/* Login form — Stitch indigo-dark styling */}
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
         {/* Email field */}
         <div className="space-y-1.5">
           <label
             htmlFor="email"
-            className="text-sm font-medium text-zinc-300"
+            className="text-[13px] font-medium text-[#A1A1AA]"
           >
             {t('emailLabel')}
           </label>
-          <div className="relative">
+          <div className="relative group">
             <Mail
               className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none"
               aria-hidden="true"
@@ -114,7 +115,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
               placeholder={t('emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full h-11 pl-10 pr-3 rounded-lg border border-zinc-700 bg-[#0F0F11] text-zinc-100 text-sm placeholder-zinc-500 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary/60 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full h-[44px] pl-10 pr-4 rounded-lg border border-zinc-700 bg-[#0F0F11] text-white text-sm placeholder-zinc-600 transition-all focus:ring-2 focus:ring-primary focus:border-transparent outline-none disabled:cursor-not-allowed disabled:opacity-50"
               required
               aria-required="true"
               aria-describedby={error ? 'login-error' : undefined}
@@ -128,18 +129,18 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           <div className="flex justify-between items-center">
             <label
               htmlFor="password"
-              className="text-sm font-medium text-zinc-300"
+              className="text-[13px] font-medium text-[#A1A1AA]"
             >
               {t('passwordLabel')}
             </label>
             <Link
               href="/reset-password"
-              className="text-xs text-primary hover:text-primary/80 transition-colors font-medium"
+              className="text-[13px] font-medium text-primary hover:opacity-80 transition-opacity"
             >
               {t('forgotPassword')}
             </Link>
           </div>
-          <div className="relative">
+          <div className="relative group">
             <Lock
               className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 pointer-events-none"
               aria-hidden="true"
@@ -148,10 +149,10 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
               id="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
-              placeholder={t('passwordPlaceholder')}
+              placeholder={t('passwordPlaceholder') || '• • • • • • • •'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full h-11 pl-10 pr-10 rounded-lg border border-zinc-700 bg-[#0F0F11] text-zinc-100 text-sm placeholder-zinc-500 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/60 focus:border-primary/60 disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full h-[44px] pl-10 pr-10 rounded-lg border border-zinc-700 bg-[#0F0F11] text-white text-sm placeholder-zinc-600 transition-all focus:ring-2 focus:ring-primary focus:border-transparent outline-none disabled:cursor-not-allowed disabled:opacity-50"
               required
               aria-required="true"
               aria-describedby={error ? 'login-error' : undefined}
@@ -160,24 +161,24 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors rounded-sm p-0.5"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors rounded-sm p-0.5"
               aria-label={showPassword ? t('hidePassword') : t('showPassword')}
               tabIndex={-1}
             >
               {showPassword ? (
-                <EyeOff className="w-4 h-4" aria-hidden="true" />
+                <EyeOff className="w-[20px] h-[20px]" aria-hidden="true" />
               ) : (
-                <Eye className="w-4 h-4" aria-hidden="true" />
+                <Eye className="w-[20px] h-[20px]" aria-hidden="true" />
               )}
             </button>
           </div>
         </div>
 
-        {/* Submit button — Stitch indigo primary */}
+        {/* Submit button — Stitch indigo accent */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-11 inline-flex items-center justify-center rounded-lg bg-primary text-white text-sm font-medium transition-all hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-background disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]"
+          className="w-full h-[44px] inline-flex items-center justify-center rounded-lg bg-primary text-white text-[15px] font-semibold transition-all hover:brightness-110 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-[#0F0F11] shadow-lg shadow-primary/20 disabled:pointer-events-none disabled:opacity-50"
           aria-label={t('submit')}
         >
           {loading ? (
@@ -191,7 +192,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         </button>
       </form>
 
-      {/* Divider */}
+      {/* Divider — Stitch material style */}
       <div className="relative my-8" role="separator" aria-orientation="horizontal">
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-zinc-800" />
@@ -203,13 +204,13 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         </div>
       </div>
 
-      {/* Social buttons — ghost with border */}
+      {/* Social buttons — Stitch ghost style with border */}
       <div className="grid grid-cols-2 gap-3 mb-8">
         <button
           type="button"
           disabled
           title={t('ssoComingSoon')}
-          className="inline-flex items-center justify-center gap-2 h-11 rounded-lg border border-zinc-700 bg-transparent text-zinc-300 text-sm font-medium transition-colors hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-primary/60 disabled:pointer-events-none disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 h-[44px] rounded-lg border border-zinc-800 bg-transparent text-white text-sm font-medium transition-colors hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-primary disabled:pointer-events-none disabled:opacity-50"
           aria-label={t('googleSignIn')}
         >
           <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true" role="img">
@@ -226,7 +227,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           type="button"
           onClick={handleMagicLink}
           disabled={magicLinkLoading}
-          className="inline-flex items-center justify-center gap-2 h-11 rounded-lg border border-zinc-700 bg-transparent text-zinc-300 text-sm font-medium transition-colors hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-primary/60 disabled:pointer-events-none disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 h-[44px] rounded-lg border border-zinc-800 bg-transparent text-white text-sm font-medium transition-colors hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-primary disabled:pointer-events-none disabled:opacity-50"
           aria-label="Magic Link"
         >
           {magicLinkLoading ? (
@@ -254,7 +255,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         {t('noAccount')}{' '}
         <Link
           href="/auth/signup"
-          className="text-primary hover:text-primary/80 font-medium transition-colors"
+          className="text-primary hover:opacity-80 font-medium transition-opacity"
         >
           {t('signUp')}
         </Link>

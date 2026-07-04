@@ -354,13 +354,6 @@ else
   echo "⚠️ SKIP_PRE_DEPLOY_GATE=1 — bypassing pre-deploy gate"
 fi
 
-# ─── Step 0: Pre-deploy gate (route audit + render check + CSS audit) ────────
-if [ "${SKIP_PRE_DEPLOY_GATE:-0}" != "1" ]; then
-  echo "==> pre-deploy-gate"
-  node scripts/pre-deploy-gate.mjs || exit $?
-else
-  echo "⚠️  SKIP_PRE_DEPLOY_GATE=1 — skipping pre-deploy gate"
-fi
 
 # ─── Step 1: Next.js build ───────────────────────────────────────────────────
 # NEXT_PUBLIC_* vars are baked into the client bundle at build time.

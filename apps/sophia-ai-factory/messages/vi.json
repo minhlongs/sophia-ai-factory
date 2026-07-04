@@ -5213,15 +5213,15 @@
         "storage": "Object Storage",
         "status": "Status",
         "lastPoll": "Last Poll",
-        "lastPollValue": "Last Poll Value"
+        "lastPollValue": "2 mins ago"
       },
       "quickActions": "Quick Actions",
       "recentActivity": "Recent Activity",
       "latency": "Latency",
       "status": "Status",
-      "pageTitle": "Page Title",
-      "badge": "Badge",
-      "searchPlaceholder": "Search Placeholder",
+      "pageTitle": "Admin",
+      "badge": "System Console",
+      "searchPlaceholder": "Search systems, users, or logs...",
       "aria": {
         "mainContent": "Main Content",
         "search": "Search",
@@ -5236,17 +5236,18 @@
         "signupsTable": "Signups Table",
         "previousPage": "Previous Page",
         "nextPage": "Next Page",
-        "deployStatus": "Deploy Status"
+        "deployStatus": "Deploy Status",
+        "userActions": "Actions for {name}"
       },
-      "userInitials": "User Initials",
+      "userInitials": "U",
       "chart": {
-        "title": "Title",
-        "30d": "30d",
-        "90d": "90d"
+        "title": "User Growth",
+        "30d": "30 DAYS",
+        "90d": "90 DAYS"
       },
       "recentSignups": {
-        "title": "Title",
-        "viewAll": "View All",
+        "title": "Recent Signups",
+        "viewAll": "VIEW ALL",
         "columns": {
           "user": "User",
           "tier": "Tier",
@@ -5254,7 +5255,7 @@
           "status": "Status",
           "actions": "Actions"
         },
-        "showing": "Hiển thị {from}–{to} / {total}",
+        "showing": "Showing {from}–{to} of {total} users",
         "status": {
           "active": "Active",
           "suspended": "Suspended"
@@ -5281,6 +5282,24 @@
         },
         "signups": {
           "label": "Đăng Ký (30 ngày)"
+        },
+        "dau": {
+          "label": "DAU"
+        },
+        "mrr": {
+          "label": "MRR"
+        },
+        "activeUsers": {
+          "label": "Active Users"
+        },
+        "serverUptime": {
+          "label": "Server Uptime"
+        },
+        "apiLatency": {
+          "label": "API Latency"
+        },
+        "d1Queries": {
+          "label": "D1 Queries/s"
         }
       }
     },
@@ -5325,7 +5344,8 @@
         "upgradePlan": "Nang cap goi",
         "notifications": "Thong bao",
         "localeEnglish": "Locale English",
-        "localeVietnamese": "Locale Vietnamese"
+        "localeVietnamese": "Locale Vietnamese",
+        "generate": "Tao"
       },
       "breadcrumb": {
         "home": "Trang chu",
@@ -5342,19 +5362,29 @@
         "title": "GPU Render",
         "usage": "{used} / {total}",
         "resetsIn": "Dat lai sau {days} ngay.",
-        "buyMore": "Mua them"
+        "buyMore": "Mua them",
+        "ariaLabel": "GPU su dung: {percent}%"
       },
       "stats": {
         "impressions": "Tong luot xem",
         "engagement": "Tuong tac",
         "avgConversion": "Chuyen doi TB",
-        "activeRenders": "Dang render"
+        "activeRenders": "Dang render",
+        "last30Days": "30 ngay chien dich gan day",
+        "industryAvg": "Muc tieu TB nganh: 3.2%"
       },
       "recentProjects": {
         "title": "Du an gan day",
         "viewAll": "Xem tat ca",
         "createNew": "Tao moi",
-        "modified": "Sua {time} truoc"
+        "modified": "Sua {time} truoc",
+        "startPrompt": "Bat dau tu template hoac prompt"
+      },
+      "footer": {
+        "privacy": "Chinh sach bao mat",
+        "terms": "Dieu khoan dich vu",
+        "documentation": "Tai lieu",
+        "copyright": "© {year} Sophia AI Factory. Da dang ky ban quyen."
       }
     },
     "affiliate": {
@@ -5412,6 +5442,7 @@
       "conversions": {
         "title": "Chuyển Đổi Gần Đây",
         "viewAll": "Xem Tất Cả Chuyển Đổi",
+        "downloadReport": "Tải Báo Cáo (CSV)",
         "columns": {
           "id": "Mã GD",
           "amount": "Số Tiền",
@@ -5428,6 +5459,7 @@
       "referral": {
         "title": "Liên Kết Giới Thiệu Của Bạn",
         "subtitle": "Chia sẻ link và nhận thưởng khi bạn bè đăng ký.",
+        "description": "Chia sẻ link này để kiếm hoa hồng từ những nhà sáng tạo mới.",
         "generateButton": "Tạo Link Giới Thiệu",
         "generating": "Đang tạo...",
         "copyButton": "Sao Chép",
@@ -5501,6 +5533,13 @@
       },
       "chart": {
         "title": "Hiệu Suất — 30 Ngày Qua",
+        "labels": {
+          "0": "01 Thg 9",
+          "1": "08 Thg 9",
+          "2": "15 Thg 9",
+          "3": "22 Thg 9",
+          "4": "29 Thg 9"
+        },
         "legend": {
           "views": "Lượt xem",
           "revenue": "Doanh thu"
@@ -5750,7 +5789,8 @@
       "status": {
         "live": "Đang chạy",
         "paused": "Tạm dừng",
-        "draft": "Bản nháp"
+        "draft": "Bản nháp",
+        "done": "Hoàn thành"
       },
       "filter": {
         "all": "Tất cả",
@@ -5806,6 +5846,48 @@
         "moreOptions": "Thêm tùy chọn cho",
         "channelIcons": "Kênh mục tiêu"
       }
+    },
+    "video-creation": {
+      "title": "Tạo Video Mới",
+      "stepIndicator": "Chỉ dẫn bước",
+      "step": "Bước",
+      "steps": {
+        "script": "Kịch Bản",
+        "voice": "Giọng Nói",
+        "visual": "Hình Ảnh",
+        "review": "Xem Lại"
+      },
+      "scriptInput": "Nhập Kịch Bản",
+      "aiGenerate": "AI Tạo",
+      "scriptPlaceholder": "Mô tả chủ đề video hoặc dán kịch bản của bạn...",
+      "generatedPreview": "Xem Trước Kịch Bản",
+      "previewPlaceholder1": "Cảnh 1: Toàn cảnh Neo-Tokyo. Mưa rơi, được chiếu sáng bởi các bảng quảng cáo AI khổng lồ.",
+      "previewPlaceholder2": "Cảnh 2: Cận cảnh mắt điều khiển của nhân vật chính, phản chiếu mã code của một thông điệp bí ẩn.",
+      "previewPlaceholder3": "Cảnh 3: Cắt cảnh các trung tâm dữ liệu tốc độ cao, quạt làm mát quay nhanh, đèn trạng thái màu cam nhấp nháy trong bóng tối.",
+      "previewPlaceholder4": "Cảnh 4: Chuyển cảnh đến một không gian kiến trúc trắng tĩnh lặng, đại diện cho ý thức cốt lõi của AI.",
+      "characterCount": "Số ký tự: {current} / {max}",
+      "percentUsed": "Đã dùng {percent}%",
+      "characterProgress": "Tiến độ ký tự: {percent}%",
+      "sidebarLabel": "Thanh bên tạo video",
+      "preview": "Xem Trước",
+      "previewDuration": "3:24",
+      "voicePreview": "Xem Trước Giọng Nói",
+      "playVoicePreview": "Xem Thử Giọng Nói",
+      "voiceProgress": "Tiến độ giọng nói",
+      "voices": {
+        "aria": "Aria - Người Thuyết Minh Chuyên Nghiệp",
+        "marcus": "Marcus - Chuyên Gia Công Nghệ",
+        "sophia": "Sophia - AI Huyền Bí",
+        "nova": "Nova - Người Kể Chuyện Năng Động"
+      },
+      "visualStyle": "Phong Cách Hình Ảnh",
+      "visualStyles": {
+        "cinematic": "Điện Ảnh",
+        "template": "Mẫu Có Sẵn"
+      },
+      "stepNavigation": "Điều Hướng Bước",
+      "back": "Quay Lại",
+      "continueToVoice": "Tiếp Tục Đến Giọng Nói"
     }
   },
   "audit": {
@@ -5899,26 +5981,5 @@
     "create_campaign": "Create campaign",
     "title": "Title",
     "subtitle": "Subtitle"
-  },
-  "stepIndicator": "Step Indicator",
-  "step": "Step",
-  "scriptInput": "Script Input",
-  "aiGenerate": "Ai Generate",
-  "scriptPlaceholder": "Script Placeholder",
-  "generatedPreview": "Generated Preview",
-  "previewPlaceholder1": "Preview Placeholder1",
-  "previewPlaceholder2": "Preview Placeholder2",
-  "previewPlaceholder3": "Preview Placeholder3",
-  "previewPlaceholder4": "Preview Placeholder4",
-  "sidebarLabel": "Sidebar Label",
-  "preview": "Preview",
-  "previewDuration": "Preview Duration",
-  "voicePreview": "Voice Preview",
-  "playVoicePreview": "Play Voice Preview",
-  "voiceProgress": "Voice Progress",
-  "visualStyle": "Visual Style",
-  "stepNavigation": "Step Navigation",
-  "continueToVoice": "Continue To Voice",
-  "voices": {},
-  "visualStyles": {}
+  }
 }

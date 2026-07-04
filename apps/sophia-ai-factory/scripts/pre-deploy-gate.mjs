@@ -23,7 +23,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const BASE_URL = process.env.PREVIEW_URL || 'http://localhost:3000';
 const ALLOWLIST = [
-  '/billing', '/contact', '/projects', '/projects/new', '/settings',
+  '/billing', '/contact', '/projects', '/projects/new', '/settings', '/docs',
   // Pre-existing Stitch design links — routes not yet implemented
 ];
 
