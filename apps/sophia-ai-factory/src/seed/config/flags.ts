@@ -65,7 +65,7 @@ export const FEATURE_FLAGS: Record<FeatureFlag, FlagConfig> = {
   enable_ui_redesign: {
     name: "UI Redesign (Two-Tone Amber/Indigo)",
     description: "Enable the new two-tone design system — amber for landing pages, indigo for dashboard",
-    defaultEnabled: false,
+    defaultEnabled: true,
     requiredTier: "BASIC",
   },
 };
@@ -96,7 +96,7 @@ const DEFAULT_FLAGS: FeatureFlagConfig = {
     description: "Early access to beta features for Master tier users",
   },
   enable_ui_redesign: {
-    enabled: false,
+    enabled: true,
     description: "Enable the new two-tone design system — amber for landing pages, indigo for dashboard",
   },
 };
