@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { useRouter, usePathname, Link } from '@/navigation';
 import { Play, Sparkles, Share2, BarChart3, Star, Github } from 'lucide-react';
 import { ScrollReveal } from '@/seed/components/ui/scroll-reveal';
-import { Link } from '@/navigation';
 
 interface Feature {
   key: string;
@@ -25,9 +25,47 @@ const CREATOR_AVATARS = [
 
 export default function LandingHero() {
   const t = useTranslations('stitch.landing');
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const switchLocale = () => {
+    const newLocale = locale === 'en' ? 'vi' : 'en';
+    router.replace(pathname, { locale: newLocale });
+  };
 
   return (
     <>
+      {/* Fixed Top Navigation — Stitch design */}
+      <nav className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-md border-b border-border/30 shadow-sm">
+        <div className="flex justify-between items-center max-w-7xl mx-auto px-6 py-4">
+          {/* Brand Logo */}
+          <Link href="/" className="flex items-center gap-2">
+            <span className="text-xl font-bold tracking-tight text-white">
+              <span className="text-primary">Sophia</span> AI
+            </span>
+          </Link>
+          {/* Nav Links */}
+          <div className="hidden md:flex items-center gap-8 text-sm">
+            <Link href="/features" className="text-muted-foreground hover:text-primary transition-colors">{t('features')}</Link>
+            <Link href="/pricing" className="text-muted-foreground hover:text-primary transition-colors">{t('pricing')}</Link>
+            <Link href="/guide" className="text-muted-foreground hover:text-primary transition-colors">{t('guide')}</Link>
+            <Link href="/affiliates" className="text-muted-foreground hover:text-primary transition-colors">{t('affiliates')}</Link>
+          </div>
+          {/* Right side */}
+          <div className="flex items-center gap-3">
+            <button onClick={switchLocale} className="text-sm text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded" aria-label="Switch language">
+              {locale === 'en' ? 'VI' : 'EN'}
+            </button>
+            <Link href="/login" className="px-5 py-2 rounded-lg text-muted-foreground hover:text-primary transition-all text-sm">
+              {t('logIn')}
+            </Link>
+            <Link href="/auth/signup" className="px-6 py-2.5 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-sm">
+              {t('getStarted')}
+            </Link>
+          </div>
+        </div>
+      </nav>
       <main
         className="relative min-h-screen pt-24 flex flex-col items-center justify-center overflow-hidden"
         style={{
