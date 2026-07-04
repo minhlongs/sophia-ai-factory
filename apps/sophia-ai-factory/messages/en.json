@@ -33,12 +33,14 @@
       "elevenlabs": {
         "label": "ElevenLabs API Key (Voice)",
         "placeholder": "sk_...",
-        "help": "Get your key at elevenlabs.io/subscription"
+        "help": "Get your key at elevenlabs.io/subscription",
+        "optionalBadge": "Add later"
       },
       "did": {
         "label": "D-ID API Key (Avatar)",
         "placeholder": "Basic ...",
-        "help": "Get your key at studio.d-id.com/account-settings"
+        "help": "Get your key at studio.d-id.com/account-settings",
+        "optionalBadge": "Add later"
       },
       "anthropic": {
         "label": "Anthropic API Key (LLM)",
@@ -48,13 +50,19 @@
       "muapi": {
         "label": "MuAPI Key (Music/Audio)",
         "placeholder": "mu_...",
-        "help": "Get your key at muapi.ai/dashboard/api-keys"
+        "help": "Get your key at muapi.ai/dashboard/api-keys",
+        "optionalBadge": "Add later"
+      },
+      "replicate": {
+        "label": "Replicate API Key (Video)",
+        "placeholder": "r8_...",
+        "help": "Get your key at replicate.com/account/api-tokens",
+        "optionalBadge": "Add later"
       }
     },
     "alerts": {
       "invalidKey": "Invalid API key — please double-check and try again",
-      "missingLlm": "At least one LLM key is required (OpenRouter or Anthropic)",
-      "missingHeygen": "HeyGen API key is required to continue"
+      "missingLlm": "At least one LLM key is required (OpenRouter or Anthropic)"
     },
     "header": {
       "title": "Sophia Setup Assistant",
@@ -113,10 +121,10 @@
       "whatYouNeed": {
         "title": "What you'll need:",
         "items": [
-          "OpenRouter or Anthropic API key (for AI/LLM)",
-          "ElevenLabs API key (for voice synthesis)",
-          "D-ID API key (for avatar generation)",
-          "HeyGen API key (for video generation)",
+          "OpenRouter API key (for AI/LLM) — required",
+          "ElevenLabs API key (for voice) — add anytime",
+          "D-ID API key (for avatar) — add anytime",
+          "HeyGen API key (for video) — add anytime",
           "A few minutes of your time"
         ]
       },
@@ -135,7 +143,8 @@
         "anthropic": "Anthropic",
         "elevenlabs": "ElevenLabs",
         "did": "D-ID",
-        "muapi": "MuAPI"
+        "muapi": "MuAPI",
+        "replicate": "Replicate"
       },
       "providers": {
         "heygen": "HeyGen",
@@ -742,6 +751,7 @@
       "new_project": "New Project",
       "campaigns": "Campaigns",
       "analytics": "Analytics",
+      "funnels": "Funnels",
       "my_videos": "My Videos",
       "voices": "Voices",
       "templates": "Templates",
@@ -1086,7 +1096,13 @@
       "recent_completed": "Completed",
       "recent_actions": "Actions",
       "recent_view": "View",
-      "recent_empty": "No campaigns found"
+      "recent_empty": "No campaigns found",
+      "funnel_page_title": "Conversion Funnels",
+      "funnel_page_desc": "Visual breakdown of how users and campaigns progress through each stage of the funnel — from signup to conversion.",
+      "funnel_no_data": "No data yet — start by generating your first campaign",
+      "funnel_error": "Could not load funnel data. Please try again later.",
+      "funnel_date_range": "Showing data from the last {days} days.",
+      "funnel_sidebar": "Funnels"
     },
     "trialBanner": {
       "title": "Your trial expires tomorrow! Upgrade now to keep access →",
@@ -1313,12 +1329,48 @@
     "api_docs": {
       "title": "API Documentation",
       "subtitle": "Integrate Sophia AI into your workflow",
-      "upgrade_required": "Premium Plan Required",
-      "upgrade_message": "API access is available for Premium and Master tier users. Upgrade your plan to unlock API integrations.",
-      "view_plans": "View Plans",
-      "api_key": "Your API Key",
-      "api_key_hint": "Contact support to generate your API key",
-      "endpoints": "Available Endpoints"
+      "api_key": "Your API Keys",
+      "api_key_hint": "Use API keys to authenticate requests. Keep them secret and rotate regularly.",
+      "create_key": "Create New Key",
+      "create_key_name": "Key Name",
+      "create_key_name_placeholder": "e.g. Production API Key",
+      "create_key_submit": "Generate",
+      "create_key_success": "Key created! Copy it now — you won't see it again.",
+      "revoke_key": "Revoke",
+      "revoke_confirm": "Are you sure you want to revoke this key?",
+      "no_keys": "No API keys yet. Create one to get started.",
+      "key_created": "Created",
+      "key_last_used": "Last used",
+      "key_never_used": "Never",
+      "key_active": "Active",
+      "key_revoked": "Revoked",
+      "endpoints": "Available Endpoints",
+      "endpoint_method": "Method",
+      "endpoint_path": "Path",
+      "endpoint_description": "Description",
+      "endpoint_auth": "Auth Required",
+      "endpoint_example": "Example Response",
+      "section_general": "General",
+      "section_checkout": "Checkout & Billing",
+      "section_webhooks": "Webhooks",
+      "section_videos": "Videos",
+      "section_agents": "AI Agents",
+      "section_affiliates": "Affiliates",
+      "section_cron": "Scheduled Jobs (Cron)",
+      "section_sops": "SOP Marketplace",
+      "section_account": "Account",
+      "section_v1": "V1 API",
+      "rate_limits": "Rate Limits & Usage",
+      "rate_limits_desc": "API rate limits vary by tier. Headers are returned with every response.",
+      "rate_limit_basic": "Basic: 60 req/min",
+      "rate_limit_premium": "Premium: 300 req/min",
+      "rate_limit_enterprise": "Enterprise: 1000 req/min",
+      "rate_limit_master": "Master: 5000 req/min",
+      "rate_limit_headers": "Rate limit headers: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset",
+      "auth_yes": "Yes",
+      "auth_no": "No",
+      "auth_bearer": "Bearer Token",
+      "auth_session": "Session"
     },
     "videos": {
       "title": "My Videos",
@@ -1854,6 +1906,8 @@
         "brandColors": "Brand Colors",
         "primaryColor": "Primary Color",
         "accentColor": "Accent Color",
+        "agencyName": "Agency Name",
+        "agencyNamePlaceholder": "Your Company Name",
         "welcomeMessage": "Welcome Message",
         "welcomeMessageHint": "Markdown supported, max 2000 chars",
         "welcomeMessagePlaceholder": "Welcome to our platform!",
@@ -1874,6 +1928,80 @@
         "domain": "Domain",
         "domainHint": "DNS CNAME setup required after saving. Contact support for instructions.",
         "domainPlaceholder": "yourbrand.com"
+      },
+      "team": {
+        "pageTitle": "Team Management",
+        "pageSubtitle": "Manage members in your organization",
+        "inviteTitle": "Invite Member",
+        "inviteEmailPlaceholder": "Enter email...",
+        "inviteButton": "Invite",
+        "memberListTitle": "Team Members",
+        "noMembers": "No team members yet",
+        "you": "You",
+        "removeConfirm": "Are you sure you want to remove this member?",
+        "roleOwner": "Owner",
+        "roleAdmin": "Admin",
+        "roleMember": "Member",
+        "roleViewer": "Viewer",
+        "successInvited": "Member invited successfully",
+        "successRemoved": "Member removed",
+        "successRoleUpdated": "Role updated"
+      }
+    },
+    "affiliate": {
+      "title": "Affiliate Dashboard",
+      "subtitle": "Manage your referrals, track conversions, and maximize your earnings.",
+      "referButton": "Refer a Friend",
+      "kpi": {
+        "totalReferrals": {
+          "label": "Total Referrals"
+        },
+        "active": {
+          "label": "Active"
+        },
+        "commissionEarned": {
+          "label": "Commission Earned"
+        },
+        "pending": {
+          "label": "Pending"
+        }
+      },
+      "referral": {
+        "title": "Your Referral Link",
+        "subtitle": "Share your link and earn rewards when friends sign up.",
+        "generateButton": "Generate Referral Link",
+        "generating": "Generating...",
+        "copyButton": "Copy",
+        "copied": "Copied!",
+        "shareLabel": "Share via:",
+        "shareWhatsApp": "Share on WhatsApp",
+        "shareTelegram": "Share on Telegram",
+        "shareEmail": "Share via Email",
+        "shareText": "Join Sophia AI Factory and start earning!",
+        "emailSubject": "Invitation to join Sophia AI Factory"
+      },
+      "wallet": {
+        "title": "USDT Wallet (TRC20)",
+        "availableBalance": "Available Balance",
+        "withdraw": "Withdraw",
+        "minimumWithdrawal": "Minimum withdrawal {amount}",
+        "toggleVisibility": "Toggle wallet address visibility"
+      }
+    },
+    "referral": {
+      "backToDashboard": "Back to Dashboard",
+      "pageTitle": "Referral Dashboard",
+      "pageSubtitle": "Track your referrals, earnings, and reward history.",
+      "totalReferrals": "Total Referrals",
+      "totalEarned": "Total Earned",
+      "rewardPerReferral": "Reward Per Referral",
+      "historyTitle": "Reward History",
+      "noHistory": "No rewards yet. Share your referral link to start earning!",
+      "statusEarned": "Earned",
+      "tableColumns": {
+        "date": "Date",
+        "reward": "Reward",
+        "status": "Status"
       }
     },
     "campaigns": {
@@ -1927,6 +2055,33 @@
         "completed_campaigns": "Completed",
         "failed_campaigns": "Failed Campaigns",
         "success_rate": "Success Rate"
+      }
+    },
+    "agents": {
+      "onboarding_tour": {
+        "welcome_title": "Meet Your AI Executive Board",
+        "welcome_desc": "Your CEO Agent team is ready to help you manage campaigns, briefings, and revenue — all with AI-powered automation.",
+        "start_tour": "Take the Tour",
+        "dismiss": "Dismiss",
+        "mini_chat": "Chat",
+        "mini_briefing": "Briefing",
+        "mini_campaigns": "Campaigns",
+        "mini_revenue": "Revenue",
+        "title": "AI Executive Board",
+        "subtitle": "Your C-level AI team at a glance",
+        "skip": "Skip Tour",
+        "next": "Next",
+        "back": "Back",
+        "finish": "Get Started",
+        "progress": "Step {current} of {total}",
+        "tour_step1_title": "Chat with Your AI Team",
+        "tour_step1_desc": "Use natural language to assign tasks, ask for strategic advice, and command your AI executive board — no technical skills needed.",
+        "tour_step2_title": "Daily Briefing",
+        "tour_step2_desc": "Every morning, your CEO Agent generates a personalized briefing with revenue updates, campaign performance, and action items.",
+        "tour_step3_title": "Campaign Management",
+        "tour_step3_desc": "Monitor and manage all your marketing campaigns from one dashboard. Your AI team runs on autopilot while you stay in control.",
+        "tour_step4_title": "Revenue Dashboard",
+        "tour_step4_desc": "Track performance across all revenue channels. See unified earnings, trends, and insights — all powered by your AI agents."
       }
     }
   },
@@ -2608,7 +2763,14 @@
       "firstTimeTitle": "Start with your first SOP",
       "firstTimeDesc": "Browse the marketplace to install SOPs and automate your agency workflows.",
       "firstTimeFaq": "What are SOPs?",
-      "pageTitle": "Page Title"
+      "pageTitle": "Page Title",
+      "sortBy": "Sort by",
+      "sortPopular": "Most Popular",
+      "sortRating": "Highest Rated",
+      "sortNewest": "Newest",
+      "resultsCount": "{count} result(s)",
+      "sales": "sales",
+      "byLabel": "by"
     },
     "card": {
       "creditsPerRun": "{n} credits/run",
@@ -2624,7 +2786,8 @@
       "playbookTitle": "Playbook",
       "outputTitle": "Output Schema",
       "back": "Back to Marketplace",
-      "installNow": "Install This SOP"
+      "installNow": "Install This SOP",
+      "byAgency": "by {name}"
     },
     "install": {
       "title": "Install SOP",
@@ -2760,7 +2923,50 @@
       "pageTitle": "Creator Dashboard",
       "title": "Creator Dashboard",
       "subtitle": "Manage your SOP templates and earnings",
-      "newSop": "Create New SOP",
+      "newSop": {
+        "back": "Back",
+        "title": "Create New SOP",
+        "subtitle": "Build a reusable SOP template for the marketplace"
+      },
+      "tabs": {
+        "mySops": "My SOPs",
+        "earnings": "Earnings",
+        "payouts": "Payouts"
+      },
+      "payouts": {
+        "title": "Payout Settings",
+        "walletDesc": "Manage your payout wallet address. Payouts are processed every Sunday at 12:00 UTC.",
+        "nextPayout": "Next scheduled payout: Sunday 12:00 UTC",
+        "payoutHistory": "Payout History",
+        "payoutHistoryDesc": "Your previous payout batches",
+        "noPayouts": "No payouts yet",
+        "noPayoutsDesc": "Payouts are processed automatically every Sunday. You'll see your payout history here once processed.",
+        "amount": "Amount",
+        "date": "Date",
+        "status": "Status",
+        "method": "Method",
+        "totalUsd": "Total (USD)",
+        "ledgerCount": "Transactions",
+        "tryAgain": "Try again",
+        "defaultBadge": "Default",
+        "unverifiedBadge": "Unverified",
+        "removePayoutMethod": "Remove payout method",
+        "addWalletAddress": "Add wallet address",
+        "network": "Network",
+        "networkUsdtTrc20": "USDT (TRC20 — Tron)",
+        "networkUsdtErc20": "USDT (ERC20 — Ethereum)",
+        "bankAccount": "Bank account",
+        "labelOptional": "Label (optional)",
+        "labelPlaceholder": "e.g. Main wallet",
+        "walletAddress": "Wallet address",
+        "placeholderTrc20": "T...",
+        "placeholderErc20": "0x...",
+        "adding": "Adding...",
+        "addWallet": "Add wallet",
+        "cancel": "Cancel",
+        "failedToLoadMethods": "Failed to load payout methods",
+        "failedToAddWallet": "Failed to add wallet"
+      },
       "totalEarned": "Total Earned",
       "pending": "Pending",
       "payable": "Payable",
@@ -2792,7 +2998,7 @@
       },
       "actions": {
         "unauthorized": "You must be logged in to perform this action.",
-        "masterRequired": "MASTER tier is required to manage SOPs.",
+        "creatorAccessRequired": "This action requires creator access. Apply to become a creator.",
         "dbUnavailable": "Database is temporarily unavailable. Please try again later.",
         "requiredFieldsMissing": "Please fill in all required fields.",
         "priceRange": "Price must be between $5 and $999.",
@@ -2818,6 +3024,24 @@
         "publishing": "Publishing...",
         "publishSuccess": "Template published successfully!",
         "draftDescription": "This template is in draft. Submit it for review to publish it to the marketplace."
+      },
+      "apply": {
+        "pageTitle": "Become a Creator",
+        "heading": "Become a SOP Creator",
+        "subtitle": "Turn your expertise into recurring revenue",
+        "valueProp": "70/30 Revenue Split",
+        "valuePropDesc": "You earn 70% of every SOP sale. We handle marketplace, payments, and infrastructure.",
+        "emailLabel": "Email",
+        "emailPlaceholder": "your@email.com",
+        "reasonLabel": "Why do you want to become a creator?",
+        "reasonPlaceholder": "Tell us about your experience and what SOPs you plan to create...",
+        "submit": "Submit Application",
+        "submitting": "Submitting...",
+        "successTitle": "Application Submitted",
+        "successDesc": "Your application is under review. We'll notify you via email once approved.",
+        "errorGeneric": "Something went wrong. Please try again.",
+        "alreadyCreator": "You already have creator access. Redirecting to your dashboard...",
+        "alreadyCreatorLink": "Go to Creator Dashboard"
       }
     },
     "community": {
@@ -2830,6 +3054,10 @@
     "status": {
       "category": "Category",
       "createFirst": "Create First",
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived",
+      "pending_review": "Pending Review",
       "name": "Name",
       "newSop": "New Sop",
       "noSops": "No Sops",
@@ -3111,6 +3339,9 @@
       },
       "muapi": {
         "format": "MuAPI keys are 20+ char alphanumeric tokens — find them in the MuAPI dashboard."
+      },
+      "replicate": {
+        "format": "Replicate keys start with r8_ — copy yours at replicate.com/account/api-tokens."
       }
     },
     "picker": {
@@ -3209,6 +3440,12 @@
     "summary": "Your account is ready. Click below to enter the Setup Wizard and configure your API keys.",
     "getStarted": "Get Started",
     "singleUseHint": "This link is single-use.",
+    "createFirstVideo": {
+      "title": "Create Your First Video Now",
+      "description": "You only need an OpenRouter API key to start. No other keys required.",
+      "cta": "Create First Video",
+      "subtitle": "Text-to-slides style — no avatar needed"
+    },
     "roadmapHeader": "Activation Roadmap",
     "stepLabel": "Step",
     "errors": {
@@ -3341,7 +3578,23 @@
     "credits": "Credits",
     "commissionBoost": "Commission Boost",
     "daysLeft": "Days Left",
-    "claimReward": "Claim Reward"
+    "claimReward": "Claim Reward",
+    "streak": {
+      "loginTitle": "Daily Login Streak",
+      "loginDesc": "Log in every day to build your streak and earn bonus rewards",
+      "videoTitle": "Weekly Video Streak",
+      "videoDesc": "Create videos every week to keep your streak alive",
+      "loginBonus": "+{multiplier}x reward bonus at {count} day streak",
+      "videoBonus": "+{multiplier}x reward bonus at {count} week streak",
+      "currentStreak": "Current Streak",
+      "longestStreak": "Longest Streak",
+      "days": "{count} days",
+      "weeks": "{count} weeks"
+    },
+    "period": "Period",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "allTime": "All Time"
   },
   "creativeStudio": {
     "audio": {
@@ -5151,6 +5404,7 @@
       },
       "conversions": {
         "title": "Recent Conversions",
+        "viewAll": "View All Conversions",
         "columns": {
           "id": "ID",
           "amount": "Amount",
@@ -5166,16 +5420,43 @@
       },
       "referral": {
         "title": "Your Referral Link",
+        "subtitle": "Share your link and earn rewards when friends sign up.",
+        "generateButton": "Generate Referral Link",
+        "generating": "Generating...",
         "copyButton": "Copy",
         "copied": "Copied!",
-        "shareLabel": "Share via:"
+        "shareLabel": "Share via:",
+        "shareWhatsApp": "Share on WhatsApp",
+        "shareTelegram": "Share on Telegram",
+        "shareEmail": "Share via Email",
+        "shareText": "Join Sophia AI Factory and start earning!",
+        "emailSubject": "Invitation to join Sophia AI Factory",
+        "info": "Referrers are tracked via cookies (30-day duration). Multi-level rewards are active for your account. Commissions are credited in USDT (TRC20)."
       },
       "wallet": {
         "title": "USDT Wallet (TRC20)",
+        "addressLabel": "TRC20 ADDRESS",
+        "editAddress": "Edit Address",
         "availableBalance": "Available Balance",
         "withdraw": "Withdraw",
         "minimumWithdrawal": "Minimum withdrawal {amount}",
         "toggleVisibility": "Toggle wallet address visibility"
+      }
+    },
+    "referral": {
+      "backToDashboard": "Back to Dashboard",
+      "pageTitle": "Referral Dashboard",
+      "pageSubtitle": "Track your referrals, earnings, and reward history.",
+      "totalReferrals": "Total Referrals",
+      "totalEarned": "Total Earned",
+      "rewardPerReferral": "Reward Per Referral",
+      "historyTitle": "Reward History",
+      "noHistory": "No rewards yet. Share your referral link to start earning!",
+      "statusEarned": "Earned",
+      "tableColumns": {
+        "date": "Date",
+        "reward": "Reward",
+        "status": "Status"
       }
     },
     "dashboardOverview": {
@@ -5361,6 +5642,10 @@
       }
     },
     "landing": {
+      "badge": "⚡ Trusted by 10,000+ creators worldwide",
+      "headline": "Build Your AI-Powered Video ",
+      "headlineHighlight": " Empire Without Hiring a Team",
+      "subheading": "Sophia automates faceless YouTube channels, affiliate campaigns, and multi-platform publishing — all from one dashboard and your Telegram. No coding. No editors. No stress.",
       "nav": {
         "features": "Features",
         "pricing": "Pricing",
@@ -5369,10 +5654,6 @@
         "signIn": "Sign In",
         "startFree": "Start Free"
       },
-      "badge": "New: Version 2.0 Released",
-      "headline": "Build Your AI",
-      "headlineHighlight": "Video Empire",
-      "subheading": "Generate faceless YouTube channels, run affiliate campaigns, and publish across TikTok, YouTube, and IG — all from one intelligent dashboard.",
       "cta": {
         "startFree": "Start Free",
         "watchDemo": "Watch Demo"
@@ -5382,25 +5663,25 @@
         "creators": "10,000+ creators",
         "videos": "1M+ videos generated"
       },
-      "features": {
-        "scriptWriting": {
-          "title": "AI Script Writing",
-          "description": "Transform a simple keyword into high-retention video scripts optimized for audience engagement and conversion metrics."
-        },
-        "multiChannel": {
-          "title": "Multi-Channel Publish",
-          "description": "Schedule and deploy your content across TikTok, YouTube Shorts, and Instagram Reels simultaneously with one click."
-        },
-        "analytics": {
-          "title": "Revenue Analytics",
-          "description": "Track affiliate link clicks and revenue generation directly linked to your AI-generated video campaigns in real-time."
-        }
-      },
       "footer": {
-        "copyright": "© 2024 Sophia AI Factory. All rights reserved.",
+        "copyright": "© 2026 Sophia AI Factory. All rights reserved.",
         "privacy": "Privacy Policy",
         "terms": "Terms of Service",
         "contact": "Contact Us"
+      },
+      "features": {
+        "scriptWriting": {
+          "title": "AI Video Factory",
+          "description": "Generate faceless YouTube videos from a single script. AI voices, auto-captions, multi-language."
+        },
+        "multiChannel": {
+          "title": "Telegram Empire Control",
+          "description": "Run your entire business from Telegram. Launch campaigns, check stats — no dashboard needed."
+        },
+        "analytics": {
+          "title": "Affiliate Revenue Engine",
+          "description": "Connect 10+ affiliate networks. Sophia auto-tags and tracks your commissions."
+        }
       }
     },
     "settingsPage": {

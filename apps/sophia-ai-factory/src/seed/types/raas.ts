@@ -20,9 +20,11 @@ export interface RaasLicenseRow {
   revoked_at: number | null;
   revoked_by: string | null;
   created_by: string | null;
+  user_id: string | null;
   created_at: number;
   metadata: Json;
   updated_at: number | null;
+  polar_customer_id: string | null;
   stripe_customer_id: string | null;
 }
 

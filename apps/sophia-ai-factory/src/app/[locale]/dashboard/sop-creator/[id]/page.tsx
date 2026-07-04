@@ -9,7 +9,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { resolveUserTier } from '@/seed/db/resolve-user-tier';
+import { hasCreatorAccess } from '@/land/sop-marketplace';
 import { getTemplateById } from '@/tree/sop/sop-repo';
 import { CategoryBadge } from '@/forest/components/sop/category-badge';
 import { ArrowLeft, Calendar, Clock, Coins, FileText } from 'lucide-react';
@@ -34,6 +34,7 @@ function statusBadge(status: string) {
     draft: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
     published: 'bg-green-500/10 text-green-400 border-green-500/20',
     archived: 'bg-white/5 text-white/40 border-white/10',
+    pending_review: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
   };
   return map[status] ?? map.draft;
 }
@@ -53,18 +54,18 @@ export default async function CreatorDetailPage({ params }: Props) {
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
 
-  const tier = await resolveUserTier(user.id);
-  if (tier !== 'MASTER') redirect(`/${locale}/pricing`);
-
   const db = getD1();
   if (!db) notFound();
+
+  const hasAccess = await hasCreatorAccess(db, user.id);
+  if (!hasAccess) redirect(`/${locale}/pricing`);
 
   const template = await getTemplateById(db, id);
   if (!template || template.author_user_id !== user.id) notFound();
 
   const isVi = locale.startsWith('vi');
   const name = isVi ? template.name_vi : template.name_en;
-  const statusLabel = t(template.status as 'draft' | 'published' | 'archived');
+  const statusLabel = t(template.status as 'draft' | 'published' | 'archived' | 'pending_review');
 
   return (
     <div className="space-y-6 max-w-4xl">

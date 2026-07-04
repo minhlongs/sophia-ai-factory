@@ -17,6 +17,7 @@ import {
   listPublishedListings,
   listUserLicenses,
 } from '@/tree/sop/sop-repo';
+import { fetchAuthorBrandings } from '@/tree/branding/org-branding-repo';
 import { SopGrid } from '@/forest/components/sop/sop-grid';
 import { CommunityListingCard } from './community-listing-card';
 import { installSopAction } from './actions';
@@ -54,6 +55,12 @@ export default async function MarketplacePage({ params }: Props) {
 
   const installedTemplateIds = installations.map(i => i.template_id);
   const licensedTemplateIds = new Set(licenses.map(l => l.template_id));
+
+  // Fetch branding for community listing authors
+  const authorIds = [...new Set(listings.map(l => l.author_user_id).filter((id): id is string => !!id))];
+  const authorBrandings = db
+    ? await fetchAuthorBrandings(db, authorIds)
+    : new Map<string, never>();
 
   const tier = await resolveUserTier(user.id);
   const sopLimit = getSopInstallLimit(tier);
@@ -115,17 +122,24 @@ export default async function MarketplacePage({ params }: Props) {
           <p className="text-sm text-muted-foreground-500 py-4">{tCommunity('noListings')}</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {listings.map(listing => (
-              <CommunityListingCard
-                key={listing.id}
-                listing={listing}
-                isPurchased={licensedTemplateIds.has(listing.template_id)}
-                locale={locale}
-                buyLabel={tCommunity('buy')}
-                purchasedLabel={tCommunity('purchased')}
-                byLabel={tCommunity('bySeller')}
-              />
-            ))}
+            {listings.map(listing => {
+              const authorBranding = listing.author_user_id
+                ? authorBrandings.get(listing.author_user_id)
+                : null;
+              return (
+                <CommunityListingCard
+                  key={listing.id}
+                  listing={listing}
+                  isPurchased={licensedTemplateIds.has(listing.template_id)}
+                  locale={locale}
+                  buyLabel={tCommunity('buy')}
+                  purchasedLabel={tCommunity('purchased')}
+                  byLabel={tCommunity('bySeller')}
+                  brandName={authorBranding?.agencyName ?? null}
+                  brandLogoUrl={authorBranding?.logoUrl ?? null}
+                />
+              );
+            })}
           </div>
         )}
       </section>

@@ -8,7 +8,7 @@ import { Send, CheckCircle2 } from 'lucide-react';
 
 interface Props {
   templateId: string;
-  status: 'draft' | 'published' | 'archived';
+  status: 'draft' | 'published' | 'archived' | 'pending_review';
 }
 
 export function CreatorDetailClient({ templateId, status }: Props) {

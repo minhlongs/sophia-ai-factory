@@ -12,10 +12,12 @@ import {
 
 const mockInsert = vi.fn();
 const mockSelect = vi.fn();
+const mockMaybeSingle = vi.fn();
 const mockSingle = vi.fn();
 const mockEq = vi.fn();
 const mockUpdate = vi.fn();
 const mockFrom = vi.fn();
+const mockDelete = vi.fn();
 
 const mockDb = {
   from: mockFrom,
@@ -44,9 +46,21 @@ vi.mock('../raas-license-crud', () => ({
 describe('revokeLicense', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Mock chain: from() returns an object with all chainable methods
+    mockFrom.mockImplementation(() => ({
+      select: mockSelect,
+      update: mockUpdate,
+      delete: mockDelete,
+    }));
+    mockSelect.mockImplementation(() => ({
+      eq: vi.fn(() => ({
+        maybeSingle: mockMaybeSingle,
+      })),
+    }));
+    // Default: org_members query returns no membership (auth not checked for no revokedBy)
+    mockMaybeSingle.mockResolvedValue({ data: null, error: null });
     mockUpdate.mockReturnValue({ eq: mockEq });
     mockEq.mockReturnValue({ select: () => ({ single: mockSingle }) });
-    mockFrom.mockReturnValue({ update: mockUpdate });
   });
 
   it('revokes an existing license', async () => {
@@ -55,6 +69,12 @@ describe('revokeLicense', () => {
       id: 1,
       nonce: 'lic_abc',
       tier: 'PREMIUM',
+      user_id: 'user_1',
+    });
+    // Mock org_members: both admin user and license owner are in the same org
+    mockMaybeSingle.mockResolvedValue({
+      data: { org_id: 'org_1', role: 'admin' },
+      error: null,
     });
     mockSingle.mockResolvedValue({
       data: { id: 1, nonce: 'lic_abc', is_revoked: true },

@@ -16,7 +16,7 @@
  * Mirror of UserSettableProvider in byok-key-form. Kept inline so this lib
  * stays free of the 'use client' boundary and can run server-side too.
  */
-export type ValidatorProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'muapi' | 'apollo' | 'hunter'
+export type ValidatorProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'muapi' | 'apollo' | 'hunter' | 'replicate'
 
 export interface ValidatorResult {
   /** True if the key passes provider-specific format checks. */
@@ -51,6 +51,9 @@ const APOLLO_RE = /^[A-Za-z0-9_-]{20,}$/
 
 /** Hunter tokens: 20+ char alphanumeric. */
 const HUNTER_RE = /^[A-Za-z0-9_-]{20,}$/
+
+/** Replicate tokens: `r8_<32+ alphanumeric>`. Minimal prefix + length check. */
+const REPLICATE_RE = /^r8_[A-Za-z0-9_-]{32,}$/
 
 /**
  * D-ID Basic-auth format detection.
@@ -160,6 +163,16 @@ export function validateHunter(key: string): ValidatorResult {
   return { ok: true }
 }
 
+/** Replicate token: `r8_<32+>`. */
+export function validateReplicate(key: string): ValidatorResult {
+  const trimmed = sanitizeCredential(key)
+  if (trimmed.length < MIN_LENGTH) return shortFail()
+  if (!REPLICATE_RE.test(trimmed)) {
+    return { ok: false, errorKey: 'byok.validate.replicate.format' }
+  }
+  return { ok: true }
+}
+
 /**
  * Provider-agnostic dispatcher used by the form. Falls back to length-only
  * check for any provider not explicitly enumerated (defensive forward-compat).
@@ -180,6 +193,8 @@ export function validateProviderKey(provider: ValidatorProvider, key: string): V
       return validateApollo(key)
     case 'hunter':
       return validateHunter(key)
+    case 'replicate':
+      return validateReplicate(key)
     default: {
       const trimmed = sanitizeCredential(key)
       return trimmed.length >= MIN_LENGTH ? { ok: true } : shortFail()

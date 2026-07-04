@@ -151,3 +151,10 @@ export const TIER_ALLOWED_VIDEO: Tier[] = ['PREMIUM', 'ENTERPRISE', 'MASTER'];
 
 /** Price per MCU credit for overage top-ups (USD). Canonical location — imported by land and forest layers. */
 export const TOPUP_PRICE_PER_MCU = 0.10;
+
+/**
+ * Default referral reward amount in cents (USD).
+ * Overridable via REFERRAL_REWARD_CENTS env var.
+ * Used by POST /api/referral/generate when creating new codes.
+ */
+export const REFERRAL_REWARD_CENTS = Number(process.env.REFERRAL_REWARD_CENTS) || 1990;

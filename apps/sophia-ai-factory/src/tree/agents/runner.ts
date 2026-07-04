@@ -14,8 +14,13 @@ import { reportError } from '@/seed/observability/telemetry/error-tracker';
 import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 import { trackUsage } from '@/tree/usage-metering';
 import { calculateCredits } from '@/seed/billing/credits-calculator';
+import { executeCeoContext } from './ceo-executor';
+import { createLogger } from '@/seed/utils/logger-utility';
+import { getErrorMessage } from '@/seed/utils/to-error';
 import type { AgentTask } from './types';
 import type { Tier } from '@/seed/types';
+
+const log = createLogger('tree/agents/runner');
 
 const COST_PER_TOKEN = 0.000001; // ~$1 / 1M tokens (gpt-4o-mini estimate)
 
@@ -95,6 +100,30 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
   // Resolve system prompt for this variant
   const systemPrompt = resolvePrompt(agent.role, variant) || agent.systemPrompt;
 
+  // ── CEO Context Injection ─────────────────────────────────────────────
+  // For CEO agent, pre-fetch campaign/revenue data based on user query
+  // and inject it into the prompt so the LLM can answer with real data.
+  let enrichedPrompt = systemPrompt;
+  if (agent.role === 'CEO') {
+    try {
+      const ceoContext = await executeCeoContext(task.input, orgId, orgId);
+      if (ceoContext.campaigns || ceoContext.revenue || ceoContext.intent !== 'general_query') {
+        enrichedPrompt = `${systemPrompt}\n\n===CONTEXT DATA===\n${ceoContext.summary}\n===END CONTEXT DATA===`;
+        log.info('[runner] CEO context injected', {
+          intent: ceoContext.intent,
+          hasCampaigns: (ceoContext.campaigns?.length ?? 0) > 0,
+          hasRevenue: !!ceoContext.revenue,
+          actionResult: !!ceoContext.actionResult,
+        });
+      }
+    } catch (ctxErr) {
+      // Context injection is best-effort — never block the LLM call
+      log.warn('[runner] CEO context injection failed, proceeding without context', {
+        error: getErrorMessage(ctxErr),
+      });
+    }
+  }
+
   // Phase 03: emit AGENT_TASK_START (fire-and-forget)
   void track(D1Events.AGENT_TASK_START, orgId, {
     task_id: taskId,
@@ -106,7 +135,7 @@ export async function runAgent(taskId: string, orgId: string, userTier = 'BASIC'
   const startMs = Date.now();
 
   try {
-    const prompt = `System: ${systemPrompt}\n\nUser: ${task.input}`;
+    const prompt = `System: ${enrichedPrompt}\n\nUser: ${task.input}`;
     const output = await resilientChatCompletion(prompt, {
       openRouterKey: apiKey,
       anthropicKey: undefined,

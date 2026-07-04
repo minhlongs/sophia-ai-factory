@@ -12,6 +12,7 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import type { Tier } from '@/seed/types';
+import type { BrandingSettings } from '@/seed/tenant-settings/defaults';
 
 export type WatermarkPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 export type WatermarkPolicy = 'always' | 'master_plus' | 'never';
@@ -150,4 +151,39 @@ function validatePolicy(p: WatermarkPolicy | undefined): WatermarkPolicy {
 function clampOpacity(o: number): number {
   if (Number.isNaN(o)) return 0.85;
   return Math.min(1, Math.max(0, o));
+}
+
+/**
+ * Batch-fetch tenant branding settings for a set of user IDs.
+ * Returns a map of userId -> BrandingSettings (or null if not set).
+ */
+export async function fetchAuthorBrandings(
+  db: D1Database,
+  userIds: string[],
+): Promise<Map<string, BrandingSettings | null>> {
+  const result = new Map<string, BrandingSettings | null>();
+  if (userIds.length === 0) return result;
+
+  // Initialize all requested IDs to null (will overwrite if found)
+  for (const uid of userIds) result.set(uid, null);
+
+  try {
+    const placeholders = userIds.map((_, i) => `?${i + 1}`).join(',');
+    const sql = `SELECT tenant_id, value FROM tenant_settings WHERE tenant_id IN (${placeholders}) AND namespace = 'branding'`;
+    const { results } = await db.prepare(sql).bind(...userIds).all<{ tenant_id: string; value: string }>();
+    for (const row of results ?? []) {
+      try {
+        const parsed = JSON.parse(row.value) as BrandingSettings;
+        result.set(row.tenant_id, parsed);
+      } catch {
+        // malformed JSON — keep null
+      }
+    }
+  } catch (err) {
+    logger.warn('[fetchAuthorBrandings] batch query failed', {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  return result;
 }

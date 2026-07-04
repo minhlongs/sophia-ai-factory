@@ -11,6 +11,7 @@ import { checkQuotaWithOverage, DEFAULT_CONFIG } from './quota-checker'
 import type { QuotaCheckContext, EnhancedQuotaCheckResult } from './quota-checker'
 import { canAccessApi } from '@/land/billing/dunning-workflow'
 import { createQuotaExceededResponse, createDunningBlockResponse } from './quota-enforcer-response'
+import { captureFreeQuotaExhaustion } from '@/forest/telemetry/posthog-capture'
 
 export type { QuotaExceededResponse } from './quota-enforcer-response'
 export { getQuotaStatus, getUserIdFromLicense } from './quota-enforcer-status'
@@ -56,6 +57,19 @@ export async function enforceQuota(
       exceededType: quotaResult.exceeded.type,
       retryAfter: exceededResponse.retryAfter,
     })
+
+    // Capture free quota exhaustion for BASIC tier (fire-and-forget)
+    if (context.tier === 'BASIC') {
+      void captureFreeQuotaExhaustion({
+        distinctId: context.userId,
+        tier: context.tier,
+        used: quotaResult.exceeded.current,
+        limit: quotaResult.exceeded.limit,
+      }).catch((err) => {
+        logger.warn('[Quota Enforcer] captureFreeQuotaExhaustion failed', { error: String(err) })
+      })
+    }
+
     return { allowed: false, response: exceededResponse }
   }
 

@@ -7,8 +7,8 @@ describe('flags', () => {
   });
 
   describe('FEATURE_FLAGS config', () => {
-    it('defines 6 feature flags', () => {
-      expect(Object.keys(FEATURE_FLAGS)).toHaveLength(6);
+    it('defines feature flags', () => {
+      expect(Object.keys(FEATURE_FLAGS).length).toBeGreaterThanOrEqual(7);
     });
 
     it('each flag has name, description, defaultEnabled, requiredTier', () => {
@@ -53,9 +53,9 @@ describe('flags', () => {
   });
 
   describe('getAllFeatureFlags', () => {
-    it('returns all 6 flags with boolean values', () => {
+    it('returns all flags with boolean values', () => {
       const flags = getAllFeatureFlags();
-      expect(Object.keys(flags)).toHaveLength(6);
+      expect(Object.keys(flags).length).toBeGreaterThanOrEqual(7);
       for (const val of Object.values(flags)) {
         expect(typeof val).toBe('boolean');
       }

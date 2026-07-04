@@ -58,6 +58,8 @@ interface PricingCardProps {
   discountedPriceCents?: number;
   /** When true, show VND equivalent below the USD price */
   showVnd?: boolean;
+  /** Yearly savings percentage (e.g. 17 for 17%). Used in the save badge when billing is annual. */
+  yearlySavingsPercent?: number;
 }
 
 /** Renders a single feature item with a checkmark icon. */
@@ -93,6 +95,7 @@ export function PricingCard({
   selected,
   discountedPriceCents,
   showVnd,
+  yearlySavingsPercent,
 }: PricingCardProps) {
   const t = useTranslations("landing");
   const isAnnual = billingPeriod === "annual" && annualPriceCents !== undefined;
@@ -143,7 +146,7 @@ export function PricingCard({
             </p>
             {/* Save badge */}
             <span className="mt-1 inline-block rounded bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-400">
-              {t("pricing.save_percent", { percent: 17 })}
+              {t("pricing.save_percent", { percent: yearlySavingsPercent ?? 17 })}
             </span>
           </>
         ) : (

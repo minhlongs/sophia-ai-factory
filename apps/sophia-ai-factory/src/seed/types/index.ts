@@ -23,7 +23,8 @@ export type FeatureFlag =
   | "enable_roi_calculator"
   | "enable_api_integrations"
   | "enable_auto_update"
-  | "enable_early_access";
+  | "enable_early_access"
+  | "enable_ui_redesign";
 
 // User representation (mock for now, will integrate with auth later)
 export interface User {
