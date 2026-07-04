@@ -751,6 +751,7 @@
       "new_project": "Dự Án Mới",
       "campaigns": "Chiến Dịch",
       "analytics": "Phân Tích",
+      "funnels": "Kênh Chuyển Đổi",
       "my_videos": "Video Của Tôi",
       "voices": "Giọng Đọc",
       "templates": "Mẫu Video",
@@ -1095,7 +1096,13 @@
       "recent_completed": "Hoàn Thành",
       "recent_actions": "Hành Động",
       "recent_view": "Xem",
-      "recent_empty": "Không tìm thấy chiến dịch"
+      "recent_empty": "Không tìm thấy chiến dịch",
+      "funnel_page_title": "Kênh Chuyển Đổi",
+      "funnel_page_desc": "Hình ảnh trực quan về cách người dùng và chiến dịch tiến triển qua từng giai đoạn — từ đăng ký đến chuyển đổi.",
+      "funnel_no_data": "Chưa có dữ liệu — hãy bắt đầu bằng cách tạo chiến dịch đầu tiên của bạn",
+      "funnel_error": "Không thể tải dữ liệu kênh chuyển đổi. Vui lòng thử lại sau.",
+      "funnel_date_range": "Hiển thị dữ liệu từ {days} ngày qua.",
+      "funnel_sidebar": "Kênh Chuyển Đổi"
     },
     "trialBanner": {
       "title": "Gói dùng thử của bạn hết hạn vào ngày mai! Nâng cấp ngay để giữ tính năng →",
@@ -2048,6 +2055,33 @@
         "completed_campaigns": "Đã Hoàn Thành",
         "failed_campaigns": "Chiến Dịch Thất Bại",
         "success_rate": "Tỷ Lệ Thành Công"
+      }
+    },
+    "agents": {
+      "onboarding_tour": {
+        "welcome_title": "Gặp Gỡ Hội Đồng AI Executive",
+        "welcome_desc": "Đội ngũ CEO Agent của bạn đã sẵn sàng giúp quản lý chiến dịch, báo cáo và doanh thu — tất cả đều được tự động hóa bằng AI.",
+        "start_tour": "Bắt Đầu Tham Quan",
+        "dismiss": "Bỏ qua",
+        "mini_chat": "Trò chuyện",
+        "mini_briefing": "Báo cáo",
+        "mini_campaigns": "Chiến dịch",
+        "mini_revenue": "Doanh thu",
+        "title": "Hội Đồng AI Executive",
+        "subtitle": "Đội ngũ AI C-level của bạn trong nháy mắt",
+        "skip": "Bỏ Qua",
+        "next": "Tiếp",
+        "back": "Quay Lại",
+        "finish": "Bắt Đầu",
+        "progress": "Bước {current} trên {total}",
+        "tour_step1_title": "Trò Chuyện Với Đội Ngũ AI",
+        "tour_step1_desc": "Sử dụng ngôn ngữ tự nhiên để giao nhiệm vụ, hỏi ý kiến chiến lược và điều khiển hội đồng AI executive — không cần kỹ năng kỹ thuật.",
+        "tour_step2_title": "Báo Cáo Sáng Hàng Ngày",
+        "tour_step2_desc": "Mỗi sáng, CEO Agent của bạn tạo một báo cáo cá nhân hóa với cập nhật doanh thu, hiệu suất chiến dịch và các mục cần hành động.",
+        "tour_step3_title": "Quản Lý Chiến Dịch",
+        "tour_step3_desc": "Theo dõi và quản lý tất cả chiến dịch marketing từ một bảng điều khiển. Đội ngũ AI của bạn tự động chạy trong khi bạn vẫn kiểm soát.",
+        "tour_step4_title": "Bảng Điều Khiển Doanh Thu",
+        "tour_step4_desc": "Theo dõi hiệu suất trên tất cả kênh doanh thu. Xem thu nhập hợp nhất, xu hướng và thông tin chi tiết — tất cả được hỗ trợ bởi các AI agent của bạn."
       }
     }
   },
@@ -5377,6 +5411,7 @@
       },
       "conversions": {
         "title": "Chuyển Đổi Gần Đây",
+        "viewAll": "Xem Tất Cả Chuyển Đổi",
         "columns": {
           "id": "Mã GD",
           "amount": "Số Tiền",
@@ -5402,10 +5437,13 @@
         "shareTelegram": "Chia sẻ qua Telegram",
         "shareEmail": "Chia sẻ qua Email",
         "shareText": "Tham gia Sophia AI Factory và bắt đầu kiếm tiền!",
-        "emailSubject": "Lời mời tham gia Sophia AI Factory"
+        "emailSubject": "Lời mời tham gia Sophia AI Factory",
+        "info": "Referral được theo dõi qua cookie (thời hạn 30 ngày). Phần thưởng đa cấp đang hoạt động cho tài khoản của bạn. Hoa hồng được thanh toán bằng USDT (TRC20)."
       },
       "wallet": {
         "title": "Ví USDT (TRC20)",
+        "addressLabel": "ĐỊA CHỈ TRC20",
+        "editAddress": "Sửa Địa Chỉ",
         "availableBalance": "Số Dư Khả Dụng",
         "withdraw": "Rút Tiền",
         "minimumWithdrawal": "Rút tối thiểu {amount}",
@@ -5611,46 +5649,46 @@
       }
     },
     "landing": {
+      "badge": "⚡ Hơn 10.000 nhà sáng tạo đang sử dụng",
+      "headline": "Xây Dựng Đế Chế Video AI ",
+      "headlineHighlight": " Không Cần Thuê Đội Ngũ",
+      "subheading": "Sophia tự động hóa kênh YouTube faceless, chiến dịch affiliate, và đăng tải đa nền tảng — từ một dashboard và Telegram của bạn. Không cần code. Không cần editor. Không căng thẳng.",
       "nav": {
         "features": "Tính năng",
         "pricing": "Bảng giá",
         "blog": "Blog",
-        "affiliates": "Đối tác",
+        "affiliates": "Affiliate",
         "signIn": "Đăng nhập",
         "startFree": "Dùng thử miễn phí"
       },
-      "badge": "Mới: Đã phát hành Phiên bản 2.0",
-      "headline": "Xây dựng",
-      "headlineHighlight": "Đế chế Video AI",
-      "subheading": "Tạo kênh YouTube ẩn danh, chạy chiến dịch tiếp thị liên kết, và xuất bản lên TikTok, YouTube, IG — tất cả từ một bảng điều khiển thông minh.",
       "cta": {
-        "startFree": "Dùng thử miễn phí",
+        "startFree": "Dùng Thử Miễn Phí",
         "watchDemo": "Xem Demo"
       },
       "trustBar": {
-        "label": "Cộng đồng người sáng tạo",
-        "creators": "Hơn 10.000 người sáng tạo",
-        "videos": "Hơn 1 triệu video đã tạo"
+        "label": "Cộng đồng sáng tạo",
+        "creators": "10.000+ nhà sáng tạo",
+        "videos": "1M+ video đã tạo"
+      },
+      "footer": {
+        "copyright": "© 2026 Sophia AI Factory. Tất cả quyền được bảo lưu.",
+        "privacy": "Chính sách bảo mật",
+        "terms": "Điều khoản dịch vụ",
+        "contact": "Liên hệ"
       },
       "features": {
         "scriptWriting": {
-          "title": "Viết Kịch bản AI",
-          "description": "Biến một từ khóa đơn giản thành kịch bản video có tỷ lệ giữ chân cao, được tối ưu hóa cho tương tác khán giả và chỉ số chuyển đổi."
+          "title": "Nhà Máy Video AI",
+          "description": "Tạo video YouTube faceless từ một kịch bản. Giọng AI, phụ đề tự động, đa ngôn ngữ."
         },
         "multiChannel": {
-          "title": "Xuất bản Đa kênh",
-          "description": "Lên lịch và triển khai nội dung của bạn lên TikTok, YouTube Shorts và Instagram Reels đồng thời chỉ với một cú nhấp chuột."
+          "title": "Điều Khiển Qua Telegram",
+          "description": "Vận hành doanh nghiệp từ Telegram. Khởi chạy chiến dịch, xem thống kê."
         },
         "analytics": {
-          "title": "Phân tích Doanh thu",
-          "description": "Theo dõi lượt nhấp vào liên kết tiếp thị liên kết và doanh thu được tạo ra từ các chiến dịch video AI của bạn trong thời gian thực."
+          "title": "Cỗ Máy Affiliate",
+          "description": "Kết nối 10+ mạng lưới affiliate. Sophia tự động theo dõi hoa hồng."
         }
-      },
-      "footer": {
-        "copyright": "© 2024 Sophia AI Factory. Bảo lưu mọi quyền.",
-        "privacy": "Chính sách Bảo mật",
-        "terms": "Điều khoản Dịch vụ",
-        "contact": "Liên hệ"
       }
     },
     "settingsPage": {

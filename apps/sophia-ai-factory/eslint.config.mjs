@@ -331,6 +331,8 @@ const eslintConfig = defineConfig([
 // quota — reads land/redis for KV cache ops (mekong-exempt: infra)
 "src/forest/quota/quota-checker-kv-cache.ts",
     "src/forest/agents/runner.ts",
+    // daily-briefing — uses land/openclaw memory adapter (mekong-exempt: orchestration)
+    "src/forest/agents/daily-briefing/briefing-generator.ts",
       // account-delete-finalize-cron orchestrates land/account cascade-delete on Inngest schedule
       // (mekong-exempt: forest → land orchestration per cross-layer-orchestration.md).
       "src/forest/inngest/functions/account-delete-finalize-cron.ts",

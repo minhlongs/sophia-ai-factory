@@ -6,7 +6,7 @@ export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
 
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center bg-[#0A0A0C] px-4 py-8 antialiased"
+      className="min-h-screen flex flex-col items-center justify-center bg-[#0F0F11] px-4 py-8 antialiased"
       data-testid="login-page"
     >
       {/* Ambient background accent */}
@@ -14,8 +14,8 @@ export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
         className="fixed inset-0 pointer-events-none"
         aria-hidden="true"
       >
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-amber-600/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-600/8 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#6366F1]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[#6366F1]/8 rounded-full blur-3xl" />
       </div>
 
       <div className="w-full max-w-[440px] relative z-10">

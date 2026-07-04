@@ -158,43 +158,43 @@
 
 .dark {
   /* ── Surface ─────────────────────────────────────────────────────────── */
-  --background: 240 14% 6%;             /* deep indigo night */
-  --foreground: 40 25% 90%;             /* warm cream light */
-  --background-secondary: 240 12% 10%;
+  --background: 240 13% 6%;             /* #0e0e12 — Stitch Indigo Dark */
+  --foreground: 255 29% 92%;            /* #e7e4f0 */
+  --background-secondary: 240 12% 11%;  /* #191920 */
 
-  --card: 240 12% 9%;
-  --card-foreground: 40 25% 90%;
+  --card: 240 12% 11%;                  /* #191920 */
+  --card-foreground: 255 29% 92%;
 
-  --popover: 240 12% 9%;
-  --popover-foreground: 40 25% 90%;
+  --popover: 240 12% 11%;
+  --popover-foreground: 255 29% 92%;
 
-  /* ── Brand ────────────────────────────────────────────────────────────── */
-  --primary: 38 78% 52%;                /* gold — brighter for dark BG */
-  --primary-foreground: 240 14% 6%;
+  /* ── Brand (indigo) ──────────────────────────────────────────────────── */
+  --primary: 240 56% 85%;               /* #c3c3ee — indigo */
+  --primary-foreground: 238 24% 31%;    /* #3c3d61 */
 
-  --secondary: 18 38% 50%;              /* terracotta */
-  --secondary-foreground: 0 0% 100%;
+  --secondary: 245 27% 82%;             /* #c6c4dd */
+  --secondary-foreground: 240 14% 28%;  /* #3e3e52 */
 
-  --muted: 240 10% 16%;
-  --muted-foreground: 240 8% 58%;
+  --muted: 240 12% 8%;                  /* #131318 */
+  --muted-foreground: 251 7% 69%;       /* #acaab5 */
 
-  --accent: 42 70% 55%;                 /* warm gold */
-  --accent-foreground: 240 14% 6%;
+  --accent: 240 56% 85%;
+  --accent-foreground: 238 24% 31%;
 
   /* ── Feedback ─────────────────────────────────────────────────────────── */
-  --destructive: 0 72% 55%;
-  --destructive-foreground: 0 0% 100%;
+  --destructive: 351 92% 71%;           /* #f97386 */
+  --destructive-foreground: 344 100% 14%; /* #490013 */
 
   /* ── Borders ──────────────────────────────────────────────────────────── */
-  --border: 240 10% 20%;
-  --input: 240 10% 20%;
-  --ring: 38 70% 48%;
+  --border: 247 6% 30%;                 /* #484750 */
+  --input: 247 6% 30%;
+  --ring: 240 56% 85%;                  /* #c3c3ee */
 
   /* ── MD3 bridge ───────────────────────────────────────────────────────── */
-  --primary-container: 35 60% 18%;
-  --on-primary-container: 35 60% 85%;
-  --secondary-container: 18 30% 18%;
-  --on-secondary-container: 18 30% 85%;
+  --primary-container: 238 20% 38%;      /* #4e4f74 */
+  --on-primary-container: 244 100% 94%;  /* #e2e0ff */
+  --secondary-container: 237 15% 26%;    /* #393a4d */
+  --on-secondary-container: 242 22% 79%; /* #bebdd5 */
 
   /* ── Primary scale (gold, dark mode) ──────────────────────────────────── */
   --primary-50: 38 70% 8%;
@@ -274,12 +274,14 @@
   --neon-pink: #d4846a;
   --neon-pink-hsl: 18 50% 62%;
 
+
   /* ── Atmosphere dark ──────────────────────────────────────────────────── */
   --gradient-space: linear-gradient(135deg, #0d0d1a 0%, #12121f 100%);
   --gradient-neon: linear-gradient(135deg, #e0a84c 0%, #6a5aaa 100%);
   --glass-bg: rgba(13, 13, 26, 0.75);
   --glass-border: rgba(255, 255, 255, 0.08);
 }
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Tailwind v4 @theme — CSS variable bridge
@@ -309,6 +311,8 @@
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
+
+  --color-brand-indigo: hsl(var(--brand-indigo));
 
   --color-neon-cyan: hsl(var(--neon-cyan-hsl));
   --color-neon-purple: hsl(var(--neon-purple-hsl));
@@ -505,6 +509,16 @@ html {
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
+/* Glass card effect — Stitch design system */
+.glass-card {
+  background: rgba(24, 24, 27, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(63, 63, 70, 0.5);
+}
+.glass-card:hover {
+  transform: translateY(-4px);
+}
+
 /* ── Dot grid background pattern ─────────────────────────────────────── */
 .dot-grid-overlay {
   background-image: radial-gradient(
@@ -574,6 +588,29 @@ html {
   box-shadow:
     0 1px 3px 0 rgba(0, 0, 0, 0.06),
     0 1px 2px -1px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Custom scrollbar (Stitch design system) ──────────────────────────── */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 10px;
 }
 
 /* ── Saigon Factory mechanical easing curves ─────────────────────────── */

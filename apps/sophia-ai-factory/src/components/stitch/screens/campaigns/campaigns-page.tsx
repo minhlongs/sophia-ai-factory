@@ -149,13 +149,18 @@ function CampaignCard({
   const statusCfg = STATUS_CONFIG[campaign.status];
   const hasMetrics = campaign.metrics.views !== '-';
 
+  const badgeClass = campaign.status === 'live'
+    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+    : campaign.status === 'paused'
+    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+    : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20';
+
   return (
     <div
       className={cn(
-        'bg-surface-container-lowest rounded-lg border border-outline-variant',
+        'glass-card rounded-lg',
         'p-4 flex flex-col gap-4',
-        'group hover:ring-1 hover:ring-primary/50 transition-all duration-200',
-        'hover:-translate-y-0.5',
+        'group hover:ring-1 hover:ring-brand-indigo/50 transition-all duration-200',
         !hasMetrics && 'opacity-80'
       )}
       role="article"
@@ -164,11 +169,11 @@ function CampaignCard({
       {/* Header */}
       <div className="flex justify-between items-start">
         <div className="min-w-0">
-          <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+          <h3 className="text-base font-semibold text-white group-hover:text-brand-indigo transition-colors truncate">
             {campaign.title}
           </h3>
           <div className="flex items-center gap-2 mt-1">
-            <Badge variant="soft" color={statusCfg.color} size="sm">
+            <Badge variant="soft" color={statusCfg.color} size="sm" className={badgeClass}>
               {t(statusCfg.labelKey)}
             </Badge>
             <span className="text-[10px] text-muted-foreground font-medium truncate">
@@ -248,7 +253,7 @@ function CampaignCard({
           aria-label={`${campaign.progress}% ${t('progress.aria')}`}
         >
           <div
-            className="h-full bg-primary rounded-full transition-all duration-500"
+            className="h-full bg-brand-indigo rounded-full transition-all duration-500"
             style={{ width: `${campaign.progress}%` }}
           />
         </div>
@@ -261,7 +266,7 @@ function CampaignCard({
         </span>
         <button
           type="button"
-          className="text-primary text-[11px] font-bold hover:underline transition-colors"
+          className="text-brand-indigo text-[11px] font-bold hover:underline transition-colors"
         >
           {t('actions.' + campaign.actionLabel)}
         </button>
@@ -303,11 +308,11 @@ function CampaignsEmptyState({ t, onCreateCampaign }: { t: (key: string) => stri
   return (
     <div className="flex flex-col items-center justify-center py-32 text-center">
       <div className="relative mb-6">
-        <div className="w-32 h-32 bg-primary/10 rounded-full flex items-center justify-center">
-          <Video className="w-16 h-16 text-primary/50" aria-hidden="true" />
+        <div className="w-32 h-32 bg-brand-indigo/10 rounded-full flex items-center justify-center">
+          <Video className="w-16 h-16 text-brand-indigo/50" aria-hidden="true" />
         </div>
         <div className="absolute -top-2 -right-2 w-10 h-10 bg-card border border-border rounded-lg flex items-center justify-center shadow-xl">
-          <Plus className="text-primary text-xl" aria-hidden="true" />
+          <Plus className="text-brand-indigo text-xl" aria-hidden="true" />
         </div>
       </div>
       <h3 className="text-xl font-semibold text-foreground mb-2">
@@ -316,7 +321,10 @@ function CampaignsEmptyState({ t, onCreateCampaign }: { t: (key: string) => stri
       <p className="text-sm text-muted-foreground max-w-xs mx-auto mb-8">
         {t('emptyState.description')}
       </p>
-      <Button onClick={onCreateCampaign}>
+      <Button
+        onClick={onCreateCampaign}
+        className="bg-brand-indigo hover:bg-indigo-500 text-white shadow-lg shadow-brand-indigo/20 hover:text-white"
+      >
         <Plus className="w-4 h-4 mr-2" />
         {t('emptyState.cta')}
       </Button>
@@ -429,7 +437,11 @@ export default function CampaignsPage({
             {t('subtitle')}
           </p>
         </div>
-        <Button onClick={onCreateCampaign}>
+        <Button
+          onClick={onCreateCampaign}
+          variant="primary"
+          className="bg-brand-indigo hover:bg-indigo-500 shadow-lg shadow-brand-indigo/20 text-white hover:text-white"
+        >
           <Plus className="w-5 h-5 mr-2" aria-hidden="true" />
           {t('actions.createCampaign')}
         </Button>
@@ -460,7 +472,7 @@ export default function CampaignsPage({
           <select
             value={statusFilter}
             onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-            className="bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="bg-surface-container-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand-indigo/30"
             aria-labelledby="status-filter-label"
           >
             <option value="all">{t('filter.all')}</option>
@@ -478,7 +490,7 @@ export default function CampaignsPage({
           <select
             value={channelFilter}
             onChange={(e) => { setChannelFilter(e.target.value); setCurrentPage(1); }}
-            className="bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+            className="bg-surface-container-high border border-outline-variant rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand-indigo/30"
             aria-labelledby="channel-filter-label"
           >
             <option value="all">{t('filter.allChannels')}</option>
@@ -490,7 +502,7 @@ export default function CampaignsPage({
 
         {/* Date filter */}
         <div
-          className="flex items-center gap-2 bg-muted border border-border rounded-lg px-3 py-2 cursor-pointer hover:border-foreground/30 transition-colors"
+          className="flex items-center gap-2 bg-surface-container-high border border-outline-variant rounded-lg px-3 py-2 cursor-pointer hover:border-foreground/30 transition-colors"
           role="button"
           tabIndex={0}
           aria-label={t('filter.date')}
@@ -562,8 +574,8 @@ export default function CampaignsPage({
                       className={cn(
                         'w-10 h-10 rounded-lg font-bold text-sm transition-all',
                         btn === currentPage
-                          ? 'bg-primary text-primary-foreground shadow-md shadow-primary/20'
-                          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                          ? 'bg-brand-indigo text-white shadow-lg shadow-brand-indigo/20'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-surface-variant'
                       )}
                     >
                       {btn}

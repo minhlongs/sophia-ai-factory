@@ -210,7 +210,7 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Heading */}
         <div className="text-center">
-          <h1 className="text-5xl font-bold text-white">
+          <h1 className="text-5xl font-bold text-[#e7e4f0]">
             {t("title")}
           </h1>
           <p className="mt-4 text-lg text-[#A1A1AA]">
@@ -226,15 +226,15 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
           />
         </div>
 
-        {/* Billing toggle */}
+        {/* Billing toggle — Stitch rounded-full style */}
         <div className="mt-8 flex justify-center">
-          <div className="inline-flex items-center rounded-lg border border-[#27272A] bg-[#18181B] p-1 gap-1">
+          <div className="inline-flex items-center rounded-full border border-[#484750] bg-[#191920] p-1">
             <button
               type="button"
               role="switch"
               aria-checked={billingPeriod === "monthly"}
               onClick={() => setBillingPeriod("monthly")}
-              className={`rounded-md px-5 py-2 text-sm font-medium transition-all duration-200 ${
+              className={`rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-200 ${
                 billingPeriod === "monthly"
                   ? "bg-[#6366F1] text-white"
                   : "text-[#A1A1AA] hover:text-white"
@@ -247,7 +247,7 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
               role="switch"
               aria-checked={billingPeriod === "annual"}
               onClick={() => setBillingPeriod("annual")}
-              className={`relative rounded-md px-5 py-2 text-sm font-medium transition-all duration-200 ${
+              className={`relative rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-200 ${
                 billingPeriod === "annual"
                   ? "bg-[#6366F1] text-white"
                   : "text-[#A1A1AA] hover:text-white"
@@ -295,21 +295,21 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
             return (
               <div
                 key={cfg.tier}
-                className={`relative flex flex-col rounded-lg border p-6 transition-all duration-200 ${
+                className={`relative flex flex-col p-8 transition-all duration-300 ${
                   cfg.highlighted
-                    ? "border-[#6366F1] bg-[#18181B] shadow-lg shadow-[#6366F1]/10"
-                    : "border-[#27272A] bg-[#18181B] hover:border-[#6366F1]/50"
+                    ? "border-2 border-[#6366F1] bg-[#191920] shadow-xl shadow-[#6366F1]/20 scale-[1.05] z-10 rounded-lg"
+                    : "border border-[#484750] bg-[#191920] hover:border-[#6366F1]/50 rounded-lg"
                 }`}
               >
-                {/* Popular badge */}
+                {/* Popular badge — Stitch rounded-full style */}
                 {cfg.tier === "PREMIUM" && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-md bg-[#6366F1] px-3 py-1 text-xs font-semibold text-white">
+                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-[#6366F1] px-4 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-sm">
                     {t("popular")}
                   </span>
                 )}
 
                 {/* Tier name */}
-                <h3 className={`text-lg font-semibold ${cfg.tier === "PREMIUM" ? "text-white" : "text-[#A1A1AA]"}`}>
+                <h3 className={`text-lg font-semibold ${cfg.tier === "PREMIUM" ? "text-[#e7e4f0]" : "text-[#A1A1AA]"}`}>
                   {cfg.tier === "MASTER" ? MASTER_TIER.name : tierConfig?.name || cfg.tier}
                 </h3>
 
@@ -319,20 +319,20 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
                 </p>
 
                 {/* Price */}
-                <div className="mt-4">
+                <div className="mt-4 mb-8">
                   {cfg.tier === "MASTER" ? (
                     <div className="flex items-baseline gap-2">
                       {discountedCents !== undefined ? (
                         <>
-                          <span className="text-3xl font-bold text-emerald-400">
+                          <span className="text-4xl font-bold text-emerald-400">
                             {formatPrice(discountedCents, locale)}
                           </span>
-                          <span className="text-xl line-through text-[#52525B]">
+                          <span className="text-2xl line-through text-[#52525B]">
                             {formatPrice(MASTER_TIER.price, locale)}
                           </span>
                         </>
                       ) : (
-                        <span className="text-3xl font-bold text-white">
+                        <span className="text-4xl font-bold text-[#e7e4f0]">
                           {formatPrice(MASTER_TIER.price, locale)}
                         </span>
                       )}
@@ -342,15 +342,15 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
                     <div className="flex items-baseline gap-2 flex-wrap">
                       {discountedCents !== undefined ? (
                         <>
-                          <span className="text-3xl font-bold text-emerald-400">
+                          <span className="text-4xl font-bold text-emerald-400">
                             {formatPrice(discountedCents, locale)}
                           </span>
-                          <span className="text-xl line-through text-[#52525B]">
+                          <span className="text-2xl line-through text-[#52525B]">
                             {formatPrice(priceCents, locale)}
                           </span>
                         </>
                       ) : (
-                        <span className="text-3xl font-bold text-white">
+                        <span className="text-4xl font-bold text-[#e7e4f0]">
                           {formatPrice(priceCents, locale)}
                         </span>
                       )}
@@ -360,15 +360,15 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
                     <div className="flex items-baseline gap-2">
                       {discountedCents !== undefined ? (
                         <>
-                          <span className="text-3xl font-bold text-emerald-400">
+                          <span className="text-4xl font-bold text-emerald-400">
                             {formatPrice(discountedCents, locale)}
                           </span>
-                          <span className="text-xl line-through text-[#52525B]">
+                          <span className="text-2xl line-through text-[#52525B]">
                             {formatPrice(priceCents, locale)}
                           </span>
                         </>
                       ) : (
-                        <span className="text-3xl font-bold text-white">
+                        <span className="text-4xl font-bold text-[#e7e4f0]">
                           {formatPrice(priceCents, locale)}
                         </span>
                       )}
@@ -377,12 +377,18 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
                   )}
                 </div>
 
-                {/* Features list */}
-                <ul className="mt-6 flex-1 space-y-3">
+                {/* Features list — Stitch spacing */}
+                <ul className="mb-10 flex-1 space-y-4">
                   {features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2 text-sm text-[#A1A1AA]">
-                      <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#6366F1]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    <li key={feature} className="flex items-start gap-3 text-sm text-[#A1A1AA]">
+                      {/* Filled check_circle SVG matching Material Icons style */}
+                      <svg
+                        className="mt-0.5 h-[18px] w-[18px] shrink-0 text-[#6366F1]"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        aria-hidden="true"
+                      >
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                       </svg>
                       {feature}
                     </li>
@@ -394,7 +400,7 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
                   <button
                     onClick={() => handleSelectTier(cfg.tier)}
                     disabled={isLoading}
-                    className="mt-6 w-full rounded-lg bg-[#6366F1] px-4 py-2.5 text-sm font-semibold text-white transition-all duration-200 hover:bg-[#5558E6] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded-lg bg-[#6366F1] px-6 py-3 text-sm font-bold text-white transition-all duration-200 hover:bg-[#5558E6] disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isLoading ? t("processing") : t("get_started")}
                   </button>
@@ -402,7 +408,7 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
                   <button
                     onClick={() => handleSelectTier(cfg.tier)}
                     disabled={isLoading}
-                    className="mt-6 w-full rounded-lg border border-[#6366F1] px-4 py-2.5 text-sm font-semibold text-[#6366F1] transition-all duration-200 hover:bg-[#6366F1]/10 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded-lg border border-[#6366F1] px-6 py-3 text-sm font-bold text-[#6366F1] transition-all duration-200 hover:bg-[#6366F1]/10 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isLoading ? t("processing") : t("get_started")}
                   </button>
@@ -410,7 +416,7 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
                   <button
                     onClick={() => handleSelectTier(cfg.tier)}
                     disabled={isLoading}
-                    className="mt-6 w-full rounded-lg border border-[#27272A] px-4 py-2.5 text-sm font-semibold text-[#A1A1AA] transition-all duration-200 hover:border-[#6366F1]/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded-lg border border-[#484750] px-6 py-3 text-sm font-bold text-[#A1A1AA] transition-all duration-200 hover:border-[#6366F1]/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isLoading ? t("processing") : cfg.tier === "MASTER" ? t("contact_sales") : t("get_started")}
                   </button>
@@ -418,7 +424,7 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
 
                 {/* Billing note */}
                 {cfg.tier !== "MASTER" && (
-                  <p className="mt-2 text-center text-xs text-[#52525B]">
+                  <p className="mt-3 text-center text-xs text-[#52525B]">
                     {isAnnual ? t("billing_yearly") : t("billing_monthly")}
                   </p>
                 )}
@@ -427,8 +433,8 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
           })}
         </div>
 
-        {/* Refund policy banner */}
-        <div className="mt-10 mx-auto max-w-xl rounded-lg border border-[#27272A] bg-[#18181B] p-4 text-center">
+        {/* Refund policy banner — matching card styling */}
+        <div className="mt-10 mx-auto max-w-xl rounded-lg border border-[#484750] bg-[#191920] p-4 text-center">
           <p className="text-xs text-[#A1A1AA]">
             <span className="font-semibold text-white">{t("refund_master_title")}</span>{" "}
             {t("refund_master_desc")}

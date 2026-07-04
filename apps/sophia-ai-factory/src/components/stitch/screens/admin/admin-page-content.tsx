@@ -332,8 +332,8 @@ export default function AdminPageContent({
                 <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 800 200">
                   <defs>
                     <linearGradient id={CHART_GRADIENT_ID} x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor="#D97706" stopOpacity="0.3" />
-                      <stop offset="100%" stopColor="#D97706" stopOpacity="0" />
+                      <stop offset="0%" stopColor="#6366F1" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#6366F1" stopOpacity="0" />
                     </linearGradient>
                   </defs>
                   <path
@@ -343,7 +343,7 @@ export default function AdminPageContent({
                   <path
                     d="M0,180 Q80,160 160,170 T320,130 T480,100 T640,60 T800,20"
                     fill="none"
-                    stroke="#D97706"
+                    stroke="#6366F1"
                     strokeWidth="3"
                   />
                 </svg>

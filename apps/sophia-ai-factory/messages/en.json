@@ -751,6 +751,7 @@
       "new_project": "New Project",
       "campaigns": "Campaigns",
       "analytics": "Analytics",
+      "funnels": "Funnels",
       "my_videos": "My Videos",
       "voices": "Voices",
       "templates": "Templates",
@@ -1095,7 +1096,13 @@
       "recent_completed": "Completed",
       "recent_actions": "Actions",
       "recent_view": "View",
-      "recent_empty": "No campaigns found"
+      "recent_empty": "No campaigns found",
+      "funnel_page_title": "Conversion Funnels",
+      "funnel_page_desc": "Visual breakdown of how users and campaigns progress through each stage of the funnel — from signup to conversion.",
+      "funnel_no_data": "No data yet — start by generating your first campaign",
+      "funnel_error": "Could not load funnel data. Please try again later.",
+      "funnel_date_range": "Showing data from the last {days} days.",
+      "funnel_sidebar": "Funnels"
     },
     "trialBanner": {
       "title": "Your trial expires tomorrow! Upgrade now to keep access →",
@@ -2048,6 +2055,33 @@
         "completed_campaigns": "Completed",
         "failed_campaigns": "Failed Campaigns",
         "success_rate": "Success Rate"
+      }
+    },
+    "agents": {
+      "onboarding_tour": {
+        "welcome_title": "Meet Your AI Executive Board",
+        "welcome_desc": "Your CEO Agent team is ready to help you manage campaigns, briefings, and revenue — all with AI-powered automation.",
+        "start_tour": "Take the Tour",
+        "dismiss": "Dismiss",
+        "mini_chat": "Chat",
+        "mini_briefing": "Briefing",
+        "mini_campaigns": "Campaigns",
+        "mini_revenue": "Revenue",
+        "title": "AI Executive Board",
+        "subtitle": "Your C-level AI team at a glance",
+        "skip": "Skip Tour",
+        "next": "Next",
+        "back": "Back",
+        "finish": "Get Started",
+        "progress": "Step {current} of {total}",
+        "tour_step1_title": "Chat with Your AI Team",
+        "tour_step1_desc": "Use natural language to assign tasks, ask for strategic advice, and command your AI executive board — no technical skills needed.",
+        "tour_step2_title": "Daily Briefing",
+        "tour_step2_desc": "Every morning, your CEO Agent generates a personalized briefing with revenue updates, campaign performance, and action items.",
+        "tour_step3_title": "Campaign Management",
+        "tour_step3_desc": "Monitor and manage all your marketing campaigns from one dashboard. Your AI team runs on autopilot while you stay in control.",
+        "tour_step4_title": "Revenue Dashboard",
+        "tour_step4_desc": "Track performance across all revenue channels. See unified earnings, trends, and insights — all powered by your AI agents."
       }
     }
   },
@@ -5370,6 +5404,7 @@
       },
       "conversions": {
         "title": "Recent Conversions",
+        "viewAll": "View All Conversions",
         "columns": {
           "id": "ID",
           "amount": "Amount",
@@ -5395,10 +5430,13 @@
         "shareTelegram": "Share on Telegram",
         "shareEmail": "Share via Email",
         "shareText": "Join Sophia AI Factory and start earning!",
-        "emailSubject": "Invitation to join Sophia AI Factory"
+        "emailSubject": "Invitation to join Sophia AI Factory",
+        "info": "Referrers are tracked via cookies (30-day duration). Multi-level rewards are active for your account. Commissions are credited in USDT (TRC20)."
       },
       "wallet": {
         "title": "USDT Wallet (TRC20)",
+        "addressLabel": "TRC20 ADDRESS",
+        "editAddress": "Edit Address",
         "availableBalance": "Available Balance",
         "withdraw": "Withdraw",
         "minimumWithdrawal": "Minimum withdrawal {amount}",
@@ -5604,6 +5642,10 @@
       }
     },
     "landing": {
+      "badge": "⚡ Trusted by 10,000+ creators worldwide",
+      "headline": "Build Your AI-Powered Video ",
+      "headlineHighlight": " Empire Without Hiring a Team",
+      "subheading": "Sophia automates faceless YouTube channels, affiliate campaigns, and multi-platform publishing — all from one dashboard and your Telegram. No coding. No editors. No stress.",
       "nav": {
         "features": "Features",
         "pricing": "Pricing",
@@ -5612,10 +5654,6 @@
         "signIn": "Sign In",
         "startFree": "Start Free"
       },
-      "badge": "New: Version 2.0 Released",
-      "headline": "Build Your AI",
-      "headlineHighlight": "Video Empire",
-      "subheading": "Generate faceless YouTube channels, run affiliate campaigns, and publish across TikTok, YouTube, and IG — all from one intelligent dashboard.",
       "cta": {
         "startFree": "Start Free",
         "watchDemo": "Watch Demo"
@@ -5625,25 +5663,25 @@
         "creators": "10,000+ creators",
         "videos": "1M+ videos generated"
       },
-      "features": {
-        "scriptWriting": {
-          "title": "AI Script Writing",
-          "description": "Transform a simple keyword into high-retention video scripts optimized for audience engagement and conversion metrics."
-        },
-        "multiChannel": {
-          "title": "Multi-Channel Publish",
-          "description": "Schedule and deploy your content across TikTok, YouTube Shorts, and Instagram Reels simultaneously with one click."
-        },
-        "analytics": {
-          "title": "Revenue Analytics",
-          "description": "Track affiliate link clicks and revenue generation directly linked to your AI-generated video campaigns in real-time."
-        }
-      },
       "footer": {
-        "copyright": "© 2024 Sophia AI Factory. All rights reserved.",
+        "copyright": "© 2026 Sophia AI Factory. All rights reserved.",
         "privacy": "Privacy Policy",
         "terms": "Terms of Service",
         "contact": "Contact Us"
+      },
+      "features": {
+        "scriptWriting": {
+          "title": "AI Video Factory",
+          "description": "Generate faceless YouTube videos from a single script. AI voices, auto-captions, multi-language."
+        },
+        "multiChannel": {
+          "title": "Telegram Empire Control",
+          "description": "Run your entire business from Telegram. Launch campaigns, check stats — no dashboard needed."
+        },
+        "analytics": {
+          "title": "Affiliate Revenue Engine",
+          "description": "Connect 10+ affiliate networks. Sophia auto-tags and tracks your commissions."
+        }
       }
     },
     "settingsPage": {

@@ -6,8 +6,6 @@ import { ArrowRight, Play, Sparkles, Share2, BarChart3 } from 'lucide-react';
 import { ScrollReveal } from '@/seed/components/ui/scroll-reveal';
 import { Link } from '@/navigation';
 
-const NAV_ITEMS = ['features', 'pricing', 'blog', 'affiliates'] as const;
-
 interface Feature {
   key: string;
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -24,72 +22,27 @@ export default function LandingHero() {
 
   return (
     <>
-      {/* ── Top Navigation Bar ──────────────────────────────────────────────── */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#0e0e12]/80 backdrop-blur-md border-b border-[#484750]">
-        <nav
-          className="flex justify-between items-center w-full px-4 md:px-8 py-4 max-w-7xl mx-auto"
-          aria-label="Main navigation"
-        >
-          {/* Brand */}
-          <Link
-            href="/"
-            className="text-2xl font-headline-xl font-bold text-[#D97706] tracking-tighter"
-          >
-            Sophia
-          </Link>
-
-          {/* Nav Links - Desktop */}
-          <div className="hidden md:flex gap-8 items-center">
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item}
-                href={`#${item}`}
-                className="text-[#acaab5] hover:text-[#e7e4f0] transition-colors text-sm font-medium"
-              >
-                {t(`nav.${item}`)}
-              </Link>
-            ))}
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-4 md:gap-6">
-            <Link
-              href="/auth/login"
-              className="text-[#acaab5] hover:text-[#e7e4f0] transition-colors text-sm font-medium"
-            >
-              {t('nav.signIn')}
-            </Link>
-            <Link
-              href="/auth/register"
-              className="inline-flex items-center justify-center bg-[#D97706] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-all active:scale-95"
-            >
-              {t('nav.startFree')}
-            </Link>
-          </div>
-        </nav>
-      </header>
-
-      {/* ── Hero Section ───────────────────────────────────────────────────── */}
-      <main className="relative pt-32 pb-24 overflow-hidden">
-        {/* Background ambient glow */}
+      <main
+        className="relative min-h-screen pt-24 flex flex-col items-center justify-center overflow-hidden"
+        style={{
+          background: 'radial-gradient(circle at 50% -20%, rgba(99, 102, 241, 0.15) 0%, rgba(14, 14, 18, 0) 60%)',
+        }}
+      >
+        {/* Background decoration */}
         <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full pointer-events-none -z-10"
-          style={{
-            background:
-              'radial-gradient(ellipse at 50% 50%, rgba(217, 119, 6, 0.1) 0%, transparent 70%)',
-          }}
+          className="absolute top-1/4 -left-20 w-96 h-96 bg-[#6366F1]/10 rounded-full blur-[120px] pointer-events-none"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute bottom-1/4 -right-20 w-96 h-96 bg-[#6366F1]/5 rounded-full blur-[120px] pointer-events-none"
           aria-hidden="true"
         />
 
-        <section className="max-w-7xl mx-auto px-4 md:px-8 flex flex-col items-center text-center">
+        <section className="max-w-7xl mx-auto px-4 md:px-8 w-full flex flex-col items-center text-center space-y-8">
           {/* Badge */}
           <ScrollReveal>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#D97706]/10 border border-[#D97706]/20 mb-8">
-              <span
-                className="w-2 h-2 rounded-full bg-[#D97706] animate-pulse"
-                aria-hidden="true"
-              />
-              <span className="text-xs font-bold uppercase tracking-widest text-[#D97706]">
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-[#6366F1]/10 border border-[#6366F1]/20">
+              <span className="text-[#6366F1] font-medium text-sm tracking-wide">
                 {t('badge')}
               </span>
             </div>
@@ -97,38 +50,37 @@ export default function LandingHero() {
 
           {/* Headline */}
           <ScrollReveal delay={100}>
-            <h1 className="text-4xl md:text-5xl lg:text-[64px] font-headline-xl leading-[1.1] mb-6 tracking-tight max-w-[900px] text-[#e7e4f0]">
+            <h1 className="text-4xl md:text-5xl lg:text-[56px] font-bold leading-tight tracking-tight text-white max-w-4xl"
+                style={{textShadow: '0 0 30px rgba(99, 102, 241, 0.3)'}}>
               {t('headline')}{' '}
-              <span className="text-[#D97706] italic">{t('headlineHighlight')}</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-indigo-600">
+                {t('headlineHighlight')}
+              </span>
             </h1>
           </ScrollReveal>
 
           {/* Subheading */}
           <ScrollReveal delay={200}>
-            <p className="text-lg md:text-xl text-[#acaab5] max-w-[720px] mb-12 leading-relaxed">
+            <p className="text-lg md:text-[20px] text-[#A1A1AA] max-w-2xl leading-relaxed">
               {t('subheading')}
             </p>
           </ScrollReveal>
 
           {/* CTA Buttons */}
           <ScrollReveal delay={300}>
-            <div className="flex flex-col sm:flex-row gap-4 mb-16">
+            <div className="flex flex-col sm:flex-row items-center gap-6 mt-4">
               <Link
-                href="/auth/register"
-                className="group inline-flex items-center justify-center gap-2 bg-[#D97706] text-white h-12 px-8 rounded-lg font-medium hover:opacity-90 transition-all active:scale-95 shadow-[0_0_20px_rgba(217,119,6,0.4)]"
+                href="/auth/signup"
+                className="h-12 px-10 rounded-xl bg-[#6366F1] text-white font-semibold hover:bg-[#5558e6] transition-all active:scale-95 shadow-lg shadow-indigo-500/30 flex items-center justify-center"
               >
                 {t('cta.startFree')}
-                <ArrowRight
-                  className="w-5 h-5 group-hover:translate-x-1 transition-transform"
-                  aria-hidden="true"
-                />
               </Link>
               <button
                 type="button"
-                className="inline-flex items-center justify-center gap-2 border border-zinc-600 text-[#e7e4f0] h-12 px-8 rounded-lg font-medium hover:bg-zinc-800/50 transition-all active:scale-95"
+                className="group h-12 px-8 rounded-xl border border-outline-variant/50 text-white font-medium hover:bg-surface-container-highest transition-all flex items-center justify-center gap-2 active:scale-95"
                 aria-label={t('cta.watchDemo')}
               >
-                <Play className="w-5 h-5" aria-hidden="true" />
+                <Play className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" aria-hidden="true" />
                 {t('cta.watchDemo')}
               </button>
             </div>
@@ -136,50 +88,66 @@ export default function LandingHero() {
 
           {/* Trust Bar */}
           <ScrollReveal delay={400}>
-            <div className="flex flex-col items-center gap-4 mb-24 py-8 px-8 md:px-12 bg-[#191920]/60 backdrop-blur-lg border border-[#484750]/50 rounded-2xl">
-              <div className="flex -space-x-3" role="list" aria-label={t('trustBar.label')}>
-                {[0, 1, 2].map((i) => (
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 pt-12 border-t border-outline-variant/20 w-full max-w-3xl mt-12">
+              <div className="flex items-center gap-2">
+                <div className="flex -space-x-3" role="list" aria-label={t('trustBar.label')}>
+                  {[0, 1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="w-8 h-8 rounded-full border-2 border-background bg-zinc-800 flex items-center justify-center text-[10px] text-white overflow-hidden"
+                      role="listitem"
+                      aria-hidden="true"
+                    />
+                  ))}
                   <div
-                    key={i}
-                    className="w-10 h-10 rounded-full border-2 border-[#191920] overflow-hidden bg-gradient-to-br from-[#D97706]/30 to-[#B45309]/30"
+                    className="w-8 h-8 rounded-full border-2 border-background bg-zinc-800 flex items-center justify-center bg-[#6366F1] text-white text-[10px] font-bold"
                     role="listitem"
-                    aria-hidden="true"
-                  />
-                ))}
-                <div
-                  className="w-10 h-10 rounded-full border-2 border-[#191920] flex items-center justify-center bg-[#D97706] text-white text-xs font-bold"
-                  role="listitem"
-                >
-                  +10k
+                  >
+                    +10k
+                  </div>
                 </div>
-              </div>
-              <p className="text-sm text-[#acaab5]">
-                <span className="text-[#e7e4f0] font-semibold">
+                <span className="text-sm font-medium text-on-surface-variant">
                   {t('trustBar.creators')}
-                </span>{' '}
-                · {t('trustBar.videos')}
-              </p>
+                </span>
+              </div>
+              <div className="h-4 w-px bg-outline-variant/40 hidden md:block" aria-hidden="true" />
+              <span className="text-sm font-medium text-on-surface-variant">
+                {t('trustBar.videos')}
+              </span>
+              <div className="h-4 w-px bg-outline-variant/40 hidden md:block" aria-hidden="true" />
+              <div className="flex items-center gap-1.5">
+                <div className="flex text-yellow-500">
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <span key={i} className="text-sm">★</span>
+                  ))}
+                </div>
+                <span className="text-sm font-medium text-on-surface-variant">4.9/5</span>
+              </div>
             </div>
           </ScrollReveal>
 
-          {/* Features Grid */}
+          {/* Feature Cards */}
           <ScrollReveal
             delay={500}
             staggerDelay={150}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-left"
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-16 pb-20 w-full max-w-6xl text-left"
           >
             {FEATURES.map(({ key, icon: Icon }) => (
               <div
                 key={key}
-                className="bg-[#18181B] border border-zinc-800 p-4 rounded-lg hover:border-[#D97706]/40 transition-colors group"
+                className="group p-6 rounded-2xl border border-zinc-800/50 hover:border-indigo-500/50 transition-all duration-500 text-left"
+                style={{
+                  background: 'rgba(37, 37, 46, 0.4)',
+                  backdropFilter: 'blur(12px)',
+                }}
               >
-                <div className="w-12 h-12 rounded-xl bg-[#D97706]/10 flex items-center justify-center mb-6 text-[#D97706] group-hover:scale-110 transition-transform">
-                  <Icon className="w-6 h-6" aria-hidden="true" />
+                <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-5 group-hover:bg-indigo-500/20 transition-colors">
+                  <Icon className="w-6 h-6 text-indigo-400" aria-hidden="true" />
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-[#e7e4f0]">
+                <h3 className="text-lg font-bold text-white mb-2">
                   {t(`features.${key}.title`)}
                 </h3>
-                <p className="text-[#acaab5] leading-relaxed">
+                <p className="text-sm text-on-surface-variant leading-relaxed">
                   {t(`features.${key}.description`)}
                 </p>
               </div>
@@ -189,32 +157,30 @@ export default function LandingHero() {
       </main>
 
       {/* ── Footer ─────────────────────────────────────────────────────────── */}
-      <footer className="bg-[#000000] border-t border-[#484750]">
-        <div className="flex flex-col md:flex-row justify-between items-center w-full px-4 md:px-8 py-12 max-w-7xl mx-auto">
-          <div className="flex flex-col items-center md:items-start gap-2 mb-8 md:mb-0">
-            <span className="text-xl font-bold text-[#e7e4f0]">
-              Sophia
-            </span>
-            <p className="text-sm text-[#acaab5]">
+      <footer className="w-full py-12 bg-surface-container-low border-t border-outline-variant/20">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex flex-col items-center md:items-start gap-2">
+            <span className="text-lg font-headline font-semibold text-on-surface">Sophia AI Factory</span>
+            <p className="text-sm text-on-surface-variant">
               {t('footer.copyright')}
             </p>
           </div>
-          <nav className="flex gap-8" aria-label="Footer navigation">
+          <nav className="flex items-center gap-8" aria-label="Footer navigation">
             <Link
               href="/privacy"
-              className="text-[#acaab5] hover:text-[#D97706] transition-colors text-sm"
+              className="text-on-surface-variant hover:text-on-surface transition-colors text-sm"
             >
               {t('footer.privacy')}
             </Link>
             <Link
               href="/terms"
-              className="text-[#acaab5] hover:text-[#D97706] transition-colors text-sm"
+              className="text-on-surface-variant hover:text-on-surface transition-colors text-sm"
             >
               {t('footer.terms')}
             </Link>
             <Link
               href="/contact"
-              className="text-[#acaab5] hover:text-[#D97706] transition-colors text-sm"
+              className="text-on-surface-variant hover:text-on-surface transition-colors text-sm"
             >
               {t('footer.contact')}
             </Link>
