@@ -22,6 +22,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [magicLinkLoading, setMagicLinkLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -53,8 +54,11 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
       const result = await authClient.signIn.magicLink({ email });
       if (result.error) {
         setError(result.error.message || t('networkError'));
+        setMagicLinkLoading(false);
+      } else {
+        setMagicLinkSent(true);
+        setMagicLinkLoading(false);
       }
-      setMagicLinkLoading(false);
     } catch {
       setError(t('networkError'));
       setMagicLinkLoading(false);
@@ -80,6 +84,14 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           {locale === 'en' ? 'VI' : 'EN'}
         </span>
       </button>
+
+      {/* Magic link sent notice */}
+      {magicLinkSent && (
+        <div className="mb-5 rounded-lg bg-emerald-900/20 border border-emerald-800/30 px-4 py-3 text-sm text-emerald-400 flex items-center gap-2">
+          <span aria-hidden="true">&#10003;</span>
+          <span>Magic link sent! Check your email.</span>
+        </div>
+      )}
 
       {/* Error banner */}
       {error && (
