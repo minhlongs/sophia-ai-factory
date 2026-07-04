@@ -282,23 +282,6 @@
   --glass-border: rgba(255, 255, 255, 0.08);
 }
 
-/* ── Two-tone theme classes — toggle via .theme-amber / .theme-indigo ── */
-/* Same specificity as .dark (0,1,0) — last-defined wins in source order. */
-.theme-amber {
-  --primary: 35 80% 44%;
-  --primary-foreground: 0 0% 100%;
-  --primary-light: 35 80% 92%;
-  --ring: 35 70% 40%;
-}
-
-.theme-indigo {
-  --primary: 239 84% 67%;
-  --primary-foreground: 0 0% 100%;
-  --primary-light: 239 84% 94%;
-  --ring: 239 84% 60%;
-}
-
-
 /* ═══════════════════════════════════════════════════════════════════════════
    Tailwind v4 @theme — CSS variable bridge
    ═══════════════════════════════════════════════════════════════════════════ */
