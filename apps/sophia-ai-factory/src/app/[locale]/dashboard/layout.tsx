@@ -18,6 +18,7 @@ import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import { SignOutButton } from "@/seed/auth/sign-out-button";
 import { DashboardSidebarNav } from "@/forest/components/dashboard/dashboard-sidebar-nav";
 import { PageTransition } from "@/seed/components/ui/page-transition";
+import { getFeatureFlag } from "@/seed/config/flags";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -65,6 +66,7 @@ export default async function DashboardLayout({
 }) {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'dashboard' });
+  const uiRedesignEnabled = getFeatureFlag('enable_ui_redesign');
   const currentUser = await getCurrentUser();
   if (!currentUser) redirect('/login');
   // Parallelize independent per-user lookups — each is an isolated D1 round-trip.
@@ -81,6 +83,7 @@ export default async function DashboardLayout({
   // already uses tier=MASTER as the source of truth. See task #35 thread.
   const isAdmin = currentUser?.role === 'admin' || userTier === 'MASTER';
   const isVi = locale.startsWith('vi');
+  const containerClassName = `relative min-h-screen flex text-foreground overflow-hidden bg-background p-0 md:p-1${uiRedesignEnabled ? ' theme-indigo' : ''}`;
   // eslint-disable-next-line react-hooks/purity
   const nowSec = Math.floor(Date.now() / 1000);
   // Only show trial banner for BASIC tier users within 7 days of trial expiry.
@@ -93,7 +96,7 @@ export default async function DashboardLayout({
     trialEndsAt <= sevenDaysFromNow;
 
   return (
-    <div className="relative min-h-screen flex text-foreground overflow-hidden bg-background p-0 md:p-1">
+    <div className={containerClassName}>
       {/* Ambient background — warm amber + indigo orbs */}
       <div className="fixed inset-0 -z-50 overflow-hidden pointer-events-none bg-background">
         {/* Warm amber orb */}

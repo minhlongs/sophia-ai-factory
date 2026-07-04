@@ -62,6 +62,12 @@ export const FEATURE_FLAGS: Record<FeatureFlag, FlagConfig> = {
     defaultEnabled: true,
     requiredTier: "MASTER",
   },
+  enable_ui_redesign: {
+    name: "UI Redesign (Two-Tone Amber/Indigo)",
+    description: "Enable the new two-tone design system — amber for landing pages, indigo for dashboard",
+    defaultEnabled: false,
+    requiredTier: "BASIC",
+  },
 };
 
 const DEFAULT_FLAGS: FeatureFlagConfig = {
@@ -88,6 +94,10 @@ const DEFAULT_FLAGS: FeatureFlagConfig = {
   enable_early_access: {
     enabled: true,
     description: "Early access to beta features for Master tier users",
+  },
+  enable_ui_redesign: {
+    enabled: false,
+    description: "Enable the new two-tone design system — amber for landing pages, indigo for dashboard",
   },
 };
 

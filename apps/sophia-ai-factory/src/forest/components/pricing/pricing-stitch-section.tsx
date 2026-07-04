@@ -236,7 +236,7 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
               onClick={() => setBillingPeriod("monthly")}
               className={`rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-200 ${
                 billingPeriod === "monthly"
-                  ? "bg-[#6366F1] text-white"
+                  ? "bg-primary text-white"
                   : "text-[#A1A1AA] hover:text-white"
               }`}
             >
@@ -249,7 +249,7 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
               onClick={() => setBillingPeriod("annual")}
               className={`relative rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-200 ${
                 billingPeriod === "annual"
-                  ? "bg-[#6366F1] text-white"
+                  ? "bg-primary text-white"
                   : "text-[#A1A1AA] hover:text-white"
               }`}
             >
@@ -297,13 +297,13 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
                 key={cfg.tier}
                 className={`relative flex flex-col p-8 transition-all duration-300 ${
                   cfg.highlighted
-                    ? "border-2 border-[#6366F1] bg-[#191920] shadow-xl shadow-[#6366F1]/20 scale-[1.05] z-10 rounded-lg"
-                    : "border border-[#484750] bg-[#191920] hover:border-[#6366F1]/50 rounded-lg"
+                    ? "border-2 border-primary bg-[#191920] shadow-xl shadow-primary/20 scale-[1.05] z-10 rounded-lg"
+                    : "border border-[#484750] bg-[#191920] hover:border-primary/50 rounded-lg"
                 }`}
               >
                 {/* Popular badge — Stitch rounded-full style */}
                 {cfg.tier === "PREMIUM" && (
-                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-[#6366F1] px-4 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-sm">
+                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-sm">
                     {t("popular")}
                   </span>
                 )}
@@ -383,7 +383,7 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
                     <li key={feature} className="flex items-start gap-3 text-sm text-[#A1A1AA]">
                       {/* Filled check_circle SVG matching Material Icons style */}
                       <svg
-                        className="mt-0.5 h-[18px] w-[18px] shrink-0 text-[#6366F1]"
+                        className="mt-0.5 h-[18px] w-[18px] shrink-0 text-primary"
                         viewBox="0 0 24 24"
                         fill="currentColor"
                         aria-hidden="true"
@@ -400,7 +400,7 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
                   <button
                     onClick={() => handleSelectTier(cfg.tier)}
                     disabled={isLoading}
-                    className="w-full rounded-lg bg-[#6366F1] px-6 py-3 text-sm font-bold text-white transition-all duration-200 hover:bg-[#5558E6] disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded-lg bg-primary px-6 py-3 text-sm font-bold text-white transition-all duration-200 hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isLoading ? t("processing") : t("get_started")}
                   </button>
@@ -408,7 +408,7 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
                   <button
                     onClick={() => handleSelectTier(cfg.tier)}
                     disabled={isLoading}
-                    className="w-full rounded-lg border border-[#6366F1] px-6 py-3 text-sm font-bold text-[#6366F1] transition-all duration-200 hover:bg-[#6366F1]/10 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded-lg border border-primary px-6 py-3 text-sm font-bold text-primary transition-all duration-200 hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isLoading ? t("processing") : t("get_started")}
                   </button>
@@ -416,7 +416,7 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
                   <button
                     onClick={() => handleSelectTier(cfg.tier)}
                     disabled={isLoading}
-                    className="w-full rounded-lg border border-[#484750] px-6 py-3 text-sm font-bold text-[#A1A1AA] transition-all duration-200 hover:border-[#6366F1]/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                    className="w-full rounded-lg border border-[#484750] px-6 py-3 text-sm font-bold text-[#A1A1AA] transition-all duration-200 hover:border-primary/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isLoading ? t("processing") : cfg.tier === "MASTER" ? t("contact_sales") : t("get_started")}
                   </button>
