@@ -5692,7 +5692,9 @@
         "affiliates": "Affiliates",
         "signIn": "Sign In",
         "startFree": "Start Free",
-        "getStarted": "Get Started"
+        "getStarted": "Get Started",
+        "guide": "Guide",
+        "login": "Login"
       },
       "cta": {
         "startFree": "Start Free",
