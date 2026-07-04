@@ -47,10 +47,10 @@ export default function LandingHero() {
           </Link>
           {/* Nav Links */}
           <div className="hidden md:flex items-center gap-8 text-sm">
-            <Link href="/features" className="text-muted-foreground hover:text-primary transition-colors">{t('features')}</Link>
-            <Link href="/pricing" className="text-muted-foreground hover:text-primary transition-colors">{t('pricing')}</Link>
-            <Link href="/guide" className="text-muted-foreground hover:text-primary transition-colors">{t('guide')}</Link>
-            <Link href="/affiliates" className="text-muted-foreground hover:text-primary transition-colors">{t('affiliates')}</Link>
+            <Link href="/features" className="text-muted-foreground hover:text-primary transition-colors">{t('nav.features')}</Link>
+            <Link href="/pricing" className="text-muted-foreground hover:text-primary transition-colors">{t('nav.pricing')}</Link>
+            <Link href="/guide" className="text-muted-foreground hover:text-primary transition-colors">{t('nav.guide')}</Link>
+            <Link href="/affiliates" className="text-muted-foreground hover:text-primary transition-colors">{t('nav.affiliates')}</Link>
           </div>
           {/* Right side */}
           <div className="flex items-center gap-3">
@@ -58,10 +58,10 @@ export default function LandingHero() {
               {locale === 'en' ? 'VI' : 'EN'}
             </button>
             <Link href="/login" className="px-5 py-2 rounded-lg text-muted-foreground hover:text-primary transition-all text-sm">
-              {t('logIn')}
+              {t('nav.login')}
             </Link>
             <Link href="/auth/signup" className="px-6 py-2.5 rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-sm">
-              {t('getStarted')}
+              {t('nav.getStarted')}
             </Link>
           </div>
         </div>

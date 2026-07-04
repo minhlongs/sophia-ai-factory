@@ -5691,7 +5691,8 @@
         "blog": "Blog",
         "affiliates": "Affiliates",
         "signIn": "Sign In",
-        "startFree": "Start Free"
+        "startFree": "Start Free",
+        "getStarted": "Get Started"
       },
       "cta": {
         "startFree": "Start Free",
@@ -5721,7 +5722,12 @@
           "title": "Affiliate Revenue Engine",
           "description": "Connect 10+ affiliate networks. Sophia auto-tags and tracks your commissions."
         }
-      }
+      },
+      "pricing": "Pricing",
+      "guide": "Guide",
+      "affiliates": "Affiliates",
+      "logIn": "Log In",
+      "getStarted": "Get Started"
     },
     "settingsPage": {
       "pageTitle": "Settings",
