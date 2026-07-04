@@ -1,0 +1,40 @@
+name: 2-Guard Deploy (Git + Cloudflare)
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+env:
+  NODE_VERSION: "20"
+  APP_DIR: apps/sophia-ai-factory
+  PREVIEW_NAME: sophia-ai-factory-preview
+jobs:
+  guard-1-ci:
+    name: "Guard 1: CI"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: "npm", cache-dependency-path: "${{ env.APP_DIR }}/package-lock.json" }
+      - run: npm ci && npm run type-check && npm test && npm run lint && npm run build
+        working-directory: ${{ env.APP_DIR }}
+  guard-2-deploy:
+    name: "Guard 2: Deploy"
+    needs: guard-1-ci
+    if: github.event_name == "push" && github.ref == "refs/heads/main"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: "npm", cache-dependency-path: "${{ env.APP_DIR }}/package-lock.json" }
+      - run: npm ci && npm run build
+        working-directory: ${{ env.APP_DIR }}
+      - run: npx wrangler deploy --name ${{ env.PREVIEW_NAME }} main=${{ env.APP_DIR }}/.open-next/worker.js
+        env: { CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}", CLOUDFLARE_ACCOUNT_ID: "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" }
+      - run: curl -sfo /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 30 "https://${{ env.PREVIEW_NAME }}.${{ secrets.CF_SUBDOMAIN }}.workers.dev/api/version"
+      - run: npx wrangler deploy main=${{ env.APP_DIR }}/.open-next/worker.js
+        env: { CLOUDFLARE_API_TOKEN: "${{ secrets.CLOUDFLARE_API_TOKEN }}", CLOUDFLARE_ACCOUNT_ID: "${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" }
+      - run: curl -sfo /dev/null -w "HTTP %{http_code}\n" --connect-timeout 10 --max-time 30 "https://sophia.agencyos.network/api/version"
