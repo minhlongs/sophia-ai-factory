@@ -231,9 +231,9 @@ function TopBar() {
   const t = useTranslations('stitch.dashboardShell');
 
   return (
-    <header className="h-16 bg-[#18181B] border-b border-zinc-800 flex items-center justify-between px-8 z-40 fixed top-0 right-0 left-[240px]">
+    <header className="h-16 bg-[#18181B] border-b border-zinc-800 flex items-center justify-between px-4 md:px-8 z-40 fixed top-0 right-0 left-[240px]">
       {/* Search */}
-      <div className="relative w-[240px]">
+      <div className="relative w-full md:w-[240px]">
         <Search
           className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 w-4 h-4 pointer-events-none"
           aria-hidden="true"
@@ -318,7 +318,7 @@ function DashboardContent({
   const gpuPercent = gpuTotal && gpuUsed ? Math.round((gpuUsed / gpuTotal) * 100) : 85;
 
   return (
-    <main className="flex-1 overflow-y-auto p-8 relative bg-black">
+    <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 relative bg-black">
       <div className="max-w-[1400px] mx-auto">
         {/* Breadcrumbs */}
         <nav aria-label={t('breadcrumb.label')} className="flex items-center gap-2 text-xs text-zinc-500 mb-6">
@@ -332,12 +332,12 @@ function DashboardContent({
         {/* Hero + GPU Credits row */}
         <div className="grid grid-cols-12 gap-6">
           {/* Hero Bento Card */}
-          <div className="col-span-12 lg:col-span-8 p-8 rounded-xl bg-gradient-to-br from-zinc-900 to-[#18181B] relative overflow-hidden border border-zinc-800/50">
+          <div className="col-span-12 lg:col-span-8 p-4 md:p-6 lg:p-8 rounded-xl bg-gradient-to-br from-zinc-900 to-[#18181B] relative overflow-hidden border border-zinc-800/50">
             <div className="relative z-10">
-              <h1 className="text-4xl font-black tracking-tight mb-2 text-zinc-100">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight mb-2 text-zinc-100">
                 {t('welcome.heading', { name: welcomeName || 'Jane' })}
               </h1>
-              <p className="text-zinc-400 text-lg max-w-md">
+              <p className="text-zinc-400 text-sm md:text-base lg:text-lg max-w-md">
                 {t.rich('welcome.description', {
                   count: activeCampaigns ?? 12,
                   bold: (chunks: React.ReactNode) => (
@@ -347,13 +347,13 @@ function DashboardContent({
               </p>
               <div className="mt-8 flex gap-4 flex-wrap">
                 <button
-                  className="bg-amber-600 hover:bg-amber-500 text-white px-6 py-3 rounded-xl font-bold shadow-xl shadow-amber-600/30 active:scale-95 transition-all"
+                  className="bg-amber-600 hover:bg-amber-500 text-white px-6 py-3 min-h-[44px] rounded-xl font-bold shadow-xl shadow-amber-600/30 active:scale-95 transition-all"
                   aria-label={t('welcome.newProject')}
                 >
                   <Play className="w-5 h-5 mr-2 inline-block align-middle" aria-hidden="true" />
                   {t('welcome.newProject')}
                 </button>
-                <button className="bg-white/5 border border-zinc-700/50 text-zinc-200 px-6 py-3 rounded-xl font-bold hover:bg-white/10 backdrop-blur-md transition-colors">
+                <button className="bg-white/5 border border-zinc-700/50 text-zinc-200 px-6 py-3 min-h-[44px] rounded-xl font-bold hover:bg-white/10 backdrop-blur-md transition-colors">
                   {t('welcome.viewAnalytics')}
                 </button>
               </div>
@@ -361,7 +361,7 @@ function DashboardContent({
           </div>
 
           {/* GPU Credits Card */}
-          <div className="col-span-12 lg:col-span-4 p-6 rounded-xl bg-[#18181B] border border-zinc-800 flex flex-col justify-between">
+          <div className="col-span-12 lg:col-span-4 p-4 md:p-6 rounded-xl bg-[#18181B] border border-zinc-800 flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
@@ -370,7 +370,7 @@ function DashboardContent({
                 <Zap className="w-5 h-5 text-amber-500" aria-hidden="true" />
               </div>
               <div className="flex items-end gap-2">
-                <span className="text-3xl font-black text-zinc-100">
+                <span className="text-2xl md:text-3xl font-black text-zinc-100">
                   {gpuUsed?.toLocaleString() || '42,800'}
                 </span>
                 <span className="text-zinc-500 text-sm pb-1">
@@ -410,7 +410,7 @@ function DashboardContent({
             return (
               <div
                 key={stat.key}
-                className="col-span-12 md:col-span-3 p-6 rounded-xl bg-[#18181B] border border-zinc-800 flex items-center gap-4 hover:border-amber-500/50 transition-colors"
+                className="col-span-12 md:col-span-3 p-4 md:p-6 rounded-xl bg-[#18181B] border border-zinc-800 flex items-center gap-4 hover:border-amber-500/50 transition-colors"
               >
                 <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-amber-500/10 text-amber-400">
                   <Icon className="w-6 h-6" aria-hidden="true" />
@@ -419,16 +419,16 @@ function DashboardContent({
                   <p className="text-xs text-zinc-500 font-bold uppercase tracking-wide">
                     {t(`stats.${stat.key}`)}
                   </p>
-                  <p className="text-2xl font-bold text-zinc-100">{stat.value}</p>
+                  <p className="text-2xl md:text-3xl font-bold text-zinc-100">{stat.value}</p>
                 </div>
               </div>
             );
           })}
 
           {/* Recent Projects */}
-          <div className="col-span-12 p-6 rounded-xl bg-[#18181B] border border-zinc-800">
+          <div className="col-span-12 p-4 md:p-6 rounded-xl bg-[#18181B] border border-zinc-800">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-zinc-100">{t('recentProjects.title')}</h2>
+              <h2 className="text-lg md:text-xl font-bold text-zinc-100">{t('recentProjects.title')}</h2>
               <a href="/projects" className="text-amber-400 text-sm font-bold hover:underline">
                 {t('recentProjects.viewAll')}
               </a>
@@ -519,10 +519,10 @@ export default function DashboardShell({
         </div>
         <div className="flex-1 flex flex-col">
           <div className="h-16 w-full bg-[#18181B] animate-pulse" />
-          <div className="flex-1 p-8 space-y-6">
+          <div className="flex-1 p-4 md:p-6 lg:p-8 space-y-6">
             <div className="h-8 w-48 bg-zinc-800/50 rounded animate-pulse" />
             <div className="h-48 w-full bg-zinc-800/50 rounded-xl animate-pulse" />
-            <div className="grid grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="h-28 bg-zinc-800/50 rounded-xl animate-pulse" />
               ))}

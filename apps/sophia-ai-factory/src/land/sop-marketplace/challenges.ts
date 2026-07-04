@@ -4,8 +4,10 @@
 
 import type { SopChallengeRow, UserChallengeProgressRow } from '@/tree/sop/sop-types';
 import { addCredits } from '@/tree/mcu/credits-repo';
+import { getStreakInfo, applyStreakBonus } from './streaks';
 
-/** Claim a completed challenge reward. Supports: 'credits' | 'badge' | 'commission_boost'. */
+/** Claim a completed challenge reward. Supports: 'credits' | 'badge' | 'commission_boost'.
+ *  Credit rewards benefit from a streak bonus multiplier based on the user's login streak. */
 export async function claimChallengeReward(
   db: D1Database,
   userId: string,
@@ -30,8 +32,13 @@ export async function claimChallengeReward(
     if (!Number.isFinite(amount) || amount <= 0) {
       return { ok: false, reason: 'invalid_amount', applied: 'none' };
     }
-    await addCredits(userId, amount, 'challenge_reward', { challengeId, rewardType });
-    applied = `credits:${amount}`;
+    // Apply login streak bonus to credit rewards
+    const loginStreak = await getStreakInfo(db, userId, 'login_daily');
+    const { boostedValue, multiplier } = applyStreakBonus(amount, loginStreak, 'login_daily');
+    await addCredits(userId, boostedValue, 'challenge_reward', { challengeId, rewardType, streakMultiplier: multiplier });
+    applied = multiplier > 1.0
+      ? `credits:${boostedValue} (streak ${multiplier}x)`
+      : `credits:${boostedValue}`;
   } else if (rewardType === 'badge') {
     // Best-effort: upsert badge into user_badges table if it exists
     try {

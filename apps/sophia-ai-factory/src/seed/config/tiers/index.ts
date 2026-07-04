@@ -24,6 +24,8 @@ export {
   DB_TIER_MAPPING,
   TIER_DB_MAPPING,
   TIER_ALLOWED_VIDEO,
+  TOPUP_PRICE_PER_MCU,
+  REFERRAL_REWARD_CENTS,
 } from './tier-configs';
 
 // Phase 11: video quota tiers (free/pro/enterprise RaaS model)

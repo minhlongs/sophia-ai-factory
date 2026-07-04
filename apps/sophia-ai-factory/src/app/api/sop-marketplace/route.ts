@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getD1 } from "@/seed/db/client";
 import { listPublishedListings } from "@/tree/sop/sop-repo-marketplace";
+import { fetchAuthorBrandings } from "@/tree/branding/org-branding-repo";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,11 @@ export async function GET(request: NextRequest) {
     const { category, limit, offset, sort } = parsed.data;
 
     const rows = await listPublishedListings(db, { category, limit, offset });
+
+    // Batch fetch branding for all unique authors
+    const authorIds = [...new Set(rows.map(r => r.author_user_id).filter((id): id is string => !!id))];
+    const authorBrandings = await fetchAuthorBrandings(db, authorIds);
+
     const templates: Template[] = rows.map((r) => ({
       id: r.id,
       templateId: r.template_id,
@@ -61,6 +67,8 @@ export async function GET(request: NextRequest) {
       previewMd: r.preview_md,
       demoVideoUrl: r.demo_video_url,
       authorUserId: r.author_user_id,
+      authorBrandName: r.author_user_id ? authorBrandings.get(r.author_user_id)?.agencyName ?? null : null,
+      authorLogoUrl: r.author_user_id ? authorBrandings.get(r.author_user_id)?.logoUrl ?? null : null,
     }));
 
     // Sort client-side based on available data

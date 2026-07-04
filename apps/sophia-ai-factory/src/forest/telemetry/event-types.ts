@@ -15,11 +15,17 @@ export const Events = {
   WIZARD_COMPLETED: 'wizard_completed',
   BYOK_CONFIGURED: 'byok_configured',
   CAMPAIGN_CREATED: 'campaign_created',
+  CAMPAIGN_PUBLISHED: 'campaign_published',
   VIDEO_RENDERED: 'video_rendered',
-  // Server-only financial events
+  FIRST_VIDEO_STARTED: 'first_video_started',
+  FIRST_VIDEO_COMPLETED: 'first_video_completed',
+  // Experiment assignment events
+  EXPERIMENT_ASSIGNED: 'experiment_assigned',
+  // Server-only financial / usage events
   TIER_UPGRADED: 'tier_upgraded',
   PAYMENT_SUCCEEDED: 'payment_succeeded',
   CHURN_SIGNAL: 'churn_signal',
+  FREE_QUOTA_EXHAUSTION: 'free_quota_exhaustion',
 } as const
 
 export type EventName = (typeof Events)[keyof typeof Events]
@@ -29,6 +35,7 @@ export const SERVER_ONLY_EVENTS = new Set<EventName>([
   Events.TIER_UPGRADED,
   Events.PAYMENT_SUCCEEDED,
   Events.CHURN_SIGNAL,
+  Events.FREE_QUOTA_EXHAUSTION,
 ])
 
 // ---- Per-event property schemas (whitelist — blocks PII injection) ----
@@ -37,6 +44,7 @@ const SignupSchema = z.object({
   plan: z.string().optional(),
   locale: z.string().optional(),
   referrer: z.string().optional(),
+  niche: z.string().optional(),
 })
 
 const PageviewSchema = z.object({
@@ -64,6 +72,33 @@ const ByokConfiguredSchema = z.object({
 
 const CampaignCreatedSchema = z.object({
   campaign_type: z.string().optional(),
+})
+
+const CampaignPublishedSchema = z.object({
+  campaign_type: z.string().optional(),
+  channels: z.string().optional(),
+})
+
+const FirstVideoStartedSchema = z.object({
+  campaign_id: z.string().optional(),
+  tier: z.string().optional(),
+})
+
+const FirstVideoCompletedSchema = z.object({
+  campaign_id: z.string().optional(),
+  duration_s: z.number().optional(),
+  tier: z.string().optional(),
+})
+
+const ExperimentAssignedSchema = z.object({
+  experiment: z.string(),
+  variant: z.string(),
+})
+
+const FreeQuotaExhaustionSchema = z.object({
+  tier: z.string(),
+  used: z.number(),
+  limit: z.number(),
 })
 
 const VideoRenderedSchema = z.object({
@@ -96,10 +131,15 @@ export const EVENT_SCHEMAS: Record<EventName, z.ZodTypeAny> = {
   [Events.WIZARD_COMPLETED]: WizardCompletedSchema,
   [Events.BYOK_CONFIGURED]: ByokConfiguredSchema,
   [Events.CAMPAIGN_CREATED]: CampaignCreatedSchema,
+  [Events.CAMPAIGN_PUBLISHED]: CampaignPublishedSchema,
   [Events.VIDEO_RENDERED]: VideoRenderedSchema,
+  [Events.FIRST_VIDEO_STARTED]: FirstVideoStartedSchema,
+  [Events.FIRST_VIDEO_COMPLETED]: FirstVideoCompletedSchema,
+  [Events.EXPERIMENT_ASSIGNED]: ExperimentAssignedSchema,
   [Events.TIER_UPGRADED]: TierUpgradedSchema,
   [Events.PAYMENT_SUCCEEDED]: PaymentSucceededSchema,
   [Events.CHURN_SIGNAL]: ChurnSignalSchema,
+  [Events.FREE_QUOTA_EXHAUSTION]: FreeQuotaExhaustionSchema,
 }
 
 /** Check if event is restricted to server-side emission only */

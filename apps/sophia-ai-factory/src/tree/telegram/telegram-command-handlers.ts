@@ -8,13 +8,14 @@ export { handleHelp } from './handlers/help-handler'
 export { handleSubscribe } from './handlers/subscribe-handler'
 export { handleDiscover } from './handlers/discover-handler'
 export { handleEmail } from './handlers/email-handler'
-export { handleCampaign } from './handlers/campaign-handler'
+export { handleCampaign, handleCampaignList, handleCampaignCancel } from './handlers/campaign-handler'
 export { handleStatus } from './handlers/status-handler'
 export { handleResults } from './handlers/results-handler'
 export { handleCallbackQuery } from './handlers/callback-query-handler'
 export { handleTextMessage, handleUnknown } from './handlers/text-message-handler'
 export { handleTicket } from './handlers/ticket-handler'
 export { handleMissions } from './handlers/missions-handler'
+export { handleAnalytics } from './handlers/analytics-handler'
 
 /**
  * Middleware wrapper - checks rate limit before executing handler

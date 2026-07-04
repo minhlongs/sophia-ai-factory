@@ -33,12 +33,14 @@
       "elevenlabs": {
         "label": "ElevenLabs API Key (Voice)",
         "placeholder": "sk_...",
-        "help": "Get your key at elevenlabs.io/subscription"
+        "help": "Get your key at elevenlabs.io/subscription",
+        "optionalBadge": "Add later"
       },
       "did": {
         "label": "D-ID API Key (Avatar)",
         "placeholder": "Basic ...",
-        "help": "Get your key at studio.d-id.com/account-settings"
+        "help": "Get your key at studio.d-id.com/account-settings",
+        "optionalBadge": "Add later"
       },
       "anthropic": {
         "label": "Anthropic API Key (LLM)",
@@ -48,13 +50,19 @@
       "muapi": {
         "label": "MuAPI Key (Music/Audio)",
         "placeholder": "mu_...",
-        "help": "Get your key at muapi.ai/dashboard/api-keys"
+        "help": "Get your key at muapi.ai/dashboard/api-keys",
+        "optionalBadge": "Add later"
+      },
+      "replicate": {
+        "label": "Replicate API Key (Video)",
+        "placeholder": "r8_...",
+        "help": "Get your key at replicate.com/account/api-tokens",
+        "optionalBadge": "Add later"
       }
     },
     "alerts": {
       "invalidKey": "Invalid API key — please double-check and try again",
-      "missingLlm": "At least one LLM key is required (OpenRouter or Anthropic)",
-      "missingHeygen": "HeyGen API key is required to continue"
+      "missingLlm": "At least one LLM key is required (OpenRouter or Anthropic)"
     },
     "header": {
       "title": "Sophia Setup Assistant",
@@ -113,10 +121,10 @@
       "whatYouNeed": {
         "title": "What you'll need:",
         "items": [
-          "OpenRouter or Anthropic API key (for AI/LLM)",
-          "ElevenLabs API key (for voice synthesis)",
-          "D-ID API key (for avatar generation)",
-          "HeyGen API key (for video generation)",
+          "OpenRouter API key (for AI/LLM) — required",
+          "ElevenLabs API key (for voice) — add anytime",
+          "D-ID API key (for avatar) — add anytime",
+          "HeyGen API key (for video) — add anytime",
           "A few minutes of your time"
         ]
       },
@@ -135,7 +143,8 @@
         "anthropic": "Anthropic",
         "elevenlabs": "ElevenLabs",
         "did": "D-ID",
-        "muapi": "MuAPI"
+        "muapi": "MuAPI",
+        "replicate": "Replicate"
       },
       "providers": {
         "heygen": "HeyGen",
@@ -1313,12 +1322,48 @@
     "api_docs": {
       "title": "API Documentation",
       "subtitle": "Integrate Sophia AI into your workflow",
-      "upgrade_required": "Premium Plan Required",
-      "upgrade_message": "API access is available for Premium and Master tier users. Upgrade your plan to unlock API integrations.",
-      "view_plans": "View Plans",
-      "api_key": "Your API Key",
-      "api_key_hint": "Contact support to generate your API key",
-      "endpoints": "Available Endpoints"
+      "api_key": "Your API Keys",
+      "api_key_hint": "Use API keys to authenticate requests. Keep them secret and rotate regularly.",
+      "create_key": "Create New Key",
+      "create_key_name": "Key Name",
+      "create_key_name_placeholder": "e.g. Production API Key",
+      "create_key_submit": "Generate",
+      "create_key_success": "Key created! Copy it now — you won't see it again.",
+      "revoke_key": "Revoke",
+      "revoke_confirm": "Are you sure you want to revoke this key?",
+      "no_keys": "No API keys yet. Create one to get started.",
+      "key_created": "Created",
+      "key_last_used": "Last used",
+      "key_never_used": "Never",
+      "key_active": "Active",
+      "key_revoked": "Revoked",
+      "endpoints": "Available Endpoints",
+      "endpoint_method": "Method",
+      "endpoint_path": "Path",
+      "endpoint_description": "Description",
+      "endpoint_auth": "Auth Required",
+      "endpoint_example": "Example Response",
+      "section_general": "General",
+      "section_checkout": "Checkout & Billing",
+      "section_webhooks": "Webhooks",
+      "section_videos": "Videos",
+      "section_agents": "AI Agents",
+      "section_affiliates": "Affiliates",
+      "section_cron": "Scheduled Jobs (Cron)",
+      "section_sops": "SOP Marketplace",
+      "section_account": "Account",
+      "section_v1": "V1 API",
+      "rate_limits": "Rate Limits & Usage",
+      "rate_limits_desc": "API rate limits vary by tier. Headers are returned with every response.",
+      "rate_limit_basic": "Basic: 60 req/min",
+      "rate_limit_premium": "Premium: 300 req/min",
+      "rate_limit_enterprise": "Enterprise: 1000 req/min",
+      "rate_limit_master": "Master: 5000 req/min",
+      "rate_limit_headers": "Rate limit headers: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset",
+      "auth_yes": "Yes",
+      "auth_no": "No",
+      "auth_bearer": "Bearer Token",
+      "auth_session": "Session"
     },
     "videos": {
       "title": "My Videos",
@@ -1854,6 +1899,8 @@
         "brandColors": "Brand Colors",
         "primaryColor": "Primary Color",
         "accentColor": "Accent Color",
+        "agencyName": "Agency Name",
+        "agencyNamePlaceholder": "Your Company Name",
         "welcomeMessage": "Welcome Message",
         "welcomeMessageHint": "Markdown supported, max 2000 chars",
         "welcomeMessagePlaceholder": "Welcome to our platform!",
@@ -1874,6 +1921,80 @@
         "domain": "Domain",
         "domainHint": "DNS CNAME setup required after saving. Contact support for instructions.",
         "domainPlaceholder": "yourbrand.com"
+      },
+      "team": {
+        "pageTitle": "Team Management",
+        "pageSubtitle": "Manage members in your organization",
+        "inviteTitle": "Invite Member",
+        "inviteEmailPlaceholder": "Enter email...",
+        "inviteButton": "Invite",
+        "memberListTitle": "Team Members",
+        "noMembers": "No team members yet",
+        "you": "You",
+        "removeConfirm": "Are you sure you want to remove this member?",
+        "roleOwner": "Owner",
+        "roleAdmin": "Admin",
+        "roleMember": "Member",
+        "roleViewer": "Viewer",
+        "successInvited": "Member invited successfully",
+        "successRemoved": "Member removed",
+        "successRoleUpdated": "Role updated"
+      }
+    },
+    "affiliate": {
+      "title": "Affiliate Dashboard",
+      "subtitle": "Manage your referrals, track conversions, and maximize your earnings.",
+      "referButton": "Refer a Friend",
+      "kpi": {
+        "totalReferrals": {
+          "label": "Total Referrals"
+        },
+        "active": {
+          "label": "Active"
+        },
+        "commissionEarned": {
+          "label": "Commission Earned"
+        },
+        "pending": {
+          "label": "Pending"
+        }
+      },
+      "referral": {
+        "title": "Your Referral Link",
+        "subtitle": "Share your link and earn rewards when friends sign up.",
+        "generateButton": "Generate Referral Link",
+        "generating": "Generating...",
+        "copyButton": "Copy",
+        "copied": "Copied!",
+        "shareLabel": "Share via:",
+        "shareWhatsApp": "Share on WhatsApp",
+        "shareTelegram": "Share on Telegram",
+        "shareEmail": "Share via Email",
+        "shareText": "Join Sophia AI Factory and start earning!",
+        "emailSubject": "Invitation to join Sophia AI Factory"
+      },
+      "wallet": {
+        "title": "USDT Wallet (TRC20)",
+        "availableBalance": "Available Balance",
+        "withdraw": "Withdraw",
+        "minimumWithdrawal": "Minimum withdrawal {amount}",
+        "toggleVisibility": "Toggle wallet address visibility"
+      }
+    },
+    "referral": {
+      "backToDashboard": "Back to Dashboard",
+      "pageTitle": "Referral Dashboard",
+      "pageSubtitle": "Track your referrals, earnings, and reward history.",
+      "totalReferrals": "Total Referrals",
+      "totalEarned": "Total Earned",
+      "rewardPerReferral": "Reward Per Referral",
+      "historyTitle": "Reward History",
+      "noHistory": "No rewards yet. Share your referral link to start earning!",
+      "statusEarned": "Earned",
+      "tableColumns": {
+        "date": "Date",
+        "reward": "Reward",
+        "status": "Status"
       }
     },
     "campaigns": {
@@ -2631,7 +2752,8 @@
       "playbookTitle": "Playbook",
       "outputTitle": "Output Schema",
       "back": "Back to Marketplace",
-      "installNow": "Install This SOP"
+      "installNow": "Install This SOP",
+      "byAgency": "by {name}"
     },
     "install": {
       "title": "Install SOP",
@@ -2767,7 +2889,11 @@
       "pageTitle": "Creator Dashboard",
       "title": "Creator Dashboard",
       "subtitle": "Manage your SOP templates and earnings",
-      "newSop": "Create New SOP",
+      "newSop": {
+        "back": "Back",
+        "title": "Create New SOP",
+        "subtitle": "Build a reusable SOP template for the marketplace"
+      },
       "tabs": {
         "mySops": "My SOPs",
         "earnings": "Earnings",
@@ -2882,11 +3008,6 @@
         "errorGeneric": "Something went wrong. Please try again.",
         "alreadyCreator": "You already have creator access. Redirecting to your dashboard...",
         "alreadyCreatorLink": "Go to Creator Dashboard"
-      },
-      "newSop": {
-        "back": "Back",
-        "title": "Create New SOP",
-        "subtitle": "Build a reusable SOP template for the marketplace"
       }
     },
     "community": {
@@ -3184,6 +3305,9 @@
       },
       "muapi": {
         "format": "MuAPI keys are 20+ char alphanumeric tokens — find them in the MuAPI dashboard."
+      },
+      "replicate": {
+        "format": "Replicate keys start with r8_ — copy yours at replicate.com/account/api-tokens."
       }
     },
     "picker": {
@@ -3282,6 +3406,12 @@
     "summary": "Your account is ready. Click below to enter the Setup Wizard and configure your API keys.",
     "getStarted": "Get Started",
     "singleUseHint": "This link is single-use.",
+    "createFirstVideo": {
+      "title": "Create Your First Video Now",
+      "description": "You only need an OpenRouter API key to start. No other keys required.",
+      "cta": "Create First Video",
+      "subtitle": "Text-to-slides style — no avatar needed"
+    },
     "roadmapHeader": "Activation Roadmap",
     "stepLabel": "Step",
     "errors": {
@@ -3414,7 +3544,23 @@
     "credits": "Credits",
     "commissionBoost": "Commission Boost",
     "daysLeft": "Days Left",
-    "claimReward": "Claim Reward"
+    "claimReward": "Claim Reward",
+    "streak": {
+      "loginTitle": "Daily Login Streak",
+      "loginDesc": "Log in every day to build your streak and earn bonus rewards",
+      "videoTitle": "Weekly Video Streak",
+      "videoDesc": "Create videos every week to keep your streak alive",
+      "loginBonus": "+{multiplier}x reward bonus at {count} day streak",
+      "videoBonus": "+{multiplier}x reward bonus at {count} week streak",
+      "currentStreak": "Current Streak",
+      "longestStreak": "Longest Streak",
+      "days": "{count} days",
+      "weeks": "{count} weeks"
+    },
+    "period": "Period",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "allTime": "All Time"
   },
   "creativeStudio": {
     "audio": {
@@ -5239,9 +5385,17 @@
       },
       "referral": {
         "title": "Your Referral Link",
+        "subtitle": "Share your link and earn rewards when friends sign up.",
+        "generateButton": "Generate Referral Link",
+        "generating": "Generating...",
         "copyButton": "Copy",
         "copied": "Copied!",
-        "shareLabel": "Share via:"
+        "shareLabel": "Share via:",
+        "shareWhatsApp": "Share on WhatsApp",
+        "shareTelegram": "Share on Telegram",
+        "shareEmail": "Share via Email",
+        "shareText": "Join Sophia AI Factory and start earning!",
+        "emailSubject": "Invitation to join Sophia AI Factory"
       },
       "wallet": {
         "title": "USDT Wallet (TRC20)",
@@ -5249,6 +5403,22 @@
         "withdraw": "Withdraw",
         "minimumWithdrawal": "Minimum withdrawal {amount}",
         "toggleVisibility": "Toggle wallet address visibility"
+      }
+    },
+    "referral": {
+      "backToDashboard": "Back to Dashboard",
+      "pageTitle": "Referral Dashboard",
+      "pageSubtitle": "Track your referrals, earnings, and reward history.",
+      "totalReferrals": "Total Referrals",
+      "totalEarned": "Total Earned",
+      "rewardPerReferral": "Reward Per Referral",
+      "historyTitle": "Reward History",
+      "noHistory": "No rewards yet. Share your referral link to start earning!",
+      "statusEarned": "Earned",
+      "tableColumns": {
+        "date": "Date",
+        "reward": "Reward",
+        "status": "Status"
       }
     },
     "dashboardOverview": {
@@ -5350,7 +5520,11 @@
           "name": "Basic",
           "description": "For starters",
           "period": "/mo",
-          "features": ["10 campaigns", "3 channels", "Basic analytics"],
+          "features": [
+            "10 campaigns",
+            "3 channels",
+            "Basic analytics"
+          ],
           "cta": "Get Started"
         },
         "premium": {

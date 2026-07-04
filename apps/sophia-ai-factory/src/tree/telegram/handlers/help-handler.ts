@@ -15,7 +15,10 @@ export async function handleHelp(chatId: string): Promise<void> {
 /discover - Find trending products
 /email <your@email.com> - Link your Sophia account
 /campaign <topic> - Create new campaign
+/campaign list - List all your campaigns
+/campaign cancel <id> - Stop a running campaign
 /status - Check campaign status
+/analytics - Campaign performance snapshot
 /results - View campaign results
 /missions - Recent missions
 /ticket <mô tả> - Gửi yêu cầu hỗ trợ

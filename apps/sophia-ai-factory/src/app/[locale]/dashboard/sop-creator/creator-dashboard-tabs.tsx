@@ -76,7 +76,7 @@ export function CreatorDashboardTabs({ templates, salesMap, earnings }: Props) {
         </div>
         <Link
           href="/dashboard/sop-creator/new"
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-sm font-medium text-white transition-colors"
+          className="flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-lg bg-primary-600 hover:bg-primary-500 text-sm font-medium text-white transition-colors"
         >
           <Plus className="w-4 h-4" aria-hidden="true" />
           {t('newSop')}
@@ -84,13 +84,13 @@ export function CreatorDashboardTabs({ templates, salesMap, earnings }: Props) {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 border-b border-white/10 pb-0">
+      <div className="flex gap-1 border-b border-white/10 pb-0 overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             type="button"
             onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap min-h-[44px] ${
               activeTab === tab.key
                 ? 'bg-white/10 text-primary-400 border-b-2 border-primary-400'
                 : 'text-white/50 hover:text-white/80 hover:bg-white/5'
@@ -127,7 +127,7 @@ function MySopsPane({
 
   return (
     <div className="rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
-      <div className="flex items-center gap-2 px-5 py-4 border-b border-white/10">
+      <div className="flex items-center gap-2 px-4 md:px-5 py-3 md:py-4 border-b border-white/10">
         <FileText className="w-4 h-4 text-white/50" aria-hidden="true" />
         <h2 className="text-sm font-medium text-white/80">{t('yourSops')} ({templates.length})</h2>
       </div>
@@ -139,7 +139,7 @@ function MySopsPane({
           <p className="text-xs text-white/30 mt-1 mb-4">{t('noSopsDesc')}</p>
           <Link
             href="/dashboard/sop-creator/new"
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-500 text-sm font-medium text-white transition-colors"
+            className="flex items-center gap-2 px-4 py-2 min-h-[44px] rounded-lg bg-primary-600 hover:bg-primary-500 text-sm font-medium text-white transition-colors"
           >
             <Plus className="w-4 h-4" aria-hidden="true" />
             {t('createFirst')}
@@ -150,11 +150,11 @@ function MySopsPane({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-white/5 text-xs text-white/40">
-                <th className="px-5 py-3 text-left font-medium">{t('name')}</th>
-                <th className="px-4 py-3 text-left font-medium">{t('category')}</th>
-                <th className="px-4 py-3 text-left font-medium">{t('status')}</th>
-                <th className="px-4 py-3 text-right font-medium">{t('sales')}</th>
-                <th className="px-4 py-3 text-right font-medium">{t('revenue')}</th>
+                <th className="px-3 md:px-5 py-3 text-left font-medium">{t('name')}</th>
+                <th className="px-2 md:px-4 py-3 text-left font-medium">{t('category')}</th>
+                <th className="px-2 md:px-4 py-3 text-left font-medium">{t('status')}</th>
+                <th className="px-2 md:px-4 py-3 text-right font-medium">{t('sales')}</th>
+                <th className="px-2 md:px-4 py-3 text-right font-medium">{t('revenue')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -162,7 +162,7 @@ function MySopsPane({
                 const s = salesMap[tpl.id] ?? { count: 0, revenue: 0 };
                 return (
                   <tr key={tpl.id} className="hover:bg-white/5 transition-colors">
-                    <td className="px-5 py-3">
+                    <td className="px-3 md:px-5 py-3">
                       <Link
                         href={`/dashboard/sop-creator/${tpl.id}`}
                         className="font-medium text-white hover:text-primary-300 transition-colors"
@@ -171,16 +171,13 @@ function MySopsPane({
                       </Link>
                       <p className="text-xs text-white/40 mt-0.5">{tpl.name_vi}</p>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="capitalize text-white/60 text-xs">{tc(tpl.category)}</span>
-                    </td>
-                    <td className="px-4 py-3">
+                    <td className="px-2 md:px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs border capitalize ${statusBadge(tpl.status)}`}>
                         {ts(tpl.status as 'draft' | 'published' | 'archived' | 'pending_review')}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-white/70">{s.count}</td>
-                    <td className="px-4 py-3 text-right text-white/70">{formatUsd(s.revenue)}</td>
+                    <td className="px-2 md:px-4 py-3 text-right text-white/70">{s.count}</td>
+                    <td className="px-2 md:px-4 py-3 text-right text-white/70">{formatUsd(s.revenue)}</td>
                   </tr>
                 );
               })}
@@ -203,12 +200,12 @@ function EarningsPane({ earnings }: { earnings: EarningsSummary }) {
         { label: t('payable'), value: formatUsd(earnings.payable), icon: TrendingUp, color: 'text-green-400' },
         { label: t('paid'), value: formatUsd(earnings.paid), icon: DollarSign, color: 'text-white/60' },
       ].map((card) => (
-        <div key={card.label} className="rounded-xl bg-white/5 border border-white/10 p-4">
+        <div key={card.label} className="rounded-xl bg-white/5 border border-white/10 p-3 md:p-4">
           <div className="flex items-center gap-2 mb-2">
             <card.icon className={`w-4 h-4 ${card.color}`} aria-hidden="true" />
             <span className="text-xs text-white/50">{card.label}</span>
           </div>
-          <p className="text-lg font-semibold text-white">{card.value}</p>
+          <p className="text-base md:text-lg font-semibold text-white">{card.value}</p>
         </div>
       ))}
     </div>

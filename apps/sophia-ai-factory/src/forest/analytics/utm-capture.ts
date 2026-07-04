@@ -19,6 +19,7 @@ export interface UtmParams {
   utm_campaign?: string
   utm_content?: string
   utm_term?: string
+  niche?: string
 }
 
 const STORAGE_KEY = 'sophia_utm'
@@ -35,6 +36,7 @@ function parseUtmFromSearch(search: URLSearchParams): UtmParams {
     'utm_campaign',
     'utm_content',
     'utm_term',
+    'niche',
   ]
   for (const key of keys) {
     const val = search.get(key)

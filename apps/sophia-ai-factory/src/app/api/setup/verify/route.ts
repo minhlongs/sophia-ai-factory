@@ -64,6 +64,14 @@ export async function POST(request: Request) {
         // MuAPI keys are JWT-like; no public test endpoint — format-check only
         result = { valid: true, verified: false, message: 'Format-checked only (MuAPI has no public ping endpoint)' };
         break;
+      case 'replicate':
+        // Replicate keys start with 'r8_'; format-check only (no public ping endpoint)
+        if (resolvedKey.startsWith('r8_')) {
+          result = { valid: true, verified: false, message: 'Format valid' };
+        } else {
+          result = { valid: false, message: 'Replicate keys must start with r8_' };
+        }
+        break;
       default:
         return NextResponse.json({ valid: false, message: "Unknown service" }, { status: 400 });
     }

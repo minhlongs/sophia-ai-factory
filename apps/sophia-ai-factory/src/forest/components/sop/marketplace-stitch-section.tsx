@@ -28,6 +28,8 @@ interface MarketplaceTemplate {
   previewMd: string | null;
   demoVideoUrl: string | null;
   authorUserId: string | null;
+  authorBrandName?: string | null;
+  authorLogoUrl?: string | null;
 }
 
 type SortKey = "popular" | "rating" | "newest";
@@ -151,22 +153,22 @@ export function MarketplaceStitchSection({
 
   return (
     <section
-      className="min-h-screen bg-[#0F0F11] py-20"
+      className="min-h-screen bg-[#0F0F11] py-12 md:py-20"
       style={{ "--amber": AMBER } as React.CSSProperties}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Heading */}
         <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white">
             {t("title")}
           </h1>
-          <p className="mt-3 text-lg text-[#A1A1AA]">{t("subtitle")}</p>
+          <p className="mt-3 text-sm md:text-base lg:text-lg text-[#A1A1AA]">{t("subtitle")}</p>
         </div>
 
         {/* Controls row */}
         <div className="mt-10 flex flex-wrap items-center gap-3">
           {/* Search */}
-          <div className="relative flex-1 min-w-[200px]">
+          <div className="relative flex-1 min-w-[200px] w-full sm:w-auto">
             <svg
               className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#52525B]"
               fill="none"
@@ -195,7 +197,7 @@ export function MarketplaceStitchSection({
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="rounded-lg border border-[#27272A] bg-[#18181B] px-3 py-2.5 text-sm text-[#A1A1AA] transition-colors focus:border-[#D97706] focus:outline-none focus:ring-1 focus:ring-[#D97706]/40"
+            className="w-full sm:w-auto rounded-lg border border-[#27272A] bg-[#18181B] px-3 py-2.5 text-sm text-[#A1A1AA] transition-colors focus:border-[#D97706] focus:outline-none focus:ring-1 focus:ring-[#D97706]/40"
             aria-label={t("filterCategory")}
           >
             {allCategories.map((cat) => (
@@ -209,7 +211,7 @@ export function MarketplaceStitchSection({
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortKey)}
-            className="rounded-lg border border-[#27272A] bg-[#18181B] px-3 py-2.5 text-sm text-[#A1A1AA] transition-colors focus:border-[#D97706] focus:outline-none focus:ring-1 focus:ring-[#D97706]/40"
+            className="w-full sm:w-auto rounded-lg border border-[#27272A] bg-[#18181B] px-3 py-2.5 text-sm text-[#A1A1AA] transition-colors focus:border-[#D97706] focus:outline-none focus:ring-1 focus:ring-[#D97706]/40"
             aria-label={t("sortBy")}
           >
             <option value="popular">{t("sortPopular")}</option>
@@ -237,7 +239,7 @@ export function MarketplaceStitchSection({
             <p className="text-sm text-[#71717A]">{t("noResults")}</p>
           </div>
         ) : (
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+          <div className="mt-8 grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
             {filtered.map((item) => (
               <div
                 key={item.id}
@@ -293,8 +295,8 @@ export function MarketplaceStitchSection({
                 </div>
 
                 {/* Card body */}
-                <div className="flex flex-1 flex-col gap-2 p-4">
-                  <h3 className="text-sm font-semibold leading-snug text-white line-clamp-2">
+                <div className="flex flex-1 flex-col gap-2 p-3 md:p-4">
+                  <h3 className="text-xs md:text-sm font-semibold leading-snug text-white line-clamp-2">
                     {item.name}
                   </h3>
 
@@ -312,10 +314,15 @@ export function MarketplaceStitchSection({
                     </div>
                   )}
 
-                  {/* Author */}
-                  {item.authorUserId && (
-                    <p className="text-[10px] text-[#52525B]">
-                      {t("byLabel")} #{item.authorUserId.slice(0, 6)}
+                  {/* Author — show agency brand name if available */}
+                  {(item.authorBrandName || item.authorUserId) && (
+                    <p className="text-[10px] text-[#52525B] flex items-center gap-1">
+                      {item.authorLogoUrl ? (
+                        <img src={item.authorLogoUrl} alt="" className="w-3.5 h-3.5 rounded object-contain inline-block" />
+                      ) : null}
+                      <span>
+                        {t("byLabel")} {item.authorBrandName ?? `#${item.authorUserId!.slice(0, 6)}`}
+                      </span>
                     </p>
                   )}
 

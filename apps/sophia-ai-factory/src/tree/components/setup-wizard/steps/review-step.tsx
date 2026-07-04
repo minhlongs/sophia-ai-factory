@@ -13,6 +13,7 @@ interface ReviewStepProps {
     ELEVENLABS_API_KEY: string;
     DID_API_KEY: string;
     MUAPI_API_KEY: string;
+    REPLICATE_API_KEY: string;
   };
   providerConfig: {
     HEYGEN_API_KEY: string;
@@ -42,6 +43,7 @@ export function ReviewStep({ config, providerConfig, onConfirm, onBack, loading 
     { key: 'ELEVENLABS_API_KEY' as const, label: t('keys.elevenlabs'), required: true },
     { key: 'DID_API_KEY' as const, label: t('keys.did'), required: true },
     { key: 'MUAPI_API_KEY' as const, label: t('keys.muapi'), required: false },
+    { key: 'REPLICATE_API_KEY' as const, label: t('keys.replicate'), required: false },
   ].filter(k => config[k.key].trim().length > 0);
 
   const providerKeyEntries = [

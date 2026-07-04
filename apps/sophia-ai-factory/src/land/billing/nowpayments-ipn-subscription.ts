@@ -132,8 +132,15 @@ async function setupDatabaseAndContext(
 
   const tier: Tier = tierConfig.tier
 
+  const isLifetime = UNIFIED_TIERS[tier]?.billingType === 'lifetime'
+  const billingPeriod = await resolveBillingPeriod(ipn, isLifetime)
+
   // SECURITY: Cross-check IPN amount against expected tier price
-  const expectedPrice = NOWPAYMENTS_TIERS[tier]?.price
+  // For yearly billing, compare against the yearly (discounted) price from UNIFIED_TIERS.
+  // For monthly/lifetime, compare against the monthly price from NOWPAYMENTS_TIERS.
+  const expectedPrice = billingPeriod === 'yearly'
+    ? (UNIFIED_TIERS[tier]?.yearlyPrice ?? NOWPAYMENTS_TIERS[tier]?.price)
+    : NOWPAYMENTS_TIERS[tier]?.price
   if (expectedPrice !== undefined && ipn.price_amount !== undefined) {
     const deviation = Math.abs(ipn.price_amount - expectedPrice)
     const tolerance = expectedPrice * AMOUNT_MISMATCH_THRESHOLD
@@ -150,8 +157,6 @@ async function setupDatabaseAndContext(
     }
   }
 
-  const isLifetime = UNIFIED_TIERS[tier]?.billingType === 'lifetime'
-  const billingPeriod = await resolveBillingPeriod(ipn, isLifetime)
   const periodEnd = calculatePeriodEnd(billingPeriod)
   const now = new Date().toISOString()
   const orgId = await findOrgIdForUser(userId, db)

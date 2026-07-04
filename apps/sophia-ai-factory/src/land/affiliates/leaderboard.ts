@@ -13,6 +13,9 @@ import { getD1 } from '@/seed/db/client';
 
 export type LeaderboardSortBy = 'epc' | 'conversions' | 'commission';
 
+/** Time period for relative date computation. */
+export type LeaderboardPeriod = 'weekly' | 'monthly' | 'all_time';
+
 export interface LeaderboardRow {
   affiliateId: string;
   /** User email when joinable; falls back to affiliateId. */
@@ -37,6 +40,8 @@ interface RawLeaderboardRow {
 
 /**
  * Top affiliates by `sortBy` within the [fromTs, toTs] window.
+ * Optionally specify a `period` ('weekly' | 'monthly' | 'all_time') to
+ * auto-compute fromTs relative to toTs, overriding the explicit fromTs argument.
  * `limit` clamped to [1, 100]. Returns up to `limit` rows.
  *
  * Implementation: SQL aggregates per affiliate_links.user_id using LEFT JOINs
@@ -47,9 +52,17 @@ export async function getTopAffiliates(
   toTs: number,
   limit: number,
   sortBy: LeaderboardSortBy,
+  period?: LeaderboardPeriod,
 ): Promise<LeaderboardRow[]> {
   if (fromTs > toTs) throw new Error('fromTs must be <= toTs');
   const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
+
+  // Compute effective fromTs when period is provided
+  const effectiveFromTs = period
+    ? period === 'all_time'
+      ? 0
+      : toTs - (period === 'monthly' ? 30 : 7) * 86400000
+    : fromTs;
 
   const orderColumn =
     sortBy === 'conversions'
@@ -99,7 +112,7 @@ export async function getTopAffiliates(
        ORDER BY ${orderColumn} DESC, pa.total_clicks DESC
        LIMIT ?3`,
     )
-    .bind(fromTs, toTs, safeLimit)
+    .bind(effectiveFromTs, toTs, safeLimit)
     .all<RawLeaderboardRow & { epc_calc: number }>();
 
   return (result.results ?? []).map((r) => {

@@ -87,7 +87,18 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
         />
       </Section>
 
-      {/* Section 2: Brand colors */}
+      {/* Section 2: Agency Info */}
+      <Section title={t('agencyName')}>
+        <TextField
+          label={t('agencyName')}
+          value={branding.agencyName ?? ''}
+          placeholder={t('agencyNamePlaceholder')}
+          onBlur={(v) => handleBlur('agencyName', v || null)}
+          inputCls={inputCls}
+        />
+      </Section>
+
+      {/* Section 3: Brand colors */}
       <Section title={t('brandColors')}>
         <ColorField
           label={t('primaryColor')}
