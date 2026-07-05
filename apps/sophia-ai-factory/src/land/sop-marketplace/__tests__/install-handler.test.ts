@@ -140,7 +140,7 @@ beforeEach(async () => {
   vi.clearAllMocks();
   d1Calls.length = 0;
   const { requireOrgMembership: orgCheck } = await import('@/seed/db/org-membership');
-  vi.mocked(orgCheck).mockResolvedValue({ authorized: true, orgId: 'test-org' });
+  vi.mocked(orgCheck).mockResolvedValue({ authorized: true, orgId: 'test-org', role: 'owner' });
 });
 
 describe('installSop', () => {

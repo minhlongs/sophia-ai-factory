@@ -1,4 +1,6 @@
 import { createServerClient } from '@/seed/db/client';
+import { type OrgRole } from '@/seed/auth/rbac';
+export type { OrgRole };
 
 /**
  * Organization member roles.
@@ -7,8 +9,6 @@ import { createServerClient } from '@/seed/db/client';
  * - member: can use all features
  * - viewer: read-only access
  */
-export type OrgRole = 'owner' | 'admin' | 'member' | 'viewer';
-
 export const ORG_ROLES: OrgRole[] = ['owner', 'admin', 'member', 'viewer'];
 
 /** Roles that have member management permissions */

@@ -28,6 +28,9 @@ export {
   isJwtExpired,
   refreshJwtIfExpired,
 } from './enriched-jwt';
+// RBAC exports
+export { hasPermission, getRolePermissions, ROLE_PERMISSIONS } from './rbac';
+export type { OrgRole, Permission } from './rbac';
 // better-auth-session excluded from wildcard — functions return User which clashes with seed/db/client and seed/types.
 // Selective re-exports for non-User-returning functions only.
 export { AuthSystemError, getSession } from './better-auth-session';
