@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: "Pre-Launch QA"
-status: pending
+status: completed
 effort: "Small (1-2h)"
 priority: P2
 dependencies: [1, 2, 3, 4]

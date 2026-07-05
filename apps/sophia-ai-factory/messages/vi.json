@@ -1434,10 +1434,10 @@
         "styleEducational": "Giáo dục",
         "languageLabel": "Ngôn ngữ",
         "languageEn": "Tiếng Anh",
-        "languageVi": "Tiếng Việt",
         "submitting": "Đang tạo...",
         "submit": "Tạo Video",
-        "quotaExceeded": "Đã hết hạn ngạch video ({used}/{limit}). Reset {resetAt}."
+        "quotaExceeded": "Đã hết hạn ngạch video ({used}/{limit}). Reset {resetAt}.",
+        "languageVi": "Tiếng Việt"
       },
       "distribute": {
         "title": "Phân phối video",
@@ -2082,6 +2082,61 @@
         "tour_step3_desc": "Theo dõi và quản lý tất cả chiến dịch marketing từ một bảng điều khiển. Đội ngũ AI của bạn tự động chạy trong khi bạn vẫn kiểm soát.",
         "tour_step4_title": "Bảng Điều Khiển Doanh Thu",
         "tour_step4_desc": "Theo dõi hiệu suất trên tất cả kênh doanh thu. Xem thu nhập hợp nhất, xu hướng và thông tin chi tiết — tất cả được hỗ trợ bởi các AI agent của bạn."
+      }
+    },
+    "ceoAgent": {
+      "briefingDate": "Báo Cáo Sáng — {date}",
+      "briefingRefresh": "Làm mới báo cáo",
+      "briefingError": "Không thể tạo báo cáo lúc này.",
+      "briefingEmpty": "Chưa có báo cáo cho hôm nay. Hãy thử làm mới hoặc cấu hình nhà cung cấp AI trong Cài đặt.",
+      "briefingRetry": "Thử lại",
+      "revenueSpentLabel": "Tổng Chi Tiêu",
+      "revenuePurchasedLabel": "Credits Đã Mua",
+      "revenueUsedLabel": "Credits Đã Dùng",
+      "revenueRemainingLabel": "Credits Còn Lại",
+      "revenueAvgSpendLabel": "Chi Tiêu Trung Bình Mỗi Ngày (7 ngày)",
+      "revenueTrendLabel": "Xu Hướng Chi Tiêu 7 Ngày",
+      "revenueNoData": "Chưa có dữ liệu doanh thu. Hãy thực hiện giao dịch đầu tiên để xem thông tin.",
+      "revenueTierLabel": "Gói Hiện Tại",
+      "recentTransactionsTitle": "Giao Dịch Gần Đây",
+      "txDateLabel": "Ngày",
+      "txAmountLabel": "Số Tiền",
+      "txCreditsLabel": "Credits",
+      "txSkuLabel": "Mã SP",
+      "revenueError": "Không thể tải thông tin doanh thu lúc này.",
+      "revenueEmptyTx": "Chưa có giao dịch gần đây.",
+      "retryLabel": "Thử Lại",
+      "briefingTitle": "Briefing Title",
+      "briefingDesc": "Briefing Desc",
+      "campaignsTitle": "Campaigns Title",
+      "campaignsDesc": "Campaigns Desc",
+      "heading": "Heading",
+      "subtitle": "Subtitle",
+      "revenueTitle": "Revenue Title",
+      "revenueDesc": "Revenue Desc",
+      "featureFlagNotice": "Feature Flag Notice",
+      "notFoundTitle": "Not Found Title",
+      "notFoundDescription": "Not Found Description",
+      "notFoundBack": "Not Found Back",
+      "revenueRefresh": "Revenue Refresh",
+      "revenueRefreshing": "Revenue Refreshing",
+      "comingSoon": "Sắp ra mắt",
+      "featureLabel": "Tính năng",
+      "onboarding_tour": {
+        "dismiss": "Dismiss",
+        "dashboard_welcome_title": "Dashboard welcome title",
+        "dashboard_welcome_desc": "Dashboard welcome desc",
+        "start_tour": "Start tour",
+        "skip": "Skip",
+        "title": "Title",
+        "subtitle": "Subtitle",
+        "back": "Back",
+        "next": "Next",
+        "finish": "Finish",
+        "dashboard_mini_briefing": "briefing (vi)",
+        "dashboard_mini_campaigns": "campaigns (vi)",
+        "dashboard_mini_revenue": "revenue (vi)",
+        "dashboard_mini_chat": "chat (vi)"
       }
     }
   },
@@ -2770,7 +2825,8 @@
       "sortNewest": "Mới Nhất",
       "resultsCount": "{count} kết quả",
       "sales": "lượt mua",
-      "byLabel": "bởi"
+      "byLabel": "bởi",
+      "seoDescription": "Duyệt qua các template SOP tự động hóa cho agency, creator và operator"
     },
     "card": {
       "creditsPerRun": "{n} credit/lần chạy",
@@ -2985,7 +3041,6 @@
         "back": "Quay lại",
         "templateDetails": "Chi tiết Template",
         "descriptionEn": "Mô tả (Tiếng Anh)",
-        "descriptionVi": "Mô tả (Tiếng Việt)",
         "creditsPerRun": "Credits mỗi lần chạy",
         "setupTime": "Thời gian setup",
         "setupTimeMinutes": "{minutes} phút",
@@ -2994,7 +3049,8 @@
         "publishSuccess": "Xuất bản thành công",
         "draftDescription": "Mô tả bản nháp",
         "publishing": "Đang xuất bản",
-        "submitForReview": "Gửi xét duyệt"
+        "submitForReview": "Gửi xét duyệt",
+        "descriptionVi": "Mô tả Tiếng Việt"
       },
       "actions": {
         "unauthorized": "Bạn cần đăng nhập để thực hiện hành động này.",
@@ -4121,7 +4177,6 @@
   "generate": {
     "languageEn": "Language En",
     "languageLabel": "Language Label",
-    "languageVi": "Language Vi",
     "missionCreated": "Mission Created",
     "promptLabel": "Prompt Label",
     "promptPlaceholder": "Prompt Placeholder",
@@ -5990,5 +6045,32 @@
     "create_campaign": "Create campaign",
     "title": "Title",
     "subtitle": "Subtitle"
+  },
+  "ceoAgent": {
+    "onboarding_tour": {
+      "dashboard_welcome_title": "Chào mừng đến với Hội Đồng AI Executive",
+      "dashboard_welcome_desc": "Dashboard CEO Agent kết hợp báo cáo sáng, quản lý chiến dịch, theo dõi doanh thu và trợ lý chat AI — tất cả trong một nơi.",
+      "start_tour": "Bắt Đầu Tham Quan",
+      "dismiss": "Bỏ qua",
+      "dashboard_mini_briefing": "Báo cáo",
+      "dashboard_mini_campaigns": "Chiến dịch",
+      "dashboard_mini_revenue": "Doanh thu",
+      "dashboard_mini_chat": "Trò chuyện",
+      "title": "Dashboard CEO Agent",
+      "subtitle": "Trung tâm chỉ huy của bạn với sức mạnh AI",
+      "skip": "Bỏ Qua",
+      "next": "Tiếp",
+      "back": "Quay Lại",
+      "finish": "Bắt Đầu",
+      "progress": "Bước {current} trên {total}",
+      "tour_step1_title": "Báo Cáo Sáng",
+      "tour_step1_desc": "Mỗi sáng bạn nhận báo cáo AI về doanh thu, hiệu suất chiến dịch và việc cần làm — cá nhân hóa cho doanh nghiệp của bạn.",
+      "tour_step2_title": "Chiến dịch",
+      "tour_step2_desc": "Tạo và theo dõi chiến dịch marketing từ một nơi. Đội AI của bạn soạn thảo, triển khai và giám sát tự động.",
+      "tour_step3_title": "Thông Tin Doanh Thu",
+      "tour_step3_desc": "Xem thu nhập hợp nhất, credits đã dùng và xu hướng 7 ngày trên tất cả kênh trong một bảng thông minh.",
+      "tour_step4_title": "Chat AI",
+      "tour_step4_desc": "Hỏi CEO Agent bất cứ điều gì — chiến lược, nội dung, hiệu suất. Dùng ngôn ngữ tự nhiên và nhận câu trả lời cấp điều hành ngay lập tức."
+    }
   }
 }

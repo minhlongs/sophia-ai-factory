@@ -1434,10 +1434,10 @@
         "styleEducational": "Educational",
         "languageLabel": "Language",
         "languageEn": "English",
-        "languageVi": "Vietnamese",
         "submitting": "Generating...",
         "submit": "Generate Video",
-        "quotaExceeded": "Video quota exceeded ({used}/{limit} used). Resets {resetAt}."
+        "quotaExceeded": "Video quota exceeded ({used}/{limit} used). Resets {resetAt}.",
+        "languageVi": "Tiếng Việt"
       },
       "distribute": {
         "title": "Distribute Video",
@@ -2082,6 +2082,61 @@
         "tour_step3_desc": "Monitor and manage all your marketing campaigns from one dashboard. Your AI team runs on autopilot while you stay in control.",
         "tour_step4_title": "Revenue Dashboard",
         "tour_step4_desc": "Track performance across all revenue channels. See unified earnings, trends, and insights — all powered by your AI agents."
+      }
+    },
+    "ceoAgent": {
+      "heading": "Heading",
+      "subtitle": "Subtitle",
+      "featureLabel": "Feature",
+      "comingSoon": "Coming Soon",
+      "briefingTitle": "Briefing Title",
+      "briefingDesc": "Briefing Desc",
+      "campaignsTitle": "Campaigns Title",
+      "campaignsDesc": "Campaigns Desc",
+      "revenueTitle": "Revenue Title",
+      "revenueDesc": "Revenue Desc",
+      "featureFlagNotice": "Feature Flag Notice",
+      "notFoundTitle": "Not Found Title",
+      "notFoundDescription": "Not Found Description",
+      "notFoundBack": "Not Found Back",
+      "briefingDate": "Daily Briefing — {date}",
+      "briefingRefresh": "Refresh Briefing",
+      "briefingError": "Unable to generate briefing right now.",
+      "briefingEmpty": "No briefing available for today. Try refreshing or configure your AI provider in Settings.",
+      "briefingRetry": "Retry",
+      "revenueSpentLabel": "Total Spent",
+      "revenuePurchasedLabel": "Credits Purchased",
+      "revenueUsedLabel": "Credits Used",
+      "revenueRemainingLabel": "Remaining Credits",
+      "revenueAvgSpendLabel": "Average Daily Spend (7 days)",
+      "revenueTrendLabel": "7-Day Spend Trend",
+      "revenueNoData": "No revenue data yet. Make your first purchase to see insights here.",
+      "revenueTierLabel": "Current Tier",
+      "recentTransactionsTitle": "Recent Transactions",
+      "txDateLabel": "Date",
+      "txAmountLabel": "Amount",
+      "txCreditsLabel": "Credits",
+      "txSkuLabel": "SKU",
+      "revenueError": "Unable to load revenue insights right now.",
+      "revenueEmptyTx": "No recent transactions.",
+      "retryLabel": "Retry",
+      "revenueRefresh": "Revenue Refresh",
+      "revenueRefreshing": "Revenue Refreshing",
+      "onboarding_tour": {
+        "dismiss": "Dismiss",
+        "dashboard_welcome_title": "Dashboard welcome title",
+        "dashboard_welcome_desc": "Dashboard welcome desc",
+        "start_tour": "Start tour",
+        "skip": "Skip",
+        "title": "Title",
+        "subtitle": "Subtitle",
+        "back": "Back",
+        "next": "Next",
+        "finish": "Finish",
+        "dashboard_mini_briefing": "briefing (en)",
+        "dashboard_mini_campaigns": "campaigns (en)",
+        "dashboard_mini_revenue": "revenue (en)",
+        "dashboard_mini_chat": "chat (en)"
       }
     }
   },
@@ -2770,7 +2825,8 @@
       "sortNewest": "Newest",
       "resultsCount": "{count} result(s)",
       "sales": "sales",
-      "byLabel": "by"
+      "byLabel": "by",
+      "seoDescription": "Browse automation SOP templates for agencies, creators, and operators"
     },
     "card": {
       "creditsPerRun": "{n} credits/run",
@@ -2985,7 +3041,6 @@
         "back": "Back",
         "templateDetails": "Template Details",
         "descriptionEn": "English Description",
-        "descriptionVi": "Vietnamese Description",
         "creditsPerRun": "Credits Per Run",
         "setupTime": "Setup Time",
         "setupTimeMinutes": "{minutes} min",
@@ -2994,7 +3049,8 @@
         "publishSuccess": "Publish Success",
         "draftDescription": "Draft Description",
         "publishing": "Publishing",
-        "submitForReview": "Submit For Review"
+        "submitForReview": "Submit For Review",
+        "descriptionVi": "Vietnamese Description"
       },
       "actions": {
         "unauthorized": "You must be logged in to perform this action.",
@@ -4121,7 +4177,6 @@
   "generate": {
     "languageEn": "Language En",
     "languageLabel": "Language Label",
-    "languageVi": "Language Vi",
     "missionCreated": "Mission Created",
     "promptLabel": "Prompt Label",
     "promptPlaceholder": "Prompt Placeholder",
@@ -5983,5 +6038,32 @@
     "create_campaign": "Create campaign",
     "title": "Title",
     "subtitle": "Subtitle"
+  },
+  "ceoAgent": {
+    "onboarding_tour": {
+      "dashboard_welcome_title": "Welcome to Your AI Executive Board",
+      "dashboard_welcome_desc": "Your CEO Agent dashboard brings together daily briefings, campaign management, revenue tracking, and an AI chat assistant — all in one place.",
+      "start_tour": "Start Tour",
+      "dismiss": "Dismiss",
+      "dashboard_mini_briefing": "Briefing",
+      "dashboard_mini_campaigns": "Campaigns",
+      "dashboard_mini_revenue": "Revenue",
+      "dashboard_mini_chat": "Chat",
+      "title": "CEO Agent Dashboard",
+      "subtitle": "Your AI-powered command center",
+      "skip": "Skip Tour",
+      "next": "Next",
+      "back": "Back",
+      "finish": "Get Started",
+      "progress": "Step {current} of {total}",
+      "tour_step1_title": "Daily Briefing",
+      "tour_step1_desc": "Start each morning with an AI-generated briefing covering revenue, campaign health, and action items — tailored to your business.",
+      "tour_step2_title": "Campaigns",
+      "tour_step2_desc": "Create and track marketing campaigns from one place. Your AI team drafts, launches, and monitors them on autopilot.",
+      "tour_step3_title": "Revenue Insights",
+      "tour_step3_desc": "See unified earnings, credits spent, and 7-day trends across all channels in a single, actionable view.",
+      "tour_step4_title": "AI Chat",
+      "tour_step4_desc": "Ask your CEO Agent anything — strategy, copy, performance. Use natural language and get instant, executive-level answers."
+    }
   }
 }

@@ -6,6 +6,7 @@
  *
  * Supports searchParams ?category= for per-category SEO metadata.
  */
+
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { MarketplaceStitchSection } from "@/forest/components/sop/marketplace-stitch-section";
@@ -33,22 +34,55 @@ interface SopMarketplacePageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
-/** generateMetadata that reads ?category= for dynamic SEO title. */
+const APP_URL =
+  process.env.NEXT_PUBLIC_APP_URL || "https://sophia.agencyos.network";
+
+function canonicalUrl(category?: string): string {
+  return category
+    ? `${APP_URL}/sop-marketplace?category=${encodeURIComponent(category)}`
+    : `${APP_URL}/sop-marketplace`;
+}
+
+function seoDescription(
+  t: Awaited<ReturnType<typeof getTranslations>>,
+  listingCount: number,
+  category?: string,
+): string {
+  if (category) {
+    return `${category} SOP automation templates on Sophia AI Factory — ${listingCount} templates available.`;
+  }
+  return t("seoDescription");
+}
+
 export async function generateMetadata({
   searchParams,
 }: SopMarketplacePageProps): Promise<Metadata> {
   const sp = await searchParams;
   const category = typeof sp.category === "string" ? sp.category : null;
   const t = await getTranslations("sop.marketplace");
-
-  const title = category
-    ? `SOP Marketplace: ${category} Templates | Sophia AI Factory`
-    : `${t("title")} | Sophia AI Factory`;
-
+  const titleBase = t("title");
+  const title =
+    category !== null
+      ? `${category} SOP Templates | ${titleBase}`
+      : `${titleBase}`;
   return {
     title,
-    openGraph: { title },
-    twitter: { title },
+    description: seoDescription(t, 0, category ?? undefined),
+    alternates: {
+      canonical: canonicalUrl(category ?? undefined),
+    },
+    openGraph: {
+      title,
+      description: seoDescription(t, 0, category ?? undefined),
+      url: canonicalUrl(category ?? undefined),
+      siteName: "Sophia AI Factory",
+      type: "website",
+    },
+    twitter: {
+      title,
+      description: seoDescription(t, 0, category ?? undefined),
+      card: "summary_large_image",
+    },
   };
 }
 
@@ -63,8 +97,13 @@ export default async function SopMarketplacePage({
 
   let templates: SopTemplateData[] = [];
   try {
-    const base = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const res = await fetch(`${base}/api/sop-marketplace?limit=100`, {
+    const base =
+      process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const params =
+      initialCategory !== undefined
+        ? `?category=${encodeURIComponent(initialCategory)}&limit=100`
+        : "?limit=100";
+    const res = await fetch(`${base}/api/sop-marketplace${params}`, {
       next: { revalidate: 60 },
       signal: AbortSignal.timeout(10_000),
     });
@@ -75,26 +114,51 @@ export default async function SopMarketplacePage({
       templates = json.templates ?? [];
     }
   } catch {
-    // Build-time fetch may fail — MarketplaceStitchSection shows empty state
+    // Build-time / D1 fetch may fail — MarketplaceStitchSection shows empty state.
     templates = [];
   }
 
-  const collectionName = initialCategory
-    ? `SOP Marketplace: ${initialCategory} Templates`
-    : t("title");
+  const collectionName =
+    initialCategory !== undefined
+      ? `SOP Marketplace: ${initialCategory} Templates`
+      : t("title");
+
+  // Compute description with real count for server-rendered structured data.
+  const seoDesc = seoDescription(t, templates.length, initialCategory);
 
   return (
     <>
-      {/* Structured data — CollectionPage */}
+      {/* Structured data — ItemList (ported from old client JSON-LD) */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "CollectionPage",
+            "@type": "ItemList",
             name: collectionName,
-            description: t("subtitle"),
+            description: seoDesc,
             numberOfItems: templates.length,
+            itemListElement: templates.slice(0, 20).map((item, idx) => ({
+              "@type": "ListItem",
+              position: idx + 1,
+              item: {
+                "@type": "Product",
+                name: item.name,
+                category: item.category,
+                offers: {
+                  "@type": "Offer",
+                  priceCurrency: "USD",
+                  price: (item.priceCents / 100).toFixed(2),
+                },
+                aggregateRating: {
+                  "@type": "AggregateRating",
+                  ratingValue: item.ratingAvg.toFixed(1),
+                  reviewCount: item.ratingCount,
+                  bestRating: 5,
+                  worstRating: 1,
+                },
+              },
+            })),
           }),
         }}
       />
