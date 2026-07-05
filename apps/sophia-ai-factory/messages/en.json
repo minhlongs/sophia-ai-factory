@@ -5983,5 +5983,19 @@
     "create_campaign": "Create campaign",
     "title": "Title",
     "subtitle": "Subtitle"
+  },
+  "marketplace": {
+    "creator": {
+      "install": "Install",
+      "installConfirm": "Install this SOP for {price}?",
+      "installSuccess": "Installed successfully!",
+      "installError": "Installation failed: {error}",
+      "alreadyInstalled": "Already installed",
+      "installLimitReached": "Install limit reached. Upgrade your plan.",
+      "yourRating": "Your Rating",
+      "reviewPlaceholder": "Write your review...",
+      "submitReview": "Submit Review",
+      "leaveReview": "Leave a Review"
+    }
   }
 }
