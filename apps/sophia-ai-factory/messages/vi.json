@@ -5990,5 +5990,19 @@
     "create_campaign": "Create campaign",
     "title": "Title",
     "subtitle": "Subtitle"
+  },
+  "marketplace": {
+    "creator": {
+      "install": "Cài Đặt",
+      "installConfirm": "Cài đặt SOP này với giá {price}?",
+      "installSuccess": "Đã cài đặt thành công!",
+      "installError": "Cài đặt thất bại: {error}",
+      "alreadyInstalled": "Đã cài đặt",
+      "installLimitReached": "Đã đạt giới hạn cài đặt. Nâng cấp gói của bạn.",
+      "yourRating": "Đánh Giá Của Bạn",
+      "reviewPlaceholder": "Viết đánh giá...",
+      "submitReview": "Gửi Đánh Giá",
+      "leaveReview": "Để Lại Đánh Giá"
+    }
   }
 }
