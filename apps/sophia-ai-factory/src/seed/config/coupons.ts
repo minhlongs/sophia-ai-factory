@@ -86,5 +86,7 @@ export function getActivateCoupons(): Record<string, { mcuBonus: number }> {
 export const PRICING: Record<string, number> = {
   BASIC: 199,
   PREMIUM: 399,
-  MASTER: 799,
+  // MASTER is a one-time lifetime purchase — no subscription coupon applies.
+  // Kept at 0 so coupon math on MASTER yields $0 (effectively non-couponable).
+  MASTER: 0,
 };

@@ -22,7 +22,7 @@ export class ByokKeyRotatedError extends Error {
  }
 }
 
-export type ProviderType = 'heygen' | 'heygen_webhook_secret' | 'resend' | 'nowpayments' | 'local_llm' | 'kling' | 'assemblyai' | 'openai' | 'openrouter' | 'replicate'
+export type ProviderType = 'heygen' | 'heygen_webhook_secret' | 'resend' | 'nowpayments' | 'local_llm' | 'kling' | 'assemblyai' | 'openai' | 'openrouter' | 'replicate' | 'elevenlabs' | 'd-id'
 
 export interface CredentialSummary {
   provider: ProviderType

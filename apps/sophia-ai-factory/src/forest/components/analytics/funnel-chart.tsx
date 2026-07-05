@@ -13,7 +13,7 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { BarChart3 } from 'lucide-react';
-import type { FunnelGroup } from '@/land/analytics/funnel-dashboard';
+import type { FunnelGroup } from '@/seed/types/funnel';
 
 // ── Sub-components ───────────────────────────────────────────────────────────
 

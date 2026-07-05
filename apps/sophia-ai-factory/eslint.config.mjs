@@ -79,6 +79,10 @@ const eslintConfig = defineConfig([
       // (now imports from seed/security/crypto-utils). Stubs kept for safety.
       "src/seed/security/api-key-validator-crypto.ts",
       "src/seed/security/api-key-validator-db.ts",
+// Platform config needs encrypt/decrypt from tree/credentials (mekong-exempt:
+// crypto primitives belong in tree by domain, but seed consumer needed for
+// platform_configs table).
+"src/seed/security/credential-crypto.ts",
       // Telemetry (if present)
 // seed/ai — AI adapters call land services + tree BYOK (mekong-exempt: AI infra)
 "src/seed/ai/anthropic-adapter.ts",

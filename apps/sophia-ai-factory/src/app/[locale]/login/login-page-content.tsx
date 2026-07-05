@@ -14,12 +14,12 @@ export function LoginPageContent() {
   const searchParams = useSearchParams();
   const tab = searchParams?.get('tab');
   const redirectTo = searchParams?.get('next') || searchParams?.get('redirect') || undefined;
+  const t = useTranslations('stitch.auth.login');
 
   if (tab === 'signup') {
     return <RegisterPage />;
   }
 
-  const t = useTranslations('stitch.auth.login');
 
   return (
     <div

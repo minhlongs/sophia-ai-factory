@@ -2,8 +2,11 @@ import type { NextConfig } from "next";
 import type { Configuration } from "webpack";
 import path from 'node:path';
 import createNextIntlPlugin from 'next-intl/plugin';
-import withBundleAnalyzer from '@next/bundle-analyzer';
 import withPWAInit from '@ducanh2912/next-pwa';
+// NOTE: @next/bundle-analyzer and @sentry/nextjs are in package.json (installed).
+// They are imported at top-level — Next.js config transpiler cannot handle
+// top-level await (), so dynamic wrapping is not viable here.
+import withBundleAnalyzer from '@next/bundle-analyzer';
 import { withSentryConfig } from '@sentry/nextjs';
 // CSP is now injected per-request by middleware (nonce-based).
 // buildCSPHeader import intentionally removed from next.config.ts.
@@ -36,8 +39,7 @@ const nextConfig: NextConfig = {
     // Pure client-side libs — traced into server bundle by nft but never
     // executed on the server. Externalizing lets esbuild stub them safely,
     // reducing the workerd module compilation footprint.
-    'html2canvas', 'jszip', 'framer-motion',
-    'd3', 'd3-*',
+    'html2canvas', 'jszip', 'framer-motion', 'd3', 'd3-*',
     // DB clients incompatible with Cloudflare Workers (no node:fs)
     'better-sqlite3',
     // Better Auth — externalized so esbuild can resolve workerd-conditional
@@ -132,36 +134,15 @@ const nextConfig: NextConfig = {
       {
         source: '/:path*',
         headers: [
-          {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on'
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload'
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '0'
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY'
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin'
-          },
+          { key: 'X-DNS-Prefetch-Control', value: 'on' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+          { key: 'X-XSS-Protection', value: '0' },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
           // Content-Security-Policy is set per-request by middleware (nonce-based).
           // Removed from static headers — middleware is the single source of truth.
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
-          }
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' }
         ]
       }
     ];
@@ -176,26 +157,26 @@ const composedConfig = withPWA(withAnalyzer(withNextIntl(nextConfig)));
 // warn loudly when this is set during a production NODE_ENV build so accidental
 // silent regression in observability is visible.
 if (process.env.NODE_ENV === 'production' && process.env.SKIP_SENTRY_BUILD === '1') {
-   
   console.warn('[next.config] SKIP_SENTRY_BUILD=1 in production build — source maps will NOT be uploaded; prod stack traces will be minified.');
 }
+
 const finalConfig = process.env.SKIP_SENTRY_BUILD === '1'
   ? composedConfig
   : withSentryConfig(composedConfig, {
-  // Sentry build-time options
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-  // Don't print Sentry logs during build (reduce CI noise)
-  silent: true,
-  // Upload source maps to Sentry then strip from bundle (fail-fast on upload errors)
-  sourcemaps: {},
-  // Upload wider set of client-side source maps
-  widenClientFileUpload: true,
-  // Disable telemetry in CI builds; Sentry v8 auto-skips plugin in dev
-  telemetry: false,
-  // Note: The plugin's default behavior is to throw on upload errors (fail-fast).
-  // No explicit `throwOnError` option exists; errors propagate naturally.
-});
+      // Sentry build-time options
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      // Don't print Sentry logs during build (reduce CI noise)
+      silent: true,
+      // Upload source maps to Sentry then strip from bundle (fail-fast on upload errors)
+      sourcemaps: {},
+      // Upload wider set of client-side source maps
+      widenClientFileUpload: true,
+      // Disable telemetry in CI builds; Sentry v8 auto-skips plugin in dev
+      telemetry: false,
+      // Note: The plugin's default behavior is to throw on upload errors (fail-fast).
+      // No explicit `throwOnError` option exists; errors propagate naturally.
+    });
 
 export default finalConfig;

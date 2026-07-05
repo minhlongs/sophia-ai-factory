@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getD1Raw } from '@/seed/db/client';
 import { toError } from '@/seed/utils/to-error';
+import { createLogger } from '@/seed/utils/logger-utility';
+
+const logger = createLogger('harness.status');
 
 export const runtime = 'edge';
 
@@ -42,7 +45,7 @@ export async function GET(request: NextRequest) {
         }
       }
     } catch (err) {
-      console.warn('Gracefully handled error reading daemon heartbeat from EXPERIMENT_KV:', err);
+      logger.warn('Gracefully handled error reading daemon heartbeat from EXPERIMENT_KV', { error: toError(err).message });
     }
 
     const db = await getD1Raw();
