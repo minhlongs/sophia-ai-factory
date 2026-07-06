@@ -12,7 +12,7 @@ env:
 jobs:
   guard-1-ci:
     name: "Guard 1: CI"
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,7 @@ jobs:
     name: "Guard 2: Deploy"
     needs: guard-1-ci
     if: github.event_name == "push" && github.ref == "refs/heads/main"
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
