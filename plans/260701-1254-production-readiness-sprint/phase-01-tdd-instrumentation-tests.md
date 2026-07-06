@@ -1,6 +1,6 @@
 # Phase 01 — TDD: instrumentation.ts Tests
 
-**Priority:** P0 | **Effort:** 1h | **Status:** pending | **Depends on:** —
+**Priority:** P0 | **Effort:** 1h | **Status:** completed | **Depends on:** —
 
 ## Overview
 

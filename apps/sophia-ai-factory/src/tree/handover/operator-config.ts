@@ -22,13 +22,12 @@ export const DEFAULT_OPERATOR_CONFIG: OperatorConfig = {
 };
 
 /** Returns the operator config. Reads from KV if configured, else default. */
-export function getOperatorConfig(remote?: unknown): OperatorConfig {
+export async function getOperatorConfig(remote?: unknown): Promise<OperatorConfig> {
   if (remote && typeof remote === 'object' && 'KV' in remote) {
     try {
       const kv = (remote as { KV: unknown }).KV;
-      const raw = typeof (kv as { get?: (k: string) => Promise<string | null> }).get === 'function'
-        ? (kv as { get: (k: string) => Promise<string | null> }).get('operator_config')
-        : null;
+      const getFn = (kv as { get?: (k: string) => Promise<string | null> }).get;
+      const raw = typeof getFn === 'function' ? await getFn('operator_config') : null;
       if (raw) {
         const parsed = JSON.parse(raw) as Partial<OperatorConfig>;
         return { ...DEFAULT_OPERATOR_CONFIG, ...parsed };

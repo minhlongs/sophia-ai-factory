@@ -340,6 +340,9 @@ export function WizardClient() {
       if (providerConfig.RESEND_API_KEY.trim()) credPayload.resend_api_key = providerConfig.RESEND_API_KEY.trim();
       if (providerConfig.NOWPAYMENTS_API_KEY.trim()) credPayload.nowpayments_api_key = providerConfig.NOWPAYMENTS_API_KEY.trim();
       if (providerConfig.HEYGEN_WEBHOOK_SECRET.trim()) credPayload.heygen_webhook_secret = providerConfig.HEYGEN_WEBHOOK_SECRET.trim();
+  if (config.OPENROUTER_API_KEY.trim()) credPayload.openrouter_api_key = config.OPENROUTER_API_KEY.trim();
+  if (config.ELEVENLABS_API_KEY.trim()) credPayload.elevenlabs_api_key = config.ELEVENLABS_API_KEY.trim();
+  if (config.DID_API_KEY.trim()) credPayload.did_api_key = config.DID_API_KEY.trim();
 
       if (Object.keys(credPayload).length > 0) {
         const credRes = await fetch('/api/setup-wizard/save-credentials', {

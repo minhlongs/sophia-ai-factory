@@ -42,6 +42,7 @@ export const AGENCY_LABELS: Record<AgencyType, { vi: string; en: string }> = {
   ecom: { vi: 'Thương mại điện tử', en: 'E-Commerce' },
   content_creator: { vi: 'Content Creator', en: 'Content Creator' },
   service: { vi: 'Dịch vụ', en: 'Service Agency' },
+  solo_ceo: { vi: 'Solo CEO', en: 'Solo CEO' },
   other: { vi: 'Khác', en: 'Other' },
 };
 
