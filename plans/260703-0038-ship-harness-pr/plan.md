@@ -1,43 +1,31 @@
 ---
 title: "Ship Harness Engineering PR"
-description: "Rebase, fix quality issues, and merge PR #31 (feature/harness-engineering) — 3 commits, 12 genuinely-new harness files, 362 main commits divergence"
-status: pending
+description: "PR #31 — Harness system health feature. Already skilleted via squash commit e7ec20ef and pruned to main."
+status: completed
 priority: P1
 branch: "main"
-tags: [harness, pr, system-health, daemon]
-blockedBy: []
-blocks: []
 created: "2026-07-03T00:38:41.082+07:00"
-createdBy: "ck:plan"
-source: skill
 ---
 
 # Ship Harness Engineering PR
 
-**PR #31:** `feature/harness-engineering` — open 34 days, 0 reviews, 2,303 LOC, 12 genuinely-new harness files.
+## Status: COMPLETED — Code Already on Main
 
-## Background
+### Evidence
 
-PR #31 adds a system health harness: 6 health checks (D1, R2, OpenRouter, ElevenLabs, HeyGen, Remotion) via a local daemon, 5 API endpoints, a dashboard UI card, Telegram `/harness` commands, and a D1 migration.
+- **Commit `e7ec20ef`** (2026-07-03): `feat(harness): add system health harness with daemon, API, dashboard, and Telegram commands` — 20 files, 1817 insertions.
+- **Commit `ad3016f9`** (bulk plan closure, 2026-07-07): cleaned plan artifacts; `promises/260702-1928-security-sweep/plan.md` updated.
+- All 10 harness source files exist on disk and on main:
+  - `src/tree/harness/daemon.ts`, `src/tree/harness/__tests__/daemon.test.ts`
+  - `src/app/api/v1/harness/{trigger,status,check/r2,jobs/poll,jobs/[id]}/route.ts`
+  - `src/app/api/v1/harness/__tests__/route.test.ts`
+  - `src/tree/telegram/telegram-bot-harness-handlers.ts`
+  - `src/app/[locale]/dashboard/system-health/components/harness-health-card.tsx`
+  - `migrations/0149_harness_tables.sql` (renamed from 0148 to avoid collision)
+- PR #31 was squash-merged (commit e7ec20ef is the squash).
+- Branch `feature/harness-engineering` no longer exists locally or was cleaned up.
+- Inventory report exists in git history: `plans/260703-0038-ship-harness-pr/reports/harness-pr-inventory-260703.md`.
 
-The branch is 362 commits behind main but uses correct import paths (`@/seed/db/client`) — unlike the Phase 6-13 branches. The main fix items are in the daemon file (dead `console.log`, dead `../../lib/validation/services` import).
+### Final State
 
-## Phases
-
-| # | Phase | Effort | Status |
-|---|-------|--------|--------|
-| 1 | [Inventory PR Files](./phase-01-inventory-pr-files.md) | ~15 min | Pending |
-| 2 | [Rebase & Fix Quality Issues](./phase-02-rebase-fix-quality-issues.md) | ~1 hr | Pending |
-| 3 | [Verify & Merge](./phase-03-verify-merge.md) | ~30 min | Pending |
-
-## Key Risks
-
-1. Migration `0148_harness_tables.sql` collision with main's current max
-2. Daemon uses `console.log` (banned), `../../lib/validation/services` (dead path), `process.env.HARNESS_SECRET` (wrong CF Workers pattern)
-3. Daemon references Remotion (Node.js-only — won't work on CF Workers)
-4. PR has 0 reviews — need to verify all code before merge
-
-## Dependencies
-
-- Brainstorm report: `/Users/macbook/projects/sophia-ai-factory/plans/reports/brainstorm-260703-0038-ship-harness-pr-report.md`
-- PR: https://github.com/longtho638-jpg/sophia-ai-factory/pull/31
+Phase 1 (inventory), Phase 2 (rebase + fix), and Phase 3 (verify + merge) are all **completed**. The harness feature is live on main.
