@@ -19,6 +19,9 @@ export const Events = {
   VIDEO_RENDERED: 'video_rendered',
   FIRST_VIDEO_STARTED: 'first_video_started',
   FIRST_VIDEO_COMPLETED: 'first_video_completed',
+  // Creator / marketplace events (added 260706)
+  SOP_INSTALLED: 'sop_installed',
+  REFERRAL_SIGNUP: 'referral_signup',
   // Experiment assignment events
   EXPERIMENT_ASSIGNED: 'experiment_assigned',
   // Server-only financial / usage events
@@ -101,6 +104,8 @@ const FreeQuotaExhaustionSchema = z.object({
   limit: z.number(),
 })
 
+const SopInstalledSchema = z.object({ sop_id: z.string().optional() })
+const ReferralSignupSchema = z.object({ referrer_id: z.string().optional() })
 const VideoRenderedSchema = z.object({
   duration_s: z.number().optional(),
   resolution: z.string().optional(),
@@ -140,6 +145,8 @@ export const EVENT_SCHEMAS: Record<EventName, z.ZodTypeAny> = {
   [Events.PAYMENT_SUCCEEDED]: PaymentSucceededSchema,
   [Events.CHURN_SIGNAL]: ChurnSignalSchema,
   [Events.FREE_QUOTA_EXHAUSTION]: FreeQuotaExhaustionSchema,
+  [Events.SOP_INSTALLED]: SopInstalledSchema,
+  [Events.REFERRAL_SIGNUP]: ReferralSignupSchema,
 }
 
 /** Check if event is restricted to server-side emission only */

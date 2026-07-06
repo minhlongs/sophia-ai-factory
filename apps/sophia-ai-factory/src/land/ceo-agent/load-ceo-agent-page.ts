@@ -22,7 +22,7 @@ export async function loadCeoAgentPage(params: { params: Promise<{ locale: strin
 
   let userTier: 'BASIC' | 'PREMIUM' | 'ENTERPRISE' | 'MASTER' = 'BASIC';
   try {
-    userTier = (await resolveUserTier(user.id)) as any;
+    userTier = await resolveUserTier(user.id);
   } catch {
     // Degrade to BASIC on D1 failure — don't block navigation.
   }

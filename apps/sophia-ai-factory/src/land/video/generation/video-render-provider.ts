@@ -20,7 +20,7 @@ export interface VideoRenderProviderResult {
   providerJobId: string;
   videoId: string;
   status: 'queued' | 'processing';
-  provider: 'heygen' | 'mock';
+  provider: 'heygen' | 'mock' | 'facefusion' | 'wav2lip';
   videoUrl?: string; // present only for mock provider (immediate completion)
 }
 
@@ -47,10 +47,12 @@ function isProofMode(): boolean {
   );
 }
 
-function getConfiguredProvider(): 'heygen' | 'mock' | null {
+function getConfiguredProvider(): 'heygen' | 'mock' | 'facefusion' | 'wav2lip' | null {
   const envProvider = process.env.SOPHIA_VIDEO_PROVIDER;
   if (envProvider === 'mock') return 'mock';
   if (envProvider === 'heygen') return 'heygen';
+  if (envProvider === 'facefusion') return 'facefusion';
+  if (envProvider === 'wav2lip') return 'wav2lip';
   return null; // default: heygen auto-resolve
 }
 

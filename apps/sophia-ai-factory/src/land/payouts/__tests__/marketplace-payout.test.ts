@@ -12,7 +12,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { D1Database } from '@cloudflare/workers-types';
 import { recordSopSaleCommission } from '@/land/sop-marketplace/commission-split';
 
-const PAYOUT_DELAY_SECONDS = 14 * 24 * 60 * 60; // 14 days in seconds
+const PAYOUT_DELAY_MS = 14 * 24 * 60 * 60 * 1000; // 14 days in milliseconds
 
 /** Captured INSERT call details for verification. */
 interface InsertCapture {
@@ -118,8 +118,8 @@ describe('recordSopSaleCommission', () => {
     const payableAt = insert!.binds[7] as number;
     const createdAt = insert!.binds[8] as number;
 
-    expect(payableAt - createdAt).toBe(PAYOUT_DELAY_SECONDS);
-    expect(payableAt).toBeGreaterThan(before + PAYOUT_DELAY_SECONDS - 10);
+    expect(payableAt - createdAt).toBe(PAYOUT_DELAY_MS);
+    expect(payableAt).toBeGreaterThan(before + PAYOUT_DELAY_MS - 10);
   });
 
   it('records the row status as pending', async () => {
