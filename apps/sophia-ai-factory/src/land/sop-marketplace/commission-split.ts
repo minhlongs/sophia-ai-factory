@@ -7,7 +7,7 @@
  */
 
 const CREATOR_COMMISSION_PCT = 0.70;
-const PAYOUT_DELAY_MS = 14 * 24 * 60 * 60 * 1000; // 14-day hold for refund window
+const PAYOUT_DELAY_SECONDS = 14 * 24 * 60 * 60; // 14-day hold for refund window
 
 export interface CommissionBreakdown {
   grossCents: number;
@@ -52,8 +52,8 @@ export async function recordSopSaleCommission(
 
   const { commissionPct, creatorCents } = calculateCreatorCommission(input.priceCents);
   const id = crypto.randomUUID();
-  const now = Date.now();
-  const payableAt = now + PAYOUT_DELAY_MS;
+  const now = Math.floor(Date.now() / 1000);
+  const payableAt = now + PAYOUT_DELAY_SECONDS;
 
   const result = await db
     .prepare(

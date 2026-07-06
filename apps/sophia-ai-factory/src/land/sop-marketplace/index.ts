@@ -13,6 +13,9 @@ export { listActiveChallenges, getUserProgress, getUserAllProgress, incrementPro
 export * from './beta-invites';
 export { hasCreatorAccess } from './creator-access';
 export { getCreatorProfile, registerCreator, updateCreatorProfile } from './creator-onboarding';
+export type { CreatorProfileView } from './creator-onboarding';
+export type { SopInstallResult, SopUninstallResult } from './install-handler';
+export { installSop, uninstallSop } from './install-handler';
 export { createSopListing, updateSopListing, listMyListings, publishListing, archiveListing } from './listing-manager';
 export type { SopListingView } from './listing-manager';
 export {

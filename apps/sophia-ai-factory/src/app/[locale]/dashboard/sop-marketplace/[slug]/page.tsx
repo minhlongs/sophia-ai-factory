@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getTemplateBySlug, listInstallationsForUser } from '@/tree/sop/sop-repo';
 import { fetchAuthorBrandings } from '@/tree/branding/org-branding-repo';
+import { trackSopListedViewed } from '@/forest/analytics/funnel-tracking';
 import { SopPreview } from '@/forest/components/sop/sop-preview';
 import { CategoryBadge } from '@/forest/components/sop/category-badge';
 import { SopDetailInstallButton } from './install-button';
@@ -37,6 +38,13 @@ export default async function SopDetailPage({ params }: Props) {
 
   const template = await getTemplateBySlug(db, slug);
   if (!template) notFound();
+
+  // Track listing view — fire-and-forget funnel event
+  trackSopListedViewed(user.id, {
+    listing_id: template.id,
+    template_slug: template.slug,
+    category: template.category,
+  }).catch(() => {});
 
   // Fetch author branding
   let authorBrandName: string | null = null;

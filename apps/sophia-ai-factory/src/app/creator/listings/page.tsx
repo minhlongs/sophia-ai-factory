@@ -7,11 +7,27 @@
  * @module app/creator/listings/page
  */
 
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { listMyListings } from '@/land/sop-marketplace';
 import ListingsClient from './listings-client';
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('marketplace.creator');
+  const title = `${t('listings')} | Sophia AI Factory`;
+  const description = t('subtitle');
+  return {
+    title,
+    description,
+    alternates: { canonical: `${APP_URL}/creator/listings` },
+    openGraph: { title, description, url: `${APP_URL}/creator/listings`, siteName: 'Sophia AI Factory', type: 'website' },
+    twitter: { title, description, card: 'summary_large_image' },
+  };
+}
 
 export default async function CreatorListingsPage() {
   const t = await getTranslations('marketplace.creator');
