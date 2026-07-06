@@ -10,7 +10,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getTranslations, getLocale } from 'next-intl/server';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/get-d1';
 import {

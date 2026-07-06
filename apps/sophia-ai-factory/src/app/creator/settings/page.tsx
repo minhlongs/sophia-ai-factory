@@ -10,7 +10,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getCreatorProfile } from '@/land/sop-marketplace';
 import CreatorSettingsForm from './settings-form';
@@ -18,7 +18,7 @@ import CreatorSettingsForm from './settings-form';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations('sop.creator');
+  const t = await getTranslations('marketplace.creator');
   const title = t('settings');
   const description = t('subtitle');
   return {
