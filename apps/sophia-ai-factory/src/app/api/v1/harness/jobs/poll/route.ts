@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getD1Raw } from '@/seed/db/client';
 import { toError } from '@/seed/utils/to-error';
+import { createLogger } from '@/seed/utils/logger-utility';
+
+const logger = createLogger('harness.jobs.poll');
 
 export const runtime = 'edge';
 
@@ -32,10 +35,10 @@ export async function GET(request: NextRequest) {
       if (kv) {
         await kv.put('harness:daemon_last_poll', new Date().toISOString());
       } else {
-        console.warn('EXPERIMENT_KV binding not found in Cloudflare context');
+        logger.warn('EXPERIMENT_KV binding not found in Cloudflare context');
       }
     } catch (err) {
-      console.warn('Gracefully handled error writing daemon heartbeat to EXPERIMENT_KV:', err);
+      logger.warn('Gracefully handled error writing daemon heartbeat to EXPERIMENT_KV', { error: toError(err).message });
     }
 
     const db = await getD1Raw();

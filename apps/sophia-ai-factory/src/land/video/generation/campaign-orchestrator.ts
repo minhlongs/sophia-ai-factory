@@ -18,16 +18,34 @@ import { TikTokChannelAdapter } from '@/tree/gateway/adapters/tiktok-channel-ada
 import { TelegramNotificationAdapter } from '@/tree/gateway/adapters/telegram-notification-adapter';
 import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
-import { getExperiment } from '@/forest/ab/experiment-store';
 import { markEngineMissionFailed } from './generate-campaign-db';
 import { notifyRefundRequired, notifyProviderError } from './generate-campaign-refund-notify';
 import { pollVideoStatus } from './generate-campaign-video-poller';
 import { emit } from '@/land/webhooks/emitter';
 import { uploadVideo, refreshAccessToken } from '@/land/youtube/youtube-oauth-client';
 import { publishVideo, checkPublishStatus } from '@/land/tiktok/tiktok-oauth-client';
-import { captureServer } from '@/forest/telemetry/posthog-capture';
-import { Events } from '@/forest/telemetry/event-types';
 import type { YouTubeOAuthClient, TikTokOAuthClient } from '@/tree/types/oauth-client-types';
+
+/**
+ * Delegate interface for forest-layer dependencies.
+ *
+ * forest modules (Inngest, telemetry, A/B) inject themselves at call time
+ * so land/ stays independent of forest imports — the allowed direction is
+ * forest → land orchestration, not land → forest.
+ */
+export interface CampaignDelegate {
+  /** Resolve an A/B experiment by id. Returns undefined when not found. */
+  getExperiment: (id: string) => Promise<{ variantACaption?: string } | undefined>
+  /** Fire a server-side telemetry event. No-op when telemetry is unavailable. */
+  captureServer: (opts: {
+    event: string
+    distinctId: string
+    source: string
+    properties?: Record<string, unknown>
+  }) => Promise<void>
+  /** Event name constants (mirrors forest/telemetry/event-types). */
+  events: Record<string, string>
+}
 
 export interface Step {
   sleep(name: string, duration: string): Promise<void>;
@@ -46,6 +64,11 @@ export interface RunCampaignWorkflowArgs {
   step: Step;
   updateStatus: (status: string, progress: number, data?: Record<string, unknown>) => Promise<void>;
   notifyUser: (message: string) => Promise<void>;
+  /**
+   * Forest-layer dependencies injected by the orchestrator caller.
+   * When omitted, all calls become safe no-ops (bare mode for direct invocation).
+   */
+  delegate?: CampaignDelegate;
 }
 
 function getD1ForWebhooks(): D1Database | null {
@@ -85,7 +108,25 @@ interface VideoAssets {
 }
 
 export async function runCampaignWorkflow(args: RunCampaignWorkflowArgs): Promise<{ success: boolean; campaignId: string; skipped?: boolean }> {
-  const { campaignId, userId, topic, audience, tier, resume, resumeFrom, abExperimentId, step, updateStatus, notifyUser } = args;
+  const {
+    campaignId,
+    userId,
+    topic,
+    audience,
+    tier,
+    resume,
+    resumeFrom,
+    abExperimentId,
+    step,
+    updateStatus,
+    notifyUser,
+    delegate,
+  } = args;
+
+  // Resolve forest dependencies — no-ops when delegate is absent (direct invocation)
+  const getExperiment = delegate?.getExperiment ?? (async () => undefined);
+  const captureServerFn = delegate?.captureServer ?? (async () => {});
+  const events = delegate?.events ?? {};
 
   async function runStepSafely<T>(
     stepName: string,
@@ -228,8 +269,8 @@ export async function runCampaignWorkflow(args: RunCampaignWorkflowArgs): Promis
       try {
         const jobId = await startVideoGeneration({ script: script as ScriptOutput, tier, userId });
         // Fire-and-forget PostHog event for first video started
-        void captureServer({
-          event: Events.FIRST_VIDEO_STARTED,
+        void captureServerFn({
+          event: events.FIRST_VIDEO_STARTED,
           distinctId: userId,
           source: 'server',
           properties: { campaign_id: campaignId, tier },
@@ -267,8 +308,8 @@ export async function runCampaignWorkflow(args: RunCampaignWorkflowArgs): Promis
     });
 
     // Fire-and-forget PostHog event for first video completed
-    void captureServer({
-      event: Events.FIRST_VIDEO_COMPLETED,
+    void captureServerFn({
+      event: events.FIRST_VIDEO_COMPLETED,
       distinctId: userId,
       source: 'server',
       properties: { campaign_id: campaignId, tier },
@@ -347,8 +388,8 @@ export async function runCampaignWorkflow(args: RunCampaignWorkflowArgs): Promis
       await notifyUser(`✅ **Campaign Ready!**\nYour video for "${topic}" is ready.\n${statusLine}\n[Watch Video](${videoAssets.video_url})`);
 
       // Fire-and-forget PostHog event for campaign published
-      void captureServer({
-        event: Events.CAMPAIGN_PUBLISHED,
+      void captureServerFn({
+        event: events.CAMPAIGN_PUBLISHED,
         distinctId: userId,
         source: 'server',
         properties: {
