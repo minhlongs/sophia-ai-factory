@@ -1,7 +1,7 @@
 ---
 title: "Auto-Deploy CI/CD + Middleware Decomposition + Deploy Script Hardening"
 description: "3-track parallel: GitHub Actions auto-deploy, middleware split, deploy script reliability"
-status: pending
+status: partial
 priority: P2
 effort: 6-8h
 branch: main
