@@ -3098,7 +3098,14 @@
         "errorGeneric": "Có lỗi xảy ra. Vui lòng thử lại.",
         "alreadyCreator": "Bạn đã có quyền truy cập creator. Đang chuyển hướng...",
         "alreadyCreatorLink": "Đi đến Bảng điều khiển Creator"
-      }
+      },
+      "confirmPublish": "Xuất bản listing này?",
+      "confirmArchive": "Lưu trữ listing này? Nó sẽ bị ẩn khỏi marketplace.",
+      "confirmDeleteListing": "Bạn có chắc muốn xóa danh sách này? Hành động không thể hoàn tác.",
+      "confirmArchiveListing": "Lưu trữ danh sách này? Nó sẽ bị ẩn khỏi marketplace.",
+      "payoutMethodNOWPayments": "NOWPayments",
+      "payoutMethodStripe": "Stripe Connect",
+      "payoutMethodUSDT": "USDT (TRC20)"
     },
     "community": {
       "firstTimeDesc": "Khám phá các SOP được cộng đồng tạo ra",

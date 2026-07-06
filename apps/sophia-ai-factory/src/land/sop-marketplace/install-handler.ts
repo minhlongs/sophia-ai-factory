@@ -23,7 +23,34 @@ import {
   getSopInstall as dbGetSopInstall,
 } from '@/seed/db/marketplace-ops';
 import { calculateCreatorCommission, recordSopSaleCommission } from './commission-split'
-import { trackSopInstalled } from '@/forest/analytics/funnel-tracking';
+import {
+  trackSopInstalled,
+  trackSopUninstalled,
+} from '@/forest/analytics/funnel-tracking';
+
+// ── Types ────────────────────────────────────────────────────────────────
+
+export type SopInstallResult = Result<
+  { licenseId: string },
+  {
+    code:
+      | 'NOT_AUTHENTICATED'
+      | 'DB_ERROR'
+      | 'LISTING_NOT_FOUND'
+      | 'LISTING_NOT_PUBLISHED'
+      | 'ALREADY_INSTALLED'
+      | 'INSTALL_LIMIT_REACHED';
+    message: string;
+  }
+>;
+
+export type SopUninstallResult = Result<
+  { success: true },
+  {
+    code: 'NOT_AUTHENTICATED' | 'DB_ERROR' | 'INSTALL_NOT_FOUND' | 'NOT_OWNER';
+    message: string;
+  }
+>;
 
 // ── Actions ─────────────────────────────────────────────────────────────
 
@@ -141,7 +168,7 @@ export async function installSop(
     );
 
     // Funnel tracking — fire-and-forget sop-installed event
-    trackSopInstalled(user.id, { listing_id: listing.id }).catch(() => {});
+    trackSopInstalled(user.id, { listing_id: listing.id, template_id: listing.sop_template_id, price_cents: listing.price_cents }).catch(() => {});
 
     logger.info('[InstallSop] SOP installed', {
       userId: user.id,
@@ -200,6 +227,9 @@ export async function uninstallSop(
       return failure({ code: 'NOT_OWNER', message: 'You do not own this SOP install' });
     }
 
+  // 5. Look up listing for template_id
+  const listing = await getSopListing(d1, install.listing_id);
+
     // 5. Update status to 'uninstalled'
     const now = Math.floor(Date.now() / 1000);
     const updateResult = await d1
@@ -217,6 +247,14 @@ export async function uninstallSop(
       userId: user.id,
       licenseId,
     });
+
+    // Fire-and-forget uninstall tracking
+  if (listing) {
+    trackSopUninstalled(user.id, {
+      listing_id: listing.id,
+      template_id: listing.sop_template_id,
+    }).catch(() => {});
+  }
 
     return success({ success: true });
   } catch (err) {

@@ -26,6 +26,11 @@ export const Events = {
   PAYMENT_SUCCEEDED: 'payment_succeeded',
   CHURN_SIGNAL: 'churn_signal',
   FREE_QUOTA_EXHAUSTION: 'free_quota_exhaustion',
+  // Marketplace events
+  SOP_INSTALLED: 'sop_installed',
+  SOP_UNINSTALLED: 'sop_uninstalled',
+  SOP_LISTING_VIEWED: 'sop_listing_viewed',
+  REFERRAL_SIGNUP: 'referral_signup',
 } as const
 
 export type EventName = (typeof Events)[keyof typeof Events]
@@ -36,6 +41,10 @@ export const SERVER_ONLY_EVENTS = new Set<EventName>([
   Events.PAYMENT_SUCCEEDED,
   Events.CHURN_SIGNAL,
   Events.FREE_QUOTA_EXHAUSTION,
+  Events.SOP_INSTALLED,
+  Events.SOP_UNINSTALLED,
+  Events.SOP_LISTING_VIEWED,
+  Events.REFERRAL_SIGNUP,
 ])
 
 // ---- Per-event property schemas (whitelist — blocks PII injection) ----
@@ -101,6 +110,27 @@ const FreeQuotaExhaustionSchema = z.object({
   limit: z.number(),
 })
 
+const SopInstalledSchema = z.object({
+  listing_id: z.string(),
+  template_id: z.string(),
+  price_cents: z.number(),
+})
+
+const SopUninstalledSchema = z.object({
+  listing_id: z.string(),
+  template_id: z.string(),
+})
+
+const SopListingViewedSchema = z.object({
+  listing_id: z.string(),
+  template_id: z.string(),
+  source: z.string().optional(),
+})
+
+const ReferralSignupSchema = z.object({
+  affiliate_id: z.string(),
+})
+
 const VideoRenderedSchema = z.object({
   duration_s: z.number().optional(),
   resolution: z.string().optional(),
@@ -140,6 +170,10 @@ export const EVENT_SCHEMAS: Record<EventName, z.ZodTypeAny> = {
   [Events.PAYMENT_SUCCEEDED]: PaymentSucceededSchema,
   [Events.CHURN_SIGNAL]: ChurnSignalSchema,
   [Events.FREE_QUOTA_EXHAUSTION]: FreeQuotaExhaustionSchema,
+  [Events.SOP_INSTALLED]: SopInstalledSchema,
+  [Events.SOP_UNINSTALLED]: SopUninstalledSchema,
+  [Events.SOP_LISTING_VIEWED]: SopListingViewedSchema,
+  [Events.REFERRAL_SIGNUP]: ReferralSignupSchema,
 }
 
 /** Check if event is restricted to server-side emission only */

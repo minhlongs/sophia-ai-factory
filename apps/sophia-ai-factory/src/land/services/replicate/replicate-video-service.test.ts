@@ -32,6 +32,7 @@ describe('ReplicateVideoService', () => {
       const result = await service.createVideo({
         avatarId: 'https://example.com/face.png',
         voiceId: 'https://example.com/audio.mp3',
+        script: 'Test script for video generation',
         title: 'test',
       });
 
@@ -46,7 +47,7 @@ describe('ReplicateVideoService', () => {
       );
 
       await expect(
-        service.createVideo({ avatarId: 'a.png', voiceId: 'b.mp3' }),
+        service.createVideo({ avatarId: 'a.png', voiceId: 'b.mp3', script: 'test' }),
       ).rejects.toThrow(ProviderInvalidKeyError);
     });
 
@@ -57,7 +58,7 @@ describe('ReplicateVideoService', () => {
       );
 
       await expect(
-        service.createVideo({ avatarId: 'a.png', voiceId: 'b.mp3' }),
+        service.createVideo({ avatarId: 'a.png', voiceId: 'b.mp3', script: 'test' }),
       ).rejects.toThrow(ProviderInvalidKeyError);
     });
 
@@ -68,7 +69,7 @@ describe('ReplicateVideoService', () => {
       );
 
       await expect(
-        service.createVideo({ avatarId: 'a.png', voiceId: 'b.mp3' }),
+        service.createVideo({ avatarId: 'a.png', voiceId: 'b.mp3', script: 'test' }),
       ).rejects.toThrow(ProviderQuotaExceededError);
     });
 
@@ -79,14 +80,14 @@ describe('ReplicateVideoService', () => {
       );
 
       await expect(
-        service.createVideo({ avatarId: 'a.png', voiceId: 'b.mp3' }),
+        service.createVideo({ avatarId: 'a.png', voiceId: 'b.mp3', script: 'test' }),
       ).rejects.toThrow(ProviderQuotaExceededError);
     });
 
     it('handles timeout correctly (uses real timers — AbortController requires native setTimeout)', async () => {
       const service = buildService(100);
       vi.spyOn(globalThis, 'fetch').mockImplementation(
-        (_url: string, init?: RequestInit): Promise<Response> => {
+        (_url: string | URL | Request, init?: RequestInit): Promise<Response> => {
           const signal = init?.signal as AbortSignal | undefined;
           return new Promise<Response>((resolve, reject) => {
             const timer = setTimeout(
@@ -102,7 +103,7 @@ describe('ReplicateVideoService', () => {
       );
 
       await expect(
-        service.createVideo({ avatarId: 'a.png', voiceId: 'b.mp3' }),
+        service.createVideo({ avatarId: 'a.png', voiceId: 'b.mp3', script: 'test' }),
       ).rejects.toThrow(/timeout/i);
     });
   });

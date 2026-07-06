@@ -56,7 +56,7 @@ import { registerCreator, getCreatorProfile, updateCreatorProfile } from '../cre
 beforeEach(async () => {
   vi.clearAllMocks();
   const { requireOrgMembership: orgCheck } = await import('@/seed/db/org-membership');
-  vi.mocked(orgCheck).mockResolvedValue({ authorized: true, orgId: 'test-org' });
+  vi.mocked(orgCheck).mockResolvedValue({ authorized: true, orgId: 'test-org', role: 'owner' });
 });
 
 describe('registerCreator', () => {

@@ -93,6 +93,38 @@ export async function trackSopInstalled(
 }
 
 /**
+ * Track when a user uninstalls an SOP.
+ * Called from the install-handler server action after status update.
+ */
+export async function trackSopUninstalled(
+  userId: string,
+  properties?: Record<string, unknown>,
+): Promise<void> {
+  await captureServer({
+    event: Events.SOP_UNINSTALLED,
+    distinctId: userId,
+    source: 'server',
+    properties,
+  })
+}
+
+/**
+ * Track when a user views a marketplace listing detail page.
+ * Called from the marketplace detail server component on render.
+ */
+export async function trackSopListedViewed(
+  userId: string,
+  properties?: Record<string, unknown>,
+): Promise<void> {
+  await captureServer({
+    event: Events.SOP_LISTING_VIEWED,
+    distinctId: userId,
+    source: 'server',
+    properties,
+  })
+}
+
+/**
  * Track when a referral signup is recorded (referral code applied).
  * Called from the referral/apply route after successful code application.
  */

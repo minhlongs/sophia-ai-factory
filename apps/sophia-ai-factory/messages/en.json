@@ -3098,7 +3098,14 @@
         "errorGeneric": "Something went wrong. Please try again.",
         "alreadyCreator": "You already have creator access. Redirecting to your dashboard...",
         "alreadyCreatorLink": "Go to Creator Dashboard"
-      }
+      },
+      "confirmPublish": "Publish this listing?",
+      "confirmArchive": "Archive this listing? It will be hidden from the marketplace.",
+      "confirmDeleteListing": "Are you sure you want to delete this listing? This action cannot be undone.",
+      "confirmArchiveListing": "Archive this listing? It will be hidden from the marketplace.",
+      "payoutMethodNOWPayments": "NOWPayments",
+      "payoutMethodStripe": "Stripe Connect",
+      "payoutMethodUSDT": "USDT (TRC20)"
     },
     "community": {
       "firstTimeDesc": "First Time Desc",

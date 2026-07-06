@@ -7,9 +7,10 @@
  * @module app/creator/page
  */
 
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getTranslations, getLocale } from 'next-intl/server';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/get-d1';
 import {
@@ -213,6 +214,21 @@ function OnboardingView({
       </div>
     </div>
   );
+}
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('marketplace.creator');
+  const title = t('title');
+  const description = t('subtitle');
+  return {
+    title,
+    description,
+    alternates: { canonical: `${APP_URL}/creator` },
+    openGraph: { title, description, url: `${APP_URL}/creator`, siteName: 'Sophia AI Factory', type: 'website' },
+    twitter: { title, description, card: 'summary_large_image' },
+  };
 }
 
 export default async function CreatorPage() {

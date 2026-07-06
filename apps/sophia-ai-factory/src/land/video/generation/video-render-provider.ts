@@ -20,7 +20,7 @@ export interface VideoRenderProviderResult {
   providerJobId: string;
   videoId: string;
   status: 'queued' | 'processing';
-  provider: 'heygen' | 'mock';
+  provider: 'heygen' | 'mock' | 'facefusion' | 'wav2lip';
   videoUrl?: string; // present only for mock provider (immediate completion)
 }
 
