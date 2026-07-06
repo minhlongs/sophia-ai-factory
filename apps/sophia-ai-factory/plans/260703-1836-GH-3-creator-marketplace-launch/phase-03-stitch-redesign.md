@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Stitch Redesign"
-status: pending
+status: completed
 effort: "Medium (4-6h)"  /* reduced after red-team: 80% already exists */
 priority: P1
 dependencies: [1]

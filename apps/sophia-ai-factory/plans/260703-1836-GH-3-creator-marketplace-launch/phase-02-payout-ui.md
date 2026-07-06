@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Payout UI"
-status: pending
+status: completed
 effort: "Medium+ (6-10h)"
 priority: P1
 dependencies: [1]

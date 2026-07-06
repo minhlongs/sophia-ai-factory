@@ -1,7 +1,7 @@
 ---
 title: "Creator Marketplace Launch — Phase 1"
 description: "Lower creator gate, add payout UI, Stitch-redesign marketplace, add SEO + analytics, pre-launch QA"
-status: pending
+status: completed
 priority: P1
 branch: "fix/3-critical-conversion-gaps"
 tags: ["marketplace", "creators", "payouts", "stitch", "phase-1"]
