@@ -2,6 +2,8 @@ import { serve } from "inngest/next";
 import { inngest } from "@/forest/inngest/client";
 import {
   helloWorld,
+  keyRotationCron,
+  keyRotationReencrypt,
   generateCampaign,
   autoDiscoverAffiliates,
   publishExecute,
@@ -58,5 +60,8 @@ export const { GET, POST, PUT } = serve({
     thumbnailAbSelector,
     // SOP execution engine (Phase 01 Solo SOPs)
     sopExecute,
+    // BYOK key rotation (Phase E4)
+    keyRotationCron,
+    keyRotationReencrypt,
   ],
 });
