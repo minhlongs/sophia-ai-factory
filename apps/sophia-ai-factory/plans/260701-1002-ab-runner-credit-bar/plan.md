@@ -1,7 +1,7 @@
 ---
 title: "A/B Runner + Credit Bar Quick Wins"
 description: "Wire existing AB module into campaign pipeline + add video-count credit bar to billing page and sidebar"
-status: pending
+status: completed
 priority: P1
 effort: 10h
 branch: main

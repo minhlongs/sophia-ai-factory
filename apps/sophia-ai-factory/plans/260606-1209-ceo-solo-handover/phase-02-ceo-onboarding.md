@@ -1,7 +1,7 @@
 ---
 title: "Phase 2: CEO Onboarding Setup"
 description: "FREE100 promo code, cash payment config, first customer record"
-status: pending
+status: completed
 priority: P1
 effort: 3h
 branch: master

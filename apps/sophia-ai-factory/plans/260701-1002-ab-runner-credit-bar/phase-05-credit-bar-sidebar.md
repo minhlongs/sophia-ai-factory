@@ -1,7 +1,7 @@
 ---
 title: "Phase 05 — Credit Bar: Sidebar widget video count"
 description: "Add compact video generation count to sidebar quota widget"
-status: pending
+status: completed
 priority: P1
 effort: 1h
 phase: 5

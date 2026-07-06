@@ -1,7 +1,7 @@
 ---
 title: "Phase 02 — AB: Wire variant generation into campaign creation"
 description: "Call generateVariants + createExperiment during campaign creation server action"
-status: pending
+status: completed
 priority: P1
 effort: 2h
 phase: 2

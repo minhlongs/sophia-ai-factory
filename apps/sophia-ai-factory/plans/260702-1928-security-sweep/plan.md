@@ -1,7 +1,7 @@
 ---
 title: "Security Sweep — 145 CVE Mitigation"
 description: "Audit, classify, fix, and mitigate 145 dependabot CVEs (1 critical, 52 high, 60 moderate, 32 low)"
-status: pending
+status: completed
 priority: P1
 branch: "main"
 tags: [security, cve, hardening]

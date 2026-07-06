@@ -1,7 +1,7 @@
 ---
 title: "Client-Ready UX — Quick Fixes"
 description: "Fix 3 UX gaps: optimize Hero CTA, verify /redeem route, add error boundary to Affiliate Discovery"
-status: pending
+status: completed
 priority: P2
 branch: "main"
 tags: []

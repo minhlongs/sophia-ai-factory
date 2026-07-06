@@ -1,7 +1,7 @@
 ---
 title: "Stitch Pipeline Tooling — Session Persistence + Token Export"
 description: "Build tooling scripts for Stitch→Next.js pipeline: session persistence (stitch-session.mjs), token export (stitch-tokens.sh), pre-flight validation (stitch-preflight.sh)"
-status: pending
+status: completed
 priority: P2
 branch: "main"
 tags: []

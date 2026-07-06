@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Affiliate Discovery Error Boundary"
-status: pending
+status: completed
 effort: "~30 min"
 priority: P2
 ---

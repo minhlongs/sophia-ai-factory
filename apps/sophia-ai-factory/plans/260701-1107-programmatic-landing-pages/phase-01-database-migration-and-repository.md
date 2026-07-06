@@ -1,6 +1,6 @@
 ---
 title: "Phase 01 — Database Migration & Repository"
-status: pending
+status: completed
 priority: P1
 effort: 3h
 blocks: [02, 04]

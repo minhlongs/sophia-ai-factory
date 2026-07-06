@@ -1,7 +1,7 @@
 ---
 title: "Phase 4: Revenue Activation"
 description: "First paying customer, affiliate links, Telegram bot go-live"
-status: pending
+status: completed
 priority: P1
 effort: 3h
 branch: master

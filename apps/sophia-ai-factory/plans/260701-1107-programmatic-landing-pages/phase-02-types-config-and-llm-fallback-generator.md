@@ -1,6 +1,6 @@
 ---
 title: "Phase 02 — Types, Config & LLM Fallback Generator"
-status: pending
+status: completed
 priority: P1
 effort: 4h
 blockedBy: [01]

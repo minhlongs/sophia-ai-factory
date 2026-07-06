@@ -1,6 +1,6 @@
 ---
 parent: ./plan.md
-status: pending
+status: completed
 priority: P1
 effort: 20m
 ---

@@ -1,7 +1,7 @@
 ---
 title: "Phase 01 — Scaffold & i18n"
 description: "Add i18n keys for video credit bar and prepare shared helpers"
-status: pending
+status: completed
 priority: P1
 effort: 1h
 phase: 1

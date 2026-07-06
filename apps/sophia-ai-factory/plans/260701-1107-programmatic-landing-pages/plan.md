@@ -1,7 +1,7 @@
 ---
 title: "Programmatic SEO Landing Pages — AI Video for [Niche]"
 description: "Auto-generated bilingual landing pages capturing long-tail SEO traffic for non-technical CEOs, with D1-backed admin CRUD and LLM fallback generation."
-status: pending
+status: completed
 priority: P2
 effort: 16h
 branch: main

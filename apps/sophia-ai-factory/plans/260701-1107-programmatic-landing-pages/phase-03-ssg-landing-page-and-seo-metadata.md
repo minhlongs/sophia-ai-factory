@@ -1,6 +1,6 @@
 ---
 title: "Phase 03 — SSG Landing Page Route & SEO Metadata"
-status: pending
+status: completed
 priority: P1
 effort: 5h
 blockedBy: [02]
