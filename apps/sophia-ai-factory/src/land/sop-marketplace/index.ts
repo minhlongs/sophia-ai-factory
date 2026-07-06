@@ -12,6 +12,9 @@ export { generateSopAffiliateLink, getSopAffiliateLink, buildSopReferralUrl } fr
 export { listActiveChallenges, getUserProgress, getUserAllProgress, incrementProgress, seedInitialChallenges, claimChallengeReward } from './challenges';
 export * from './beta-invites';
 export { hasCreatorAccess } from './creator-access';
+export { getCreatorProfile, registerCreator, updateCreatorProfile } from './creator-onboarding';
+export { createSopListing, updateSopListing, listMyListings, publishListing, archiveListing } from './listing-manager';
+export type { SopListingView } from './listing-manager';
 export {
   updateLoginStreak,
   updateVideoStreak,
