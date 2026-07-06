@@ -1,6 +1,6 @@
 ---
 title: "F-A: i18n + Import Hygiene"
-status: pending
+status: completed
 priority: P1
 effort: 1–2 days
 track: F-A
