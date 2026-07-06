@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Daily Briefing"
-status: in-progress
+status: completed
 effort: "2026-07-05"
 ---
 

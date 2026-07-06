@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "Revenue Insights"
-status: pending
+status: completed
 effort: ""
 ---
 
