@@ -1316,7 +1316,13 @@
         "topUpNow": "Nạp ngay để tiếp tục",
         "nearLimit": "Sắp hết hạn mức",
         "atLimit": "Đã hết hạn mức"
-      }
+      },
+      "referralSection": "Giới thiệu bạn bè",
+      "yourReferralLink": "Link giới thiệu của bạn",
+      "linkCopied": "Đã sao chép!",
+      "copyLink": "Sao chép link",
+      "totalReferrals": "Tổng giới thiệu",
+      "referralEarnings": "Thu nhập giới thiệu"
     },
     "support": {
       "title": "Hỗ Trợ",
@@ -2138,6 +2144,16 @@
         "dashboard_mini_revenue": "revenue (vi)",
         "dashboard_mini_chat": "chat (vi)"
       }
+    },
+    "developer": {
+      "api_keys": "Api keys",
+      "page_title": "Page title",
+      "page_subtitle": "Page subtitle",
+      "rate_limits": "Rate limits",
+      "current_limit": "Current limit",
+      "usage": "Usage",
+      "no_usage_data": "No usage data",
+      "view_api_docs": "View api docs"
     }
   },
   "account": {
@@ -2259,7 +2275,28 @@
           "signupUrl": "https://nowpayments.io"
         }
       }
-    }
+    },
+    "quickStartGenFailed": "Quick Start Gen Failed",
+    "stepConnectKeys": "Step Connect Keys",
+    "stepConnectKeysDesc": "Step Connect Keys Desc",
+    "stepChooseTemplate": "Step Choose Template",
+    "stepChooseTemplateDesc": "Step Choose Template Desc",
+    "stepGenerateVideo": "Step Generate Video",
+    "stepGenerateVideoDesc": "Step Generate Video Desc",
+    "stepShareResults": "Step Share Results",
+    "stepShareResultsDesc": "Step Share Results Desc",
+    "quickStart": "Quick Start",
+    "quickStartDesc": "Quick Start Desc",
+    "completeSetup": "Complete Setup",
+    "templateAutoSelected": "Template Auto Selected",
+    "generateFirstVideo": "Generate First Video",
+    "generatingVideo": "Generating Video",
+    "videoReady": "Video Ready",
+    "viewVideo": "View Video",
+    "quickStartRetry": "Quick Start Retry",
+    "connectChannels": "Connect Channels",
+    "quickStartDone": "Quick Start Done",
+    "goToDashboard": "Go To Dashboard"
   },
   "pricing": {
     "nav_dashboard": "Bảng Điều Khiển",
@@ -2589,6 +2626,67 @@
         "columnCreated": "Tạo lúc",
         "neverExpires": "Vĩnh viễn"
       }
+    },
+    "branding": {
+      "brandingSaved": "Branding Saved",
+      "brandingSettings": "Branding Settings",
+      "agencyName": "Agency Name",
+      "logoUrl": "Logo Url",
+      "primaryColor": "Primary Color",
+      "watermarkPolicy": "Watermark Policy",
+      "watermarkPosition": "Watermark Position",
+      "saveBranding": "Save Branding",
+      "selectOrgPrompt": "Select Org Prompt",
+      "noOrgs": "No Orgs",
+      "pageTitle": "Tùy chỉnh thương hiệu",
+      "pageSubtitle": "Cấu hình logo, màu sắc và watermark"
+    },
+    "orgs": {
+      "nameRequired": "Name Required",
+      "createError": "Create Error",
+      "emailRequired": "Email Required",
+      "inviteSuccess": "Invite Success",
+      "inviteError": "Invite Error",
+      "createOrg": "Tạo tổ chức",
+      "noOrgs": "Chưa có tổ chức",
+      "orgName": "Org Name",
+      "members": "Members",
+      "created": "Created",
+      "actions": "Actions",
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "inviteMember": "Invite Member",
+      "noMembers": "No Members",
+      "removeMember": "Remove Member",
+      "close": "Close",
+      "orgNamePlaceholder": "Org Name Placeholder",
+      "orgDescription": "Org Description",
+      "orgDescPlaceholder": "Org Desc Placeholder",
+      "cancel": "Cancel",
+      "creating": "Creating",
+      "create": "Create",
+      "emailLabel": "Email Label",
+      "emailPlaceholder": "Email Placeholder",
+      "roleLabel": "Role Label",
+      "roleMember": "Role Member",
+      "roleAdmin": "Role Admin",
+      "roleOwner": "Role Owner",
+      "inviting": "Inviting",
+      "title": "Title",
+      "subtitle": "Subtitle",
+      "loadError": "Load Error"
+    },
+    "sso": {
+      "pageTitle": "Page Title",
+      "pageSubtitle": "Page Subtitle",
+      "status": "Status",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "ssoSaved": "Sso Saved",
+      "providerConfig": "Provider Config",
+      "providerUrl": "Provider Url",
+      "clientId": "Client Id",
+      "saveSso": "Save Sso"
     }
   },
   "common": {
@@ -6078,6 +6176,65 @@
       "tour_step3_desc": "Xem thu nhập hợp nhất, credits đã dùng và xu hướng 7 ngày trên tất cả kênh trong một bảng thông minh.",
       "tour_step4_title": "Chat AI",
       "tour_step4_desc": "Hỏi CEO Agent bất cứ điều gì — chiến lược, nội dung, hiệu suất. Dùng ngôn ngữ tự nhiên và nhận câu trả lời cấp điều hành ngay lập tức."
+    }
+  },
+  "marketplace": {
+    "creator": {
+      "confirmPublish": "Confirm Publish",
+      "confirmArchive": "Confirm Archive",
+      "createListing": "Create Listing",
+      "editListing": "Edit Listing",
+      "noListings": "No Listings",
+      "title": "Title",
+      "status": "Status",
+      "installCount": "Install Count",
+      "earnings": "Earnings",
+      "publish": "Publish",
+      "archive": "Archive",
+      "listings": "Listings",
+      "subtitle": "Subtitle",
+      "editProfile": "Edit Profile",
+      "bio": "Bio",
+      "payoutMethod": "Payout Method",
+      "payoutAddress": "Payout Address",
+      "activeChallenges": "Active Challenges",
+      "noChallenges": "No Challenges",
+      "earningsHistory": "Earnings History",
+      "referralEarn": "Referral Earn",
+      "referralDesc": "Referral Desc",
+      "registerTitle": "Register Title",
+      "registerSubtitle": "Register Subtitle",
+      "settings": "Settings",
+      "settingsSaved": "Settings Saved",
+      "displayName": "Display Name",
+      "displayNamePlaceholder": "Display Name Placeholder",
+      "bioPlaceholder": "Bio Placeholder",
+      "payoutMethodPlaceholder": "Payout Method Placeholder",
+      "payoutAddressPlaceholder": "Payout Address Placeholder",
+      "save": "Save",
+      "profileSaved": "Đã lưu hồ sơ",
+      "inviteCode": "Mã mời",
+      "inviteCodePlaceholder": "Nhập mã mời nếu có",
+      "registerCta": "Đăng ký làm Creator",
+      "paid": "Đã thanh toán",
+      "available": "Có thể rút",
+      "pending": "Đang chờ",
+      "platform": "Nền tảng",
+      "titlePlaceholder": "Tên SOP template",
+      "price": "Giá",
+      "pricePlaceholder": "VD: 29",
+      "category": "Danh mục",
+      "categoryPlaceholder": "Chọn danh mục",
+      "sopTemplate": "Mẫu SOP",
+      "thumbnail": "Ảnh thu nhỏ",
+      "cancel": "Hủy",
+      "installSuccess": "Cài đặt thành công!",
+      "install": "Cài đặt",
+      "alreadyInstalled": "Đã cài đặt",
+      "installLimitReached": "Đạt giới hạn cài đặt",
+      "yourRating": "Đánh giá của bạn",
+      "reviewPlaceholder": "Chia sẻ trải nghiệm của bạn...",
+      "submitReview": "Gửi đánh giá"
     }
   }
 }
