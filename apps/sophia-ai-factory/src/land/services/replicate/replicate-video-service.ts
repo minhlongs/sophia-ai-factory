@@ -127,6 +127,8 @@ export class ReplicateVideoService implements IVideoService {
       return prediction.id;
     } catch (error) {
       if (error instanceof ReplicateClientError) throw error;
+ if (error instanceof ProviderInvalidKeyError) throw error;
+ if (error instanceof ProviderQuotaExceededError) throw error;
       if (error instanceof DOMException && error.name === 'AbortError') {
         throw new ProviderNetworkError(
           'replicate',
@@ -180,6 +182,8 @@ export class ReplicateVideoService implements IVideoService {
       };
     } catch (error) {
       if (error instanceof ReplicateClientError) throw error;
+ if (error instanceof ProviderInvalidKeyError) throw error;
+ if (error instanceof ProviderQuotaExceededError) throw error;
       if (error instanceof DOMException && error.name === 'AbortError') {
         throw new ProviderNetworkError(
           'replicate',

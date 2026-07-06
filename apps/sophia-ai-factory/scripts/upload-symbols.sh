@@ -66,6 +66,9 @@ if [ $uploaded -gt 0 ]; then
   echo "✅ Uploaded $uploaded source maps ($((total_bytes / 1024)) KiB) to R2 bucket '$R2_BUCKET'"
 fi
 if [ $errors -gt 0 ]; then
-  echo "⚠️  $errors upload(s) failed — check above for details"
+  echo "⚠️ $errors upload(s) failed — check above for details"
+else
+  echo "✅ All source maps uploaded successfully"
 fi
-exit $errors
+# Source map upload is best-effort; do NOT fail the build on R2 rate limits.
+exit 0

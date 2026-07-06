@@ -31,6 +31,7 @@ const saveCredentialsSchema = z.object({
  openrouter_api_key: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
  elevenlabs_api_key: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
  did_api_key: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
+  replicate_api_key: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional())
 })
 
 export async function POST(request: NextRequest) {
@@ -62,6 +63,7 @@ export async function POST(request: NextRequest) {
  openrouter_api_key,
  elevenlabs_api_key,
  did_api_key,
+ replicate_api_key,
   } = parsed.data
 
   const saves: Array<{ provider: ProviderType; key: string }> = []
@@ -72,6 +74,7 @@ export async function POST(request: NextRequest) {
 if (openrouter_api_key) saves.push({ provider: 'openrouter', key: openrouter_api_key })
 if (elevenlabs_api_key) saves.push({ provider: 'elevenlabs', key: elevenlabs_api_key })
 if (did_api_key) saves.push({ provider: 'd-id', key: did_api_key })
+  if (replicate_api_key) saves.push({ provider: 'replicate', key: replicate_api_key })
 
   if (saves.length === 0) {
     return NextResponse.json({ success: false, message: 'No credentials provided' }, { status: 400 })
