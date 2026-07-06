@@ -1,4 +1,5 @@
 # Phase 7: Memory Consolidation — Detailed Design
+**Status:** shipped
 
 ## 1. Context Manager
 

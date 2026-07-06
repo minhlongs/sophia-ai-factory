@@ -1,4 +1,5 @@
 # Phase 06: Database Migration
+**Status:** completed — migration applied (0128 + 20260522, schema differs from plan)
 
 **Layer:** seed (database primitive)
 **Dependencies:** None
