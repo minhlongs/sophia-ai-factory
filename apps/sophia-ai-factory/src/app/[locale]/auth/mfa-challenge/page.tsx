@@ -59,7 +59,7 @@ export default function MfaChallengePage() {
       <div className="w-full max-w-md space-y-8">
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-primary-500/10 flex items-center justify-center">
+          <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
             <ShieldCheck aria-hidden="true" className="w-7 h-7 text-primary-400" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -98,7 +98,7 @@ export default function MfaChallengePage() {
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   placeholder={useBackup ? "XXXX-XXXX" : "000000"}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50 tracking-widest text-center text-lg"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground tabular-nums focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 tracking-widest text-center text-lg"
                 />
               </div>
             </div>
@@ -106,7 +106,7 @@ export default function MfaChallengePage() {
             <button
               type="submit"
               disabled={loading || code.length < maxLen}
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none"
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-accent px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
             >
               {loading ? (
                 <>
@@ -128,7 +128,7 @@ export default function MfaChallengePage() {
                 setCode("");
                 setError(null);
               }}
-              className="text-sm text-primary-400 hover:text-primary-300 transition-colors focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none rounded"
+              className="text-sm text-primary-400 hover:text-primary-300 transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none rounded"
             >
               {useBackup ? t("use_totp") : t("use_backup")}
             </button>

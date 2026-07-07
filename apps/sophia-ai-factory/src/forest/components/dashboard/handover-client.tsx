@@ -186,7 +186,7 @@ export function HandoverClient(): React.JSX.Element {
                   handover.tier === 'MASTER'
                     ? 'bg-primary/10 text-primary border border-primary/20'
                     : handover.tier === 'ENTERPRISE'
-                      ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                      ? 'bg-primary/10/10 text-primary border border-primary/30/20'
                       : 'bg-muted text-muted-foreground'
                 }`}
               >

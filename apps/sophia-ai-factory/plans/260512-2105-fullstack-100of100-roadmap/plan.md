@@ -1,7 +1,7 @@
 ---
 title: "Sophia AI Factory — 74→93+ Fullstack Roadmap"
 description: "Close 20 audit gaps via 5 phases (CI→DNS→Code→Backup→Schema). CF-direct doctrine."
-status: pending
+status: completed
 priority: P1
 effort: 18h
 branch: main

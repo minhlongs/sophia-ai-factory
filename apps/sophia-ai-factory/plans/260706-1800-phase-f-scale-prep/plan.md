@@ -1,7 +1,7 @@
 ---
 title: "Phase F: Scale Preparation"
 description: "Production hardening — i18n completeness, import hygiene, security audit. 3 parallel tracks, 2–3 days."
-status: pending
+status: completed
 priority: P1
 branch: main
 tags: ["scale", "i18n", "security", "hardening", "deploy-readiness"]

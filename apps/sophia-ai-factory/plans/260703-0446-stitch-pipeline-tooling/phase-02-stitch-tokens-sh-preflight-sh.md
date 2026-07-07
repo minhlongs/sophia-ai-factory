@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "stitch-tokens.sh + preflight.sh"
-status: pending
+status: completed
 priority: P1
 dependencies: [1]
 ---

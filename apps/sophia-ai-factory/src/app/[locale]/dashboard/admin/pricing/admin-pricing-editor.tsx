@@ -97,7 +97,7 @@ export function AdminPricingEditor({ locale }: Props) {
                   placeholder={(row.effective_price_cents / 100).toFixed(2)}
                   value={editValues[row.sku] ?? ''}
                   onChange={(e) => setEditValues((p) => ({ ...p, [row.sku]: e.target.value }))}
-                  className="w-28 bg-muted-800 border border-border-700 rounded px-2 py-1 text-xs text-muted-foreground-100 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                  className="w-28 bg-muted-800 border border-border-700 rounded px-2 py-1 text-xs text-muted-foreground-100 focus:outline-none focus:ring-1 focus:ring-primary"
                 />
               </td>
               <td className="px-4 py-3">

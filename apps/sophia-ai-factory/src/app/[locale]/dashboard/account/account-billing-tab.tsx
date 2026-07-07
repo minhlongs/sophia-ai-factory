@@ -25,7 +25,7 @@ interface BillingHistoryResponse {
 const STATUS_COLOR: Record<string, string> = {
   paid: 'text-green-600 dark:text-green-400',
   pending: 'text-amber-600 dark:text-amber-400',
-  refunded: 'text-blue-600 dark:text-blue-400',
+  refunded: 'text-primary dark:text-primary',
   failed: 'text-red-600 dark:text-red-400',
 };
 

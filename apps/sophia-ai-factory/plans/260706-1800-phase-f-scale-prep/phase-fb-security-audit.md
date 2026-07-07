@@ -1,6 +1,6 @@
 ---
 title: "F-B: Security Audit"
-status: pending
+status: completed
 priority: P1
 effort: 1d
 track: F-B

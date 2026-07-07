@@ -5,15 +5,15 @@ import { cn } from '@/seed/utils/cn';
 import { CampaignProgressBarProps } from './types';
 
 const PROGRESS_STATUS_COLORS = {
-  active: 'bg-blue-100 dark:bg-blue-900/30',
-  complete: 'bg-green-100 dark:bg-green-900/30',
-  error: 'bg-red-100 dark:bg-red-900/30',
+  active: 'bg-primary/10',
+  complete: 'bg-emerald-100/10',
+  error: 'bg-destructive/10',
 };
 
 const PROGRESS_INDICATOR_COLORS = {
-  active: 'bg-blue-600 dark:bg-blue-400',
-  complete: 'bg-green-600 dark:bg-green-400',
-  error: 'bg-red-600 dark:bg-red-400',
+  active: 'bg-primary',
+  complete: 'bg-emerald-500',
+  error: 'bg-destructive',
 };
 
 function getProgressStatus(

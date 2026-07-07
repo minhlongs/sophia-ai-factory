@@ -97,7 +97,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-xl border border-border/50 bg-muted-900/40 backdrop-blur-sm p-5 md:p-6 shadow-xl relative overflow-hidden">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5 rounded-xl border border-border/50 bg-muted p-5 md:p-6 shadow-xl relative overflow-hidden">
         {/* Wizard Stepper */}
         <WizardStepper currentStep={step} steps={stepLabels} />
 
@@ -108,12 +108,12 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
                   <label htmlFor="video-prompt" className="text-sm font-semibold flex items-center gap-1.5 text-muted-foreground-200">
-                    <Sparkles className="h-4 w-4 text-primary-400" />
+                    <Sparkles className="h-4 w-4 text-primary" />
                     {t('step1_label')}
                   </label>
                   <div className="group relative">
                     <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground-300 cursor-help" />
-                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted-950 border border-border/50 p-2 text-xs text-muted-foreground-300 shadow-xl z-20">
+                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted border border-border/50 p-2 text-xs text-muted-foreground-300 shadow-xl z-20">
                       {t('step1_hint')}
                     </span>
                   </div>
@@ -125,7 +125,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
                   rows={5}
                   maxLength={500}
                   placeholder={t('step1_placeholder')}
-                  className="rounded-lg border border-border/50 bg-black/40 px-3 py-2 text-sm text-foreground placeholder-zinc-500 resize-none focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+                  className="rounded-lg border border-border/50 bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary transition"
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>{t('step1_helper')}</span>
@@ -143,7 +143,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
                   <button
                     type="button"
                     onClick={generateDraftScript}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary-400 hover:text-primary-300 transition-colors"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-foreground transition-colors"
                   >
                     <Sparkles className="h-3 w-3" />
                     {t('step2_regenerate')}
@@ -163,7 +163,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
                 <span className="text-sm font-semibold text-muted-foreground-200">{t('step3_label')}</span>
                 <div className="group relative">
                   <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground-300 cursor-help" />
-                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted-950 border border-border/50 p-2 text-[10px] text-muted-foreground-300 shadow-xl z-20">
+                  <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted border border-border/50 p-2 text-[10px] text-muted-foreground-300 shadow-xl z-20">
                     {t('step3_hint')}
                   </span>
                 </div>
@@ -183,7 +183,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
                   <span className="text-sm font-semibold text-muted-foreground-200">{t('step4_label1')}</span>
                   <div className="group relative">
                     <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground-300 cursor-help" />
-                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted-950 border border-border/50 p-2 text-xs text-muted-foreground-300 shadow-xl z-20">
+                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted border border-border/50 p-2 text-xs text-muted-foreground-300 shadow-xl z-20">
                       {t('step4_hint1')}
                     </span>
                   </div>
@@ -198,7 +198,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
                   <span className="text-sm font-semibold text-muted-foreground-200">{t('step4_label2')}</span>
                   <div className="group relative">
                     <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-muted-foreground-300 cursor-help" />
-                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted-950 border border-border/50 p-2 text-xs text-muted-foreground-300 shadow-xl z-20">
+                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex w-48 rounded bg-muted border border-border/50 p-2 text-xs text-muted-foreground-300 shadow-xl z-20">
                       {t('step4_hint2')}
                     </span>
                   </div>
@@ -213,8 +213,8 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
 
           {step === 5 && (
             <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-2 duration-200">
-              <div className="rounded-xl border border-border/50 bg-black/30 p-4 space-y-3">
-                <h4 className="font-bold text-xs text-primary-400 uppercase tracking-wider">{t('step5_review')}</h4>
+              <div className="rounded-xl border border-border/50 bg-background/30 p-4 space-y-3">
+                <h4 className="font-bold text-xs text-primary uppercase tracking-wider">{t('step5_review')}</h4>
                 <div className="space-y-2 text-xs md:text-sm">
                   <div className="flex justify-between border-b border-border/10 pb-1">
                     <span className="text-muted-foreground">{t('step5_avatar')}:</span>
@@ -230,7 +230,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
                   </div>
                   <div className="flex flex-col gap-1 pt-1">
                     <span className="text-muted-foreground">{t('step5_script')}:</span>
-                    <p className="bg-black/40 border border-border/10 p-3 rounded-lg text-xs font-mono text-muted-foreground-300 max-h-[80px] overflow-y-auto">
+                    <p className="bg-background/40 border border-border/10 p-3 rounded-lg text-xs font-mono text-muted-foreground-300 max-h-[80px] overflow-y-auto">
                       {form.script || t('step5_empty')}
                     </p>
                   </div>
@@ -246,7 +246,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
             <button
               type="button"
               onClick={() => setStep((s) => s - 1)}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border hover:border-border bg-muted/20 px-4 py-2 text-xs md:text-sm font-semibold text-foreground hover:bg-white/10 transition"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border hover:border-border bg-muted/20 px-4 py-2 text-xs md:text-sm font-semibold text-foreground hover:bg-muted transition"
             >
               <ArrowLeft className="h-4 w-4" />
               {t('btn_back')}
@@ -265,7 +265,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
                 setStep((s) => s + 1);
               }}
               disabled={step === 1 && !form.prompt.trim()}
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-primary-600 hover:bg-primary-500 px-5 py-2 text-xs md:text-sm font-semibold text-foreground transition disabled:opacity-50"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-primary hover:bg-primary/90 px-5 py-2 text-xs md:text-sm font-semibold text-foreground transition disabled:opacity-50"
             >
               {t('btn_next')}
               <ArrowRight className="h-4 w-4" />
@@ -274,7 +274,7 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
             <button
               type="submit"
               disabled={!canSubmit || isPending}
-              className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 px-6 py-2 text-xs md:text-sm font-bold text-foreground transition disabled:opacity-50"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-6 py-2 text-xs md:text-sm font-bold text-foreground transition disabled:opacity-50"
             >
               {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               {isPending ? t('video.generating') : t('video.generate')}
@@ -285,43 +285,43 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
 
       {/* Live Preview Sidebar */}
       <div className="flex flex-col gap-4">
-        <div className="overflow-hidden rounded-xl border border-border/50 bg-muted-950 shadow-xl">
-          <div className="aspect-video bg-[radial-gradient(circle_at_25%_25%,hsl(var(--primary)/0.15),transparent_40%),linear-gradient(135deg,rgba(15,15,20,0.9),rgba(20,10,35,0.9))] p-4 relative">
-            <div className="flex h-full flex-col justify-between rounded-lg border border-border/50 bg-muted-900/60 backdrop-blur-md p-4">
+        <div className="overflow-hidden rounded-xl border border-border/50 bg-background shadow-xl">
+          <div className="aspect-video bg-[radial-gradient(circle_at_25%_25%,hsl(var(--primary)/0.15),transparent_40%),linear-gradient(135deg,hsl(var(--background)),hsl(var(--muted)))] p-4 relative">
+            <div className="flex h-full flex-col justify-between rounded-lg border border-border/50 bg-muted/60 backdrop-blur-md p-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-primary-400">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">
                     {t('video.previewLabel')}
                   </p>
                   <p className="mt-1 text-xs md:text-sm font-semibold text-muted-foreground-100 line-clamp-1">
                     {form.prompt ? `"${form.prompt}"` : t('video.previewPlaceholder')}
                   </p>
                 </div>
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 text-foreground shadow-lg shadow-violet-500/30">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-foreground shadow-lg">
                   <Film className="h-4 w-4" aria-hidden="true" />
                 </div>
               </div>
 
               {/* Dynamic Mock Avatar Frame */}
-              <div className="my-2 flex flex-col items-center justify-center border border-dashed border-border/50 rounded p-2 bg-black/40 text-center">
+              <div className="my-2 flex flex-col items-center justify-center border border-dashed border-border/50 rounded p-2 bg-background/40 text-center">
                 <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-mono">{t('presenting_avatar')}</span>
-                <span className="text-xs font-semibold text-accent-400 mt-0.5">{form.avatarId}</span>
+                <span className="text-xs font-semibold text-accent mt-0.5">{form.avatarId}</span>
               </div>
 
               <div className="grid grid-cols-3 gap-2 text-center">
-                <div className={`rounded border p-1.5 transition-colors duration-200 ${step === 2 ? 'border-primary-500 bg-primary-500/10' : 'border-border/10 bg-muted/10'}`}>
+                <div className={`rounded border p-1.5 transition-colors duration-200 ${step === 2 ? 'border-primary bg-primary/10' : 'border-border/10 bg-muted/10'}`}>
                   <p className="text-xs font-medium text-muted-foreground">{t('preview_script')}</p>
                   <p className="text-[10px] font-bold text-foreground truncate">
                     {form.script ? `${form.script.length} chars` : "-"}
                   </p>
                 </div>
-                <div className={`rounded border p-1.5 transition-colors duration-200 ${step === 3 ? 'border-primary-500 bg-primary-500/10' : 'border-border/10 bg-muted/10'}`}>
+                <div className={`rounded border p-1.5 transition-colors duration-200 ${step === 3 ? 'border-primary bg-primary/10' : 'border-border/10 bg-muted/10'}`}>
                   <p className="text-xs font-medium text-muted-foreground">{t('preview_voice')}</p>
                   <p className="text-[10px] font-bold text-foreground truncate">
                     {form.voiceId}
                   </p>
                 </div>
-                <div className={`rounded border p-1.5 transition-colors duration-200 ${step === 4 ? 'border-primary-500 bg-primary-500/10' : 'border-border/10 bg-muted/10'}`}>
+                <div className={`rounded border p-1.5 transition-colors duration-200 ${step === 4 ? 'border-primary bg-primary/10' : 'border-border/10 bg-muted/10'}`}>
                   <p className="text-xs font-medium text-muted-foreground">{t('preview_template')}</p>
                   <p className="text-[10px] font-bold text-foreground truncate capitalize">
                     {form.template}
@@ -331,23 +331,23 @@ export function VideoCreatorTab({ tier }: VideoCreatorTabProps) {
             </div>
           </div>
         </div>
-
-        {missionId && (
-          <div className="flex flex-col gap-2 rounded-xl border border-border/50 bg-muted-900/40 p-4 shadow-sm animate-in fade-in duration-300">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-400" aria-hidden="true" />
-              <p className="text-sm font-medium text-foreground">{t('video.missionCreated')}</p>
-            </div>
-            <p className="text-xs text-muted-foreground font-mono bg-black/25 p-2 rounded border border-border/10">{missionId}</p>
-            <Link
-              href="/dashboard/videos"
-              className="mt-1 inline-flex w-fit cursor-pointer text-xs font-medium text-primary-400 hover:text-primary-300 underline underline-offset-2"
-            >
-              {t('video.trackProgress')}
-            </Link>
-          </div>
-        )}
       </div>
+
+      {missionId && (
+        <div className="flex flex-col gap-2 rounded-xl border border-border/50 bg-muted/40 p-4 shadow-sm animate-in fade-in duration-300">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" aria-hidden="true" />
+            <p className="text-sm font-medium text-foreground">{t('video.missionCreated')}</p>
+          </div>
+          <p className="text-xs text-muted-foreground font-mono bg-background/25 p-2 rounded border border-border/10">{missionId}</p>
+          <Link
+            href="/dashboard/videos"
+            className="mt-1 inline-flex w-fit cursor-pointer text-xs font-medium text-primary hover:text-primary-foreground underline underline-offset-2"
+          >
+            {t('video.trackProgress')}
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

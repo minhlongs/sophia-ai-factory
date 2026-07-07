@@ -1,7 +1,7 @@
 ---
 title: "Phase 04 — Credit Bar: Billing page video count"
 description: "Render CreditBar component on billing page showing 'X of Y videos this month'"
-status: pending
+status: completed
 priority: P1
 effort: 1.5h
 phase: 4

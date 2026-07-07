@@ -1,6 +1,6 @@
 ---
 title: "F-C: Deploy Readiness"
-status: pending
+status: completed
 priority: P1
 effort: 0.5d
 track: F-C

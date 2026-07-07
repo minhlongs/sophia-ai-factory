@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Group A: Marketing Sections"
-status: pending
+status: completed
 priority: P1
 dependencies: []
 ---

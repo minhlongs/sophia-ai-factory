@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Hero CTA Optimize"
-status: pending
+status: completed
 effort: "~10 min"
 priority: P2
 ---

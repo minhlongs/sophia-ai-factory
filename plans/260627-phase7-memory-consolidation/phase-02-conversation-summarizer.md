@@ -1,4 +1,5 @@
 # Phase 02: Conversation Summarizer
+**Status:** completed
 
 **Layer:** tree (domain logic)
 **Dependencies:** Phase 01 (ContextWindowManager)

@@ -22,9 +22,9 @@ Complete UI redesign of all 45+ Sophia AI Factory pages with amber theme (#D9770
 | Phase | Name | Status | Effort |
 |-------|------|--------|--------|
 | 0 | [Design System Consolidation](./phase-00-design-system-consolidation.md) | **Completed** | 2h |
-| 1 | [P0 Screen Prompts & Amber Update](./phase-01-p0-screen-prompts-amber.md) | Ready | 2h |
-| 2 | [Parallel P0 Screens: Landing + Pricing + Login](./phase-02-parallel-screens.md) | Pending | 3-4h |
-| 3 | [Setup Wizard + Dashboard Shell](./phase-03-wizard-dashboard.md) | Pending | 3-4h |
+| 1 | [P0 Screen Prompts & Amber Update](./phase-01-p0-screen-prompts-amber.md) | **Completed** | 2h |
+| 2 | [Parallel P0 Screens: Landing + Pricing + Login](./phase-02-parallel-screens.md) | **Completed** | 3-4h |
+| 3 | [Setup Wizard + Dashboard Shell](./phase-03-wizard-dashboard.md) | **In Progress** | 3-4h |
 | 4 | [Integration Test & Deploy Readiness](./phase-04-integration-test.md) | Pending | 1-2h |
 
 ## Dependencies

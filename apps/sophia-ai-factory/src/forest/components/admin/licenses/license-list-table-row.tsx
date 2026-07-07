@@ -24,8 +24,8 @@ import {
 } from 'lucide-react';
 
 const TIER_COLORS: Record<string, string> = {
-  basic: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-  premium: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+  basic: 'bg-primary/10/10 text-primary border-primary/30/30',
+  premium: 'bg-primary/10 text-primary border-primary/30',
   enterprise: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30',
   master: 'bg-red-500/10 text-red-400 border-red-500/30',
 };

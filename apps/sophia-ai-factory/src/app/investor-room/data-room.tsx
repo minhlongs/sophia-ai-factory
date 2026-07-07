@@ -110,7 +110,7 @@ export default function DataRoom() {
           placeholder="Search documents…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-lg border border-border-300 bg-white px-4 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none"
+          className="w-full rounded-lg border border-border-300 bg-white px-4 py-2 text-sm shadow-sm focus:border-primary/30 focus:outline-none"
         />
       </div>
       <div className="mb-6 flex flex-wrap gap-2 border-b border-border-200 pb-2">
@@ -120,7 +120,7 @@ export default function DataRoom() {
             onClick={() => setActiveTab(tab.key)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === tab.key
-                ? "bg-blue-600 text-white"
+                ? "bg-primary/10 text-white"
                 : "bg-muted-100 text-muted-foreground-700 hover:bg-muted-200"
             }`}
           >

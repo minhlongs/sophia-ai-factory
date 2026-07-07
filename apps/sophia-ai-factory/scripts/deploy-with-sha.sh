@@ -558,27 +558,29 @@ if ! npx wrangler secret put DEPLOYED_AT --name sophia-ai-factory --env health 2
   log_info "Health worker DEPLOYED_AT may already be set (non-fatal — continuing)"
 fi
 
-# ─── Step 5: Upload Sentry source maps (fail-fast) ───────────────────────────
+# ─── Step 5: Upload Sentry source maps (non-fatal per no-tech doctrine) ───────
 # Bakes symbolicated stack traces into prod errors. Script gracefully skips
-# when SENTRY_AUTH_TOKEN is unset. Failure here will fail the deploy — we
-# want fail-fast on Sentry upload issues to maintain observability guarantees.
+# when SENTRY_AUTH_TOKEN is unset. Upload failure is NON-FATAL — send events
+# still captured with minified stacks per sophia-no-tech-doctrine.md.
 if [ -x scripts/ci/sentry-upload-sourcemaps.sh ]; then
-  echo "==> sentry-upload-sourcemaps"
-  bash scripts/ci/sentry-upload-sourcemaps.sh
-
-# Post-deploy probe: verify release exists with artifacts (skip if SENTRY_ORG/SENTRY_PROJECT unset)
-if [ -n "${SENTRY_ORG:-}" ] && [ -n "${SENTRY_PROJECT:-}" ]; then
-RELEASE="${SENTRY_RELEASE:-$COMMIT_SHORT}"
-if npx @sentry/cli releases info "$RELEASE" --org "$SENTRY_ORG" --project "$SENTRY_PROJECT" >/dev/null 2>>"$DEPLOY_LOG"; then
-echo "✅ Sentry release $RELEASE verified"
-else
-echo "❌ Sentry release $RELEASE not found or missing artifacts"
-exit 2
-fi
-else
-echo "⚠️ SENTRY_ORG/SENTRY_PROJECT not set — skipping Sentry release verification (sourcemaps optional per no-tech doctrine)"
-fi
-
+  SECRETS_OK=1
+  if [ -z "${SENTRY_AUTH_TOKEN:-}" ] || [ -z "${SENTRY_ORG:-}" ] || [ -z "${SENTRY_PROJECT:-}" ]; then
+    echo "⚠️ Sentry sourcemap upload skipped: SENTRY_AUTH_TOKEN/SENTRY_ORG/SENTRY_PROJECT not set (sourcemaps optional)"
+    SECRETS_OK=0
+  fi
+  if [ "$SECRETS_OK" = "1" ]; then
+    echo "==> sentry-upload-sourcemaps (non-fatal per no-tech doctrine)"
+    bash scripts/ci/sentry-upload-sourcemaps.sh || echo "⚠️ Sentry sourcemap upload failed (non-fatal — minified stacks still captured)"
+  fi
+  # Release verification (non-blocking — existence check only)
+  if [ -n "${SENTRY_ORG:-}" ] && [ -n "${SENTRY_PROJECT:-}" ]; then
+    RELEASE="${SENTRY_RELEASE:-$COMMIT_SHORT}"
+    if npx @sentry/cli releases info "$RELEASE" --org "$SENTRY_ORG" --project "$SENTRY_PROJECT" >/dev/null 2>>"$DEPLOY_LOG"; then
+      echo "✅ Sentry release $RELEASE verified"
+    else
+      echo "⚠️ Sentry release $RELEASE not found or missing artifacts (non-fatal — sourcemaps optional per no-tech doctrine)"
+    fi
+  fi
 fi
 # ─── Step 5.2: Mandatory live deploy verification ──────────────────────────
 # HTTP 200 alone can be a stale worker. /api/version must expose the exact

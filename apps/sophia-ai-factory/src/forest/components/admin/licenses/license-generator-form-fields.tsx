@@ -30,14 +30,14 @@ export const TIERS: TierInfo[] = [
     value: 'basic',
     label: 'Basic',
     price: '$199/mo',
-    color: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+    color: 'bg-primary/10/10 text-primary border-primary/30/30',
     features: ['1 channel', '5 templates', 'Basic support'],
   },
   {
     value: 'premium',
     label: 'Premium',
     price: '$399/mo',
-    color: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+    color: 'bg-primary/50/10 text-primary border-primary/50/30',
     features: ['3 channels', 'Unlimited templates', 'Priority support'],
   },
   {

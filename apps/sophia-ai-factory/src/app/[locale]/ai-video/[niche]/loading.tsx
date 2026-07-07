@@ -7,7 +7,7 @@ export default function NicheLoading() {
   return (
     <main className="min-h-screen animate-pulse">
       {/* Hero skeleton */}
-      <section className="py-28 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-950">
+      <section className="py-28 bg-gradient-to-b from-primary to-white dark:from-gray-900 dark:to-gray-950">
         <div className="container mx-auto px-4 text-center space-y-6">
           <div className="h-14 bg-gray-200 dark:bg-gray-800 rounded-lg max-w-2xl mx-auto" />
           <div className="h-6 bg-gray-200 dark:bg-gray-800 rounded max-w-xl mx-auto" />

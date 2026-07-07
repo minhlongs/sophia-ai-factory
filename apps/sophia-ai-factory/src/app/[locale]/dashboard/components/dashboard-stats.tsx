@@ -39,8 +39,8 @@ export function DashboardStats({
     )}>
       {/* Total Campaigns */}
       <StatCard
-        icon={<TrendingUp className="w-6 h-6 text-blue-600 dark:text-blue-400" aria-hidden="true" />}
-        iconBg="bg-blue-50 dark:bg-blue-900/20"
+        icon={<TrendingUp className="w-6 h-6 text-primary dark:text-primary" aria-hidden="true" />}
+        iconBg="bg-primary/10 dark:bg-primary/10/20"
         label={t('total_campaigns')}
         value={totalCampaigns}
         accent="blue"
@@ -48,11 +48,11 @@ export function DashboardStats({
 
       {/* Active Campaigns */}
       <StatCard
-        icon={<Activity className="w-6 h-6 text-purple-600 dark:text-purple-400" aria-hidden="true" />}
-        iconBg="bg-purple-50 dark:bg-purple-900/20"
+        icon={<Activity className="w-6 h-6 text-primary dark:text-primary" aria-hidden="true" />}
+        iconBg="bg-primary/10 dark:bg-primary/10/20"
         label={t('active_campaigns')}
         value={activeCampaigns}
-        accent="purple"
+        accent="blue"
       />
 
       {/* Completed Campaigns */}

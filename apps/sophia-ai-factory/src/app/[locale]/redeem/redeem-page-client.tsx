@@ -94,10 +94,10 @@ export function RedeemPageClient({ locale: _locale, initialCode }: Props) {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-12">
-      <div className="absolute inset-0 bg-gradient-to-br from-violet-900/20 via-blue-900/10 to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-blue-900/10 to-transparent pointer-events-none" />
       <div className="relative max-w-md w-full">
         <div className="bg-card/80 backdrop-blur border border-border rounded-2xl shadow-xl p-8">
-          <div className="flex items-center justify-center w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary-600/20 border border-primary-500/30">
+          <div className="flex items-center justify-center w-14 h-14 mx-auto mb-4 rounded-2xl bg-primary/20 border border-primary-500/30">
             <Gift size={26} className="text-primary-300" />
           </div>
           <h1 className="text-2xl font-bold text-white text-center mb-2">{t('title')}</h1>
@@ -112,7 +112,7 @@ export function RedeemPageClient({ locale: _locale, initialCode }: Props) {
                 placeholder="FREE100"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground font-mono uppercase tracking-wider focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground font-mono uppercase tracking-wider focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary"
                 maxLength={30}
               />
             </Field>
@@ -125,7 +125,7 @@ export function RedeemPageClient({ locale: _locale, initialCode }: Props) {
                 placeholder="ban@congty.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary"
                 maxLength={200}
               />
             </Field>
@@ -137,7 +137,7 @@ export function RedeemPageClient({ locale: _locale, initialCode }: Props) {
                 placeholder={t('name_placeholder')}
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-violet-500"
+                className="w-full px-4 py-3 rounded-lg bg-background border border-border text-white placeholder:text-muted-foreground focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary"
                 maxLength={100}
               />
             </Field>
@@ -152,7 +152,7 @@ export function RedeemPageClient({ locale: _locale, initialCode }: Props) {
             <button
               type="submit"
               disabled={submitting || !code || !email}
-              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               {submitting ? (
                 <Loader2 size={18} className="motion-safe:animate-spin" />
@@ -208,7 +208,7 @@ function SuccessView({
           {magicLink ? (
             <a
               href={magicLink}
-              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold text-base shadow-lg shadow-violet-900/30 transition-all focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none mb-4"
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary text-white font-semibold text-base shadow-lg shadow-primary/30 transition-all focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none mb-4"
             >
               {t('get_started')}
               <ArrowRight size={18} />

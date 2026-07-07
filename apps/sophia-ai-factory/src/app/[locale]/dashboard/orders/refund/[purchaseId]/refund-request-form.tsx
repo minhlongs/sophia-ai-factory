@@ -74,7 +74,7 @@ export function RefundRequestForm({ purchaseId, locale }: Props) {
           onChange={(e) => setReason(e.target.value)}
           rows={4}
           placeholder={isVi ? 'Mô tả lý do bạn muốn hoàn tiền...' : 'Describe why you need a refund...'}
-          className="w-full bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-violet-500 resize-none"
+          className="w-full bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-primary resize-none"
         />
       </div>
 
@@ -90,7 +90,7 @@ export function RefundRequestForm({ purchaseId, locale }: Props) {
           value={wallet}
           onChange={(e) => setWallet(e.target.value)}
           placeholder={isVi ? 'TRC20 địa chỉ ví của bạn...' : 'Your TRC20 wallet address...'}
-          className="w-full bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-violet-500 font-mono"
+          className="w-full bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-primary font-mono"
         />
       </div>
 

@@ -24,7 +24,7 @@ interface Props {
 
 const ROLE_CONFIG: Record<OrgRole, { icon: React.ComponentType<{ className?: string }>; color: string }> = {
   owner: { icon: ShieldAlert, color: 'text-amber-500' },
-  admin: { icon: ShieldCheck, color: 'text-blue-500' },
+  admin: { icon: ShieldCheck, color: 'text-primary' },
   member: { icon: Shield, color: 'text-emerald-500' },
   viewer: { icon: Shield, color: 'text-gray-500' },
 };
@@ -82,9 +82,9 @@ export function TeamManagementClient({ currentUserId, currentUserRole, members: 
   }
 
   const inputCls =
-    'w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500';
+    'w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
   const selectCls =
-    'bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-violet-500';
+    'bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary';
 
   function roleLabel(role: OrgRole): string {
     switch (role) {
@@ -150,7 +150,7 @@ export function TeamManagementClient({ currentUserId, currentUserRole, members: 
             </select>
             <button
               type="submit"
-              className="bg-violet-600 hover:bg-violet-500 text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap"
+              className="bg-primary hover:bg-primary text-white rounded-lg px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap"
             >
               {t('inviteButton')}
             </button>
@@ -193,7 +193,7 @@ export function TeamManagementClient({ currentUserId, currentUserRole, members: 
                           {member.name || member.email}
                         </span>
                         {isSelf && (
-                          <span className="text-[10px] bg-violet-500/10 text-violet-500 px-1.5 py-0.5 rounded-full font-medium">
+                          <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">
                             {t('you')}
                           </span>
                         )}

@@ -68,9 +68,9 @@ const STATE_COLORS: Record<StepState, { bg: string; text: string; border: string
     border: 'border-border',
   },
   active: {
-    bg: 'bg-blue-50 dark:bg-blue-950/30',
-    text: 'text-blue-700 dark:text-blue-300',
-    border: 'border-blue-300 dark:border-blue-700',
+    bg: 'bg-primary/10 dark:bg-primary/10/30',
+    text: 'text-primary dark:text-primary',
+    border: 'border-primary/30 dark:border-primary/30',
   },
   complete: {
     bg: 'bg-green-50 dark:bg-green-950/30',
@@ -174,7 +174,7 @@ export function StepIndicator({
                     <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400" />
                   )}
                   {stepState === 'active' && (
-                    <Loader2 className="w-5 h-5 text-blue-600 dark:text-blue-400 motion-safe:animate-spin" />
+                    <Loader2 className="w-5 h-5 text-primary dark:text-primary motion-safe:animate-spin" />
                   )}
                   {stepState === 'error' && (
                     <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
@@ -199,7 +199,7 @@ export function StepIndicator({
                   <Badge
                     variant="outline"
                     className={cn(
-                      'text-xs border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300',
+                      'text-xs border-primary/30 dark:border-primary/30 text-primary dark:text-primary',
                     )}
                   >
                     {t('badge.active', { fallback: 'Running' })}

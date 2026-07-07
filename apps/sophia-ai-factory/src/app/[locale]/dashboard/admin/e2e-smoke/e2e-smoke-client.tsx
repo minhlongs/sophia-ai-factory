@@ -143,7 +143,7 @@ export function E2ESmokeClient({ locale }: Props) {
   const statusColor = {
     idle: 'text-muted-foreground-400',
     dispatching: 'text-yellow-400',
-    polling: 'text-blue-400',
+    polling: 'text-primary',
     completed: 'text-emerald-400',
     failed: 'text-red-400',
   }[phase]

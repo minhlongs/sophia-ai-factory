@@ -61,7 +61,7 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center justify-center w-6 h-6 rounded-full text-muted-foreground hover:text-primary-300 hover:bg-primary-500/10 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500"
+        className="inline-flex items-center justify-center w-6 h-6 rounded-full text-muted-foreground hover:text-primary-300 hover:bg-primary-500/10 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
         aria-label={t("aria_trigger", { label: pageLabel ?? t("aria_trigger_default") })}
         aria-haspopup="dialog"
       >
@@ -83,7 +83,7 @@ export function HelpTooltip({ locale, content, pageLabel }: HelpTooltipProps) {
             <button
               type="button"
               onClick={() => { setOpen(false); triggerRef.current?.focus(); }}
-              className="absolute top-4 right-4 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="absolute top-4 right-4 p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
               aria-label={t("close")}
             >
               <X className="w-4 h-4" />

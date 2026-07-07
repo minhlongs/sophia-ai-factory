@@ -14,7 +14,7 @@ export function TemplateSelector({ templates, selectedTemplateId, onSelect }: Te
   if (templates.length === 0) {
     return (
       <div className="py-12 text-center text-sm text-muted-foreground">
-        Không có mẫu nào / No templates available
+        {t('no_templates')}
       </div>
     );
   }
@@ -35,13 +35,13 @@ export function TemplateSelector({ templates, selectedTemplateId, onSelect }: Te
             aria-pressed={selectedTemplateId === template.id}
             className={`relative p-4 border-2 rounded-lg text-left transition-all hover:shadow-md ${
               selectedTemplateId === template.id
-                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 dark:border-blue-700"
+                ? "border-primary bg-primary/10"
                 : "border-border hover:border-primary/50"
             }`}
           >
             {selectedTemplateId === template.id && (
               <div className="absolute top-2 right-2">
-                <Check className="w-5 h-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                <Check className="w-5 h-5 text-primary" aria-hidden="true" />
               </div>
             )}
 

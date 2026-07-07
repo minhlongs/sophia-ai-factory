@@ -1,4 +1,5 @@
 # Phase 01: Context Window Manager
+**Status:** completed
 
 **Layer:** seed (primitive) → tree (domain logic)
 **Dependencies:** None (foundational)

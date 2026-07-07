@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sophia AI Factory - Build Your AI Video Empire</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#cecefa",
+                        "error-container": "#871c34",
+                        "on-primary-fixed-variant": "#4c4d72",
+                        "surface-container-lowest": "#000000",
+                        "secondary-dim": "#b8b6cf",
+                        "background": "#0e0e12",
+                        "primary-fixed-dim": "#c0c0eb",
+                        "outline": "#76747f",
+                        "inverse-surface": "#fcf8fe",
+                        "on-surface-variant": "#acaab5",
+                        "tertiary-container": "#f5cdf9",
+                        "on-error-container": "#ff97a3",
+                        "tertiary": "#fedeff",
+                        "surface": "#0e0e12",
+                        "secondary-fixed-dim": "#d4d2eb",
+                        "on-tertiary-fixed": "#4c2f52",
+                        "outline-variant": "#484750",
+                        "on-tertiary": "#694a6f",
+                        "on-tertiary-fixed-variant": "#6a4b70",
+                        "on-background": "#e7e4f0",
+                        "surface-tint": "#c3c3ee",
+                        "surface-container-high": "#1f1f26",
+                        "on-surface": "#e7e4f0",
+                        "on-secondary-fixed": "#3d3e51",
+                        "inverse-on-surface": "#55545a",
+                        "on-secondary-fixed-variant": "#5a5a6f",
+                        "surface-container-highest": "#25252e",
+                        "tertiary-fixed-dim": "#e7bfea",
+                        "surface-dim": "#0e0e12",
+                        "surface-bright": "#2c2b34",
+                        "primary-dim": "#b5b5e0",
+                        "primary": "#c3c3ee",
+                        "on-primary-container": "#e2e0ff",
+                        "on-secondary": "#3e3e52",
+                        "on-error": "#490013",
+                        "inverse-primary": "#5b5c81",
+                        "tertiary-fixed": "#f5cdf9",
+                        "secondary-container": "#393a4d",
+                        "secondary-fixed": "#e2e0f9",
+                        "error-dim": "#c44b5f",
+                        "secondary": "#c6c4dd",
+                        "on-secondary-container": "#bebdd5",
+                        "surface-container-low": "#131318",
+                        "on-tertiary-container": "#604266",
+                        "tertiary-dim": "#e7bfea",
+                        "on-primary-fixed": "#303154",
+                        "error": "#f97386",
+                        "surface-variant": "#25252e",
+                        "surface-container": "#191920",
+                        "on-primary": "#3c3d61",
+                        "primary-container": "#4e4f74"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter", "sans-serif"],
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                        "label": ["IBM Plex Sans", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0e0e12;
+            color: #e7e4f0;
+            overflow-x: hidden;
+        }
+        .glass-card {
+            background: rgba(37, 37, 46, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(72, 71, 80, 0.3);
+        }
+        .hero-gradient {
+            background: radial-gradient(circle at 50% -20%, rgba(99, 102, 241, 0.15) 0%, rgba(14, 14, 18, 0) 60%);
+        }
+        .text-glow {
+            text-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .icon-fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="font-body selection:bg-primary/30">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-background/80 dark:bg-background/80 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+<div class="flex justify-between items-center max-w-7xl mx-auto px-6 py-4">
+<!-- Brand Logo -->
+<div class="flex items-center gap-2">
+<span class="text-xl font-headline font-bold text-on-background dark:text-on-background tracking-tight">
+<span class="text-[#6366F1]">Sophia</span> AI
+                </span>
+</div>
+<!-- Navigation Links -->
+<div class="hidden md:flex items-center gap-8 font-body text-label-sm">
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors" href="#">Features</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors" href="#">Pricing</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors" href="#">Blog</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary transition-colors" href="#">Affiliates</a>
+</div>
+<!-- Trailing Actions -->
+<div class="flex items-center gap-4">
+<button class="flex items-center gap-1 text-on-surface-variant hover:text-primary transition-colors text-label-sm">
+<span class="material-symbols-outlined text-sm">language</span>
+<span>EN/VI</span>
+</button>
+<button class="px-5 py-2 rounded-lg text-on-surface-variant hover:text-primary transition-all duration-200 active:scale-95 text-label-sm">Log In</button>
+<button class="px-6 py-2.5 rounded-lg bg-[#6366F1] text-white font-medium hover:bg-[#5558e6] transition-all duration-200 active:scale-95 shadow-lg shadow-indigo-500/20 text-label-sm">Get Started</button>
+</div>
+</div>
+</nav>
+<!-- Hero Section -->
+<main class="relative min-h-screen pt-24 hero-gradient flex flex-col items-center justify-center overflow-hidden">
+<!-- Background Decoration -->
+<div class="absolute top-1/4 -left-20 w-96 h-96 bg-[#6366F1]/10 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="absolute bottom-1/4 -right-20 w-96 h-96 bg-[#6366F1]/5 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="max-w-7xl mx-auto px-6 w-full flex flex-col items-center text-center space-y-8">
+<!-- Eyebrow Tagline -->
+<div class="inline-flex items-center px-4 py-1.5 rounded-full bg-[#6366F1]/10 border border-[#6366F1]/20 animate-fade-in">
+<span class="text-[#6366F1] font-medium text-sm tracking-wide">AI Video Factory for Revenue-as-a-Service</span>
+</div>
+<!-- Headline -->
+<h1 class="text-5xl md:text-[56px] font-bold leading-tight tracking-tight text-white max-w-4xl text-glow">
+                Build Your AI <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-indigo-600">Video Empire</span>
+</h1>
+<!-- Subheading -->
+<p class="text-lg md:text-[20px] text-[#A1A1AA] max-w-2xl leading-relaxed">
+                Generate faceless YouTube channels, run affiliate campaigns, and publish across TikTok/YouTube/IG — all from one dashboard.
+            </p>
+<!-- CTA Row -->
+<div class="flex flex-col sm:flex-row items-center gap-6 mt-4">
+<button class="h-12 px-10 rounded-xl bg-[#6366F1] text-white font-semibold hover:bg-[#5558e6] transition-all duration-300 hover:shadow-2xl hover:shadow-indigo-500/30 flex items-center justify-center active:scale-95">
+                    Start Free
+                </button>
+<button class="group h-12 px-8 rounded-xl border border-outline-variant/50 text-white font-medium hover:bg-surface-container-highest transition-all duration-300 flex items-center justify-center gap-2 active:scale-95">
+<span class="material-symbols-outlined text-indigo-400 group-hover:scale-110 transition-transform icon-fill">play_circle</span>
+                    Watch Demo
+                </button>
+</div>
+<!-- Trust Bar -->
+<div class="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 pt-12 border-t border-outline-variant/20 w-full max-w-3xl mt-12">
+<div class="flex items-center gap-2">
+<div class="flex -space-x-3">
+<div class="w-8 h-8 rounded-full border-2 border-background bg-zinc-800 flex items-center justify-center text-[10px] text-white overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Close-up professional portrait of a tech-savvy female content creator in a modern home office with soft blue lighting, wearing headphones, smiling warmly at the camera with a blurred digital workstation in the background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAfR0bknCkNIcP-Q_7hz6rAR72MpZ5rSptSsQArYIN9gjf7h4LZeK-b3w13kIH-09iQ-X0YDJLsUzyA1O2McDI0wAf2fawRoCadpH5XZHF7sz8e6nTkGl8oD8yUeekTuWjCJD_36G6U2vZRSyvBHEW8d1mWAAo_7TLHnpi1tweUa36a_Nke4PK9Le1ecVr7fVKFbnScLKHj9YRjNwciYPYY2MlT-ZThm_Nyxv1iISsJKAHhri1wQxbZ81k0j1xCs6BL2SQ7toUCINk"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-background bg-zinc-800 flex items-center justify-center text-[10px] text-white overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Portrait of a young male entrepreneur in a minimalist studio environment, looking confident and focused. The aesthetic is clean and modern with a focus on dark mode UI design principles and indigo accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDL8_7LlH2v_smJRWxa1eamUmFBwr6cSb4FlhdmM4FBnUJb0ygXZCWQaKpLb-L7qNMjc96XTl2_AG9_i8IJknagVZE9B2nPF_4T68HSm-Cp8xxz6pizXd1NdbGWbQon0i0cFWYx5T7pmLxotJkh6F2jLmkrhUIe7oUq4tAd4Al8m681lgMwNfjDj_lewTvvZofgwwiD00TR99y1K9QFZXZAQTy2nFvJ7jH7cMS5NEDCd0fuqI6QlVfBz0XDx4_qGwAty0vmneQHeaA"/>
+</div>
+<div class="w-8 h-8 rounded-full border-2 border-background bg-zinc-800 flex items-center justify-center text-[10px] text-white overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Headshot of a creative professional woman in a high-tech media environment, holding a digital tablet. The background features subtle light leaks and a professional cinematic depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzASEzcoy22zcI1jAiCvG7Czgaz66KtXrRo09El0zvX9gc8ik9rL8q5Rqx0EZZwI_fm_32H5cE7o57qdt-jx4j1pKdVIcIcfwGv54jb9VNrpd282lxfhKUOEje8sXO1nLNGmzo0NUSTDb_5ZRmcGIgBndrWzr265fTlwHeUXsdiraGvgP6fkl7fXPYyXFbTSDvP36DUHyrCFE4_TxqAYvUHf6eY88t5Vrn4NoUHOaMaSklugRIFLULx6xzMKwNtoaoJeupOkm4hGA"/>
+</div>
+</div>
+<span class="text-sm font-medium text-on-surface-variant">10,000+ creators</span>
+</div>
+<div class="h-4 w-px bg-outline-variant/40 hidden md:block"></div>
+<span class="text-sm font-medium text-on-surface-variant">1M+ videos generated</span>
+<div class="h-4 w-px bg-outline-variant/40 hidden md:block"></div>
+<div class="flex items-center gap-1.5">
+<div class="flex text-yellow-500">
+<span class="material-symbols-outlined text-sm icon-fill">star</span>
+<span class="material-symbols-outlined text-sm icon-fill">star</span>
+<span class="material-symbols-outlined text-sm icon-fill">star</span>
+<span class="material-symbols-outlined text-sm icon-fill">star</span>
+<span class="material-symbols-outlined text-sm icon-fill">star</span>
+</div>
+<span class="text-sm font-medium text-on-surface-variant">4.9/5 rating</span>
+</div>
+</div>
+<!-- Feature Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-16 pb-20 w-full max-w-6xl">
+<!-- Card 1 -->
+<div class="glass-card p-6 rounded-2xl border border-zinc-800/50 hover:border-indigo-500/50 transition-all duration-500 group text-left">
+<div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-5 group-hover:bg-indigo-500/20 transition-colors">
+<span class="material-symbols-outlined text-indigo-400">edit_note</span>
+</div>
+<h3 class="text-lg font-bold text-white mb-2">AI Script Writing</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">
+                        Transform a simple keyword into high-retention video scripts optimized for audience engagement and conversion.
+                    </p>
+</div>
+<!-- Card 2 -->
+<div class="glass-card p-6 rounded-2xl border border-zinc-800/50 hover:border-indigo-500/50 transition-all duration-500 group text-left">
+<div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-5 group-hover:bg-indigo-500/20 transition-colors">
+<span class="material-symbols-outlined text-indigo-400">dynamic_feed</span>
+</div>
+<h3 class="text-lg font-bold text-white mb-2">Multi-Channel Publish</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">
+                        Schedule and deploy your content across TikTok, YouTube Shorts, and Instagram Reels simultaneously with one click.
+                    </p>
+</div>
+<!-- Card 3 -->
+<div class="glass-card p-6 rounded-2xl border border-zinc-800/50 hover:border-indigo-500/50 transition-all duration-500 group text-left">
+<div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-5 group-hover:bg-indigo-500/20 transition-colors">
+<span class="material-symbols-outlined text-indigo-400">monitoring</span>
+</div>
+<h3 class="text-lg font-bold text-white mb-2">Revenue Analytics</h3>
+<p class="text-sm text-on-surface-variant leading-relaxed">
+                        Track affiliate link clicks and revenue generation directly linked to your AI-generated video campaigns.
+                    </p>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 bg-surface-container-low dark:bg-surface-container-low border-t border-outline-variant/20">
+<div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+<div class="flex flex-col items-center md:items-start gap-2">
+<span class="text-lg font-headline font-semibold text-on-surface">Sophia AI Factory</span>
+<p class="text-label-xs font-body text-on-surface-variant">© 2024 Sophia AI Factory. All rights reserved.</p>
+</div>
+<div class="flex items-center gap-8 text-label-xs font-body">
+<a class="text-on-surface-variant hover:text-on-surface transition-colors hover:underline" href="#">Privacy Policy</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors hover:underline" href="#">Terms of Service</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors hover:underline" href="#">Contact</a>
+</div>
+<div class="flex items-center gap-4">
+<a class="text-on-surface-variant hover:text-primary transition-colors opacity-80 hover:opacity-100" href="#">
+<svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24"><path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"></path></svg>
+</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors opacity-80 hover:opacity-100" href="#">
+<svg class="w-5 h-5" fill="currentColor" viewbox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.041-1.416-4.041-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path></svg>
+</a>
+</div>
+</div>
+</footer>
+<script>
+        // Simple micro-interactions
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('opacity-100');
+                    entry.target.classList.remove('translate-y-4');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.classList.add('opacity-0', 'translate-y-4', 'transition-all', 'duration-700');
+            observer.observe(card);
+        });
+    </script>
+</body></html>

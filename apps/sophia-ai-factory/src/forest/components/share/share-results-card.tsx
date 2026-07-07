@@ -45,7 +45,7 @@ export function ShareResultsCard({
   return (
     <div className="relative rounded-2xl overflow-hidden bg-card border border-border p-px">
       {/* Gradient border effect */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-500/20 via-purple-500/10 to-pink-500/20 pointer-events-none" />
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/20 via-purple-500/10 to-accent/10 pointer-events-none" />
 
       <div className="relative rounded-2xl bg-background p-6 flex flex-col gap-4">
         {/* Header */}
@@ -69,7 +69,7 @@ export function ShareResultsCard({
           </div>
           <div className="h-1.5 rounded-full bg-muted overflow-hidden">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500"
+              className="h-full rounded-full bg-gradient-to-r from-primary to-purple-500 transition-all duration-500"
               style={{ width: `${percent}%` }}
               role="progressbar"
               aria-valuenow={percent}
@@ -99,7 +99,7 @@ export function ShareResultsCard({
 
         {/* Footer */}
         <div className="flex items-center gap-1.5 pt-1 border-t border-border">
-          <div className="w-4 h-4 rounded-sm bg-gradient-to-br from-blue-500 to-purple-600 shrink-0" />
+          <div className="w-4 h-4 rounded-sm bg-gradient-to-br from-primary to-purple-600 shrink-0" />
           <span className="text-xs text-muted-foreground/50">
             Powered by <span className="text-muted-foreground font-medium">Sophia AI</span>
           </span>

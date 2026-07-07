@@ -1316,7 +1316,13 @@
         "topUpNow": "Top up now to continue",
         "nearLimit": "Near limit",
         "atLimit": "At limit"
-      }
+      },
+      "referralSection": "Referral Section",
+      "yourReferralLink": "Your Referral Link",
+      "linkCopied": "Link Copied",
+      "copyLink": "Copy Link",
+      "totalReferrals": "Total Referrals",
+      "referralEarnings": "Referral Earnings"
     },
     "support": {
       "title": "Support",
@@ -2138,6 +2144,16 @@
         "dashboard_mini_revenue": "revenue (en)",
         "dashboard_mini_chat": "chat (en)"
       }
+    },
+    "developer": {
+      "api_keys": "Api keys",
+      "page_title": "Page title",
+      "page_subtitle": "Page subtitle",
+      "rate_limits": "Rate limits",
+      "current_limit": "Current limit",
+      "usage": "Usage",
+      "no_usage_data": "No usage data",
+      "view_api_docs": "View api docs"
     }
   },
   "account": {
@@ -2259,7 +2275,28 @@
           "signupUrl": "https://nowpayments.io"
         }
       }
-    }
+    },
+    "quickStartGenFailed": "Quick Start Gen Failed",
+    "stepConnectKeys": "Step Connect Keys",
+    "stepConnectKeysDesc": "Step Connect Keys Desc",
+    "stepChooseTemplate": "Step Choose Template",
+    "stepChooseTemplateDesc": "Step Choose Template Desc",
+    "stepGenerateVideo": "Step Generate Video",
+    "stepGenerateVideoDesc": "Step Generate Video Desc",
+    "stepShareResults": "Step Share Results",
+    "stepShareResultsDesc": "Step Share Results Desc",
+    "quickStart": "Quick Start",
+    "quickStartDesc": "Quick Start Desc",
+    "completeSetup": "Complete Setup",
+    "templateAutoSelected": "Template Auto Selected",
+    "generateFirstVideo": "Generate First Video",
+    "generatingVideo": "Generating Video",
+    "videoReady": "Video Ready",
+    "viewVideo": "View Video",
+    "quickStartRetry": "Quick Start Retry",
+    "connectChannels": "Connect Channels",
+    "quickStartDone": "Quick Start Done",
+    "goToDashboard": "Go To Dashboard"
   },
   "pricing": {
     "nav_dashboard": "Dashboard",
@@ -2447,7 +2484,11 @@
   "campaign": {
     "template_selection": {
       "title": "Choose a Template",
-      "subtitle": "Start with a pre-configured template or create from scratch"
+      "subtitle": "Start with a pre-configured template or create from scratch",
+      "affiliate_offer": "Affiliate Offer",
+      "affiliate_offer_desc": "A CTA for this offer will be included in your video.",
+      "select_offer": "Select an affiliate offer...",
+      "no_templates": "No templates available"
     },
     "customization": {
       "title": "Customize Your Campaign",
@@ -2589,6 +2630,67 @@
         "columnCreated": "Created",
         "neverExpires": "Never"
       }
+    },
+    "branding": {
+      "brandingSaved": "Branding Saved",
+      "brandingSettings": "Branding Settings",
+      "agencyName": "Agency Name",
+      "logoUrl": "Logo Url",
+      "primaryColor": "Primary Color",
+      "watermarkPolicy": "Watermark Policy",
+      "watermarkPosition": "Watermark Position",
+      "saveBranding": "Save Branding",
+      "selectOrgPrompt": "Select Org Prompt",
+      "noOrgs": "No Orgs",
+      "pageTitle": "Page Title",
+      "pageSubtitle": "Page Subtitle"
+    },
+    "orgs": {
+      "nameRequired": "Name Required",
+      "createError": "Create Error",
+      "emailRequired": "Email Required",
+      "inviteSuccess": "Invite Success",
+      "inviteError": "Invite Error",
+      "createOrg": "Create Org",
+      "noOrgs": "No Orgs",
+      "orgName": "Org Name",
+      "members": "Members",
+      "created": "Created",
+      "actions": "Actions",
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "inviteMember": "Invite Member",
+      "noMembers": "No Members",
+      "removeMember": "Remove Member",
+      "close": "Close",
+      "orgNamePlaceholder": "Org Name Placeholder",
+      "orgDescription": "Org Description",
+      "orgDescPlaceholder": "Org Desc Placeholder",
+      "cancel": "Cancel",
+      "creating": "Creating",
+      "create": "Create",
+      "emailLabel": "Email Label",
+      "emailPlaceholder": "Email Placeholder",
+      "roleLabel": "Role Label",
+      "roleMember": "Role Member",
+      "roleAdmin": "Role Admin",
+      "roleOwner": "Role Owner",
+      "inviting": "Inviting",
+      "title": "Title",
+      "subtitle": "Subtitle",
+      "loadError": "Load Error"
+    },
+    "sso": {
+      "pageTitle": "Page Title",
+      "pageSubtitle": "Page Subtitle",
+      "status": "Status",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "ssoSaved": "Sso Saved",
+      "providerConfig": "Provider Config",
+      "providerUrl": "Provider Url",
+      "clientId": "Client Id",
+      "saveSso": "Save Sso"
     }
   },
   "common": {
@@ -6071,6 +6173,65 @@
       "tour_step3_desc": "See unified earnings, credits spent, and 7-day trends across all channels in a single, actionable view.",
       "tour_step4_title": "AI Chat",
       "tour_step4_desc": "Ask your CEO Agent anything — strategy, copy, performance. Use natural language and get instant, executive-level answers."
+    }
+  },
+  "marketplace": {
+    "creator": {
+      "confirmPublish": "Confirm Publish",
+      "confirmArchive": "Confirm Archive",
+      "createListing": "Create Listing",
+      "editListing": "Edit Listing",
+      "noListings": "No Listings",
+      "title": "Title",
+      "status": "Status",
+      "installCount": "Install Count",
+      "earnings": "Earnings",
+      "publish": "Publish",
+      "archive": "Archive",
+      "listings": "Listings",
+      "subtitle": "Subtitle",
+      "editProfile": "Edit Profile",
+      "bio": "Bio",
+      "payoutMethod": "Payout Method",
+      "payoutAddress": "Payout Address",
+      "activeChallenges": "Active Challenges",
+      "noChallenges": "No Challenges",
+      "earningsHistory": "Earnings History",
+      "referralEarn": "Referral Earn",
+      "referralDesc": "Referral Desc",
+      "registerTitle": "Register Title",
+      "registerSubtitle": "Register Subtitle",
+      "settings": "Settings",
+      "settingsSaved": "Settings Saved",
+      "displayName": "Display Name",
+      "displayNamePlaceholder": "Display Name Placeholder",
+      "bioPlaceholder": "Bio Placeholder",
+      "payoutMethodPlaceholder": "Payout Method Placeholder",
+      "payoutAddressPlaceholder": "Payout Address Placeholder",
+      "save": "Save",
+      "profileSaved": "Profile Saved",
+      "inviteCode": "Invite Code",
+      "inviteCodePlaceholder": "Invite Code Placeholder",
+      "registerCta": "Register Cta",
+      "paid": "Paid",
+      "available": "Available",
+      "pending": "Pending",
+      "platform": "Platform",
+      "titlePlaceholder": "Title Placeholder",
+      "price": "Price",
+      "pricePlaceholder": "Price Placeholder",
+      "category": "Category",
+      "categoryPlaceholder": "Category Placeholder",
+      "sopTemplate": "Sop Template",
+      "thumbnail": "Thumbnail",
+      "cancel": "Cancel",
+      "installSuccess": "Install Success",
+      "install": "Install",
+      "alreadyInstalled": "Already Installed",
+      "installLimitReached": "Install Limit Reached",
+      "yourRating": "Your Rating",
+      "reviewPlaceholder": "Review Placeholder",
+      "submitReview": "Submit Review"
     }
   }
 }

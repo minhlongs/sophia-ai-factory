@@ -118,7 +118,7 @@ export function StripeConnectCard(props: Props): React.JSX.Element {
         type="button"
         onClick={handleClick}
         disabled={busy}
-        className="inline-flex items-center gap-2 rounded-md border border-[var(--neon-cyan)]/40 bg-[var(--neon-cyan)]/10 px-4 py-2 text-sm font-medium text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 transition disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-md border accent/40 accent/10 px-4 py-2 text-sm font-medium text-accent hover:bg-accent/20 transition disabled:opacity-50"
       >
         {busy ? 'Redirecting…' : copy.cta}
       </button>

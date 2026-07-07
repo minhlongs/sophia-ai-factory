@@ -103,7 +103,7 @@ export function VideoScriptTemplateSelector({
           value={topic}
           onChange={(e) => onTopicChange(e.target.value)}
           placeholder={selectedTemplate ? (isVi ? `VD: ${selectedTemplate.defaults.title}...` : `e.g. ${selectedTemplate.defaults.title}...`) : (isVi ? 'Nhap chu de video cua ban...' : 'Enter your video topic...')}
-          className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+          className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary transition"
         />
         {selectedTemplate && (
           <p className="text-xs text-muted-foreground-600 mt-0.5">
@@ -121,7 +121,7 @@ export function VideoScriptTemplateSelector({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={isVi ? 'Tim kiem mau...' : 'Search templates...'}
-            className="w-full rounded-lg border border-white/10 bg-black/40 pl-9 pr-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+            className="w-full rounded-lg border border-white/10 bg-black/40 pl-9 pr-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary transition"
           />
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -156,7 +156,7 @@ export function VideoScriptTemplateSelector({
                 type="button"
                 onClick={() => handleSelect(tmpl)}
                 className={`text-left rounded-xl border p-4 transition-all group ${
-                  isSelected ? 'border-primary-500/60 bg-primary-500/10 shadow-lg shadow-violet-500/10' : 'border-white/10 bg-muted-900/30 hover:border-white/20 hover:bg-muted-900/50'
+                  isSelected ? 'border-primary/60 bg-primary/10 shadow-lg shadow-primary/20' : 'border-white/10 bg-muted-900/30 hover:border-white/20 hover:bg-muted-900/50'
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -196,7 +196,7 @@ export function VideoScriptTemplateSelector({
         type="button"
         onClick={onGenerate}
         disabled={!canGenerate}
-        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-500 text-sm font-semibold text-white hover:from-violet-500 hover:to-cyan-400 transition disabled:opacity-50"
+        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-gradient-to-r from-primary to-accent text-sm font-semibold text-white hover:from-primary hover:to-accent transition disabled:opacity-50"
       >
         {generating && <Loader2 className="h-4 w-4 animate-spin" />}
         {generating ? (isVi ? 'Dang tao kich ban...' : 'Generating script...') : (isVi ? 'Tao kich ban' : 'Generate Script')}

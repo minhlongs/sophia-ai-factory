@@ -1,6 +1,6 @@
 ---
 title: "Phase 04 — Admin CRUD Dashboard"
-status: pending
+status: completed
 priority: P1
 effort: 4h
 blockedBy: [01, 02]

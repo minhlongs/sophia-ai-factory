@@ -57,7 +57,7 @@ export function IntegrationCard({
               </span>
             )}
             {isConnected && (
-              <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-primary/10 text-primary dark:bg-primary/10/30 dark:text-primary">
                 {t('status_connected')}
               </span>
             )}

@@ -1,7 +1,7 @@
 ---
 title: "Option D - All-In Subscription Pricing"
 description: "Switch from bundle (one-time + monthly) to single monthly subscription model"
-status: pending
+status: completed
 priority: P1
 effort: 1.5h
 branch: main

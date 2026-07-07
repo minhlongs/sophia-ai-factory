@@ -89,7 +89,7 @@ export function HandoverStatsPanel({ isVi }: Props) {
     {
       label: isVi ? 'Email đã gửi' : 'Emails sent',
       value: s.email_sent,
-      icon: <MailCheck size={14} className="text-blue-400" />,
+      icon: <MailCheck size={14} className="text-primary" />,
       sub: isVi ? `Login: ${loginPct}%` : `Login: ${loginPct}%`,
     },
     {

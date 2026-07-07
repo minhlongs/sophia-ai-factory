@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Setup Wizard + Dashboard Shell"
-status: pending
+status: in_progress
 effort: "3-4h"
 dependsOn: "Phase 1 (P0 Screen Prompts & Amber Update)"
 blocks: ["Phase 4: Integration Test & Deploy Readiness"]

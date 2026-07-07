@@ -1,7 +1,7 @@
 ---
 title: "Phase 06 — Integration tests & build gate"
 description: "Write unit/integration tests for both features, verify build + all tests pass"
-status: pending
+status: completed
 priority: P1
 effort: 2.5h
 phase: 6

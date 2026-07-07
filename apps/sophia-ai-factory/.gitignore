@@ -81,3 +81,6 @@ plans/reports/*.md
 .sbom/
 .claude/worktrees/
 .claude/cache/
+
+# Stitch pipeline tooling artifacts
+.stitch-tokens.json

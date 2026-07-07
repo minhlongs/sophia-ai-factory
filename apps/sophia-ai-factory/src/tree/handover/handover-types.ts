@@ -5,7 +5,7 @@
 
 import type { Tier } from '@/seed/types';
 
-export type AgencyType = 'b2b_saas' | 'ecom' | 'content_creator' | 'service' | 'other';
+export type AgencyType = 'b2b_saas' | 'ecom' | 'content_creator' | 'service' | 'solo_ceo' | 'other';
 
 export type HandoverStatus = 'pending' | 'active' | 'at_risk' | 'churned';
 
@@ -111,6 +111,16 @@ export const AGENCY_SOP_MAP: Record<AgencyType, string[]> = {
     'weekly-newsletter',
     'client-check-in',
     'case-study-generator',
+  ],
+  solo_ceo: [
+    'weekly-newsletter',
+    'proposal-auto-pilot',
+    'lead-enrichment',
+    'mention-monitor',
+    'weekly-perf-report',
+    'onboarding-video',
+    'client-check-in',
+    'anomaly-alerts',
   ],
   other: [
     'weekly-newsletter',

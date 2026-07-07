@@ -77,7 +77,7 @@ export default function RealEstatePage() {
 
       {/* Hero */}
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-accent bg-clip-text text-transparent mb-3">
           Real Estate Virtual Tours
         </h1>
         <p className="text-sm text-muted-foreground/70 mb-3">Video Bất Động Sản Thực Tế Ảo</p>

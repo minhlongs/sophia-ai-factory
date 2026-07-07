@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "Lower Creator Gate"
-status: pending
+status: completed
 effort: "Small+ (3-5h)"
 priority: P1
 dependencies: []

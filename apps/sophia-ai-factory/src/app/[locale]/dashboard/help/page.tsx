@@ -188,7 +188,7 @@ export default async function HelpIndexPage({ params }: Props) {
               <a
                 key={q.href}
                 href={q.href}
-                className="group p-4 rounded-xl border border-border-800 bg-gradient-to-br from-violet-950/30 to-zinc-900/50 hover:border-primary-500/60 hover:from-violet-900/40 transition-colors"
+                className="group p-4 rounded-xl border border-border-800 bg-gradient-to-br from-primary/30 to-zinc-900/50 hover:border-primary-500/60 hover:from-primary/40 transition-colors"
               >
                 <div className="flex items-center gap-2 mb-2">
                   <Icon className="w-5 h-5 text-primary-300" aria-hidden="true" />

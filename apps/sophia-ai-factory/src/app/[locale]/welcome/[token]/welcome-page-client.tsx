@@ -115,16 +115,16 @@ export function WelcomePageClient({ token, locale }: Props) {
     <div className="min-h-screen bg-background">
       {/* Hero */}
       <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-900/20 via-blue-900/10 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent pointer-events-none" />
         <div className="max-w-2xl mx-auto px-6 pt-16 pb-10 text-center relative">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary-500/20 border border-primary-500/40 text-primary-300 text-xs mb-6">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/20 border border-primary-500/40 text-primary-300 text-xs mb-6">
             <Video aria-hidden="true" size={12} />
             {t('tierActivated', { tier: data.tier })}
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
             {t('greeting')}
             <br />
-            <span className="bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">{data.agencyName}</span>
+            <span className="bg-gradient-to-r from-primary to-primary bg-clip-text text-transparent">{data.agencyName}</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-md mx-auto mb-8">
             {t('summary')}
@@ -134,7 +134,7 @@ export function WelcomePageClient({ token, locale }: Props) {
           <button
             onClick={() => void handleGetStarted()}
             disabled={started}
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-semibold text-lg shadow-lg shadow-violet-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors transition-opacity focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none"
+            className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-primary to-primary hover:from-primary hover:to-primary text-white font-semibold text-lg shadow-lg shadow-primary/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors transition-opacity focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
           >
             {started ? <Loader2 aria-hidden="true" size={20} className="animate-spin" /> : <Zap aria-hidden="true" size={20} />}
             {t('getStarted')}
@@ -147,10 +147,10 @@ export function WelcomePageClient({ token, locale }: Props) {
 
       {/* Create First Video CTA — consume token and go to dashboard, only OpenRouter needed */}
       <div className="max-w-2xl mx-auto px-6 pb-4">
-        <div className="rounded-2xl border border-violet-500/30 bg-violet-900/10 p-5">
+        <div className="rounded-2xl border border-primary/30/30 bg-primary/10/10 p-5">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-violet-500/20 border border-violet-500/30 flex items-center justify-center shrink-0">
-              <PlayCircle aria-hidden="true" size={20} className="text-violet-300" />
+            <div className="w-10 h-10 rounded-full bg-primary/10/20 border border-primary/30/30 flex items-center justify-center shrink-0">
+              <PlayCircle aria-hidden="true" size={20} className="text-primary" />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-foreground mb-1">
@@ -165,7 +165,7 @@ export function WelcomePageClient({ token, locale }: Props) {
               <button
                 onClick={() => void handleCreateFirstVideo()}
                 disabled={creatingFirstVideo}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 hover:bg-primary/10 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
               >
                 {creatingFirstVideo
                   ? <Loader2 aria-hidden="true" size={16} className="animate-spin" />
@@ -179,10 +179,10 @@ export function WelcomePageClient({ token, locale }: Props) {
 
       {/* Telegram CTA */}
       <div className="max-w-2xl mx-auto px-6 pb-8">
-        <div className="rounded-2xl border border-blue-500/30 bg-blue-900/10 p-5">
+        <div className="rounded-2xl border border-primary/30/30 bg-primary/10/10 p-5">
           <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center shrink-0">
-              <MessageCircle aria-hidden="true" size={20} className="text-blue-300" />
+            <div className="w-10 h-10 rounded-full bg-primary/10/20 border border-primary/30/30 flex items-center justify-center shrink-0">
+              <MessageCircle aria-hidden="true" size={20} className="text-primary" />
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-foreground mb-1">
@@ -200,7 +200,7 @@ export function WelcomePageClient({ token, locale }: Props) {
                 <button
                   onClick={() => void handleConnectTelegram()}
                   disabled={telegramLinking}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:outline-none"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary/10 hover:bg-primary/10 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
                 >
                   {telegramLinking
                     ? <Loader2 aria-hidden="true" size={16} className="animate-spin" />
@@ -284,7 +284,7 @@ function InvalidLinkView({
           </p>
           <a
             href={`/${locale}`}
-            className="inline-block px-6 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-500 transition-colors"
+            className="inline-block px-6 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary transition-colors"
           >
             {t('invalid.backHome')}
           </a>
@@ -314,7 +314,7 @@ function InvalidLinkView({
               {t('invalid.resendPrompt')}
             </p>
             <form onSubmit={handleResend} className="space-y-3">
-              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-background border border-border focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-violet-500/40">
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-background border border-border focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary/40">
                 <Mail aria-hidden="true" size={16} className="text-muted-foreground flex-shrink-0" />
                 <input
                   type="email"
@@ -337,7 +337,7 @@ function InvalidLinkView({
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full px-4 py-2.5 rounded-lg bg-primary-600 hover:bg-primary-500 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-violet-500/50 focus-visible:outline-none"
+                className="w-full px-4 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:outline-none"
               >
                 {submitting ? <Loader2 aria-hidden="true" size={16} className="animate-spin" /> : null}
                 {t('invalid.submit')}

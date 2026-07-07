@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Group B: New Pages"
-status: pending
+status: completed
 priority: P1
 dependencies: []
 ---

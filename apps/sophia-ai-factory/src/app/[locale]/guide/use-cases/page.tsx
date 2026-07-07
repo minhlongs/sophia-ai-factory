@@ -24,8 +24,8 @@ const USE_CASES = [
     icon: TrendingUp,
     iconColor: "text-primary-400",
     iconBg: "bg-primary-500/10",
-    gradientFrom: "from-violet-500/20",
-    gradientTo: "to-violet-500/5",
+    gradientFrom: "from-primary/20",
+    gradientTo: "to-primary/5",
     title: "CEO Video Marketing",
     titleVi: "Video Marketing Cho CEO",
     description: "Create weekly YouTube content without hiring a video team",
@@ -37,8 +37,8 @@ const USE_CASES = [
     icon: ShoppingBag,
     iconColor: "text-accent-400",
     iconBg: "bg-accent-500/10",
-    gradientFrom: "from-cyan-500/20",
-    gradientTo: "to-cyan-500/5",
+    gradientFrom: "from-accent/20",
+    gradientTo: "to-accent/5",
     title: "E-commerce Product Videos",
     titleVi: "Video Sản Phẩm TMĐT",
     description: "50+ product demos per month at $0 production cost",
@@ -70,7 +70,7 @@ export default function UseCasesIndexPage() {
 
       {/* Hero */}
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">
           Use Case Library / Thư Viện Ứng Dụng Thực Tế
         </h1>
         <p className="text-muted-foreground leading-relaxed">

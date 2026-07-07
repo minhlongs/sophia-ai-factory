@@ -15,8 +15,8 @@ export function getStatusBadge(status: string, label?: string) {
   const styles: Record<string, string> = {
     draft: "bg-muted text-muted-foreground",
     queued: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
-    processing_script: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-    processing_video: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+    processing_script: "bg-primary/10 text-primary dark:bg-primary/10/30 dark:text-primary",
+    processing_video: "bg-primary/10 text-primary dark:bg-primary/10/30 dark:text-primary",
     completed: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
     failed: "bg-destructive/10 text-destructive"
   };

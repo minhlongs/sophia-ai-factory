@@ -203,7 +203,7 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
               onClick={() => setBillingPeriod("monthly")}
               className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
                 billingPeriod === "monthly"
-                  ? "bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow shadow-violet-500/30"
+                  ? "bg-gradient-to-r from-primary to-primary text-white shadow shadow-primary/30"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -238,7 +238,7 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
               onClick={() => setPaymentMethod("nowpayments")}
               className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
                 paymentMethod === "nowpayments"
-                  ? "bg-gradient-to-r from-violet-600 to-violet-500 text-white shadow shadow-violet-500/30"
+                  ? "bg-gradient-to-r from-primary to-primary text-white shadow shadow-primary/30"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -281,7 +281,7 @@ const [checkoutError, setCheckoutError] = useState<string | null>(null);
 			</div>
 		)}
         {/* ── 100% Risk-Free Refund Policy Banner ── */}
-        <div className="mt-8 mx-auto max-w-xl rounded-2xl border border-border bg-gradient-to-r from-violet-950/20 via-violet-900/10 to-cyan-950/20 p-4 text-center shadow-lg backdrop-blur-sm">
+        <div className="mt-8 mx-auto max-w-xl rounded-2xl border border-border bg-gradient-to-r from-primary/20 via-primary/10 to-accent/20 p-4 text-center shadow-lg backdrop-blur-sm">
           <p className="flex items-center justify-center gap-2 text-xs md:text-sm text-muted-foreground">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-400">
               <Check className="h-3 w-3" />

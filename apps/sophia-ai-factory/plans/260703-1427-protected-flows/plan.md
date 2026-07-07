@@ -1,7 +1,7 @@
 ---
 title: "Protected Flows Execution Plan"
 description: "Visual-only amber theme update for Setup Wizard + Checkout, E2E test infra fix, and auth E2E verification."
-status: pending
+status: completed
 priority: P1
 effort: 8h
 branch: main
@@ -19,10 +19,10 @@ created: 2026-07-03
 
 | Phase | Name | Priority | Effort | Status | Blocks |
 |-------|------|----------|--------|--------|--------|
-| 01 | Setup Wizard Visual Update | P0 Critical | 2-3h | pending | — |
-| 02 | Checkout Page Amber + i18n | P0 Critical | 1-2h | pending | — |
-| 03 | E2E Test Infrastructure Fix | P1 High | 1-2h | pending | — |
-| 04 | Auth E2E Verification | P1 High | 1h | pending | Phase 03 |
+| 01 | Setup Wizard Visual Update | P0 Critical | 2-3h | **completed** | — |
+| 02 | Checkout Page Amber + i18n | P0 Critical | 1-2h | **completed** | — |
+| 03 | E2E Test Infrastructure Fix | P1 High | 1-2h | **completed** | — |
+| 04 | Auth E2E Verification | P1 High | 1h | **completed** | Phase 03 |
 
 ## Dependency Graph
 

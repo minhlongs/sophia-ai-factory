@@ -46,6 +46,6 @@ describe('UpgradeBanner', () => {
 
     const badge = screen.getByText('Growth');
     expect(badge).toBeDefined();
-    expect(badge.className).toContain('bg-blue-100');
+    expect(badge.className).toContain('bg-primary/10');
   });
 });

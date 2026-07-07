@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 const flowSteps = [
   { icon: User, label: "Bạn nhập nội dung", color: "text-primary-400", bg: "bg-primary-500/10" },
   { icon: Brain, label: "AI viết kịch bản", color: "text-accent-400", bg: "bg-accent-500/10" },
-  { icon: Mic, label: "AI tạo giọng nói", color: "text-blue-400", bg: "bg-blue-500/10" },
+  { icon: Mic, label: "AI tạo giọng nói", color: "text-primary", bg: "bg-primary/10/10" },
   { icon: Video, label: "Video hoàn chỉnh", color: "text-emerald-400", bg: "bg-emerald-500/10" },
 ];
 
@@ -35,7 +35,7 @@ const features: GuideFeatureItem[] = [
     icon: Mic,
     title: "ElevenLabs — Giọng Nói AI",
     description: "Chuyển kịch bản thành giọng nói tự nhiên với hàng chục giọng nam/nữ tiếng Việt và Anh.",
-    iconColor: "text-blue-400",
+    iconColor: "text-primary",
   },
   {
     icon: Video,
@@ -66,7 +66,7 @@ export default function HowItWorksPage() {
       />
       {/* Hero */}
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">
           Cách Sophia Hoạt Động
         </h1>
         <p className="text-muted-foreground leading-relaxed">

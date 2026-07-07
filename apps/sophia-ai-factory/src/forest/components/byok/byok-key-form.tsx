@@ -75,8 +75,8 @@ interface TestResult {
 function StatusBadge({ status }: { status: 'not_configured' | 'connected' | 'error' | 'testing' }) {
   if (status === 'testing') {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full border bg-blue-500/10 text-blue-400 border-blue-500/20 animate-pulse">
-        <span className="w-1 h-1 rounded-full bg-blue-400 animate-ping" />
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full border bg-primary/10/10 text-primary border-primary/30/20 animate-pulse">
+        <span className="w-1 h-1 rounded-full bg-primary/10 animate-ping" />
         Testing
       </span>
     )
@@ -349,7 +349,7 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
                       type="button"
                       onClick={() => handleTest(p)}
                       disabled={isPending || testingProvider === p}
-                      className="flex-1 border-border bg-muted/10 hover:bg-muted/50 text-xs font-semibold text-blue-400 hover:text-blue-300 h-8 rounded-lg flex items-center justify-center gap-1.5 transition-all"
+                      className="flex-1 border-border bg-muted/10 hover:bg-muted/50 text-xs font-semibold text-primary hover:text-primary h-8 rounded-lg flex items-center justify-center gap-1.5 transition-all"
                     >
                       {testingProvider === p ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />

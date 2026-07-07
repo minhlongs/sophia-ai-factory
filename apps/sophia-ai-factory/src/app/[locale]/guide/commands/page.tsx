@@ -50,7 +50,7 @@ export default function CommandsGuidePage() {
       />
       {/* Hero */}
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">
           Lệnh Bot Telegram
         </h1>
         <p className="text-muted-foreground leading-relaxed">
@@ -66,7 +66,7 @@ export default function CommandsGuidePage() {
       {commandCategories.map((cat) => (
         <div key={cat.label}>
           <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
-            <span className="w-1 h-5 rounded bg-gradient-to-b from-violet-500 to-cyan-500 inline-block" aria-hidden="true" />
+            <span className="w-1 h-5 rounded bg-gradient-to-b from-primary to-accent inline-block" aria-hidden="true" />
             {cat.label}
           </h2>
           <div className="space-y-3">

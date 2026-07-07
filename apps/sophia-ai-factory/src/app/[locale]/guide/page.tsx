@@ -37,7 +37,7 @@ export default async function GuidePage({ params }: { params: Promise<{ locale: 
     <div className="max-w-3xl space-y-10">
       {/* Hero */}
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">
           {t("hero_title")}
         </h1>
         <p className="text-muted-foreground leading-relaxed">{t("hero_subtitle")}</p>

@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: "Verify Redeem Route"
-status: pending
+status: completed
 effort: "~15 min"
 priority: P2
 ---

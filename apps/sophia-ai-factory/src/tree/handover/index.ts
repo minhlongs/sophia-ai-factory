@@ -10,3 +10,4 @@ export * from './handover-magic-link';
 export * from './handover-tier-content';
 export * from './handover-types';
 export * from './install-starter-sop';
+export * from './operator-config';

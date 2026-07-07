@@ -112,7 +112,7 @@ function RequestForm({ t }: { t: TFn }) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t("email_placeholder")}
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               />
             </div>
           </div>
@@ -120,7 +120,7 @@ function RequestForm({ t }: { t: TFn }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-accent px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {loading ? (
               <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> {t("submitting")}</>
@@ -210,7 +210,7 @@ function ConfirmForm({
           <p className="text-sm text-muted-foreground">{t("confirm_success_body")}</p>
           <button
             onClick={() => router.push("/login")}
-            className="rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-6 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+            className="rounded-lg bg-gradient-to-r from-primary to-accent px-6 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
           >
             {t("sign_in_now")}
           </button>
@@ -254,7 +254,7 @@ function ConfirmForm({
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder={t("new_password_placeholder")}
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               />
             </div>
           </div>
@@ -273,7 +273,7 @@ function ConfirmForm({
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder={t("confirm_password_placeholder")}
-                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/50"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               />
             </div>
           </div>
@@ -281,7 +281,7 @@ function ConfirmForm({
           <button
             type="submit"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-accent px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {loading ? (
               <><Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> {t("setting")}</>

@@ -3,7 +3,7 @@
 **Product:** Sophia — no-code AI video & revenue automation SaaS  
 **Stage:** Zero → PMF (no paying customers yet)  
 **Verdict:** GO — existing platform, proven architecture, clear path to first dollar  
-**Date:** 2026-07-05  
+**Date:** 2026-07-05 (updated 2026-07-07)  
 
 ---
 
@@ -25,12 +25,12 @@
 
 | Item | State | Blocker? |
 |------|-------|----------|
-| Build (`npm run build`) | BROKEN — `@next/bundle-analyzer` missing | YES |
-| Tests (`npm test`) | 3220 failed / 1264 passed | YES |
-| Production deploy | Live at sophia.agencyos.network (SHA 1c18a34e) | No |
-| Protected flows | Setup Wizard, Telegram, NOWPayments — unknown state after .claude deletions | YES |
-| Install (`node_modules`) | Incomplete — needs `npm install` or `npm run dev` | YES |
-| Tests runner | `@sentry/nextjs` import broken | YES |
+| Build (`npm run build`) | ✅ GREEN — 0 TypeScript errors | No |
+| Tests (`npm test`) | ✅ GREEN — 6881 passed / 34 skipped / 10 todo | No |
+| Production deploy | Live at sophia.agencyos.network | No |
+| Protected flows | Setup Wizard + Telegram — verified in prior sprint; NOWPayments active | No |
+| Install (`node_modules`) | ✅ Complete | No |
+| Tests runner | ✅ Sentry import resolved | No |
 
 ---
 
@@ -138,19 +138,7 @@ gantt
 
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|-----------|
-| `@next/bundle-analyzer` not installable | Low | High | Remove if unnecessary; guard with env check |
-| `@sentry/nextjs` required by other routes | Medium | High | Lazy import or replace with inline logger |
-| NOWPayments sandbox doesn't match production | Medium | Medium | Test on sandnet first; have PayOS backup |
-| SSE stream tests require Sentry | Medium | Medium | Mock `@sentry/nextjs` in test setup |
-| TikTok API requires app review | Medium | Low | Defer to Phase 4; use manual export first |
-| Test suite has 3220 failures — may be Sisyphean | High | High | Triage: fix blocked-by-import failures first, accept known-failures for non-critical tests |
-
----
-
-## Unresolved Questions
-
-1. Is `@next/bundle-analyzer` actually used or was it left over from dev? (Check bundle-size.sh)
-2. Is Sentry truly required or can it be swapped for the existing `forest/telemetry/` system?
-3. Are there real paying customers already or is this truly zero?
-4. What does the `.claude/` deletion diff reveal about broken capabilities?
-5. Is the 84tea app in-scope or separate product line?
+| TikTok API requires app review | Medium | Low | Defer to Phase E; use manual export first |
+| NOWPayments tunnel reliability | Medium | Medium | Test on sandnet first; have PayOS Vietnam backup |
+| i18n completeness for new screens | Low | Medium | i18n:validate currently passes; maintain coverage |
+| Test suite stability | Medium | Low | 6881 tests green; regressions flagged by vitest |

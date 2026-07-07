@@ -154,7 +154,7 @@ export function ScriptTemplateSelector({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('search_placeholder')}
-              className="w-full rounded-lg border border-white/10 bg-black/40 pl-9 pr-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+              className="w-full rounded-lg border border-white/10 bg-black/40 pl-9 pr-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary transition"
             />
           </div>
 
@@ -193,7 +193,7 @@ export function ScriptTemplateSelector({
                   onClick={() => handleSelect(tmpl)}
                   className={`text-left rounded-xl border p-4 transition-all group ${
                     isSelected
-                      ? 'border-primary-500/60 bg-primary-500/10 shadow-lg shadow-violet-500/10'
+                      ? 'border-primary/60 bg-primary/10 shadow-lg shadow-primary/20'
                       : 'border-white/10 bg-muted-900/30 hover:border-white/20 hover:bg-muted-900/50'
                   }`}
                 >
@@ -201,7 +201,7 @@ export function ScriptTemplateSelector({
                     <div className="flex items-center gap-2">
                       <span className="text-lg">{tmpl.icon}</span>
                       <div>
-                        <p className={`text-sm font-semibold ${isSelected ? 'text-primary-200' : 'text-muted-foreground-200'}`}>
+                        <p className={`text-sm font-semibold ${isSelected ? 'text-primary' : 'text-foreground'}`}>
                           {tmpl.name}
                         </p>
                         <p className="text-[11px] text-muted-foreground-500 mt-0.5 line-clamp-2">
@@ -248,7 +248,7 @@ export function ScriptTemplateSelector({
                 ? t('topic_placeholder_template', { title: selectedTemplate.defaults.title })
                 : t('topic_placeholder_default')
             }
-            className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+            className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary transition"
           />
           <p className="text-[10px] text-muted-foreground-600 mt-1">
             {selectedTemplate
@@ -266,7 +266,7 @@ export function ScriptTemplateSelector({
             value={brandName}
             onChange={(e) => onBrandNameChange(e.target.value)}
             placeholder={t('brand_placeholder')}
-            className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+            className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary transition"
           />
         </div>
 
@@ -274,7 +274,7 @@ export function ScriptTemplateSelector({
         <button
           type="button"
           onClick={() => setShowAdvanced((v) => !v)}
-          className="inline-flex items-center gap-1 text-[11px] text-muted-foreground-500 hover:text-muted-foreground-300 transition-colors"
+          className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
         >
           <Sparkles className="h-3 w-3" />
           {t('advanced_options')}
@@ -298,7 +298,7 @@ export function ScriptTemplateSelector({
                 step={5}
                 value={targetDuration}
                 onChange={(e) => onDurationChange(parseInt(e.target.value, 10) || 30)}
-                className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+                className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:ring-2 focus:ring-primary transition"
               />
             </div>
             <div>
@@ -310,7 +310,7 @@ export function ScriptTemplateSelector({
                 value={tone}
                 onChange={(e) => onToneChange(e.target.value)}
                 placeholder={t('tone_placeholder')}
-                className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+                className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary transition"
               />
             </div>
             <div>
@@ -320,7 +320,7 @@ export function ScriptTemplateSelector({
               <select
                 value={language}
                 onChange={(e) => onLanguageChange(e.target.value as 'en' | 'vi')}
-                className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-violet-500 transition"
+                className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-primary transition"
               >
                 <option value="vi">Tieng Viet</option>
                 <option value="en">English</option>
@@ -332,9 +332,9 @@ export function ScriptTemplateSelector({
 
       {/* Error */}
       {error && (
-        <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 flex items-start gap-2">
-          <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-red-200">{error}</p>
+        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 text-destructive flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-destructive/80">{error}</p>
         </div>
       )}
 
@@ -343,7 +343,7 @@ export function ScriptTemplateSelector({
         size="lg"
         disabled={!canGenerate}
         onClick={onGenerate}
-        className="w-full bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white font-bold"
+        className="w-full bg-gradient-to-r from-accent to-primary hover:from-accent/90 hover:to-primary/90 text-foreground font-bold"
       >
         {generating ? (
           <>

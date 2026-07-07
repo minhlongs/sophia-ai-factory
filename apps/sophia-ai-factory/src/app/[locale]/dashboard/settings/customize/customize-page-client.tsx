@@ -128,7 +128,7 @@ function ChannelsPanel() {
             onClick={() => { setActiveChannel(ch); setPreview(null); }}
             className={`rounded px-2 py-1 text-xs capitalize ${
               activeChannel === ch
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-primary text-foreground'
                 : 'bg-muted-100 text-muted-foreground hover:bg-muted-200'
             }`}
           >
@@ -148,7 +148,7 @@ function ChannelsPanel() {
               onChange={e => updateField(activeChannel, field, e.target.value)}
               rows={field === 'captionTemplate' ? 3 : 2}
               placeholder="Use {productName}, {commission}, {network}, {ctaUrl}, {tenantName}…"
-              className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
         ))}
@@ -164,7 +164,7 @@ function ChannelsPanel() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="rounded-md bg-primary px-3 py-1.5 text-xs text-foreground hover:bg-primary disabled:opacity-50"
         >
           {saving ? 'Saving…' : saved ? 'Saved!' : 'Save'}
         </button>
@@ -266,7 +266,7 @@ function McpPanel() {
                 <td className="py-1.5 pr-4">{s.authType}</td>
                 <td className="py-1.5 pr-4">
                   {testResult[s.name] ? (
-                    <span className={testResult[s.name] === 'reachable' ? 'text-green-600' : 'text-red-600'}>
+                    <span className={testResult[s.name] === 'reachable' ? 'text-emerald-500' : 'text-destructive'}>
                       {testResult[s.name]}
                     </span>
                   ) : (
@@ -277,11 +277,11 @@ function McpPanel() {
                   <button
                     onClick={() => handleTest(s.name)}
                     disabled={testing === s.name}
-                    className="text-indigo-600 hover:underline disabled:opacity-50"
+                    className="text-primary hover:underline disabled:opacity-50"
                   >
                     {testing === s.name ? 'Testing…' : 'Test'}
                   </button>
-                  <button onClick={() => handleDelete(s.name)} className="text-red-500 hover:underline">
+                  <button onClick={() => handleDelete(s.name)} className="text-destructive hover:underline">
                     Delete
                   </button>
                 </td>
@@ -340,7 +340,7 @@ function McpPanel() {
         <button
           onClick={handleAdd}
           disabled={saving}
-          className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="rounded-md bg-primary px-3 py-1.5 text-xs text-foreground hover:bg-primary disabled:opacity-50"
         >
           {saving ? 'Saving…' : 'Add Server'}
         </button>
@@ -515,7 +515,7 @@ function StoragePanel() {
       </div>
 
       {error && (
-        <div className="rounded bg-red-50 p-3 text-xs text-red-600">
+        <div className="rounded bg-destructive/5 p-3 text-xs text-destructive">
           {error}
         </div>
       )}
@@ -530,7 +530,7 @@ function StoragePanel() {
             value={form.r2AccessKeyId}
             onChange={e => handleChangeKey('r2AccessKeyId', e.target.value)}
             placeholder="Enter R2 Access Key ID"
-            className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
 
@@ -543,7 +543,7 @@ function StoragePanel() {
             value={form.r2SecretAccessKey}
             onChange={e => handleChangeKey('r2SecretAccessKey', e.target.value)}
             placeholder="Enter R2 Secret Access Key"
-            className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
 
@@ -556,7 +556,7 @@ function StoragePanel() {
             value={form.r2BucketName}
             onChange={e => handleChangeField('r2BucketName', e.target.value)}
             placeholder="e.g. my-bucket"
-            className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
 
@@ -569,7 +569,7 @@ function StoragePanel() {
             value={form.r2Endpoint}
             onChange={e => handleChangeField('r2Endpoint', e.target.value)}
             placeholder="e.g. https://<account-id>.r2.cloudflarestorage.com"
-            className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
 
@@ -582,7 +582,7 @@ function StoragePanel() {
             value={form.r2PublicBaseUrl}
             onChange={e => handleChangeField('r2PublicBaseUrl', e.target.value)}
             placeholder="e.g. https://pub-12345.r2.dev or custom domain"
-            className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            className="mt-1 block w-full rounded border border-border px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
       </div>
@@ -591,7 +591,7 @@ function StoragePanel() {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="rounded-md bg-primary px-3 py-1.5 text-xs text-foreground hover:bg-primary disabled:opacity-50"
         >
           {saving ? 'Saving…' : saved ? 'Saved!' : 'Save'}
         </button>
@@ -665,7 +665,7 @@ function ExportImportPanel() {
         <p className="mt-1 text-xs text-muted-foreground">Download all your settings as a JSON file.</p>
         <button
           onClick={handleExport}
-          className="mt-3 rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700"
+          className="mt-3 rounded-md bg-primary px-4 py-2 text-sm text-foreground hover:bg-primary"
         >
           Download JSON
         </button>
@@ -680,11 +680,11 @@ function ExportImportPanel() {
           accept=".json,application/json"
           onChange={handleImport}
           disabled={importing}
-          className="mt-3 block text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-indigo-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-indigo-700"
+          className="mt-3 block text-sm text-muted-foreground file:mr-4 file:rounded-md file:border-0 file:bg-primary/5 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary"
         />
         {importing && <p className="mt-2 text-xs text-muted-foreground">Importing…</p>}
         {importResult && (
-          <p className="mt-2 text-xs text-green-600">
+          <p className="mt-2 text-xs text-emerald-500">
             Imported {importResult.imported} namespace(s).
             {importResult.errors.length > 0 && ` ${importResult.errors.length} error(s) — check console.`}
           </p>
@@ -692,7 +692,7 @@ function ExportImportPanel() {
       </div>
 
       <div className="border-t pt-6">
-        <h3 className="text-sm font-semibold text-red-600">Danger Zone</h3>
+        <h3 className="text-sm font-semibold text-destructive">Danger Zone</h3>
         <p className="mt-1 text-xs text-muted-foreground">
           Reset all settings back to system defaults. This cannot be undone.
         </p>
@@ -701,10 +701,10 @@ function ExportImportPanel() {
           disabled={resetting}
           className={`mt-3 rounded-md px-4 py-2 text-sm font-medium disabled:opacity-50 ${
             resetStep === 0
-              ? 'border border-red-300 text-red-600 hover:bg-red-50'
+              ? 'border border-destructive/30 text-destructive hover:bg-destructive/5'
               : resetStep === 1
-              ? 'bg-red-100 text-red-700 border border-red-400'
-              : 'bg-red-600 text-white'
+              ? 'bg-destructive/10 text-destructive border border-destructive'
+              : 'bg-destructive text-foreground'
           }`}
         >
           {resetting
@@ -753,7 +753,7 @@ export function CustomizePageClient() {
                 onClick={() => setActive(item.id)}
                 className={`w-full rounded-md px-3 py-2 text-left text-sm transition-colors ${
                   active === item.id
-                    ? 'bg-indigo-100 font-medium text-indigo-700'
+                    ? 'bg-primary/10 font-medium text-primary'
                     : 'text-muted-foreground hover:bg-muted-100'
                 }`}
               >

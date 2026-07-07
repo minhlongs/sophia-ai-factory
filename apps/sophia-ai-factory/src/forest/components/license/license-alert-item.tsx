@@ -39,7 +39,7 @@ function getSeverityColor(severity: string): string {
     case 'critical': return 'bg-destructive text-destructive-foreground';
     case 'high': return 'bg-orange-500 text-white';
     case 'medium': return 'bg-yellow-500 text-yellow-900';
-    default: return 'bg-blue-500 text-white';
+    default: return 'bg-primary/10 text-white';
   }
 }
 
@@ -48,7 +48,7 @@ function getSeverityBorder(severity: string): string {
     case 'critical': return 'border-destructive';
     case 'high': return 'border-orange-500';
     case 'medium': return 'border-yellow-500';
-    default: return 'border-blue-500';
+    default: return 'border-primary/30';
   }
 }
 

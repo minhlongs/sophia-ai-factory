@@ -591,7 +591,7 @@ function KpiCard({
 }): React.JSX.Element {
   const colors: Record<string, string> = {
     emerald: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
-    blue: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+    blue: 'text-primary bg-primary/10/10 border-primary/30/20',
     amber: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
     red: 'text-red-400 bg-red-500/10 border-red-500/20',
   };

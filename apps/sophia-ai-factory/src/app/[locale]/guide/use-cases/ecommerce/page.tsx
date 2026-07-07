@@ -71,7 +71,7 @@ export default function EcommercePage() {
 
       {/* Hero */}
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-accent to-emerald-400 bg-clip-text text-transparent mb-3">
           E-commerce Product Videos
         </h1>
         <p className="text-sm text-muted-foreground/70 mb-3">

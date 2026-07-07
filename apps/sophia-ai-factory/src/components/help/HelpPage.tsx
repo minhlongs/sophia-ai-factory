@@ -71,7 +71,7 @@ export default function HelpPage({ locale, data, pageTitle, pageSubtitle, type }
       {data.sections?.map((section) => (
         <section key={section.id} id={section.id} className="space-y-4 scroll-mt-6">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary-500/10 text-primary-400">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary-400">
               {section.icon && <span className="text-lg">●</span>}
             </div>
             <h2 className="text-lg font-semibold text-foreground">{section.title}</h2>
@@ -240,7 +240,7 @@ export default function HelpPage({ locale, data, pageTitle, pageSubtitle, type }
           ← {isVi ? 'Trung Tâm Trợ Giúp' : 'Help Center'}
         </Link>
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500/20 to-cyan-500/20 ring-1 ring-violet-500/30">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 ring-1 ring-primary/30">
             <HelpCircle className="w-6 h-6 text-primary-400" />
           </div>
           <div>

@@ -168,33 +168,33 @@
   --popover: 240 12% 11%;
   --popover-foreground: 255 29% 92%;
 
-  /* ── Brand (indigo) ──────────────────────────────────────────────────── */
-  --primary: 240 56% 85%;               /* #c3c3ee — indigo */
-  --primary-foreground: 238 24% 31%;    /* #3c3d61 */
+  /* ── Brand (amber) ──────────────────────────────────────────────────── */
+  --primary: 35 80% 56%; /* #d97706 — amber */
+  --primary-foreground: 0 0% 100%; /* white for contrast */
 
-  --secondary: 245 27% 82%;             /* #c6c4dd */
-  --secondary-foreground: 240 14% 28%;  /* #3e3e52 */
+  --secondary: 18 40% 48%; /* terracotta — matches light mode */
+  --secondary-foreground: 0 0% 100%;
 
-  --muted: 240 12% 8%;                  /* #131318 */
-  --muted-foreground: 251 7% 69%;       /* #acaab5 */
+  --muted: 240 12% 8%; /* close to #131318 — dark surface */
+  --muted-foreground: 251 7% 69%; /* #acaab5 — neutral grey */
 
-  --accent: 240 56% 85%;
-  --accent-foreground: 238 24% 31%;
+  --accent: 35 60% 50%;
+  --accent-foreground: 0 0% 100%;
 
   /* ── Feedback ─────────────────────────────────────────────────────────── */
   --destructive: 351 92% 71%;           /* #f97386 */
   --destructive-foreground: 344 100% 14%; /* #490013 */
 
   /* ── Borders ──────────────────────────────────────────────────────────── */
-  --border: 247 6% 30%;                 /* #484750 */
-  --input: 247 6% 30%;
-  --ring: 240 56% 85%;                  /* #c3c3ee */
+  --border: 247 6% 30%; /* neutral grey — works on dark bg */
+  --input: 247 6% 30%; /* neutral grey — matches border */
+  --ring: 35 70% 40%; /* amber focus ring */
 
   /* ── MD3 bridge ───────────────────────────────────────────────────────── */
-  --primary-container: 238 20% 38%;      /* #4e4f74 */
-  --on-primary-container: 244 100% 94%;  /* #e2e0ff */
-  --secondary-container: 237 15% 26%;    /* #393a4d */
-  --on-secondary-container: 242 22% 79%; /* #bebdd5 */
+  --primary-container: 35 50% 28%; /* dark amber for containers */
+  --on-primary-container: 35 100% 94%; /* light amber text on container */
+  --secondary-container: 18 30% 20%; /* dark terracotta container */
+  --on-secondary-container: 18 40% 75%; /* light terracotta text */
 
   /* ── Primary scale (gold, dark mode) ──────────────────────────────────── */
   --primary-50: 38 70% 8%;

@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: "SEO + Analytics"
-status: pending
+status: completed
 effort: "Small (1-2h)"
 priority: P1
 dependencies: [3]

@@ -34,7 +34,7 @@ export default async function AdminLandingPagesPage() {
         </div>
         <Link
           href="/dashboard/admin/landing-pages/new"
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          className="inline-flex items-center gap-2 bg-primary hover:bg-primary/80 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         >
           + New Page
         </Link>

@@ -107,7 +107,7 @@ export function CheckoutPanel({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm transition-opacity">
       <div
-        className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-background to-card p-6 md:p-8 shadow-2xl shadow-violet-500/10 text-foreground animate-in fade-in zoom-in-95 duration-200"
+        className="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-border bg-gradient-to-b from-background to-card p-6 md:p-8 shadow-2xl shadow-primary/10 text-foreground animate-in fade-in zoom-in-95 duration-200"
         role="dialog"
         aria-modal="true"
       >
@@ -194,7 +194,7 @@ export function CheckoutPanel({
                   href={checkoutUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 px-5 py-3 font-semibold text-white transition hover:from-violet-500 hover:to-cyan-400 shadow-lg shadow-violet-500/20 active:scale-[0.98]"
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent px-5 py-3 font-semibold text-white transition hover:from-primary hover:to-accent shadow-lg shadow-primary/20 active:scale-[0.98]"
                 >
                   {t("go_to_payment")}
                   <ExternalLink className="h-4 w-4" />
@@ -208,7 +208,7 @@ export function CheckoutPanel({
             {checkoutUrl ? (
               <>
                 <div className="relative group">
-                  <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 opacity-20 blur group-hover:opacity-30 transition duration-300"></div>
+                  <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-primary to-accent opacity-20 blur group-hover:opacity-30 transition duration-300"></div>
                   <div className="relative rounded-xl border border-border bg-muted p-3 shadow-xl">
                     <Image
                       src={qrCodeSrc}

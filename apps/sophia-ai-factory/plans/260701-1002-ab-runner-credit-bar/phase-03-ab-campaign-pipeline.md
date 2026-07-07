@@ -1,7 +1,7 @@
 ---
 title: "Phase 03 — AB: Wire into campaign pipeline + bundle publisher"
 description: "Use variant A title in video generation pipeline; complete bundle publisher AB selection"
-status: pending
+status: completed
 priority: P1
 effort: 2h
 phase: 3

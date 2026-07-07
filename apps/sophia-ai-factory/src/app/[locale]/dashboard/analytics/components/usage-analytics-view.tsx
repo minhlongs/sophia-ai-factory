@@ -61,7 +61,7 @@ function RoiEstimator() {
               max="100"
               value={videoCount}
               onChange={(e) => setVideoCount(Number(e.target.value))}
-              className="w-full h-1.5 bg-muted-800 rounded-lg appearance-none cursor-pointer accent-violet-500"
+              className="w-full h-1.5 bg-muted-800 rounded-lg appearance-none cursor-pointer accent-primary"
             />
           </div>
 

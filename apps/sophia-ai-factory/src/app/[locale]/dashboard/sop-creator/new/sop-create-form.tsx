@@ -15,7 +15,7 @@ const SOP_CATEGORIES = [
   { value: 'social', label: 'Social' },
 ] as const;
 
-const inputCls = 'w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-violet-400';
+const inputCls = 'w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary';
 const labelCls = 'block text-xs font-medium text-white/60 mb-1';
 
 export function SopCreateForm() {

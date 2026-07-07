@@ -62,7 +62,7 @@ export function HelpVideoPlayer({ video, locale, onClose }: HelpVideoPlayerProps
             ref={closeBtnRef}
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-lg p-1.5 text-muted-foreground-400 hover:text-muted-foreground-100 hover:bg-muted-800 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="shrink-0 rounded-lg p-1.5 text-muted-foreground-400 hover:text-muted-foreground-100 hover:bg-muted-800 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
             aria-label={isVi ? "Đóng" : "Close"}
           >
             <X className="w-4 h-4" />

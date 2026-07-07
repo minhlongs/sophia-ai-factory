@@ -132,7 +132,7 @@ export function useReauth() {
               autoComplete="current-password"
               placeholder="Admin password"
               disabled={state.loading}
-              className="w-full px-3 py-2 pr-10 bg-background border border-border rounded-md text-white placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
+              className="w-full px-3 py-2 pr-10 bg-background border border-border rounded-md text-white placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
             />
             <button
               type="button"

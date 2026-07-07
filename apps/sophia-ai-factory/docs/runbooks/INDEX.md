@@ -74,8 +74,9 @@ Operational runbooks for Sophia AI Factory — standard procedures for common op
 | **Replay NOWPayments IPN** | Payment webhook missed / verify reconciliation | Finance | 3 min | ❌ undocumented |
 | **Register HeyGen Webhook** | After customer provides HeyGen API key | Customer | 5 min | ❌ undocumented |
 | **Webhook Signature Verification** | Debug failed webhook delivery | DevOps | 5 min | ❌ undocumented |
+| **Customer Handover Execution** | First purchase / FREE100 promo → user creation + tier + SOPs | Operator | 5 min | ✅ `customer-handover-execution.md` |
 
-*Reference:* `docs/dev-sops.md` (NOWPayments IPN), `src/app/api/webhooks/`
+*Reference:* `docs/dev-sops.md` (NOWPayments IPN), `src/app/api/webhooks/`, `src/tree/handover/auto-handover.ts`
 
 ---
 

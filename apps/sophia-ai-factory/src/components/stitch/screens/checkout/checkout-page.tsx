@@ -137,7 +137,7 @@ export default function CheckoutPage() {
                     <div className="relative">
                       <Input placeholder="1234 5678 9012 3456" />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
-                        <div className="w-8 h-5 bg-blue-600 rounded text-white text-[8px] flex items-center justify-center font-bold">VISA</div>
+                        <div className="w-8 h-5 bg-primary/10 rounded text-white text-[8px] flex items-center justify-center font-bold">VISA</div>
                         <div className="w-8 h-5 bg-red-500 rounded text-white text-[8px] flex items-center justify-center font-bold">MC</div>
                       </div>
                     </div>

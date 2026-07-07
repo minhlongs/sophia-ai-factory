@@ -35,7 +35,7 @@ export default async function AgiHubPage() {
     },
     {
       href: "/dashboard/agi/confidence",
-      icon: <Shield className="w-6 h-6 text-blue-400" aria-hidden="true" />,
+      icon: <Shield className="w-6 h-6 text-primary" aria-hidden="true" />,
       title: t("confidence_title"),
       description: t("confidence_description"),
       comingSoon: false,

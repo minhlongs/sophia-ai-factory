@@ -88,7 +88,7 @@ export function OnboardingStatusWidget({ isVi }: Props) {
               : `${h.tier} plan — ${completed} of ${steps.length} steps complete`}
           </p>
         </div>
-        <span className="text-2xl font-bold bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">
+        <span className="text-2xl font-bold bg-gradient-to-r from-primary to-primary bg-clip-text text-transparent">
           {pct}%
         </span>
       </div>

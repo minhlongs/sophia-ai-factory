@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: "Campaign Management"
-status: pending
+status: completed
 effort: ""
 ---
 

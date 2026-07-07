@@ -44,14 +44,14 @@ export function DocumentSection({ group }: { group: DocumentGroup }) {
           <a
             key={doc.path + doc.name}
             href={doc.path}
-            className="group rounded-xl border border-border-200 bg-white p-4 shadow-sm transition hover:border-blue-300 hover:shadow-md"
+            className="group rounded-xl border border-border-200 bg-white p-4 shadow-sm transition hover:border-primary/30 hover:shadow-md"
           >
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-sm font-semibold text-muted-foreground-900">{doc.name}</h3>
               <AccessBadge access={doc.access} />
             </div>
             <p className="mb-3 text-xs text-muted-foreground-600">{doc.description}</p>
-            <span className="inline-flex items-center text-xs font-medium text-blue-600 group-hover:text-blue-800">
+            <span className="inline-flex items-center text-xs font-medium text-primary group-hover:text-primary">
               Download PDF →
             </span>
           </a>

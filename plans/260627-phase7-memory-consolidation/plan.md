@@ -1,14 +1,37 @@
 # Phase 7: Memory Consolidation — Design Plan
 
-**Status:** Design Complete — Ready for Implementation  
-**Date:** 2026-06-27  
-**Layer:** seed (primitives) + forest (orchestration) + land (integration)
+**Status:** completed — Shipped to production
+**Date:** 2026-06-27
+**Closed:** 2026-07-07
+
+## Verification Notes (2026-07-07)
+
+**Path conformance:** Implementation uses 4-layer architecture (consistent with codebase conventions):
+- `src/seed/ai/context-window.ts` — Phase 01 context window (matches seed/ prefix plan)
+- `src/tree/memory/conversation-summarizer.ts` — Phase 02 summarizer (tree layer)
+- `src/tree/memory/memory-consolidator.ts` — Phase 03 consolidation (tree layer)
+- `src/tree/memory/memory-extractor.ts` — Phase 05 extractor (tree layer)
+- `src/tree/memory/memory-repository.ts` — Phase 05 data access (tree layer)
+- `src/tree/memory/memory-pruner.ts` — Phase 07 pruner (tree layer)
+- `src/forest/memory/context-window-service.ts` — Phase 07 orchestration service
+- `src/forest/agent-chat/context-manager.ts` — Phase 04/07 chat integration
+- `src/forest/agent-chat/memory-consolidation-service.ts` — Phase 04/07 consolidation service
+- `src/forest/memory/memory-enrichment.ts` — Phase 05 enrichment service
+
+**Migration discrepancy (noted):** Plan specified `migrations/0188_creator_memory.sql` with schema (tenant_id, value_json, types: semantic/preference/fact/decision). Actual migration: `migrations/0128_creator_memory.sql` + `src/seed/db/migrations/20260522_creator_memory.sql` with schema (user_id, content_json, types: semantic/preference/episodic/performance). Schema drift is acknowledged; both are applied and functional.
+
 
 ## Phases
 
 | File | Status | Description |
 |------|--------|-------------|
-| `phase-07-enhanced-context.md` | Design | Full design: interfaces, file paths, integration plan |
+| `phase-01-context-window-manager.md` | completed | ContextWindow in seed/ai/, ContextWindowService in forest/memory/, ContextManager in forest/agent-chat/ — all implementations shipped |
+| `phase-02-conversation-summarizer.md` | completed | ConversationSummarizer in tree/memory/ — LLM-backed + extractive fallback, shipped |
+| `phase-03-memory-consolidator.md` | completed | MemoryConsolidator (tree/memory/), MemoryPruner (tree/memory/), MemoryConsolidationService (forest/memory/), MemoryRepository (tree/memory/) — shipped |
+| `phase-04-chat-integration.md` | completed | ContextManager in forest/agent-chat/ + MemoryConsolidationService integration — shipped |
+| `phase-05-memory-enrichment.md` | completed | MemoryEnrichment (forest/memory/) + MemoryExtractor (tree/memory/) + MemoryEnrichmentService — shipped |
+| `phase-06-database-migration.md` | completed | creator_memory table — migration 0128 + 20260522 (differs from plan's 0188) — D1 applied |
+| `phase-07-enhanced-context.md` | shipped | Trimming strategies (sliding-window, summarization, importance) in ContextManager — shipped |
 
 ## Acceptance Criteria
 

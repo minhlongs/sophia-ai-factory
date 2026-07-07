@@ -34,7 +34,7 @@ function statusBadge(status: string) {
     draft: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
     published: 'bg-green-500/10 text-green-400 border-green-500/20',
     archived: 'bg-white/5 text-white/40 border-white/10',
-    pending_review: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    pending_review: 'bg-primary/10/10 text-primary border-primary/30/20',
   };
   return map[status] ?? map.draft;
 }
@@ -126,7 +126,7 @@ export default async function CreatorDetailPage({ params }: Props) {
             </div>
           </div>
           <div className="flex items-start gap-2">
-            <Clock className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" aria-hidden="true" />
+            <Clock className="w-4 h-4 text-primary mt-0.5 shrink-0" aria-hidden="true" />
             <div>
               <p className="text-xs text-white/40">{t('setupTime')}</p>
               <p className="text-sm font-medium text-white">

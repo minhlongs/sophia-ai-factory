@@ -100,7 +100,7 @@ const DEFAULT_OFFERS: AffiliateOffer[] = [
     description: 'E-commerce affiliate bundle',
     commissionLabel: '12% Comm.',
     icon: GitBranch,
-    iconBgClass: 'bg-blue-600',
+    iconBgClass: 'bg-primary/10',
     iconColorClass: 'text-white',
   },
   {
@@ -118,7 +118,7 @@ const DEFAULT_OFFERS: AffiliateOffer[] = [
     description: 'Flagship AI subscription plan',
     commissionLabel: '25% Comm.',
     icon: Rocket,
-    iconBgClass: 'bg-indigo-500/20',
+    iconBgClass: 'bg-primary/10/20',
     iconColorClass: 'text-primary',
   },
 ];
@@ -138,7 +138,7 @@ const DEFAULT_CONVERSIONS: ConversionRow[] = [
 
 const STATUS_STYLES: Record<string, string> = {
   paid: 'bg-green-500/10 text-green-400',
-  pending: 'bg-indigo-500/10 text-indigo-400',
+  pending: 'bg-primary/10/10 text-primary',
   clawback: 'bg-red-500/10 text-red-400',
 };
 
@@ -447,7 +447,7 @@ export default function AffiliateDashboardPage({
                           className={cn(
                             'px-4 py-3 font-bold whitespace-nowrap',
                             row.status === 'paid' && 'text-green-400',
-                            row.status === 'pending' && 'text-indigo-400',
+                            row.status === 'pending' && 'text-primary',
                             row.status === 'clawback' && 'text-red-400',
                           )}
                         >

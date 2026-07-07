@@ -306,7 +306,7 @@ function HeroSection({
   signupUrl: string;
 }) {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-950 py-20 lg:py-28">
+    <section className="relative overflow-hidden bg-gradient-to-b from-primary to-white dark:from-gray-900 dark:to-gray-950 py-20 lg:py-28">
       <div className="container mx-auto px-4 text-center">
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900 dark:text-white mb-6">
           {title}
@@ -316,7 +316,7 @@ function HeroSection({
         </p>
         <Link
           href={signupUrl}
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full text-lg font-semibold transition-colors shadow-lg hover:shadow-xl"
+          className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/10 text-white px-8 py-4 rounded-full text-lg font-semibold transition-colors shadow-lg hover:shadow-xl"
         >
           {ctaText}
           <ArrowRight className="h-5 w-5" />
@@ -345,9 +345,9 @@ function FeaturesSection({
           {features.map((feature, i) => (
             <div
               key={i}
-              className="p-6 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+              className="p-6 rounded-xl border border-gray-200 dark:border-gray-800 hover:border-primary/30 dark:hover:border-primary/30 transition-colors"
             >
-              <div className="text-blue-600 dark:text-blue-400 mb-4">
+              <div className="text-primary dark:text-primary mb-4">
                 {resolveIcon(feature.icon)}
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -384,7 +384,7 @@ function HowItWorksSection({ isVi }: { isVi: boolean }) {
         <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {steps.map((s) => (
             <div key={s.step} className="text-center">
-              <div className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
+              <div className="w-12 h-12 bg-primary/10 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
                 {s.step}
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{s.title}</h3>
@@ -426,7 +426,7 @@ function PricingTeaserSection({ isVi }: { isVi: boolean }) {
               className="p-8 rounded-xl border border-gray-200 dark:border-gray-800 text-center hover:shadow-lg transition-shadow"
             >
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{tier.name}</h3>
-              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-4">{tier.price}</p>
+              <p className="text-3xl font-bold text-primary dark:text-primary mb-4">{tier.price}</p>
               <ul className="space-y-2 mb-6">
                 {tier.features.map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -437,7 +437,7 @@ function PricingTeaserSection({ isVi }: { isVi: boolean }) {
               </ul>
               <Link
                 href="/signup"
-                className="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold transition-colors"
+                className="inline-block bg-primary/10 hover:bg-primary/10 text-white px-6 py-3 rounded-full font-semibold transition-colors"
               >
                 {isVi ? 'Bắt Đầu' : 'Get Started'}
               </Link>
@@ -470,7 +470,7 @@ function FaqSection({
             >
               <summary className="flex justify-between items-center cursor-pointer font-semibold text-gray-900 dark:text-white">
                 {item.question}
-                <span className="text-blue-600 dark:text-blue-400 text-xl ml-4 group-open:rotate-45 transition-transform">
+                <span className="text-primary dark:text-primary text-xl ml-4 group-open:rotate-45 transition-transform">
                   +
                 </span>
               </summary>
@@ -493,21 +493,21 @@ function CtaSection({
   signupUrl: string;
 }) {
   return (
-    <section className="py-20 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-800 dark:to-blue-900">
+    <section className="py-20 bg-gradient-to-r from-primary to-primary dark:from-primary dark:to-primary">
       <div className="container mx-auto px-4 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
           {isVi
             ? `Sẵn Sàng Tạo Video ${nicheLabel} Bằng AI?`
             : `Ready to Create AI ${nicheLabel} Videos?`}
         </h2>
-        <p className="text-blue-100 text-lg mb-8 max-w-xl mx-auto">
+        <p className="text-primary text-lg mb-8 max-w-xl mx-auto">
           {isVi
             ? 'Tham gia cùng hàng nghìn doanh nghiệp đang sử dụng Sophia AI Factory để phát triển với video.'
             : 'Join thousands of businesses using Sophia AI Factory to grow with video.'}
         </p>
         <Link
           href={signupUrl}
-          className="inline-flex items-center gap-2 bg-white text-blue-700 px-8 py-4 rounded-full text-lg font-semibold hover:bg-blue-50 transition-colors shadow-lg"
+          className="inline-flex items-center gap-2 bg-white text-primary px-8 py-4 rounded-full text-lg font-semibold hover:bg-primary/10 transition-colors shadow-lg"
         >
           {isVi ? 'Bắt Đầu Miễn Phí' : 'Start Free Today'}
           <ArrowRight className="h-5 w-5" />

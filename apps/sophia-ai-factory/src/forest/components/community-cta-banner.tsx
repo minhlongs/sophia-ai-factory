@@ -46,7 +46,7 @@ export function CommunityCTABanner() {
     <div
       role="banner"
       aria-label={t("joinCommunity")}
-      className="relative w-full flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-violet-600/20 via-indigo-600/15 to-violet-600/20 border-b border-white/10 text-white"
+      className="relative w-full flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-primary/20 via-primary/15 to-primary/20 border-b border-white/10 text-white"
     >
       {/* Left: label */}
       <p className="text-sm font-semibold shrink-0">{t("joinCommunity")}</p>

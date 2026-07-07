@@ -319,7 +319,7 @@ function FreeRedemptionModal({ modal, onClose, tLabel: t }: FreeRedemptionModalP
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-violet-600 py-3 text-sm font-semibold text-foreground hover:from-emerald-500 hover:to-violet-500 disabled:opacity-50 transition"
+              className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-primary py-3 text-sm font-semibold text-foreground hover:from-emerald-500 hover:to-primary disabled:opacity-50 transition"
             >
               {submitting ? t("free_submitting") : t("free_submit")}
             </button>

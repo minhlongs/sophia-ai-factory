@@ -158,8 +158,8 @@ function StatusBadge({
   const t = useTranslations('experiments');
   if (status === 'active') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900 dark:text-blue-300">
-        <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+      <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary dark:bg-primary/10 dark:text-primary">
+        <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
         {t('status.active')}
       </span>
     );

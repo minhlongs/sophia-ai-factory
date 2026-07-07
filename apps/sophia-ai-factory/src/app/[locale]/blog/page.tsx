@@ -101,7 +101,7 @@ const POSTS: BlogPost[] = [
 export default function BlogPage() {
   return (
     <div className="max-w-3xl mx-auto py-16 px-4">
-      <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+      <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">
         Blog
       </h1>
       <p className="text-muted-foreground mb-10">
