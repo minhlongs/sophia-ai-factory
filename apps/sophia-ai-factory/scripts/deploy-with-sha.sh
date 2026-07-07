@@ -365,7 +365,12 @@ if [ "${SKIP_NEXT_BUILD:-0}" = "1" ]; then
   echo "⚠️  SKIP_NEXT_BUILD=1 — reusing existing .next build artifact"
 else
   echo "==> npm run build"
-SKIP_SYMBOL_UPLOAD=1 npm run build
+# SKIP_SENTRY_BUILD=1 disables withSentryConfig wrapping, preventing Turbopack
+# from injecting the Sentry SDK into SSR chunks. The SDK adds ~2.6 MB across
+# 2 chunks and is OPTIONAL per no-tech doctrine (source-map upload requires
+# SENTRY_AUTH_TOKEN, which violates the operator-only-platform constraint).
+# Runtime error capture works without build-time wrapping.
+SKIP_SYMBOL_UPLOAD=1 SKIP_SENTRY_BUILD=1 npm run build
   # Brief pause to ensure filesystem consistency before subsequent steps
   sleep 5
 fi
@@ -416,16 +421,13 @@ wait_for_file() {
 
 # Copy instrumentation files from .next/server to .next/standalone/.next/server
 # This is needed because Next.js standalone output does not include instrumentation.js
-mkdir -p ".next/standalone/.next/server/chunks"
-if ! wait_for_file ".next/server/instrumentation.js" 60; then
-  echo "ERROR: .next/server/instrumentation.js never appeared after build (filesystem cache delay)"
-  exit 1
-fi
+if [ -f ".next/server/instrumentation.js" ]; then
 cp -f ".next/server/instrumentation.js" ".next/standalone/.next/server/"
-echo "  Copied instrumentation.js"
+echo " Copied instrumentation.js"
 if [ -f ".next/server/instrumentation.js.map" ]; then
-  cp -f ".next/server/instrumentation.js.map" ".next/standalone/.next/server/"
-  echo "  Copied instrumentation.js.map"
+ cp -f ".next/server/instrumentation.js.map" ".next/standalone/.next/server/"
+ echo " Copied instrumentation.js.map"
+fi
 fi
 # Copy instrumentation chunks if present (with wait)
 if ! wait_for_file ".next/server/chunks/instrumentation_ts_*" 5; then
@@ -440,25 +442,30 @@ else
   fi
 fi
 
+# ─── Step 2: Strip bloat BEFORE OpenNext bundles (effective) ─────────────
+# Stripping .open-next/ AFTER bundling cannot reduce handler.mjs size — the
+# bundle is already assembled. We must strip raw .next/server/chunks/ssr/
+# files BEFORE @opennextjs/cloudflare build so Turbopack produces a smaller
+# bundle that fits within CF Workers' 10 MiB hard limit.
+# Primary target: Sentry SDK (~2.6 MB across 2 chunks) — OPTIONAL per
+# no-tech doctrine (source map upload requires SENTRY_AUTH_TOKEN).
+echo "==> strip-ssr-bloat (pre-build)"
+bash scripts/strip-ssr-bloat.sh --pre-build 2>>"$DEPLOY_LOG"
+
 echo "==> opennextjs/cloudflare build"
 npx @opennextjs/cloudflare build --skipNextBuild --noMinify
 
 echo "==> inject-scheduled-handler"
 node scripts/inject-scheduled-handler.mjs
 
-# ─── Step 2.5: Strip bloat from OpenNext output (post-build) ─────────────────
-# OpenNext bundles from .next/standalone/ which already has stripped chunks.
-# However, esbuild may still include full library code in non-SSR chunks.
-# Strip heavy libs from the final .open-next/ output before deploy.
-# ─── Step 2.5: Post-build strip on OpenNext output ──────────────────────────
-# OpenNext bundles .next/standalone into .open-next/server-functions/default/.
-# Strip heavy client-only libs from the bundled handler AFTER OpenNext build
-# but BEFORE deploy. This reduces the final worker size.
-echo "==> strip-ssr-bloat (post-opennext)"
-# Try post-opennext mode first; fall back to default mode if --post-opennext flag not supported.
+# ─── Step 3.5: Secondary safety-net strip (post-build, mitigation) ───────
+# Some esbuild inlining may still pull in full library code. Strip as a
+# second defense — less effective but catches anything that slipped through.
+echo "==> strip-ssr-bloat (post-build safety net)"
+# Fall back to default mode if --post-opennext not supported.
 if ! bash scripts/strip-ssr-bloat.sh --post-opennext 2>>"$DEPLOY_LOG"; then
-  log_info "strip-ssr-bloat --post-opennext not supported, falling back to default mode"
-  bash scripts/strip-ssr-bloat.sh
+  log_info "strip-ssr-bloat --post-opennext unsupported, using default mode"
+  bash scripts/strip-ssr-bloat.sh 2>>"$DEPLOY_LOG"
 fi
 
 # ─── Step 3b: Pre-deploy E2E smoke (opt-in, Phase 03 Track C) ───────────────
