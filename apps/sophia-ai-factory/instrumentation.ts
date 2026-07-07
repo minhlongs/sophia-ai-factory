@@ -7,13 +7,23 @@
 
 import { initializeOTel } from '@/seed/telemetry/opentelemetry-setup';
 
-const isWorkersRuntime = typeof globalThis !== 'undefined'
-  && typeof (globalThis as unknown as Record<string, unknown>).process === 'undefined'
-  && typeof (globalThis as unknown as Record<string, unknown>).fetch === 'function'
-  && typeof (globalThis as unknown as Record<string, unknown>).window === 'undefined';
+/**
+ * Detect Cloudflare Workers edge runtime.
+ *
+ * Turbopack (used by Next.js in Workers builds) polyfills a minimal `process`
+ * object, so `typeof process === 'undefined'` is unreliable. The reliable
+ * discriminator is `process.versions?.node`: in Node.js it is a non-empty
+ * string (e.g. "v22.15.0"); in Workers (even with the Turbopack polyfill)
+ * the property does not exist.
+ */
+function isWorkersRuntime(): boolean {
+  const proc = (globalThis as unknown as { process?: { versions?: { node?: string } } })
+    .process;
+  return proc !== undefined && !proc.versions?.node;
+}
 
 export async function register(): Promise<void> {
-  if (isWorkersRuntime) {
+  if (isWorkersRuntime()) {
     return; // OTel uses Node.js builtins — silently no-op in Workers
   }
 

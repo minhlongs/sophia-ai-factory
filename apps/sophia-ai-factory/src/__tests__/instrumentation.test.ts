@@ -52,12 +52,11 @@ describe('instrumentation.ts — register hook', () => {
 
   it('register() skips OTel in Cloudflare Workers runtime', async () => {
     const origProcess = (globalThis as any).process;
-    const origWindow = (globalThis as any).window;
-    const origFetch = (globalThis as any).fetch;
+    const savedVersions = origProcess?.versions;
     try {
-      delete (globalThis as any).process;
-      (globalThis as any).window = undefined;
-      (globalThis as any).fetch = () => Promise.resolve(new Response());
+      // Simulate Workers: Turbopack polyfills a minimal `process` but
+      // there is no `process.versions.node` string (present only in Node.js).
+      (globalThis as any).process = { versions: { ...savedVersions, node: undefined } };
 
       vi.resetModules();
       const mod = await import(instrumentationPath);
@@ -65,8 +64,6 @@ describe('instrumentation.ts — register hook', () => {
       expect(mocks.mockInitializeOTel).not.toHaveBeenCalled();
     } finally {
       (globalThis as any).process = origProcess;
-      (globalThis as any).window = origWindow;
-      (globalThis as any).fetch = origFetch;
     }
   });
 });
