@@ -5,7 +5,17 @@
  * automatically when running in Cloudflare Workers edge runtime.
  */
 
-import { initializeOTel } from '@/seed/telemetry/opentelemetry-setup';
+// NOTE: Dynamic import prevents Node.js-only OTel modules from being
+// bundled into the Cloudflare Worker. The static ESM graph must not
+// reference @opentelemetry/* packages in Workers runtime.
+let _initializeOTel: (() => Promise<void>) | null = null;
+async function getInitializeOTel() {
+  if (!_initializeOTel) {
+    const mod = await import('@/seed/telemetry/opentelemetry-setup');
+    _initializeOTel = mod.initializeOTel;
+  }
+  return _initializeOTel;
+}
 
 /**
  * Detect Cloudflare Workers edge runtime.
@@ -28,7 +38,7 @@ export async function register(): Promise<void> {
   }
 
   try {
-    await initializeOTel();
+    await getInitializeOTel();
   } catch (err) {
     // OTEL failure is non-fatal — app must still serve traffic.
     // console.error is acceptable here: instrumentation runs before the
