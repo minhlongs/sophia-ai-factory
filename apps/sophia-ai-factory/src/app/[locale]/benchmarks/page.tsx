@@ -67,7 +67,7 @@ function StatusBadge({ status }: { status: "pass" | "warning" | "info" }) {
   const styles: Record<string, string> = {
     pass: "bg-emerald-900/40 text-emerald-300 border border-emerald-700",
     warning: "bg-amber-900/40 text-amber-300 border border-amber-700",
-    info: "bg-blue-900/40 text-blue-300 border border-blue-700",
+    info: "bg-primary/10/40 text-primary border border-primary/30",
   };
   const labels: Record<string, string> = {
     pass: "PASS",

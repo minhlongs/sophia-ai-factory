@@ -140,7 +140,7 @@ export function Step2StarterPack({ agencyType, tier, selectedSops, toggleSop, is
           const checked = selectedSops.includes(slug);
           return (
             <label key={slug} className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${checked ? 'border-primary-500/60 bg-primary-500/10' : 'border-border-700 bg-muted-900/50 hover:border-border-600'}`}>
-              <input type="checkbox" className="accent-violet-500" checked={checked} onChange={() => toggleSop(slug)} />
+              <input type="checkbox" className="accent-primary" checked={checked} onChange={() => toggleSop(slug)} />
               <span className="text-sm font-mono text-muted-foreground-200">{slug}</span>
             </label>
           );
@@ -169,8 +169,8 @@ export function Step3Configuration({ form, selectedSops, isVi }: Step3Props) {
           </div>
         ))}
       </div>
-      <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
-        <h3 className="text-sm font-semibold text-blue-300 mb-2">{isVi ? 'Tóm tắt bàn giao' : 'Handover Summary'}</h3>
+      <div className="rounded-xl border border-primary/30 bg-primary/10 p-4">
+        <h3 className="text-sm font-semibold text-primary mb-2">{isVi ? 'Tóm tắt bàn giao' : 'Handover Summary'}</h3>
         <div className="space-y-1 text-sm text-muted-foreground-300">
           <p><span className="text-muted-foreground-500">{isVi ? 'Agency:' : 'Agency:'}</span> {form.agencyName}</p>
           <p><span className="text-muted-foreground-500">Email:</span> {form.ownerEmail}</p>

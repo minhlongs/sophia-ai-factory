@@ -159,10 +159,10 @@ export default async function PaymentSuccessPage({
             </p>
 
             {maskedEmail && (
-              <div className="mt-4 rounded-xl border border-blue-500/20 bg-blue-500/[0.07] px-4 py-3">
-                <p className="text-sm text-blue-300">
+              <div className="mt-4 rounded-xl border border-primary/30/20 bg-primary/10/[0.07] px-4 py-3">
+                <p className="text-sm text-primary">
                   {t("magic_link_sent_to")}{" "}
-                  <span className="font-mono font-semibold text-blue-200">{maskedEmail}</span>
+                  <span className="font-mono font-semibold text-primary">{maskedEmail}</span>
                 </p>
               </div>
             )}
@@ -258,7 +258,7 @@ export default async function PaymentSuccessPage({
           <div className="flex flex-col gap-3">
             <Link
               href={`/${locale}/dashboard`}
-              className="inline-block w-full rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 px-6 py-3.5 text-center font-semibold text-white transition hover:from-violet-500 hover:to-blue-500 shadow-lg shadow-violet-500/20"
+              className="inline-block w-full rounded-xl bg-gradient-to-r from-primary to-primary px-6 py-3.5 text-center font-semibold text-white transition hover:from-primary hover:to-primary shadow-lg shadow-primary/20"
             >
               {t("go_dashboard")}
             </Link>

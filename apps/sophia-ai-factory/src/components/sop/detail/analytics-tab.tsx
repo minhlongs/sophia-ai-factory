@@ -64,7 +64,7 @@ function DrillDownPanel({ drillDownDate, setDrillDownDate, dayDrillDown }: Drill
                       ${run.status === 'completed'
                         ? 'bg-emerald-100 text-emerald-700'
                         : run.status === 'running'
-                        ? 'bg-blue-100 text-blue-700'
+                        ? 'bg-primary/10 text-primary'
                         : run.status === 'paused'
                         ? 'bg-amber-100 text-amber-700'
                         : run.status === 'failed'
@@ -155,7 +155,7 @@ export function SopAnalyticsTab({ runs, totalRuns, totalCreditsSpent, template }
             <div className="bg-green-500 transition-all" style={{ width: `${(stats.completed / stats.total) * 100}%` }} title={`Completed: ${stats.completed}`} />
           )}
           {stats.running > 0 && (
-            <div className="bg-blue-500 transition-all" style={{ width: `${(stats.running / stats.total) * 100}%` }} title={`Running: ${stats.running}`} />
+            <div className="bg-primary transition-all" style={{ width: `${(stats.running / stats.total) * 100}%` }} title={`Running: ${stats.running}`} />
           )}
           {stats.paused > 0 && (
             <div className="bg-yellow-500 transition-all" style={{ width: `${(stats.paused / stats.total) * 100}%` }} title={`Paused: ${stats.paused}`} />
@@ -166,7 +166,7 @@ export function SopAnalyticsTab({ runs, totalRuns, totalCreditsSpent, template }
         </div>
         <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-green-500" /> {t('statusCompleted')}: {stats.completed}</span>
-          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-blue-500" /> {t('statusRunning')}: {stats.running}</span>
+          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-primary" /> {t('statusRunning')}: {stats.running}</span>
           <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-yellow-500" /> {t('statusPaused')}: {stats.paused}</span>
           <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-red-500" /> {t('statusFailed')}: {stats.failed}</span>
         </div>

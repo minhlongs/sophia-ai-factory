@@ -11,8 +11,8 @@ import { TIER_CONFIG } from '@/seed/config/tiers';
 const TIER_COLORS: Record<Tier, string> = {
   BASIC: 'bg-muted text-foreground border-border',
   PREMIUM: 'bg-primary/10 text-primary border-primary/20',
-  ENTERPRISE: 'bg-indigo-900/60 text-indigo-200 border-indigo-700',
-  MASTER: 'bg-amber-900/60 text-amber-200 border-amber-700',
+  ENTERPRISE: 'bg-accent/10 text-accent border-accent/20',
+  MASTER: 'bg-primary-container/60 text-primary-foreground border-primary-container',
 };
 
 interface TierBadgeProps {

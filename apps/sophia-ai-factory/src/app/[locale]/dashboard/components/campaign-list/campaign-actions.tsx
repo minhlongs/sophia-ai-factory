@@ -72,7 +72,7 @@ export function CampaignActions({ campaign, isRetrying, onRetry, onResume }: Cam
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`${t('watch_video')}: ${campaign.title || campaign.topic}`}
-          className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-medium text-xs sm:text-sm"
+          className="flex items-center gap-2 text-primary dark:text-primary hover:text-primary dark:hover:text-primary font-medium text-xs sm:text-sm"
         >
           <PlayCircle className="w-4 h-4" aria-hidden="true" />
           {t('watch_video')}

@@ -50,7 +50,7 @@ const steps = [
 
 const networks = [
   { name: "TRC-20 (Tron)", badge: "Lowest Fees", color: "text-emerald-400", bg: "bg-emerald-500/10" },
-  { name: "ERC-20 (Ethereum)", badge: "Most Common", color: "text-blue-400", bg: "bg-blue-500/10" },
+  { name: "ERC-20 (Ethereum)", badge: "Most Common", color: "text-primary", bg: "bg-primary/10/10" },
   { name: "BEP-20 (BSC)", badge: "Fast", color: "text-amber-400", bg: "bg-amber-500/10" },
 ];
 
@@ -64,7 +64,7 @@ export default function UsdtPaymentGuidePage() {
 
       {/* Hero */}
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">
           Pay with USDT (Crypto)
           <span className="block text-xl mt-1">Thanh Toán Bằng USDT (Crypto)</span>
         </h1>

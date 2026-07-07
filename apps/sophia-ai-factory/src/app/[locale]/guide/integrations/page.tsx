@@ -30,7 +30,7 @@ const services: GuideFeatureItem[] = [
     icon: Mic,
     title: "ElevenLabs — Giọng Nói AI",
     description: "Chuyển kịch bản thành giọng nói tự nhiên với hàng chục giọng tiếng Việt và Anh.",
-    iconColor: "text-blue-400",
+    iconColor: "text-primary",
   },
   {
     icon: Video,
@@ -54,7 +54,7 @@ const services: GuideFeatureItem[] = [
     icon: Bot,
     title: "Telegram Bot — Điều Khiển Từ Xa",
     description: "Tạo và theo dõi chiến dịch video ngay trên Telegram, không cần mở trình duyệt.",
-    iconColor: "text-sky-400",
+    iconColor: "text-accent",
   },
 ];
 
@@ -67,7 +67,7 @@ export default function IntegrationsGuidePage() {
       />
       {/* Hero */}
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">
           Tích Hợp Dịch Vụ
         </h1>
         <p className="text-muted-foreground leading-relaxed">
@@ -116,7 +116,7 @@ export default function IntegrationsGuidePage() {
       {/* ElevenLabs */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Mic className="w-5 h-5 text-blue-400" aria-hidden="true" /> ElevenLabs — Giọng Nói AI
+          <Mic className="w-5 h-5 text-primary" aria-hidden="true" /> ElevenLabs — Giọng Nói AI
         </h2>
 
         <div className="grid sm:grid-cols-3 gap-3 text-sm">
@@ -196,7 +196,7 @@ export default function IntegrationsGuidePage() {
       {/* Telegram Bot */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <Bot className="w-5 h-5 text-sky-400" aria-hidden="true" /> Telegram Bot — Điều Khiển Từ Xa
+          <Bot className="w-5 h-5 text-accent" aria-hidden="true" /> Telegram Bot — Điều Khiển Từ Xa
         </h2>
         <GuideCallout variant="important">
           Xem hướng dẫn chi tiết tại trang{" "}
@@ -228,15 +228,15 @@ export default function IntegrationsGuidePage() {
       {/* Zalo */}
       <section className="space-y-4">
         <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-          <MessageCircle className="w-5 h-5 text-blue-500" aria-hidden="true" /> Zalo — Nhắn Tin & Marketing VN
+          <MessageCircle className="w-5 h-5 text-primary" aria-hidden="true" /> Zalo — Nhắn Tin & Marketing VN
         </h2>
         <GuideCallout variant="info">
           <strong>Zalo đang trong lộ trình phát triển.</strong> Zalo là nền tảng nhắn tin phổ biến nhất Việt Nam với 70 triệu người dùng. Tích hợp Zalo sẽ cho phép gửi chiến dịch video trực tiếp qua Zalo OA (Official Account).
           <br /><br />
           Trong khi chờ tích hợp Zalo, bạn có thể điều khiển Sophia qua <strong>Telegram (@Sophia_Bbot)</strong> — tính năng tương tự, hoạt động ngay hôm nay.
         </GuideCallout>
-        <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 px-4 py-3 text-sm text-muted-foreground">
-          <span className="font-semibold text-blue-400">Coming Soon:</span> Zalo OA integration — automated video campaigns delivered via Zalo to Vietnamese customers.
+        <div className="rounded-lg border border-primary/30/20 bg-primary/10/5 px-4 py-3 text-sm text-muted-foreground">
+          <span className="font-semibold text-primary">Coming Soon:</span> Zalo OA integration — automated video campaigns delivered via Zalo to Vietnamese customers.
         </div>
       </section>
     </div>

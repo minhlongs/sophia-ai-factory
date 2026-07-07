@@ -2484,7 +2484,11 @@
   "campaign": {
     "template_selection": {
       "title": "Chọn Mẫu",
-      "subtitle": "Bắt đầu với mẫu có sẵn hoặc tạo từ đầu"
+      "subtitle": "Bắt đầu với mẫu có sẵn hoặc tạo từ đầu",
+      "affiliate_offer": "Ưu đãi Affiliate",
+      "affiliate_offer_desc": "CTA cho ưu đãi này sẽ được đưa vào video của bạn.",
+      "select_offer": "Chọn ưu đãi affiliate...",
+      "no_templates": "Không có mẫu nào"
     },
     "customization": {
       "title": "Tùy Chỉnh Chiến Dịch",

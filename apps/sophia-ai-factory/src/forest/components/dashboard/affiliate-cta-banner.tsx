@@ -46,7 +46,7 @@ export function AffiliateCTABanner() {
     <div
       role="banner"
       aria-label={t("cta_banner_title")}
-      className="relative w-full flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-emerald-700/25 via-cyan-700/20 to-emerald-700/25 border-b border-emerald-500/20 text-white"
+      className="relative w-full flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-emerald-700/25 via-accent/20 to-emerald-700/25 border-b border-emerald-500/20 text-white"
     >
       {/* Left: icon + title */}
       <div className="flex items-center gap-2 shrink-0">

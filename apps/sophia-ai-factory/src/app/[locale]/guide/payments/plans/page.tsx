@@ -49,9 +49,9 @@ const plans = [
     annual: "$7,990/yr",
     savings: "Save $1,598/yr",
     badge: "High Volume",
-    color: "text-blue-400",
-    bg: "bg-blue-500/10",
-    border: "border-blue-500/30",
+    color: "text-primary",
+    bg: "bg-primary/10/10",
+    border: "border-primary/30/30",
     fit: "High volume output, team use, and priority support.",
   },
   {
@@ -77,7 +77,7 @@ export default function PlansGuidePage() {
 
       {/* Hero */}
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">
           Plans & Pricing Guide
           <span className="block text-xl mt-1">Hướng Dẫn Gói & Bảng Giá</span>
         </h1>
@@ -153,7 +153,7 @@ export default function PlansGuidePage() {
               monthly)
             </li>
             <li>
-              <strong className="text-blue-400">ENTERPRISE Annual:</strong> $7,990/yr (save
+              <strong className="text-primary">ENTERPRISE Annual:</strong> $7,990/yr (save
               $1,598 vs monthly)
             </li>
             <li>
@@ -173,7 +173,7 @@ export default function PlansGuidePage() {
       <div className="grid sm:grid-cols-3 gap-3">
         <Link
           href="/pricing"
-          className="group flex items-center justify-between gap-2 bg-gradient-to-r from-violet-500/20 to-cyan-500/20 border border-primary-500/30 rounded-xl px-4 py-3 text-sm font-medium text-foreground hover:border-primary-500/50 transition-colors"
+          className="group flex items-center justify-between gap-2 bg-gradient-to-r from-primary/20 to-accent/20 border border-primary-500/30 rounded-xl px-4 py-3 text-sm font-medium text-foreground hover:border-primary-500/50 transition-colors"
         >
           View Full Pricing
           <ArrowRight className="w-4 h-4" aria-hidden="true" />

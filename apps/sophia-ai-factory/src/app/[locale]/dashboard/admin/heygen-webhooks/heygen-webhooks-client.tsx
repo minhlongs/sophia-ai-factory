@@ -106,7 +106,7 @@ export function HeyGenWebhooksClient({ locale }: Props) {
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
             placeholder={isVi ? 'User ID' : 'User ID'}
-            className="flex-1 bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="flex-1 bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <button
             onClick={fetchWebhooks}

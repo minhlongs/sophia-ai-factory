@@ -65,7 +65,7 @@ export function BrandingFormClient({ locale, initialBranding }: Props) {
   }
 
   const inputCls =
-    'w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500';
+    'w-full bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary';
 
   return (
     <div className="space-y-8">
@@ -286,7 +286,7 @@ function ColorField({
           onChange={(e) => onChange(e.target.value)}
           onBlur={onBlur}
           placeholder="#7c3aed"
-          className="flex-1 bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-violet-500"
+          className="flex-1 bg-muted border border-border rounded-lg px-3 py-2 text-sm text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-primary"
         />
       </div>
     </div>

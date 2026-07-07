@@ -23,8 +23,8 @@ type SearchParams = Promise<{ lang?: string }>;
 
 const TIER_BADGE: Record<VoicePreset['minTier'], string> = {
   BASIC: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-  PREMIUM: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
-  ENTERPRISE: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
+  PREMIUM: 'bg-primary/10/15 text-primary border-primary/30/30',
+  ENTERPRISE: 'bg-primary/10 text-primary border-primary/30',
   MASTER: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
 };
 

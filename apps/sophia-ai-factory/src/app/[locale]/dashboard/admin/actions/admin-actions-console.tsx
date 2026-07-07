@@ -74,7 +74,7 @@ export function AdminActionsConsole({ locale }: Props) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-violet-500"
+      className="w-full bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 placeholder:text-muted-foreground-500 focus:outline-none focus:ring-2 focus:ring-primary"
     />
   )
 
@@ -115,7 +115,7 @@ export function AdminActionsConsole({ locale }: Props) {
           <select
             value={tier}
             onChange={(e) => setTier(e.target.value)}
-            className="bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
+            className="bg-muted-800 border border-border-700 rounded-lg px-3 py-2 text-sm text-muted-foreground-100 focus:outline-none focus:ring-2 focus:ring-primary"
           >
             {TIERS.map((t) => <option key={t} value={t}>{t}</option>)}
           </select>

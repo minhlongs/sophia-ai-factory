@@ -81,7 +81,7 @@ export function HandoverOnboardingBanner({ userId, locale }: Props) {
   const remaining = totalSteps - completedSteps;
 
   return (
-    <div className="rounded-xl border border-primary/30 bg-gradient-to-r from-primary/20 to-blue-900/20 backdrop-blur-sm p-4 flex items-center gap-4">
+    <div className="rounded-xl border border-primary/30 bg-gradient-to-r from-primary/20 to-primary/20 backdrop-blur-sm p-4 flex items-center gap-4">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-2">
           <span className="text-sm font-semibold text-primary/80">
@@ -93,7 +93,7 @@ export function HandoverOnboardingBanner({ userId, locale }: Props) {
         </div>
         <div className="h-1.5 rounded-full bg-muted mb-2">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-blue-500 transition-all"
+            className="h-full rounded-full bg-gradient-to-r from-primary to-primary transition-all"
             style={{ width: `${progressPct}%` }}
           />
         </div>

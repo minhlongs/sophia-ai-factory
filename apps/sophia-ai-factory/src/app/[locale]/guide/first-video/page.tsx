@@ -30,7 +30,7 @@ export default function FirstVideoPage() {
 
       {/* Hero */}
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">
           Your First AI Video in 5 Minutes
           <span className="block text-xl mt-1 text-muted-foreground font-normal">
             Video AI Đầu Tiên Trong 5 Phút

@@ -59,7 +59,7 @@ describe('RunStatusBadge', () => {
     expect(container.firstChild?.textContent).toContain('Running');
     // The badge element has motion-safe:animate-pulse class (conditional on prefers-reduced-motion)
     const badge = container.firstChild as HTMLElement;
-    expect(badge.className).toContain('bg-blue-900');
+    expect(badge.className).toContain('bg-primary/10/50');
   });
 
   it('applies green color for completed', () => {

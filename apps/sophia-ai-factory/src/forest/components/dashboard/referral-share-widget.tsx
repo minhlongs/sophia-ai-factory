@@ -113,7 +113,7 @@ export function ReferralShareWidget({ initialCode, initialShareUrl }: ReferralSh
               onClick={shareTelegram}
               variant="ghost"
               size="sm"
-              className="h-10 w-10 md:h-8 md:w-8 p-0 rounded-full hover:bg-sky-500/10 hover:text-sky-500"
+              className="h-10 w-10 md:h-8 md:w-8 p-0 rounded-full hover:bg-accent/10/10 hover:text-accent"
               aria-label={t('shareTelegram')}
             >
               <Send className="w-4 h-4" aria-hidden="true" />
@@ -122,7 +122,7 @@ export function ReferralShareWidget({ initialCode, initialShareUrl }: ReferralSh
               onClick={shareEmail}
               variant="ghost"
               size="sm"
-              className="h-10 w-10 md:h-8 md:w-8 p-0 rounded-full hover:bg-blue-500/10 hover:text-blue-500"
+              className="h-10 w-10 md:h-8 md:w-8 p-0 rounded-full hover:bg-primary/10/10 hover:text-primary"
               aria-label={t('shareEmail')}
             >
               <Mail className="w-4 h-4" aria-hidden="true" />

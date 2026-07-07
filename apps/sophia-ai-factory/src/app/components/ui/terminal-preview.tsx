@@ -16,7 +16,7 @@ const lines = [
 const colorMap: Record<string, string> = {
   comment: "text-muted-foreground",
   command: "text-green-400",
-  flag: "text-blue-300",
+  flag: "text-primary",
   response: "text-amber-300",
   empty: "",
 };

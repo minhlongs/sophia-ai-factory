@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: "P0 Screen Prompts & Amber Theme Update"
-status: ready
+status: complete
 effort: "2h"
 dependsOn: "Phase 0 (Design System Consolidation) — completed"
 blocks: ["Phase 2: Parallel P0 Screens", "Phase 3: Setup Wizard + Dashboard Shell"]
@@ -74,11 +74,12 @@ Update the Quick Reference at the bottom of `prompts-stitch-screens.md` to refle
 
 ## Success Criteria
 
-- [ ] `design-spec.json` primaryColor is `#D97706` (amber)
-- [ ] All 10 existing prompts use amber primary with indigo accent (not indigo primary)
-- [ ] New Setup Wizard prompt (#11) covers all 5 BYOK steps
-- [ ] Quick Reference updated with amber + i18n + component replacement steps
-- [ ] Zero references to indigo as primary color remain in prompts
+- [x] `design-spec.json` primaryColor is `#D97706` (amber)
+- [x] All 10 existing prompts use amber primary with indigo accent (not indigo primary)
+- [x] New Setup Wizard prompt (#11) covers all 5 BYOK steps
+- [x] Quick Reference updated with amber + i18n + API routes + execution order
+- [x] Zero references to indigo as primary color remain in prompts
+- [x] Pricing canonicalized to $199/$399/$799/$4999 (matches `unified-limits.ts`)
 
 ## Key Files
 

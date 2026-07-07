@@ -317,7 +317,7 @@ export function LandingPagesEditor({ locale: _locale, initialData }: Props) {
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
+          className="inline-flex items-center gap-2 bg-primary hover:bg-primary/80 disabled:opacity-50 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
         >
           <Save className="h-4 w-4" />
           {saving ? 'Saving...' : isCreate ? 'Create Page' : 'Save Changes'}

@@ -128,7 +128,7 @@ export function SignupForm({ t }: SignupFormProps) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t.name_placeholder}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
         </div>
       </div>
@@ -147,7 +147,7 @@ export function SignupForm({ t }: SignupFormProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={t.email_placeholder}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
         </div>
       </div>
@@ -167,7 +167,7 @@ export function SignupForm({ t }: SignupFormProps) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder={t.password_placeholder}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
         </div>
       </div>
@@ -186,7 +186,7 @@ export function SignupForm({ t }: SignupFormProps) {
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             placeholder={t.confirm_placeholder}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
         </div>
       </div>
@@ -194,7 +194,7 @@ export function SignupForm({ t }: SignupFormProps) {
       <button
         type="submit"
         disabled={loading}
-        className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-accent px-4 py-3 text-sm font-medium text-white hover:opacity-90 transition-opacity disabled:opacity-50"
       >
         {loading ? (
           <><Loader2 className="w-4 h-4 motion-safe:animate-spin" aria-hidden="true" /> {t.submitting}</>

@@ -17,7 +17,7 @@ const fetcher = (url: string) => fetch(url).then((r) => r.json() as Promise<Refu
 
 const STATUS_BADGE: Record<string, string> = {
   pending: 'bg-yellow-900/50 text-yellow-300',
-  approved: 'bg-blue-900/50 text-blue-300',
+  approved: 'bg-primary/10 text-primary',
   rejected: 'bg-red-900/50 text-red-300',
   refunded: 'bg-emerald-900/50 text-emerald-300',
 }

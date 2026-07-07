@@ -33,7 +33,7 @@ const dashboardFeatures: GuideFeatureItem[] = [
     icon: ListVideo,
     title: "Danh Sách Chiến Dịch",
     description: "Quản lý tất cả video đã tạo: xem, tải về, hoặc chạy lại. URL: /dashboard/campaigns",
-    iconColor: "text-blue-400",
+    iconColor: "text-primary",
   },
   {
     icon: BarChart3,
@@ -76,7 +76,7 @@ export default function ScreensGuidePage() {
       />
       {/* Hero */}
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">
           Hướng Dẫn Màn Hình A-Z
         </h1>
         <p className="text-muted-foreground leading-relaxed">

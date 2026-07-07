@@ -39,7 +39,7 @@ export function TrialBanner({ trialEndsAt }: TrialBannerProps) {
       className={`w-full px-4 py-2.5 text-center text-sm font-medium transition-colors ${
         isUrgent
           ? "bg-gradient-to-r from-amber-600/80 to-orange-600/80 text-white"
-          : "bg-gradient-to-r from-emerald-600/70 to-violet-600/70 text-white"
+          : "bg-gradient-to-r from-emerald-600/70 to-primary/70 text-white"
       }`}
     >
       <Link

@@ -90,7 +90,7 @@ export function AuditLogTable({ licenseId }: AuditLogTableProps) {
       case 'REVOKE':
         return 'text-red-400';
       case 'VALIDATE':
-        return 'text-blue-400';
+        return 'text-primary';
       default:
         return 'text-muted-foreground';
     }

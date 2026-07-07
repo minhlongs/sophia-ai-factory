@@ -1,0 +1,21 @@
+{
+  "timestamp": "2026-07-07T15:08:04Z",
+  "overall": "FAIL",
+  "phases": {
+    "build_pass": "true",
+    "build_ts_errors": "0\n0",
+    "tests_pass": "true",
+    "tests_total": "0",
+    "tests_failed": "0",
+    "deploy_pass": "false",
+    "deploy_sha_match": "false",
+    "deploy_http_200": "false",
+    "deploy_local_sha": "dc89f63a",
+    "deploy_live_sha": "d8b0f9a8",
+    "i18n_pass": "true",
+    "i18n_vi_keys": "0",
+    "i18n_en_keys": "0",
+    "plan_state_pass": "true",
+    "plan_state_incomplete": "0"
+  }
+}

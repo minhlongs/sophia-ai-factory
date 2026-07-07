@@ -49,7 +49,7 @@ export default async function AffiliateLandingPage({ params }: PageProps) {
     <div className="max-w-4xl mx-auto px-4 py-16 space-y-20">
       {/* Hero */}
       <section className="text-center space-y-6">
-        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
+        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
           {t('hero.title')}
         </h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
@@ -58,7 +58,7 @@ export default async function AffiliateLandingPage({ params }: PageProps) {
         <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
           <Link
             href={signupUrl}
-            className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-violet-500 to-cyan-500 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-shadow"
+            className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-accent text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-shadow"
           >
             {t('hero.ctaPrimary')}
             <ArrowRight className="w-4 h-4" aria-hidden="true" />
@@ -176,7 +176,7 @@ export default async function AffiliateLandingPage({ params }: PageProps) {
         <p className="text-muted-foreground">{t('cta.subtitle')}</p>
         <Link
           href={signupUrl}
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-500 to-cyan-500 text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-shadow"
+          className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-accent text-white px-8 py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-shadow"
         >
           {t('cta.button')}
           <ArrowRight className="w-4 h-4" aria-hidden="true" />

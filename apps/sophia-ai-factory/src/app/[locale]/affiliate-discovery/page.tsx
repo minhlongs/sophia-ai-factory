@@ -48,7 +48,7 @@ export default async function AffiliateDiscoveryPage() {
   return (
     <div className="container mx-auto px-4 py-8 pt-24 max-w-5xl">
       <div className="mb-8 border-b border-border/40 pb-6">
-        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
           Sophia Index
         </h1>
         <p className="mt-2 text-lg text-muted-foreground">
@@ -122,7 +122,7 @@ export default async function AffiliateDiscoveryPage() {
         </p>
         <Link
           href="/pricing"
-          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-cyan-600 px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-primary to-accent px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
         >
           Xem Bảng Giá <ArrowRight className="w-4 h-4" aria-hidden="true" />
         </Link>

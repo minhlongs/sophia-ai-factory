@@ -31,8 +31,8 @@ export function LoginPageContent() {
         className="fixed inset-0 pointer-events-none overflow-hidden"
         aria-hidden="true"
       >
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-indigo-500/5 rounded-full blur-[120px]" />
-        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-indigo-500/5 rounded-full blur-[120px]" />
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-primary/10/5 rounded-full blur-[120px]" />
+        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-primary/10/5 rounded-full blur-[120px]" />
       </div>
 
       <div className="w-full max-w-[440px] relative z-10">
@@ -42,7 +42,7 @@ export function LoginPageContent() {
         >
           {/* Logo + Header */}
           <div className="flex flex-col items-center mb-8">
-            <div className="w-10 h-10 mb-6 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <div className="w-10 h-10 mb-6 rounded-xl bg-gradient-to-br from-primary to-primary flex items-center justify-center shadow-lg shadow-primary/20">
               <svg
                 className="w-5 h-5 text-white"
                 viewBox="0 0 24 24"

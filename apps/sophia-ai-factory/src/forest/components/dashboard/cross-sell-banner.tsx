@@ -43,13 +43,13 @@ export function CrossSellBanner({ variant }: CrossSellBannerProps) {
       className={`relative rounded-xl border p-4 flex items-center gap-4 ${
         isRaasBanner
           ? "border-primary/30 bg-gradient-to-r from-primary/10 to-purple-500/5"
-          : "border-blue-500/30 bg-gradient-to-r from-blue-500/10 to-cyan-500/5"
+          : "border-primary/30/30 bg-gradient-to-r from-primary/10 to-accent/5"
       }`}
     >
       {/* Icon */}
       <div
         className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-          isRaasBanner ? "bg-primary/20 text-primary" : "bg-blue-500/20 text-blue-400"
+          isRaasBanner ? "bg-primary/20 text-primary" : "bg-primary/10/20 text-primary"
         }`}
       >
         {isRaasBanner ? <Zap className="w-5 h-5" aria-hidden="true" /> : <Video className="w-5 h-5" aria-hidden="true" />}
@@ -71,7 +71,7 @@ export function CrossSellBanner({ variant }: CrossSellBannerProps) {
         className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
           isRaasBanner
             ? "bg-primary hover:bg-primary/80 text-white"
-            : "bg-blue-600 hover:bg-blue-500 text-white"
+            : "bg-primary/10 hover:bg-primary/10 text-white"
         }`}
       >
         {isRaasBanner ? t("raas_cta") : t("video_cta")}

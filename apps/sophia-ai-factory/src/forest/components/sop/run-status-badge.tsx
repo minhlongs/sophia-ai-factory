@@ -11,7 +11,7 @@ type RunStatus = SopRunRow['status'];
 
 const STATUS_STYLES: Record<RunStatus, string> = {
   pending:    'bg-muted text-muted-foreground',
-  running:   'bg-blue-900/50 text-blue-300 motion-safe:animate-pulse',
+  running:   'bg-primary/10/50 text-primary motion-safe:animate-pulse',
   completed: 'bg-emerald-900/50 text-emerald-300',
   failed:    'bg-red-900/50 text-red-300',
   paused:   'bg-amber-900/50 text-amber-300',

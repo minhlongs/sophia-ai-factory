@@ -22,7 +22,7 @@ export const PROVIDER_LABELS: Record<string, string> = {
 };
 
 export const PUBLISH_STATUS_STYLES: Record<string, string> = {
-  scheduled: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+  scheduled: 'bg-primary/10 text-primary dark:bg-primary/10 dark:text-primary',
   uploading: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
   processing: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
   live: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',

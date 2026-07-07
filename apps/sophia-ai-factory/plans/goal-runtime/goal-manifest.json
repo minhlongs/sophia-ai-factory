@@ -1,0 +1,90 @@
+{
+  "id": "260510-0000-wave20-carry-overs",
+  "priority": "P1",
+  "phases": [
+    {
+      "id": "01",
+      "name": "Telegram MarkdownV2 Escaping",
+      "estimate_h": 2,
+      "status": "completed",
+      "files_owned": [
+        "src/tree/telegram/format-markdown-v2.ts",
+        "src/tree/telegram/__tests__/format-markdown-v2.test.ts",
+        "src/forest/publishing/providers/telegram-publisher.ts",
+        "src/forest/publishing/providers/__tests__/telegram-publisher.test.ts"
+      ],
+      "depends_on": [],
+      "updated_at": "2026-07-07T11:46:04Z"
+    },
+    {
+      "id": "02",
+      "name": "Telegram Step Split + retry_after",
+      "estimate_h": 4,
+      "status": "completed",
+      "files_owned": [
+        "src/tree/telegram/dispatch-with-retry-hints.ts",
+        "src/tree/telegram/__tests__/dispatch-with-retry-hints.test.ts",
+        "src/forest/inngest/functions/publish-execute.ts"
+      ],
+      "depends_on": [
+        "01"
+      ],
+      "updated_at": "2026-07-07T11:46:04Z"
+    },
+    {
+      "id": "03",
+      "name": "Sidebar Quota Widget",
+      "estimate_h": 2,
+      "status": "completed",
+      "files_owned": [
+        "src/forest/components/dashboard/sidebar-quota-widget.tsx",
+        "src/forest/components/dashboard/__tests__/sidebar-quota-widget.test.tsx",
+        "src/app/[locale]/dashboard/layout.tsx",
+        "messages/en.json",
+        "messages/vi.json"
+      ],
+      "depends_on": [],
+      "updated_at": "2026-07-07T11:46:04Z"
+    },
+    {
+      "id": "04",
+      "name": "Account Self-Service: Export + Change-Email",
+      "estimate_h": 4,
+      "status": "completed",
+      "files_owned": [
+        "src/app/api/account/export/route.ts",
+        "src/app/api/account/change-email/route.ts",
+        "src/app/api/account/change-email/verify/route.ts",
+        "src/app/[locale]/dashboard/account/account-profile-tab.tsx",
+        "messages/en.json",
+        "messages/vi.json"
+      ],
+      "depends_on": [],
+      "updated_at": "2026-07-07T11:46:04Z"
+    },
+    {
+      "id": "05",
+      "name": "publishing_jobs.video_job_id -> video_id",
+      "estimate_h": 2,
+      "status": "completed",
+      "files_owned": [
+        "migrations/0101-publishing-jobs-rename-video-job-id-to-video-id.sql",
+        "src/forest/publishing/schedule-publish.ts",
+        "src/forest/inngest/functions/video-publish.ts",
+        "src/forest/inngest/functions/publish-execute.ts",
+        "src/forest/inngest/functions/__tests__/publish-execute-video-url-wave17.test.ts",
+        "src/app/[locale]/dashboard/videos/[id]/page.tsx",
+        "src/app/api/v1/videos/[id]/distribute/route.ts",
+        "src/app/api/v1/distribute/jobs/[videoId]/status/route.ts",
+        "src/lib/publishing/scheduler.ts",
+        "src/lib/publishing/publisher-interface.ts",
+        "src/seed/db/migrations/20260503_publishing.sql",
+        "tests/e2e/_fixtures/free100-db-helpers.ts"
+      ],
+      "depends_on": [],
+      "updated_at": "2026-07-07T11:46:04Z"
+    }
+  ],
+  "status": "completed",
+  "updated_at": "2026-07-07T11:46:04Z"
+}

@@ -33,7 +33,7 @@ interface DashboardReturningUserProps {
 const STATUS_COLOR: Record<string, string> = {
   succeeded: 'text-green-600 dark:text-green-400',
   failed: 'text-red-600 dark:text-red-400',
-  running: 'text-blue-600 dark:text-blue-400',
+  running: 'text-primary dark:text-primary',
   queued: 'text-muted-foreground-500 dark:text-slate-400',
   partial: 'text-orange-600 dark:text-orange-400',
 };
@@ -47,8 +47,8 @@ export async function DashboardReturningUser({
   const t = await getTranslations('dashboard.home');
 
   const stats = [
-    { icon: BookOpen, label: t('stat_active_sops'), value: sopCount, color: 'text-primary-600 dark:text-violet-400', bg: 'bg-primary-50 dark:bg-violet-900/20' },
-    { icon: Coins, label: t('stat_mcu_remaining'), value: mcuRemaining.toLocaleString(), color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+    { icon: BookOpen, label: t('stat_active_sops'), value: sopCount, color: 'text-primary-600 dark:text-primary', bg: 'bg-primary-50 dark:bg-primary/10/20' },
+    { icon: Coins, label: t('stat_mcu_remaining'), value: mcuRemaining.toLocaleString(), color: 'text-primary dark:text-primary', bg: 'bg-primary/10 dark:bg-primary/10/20' },
     { icon: Video, label: t('stat_videos'), value: videosThisMonth, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
     { icon: Activity, label: t('stat_runs'), value: recentRuns.length, color: 'text-orange-600 dark:text-orange-400', bg: 'bg-orange-50 dark:bg-orange-900/20' },
   ];
@@ -90,9 +90,9 @@ export async function DashboardReturningUser({
               <Link
                 key={action.label}
                 href={action.href}
-                className="cursor-pointer flex flex-col items-center gap-2 rounded-lg border border-border-200 dark:border-slate-700/50 bg-muted-50 dark:bg-slate-800/40 p-3 hover:border-blue-300 dark:hover:border-blue-700 transition-colors duration-150 text-center"
+                className="cursor-pointer flex flex-col items-center gap-2 rounded-lg border border-border-200 dark:border-slate-700/50 bg-muted-50 dark:bg-slate-800/40 p-3 hover:border-primary/30 dark:hover:border-primary/30 transition-colors duration-150 text-center"
               >
-                <Icon className="w-5 h-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+                <Icon className="w-5 h-5 text-primary dark:text-primary" aria-hidden="true" />
                 <span className="text-xs font-medium text-muted-foreground-700 dark:text-slate-300">{action.label}</span>
               </Link>
             );
@@ -104,7 +104,7 @@ export async function DashboardReturningUser({
       <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg rounded-xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-muted-foreground-900 dark:text-slate-100">{t('recent_runs')}</h2>
-          <Link href="/dashboard/missions" className="cursor-pointer text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-150 flex items-center gap-1">
+          <Link href="/dashboard/missions" className="cursor-pointer text-xs text-primary dark:text-primary hover:text-primary dark:hover:text-primary transition-colors duration-150 flex items-center gap-1">
             {t('view_all_runs')} <ArrowRight className="w-3 h-3" aria-hidden="true" />
           </Link>
         </div>

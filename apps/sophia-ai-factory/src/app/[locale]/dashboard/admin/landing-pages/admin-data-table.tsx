@@ -167,7 +167,7 @@ export function AdminDataTable({ pages }: Props) {
               <tr>
                 <td colSpan={5} className="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
                   No landing pages yet.{' '}
-                  <Link href="/dashboard/admin/landing-pages/new" className="text-blue-600 hover:underline">
+                  <Link href="/dashboard/admin/landing-pages/new" className="text-primary hover:underline">
                     Create your first page
                   </Link>
                 </td>

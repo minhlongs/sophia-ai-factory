@@ -73,7 +73,7 @@ export function CopyReferralLink() {
           type="button"
           onClick={generate}
           disabled={loading}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-violet-500 to-cyan-500 text-white font-semibold shadow hover:opacity-90 transition-opacity disabled:opacity-60"
+          className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-primary to-accent text-white font-semibold shadow hover:opacity-90 transition-opacity disabled:opacity-60"
         >
           <Zap className="w-4 h-4" aria-hidden="true" />
           {loading ? t("copyLink.generating") : t("copyLink.cta")}

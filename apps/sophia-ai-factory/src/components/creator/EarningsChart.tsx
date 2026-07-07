@@ -42,7 +42,7 @@ export default function EarningsChart({
     color: string;
   }> = [
     { key: 'paid', label: t('paid'), amount: paidCents, color: 'bg-green-500' },
-    { key: 'available', label: t('available'), amount: payableCents, color: 'bg-blue-500' },
+    { key: 'available', label: t('available'), amount: payableCents, color: 'bg-primary/10' },
     { key: 'pending', label: t('pending'), amount: pendingCents, color: 'bg-yellow-500' },
     { key: 'platform', label: t('platform'), amount: platformCents, color: 'bg-gray-400' },
   ];

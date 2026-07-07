@@ -138,7 +138,7 @@ export default function FAQGuidePage() {
       />
       {/* Hero */}
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent mb-3">
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-3">
           Câu Hỏi Thường Gặp
         </h1>
         <p className="text-muted-foreground leading-relaxed">
@@ -149,7 +149,7 @@ export default function FAQGuidePage() {
       {/* General */}
       <div>
         <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
-          <span className="w-1 h-5 rounded bg-gradient-to-b from-violet-500 to-cyan-500 inline-block" aria-hidden="true" />
+          <span className="w-1 h-5 rounded bg-gradient-to-b from-primary to-accent inline-block" aria-hidden="true" />
           Tổng Quan
         </h2>
         <GuideAccordionFaq items={generalFaqs} />
@@ -158,7 +158,7 @@ export default function FAQGuidePage() {
       {/* Payment */}
       <div>
         <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
-          <span className="w-1 h-5 rounded bg-gradient-to-b from-violet-500 to-cyan-500 inline-block" aria-hidden="true" />
+          <span className="w-1 h-5 rounded bg-gradient-to-b from-primary to-accent inline-block" aria-hidden="true" />
           Thanh Toán & Gói Dịch Vụ
         </h2>
         <GuideAccordionFaq items={paymentFaqs} />
@@ -167,7 +167,7 @@ export default function FAQGuidePage() {
       {/* Crypto / PayOS */}
       <div>
         <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
-          <span className="w-1 h-5 rounded bg-gradient-to-b from-violet-500 to-cyan-500 inline-block" aria-hidden="true" />
+          <span className="w-1 h-5 rounded bg-gradient-to-b from-primary to-accent inline-block" aria-hidden="true" />
           Thanh Toán Crypto & PayOS
         </h2>
         <GuideAccordionFaq items={cryptoFaqs} />
@@ -176,7 +176,7 @@ export default function FAQGuidePage() {
       {/* Technical */}
       <div>
         <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
-          <span className="w-1 h-5 rounded bg-gradient-to-b from-violet-500 to-cyan-500 inline-block" aria-hidden="true" />
+          <span className="w-1 h-5 rounded bg-gradient-to-b from-primary to-accent inline-block" aria-hidden="true" />
           Kỹ Thuật & Xử Lý Sự Cố
         </h2>
         <GuideAccordionFaq items={technicalFaqs} />
@@ -185,7 +185,7 @@ export default function FAQGuidePage() {
       {/* Data */}
       <div>
         <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
-          <span className="w-1 h-5 rounded bg-gradient-to-b from-violet-500 to-cyan-500 inline-block" aria-hidden="true" />
+          <span className="w-1 h-5 rounded bg-gradient-to-b from-primary to-accent inline-block" aria-hidden="true" />
           Quyền Sở Hữu & Dữ Liệu
         </h2>
         <GuideAccordionFaq items={dateFaqs} />

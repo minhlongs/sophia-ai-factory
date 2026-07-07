@@ -172,7 +172,7 @@ export function MigrationsClient({ locale }: Props) {
                   value={notes[m.filename] ?? ''}
                   onChange={(e) => setNotes((prev) => ({ ...prev, [m.filename]: e.target.value }))}
                   placeholder={isVi ? 'Ghi chú (tùy chọn)' : 'Notes (optional)'}
-                  className="flex-1 bg-muted-800 border border-border-700 rounded-lg px-3 py-1.5 text-xs text-muted-foreground-100 placeholder:text-muted-foreground-600 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                  className="flex-1 bg-muted-800 border border-border-700 rounded-lg px-3 py-1.5 text-xs text-muted-foreground-100 placeholder:text-muted-foreground-600 focus:outline-none focus:ring-1 focus:ring-primary"
                 />
                 <button
                   onClick={() => {

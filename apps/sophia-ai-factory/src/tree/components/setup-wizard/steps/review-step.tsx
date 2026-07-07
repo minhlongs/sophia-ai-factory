@@ -67,7 +67,7 @@ export function ReviewStep({ config, providerConfig, onConfirm, onBack, loading 
       </div>
 
       {!hasRequired && (
-        <div className="flex items-start gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 p-4 text-sm text-amber-600 dark:text-amber-400">
+        <div className="flex items-start gap-2 rounded-lg border border-primary/50 bg-primary/10 p-4 text-sm text-primary">
           <AlertTriangle className="mt-0.5 w-5 h-5 shrink-0" />
           <div>
             <p className="font-medium">{t('missingRequired.title')}</p>

@@ -49,7 +49,7 @@ interface PayoutsResponse {
 
 const STATUS_STYLES: Record<string, string> = {
   pending: 'text-yellow-400',
-  processing: 'text-blue-400',
+  processing: 'text-primary',
   completed: 'text-green-400',
   failed: 'text-red-400',
   cancelled: 'text-white/40',

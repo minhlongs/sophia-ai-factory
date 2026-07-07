@@ -536,9 +536,9 @@ const ENDPOINT_GROUPS: EndpointGroup[] = [
 function MethodBadge({ method }: { method: Endpoint["method"] }) {
   const colorMap: Record<string, string> = {
     GET: "bg-green-500/20 text-green-600",
-    POST: "bg-blue-500/20 text-blue-600",
+    POST: "bg-primary/10/20 text-primary",
     PUT: "bg-orange-500/20 text-orange-600",
-    PATCH: "bg-purple-500/20 text-purple-600",
+    PATCH: "bg-primary/10/20 text-primary",
     DELETE: "bg-red-500/20 text-red-600",
   };
 

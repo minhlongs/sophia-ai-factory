@@ -25,16 +25,16 @@ export function UpgradeBanner({
   const upgradeLink = requiredTier === "ENTERPRISE" ? "mailto:support@mekongmind.com" : "/pricing";
 
   return (
-    <Card className={`bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800 ${className}`}>
+    <Card className={`bg-gradient-to-r from-primary to-primary dark:from-primary/20 dark:to-primary/20 border-primary/30 dark:border-primary/30 ${className}`}>
       <CardContent className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-start gap-4">
           <div className="p-3 bg-background rounded-full shadow-sm">
-            <Lock className="w-6 h-6 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+            <Lock className="w-6 h-6 text-primary dark:text-primary" aria-hidden="true" />
           </div>
           <div>
             <h3 className="font-semibold text-foreground flex items-center gap-2">
               Unlock {featureName}
-              <span className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300 px-2 py-0.5 rounded-full font-medium">
+              <span className="text-xs bg-primary/10 text-primary dark:bg-primary/10 dark:text-primary px-2 py-0.5 rounded-full font-medium">
                 {TIER_CONFIGS[requiredTier].name}
               </span>
             </h3>
@@ -45,7 +45,7 @@ export function UpgradeBanner({
           </div>
         </div>
 
-        <Button asChild className="whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white">
+        <Button asChild className="whitespace-nowrap bg-primary/10 hover:bg-primary/10 text-white">
           <Link href={upgradeLink}>
             {upgradeLabel} <ArrowRight className="w-4 h-4 ml-2" aria-hidden="true" />
           </Link>

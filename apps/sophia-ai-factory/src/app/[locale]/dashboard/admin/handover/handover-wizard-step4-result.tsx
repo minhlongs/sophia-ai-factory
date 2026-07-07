@@ -56,7 +56,7 @@ export function Step4Result({ result, form, isVi, copied, onCopy, onDownload, on
           <div className="text-muted-foreground-500 text-xs mt-0.5">{isVi ? 'Email gửi' : 'Email Sent'}</div>
         </div>
         <div className="rounded-lg bg-muted-900/50 border border-border-700 p-3 text-center">
-          <div className="text-lg font-bold text-blue-400 text-xs font-mono truncate">{result.handoverId.slice(0, 8)}</div>
+          <div className="text-lg font-bold text-primary text-xs font-mono truncate">{result.handoverId.slice(0, 8)}</div>
           <div className="text-muted-foreground-500 text-xs mt-0.5">Handover ID</div>
         </div>
       </div>

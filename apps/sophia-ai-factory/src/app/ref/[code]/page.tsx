@@ -98,7 +98,7 @@ export default async function ReferralPage({ params }: Props) {
       <div className="max-w-3xl mx-auto px-6 py-20 text-center">
         <div className="flex items-center justify-center gap-2 mb-6">
           <Sparkles className="w-8 h-8 text-primary-400" />
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-pink-400 bg-clip-text text-transparent">
             {t('brand')}
           </h1>
         </div>

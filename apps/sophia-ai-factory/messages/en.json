@@ -2484,7 +2484,11 @@
   "campaign": {
     "template_selection": {
       "title": "Choose a Template",
-      "subtitle": "Start with a pre-configured template or create from scratch"
+      "subtitle": "Start with a pre-configured template or create from scratch",
+      "affiliate_offer": "Affiliate Offer",
+      "affiliate_offer_desc": "A CTA for this offer will be included in your video.",
+      "select_offer": "Select an affiliate offer...",
+      "no_templates": "No templates available"
     },
     "customization": {
       "title": "Customize Your Campaign",

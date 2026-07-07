@@ -111,7 +111,7 @@ export default async function BetaInvitesPage({ params }: PageProps): Promise<Re
               name="email"
               type="email"
               placeholder="creator@example.com"
-              className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+              className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-primary/50"
             />
           </div>
 
@@ -125,7 +125,7 @@ export default async function BetaInvitesPage({ params }: PageProps): Promise<Re
               type="number"
               defaultValue={1}
               min={1}
-              className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+              className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
             />
           </div>
 
@@ -137,7 +137,7 @@ export default async function BetaInvitesPage({ params }: PageProps): Promise<Re
               id="expiresAt"
               name="expiresAt"
               type="date"
-              className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+              className="rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-primary/50"
             />
           </div>
 

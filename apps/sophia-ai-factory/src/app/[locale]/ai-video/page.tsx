@@ -86,9 +86,9 @@ export default async function AiVideoHubPage({ params }: PageProps) {
   return (
     <main className="min-h-screen">
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-950 py-16 lg:py-24">
+      <section className="relative overflow-hidden bg-gradient-to-b from-primary to-white dark:from-gray-900 dark:to-gray-950 py-16 lg:py-24">
         <div className="container mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-4 py-2 rounded-full text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 bg-primary/10 dark:bg-primary/10/30 text-primary dark:text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
             <Video className="h-4 w-4" />
             {isVi ? '25+ Ngành Nghề' : '25+ Industries'}
           </div>
@@ -102,7 +102,7 @@ export default async function AiVideoHubPage({ params }: PageProps) {
           </p>
           <Link
             href="/signup"
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full text-lg font-semibold transition-colors shadow-lg hover:shadow-xl"
+            className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/10 text-white px-8 py-4 rounded-full text-lg font-semibold transition-colors shadow-lg hover:shadow-xl"
           >
             {isVi ? 'Bắt Đầu Miễn Phí' : 'Start Free'}
             <ArrowRight className="h-5 w-5" />
@@ -114,7 +114,7 @@ export default async function AiVideoHubPage({ params }: PageProps) {
       <section className="py-16 lg:py-24 bg-white dark:bg-gray-950">
         <div className="container mx-auto px-4">
           <div className="flex items-center gap-3 mb-8 max-w-6xl mx-auto">
-            <Search className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            <Search className="h-6 w-6 text-primary dark:text-primary" />
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
               {isVi ? 'Chọn Ngành Của Bạn' : 'Choose Your Industry'}
             </h2>
@@ -124,12 +124,12 @@ export default async function AiVideoHubPage({ params }: PageProps) {
               <Link
                 key={niche.slug}
                 href={`/ai-video/${niche.slug}`}
-                className="group flex flex-col items-center gap-2 p-4 md:p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md transition-all text-center"
+                className="group flex flex-col items-center gap-2 p-4 md:p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-primary/30 dark:hover:border-primary/30 hover:shadow-md transition-all text-center"
               >
                 <span className="text-3xl md:text-4xl" role="img" aria-hidden="true">
                   {niche.emoji}
                 </span>
-                <span className="text-sm md:text-base font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                <span className="text-sm md:text-base font-medium text-gray-900 dark:text-white group-hover:text-primary dark:group-hover:text-primary transition-colors">
                   {niche.name}
                 </span>
               </Link>
@@ -139,19 +139,19 @@ export default async function AiVideoHubPage({ params }: PageProps) {
       </section>
 
       {/* CTA */}
-      <section className="py-16 bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-800 dark:to-blue-900">
+      <section className="py-16 bg-gradient-to-r from-primary to-primary dark:from-primary dark:to-primary">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
             {isVi ? 'Sẵn Sàng Phát Triển Với Video AI?' : 'Ready to Grow With AI Video?'}
           </h2>
-          <p className="text-blue-100 text-lg mb-8 max-w-xl mx-auto">
+          <p className="text-primary text-lg mb-8 max-w-xl mx-auto">
             {isVi
               ? 'Tham gia cùng hàng nghìn doanh nghiệp đang sử dụng Sophia AI Factory để tạo video marketing tự động.'
               : 'Join thousands of businesses using Sophia AI Factory to create automated marketing videos.'}
           </p>
           <Link
             href="/signup"
-            className="inline-flex items-center gap-2 bg-white text-blue-700 px-8 py-4 rounded-full text-lg font-semibold hover:bg-blue-50 transition-colors shadow-lg"
+            className="inline-flex items-center gap-2 bg-white text-primary px-8 py-4 rounded-full text-lg font-semibold hover:bg-primary/10 transition-colors shadow-lg"
           >
             {isVi ? 'Bắt Đầu Miễn Phí' : 'Start Free Today'}
             <ArrowRight className="h-5 w-5" />

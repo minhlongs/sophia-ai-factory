@@ -89,7 +89,7 @@ const JobStatusBadge = ({ status }: { status: string }) => {
       );
     case 'processing':
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 dark:bg-primary/10 text-primary dark:text-primary">
           <Loader2 className="w-3 h-3 motion-safe:animate-spin" aria-hidden="true" />
           Processing
         </span>

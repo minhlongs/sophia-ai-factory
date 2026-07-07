@@ -105,12 +105,12 @@ export function PricingCard({
       duration={500}
       className={`card-hover relative flex flex-col rounded-2xl border p-8 transition-all duration-300 backdrop-blur-md shadow-2xl ${
         popular
-          ? "border-primary-500/50 bg-gradient-to-b from-violet-600/[0.08] to-violet-950/[0.04] shadow-violet-500/10 hover:shadow-violet-500/25 hover:border-primary-400 hover:scale-[1.02]"
+          ? "border-primary-500/50 bg-gradient-to-b from-primary/[0.08] to-primary/[0.04] shadow-primary/10 hover:shadow-primary/25 hover:border-primary-400 hover:scale-[1.02]"
           : "border-border bg-gradient-to-b from-muted/30 to-muted/10 hover:border-primary/30 hover:shadow-primary/5 hover:scale-[1.01]"
       }`}
     >
       {popular && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-violet-600 to-cyan-500 shadow-md shadow-violet-500/30 px-4 py-1 text-sm font-semibold text-white">
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-primary to-accent shadow-md shadow-primary/30 px-4 py-1 text-sm font-semibold text-white">
           {t("pricing.popular")}
         </span>
       )}
@@ -220,7 +220,7 @@ export function PricingCard({
         aria-label={`${loading ? "Processing" : "Subscribe to"} ${name} plan`}
         className={`mt-8 w-full rounded-lg py-3 font-semibold transition-all duration-300 active:scale-[0.98] ${
           popular
-            ? "bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white shadow-lg shadow-violet-500/25 hover:scale-[1.02]"
+            ? "bg-gradient-to-r from-primary to-accent hover:from-primary hover:to-accent text-white shadow-lg shadow-primary/25 hover:scale-[1.02]"
             : "bg-muted/30 hover:bg-muted/50 text-foreground border border-border hover:border-border hover:scale-[1.02]"
         } disabled:cursor-not-allowed disabled:opacity-50`}
       >

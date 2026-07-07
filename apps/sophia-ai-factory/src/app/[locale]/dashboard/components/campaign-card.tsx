@@ -131,12 +131,12 @@ export function CampaignCard({ campaign, onSelect }: CampaignCardProps) {
               value={progress}
               className={cn(
                 "h-2",
-                progressStatus === 'active' && "bg-blue-100 dark:bg-blue-900/30",
+                progressStatus === 'active' && "bg-primary/10 dark:bg-primary/10/30",
                 progressStatus === 'complete' && "bg-green-100 dark:bg-green-900/30",
                 progressStatus === 'error' && "bg-red-100 dark:bg-red-900/30"
               )}
               indicatorClassName={cn(
-                progressStatus === 'active' && "bg-blue-600 dark:bg-blue-400",
+                progressStatus === 'active' && "bg-primary/10 dark:bg-primary/10",
                 progressStatus === 'complete' && "bg-green-600 dark:bg-green-400",
                 progressStatus === 'error' && "bg-red-600 dark:bg-red-400"
               )}
@@ -158,7 +158,7 @@ export function CampaignCard({ campaign, onSelect }: CampaignCardProps) {
               href={campaign.video_url!}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+              className="flex items-center gap-1 text-xs text-primary dark:text-primary hover:text-primary dark:hover:text-primary transition-colors"
               onClick={(e) => e.stopPropagation()}
             >
               <PlayCircle className="w-3.5 h-3.5" />

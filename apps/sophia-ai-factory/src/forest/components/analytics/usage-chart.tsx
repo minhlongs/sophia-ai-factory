@@ -65,14 +65,14 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
         <p className="text-sm font-medium text-foreground mb-2">{label}</p>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-blue-500" />
+            <div className="w-3 h-3 rounded-full bg-primary/10" />
             <span className="text-xs text-muted-foreground">Requests:</span>
             <span className="text-xs font-medium text-foreground">
               {data.requests.toLocaleString()}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-purple-500" />
+            <div className="w-3 h-3 rounded-full bg-primary/40" />
             <span className="text-xs text-muted-foreground">Credits:</span>
             <span className="text-xs font-medium text-foreground">
               {data.credits.toLocaleString()}

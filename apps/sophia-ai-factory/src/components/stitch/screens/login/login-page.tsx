@@ -14,20 +14,20 @@ export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
         className="fixed inset-0 pointer-events-none overflow-hidden"
         aria-hidden="true"
       >
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-indigo-500/5 rounded-full blur-[120px]" />
-        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-indigo-500/5 rounded-full blur-[120px]" />
+        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-amber-500/5 rounded-full blur-[120px]" />
+        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-amber-500/5 rounded-full blur-[120px]" />
       </div>
 
       <div className="w-full max-w-[440px] relative z-10">
-        {/* Stitch card — indigo-dark theme */}
+        {/* Stitch card — amber-dark theme */}
         <div
-          className="rounded-[12px] border border-zinc-800 bg-[#18181B] p-8 md:p-10 shadow-2xl transition-all duration-500 hover:shadow-indigo-900/10"
+          className="rounded-[12px] border border-zinc-800 bg-[#18181B] p-8 md:p-10 shadow-2xl transition-all duration-500 hover:shadow-amber-900/10"
           aria-label={t('title')}
         >
           {/* Logo + Header */}
           <div className="flex flex-col items-center mb-8">
             {/* Brand icon */}
-            <div className="w-10 h-10 mb-6 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <div className="w-10 h-10 mb-6 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
               <svg
                 className="w-5 h-5 text-white"
                 viewBox="0 0 24 24"

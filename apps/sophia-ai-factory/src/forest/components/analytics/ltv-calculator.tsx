@@ -20,8 +20,8 @@ const TIERS: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER'];
 
 const TIER_COLORS: Record<Tier, string> = {
   BASIC: 'bg-muted text-foreground',
-  PREMIUM: 'bg-blue-100 text-blue-700',
-  ENTERPRISE: 'bg-purple-100 text-purple-700',
+  PREMIUM: 'bg-primary/10 text-primary',
+  ENTERPRISE: 'bg-primary/10 text-primary',
   MASTER: 'bg-amber-100 text-amber-700',
 };
 

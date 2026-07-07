@@ -28,12 +28,12 @@ interface TemplateCardProps {
 }
 
 const CATEGORY_GRADIENTS: Record<string, string> = {
-  welcome: 'from-blue-500 to-cyan-500',
+  welcome: 'from-primary to-accent',
   product: 'from-purple-500 to-pink-500',
   seasonal: 'from-orange-500 to-yellow-500',
   promotion: 'from-red-500 to-orange-500',
   viral: 'from-green-500 to-teal-500',
-  video: 'from-indigo-500 to-purple-500',
+  video: 'from-primary to-accent',
   default: 'from-gray-500 to-slate-500',
 };
 

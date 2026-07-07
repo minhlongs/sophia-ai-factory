@@ -66,7 +66,7 @@ function getSectionIcon(heading: string): React.ReactNode {
     return <TrendingUp className="w-4 h-4 text-emerald-500" />;
   }
   if (lower.includes('campaign') || lower.includes('chiến dịch')) {
-    return <Activity className="w-4 h-4 text-blue-500" />;
+    return <Activity className="w-4 h-4 text-primary" />;
   }
   if (lower.includes('issue') || lower.includes('vấn đề') || lower.includes('issue')) {
     return <AlertTriangle className="w-4 h-4 text-amber-500" />;

@@ -28,7 +28,7 @@ const STATUS_BADGE: Record<HandoverStatus, string> = {
 
 const SOURCE_CONFIG: Record<HandoverSource, { label: { vi: string; en: string }; style: string; icon: 'zap' | 'user' }> = {
   auto_payment: { label: { vi: 'Tự động', en: 'Auto' }, style: 'bg-emerald-900/40 text-emerald-300 border-emerald-500/30', icon: 'zap' },
-  auto_signup:  { label: { vi: 'Tự đăng ký', en: 'Self-signup' }, style: 'bg-blue-900/40 text-blue-300 border-blue-500/30', icon: 'zap' },
+  auto_signup:  { label: { vi: 'Tự đăng ký', en: 'Self-signup' }, style: 'bg-primary/10 text-primary border-primary/30', icon: 'zap' },
   manual:       { label: { vi: 'Thủ công', en: 'Manual' }, style: 'bg-muted-800 text-muted-foreground-400 border-border-600', icon: 'user' },
 };
 

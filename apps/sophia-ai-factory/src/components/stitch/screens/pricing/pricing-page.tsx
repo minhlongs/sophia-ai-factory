@@ -19,12 +19,12 @@ interface PricingTier {
   featureCount: number;
 }
 
-/* ── Tier data (prices stay in code; text from translation) ─────────────────── */
+/* ── Tier data (canonical prices from unified-limits.ts) ────────────────────── */
 
 const TIERS: PricingTier[] = [
-  { id: 'basic', popular: false, monthlyPrice: 29, yearlyPrice: 23, featureCount: 3 },
-  { id: 'premium', popular: true, monthlyPrice: 79, yearlyPrice: 63, featureCount: 4 },
-  { id: 'enterprise', popular: false, monthlyPrice: 199, yearlyPrice: 159, featureCount: 4 },
+  { id: 'basic', popular: false, monthlyPrice: 199, yearlyPrice: 159, featureCount: 3 },
+  { id: 'premium', popular: true, monthlyPrice: 399, yearlyPrice: 319, featureCount: 4 },
+  { id: 'enterprise', popular: false, monthlyPrice: 799, yearlyPrice: 639, featureCount: 4 },
   { id: 'master', popular: false, monthlyPrice: null, yearlyPrice: null, featureCount: 3 },
 ];
 
@@ -33,8 +33,8 @@ const TIERS: PricingTier[] = [
 const FAQ_INDICES = [0, 1, 2, 3] as const;
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   PricingPage
-   ═══════════════════════════════════════════════════════════════════════════════ */
+PricingPage
+═══════════════════════════════════════════════════════════════════════════════ */
 
 export default function PricingPage() {
   const t = useTranslations('stitch.pricingPage');
@@ -201,8 +201,8 @@ export default function PricingPage() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   PricingCard — individual tier card
-   ═══════════════════════════════════════════════════════════════════════════════ */
+PricingCard — individual tier card
+═══════════════════════════════════════════════════════════════════════════════ */
 
 interface PricingCardProps {
   tier: PricingTier;

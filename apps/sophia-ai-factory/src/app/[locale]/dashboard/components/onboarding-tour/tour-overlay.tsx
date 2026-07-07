@@ -83,7 +83,7 @@ export function TourOverlay({
 
         {/* Step content */}
         <div className="min-h-[90px] mb-4">
-          <p className="text-xs font-medium text-primary-600 dark:text-violet-400 mb-2">
+          <p className="text-xs font-medium text-primary-600 dark:text-primary mb-2">
             {t('progress', { current: step, total: TOTAL_STEPS })}
           </p>
           <h3 className="text-base font-semibold text-muted-foreground-900 dark:text-slate-100 mb-2">
@@ -102,7 +102,7 @@ export function TourOverlay({
             <button
               onClick={() => onActionNav(current.actionHref!)}
               disabled={completing}
-              className="w-full cursor-pointer py-2 px-4 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="w-full cursor-pointer py-2 px-4 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-primary to-primary hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {t(current.actionKey)}
             </button>

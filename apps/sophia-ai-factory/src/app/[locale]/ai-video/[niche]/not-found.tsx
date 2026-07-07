@@ -22,7 +22,7 @@ export default function NicheNotFound() {
         </p>
         <Link
           href="/"
-          className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold transition-colors"
+          className="inline-flex items-center gap-2 bg-primary/10 hover:bg-primary/10 text-white px-6 py-3 rounded-full font-semibold transition-colors"
         >
           Back to Home / Về Trang Chủ
         </Link>

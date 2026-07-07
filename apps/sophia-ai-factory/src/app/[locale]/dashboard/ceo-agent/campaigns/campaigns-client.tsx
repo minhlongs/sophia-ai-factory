@@ -30,7 +30,7 @@ interface CampaignsClientProps {
 function StatusBadge({ status }: { status: CeoCampaign['status'] }) {
   const styles: Record<string, { bg: string; text: string }> = {
     draft: { bg: 'bg-gray-100', text: 'text-gray-600' },
-    generating: { bg: 'bg-blue-50', text: 'text-blue-600' },
+    generating: { bg: 'bg-primary/10', text: 'text-primary' },
     completed: { bg: 'bg-emerald-50', text: 'text-emerald-600' },
     failed: { bg: 'bg-red-50', text: 'text-red-600' },
   };
@@ -102,7 +102,7 @@ export function CampaignsClient({
           {!showForm && canCreate && (
             <button
               onClick={() => setShowForm(true)}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/80"
             >
               <Plus className="h-4 w-4" aria-hidden />
               {createNewLabel}
@@ -128,7 +128,7 @@ export function CampaignsClient({
             <button type="button" onClick={() => setShowForm(false)} disabled={isPending}
               className="px-4 py-2 text-sm text-gray-600">{cancelLabel}</button>
             <button type="submit" disabled={isPending}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
               {createCta}
             </button>
           </div>
@@ -156,7 +156,7 @@ export function CampaignsClient({
                   )}
                   {campaign.status === 'completed' && campaign.generated_script && (
                     <details className="mt-3">
-                      <summary className="cursor-pointer text-xs text-blue-600 hover:underline">View script</summary>
+                      <summary className="cursor-pointer text-xs text-primary hover:underline">View script</summary>
                       <pre className="mt-2 whitespace-pre-wrap rounded-lg bg-gray-50 p-3 text-xs text-gray-700">
                         {campaign.generated_script}
                       </pre>

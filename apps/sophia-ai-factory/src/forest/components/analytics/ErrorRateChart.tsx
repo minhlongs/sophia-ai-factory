@@ -86,7 +86,7 @@ export function ErrorRateChart({
               <span className="font-mono text-red-500">{errors}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
-              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <div className="w-2 h-2 rounded-full bg-primary/10" />
               <span>Requests:</span>
               <span className="font-mono">{requests}</span>
             </div>

@@ -35,7 +35,7 @@ export function HelpVideosLibrary({ videos, locale }: HelpVideosLibraryProps) {
               key={video.id}
               type="button"
               onClick={() => setSelected(video)}
-              className="group relative rounded-xl overflow-hidden border border-border-800 bg-muted-900/60 hover:border-primary-500/60 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-violet-500"
+              className="group relative rounded-xl overflow-hidden border border-border-800 bg-muted-900/60 hover:border-primary-500/60 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-primary"
               aria-label={title}
             >
               {/* Thumbnail */}

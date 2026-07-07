@@ -76,9 +76,9 @@ export async function DashboardSetupSteps({ hasApiKeys, sopCount }: DashboardSet
               <div className={`mb-3 flex h-9 w-9 items-center justify-center rounded-full ${
                 step.completed
                   ? 'bg-green-100 dark:bg-green-900/30'
-                  : 'bg-blue-100 dark:bg-blue-900/30'
+                  : 'bg-primary/10 dark:bg-primary/10/30'
               }`}>
-                <Icon className={`w-4 h-4 ${step.completed ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`} />
+                <Icon className={`w-4 h-4 ${step.completed ? 'text-green-600 dark:text-green-400' : 'text-primary dark:text-primary'}`} />
               </div>
               <p className="text-xs text-muted-foreground-500 dark:text-slate-500 mb-0.5">
                 Step {index + 1}
@@ -92,7 +92,7 @@ export async function DashboardSetupSteps({ hasApiKeys, sopCount }: DashboardSet
               {!step.completed && (
                 <Link
                   href={step.href}
-                  className="inline-block cursor-pointer text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors duration-150"
+                  className="inline-block cursor-pointer text-xs font-medium text-primary dark:text-primary hover:text-primary dark:hover:text-primary transition-colors duration-150"
                 >
                   {t(step.ctaKey as Parameters<typeof t>[0])} &rarr;
                 </Link>
