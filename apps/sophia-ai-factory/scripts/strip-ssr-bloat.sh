@@ -78,6 +78,11 @@ strip_sentry() {
     # breaks hashed module references (Cannot find module '@sentry/nextjs-xxxxx').
     for f in $(find "$dir" \( -name "*sentry*" -o -name "*SENTRY*" \) -type f ! -name "*.map" 2>/dev/null); do
       [ -f "$f" ] || continue
+      # Skip interop shim files (contain __import_unsupported or CJS→ESM helpers)
+      if grep -q "__import_unsupported\|__commonJS\|__esm\|__defProp" "$f" 2>/dev/null; then
+        echo "  [skip interop] $f"
+        continue
+      fi
       local size=$(wc -c < "$f")
       if [ "$size" -gt 100000 ]; then
         saved=$((saved + size))
