@@ -458,6 +458,11 @@ npx @opennextjs/cloudflare build --skipNextBuild --noMinify
 echo "==> inject-scheduled-handler"
 node scripts/inject-scheduled-handler.mjs
 
+# ─── Step 3.4: Inject interop shim polyfill (guards against __import_unsupported errors)
+# Fixes: ReferenceError on __import_unsupported when CJS→ESM interop code was stripped.
+echo "==> inject-interop-shim"
+node scripts/inject-interop-shim.mjs 2>>"$DEPLOY_LOG"
+
 # ─── Step 3.5: Secondary safety-net strip (post-build, mitigation) ───────
 # Some esbuild inlining may still pull in full library code. Strip as a
 # second defense — less effective but catches anything that slipped through.
