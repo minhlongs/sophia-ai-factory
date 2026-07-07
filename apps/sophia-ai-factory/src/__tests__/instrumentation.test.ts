@@ -1,6 +1,5 @@
 /**
  * instrumentation.ts tests.
- *
  * Tests the Next.js instrumentation register hook.
  *
  * @vitest-environment node
@@ -8,14 +7,11 @@
 
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createRequire } from 'node:module';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Resolve project-root instrumentation.ts (vitest @ alias resolves to ./src)
 const _dir = path.dirname(fileURLToPath(import.meta.url));
 const instrumentationPath = path.join(_dir, '..', '..', 'instrumentation.ts');
 
-// Hoisted mocks — must be top-level so vitest hoisting works
 const mocks = vi.hoisted(() => ({
   mockInitializeOTel: vi.fn(),
 }));
@@ -25,15 +21,6 @@ vi.mock('@/seed/telemetry/opentelemetry-setup', () => ({
   getTracer: vi.fn(),
   startSpan: vi.fn(),
 }));
-
-/**
- * TDD: Tests for the Next.js instrumentation register hook.
- *
- * Phases:
- *  - RED:    test "calls initializeOTel" fails because register() is no-op
- *  - GREEN:  after Phase 02 fix, register() calls initializeOTel() with try/catch
- *  - REFACT: verify graceful failure path
- */
 
 describe('instrumentation.ts — register hook', () => {
   beforeEach(() => {
@@ -47,7 +34,7 @@ describe('instrumentation.ts — register hook', () => {
     expect(typeof mod.register).toBe('function');
   });
 
-  it('register() should call initializeOTel after fix', async () => {
+  it('register() calls initializeOTel in Node.js runtime', async () => {
     mocks.mockInitializeOTel.mockResolvedValue(undefined);
 
     const mod = await import(instrumentationPath);
@@ -56,11 +43,30 @@ describe('instrumentation.ts — register hook', () => {
     expect(mocks.mockInitializeOTel).toHaveBeenCalledTimes(1);
   });
 
-  it('register() should not throw if initializeOTel fails', async () => {
+  it('register() does not throw if initializeOTel fails', async () => {
     mocks.mockInitializeOTel.mockRejectedValue(new Error('No API key'));
 
     const mod = await import(instrumentationPath);
-    // OTEL failure is non-fatal — app must still serve traffic
     await expect(mod.register()).resolves.toBeUndefined();
+  });
+
+  it('register() skips OTel in Cloudflare Workers runtime', async () => {
+    const origProcess = (globalThis as any).process;
+    const origWindow = (globalThis as any).window;
+    const origFetch = (globalThis as any).fetch;
+    try {
+      delete (globalThis as any).process;
+      (globalThis as any).window = undefined;
+      (globalThis as any).fetch = () => Promise.resolve(new Response());
+
+      vi.resetModules();
+      const mod = await import(instrumentationPath);
+      await mod.register();
+      expect(mocks.mockInitializeOTel).not.toHaveBeenCalled();
+    } finally {
+      (globalThis as any).process = origProcess;
+      (globalThis as any).window = origWindow;
+      (globalThis as any).fetch = origFetch;
+    }
   });
 });
