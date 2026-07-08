@@ -169,7 +169,7 @@ function CampaignCard({
   const badgeClass = campaign.status === 'live'
     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
     : campaign.status === 'paused'
-    ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+    ? 'bg-primary/10 text-primary border-primary/20'
     : isDone
     ? 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
     : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20';

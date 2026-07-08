@@ -27,27 +27,43 @@ const nextConfig: NextConfig = {
   /* config options here */
   output: 'standalone',
   outputFileTracingRoot: path.resolve(__dirname),
+
   // Replace @upstash/redis with stub to avoid uncrypto bundling issues on Cloudflare
   // (Redis not used in production on Sophia — features disabled via env)
   webpack: (config: Configuration) => {
     (config.resolve!.alias as Record<string, string>)['@upstash/redis'] = path.resolve(__dirname, 'src/lib/redis-stub.ts');
     return config;
   },
+
   // M1 16GB workaround: reactCompiler doubles webpack memory pressure. Disable when SKIP_RC=1.
   reactCompiler: process.env.SKIP_RC === '1' ? false : true,
+
+  // ─────────────────────────────────────────────────────────────────
+  // serverExternalPackages — heavy libs that MUST NOT be inlined into
+  // handler.mjs.  Turbopack in Next.js 16+ honors this natively.
+  //
+  // ⚠ Managed pair: opennextjs/cloudflare's `nodejs_compatibility` pass
+  // ALREADY externalizes d3/framer-motion/three/etc. based on Wildcard
+  // detection. Adding them here again triggers a "duplicate" panic from
+  // Turbopack. Keep ONLY packages that are NOT in opennextjs wildcard.
+  // ─────────────────────────────────────────────────────────────────
   serverExternalPackages: [
-    // Pure client-side libs — traced into server bundle by nft but never
-    // executed on the server. Externalizing lets esbuild stub them safely,
-    // reducing the workerd module compilation footprint.
-    'html2canvas', 'jszip', 'framer-motion', 'd3', 'd3-*',
-    // DB clients incompatible with Cloudflare Workers (no node:fs)
-    'better-sqlite3',
+    // Heavy server-incompatible libs. serverExternalPackages is the BUNDLE-TIME
+    // mechanism that Turbopack honors.
+    'html2canvas', 'jszip', 'better-sqlite3',
+    // serverExternalPackages as defense-in-depth for any @sentry/*
+    // (also bundled by opennextjs/cloudflare's Sentry integration)
+    '@sentry/nextjs', '@sentry/core', '@sentry/react',
+    // Unused client-side packages that Turbopack still traces into server bundle
+    'firebase', 'firebase-*', '@prisma/client', 'prisma',
+    '@upstash/redis', 'upstash', 'uncrypto',
     // Better Auth — externalized so esbuild can resolve workerd-conditional
     // sub-path exports (e.g. @better-auth/core/instrumentation) that
     // copyWorkerdPackages never copies into the output node_modules.
     '@better-auth/kysely-adapter',
     '@better-auth/core',
   ],
+
   // Gated by scripts/deploy-with-sha.sh Step 0.5 (`npm run type-check`).
   // Next's in-build typecheck is redundant once the gate runs — and was the
   // M1 16GB OOM trigger during deploy:full. Removing it from the inner build
@@ -55,6 +71,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
@@ -68,6 +85,7 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+
   // Auth aliases — /signup intentionally NOT redirected: [locale]/signup/page.tsx
   // handles it with query-param preservation (affiliate refs, tab=signup).
   // A blanket next.config redirect strips locale AND query params.
@@ -99,38 +117,32 @@ const nextConfig: NextConfig = {
       // Locale prefix always present via next-intl localePrefix: 'always'.
     ];
   },
+
   headers() {
     return [
       // Immutable cache for hashed static assets (CDN Layer 9)
       {
         source: '/_next/static/:path*',
         headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
       {
         source: '/static/:path*',
         headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
       },
+
       // CDN cache for public marketing pages (s-maxage=60, stale-while-revalidate=600).
       // Auth-gated routes (/dashboard/*, /auth/*, /onboarding/*, /welcome/*) keep Cloudflare default no-store.
       {
         source: '/(|en|vi)(|/pricing|/guide|/guide/:path*|/blog|/blog/:path*|/privacy|/terms|/status|/affiliate-discovery)',
         headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, s-maxage=60, stale-while-revalidate=600',
-          },
+          { key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=600' },
         ],
       },
+
       {
         source: '/:path*',
         headers: [
@@ -163,20 +175,20 @@ if (process.env.NODE_ENV === 'production' && process.env.SKIP_SENTRY_BUILD === '
 const finalConfig = process.env.SKIP_SENTRY_BUILD === '1'
   ? composedConfig
   : withSentryConfig(composedConfig, {
-      // Sentry build-time options
-      org: process.env.SENTRY_ORG,
-      project: process.env.SENTRY_PROJECT,
-      authToken: process.env.SENTRY_AUTH_TOKEN,
-      // Don't print Sentry logs during build (reduce CI noise)
-      silent: true,
-      // Upload source maps to Sentry then strip from bundle (fail-fast on upload errors)
-      sourcemaps: {},
-      // Upload wider set of client-side source maps
-      widenClientFileUpload: true,
-      // Disable telemetry in CI builds; Sentry v8 auto-skips plugin in dev
-      telemetry: false,
-      // Note: The plugin's default behavior is to throw on upload errors (fail-fast).
-      // No explicit `throwOnError` option exists; errors propagate naturally.
-    });
+    // Sentry build-time options
+    org: process.env.SENTRY_ORG,
+    project: process.env.SENTRY_PROJECT,
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+    // Don't print Sentry logs during build (reduce CI noise)
+    silent: true,
+    // Upload source maps to Sentry then strip from bundle (fail-fast on upload errors)
+    sourcemaps: {},
+    // Upload wider set of client-side source maps
+    widenClientFileUpload: true,
+    // Disable telemetry in CI builds; Sentry v8 auto-skips plugin in dev
+    telemetry: false,
+    // Note: The plugin's default behavior is to throw on upload errors (fail-fast).
+    // No explicit `throwOnError` option exists; errors propagate naturally.
+  });
 
 export default finalConfig;

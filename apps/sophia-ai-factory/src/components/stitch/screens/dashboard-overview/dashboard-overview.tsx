@@ -84,7 +84,7 @@ const campaignIconMap: Record<string, React.ComponentType<{ className?: string }
 
 const STATUS_STYLES: Record<string, string> = {
   live: 'bg-emerald-500/10 text-emerald-400',
-  paused: 'bg-amber-500/10 text-amber-400',
+  paused: 'bg-saigon-amber/10 text-saigon-amber',
   draft: 'bg-zinc-500/10 text-zinc-400',
 };
 
@@ -92,7 +92,7 @@ const STATUS_STYLES: Record<string, string> = {
  * Primary chart gradient ID
  * ─────────────────────────────────────────────────────────────── */
 
-const CHART_GRADIENT_ID = 'indigoChartGradient';
+const CHART_GRADIENT_ID = 'saigonChartGradient';
 const CHART_LABEL_COUNT = 5;
 
 /* ════════════════════════════════════════════════════════════════════

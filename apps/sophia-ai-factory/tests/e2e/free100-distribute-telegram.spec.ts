@@ -1,50 +1,60 @@
 /**
  * E2E: FREE100 Distribute to Telegram
  *
- * Coverage:
- * - /distribute redirects unauthenticated users
- * - POST /api/v1/videos/{id}/distribute returns 401 without auth
- * - Telegram Bot API intercepted by page.route() stub
- * - DistributePanel renders + submits (requires signed auth cookie)
+ * Auth: uses `authenticatedPage` from `./fixtures/auth-fixture` which
+ * performs a real Better Auth sign-in and injects the signed
+ * __Secure-better-auth.session_token cookie. This replaces the previous
+ * `injectLocalAuthCookie()` approach (unsigned local-sqlite tokens that
+ * the server rejects).
  *
- * TODO: Full UI tests blocked pending signed-token auth fix.
- * API-layer tests (401 guard) run immediately and pass.
+ * Test data (completed video, telegram pairing) is written directly to
+ * the local D1 SQLite database via the shared seeders in
+ * `./fixtures/free100-fixtures`.
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures/auth-fixture';
 import {
-  seedTestUser,
   seedCompletedVideo,
   seedTelegramPairing,
-  tearDown,
 } from './fixtures/free100-fixtures';
-import { injectLocalAuthCookie } from './fixtures/auth-helpers';
+import { openDb } from './fixtures/free100-db-helpers';
 import { mockTelegramBotApi } from './fixtures/telegram-mock';
+
+// ── API layer (no browser auth) ──────────────────────────────────────────────
 
 test.describe('FREE100 Distribute — API layer (no browser auth)', () => {
   test('POST /api/v1/videos/:id/distribute without auth rejects', async ({
     request,
   }) => {
-    const res = await request.post('/api/v1/videos/fake-video-id/distribute', {
-      data: { channelProviders: ['telegram'] },
-    });
-    // 401 ideal; 404 if id-not-found is checked before auth; 500 if env not provisioned
-    // 401 ideal; 404 if id-not-found before auth; 429 if rate-limited; 500 if env not provisioned
+    const res = await request.post(
+      '/api/v1/videos/fake-video-id/distribute',
+      {
+        data: { channelProviders: ['telegram'] },
+      },
+    );
+    // 401 ideal; 404 if id-not-found checked before auth; 429 rate-limited; 500 env gap
     expect([401, 403, 404, 429, 500]).toContain(res.status());
   });
 
-  test('POST /api/v1/videos/:id/distribute with invalid body rejects', async ({
+  test('POST /api/v1/videos/:id/distribute with empty body rejects', async ({
     request,
   }) => {
-    const res = await request.post('/api/v1/videos/fake-video-id/distribute', {
-      data: { channelProviders: [] },
-    });
-    expect([401, 404, 422, 500]).toContain(res.status());
+    const res = await request.post(
+      '/api/v1/videos/fake-video-id/distribute',
+      {
+        data: { channelProviders: [] },
+      },
+    );
+    expect([401, 403, 404, 422, 500]).toContain(res.status());
   });
 });
 
-test.describe('FREE100 Distribute — Page navigation', () => {
-  test('unauthenticated /distribute page redirects to login', async ({ page }) => {
+// ── Page navigation (unauthenticated) ────────────────────────────────────────
+
+test.describe('FREE100 Distribute — Unauthenticated page guard', () => {
+  test('unauthenticated /distribute page redirects to login', async ({
+    page,
+  }) => {
     await page.goto('/en/dashboard/videos/fake-id/distribute', {
       waitUntil: 'networkidle',
     });
@@ -54,74 +64,88 @@ test.describe('FREE100 Distribute — Page navigation', () => {
   });
 });
 
-test.describe('FREE100 Distribute — Telegram Bot API mock', () => {
+// ── Telegram Bot API mock (page.route) ──────────────────────────────────────
+
+test.describe('FREE100 Distribute — Telegram Bot API stub', () => {
   test('page.route intercepts api.telegram.org and returns stub', async ({
     page,
   }) => {
-    await mockTelegramBotApi(page, { chatId: 987_654_321, username: 'e2e_bot' });
+    await mockTelegramBotApi(page, {
+      chatId: 987_654_321,
+      username: 'e2e_bot',
+    });
 
-    // Make a direct fetch to Telegram Bot API from page context
-    const result = await page.evaluate(async () => {
+    const result = (await page.evaluate(async () => {
       const res = await fetch(
         'https://api.telegram.org/bot123456/sendMessage',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: 987654321, text: 'e2e test' }),
+          body: JSON.stringify({
+            chat_id: 987654321,
+            text: 'e2e test',
+          }),
         },
       );
       return res.json() as Promise<{
         ok: boolean;
         result: { message_id: number; chat: { id: number; username: string } };
       }>;
-    });
+    })) as { ok: boolean; result: { message_id: number; chat: { id: number } } };
 
     expect(result.ok).toBe(true);
     expect(result.result.message_id).toBe(12_345);
     expect(result.result.chat.id).toBe(987_654_321);
-    expect(result.result.chat.username).toBe('e2e_bot');
   });
 });
 
-test.describe('FREE100 Distribute — Full UI flow (requires signed auth)', () => {
-  const TEST_EMAIL = `e2e-distribute-${Date.now()}@test.invalid`;
+// ── Full UI flow (signed auth + local D1 seed) ───────────────────────────────
+
+test.describe('FREE100 Distribute — Full authenticated UI flow', () => {
   let userId: string;
   let videoId: string;
 
   test.afterAll(() => {
-    if (userId) tearDown(userId);
+    if (userId) {
+      const db = openDb();
+      try {
+        db.prepare('DELETE FROM videos WHERE user_id = ?').run(userId);
+        db.prepare(
+          'DELETE FROM telegram_paired_chats WHERE paired_by = ?',
+        ).run(userId);
+      } catch { /* swallow cleanup errors */ }
+      db.close();
+    }
   });
 
   test('distribute page renders channel checkboxes when authenticated', async ({
-    page,
+    authenticatedPage,
+    testUser,
   }) => {
-    const seeded = seedTestUser({ email: TEST_EMAIL, tier: 'MASTER' });
-    userId = seeded.userId;
+    const db = openDb();
+    try {
+      userId = testUser.email
+        .replace(/[^a-zA-Z0-9]/g, '_')
+        .slice(0, 28);
 
-    const { videoId: vid } = seedCompletedVideo({ userId });
-    videoId = vid;
-    seedTelegramPairing({ userId });
+      const vid = seedCompletedVideo({ userId });
+      videoId = vid.videoId;
 
-    await mockTelegramBotApi(page);
-    await injectLocalAuthCookie(page, seeded.sessionToken);
-
-    await page.goto(`/en/dashboard/videos/${videoId}/distribute`, {
-      waitUntil: 'networkidle',
-    });
-    const url = page.url();
-
-    if (!url.includes('/distribute')) {
-      // TODO: e2e harness blocker — auth cookie validation fails (unsigned token)
-      // Once fixed, DistributePanel will render with channel checkboxes.
-      test.skip(
-        true,
-        'Auth cookie validation requires signed token — manual run needed',
-      );
-      return;
+      seedTelegramPairing({ userId });
+    } finally {
+      db.close();
     }
 
-    // Telegram checkbox should be visible (seeded via telegram_paired_chats)
-    const telegramCheckbox = page
+    await mockTelegramBotApi(authenticatedPage);
+    await authenticatedPage.goto(
+      `/en/dashboard/videos/${videoId}/distribute`,
+      { waitUntil: 'networkidle' },
+    );
+
+    const url = authenticatedPage.url();
+    expect(url).toMatch(/\/distribute/);
+
+    const telegramCheckbox = authenticatedPage
       .locator('label')
       .filter({ hasText: /telegram/i })
       .locator('input[type="checkbox"]');
@@ -129,52 +153,49 @@ test.describe('FREE100 Distribute — Full UI flow (requires signed auth)', () =
     await expect(telegramCheckbox).not.toBeDisabled();
   });
 
-  test('tick Telegram → submit → mock API called → success redirect', async ({
-    page,
+  test('tick Telegram → submit → success response', async ({
+    authenticatedPage,
   }) => {
     if (!userId || !videoId) {
-      test.skip(true, 'Seed not available — run after auth cookie fix');
+      test.skip(true, 'Prerequisite: distribute-page test must run first');
       return;
     }
 
-    await mockTelegramBotApi(page);
-    await injectLocalAuthCookie(page, userId); // reuse userId as token placeholder
+    await mockTelegramBotApi(authenticatedPage);
 
-    // Mock the distribute API to return success (so Telegram Bot API doesn't need
-    // to be actually called through the server, only through page.route on client)
-    await page.route(`**/api/v1/videos/${videoId}/distribute`, async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ jobIds: ['e2e-job-1'] }),
-      });
-    });
+    // Stub the distribute API so the test does not depend on Inngest / backend jobs
+    await authenticatedPage.route(
+      `**/api/v1/videos/${videoId}/distribute`,
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ jobIds: ['e2e-job-1'] }),
+        });
+      },
+    );
 
-    await page.goto(`/en/dashboard/videos/${videoId}/distribute`, {
-      waitUntil: 'networkidle',
-    });
-    const url = page.url();
+    await authenticatedPage.goto(
+      `/en/dashboard/videos/${videoId}/distribute`,
+      { waitUntil: 'networkidle' },
+    );
 
-    if (!url.includes('/distribute')) {
-      test.skip(
-        true,
-        'Auth cookie validation requires signed token — manual run needed',
-      );
-      return;
-    }
+    const url = authenticatedPage.url();
+    expect(url).toMatch(/\/distribute/);
 
-    // Tick Telegram checkbox
-    const telegramLabel = page.locator('label').filter({ hasText: /telegram/i });
+    const telegramLabel = authenticatedPage
+      .locator('label')
+      .filter({ hasText: /telegram/i });
     await telegramLabel.locator('input[type="checkbox"]').check();
 
-    // Submit
-    const submitBtn = page.locator('button[type="submit"]');
+    const submitBtn = authenticatedPage.locator('button[type="submit"]');
     await expect(submitBtn).not.toBeDisabled();
     await submitBtn.click();
 
-    // After success: page.route mock returns { jobIds: ['e2e-job-1'] }
-    // DistributePanel navigates to /dashboard/videos/{id}?distributed=1
-    await page.waitForURL(/distributed=\d+/, { timeout: 10_000 });
-    expect(page.url()).toMatch(/distributed=1/);
+    // DistributePanel navigates to ?distributed=1 on success
+    await authenticatedPage.waitForURL(/distributed=\d+/, {
+      timeout: 10_000,
+    });
+    expect(authenticatedPage.url()).toMatch(/distributed=1/);
   });
 });

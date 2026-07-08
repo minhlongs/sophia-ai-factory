@@ -1,69 +1,53 @@
-/**
- * instrumentation.ts tests.
- * Tests the Next.js instrumentation register hook.
- *
- * @vitest-environment node
- */
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+const instrumentationPath = '/Users/macbook/repos/sophia-ai-factory/apps/sophia-ai-factory/instrumentation.ts';
 
-const _dir = path.dirname(fileURLToPath(import.meta.url));
-const instrumentationPath = path.join(_dir, '..', '..', 'instrumentation.ts');
-
-const mocks = vi.hoisted(() => ({
-  mockInitializeOTel: vi.fn(),
-}));
-
-vi.mock('@/seed/telemetry/opentelemetry-setup', () => ({
-  initializeOTel: mocks.mockInitializeOTel,
-  getTracer: vi.fn(),
-  startSpan: vi.fn(),
-}));
-
-describe('instrumentation.ts — register hook', () => {
+describe('instrumentation.ts', () => {
   beforeEach(() => {
+    // Default: jsdom has no NEXT_RUNTIME → falls through to process.versions check (also absent) → Workers mode
+    delete (process.env as Record<string, string | undefined>).NEXT_RUNTIME;
     vi.resetModules();
-    mocks.mockInitializeOTel.mockReset();
   });
 
-  it('exports register function', async () => {
-    const mod = await import(instrumentationPath);
-    expect(mod.register).toBeDefined();
-    expect(typeof mod.register).toBe('function');
+  it('calls initializeOTel in Node.js runtime', async () => {
+    // Simulate Node.js: Next.js sets NEXT_RUNTIME=node in node builds
+    ;(process.env as Record<string, string | undefined>).NEXT_RUNTIME = 'node';
+
+    const fakeInit = vi.fn().mockResolvedValue(undefined);
+
+    // __setInitializeOTelForTests injects the mock directly into the module-scope cache,
+    // bypassing the dynamic import that vi.mock() cannot intercept through Vite aliases.
+    const { register, __setInitializeOTelForTests } = await import(instrumentationPath);
+    __setInitializeOTelForTests(fakeInit);
+
+    await register();
+
+    expect(fakeInit).toHaveBeenCalledTimes(1);
   });
 
-  it('register() calls initializeOTel in Node.js runtime', async () => {
-    mocks.mockInitializeOTel.mockResolvedValue(undefined);
+  it('does not throw if initializeOTel fails', async () => {
+    ;(process.env as Record<string, string | undefined>).NEXT_RUNTIME = 'node';
 
-    const mod = await import(instrumentationPath);
-    await mod.register();
+    const fakeInit = vi.fn().mockRejectedValue(new Error('OTel down'));
 
-    expect(mocks.mockInitializeOTel).toHaveBeenCalledTimes(1);
+    const { register, __setInitializeOTelForTests } = await import(instrumentationPath);
+    __setInitializeOTelForTests(fakeInit);
+
+    // OTel failure is non-fatal — register() must not throw
+    await expect(register()).resolves.toBeUndefined();
   });
 
-  it('register() does not throw if initializeOTel fails', async () => {
-    mocks.mockInitializeOTel.mockRejectedValue(new Error('No API key'));
+  it('skips OTel in Workers runtime', async () => {
+    // Simulate Cloudflare Workers: Next.js sets NEXT_RUNTIME=edge
+    ;(process.env as Record<string, string | undefined>).NEXT_RUNTIME = 'edge';
 
-    const mod = await import(instrumentationPath);
-    await expect(mod.register()).resolves.toBeUndefined();
-  });
+    const fakeInit = vi.fn();
 
-  it('register() skips OTel in Cloudflare Workers runtime', async () => {
-    const origProcess = (globalThis as any).process;
-    const savedVersions = origProcess?.versions;
-    try {
-      // Simulate Workers: Turbopack polyfills a minimal `process` but
-      // there is no `process.versions.node` string (present only in Node.js).
-      (globalThis as any).process = { versions: { ...savedVersions, node: undefined } };
+    const { register, __setInitializeOTelForTests } = await import(instrumentationPath);
+    __setInitializeOTelForTests(fakeInit);
 
-      vi.resetModules();
-      const mod = await import(instrumentationPath);
-      await mod.register();
-      expect(mocks.mockInitializeOTel).not.toHaveBeenCalled();
-    } finally {
-      (globalThis as any).process = origProcess;
-    }
+    // In Workers mode, register returns before calling initializeOTel
+    await register();
+    expect(fakeInit).not.toHaveBeenCalled();
   });
 });

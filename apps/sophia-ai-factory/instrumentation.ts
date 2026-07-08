@@ -9,26 +9,30 @@
 // bundled into the Cloudflare Worker. The static ESM graph must not
 // reference @opentelemetry/* packages in Workers runtime.
 let _initializeOTel: (() => Promise<void>) | null = null;
-async function getInitializeOTel() {
+async function getInitializeOTel(): Promise<void> {
   if (!_initializeOTel) {
     const mod = await import('@/seed/telemetry/opentelemetry-setup');
     _initializeOTel = mod.initializeOTel;
   }
-  return _initializeOTel;
+  // Invoke the cached initializer (safe — initializeOTel is idempotent).
+  // Previously this returned the function reference without calling it,
+  // so register() would await a function value that resolved immediately
+  // and fakeInit was never invoked in tests.
+  return _initializeOTel();
 }
 
-/**
- * Detect Cloudflare Workers edge runtime.
- *
- * Turbopack (used by Next.js in Workers builds) polyfills a minimal `process`
- * object, so `typeof process === 'undefined'` is unreliable. The reliable
- * discriminator is `process.versions?.node`: in Node.js it is a non-empty
- * string (e.g. "v22.15.0"); in Workers (even with the Turbopack polyfill)
- * the property does not exist.
- */
+/** Detect Cloudflare Workers edge runtime. */
 function isWorkersRuntime(): boolean {
-  const proc = (globalThis as unknown as { process?: { versions?: { node?: string } } })
-    .process;
+  // jsdom (test) and Node.js both have `process`. In both, `process.env`
+  // is the authoritative discriminator when set by the runtime:
+  //   Node.js build  → process.env.NEXT_RUNTIME = 'node'
+  //   Workers build  → process.env.NEXT_RUNTIME = 'edge'
+  // If neither is set (e.g. bare jsdom without Next.js runtime), process
+  // exists but process.versions.node is absent — treat as Workers to stay safe.
+  const proc = (globalThis as unknown as { process?: { env?: { NEXT_RUNTIME?: string }; versions?: { node?: string } } }).process;
+  if (proc?.env?.NEXT_RUNTIME === 'node') return false;
+  if (proc?.env?.NEXT_RUNTIME === 'edge') return true;
+  // No NEXT_RUNTIME set — fall back to process.versions.node absence (jsdom + Workers both lack it)
   return proc !== undefined && !proc.versions?.node;
 }
 
@@ -46,4 +50,20 @@ export async function register(): Promise<void> {
     // eslint-disable-next-line no-console
     console.error('[instrumentation] OTel init failed:', err);
   }
+}
+
+/**
+ * Test-only shim: inject an initializeOTel implementation directly into the
+ * module-scoped cache, bypassing the dynamic import entirely.
+ *
+ * WHY: vitest `vi.mock()` does not intercept dynamic `import()` calls resolved
+ * through Vite path aliases. Direct module-scope patching works because
+ * `_initializeOTel` is set at module level and consumed by `getInitializeOTel`.
+ *
+ * @internal — NOT part of the public API. Tests use this to verify
+ * Workers-detection and error paths without loading Node.js-only
+ * @opentelemetry/* packages.
+ */
+export function __setInitializeOTelForTests(impl?: () => Promise<void>): void {
+  _initializeOTel = impl ?? null;
 }

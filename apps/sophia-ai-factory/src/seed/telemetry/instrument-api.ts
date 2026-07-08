@@ -1,14 +1,16 @@
 /**
  * Instrument API route handlers with OpenTelemetry spans.
  * Wraps a Next.js App Router route handler to create spans and record metrics.
+ *
+ * getTracer() is safe to call synchronously: returns a no-op tracer in Workers
+ * runtime (where OTel is not initialized) and a real tracer in Node.js.
  */
 
-import { startSpan, getTracer } from '@/seed/telemetry/opentelemetry-setup';
+import type { Tracer } from '@opentelemetry/api';
 import { record as recordMetrics } from '@/seed/observability/telemetry/metrics';
+import { getTracer } from '@/seed/telemetry/opentelemetry-setup';
 
-/**
- * Options for instrumenting a route.
- */
+/** Options for instrumenting a route. */
 type AsyncHandler = (...args: never[]) => Promise<unknown>;
 
 function getResponseStatus(result: unknown): number {
@@ -29,19 +31,18 @@ export interface InstrumentationOptions {
 /**
  * Wrap an API route handler with tracing and metrics.
  * Usage:
- *   export const GET = instrumentRoute({ route: '/api/campaigns', method: 'GET' }, async (request) => {
- *     // handler logic
- *   });
+ * export const GET = instrumentRoute({ route: '/api/campaigns', method: 'GET' }, async (request) => {
+ *   // handler logic
+ * });
  */
 export function instrumentRoute<T extends AsyncHandler>(
   options: InstrumentationOptions,
-  handler: T
+  handler: T,
 ): T {
   return ((...args: Parameters<T>) => {
     const startTime = Date.now();
     const tracer = getTracer();
     const spanName = `api.${options.method.toLowerCase()}.${options.route.replace(/\//g, '.')}`;
-
     const span = tracer.startSpan(spanName, {
       attributes: {
         'http.method': options.method,
@@ -50,14 +51,10 @@ export function instrumentRoute<T extends AsyncHandler>(
       },
     });
 
-    // Attach span context to request headers for downstream fetch propagation
-    // (Next.js doesn't provide request object modification, but OTel fetch instrumentation picks up from context)
-
     let result: unknown;
     return handler(...args)
       .then((res: unknown) => {
         result = res;
-        // Record status based on response code if available
         const status = getResponseStatus(result);
         if (status >= 400) {
           span.setStatus({ code: 1 /* ERROR */, message: `HTTP ${status}` });

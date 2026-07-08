@@ -1,33 +1,36 @@
 /**
  * Instrument Inngest event handlers with OpenTelemetry spans.
+ *
+ * getTracer() is safe to call synchronously — returns a no-op tracer in
+ * Workers runtime (where OTel is not initialized).
  */
 
-import { startSpan, getTracer } from '@/seed/telemetry/opentelemetry-setup';
+import type { Tracer } from '@opentelemetry/api';
+import { getTracer } from '@/seed/telemetry/opentelemetry-setup';
 
 /**
  * Wrap an Inngest function handler with tracing.
  * The wrapper creates a span named after the event and records duration/errors.
  *
  * Usage:
- *   export const generateCampaign = instrumentInngest('generate_campaign', async ({ event, step }) => {
- *     // handler logic
- *   });
+ * export const generateCampaign = instrumentInngest('generate_campaign', async ({ event, step }) => {
+ *   // handler logic
+ * });
  */
 type AsyncHandler = (...args: never[]) => Promise<unknown>;
 
 export function instrumentInngest<T extends AsyncHandler>(
   eventName: string,
-  handler: T
+  handler: T,
 ): T {
   return ((...args: Parameters<T>) => {
     const tracer = getTracer();
     const span = tracer.startSpan(`inngest.${eventName}`, {
       attributes: {
         'inngest.event': eventName,
-        component: 'inngest',
+        'component': 'inngest',
       },
     });
-
     const startTime = Date.now();
 
     return handler(...args)
@@ -55,18 +58,16 @@ export function createInngestSpan(eventName: string) {
   const span = tracer.startSpan(`inngest.${eventName}`, {
     attributes: {
       'inngest.event': eventName,
-      component: 'inngest',
+      'component': 'inngest',
     },
   });
   const startTime = Date.now();
-  let isError = false;
 
   return {
     span,
     finish: (error?: Error) => {
       const duration = Date.now() - startTime;
       if (error) {
-        isError = true;
         span.recordException(error);
         span.setStatus({ code: 1, message: error.message });
       }
