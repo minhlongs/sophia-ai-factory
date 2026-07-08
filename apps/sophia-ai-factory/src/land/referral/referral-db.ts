@@ -39,10 +39,10 @@ export async function findReferrerByCode(code: string): Promise<{ referrerId: st
       .select('user_id, org_id')
       .eq('code', code)
       .eq('status', 'active')
-      .maybeSingle<{ user_id: string; org_id: string }>();
-    const data = await row;
+      .maybeSingle();
+    const data = row.data;
     if (!data) return null;
-    return { referrerId: data.user_id, orgId: data.org_id };
+    return { referrerId: data.user_id as string, orgId: data.org_id as string | null };
   } catch (err) {
     safeCatch('referral.findReferrerByCode')(err);
     logger.warn('[referral] findReferrerByCode failed', {

@@ -33,7 +33,12 @@ function isWorkersRuntime(): boolean {
   if (proc?.env?.NEXT_RUNTIME === 'node') return false;
   if (proc?.env?.NEXT_RUNTIME === 'edge') return true;
   // No NEXT_RUNTIME set — fall back to process.versions.node absence (jsdom + Workers both lack it)
-  return proc !== undefined && !proc.versions?.node;
+  // nodejs_compat polyfills process.versions.node in Workers, so absence
+  // is no longer a reliable signal. Use definitive Workers markers instead.
+  if (typeof (globalThis as Record<string, unknown>).cf !== 'undefined') return true; // CF Request.cf
+  if (typeof (globalThis as Record<string, unknown>).FF_DEBUG !== 'undefined') return true; // CF runtime flag
+  if (typeof (globalThis as Record<string, unknown>).EdgeRuntime !== 'undefined') return true; // CF edge
+  return false;
 }
 
 export async function register(): Promise<void> {

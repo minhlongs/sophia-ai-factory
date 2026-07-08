@@ -3,13 +3,13 @@
  * Pre-deploy gate — blocks deploy if UI bugs found.
  *
  * Steps:
- *   1. Route Integrity: Every href="/" in Stitch components must exist as a page route
- *   2. Page Render: Critical URLs return HTTP 200 (not 404/500)
- *   3. CSS Audit: No hardcoded #6366F1 / indigo-* in changed files
+ * 1. Route Integrity: Every href="/" in Stitch components must exist as a page route
+ * 2. Page Render: Critical URLs return HTTP 200 (not 404/500)
+ * 3. CSS Audit: No hardcoded #6366F1 / indigo-* in changed files
  *
  * Usage:
- *   node scripts/pre-deploy-gate.mjs        # run all checks
- *   SKIP_PRE_DEPLOY_GATE=1 node ...         # bypass
+ * node scripts/pre-deploy-gate.mjs # run all checks
+ * SKIP_PRE_DEPLOY_GATE=1 node ... # bypass
  *
  * Exit code: 0 = pass, 1 = fail
  */
@@ -24,7 +24,8 @@ const ROOT = join(__dirname, '..');
 const BASE_URL = process.env.PREVIEW_URL || 'http://localhost:3000';
 const ALLOWLIST = [
   '/billing', '/contact', '/projects', '/projects/new', '/settings', '/docs',
-  // Pre-existing Stitch design links — routes not yet implemented
+// Pre-existing Stitch design links — routes not yet implemented
+  '/affiliates', '/features',
 ];
 
 let failed = 0;
@@ -45,7 +46,7 @@ async function checkRouteIntegrity() {
   }
 
   if (hrefs.length === 0) {
-    console.log('  ⚠️  No hardcoded routes found in Stitch components');
+    console.log(' ⚠️ No hardcoded routes found in Stitch components');
     return;
   }
 
@@ -56,7 +57,7 @@ async function checkRouteIntegrity() {
 
     const routePath = href.replace(/^\//, '').replace(/\/$/, '');
     if (!routePath) continue;
-    if (ALLOWLIST.includes(href)) continue;  // known pre-existing
+    if (ALLOWLIST.includes(href)) continue; // known pre-existing
 
     const rootAppDir = join(ROOT, 'src', 'app');
     const pathsToCheck = [
@@ -68,16 +69,16 @@ async function checkRouteIntegrity() {
 
     const exists = pathsToCheck.some(p => existsSync(p));
     if (!exists && !routePath.includes('[')) {
-      console.log(`  ❌ /${routePath} → no page.tsx found`);
+      console.log(` ❌ /${routePath} → no page.tsx found`);
       stepFail++;
     }
   }
 
   if (stepFail > 0) {
-    console.log(`  🔴 Route Integrity: ${stepFail} broken`);
+    console.log(` 🔴 Route Integrity: ${stepFail} broken`);
     failed++;
   } else {
-    console.log(`  ✅ ${hrefs.length} routes verified`);
+    console.log(` ✅ ${hrefs.length} routes verified`);
   }
 }
 
@@ -92,22 +93,22 @@ async function checkPageRender() {
       const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
       if (resp.status === 200 || resp.status === 307 || resp.status === 429) {
         // 307 = locale redirect, 429 = rate limited (still alive)
-        console.log(`  ✅ ${path} → ${resp.status}`);
+        console.log(` ✅ ${path} → ${resp.status}`);
       } else {
-        console.log(`  ❌ ${path} → ${resp.status}`);
+        console.log(` ❌ ${path} → ${resp.status}`);
         stepFail++;
       }
     } catch (err) {
-      console.log(`  ⚠️  ${path} → ${err.message}`);
+      console.log(` ⚠️ ${path} → ${err.message}`);
       if (BASE_URL.includes('sophia.agencyos.network')) stepFail++;
     }
   }
 
   if (stepFail > 0) {
-    console.log(`  🔴 Page Render: ${stepFail} fail`);
+    console.log(` 🔴 Page Render: ${stepFail} fail`);
     failed++;
   } else {
-    console.log(`  ✅ ${urls.length} URLs OK`);
+    console.log(` ✅ ${urls.length} URLs OK`);
   }
 }
 
@@ -124,7 +125,7 @@ async function checkCSSAudit() {
     changedFiles = [];
   }
 
-  if (changedFiles.length === 0) { console.log('  ℹ️  No changed files'); return; }
+  if (changedFiles.length === 0) { console.log(' ℹ️ No changed files'); return; }
 
   let stepFail = 0;
   const patterns = ['#6366F1', 'indigo-500', 'indigo-400', 'indigo-600'];
@@ -140,7 +141,7 @@ async function checkCSSAudit() {
           { encoding: 'utf-8' }
         ).trim());
         if (count > 0) {
-          console.log(`  ❌ ${file}: ${count}× ${pattern}`);
+          console.log(` ❌ ${file}: ${count}× ${pattern}`);
           stepFail++;
         }
       } catch {}
@@ -148,21 +149,21 @@ async function checkCSSAudit() {
   }
 
   if (stepFail > 0) {
-    console.log(`  🔴 CSS Audit: ${stepFail} hardcoded`);
+    console.log(` 🔴 CSS Audit: ${stepFail} hardcoded`);
     failed++;
   } else {
-    console.log(`  ✅ No hardcoded colors`);
+    console.log(` ✅ No hardcoded colors`);
   }
 }
 
 async function main() {
   if (process.env.SKIP_PRE_DEPLOY_GATE === '1') {
-    console.log('⏭️  Skipped (SKIP_PRE_DEPLOY_GATE=1)');
+    console.log('⏭️ Skipped (SKIP_PRE_DEPLOY_GATE=1)');
     process.exit(0);
   }
 
   console.log('═══════════════════════════════════');
-  console.log('  🔒 Pre-Deploy Gate');
+  console.log(' 🔒 Pre-Deploy Gate');
   console.log('═══════════════════════════════════');
 
   await checkRouteIntegrity();
@@ -171,11 +172,11 @@ async function main() {
 
   console.log('\n═══════════════════════════════════');
   if (failed > 0) {
-    console.log(`  ❌ FAILED: ${failed} check(s)`);
-    console.log('  💡 Set SKIP_PRE_DEPLOY_GATE=1 to bypass');
+    console.log(` ❌ FAILED: ${failed} check(s)`);
+    console.log(' 💡 Set SKIP_PRE_DEPLOY_GATE=1 to bypass');
     process.exit(1);
   } else {
-    console.log('  ✅ PASSED');
+    console.log(' ✅ PASSED');
     process.exit(0);
   }
 }

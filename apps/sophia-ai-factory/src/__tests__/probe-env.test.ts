@@ -9,6 +9,7 @@ describe('vitest env probe', () => {
     console.log('process.versions?.node:', (proc as Record<string, { node?: string }>).versions?.node);
     console.log('isWorkersRuntime would return:', proc !== undefined && !(proc as Record<string, { node?: string }>).versions?.node);
     console.log('process.browser:', (proc as Record<string, unknown>).browser);
-    console.log('process.versions?.node exists:', 'node' in (proc as Record<string, Record<string, string>>).versions ?? {});
+    console.log('process.versions exists:', (proc as Record<string, { versions?: Record<string, string> }>).versions ?? undefined);
+console.log('process.versions?.node exists:', 'node' in ((proc as Record<string, { versions?: Record<string, string> }>).versions ?? {}));
   });
 });

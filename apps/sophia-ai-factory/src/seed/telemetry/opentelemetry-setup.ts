@@ -132,7 +132,7 @@ export async function initializeOTel(): Promise<void> {
     'x-honeycomb-dataset': dataset,
   };
 
-  const resource = (_resourceFromAttributes as { fromAttributes: (a: Record<string, string>) => unknown }).fromAttributes({
+  const resource = (_resourceFromAttributes as (attrs: Record<string, string>) => unknown)({
     [(_SEMRESATTRS_SERVICE_NAME as string)]: serviceName,
   });
 
@@ -169,7 +169,7 @@ export async function initializeOTel(): Promise<void> {
     exportIntervalMillis: 60000,
   });
 
-  _meterProvider = new (_MeterProvider as new (c: { readers: unknown[] }) => unknown)({
+  _meterProvider = new (_MeterProvider as { new (c: { readers: unknown[] }): MeterProvider })({
     readers: [metricReader],
   });
 

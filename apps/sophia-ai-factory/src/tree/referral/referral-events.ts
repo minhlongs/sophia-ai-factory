@@ -12,7 +12,7 @@
  * @module referral/referral-events
  */
 
-export type ReferralEventType = 'created' | 'clicked' | 'converted' | 'rewarded';
+import { ReferralEventType } from './referral-types';
 
 const ALLOWED: Record<ReferralEventType, Set<ReferralEventType>> = {
   created: new Set<ReferralEventType>(['clicked', 'converted']),

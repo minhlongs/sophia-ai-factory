@@ -144,7 +144,8 @@ describe('land/referral/referral-service', () => {
       // seq resets here, processedSeen becomes true.
       const r1 = await awardReferralRewardUponPayment(baseInput);
       expect(r1.ok).toBe(true);
-      expect(r1.value.rewardCents).toBe(100);
+      if (!r1.ok) throw new Error('idempotent: expected success');
+    expect(r1.value.rewardCents).toBe(100);
 
       // Reset seq; set processedSeen=true → next acquireRewardLock hit
       // the alreadyProcessed branch → returns cached success.
