@@ -269,12 +269,12 @@ export async function POST(request: NextRequest) {
         await handleConfirmCommand(chatId)
       } else if (text === '/cancel') {
         await TelegramFSM.clearContext(chatId)
-      } else if (text === '/status') {
-        await handleStatus(chatId)
-      } else if (text === '/analytics') {
-        await handleAnalytics(chatId)
-      } else if (text === '/results') {
-        await handleResults(chatId)
+      } else if (text === '/status' || text.startsWith('/status ')) {
+        const statusId = text === '/status' ? undefined : text.replace('/status', '').trim()
+        await handleStatus(chatId, statusId)
+        } else if (text === '/results' || text.startsWith('/results ')) {
+      const resultsId = text === '/results' ? undefined : text.replace('/results', '').trim()
+      await handleResults(chatId, resultsId)
       } else if (text === '/missions') {
         await handleMissions(chatId)
       } else if (text === '/version') {
