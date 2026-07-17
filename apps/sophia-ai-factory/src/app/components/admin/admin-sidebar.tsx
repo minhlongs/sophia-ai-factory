@@ -12,14 +12,12 @@ import {
   LogOut,
   Key,
   BarChart3,
-  Activity,
   Wallet,
   Tag,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { name: "Monitoring", href: "/admin/monitoring", icon: Activity },
   { name: "Analytics", href: "/admin/analytics/usage", icon: BarChart3 },
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "Promo Codes", href: "/admin/promo-codes", icon: Tag },
