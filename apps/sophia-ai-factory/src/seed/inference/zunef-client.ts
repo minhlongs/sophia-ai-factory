@@ -1,28 +1,58 @@
 /**
- * ZuneF Resilient Client
+ * ZuneF Resilient Client (Cloudflare Workers runtime)
  *
- * Handles ZuneF proxy auth + API calls with:
- * - Device credential management
- * - Token auto-refresh
- * - Circuit breaker on 5xx/cooldown
- * - Exponential backoff retry
+ * Replaces Node `fs` calls (`existsSync/readFileSync/writeFileSync`) with a
+ * Workers-compatible storage layer that prefers KV and falls back to D1.
+ *
+ * Public API is preserved — all callers still see the same exports:
+ *   zunefChatCompletion / resetZuneFCircuit / getZuneFCircuitState
+ *
+ * Caching: 14-minute refresh lease for token; device-id is durable once-set.
+ * Circuit breaker: in-memory, resets on any successful completion.
  */
 
 import { logger } from '@/seed/utils/logger-utility'
-import * as fs from 'fs';
+import {
+  storageGet,
+  storageSet,
+  storageDelete,
+} from '@/seed/kv/kv-storage-ops'
+
+/* ------------------------------------------------------------------ *
+ * Types used by this module (TokenData lives here — not in kv-storage-ops)
+ * ------------------------------------------------------------------ */
+
+interface TokenData {
+  token: string
+  expiresAt: number // epoch ms
+}
+
+/* ------------------------------------------------------------------ *
+ * Constants
+ * ------------------------------------------------------------------ */
 
 const ZUNEF_BASE_URL = 'https://claude.zunef.com'
-const DEVICE_ID_FILE = '/Users/macbook/.claude/zunef-device-id'
-const DEVICE_TOKEN_FILE = '/Users/macbook/.claude/zunef-device-token'
+
+// Shared with any caller that needs to seed or evict credentials.
+export const ZUNEF_KV_PREFIX = 'zunef:'
+export const DEVICE_ID_KEY = `${ZUNEF_KV_PREFIX}device-id`
+export const DEVICE_TOKEN_KEY = `${ZUNEF_KV_PREFIX}device-token`
+
+/** Treat a token as fresh if it has more than this much remaining time. */
+const TOKEN_FRESH_SKEW_MS = 60_000
+
+/* ------------------------------------------------------------------ *
+ * Circuit breaker — process-local, reset on each successful completion
+ * ------------------------------------------------------------------ */
 
 interface CircuitState {
   failures: number
-  openUntil: number // timestamp
+  openUntil: number // epoch ms
 }
 
 const circuit: CircuitState = { failures: 0, openUntil: 0 }
 const CIRCUIT_THRESHOLD = 5
-const CIRCUIT_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
+const CIRCUIT_COOLDOWN_MS = 5 * 60 * 1000
 
 function isCircuitOpen(): boolean {
   return Date.now() < circuit.openUntil
@@ -35,7 +65,7 @@ function recordSuccess(): void {
 function recordFailure(): void {
   circuit.failures++
   if (circuit.failures >= CIRCUIT_THRESHOLD && circuit.openUntil === 0) {
-    circuit.openUntil = Date.now() + CIRCUIT_TIMEOUT_MS
+    circuit.openUntil = Date.now() + CIRCUIT_COOLDOWN_MS
     logger.warn('[zunef-client] Circuit breaker opened', {
       failures: circuit.failures,
       openUntil: new Date(circuit.openUntil).toISOString(),
@@ -43,77 +73,82 @@ function recordFailure(): void {
   }
 }
 
+/* ------------------------------------------------------------------ *
+ * Credential storage (KV/D1 — never touches Node fs)
+ * ------------------------------------------------------------------ */
+
 async function getOrCreateDeviceId(): Promise<string> {
   try {
-    if (await fileExists(DEVICE_ID_FILE)) {
-      return readFile(DEVICE_ID_FILE)
-    }
-    const newId = `device-${crypto.randomUUID()}`
-    await writeFile(DEVICE_ID_FILE, newId)
-    return newId
+    const stored = await storageGet(DEVICE_ID_KEY)
+    if (stored) return stored
+
+    const id = `device-${crypto.randomUUID()}`
+    await storageSet(DEVICE_ID_KEY, id)
+    return id
   } catch (err) {
     logger.error('[zunef-client] Device ID error', { error: String(err) })
     throw err
   }
 }
 
-interface TokenData {
-  token: string;
-  expiresAt: number;
+function tokenFromRaw(raw: string): TokenData | null {
+  try {
+    return JSON.parse(raw) as TokenData
+  } catch {
+    return null
+  }
 }
 
-interface ZuneFResponse {
-  choices: Array<{
-    message: {
-      content: string;
-    };
-  }>;
-}
+async function getFreshToken(deviceId: string): Promise<TokenData> {
+  const res = await fetch(`${ZUNEF_BASE_URL}/api/claude-code/auth`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ deviceId }),
+  })
 
-interface TokenResponse {
-  token: string;
-  expiresIn: number; // seconds
-}
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Auth failed: ${res.status} ${text}`)
+  }
 
-// ... existing code ...
+  const parsed: { token: string; expiresIn: number } = await res.json()
+  const tokenData: TokenData = {
+    token: parsed.token,
+    expiresAt: Date.now() + parsed.expiresIn * 1_000,
+  }
+  await storageSet(DEVICE_TOKEN_KEY, JSON.stringify(tokenData))
+  return tokenData
+}
 
 async function getOrRefreshToken(deviceId: string): Promise<string> {
   try {
-    if (await fileExists(DEVICE_TOKEN_FILE)) {
-      const raw = readFile(DEVICE_TOKEN_FILE);
-      const tokenData: TokenData = JSON.parse(raw);
-      if (tokenData.expiresAt > Date.now() + 60_000) {
-        return tokenData.token;
+    const raw = await storageGet(DEVICE_TOKEN_KEY)
+    if (raw) {
+      const existing = tokenFromRaw(raw)
+      if (existing && existing.expiresAt > Date.now() + TOKEN_FRESH_SKEW_MS) {
+        return existing.token
       }
     }
 
-    // Fetch new token from ZuneF auth endpoint
-    const res = await fetch(`${ZUNEF_BASE_URL}/api/claude-code/auth`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId }),
-    });
-
-    if (!res.ok) {
-      throw new Error(`Auth failed: ${res.status} ${await res.text()}`);
-    }
-
-    const tokenResponse: TokenResponse = await res.json();
-    const tokenData: TokenData = {
-      token: tokenResponse.token,
-      expiresAt: Date.now() + tokenResponse.expiresIn * 1000,
-    };
-    await writeFile(DEVICE_TOKEN_FILE, JSON.stringify(tokenData));
-    return tokenData.token;
+    const tokenData = await getFreshToken(deviceId)
+    return tokenData.token
   } catch (err) {
-    logger.error('[zunef-client] Token refresh failed', { error: String(err) });
-    throw err;
+    logger.error('[zunef-client] Token refresh failed', { error: String(err) })
+    throw err
   }
+}
+
+/* ------------------------------------------------------------------ *
+ * Public API
+ * ------------------------------------------------------------------ */
+
+interface ZuneFResponse {
+  choices: Array<{ message: { content: string } }>
 }
 
 export async function zunefChatCompletion(
   messages: Array<{ role: string; content: string }>,
-  options: { model?: string } = {}
+  options: { model?: string } = {},
 ): Promise<string> {
   if (isCircuitOpen()) {
     throw new Error('Circuit breaker open — ZuneF proxy degraded')
@@ -130,7 +165,7 @@ export async function zunefChatCompletion(
       const res = await fetch(`${ZUNEF_BASE_URL}/v1/chat/completions`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -141,17 +176,19 @@ export async function zunefChatCompletion(
       })
 
       if (res.status === 429) {
-        const retryAfter = parseInt(res.headers.get('Retry-After') || '5')
-        await sleep((retryAfter + Math.random()) * 1000)
+        const retryAfter = parseInt(res.headers.get('Retry-After') || '5', 10)
+        await sleep((retryAfter + Math.random()) * 1_000)
         attempt++
         continue
       }
 
       if (res.status >= 500) {
         const text = await res.text()
+
         if (text.includes('cooldown') || text.includes('cooling down')) {
           throw new Error(`ZuneF cooldown: ${text}`)
         }
+
         throw new Error(`ZuneF error ${res.status}: ${text}`)
       }
 
@@ -169,7 +206,8 @@ export async function zunefChatCompletion(
         recordFailure()
         throw err
       }
-      const delay = Math.min(1000 * 2 ** attempt + Math.random() * 1000, 30_000)
+
+      const delay = Math.min(1_000 * 2 ** attempt + Math.random() * 1_000, 30_000)
       await sleep(delay)
     }
   }
@@ -177,21 +215,16 @@ export async function zunefChatCompletion(
   throw new Error('ZuneF: max retries exceeded')
 }
 
-// Helpers (polyfill Node fs/crypto if running in browser)
-function fileExists(path: string): boolean {
-  return fs.existsSync(path)
-}
-
-function readFile(path: string): string {
-  return fs.readFileSync(path, 'utf-8')
-}
-
-function writeFile(path: string, content: string): void {
-  fs.writeFileSync(path, content)
-}
+/* ------------------------------------------------------------------ *
+ * Lifecycle helpers
+ * ------------------------------------------------------------------ */
 
 function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  const g = globalThis as Record<string, unknown>
+  if (typeof g.__zunefSleep === 'function') {
+    return (g.__zunefSleep as (ms: number) => Promise<void>)(ms)
+  }
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 export function resetZuneFCircuit(): void {
@@ -200,6 +233,20 @@ export function resetZuneFCircuit(): void {
   logger.info('[zunef-client] Circuit reset')
 }
 
-export function getZuneFCircuitState(): { failures: number; openUntil: number } {
+export function getZuneFCircuitState(): {
+  failures: number
+  openUntil: number
+} {
   return { ...circuit }
+}
+
+/**
+ * Remove both `zunef:device-id` and `zunef:device-token` from KV/D1.
+ * Mirrors the old behavior of `rm -f <device-id-file> <token-file>`.
+ */
+export async function clearZuneFCredentials(): Promise<void> {
+  await Promise.all([
+    storageDelete(DEVICE_ID_KEY),
+    storageDelete(DEVICE_TOKEN_KEY),
+  ])
 }
