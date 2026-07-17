@@ -23,7 +23,7 @@ import {
   getSopInstall as dbGetSopInstall,
 } from '@/seed/db/marketplace-ops';
 import { calculateCreatorCommission, recordSopSaleCommission } from './commission-split'
-import { trackSopInstalled } from '@/forest/analytics/funnel-tracking';
+import { captureSopInstalled } from '@/tree/signals/posthog-capture';
 
 // ── Actions ─────────────────────────────────────────────────────────────
 
@@ -141,7 +141,7 @@ export async function installSop(
     );
 
     // Funnel tracking — fire-and-forget sop-installed event
-    trackSopInstalled(user.id, { listing_id: listing.id }).catch(() => {});
+    captureSopInstalled({ distinctId: user.id, listingId: listing.id })
 
     logger.info('[InstallSop] SOP installed', {
       userId: user.id,

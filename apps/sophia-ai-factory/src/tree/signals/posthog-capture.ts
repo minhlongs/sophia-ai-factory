@@ -96,6 +96,21 @@ export async function captureTierUpgraded(opts: {
 }
 
 /**
+ * Convenience for SOP install event — always server-side
+ */
+export async function captureSopInstalled(opts: {
+  distinctId: string
+  listingId?: string
+}): Promise<void> {
+  await captureServer({
+    event: Events.SOP_INSTALLED,
+    distinctId: opts.distinctId,
+    source: 'server',
+    properties: { listingId: opts.listingId },
+  })
+}
+
+/**
  * Convenience for free quota exhaustion event — always server-side
  */
 export async function captureFreeQuotaExhaustion(opts: {

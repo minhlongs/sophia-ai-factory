@@ -200,8 +200,8 @@ for m in $MIGRATIONS; do
 
   echo "==> Applying ${MIGRATION_NAME} to ${DB_NAME}"
   if ! npx wrangler d1 execute "$DB_NAME" --config "$WRANGLER_CONFIG" --file="$m" "${WRANGLER_SCOPE_ARGS[@]}"; then
-    echo "ERROR: ${MIGRATION_NAME} FAILED — continuing with remaining migrations"
-    continue
+    echo "ERROR: ${MIGRATION_NAME} FAILED — aborting deployment to prevent schema divergence"
+    exit 1
   fi
 
   APPLIED_COUNT=$((APPLIED_COUNT + 1))

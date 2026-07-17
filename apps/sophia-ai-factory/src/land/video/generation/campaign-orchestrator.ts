@@ -18,15 +18,14 @@ import { TikTokChannelAdapter } from '@/tree/gateway/adapters/tiktok-channel-ada
 import { TelegramNotificationAdapter } from '@/tree/gateway/adapters/telegram-notification-adapter';
 import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
-import { getExperiment } from '@/forest/ab/experiment-store';
 import { markEngineMissionFailed } from './generate-campaign-db';
 import { notifyRefundRequired, notifyProviderError } from './generate-campaign-refund-notify';
 import { pollVideoStatus } from './generate-campaign-video-poller';
 import { emit } from '@/land/webhooks/emitter';
 import { uploadVideo, refreshAccessToken } from '@/land/youtube/youtube-oauth-client';
 import { publishVideo, checkPublishStatus } from '@/land/tiktok/tiktok-oauth-client';
-import { captureServer } from '@/forest/telemetry/posthog-capture';
-import { Events } from '@/forest/telemetry/event-types';
+import { captureServer } from '@/tree/signals/posthog-capture';
+import { Events } from '@/tree/signals/event-types';
 import type { YouTubeOAuthClient, TikTokOAuthClient } from '@/tree/types/oauth-client-types';
 
 export interface Step {
@@ -304,8 +303,13 @@ export async function runCampaignWorkflow(args: RunCampaignWorkflowArgs): Promis
     const campaignTitle = (await step.run('resolve-ab-title', async () => {
       if (!abExperimentId) return topic || `Campaign ${campaignId}`;
       try {
-        const experiment = await getExperiment(abExperimentId);
-        if (experiment?.variantACaption) return experiment.variantACaption;
+        const db = createServerClient();
+  const { data: expData } = await db
+  .from('ab_experiments')
+  .select('variant_a_caption')
+  .eq('id', abExperimentId)
+  .maybeSingle();
+if (expData?.variant_a_caption) return expData.variant_a_caption;
       } catch (err) {
         logger.warn('[runCampaignWorkflow] AB experiment lookup failed — using original title', {
           campaignId, abExperimentId, error: String(err),

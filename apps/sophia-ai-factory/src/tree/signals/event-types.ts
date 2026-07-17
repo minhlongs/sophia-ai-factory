@@ -21,6 +21,9 @@ export const Events = {
   FIRST_VIDEO_COMPLETED: 'first_video_completed',
   // Experiment assignment events
   EXPERIMENT_ASSIGNED: 'experiment_assigned',
+  // SOP / referral events
+  SOP_INSTALLED: "sop_installed",
+  REFERRAL_SIGNUP: "referral_signup",
   // Server-only financial / usage events
   TIER_UPGRADED: 'tier_upgraded',
   PAYMENT_SUCCEEDED: 'payment_succeeded',
@@ -117,6 +120,12 @@ const PaymentSucceededSchema = z.object({
   currency: z.string(),
 })
 
+const SopInstalledSchema = z.object({
+  listingId: z.string().optional(),
+})
+const ReferralSignupSchema = z.object({
+  referrer: z.string().optional(),
+})
 const ChurnSignalSchema = z.object({
   reason: z.string().optional(),
   tier: z.string().optional(),
@@ -136,6 +145,8 @@ export const EVENT_SCHEMAS: Record<EventName, z.ZodTypeAny> = {
   [Events.FIRST_VIDEO_STARTED]: FirstVideoStartedSchema,
   [Events.FIRST_VIDEO_COMPLETED]: FirstVideoCompletedSchema,
   [Events.EXPERIMENT_ASSIGNED]: ExperimentAssignedSchema,
+  [Events.SOP_INSTALLED]: SopInstalledSchema,
+  [Events.REFERRAL_SIGNUP]: ReferralSignupSchema,
   [Events.TIER_UPGRADED]: TierUpgradedSchema,
   [Events.PAYMENT_SUCCEEDED]: PaymentSucceededSchema,
   [Events.CHURN_SIGNAL]: ChurnSignalSchema,
