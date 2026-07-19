@@ -1,0 +1,30 @@
+{
+  "version": "1",
+  "rules": [
+    {
+      "match": "mekong",
+      "replace": "mekong --bootstrap-mode auto"
+    },
+    {
+      "match": "bootstrap",
+      "replace": "bootstrap --full"
+    }
+  ],
+  "modelRouting": {
+    "flash": "claude-sonnet-4-6",
+    "pro": "claude-opus-4-8",
+    "strategic": "claude-fable-5"
+  },
+  "strategicTriggers": {
+    "manual": [
+      "@kongming"
+    ],
+    "keywords": [
+      "architecture",
+      "trade-off",
+      "critical-bug",
+      "design-doc"
+    ],
+    "autoEscalateAfterProFailures": 2
+  }
+}

@@ -1,0 +1,653 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   "Saigon Factory" Design System
+   1960s Saigon print shop × modern AI automation
+   Warm amber + deep indigo + cream paper tones
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Surface ─────────────────────────────────────────────────────────── */
+  --background: 40 30% 97%;           /* warm cream paper */
+  --foreground: 240 12% 12%;          /* deep indigo ink */
+  --background-secondary: 40 25% 93%; /* slightly darker cream */
+
+  --card: 40 20% 99%;                 /* crisp paper white */
+  --card-foreground: 240 12% 12%;
+
+  --popover: 40 20% 99%;
+  --popover-foreground: 240 12% 12%;
+
+  /* ── Brand ────────────────────────────────────────────────────────────── */
+  --primary: 35 80% 44%;              /* warm amber gold */
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 18 40% 48%;            /* terracotta */
+  --secondary-foreground: 0 0% 100%;
+
+  --muted: 40 20% 94%;                /* muted cream */
+  --muted-foreground: 240 8% 38%;     /* muted indigo */
+
+  --accent: 35 60% 50%;               /* lighter amber for hover */
+  --accent-foreground: 0 0% 100%;
+
+  /* ── Feedback ─────────────────────────────────────────────────────────── */
+  --destructive: 0 68% 42%;           /* red ochre — WCAG AA on cream */
+  --destructive-foreground: 0 0% 100%;
+
+  /* ── Borders ──────────────────────────────────────────────────────────── */
+  --border: 35 18% 82%;               /* warm tan border */
+  --input: 35 18% 82%;
+  --ring: 35 70% 40%;                 /* amber focus ring */
+
+  /* ── Radius ───────────────────────────────────────────────────────────── */
+  --radius: 0.375rem;                 /* industrial — sharper than default 0.5rem */
+
+  /* ── Material Design 3 bridge tokens (keep for Stitch compat) ─────────── */
+  --primary-container: 35 70% 88%;
+  --on-primary-container: 240 12% 16%;
+  --secondary-container: 18 35% 90%;
+  --on-secondary-container: 240 12% 16%;
+  --tertiary: 200 30% 35%;
+  --tertiary-container: 200 30% 88%;
+  --on-tertiary: 0 0% 100%;
+  --on-tertiary-container: 200 30% 16%;
+  --surface-container: var(--card);
+  --surface-container-lowest: var(--card);
+  --surface-container-low: var(--muted);
+  --surface-container-high: var(--muted);
+  --surface-container-highest: var(--muted);
+  --surface-bright: var(--background-secondary);
+  --surface-dim: var(--muted);
+  --surface-variant: var(--muted);
+  --inverse-surface: 240 12% 14%;
+  --inverse-primary: 35 70% 50%;
+  --outline: var(--border);
+  --outline-variant: var(--border);
+  --error-container: var(--destructive);
+  --on-error-container: var(--destructive-foreground);
+
+  /* ── Primary color scale (amber) ──────────────────────────────────────── */
+  --primary-50: 35 85% 96%;
+  --primary-100: 35 80% 90%;
+  --primary-200: 35 78% 78%;
+  --primary-300: 35 78% 62%;
+  --primary-400: 35 78% 50%;
+  --primary-500: 35 80% 44%;
+  --primary-600: 35 82% 36%;
+  --primary-700: 35 82% 26%;
+  --primary-800: 35 82% 18%;
+  --primary-900: 35 82% 12%;
+
+  /* ── Accent color scale (indigo) ──────────────────────────────────────── */
+  --accent-50: 240 25% 96%;
+  --accent-100: 240 22% 90%;
+  --accent-200: 240 20% 80%;
+  --accent-300: 240 18% 64%;
+  --accent-400: 240 18% 48%;
+  --accent-500: 240 20% 40%;
+  --accent-600: 240 22% 32%;
+  --accent-700: 240 22% 22%;
+  --accent-800: 240 22% 15%;
+  --accent-900: 240 22% 10%;
+
+  /* ── Violet color scale (repurposed as warm plum) ─────────────────────── */
+  --violet-50: 300 25% 96%;
+  --violet-100: 300 22% 90%;
+  --violet-200: 300 20% 80%;
+  --violet-300: 300 25% 64%;
+  --violet-400: 300 25% 48%;
+  --violet-500: 300 28% 40%;
+  --violet-600: 300 28% 32%;
+  --violet-700: 300 28% 22%;
+  --violet-800: 300 28% 15%;
+  --violet-900: 300 28% 10%;
+  --violet-950: 300 28% 7%;
+
+  /* ── Emerald color scale ──────────────────────────────────────────────── */
+  --emerald-50: 160 60% 96%;
+  --emerald-100: 160 55% 90%;
+  --emerald-200: 160 55% 78%;
+  --emerald-300: 160 58% 60%;
+  --emerald-400: 160 60% 45%;
+  --emerald-500: 160 62% 36%;
+  --emerald-600: 160 62% 28%;
+  --emerald-700: 160 62% 20%;
+  --emerald-800: 160 62% 14%;
+  --emerald-900: 160 62% 10%;
+  --emerald-950: 160 62% 7%;
+
+  /* ── Amber color scale ────────────────────────────────────────────────── */
+  --amber-50: 38 85% 96%;
+  --amber-100: 38 80% 90%;
+  --amber-200: 38 78% 78%;
+  --amber-300: 38 78% 60%;
+  --amber-400: 38 78% 50%;
+  --amber-500: 38 80% 42%;
+  --amber-600: 38 82% 34%;
+  --amber-700: 38 82% 24%;
+  --amber-800: 38 82% 16%;
+  --amber-900: 38 82% 10%;
+  --amber-950: 38 82% 7%;
+
+  /* ── Chart Colors ─────────────────────────────────────────────────────── */
+  --chart-1: #c4872e;   /* amber */
+  --chart-2: #2d4a6e;   /* indigo */
+  --chart-3: #c45a3e;   /* terracotta */
+  --chart-4: #4a8c6f;   /* emerald */
+  --chart-5: #8b6b4a;   /* warm brown */
+
+  /* ── Legacy bridge tokens ─────────────────────────────────────────────── */
+  --neon-cyan: #c4872e;
+  --neon-cyan-hsl: 35 60% 48%;
+  --neon-purple: #4a3880;
+  --neon-purple-hsl: 255 40% 36%;
+  --neon-pink: #c45a3e;
+  --neon-pink-hsl: 18 55% 50%;
+
+  /* ── Atmosphere ───────────────────────────────────────────────────────── */
+  --gradient-space: linear-gradient(135deg, #faf7f2 0%, #f0ebe0 100%);
+  --gradient-neon: linear-gradient(135deg, #c4872e 0%, #4a3880 100%);
+  --glass-bg: rgba(250, 247, 242, 0.75);
+  --glass-border: rgba(0, 0, 0, 0.08);
+}
+
+.dark {
+  /* ── Surface ─────────────────────────────────────────────────────────── */
+  --background: 240 13% 6%;             /* #0e0e12 — Stitch Indigo Dark */
+  --foreground: 255 29% 92%;            /* #e7e4f0 */
+  --background-secondary: 240 12% 11%;  /* #191920 */
+
+  --card: 240 12% 11%;                  /* #191920 */
+  --card-foreground: 255 29% 92%;
+
+  --popover: 240 12% 11%;
+  --popover-foreground: 255 29% 92%;
+
+  /* ── Brand (amber) ──────────────────────────────────────────────────── */
+  --primary: 35 80% 56%; /* #d97706 — amber */
+  --primary-foreground: 0 0% 100%; /* white for contrast */
+
+  --secondary: 18 40% 48%; /* terracotta — matches light mode */
+  --secondary-foreground: 0 0% 100%;
+
+  --muted: 240 12% 8%; /* close to #131318 — dark surface */
+  --muted-foreground: 251 7% 69%; /* #acaab5 — neutral grey */
+
+  --accent: 35 60% 50%;
+  --accent-foreground: 0 0% 100%;
+
+  /* ── Feedback ─────────────────────────────────────────────────────────── */
+  --destructive: 351 92% 71%;           /* #f97386 */
+  --destructive-foreground: 344 100% 14%; /* #490013 */
+
+  /* ── Borders ──────────────────────────────────────────────────────────── */
+  --border: 247 6% 30%; /* neutral grey — works on dark bg */
+  --input: 247 6% 30%; /* neutral grey — matches border */
+  --ring: 35 70% 40%; /* amber focus ring */
+
+  /* ── MD3 bridge ───────────────────────────────────────────────────────── */
+  --primary-container: 35 50% 28%; /* dark amber for containers */
+  --on-primary-container: 35 100% 94%; /* light amber text on container */
+  --secondary-container: 18 30% 20%; /* dark terracotta container */
+  --on-secondary-container: 18 40% 75%; /* light terracotta text */
+
+  /* ── Primary scale (gold, dark mode) ──────────────────────────────────── */
+  --primary-50: 38 70% 8%;
+  --primary-100: 38 68% 12%;
+  --primary-200: 38 68% 18%;
+  --primary-300: 38 70% 28%;
+  --primary-400: 38 72% 40%;
+  --primary-500: 38 75% 50%;
+  --primary-600: 38 78% 58%;
+  --primary-700: 38 78% 70%;
+  --primary-800: 38 78% 82%;
+  --primary-900: 38 78% 92%;
+
+  /* ── Accent scale (indigo, dark mode) ─────────────────────────────────── */
+  --accent-50: 240 18% 8%;
+  --accent-100: 240 16% 12%;
+  --accent-200: 240 16% 18%;
+  --accent-300: 240 16% 28%;
+  --accent-400: 240 16% 40%;
+  --accent-500: 240 16% 50%;
+  --accent-600: 240 16% 58%;
+  --accent-700: 240 16% 70%;
+  --accent-800: 240 16% 82%;
+  --accent-900: 240 16% 92%;
+
+  /* ── Violet (plum) dark ───────────────────────────────────────────────── */
+  --violet-50: 300 20% 8%;
+  --violet-100: 300 18% 12%;
+  --violet-200: 300 18% 18%;
+  --violet-300: 300 20% 28%;
+  --violet-400: 300 20% 40%;
+  --violet-500: 300 22% 48%;
+  --violet-600: 300 22% 56%;
+  --violet-700: 300 22% 68%;
+  --violet-800: 300 22% 80%;
+  --violet-900: 300 22% 90%;
+  --violet-950: 300 22% 94%;
+
+  /* ── Emerald dark ─────────────────────────────────────────────────────── */
+  --emerald-50: 160 50% 6%;
+  --emerald-100: 160 48% 10%;
+  --emerald-200: 160 48% 16%;
+  --emerald-300: 160 50% 24%;
+  --emerald-400: 160 50% 36%;
+  --emerald-500: 160 52% 46%;
+  --emerald-600: 160 52% 54%;
+  --emerald-700: 160 52% 66%;
+  --emerald-800: 160 52% 78%;
+  --emerald-900: 160 52% 88%;
+  --emerald-950: 160 52% 94%;
+
+  /* ── Amber dark ───────────────────────────────────────────────────────── */
+  --amber-50: 35 70% 6%;
+  --amber-100: 35 68% 10%;
+  --amber-200: 35 68% 16%;
+  --amber-300: 35 70% 24%;
+  --amber-400: 35 72% 38%;
+  --amber-500: 35 75% 48%;
+  --amber-600: 35 78% 56%;
+  --amber-700: 35 78% 68%;
+  --amber-800: 35 78% 80%;
+  --amber-900: 35 78% 90%;
+  --amber-950: 35 78% 94%;
+
+  /* ── Chart dark ───────────────────────────────────────────────────────── */
+  --chart-1: #e0a84c;
+  --chart-2: #5a8ab5;
+  --chart-3: #d4846a;
+  --chart-4: #6aad8a;
+  --chart-5: #b8946a;
+
+  /* ── Legacy bridge ────────────────────────────────────────────────────── */
+  --neon-cyan: #e0a84c;
+  --neon-cyan-hsl: 38 70% 59%;
+  --neon-purple: #6a5aaa;
+  --neon-purple-hsl: 255 35% 50%;
+  --neon-pink: #d4846a;
+  --neon-pink-hsl: 18 50% 62%;
+
+
+  /* ── Atmosphere dark ──────────────────────────────────────────────────── */
+  --gradient-space: linear-gradient(135deg, #0d0d1a 0%, #12121f 100%);
+  --gradient-neon: linear-gradient(135deg, #e0a84c 0%, #6a5aaa 100%);
+  --glass-bg: rgba(13, 13, 26, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tailwind v4 @theme — CSS variable bridge
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+
+  --color-neon-cyan: hsl(var(--neon-cyan-hsl));
+  --color-neon-purple: hsl(var(--neon-purple-hsl));
+  --color-neon-pink: var(--neon-pink);
+
+  /* Primary */
+  --color-primary-50: hsl(var(--primary-50));
+  --color-primary-100: hsl(var(--primary-100));
+  --color-primary-200: hsl(var(--primary-200));
+  --color-primary-300: hsl(var(--primary-300));
+  --color-primary-400: hsl(var(--primary-400));
+  --color-primary-500: hsl(var(--primary-500));
+  --color-primary-600: hsl(var(--primary-600));
+  --color-primary-700: hsl(var(--primary-700));
+  --color-primary-800: hsl(var(--primary-800));
+  --color-primary-900: hsl(var(--primary-900));
+
+  /* Accent */
+  --color-accent-50: hsl(var(--accent-50));
+  --color-accent-100: hsl(var(--accent-100));
+  --color-accent-200: hsl(var(--accent-200));
+  --color-accent-300: hsl(var(--accent-300));
+  --color-accent-400: hsl(var(--accent-400));
+  --color-accent-500: hsl(var(--accent-500));
+  --color-accent-600: hsl(var(--accent-600));
+  --color-accent-700: hsl(var(--accent-700));
+  --color-accent-800: hsl(var(--accent-800));
+  --color-accent-900: hsl(var(--accent-900));
+
+  /* Violet */
+  --color-violet-50: hsl(var(--violet-50));
+  --color-violet-100: hsl(var(--violet-100));
+  --color-violet-200: hsl(var(--violet-200));
+  --color-violet-300: hsl(var(--violet-300));
+  --color-violet-400: hsl(var(--violet-400));
+  --color-violet-500: hsl(var(--violet-500));
+  --color-violet-600: hsl(var(--violet-600));
+  --color-violet-700: hsl(var(--violet-700));
+  --color-violet-800: hsl(var(--violet-800));
+  --color-violet-900: hsl(var(--violet-900));
+  --color-violet-950: hsl(var(--violet-950));
+
+  /* Emerald */
+  --color-emerald-50: hsl(var(--emerald-50));
+  --color-emerald-100: hsl(var(--emerald-100));
+  --color-emerald-200: hsl(var(--emerald-200));
+  --color-emerald-300: hsl(var(--emerald-300));
+  --color-emerald-400: hsl(var(--emerald-400));
+  --color-emerald-500: hsl(var(--emerald-500));
+  --color-emerald-600: hsl(var(--emerald-600));
+  --color-emerald-700: hsl(var(--emerald-700));
+  --color-emerald-800: hsl(var(--emerald-800));
+  --color-emerald-900: hsl(var(--emerald-900));
+  --color-emerald-950: hsl(var(--emerald-950));
+
+  /* Amber */
+  --color-amber-50: hsl(var(--amber-50));
+  --color-amber-100: hsl(var(--amber-100));
+  --color-amber-200: hsl(var(--amber-200));
+  --color-amber-300: hsl(var(--amber-300));
+  --color-amber-400: hsl(var(--amber-400));
+  --color-amber-500: hsl(var(--amber-500));
+  --color-amber-600: hsl(var(--amber-600));
+  --color-amber-700: hsl(var(--amber-700));
+  --color-amber-800: hsl(var(--amber-800));
+  --color-amber-900: hsl(var(--amber-900));
+  --color-amber-950: hsl(var(--amber-950));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Base
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   "Saigon Factory" Signature Effects
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Letterpress / stamped card effect */
+.card-letterpress {
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--border)),
+    0 1px 3px 0 rgba(0, 0, 0, 0.06);
+  transition: box-shadow 0.25s ease;
+}
+.card-letterpress:hover {
+  box-shadow:
+    inset 0 1px 0 0 hsl(var(--primary) / 0.3),
+    0 4px 12px 0 rgba(0, 0, 0, 0.08);
+}
+
+/* Industrial divider — thick line with notch */
+.divider-industrial {
+  position: relative;
+  height: 1px;
+  background: hsl(var(--border));
+  margin: 2rem 0;
+}
+.divider-industrial::after {
+  content: '◆';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: hsl(var(--background));
+  padding: 0 0.75rem;
+  font-size: 0.5rem;
+  color: hsl(var(--muted-foreground));
+}
+
+/* Paper texture overlay (subtle noise) */
+.bg-paper {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Animations
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 6s ease infinite;
+}
+
+/* Conveyor-belt loading — factory automation feel */
+@keyframes conveyor {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.animate-conveyor {
+  animation: conveyor 3s linear infinite;
+}
+
+/* Fade in from below — section reveals */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(1.5rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out both;
+}
+
+/* Staggered list reveals */
+.stagger-reveal > * {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+.stagger-reveal > *:nth-child(1) { animation-delay: 0s; }
+.stagger-reveal > *:nth-child(2) { animation-delay: 0.1s; }
+.stagger-reveal > *:nth-child(3) { animation-delay: 0.2s; }
+.stagger-reveal > *:nth-child(4) { animation-delay: 0.3s; }
+.stagger-reveal > *:nth-child(5) { animation-delay: 0.4s; }
+
+/* Shimmer loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted-foreground) / 0.15) 40%,
+    hsl(var(--muted)) 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Card hover lift — subtle, no glow */
+.card-hover {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Glass card effect — Stitch design system */
+.glass-card {
+  background: rgba(24, 24, 27, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(63, 63, 70, 0.5);
+}
+.glass-card:hover {
+  transform: translateY(-4px);
+}
+
+/* ── Dot grid background pattern ─────────────────────────────────────── */
+.dot-grid-overlay {
+  background-image: radial-gradient(
+    circle,
+    hsl(var(--foreground) / 0.15) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
+}
+
+/* ── Floating ambient orbs ────────────────────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-20px) scale(1.02); }
+}
+.animate-float {
+  animation: float 8s ease-in-out infinite;
+}
+.animate-float-delayed {
+  animation: float 9s ease-in-out 2s infinite;
+}
+
+/* ── Soft pulse glow (status indicator) ───────────────────────────────── */
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.6; box-shadow: 0 0 4px currentColor; }
+  50% { opacity: 1; box-shadow: 0 0 10px currentColor; }
+}
+.animate-glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+/* ── Terminal cursor blink ────────────────────────────────────────────── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.animate-blink {
+  animation: blink 0.8s step-end infinite;
+}
+
+/* ── Slow bounce (scroll indicator) ───────────────────────────────────── */
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.animate-bounce-slow {
+  animation: bounce-slow 2s ease-in-out infinite;
+}
+
+/* ── Saigon Factory gradient text — warm amber → deep indigo ──────────── */
+.text-gradient {
+  background: linear-gradient(
+    135deg,
+    hsl(var(--primary)) 0%,
+    hsl(var(--accent)) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Legacy shadow utilities (bridge from old system) ─────────────────── */
+.custom-shadow-low {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.custom-shadow-md {
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.06),
+    0 1px 2px -1px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Custom scrollbar (Stitch design system) ──────────────────────────── */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted));
+  border-radius: 10px;
+}
+
+/* ── Saigon Factory mechanical easing curves ─────────────────────────── */
+/* Stamped press: quick impact with slight settle — buttons, toggles */
+.ease-press {
+  transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+/* Conveyor belt: steady, linear-feeling — loaders, progress */
+.ease-conveyor {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* Quick release: fast snap-to — hover reveals, tooltips */
+.ease-release {
+  transition-timing-function: cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+/* Industrial heavy: deliberate weight — section reveals, page enter */
+.ease-industrial {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Reduced Motion
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-gradient,
+  .animate-conveyor,
+  .animate-fade-in-up,
+  .animate-shimmer,
+  .animate-float,
+  .animate-float-delayed,
+  .animate-glow-pulse,
+  .animate-blink,
+  .animate-bounce-slow,
+  .card-hover,
+  .stagger-reveal > * {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .card-hover:hover { transform: none; }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "sophia-ai-factory",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "clean": "rm -rf .next node_modules",
+    "harness": "bash scripts/harness/harness.sh",
+    "harness:audit": "bash scripts/harness/harness.sh audit",
+    "harness:fix": "bash scripts/harness/harness.sh fix",
+    "harness:report": "bash scripts/harness/harness.sh report"
+  },
+  "devDependencies": {
+    "@typescript-eslint/typescript-estree": "^8.59.3"
+  }
+}

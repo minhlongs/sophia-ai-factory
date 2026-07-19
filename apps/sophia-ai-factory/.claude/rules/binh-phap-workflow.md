@@ -1,0 +1,1 @@
+/Users/macbook/.claude/rules/binh-phap-workflow.md

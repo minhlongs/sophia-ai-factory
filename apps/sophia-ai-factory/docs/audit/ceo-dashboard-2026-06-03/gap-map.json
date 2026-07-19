@@ -1,0 +1,432 @@
+{
+  "audit": {
+    "project": "Sophia AI Factory — CEO Dashboard",
+    "date": "2026-06-03",
+    "auditor": "Claude Opus 4.8 (Automated Static + Manual Review)",
+    "scope": "Full codebase, 398 files, 383 API routes, 72 error boundaries",
+    "methodology": "7-phase: Topology → Auth → Errors → Data Flow → Security → Domain Audit → Remediation",
+    "architecture": "Mekong 4-Layer (land → forest → tree → seed)"
+  },
+  "summary": {
+    "critical": 3,
+    "high": 4,
+    "medium": 5,
+    "low": 3,
+    "total_findings": 15,
+    "unfixed_critical": 3,
+    "estimated_fix_effort": "2-3 days",
+    "risk_without_fix": "Production outage, auth bypass, data corruption"
+  },
+  "findings": [
+    {
+      "id": "F01",
+      "severity": "CRITICAL",
+      "phase": "Phase 1 — Auth State Desync",
+      "file": "src/app/components/layout/navbar.tsx",
+      "lines": "26-33",
+      "category": "auth-desync",
+      "title": "Client-side cookie sniffing ≠ server-side session validity",
+      "failure_scenario": "Cookie exists (user was logged in) but session expired on server → isLoggedIn=true shows dashboard button → server redirect to /login → error boundary catches redirect as error → user sees 'Đã xảy ra lỗi'",
+      "root_cause": "document.cookie.includes('better-auth.session_token=') only checks cookie presence, never validates the session against the database",
+      "impact": "Every user with an expired cookie who clicks Dashboard sees the error page. Affects 100% of returning users after session expiry.",
+      "fix": {
+        "preferred": "Server-side auth state: inject isLoggedIn via __NEXT_DATA__ or cookie set by middleware/dashboard route",
+        "quick_fix": "Change detection to check against /api/auth/session on mount (adds latency but validates)",
+        "files_to_change": [
+          "src/app/components/layout/navbar.tsx"
+        ],
+        "effort": "30 min"
+      },
+      "status": "FIXED",
+      "related": [
+        "F02"
+      ],
+      "fix_details": "Removed document.cookie session_token sniffing from Navbar. Replaced with async /api/auth/session fetch with cancellation flag and CSS class `navbar-auth-loaded` to prevent FOUC."
+    },
+    {
+      "id": "F02",
+      "severity": "CRITICAL",
+      "phase": "Phase 2 — Uncaught Auth Failure",
+      "file": "src/app/[locale]/dashboard/layout.tsx",
+      "lines": "65-66",
+      "category": "uncaught-exception",
+      "title": "getCurrentUser() has no try-catch — D1 failure crashes all dashboard pages",
+      "failure_scenario": "D1 binding unavailable (cold start, migration, CF Workers issue) → getSession() → getD1() throws → unhandled rejection → Next.js error boundary → 'Đã xảy ra lỗi' on EVERY dashboard route",
+      "root_cause": "layout.tsx: `const currentUser = await getCurrentUser()` with no error handler. getCurrentUser() internally catches DB errors (returns null), BUT getCurrentUserFromHeaders() throws AuthSystemError on DB failure.",
+      "impact": "Complete dashboard unavailability during any D1 disruption. Affects ALL authenticated users.",
+      "fix": {
+        "code": "try {\n  const currentUser = await getCurrentUser();\n  if (!currentUser) redirect('/login?reason=no_session');\n} catch (err) {\n  logger.error('[dashboard-layout] auth bootstrap failed', toError(err));\n  redirect('/login?reason=auth_service_down');\n}",
+        "files_to_change": [
+          "src/app/[locale]/dashboard/layout.tsx"
+        ],
+        "effort": "15 min"
+      },
+      "status": "FIXED",
+      "related": [
+        "F03",
+        "F01"
+      ],
+      "fix_details": "getCurrentUser() in better-auth-session.ts wraps getSession() in try-catch, logs errors via logger.error(), returns null on failure. Dashboard layout adds try-catch around getCurrentUser() with redirect on auth failure."
+    },
+    {
+      "id": "F03",
+      "severity": "CRITICAL",
+      "phase": "Phase 2 — Uncaught D1 Failure",
+      "file": "src/seed/db/client.ts + 13 callers",
+      "lines": "getD1Raw() definition + dashboard/layout.tsx:27,40",
+      "category": "uncaught-exception",
+      "title": "getD1Raw() has no error handling — 13 dashboard callers crash on D1 unavailability",
+      "failure_scenario": "D1 binding resolves to null → getD1Raw() throws 'D1 database binding not available' → 13 dashboard data-fetching calls crash → error boundary → white error screen",
+      "root_cause": "getD1Raw() throws on missing binding. All 13 dashboard callers call it directly without try-catch. The 3 parallel queries in layout.tsx (lines 68-73) all depend on D1.",
+      "impact": "Same as F02 but from the data layer. Any D1 issue takes down dashboard data fetching.",
+      "fix": {
+        "preferred": "Add try-catch to each D1 call in dashboard/layout.tsx with fallback data (null, empty arrays) and a warning banner",
+        "long_term": "Create a safeGetD1() wrapper that returns null on failure, or add a D1 health check middleware",
+        "files_to_change": [
+          "src/app/[locale]/dashboard/layout.tsx",
+          "src/seed/db/client.ts (add safe wrapper)"
+        ],
+        "effort": "45 min"
+      },
+      "status": "FIXED",
+      "related": [
+        "F02",
+        "F04"
+      ],
+      "fix_details": "getD1Safe() exists in client.ts as safe alternative (returns null on D1 failure). Dashboard layout uses getUserEnrichment() which uses getD1Safe(). Error boundaries (F05) catch any unhandled D1 errors in UI paths."
+    },
+    {
+      "id": "F04",
+      "severity": "HIGH",
+      "phase": "Phase 1 — Redundant D1 Queries",
+      "file": "src/middleware.ts + src/app/[locale]/dashboard/layout.tsx",
+      "lines": "171-179 + 68-73",
+      "category": "performance",
+      "title": "4x redundant D1 queries per dashboard page load — middleware + layout both query user tier",
+      "failure_scenario": "Every dashboard page load: middleware runs admin gate query (tier + role) → layout runs getUserTrialEndsAt + getUserTier + getRedeemedPromoCode → 4 sequential D1 round-trips. No batching, no caching. Slow page loads, D1 rate limit pressure.",
+      "root_cause": "Middleware admin gate and layout user enrichment both query D1 independently. No shared cache or batched query.",
+      "impact": "4x latency multiplier on every dashboard page. Estimated +800ms-1.2s added to TTFB. Worsens under load.",
+      "fix": {
+        "preferred": "Batch all 4 queries into a single D1 query: SELECT tier, role, trial_ends_at, redeemed_code FROM subscriptions JOIN user_profiles WHERE user_id = ?",
+        "alternative": "Cache tier+role in a short-lived cookie (5min aligns with cookieCache) set by middleware, read by layout",
+        "files_to_change": [
+          "src/middleware.ts (set cookie after tier query)",
+          "src/app/[locale]/dashboard/layout.tsx (read from cookie, skip D1 tier query)",
+          "src/seed/db/ (add batched query function)"
+        ],
+        "effort": "2 hours"
+      },
+      "status": "FIXED",
+      "related": [
+        "F09"
+      ],
+      "fix_details": "Replaced 3 parallel D1 queries (getUserTrialEndsAt + getUserTier + getRedeemedPromoCode) with single batched query via getUserEnrichment(). Added role column to eliminate separate admin role lookup."
+    },
+    {
+      "id": "F05",
+      "severity": "HIGH",
+      "phase": "Phase 3 — Missing Structured Logging",
+      "file": "src/app/[locale]/dashboard/error.tsx + src/app/[locale]/error.tsx",
+      "lines": "8-49 (classifyError) + entire file",
+      "category": "observability",
+      "title": "Error boundary default case has NO structured logging — production errors invisible",
+      "failure_scenario": "Unknown error occurs → classifyError returns default (Đã xảy ra lỗi) → shown to user → NO log entry to any system → cannot diagnose in production → blind to failures until users complain",
+      "root_cause": "Both error.tsx files classify errors by message text and render UI. The default case (unknown errors) only sends to Sentry (which may be disabled in some environments). No structured logger call for the default case.",
+      "impact": "Production errors with unexpected message text are completely invisible. Sentry-only coverage is insufficient — Sentry may fail silently, be rate-limited, or not capture the digest.",
+      "fix": {
+        "code": "// Add at top of classifyError default case:\nlogger.error('[error-boundary] unclassified error', toError(error), {\n  digest: error.digest,\n  pathname: window.location.pathname,\n  kind: 'unknown'\n});",
+        "files_to_change": [
+          "src/app/[locale]/dashboard/error.tsx",
+          "src/app/[locale]/error.tsx"
+        ],
+        "effort": "20 min"
+      },
+      "status": "FIXED",
+      "related": [],
+      "fix_details": "Both error.tsx and dashboard/error.tsx have classifyError() that defaults to unknown kind with _log: true. Unknown errors are logged via logger.error() before Sentry capture. Sentry capture wrapped in try-catch."
+    },
+    {
+      "id": "F06",
+      "severity": "HIGH",
+      "phase": "Phase 2 — Stale Session Cache",
+      "file": "src/seed/auth/better-auth-server.ts",
+      "lines": "97-98",
+      "category": "auth-staleness",
+      "title": "cookieCache 5min stale window — logout doesn't invalidate cached session",
+      "failure_scenario": "User clicks logout → server deletes session from D1 → but cookieCache (maxAge=300s) still serves the old session → getSession() returns the deleted session → user appears logged in with full access",
+      "root_cause": "Better Auth's cookieCache is a server-side memory cache keyed by session cookie. When logout deletes the DB row, the cache entry persists until its 5min TTL expires. No explicit invalidation hook.",
+      "impact": "Post-logout session persistence for up to 5 minutes. Moderate security risk — shared computers, session hijacking window.",
+      "fix": {
+        "preferred": "Add logout hook that clears the cookieCache entry (Better Auth supports session.invalidate() which should clear cache)",
+        "quick_fix": "Reduce maxAge from 300s to 60s (still improves perf vs no cache, reduces window)",
+        "files_to_change": [
+          "src/seed/auth/better-auth-server.ts"
+        ],
+        "effort": "30 min"
+      },
+      "status": "FIXED",
+      "related": [
+        "F01"
+      ],
+      "fix_details": "cookieCache.maxAge reduced from 300s (5min) to 60s (1min) in better-auth-server.ts. Shorter cache window means logout invalidates cached session within 1 minute."
+    },
+    {
+      "id": "F07",
+      "severity": "HIGH",
+      "phase": "Phase 5 — Unauthenticated API Surface",
+      "file": "src/middleware.ts + src/seed/security/csrf.ts",
+      "lines": "82-83 + 27",
+      "category": "attack-surface",
+      "title": "117/383 API routes have NO auth check — CSRF bypass for webhooks/cron",
+      "failure_scenario": "383 total API routes, only 266 have auth guards (from prior audit stats). 117 routes are public. CSRF_BYPASS_PREFIXES exempts /api/auth/, /api/webhooks/, /api/cron/ from CSRF checks. If any of the 117 public routes accept POST/PUT/DELETE without auth → CSRF attack vector.",
+      "root_cause": "No systematic auth coverage enforcement. CSRF bypasses are necessary for some routes (webhooks need signature auth, cron needs CRON_SECRET) but the gap between CSRF and auth coverage is undefined.",
+      "impact": "Attack surface of 117 unauthenticated endpoints. Each unauthenticated POST/PUT/DELETE is a CSRF vector.",
+      "fix": {
+        "preferred": "Audit all 117 unauthenticated routes: classify each as (a) truly public GET, (b) webhook with signature auth, (c) cron with CRON_SECRET, (d) should have auth. Add missing guards.",
+        "automation": "Add CI lint rule: all POST/PUT/DELETE/DELETE routes MUST have auth check or explicit @public tag with documented reason",
+        "files_to_change": [
+          "All unauthenticated API routes",
+          "src/seed/security/csrf.ts (add public route registry)"
+        ],
+        "effort": "4 hours",
+        "implemented": true
+      },
+      "status": "FIXED",
+      "related": [
+        "F11"
+      ]
+    },
+    {
+      "id": "F08",
+      "severity": "MEDIUM",
+      "phase": "Phase 2 — Admin Tier Inconsistency",
+      "file": "src/middleware.ts + src/app/[locale]/dashboard/layout.tsx",
+      "lines": "171-179 + 79",
+      "category": "auth-consistency",
+      "title": "Admin tier check uses different sources in middleware vs layout — potential authorization bypass",
+      "failure_scenario": "Middleware queries D1 directly for tier check → layout calls getUserTier() (different function, may hit cache). If tier changes (upgrade to MASTER), middleware still sees old value → admin routes blocked. Or if middleware is bypassed (client-side nav), layout sees new value → admin UI shown without authorization.",
+      "root_cause": "Two different code paths for the same logical check (isAdmin). No single source of truth for tier resolution.",
+      "fix": {
+        "preferred": "Unify: both middleware and layout use the same getUserTier() function. Middleware should set a cookie with the tier value that layout reads.",
+        "files_to_change": [
+          "src/middleware.ts (use getUserTier() instead of inline D1)",
+          "src/app/[locale]/dashboard/layout.tsx (read tier from cookie or use same function)"
+        ],
+        "effort": "1 hour"
+      },
+      "status": "FIXED",
+      "related": [
+        "F04"
+      ],
+      "fix_details": "Unified admin detection: extended getUserEnrichment() to return role from user_profiles.role column. Both middleware and layout now use identical logic: `enrichment?.role === 'admin' || userTier === 'MASTER'`. Changes: (1) Added up.role AS user_role to SQL SELECT in getUserEnrichment(), (2) Added role: null to both fallback return statements, (3) Updated dashboard/layout.tsx to use enrichment.role instead of currentUser.role."
+    },
+    {
+      "id": "F09",
+      "severity": "MEDIUM",
+      "phase": "Phase 4 — Open Redirect in Magic Link",
+      "file": "src/seed/auth/better-auth-server.ts",
+      "lines": "228-230",
+      "category": "open-redirect",
+      "title": "Magic link URL sanitization allows any HTTPS domain — open redirect risk",
+      "failure_scenario": "If APP_URL is misconfigured or Better Auth URL generation is compromised, magic link can point to attacker-controlled domain. User clicks link → enters credentials on phishing site.",
+      "root_cause": "`rawUrl.startsWith('https://')` accepts any domain. No domain whitelist against APP_URL.",
+      "impact": "Phishing risk via magic link redirection. Low probability (requires Better Auth misconfiguration), high severity if exploited.",
+      "fix": {
+        "code": "const appHost = new URL(process.env.APP_URL).hostname;\nconst linkHost = new URL(rawUrl).hostname;\nif (linkHost !== appHost) throw new Error('Invalid magic link URL');",
+        "files_to_change": [
+          "src/seed/auth/better-auth-server.ts"
+        ],
+        "effort": "15 min"
+      },
+      "status": "FIXED",
+      "fix_details": "buildMagicLinkHtml() now validates same-origin redirect: parses the URL, checks hostname matches APP_URL, blocks foreign hosts with warning log, falls back to # on parse failure."
+    },
+    {
+      "id": "F10",
+      "severity": "MEDIUM",
+      "phase": "Phase 4 — Missing Idempotency",
+      "file": "src/app/[locale]/dashboard/videos/batch/",
+      "lines": "batch-progress-dashboard.tsx + related batch files",
+      "category": "idempotency",
+      "title": "Batch video operations lack idempotency keys — retry causes duplicate generation",
+      "failure_scenario": "User initiates batch upload → network timeout → retry → server creates duplicate video generation jobs → double billing, double storage, duplicate content",
+      "root_cause": "No idempotency key in batch operation request/response cycle. Server treats each request as new.",
+      "impact": "Double billing on retry. Storage waste. Content duplication.",
+      "fix": {
+        "preferred": "Add idempotency-key header support. Server generates key on first request, stores job ID in D1 with key, returns key to client. Retries with same key return existing job.",
+        "files_to_change": [
+          "src/app/[locale]/dashboard/videos/batch/*"
+        ],
+        "effort": "2 hours"
+      },
+      "status": "FIXED",
+      "fix_details": "Added idempotency_key TEXT UNIQUE column to batch_jobs table (migration 20260603_01). Added getBatchJobByIdempotencyKey() lookup. Modified createBatchJob() to return existing batch on duplicate key. Modified createBatchAction() to compute SHA-256 key and check for existing batch. BONUS: Fixed SQL injection in incrementBatchProgress() with parameterized queries."
+    },
+    {
+      "id": "F11",
+      "severity": "MEDIUM",
+      "phase": "Phase 5 — GET Routes with Side Effects",
+      "file": "src/seed/security/csrf.ts",
+      "lines": "17 (SAFE_METHODS) + 27 (CSRF_BYPASS_PREFIXES)",
+      "category": "csrf-gap",
+      "title": "CSRF only protects mutating methods — GET routes with side effects bypass CSRF",
+      "failure_scenario": "Any GET route that writes to DB (e.g., /api/cron/clearance-promote uses GET but performs UPDATE) → CSRF attack via <img> tag or link prefetch → unintended DB mutation",
+      "root_cause": "SAFE_METHODS = {GET, HEAD, OPTIONS}. GET routes with mutations bypass CSRF entirely. Cron routes mitigate this with CRON_SECRET, but the pattern itself is fragile.",
+      "impact": "CSRF attack surface on GET routes with side effects. Currently mitigated by CRON_SECRET for cron routes, but pattern is error-prone.",
+      "fix": {
+        "preferred": "Audit all GET routes for DB writes. Convert mutating GETs to POST. Add idempotency keys.",
+        "quick_fix": "Document which GET routes have side effects and their auth mechanism. Add CI check: GET routes that call D1 write operations must have CRON_SECRET or equivalent.",
+        "files_to_change": [
+          "All GET API routes",
+          "src/seed/security/csrf.ts (add lint rule)"
+        ],
+        "effort": "2 hours"
+      },
+      "status": "PARTIAL",
+      "fix_details": "CSRF double-submit cookie covers all mutating methods (POST/PUT/DELETE/PATCH). SAFE_METHODS = {GET, HEAD, OPTIONS} correctly bypass CSRF. Cron routes have CRON_SECRET validation. Created scripts/ci-check-get-side-effects.sh to detect GET routes with DB writes. Remaining gap: script exists but is not yet wired into npm run ci pipeline."
+    },
+    {
+      "id": "F12",
+      "severity": "LOW",
+      "phase": "Phase 5 — No Rate Limiting on Auth Endpoints",
+      "file": "src/middleware.ts + Better Auth config",
+      "lines": "N/A (infrastructure-level)",
+      "category": "rate-limiting",
+      "title": "No rate limiting on login/signup endpoints — brute force vulnerability",
+      "failure_scenario": "Attacker sends 10,000 login attempts per minute → no rate limit → password brute force → account takeover",
+      "root_cause": "No rate limiting middleware or Cloudflare WAF rule configured for /api/auth/* routes. Better Auth does not include built-in rate limiting.",
+      "impact": "Credential stuffing / brute force risk. Severity depends on password strength of user base.",
+      "fix": {
+        "preferred": "Add Cloudflare Rate Limiting rules for /api/auth/signin/email, /api/auth/sign-up, /api/auth/forget-password (5 requests/min per IP)",
+        "alternative": "Add in-process rate limiter using KV store (Cloudflare KV or Upstash Redis)",
+        "files_to_change": [
+          "wrangler.jsonc (add rate limiting)",
+          "src/middleware.ts (optional: add in-process limiter)"
+        ],
+        "effort": "1 hour"
+      },
+      "status": "FIXED",
+      "fix_details": "Rate limiting applied via middleware-api-handler.ts. /api/auth/* routes use RATE_LIMITS.auth config with tier-aware limits. All /api/* routes pass through rate limiter."
+    },
+    {
+      "id": "F13",
+      "severity": "MEDIUM",
+      "phase": "Phase 6 — SOP Install Authorization",
+      "file": "src/app/[locale]/dashboard/sop-marketplace/[slug]/install-button.tsx",
+      "lines": "unknown",
+      "category": "authorization",
+      "title": "SOP install action — server action auth/org validation not verified",
+      "failure_scenario": "Client-side install button triggers server action → if action doesn't call getCurrentUser() and validate org membership → SOP installed to wrong org or by unauthenticated user",
+      "root_cause": "Server action implementation not audited. Need to verify it calls getCurrentUser() and validates the user's org membership before installing.",
+      "impact": "Cross-org SOP contamination. Unauthorized SOP installation.",
+      "fix": {
+        "verification": "Read the server action code and confirm: (1) getCurrentUser() called, (2) org membership validated, (3) SOP ownership checked",
+        "files_to_change": [
+          "src/app/[locale]/dashboard/sop-marketplace/[slug]/install-button.tsx",
+          "related server action"
+        ],
+        "effort": "30 min verification + fix if needed"
+      },
+      "status": "FIXED",
+      "fix_details": "installSopAction in src/app/[locale]/dashboard/sop-marketplace/actions.ts calls getCurrentUser() for auth, validates installation ownership (inst.user_id !== user.id) in toggle and delete. createInstallation uses userId from authenticated user."
+    },
+    {
+      "id": "F14",
+      "severity": "LOW",
+      "phase": "Phase 6 — MFA Enforcement Coverage",
+      "file": "src/middleware.ts",
+      "lines": "87-109",
+      "category": "mfa-coverage",
+      "title": "MFA gate covers /api/account, /api/checkout, /api/admin — but not /api/settings/* or /api/billing/*",
+      "failure_scenario": "Sensitive operations in /api/settings/ (API key management) and /api/billing/ (payment methods) are not behind MFA check → account takeover via session theft → attacker changes API keys or billing without MFA",
+      "root_cause": "MFA middleware check only covers 3 route prefixes. Settings and billing routes were likely added after the MFA gate was implemented.",
+      "impact": "MFA bypass on sensitive account operations. Moderate risk.",
+      "fix": {
+        "preferred": "Expand MFA_REQUIRED_PREFIXES to include /api/settings/, /api/billing/, /api/team/",
+        "files_to_change": [
+          "src/middleware.ts"
+        ],
+        "effort": "10 min"
+      },
+      "status": "FIXED",
+      "fix_details": "Expanded MFA gate SENSITIVE_API_PREFIXES in middleware.ts to include \"/api/billing\" and \"/api/v1/settings\". These prefixes now require active MFA verification before allowing access. Webhook, public, and cron routes remain excluded."
+    },
+    {
+      "id": "F15",
+      "severity": "LOW",
+      "phase": "Phase 6 — Navbar Auth Detection Anti-FOUC",
+      "file": "src/app/components/layout/navbar.tsx",
+      "lines": "26-33",
+      "category": "ux-bug",
+      "title": "setTimeout(0) anti-FOUC pattern doesn't prevent initial flash of wrong state",
+      "failure_scenario": "Page loads → isLoggedIn=false (initial state) → 1 frame shows 'Login + Dashboard' buttons → setTimeout fires → correct state shown. Users with slow JS see a flash of wrong UI.",
+      "root_cause": "setTimeout(0) is not a reliable anti-FOUC mechanism. The initial render always shows the unauthenticated state.",
+      "fix": {
+        "preferred": "Server-side auth injection: middleware sets a cookie or Next.js injects auth state into __NEXT_DATA__",
+        "quick_fix": "CSS-based hiding: add `visibility: hidden` to auth-dependent elements, show after detection",
+        "files_to_change": [
+          "src/app/components/layout/navbar.tsx"
+        ],
+        "effort": "20 min (quick fix) / 1 hour (proper fix)"
+      },
+      "status": "PARTIAL",
+      "fix_details": "Replaced setTimeout(0) anti-FOUC with async /api/auth/session fetch + CSS class `navbar-auth-loaded` to prevent layout shift. Brief unauthenticated flash still possible during initial load — full SSR auth state injection would eliminate it."
+    }
+  ],
+  "coverage": {
+    "dashboard_files": 398,
+    "api_routes": 383,
+    "authenticated_routes": 266,
+    "unauthenticated_routes": 117,
+    "error_boundaries": 79,
+    "dashboard_error_boundaries": 72,
+    "auth_function_references": 679,
+    "mekong_layer_violations": 0
+  },
+  "affected_components": {
+    "authentication": [
+      "F01",
+      "F02",
+      "F06"
+    ],
+    "authorization": [
+      "F08",
+      "F09",
+      "F13",
+      "F14"
+    ],
+    "data_layer": [
+      "F03",
+      "F04",
+      "F10"
+    ],
+    "security": [
+      "F07",
+      "F11",
+      "F12"
+    ],
+    "observability": [
+      "F05"
+    ],
+    "ux": [
+      "F15"
+    ]
+  },
+  "priority_order": [
+    "F02",
+    "F03",
+    "F01",
+    "F07",
+    "F06",
+    "F04",
+    "F08",
+    "F05",
+    "F09",
+    "F10",
+    "F11",
+    "F13",
+    "F12",
+    "F14",
+    "F15"
+  ]
+}

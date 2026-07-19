@@ -1,0 +1,91 @@
+{
+  "sections": [
+    {
+      "heading": "FREE100 & gói cước",
+      "items": [
+        {
+          "q": "Mã FREE100 hoạt động như thế nào?",
+          "a": "FREE100 mở khoá gói MASTER trọn đời. Bạn nhập mã trên trang /pricing → đăng ký email → nhận magic link → click để vào dashboard. Không cần thẻ tín dụng, không auto-charge.",
+          "link": { "href": "/pricing", "label": "Mở trang giá" }
+        },
+        {
+          "q": "Gói MASTER bao gồm những gì?",
+          "a": "Truy cập tất cả tính năng: video AI không giới hạn (theo BYOK), 31 SOP templates, Telegram bot, audit logs, API access, multi-language support. Tier tồn tại vĩnh viễn cho tài khoản của bạn."
+        },
+        {
+          "q": "Magic link của tôi đã hết hạn — phải làm sao?",
+          "a": "Vào trang /welcome/expired, nhập email đã đăng ký, hệ thống sẽ gửi link mới. Mỗi giờ tối đa 3 lần gửi lại.",
+          "link": { "href": "/welcome/invalid", "label": "Gửi lại magic link" }
+        },
+        {
+          "q": "Tôi có thể nâng cấp sang gói trả phí sau không?",
+          "a": "Có. Sau khi FREE100 active, bạn vẫn có thể chuyển sang gói trả phí (ENTERPRISE hoặc PREMIUM) bằng USDT qua NOWPayments hoặc PayOS. Nhưng MASTER đã là gói cao nhất rồi."
+        }
+      ]
+    },
+    {
+      "heading": "BYOK (Bring Your Own Key)",
+      "items": [
+        {
+          "q": "Tôi cần API key nào để bắt đầu?",
+          "a": "Bắt buộc: HeyGen (cho video avatar). Tuỳ chọn nhưng khuyến nghị: OpenRouter (LLM), ElevenLabs (giọng nói), D-ID (avatar thay thế). Mỗi key tự bạn lấy từ dashboard nhà cung cấp.",
+          "link": { "href": "/dashboard/byok", "label": "Vào trang BYOK" }
+        },
+        {
+          "q": "Lấy HeyGen API key ở đâu?",
+          "a": "Đăng nhập app.heygen.com → Avatar → Settings → API Keys → Create New Key. Copy toàn bộ chuỗi do HeyGen cung cấp và paste vào BYOK."
+        },
+        {
+          "q": "API key của tôi có an toàn không?",
+          "a": "Có. Key được mã hoá bằng AES-GCM trước khi lưu vào D1 database, chỉ giải mã khi gọi API. Không log raw key. Không hiển thị key trong UI sau khi lưu."
+        },
+        {
+          "q": "BYOK key bị báo \"invalid\" — tại sao?",
+          "a": "Thường do: (1) copy thiếu hoặc thừa khoảng trắng, (2) key đã bị thu hồi ở dashboard nhà cung cấp, (3) tài khoản nhà cung cấp hết credit. Xem trang Troubleshooting.",
+          "link": { "href": "/dashboard/help/troubleshooting", "label": "Xem Troubleshooting" }
+        }
+      ]
+    },
+    {
+      "heading": "Video & SOPs",
+      "items": [
+        {
+          "q": "Sự khác biệt giữa \"Video\" và \"SOP\" là gì?",
+          "a": "SOP = quy trình lặp lại (ví dụ: \"Chiến dịch ra mắt sản phẩm 7 video\"). Video = file MP4 cụ thể được render. 1 SOP có thể chạy nhiều lần để tạo nhiều video khác nhau.",
+          "link": { "href": "/dashboard/sop-marketplace", "label": "Khám phá SOP marketplace" }
+        },
+        {
+          "q": "Làm sao tạo video đầu tiên?",
+          "a": "Cách nhanh nhất: vào /dashboard/sop-marketplace → chọn 1 SOP template phù hợp → Install → bấm \"Run\" → nhập tham số → chờ 2-5 phút. Video sẽ xuất hiện ở /dashboard/videos.",
+          "link": { "href": "/dashboard/sop-marketplace", "label": "Mở SOP marketplace" }
+        },
+        {
+          "q": "Tôi muốn xem credits còn lại?",
+          "a": "Với MASTER tier, credits là không giới hạn (limit bởi API key BYOK của bạn). Xem /dashboard/billing để biết HeyGen/ElevenLabs credit usage thực tế."
+        },
+        {
+          "q": "Có thể share video với team không?",
+          "a": "Có. Mỗi video có signed URL download có hạn 7 ngày. Vào /dashboard/videos → chọn video → Copy share link."
+        }
+      ]
+    },
+    {
+      "heading": "Telegram & Multi-language",
+      "items": [
+        {
+          "q": "Cách kết nối Telegram bot?",
+          "a": "Vào /welcome/[token] (sau khi đăng ký) → click \"Connect Telegram\" → @Sophia_Bbot mở tự động → bấm Start. Hoặc /dashboard/settings → Integrations → Telegram.",
+          "link": { "href": "/guide/telegram", "label": "Hướng dẫn chi tiết" }
+        },
+        {
+          "q": "Sophia hỗ trợ ngôn ngữ nào?",
+          "a": "UI: Tiếng Việt + English. Video output: phụ thuộc model bạn dùng (HeyGen hỗ trợ 40+ ngôn ngữ, ElevenLabs 30+)."
+        },
+        {
+          "q": "Đổi ngôn ngữ UI ở đâu?",
+          "a": "URL prefix: /vi/* cho Tiếng Việt, /en/* cho English. Hoặc Settings → Language. Lựa chọn được lưu trong cookie."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sophia AI Factory - Affiliate Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error": "#f97386",
+                        "surface-container-low": "#131318",
+                        "primary-fixed": "#cecefa",
+                        "outline": "#76747f",
+                        "on-error": "#490013",
+                        "on-primary-fixed-variant": "#4c4d72",
+                        "error-dim": "#c44b5f",
+                        "on-secondary-container": "#bebdd5",
+                        "on-primary-container": "#e2e0ff",
+                        "surface-container-lowest": "#000000",
+                        "primary-dim": "#b5b5e0",
+                        "tertiary-dim": "#e7bfea",
+                        "secondary": "#c6c4dd",
+                        "primary-fixed-dim": "#c0c0eb",
+                        "on-secondary-fixed-variant": "#5a5a6f",
+                        "on-secondary": "#3e3e52",
+                        "background": "#0e0e12",
+                        "on-surface-variant": "#acaab5",
+                        "on-surface": "#e7e4f0",
+                        "secondary-fixed": "#e2e0f9",
+                        "on-primary-fixed": "#303154",
+                        "secondary-container": "#393a4d",
+                        "primary-container": "#4e4f74",
+                        "tertiary": "#fedeff",
+                        "tertiary-container": "#f5cdf9",
+                        "inverse-on-surface": "#55545a",
+                        "secondary-dim": "#b8b6cf",
+                        "outline-variant": "#484750",
+                        "on-tertiary": "#694a6f",
+                        "surface": "#0e0e12",
+                        "on-secondary-fixed": "#3d3e51",
+                        "inverse-surface": "#fcf8fe",
+                        "on-tertiary-fixed": "#4c2f52",
+                        "secondary-fixed-dim": "#d4d2eb",
+                        "surface-container-high": "#1f1f26",
+                        "surface-variant": "#25252e",
+                        "surface-bright": "#2c2b34",
+                        "surface-dim": "#0e0e12",
+                        "tertiary-fixed-dim": "#e7bfea",
+                        "on-error-container": "#ff97a3",
+                        "error-container": "#871c34",
+                        "on-background": "#e7e4f0",
+                        "inverse-primary": "#5b5c81",
+                        "primary": "#c3c3ee",
+                        "on-tertiary-fixed-variant": "#6a4b70",
+                        "surface-container-highest": "#25252e",
+                        "on-primary": "#3c3d61",
+                        "surface-tint": "#c3c3ee",
+                        "tertiary-fixed": "#f5cdf9",
+                        "on-tertiary-container": "#604266",
+                        "surface-container": "#191920"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["IBM Plex Sans"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #0e0e12; color: #e7e4f0; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-card { background: rgba(25, 25, 32, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(72, 71, 80, 0.5); }
+        .active-nav { border-right: 4px solid #6366F1; background: rgba(78, 79, 116, 0.2); color: #c3c3ee; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0e0e12; }
+        ::-webkit-scrollbar-thumb { background: #393a4d; border-radius: 10px; }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+<!-- SideNavBar (Authority: JSON) -->
+<aside class="h-screen w-64 fixed left-0 top-0 bg-surface-container-low dark:bg-surface-container-low border-r border-outline-variant dark:border-outline-variant flex flex-col py-6 z-50">
+<div class="px-6 mb-8 flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-on-primary">movie_filter</span>
+</div>
+<div>
+<h1 class="text-xl font-headline font-black text-primary dark:text-primary tracking-tighter">Sophia AI</h1>
+<p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">AI Factory</p>
+</div>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body text-label-sm tracking-wide">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="movie_filter">movie_filter</span>
+<span class="font-body text-label-sm tracking-wide">Video Factory</span>
+</a>
+<!-- ACTIVE: Affiliates -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-primary dark:text-primary bg-primary-container/20 border-r-4 border-primary transition-colors cursor-pointer active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-body text-label-sm tracking-wide">Affiliates</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="account_balance_wallet">account_balance_wallet</span>
+<span class="font-body text-label-sm tracking-wide">Wallet</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer active:scale-95 duration-150" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-body text-label-sm tracking-wide">Settings</span>
+</a>
+</nav>
+<div class="px-4 mt-auto">
+<button class="w-full py-3 bg-primary text-on-primary font-bold rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/10 hover:brightness-110 active:scale-[0.98] transition-all">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span>Create New Video</span>
+</button>
+</div>
+</aside>
+<!-- TopNavBar (Authority: JSON) -->
+<header class="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-background/80 dark:bg-background/80 backdrop-blur-md border-b border-outline-variant dark:border-outline-variant flex items-center justify-between px-8 z-40 shadow-sm">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+<input class="w-full bg-surface-container-highest/50 border-none rounded-full pl-10 pr-4 py-1.5 text-sm focus:ring-1 focus:ring-primary placeholder:text-on-surface-variant/50" placeholder="Search affiliate resources..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 text-on-surface-variant">
+<button class="hover:text-primary transition-all flex items-center gap-1">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+</button>
+<button class="relative hover:text-primary transition-all">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</button>
+</div>
+<div class="h-8 w-[1px] bg-outline-variant"></div>
+<button class="px-4 py-1.5 bg-surface-container-highest border border-outline-variant rounded-full text-primary font-bold text-sm hover:bg-surface-container-high transition-all">
+                Upgrade Pro
+            </button>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="text-xs font-bold text-on-surface">Sophia J.</p>
+<p class="text-[10px] text-on-surface-variant">Affiliate Partner</p>
+</div>
+<div class="w-9 h-9 rounded-full overflow-hidden border border-primary/20">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a young female tech entrepreneur with short hair, wearing a sleek black blazer, set against a blurred high-tech studio background with soft purple and indigo ambient lighting. The style is ultra-high definition, cinematic, and professional for a SaaS platform avatar." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2-gu7T1T1q88cjPi2A4NgjpZTjkFYQfWIluOmp5yQokHqtl92d7as8OYz0xRU0uAwpzytcNAr2QanjhhPQVWA390XYNOXwHSVS_mA7uSz3cindZ1QPUc6fkw3YuCSoaCTocAWfXJs0TFBJ4NH9CMqZ2vmYACArBznZ5UXWwbu3th7WnWvK7j2rcpmSt5GGhR6d-15fXTUlrfc60y_1wnJdD5RiOtpt7OcP57-eaSnpCd3FiBJX9tuy37bqeN1DE2sKnYbFRXUMmc"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 pt-24 px-8 pb-12 min-h-screen">
+<!-- Header Section -->
+<div class="flex justify-between items-center mb-8">
+<div>
+<h2 class="text-[28px] font-bold text-on-surface tracking-tight">Affiliate Dashboard</h2>
+<p class="text-on-surface-variant text-sm mt-1">Manage your referrals, track conversions, and maximize your earnings.</p>
+</div>
+<button class="px-6 py-2.5 bg-primary text-on-primary font-bold rounded-xl flex items-center gap-2 hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-primary/20">
+<span class="material-symbols-outlined">share</span>
+                Refer a Friend
+            </button>
+</div>
+<!-- KPI Section (Compact Cards) -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+<div class="glass-card p-5 rounded-2xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">groups</span>
+</div>
+<div>
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Total Referrals</p>
+<h3 class="text-24 font-semibold text-on-surface">47</h3>
+</div>
+</div>
+<div class="glass-card p-5 rounded-2xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">how_to_reg</span>
+</div>
+<div>
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Active</p>
+<h3 class="text-24 font-semibold text-on-surface">32</h3>
+</div>
+</div>
+<div class="glass-card p-5 rounded-2xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">payments</span>
+</div>
+<div>
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Commission Earned</p>
+<h3 class="text-24 font-semibold text-on-surface">$3,847</h3>
+</div>
+</div>
+<div class="glass-card p-5 rounded-2xl flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">schedule</span>
+</div>
+<div>
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-wider">Pending</p>
+<h3 class="text-24 font-semibold text-on-surface">$892</h3>
+</div>
+</div>
+</div>
+<!-- Main Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+<!-- Left Column: Affiliate Offers -->
+<section>
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-xl font-bold text-on-surface">Affiliate Offers</h3>
+<a class="text-primary text-sm font-medium hover:underline" href="#">View All Offers</a>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<!-- TikTok Shop Card -->
+<div class="glass-card p-6 rounded-2xl group hover:border-primary/50 transition-all">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest p-2 border border-outline-variant">
+<img class="w-full h-full object-contain" data-alt="A sleek, minimalist vector logo of TikTok featuring the iconic music note in a high-tech chrome finish, set against a dark glassmorphism background. The aesthetic is modern and professional, matching a high-fidelity SaaS dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnEdqaJgbgsRQRJR7YfbGaoTWoLavohXlUu76qaAymhvnbTJKwjLSAPdiVBGNIR0xFv3GzpNC0WjrsRg2o6gTMazA3LxtU1GWukgPWhUT5epysxqiG3brwOufh3zR4Q3lV107jtBW2lrlRYDU0XRxzvdlhs2LNC_aKprHwiPENyduShmFoY7l3juWuknrnufEO9OC62Hysx9CZ0ReuhKyeBH3kF7Mc8SDFyJmf2vbqknFgGPo31HIJNqr3sQgM1LWY8KYv3-phFq4"/>
+</div>
+<span class="bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight">15% Comm.</span>
+</div>
+<h4 class="font-bold text-on-surface mb-4">TikTok Shop</h4>
+<button class="w-full py-2 bg-transparent border border-outline-variant hover:bg-surface-container-highest text-on-surface font-semibold rounded-lg text-sm transition-all">
+                            Promote
+                        </button>
+</div>
+<!-- AccessTrade Card -->
+<div class="glass-card p-6 rounded-2xl group hover:border-primary/50 transition-all">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest p-2 border border-outline-variant">
+<img class="w-full h-full object-contain" data-alt="A modern corporate fintech logo for AccessTrade, showing abstract intersecting geometric lines in silver and electric indigo. The logo is minimalist and professional, perfectly suited for a dark-mode affiliate dashboard interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9-xL5gMztPKejHq5aUxb9yD8Wyeqy08QZwrtzCz6NArLqwCCndopVFlgtc6DX84mVQAJ4gbyUXrEJSXlHT1yGtqyXayvLdEaT3TFzheJko7A_wLXOIJQV1Ya2nXeHzxZCJ0SyYox10Hby64sIsBMRuSMpDFXy9a-uB3PC8bF4rH5Dupcg66nw5Pg4MKyNPGgJXx-8ikncdcWK_6d6DpgLA-ln5jDrnWBv-kWQu4z1BBibl_uUBO-OzGsMQlZ05UHNENj9uqgjjmU"/>
+</div>
+<span class="bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight">10% Comm.</span>
+</div>
+<h4 class="font-bold text-on-surface mb-4">AccessTrade</h4>
+<button class="w-full py-2 bg-transparent border border-outline-variant hover:bg-surface-container-highest text-on-surface font-semibold rounded-lg text-sm transition-all">
+                            Promote
+                        </button>
+</div>
+<!-- ClickBank Card -->
+<div class="glass-card p-6 rounded-2xl group hover:border-primary/50 transition-all">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-lg bg-surface-container-highest p-2 border border-outline-variant">
+<img class="w-full h-full object-contain" data-alt="A clean, flat vector logo for ClickBank featuring its classic C and B branding in a minimalist white and indigo color scheme. The background is a dark deep charcoal, creating a high-contrast and premium professional look for a SaaS dashboard." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4CqbdijYkWM5X0W8jIhpkacLQfGnUm9fRHdPySX8ceLZQt2KBD3OLdMAHpaTnBqJ-dnhVgZW2IMsDF_bvLg6LTeWjWsbIqr71EtFd0BkhR5MpRQXLeQGZ4UrnEyl_cPXqUNAvpxOWMA6e8zpuSDmEkDYtT1EYr4beZ6bkILRo3vEG9bQ6l3HY_27L7TcPN02LAFMtuJcZnpLmMTEHaBW743WKIQv9RBWJcq934mak8EwtDRehzV3ACXaXVI_aX0V1J6IgCp_ebrg"/>
+</div>
+<span class="bg-primary/20 text-primary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight">20% Comm.</span>
+</div>
+<h4 class="font-bold text-on-surface mb-4">ClickBank</h4>
+<button class="w-full py-2 bg-transparent border border-outline-variant hover:bg-surface-container-highest text-on-surface font-semibold rounded-lg text-sm transition-all">
+                            Promote
+                        </button>
+</div>
+<!-- Add New Card -->
+<div class="border-2 border-dashed border-outline-variant rounded-2xl flex flex-col items-center justify-center p-6 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all text-on-surface-variant">
+<span class="material-symbols-outlined text-3xl mb-2">add_circle</span>
+<span class="text-sm font-medium">Browse More</span>
+</div>
+</div>
+</section>
+<!-- Right Column: Recent Conversions -->
+<section>
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-xl font-bold text-on-surface">Recent Conversions</h3>
+<div class="flex gap-2">
+<button class="p-2 glass-card rounded-lg hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+</button>
+<button class="p-2 glass-card rounded-lg hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-sm">download</span>
+</button>
+</div>
+</div>
+<div class="glass-card rounded-2xl overflow-hidden overflow-x-auto">
+<table class="w-full text-left text-sm">
+<thead>
+<tr class="bg-surface-container-high text-on-surface-variant">
+<th class="px-6 py-4 font-bold uppercase text-[10px] tracking-widest">ID</th>
+<th class="px-6 py-4 font-bold uppercase text-[10px] tracking-widest">Amount</th>
+<th class="px-6 py-4 font-bold uppercase text-[10px] tracking-widest">Comm.</th>
+<th class="px-6 py-4 font-bold uppercase text-[10px] tracking-widest">Status</th>
+<th class="px-6 py-4 font-bold uppercase text-[10px] tracking-widest">Date</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<tr>
+<td class="px-6 py-4 text-on-surface">#TRX-9421</td>
+<td class="px-6 py-4 font-medium">$120.00</td>
+<td class="px-6 py-4 text-primary font-bold">$18.00</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-[10px] font-bold">PAID</span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">Oct 24, 2023</td>
+</tr>
+<tr>
+<td class="px-6 py-4 text-on-surface">#TRX-9418</td>
+<td class="px-6 py-4 font-medium">$450.00</td>
+<td class="px-6 py-4 text-primary font-bold">$67.50</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-orange-500/10 text-orange-400 rounded-full text-[10px] font-bold">PENDING</span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">Oct 23, 2023</td>
+</tr>
+<tr>
+<td class="px-6 py-4 text-on-surface">#TRX-9415</td>
+<td class="px-6 py-4 font-medium">$89.00</td>
+<td class="px-6 py-4 text-primary font-bold">$13.35</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-[10px] font-bold">PAID</span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">Oct 22, 2023</td>
+</tr>
+<tr>
+<td class="px-6 py-4 text-on-surface">#TRX-9402</td>
+<td class="px-6 py-4 font-medium">$250.00</td>
+<td class="px-6 py-4 text-primary font-bold">$37.50</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-red-500/10 text-red-400 rounded-full text-[10px] font-bold">CLAWBACK</span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">Oct 20, 2023</td>
+</tr>
+<tr>
+<td class="px-6 py-4 text-on-surface">#TRX-9398</td>
+<td class="px-6 py-4 font-medium">$1,200.00</td>
+<td class="px-6 py-4 text-primary font-bold">$180.00</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-orange-500/10 text-orange-400 rounded-full text-[10px] font-bold">PENDING</span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">Oct 19, 2023</td>
+</tr>
+<tr>
+<td class="px-6 py-4 text-on-surface">#TRX-9391</td>
+<td class="px-6 py-4 font-medium">$75.00</td>
+<td class="px-6 py-4 text-primary font-bold">$11.25</td>
+<td class="px-6 py-4">
+<span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-[10px] font-bold">PAID</span>
+</td>
+<td class="px-6 py-4 text-on-surface-variant">Oct 18, 2023</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<!-- Referral Link Section -->
+<section class="glass-card p-8 rounded-3xl mb-8 border-primary/20 bg-gradient-to-br from-surface-container-low to-background">
+<h3 class="text-xl font-bold text-on-surface mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">link</span>
+                Your Referral Link
+            </h3>
+<div class="flex flex-col md:flex-row gap-4 mb-8">
+<div class="flex-1 bg-surface-container-highest/50 border border-outline-variant rounded-xl flex items-center px-4 py-3">
+<code class="text-primary font-mono text-base flex-1 overflow-hidden overflow-ellipsis whitespace-nowrap">https://sophia.agencyos.network/r/jane-8472</code>
+<button class="ml-4 flex items-center gap-2 bg-primary text-on-primary px-6 py-2 rounded-lg font-bold hover:brightness-110 active:scale-95 transition-all" onclick="this.innerText='Copied!'; setTimeout(() =&gt; this.innerHTML='&lt;span class=\'material-symbols-outlined text-[18px]\'&gt;content_copy&lt;/span&gt;&lt;span&gt;Copy&lt;/span&gt;', 2000)">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+<span>Copy</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-sm font-medium text-on-surface-variant">Share via:</span>
+<div class="flex gap-3">
+<button class="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-primary/20 hover:border-primary transition-all">
+<img alt="Facebook" class="w-5 h-5 invert opacity-70 group-hover:opacity-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCm6VPNRoF7jwMjeAHqMCNI8qcaeWh8sGNAencf56N4DMWIC9LhZ49ZXiiIHra1YNm59gXy5dHsOaWszCpG_y_M_Yu9jw-9-QwYAVkfp81dP5DtpFskEve6FZYOgGzzs2JwmYWcgD_BLFMXwtK53cfjKbUrKVK_i9SK8PyyBt5GY6T8lz1pMjqgaO7VPjBVJj_8oRMBygtIPdbffAPtc5vN4oGYOejWjaxCiVlEKkT2yXUbzPg-HS0QePI-e3jhym6WpWklmXCBrpA"/>
+</button>
+<button class="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-primary/20 hover:border-primary transition-all">
+<img alt="Twitter" class="w-5 h-5 invert opacity-70 group-hover:opacity-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCb1VQGVOt-fYn-RV03Ml6axmIK72H7PgDGieTl10VAJntRhJ1-Zo7VNGS9xcpU5pehpO_CKIa3kRlv2oHL5ff34amPfaMELRgnJWANvlE5EiVz7dO67809gSsZAzYduYTxFolzbXgWvFvG7Mqe27Oe_bkVv1v1u47atesT_JUtH0ox-kO_i7K84dZtF9UQaNaALnjjWbU01je23HPpMHz8T1-v5QZ5AoG-nzZH3r9wg3E4qZY8-779vjUhWltMSSkrDFOoP-xawA4"/>
+</button>
+<button class="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-primary/20 hover:border-primary transition-all">
+<img alt="WhatsApp" class="w-5 h-5 invert opacity-70 group-hover:opacity-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5W_pemMkhAgH3-i7pDgdOp9BLe-HwP2Wsg0_im4_A-fzmZ8dWiP6Qd62DdRSc-0ipnAtaah5DK1gcMmw7Q-8glAHYBEDxEpJLy6QVxOGpgI0Vamk6m7Lk1DMm6_YdWT75kuQi91RxFbIBtq0YSjz0gES4uxPCMy5dhqD807_3LzMZJ62MCsMRMHdToNbEZ75p1r1QcRiEnLBWxIrvWeNs66i3s6nQcPe6D7s9A7x7ydsgih2t5MCOS_GlGYKzi27U_bsABNTHG6U"/>
+</button>
+<button class="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-primary/20 hover:border-primary transition-all">
+<img alt="Telegram" class="w-5 h-5 invert opacity-70 group-hover:opacity-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8TqxoMtcqCkVIHEK4eiW88PDRpa8Et0F8hiPTpW0MsFoKYnwvUUCQ1Amjr5o_mr2cqAwr23-l-WWzTMHyVwZvmx9369IWB3dgnilqwgNguJXcovVZkzUO0zDRkJxBcq_iuCQUkdfRlmA5EyY8642xij5ODGXVgNKJ9owaZBPZ9GPiQqwj4Rl3mvSJt0lcUBwr5qSlu3BwC_BzeDdOy4zvdyTx6BNifcWpnoSziJQRx-IaR0BXQkhK8TfABKsXYhW0iGvZIBjIsmY"/>
+</button>
+</div>
+</div>
+</section>
+<!-- Wallet Section -->
+<section class="glass-card p-8 rounded-3xl border-primary/10">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+<div class="flex items-center gap-6">
+<div class="w-16 h-16 rounded-2xl bg-surface-container-highest flex items-center justify-center border border-outline-variant">
+<span class="material-symbols-outlined text-3xl text-primary" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+</div>
+<div>
+<h3 class="text-lg font-bold text-on-surface">USDT Wallet (TRC20)</h3>
+<div class="flex items-center gap-2 mt-1">
+<span class="text-on-surface-variant font-mono text-sm">TY5n...9K2mB7</span>
+<span class="material-symbols-outlined text-sm cursor-pointer hover:text-primary">visibility</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-8">
+<div class="text-right">
+<p class="text-xs text-on-surface-variant font-medium uppercase tracking-wider mb-1">Available Balance</p>
+<h4 class="text-2xl font-bold text-on-surface">$247.00</h4>
+</div>
+<div class="flex flex-col items-end gap-2">
+<button class="px-8 py-3 bg-primary text-on-primary font-bold rounded-xl hover:brightness-110 active:scale-95 transition-all">
+                            Withdraw
+                        </button>
+<p class="text-[12px] text-outline italic">Minimum withdrawal $50.00</p>
+</div>
+</div>
+</div>
+</section>
+</main>
+<script>
+        // Micro-interaction for hover effects on cards
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+    </script>
+</body></html>

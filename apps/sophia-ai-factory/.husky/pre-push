@@ -1,0 +1,81 @@
+#!/usr/bin/env sh
+# Sophia AI Factory pre-push gate
+# G1 typecheck + G2 lint (FAIL mode) + G3 test + G4 secrets + G5 audit
+# Bypass: git push --no-verify (DISCOURAGED — escape hatch for emergency hotfixes only)
+#
+# Phase 03 Track C (2026-05-18): smoke suite + contract tests wired.
+# - Smoke suite: tests/e2e/smoke/critical-paths.spec.ts (3 tests, @smoke tag)
+#   Run separately: PLAYWRIGHT_TEST_BASE_URL=<url> npx playwright test --grep "@smoke"
+#   Smoke is NOT in this hook (requires running server); it lives in deploy-with-sha.sh
+#   behind RUN_PREDEPLOY_E2E=1 (pre-deploy) and RUN_POSTDEPLOY_E2E=1 (post-deploy).
+# - Contract tests: src/app/api/health/__tests__/route.contract.test.ts (Zod shape tests)
+#   Included in G3 (npm run ci:test via vitest run).
+set -e
+cd "$(git rev-parse --show-toplevel)/apps/sophia-ai-factory"
+
+# G1 typecheck — fail-fast cheapest check. Added 2026-05-17 after caption-translator.test.ts
+# stale Vitest v1 type signature shipped 10 TS errors silently (no gate caught them).
+echo "[pre-push] G1 typecheck (tsc --noEmit)..."
+npm run ci:typecheck
+
+# G2 lint — FAIL MODE (flipped from warn-only at end of Phase 3 on 2026-05-13).
+# `ci:lint` = `eslint --max-warnings=341` — current baseline warning count (rebaselined
+# 2026-05-18 from 340: +1 unused eslint-disable in affiliate/page.tsx after ESLint config
+# changes for Batch B migrations made @next/next/no-html-link-for-pages no longer fire).
+# Any new warning OR any error blocks push.
+# To rebaseline (after intentional cleanup): re-run lint, count warnings, update
+# package.json `ci:lint` threshold downward (never upward without justification).
+echo "[pre-push] G2 lint (fail mode — full suite, baseline=341 warnings)..."
+npm run ci:lint
+
+echo "[pre-push] G3 test (vitest run)..."
+npm run ci:test
+# G3-NOTE (2026-05-18, Phase 01 zero-bug dashboard): vitest.config.ts now enforces
+# per-glob coverage thresholds on src/app/[locale]/dashboard/**. Current floor =
+# observed baseline (lines:4, branches:4, functions:2, statements:3). Phase 03
+# Track B ratchets these to 65/50/60/65 as new tests land. To run dashboard-only
+# coverage locally: `npm run test:coverage:dashboard`.
+
+# G4 secrets — secretlint on FULL src tree (not just staged). Catches secrets that
+# bypassed commit-time lint-staged (e.g., from --no-verify commits or stash pop).
+echo "[pre-push] G4 secrets (secretlint full tree)..."
+npm run ci:secrets
+
+# ─── G5.5: Deploy guard dry-run (PR approval check) ─────────────────────────────
+# SOC 2 CC6.1: Verify PR has approval before push (will be enforced at deploy time)
+# This is a dry-run warning, not blocking — actual enforcement happens in guard-deploy.js
+echo "[pre-push] G5.5 deploy guard dry-run (PR approval check)..."
+if node scripts/deploy/guard-deploy.js --dry-run 2>/dev/null; then
+  echo "[pre-push] ✅ Deploy guard: PR checks OK (or no PR — attestation required at deploy)"
+else
+  guardExit=$?
+  if [ $guardExit -eq 1 ]; then
+    echo "[pre-push] ⚠️  Deploy guard: PR NOT ready for deploy (missing approval or CI failing)"
+    echo "[pre-push]   Fix: obtain PR approval or use --override at deploy time (emergency)"
+  else
+    echo "[pre-push] ⚠️  Deploy guard: Could not check (gh CLI unavailable?)"
+  fi
+fi
+
+
+# G5 audit (HIGH vulns) — BLOCKING (Phase 06)
+echo "[pre-push] G5 audit (npm audit --audit-level=high)..."
+npm audit --audit-level=high || {
+  echo "[pre-push] ❌ BLOCK: HIGH severity vulnerabilities found"
+  echo "[pre-push] Run: npm audit fix or review manually"
+  exit 1
+}
+
+# G6: SBOM generation (non-blocking for pre-push, enforced at deploy)
+echo "[pre-push] G6 SBOM generation..."
+npm run sbom > /dev/null 2>&1 || echo "[pre-push] WARN: SBOM generation failed (non-blocking, will be enforced at deploy)"
+
+# G7: Commit signature verification (BLOCKING on main branch)
+echo "[pre-push] G7 commit signature verification..."
+node scripts/supply-chain/verify-signed-commits.mjs || {
+  echo "[pre-push] ❌ BLOCK: Unsigned commits detected on main branch."
+  echo "[pre-push] Please sign your commits: git commit -S -m 'your message'"
+  echo "[pre-push] See: docs/security/commit-signing-guide.md"
+  exit 1
+}
+

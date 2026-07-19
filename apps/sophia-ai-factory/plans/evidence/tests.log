@@ -1,0 +1,80 @@
+◇ injected env (13) from .env.test // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+
+ RUN  v4.1.7 /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory
+
+(node:25757) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+ ❯ src/forest/telemetry/signals.test.ts (10 tests | 1 failed) 933ms
+     × (f) captureTierUpgraded is called when finished IPN succeeds 372ms
+ ❯ src/land/signals/signals.test.ts (10 tests | 1 failed) 945ms
+     × (f) captureTierUpgraded is called when finished IPN succeeds 372ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/forest/telemetry/signals.test.ts > NOWPayments webhook: tier_upgraded emission > (f) captureTierUpgraded is called when finished IPN succeeds
+AssertionError: expected "captureTierUpgraded" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st captureTierUpgraded call:
+
+  [
+-   ObjectContaining {
++   {
+      "amount": 99,
+      "currency": "USD",
+      "distinctId": "user-456",
+-     "tier": "inv-premium",
++     "tier": "PREMIUM",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/forest/telemetry/signals.test.ts:199:24
+    197|     await POST(req)
+    198|
+    199|     expect(captureSpy).toHaveBeenCalledWith(
+       |                        ^
+    200|       expect.objectContaining({
+    201|         distinctId: 'user-456',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/land/signals/signals.test.ts > NOWPayments webhook: tier_upgraded emission > (f) captureTierUpgraded is called when finished IPN succeeds
+AssertionError: expected "captureTierUpgraded" to be called with arguments: [ ObjectContaining{…} ]
+
+Received:
+
+  1st captureTierUpgraded call:
+
+  [
+-   ObjectContaining {
++   {
+      "amount": 99,
+      "currency": "USD",
+      "distinctId": "user-456",
+-     "tier": "inv-premium",
++     "tier": "PREMIUM",
+    },
+  ]
+
+
+Number of calls: 1
+
+ ❯ src/land/signals/signals.test.ts:199:24
+    197|     await POST(req)
+    198|
+    199|     expect(captureSpy).toHaveBeenCalledWith(
+       |                        ^
+    200|       expect.objectContaining({
+    201|         distinctId: 'user-456',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 593 passed | 1 skipped (596)
+      Tests  2 failed | 5774 passed | 34 skipped (5810)
+   Start at  22:10:54
+   Duration  60.79s (transform 22.74s, setup 22.77s, import 45.84s, tests 75.39s, environment 277.39s)

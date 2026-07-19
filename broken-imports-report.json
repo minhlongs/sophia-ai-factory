@@ -1,0 +1,316 @@
+{
+  "totalFiles": 3389,
+  "filesWithIssues": 24,
+  "brokenImports": [
+    {
+      "import": "@/app/actions/billing",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/actions/billing",
+      "file": "src/app/[locale]/dashboard/billing/refund/page.tsx"
+    },
+    {
+      "import": "@/app/actions/billing",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/actions/billing",
+      "file": "src/app/[locale]/dashboard/billing/refund/refund-form-client.tsx"
+    },
+    {
+      "import": "./sophia",
+      "resolved": "app/api/sdk/typescript/sophia",
+      "file": "src/app/api/sdk/typescript/route.ts"
+    },
+    {
+      "import": "@/app/actions/billing",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/actions/billing",
+      "file": "src/components/billing/TierConfirmationModal.tsx"
+    },
+    {
+      "import": "@/app/actions/billing",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/actions/billing",
+      "file": "src/components/billing/cancel-subscription-modal.tsx"
+    },
+    {
+      "import": "@/app/actions/billing",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/actions/billing",
+      "file": "src/components/billing/change-tier-client.tsx"
+    },
+    {
+      "import": "@/components/stitch",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+      "file": "src/components/stitch/screens/admin/admin-panel-page.tsx"
+    },
+    {
+      "import": "@/components/stitch",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+      "file": "src/components/stitch/screens/affiliate-portal/affiliate-portal-page.tsx"
+    },
+    {
+      "import": "@/components/stitch",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+      "file": "src/components/stitch/screens/affiliates/affiliates-page.tsx"
+    },
+    {
+      "import": "@/components/stitch",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+      "file": "src/components/stitch/screens/auth/login-page.tsx"
+    },
+    {
+      "import": "@/components/stitch",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+      "file": "src/components/stitch/screens/auth/register-page.tsx"
+    },
+    {
+      "import": "@/components/stitch",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+      "file": "src/components/stitch/screens/checkout/checkout-page.tsx"
+    },
+    {
+      "import": "@/components/stitch",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+      "file": "src/components/stitch/screens/dashboard/dashboard-page.tsx"
+    },
+    {
+      "import": "@/components/stitch",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+      "file": "src/components/stitch/screens/payments/payments-page.tsx"
+    },
+    {
+      "import": "@/components/stitch",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+      "file": "src/components/stitch/screens/pricing/pricing-page.tsx"
+    },
+    {
+      "import": "@/components/stitch",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+      "file": "src/components/stitch/screens/products/products-page.tsx"
+    },
+    {
+      "import": "@/components/stitch",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+      "file": "src/components/stitch/screens/settings/settings-page.tsx"
+    },
+    {
+      "import": "@/components/stitch",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+      "file": "src/components/stitch/screens/subscribers/subscribers-page.tsx"
+    },
+    {
+      "import": "@/components/stitch",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+      "file": "src/components/stitch/screens/webhook/webhook-page.tsx"
+    },
+    {
+      "import": "@/components/experiment-variant",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/experiment-variant",
+      "file": "src/forest/telemetry/experiments-registry.ts"
+    },
+    {
+      "import": "./quota",
+      "resolved": "land/alerts/quota",
+      "file": "src/land/alerts/quota-alert-service.ts"
+    },
+    {
+      "import": "./token-crypto",
+      "resolved": "land/video/publishing/token-crypto",
+      "file": "src/land/video/publishing/oauth-token-refresher.ts"
+    },
+    {
+      "import": "./publisher-interface",
+      "resolved": "land/video/publishing/publisher-interface",
+      "file": "src/land/video/publishing/oauth-token-refresher.ts"
+    },
+    {
+      "import": "@/sdk",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/sdk",
+      "file": "src/sdk/index.ts"
+    },
+    {
+      "import": "@/components/experiment-variant",
+      "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/experiment-variant",
+      "file": "src/tree/signals/experiments-registry.ts"
+    }
+  ],
+  "byFile": {
+    "src/app/[locale]/dashboard/billing/refund/page.tsx": [
+      {
+        "import": "@/app/actions/billing",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/actions/billing",
+        "file": "src/app/[locale]/dashboard/billing/refund/page.tsx"
+      }
+    ],
+    "src/app/[locale]/dashboard/billing/refund/refund-form-client.tsx": [
+      {
+        "import": "@/app/actions/billing",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/actions/billing",
+        "file": "src/app/[locale]/dashboard/billing/refund/refund-form-client.tsx"
+      }
+    ],
+    "src/app/api/sdk/typescript/route.ts": [
+      {
+        "import": "./sophia",
+        "resolved": "app/api/sdk/typescript/sophia",
+        "file": "src/app/api/sdk/typescript/route.ts"
+      }
+    ],
+    "src/components/billing/TierConfirmationModal.tsx": [
+      {
+        "import": "@/app/actions/billing",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/actions/billing",
+        "file": "src/components/billing/TierConfirmationModal.tsx"
+      }
+    ],
+    "src/components/billing/cancel-subscription-modal.tsx": [
+      {
+        "import": "@/app/actions/billing",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/actions/billing",
+        "file": "src/components/billing/cancel-subscription-modal.tsx"
+      }
+    ],
+    "src/components/billing/change-tier-client.tsx": [
+      {
+        "import": "@/app/actions/billing",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/actions/billing",
+        "file": "src/components/billing/change-tier-client.tsx"
+      }
+    ],
+    "src/components/stitch/screens/admin/admin-panel-page.tsx": [
+      {
+        "import": "@/components/stitch",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+        "file": "src/components/stitch/screens/admin/admin-panel-page.tsx"
+      }
+    ],
+    "src/components/stitch/screens/affiliate-portal/affiliate-portal-page.tsx": [
+      {
+        "import": "@/components/stitch",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+        "file": "src/components/stitch/screens/affiliate-portal/affiliate-portal-page.tsx"
+      }
+    ],
+    "src/components/stitch/screens/affiliates/affiliates-page.tsx": [
+      {
+        "import": "@/components/stitch",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+        "file": "src/components/stitch/screens/affiliates/affiliates-page.tsx"
+      }
+    ],
+    "src/components/stitch/screens/auth/login-page.tsx": [
+      {
+        "import": "@/components/stitch",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+        "file": "src/components/stitch/screens/auth/login-page.tsx"
+      }
+    ],
+    "src/components/stitch/screens/auth/register-page.tsx": [
+      {
+        "import": "@/components/stitch",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+        "file": "src/components/stitch/screens/auth/register-page.tsx"
+      }
+    ],
+    "src/components/stitch/screens/checkout/checkout-page.tsx": [
+      {
+        "import": "@/components/stitch",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+        "file": "src/components/stitch/screens/checkout/checkout-page.tsx"
+      }
+    ],
+    "src/components/stitch/screens/dashboard/dashboard-page.tsx": [
+      {
+        "import": "@/components/stitch",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+        "file": "src/components/stitch/screens/dashboard/dashboard-page.tsx"
+      }
+    ],
+    "src/components/stitch/screens/payments/payments-page.tsx": [
+      {
+        "import": "@/components/stitch",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+        "file": "src/components/stitch/screens/payments/payments-page.tsx"
+      }
+    ],
+    "src/components/stitch/screens/pricing/pricing-page.tsx": [
+      {
+        "import": "@/components/stitch",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+        "file": "src/components/stitch/screens/pricing/pricing-page.tsx"
+      }
+    ],
+    "src/components/stitch/screens/products/products-page.tsx": [
+      {
+        "import": "@/components/stitch",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+        "file": "src/components/stitch/screens/products/products-page.tsx"
+      }
+    ],
+    "src/components/stitch/screens/settings/settings-page.tsx": [
+      {
+        "import": "@/components/stitch",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+        "file": "src/components/stitch/screens/settings/settings-page.tsx"
+      }
+    ],
+    "src/components/stitch/screens/subscribers/subscribers-page.tsx": [
+      {
+        "import": "@/components/stitch",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+        "file": "src/components/stitch/screens/subscribers/subscribers-page.tsx"
+      }
+    ],
+    "src/components/stitch/screens/webhook/webhook-page.tsx": [
+      {
+        "import": "@/components/stitch",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch",
+        "file": "src/components/stitch/screens/webhook/webhook-page.tsx"
+      }
+    ],
+    "src/forest/telemetry/experiments-registry.ts": [
+      {
+        "import": "@/components/experiment-variant",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/experiment-variant",
+        "file": "src/forest/telemetry/experiments-registry.ts"
+      }
+    ],
+    "src/land/alerts/quota-alert-service.ts": [
+      {
+        "import": "./quota",
+        "resolved": "land/alerts/quota",
+        "file": "src/land/alerts/quota-alert-service.ts"
+      }
+    ],
+    "src/land/video/publishing/oauth-token-refresher.ts": [
+      {
+        "import": "./token-crypto",
+        "resolved": "land/video/publishing/token-crypto",
+        "file": "src/land/video/publishing/oauth-token-refresher.ts"
+      },
+      {
+        "import": "./publisher-interface",
+        "resolved": "land/video/publishing/publisher-interface",
+        "file": "src/land/video/publishing/oauth-token-refresher.ts"
+      }
+    ],
+    "src/sdk/index.ts": [
+      {
+        "import": "@/sdk",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/sdk",
+        "file": "src/sdk/index.ts"
+      }
+    ],
+    "src/tree/signals/experiments-registry.ts": [
+      {
+        "import": "@/components/experiment-variant",
+        "resolved": "/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/components/experiment-variant",
+        "file": "src/tree/signals/experiments-registry.ts"
+      }
+    ]
+  },
+  "byImport": {
+    "@/app/actions/billing": 5,
+    "./sophia": 1,
+    "@/components/stitch": 13,
+    "@/components/experiment-variant": 2,
+    "./quota": 1,
+    "./token-crypto": 1,
+    "./publisher-interface": 1,
+    "@/sdk": 1
+  }
+}

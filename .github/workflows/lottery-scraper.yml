@@ -1,0 +1,25 @@
+name: XSMB Lottery Scraper
+
+on:
+  schedule:
+    # XSMB draws at 18:35 Vietnam time (11:35 UTC); scrape shortly after
+    - cron: '0 12 * * *'
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Specific date to scrape (YYYY-MM-DD)'
+        required: false
+
+jobs:
+  scrape-and-ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Lottery Ingest API
+        run: |
+          curl -X POST ${{ secrets.APP_URL }}/api/lottery/ingest \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "date": "${{ github.event.inputs.date }}",
+              "prizes": {}
+            }'

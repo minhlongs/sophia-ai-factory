@@ -1,0 +1,27 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "generative-media": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/generative-media-skills"],
+      "env": {
+        "MUAPI_API_KEY": "${MUAPI_API_KEY}"
+      }
+    },
+    "stitch": {
+      "command": "npx",
+      "args": ["-y", "stitch-mcp"],
+      "env": {
+        "GOOGLE_CLOUD_PROJECT": "${GOOGLE_CLOUD_PROJECT}",
+        "GOOGLE_APPLICATION_CREDENTIALS": "${GOOGLE_APPLICATION_CREDENTIALS}",
+        "STITCH_API_ENDPOINT": "${STITCH_API_ENDPOINT:-https://aiplatform.googleapis.com}"
+      }
+    }
+  }
+}

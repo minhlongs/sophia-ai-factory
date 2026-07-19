@@ -1,0 +1,79 @@
+/**
+ * Tests for src/instrumentation.ts — verify register() initializes OTel
+ * in Node.js and skips in Workers runtime.
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+const instrumentationPath = '/Users/macbook/repos/sophia-ai-factory/apps/sophia-ai-factory/instrumentation.ts';
+
+// ── Mutable shared state for test verification ─────────────────────────────
+// vi.hoisted provides a closure-scoped singleton that persists across
+// vi.resetModules() and module re-imports.
+let initCalls: string[] = [];
+
+const mockData = vi.hoisted(() => {
+  const mockInitializeOTel = vi.fn().mockImplementation(async () => {
+    initCalls.push(Date.now().toFixed(0));
+    return undefined;
+  });
+  return { mockInitializeOTel };
+});
+
+vi.mock('@/seed/telemetry/opentelemetry-setup', () => ({
+  initializeOTel: mockData.mockInitializeOTel,
+  getTracer: vi.fn().mockReturnValue({
+    startSpan: vi.fn().mockReturnValue({
+      setAttribute: vi.fn(), setAttributes: vi.fn(),
+      recordException: vi.fn(), end: vi.fn(), setStatus: vi.fn(),
+    }),
+  }),
+  startSpan: vi.fn(),
+  meterProvider: null,
+}));
+
+// ── Tests ──────────────────────────────────────────────────────────────────
+describe('instrumentation — register hook', () => {
+  beforeEach(() => {
+    initCalls = [];
+    mockData.mockInitializeOTel.mockClear();
+    vi.resetModules();
+  });
+
+  it('registers OTel init in Node.js runtime', async () => {
+    const mod = await import(instrumentationPath);
+    await mod.register();
+
+    // register() → isWorkersRuntime() → false (Node.js) → getInitializeOTel()
+    // → dynamic import → mock → mockInitializeOTel called
+    // Use both side-channel (initCalls) AND mock count as dual-verification
+    if (initCalls.length === 0 && mockData.mockInitializeOTel.mock.calls.length === 0) {
+      // Neither path triggered — test should signal this clearly
+      expect(initCalls.length).toBeGreaterThan(
+        0,
+        'register() did not traverse the OTel init path. ' +
+        'Check: isWorkersRuntime() returned true (Workers detected in Node.js env)'
+      );
+    }
+    expect(mockData.mockInitializeOTel.mock.calls.length).toBeGreaterThan(0);
+  });
+
+  it('does not throw when initializeOTel rejects', async () => {
+    mockData.mockInitializeOTel.mockRejectedValueOnce(new Error('OTel down'));
+    const mod = await import(instrumentationPath);
+    expect(() => mod.register()).not.toThrow();
+  });
+
+  it('skips OTel in Workers runtime', async () => {
+    // Simulate Workers: process exists, but no .versions.node
+    const original = globalThis.process;
+    (globalThis as unknown as Record<string, unknown>).process = { versions: {} };
+
+    const mod = await import(instrumentationPath);
+    await mod.register();
+
+    expect(mockData.mockInitializeOTel).not.toHaveBeenCalled();
+    expect(initCalls).toHaveLength(0);
+
+    (globalThis as unknown as Record<string, unknown>).process = original;
+  });
+});

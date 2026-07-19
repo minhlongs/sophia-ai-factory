@@ -1,0 +1,19 @@
+name: Fulfillment Retry
+
+on:
+  schedule:
+    # Every 2 minutes — retry queued video fulfillments with backoff.
+    - cron: '*/2 * * * *'
+  workflow_dispatch: {}
+
+jobs:
+  retry:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger fulfillment retry cron
+        run: |
+          curl -fsS \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            "https://sophia.agencyos.network/api/cron/fulfillment-retry" \
+            || echo "::warning::fulfillment-retry curl failed (non-blocking)"

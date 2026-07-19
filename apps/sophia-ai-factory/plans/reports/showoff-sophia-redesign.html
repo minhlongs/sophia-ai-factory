@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sophia AI Factory — The Amber Revolution</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0A0A0C;--bg2:#121214;--bg3:#18181B;--bg4:#1F1F23;--border:#27272A;--text:#F4F4F5;--text2:#A1A1AA;--text3:#6B6B70;--amber:#D97706;--amberL:#F59E0B;--amberD:#92400E;--amberG:rgba(217,119,6,0.12);--indigo:#6366F1;--indigoG:rgba(99,102,241,0.1);--green:#22C55E;--red:#EF4444;--radius:12px;--font:'Inter',system-ui,sans-serif;--fontMono:'IBM Plex Mono','JetBrains Mono',monospace}
+[data-theme="light"]{--bg:#FAFAF8;--bg2:#F5F5F0;--bg3:#EEEDE8;--bg4:#E6E5E0;--border:#D4D4D0;--text:#0A0A08;--text2:#5C5C58;--text3:#8C8C88;--amberG:rgba(217,119,6,0.08);--indigoG:rgba(99,102,241,0.06)}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+.theme-toggle{position:fixed;top:20px;right:20px;z-index:1000;background:var(--bg3);border:1px solid var(--border);border-radius:50%;width:44px;height:44px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;transition:all .3s;color:var(--text)}
+.theme-toggle:hover{background:var(--bg4);transform:scale(1.05)}
+
+/* Hero */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px 24px;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,var(--amberG) 0%,transparent 60%),radial-gradient(ellipse at 80% 70%,var(--indigoG) 0%,transparent 50%);pointer-events:none}
+.hero-content{position:relative;z-index:1;max-width:800px}
+.hero-badge{display:inline-block;padding:8px 20px;border-radius:100px;background:var(--amberG);border:1px solid rgba(217,119,6,0.25);color:var(--amberL);font-size:13px;font-weight:500;letter-spacing:0.5px;margin-bottom:32px;animation:fadeUp .8s .2s both}
+.hero h1{font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;line-height:1.1;margin-bottom:20px;animation:fadeUp .8s .4s both}
+.hero h1 .highlight{background:linear-gradient(135deg,var(--amber),var(--amberL));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero h1 .indigo{background:linear-gradient(135deg,var(--indigo),#818CF8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:clamp(1rem,2vw,1.25rem);color:var(--text2);max-width:600px;margin:0 auto 40px;animation:fadeUp .8s .6s both}
+.hero-stats{display:flex;gap:32px;justify-content:center;flex-wrap:wrap;animation:fadeUp .8s .8s both}
+.hero-stat{text-align:center}
+.hero-stat .num{font-size:2rem;font-weight:700;background:linear-gradient(135deg,var(--amber),var(--amberL));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-stat .label{font-size:13px;color:var(--text3);margin-top:4px}
+.hero .lang-toggle{font-size:14px;color:var(--text2);margin-top:40px;animation:fadeUp .8s 1s both}
+.hero .lang-toggle span{padding:6px 14px;cursor:pointer;border-radius:6px;transition:all .3s}
+.hero .lang-toggle span.active{background:var(--bg3);color:var(--text)}
+
+/* Sections common */
+section{padding:80px 24px;max-width:1100px;margin:0 auto}
+.section-label{font-size:13px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--amberL);margin-bottom:12px}
+.section-title{font-size:clamp(1.6rem,3vw,2.2rem);font-weight:700;margin-bottom:16px}
+.section-sub{color:var(--text2);font-size:1.05rem;max-width:600px;margin-bottom:48px}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:28px;transition:all .3s;opacity:0;transform:translateY(20px)}
+.card.visible{opacity:1;transform:translateY(0)}
+.card:hover{background:var(--bg4);border-color:rgba(217,119,6,0.2);transform:translateY(-2px)}
+.card .icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:16px}
+.card h3{font-size:1.1rem;font-weight:600;margin-bottom:8px}
+.card p{font-size:14px;color:var(--text2);line-height:1.6}
+
+/* Timeline */
+.timeline{position:relative;padding-left:32px}
+.timeline::before{content:'';position:absolute;left:12px;top:0;bottom:0;width:2px;background:var(--border)}
+.tl-item{position:relative;padding:0 0 32px 20px;opacity:0;transform:translateX(-20px)}
+.tl-item.visible{opacity:1;transform:translateX(0)}
+.tl-item::before{content:'';position:absolute;left:-22px;top:6px;width:12px;height:12px;border-radius:50%;background:var(--amber);border:2px solid var(--bg)}
+.tl-item .hash{font-family:var(--fontMono);font-size:13px;color:var(--amberL)}
+.tl-item .msg{font-size:14px;color:var(--text2);margin-top:4px}
+
+/* Pipeline flow */
+.pipeline{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:40px 0}
+.pipe-step{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px 20px;text-align:center;min-width:100px;font-size:13px;font-weight:500;transition:all .3s}
+.pipe-step:hover{background:var(--bg4);border-color:var(--amber)}
+.pipe-arrow{font-size:20px;color:var(--text3)}
+
+/* Number cards */
+.num-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px}
+.num-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:24px;text-align:center;opacity:0;transform:scale(0.9);transition:all .5s}
+.num-card.visible{opacity:1;transform:scale(1)}
+.num-card .big{font-size:2.2rem;font-weight:800;background:linear-gradient(135deg,var(--amber),var(--amberL));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.num-card .desc{font-size:13px;color:var(--text2);margin-top:6px}
+
+/* Comparison */
+.comp-grid{display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
+.comp-old,.comp-new{padding:28px}
+.comp-old{background:var(--bg3)}
+.comp-new{background:rgba(217,119,6,0.04)}
+.comp-header{font-size:14px;font-weight:600;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.comp-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(39,39,42,0.5);font-size:14px}
+.comp-row:last-child{border-bottom:none}
+.comp-old-val{color:var(--text3)}
+.comp-new-val{color:var(--amberL);font-weight:500}
+
+/* Architecture */
+.arch{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:32px 0}
+.arch-layer{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 18px;text-align:center;font-size:12px;font-weight:500;min-width:70px}
+.arch-layer.seed{border-color:rgba(217,119,6,0.3);background:rgba(217,119,6,0.06)}
+.arch-layer.tree{border-color:rgba(99,102,241,0.3);background:rgba(99,102,241,0.06)}
+.arch-layer.forest{border-color:rgba(34,197,94,0.3);background:rgba(34,197,94,0.06)}
+.arch-layer.land{border-color:rgba(239,68,68,0.3);background:rgba(239,68,68,0.06)}
+.arch-arrow{color:var(--text3);font-size:14px}
+
+/* Tools */
+.tool-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.tool-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:24px;text-align:center;opacity:0;transform:translateY(20px);transition:all .4s}
+.tool-card.visible{opacity:1;transform:translateY(0)}
+.tool-card .emoji{font-size:2rem;margin-bottom:12px}
+.tool-card h4{font-size:15px;font-weight:600;margin-bottom:6px}
+.tool-card p{font-size:13px;color:var(--text2)}
+
+/* Footer */
+.footer{text-align:center;padding:60px 24px;color:var(--text3);font-size:14px;border-top:1px solid var(--border)}
+.footer .big{font-size:2.5rem;margin-bottom:12px}
+.footer a{color:var(--amberL);text-decoration:none}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:640px){
+  section{padding:50px 16px}
+  .hero h1{font-size:2rem}
+  .hero-stats{gap:20px}
+  .hero-stat .num{font-size:1.5rem}
+  .pipeline{gap:4px}
+  .pipe-step{padding:10px 14px;font-size:11px;min-width:70px}
+  .comp-grid{grid-template-columns:1fr}
+  .arch{gap:4px}
+  .arch-layer{padding:8px 12px;font-size:10px;min-width:50px}
+  .tool-list{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">🌙</button>
+
+<!-- Hero -->
+<section class="hero">
+<div class="hero-bg"></div>
+<div class="hero-content">
+  <div class="hero-badge">🚀 2026-07-03 · One Day Epic</div>
+  <h1>
+    <span class="highlight">The Amber Revolution</span><br>
+    <span class="indigo">Sophia AI Factory</span>
+  </h1>
+  <p>Từ Indigo đến Amber — Một ngày tái sinh toàn bộ UI<br>
+  <em>From scattered indigo to cohesive Saigon Factory Amber — a full UI redesign in one day</em></p>
+  <div class="hero-stats">
+    <div class="hero-stat"><div class="num">10</div><div class="label">Screens</div></div>
+    <div class="hero-stat"><div class="num">6</div><div class="label">Commits</div></div>
+    <div class="hero-stat"><div class="num">12K</div><div class="label">Lines</div></div>
+    <div class="hero-stat"><div class="num">6.7K</div><div class="label">Tests</div></div>
+    <div class="hero-stat"><div class="num">8/8</div><div class="label">E2E Pass</div></div>
+    <div class="hero-stat"><div class="num">&lt;1s</div><div class="label">Dev Server</div></div>
+  </div>
+  <div class="lang-toggle">
+    <span class="active" onclick="switchLang('vi')">🇻🇳 VI</span>
+    <span>·</span>
+    <span onclick="switchLang('en')">🇺🇸 EN</span>
+  </div>
+</div>
+</section>
+
+<!-- Challenge -->
+<section>
+<div class="section-label">⚠️ The Challenge / Thách Thức</div>
+<h2 class="section-title">A Fragmented Foundation</h2>
+<p class="section-sub">Before the redesign, Sophia AI Factory suffered from a scattered design identity — four competing MASTER.md files, a split between indigo-based Stitch tokens and amber-based CSS globals, and no reliable E2E infrastructure.</p>
+<div class="grid-2">
+  <div class="card"><div class="icon" style="background:rgba(239,68,68,0.12)">📂</div><h3>4 Design Systems</h3><p>Purple, pink, blue, and amber MASTER.md files — no single source of truth. Each Stitch session picked a different primary color.</p></div>
+  <div class="card"><div class="icon" style="background:rgba(99,102,241,0.12)">🎨</div><h3>Color Split</h3><p>CSS globals used amber (#D97706) while Stitch tokens used indigo (#6366F1). Components rendered differently in dev vs. design.</p></div>
+  <div class="card"><div class="icon" style="background:rgba(217,119,6,0.12)">🏗️</div><h3>Build Failures</h3><p>Static generation crashed on 11 routes because D1 bindings weren't available at build time. Deploy was blocked by prerender errors.</p></div>
+  <div class="card"><div class="icon" style="background:rgba(34,197,94,0.12)">🧪</div><h3>No E2E Infra</h3><p>Playwright dev server took 5+ minutes to start. E2E tests were effectively unrunable locally. Auth and payment flows had no automated coverage.</p></div>
+</div>
+</section>
+
+<!-- Pipeline -->
+<section>
+<div class="section-label">🔧 The Pipeline / Quy Trình</div>
+<h2 class="section-title">From Stitch to Production</h2>
+<p class="section-sub">A 5-step pipeline transforms Stitch AI-generated designs into production Next.js routes deployed on Cloudflare Workers.</p>
+<div class="pipeline">
+  <div class="pipe-step">🎨 Stitch<br><small>Generate</small></div>
+  <div class="pipe-arrow">→</div>
+  <div class="pipe-step">📄 HTML<br><small>Export</small></div>
+  <div class="pipe-arrow">→</div>
+  <div class="pipe-step">⚛️ Next.js<br><small>Convert</small></div>
+  <div class="pipe-arrow">→</div>
+  <div class="pipe-step">🔌 Routes<br><small>Wire</small></div>
+  <div class="pipe-arrow">→</div>
+  <div class="pipe-step">☁️ Workers<br><small>Deploy</small></div>
+</div>
+</section>
+
+<!-- Key Numbers -->
+<section>
+<div class="section-label">📊 By The Numbers / Con Số</div>
+<h2 class="section-title">What 12,000 Lines of Change Looks Like</h2>
+<div class="num-grid">
+  <div class="num-card"><div class="big">10</div><div class="desc">Screens Converted</div></div>
+  <div class="num-card"><div class="big">6</div><div class="desc">Commits</div></div>
+  <div class="num-card"><div class="big">12K</div><div class="desc">Lines Changed</div></div>
+  <div class="num-card"><div class="big">6,772</div><div class="desc">Unit Tests Pass</div></div>
+  <div class="num-card"><div class="big">8/8</div><div class="desc">E2E Auth Tests</div></div>
+  <div class="num-card"><div class="big">11</div><div class="desc">Routes Fixed</div></div>
+  <div class="num-card"><div class="big">9</div><div class="desc">Parallel Agents</div></div>
+  <div class="num-card"><div class="big">&lt;1s</div><div class="desc">E2E Startup</div></div>
+</div>
+</section>
+
+<!-- What Changed -->
+<section>
+<div class="section-label">🔄 What Changed / Thay Đổi</div>
+<h2 class="section-title">Before vs. After</h2>
+<div class="comp-grid">
+  <div class="comp-old">
+    <div class="comp-header" style="color:var(--text3)">❌ Before — Indigo Era</div>
+    <div class="comp-row"><span>Primary Color</span><span class="comp-old-val">Indigo #6366F1</span></div>
+    <div class="comp-row"><span>Design System</span><span class="comp-old-val">4 fragmented MASTER.md</span></div>
+    <div class="comp-row"><span>Build</span><span class="comp-old-val">Fails: 11 routes D1</span></div>
+    <div class="comp-row"><span>E2E Dev Server</span><span class="comp-old-val">~5 minutes</span></div>
+    <div class="comp-row"><span>Screens</span><span class="comp-old-val">Old hand-coded</span></div>
+    <div class="comp-row"><span>Login E2E</span><span class="comp-old-val">Not runnable</span></div>
+  </div>
+  <div class="comp-new">
+    <div class="comp-header" style="color:var(--amberL)">✅ After — Amber Revolution</div>
+    <div class="comp-row"><span>Primary Color</span><span class="comp-new-val">Amber #D97706</span></div>
+    <div class="comp-row"><span>Design System</span><span class="comp-new-val">1 canonical MASTER.md</span></div>
+    <div class="comp-row"><span>Build</span><span class="comp-new-val">✅ 0 errors</span></div>
+    <div class="comp-row"><span>E2E Dev Server</span><span class="comp-new-val">&lt;1 second</span></div>
+    <div class="comp-row"><span>Screens</span><span class="comp-new-val">Stitch-generated Next.js</span></div>
+    <div class="comp-row"><span>Login E2E</span><span class="comp-new-val">✅ 8/8 pass</span></div>
+  </div>
+</div>
+</section>
+
+<!-- Timeline -->
+<section>
+<div class="section-label">📅 Timeline / Dòng Thời Gian</div>
+<h2 class="section-title">One Day, Six Commits</h2>
+<div class="timeline">
+  <div class="tl-item"><div class="hash">f9887b01</div><div class="msg">Design System Consolidation — indigo→amber, MASTER.md cleanup</div></div>
+  <div class="tl-item"><div class="hash">de1ee463f</div><div class="msg">7 screens converted: Landing, Pricing, Login, Dashboard, Campaigns, Settings</div></div>
+  <div class="tl-item"><div class="hash">ad6b35ae0</div><div class="msg">3 more screens: Admin, Affiliate, Video Creation</div></div>
+  <div class="tl-item"><div class="hash">2e6f1d52</div><div class="msg">i18n keys + D1 static gen fix for 11 routes</div></div>
+  <div class="tl-item"><div class="hash">15aa3bc5</div><div class="msg">Protected flows: Checkout amber, E2E infra, Auth E2E pass</div></div>
+  <div class="tl-item"><div class="hash">fca95450</div><div class="msg">🚀 All 10 screens wired to routes, deployed to production</div></div>
+</div>
+</section>
+
+<!-- Architecture -->
+<section>
+<div class="section-label">🏛️ Architecture / Kiến Trúc</div>
+<h2 class="section-title">4-Layer Model</h2>
+<p class="section-sub">Sophia's strict import direction: seed → tree → forest → land. Stitch screens integrate at the route layer while preserving all business logic.</p>
+<div class="arch">
+  <div class="arch-layer seed">🌱 seed<br><small>Primitives</small></div>
+  <div class="arch-arrow">→</div>
+  <div class="arch-layer tree">🌳 tree<br><small>Domain</small></div>
+  <div class="arch-arrow">→</div>
+  <div class="arch-layer forest">🌲 forest<br><small>Orchestrate</small></div>
+  <div class="arch-arrow">→</div>
+  <div class="arch-layer land">🏞️ land<br><small>Business</small></div>
+  <div class="arch-arrow">→</div>
+  <div class="arch-layer" style="border-color:var(--amber);background:var(--amberG);">🖥️ Routes<br><small>Stitch Screens</small></div>
+</div>
+</section>
+
+<!-- Tools -->
+<section>
+<div class="section-label">🛠️ Tools & Team / Công Cụ</div>
+<h2 class="section-title">Built With</h2>
+<div class="tool-list">
+  <div class="tool-card"><div class="emoji">🤖</div><h4>Claude Code</h4><p>Ultracode mode · 9 parallel agents · Workflow orchestration</p></div>
+  <div class="tool-card"><div class="emoji">🎨</div><h4>Google Stitch</h4><p>AI design generation · REST API · 10 screen exports</p></div>
+  <div class="tool-card"><div class="emoji">⚛️</div><h4>Next.js 16</h4><p>App Router · Server/Client split · i18n with next-intl</p></div>
+  <div class="tool-card"><div class="emoji">☁️</div><h4>Cloudflare Workers</h4><p>CF-direct deploy · D1 · R2 · OpenNext</p></div>
+  <div class="tool-card"><div class="emoji">🧪</div><h4>Playwright</h4><p>E2E tests · 6,772 unit tests · Vitest</p></div>
+  <div class="tool-card"><div class="emoji">🔄</div><h4>Claude Workflows</h4><p>Parallel agent orchestration · 11 agent pipeline</p></div>
+</div>
+</section>
+
+<!-- Footer -->
+<div class="footer">
+<div class="big">🟠</div>
+<p>Built with <span style="color:var(--amber)">Saigon Factory Amber</span> by Sophia AI Factory</p>
+<p style="margin-top:8px">2026-07-03 · From 10:30 AM to 4:30 PM · 6 Hours of Pure Execution</p>
+</div>
+
+<script>
+function toggleTheme(){
+  const html=document.documentElement;
+  const btn=document.querySelector('.theme-toggle');
+  if(html.getAttribute('data-theme')==='dark'){
+    html.setAttribute('data-theme','light');
+    btn.textContent='☀️';
+  }else{
+    html.setAttribute('data-theme','dark');
+    btn.textContent='🌙';
+  }
+}
+function switchLang(lang){
+  // Language toggle visual feedback
+  document.querySelectorAll('.lang-toggle span').forEach(s=>s.classList.remove('active'));
+  event.target.classList.add('active');
+}
+// Intersection Observer for scroll animations
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      entry.target.classList.add('visible');
+      // Stagger children
+      const children=entry.target.querySelectorAll('.card, .num-card, .tl-item, .tool-card');
+      children.forEach((el,i)=>setTimeout(()=>el.classList.add('visible'),i*100));
+    }
+  });
+},{threshold:0.1});
+document.querySelectorAll('section, .comp-grid').forEach(s=>observer.observe(s));
+// Trigger hero animations
+document.querySelectorAll('.hero-stat,.hero-badge,.hero h1,.hero p,.hero .lang-toggle').forEach(el=>el.style.animationPlayState='running');
+// Init light/dark
+const html=document.documentElement;
+const btn=document.querySelector('.theme-toggle');
+btn.textContent=html.getAttribute('data-theme')==='dark'?'🌙':'☀️';
+</script>
+</body>
+</html>

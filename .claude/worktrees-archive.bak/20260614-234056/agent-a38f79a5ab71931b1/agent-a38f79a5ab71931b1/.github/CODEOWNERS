@@ -1,0 +1,35 @@
+# CODEOWNERS for Sophia AI Factory
+#
+# Lines later in this file take precedence over earlier lines.
+# See https://docs.github.com/en/repositories/managing-your-repositories-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default — anything not covered below
+*                                                       @longtho638-jpg
+
+# Doctrine + governance
+/CLAUDE.md                                              @longtho638-jpg
+/SECURITY.md                                            @longtho638-jpg
+/LICENSE                                                @longtho638-jpg
+/apps/sophia-ai-factory/.claude/rules/                  @longtho638-jpg
+
+# Platform infrastructure
+/apps/sophia-ai-factory/wrangler.toml                   @longtho638-jpg
+/apps/sophia-ai-factory/wrangler.staging.toml           @longtho638-jpg
+/apps/sophia-ai-factory/migrations/                     @longtho638-jpg
+/apps/sophia-ai-factory/scripts/deploy-with-sha.sh      @longtho638-jpg
+/apps/sophia-ai-factory/scripts/deploy-staging.sh       @longtho638-jpg
+
+# 4-layer architecture — review by domain owner
+/apps/sophia-ai-factory/src/seed/                       @longtho638-jpg
+/apps/sophia-ai-factory/src/tree/                       @longtho638-jpg
+/apps/sophia-ai-factory/src/forest/                     @longtho638-jpg
+/apps/sophia-ai-factory/src/land/                       @longtho638-jpg
+
+# Billing / payments — extra scrutiny
+/apps/sophia-ai-factory/src/land/billing/               @longtho638-jpg
+/apps/sophia-ai-factory/src/land/promo/                 @longtho638-jpg
+/apps/sophia-ai-factory/src/land/payouts/               @longtho638-jpg
+
+# Documentation
+/apps/sophia-ai-factory/docs/                           @longtho638-jpg
+/apps/sophia-ai-factory/plans/                          @longtho638-jpg

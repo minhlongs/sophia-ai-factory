@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login | Sophia AI Factory</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "secondary-container": "#393a4d",
+                        "error-dim": "#c44b5f",
+                        "on-secondary-fixed-variant": "#5a5a6f",
+                        "on-surface-variant": "#acaab5",
+                        "on-primary-fixed-variant": "#4c4d72",
+                        "background": "#0e0e12",
+                        "tertiary-dim": "#e7bfea",
+                        "on-primary": "#3c3d61",
+                        "surface-container-highest": "#25252e",
+                        "error-container": "#871c34",
+                        "surface-tint": "#c3c3ee",
+                        "on-tertiary-container": "#604266",
+                        "primary": "#c3c3ee",
+                        "on-secondary-container": "#bebdd5",
+                        "surface-bright": "#2c2b34",
+                        "secondary": "#c6c4dd",
+                        "tertiary-container": "#f5cdf9",
+                        "surface-container-high": "#1f1f26",
+                        "inverse-primary": "#5b5c81",
+                        "surface-container-lowest": "#000000",
+                        "on-tertiary-fixed-variant": "#6a4b70",
+                        "on-tertiary-fixed": "#4c2f52",
+                        "on-secondary": "#3e3e52",
+                        "on-error": "#490013",
+                        "primary-container": "#4e4f74",
+                        "tertiary": "#fedeff",
+                        "error": "#f97386",
+                        "inverse-on-surface": "#55545a",
+                        "outline-variant": "#484750",
+                        "on-surface": "#e7e4f0",
+                        "tertiary-fixed": "#f5cdf9",
+                        "surface-container-low": "#131318",
+                        "surface": "#0e0e12",
+                        "secondary-fixed": "#e2e0f9",
+                        "on-background": "#e7e4f0",
+                        "secondary-dim": "#b8b6cf",
+                        "secondary-fixed-dim": "#d4d2eb",
+                        "primary-fixed-dim": "#c0c0eb",
+                        "surface-container": "#191920",
+                        "inverse-surface": "#fcf8fe",
+                        "on-tertiary": "#694a6f",
+                        "on-error-container": "#ff97a3",
+                        "on-primary-container": "#e2e0ff",
+                        "primary-fixed": "#cecefa",
+                        "surface-variant": "#25252e",
+                        "surface-dim": "#0e0e12",
+                        "outline": "#76747f",
+                        "on-primary-fixed": "#303154",
+                        "on-secondary-fixed": "#3d3e51",
+                        "tertiary-fixed-dim": "#e7bfea",
+                        "primary-dim": "#b5b5e0"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    fontFamily: {
+                        "headline": ["Inter"],
+                        "display": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Ibm Plex Sans"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #0F0F11;
+            font-family: 'Inter', sans-serif;
+        }
+        .login-card {
+            background-color: #18181B;
+            border-color: #27272A; /* Zinc-800 */
+        }
+        .input-base {
+            background-color: #0F0F11;
+            border-color: #3F3F46; /* Zinc-700 */
+        }
+        .indigo-accent {
+            color: #6366F1;
+        }
+        .bg-indigo-accent {
+            background-color: #6366F1;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Custom scrollbar for better look */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0e0e12; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen items-center justify-center p-6 antialiased">
+<!-- Top Navigation (Shell Rule: Suppressed for login) -->
+<!-- Not rendered as per conflict resolution protocol for Transactional pages -->
+<main class="flex-grow flex items-center justify-center w-full">
+<!-- Auth Container -->
+<div class="w-full max-w-[440px] login-card border rounded-[12px] p-8 md:p-10 shadow-2xl transition-all duration-500 hover:shadow-indigo-900/10">
+<!-- Top Section -->
+<div class="flex flex-col items-center mb-8">
+<img alt="Sophia AI Factory" class="h-10 mb-6" src="https://lh3.googleusercontent.com/aida/AP1WRLtqUOSnZ1N-s_mvUVzRETh9N9zNk-YJjLDeDi2wsavxXLew-8VhTcs-tgxERWn5muiFy0JaTBKqmbtmyMnOaoP6i_mPRQxhv4tHWRqXkvyIKpDooZMj_M6Qg5Z9L1yyQKxQAfLa0fPh9bTOL6j1Zt45i2FlnJlqykCKawrVyFC8rx9QyuiiKccX9IjUzCcOmIzc54dwYvxO0ct7wdLc9KI67cTr1MTvBS2AXMeYkUslIXbs2VVe4DBXvyI"/>
+<h1 class="text-[24px] font-bold text-white tracking-tight mb-1">Welcome back</h1>
+<p class="text-[14px] text-[#A1A1AA]">Sign in to your account</p>
+</div>
+<!-- Login Form -->
+<form action="#" class="space-y-5" method="POST">
+<!-- Email Field -->
+<div class="space-y-1.5">
+<label class="text-[13px] font-medium text-[#A1A1AA]" for="email">Email</label>
+<div class="relative group">
+<input class="input-base w-full h-[44px] px-4 rounded-lg border text-white text-sm focus:ring-2 focus:ring-[#6366F1] focus:border-transparent outline-none transition-all placeholder:text-zinc-600" id="email" name="email" placeholder="name@company.com" required="" type="email"/>
+</div>
+</div>
+<!-- Password Field -->
+<div class="space-y-1.5">
+<div class="flex justify-between items-center">
+<label class="text-[13px] font-medium text-[#A1A1AA]" for="password">Password</label>
+<a class="text-[13px] font-medium indigo-accent hover:opacity-80 transition-opacity" href="#">Forgot password?</a>
+</div>
+<div class="relative group">
+<input class="input-base w-full h-[44px] px-4 rounded-lg border text-white text-sm focus:ring-2 focus:ring-[#6366F1] focus:border-transparent outline-none transition-all placeholder:text-zinc-600" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors" onclick="togglePassword()" type="button">
+<span class="material-symbols-outlined text-[20px]" id="eye-icon">visibility</span>
+</button>
+</div>
+</div>
+<!-- CTA Button -->
+<button class="w-full h-[44px] bg-indigo-accent text-white text-[15px] font-semibold rounded-lg hover:brightness-110 active:scale-[0.98] transition-all shadow-lg shadow-indigo-500/20" type="submit">
+                    Sign In
+                </button>
+</form>
+<!-- Divider -->
+<div class="relative my-8">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-zinc-800"></div>
+</div>
+<div class="relative flex justify-center text-xs uppercase">
+<span class="bg-[#18181B] px-3 text-[#71717A] font-medium tracking-wider">or continue with</span>
+</div>
+</div>
+<!-- Social Buttons -->
+<div class="grid grid-cols-2 gap-3 mb-8">
+<button class="flex items-center justify-center gap-2 h-[44px] rounded-lg border border-zinc-800 bg-transparent hover:bg-zinc-800/50 text-white text-sm font-medium transition-all group">
+<svg class="w-4 h-4" viewbox="0 0 24 24">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"></path>
+</svg></button></div></div></main></body></html>

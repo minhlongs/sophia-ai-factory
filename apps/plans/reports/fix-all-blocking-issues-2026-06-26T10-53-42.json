@@ -1,0 +1,57 @@
+{
+  "timestamp": "2026-06-26T10:53:42.523Z",
+  "totalIssues": 15,
+  "critical": 7,
+  "high": 8,
+  "fixes": [
+    {
+      "file": "src/app/actions/campaigns-retry-resume.ts",
+      "issue": "P0-1 IDOR vulnerability",
+      "fix": "Add org_id validation",
+      "complexity": "low"
+    },
+    {
+      "file": "src/app/api/v1/campaigns/create/route.ts",
+      "issue": "P0-2 RaaS API key not bound to user",
+      "fix": "Validate key ownership before use",
+      "complexity": "low"
+    },
+    {
+      "file": "src/tree/byok/byok-crypto.ts",
+      "issue": "P0-3 AES-GCM missing AAD",
+      "fix": "Add organization context to AAD",
+      "complexity": "medium"
+    },
+    {
+      "file": "src/tree/credentials/encryption.ts",
+      "issue": "P0-3 AES-GCM missing AAD",
+      "fix": "Add organization context to AAD",
+      "complexity": "medium"
+    },
+    {
+      "file": "src/app/api/version/route.ts",
+      "issue": "P1-2 OPENNEXT_VERSION hardcoded",
+      "fix": "Read from @opennextjs/cloudflare package",
+      "complexity": "low"
+    },
+    {
+      "file": "multiple",
+      "issue": "P0-7 console.* leakage",
+      "fix": "Replace with logger utility",
+      "complexity": "medium",
+      "pattern": "console.(log|warn|error)"
+    }
+  ],
+  "manualStepsRequired": [
+    "P0-4: Bump Next.js version in package.json (CVE fix)",
+    "P0-5: Review HeyGen webhook for tenant isolation",
+    "P0-6: Create migration to add org_id to campaigns table",
+    "P1-3: Register d1-backup cron in cron configuration",
+    "P1-4: Add rate limiting middleware",
+    "P1-5: Add request size limits",
+    "P1-6: Validate input schema on RaaS external",
+    "P1-7: Fix Referer header check",
+    "P1-8: Add cache-control headers"
+  ],
+  "notes": "Some fixes require manual review. See manualStepsRequired."
+}

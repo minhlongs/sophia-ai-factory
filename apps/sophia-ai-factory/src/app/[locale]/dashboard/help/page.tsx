@@ -1,0 +1,263 @@
+/**
+ * /dashboard/help — Help center index. Lists all support resources + video library.
+ * Bilingual via const arrays matching the /help/getting-started pattern.
+ *
+ * @module app/[locale]/dashboard/help/page
+ */
+
+import { BookOpen, HelpCircle, AlertTriangle, MessageCircle, Compass, Video, KeyRound, Send, Store } from 'lucide-react'
+import { listAllHelpVideos } from '@/forest/help/help-video-store'
+import { HelpVideosLibrary } from './help-videos-library'
+
+interface Props {
+  params: Promise<{ locale: string }>
+}
+
+export const metadata = {
+  title: 'Help Center | Sophia AI',
+  description: 'Self-serve help, FAQ, and troubleshooting for Sophia AI Factory',
+}
+
+interface ResourceCard {
+  href: string
+  icon: typeof BookOpen
+  title: string
+  desc: string
+  badge?: string
+}
+
+const RESOURCES_VI: ResourceCard[] = [
+  {
+    href: '/dashboard/help/getting-started',
+    icon: Compass,
+    title: 'Hướng dẫn bắt đầu',
+    desc: '4 bước đơn giản để tạo video AI đầu tiên — từ API key đến video xuất ra.',
+    badge: 'Bắt đầu ở đây',
+  },
+  {
+    href: '/dashboard/help/sops',
+    icon: Store,
+    title: 'Hướng dẫn vận hành SOP',
+    desc: '6 quy trình đầy đủ: duyệt, cài đặt, cấu hình, chạy, xem kết quả, tạo SOP và thử thách.',
+    badge: 'SOP',
+  },
+  {
+    href: '/dashboard/help/faq',
+    icon: HelpCircle,
+    title: 'Câu hỏi thường gặp',
+    desc: '15 câu hỏi phổ biến: cách dùng FREE100, BYOK, gói cước, video credits.',
+  },
+  {
+    href: '/dashboard/help/troubleshooting',
+    icon: AlertTriangle,
+    title: 'Khắc phục sự cố',
+    desc: '10 lỗi thường gặp + cách tự xử lý — magic link, HeyGen, Telegram, video kẹt.',
+  },
+  {
+    href: '/guide/telegram',
+    icon: MessageCircle,
+    title: 'Hướng dẫn Telegram bot',
+    desc: 'Cách kết nối @Sophia_Bbot và dùng các lệnh /campaign, /status, /results.',
+  },
+  {
+    href: '/guide/faq',
+    icon: BookOpen,
+    title: 'Tài liệu công khai',
+    desc: 'FAQ chung dành cho mọi người (không cần đăng nhập).',
+  },
+]
+
+const RESOURCES_EN: ResourceCard[] = [
+  {
+    href: '/dashboard/help/getting-started',
+    icon: Compass,
+    title: 'Getting Started Guide',
+    desc: '4 simple steps to your first AI video — from API key to rendered output.',
+    badge: 'Start here',
+  },
+  {
+    href: '/dashboard/help/sops',
+    icon: Store,
+    title: 'SOP Operations Guide',
+    desc: '6 complete workflows: browse, install, configure, run, view results, create SOPs and challenges.',
+    badge: 'SOP',
+  },
+  {
+    href: '/dashboard/help/faq',
+    icon: HelpCircle,
+    title: 'Frequently Asked Questions',
+    desc: '15 common questions: how FREE100 works, BYOK, plans, video credits.',
+  },
+  {
+    href: '/dashboard/help/troubleshooting',
+    icon: AlertTriangle,
+    title: 'Troubleshooting',
+    desc: '10 common issues + self-fix steps — magic link, HeyGen, Telegram, stuck videos.',
+  },
+  {
+    href: '/guide/telegram',
+    icon: MessageCircle,
+    title: 'Telegram bot guide',
+    desc: 'How to connect @Sophia_Bbot and use /campaign, /status, /results commands.',
+  },
+  {
+    href: '/guide/faq',
+    icon: BookOpen,
+    title: 'Public docs',
+    desc: 'General FAQ available to everyone (no login required).',
+  },
+]
+
+interface QuickAction {
+  href: string
+  icon: typeof Video
+  title: string
+  eta: string
+}
+
+const QUICK_VI: QuickAction[] = [
+  { href: '/dashboard/sop-marketplace', icon: Video, title: 'Tạo video đầu tiên', eta: '~5 phút' },
+  { href: '/dashboard/byok', icon: KeyRound, title: 'Cấu hình API keys', eta: '~3 phút' },
+  { href: '/dashboard/integrations', icon: Send, title: 'Kết nối Telegram', eta: '~30 giây' },
+]
+
+const QUICK_EN: QuickAction[] = [
+  { href: '/dashboard/sop-marketplace', icon: Video, title: 'Generate first video', eta: '~5 min' },
+  { href: '/dashboard/byok', icon: KeyRound, title: 'Configure API keys', eta: '~3 min' },
+  { href: '/dashboard/integrations', icon: Send, title: 'Connect Telegram', eta: '~30 sec' },
+]
+
+export default async function HelpIndexPage({ params }: Props) {
+  const { locale } = await params
+  const isVi = locale.startsWith('vi')
+  const resources = isVi ? RESOURCES_VI : RESOURCES_EN
+  const quick = isVi ? QUICK_VI : QUICK_EN
+
+  // Fetch help videos (gracefully degrade if migration not yet applied)
+  let helpVideos: Awaited<ReturnType<typeof listAllHelpVideos>> = []
+  try {
+    helpVideos = await listAllHelpVideos()
+  } catch {
+    // Migration 0112 not applied yet — show library skeleton
+  }
+
+  return (
+    <div className="max-w-5xl space-y-8">
+      <div>
+        <h1 className="text-2xl font-bold text-muted-foreground-100">
+          {isVi ? 'Trung tâm trợ giúp' : 'Help Center'}
+        </h1>
+        <p className="text-sm text-muted-foreground-400 mt-1">
+          {isVi
+            ? 'Tự tra cứu trước khi liên hệ — phần lớn câu hỏi đã có sẵn câu trả lời ở đây.'
+            : 'Self-serve first — most questions are already answered here.'}
+        </p>
+      </div>
+
+      {/* Video library — above FAQ/resources */}
+      <section className="space-y-4" id="videos">
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-primary-300">
+            {isVi ? 'Thư viện video hướng dẫn' : 'Tutorial video library'}
+          </h2>
+          <p className="text-xs text-muted-foreground-500 mt-1">
+            {isVi
+              ? 'Nhà sáng lập đang ghi hình từng video. Video sắp ra mắt sẽ xuất hiện tại đây.'
+              : 'The founder is recording each video. Coming-soon videos will appear here as they go live.'}
+          </p>
+        </div>
+        {helpVideos.length > 0 ? (
+          <HelpVideosLibrary videos={helpVideos} locale={locale} />
+        ) : (
+          <div className="rounded-xl border border-border-800 bg-muted-900/40 p-6 text-center">
+            <p className="text-sm text-muted-foreground-400">
+              {isVi ? 'Video đang được chuẩn bị. Quay lại sau!' : 'Videos are being prepared. Check back soon!'}
+            </p>
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-primary-300">
+          {isVi ? 'Bắt đầu nhanh' : 'Quick start'}
+        </h2>
+        <div className="grid sm:grid-cols-3 gap-3">
+          {quick.map((q) => {
+            const Icon = q.icon
+            return (
+              <a
+                key={q.href}
+                href={q.href}
+                className="group p-4 rounded-xl border border-border-800 bg-gradient-to-br from-primary/30 to-zinc-900/50 hover:border-primary-500/60 hover:from-primary/40 transition-colors"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <Icon className="w-5 h-5 text-primary-300" aria-hidden="true" />
+                  <span className="text-[10px] uppercase tracking-wider text-primary-300/80">
+                    {q.eta}
+                  </span>
+                </div>
+                <p className="text-sm font-medium text-muted-foreground-100 group-hover:text-white">
+                  {q.title}
+                </p>
+              </a>
+            )
+          })}
+        </div>
+      </section>
+
+      <div className="grid sm:grid-cols-2 gap-4">
+        {resources.map((r) => {
+          const Icon = r.icon
+          return (
+            <a
+              key={r.href}
+              href={r.href}
+              className="group p-5 rounded-xl border border-border-800 bg-muted-900/50 hover:border-primary-500/50 hover:bg-muted-900 transition-colors"
+            >
+              <div className="flex items-start gap-3">
+                <div className="shrink-0 mt-0.5">
+                  <Icon className="w-5 h-5 text-primary-400" aria-hidden="true" />
+                </div>
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-semibold text-muted-foreground-200 group-hover:text-white">
+                      {r.title}
+                    </h2>
+                    {r.badge && (
+                      <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary-500/20 border border-primary-500/40 text-primary-300">
+                        {r.badge}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground-400 leading-relaxed">{r.desc}</p>
+                </div>
+              </div>
+            </a>
+          )
+        })}
+      </div>
+
+      <div className="rounded-xl border border-amber-900/40 bg-amber-950/20 p-5 space-y-2">
+        <h3 className="text-sm font-semibold text-amber-300">
+          {isVi ? 'Vẫn cần hỗ trợ trực tiếp?' : 'Still need direct help?'}
+        </h3>
+        <p className="text-sm text-muted-foreground-400">
+          {isVi
+            ? 'Nếu không tìm được câu trả lời, gửi email tới: '
+            : 'If you cannot find an answer, email: '}
+          <a
+            href="mailto:support@mekongmind.com"
+            className="text-amber-400 hover:underline"
+          >
+            support@mekongmind.com
+          </a>
+        </p>
+        <p className="text-xs text-muted-foreground-500">
+          {isVi
+            ? 'Thời gian phản hồi: trong vòng 1 giờ làm việc.'
+            : 'Response time: within 1 business hour.'}
+        </p>
+      </div>
+    </div>
+  )
+}

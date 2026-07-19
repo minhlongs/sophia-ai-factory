@@ -1,0 +1,16 @@
+{
+  "url": [
+    "https://sophia.agencyos.network/vi",
+    "https://sophia.agencyos.network/vi/dashboard",
+    "https://sophia.agencyos.network/vi/pricing",
+    "https://sophia.agencyos.network/vi/dashboard/admin"
+  ],
+  "settings": {
+    "chromeFlags": "--headless --no-sandbox",
+    "throttlingMethod": "provided",
+    "formFactor": "desktop",
+    "screenEmulation": { "width": 1350, "height": 940, "deviceScaleFactor": 1 },
+    "output": "html",
+    "outputPath": ".lighthouseci"
+  }
+}
