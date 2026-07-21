@@ -50,7 +50,9 @@ describe('dispatchFinished — subscription + one-time routing', () => {
       config: {
         tier: 'BASIC' as const,
         invoiceId: '5710519960',
+        yearlyInvoiceId: '5710519960',
         price: 199,
+        yearlyPrice: 1990,
         currency: 'USD',
         name: 'Starter',
       },
@@ -72,7 +74,9 @@ describe('dispatchFinished — subscription + one-time routing', () => {
       config: {
         tier: 'PREMIUM' as const,
         invoiceId: '4559269964',
+        yearlyInvoiceId: '4559269964',
         price: 399,
+        yearlyPrice: 3990,
         currency: 'USD',
         name: 'Growth',
       },
@@ -93,7 +97,9 @@ describe('dispatchFinished — subscription + one-time routing', () => {
       config: {
         tier: 'ENTERPRISE' as const,
         invoiceId: '6336799275',
+        yearlyInvoiceId: '6336799275',
         price: 799,
+        yearlyPrice: 7990,
         currency: 'USD',
         name: 'Premium',
       },
@@ -114,7 +120,9 @@ describe('dispatchFinished — subscription + one-time routing', () => {
       config: {
         tier: 'MASTER' as const,
         invoiceId: '5589879034',
+        yearlyInvoiceId: '5589879034',
         price: 4999,
+        yearlyPrice: 0,
         currency: 'USD',
         name: 'Master',
       },
@@ -170,7 +178,9 @@ describe('dispatchFinished — subscription + one-time routing', () => {
       config: {
         tier: 'BASIC' as const,
         invoiceId: '5710519960',
+        yearlyInvoiceId: '5710519960',
         price: 199,
+        yearlyPrice: 1990,
         currency: 'USD',
         name: 'Starter',
       },
@@ -286,7 +296,9 @@ describe('dispatchRefunded — subscription + one-time refund routing', () => {
       config: {
         tier: 'BASIC' as const,
         invoiceId: '5710519960',
+        yearlyInvoiceId: '5710519960',
         price: 199,
+        yearlyPrice: 1990,
         currency: 'USD',
         name: 'Starter',
       },
@@ -310,7 +322,9 @@ describe('dispatchRefunded — subscription + one-time refund routing', () => {
       config: {
         tier: 'PREMIUM' as const,
         invoiceId: '4559269964',
+        yearlyInvoiceId: '4559269964',
         price: 399,
+        yearlyPrice: 3990,
         currency: 'USD',
         name: 'Growth',
       },
@@ -334,7 +348,9 @@ describe('dispatchRefunded — subscription + one-time refund routing', () => {
       config: {
         tier: 'ENTERPRISE' as const,
         invoiceId: '6336799275',
+        yearlyInvoiceId: '6336799275',
         price: 799,
+        yearlyPrice: 7990,
         currency: 'USD',
         name: 'Premium',
       },
@@ -358,7 +374,9 @@ describe('dispatchRefunded — subscription + one-time refund routing', () => {
       config: {
         tier: 'MASTER' as const,
         invoiceId: '5589879034',
+        yearlyInvoiceId: '5589879034',
         price: 4999,
+        yearlyPrice: 0,
         currency: 'USD',
         name: 'Master',
       },

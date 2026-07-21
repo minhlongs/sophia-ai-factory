@@ -223,7 +223,7 @@ describe('Telegram Bot Handlers', () => {
       // Mock profile check
       const mockSelectProfile = vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
+          maybeSingle: vi.fn().mockResolvedValue({
             data: { user_id: testUserId },
             error: null
           })
@@ -256,7 +256,7 @@ describe('Telegram Bot Handlers', () => {
 
       expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
         chatId,
-        expect.stringContaining('Your Status'),
+        expect.stringContaining('ACTIVE CAMPAIGNS'),
         expect.any(Object)
       )
       expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
@@ -270,12 +270,12 @@ describe('Telegram Bot Handlers', () => {
 
   describe('handleResults', () => {
     it('should show completed campaigns', async () => {
-       const testUserId = 'user-1'
+      const testUserId = 'user-1'
 
       // Mock profile check
       const mockSelectProfile = vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
+          maybeSingle: vi.fn().mockResolvedValue({
             data: { user_id: testUserId },
             error: null
           })
@@ -313,7 +313,7 @@ describe('Telegram Bot Handlers', () => {
 
       expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
         chatId,
-        expect.stringContaining('Recent Results'),
+        expect.stringContaining('Xem video'),
         expect.any(Object)
       )
     })
