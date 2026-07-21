@@ -207,3 +207,14 @@ FEATURE_PAYOS = "false"
 # Prevents drift between the hardcoded constant and the actual deployed adapter version.
 OPENNEXT_VERSION = "1.19.9"
 # === OPENNEXT-VERSION-END ===
+
+# ── ultracode worker (standalone) ───────────────────────────────────────────
+[[env]]
+name = "ultracode"
+main = "src/workers/ultracode-worker.ts"
+compatibility_date = "2026-07-22"
+compatibility_flags = ["nodejs_compat"]
+usage_model = "standard"
+
+[env.ultracode.d1_databases]
+DB = { binding = "DB", database_name = "sophia-raas-db", database_id = "78bd1961-b62d-43bb-b551-0c5d7d389506" }
