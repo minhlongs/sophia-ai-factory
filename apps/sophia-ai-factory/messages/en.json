@@ -2632,6 +2632,46 @@
       "providerUrl": "Provider Url",
       "clientId": "Client Id",
       "saveSso": "Save Sso"
+    },
+    "title": "Title",
+    "subtitle": "Subtitle",
+    "stats": {
+      "pending": "Pending",
+      "published": "Published",
+      "total": "Total"
+    },
+    "sections": {
+      "pendingReviews": "Pending Reviews",
+      "publishedListings": "Published Listings"
+    },
+    "table": {
+      "columns": {
+        "title": "Title",
+        "creator": "Creator",
+        "category": "Category",
+        "price": "Price",
+        "submitted": "Submitted",
+        "actions": "Actions",
+        "installs": "Installs",
+        "rating": "Rating",
+        "updated": "Updated"
+      },
+      "uncategorized": "Uncategorized"
+    },
+    "actions": {
+      "view": "View",
+      "approve": "Approve",
+      "reject": "Reject"
+    },
+    "empty": {
+      "pending": {
+        "title": "Title",
+        "description": "Description"
+      },
+      "published": {
+        "title": "Title",
+        "description": "Description"
+      }
     }
   },
   "common": {
@@ -3021,6 +3061,11 @@
       "pageTitle": "Creator Dashboard",
       "title": "Creator Dashboard",
       "subtitle": "Manage your SOP templates and earnings",
+      "heading": "Become a SOP Creator",
+      "valueProp": "70/30 Revenue Split",
+      "valuePropDesc": "You earn 70% of every SOP sale. We handle marketplace, payments, and infrastructure.",
+      "submit": "Submit Application",
+      "alreadyCreator": "You already have creator access. Redirecting to your dashboard...",
       "newSop": {
         "back": "Back",
         "title": "Create New SOP",
@@ -3069,6 +3114,14 @@
       "pending": "Pending",
       "payable": "Payable",
       "paid": "Paid Out",
+      "allTimeEarnings": "All-time earnings",
+      "awaitingPayout": "Awaiting payout threshold",
+      "readyForPayout": "Ready for next payout",
+      "paidOut": "Paid Out",
+      "historicalPayouts": "Historical payouts",
+      "noSopsTitle": "No SOPs Yet",
+      "noSopsDesc": "Create your first SOP listing to start earning",
+      "createFirstSop": "Create First SOP",
       "yourSops": "Your SOPs",
       "noSops": "No SOPs yet",
       "noSopsDesc": "Create your first SOP template to start earning",
@@ -3092,7 +3145,41 @@
         "publishSuccess": "Publish Success",
         "draftDescription": "Draft Description",
         "publishing": "Publishing",
-        "submitForReview": "Submit For Review"
+        "submitForReview": "Submit For Review",
+        "subtitle": "Subtitle",
+        "stats": {
+          "price": "Price",
+          "installs": "Installs",
+          "rating": "Rating",
+          "created": "Created"
+        },
+        "sections": {
+          "basicInfo": "Basic Info",
+          "media": "Media"
+        },
+        "fields": {
+          "title": "Title",
+          "category": "Category",
+          "notSet": "Not Set",
+          "sopTemplateId": "Sop Template Id",
+          "status": "Status",
+          "description": "Description",
+          "noDescription": "No Description",
+          "tags": "Tags",
+          "noTags": "No Tags",
+          "thumbnail": "Thumbnail",
+          "demoVideo": "Demo Video",
+          "viewVideo": "View Video"
+        },
+        "actions": {
+          "title": "Title",
+          "edit": "Edit",
+          "submitForReview": "Submit For Review",
+          "underReview": "Under Review",
+          "archive": "Archive",
+          "archived": "Archived",
+          "viewInMarketplace": "View In Marketplace"
+        }
       },
       "actions": {
         "unauthorized": "You must be logged in to perform this action.",
@@ -3124,22 +3211,188 @@
         "draftDescription": "This template is in draft. Submit it for review to publish it to the marketplace."
       },
       "apply": {
-        "pageTitle": "Become a Creator",
-        "heading": "Become a SOP Creator",
-        "subtitle": "Turn your expertise into recurring revenue",
-        "valueProp": "70/30 Revenue Split",
-        "valuePropDesc": "You earn 70% of every SOP sale. We handle marketplace, payments, and infrastructure.",
-        "emailLabel": "Email",
-        "emailPlaceholder": "your@email.com",
-        "reasonLabel": "Why do you want to become a creator?",
-        "reasonPlaceholder": "Tell us about your experience and what SOPs you plan to create...",
-        "submit": "Submit Application",
-        "submitting": "Submitting...",
-        "successTitle": "Application Submitted",
-        "successDesc": "Your application is under review. We'll notify you via email once approved.",
-        "errorGeneric": "Something went wrong. Please try again.",
-        "alreadyCreator": "You already have creator access. Redirecting to your dashboard...",
-        "alreadyCreatorLink": "Go to Creator Dashboard"
+        "title": "Become a SOP Creator",
+        "description": "Turn your automation expertise into recurring revenue. Create SOP templates once, earn on every sale.",
+        "benefits": {
+          "title": "Why Become a Creator?",
+          "items": [
+            "70/30 revenue split — you keep 70% of every sale",
+            "Passive income — create once, sell indefinitely",
+            "Global marketplace with built-in distribution",
+            "Full payout automation (USDT to your wallet)",
+            "Creator analytics dashboard",
+            "Priority support for verified creators"
+          ]
+        },
+        "form": {
+          "title": "Creator Application",
+          "website": {
+            "label": "Your Channel/Website",
+            "placeholder": "https://your-channel.com",
+            "hint": "Link to your YouTube, blog, or portfolio"
+          },
+          "niche": {
+            "label": "Primary Niche",
+            "placeholder": "Select your niche",
+            "options": {
+              "tech": "Technology & AI",
+              "finance": "Finance & Crypto",
+              "lifestyle": "Lifestyle & Productivity",
+              "education": "Education & Tutorials",
+              "gaming": "Gaming & Entertainment",
+              "health": "Health & Fitness",
+              "business": "Business & Marketing",
+              "other": "Other"
+            }
+          },
+          "subscribers": {
+            "label": "Subscribers/Followers",
+            "placeholder": "Select range",
+            "options": {
+              "0-1k": "0 – 1,000",
+              "1k-10k": "1,000 – 10,000",
+              "10k-100k": "10,000 – 100,000",
+              "100k-500k": "100,000 – 500,000",
+              "500k+": "500,000+"
+            }
+          },
+          "monthlyViews": {
+            "label": "Average Monthly Views",
+            "placeholder": "Select range",
+            "options": {
+              "0-10k": "0 – 10,000",
+              "10k-50k": "10,000 – 50,000",
+              "50k-200k": "50,000 – 200,000",
+              "200k-1m": "200,000 – 1,000,000",
+              "1m+": "1,000,000+"
+            }
+          },
+          "experience": {
+            "label": "Automation/Content Experience",
+            "placeholder": "Describe your experience with automation, content creation, or SOP development...",
+            "hint": "Tell us about your background — what SOPs do you plan to create?"
+          },
+          "whyJoin": {
+            "label": "Why Do You Want to Be a Creator?",
+            "placeholder": "What unique value will your SOPs bring to the marketplace?",
+            "hint": "Explain your unique angle and what problems your SOPs will solve"
+          },
+          "sampleContent": {
+            "label": "Sample Content Link (Optional)",
+            "placeholder": "https://youtube.com/watch?v=...",
+            "hint": "Link to your best video or content piece"
+          },
+          "submit": "Submit Application",
+          "disclaimer": "Applications are reviewed within 3-5 business days. We look for creators with proven expertise and unique automation workflows."
+        },
+        "submitted": {
+          "title": "Application Submitted!",
+          "description": "Thanks for applying! Our team will review your application within 3-5 business days. You'll receive an email notification once a decision is made."
+        },
+        "backToDashboard": "Back to Dashboard"
+      },
+      "dashboard": {
+        "title": "Creator Dashboard",
+        "description": "Manage your SOP templates and track earnings",
+        "sections": {
+          "mySops": "My SOPs",
+          "earnings": "Earnings",
+          "payouts": "Payouts"
+        },
+        "stats": {
+          "listings": "Total Listings",
+          "drafts": "Draft Listings",
+          "published": "Published",
+          "earnings": "Total Earnings"
+        },
+        "actions": {
+          "newListing": "Create New Listing",
+          "myListings": "My Listings",
+          "browseMarketplace": "Browse Marketplace"
+        },
+        "empty": {
+          "title": "No Listings Yet",
+          "description": "Create your first SOP listing to start earning"
+        }
+      },
+      "gate": {
+        "notAuthorized": {
+          "title": "Creator Access Required",
+          "description": "You don't have access to the Creator Dashboard yet. Apply to become a verified SOP creator and start earning 70% revenue share on every sale."
+        },
+        "benefits": {
+          "revenue": "70/30 Revenue Split",
+          "revenueDesc": "You keep 70% of every sale",
+          "audience": "Global Audience",
+          "audienceDesc": "Reach thousands of creators",
+          "tools": "Full Tooling",
+          "toolsDesc": "Playbook editor, analytics, payouts"
+        },
+        "applyNow": "Apply to Become a Creator",
+        "masterNote": "MASTER tier users have automatic access — no application needed",
+        "masterTier": {
+          "title": "MASTER Tier Included",
+          "description": "MASTER plan ($4,999 lifetime) includes unrestricted creator access. If you're on MASTER, you're already approved."
+        }
+      },
+      "new": {
+        "back": "Back",
+        "title": "Title",
+        "subtitle": "Subtitle",
+        "form": {
+          "title": "Title",
+          "fields": {
+            "title": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            },
+            "sopTemplateId": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            },
+            "priceCents": {
+              "label": "Label",
+              "hint": "Hint"
+            },
+            "category": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "options": {
+                "content": "Content",
+                "leads": "Leads",
+                "email": "Email",
+                "analytics": "Analytics",
+                "proposals": "Proposals",
+                "social": "Social",
+                "other": "Other"
+              }
+            },
+            "description": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            },
+            "tags": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            },
+            "thumbnailUrl": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            },
+            "demovideoUrl": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            }
+          },
+          "submit": "Submit",
+          "disclaimer": "Disclaimer"
+        }
       }
     },
     "community": {

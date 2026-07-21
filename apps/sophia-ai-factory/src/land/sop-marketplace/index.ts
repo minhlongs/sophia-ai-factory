@@ -25,3 +25,4 @@ export type { CreatorProfileView } from './creator-onboarding';
 export { createSopListing, updateSopListing, listMyListings, publishListing, archiveListing } from './listing-manager';
 export type { SopListingView } from './listing-manager';
 export { installSop, uninstallSop } from './install-handler';
+export { approveListingAdmin, rejectListingAdmin } from './listing-manager';

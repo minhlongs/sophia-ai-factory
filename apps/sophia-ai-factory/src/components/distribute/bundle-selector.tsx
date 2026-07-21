@@ -23,7 +23,7 @@ import { BUNDLE_IDS, getBundleChannels } from '@/forest/publishing/bundle-defini
 import { publishToBundle } from '@/forest/publishing/bundle-publisher';
 import type { ChannelPublishResult } from '@/forest/publishing/bundle-publisher';
 import type { UserChannel } from '@/seed/db/get-user-channels';
-import { PROVIDER_LABELS } from '@/app/[locale]/dashboard/videos/[id]/distribute/channel-meta';
+import { PROVIDER_LABELS } from '@/app/(app)/dashboard/videos/[id]/distribute/channel-meta';
 
 interface Props {
   videoId: string;
