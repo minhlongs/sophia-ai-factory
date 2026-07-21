@@ -1,12 +1,15 @@
 ---
 title: "Resolve i18n merge conflicts in messages/en.json and messages/vi.json"
 description: "Fix invalid JSON caused by missing comma before ceoAgent block and restore canonical structure for developer and dashboard keys"
-status: pending
+status: completed
 priority: P1
 effort: 1h
 branch: feat/next-evolution-phase-1-5
 tags: [i18n, merge-conflict, json, bugfix]
 created: 2026-07-16
+updated: 2026-07-22
+completedAt: 2026-07-22
+completedBy: ak:cook
 ---
 
 ## Problem

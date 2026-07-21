@@ -32,6 +32,8 @@ import { getBrandKit } from '@/seed/db/repositories/brand-kits-repo';
 import { generateSubtitles } from '@/land/video/assembly/subtitle-generator';
 import { composeFinalVideo, applyBrandKit } from '@/land/video/assembly/composer-ffmpeg';
 import { CheckpointService } from '@/forest/pipeline';
+import { captureServer } from '@/tree/signals/posthog-capture';
+import { Events } from '@/tree/signals/event-types';
 import type { VideoGenerateRequestedEvent, ProviderVideoJobStatus } from '@/land/video/templates/types';
 
 /** Progress payload emitted via inngest.send for SSE streaming */

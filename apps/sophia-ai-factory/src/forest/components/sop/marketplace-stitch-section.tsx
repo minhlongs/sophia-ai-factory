@@ -245,7 +245,7 @@ export function MarketplaceStitchSection({
                 key={item.id}
                 className="group flex flex-col overflow-hidden rounded-lg border border-[#27272A] bg-[#18181B] transition-all duration-200 hover:border-[#D97706]/50 hover:shadow-[0_0_20px_rgba(217,119,6,0.08)]"
               >
-                {/* JSON-LD Product schema */}
+                {/* JSON-LD Product schema — enhanced for SEO */}
                 <script
                   type="application/ld+json"
                   dangerouslySetInnerHTML={{
@@ -253,18 +253,33 @@ export function MarketplaceStitchSection({
                       "@context": "https://schema.org",
                       "@type": "Product",
                       name: item.name,
+                      description: item.previewMd?.slice(0, 300) ?? item.name,
+                      image: item.authorLogoUrl ?? undefined,
                       category: item.category,
+                      sku: item.templateId ?? item.id,
+                      mpn: item.templateId ?? item.id,
+                      brand: {
+                        "@type": "Organization",
+                        name: item.authorBrandName ?? `Sophia Creator ${item.authorUserId?.slice(0, 6) ?? "Unknown"}`,
+                        logo: item.authorLogoUrl ?? undefined,
+                      },
                       offers: {
                         "@type": "Offer",
                         priceCurrency: "USD",
                         price: (item.priceCents / 100).toFixed(2),
-                        url: `${typeof window !== "undefined" ? window.location.origin : ""}`,
+                        availability: "https://schema.org/InStock",
+                        url: `${typeof window !== "undefined" ? window.location.origin : ""}/marketplace/${item.templateId ?? item.id}`,
+                        seller: {
+                          "@type": "Organization",
+                          name: item.authorBrandName ?? "Sophia Marketplace",
+                        },
                       },
                       aggregateRating: {
                         "@type": "AggregateRating",
                         ratingValue: item.ratingAvg.toFixed(1),
                         reviewCount: item.ratingCount,
                         bestRating: 5,
+                        worstRating: 1,
                       },
                     }),
                   }}

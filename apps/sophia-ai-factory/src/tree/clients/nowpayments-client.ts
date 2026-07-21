@@ -237,7 +237,9 @@ export function parseIpnWebhook(
 export interface NowPaymentsTierConfig {
   tier: Tier
   invoiceId: string
+  yearlyInvoiceId?: string
   price: number
+  yearlyPrice: number
   currency: string
   name: string
 }
@@ -250,28 +252,36 @@ export const NOWPAYMENTS_TIERS: Record<string, NowPaymentsTierConfig> = {
   BASIC: {
     tier: 'BASIC',
     invoiceId: '5710519960',
+    yearlyInvoiceId: '5710519960', // TODO: Replace with actual yearly invoice ID from NOWPayments dashboard
     price: 199,
+    yearlyPrice: 1990,
     currency: 'USD',
     name: 'Starter',
   },
   PREMIUM: {
     tier: 'PREMIUM',
     invoiceId: '4559269964',
+    yearlyInvoiceId: '4559269964', // TODO: Replace with actual yearly invoice ID from NOWPayments dashboard
     price: 399,
+    yearlyPrice: 3990,
     currency: 'USD',
     name: 'Growth',
   },
   ENTERPRISE: {
     tier: 'ENTERPRISE',
     invoiceId: '6336799275',
+    yearlyInvoiceId: '6336799275', // TODO: Replace with actual yearly invoice ID from NOWPayments dashboard
     price: 799,
+    yearlyPrice: 7990,
     currency: 'USD',
     name: 'Premium',
   },
   MASTER: {
     tier: 'MASTER',
     invoiceId: '5589879034',
+    yearlyInvoiceId: '5589879034', // TODO: Replace with actual yearly invoice ID from NOWPayments dashboard
     price: 4999,
+    yearlyPrice: 0, // MASTER is lifetime only - no annual option
     currency: 'USD',
     name: 'Master',
   },
@@ -283,10 +293,17 @@ const NOWPAYMENTS_CHECKOUT_BASE =
 /**
  * @deprecated Use createCheckout() instead. Builds URL from pre-created invoice IDs.
  * Kept for emergency fallback when NOWPayments API is unreachable.
+ * Supports period for yearly billing when yearlyInvoiceId is configured.
  */
-export function createInvoiceUrl(tierId: string, userId: string, customerEmail?: string): string {
+export function createInvoiceUrl(tierId: string, userId: string, customerEmail?: string, period?: 'monthly' | 'yearly'): string {
   const tierConfig = NOWPAYMENTS_TIERS[tierId]
   if (!tierConfig) throw new Error(`Unknown tier: ${tierId}`)
+
+  const isYearly = period === 'yearly'
+  const invoiceId = isYearly && tierConfig.yearlyInvoiceId ? tierConfig.yearlyInvoiceId : tierConfig.invoiceId
+  if (isYearly && tierConfig.yearlyPrice === 0) {
+    throw new Error(`Yearly billing not available for tier: ${tierId}`)
+  }
 
   const timestamp = Date.now()
   const orderId = `sophia_${userId}_${timestamp}`
@@ -296,7 +313,7 @@ export function createInvoiceUrl(tierId: string, userId: string, customerEmail?:
   if (customerEmail) successParams.set('email', encodeURIComponent(customerEmail))
 
   const params = new URLSearchParams({
-    iid: tierConfig.invoiceId,
+    iid: invoiceId,
     order_id: orderId,
     success_url: `${appUrl}/payment-success?${successParams.toString()}`,
     cancel_url: `${appUrl}/pricing`,
@@ -354,10 +371,11 @@ export async function verifyIpnSignature(
 
 /**
  * @deprecated Use createCheckout() instead. Looks up tier by pre-created invoice ID.
+ * Supports both monthly and yearly invoice IDs.
  */
 export function getTierByInvoiceId(invoiceId: string): NowPaymentsTierConfig | null {
   return (
-    Object.values(NOWPAYMENTS_TIERS).find(t => t.invoiceId === invoiceId) ?? null
+    Object.values(NOWPAYMENTS_TIERS).find(t => t.invoiceId === invoiceId || t.yearlyInvoiceId === invoiceId) ?? null
   )
 }
 
