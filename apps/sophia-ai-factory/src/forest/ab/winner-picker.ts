@@ -1,25 +1,31 @@
 /**
- * Winner Picker — Simple 2× CTR rule evaluation
+ * Winner Picker — Chi-square statistical significance + minimum sample size gates
  *
- * Winner condition: CTR(variant) >= 2× CTR(other) AND total impressions >= MIN_IMPRESSIONS
- * No-winner condition: both sides evaluated after MAX_WINDOW_HOURS with no clear winner
+ * Winner condition: chi-square test p < 0.05 AND minimum sample size per variant
+ * No-winner condition: both sides evaluated after MAX_WINDOW_HOURS with no significant winner
  *
- * This module is pure computation — no D1 calls. Persistence is handled by experiment-store.
- * Makes it easy to unit-test without mocking D1.
+ * Replaces the simple 2× CTR rule from pre-2026 versions.
  *
  * @module forest/ab/winner-picker
  */
 
 import type { AbExperiment, WinnerEvaluation, WinnerVariant } from './ab-types';
 
-/** Minimum total impressions (A + B) before declaring a winner. */
-export const MIN_IMPRESSIONS = 100;
+// ---------------------------------------------------------------------------
+// Configuration constants
+// ---------------------------------------------------------------------------
 
-/** After this many hours with no winner, mark as 'no_winner'. */
+/** Minimum impressions PER VARIANT before statistical test is valid. */
+export const MIN_IMPRESSIONS_PER_VARIANT = 100;
+
+/** After this many hours with no significant winner, mark as 'no_winner' (or marginal if substantial lead). */
 export const MAX_WINDOW_HOURS = 48;
 
-/** Multiplier required: winner CTR >= WINNER_MULTIPLIER × loser CTR. */
-export const WINNER_MULTIPLIER = 2;
+/** Chi-square significance threshold. Winner must have p < 0.05. */
+export const SIGNIFICANCE_LEVEL = 0.05;
+
+/** Minimum absolute CTR difference (percentage points) to consider "meaningful" at max window. */
+export const MIN_CTR_DIFF_PCT = 0.5; // 0.5 percentage points
 
 // ---------------------------------------------------------------------------
 // CTR helpers
@@ -35,6 +41,115 @@ export function computeCtr(conversions: number, impressions: number): number {
 }
 
 // ---------------------------------------------------------------------------
+// Chi-square test for 2×2 contingency table
+// ---------------------------------------------------------------------------
+
+/**
+ * Chi-square test for independence (2×2 contingency table).
+ * Tests: are conversion rates between variant A and B statistically different?
+ *
+ * Contingency table:
+ * |              | Converted | Not Converted | Total |
+ * | variant A    | a         | b             | nA    |
+ * | variant B    | c         | d             | nB    |
+ * | Total        | a+c       | b+d           | nA+nB |
+ *
+ * Expected: E_ij = (row_i_total * col_j_total) / grand_total
+ * Chi-square = Σ (O - E)² / E for all 4 cells
+ * df = 1 ( (2-1)*(2-1) )
+ *
+ * @returns { chi2: number; pValue: number; significant: boolean }
+ */
+export function chiSquareTest(
+  conversionsA: number,
+  impressionsA: number,
+  conversionsB: number,
+  impressionsB: number,
+): { chi2: number; pValue: number; significant: boolean } {
+  const a = conversionsA;
+  const b = impressionsA - conversionsA;
+  const c = conversionsB;
+  const d = impressionsB - conversionsB;
+
+  const nA = impressionsA;
+  const nB = impressionsB;
+  const total = nA + nB;
+  const totalConverted = a + c;
+  const totalNotConverted = b + d;
+
+  // Edge case: no data at all
+  if (total === 0) {
+    return { chi2: 0, pValue: 1, significant: false };
+  }
+
+  // Expected frequencies under null hypothesis (no difference)
+  const eA = (nA * totalConverted) / total;
+  const eB = (nA * totalNotConverted) / total;
+  const eC = (nB * totalConverted) / total;
+  const eD = (nB * totalNotConverted) / total;
+
+  // Avoid division by zero in edge cases
+  if (eA === 0 || eB === 0 || eC === 0 || eD === 0) {
+    return { chi2: 0, pValue: 1, significant: false };
+  }
+
+  const chi2 =
+    (a - eA) ** 2 / eA +
+    (b - eB) ** 2 / eB +
+    (c - eC) ** 2 / eC +
+    (d - eD) ** 2 / eD;
+
+  // p-value for chi-square with df=1
+  // Using Wilson-Hilferty approximation or direct computation
+  // For df=1: p = 1 - erf(sqrt(chi2/2))
+  // Approximation: p ≈ 2 * (1 - Φ(√χ²)) for df=1
+  const pValue = pValueChiSquareDf1(chi2);
+
+  return {
+    chi2,
+    pValue,
+    significant: pValue < SIGNIFICANCE_LEVEL,
+  };
+}
+
+/**
+ * Approximate p-value for chi-square distribution with df=1.
+ * Uses the relationship: sqrt(chi2) ~ N(0,1) for df=1
+ * p = 2 * (1 - Φ(|z|)) where z = sqrt(chi2)
+ */
+function pValueChiSquareDf1(chi2: number): number {
+  if (chi2 <= 0) return 1;
+  const z = Math.sqrt(chi2);
+  // Standard normal CDF approximation (Abramowitz & Stegun 7.1.26)
+  const cdf = normalCdf(z);
+  return 2 * (1 - cdf); // two-tailed
+}
+
+/**
+ * Standard normal CDF approximation.
+ * Using rational approximation with max error ~7e-8 (from Abramowitz & Stegun 7.1.27)
+ */
+function normalCdf(x: number): number {
+  // Constants for rational approximation
+  const a1 = 0.254829592;
+  const a2 = -0.284496736;
+  const a3 = 1.421413741;
+  const a4 = -1.453152027;
+  const a5 = 1.061405429;
+  const p = 0.3275911;
+
+  // Save the sign of x
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x) / Math.sqrt(2);
+
+  // A&S formula 7.1.26
+  const t = 1.0 / (1.0 + p * x);
+  const y = 1.0 - (((((a5 * t + a4) * t + a3) * t + a2) * t + a1) * t) * Math.exp(-x * x);
+
+  return 0.5 * (1.0 + sign * y);
+}
+
+// ---------------------------------------------------------------------------
 // Core evaluation
 // ---------------------------------------------------------------------------
 
@@ -42,71 +157,79 @@ export function computeCtr(conversions: number, impressions: number): number {
  * Evaluate whether a winner can be declared for a single experiment.
  *
  * Decision rules:
- * 1. If total impressions < MIN_IMPRESSIONS → 'pending' (return null)
- * 2. If ctrA >= WINNER_MULTIPLIER * ctrB → winner = 'a'
- * 3. If ctrB >= WINNER_MULTIPLIER * ctrA → winner = 'b'
- * 4. If experiment is older than MAX_WINDOW_HOURS → 'no_winner'
- * 5. Otherwise → 'pending' (return null — keep running)
+ * 1. If either variant has < MIN_IMPRESSIONS_PER_VARIANT → 'pending' (null)
+ * 2. If chi-square test p < 0.05 → declare winner (higher CTR variant)
+ * 3. If experiment age >= MAX_WINDOW_HOURS:
+ *    - If significant → winner
+ *    - If not significant but |CTR_A - CTR_B| >= MIN_CTR_DIFF_PCT → marginal winner (higher CTR)
+ *    - Else → 'no_winner'
+ * 4. Otherwise → 'pending' (null)
  */
 export function evaluateWinner(experiment: AbExperiment): WinnerEvaluation | null {
-  const totalImpressions = experiment.impressionsA + experiment.impressionsB;
-  const ctrA = computeCtr(experiment.conversionsA, experiment.impressionsA);
-  const ctrB = computeCtr(experiment.conversionsB, experiment.impressionsB);
+  const impressionsA = experiment.impressionsA;
+  const impressionsB = experiment.impressionsB;
+  const conversionsA = experiment.conversionsA;
+  const conversionsB = experiment.conversionsB;
 
-  // Not enough data yet — regardless of age
-  if (totalImpressions < MIN_IMPRESSIONS) {
+  const ctrA = computeCtr(conversionsA, impressionsA);
+  const ctrB = computeCtr(conversionsB, impressionsB);
+
+  // Rule 1: Minimum sample size per variant
+  if (impressionsA < MIN_IMPRESSIONS_PER_VARIANT || impressionsB < MIN_IMPRESSIONS_PER_VARIANT) {
     const ageHours = computeAgeHours(experiment.createdAt);
     if (ageHours < MAX_WINDOW_HOURS) return null;
 
-    // Past max window, still low traffic → declare no_winner
+    // Past max window but still low impressions → no_winner
     return {
       experimentId: experiment.id,
       winner: 'no_winner',
       ctrA,
       ctrB,
-      reason: `Max window (${MAX_WINDOW_HOURS}h) reached with insufficient impressions (${totalImpressions} < ${MIN_IMPRESSIONS})`,
+      reason: `Max window (${MAX_WINDOW_HOURS}h) reached with insufficient impressions (A=${impressionsA}, B=${impressionsB} < ${MIN_IMPRESSIONS_PER_VARIANT}/variant)`,
     };
   }
 
-  // Clear winner check
-  if (ctrA >= WINNER_MULTIPLIER * ctrB && ctrA > 0) {
-    return {
-      experimentId: experiment.id,
-      winner: 'a',
-      ctrA,
-      ctrB,
-      reason: `Variant A CTR (${(ctrA * 100).toFixed(2)}%) >= 2× Variant B CTR (${(ctrB * 100).toFixed(2)}%)`,
-    };
-  }
+  // Rule 2: Statistical significance test
+  const { chi2, pValue, significant } = chiSquareTest(conversionsA, impressionsA, conversionsB, impressionsB);
 
-  if (ctrB >= WINNER_MULTIPLIER * ctrA && ctrB > 0) {
-    return {
-      experimentId: experiment.id,
-      winner: 'b',
-      ctrA,
-      ctrB,
-      reason: `Variant B CTR (${(ctrB * 100).toFixed(2)}%) >= 2× Variant A CTR (${(ctrA * 100).toFixed(2)}%)`,
-    };
-  }
-
-  // No clear winner yet — check if we've hit the time limit
-  const ageHours = computeAgeHours(experiment.createdAt);
-  if (ageHours >= MAX_WINDOW_HOURS) {
-    const winner: WinnerVariant = ctrA > ctrB ? 'a' : ctrB > ctrA ? 'b' : 'no_winner';
+  if (significant) {
+    const winner: WinnerVariant = ctrA > ctrB ? 'a' : 'b';
     return {
       experimentId: experiment.id,
       winner,
       ctrA,
       ctrB,
-      reason: `Max window (${MAX_WINDOW_HOURS}h) reached — ${
-        winner === 'no_winner'
-          ? 'tied CTR, no clear winner'
-          : `marginal lead for variant ${winner.toUpperCase()}`
-      }`,
+      reason: `Chi-square p=${pValue.toFixed(4)} < ${SIGNIFICANCE_LEVEL} (χ²=${chi2.toFixed(2)}). Winner: variant ${winner.toUpperCase()} (CTR: ${winner === 'a' ? ctrA : ctrB * 100}% vs ${winner === 'a' ? ctrB : ctrA * 100}%)`,
     };
   }
 
-  // Still within window, no clear winner yet
+  // Rule 3: Max window reached without significance
+  const ageHours = computeAgeHours(experiment.createdAt);
+  if (ageHours >= MAX_WINDOW_HOURS) {
+    const ctrDiffPct = Math.abs(ctrA - ctrB) * 100;
+    // Use small epsilon to handle floating point precision (e.g., 0.105 - 0.1 = 0.004999...)
+    const eps = 1e-10;
+    if (ctrDiffPct >= MIN_CTR_DIFF_PCT - eps) {
+      const winner: WinnerVariant = ctrA > ctrB ? 'a' : 'b';
+      return {
+        experimentId: experiment.id,
+        winner,
+        ctrA,
+        ctrB,
+        reason: `Max window (${MAX_WINDOW_HOURS}h) reached. No statistical significance (p=${pValue.toFixed(4)}), but CTR difference (${ctrDiffPct.toFixed(2)}pp) >= ${MIN_CTR_DIFF_PCT}pp. Marginal winner: variant ${winner.toUpperCase()}.`,
+      };
+    }
+
+    return {
+      experimentId: experiment.id,
+      winner: 'no_winner',
+      ctrA,
+      ctrB,
+      reason: `Max window (${MAX_WINDOW_HOURS}h) reached. No statistical significance (p=${pValue.toFixed(4)}), CTR difference (${ctrDiffPct.toFixed(2)}pp) < ${MIN_CTR_DIFF_PCT}pp. No clear winner.`,
+    };
+  }
+
+  // Rule 4: Still within window, no significance yet
   return null;
 }
 

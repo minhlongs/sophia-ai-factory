@@ -294,7 +294,7 @@ if (promoCode && validation?.valid && calc.isFreeOrder && validation.discountTyp
                 error: sdkErr instanceof Error ? sdkErr.message : String(sdkErr),
                 tier,
               });
-              invoiceUrl = createInvoiceUrl(tier, userId);
+              invoiceUrl = createInvoiceUrl(tier, userId, customerEmail, period === 'monthly' || period === 'yearly' ? period : undefined);
             }
             await writeOrder({
               order_id: orderId,

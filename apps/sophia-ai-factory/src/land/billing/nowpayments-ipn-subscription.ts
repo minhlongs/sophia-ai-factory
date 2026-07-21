@@ -139,7 +139,7 @@ async function setupDatabaseAndContext(
   // For yearly billing, compare against the yearly (discounted) price from UNIFIED_TIERS.
   // For monthly/lifetime, compare against the monthly price from NOWPAYMENTS_TIERS.
   const expectedPrice = billingPeriod === 'yearly'
-    ? (UNIFIED_TIERS[tier]?.yearlyPrice ?? NOWPAYMENTS_TIERS[tier]?.price)
+    ? (UNIFIED_TIERS[tier]?.yearlyPrice ?? NOWPAYMENTS_TIERS[tier]?.yearlyPrice)
     : NOWPAYMENTS_TIERS[tier]?.price
   if (expectedPrice !== undefined && ipn.price_amount !== undefined) {
     const deviation = Math.abs(ipn.price_amount - expectedPrice)
