@@ -41,7 +41,7 @@ export interface CreateSopListingInput {
   thumbnail_url?: string | null;
   demo_video_url?: string | null;
   sop_template_id: string;
-  status?: 'draft' | 'published' | 'archived';
+  status?: 'draft' | 'published' | 'archived' | 'pending_review';
 }
 
 export interface SopListing extends Required<CreateSopListingInput> {
@@ -90,7 +90,7 @@ export interface SopReview {
 
 export interface ListingFilters {
   category?: string;
-  status?: 'draft' | 'published' | 'archived';
+  status?: 'draft' | 'published' | 'archived' | 'pending_review';
 }
 
 // ── Creator Profile Operations ─────────────────────────────────────────────

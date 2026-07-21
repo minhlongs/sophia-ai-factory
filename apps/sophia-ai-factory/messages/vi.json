@@ -2632,6 +2632,46 @@
       "providerUrl": "Provider Url",
       "clientId": "Client Id",
       "saveSso": "Save Sso"
+    },
+    "title": "Title",
+    "subtitle": "Subtitle",
+    "stats": {
+      "pending": "Pending",
+      "published": "Published",
+      "total": "Total"
+    },
+    "sections": {
+      "pendingReviews": "Pending Reviews",
+      "publishedListings": "Published Listings"
+    },
+    "table": {
+      "columns": {
+        "title": "Title",
+        "creator": "Creator",
+        "category": "Category",
+        "price": "Price",
+        "submitted": "Submitted",
+        "actions": "Actions",
+        "installs": "Installs",
+        "rating": "Rating",
+        "updated": "Updated"
+      },
+      "uncategorized": "Uncategorized"
+    },
+    "actions": {
+      "view": "View",
+      "approve": "Approve",
+      "reject": "Reject"
+    },
+    "empty": {
+      "pending": {
+        "title": "Title",
+        "description": "Description"
+      },
+      "published": {
+        "title": "Title",
+        "description": "Description"
+      }
     }
   },
   "common": {
@@ -3021,6 +3061,11 @@
       "pageTitle": "Bảng điều khiển Creator",
       "title": "Bảng điều khiển Creator",
       "subtitle": "Quản lý template SOP và thu nhập của bạn",
+      "heading": "Trở thành SOP Creator",
+      "valueProp": "Chia sẻ doanh thu 70/30",
+      "valuePropDesc": "Bạn nhận 70% từ mỗi SOP bán được. Chúng tôi lo marketplace, thanh toán và hạ tầng.",
+      "submit": "Gửi Đơn Đăng Ký",
+      "alreadyCreator": "Bạn đã có quyền truy cập creator. Đang chuyển hướng...",
       "newSop": {
         "back": "Quay lại",
         "title": "Tạo SOP Mới",
@@ -3029,7 +3074,19 @@
       "tabs": {
         "mySops": "SOP của tôi",
         "earnings": "Thu nhập",
-        "payouts": "Thanh toán"
+        "payouts": "Thanh toán",
+        "pageTitle": "Tab điều khiển Creator",
+        "noSopsTitle": "Chưa có SOP nào",
+        "noSopsDesc": "Tạo SOP đầu tiên để bắt đầu kiếm thu nhập",
+        "createFirstSop": "Tạo SOP đầu tiên",
+        "totalEarned": "Tổng thu nhập",
+        "allTimeEarnings": "Thu nhập cả đời",
+        "pending": "Chờ xử lý",
+        "awaitingPayout": "Đang chờ ngưỡng thanh toán",
+        "payable": "Có thể thanh toán",
+        "readyForPayout": "Sẵn sàng cho lần thanh toán tới",
+        "paidOut": "Đã thanh toán",
+        "historicalPayouts": "Lịch sử thanh toán"
       },
       "payouts": {
         "title": "Cài đặt thanh toán",
@@ -3092,7 +3149,41 @@
         "publishSuccess": "Xuất bản thành công",
         "draftDescription": "Mô tả bản nháp",
         "publishing": "Đang xuất bản",
-        "submitForReview": "Gửi xét duyệt"
+        "submitForReview": "Gửi xét duyệt",
+        "subtitle": "Subtitle",
+        "stats": {
+          "price": "Price",
+          "installs": "Installs",
+          "rating": "Rating",
+          "created": "Created"
+        },
+        "sections": {
+          "basicInfo": "Basic Info",
+          "media": "Media"
+        },
+        "fields": {
+          "title": "Title",
+          "category": "Category",
+          "notSet": "Not Set",
+          "sopTemplateId": "Sop Template Id",
+          "status": "Status",
+          "description": "Description",
+          "noDescription": "No Description",
+          "tags": "Tags",
+          "noTags": "No Tags",
+          "thumbnail": "Thumbnail",
+          "demoVideo": "Demo Video",
+          "viewVideo": "View Video"
+        },
+        "actions": {
+          "title": "Title",
+          "edit": "Edit",
+          "submitForReview": "Submit For Review",
+          "underReview": "Under Review",
+          "archive": "Archive",
+          "archived": "Archived",
+          "viewInMarketplace": "View In Marketplace"
+        }
       },
       "actions": {
         "unauthorized": "Bạn cần đăng nhập để thực hiện hành động này.",
@@ -3124,22 +3215,188 @@
         "draftDescription": "Template này đang ở trạng thái nháp. Gửi đi duyệt để xuất bản lên marketplace."
       },
       "apply": {
-        "pageTitle": "Trở thành Creator",
-        "heading": "Trở thành SOP Creator",
-        "subtitle": "Biến chuyên môn của bạn thành thu nhập thụ động",
-        "valueProp": "Chia sẻ doanh thu 70/30",
-        "valuePropDesc": "Bạn nhận 70% từ mỗi SOP bán được. Chúng tôi lo marketplace, thanh toán và hạ tầng.",
-        "emailLabel": "Email",
-        "emailPlaceholder": "email@cua-ban.com",
-        "reasonLabel": "Tại sao bạn muốn trở thành creator?",
-        "reasonPlaceholder": "Chia sẻ kinh nghiệm của bạn và những SOP bạn dự định tạo...",
-        "submit": "Gửi Đơn Đăng Ký",
-        "submitting": "Đang gửi...",
-        "successTitle": "Đã Gửi Đơn",
-        "successDesc": "Đơn đăng ký của bạn đang được xem xét. Chúng tôi sẽ thông báo qua email khi được duyệt.",
-        "errorGeneric": "Có lỗi xảy ra. Vui lòng thử lại.",
-        "alreadyCreator": "Bạn đã có quyền truy cập creator. Đang chuyển hướng...",
-        "alreadyCreatorLink": "Đi đến Bảng điều khiển Creator"
+        "title": "Trở thành SOP Creator",
+        "description": "Biến chuyên môn tự động hóa thành thu nhập thụ động. Tạo template SOP một lần, kiếm tiền trên mỗi lần bán.",
+        "benefits": {
+          "title": "Tại sao nên trở thành Creator?",
+          "items": [
+            "Chia sẻ doanh thu 70/30 — bạn nhận 70% mỗi lần bán",
+            "Thu nhập thụ động — tạo một lần, bán không giới hạn",
+            "Marketplace toàn cầu với phân phối tích hợp sẵn",
+            "Tự động hóa thanh toán đầy đủ (USDT về ví của bạn)",
+            "Bảng điều khiển phân tích cho Creator",
+            "Hỗ trợ ưu tiên cho Creator được xác thực"
+          ]
+        },
+        "form": {
+          "title": "Đơn đăng ký Creator",
+          "website": {
+            "label": "Kênh/Trang web của bạn",
+            "placeholder": "https://kenh-cua-ban.com",
+            "hint": "Link đến YouTube, blog, hoặc portfolio"
+          },
+          "niche": {
+            "label": "Chuyên mục chính",
+            "placeholder": "Chọn chuyên mục",
+            "options": {
+              "tech": "Công nghệ & AI",
+              "finance": "Tài chính & Crypto",
+              "lifestyle": "Lối sống & Năng suất",
+              "education": "Giáo dục & Hướng dẫn",
+              "gaming": "Game & Giải trí",
+              "health": "Sức khỏe & Thể dục",
+              "business": "Kinh doanh & Marketing",
+              "other": "Khác"
+            }
+          },
+          "subscribers": {
+            "label": "Người đăng ký/Theo dõi",
+            "placeholder": "Chọn khoảng",
+            "options": {
+              "0-1k": "0 – 1.000",
+              "1k-10k": "1.000 – 10.000",
+              "10k-100k": "10.000 – 100.000",
+              "100k-500k": "100.000 – 500.000",
+              "500k+": "500.000+"
+            }
+          },
+          "monthlyViews": {
+            "label": "Lượt xem trung bình/tháng",
+            "placeholder": "Chọn khoảng",
+            "options": {
+              "0-10k": "0 – 10.000",
+              "10k-50k": "10.000 – 50.000",
+              "50k-200k": "50.000 – 200.000",
+              "200k-1m": "200.000 – 1.000.000",
+              "1m+": "1.000.000+"
+            }
+          },
+          "experience": {
+            "label": "Kinh nghiệm tự động hóa/Tạo nội dung",
+            "placeholder": "Mô tả kinh nghiệm của bạn về tự động hóa, tạo nội dung, hoặc phát triển SOP...",
+            "hint": "Hãy cho chúng tôi biết về background — bạn dự định tạo SOP gì?"
+          },
+          "whyJoin": {
+            "label": "Tại sao bạn muốn làm Creator?",
+            "placeholder": "Giá trị độc đáo nào mà SOP của bạn sẽ mang đến cho marketplace?",
+            "hint": "Giải thích góc nhìn độc đáo và vấn đề SOP của bạn sẽ giải quyết"
+          },
+          "sampleContent": {
+            "label": "Link nội dung mẫu (Tùy chọn)",
+            "placeholder": "https://youtube.com/watch?v=...",
+            "hint": "Link đến video hoặc nội dung tốt nhất của bạn"
+          },
+          "submit": "Gửi đơn đăng ký",
+          "disclaimer": "Đơn đăng ký được xem xét trong 3-5 ngày làm việc. Chúng tôi tìm kiếm creator có chuyên môn được chứng minh và quy trình tự động hóa độc đáo."
+        },
+        "submitted": {
+          "title": "Đã Gửi Đơn!",
+          "description": "Cảm ơn bạn đã đăng ký! Đội ngũ sẽ xem xét đơn trong 3-5 ngày làm việc. Bạn sẽ nhận email thông báo khi có kết quả."
+        },
+        "backToDashboard": "Quay lại Bảng điều khiển"
+      },
+      "dashboard": {
+        "title": "Bảng điều khiển Creator",
+        "description": "Quản lý template SOP và theo dõi thu nhập",
+        "sections": {
+          "mySops": "SOP của tôi",
+          "earnings": "Thu nhập",
+          "payouts": "Thanh toán"
+        },
+        "stats": {
+          "listings": "Tổng số Listing",
+          "drafts": "Listing bản nháp",
+          "published": "Đã xuất bản",
+          "earnings": "Tổng thu nhập"
+        },
+        "actions": {
+          "newListing": "Tạo Listing mới",
+          "myListings": "Listing của tôi",
+          "browseMarketplace": "Duyệt Marketplace"
+        },
+        "empty": {
+          "title": "Chưa có Listing nào",
+          "description": "Tạo listing SOP đầu tiên để bắt đầu kiếm thu nhập"
+        }
+      },
+      "gate": {
+        "notAuthorized": {
+          "title": "Yêu Cầu Quyền Creator",
+          "description": "Bạn chưa có quyền truy cập Bảng điều khiển Creator. Đăng ký để trở thành SOP Creator được xác thực và kiếm 70% chia sẻ doanh thu trên mỗi lần bán."
+        },
+        "benefits": {
+          "revenue": "Chia sẻ doanh thu 70/30",
+          "revenueDesc": "Bạn nhận 70% mỗi lần bán",
+          "audience": "Khách hàng toàn cầu",
+          "audienceDesc": "Tiếp cận hàng nghìn creator",
+          "tools": "Công cụ đầy đủ",
+          "toolsDesc": "Trình soạn playbook, phân tích, thanh toán"
+        },
+        "applyNow": "Đăng ký trở thành Creator",
+        "masterNote": "Người dùng gói MASTER có quyền truy cập tự động — không cần đăng ký",
+        "masterTier": {
+          "title": "Gói MASTER Đã Bao Gồm",
+          "description": "Gói MASTER ($4,999 trọn đời) bao gồm quyền creator không giới hạn. Nếu bạn đang dùng MASTER, bạn đã được duyệt."
+        }
+      },
+      "new": {
+        "back": "Back",
+        "title": "Title",
+        "subtitle": "Subtitle",
+        "form": {
+          "title": "Title",
+          "fields": {
+            "title": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            },
+            "sopTemplateId": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            },
+            "priceCents": {
+              "label": "Label",
+              "hint": "Hint"
+            },
+            "category": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "options": {
+                "content": "Content",
+                "leads": "Leads",
+                "email": "Email",
+                "analytics": "Analytics",
+                "proposals": "Proposals",
+                "social": "Social",
+                "other": "Other"
+              }
+            },
+            "description": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            },
+            "tags": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            },
+            "thumbnailUrl": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            },
+            "demovideoUrl": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            }
+          },
+          "submit": "Submit",
+          "disclaimer": "Disclaimer"
+        }
       }
     },
     "community": {

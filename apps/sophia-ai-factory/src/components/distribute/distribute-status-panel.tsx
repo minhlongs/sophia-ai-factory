@@ -10,7 +10,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useDistributeJobsPolling } from '@/seed/hooks/use-distribute-jobs-polling';
-import { PROVIDER_LABELS, PUBLISH_STATUS_STYLES } from '@/app/[locale]/dashboard/videos/[id]/distribute/channel-meta';
+import { PROVIDER_LABELS, PUBLISH_STATUS_STYLES } from '@/app/(app)/dashboard/videos/[id]/distribute/channel-meta';
 
 interface Props {
   videoId: string;

@@ -37,8 +37,8 @@ import {
   LayoutTemplate,
   Target,
   RotateCw,
+  RotateCcw,
 } from "lucide-react";
-import { ReplayTourLink } from "@/app/[locale]/dashboard/components/replay-tour-link";
 
 interface DashboardSidebarNavProps {
   isAdmin: boolean;
@@ -323,7 +323,11 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
         <span className="font-medium">{t('sidebar.settings')}</span>
       </Link>
       
-      <ReplayTourLink label={t('sidebar.replay_tour')} />
+      <Link href="/dashboard/tour" className={linkClass("/dashboard/tour")}>
+        {renderActiveIndicator("/dashboard/tour")}
+        <RotateCcw className={iconClass("/dashboard/tour")} aria-hidden="true" />
+        <span className="font-medium">{t('sidebar.replay_tour')}</span>
+      </Link>
     </nav>
   );
 }
