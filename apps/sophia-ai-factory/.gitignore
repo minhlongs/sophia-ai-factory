@@ -86,3 +86,5 @@ plans/reports/*.md
 .stitch-tokens.json
 OpenMontage/
 .mekong/history/
+
+src/messages
