@@ -3092,7 +3092,19 @@
       "tabs": {
         "mySops": "SOP của tôi",
         "earnings": "Thu nhập",
-        "payouts": "Thanh toán"
+        "payouts": "Thanh toán",
+        "title": "Trang quản lý SOP",
+        "noSops": "Chưa có SOP",
+        "noSopsDesc": "Tạo SOP đầu tiên để bắt đầu kiếm tiền",
+        "createFirst": "Tạo SOP đầu tiên",
+        "totalEarned": "Tổng thu nhập",
+        "pending": "Đang chờ",
+        "payable": "Có thể rút",
+        "paid": "Đã thanh toán",
+        "allTimeEarnings": "Tổng thu nhập",
+        "awaitingPayout": "Chờ đạt ngưỡng thanh toán",
+        "readyForPayout": "Sẵn sàng cho đợt thanh toán tiếp",
+        "historicalPayouts": "Lịch sử thanh toán"
       },
       "payouts": {
         "title": "Cài đặt thanh toán",

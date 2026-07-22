@@ -3092,7 +3092,19 @@
       "tabs": {
         "mySops": "My SOPs",
         "earnings": "Earnings",
-        "payouts": "Payouts"
+        "payouts": "Payouts",
+        "title": "Creator Dashboard",
+        "noSops": "No SOPs yet",
+        "noSopsDesc": "Create your first SOP template to start earning",
+        "createFirst": "Create First SOP",
+        "totalEarned": "Total Earned",
+        "pending": "Pending",
+        "payable": "Payable",
+        "paid": "Paid Out",
+        "allTimeEarnings": "All-time earnings",
+        "awaitingPayout": "Awaiting payout threshold",
+        "readyForPayout": "Ready for next payout",
+        "historicalPayouts": "Historical payouts"
       },
       "payouts": {
         "title": "Payout Settings",
