@@ -112,10 +112,10 @@ function SOPSList({ locale, userId, t }: SOPSListProps) {
   return (
     <div className="bg-card border rounded-lg p-8 text-center">
       <FileText className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-      <h3 className="text-lg font-medium text-foreground mb-2">{t('tabs.noSopsTitle') || 'No SOPs Yet'}</h3>
-      <p className="text-muted-foreground mb-6">{t('tabs.noSopsDesc') || 'Create your first SOP listing to start earning'}</p>
+      <h3 className="text-lg font-medium text-foreground mb-2">{t('tabs.noSopsTitle') }</h3>
+      <p className="text-muted-foreground mb-6">{t('tabs.noSopsDesc') }</p>
       <a href={`/${locale}/dashboard/sop-creator/new`} className="btn btn-primary">
-        <Plus className="w-4 h-4 mr-2" /> {t('tabs.createFirstSop') || 'Create First SOP'}
+        <Plus className="w-4 h-4 mr-2" /> {t('tabs.createFirstSop') }
       </a>
     </div>
   );
@@ -132,27 +132,27 @@ function EarningsSection({ locale, userId, t }: EarningsSectionProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <EarningsCard
-        title={t('tabs.totalEarned') || 'Total Earned'}
+        title={t('tabs.totalEarned') }
         value="$0"
-        desc={t('tabs.allTimeEarnings') || 'All-time earnings'}
+        desc={t('tabs.allTimeEarnings') }
         color="emerald"
       />
       <EarningsCard
-        title={t('tabs.pending') || 'Pending'}
+        title={t('tabs.pending') }
         value="$0"
-        desc={t('tabs.awaitingPayout') || 'Awaiting payout threshold'}
+        desc={t('tabs.awaitingPayout') }
         color="amber"
       />
       <EarningsCard
-        title={t('tabs.payable') || 'Payable'}
+        title={t('tabs.payable') }
         value="$0"
-        desc={t('tabs.readyForPayout') || 'Ready for next payout'}
+        desc={t('tabs.readyForPayout') }
         color="blue"
       />
       <EarningsCard
-        title={t('tabs.paidOut') || 'Paid Out'}
+        title={t('tabs.paidOut') }
         value="$0"
-        desc={t('tabs.historicalPayouts') || 'Historical payouts'}
+        desc={t('tabs.historicalPayouts') }
         color="violet"
       />
     </div>
