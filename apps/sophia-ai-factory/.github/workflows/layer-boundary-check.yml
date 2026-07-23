@@ -15,5 +15,5 @@ jobs:
           cache: pnpm
       - run: pnpm install
       - run: bash scripts/check-layer-boundaries.sh
-        name: Layer boundary check (warning)
-        continue-on-error: true
+        name: Layer boundary check
+        continue-on-error: false
