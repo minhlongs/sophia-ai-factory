@@ -152,7 +152,8 @@ MIGRATIONS=$(git diff --name-only --relative "$REF" HEAD -- migrations/ 2>/dev/n
 NON_CANONICAL_D1_SQL=$(git diff --name-only --relative "$REF" HEAD -- src/seed/db/migrations/ 2>/dev/null | grep -E "\.sql$" | sort || true)
 if [ -n "$NON_CANONICAL_D1_SQL" ]; then
   echo "ERROR: Refusing to apply non-canonical D1 migration files."
-  echo "Move these SQL files into migrations/ or document why they are not production D1 migrations:"
+  echo "Move these SQL files into migrations/ or document why they are not production D1 migrations:
+    echo "NOTE: baseline duplicates may remain under migrations/_archive/""
   printf '%s\n' "$NON_CANONICAL_D1_SQL"
   exit 2
 fi
