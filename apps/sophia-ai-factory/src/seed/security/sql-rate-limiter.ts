@@ -106,8 +106,8 @@ export async function checkRateLimit(
   } catch (error) {
     logger.error('SQL rate limit check failed', error instanceof Error ? error : new Error(String(error)))
     return {
-      success: false,
-      remaining: 0,
+      success: true,
+      remaining: config.maxRequests,
       reset: now + config.windowSeconds * 1000,
     }
   }

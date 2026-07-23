@@ -22,6 +22,7 @@ export async function handleApiPipeline(
   needsCsrfSeed: boolean,
 ): Promise<NextResponse | null> {
   if (!pathname.startsWith('/api')) return null;
+ try {
 
   // Cron secret validation
   if (pathname.startsWith('/api/cron') && !validateCronRequest(request)) {
@@ -40,9 +41,14 @@ export async function handleApiPipeline(
     return sizeRejected;
   }
 
+ try {
   // Rate limiting, RaaS gate, tenant isolation, webhook pinning
   const blocked = await handleApiRoute(request, pathname, startTime);
   if (blocked) return blocked;
+ } catch (error) {
+  const errInstance = error instanceof Error ? error : new Error(String(error));
+  logger.error('[Proxy] Rate-limit/RaaS gate failed', { error: errInstance.message, pathname });
+ }
 
   // Auth guard for protected API routes
   if (!isPublicApiRoute(pathname)) {
@@ -105,4 +111,16 @@ export async function handleApiPipeline(
 
   applySecurityHeaders(response, nonce, needsCsrfSeed);
   return response;
+ } catch (error) {
+  const errInstance = error instanceof Error ? error : new Error(String(error));
+  logger.error('[Proxy] API pipeline error', { error: errInstance.message, pathname });
+  // Fail open for public routes (health, auth); return 503 for protected routes
+  if (!isPublicApiRoute(pathname)) {
+   return NextResponse.json(
+    { error: 'Service temporarily unavailable' },
+    { status: 503 },
+   );
+  }
+  return null;
+ }
 }
