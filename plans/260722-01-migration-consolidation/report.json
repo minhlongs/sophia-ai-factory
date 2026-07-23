@@ -1,0 +1,123 @@
+{
+  "generatedAt": "2026-07-22T17:24:49.248Z",
+  "directory": "apps/sophia-ai-factory/migrations",
+  "totalFiles": 203,
+  "duplicateGroups": 14,
+  "groups": [
+    {
+      "prefix": "0004",
+      "count": 3,
+      "files": [
+        "0004-user-profiles.sql",
+        "0004_error_log.sql",
+        "0004_migrate_users_to_user.sql"
+      ]
+    },
+    {
+      "prefix": "0005",
+      "count": 2,
+      "files": [
+        "0005-signals-events.sql",
+        "0005_migrate_users_to_user.sql"
+      ]
+    },
+    {
+      "prefix": "0031",
+      "count": 2,
+      "files": [
+        "0031-affiliate-offers-catalog.sql",
+        "0031-video-pipeline-jobs.sql"
+      ]
+    },
+    {
+      "prefix": "0032",
+      "count": 2,
+      "files": [
+        "0032-seed-affiliate-catalog.sql",
+        "0032-voices.sql"
+      ]
+    },
+    {
+      "prefix": "0033",
+      "count": 2,
+      "files": [
+        "0033-video-templates.sql",
+        "0033-video-usage-monthly.sql"
+      ]
+    },
+    {
+      "prefix": "0034",
+      "count": 2,
+      "files": [
+        "0034-tenant-storage-usage.sql",
+        "0034-video-onboarding-events.sql"
+      ]
+    },
+    {
+      "prefix": "0100",
+      "count": 2,
+      "files": [
+        "0100-onboarding-automation.sql",
+        "0100-telegram-pairing-unique-paired-by.sql"
+      ]
+    },
+    {
+      "prefix": "0118",
+      "count": 2,
+      "files": [
+        "0118_d1_migrations_baseline.sql",
+        "0118_d1_migrations_baseline_full.sql"
+      ]
+    },
+    {
+      "prefix": "0178",
+      "count": 2,
+      "files": [
+        "0178_idempotency_keys.sql",
+        "0178_referral_rewards_table.sql"
+      ]
+    },
+    {
+      "prefix": "0179",
+      "count": 2,
+      "files": [
+        "0179_batch_jobs_idempotency_unique.sql",
+        "0179_referral_rewards_table.sql"
+      ]
+    },
+    {
+      "prefix": "0212",
+      "count": 2,
+      "files": [
+        "0212_create_creator_profiles.sql",
+        "0212_user_beta_invites.sql"
+      ]
+    },
+    {
+      "prefix": "0213",
+      "count": 2,
+      "files": [
+        "0213_create_sop_listings.sql",
+        "0213_user_streaks.sql"
+      ]
+    },
+    {
+      "prefix": "0214",
+      "count": 2,
+      "files": [
+        "0214_create_sop_installs.sql",
+        "0214_ipn_dead_letter_queue.sql"
+      ]
+    },
+    {
+      "prefix": "0215",
+      "count": 2,
+      "files": [
+        "0215-ceo-campaigns.sql",
+        "0215_create_sop_reviews.sql"
+      ]
+    }
+  ],
+  "status": "archived",
+  "archived_files_count": 16
+}

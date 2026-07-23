@@ -313,6 +313,11 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
  <RotateCw className={iconClass("/dashboard/admin/byok-rotation")} aria-hidden="true" />
  <span className="font-medium">Key Rotation</span>
  </Link>
+ <Link href="/dashboard/admin/checkout-review" className={linkClass("/dashboard/admin/checkout-review")}>
+ {renderActiveIndicator("/dashboard/admin/checkout-review")}
+ <ShoppingBag className={iconClass("/dashboard/admin/checkout-review")} aria-hidden="true" />
+ <span className="font-medium">Checkout Review</span>
+ </Link>
  </div>
  </>
       )}

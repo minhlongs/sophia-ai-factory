@@ -55,6 +55,7 @@ There is no active root `packages/` workspace. Treat the root package as orchest
 - **Pre-deploy gate**: Runs automatically before deploy via `scripts/pre-deploy-gate.mjs` — checks git clean, tests, typecheck, secrets, migrations.
 - **Post-deploy smoke**: Basic health checks run after deploy (`scripts/post-deploy-smoke.mjs`). Full E2E smoke can be enabled with `RUN_POSTDEPLOY_E2E=1`.
 - **Runbooks**: Incident response procedures in `apps/sophia-ai-factory/docs/runbooks/`.
+- **Order review queue**: Admin can review pending checkout orders at `/dashboard/admin/checkout-review` to resolve payment mismatches and manual activation cases.
 
 ## Canonical Runtime Paths
 
