@@ -2694,6 +2694,27 @@
       "providerUrl": "Provider Url",
       "clientId": "Client Id",
       "saveSso": "Save Sso"
+    },
+    "checkoutReview": {
+      "title": "Checkout Review Queue",
+      "description": "Review and resolve orders that require manual verification.",
+      "queueCount": "{count} orders in queue",
+      "refresh": "Refresh",
+      "order": "Order",
+      "user": "User",
+      "tier": "Tier",
+      "amount": "Amount",
+      "status": "Status",
+      "created": "Created",
+      "actions": "Actions",
+      "approve": "Approve",
+      "reject": "Reject",
+      "cancel": "Cancel",
+      "reviewRejectedReason": "Manual review rejected",
+      "empty": "No orders in queue",
+      "acting": "Processing…",
+      "loadFailed": "Failed to load",
+      "actionFailed": "Action failed"
     }
   },
   "common": {

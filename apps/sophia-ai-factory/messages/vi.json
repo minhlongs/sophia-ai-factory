@@ -2694,6 +2694,27 @@
       "providerUrl": "Provider Url",
       "clientId": "Client Id",
       "saveSso": "Save Sso"
+    },
+    "checkoutReview": {
+      "title": "Hàng đợi duyệt thanh toán",
+      "description": "Xem xét và xử lý các đơn hàng cần xác minh thủ công.",
+      "queueCount": "{count} đơn hàng trong hàng đợi",
+      "refresh": "Làm mới",
+      "order": "Đơn hàng",
+      "user": "Người dùng",
+      "tier": "Gói",
+      "amount": "Số tiền",
+      "status": "Trạng thái",
+      "created": "Tạo lúc",
+      "actions": "Thao tác",
+      "approve": "Duyệt",
+      "reject": "Từ chối",
+      "cancel": "Hủy",
+      "reviewRejectedReason": "Đã từ chối qua duyệt thủ công",
+      "empty": "Không có đơn hàng cần duyệt",
+      "acting": "Đang xử lý…",
+      "loadFailed": "Tải danh sách thất bại",
+      "actionFailed": "Thao tác thất bại"
     }
   },
   "common": {
