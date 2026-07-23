@@ -6397,5 +6397,11 @@
     "customDomain": "Custom Domain",
     "save": "Save",
     "saved": "Saved"
-  }
+  },
+  "order": "Order",
+  "user": "User",
+  "amount": "Amount",
+  "approve": "Approve",
+  "reviewRejectedReason": "Review Rejected Reason",
+  "reject": "Reject"
 }

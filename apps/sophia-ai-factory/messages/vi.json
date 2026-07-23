@@ -6404,5 +6404,11 @@
     "customDomain": "Custom Domain",
     "save": "Lưu",
     "saved": "Đã lưu"
-  }
+  },
+  "order": "Order",
+  "user": "User",
+  "amount": "Amount",
+  "approve": "Approve",
+  "reviewRejectedReason": "Review Rejected Reason",
+  "reject": "Reject"
 }
