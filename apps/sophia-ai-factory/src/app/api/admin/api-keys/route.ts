@@ -18,6 +18,7 @@ import {
   getUserApiKeys,
 } from '@/seed/security/api-key-validator'
 import { logApiKeyCreation } from '@/tree/audit/audit-query-logger'
+import { logAuditEvent } from '@/tree/audit/logger/audit-query'
 
 export const dynamic = 'force-dynamic'
 
@@ -111,6 +112,18 @@ export async function POST(request: NextRequest) {
       permissions,
       request.headers.get('x-forwarded-for')?.split(',')[0]
     ).catch(e => logger.error('[API Keys] Audit log failed', toError(e)))
+
+  logAuditEvent({
+    action: 'admin.api_key.create',
+    userId: auth.user.id,
+    metadata: {
+      keyId: result.keyId,
+      keyPrefix: result.keyPrefix,
+      permissions,
+      expiresAt,
+      actorType: 'admin',
+    },
+  }).catch((err) => logger.warn('[admin] audit log failed', getErrorMessage(err)))
 
     logger.info('[API Keys] Created new API key', {
       keyId: result.keyId,

@@ -4,6 +4,7 @@ import {
   upsertPlatformCredential,
 } from '@/seed/db/repositories/platform-credentials-repo';
 import { logger } from '@/seed/utils/logger-utility';
+import { logAuditEvent } from '@/tree/audit/logger/audit-query';
 import type { Platform } from '@/seed/types/channel-provider';
 
 export interface DecryptedCredentials {
@@ -66,6 +67,13 @@ export async function storeCredentials(input: {
     platform: input.platform,
   });
 }
+// SOC2: audit credential storage mutation
+logAuditEvent({
+  action: 'credential.store',
+  userId: input.userId,
+  metadata: { platform: input.platform },
+}).catch((err) => logger.warn('[credential] audit log failed', getErrorMessage(err)));
+
 
 export async function getClientCredentials(
   _userId: string,
