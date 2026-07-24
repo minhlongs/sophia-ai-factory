@@ -33,9 +33,9 @@ interface FullVersionResponse extends PublicVersionResponse {
 }
 
 // Fallback — overridden at deploy time by deploy-with-sha.sh injecting
-// OPENNEXT_VERSION into CF [vars]. The installed version is read from
-// node_modules/@opennextjs/cloudflare/package.json during the deploy script.
-const OPENNEXT_FALLBACK = "1.19.9";
+// OPENNEXT_VERSION into CF [vars]. "unknown" makes missing-injection visible
+// in /api/version instead of baking a stale hardcoded adapter version.
+const OPENNEXT_FALLBACK = "unknown";
 
 function getEnv(request: NextRequest): CloudflareEnv {
  // CF Workers exposes env via request context; Next.js falls back to process.env
