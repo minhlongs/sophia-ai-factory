@@ -9,8 +9,8 @@
  * Called automatically by deploy/deploy:build scripts (between next build and opennext build).
  */
 
-import { copyFileSync, existsSync, mkdirSync, cpSync, rmSync, statSync, unlinkSync } from 'node:fs';
-import { join, dirname } from 'node:path';
+import { copyFileSync, existsSync, mkdirSync, cpSync, rmSync, statSync, unlinkSync, readFileSync } from 'node:fs';
+import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -34,10 +34,26 @@ const filesToCopy = [
   'instrumentation.js',
   'instrumentation.js.map',
   'instrumentation.js.nft.json',
+  'edge',
   'middleware',
   'middleware-build-manifest.js',
   'middleware-manifest.json',
 ];
+
+// Parse instrumentation.js.nft.json to copy referenced chunks alongside the loader
+const nftForInstrumentation = join(serverDir, 'instrumentation.js.nft.json');
+const instrumentationChunks = [];
+if (existsSync(nftForInstrumentation)) {
+  try {
+    const nftContent = readFileSync(nftForInstrumentation, 'utf8');
+    const nft = JSON.parse(nftContent);
+    const files = nft.files ?? [];
+    // nft entries are relative to the server dir, e.g. "./chunks/_0.zwy-~._.js"
+    instrumentationChunks.push(...files.filter((f) => typeof f === 'string' && f.endsWith('.js')));
+  } catch (e) {
+    console.warn('[fix-instrumentation] Failed to parse instrumentation.nft.json', e?.message ?? String(e));
+  }
+}
 
 let copyCount = 0;
 for (const file of filesToCopy) {
@@ -49,9 +65,13 @@ for (const file of filesToCopy) {
   }
 
   if (existsSync(dest)) {
-    // If dest exists and is a directory, skip; if file exists, skip
-    if (statSync(dest).isDirectory()) continue;
-    // Remove existing file to replace
+    // If dest is a directory, overwrite recursively; if file, replace
+    if (statSync(dest).isDirectory()) {
+      cpSync(src, dest, { recursive: true });
+      console.log(`[fix-instrumentation] OVERWROTE ${file} → .next/standalone/.next/server/`);
+      copyCount++;
+      continue;
+    }
     unlinkSync(dest);
   }
 
@@ -62,6 +82,25 @@ for (const file of filesToCopy) {
   }
   console.log(`[fix-instrumentation] COPIED ${file} → .next/standalone/.next/server/`);
   copyCount++;
+}
+
+// Copy instrumentation chunk dependencies referenced by instrumentation.js.nft.json
+const standaloneChunksDir = join(standaloneServerDir, 'chunks');
+for (const rel of instrumentationChunks) {
+  // Strip leading "./" if present
+  const relClean = rel.replace(/^\.\//, '');
+  const srcChunk = join(serverDir, relClean);
+  const destChunk = join(standaloneChunksDir, basename(relClean));
+  if (!existsSync(srcChunk)) {
+    console.warn(`[fix-instrumentation] MISSING chunk ${relClean} — skipping`);
+    continue;
+  }
+  if (existsSync(destChunk)) {
+    if (statSync(destChunk).isDirectory()) continue;
+    unlinkSync(destChunk);
+  }
+  copyFileSync(srcChunk, destChunk);
+  console.log(`[fix-instrumentation] COPIED chunk ${relClean} → .next/standalone/.next/server/chunks/`);
 }
 
 // ---------------------------------------------------------------------------
