@@ -21,6 +21,7 @@ import {
 } from '@/tree/byok/user-api-key-store'
 import { track } from '@/tree/signals/track'
 import { D1Events } from '@/tree/signals/d1-event-types'
+import { logAuditEvent } from '@/tree/audit/logger/audit-query'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter'
@@ -93,6 +94,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   // Audit: provider only — never log plaintext key material.
   track(D1Events.BYOK_KEY_SET, user.id, { provider })
 
+  // SOC2: immutable audit trail for key mutation
+  logAuditEvent({
+    action: 'byok.key_set',
+    userId: user.id,
+    metadata: { provider },
+  }).catch((err) => logger.warn('[byok] audit log failed', getErrorMessage(err)))
+
+
   return NextResponse.json({ ok: true })
 }
 
@@ -131,6 +140,13 @@ export async function DELETE(request: NextRequest): Promise<NextResponse> {
   }
 
   track(D1Events.BYOK_KEY_CLEARED, user.id, { provider })
+  // SOC2: immutable audit trail for key mutation
+  logAuditEvent({
+    action: 'byok.key_cleared',
+    userId: user.id,
+    metadata: { provider },
+  }).catch((err) => logger.warn('[byok] audit log failed', getErrorMessage(err)))
+
 
   return NextResponse.json({ ok: true })
 }
