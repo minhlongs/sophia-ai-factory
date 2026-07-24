@@ -1,0 +1,235 @@
+# Sophia AI Factory — Plan Rollup
+
+Generated from all `plans/*/plan.md`. Auto-classified by first status cue.
+
+## Summary
+
+| State | Count |
+|-------|-------|
+| done | 55 |
+| in-progress | 8 |
+| blocked | 44 |
+| pending | 0 |
+
+## IN-PROGRESS (8)
+
+- `260207-1916-sophia-metamorphosis`: Sophia AI Factory Metamorphosis Plan
+  - Missing: no todo/tasks, no success criteria
+- `260309-0800-overage-billing-quota-enforcement`: Phase 1-5: Overage Billing & Quota Enforcement System
+  - Missing: no todo/tasks, no success criteria
+- `260617-1234-enterprise-gap-closure`: Enterprise Gap Closure — Milestone B (85) & C (100)
+  - Missing: no todo/tasks
+- `260621-1445-campaign-dashboard-ui`: Plan: Complete Campaign Dashboard UI
+  - Missing: no todo/tasks
+- `260621-1700-key-rotation-completion-sprint`: Key Rotation Completion Sprint — Tasks #67, #55, #57-59, #60, #62-63, #65
+  - Missing: no todo/tasks
+- `260621-soc2-type1-completion`: SOC 2 Type I Completion — Tasks #41-66
+  - Missing: no todo/tasks
+- `260713-1345-fix-node-polyfill-crypto-crash`: Fix: Next.js node-polyfill-crypto SSR Crash → HTTP 500
+  - Missing: no todo/tasks
+- `METAMORPHOSIS-PROTOCOL`: METAMORPHOSIS PROTOCOL - Sophia AI Factory
+  - Missing: no todo/tasks, no success criteria
+
+## BLOCKED (44)
+
+- `260205-1029-go-live-green-verification`: GO-LIVE GREEN Verification Plan
+  - Missing: no todo/tasks
+- `260205-1503-campaign-analytics-dashboard`: Campaign Analytics Dashboard Plan
+  - Missing: no todo/tasks, no success criteria
+- `260307-usage-metering-production`: Usage Metering Production Readiness Plan
+  - Missing: no todo/tasks
+- `260418-1710-r9-byok-polish-discovery-score`: R9 — BYOK Admin Polish + Discovery Score User Endpoint
+  - Missing: no todo/tasks
+- `260419-2121-triet-tieu-no-ky-thuat`: Triết Tiểu Nỏ Kỹ Thuật — Sophia AI Factory Phase 1–39 Master Plan
+  - Missing: no todo/tasks
+- `260425-2055-b2-typescript-cleanup`: B2: TypeScript Cleanup Initiative
+  - Missing: no todo/tasks
+- `260427-0306-sprint-m-revenue-path`: Sprint M — First-Dollar Revenue Path
+  - Missing: no phases, no todo/tasks
+- `260428-0253-go-live-100-fixes`: Plan — Go-Live 100 Fixes Sprint
+  - Missing: no todo/tasks
+- `260428-2141-tier2d-sentry-observability`: Plan — TIER-2D Sentry Observability
+  - Missing: no phases, no todo/tasks
+- `260428-2219-tier2-remaining-eight`: Plan — TIER-2 Remaining Eight (Completed)
+  - Missing: no todo/tasks
+- `260503-2042-webhooks`: Webhooks for RaaS Users — Sophia AI Factory
+  - Missing: no phases, no todo/tasks, no success criteria
+- `260504-0127-bug-sweep-ux-flow`: Bug Sweep & UX Flow — Sophia AI Factory
+  - Missing: no phases, no todo/tasks
+- `260504-1830-dashboard-gap-fix`: Dashboard GAP Fix — All 13 Issues
+  - Missing: no phases, no todo/tasks, no success criteria
+- `260508-1840-phase-1-fb-x-publishers-sentry`: Phase 1 — Facebook + X Publishers + Sentry DSN
+  - Missing: no todo/tasks
+- `260509-0447-phase-2-wave-11-parallel`: Phase 2 Wave 11 — Completed
+  - Missing: no todo/tasks, no success criteria
+- `260509-0525-phase-2-wave-12-parallel`: Phase 2 Wave 12 — Completed
+  - Missing: no todo/tasks, no success criteria
+- `260509-1956-wave17-unlock-harden-cleanup`: Wave 17 — Unlock Distribution + Harden + Cleanup
+  - Missing: no todo/tasks
+- `260510-0000-wave20-carry-overs`: Wave 20 — Carry-overs
+  - Missing: no todo/tasks, no success criteria
+- `260510-0115-wave21-hardening-and-docs`: Wave 21 — Hardening + Documentation Sync
+  - Missing: no todo/tasks, no success criteria
+- `260510-0152-wave22-security-and-reliability`: Wave 22 — Security + Reliability Sweep
+  - Missing: no phases, no todo/tasks, no success criteria
+- `260512-2001-mekong-sops-gap-bridge`: Plan: Mekong SOP Gap Bridge
+  - Missing: no todo/tasks
+- `260512-2105-fullstack-100of100-roadmap`: Plan: Sophia AI Factory — Fullstack 74 → 93+
+  - Missing: no todo/tasks
+- `260514-0044-raas-global-multichannel-gap`: Plan: RaaS Global Multi-Channel Gap — Wave A + B + C COMPLETE
+  - Missing: no todo/tasks
+- `260515-0830-gap-91to93`: Plan: Sophia AI Factory — 91 → 93+/100 [ARCHIVED PARTIAL]
+  - Missing: no todo/tasks
+- `260517-2223-sophia-free100-handover`: Plan — Sophia FREE100 + Compliance-Grade Handover
+  - Missing: no todo/tasks, no success criteria
+- `260518-1728-sophia-zero-bug-dashboard`: Plan — Sophia /dashboard Zero-Bug Harden
+  - Missing: no phases, no todo/tasks
+- `260521-2342-go-live-100-audit`: Go-Live 100/100 — Production-Readiness Audit & Hardening
+  - Missing: no todo/tasks
+- `260524-professional-docs`: Sophia AI Factory — Professional Documentation Restructure
+  - Missing: no todo/tasks, no success criteria
+- `260601-sop-sync-analytics-fix`: SOP Sync Fix + Analytics UI — Implementation Plan
+  - Missing: no todo/tasks
+- `260621-otEL-staging-deployment`: OTEL Staging Deployment — Tasks #28-39
+- `260630-2156-revenue-features-sprint`: Revenue Features Sprint
+  - Missing: no phases, no todo/tasks
+- `260701-0031-revenue-and-trust-sprint`: Revenue & Trust Sprint
+  - Missing: no todo/tasks
+- `260702-1849-client-ready-ux-quick-fixes`: Client-Ready UX — Quick Fixes
+  - Missing: no phases, no todo/tasks, no success criteria
+- `260702-1928-security-sweep`: Security Sweep — 145 CVE Mitigation
+  - Missing: no phases, no todo/tasks, no success criteria
+- `260702-2058-otel-byok`: OTel BYOK — Platform-Level Observability Key
+  - Missing: no phases, no todo/tasks, no success criteria
+- `260703-0258-parallel-ui-skill-execution`: Parallel UI Skill Execution — Stitch Designs → Production UI
+  - Missing: no todo/tasks, no success criteria
+- `260703-0446-stitch-pipeline-tooling`: Stitch Pipeline Tooling — Session Persistence + Token Export
+  - Missing: no todo/tasks, no success criteria
+- `260703-1836-GH-3-creator-marketplace-launch`: Creator Marketplace Launch — Phase 1
+  - Missing: no todo/tasks, no success criteria
+- `260703-2145-GH-3-growth-infrastructure`: Phase 2: Growth Infrastructure
+  - Missing: no todo/tasks, no success criteria
+- `260704-0831-GH-3-open-source-video`: Open-Source AI Video Integration
+  - Missing: no todo/tasks, no success criteria
+- `260704-0921-GH-3-ceo-agent-upsell`: CEO Agent Upsell for Premium Tier
+  - Missing: no todo/tasks, no success criteria
+- `260706-1800-phase-f-scale-prep`: Phase F: Scale Preparation
+  - Missing: no phases, no todo/tasks, no success criteria
+- `260713-1000-ssr-node-builtin-cleanup`: Plan: SSR Node Builtin Cleanup — Fix Worker Crash
+  - Missing: no phases, no todo/tasks
+- `company-blueprint`: Sophia AI Factory — Company Blueprint
+  - Missing: no phases, no todo/tasks, no success criteria
+
+## DONE (55)
+
+- `260204-1839-sophia-enterprise-video-factory`: Implementation Plan: Sophia AI Video Factory Enterprise Edition
+  - Missing: no todo/tasks
+- `260204-2040-sophia-phase-9-12-implementation`: Phase 9-12: Automation & Enterprise Gating Implementation
+  - Missing: no todo/tasks, no success criteria
+- `260204-2055-sophia-phase-13-ui-integration`: Phase 13: Enterprise UI Integration
+  - Missing: no todo/tasks, no success criteria
+- `260204-2059-turnkey-setup-wizard`: Overview
+  - Missing: no todo/tasks, no success criteria
+- `260204-2115-sophia-phase-14-deployment-prep`: Phase 14: Deployment Preparation & Polish
+  - Missing: no todo/tasks, no success criteria
+- `260204-2130-polar-payment-integration`: Polar Payment Integration Plan
+  - Missing: no todo/tasks, no success criteria
+- `260205-0935-post-bootstrap-refinement`: Post-Bootstrap Refinement Plan
+  - Missing: no todo/tasks, no success criteria
+- `260205-1000-core-pipeline-implementation`: Core Pipeline Implementation Plan
+  - Missing: no todo/tasks, no success criteria
+- `260205-1056-phase2-auto-discovery-engine`: Phase 2: Auto-Discovery Engine Strategy
+  - Missing: no todo/tasks, no success criteria
+- `260205-1218-go-live-sophia-phase2`: Sophia AI Factory Phase 2 Go-Live Plan
+  - Missing: no todo/tasks, no success criteria
+- `260205-1313-sophia-campaign-automation`: Campaign Automation Implementation Plan
+  - Missing: no todo/tasks, no success criteria
+- `260205-1537-production-verification-dashboard`: Production Verification Dashboard Plan
+  - Missing: no todo/tasks, no success criteria
+- `260205-1552-campaign-export-feature`: Campaign Export Feature Plan
+  - Missing: no todo/tasks, no success criteria
+- `260205-1607-user-settings-implementation`: User Settings Page Implementation Plan
+  - Missing: no todo/tasks, no success criteria
+- `260205-1608-settings-page-implementation`: Implementation Plan: Settings Page & User Preferences
+  - Missing: no todo/tasks, no success criteria
+- `260205-2100-binh-phap-full-automation-strategy`: Binh Pháp Full Automation Strategy
+  - Missing: no todo/tasks, no success criteria
+- `260205-2303-go-live-green-verification`: Go-Live Green Verification Plan
+  - Missing: no todo/tasks, no success criteria
+- `260206-2200-lemon-squeezy-migration`: 🍋 Lemon Squeezy Migration Plan
+  - Missing: no todo/tasks, no success criteria
+- `260206-2315-polar-revert`: Context
+  - Missing: no todo/tasks, no success criteria
+- `260207-0020-sophia-payment-feature-verification`: Sophia Payment Bug Fix & Feature Verification
+  - Missing: no phases, no todo/tasks
+- `260207-0127-option-d-subscription-pricing`: Option D: All-In Subscription Pricing
+  - Missing: no phases, no todo/tasks
+- `260309-0825-analytics-dashboard-raas-integration`: Phase 5: Analytics Dashboard - RaaS Gateway Integration
+  - Missing: no todo/tasks
+- `260420-1113-r10-close-r9-deferrals`: R10 — Close R9 Reviewer Deferrals (M-1 + L-1 + L-3 + INFO-1)
+  - Missing: no todo/tasks
+- `260425-1200-tiet-tieu-no-ky-thuat-phase-40-48`: Triệt Tiêu Nợ Kỹ Thuật (Tech Debt Elimination) — Phases 40–48
+  - Missing: no todo/tasks, no success criteria
+- `260425-solo-platform-agent-factory-restructure`: Solo Platform — Multi-Tenant AI Agent Factory Restructure
+  - Missing: no todo/tasks, no success criteria
+- `260429-video-go-live`: Video Go-Live — Full Auto Pipeline
+  - Missing: no phases, no todo/tasks, no success criteria
+- `260430-go-live-100-zero-bug`: Go-Live 100/100 — Zero Bug Zero 404
+  - Missing: no todo/tasks, no success criteria
+- `260430-sophia-distill-oss`: Sophia AI Factory — Open Source Feature Distillation
+  - Missing: no todo/tasks, no success criteria
+- `260509-0606-phase-2-wave-13-parallel`: Wave 13 — Parallel Implementation (4 Groups)
+  - Missing: no todo/tasks, no success criteria
+- `260509-0621-phase-2-wave-14-parallel`: Phase 2 Wave 14 — Parallel Delivery Summary
+  - Missing: no todo/tasks, no success criteria
+- `260509-0839-raas-dashboard-wave16`: Wave 16 — FREE100 RaaS Dashboard Full-Flow
+  - Missing: no todo/tasks
+- `260509-2127-wave19-free100-100of100`: Wave 19 — FREE100 100/100
+  - Missing: no todo/tasks
+- `260512-0951-consolidate-proposal-surfaces`: Goal
+  - Missing: no todo/tasks, no success criteria
+- `260519-0300-handover-funnel-critical-fixes`: Plan — Handover Funnel Critical Fixes
+  - Missing: no todo/tasks, no success criteria
+- `260522-0048-ship-p0-fixes`: Ship P0 Fixes — Plan
+  - Missing: no todo/tasks
+- `260523-0102-creative-studio`: Creative Studio — Full Media Suite
+  - Missing: no phases, no todo/tasks
+- `260523-agent-orchestration-upgrade`: Agent Orchestration Upgrade
+  - Missing: no todo/tasks
+- `260523-landing-page-redesign`: Landing Page Redesign
+  - Missing: no todo/tasks
+- `260523-revenue-push`: Sophia AI Factory — Revenue Push Plan
+  - Missing: no todo/tasks, no success criteria
+- `260530-0315-ui-ux-pro-max-test`: Kế Hoạch Kiểm Thử UI/UX Pro Max — Sophia AI Factory
+  - Missing: no todo/tasks, no success criteria
+- `260530-0600-architecture-ask-audit`: Kế Hoạch Rà Soát Kiến Trúc Hệ Thống (Architecture Audit via Ask Command)
+  - Missing: no todo/tasks, no success criteria
+- `260530-2310-cheetahclaws-brainstorming`: Kế Hoạch Đánh Giá & Brainstorming: CheetahClaws vs OpenClaw + n8n
+  - Missing: no todo/tasks, no success criteria
+- `260530-2345-sophia-hybrid-refactoring`: Kế Hoạch Tái Cấu Trúc Sophia: Mô Hình Lai (Hybrid Model) với CheetahClaws & BYOS
+  - Missing: no todo/tasks, no success criteria
+- `260606-1209-ceo-solo-handover`: Sophia AI Factory — CEO Solo Company Media Handover
+  - Missing: no phases, no todo/tasks, no success criteria
+- `260607-1717-binh-phap-edge-case-fixes`: Binh Pháp Edge Case Fixes — Master Plan
+  - Missing: no todo/tasks
+- `260607-1801-fix-parallel-edge-cases`: Fix Plan — 40 Edge Cases (11 Unhandled + 29 Partial)
+  - Missing: no phases, no todo/tasks
+- `260630-1626-zero-bug-three-pillars`: Overview
+  - Missing: no phases, no todo/tasks
+- `260630-2119-nowpayments-sdk-adoption`: NOWPayments SDK Full Adoption
+  - Missing: no todo/tasks
+- `260630-2310-payment-pipeline-hardening`: Payment Pipeline Hardening
+  - Missing: no todo/tasks, no success criteria
+- `260701-0428-security-audit-fixes`: Security Audit Fixes — Implementation Plan
+  - Missing: no todo/tasks, no success criteria
+- `260701-1002-ab-runner-credit-bar`: Plan Overview
+  - Missing: no todo/tasks
+- `260701-1107-programmatic-landing-pages`: Programmatic SEO Landing Pages
+  - Missing: no todo/tasks
+- `260701-1430-security-audit-remaining-fixes`: Security Audit Remaining Fixes
+  - Missing: no phases, no todo/tasks, no success criteria
+- `260703-1427-protected-flows`: Protected Flows Execution Plan
+  - Missing: no todo/tasks
+- `260708-0500-all-tracks-execution`: All-Tracks Execution Plan
+  - Missing: no todo/tasks, no success criteria
+
