@@ -67,12 +67,12 @@ export async function storeCredentials(input: {
     platform: input.platform,
   });
 }
-// SOC2: audit credential storage mutation
-logAuditEvent({
-  action: 'credential.store',
-  userId: input.userId,
-  metadata: { platform: input.platform },
-}).catch((err) => logger.warn('[credential] audit log failed', getErrorMessage(err)));
+  // SOC2: audit credential storage mutation
+  logAuditEvent({
+    action: 'credential.store',
+    userId: input.userId,
+    metadata: { platform: input.platform },
+  }).catch((err) => logger.warn('[credential] audit log failed', getErrorMessage(err)));
 
 
 export async function getClientCredentials(
