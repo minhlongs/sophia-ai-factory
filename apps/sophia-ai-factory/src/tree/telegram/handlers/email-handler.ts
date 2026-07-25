@@ -77,7 +77,7 @@ export async function handleEmail(chatId: string, email: string): Promise<void> 
 
     await sendMessage(
       chatId,
-      `✅ *Success!* Your account (${email}) has been linked.\n\nYou can now create campaigns using:\n\`/campaign Your Topic\``
+      `✅ *Success!* Your account (${email}) has been linked.\n\n📊 Open Dashboard:\n${process.env.NEXT_PUBLIC_APP_URL}/dashboard/campaigns?linked=${encodeURIComponent(email)}\n\nOr create campaigns using:\n\`/campaign Your Topic\``
     )
   } catch (error) {
     logger.error('Error in handleEmail', error instanceof Error ? error : new Error(String(error)))

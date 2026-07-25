@@ -61,7 +61,8 @@ export async function localExecutor(
   const content = await resilientChatCompletion(task.prompt, {
     openRouterKey: apiKey,
     anthropicKey: undefined,
-    enableFallback: false,
+    enableFallback: true,
+  tier: task.tier,
     model,
   });
 

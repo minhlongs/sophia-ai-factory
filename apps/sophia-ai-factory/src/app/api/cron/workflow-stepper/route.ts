@@ -32,6 +32,7 @@ import {
   finishCronCheckIn,
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in'
+import { isVendorHealthy } from '@/seed/observability/vendor-health-gate'
 
 export const dynamic = 'force-dynamic'
 

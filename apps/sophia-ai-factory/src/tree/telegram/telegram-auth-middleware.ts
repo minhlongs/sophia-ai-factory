@@ -2,6 +2,7 @@ import { resolveUserTier } from '@/seed/db/resolve-user-tier'
 import { createServerClient } from '@/seed/db/client'
 import { Tier } from '@/seed/types'
 import { logger } from '@/seed/utils/logger-utility'
+import { getCachedTier, setCachedTier, invalidateTierCache } from '@/seed/utils/telegram-tier-cache'
 
 /**
  * Auth middleware - verifies subscription tier before premium commands
@@ -31,6 +32,18 @@ export async function checkSubscriptionAuth(
   const db = createServerClient()
 
   try {
+    // Check cache first to reduce DB round-trips
+    const cachedTier = getCachedTier(chatId)
+    if (cachedTier) {
+      const tier = cachedTier as Tier
+      const hasAccess = TIER_RANK[tier] >= TIER_RANK[requiredTier]
+      return {
+        authorized: hasAccess,
+        tier,
+        error: hasAccess ? undefined : `Requires ${requiredTier} subscription`,
+      }
+    }
+
     // Look up userId from telegram chatId mapping
     const { data, error } = await db.rpc('get_user_by_telegram_chat_id', {
       p_chat_id: chatId,
@@ -57,6 +70,7 @@ export async function checkSubscriptionAuth(
     }
 
     const tier = await resolveUserTier(userId)
+    setCachedTier(chatId, tier)
     const hasAccess = TIER_RANK[tier] >= TIER_RANK[requiredTier]
 
     return {
