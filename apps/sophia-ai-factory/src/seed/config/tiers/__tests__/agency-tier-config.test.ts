@@ -1,4 +1,5 @@
 import { AGENCY_TIERS, TIER_CONFIGS, getTierConfig, tierHasFeature, getAllTiers } from '../tier-configs';
+import { describe, it, expect } from 'vitest'
 
 describe('Agency Tier Config', () => {
   it('should export AGENCY_TIERS with all required tiers', () => {

@@ -62,7 +62,6 @@ export async function localExecutor(
     openRouterKey: apiKey,
     anthropicKey: undefined,
     enableFallback: true,
-  tier: task.tier,
     model,
   });
 
@@ -84,7 +83,6 @@ export async function runTask(
     taskId: task.id,
     tenantId,
     agentRole: task.agentRole,
-    tier: task.tier,
   });
 
   // Fail-fast if breaker is already open — no point dispatching

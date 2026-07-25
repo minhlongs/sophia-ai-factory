@@ -1,4 +1,5 @@
 import { generateAgencyApiKey, hashApiKey, verifyApiKey, type AgencyApiKey, createAgencyApiKey } from '../agency-api-key';
+import { describe, it, expect } from 'vitest'
 
 describe('Agency API Key Generator', () => {
   describe('generateAgencyApiKey', () => {
