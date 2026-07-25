@@ -1,0 +1,11 @@
+{
+    "schema_version": 1,
+    "commit": "a0fffe6df18bab11d34a459b8b8040893d0ad6a2",
+    "indexed_at": "2026-07-24T10:41:11Z",
+    "project": "Users-macbook-sophia-ai-factory-apps-sophia-ai-factory",
+    "nodes": 106119,
+    "edges": 237543,
+    "original_size": 136118272,
+    "compressed_size": 15211514,
+    "compression_level": 9
+}
