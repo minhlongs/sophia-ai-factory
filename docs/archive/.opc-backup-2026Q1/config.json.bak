@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "loop": {
+    "limit": 2,
+    "timeoutMs": 720000,
+    "verifyTimeoutMs": 300000
+  },
+  "ship": {
+    "build": null,
+    "test": null,
+    "deploy": null,
+    "url": null
+  },
+  "defaults": {
+    "base": "main"
+  }
+}

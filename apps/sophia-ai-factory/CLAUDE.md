@@ -228,3 +228,10 @@ Full doctrine: `.claude/rules/sophia-no-tech-doctrine.md`
 - CLEO pre-push hook requires task IDs in commit subjects. Use `git push --no-verify` only for docs/hotfixes.
 - `npm run deploy:full` runs pre-deploy type-check + test gate + SHA verification automatically. Dirty working tree = rejected.
 - `src/land/billing/actions/` holds `'use server'` billing portal actions (change-tier, cancel-subscription, resubscribe).
+
+## Product Positioning (FROZEN)
+- **One-liner**: Sophia AI Factory — AI video automation for operators running faceless channels and affiliate empires.
+- **3 Pillars**: BYOK (customers bring own AI keys), Operator-only platform (no operator-side VCs), Pincer payments (NOWPayments + PayOS).
+- **Enterprise Tier**: MASTER $4,999/mo = white-label + SLA + SSO.
+- **Target**: Faceless YouTube + affiliate empires. Vietnamese domestic + international.
+- **Canonical tier enum**: BASIC | PREMIUM | ENTERPRISE | MASTER (uppercase only).

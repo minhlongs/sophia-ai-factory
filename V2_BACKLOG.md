@@ -14,11 +14,12 @@ status: ACTIVE
 ## 🔴 P1 — Tech Debt (Fix trong 1-2 sprints đầu)
 
 ### 1. Migration Consolidation
-**Problem:** Duplicate migration files (`0004` vs `004`, `0005` vs `005`) across 2 directories.
+**Problem:** Duplicate migration files across root and app directories.
 **Impact:** Wrong apply order → D1 schema errors in production.
 **Effort:** 4h
 **Affected files:** `apps/sophia-ai-factory/migrations/`, `migrations/`
 **Reference:** `plans/20260716-tech-debt-sprint/`
+**Status:** ✅ DONE 2026-07-25 — renamed: `0044_error_log.sql` → `0160_error_log.sql`, `0031-video-pipeline-jobs.sql` → `0031b-video-pipeline-jobs.sql`, `0032-voices.sql` → `0032b-voices.sql`, `0033-video-usage-monthly.sql` → `0033b-video-usage-monthly.sql`, `0034-video-onboarding-events.sql` → `0034b-video-onboarding-events.sql`
 
 ### 2. Layer Enforcement CI Gate
 **Problem:** No automated check to prevent cross-layer imports (e.g., `land` → `seed` direct).
