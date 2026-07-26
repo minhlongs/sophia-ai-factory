@@ -104,12 +104,12 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   let isError = false;
   let status = 200;
   try {
-    middlewareLogger.debug({ pathname: request.nextUrl.pathname }, 'proxy called');
+    middlewareLogger.debug('proxy called');
     const response = await proxyImpl(request);
     const responseStatus = Number(response.status);
     status = Number.isFinite(responseStatus) ? responseStatus : 500;
     isError = status >= 400;
-    middlewareLogger.debug({ status }, 'proxyImpl returned');
+    middlewareLogger.debug(`proxyImpl returned ${status}`);
     return response;
   } catch (err) {
     isError = true;
@@ -121,7 +121,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     const errorResponse = applySecurityHeaders(
       NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     );
-    middlewareLogger.debug({ status: errorResponse.status }, 'proxyImpl error response');
+    middlewareLogger.debug(`proxyImpl error response ${errorResponse.status}`);
     return errorResponse;
   } finally {
     const duration = Date.now() - startTime;

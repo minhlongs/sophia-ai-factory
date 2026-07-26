@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { isOk, isErr } from '@/seed/types/result'
 import { CreditMeter, DEFAULT_CREDIT_METER_CONFIG } from '../credit-meter'
 
 vi.mock('@/seed/db/repositories/agency-repo', () => ({
@@ -42,10 +43,10 @@ describe('CreditMeter', () => {
       const result = await meter.reserve(1, 'job-1')
 
       expect(result.ok).toBe(true)
-      expect(result.value.balanceAfter).toBe(450)
-      expect(result.value.amount).toBe(1)
-      expect(result.value.agencyId).toBe(1)
-      expect(result.value.jobId).toBe('job-1')
+      expect(isOk(result)?result.value:"".balanceAfter).toBe(450)
+      expect(isOk(result)?result.value:"".amount).toBe(1)
+      expect(isOk(result)?result.value:"".agencyId).toBe(1)
+      expect(isOk(result)?result.value:"".jobId).toBe('job-1')
     })
 
     it('returns failure on insufficient credits', async () => {
@@ -58,7 +59,7 @@ describe('CreditMeter', () => {
       const result = await meter.reserve(1, 'job-1')
 
       expect(result.ok).toBe(false)
-      expect(result.error.code).toBe('INSUFFICIENT_CREDITS')
+      expect(isOk(result)?undefined:result.error.code).toBe('INSUFFICIENT_CREDITS')
     })
 
     it('retries on transient errors', async () => {
@@ -94,7 +95,7 @@ describe('CreditMeter', () => {
       const result = await meter.reserve(1, 'job-fail')
 
       expect(result.ok).toBe(false)
-      expect(result.error.code).toBe('CREDIT_RESERVE_ERROR')
+      expect(isOk(result)?undefined:result.error.code).toBe('CREDIT_RESERVE_ERROR')
     })
   })
 
@@ -106,8 +107,8 @@ describe('CreditMeter', () => {
       const result = await meter.commit(1, 'job-1')
 
       expect(result.ok).toBe(true)
-      expect(result.value.jobId).toBe('job-1')
-      expect(result.value.amount).toBe(1)
+      expect(isOk(result)?result.value:"".jobId).toBe('job-1')
+      expect(isOk(result)?result.value:"".amount).toBe(1)
     })
 
     it('returns failure on commit error', async () => {
@@ -120,7 +121,7 @@ describe('CreditMeter', () => {
       const result = await meter.commit(1, 'job-missing')
 
       expect(result.ok).toBe(false)
-      expect(result.error.code).toBe('CREDIT_COMMIT_ERROR')
+      expect(isOk(result)?undefined:result.error.code).toBe('CREDIT_COMMIT_ERROR')
     })
   })
 
@@ -144,7 +145,7 @@ describe('CreditMeter', () => {
       const result = await meter.refund(1, 'job-missing')
 
       expect(result.ok).toBe(false)
-      expect(result.error.code).toBe('CREDIT_REFUND_ERROR')
+      expect(isOk(result)?undefined:result.error.code).toBe('CREDIT_REFUND_ERROR')
     })
   })
 
