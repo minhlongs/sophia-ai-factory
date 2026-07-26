@@ -1,4 +1,6 @@
 /** Discriminated union for explicit success/failure — no more silent error swallowing */
+type ErrorVariant = { code: string; message: string } | Error;
+
 export type Result<T, E = Error> =
 	| { ok: true; value: T }
 	| { ok: false; error: E };

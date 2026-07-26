@@ -57,7 +57,7 @@ export async function applySocialTierGate(
   const { pathname } = request.nextUrl;
   if (!pathname.startsWith(SOCIAL_PREFIX)) return null;
 
-  const tier = await resolveTier(userId);
+  const tier = await resolveTier(userId) ?? 'BASIC';
   if (!isTierLocked(tier)) return null;
 
   const locale = (pathname.split('/')[1] ?? 'vi') as 'vi' | 'en';

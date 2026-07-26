@@ -8,7 +8,7 @@
  * per-test D1 stub, let TIER_SOCIAL_LIMITS load from real module.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { applySocialTierGate } from './social-tier-gate';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────

@@ -117,10 +117,11 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       errMsg: (err as Error)?.message,
       pathname: request.nextUrl.pathname,
     }, '[MIDDLEWARE_ERROR]');
-    // L2: return a safe error response with security headers instead of throwing
-    return applySecurityHeaders(
+    const errorResponse = applySecurityHeaders(
       NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     );
+    middlewareLogger.debug({ status: errorResponse.status }, 'proxyImpl error response');
+    return errorResponse;
   } finally {
     const duration = Date.now() - startTime;
     try { recordMetrics(request.nextUrl.pathname, duration, isError); } catch {}
