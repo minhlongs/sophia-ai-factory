@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { applySocialTierGate } from './social-tier-gate';
+import { applySocialTierGate } from '../social-tier-gate';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 

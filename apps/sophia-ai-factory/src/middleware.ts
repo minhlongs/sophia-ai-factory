@@ -106,7 +106,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   try {
     middlewareLogger.debug({ pathname: request.nextUrl.pathname }, 'proxy called');
     const response = await proxyImpl(request);
-    status = response.status;
+    const responseStatus = Number(response.status);
+    status = Number.isFinite(responseStatus) ? responseStatus : 500;
     isError = status >= 400;
     middlewareLogger.debug({ status }, 'proxyImpl returned');
     return response;
