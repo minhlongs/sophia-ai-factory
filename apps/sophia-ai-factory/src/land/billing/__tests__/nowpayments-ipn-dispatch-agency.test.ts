@@ -358,7 +358,7 @@ describe('Agency branch routing (order_id "ag_" prefix)', () => {
   it('routes agency order (ag_ prefix) → agency handler on finished', async () => {
     const payload = buildIpnPayload({
       order_id: 'ag_42_1700000000',
-      payment_status: 'agency_tier_growth',
+      payment_status: 'finished',
       price_amount: 1500,
       invoice_id: 'inv_agency_growth',
     })

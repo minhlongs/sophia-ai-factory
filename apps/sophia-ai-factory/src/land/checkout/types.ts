@@ -1,0 +1,1 @@
+export interface QueuedCheckoutItem { id: string; status: 'review_required' | 'pending' | 'approved' | 'rejected' | 'cancelled'; amount: number; currency: string; createdAt: number; updatedAt: number; } export type CheckoutReviewAction = 'approve' | 'reject' | 'cancel';

@@ -13,7 +13,6 @@ export * from './cron';
 export * from './factory';
 export * from './fulfillment';
 export * from './heygen';
-export * from './i18n';
 export * from './ingestion';
 export * from './intelligence';
 export * from './monitoring';

@@ -74,7 +74,7 @@ export async function agencyRegisterAction(
 
   let apiKeyPair: { key: string; hash: string }
   try {
-    apiKeyPair = createAgencyApiKey()
+    apiKeyPair = await createAgencyApiKey()
   } catch {
     return failure({ code: 'KEY_GENERATION_FAILED', message: 'Failed to generate API key' })
   }

@@ -72,7 +72,7 @@ export async function storeCredentials(input: {
     action: 'credential.store',
     userId: input.userId,
     metadata: { platform: input.platform },
-  }).catch((err) => logger.warn('[credential] audit log failed', getErrorMessage(err)));
+  }).catch((err) => logger.warn('[credential] audit log failed', err));
 }
 
 export async function getClientCredentials(
