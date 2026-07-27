@@ -15,9 +15,10 @@ import { applySocialTierGate } from '../social-tier-gate'
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function makeNextRequest(pathname: string): NextRequest {
-  const req = new Request(`http://localhost:3000${pathname}`) as unknown as NextRequest;
-  req.nextUrl = { pathname };
-  return req;
+  const req = new Request(`http://localhost:3000${pathname}`, {
+    next: { rewrite: { source: pathname, destination: pathname } },
+  }) as unknown as NextRequest;
+  return req
 }
 
 function d1Returning(tier: string | null, plan: string | null): D1Database {
