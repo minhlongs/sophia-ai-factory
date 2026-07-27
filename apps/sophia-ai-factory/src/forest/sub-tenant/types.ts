@@ -20,7 +20,7 @@ export interface Agency {
   ownerUserId: number
   billingEmail: string | null
   status: AgencyStatus
-  brandingJson: string | null
+  brandingJson?: string | null
   createdAt: number
   updatedAt: number
 }

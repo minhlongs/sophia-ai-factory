@@ -8,13 +8,14 @@
  * per-test D1 stub, let TIER_SOCIAL_LIMITS load from real module.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { applySocialTierGate } from '../social-tier-gate';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import type { NextRequest } from 'next/server'
+import { applySocialTierGate } from '../social-tier-gate'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function makeNextRequest(pathname: string): Request {
-  const req = new Request(`http://localhost:3000${pathname}`) as Request & { nextUrl: { pathname: string } };
+function makeNextRequest(pathname: string): NextRequest {
+  const req = new Request(`http://localhost:3000${pathname}`) as unknown as NextRequest;
   req.nextUrl = { pathname };
   return req;
 }

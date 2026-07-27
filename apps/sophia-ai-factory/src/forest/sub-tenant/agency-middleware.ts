@@ -121,18 +121,19 @@ export async function validateAgencyKey(
     return failure({ code: 'AGENCY_SUSPENDED', message: 'Agency account is suspended', status: 403 })
   }
 
-  const agency: Agency = {
-    id: agencyRow.id,
-    slug: agencyRow.slug,
-    name: agencyRow.name,
-    tier: agencyRow.tier,
-    apiKeyPrefix: agencyRow.api_key_prefix,
-    ownerUserId: agencyRow.owner_user_id,
-    billingEmail: agencyRow.billing_email,
-    status: agencyRow.status,
-    createdAt: agencyRow.created_at,
-    updatedAt: agencyRow.updated_at,
-  }
+const agency: Agency = {
+  id: agencyRow.id,
+  slug: agencyRow.slug,
+  name: agencyRow.name,
+  tier: agencyRow.tier,
+  apiKeyPrefix: agencyRow.api_key_prefix,
+  apiKeyHash: agencyRow.api_key_hash,
+  ownerUserId: agencyRow.owner_user_id,
+  billingEmail: agencyRow.billing_email,
+  status: agencyRow.status,
+  createdAt: agencyRow.created_at,
+  updatedAt: agencyRow.updated_at,
+}
 
   log.info('Agency auth: success', { agencyId: agency.id, slug: agency.slug, tier: agency.tier })
 

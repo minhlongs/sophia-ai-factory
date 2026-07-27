@@ -88,3 +88,6 @@ OpenMontage/
 .mekong/history/
 
 src/messages
+
+# App-level Claude state (handover artifacts)
+.claude/state/

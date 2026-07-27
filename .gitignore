@@ -95,3 +95,7 @@ sync-*.sh
 .claude/worktrees.bak/
 .stitch-tokens.json
 .mekong/history/
+
+# Sophia AI Factory — Claude/handover extras
+.claude/state/
+sophia-ai-factory-archive-*.zip

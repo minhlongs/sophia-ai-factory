@@ -113,16 +113,20 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return response;
   } catch (err) {
     isError = true;
-    middlewareLogger.error({
-      errName: err?.constructor?.name,
+  middlewareLogger.error(
+    'Unhandled middleware error',
+    {
+      errName: String(err?.constructor?.name),
       errMsg: (err as Error)?.message,
       pathname: request.nextUrl.pathname,
-    }, '[MIDDLEWARE_ERROR]');
-    const errorResponse = applySecurityHeaders(
-      NextResponse.json({ error: 'Internal server error' }, { status: 500 })
-    );
-    middlewareLogger.debug(`proxyImpl error response ${errorResponse.status}`);
-    return errorResponse;
+    },
+    '[MIDDLEWARE_ERROR]'
+  );
+  const errorResponse = applySecurityHeaders(
+    NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  );
+  middlewareLogger.debug(`proxy error response ${errorResponse.status}`);
+  return errorResponse;
   } finally {
     const duration = Date.now() - startTime;
     try { recordMetrics(request.nextUrl.pathname, duration, isError); } catch {}

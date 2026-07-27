@@ -10,11 +10,10 @@ export function generateAgencyApiKey(): string {
 }
 
 /** SHA-256 hash → base64url (for DB storage, never plaintext) */
-export function hashApiKey(key: string): string {
+export async function hashApiKey(key: string): Promise<string> {
   const data = new TextEncoder().encode(key);
-  return crypto.subtle.digest('SHA-256', data).then((buf) => {
-    return Buffer.from(new Uint8Array(buf)).toString('base64url');
-  });
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return Buffer.from(new Uint8Array(buf)).toString('base64url');
 }
 
 /** Verify a key against stored hash (constant-time compare) */
