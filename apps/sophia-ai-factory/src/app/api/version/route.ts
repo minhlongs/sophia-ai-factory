@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withEdgeCache } from "@/seed/cache/edge-cache";
 import { timingSafeEqual } from "@/land/webhooks/signature";
 
 // IMPORTANT: do NOT add `export const revalidate = N` here. The route reads
@@ -84,16 +83,11 @@ export const GET = async (request: NextRequest): Promise<Response> => {
   return NextResponse.json(fullBody);
  }
 
- // Anonymous path: wrap with `caches.default` so CF edge serves repeat hits
- // without invoking the Worker. Builder runs only on cache miss.
- return withEdgeCache(request, 60, async () => {
-  const commitSha = env.COMMIT_SHA ?? "unknown";
-  const publicBody: PublicVersionResponse = {
-   shortSha: commitSha.slice(0, 8),
-   deployedAt: env.DEPLOYED_AT ?? new Date().toISOString(),
-   opennextVersion,
-  };
-  return NextResponse.json(publicBody, { headers: PUBLIC_CACHE_HEADERS });
- });
+// Anonymous path — bypass `caches.default` in OpenNext Workers runtime.
+ // CF CDN caches on Cache-Control headers alone; no Worker-side cache needed.
+ return NextResponse.json(
+   { shortSha: env.COMMIT_SHA?.slice(0, 8) ?? 'unknown', deployedAt: env.DEPLOYED_AT ?? new Date().toISOString(), opennextVersion },
+   { headers: PUBLIC_CACHE_HEADERS },
+ );
 
 }
