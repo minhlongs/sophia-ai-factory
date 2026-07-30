@@ -94,15 +94,17 @@ export async function agencyRegisterAction(
   })
 
   if (!result.ok) {
+    const err = result.error as Error & { code?: string }
+    const errCode = err.code ?? ''
+    const errMsg = typeof err.message === 'string' ? err.message : String(err)
     const slugTaken =
-      result.error.code === 'AGENCY_CREATE_FAILED' ||
-      typeof result.error.message === 'string' &&
-        (result.error.message as string).includes('UNIQUE constraint')
+      errCode === 'AGENCY_CREATE_FAILED' ||
+      errMsg.includes('UNIQUE constraint')
 
     if (slugTaken) {
       return failure({ code: 'SLUG_TAKEN', message: 'This agency slug is already registered' })
     }
-    return failure({ code: 'INSERT_FAILED', message: result.error.message })
+    return failure({ code: 'INSERT_FAILED', message: errMsg })
   }
 
   log.info('Agency registered successfully', { agencyId: result.value.id, slug: data.slug })

@@ -39,7 +39,7 @@ describe('processAgencyPayment', () => {
   it('returns failure for unknown amount', () => {
     const r = processAgencyPayment({ ...base, price_amount: 9999 })
     expect(r.ok).toBe(false)
-    if (!r.ok) expect(r.error.code).toBe('UNKNOWN_AGENCY_TIER_AMOUNT')
+    if (!r.ok) expect(r.error.code).toBe('UNKNOWN_AGENCY_TIER')
   })
 
   it('returns success for starter tier ($500)', () => {

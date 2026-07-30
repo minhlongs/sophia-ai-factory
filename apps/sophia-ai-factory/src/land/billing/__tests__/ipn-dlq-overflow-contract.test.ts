@@ -34,6 +34,7 @@ vi.mock('../nowpayments-ipn-dead-letter', () => ({
     return Promise.resolve({ ok: true })
   },
   countUnresolvedDlq: () => Promise.resolve(mockUnresolvedDlqCount),
+  MAX_DLQ_RETRIES: 5,
 }))
 
 vi.mock('../nowpayments-ipn-dropped-events', () => ({

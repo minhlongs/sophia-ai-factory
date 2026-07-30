@@ -123,13 +123,17 @@ export function buildD1Mock(config: D1MockConfig = {}) {
         insertLog.push(obj)
         const updateResult = config.updateResult ?? { count: 1, error: null }
         return {
-          eq: (_col: string, _val: unknown) => ({
-            eq: (_c2: string, _v2: unknown) => makeThenable(updateResult),
-            neq: () => makeThenable(updateResult),
-            select: () => eqChain,
-            limit: () => eqChain,
-            order: () => makeThenable({ data: config.selectListResult?.data ?? [], error: null }),
-          }),
+  eq: (_col: string, _val: unknown) => {
+    const t = makeThenable(updateResult)
+    return Object.assign(t, {
+      eq: (_c2: string, _v2: unknown) => t,
+      neq: () => t,
+      lt: (_c2: string, _v2: unknown) => t,
+      select: () => eqChain,
+      limit: () => eqChain,
+      order: () => makeThenable({ data: config.selectListResult?.data ?? [], error: null }),
+    })
+  },
         }
       },
       select: (...args: unknown[]) => {

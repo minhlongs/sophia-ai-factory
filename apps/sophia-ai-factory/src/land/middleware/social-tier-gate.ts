@@ -55,7 +55,9 @@ export async function applySocialTierGate(
   userId: string,
 ): Promise<NextResponse | null> {
   const { pathname } = request.nextUrl;
-  if (!pathname.startsWith(SOCIAL_PREFIX)) return null;
+  // Strip leading locale segment (/vi/, /en/, etc.) before prefix check
+  const pathAfterLocale = pathname.replace(/^\/[a-z]{2}(?=\/|$)/, '');
+  if (!pathAfterLocale.startsWith(SOCIAL_PREFIX)) return null;
 
   const tier = await resolveTier(userId) ?? "BASIC";
   if (!isTierLocked(tier)) return null;

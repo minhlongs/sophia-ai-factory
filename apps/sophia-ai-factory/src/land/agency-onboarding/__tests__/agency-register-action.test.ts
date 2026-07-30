@@ -76,7 +76,8 @@ describe('agencyRegisterAction', () => {
     })
 
     expect(result.ok).toBe(false)
-    expect(result.error.code).toBe('VALIDATION_ERROR')
+    if (!result.ok) {
+      expect(result.error.code).toBe('VALIDATION_ERROR')    }
   })
 
   it('returns failure for reserved slug', async () => {
@@ -92,7 +93,8 @@ describe('agencyRegisterAction', () => {
     })
 
     expect(result.ok).toBe(false)
-    expect(result.error.code).toBe('RESERVED_SLUG')
+    if (!result.ok) {
+      expect(result.error.code).toBe('RESERVED_SLUG')    }
   })
 
   it('returns failure on duplicate slug', async () => {
@@ -109,7 +111,8 @@ describe('agencyRegisterAction', () => {
     })
 
     expect(result.ok).toBe(false)
-    expect(result.error.code).toBe('SLUG_TAKEN')
+    if (!result.ok) {
+      expect(result.error.code).toBe('SLUG_TAKEN')    }
   })
 
   it('returns failure for invalid input schema', async () => {
@@ -120,7 +123,8 @@ describe('agencyRegisterAction', () => {
     })
 
     expect(result.ok).toBe(false)
-    expect(result.error.code).toBe('VALIDATION_ERROR')
+    if (!result.ok) {
+      expect(result.error.code).toBe('VALIDATION_ERROR')    }
   })
 
   it('returns failure on agency creation DB error', async () => {
@@ -140,7 +144,8 @@ describe('agencyRegisterAction', () => {
     })
 
     expect(result.ok).toBe(false)
-    expect(result.error.code).toBe('INSERT_FAILED')
+    if (!result.ok) {
+      expect(result.error.code).toBe('INSERT_FAILED')    }
   })
 
   it('uses default tier when not provided', async () => {
