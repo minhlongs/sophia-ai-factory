@@ -56,6 +56,32 @@ function mockD1() {
   c.all = vi.fn()
   c.run = vi.fn()
   c.prepare = vi.fn().mockReturnValue(c)
+
+  // Wrap .first() to unwrap {data, error} → throw on error, return raw data on success
+  c.first = vi.fn().mockImplementation(async (...args: unknown[]) => {
+    const result = await Promise.resolve(origFirst(...args))
+    // If data is null and no error → return null (not found)
+    // If data is null and error exists → throw
+    // Otherwise return data directly
+    if (result && typeof result === 'object' && 'error' in result) {
+      const r = result as { data: unknown; error: { message?: string } | null }
+      if (r.error) throw new Error(r.error.message ?? 'D1 error')
+      return r.data
+    }
+    return result
+  })
+
+  // Wrap .all() to unwrap {data, error} → return raw results array
+  c.all = vi.fn().mockImplementation(async (...args: unknown[]) => {
+    const result = await Promise.resolve(origAll(...args))
+    if (result && typeof result === 'object' && 'error' in result) {
+      const r = result as { data: unknown[]; error: { message?: string } | null }
+      if (r.error) throw new Error(r.error.message ?? 'D1 error')
+      return r.data
+    }
+    return result
+  })
+
   const rawDb = { prepare: vi.fn().mockReturnValue(c as never) }
   vi.mocked(dbClient.getD1).mockReturnValue(rawDb as never)
   return { rawDb, chain: c }

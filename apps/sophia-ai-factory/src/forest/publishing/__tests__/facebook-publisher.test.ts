@@ -18,13 +18,13 @@ describe('FacebookPublisher', () => {
   describe('mock mode', () => {
     it('returns mock_facebook_ id when FACEBOOK_APP_ID absent', async () => {
       const publisher = new FacebookPublisher('tok', 'page_1');
-      const id = await publisher.upload('https://v.mp4', { caption: 'caption', hashtags: ['#fb'] });
-      expect(id).toMatch(/^mock_facebook_/);
+      const id = await publisher.publish('https://v.mp4', { caption: 'caption', hashtags: ['#fb'] });
+      expect(id.externalPostId).toMatch(/^mock_facebook_/);
     });
 
     it('pollStatus returns live for mock id', async () => {
       const publisher = new FacebookPublisher('tok', 'page_1');
-      const s = await publisher.pollStatus('mock_facebook_99');
+      const s = await publisher.getStatus('mock_facebook_99');
       expect(s).toBe('live');
     });
 
@@ -48,13 +48,13 @@ describe('FacebookPublisher', () => {
       );
 
       const publisher = new FacebookPublisher('page_token', 'page_42');
-      const id = await publisher.upload('https://v.mp4', {
+      const id = await publisher.publish('https://v.mp4', {
         caption: 'test reel',
         hashtags: ['#reel', '#ai'],
         productLink: 'https://shop.com',
       });
 
-      expect(id).toBe('fb_video_789');
+      expect(id.externalPostId).toBe('fb_video_789');
       expect(fetchSpy).toHaveBeenCalledTimes(1);
       const url = fetchSpy.mock.calls[0][0] as string;
       expect(url).toContain('/page_42/video_reels');
@@ -70,9 +70,9 @@ describe('FacebookPublisher', () => {
       fetchSpy.mockResolvedValueOnce(new Response('quota_exceeded', { status: 429 }));
 
       const publisher = new FacebookPublisher('page_token', 'page_42');
-      await expect(
-        publisher.upload('https://v.mp4', { caption: 'x', hashtags: [] }),
-      ).rejects.toThrow(/Facebook video_reels publish failed/);
+      const _errResult = await publisher.publish('https://v.mp4', { caption: 'test', hashtags: [] });
+    expect(_errResult.success).toBe(false);
+    expect(_errResult.error).toMatch('Facebook video_reels publish failed');
       fetchSpy.mockRestore();
     });
 
@@ -82,7 +82,7 @@ describe('FacebookPublisher', () => {
         new Response(JSON.stringify({ status: { video_status: 'ready' } }), { status: 200 }),
       );
       const publisher = new FacebookPublisher('tok', 'page_1');
-      const s = await publisher.pollStatus('fb_video_1');
+      const s = await publisher.getStatus('fb_video_1');
       expect(s).toBe('live');
       fetchSpy.mockRestore();
     });

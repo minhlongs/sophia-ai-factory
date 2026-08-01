@@ -29,17 +29,17 @@ describe('TikTokPublisher', () => {
   describe('upload — mock mode (no env)', () => {
     it('returns mock_tiktok_ id when TIKTOK_CLIENT_KEY absent', async () => {
       const publisher = new TikTokPublisher('tok');
-      const id = await publisher.upload('https://example.com/v.mp4', {
+      const id = await publisher.publish('https://example.com/v.mp4', {
         caption: 'test',
         hashtags: ['#ai'],
       });
-      expect(id).toMatch(/^mock_tiktok_/);
+      expect(id.externalPostId).toMatch(/^mock_tiktok_/);
       expect(tiktokMocks.publishVideo).not.toHaveBeenCalled();
     });
 
     it('pollStatus returns live for mock id', async () => {
       const publisher = new TikTokPublisher('tok');
-      const status = await publisher.pollStatus('mock_tiktok_123');
+      const status = await publisher.getStatus('mock_tiktok_123');
       expect(status).toBe('live');
     });
 
@@ -101,11 +101,11 @@ describe('TikTokPublisher', () => {
     it('calls publishVideo and returns publish_id', async () => {
       tiktokMocks.publishVideo.mockResolvedValueOnce('pk_123');
       const publisher = new TikTokPublisher('access_tok');
-      const id = await publisher.upload('https://example.com/v.mp4', {
+      const id = await publisher.publish('https://example.com/v.mp4', {
         caption: 'hello world',
         hashtags: ['#ai'],
       });
-      expect(id).toBe('pk_123');
+      expect(id.externalPostId).toBe('pk_123');
       expect(tiktokMocks.publishVideo).toHaveBeenCalledWith(
         expect.objectContaining({ accessToken: 'access_tok' }),
       );
@@ -114,7 +114,7 @@ describe('TikTokPublisher', () => {
     it('auth header passed via publishVideo call', async () => {
       tiktokMocks.publishVideo.mockResolvedValueOnce('pk_456');
       const publisher = new TikTokPublisher('Bearer_token_xyz');
-      await publisher.upload('https://v.mp4', { caption: 'c', hashtags: [] });
+      await publisher.publish('https://v.mp4', { caption: 'c', hashtags: [] });
       expect(tiktokMocks.publishVideo).toHaveBeenCalledWith(
         expect.objectContaining({ accessToken: 'Bearer_token_xyz' }),
       );
@@ -123,21 +123,21 @@ describe('TikTokPublisher', () => {
     it('pollStatus maps PUBLISH_COMPLETE → live', async () => {
       tiktokMocks.checkPublishStatus.mockResolvedValueOnce({ status: 'PUBLISH_COMPLETE' });
       const publisher = new TikTokPublisher('tok');
-      const s = await publisher.pollStatus('pk_123');
+      const s = await publisher.getStatus('pk_123');
       expect(s).toBe('live');
     });
 
     it('pollStatus maps FAILED → failed', async () => {
       tiktokMocks.checkPublishStatus.mockResolvedValueOnce({ status: 'FAILED' });
       const publisher = new TikTokPublisher('tok');
-      const s = await publisher.pollStatus('pk_123');
+      const s = await publisher.getStatus('pk_123');
       expect(s).toBe('failed');
     });
 
     it('pollStatus returns processing for unknown status', async () => {
       tiktokMocks.checkPublishStatus.mockResolvedValueOnce({ status: 'IN_REVIEW' });
       const publisher = new TikTokPublisher('tok');
-      const s = await publisher.pollStatus('pk_123');
+      const s = await publisher.getStatus('pk_123');
       expect(s).toBe('processing');
     });
   });

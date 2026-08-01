@@ -50,10 +50,37 @@ interface Chain {
 function mockD1() {
   const c = {} as Chain
   c.bind = vi.fn().mockReturnThis()
-  c.first = vi.fn()
-  c.all = vi.fn()
   c.run = vi.fn()
   c.prepare = vi.fn().mockReturnValue(c)
+
+  // D1's real binding returns { data, error } for `.first()`/`.all()`.
+  // The test sets up mockResolvedValue({ data: X, error: null }) — we unwrap so
+  // the repo code (which checks `if (!result)`) receives the raw row/array.
+  const unwrap = <R>(v: unknown): R | null =>
+    typeof v === 'object' && v !== null && 'data' in (v as Record<string, unknown>)
+      ? ((v as { data: R | null }).data ?? null)
+      : (v as R | null)
+
+  // Wrap each invocation: look at the last mock setup for this call and unwrap.
+  const makeUnwrappingFn = () => {
+    const fn = vi.fn()
+    fn.mockImplementation(async (..._args: unknown[]) => {
+      // Pull the last .mock.setup value (from mockResolvedValue / mockResolvedValueOnce)
+      const setups = fn.mock.instances ?? []
+      const lastSetup = setups.length ? setups[setups.length - 1] : undefined
+      // Actually vitest stores setup values in mock.results[].type === 'return'
+      const lastReturn = fn.mock.results
+        .slice()
+        .reverse()
+        .find((r) => r.type === 'return')
+      return unwrap(lastReturn?.value)
+    })
+    return fn
+  }
+
+  c.first = makeUnwrappingFn()
+  c.all = makeUnwrappingFn()
+
   const rawDb = { prepare: vi.fn().mockReturnValue(c as never) }
   vi.mocked(dbClient.getD1).mockReturnValue(rawDb as never)
   return { rawDb, chain: c }
@@ -122,15 +149,20 @@ describe('1. Sub-tenant isolation', () => {
     // Each findById call prepares a new statement but reuses the same chain mock.
     // Use mockResolvedValueOnce so Agency A (1st all) and Agency B (2nd all) get
     // separate queued responses.
-    chain.all
-      .mockResolvedValueOnce({
-        data: [
-          subTenantRow({ id: 1, agency_id: 1, display_name: 'Alpha' }),
-          subTenantRow({ id: 2, agency_id: 1, display_name: 'Beta' }),
-        ],
-        error: null,
-      })
-      .mockResolvedValueOnce({ data: [], error: null })
+ chain.all
+ .mockResolvedValueOnce({
+   results: [
+     subTenantRow({ id: 1, agency_id: 1, display_name: 'Alpha' }),
+     subTenantRow({ id: 2, agency_id: 1, display_name: 'Beta' }),
+   ],
+   success: true,
+   meta: { changes: 2 },
+ })
+ .mockResolvedValueOnce({
+   results: [],
+   success: true,
+   meta: { changes: 0 },
+ })
 
     const aResults = await findByAgency(1)
     const bResults = await findByAgency(2)

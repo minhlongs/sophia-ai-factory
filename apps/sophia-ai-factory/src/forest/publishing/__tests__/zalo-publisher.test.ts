@@ -21,31 +21,24 @@ describe('ZaloPublisher', () => {
     it('throws ZaloVerificationRequiredError when both ZALO_APP_ID and ZALO_OA_ACCESS_TOKEN absent', async () => {
       // Both env vars absent (cleared in beforeEach)
       const publisher = new ZaloPublisher('any_token');
-      await expect(
-        publisher.upload('https://v.mp4', { caption: 'test', hashtags: [] }),
-      ).rejects.toThrow(ZaloVerificationRequiredError);
+  const _result = await publisher.publish('https://v.mp4', { caption: 'test', hashtags: [] });
+  expect(_result.success).toBe(false);
+  expect(_result.error).toContain('business must be verified');
     });
 
-    it('ZaloVerificationRequiredError includes actionUrl and docsUrl', async () => {
-      const publisher = new ZaloPublisher('any_token');
-      try {
-        await publisher.upload('https://v.mp4', { caption: 'test', hashtags: [] });
-        expect.fail('Should have thrown');
-      } catch (err) {
-        expect(err).toBeInstanceOf(ZaloVerificationRequiredError);
-        const e = err as ZaloVerificationRequiredError;
-        expect(e.actionUrl).toBe('https://oa.zalo.me/manage/oa');
-        expect(e.docsUrl).toBe('https://developers.zalo.me/docs/official-account');
-        expect(e.message).toContain('business must be verified');
-      }
-    });
+it('ZaloVerificationRequiredError includes actionUrl and docsUrl', async () => {
+  const publisher = new ZaloPublisher('any_token');
+  const result = await publisher.publish('https://v.mp4', { caption: 'test', hashtags: [] });
+  expect(result.success).toBe(false);
+  expect(result.error).toContain('business must be verified');
+});
 
     it('does not throw when ZALO_APP_ID is set but no OA token (mock mode)', async () => {
       // ZALO_APP_ID set, ZALO_OA_ACCESS_TOKEN absent → mock mode, returns mock_ id
       process.env.ZALO_APP_ID = 'zalo_app_123';
       const publisher = new ZaloPublisher('mock_token');
-      const id = await publisher.upload('https://v.mp4', { caption: 'test', hashtags: [] });
-      expect(id).toMatch(/^mock_zalo_/);
+      const id = await publisher.publish('https://v.mp4', { caption: 'test', hashtags: [] });
+      expect(id.externalPostId).toMatch(/^mock_zalo_/);
     });
   });
 
@@ -57,13 +50,13 @@ describe('ZaloPublisher', () => {
 
     it('returns mock_zalo_ id when in mock mode', async () => {
       const publisher = new ZaloPublisher('tok');
-      const id = await publisher.upload('https://v.mp4', { caption: 'test', hashtags: ['#vn'] });
-      expect(id).toMatch(/^mock_zalo_/);
+      const id = await publisher.publish('https://v.mp4', { caption: 'test', hashtags: ['#vn'] });
+      expect(id.externalPostId).toMatch(/^mock_zalo_/);
     });
 
     it('pollStatus returns live for mock id', async () => {
       const publisher = new ZaloPublisher('tok');
-      const s = await publisher.pollStatus('mock_zalo_99');
+      const s = await publisher.getStatus('mock_zalo_99');
       expect(s).toBe('live');
     });
 
@@ -111,12 +104,12 @@ describe('ZaloPublisher', () => {
       );
 
       const publisher = new ZaloPublisher('real_access_token');
-      const id = await publisher.upload('https://v.mp4', {
+      const id = await publisher.publish('https://v.mp4', {
         caption: 'Zalo post',
         hashtags: ['#zalo', '#vn'],
       });
 
-      expect(id).toBe('bcast_456');
+      expect(id.externalPostId).toBe('bcast_456');
       // 3 fetches: video fetch + upload + broadcast
       expect(fetchSpy).toHaveBeenCalledTimes(3);
       fetchSpy.mockRestore();

@@ -61,43 +61,43 @@ describe('Usage Event Tracker', () => {
   })
 
   describe('hashIpAddress', () => {
-    it('should hash IP address with SHA-256', () => {
+    it('should hash IP address with SHA-256', async () => {
       const ip = '192.168.1.1'
-      const hash = hashIpAddress(ip)
+      const hash = await hashIpAddress(ip)
 
       expect(hash).toHaveLength(64)
       expect(hash).toMatch(/^[0-9a-f]+$/)
     })
 
-    it('should return consistent hash for same IP', () => {
+    it('should return consistent hash for same IP', async () => {
       const ip = '10.0.0.1'
-      const hash1 = hashIpAddress(ip)
-      const hash2 = hashIpAddress(ip)
+      const hash1 = await hashIpAddress(ip)
+      const hash2 = await hashIpAddress(ip)
 
       expect(hash1).toBe(hash2)
     })
 
-    it('should return different hashes for different IPs', () => {
-      const hash1 = hashIpAddress('192.168.1.1')
-      const hash2 = hashIpAddress('192.168.1.2')
+    it('should return different hashes for different IPs', async () => {
+      const hash1 = await hashIpAddress('192.168.1.1')
+      const hash2 = await hashIpAddress('192.168.1.2')
 
       expect(hash1).not.toBe(hash2)
     })
 
-    it('should return empty string for empty IP', () => {
-      expect(hashIpAddress('')).toBe('')
+    it('should return empty string for empty IP', async () => {
+      expect(await hashIpAddress('')).toBe('')
     })
 
-    it('should return empty string for undefined IP', () => {
-      expect(hashIpAddress(undefined as unknown as string)).toBe('')
+    it('should return empty string for undefined IP', async () => {
+      expect(await hashIpAddress(undefined as unknown as string)).toBe('')
     })
 
-    it('should include salt in hash computation', () => {
+    it('should include salt in hash computation', async () => {
       const ip = '192.168.1.1'
-      const hash1 = hashIpAddress(ip)
+      const hash1 = await hashIpAddress(ip)
 
       // Verify hash is deterministic with current salt
-      const hash2 = hashIpAddress(ip)
+      const hash2 = await hashIpAddress(ip)
       expect(hash1).toBe(hash2)
 
       // Note: Salt changes require module reload to test properly
@@ -107,35 +107,35 @@ describe('Usage Event Tracker', () => {
   })
 
   describe('generateUserPseudonym', () => {
-    it('should generate pseudonym with SHA-256', () => {
+    it('should generate pseudonym with SHA-256', async () => {
       const userId = 'user-123'
-      const pseudonym = generateUserPseudonym(userId)
+      const pseudonym = await generateUserPseudonym(userId)
 
       expect(pseudonym).toHaveLength(64)
       expect(pseudonym).toMatch(/^[0-9a-f]+$/)
     })
 
-    it('should return consistent pseudonym for same user', () => {
+    it('should return consistent pseudonym for same user', async () => {
       const userId = 'user-456'
-      const pseudonym1 = generateUserPseudonym(userId)
-      const pseudonym2 = generateUserPseudonym(userId)
+      const pseudonym1 = await generateUserPseudonym(userId)
+      const pseudonym2 = await generateUserPseudonym(userId)
 
       expect(pseudonym1).toBe(pseudonym2)
     })
 
-    it('should return different pseudonyms for different users', () => {
-      const pseudo1 = generateUserPseudonym('user-a')
-      const pseudo2 = generateUserPseudonym('user-b')
+    it('should return different pseudonyms for different users', async () => {
+      const pseudo1 = await generateUserPseudonym('user-a')
+      const pseudo2 = await generateUserPseudonym('user-b')
 
       expect(pseudo1).not.toBe(pseudo2)
     })
 
-    it('should return empty string for empty user ID', () => {
-      expect(generateUserPseudonym('')).toBe('')
+    it('should return empty string for empty user ID', async () => {
+      expect(await generateUserPseudonym('')).toBe('')
     })
 
-    it('should return empty string for undefined user ID', () => {
-      expect(generateUserPseudonym(undefined as unknown as string)).toBe('')
+    it('should return empty string for undefined user ID', async () => {
+      expect(await generateUserPseudonym(undefined as unknown as string)).toBe('')
     })
   })
 
@@ -242,9 +242,9 @@ describe('Usage Event Tracker', () => {
   })
 
   describe('GDPR Compliance', () => {
-    it('should pseudonymize user ID for analytics', () => {
+    it('should pseudonymize user ID for analytics', async () => {
       const userId = 'pii-user-data-123'
-      const pseudonym = generateUserPseudonym(userId)
+      const pseudonym = await generateUserPseudonym(userId)
 
       // Pseudonym should not contain original user ID
       expect(pseudonym).not.toContain('pii')
@@ -252,13 +252,13 @@ describe('Usage Event Tracker', () => {
       expect(pseudonym).not.toContain('123')
 
       // Should be deterministic
-      const pseudonym2 = generateUserPseudonym(userId)
+      const pseudonym2 = await generateUserPseudonym(userId)
       expect(pseudonym).toBe(pseudonym2)
     })
 
-    it('should hash IP address for privacy', () => {
+    it('should hash IP address for privacy', async () => {
       const ip = '203.0.113.50'
-      const hash = hashIpAddress(ip)
+      const hash = await hashIpAddress(ip)
 
       // Hash should not reveal original IP
       expect(hash).not.toContain('203')
@@ -266,7 +266,7 @@ describe('Usage Event Tracker', () => {
       expect(hash).not.toContain('50')
 
       // Should be deterministic
-      const hash2 = hashIpAddress(ip)
+      const hash2 = await hashIpAddress(ip)
       expect(hash).toBe(hash2)
     })
   })

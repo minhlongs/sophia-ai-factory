@@ -15,12 +15,12 @@ describe('BlueskyPublisher', () => {
   describe('mock mode', () => {
     it('returns mock_bluesky_ id when BLUESKY_PDS_URL absent', async () => {
       const p = new BlueskyPublisher('tok', 'did:plc:123');
-      const id = await p.upload('https://v.mp4', { caption: 'hi', hashtags: [] });
-      expect(id).toMatch(/^mock_bluesky_/);
+      const id = await p.publish('https://v.mp4', { caption: 'hi', hashtags: [] });
+      expect(id.externalPostId).toMatch(/^mock_bluesky_/);
     });
     it('pollStatus returns live always', async () => {
       const p = new BlueskyPublisher('tok', 'did:plc:123');
-      expect(await p.pollStatus('some_rkey')).toBe('live');
+      expect(await p.getStatus('some_rkey')).toBe('live');
     });
   });
 
@@ -36,8 +36,8 @@ describe('BlueskyPublisher', () => {
         ),
       );
       const p = new BlueskyPublisher('access_jwt', 'did:plc:abc');
-      const id = await p.upload('https://v.mp4', { caption: 'test', hashtags: ['#ai'] });
-      expect(id).toBe('rkey123');
+      const id = await p.publish('https://v.mp4', { caption: 'test', hashtags: ['#ai'] });
+      expect(id.externalPostId).toBe('rkey123');
       fetchSpy.mockRestore();
     });
 
@@ -45,7 +45,9 @@ describe('BlueskyPublisher', () => {
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
       fetchSpy.mockResolvedValueOnce(new Response('bad', { status: 400 }));
       const p = new BlueskyPublisher('tok', 'did:plc:x');
-      await expect(p.upload('https://v.mp4', { caption: 'x', hashtags: [] })).rejects.toThrow(/createRecord failed/);
+      const _result = await p.publish('https://v.mp4', { caption: 'x', hashtags: [] });
+      expect(_result.success).toBe(false);
+      expect(_result.error).toMatch(/createRecord failed/);
       fetchSpy.mockRestore();
     });
   });

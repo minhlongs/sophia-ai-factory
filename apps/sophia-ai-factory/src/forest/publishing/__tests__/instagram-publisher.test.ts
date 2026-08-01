@@ -18,16 +18,16 @@ describe('InstagramPublisher', () => {
   describe('mock mode', () => {
     it('returns mock_instagram_ id when INSTAGRAM_APP_ID absent', async () => {
       const publisher = new InstagramPublisher('tok', 'ig_user_1');
-      const id = await publisher.upload('https://v.mp4', {
+      const id = await publisher.publish('https://v.mp4', {
         caption: 'caption',
         hashtags: ['#ig'],
       });
-      expect(id).toMatch(/^mock_instagram_/);
+      expect(id.externalPostId).toMatch(/^mock_instagram_/);
     });
 
     it('pollStatus returns live for mock id', async () => {
       const publisher = new InstagramPublisher('tok', 'ig_user_1');
-      const s = await publisher.pollStatus('mock_instagram_99');
+      const s = await publisher.getStatus('mock_instagram_99');
       expect(s).toBe('live');
     });
 
@@ -57,13 +57,13 @@ describe('InstagramPublisher', () => {
       );
 
       const publisher = new InstagramPublisher('ig_access_token', 'ig_user_123');
-      const id = await publisher.upload('https://v.mp4', {
+      const id = await publisher.publish('https://v.mp4', {
         caption: 'test reel',
         hashtags: ['#reel', '#ai'],
         productLink: 'https://shop.com',
       });
 
-      expect(id).toBe('ig_post_789');
+      expect(id.externalPostId).toBe('ig_post_789');
       expect(fetchSpy).toHaveBeenCalledTimes(2);
 
       // Verify first call was to /media endpoint

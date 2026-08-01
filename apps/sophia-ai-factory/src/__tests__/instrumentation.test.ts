@@ -1,7 +1,7 @@
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // instrumentation.ts lives at the app root (two levels above src/)
-const instrumentationPath = '/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/instrumentation.ts';
+const instrumentationPath = '/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/instrumentation.ts';
 
 describe('instrumentation.ts', () => {
   beforeEach(() => {

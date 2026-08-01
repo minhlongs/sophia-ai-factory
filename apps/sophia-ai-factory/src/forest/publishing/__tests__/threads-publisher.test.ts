@@ -15,12 +15,12 @@ describe('ThreadsPublisher', () => {
   describe('mock mode', () => {
     it('returns mock_threads_ id when THREADS_APP_ID absent', async () => {
       const p = new ThreadsPublisher('tok', 'u123');
-      const id = await p.upload('https://v.mp4', { caption: 'hi', hashtags: [] });
-      expect(id).toMatch(/^mock_threads_/);
+      const id = await p.publish('https://v.mp4', { caption: 'hi', hashtags: [] });
+      expect(id.externalPostId).toMatch(/^mock_threads_/);
     });
     it('pollStatus returns live for mock id', async () => {
       const p = new ThreadsPublisher('tok', 'u123');
-      expect(await p.pollStatus('mock_threads_1')).toBe('live');
+      expect(await p.getStatus('mock_threads_1')).toBe('live');
     });
     it('getMetrics returns zeros for mock id', async () => {
       const p = new ThreadsPublisher('tok', 'u123');
@@ -41,8 +41,8 @@ describe('ThreadsPublisher', () => {
         new Response(JSON.stringify({ id: 'post_42' }), { status: 200 }),
       );
       const p = new ThreadsPublisher('tok', 'u123');
-      const id = await p.upload('https://v.mp4', { caption: 'test', hashtags: ['#ai'] });
-      expect(id).toBe('post_42');
+      const id = await p.publish('https://v.mp4', { caption: 'test', hashtags: ['#ai'] });
+      expect(id.externalPostId).toBe('post_42');
       expect(fetchSpy.mock.calls.length).toBe(2);
       fetchSpy.mockRestore();
     });
@@ -51,7 +51,9 @@ describe('ThreadsPublisher', () => {
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
       fetchSpy.mockResolvedValueOnce(new Response('error', { status: 500 }));
       const p = new ThreadsPublisher('tok', 'u123');
-      await expect(p.upload('https://v.mp4', { caption: 'x', hashtags: [] })).rejects.toThrow(/container creation failed/);
+      const _result = await p.publish('https://v.mp4', { caption: 'x', hashtags: [] });
+      expect(_result.success).toBe(false);
+      expect(_result.error).toMatch(/container creation failed/);
       fetchSpy.mockRestore();
     });
 
@@ -59,7 +61,7 @@ describe('ThreadsPublisher', () => {
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
       fetchSpy.mockResolvedValueOnce(new Response('', { status: 404 }));
       const p = new ThreadsPublisher('tok', 'u123');
-      expect(await p.pollStatus('post_404')).toBe('failed');
+      expect(await p.getStatus('post_404')).toBe('failed');
       fetchSpy.mockRestore();
     });
   });

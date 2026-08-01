@@ -18,16 +18,16 @@ describe('PinterestPublisher', () => {
   describe('mock mode', () => {
     it('returns mock_pinterest_ id when PINTEREST_CLIENT_ID absent', async () => {
       const publisher = new PinterestPublisher('tok', 'board_123');
-      const id = await publisher.upload('https://v.mp4', {
+      const id = await publisher.publish('https://v.mp4', {
         caption: 'caption',
         hashtags: ['#pin'],
       });
-      expect(id).toMatch(/^mock_pinterest_/);
+      expect(id.externalPostId).toMatch(/^mock_pinterest_/);
     });
 
     it('pollStatus returns live for mock id', async () => {
       const publisher = new PinterestPublisher('tok', 'board_123');
-      const s = await publisher.pollStatus('mock_pinterest_99');
+      const s = await publisher.getStatus('mock_pinterest_99');
       expect(s).toBe('live');
     });
 
@@ -69,14 +69,14 @@ describe('PinterestPublisher', () => {
       );
 
       const publisher = new PinterestPublisher('pin_access_token', 'board_abc');
-      const id = await publisher.upload('https://v.mp4', {
+      const id = await publisher.publish('https://v.mp4', {
         caption: 'my pin',
         hashtags: ['#diy', '#craft'],
         title: 'DIY Project',
         productLink: 'https://shop.example.com/product',
       });
 
-      expect(id).toBe('pin_xyz789');
+      expect(id.externalPostId).toBe('pin_xyz789');
       expect(fetchSpy).toHaveBeenCalledTimes(4);
 
       // Verify pin creation call contains product tag
@@ -101,9 +101,9 @@ describe('PinterestPublisher', () => {
       );
 
       const publisher = new PinterestPublisher('bad_token', 'board_abc');
-      await expect(
-        publisher.upload('https://v.mp4', { caption: 'test', hashtags: [] }),
-      ).rejects.toThrow('Register upload failed (401)');
+      const _errResult = await publisher.publish('https://v.mp4', { caption: 'test', hashtags: [] });
+    expect(_errResult.success).toBe(false);
+    expect(_errResult.error).toMatch('Register upload failed (401)');
 
       fetchSpy.mockRestore();
     });
@@ -114,7 +114,7 @@ describe('PinterestPublisher', () => {
       fetchSpy.mockResolvedValueOnce(new Response(null, { status: 404 }));
 
       const publisher = new PinterestPublisher('tok', 'board_abc');
-      const s = await publisher.pollStatus('pin_missing');
+      const s = await publisher.getStatus('pin_missing');
       expect(s).toBe('failed');
       fetchSpy.mockRestore();
     });
@@ -134,9 +134,9 @@ describe('PinterestPublisher', () => {
       );
 
       const publisher = new PinterestPublisher('tok', 'board_abc');
-      const id = await publisher.upload('https://v.mp4', { caption: 'no link', hashtags: ['#test'] });
+      const id = await publisher.publish('https://v.mp4', { caption: 'no link', hashtags: ['#test'] });
 
-      expect(id).toBe('pin_no_tag');
+      expect(id.externalPostId).toBe('pin_no_tag');
 
       const pinBody = JSON.parse(fetchSpy.mock.calls[3][1]?.body as string) as {
         media_product_tags?: unknown[];

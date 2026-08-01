@@ -15,8 +15,8 @@ describe('RedditPublisher', () => {
   describe('mock mode', () => {
     it('returns mock_reddit_ id when REDDIT_CLIENT_ID absent', async () => {
       const p = new RedditPublisher('tok', 'testuser');
-      const id = await p.upload('https://v.mp4', { caption: 'hi', hashtags: [] });
-      expect(id).toMatch(/^mock_reddit_/);
+      const id = await p.publish('https://v.mp4', { caption: 'hi', hashtags: [] });
+      expect(id.externalPostId).toMatch(/^mock_reddit_/);
     });
   });
 
@@ -29,8 +29,8 @@ describe('RedditPublisher', () => {
         new Response(JSON.stringify({ json: { errors: [], data: { name: 't3_abc123' } } }), { status: 200 }),
       );
       const p = new RedditPublisher('tok', 'testuser');
-      const id = await p.upload('https://v.mp4', { caption: 'test', hashtags: [] });
-      expect(id).toBe('t3_abc123');
+      const id = await p.publish('https://v.mp4', { caption: 'test', hashtags: [] });
+      expect(id.externalPostId).toBe('t3_abc123');
       fetchSpy.mockRestore();
     });
 
@@ -40,7 +40,9 @@ describe('RedditPublisher', () => {
         new Response(JSON.stringify({ json: { errors: [['RATELIMIT', 'take a break']] } }), { status: 200 }),
       );
       const p = new RedditPublisher('tok', 'testuser');
-      await expect(p.upload('https://v.mp4', { caption: 'x', hashtags: [] })).rejects.toThrow(/RATELIMIT/);
+      const _result = await p.publish('https://v.mp4', { caption: 'x', hashtags: [] });
+      expect(_result.success).toBe(false);
+      expect(_result.error).toMatch(/RATELIMIT/);
       fetchSpy.mockRestore();
     });
 

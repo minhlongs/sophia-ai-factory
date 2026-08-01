@@ -23,7 +23,7 @@ const pollStatusMock = vi.fn()
 const getMetricsMock = vi.fn()
 vi.mock('@/land/video/publishing/providers/youtube-publisher', () => ({
   YouTubePublisher: class {
-    upload = uploadMock
+    publish = uploadMock
     pollStatus = pollStatusMock
     getMetrics = getMetricsMock
   },

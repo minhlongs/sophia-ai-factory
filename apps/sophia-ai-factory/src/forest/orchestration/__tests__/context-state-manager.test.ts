@@ -116,7 +116,7 @@ describe('ContextStateManager', () => {
     expect(context).toContain('Goal: Context Test');
     expect(context).toContain('Current Phase: implementation');
     expect(context).toContain('Pending Steps: code, test');
-    expect(context).toContain('"db": "D1"');
+    expect(context).toContain('[DECISION] db = D1');
     expect(context).toContain('Bounded state mode');
   });
 });

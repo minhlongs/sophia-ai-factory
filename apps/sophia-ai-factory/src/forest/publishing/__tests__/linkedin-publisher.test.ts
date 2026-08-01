@@ -20,16 +20,16 @@ describe('LinkedInPublisher', () => {
   describe('mock mode', () => {
     it('returns mock_linkedin_ id when LINKEDIN_CLIENT_ID absent', async () => {
       const publisher = new LinkedInPublisher('tok', AUTHOR_URN);
-      const id = await publisher.upload('https://v.mp4', {
+      const id = await publisher.publish('https://v.mp4', {
         caption: 'caption',
         hashtags: ['#li'],
       });
-      expect(id).toMatch(/^mock_linkedin_/);
+      expect(id.externalPostId).toMatch(/^mock_linkedin_/);
     });
 
     it('pollStatus returns live for mock id', async () => {
       const publisher = new LinkedInPublisher('tok', AUTHOR_URN);
-      const s = await publisher.pollStatus('mock_linkedin_99');
+      const s = await publisher.getStatus('mock_linkedin_99');
       expect(s).toBe('live');
     });
 
@@ -82,13 +82,13 @@ describe('LinkedInPublisher', () => {
       );
 
       const publisher = new LinkedInPublisher('li_access_token', AUTHOR_URN);
-      const id = await publisher.upload('https://v.mp4', {
+      const id = await publisher.publish('https://v.mp4', {
         caption: 'my linkedin post',
         hashtags: ['#career', '#ai'],
         title: 'AI Update',
       });
 
-      expect(id).toBe('urn:li:ugcPost:post123');
+      expect(id.externalPostId).toBe('urn:li:ugcPost:post123');
       expect(fetchSpy).toHaveBeenCalledTimes(4);
 
       // Verify register call has correct owner URN
@@ -109,9 +109,9 @@ describe('LinkedInPublisher', () => {
       fetchSpy.mockResolvedValueOnce(new Response('Forbidden', { status: 403 }));
 
       const publisher = new LinkedInPublisher('bad_token', AUTHOR_URN);
-      await expect(
-        publisher.upload('https://v.mp4', { caption: 'test', hashtags: [] }),
-      ).rejects.toThrow('Register upload failed (403)');
+  const _errResult = await publisher.publish('https://v.mp4', { caption: 'test', hashtags: [] });
+  expect(_errResult.success).toBe(false);
+  expect(_errResult.error).toMatch('Register upload failed (403)');
 
       fetchSpy.mockRestore();
     });
@@ -121,7 +121,7 @@ describe('LinkedInPublisher', () => {
       fetchSpy.mockResolvedValueOnce(new Response(null, { status: 404 }));
 
       const publisher = new LinkedInPublisher('tok', AUTHOR_URN);
-      const s = await publisher.pollStatus('urn:li:ugcPost:missing');
+      const s = await publisher.getStatus('urn:li:ugcPost:missing');
       expect(s).toBe('failed');
       fetchSpy.mockRestore();
     });
@@ -154,7 +154,7 @@ describe('LinkedInPublisher', () => {
       );
 
       const publisher = new LinkedInPublisher('tok', AUTHOR_URN);
-      await publisher.upload('https://v.mp4', { caption: longCaption, hashtags: [] });
+      await publisher.publish('https://v.mp4', { caption: longCaption, hashtags: [] });
 
       const postBody = JSON.parse(fetchSpy.mock.calls[3][1]?.body as string) as {
         commentary: string;

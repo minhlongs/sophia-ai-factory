@@ -31,7 +31,7 @@ describe('TikTokPublisher — FTC caption prefix', () => {
 
   it('prepends #ad to caption if missing', async () => {
     const publisher = new TikTokPublisher('access-token');
-    await publisher.upload('https://cdn.example.com/video.mp4', {
+    await publisher.publish('https://cdn.example.com/video.mp4', {
       caption: 'Check out this product!',
       hashtags: ['promo'],
     });
@@ -43,7 +43,7 @@ describe('TikTokPublisher — FTC caption prefix', () => {
 
   it('does not double-prefix if caption already starts with #ad', async () => {
     const publisher = new TikTokPublisher('access-token');
-    await publisher.upload('https://cdn.example.com/video.mp4', {
+    await publisher.publish('https://cdn.example.com/video.mp4', {
       caption: '#ad Great product here',
       hashtags: [],
     });
@@ -56,7 +56,7 @@ describe('TikTokPublisher — FTC caption prefix', () => {
   it('truncates caption with prefix to 150 chars', async () => {
     const longCaption = 'A'.repeat(200);
     const publisher = new TikTokPublisher('access-token');
-    await publisher.upload('https://cdn.example.com/video.mp4', {
+    await publisher.publish('https://cdn.example.com/video.mp4', {
       caption: longCaption,
       hashtags: [],
     });

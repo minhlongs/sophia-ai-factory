@@ -22,16 +22,16 @@ describe('TelegramPublisher', () => {
   describe('mock mode (no bot token)', () => {
     it('returns mock_telegram_ id when botToken is empty', async () => {
       const pub = new TelegramPublisher('', '-100123');
-      const id = await pub.upload('https://example.com/v.mp4', {
+      const id = await pub.publish('https://example.com/v.mp4', {
         caption: 'hello',
         hashtags: ['#ai'],
       });
-      expect(id).toMatch(/^mock_telegram_/);
+      expect(id.externalPostId).toMatch(/^mock_telegram_/);
     });
 
     it('pollStatus returns live for mock id', async () => {
       const pub = new TelegramPublisher('', '-100123');
-      const s = await pub.pollStatus('mock_telegram_1');
+      const s = await pub.getStatus('mock_telegram_1');
       expect(s).toBe('live');
     });
 
@@ -54,12 +54,12 @@ describe('TelegramPublisher', () => {
       ]);
 
       const pub = new TelegramPublisher('TOKEN', '-100123');
-      const id = await pub.upload('https://example.com/v.mp4', {
+      const id = await pub.publish('https://example.com/v.mp4', {
         caption: '#ad Test',
         hashtags: ['#ai'],
       });
 
-      expect(id).toBe('42');
+      expect(id.externalPostId).toBe('42');
       expect(fetchSpy).toHaveBeenCalledTimes(1);
       expect(fetchSpy.mock.calls[0][0]).toContain('/sendVideo');
       fetchSpy.mockRestore();
@@ -74,9 +74,9 @@ describe('TelegramPublisher', () => {
       ]);
 
       const pub = new TelegramPublisher('TOKEN', '-100123');
-      const id = await pub.upload('', { caption: 'text only', hashtags: [] });
+      const id = await pub.publish('', { caption: 'text only', hashtags: [] });
 
-      expect(id).toBe('7');
+      expect(id.externalPostId).toBe('7');
       expect(fetchSpy.mock.calls[0][0]).toContain('/sendMessage');
       fetchSpy.mockRestore();
     });
@@ -87,9 +87,9 @@ describe('TelegramPublisher', () => {
       ]);
 
       const pub = new TelegramPublisher('TOKEN', '-100123');
-      await expect(
-        pub.upload('https://example.com/v.mp4', { caption: 'c', hashtags: [] }),
-      ).rejects.toThrow('Telegram sendVideo failed: 400');
+  const _errResult = await pub.publish('https://example.com/v.mp4', { caption: 'c', hashtags: [] });
+  expect(_errResult.success).toBe(false);
+  expect(_errResult.error).toMatch('Telegram sendVideo failed: 400');
       fetchSpy.mockRestore();
     });
 
@@ -102,9 +102,9 @@ describe('TelegramPublisher', () => {
       ]);
 
       const pub = new TelegramPublisher('TOKEN', '-100123');
-      await expect(
-        pub.upload('https://example.com/v.mp4', { caption: 'c', hashtags: [] }),
-      ).rejects.toThrow('ok=false');
+  const _errResult2 = await pub.publish('https://example.com/v.mp4', { caption: 'c', hashtags: [] });
+  expect(_errResult2.success).toBe(false);
+  expect(_errResult2.error).toMatch('ok=false');
       fetchSpy.mockRestore();
     });
   });
@@ -114,7 +114,7 @@ describe('TelegramPublisher', () => {
       const fetchSpy = setupFetchMock([new Response(null, { status: 404 })]);
 
       const pub = new TelegramPublisher('TOKEN', '-100123');
-      const s = await pub.pollStatus('99');
+      const s = await pub.getStatus('99');
       expect(s).toBe('failed');
       fetchSpy.mockRestore();
     });
@@ -128,7 +128,7 @@ describe('TelegramPublisher', () => {
       ]);
 
       const pub = new TelegramPublisher('TOKEN', '-100123');
-      const s = await pub.pollStatus('99');
+      const s = await pub.getStatus('99');
       expect(s).toBe('live');
       fetchSpy.mockRestore();
     });
@@ -139,7 +139,7 @@ describe('TelegramPublisher', () => {
       ]);
 
       const pub = new TelegramPublisher('TOKEN', '-100123');
-      const s = await pub.pollStatus('99');
+      const s = await pub.getStatus('99');
       expect(s).toBe('processing');
       fetchSpy.mockRestore();
     });

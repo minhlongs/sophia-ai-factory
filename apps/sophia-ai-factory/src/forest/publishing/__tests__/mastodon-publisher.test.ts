@@ -27,8 +27,8 @@ describe('MastodonPublisher', () => {
   describe('mock mode', () => {
     it('returns mock_mastodon_ id when MASTODON_INSTANCE_URL absent', async () => {
       const p = new MastodonPublisher('tok', 'https://mastodon.social|u1');
-      const id = await p.upload('https://v.mp4', { caption: 'hi', hashtags: [] });
-      expect(id).toMatch(/^mock_mastodon_/);
+      const id = await p.publish('https://v.mp4', { caption: 'hi', hashtags: [] });
+      expect(id.externalPostId).toMatch(/^mock_mastodon_/);
     });
   });
 
@@ -41,8 +41,8 @@ describe('MastodonPublisher', () => {
         new Response(JSON.stringify({ id: 'status_99', uri: 'https://mastodon.social/@user/99' }), { status: 200 }),
       );
       const p = new MastodonPublisher('tok', 'https://mastodon.social|user1');
-      const id = await p.upload('https://v.mp4', { caption: 'test', hashtags: ['#ai'] });
-      expect(id).toBe('status_99');
+      const id = await p.publish('https://v.mp4', { caption: 'test', hashtags: ['#ai'] });
+      expect(id.externalPostId).toBe('status_99');
       fetchSpy.mockRestore();
     });
 
@@ -50,7 +50,9 @@ describe('MastodonPublisher', () => {
       const fetchSpy = vi.spyOn(globalThis, 'fetch');
       fetchSpy.mockResolvedValueOnce(new Response('unauthorized', { status: 401 }));
       const p = new MastodonPublisher('tok', 'https://mastodon.social|user1');
-      await expect(p.upload('https://v.mp4', { caption: 'x', hashtags: [] })).rejects.toThrow(/statuses failed/);
+      const _result = await p.publish('https://v.mp4', { caption: 'x', hashtags: [] });
+      expect(_result.success).toBe(false);
+      expect(_result.error).toMatch(/statuses failed/);
       fetchSpy.mockRestore();
     });
 

@@ -7,9 +7,9 @@ import { describe, it, expect, vi } from 'vitest';
 import type { NextRequest, NextResponse } from 'next/server';
 import {
   isWebhookRoute,
-  getMaxSizeForPath,
+  getSizeLimit,
   rejectOversizedRequest,
-  DEFAULT_MAX_REQUEST_SIZE,
+  MAX_REQUEST_SIZE,
   MAX_WEBHOOK_SIZE,
 } from '@/forest/middleware/request-size-limit';
 
@@ -44,20 +44,20 @@ describe('isWebhookRoute', () => {
   });
 });
 
-// ─── getMaxSizeForPath ────────────────────────────────────────────────────────
+// ─── getSizeLimit ────────────────────────────────────────────────────────
 
-describe('getMaxSizeForPath', () => {
+describe('getSizeLimit', () => {
   it('returns webhook limit for webhook routes', () => {
-    expect(getMaxSizeForPath('/api/webhooks/heygen')).toBe(MAX_WEBHOOK_SIZE);
+    expect(getSizeLimit('/api/webhooks/heygen')).toBe(MAX_WEBHOOK_SIZE);
   });
 
   it('returns default limit for non-webhook routes', () => {
-    expect(getMaxSizeForPath('/api/v1/missions')).toBe(DEFAULT_MAX_REQUEST_SIZE);
-    expect(getMaxSizeForPath('/api/cron/d1-backup')).toBe(DEFAULT_MAX_REQUEST_SIZE);
+    expect(getSizeLimit('/api/v1/missions')).toBe(MAX_REQUEST_SIZE);
+    expect(getSizeLimit('/api/cron/d1-backup')).toBe(MAX_REQUEST_SIZE);
   });
 
   it('returns correct byte values', () => {
-    expect(DEFAULT_MAX_REQUEST_SIZE).toBe(10 * 1024 * 1024); // 10MB
+    expect(MAX_REQUEST_SIZE).toBe(10 * 1024 * 1024); // 10MB
     expect(MAX_WEBHOOK_SIZE).toBe(50 * 1024 * 1024); // 50MB
   });
 });
@@ -67,27 +67,27 @@ describe('getMaxSizeForPath', () => {
 describe('rejectOversizedRequest', () => {
   it('returns null when no Content-Length header', () => {
     const req = makeRequest(null);
-    const result = rejectOversizedRequest(req, DEFAULT_MAX_REQUEST_SIZE);
+    const result = rejectOversizedRequest(req, MAX_REQUEST_SIZE);
     expect(result).toBeNull();
   });
 
   it('returns null when request is within limit', () => {
     const req = makeRequest(String(1024)); // 1KB
-    const result = rejectOversizedRequest(req, DEFAULT_MAX_REQUEST_SIZE);
+    const result = rejectOversizedRequest(req, MAX_REQUEST_SIZE);
     expect(result).toBeNull();
   });
 
   it('returns 413 response when request exceeds limit', async () => {
-    const oversized = DEFAULT_MAX_REQUEST_SIZE + 1;
+    const oversized = MAX_REQUEST_SIZE + 1;
     const req = makeRequest(String(oversized));
-    const result = rejectOversizedRequest(req, DEFAULT_MAX_REQUEST_SIZE);
+    const result = rejectOversizedRequest(req, MAX_REQUEST_SIZE);
 
     expect(result).not.toBeNull();
     expect(result!.status).toBe(413);
     const body = (await result!.json()) as { error: string; detail: string };
     expect(body.error).toBe('Payload too large');
     expect(body.detail).toContain(String(oversized));
-    expect(body.detail).toContain(String(DEFAULT_MAX_REQUEST_SIZE));
+    expect(body.detail).toContain(String(MAX_REQUEST_SIZE));
   });
 
   it('returns 413 for webhook exceeding webhook limit', async () => {
@@ -100,20 +100,20 @@ describe('rejectOversizedRequest', () => {
   });
 
   it('allows request at exactly the limit', () => {
-    const req = makeRequest(String(DEFAULT_MAX_REQUEST_SIZE));
-    const result = rejectOversizedRequest(req, DEFAULT_MAX_REQUEST_SIZE);
+    const req = makeRequest(String(MAX_REQUEST_SIZE));
+    const result = rejectOversizedRequest(req, MAX_REQUEST_SIZE);
     expect(result).toBeNull();
   });
 
   it('handles non-numeric Content-Length gracefully', () => {
     const req = makeRequest('not-a-number');
-    const result = rejectOversizedRequest(req, DEFAULT_MAX_REQUEST_SIZE);
+    const result = rejectOversizedRequest(req, MAX_REQUEST_SIZE);
     expect(result).toBeNull();
   });
 
   it('handles negative Content-Length gracefully', () => {
     const req = makeRequest('-1');
-    const result = rejectOversizedRequest(req, DEFAULT_MAX_REQUEST_SIZE);
+    const result = rejectOversizedRequest(req, MAX_REQUEST_SIZE);
     expect(result).toBeNull();
   });
 });
