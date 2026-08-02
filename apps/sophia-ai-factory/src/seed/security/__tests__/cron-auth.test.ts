@@ -128,6 +128,8 @@ describe('verifyCronAuth', () => {
   describe('dev mode bypass', () => {
     it('allows in development without any auth', () => {
       vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('NEXT_PUBLIC_MOCK_AI_SERVICES', 'false');
+    vi.stubEnv('PLAYWRIGHT_TEST_BASE_URL', '');
       const req = makeRequest();
       expect(verifyCronAuth(req)).toBeNull();
     });
