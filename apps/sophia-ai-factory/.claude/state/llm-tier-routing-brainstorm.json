@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-07-27T18:25:00Z",
+  "mode": "ultracode",
+  "topic": "llm tier routing",
+  "recommendedPath": "bridge-layer",
+  "recommendedImplementation": {
+    "file": "src/land/openclaw/llm-tier-bridge.ts",
+    "routing": {
+      "BASIC": "lite",
+      "PREMIUM": "standard",
+      "ENTERPRISE": "max",
+      "MASTER": "max"
+    },
+    "budgetModel": "qwen3:32b",
+    "costModel": "claude-haiku-3-5",
+    "maxModel": "claude-sonnet-4-5",
+    "notes": "Dùng code cũ có sẵn, không bắt tay viết lại từ đầu"
+  },
+  "accepted": true,
+  "nextAction": "wire hot paths + tests",
+  "status": "delivered",
+  "voidReturned": false
+}

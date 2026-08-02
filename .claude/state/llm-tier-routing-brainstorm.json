@@ -1,0 +1,34 @@
+{
+  "timestamp": "2026-07-27T18:40:00Z",
+  "mode": "ultracode",
+  "topic": "llm tier routing",
+  "recommendedPath": "bridge-layer-wrapper",
+  "files": {
+    "bridge": "src/land/openclaw/llm-tier-bridge.ts",
+    "router": "src/land/openclaw/llm-router.ts",
+    "costTracker": "src/land/openclaw/llm-cost-tracker.ts",
+    "resilientClient": "src/seed/inference/openrouter-client.ts",
+    "tierConfigs": "src/seed/config/tiers/tier-configs.ts",
+    "types": "src/seed/types/index.ts",
+    "tokenCounter": "src/seed/ai/token-counter.ts",
+    "contextWindow": "src/seed/ai/context-window.ts",
+    "plan": "apps/sophia-ai-factory/plans/260727-brainstorm-llm-tier-routing/PLAN.md"
+  },
+  "recommendedImplementation": {
+    "file": "src/land/openclaw/llm-tier-bridge.ts",
+    "routing": {
+      "BASIC": "lite",
+      "PREMIUM": "standard",
+      "ENTERPRISE": "max",
+      "MASTER": "max"
+    },
+    "budgetModel": "qwen3:32b",
+    "costModel": "claude-haiku-3-5",
+    "maxModel": "claude-sonnet-4-5",
+    "notes": "Dùng code cũ có sẵn, không bắt tay viết lại từ đầu"
+  },
+  "accepted": true,
+  "nextAction": "wire bridge into hot paths + create llm-router tests",
+  "status": "delivered",
+  "voidReturned": false
+}

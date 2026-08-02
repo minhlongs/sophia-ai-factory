@@ -1,0 +1,54 @@
+{
+  "timestamp": "2026-07-27T18:45:00Z",
+  "tool": "tsc --noEmit",
+  "status": "FAIL",
+  "openrouter-client.ts": {
+    "unboundImports": false,
+    "notes": "tokenCounter + DEFAULT_MODEL_LIMITS imports resolve correctly from '@/seed/ai/*'"
+  },
+  "realFailureClusters": [
+    {
+      "path": "forest/publishing/__tests__/*",
+      "error": "TS2339: Property 'upload'/'pollStatus' does not exist on type '*Publisher'",
+      "count": "25+",
+      "fixStrategy": "test mocks call methods that interface does not declare"
+    },
+    {
+      "path": "land/middleware/__tests__/social-tier-gate.test.ts",
+      "lines": "75,84,94,101,106,111,117,127,132,137",
+      "error": "TS2345: Request<unknown, CfProperties<unknown>> not assignable to NextRequest",
+      "fixStrategy": "cast test Request to NextRequest or import correct type"
+    },
+    {
+      "path": "middleware.ts",
+      "line": 116,
+      "error": "TS2345: object not assignable to string",
+      "fixStrategy": "stringify object or change param type"
+    },
+    {
+      "path": "seed/db/agency-api-key.ts",
+      "line": 15,
+      "error": "TS2322: Promise<string> not assignable to string",
+      "fixStrategy": "await async call or change return type to Promise"
+    },
+    {
+      "path": "seed/db/repositories/__tests__/agency-repo.test.ts",
+      "lines": "134,146,156,231,249,298,308,341,373",
+      "error": "TS2339: Property 'value'/'code' does not exist on Result/Error type",
+      "fixStrategy": "update test assertions to match actual Result<T> shape"
+    },
+    {
+      "path": "seed/db/repositories/__tests__/cross-agency-isolation.test.ts",
+      "lines": "246,282,429,454,494,506",
+      "error": "TS2339: Property 'value'/'code' does not exist",
+      "fixStrategy": "same as agency-repo"
+    }
+  ],
+  "recommendedBatchFixOrder": [
+    "land/middleware/__tests__/social-tier-gate.test.ts",
+    "seed/db/agency-api-key.ts",
+    "seed/db/repositories/__tests__/agency-repo.test.ts",
+    "seed/db/repositories/__tests__/cross-agency-isolation.test.ts",
+    "forest/publishing/__tests__/*"
+  ]
+}
