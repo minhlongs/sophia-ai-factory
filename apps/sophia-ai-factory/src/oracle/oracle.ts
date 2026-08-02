@@ -6,8 +6,7 @@
  * into those treaps via the Mode layer.
  */
 
-import type { ModeChoice, ModeCtx, ModeState } from '../core/mode/mode'
-import type { AgentRecord } from '../core/agent/agent'
+import type { ModeChoice, ModeState } from '../core/mode/mode'
 
 export interface OracleTick {
   agentId: string

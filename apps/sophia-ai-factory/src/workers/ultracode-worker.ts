@@ -1,3 +1,8 @@
+import type { D1Client } from '@/seed/db/d1-query-builder'
+import { createLogger } from '@/seed/utils/logger-utility'
+
+const log = createLogger('workers/ultracode')
+
 /**
  * ultracode-worker — standalone Cloudflare Worker for ultracode runtime.
  *
@@ -6,8 +11,19 @@
  *         POST /api/v1/agent/:id/chat — Agent chat endpoint (future)
  */
 
+interface TelegramMessage {
+  chat: { id: string }
+  from: { first_name: string }
+  text?: string
+}
+
+interface TelegramUpdate {
+  message?: TelegramMessage
+  callback_query?: { message: TelegramMessage }
+}
+
 export interface UltracodeEnv {
-  DB: D1Database
+  DB: D1Client
   TELEGRAM_BOT_TOKEN: string
   ULTRACODE_JWT_PRIVATE_KEY?: string
   ULTRACODE_JWT_PUBLIC_KEY?: string
@@ -47,7 +63,11 @@ import { isAllowed as isForestAllowed, requestPairing as reqForestPairing } from
 
 async function handleTelegram(request: Request, env: UltracodeEnv): Promise<Response> {
   try {
-    const update = (await request.json()) as any
+    const raw = await request.json()
+  const update = raw as TelegramUpdate
+  if (!update || typeof update !== 'object') {
+    return jsonResponse({ status: 'ignored', reason: 'invalid-payload' })
+  }
     const message = update.message || update.callback_query?.message
     if (!message) return jsonResponse({ status: 'ignored', reason: 'no-message' })
 
@@ -74,7 +94,7 @@ async function handleTelegram(request: Request, env: UltracodeEnv): Promise<Resp
     await sendTg(env, chatId, `Echo: ${text}`)
     return jsonResponse({ status: 'ok' })
   } catch (err) {
-    console.error('ultracode worker error', err)
+    log.error('ultracode worker error', err as Record<string, unknown>)
     return new Response(JSON.stringify({ error: String(err) }), { status: 500 })
   }
 }
@@ -98,6 +118,6 @@ async function sendTg(env: UltracodeEnv, chatId: string, text: string): Promise<
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
     })
   } catch (e) {
-    console.error('tg send error', e)
+    log.error('tg send error', e as Record<string, unknown>)
   }
 }

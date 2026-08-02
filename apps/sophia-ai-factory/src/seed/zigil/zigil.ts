@@ -25,7 +25,7 @@ export function createZigil(scope: ZigilScope = 'session'): Zigil {
   const chainId = randomHex(12)
   const issuedAt = new Date().toISOString()
   const payload = `${ZIGIL_VERSION}.${chainId}.${scope}.${issuedAt}`
-  const sig = hmac(payload)
+  const sig = hmacSync(payload)
 
   return {
     value: `${ZIGIL_PREFIX}${base64Url(payload)}.${base64Url(sig)}`,
@@ -43,10 +43,11 @@ export function parseZigil(token: string): Zigil | null {
 
   if (!payloadB64 || !sigB64) return null
 
-  const expectedSig = base64UrlDecode(sigB64)
-  const actualSig = hmac(base64UrlDecode(payloadB64))
+  const expectedSig = Buffer.from(base64UrlDecode(sigB64))
+  const actual = hmacSync(decodeUtf8(base64UrlDecode(payloadB64)))
+  const actualSig = Buffer.from(actual, 'base64url')
 
-  if (expectedSig !== actualSig) return null
+  if (bufsDiffer(expectedSig, actualSig)) return null
 
   const payload = decodeUtf8(base64UrlDecode(payloadB64))
   const [version, chainId, scope, issuedAt] = payload.split('.')
@@ -64,17 +65,13 @@ export function zigilChain(z: Zigil): string {
 
 function randomHex(bytes: number): string {
   const arr = crypto.getRandomValues(new Uint8Array(bytes))
-  return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('')
+  return Array.from(arr, (b) => b.toString(16).padStart(2, '0')).join('')
 }
 
-function hmac(message: string): string {
-  const keyBuf = new TextEncoder().encode('ultracode.zigil.v1')
-  const enc = new TextEncoder().encode(message)
-  const key = await crypto.subtle.importKey(
-    'raw', keyBuf, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
-  )
-  const sig = await crypto.subtle.sign('HMAC', key, enc)
-  return b64(sig)
+function hmacSync(message: string): string {
+  const h = crypto.createHmac('sha256', 'ultracode.zigil.v1')
+  h.update(message)
+  return h.digest('base64url')
 }
 
 function base64Url(input: string): string {
@@ -90,4 +87,11 @@ function base64UrlDecode(input: string): Uint8Array {
 function decodeUtf8(buf: Uint8Array): string {
   const decoder = new TextDecoder()
   return decoder.decode(buf)
+}
+
+function bufsDiffer(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return true
+  let acc = 0
+  for (let i = 0; i < a.length; i++) acc |= a[i] ^ b[i]
+  return acc !== 0
 }
