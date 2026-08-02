@@ -63,7 +63,7 @@ const ENDPOINT_GROUPS: EndpointGroup[] = [
       {
         method: "GET",
         path: "/api/cron/pending-orders-cleanup",
-        description: "Clean up stale pending orders (internal cron). Requires CRON_SECRET header",
+        description: "Clean up stale pending orders (internal cron — authenticated)",
         auth: "bearer",
         example: JSON.stringify({ cleaned: 5 }, null, 2),
       },

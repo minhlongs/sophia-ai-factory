@@ -75,6 +75,25 @@ bash scripts/apply-migrations.sh HEAD~3
 npx wrangler d1 execute sophia-raas-db --file=migrations/<NNNN_name>.sql --remote
 ```
 
+## Fallback Decision Matrix
+
+Use this matrix when a deploy, smoke, or health check does not land green.
+
+| Symptom | Detection | Action |
+|---|---|---|
+| Stale version after `deploy:full` | `/api/version` shortSha != local HEAD | Re-run `npm run deploy:full`. If second attempt also mismatches, do NOT push again — investigate `wrangler.toml` binding or build artifact. |
+| Smoke fails after green SHA | `post-deploy-smoke.mjs` non-zero | Manual decision: keep live with regression or rollback. Do not redeploy without root-cause. |
+| D1 migration missing after deploy | `migrations/` changed but D1 schema stale | Run `bash scripts/apply-migrations.sh` (no redeploy needed). |
+| Worker 500 after deploy | `curl -sI` returns 5xx | Rollback immediately: `npx wrangler rollback --name sophia-ai-factory --message "rollback 5xx post deploy <sha>" --yes`. |
+| Want prior known-good version | Specific SHA known | `git checkout <sha> && npm run deploy:full && git checkout main`. |
+| Want previous live version without SHA | Last known good is previous live | `npx wrangler rollback --name sophia-ai-factory --message "rollback to last live" --yes`. |
+| Needs partial rollback (migrations only) | Schema change broke queries | No rollback path — D1 migrations are immutable. Revert migration in new patch file + redeploy. |
+
+**Decision rules:**
+- **Green SHA + failing smoke:** treat as "live but broken" — operator decides rollback manually. `deploy-with-sha.sh` does NOT auto-rollback.
+- **Health worker distinct:** `--env health` worker has its own secrets. If health check fails but main worker is green, verify `HEALTH_CHECK_SECRET` propagation, not rollback.
+- **No stale redeploys:** never run `deploy:full` twice in a row without investigating why the first attempt produced a deploy artifact mismatch.
+
 ## Rollback
 
 ```bash
@@ -88,7 +107,7 @@ npm run deploy:full
 git checkout main
 ```
 
-## ❌ Anti-Patterns
+## ⚠️ Anti-Patterns
 
 - ❌ Polling `gh run list` — GitHub Actions is disabled; will always return 0 results
 - ❌ Curl HTTP 200 without SHA check — may be stale deploy from prior wrangler invocation

@@ -60,17 +60,61 @@ trap 'log_error "Deploy failed unexpectedly at line $LINENO"' ERR
 # wrangler/opennext can reach api.cloudflare.com/workers directly.
 unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy ALL_PROXY all_proxy
 
+# ─── Kill-switch reason validation (2026-08-02 — Kongming hardening) ─────
+# Any emergency bypass flag (SKIP_* / ALLOW_*) requires a non-empty operator-authored
+# justification. Set DEPLOY_KILLSWITCH_REASON="<why>" before running.
+# This blocks silent bypass of test gate, TS gate, build, signature check, migration check, etc.
+if [ -n "${DEPLOY_KILLSWITCH_REASON:-}" ]; then
+  trimmed="${DEPLOY_KILLSWITCH_REASON#"${DEPLOY_KILLSWITCH_REASON%%[![:space:]]*}"}"
+  trimmed="${trimmed%"${trimmed##*[![:space:]]}"}"
+  if [ -z "$trimmed" ]; then
+    echo "❌ DEPLOY_KILLSWITCH_REASON is set but empty — a non-empty operator-authored justification is required for any emergency bypass."
+    echo ' Set DEPLOY_KILLSWITCH_REASON="<why>" before rerunning.'
+    exit 2
+  fi
+  echo "🔑 Kill-switch reason on record: ${trimmed}"
+fi
+
+# Helper: require a non-empty, non-placeholder kill-switch justification.
+# Usage: require_killswitch_reason <flag_name> <reason_env_var>
+# Returns 0 if a valid justification is present, exits 2 otherwise.
+require_killswitch_reason() {
+  local flag_name="$1"
+  local reason_var="$2"
+  local reason="${!reason_var:-}"
+  if [ -z "$reason" ]; then
+    echo "❌ ${flag_name} requires ${reason_var} — a non-empty operator-authored justification."
+    echo "   Set ${reason_var}=\"<why>\" before rerunning."
+    exit 2
+  fi
+  local trimmed
+  trimmed="${reason#"${reason%%[![:space:]]*}"}"
+  trimmed="${trimmed%"${trimmed##*[![:space:]]}"}"
+  if [ -z "$trimmed" ]; then
+    echo "❌ ${reason_var} is set but empty — a non-empty operator-authored justification is required for ${flag_name}."
+    echo '   Set '"${reason_var}"'="<why>" before rerunning.'
+    exit 2
+  fi
+  if [[ "$trimmed" =~ (Emergency\s*bypass|placeholder|TODO|FIXME|CHANGE_ME|REPLACE_WITH) ]]; then
+    echo "❌ ${reason_var} looks like a placeholder — provide a specific operator-authored justification for ${flag_name}."
+    echo "   Current value: ${trimmed}"
+    echo '   Set '"${reason_var}"'="<date> <operator> <reason>" before rerunning.'
+    exit 2
+  fi
+  echo "📋 ${flag_name} reason: ${trimmed}"
+}
+
 # ─── Step 0: Push precondition (2026-05-15 — prevent prod/git divergence) ────
 # Reject deploy if local HEAD has commits not yet on origin/main. Latent divergence
 # is the root cause of incident 2026-05-13/15 where prod ran code that existed
 # only in the deployer's local reflog. See plans/260515-0830-gap-91to93/phase-01.
-# Emergency bypass: ALLOW_UNPUSHED_DEPLOY=1 npm run deploy:full
+# Emergency bypass: ALLOW_UNPUSHED_DEPLOY=1 ALLOW_UNPUSHED_DEPLOY_REASON="<why>" npm run deploy:full
 if [ "${ALLOW_UNPUSHED_DEPLOY:-0}" != "1" ]; then
   UNPUSHED=$(git -C "$REPO_ROOT" log origin/main..HEAD --oneline 2>>"$DEPLOY_LOG" | wc -l | tr -d ' ')
   if [ "$UNPUSHED" != "0" ]; then
     echo "❌ Refusing to deploy: $UNPUSHED commit(s) on HEAD but not on origin/main."
     echo "Run: git push origin main && git push gitlab main"
-    echo "Emergency bypass: ALLOW_UNPUSHED_DEPLOY=1 npm run deploy:full"
+    echo "Emergency bypass: ALLOW_UNPUSHED_DEPLOY=1 ALLOW_UNPUSHED_DEPLOY_REASON="<why>" npm run deploy:full"
     exit 2
   fi
   # Refresh git index before diff check — git caches stat info (mtime/size) per file
@@ -106,6 +150,9 @@ if [ "${ALLOW_UNPUSHED_DEPLOY:-0}" != "1" ]; then
     exit 2
   fi
   echo "✅ Push precondition: HEAD == origin/main, working tree clean"
+else
+   require_killswitch_reason "ALLOW_UNPUSHED_DEPLOY" "ALLOW_UNPUSHED_DEPLOY_REASON"
+  echo "⚠️ ALLOW_UNPUSHED_DEPLOY=1 — BYPASSING push precondition (${ALLOW_UNPUSHED_DEPLOY_REASON})" 
 fi
 
 # Collect version metadata from git before any manifest/attestation step uses it.
@@ -238,7 +285,8 @@ if [ "${SKIP_ATTESTATION:-0}" != "1" ]; then
     echo "✅ Attestation passed: ${ATTESTATION_COUNT} operator(s) signed"
   fi
 else
-  echo "⚠️ SKIP_ATTESTATION=1 — BYPASSING deploy attestation (emergency hotfix)"
+  require_killswitch_reason "SKIP_ATTESTATION" "SKIP_ATTESTATION_REASON"
+echo "⚠️ SKIP_ATTESTATION=1 — BYPASSING deploy attestation (emergency hotfix)"
   echo "⚠️ Document bypass reason: date, operator, reason, rollback plan"
   echo "⚠️ SOC 2 CC6.1: Re-attest within 24h or next business day"
   # Set defaults for audit payload when skipping attestation
@@ -257,7 +305,8 @@ else
   if [ -n "${DEPLOY_GUARD_API_TOKEN:-}" ]; then
     echo "==> Recording Deploy Guard emergency override"
     # Read reason from environment or prompt? For automation, use SKIP_ATTESTATION_REASON env var
-    OVERRIDE_REASON="${SKIP_ATTESTATION_REASON:-Emergency bypass: SKIP_ATTESTATION=1}"
+    require_killswitch_reason "SKIP_ATTESTATION" "SKIP_ATTESTATION_REASON"
+  OVERRIDE_REASON="${SKIP_ATTESTATION_REASON}"
     if ! curl --fail -fsS -X POST "https://sophia.agencyos.network/api/admin/deploy-guard/override" \
       -H "Content-Type: application/json" \
       -H "X-Deploy-Guard-Token: ${DEPLOY_GUARD_API_TOKEN}" \
@@ -314,6 +363,7 @@ if [ "${SKIP_TSC:-0}" != "1" ]; then
   echo "==> npm run type-check (TS gate)"
   npm run type-check
 else
+require_killswitch_reason "SKIP_TSC" "SKIP_TSC_REASON"
   echo "⚠️  SKIP_TSC=1 — bypassing TypeScript gate"
 fi
 
@@ -325,6 +375,7 @@ if [ "${SKIP_TESTS:-0}" != "1" ]; then
   echo "==> npm test (pre-deploy test gate)"
   npm test
 else
+require_killswitch_reason "SKIP_TESTS" "SKIP_TESTS_REASON"
   echo "⚠️  SKIP_TESTS=1 — bypassing test gate (emergency hotfix)"
 fi
 
@@ -337,6 +388,7 @@ if [ "${SKIP_SIGNATURE_CHECK:-0}" != "1" ]; then
     exit 2
   }
 else
+  require_killswitch_reason "SKIP_SIGNATURE_CHECK" "SKIP_SIGNATURE_CHECK_REASON"
   echo "⚠️ SKIP_SIGNATURE_CHECK=1 — bypassing commit signature check"
 fi
 
@@ -351,12 +403,14 @@ if [ "${SKIP_PRE_DEPLOY_GATE:-0}" != "1" ]; then
   fi
   echo "✅ pre-deploy gate passed"
 else
+  require_killswitch_reason "SKIP_PRE_DEPLOY_GATE" "SKIP_PRE_DEPLOY_GATE_REASON"
   echo "⚠️ SKIP_PRE_DEPLOY_GATE=1 — bypassing pre-deploy gate"
 fi
 
 
 # ─── Step 1: Next.js build ───────────────────────────────────────────────────
 # NEXT_PUBLIC_* vars are baked into the client bundle at build time.
+require_killswitch_reason "SKIP_NEXT_BUILD" "SKIP_NEXT_BUILD_REASON"
 if [ "${SKIP_NEXT_BUILD:-0}" = "1" ]; then
   if [ ! -f .next/BUILD_ID ]; then
     echo "❌ SKIP_NEXT_BUILD=1 but .next/BUILD_ID is missing."

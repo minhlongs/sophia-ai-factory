@@ -20,7 +20,7 @@ describe('pre-deploy-gate', () => {
 
   const mockedExistsSync = fs.existsSync as ReturnType<typeof vi.fn>;
   const mockedReadFileSync = fs.readFileSync as ReturnType<typeof vi.fn>;
-  const mockedExecSync = childProcess.execSync as ReturnType<typeof vi.fn>;
+  const mockedExecSync = childProcess.execSync as any;
 
   beforeEach(() => {
     originalEnv = { ...process.env };

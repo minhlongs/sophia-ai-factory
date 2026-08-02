@@ -58,6 +58,7 @@ function mockD1() {
   c.prepare = vi.fn().mockReturnValue(c)
 
   // Wrap .first() to unwrap {data, error} → throw on error, return raw data on success
+  const origFirst = c.first
   c.first = vi.fn().mockImplementation(async (...args: unknown[]) => {
     const result = await Promise.resolve(origFirst(...args))
     // If data is null and no error → return null (not found)
@@ -72,6 +73,7 @@ function mockD1() {
   })
 
   // Wrap .all() to unwrap {data, error} → return raw results array
+  const origAll = c.all
   c.all = vi.fn().mockImplementation(async (...args: unknown[]) => {
     const result = await Promise.resolve(origAll(...args))
     if (result && typeof result === 'object' && 'error' in result) {

@@ -15,13 +15,89 @@
  */
 
 import { execSync } from 'child_process';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const BASE_URL = process.env.PREVIEW_URL || 'http://localhost:3000';
+// ─── Secrets reference ──────────────────────────────────────────────────────
+// `.env.production.example` documents the operator-required secrets.
+// This file is reference-only — production secrets are injected via
+// `wrangler secret put` and `wrangler.toml` bindings. The local test env
+// is `.dev.vars` (Cloudflare convention). Both the reference file and the
+// live env are checked so operators get actionable guidance on what is
+// missing without leaking any actual values.
+const SECRETS_REF_PATH = join(ROOT, '.env.production.example');
+const DEV_VARS_PATH = join(ROOT, '.dev.vars');
+
+function parseEnvFile(path) {
+  try {
+    const content = readFileSync(path, 'utf-8');
+    return content
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line && !line.startsWith('#') && line.includes('='))
+      .map(line => {
+        const idx = line.indexOf('=');
+        return line.slice(0, idx).trim();
+      });
+  } catch {
+    return [];
+  }
+}
+
+function parseDevVars(path) {
+  try {
+    const content = readFileSync(path, 'utf-8');
+    return content
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line && !line.startsWith('#') && line.includes('='))
+      .map(line => {
+        const idx = line.indexOf('=');
+        return line.slice(0, idx).trim();
+      });
+  } catch {
+    return [];
+  }
+}
+
+// Secrets whose runtime value comes from `wrangler secret put` rather than the
+// developer's `.env.local` / `.dev.vars`. These SHOULD be absent from
+// `.dev.vars` (the operator sets them in the CF Workers console). If they
+// appear in `process.env` they pass; if not, they are flagged as a warning
+// rather than a hard failure so the gate does not block local development.
+const CLOUDFLARE_SECRET_NAMES = new Set([
+  'BETTER_AUTH_SECRET',
+  'CRON_SECRET',
+  'INTERNAL_API_SECRET',
+  'TELEGRAM_WEBHOOK_SECRET',
+ 'HEALTH_CHECK_SECRET',
+  'NOWPAYMENTS_IPN_SECRET',
+  'PAYOS_API_KEY',
+  'PAYOS_CHECKSUM_KEY',
+  'RESEND_API_KEY',
+  'INNGEST_EVENT_KEY',
+  'INNGEST_SIGNING_KEY',
+  'TELEGRAM_BOT_TOKEN',
+  'METRICS_BEARER_TOKEN',
+  'INTROSPECT_TOKEN',
+]);
+
+// Variables baked into the Next.js client bundle at build time via
+// `deploy-with-sha.sh` Step 1's export loop. They are intentionally absent
+// from `.env.production` at runtime.
+const BUILD_TIME_VAR_NAMES = new Set([
+  'NEXT_PUBLIC_APP_URL',
+  'NEXT_PUBLIC_IS_CONFIGURED',
+]);
+
+function isBuildTimeVar(name) {
+  return BUILD_TIME_VAR_NAMES.has(name) || name.startsWith('NEXT_PUBLIC_');
+}
+
 const ALLOWLIST = [
   '/billing', '/contact', '/projects', '/projects/new', '/settings', '/docs',
 // Pre-existing Stitch design links — routes not yet implemented
@@ -156,6 +232,86 @@ async function checkCSSAudit() {
   }
 }
 
+async function checkSecrets() {
+  console.log('\n🔒 Step 4: Secrets Audit');
+  const referenceNames = parseEnvFile(SECRETS_REF_PATH);
+  const devVarNames = parseDevVars(DEV_VARS_PATH);
+  const liveEnvKeys = new Set(Object.keys(process.env));
+
+  if (referenceNames.length === 0) {
+    console.log(' ⚠️ Reference env file missing; cannot compare');
+    return;
+  }
+
+  let stepFail = 0;
+  const warnings = [];
+
+  for (const name of referenceNames) {
+    if (isBuildTimeVar(name)) {
+      // Build-time vars are intentionally absent from runtime env.
+      continue;
+    }
+
+    const inDevVars = devVarNames.includes(name);
+    const inLiveEnv = liveEnvKeys.has(name);
+
+    if (CLOUDFLARE_SECRET_NAMES.has(name)) {
+      if (!inLiveEnv && !inDevVars) {
+        console.info(` ℹ️ ${name} (operator-injected via wrangler secret put)`);
+      }
+      continue;
+    }
+
+    if (!inLiveEnv && !inDevVars) {
+      console.log(` ❌ ${name} → missing from env`);
+      stepFail++;
+    } else if (inLiveEnv && !process.env[name]) {
+      console.log(` ❌ ${name} → present but empty`);
+      stepFail++;
+    }
+  }
+
+  warnings.forEach(msg => console.log(` ⚠️ ${msg}`));
+
+  if (stepFail > 0) {
+    console.log(` 🔴 Secrets: ${stepFail} missing/empty`);
+    failed++;
+  } else {
+    console.log(` ✅ ${referenceNames.length} reference vars audited`);
+  }
+}
+
+async function checkSecretUniqueness() {
+  console.log('\n🔑 Step 5: JWT/HTTP Secret Uniqueness');
+
+
+
+
+  const candidates = [
+    'BETTER_AUTH_SECRET',
+    'CRON_SECRET',
+    'INTERNAL_API_SECRET',
+    'TELEGRAM_WEBHOOK_SECRET',
+ 'HEALTH_CHECK_SECRET',
+];
+  const values = candidates.map(name => process.env[name]).filter(v => v);
+  const unique = new Set(values).size;
+
+  if (values.length < candidates.length) {
+    console.log(' ⚠️ 1+ signing secret absent; skipping uniqueness check');
+    return;
+  }
+
+  if (unique !== candidates.length) {
+    console.log(
+      ` ❌ Signing secrets reuse detected (${unique}/${candidates.length} unique)`
+    );
+    failed++;
+  } else {
+    console.log(` ✅ ${candidates.length} signing secrets are distinct`);
+  }
+}
+
 async function main() {
   if (process.env.SKIP_PRE_DEPLOY_GATE === '1') {
     console.log('⏭️ Skipped (SKIP_PRE_DEPLOY_GATE=1)');
@@ -169,6 +325,8 @@ async function main() {
   await checkRouteIntegrity();
   await checkPageRender();
   await checkCSSAudit();
+await checkSecrets();
+await checkSecretUniqueness();
 
   console.log('\n═══════════════════════════════════');
   if (failed > 0) {
