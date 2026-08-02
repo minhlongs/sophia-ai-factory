@@ -3397,7 +3397,14 @@
           "submit": "Submit",
           "disclaimer": "Disclaimer"
         }
-      }
+      },
+      "allTimeEarnings": "Tổng thu nhập",
+      "awaitingPayout": "Chờ đạt ngưỡng thanh toán",
+      "readyForPayout": "Sẵn sàng cho đợt thanh toán tiếp",
+      "paidOut": "Đã thanh toán",
+      "historicalPayouts": "Lịch sử thanh toán",
+      "noSopsTitle": "Chưa có SOP",
+      "createFirstSop": "Tạo SOP đầu tiên"
     },
     "community": {
       "firstTimeDesc": "Khám phá các SOP được cộng đồng tạo ra",

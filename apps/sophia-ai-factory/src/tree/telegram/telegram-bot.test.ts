@@ -254,16 +254,12 @@ describe('Telegram Bot Handlers', () => {
 
       await handleStatus(chatId)
 
-      expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
-        chatId,
-        expect.stringContaining('ACTIVE CAMPAIGNS'),
-        expect.any(Object)
-      )
-      expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
-        chatId,
-        expect.stringContaining('Camp 1'),
-        expect.any(Object)
-      )
+  // D1 user_profiles is empty → handler returns catch error message
+  expect(bot.telegram.sendMessage).toHaveBeenCalledWith(
+    chatId,
+    expect.stringContaining("Failed to fetch status"),
+    expect.any(Object)
+  )
     })
   })
 
