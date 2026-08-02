@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withEdgeCache } from "@/seed/cache/edge-cache";
 import { timingSafeEqual } from "@/land/webhooks/signature";
 
 // IMPORTANT: do NOT add `export const revalidate = N` here. The route reads
@@ -14,22 +13,22 @@ export const dynamic = "force-dynamic";
 // Full SHA + branch + commitMsg gated behind INTROSPECT_TOKEN bearer.
 
 interface CloudflareEnv {
- COMMIT_SHA?: string;
- DEPLOYED_AT?: string;
- DEPLOY_BRANCH?: string;
- INTROSPECT_TOKEN?: string;
- OPENNEXT_VERSION?: string;
+  COMMIT_SHA?: string;
+  DEPLOYED_AT?: string;
+  DEPLOY_BRANCH?: string;
+  INTROSPECT_TOKEN?: string;
+  OPENNEXT_VERSION?: string;
 }
 
 interface PublicVersionResponse {
- shortSha: string;
- deployedAt: string;
- opennextVersion: string;
+  shortSha: string;
+  deployedAt: string;
+  opennextVersion: string;
 }
 
 interface FullVersionResponse extends PublicVersionResponse {
- commitSha: string;
- branch: string;
+  commitSha: string;
+  branch: string;
 }
 
 // Fallback — overridden at deploy time by deploy-with-sha.sh injecting
@@ -38,61 +37,60 @@ interface FullVersionResponse extends PublicVersionResponse {
 const OPENNEXT_FALLBACK = "1.19.9";
 
 function getEnv(request: NextRequest): CloudflareEnv {
- // CF Workers exposes env via request context; Next.js falls back to process.env
- const ctx = (request as NextRequest & { env?: CloudflareEnv }).env;
- return {
-  COMMIT_SHA: ctx?.COMMIT_SHA ?? process.env.COMMIT_SHA,
-  DEPLOYED_AT: ctx?.DEPLOYED_AT ?? process.env.DEPLOYED_AT,
-  DEPLOY_BRANCH: ctx?.DEPLOY_BRANCH ?? process.env.DEPLOY_BRANCH,
-  INTROSPECT_TOKEN: ctx?.INTROSPECT_TOKEN ?? process.env.INTROSPECT_TOKEN,
-  OPENNEXT_VERSION: ctx?.OPENNEXT_VERSION ?? process.env.OPENNEXT_VERSION,
- };
+  // CF Workers exposes env via request context; Next.js falls back to process.env
+  const ctx = (request as NextRequest & { env?: CloudflareEnv }).env;
+  return {
+    COMMIT_SHA: ctx?.COMMIT_SHA ?? process.env.COMMIT_SHA,
+    DEPLOYED_AT: ctx?.DEPLOYED_AT ?? process.env.DEPLOYED_AT,
+    DEPLOY_BRANCH: ctx?.DEPLOY_BRANCH ?? process.env.DEPLOY_BRANCH,
+    INTROSPECT_TOKEN: ctx?.INTROSPECT_TOKEN ?? process.env.INTROSPECT_TOKEN,
+    OPENNEXT_VERSION: ctx?.OPENNEXT_VERSION ?? process.env.OPENNEXT_VERSION,
+  };
 }
 
 function resolveVersion(env: CloudflareEnv): string {
- return env.OPENNEXT_VERSION ?? OPENNEXT_FALLBACK;
+  return env.OPENNEXT_VERSION ?? OPENNEXT_FALLBACK;
 }
 
 function isIntrospectAuthorized(request: NextRequest, env: CloudflareEnv): boolean {
- const token = env.INTROSPECT_TOKEN;
- if (!token) return false;
- const auth = request.headers.get("authorization") ?? "";
- return timingSafeEqual(auth, `Bearer ${token}`);
+  const token = env.INTROSPECT_TOKEN;
+  if (!token) return false;
+  const auth = request.headers.get("authorization") ?? "";
+  return timingSafeEqual(auth, `Bearer ${token}`);
 }
 
 // Public payload is deploy-stable for 60s — the only field that ever changes
 // between identical SHAs is `deployedAt`, and re-render cost outweighs the
 // staleness signal for the typical caller (uptime probes + load balancers).
 const PUBLIC_CACHE_HEADERS = {
- "Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=120",
+  "Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=120",
 } as const;
 
 export async function GET(request: NextRequest): Promise<Response> {
- const env = getEnv(request);
- const opennextVersion = resolveVersion(env);
+  const env = getEnv(request);
+  const opennextVersion = resolveVersion(env);
 
- // Authorized path: always fresh, never cached.
- if (isIntrospectAuthorized(request, env)) {
-  const commitSha = env.COMMIT_SHA ?? "unknown";
-  const fullBody: FullVersionResponse = {
-   shortSha: commitSha.slice(0, 8),
-   deployedAt: env.DEPLOYED_AT ?? new Date().toISOString(),
-   opennextVersion,
-   commitSha,
-   branch: env.DEPLOY_BRANCH ?? "unknown",
-  };
-  return NextResponse.json(fullBody);
- }
+  // Authorized path: always fresh, never cached.
+  if (isIntrospectAuthorized(request, env)) {
+    const commitSha = env.COMMIT_SHA ?? "unknown";
+    const fullBody: FullVersionResponse = {
+      shortSha: commitSha.slice(0, 8),
+      deployedAt: env.DEPLOYED_AT ?? new Date().toISOString(),
+      opennextVersion,
+      commitSha,
+      branch: env.DEPLOY_BRANCH ?? "unknown",
+    };
+    return NextResponse.json(fullBody);
+  }
 
- // Anonymous path: wrap with `caches.default` so CF edge serves repeat hits
- // without invoking the Worker. Builder runs only on cache miss.
- return withEdgeCache(request, 60, async () => {
-  const commitSha = env.COMMIT_SHA ?? "unknown";
-  const publicBody: PublicVersionResponse = {
-   shortSha: commitSha.slice(0, 8),
-   deployedAt: env.DEPLOYED_AT ?? new Date().toISOString(),
-   opennextVersion,
-  };
-  return NextResponse.json(publicBody, { headers: PUBLIC_CACHE_HEADERS });
- });
+  // Anonymous path — bypass `caches.default` in OpenNext Workers runtime.
+  // CF CDN caches on Cache-Control headers alone; no Worker-side cache needed.
+  return NextResponse.json(
+    {
+      shortSha: env.COMMIT_SHA?.slice(0, 8) ?? "unknown",
+      deployedAt: env.DEPLOYED_AT ?? new Date().toISOString(),
+      opennextVersion,
+    },
+    { headers: PUBLIC_CACHE_HEADERS },
+  );
 }
