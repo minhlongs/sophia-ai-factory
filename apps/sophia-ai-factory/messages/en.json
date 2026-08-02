@@ -1230,9 +1230,48 @@
         "label_wallet": "Label wallet",
         "placeholder_wallet": "Placeholder wallet",
         "hint_wallet": "Hint wallet",
+        "updatesBanner": {
+          "cta": "Unlock Updates",
+          "ctaShort": "Upgrade Now",
+          "title": "Get Real-Time Business Updates",
+          "description": "Activate the CEO Agent Upsell to receive daily briefings, campaign alerts, and revenue insights — delivered straight to your dashboard and Telegram.",
+          "tierHint": "Available on PREMIUM and above",
+          "secondaryCta": "View Plans"
+        },
+        "dailyBriefing": {
+          "badge": "CEO Agent",
+          "title": "CEO Agent Morning Briefing",
+          "generatedAt": "Generated at {time}",
+          "noBriefing": "Briefing unavailable — upgrade to PREMIUM to unlock daily CEO briefings.",
+          "unlockCta": "Unlock Briefing"
+        },
+        "ceoAgentUpsell": {
+          "title": "CEO Agent Upsell",
+          "description": "Unlock AI-powered daily briefings, autonomous campaign management, and revenue insights.",
+          "features": {
+            "briefing": "Daily morning briefing",
+            "campaigns": "Campaign management",
+            "revenue": "Revenue insights",
+            "support": "Priority support"
+          },
+          "locked": "This feature is locked for your current plan. Upgrade to PREMIUM to access it."
+        },
         "crypto_warning": "Crypto warning",
         "submitting": "Submitting",
         "submit": "Submit"
+      },
+      "ceoAgent": {
+        "title": "CEO Agent Dashboard",
+        "subtitle": "Your AI executive assistant — briefing, campaigns, and revenue insights.",
+        "loading": "Loading CEO Agent...",
+        "tabs": {
+          "briefing": "Daily Briefing",
+          "campaigns": "Campaigns",
+          "revenue": "Revenue"
+        },
+        "errors": {
+          "authRequired": "Authentication required"
+        }
       },
       "cancel": {
         "error_generic": "Error generic",
@@ -2099,6 +2138,16 @@
       "usage": "Usage",
       "no_usage_data": "No usage data",
       "view_api_docs": "View api docs"
+    },
+    "ceoAgent": {
+      "tabs": {
+        "briefing": "Briefing",
+        "campaigns": "Campaigns",
+        "revenue": "Revenue"
+      },
+      "title": "CEO Agent Dashboard",
+      "subtitle": "Your AI executive assistant — briefing, campaigns, and revenue insights.",
+      "loading": "Loading CEO Agent..."
     }
   },
   "account": {

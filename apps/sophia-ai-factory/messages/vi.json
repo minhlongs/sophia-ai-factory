@@ -1230,9 +1230,48 @@
         "label_wallet": "Ví",
         "placeholder_wallet": "Nhập địa chỉ ví",
         "hint_wallet": "Ví crypto",
+        "updatesBanner": {
+          "cta": "Mở Khóa Tính Năng",
+          "ctaShort": "Nâng Cấp Ngay",
+          "title": "Nhận Cập Nhật Kinh Doanh Thời Gian Thực",
+          "description": "Kích hoạt CEO Agent Upsell để nhận báo cáo sáng, cảnh báo chiến dịch, và thông tin doanh thu — hiển thị trực tiếp trên dashboard và Telegram.",
+          "tierHint": "Có sẵn cho gói PREMIUM trở lên",
+          "secondaryCta": "Xem Gói"
+        },
+        "dailyBriefing": {
+          "badge": "CEO Agent",
+          "title": "Báo Cáo Sáng CEO Agent",
+          "generatedAt": "Tạo lúc {time}",
+          "noBriefing": "Chưa có báo cáo — nâng cấp lên PREMIUM để mở khóa báo cáo sáng của CEO Agent.",
+          "unlockCta": "Mở Khóa Báo Cáo"
+        },
+        "ceoAgentUpsell": {
+          "title": "CEO Agent Upsell",
+          "description": "Mở khóa báo cáo sáng AI, tự động hóa chiến dịch, và thông tin doanh thu.",
+          "features": {
+            "briefing": "Báo cáo sáng hàng ngày",
+            "campaigns": "Quản lý chiến dịch",
+            "revenue": "Thông tin doanh thu",
+            "support": "Hỗ trợ ưu tiên"
+          },
+          "locked": "Tính năng này bị khóa với gói hiện tại của bạn. Nâng cấp lên PREMIUM để sử dụng."
+        },
         "crypto_warning": "Cảnh báo hoàn tiền crypto",
         "submitting": "Đang gửi",
         "submit": "Gửi yêu cầu"
+      },
+      "ceoAgent": {
+        "title": "CEO Agent Dashboard",
+        "subtitle": "Trợ lý điều hành AI của bạn — báo cáo sáng, chiến dịch, và phân tích doanh thu.",
+        "loading": "Đang tải CEO Agent...",
+        "tabs": {
+          "briefing": "Báo Cáo Sáng",
+          "campaigns": "Chiến Dịch",
+          "revenue": "Doanh Thu"
+        },
+        "errors": {
+          "authRequired": "Yêu cầu xác thực"
+        }
       },
       "cancel": {
         "error_generic": "Lỗi không xác định",
@@ -2099,6 +2138,16 @@
       "usage": "Usage",
       "no_usage_data": "No usage data",
       "view_api_docs": "View api docs"
+    },
+    "ceoAgent": {
+      "tabs": {
+        "briefing": "Briefing",
+        "campaigns": "Chiến Dịch",
+        "revenue": "Revenue"
+      },
+      "title": "CEO Agent Dashboard",
+      "subtitle": "Trợ lý điều hành AI của bạn — báo cáo sáng, chiến dịch, và phân tích doanh thu.",
+      "loading": "Đang tải CEO Agent..."
     }
   },
   "account": {
