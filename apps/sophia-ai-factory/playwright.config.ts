@@ -1,49 +1,22 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:3000';
-const isRemote = BASE_URL.startsWith('https://');
-
 export default defineConfig({
   testDir: './tests/e2e',
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : isRemote ? 1 : 0,
-  workers: process.env.CI ? 1 : isRemote ? 4 : undefined,
-  reporter: [
-    ['html', { open: 'never' }],
-    ['list'],
-    ['junit', { outputFile: 'test-results/e2e-results.xml' }],
-  ],
+  retries: process.env.CI ? 1 : 0,
+  workers: 2,
+  reporter: [['list']],
   use: {
-    baseURL: BASE_URL,
-    trace: 'on-first-retry',
+    baseURL: 'http://localhost:3000',
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     viewport: { width: 1280, height: 720 },
   },
   projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-    {
-      name: 'mobile-chrome',
-      use: { ...devices['Pixel 7'] },
-    },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],
-  webServer: isRemote
-    ? undefined
-    : {
-        command: process.env.NEXT_PUBLIC_MOCK_D1 === 'true'
-          ? 'NEXT_PUBLIC_MOCK_D1=true npm run dev'
-          : process.env.E2E_PREBUILT === '1'
-          ? 'npx wrangler dev --local --port 3000'
-          : 'bash -c "export $(grep -v \'^#\' .env.local | xargs) && npm run build && node scripts/fix-instrumentation-standalone.mjs && npx @opennextjs/cloudflare build --skipNextBuild && npx wrangler dev --local --port 3000"',
-        url: BASE_URL,
-        reuseExistingServer: !process.env.CI,
-        timeout: process.env.NEXT_PUBLIC_MOCK_D1 === 'true' ? 60 * 1000
-          : process.env.E2E_PREBUILT === '1' ? 60 * 1000
-          : 300 * 1000,
-      },
-  globalSetup: './tests/e2e/global-setup.ts',
+  // No webServer — caller must run `npm run dev` first
+  webServer: undefined,
 });

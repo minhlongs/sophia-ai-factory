@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 # Sophia AI Factory pre-push gate
+# G0 migration prefixes (block duplicate prefix collisions) +
 # G1 typecheck + G2 lint (FAIL mode) + G3 test + G4 secrets + G5 audit
 # Bypass: git push --no-verify (DISCOURAGED — escape hatch for emergency hotfixes only)
 #
@@ -12,6 +13,10 @@
 #   Included in G3 (npm run ci:test via vitest run).
 set -e
 cd "$(git rev-parse --show-toplevel)/apps/sophia-ai-factory"
+
+# ─── G0: Migration prefix guard (stops wrangler d1 collisions) ───────────────
+echo "[pre-push] G0 migration prefixes..."
+npm run check:migrations
 
 # G1 typecheck — fail-fast cheapest check. Added 2026-05-17 after caption-translator.test.ts
 # stale Vitest v1 type signature shipped 10 TS errors silently (no gate caught them).

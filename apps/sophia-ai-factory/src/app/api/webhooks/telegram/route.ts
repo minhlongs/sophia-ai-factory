@@ -269,88 +269,22 @@ export async function POST(request: NextRequest) {
         await handleConfirmCommand(chatId)
       } else if (text === '/cancel') {
         await TelegramFSM.clearContext(chatId)
+
       } else if (text === '/status' || text.startsWith('/status ')) {
-        const statusId = text === '/status' ? undefined : text.replace('/status', '').trim()
-        await handleStatus(chatId, statusId)
-        } else if (text === '/results' || text.startsWith('/results ')) {
-      const resultsId = text === '/results' ? undefined : text.replace('/results', '').trim()
-      await handleResults(chatId, resultsId)
-      } else if (text === '/missions') {
-        await handleMissions(chatId)
-      } else if (text === '/version') {
-        await handleVersion(chatId)
-      } else if (text === '/tier') {
-        await handleTier(chatId)
-      } else if (text === '/quota') {
-        await handleQuota(chatId)
-      } else if (text === '/affiliate') {
-        await handleAffiliate(chatId)
-      } else if (text === '/videos' || text.startsWith('/videos ')) {
-        const filter = text === '/videos' ? undefined : text.replace('/videos', '').trim()
-        await handleVideos(chatId, filter || undefined)
-      } else if (text === '/handover') {
-        await handleHandover(chatId)
-      } else if (text === '/embed' || text.startsWith('/embed ')) {
-        const arg = text === '/embed' ? '' : text.replace('/embed', '').trim()
-        await handleEmbed(chatId, arg)
-      } else if (text.startsWith('/translate')) {
-        const arg = text.replace('/translate', '').trim()
-        await handleTranslate(chatId, arg)
-      } else if (text.startsWith('/clone-voice')) {
-        const arg = text.replace('/clone-voice', '').trim()
-        await handleCloneVoice(chatId, arg)
-      } else if (text.startsWith('/seo-script')) {
-        const arg = text.replace('/seo-script', '').trim()
-        await handleSeoScript(chatId, arg)
-      } else if (text.startsWith('/publish')) {
-        const arg = text.replace('/publish', '').trim()
-        await handleSchedulePublish(chatId, arg)
-      } else if (text.startsWith('/free100')) {
-        const email = text.replace('/free100', '').trim()
-        await handleFree100(chatId, email)
-      } else if (text.startsWith('/ticket')) {
-        const ticketText = text.replace('/ticket', '').trim()
-        // Resolve userId from chat_id — fall back to empty string if not linked
-        let userId = ''
-        try {
-          const db = createServerClient()
-          const { data } = await db
-            .from('user_profiles')
-            .select('user_id')
-            .eq('telegram_chat_id', chatId)
-            .single()
-          if (data) userId = (data as { user_id: string }).user_id
-        } catch {
-          // Not linked — ticket still created with empty userId
-        }
-        await handleTicket(chatId, userId, ticketText)
-      } else if (text.startsWith('/')) {
-        await handleUnknown(chatId)
-      } else {
-        // Try FSM text input first; fall through to legacy handler if not in FSM flow
-        const handledByFsm = await handleFsmTextInput(chatId, text)
-        if (!handledByFsm) {
-          await handleTextMessage(chatId, text)
-        }
-      }
-    })
+      const arg = text.slice(7).trim()
+      const statusId = arg || undefined
+    await handleStatus(chatId, statusId)
+      } else if (text === '/analytics') {
+        await handleAnalytics(chatId)
+      } else if (text === '/results') {
+        await handleResults(chatId)
+ }
+ });
 
-    return NextResponse.json({ ok: true })
-  } catch {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
-  }
-}
-
-/**
- * Health check endpoint
- */
-export async function GET() {
-  return NextResponse.json({
-    status: 'ok',
-    service: 'telegram-webhook',
-    timestamp: new Date().toISOString(),
-  })
-}
+ return NextResponse.json({ ok: true });
+ } catch (error) {
+ const { logger } = await import('@/seed/utils/logger-utility');
+ logger.error('[telegram-webhook] Unhandled error', { error: String(error) });
+ return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+ }
+ }

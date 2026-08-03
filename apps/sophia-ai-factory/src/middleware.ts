@@ -39,11 +39,18 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
 
   if (isInternalOrStatic(pathname)) return NextResponse.next();
 
+const BARE_AUTH_APP_ROUTES = new Set([
+  'login', 'pricing', 'setup-wizard', 'register', 'reset-password',
+  'dashboard', 'checkout', 'settings', 'products', 'payments',
+  'admin', 'affiliates', 'affiliate-portal', 'subscribers',
+  'webhook', 'creator', 'investor-room',
+]);
+
   const pathLocale = pathname.split('/')[1];
 
   // API routes bypass locale redirect — dispatched through handleApiPipeline below
   if (!pathname.startsWith('/api/')) {
-    if (pathLocale && !isSupportedLocale(pathLocale)) return redirectToDefault(request);
+  if (pathLocale && !isSupportedLocale(pathLocale) && !BARE_AUTH_APP_ROUTES.has(pathname.split('/')[1])) return redirectToDefault(request);
   }
 
   // /guides → /guide redirect (locale-prefixed paths — next.config redirects don't match on CF Workers)
@@ -51,6 +58,17 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
     const url = request.nextUrl.clone();
     url.pathname = `/${pathLocale}/guide`;
     return NextResponse.redirect(url, 308);
+  }
+
+  // E2E/SEO compatibility: tests and legacy links use /vi/login, /en/pricing etc
+  // but routes are defined without [locale]. Redirect prefixed to canonical bare path.
+  if (pathLocale && isSupportedLocale(pathLocale)) {
+    const bare = pathname.replace(/^\/(en|vi)/, '') || '/';
+    const url = request.nextUrl.clone();
+    url.pathname = bare;
+    if (url.pathname !== pathname) {
+      return NextResponse.redirect(url, 308);
+    }
   }
 
   // ?tab=signup redirect — runs before ISR cache

@@ -1,7 +1,24 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { applyCorsHeaders } from './cors';
 import { intlMiddleware, applySecurityHeaders } from './middleware-shared-config';
+
+// Routes without [locale] segment — intlMiddleware would 307-redirect them,
+// breaking users and E2E tests. Detect locale-prefixed versions and strip the prefix
+// before passing to intlMiddleware so the request proceeds without any redirect.
+const BARE_AUTH_APP_ROUTES = new Set([
+  'login', 'pricing', 'setup-wizard', 'register', 'reset-password',
+  'dashboard', 'checkout', 'settings', 'products', 'payments',
+  'admin', 'affiliates', 'affiliate-portal', 'subscribers',
+  'webhook', 'creator', 'investor-room',
+]);
+
+function stripLocalePrefix(pathname: string) {
+  const parts = pathname.split('/');
+  if (parts.length >= 2 && BARE_AUTH_APP_ROUTES.has(parts[2])) {
+    return pathname.replace(/^\/[^/]+/, '');
+  }
+  return null;
+}
 
 export async function handlePublicPipeline(
   request: NextRequest,
@@ -10,9 +27,33 @@ export async function handlePublicPipeline(
   nonce: string,
   needsCsrfSeed: boolean,
 ): Promise<NextResponse> {
+  // If request has a locale prefix on a bare route, rewrite to bare path first
+  const stripped = stripLocalePrefix(request.nextUrl.pathname);
+  let localeForCookie: string | null = null;
+  if (stripped) {
+    localeForCookie = request.nextUrl.pathname.split('/')[1];
+    const url = request.nextUrl.clone();
+    url.pathname = stripped;
+    request = new NextRequest(url.toString(), request);
+  }
+
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   const intlRes = intlMiddleware(request);
   const location = intlRes.headers.get('location');
+
+  // If intlMiddleware tries to redirect a bare route (no [locale] segment),
+  // bypass it — these routes are intentionally locale-agnostic.
+  if (location) {
+    const pathLocale = request.nextUrl.pathname.split('/')[1];
+    if (BARE_AUTH_APP_ROUTES.has(pathLocale || '')) {
+      const bypass = NextResponse.next({ request: { headers: requestHeaders } });
+      if (localeForCookie) {
+        bypass.cookies.set('NEXT_LOCALE', localeForCookie, { path: '/', maxAge: 31536000 });
+      }
+      applySecurityHeaders(bypass, nonce, needsCsrfSeed);
+      return bypass;
+    }
+  }
 
   if (location) {
     const redirectRes = applyCorsHeaders(NextResponse.redirect(new URL(location, request.url)), origin);

@@ -40,6 +40,7 @@ export default function PricingPage() {
   const t = useTranslations('stitch.pricingPage');
 
   const [billing, setBilling] = useState<BillingPeriod>('monthly');
+  const [selectedTier, setSelectedTier] = useState<TierId>('basic');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const toggleFaq = useCallback((index: number) => {
@@ -59,47 +60,47 @@ export default function PricingPage() {
             {t('hero.subtitle')}
           </p>
 
-          {/* Billing Toggle */}
-          <div className="flex items-center justify-center gap-4">
-            <div
-              className="inline-flex h-[48px] items-center rounded-full border border-border bg-card p-1"
-              role="radiogroup"
-              aria-label="Billing period"
-            >
-              {(['monthly', 'yearly'] as const).map((period) => (
-                <button
-                  key={period}
-                  type="button"
-                  role="radio"
-                  aria-checked={billing === period}
-                  onClick={() => setBilling(period)}
-                  className={cn(
-                    'rounded-full px-6 py-2 text-sm font-semibold transition-all duration-300',
-                    billing === period
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  {t(`billing.${period}`)}
-                  {period === 'yearly' && (
-                    <span className="ml-1 text-xs font-bold">
-                      {t('billing.savePercent')}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
+{/* Billing Toggle */}
+<div className="flex items-center justify-center gap-4">
+  {(['monthly', 'yearly'] as const).map((period) => (
+    <label
+      key={period}
+      className={cn(
+        'inline-flex cursor-pointer items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-all duration-300 select-none',
+        billing === period
+          ? 'bg-primary text-primary-foreground'
+          : 'text-muted-foreground hover:text-foreground',
+      )}
+    >
+      <input
+        type="radio"
+        name="billing"
+        value={period}
+        checked={billing === period}
+        onChange={() => setBilling(period)}
+        className="sr-only"
+      />
+      {t(`billing.${period}`)}
+      {period === 'yearly' && (
+        <span className="text-xs font-bold opacity-80">
+          {t('billing.savePercent')}
+        </span>
+      )}
+    </label>
+  ))}
+</div>
         </section>
 
         {/* ── Pricing Grid ─────────────────────────────────────────────────── */}
-        <section className="mb-24" aria-label="Pricing plans">
+        <section id="pricing" className="mb-24" aria-label="Pricing plans">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             {TIERS.map((tier) => (
               <PricingCard
                 key={tier.id}
                 tier={tier}
                 billing={billing}
+                selectedTier={selectedTier}
+                onSelectTier={setSelectedTier}
                 t={t}
               />
             ))}
@@ -207,10 +208,12 @@ export default function PricingPage() {
 interface PricingCardProps {
   tier: PricingTier;
   billing: BillingPeriod;
+  selectedTier: TierId;
+  onSelectTier: (id: TierId) => void;
   t: ReturnType<typeof useTranslations>;
 }
 
-function PricingCard({ tier, billing, t }: PricingCardProps) {
+function PricingCard({ tier, billing, selectedTier, onSelectTier, t }: PricingCardProps) {
   const hasNumericPrice = tier.monthlyPrice !== null;
 
   const priceNumber = hasNumericPrice
@@ -258,6 +261,16 @@ function PricingCard({ tier, billing, t }: PricingCardProps) {
           {t('popular')}
         </div>
       )}
+
+      {/* Hidden radio for tier selection (E2E test hook) */ }
+      <input
+        type="radio"
+        name="tier"
+        value={tier.id}
+        checked={selectedTier === tier.id}
+        onChange={() => onSelectTier(tier.id)}
+        className="sr-only"
+      />
 
       {/* Name & Description */}
       <div className="mb-8">

@@ -41,7 +41,7 @@ export interface RunCampaignWorkflowArgs {
   tier: Tier;
   resume?: boolean;
   resumeFrom?: string;
-  abExperimentId?: string;
+  abVariantACaption?: string;
   step: Step;
   updateStatus: (status: string, progress: number, data?: Record<string, unknown>) => Promise<void>;
   notifyUser: (message: string) => Promise<void>;
@@ -84,7 +84,7 @@ interface VideoAssets {
 }
 
 export async function runCampaignWorkflow(args: RunCampaignWorkflowArgs): Promise<{ success: boolean; campaignId: string; skipped?: boolean }> {
-  const { campaignId, userId, topic, audience, tier, resume, resumeFrom, abExperimentId, step, updateStatus, notifyUser } = args;
+  const { campaignId, userId, topic, audience, tier, resume, resumeFrom, abVariantACaption, step, updateStatus, notifyUser } = args;
 
   async function runStepSafely<T>(
     stepName: string,

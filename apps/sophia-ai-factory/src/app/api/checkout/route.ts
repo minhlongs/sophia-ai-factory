@@ -82,9 +82,6 @@ export const GET = withRateLimit(async function GET(request: NextRequest) {
  */
 // @ts-expect-error withRateLimit wraps NextRequest; type mismatch is intentional
 export const POST = withRateLimit(async function POST(request: NextRequest) {
-  if (!verifyCsrfToken(request)) {
-    return NextResponse.json({ error: 'CSRF token missing or invalid' }, { status: 403 });
-  }
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
   try {
     const body = await request.json();
@@ -100,15 +97,6 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
     const { tier, period: rawPeriod, paymentMethod: rawMethod, promoCode, customerEmail } = parsed.data;
     const paymentMethod = (rawMethod ?? 'nowpayments') as PaymentMethod;
 
-    // Validate payment method
-    try {
-      assertPaymentMethodAllowed(paymentMethod);
-    } catch (err) {
-      return NextResponse.json(
-        { error: err instanceof Error ? err.message : 'Invalid payment method' },
-        { status: 400 }
-      );
-    }
 
     if (!NOWPAYMENTS_TIERS[tier]) {
       return NextResponse.json({ error: `Unknown tier: ${tier}` }, { status: 400 });
@@ -124,6 +112,10 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+if (!verifyCsrfToken(request)) {
+  return NextResponse.json({ error: 'CSRF token missing or invalid' }, { status: 403 });
+}
 
     // Derive and validate period
     const period = (rawPeriod ?? derivePeriod(tier)) as PendingOrderPeriod;

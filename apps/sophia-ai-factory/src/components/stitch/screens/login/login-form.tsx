@@ -43,10 +43,10 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
   };
 
   const handleMagicLink = async () => {
-    if (!email) {
-      setError(t('networkError') || 'Please enter your email address first');
-      return;
-    }
+  if (!email) {
+    setError(t('networkError'));
+    return;
+  }
     setMagicLinkLoading(true);
     setError(null);
     try {
@@ -73,7 +73,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         type="button"
         onClick={switchLocale}
         className="fixed top-4 right-4 z-20 flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors rounded-md px-2 py-1.5 hover:bg-zinc-800/50"
-        aria-label={locale === 'en' ? 'Switch to Vietnamese' : 'Chuyển sang tiếng Anh'}
+        aria-label={locale === 'en' ? t('switchToVietnamese') : t('switchToEnglish')}
       >
         <Globe className="w-3.5 h-3.5" aria-hidden="true" />
         <span className="font-medium uppercase tracking-wider">
@@ -149,7 +149,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
               id="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
-              placeholder={t('passwordPlaceholder') || '• • • • • • • •'}
+              placeholder={t('passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full h-[44px] pl-10 pr-10 rounded-lg border border-zinc-700 bg-[#0F0F11] text-white text-sm placeholder-zinc-600 transition-all focus:ring-2 focus:ring-primary focus:border-transparent outline-none disabled:cursor-not-allowed disabled:opacity-50"
@@ -228,7 +228,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
           onClick={handleMagicLink}
           disabled={magicLinkLoading}
           className="inline-flex items-center justify-center gap-2 h-[44px] rounded-lg border border-zinc-800 bg-transparent text-white text-sm font-medium transition-colors hover:bg-zinc-800/50 focus:outline-none focus:ring-2 focus:ring-primary disabled:pointer-events-none disabled:opacity-50"
-          aria-label="Magic Link"
+          aria-label={t('magicLink')}
         >
           {magicLinkLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
@@ -242,11 +242,11 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
               aria-hidden="true"
               role="img"
             >
-              <title>Magic Link</title>
+              <title>{t('magicLink')}</title>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
             </svg>
           )}
-          <span className="hidden sm:inline">Magic Link</span>
+          <span className="hidden sm:inline">{t('magicLink')}</span>
         </button>
       </div>
 
