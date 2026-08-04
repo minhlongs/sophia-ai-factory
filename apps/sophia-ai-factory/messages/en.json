@@ -1230,48 +1230,9 @@
         "label_wallet": "Label wallet",
         "placeholder_wallet": "Placeholder wallet",
         "hint_wallet": "Hint wallet",
-        "updatesBanner": {
-          "cta": "Unlock Updates",
-          "ctaShort": "Upgrade Now",
-          "title": "Get Real-Time Business Updates",
-          "description": "Activate the CEO Agent Upsell to receive daily briefings, campaign alerts, and revenue insights — delivered straight to your dashboard and Telegram.",
-          "tierHint": "Available on PREMIUM and above",
-          "secondaryCta": "View Plans"
-        },
-        "dailyBriefing": {
-          "badge": "CEO Agent",
-          "title": "CEO Agent Morning Briefing",
-          "generatedAt": "Generated at {time}",
-          "noBriefing": "Briefing unavailable — upgrade to PREMIUM to unlock daily CEO briefings.",
-          "unlockCta": "Unlock Briefing"
-        },
-        "ceoAgentUpsell": {
-          "title": "CEO Agent Upsell",
-          "description": "Unlock AI-powered daily briefings, autonomous campaign management, and revenue insights.",
-          "features": {
-            "briefing": "Daily morning briefing",
-            "campaigns": "Campaign management",
-            "revenue": "Revenue insights",
-            "support": "Priority support"
-          },
-          "locked": "This feature is locked for your current plan. Upgrade to PREMIUM to access it."
-        },
         "crypto_warning": "Crypto warning",
         "submitting": "Submitting",
         "submit": "Submit"
-      },
-      "ceoAgent": {
-        "title": "CEO Agent Dashboard",
-        "subtitle": "Your AI executive assistant — briefing, campaigns, and revenue insights.",
-        "loading": "Loading CEO Agent...",
-        "tabs": {
-          "briefing": "Daily Briefing",
-          "campaigns": "Campaigns",
-          "revenue": "Revenue"
-        },
-        "errors": {
-          "authRequired": "Authentication required"
-        }
       },
       "cancel": {
         "error_generic": "Error generic",
@@ -2139,11 +2100,4325 @@
       "no_usage_data": "No usage data",
       "view_api_docs": "View api docs"
     },
-
-    "referralSection": "referralSection",
-    "yourReferralLink": "yourReferralLink",
-    "linkCopied": "linkCopied",
-    "copyLink": "copyLink",
-    "totalReferrals": "totalReferrals",
-    "referralEarnings": "referralEarnings"
+    "ceoAgent": {
+      "tabs": {
+        "briefing": "Briefing",
+        "campaigns": "Campaigns",
+        "revenue": "Revenue"
+      },
+      "title": "Title",
+      "subtitle": "Subtitle",
+      "loading": "Loading"
+    }
+  },
+  "account": {
+    "title": "Account & Billing",
+    "tab_profile": "Profile",
+    "tab_subscription": "Subscription",
+    "tab_billing": "Billing History",
+    "profile_email": "Email",
+    "profile_name": "Display Name",
+    "profile_locale": "Language",
+    "profile_timezone": "Timezone",
+    "profile_save": "Save Changes",
+    "profile_saving": "Saving...",
+    "profile_saved": "Saved",
+    "locale_vi": "Vietnamese",
+    "locale_en": "English",
+    "email_change_btn": "Update Email",
+    "email_change_pending": "Sending…",
+    "email_change_sent": "Verification link sent to {email}. Click it to complete the change.",
+    "email_change_invalid": "Could not update email. Please try again.",
+    "email_changed_success": "Email updated. Use your new address to sign in next time.",
+    "data_section": "Your Data",
+    "export_description": "Download a JSON copy of all data tied to your account.",
+    "export_btn": "Export Data",
+    "export_pending": "Preparing…",
+    "sub_current_plan": "Current Plan",
+    "sub_limits": "Plan Limits",
+    "sub_renewal": "Renews",
+    "sub_change": "Change Plan",
+    "sub_cancel": "Cancel Subscription",
+    "sub_cancel_confirm": "Are you sure you want to cancel? Your plan remains active until the end of the billing period.",
+    "sub_cancelled": "Cancellation requested",
+    "billing_date": "Date",
+    "billing_desc": "Description",
+    "billing_amount": "Amount",
+    "billing_status": "Status",
+    "billing_empty": "No billing history yet",
+    "billing_filter_all": "All time",
+    "billing_filter_30": "Last 30 days",
+    "billing_filter_90": "Last 90 days",
+    "danger_section": "Danger Zone",
+    "delete_description": "Permanently delete your account and all data. After confirming via email, you have 7 days to cancel.",
+    "delete_btn": "Delete Account",
+    "delete_typed_label": "Type DELETE to enable",
+    "delete_typed_word": "DELETE",
+    "delete_request_pending": "Sending confirmation…",
+    "delete_request_sent": "Check your email for the confirmation link.",
+    "delete_status_pending": "Awaiting email confirmation. Check your inbox.",
+    "delete_status_confirmed": "Confirmed — deletion scheduled for {date}.",
+    "delete_status_cancelled": "Deletion request cancelled.",
+    "delete_cancel_btn": "Cancel Deletion Request",
+    "delete_cancel_pending": "Cancelling…",
+    "delete_error": "Could not process deletion request. Please try again.",
+    "sub_cancel_failed": "Sub cancel failed",
+    "error": "Error",
+    "ok": "Ok",
+    "settings": "Settings"
+  },
+  "onboarding": {
+    "title": "Welcome to Sophia AI Factory",
+    "subtitle": "7-step orientation — get your first automation running today",
+    "skip": "Skip Tour",
+    "next": "Next",
+    "back": "Back",
+    "finish": "Finish",
+    "resume": "Replay Tour",
+    "go_to": "Go to",
+    "progress": "Step {current} of {total}",
+    "step1_title": "Welcome to Sophia",
+    "step1_desc": "{tier} plan activated — start automating content right now.",
+    "step2_title": "Configure API Keys",
+    "step2_desc": "Connect HeyGen, ElevenLabs, OpenRouter… once, use forever.",
+    "step2_action": "Configure Now",
+    "step3_title": "Explore SOP Marketplace",
+    "step3_desc": "30+ automation playbooks: TikTok 3x daily, YouTube longform, Pinterest affiliate…",
+    "step3_action": "Open Marketplace",
+    "step4_title": "Install & Run Your First SOP",
+    "step4_desc": "Pick a SOP, configure your niche, activate. The bot runs automatically on the server.",
+    "step4_action": "View My SOPs",
+    "step5_title": "Connect Telegram bot",
+    "step5_desc": "Pair @Sophia_Bbot to receive notifications and run /campaign, /status, /results commands from your phone.",
+    "step5_action": "Connect Telegram",
+    "step6_title": "Buy Credits (MCU)",
+    "step6_desc": "MCU = AI fuel. Top up when low or upgrade your tier for a higher monthly quota.",
+    "step6_action": "Buy Credits",
+    "step7_title": "Self-serve Help Center",
+    "step7_desc": "15 FAQs + 10 common issues + step-by-step guides — try self-serve before emailing support.",
+    "step7_action": "Open Help Center",
+    "byok": {
+      "help": {
+        "toggleShow": "How to get this key",
+        "toggleHide": "Hide guide",
+        "openrouter": {
+          "title": "How to get your OpenRouter API Key",
+          "step1": "Go to https://openrouter.ai/keys → sign in with Google",
+          "step2": "Click \"Create Key\" → name it \"sophia-ai-factory\"",
+          "step3": "Copy the string starting with sk-or-v1-... and paste it above",
+          "signupUrl": "https://openrouter.ai/keys"
+        },
+        "elevenlabs": {
+          "title": "How to get your ElevenLabs API Key",
+          "step1": "Go to https://elevenlabs.io → create a free account",
+          "step2": "Navigate to My Account → API Key → click \"Copy\"",
+          "step3": "Paste the key string above (starts with sk_...)",
+          "signupUrl": "https://elevenlabs.io/app/sign-up"
+        },
+        "dId": {
+          "title": "How to get your D-ID API Key",
+          "step1": "Go to https://studio.d-id.com → register / sign in",
+          "step2": "Navigate to Account Settings → API → click \"Generate\"",
+          "step3": "Copy the full Basic ... string and paste it above as-is",
+          "signupUrl": "https://studio.d-id.com/account-settings"
+        },
+        "nowpayments": {
+          "title": "How to get your NOWPayments API Key",
+          "step1": "Go to https://nowpayments.io → create a merchant account",
+          "step2": "Navigate to Settings → API → copy your API Key (starts with -)",
+          "step3": "Paste the API key string above",
+          "signupUrl": "https://nowpayments.io"
+        }
+      }
+    },
+    "quickStartGenFailed": "Quick Start Gen Failed",
+    "stepConnectKeys": "Step Connect Keys",
+    "stepConnectKeysDesc": "Step Connect Keys Desc",
+    "stepChooseTemplate": "Step Choose Template",
+    "stepChooseTemplateDesc": "Step Choose Template Desc",
+    "stepGenerateVideo": "Step Generate Video",
+    "stepGenerateVideoDesc": "Step Generate Video Desc",
+    "stepShareResults": "Step Share Results",
+    "stepShareResultsDesc": "Step Share Results Desc",
+    "quickStart": "Quick Start",
+    "quickStartDesc": "Quick Start Desc",
+    "completeSetup": "Complete Setup",
+    "templateAutoSelected": "Template Auto Selected",
+    "generateFirstVideo": "Generate First Video",
+    "generatingVideo": "Generating Video",
+    "videoReady": "Video Ready",
+    "viewVideo": "View Video",
+    "quickStartRetry": "Quick Start Retry",
+    "connectChannels": "Connect Channels",
+    "quickStartDone": "Quick Start Done",
+    "goToDashboard": "Go To Dashboard"
+  },
+  "pricing": {
+    "nav_dashboard": "Dashboard",
+    "combined_badge": "Video Factory + AI Automation",
+    "combined_title": "Video Factory + AI Automation — One Platform",
+    "combined_subtitle": "Everything you need to automate content creation and business workflows",
+    "coupon": {
+      "label": "Have a promo code?",
+      "placeholder": "ENTER CODE",
+      "apply": "Apply",
+      "applying": "Applying...",
+      "clear": "Remove",
+      "applied": "'{code}' applied — {pct}% off!",
+      "applied_trial": "'{code}' applied — {days}-day free trial!",
+      "applied_free": "'{code}' applied — FREE access!",
+      "invalid": "Invalid or expired promo code.",
+      "network_error": "Could not validate promo code. Please try again.",
+      "wrong_tier": "This code is not valid for the selected plan.",
+      "user_limit": "You have already used this promo code.",
+      "max_uses": "This promo code has reached its usage limit.",
+      "free_cta": "Activate Free Access",
+      "free_email_label": "Your email",
+      "free_email_placeholder": "you@agency.com",
+      "free_name_label": "Your name",
+      "free_name_placeholder": "Agency Name",
+      "free_submit": "Activate Now",
+      "free_submitting": "Activating..."
+    },
+    "current_plan_badge": "Your Current Plan",
+    "save_percent": "Save {percent}%",
+    "for_starters": "For starters",
+    "unlimited_features": "Everything included, unlimited",
+    "white_label_plan": "White-label agency plan",
+    "custom_price": "Custom",
+    "billing_monthly": "Billing monthly",
+    "billing_yearly": "Billed yearly",
+    "get_started": "Get Started",
+    "contact_sales": "Contact Sales",
+    "comparison_title": "Compare All Plans",
+    "feature_compare": "Feature",
+    "most_popular": "Most Popular",
+    "talk_to_sales": "Talk to Sales",
+    "talk_to_sales_desc": "Need a custom enterprise plan? Our team is ready to help.",
+    "talk_to_sales_cta": "Contact Sales",
+    "faq_title": "Frequently Asked Questions",
+    "faq_1_q": "What is an MCU credit?",
+    "faq_1_a": "MCU (Model Compute Units) are the currency for AI commands. Each mission or automation run costs a certain number of MCU based on complexity.",
+    "faq_2_q": "Can I change my plan anytime?",
+    "faq_2_a": "Yes. You can upgrade your plan at any time. Downgrades take effect at the end of your current billing period.",
+    "faq_3_q": "Is there a free trial?",
+    "faq_3_a": "We offer a 7-day money-back guarantee on all monthly plans. Contact support within 7 days for a full refund.",
+    "faq_4_q": "What payment methods do you accept?",
+    "faq_4_a": "We accept USDT (crypto via NOWPayments) and Vietnam domestic payments via PayOS.",
+    "faq_5_q": "What happens when I run out of MCU?",
+    "faq_5_a": "Your automations pause until the next billing cycle or until you purchase additional MCU. Upgrade anytime to get more.",
+    "promo": {
+      "placeholder": "Enter VIP code (optional)",
+      "help_text": "FREE100 is reserved for strategic partners",
+      "apply": "Apply",
+      "applying": "Applying",
+      "clear": "Clear",
+      "invalid": "Invalid",
+      "label": "Label",
+      "max_uses": "Max uses",
+      "network_error": "Network error",
+      "user_limit": "User limit",
+      "wrong_tier": "Wrong tier"
+    },
+    "error": {
+      "redemption_failed": "Redemption failed. Please try again.",
+      "access_activated_title": "Access Activated!",
+      "access_activated_desc": "Check your email for the magic login link.",
+      "free_trial_days": "{days}-day free trial",
+      "free_full_label": "Full free access",
+      "free_cta": "Free cta",
+      "free_email_label": "Free email label",
+      "free_email_placeholder": "Free email placeholder",
+      "free_name_label": "Free name label",
+      "free_name_placeholder": "Free name placeholder",
+      "free_submit": "Free submit",
+      "free_submitting": "Free submitting",
+      "network_error": "Network error"
+    },
+    "crypto_explainer_title": "💡 How to Pay with Crypto (USDT)",
+    "crypto_explainer_subtitle": "New to crypto? Follow these simple steps — it only takes 5 minutes.",
+    "crypto_no_wallet_title": "Don't have a crypto wallet?",
+    "crypto_no_wallet_desc": "You can create one for free in 2 minutes using Trust Wallet, Coin98, or Binance. We can also guide you step by step.",
+    "crypto_support_cta": "Request PayOS (Bank Transfer) →",
+    "row_mcu": "Row mcu",
+    "row_campaigns": "Row campaigns",
+    "row_youtube": "Row youtube",
+    "row_team": "Row team",
+    "row_api": "Row api",
+    "row_webhooks": "Row webhooks",
+    "row_integrations": "Row integrations",
+    "row_white_label": "Row white label",
+    "row_billing": "Row billing",
+    "billing_one_time": "Billing one time",
+    "crypto_what_is_usdt": "What is USDT?",
+    "crypto_what_is_usdt_desc": "USDT (Tether) is a stable cryptocurrency pegged 1:1 to the US Dollar — so 1 USDT = $1. Unlike Bitcoin, its price doesn't fluctuate. Think of it like digital USD.",
+    "crypto_wallet_title": "Get a Crypto Wallet",
+    "crypto_wallet_desc": "Install Trust Wallet (mobile), Coin98 (mobile), or Binance (exchange). Each gives you a USDT wallet address. It's like a bank account number for crypto.",
+    "crypto_network_title": "Choose Network: TRC-20 (Recommended)",
+    "crypto_network_desc": "When sending, select TRC-20 (Tron) — fees are lowest (~$0.50). Avoid ERC-20 (Ethereum) as fees can be $5-20. Selecting the wrong network means you lose your funds permanently.",
+    "crypto_send_title": "Send Exact Amount",
+    "crypto_send_desc": "Copy the USDT amount shown on the payment page and send EXACTLY that amount from your wallet. Send more or less → your order won't be confirmed automatically and needs manual review (delays 24-48h).",
+    "crypto_time_title": "Wait for Confirmation (5-30 min)",
+    "crypto_time_desc": "NOWPayments detects your payment automatically (5-30 min). Your tier activates instantly once confirmed — no manual steps. Check your email for the confirmation receipt.",
+    "dismiss": "Dismiss",
+    "annual_label": "Yearly",
+    "commitment": "Monthly subscription",
+    "error_checkout": "Failed to start checkout. Please try again.",
+    "error_network": "Network error. Please try again.",
+    "features": {
+      "api_webhooks": "API & Webhooks",
+      "basic_analytics": "Basic Analytics",
+      "campaigns_10": "10 Campaigns",
+      "campaigns_50": "50 Campaigns",
+      "campaigns_unlimited": "Unlimited Campaigns",
+      "custom_integrations": "Custom Integrations",
+      "custom_templates": "Custom Templates",
+      "early_access": "Early Access",
+      "email_support": "Email Support",
+      "everything_premium": "Everything in Premium",
+      "group_raas": "Group RaaS",
+      "group_video": "Group Video",
+      "lifetime_access": "Lifetime Access",
+      "mcu_1000": "Mcu 1000",
+      "mcu_100000": "Mcu 100000",
+      "mcu_20000": "Mcu 20000",
+      "mcu_5000": "Mcu 5000",
+      "onboarding": "Onboarding",
+      "roi_calculator": "Roi calculator",
+      "strategy_review": "Strategy Review",
+      "team_members_1": "1 Team Member",
+      "team_members_5": "5 Team Members",
+      "team_members_unlimited": "Unlimited Team Members",
+      "templates_5": "5 Templates",
+      "unlimited_templates": "Unlimited Templates",
+      "vip_support": "VIP Support",
+      "white_label_license": "White Label License",
+      "youtube_1": "1 YouTube Channel",
+      "youtube_3": "3 YouTube Channels",
+      "youtube_unlimited": "Unlimited YouTube Channels"
+    },
+    "master": {
+      "best_value": "Best value",
+      "compare_label": "Compare label",
+      "compare_price": "Compare price",
+      "one_time": "One time"
+    },
+    "monthly_label": "Monthly",
+    "per_month": "Per month",
+    "per_year": "Per year",
+    "popular": "Most Popular",
+    "processing": "Processing...",
+    "refund_master_desc": "Refund master desc",
+    "refund_master_title": "Refund master title",
+    "subscribe_now": "Subscribe now",
+    "subscribe_now_master": "Get Master",
+    "subtitle": "Simple monthly pricing with everything included",
+    "tier_selection_label": "Tier selection label",
+    "tiers": {
+      "growth": {
+        "description": "Scale your content production. Monthly subscription.",
+        "name": "Growth"
+      },
+      "master": {
+        "description": "Lifetime access. One payment. Everything included forever.",
+        "name": "Master"
+      },
+      "premium": {
+        "description": "Enterprise power and support. Monthly subscription.",
+        "name": "Premium"
+      },
+      "starter": {
+        "description": "Complete AI video automation. Monthly subscription.",
+        "name": "Starter"
+      }
+    },
+    "title": "Choose Your Plan",
+    "heygen_configure_prompt": "Configure your HeyGen API key to unlock video generation bundles.",
+    "heygen_configure_cta": "Configure HeyGen Key"
+  },
+  "campaign": {
+    "template_selection": {
+      "title": "Choose a Template",
+      "subtitle": "Start with a pre-configured template or create from scratch"
+    },
+    "customization": {
+      "title": "Customize Your Campaign",
+      "campaign_title": "Campaign Title",
+      "video_topic": "Video Topic",
+      "video_topic_hint": "What should this video be about?",
+      "target_audience": "Target Audience",
+      "target_audience_hint": "Who is this video for?",
+      "target_platforms": "Target Platforms",
+      "platforms_hint": "Select platforms to publish to. Multiple platforms require Premium plan.",
+      "template_settings": "Template Settings",
+      "tone": "Tone",
+      "duration": "Duration"
+    },
+    "actions": {
+      "change_template": "Change Template",
+      "create_campaign": "Create Campaign",
+      "creating": "Creating...",
+      "campaign_title": "Campaign title",
+      "duration": "Duration",
+      "platforms_hint": "Platforms hint",
+      "target_audience": "Target audience",
+      "target_audience_hint": "Target audience hint",
+      "target_platforms": "Target platforms",
+      "template_settings": "Template settings",
+      "title": "Title",
+      "tone": "Tone",
+      "video_topic": "Video topic",
+      "video_topic_hint": "Video topic hint"
+    },
+    "status": {
+      "draft": "Draft",
+      "queued": "Queued",
+      "processing_script": "Processing Script",
+      "processing_video": "Processing Video",
+      "completed": "Completed",
+      "failed": "Failed",
+      "general_audience": "General audience",
+      "resume": "Resume",
+      "retry": "Retry",
+      "view_details": "View Details",
+      "watch_video": "Watch video"
+    },
+    "errors": {
+      "something_wrong": "Something went wrong",
+      "create_failed": "Failed to create campaign",
+      "audience": "Audience",
+      "title": "Title",
+      "topic": "Topic"
+    },
+    "detail": {
+      "back": "Back to Campaigns",
+      "untitled": "Untitled Campaign",
+      "created": "Created",
+      "retry": "Retry Generation",
+      "script": "Generated Script",
+      "scene": "Scene",
+      "visual": "Visual",
+      "title": "Campaign Details",
+      "topic": "Topic",
+      "audience": "Target Audience",
+      "template": "Template",
+      "status": "Status",
+      "progress": "Progress",
+      "system_info": "System Info",
+      "id": "ID",
+      "updated": "Updated",
+      "na": "N/A",
+      "general": "General"
+    }
+  },
+  "login": {
+    "title": "Sign In",
+    "emailLabel": "Email Address",
+    "sendLink": "Send Magic Link",
+    "checkEmail": "Check your email for the login link",
+    "error": "Something went wrong",
+    "loading": "Loading"
+  },
+  "admin": {
+    "users": {
+      "title": "User Management",
+      "invite": "Invite New Client",
+      "email": "Email",
+      "tier": "Tier",
+      "status": "Status",
+      "invited": "Invited",
+      "active": "Active"
+    },
+    "promoCodes": {
+      "title": "Promo Codes",
+      "subtitle": "Manage discount and free trial codes",
+      "bulk": {
+        "pageTitle": "Bulk Generate Codes",
+        "pageSubtitle": "Generate many FREE100-XXXX codes for a marketing campaign. Each code is single-use and grants the Master tier.",
+        "countLabel": "Number of codes",
+        "countHelper": "Between 1 and 1000 codes per request",
+        "descriptionLabel": "Campaign description",
+        "descriptionPlaceholder": "e.g. May launch",
+        "expiresLabel": "Expiry date (optional)",
+        "submit": "Generate",
+        "submitting": "Generating…",
+        "successHeading": "Generated {count} codes successfully",
+        "downloadCsv": "Download CSV",
+        "copyAll": "Copy all",
+        "copied": "Copied",
+        "reset": "Start new batch",
+        "errorTitle": "Generation failed",
+        "errorRateLimit": "Rate limit hit (5/hour). Try again later.",
+        "errorAuth": "Not authorized.",
+        "errorGeneric": "Unknown error. Please retry.",
+        "codeTable": "Generated codes",
+        "bulkButton": "Bulk Generate",
+        "backToList": "Back to list"
+      },
+      "list": {
+        "searchPlaceholder": "Search by code (e.g. FREE100)…",
+        "filterStatusLabel": "Status",
+        "filterTierLabel": "Tier",
+        "filterStatusAll": "All",
+        "filterStatusActive": "Active",
+        "filterStatusDisabled": "Disabled",
+        "filterStatusExpired": "Expired",
+        "filterTierAll": "All tiers",
+        "pageLabel": "Page",
+        "pageOf": "of",
+        "prev": "Prev",
+        "next": "Next",
+        "noResults": "No codes match your filters",
+        "exportCsv": "Export full CSV",
+        "exporting": "Exporting…",
+        "resultsCount": "{count} codes",
+        "columnCode": "Code",
+        "columnTier": "Tier",
+        "columnStatus": "Status",
+        "columnUsed": "Used",
+        "columnMaxUses": "Max uses",
+        "columnExpires": "Expires",
+        "columnCreated": "Created",
+        "neverExpires": "Never"
+      }
+    },
+    "branding": {
+      "brandingSaved": "Branding Saved",
+      "brandingSettings": "Branding Settings",
+      "agencyName": "Agency Name",
+      "logoUrl": "Logo Url",
+      "primaryColor": "Primary Color",
+      "watermarkPolicy": "Watermark Policy",
+      "watermarkPosition": "Watermark Position",
+      "saveBranding": "Save Branding",
+      "selectOrgPrompt": "Select Org Prompt",
+      "noOrgs": "No Orgs",
+      "pageTitle": "Page Title",
+      "pageSubtitle": "Page Subtitle"
+    },
+    "orgs": {
+      "nameRequired": "Name Required",
+      "createError": "Create Error",
+      "emailRequired": "Email Required",
+      "inviteSuccess": "Invite Success",
+      "inviteError": "Invite Error",
+      "createOrg": "Create Org",
+      "noOrgs": "No Orgs",
+      "orgName": "Org Name",
+      "members": "Members",
+      "created": "Created",
+      "actions": "Actions",
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "inviteMember": "Invite Member",
+      "noMembers": "No Members",
+      "removeMember": "Remove Member",
+      "close": "Close",
+      "orgNamePlaceholder": "Org Name Placeholder",
+      "orgDescription": "Org Description",
+      "orgDescPlaceholder": "Org Desc Placeholder",
+      "cancel": "Cancel",
+      "creating": "Creating",
+      "create": "Create",
+      "emailLabel": "Email Label",
+      "emailPlaceholder": "Email Placeholder",
+      "roleLabel": "Role Label",
+      "roleMember": "Role Member",
+      "roleAdmin": "Role Admin",
+      "roleOwner": "Role Owner",
+      "inviting": "Inviting",
+      "title": "Title",
+      "subtitle": "Subtitle",
+      "loadError": "Load Error"
+    },
+    "sso": {
+      "pageTitle": "Page Title",
+      "pageSubtitle": "Page Subtitle",
+      "status": "Status",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "ssoSaved": "Sso Saved",
+      "providerConfig": "Provider Config",
+      "providerUrl": "Provider Url",
+      "clientId": "Client Id",
+      "saveSso": "Save Sso"
+    },
+    "title": "Title",
+    "subtitle": "Subtitle",
+    "stats": {
+      "pending": "Pending",
+      "published": "Published",
+      "total": "Total"
+    },
+    "sections": {
+      "pendingReviews": "Pending Reviews",
+      "publishedListings": "Published Listings"
+    },
+    "table": {
+      "columns": {
+        "title": "Title",
+        "creator": "Creator",
+        "category": "Category",
+        "price": "Price",
+        "submitted": "Submitted",
+        "actions": "Actions",
+        "installs": "Installs",
+        "rating": "Rating",
+        "updated": "Updated"
+      },
+      "uncategorized": "Uncategorized"
+    },
+    "actions": {
+      "view": "View",
+      "approve": "Approve",
+      "reject": "Reject"
+    },
+    "empty": {
+      "pending": {
+        "title": "Title",
+        "description": "Description"
+      },
+      "published": {
+        "title": "Title",
+        "description": "Description"
+      }
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "close": "Close",
+    "expand": "Expand",
+    "collapse": "Collapse",
+    "delete": "Delete",
+    "edit": "Edit",
+    "refresh": "Refresh",
+    "menu": "Menu",
+    "search": "Search",
+    "copy": "Copy",
+    "more_options": "More options",
+    "clear": "Clear"
+  },
+  "title": "Sophia AI Factory — AI Video & Revenue Automation",
+  "topic": "Topic",
+  "na": "Na",
+  "audience": "Audience",
+  "general": "General",
+  "template": "Template",
+  "status": {
+    "fallback": "Status",
+    "title": "Title",
+    "operational": "Operational",
+    "degraded": "Degraded",
+    "uptime90d": "Uptime90d",
+    "noData": "No Data",
+    "pastIncidents": "Past Incidents",
+    "active": "Active",
+    "paused": "Paused"
+  },
+  "progress": "Progress",
+  "system_info": "System info",
+  "id": "Id",
+  "updated": "Updated",
+  "back": "Back",
+  "untitled": "Untitled",
+  "created": "Created",
+  "retry": "Retry",
+  "script": "Script",
+  "scene": "Scene",
+  "visual": "Visual",
+  "settings": {
+    "fallback": "Settings",
+    "mfa": {
+      "error_generic": "Error generic",
+      "error_invalid_code": "Error invalid code",
+      "title": "Title",
+      "subtitle": "Subtitle",
+      "status_enabled": "Status enabled",
+      "status_disabled": "Status disabled",
+      "setup_button": "Setup button",
+      "disable_button": "Disable button",
+      "setup_title": "Setup title",
+      "setup_description": "Setup description",
+      "code_label": "Code label",
+      "code_placeholder": "Code placeholder",
+      "verify_button": "Verify button",
+      "backup_codes_title": "Backup codes title",
+      "backup_codes_description": "Backup codes description",
+      "backup_codes_done": "Backup codes done",
+      "disable_title": "Disable title",
+      "disable_description": "Disable description",
+      "cancel": "Cancel",
+      "revoking": "Revoking"
+    },
+    "apiKeys": {
+      "title": "Title",
+      "subtitle": "Subtitle",
+      "securityNoteLabel": "Security Note Label",
+      "securityNoteBody": "Security Note Body"
+    },
+    "appearance": {
+      "title": "Title",
+      "subtitle": "Subtitle",
+      "themeLabel": "Theme Label",
+      "themeAriaLabel": "Theme Aria Label",
+      "themeLight": "Theme Light",
+      "themeDark": "Theme Dark",
+      "themeSystem": "Theme System",
+      "themeHelp": "Theme Help"
+    },
+    "notifications": {
+      "title": "Title",
+      "subtitle": "Subtitle",
+      "marketingTitle": "Marketing Title",
+      "marketingDesc": "Marketing Desc",
+      "securityTitle": "Security Title",
+      "securityDesc": "Security Desc",
+      "telegramTitle": "Telegram Title",
+      "telegramDesc": "Telegram Desc",
+      "saveButton": "Save Button"
+    },
+    "profile": {
+      "title": "Title",
+      "subtitle": "Subtitle",
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Full Name Placeholder",
+      "email": "Email",
+      "emailManagedNote": "Email Managed Note"
+    },
+    "changeEmail": {
+      "title": "Change Email",
+      "subtitle": "Request an email change. A verification link will be sent to your new address.",
+      "currentEmail": "Current Email",
+      "newEmail": "New Email",
+      "newEmailPlaceholder": "Enter your new email",
+      "sendVerification": "Send Verification",
+      "sending": "Sending...",
+      "checkEmail": "Verification link sent to {email}. Please check your inbox.",
+      "unknownError": "An unknown error occurred. Please try again.",
+      "networkError": "Network error. Please check your connection and try again."
+    },
+    "profile_description": "Profile description",
+    "upload_avatar": "Upload avatar",
+    "avatar_hint": "Avatar hint",
+    "name": "Name",
+    "email": "Email",
+    "save_changes": "Save changes",
+    "api_keys": "Api keys",
+    "api_keys_description": "Api keys description",
+    "configured": "Configured",
+    "not_configured": "Not configured",
+    "enter_key": "Enter key",
+    "api_key": "Api key",
+    "save_api_keys": "Save api keys",
+    "danger_zone": "Danger zone",
+    "danger_zone_description": "Danger zone description",
+    "delete_account": "Delete account",
+    "delete_account_hint": "Delete account hint",
+    "delete": "Delete",
+    "language": "Language",
+    "language_description": "Language description",
+    "coming_soon": "Coming soon",
+    "settings_title": "Settings title",
+    "settings_subtitle": "Settings subtitle"
+  },
+  "auth": {
+    "signup": {
+      "tab": "Sign Up",
+      "signin_tab": "Sign In",
+      "title": "Create Account",
+      "subtitle": "Join Sophia AI — Video & AI Automation Platform",
+      "name_label": "Full Name",
+      "name_placeholder": "Your name",
+      "email_label": "Email",
+      "email_placeholder": "you@example.com",
+      "password_label": "Password",
+      "password_placeholder": "Min 8 characters",
+      "confirm_label": "Confirm Password",
+      "confirm_placeholder": "Re-enter password",
+      "submit": "Create Account",
+      "submitting": "Creating account...",
+      "success_title": "Account Created!",
+      "success_message": "Redirecting to setup wizard...",
+      "error_password_mismatch": "Passwords do not match",
+      "error_password_too_short": "Password must be at least 8 characters",
+      "error_email_exists": "This email is already registered. Try signing in.",
+      "error_generic": "Signup failed. Please try again.",
+      "have_account": "Already have an account?",
+      "error_coupon_failed": "Error coupon failed",
+      "check_email_title": "Check email title",
+      "check_spam_note": "Check spam note",
+      "back_to_login": "Back to login",
+      "sign_in": "Sign in",
+      "create_account": "Create account",
+      "tab_signin": "Tab signin",
+      "tab_signup": "Tab signup",
+      "mode_password": "Mode password",
+      "mode_magic": "Mode magic",
+      "or_contact_support": "Or contact support",
+      "back_to_home": "Back to home",
+      "tagline": "Tagline"
+    },
+    "login": {
+      "error_magic_failed": "Failed to send magic link",
+      "error_connection": "Connection error. Please try again.",
+      "magic_link_description": "Enter your email to receive a login link. No password needed.<br/><span class=\"text-accent\">Don't have an account? The magic link will automatically create one for you.</span>",
+      "email_label": "Email",
+      "sending_magic": "Sending magic link...",
+      "send_magic_link": "Send Magic Link",
+      "error_login_failed": "Login failed",
+      "password_label": "Password",
+      "logging_in": "Logging in...",
+      "sign_in": "Sign In",
+      "error_coupon_failed": "Coupon activation failed",
+      "check_email_title": "Check Your Email",
+      "check_email_message": "We sent a login link to <strong>{email}</strong>. The link is valid for 15 minutes.",
+      "check_spam_note": "Can't find the email? Check your Spam/Junk folder or the Promotions tab.",
+      "back_to_login": "Back to login",
+      "create_account": "Create Account",
+      "tab_signin": "Sign In",
+      "tab_signup": "Sign Up",
+      "mode_password": "Password",
+      "mode_magic": "Magic Link",
+      "or_contact_support": "Or contact support",
+      "back_to_home": "Back to home",
+      "tagline": "Sophia AI — Video Factory & AI Automation"
+    },
+    "mfa_challenge": {
+      "title": "Two-Factor Authentication",
+      "subtitle": "Enter the 6-digit code from your authenticator app.",
+      "label_totp": "Authenticator code (TOTP)",
+      "label_backup": "Backup code",
+      "submit": "Verify",
+      "verifying": "Verifying...",
+      "use_backup": "Use a backup code",
+      "use_totp": "Use authenticator code",
+      "error_invalid_code": "Invalid code. Please try again.",
+      "error_generic": "Verification error. Please try again."
+    }
+  },
+  "sop": {
+    "marketplace": {
+      "title": "SOP Marketplace",
+      "subtitle": "Automate your agency workflows with battle-tested playbooks",
+      "filterCategory": "Filter by category",
+      "filterAll": "All Categories",
+      "searchPlaceholder": "Search SOPs...",
+      "noResults": "No SOPs found matching your search.",
+      "installed": "Installed",
+      "featuredTitle": "Featured Playbooks",
+      "firstTimeTitle": "Start with your first SOP",
+      "firstTimeDesc": "Browse the marketplace to install SOPs and automate your agency workflows.",
+      "firstTimeFaq": "What are SOPs?",
+      "pageTitle": "Page Title",
+      "sortBy": "Sort by",
+      "sortPopular": "Most Popular",
+      "sortRating": "Highest Rated",
+      "sortNewest": "Newest",
+      "resultsCount": "{count} result(s)",
+      "sales": "sales",
+      "byLabel": "by"
+    },
+    "card": {
+      "creditsPerRun": "{n} credits/run",
+      "install": "Install",
+      "installed": "Installed",
+      "viewDetails": "View Details",
+      "featured": "Featured",
+      "setupTime": "Setup {n} min",
+      "upgradeTier": "Upgrade Tier"
+    },
+    "detail": {
+      "agentsTitle": "Agents",
+      "playbookTitle": "Playbook",
+      "outputTitle": "Output Schema",
+      "back": "Back to Marketplace",
+      "installNow": "Install This SOP",
+      "byAgency": "by {name}"
+    },
+    "install": {
+      "title": "Install SOP",
+      "configureTitle": "Configure Your Playbook",
+      "schedule": "Run Schedule",
+      "scheduleHourly": "Every hour",
+      "scheduleDaily": "Daily 9 AM",
+      "scheduleWeekly": "Weekly Monday 9 AM",
+      "scheduleManual": "Manual only",
+      "enable": "Enable immediately after install",
+      "submit": "Install",
+      "submitting": "Installing...",
+      "success": "SOP installed successfully!",
+      "error": "Failed to install SOP. Please try again.",
+      "setupTime": "Ready in {n} min",
+      "advancedLabel": "Advanced — Edit Markdown directly",
+      "advancedHelp": "For power users. Overrides the config form above. Use {{config.field}} to reference your form values.",
+      "customizationsPlaceholder": "Paste or write custom Markdown playbook...",
+      "edit": {
+        "title": "Title"
+      }
+    },
+    "categories": {
+      "content": "Content",
+      "leads": "Leads",
+      "email": "Email",
+      "analytics": "Analytics",
+      "proposals": "Proposals",
+      "crisis": "Crisis PR",
+      "sales": "Sales",
+      "social": "Social Media",
+      "featuredTitle": "Featured Playbooks",
+      "noResults": "No SOPs found matching your search."
+    },
+    "list": {
+      "title": "My SOPs",
+      "subtitle": "Manage your installed SOP automations",
+      "empty": "No SOPs installed yet.",
+      "emptyAction": "Browse Marketplace",
+      "name": "Name",
+      "category": "Category",
+      "schedule": "Schedule",
+      "lastRun": "Last Run",
+      "runCount": "Runs",
+      "enabled": "Enabled",
+      "actions": "Actions",
+      "viewDetail": "View",
+      "runNow": "Run Now",
+      "delete": "Delete",
+      "manual": "Manual",
+      "firstInstallTitle": "Your first SOP is installed!",
+      "firstInstallDesc": "Great start! Explore more SOPs in the marketplace or run this one now."
+    },
+    "detail_page": {
+      "overview": "Overview",
+      "edit": "Edit Playbook",
+      "webhook": "Webhook",
+      "schedule": "Schedule",
+      "nextRun": "Next Run",
+      "lastRun": "Last Run",
+      "runCount": "Total Runs",
+      "status": "Status",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "runNow": "Run Now",
+      "running": "Running...",
+      "delete": "Delete Installation",
+      "deleteConfirm": "Are you sure? This cannot be undone.",
+      "deleteConfirmYes": "Yes, Delete",
+      "deleteConfirmNo": "Cancel",
+      "never": "Never",
+      "notScheduled": "Not scheduled",
+      "runs": {
+        "fallback": "Runs",
+        "pageTitleSimple": "Page Title Simple",
+        "subtitle": "Subtitle",
+        "backToSop": "Back To Sop"
+      },
+      "analytics": {
+        "fallback": "Analytics",
+        "totalRuns": "Total Runs",
+        "successRate": "Success Rate",
+        "creditsSpent": "Credits Spent",
+        "runsLast24h": "Runs Last24h",
+        "breakdownTitle": "Breakdown Title",
+        "statusCompleted": "Status Completed",
+        "statusRunning": "Status Running",
+        "statusPaused": "Status Paused",
+        "statusFailed": "Status Failed",
+        "recentRuns": "Recent Runs"
+      }
+    },
+    "run": {
+      "trigger": "Trigger",
+      "status": "Status",
+      "started": "Started",
+      "completed": "Completed",
+      "duration": "Duration",
+      "missions": "Missions",
+      "viewMission": "View Mission",
+      "noMissions": "No missions recorded for this run.",
+      "manual": "Manual",
+      "webhook": "Webhook",
+      "cron": "Scheduled",
+      "queued": "Queued",
+      "running": "Running",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "partial": "Partial",
+      "backToSops": "Back to SOPs",
+      "backToRuns": "Back to Runs",
+      "title": "Run Details"
+    },
+    "edit": {
+      "title": "Edit Playbook",
+      "save": "Save Changes",
+      "saving": "Saving...",
+      "saved": "Saved!",
+      "error": "Failed to save. Please try again.",
+      "helpText": "Edit the Markdown playbook. Changes apply to all future runs."
+    },
+    "webhook": {
+      "title": "Webhook Integration",
+      "url": "Trigger URL",
+      "copy": "Copy URL",
+      "copied": "Copied!",
+      "regen": "Regenerate Secret",
+      "regenConfirm": "This will invalidate existing signatures. Continue?",
+      "regenSuccess": "New secret generated. Update your webhook sender.",
+      "urlHelp": "POST to this URL with HMAC signature to trigger this SOP."
+    },
+    "creator": {
+      "pageTitle": "Creator Dashboard",
+      "title": "Creator Dashboard",
+      "subtitle": "Manage your SOP templates and earnings",
+      "heading": "Become a SOP Creator",
+      "valueProp": "70/30 Revenue Split",
+      "valuePropDesc": "You earn 70% of every SOP sale. We handle marketplace, payments, and infrastructure.",
+      "submit": "Submit Application",
+      "alreadyCreator": "You already have creator access. Redirecting to your dashboard...",
+      "newSop": {
+        "back": "Back",
+        "title": "Create New SOP",
+        "subtitle": "Build a reusable SOP template for the marketplace"
+      },
+      "payouts": {
+        "title": "Payout Settings",
+        "walletDesc": "Manage your payout wallet address. Payouts are processed every Sunday at 12:00 UTC.",
+        "nextPayout": "Next scheduled payout: Sunday 12:00 UTC",
+        "payoutHistory": "Payout History",
+        "payoutHistoryDesc": "Your previous payout batches",
+        "noPayouts": "No payouts yet",
+        "noPayoutsDesc": "Payouts are processed automatically every Sunday. You'll see your payout history here once processed.",
+        "amount": "Amount",
+        "date": "Date",
+        "status": "Status",
+        "method": "Method",
+        "totalUsd": "Total (USD)",
+        "ledgerCount": "Transactions",
+        "tryAgain": "Try again",
+        "defaultBadge": "Default",
+        "unverifiedBadge": "Unverified",
+        "removePayoutMethod": "Remove payout method",
+        "addWalletAddress": "Add wallet address",
+        "network": "Network",
+        "networkUsdtTrc20": "USDT (TRC20 — Tron)",
+        "networkUsdtErc20": "USDT (ERC20 — Ethereum)",
+        "bankAccount": "Bank account",
+        "labelOptional": "Label (optional)",
+        "labelPlaceholder": "e.g. Main wallet",
+        "walletAddress": "Wallet address",
+        "placeholderTrc20": "T...",
+        "placeholderErc20": "0x...",
+        "adding": "Adding...",
+        "addWallet": "Add wallet",
+        "cancel": "Cancel",
+        "failedToLoadMethods": "Failed to load payout methods",
+        "failedToAddWallet": "Failed to add wallet"
+      },
+      "tabs": {
+        "pageTitle": "Creator Dashboard",
+        "mySops": "My SOPs",
+        "earnings": "Earnings",
+        "payouts": "Payouts",
+        "noSopsTitle": "No SOPs Yet",
+        "noSopsDesc": "Create your first SOP listing to start earning",
+        "createFirstSop": "Create First SOP",
+        "totalEarned": "Total Earned",
+        "allTimeEarnings": "All-time earnings",
+        "pending": "Pending",
+        "awaitingPayout": "Awaiting payout threshold",
+        "payable": "Payable",
+        "readyForPayout": "Ready for next payout",
+        "paidOut": "Paid Out",
+        "historicalPayouts": "Historical payouts"
+      },
+      "totalEarned": "Total Earned",
+      "pending": "Pending",
+      "payable": "Payable",
+      "paid": "Paid Out",
+      "allTimeEarnings": "All-time earnings",
+      "awaitingPayout": "Awaiting payout threshold",
+      "readyForPayout": "Ready for next payout",
+      "paidOut": "Paid Out",
+      "historicalPayouts": "Historical payouts",
+      "detail": {
+        "pageTitle": "SOP Details",
+        "back": "Back",
+        "templateDetails": "Template Details",
+        "descriptionEn": "English Description",
+        "descriptionVi": "Vietnamese Description",
+        "creditsPerRun": "Credits Per Run",
+        "setupTime": "Setup Time",
+        "setupTimeMinutes": "{minutes} min",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At",
+        "publishSuccess": "Publish Success",
+        "draftDescription": "Draft Description",
+        "publishing": "Publishing",
+        "submitForReview": "Submit For Review",
+        "subtitle": "Subtitle",
+        "stats": {
+          "price": "Price",
+          "installs": "Installs",
+          "rating": "Rating",
+          "created": "Created"
+        },
+        "sections": {
+          "basicInfo": "Basic Info",
+          "media": "Media"
+        },
+        "fields": {
+          "title": "Title",
+          "category": "Category",
+          "notSet": "Not Set",
+          "sopTemplateId": "Sop Template Id",
+          "status": "Status",
+          "description": "Description",
+          "noDescription": "No Description",
+          "tags": "Tags",
+          "noTags": "No Tags",
+          "thumbnail": "Thumbnail",
+          "demoVideo": "Demo Video",
+          "viewVideo": "View Video"
+        },
+        "actions": {
+          "title": "Title",
+          "edit": "Edit",
+          "submitForReview": "Submit For Review",
+          "underReview": "Under Review",
+          "archive": "Archive",
+          "archived": "Archived",
+          "viewInMarketplace": "View In Marketplace"
+        }
+      },
+      "noSopsTitle": "No SOPs Yet",
+      "noSopsDesc": "Create your first SOP template to start earning",
+      "createFirstSop": "Create First SOP",
+      "yourSops": "Your SOPs",
+      "noSops": "No SOPs yet",
+      "createFirst": "Create First SOP",
+      "name": "Name",
+      "category": "Category",
+      "status": "Status",
+      "sales": "Sales",
+      "revenue": "Revenue",
+      "actions": {
+        "unauthorized": "You must be logged in to perform this action.",
+        "creatorAccessRequired": "This action requires creator access. Apply to become a creator.",
+        "dbUnavailable": "Database is temporarily unavailable. Please try again later.",
+        "requiredFieldsMissing": "Please fill in all required fields.",
+        "priceRange": "Price must be between $5 and $999.",
+        "notYourTemplate": "You do not have permission to modify this template.",
+        "createSuccess": "SOP template created successfully!",
+        "createError": "Failed to create SOP template. Please try again.",
+        "submitSuccess": "SOP submitted for review successfully!",
+        "submitError": "Failed to submit SOP for review. Please try again.",
+        "agents_yaml": "Agents yaml",
+        "category": "Category",
+        "config_schema": "Config schema",
+        "credits_per_run": "Credits per run",
+        "description_en": "Description en",
+        "description_vi": "Description vi",
+        "name_en": "Name en",
+        "name_vi": "Name vi",
+        "playbook_md": "Playbook md",
+        "price_usd": "Price usd",
+        "setup_time_minutes": "Setup time minutes"
+      },
+      "publish": {
+        "submitForReview": "Submit for Review",
+        "publishing": "Publishing...",
+        "publishSuccess": "Template published successfully!",
+        "draftDescription": "This template is in draft. Submit it for review to publish it to the marketplace."
+      },
+      "apply": {
+        "title": "Become a SOP Creator",
+        "description": "Turn your automation expertise into recurring revenue. Create SOP templates once, earn on every sale.",
+        "benefits": {
+          "title": "Why Become a Creator?",
+          "items": [
+            "70/30 revenue split — you keep 70% of every sale",
+            "Passive income — create once, sell indefinitely",
+            "Global marketplace with built-in distribution",
+            "Full payout automation (USDT to your wallet)",
+            "Creator analytics dashboard",
+            "Priority support for verified creators"
+          ]
+        },
+        "form": {
+          "title": "Creator Application",
+          "website": {
+            "label": "Your Channel/Website",
+            "placeholder": "https://your-channel.com",
+            "hint": "Link to your YouTube, blog, or portfolio"
+          },
+          "niche": {
+            "label": "Primary Niche",
+            "placeholder": "Select your niche",
+            "options": {
+              "tech": "Technology & AI",
+              "finance": "Finance & Crypto",
+              "lifestyle": "Lifestyle & Productivity",
+              "education": "Education & Tutorials",
+              "gaming": "Gaming & Entertainment",
+              "health": "Health & Fitness",
+              "business": "Business & Marketing",
+              "other": "Other"
+            }
+          },
+          "subscribers": {
+            "label": "Subscribers/Followers",
+            "placeholder": "Select range",
+            "options": {
+              "0-1k": "0 – 1,000",
+              "1k-10k": "1,000 – 10,000",
+              "10k-100k": "10,000 – 100,000",
+              "100k-500k": "100,000 – 500,000",
+              "500k+": "500,000+"
+            }
+          },
+          "monthlyViews": {
+            "label": "Average Monthly Views",
+            "placeholder": "Select range",
+            "options": {
+              "0-10k": "0 – 10,000",
+              "10k-50k": "10,000 – 50,000",
+              "50k-200k": "50,000 – 200,000",
+              "200k-1m": "200,000 – 1,000,000",
+              "1m+": "1,000,000+"
+            }
+          },
+          "experience": {
+            "label": "Automation/Content Experience",
+            "placeholder": "Describe your experience with automation, content creation, or SOP development...",
+            "hint": "Tell us about your background — what SOPs do you plan to create?"
+          },
+          "whyJoin": {
+            "label": "Why Do You Want to Be a Creator?",
+            "placeholder": "What unique value will your SOPs bring to the marketplace?",
+            "hint": "Explain your unique angle and what problems your SOPs will solve"
+          },
+          "sampleContent": {
+            "label": "Sample Content Link (Optional)",
+            "placeholder": "https://youtube.com/watch?v=...",
+            "hint": "Link to your best video or content piece"
+          },
+          "submit": "Submit Application",
+          "disclaimer": "Applications are reviewed within 3-5 business days. We look for creators with proven expertise and unique automation workflows."
+        },
+        "submitted": {
+          "title": "Application Submitted!",
+          "description": "Thanks for applying! Our team will review your application within 3-5 business days. You'll receive an email notification once a decision is made."
+        },
+        "backToDashboard": "Back to Dashboard"
+      },
+      "dashboard": {
+        "title": "Creator Dashboard",
+        "description": "Manage your SOP templates and track earnings",
+        "sections": {
+          "mySops": "My SOPs",
+          "earnings": "Earnings",
+          "payouts": "Payouts"
+        },
+        "stats": {
+          "listings": "Total Listings",
+          "drafts": "Draft Listings",
+          "published": "Published",
+          "earnings": "Total Earnings"
+        },
+        "actions": {
+          "newListing": "Create New Listing",
+          "myListings": "My Listings",
+          "browseMarketplace": "Browse Marketplace"
+        },
+        "empty": {
+          "title": "No Listings Yet",
+          "description": "Create your first SOP listing to start earning"
+        }
+      },
+      "gate": {
+        "notAuthorized": {
+          "title": "Creator Access Required",
+          "description": "You don't have access to the Creator Dashboard yet. Apply to become a verified SOP creator and start earning 70% revenue share on every sale."
+        },
+        "benefits": {
+          "revenue": "70/30 Revenue Split",
+          "revenueDesc": "You keep 70% of every sale",
+          "audience": "Global Audience",
+          "audienceDesc": "Reach thousands of creators",
+          "tools": "Full Tooling",
+          "toolsDesc": "Playbook editor, analytics, payouts"
+        },
+        "applyNow": "Apply to Become a Creator",
+        "masterNote": "MASTER tier users have automatic access — no application needed",
+        "masterTier": {
+          "title": "MASTER Tier Included",
+          "description": "MASTER plan ($4,999 lifetime) includes unrestricted creator access. If you're on MASTER, you're already approved."
+        }
+      },
+      "new": {
+        "back": "Back",
+        "title": "Title",
+        "subtitle": "Subtitle",
+        "form": {
+          "title": "Title",
+          "fields": {
+            "title": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            },
+            "sopTemplateId": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            },
+            "priceCents": {
+              "label": "Label",
+              "hint": "Hint"
+            },
+            "category": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "options": {
+                "content": "Content",
+                "leads": "Leads",
+                "email": "Email",
+                "analytics": "Analytics",
+                "proposals": "Proposals",
+                "social": "Social",
+                "other": "Other"
+              }
+            },
+            "description": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            },
+            "tags": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            },
+            "thumbnailUrl": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            },
+            "demovideoUrl": {
+              "label": "Label",
+              "placeholder": "Placeholder",
+              "hint": "Hint"
+            }
+          },
+          "submit": "Submit",
+          "disclaimer": "Disclaimer"
+        }
+      }
+    },
+    "community": {
+      "firstTimeDesc": "First Time Desc",
+      "firstTimeFaq": "First Time Faq",
+      "firstTimeTitle": "First Time Title",
+      "subtitle": "Subtitle",
+      "title": "Title"
+    },
+    "status": {
+      "category": "Category",
+      "createFirst": "Create First",
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived",
+      "pending_review": "Pending Review",
+      "name": "Name",
+      "newSop": "New Sop",
+      "noSops": "No Sops",
+      "noSopsDesc": "No Sops Desc",
+      "paid": "Paid",
+      "payable": "Payable",
+      "pending": "Pending",
+      "revenue": "Revenue",
+      "sales": "Sales",
+      "status": "Status",
+      "subtitle": "Subtitle",
+      "title": "Title",
+      "totalEarned": "Total Earned",
+      "yourSops": "Your Sops"
+    }
+  },
+  "agentChat": {
+    "title": "Sophia Assistant",
+    "placeholder": "Ask Sophia...",
+    "showWork": "Show Work",
+    "hideWork": "Hide Work",
+    "newChat": "New chat",
+    "collapse": "Collapse",
+    "expand": "Open Sophia Assistant",
+    "sessionNote": "Session only — not saved"
+  },
+  "cmdK": {
+    "placeholder": "Type a command or search...",
+    "noResults": "No results found.",
+    "openMarketplace": "Open SOP Marketplace",
+    "adminOps": "Open Ops Dashboard",
+    "showQueueDepth": "Show Queue Depth",
+    "groups": {
+      "pages": "Pages",
+      "sops": "SOPs",
+      "missions": "Recent Missions",
+      "admin": "Admin"
+    }
+  },
+  "checkout": {
+    "pending_title": "Confirming payment...",
+    "pending_desc": "Crypto confirmations take 2-5 min. Checking... ({attempt}/{max})",
+    "timeout_title": "Still processing...",
+    "timeout_desc": "The blockchain is confirming your transaction. We'll email you when it's done.",
+    "contact_support": "Contact support",
+    "failure_title": "Payment Unsuccessful",
+    "failure_desc": "We're sorry, your payment could not be completed. Don't worry — you can try again.",
+    "failure_reasons_title": "Common reasons",
+    "failure_reasons": [
+      "Insufficient payment amount (underpayment)",
+      "Transaction expired before confirmation",
+      "Amount doesn't match the invoice",
+      "Blockchain connection error"
+    ],
+    "try_again": "Try again",
+    "order_id_label": "Order ID",
+    "period_yearly_coming_soon": "Yearly billing not yet enabled",
+    "failure_reason_blockchain": "Failure reason blockchain",
+    "failure_reason_expired": "Failure reason expired",
+    "failure_reason_mismatch": "Failure reason mismatch",
+    "failure_reason_underpayment": "Failure reason underpayment",
+    "recommended": "Recommended",
+    "payment_method": "Payment method",
+    "guidance_text": "Guidance text",
+    "wallet_address": "Wallet address",
+    "copied": "Copied",
+    "copy": "Copy",
+    "qr_code": "Qr code",
+    "confirm_payment": "Confirm payment",
+    "nowpayments_redirect": "Nowpayments redirect",
+    "proceed_to_invoice": "Proceed to invoice",
+    "order_summary": "Order summary",
+    "plan_selected": "Plan selected",
+    "subscription": "Subscription",
+    "subscription_price": "Subscription price",
+    "ai_credits": "Ai credits",
+    "ai_credits_price": "Ai credits price",
+    "grand_total": "Grand total",
+    "grand_total_price": "Grand total price",
+    "breadcrumb_billing": "Breadcrumb billing",
+    "breadcrumb_checkout": "Breadcrumb checkout",
+    "page_title": "Page title"
+  },
+  "onboardingFlow": {
+    "title": "Set up Sophia AI",
+    "subtitle": "Complete 3 steps to unlock full features",
+    "step1": {
+      "title": "Connectivity check",
+      "desc": "Verifying connection to Sophia AI servers."
+    },
+    "step2": {
+      "title": "Generate API Key",
+      "desc": "This key lets your app call the Sophia AI API. Save it now — shown only once.",
+      "saveWarning": "This key will not be shown again. Store it securely.",
+      "savedBtn": "I've saved this key",
+      "generateBtn": "Generate API Key",
+      "generating": "Generating..."
+    },
+    "step3": {
+      "title": "Make your first API call",
+      "desc": "Send a message to Sophia AI and see the live response.",
+      "sendBtn": "Send",
+      "sending": "Sending...",
+      "continueBtn": "Continue →"
+    },
+    "completed": "All done!",
+    "completedDesc": "Sophia AI is ready to serve you.",
+    "openDashboard": "Open Dashboard"
+  },
+  "statusPage": {
+    "title": "Sophia AI Factory Status",
+    "operational": "All Systems Operational",
+    "degraded": "Degraded Performance",
+    "uptime90d": "90-day uptime",
+    "pastIncidents": "Past Incidents",
+    "noIncidents": "No incidents in the past 90 days.",
+    "incidentDuration": "Duration",
+    "postmortem": "Post-mortem"
+  },
+  "missionControl": {
+    "currentPlan": "Current plan",
+    "mcuQuota": "MCU quota",
+    "callsLast7d": "calls / 7d",
+    "upgradeNow": "Upgrade now",
+    "exploreSops": "Explore SOPs",
+    "renew": "Renew"
+  },
+  "errors": {
+    "boundary": {
+      "title": "Something went wrong",
+      "message": "An unexpected error occurred. Please try again.",
+      "retry": "Try again",
+      "home": "Go home",
+      "support": "Contact support",
+      "errorCode": "Error code"
+    },
+    "generic": "Generic",
+    "noChannelSelected": "No channel selected",
+    "retry": "Retry",
+    "submitFailed": "Submit failed",
+    "unknown": "Unknown",
+    "validateConnection": "Validate connection",
+    "validateInvalid": "Invalid credentials"
+  },
+  "header": {
+    "brand": "Brand",
+    "title": "Dashboard",
+    "subtitle": "Subtitle"
+  },
+  "sidebar": {
+    "overview": "Overview",
+    "new_project": "New project",
+    "campaigns": "Campaigns",
+    "analytics": "Analytics",
+    "my_videos": "My videos",
+    "orders": "Orders",
+    "support": "Support",
+    "missions": "Missions",
+    "credits": "Credits",
+    "integrations": "Integrations",
+    "webhooks": "Webhooks",
+    "byok": "Byok",
+    "api_keys": "Api keys",
+    "proposals": "Proposals",
+    "workflows": "Workflows",
+    "sop_marketplace": "Sop marketplace",
+    "my_sops": "My sops",
+    "api_docs": "Api docs",
+    "settings": "Settings",
+    "replay_tour": "Replay tour",
+    "sign_out": "Sign out",
+    "challenges": "Challenges",
+    "creative_studio": "Creative studio",
+    "sop_creator": "Sop creator",
+    "templates": "Templates",
+    "upgradePlan": "Upgrade Plan",
+    "voices": "Voices"
+  },
+  "privacy": {
+    "meta_title": "Privacy Policy - Sophia AI Factory",
+    "meta_description": "How Sophia AI Factory collects, uses, and protects your data.",
+    "title": "Privacy Policy",
+    "last_updated": "Last updated: April 30, 2026",
+    "section1_title": "1. Information We Collect",
+    "section1_body": "We collect information you provide directly: email address, name, API keys (encrypted at rest), and payment transaction records. We do NOT sell your data.",
+    "section2_title": "2. How We Use Your Data",
+    "section2_body": "Your data is used solely to provide and improve the Service — generating AI videos, processing payments, and sending transactional emails. API keys are encrypted using AES-256-GCM.",
+    "section3_title": "3. Data Storage & Security",
+    "section3_body": "Data is stored on Cloudflare D1 (global edge database) and Cloudflare R2 (object storage). All data is encrypted in transit (TLS 1.3) and at rest. We implement CSP, HSTS, and CSRF protection.",
+    "section4_title": "4. Third-Party Services",
+    "section4_body": "We use third-party services to deliver the Service: HeyGen (video generation), ElevenLabs (text-to-speech), OpenRouter (AI script writing), NOWPayments (payment processing), and Resend (email delivery). Each service has its own privacy policy.",
+    "section5_title": "5. Your Rights",
+    "section5_body": "You may request deletion of your data at any time. Contact us to exercise your data rights. We will respond within 30 days.",
+    "section6_title": "6. Contact",
+    "section6_body": "Data protection inquiries: Telegram @Sophia_Bbot or email support."
+  },
+  "terms": {
+    "meta_title": "Terms of Service - Sophia AI Factory",
+    "meta_description": "Terms and conditions for using Sophia AI Factory — AI Video SaaS Platform.",
+    "title": "Terms of Service",
+    "last_updated": "Last updated: April 30, 2026",
+    "section1_title": "1. Acceptance of Terms",
+    "section1_body": "By accessing or using Sophia AI Factory (\"the Service\"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.",
+    "section2_title": "2. Subscription & Payments",
+    "section2_body": "The Service is offered on a subscription basis. Plans are billed monthly in USDT via NOWPayments. You are responsible for maintaining accurate payment information. Failed payments may result in service suspension.",
+    "section3_title": "3. Acceptable Use",
+    "section3_body": "You agree not to use the Service to create content that is illegal, harmful, or violates third-party rights. Sophia AI Factory reserves the right to suspend accounts that violate these terms.",
+    "section4_title": "4. Intellectual Property",
+    "section4_body": "Videos generated through the Service belong to you. The underlying AI models, platform code, and infrastructure remain the property of Sophia AI Factory.",
+    "section5_title": "5. Limitation of Liability",
+    "section5_body": "The Service is provided \"as is\" without warranties. Sophia AI Factory is not liable for damages arising from the use of the Service, including video generation failures or service interruptions.",
+    "section6_title": "6. Contact",
+    "section6_body": "For questions about these terms, contact us via Telegram @Sophia_Bbot or email support."
+  },
+  "resetPassword": {
+    "meta_title": "Reset Password - Sophia AI Factory",
+    "meta_description": "Reset your Sophia AI Factory account password.",
+    "request_title": "Reset Password",
+    "request_subtitle": "Enter your email address and we will send you a reset link.",
+    "email_label": "Email Address",
+    "email_placeholder": "you@example.com",
+    "submit_request": "Send Reset Link",
+    "submitting": "Sending...",
+    "success_title": "Check Your Email",
+    "success_body": "If an account with that email exists, a reset link has been sent. It expires in 1 hour.",
+    "spam_note": "Don't see it? Check your Spam or Promotions folder.",
+    "back_to_login": "Back to sign in",
+    "confirm_title": "Set New Password",
+    "confirm_subtitle": "Enter your new password below.",
+    "new_password_label": "New Password",
+    "new_password_placeholder": "Min 8 characters",
+    "confirm_password_label": "Confirm Password",
+    "confirm_password_placeholder": "Re-enter password",
+    "submit_confirm": "Set Password",
+    "setting": "Setting...",
+    "confirm_success_title": "Password Updated",
+    "confirm_success_body": "Your password has been set. You can now sign in.",
+    "sign_in_now": "Sign In Now",
+    "error_token_missing": "Invalid or missing reset token. Please request a new link.",
+    "error_token_expired": "This reset link has expired. Please request a new one.",
+    "error_password_mismatch": "Passwords do not match.",
+    "error_password_too_short": "Password must be at least 8 characters.",
+    "error_generic": "Something went wrong. Please try again.",
+    "link_expired_title": "Link Expired",
+    "request_new_link": "Request New Link",
+    "token": "Token"
+  },
+  "byok": {
+    "configured_providers": "Configured providers ({count})",
+    "no_keys": "No keys stored yet. Add one below.",
+    "test_button": "Test",
+    "clear_button": "Clear",
+    "clear_confirm": "Delete {label} key? You'll lose access to this feature.",
+    "add_or_rotate": "Add or rotate a key",
+    "provider_label": "Provider",
+    "key_label": "API Key",
+    "key_hint": "Keys are encrypted at rest and never returned from the server.",
+    "rotate": "rotate",
+    "saving": "Saving…",
+    "save_button": "Save key",
+    "saved": "Saved {provider} key",
+    "cleared": "Cleared {provider} key",
+    "error_format": "Key too short — must be at least 10 characters.",
+    "network_error": "Network error — try again",
+    "validate": {
+      "too_short": "Key looks too short — paste the full key from your provider dashboard.",
+      "openrouter": {
+        "format": "OpenRouter keys start with sk-or- — copy yours at openrouter.ai/keys."
+      },
+      "anthropic": {
+        "format": "Anthropic keys start with sk-ant- — copy yours at console.anthropic.com."
+      },
+      "elevenlabs": {
+        "format": "ElevenLabs xi-api-key is a 20+ char alphanumeric token — find it under Profile → API Keys."
+      },
+      "did": {
+        "format": "D-ID expects either email:password (we'll auto-encode) or its base64-encoded form from the dashboard.",
+        "auto_encoded": "Detected raw email:password — auto-encoded to base64 for you."
+      },
+      "muapi": {
+        "format": "MuAPI keys are 20+ char alphanumeric tokens — find them in the MuAPI dashboard."
+      },
+      "replicate": {
+        "format": "Replicate keys start with r8_ — copy yours at replicate.com/account/api-tokens."
+      }
+    },
+    "picker": {
+      "placeholder": "Use system model (default)",
+      "placeholder_label": "AI Model (optional — use your own key)",
+      "system_default": "System default — no BYOK",
+      "aria_label": "Select provider and model",
+      "no_providers": "No BYOK providers configured — add keys in Settings.",
+      "cost_preview": "~${input} input / ${output} output per 1k tokens",
+      "back_to_templates": "Back to templates",
+      "balance": "Balance",
+      "cost": "Cost",
+      "insufficient_credits": "Insufficient credits",
+      "launch_mission": "Launch mission",
+      "launching": "Launching"
+    }
+  },
+  "affiliateProgram": {
+    "meta": {
+      "title": "Become a Sophia Affiliate — Earn Recurring Commissions",
+      "description": "Refer creators to Sophia AI Factory and earn 30% recurring commission. USDT or fiat payouts. No minimum threshold."
+    },
+    "hero": {
+      "title": "Earn 30% Recurring",
+      "subtitle": "Refer creators and businesses to Sophia AI Factory. Get paid every month they stay subscribed.",
+      "ctaPrimary": "Become an Affiliate",
+      "ctaSecondary": "How It Works"
+    },
+    "stats": {
+      "commission": "30% recurring",
+      "commissionLabel": "Commission rate",
+      "payout": "USDT or fiat",
+      "payoutLabel": "Payout methods",
+      "cookie": "30 days",
+      "cookieLabel": "Cookie window"
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "step1Title": "1. Sign up",
+      "step1Desc": "Create your free Sophia account — affiliates use the same login.",
+      "step2Title": "2. Get your link",
+      "step2Desc": "Generate a unique referral code in your dashboard. Share it anywhere.",
+      "step3Title": "3. Earn",
+      "step3Desc": "Track conversions in real time. Get paid USDT (instant) or USD via Stripe Connect."
+    },
+    "features": {
+      "title": "Why Affiliate With Sophia",
+      "recurring": "Recurring revenue — earn every month, not just first sale",
+      "highEpc": "High EPC — converting niche with hot AI video product",
+      "transparent": "Real-time tracking — full conversion + payout dashboard",
+      "noMinimum": "No minimum threshold — withdraw anytime"
+    },
+    "cta": {
+      "title": "Ready to start?",
+      "subtitle": "Sign up free, generate your link in 2 minutes.",
+      "button": "Start Earning"
+    },
+    "footer": {
+      "disclaimer": "Commission rates and terms subject to change. See affiliate agreement for details."
+    },
+    "earnings": {
+      "title": "Your Earnings",
+      "tier_col": "Tier",
+      "price_col": "Price",
+      "your_cut_col": "Your Commission",
+      "note": "Commissions are tracked automatically and paid monthly."
+    },
+    "onboarding": {
+      "title": "Start Earning in 3 Steps",
+      "step1_title": "Sign Up Free",
+      "step1_desc": "Create your account in 2 minutes.",
+      "step2_title": "Share Your Link",
+      "step2_desc": "Get your unique referral link and share it.",
+      "step3_title": "Earn Commissions",
+      "step3_desc": "Earn up to 40% on every sale. Paid monthly."
+    },
+    "copyLink": {
+      "title": "Your Referral Link",
+      "loginHint": "Login Hint",
+      "generating": "Generating",
+      "cta": "Copy Link",
+      "copied": "Copied",
+      "copy": "Copy"
+    }
+  },
+  "tour": {
+    "beginner": {
+      "audit_note": "Onboarding tour has 7 complete steps (BYOK → SOP → Run → Analytics → MCU → Support). Coverage EXCEEDS the 6-step beginner requirement.",
+      "step_distribute_hint": "After running a SOP, the bot auto-distributes the video to connected channels."
+    }
+  },
+  "welcome": {
+    "metadataTitle": "Welcome to Sophia AI",
+    "tierActivated": "{tier} Plan Activated",
+    "greeting": "Welcome,",
+    "summary": "Your account is ready. Click below to enter the Setup Wizard and configure your API keys.",
+    "getStarted": "Get Started",
+    "singleUseHint": "This link is single-use.",
+    "createFirstVideo": {
+      "title": "Create Your First Video Now",
+      "description": "You only need an OpenRouter API key to start. No other keys required.",
+      "cta": "Create First Video",
+      "subtitle": "Text-to-slides style — no avatar needed"
+    },
+    "roadmapHeader": "Activation Roadmap",
+    "stepLabel": "Step",
+    "errors": {
+      "validateInvalid": "Link is invalid or expired.",
+      "validateConnection": "Connection error. Please try again."
+    },
+    "telegram": {
+      "title": "Connect Telegram",
+      "description": "Get notifications + quick commands on Telegram. Type /campaign to create videos anytime.",
+      "connectButton": "Open Telegram and connect",
+      "openedHint": "✅ Telegram opened — type /start to complete linking"
+    },
+    "steps": {
+      "accountCreated": {
+        "title": "Account Created",
+        "description": "Sophia created your account. Click \"Get Started\" below to enter your dashboard."
+      },
+      "configureKeys": {
+        "title": "Configure API Keys",
+        "description": "Add your HeyGen API key and Resend API key in the Setup Wizard."
+      },
+      "verifyHeygen": {
+        "title": "Verify HeyGen",
+        "description": "Test HeyGen connection in Settings → Integrations."
+      },
+      "firstSop": {
+        "title": "Run First SOP",
+        "installedPrefix": "{count} SOPs pre-installed. ",
+        "callToAction": "Enable and run a SOP now."
+      },
+      "watchResults": {
+        "title": "Watch Results",
+        "description": "See generated videos, performance metrics, and MCU usage in your Dashboard."
+      }
+    },
+    "invalid": {
+      "title": "Invalid Link",
+      "defaultMessage": "This link has expired or been used.",
+      "resendPrompt": "Enter your email to get a new link",
+      "submit": "Send new link",
+      "rateLimited": "Too many requests. Please try again in an hour.",
+      "genericError": "Something went wrong.",
+      "connectionError": "Connection error.",
+      "altLogin": "Or sign in with existing account",
+      "sentTitle": "New link sent",
+      "sentDescription": "If that email is in our system, you'll receive a new sign-in link in a few minutes.",
+      "backHome": "Back to home"
+    }
+  },
+  "templates": {
+    "beginnerTag": {
+      "label": "🌱 Beginner"
+    }
+  },
+  "cryptoCompliance": {
+    "title": "Crypto Compliance Settings",
+    "subtitle": "Select your primary audience jurisdiction for crypto affiliate offers. This determines the required legal disclaimer text and which channels are permitted.",
+    "jurisdictionLabel": "Target Audience Jurisdiction",
+    "blockedTitle": "Crypto Promotion Blocked",
+    "blockedDescription": "Vietnam law prohibits promotion or advertising of cryptocurrency assets. Crypto affiliate offers cannot be published to any Vietnam-targeted channel.",
+    "bannedChannelsTitle": "Channels Blocked for Crypto:",
+    "bannedChannelsNote": "These channels reach a primarily Vietnamese audience and cannot be used for crypto affiliate content regardless of your declared jurisdiction.",
+    "previewTitle": "Disclaimer Preview (will appear in captions & videos):",
+    "saving": "Saving...",
+    "saved": "Saved!",
+    "save": "Save Jurisdiction",
+    "disclaimerPreview": {
+      "US": "#ad | Crypto is highly volatile. Past performance does not guarantee future results. Not financial advice.",
+      "EU": "#ad | Crypto-assets are speculative. Capital is at risk. Not financial advice. (MiCA EU 2023/1114)",
+      "VN": "[BLOCKED: Crypto promotion is prohibited in Vietnam by law]",
+      "SG": "#ad | DPT (crypto) is high-risk and may not suit retail investors. (MAS Notice PSN08)",
+      "JP": "#ad | Crypto trading involves risk of loss. Use only FSA-registered exchanges in Japan. (FSA JP)"
+    }
+  },
+  "experiments": {
+    "title": "A/B Experiments",
+    "subtitle": "Compare two title versions and see which one gets more clicks.",
+    "empty": {
+      "title": "No experiments yet",
+      "description": "Publish a video with A/B testing enabled to start comparing title variants."
+    },
+    "sections": {
+      "active": "Running Now",
+      "decided": "Results In"
+    },
+    "variant": {
+      "a": "Version A",
+      "b": "Version B"
+    },
+    "stats": {
+      "views": "views"
+    },
+    "status": {
+      "active": "Running",
+      "decided": "Winner picked",
+      "no_winner": "No clear winner",
+      "expired": "Expired"
+    },
+    "winner": {
+      "a": "Winner: Version A picked ({delta} more clicks)",
+      "b": "Winner: Version B picked ({delta} more clicks)",
+      "no_winner": "No clear winner after 48 hours — both versions kept running."
+    }
+  },
+  "agi": {
+    "outcomes_title": "Outcomes title",
+    "outcomes_description": "Outcomes description",
+    "confidence_title": "Confidence title",
+    "confidence_description": "Confidence description",
+    "agents_title": "Agents title",
+    "agents_description": "Agents description",
+    "api_keys_title": "Api keys title",
+    "api_keys_description": "Api keys description",
+    "feedback_title": "Feedback title",
+    "feedback_description": "Feedback description",
+    "compliance_title": "Compliance title",
+    "compliance_description": "Compliance description",
+    "hub_title": "Hub title",
+    "hub_subtitle": "Hub subtitle",
+    "coming_soon": "Coming soon"
+  },
+  "challenges": {
+    "title": "Complete Missions, Earn Rewards",
+    "subtitle": "Level up your agency with hands-on AI challenges",
+    "noChallenges": "No Challenges",
+    "claimed": "Claimed",
+    "completed": "Completed",
+    "progress": "Progress",
+    "badge": "🎯 Gamified Learning",
+    "credits": "Credits",
+    "commissionBoost": "Commission Boost",
+    "daysLeft": "Days Left",
+    "claimReward": "Claim Reward",
+    "streak": {
+      "loginTitle": "Daily Login Streak",
+      "loginDesc": "Log in every day to build your streak and earn bonus rewards",
+      "videoTitle": "Weekly Video Streak",
+      "videoDesc": "Create videos every week to keep your streak alive",
+      "loginBonus": "+{multiplier}x reward bonus at {count} day streak",
+      "videoBonus": "+{multiplier}x reward bonus at {count} week streak",
+      "currentStreak": "Current Streak",
+      "longestStreak": "Longest Streak",
+      "days": "{count} days",
+      "weeks": "{count} weeks"
+    },
+    "period": "Period",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "allTime": "All Time"
+  },
+  "creativeStudio": {
+    "audio": {
+      "download": "Download",
+      "generating": "Generating",
+      "generateAudio": "Generate Audio",
+      "emptyState": "Empty State",
+      "textLabel": "Text Label",
+      "textPlaceholder": "Text Placeholder",
+      "voiceLabel": "Voice Label",
+      "voicePlaceholder": "Voice Placeholder"
+    },
+    "brand": {
+      "loading": "Loading",
+      "brandKit": "Brand Kit",
+      "colors": "Colors",
+      "primaryColor": "Primary Color",
+      "secondaryColor": "Secondary Color",
+      "logo": "Logo",
+      "uploadLogo": "Upload Logo",
+      "logoPosition": "Logo Position",
+      "logoOpacity": "Logo Opacity",
+      "intro": "Intro",
+      "uploadIntro": "Upload Intro",
+      "outro": "Outro",
+      "uploadOutro": "Upload Outro",
+      "introPosition": "Intro Position",
+      "font": "Font",
+      "uploadFont": "Upload Font",
+      "saving": "Saving"
+    },
+    "image": {
+      "generateFirst": "Generate First",
+      "generationFailed": "Generation Failed",
+      "download": "Download",
+      "copyUrl": "Copy Url",
+      "generateImage": "Generate Image",
+      "generatedImages": "Generated Images",
+      "modelLabel": "Model Label",
+      "modelPlaceholder": "Model Placeholder",
+      "upgradeToUnlock": "Upgrade To Unlock",
+      "promptLabel": "Prompt Label",
+      "promptPlaceholder": "Prompt Placeholder",
+      "charsRemaining": "Chars Remaining",
+      "aspectRatioLabel": "Aspect Ratio Label",
+      "generating": "Generating",
+      "loadHistoryFailed": "Load History Failed",
+      "retry": "Retry",
+      "loadFailed": "Load Failed"
+    },
+    "newsletter": {
+      "brandLabel": "Brand Label",
+      "brandPlaceholder": "Brand Placeholder",
+      "topicLabel": "Topic Label",
+      "topicPlaceholder": "Topic Placeholder",
+      "toneLabel": "Tone Label",
+      "introLabel": "Intro Label",
+      "introPlaceholder": "Intro Placeholder",
+      "ctaLabel": "Cta Label",
+      "ctaPlaceholder": "Cta Placeholder",
+      "generating": "Generating",
+      "generate": "Generate",
+      "previewLabel": "Preview Label",
+      "copied": "Copied",
+      "copyHtml": "Copy Html",
+      "subjectLine": "Subject Line",
+      "words": "Words",
+      "previewPlaceholder": "Preview Placeholder"
+    },
+    "templates": {
+      "useTemplate": "Use Template",
+      "filterAll": "Filter All",
+      "filterCampaign": "Filter Campaign",
+      "filterVideo": "Filter Video",
+      "campaignTemplates": "Campaign Templates",
+      "videoTemplates": "Video Templates"
+    },
+    "video": {
+      "avatarLabel": "Avatar Label",
+      "successTitle": "Success Title",
+      "successDescription": "Success Description",
+      "errorTitle": "Error Title",
+      "generating": "Generating",
+      "generate": "Generate",
+      "previewLabel": "Preview Label",
+      "previewPlaceholder": "Preview Placeholder",
+      "missionCreated": "Mission Created",
+      "trackProgress": "Track Progress",
+      "scriptLabel": "Script Label",
+      "scriptPlaceholder": "Script Placeholder",
+      "templateLabel": "Template Label",
+      "voiceLabel": "Voice Label"
+    },
+    "tabs": {
+      "image": "Image",
+      "audio": "Audio",
+      "newsletter": "Newsletter",
+      "templates": "Templates",
+      "brand": "Brand"
+    },
+    "stats": {
+      "video": {
+        "label": "Label",
+        "value": "Value"
+      },
+      "image": {
+        "label": "Label",
+        "value": "Value"
+      },
+      "audio": {
+        "label": "Label",
+        "value": "Value"
+      }
+    },
+    "eyebrow": "Eyebrow",
+    "title": "AI Creative Studio",
+    "subtitle": "Generate thumbnails, banners, and marketing visuals with AI",
+    "badge": "🎨 Visual AI",
+    "textarea": "Textarea",
+    "videoCreator": {
+      "step_topic": "Topic",
+      "step_script": "Script",
+      "step_voice": "Voice",
+      "step_visuals": "Visuals",
+      "step_confirm": "Confirm",
+      "step1_label": "Video Topic / Ideas",
+      "step1_hint": "Describe your video topic. Our AI will automatically compose the script.",
+      "step1_helper": "Your idea will be converted to a script in the next step.",
+      "step1_placeholder": "e.g. 3 valuable lessons about personal finance for young adults...",
+      "step2_label": "Detailed script the AI avatar will read (min 10 chars):",
+      "step2_regenerate": "Regenerate AI Draft",
+      "step3_label": "Choose AI Voice",
+      "step3_hint": "Select the AI voice profile to read your generated video script.",
+      "step4_label1": "1. Choose Presenter Avatar",
+      "step4_hint1": "Select the digital twin avatar representing your brand or topic.",
+      "step4_label2": "2. Choose Layout Template",
+      "step4_hint2": "Choose between cinematic or casual templates to customize the visual theme.",
+      "step5_review": "Review Selections",
+      "step5_avatar": "Avatar",
+      "step5_voice": "Voice",
+      "step5_template": "Template",
+      "step5_script": "Script Content",
+      "step5_empty": "(Empty)",
+      "btn_back": "Back",
+      "btn_next": "Next",
+      "preview_script": "Script",
+      "preview_voice": "Voice",
+      "preview_template": "Template",
+      "presenting_avatar": "Presenting Avatar",
+      "video": {
+        "successTitle": "Success Title",
+        "successDescription": "Success Description",
+        "errorTitle": "Error Title",
+        "generating": "Generating",
+        "generate": "Generate",
+        "previewLabel": "Preview Label",
+        "previewPlaceholder": "Preview Placeholder",
+        "missionCreated": "Mission Created",
+        "trackProgress": "Track Progress"
+      }
+    },
+    "templateSelector": {
+      "search_placeholder": "Search templates...",
+      "filter_all": "All",
+      "category_welcome": "Welcome",
+      "category_product": "Product Launch",
+      "category_seasonal": "Seasonal",
+      "category_promotion": "Promotion",
+      "category_viral": "Viral Content",
+      "no_templates": "No matching templates",
+      "tone_label": "Tone:",
+      "topic_label": "Topic",
+      "topic_required": "*",
+      "topic_placeholder_template": "e.g. {title}...",
+      "topic_placeholder_default": "Enter your video topic...",
+      "topic_hint_template": "Target: {audience}",
+      "brand_label": "Brand Name",
+      "brand_placeholder": "Your brand or channel name...",
+      "advanced_options": "Advanced options",
+      "duration_label": "Duration (sec)",
+      "tone_placeholder": "e.g. professional, casual...",
+      "language_label": "Language",
+      "generating": "Generating script...",
+      "generate": "Generate Script"
+    }
+  },
+  "publish": {
+    "publish": "Publish",
+    "publishVideo": "Publish Video",
+    "publishSuccess": "Publish Success",
+    "platform": "Platform",
+    "noPlatforms": "No Platforms",
+    "title": "Publish Everywhere",
+    "description": "Description",
+    "tags": "Tags",
+    "tagsPlaceholder": "Tags Placeholder",
+    "privacy": "Privacy",
+    "private": "Private",
+    "unlisted": "Unlisted",
+    "public": "Public",
+    "publishNow": "Publish Now",
+    "subtitle": "One-click publishing to YouTube, TikTok, Instagram, and more"
+  },
+  "analytics": {
+    "syncNow": "Sync Now",
+    "totalViews": "Total Views",
+    "totalWatchTime": "Total Watch Time",
+    "avgCTR": "Avg C T R",
+    "avgEngagement": "Avg Engagement",
+    "topVideos": "Top Videos",
+    "noData": "No Data",
+    "views": "Views",
+    "watchTime": "Watch Time",
+    "ctr": "Ctr",
+    "engagement": "Engagement",
+    "title": "Smart Analytics",
+    "last": {},
+    "subtitle": "Track performance across all your channels in one dashboard"
+  },
+  "batch": {
+    "cancel": "Cancel",
+    "completed": "Completed",
+    "failed": "Failed",
+    "status": "Status",
+    "cost": "Cost",
+    "videoList": "Video List",
+    "view": "View",
+    "uploadTitle": "Upload Title",
+    "batchName": "Batch Name",
+    "batchNamePlaceholder": "Batch Name Placeholder",
+    "uploadFile": "Upload File",
+    "uploadHint": "Upload Hint",
+    "videosReady": "Videos Ready",
+    "estimatedCost": "Estimated Cost",
+    "validate": "Validate",
+    "startBatch": "Start Batch",
+    "title": "Batch Processing",
+    "description": "Description",
+    "subtitle": "Process multiple videos simultaneously with AI"
+  },
+  "thumbnails": {
+    "abTest": "Ab Test",
+    "clicks": "Clicks",
+    "winner": "Winner"
+  },
+  "repurpose": {
+    "title": "Content Repurposing",
+    "selectVideo": "Select Video",
+    "analyzeForClips": "Analyze For Clips",
+    "analyzing": "Analyzing",
+    "clipsReady": "Clips Ready",
+    "clipScore": "Clip Score",
+    "generateClips": "Generate Clips",
+    "noClips": "No Clips",
+    "subtitle": "Turn one video into 10 pieces of content automatically"
+  },
+  "notFoundPage": {
+    "heading": "Heading",
+    "description": "Description",
+    "returnHome": "Return Home",
+    "goToDashboard": "Go To Dashboard",
+    "features": "Features",
+    "pricing": "Pricing",
+    "dashboard": "Dashboard",
+    "contactSupport": "Contact Support"
+  },
+  "agi_showcase": {
+    "title": "AI in Action",
+    "subtitle": "See how Sophia automates your entire content workflow",
+    "outcome_tracking_title": "Real Outcome Tracking",
+    "outcome_tracking_desc": "Measure campaign performance across channels with a real-time dashboard.",
+    "confidence_title": "High Confidence",
+    "confidence_desc": "Every recommendation includes a confidence score and rationale, so you make the final call.",
+    "multi_agent_title": "Multi-Agent Collaboration",
+    "multi_agent_desc": "Specialized agents coordinate to optimize the full content pipeline.",
+    "pricing_title": "Flexible Pricing Model",
+    "pricing_desc": "Pay by channel, by video, or on an enterprise plan. No hidden fees.",
+    "feedback_title": "Automatic Feedback Loop",
+    "feedback_desc": "The system learns from real results to continuously improve recommendations.",
+    "compliance_title": "Automated Compliance",
+    "compliance_desc": "Check copyright, brand safety, and compliance risks before publishing."
+  },
+  "community": {
+    "joinCommunity": "Join Community",
+    "telegramDescription": "Telegram Description",
+    "joinTelegram": "Join Telegram",
+    "discordDescription": "Discord Description",
+    "joinDiscord": "Join Discord",
+    "dismiss": "Dismiss"
+  },
+  "affiliate": {
+    "cta_banner_title": "Unlock High-Ticket Commissions",
+    "cta_banner_description": "Join our affiliate program and earn up to 40% commission on every sale.",
+    "cta_banner_cta": "Join Affiliate Program",
+    "cta_banner_dismiss": "Dismiss",
+    "refer_earn_nav": "Refer & Earn",
+    "commission_badge": "Up to 40% Commission",
+    "earnings_table_title": "Affiliate Earnings Table",
+    "earnings_tier_col": "Tier",
+    "earnings_price_col": "Price",
+    "earnings_commission_col": "Commission/Sale",
+    "earnings_starter": "Starter",
+    "earnings_growth": "Growth",
+    "earnings_premium": "Premium",
+    "tier_multiplier_note": "Multiplier applies by tier",
+    "copy_link_cta": "Copy Referral Link",
+    "apply": "Apply",
+    "commission": "Commission",
+    "epc": "EPC (Earnings Per Click)",
+    "preview_tier": "Preview tier",
+    "subtitle": "Subtitle",
+    "title": "Title",
+    "upgrade": {
+      "button": "Button",
+      "description": "Description"
+    },
+    "affiliate": {
+      "apply": "Apply",
+      "commission": "Commission",
+      "epc": "EPC (Earnings Per Click)",
+      "preview_tier": "Preview tier",
+      "subtitle": "Subtitle",
+      "title": "Title",
+      "upgrade": {
+        "button": "Button",
+        "description": "Description"
+      }
+    },
+    "nav": {
+      "brand": "Brand",
+      "dashboard": "Dashboard",
+      "features": "Features",
+      "guide": "Guide",
+      "login": "Login",
+      "pricing": "Pricing",
+      "raas": "Raas"
+    },
+    "referral_link_title": "Referral link title",
+    "copied": "Copied",
+    "copy_link": "Copy link",
+    "share_link": "Share link",
+    "referral_link_hint": "Referral link hint",
+    "usdt_wallet": "Usdt wallet",
+    "balance": "Balance",
+    "wallet_address": "Wallet address",
+    "copy_address": "Copy address",
+    "withdraw": "Withdraw",
+    "dashboard_title": "Dashboard title",
+    "dashboard_subtitle": "Dashboard subtitle",
+    "refer_a_friend": "Refer a friend",
+    "total_referrals": "Total referrals",
+    "total_referrals_sub": "Total referrals sub",
+    "active_referrals": "Active referrals",
+    "active_referrals_sub": "Active referrals sub",
+    "commission_earned": "Commission earned",
+    "commission_earned_sub": "Commission earned sub",
+    "pending_commission": "Pending commission",
+    "pending_commission_sub": "Pending commission sub",
+    "affiliate_offers": "Affiliate offers",
+    "recent_conversions": "Recent conversions",
+    "referrer": "Referrer",
+    "commission_short": "Commission short",
+    "status": "Status"
+  },
+  "paymentSuccess": {
+    "tier_starter": "Starter",
+    "tier_growth": "Growth",
+    "tier_premium": "Premium",
+    "tier_master": "Master",
+    "step_check_email": "Check your email",
+    "step_check_email_desc": "We've sent a magic link to your inbox. Click to access your account.",
+    "step_setup_keys": "Set up your API keys",
+    "step_setup_keys_desc": "Add your AI service keys (OpenRouter, ElevenLabs, D-ID) in settings.",
+    "step_enable_sop": "Enable your first SOP",
+    "step_enable_sop_desc": "Choose a pre-built workflow from the SOP Marketplace.",
+    "step_watch_results": "Watch results roll in",
+    "step_watch_results_desc": "Your campaigns will start generating revenue automatically.",
+    "title_promo": "Promo Activated!",
+    "title_paid": "Payment Confirmed!",
+    "plan_label": "Plan",
+    "trial_days": "{days} days free trial",
+    "magic_link_sent_to": "Magic link sent to",
+    "check_email_for_magic_link": "Check your email for the magic link to get started.",
+    "order_id_label": "Order ID",
+    "plan_label_rcpt": "Plan",
+    "billing_cycle_label": "Billing cycle",
+    "period_lifetime": "Lifetime",
+    "period_yearly": "Yearly",
+    "period_monthly": "Monthly",
+    "transaction_status": "Transaction Status",
+    "status_completed": "Completed",
+    "method_label": "Method",
+    "method_promo": "Promo Code",
+    "next_steps_title": "Next Steps",
+    "receipt_title": "Receipt",
+    "campaign_ready_in": "Campaigns ready in",
+    "minutes_label": "minutes",
+    "setup_cta": "Complete your setup to start generating revenue.",
+    "start_setup": "Start Setup",
+    "go_dashboard": "Go to Dashboard",
+    "configure_keys": "Configure Keys",
+    "order_label": "Order"
+  },
+  "actions": {
+    "back": "Back",
+    "launch": "Launch",
+    "next": "Next",
+    "saving": "Saving"
+  },
+  "alerts": {
+    "invalidKey": "Invalid API key format",
+    "missingHeygen": "Missing HeyGen API key",
+    "missingLlm": "Missing LLM API key"
+  },
+  "anthropic": {
+    "help": "Help",
+    "label": "Label",
+    "placeholder": "Placeholder"
+  },
+  "badges": {
+    "customer_reviews": "Customer reviews"
+  },
+  "better-auth": {
+    "session_token": "Session Token"
+  },
+  "bundles": {
+    "allSkipped": "All Skipped",
+    "publishing": "Publishing",
+    "subtitle": "Subtitle",
+    "title": "Title"
+  },
+  "buttons": {
+    "new_campaign": "New Campaign"
+  },
+  "card": {
+    "featured": "Featured",
+    "install": "Install",
+    "installed": "Installed",
+    "upgradeTier": "Upgrade Tier",
+    "viewDetails": "View Details"
+  },
+  "copyLink": {
+    "copied": "Copied!",
+    "copy": "Copy",
+    "cta": "Cta",
+    "generating": "Generating...",
+    "loginHint": "Login to copy your referral link",
+    "title": "Title"
+  },
+  "create": {
+    "title": "Title"
+  },
+  "cta": {
+    "button": "Button",
+    "subtitle": "Subtitle",
+    "title": "Title"
+  },
+  "detail": {
+    "agentsTitle": "Agents Title",
+    "back": "Back",
+    "installNow": "Install Now",
+    "outputTitle": "Output Title",
+    "playbookTitle": "Playbook Title"
+  },
+  "detail_page": {
+    "disabled": "Disabled",
+    "enabled": "Enabled"
+  },
+  "did": {
+    "help": "Help",
+    "label": "Label",
+    "placeholder": "Placeholder"
+  },
+  "distribute": {
+    "cta": "Cta"
+  },
+  "earnings": {
+    "note": "Note",
+    "price_col": "Price col",
+    "tier_col": "Tier col",
+    "title": "Title",
+    "your_cut_col": "Your cut col"
+  },
+  "edit": {
+    "title": "Title"
+  },
+  "elevenlabs": {
+    "help": "Help",
+    "label": "Label",
+    "placeholder": "Placeholder"
+  },
+  "empty": {
+    "description": "Description",
+    "title": "Title"
+  },
+  "empty_state": {
+    "action": "Action",
+    "description": "Description",
+    "title": "Title"
+  },
+  "faq": {
+    "subtitle": "Subtitle",
+    "title": "Title"
+  },
+  "features": {
+    "title": "Title"
+  },
+  "footer": {
+    "disclaimer": "Disclaimer"
+  },
+  "form": {
+    "cancel": "Cancel",
+    "confirmDelete": "Confirm Delete",
+    "createTitle": "Create Title",
+    "days": "Days",
+    "intervalLabel": "Interval Label",
+    "requiredFields": "Required Fields",
+    "startDateLabel": "Start Date Label",
+    "submit": "Submit",
+    "topicLabel": "Topic Label",
+    "topicPlaceholder": "Topic Placeholder",
+    "submitting": "Submitting"
+  },
+  "generate": {
+    "languageEn": "Language En",
+    "languageLabel": "Language Label",
+    "languageVi": "Language Vi",
+    "missionCreated": "Mission Created",
+    "promptLabel": "Prompt Label",
+    "promptPlaceholder": "Prompt Placeholder",
+    "styleCasual": "Style Casual",
+    "styleCinematic": "Style Cinematic",
+    "styleEducational": "Style Educational",
+    "styleLabel": "Style Label",
+    "submit": "Submit",
+    "submitting": "Submitting",
+    "subtitle": "Subtitle"
+  },
+  "groups": {
+    "admin": "Admin",
+    "missions": "Missions",
+    "pages": "Pages",
+    "sops": "Sops"
+  },
+  "guide": {
+    "back_to_dashboard": "Back to dashboard",
+    "gettingStarted": {
+      "hero_title": "Getting Started with Sophia",
+      "hero_subtitle": "Follow these simple steps to create your first AI video. No technical skills needed — Sophia handles everything automatically.",
+      "steps_title": "Setup Steps",
+      "step1_title": "Access the Dashboard",
+      "step1_desc": "Open your browser and go to sophia.agencyos.network. Click Sign In in the top-right corner, then enter your registered email and password.",
+      "callout_no_account": "No account yet? Click Sign Up and follow the guide — it only takes 2 minutes.",
+      "step2_title": "Set Up API Keys",
+      "step2_desc": "Sophia needs 3 API keys to create videos: OpenRouter (AI scriptwriting), ElevenLabs (AI voice), and D-ID (video avatar). Go to Settings → API Keys to enter them.",
+      "callout_keys_info": "Each service has a free tier to get started. API Keys only need to be entered once and are securely encrypted.",
+      "step3_title": "Create Your First Campaign",
+      "step3_desc": "In the Dashboard, click the + New Campaign button. Enter a campaign name, choose a video template, input your main content, and select a voice. Click Create Campaign.",
+      "step4_title": "View and Download Video",
+      "step4_desc": "Videos process in 2–5 minutes. When the status shows Completed, click the campaign to preview and download the MP4 file.",
+      "step5_title": "Need Help?",
+      "step5_telegram": "Telegram: @Sophia_Bbot",
+      "step5_email": "Email: support@mekongmind.com",
+      "next_steps_title": "Next Steps",
+      "next_step_telegram": "Connect Telegram Bot",
+      "next_step_telegram_desc": "Create videos from your phone",
+      "next_step_how": "How It Works",
+      "next_step_how_desc": "Understand Sophia's workflow",
+      "next_step_faq": "FAQ",
+      "next_step_faq_desc": "Get answers to common questions"
+    }
+  },
+  "hero": {
+    "ctaPrimary": "Cta Primary",
+    "ctaSecondary": "Cta Secondary",
+    "subtitle": "Subtitle",
+    "title": "Title"
+  },
+  "howItWorks": {
+    "step1Desc": "Step1Desc",
+    "step1Title": "Step1Title",
+    "step2Desc": "Step2Desc",
+    "step2Title": "Step2Title",
+    "step3Desc": "Step3Desc",
+    "step3Title": "Step3Title",
+    "title": "Title"
+  },
+  "hub": {
+    "challenge": "Challenge",
+    "mode": "Mode"
+  },
+  "invalid": {
+    "altLogin": "Try logging in instead",
+    "backHome": "Back Home",
+    "connectionError": "Connection error",
+    "defaultMessage": "Default Message",
+    "genericError": "Something went wrong",
+    "rateLimited": "Rate limited",
+    "resendPrompt": "Resend verification email",
+    "sentDescription": "Check your inbox for the verification link",
+    "sentTitle": "Verification email sent",
+    "submit": "Submit",
+    "title": "Title"
+  },
+  "meta": {
+    "description": "Description",
+    "title": "Title"
+  },
+  "muapi": {
+    "help": "Help",
+    "label": "Label",
+    "placeholder": "Placeholder"
+  },
+  "nav": {
+    "brand": "Brand",
+    "dashboard": "Dashboard",
+    "features": "Features",
+    "guide": "Guide",
+    "login": "Login",
+    "pricing": "Pricing",
+    "raas": "Raas"
+  },
+  "openrouter": {
+    "help": "Help",
+    "label": "Label",
+    "placeholder": "Placeholder"
+  },
+  "render": {
+    "failed": "Failed"
+  },
+  "roi": {
+    "calculator_title": "Calculator title",
+    "disclaimer": "Disclaimer",
+    "estimate_note": "Estimate note",
+    "labels": {
+      "avg_views": "Avg Views per Video",
+      "channels": "Channels",
+      "projected_revenue": "Projected Monthly Revenue",
+      "total_videos": "Videos per Week",
+      "total_views": "Total Monthly Views",
+      "videos_per_week": "Videos per Week"
+    },
+    "subtitle": "Subtitle",
+    "title": "Title"
+  },
+  "run": {
+    "backToSops": "Back to SOPs"
+  },
+  "runs": {
+    "backToSop": "Back to SOP",
+    "pageTitleSimple": "Runs",
+    "subtitle": "Subtitle"
+  },
+  "save": {
+    "manualSetup": "Manual Setup",
+    "webhookWarning": "Webhook Warning"
+  },
+  "sections": {
+    "active": "Active",
+    "decided": "Decided"
+  },
+  "stats": "Stats",
+  "statusPanel": {
+    "empty": "Empty",
+    "title": "Title"
+  },
+  "step1": {
+    "description": "Description",
+    "title": "Title"
+  },
+  "step2": {
+    "title": "Title"
+  },
+  "step3": {
+    "title": "Title"
+  },
+  "step4": {
+    "code": "Code",
+    "title": "Title"
+  },
+  "stepper": {
+    "aiKeys": "AI Service Keys",
+    "finish": "Finish",
+    "providers": "Providers",
+    "system": "System"
+  },
+  "steps": {
+    "firstSop": {
+      "callToAction": "Call to Action"
+    }
+  },
+  "table": {
+    "actions": "Actions",
+    "campaign": "Campaign",
+    "cancel": "Cancel",
+    "help": "Help",
+    "interval": "Interval",
+    "nextRun": "Next Run",
+    "quota": "Quota",
+    "results": "Results",
+    "start": "Start",
+    "status": "Status",
+    "tier": "Tier",
+    "title": "Title",
+    "topic": "Topic"
+  },
+  "table_tier_growth": "Growth",
+  "table_tier_master": "Master",
+  "table_tier_premium": "Premium",
+  "table_tier_starter": "Starter",
+  "tabs": {
+    "audio": "Audio",
+    "brand": "Brand",
+    "image": "Image",
+    "newsletter": "Newsletter",
+    "templates": "Templates"
+  },
+  "telegram": {
+    "connectButton": "Connect Button",
+    "description": "Description",
+    "openedHint": "Opened Hint",
+    "title": "Title"
+  },
+  "terminal": {
+    "cta": "Cta",
+    "subtitle": "Subtitle",
+    "title": "Title"
+  },
+  "toasts": {
+    "resume_failed": "Resume failed",
+    "resume_success": "Resume success",
+    "retry_failed": "Retry failed",
+    "retry_started": "Retry started",
+    "retry_started_desc": "Retry started desc"
+  },
+  "validate": {
+    "did": {
+      "auto_encoded": "Auto-encoded"
+    }
+  },
+  "variant": {
+    "a": "A",
+    "b": "B"
+  },
+  "video": {
+    "avatarLabel": "Avatar Label",
+    "errorTitle": "Error Title",
+    "generate": "Generate",
+    "generating": "Generating...",
+    "missionCreated": "Mission Created",
+    "previewLabel": "Preview Label",
+    "previewPlaceholder": "Preview Placeholder",
+    "scriptLabel": "Script Label",
+    "scriptPlaceholder": "Script Placeholder",
+    "successDescription": "Success Description",
+    "successTitle": "Success Title",
+    "templateLabel": "Template Label",
+    "trackProgress": "Track Progress",
+    "voiceLabel": "Voice Label"
+  },
+  "winner": {
+    "no_winner": "No winner"
+  },
+  "workflow": {
+    "cta": "Cta",
+    "steps": {
+      "ai_generate": {
+        "description": "Description",
+        "title": "Title"
+      },
+      "profit": {
+        "description": "Description",
+        "title": "Title"
+      },
+      "publish": {
+        "description": "Description",
+        "title": "Title"
+      },
+      "select_niche": {
+        "description": "Description",
+        "title": "Title"
+      }
+    },
+    "subtitle": "Subtitle",
+    "title": "Title"
+  },
+  "help": {
+    "routes": {
+      "dashboard": "Dashboard",
+      "byok": "BYOK Keys",
+      "sops": "SOPs",
+      "sop-marketplace": "SOP Marketplace",
+      "sop-creator": "SOP Creator",
+      "challenges": "Challenges",
+      "analytics": "Analytics",
+      "credits": "MCU Credits",
+      "affiliate-networks": "Affiliate Networks"
+    },
+    "aria_trigger_default": "Help",
+    "close": "Close",
+    "dialog_label": "Dialog label",
+    "header": "Header",
+    "help_center": "Help center",
+    "tutorial_video": "Tutorial video",
+    "video_coming_soon": "Video coming soon",
+    "watch_video": "Watch video",
+    "aria_trigger": "Help for {label}"
+  },
+  "checkoutPanel": {
+    "secure_title": "Secure Checkout",
+    "secure_desc": "SSL Encrypted Transaction",
+    "order_summary": "Order Summary",
+    "billing_period": "Billing: {period}",
+    "billing_period_lifetime": "Lifetime",
+    "billing_period_yearly": "Yearly",
+    "billing_period_monthly": "Monthly",
+    "discount_applied": "Discount Applied",
+    "vnd_conversion": "VND conversion",
+    "support_247": "Premium 24/7 dedicated support via Telegram.",
+    "go_to_payment": "Go to Payment Page",
+    "scan_qr": "Scan QR to Pay",
+    "qr_nowpayments": "Supports USDT (TRC20/ERC20) or Bitcoin via NOWPayments",
+    "qr_payos": "Supports all Vietnamese banks via PayOS",
+    "verifying": "Verifying transaction...",
+    "payment_success": "Payment Successful!",
+    "payment_failed": "Transaction failed/expired",
+    "verify_status": "Verify Payment Status",
+    "initializing": "Initializing gateway...",
+    "ssl_secured": "SSL Secured Connection",
+    "pricing": {
+      "refund_master_title": "MASTER Plan — Full 14-Day Refund",
+      "refund_master_desc": "The MASTER plan ($4,999 one-time) is fully refundable for 14 days from payment, no reason required."
+    }
+  },
+  "1:1": "1:1",
+  "24h": "24h",
+  "30d": "30d",
+  "Asia/Ho_Chi_Minh": "Asia/Ho Chi Minh",
+  "Error adding server": "Error adding server",
+  "Export failed": "Export failed",
+  "Failed to add server": "Failed to add server",
+  "Failed to remove method": "Failed to remove method",
+  "Import failed — invalid JSON file": "Import failed — invalid JSON file",
+  "Location": "Location",
+  "Name and URL are required": "Name and URL are required",
+  "Reset failed": "Reset failed",
+  "Save failed": "Save failed",
+  "\\n\\n": "\\n\\n",
+  "access_token": "Access Token",
+  "action": "Action",
+  "active": "Active",
+  "adam": "Adam",
+  "agent_id, status, input, created_at": "Agent id, status, input, created at",
+  "aggregate": "Aggregate",
+  "analyze": "Analyze",
+  "api_keys": "Api keys",
+  "api_keys,onboarding_completed_at": "Api keys,onboarding completed at",
+  "assetType": "Asset Type",
+  "audio": "Audio",
+  "audio_r2_key": "Audio r2 key",
+  "audio_url": "Audio url",
+  "authorization": "Authorization",
+  "body": "Body",
+  "calloutTitle": "Callout Title",
+  "campaign_id, user_id, offer_id, affiliate_link": "Campaign id, user id, offer id, affiliate link",
+  "casual": "Casual",
+  "category": "Category",
+  "cf-connecting-ip": "Cf connecting ip",
+  "cf-ipcountry": "Cf ipcountry",
+  "challengeId": "Challenge Id",
+  "channels, webhook_url, webhook_secret": "Channels, webhook url, webhook secret",
+  "chat_id": "Chat id",
+  "chat_id, expires_at": "Chat id, expires at",
+  "chat_id, first_name, paired_at, paired_by": "Chat id, first name, paired at, paired by",
+  "code": "Code",
+  "code, uses, reward_amount": "Code, uses, reward amount",
+  "command": "Command",
+  "commandsTitle": "Commands Title",
+  "configValues": "Config Values",
+  "consent": "Consent",
+  "content-length": "Content length",
+  "content-type": "Content type",
+  "context_data, updated_at": "Context data, updated at",
+  "cookie": "Cookie",
+  "cost_usd": "Cost usd",
+  "count": "Count",
+  "coupon": "Coupon",
+  "created_at": "Created at",
+  "created_at, completed_at, anonymized_count": "Created at, completed at, anonymized count",
+  "created_at, payload": "Created at, payload",
+  "created_by": "Created by",
+  "credits_remaining, credits_total_purchased, credits_total_used": "Credits remaining, credits total purchased, credits total used",
+  "credits_remaining, expires_at": "Credits remaining, expires at",
+  "credits_remaining, user_id": "Credits remaining, user id",
+  "credits_used": "Credits used",
+  "credits_used, created_at": "Credits used, created at",
+  "cron": "Cron",
+  "crypto": "Crypto",
+  "csv": "Csv",
+  "current_month": "Current month",
+  "current_period_end,plan": "Current period end,plan",
+  "cursor": "Cursor",
+  "customer_id": "Customer id",
+  "customizations": "Customizations",
+  "day_timestamp": "Day timestamp",
+  "days": "Days",
+  "degraded": "Degraded",
+  "description": "Description",
+  "destination_url,tenant_id,active": "Destination url,tenant id,active",
+  "development": "Development",
+  "discount_type": "Discount type",
+  "distinctId": "Distinct Id",
+  "dry_run": "Dry run",
+  "dunning_state": "Dunning state",
+  "duration_ms": "Duration ms",
+  "email": "Email",
+  "email, locale": "Email, locale",
+  "email, name": "Email, name",
+  "email,name": "Email,name",
+  "email-change-conflict": "Email change conflict",
+  "email-change-expired": "Email change expired",
+  "email-change-invalid": "Email change invalid",
+  "email-change-unavailable": "Email change unavailable",
+  "en": "En",
+  "enabled": "Enabled",
+  "encrypted_value": "Encrypted value",
+  "end": "End",
+  "error": "Error",
+  "event_type, payload, created_at": "Event type, payload, created at",
+  "event_type, user_id, tier, receipt": "Event type, user id, tier, receipt",
+  "exceeded_by, billable": "Exceeded by, billable",
+  "exceeded_by, exceeded_type, billable": "Exceeded by, exceeded type, billable",
+  "exceeded_by, tier_at_exceeded": "Exceeded by, tier at exceeded",
+  "exceeded_type, exceeded_by, created_at": "Exceeded type, exceeded by, created at",
+  "experiment": "Experiment",
+  "expiresAt": "Expires At",
+  "external_customer_id": "External customer id",
+  "external_id": "External id",
+  "eyebrow": "Eyebrow",
+  "feature": "Feature",
+  "feature_entitlements, dunning_state": "Feature entitlements, dunning state",
+  "file": "File",
+  "filter": "Filter",
+  "flag": "Flag",
+  "format": "Format",
+  "from": "From",
+  "granularity": "Granularity",
+  "handover": "Handover",
+  "hard": "Hard",
+  "hash, response, input_tokens, output_tokens, cost_usd, expires_at, embedding": "Hash, response, input tokens, output tokens, cost usd, expires at, embedding",
+  "hero-cta-copy-v1": "Hero cta copy v1",
+  "heroTitle": "Hero Title",
+  "hex": "Hex",
+  "heygen-signature": "Heygen signature",
+  "hidden_gems": "Hidden gems",
+  "hour": "Hour",
+  "hour_timestamp": "Hour timestamp",
+  "html2canvas": "Html2canvas",
+  "id, agent_id, status, input, output, error_message, created_at, completed_at": "Id, agent id, status, input, output, error message, created at, completed at",
+  "id, command, status, credits_used, created_at": "Id, command, status, credits used, created at",
+  "id, command, status, credits_used, created_at, completed_at, webhook_url": "Id, command, status, credits used, created at, completed at, webhook url",
+  "id, command, status, result, error, credits_used, updated_at, completed_at": "Id, command, status, result, error, credits used, updated at, completed at",
+  "id, delta, reason, mission_id, created_at": "Id, delta, reason, mission id, created at",
+  "id, email": "Id, email",
+  "id, email, name": "Id, email, name",
+  "id, event_type, user_id, license_nonce, tier, receipt, created_at": "Id, event type, user id, license nonce, tier, receipt, created at",
+  "id, exceeded_by, user_id, license_nonce": "Id, exceeded by, user id, license nonce",
+  "id, external_account_id, display_name, status, expires_at": "Id, external account id, display name, status, expires at",
+  "id, is_error": "Id, is error",
+  "id, is_revoked, expires_at, user_id": "Id, is revoked, expires at, user id",
+  "id, metrics_json": "Id, metrics json",
+  "id, name, language, ref_audio_r2_key, created_at": "Id, name, language, ref audio r2 key, created at",
+  "id, name, slug": "Id, name, slug",
+  "id, name_en, steps_json, credits_per_run": "Id, name en, steps json, credits per run",
+  "id, offer_name, network, url, commission_rate, category, description, created_at": "Id, offer name, network, url, commission rate, category, description, created at",
+  "id, report_type, format, storage_path, file_size": "Id, report type, format, storage path, file size",
+  "id, role, name, created_at": "Id, role, name, created at",
+  "id, sop_id, installed_at, version, status, sop_name": "Id, sop id, installed at, version, status, sop name",
+  "id, status": "Id, status",
+  "id, status, org_id": "Id, status, org id",
+  "id, status, result_url, thumbnail_url": "Id, status, result url, thumbnail url",
+  "id, tenant_id": "Id, tenant id",
+  "id, title, created_at, user_id": "Id, title, created at, user id",
+  "id, title, niche, status, created_at": "Id, title, niche, status, created at",
+  "id, title, status, duration_sec, created_at": "Id, title, status, duration sec, created at",
+  "id, title, status, heygen_job_id, video_url, created_at": "Id, title, status, heygen job id, video url, created at",
+  "id, updated_at": "Id, updated at",
+  "id, user_id, command, params, status, webhook_url": "Id, user id, command, params, status, webhook url",
+  "id, user_id, expires_at": "Id, user id, expires at",
+  "id, user_id, ip_address": "Id, user id, ip address",
+  "id, user_id, is_onboarding": "Id, user id, is onboarding",
+  "id, user_id, status": "Id, user id, status",
+  "id, user_id, title": "Id, user id, title",
+  "id, user_id, uses, max_uses, reward_amount": "Id, user id, uses, max uses, reward amount",
+  "id, user_id, video_url, status": "Id, user id, video url, status",
+  "id, video_id, delivery_status": "Id, video id, delivery status",
+  "id,destination_url,affiliate_id,campaign_id,active,created_at": "Id,destination url,affiliate id,campaign id,active,created at",
+  "id,kind,sku,amount_cents,status,created_at,paid_at": "Id,kind,sku,amount cents,status,created at,paid at",
+  "id,provider,external_account_id": "Id,provider,external account id",
+  "id,status,variants_json": "Id,status,variants json",
+  "id,tenant_id,destination_url,affiliate_id,campaign_id,active,created_at": "Id,tenant id,destination url,affiliate id,campaign id,active,created at",
+  "idempotency-key": "Idempotency key",
+  "includeDismissed": "Include Dismissed",
+  "include_raw": "Include raw",
+  "jobId": "Job Id",
+  "json": "Json",
+  "jszip": "Jszip",
+  "kind": "Kind",
+  "language": "Language",
+  "last-event-id": "Last event id",
+  "licenseNonce": "License Nonce",
+  "license_key": "License key",
+  "license_nonce": "License nonce",
+  "license_nonce, model_name, token_count, tokens_input, tokens_output": "License nonce, model name, token count, tokens input, tokens output",
+  "license_nonce, tier, status": "License nonce, tier, status",
+  "license_nonce, tier, status, user_id": "License nonce, tier, status, user id",
+  "limit": "Limit",
+  "limitCredit": "Limit Credit",
+  "locale": "Locale",
+  "location": "Location",
+  "logId": "Log Id",
+  "manual": "Manual",
+  "max": "Max",
+  "maxUses": "Max Uses",
+  "mcu_cost, created_at": "Mcu cost, created at",
+  "medium": "Medium",
+  "metaDescription": "Meta Description",
+  "metaTitle": "Meta Title",
+  "metadata": "Metadata",
+  "metadataTitle": "Metadata Title",
+  "metric": "Metric",
+  "month": "Month",
+  "monthly": "Monthly",
+  "months": "Months",
+  "mp4": "Mp4",
+  "name": "Name",
+  "network": "Network",
+  "network_id, is_active, created_at": "Network id, is active, created at",
+  "next/headers": "Next/headers",
+  "next_retry_at": "Next retry at",
+  "niche": "Niche",
+  "noData": "No Data",
+  "node:crypto": "Node:crypto",
+  "node:fs/promises": "Node:fs/promises",
+  "nonce": "Nonce",
+  "nonce, tier": "Nonce, tier",
+  "nonce, tier, agency_id": "Nonce, tier, agency id",
+  "nonce, tier, created_at, last_used_at": "Nonce, tier, created at, last used at",
+  "nonce, tier, created_at, metadata": "Nonce, tier, created at, metadata",
+  "nonce, tier, created_by": "Nonce, tier, created by",
+  "nonce, tier, created_by, stripe_customer_id": "Nonce, tier, created by, stripe customer id",
+  "nonce, tier, is_revoked, created_by": "Nonce, tier, is revoked, created by",
+  "nonce, tier, status, expires_at, feature_entitlements, dunning_state": "Nonce, tier, status, expires at, feature entitlements, dunning state",
+  "nonce, tier, stripe_customer_id, is_revoked, created_at, expires_at": "Nonce, tier, stripe customer id, is revoked, created at, expires at",
+  "normal": "Normal",
+  "nowpayments": "Nowpayments",
+  "oa_id": "Oa id",
+  "offer_id": "Offer id",
+  "offset": "Offset",
+  "operational": "Operational",
+  "orderId": "Order Id",
+  "order_id": "Order id",
+  "order_id, payment_id": "Order id, payment id",
+  "org_id": "Org id",
+  "org_id, plan, status, current_period_end": "Org id, plan, status, current period end",
+  "org_id, role": "Org id, role",
+  "origin": "Origin",
+  "owner_id, permissions": "Owner id, permissions",
+  "page": "Page",
+  "pageSubtitle": "Page Subtitle",
+  "pageTitle": "Page Title",
+  "paired_by": "Paired by",
+  "password": "Password",
+  "pastIncidents": "Past Incidents",
+  "payload": "Payload",
+  "payment_id, invoice_id": "Payment id, invoice id",
+  "pending": "Pending",
+  "percentage": "Percentage",
+  "period": "Period",
+  "phone": "Phone",
+  "plan": "Plan",
+  "processed": "Processed",
+  "processed, created_at": "Processed, created at",
+  "professional": "Professional",
+  "provider,access_token,external_account_id": "Provider,access token,external account id",
+  "pstack-signature": "Pstack signature",
+  "q": "Q",
+  "raw_user_meta_data": "Raw user meta data",
+  "react-hook-form": "React hook form",
+  "react-markdown": "React markdown",
+  "reason": "Reason",
+  "receipt_sent": "Receipt sent",
+  "redirect": "Redirect",
+  "referer": "Referer",
+  "replayTour": "Replay Tour",
+  "request": "Request",
+  "resolved": "Resolved",
+  "response, input_tokens, output_tokens, cost_usd, expires_at": "Response, input tokens, output tokens, cost usd, expires at",
+  "retry_count": "Retry count",
+  "role": "Role",
+  "scheduleCron": "Schedule Cron",
+  "script_content": "Script content",
+  "script_text, prompt, audio_r2_key": "Script text, prompt, audio r2 key",
+  "service": "Service",
+  "session_id, expires_at": "Session id, expires at",
+  "settings,onboarding_completed_at": "Settings,onboarding completed at",
+  "settings_panel": "Settings panel",
+  "setupTitle": "Setup Title",
+  "severity": "Severity",
+  "short_code, offer_name, affiliate_link": "Short code, offer name, affiliate link",
+  "signature": "Signature",
+  "slug": "Slug",
+  "sonner": "Sonner",
+  "sort": "Sort",
+  "sortBy": "Sort By",
+  "start": "Start",
+  "state": "State",
+  "status, final_r2_key": "Status, final r2 key",
+  "status, prompt": "Status, prompt",
+  "status, script_text, audio_r2_key, prompt": "Status, script text, audio r2 key, prompt",
+  "status, script_text, prompt, audio_r2_key": "Status, script text, prompt, audio r2 key",
+  "status, tenant_id, error": "Status, tenant id, error",
+  "status, visual_r2_key": "Status, visual r2 key",
+  "storage_path, format": "Storage path, format",
+  "stripe-signature": "Stripe signature",
+  "stripe_customer_id, dunning_state": "Stripe customer id, dunning state",
+  "subscription_tier": "Subscription tier",
+  "subtitle": "Subtitle",
+  "supportFaqLink": "Support Faq Link",
+  "supportSeeAlso": "Support See Also",
+  "supportTitle": "Support Title",
+  "surface": "Surface",
+  "system": "System",
+  "tab": "Tab",
+  "tableHeaderCmd": "Table Header Cmd",
+  "tableHeaderDesc": "Table Header Desc",
+  "technology": "Technology",
+  "telegram_chat_id": "Telegram chat id",
+  "telegram_chat_id, settings": "Telegram chat id, settings",
+  "template_id": "Template id",
+  "tenantId": "Tenant Id",
+  "tenant_id": "Tenant id",
+  "textarea": "Textarea",
+  "threshold, channel, sent_at, recipient": "Threshold, channel, sent at, recipient",
+  "tier": "Tier",
+  "tier, agency_id, expires_at, created_at": "Tier, agency id, expires at, created at",
+  "tier, created_at": "Tier, created at",
+  "tier, created_at, metadata": "Tier, created at, metadata",
+  "tier, created_by": "Tier, created by",
+  "tier, is_revoked, created_at": "Tier, is revoked, created at",
+  "tier, status": "Tier, status",
+  "tipsTitle": "Tips Title",
+  "title, user_id": "Title, user id",
+  "to": "To",
+  "token": "Token",
+  "totp_enabled": "Totp enabled",
+  "totp_secret, totp_enabled, is_encrypted": "Totp secret, totp enabled, is encrypted",
+  "totp_secret_enc, backup_codes_json": "Totp secret enc, backup codes json",
+  "totp_secret_enc, totp_enabled": "Totp secret enc, totp enabled",
+  "type": "Type",
+  "uptime90d": "Uptime90d",
+  "url": "Url",
+  "usedCredits": "Used Credits",
+  "used_at, expires_at": "Used at, expires at",
+  "user-agent": "User agent",
+  "userId": "User Id",
+  "user_id": "User id",
+  "user_id, credits_remaining, status": "User id, credits remaining, status",
+  "user_id, email": "User id, email",
+  "user_id, is_active, expires_at": "User id, is active, expires at",
+  "user_id, license_nonce": "User id, license nonce",
+  "user_id, license_nonce, is_active, tier": "User id, license nonce, is active, tier",
+  "user_id, settings": "User id, settings",
+  "user_id, subscription_tier": "User id, subscription tier",
+  "user_id, tier": "User id, tier",
+  "valuePerCredit": "Value Per Credit",
+  "vi": "Vi",
+  "video_url, thumbnail_url": "Video url, thumbnail url",
+  "webhook": "Webhook",
+  "webhook-id": "Webhook id",
+  "webhook-signature": "Webhook signature",
+  "webhook-timestamp": "Webhook timestamp",
+  "window": "Window",
+  "x-accesstrade-signature": "X accesstrade signature",
+  "x-agencyos-signature": "X agencyos signature",
+  "x-agencyos-timestamp": "X agencyos timestamp",
+  "x-amazon-signature": "X amazon signature",
+  "x-api-key": "X api key",
+  "x-awin-signature": "X awin signature",
+  "x-checksum": "X checksum",
+  "x-clickbank-signature": "X clickbank signature",
+  "x-confirm-delete": "X confirm delete",
+  "x-cron-secret": "X cron secret",
+  "x-csp-nonce": "X csp nonce",
+  "x-duration-sec": "X duration sec",
+  "x-emergency-bypass": "X emergency bypass",
+  "x-forwarded-for": "X forwarded for",
+  "x-heygen-signature": "X heygen signature",
+  "x-hub-signature-256": "X hub signature 256",
+  "x-idempotency-key": "X idempotency key",
+  "x-internal-secret": "X internal secret",
+  "x-internal-token": "X internal token",
+  "x-logged-in-user-id": "X logged in user id",
+  "x-nowpayments-sig": "X nowpayments sig",
+  "x-override-cooldown": "X override cooldown",
+  "x-quota-remaining": "X quota remaining",
+  "x-raas-agency-id": "X raas agency id",
+  "x-raas-api-key": "X raas api key",
+  "x-raas-license-key": "X raas license key",
+  "x-raas-receipt": "X raas receipt",
+  "x-raas-tier": "X raas tier",
+  "x-response-time-ms": "X response time ms",
+  "x-signature": "X signature",
+  "x-sophia-signature": "X sophia signature",
+  "x-tiktok-signature": "X tiktok signature",
+  "x-tts-signature": "X tts signature",
+  "redeem": {
+    "title": "Redeem Promo Code",
+    "subtitle": "Enter your email and code — we'll create the account and email a sign-in link.",
+    "promo_code": "Promo code",
+    "email": "Email",
+    "name": "Name (optional)",
+    "name_placeholder": "Your name",
+    "terms": "By continuing, you agree to Sophia AI Factory's terms of service.",
+    "submit": "Redeem now",
+    "error_generic": "Something went wrong. Please try again.",
+    "error_connection": "Connection error. Please try again.",
+    "success_title": "Redemption successful!",
+    "success_subtitle": "Your account is ready. Click below to enter your dashboard.",
+    "get_started": "Get Started",
+    "activation_error": "Activation link not generated. Please contact support to receive your sign-in link.",
+    "copy_emailed_to": "A copy was emailed to",
+    "link_validity": "The link is valid for 72 hours and is single-use.",
+    "link_generated_but_not_displayed": "Link generated but not displayed. Please check your email or contact support.",
+    "reason": {
+      "invalid_code": "Invalid or expired code.",
+      "max_uses": "This code has reached its max redemptions. Please contact support.",
+      "expired": "This code has expired.",
+      "already_redeemed": "This email has already redeemed this code.",
+      "user_create_failed": "Could not create account. Email may already exist — try signing in."
+    }
+  },
+  "All settings reset to defaults.": "All settings reset to defaults.",
+  "Network error. Please try again.": "Network error. Please try again.",
+  "error_magic_failed": "Error magic failed",
+  "error_connection": "Error connection",
+  "magic_link_description": "Magic link description",
+  "email_label": "Email label",
+  "sending_magic": "Sending magic",
+  "send_magic_link": "Send magic link",
+  "error_login_failed": "Error login failed",
+  "password_label": "Password label",
+  "logging_in": "Logging in",
+  "sign_in": "Sign in",
+  "mode_title": "Mode title",
+  "mode_eoc_label": "Mode eoc label",
+  "mode_eoc_desc": "Mode eoc desc",
+  "mode_immediate_label": "Mode immediate label",
+  "mode_immediate_desc": "Mode immediate desc",
+  "confirm_downgrade_title": "Confirm downgrade title",
+  "confirm_lose_title": "Confirm lose title",
+  "timing_eoc_label": "Timing eoc label",
+  "timing_eoc_desc": "Timing eoc desc",
+  "timing_immediate_label": "Timing immediate label",
+  "confirm_immediate_downgrade_warning": "Confirm immediate downgrade warning",
+  "cancel": "Cancel",
+  "submitting": "Submitting",
+  "confirm_downgrade_confirm": "Confirm downgrade confirm",
+  "badge_current": "Badge current",
+  "badge_downgrade": "Badge downgrade",
+  "everyDay": "Every Day",
+  "threeDays": "Three Days",
+  "weekly": "Weekly",
+  "twoWeeks": "Two Weeks",
+  "refresh": "Refresh",
+  "hasTemplate": "Has Template",
+  "pauseTooltip": "Pause Tooltip",
+  "activateTooltip": "Activate Tooltip",
+  "deleteTooltip": "Delete Tooltip",
+  "countLabel": "Count Label",
+  "activeLabel": "Active Label",
+  "autoRefresh": "Auto Refresh",
+  "stitch": {
+    "common": {
+      "search": "Search",
+      "searchPlaceholder": "Search...",
+      "filter": "Filter",
+      "export": "Export",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel",
+      "loading": "Loading...",
+      "error": "Error",
+      "retry": "Retry",
+      "success": "Success",
+      "actions": "Actions",
+      "viewAll": "View All",
+      "noData": "No data available",
+      "confirmDelete": "Are you sure you want to delete this?",
+      "all": "All",
+      "active": "Active",
+      "inactive": "Inactive",
+      "pending": "Pending",
+      "paid": "Paid",
+      "failed": "Failed"
+    },
+    "dashboard": {
+      "title": "Dashboard",
+      "subtitle": "Welcome back. Here's what's happening with your workspace today.",
+      "common": {
+        "paid": "Paid",
+        "failed": "Failed",
+        "pending": "Pending"
+      },
+      "metrics": {
+        "total_campaigns": "Total Campaigns",
+        "active_campaigns": "Active Campaigns",
+        "videos_generated": "Videos Generated",
+        "success_rate": "Success Rate"
+      },
+      "revenueChart": {
+        "title": "Revenue Over Time",
+        "subtitle": "Total sales performance this quarter",
+        "period": "Last 30 Days",
+        "periods": {
+          "30d": "Last 30 Days",
+          "6m": "Last 6 Months",
+          "ytd": "Year to Date"
+        }
+      },
+      "topAffiliates": {
+        "title": "Top Affiliates",
+        "viewAll": "View All",
+        "invite": "Invite New Affiliate"
+      },
+      "recentTransactions": {
+        "title": "Recent Transactions",
+        "subtitle": "Latest subscriber payments and refunds",
+        "showing": "Showing {from}-{to} of {total} transactions",
+        "columns": {
+          "date": "Date",
+          "customer": "Customer",
+          "amount": "Amount",
+          "status": "Status",
+          "action": "Action"
+        }
+      },
+      "actions": {
+        "exportData": "Export Data",
+        "addProduct": "Add Product"
+      }
+    },
+    "auth": {
+      "login": {
+        "title": "Sign In to Sophia",
+        "heading": "Welcome back",
+        "description": "Sign in to your account",
+        "subtitle": "AI-Powered Revenue Automation Platform",
+        "emailLabel": "Email Address",
+        "emailPlaceholder": "name@company.com",
+        "passwordLabel": "Password",
+        "passwordPlaceholder": "Enter your password",
+        "rememberMe": "Remember this device for 30 days",
+        "forgotPassword": "Forgot password?",
+        "submit": "Sign In to Sophia",
+        "orContinueWith": "or continue with",
+        "noAccount": "Don't have an account?",
+        "signUp": "Sign up",
+        "googleSignIn": "Google",
+        "githubSignIn": "GitHub",
+        "ssoComingSoon": "Coming soon — please use email to sign in",
+        "hidePassword": "Hide Password",
+        "showPassword": "Show Password",
+        "invalidCredentials": "Invalid email or password",
+        "networkError": "Network error. Please try again.",
+        "switchToVietnamese": "Switch To Vietnamese",
+        "switchToEnglish": "Switch To English",
+        "magicLink": "Magic Link"
+      },
+      "register": {
+        "title": "Create Your Account",
+        "subtitle": "Start your AI-powered revenue journey today",
+        "nameLabel": "Full Name",
+        "namePlaceholder": "John Doe",
+        "emailLabel": "Email Address",
+        "emailPlaceholder": "name@company.com",
+        "companyLabel": "Company Name",
+        "companyPlaceholder": "Your Company",
+        "passwordLabel": "Create Password",
+        "passwordPlaceholder": "Create a strong password",
+        "confirmPasswordLabel": "Confirm Password",
+        "confirmPasswordPlaceholder": "Re-enter your password",
+        "termsPrefix": "By creating an account, you agree to our",
+        "termsLink": "Terms of Service",
+        "privacyLink": "Privacy Policy",
+        "submit": "Create Account",
+        "orContinueWith": "or continue with",
+        "hasAccount": "Already have an account?",
+        "signIn": "Sign in",
+        "successTitle": "Success Title",
+        "successMessage": "Success Message",
+        "goToLogin": "Go To Login",
+        "and": "And",
+        "or": "Or",
+        "googleSignIn": "Google Sign In",
+        "githubSignIn": "Github Sign In",
+        "errorPasswordMismatch": "Passwords do not match",
+        "errorPasswordTooShort": "Password must be at least 8 characters",
+        "errorEmailExists": "An account with this email already exists",
+        "errorGeneric": "Registration failed. Please try again.",
+        "errorPasswordUppercase": "Password must include at least one uppercase letter",
+        "errorPasswordLowercase": "Password must include at least one lowercase letter",
+        "errorPasswordNumber": "Password must include at least one number",
+        "errorPasswordComplexity": "Password must be at least 8 characters with uppercase, lowercase, and a number",
+        "ssoComingSoon": "Coming soon — please use email to sign in"
+      }
+    },
+    "pricing": {
+      "title": "Simple, Transparent Pricing",
+      "subtitle": "Choose the plan that fits your business. All plans include a 30-day money-back guarantee.",
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "savePercent": "(Save 20%)",
+      "currentPlan": "Current Plan",
+      "popular": "Most Popular",
+      "plans": {
+        "basic": {
+          "name": "Basic",
+          "price": "$199",
+          "period": "/month",
+          "description": "Perfect for getting started",
+          "features": {
+            "videos": "100 videos per month",
+            "affiliates": "5 affiliate programs",
+            "support": "Email support",
+            "aiModels": "Access to standard AI models"
+          }
+        },
+        "premium": {
+          "name": "Premium",
+          "price": "$399",
+          "period": "/month",
+          "description": "For growing businesses",
+          "features": {
+            "videos": "500 videos per month",
+            "affiliates": "Unlimited affiliate programs",
+            "support": "Priority email support",
+            "aiModels": "Access to premium AI models",
+            "custom": "Custom branding"
+          }
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "price": "$799",
+          "period": "/month",
+          "description": "For large-scale operations",
+          "features": {
+            "videos": "Unlimited videos",
+            "affiliates": "Unlimited everything",
+            "support": "24/7 dedicated support",
+            "aiModels": "Full AI model access",
+            "custom": "White-label solution",
+            "integration": "Custom integrations"
+          }
+        }
+      },
+      "questions": "Have questions about pricing?",
+      "contactSales": "Contact Sales"
+    },
+    "products": {
+      "title": "Products",
+      "subtitle": "Manage your video products and pricing",
+      "newProduct": "New Product",
+      "allProducts": "All Products",
+      "columns": {
+        "name": "Product",
+        "type": "Type",
+        "price": "Price",
+        "subscribers": "Subscribers",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "actions": {
+        "view": "View",
+        "edit": "Edit",
+        "delete": "Delete"
+      },
+      "searchPlaceholder": "Search products..."
+    },
+    "subscribers": {
+      "title": "Subscribers",
+      "subtitle": "Manage your customer subscriptions",
+      "total": "Total",
+      "active": "Active",
+      "canceled": "Canceled",
+      "mrr": "MRR",
+      "searchPlaceholder": "Search subscribers by name or email...",
+      "columns": {
+        "subscriber": "Subscriber",
+        "plan": "Plan",
+        "status": "Status",
+        "joined": "Joined",
+        "actions": "Actions"
+      }
+    },
+    "payments": {
+      "title": "Payments",
+      "subtitle": "Track transactions and revenue",
+      "download": "Download Report",
+      "searchPlaceholder": "Search payments...",
+      "summary": {
+        "title": "Payment Summary"
+      },
+      "columns": {
+        "date": "Date",
+        "customer": "Customer",
+        "amount": "Amount",
+        "method": "Method",
+        "status": "Status",
+        "actions": "Actions"
+      }
+    },
+    "affiliates": {
+      "title": "Affiliates",
+      "subtitle": "Manage your affiliate partnerships",
+      "newAffiliate": "Add Affiliate",
+      "totalAffiliates": "Total Affiliates",
+      "active": "Active",
+      "totalCommission": "Total Commission Paid",
+      "pending": "Pending",
+      "searchPlaceholder": "Search affiliates...",
+      "inviteEmail": "Invite via Email",
+      "columns": {
+        "affiliate": "Affiliate",
+        "status": "Status",
+        "sales": "Sales",
+        "commission": "Commission"
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Manage your workspace preferences",
+      "profile": "Profile Settings",
+      "notifications": "Notification Preferences",
+      "appearance": "Appearance",
+      "security": "Security",
+      "team": "Team Management",
+      "integrations": "Integrations",
+      "workspaceName": "Workspace Name",
+      "timezone": "Timezone",
+      "description": "Description",
+      "saveChanges": "Save Changes"
+    },
+    "checkout": {
+      "payment": {
+        "title": "Complete Your Purchase",
+        "subtitle": "You're just one step away from unlocking premium features",
+        "yourPlan": "Your Plan",
+        "orderSummary": "Order Summary",
+        "monthlySubscription": "Monthly subscription",
+        "taxes": "Taxes",
+        "total": "Total",
+        "payNow": "Pay Now",
+        "processing": "Processing...",
+        "paymentDetails": "Payment Details",
+        "secureEncrypted": "All transactions are secure and encrypted",
+        "cardNumber": "Card Number",
+        "expiryDate": "Expiry Date",
+        "cvc": "CVC",
+        "cardholderName": "Cardholder Name",
+        "saveCard": "Save this card for future purchases"
+      },
+      "success": {
+        "title": "Payment Successful!",
+        "subtitle": "Your account has been upgraded. Welcome to {plan}!",
+        "dashboardLink": "Go to Dashboard",
+        "emailConfirmation": "A confirmation email has been sent to your inbox.",
+        "viewReceipt": "View Receipt"
+      }
+    },
+    "webhook": {
+      "title": "Webhook Configuration",
+      "subtitle": "Configure incoming webhooks from external services",
+      "newWebhook": "New Webhook",
+      "webhookName": "Webhook Name",
+      "endpointUrl": "Endpoint URL",
+      "eventsToSubscribe": "Events to Subscribe",
+      "saveWebhook": "Save Webhook",
+      "edit": "Edit",
+      "delete": "Delete",
+      "subscribedEvents": "Subscribed Events",
+      "signingSecret": "Signing Secret",
+      "testing": "Testing Webhooks",
+      "description": "Configure webhooks to receive real-time notifications when events occur in your integrated services."
+    },
+    "admin": {
+      "title": "Admin Panel",
+      "subtitle": "System administration and oversight",
+      "platformStats": {
+        "title": "Platform Statistics",
+        "revenue": "Total Revenue",
+        "users": "Total Users",
+        "videos": "Videos Created",
+        "uptime": "System Uptime"
+      },
+      "systemHealth": {
+        "title": "System Health",
+        "database": "Database",
+        "api": "API Gateway",
+        "workers": "Edge Workers",
+        "storage": "Object Storage",
+        "status": "Status",
+        "lastPoll": "Last Poll",
+        "lastPollValue": "2 mins ago"
+      },
+      "quickActions": "Quick Actions",
+      "recentActivity": "Recent Activity",
+      "latency": "Latency",
+      "status": "Status",
+      "pageTitle": "Admin",
+      "badge": "System Console",
+      "searchPlaceholder": "Search systems, users, or logs...",
+      "aria": {
+        "mainContent": "Main Content",
+        "search": "Search",
+        "headerNav": "Header Nav",
+        "notifications": "Notifications",
+        "userMenu": "User Menu",
+        "kpiSection": "Kpi Section",
+        "chartSection": "Chart Section",
+        "chartPeriod": "Chart Period",
+        "chart": "Chart",
+        "systemHealth": "System Health",
+        "signupsTable": "Signups Table",
+        "previousPage": "Previous Page",
+        "nextPage": "Next Page",
+        "deployStatus": "Deploy Status",
+        "userActions": "Actions for {name}"
+      },
+      "userInitials": "U",
+      "chart": {
+        "title": "User Growth",
+        "30d": "30 DAYS",
+        "90d": "90 DAYS"
+      },
+      "recentSignups": {
+        "title": "Recent Signups",
+        "viewAll": "VIEW ALL",
+        "columns": {
+          "user": "User",
+          "tier": "Tier",
+          "signupDate": "Signup Date",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "showing": "Showing {from}–{to} of {total} users",
+        "status": {
+          "active": "Active",
+          "suspended": "Suspended"
+        }
+      },
+      "deployStatus": {
+        "env": "Env"
+      },
+      "kpi": {
+        "crons": {
+          "label": "Scheduled Crons"
+        },
+        "emails": {
+          "label": "Emails Sent"
+        },
+        "webhooks": {
+          "label": "Webhook Endpoints"
+        },
+        "storage": {
+          "label": "R2 Storage"
+        },
+        "cost": {
+          "label": "Provider Spend (30d)"
+        },
+        "signups": {
+          "label": "Signups (30d)"
+        },
+        "dau": {
+          "label": "DAU"
+        },
+        "mrr": {
+          "label": "MRR"
+        },
+        "activeUsers": {
+          "label": "Active Users"
+        },
+        "serverUptime": {
+          "label": "Server Uptime"
+        },
+        "apiLatency": {
+          "label": "API Latency"
+        },
+        "d1Queries": {
+          "label": "D1 Queries/s"
+        }
+      }
+    },
+    "affiliatePortal": {
+      "title": "Affiliate Portal",
+      "subtitle": "Track your earnings and referrals",
+      "totalEarnings": "Total Earnings",
+      "pending": "Pending",
+      "clicks": "Clicks",
+      "conversions": "Conversions",
+      "conversionRate": "Conv. Rate",
+      "yourReferralLink": "Your Referral Link",
+      "copyLink": "Copy Link",
+      "copied": "Copied!",
+      "recentReferrals": "Recent Referrals",
+      "noReferrals": "No referrals yet. Share your link to start earning!",
+      "resources": "Marketing Resources",
+      "banners": "Banner Images",
+      "links": "Deep Links"
+    },
+    "dashboardShell": {
+      "sidebar": {
+        "main": "Main",
+        "management": "Management",
+        "adminPanel": "Admin Panel",
+        "dashboard": "Dashboard",
+        "campaigns": "Campaigns",
+        "videos": "Videos",
+        "analytics": "Analytics",
+        "billing": "Billing",
+        "affiliates": "Affiliates",
+        "settings": "Settings",
+        "users": "Users",
+        "licenses": "Licenses",
+        "auditLog": "Audit Log",
+        "systemHealth": "System Health",
+        "label": "Label",
+        "logout": "Logout"
+      },
+      "header": {
+        "searchPlaceholder": "Search campaigns...",
+        "upgradePlan": "Upgrade Plan",
+        "notifications": "Notifications",
+        "localeEnglish": "Locale English",
+        "localeVietnamese": "Locale Vietnamese",
+        "generate": "Generate"
+      },
+      "breadcrumb": {
+        "home": "Home",
+        "dashboard": "Dashboard",
+        "label": "Label"
+      },
+      "welcome": {
+        "heading": "Welcome back, {name}.",
+        "description": "Your AI video generator is currently processing <bold>{count} campaigns</bold>. Ready to create something new?",
+        "newProject": "New Project",
+        "viewAnalytics": "View Analytics"
+      },
+      "gpuCredits": {
+        "title": "GPU Rendering Credits",
+        "usage": "{used} / {total}",
+        "resetsIn": "Resets in {days} days.",
+        "buyMore": "Buy more",
+        "ariaLabel": "GPU usage: {percent}%"
+      },
+      "stats": {
+        "impressions": "Total Impressions",
+        "engagement": "Engagement",
+        "avgConversion": "Avg. Conversion",
+        "activeRenders": "Active Renders",
+        "last30Days": "Last 30 days active campaigns",
+        "industryAvg": "Target industry avg: 3.2%"
+      },
+      "recentProjects": {
+        "title": "Recent Projects",
+        "viewAll": "View All Projects",
+        "createNew": "Create New",
+        "modified": "Modified {time} ago",
+        "startPrompt": "Start from a template or prompt"
+      },
+      "footer": {
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service",
+        "documentation": "Documentation",
+        "copyright": "© {year} Sophia AI Factory. All rights reserved."
+      }
+    },
+    "affiliate": {
+      "aria": {
+        "mainContent": "Affiliate dashboard main content",
+        "kpiSection": "Key performance indicators",
+        "offersSection": "Affiliate offers",
+        "conversionsSection": "Recent conversions",
+        "conversionsTable": "Recent conversions table",
+        "referralSection": "Referral link",
+        "walletSection": "Wallet"
+      },
+      "common": {
+        "search": "Search",
+        "filter": "Filter",
+        "export": "Export"
+      },
+      "title": "Affiliate Dashboard",
+      "subtitle": "Manage your referrals, track conversions, and maximize your earnings.",
+      "referButton": "Refer a Friend",
+      "kpi": {
+        "totalReferrals": {
+          "label": "Total Referrals"
+        },
+        "active": {
+          "label": "Active"
+        },
+        "commissionEarned": {
+          "label": "Commission Earned"
+        },
+        "pending": {
+          "label": "Pending"
+        }
+      },
+      "offers": {
+        "title": "Affiliate Offers",
+        "viewAll": "View All Offers",
+        "promote": "Promote",
+        "browseMore": "Browse More",
+        "items": {
+          "tiktokShop": {
+            "name": "TikTok Shop",
+            "commission": "15% Comm."
+          },
+          "accessTrade": {
+            "name": "AccessTrade",
+            "commission": "10% Comm."
+          },
+          "clickbank": {
+            "name": "ClickBank",
+            "commission": "20% Comm."
+          }
+        }
+      },
+      "conversions": {
+        "title": "Recent Conversions",
+        "viewAll": "View All Conversions",
+        "downloadReport": "Download Report (CSV)",
+        "columns": {
+          "id": "ID",
+          "amount": "Amount",
+          "commission": "Comm.",
+          "status": "Status",
+          "date": "Date"
+        },
+        "status": {
+          "paid": "PAID",
+          "pending": "PENDING",
+          "clawback": "CLAWBACK"
+        }
+      },
+      "referral": {
+        "title": "Your Referral Link",
+        "subtitle": "Share your link and earn rewards when friends sign up.",
+        "description": "Share this link to earn commission from new factory creators.",
+        "generateButton": "Generate Referral Link",
+        "generating": "Generating...",
+        "copyButton": "Copy",
+        "copied": "Copied!",
+        "shareLabel": "Share via:",
+        "shareWhatsApp": "Share on WhatsApp",
+        "shareTelegram": "Share on Telegram",
+        "shareEmail": "Share via Email",
+        "shareText": "Join Sophia AI Factory and start earning!",
+        "emailSubject": "Invitation to join Sophia AI Factory",
+        "info": "Referrers are tracked via cookies (30-day duration). Multi-level rewards are active for your account. Commissions are credited in USDT (TRC20)."
+      },
+      "wallet": {
+        "title": "USDT Wallet (TRC20)",
+        "addressLabel": "TRC20 ADDRESS",
+        "editAddress": "Edit Address",
+        "availableBalance": "Available Balance",
+        "withdraw": "Withdraw",
+        "minimumWithdrawal": "Minimum withdrawal {amount}",
+        "toggleVisibility": "Toggle wallet address visibility"
+      }
+    },
+    "referral": {
+      "backToDashboard": "Back to Dashboard",
+      "pageTitle": "Referral Dashboard",
+      "pageSubtitle": "Track your referrals, earnings, and reward history.",
+      "totalReferrals": "Total Referrals",
+      "totalEarned": "Total Earned",
+      "rewardPerReferral": "Reward Per Referral",
+      "historyTitle": "Reward History",
+      "noHistory": "No rewards yet. Share your referral link to start earning!",
+      "statusEarned": "Earned",
+      "tableColumns": {
+        "date": "Date",
+        "reward": "Reward",
+        "status": "Status"
+      }
+    },
+    "dashboardOverview": {
+      "aria": {
+        "mainContent": "Dashboard main content",
+        "kpiSection": "Key performance indicators",
+        "chartSection": "Performance chart",
+        "chartLegend": "Chart legend",
+        "chart": "Performance over last 30 days chart",
+        "sparkline": "Trend sparkline",
+        "campaignsTable": "Recent campaigns table",
+        "quickActions": "Quick actions"
+      },
+      "title": "Dashboard",
+      "subtitle": "Welcome back. Here’s what’s happening with your video production.",
+      "periodSelector": {
+        "label": "Last 30 days",
+        "ariaLabel": "Select date range, currently last 30 days"
+      },
+      "kpi": {
+        "activeCampaigns": {
+          "label": "Active Campaigns"
+        },
+        "totalViews": {
+          "label": "Total Views"
+        },
+        "revenueMtd": {
+          "label": "Revenue MTD"
+        },
+        "creditsUsed": {
+          "label": "Credits Used",
+          "value": "{used} / {total}",
+          "progressLabel": "{used} of {total} credits used"
+        }
+      },
+      "chart": {
+        "title": "Performance — Last 30 Days",
+        "labels": {
+          "0": "Sept 01",
+          "1": "Sept 08",
+          "2": "Sept 15",
+          "3": "Sept 22",
+          "4": "Sept 29"
+        },
+        "legend": {
+          "views": "Views",
+          "revenue": "Revenue"
+        },
+        "tooltip": {
+          "label": "Chart data point",
+          "date": "Sept 24, 2023",
+          "views": "Views",
+          "viewsValue": "42,391",
+          "revenue": "Revenue",
+          "revenueValue": "$1,104.20"
+        }
+      },
+      "campaigns": {
+        "title": "Recent Campaigns",
+        "viewAll": "View All",
+        "columns": {
+          "name": "Campaign Name",
+          "status": "Status",
+          "views": "Views",
+          "revenue": "Revenue",
+          "lastUpdated": "Last Updated"
+        },
+        "status": {
+          "live": "Live",
+          "paused": "Paused",
+          "draft": "Draft"
+        }
+      },
+      "quickActions": {
+        "title": "Quick Actions",
+        "createCampaign": "Create Campaign",
+        "createCampaignDesc": "Start a new project",
+        "viewAnalytics": "View Analytics",
+        "viewAnalyticsDesc": "Deep dive into data",
+        "generateReport": "Generate Report",
+        "generateReportDesc": "Export monthly PDF",
+        "inviteTeam": "Invite Team Member",
+        "inviteTeamDesc": "Add collaborators"
+      },
+      "storage": {
+        "title": "Storage Usage",
+        "used": "{gb} GB used",
+        "percent": "{pct}%",
+        "progressLabel": "{pct}% storage used",
+        "upgradeHint": "Upgrade to Pro for unlimited cloud rendering and team storage."
+      }
+    },
+    "pricingPage": {
+      "hero": {
+        "title": "Choose Your Plan",
+        "subtitle": "Scale your AI video business with the right plan"
+      },
+      "billing": {
+        "monthly": "Monthly",
+        "yearly": "Yearly",
+        "savePercent": "(Save 20%)"
+      },
+      "popular": "Most Popular",
+      "plans": {
+        "basic": {
+          "name": "Basic",
+          "description": "For starters",
+          "period": "/mo",
+          "features": [
+            "10 campaigns",
+            "3 channels",
+            "Basic analytics"
+          ],
+          "cta": "Get Started"
+        },
+        "premium": {
+          "name": "Premium",
+          "description": "High performance",
+          "period": "/mo",
+          "features": [
+            "100 campaigns",
+            "All channels",
+            "Advanced analytics",
+            "Priority support"
+          ],
+          "cta": "Start Free Trial"
+        },
+        "enterprise": {
+          "name": "Enterprise",
+          "description": "Scale without limits",
+          "period": "/mo",
+          "features": [
+            "Unlimited campaigns",
+            "Custom integrations",
+            "API access",
+            "Dedicated manager"
+          ],
+          "cta": "Contact Sales"
+        },
+        "master": {
+          "name": "Master",
+          "description": "For agencies",
+          "price": "Custom",
+          "features": [
+            "Everything unlimited",
+            "White-label platform",
+            "Custom rendering farm"
+          ],
+          "cta": "Talk to Us"
+        }
+      },
+      "faq": {
+        "title": "Frequently Asked Questions",
+        "items": [
+          {
+            "question": "Can I change plans anytime?",
+            "answer": "Yes, you can upgrade or downgrade your plan at any time from your account settings. Changes will be reflected in your next billing cycle."
+          },
+          {
+            "question": "What happens after my free trial?",
+            "answer": "After your 14-day trial ends, you'll be automatically moved to your selected plan unless you cancel beforehand. We'll send you a reminder 3 days before the trial expires."
+          },
+          {
+            "question": "Are there any hidden fees?",
+            "answer": "No hidden fees. The price you see includes all features listed in that plan. Custom API usage beyond limits might incur additional costs on a pay-as-you-go basis."
+          },
+          {
+            "question": "Do you offer discounts for non-profits?",
+            "answer": "Yes! We offer a 50% discount for qualified non-profit organizations and educational institutions. Contact our support team with your credentials to apply."
+          }
+        ]
+      },
+      "nav": {
+        "models": "Models",
+        "gallery": "Gallery",
+        "pricing": "Pricing",
+        "api": "API",
+        "enterprise": "Enterprise",
+        "signIn": "Sign In",
+        "getStarted": "Get Started"
+      },
+      "footer": {
+        "description": "Building the future of generative video intelligence for the global creative economy.",
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service",
+        "security": "Security",
+        "status": "Status",
+        "contact": "Contact",
+        "copyright": "© 2024 Sophia AI Factory. All rights reserved."
+      }
+    },
+    "landing": {
+      "badge": "⚡ Trusted by 10,000+ creators worldwide",
+      "headline": "Build Your AI-Powered Video ",
+      "headlineHighlight": " Empire Without Hiring a Team",
+      "subheading": "Sophia automates faceless YouTube channels, affiliate campaigns, and multi-platform publishing — all from one dashboard and your Telegram. No coding. No editors. No stress.",
+      "nav": {
+        "features": "Features",
+        "pricing": "Pricing",
+        "blog": "Blog",
+        "affiliates": "Affiliates",
+        "signIn": "Sign In",
+        "startFree": "Start Free",
+        "getStarted": "Get Started",
+        "guide": "Guide",
+        "login": "Login",
+        "brand": "Brand"
+      },
+      "cta": {
+        "startFree": "Start Free",
+        "watchDemo": "Watch Demo"
+      },
+      "trustBar": {
+        "label": "Creator community",
+        "creators": "10,000+ creators",
+        "videos": "1M+ videos generated"
+      },
+      "footer": {
+        "copyright": "© 2026 Sophia AI Factory. All rights reserved.",
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service",
+        "contact": "Contact Us"
+      },
+      "features": {
+        "scriptWriting": {
+          "title": "AI Video Factory",
+          "description": "Generate faceless YouTube videos from a single script. AI voices, auto-captions, multi-language."
+        },
+        "multiChannel": {
+          "title": "Telegram Empire Control",
+          "description": "Run your entire business from Telegram. Launch campaigns, check stats — no dashboard needed."
+        },
+        "analytics": {
+          "title": "Affiliate Revenue Engine",
+          "description": "Connect 10+ affiliate networks. Sophia auto-tags and tracks your commissions."
+        }
+      },
+      "pricing": "Pricing",
+      "guide": "Guide",
+      "affiliates": "Affiliates",
+      "logIn": "Log In",
+      "getStarted": "Get Started"
+    },
+    "settingsPage": {
+      "pageTitle": "Settings",
+      "topNav": {
+        "upgradePlan": "Upgrade Plan",
+        "notifications": "Notifications"
+      },
+      "nav": {
+        "label": "Settings navigation",
+        "title": "Settings",
+        "account": "Account",
+        "apiKeys": "API Keys",
+        "billing": "Billing",
+        "notifications": "Notifications",
+        "team": "Team",
+        "appearance": "Appearance",
+        "signOut": "Sign Out"
+      },
+      "profile": {
+        "title": "Profile Details",
+        "name": "Name",
+        "email": "Email Address",
+        "verified": "Verified",
+        "save": "Save Changes"
+      },
+      "apiKeys": {
+        "title": "API Keys",
+        "addKey": "Add Key",
+        "elevenLabs": "ElevenLabs API Key",
+        "openRouter": "OpenRouter API Key",
+        "did": "D-ID API Key",
+        "configured": "Configured",
+        "missing": "Missing",
+        "didHint": "Enter your D-ID secret key to enable video avatar features.",
+        "show": "Show key",
+        "hide": "Hide key",
+        "delete": "Delete",
+        "connect": "Connect"
+      },
+      "locale": {
+        "title": "Locale & Language",
+        "vietnamese": "Vietnamese",
+        "english": "English (United States)"
+      },
+      "dangerZone": {
+        "title": "Danger Zone",
+        "description": "Manage high-impact changes to your account. Please proceed with caution.",
+        "deleteAccount": "Delete Account",
+        "deleteDesc": "Permanently remove your account and all associated data.",
+        "irreversible": "This action is irreversible.",
+        "deleteButton": "Delete Account"
+      }
+    },
+    "campaigns": {
+      "title": "Campaigns",
+      "subtitle": "Manage and monitor your AI video generations.",
+      "searchPlaceholder": "Search campaigns...",
+      "status": {
+        "live": "Live",
+        "paused": "Paused",
+        "draft": "Draft",
+        "done": "Done"
+      },
+      "filter": {
+        "all": "All",
+        "allChannels": "All Channels",
+        "status": "Status",
+        "channel": "Channel",
+        "date": "Date",
+        "last30Days": "Last 30 Days",
+        "clear": "Clear filters"
+      },
+      "actions": {
+        "createCampaign": "Create Campaign",
+        "viewDetails": "View Details",
+        "continueDraft": "Continue Draft"
+      },
+      "metrics": {
+        "views": "Views",
+        "revenue": "Revenue",
+        "ctr": "CTR"
+      },
+      "progress": {
+        "campaign": "Campaign Progress",
+        "generation": "Generation Progress",
+        "aria": "complete"
+      },
+      "pagination": {
+        "showing": "Showing {from}-{to} of {total}"
+      },
+      "placeholder": {
+        "thumbnail": "Processing visuals..."
+      },
+      "emptyState": {
+        "title": "No campaigns yet",
+        "description": "Create your first campaign to start generating AI videos for your social channels.",
+        "cta": "Create Campaign"
+      },
+      "lastPublished": "Last published",
+      "footer": {
+        "poweredBy": "Powered by",
+        "engine": "Sophia Engine v2.4",
+        "apiDocs": "API Documentation",
+        "privacy": "Privacy Policy",
+        "terms": "Terms of Service"
+      },
+      "aria": {
+        "filterBar": "Filter campaigns",
+        "searchCampaigns": "Search campaigns",
+        "campaignList": "Campaign list",
+        "pagination": "Campaign pagination",
+        "previousPage": "Previous page",
+        "nextPage": "Next page",
+        "page": "Page {page}",
+        "moreOptions": "More options for",
+        "channelIcons": "Target channels"
+      }
+    },
+    "video-creation": {
+      "title": "Create New Video",
+      "stepIndicator": "Step indicator",
+      "step": "Step",
+      "steps": {
+        "script": "Script",
+        "voice": "Voice",
+        "visual": "Visual",
+        "review": "Review"
+      },
+      "scriptInput": "Script Input",
+      "aiGenerate": "AI Generate",
+      "scriptPlaceholder": "Describe your video topic or paste a script...",
+      "generatedPreview": "Generated Script Preview",
+      "previewPlaceholder1": "Scene 1: Wide shot of Neo-Tokyo skyline. Rain is falling, illuminated by massive neon billboards advertising AI solutions.",
+      "previewPlaceholder2": "Scene 2: Close up on a protagonist's cybernetic eye, reflecting the scrolling code of a mysterious message.",
+      "previewPlaceholder3": "Scene 3: A montage of high-speed data centers, cooling fans spinning rapidly, orange status lights flickering in the dark.",
+      "previewPlaceholder4": "Scene 4: Transition to a calm, white architectural space representing the AI's core consciousness.",
+      "characterCount": "Character count: {current} / {max}",
+      "percentUsed": "{percent}% Used",
+      "characterProgress": "Character progress: {percent}%",
+      "sidebarLabel": "Video creation sidebar",
+      "preview": "Preview",
+      "previewDuration": "3:24",
+      "voicePreview": "Voice Preview",
+      "playVoicePreview": "Play Voice Preview",
+      "voiceProgress": "Voice preview progress",
+      "voices": {
+        "aria": "Aria - Professional Narrator",
+        "marcus": "Marcus - Tech Evangelist",
+        "sophia": "Sophia - Ethereal AI",
+        "nova": "Nova - Energetic Storyteller"
+      },
+      "visualStyle": "Visual Style",
+      "visualStyles": {
+        "cinematic": "Cinematic",
+        "template": "Template"
+      },
+      "stepNavigation": "Step Navigation",
+      "back": "Back",
+      "continueToVoice": "Continue to Voice"
+    }
+  },
+  "audit": {
+    "noRuns": "No audit runs yet. Run your first audit above.",
+    "date": "Date",
+    "score": "Score",
+    "checks": "Checks",
+    "pwf": "P/W/F",
+    "detail": "Detail",
+    "view": "View"
+  },
+  "setup_wizard": {
+    "system_check": {
+      "title": "System Check",
+      "cloudflare_workers": "Cloudflare Workers",
+      "cloudflare_desc": "System running on edge (global)",
+      "security": "Security",
+      "security_desc": "API keys encrypted with AES-256 at rest",
+      "next_step": "Next: enter API keys for AI services. You can skip and add later in Settings."
+    }
+  },
+  "billing": {
+    "creditBar": {
+      "used": "Used",
+      "of": "Of",
+      "thisMonth": "This Month",
+      "videoThisMonth": "videos this month",
+      "atLimit": "At Limit",
+      "nearLimit": "Near Limit",
+      "topUpNow": "Top Up Now",
+      "buyMore": "Buy More"
+    },
+    "paymentHistory": {
+      "completed": "Completed",
+      "pending": "Pending",
+      "failed": "Failed",
+      "title": "Title",
+      "date": "Date",
+      "amount": "Amount",
+      "method": "Method",
+      "status": "Status",
+      "invoice": "Invoice",
+      "downloadInvoice": "Download Invoice"
+    },
+    "currentPlan": {
+      "badge": "Badge",
+      "planName": "Plan Name",
+      "price": "Price",
+      "billedAnnually": "Billed Annually",
+      "status": "Status",
+      "nextBilling": "Next Billing",
+      "changePlan": "Change Plan",
+      "cancel": "Cancel"
+    },
+    "usage": {
+      "title": "Title",
+      "of": "Of",
+      "aiVideos": "AI Videos",
+      "campaigns": "Campaigns",
+      "storage": "Storage"
+    },
+    "paymentMethods": {
+      "title": "Title",
+      "default": "Default",
+      "addMethod": "Add Method"
+    },
+    "topUp": {
+      "title": "Title",
+      "description": "Description",
+      "button": "Button"
+    },
+    "dangerZone": {
+      "title": "Title",
+      "description": "Description",
+      "deleteButton": "Delete Button",
+      "deleteHint": "Delete Hint",
+      "delete": "Delete"
+    },
+    "pageTitle": "Page Title",
+    "pageSubtitle": "Page Subtitle"
+  },
+  "campaigns": {
+    "all_statuses": "All statuses",
+    "all_channels": "All channels",
+    "search_campaigns": "Search campaigns",
+    "filter_status": "Filter status",
+    "filter_channel": "Filter channel",
+    "filter_date": "Filter date",
+    "no_campaigns": "No campaigns",
+    "no_campaigns_hint": "No campaigns hint",
+    "create_campaign": "Create campaign",
+    "title": "Title",
+    "subtitle": "Subtitle"
+  },
+  "marketplace": {
+    "creator": {
+      "install": "Install",
+      "installConfirm": "Install this SOP for {price}?",
+      "installSuccess": "Installed successfully!",
+      "installError": "Installation failed: {error}",
+      "alreadyInstalled": "Already installed",
+      "installLimitReached": "Install limit reached. Upgrade your plan.",
+      "yourRating": "Your Rating",
+      "reviewPlaceholder": "Write your review...",
+      "submitReview": "Submit Review",
+      "leaveReview": "Leave a Review",
+      "confirmPublish": "Confirm Publish",
+      "confirmArchive": "Confirm Archive",
+      "createListing": "Create Listing",
+      "editListing": "Edit Listing",
+      "noListings": "No Listings",
+      "title": "Title",
+      "status": "Status",
+      "installCount": "Install Count",
+      "earnings": "Earnings",
+      "publish": "Publish",
+      "archive": "Archive",
+      "listings": "Listings",
+      "subtitle": "Subtitle",
+      "editProfile": "Edit Profile",
+      "bio": "Bio",
+      "payoutMethod": "Payout Method",
+      "payoutAddress": "Payout Address",
+      "activeChallenges": "Active Challenges",
+      "noChallenges": "No Challenges",
+      "earningsHistory": "Earnings History",
+      "referralEarn": "Referral Earn",
+      "referralDesc": "Referral Desc",
+      "registerTitle": "Register Title",
+      "registerSubtitle": "Register Subtitle",
+      "settings": "Settings",
+      "settingsSaved": "Settings Saved",
+      "displayName": "Display Name",
+      "displayNamePlaceholder": "Display Name Placeholder",
+      "bioPlaceholder": "Bio Placeholder",
+      "payoutMethodPlaceholder": "Payout Method Placeholder",
+      "payoutAddressPlaceholder": "Payout Address Placeholder",
+      "save": "Save",
+      "profileSaved": "Profile Saved",
+      "inviteCode": "Invite Code",
+      "inviteCodePlaceholder": "Invite Code Placeholder",
+      "registerCta": "Register Cta",
+      "paid": "Paid",
+      "available": "Available",
+      "pending": "Pending",
+      "platform": "Platform",
+      "titlePlaceholder": "Title Placeholder",
+      "price": "Price",
+      "pricePlaceholder": "Price Placeholder",
+      "category": "Category",
+      "categoryPlaceholder": "Category Placeholder",
+      "sopTemplate": "Sop Template",
+      "thumbnail": "Thumbnail",
+      "cancel": "Cancel"
+    }
+  }
 }
