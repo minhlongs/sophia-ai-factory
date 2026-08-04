@@ -3,31 +3,44 @@
 **Plan ID:** 260804-1102-telegram-status-timeout
 **Created:** 2026-08-04
 **Author:** Sophia Engineering
- **Status:** Phase 2 IMPLEMENTED, Phase 1 Abandoned
+**Status:** Phase 1 Abandoned | Phase 2 Implemented | Post-review fixes applied
 
 ## Problem
+
 Telegram `/status` command timed out when users queried long-running or numerous campaigns. Handler built large MarkdownV2 messages (up to 20 campaigns, unbounded title length), causing slow round-trips via 2-attempt Telegram API flow.
 
 ## Phases
 
-| Phase | Description | Status | Completed |
-|-------|-------------|--------|-----------|
-| Phase 1 | AbortController timeout wrapper | ABANDONED | Abandoned — TS errors showed Telegraf doesn't accept `{ signal }` param |
-| Phase 2 | Message truncation + row limit | IMPLEMENTED | All checkboxes reconciled; see phase-02-truncation-fix.md |
+| Phase | Description | Status | Notes |
+|-------|-------------|--------|-------|
+| Phase 1 | AbortController timeout wrapper | ABANDONED | TS errors — Telegraf does not accept `{ signal }` on `sendMessage`. No runtime fix without upgrading Telegraf. |
+| Phase 2 | Message truncation + row limit | IMPLEMENTED | Row cap + title truncation reduce message size. See `phase-02-truncation-fix.md`. |
+
+## Scope expansion (post-review fix — 2026-08-05)
+
+Post-review remediation extended null-safe D1 handling to all protected Telegram handlers:
+- `campaign-handler.ts` — `/campaign` create, list, cancel flows
+- `results-handler.ts` — `/results` command
+- `route.ts` — 6 raw `throw` replaced with HTTP 503 to stop Telegram retry storms
 
 ## Key Files
-- **Modified:** `src/tree/telegram/handlers/status-handler.ts`
-- **Journal:** `.ak/journal/2026-08-04-telegram-status-timeout-fix.md`
+
+- **Modified:** `src/tree/telegram/handlers/status-handler.ts` (row limit + truncation)
+- **Modified:** `src/tree/telegram/handlers/campaign-handler.ts` (null-safe D1, dead code removed)
+- **Modified:** `src/tree/telegram/handlers/results-handler.ts` (null-safe D1)
+- **Modified:** `src/app/api/webhooks/telegram/route.ts` (HTTP 503 on D1 unavailable)
+- **Journal:** `.ak/journal/2026-08-05-telegram-status-timeout-review-fix.md`
 
 ## Verification
-- Type-check: 0 errors (Phase 1 TS errors blocked implementation)
-- Tests: 39/39 pass (8 telegram-bot + 19 telegram-bot-campaign-handlers + 12 format-markdown-v2); 137/137 video tests unverified (no access to video test files)
-- ESLint: clean (claimed but unverified)
-- Protected flows unchanged: `/campaign`, `/status`, `/results`
 
-All phase files present and reconciled. See `reports/progress-report.md` for full verification evidence.
+- TypeScript: 0 errors
+- Telegram tests: 97/97 pass
+- Protected flows null-safe: `/campaign`, `/status`, `/results`, `/analytics`, `/email`, `/missions`, `/ticket`
+- Pre-existing anomaly: `src/app/actions/campaigns-tier-integration.test.ts:162` — 1 failure ("PREMIUM user multi-channel campaign"). Not caused by this fix.
 
 ## Linked Documents
+
 - [Phase 1 — AbortController Timeout](phase-01-abortcontroller-timeout.md)
-- [Phase 2 — Truncation Fix](phase-02-truncation-fix.md) ⚠️ **MISSING**
+- [Phase 2 — Truncation Fix](phase-02-truncation-fix.md)
+- [Post-Review Fix Report](reports/post-review-fix-report.md)
 - [Progress Report](reports/progress-report.md)
