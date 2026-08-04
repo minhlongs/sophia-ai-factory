@@ -13,7 +13,7 @@ interface ProfileRow {
 }
 
 async function resolveUserId(chatId: string): Promise<string | null> {
-  const { data } = db()
+  const { data } = await db()
     .from('user_profiles')
     .select('user_id')
     .eq('telegram_chat_id', chatId)
@@ -31,12 +31,6 @@ interface CampaignRow {
   user_id: string;
 }
 
-// Safe MarkdownV2 escape for user-provided content only (URLs, titles).
-// Structural chars (newlines, *, backticks, parens, brackets) are kept as-is.
-function escapeMd(text: string): string {
-  return text.replace(/[_\\[\]()~`>#+\-=|{}.]/g, '\\$&');
-}
-
 // Drop fragment/doc open id; preserve downloadable view.
 type DriveSnippet = {
   mimeType?: string | null;
@@ -44,8 +38,9 @@ type DriveSnippet = {
   url?: string | null;
 };
 
+// Safe MarkdownV2 escape for user-provided content only (URLs, titles).
+// Structural chars (newlines, *, backticks, parens, brackets) are kept as-is.
 function escapeMd(text: string): string {
-  // Escape markdown-v2 special chars: _ * [ ] ( ) ~ ` > # + - = | { } .
   return text.replace(/[_*[\]()~`>#+\-=|{}.]/g, '\\$&');
 }
 

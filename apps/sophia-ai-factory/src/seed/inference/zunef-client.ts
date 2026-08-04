@@ -252,9 +252,9 @@ export async function zunefChatCompletion(
   throw new Error('ZuneF: max retries exceeded');
 }
 
-// Re-export KV key names so callers that need to seed / evict credentials
-// don't have to recompose the prefix themselves.
-export { DEVICE_ID_KEY, DEVICE_TOKEN_KEY, ZUNEF_KV_PREFIX as PREFIX };
+// DEVICE_ID_KEY and DEVICE_TOKEN_KEY are already exported above (lines 34-35).
+// PREFIX is re-exported here for callers that need it for eviction/scoping.
+export { ZUNEF_KV_PREFIX as PREFIX };
 
 /**
  * Drop both credentials from storage. Primarily for tests / logout flows.
