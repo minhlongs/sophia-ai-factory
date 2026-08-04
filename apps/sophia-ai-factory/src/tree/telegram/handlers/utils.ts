@@ -18,8 +18,8 @@ async function trySendMarkdownV2(
     await bot.telegram.sendMessage(chatId, text, { ...extra, parse_mode: 'MarkdownV2' });
   } catch (firstErr) {
     // If MarkdownV2 parse fails, fall back to plain text to keep messages flowing.
-    const msg = firstErr instanceof Error ? firstErr.message : String(firstErr);
-    if (msg.includes('400') || msg.includes('can\'t parse')) {
+    const msg = firstErr instanceof Error ? firstErr.message : String(firstErr)
+    if (msg.includes('400') || msg.includes("can't parse")) {
       logger.warn('[sendMessage] MarkdownV2 parse failed, falling back to plain text', {
         chatId,
         error: msg.slice(0, 200),

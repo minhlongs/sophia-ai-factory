@@ -2,7 +2,16 @@ import { createServerClient } from '@/seed/db/client';
 import { sendMessage } from '@/tree/telegram/handlers/utils';
 import { logger } from '@/seed/utils/logger-utility';
 
-const db = () => createServerClient();
+const db = createServerClient();
+
+const MAX_FIELD_LENGTH = 120;
+const MAX_LIST_ROWS = 10;
+const TRUNCATION_SUFFIX = '…';
+
+function truncate(value: string | null | undefined, max = MAX_FIELD_LENGTH): string {
+  const base = value ?? '';
+  return base.length > max ? `${base.slice(0, max)}${TRUNCATION_SUFFIX}` : base;
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -13,7 +22,7 @@ interface ProfileRow {
 }
 
 async function resolveUserId(chatId: string): Promise<string | null> {
-  const { data } = db()
+  const { data } = await db
     .from('user_profiles')
     .select('user_id')
     .eq('telegram_chat_id', chatId)
@@ -47,7 +56,7 @@ export async function handleStatus(chatId: string, campaignId?: string): Promise
       return;
     }
 
-    const d1 = db();
+    const d1 = db;
 
     let message: string;
     let headerEmoji: string;
@@ -78,7 +87,8 @@ export async function handleStatus(chatId: string, campaignId?: string): Promise
               : '⚙️';
 
       const statusHuman = row.status?.replace(/_/g, ' ') ?? 'unknown';
-      message = `${headerEmoji} *Trạng thái / Status: ${row.title}*\n\n`;
+      const title = truncate(row.title);
+      message = `${headerEmoji} *Trạng thái / Status: ${title}*\n\n`;
       message += ` ID: \`${row.id.slice(0, 8)}\`\n`;
       message += ` Trạng thái / Status: ${statusHuman}\n`;
       message += ` Tiến độ / Progress: ${row.progress ?? 0}%\n`;
@@ -92,7 +102,7 @@ export async function handleStatus(chatId: string, campaignId?: string): Promise
         .eq('user_id', userId)
         .not('status', 'in', '("draft","completed","failed","video_timeout")')
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(MAX_LIST_ROWS);
 
       const campaigns = (rows as CampaignRow[] | null) ?? [];
 
@@ -118,7 +128,8 @@ export async function handleStatus(chatId: string, campaignId?: string): Promise
       campaigns.forEach((c, idx) => {
         const emoji = statusEmoji(c.status);
         const statusHuman = (c.status ?? 'unknown').replace(/_/g, ' ');
-        message += `${idx + 1}. ${emoji} *${c.title}*\n`;
+        const title = truncate(c.title);
+        message += `${idx + 1}. ${emoji} *${title}*\n`;
         message += ` ID: \`${c.id.slice(0, 8)}\`\n`;
         message += ` TT / Status: ${statusHuman} (${c.progress ?? 0}%)\n`;
         message += ` Tạo / Created: ${new Date(c.created_at).toLocaleDateString()}\n\n`;
