@@ -5,6 +5,7 @@ import { Tier } from '@/seed/types'
 import { backupSessionState } from '@/tree/telegram/telegram-state-backup-service'
 import { sendMessage } from '@/tree/telegram/handlers/utils'
 import { logger } from '@/seed/utils/logger-utility'
+import { truncateMarkdownV2Safely } from '../format-markdown-v2'
 
 const getSupabase = () => createServerClient()
 
@@ -150,6 +151,18 @@ I will notify you when it's ready. Check progress with /status.`
 // -------------------------------------------------------------------------
 const ACTIVE_STATUSES = ['queued', 'processing_script', 'processing_video'] as const;
 
+
+const MAX_FIELD_LENGTH = 120;
+const TRUNCATION_SUFFIX = '…';
+
+function truncate(value: string | null | undefined, max = MAX_FIELD_LENGTH): string {
+  const base = value ?? ''
+return base.length > max ? `${base.slice(0, max)}${TRUNCATION_SUFFIX}` : base
+}
+const MAX_CAMPAIGN_LIST_ROWS = 10
+const MAX_CAMPAIGN_TITLE_LEN = 80
+const MAX_CAMPAIGN_MESSAGE_LEN = 3800
+
 /**
  * Handle /campaign list — list all campaigns for the user with their statuses.
  */
@@ -173,10 +186,10 @@ export async function handleCampaignList(chatId: string): Promise<void> {
       .select('id, title, status, progress, created_at')
       .eq('user_id', profile.user_id)
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(MAX_CAMPAIGN_LIST_ROWS)
 
-    const campaigns = campaignsData as CampaignRow[] | null
-    if (!campaigns || campaigns.length === 0) {
+    const campaigns = (campaignsData as CampaignRow[] | null) ?? []
+    if (campaigns.length === 0) {
       await sendMessage(chatId, '📭 No campaigns found. Start one with /campaign <topic>')
       return
     }
@@ -196,13 +209,18 @@ export async function handleCampaignList(chatId: string): Promise<void> {
       const emoji = statusEmoji[c.status ?? ''] || '❓'
       const shortId = c.id.slice(0, 8)
       const date = new Date(c.created_at).toLocaleDateString()
-      message += `${emoji} *${c.title}*\n`
+      const title = truncateMarkdownV2Safely(c.title, MAX_CAMPAIGN_TITLE_LEN)
+    message += `${emoji} *${title}*\n`
       message += `  ID: \`${shortId}\` | Status: ${c.status ?? 'unknown'} | Progress: ${c.progress ?? 0}%\n`
       message += `  Created: ${date}\n`
       if (i < campaigns.length - 1) message += '\n'
     })
 
-    await sendMessage(chatId, message)
+    const finalMessage = truncateMarkdownV2Safely(message, MAX_CAMPAIGN_MESSAGE_LEN)
+  await sendMessage(
+    chatId,
+    finalMessage + (finalMessage.length >= MAX_CAMPAIGN_MESSAGE_LEN ? '…\n_(truncated)_' : ''),
+  )
   } catch (error) {
     logger.error('Error listing campaigns', error instanceof Error ? error : new Error(String(error)))
     await sendMessage(chatId, '❌ Error fetching campaign list.')
