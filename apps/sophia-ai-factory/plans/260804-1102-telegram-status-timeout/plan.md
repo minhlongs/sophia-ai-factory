@@ -1,9 +1,17 @@
+---
+id: 260804-1102-telegram-status-timeout
+name: Telegram /status Timeout Fix
+created: 2026-08-04
+completed: 2026-08-05
+status: COMPLETED
+---
+
 # Telegram /status Timeout Fix — Plan Overview
 
 **Plan ID:** 260804-1102-telegram-status-timeout
 **Created:** 2026-08-04
 **Author:** Sophia Engineering
-**Status:** Phase 1 Abandoned | Phase 2 Implemented | Post-review fixes applied
+**Status:** COMPLETED — Phase 1 abandoned (Telegraf incompatibility), Phase 2 implemented (truncation + row limit), post-review fixes applied and verified (97/97 tests pass, 0 TS errors)
 
 ## Problem
 
@@ -13,8 +21,8 @@ Telegram `/status` command timed out when users queried long-running or numerous
 
 | Phase | Description | Status | Notes |
 |-------|-------------|--------|-------|
-| Phase 1 | AbortController timeout wrapper | ABANDONED | TS errors — Telegraf does not accept `{ signal }` on `sendMessage`. No runtime fix without upgrading Telegraf. |
-| Phase 2 | Message truncation + row limit | IMPLEMENTED | Row cap + title truncation reduce message size. See `phase-02-truncation-fix.md`. |
+| Phase 1 | AbortController timeout wrapper | ABANDONED | Telegraf `sendMessage` does not accept `{ signal }`. No runtime fix without upgrading Telegraf. See `phase-01-abortcontroller-timeout.md`. |
+| Phase 2 | Message truncation + row limit | COMPLETED | Row cap (10) + title truncation (120 chars) reduce MarkdownV2 payload. See `phase-02-truncation-fix.md`. |
 
 ## Scope expansion (post-review fix — 2026-08-05)
 
