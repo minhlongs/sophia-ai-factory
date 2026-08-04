@@ -1,9 +1,20 @@
+---
+title: /campaign list timeout fix
+status: completed
+priority: P1
+effort: small
+branch: fix/campaign-list-timeout
+tags: [telegram, timeout, campaign]
+created: 2026-08-04
+---
+
 # /campaign list Timeout Fix — Plan
 
 **Plan ID:** 260804-1145-campaign-list-timeout
 **Created:** 2026-08-04
+**Completed:** 2026-08-05
 **Author:** Sophia Engineering
-**Status:** In Progress
+**Status:** COMPLETED — Phase 1 implemented, verified, synced
 
 ## Problem
 
@@ -27,13 +38,10 @@ Apply the proven pattern from `status-handler.ts`:
 |-------|-------------|--------|
 | Phase 1 | Apply truncation + row cap to handleCampaignList | Completed |
 
-## Completion
+## Verification Summary
 
-- **File modified:** `src/tree/telegram/handlers/campaign-handler.ts`
-- **Change:** Row cap (10), per-title truncation (80 chars via `truncateMarkdownV2Safely`), message truncation (3800 chars), footer when truncated
-- **Verification:** type-check 0 errors, tests pass, code review approved
-- **Pattern source:** `plan 260804-1102` (status fix, committed as `2752fa59`)
-- **Dead code removed:** unused `escapeMarkdownV2` import, local `truncate()` helper + `MAX_FIELD_LENGTH`/`TRUNCATION_SUFFIX` constants
-- **Review fix:** Added timeout rationale comment above `MAX_CAMPAIGN_LIST_ROWS`
-- **Date completed:** 2026-08-04
-- **Status:** `completed`
+- TypeScript: 0 errors
+- Tests: 6778/6778 pass (678 files, 1 skipped, 10 todo)
+- Protected flows: `/campaign`, `/status`, `/results` verified
+- Plan supersedes: `260804-1200-campaign-list-timeout` (lower row cap + shorter titles)
+- Sync-back: plan.md updated to status=completed with YAML frontmatter; phase-01 reconciled
