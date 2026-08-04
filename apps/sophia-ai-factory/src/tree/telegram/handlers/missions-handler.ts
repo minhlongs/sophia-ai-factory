@@ -4,7 +4,7 @@
  * Lists recent engine_missions for the user linked to this Telegram chat.
  */
 
-import { createServerClient } from '@/seed/db/client';
+import { tryCreateServerClient } from '@/seed/db/client';
 import { sendMessage } from '@/tree/telegram/handlers/utils';
 
 interface ProfileRow {
@@ -23,7 +23,12 @@ interface MissionRow {
  * Handle /missions command — shows recent missions + status.
  */
 export async function handleMissions(chatId: string): Promise<void> {
-  const db = createServerClient();
+  const db = tryCreateServerClient();
+if (!db) {
+  await sendMessage(chatId, 'Database unavailable. Please try again later.');
+  return;
+}
+
 
   // Resolve user from telegram chat_id
   const { data: profile } = await db

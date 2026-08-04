@@ -8,7 +8,7 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
-import { getD1, createServerClient } from '@/seed/db/client';
+import { createServerClient } from '@/seed/db/client';
 
 // ─── Public Types ───────────────────────────────────────────────────────────────
 
@@ -55,7 +55,7 @@ export async function publishVideo(
     const { createFeedbackCycle } = await import('@/tree/sop/performance-feedback-engine');
 
     // Verify video exists and user has access (check both videos table and engine_missions)
-    const db = getD1();
+    const db = createServerClient();
     if (!db) throw new Error('D1 database binding not available');
 
     const videoCheck = await db
@@ -130,7 +130,7 @@ export async function publishVideo(
 
     // Auto-create performance feedback cycle if video corresponds to a Campaign or SOP Execution
     try {
-      const dbForFeedback = getD1();
+      const dbForFeedback = createServerClient();
       if (!dbForFeedback) throw new Error('D1 unavailable');
       const sopExec = await dbForFeedback.prepare(
         `SELECT id, user_id, sop_template_id FROM sop_executions WHERE id = ?1 LIMIT 1`

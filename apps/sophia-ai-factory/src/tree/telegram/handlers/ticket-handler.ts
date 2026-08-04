@@ -1,4 +1,4 @@
-import { createServerClient } from '@/seed/db/client'
+import { tryCreateServerClient } from '@/seed/db/client'
 import { sendMessage } from '@/tree/telegram/handlers/utils'
 
 /**
@@ -17,7 +17,12 @@ export async function handleTicket(chatId: string, userId: string, ticketText: s
 
   // Attempt to persist the ticket — fail silently if table absent
   try {
-    const db = createServerClient()
+    const db = tryCreateServerClient()
+if (!db) {
+  await sendMessage(chatId, 'Database unavailable. Please try again later.');
+  return;
+}
+
     await db.from('support_tickets').insert({
       user_id: userId,
       telegram_chat_id: chatId,

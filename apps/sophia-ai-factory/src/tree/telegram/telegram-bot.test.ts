@@ -7,6 +7,10 @@ import {
   handleStatus,
   handleResults
 } from '@/tree/telegram/telegram-command-handlers'
+import { resetEmailDb } from '@/tree/telegram/handlers/email-handler'
+import { resetCampaignDb } from '@/tree/telegram/handlers/campaign-handler'
+import { resetStatusDb } from '@/tree/telegram/handlers/status-handler'
+import { resetResultsDb } from '@/tree/telegram/handlers/results-handler'
 import { bot } from '@/tree/telegram/telegram-bot-instance'
 import { TelegramFSM, BotState } from '@/tree/telegram/telegram-fsm-state-manager'
 
@@ -25,6 +29,7 @@ const createChainableMock = () => {
     delete: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
     in: vi.fn().mockReturnThis(),
+    not: vi.fn().mockReturnThis(),
     single: vi.fn().mockReturnThis(),
     maybeSingle: vi.fn().mockReturnThis(),
     order: vi.fn().mockReturnThis(),
@@ -33,11 +38,14 @@ const createChainableMock = () => {
   return mock
 }
 
-// Mock D1 shim client creation
+// Mock D1 shim client creation — return the shared mockSupabase so test
+// mockImplementation intercepts real handler calls (handleResults uses
+// tryCreateServerClient(), not createServerClient).
 vi.mock('@/seed/db/client', () => ({
   getD1: vi.fn(),
-  createServerClient: () => mockSupabase,
-  createClient: () => mockSupabase,
+  createServerClient: vi.fn(() => mockSupabase),
+  createClient: vi.fn(() => mockSupabase),
+  tryCreateServerClient: vi.fn(() => mockSupabase),
 }))
 
 // Mock Inngest
@@ -78,6 +86,11 @@ describe('Telegram Bot Handlers', () => {
     vi.resetAllMocks()
     // Reset the rpc mock with proper return value
     mockSupabase.rpc.mockResolvedValue({ data: null, error: null })
+    // Clear lazy-init D1 client singletons so each test gets a fresh mock
+    resetEmailDb()
+    resetCampaignDb()
+    resetStatusDb()
+    resetResultsDb()
   })
 
   describe('handleStart', () => {

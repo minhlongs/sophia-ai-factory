@@ -1,5 +1,5 @@
 import { TelegramFSM, BotState } from '@/tree/telegram/telegram-fsm-state-manager'
-import { createServerClient } from '@/seed/db/client'
+import { tryCreateServerClient, D1Client } from '@/seed/db/client'
 import { inngest } from '@/tree/inngest'
 import { Tier } from '@/seed/types'
 import { backupSessionState } from '@/tree/telegram/telegram-state-backup-service'
@@ -7,7 +7,12 @@ import { sendMessage } from '@/tree/telegram/handlers/utils'
 import { logger } from '@/seed/utils/logger-utility'
 import { truncateMarkdownV2Safely } from '../format-markdown-v2'
 
-const getSupabase = () => createServerClient()
+let _campaignDb: D1Client | null = null
+export function resetCampaignDb() { _campaignDb = null; }
+function getCampaignDb(): D1Client | null {
+  if (!_campaignDb) _campaignDb = tryCreateServerClient();
+  return _campaignDb;
+}
 
 // -------------------------------------------------------------------------
 // Campaign row types
@@ -56,12 +61,7 @@ export async function handleCampaign(chatId: string, topic: string): Promise<voi
 
   await sendMessage(
     chatId,
-    `📊 *Campaign Preview*
-
-Email: ${context.email}
-Topic: ${topic}
-
-Type "confirm" to create this campaign, or /cancel to abort.`
+    `📊 *Campaign Preview*\n\nEmail: ${context.email}\nTopic: ${topic}\n\nType "confirm" to create this campaign, or /cancel to abort.`,
   )
 }
 
@@ -76,7 +76,11 @@ export async function executeCampaignCreation(chatId: string): Promise<void> {
   }
 
   try {
-    const db = getSupabase()
+    const db = getCampaignDb();
+    if (!db) {
+      await sendMessage(chatId, 'Database unavailable. Please try again later.');
+      return;
+    }
 
     // 1. Identify user from chatId
     const { data: profileData, error } = await db
@@ -133,12 +137,7 @@ export async function executeCampaignCreation(chatId: string): Promise<void> {
 
     await sendMessage(
       chatId,
-      `🚀 *Campaign Started!*
-
-Topic: ${context.campaignTopic}
-ID: \`${campaign.id.slice(0, 8)}\`
-
-I will notify you when it's ready. Check progress with /status.`
+      `🚀 *Campaign Started!*\n\nTopic: ${context.campaignTopic}\nID: \`${campaign.id.slice(0, 8)}\`\n\nI will notify you when it's ready. Check progress with /status.`,
     )
   } catch (error) {
     logger.error('Error executing campaign creation', error instanceof Error ? error : new Error(String(error)))
@@ -152,13 +151,6 @@ I will notify you when it's ready. Check progress with /status.`
 const ACTIVE_STATUSES = ['queued', 'processing_script', 'processing_video'] as const;
 
 
-const MAX_FIELD_LENGTH = 120;
-const TRUNCATION_SUFFIX = '…';
-
-function truncate(value: string | null | undefined, max = MAX_FIELD_LENGTH): string {
-  const base = value ?? ''
-return base.length > max ? `${base.slice(0, max)}${TRUNCATION_SUFFIX}` : base
-}
 const MAX_CAMPAIGN_LIST_ROWS = 10
 const MAX_CAMPAIGN_TITLE_LEN = 80
 const MAX_CAMPAIGN_MESSAGE_LEN = 3800
@@ -168,7 +160,12 @@ const MAX_CAMPAIGN_MESSAGE_LEN = 3800
  */
 export async function handleCampaignList(chatId: string): Promise<void> {
   try {
-    const db = getSupabase()
+    const db = getCampaignDb();
+    if (!db) {
+      await sendMessage(chatId, 'Database unavailable. Please try again later.');
+      return;
+    }
+
     const { data: profileData } = await db
       .from('user_profiles')
       .select('user_id')
@@ -210,17 +207,17 @@ export async function handleCampaignList(chatId: string): Promise<void> {
       const shortId = c.id.slice(0, 8)
       const date = new Date(c.created_at).toLocaleDateString()
       const title = truncateMarkdownV2Safely(c.title, MAX_CAMPAIGN_TITLE_LEN)
-    message += `${emoji} *${title}*\n`
-      message += `  ID: \`${shortId}\` | Status: ${c.status ?? 'unknown'} | Progress: ${c.progress ?? 0}%\n`
-      message += `  Created: ${date}\n`
+      message += `${emoji} *${title}*\n`
+      message += ` ID: \`${shortId}\` | Status: ${c.status ?? 'unknown'} | Progress: ${c.progress ?? 0}%\n`
+      message += ` Created: ${date}\n`
       if (i < campaigns.length - 1) message += '\n'
     })
 
     const finalMessage = truncateMarkdownV2Safely(message, MAX_CAMPAIGN_MESSAGE_LEN)
-  await sendMessage(
-    chatId,
-    finalMessage + (finalMessage.length >= MAX_CAMPAIGN_MESSAGE_LEN ? '…\n_(truncated)_' : ''),
-  )
+    await sendMessage(
+      chatId,
+      finalMessage + (finalMessage.length >= MAX_CAMPAIGN_MESSAGE_LEN ? '…\n_(truncated)_' : ''),
+    )
   } catch (error) {
     logger.error('Error listing campaigns', error instanceof Error ? error : new Error(String(error)))
     await sendMessage(chatId, '❌ Error fetching campaign list.')
@@ -236,7 +233,12 @@ export async function handleCampaignList(chatId: string): Promise<void> {
  */
 export async function handleCampaignCancel(chatId: string, campaignId: string): Promise<void> {
   try {
-    const db = getSupabase()
+    const db = getCampaignDb();
+    if (!db) {
+      await sendMessage(chatId, 'Database unavailable. Please try again later.');
+      return;
+    }
+
     const { data: profileData } = await db
       .from('user_profiles')
       .select('user_id')
@@ -268,7 +270,7 @@ export async function handleCampaignCancel(chatId: string, campaignId: string): 
       await sendMessage(
         chatId,
         `❌ Campaign *${campaign.title}* (status: ${campaign.status}) cannot be cancelled.\n` +
-        `Only active campaigns (queued, processing) can be cancelled.`
+        `Only active campaigns (queued, processing) can be cancelled.`,
       )
       return
     }

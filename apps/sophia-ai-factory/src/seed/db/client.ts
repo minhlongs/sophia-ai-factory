@@ -23,6 +23,22 @@ if (process.env.NEXT_RUNTIME !== 'edge') {
   }
 }
 
+// ─── Error types ──────────────────────────────────────────────────────────────
+
+/**
+ * Thrown when a D1 binding is unavailable at runtime.
+ * Named export so routes like the Telegram webhook can catch it
+ * specifically instead of matching a generic Error string.
+ */
+export class D1NotAvailableError extends Error {
+  constructor() {
+    super('D1 database binding not available')
+    this.name = 'D1NotAvailableError'
+  }
+}
+
+// ─── D1Database accessors ─────────────────────────────────────────────────────
+
 /**
  * Get D1Database binding synchronously from CF request context.
  * Returns null if binding is unavailable (non-fatal).
@@ -158,8 +174,20 @@ async function getD1Async(): Promise<D1Database> {
 }
 
 /**
+ * Safe variant of createServerClient() — never throws.
+ * Returns null when no D1 binding is available (e.g. during build-time page data collection).
+ * Callers must handle the null case explicitly.
+ */
+export function tryCreateServerClient(override?: D1Database): D1Client | null {
+  const db = override ?? getD1();
+  if (!db) return null;
+  return new D1Client(db);
+}
+
+/**
  * Create a server-side D1 client.
  * Drop-in replacement for Supabase createServerClient().
+ * @throws Error if no D1 binding is available
  */
 export function createServerClient(override?: D1Database): D1Client {
   const db = override ?? getD1Sync();

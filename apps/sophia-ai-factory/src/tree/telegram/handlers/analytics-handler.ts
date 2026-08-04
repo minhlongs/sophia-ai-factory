@@ -5,7 +5,7 @@
  * including campaign counts by status, affiliate clicks, conversions, and earnings.
  */
 
-import { createServerClient } from '@/seed/db/client';
+import { tryCreateServerClient } from '@/seed/db/client';
 import { sendMessage } from '@/tree/telegram/handlers/utils';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -39,7 +39,12 @@ interface ConversionRow {
  */
 export async function handleAnalytics(chatId: string): Promise<void> {
   try {
-    const db = createServerClient();
+    const db = tryCreateServerClient();
+
+if (!db) {
+  await sendMessage(chatId, 'Database unavailable. Please try again later.');
+  return;
+}
 
     // 1. Resolve user from chatId
     const { data: profileData } = await db

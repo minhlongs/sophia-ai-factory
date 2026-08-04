@@ -1,8 +1,13 @@
-import { createServerClient } from '@/seed/db/client';
+import { tryCreateServerClient, D1Client } from '@/seed/db/client';
 import { sendMessage } from '@/tree/telegram/handlers/utils';
 import { logger } from '@/seed/utils/logger-utility';
 
-const db = () => createServerClient();
+let _resultsDb: D1Client | null = null;
+export function resetResultsDb() { _resultsDb = null; }
+function getResultsDb(): D1Client | null {
+  if (!_resultsDb) _resultsDb = tryCreateServerClient();
+  return _resultsDb;
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -12,8 +17,9 @@ interface ProfileRow {
   user_id: string;
 }
 
-async function resolveUserId(chatId: string): Promise<string | null> {
-  const { data } = await db()
+async function resolveUserId(chatId: string, d1: D1Client | null): Promise<string | null> {
+  if (!d1) return null;
+  const { data } = await d1
     .from('user_profiles')
     .select('user_id')
     .eq('telegram_chat_id', chatId)
@@ -105,7 +111,13 @@ function formatResultsMarkdown(campaigns: CampaignRow[], filterId?: string): str
 // ---------------------------------------------------------------------------
 export async function handleResults(chatId: string, campaignId?: string): Promise<void> {
   try {
-    const userId = await resolveUserId(chatId);
+    const d1 = getResultsDb();
+    if (!d1) {
+      await sendMessage(chatId, 'Database unavailable. Please try again later.');
+      return;
+    }
+
+    const userId = await resolveUserId(chatId, d1);
     if (!userId) {
       await sendMessage(
         chatId,
@@ -113,8 +125,6 @@ export async function handleResults(chatId: string, campaignId?: string): Promis
       );
       return;
     }
-
-    const d1 = db();
 
     if (campaignId) {
       // Single-campaign lookup; ownership enforced by user_id

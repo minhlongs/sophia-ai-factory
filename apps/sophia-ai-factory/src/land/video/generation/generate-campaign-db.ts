@@ -3,7 +3,7 @@
  * @module inngest/functions/generate-campaign-db
  */
 
-import { createServerClient, getD1 } from '@/seed/db/client'
+import { createServerClient } from '@/seed/db/client'
 import { CampaignStatus } from '@/seed/types'
 import { logger } from '@/seed/utils/logger-utility'
 
@@ -34,7 +34,7 @@ export async function markEngineMissionFailed(
   errorMessage: string,
 ): Promise<void> {
   try {
-    const _db = getD1();
+    const _db = createServerClient();
     if (!_db) throw new Error('D1 database binding not available');
     const db = _db;
     const nowSec = Math.floor(Date.now() / 1000);

@@ -1,8 +1,13 @@
-import { createServerClient } from '@/seed/db/client';
+import { tryCreateServerClient, D1Client } from '@/seed/db/client';
 import { sendMessage } from '@/tree/telegram/handlers/utils';
 import { logger } from '@/seed/utils/logger-utility';
 
-const db = createServerClient();
+let _statusDb: D1Client | null = null;
+export function resetStatusDb() { _statusDb = null; }
+function getStatusDb(): D1Client | null {
+  if (!_statusDb) _statusDb = tryCreateServerClient();
+  return _statusDb;
+}
 
 const MAX_FIELD_LENGTH = 120;
 const MAX_LIST_ROWS = 10;
@@ -22,6 +27,8 @@ interface ProfileRow {
 }
 
 async function resolveUserId(chatId: string): Promise<string | null> {
+  const db = getStatusDb();
+  if (!db) return null;
   const { data } = await db
     .from('user_profiles')
     .select('user_id')
@@ -47,6 +54,12 @@ interface CampaignRow {
 // ---------------------------------------------------------------------------
 export async function handleStatus(chatId: string, campaignId?: string): Promise<void> {
   try {
+    const db = getStatusDb();
+    if (!db) {
+      await sendMessage(chatId, 'Database unavailable. Please try again later.');
+      return;
+    }
+
     const userId = await resolveUserId(chatId);
     if (!userId) {
       await sendMessage(
@@ -56,14 +69,12 @@ export async function handleStatus(chatId: string, campaignId?: string): Promise
       return;
     }
 
-    const d1 = db;
-
     let message: string;
     let headerEmoji: string;
 
     if (campaignId) {
       // Single campaign status lookup
-      const { data } = await d1
+      const { data } = await db
         .from('campaigns')
         .select('id, title, status, progress, created_at, updated_at')
         .eq('id', campaignId)
@@ -96,7 +107,7 @@ export async function handleStatus(chatId: string, campaignId?: string): Promise
       message += ` Cập nhật / Updated: ${new Date(row.updated_at).toLocaleDateString()}\n`;
     } else {
       // List all non-draft / non-completed campaigns (active work)
-      const { data: rows } = await d1
+      const { data: rows } = await db
         .from<CampaignRow>('campaigns')
         .select('id, title, status, progress, created_at, updated_at')
         .eq('user_id', userId)

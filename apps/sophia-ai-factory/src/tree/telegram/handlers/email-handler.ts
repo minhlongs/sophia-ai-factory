@@ -1,10 +1,16 @@
 import { TelegramFSM, BotState } from '@/tree/telegram/telegram-fsm-state-manager'
-import { createServerClient } from '@/seed/db/client'
+import { tryCreateServerClient, D1Client } from '@/seed/db/client'
 import { backupSessionState } from '@/tree/telegram/telegram-state-backup-service'
 import { sendMessage } from '@/tree/telegram/handlers/utils'
 import { logger } from '@/seed/utils/logger-utility'
 
-const getSupabase = () => createServerClient()
+let _emailDb: D1Client | null = null
+export function resetEmailDb() { _emailDb = null; }
+function getEmailDb(): D1Client {
+  if (!_emailDb) _emailDb = tryCreateServerClient();
+  if (!_emailDb) throw new Error('D1 database binding not available');
+  return _emailDb;
+}
 
 /**
  * Handle /email command or email input
@@ -24,7 +30,7 @@ export async function handleEmail(chatId: string, email: string): Promise<void> 
   }
 
   try {
-    const db = getSupabase()
+    const db = getEmailDb()
 
     // 1. Find user by email via D1 users table
     const { data: userData, error: userError } = await db

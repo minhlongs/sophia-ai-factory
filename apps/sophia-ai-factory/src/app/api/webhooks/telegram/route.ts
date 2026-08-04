@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import {
   handleStart,
@@ -38,7 +40,7 @@ import {
   handleConfirmCommand,
 } from '@/tree/telegram/telegram-bot-campaign-handlers'
 import { TelegramFSM } from '@/tree/telegram/telegram-fsm-state-manager'
-import { createServerClient } from '@/seed/db/client'
+import { tryCreateServerClient } from '@/seed/db/client'
 import { sendTelegramMessage } from '@/tree/telegram/telegram-client'
 import {
   isAllowed,
@@ -134,7 +136,8 @@ export async function POST(request: NextRequest) {
           await sendTelegramMessage(chatId, 'Usage: /pair\\_approve <CODE>')
           return NextResponse.json({ ok: true })
         }
-        const db = createServerClient()
+        const db = tryCreateServerClient()
+  if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
         const result = await approvePairing(db, code, chatId)
         if (!result) {
           await sendTelegramMessage(chatId, 'Code not found or expired.')
@@ -146,7 +149,8 @@ export async function POST(request: NextRequest) {
       }
 
       if (text === '/pair_list') {
-        const db = createServerClient()
+        const db = tryCreateServerClient()
+  if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
         const rows = await listPaired(db)
         if (rows.length === 0) {
           await sendTelegramMessage(chatId, 'No paired chats.')
@@ -165,7 +169,8 @@ export async function POST(request: NextRequest) {
           await sendTelegramMessage(chatId, 'Usage: /pair\\_revoke <CHAT\\_ID>')
           return NextResponse.json({ ok: true })
         }
-        const db = createServerClient()
+        const db = tryCreateServerClient()
+  if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
         const removed = await revokePairing(db, targetId)
         await sendTelegramMessage(
           chatId,
@@ -196,10 +201,12 @@ export async function POST(request: NextRequest) {
    text === '/start' ? null : text.startsWith('/start ') ? text.slice(7).trim() : null
 
  if (pairingToken) {
-   const db = createServerClient()
+   const db = tryCreateServerClient()
+  if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
    const result = await consumePairingToken(db, pairingToken)
    if (result) {
-     const db2 = createServerClient()
+     const db2 = tryCreateServerClient()
+  if (!db2) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
      await db2.from('telegram_paired_chats').upsert({
        chat_id: chatId,
        first_name: firstName || null,
@@ -225,7 +232,8 @@ export async function POST(request: NextRequest) {
     // Skip gate for admin, public commands, and when TELEGRAM_ADMIN_CHAT_ID is
     // not set (open mode).
     if (adminChatId && chatId !== adminChatId && !isPublicCommand && !pairingToken) {
-      const db = createServerClient()
+      const db = tryCreateServerClient()
+  if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
       const allowed = await isAllowed(db, chatId)
       if (!allowed) {
         const { code } = await requestPairing(db, chatId, firstName)

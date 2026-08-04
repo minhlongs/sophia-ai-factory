@@ -14,6 +14,9 @@ vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(() => ({
     rpc: mockRpc,
   })),
+  tryCreateServerClient: vi.fn(() => ({
+    rpc: mockRpc,
+  })),
 }));
 
 describe('TelegramRateLimitMiddleware', () => {

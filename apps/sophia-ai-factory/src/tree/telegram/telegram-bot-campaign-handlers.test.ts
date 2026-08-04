@@ -15,6 +15,7 @@ const mockDb = vi.hoisted(() => ({ from: vi.fn() }))
 vi.mock('@/seed/db/client', () => ({
   getD1: vi.fn(),
   createServerClient: () => mockDb,
+  tryCreateServerClient: () => mockDb,
 }))
 
 vi.mock('@/seed/inngest/client', () => ({
