@@ -365,7 +365,11 @@ if [ "${SKIP_NEXT_BUILD:-0}" = "1" ]; then
   echo "⚠️  SKIP_NEXT_BUILD=1 — reusing existing .next build artifact"
 else
   echo "==> npm run build"
-SKIP_SYMBOL_UPLOAD=1 npm run build
+# SKIP_SENTRY_BUILD=1 suppresses the @sentry/nextjs plugin's source-map upload
+# during build (159 .js.map uploads were failing silently on CF Workers).
+# Per no-tech doctrine, source-map upload is optional — minified stack traces
+# still capture errors via the runtime SDK (sentry.*.config.ts).
+SKIP_SENTRY_BUILD=1 SKIP_SYMBOL_UPLOAD=1 npm run build
   # Brief pause to ensure filesystem consistency before subsequent steps
   sleep 5
 fi
