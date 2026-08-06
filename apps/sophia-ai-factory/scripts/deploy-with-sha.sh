@@ -378,7 +378,6 @@ fi
 # Create CycloneDX SBOM for traceability. Upload to R2 after deploy succeeds.
 if [ "${SKIP_SBOM:-0}" != "1" ]; then
   echo "==> generate SBOM (supply-chain hardening)"
-  npm run sbom || {
  npm run sbom || echo "⚠️  SBOM generation skipped (non-fatal)"
   echo "⚠️ SKIP_SBOM=1 — skipping SBOM generation"
 fi
