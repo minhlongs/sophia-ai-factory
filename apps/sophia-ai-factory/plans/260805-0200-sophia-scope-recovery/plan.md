@@ -1,10 +1,10 @@
 ---
 title: "Sophia Recovery — Scope Cut + Architecture Fix + Stabilization"
 description: "Cut phantom products (CR8809, RaaS, SOP Marketplace), fix architecture violations, verify core flows, and ship the first real feature"
-status: in-progress
+status: completed
 priority: P0
 effort: 8-10 weeks
-branch: recovery
+completed: 2026-08-06
 tags: [scope-cut, architecture, recovery, stabilization]
 created: 2026-08-05
 updated: 2026-08-06
@@ -32,12 +32,6 @@ updated: 2026-08-06
 2. Mark phase status completed when all TODOs checked
 3. Update plan.md progress after each phase completes
 4. Test gate: npm test must pass before declaring phase done
-
-## Phase 4 Completion Notes (2026-08-06)
-- Public landing-page preview API shipped: `GET /api/public/landing-pages/[slug]`
-- Production build verified (`npm run build` exit 0)
-- All 6694+ tests passing
-- CF-direct deploy pending (production build running in background)
 
 ## Key Risks
 
