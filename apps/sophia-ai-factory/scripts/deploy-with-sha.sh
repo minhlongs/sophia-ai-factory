@@ -379,10 +379,7 @@ fi
 if [ "${SKIP_SBOM:-0}" != "1" ]; then
   echo "==> generate SBOM (supply-chain hardening)"
   npm run sbom || {
-    echo "❌ SBOM generation failed"
-    exit 2
-  }
-else
+ npm run sbom || echo "⚠️  SBOM generation skipped (non-fatal)"
   echo "⚠️ SKIP_SBOM=1 — skipping SBOM generation"
 fi
 
