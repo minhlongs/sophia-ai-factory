@@ -140,6 +140,7 @@ export function createForbiddenResponse(reason: string): NextResponse {
 export function shouldApplyRaasGate(pathname: string): boolean {
   const publicRoutes = [
     '/api/health',
+    '/api/public',
     '/api/setup',
     '/api/webhooks/nowpayments',
     '/api/webhooks/telegram',

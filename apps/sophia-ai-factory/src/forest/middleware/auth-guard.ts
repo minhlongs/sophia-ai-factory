@@ -203,6 +203,7 @@ export function isPublicApiRoute(pathname: string): boolean {
     // Health checks (public)
     '/api/health',
     '/api/sophia-index/health',
+  '/api/public',
 
     // Version endpoint (public)
     '/api/version',
