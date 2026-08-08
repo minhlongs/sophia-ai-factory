@@ -7,7 +7,6 @@
 
 import { createServerClient } from '@/seed/db/client'
 import { insertTyped } from '@/seed/db/insert-typed'
-import type { RaasAuditLogInsert, RaasAuditLogRow } from '@/tree/database/supabase-types'
 
 /** Type helper for Supabase query results */
 export type SupabaseResult<T> = { data: T | null; error: Error | null }
@@ -17,12 +16,12 @@ export type SupabaseResult<T> = { data: T | null; error: Error | null }
  */
 export async function insertAuditLog(
   db: ReturnType<typeof createServerClient>,
-  logData: RaasAuditLogInsert
-): Promise<SupabaseResult<RaasAuditLogRow>> {
-  const result = await insertTyped(db.from<RaasAuditLogRow>('raas_audit_logs'), logData)
+  logData: Record<string, unknown>
+): Promise<Record<string, unknown>> {
+  const result = await insertTyped(db.from('raas_audit_logs'), logData)
     .select()
     .single()
-  return result as SupabaseResult<RaasAuditLogRow>
+  return result
 }
 
 /**
@@ -33,8 +32,8 @@ export async function updateReceiptSignature(
   logId: string,
   signature: string
 ): Promise<Error | null> {
-  const result = await db.from<RaasAuditLogRow>('raas_audit_logs')
-    .update({ receipt_signature: signature } as Partial<RaasAuditLogRow>)
+  const result = await db.from('raas_audit_logs')
+    .update({ receipt_signature: signature }) 
     .eq('id', logId)
   return (result as { error: Error | null }).error
 }

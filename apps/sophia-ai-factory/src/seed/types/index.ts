@@ -203,8 +203,6 @@ export * from './video';
 // Billing domain (events, dunning, overage, quota limits)
 export * from './billing';
 
-// RaaS domain (licenses, API keys, audit logs)
-export * from './raas';
 
 // Infrastructure domain (rate limiting, summaries)
 export * from './infra';

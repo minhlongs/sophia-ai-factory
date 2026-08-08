@@ -119,53 +119,6 @@ export interface Database {
         Update: Partial<import('./user').TelegramUserMappingRow>
         Relationships: []
       }
-      raas_licenses: {
-        Row: import('./raas').RaasLicenseRow
-        Insert: import('./raas').RaasLicenseInsert
-        Update: import('./raas').RaasLicenseUpdate
-        Relationships: []
-      }
-      raas_audit_logs: {
-        Row: import('./raas').RaasAuditLogRow
-        Insert: import('./raas').RaasAuditLogInsert
-        Update: Partial<import('./raas').RaasAuditLogRow>
-        Relationships: [{
-          foreignKeyName: 'raas_audit_logs_license_id_fkey'
-          columns: ['license_id']
-          referencedRelation: 'raas_licenses'
-          referencedColumns: ['id']
-        }]
-      }
-      usage_events: {
-        Row: import('./video').UsageEventRow
-        Insert: import('./video').UsageEventInsert
-        Update: Partial<import('./video').UsageEventRow>
-        Relationships: []
-      }
-      usage_hourly_summaries: {
-        Row: import('./infra').UsageHourlySummaryRow
-        Insert: import('./infra').UsageHourlySummaryInsert
-        Update: Partial<import('./infra').UsageHourlySummaryRow>
-        Relationships: []
-      }
-      usage_daily_summaries: {
-        Row: import('./infra').UsageDailySummaryRow
-        Insert: import('./infra').UsageDailySummaryInsert
-        Update: Partial<import('./infra').UsageDailySummaryRow>
-        Relationships: []
-      }
-      usage_quota_usage: {
-        Row: import('./infra').UsageQuotaUsageRow
-        Insert: import('./infra').UsageQuotaUsageInsert
-        Update: Partial<import('./infra').UsageQuotaUsageRow>
-        Relationships: []
-      }
-      raas_api_keys: {
-        Row: import('./raas').RaasApiKeyRow
-        Insert: import('./raas').RaasApiKeyInsert
-        Update: import('./raas').RaasApiKeyUpdate
-        Relationships: []
-      }
       overage_events: {
         Row: import('./billing').OverageEventRow
         Insert: import('./billing').OverageEventInsert

@@ -6,7 +6,7 @@
  * AuditLogEntry, HashChainVerificationResult) now live in seed layer.
  *
  * Domain-specific utilities (verifyHashChain, merkleRoot) remain here
- * since they depend on @/land/supabase/types (RaasAuditLogRow).
+ * since audit log shapes were removed (RaaS cutoff).
  *
  * @module audit/crypto-utils
  */
@@ -20,5 +20,5 @@ export {
 } from '@/seed/security/crypto-utils'
 export type { AuditLogEntry, HashChainVerificationResult } from '@/seed/security/crypto-utils'
 
-// Domain utilities — remain in tree/audit (use RaasAuditLogRow)
+// Domain utilities — remain in tree/audit (use Record<string, unknown>)
 export { verifyHashChain, merkleRoot } from './crypto-utils-signing'

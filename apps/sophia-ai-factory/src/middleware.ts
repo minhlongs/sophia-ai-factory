@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { generateNonce } from '@/forest/raas-service';
+import { generateNonce } from '@/seed/security/nonce-utils';
 import { CSP_NONCE_HEADER } from '@/seed/security/get-csp-nonce';
 import { verifyCsrfToken, requiresCsrfCheck, csrfForbiddenResponse, CSRF_COOKIE_NAME } from '@/seed/security/csrf';
 import { record as recordMetrics } from '@/seed/observability/telemetry/metrics';

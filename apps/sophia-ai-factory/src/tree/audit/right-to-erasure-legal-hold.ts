@@ -6,8 +6,6 @@
 import { createServerClient } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
-import type { RaasAuditLogRow, AuditUserMetadataRow } from '@/tree/audit/types'
-
 export interface LegalHoldCheck {
   canDelete: boolean
   reason?: string
@@ -37,7 +35,7 @@ export async function canDeleteUserData(userId: string): Promise<LegalHoldCheck>
       return { canDelete: false, reason: 'Active legal hold', legalHoldUntil: legalHold.until as number | undefined }
     }
 
-    const { data: firstLog } = await db.from<RaasAuditLogRow>('raas_audit_logs')
+    const { data: firstLog } = await db.from('raas_audit_logs')
       .select('created_at').eq('user_id', userId).order('created_at', { ascending: true }).limit(1).single()
 
     if (firstLog && 'created_at' in firstLog && firstLog.created_at) {

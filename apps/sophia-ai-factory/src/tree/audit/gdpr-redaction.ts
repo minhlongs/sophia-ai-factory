@@ -8,7 +8,6 @@
  */
 
 import { hashSensitiveData } from '@/tree/audit/audit-hashing'
-import type { RaasAuditLogRow } from '@/tree/database/supabase-types'
 import { logger } from '@/seed/utils/logger-utility'
 import { redactDetailsPII } from '@/tree/audit/gdpr-redaction-pii-detection'
 
@@ -81,7 +80,7 @@ export function generateUserPseudonym(userId: string): string {
  * @param log - Original audit log entry
  * @returns New redacted audit log object
  */
-export function redactAuditLog(log: RaasAuditLogRow): RedactedAuditLog {
+export function redactAuditLog(log: Record<string, unknown>): RedactedAuditLog {
   return {
     ...log,
     user_id: log.user_id ? generateUserPseudonym(log.user_id) : null,
@@ -99,16 +98,16 @@ export function redactAuditLog(log: RaasAuditLogRow): RedactedAuditLog {
  * @returns Array of redacted audit logs
  */
 export function batchRedactAuditLogs(
-  logs: RaasAuditLogRow[],
+  logs: Record<string, unknown>[],
   options: RedactionOptions
-): RedactedAuditLog[] {
+): Record<string, unknown>[] {
   logger.info('Starting batch redaction', {
     totalLogs: logs.length,
     options,
   })
 
   const startTime = Date.now()
-  const redactedLogs: RedactedAuditLog[] = []
+  const redactedLogs: Record<string, unknown>[] = []
 
   for (const log of logs) {
     const redacted = redactAuditLog(log)

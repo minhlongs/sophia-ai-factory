@@ -10,7 +10,6 @@
  * @module audit/compliance-receipt
  */
 
-import type { RaasAuditLogRow } from '@/tree/database/supabase-types';
 import {
   getReceiptSecret,
   buildSignaturePayload,
@@ -33,7 +32,7 @@ const RECEIPT_TTL = 60 * 60;
  *
  * @throws Error if RECEIPT_SECRET is not configured
  */
-export function generateReceipt(log: RaasAuditLogRow): import('./compliance-receipt-types').ComplianceReceipt {
+export function generateReceipt(log: Record<string, unknown>): import('./compliance-receipt-types').ComplianceReceipt {
   const receiptSecret = getReceiptSecret();
   if (!receiptSecret) {
     throw new Error(
@@ -44,15 +43,16 @@ export function generateReceipt(log: RaasAuditLogRow): import('./compliance-rece
 
   const now = Math.floor(Date.now() / 1000);
 
+const logData = log as Record<string, unknown>
   const receipt: import('./compliance-receipt-types').ComplianceReceipt = {
     receiptId: globalThis.crypto.randomUUID(),
-    auditLogId: log.id,
-    action: log.action,
-    licenseNonce: log.license_nonce || '',
-    timestamp: log.created_at,
-    actorId: log.user_id || 'system',
-    actorIpHash: log.ip_address ? hashIpAddress(log.ip_address) : '',
-    contentHash: log.content_hash,
+    auditLogId: String(logData.id || ''),
+    action: String(logData.action || ''),
+    licenseNonce: String(logData.license_nonce || '') || '',
+    timestamp: Number(logData.created_at || 0),
+    actorId: String(logData.user_id || 'system') || 'system',
+    actorIpHash: logData.ip_address ? hashIpAddress(logData.ip_address) : '',
+    contentHash: String(logData.content_hash || ''),
     signature: '',
     issuedAt: now,
     expiresAt: now + RECEIPT_TTL,

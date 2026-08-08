@@ -6,7 +6,7 @@
  * @module @/types/audit-log
  */
 
-import type { RaasAuditLogRow, RaasAuditLogInsert, Json } from '@/seed/types'
+import type { Json } from '@/seed/types'
 
 /**
  * Hash chain entry for audit log integrity verification
@@ -44,7 +44,7 @@ export interface HashChainVerificationResult {
  * Audit log with computed hash chain fields
  * Extends base RaasAuditLogRow with hash chain properties
  */
-export interface AuditLogWithHash extends RaasAuditLogRow {
+export interface AuditLogWithHash extends Record<string, unknown> {
   content_hash: string
   previous_log_hash: string | null
   hash_chain_valid: boolean
@@ -206,4 +206,3 @@ export interface AuditEnvConfig {
 }
 
 // Re-export base types for convenience
-export type { RaasAuditLogRow, RaasAuditLogInsert, Json }

@@ -8,7 +8,6 @@ import { createServerClient } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError, getErrorMessage } from '@/seed/utils/to-error'
 import { generateUserPseudonym, hashIpAddress } from '@/tree/audit/gdpr-redaction'
-import type { RaasAuditLogRow, AuditGdprErasureRow } from '@/tree/audit/types'
 import { canDeleteUserData } from '@/tree/audit/right-to-erasure-legal-hold'
 
 export type { LegalHoldCheck } from './right-to-erasure-legal-hold'
@@ -30,7 +29,7 @@ export async function handleRightToErasure(userId: string): Promise<ErasureResul
 
   try {
     const db = createServerClient()
-    const { data: existingLogs, error: fetchError } = await db.from<RaasAuditLogRow>('raas_audit_logs')
+    const { data: existingLogs, error: fetchError } = await db.from('raas_audit_logs')
       .select('id, user_id, ip_address').eq('user_id', userId)
 
     if (fetchError) {
@@ -49,7 +48,7 @@ export async function handleRightToErasure(userId: string): Promise<ErasureResul
     const errors: string[] = []
 
     for (const log of existingLogs) {
-      const { error: updateError } = await db.from<RaasAuditLogRow>('raas_audit_logs')
+      const { error: updateError } = await db.from('raas_audit_logs')
         .update({
           user_id: 'ANONYMIZED_' + generateUserPseudonym(userId).slice(0, 8),
           ip_address: log.ip_address ? 'ANONYMIZED_' + hashIpAddress(log.ip_address).slice(0, 8) : null,
@@ -80,7 +79,7 @@ export async function getErasureStatus(userId: string): Promise<{
 }> {
   try {
     const db = createServerClient()
-    const { data: request } = await db.from<AuditGdprErasureRow>('gdpr_erasure_requests')
+    const { data: request } = await db.from('gdpr_erasure_requests')
       .select('created_at, completed_at, anonymized_count').eq('user_id', userId)
       .order('created_at', { ascending: false }).limit(1).single()
 

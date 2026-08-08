@@ -9,9 +9,9 @@ import { createServerClient } from '@/seed/db/client'
 import { generateReceipt } from '@/tree/audit/compliance-receipt'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
-import type { RaasAuditLogInsert, RaasAuditLogRow, Json } from '@/tree/database/supabase-types'
 import type { ComplianceReceipt } from '@/tree/audit/compliance-receipt'
 import { insertAuditLog, updateReceiptSignature } from '@/tree/audit/logger/audit-event-builder'
+import type { Json } from '@/tree/database/supabase-types'
 import type { ValidationLogParams, CreationLogParams, RevocationLogParams } from '@/tree/audit/logger/audit-event-builder'
 
 /**
@@ -20,7 +20,7 @@ import type { ValidationLogParams, CreationLogParams, RevocationLogParams } from
 async function finalizeReceipt(
   db: ReturnType<typeof createServerClient>,
   logId: string,
-  log: RaasAuditLogRow
+  log: Record<string, unknown>
 ): Promise<ComplianceReceipt> {
   const receipt = generateReceipt(log)
   const updateError = await updateReceiptSignature(db, logId, receipt.signature)
@@ -39,7 +39,7 @@ export async function logValidationWithReceipt(
   const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
-  const logData: RaasAuditLogInsert = {
+  const logData: Record<string, unknown> = {
     action: 'VALIDATE',
     license_nonce: params.nonce,
     user_id: params.userId ?? null,
@@ -55,8 +55,16 @@ export async function logValidationWithReceipt(
       logger.error('[Audit Logger] Failed to insert audit log', toError(error))
       return null
     }
-    const receipt = await finalizeReceipt(db, insertedLog.id, insertedLog)
-    logger.info('[Audit Logger] Validation logged', { logId: insertedLog.id, nonce: params.nonce.slice(0, 8), isValid: params.isValid, receiptId: receipt.receiptId })
+    const receipt = await finalizeReceipt(db, (insertedLog as Record<string, unknown>).id, insertedLog)
+    logger.info(
+  '[Audit Logger] Validation logged',
+  {
+    logId: (insertedLog as Record<string, unknown>).id,
+    nonce: String(params.nonce).slice(0, 8),
+    isValid: params.isValid,
+    receiptId: receipt.receiptId,
+  },
+)
     return receipt
   } catch (error) {
     logger.error('[Audit Logger] Audit logging failed', toError(error))
@@ -73,7 +81,7 @@ export async function logCreationWithReceipt(
   const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
-  const logData: RaasAuditLogInsert = {
+  const logData: Record<string, unknown> = {
     action: 'CREATE',
     license_nonce: params.nonce,
     user_id: params.createdBy ?? null,
@@ -89,8 +97,16 @@ export async function logCreationWithReceipt(
       logger.error('[Audit Logger] Failed to insert creation audit log', toError(error))
       return null
     }
-    const receipt = await finalizeReceipt(db, insertedLog.id, insertedLog)
-    logger.info('[Audit Logger] Creation logged', { logId: insertedLog.id, nonce: params.nonce.slice(0, 8), tier: params.tier, receiptId: receipt.receiptId })
+    const receipt = await finalizeReceipt(db, (insertedLog as Record<string, unknown>).id, insertedLog)
+    logger.info(
+  '[Audit Logger] Creation logged',
+  {
+    logId: (insertedLog as Record<string, unknown>).id,
+    nonce: String(params.nonce).slice(0, 8),
+    tier: params.tier,
+    receiptId: receipt.receiptId,
+  },
+)
     return receipt
   } catch (error) {
     logger.error('[Audit Logger] Creation audit logging failed', toError(error))
@@ -107,7 +123,7 @@ export async function logRevocationWithReceipt(
   const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
-  const logData: RaasAuditLogInsert = {
+  const logData: Record<string, unknown> = {
     action: 'REVOKE',
     license_nonce: params.nonce,
     user_id: params.revokedBy ?? null,
@@ -123,8 +139,16 @@ export async function logRevocationWithReceipt(
       logger.error('[Audit Logger] Failed to insert revocation audit log', toError(error))
       return null
     }
-    const receipt = await finalizeReceipt(db, insertedLog.id, insertedLog)
-    logger.info('[Audit Logger] Revocation logged', { logId: insertedLog.id, nonce: params.nonce.slice(0, 8), reason: params.reason, receiptId: receipt.receiptId })
+    const receipt = await finalizeReceipt(db, (insertedLog as Record<string, unknown>).id, insertedLog)
+    logger.info(
+  '[Audit Logger] Revocation logged',
+  {
+    logId: (insertedLog as Record<string, unknown>).id,
+    nonce: String(params.nonce).slice(0, 8),
+    reason: params.reason,
+    receiptId: receipt.receiptId,
+  },
+)
     return receipt
   } catch (error) {
     logger.error('[Audit Logger] Revocation audit logging failed', toError(error))

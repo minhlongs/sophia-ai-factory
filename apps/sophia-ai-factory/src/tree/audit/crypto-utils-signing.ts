@@ -7,7 +7,6 @@
  * @module audit/crypto-utils-signing
  */
 
-import type { RaasAuditLogRow } from '@/tree/database/supabase-types'
 import { sha256, computeContentHash } from '@/seed/security/crypto-utils'
 import type { AuditLogEntry, HashChainVerificationResult } from '@/seed/security/crypto-utils'
 
@@ -77,7 +76,7 @@ export function timingSafeEqual(a: string | null | undefined, b: string | null |
  *   console.log(`Chain broken at index ${result.firstInvalidIndex}: ${result.reason}`)
  * }
  */
-export function verifyHashChain(logs: RaasAuditLogRow[]): HashChainVerificationResult {
+export function verifyHashChain(logs: Record<string, unknown>[]): HashChainVerificationResult {
   if (logs.length === 0) {
     return { valid: true }
   }

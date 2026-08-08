@@ -8,8 +8,6 @@ import { toError } from '@/seed/utils/to-error'
 import { createServerClient } from '@/seed/db/client'
 import type { ComplianceReportData } from '@/tree/audit/pdf-report-generator'
 import type {
-  RaasAuditLogRow,
-  AuditLicenseRow,
   AuditUsageEventRow,
 } from '@/tree/audit/types'
 
@@ -22,7 +20,7 @@ export async function fetchComplianceData(
   const endDate = filters.endDate || now
 
   try {
-    const logsQuery = db.from<RaasAuditLogRow>('raas_audit_logs')
+    const logsQuery = db.from('raas_audit_logs')
       .select('*', { count: 'exact', head: true })
       .gte('created_at', startDate)
       .lte('created_at', endDate)
@@ -37,7 +35,7 @@ export async function fetchComplianceData(
     // audit-logging-service writer and 0019 migration omits those columns.
     // Removed dead SELECTs (M2 fix — KISS: implement when writer is ready).
 
-    const licenseQuery = await db.from<AuditLicenseRow>('raas_licenses')
+    const licenseQuery = await db.from('raas_licenses')
       .select('nonce, tier, created_at, last_used_at')
       .gte('created_at', startDate)
       .lte('created_at', endDate)
@@ -89,13 +87,13 @@ export async function fetchComplianceData(
       usageCounts.set(nonce, (usageCounts.get(nonce) || 0) + (event.token_count || 0))
     }
 
-    const licenseReportData = licenses.map((lic: AuditLicenseRow) => ({
-      nonce: lic.nonce,
-      tier: lic.tier,
-      validationCount: validationCounts.get(lic.nonce) || 0,
-      usageCredits: usageCounts.get(lic.nonce) || 0,
-      createdAt: new Date(lic.created_at * 1000).toISOString(),
-      lastUsedAt: lic.last_used_at ? new Date(lic.last_used_at * 1000).toISOString() : undefined
+    const licenseReportData = licenses.map((lic: Record<string, unknown>) => ({
+      nonce: String(lic.nonce),
+      tier: String(lic.tier),
+      validationCount: validationCounts.get(String(lic.nonce)) || 0,
+      usageCredits: usageCounts.get(String(lic.nonce)) || 0,
+      createdAt: new Date(Number(lic.created_at) * 1000).toISOString(),
+  lastUsedAt: lic.last_used_at ? new Date(Number(lic.last_used_at) * 1000).toISOString() : undefined
     }))
 
     return {

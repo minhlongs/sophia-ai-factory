@@ -2,14 +2,13 @@
  * Shared row interfaces for audit module DB queries.
  *
  * These are narrow read-shapes used by db.from<T>() in audit queries.
- * For full raas_audit_logs read/insert shapes, use RaasAuditLogRow / RaasAuditLogInsert
+ * For audit log shapes, use Record<string, unknown>
  * from '@/tree/database/supabase-types'.
  *
  * @module audit/types
  */
 
-// Re-export canonical raas_audit_logs types for convenience
-export type { RaasAuditLogRow, RaasAuditLogInsert } from '@/tree/database/supabase-types'
+// RaaS types removed — use Record<string, unknown> for audit log shapes
 import type { Json } from '@/tree/database/supabase-types'
 
 /**
@@ -31,12 +30,6 @@ export interface AuditScheduledReportRow {
 /**
  * Narrow row shape for raas_licenses reads in cron-report-runner.
  */
-export interface AuditLicenseRow {
-  nonce: string
-  tier: string
-  created_at: number
-  last_used_at: number | null
-}
 
 /**
  * Narrow row shape for raas_usage_events reads in cron-report-runner.
@@ -60,11 +53,6 @@ export interface AuditHashChainRow {
 /**
  * Narrow row shape for gdpr_erasure_requests table.
  */
-export interface AuditGdprErasureRow {
-  created_at: string
-  completed_at: string | null
-  anonymized_count: number
-}
 
 /**
  * Narrow row shape for auth.users metadata reads.

@@ -17,7 +17,6 @@ import {
   verifyReceiptDetailed,
   type ComplianceReceipt
 } from '@/tree/audit/compliance-receipt'
-import type { RaasAuditLogRow } from '@/tree/database/supabase-types'
 
 // Set up test environment variable for receipt secret
 const TEST_RECEIPT_SECRET = 'test-secret-key-for-compliance-receipt-32-bytes-minimum'
@@ -31,7 +30,7 @@ afterAll(() => {
 })
 
 // Mock audit log for testing
-const createMockAuditLog = (overrides?: Partial<RaasAuditLogRow>): RaasAuditLogRow => ({
+const createMockAuditLog = (overrides?: Partial<Record<string, unknown>>): Record<string, unknown> => ({
   id: 'test-audit-log-uuid-12345',
   action: 'VALIDATE',
   license_id: 'license-uuid-67890',
@@ -42,7 +41,7 @@ const createMockAuditLog = (overrides?: Partial<RaasAuditLogRow>): RaasAuditLogR
   details: { validation_result: 'success', tier: 'premium' },
   created_at: 1709856000,
   content_hash: 'a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456',
-  previous_log_hash: '0987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba',
+  previous_log_hash: '0987654321fedcba0987654321fedcba0987654321fedcba0987654321fedcba', // RaaS removed
   hash_chain_valid: true,
   model_name: null,
   token_count: null,

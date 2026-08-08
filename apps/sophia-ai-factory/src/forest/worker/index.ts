@@ -10,4 +10,4 @@ HARD_LIMIT_PERCENT?: string;
 [key: string]: unknown;
 }
 
-export { handleQuotaCheck, handleProxyRequest, handleOverageWebhook } from './worker-handlers';
+// worker-handlers deleted — RaaS gateway removed

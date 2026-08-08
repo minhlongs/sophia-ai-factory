@@ -12,7 +12,6 @@ import { insertTyped } from '@/seed/db/insert-typed'
 import { hashIpAddress, generateUserPseudonym } from '@/tree/audit/audit-hashing'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
-import type { RaasAuditLogInsert, RaasAuditLogRow } from '@/tree/database/supabase-types'
 
 /**
  * Model invocation event for usage tracking
@@ -74,7 +73,7 @@ export async function logModelInvocation(
   const createdAt = Math.floor(Date.now() / 1000)
 
   // Prepare audit log data
-  const logData: RaasAuditLogInsert = {
+  const logData: Record<string, unknown> = {
     action: 'USAGE',
     license_nonce: event.license_nonce,
     user_id: event.userId ?? null,
@@ -92,7 +91,7 @@ export async function logModelInvocation(
 
   try {
     // Insert audit log (database trigger auto-computes hash chain)
-    const result = await insertTyped(db.from<RaasAuditLogRow>('raas_audit_logs'), logData)
+    const result = await insertTyped(db.from('raas_audit_logs'), logData)
       .select()
       .single()
 
@@ -138,7 +137,7 @@ export async function logApiUsage(
   const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
-  const logData: RaasAuditLogInsert = {
+  const logData: Record<string, unknown> = {
     action: 'USAGE',
     license_nonce: licenseNonce,
     user_id: userId ?? null,
@@ -151,7 +150,7 @@ export async function logApiUsage(
   }
 
   try {
-    const result = await insertTyped(db.from<RaasAuditLogRow>('raas_audit_logs'), logData)
+    const result = await insertTyped(db.from('raas_audit_logs'), logData)
       .select()
       .single()
 

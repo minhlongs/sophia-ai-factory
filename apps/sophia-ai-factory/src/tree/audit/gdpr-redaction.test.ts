@@ -13,7 +13,6 @@ import {
   shouldDeleteForRetentionPolicy,
   type RedactionOptions,
 } from '@/tree/audit/gdpr-redaction'
-import type { RaasAuditLogRow } from '@/tree/database/supabase-types'
 
 // Mock environment variable for consistent testing
 const ORIGINAL_SALT = process.env.AUDIT_HASH_SALT
@@ -144,7 +143,7 @@ describe('GDPR Redaction Module', () => {
   })
 
   describe('redactAuditLog', () => {
-    const createMockLog = (overrides?: Partial<RaasAuditLogRow>): RaasAuditLogRow => ({
+    const createMockLog = (overrides?: Partial<Record<string, unknown>>): Record<string, unknown> => ({
       id: 'log-1',
       action: 'LOGIN',
       license_id: 'license-123',
@@ -215,7 +214,7 @@ describe('GDPR Redaction Module', () => {
   })
 
   describe('batchRedactAuditLogs', () => {
-    const createMockLogs = (count: number): RaasAuditLogRow[] => {
+    const createMockLogs = (count: number): Record<string, unknown>[] => {
       return Array.from({ length: count }, (_, i) => ({
         id: `log-${i}`,
         action: 'ACTION',

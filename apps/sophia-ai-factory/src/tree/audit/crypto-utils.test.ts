@@ -13,7 +13,6 @@ import {
   verifyHashChain,
   merkleRoot
 } from '@/tree/audit/crypto-utils'
-import type { RaasAuditLogRow } from '@/tree/database/supabase-types'
 
 // Save original env vars
 const ORIGINAL_SALT = process.env.AUDIT_HASH_SALT
@@ -206,8 +205,8 @@ describe('crypto-utils', () => {
     const createValidLog = (
       index: number,
       previousHash: string | null,
-      override?: Partial<RaasAuditLogRow>
-    ): RaasAuditLogRow => {
+      override?: Partial<Record<string, unknown>>
+    ): Record<string, unknown> => {
       const entry = {
         id: `log-${index}`,
         action: 'LOGIN',

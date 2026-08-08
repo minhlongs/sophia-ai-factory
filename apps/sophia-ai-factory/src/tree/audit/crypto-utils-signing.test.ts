@@ -17,11 +17,10 @@ import {
 } from './crypto-utils-signing'
 import { sha256, computeContentHash } from './crypto-utils'
 import type { AuditLogEntry } from './crypto-utils'
-import type { RaasAuditLogRow } from '@/tree/database/supabase-types'
 
 function makeLog(
-  overrides: Partial<RaasAuditLogRow> & { previous_log_hash: string | null; content_hash: string },
-): RaasAuditLogRow {
+  overrides: Partial<Record<string, unknown>> & { previous_log_hash: string | null; content_hash: string },
+): Record<string, unknown> {
   return {
     id: overrides.id ?? 'log-1',
     action: overrides.action ?? 'license.use',
@@ -42,7 +41,7 @@ function makeLog(
   }
 }
 
-function chainLog(idx: number, prev: string | null): RaasAuditLogRow {
+function chainLog(idx: number, prev: string | null): Record<string, unknown> {
   const created_at = 1_700_000_000 + idx
   const entry: AuditLogEntry = {
     action: 'license.use',

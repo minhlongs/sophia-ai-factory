@@ -9,9 +9,9 @@ import { createServerClient } from '@/seed/db/client'
 import { generateReceipt } from '@/tree/audit/compliance-receipt'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
-import type { RaasAuditLogInsert, RaasAuditLogRow, Json } from '@/tree/database/supabase-types'
 import type { ComplianceReceipt } from '@/tree/audit/compliance-receipt'
 import { insertAuditLog, updateReceiptSignature } from '@/tree/audit/logger/audit-event-builder'
+import type { Json } from '@/tree/database/supabase-types'
 import type { UsageLogParams } from '@/tree/audit/logger/audit-event-builder'
 
 /**
@@ -20,7 +20,7 @@ import type { UsageLogParams } from '@/tree/audit/logger/audit-event-builder'
 async function finalizeReceipt(
   db: ReturnType<typeof createServerClient>,
   logId: string,
-  log: RaasAuditLogRow
+  log: Record<string, unknown>
 ): Promise<ComplianceReceipt> {
   const receipt = generateReceipt(log)
   const updateError = await updateReceiptSignature(db, logId, receipt.signature)
@@ -49,7 +49,7 @@ export async function logUpdateWithReceipt(
   const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
-  const logData: RaasAuditLogInsert = {
+  const logData: Record<string, unknown> = {
     action: 'UPDATE',
     license_nonce: params.nonce,
     user_id: params.updatedBy ?? null,
@@ -70,8 +70,16 @@ export async function logUpdateWithReceipt(
       logger.error('[Audit Logger] Failed to insert update audit log', toError(error))
       return null
     }
-    const receipt = await finalizeReceipt(db, insertedLog.id, insertedLog)
-    logger.info('[Audit Logger] Update logged', { logId: insertedLog.id, nonce: params.nonce.slice(0, 8), changes: params.changes, receiptId: receipt.receiptId })
+    const receipt = await finalizeReceipt(db, (insertedLog as Record<string, unknown>).id, insertedLog)
+    logger.info(
+  '[Audit Logger] Update logged',
+  {
+    logId: (insertedLog as Record<string, unknown>).id,
+    nonce: String(params.nonce).slice(0, 8),
+    changes: params.changes,
+    receiptId: receipt.receiptId,
+  },
+)
     return receipt
   } catch (error) {
     logger.error('[Audit Logger] Update audit logging failed', toError(error))
@@ -96,7 +104,7 @@ export async function logUsageWithReceipt(
   const db = createServerClient()
   const createdAt = Math.floor(Date.now() / 1000)
 
-  const logData: RaasAuditLogInsert = {
+  const logData: Record<string, unknown> = {
     action: 'USAGE',
     license_nonce: params.nonce,
     user_id: params.userId ?? null,
@@ -120,10 +128,10 @@ export async function logUsageWithReceipt(
       logger.error('[Audit Logger] Failed to insert usage audit log', toError(error))
       return null
     }
-    const receipt = await finalizeReceipt(db, insertedLog.id, insertedLog)
+    const receipt = await finalizeReceipt(db, (insertedLog as Record<string, unknown>).id, insertedLog)
     logger.info('[Audit Logger] Usage logged', {
-      logId: insertedLog.id,
-      nonce: params.nonce.slice(0, 8),
+      logId: (insertedLog as Record<string, unknown>).id,
+      nonce: String(params.nonce).slice(0, 8),
       model: params.model_name,
       tokens: params.token_count,
       tier: params.tier,
