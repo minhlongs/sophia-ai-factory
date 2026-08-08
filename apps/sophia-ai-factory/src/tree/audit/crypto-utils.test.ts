@@ -222,7 +222,7 @@ describe('crypto-utils', () => {
         details: {},
         user_agent: null,
         license_id: null,
-        content_hash: contentHash,
+        content_hash: contentHash as string | null,
         previous_log_hash: previousHash,
         hash_chain_valid: true,
         model_name: null,
@@ -247,8 +247,8 @@ describe('crypto-utils', () => {
 
     it('should verify a valid multi-entry chain', () => {
       const log1 = createValidLog(0, null)
-      const log2 = createValidLog(1, log1.content_hash)
-      const log3 = createValidLog(2, log2.content_hash)
+      const log2 = createValidLog(1, log1.content_hash as string | null)
+      const log3 = createValidLog(2, log2.content_hash as string | null)
 
       const result = verifyHashChain([log1, log2, log3])
       expect(result.valid).toBe(true)
@@ -256,7 +256,7 @@ describe('crypto-utils', () => {
 
     it('should detect tampered content_hash', () => {
       const log1 = createValidLog(0, null)
-      const log2 = createValidLog(1, log1.content_hash)
+      const log2 = createValidLog(1, log1.content_hash as string | null)
 
       // Tamper with log2's content
       log2.action = 'TAMPERED'
@@ -269,7 +269,7 @@ describe('crypto-utils', () => {
 
     it('should detect broken chain link (wrong previous_log_hash)', () => {
       const log1 = createValidLog(0, null)
-      const log2 = createValidLog(1, log1.content_hash)
+      const log2 = createValidLog(1, log1.content_hash as string | null)
 
       // Break the chain link
       log2.previous_log_hash = 'tampered-previous-hash'
@@ -290,7 +290,7 @@ describe('crypto-utils', () => {
 
     it('should provide detailed error reason', () => {
       const logs = [createValidLog(0, null)]
-      const log2 = createValidLog(1, logs[0].content_hash)
+      const log2 = createValidLog(1, logs[0].content_hash as string | null)
       log2.content_hash = 'invalid-hash'
 
       const result = verifyHashChain([...logs, log2])

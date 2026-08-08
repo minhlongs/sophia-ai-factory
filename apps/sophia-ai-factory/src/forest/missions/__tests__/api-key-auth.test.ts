@@ -56,11 +56,11 @@ vi.mock('@/tree/audit/crypto-utils', () => ({
 
 // ── Import after mocks ──────────────────────────────────────────────────────
 
-import { validateMissionApiKey, apiKeyAuthErrorResponse } from '../api-key-auth';
+import { validateMissionApiKey, apiKeyAuthErrorResponse } from '@/tree/missions/api-key-auth';
 
 // ── Chain builder ────────────────────────────────────────────────────────────
 
-type MockRow = { owner_id: string; is_active: boolean } | null;
+type MockRow = { user_id: string; is_active: boolean } | null;
 
 function makeChain(row: MockRow, throws = false) {
   const single = throws
@@ -106,7 +106,7 @@ describe('validateMissionApiKey', () => {
   });
 
   it('inactive — key found but is_active=false', async () => {
-    mockDbFrom.mockReturnValue(makeChain({ owner_id: 'u1', is_active: false }));
+    mockDbFrom.mockReturnValue(makeChain({ user_id: 'u1', is_active: false }));
 
     const result = await validateMissionApiKey(null, 'mk_inactive');
 
@@ -141,7 +141,7 @@ describe('validateMissionApiKey', () => {
   });
 
   it('valid — active key returns ok:true + userId', async () => {
-    mockDbFrom.mockReturnValue(makeChain({ owner_id: 'user-abc', is_active: true }));
+    mockDbFrom.mockReturnValue(makeChain({ user_id: 'user-abc', is_active: true }));
 
     const result = await validateMissionApiKey('Bearer mk_valid', null);
 
@@ -171,13 +171,13 @@ describe('validateMissionApiKey', () => {
     expect(result.valid).toBe(false);
     expect(result.errorType).toBe('db_unreachable');
     expect(mockLoggerError).toHaveBeenCalledWith(
-      '[ApiKeyAuth] Validation error',
+      '[ApiKeyAuth] Session fallback error',
       expect.any(Error)
     );
   });
 
   it('x-api-key header accepted as alternative to Bearer', async () => {
-    mockDbFrom.mockReturnValue(makeChain({ owner_id: 'user-xyz', is_active: true }));
+    mockDbFrom.mockReturnValue(makeChain({ user_id: 'user-xyz', is_active: true }));
 
     const result = await validateMissionApiKey(null, 'mk_user_xyz');
 

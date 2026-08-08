@@ -7,9 +7,10 @@
 
 import { createServerClient } from '@/seed/db/client'
 import { insertTyped } from '@/seed/db/insert-typed'
+import { QueryError } from '@/seed/db/d1-query-types'
 
 /** Type helper for Supabase query results */
-export type SupabaseResult<T> = { data: T | null; error: Error | null }
+export type SupabaseResult<T> = { data: T | null; error: QueryError | null }
 
 /**
  * Insert audit log — wrapper to bypass Supabase type issues
@@ -17,7 +18,7 @@ export type SupabaseResult<T> = { data: T | null; error: Error | null }
 export async function insertAuditLog(
   db: ReturnType<typeof createServerClient>,
   logData: Record<string, unknown>
-): Promise<Record<string, unknown>> {
+): Promise<{ data: Record<string, unknown> | null; error: QueryError | null }> {
   const result = await insertTyped(db.from('raas_audit_logs'), logData)
     .select()
     .single()

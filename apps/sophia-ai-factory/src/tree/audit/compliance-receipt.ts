@@ -44,6 +44,7 @@ export function generateReceipt(log: Record<string, unknown>): import('./complia
   const now = Math.floor(Date.now() / 1000);
 
 const logData = log as Record<string, unknown>
+  const ipAddress = logData.ip_address as string | undefined
   const receipt: import('./compliance-receipt-types').ComplianceReceipt = {
     receiptId: globalThis.crypto.randomUUID(),
     auditLogId: String(logData.id || ''),
@@ -51,7 +52,7 @@ const logData = log as Record<string, unknown>
     licenseNonce: String(logData.license_nonce || '') || '',
     timestamp: Number(logData.created_at || 0),
     actorId: String(logData.user_id || 'system') || 'system',
-    actorIpHash: logData.ip_address ? hashIpAddress(logData.ip_address) : '',
+    actorIpHash: ipAddress ? hashIpAddress(ipAddress) : '',
     contentHash: String(logData.content_hash || ''),
     signature: '',
     issuedAt: now,

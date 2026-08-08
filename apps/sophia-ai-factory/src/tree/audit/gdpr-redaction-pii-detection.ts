@@ -97,7 +97,7 @@ export function redactEmail(email: string): string {
  */
 export function redactDetailsPII(details: Json): Json {
   if (details === null || details === undefined) {
-    return details
+    return null
   }
 
   if (typeof details === 'string') {

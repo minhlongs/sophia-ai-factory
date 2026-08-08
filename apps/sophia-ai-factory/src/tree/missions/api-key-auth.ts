@@ -82,13 +82,20 @@ export async function validateMissionApiKey(
         "[ApiKeyAuth] Session fallback error",
         err instanceof Error ? err : new Error(String(err)),
       );
+      // Session store down = operational error, not client error
+      void forwardToSentry({
+        level: "error",
+        message: "[ApiKeyAuth] db_unreachable",
+        tags: { "auth.error_type": "db_unreachable" },
+        extra: { errorMessage: err instanceof Error ? err.message : String(err) },
+      });
+      return {
+        valid: false,
+        error: "Authentication error",
+        errorType: "db_unreachable",
+      };
     }
-    // Fire-and-forget Sentry tag for missing_credentials (low severity)
-    void forwardToSentry({
-      level: "warning",
-      message: "[ApiKeyAuth] missing_credentials",
-      tags: { "auth.error_type": "missing_credentials" },
-    });
+    // No key + no session = client error, don't alert Sentry (just return 401)
     return {
       valid: false,
       error:

@@ -81,11 +81,26 @@ export function generateUserPseudonym(userId: string): string {
  * @returns New redacted audit log object
  */
 export function redactAuditLog(log: Record<string, unknown>): RedactedAuditLog {
+  const userId = log.user_id as string | null | undefined
+  const ipAddress = log.ip_address as string | null | undefined
+  const details = log.details as Json | null | undefined
+
   return {
-    ...log,
-    user_id: log.user_id ? generateUserPseudonym(log.user_id) : null,
-    ip_address: log.ip_address ? hashIpAddress(log.ip_address) : null,
-    details: redactDetailsPII(log.details),
+    id: (log.id as string) || '',
+    action: (log.action as string) || '',
+    license_nonce: (log.license_nonce as string) || null,
+    user_id: userId ? generateUserPseudonym(userId) : null,
+    ip_address: ipAddress ? hashIpAddress(ipAddress) : null,
+    user_agent: (log.user_agent as string) || null,
+    details: redactDetailsPII(details ?? null),
+    created_at: (log.created_at as number) || 0,
+    model_name: (log.model_name as string) || null,
+    token_count: (log.token_count as number) || null,
+    ip_address_hash: (log.ip_address_hash as string) || null,
+    user_pseudonym: (log.user_pseudonym as string) || null,
+    content_hash: (log.content_hash as string) || '',
+    previous_log_hash: (log.previous_log_hash as string) || null,
+    hash_chain_valid: (log.hash_chain_valid as boolean) || false,
   }
 }
 
@@ -113,13 +128,13 @@ export function batchRedactAuditLogs(
     const redacted = redactAuditLog(log)
 
     if (!options.redactIp) {
-      redacted.ip_address = log.ip_address
+      redacted.ip_address = log.ip_address as string | null
     }
     if (!options.redactUserId) {
-      redacted.user_id = log.user_id
+      redacted.user_id = log.user_id as string | null
     }
 
-    redactedLogs.push(redacted)
+    redactedLogs.push(redacted as unknown as Record<string, unknown>)
   }
 
   const duration = Date.now() - startTime

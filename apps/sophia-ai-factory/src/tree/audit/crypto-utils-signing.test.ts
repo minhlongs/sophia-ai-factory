@@ -146,14 +146,14 @@ describe('verifyHashChain', () => {
 
   it('returns valid:true for properly-linked multi-entry chain', () => {
     const log0 = chainLog(0, null)
-    const log1 = chainLog(1, log0.content_hash)
-    const log2 = chainLog(2, log1.content_hash)
+    const log1 = chainLog(1, log0.content_hash as string)
+    const log2 = chainLog(2, log1.content_hash as string)
     expect(verifyHashChain([log0, log1, log2])).toEqual({ valid: true })
   })
 
   it('detects broken previous_log_hash link (returns first invalid index + reason)', () => {
     const log0 = chainLog(0, null)
-    const log1 = chainLog(1, log0.content_hash)
+    const log1 = chainLog(1, log0.content_hash as string)
     // Tamper: rewrite log1 to claim a wrong previous_log_hash
     const tampered = { ...log1, previous_log_hash: 'wrong-prev-hash' }
     const result = verifyHashChain([log0, tampered])
@@ -182,10 +182,10 @@ describe('verifyHashChain', () => {
 
   it('detects mismatch when previous-link tampered mid-chain (index 1, not 0)', () => {
     const log0 = chainLog(0, null)
-    const log1 = chainLog(1, log0.content_hash)
-    const log2 = chainLog(2, log1.content_hash)
+    const log1 = chainLog(1, log0.content_hash as string)
+    const log2 = chainLog(2, log1.content_hash as string)
     // Tamper log2 to claim it follows log0 directly, skipping log1
-    const tampered = { ...log2, previous_log_hash: log0.content_hash }
+    const tampered = { ...log2, previous_log_hash: log0.content_hash as string }
     const result = verifyHashChain([log0, log1, tampered])
     expect(result.valid).toBe(false)
     expect(result.firstInvalidIndex).toBe(2)

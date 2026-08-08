@@ -87,34 +87,36 @@ export function verifyHashChain(logs: Record<string, unknown>[]): HashChainVerif
     const log = logs[i]
 
     // Check 1: previous_hash links correctly
-    if (log.previous_log_hash !== previousHash) {
+    const previousLogHash = log.previous_log_hash as string | null | undefined
+    if (previousLogHash !== previousHash) {
       return {
         valid: false,
         firstInvalidIndex: i,
-        reason: `previous_log_hash mismatch at index ${i}: expected "${previousHash}", got "${log.previous_log_hash}"`,
+        reason: `previous_log_hash mismatch at index ${i}: expected "${previousHash}", got "${previousLogHash}"`,
       }
     }
 
     // Check 2: content_hash matches recomputed value
     const entry: AuditLogEntry = {
-      action: log.action,
-      license_nonce: log.license_nonce || '',
-      user_id: log.user_id || '',
-      ip_address: log.ip_address || '',
-      created_at: log.created_at,
+      action: (log.action as string) || '',
+      license_nonce: (log.license_nonce as string) || '',
+      user_id: (log.user_id as string) || '',
+      ip_address: (log.ip_address as string) || '',
+      created_at: (log.created_at as number) || 0,
     }
 
     const expectedHash = computeContentHash(entry, previousHash)
 
-    if (log.content_hash !== expectedHash) {
+    const contentHash = log.content_hash as string | null | undefined
+    if (contentHash !== expectedHash) {
       return {
         valid: false,
         firstInvalidIndex: i,
-        reason: `content_hash mismatch at index ${i}: expected "${expectedHash}", got "${log.content_hash}"`,
+        reason: `content_hash mismatch at index ${i}: expected "${expectedHash}", got "${contentHash}"`,
       }
     }
 
-    previousHash = log.content_hash
+    previousHash = contentHash || null
   }
 
   return { valid: true }

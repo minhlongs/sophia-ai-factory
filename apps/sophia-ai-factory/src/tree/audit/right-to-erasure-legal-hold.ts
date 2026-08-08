@@ -6,6 +6,7 @@
 import { createServerClient } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
+import type { AuditUserMetadataRow } from '@/tree/audit/types'
 export interface LegalHoldCheck {
   canDelete: boolean
   reason?: string
@@ -38,7 +39,7 @@ export async function canDeleteUserData(userId: string): Promise<LegalHoldCheck>
     const { data: firstLog } = await db.from('raas_audit_logs')
       .select('created_at').eq('user_id', userId).order('created_at', { ascending: true }).limit(1).single()
 
-    if (firstLog && 'created_at' in firstLog && firstLog.created_at) {
+    if (firstLog && 'created_at' in firstLog && typeof firstLog.created_at === 'number') {
       const minDeletionDate = firstLog.created_at + MIN_RETENTION_DAYS * MS_PER_DAY
       if (Date.now() < minDeletionDate) {
         return { canDelete: false, reason: `SOC 2 retention period active (minimum ${MIN_RETENTION_DAYS} days)`, legalHoldUntil: minDeletionDate }

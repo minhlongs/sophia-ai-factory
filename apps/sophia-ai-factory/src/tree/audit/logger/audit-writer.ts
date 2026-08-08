@@ -11,7 +11,7 @@ import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 import type { ComplianceReceipt } from '@/tree/audit/compliance-receipt'
 import { insertAuditLog, updateReceiptSignature } from '@/tree/audit/logger/audit-event-builder'
-import type { Json } from '@/tree/database/supabase-types'
+import type { Json } from '@/seed/types/json'
 import type { ValidationLogParams, CreationLogParams, RevocationLogParams } from '@/tree/audit/logger/audit-event-builder'
 
 /**
@@ -55,11 +55,12 @@ export async function logValidationWithReceipt(
       logger.error('[Audit Logger] Failed to insert audit log', toError(error))
       return null
     }
-    const receipt = await finalizeReceipt(db, (insertedLog as Record<string, unknown>).id, insertedLog)
+    const logId = (insertedLog as Record<string, unknown>).id as string
+    const receipt = await finalizeReceipt(db, logId, insertedLog as Record<string, unknown>)
     logger.info(
   '[Audit Logger] Validation logged',
   {
-    logId: (insertedLog as Record<string, unknown>).id,
+    logId,
     nonce: String(params.nonce).slice(0, 8),
     isValid: params.isValid,
     receiptId: receipt.receiptId,
@@ -97,11 +98,12 @@ export async function logCreationWithReceipt(
       logger.error('[Audit Logger] Failed to insert creation audit log', toError(error))
       return null
     }
-    const receipt = await finalizeReceipt(db, (insertedLog as Record<string, unknown>).id, insertedLog)
+    const logId = (insertedLog as Record<string, unknown>).id as string
+    const receipt = await finalizeReceipt(db, logId, insertedLog as Record<string, unknown>)
     logger.info(
   '[Audit Logger] Creation logged',
   {
-    logId: (insertedLog as Record<string, unknown>).id,
+    logId,
     nonce: String(params.nonce).slice(0, 8),
     tier: params.tier,
     receiptId: receipt.receiptId,
@@ -139,11 +141,12 @@ export async function logRevocationWithReceipt(
       logger.error('[Audit Logger] Failed to insert revocation audit log', toError(error))
       return null
     }
-    const receipt = await finalizeReceipt(db, (insertedLog as Record<string, unknown>).id, insertedLog)
+    const logId = (insertedLog as Record<string, unknown>).id as string
+    const receipt = await finalizeReceipt(db, logId, insertedLog as Record<string, unknown>)
     logger.info(
   '[Audit Logger] Revocation logged',
   {
-    logId: (insertedLog as Record<string, unknown>).id,
+    logId,
     nonce: String(params.nonce).slice(0, 8),
     reason: params.reason,
     receiptId: receipt.receiptId,

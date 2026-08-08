@@ -11,7 +11,7 @@ import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 import type { ComplianceReceipt } from '@/tree/audit/compliance-receipt'
 import { insertAuditLog, updateReceiptSignature } from '@/tree/audit/logger/audit-event-builder'
-import type { Json } from '@/tree/database/supabase-types'
+import type { Json } from '@/seed/types/json'
 import type { UsageLogParams } from '@/tree/audit/logger/audit-event-builder'
 
 /**
@@ -70,11 +70,12 @@ export async function logUpdateWithReceipt(
       logger.error('[Audit Logger] Failed to insert update audit log', toError(error))
       return null
     }
-    const receipt = await finalizeReceipt(db, (insertedLog as Record<string, unknown>).id, insertedLog)
+    const logId = (insertedLog as Record<string, unknown>).id as string
+    const receipt = await finalizeReceipt(db, logId, insertedLog as Record<string, unknown>)
     logger.info(
   '[Audit Logger] Update logged',
   {
-    logId: (insertedLog as Record<string, unknown>).id,
+    logId,
     nonce: String(params.nonce).slice(0, 8),
     changes: params.changes,
     receiptId: receipt.receiptId,
@@ -128,9 +129,10 @@ export async function logUsageWithReceipt(
       logger.error('[Audit Logger] Failed to insert usage audit log', toError(error))
       return null
     }
-    const receipt = await finalizeReceipt(db, (insertedLog as Record<string, unknown>).id, insertedLog)
+    const logId = (insertedLog as Record<string, unknown>).id as string
+    const receipt = await finalizeReceipt(db, logId, insertedLog as Record<string, unknown>)
     logger.info('[Audit Logger] Usage logged', {
-      logId: (insertedLog as Record<string, unknown>).id,
+      logId,
       nonce: String(params.nonce).slice(0, 8),
       model: params.model_name,
       tokens: params.token_count,

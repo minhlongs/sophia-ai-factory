@@ -37,17 +37,19 @@ export async function handleRightToErasure(userId: string): Promise<ErasureResul
       return { anonymizedCount: 0, error: `Failed to fetch logs: ${fetchError.message}` }
     }
 
-    if (!existingLogs || existingLogs.length === 0) {
+    const logs = (existingLogs as Array<{ id: string; user_id: string; ip_address: string | null }> | null) || []
+
+    if (logs.length === 0) {
       logger.info('No audit logs found for user', { userId })
       return { anonymizedCount: 0 }
     }
 
-    logger.info('Found logs to anonymize', { userId, count: existingLogs.length })
+    logger.info('Found logs to anonymize', { userId, count: logs.length })
 
     let anonymizedCount = 0
     const errors: string[] = []
 
-    for (const log of existingLogs) {
+    for (const log of logs) {
       const { error: updateError } = await db.from('raas_audit_logs')
         .update({
           user_id: 'ANONYMIZED_' + generateUserPseudonym(userId).slice(0, 8),
@@ -84,11 +86,12 @@ export async function getErasureStatus(userId: string): Promise<{
       .order('created_at', { ascending: false }).limit(1).single()
 
     if (!request) return { hasErasureRequest: false }
+    const req = request as { created_at: string; completed_at: string | null; anonymized_count: number | null }
     return {
       hasErasureRequest: true,
-      erasureRequestedAt: new Date(request.created_at).getTime(),
-      completedAt: request.completed_at ? new Date(request.completed_at).getTime() : undefined,
-      anonymizedCount: request.anonymized_count || 0,
+      erasureRequestedAt: new Date(req.created_at).getTime(),
+      completedAt: req.completed_at ? new Date(req.completed_at).getTime() : undefined,
+      anonymizedCount: req.anonymized_count || 0,
     }
   } catch (error) {
     logger.warn('Failed to fetch erasure status', { userId, errorMessage: getErrorMessage(error) })
