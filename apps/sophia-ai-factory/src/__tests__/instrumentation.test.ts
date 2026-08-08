@@ -1,34 +1,62 @@
 /**
- * instrumentation.ts tests.
+ * instrumentation.ts tests — Phase 01 TDD Production Readiness Sprint.
  *
- * Tests the Next.js instrumentation register hook. register() is intentionally
- * a no-op for Cloudflare Workers compatibility — OTEL SDK requires Node.js
- * builtins (http, fs, zlib, stream) unavailable in Workers even with nodejs_compat.
- *
- * For non-Worker deployments, callers should import and call initializeOTel()
- * from @/seed/telemetry/opentelemetry-setup directly.
+ * Tests the Next.js instrumentation register hook.
+ * Current state: register() is a no-op (disabled for Cloudflare Workers compatibility).
+ * Target state: register() calls initializeOTel() from @/seed/telemetry/opentelemetry-setup.
  *
  * @vitest-environment node
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// ── Module mocks ─────────────────────────────────────────────────────────────
+
+const mocks = vi.hoisted(() => ({
+  mockInitializeOTel: vi.fn().mockResolvedValue(undefined),
+  mockGetTracer: vi.fn(),
+  mockStartSpan: vi.fn(),
+}));
+
+vi.mock('@/seed/telemetry/opentelemetry-setup', () => ({
+  initializeOTel: mocks.mockInitializeOTel,
+  getTracer: mocks.mockGetTracer,
+  startSpan: mocks.mockStartSpan,
+}));
+
+// ── Tests ────────────────────────────────────────────────────────────────────
 
 describe('instrumentation.ts — register hook', () => {
-  it('exports register function as a no-op', async () => {
+  beforeEach(() => {
+    vi.resetModules();
+    mocks.mockInitializeOTel.mockReset();
+    mocks.mockGetTracer.mockReset();
+    mocks.mockStartSpan.mockReset();
+  });
+
+  it('exports register function (currently disabled/no-op)', async () => {
+    // Currently register() is a no-op - it should exist and not throw
     const mod = await import('@/../instrumentation');
     expect(mod.register).toBeDefined();
     expect(typeof mod.register).toBe('function');
 
-    // register() is a no-op — resolves without error
+    // Should not throw when called
     await expect(mod.register()).resolves.toBeUndefined();
   });
 
-  it('register() does not import OTEL (Cloudflare Workers compatibility)', async () => {
-    // register() intentionally does NOT import @/seed/telemetry/opentelemetry-setup
-    // to prevent OTEL's Node.js-dependent packages from being bundled into Workers.
-    const mod = await import('@/../instrumentation');
-    await mod.register();
-    // If we got here without OTEL import errors, the test passes.
-    // The no-op design is the intended production behavior.
+  it('register() should call initializeOTel (post-fix expectation)', async () => {
+    const { register } = await import('@/../instrumentation');
+    await register();
+
+    const { initializeOTel } = await import('@/seed/telemetry/opentelemetry-setup');
+    expect(initializeOTel).toHaveBeenCalled();
+  });
+
+  it('register() should not throw if initializeOTel fails', async () => {
+    mocks.mockInitializeOTel.mockRejectedValueOnce(new Error('No API key'));
+
+    const { register } = await import('@/../instrumentation');
+    // Should not throw — OTEL failure is non-fatal
+    await expect(register()).resolves.toBeUndefined();
   });
 });
