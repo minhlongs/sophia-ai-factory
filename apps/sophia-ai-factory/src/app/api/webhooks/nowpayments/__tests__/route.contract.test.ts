@@ -1,18 +1,6 @@
-/**
- * Contract tests: NOWPayments IPN Webhook Route
- *
- * Verifies HTTP response contracts for the POST /api/webhooks/nowpayments route:
- * - Method restriction (GET allowed for health, others rejected)
- * - Body parsing (no body, malformed JSON)
- * - Signature verification (missing/invalid signature)
- * - Valid IPN processing returns 200
- * - Idempotency: duplicate IPN returns 200 (not 500)
- *
- * @vitest
- */
-
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
+import { z } from 'zod'
 
 // Hoisted mocks for dependencies
 const { mockParseIpnWebhook, mockProcessIpn, mockLogger } = vi.hoisted(() => ({
@@ -43,7 +31,6 @@ vi.mock('@/land/webhooks/emitter', () => ({ emit: vi.fn() }))
 vi.mock('@/seed/db/resolve-user-tier', () => ({ resolveUserTier: vi.fn().mockResolvedValue('BASIC') }))
 vi.mock('@/seed/db/client', () => ({ getD1: vi.fn(() => ({ prepare: vi.fn() })) }))
 vi.mock('@/land/billing/ipn-payload-schema', () => {
-  const { z } = require('zod')
   const schema = z.object({
     payment_id: z.string().min(1),
     payment_status: z.enum(['waiting', 'confirming', 'confirmed', 'sending', 'partially_paid', 'finished', 'failed', 'refunded', 'expired']),
