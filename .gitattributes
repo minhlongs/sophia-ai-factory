@@ -1,1 +1,7 @@
 .github/workflows/*.lock.yml linguist-generated=true merge=ours
+
+# Shell scripts must use LF line endings on all platforms
+*.sh text eol=lf
+
+# Lockfiles
+package-lock.json -text
