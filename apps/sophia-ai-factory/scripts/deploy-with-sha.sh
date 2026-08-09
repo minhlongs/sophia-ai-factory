@@ -416,29 +416,34 @@ wait_for_file() {
 
 # Copy instrumentation files from .next/server to .next/standalone/.next/server
 # This is needed because Next.js standalone output does not include instrumentation.js
+# SKIP: instrumentation uses OTEL which requires Node.js builtins unavailable in Cloudflare Workers.
+# The instrumentation.ts register hook detects Workers and returns early, but the module
+# still gets bundled and causes "ReferenceError: __import_unsupported is not defined".
+# We skip copying to prevent the instrumentation hook from loading in Workers.
 mkdir -p ".next/standalone/.next/server/chunks"
-if ! wait_for_file ".next/server/instrumentation.js" 60; then
-  echo "ERROR: .next/server/instrumentation.js never appeared after build (filesystem cache delay)"
-  exit 1
-fi
-cp -f ".next/server/instrumentation.js" ".next/standalone/.next/server/"
-echo "  Copied instrumentation.js"
-if [ -f ".next/server/instrumentation.js.map" ]; then
-  cp -f ".next/server/instrumentation.js.map" ".next/standalone/.next/server/"
-  echo "  Copied instrumentation.js.map"
-fi
+echo "  Skipping instrumentation copy (OTEL incompatible with Workers)"
+# if ! wait_for_file ".next/server/instrumentation.js" 60; then
+#   echo "ERROR: .next/server/instrumentation.js never appeared after build (filesystem cache delay)"
+#   exit 1
+# fi
+# cp -f ".next/server/instrumentation.js" ".next/standalone/.next/server/"
+# echo "  Copied instrumentation.js"
+# if [ -f ".next/server/instrumentation.js.map" ]; then
+#   cp -f ".next/server/instrumentation.js.map" ".next/standalone/.next/server/"
+#   echo "  Copied instrumentation.js.map"
+# fi
 # Copy instrumentation chunks if present (with wait)
-if ! wait_for_file ".next/server/chunks/instrumentation_ts_*" 5; then
-  echo "  No instrumentation chunks found (optional)"
-else
-  # Copy any matched instrumentation chunks; the glob is checked in wait_for_file above.
-  # shellcheck disable=SC2086  # Intentional: glob expansion for cp source.
-  if cp -f .next/server/chunks/instrumentation_ts_* .next/standalone/.next/server/chunks/ 2>>"$DEPLOY_LOG"; then
-    echo "  Copied instrumentation chunks"
-  else
-    log_warn "No instrumentation chunk files matched the glob (optional — continuing)"
-  fi
-fi
+# if ! wait_for_file ".next/server/chunks/instrumentation_ts_*" 5; then
+#   echo "  No instrumentation chunks found (optional)"
+# else
+#   # Copy any matched instrumentation chunks; the glob is checked in wait_for_file above.
+#   # shellcheck disable=SC2086  # Intentional: glob expansion for cp source.
+#   if cp -f .next/server/chunks/instrumentation_ts_* .next/standalone/.next/server/chunks/ 2>>"$DEPLOY_LOG"; then
+#     echo "  Copied instrumentation chunks"
+#   else
+#     log_warn "No instrumentation chunk files matched the glob (optional — continuing)"
+#   fi
+# fi
 
 echo "==> opennextjs/cloudflare build"
 npx @opennextjs/cloudflare build --skipNextBuild --noMinify
