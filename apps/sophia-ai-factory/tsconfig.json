@@ -18,6 +18,7 @@
     "jsx": "react-jsx",
     "incremental": true,
     "allowImportingTsExtensions": true,
+    "types": ["@cloudflare/workers-types"],
     "plugins": [
       {
         "name": "next"
