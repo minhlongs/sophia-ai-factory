@@ -8,7 +8,7 @@
  */
 
 import { getD1 } from '@/seed/db/client';
-import { encryptValue, decryptValue } from '@/tree/credentials/encryption';
+import { encryptPlatformConfig as encryptValue, decryptPlatformConfig as decryptValue } from '@/seed/crypto/encryption';
 
 interface PlatformConfigRow {
   key: string;
