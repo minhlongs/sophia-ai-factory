@@ -419,31 +419,15 @@ wait_for_file() {
 # SKIP: instrumentation uses OTEL which requires Node.js builtins unavailable in Cloudflare Workers.
 # The instrumentation.ts register hook detects Workers and returns early, but the module
 # still gets bundled and causes "ReferenceError: __import_unsupported is not defined".
-# We skip copying to prevent the instrumentation hook from loading in Workers.
+# We create an empty stub file to satisfy OpenNext's copyTracedFiles, which expects it to exist.
 mkdir -p ".next/standalone/.next/server/chunks"
-echo "  Skipping instrumentation copy (OTEL incompatible with Workers)"
-# if ! wait_for_file ".next/server/instrumentation.js" 60; then
-#   echo "ERROR: .next/server/instrumentation.js never appeared after build (filesystem cache delay)"
-#   exit 1
-# fi
-# cp -f ".next/server/instrumentation.js" ".next/standalone/.next/server/"
-# echo "  Copied instrumentation.js"
-# if [ -f ".next/server/instrumentation.js.map" ]; then
-#   cp -f ".next/server/instrumentation.js.map" ".next/standalone/.next/server/"
-#   echo "  Copied instrumentation.js.map"
-# fi
-# Copy instrumentation chunks if present (with wait)
-# if ! wait_for_file ".next/server/chunks/instrumentation_ts_*" 5; then
-#   echo "  No instrumentation chunks found (optional)"
-# else
-#   # Copy any matched instrumentation chunks; the glob is checked in wait_for_file above.
-#   # shellcheck disable=SC2086  # Intentional: glob expansion for cp source.
-#   if cp -f .next/server/chunks/instrumentation_ts_* .next/standalone/.next/server/chunks/ 2>>"$DEPLOY_LOG"; then
-#     echo "  Copied instrumentation chunks"
-#   else
-#     log_warn "No instrumentation chunk files matched the glob (optional — continuing)"
-#   fi
-# fi
+echo "  Creating empty instrumentation stub (OTEL incompatible with Workers)"
+# Create empty instrumentation.js to satisfy OpenNext's copyTracedFiles
+echo "// Instrumentation disabled in Cloudflare Workers (OTEL requires Node.js builtins)" > ".next/standalone/.next/server/instrumentation.js"
+echo "  Created instrumentation.js stub"
+# Create empty instrumentation.js.map
+echo "{}" > ".next/standalone/.next/server/instrumentation.js.map"
+echo "  Created instrumentation.js.map stub"
 
 echo "==> opennextjs/cloudflare build"
 npx @opennextjs/cloudflare build --skipNextBuild --noMinify
