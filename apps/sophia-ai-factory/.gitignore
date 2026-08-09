@@ -81,3 +81,4 @@ plans/reports/*.md
 .sbom/
 .claude/worktrees/
 .claude/cache/
+worker-configuration.d.ts
