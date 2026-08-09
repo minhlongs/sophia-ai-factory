@@ -1,13 +1,13 @@
 
-> sophia-ai-factory@0.1.0 i18n:validate
+> sophia-ai-factory@0.1.5 i18n:validate
 > node scripts/validate-i18n-keys.mjs
 
 🔍 Scanning for i18n keys...
 
 📊 Summary:
-   Total t() calls: 3476
-   Unique static keys: 1557
-   Dynamic key prefixes: 19
+   Total t() calls: 2766
+   Unique static keys: 1227
+   Dynamic key prefixes: 18
    Missing static keys: 0
    Unresolved dynamic prefixes: 0
 

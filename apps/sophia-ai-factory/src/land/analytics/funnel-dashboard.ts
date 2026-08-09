@@ -12,31 +12,12 @@
 
 import { getD1 } from '@/seed/db/client';
 import { getActivationFunnel, type ActivationFunnel } from './funnel-stats';
+import type { FunnelStepData, FunnelGroup, FunnelDashboard } from '@/seed/types/analytics-funnel';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export interface FunnelStepData {
-  name: string;
-  key: string;
-  count: number;
-  /** Percentage drop-off from the previous step (null for first step). */
-  dropOffRate: number | null;
-  /** Percentage of users retained since the first step. */
-  conversionRate: number;
-}
-
-export interface FunnelGroup {
-  id: string;
-  title: string;
-  description: string;
-  steps: FunnelStepData[];
-}
-
-export interface FunnelDashboard {
-  fromTs: number;
-  toTs: number;
-  funnels: FunnelGroup[];
-}
+// Re-export shared types
+export type { FunnelStepData, FunnelGroup, FunnelDashboard };
 
 export interface CampaignStatusCount {
   status: string;

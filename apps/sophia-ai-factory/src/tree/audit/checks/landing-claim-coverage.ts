@@ -13,12 +13,13 @@ interface ClaimCheck {
  check: (d1: D1Database) => Promise<boolean>
 }
 
-function fileExists(relativePath: string): boolean {
- // Lazy require to avoid NFT tracer resolving fs/path at module scope
- // eslint-disable-next-line @typescript-eslint/no-var-requires
- const { existsSync } = require('node:fs') as typeof import('node:fs')
- // eslint-disable-next-line @typescript-eslint/no-var-requires
- const { join } = require('node:path') as typeof import('node:path')
+async function fileExists(relativePath: string): Promise<boolean> {
+ // Lazy dynamic import — fs/path are Node.js builtins that Next.js NFT static tracer
+ // cannot resolve when imported at module top-level. Dynamic import inside this
+ // function means they are only resolved at runtime, after the trace is done.
+
+ const { existsSync } = await import('node:fs')
+ const { join } = await import('node:path')
 
  const APP_ROOT = join(process.cwd(), 'src')
  return existsSync(join(APP_ROOT, relativePath))

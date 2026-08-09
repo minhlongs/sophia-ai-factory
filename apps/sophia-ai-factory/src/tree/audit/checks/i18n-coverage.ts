@@ -28,17 +28,19 @@ function flattenKeys(obj: Record<string, unknown>, prefix = ''): string[] {
  return keys
 }
 
-function getFsPath() {
- // Lazy require to avoid NFT tracer resolving fs/path at module scope
- // eslint-disable-next-line @typescript-eslint/no-var-requires
- const { existsSync, readFileSync, readdirSync, statSync } = require('node:fs') as typeof import('node:fs')
- // eslint-disable-next-line @typescript-eslint/no-var-requires
- const { join } = require('node:path') as typeof import('node:path')
+async function getFsPath() {
+ // Lazy dynamic import — fs/path are Node.js builtins that Next.js NFT static tracer
+ // cannot resolve when imported at module top-level. Dynamic import inside this
+ // function means they are only resolved at runtime, after the trace is done.
+
+ const { existsSync, readFileSync, readdirSync, statSync } = await import('node:fs')
+
+ const { join } = await import('node:path')
  return { existsSync, readFileSync, readdirSync, statSync, join }
 }
 
-function loadMessageKeys(locale: string): string[] | null {
- const { existsSync, readFileSync, join } = getFsPath()
+async function loadMessageKeys(locale: string): Promise<string[] | null> {
+ const { existsSync, readFileSync, join } = await getFsPath()
  const messagesDir = join(process.cwd(), 'messages')
  const path = join(messagesDir, `${locale}.json`)
  if (!existsSync(path)) return null
@@ -49,15 +51,15 @@ function loadMessageKeys(locale: string): string[] | null {
  }
 }
 
-function collectTsxFiles(dir: string): string[] {
- const { existsSync, readdirSync, statSync, join } = getFsPath()
+async function collectTsxFiles(dir: string): Promise<string[]> {
+ const { existsSync, readdirSync, statSync, join } = await getFsPath()
  if (!existsSync(dir)) return []
  const files: string[] = []
  for (const entry of readdirSync(dir)) {
    const full = join(dir, entry)
    const s = statSync(full)
    if (s.isDirectory()) {
-     files.push(...collectTsxFiles(full))
+     files.push(...(await collectTsxFiles(full)))
    } else if (entry.endsWith('.tsx') || entry.endsWith('.ts')) {
      files.push(full)
    }
@@ -69,11 +71,11 @@ export async function runI18nChecks(_env: AuditEnv): Promise<CheckResult[]> {
  const start = Date.now()
 
  // Compute path at runtime to avoid NFT module-level tracing
- const { join } = getFsPath()
+ const { join } = await getFsPath()
  const APP_SRC_DIR = join(process.cwd(), 'src', 'app')
 
- const viKeys = loadMessageKeys('vi')
- const enKeys = loadMessageKeys('en')
+ const viKeys = await loadMessageKeys('vi')
+ const enKeys = await loadMessageKeys('en')
 
  if (!viKeys || !enKeys) {
    return [
@@ -99,9 +101,9 @@ export async function runI18nChecks(_env: AuditEnv): Promise<CheckResult[]> {
  const totalMissing = missingInEn.length + missingInVi.length
 
  // Sample hardcoded string check in TSX files — look for JSX text with > 3 chars that isnt a translation call
- const tsxFiles = collectTsxFiles(APP_SRC_DIR).slice(0, 50) // cap at 50 files for performance
+ const tsxFiles = (await collectTsxFiles(APP_SRC_DIR)).slice(0, 50) // cap at 50 files for performance
  let hardcodedCount = 0
- const { readFileSync } = getFsPath()
+ const { readFileSync } = await getFsPath()
  for (const file of tsxFiles) {
    try {
      const content = readFileSync(file, 'utf-8')

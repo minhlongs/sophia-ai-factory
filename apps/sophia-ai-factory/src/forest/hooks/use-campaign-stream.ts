@@ -230,7 +230,7 @@ export function useCampaignStream(
         timerRef.current = null;
       }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [campaignId, connect]);
 
   const clearEvents = useCallback(() => setEvents([]), []);

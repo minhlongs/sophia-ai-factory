@@ -23,19 +23,19 @@ async function BriefingTab({ locale, userId }: { locale: string; userId: string 
 
 // ── Campaigns tab (client-wrapped for grid interactivity) ─────────────────────
 
-function CampaignsTabClient() {
+function CampaignsTabClient({ userId }: { userId: string }) {
   return (
     <Suspense fallback={<CampaignSkeleton />}>
-      <CampaignGridInner />
+      <CampaignGridInner userId={userId} />
     </Suspense>
   );
 }
 
-async function CampaignGridInner() {
+async function CampaignGridInner({ userId }: { userId: string }) {
   const { CampaignGrid } = await import('@/forest/dashboard/campaign/campaign-grid');
-  const { fetchCurrentUserDashboard } = await import('@/forest/dashboard/metrics');
-  const initialData = await fetchCurrentUserDashboard();
-  const campaigns = (initialData as any)?.data?.campaigns ?? [];
+  const { fetchRecentCampaigns } = await import('@/forest/dashboard/metrics');
+  const result = await fetchRecentCampaigns(userId, 10);
+  const campaigns = result.ok ? result.data : [];
   return <CampaignGrid campaigns={campaigns} onCampaignSelect={() => {}} />;
 }
 
@@ -111,7 +111,7 @@ export async function CeoAgentDashboard({ locale, userId, tab }: DashboardProps)
       label: t('tabs.briefing'),
     },
     campaigns: {
-      client: <CampaignsTabClient />,
+      client: <CampaignsTabClient userId={userId} />,
       label: t('tabs.campaigns'),
     },
     revenue: {

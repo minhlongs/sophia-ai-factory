@@ -1,1 +1,503 @@
-⚠️  Bundle: 9.61 MB compressed — APPROACHING LIMIT (limit 10MB)
+
+> sophia-ai-factory@0.1.5 build
+> NODE_OPTIONS=--max-old-space-size=4096 next build
+
+Warning: Custom Cache-Control headers detected for the following routes:
+  - /_next/static/:path*
+
+Setting a custom Cache-Control header can break Next.js development behavior.
+▲ Next.js 16.2.11 (Turbopack)
+- Experiments (use with caution):
+  · clientTraceMetadata
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+Turbopack build encountered 1 warnings:
+./src/app/api/cron/hash-chain-verification/route.ts:63:20
+Module not found: Can't resolve ('scripts/audit/verify-hash-chain.mjs' | <dynamic>)
+  [90m61 |[0m
+  [90m62 |[0m     [90m// Run the verification script[0m
+[31m[1m>[0m [90m63 |[0m     [36mconst[0m result = spawnSync(
+  [90m   |[0m                    [31m[1m^^^^^^^^^[0m
+[31m[1m>[0m [90m64 |[0m       [32m'node'[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m65 |[0m       [[32m'scripts/audit/verify-hash-chain.mjs'[0m, [32m'--since'[0m, [32m'30 days ago'[0m],
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m66 |[0m       {
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m67 |[0m         encoding: [32m'utf-8'[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m68 |[0m         stdio: [32m'pipe'[0m,
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m69 |[0m         cwd: process.cwd(),
+  [90m   |[0m [31m[1m^^^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m[1m>[0m [90m70 |[0m       }
+  [90m   |[0m [31m[1m^^^^^^^[0m
+[31m[1m>[0m [90m71 |[0m     );
+  [90m   |[0m [31m[1m^^^^^[0m
+  [90m72 |[0m
+  [90m73 |[0m     [36mconst[0m stdout = result.stdout || [32m''[0m;
+  [90m74 |[0m     [36mconst[0m stderr = result.stderr || [32m''[0m;
+
+
+
+https://nextjs.org/docs/messages/module-not-found
+
+
+✓ Compiled successfully in 17.1s
+  Running next.config.js provided runAfterProductionCompile ...
+✓ Completed runAfterProductionCompile in 138ms
+  Skipping validation of types
+  Finished TypeScript config validation in 7ms ...
+  Collecting page data using 9 workers ...
+⚠ Using edge runtime on a page currently disables static generation for that page
+  Generating static pages using 9 workers (0/167) ...
+  Generating static pages using 9 workers (41/167) 
+  Generating static pages using 9 workers (83/167) 
+  Generating static pages using 9 workers (125/167) 
+✓ Generating static pages using 9 workers (167/167) in 237ms
+  Finalizing page optimization ...
+
+Route (app)                                                     Revalidate  Expire
+┌ ○ /_not-found
+├ ƒ /[locale]/sop-marketplace
+├ ƒ /admin
+├ ƒ /affiliate-portal
+├ ƒ /affiliates
+├ ƒ /api/account
+├ ƒ /api/account/change-email
+├ ƒ /api/account/change-email/verify
+├ ƒ /api/account/delete/confirm
+├ ƒ /api/account/delete/request
+├ ƒ /api/account/delete/status
+├ ƒ /api/account/export
+├ ƒ /api/admin/actions
+├ ƒ /api/admin/affiliate-leaderboard
+├ ƒ /api/admin/api-key-usage
+├ ƒ /api/admin/api-keys
+├ ƒ /api/admin/api-keys/[id]
+├ ƒ /api/admin/audit-log
+├ ƒ /api/admin/billing/summary
+├ ƒ /api/admin/board-pack
+├ ƒ /api/admin/board-pack/[id]
+├ ƒ /api/admin/circuit-breaker/reset
+├ ƒ /api/admin/cost
+├ ƒ /api/admin/crons
+├ ƒ /api/admin/deploy-guard/approvals/[id]
+├ ƒ /api/admin/deploy-guard/attest
+├ ƒ /api/admin/deploy-guard/create-approval
+├ ƒ /api/admin/deploy-guard/history
+├ ƒ /api/admin/deploy-guard/override
+├ ƒ /api/admin/deploy-guard/pending
+├ ƒ /api/admin/deploy-guard/reject
+├ ƒ /api/admin/deploy-status
+├ ƒ /api/admin/dlq/reconciliation
+├ ƒ /api/admin/dlq/replay
+├ ƒ /api/admin/email-outbox
+├ ƒ /api/admin/finance/report
+├ ƒ /api/admin/funnel
+├ ƒ /api/admin/go-live-status
+├ ƒ /api/admin/handover/[id]
+├ ƒ /api/admin/handover/[id]/resend-welcome
+├ ƒ /api/admin/handover/create
+├ ƒ /api/admin/handover/customer-status
+├ ƒ /api/admin/handover/list
+├ ƒ /api/admin/heygen/list-webhooks
+├ ƒ /api/admin/honeycomb/test
+├ ƒ /api/admin/invite
+├ ƒ /api/admin/keys/rotate
+├ ƒ /api/admin/landing-pages
+├ ƒ /api/admin/landing-pages/[slug]
+├ ƒ /api/admin/llm-cache-stats
+├ ƒ /api/admin/llm-trace-stats
+├ ƒ /api/admin/migrations
+├ ƒ /api/admin/migrations/[filename]/mark-applied
+├ ƒ /api/admin/ops/snapshot
+├ ƒ /api/admin/orgs/[orgId]/quota
+├ ƒ /api/admin/payouts/mark-paid
+├ ƒ /api/admin/payouts/queue
+├ ƒ /api/admin/platform-config
+├ ƒ /api/admin/pricing/list
+├ ƒ /api/admin/pricing/update
+├ ƒ /api/admin/promo-codes
+├ ƒ /api/admin/promo-codes/[id]/redemptions
+├ ƒ /api/admin/promo-codes/[id]/status
+├ ƒ /api/admin/promo-codes/bulk-generate
+├ ƒ /api/admin/promo-codes/create
+├ ƒ /api/admin/promo-codes/list
+├ ƒ /api/admin/quota/mark-billable
+├ ƒ /api/admin/quota/overage-summary
+├ ƒ /api/admin/refunds
+├ ƒ /api/admin/refunds/[id]
+├ ƒ /api/admin/refunds/[id]/mark-refunded
+├ ƒ /api/admin/run-synthetic-fulfillment
+├ ƒ /api/admin/storage
+├ ƒ /api/admin/synthetic-ipn
+├ ƒ /api/admin/tenant-lookup
+├ ƒ /api/admin/tenants/[id]/costs
+├ ƒ /api/admin/tenants/[id]/quota
+├ ƒ /api/admin/users/[id]
+├ ƒ /api/admin/video-render-benchmark
+├ ƒ /api/admin/webhook-deliveries
+├ ƒ /api/affiliate-discovery
+├ ƒ /api/affiliate/clicks
+├ ƒ /api/affiliate/conversions
+├ ƒ /api/affiliate/conversions/csv
+├ ƒ /api/affiliate/earnings
+├ ƒ /api/affiliate/payout-method
+├ ƒ /api/affiliate/payouts
+├ ƒ /api/affiliate/promo-assets
+├ ƒ /api/agents/feedback
+├ ƒ /api/agents/list
+├ ƒ /api/agents/pause
+├ ƒ /api/agents/status/[id]
+├ ƒ /api/agents/stream
+├ ƒ /api/agents/task
+├ ƒ /api/agents/team
+├ ƒ /api/agents/team/create
+├ ƒ /api/agents/team/delete
+├ ƒ /api/agents/team/update
+├ ƒ /api/alerts/history
+├ ƒ /api/alerts/preferences
+├ ƒ /api/alerts/rules
+├ ƒ /api/alerts/test
+├ ƒ /api/analytics/agent-performance
+├ ƒ /api/analytics/cohorts
+├ ƒ /api/analytics/export
+├ ƒ /api/analytics/realtime
+├ ƒ /api/analytics/revenue
+├ ƒ /api/analytics/revenue-unified
+├ ƒ /api/analytics/roi
+├ ƒ /api/analytics/usage
+├ ƒ /api/audit
+├ ƒ /api/auth/[...all]
+├ ƒ /api/auth/admin-challenge
+├ ƒ /api/auth/callback
+├ ƒ /api/auth/login
+├ ƒ /api/auth/logout
+├ ƒ /api/auth/mfa/challenge
+├ ƒ /api/auth/mfa/disable
+├ ƒ /api/auth/mfa/setup
+├ ƒ /api/auth/mfa/status
+├ ƒ /api/auth/mfa/verify
+├ ƒ /api/auth/reset-password/confirm
+├ ƒ /api/auth/reset-password/request
+├ ƒ /api/auth/session
+├ ƒ /api/auth/sign-in
+├ ƒ /api/auth/sign-in/email
+├ ƒ /api/auth/sign-up
+├ ƒ /api/auth/signup
+├ ƒ /api/auth/tiktok/callback
+├ ƒ /api/auth/youtube/callback
+├ ƒ /api/auth/youtube/disconnect
+├ ƒ /api/branding
+├ ƒ /api/campaigns
+├ ƒ /api/canary/webhook
+├ ƒ /api/check-access
+├ ƒ /api/checkout
+├ ƒ /api/checkout/status
+├ ƒ /api/connect/onboard
+├ ƒ /api/coupons/activate
+├ ƒ /api/coupons/activate-redirect
+├ ƒ /api/coupons/apply
+├ ƒ /api/creative-studio/scripts/templates
+├ ƒ /api/cron/ab-winner-picker
+├ ƒ /api/cron/affiliate-scout
+├ ƒ /api/cron/clearance-promote
+├ ƒ /api/cron/d1-backup
+├ ƒ /api/cron/daily-rollup
+├ ƒ /api/cron/dlq-retry
+├ ƒ /api/cron/dunning-advance
+├ ƒ /api/cron/email-drip
+├ ƒ /api/cron/email-outbox-flush
+├ ƒ /api/cron/error-digest
+├ ƒ /api/cron/fulfillment-reconcile
+├ ƒ /api/cron/fulfillment-retry
+├ ƒ /api/cron/handover-status-sync
+├ ƒ /api/cron/hash-chain-verification
+├ ƒ /api/cron/heartbeat
+├ ƒ /api/cron/hourly-rollup
+├ ƒ /api/cron/llm-cache-purge
+├ ƒ /api/cron/mcu-monthly-reset
+├ ƒ /api/cron/memory-consolidation
+├ ƒ /api/cron/mission-reaper
+├ ƒ /api/cron/onboarding-check
+├ ƒ /api/cron/pending-orders-cleanup
+├ ƒ /api/cron/promo-cleanup
+├ ƒ /api/cron/promo-trial-expiry
+├ ƒ /api/cron/quota-check
+├ ƒ /api/cron/reset-quotas
+├ ƒ /api/cron/scheduled-campaigns
+├ ƒ /api/cron/smoke-one-time
+├ ƒ /api/cron/sop-scheduler
+├ ƒ /api/cron/status-rollup
+├ ƒ /api/cron/subscription-reminders
+├ ƒ /api/cron/uptime-check
+├ ƒ /api/cron/video-status-sync
+├ ƒ /api/cron/wallet-rebuild
+├ ƒ /api/cron/weekly-signals-digest
+├ ƒ /api/cron/workflow-stepper
+├ ƒ /api/csp-report
+├ ƒ /api/debug-symbols/[commit]/[...path]
+├ ƒ /api/debug/db-schema
+├ ƒ /api/debug/migrate
+├ ƒ /api/dev/sentry-test
+├ ƒ /api/discovery/score
+├ ƒ /api/discovery/search
+├ ƒ /api/discovery/top-50
+├ ƒ /api/discovery/validate-link
+├ ƒ /api/errors/report
+├ ƒ /api/funnel
+├ ƒ /api/graphql/analytics
+├ ƒ /api/handover/me
+├ ƒ /api/health
+├ ƒ /api/heygen/avatars
+├ ƒ /api/heygen/status/[id]
+├ ƒ /api/heygen/voices
+├ ƒ /api/ingestion/trigger
+├ ƒ /api/inngest
+├ ƒ /api/intelligence/score
+├ ƒ /api/internal/render-py
+├ ƒ /api/internal/runpod-status
+├ ƒ /api/internal/runpod-trigger
+├ ƒ /api/internal/tts
+├ ƒ /api/media/generate
+├ ƒ /api/media/status
+├ ƒ /api/metrics
+├ ƒ /api/missions/auto-video
+├ ƒ /api/oauth/bluesky/connect
+├ ƒ /api/oauth/facebook/callback
+├ ƒ /api/oauth/facebook/connect
+├ ƒ /api/oauth/instagram/callback
+├ ƒ /api/oauth/instagram/connect
+├ ƒ /api/oauth/linkedin
+├ ƒ /api/oauth/linkedin/callback
+├ ƒ /api/oauth/mastodon/callback
+├ ƒ /api/oauth/mastodon/connect
+├ ƒ /api/oauth/pinterest
+├ ƒ /api/oauth/pinterest/callback
+├ ƒ /api/oauth/reddit/callback
+├ ƒ /api/oauth/reddit/connect
+├ ƒ /api/oauth/threads/callback
+├ ƒ /api/oauth/threads/connect
+├ ƒ /api/oauth/tiktok/callback
+├ ƒ /api/oauth/tiktok/connect
+├ ƒ /api/oauth/twitter/callback
+├ ƒ /api/oauth/twitter/connect
+├ ƒ /api/oauth/youtube/callback
+├ ƒ /api/oauth/youtube/connect
+├ ƒ /api/oauth/zalo
+├ ƒ /api/oauth/zalo/callback
+├ ƒ /api/offers/sync/[network]
+├ ƒ /api/offers/trending
+├ ƒ /api/onboarding
+├ ○ /api/openapi
+├ ƒ /api/openclaw/exchange
+├ ƒ /api/orders
+├ ƒ /api/payments/one-time-checkout
+├ ƒ /api/payos
+├ ƒ /api/payos/ipn
+├ ƒ /api/postback/[network]
+├ ƒ /api/promo/redeem-free
+├ ƒ /api/promo/validate
+├ ƒ /api/proposals
+├ ƒ /api/public/landing-pages/[slug]
+├ ƒ /api/publish/channels
+├ ƒ /api/publish/quick-schedule
+├ ƒ /api/publish/schedule
+├ ƒ /api/publish/status/[jobId]
+├ ƒ /api/quota/overage-events
+├ ƒ /api/r/[code]
+├ ƒ /api/realtime/alerts
+├ ƒ /api/referral/apply
+├ ƒ /api/referral/generate
+├ ƒ /api/refund-requests/create
+├ ƒ /api/schedule
+├ ƒ /api/scripts/generate
+├ ƒ /api/scripts/seo
+├ ƒ /api/sdk/quickstart
+├ ƒ /api/sdk/typescript
+├ ƒ /api/setup-wizard/heygen/auto-register
+├ ƒ /api/setup-wizard/list-credentials
+├ ƒ /api/setup-wizard/save-credentials
+├ ƒ /api/setup-wizard/test-heygen
+├ ƒ /api/setup-wizard/test-resend
+├ ƒ /api/setup/save
+├ ƒ /api/setup/skip
+├ ƒ /api/setup/verify
+├ ƒ /api/signals/experiments
+├ ƒ /api/signals/flag
+├ ƒ /api/signals/track
+├ ƒ /api/sop-marketplace
+├ ƒ /api/sop-marketplace/review
+├ ƒ /api/sop/install
+├ ƒ /api/sop/installations
+├ ƒ /api/sop/installations/[id]
+├ ƒ /api/sop/installations/[id]/customizations
+├ ƒ /api/sop/installations/[id]/regen-secret
+├ ƒ /api/sop/installations/[id]/run
+├ ƒ /api/sop/installations/[id]/toggle
+├ ƒ /api/sop/runs/[runId]
+├ ƒ /api/sop/templates
+├ ƒ /api/sop/templates/[slug]
+├ ƒ /api/sophia-index/health
+├ ƒ /api/stats/live
+├ ƒ /api/status.json
+├ ƒ /api/stream/campaigns/[id]
+├ ƒ /api/track/[id]
+├ ƒ /api/translate
+├ ƒ /api/user/audit-logs
+├ ƒ /api/user/billing-history
+├ ƒ /api/user/byok
+├ ƒ /api/user/byok/test
+├ ƒ /api/user/cancel-subscription
+├ ƒ /api/user/integrations
+├ ƒ /api/user/profile
+├ ƒ /api/user/wallet
+├ ƒ /api/v1/advisor/revenue
+├ ƒ /api/v1/agent-chat
+├ ƒ /api/v1/agi/agents
+├ ƒ /api/v1/agi/confidence
+├ ƒ /api/v1/agi/outcomes
+├ ƒ /api/v1/api-keys
+├ ƒ /api/v1/api-keys/[id]
+├ ƒ /api/v1/api-keys/[id]/rotate
+├ ƒ /api/v1/branding/upload
+├ ƒ /api/v1/campaigns/create
+├ ƒ /api/v1/creative-studio/images
+├ ƒ /api/v1/creative-studio/images/[id]/status
+├ ƒ /api/v1/creative-studio/images/generate
+├ ƒ /api/v1/credits
+├ ƒ /api/v1/dashboard/mission-control
+├ ƒ /api/v1/distribute/jobs/[videoId]/status
+├ ƒ /api/v1/factory/url-to-revenue
+├ ƒ /api/v1/factory/url-to-revenue/[jobId]
+├ ƒ /api/v1/harness/check/r2
+├ ƒ /api/v1/harness/jobs/[id]
+├ ƒ /api/v1/harness/jobs/poll
+├ ƒ /api/v1/harness/status
+├ ƒ /api/v1/harness/trigger
+├ ƒ /api/v1/integrations/affiliate-networks
+├ ƒ /api/v1/integrations/affiliate-networks/[network]
+├ ƒ /api/v1/integrations/affiliate-networks/[network]/validate
+├ ƒ /api/v1/integrations/channels
+├ ƒ /api/v1/integrations/channels/[provider]
+├ ƒ /api/v1/integrations/mcp
+├ ƒ /api/v1/integrations/mcp/test
+├ ƒ /api/v1/missions
+├ ƒ /api/v1/missions/[id]
+├ ƒ /api/v1/missions/[id]/generate-video
+├ ƒ /api/v1/missions/[id]/stream
+├ ƒ /api/v1/overage/[tenantId]
+├ ƒ /api/v1/quota/[tenantId]
+├ ƒ /api/v1/settings
+├ ƒ /api/v1/settings/[namespace]
+├ ƒ /api/v1/settings/branding
+├ ƒ /api/v1/settings/channels
+├ ƒ /api/v1/settings/export
+├ ƒ /api/v1/settings/import
+├ ƒ /api/v1/settings/reset
+├ ƒ /api/v1/settings/storage
+├ ƒ /api/v1/sop/[installationId]/trigger
+├ ƒ /api/v1/sop/installations
+├ ƒ /api/v1/sops
+├ ƒ /api/v1/tracking/links
+├ ƒ /api/v1/tracking/links/[id]
+├ ƒ /api/v1/usage
+├ ƒ /api/v1/usage/batch
+├ ƒ /api/v1/videos/[id]/distribute
+├ ƒ /api/v1/webhooks
+├ ƒ /api/v1/webhooks/[id]
+├ ƒ /api/v1/webhooks/[id]/attempts
+├ ƒ /api/v1/webhooks/[id]/test
+├ ƒ /api/version
+├ ƒ /api/video-templates
+├ ƒ /api/videos
+├ ƒ /api/videos/[id]
+├ ƒ /api/videos/[id]/description-enriched
+├ ƒ /api/videos/[id]/url
+├ ƒ /api/videos/generate
+├ ƒ /api/videos/jobs/[jobId]
+├ ƒ /api/videos/status/[jobId]
+├ ƒ /api/violations
+├ ƒ /api/voice-presets
+├ ƒ /api/voice/clone
+├ ƒ /api/voices
+├ ƒ /api/voices/[id]
+├ ƒ /api/webhooks/accesstrade
+├ ƒ /api/webhooks/amazon
+├ ƒ /api/webhooks/awin
+├ ƒ /api/webhooks/clickbank
+├ ƒ /api/webhooks/heygen
+├ ƒ /api/webhooks/nowpayments
+├ ƒ /api/webhooks/nowpayments-payout
+├ ƒ /api/webhooks/overage-billing
+├ ƒ /api/webhooks/payos
+├ ƒ /api/webhooks/stripe-connect
+├ ƒ /api/webhooks/telegram
+├ ƒ /api/webhooks/tiktok-notification
+├ ƒ /api/webhooks/tiktok-shop
+├ ƒ /api/webhooks/youtube-notification
+├ ƒ /api/welcome/milestone
+├ ƒ /api/welcome/resend
+├ ƒ /api/welcome/status
+├ ƒ /api/welcome/validate/[token]
+├ ƒ /auth/callback
+├ ƒ /blog/feed.xml
+├ ƒ /checkout
+├ ƒ /creator
+├ ƒ /creator/listings
+├ ƒ /creator/settings
+├ ƒ /dashboard
+├ ƒ /dashboard/admin/monitoring
+├ ƒ /dashboard/admin/sop-reviews
+├ ƒ /dashboard/admin/sop-reviews/[id]/approve
+├ ƒ /dashboard/admin/sop-reviews/[id]/reject
+├ ƒ /dashboard/ceo-agent
+├ ƒ /dashboard/sop-creator
+├ ƒ /dashboard/sop-creator/[id]
+├ ƒ /dashboard/sop-creator/apply
+├ ƒ /dashboard/sop-creator/new
+├ ○ /investor-room                                                      1h      1y
+├ ƒ /login
+├ ƒ /payments
+├ ƒ /pricing
+├ ƒ /products
+├ ƒ /ref/[code]
+├ ƒ /register
+├ ○ /robots.txt
+├ ƒ /settings
+├ ○ /sitemap.xml
+├ ƒ /subscribers
+└ ƒ /webhook
+
+
+ƒ Proxy (Middleware)
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+> sophia-ai-factory@0.1.5 postbuild
+> bash scripts/upload-symbols.sh
+
+🚀 Uploading source maps for commit 4a3d8a011702943983c30ce45318f7b17266bee7 to R2 bucket 'sophia-symbols'
+📦 Found 1 source maps. Uploading (10 parallel, retry=3)...
+ ✗ attempt 1/3: .open-next/server-functions/default/.next/server/instrumentation.js.map
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mIn a non-interactive environment, it's necessary to set a CLOUDFLARE_API_TOKEN environment variable for wrangler to work. Please go to https://developers.cloudflare.com/fundamentals/api/get-started/create-token/ for instructions on how to create an api token, and assign its value to CLOUDFLARE_API_TOKEN.[0m
+
+
+🪵  Logs were written to "/Users/macbook/.wrangler/logs/wrangler-2026-08-09_19-16-32_918.log"
+ ✗ attempt 2/3: .open-next/server-functions/default/.next/server/instrumentation.js.map
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mIn a non-interactive environment, it's necessary to set a CLOUDFLARE_API_TOKEN environment variable for wrangler to work. Please go to https://developers.cloudflare.com/fundamentals/api/get-started/create-token/ for instructions on how to create an api token, and assign its value to CLOUDFLARE_API_TOKEN.[0m
+
+
+🪵  Logs were written to "/Users/macbook/.wrangler/logs/wrangler-2026-08-09_19-16-35_341.log"
+ ✗ attempt 3/3: .open-next/server-functions/default/.next/server/instrumentation.js.map
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mIn a non-interactive environment, it's necessary to set a CLOUDFLARE_API_TOKEN environment variable for wrangler to work. Please go to https://developers.cloudflare.com/fundamentals/api/get-started/create-token/ for instructions on how to create an api token, and assign its value to CLOUDFLARE_API_TOKEN.[0m
+
+
+🪵  Logs were written to "/Users/macbook/.wrangler/logs/wrangler-2026-08-09_19-16-38_564.log"
+ ✗ FAILED after 3: .open-next/server-functions/default/.next/server/instrumentation.js.map
+
+⚠️ 16 upload(s) failed

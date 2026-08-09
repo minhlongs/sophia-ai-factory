@@ -17,6 +17,7 @@
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getRefundBadgeCap, CREDITS_PER_VIDEO } from '@/seed/db/repositories/campaign-videos-repo';
+import { toError } from '@/seed/utils/to-error';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -64,10 +65,10 @@ export async function enforceRefundBadgeCap(input: WriteRefundBadgeInput): Promi
 	try {
 		capInfo = await getRefundBadgeCap(input.campaignId);
 	} catch (err) {
-		logger.error('[refund-badge-cap] Cap query failed', err as Error, {
+		logger.error('[refund-badge-cap] Cap query failed', toError(err), {
 			campaignId: input.campaignId,
 		});
-		return { kind: 'not_written', reason: `cap query failed: ${String(err)}` };
+		return { kind: 'not_written', reason: `cap query failed: ${toError(err).message}` };
 	}
 
 	const clamped = Math.min(input.requestedCents, capInfo.cap);
@@ -106,10 +107,10 @@ export async function enforceRefundBadgeCap(input: WriteRefundBadgeInput): Promi
 
 		return outcome;
 	} catch (err) {
-		logger.error('[refund-badge-cap] Write failed', err as Error, {
+		logger.error('[refund-badge-cap] Write failed', toError(err), {
 			campaignId: input.campaignId,
 		});
-		return { kind: 'not_written', reason: `write failed: ${String(err)}` };
+		return { kind: 'not_written', reason: `write failed: ${toError(err).message}` };
 	}
 }
 
@@ -159,8 +160,8 @@ export async function recalculateRefundBadgeCap(campaignId: string): Promise<Cap
 
 		return { kind: 'written_clamped', writtenCents: clamped, capInfo };
 	} catch (err) {
-		logger.error('[refund-badge-cap] Recalculation failed', err as Error, { campaignId });
-		return { kind: 'not_written', reason: String(err) };
+		logger.error('[refund-badge-cap] Recalculation failed', toError(err), { campaignId });
+		return { kind: 'not_written', reason: toError(err).message };
 	}
 }
 

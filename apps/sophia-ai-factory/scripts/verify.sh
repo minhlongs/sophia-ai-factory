@@ -33,7 +33,7 @@ echo_success "Type check passed"
 
 # 3. Unit Tests
 echo_step "3. Running Unit Tests..."
-npm run test -- --run
+npm run test
 echo_success "Tests passed"
 
 # 4. Security Audit
@@ -43,7 +43,7 @@ echo_success "Security audit completed"
 
 # 5. Production Build
 echo_step "5. Production Build Verification..."
-npm run build
+SKIP_SENTRY_BUILD=1 SKIP_SYMBOL_UPLOAD=1 npm run build
 echo_success "Build passed"
 
 echo -e "${GREEN}\n✨ ALL SYSTEMS GREEN - READY FOR PRODUCTION ✨${NC}\n"

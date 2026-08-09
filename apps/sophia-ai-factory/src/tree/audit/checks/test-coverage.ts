@@ -15,14 +15,14 @@ interface VitestResult {
  testResults?: Array<{ status: string; numPassingAsserts?: number }>
 }
 
-function readTestResults(): VitestResult | null {
- // Lazy require — fs/path are Node.js builtins that Next.js NFT static tracer
- // cannot resolve when imported at module top-level. require() inside this
+async function readTestResults(): Promise<VitestResult | null> {
+ // Lazy dynamic import — fs/path are Node.js builtins that Next.js NFT static tracer
+ // cannot resolve when imported at module top-level. Dynamic import inside this
  // function means they are only resolved at runtime, after the trace is done.
- // eslint-disable-next-line @typescript-eslint/no-var-requires
- const { existsSync, readFileSync } = require('node:fs') as typeof import('node:fs')
- // eslint-disable-next-line @typescript-eslint/no-var-requires
- const { join } = require('node:path') as typeof import('node:path')
+
+ const { existsSync, readFileSync } = await import("node:fs")
+
+ const { join } = await import("node:path")
 
  const TEST_RESULT_PATHS = [
    join(process.cwd(), 'test-results.json'),
@@ -44,7 +44,7 @@ function readTestResults(): VitestResult | null {
 
 export async function runTestCoverageChecks(_env: AuditEnv): Promise<CheckResult[]> {
  const start = Date.now()
- const results = readTestResults()
+ const results = await readTestResults()
 
  if (!results) {
    return [

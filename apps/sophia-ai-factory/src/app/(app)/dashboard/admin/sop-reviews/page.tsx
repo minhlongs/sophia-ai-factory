@@ -4,6 +4,21 @@ import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 
+interface SopListing {
+  id: string;
+  title: string;
+  sop_template_id: string;
+  creator_name: string;
+  creator_user_id: string;
+  category: string | null;
+  price_cents: number;
+  created_at: number;
+  updated_at: number;
+  install_count: number;
+  rating: number;
+  status: string;
+}
+
 interface PageProps {
   params: Promise<{ locale: string }>;
 }
@@ -68,7 +83,7 @@ async function AdminSOPReviewsContent({ locale, userId }: { locale: string; user
        WHERE sl.status = 'pending_review'
        ORDER BY sl.created_at ASC`
     )
-    .all();
+    .all<SopListing>();
 
   const publishedListings = await d1
     .prepare(
@@ -79,7 +94,7 @@ async function AdminSOPReviewsContent({ locale, userId }: { locale: string; user
        ORDER BY sl.updated_at DESC
        LIMIT 20`
     )
-    .all();
+    .all<SopListing>();
 
   const formatDate = (timestamp: number) => new Date(timestamp * 1000).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US');
   const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
@@ -142,7 +157,7 @@ async function AdminSOPReviewsContent({ locale, userId }: { locale: string; user
                   </tr>
                 </thead>
                 <tbody>
-                  {pendingListings.results.map((listing: any) => (
+                  {pendingListings.results.map((listing: SopListing) => (
                     <tr key={listing.id} className="border-b hover:bg-muted/30">
                       <td className="p-4">
                         <div className="font-medium text-foreground">{listing.title}</div>
@@ -228,7 +243,7 @@ async function AdminSOPReviewsContent({ locale, userId }: { locale: string; user
                   </tr>
                 </thead>
                 <tbody>
-                  {publishedListings.results.map((listing: any) => (
+                  {publishedListings.results.map((listing: SopListing) => (
                     <tr key={listing.id} className="border-b hover:bg-muted/30">
                       <td className="p-4">
                         <div className="font-medium text-foreground">{listing.title}</div>
