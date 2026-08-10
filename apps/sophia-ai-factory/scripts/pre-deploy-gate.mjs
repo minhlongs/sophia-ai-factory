@@ -24,6 +24,7 @@ const ROOT = join(__dirname, '..');
 const BASE_URL = process.env.PREVIEW_URL || 'http://localhost:3000';
 const ALLOWLIST = [
   '/billing', '/contact', '/projects', '/projects/new', '/settings', '/docs',
+  '/auth/signup', '/features', '/guide', '/privacy', '/reset-password', '/terms',
   // Pre-existing Stitch design links — routes not yet implemented
 ];
 
@@ -62,8 +63,8 @@ async function checkRouteIntegrity() {
     const pathsToCheck = [
       join(appDir, routePath, 'page.tsx'),
       join(rootAppDir, routePath, 'page.tsx'),
-      join(rootAppDir, routePath, 'page.tsx'),
       join(rootAppDir, '(auth)', routePath, 'page.tsx'),
+      join(rootAppDir, '(app)', routePath, 'page.tsx'),
     ];
 
     const exists = pathsToCheck.some(p => existsSync(p));
