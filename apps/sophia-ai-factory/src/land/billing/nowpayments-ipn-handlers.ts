@@ -12,6 +12,7 @@ import { dispatchFinished, dispatchRefunded } from './nowpayments-ipn-dispatch'
 import { enqueueDlqEntry, countUnresolvedDlq, type D1LikeClient } from './nowpayments-ipn-dead-letter'
 import { recordDroppedEvent } from './nowpayments-ipn-dropped-events'
 import { type Result } from '@/seed/types/result'
+import { writeDeadLetterToR2, generateDeadLetterKey } from '@/seed/r2/bucket-ops'
 
 export interface NowPaymentsIpnPayload {
   payment_id: string
@@ -40,6 +41,20 @@ export async function processNowPaymentsIpn(
   const { payment_id, payment_status } = ipn
   const eventId = `nowpayments_${payment_id}_${payment_status}`
   const db = getDb()
+
+  // Check D1 availability at function entry - write dead-letter if unavailable
+  if (!db) {
+    await writeDeadLetterToR2(generateDeadLetterKey('nowpayments-ipn', eventId), {
+      webhookType: 'nowpayments-ipn',
+      operation: 'processNowPaymentsIpn',
+      timestamp: new Date().toISOString(),
+      payload: ipn,
+      error: 'D1 binding unavailable at function entry',
+    })
+    logger.error('[NOWPayments IPN Handler] D1 binding unavailable — dead-letter written', { eventId, payment_id, payment_status })
+    return { success: false, message: 'Database temporarily unavailable' }
+  }
+
   const now = new Date().toISOString()
 
   // ── 1. Atomic lock via INSERT ... ON CONFLICT DO NOTHING ──────────────────
@@ -69,22 +84,32 @@ export async function processNowPaymentsIpn(
       return { success: true, message: 'Already processed' }
     }
 
-    // Stale lock recovery (C1+H7 fix 2026-07-01):
-    // DELETE the old lock row and return {success: false} so NOWPayments retries.
-    // The next IPN call will acquire a fresh lock and process normally.
-    // Previous behavior (mark processed=1) destroyed the payment event silently.
+    // Stale lock recovery (C1+H7 fix 2026-07-01, race-condition fix 2026-08-10):
+    // Use atomic UPDATE with WHERE processed = 0 to ensure only ONE process wins
+    // the race to recover the stale lock. processed = 2 means "recovery in progress".
+    // Only the process that gets changes === 1 proceeds to delete and retry.
     const lockAgeMs = Date.now() - new Date(existing.created_at ?? now).getTime()
     if (lockAgeMs > 5 * 60 * 1000) {
-      logger.error('[NOWPayments] Stale lock recovered — re-enqueuing for retry', {
-        eventId, payment_id, payment_status, lockAgeMs,
-      })
-      try {
-        await db
-          .prepare('DELETE FROM payment_events WHERE event_id = ?1')
-          .bind(eventId)
-          .run()
-      } catch (e) { safeCatch('Stale lock delete')(e) }
-      return { success: false, message: 'Stale lock cleared — retry' }
+      const updateResult = await db
+        .prepare('UPDATE payment_events SET processed = 2 WHERE event_id = ?1 AND processed = 0')
+        .bind(eventId)
+        .run()
+
+      if (updateResult.meta?.changes === 1) {
+        // This process won the race - proceed with fresh lock
+        logger.error('[NOWPayments] Stale lock recovered — re-enqueuing for retry', {
+          eventId, payment_id, payment_status, lockAgeMs,
+        })
+        try {
+          await db
+            .prepare('DELETE FROM payment_events WHERE event_id = ?1')
+            .bind(eventId)
+            .run()
+        } catch (e) { safeCatch('Stale lock delete')(e) }
+        return { success: false, message: 'Stale lock recovered — retry' }
+      }
+      // Another process won - back off
+      return { success: false, message: 'Stale lock recovery in progress' }
     }
 
     // Another process is currently handling this event — back off

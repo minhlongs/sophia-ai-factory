@@ -129,11 +129,35 @@ export async function checkD1RateLimit(
       resetAt,
     };
   } catch (err) {
-    logger.error(
-      'D1 rate limit check failed',
-      err instanceof Error ? err : new Error(String(err)),
-    );
-    // Fail-open: allow request on error
+    const error = err instanceof Error ? err : new Error(String(err));
+
+    // Fail-closed on schema/constraint errors (permanent)
+    const permanentPatterns = [
+      /no such table/i,
+      /schema mismatch/i,
+      /no such column/i,
+      /datatype mismatch/i,
+      /UNIQUE constraint/i,
+      /NOT NULL constraint/i,
+      /FOREIGN KEY constraint/i,
+      /syntax error/i,
+    ];
+
+    const isPermanent = permanentPatterns.some((p) => p.test(error.message));
+
+    if (isPermanent) {
+      logger.error('D1 rate limit: PERMANENT ERROR - failing closed', {
+        error: error.message,
+      });
+      return {
+        allowed: false,
+        remaining: 0,
+        resetAt: Math.floor(Date.now() / 1000) + config.windowSeconds,
+      };
+    }
+
+    // Transient error (network, timeout) - fail open
+    logger.error('D1 rate limit check failed (transient), failing open', error);
     return {
       allowed: true,
       remaining: config.maxRequests,

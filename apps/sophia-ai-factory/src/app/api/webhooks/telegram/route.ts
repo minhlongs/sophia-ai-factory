@@ -50,6 +50,8 @@ import {
   revokePairing,
 } from '@/tree/telegram/pairing'
 import { consumePairingToken } from '@/tree/telegram/pairing-token-service'
+import { writeDeadLetterToR2, generateDeadLetterKey } from '@/seed/r2/bucket-ops'
+import { logger } from '@/seed/utils/logger-utility'
 
 interface TelegramUpdate {
   callback_query?: {
@@ -81,27 +83,45 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
+  // Parse body early for dead-letter capture
+  let body: TelegramUpdate
   try {
-    const body = (await request.json().catch(() => ({}))) as TelegramUpdate
+    body = (await request.json().catch(() => ({}))) as TelegramUpdate
+  } catch {
+    body = {} as TelegramUpdate
+  }
 
-    // M8 fix: webhook secret mandatory in production; only optional in dev
-    const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET
-    const isDev = process.env.NODE_ENV === 'development'
-    if (isDev && !webhookSecret) {
-      // Dev without secret — warn and allow
-      const { logger } = await import('@/seed/utils/logger-utility')
-      logger.warn('[telegram-webhook] TELEGRAM_WEBHOOK_SECRET not set — accepting all requests (dev only)')
-    } else if (!webhookSecret) {
-      // Production without secret — reject
-      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
-    } else {
-      const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
-      if (token !== webhookSecret) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
+  // TELEGRAM_WEBHOOK_SECRET is mandatory in ALL environments.
+  // For local development only, use TELEGRAM_WEBHOOK_SECRET_DEV (not for production).
+  // Production MUST set TELEGRAM_WEBHOOK_SECRET.
+  const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET
+  if (!webhookSecret) {
+    const { logger } = await import('@/seed/utils/logger-utility')
+    logger.error('[telegram-webhook] TELEGRAM_WEBHOOK_SECRET not configured')
+    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
+  }
+  const token = request.headers.get('X-Telegram-Bot-Api-Secret-Token')
+  if (token !== webhookSecret) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Helper to get DB or write dead-letter and return 503
+  async function getDbOrDeadLetter(operation: string, eventId: string): Promise<ReturnType<typeof tryCreateServerClient>> {
+    const db = tryCreateServerClient()
+    if (!db) {
+      await writeDeadLetterToR2(generateDeadLetterKey('telegram', eventId), {
+        webhookType: 'telegram',
+        operation,
+        timestamp: new Date().toISOString(),
+        payload: body,
+        error: 'D1 binding unavailable',
+      })
+      logger.error('[telegram-webhook] D1 unavailable — dead-letter written', { operation, eventId })
     }
+    return db
+  }
 
-    // Handle callback queries (inline keyboard button clicks)
+  try {
     if (body.callback_query) {
       const chatId = body.callback_query.message?.chat?.id?.toString()
       const callbackData = body.callback_query.data
@@ -136,8 +156,8 @@ export async function POST(request: NextRequest) {
           await sendTelegramMessage(chatId, 'Usage: /pair\\_approve <CODE>')
           return NextResponse.json({ ok: true })
         }
-        const db = tryCreateServerClient()
-  if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
+        const db = await getDbOrDeadLetter('pair_approve', `pair_approve_${code}`)
+        if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
         const result = await approvePairing(db, code, chatId)
         if (!result) {
           await sendTelegramMessage(chatId, 'Code not found or expired.')
@@ -149,8 +169,8 @@ export async function POST(request: NextRequest) {
       }
 
       if (text === '/pair_list') {
-        const db = tryCreateServerClient()
-  if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
+        const db = await getDbOrDeadLetter('pair_list', `pair_list_${chatId}`)
+        if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
         const rows = await listPaired(db)
         if (rows.length === 0) {
           await sendTelegramMessage(chatId, 'No paired chats.')
@@ -169,8 +189,8 @@ export async function POST(request: NextRequest) {
           await sendTelegramMessage(chatId, 'Usage: /pair\\_revoke <CHAT\\_ID>')
           return NextResponse.json({ ok: true })
         }
-        const db = tryCreateServerClient()
-  if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
+        const db = await getDbOrDeadLetter('pair_revoke', `pair_revoke_${targetId}`)
+        if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
         const removed = await revokePairing(db, targetId)
         await sendTelegramMessage(
           chatId,
@@ -201,12 +221,12 @@ export async function POST(request: NextRequest) {
    text === '/start' ? null : text.startsWith('/start ') ? text.slice(7).trim() : null
 
  if (pairingToken) {
-   const db = tryCreateServerClient()
-  if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
+   const db = await getDbOrDeadLetter('consume_pairing_token', `pairing_token_${pairingToken.slice(0, 50)}`)
+   if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
    const result = await consumePairingToken(db, pairingToken)
    if (result) {
-     const db2 = tryCreateServerClient()
-  if (!db2) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
+     const db2 = await getDbOrDeadLetter('pairing_token_upsert', `pairing_token_upsert_${chatId}`)
+     if (!db2) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
      await db2.from('telegram_paired_chats').upsert({
        chat_id: chatId,
        first_name: firstName || null,
@@ -232,8 +252,8 @@ export async function POST(request: NextRequest) {
     // Skip gate for admin, public commands, and when TELEGRAM_ADMIN_CHAT_ID is
     // not set (open mode).
     if (adminChatId && chatId !== adminChatId && !isPublicCommand && !pairingToken) {
-      const db = tryCreateServerClient()
-  if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
+      const db = await getDbOrDeadLetter('dm_pairing_gate', `dm_gate_${chatId}`)
+      if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
       const allowed = await isAllowed(db, chatId)
       if (!allowed) {
         const { code } = await requestPairing(db, chatId, firstName)

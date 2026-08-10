@@ -15,6 +15,7 @@ import { D1Events } from '@/tree/signals/d1-event-types'
 import { emit } from '@/land/webhooks/emitter'
 import { resolveUserTier } from '@/seed/db/resolve-user-tier'
 import { getD1 } from '@/seed/db/client'
+import { writeDeadLetterToR2, generateDeadLetterKey } from '@/seed/r2/bucket-ops'
 
 function getCloudflareEnv(): Record<string, unknown> | null {
   try {
@@ -164,13 +165,27 @@ track(D1Events.PAYMENT_SUCCESS, 'webhook', { amount_usd: ipn.price_amount, curre
 // resolveUserTier can throw if D1 binding unavailable in webhook context — guard it
 let fromTier: string = 'unknown'
 try {
-fromTier = await resolveUserTier(userId)
+  // Check D1 availability before calling resolveUserTier
+  const d1Check = getD1()
+  if (!d1Check) {
+    await writeDeadLetterToR2(generateDeadLetterKey('nowpayments', `resolve_tier_${ipn.payment_id}`), {
+      webhookType: 'nowpayments',
+      operation: 'resolveUserTier',
+      timestamp: new Date().toISOString(),
+      payload: ipn,
+      error: 'D1 binding unavailable',
+      userId,
+    })
+    logger.warn('[NOWPayments Webhook] D1 unavailable — resolveUserTier skipped, dead-letter written', { paymentId: ipn.payment_id })
+  } else {
+    fromTier = await resolveUserTier(userId)
+  }
 } catch (tierErr) {
 logger.warn('[NOWPayments Webhook] resolveUserTier failed, using fallback', tierErr instanceof Error ? tierErr : new Error(String(tierErr)))
 }
 track(D1Events.TIER_CONVERSION, userId, { from_tier: fromTier, to_tier: tierName, amount_usd: ipn.price_amount, provider: 'nowpayments' }, userId)
 
-// Emit outbound webhook event (fire-and-forget)
+// Emit outbound webhook event (fire-and-forget) — guard D1 availability
 const db = getD1();
 if (db) {
 emit({ DB: db }, 'payment.received', {
@@ -180,6 +195,23 @@ tier: tierName,
 paymentId: ipn.payment_id,
 paidAt: new Date().toISOString(),
 }, userId);
+} else {
+  // D1 unavailable — write dead-letter for the emission
+  await writeDeadLetterToR2(generateDeadLetterKey('nowpayments', `emit_${ipn.payment_id}`), {
+    webhookType: 'nowpayments',
+    operation: 'emit_payment_received',
+    timestamp: new Date().toISOString(),
+    payload: {
+      tenantId: userId,
+      amountUsd: ipn.price_amount,
+      tier: tierName,
+      paymentId: ipn.payment_id,
+      paidAt: new Date().toISOString(),
+    },
+    error: 'D1 binding unavailable',
+    userId,
+  })
+  logger.warn('[NOWPayments Webhook] D1 unavailable — emit skipped, dead-letter written', { paymentId: ipn.payment_id })
 }
 }
 

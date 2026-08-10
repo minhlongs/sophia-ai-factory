@@ -15,6 +15,7 @@ import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { validateProviderKey, sanitizeCredential } from '@/tree/byok/key-format-validators';
 import type { ValidatorProvider } from '@/tree/byok/key-format-validators';
+import { verifyCsrfToken } from '@/seed/security/csrf';
 
 const setupSaveSchema = z
   .object({
@@ -70,6 +71,15 @@ export async function POST(request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+  }
+
+  // Defense-in-depth: explicit CSRF verification even though middleware checks it
+  // This ensures protection if middleware is bypassed or misconfigured
+  if (!verifyCsrfToken(request)) {
+    return NextResponse.json(
+      { success: false, message: 'Invalid CSRF token' },
+      { status: 403 }
+    );
   }
 
   try {

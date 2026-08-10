@@ -67,6 +67,14 @@ function buildMockDb() {
               })
               return { meta: { changes: 1 } } // lock acquired
             }
+            if (sql.includes('UPDATE payment_events SET processed = 2')) {
+              const row = mockDbEvents.get(eventId)
+              if (row && row.processed === 0) {
+                row.processed = 2
+                return { meta: { changes: 1 } } // won the race
+              }
+              return { meta: { changes: 0 } } // lost the race
+            }
             if (sql.includes('UPDATE payment_events')) {
               const row = mockDbEvents.get(eventId)
               if (row) row.processed = 1
@@ -221,7 +229,7 @@ describe('IPN TOCTOU Contract Tests', () => {
       const result = await processNowPaymentsIpn(ipn)
       // C1 fix: stale lock now returns false so NOWPayments retries
       expect(result.success).toBe(false)
-      expect(result.message).toBe('Stale lock cleared — retry')
+      expect(result.message).toBe('Stale lock recovered — retry')
 
       // C1 fix: lock is DELETED (not marked processed) so retry succeeds
       const row = mockDbEvents.get(eventId)

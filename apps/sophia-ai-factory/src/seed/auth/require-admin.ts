@@ -63,9 +63,18 @@ export async function requireRecentAuth(
   request: NextRequest | Request,
   maxAgeMs = 5 * 60 * 1000,
 ): Promise<RecentAuthResult> {
-  const secret = process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET;
+  const secret = process.env.ADMIN_CHALLENGE_SECRET || process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET;
   if (!secret) {
     return { ok: false, reason: 'invalid' };
+  }
+
+  if (!process.env.ADMIN_CHALLENGE_SECRET && (process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET)) {
+    // Log deprecation warning once per isolate
+    const globalWithFlag = globalThis as typeof globalThis & { _adminChallengeSecretWarned?: boolean };
+    if (!globalWithFlag._adminChallengeSecretWarned) {
+      logger.warn('[require-admin] ADMIN_CHALLENGE_SECRET not set — falling back to BETTER_AUTH_SECRET/JWT_SECRET. Set dedicated secret for key separation.');
+      globalWithFlag._adminChallengeSecretWarned = true;
+    }
   }
 
   const cookieHeader = request.headers

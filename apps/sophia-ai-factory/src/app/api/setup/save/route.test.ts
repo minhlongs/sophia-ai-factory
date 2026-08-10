@@ -11,6 +11,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
+vi.mock('@/seed/security/csrf', () => ({
+  verifyCsrfToken: vi.fn().mockReturnValue(true),
+  CSRF_COOKIE_NAME: 'csrf-token',
+}));
+
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
@@ -31,24 +36,36 @@ vi.mock('@/tree/byok/user-api-key-store', () => ({
 import { POST } from './route';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { setUserApiKey } from '@/tree/byok/user-api-key-store';
+import { verifyCsrfToken } from '@/seed/security/csrf';
 
 const mockGetCurrentUser = vi.mocked(getCurrentUser);
 const mockSetUserApiKey = vi.mocked(setUserApiKey);
+const mockVerifyCsrfToken = vi.mocked(verifyCsrfToken);
 
 const MOCK_USER = { id: 'user-1', email: 'test@example.com', name: 'Test' };
 
+const CSRF_TOKEN = 'test-csrf-token-1234567890abcdef';
+
 function makeRequest(body?: unknown): NextRequest {
-  return new NextRequest('http://localhost/api/setup/save', {
+  const req = new NextRequest('http://localhost/api/setup/save', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'cookie': `csrf-token=${CSRF_TOKEN}`,
+      'x-csrf-token': CSRF_TOKEN
+    },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
+  // Manually set the cookie for NextRequest.cookies getter (works in test env)
+  req.cookies.set('csrf-token', CSRF_TOKEN);
+  return req;
 }
 
 describe('POST /api/setup/save', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Restore default mock implementations after clearAllMocks
+    mockVerifyCsrfToken.mockReturnValue(true);
     mockSetUserApiKey.mockResolvedValue(undefined);
   });
 
