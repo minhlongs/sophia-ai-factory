@@ -61,15 +61,16 @@ const BARE_AUTH_APP_ROUTES = new Set([
   }
 
   // E2E/SEO compatibility: tests and legacy links use /vi/login, /en/pricing etc
-  // but routes are defined without [locale]. Redirect prefixed to canonical bare path.
-  if (pathLocale && isSupportedLocale(pathLocale)) {
-    const bare = pathname.replace(/^\/(en|vi)/, '') || '/';
-    const url = request.nextUrl.clone();
-    url.pathname = bare;
-    if (url.pathname !== pathname) {
-      return NextResponse.redirect(url, 308);
-    }
-  }
+  // but routes are defined WITH [locale] prefix. Keep locale prefix in path.
+  // This block is intentionally disabled - locale prefix is required for routing.
+  // if (pathLocale && isSupportedLocale(pathLocale)) {
+  //   const bare = pathname.replace(/^\/(en|vi)/, '') || '/';
+  //   const url = request.nextUrl.clone();
+  //   url.pathname = bare;
+  //   if (url.pathname !== pathname) {
+  //     return NextResponse.redirect(url, 308);
+  //   }
+  // }
 
   // ?tab=signup redirect — runs before ISR cache
   const { searchParams: sp } = request.nextUrl;
