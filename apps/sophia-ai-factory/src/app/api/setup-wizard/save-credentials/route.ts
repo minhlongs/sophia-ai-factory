@@ -28,6 +28,7 @@ const saveCredentialsSchema = z.object({
   resend_api_key: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
   nowpayments_api_key: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
   nowpayments_ipn_secret: z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().optional()),
+  routing_strategy: z.enum(['priority', 'costOptimized', 'leastUsed']).optional(),
 })
 
 export async function POST(request: NextRequest) {
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
     heygen_webhook_secret,
     resend_api_key,
     nowpayments_api_key,
+    routing_strategy,
   } = parsed.data
 
   const saves: Array<{ provider: ProviderType; key: string }> = []
@@ -119,8 +121,8 @@ export async function POST(request: NextRequest) {
     const db = _db;
     const nowMs = Date.now()
     await db
-      .prepare('UPDATE user_profiles SET onboarding_completed_at = ? WHERE user_id = ?')
-      .bind(nowMs, user.id)
+      .prepare('UPDATE user_profiles SET onboarding_completed_at = ?, settings = json_set(COALESCE(settings, \'{}\'), \'$.routing_strategy\', ?1) WHERE user_id = ?2')
+      .bind(routing_strategy ?? 'priority', nowMs, user.id)
       .run()
 
     // E2 setup-complete lifecycle email — fire ONCE per user (lifecycle_email_log dedup).

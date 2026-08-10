@@ -136,7 +136,8 @@
       "sections": {
         "llmKeys": "AI/LLM Keys",
         "mediaKeys": "Voice & Avatar Keys",
-        "providerKeys": "Provider Credentials"
+        "providerKeys": "Provider Credentials",
+        "routingStrategy": "Routing Strategy"
       },
       "keys": {
         "openrouter": "OpenRouter",
@@ -151,6 +152,24 @@
         "heygenWebhook": "HeyGen Webhook",
         "resend": "Resend",
         "nowpayments": "NOWPayments"
+      },
+      "routingStrategy": {
+        "title": "Routing Strategy",
+        "subtitle": "Choose how Sophia selects AI providers for your video generation tasks.",
+        "label": "Default Strategy",
+        "help": "This setting applies to all video tasks (scripting, voice, visual, compose). You can change it anytime in Settings.",
+        "priority": {
+          "label": "Priority (Default)",
+          "description": "Uses the recommended provider order for each task. Best for reliability and quality."
+        },
+        "costOptimized": {
+          "label": "Cost Optimized",
+          "description": "Selects the cheapest available provider for each task. Best for minimizing costs."
+        },
+        "leastUsed": {
+          "label": "Least Used",
+          "description": "Balances load across providers by picking the least recently used. Best for high-volume workflows."
+        }
       },
       "securityNote": "Your API keys will be encrypted using AES-256 before storage. You can update them anytime in Settings.",
       "actions": {

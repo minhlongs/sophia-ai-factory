@@ -15,6 +15,7 @@ export const notificationsSchema = z.object({
 export const settingsSchema = z.object({
   theme: z.enum(['light', 'dark', 'system']).default('system'),
   notifications: notificationsSchema.optional(),
+  routing_strategy: z.enum(['priority', 'costOptimized', 'leastUsed']).optional(),
 });
 
 // API Keys Schema — BYOK (Bring Your Own Key)

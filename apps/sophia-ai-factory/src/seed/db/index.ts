@@ -18,6 +18,7 @@ export * from './d1-query-utilities';
 export * from './get-d1';
 export * from './get-user-channels';
 export * from './get-user-credits';
+export * from './get-user-routing-strategy';
 export * from './get-user-tier';
 export * from './insert-typed';
 export * from './local-d1-mock';

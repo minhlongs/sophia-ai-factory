@@ -15,6 +15,7 @@
 import React from 'react'
 import { ApiKeyInput } from '@/tree/components/setup-wizard/api-key-input'
 import { ByokHelpTip } from '@/components/onboarding/byok-help-tip'
+import { useTranslations } from 'next-intl'
 import type { CredentialSummary } from '@/tree/credentials/user-credentials-repo'
 
 export interface ProviderConfig {
@@ -22,6 +23,7 @@ export interface ProviderConfig {
   RESEND_API_KEY: string
   NOWPAYMENTS_API_KEY: string
   HEYGEN_WEBHOOK_SECRET: string
+  ROUTING_STRATEGY: 'priority' | 'costOptimized' | 'leastUsed'
 }
 
 interface ProviderCredentialsStepProps {
@@ -53,6 +55,8 @@ export function ProviderCredentialsStep({
   savedCredentials,
   latencies,
 }: ProviderCredentialsStepProps) {
+  const tProviders = useTranslations('setupWizard.providers')
+  const tRouting = useTranslations('setupWizard.routingStrategy')
   const getSaved = (provider: string) =>
     savedCredentials.find((c) => c.provider === provider) ?? null
 
@@ -173,6 +177,41 @@ export function ProviderCredentialsStep({
         />
         <ByokHelpTip provider="nowpayments" />
         <SavedHint hint={getSaved('nowpayments')?.display_hint ?? null} />
+      </div>
+
+      {/* Routing Strategy Selector */}
+      <div className="space-y-2 pt-4 border-t">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold uppercase tracking-wider bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+            {tRouting('label')}
+          </span>
+        </div>
+        <p className="text-sm text-muted-foreground">{tRouting('help')}</p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {(['priority', 'costOptimized', 'leastUsed'] as const).map((strategy) => (
+            <label
+              key={strategy}
+              className={`cursor-pointer p-3 rounded-lg border-2 transition-all ${
+                config.ROUTING_STRATEGY === strategy
+                  ? 'border-primary bg-primary/5'
+                  : 'border-muted-200 hover:border-muted-300'
+              }`}
+            >
+              <input
+                type="radio"
+                name="routingStrategy"
+                value={strategy}
+                checked={config.ROUTING_STRATEGY === strategy}
+                onChange={() => updateConfig('ROUTING_STRATEGY', strategy)}
+                className="sr-only"
+              />
+              <div className="font-medium">{tRouting(`${strategy}.label`)}</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                {tRouting(`${strategy}.description`)}
+              </div>
+            </label>
+          ))}
+        </div>
       </div>
     </div>
   )

@@ -35,6 +35,11 @@ import { CheckpointService } from '@/forest/pipeline';
 import { captureServer } from '@/tree/signals/posthog-capture';
 import { Events } from '@/tree/signals/event-types';
 import type { VideoGenerateRequestedEvent, ProviderVideoJobStatus } from '@/land/video/templates/types';
+import { getUserTier } from '@/seed/db/get-user-tier';
+import { getUserRoutingStrategy, getDefaultStrategyForTier } from '@/seed/db/get-user-routing-strategy';
+import { buildProviderPool } from '@/forest/quota/provider-pool';
+import { selectWithStrategy, NoProvidersAvailableError } from '@/forest/quota/routing-strategy';
+import type { VideoTaskType, RoutingContext } from '@/seed/config/routing-strategies';
 
 /** Progress payload emitted via inngest.send for SSE streaming */
 interface ProgressPayload {
@@ -171,10 +176,55 @@ export const videoGenerate = inngest.createFunction(
       research_brief: { prompt, voiceoverText, language },
     });
 
-    // ── Step 2: Generate TTS ───────────────────────────────────────────────
+    // ── Strategy Resolution: Determine routing strategy for this user ──────────
+    const routingStrategy = await step.run('resolve-routing-strategy', async () => {
+      // First try user's explicit preference from profile
+      const userStrategy = await getUserRoutingStrategy(userId);
+      if (userStrategy) return userStrategy;
+
+      // Fall back to tier default
+      const tier = await getUserTier(userId);
+      return getDefaultStrategyForTier(tier);
+    }) as string; // StrategyName is guaranteed non-null after fallback
+
+    // ── Step 2: Generate TTS (with routing strategy) ─────────────────────────
     const audioR2Key = `video-jobs/${missionId}/audio.mp3`;
 
     const audioDurationSec = await step.run('generate-tts', async () => {
+      // Try to select TTS provider via routing strategy
+      const ttsContext: RoutingContext = { taskType: 'tts', estimatedInputTokens: voiceoverText.length };
+      const ttsPool = await buildProviderPool(userId, ttsContext);
+
+      // Handle empty pool gracefully - fall back to Fish Speech
+      let ttsDecision: { provider: string; strategy: string } | null = null;
+      if (ttsPool.length > 0) {
+        try {
+          const decision = selectWithStrategy(ttsPool, ttsContext, routingStrategy);
+          ttsDecision = { provider: decision.provider, strategy: decision.strategy };
+        } catch (err) {
+          if (err instanceof NoProvidersAvailableError) {
+            logger.info('[videoGenerate] No TTS providers available, falling back to Fish Speech', { strategy: routingStrategy });
+            await emitProgress(missionId, 'tts', 0, 'Không có nhà cung cấp TTS nào / No TTS providers available — using Fish Speech fallback');
+          } else {
+            throw err;
+          }
+        }
+      } else {
+        logger.info('[videoGenerate] TTS provider pool empty, falling back to Fish Speech', { strategy: routingStrategy });
+      }
+
+      // If a supported TTS provider is selected and has a key, use it
+      const hasElevenLabsKey = ttsPool.find(c => c.provider === 'elevenlabs')?.hasUserKey;
+      if (ttsDecision?.provider === 'elevenlabs' && hasElevenLabsKey) {
+        // TODO: Implement ElevenLabs TTS client when available
+        // For now, fall through to Fish Speech (current behavior)
+        logger.info('[videoGenerate] ElevenLabs selected by strategy but not implemented yet — falling back to Fish Speech', {
+          strategy: routingStrategy,
+          provider: ttsDecision.provider,
+        });
+      }
+
+      // Fish Speech (current behavior, preserved as fallback)
       const ttsClient = getFishSpeechClient();
       const { audioUrl, durationSec } = await ttsClient.generateSpeech({
         text: voiceoverText,
@@ -184,7 +234,7 @@ export const videoGenerate = inngest.createFunction(
       const audioBuffer = await downloadToBuffer(audioUrl);
       await uploadBufferToR2(audioR2Key, audioBuffer, 'audio/mpeg');
 
-      logger.info('[videoGenerate] Audio uploaded to R2', { audioR2Key, durationSec });
+      logger.info('[videoGenerate] Audio uploaded to R2', { audioR2Key, durationSec, strategy: routingStrategy, ttsProvider: ttsDecision?.provider ?? 'fish-speech' });
       return durationSec;
     });
 
@@ -225,15 +275,60 @@ export const videoGenerate = inngest.createFunction(
       metadata: { wanJobId },
     });
 
-    // ── Step 4: Poll Until Video Ready ────────────────────────────────────
+    // ── Step 4: Poll Until Video Ready (with routing strategy for visual) ─────
+    // Try to select visual provider via routing strategy
     let finalVideoUrl: string | undefined;
+    let selectedVisualProvider: string | undefined;
 
+    // First, check if strategy selects a supported visual provider (HeyGen/D-ID)
+    const visualContext: RoutingContext = { taskType: 'visual', estimatedInputTokens: prompt.length };
+    const visualPool = await buildProviderPool(userId, visualContext);
+
+    // Handle empty pool gracefully
+    let visualDecision: { provider: string; strategy: string } | null = null;
+    if (visualPool.length > 0) {
+      try {
+        const decision = selectWithStrategy(visualPool, visualContext, routingStrategy);
+        visualDecision = { provider: decision.provider, strategy: decision.strategy };
+        selectedVisualProvider = visualDecision.provider;
+      } catch (err) {
+        if (err instanceof NoProvidersAvailableError) {
+          logger.info('[videoGenerate] No visual providers available, falling back to Wan Video', { strategy: routingStrategy });
+          await emitProgress(missionId, 'visual', 0, 'Không có nhà cung cấp video nào / No visual providers available — using Wan Video fallback');
+        } else {
+          throw err;
+        }
+      }
+    } else {
+      logger.info('[videoGenerate] Visual provider pool empty, falling back to Wan Video', { strategy: routingStrategy });
+    }
+
+    // If HeyGen or D-ID is selected and has a key, use it (when implemented)
+    const hasHeyGenKey = visualPool.find(c => c.provider === 'heygen')?.hasUserKey;
+    const hasDidKey = visualPool.find(c => c.provider === 'd-id')?.hasUserKey;
+
+    if (visualDecision && ((visualDecision.provider === 'heygen' && hasHeyGenKey) || (visualDecision.provider === 'd-id' && hasDidKey))) {
+      // TODO: Implement HeyGen/D-ID visual generation client when available
+      // For now, fall through to Wan Video (current behavior)
+      logger.info('[videoGenerate] Visual provider selected by strategy but not implemented yet — falling back to Wan Video', {
+        strategy: routingStrategy,
+        provider: selectedVisualProvider,
+        hasHeyGenKey,
+        hasDidKey,
+      });
+    }
+
+    // Wan Video (current behavior, preserved as fallback)
+    const wanClient = getWanClient();
+    const submitResult = await wanClient.generateVideo({ prompt, duration: 5 });
+    const wanJobId2 = submitResult.jobId;
+
+    // Poll Wan Video until ready
     for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
       await step.sleep(`poll-wait-${attempt}`, POLL_INTERVAL_MS);
 
       const statusResult = await step.run(`poll-video-status-${attempt}`, async () => {
-        const wanClient = getWanClient();
-        return wanClient.getJobStatus(wanJobId);
+        return wanClient.getJobStatus(wanJobId2);
       }) as ProviderVideoJobStatus;
 
       if (statusResult.status === 'succeeded' && statusResult.videoUrl) {
@@ -244,7 +339,7 @@ export const videoGenerate = inngest.createFunction(
         await emitProgress(missionId, 'error', 0, `Lỗi tạo video / Video generation failed: ${statusResult.status}`);
         await writeStageCheckpoint(missionId, 'poll_video_ready', 'failed', tenantId, {}, statusResult.status);
         throw new Error(
-          `[videoGenerate] Wan job ${wanJobId} ended with status: ${statusResult.status} — ${statusResult.error ?? ''}`,
+          `[videoGenerate] Wan job ${wanJobId2} ended with status: ${statusResult.status} — ${statusResult.error ?? ''}`,
         );
       }
     }
@@ -252,7 +347,7 @@ export const videoGenerate = inngest.createFunction(
     if (!finalVideoUrl) {
       await emitProgress(missionId, 'error', 0, `Hết thời gian chờ / Video generation timed out after ${POLL_MAX_ATTEMPTS} polls`);
       await writeStageCheckpoint(missionId, 'poll_video_ready', 'failed', tenantId, {}, 'timeout');
-      throw new Error(`[videoGenerate] Wan job ${wanJobId} did not complete after ${POLL_MAX_ATTEMPTS} polls`);
+      throw new Error(`[videoGenerate] Wan job ${wanJobId2} did not complete after ${POLL_MAX_ATTEMPTS} polls`);
     }
 
     // Checkpoint: poll-video-ready succeeded
@@ -265,7 +360,7 @@ export const videoGenerate = inngest.createFunction(
           { type: 'video', r2Key: '', mimeType: 'video/mp4' },
         ],
       },
-      metadata: { wanJobId, finalVideoUrl },
+      metadata: { wanJobId: wanJobId2, finalVideoUrl },
     });
 
     // Emit: video generation complete (40%)

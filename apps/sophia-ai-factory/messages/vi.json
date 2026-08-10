@@ -136,7 +136,8 @@
       "sections": {
         "llmKeys": "Khóa AI/LLM",
         "mediaKeys": "Khóa Giọng Nói & Avatar",
-        "providerKeys": "Thông Tin Nhà Cung Cấp"
+        "providerKeys": "Thông Tin Nhà Cung Cấp",
+        "routingStrategy": "Chiến Lược Định Tuyến"
       },
       "keys": {
         "openrouter": "OpenRouter",
@@ -151,6 +152,24 @@
         "heygenWebhook": "HeyGen Webhook",
         "resend": "Resend",
         "nowpayments": "NOWPayments"
+      },
+      "routingStrategy": {
+        "title": "Chiến Lược Định Tuyến",
+        "subtitle": "Chọn cách Sophia lựa chọn nhà cung cấp AI cho các tác vụ tạo video của bạn.",
+        "label": "Chiến Lược Mặc Định",
+        "help": "Cài đặt này áp dụng cho tất cả các tác vụ video (kịch bản, giọng nói, hình ảnh, biên soạn). Bạn có thể thay đổi bất kỳ lúc nào trong Cài đặt.",
+        "priority": {
+          "label": "Ưu Tiên (Mặc Định)",
+          "description": "Sử dụng thứ tự nhà cung cấp được khuyến nghị cho mỗi tác vụ. Tốt nhất cho độ tin cậy và chất lượng."
+        },
+        "costOptimized": {
+          "label": "Tối Ưu Chi Phí",
+          "description": "Chọn nhà cung cấp rẻ nhất cho mỗi tác vụ. Tốt nhất để giảm thiểu chi phí."
+        },
+        "leastUsed": {
+          "label": "Ít Sử Dụng Nhất",
+          "description": "Cân bằng tải qua các nhà cung cấp bằng cách chọn nhà cung cấp ít được dùng gần đây nhất. Tốt nhất cho quy trình khối lượng lớn."
+        }
       },
       "securityNote": "API keys của bạn sẽ được mã hóa AES-256 trước khi lưu trữ. Bạn có thể cập nhật chúng bất kỳ lúc nào trong Cài đặt.",
       "actions": {

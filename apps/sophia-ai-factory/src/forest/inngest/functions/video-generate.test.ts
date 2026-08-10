@@ -14,6 +14,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// ── Mock fetch globally for downloadToBuffer ───────────────────────────────────
+const mockFetch = vi.fn();
+globalThis.fetch = mockFetch;
+
 // ── Hoisted mock functions (safe for use in vi.mock factories) ────────────────
 
 const {
@@ -28,6 +32,11 @@ const {
   mockGenerateSubtitles,
   mockComposeFinalVideo,
   mockInngestSend,
+  mockGetUserTier,
+  mockGetUserRoutingStrategy,
+  mockGetDefaultStrategyForTier,
+  mockBuildProviderPool,
+  mockSelectWithStrategy,
 } = vi.hoisted(() => ({
   mockGenerateSpeech: vi.fn(),
   mockGenerateVideo: vi.fn(),
@@ -40,6 +49,14 @@ const {
   mockGenerateSubtitles: vi.fn(),
   mockComposeFinalVideo: vi.fn(),
   mockInngestSend: vi.fn().mockResolvedValue(undefined),
+  mockGetUserTier: vi.fn().mockResolvedValue('PREMIUM'),
+  mockGetUserRoutingStrategy: vi.fn().mockResolvedValue(null),
+  mockGetDefaultStrategyForTier: vi.fn().mockReturnValue('cost-optimized'),
+  mockBuildProviderPool: vi.fn().mockResolvedValue([
+    { provider: 'elevenlabs', model: 'elevenlabs-multilingual-v2', hasUserKey: false, costPerUnit: 0.0003, healthScore: 1, quotaRemaining: 100, usageCount: 0, estimatedCost: 0.1 },
+    { provider: 'openrouter', model: 'openai/gpt-4o-mini', hasUserKey: false, costPerUnit: 0.002, healthScore: 1, quotaRemaining: 100, usageCount: 0, estimatedCost: 0.2 },
+  ]),
+  mockSelectWithStrategy: vi.fn().mockReturnValue({ provider: 'elevenlabs', model: 'elevenlabs-multilingual-v2', strategy: 'cost-optimized', reason: 'test', candidatesConsidered: 2 }),
 }));
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
@@ -59,6 +76,23 @@ vi.mock('@/land/video/storage/r2-binding', () => ({
 vi.mock('@/land/video/templates/cost-ledger', () => ({ recordCost: mockRecordCost }));
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}));
+
+vi.mock('@/seed/db/get-user-tier', () => ({
+  getUserTier: mockGetUserTier,
+}));
+
+vi.mock('@/seed/db/get-user-routing-strategy', () => ({
+  getUserRoutingStrategy: mockGetUserRoutingStrategy,
+  getDefaultStrategyForTier: mockGetDefaultStrategyForTier,
+}));
+
+vi.mock('@/forest/quota/provider-pool', () => ({
+  buildProviderPool: mockBuildProviderPool,
+}));
+
+vi.mock('@/forest/quota/routing-strategy', () => ({
+  selectWithStrategy: mockSelectWithStrategy,
 }));
 
 vi.mock('@/land/video/generation/wan21-client', () => {
@@ -132,6 +166,21 @@ describe('videoGenerate Inngest function', () => {
     mockGenerateSubtitles.mockReset();
     mockComposeFinalVideo.mockReset();
     mockInngestSend.mockReset();
+    mockGetUserTier.mockReset();
+    mockGetUserRoutingStrategy.mockReset();
+    mockGetDefaultStrategyForTier.mockReset();
+    mockBuildProviderPool.mockReset();
+    mockSelectWithStrategy.mockReset();
+    mockFetch.mockReset();
+
+    mockGetUserTier.mockResolvedValue('PREMIUM');
+    mockGetUserRoutingStrategy.mockResolvedValue(null);
+    mockGetDefaultStrategyForTier.mockReturnValue('cost-optimized');
+    mockBuildProviderPool.mockResolvedValue([
+      { provider: 'elevenlabs', model: 'elevenlabs-multilingual-v2', hasUserKey: false, costPerUnit: 0.0003, healthScore: 1, quotaRemaining: 100, usageCount: 0, estimatedCost: 0.1 },
+      { provider: 'openrouter', model: 'openai/gpt-4o-mini', hasUserKey: false, costPerUnit: 0.002, healthScore: 1, quotaRemaining: 100, usageCount: 0, estimatedCost: 0.2 },
+    ]);
+    mockSelectWithStrategy.mockReturnValue({ provider: 'elevenlabs', model: 'elevenlabs-multilingual-v2', strategy: 'cost-optimized', reason: 'test', candidatesConsidered: 2 });
 
     mockGetBrandKit.mockResolvedValue(null);
     mockGenerateSubtitles.mockResolvedValue({
@@ -141,6 +190,25 @@ describe('videoGenerate Inngest function', () => {
       finalR2Key: 'final.mp4',
       costUsd: 0.07,
       metadata: { durationSeconds: 10 },
+    });
+
+    // TTS and Video mocks
+    mockGenerateSpeech.mockResolvedValue({
+      audioUrl: 'https://example.com/audio.mp3',
+      durationSec: 10,
+    });
+    mockGenerateVideo.mockResolvedValue({
+      jobId: 'wan-job-123',
+    });
+    mockGetJobStatus.mockResolvedValue({
+      status: 'succeeded',
+      videoUrl: 'https://example.com/video.mp4',
+    });
+
+    // Mock fetch for audio/video downloads
+    mockFetch.mockResolvedValue({
+      ok: true,
+      arrayBuffer: async () => new ArrayBuffer(1024),
     });
 
     process.env.WAN_API_KEY = 'test-wan-key';
@@ -160,11 +228,24 @@ describe('videoGenerate Inngest function', () => {
             eq: vi.fn().mockReturnThis(),
           };
         }
+        if (table === 'user_profiles') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                single: vi.fn().mockResolvedValue({ data: { settings: null }, error: null }),
+              })),
+            })),
+          };
+        }
         return {
           select: vi.fn().mockReturnThis(),
           update: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
         };
+      }),
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnThis(),
+        first: vi.fn().mockResolvedValue({ settings: null }),
       }),
     };
     mockCreateServerClient.mockReturnValue(dbMock);
@@ -178,26 +259,6 @@ describe('videoGenerate Inngest function', () => {
 
     mockRecordCost.mockResolvedValue(undefined);
 
-    // Fish Speech
-    mockGenerateSpeech.mockResolvedValue({
-      audioUrl: 'https://fal.media/audio.mp3',
-      durationSec: 8,
-    });
-
-    // Wan
-    mockGenerateVideo.mockResolvedValue({ jobId: 'pred-test-001', status: 'starting' });
-    let pollCount = 0;
-    mockGetJobStatus.mockImplementation(async () => {
-      pollCount++;
-      if (pollCount < 2) return { status: 'processing' };
-      return { status: 'succeeded', videoUrl: 'https://cdn.replicate.delivery/final.mp4' };
-    });
-
-    // fetch for download
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      arrayBuffer: async () => new ArrayBuffer(16),
-    }));
   });
 
   it('happy path: calls all 8 steps, returns correct shape', async () => {

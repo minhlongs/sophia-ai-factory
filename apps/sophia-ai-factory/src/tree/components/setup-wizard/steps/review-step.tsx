@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { Check, AlertTriangle } from 'lucide-react';
+import { Check, AlertTriangle, Route } from 'lucide-react';
 import { cn } from '@/tree/components/setup-wizard/wizard-stepper';
 import type { ProviderConfig } from '@/tree/components/setup-wizard/steps/provider-credentials-step';
 
@@ -20,6 +20,7 @@ interface ReviewStepProps {
     RESEND_API_KEY: string;
     NOWPAYMENTS_API_KEY: string;
     HEYGEN_WEBHOOK_SECRET: string;
+    ROUTING_STRATEGY: 'priority' | 'costOptimized' | 'leastUsed';
   };
   onConfirm: () => void;
   onBack: () => void;
@@ -33,6 +34,12 @@ function maskApiKey(key: string): string {
 
 export function ReviewStep({ config, providerConfig, onConfirm, onBack, loading }: ReviewStepProps) {
   const t = useTranslations('setupWizard.review');
+
+  const routingStrategyLabels: Record<string, string> = {
+    priority: t('routingStrategy.priority.label'),
+    costOptimized: t('routingStrategy.costOptimized.label'),
+    leastUsed: t('routingStrategy.leastUsed.label'),
+  };
 
   const llmKeys = [
     { key: 'OPENROUTER_API_KEY' as const, label: t('keys.openrouter'), required: true },
@@ -145,6 +152,23 @@ export function ReviewStep({ config, providerConfig, onConfirm, onBack, loading 
             </ul>
           </div>
         )}
+
+        {/* Routing Strategy */}
+        <div className="rounded-lg border border-border p-4 bg-card md:col-span-2">
+          <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
+            <Route className="w-5 h-5" />
+            {t('sections.routingStrategy')}
+          </h4>
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-sm bg-muted px-3 py-1.5 rounded-lg">
+              {routingStrategyLabels[providerConfig.ROUTING_STRATEGY]}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              ({providerConfig.ROUTING_STRATEGY})
+            </span>
+          </div>
+        </div>
+
       </div>
 
       <div className="bg-accent/10 border border-accent/20 rounded-lg p-4 text-sm text-accent flex gap-3">

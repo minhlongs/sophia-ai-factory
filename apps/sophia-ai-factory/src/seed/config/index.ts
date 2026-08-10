@@ -12,5 +12,6 @@ export * from './one-time-skus';
 export * from './pricing-resolver';
 export * from './quota-limits';
 export * from './revenue-share';
+export * from './routing-strategies';
 export * from './synthetic-monitoring';
 export * from './niche-list';
