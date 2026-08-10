@@ -204,7 +204,8 @@ export const videoGenerate = inngest.createFunction(
         } catch (err) {
           if (err instanceof NoProvidersAvailableError) {
             logger.info('[videoGenerate] No TTS providers available, falling back to Fish Speech', { strategy: routingStrategy });
-            await emitProgress(missionId, 'tts', 0, 'Không có nhà cung cấp TTS nào / No TTS providers available — using Fish Speech fallback');
+            await emitProgress(missionId, 'error', 0, 'Không có nhà cung cấp khả dụng / No providers available for tts');
+            await writeStageCheckpoint(missionId, 'generate_tts', 'failed', tenantId, {}, 'no_providers_available');
           } else {
             throw err;
           }
@@ -294,7 +295,8 @@ export const videoGenerate = inngest.createFunction(
       } catch (err) {
         if (err instanceof NoProvidersAvailableError) {
           logger.info('[videoGenerate] No visual providers available, falling back to Wan Video', { strategy: routingStrategy });
-          await emitProgress(missionId, 'visual', 0, 'Không có nhà cung cấp video nào / No visual providers available — using Wan Video fallback');
+          await emitProgress(missionId, 'error', 0, 'Không có nhà cung cấp khả dụng / No providers available for visual');
+          await writeStageCheckpoint(missionId, 'generate_visual', 'failed', tenantId, {}, 'no_providers_available');
         } else {
           throw err;
         }

@@ -26,6 +26,7 @@ import { checkVideoQuota } from '@/forest/quota/video-quota';
 import { getUserApiKey } from '@/tree/byok/user-api-key-store';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { getSharedRegistry } from '@/forest/ai/provider-factory';
+import { getCircuitState } from '@/seed/utils/circuit-breaker';
 
 /** Cost used for providers not priced for a task — the cost strategy never picks them. */
 const UNSERVED_TASK_COST = 1_000_000;
@@ -83,19 +84,35 @@ export async function buildProviderPool(
     // Distinguish user-owned keys (BYOK) from platform fallback for audit.
     const userKey = await getUserApiKey(userId, provider);
 
-    // Get health score from circuit breaker registry (1.0 = healthy, <1.0 = degraded)
-    const registryProviderId = providerHealthMap[provider];
+    // Get health score from circuit breaker (HeyGen) or provider registry (others)
+    // HeyGen uses KV-backed circuit breaker: closed=1.0, half-open=0.5, open=0.1
     let healthScore = 1;
-    if (registryProviderId) {
-      const health = registry.getHealth(registryProviderId);
-      if (health) {
-        // Healthy = 1.0, in cooldown = 0.5, unhealthy = 0.1
-        if (health.healthy) {
-          healthScore = 1;
-        } else if (health.inCooldown) {
+    if (provider === 'heygen') {
+      const circuitStatus = await getCircuitState();
+      switch (circuitStatus.state) {
+        case 'closed':
+          healthScore = 1.0;
+          break;
+        case 'half-open':
           healthScore = 0.5;
-        } else {
+          break;
+        case 'open':
           healthScore = 0.1;
+          break;
+      }
+    } else {
+      const registryProviderId = providerHealthMap[provider];
+      if (registryProviderId) {
+        const health = registry.getHealth(registryProviderId);
+        if (health) {
+          // Healthy = 1.0, in cooldown = 0.5, unhealthy = 0.1
+          if (health.healthy) {
+            healthScore = 1;
+          } else if (health.inCooldown) {
+            healthScore = 0.5;
+          } else {
+            healthScore = 0.1;
+          }
         }
       }
     }
