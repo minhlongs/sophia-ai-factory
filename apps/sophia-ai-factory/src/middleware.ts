@@ -85,8 +85,8 @@ const BARE_AUTH_APP_ROUTES = new Set([
 // P0: redirect bare /dashboard/* auth pages to locale-prefixed paths.
 // These were previously rewritten through redirectTo without a valid target, which
 // produced a self-pointing loop / 500 on locale SSR.
-if (!pathLocale && (pathname === '/dashboard/login' || pathname === '/dashboard/signup')) {
-  const target = pathname === '/dashboard/login' ? '/vi/dashboard/login' : '/vi/dashboard/signup';
+if (pathname === '/dashboard/login' || pathname === '/dashboard/signup') {
+  const target = pathname === '/dashboard/login' ? '/login' : '/signup';
   return NextResponse.redirect(new URL(target, request.url));
 }
 
