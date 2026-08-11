@@ -82,6 +82,14 @@ const BARE_AUTH_APP_ROUTES = new Set([
   if (pathLocale && !isSupportedLocale(pathLocale) && !BARE_AUTH_APP_ROUTES.has(pathname.split('/')[1])) return redirectToDefault(request);
   }
 
+// P0: redirect bare /dashboard/* auth pages to locale-prefixed paths.
+// These were previously rewritten through redirectTo without a valid target, which
+// produced a self-pointing loop / 500 on locale SSR.
+if (!pathLocale && (pathname === '/dashboard/login' || pathname === '/dashboard/signup')) {
+  const target = pathname === '/dashboard/login' ? '/vi/dashboard/login' : '/vi/dashboard/signup';
+  return NextResponse.redirect(new URL(target, request.url));
+}
+
   // /guides → /guide redirect (locale-prefixed paths — next.config redirects don't match on CF Workers)
   if (pathLocale && isSupportedLocale(pathLocale) && pathname === `/${pathLocale}/guides`) {
     const url = request.nextUrl.clone();
