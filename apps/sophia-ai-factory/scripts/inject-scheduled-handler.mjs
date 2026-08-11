@@ -74,6 +74,7 @@ const CRON_ROUTES = {
   ],
   '0 0 1 * *': [
     '/api/cron/mcu-monthly-reset',
+    '/api/cron/slo-burn-rate',
   ],
   '0 1 * * *': [
     '/api/cron/dunning-advance',
