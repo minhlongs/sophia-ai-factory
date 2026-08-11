@@ -17,6 +17,6 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/worker/**/*"],
+  "include": ["src/forest/worker/**/*"],
   "exclude": ["node_modules", "dist", ".next"]
 }
