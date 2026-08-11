@@ -47,7 +47,7 @@ export function validateCronRequest(request: NextRequest): boolean {
   }
 
   // Check Authorization: Bearer <CRON_SECRET> (sent by scheduled handler)
-  const authHeader = request.headers.get('Authorization')
+  const authHeader = request.headers.get('authorization') ?? ''
   const cronSecret = process.env.CRON_SECRET
   if (authHeader && cronSecret) {
     const bearerPrefix = 'Bearer '
