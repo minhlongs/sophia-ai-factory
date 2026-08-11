@@ -82,3 +82,7 @@ plans/reports/*.md
 .claude/worktrees/
 .claude/cache/
 worker-configuration.d.ts
+
+.claude/agent-memory/
+_scratch/
+
