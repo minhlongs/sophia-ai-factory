@@ -3,13 +3,14 @@ import type { NextRequest } from 'next/server';
 import { generateNonce } from '@/seed/security/nonce-utils';
 import { CSP_NONCE_HEADER } from '@/seed/security/get-csp-nonce';
 import { verifyCsrfToken, requiresCsrfCheck, csrfForbiddenResponse, CSRF_COOKIE_NAME } from '@/seed/security/csrf';
-import { record as recordMetrics } from '@/seed/observability/telemetry/metrics';
+import { record as recordMetrics, setWAEBinding } from '@/seed/observability/telemetry/metrics';
 import { isInternalOrStatic } from './middleware-helpers';
 import { handleCorsPrelight } from './middleware/cors';
 import { handleApiPipeline } from './middleware/api-pipeline';
 import { handleDashboardPipeline } from './middleware/dashboard-pipeline';
 import { handlePublicPipeline } from './middleware/public-pipeline';
 import { checkAuthRateLimit } from '@/forest/middleware/rate-limiter';
+import type { AnalyticsEngineDataset } from '@cloudflare/workers-types';
 
 /** L2: apply security headers to error responses that bypass the normal pipeline */
 function applySecurityHeaders(response: NextResponse): NextResponse {
@@ -18,6 +19,31 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set('X-Frame-Options', 'DENY');
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   return response;
+}
+
+// Initialize WAE binding once at module load (Cloudflare Workers env)
+// The WAE binding is available via the global `env` in Workers, but in Next.js middleware
+// we need to access it differently. We'll set it lazily on first request.
+// For now, we expose a setter that can be called from the app router or setup.
+let waeInitialized = false;
+
+function initializeWAEBinding(): void {
+  if (waeInitialized) return;
+  // In Cloudflare Workers, the WAE binding is available in the global scope
+  // when configured in wrangler.toml. We try to access it via the environment.
+  // Note: In Next.js on Cloudflare Workers, bindings are available in the
+  // request context via `env` property on the Request object (added by OpenNext).
+  // We'll use a global to store the binding.
+  try {
+    // @ts-expect-error - Cloudflare Workers global bindings
+    const globalEnv = globalThis.env || globalThis;
+    if (globalEnv?.WAE) {
+      setWAEBinding(globalEnv.WAE as AnalyticsEngineDataset);
+    }
+  } catch {
+    // Ignore if not available
+  }
+  waeInitialized = true;
 }
 
 const SUPPORTED_LOCALES = ['en', 'vi'] as const;
@@ -36,6 +62,9 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
   const origin = request.headers.get('origin');
   const startTime = Date.now();
+
+  // Initialize WAE binding on first request
+  initializeWAEBinding();
 
   if (isInternalOrStatic(pathname)) return NextResponse.next();
 
@@ -132,7 +161,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     );
   } finally {
     const duration = Date.now() - startTime;
-    recordMetrics(request.nextUrl.pathname, duration, isError);
+    recordMetrics(request.nextUrl.pathname, duration, isError, {
+      method: request.method,
+      status,
+    });
   }
 }
 

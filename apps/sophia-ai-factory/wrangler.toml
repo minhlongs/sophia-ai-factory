@@ -126,6 +126,11 @@ id = "ba8c93a931524b7e97027dbad43b31c0"
 preview_id = "f2cf595dec5543dc96f6370bebbc8754"
 # === P3-KV-END ===
 
+# Workers Analytics Engine for SLO metrics
+[[analytics_engine_datasets]]
+binding = "WAE"
+dataset = "sophia_slo_metrics"
+
 [vars]
 # NEXT_PUBLIC_MOCK_AI_SERVICES — set in .dev.vars for local dev only
 # Production uses real AI services (BYOK keys from customer)
@@ -169,6 +174,10 @@ OTEL_SAMPLERATE = "0.01"  # 1% sampling in production for cost control
 
 # === P3-CRONS-BEGIN ===
 # P3 appends cron triggers here (weekly-signals-digest)
+# SLO Burn Rate: runs monthly on 1st at 00:00 UTC
+[[triggers]]
+crons = ["0 0 1 * *"]
+url = "/api/cron/slo-burn-rate"
 # === P3-CRONS-END ===
 
 # === P3-KV-BEGIN ===

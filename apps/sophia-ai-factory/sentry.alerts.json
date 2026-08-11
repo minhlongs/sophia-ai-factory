@@ -1,0 +1,145 @@
+{
+  "alerts": [
+    {
+      "name": "SLO: API Error Rate > 1%",
+      "query": "select count() from events where project.slug = 'sophia-ai-factory' and event.type = 'error' and transaction.name starts with '/api/'",
+      "condition": "count() > 0.01 * (select count() from events where project.slug = 'sophia-ai-factory' and transaction.name starts with '/api/')",
+      "evaluation_window": "5m",
+      "triggers": [
+        {
+          "label": "critical",
+          "alert_threshold": 1,
+          "resolve_threshold": 0
+        }
+      ],
+      "actions": [
+        {
+          "type": "email",
+          "target": "oncall@sophia.agencyos.network"
+        },
+        {
+          "type": "webhook",
+          "target": "https://api.telegram.org/bot<BOT_TOKEN>/sendMessage",
+          "payload": {
+            "chat_id": "<CHAT_ID>",
+            "text": "🚨 SLO BREACH: API Error Rate > 1%\nBurn rate critical - investigate immediately"
+          }
+        }
+      ],
+      "owner": "platform-engineering",
+      "tags": {
+        "slo": "error_rate",
+        "team": "platform"
+      }
+    },
+    {
+      "name": "SLO: API Latency p95 > 800ms",
+      "query": "select percentile(duration, 95) as p95 from transactions where project.slug = 'sophia-ai-factory' and transaction.name starts with '/api/'",
+      "condition": "p95 > 800",
+      "evaluation_window": "5m",
+      "triggers": [
+        {
+          "label": "warning",
+          "alert_threshold": 800,
+          "resolve_threshold": 700
+        },
+        {
+          "label": "critical",
+          "alert_threshold": 1200,
+          "resolve_threshold": 1000
+        }
+      ],
+      "actions": [
+        {
+          "type": "email",
+          "target": "oncall@sophia.agencyos.network"
+        }
+      ],
+      "owner": "platform-engineering",
+      "tags": {
+        "slo": "api_latency_p95",
+        "team": "platform"
+      }
+    },
+    {
+      "name": "SLO: Health Latency p95 > 500ms",
+      "query": "select percentile(duration, 95) as p95 from transactions where project.slug = 'sophia-ai-factory' and transaction.name in ('/api/health', '/api/version')",
+      "condition": "p95 > 500",
+      "evaluation_window": "5m",
+      "triggers": [
+        {
+          "label": "warning",
+          "alert_threshold": 500,
+          "resolve_threshold": 400
+        }
+      ],
+      "actions": [
+        {
+          "type": "email",
+          "target": "oncall@sophia.agencyos.network"
+        }
+      ],
+      "owner": "platform-engineering",
+      "tags": {
+        "slo": "health_latency_p95",
+        "team": "platform"
+      }
+    },
+    {
+      "name": "SLO: Availability < 99.5%",
+      "query": "select count() as total, countif(status >= 200 and status < 400) as good from transactions where project.slug = 'sophia-ai-factory'",
+      "condition": "good / total < 0.995",
+      "evaluation_window": "5m",
+      "triggers": [
+        {
+          "label": "critical",
+          "alert_threshold": 0.995,
+          "resolve_threshold": 0.997
+        }
+      ],
+      "actions": [
+        {
+          "type": "email",
+          "target": "oncall@sophia.agencyos.network"
+        },
+        {
+          "type": "webhook",
+          "target": "https://api.telegram.org/bot<BOT_TOKEN>/sendMessage",
+          "payload": {
+            "chat_id": "<CHAT_ID>",
+            "text": "🚨 SLO BREACH: Availability < 99.5%\nCritical availability degradation - incident bridge required"
+          }
+        }
+      ],
+      "owner": "platform-engineering",
+      "tags": {
+        "slo": "availability",
+        "team": "platform"
+      }
+    },
+    {
+      "name": "SLO: Webhook Delivery p95 > 5min",
+      "query": "select percentile(duration, 95) as p95 from transactions where project.slug = 'sophia-ai-factory' and transaction.name starts with '/webhook/'",
+      "condition": "p95 > 300000",
+      "evaluation_window": "5m",
+      "triggers": [
+        {
+          "label": "warning",
+          "alert_threshold": 300000,
+          "resolve_threshold": 240000
+        }
+      ],
+      "actions": [
+        {
+          "type": "email",
+          "target": "oncall@sophia.agencyos.network"
+        }
+      ],
+      "owner": "platform-engineering",
+      "tags": {
+        "slo": "webhook_delivery_p95",
+        "team": "platform"
+      }
+    }
+  ]
+}

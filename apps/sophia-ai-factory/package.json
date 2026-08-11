@@ -33,6 +33,7 @@
     "test:load:spike": "k6 run tests/load/k6-spike.js",
     "test:load:soak": "k6 run tests/load/k6-soak.js",
     "test:load:stress": "k6 run tests/load/k6-stress.js",
+    "perf:check": "tsx scripts/perf-check.ts",
     "setup:production": "tsx scripts/production-setup.ts",
     "infra:sync": "./scripts/infra-sync.sh",
     "i18n:validate": "node scripts/validate-i18n-keys.mjs",
