@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
 import { getWAEBinding } from '@/seed/observability/telemetry/wae-client';
 import { emitBurnRateAlert } from '@/seed/observability/telemetry/sentry-metrics';
+import type { AnalyticsEngineDataset } from '@cloudflare/workers-types';
 
 interface SLOConfig {
   name: string;
@@ -79,7 +80,7 @@ interface WAEBinding {
   // Add other WAE methods as needed
 }
 
-async function fetchWAEData(env: { WAE?: WAEBinding }, startTime: number, endTime: number): Promise<WAERow[]> {
+async function fetchWAEData(env: { WAE?: AnalyticsEngineDataset }, startTime: number, endTime: number): Promise<WAERow[]> {
   const wae = getWAEBinding(env);
   if (!wae) {
     console.log('[SLO Cron] WAE binding not available');
