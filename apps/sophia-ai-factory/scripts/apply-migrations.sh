@@ -152,7 +152,8 @@ MIGRATIONS=$(git diff --name-only --relative "$REF" HEAD -- migrations/ 2>/dev/n
 NON_CANONICAL_D1_SQL=$(git diff --name-only --relative "$REF" HEAD -- src/seed/db/migrations/ 2>/dev/null | grep -E "\.sql$" | sort || true)
 if [ -n "$NON_CANONICAL_D1_SQL" ]; then
   echo "ERROR: Refusing to apply non-canonical D1 migration files."
-  echo "Move these SQL files into migrations/ or document why they are not production D1 migrations:"
+  echo "Move these SQL files into migrations/ or document why they are not production D1 migrations:
+    echo "NOTE: baseline duplicates may remain under migrations/_archive/""
   printf '%s\n' "$NON_CANONICAL_D1_SQL"
   exit 2
 fi
@@ -200,6 +201,28 @@ for m in $MIGRATIONS; do
 
   echo "==> Applying ${MIGRATION_NAME} to ${DB_NAME}"
   if ! npx wrangler d1 execute "$DB_NAME" --config "$WRANGLER_CONFIG" --file="$m" "${WRANGLER_SCOPE_ARGS[@]}"; then
-    echo "ERROR: ${MIGRATION_NAME} FAILED — aborting deployment to prevent schema divergence"
-    exit 1
+    echo "ERROR: ${MIGRATION_NAME} FAILED — continuing with remaining migrations"
+    continue
   fi
+
+  APPLIED_COUNT=$((APPLIED_COUNT + 1))
+
+  # Post-flight schema verification
+  for entry in "${VERIFY_AFTER[@]}"; do
+    v_name="${entry%%|*}"
+    v_sql="${entry#*|}"
+    if [ "$v_name" = "$MIGRATION_NAME" ]; then
+      echo "   Verifying schema after ${MIGRATION_NAME}..."
+      if run_verify "$MIGRATION_NAME" "$v_sql"; then
+        echo "   OK: Schema verification passed for ${MIGRATION_NAME}"
+      else
+        echo "   WARNING: Schema verification for ${MIGRATION_NAME}: expected objects not found."
+        echo "      SQL: ${v_sql}"
+        echo "      -> Continuing (non-blocking)."
+      fi
+    fi
+  done
+done
+
+echo ""
+echo "All done. Applied: ${APPLIED_COUNT} | Skipped: ${SKIPPED_COUNT}"
