@@ -6,6 +6,7 @@
       "dom.iterable",
       "esnext"
     ],
+    "types": ["vitest/globals", "@testing-library/jest-dom"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -18,7 +19,6 @@
     "jsx": "react-jsx",
     "incremental": true,
     "allowImportingTsExtensions": true,
-    "types": ["@cloudflare/workers-types"],
     "plugins": [
       {
         "name": "next"
@@ -43,6 +43,7 @@
   "exclude": [
     "node_modules",
     "scripts",
-    ".next"
+    ".next",
+    "**/__tests__/**"
   ]
 }
