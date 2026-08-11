@@ -60,6 +60,11 @@
         "optionalBadge": "Add later"
       }
     },
+    "errors": {
+      "emptyKey": "API key cannot be empty",
+      "verificationFailed": "Verification failed. Please check your key and try again.",
+      "saveFailed": "Failed to save configuration. Please try again."
+    },
     "alerts": {
       "invalidKey": "Invalid API key — please double-check and try again",
       "missingLlm": "At least one LLM key is required (OpenRouter or Anthropic)"

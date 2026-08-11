@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import { SetupWizardPage } from '@/tree/components/setup-wizard/steps';
 
-export default function SetupWizardRedirect() {
-  redirect('/vi/setup-wizard'); // This will be handled by middleware
+export default function SetupWizardRoute() {
+  return <SetupWizardPage />;
 }

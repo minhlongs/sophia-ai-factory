@@ -60,6 +60,11 @@
         "optionalBadge": "Thêm sau"
       }
     },
+    "errors": {
+      "emptyKey": "Khóa API không được để trống",
+      "verificationFailed": "Xác thực thất bại. Vui lòng kiểm tra lại key và thử lại.",
+      "saveFailed": "Lưu cấu hình thất bại. Vui lòng thử lại."
+    },
     "alerts": {
       "invalidKey": "Khoá API không hợp lệ — vui lòng kiểm tra lại",
       "missingLlm": "Cần ít nhất một khoá LLM (OpenRouter hoặc Anthropic)"
