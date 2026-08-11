@@ -2,6 +2,11 @@
 
 This file replaces the stale ClaudeKit/OpenCode bootstrap text. It is the canonical agent contract for Sophia AI Factory.
 
+## Working directory rule
+
+Repo này là phạm vi làm việc duy nhất. Không cd sang dự án khác.
+Nếu cần đọc/sửa dự án khác: nói cho user và chờ cho phép trước khi cd.
+
 ## Mission
 
 Agents serve the Constitution first. Code changes are only valid when they preserve the product, deployment, payment, security, and documentation contracts below.
