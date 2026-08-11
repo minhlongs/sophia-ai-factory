@@ -32,7 +32,8 @@ const SUPPORTED_LOCALES = ['vi', 'en']
  * Verify that a cron request is authentic.
  * Cron endpoints bypass CSRF but require either:
  * - Cloudflare Cron header (cf-cron-trigger) OR
- * - Internal cron secret (x-internal-cron-secret)
+ * - Internal cron secret (x-internal-cron-secret) OR
+ * - Authorization: Bearer <CRON_SECRET> (from scheduled handler)
  */
 export function validateCronRequest(request: NextRequest): boolean {
   const pathname = new URL(request.url).pathname
@@ -40,15 +41,28 @@ export function validateCronRequest(request: NextRequest): boolean {
     return false // Not a cron route
   }
 
-  // Check Cloudflare Cron header (when triggered by CF Scheduler)
+  // Check Cloudflare Cron header (when triggered by CF Scheduler directly)
   if (request.headers.get('cf-cron-trigger')) {
     return true
   }
 
-  // Check internal cron secret for manual/alternative triggers
-  const cronSecret = request.headers.get('x-internal-cron-secret')
-  const expectedSecret = process.env.INTERNAL_CRON_SECRET
-  if (cronSecret && expectedSecret && timingSafeEqual(cronSecret, expectedSecret)) {
+  // Check Authorization: Bearer <CRON_SECRET> (sent by scheduled handler)
+  const authHeader = request.headers.get('Authorization')
+  const cronSecret = process.env.CRON_SECRET
+  if (authHeader && cronSecret) {
+    const bearerPrefix = 'Bearer '
+    if (authHeader.startsWith(bearerPrefix)) {
+      const token = authHeader.slice(bearerPrefix.length)
+      if (timingSafeEqual(token, cronSecret)) {
+        return true
+      }
+    }
+  }
+
+  // Check internal cron secret for manual/alternative triggers (legacy)
+  const internalCronSecret = request.headers.get('x-internal-cron-secret')
+  const expectedInternalSecret = process.env.INTERNAL_CRON_SECRET
+  if (internalCronSecret && expectedInternalSecret && timingSafeEqual(internalCronSecret, expectedInternalSecret)) {
     return true
   }
 
