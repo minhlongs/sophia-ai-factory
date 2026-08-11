@@ -74,7 +74,12 @@ interface WAERow {
   isErrorFlag: number;
 }
 
-async function fetchWAEData(env: { WAE?: any }, startTime: number, endTime: number): Promise<WAERow[]> {
+interface WAEBinding {
+  fetch?: (input: RequestInfo, init?: RequestInit) => Promise<Response>;
+  // Add other WAE methods as needed
+}
+
+async function fetchWAEData(env: { WAE?: WAEBinding }, startTime: number, endTime: number): Promise<WAERow[]> {
   const wae = getWAEBinding(env);
   if (!wae) {
     console.log('[SLO Cron] WAE binding not available');
