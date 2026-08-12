@@ -6,7 +6,7 @@ import { intlMiddleware, applySecurityHeaders } from './middleware-shared-config
 // breaking users and E2E tests. Detect locale-prefixed versions and strip the prefix
 // before passing to intlMiddleware so the request proceeds without any redirect.
 const BARE_AUTH_APP_ROUTES = new Set([
-  'login', 'pricing', 'setup-wizard', 'register', 'reset-password',
+  'pricing', 'setup-wizard', 'register', 'reset-password',
   'dashboard', 'checkout', 'settings', 'products', 'payments',
   'admin', 'affiliates', 'affiliate-portal', 'subscribers',
   'webhook', 'creator', 'investor-room',
@@ -27,6 +27,20 @@ export async function handlePublicPipeline(
   nonce: string,
   needsCsrfSeed: boolean,
 ): Promise<NextResponse> {
+  // Explicit hard redirects: /dashboard/* bare auth routes → locale-prefixed versions.
+  // This follows the same pattern as the .orchestrate/260812-1045 plan and avoids
+  // adding these paths to BARE_AUTH_APP_ROUTES (which would cause intlMiddleware
+  // to loop by stripping the wrong path segment).
+  const path = request.nextUrl.pathname;
+  const BARE_REDIRECTS: Record<string, string> = {
+    '/dashboard/login': '/login',
+    '/dashboard/signup': '/signup',
+  };
+  if (BARE_REDIRECTS[path]) {
+    const target = new URL(BARE_REDIRECTS[path], request.url);
+    return applyCorsHeaders(NextResponse.redirect(target), origin);
+  }
+
   // If request has a locale prefix on a bare route, rewrite to bare path first
   const stripped = stripLocalePrefix(request.nextUrl.pathname);
   let localeForCookie: string | null = null;
