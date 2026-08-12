@@ -6,7 +6,7 @@ import { toError } from '@/seed/utils/to-error';
 import { pathnameWithoutLocale } from '../middleware-helpers';
 import { requireAuth } from './auth';
 import { enforceMfaGate } from './mfa';
-import { intlMiddleware, applySecurityHeaders } from './middleware-shared-config';
+import { intlMiddleware, applySecurityHeaders, SUPPORTED_LOCALES } from './middleware-shared-config';
 
 function buildDashboardLoginRedirect(request: NextRequest, fallbackLocale: string): NextResponse {
   const loginUrl = new URL('/login', request.url);
@@ -24,8 +24,14 @@ export async function handleDashboardPipeline(
   const cleanPath = pathnameWithoutLocale(request.nextUrl.pathname);
   if (!cleanPath.startsWith('/dashboard')) return null;
 
-  // Authentication check
-  const authResult = await requireAuth(request, pathLocale ?? 'vi');
+  // /dashboard/login and /dashboard/signup are auth entry points, not protected
+  // dashboard pages. Skip them so handlePublicPipeline's BARE_REDIRECTS can
+  // redirect to the correct bare /login and /signup routes.
+  if (cleanPath === '/dashboard/login' || cleanPath === '/dashboard/signup') return null;
+
+  // Authentication check — validate pathLocale is a real locale, otherwise fallback to 'vi'
+  const locale = (pathLocale && (SUPPORTED_LOCALES as readonly string[]).includes(pathLocale)) ? pathLocale : 'vi';
+  const authResult = await requireAuth(request, locale);
   if (authResult instanceof NextResponse) return authResult;
   const { session } = authResult;
 
