@@ -290,21 +290,6 @@ echo "Deployed at: $DEPLOYED_AT"
 echo "==> generate-supabase-migrations-manifest"
 node scripts/generate-supabase-migrations-manifest.mjs
 
-# ─── Step 0.3: Resolve OpenNext version from installed package (not package.json range) ─
-# Reads the actual @opennextjs/cloudflare version from node_modules (the exact build artifact
-# shipped by `npx @opennextjs/cloudflare build`). Injects into wrangler.toml [vars] so
-# /api/version reflects reality instead of a stale hardcoded constant.
-RESOLVED_OPENNEXT=$(node -e "const fs=require('fs'); const path=require('path'); const p=path.join(process.cwd(),'node_modules','@opennextjs','cloudflare','package.json'); console.log(fs.existsSync(p)?p:'')")
-if [ -n "$RESOLVED_OPENNEXT" ]; then
-  OPENNEXT_VER=$(node -p "require('${RESOLVED_OPENNEXT}').version")
-  # Only update if wrangler.toml has the placeholder pattern
-  if grep -q 'OPENNEXT_VERSION = "' "$APP_DIR/wrangler.toml" 2>>"$DEPLOY_LOG"; then
-    echo "==> Injecting OPENNEXT_VERSION=$OPENNEXT_VER into wrangler.toml"
-    node -e "const fs=require('fs'); const file=process.argv[1]; const version=process.argv[2]; const src=fs.readFileSync(file,'utf8'); fs.writeFileSync(file,src.replace(/OPENNEXT_VERSION = \"[^\"]*\"/,'OPENNEXT_VERSION = \"'+version+'\"'));" "$APP_DIR/wrangler.toml" "$OPENNEXT_VER"
-  fi
-else
-  echo "⚠️ @opennextjs/cloudflare not in node_modules — OPENNEXT_VERSION stays as wrangler.toml default"
-fi
 
 # Snapshot the value that is now in wrangler.toml so Step 4's OpenNext deploy can be
 # reverted afterward. This keeps wrangler.toml clean in git and avoids dirty-tree deploys.
