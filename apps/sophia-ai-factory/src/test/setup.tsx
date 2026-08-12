@@ -52,9 +52,9 @@ const kvMock = {
 // 3) instanceof NextResponse checks in middleware/guards
 //
 // Both 2 and 3 are satisfied by a single mock object whose prototype chain
-// reaches the real global Response.  The mock is callable as a function (tests
+// reaches the real global Response. The mock is callable as a function (tests
 // do `NextResponse.json(...)`) and constructable (production code does
-// `new NextResponse(body, init)`).  `instanceof NextResponse` checks succeed
+// `new NextResponse(body, init)`). `instanceof NextResponse` checks succeed
 // because every Response returned by the mock carries NextResponseMock in its
 // prototype chain.
 // ─────────────────────────────────────────────────────────────────────────
@@ -92,7 +92,7 @@ class _NextResponseMock {
 }
 
 // Make `instanceof _NextResponseMock` resolve true for any Response created
-// through our mock.  We do this by templating a thin wrapper class whose
+// through our mock. We do this by templating a thin wrapper class whose
 // prototype chain goes through `_NextResponseMock` but whose instances ARE
 // real `Response` objects (so all fetch/body methods continue to work).
 const NextResponseMock = (() => {
