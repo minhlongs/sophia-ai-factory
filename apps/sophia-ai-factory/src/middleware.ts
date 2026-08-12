@@ -73,10 +73,6 @@ const BARE_AUTH_APP_ROUTES = new Set([
   'dashboard', 'checkout', 'settings', 'products', 'payments',
   'admin', 'affiliates', 'affiliate-portal', 'subscribers',
   'webhook', 'creator', 'investor-room',
- // P0: bare /dashboard/* auth pages must bypass the locale-guard branch above.
- // Without this, `pathname.split('/')[1]` yields the invalid locale 'dashboard' and the
- // auth pipeline constructs `/${locale}/login`, producing `/dashboard/login` -> self-loop.
- 'dashboard/login', 'dashboard/signup',
 ]);
 
   const pathLocale = pathname.split('/')[1];
@@ -86,13 +82,6 @@ const BARE_AUTH_APP_ROUTES = new Set([
   if (pathLocale && !isSupportedLocale(pathLocale) && !BARE_AUTH_APP_ROUTES.has(pathname.split('/')[1])) return redirectToDefault(request);
   }
 
-// P0: redirect bare /dashboard/* auth pages to locale-prefixed paths.
-// These were previously rewritten through redirectTo without a valid target, which
-// produced a self-pointing loop / 500 on locale SSR.
-if (pathname === '/dashboard/login' || pathname === '/dashboard/signup') {
-  const target = pathname === '/dashboard/login' ? '/login' : '/signup';
-  return NextResponse.redirect(new URL(target, request.url));
-}
 
   // /guides → /guide redirect (locale-prefixed paths — next.config redirects don't match on CF Workers)
   if (pathLocale && isSupportedLocale(pathLocale) && pathname === `/${pathLocale}/guides`) {

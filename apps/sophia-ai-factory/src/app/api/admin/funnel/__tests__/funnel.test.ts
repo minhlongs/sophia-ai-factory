@@ -3,21 +3,17 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-vi.mock('@/seed/auth/better-auth-session', () => ({
-  getCurrentUserFromHeaders: vi.fn(),
-}));
-vi.mock('@/seed/auth/is-user-admin', () => ({
-  isUserAdmin: vi.fn(),
+vi.mock('@/seed/auth/require-admin', () => ({
+  requireAdmin: vi.fn(),
 }));
 
 vi.mock('@/land/analytics/funnel-stats', () => ({
   getActivationFunnel: vi.fn(),
 }));
 
-import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { isUserAdmin } from '@/seed/auth/is-user-admin';
+import { requireAdmin } from '@/seed/auth/require-admin';
 import { getActivationFunnel } from '@/land/analytics/funnel-stats';
 import { GET } from '../route';
 
@@ -33,32 +29,32 @@ const STUB_FUNNEL = {
   conversions: { signupToLogin: 0.5, loginToVideo: 0.4, videoToConversion: 0.5 },
 };
 
+// Test-only cast: requireAdmin return type is a union; narrow to the admin-user branch.
+const ADMIN_AUTH = { user: { id: 'u1', role: 'admin' } } as any;
+
 describe('GET /api/admin/funnel', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 401 anon', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue(null);
+    vi.mocked(requireAdmin).mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     const resp = await GET(buildRequest());
     expect(resp.status).toBe(401);
   });
 
   it('returns 403 for non-admin', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'user' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(false);
+    vi.mocked(requireAdmin).mockResolvedValue(NextResponse.json({ error: 'Forbidden: admin role required' }, { status: 403 }));
     const resp = await GET(buildRequest());
     expect(resp.status).toBe(403);
   });
 
   it('returns 400 when from > to', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
+    vi.mocked(requireAdmin).mockResolvedValue(ADMIN_AUTH);
     const resp = await GET(buildRequest({ from: '2000', to: '1000' }));
     expect(resp.status).toBe(400);
   });
 
   it('admin sees funnel JSON', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
+    vi.mocked(requireAdmin).mockResolvedValue(ADMIN_AUTH);
     vi.mocked(getActivationFunnel).mockResolvedValue(STUB_FUNNEL);
     const resp = await GET(buildRequest());
     expect(resp.status).toBe(200);
@@ -68,16 +64,14 @@ describe('GET /api/admin/funnel', () => {
   });
 
   it('passes custom from/to', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
+    vi.mocked(requireAdmin).mockResolvedValue(ADMIN_AUTH);
     vi.mocked(getActivationFunnel).mockResolvedValue(STUB_FUNNEL);
     await GET(buildRequest({ from: '500', to: '1500' }));
     expect(getActivationFunnel).toHaveBeenCalledWith(500, 1500);
   });
 
   it('returns 500 if primitive throws', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
+    vi.mocked(requireAdmin).mockResolvedValue(ADMIN_AUTH);
     vi.mocked(getActivationFunnel).mockRejectedValue(new Error('boom'));
     const resp = await GET(buildRequest());
     expect(resp.status).toBe(500);

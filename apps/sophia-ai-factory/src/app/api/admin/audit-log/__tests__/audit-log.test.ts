@@ -1,23 +1,13 @@
-/**
- * /api/admin/audit-log — admin auth + query parsing + delegation.
- */
+/**  * /api/admin/audit-log — admin auth + query parsing + delegation.  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-vi.mock('@/seed/auth/better-auth-session', () => ({
-  getCurrentUserFromHeaders: vi.fn(),
-}));
-vi.mock('@/seed/auth/is-user-admin', () => ({
-  isUserAdmin: vi.fn(),
-}));
+vi.mock('@/seed/auth/require-admin', () => ({ requireAdmin: vi.fn() }));
 
-vi.mock('@/land/observability/audit-log-stats', () => ({
-  searchAuditLog: vi.fn(),
-}));
+vi.mock('@/land/observability/audit-log-stats', () => ({ searchAuditLog: vi.fn(), }));
 
-import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { isUserAdmin } from '@/seed/auth/is-user-admin';
+import { requireAdmin } from '@/seed/auth/require-admin';
 import { searchAuditLog } from '@/land/observability/audit-log-stats';
 import { GET } from '../route';
 
@@ -27,51 +17,44 @@ function buildRequest(query: Record<string, string> = {}): NextRequest {
   return new NextRequest(url);
 }
 
-const STUB_ROW = {
-  id: 1, tenantId: 't', actor: 'a@x.com', action: 'login',
-  resource: null, metadata: null, ts: 1700000000,
-};
+const STUB_ROW = { id: 1, tenantId: 't', actor: 'a@x.com', action: 'login',
+  resource: null, metadata: null, ts: 1700000000, };
 
 describe('GET /api/admin/audit-log', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 401 anon', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue(null);
+    vi.mocked(requireAdmin).mockResolvedValue(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
     const resp = await GET(buildRequest());
     expect(resp.status).toBe(401);
   });
 
   it('returns 403 for non-admin', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'user' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(false);
+    vi.mocked(requireAdmin).mockResolvedValue(NextResponse.json({ error: 'Forbidden: admin role required' }, { status: 403 }));
     const resp = await GET(buildRequest());
     expect(resp.status).toBe(403);
   });
 
   it('returns 400 when from > to', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
+    vi.mocked(requireAdmin).mockResolvedValue({ user: { id: 'u1', role: 'admin' } } as any );
     const resp = await GET(buildRequest({ from: '2000', to: '1000' }));
     expect(resp.status).toBe(400);
   });
 
   it('returns 400 for limit < 1', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
+    vi.mocked(requireAdmin).mockResolvedValue({ user: { id: 'u1', role: 'admin' } } as any );
     const resp = await GET(buildRequest({ limit: '0' }));
     expect(resp.status).toBe(400);
   });
 
   it('returns 400 for negative offset', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
+    vi.mocked(requireAdmin).mockResolvedValue({ user: { id: 'u1', role: 'admin' } } as any );
     const resp = await GET(buildRequest({ offset: '-1' }));
     expect(resp.status).toBe(400);
   });
 
   it('admin sees rows + filters echoed', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
+    vi.mocked(requireAdmin).mockResolvedValue({ user: { id: 'u1', role: 'admin' } } as any );
     vi.mocked(searchAuditLog).mockResolvedValue([STUB_ROW]);
     const resp = await GET(buildRequest({ tenantId: 't1', action: 'login' }));
     expect(resp.status).toBe(200);
@@ -81,23 +64,14 @@ describe('GET /api/admin/audit-log', () => {
   });
 
   it('passes parsed numeric filters', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
+    vi.mocked(requireAdmin).mockResolvedValue({ user: { id: 'u1', role: 'admin' } } as any );
     vi.mocked(searchAuditLog).mockResolvedValue([]);
     await GET(buildRequest({ from: '100', to: '200', limit: '50', offset: '10' }));
-    expect(searchAuditLog).toHaveBeenCalledWith({
-      tenantId: undefined,
-      action: undefined,
-      fromTs: 100,
-      toTs: 200,
-      limit: 50,
-      offset: 10,
-    });
+    expect(searchAuditLog).toHaveBeenCalledWith({ tenantId: undefined, action: undefined, fromTs: 100, toTs: 200, limit: 50, offset: 10, });
   });
 
   it('returns 500 if primitive throws', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
+    vi.mocked(requireAdmin).mockResolvedValue({ user: { id: 'u1', role: 'admin' } } as any );
     vi.mocked(searchAuditLog).mockRejectedValue(new Error('boom'));
     const resp = await GET(buildRequest());
     expect(resp.status).toBe(500);

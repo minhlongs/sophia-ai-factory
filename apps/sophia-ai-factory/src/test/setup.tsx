@@ -97,7 +97,6 @@ class _NextResponseMock {
 // real `Response` objects (so all fetch/body methods continue to work).
 const NextResponseMock = (() => {
   const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
-  let wrapper: new (...args: ConstructorParameters<typeof Response>) => Response;
 
   // Each time `new NextResponseMock(...)` is called, redirect it through the
   // real Response constructor so Vitest / fetch sees a genuine Response.
@@ -109,11 +108,22 @@ const NextResponseMock = (() => {
   C.prototype = Object.create(_NextResponseMock.prototype);
   C.prototype.constructor = _NextResponseMock;
 
-  // Static factory methods: return real Response instances but template the
+  // Stamp a plain Response so `instanceof NextResponse` passes for results of
+  // the static factories (json/redirect/next). Without this the route guards
+  // (`auth instanceof NextResponse`) miss auth-failure responses under Vitest.
+  const stamp = (res: Response): Response => {
+    Object.setPrototypeOf(res, C.prototype);
+    return res;
+  };
+
+  // Static factory methods: return real Response instances carrying the mock
   // prototype so they pass instanceof checks too.
-  C.json = _NextResponseMock.json;
-  C.redirect = _NextResponseMock.redirect;
-  C.next = _NextResponseMock.next;
+  C.json = (data: unknown, init?: { status?: number }): Response =>
+    stamp(_NextResponseMock.json(data, init));
+  C.redirect = (url: string | URL, init?: { status?: number }): Response =>
+    stamp(_NextResponseMock.redirect(url, init));
+  C.next = (init?: { status?: number }): Response =>
+    stamp(_NextResponseMock.next(init));
 
   return C as unknown as typeof _NextResponseMock;
 })();

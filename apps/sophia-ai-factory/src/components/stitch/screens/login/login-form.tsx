@@ -34,7 +34,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
         setError(t('invalidCredentials'));
         setLoading(false);
       } else {
-        router.push(redirectTo || '/dashboard');
+        router.push(redirectTo && !redirectTo.startsWith('/api/') ? redirectTo : `/${locale}/dashboard`);
       }
     } catch {
       setError(t('networkError'));

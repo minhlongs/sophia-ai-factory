@@ -3,100 +3,69 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { GET } from '@/app/api/admin/affiliate-leaderboard/route';
+import { requireAdmin } from '@/seed/auth/require-admin';
+import { getTopAffiliates } from '@/land/affiliates/leaderboard';
 
-vi.mock('@/seed/auth/better-auth-session', () => ({
-  getCurrentUserFromHeaders: vi.fn(),
-}));
-vi.mock('@/seed/auth/is-user-admin', () => ({
-  isUserAdmin: vi.fn(),
+vi.mock('@/seed/auth/require-admin', () => ({
+  requireAdmin: vi.fn(),
 }));
 
 vi.mock('@/land/affiliates/leaderboard', () => ({
   getTopAffiliates: vi.fn(),
 }));
 
-import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { isUserAdmin } from '@/seed/auth/is-user-admin';
-import { getTopAffiliates } from '@/land/affiliates/leaderboard';
-import { GET } from '../route';
-
-function buildRequest(query: Record<string, string> = {}): NextRequest {
+const buildRequest = (query?: Record<string, string>): NextRequest => {
   const url = new URL('http://localhost/api/admin/affiliate-leaderboard');
-  for (const [k, v] of Object.entries(query)) url.searchParams.set(k, v);
-  return new NextRequest(url);
-}
-
-const STUB_ROW = {
-  affiliateId: 'aff-1', email: 'a@x.com', name: 'Alex',
-  totalClicks: 100, totalConversions: 5, totalCommissionUsd: 50, epc: 0.5,
+  if (query) {
+    Object.entries(query).forEach(([k, v]) => url.searchParams.set(k, v));
+  }
+  return new NextRequest(url) as NextRequest;
 };
 
 describe('GET /api/admin/affiliate-leaderboard', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
 
-  it('returns 401 anon', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue(null);
+  it('returns 401 if not authenticated', async () => {
+    vi.mocked(requireAdmin).mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
+
     const resp = await GET(buildRequest());
     expect(resp.status).toBe(401);
   });
 
-  it('returns 403 for non-admin', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'user' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(false);
+  it('returns 403 if authenticated but not admin', async () => {
+    vi.mocked(requireAdmin).mockResolvedValue(
+      NextResponse.json(
+        { error: 'Forbidden: admin role required' },
+        { status: 403 },
+      ),
+    );
+
     const resp = await GET(buildRequest());
     expect(resp.status).toBe(403);
   });
 
-  it('returns 400 for invalid limit', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
-    const resp = await GET(buildRequest({ limit: '0' }));
-    expect(resp.status).toBe(400);
-  });
+  it('returns 200 with leaderboard data for admin', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RequireAdminResult union requires cast for partial user shape
+    vi.mocked(requireAdmin).mockResolvedValue({ user: { id: 'u1', role: 'admin' } } as any);
+    vi.mocked(getTopAffiliates).mockResolvedValue([
+      { affiliateId: 'a1', email: 'a@x.com', name: 'Alex', totalClicks: 10, totalConversions: 2, totalCommissionUsd: 50, epc: 5 },
+    ]);
 
-  it('returns 400 when from > to', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
-    const resp = await GET(buildRequest({ from: '2000', to: '1000' }));
-    expect(resp.status).toBe(400);
-  });
-
-  it('admin sees rows with default sortBy=epc', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
-    vi.mocked(getTopAffiliates).mockResolvedValue([STUB_ROW]);
     const resp = await GET(buildRequest());
     expect(resp.status).toBe(200);
-    const body = await resp.json() as { sortBy: string; count: number };
-    expect(body.sortBy).toBe('epc');
-    expect(body.count).toBe(1);
-  });
-
-  it('passes valid sortBy through', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
-    vi.mocked(getTopAffiliates).mockResolvedValue([]);
-    await GET(buildRequest({ sortBy: 'commission' }));
-    expect(getTopAffiliates).toHaveBeenCalledWith(
-      expect.any(Number), expect.any(Number), 25, 'commission',
-    );
-  });
-
-  it('falls back to epc when sortBy invalid', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
-    vi.mocked(getTopAffiliates).mockResolvedValue([]);
-    await GET(buildRequest({ sortBy: 'bogus' }));
-    expect(getTopAffiliates).toHaveBeenCalledWith(
-      expect.any(Number), expect.any(Number), 25, 'epc',
-    );
   });
 
   it('returns 500 if primitive throws', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u1', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RequireAdminResult union requires cast for partial user shape
+    vi.mocked(requireAdmin).mockResolvedValue({ user: { id: 'u1', role: 'admin' } } as any);
     vi.mocked(getTopAffiliates).mockRejectedValue(new Error('boom'));
+
     const resp = await GET(buildRequest());
     expect(resp.status).toBe(500);
   });

@@ -12,26 +12,14 @@ vi.mock('@/seed/utils/to-error', () => ({
   toError: (e: unknown) => (e instanceof Error ? e : new Error(String(e))),
 }));
 
-// Mock session-based auth
-vi.mock('@/seed/auth/better-auth-session', () => ({
-  getCurrentUserFromHeaders: vi.fn(),
-}));
-
-vi.mock('@/seed/auth/is-user-admin', () => ({
-  isUserAdmin: vi.fn(),
+// Mock the admin auth gate as a whole so instanceof NextResponse checks work.
+vi.mock('@/seed/auth/require-admin', () => ({
+  requireAdmin: vi.fn(),
 }));
 
 import { GET } from './route';
-import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { isUserAdmin } from '@/seed/auth/is-user-admin';
-import { NextRequest } from 'next/server';
-
-const mockGetCurrentUserFromHeaders = vi.mocked(getCurrentUserFromHeaders);
-const mockIsUserAdmin = vi.mocked(isUserAdmin);
-
-type SessionUser = NonNullable<Awaited<ReturnType<typeof getCurrentUserFromHeaders>>>
-
-const adminUser = { id: 'admin-user-id', email: 'admin@test.com', role: 'admin' } as unknown as SessionUser;
+import { requireAdmin } from '@/seed/auth/require-admin';
+import { NextRequest, NextResponse } from 'next/server';
 
 const mockAll = vi.fn();
 const mockBind = vi.fn(() => ({ all: mockAll }));
@@ -48,21 +36,28 @@ beforeEach(() => {
   vi.clearAllMocks();
   (globalThis as unknown as { __env: Record<string, unknown> }).__env = { DB: mockDb };
   mockAll.mockResolvedValue({ results: [] });
-  mockGetCurrentUserFromHeaders.mockResolvedValue(adminUser);
-  mockIsUserAdmin.mockResolvedValue(true);
+  // Default: authenticated admin.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test-only shortcut for partial user shape
+  vi.mocked(requireAdmin).mockResolvedValue({ user: { id: 'u1', role: 'admin' } } as any);
 });
 
 describe('GET /api/admin/payouts/queue', () => {
   it('returns 401 when user is not authenticated', async () => {
-    mockGetCurrentUserFromHeaders.mockResolvedValue(null);
+    // Use dynamic import so instanceof NextResponse matches the route's own reference.
+    vi.mocked(requireAdmin).mockImplementation(async () => {
+      const { NextResponse: NR } = await import('next/server');
+      return NR.json({ error: 'Unauthorized' }, { status: 401 });
+    });
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(401);
   });
 
   it('returns 403 when user is not admin', async () => {
-    mockGetCurrentUserFromHeaders.mockResolvedValue({ id: 'user-1', email: 'user@test.com', role: 'user' } as unknown as SessionUser);
-    mockIsUserAdmin.mockResolvedValue(false);
+    vi.mocked(requireAdmin).mockImplementation(async () => {
+      const { NextResponse: NR } = await import('next/server');
+      return NR.json({ error: 'Forbidden: admin role required' }, { status: 403 });
+    });
 
     const res = await GET(makeRequest());
     expect(res.status).toBe(403);
@@ -110,6 +105,7 @@ describe('GET /api/admin/payouts/queue', () => {
   });
 
   it('returns 500 on D1 error', async () => {
+    // Auth gate passes; the D1 primitive throws to trigger the 500 path.
     mockAll.mockRejectedValue(new Error('D1 error'));
 
     const res = await GET(makeRequest());

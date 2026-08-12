@@ -3,21 +3,17 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-vi.mock('@/seed/auth/better-auth-session', () => ({
-  getCurrentUserFromHeaders: vi.fn(),
-}));
-vi.mock('@/seed/auth/is-user-admin', () => ({
-  isUserAdmin: vi.fn(),
+vi.mock('@/seed/auth/require-admin', () => ({
+  requireAdmin: vi.fn(),
 }));
 
 vi.mock('@/land/observability/tenant-summary', () => ({
   getTenantSummary: vi.fn(),
 }));
 
-import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { isUserAdmin } from '@/seed/auth/is-user-admin';
+import { requireAdmin } from '@/seed/auth/require-admin';
 import { getTenantSummary } from '@/land/observability/tenant-summary';
 import { GET } from '../route';
 
@@ -41,36 +37,42 @@ describe('GET /api/admin/tenant-lookup', () => {
   beforeEach(() => vi.clearAllMocks());
 
   it('returns 401 anon', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue(null);
+    vi.mocked(requireAdmin).mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+    );
     const resp = await GET(buildRequest({ tenantId: 't' }));
     expect(resp.status).toBe(401);
   });
 
   it('returns 403 for non-admin', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u', role: 'user' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(false);
+    vi.mocked(requireAdmin).mockResolvedValue(
+      NextResponse.json({ error: 'Forbidden: admin role required' }, { status: 403 }),
+    );
     const resp = await GET(buildRequest({ tenantId: 't' }));
     expect(resp.status).toBe(403);
   });
 
   it('returns 400 when tenantId missing', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
+    vi.mocked(requireAdmin).mockResolvedValue(
+      { user: { id: 'u1', role: 'admin' } } as any,
+    );
     const resp = await GET(buildRequest());
     expect(resp.status).toBe(400);
   });
 
   it('returns 404 when summary is null', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
+    vi.mocked(requireAdmin).mockResolvedValue(
+      { user: { id: 'u1', role: 'admin' } } as any,
+    );
     vi.mocked(getTenantSummary).mockResolvedValue(null);
     const resp = await GET(buildRequest({ tenantId: 'missing' }));
     expect(resp.status).toBe(404);
   });
 
   it('returns 200 with summary on hit', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
+    vi.mocked(requireAdmin).mockResolvedValue(
+      { user: { id: 'u1', role: 'admin' } } as any,
+    );
     vi.mocked(getTenantSummary).mockResolvedValue(STUB_SUMMARY);
     const resp = await GET(buildRequest({ tenantId: 't' }));
     expect(resp.status).toBe(200);
@@ -79,8 +81,9 @@ describe('GET /api/admin/tenant-lookup', () => {
   });
 
   it('returns 500 if primitive throws', async () => {
-    vi.mocked(getCurrentUserFromHeaders).mockResolvedValue({ id: 'u', role: 'admin' } as Awaited<ReturnType<typeof getCurrentUserFromHeaders>>);
-    vi.mocked(isUserAdmin).mockResolvedValue(true);
+    vi.mocked(requireAdmin).mockResolvedValue(
+      { user: { id: 'u1', role: 'admin' } } as any,
+    );
     vi.mocked(getTenantSummary).mockRejectedValue(new Error('boom'));
     const resp = await GET(buildRequest({ tenantId: 't' }));
     expect(resp.status).toBe(500);
