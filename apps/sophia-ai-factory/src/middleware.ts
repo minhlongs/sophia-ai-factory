@@ -73,6 +73,10 @@ const BARE_AUTH_APP_ROUTES = new Set([
   'dashboard', 'checkout', 'settings', 'products', 'payments',
   'admin', 'affiliates', 'affiliate-portal', 'subscribers',
   'webhook', 'creator', 'investor-room',
+ // P0: bare /dashboard/* auth pages must bypass the locale-guard branch above.
+ // Without this, `pathname.split('/')[1]` yields the invalid locale 'dashboard' and the
+ // auth pipeline constructs `/${locale}/login`, producing `/dashboard/login` -> self-loop.
+ 'dashboard/login', 'dashboard/signup',
 ]);
 
   const pathLocale = pathname.split('/')[1];
