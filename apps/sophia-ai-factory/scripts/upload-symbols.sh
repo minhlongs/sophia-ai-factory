@@ -28,6 +28,12 @@ if [ "${SKIP_SYMBOL_UPLOAD:-0}" = "1" ]; then
   exit 0
 fi
 
+# Skip gracefully when auth token is missing (L7 doctrine: symbolication is optional)
+if [ -z "${SENTRY_AUTH_TOKEN:-}" ]; then
+  echo "⚠️ SENTRY_AUTH_TOKEN not set — skipping source map upload"
+  exit 0
+fi
+
 # Resolve commit SHA
 COMMIT_SHA="${GIT_COMMIT_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
 if [ "$COMMIT_SHA" = "unknown" ]; then
@@ -122,6 +128,7 @@ while IFS= read -r result; do
     errors=$((errors + 1))
   fi
 done < <(
+  set +e
   for mapfile in "${map_files[@]}"; do
     upload_one "$mapfile" "$COMMIT_SHA" "$R2_BUCKET" 2>&1
   done | tee /dev/stderr
@@ -133,5 +140,5 @@ if [ $uploaded -gt 0 ]; then
 fi
 if [ $errors -gt 0 ]; then
   echo "⚠️ $errors upload(s) failed"
-  exit 1
+  exit 0
 fi

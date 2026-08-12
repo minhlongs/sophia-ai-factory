@@ -44,6 +44,62 @@ const kvMock = {
   R2: r2Mock,
 };
 
+// ── Minimal NextResponse factory ─────────────────────────────────────────
+let mockNextResponseImplementation: {
+  json: (data: unknown, init?: { status?: number }) => Response;
+  redirect: (url: string | URL, init?: { status?: number }) => Response;
+  next: (init?: { status?: number }) => Response;
+} = {
+  json: (data: unknown, init?: { status?: number }) => {
+    const body = typeof data === 'string' ? data : JSON.stringify(data);
+    return new Response(body, {
+      status: init?.status ?? 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  },
+  redirect: (url: string | URL, init?: { status?: number }) => {
+    return new Response(null, {
+      status: init?.status ?? 307,
+      headers: { location: typeof url === 'string' ? url : url.toString() },
+    });
+  },
+  next: (init?: { status?: number }) => {
+    return new Response(null, { status: init?.status ?? 200 });
+  },
+};
+
+const NextResponse = new Proxy(
+  {},
+  {
+    get(_target, prop: string) {
+      const value = mockNextResponseImplementation[prop as keyof typeof mockNextResponseImplementation];
+      if (!value) {
+        throw new Error(`[vitest setup] NextResponse.${String(prop)} is not mocked; add it to the factory.`);
+      }
+      return typeof value === 'function' ? value.bind(mockNextResponseImplementation) : value;
+    },
+    set() {
+      throw new Error('[vitest setup] Assigning directly onto NextResponse is not supported. Override the factory instead.');
+    },
+  }
+);
+
+export function configureNextResponse(
+  overrides: Partial<{
+    json: (data: unknown, init?: { status?: number }) => Response;
+    redirect: (url: string | URL, init?: { status?: number }) => Response;
+    next: (init?: { status?: number }) => Response;
+  }>
+) {
+  mockNextResponseImplementation = {
+    ...mockNextResponseImplementation,
+    ...overrides,
+  };
+}
+
+// vi.mock('next/server') mocks everything on next/server with one vi.fn()-based object.
+// NextResponse.json and NextResponse.redirect are *property access*, but Module._e mocked it as a function. fs_react runs into the same error handling static/unbound behavior.
+// With MockResponsePolicy above everything else can stay regular.
 // ── SSRF-safe NextRequest ────────────────────────────────────────────────
 class MockNextRequest extends Request {
   cookies: ReturnType<typeof createCookieJar>;
@@ -61,12 +117,11 @@ class MockNextRequest extends Request {
     (this.nextUrl as any).clone = () => new URL(this.nextUrl.toString());
   }
 
-  clone(): MockNextRequest {
-    // Match real NextRequest/URL clone contract so public-pipeline.ts
-    // (`request.nextUrl.clone()`) does not throw.
+// @ts-ignore - Cloudflare Request<…, CfProperties<…>> LSP mismatch unavoidable for test mock; runtime clone() is correct
+  clone(): Request {
     const cloneUrl = this.nextUrl.toString();
     const cloned = new MockNextRequest(cloneUrl);
-    return cloned;
+    return cloned as unknown as Request;
   }
 }
 
@@ -106,80 +161,18 @@ function createCookieJar() {
   };
 }
 
-// ── Mock NextResponse ────────────────────────────────────────────────────
-class MockNextResponse {
-  status = 200;
-  headers: Headers;
-  cookies: ReturnType<typeof createCookieJar>;
-  ok = true;
-  private _body?: BodyInit | null;
-
-  constructor(body?: BodyInit | null, opts?: { status?: number }) {
-    this.headers = new Headers();
-    this.cookies = createCookieJar();
-    this._body = body;
-    if (opts?.status) this.status = opts.status;
-  }
-
-  redirect(url: string | URL, opts?: { status?: number }): MockNextResponse {
-    // Mirror real NextResponse.redirect() which defaults to 307 and
-    // stores the status on the returned response itself.
-    const res = new MockNextResponse(null, { status: opts?.status ?? 307 });
-    res.headers.set('location', url.toString());
-    return res;
-  }
-
-  clone(): MockNextResponse {
-    const cloned = new MockNextResponse(this._body, {
-      status: this.status,
-    });
-    this.headers.forEach((v, k) => cloned.headers.set(k, v));
-    return cloned;
-  }
-
-  json(data: unknown, opts?: { status?: number }): MockNextResponse {
-    return new MockNextResponse(JSON.stringify(data), {
-      status: opts?.status ?? 200,
-    });
-  }
-
-  redirect(url: string | URL, opts?: { status?: number }): MockNextResponse {
-    this.headers.set('location', url.toString());
-    this.status = opts?.status ?? 307;
-    this.ok = this.status < 400;
-    return this;
-  }
-
-  next(opts?: { status?: number }): MockNextResponse {
-    return new MockNextResponse(null, {
-      status: opts?.status ?? 200,
-    });
-  }
-
- async text(): Promise<string> {
-  if (this._body == null) return '';
-  if (typeof this._body === 'string') return this._body;
-  return String(this._body);
-}
-
-  static redirect(url: string | URL): MockNextResponse {
-    const response = new MockNextResponse(null);
-    response.headers.set('location', url.toString());
-    response.status = 307;
-    return response;
-  }
-
-  static next(): MockNextResponse {
-    return new MockNextResponse(null, { status: 200 });
-  }
-}
-
+// ── Mock NextRequest on next/server ───────────────────────────────────────
+// Needed because vi.mock('next/server') replaces the whole module with plain JSON.
+// Tests still construct `new NextRequest(url)` from `next/server`.
 vi.mock('next/server', () => {
-  // @ts-ignore
+  const base = {
+    NextResponse,
+  } as Record<string, unknown>;
+
   return {
-    NextResponse: MockNextResponse,
+    ...base,
     NextRequest: MockNextRequest,
-  };
+  } as Record<string, unknown>;
 });
 
 // ── Mock next/link ───────────────────────────────────────────────────────
