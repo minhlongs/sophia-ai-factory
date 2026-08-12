@@ -423,6 +423,8 @@ echo "  Created instrumentation.js stub"
 echo "{}" > ".next/standalone/.next/server/instrumentation.js.map"
 echo "  Created instrumentation.js.map stub"
 
+echo "==> patch opennext d3 stubs (export named symbols for esbuild)"
+bash scripts/patch-opennext-d3-stubs.sh
 echo "==> opennextjs/cloudflare build"
 npx @opennextjs/cloudflare build --skipNextBuild --noMinify
 
