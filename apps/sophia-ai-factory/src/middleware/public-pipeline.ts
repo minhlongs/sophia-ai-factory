@@ -60,7 +60,7 @@ export async function handlePublicPipeline(
   if (location) {
     const pathLocale = request.nextUrl.pathname.split('/')[1];
     if (BARE_AUTH_APP_ROUTES.has(pathLocale || '')) {
-      const bypass = NextResponse.next({ request: { headers: requestHeaders } });
+      const bypass = NextResponse.rewrite(new URL(request.url), { request: { headers: requestHeaders } });
       if (localeForCookie) {
         bypass.cookies.set('NEXT_LOCALE', localeForCookie, { path: '/', maxAge: 31536000 });
       }
