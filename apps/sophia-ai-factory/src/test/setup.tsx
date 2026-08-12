@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import { vi, beforeEach, afterEach } from 'vitest';
+import { vi } from 'vitest';
 
 // ── D1 / R2 / KV mocks ───────────────────────────────────────────────────
 function createD1Mock() {
@@ -44,46 +44,85 @@ const kvMock = {
   R2: r2Mock,
 };
 
-// ── Minimal NextResponse factory ─────────────────────────────────────────
-let mockNextResponseImplementation: {
-  json: (data: unknown, init?: { status?: number }) => Response;
-  redirect: (url: string | URL, init?: { status?: number }) => Response;
-  next: (init?: { status?: number }) => Response;
-} = {
-  json: (data: unknown, init?: { status?: number }) => {
+// ── NextResponse mock ─────────────────────────────────────────────────────
+//
+// Tests need three things from the NextResponse mock:
+// 1) Static factory methods: NextResponse.json / .redirect / .next
+// 2) Constructor support: new NextResponse(body?, init?)
+// 3) instanceof NextResponse checks in middleware/guards
+//
+// Both 2 and 3 are satisfied by a single mock object whose prototype chain
+// reaches the real global Response.  The mock is callable as a function (tests
+// do `NextResponse.json(...)`) and constructable (production code does
+// `new NextResponse(body, init)`).  `instanceof NextResponse` checks succeed
+// because every Response returned by the mock carries NextResponseMock in its
+// prototype chain.
+// ─────────────────────────────────────────────────────────────────────────
+
+// Declared first because vi.mock (hoisted by vitest) must capture these.
+class _NextResponseMock {
+  private _res: Response;
+
+  constructor(body?: BodyInit | null, init?: ResponseInit) {
+    const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
+    this._res = new GlobalResponse(body, init);
+  }
+
+  static json(data: unknown, init?: { status?: number }): Response {
     const body = typeof data === 'string' ? data : JSON.stringify(data);
-    return new Response(body, {
+    const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
+    return new GlobalResponse(body, {
       status: init?.status ?? 200,
       headers: { 'content-type': 'application/json' },
     });
-  },
-  redirect: (url: string | URL, init?: { status?: number }) => {
-    return new Response(null, {
+  }
+
+  static redirect(url: string | URL, init?: { status?: number }): Response {
+    const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
+    return new GlobalResponse(null, {
       status: init?.status ?? 307,
       headers: { location: typeof url === 'string' ? url : url.toString() },
     });
-  },
-  next: (init?: { status?: number }) => {
-    return new Response(null, { status: init?.status ?? 200 });
-  },
-};
+  }
 
-export function configureNextResponse(
-  overrides: Partial<{
-    json: (data: unknown, init?: { status?: number }) => Response;
-    redirect: (url: string | URL, init?: { status?: number }) => Response;
-    next: (init?: { status?: number }) => Response;
-  }>
-) {
-  mockNextResponseImplementation = {
-    ...mockNextResponseImplementation,
-    ...overrides,
-  };
+  static next(init?: { status?: number }): Response {
+    const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
+    return new GlobalResponse(null, { status: init?.status ?? 200 });
+  }
 }
 
-// vi.mock('next/server') mocks everything on next/server with one vi.fn()-based object.
-// NextResponse.json and NextResponse.redirect are *property access*, but Module._e mocked it as a function. fs_react runs into the same error handling static/unbound behavior.
-// With MockResponsePolicy above everything else can stay regular.
+// Make `instanceof _NextResponseMock` resolve true for any Response created
+// through our mock.  We do this by templating a thin wrapper class whose
+// prototype chain goes through `_NextResponseMock` but whose instances ARE
+// real `Response` objects (so all fetch/body methods continue to work).
+const NextResponseMock = (() => {
+  const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
+  let wrapper: new (...args: ConstructorParameters<typeof Response>) => Response;
+
+  // Each time `new NextResponseMock(...)` is called, redirect it through the
+  // real Response constructor so Vitest / fetch sees a genuine Response.
+  const Real = GlobalResponse;
+  function C(this: Response, ...args: ConstructorParameters<typeof Response>) {
+    return Reflect.construct(Real, args, new.target);
+  }
+  // Template link: instances of C are also instances of _NextResponseMock
+  C.prototype = Object.create(_NextResponseMock.prototype);
+  C.prototype.constructor = _NextResponseMock;
+
+  // Static factory methods: return real Response instances but template the
+  // prototype so they pass instanceof checks too.
+  C.json = _NextResponseMock.json;
+  C.redirect = _NextResponseMock.redirect;
+  C.next = _NextResponseMock.next;
+
+  return C as unknown as typeof _NextResponseMock;
+})();
+
+// Re-point the wrapper so instanceof works through the final prototype chain.
+const _RealRes = (globalThis as unknown as Record<string, typeof Response>).Response;
+Object.setPrototypeOf(NextResponseMock, _RealRes);
+Object.setPrototypeOf(NextResponseMock.prototype, _RealRes.prototype);
+
 // ── SSRF-safe NextRequest ────────────────────────────────────────────────
 class MockNextRequest extends Request {
   cookies: ReturnType<typeof createCookieJar>;
@@ -145,20 +184,6 @@ function createCookieJar() {
   };
 }
 
-// ── Mock NextRequest on next/server ───────────────────────────────────────
-// Needed because vi.mock('next/server') replaces the whole module with plain JSON.
-// Tests still construct `new NextRequest(url)` from `next/server`.
-vi.mock('next/server', () => {
-  const base = {
-    NextResponse: mockNextResponseImplementation,
-  } as Record<string, unknown>;
-
-  return {
-    ...base,
-    NextRequest: MockNextRequest,
-  } as Record<string, unknown>;
-});
-
 // ── Mock next/link ───────────────────────────────────────────────────────
 type LinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
   href?: string | (() => string);
@@ -179,3 +204,11 @@ globalThis.console = {
   log: vi.fn(),
   error: globalThis.console.error,
 };
+
+// vitest hoists vi.mock to the top of the file during transformation, so
+// NextResponseMock and MockNextRequest — referenced inside the factory — must
+// already be declared above this call.
+vi.mock('next/server', () => ({
+  NextResponse: NextResponseMock,
+  NextRequest: MockNextRequest,
+}));
