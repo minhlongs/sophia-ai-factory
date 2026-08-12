@@ -1,5 +1,5 @@
 /**
- * /api/v1/missions/[id]/stream — SSE Stream for mission status
+ * /api/v1/missions/[id]/stream - SSE Stream for mission status
  *
  * Polls D1 every 2s, emits status events with `id:` cursor (SSE spec).
  * Supports Last-Event-ID reconnect: resumes from updated_at cursor so the
@@ -10,8 +10,8 @@
  * and we skip polling cycles until mission.updated_at > cursor.
  *
  * Two separate variables prevent clock-skew dedup suppression (Wave-14 fix):
- *   - eventCursor  — advances ONLY when a real DB status event is emitted.
- *   - lastHeartbeatTs — advances on keepalive ticks; NEVER touches eventCursor.
+ * - eventCursor - advances ONLY when a real DB status event is emitted.
+ * - lastHeartbeatTs - advances on keepalive ticks; NEVER touches eventCursor.
  * Heartbeat emits `:` comment line (no `id:`) per SSE spec so Last-Event-ID
  * is never polluted by server-wall-clock timestamps.
  *
@@ -22,7 +22,6 @@ import * as Sentry from '@sentry/nextjs';
 import { NextRequest, NextResponse } from 'next/server';
 import { validateMissionApiKey, apiKeyAuthErrorResponse } from '@/tree/missions/api-key-auth';
 import { createServerClient } from '@/seed/db/client';
-import { NextResponse } from 'next/server';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -63,7 +62,7 @@ function sseMessage(event: string, data: unknown, cursor: number | null = null):
   return `${idLine}event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
-/** SSE keepalive comment line — does NOT set Last-Event-ID (per SSE spec). */
+/** SSE keepalive comment line - does NOT set Last-Event-ID (per SSE spec). */
 function sseHeartbeat(ts: number): string {
   return `: ping ${ts}\n\n`;
 }
@@ -79,7 +78,7 @@ export async function GET(
       r.headers.get('x-api-key'),
     );
     if (!auth.valid) {
-      return apiKeyAuthErrorResponse(auth);
+      return apiKeyAuthErrorResponse(auth) as NextResponse;
     }
     const userId = auth.userId!;
 
@@ -95,14 +94,13 @@ export async function GET(
       async start(controller) {
         const db = createServerClient();
 
-        // ── Cursor separation (Wave-14 heartbeat-cursor fix) ───────────────
+        // Cursor separation (Wave-14 heartbeat-cursor fix)
         // eventCursor: advances ONLY when a real DB status event is emitted.
-        //   Used for SSE `id:` lines and reconnect dedup.
+        // Used for SSE `id:` lines and reconnect dedup.
         // lastHeartbeatTs: wall-clock of last keepalive tick.
-        //   NEVER written to eventCursor — prevents clock-skew dedup suppression.
+        // NEVER written to eventCursor - prevents clock-skew dedup suppression.
         let eventCursor = resumeCursor;
         let lastHeartbeatTs = Date.now();
-        // ──────────────────────────────────────────────────────────────────
 
         // Emit initial `id: 0` so EventSource can track from the start.
         controller.enqueue(encoder.encode(
@@ -133,7 +131,7 @@ export async function GET(
 
             const now = Date.now();
 
-            // Keepalive: heartbeat emits `:` comment line — does NOT set Last-Event-ID.
+            // Keepalive: heartbeat emits `:` comment line - does NOT set Last-Event-ID.
             // lastHeartbeatTs advances; eventCursor is untouched.
             if (now - lastHeartbeatTs >= HEARTBEAT_INTERVAL_MS) {
               controller.enqueue(encoder.encode(sseHeartbeat(now)));
@@ -157,11 +155,11 @@ export async function GET(
               }
 
               // Dedup check: skip if client already saw this DB state.
-              // updated_at is 0/null on brand-new missions — emit those always.
+              // updated_at is 0/null on brand-new missions - emit those always.
               // Comparison is against eventCursor ONLY (never polluted by heartbeat).
               const dbCursor = data.updated_at ?? 0;
               if (dbCursor > 0 && dbCursor <= eventCursor) {
-                // No new state since last emitted event — keep polling silently.
+                // No new state since last emitted event - keep polling silently.
                 if (TERMINAL_STATUSES.has(data.status)) {
                   // Terminal already delivered pre-disconnect; re-send done on reconnect.
                   controller.enqueue(encoder.encode(
@@ -225,13 +223,13 @@ export async function GET(
       },
     });
 
-    return new NextResponse(stream, {
+    return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         Connection: 'keep-alive',
         'X-Accel-Buffering': 'no',
       },
-    });
+    }) as unknown as NextResponse;
   }, { addHeaders: false, config: { intervalMs: 60_000, maxRequests: 20 } })(request);
 }

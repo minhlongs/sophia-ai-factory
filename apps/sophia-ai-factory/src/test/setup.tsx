@@ -68,22 +68,6 @@ let mockNextResponseImplementation: {
   },
 };
 
-const NextResponse = new Proxy(
-  {},
-  {
-    get(_target, prop: string) {
-      const value = mockNextResponseImplementation[prop as keyof typeof mockNextResponseImplementation];
-      if (!value) {
-        throw new Error(`[vitest setup] NextResponse.${String(prop)} is not mocked; add it to the factory.`);
-      }
-      return typeof value === 'function' ? value.bind(mockNextResponseImplementation) : value;
-    },
-    set() {
-      throw new Error('[vitest setup] Assigning directly onto NextResponse is not supported. Override the factory instead.');
-    },
-  }
-);
-
 export function configureNextResponse(
   overrides: Partial<{
     json: (data: unknown, init?: { status?: number }) => Response;
@@ -117,7 +101,7 @@ class MockNextRequest extends Request {
     (this.nextUrl as any).clone = () => new URL(this.nextUrl.toString());
   }
 
-// @ts-ignore - Cloudflare Request<…, CfProperties<…>> LSP mismatch unavoidable for test mock; runtime clone() is correct
+  // @ts-ignore - Cloudflare Request<…, Cf Properties<…>> LSP mismatch unavoidable for test mock; runtime clone() is correct
   clone(): Request {
     const cloneUrl = this.nextUrl.toString();
     const cloned = new MockNextRequest(cloneUrl);
@@ -166,7 +150,7 @@ function createCookieJar() {
 // Tests still construct `new NextRequest(url)` from `next/server`.
 vi.mock('next/server', () => {
   const base = {
-    NextResponse,
+    NextResponse: mockNextResponseImplementation,
   } as Record<string, unknown>;
 
   return {
