@@ -306,6 +306,15 @@ else
   echo "⚠️ @opennextjs/cloudflare not in node_modules — OPENNEXT_VERSION stays as wrangler.toml default"
 fi
 
+# Snapshot the value that is now in wrangler.toml so Step 4's OpenNext deploy can be
+# reverted afterward. This keeps wrangler.toml clean in git and avoids dirty-tree deploys.
+WRANGLER_TOML="$APP_DIR/wrangler.toml"
+WRANGLER_PRE_DEPLOY_VERSION=""
+if [ -f "$WRANGLER_TOML" ] && grep -q 'OPENNEXT_VERSION = "' "$WRANGLER_TOML" 2>>"$DEPLOY_LOG"; then
+  WRANGLER_PRE_DEPLOY_VERSION=$(node -e "const fs=require('fs');const f=process.argv[1];const m=fs.readFileSync(f,'utf8').match(/OPENNEXT_VERSION = \"([^\"]*)\"/);process.stdout.write(m?m[1]:'');" "$WRANGLER_TOML")
+  [ -n "$WRANGLER_PRE_DEPLOY_VERSION" ] && echo "==> Snapshot OPENNEXT_VERSION=$WRANGLER_PRE_DEPLOY_VERSION for post-deploy restore" || true
+fi
+
 # ─── Step 0.5: TypeScript gate (replaces removed ignoreBuildErrors safety) ───
 # next.config.ts has `ignoreBuildErrors: true` to dodge an M1 16GB OOM during
 # Next's inner typecheck. We MUST run tsc --noEmit externally before next build
@@ -498,6 +507,22 @@ echo "==> OpenNext Cloudflare deploy"
 # OpenNext 1.19+ deploys the generated worker from its adapter output.
 # Direct wrangler deploy still points at the legacy .open-next/worker.js path.
 retry_cf "opennext deploy" npx opennextjs-cloudflare deploy --config wrangler.toml
+
+# ── Post-deploy: restore wrangler.toml to pre-inject state ────────────────────
+# OpenNext deploy may rewrite OPENNEXT_VERSION. Restore the snapshot we saved
+# before Step 4 so the working tree stays clean and wrangler.toml is never
+# committed with injected drift.
+if [ -n "${WRANGLER_PRE_DEPLOY_VERSION:-}" ] && [ -f "$WRANGLER_TOML" ] && grep -q 'OPENNEXT_VERSION = "' "$WRANGLER_TOML" 2>>"$DEPLOY_LOG"; then
+  echo "==> Restoring OPENNEXT_VERSION=$WRANGLER_PRE_DEPLOY_VERSION in wrangler.toml"
+  node -e "const fs=require('fs');const f=process.argv[1];const v=process.argv[2];const src=fs.readFileSync(f,'utf8');fs.writeFileSync(f,src.replace(/OPENNEXT_VERSION = \"[^\"]*\"/,'OPENNEXT_VERSION = \"'+v+'\"'));" "$WRANGLER_TOML" "$WRANGLER_PRE_DEPLOY_VERSION"
+  if [ -n "${REPO_ROOT:-}" ] && [ -d "$REPO_ROOT/.git" ]; then
+    if git -C "$REPO_ROOT" diff --quiet -- "$WRANGLER_TOML"; then
+      echo "✅ wrangler.toml restore verified: tree is clean"
+    else
+      echo "⚠️ wrangler.toml still dirty after restore — manual check recommended"
+    fi
+  fi
+fi
 
 # ─── Step 4.5: Upload SBOM to R2 ───────────────────────────────────────────────
 # Store SBOM in BACKUPS_BUCKET for supply chain artifacts.
