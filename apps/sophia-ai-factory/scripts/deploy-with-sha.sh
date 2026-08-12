@@ -589,17 +589,27 @@ if ! verify_deploy_sha "$VERIFY_VERSION_URL" "$COMMIT_SHORT" 12; then
   exit 2
 fi
 
-echo "==> verify production HTTP via $PROD_URL"
-# fetch_status returns non-zero on failure (curl --fail). In that case HTTP_STATUS is empty.
-if ! HTTP_STATUS=$(fetch_status "$PROD_URL" 2>>"$DEPLOY_LOG"); then
-  echo "❌ Production HTTP check failed: curl error (see deploy log)"
+echo "==> verify production HTTP via specific endpoints"
+# Verify /api/health (must be 200) — stale-worker guard; does NOT follow redirects
+if ! HTTP_STATUS=$(fetch_status "$PROD_URL/api/health" 2>>"$DEPLOY_LOG"); then
+  echo "❌ Production HTTP check failed: /api/health curl error (see deploy log)"
   exit 2
 fi
 if [ "$HTTP_STATUS" != "200" ]; then
-  echo "❌ Production HTTP check failed: ${HTTP_STATUS}"
+  echo "❌ Production HTTP check failed: /api/health → ${HTTP_STATUS}"
   exit 2
 fi
-echo "✅ Production HTTP: $HTTP_STATUS"
+# Verify /login (must be 200) — does NOT follow root redirects
+HTTP_STATUS=""
+if ! HTTP_STATUS=$(fetch_status "$PROD_URL/login" 2>>"$DEPLOY_LOG"); then
+  echo "❌ Production HTTP check failed: /login curl error (see deploy log)"
+  exit 2
+fi
+if [ "$HTTP_STATUS" != "200" ]; then
+  echo "❌ Production HTTP check failed: /login → ${HTTP_STATUS}"
+  exit 2
+fi
+echo "✅ Production HTTP: /api/health → $HTTP_STATUS, /login → ${HTTP_STATUS}"
 
 # ─── Step 5.7: Basic post-deploy smoke (health + version) ─────────────────────
 # Runs minimal health checks; write report if SMOKE_REPORT_PATH set.
