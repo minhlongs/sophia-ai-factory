@@ -8,17 +8,17 @@ import { vi } from 'vitest';
 
 // ── D1 / R2 / KV mocks ───────────────────────────────────────────────────
 function createD1Mock() {
+  const makeStmt = () => ({
+    first: vi.fn().mockResolvedValue(null),
+    all: vi.fn().mockResolvedValue({ results: [], meta: { changes: 0, duration: 1 } }),
+    run: vi.fn().mockResolvedValue({ success: true, meta: { changes: 0, duration: 1 } }),
+    bind: vi.fn().mockReturnThis(),
+  });
   return {
-    prepare: (_sql: string) => ({
-      bind: (..._vals: unknown[]) => ({
-        first: async () => null,
-        all: async () => ({ results: [], meta: { changes: 0, duration: 1 } }),
-        run: async () => ({ success: true, meta: { changes: 0, duration: 1 } }),
-      }),
-    }),
-    batch: async (_stmts: unknown[]) => {},
-    exec: async (_sql: string) => ({ results: [], meta: { changes: 0 } }),
-    dump: async () => ({ data: '' }),
+    prepare: vi.fn().mockImplementation((_sql: string) => makeStmt()),
+    batch: vi.fn().mockResolvedValue([]),
+    exec: vi.fn().mockResolvedValue({ results: [], meta: { changes: 0 } }),
+    dump: vi.fn().mockResolvedValue({ data: '' }),
     transaction: { statements: [] },
   };
 }
@@ -68,19 +68,20 @@ class _NextResponseMock {
     this._res = new GlobalResponse(body, init);
   }
 
-  static json(data: unknown, init?: { status?: number }): Response {
+  static json(data: unknown, init?: { status?: number; headers?: Record<string, string> }): Response {
     const body = typeof data === 'string' ? data : JSON.stringify(data);
     const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
     return new GlobalResponse(body, {
       status: init?.status ?? 200,
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', ...init?.headers },
     });
   }
 
-  static redirect(url: string | URL, init?: { status?: number }): Response {
+  static redirect(url: string | URL, init?: number | { status?: number }): Response {
+    const status = typeof init === 'number' ? init : (init?.status ?? 307);
     const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
     return new GlobalResponse(null, {
-      status: init?.status ?? 307,
+      status,
       headers: { location: typeof url === 'string' ? url : url.toString() },
     });
   }
@@ -88,6 +89,11 @@ class _NextResponseMock {
   static next(init?: { status?: number }): Response {
     const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
     return new GlobalResponse(null, { status: init?.status ?? 200 });
+  }
+
+  static rewrite(url: string | URL, init?: ResponseInit): Response {
+    const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
+    return new GlobalResponse(null, { status: init?.status ?? 200, ...init });
   }
 }
 
@@ -108,6 +114,35 @@ const NextResponseMock = (() => {
   C.prototype = Object.create(_NextResponseMock.prototype);
   C.prototype.constructor = _NextResponseMock;
 
+  // Per-instance cookies interface — next-intl middleware calls
+  // response.cookies.set() on NextResponse instances. Add a lightweight
+  // cookie store so intlMiddleware doesn't crash in tests.
+  const cookiesMap = new WeakMap<object, ReturnType<typeof createCookieJar>>();
+  Object.defineProperty(C.prototype, 'cookies', {
+    get() {
+      if (!cookiesMap.has(this)) {
+        const store = new Map<string, { name: string; value: string }>();
+        cookiesMap.set(this, {
+          get: (name: string) => store.get(name),
+          getAll: () => Array.from(store.values()),
+          set: (name: string, value: string) => { store.set(name, { name, value }); },
+          delete: (name: string) => { store.delete(name); },
+          deleteAll: () => { store.clear(); },
+          has: (name: string) => store.has(name),
+          [Symbol.iterator]: function* () {
+            for (const [name, value] of store) yield { name, value };
+          },
+          *entries() {
+            for (const [name, value] of store) yield [name, value] as [string, string];
+          },
+          get size() { return store.size; },
+        });
+      }
+      return cookiesMap.get(this);
+    },
+    configurable: true,
+  });
+
   // Stamp a plain Response so `instanceof NextResponse` passes for results of
   // the static factories (json/redirect/next). Without this the route guards
   // (`auth instanceof NextResponse`) miss auth-failure responses under Vitest.
@@ -120,10 +155,12 @@ const NextResponseMock = (() => {
   // prototype so they pass instanceof checks too.
   C.json = (data: unknown, init?: { status?: number }): Response =>
     stamp(_NextResponseMock.json(data, init));
-  C.redirect = (url: string | URL, init?: { status?: number }): Response =>
+  C.redirect = (url: string | URL, init?: number | { status?: number }): Response =>
     stamp(_NextResponseMock.redirect(url, init));
   C.next = (init?: { status?: number }): Response =>
     stamp(_NextResponseMock.next(init));
+  C.rewrite = (url: string | URL, init?: ResponseInit): Response =>
+    stamp(_NextResponseMock.rewrite(url, init));
 
   return C as unknown as typeof _NextResponseMock;
 })();

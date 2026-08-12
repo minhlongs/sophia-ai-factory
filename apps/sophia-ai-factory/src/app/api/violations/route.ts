@@ -29,15 +29,15 @@ export async function GET(request: NextRequest) {
     // Step 2: Parse & validate query params
     const sp = request.nextUrl.searchParams;
     const validation = violationsQuerySchema.safeParse({
-      licenseNonce: sp.get('licenseNonce'),
-      userId: sp.get('userId'),
-      type: sp.get('type'),
-      severity: sp.get('severity'),
-      start: sp.get('start'),
-      end: sp.get('end'),
-      resolved: sp.get('resolved'),
-      page: sp.get('page'),
-      limit: sp.get('limit'),
+      licenseNonce: sp.get('licenseNonce') ?? undefined,
+      userId: sp.get('userId') ?? undefined,
+      type: sp.get('type') ?? undefined,
+      severity: sp.get('severity') ?? undefined,
+      start: sp.get('start') ?? undefined,
+      end: sp.get('end') ?? undefined,
+      resolved: sp.get('resolved') ?? undefined,
+      page: sp.get('page') ?? undefined,
+      limit: sp.get('limit') ?? undefined,
     });
 
     if (!validation.success) {
