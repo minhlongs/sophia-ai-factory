@@ -1,6 +1,6 @@
 # Plan: Auto-restore wrangler.toml after OpenNext deploy
 
-Status: Proposed
+Status: Complete
 Date: 2026-08-12
 
 ## Outcome

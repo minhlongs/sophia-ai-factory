@@ -1,6 +1,6 @@
 # Phase 01: deploy-with-sha.sh wrangler.toml restore
 Priority: P0
-Status: Proposed
+Status: Complete
 
 ## Context
 OpenNext's `deploy` rewrites the `OPENNEXT_VERSION` block inside `wrangler.toml`. This dirties the tree and blocks subsequent deploys.
