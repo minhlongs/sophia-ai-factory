@@ -133,7 +133,7 @@ const NextResponseMock = (() => {
             for (const [name, value] of store) yield { name, value };
           },
           *entries() {
-            for (const [name, value] of store) yield [name, value] as [string, string];
+            for (const [name, entry] of store) yield [name, entry.value] as [string, string];
           },
           get size() { return store.size; },
         });
