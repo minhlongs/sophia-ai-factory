@@ -133,4 +133,8 @@ These are known unwired sites. Most are low-risk (fire-and-forget notifications,
 | `app/api/internal/runpod-status/route.ts` | RunPod status | Medium | P2 |
 | `app/api/internal/runpod-trigger/route.ts` | RunPod trigger | Medium | P2 |
 | `app/api/setup-wizard/test-resend/route.ts` | Resend (test route) | Low | P3 |
-| `app/api/cron/workflow-stepper/workflow-stepper-llm-executor.ts` | OpenRouter (LLM) | **High** | **P1** |
+
+### Recently Resolved (Batch 5)
+| File | Service | Status |
+|------|---------|--------|
+| `app/api/cron/workflow-stepper/workflow-stepper-llm-executor.ts` | OpenRouter (LLM) | ✅ Wired — guard + classifyHttpStatus + recordSuccess + re-throw guard + classifyError |

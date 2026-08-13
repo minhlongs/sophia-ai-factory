@@ -145,6 +145,7 @@ All services with active circuit breaker wiring:
 | `openrouter` | `app/api/cron/weekly-signals-digest/weekly-digest-ai.ts` |
 | `resend-email` | `app/api/cron/weekly-signals-digest/weekly-digest-delivery.ts` |
 | `telegram-bot` | `app/api/cron/weekly-signals-digest/weekly-digest-delivery.ts` |
+| `openrouter-workflow-stepper` | `app/api/cron/workflow-stepper/workflow-stepper-llm-executor.ts` |
 
 ## Code Review Checklist
 

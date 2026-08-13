@@ -2,10 +2,14 @@ import { logger } from '@/seed/utils/logger-utility'
 import { callWithCache } from '@/land/llm/cache/call-with-cache'
 import { callAnthropic } from '@/seed/ai/anthropic-adapter'
 import { resolveOrgOwnerUserId } from '@/seed/auth/resolve-org-id'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind'
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'
+
 import type { CacheKey, CacheEntry } from '@/land/llm/cache/llm-cache'
 import type { WorkflowRow } from '@/seed/db/workflow-repository'
 import type { OpenRouterResponse } from './workflow-stepper-runtime-utils'
+const OPENROUTER_SERVICE = 'openrouter-workflow-stepper'
 
 export interface LlmCallResult {
   result: string
@@ -112,6 +116,10 @@ export async function callOpenRouterWithByok(
   }
 
   try {
+    if (!shouldAllowRequest(OPENROUTER_SERVICE)) {
+      throw new Error(`[circuit-breaker] Circuit open for ${OPENROUTER_SERVICE}`)
+    }
+
     const cacheResult = await callWithCache(cacheKey, async (): Promise<CacheEntry> => {
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -123,9 +131,12 @@ export async function callOpenRouterWithByok(
       })
 
       if (!response.ok) {
+        const kind = classifyHttpStatus(response.status)
+        recordFailure(OPENROUTER_SERVICE, kind)
         throw new Error(`OpenRouter ${response.status}: ${await response.text()}`)
       }
 
+      recordSuccess(OPENROUTER_SERVICE)
       const data = await response.json() as OpenRouterResponse
       const content = data.choices[0]?.message?.content ?? ''
 
@@ -149,6 +160,9 @@ export async function callOpenRouterWithByok(
       degradeReason: 'LLM_LIVE_FAILED_FALLBACK',
     }
   } catch (err) {
+    if (err instanceof Error && err.message.includes('[circuit-breaker]')) throw err
+    const kind = classifyError(err)
+    recordFailure(OPENROUTER_SERVICE, kind)
     logger.warn('[workflow-stepper] live LLM call failed, falling back to mock', { workflowId: workflow.id, model, err })
     return {
       result: `Step ${stepType} completed: ${workflow.prompt.slice(0, 100)}`,
