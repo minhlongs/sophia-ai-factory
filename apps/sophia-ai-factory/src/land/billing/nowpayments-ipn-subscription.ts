@@ -172,6 +172,27 @@ function calculatePeriodEnd(billingPeriod: 'monthly' | 'yearly' | 'lifetime'): s
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
 }
 
+/**
+ * Stacked period end for duplicate/same-tier re-payments.
+ * If the subscription still has remaining time (current_period_end > now),
+ * the new period is appended to the existing end instead of resetting the
+ * clock — the customer keeps the time they already paid for.
+ */
+export function stackedPeriodEnd(
+  existingPeriodEnd: string | null | undefined,
+  billingPeriod: 'monthly' | 'yearly' | 'lifetime',
+  now: string,
+  defaultPeriodEnd: string
+): string {
+  if (billingPeriod === 'lifetime') return defaultPeriodEnd
+  if (!existingPeriodEnd) return defaultPeriodEnd
+  const existingMs = Date.parse(existingPeriodEnd)
+  const nowMs = Date.parse(now)
+  if (!Number.isFinite(existingMs) || existingMs <= nowMs) return defaultPeriodEnd
+  const days = billingPeriod === 'yearly' ? 365 : 30
+  return new Date(existingMs + days * 24 * 60 * 60 * 1000).toISOString()
+}
+
 async function resolveBillingPeriod(ipn: NowPaymentsIpnPayload, isLifetime: boolean): Promise<'monthly' | 'yearly' | 'lifetime'> {
   if (isLifetime) return 'lifetime'
 
@@ -221,11 +242,22 @@ async function processExistingOrgSubscription(
   db: ReturnType<typeof getDb>
 ): Promise<void> {
   try {
-    const { data: currentSub } = await db.from('subscriptions').select('plan').eq('org_id', orgId).single()
+    const { data: currentSub } = await db.from('subscriptions').select('plan, current_period_end').eq('org_id', orgId).single()
     const currentPlan = (currentSub as { plan?: string } | null)?.plan ?? ''
     const wouldDowngrade = wouldDowngradeTier(currentPlan, tier)
 
-    const stmts = buildSubscriptionUpdateStatements(currentSub, wouldDowngrade, orgId, tier, periodEnd, now, ipn, d1)
+    const stmts = buildSubscriptionUpdateStatements(
+      currentSub,
+      wouldDowngrade,
+      orgId,
+      tier,
+      periodEnd,
+      now,
+      ipn,
+      d1,
+      billingPeriod,
+      (currentSub as { current_period_end?: string | null } | null)?.current_period_end
+    )
     await d1.batch(stmts)
   } catch (batchErr) {
     // M14 fix (2026-07-01): Removed non-atomic fallback.
@@ -271,7 +303,9 @@ function buildSubscriptionUpdateStatements(
   periodEnd: string,
   now: string,
   ipn: NowPaymentsIpnPayload,
-  d1: D1Database
+  d1: D1Database,
+  billingPeriod: 'monthly' | 'yearly' | 'lifetime',
+  existingPeriodEnd: string | null | undefined
 ): ReturnType<typeof d1.prepare>[] {
   const stmts = currentSub
     ? wouldDowngrade
@@ -285,7 +319,13 @@ function buildSubscriptionUpdateStatements(
       ]
       : [
         d1.prepare('UPDATE subscriptions SET plan=?, status=?, current_period_end=?, updated_at=? WHERE org_id=?')
-          .bind(tier.toLowerCase(), 'active', periodEnd, now, orgId),
+          .bind(
+            tier.toLowerCase(),
+            'active',
+            stackedPeriodEnd(existingPeriodEnd, billingPeriod, now, periodEnd),
+            now,
+            orgId
+          ),
         d1.prepare('UPDATE organizations SET plan=?, updated_at=? WHERE id=?')
           .bind(tier.toLowerCase(), now, orgId),
       ]
@@ -309,6 +349,7 @@ function buildSubscriptionUpdateStatements(
 async function handleBatchFallback(
   orgId: string,
   tier: Tier,
+  billingPeriod: 'monthly' | 'yearly' | 'lifetime',
   periodEnd: string,
   now: string,
   ipn: NowPaymentsIpnPayload,
@@ -318,9 +359,15 @@ async function handleBatchFallback(
 ): Promise<void> {
   logger.warn('[NOWPayments] D1 batch failed, falling back to individual updates', batchErr instanceof Error ? batchErr : { message: String(batchErr) })
   try {
-    const { data: existingSub2 } = await db.from('subscriptions').select('id').eq('org_id', orgId).single()
+    const { data: existingSub2 } = await db.from('subscriptions').select('id, current_period_end').eq('org_id', orgId).single()
     if (existingSub2) {
-      await db.from('subscriptions').update({ plan: tier.toLowerCase(), status: 'active', current_period_end: periodEnd, updated_at: now }).eq('org_id', orgId)
+      const stackedEnd = stackedPeriodEnd(
+        (existingSub2 as { current_period_end?: string | null }).current_period_end,
+        billingPeriod,
+        now,
+        periodEnd
+      )
+      await db.from('subscriptions').update({ plan: tier.toLowerCase(), status: 'active', current_period_end: stackedEnd, updated_at: now }).eq('org_id', orgId)
     } else {
       await db.from('subscriptions').insert({ org_id: orgId, plan: tier.toLowerCase(), status: 'active', current_period_start: now, current_period_end: periodEnd })
     }
