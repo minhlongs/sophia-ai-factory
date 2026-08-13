@@ -12,6 +12,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { logger } from '@/seed/utils/logger-utility'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyHttpStatus, classifyError } from '@/seed/types/failure-kind'
+
+const RESEND_TEST_WIZARD_SERVICE = 'resend-test-wizard'
 
 const schema = z.object({
   api_key: z.string().min(1, 'api_key is required'),
@@ -64,6 +68,15 @@ export async function POST(request: NextRequest) {
     }, { status: 422 })
   }
 
+  if (!shouldAllowRequest(RESEND_TEST_WIZARD_SERVICE)) {
+    return NextResponse.json({
+      ok: false,
+      valid: false,
+      message: 'Service temporarily unavailable (circuit open)',
+      message_vi: 'Dịch vụ tạm thời không khả dụng',
+    }, { status: 503 })
+  }
+
   try {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -81,6 +94,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (res.ok) {
+      recordSuccess(RESEND_TEST_WIZARD_SERVICE)
       return NextResponse.json({
         ok: true,
         valid: true,
@@ -89,6 +103,7 @@ export async function POST(request: NextRequest) {
       })
     }
     if (res.status === 401 || res.status === 403) {
+      recordFailure(RESEND_TEST_WIZARD_SERVICE, classifyHttpStatus(res.status))
       return NextResponse.json({
         ok: false,
         valid: false,
@@ -100,6 +115,7 @@ export async function POST(request: NextRequest) {
       logger.warn('Failed to read response body', { error: String(err), context: 'POST /api/setup-wizard/test-resend' });
       return '';
     })
+    recordFailure(RESEND_TEST_WIZARD_SERVICE, classifyHttpStatus(res.status))
     return NextResponse.json(
       {
         ok: false,
@@ -110,6 +126,7 @@ export async function POST(request: NextRequest) {
       { status: 422 },
     )
   } catch (err) {
+    recordFailure(RESEND_TEST_WIZARD_SERVICE, classifyError(err))
     const msg = err instanceof Error ? err.message : String(err)
     return NextResponse.json({
       ok: false,

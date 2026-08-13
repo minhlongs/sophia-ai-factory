@@ -6,8 +6,9 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError } from '@/seed/types/failure-kind';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 
+const SERVICE_NAME = 'reddit-oauth';
 const REDDIT_AUTHORIZE = 'https://www.reddit.com/api/v1/authorize';
 const REDDIT_TOKEN_URL = 'https://www.reddit.com/api/v1/access_token';
 const REDDIT_ME_URL = 'https://oauth.reddit.com/api/v1/me';
@@ -49,8 +50,8 @@ export function getAuthorizationUrl(state: string): string {
 }
 
 export async function exchangeCodeForTokens(code: string): Promise<RedditTokenResponse> {
-  if (!shouldAllowRequest('reddit')) {
-    throw new Error('[Reddit] Circuit breaker open for reddit');
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
   }
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
   try {
@@ -72,21 +73,21 @@ export async function exchangeCodeForTokens(code: string): Promise<RedditTokenRe
         logger.warn('Failed to read Reddit token exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
         return '';
       });
-      recordFailure('reddit', classifyError(new Error(`HTTP ${res.status}`)));
+      recordFailure(SERVICE_NAME, classifyHttpStatus(res.status));
       throw new Error(`Reddit token exchange failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
     }
-    recordSuccess('reddit');
+    recordSuccess(SERVICE_NAME);
     return res.json() as Promise<RedditTokenResponse>;
   } catch (error) {
-    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
-    recordFailure('reddit', classifyError(error));
+    if (error instanceof Error && error.message.includes('[circuit-breaker]')) throw error;
+    recordFailure(SERVICE_NAME, classifyError(error));
     throw error;
   }
 }
 
 export async function refreshAccessToken(refreshToken: string): Promise<RedditTokenResponse> {
-  if (!shouldAllowRequest('reddit')) {
-    throw new Error('[Reddit] Circuit breaker open for reddit');
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
   }
   try {
     const res = await fetch(REDDIT_TOKEN_URL, {
@@ -106,21 +107,21 @@ export async function refreshAccessToken(refreshToken: string): Promise<RedditTo
         logger.warn('Failed to read Reddit token refresh response', { error: String(err), context: 'refreshAccessToken' });
         return '';
       });
-      recordFailure('reddit', classifyError(new Error(`HTTP ${res.status}`)));
+      recordFailure(SERVICE_NAME, classifyHttpStatus(res.status));
       throw new Error(`Reddit token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
     }
-    recordSuccess('reddit');
+    recordSuccess(SERVICE_NAME);
     return res.json() as Promise<RedditTokenResponse>;
   } catch (error) {
-    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
-    recordFailure('reddit', classifyError(error));
+    if (error instanceof Error && error.message.includes('[circuit-breaker]')) throw error;
+    recordFailure(SERVICE_NAME, classifyError(error));
     throw error;
   }
 }
 
 export async function getUserInfo(accessToken: string): Promise<RedditUserInfo> {
-  if (!shouldAllowRequest('reddit')) {
-    throw new Error('[Reddit] Circuit breaker open for reddit');
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
   }
   try {
     const res = await fetch(REDDIT_ME_URL, {
@@ -130,16 +131,16 @@ export async function getUserInfo(accessToken: string): Promise<RedditUserInfo> 
       },
     });
     if (!res.ok) {
-      recordFailure('reddit', classifyError(new Error(`HTTP ${res.status}`)));
+      recordFailure(SERVICE_NAME, classifyHttpStatus(res.status));
       throw new Error(`Reddit /me failed: HTTP ${res.status}`);
     }
-    recordSuccess('reddit');
+    recordSuccess(SERVICE_NAME);
     const data = (await res.json()) as { id?: string; name?: string };
     if (!data.id || !data.name) throw new Error('Reddit /me returned no id/name');
     return { id: data.id, name: data.name };
   } catch (error) {
-    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
-    recordFailure('reddit', classifyError(error));
+    if (error instanceof Error && error.message.includes('[circuit-breaker]')) throw error;
+    recordFailure(SERVICE_NAME, classifyError(error));
     throw error;
   }
 }

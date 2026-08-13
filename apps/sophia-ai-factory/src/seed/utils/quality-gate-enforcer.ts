@@ -7,6 +7,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { logger } from './index';
+import { toError } from './to-error';
 
 export interface UnwiredSite {
   file: string;
@@ -79,7 +80,7 @@ function scanFile(filePath: string, srcDir: string): UnwiredSite[] {
       }
     }
   } catch (err) {
-    logger.error(`Failed to scan file: ${filePath}`, err as Error);
+    logger.error(`Failed to scan file: ${filePath}`, toError(err));
   }
   return sites;
 }
@@ -99,7 +100,7 @@ function findTsFiles(dir: string): string[] {
       }
     }
   } catch (err) {
-    logger.error(`Failed to read directory: ${dir}`, err as Error);
+    logger.error(`Failed to read directory: ${dir}`, toError(err));
   }
   return files;
 }

@@ -13,7 +13,9 @@ import { encryptToken, decryptToken } from './token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError } from '@/seed/types/failure-kind';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+
+const SERVICE_NAME = 'oauth-token-refresher' as const;
 import { refreshAccessToken as refreshTikTok } from '@/land/tiktok/tiktok-token-manager';
 import { refreshAccessToken as refreshYouTube } from '@/land/youtube/youtube-oauth-client';
 import { refreshAccessToken as refreshTwitter } from '@/land/video/publishing/providers/twitter-oauth-client';
@@ -33,8 +35,8 @@ const LOCK_STALE_S = 600; // 10 minutes
 async function refreshInstagramLongLivedToken(
   currentToken: string,
 ): Promise<{ access_token: string; expires_in: number }> {
-  if (!shouldAllowRequest('instagram')) {
-    throw new Error('[Instagram] Circuit breaker open for instagram');
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
   }
   const appId = process.env.INSTAGRAM_APP_ID;
   const appSecret = process.env.INSTAGRAM_APP_SECRET;
@@ -50,14 +52,14 @@ async function refreshInstagramLongLivedToken(
         logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
         return '';
       });
-      recordFailure('instagram', classifyError(new Error(`HTTP ${res.status}`)));
+      recordFailure(SERVICE_NAME, classifyHttpStatus(res.status));
       throw new Error(`Instagram token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
     }
-    recordSuccess('instagram');
+    recordSuccess(SERVICE_NAME);
     return res.json() as Promise<{ access_token: string; expires_in: number }>;
   } catch (error) {
     if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
-    recordFailure('instagram', classifyError(error));
+    recordFailure(SERVICE_NAME, classifyError(error));
     throw error;
   }
 }
@@ -66,8 +68,8 @@ async function refreshInstagramLongLivedToken(
 async function refreshPinterestToken(
   refreshToken: string,
 ): Promise<{ access_token: string; expires_in: number }> {
-  if (!shouldAllowRequest('pinterest')) {
-    throw new Error('[Pinterest] Circuit breaker open for pinterest');
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
   }
   const clientId = process.env.PINTEREST_CLIENT_ID;
   const clientSecret = process.env.PINTEREST_CLIENT_SECRET;
@@ -89,14 +91,14 @@ async function refreshPinterestToken(
         logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
         return '';
       });
-      recordFailure('pinterest', classifyError(new Error(`HTTP ${res.status}`)));
+      recordFailure(SERVICE_NAME, classifyHttpStatus(res.status));
       throw new Error(`Pinterest token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
     }
-    recordSuccess('pinterest');
+    recordSuccess(SERVICE_NAME);
     return res.json() as Promise<{ access_token: string; expires_in: number }>;
   } catch (error) {
     if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
-    recordFailure('pinterest', classifyError(error));
+    recordFailure(SERVICE_NAME, classifyError(error));
     throw error;
   }
 }
@@ -105,8 +107,8 @@ async function refreshPinterestToken(
 async function refreshLinkedInToken(
   refreshToken: string,
 ): Promise<{ access_token: string; expires_in: number }> {
-  if (!shouldAllowRequest('linkedin')) {
-    throw new Error('[LinkedIn] Circuit breaker open for linkedin');
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
   }
   const clientId = process.env.LINKEDIN_CLIENT_ID;
   const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
@@ -129,14 +131,14 @@ async function refreshLinkedInToken(
         logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
         return '';
       });
-      recordFailure('linkedin', classifyError(new Error(`HTTP ${res.status}`)));
+      recordFailure(SERVICE_NAME, classifyHttpStatus(res.status));
       throw new Error(`LinkedIn token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
     }
-    recordSuccess('linkedin');
+    recordSuccess(SERVICE_NAME);
     return res.json() as Promise<{ access_token: string; expires_in: number }>;
   } catch (error) {
     if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
-    recordFailure('linkedin', classifyError(error));
+    recordFailure(SERVICE_NAME, classifyError(error));
     throw error;
   }
 }
@@ -145,8 +147,8 @@ async function refreshLinkedInToken(
 async function refreshZaloToken(
   refreshToken: string,
 ): Promise<{ access_token: string; expires_in: number }> {
-  if (!shouldAllowRequest('zalo')) {
-    throw new Error('[Zalo] Circuit breaker open for zalo');
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
   }
   const appId = process.env.ZALO_APP_ID;
   const appSecret = process.env.ZALO_APP_SECRET;
@@ -171,18 +173,18 @@ async function refreshZaloToken(
         logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
         return '';
       });
-      recordFailure('zalo', classifyError(new Error(`HTTP ${res.status}`)));
+      recordFailure(SERVICE_NAME, classifyHttpStatus(res.status));
       throw new Error(`Zalo token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
     }
     const data = (await res.json()) as { access_token?: string; expires_in?: number; error?: number; message?: string };
     if (data.error && data.error !== 0) {
       throw new Error(`Zalo token refresh error ${data.error}: ${data.message ?? 'unknown'}`);
     }
-    recordSuccess('zalo');
+    recordSuccess(SERVICE_NAME);
     return { access_token: data.access_token ?? '', expires_in: data.expires_in ?? 86400 };
   } catch (error) {
     if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
-    recordFailure('zalo', classifyError(error));
+    recordFailure(SERVICE_NAME, classifyError(error));
     throw error;
   }
 }
@@ -264,8 +266,8 @@ async function refreshMastodonToken(
     return { accessToken: decryptedToken, expiresIn: 365 * 24 * 3600, rotatedRefreshToken: null };
   }
 
-  if (!shouldAllowRequest('mastodon')) {
-    throw new Error('[Mastodon] Circuit breaker open for mastodon');
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
   }
 
   try {
@@ -285,11 +287,11 @@ async function refreshMastodonToken(
         logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
         return '';
       });
-      recordFailure('mastodon', classifyError(new Error(`HTTP ${res.status}`)));
+      recordFailure(SERVICE_NAME, classifyHttpStatus(res.status));
       throw new Error(`Mastodon token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
     }
 
-    recordSuccess('mastodon');
+    recordSuccess(SERVICE_NAME);
     const data = (await res.json()) as { access_token?: string; expires_in?: number; refresh_token?: string };
     if (!data.access_token) throw new Error('Mastodon token refresh returned no access_token');
 
@@ -300,7 +302,7 @@ async function refreshMastodonToken(
     };
   } catch (error) {
     if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
-    recordFailure('mastodon', classifyError(error));
+    recordFailure(SERVICE_NAME, classifyError(error));
     throw error;
   }
 }

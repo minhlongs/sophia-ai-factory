@@ -95,6 +95,12 @@ All services with active circuit breaker wiring:
 | `langfuse` | `seed/observability/telemetry/langfuse-client.ts` |
 | `heygen-health` | `seed/health/heygen-health-check.ts` |
 | `nhà cung cấp dịch vụ AI-api` | `seed/ai/nhà cung cấp dịch vụ AI-adapter.ts` |
+| `openrouter-validator` | `seed/validation/services.ts` |
+| `elevenlabs-validator` | `seed/validation/services.ts` |
+| `d-id-validator` | `seed/validation/services.ts` |
+| `airtable-validator` | `seed/validation/services.ts` |
+| `heygen-validator` | `seed/validation/services.ts` |
+| `muapi-validator` | `seed/validation/services.ts` |
 
 ### Tree Layer (domain logic — imports from seed only)
 | Service | File |
@@ -113,6 +119,15 @@ All services with active circuit breaker wiring:
 | `llm-router` | `tree/agent-fleet/llm-router.ts` |
 | `mcp-gateway` | `tree/agent-fleet/mcp-gateway.ts` |
 | `telegram-gateway-notify` | `tree/gateway/adapters/telegram-notification-adapter.ts` |
+| `zalo-oauth` | `tree/publishing/zalo-oauth-client.ts` |
+| `twitter-oauth` | `tree/publishing/twitter-oauth-client.ts` |
+| `mastodon-oauth` | `tree/publishing/mastodon-oauth-client.ts` |
+| `youtube-adapter` | `tree/publishing/youtube-adapter.ts` |
+| `bundle-publisher` | `tree/publishing/bundle-publisher.ts` |
+| `muapi-media` | `tree/clients/muapi-media-client.ts` |
+| `provider-connectivity` | `tree/audit/checks/provider-connectivity.ts` |
+| `llm-router` | `tree/agent-fleet/llm-router.ts` |
+| `mcp-gateway` | `tree/agent-fleet/mcp-gateway.ts` |
 
 ### Forest Layer (orchestrators — imports from seed, tree)
 | Service | File |
@@ -121,6 +136,15 @@ All services with active circuit breaker wiring:
 | `raas-gateway` | `forest/worker/lib/metering-reconciler-license-validator.ts` |
 | `agent-runner` | `forest/agents/runner.ts` |
 | `clickbank-feed` | `forest/ingestion/adapters/clickbank-adapter.ts` |
+| `instagram-adapter` | `forest/publishing/instagram-adapter.ts` |
+| `facebook-adapter` | `forest/publishing/facebook-adapter.ts` |
+| `linkedin-adapter` | `forest/publishing/linkedin-adapter.ts` |
+| `pinterest-adapter` | `forest/publishing/pinterest-adapter.ts` |
+| `mastodon-adapter` | `forest/publishing/mastodon.ts` |
+| `bluesky-publisher` | `forest/publishing/bluesky.ts` |
+| `tiktok-adapter` | `forest/publishing/tiktok-adapter.ts` |
+| `x-ads-adapter` | `forest/publishing/x-ads-adapter.ts` |
+| `tiktok-token-manager` | `forest/publishing/tiktok/tiktok-token-manager.ts` |
 
 ### Land Layer (business workflows — imports from seed, tree, forest)
 | Service | File |
@@ -154,6 +178,13 @@ All services with active circuit breaker wiring:
 | `tts-coqui` | `app/api/internal/tts/route.ts` |
 | `fly-render-py` | `app/api/internal/render-py/route.ts` |
 | `telegram-uptime-alert` | `app/api/cron/uptime-check/route.ts` |
+| `resend-test` | `tree/email/missions/email-test.ts` |
+| `resend-test-wizard` | `app/api/setup-wizard/test-resend/route.ts` |
+| `ultracode-telegram` | `workers/ultracode-worker.ts` |
+| `bluesky-publisher` | `tree/publishing/bluesky.ts` |
+| `reddit-oauth` | `tree/publishing/reddit-oauth-client.ts` |
+| `threads-oauth` | `tree/publishing/threads-oauth-client.ts` |
+| `youtube-adapter` | `tree/publishing/youtube-adapter.ts` |
 
 ## Code Review Checklist
 

@@ -177,7 +177,6 @@ class MockNextRequest extends Request {
 
   constructor(url: string | URL, init?: RequestInit) {
     const urlStr = typeof url === 'string' ? url : url.toString();
-    // @ts-ignore - ssrf-safe constructor with allowedTargets
     super(urlStr, init);
     this.cookies = createCookieJar();
     this.nextUrl = new URL(urlStr, 'http://localhost');
@@ -187,7 +186,7 @@ class MockNextRequest extends Request {
     (this.nextUrl as any).clone = () => new URL(this.nextUrl.toString());
   }
 
-  // @ts-ignore - Cloudflare Request<…, Cf Properties<…>> LSP mismatch unavoidable for test mock; runtime clone() is correct
+  // @ts-expect-error - Cloudflare Request<…, Cf Properties<…>> LSP mismatch unavoidable for test mock; runtime clone() is correct
   clone(): Request {
     const cloneUrl = this.nextUrl.toString();
     const cloned = new MockNextRequest(cloneUrl);

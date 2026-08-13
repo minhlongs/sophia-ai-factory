@@ -7,7 +7,7 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError } from '@/seed/types/failure-kind';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 
 export const MASTODON_SCOPES = 'read write';
 
@@ -55,7 +55,8 @@ export async function registerMastodonApp(instanceUrl: string): Promise<Mastodon
         logger.warn('Failed to read Mastodon app registration response', { error: String(err), context: 'registerApp' });
         return '';
       });
-      recordFailure('mastodon', classifyError(new Error(`HTTP ${res.status}`)));
+      const kind = classifyHttpStatus(res.status);
+      recordFailure('mastodon', kind);
       throw new Error(`Mastodon app registration failed on ${normalizedInstance}: HTTP ${res.status} — ${body.slice(0, 200)}`);
     }
     recordSuccess('mastodon');
@@ -122,7 +123,8 @@ export async function exchangeCodeForTokens(
         logger.warn('Failed to read Mastodon token exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
         return '';
       });
-      recordFailure('mastodon', classifyError(new Error(`HTTP ${res.status}`)));
+      const kind = classifyHttpStatus(res.status);
+      recordFailure('mastodon', kind);
       throw new Error(`Mastodon token exchange failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
     }
     recordSuccess('mastodon');
@@ -144,7 +146,8 @@ export async function getAccountInfo(instanceUrl: string, accessToken: string): 
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!res.ok) {
-      recordFailure('mastodon', classifyError(new Error(`HTTP ${res.status}`)));
+      const kind = classifyHttpStatus(res.status);
+      recordFailure('mastodon', kind);
       throw new Error(`Mastodon /verify_credentials failed: HTTP ${res.status}`);
     }
     recordSuccess('mastodon');

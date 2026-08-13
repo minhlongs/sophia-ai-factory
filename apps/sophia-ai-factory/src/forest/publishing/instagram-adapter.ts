@@ -1,8 +1,9 @@
 import type { PlatformAdapter, PublishParams, PublishResult, PublishStatus } from '@/tree/publishing/platform-adapter';
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError } from '@/seed/types/failure-kind';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 
+const SERVICE_NAME = 'instagram-adapter' as const;
 const IG_API = 'https://graph.facebook.com/v19.0';
 const MAX_DURATION_SEC = 90;
 
@@ -10,8 +11,8 @@ export const instagramAdapter: PlatformAdapter = {
   platform: 'instagram',
 
   async uploadVideo(accessToken: string, params: PublishParams): Promise<PublishResult> {
-    if (!shouldAllowRequest('instagram')) {
-      throw new Error('[Instagram] Circuit breaker open for instagram');
+    if (!shouldAllowRequest(SERVICE_NAME)) {
+      throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
     }
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
     const [igUserId, token] = accessToken.includes(':')
@@ -33,7 +34,7 @@ export const instagramAdapter: PlatformAdapter = {
 
       if (!containerRes.ok) {
         const err = await containerRes.text();
-        recordFailure('instagram', classifyError(new Error(`HTTP ${containerRes.status}`)));
+        recordFailure(SERVICE_NAME, classifyHttpStatus(containerRes.status));
         throw new Error(`Instagram container creation failed: ${containerRes.status} ${err}`);
       }
 
@@ -69,11 +70,11 @@ export const instagramAdapter: PlatformAdapter = {
 
       if (!publishRes.ok) {
         const err = await publishRes.text();
-        recordFailure('instagram', classifyError(new Error(`HTTP ${publishRes.status}`)));
+        recordFailure(SERVICE_NAME, classifyHttpStatus(publishRes.status));
         throw new Error(`Instagram publish failed: ${publishRes.status} ${err}`);
       }
 
-      recordSuccess('instagram');
+      recordSuccess(SERVICE_NAME);
       const result = await publishRes.json() as { id: string };
 
       logger.info('[instagram-adapter] Published', { mediaId: result.id });
@@ -85,7 +86,7 @@ export const instagramAdapter: PlatformAdapter = {
       };
     } catch (error) {
       if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
-      recordFailure('instagram', classifyError(error));
+      recordFailure(SERVICE_NAME, classifyError(error));
       throw error;
     }
   },
@@ -94,8 +95,8 @@ export const instagramAdapter: PlatformAdapter = {
     accessToken: string,
     platformVideoId: string,
   ): Promise<{ status: PublishStatus; error?: string }> {
-    if (!shouldAllowRequest('instagram')) {
-      return { status: 'failed', error: 'Instagram circuit breaker open' };
+    if (!shouldAllowRequest(SERVICE_NAME)) {
+      return { status: 'failed', error: `[circuit-breaker] Circuit open for ${SERVICE_NAME}` };
     }
     const token = accessToken.includes(':') ? accessToken.split(':', 2)[1] : accessToken;
 
@@ -105,18 +106,18 @@ export const instagramAdapter: PlatformAdapter = {
       );
 
       if (!res.ok) {
-        recordFailure('instagram', classifyError(new Error(`HTTP ${res.status}`)));
+        recordFailure(SERVICE_NAME, classifyHttpStatus(res.status));
         return { status: 'failed', error: `Instagram API ${res.status}` };
       }
 
-      recordSuccess('instagram');
+      recordSuccess(SERVICE_NAME);
       const data = await res.json() as { status_code?: string };
 
       if (data.status_code === 'FINISHED' || !data.status_code) return { status: 'published' };
       if (data.status_code === 'ERROR') return { status: 'failed', error: 'Media processing error' };
       return { status: 'processing' };
     } catch (error) {
-      recordFailure('instagram', classifyError(error));
+      recordFailure(SERVICE_NAME, classifyError(error));
       return { status: 'failed', error: classifyError(error) as string };
     }
   },
@@ -126,8 +127,8 @@ export const instagramAdapter: PlatformAdapter = {
     _clientSecret: string,
     refreshToken: string,
   ): Promise<{ accessToken: string; expiresIn: number }> {
-    if (!shouldAllowRequest('instagram')) {
-      throw new Error('[Instagram] Circuit breaker open for instagram');
+    if (!shouldAllowRequest(SERVICE_NAME)) {
+      throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
     }
     try {
       const res = await fetch(
@@ -136,16 +137,16 @@ export const instagramAdapter: PlatformAdapter = {
 
       if (!res.ok) {
         const err = await res.text();
-        recordFailure('instagram', classifyError(new Error(`HTTP ${res.status}`)));
+        recordFailure(SERVICE_NAME, classifyHttpStatus(res.status));
         throw new Error(`Instagram token refresh failed: ${res.status} ${err}`);
       }
 
-      recordSuccess('instagram');
+      recordSuccess(SERVICE_NAME);
       const data = await res.json() as { access_token: string; expires_in: number };
       return { accessToken: data.access_token, expiresIn: data.expires_in };
     } catch (error) {
       if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
-      recordFailure('instagram', classifyError(error));
+      recordFailure(SERVICE_NAME, classifyError(error));
       throw error;
     }
   },

@@ -119,26 +119,24 @@ describe('MyExternalService', () => {
 });
 ```
 
-## Unwired Sites — Remaining
+## ✅ Circuit Breaker Coverage — 100% COMPLETE
 
-These are low-risk sites (fire-and-forget notifications, one-shot validators) not yet wired:
+**All external HTTP calls** in the codebase are now wired with circuit breaker protection.
+Quality gate enforcer: **0 unwired sites** across 2057 source files (129 wired).
 
-| File | Service | Risk | Priority |
-|------|---------|------|----------|
-| `seed/validation/services.ts` | 6 setup wizard validators | Low (one-shot, user-initiated) | P3 |
-| `tree/email/missions/email-test.ts` | Resend (test email) | Low | P3 |
-| `workers/ultracode-worker.ts` | Telegram (worker notifications) | Medium | P2 |
-| `app/api/setup-wizard/test-resend/route.ts` | Resend (test route) | Low | P3 |
-
-### Recently Resolved (Batch 5 + 6)
+### Recently Resolved (Publishing Layer + P3 Sites — Batch 7)
 | File | Service | Batch | Status |
 |------|---------|-------|--------|
-| `app/api/cron/workflow-stepper/workflow-stepper-llm-executor.ts` | OpenRouter (LLM) | Batch 5 | ✅ Wired |
-| `app/api/internal/runpod-trigger/route.ts` | RunPod trigger | Batch 6 | ✅ Wired |
-| `app/api/internal/runpod-status/route.ts` | RunPod status | Batch 6 | ✅ Wired |
-| `app/api/internal/tts/route.ts` | TTS Coqui | Batch 6 | ✅ Wired |
-| `app/api/internal/render-py/route.ts` | Fly.io Render Py | Batch 6 | ✅ Wired |
-| `tree/gateway/adapters/telegram-notification-adapter.ts` | Telegram gateway | Batch 6 | ✅ Wired |
-| `app/api/cron/uptime-check/route.ts` | Telegram uptime alerts | Batch 6 | ✅ Wired |
-| `forest/ingestion/adapters/clickbank-adapter.ts` | ClickBank feed | Batch 6 | ✅ Wired |
-| `seed/ai/anthropic-adapter.ts` | nhà cung cấp dịch vụ AI API | Batch 6 | ✅ Wired |
+| `forest/publishing/instagram-adapter.ts` | Instagram Graph API | Batch 7 | ✅ Wired |
+| `forest/publishing/facebook-adapter.ts` | Facebook Graph API | Batch 7 | ✅ Wired |
+| `forest/publishing/linkedin-adapter.ts` | LinkedIn API | Batch 7 | ✅ Wired |
+| `forest/publishing/pinterest-adapter.ts` | Pinterest API | Batch 7 | ✅ Wired |
+| `forest/publishing/mastodon.ts` | Mastodon API | Batch 7 | ✅ Wired |
+| `forest/publishing/bluesky.ts` | Bluesky PDS | Batch 7 | ✅ Wired |
+| `forest/publishing/tiktok-adapter.ts` | TikTok API | Batch 7 | ✅ Wired |
+| `forest/publishing/x-ads-adapter.ts` | X/Twitter Ads API | Batch 7 | ✅ Wired |
+| `forest/publishing/tiktok/tiktok-token-manager.ts` | TikTok token refresh | Batch 7 | ✅ Wired |
+| `seed/validation/services.ts` | 6 setup wizard validators | Batch 7 | ✅ Wired |
+| `tree/email/missions/email-test.ts` | Resend (test email) | Batch 7 | ✅ Wired |
+| `app/api/setup-wizard/test-resend/route.ts` | Resend (test route) | Batch 7 | ✅ Wired |
+| `workers/ultracode-worker.ts` | Telegram (worker notifications) | Batch 7 | ✅ Wired |

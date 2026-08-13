@@ -1,7 +1,7 @@
 import type { PlatformAdapter, PublishParams, PublishResult, PublishStatus } from './platform-adapter';
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError } from '@/seed/types/failure-kind';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 
 const YT_UPLOAD_URL = 'https://www.googleapis.com/upload/youtube/v3/videos';
 const YT_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
@@ -44,7 +44,8 @@ export const youtubeAdapter: PlatformAdapter = {
 
       if (!initRes.ok) {
         const err = await initRes.text();
-        recordFailure('youtube', classifyError(new Error(`HTTP ${initRes.status}`)));
+        const initKind = classifyHttpStatus(initRes.status);
+        recordFailure('youtube', initKind);
         throw new Error(`YouTube upload init failed: ${initRes.status} ${err}`);
       }
 
@@ -68,7 +69,8 @@ export const youtubeAdapter: PlatformAdapter = {
 
       if (!uploadRes.ok) {
         const err = await uploadRes.text();
-        recordFailure('youtube', classifyError(new Error(`HTTP ${uploadRes.status}`)));
+        const kind = classifyHttpStatus(uploadRes.status);
+        recordFailure('youtube', kind);
         throw new Error(`YouTube upload failed: ${uploadRes.status} ${err}`);
       }
 
@@ -108,7 +110,8 @@ export const youtubeAdapter: PlatformAdapter = {
       );
 
       if (!res.ok) {
-        recordFailure('youtube', classifyError(new Error(`HTTP ${res.status}`)));
+        const kind = classifyHttpStatus(res.status);
+        recordFailure('youtube', kind);
         return { status: 'failed', error: `YouTube API ${res.status}` };
       }
 
@@ -136,6 +139,7 @@ export const youtubeAdapter: PlatformAdapter = {
 
       return { status: 'processing' };
     } catch (error) {
+      if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
       recordFailure('youtube', classifyError(error));
       return { status: 'failed', error: classifyError(error) as string };
     }
@@ -163,7 +167,8 @@ export const youtubeAdapter: PlatformAdapter = {
 
       if (!res.ok) {
         const err = await res.text();
-        recordFailure('youtube', classifyError(new Error(`HTTP ${res.status}`)));
+        const kind = classifyHttpStatus(res.status);
+        recordFailure('youtube', kind);
         throw new Error(`YouTube token refresh failed: ${res.status} ${err}`);
       }
 

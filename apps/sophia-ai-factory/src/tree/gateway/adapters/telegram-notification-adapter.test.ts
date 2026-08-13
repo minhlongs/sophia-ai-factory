@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { TelegramNotificationAdapter } from '@/tree/gateway/adapters/telegram-notification-adapter'
 import type { CampaignOutput } from '@/tree/gateway/gateway-types'
 
+vi.mock('@/seed/security/circuit-breaker', () => ({
+  shouldAllowRequest: vi.fn(() => true),
+  recordSuccess: vi.fn(),
+  recordFailure: vi.fn(),
+}))
+
 const sampleContent: CampaignOutput = {
   campaignId: 'camp-001',
   videoUrl: 'https://example.com/video.mp4',

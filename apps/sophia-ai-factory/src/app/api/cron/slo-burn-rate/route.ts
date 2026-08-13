@@ -10,6 +10,7 @@ import { createServerClient } from '@/seed/db/client';
 import { getWAEBinding } from '@/seed/observability/telemetry/wae-client';
 import { emitBurnRateAlert } from '@/seed/observability/telemetry/sentry-metrics';
 import { logger } from '@/seed/utils/logger-utility';
+import { toError } from '@/seed/utils/to-error';
 import type { AnalyticsEngineDataset } from '@cloudflare/workers-types';
 
 interface SLOConfig {
@@ -266,7 +267,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         totalRequests: metrics.totalRequests,
       });
     } catch (err) {
-      logger.error(`[SLO Cron] Failed to compute burn rate for ${slo.name}:`, err as Error);
+      logger.error(`[SLO Cron] Failed to compute burn rate for ${slo.name}:`, toError(err));
       results.push({
         slo: slo.name,
         error: String(err),

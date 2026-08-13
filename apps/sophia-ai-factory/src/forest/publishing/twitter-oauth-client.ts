@@ -6,7 +6,7 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError } from '@/seed/types/failure-kind';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 
 const X_AUTHORIZE_URL = 'https://twitter.com/i/oauth2/authorize';
 const X_TOKEN_URL = 'https://api.x.com/2/oauth2/token';
@@ -93,7 +93,8 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string):
         logger.warn('Failed to read X token exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
         return '';
       });
-      recordFailure('twitter', classifyError(new Error(`HTTP ${res.status}`)));
+      const kind = classifyHttpStatus(res.status);
+      recordFailure('twitter', kind);
       throw new Error(`X token exchange failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
     }
     recordSuccess('twitter');
@@ -126,7 +127,8 @@ export async function refreshAccessToken(refreshToken: string): Promise<TwitterT
         logger.warn('Failed to read X token refresh response', { error: String(err), context: 'refreshAccessToken' });
         return '';
       });
-      recordFailure('twitter', classifyError(new Error(`HTTP ${res.status}`)));
+      const kind = classifyHttpStatus(res.status);
+      recordFailure('twitter', kind);
       throw new Error(`X token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
     }
     recordSuccess('twitter');
@@ -147,7 +149,8 @@ export async function getUserInfo(accessToken: string): Promise<TwitterUserInfo>
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (!res.ok) {
-      recordFailure('twitter', classifyError(new Error(`HTTP ${res.status}`)));
+      const kind = classifyHttpStatus(res.status);
+      recordFailure('twitter', kind);
       throw new Error(`X /users/me failed: HTTP ${res.status}`);
     }
     recordSuccess('twitter');

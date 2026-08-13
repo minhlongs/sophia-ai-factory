@@ -8,7 +8,11 @@
 import { getResendKey } from '@/tree/credentials/get-provider-key';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyHttpStatus, classifyError } from '@/seed/types/failure-kind';
 import type { MissionHandlerResult, MissionContext } from '@/seed/types/missions';
+
+const RESEND_TEST_SERVICE = 'resend-test';
 
 interface UserRow {
   email: string;
@@ -39,6 +43,10 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
     return { ok: false, error: 'Resend API key not available' };
   }
 
+  if (!shouldAllowRequest(RESEND_TEST_SERVICE)) {
+    return { ok: false, error: 'Resend service temporarily unavailable (circuit open)' };
+  }
+
   try {
     const resp = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -55,6 +63,7 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
     });
 
     if (resp.ok) {
+      recordSuccess(RESEND_TEST_SERVICE);
       const json = await resp.json() as { id?: string };
       return {
         ok: true,
@@ -63,8 +72,10 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
     }
 
     const err = await resp.text();
+    recordFailure(RESEND_TEST_SERVICE, classifyHttpStatus(resp.status));
     return { ok: false, error: `Resend error: ${resp.status} ${err.slice(0, 200)}` };
   } catch (err) {
+    recordFailure(RESEND_TEST_SERVICE, classifyError(err));
     logger.error('[email:test] error', err instanceof Error ? err : new Error(String(err)));
     return { ok: false, error: err instanceof Error ? err.message : 'Send failed' };
   }

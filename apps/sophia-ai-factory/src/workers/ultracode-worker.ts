@@ -1,5 +1,9 @@
 import type { D1Client } from '@/seed/db/d1-query-builder'
 import { createLogger } from '@/seed/utils/logger-utility'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError } from '@/seed/types/failure-kind'
+
+const ULTRACODE_TG_SERVICE = 'ultracode-telegram'
 
 const log = createLogger('workers/ultracode')
 
@@ -110,14 +114,24 @@ function jsonResponse(body: Record<string, unknown>, status = 200): Response {
 }
 
 async function sendTg(env: UltracodeEnv, chatId: string, text: string): Promise<void> {
+  if (!shouldAllowRequest(ULTRACODE_TG_SERVICE)) {
+    log.warn('ultracode-telegram circuit open, skipping send')
+    return
+  }
   const token = env.TELEGRAM_BOT_TOKEN as string
   try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const resp = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
     })
+    if (resp.ok) {
+      recordSuccess(ULTRACODE_TG_SERVICE)
+    } else {
+      recordFailure(ULTRACODE_TG_SERVICE, classifyError(new Error(`Telegram API ${resp.status}`)))
+    }
   } catch (e) {
+    recordFailure(ULTRACODE_TG_SERVICE, classifyError(e))
     log.error('tg send error', e as Record<string, unknown>)
   }
 }

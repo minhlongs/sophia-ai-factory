@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         logger.warn('EXPERIMENT_KV binding not found in Cloudflare context');
       }
     } catch (err) {
-      logger.warn('Gracefully handled error writing daemon heartbeat to EXPERIMENT_KV:', err as Error);
+      logger.warn('Gracefully handled error writing daemon heartbeat to EXPERIMENT_KV:', toError(err));
     }
 
     const db = await getD1Raw();

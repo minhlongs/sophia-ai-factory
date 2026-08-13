@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
         }
       }
     } catch (err) {
-      logger.warn('Gracefully handled error reading daemon heartbeat from EXPERIMENT_KV:', err as Error);
+      logger.warn('Gracefully handled error reading daemon heartbeat from EXPERIMENT_KV:', toError(err));
     }
 
     const db = await getD1Raw();

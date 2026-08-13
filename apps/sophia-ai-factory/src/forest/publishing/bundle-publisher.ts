@@ -22,6 +22,10 @@ import { isChannelBannedForCrypto } from '@/seed/config/crypto-banned-channels';
 import { translateCaption } from '@/land/i18n/caption-translator';
 import { getChannelCaptionRule } from '@/land/i18n/channel-caption-rules';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+
+const SERVICE_NAME = 'bundle-publisher' as const;
 
 export type ChannelResultStatus = 'success' | 'skipped' | 'failed';
 
@@ -197,6 +201,15 @@ export async function publishToBundle(input: BundlePublishInput): Promise<Bundle
     }
 
     // Call the distribute API
+    if (!shouldAllowRequest(SERVICE_NAME)) {
+      results.push({
+        provider,
+        status: 'failed',
+        errorMessage: `[circuit-breaker] Circuit open for ${SERVICE_NAME}`,
+      });
+      continue;
+    }
+
     try {
       const res = await fetch(`/api/v1/videos/${videoId}/distribute`, {
         method: 'POST',
@@ -209,6 +222,8 @@ export async function publishToBundle(input: BundlePublishInput): Promise<Bundle
       });
 
       if (!res.ok) {
+        const kind = classifyHttpStatus(res.status);
+        recordFailure(SERVICE_NAME, kind);
         const errorData = (await res.json().catch(() => ({}))) as { error?: string };
         results.push({
           provider,
@@ -218,6 +233,7 @@ export async function publishToBundle(input: BundlePublishInput): Promise<Bundle
         continue;
       }
 
+      recordSuccess(SERVICE_NAME);
       const data = (await res.json()) as { jobIds?: string[] };
       results.push({
         provider,
@@ -225,6 +241,9 @@ export async function publishToBundle(input: BundlePublishInput): Promise<Bundle
         jobId: data.jobIds?.[0],
       });
     } catch (err) {
+      if (err instanceof Error && err.message.includes('[circuit-breaker]')) throw err;
+      const kind = classifyError(err);
+      recordFailure(SERVICE_NAME, kind);
       results.push({
         provider,
         status: 'failed',

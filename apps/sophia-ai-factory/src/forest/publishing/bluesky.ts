@@ -9,8 +9,9 @@
 import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publisher-interface';
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError } from '@/seed/types/failure-kind';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 
+const SERVICE_NAME = 'bluesky-publisher';
 const DEFAULT_PDS = 'https://bsky.social';
 const MAX_POST_LENGTH = 300;
 
@@ -48,8 +49,8 @@ export class BlueskyPublisher implements Publisher {
       logger.warn('[BlueskyPublisher] Mock mode — BLUESKY_PDS_URL missing');
       return `mock_bluesky_${Date.now()}`;
     }
-    if (!shouldAllowRequest('bluesky')) {
-      throw new Error('[BlueskyPublisher] Circuit breaker open for bluesky');
+    if (!shouldAllowRequest(SERVICE_NAME)) {
+      throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
     }
 
     const text = buildPostText(meta);
@@ -105,11 +106,11 @@ export class BlueskyPublisher implements Publisher {
           logger.warn('Failed to read Bluesky createRecord response', { error: String(err), context: 'BlueskyPublisher.upload' });
           return '';
         });
-        recordFailure('bluesky', classifyError(new Error(`HTTP ${res.status}`)));
+        recordFailure(SERVICE_NAME, classifyHttpStatus(res.status));
         throw new Error(`Bluesky createRecord failed (${res.status}): ${body.slice(0, 300)}`);
       }
 
-      recordSuccess('bluesky');
+      recordSuccess(SERVICE_NAME);
       const data = (await res.json()) as AtprotoCreateRecordResponse;
       if (!data.uri) {
         throw new Error(`Bluesky createRecord returned no uri: ${data.message ?? data.error ?? 'unknown'}`);
@@ -118,8 +119,8 @@ export class BlueskyPublisher implements Publisher {
       const rkey = data.uri.split('/').pop() ?? data.uri;
       return rkey;
     } catch (error) {
-      if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
-      recordFailure('bluesky', classifyError(error));
+      if (error instanceof Error && error.message.includes('[circuit-breaker]')) throw error;
+      recordFailure(SERVICE_NAME, classifyError(error));
       throw error;
     }
   }
@@ -142,8 +143,8 @@ export async function createAtprotoSession(
   appPassword: string,
   pdsUrl?: string,
 ): Promise<{ accessJwt: string; refreshJwt: string; did: string; handle: string }> {
-  if (!shouldAllowRequest('bluesky')) {
-    throw new Error('[Bluesky] Circuit breaker open for bluesky');
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
   }
   const base = (pdsUrl ?? process.env.BLUESKY_PDS_URL ?? DEFAULT_PDS).replace(/\/$/, '');
   try {
@@ -157,10 +158,10 @@ export async function createAtprotoSession(
         logger.warn('Failed to read Bluesky createSession response', { error: String(err), context: 'createAtprotoSession' });
         return '';
       });
-      recordFailure('bluesky', classifyError(new Error(`HTTP ${res.status}`)));
+      recordFailure(SERVICE_NAME, classifyHttpStatus(res.status));
       throw new Error(`Bluesky createSession failed (${res.status}): ${body.slice(0, 200)}`);
     }
-    recordSuccess('bluesky');
+    recordSuccess(SERVICE_NAME);
     const data = (await res.json()) as {
       accessJwt?: string;
       refreshJwt?: string;
@@ -180,8 +181,8 @@ export async function createAtprotoSession(
       handle: data.handle ?? identifier,
     };
   } catch (error) {
-    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
-    recordFailure('bluesky', classifyError(error));
+    if (error instanceof Error && error.message.includes('[circuit-breaker]')) throw error;
+    recordFailure(SERVICE_NAME, classifyError(error));
     throw error;
   }
 }
@@ -191,8 +192,8 @@ export async function refreshAtprotoSession(
   refreshJwt: string,
   pdsUrl?: string,
 ): Promise<{ accessJwt: string; refreshJwt: string; did: string }> {
-  if (!shouldAllowRequest('bluesky')) {
-    throw new Error('[Bluesky] Circuit breaker open for bluesky');
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
   }
   const base = (pdsUrl ?? process.env.BLUESKY_PDS_URL ?? DEFAULT_PDS).replace(/\/$/, '');
   try {
@@ -205,10 +206,10 @@ export async function refreshAtprotoSession(
         logger.warn('Failed to read Bluesky refreshSession response', { error: String(err), context: 'refreshAtprotoSession' });
         return '';
       });
-      recordFailure('bluesky', classifyError(new Error(`HTTP ${res.status}`)));
+      recordFailure(SERVICE_NAME, classifyHttpStatus(res.status));
       throw new Error(`Bluesky refreshSession failed (${res.status}): ${body.slice(0, 200)}`);
     }
-    recordSuccess('bluesky');
+    recordSuccess(SERVICE_NAME);
     const data = (await res.json()) as {
       accessJwt?: string;
       refreshJwt?: string;
@@ -221,8 +222,8 @@ export async function refreshAtprotoSession(
       did: data.did,
     };
   } catch (error) {
-    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
-    recordFailure('bluesky', classifyError(error));
+    if (error instanceof Error && error.message.includes('[circuit-breaker]')) throw error;
+    recordFailure(SERVICE_NAME, classifyError(error));
     throw error;
   }
 }

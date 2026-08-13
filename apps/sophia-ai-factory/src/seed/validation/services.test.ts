@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { validateOpenRouter, validateElevenLabs, validateDID, validateAirtable } from './services';
+import { reset as resetCircuitBreaker } from '@/seed/security/circuit-breaker';
 
 // Mock global fetch
 const globalFetch = global.fetch = vi.fn();
@@ -7,6 +8,10 @@ const globalFetch = global.fetch = vi.fn();
 describe('Validation Services', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    resetCircuitBreaker('openrouter-validator');
+    resetCircuitBreaker('elevenlabs-validator');
+    resetCircuitBreaker('d-id-validator');
+    resetCircuitBreaker('airtable-validator');
   });
 
   describe('validateOpenRouter', () => {
