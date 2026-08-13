@@ -16,7 +16,12 @@ import {
   type AnthropicStreamEvent,
 } from './anthropic-sse-parser'
 import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/seed/services/errors'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind'
+
 import { logger } from '@/seed/utils/logger-utility'
+
+const SERVICE_NAME = 'nhà-cung-cấp-dịch-vụ-ai-api'
 
 export type { AnthropicStreamEvent } from './anthropic-sse-parser'
 
@@ -126,13 +131,21 @@ export async function callAnthropicFull(params: CallAnthropicParams): Promise<An
     throw new Error('ANTHROPIC_MISSING_API_KEY: apiKey is required')
   }
 
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`)
+  }
   const response = await fetch(API_URL, {
     method:  'POST',
     headers: buildHeaders(params.apiKey),
     body:    buildBody(params, false),
   })
 
-  if (!response.ok) await httpError(response)
+  if (!response.ok) {
+    const kind = classifyHttpStatus(response.status)
+    recordFailure(SERVICE_NAME, kind)
+    await httpError(response)
+  }
+  recordSuccess(SERVICE_NAME)
 
   const data = await response.json() as AnthropicResponse
   if (!data.content || data.content.length === 0) {
@@ -163,13 +176,21 @@ export async function* callAnthropicStreamEvents(
     throw new Error('ANTHROPIC_MISSING_API_KEY: apiKey is required')
   }
 
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`)
+  }
   const response = await fetch(API_URL, {
     method:  'POST',
     headers: buildHeaders(params.apiKey),
     body:    buildBody(params, true),
   })
 
-  if (!response.ok) await httpError(response)
+  if (!response.ok) {
+    const kind = classifyHttpStatus(response.status)
+    recordFailure(SERVICE_NAME, kind)
+    await httpError(response)
+  }
+  recordSuccess(SERVICE_NAME)
   if (!response.body) {
     throw new Error('ANTHROPIC_NO_STREAM_BODY: response body is null')
   }

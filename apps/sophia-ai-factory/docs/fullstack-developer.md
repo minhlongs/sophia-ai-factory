@@ -119,22 +119,26 @@ describe('MyExternalService', () => {
 });
 ```
 
-## Unwired Sites — Remaining (as of Batch 4)
+## Unwired Sites — Remaining
 
-These are known unwired sites. Most are low-risk (fire-and-forget notifications, one-shot validators):
+These are low-risk sites (fire-and-forget notifications, one-shot validators) not yet wired:
 
 | File | Service | Risk | Priority |
 |------|---------|------|----------|
 | `seed/validation/services.ts` | 6 setup wizard validators | Low (one-shot, user-initiated) | P3 |
-| `tree/gateway/adapters/telegram-notification-adapter.ts` | Telegram sendMessage/getMe | Medium | P2 |
 | `tree/email/missions/email-test.ts` | Resend (test email) | Low | P3 |
 | `workers/ultracode-worker.ts` | Telegram (worker notifications) | Medium | P2 |
-| `app/api/cron/uptime-check/route.ts` | Telegram (uptime alerts) | Medium | P2 |
-| `app/api/internal/runpod-status/route.ts` | RunPod status | Medium | P2 |
-| `app/api/internal/runpod-trigger/route.ts` | RunPod trigger | Medium | P2 |
 | `app/api/setup-wizard/test-resend/route.ts` | Resend (test route) | Low | P3 |
 
-### Recently Resolved (Batch 5)
-| File | Service | Status |
-|------|---------|--------|
-| `app/api/cron/workflow-stepper/workflow-stepper-llm-executor.ts` | OpenRouter (LLM) | ✅ Wired — guard + classifyHttpStatus + recordSuccess + re-throw guard + classifyError |
+### Recently Resolved (Batch 5 + 6)
+| File | Service | Batch | Status |
+|------|---------|-------|--------|
+| `app/api/cron/workflow-stepper/workflow-stepper-llm-executor.ts` | OpenRouter (LLM) | Batch 5 | ✅ Wired |
+| `app/api/internal/runpod-trigger/route.ts` | RunPod trigger | Batch 6 | ✅ Wired |
+| `app/api/internal/runpod-status/route.ts` | RunPod status | Batch 6 | ✅ Wired |
+| `app/api/internal/tts/route.ts` | TTS Coqui | Batch 6 | ✅ Wired |
+| `app/api/internal/render-py/route.ts` | Fly.io Render Py | Batch 6 | ✅ Wired |
+| `tree/gateway/adapters/telegram-notification-adapter.ts` | Telegram gateway | Batch 6 | ✅ Wired |
+| `app/api/cron/uptime-check/route.ts` | Telegram uptime alerts | Batch 6 | ✅ Wired |
+| `forest/ingestion/adapters/clickbank-adapter.ts` | ClickBank feed | Batch 6 | ✅ Wired |
+| `seed/ai/anthropic-adapter.ts` | nhà cung cấp dịch vụ AI API | Batch 6 | ✅ Wired |

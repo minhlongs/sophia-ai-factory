@@ -94,6 +94,7 @@ All services with active circuit breaker wiring:
 | `sentry-forwarder` | `seed/observability/sentry-forwarder.ts` |
 | `langfuse` | `seed/observability/telemetry/langfuse-client.ts` |
 | `heygen-health` | `seed/health/heygen-health-check.ts` |
+| `nhà cung cấp dịch vụ AI-api` | `seed/ai/nhà cung cấp dịch vụ AI-adapter.ts` |
 
 ### Tree Layer (domain logic — imports from seed only)
 | Service | File |
@@ -111,6 +112,7 @@ All services with active circuit breaker wiring:
 | `provider-connectivity` | `tree/audit/checks/provider-connectivity.ts` |
 | `llm-router` | `tree/agent-fleet/llm-router.ts` |
 | `mcp-gateway` | `tree/agent-fleet/mcp-gateway.ts` |
+| `telegram-gateway-notify` | `tree/gateway/adapters/telegram-notification-adapter.ts` |
 
 ### Forest Layer (orchestrators — imports from seed, tree)
 | Service | File |
@@ -118,6 +120,7 @@ All services with active circuit breaker wiring:
 | `oauth-token-refresher` | `forest/publishing/oauth-token-refresher.ts` |
 | `raas-gateway` | `forest/worker/lib/metering-reconciler-license-validator.ts` |
 | `agent-runner` | `forest/agents/runner.ts` |
+| `clickbank-feed` | `forest/ingestion/adapters/clickbank-adapter.ts` |
 
 ### Land Layer (business workflows — imports from seed, tree, forest)
 | Service | File |
@@ -146,6 +149,11 @@ All services with active circuit breaker wiring:
 | `resend-email` | `app/api/cron/weekly-signals-digest/weekly-digest-delivery.ts` |
 | `telegram-bot` | `app/api/cron/weekly-signals-digest/weekly-digest-delivery.ts` |
 | `openrouter-workflow-stepper` | `app/api/cron/workflow-stepper/workflow-stepper-llm-executor.ts` |
+| `runpod-trigger` | `app/api/internal/runpod-trigger/route.ts` |
+| `runpod-status` | `app/api/internal/runpod-status/route.ts` |
+| `tts-coqui` | `app/api/internal/tts/route.ts` |
+| `fly-render-py` | `app/api/internal/render-py/route.ts` |
+| `telegram-uptime-alert` | `app/api/cron/uptime-check/route.ts` |
 
 ## Code Review Checklist
 

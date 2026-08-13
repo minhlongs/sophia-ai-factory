@@ -12,6 +12,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyInternalSecret } from '@/seed/security/verify-internal-secret';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+
+const CIRCUIT_SERVICE = 'fly-render-py' as const;
 
 const bodySchema = z.object({
   templateId: z.string().min(1),
@@ -49,22 +53,36 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
   }
 
-  const upstream = await fetch(`${flyUrl}/render`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ templateId, audio_r2_key: audioR2Key, scenes, output_format: outputFormat }),
-  });
+  try {
+    if (!shouldAllowRequest(CIRCUIT_SERVICE)) {
+      throw new Error(`[circuit-breaker] Circuit open for ${CIRCUIT_SERVICE}`)
+    }
 
-  if (!upstream.ok) {
-    return NextResponse.json(
-      { error: `MoviePy service error: ${upstream.status}` },
-      { status: upstream.status >= 500 ? 502 : upstream.status },
-    );
+    const upstream = await fetch(`${flyUrl}/render`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ templateId, audio_r2_key: audioR2Key, scenes, output_format: outputFormat }),
+    });
+
+    if (!upstream.ok) {
+      const kind = classifyHttpStatus(upstream.status);
+      recordFailure(CIRCUIT_SERVICE, kind);
+      return NextResponse.json(
+        { error: `MoviePy service error: ${upstream.status}` },
+        { status: upstream.status >= 500 ? 502 : upstream.status },
+      );
+    }
+
+    const buffer = await upstream.arrayBuffer();
+    recordSuccess(CIRCUIT_SERVICE);
+    return new NextResponse(buffer, {
+      status: 200,
+      headers: { 'Content-Type': 'video/mp4' },
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('[circuit-breaker]')) throw err;
+    const kind = classifyError(err);
+    recordFailure(CIRCUIT_SERVICE, kind);
+    return NextResponse.json({ error: 'Render service error' }, { status: 500 });
   }
-
-  const buffer = await upstream.arrayBuffer();
-  return new NextResponse(buffer, {
-    status: 200,
-    headers: { 'Content-Type': 'video/mp4' },
-  });
 }

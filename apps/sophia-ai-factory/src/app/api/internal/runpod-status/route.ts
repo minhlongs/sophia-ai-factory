@@ -8,6 +8,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  shouldAllowRequest,
+  recordSuccess,
+  recordFailure,
+} from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const { searchParams } = new URL(req.url);
@@ -29,24 +35,41 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     });
   }
 
-  const res = await fetch(`https://api.runpod.io/v2/${endpointId}/status/${runpodJobId}`, {
-    headers: { Authorization: `Bearer ${apiKey}` },
-  });
+  const RUNPOD_STATUS_SERVICE = 'runpod-status';
 
-  if (!res.ok) {
-    return NextResponse.json({ error: `Runpod status check failed: ${res.status}` }, { status: 502 });
+  if (!shouldAllowRequest(RUNPOD_STATUS_SERVICE)) {
+    throw new Error(`[circuit-breaker] Circuit open for ${RUNPOD_STATUS_SERVICE}`);
   }
 
-  const data = (await res.json()) as {
-    id: string;
-    status: string;
-    output?: { r2_key?: string; download_url?: string } | null;
-    error?: string | null;
-  };
+  try {
+    const res = await fetch(`https://api.runpod.io/v2/${endpointId}/status/${runpodJobId}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    });
 
-  return NextResponse.json({
-    status: data.status,
-    output: data.output ?? null,
-    error: data.error ?? null,
-  });
+    if (!res.ok) {
+      const kind = classifyHttpStatus(res.status);
+      recordFailure(RUNPOD_STATUS_SERVICE, kind);
+      return NextResponse.json({ error: `Runpod status check failed: ${res.status}` }, { status: 502 });
+    }
+
+    const data = (await res.json()) as {
+      id: string;
+      status: string;
+      output?: { r2_key?: string; download_url?: string } | null;
+      error?: string | null;
+    };
+
+    recordSuccess(RUNPOD_STATUS_SERVICE);
+
+    return NextResponse.json({
+      status: data.status,
+      output: data.output ?? null,
+      error: data.error ?? null,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('[circuit-breaker]')) throw err;
+    const kind = classifyError(err);
+    recordFailure(RUNPOD_STATUS_SERVICE, kind);
+    throw err;
+  }
 }

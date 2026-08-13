@@ -20,6 +20,8 @@ import { toError, getErrorMessage } from '@/seed/utils/to-error';
 import { recordCronRun, wasRecentlyRun } from '@/land/cron/run-tracker';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
 import { recordCheck, getRecentChecks, getActiveIncident, openIncident, closeIncident } from '@/land/status/status-store';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 import { evaluateIncidentAction } from '@/land/status/incident-state-machine';
 import {
   startCronCheckIn,
@@ -40,6 +42,7 @@ const HEALTH_URL = process.env.PROD_URL
 const ADMIN_TELEGRAM_CHAT_ID = process.env.ADMIN_TELEGRAM_CHAT_ID;
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const LATENCY_WARN_MS = 5000;
+const SERVICE_NAME = 'telegram-uptime-alert';
 
 function getD1(): D1Database | null {
   try {
@@ -59,7 +62,10 @@ async function alertAdmin(message: string): Promise<void> {
     return;
   }
   try {
-    await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+    if (!shouldAllowRequest(SERVICE_NAME)) {
+      throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`)
+    }
+    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -68,8 +74,16 @@ async function alertAdmin(message: string): Promise<void> {
         parse_mode: 'HTML',
       }),
     });
-  } catch {
-    // best effort — never propagate alert failures
+    if (res.ok) {
+      recordSuccess(SERVICE_NAME);
+    } else {
+      const kind = classifyHttpStatus(res.status);
+      recordFailure(SERVICE_NAME, kind);
+    }
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('[circuit-breaker]')) throw err
+    const kind = classifyError(err)
+    recordFailure(SERVICE_NAME, kind)
   }
 }
 

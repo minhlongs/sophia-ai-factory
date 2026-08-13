@@ -11,6 +11,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { verifyInternalSecret } from '@/seed/security/verify-internal-secret';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+
+const RUNPOD_TRIGGER_SERVICE = 'runpod-trigger';
 
 const bodySchema = z.object({
   prompts: z.array(z.string().min(1)).min(1).max(10),
@@ -43,16 +47,30 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ runpodJobId: 'stub-job-id', stub: true }, { status: 200 });
   }
 
-  const res = await fetch(`https://api.runpod.io/v2/${endpointId}/run`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ input: { prompts, duration: durationSec, fps } }),
-  });
-
-  if (!res.ok) {
-    return NextResponse.json({ error: `Runpod submit failed: ${res.status}` }, { status: 502 });
+  if (!shouldAllowRequest(RUNPOD_TRIGGER_SERVICE)) {
+    throw new Error(`[circuit-breaker] Circuit open for ${RUNPOD_TRIGGER_SERVICE}`);
   }
 
-  const data = (await res.json()) as { id: string; status: string };
-  return NextResponse.json({ runpodJobId: data.id, status: data.status });
+  try {
+    const res = await fetch(`https://api.runpod.io/v2/${endpointId}/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ input: { prompts, duration: durationSec, fps } }),
+    });
+
+    if (!res.ok) {
+      const kind = classifyHttpStatus(res.status);
+      recordFailure(RUNPOD_TRIGGER_SERVICE, kind);
+      return NextResponse.json({ error: `Runpod submit failed: ${res.status}` }, { status: 502 });
+    }
+
+    recordSuccess(RUNPOD_TRIGGER_SERVICE);
+    const data = (await res.json()) as { id: string; status: string };
+    return NextResponse.json({ runpodJobId: data.id, status: data.status });
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('[circuit-breaker]')) throw err;
+    const kind = classifyError(err);
+    recordFailure(RUNPOD_TRIGGER_SERVICE, kind);
+    throw err;
+  }
 }

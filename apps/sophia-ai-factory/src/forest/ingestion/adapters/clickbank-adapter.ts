@@ -1,5 +1,9 @@
 import { BaseAdapter } from '../base-adapter'
 import type { RawProduct, AdapterConfig } from '../types'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind'
+
+const SERVICE_NAME = 'clickbank-feed'
 
 export class ClickbankAdapter extends BaseAdapter {
   networkId = 'clickbank' as const
@@ -13,10 +17,16 @@ export class ClickbankAdapter extends BaseAdapter {
 
   async fetchProducts(): Promise<RawProduct[]> {
     try {
+      if (!shouldAllowRequest(SERVICE_NAME)) {
+        throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`)
+      }
       const response = await fetch(this.feedUrl)
       if (!response.ok) {
+        const kind = classifyHttpStatus(response.status)
+        recordFailure(SERVICE_NAME, kind)
         throw new Error(`Failed to fetch ClickBank feed: ${response.statusText}`)
       }
+      recordSuccess(SERVICE_NAME)
 
       const blob = await response.blob()
       const arrayBuffer = await blob.arrayBuffer()
@@ -78,7 +88,10 @@ export class ClickbankAdapter extends BaseAdapter {
 
       return products
 
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('[circuit-breaker]')) throw err
+      const kind = classifyError(err)
+      recordFailure(SERVICE_NAME, kind)
       // For development fallback if feed fails (likely due to CORS or network in this env)
       if (process.env.NODE_ENV === 'development') {
         return this.getMockData()

@@ -9,8 +9,11 @@ import type {
   ChannelStatus,
   PublishResult,
 } from "@/tree/gateway/gateway-types";
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind'
 
 const CHANNEL_ID = "telegram";
+const SERVICE_NAME = 'telegram-gateway-notify'
 
 /**
  * Sends a Telegram message using the bot token from env.
@@ -26,6 +29,9 @@ async function sendNotification(
   }
 
   try {
+    if (!shouldAllowRequest(SERVICE_NAME)) {
+      throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`)
+    }
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/sendMessage`,
       {
@@ -39,9 +45,18 @@ async function sendNotification(
       },
     );
 
-    return response.ok;
-  } catch {
-    return false;
+    if (response.ok) {
+      recordSuccess(SERVICE_NAME)
+      return true
+    }
+    const kind = classifyHttpStatus(response.status)
+    recordFailure(SERVICE_NAME, kind)
+    return false
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('[circuit-breaker]')) throw err
+    const kind = classifyError(err)
+    recordFailure(SERVICE_NAME, kind)
+    return false
   }
 }
 
@@ -108,12 +123,22 @@ export class TelegramNotificationAdapter implements ChannelAdapter {
     if (!botToken) return false;
 
     try {
+      if (!shouldAllowRequest(SERVICE_NAME)) {
+        throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`)
+      }
       const response = await fetch(
         `https://api.telegram.org/bot${botToken}/getMe`,
       );
-      return response.ok;
-    } catch {
-      return false;
+      if (response.ok) {
+        recordSuccess(SERVICE_NAME)
+        return true
+      }
+      return false
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('[circuit-breaker]')) throw err
+      const kind = classifyError(err)
+      recordFailure(SERVICE_NAME, kind)
+      return false
     }
   }
 }

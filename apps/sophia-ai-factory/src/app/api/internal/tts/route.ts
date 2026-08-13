@@ -17,6 +17,10 @@ import { tenantScopedKey } from '@/land/video/storage/r2-binding';
 import { uploadToR2 } from '@/land/video/storage/r2-multipart-upload';
 import { logger } from '@/seed/utils/logger-utility';
 import { getVoicePreset } from '@/seed/voices/presets';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+
+const CIRCUIT_SERVICE = 'tts-coqui' as const;
 
 // 1-second silent WAV (44 bytes: RIFF header + empty data chunk)
 const SILENT_WAV_B64 =
@@ -145,6 +149,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // Fetch from Coqui XTTS v2
   try {
+    if (!shouldAllowRequest(CIRCUIT_SERVICE)) {
+      throw new Error(`[circuit-breaker] Circuit open for ${CIRCUIT_SERVICE}`)
+    }
+
     const coquiResp = await fetch(`${coquiUrl}/synth`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -152,6 +160,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     if (!coquiResp.ok) {
+      const kind = classifyHttpStatus(coquiResp.status);
+      recordFailure(CIRCUIT_SERVICE, kind);
       const errText = await coquiResp.text().catch((err) => {
         logger.warn('Failed to read response text', { error: String(err), context: 'ttsInternal' });
         return 'unknown';
@@ -165,6 +175,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const durationSec = Number(coquiResp.headers.get('x-duration-sec') ?? '0');
     const wavBuffer = await coquiResp.arrayBuffer();
+    recordSuccess(CIRCUIT_SERVICE);
 
     const bucketRef = await getVideoBucket();
     if (!bucketRef) {
@@ -176,6 +187,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     logger.info('[TTS] Synthesis complete', { jobId, r2Key, durationSec });
     return NextResponse.json({ r2Key, durationSec, costUsd: 0 });
   } catch (err) {
+    if (err instanceof Error && err.message.includes('[circuit-breaker]')) throw err;
+    const kind = classifyError(err);
+    recordFailure(CIRCUIT_SERVICE, kind);
     logger.warn('[TTS] Unexpected error', { jobId, error: String(err) });
     return NextResponse.json({ error: 'Internal TTS error' }, { status: 500 });
   }
