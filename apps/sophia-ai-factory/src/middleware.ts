@@ -69,7 +69,7 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   if (isInternalOrStatic(pathname)) return NextResponse.next();
 
 const BARE_AUTH_APP_ROUTES = new Set([
-  'pricing', 'setup-wizard', 'register', 'reset-password',
+  'pricing', 'setup-wizard', 'reset-password',
   'dashboard', 'checkout', 'settings', 'products', 'payments',
   'admin', 'affiliates', 'affiliate-portal', 'subscribers',
   'webhook', 'creator', 'investor-room',

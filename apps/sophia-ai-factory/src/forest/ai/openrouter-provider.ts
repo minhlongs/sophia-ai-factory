@@ -89,6 +89,8 @@ function getCapabilitiesForModel(model: string): ProviderCapabilities {
 
 // ── Provider implementation ────────────────────────────────────────────────────
 
+const SERVICE_NAME = 'openrouter';
+
 export interface OpenRouterProviderConfig {
   apiKey: string;
   baseUrl?: string;
@@ -117,22 +119,33 @@ export class OpenRouterProvider implements Provider {
   // ── Chat (full response) ────────────────────────────────────────────────────
 
   async chat(messages: ChatMessage[], options: ChatOptions): Promise<ChatResponse> {
+    if (!shouldAllowRequest(SERVICE_NAME)) {
+      throw new Error(`[OpenRouterProvider] Circuit breaker open for ${SERVICE_NAME}`);
+    }
+
     const startTime = performance.now();
     const model = options.model ?? DEFAULT_MODEL;
 
     const body = this.buildRequestBody(messages, options, false);
 
-    const response = await fetch(this.baseUrl, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://sophia.agencyos.network',
-        ...options.extraHeaders,
-      },
-      body: JSON.stringify(body),
-      signal: this.createTimeoutSignal(options.timeoutMs ?? DEFAULT_TIMEOUT_MS),
-    });
+    let response: Response;
+    try {
+      response = await fetch(this.baseUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://sophia.agencyos.network',
+          ...options.extraHeaders,
+        },
+        body: JSON.stringify(body),
+        signal: this.createTimeoutSignal(options.timeoutMs ?? DEFAULT_TIMEOUT_MS),
+      });
+    } catch (error) {
+      const kind = classifyError(error);
+      recordFailure(SERVICE_NAME, kind);
+      throw error;
+    }
 
     if (!response.ok) {
       let errorBody = '';
@@ -150,6 +163,8 @@ export class OpenRouterProvider implements Provider {
       } else {
         (error as { retryable?: boolean }).retryable = false;
       }
+      const kind = classifyError(error);
+      recordFailure(SERVICE_NAME, kind);
       throw error;
     }
 
@@ -168,6 +183,8 @@ export class OpenRouterProvider implements Provider {
       inputTokens: data.usage?.prompt_tokens,
       outputTokens: data.usage?.completion_tokens,
     });
+
+    recordSuccess(SERVICE_NAME);
 
     return {
       content,
@@ -188,10 +205,16 @@ export class OpenRouterProvider implements Provider {
     messages: ChatMessage[],
     options: ChatOptions,
   ): AsyncGenerator<StreamChunk, void, unknown> {
+    if (!shouldAllowRequest(SERVICE_NAME)) {
+      throw new Error(`[OpenRouterProvider] Circuit breaker open for ${SERVICE_NAME}`);
+    }
+
     const model = options.model ?? DEFAULT_MODEL;
     const body = this.buildRequestBody(messages, options, true);
 
-    const response = await fetch(this.baseUrl, {
+    let response: Response;
+    try {
+      response = await fetch(this.baseUrl, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
@@ -201,7 +224,12 @@ export class OpenRouterProvider implements Provider {
       },
       body: JSON.stringify(body),
       signal: this.createTimeoutSignal(options.timeoutMs ?? DEFAULT_TIMEOUT_MS),
-    });
+      });
+    } catch (error) {
+      const kind = classifyError(error);
+      recordFailure(SERVICE_NAME, kind);
+      throw error;
+    }
 
     if (!response.ok) {
       let errorBody = '';
@@ -217,6 +245,8 @@ export class OpenRouterProvider implements Provider {
       } else {
         (error as { retryable?: boolean }).retryable = true;
       }
+      const kind = classifyError(error);
+      recordFailure(SERVICE_NAME, kind);
       throw error;
     }
 

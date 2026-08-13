@@ -6,7 +6,7 @@ import { intlMiddleware, applySecurityHeaders } from './middleware-shared-config
 // breaking users and E2E tests. Detect locale-prefixed versions and strip the prefix
 // before passing to intlMiddleware so the request proceeds without any redirect.
 const BARE_AUTH_APP_ROUTES = new Set([
-  'pricing', 'setup-wizard', 'register', 'reset-password',
+  'pricing', 'setup-wizard', 'reset-password',
   'dashboard', 'checkout', 'settings', 'products',
   'payments', 'admin', 'affiliates', 'affiliate-portal',
   'subscribers', 'webhook', 'creator', 'investor-room',

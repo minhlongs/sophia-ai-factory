@@ -1,6 +1,7 @@
 /**
  * Inngest Function: videoUpload
  * @deprecated 2026-05-17 (ADR 0007) — removed from serve registration. `video_jobs` table was never applied to prod D1. File kept for test coverage + historical context.
+ * NOTE: Circuit breaker removed from this deprecated file (2026-08-14). Kept for test coverage reference only.
  *
  * Listens: video.composed
  * Transition: composing → uploaded
@@ -14,8 +15,6 @@ import { createServerClient } from '@/seed/db/client';
 import { recordCost } from '@/land/video/templates/cost-ledger';
 import { assertValidTransition } from '@/land/video/generation/video-job-fsm';
 import { logger } from '@/seed/utils/logger-utility';
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 import type { VideoJobStatus } from '@/land/video/generation/video-job-fsm';
 
 interface VideoJobRow {
@@ -55,21 +54,11 @@ export const videoUpload = inngest.createFunction(
       const url = job.final_r2_key;
       if (url.startsWith('http')) {
         try {
-          if (!shouldAllowRequest('video-upload')) {
-            logger.warn('[videoUpload] Circuit breaker open for video-upload — skipping URL check', { jobId });
-          } else {
-            const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(10_000) });
-            if (res.ok) {
-              recordSuccess('video-upload');
-            } else {
-              const kind = classifyHttpStatus(res.status);
-              recordFailure('video-upload', kind);
-              logger.warn('[videoUpload] Video URL not accessible', { jobId, url, status: res.status });
-            }
+          const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(10_000) });
+          if (!res.ok) {
+            logger.warn('[videoUpload] Video URL not accessible', { jobId, url, status: res.status });
           }
         } catch (err) {
-          const kind = classifyError(err);
-          recordFailure('video-upload', kind);
           logger.warn('[videoUpload] Video URL check failed (non-fatal)', { jobId, url });
         }
       }
