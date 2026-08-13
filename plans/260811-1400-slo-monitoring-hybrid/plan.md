@@ -1,7 +1,7 @@
 ---
 title: "SLO/Monitoring Hybrid Approach"
 description: "Implement SLO targets with Workers Analytics Engine + Sentry metrics export, monthly cron burn-rate job, and CI perf gate"
-status: pending
+status: complete
 priority: P1
 effort: 8h
 branch: feat/slo-monitoring-hybrid

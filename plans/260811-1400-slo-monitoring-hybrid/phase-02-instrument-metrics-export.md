@@ -1,7 +1,7 @@
 ---
 title: "Phase 02 — Instrument Metrics Export"
 description: "Extend metrics telemetry to export to Workers Analytics Engine and Sentry custom metrics"
-status: pending
+status: complete
 priority: P1
 effort: 2.5h
 branch: feat/slo-monitoring-hybrid

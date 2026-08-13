@@ -1,7 +1,7 @@
 ---
 title: "Phase 01 — Define SLOs and D1 Schema"
 description: "Document SLO targets and create D1 migration for slo_burn table"
-status: pending
+status: complete
 priority: P1
 effort: 1.5h
 branch: feat/slo-monitoring-hybrid
