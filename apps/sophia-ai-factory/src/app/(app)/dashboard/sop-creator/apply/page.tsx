@@ -24,13 +24,13 @@ export default async function ApplyPage({ params, searchParams }: PageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-2xl mx-auto">
         <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
           <ApplyPageClient locale={locale} submitted={submitted === 'true'} />
         </Suspense>
       </div>
-    </main>
+    </div>
   );
 }
 
