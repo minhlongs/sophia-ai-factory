@@ -20,6 +20,8 @@ import {
   finishCronCheckIn,
   failCronCheckIn,
 } from '@/seed/observability/cron-check-in';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,22 +92,38 @@ async function sendTelegram(message: string): Promise<void> {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.ADMIN_TELEGRAM_CHAT_ID;
   if (!botToken || !chatId) return;
+
+  const SERVICE = 'telegram-error-digest';
+  if (!shouldAllowRequest(SERVICE)) return;
+
   try {
-    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' }),
     });
-  } catch {
-    // Best-effort
+    if (res.ok) {
+      recordSuccess(SERVICE);
+    } else {
+      const kind = classifyHttpStatus(res.status);
+      recordFailure(SERVICE, kind);
+    }
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('Circuit breaker open')) throw err;
+    const kind = classifyError(err);
+    recordFailure(SERVICE, kind);
   }
 }
 
 async function sendFounderEmail(to: string, subject: string, body: string): Promise<void> {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) return;
+
+  const SERVICE = 'resend-error-digest';
+  if (!shouldAllowRequest(SERVICE)) return;
+
   try {
-    await fetch('https://api.resend.com/emails', {
+    const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${resendKey}`,
@@ -118,8 +136,16 @@ async function sendFounderEmail(to: string, subject: string, body: string): Prom
         text: body,
       }),
     });
-  } catch {
-    // Best-effort
+    if (res.ok) {
+      recordSuccess(SERVICE);
+    } else {
+      const kind = classifyHttpStatus(res.status);
+      recordFailure(SERVICE, kind);
+    }
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('Circuit breaker open')) throw err;
+    const kind = classifyError(err);
+    recordFailure(SERVICE, kind);
   }
 }
 
