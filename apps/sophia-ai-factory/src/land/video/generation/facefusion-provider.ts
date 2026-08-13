@@ -12,6 +12,8 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import type { VideoRenderProviderInput, VideoRenderProviderResult } from './video-render-provider';
 
 export interface FaceFusionConfig {
@@ -77,6 +79,11 @@ export async function renderWithFaceFusion(
   };
   if (apiKey) headers['X-API-Key'] = apiKey;
 
+  if (!shouldAllowRequest('facefusion')) {
+    logger.warn('[FaceFusion] Circuit breaker open for facefusion, request blocked');
+    throw new FaceFusionProviderError('SUBMIT_FAILED', 'Circuit breaker open for facefusion — request blocked');
+  }
+
   let response: Response;
   try {
     response = await fetch(endpoint, {
@@ -85,7 +92,9 @@ export async function renderWithFaceFusion(
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(30_000), // 30s timeout for submission
     });
+    recordSuccess('facefusion');
   } catch (err) {
+    recordFailure('facefusion', classifyError(err));
     const wrapped = toError(err);
     logger.error('[FaceFusion] Network error submitting video job', wrapped, {
       apiUrl,

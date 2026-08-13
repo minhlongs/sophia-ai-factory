@@ -22,6 +22,8 @@
 
 import { getVideoBucket } from '@/land/video/storage/r2-binding';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 export interface MuxVideoAudioParams {
   /** Public URL of the silent video file (mp4). */
@@ -136,25 +138,36 @@ async function submitCloudconvertJob(
     },
   };
 
-  const res = await fetch(`${CLOUDCONVERT_API}/jobs`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch((err) => {
-      logger.warn('Failed to read Cloudconvert response text', { error: String(err), context: 'submitCloudconvertJob' });
-      return '';
-    });
-    throw new Error(`[FFmpegMuxer] Cloudconvert job creation failed: ${res.status} — ${text}`);
+  if (!shouldAllowRequest('ffmpeg')) {
+    throw new Error('[FFmpegMuxer] Circuit breaker open for ffmpeg — too many failures');
   }
 
-  const json = (await res.json()) as { data: { id: string } };
-  return json.data.id;
+  try {
+    const res = await fetch(`${CLOUDCONVERT_API}/jobs`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch((err) => {
+        logger.warn('Failed to read Cloudconvert response text', { error: String(err), context: 'submitCloudconvertJob' });
+        return '';
+      });
+      throw new Error(`[FFmpegMuxer] Cloudconvert job creation failed: ${res.status} — ${text}`);
+    }
+
+    recordSuccess('ffmpeg');
+    const json = (await res.json()) as { data: { id: string } };
+    return json.data.id;
+  } catch (err) {
+    const kind = classifyError(err);
+    recordFailure('ffmpeg', kind);
+    throw err;
+  }
 }
 
 /** Poll a Cloudconvert job until finished or timeout. Returns export task result. */
@@ -165,30 +178,41 @@ async function pollCloudconvertJob(
   for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
     await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
 
-    const res = await fetch(`${CLOUDCONVERT_API}/jobs/${jobId}`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
-
-    if (!res.ok) {
-      throw new Error(`[FFmpegMuxer] Cloudconvert poll failed: ${res.status}`);
+    if (!shouldAllowRequest('ffmpeg')) {
+      throw new Error('[FFmpegMuxer] Circuit breaker open for ffmpeg — too many failures');
     }
 
-    const json = (await res.json()) as CloudconvertJobResponse;
-    const job = json.data;
+    try {
+      const res = await fetch(`${CLOUDCONVERT_API}/jobs/${jobId}`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
 
-    if (job.status === 'finished') {
-      const exportTask = job.tasks.find((t) => t.name === 'export-muxed');
-      if (!exportTask) throw new Error('[FFmpegMuxer] export-muxed task missing from finished job');
-      return exportTask;
+      if (!res.ok) {
+        throw new Error(`[FFmpegMuxer] Cloudconvert poll failed: ${res.status}`);
+      }
+
+      recordSuccess('ffmpeg');
+      const json = (await res.json()) as CloudconvertJobResponse;
+      const job = json.data;
+
+      if (job.status === 'finished') {
+        const exportTask = job.tasks.find((t) => t.name === 'export-muxed');
+        if (!exportTask) throw new Error('[FFmpegMuxer] export-muxed task missing from finished job');
+        return exportTask;
+      }
+
+      if (job.status === 'error') {
+        const errTask = job.tasks.find((t) => t.status === 'error');
+        const msg = errTask?.message ?? 'unknown error';
+        throw new Error(`[FFmpegMuxer] Cloudconvert job errored: ${msg}`);
+      }
+
+      logger.info('[FFmpegMuxer] Cloudconvert job still running', { jobId, attempt });
+    } catch (err) {
+      const kind = classifyError(err);
+      recordFailure('ffmpeg', kind);
+      throw err;
     }
-
-    if (job.status === 'error') {
-      const errTask = job.tasks.find((t) => t.status === 'error');
-      const msg = errTask?.message ?? 'unknown error';
-      throw new Error(`[FFmpegMuxer] Cloudconvert job errored: ${msg}`);
-    }
-
-    logger.info('[FFmpegMuxer] Cloudconvert job still running', { jobId, attempt });
   }
 
   throw new Error(`[FFmpegMuxer] Cloudconvert job ${jobId} timed out after ${POLL_MAX_ATTEMPTS} polls`);
@@ -199,12 +223,17 @@ async function downloadAndUploadToR2(
   downloadUrl: string,
   outputKey: string,
 ): Promise<{ url: string; durationMs: number }> {
-  const fetchRes = await fetch(downloadUrl);
-  if (!fetchRes.ok) {
-    throw new Error(`[FFmpegMuxer] Failed to download muxed mp4: ${fetchRes.status}`);
+  if (!shouldAllowRequest('ffmpeg')) {
+    throw new Error('[FFmpegMuxer] Circuit breaker open for ffmpeg — too many failures');
   }
 
-  const buffer = await fetchRes.arrayBuffer();
+  try {
+    const fetchRes = await fetch(downloadUrl);
+    if (!fetchRes.ok) {
+      throw new Error(`[FFmpegMuxer] Failed to download muxed mp4: ${fetchRes.status}`);
+    }
+    recordSuccess('ffmpeg');
+    const buffer = await fetchRes.arrayBuffer();
 
   const ref = await getVideoBucket();
   if (ref) {
@@ -219,7 +248,12 @@ async function downloadAndUploadToR2(
   }
 
   logger.warn('[FFmpegMuxer] VIDEO_BUCKET unavailable — returning Cloudconvert temp URL', { outputKey });
-  return { url: downloadUrl, durationMs: 0 };
+    return { url: downloadUrl, durationMs: 0 };
+  } catch (err) {
+    const kind = classifyError(err);
+    recordFailure('ffmpeg', kind);
+    throw err;
+  }
 }
 
 // ── Public API ─────────────────────────────────────────────────────────────────

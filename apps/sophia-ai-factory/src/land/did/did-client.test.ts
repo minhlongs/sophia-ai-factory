@@ -3,6 +3,18 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+// Mock circuit breaker — allow all requests in tests
+vi.mock('@/seed/security/circuit-breaker', () => ({
+  shouldAllowRequest: () => true,
+  recordSuccess: () => {},
+  recordFailure: () => {},
+}))
+
+vi.mock('@/seed/types/failure-kind', () => ({
+  classifyError: () => 'SERVER_ERROR' as never,
+}))
+
 import { createDidTalk } from './did-client'
 
 describe('createDidTalk', () => {

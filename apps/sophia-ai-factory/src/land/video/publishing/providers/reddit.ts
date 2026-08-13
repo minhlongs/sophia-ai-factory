@@ -7,6 +7,8 @@
 
 import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publisher-interface';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 const REDDIT_OAUTH_BASE = 'https://oauth.reddit.com';
 const REDDIT_SUBMIT = `${REDDIT_OAUTH_BASE}/api/submit`;
@@ -88,83 +90,110 @@ export class RedditPublisher implements Publisher {
       return `mock_reddit_${Date.now()}`;
     }
 
-    const title = buildTitle(meta);
-    // Post to user profile subreddit by default; can be overridden via meta.title as subreddit
-    const subreddit = (meta.title && meta.title.startsWith('r/'))
-      ? meta.title.slice(2)
-      : `u_${this.username}`;
+    if (!shouldAllowRequest('reddit')) {
+      throw new Error('Circuit breaker open for reddit — upload blocked');
+    }
 
-    const body = new URLSearchParams({
-      kind: 'link',
-      sr: subreddit,
-      title,
-      url: meta.productLink ?? videoUrl,
-      resubmit: 'true',
-      nsfw: 'false',
-      api_type: 'json',
-    });
+    try {
+      const title = buildTitle(meta);
+      // Post to user profile subreddit by default; can be overridden via meta.title as subreddit
+      const subreddit = (meta.title && meta.title.startsWith('r/'))
+        ? meta.title.slice(2)
+        : `u_${this.username}`;
 
-    const res = await fetch(REDDIT_SUBMIT, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': REDDIT_USER_AGENT,
-      },
-      body,
-    });
-
-    if (!res.ok) {
-      const text = await res.text().catch((err) => {
-        logger.warn('Failed to read Reddit submit response', { error: String(err), context: 'RedditPublisher.upload' });
-        return '';
+      const body = new URLSearchParams({
+        kind: 'link',
+        sr: subreddit,
+        title,
+        url: meta.productLink ?? videoUrl,
+        resubmit: 'true',
+        nsfw: 'false',
+        api_type: 'json',
       });
-      throw new Error(`Reddit /api/submit failed (${res.status}): ${text.slice(0, 300)}`);
-    }
 
-    const data = (await res.json()) as RedditSubmitResponse;
-    const errors = data.json?.errors ?? [];
-    if (errors.length > 0) {
-      throw new Error(`Reddit submit errors: ${errors.map(e => e.join(': ')).join('; ')}`);
-    }
+      const res = await fetch(REDDIT_SUBMIT, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': REDDIT_USER_AGENT,
+        },
+        body,
+      });
 
-    const postId = data.json?.data?.name ?? data.json?.data?.id;
-    if (!postId) throw new Error('Reddit submit returned no post id');
-    return postId;
+      if (!res.ok) {
+        const text = await res.text().catch((err) => {
+          logger.warn('Failed to read Reddit submit response', { error: String(err), context: 'RedditPublisher.upload' });
+          return '';
+        });
+        throw new Error(`Reddit /api/submit failed (${res.status}): ${text.slice(0, 300)}`);
+      }
+
+      const data = (await res.json()) as RedditSubmitResponse;
+      const errors = data.json?.errors ?? [];
+      if (errors.length > 0) {
+        throw new Error(`Reddit submit errors: ${errors.map(e => e.join(': ')).join('; ')}`);
+      }
+
+      const postId = data.json?.data?.name ?? data.json?.data?.id;
+      if (!postId) throw new Error('Reddit submit returned no post id');
+      recordSuccess('reddit');
+      return postId;
+    } catch (error) {
+      recordFailure('reddit', classifyError(error));
+      throw error;
+    }
   }
 
   async pollStatus(externalPostId: string): Promise<PublishStatus> {
     if (isMockMode() || externalPostId.startsWith('mock_')) return 'live';
-    // Reddit posts are synchronous — just check the post exists
-    const res = await fetch(`${REDDIT_OAUTH_BASE}/by_id/${externalPostId}.json`, {
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        'User-Agent': REDDIT_USER_AGENT,
-      },
-    });
-    if (res.status === 404) return 'failed';
-    if (!res.ok) return 'failed';
-    return 'live';
+
+    if (!shouldAllowRequest('reddit')) return 'processing';
+
+    try {
+      const res = await fetch(`${REDDIT_OAUTH_BASE}/by_id/${externalPostId}.json`, {
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          'User-Agent': REDDIT_USER_AGENT,
+        },
+      });
+      if (res.status === 404) return 'failed';
+      if (!res.ok) return 'failed';
+      recordSuccess('reddit');
+      return 'live';
+    } catch (error) {
+      recordFailure('reddit', classifyError(error));
+      return 'processing';
+    }
   }
 
   async getMetrics(externalPostId: string): Promise<MetricsJson> {
     if (isMockMode() || externalPostId.startsWith('mock_')) {
       return { views: 0, likes: 0, comments: 0 };
     }
-    const res = await fetch(`${REDDIT_OAUTH_BASE}/by_id/${externalPostId}.json`, {
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        'User-Agent': REDDIT_USER_AGENT,
-      },
-    });
-    if (!res.ok) return { views: 0, likes: 0, comments: 0 };
-    const json = (await res.json()) as { data?: { children?: Array<{ data?: RedditPostResponse['data'] }> } };
-    const post = json.data?.children?.[0]?.data;
-    return {
-      views: 0, // Reddit doesn't expose view counts via API
-      likes: post?.ups ?? post?.score ?? 0,
-      comments: post?.num_comments ?? 0,
-    };
+
+    if (!shouldAllowRequest('reddit')) return { views: 0, likes: 0, comments: 0 };
+
+    try {
+      const res = await fetch(`${REDDIT_OAUTH_BASE}/by_id/${externalPostId}.json`, {
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          'User-Agent': REDDIT_USER_AGENT,
+        },
+      });
+      if (!res.ok) return { views: 0, likes: 0, comments: 0 };
+      const json = (await res.json()) as { data?: { children?: Array<{ data?: RedditPostResponse['data'] }> } };
+      const post = json.data?.children?.[0]?.data;
+      recordSuccess('reddit');
+      return {
+        views: 0, // Reddit doesn't expose view counts via API
+        likes: post?.ups ?? post?.score ?? 0,
+        comments: post?.num_comments ?? 0,
+      };
+    } catch (error) {
+      recordFailure('reddit', classifyError(error));
+      return { views: 0, likes: 0, comments: 0 };
+    }
   }
 
 async delete(postId: string): Promise<void> {

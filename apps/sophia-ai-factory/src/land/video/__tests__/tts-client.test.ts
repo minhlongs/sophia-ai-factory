@@ -8,6 +8,17 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+vi.mock('@/seed/security/circuit-breaker', () => ({
+  shouldAllowRequest: vi.fn().mockReturnValue(true),
+  recordSuccess: vi.fn(),
+  recordFailure: vi.fn(),
+}));
+
+vi.mock('@/seed/types/failure-kind', () => ({
+  classifyError: vi.fn().mockReturnValue('SERVER_ERROR'),
+}));
+
 import { synthesize } from '../generation/tts-client';
 
 const MOCK_WAV = new ArrayBuffer(44); // minimal buffer

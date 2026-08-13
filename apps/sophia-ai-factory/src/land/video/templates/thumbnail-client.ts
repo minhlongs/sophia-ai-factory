@@ -12,6 +12,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 const DEFAULT_BASE_URL = 'https://api.openai.com/v1';
 const DEFAULT_TIMEOUT_MS = 60_000; // 60s — image gen is slower than text
@@ -75,6 +77,10 @@ export class ThumbnailClient {
       style = 'vivid',
     } = params;
 
+    if (!shouldAllowRequest('openai')) {
+      throw new ThumbnailClientError(0, '[ThumbnailClient] Circuit breaker open for openai — too many failures');
+    }
+
     logger.info('[ThumbnailClient] Generating thumbnail', { size, quality, style });
 
     const controller = new AbortController();
@@ -102,6 +108,7 @@ export class ThumbnailClient {
         await this.handleErrorResponse(response);
       }
 
+      recordSuccess('openai');
       const output = (await response.json()) as OpenAIImageResponse;
 
       const imageData = output.data?.[0];
@@ -116,6 +123,10 @@ export class ThumbnailClient {
         imageUrl,
         revisedPrompt: imageData.revised_prompt,
       };
+    } catch (err) {
+      const kind = classifyError(err);
+      recordFailure('openai', kind);
+      throw err;
     } finally {
       clearTimeout(timer);
     }

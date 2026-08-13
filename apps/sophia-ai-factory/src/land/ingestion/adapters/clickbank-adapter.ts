@@ -1,5 +1,7 @@
 import { BaseAdapter } from '../base-adapter'
 import type { RawProduct, AdapterConfig } from '../types'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError } from '@/seed/types/failure-kind'
 
 export class ClickbankAdapter extends BaseAdapter {
   networkId = 'clickbank' as const
@@ -12,12 +14,17 @@ export class ClickbankAdapter extends BaseAdapter {
   }
 
   async fetchProducts(): Promise<RawProduct[]> {
+    if (!shouldAllowRequest('clickbank')) {
+      throw new Error('Circuit breaker open for clickbank — too many failures')
+    }
+
     try {
       const response = await fetch(this.feedUrl)
       if (!response.ok) {
         throw new Error(`Failed to fetch ClickBank feed: ${response.statusText}`)
       }
 
+      recordSuccess('clickbank')
       const blob = await response.blob()
       const arrayBuffer = await blob.arrayBuffer()
 
@@ -78,7 +85,9 @@ export class ClickbankAdapter extends BaseAdapter {
 
       return products
 
-    } catch {
+    } catch (err) {
+      const kind = classifyError(err)
+      recordFailure('clickbank', kind)
       // For development fallback if feed fails (likely due to CORS or network in this env)
       if (process.env.NODE_ENV === 'development') {
         return this.getMockData()

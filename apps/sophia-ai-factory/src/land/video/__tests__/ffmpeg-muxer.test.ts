@@ -26,6 +26,16 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
+vi.mock('@/seed/security/circuit-breaker', () => ({
+  shouldAllowRequest: vi.fn().mockReturnValue(true),
+  recordSuccess: vi.fn(),
+  recordFailure: vi.fn(),
+}));
+
+vi.mock('@/seed/types/failure-kind', () => ({
+  classifyError: vi.fn().mockReturnValue('SERVER_ERROR'),
+}));
+
 // ── Import SUT after mocks ────────────────────────────────────────────────────
 
 import { muxVideoAudio } from '../assembly/ffmpeg-muxer';

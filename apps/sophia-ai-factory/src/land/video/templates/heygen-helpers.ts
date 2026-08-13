@@ -4,6 +4,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 export const HEYGEN_API_URL = 'https://api.heygen.com/v2';
 
@@ -39,27 +41,38 @@ export async function createHeyGenVideo(params: {
     bodyPayload.callback_url = callbackUrl;
   }
 
-  const res = await fetch(`${HEYGEN_API_URL}/video/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-Api-Key': apiKey },
-    body: JSON.stringify(bodyPayload),
-    signal: AbortSignal.timeout(30_000),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text().catch((err) => {
-      logger.warn('Failed to read HeyGen error response', { error: String(err), context: 'createHeyGenVideo' });
-      return '';
-    });
-    throw new Error(`HeyGen createVideo ${res.status}: ${errText.slice(0, 200)}`);
+  if (!shouldAllowRequest('heygen')) {
+    throw new Error('Circuit breaker open for HeyGen — too many failures');
   }
 
-  const data = await res.json() as { data?: { video_id?: string } };
-  const videoId = data.data?.video_id;
-  if (!videoId) throw new Error('HeyGen: missing video_id in response');
+  try {
+    const res = await fetch(`${HEYGEN_API_URL}/video/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Api-Key': apiKey },
+      body: JSON.stringify(bodyPayload),
+      signal: AbortSignal.timeout(30_000),
+    });
 
-  logger.info('[HeyGenHelpers] Video created', { videoId });
-  return { videoId };
+    if (!res.ok) {
+      const errText = await res.text().catch((err) => {
+        logger.warn('Failed to read HeyGen error response', { error: String(err), context: 'createHeyGenVideo' });
+        return '';
+      });
+      throw new Error(`HeyGen createVideo ${res.status}: ${errText.slice(0, 200)}`);
+    }
+
+    recordSuccess('heygen');
+    const data = await res.json() as { data?: { video_id?: string } };
+    const videoId = data.data?.video_id;
+    if (!videoId) throw new Error('HeyGen: missing video_id in response');
+
+    logger.info('[HeyGenHelpers] Video created', { videoId });
+    return { videoId };
+  } catch (err) {
+    const kind = classifyError(err);
+    recordFailure('heygen', kind);
+    throw err;
+  }
 }
 
 export async function pollHeyGenStatus(params: {
@@ -71,22 +84,33 @@ export async function pollHeyGenStatus(params: {
   const start = Date.now();
 
   while (Date.now() - start < maxWaitMs) {
-    const res = await fetch(`${HEYGEN_API_URL}/video/${videoId}`, {
-      headers: { 'X-Api-Key': apiKey },
-      signal: AbortSignal.timeout(10_000),
-    });
-
-    if (!res.ok) throw new Error(`HeyGen status ${res.status}`);
-
-    const json = await res.json() as { data?: { status?: string; video_url?: string; error?: { message?: string } } };
-    const status = json.data?.status;
-
-    if (status === 'completed' && json.data?.video_url) {
-      return json.data.video_url;
+    if (!shouldAllowRequest('heygen')) {
+      throw new Error('Circuit breaker open for HeyGen — too many failures');
     }
-    if (status === 'failed') {
-      const errorMsg = json.data?.error?.message ?? 'unknown';
-      throw new Error(`HeyGen video failed: ${errorMsg}`);
+
+    try {
+      const res = await fetch(`${HEYGEN_API_URL}/video/${videoId}`, {
+        headers: { 'X-Api-Key': apiKey },
+        signal: AbortSignal.timeout(10_000),
+      });
+
+      if (!res.ok) throw new Error(`HeyGen status ${res.status}`);
+
+      recordSuccess('heygen');
+      const json = await res.json() as { data?: { status?: string; video_url?: string; error?: { message?: string } } };
+      const status = json.data?.status;
+
+      if (status === 'completed' && json.data?.video_url) {
+        return json.data.video_url;
+      }
+      if (status === 'failed') {
+        const errorMsg = json.data?.error?.message ?? 'unknown';
+        throw new Error(`HeyGen video failed: ${errorMsg}`);
+      }
+    } catch (err) {
+      const kind = classifyError(err);
+      recordFailure('heygen', kind);
+      throw err;
     }
 
     await new Promise((r) => setTimeout(r, 10_000));

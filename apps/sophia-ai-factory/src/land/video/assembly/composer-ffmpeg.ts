@@ -20,6 +20,8 @@ import { getVideoBucket, tenantScopedKey } from '@/land/video/storage/r2-binding
 import { recordCost } from '@/land/video/templates/cost-ledger';
 import { logger } from '@/seed/utils/logger-utility';
 import { withBreaker, BreakerOpenError } from '@/land/video/templates/circuit-breaker';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import { loadBrandKitOverrides } from '@/land/video/assembly/brand-kit-composer';
 
 export interface SubtitleStyle {
@@ -243,15 +245,26 @@ async function callFly(flyUrl: string, input: ComposeInput): Promise<Response> {
         output_format: 'mp4',
       };
 
-  const res = await fetch(`${flyUrl}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    throw new Error(`[Composer] MoviePy ${path} failed: ${res.status} ${res.statusText}`);
+  if (!shouldAllowRequest('ffmpeg')) {
+    throw new Error('[Composer] Circuit breaker open for ffmpeg — too many failures');
   }
-  return res;
+
+  try {
+    const res = await fetch(`${flyUrl}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      throw new Error(`[Composer] MoviePy ${path} failed: ${res.status} ${res.statusText}`);
+    }
+    recordSuccess('ffmpeg');
+    return res;
+  } catch (err) {
+    const kind = classifyError(err);
+    recordFailure('ffmpeg', kind);
+    throw err;
+  }
 }
 
 /**

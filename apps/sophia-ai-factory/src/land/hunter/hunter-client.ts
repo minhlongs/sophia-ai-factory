@@ -10,6 +10,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 const HUNTER_BASE = 'https://api.hunter.io/v2';
 
@@ -68,25 +70,36 @@ function buildUrl(path: string, params: Record<string, string | undefined>, apiK
 }
 
 async function callHunter<T>(path: string, params: Record<string, string | undefined>, apiKey: string): Promise<T> {
-  const res = await fetch(buildUrl(path, params, apiKey), {
-    method: 'GET',
-    headers: { Accept: 'application/json' },
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch((err) => {
-      logger.warn('Failed to read Hunter response', { error: String(err), context: 'callHunter' });
-      return '';
-    });
-    const err: HunterErrorResponse = Object.assign(new Error(`Hunter HTTP ${res.status}`), {
-      code: `hunter_${res.status}`,
-      status: res.status,
-      message: text.slice(0, 500) || `Hunter HTTP ${res.status}`,
-    });
-    throw err;
+  if (!shouldAllowRequest('hunter')) {
+    throw new Error('Circuit breaker open for hunter — too many failures')
   }
 
-  return res.json() as Promise<T>;
+  try {
+    const res = await fetch(buildUrl(path, params, apiKey), {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch((err) => {
+        logger.warn('Failed to read Hunter response', { error: String(err), context: 'callHunter' });
+        return '';
+      });
+      const err: HunterErrorResponse = Object.assign(new Error(`Hunter HTTP ${res.status}`), {
+        code: `hunter_${res.status}`,
+        status: res.status,
+        message: text.slice(0, 500) || `Hunter HTTP ${res.status}`,
+      });
+      throw err;
+    }
+
+    recordSuccess('hunter')
+    return res.json() as Promise<T>;
+  } catch (err) {
+    const kind = classifyError(err)
+    recordFailure('hunter', kind)
+    throw err
+  }
 }
 
 export function findEmail(apiKey: string, req: HunterEmailFinderRequest): Promise<HunterEmailFinderResponse> {

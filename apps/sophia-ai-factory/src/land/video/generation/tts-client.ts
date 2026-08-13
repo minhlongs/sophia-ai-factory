@@ -6,6 +6,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 export interface TTSSynthesizeParams {
   text: string;
@@ -34,27 +36,38 @@ export async function synthesize(params: TTSSynthesizeParams): Promise<TTSSynthe
 
   const url = `${baseUrl}/api/internal/tts`;
 
-  logger.info('[TTSClient] Calling internal TTS', { jobId, tenantId, language });
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-internal-token': internalToken,
-    },
-    body: JSON.stringify({ text, voiceId, language, tenantId, jobId }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text().catch((err) => {
-      logger.warn('Failed to read response text', { error: String(err), context: 'ttsClient' });
-      return 'unknown';
-    });
-    throw new Error(`[TTSClient] /api/internal/tts returned ${response.status}: ${errorText}`);
+  if (!shouldAllowRequest('elevenlabs')) {
+    logger.warn('[TTSClient] Circuit breaker open for elevenlabs, request blocked', { jobId });
+    throw new Error('Circuit breaker open for elevenlabs — request blocked');
   }
 
-  const result = (await response.json()) as TTSSynthesizeResult;
+  logger.info('[TTSClient] Calling internal TTS', { jobId, tenantId, language });
 
-  logger.info('[TTSClient] TTS complete', { jobId, r2Key: result.r2Key, durationSec: result.durationSec });
-  return result;
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-token': internalToken,
+      },
+      body: JSON.stringify({ text, voiceId, language, tenantId, jobId }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch((err) => {
+        logger.warn('Failed to read response text', { error: String(err), context: 'ttsClient' });
+        return 'unknown';
+      });
+      throw new Error(`[TTSClient] /api/internal/tts returned ${response.status}: ${errorText}`);
+    }
+
+    const result = (await response.json()) as TTSSynthesizeResult;
+
+    logger.info('[TTSClient] TTS complete', { jobId, r2Key: result.r2Key, durationSec: result.durationSec });
+    recordSuccess('elevenlabs');
+    return result;
+  } catch (error) {
+    recordFailure('elevenlabs', classifyError(error));
+    throw error;
+  }
 }

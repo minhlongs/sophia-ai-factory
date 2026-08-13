@@ -9,6 +9,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import type {
   VideoGenerateParams,
   VideoGenerateResult,
@@ -56,6 +58,10 @@ export class WanVideoClient {
    * Returns immediately with jobId + initial status.
    */
   async generateVideo(params: VideoGenerateParams): Promise<VideoGenerateResult> {
+    if (!shouldAllowRequest('wan21')) {
+      throw new WanVideoClientError(0, 'Circuit breaker open for Wan 2.1 — too many failures');
+    }
+
     const input: WanApiInput = {
       prompt: params.prompt,
       aspect_ratio: params.aspectRatio ?? '16:9',
@@ -94,10 +100,16 @@ export class WanVideoClient {
         status: prediction.status,
       });
 
+      recordSuccess('wan21');
       return {
         jobId: prediction.id,
         status: prediction.status,
       };
+    } catch (error) {
+      if (error instanceof WanVideoClientError) throw error;
+      const kind = classifyError(error);
+      recordFailure('wan21', kind);
+      throw error;
     } finally {
       clearTimeout(timer);
     }
@@ -107,6 +119,10 @@ export class WanVideoClient {
    * Poll job status by prediction id.
    */
   async getJobStatus(jobId: string): Promise<ProviderVideoJobStatus> {
+    if (!shouldAllowRequest('wan21')) {
+      throw new WanVideoClientError(0, 'Circuit breaker open for Wan 2.1 — too many failures');
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -131,11 +147,17 @@ export class WanVideoClient {
             : prediction.output
           : undefined;
 
+      recordSuccess('wan21');
       return {
         status: prediction.status,
         videoUrl,
         error: prediction.error,
       };
+    } catch (error) {
+      if (error instanceof WanVideoClientError) throw error;
+      const kind = classifyError(error);
+      recordFailure('wan21', kind);
+      throw error;
     } finally {
       clearTimeout(timer);
     }

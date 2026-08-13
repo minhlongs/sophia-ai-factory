@@ -10,6 +10,8 @@
  */
 
 import { MODEL_COSTS, estimateCost, getCostForModel } from './llm-cost-tracker';
+import { shouldAllowRequest, recordSuccess, recordFailure, reset as resetCircuit } from '@/seed/security/circuit-breaker';
+import { classifyError, FailureKind } from '@/seed/types/failure-kind';
 
 export type { TenantUsage } from './llm-cost-tracker';
 export { MODEL_COSTS, trackUsage, getUsageSummary, _resetUsage } from './llm-cost-tracker';
@@ -34,49 +36,31 @@ export interface LLMRouteResult {
   estimatedCostUsd: number;
 }
 
-// ── Circuit breaker ─────────────────────────────────────────────────────────
-
-interface CircuitState {
-  failures: number;
-  openUntil: number;
-}
-
-const _circuitState: CircuitState = { failures: 0, openUntil: 0 };
-const CIRCUIT_FAILURE_THRESHOLD = 3;
-const CIRCUIT_RESET_MS = 60_000;
+// ── Circuit breaker (delegated to seed circuit breaker) ──────────────────────
+const QWEN_SERVICE = 'qwen-local'
 
 function isCircuitOpen(): boolean {
-  if (_circuitState.openUntil === 0) return false;
-  if (Date.now() < _circuitState.openUntil) return true;
-  _circuitState.failures = 0;
-  _circuitState.openUntil = 0;
-  return false;
+  return !shouldAllowRequest(QWEN_SERVICE)
 }
 
 function recordQwenFailure(): void {
-  _circuitState.failures += 1;
-  if (_circuitState.failures >= CIRCUIT_FAILURE_THRESHOLD) {
-    _circuitState.openUntil = Date.now() + CIRCUIT_RESET_MS;
-  }
+  recordFailure(QWEN_SERVICE, FailureKind.SERVER_ERROR)
 }
 
 function recordQwenSuccess(): void {
-  _circuitState.failures = 0;
-  _circuitState.openUntil = 0;
+  recordSuccess(QWEN_SERVICE)
 }
 
 export function _resetCircuit(): void {
-  _circuitState.failures = 0;
-  _circuitState.openUntil = 0;
-}
-
-export function _getCircuitState(): Readonly<CircuitState> {
-  return { ..._circuitState };
+  resetCircuit(QWEN_SERVICE)
 }
 
 // ── Provider calls ──────────────────────────────────────────────────────────
 
 async function callQwen(prompt: string, baseUrl: string, timeoutMs: number): Promise<string> {
+  if (!shouldAllowRequest('openrouter')) {
+    throw new Error('Circuit open for openrouter — fable-5 call blocked');
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -89,29 +73,42 @@ async function callQwen(prompt: string, baseUrl: string, timeoutMs: number): Pro
     clearTimeout(timer);
     if (!res.ok) throw new Error(`Qwen HTTP ${res.status}`);
     const data = await res.json() as { response?: string };
+    recordSuccess('openrouter');
     return data.response ?? '';
+  } catch (err) {
+    recordFailure('openrouter', classifyError(err));
+    throw err;
   } finally {
     clearTimeout(timer);
   }
 }
 
 async function callClaude(prompt: string, model: string, apiKey: string): Promise<string> {
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: 4096,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  });
-  if (!res.ok) throw new Error(`Anthropic HTTP ${res.status}`);
-  const data = await res.json() as { content?: { text?: string }[] };
-  return data.content?.[0]?.text ?? '';
+  if (!shouldAllowRequest('openrouter')) {
+    throw new Error('Circuit open for openrouter — Anthropic call blocked');
+  }
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 4096,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    if (!res.ok) throw new Error(`Anthropic HTTP ${res.status}`);
+    const data = await res.json() as { content?: { text?: string }[] };
+    recordSuccess('openrouter');
+    return data.content?.[0]?.text ?? '';
+  } catch (err) {
+    recordFailure('openrouter', classifyError(err));
+    throw err;
+  }
 }
 
 // ── Routing ─────────────────────────────────────────────────────────────────

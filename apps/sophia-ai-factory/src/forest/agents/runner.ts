@@ -14,6 +14,8 @@ import {
   appendLog,
 } from './repository';
 import { reportError } from '@/seed/observability/telemetry/error-tracker';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import { track } from '@/tree/signals/track';
 import { assignVariant } from '@/tree/signals/ab-experiment';
 import { D1Events } from '@/tree/signals/d1-event-types';
@@ -87,6 +89,11 @@ export async function runAgent(
       break;
   }
 
+  // Circuit breaker: check if OpenRouter is available
+  if (!shouldAllowRequest('openrouter')) {
+    throw new Error('Circuit breaker open for OpenRouter — too many failures');
+  }
+
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -114,6 +121,9 @@ export async function runAgent(
       usage?: { completion_tokens: number; prompt_tokens: number; cost?: number };
     };
     const output = data.choices?.[0]?.message?.content || '';
+
+    // Circuit breaker: record success
+    recordSuccess('openrouter');
 
     // Update task with success
     await updateTaskResult(taskId, orgId, {
@@ -150,6 +160,10 @@ export async function runAgent(
     // Record failure
     const error = err instanceof Error ? err : new Error(String(err));
     const errorMessage = error.message;
+
+    // Circuit breaker: classify and record failure
+    const kind = classifyError(error);
+    recordFailure('openrouter', kind);
 
     await updateTaskResult(taskId, orgId, {
       status: 'failed',

@@ -4,6 +4,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 export interface SceneBoundary {
   /** Timestamp of scene transition in milliseconds */
@@ -67,6 +69,11 @@ export async function detectScenes(videoUrl: string): Promise<SceneBoundary[]> {
 
   const config = buildSceneDetectConfig(videoUrl);
 
+  if (!shouldAllowRequest('openai')) {
+    logger.warn('[scene-detector] Circuit breaker open for openai — too many failures');
+    return [];
+  }
+
   try {
     const response = await fetch(`${flyServiceUrl}/scene-detect`, {
       method: 'POST',
@@ -79,9 +86,12 @@ export async function detectScenes(videoUrl: string): Promise<SceneBoundary[]> {
       return [];
     }
 
+    recordSuccess('openai');
     const data = (await response.json()) as { timestamps: string };
     return parseSceneDetectOutput(data.timestamps ?? '');
   } catch (err) {
+    const kind = classifyError(err);
+    recordFailure('openai', kind);
     logger.error('[scene-detector] Failed to detect scenes', { videoUrl, err });
     return [];
   }

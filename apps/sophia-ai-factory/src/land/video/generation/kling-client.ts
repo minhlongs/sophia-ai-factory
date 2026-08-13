@@ -12,6 +12,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import type {
   VideoGenerateParams,
   VideoGenerateResult,
@@ -67,6 +69,10 @@ export class KlingVideoClient {
       duration: input.duration,
     });
 
+    if (!shouldAllowRequest('kling')) {
+      throw new KlingVideoClientError(0, 'Circuit breaker open for Kling — too many failures');
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -92,11 +98,17 @@ export class KlingVideoClient {
         status: result.status,
       });
 
+      recordSuccess('kling');
       return {
         jobId: result.request_id,
         // fal.ai queue returns 'IN_QUEUE' on submit; map to 'starting'
         status: 'starting',
       };
+    } catch (error) {
+      if (error instanceof KlingVideoClientError) throw error;
+      const kind = classifyError(error);
+      recordFailure('kling', kind);
+      throw error;
     } finally {
       clearTimeout(timer);
     }
@@ -106,6 +118,10 @@ export class KlingVideoClient {
    * Poll job status by request id.
    */
   async getJobStatus(jobId: string): Promise<ProviderVideoJobStatus> {
+    if (!shouldAllowRequest('kling')) {
+      throw new KlingVideoClientError(0, 'Circuit breaker open for Kling — too many failures');
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -155,6 +171,11 @@ export class KlingVideoClient {
       // IN_QUEUE → starting, IN_PROGRESS → processing
       const mappedStatus = falStatus === 'IN_PROGRESS' ? 'processing' : 'starting';
       return { status: mappedStatus };
+    } catch (error) {
+      if (error instanceof KlingVideoClientError) throw error;
+      const kind = classifyError(error);
+      recordFailure('kling', kind);
+      throw error;
     } finally {
       clearTimeout(timer);
     }

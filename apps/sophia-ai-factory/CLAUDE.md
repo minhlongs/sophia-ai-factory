@@ -97,6 +97,36 @@ if (lockAgeMs > 5 * 60 * 1000) {
 }
 ```
 
+### Circuit Breaker Patterns (Resilience)
+
+Every external HTTP call must use the circuit breaker. Key patterns:
+
+```typescript
+import { recordFailure, recordSuccess, shouldAllowRequest } from '@/seed/security/circuit-breaker'
+import { classifyError } from '@/seed/types/failure-kind'
+
+// Before call
+if (!shouldAllowRequest('openrouter')) {
+  throw new Error('Circuit open for openrouter')
+}
+
+try {
+  const result = await callExternalService()
+  recordSuccess('openrouter')
+  return result
+} catch (error) {
+  const kind = classifyError(error)
+  recordFailure('openrouter', kind)
+  throw error
+}
+```
+
+**Critical rules:**
+- HALF_OPEN probe failure → immediately re-open circuit (not stuck)
+- Failure window decay: entries older than `failureWindowMs` auto-reset failureCount and state
+- LRU eviction uses `lastAccessAt` (not `lastFailureAt`) — healthy services should not be evicted
+- AUTH_FAILURE opens circuit immediately (no cooldown wait)
+
 ---
 
 ## Canonical Import Paths (POST-2026-04-14 CONSOLIDATION)
@@ -112,6 +142,8 @@ Single sources of truth. Old paths deleted; do not create new ones.
 | Tier pricing | `import { TOPUP_PRICE_PER_MCU } from '@/seed/config/tiers/tier-configs'` |
 | Result type | `import { success, failure, type Result } from '@/seed/types/result'` |
 | Overage billing ops | `import { markEventsAsBillable } from '@/seed/db/overage-billing-ops'` |
+| Circuit breaker | `import { recordFailure, recordSuccess, shouldAllowRequest } from '@/seed/security/circuit-breaker'` |
+| Failure classification | `import { classifyError, classifyHttpStatus, FailureKind } from '@/seed/types/failure-kind'` |
 | Quota cache ops | `import { invalidateQuotaCache } from '@/seed/kv/quota-cache-ops'` |
 | Locale-aware Link | `import { Link } from '@/navigation'` (named export) |
 
@@ -194,7 +226,7 @@ Full doctrine: `.claude/rules/sophia-no-tech-doctrine.md`
 ## Quality Gates
 
 - `npm run build` → 0 TypeScript errors
-- `npm test` → all tests pass (6694+ tests)
+- `npm test` → all tests pass (6744+ tests)
 - Zero `:any` types in production code
 - Zero `console.log`/`console.warn`/`console.error` — use `@/seed/utils/logger-utility`
 - Zod validation on all API inputs
@@ -202,6 +234,9 @@ Full doctrine: `.claude/rules/sophia-no-tech-doctrine.md`
 - Tier enum: `BASIC | PREMIUM | ENTERPRISE | MASTER` (uppercase only)
 - No land→forest imports (enforced by ESLint `no-restricted-imports`). Run `npm run lint` to catch.
 - Deploy: working tree must be clean (`deploy-with-sha.sh` rejects dirty trees). Commit docs before deploy.
+- Circuit breaker on all external HTTP calls (OpenRouter, ElevenLabs, D-ID, HeyGen, NOWPayments, ClickBank, Replicate, fal.ai)
+- Per-kind error classification: AUTH_FAILURE → immediate open, RATE_LIMIT → cooldown, SERVER_ERROR → retry with backoff
+- No bare try/catch for external HTTP without failure kind classification
 
 ---
 

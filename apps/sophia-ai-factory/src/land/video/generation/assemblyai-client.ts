@@ -10,6 +10,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 const DEFAULT_BASE_URL = 'https://api.assemblyai.com/v2';
 const DEFAULT_TIMEOUT_MS = 30_000; // 30s per individual request
@@ -98,6 +100,11 @@ export class AssemblyAIClient {
       body.speaker_labels = true;
     }
 
+if (!shouldAllowRequest('assemblyai')) {
+      logger.warn('[AssemblyAIClient] Circuit breaker open for assemblyai, request blocked');
+      throw new Error('Circuit breaker open for assemblyai — request blocked');
+    }
+
     logger.info('[AssemblyAIClient] Submitting transcription job', {
       audioUrl: params.audioUrl,
       languageCode: params.languageCode ?? 'auto',
@@ -129,7 +136,11 @@ export class AssemblyAIClient {
         status: data.status,
       });
 
+      recordSuccess('assemblyai');
       return { transcriptId: data.id, status: data.status };
+    } catch (error) {
+      recordFailure('assemblyai', classifyError(error));
+      throw error;
     } finally {
       clearTimeout(timer);
     }
@@ -140,6 +151,11 @@ export class AssemblyAIClient {
    * Caller is responsible for polling until status is 'completed' or 'error'.
    */
   async getTranscript(transcriptId: string): Promise<TranscriptResponse> {
+    if (!shouldAllowRequest('assemblyai')) {
+      logger.warn('[AssemblyAIClient] Circuit breaker open for assemblyai, request blocked');
+      throw new Error('Circuit breaker open for assemblyai — request blocked');
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -162,7 +178,11 @@ export class AssemblyAIClient {
         status: data.status,
       });
 
+      recordSuccess('assemblyai');
       return data;
+    } catch (error) {
+      recordFailure('assemblyai', classifyError(error));
+      throw error;
     } finally {
       clearTimeout(timer);
     }
@@ -173,6 +193,11 @@ export class AssemblyAIClient {
    * Returns the raw subtitle string (plain text, not JSON).
    */
   async getSubtitles(transcriptId: string, format: 'srt' | 'vtt'): Promise<string> {
+    if (!shouldAllowRequest('assemblyai')) {
+      logger.warn('[AssemblyAIClient] Circuit breaker open for assemblyai, request blocked');
+      throw new Error('Circuit breaker open for assemblyai — request blocked');
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -196,7 +221,11 @@ export class AssemblyAIClient {
         length: subtitles.length,
       });
 
+      recordSuccess('assemblyai');
       return subtitles;
+    } catch (error) {
+      recordFailure('assemblyai', classifyError(error));
+      throw error;
     } finally {
       clearTimeout(timer);
     }

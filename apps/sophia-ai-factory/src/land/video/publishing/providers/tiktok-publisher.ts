@@ -7,6 +7,8 @@
 import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publisher-interface';
 import { publishVideo, checkPublishStatus } from '@/land/tiktok/tiktok-oauth-client';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 function isMockMode(): boolean {
   return !process.env.TIKTOK_CLIENT_KEY;
@@ -26,16 +28,27 @@ export class TikTokPublisher implements Publisher {
       return `mock_tiktok_${Date.now()}`;
     }
 
-    // FTC compliance: prepend #ad disclosure if not already present
-    const rawCaption = meta.caption.startsWith('#ad ') ? meta.caption : `#ad ${meta.caption}`;
-    const title = rawCaption.slice(0, 150);
+    if (!shouldAllowRequest('tiktok')) {
+      throw new Error('Circuit breaker open for TikTok — too many failures');
+    }
 
-    const publishId = await publishVideo({
-      accessToken: this.accessToken,
-      videoUrl,
-      title,
-    });
-    return publishId;
+    try {
+      // FTC compliance: prepend #ad disclosure if not already present
+      const rawCaption = meta.caption.startsWith('#ad ') ? meta.caption : `#ad ${meta.caption}`;
+      const title = rawCaption.slice(0, 150);
+
+      const publishId = await publishVideo({
+        accessToken: this.accessToken,
+        videoUrl,
+        title,
+      });
+      recordSuccess('tiktok');
+      return publishId;
+    } catch (error) {
+      const kind = classifyError(error);
+      recordFailure('tiktok', kind);
+      throw error;
+    }
   }
 
   async pollStatus(externalPostId: string): Promise<PublishStatus> {
@@ -43,12 +56,21 @@ export class TikTokPublisher implements Publisher {
       return 'live';
     }
 
-    const result = await checkPublishStatus(this.accessToken, externalPostId);
-    const s = result.status.toUpperCase();
+    if (!shouldAllowRequest('tiktok')) return 'processing';
 
-    if (s === 'PUBLISH_COMPLETE' || s === 'SUCCESS') return 'live';
-    if (s === 'FAILED' || s === 'ERROR') return 'failed';
-    return 'processing';
+    try {
+      const result = await checkPublishStatus(this.accessToken, externalPostId);
+      const s = result.status.toUpperCase();
+
+      if (s === 'PUBLISH_COMPLETE' || s === 'SUCCESS') return 'live';
+      if (s === 'FAILED' || s === 'ERROR') return 'failed';
+      recordSuccess('tiktok');
+      return 'processing';
+    } catch (error) {
+      const kind = classifyError(error);
+      recordFailure('tiktok', kind);
+      throw error;
+    }
   }
 
   async getMetrics(externalPostId: string): Promise<MetricsJson> {
@@ -56,8 +78,17 @@ export class TikTokPublisher implements Publisher {
       return { views: 0, likes: 0, comments: 0, shares: 0 };
     }
 
-    // TikTok metrics API requires additional scope — return placeholder
-    return { views: 0, likes: 0, comments: 0, shares: 0, _note: 'metrics_pending_scope' };
+    if (!shouldAllowRequest('tiktok')) return { views: 0, likes: 0, comments: 0 };
+
+    try {
+      // TikTok metrics API requires additional scope — return placeholder
+      recordSuccess('tiktok');
+      return { views: 0, likes: 0, comments: 0, shares: 0, _note: 'metrics_pending_scope' };
+    } catch (error) {
+      const kind = classifyError(error);
+      recordFailure('tiktok', kind);
+      throw error;
+    }
   }
 
 async delete(postId: string): Promise<void> {

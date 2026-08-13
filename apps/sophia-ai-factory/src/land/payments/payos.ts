@@ -9,6 +9,8 @@ import { z } from 'zod'
 import { FEATURE_PAYOS } from '@/seed/config/flags'
 import type { Tier } from '@/seed/types'
 import { verifyInboundWebhook } from '@/land/webhooks/signature'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError } from '@/seed/types/failure-kind'
 
 // ── USD to VND conversion (must be set explicitly, no fallback) ───────────────
 // Defer env var check until runtime to avoid build-time crash during static page
@@ -233,28 +235,39 @@ export async function createPayOsInvoice(input: PayOsCheckoutInput): Promise<Pay
     .map(b => b.toString(16).padStart(2, '0'))
     .join('')
 
-  const response = await fetch('https://api-merchant.payos.vn/v2/payment-requests', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-client-id': clientId,
-      'x-api-key': apiKey,
-    },
-    body: JSON.stringify({ ...body, signature: checksum }),
-  })
-
-  const result = await response.json() as PayOsCreatePaymentResponse
-
-  if (result.code !== '00' || !result.data) {
-    throw new Error(`PayOS API error: ${result.code} — ${result.desc}`)
+  if (!shouldAllowRequest('payos')) {
+    throw new Error('Circuit open for payos — too many recent failures')
   }
 
-  return {
-    qrUrl: result.data.qrCode,
-    checkoutUrl: result.data.checkoutUrl,
-    paymentLinkId: result.data.paymentLinkId,
-    orderCode: result.data.orderCode,
-    expiresAt: new Date(expiredAt * 1000).toISOString(),
+  try {
+    const response = await fetch('https://api-merchant.payos.vn/v2/payment-requests', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-client-id': clientId,
+        'x-api-key': apiKey,
+      },
+      body: JSON.stringify({ ...body, signature: checksum }),
+    })
+
+    const result = await response.json() as PayOsCreatePaymentResponse
+
+    if (result.code !== '00' || !result.data) {
+      throw new Error(`PayOS API error: ${result.code} — ${result.desc}`)
+    }
+
+    recordSuccess('payos')
+
+    return {
+      qrUrl: result.data.qrCode,
+      checkoutUrl: result.data.checkoutUrl,
+      paymentLinkId: result.data.paymentLinkId,
+      orderCode: result.data.orderCode,
+      expiresAt: new Date(expiredAt * 1000).toISOString(),
+    }
+  } catch (error) {
+    recordFailure('payos', classifyError(error))
+    throw error
   }
 }
 

@@ -12,6 +12,8 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import type { VideoRenderProviderInput, VideoRenderProviderResult } from './video-render-provider';
 
 export interface Wav2LipConfig {
@@ -80,6 +82,11 @@ export async function renderWithWav2Lip(
     'Content-Type': 'application/json',
   };
 
+  if (!shouldAllowRequest('wav2lip')) {
+    logger.warn('[Wav2Lip] Circuit breaker open for wav2lip, request blocked');
+    throw new Wav2LipProviderError('SUBMIT_FAILED', 'Circuit breaker open for wav2lip — request blocked');
+  }
+
   let response: Response;
   try {
     response = await fetch(endpoint, {
@@ -88,7 +95,9 @@ export async function renderWithWav2Lip(
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(30_000), // 30s timeout for submission
     });
+    recordSuccess('wav2lip');
   } catch (err) {
+    recordFailure('wav2lip', classifyError(err));
     const wrapped = toError(err);
     logger.error('[Wav2Lip] Network error submitting lip-sync job', wrapped, {
       apiUrl,

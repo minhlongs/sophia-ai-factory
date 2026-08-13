@@ -10,6 +10,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError } from '@/seed/types/failure-kind'
 
 const DID_TALKS_URL = 'https://api.d-id.com/talks'
 
@@ -43,6 +45,10 @@ export interface DidErrorResponse {
  * @throws DidErrorResponse on non-2xx HTTP response.
  */
 export async function createDidTalk(apiKey: string, req: DidTalkRequest): Promise<DidTalkResponse> {
+  if (!shouldAllowRequest('did')) {
+    throw { code: 'did_circuit_open', status: 503, message: 'Circuit breaker open for D-ID — too many failures' } as DidErrorResponse
+  }
+
   const payload = {
     source_url: req.sourceUrl,
     script: {
@@ -55,34 +61,44 @@ export async function createDidTalk(apiKey: string, req: DidTalkRequest): Promis
     },
   }
 
-  const res = await fetch(DID_TALKS_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${apiKey}`,
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-    body: JSON.stringify(payload),
-  })
-
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read response text', { error: String(err), context: 'createDidTalk' });
-      return '<unreadable>';
+  try {
+    const res = await fetch(DID_TALKS_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${apiKey}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify(payload),
     })
-    logger.warn('[did-client] /talks rejected', { status: res.status, body: body.slice(0, 500) })
-    const err: DidErrorResponse = {
-      code: `did_${res.status}`,
-      status: res.status,
-      message: body.slice(0, 300),
-    }
-    throw err
-  }
 
-  const data = (await res.json()) as { id?: string; status?: string }
-  if (!data.id) {
-    const err: DidErrorResponse = { code: 'did_no_id', status: 500, message: 'D-ID response missing id' }
+    if (!res.ok) {
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read response text', { error: String(err), context: 'createDidTalk' });
+        return '<unreadable>';
+      })
+      logger.warn('[did-client] /talks rejected', { status: res.status, body: body.slice(0, 500) })
+      const kind = classifyError(new Error(`HTTP ${res.status}`))
+      recordFailure('did', kind)
+      const err: DidErrorResponse = {
+        code: `did_${res.status}`,
+        status: res.status,
+        message: body.slice(0, 300),
+      }
+      throw err
+    }
+
+    const data = (await res.json()) as { id?: string; status?: string }
+    if (!data.id) {
+      const err: DidErrorResponse = { code: 'did_no_id', status: 500, message: 'D-ID response missing id' }
+      throw err
+    }
+    recordSuccess('did')
+    return { id: data.id, status: data.status ?? 'created' }
+  } catch (err) {
+    if ((err as DidErrorResponse).code) throw err
+    const kind = classifyError(err)
+    recordFailure('did', kind)
     throw err
   }
-  return { id: data.id, status: data.status ?? 'created' }
 }

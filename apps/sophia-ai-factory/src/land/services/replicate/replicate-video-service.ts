@@ -19,6 +19,8 @@ import { IVideoService, CreateVideoParams, VideoStatus, Avatar, Voice } from '..
 import { ProviderInvalidKeyError, ProviderQuotaExceededError, ProviderNetworkError } from '@/seed/services/errors';
 import { logger } from '@/seed/utils/logger-utility';
 import { getVideoBucket } from '@/land/video/storage/r2-binding';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -96,6 +98,11 @@ export class ReplicateVideoService implements IVideoService {
       title: params.title,
     });
 
+    // Circuit breaker: check if Replicate is available
+    if (!shouldAllowRequest('replicate')) {
+      throw new ProviderNetworkError('replicate', 'Circuit breaker open — too many failures');
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -124,9 +131,16 @@ export class ReplicateVideoService implements IVideoService {
         status: prediction.status,
       });
 
+      // Circuit breaker: record success
+      recordSuccess('replicate');
       return prediction.id;
     } catch (error) {
       if (error instanceof ReplicateClientError) throw error;
+
+      // Circuit breaker: classify and record failure
+      const kind = classifyError(error);
+      recordFailure('replicate', kind);
+
       if (error instanceof DOMException && error.name === 'AbortError') {
         throw new ProviderNetworkError(
           'replicate',

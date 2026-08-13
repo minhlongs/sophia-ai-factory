@@ -13,6 +13,8 @@
 
 import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publisher-interface';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 const LI_API = 'https://api.linkedin.com';
 const MAX_COMMENTARY_LEN = 3000;
@@ -61,6 +63,11 @@ export class LinkedInPublisher implements Publisher {
       return `mock_linkedin_${Date.now()}`;
     }
 
+    if (!shouldAllowRequest('linkedin')) {
+      throw new Error('[LinkedInPublisher] Circuit breaker open for linkedin');
+    }
+
+    try {
     // Step 1: Fetch video binary
     const videoRes = await fetch(videoUrl);
     if (!videoRes.ok) {
@@ -157,12 +164,20 @@ export class LinkedInPublisher implements Publisher {
     }
 
     const postData = (await postRes.json()) as PostCreateResponse;
+    recordSuccess('linkedin');
     return postData.id;
+    } catch (error) {
+      recordFailure('linkedin', classifyError(error));
+      throw error;
+    }
   }
 
   async pollStatus(externalPostId: string): Promise<PublishStatus> {
     if (isMockMode() || externalPostId.startsWith('mock_')) return 'live';
 
+    if (!shouldAllowRequest('linkedin')) return 'processing';
+
+    try {
     // LinkedIn posts are synchronously published — check existence
     const encodedUrn = encodeURIComponent(externalPostId);
     const res = await fetch(`${LI_API}/v2/posts/${encodedUrn}`, {
@@ -175,7 +190,12 @@ export class LinkedInPublisher implements Publisher {
 
     if (res.status === 404) return 'failed';
     if (!res.ok) return 'failed';
+    recordSuccess('linkedin');
     return 'live';
+    } catch (error) {
+      recordFailure('linkedin', classifyError(error));
+      return 'processing';
+    }
   }
 
   async getMetrics(externalPostId: string): Promise<MetricsJson> {
@@ -183,6 +203,11 @@ export class LinkedInPublisher implements Publisher {
       return { views: 0, likes: 0, comments: 0, shares: 0 };
     }
 
+    if (!shouldAllowRequest('linkedin')) {
+      return { views: 0, likes: 0, comments: 0, shares: 0 };
+    }
+
+    try {
     const encodedUrn = encodeURIComponent(externalPostId);
     const res = await fetch(
       `${LI_API}/v2/organizationalEntityShareStatistics?q=organizationalEntity&organizationalEntity=${encodedUrn}&shares[0]=${encodedUrn}`,
@@ -198,12 +223,17 @@ export class LinkedInPublisher implements Publisher {
 
     const data = (await res.json()) as VideoStatsResponse;
     const stats = data.elements?.[0]?.totalShareStatistics ?? {};
+    recordSuccess('linkedin');
     return {
       views: stats.impressionCount ?? 0,
       likes: stats.likeCount ?? 0,
       comments: stats.commentCount ?? 0,
       shares: stats.shareCount ?? 0,
     };
+    } catch (error) {
+      recordFailure('linkedin', classifyError(error));
+      return { views: 0, likes: 0, comments: 0, shares: 0 };
+    }
   }
 
 async delete(postId: string): Promise<void> {

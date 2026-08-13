@@ -4,6 +4,8 @@ import { getErrorMessage } from '@/seed/utils/to-error';
 import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/tree/usage-metering';
 import { getUsageContext } from '@/tree/usage-metering';
 import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/land/services/errors';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, FailureKind } from '@/seed/types/failure-kind';
 
 const HEYGEN_API_URL = "https://api.heygen.com/v2";
 
@@ -55,28 +57,48 @@ export class HeyGenClient {
   }
 
   private async request(endpoint: string, options: RequestInit = {}) {
-    const response = await fetch(`${HEYGEN_API_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        "X-Api-Key": this.apiKey,
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-      signal: AbortSignal.timeout(15_000), // 15s timeout prevents hung connections
-    });
-
-    if (!response.ok) {
-      const errorBody = await response.text();
-      if (response.status === 401 || response.status === 403) {
-        throw new ProviderInvalidKeyError('heygen', errorBody);
-      }
-      if (response.status === 429 || response.status === 402) {
-        throw new ProviderQuotaExceededError('heygen', errorBody);
-      }
-      throw new Error(`HeyGen API error: ${response.status} ${response.statusText} - ${errorBody}`);
+    // Circuit breaker: check if HeyGen is available
+    if (!shouldAllowRequest('heygen')) {
+      throw new Error('Circuit breaker open for HeyGen — too many failures');
     }
 
-    return response.json();
+    try {
+      const response = await fetch(`${HEYGEN_API_URL}${endpoint}`, {
+        ...options,
+        headers: {
+          "X-Api-Key": this.apiKey,
+          "Content-Type": "application/json",
+          ...options.headers,
+        },
+        signal: AbortSignal.timeout(15_000), // 15s timeout prevents hung connections
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        if (response.status === 401 || response.status === 403) {
+          recordFailure('heygen', FailureKind.AUTH_FAILURE);
+          throw new ProviderInvalidKeyError('heygen', errorBody);
+        }
+        if (response.status === 429 || response.status === 402) {
+          recordFailure('heygen', FailureKind.RATE_LIMIT);
+          throw new ProviderQuotaExceededError('heygen', errorBody);
+        }
+        recordFailure('heygen', FailureKind.SERVER_ERROR);
+        throw new Error(`HeyGen API error: ${response.status} ${response.statusText} - ${errorBody}`);
+      }
+
+      // Circuit breaker: record success
+      recordSuccess('heygen');
+      return response.json();
+    } catch (error) {
+      // Circuit breaker: classify and record failure for network errors
+      if (error instanceof ProviderInvalidKeyError || error instanceof ProviderQuotaExceededError) {
+        throw error; // Already recorded
+      }
+      const kind = classifyError(error);
+      recordFailure('heygen', kind);
+      throw error;
+    }
   }
 
   async listAvatars(): Promise<HeyGenAvatar[]> {

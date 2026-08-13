@@ -13,6 +13,8 @@ import type { TenantContext } from './with-tenant';
 import { getOrDefault } from '@/seed/tenant-settings/registry';
 import { decryptToken } from '@/tree/crypto/token-crypto';
 import type { McpSettings } from '@/seed/tenant-settings/defaults';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 export class MCPDeniedError extends Error {
   constructor(server: string) {
@@ -67,6 +69,9 @@ function buildHttpMCPClient(
 ): MCPServerClient {
   return {
     async call(method: string, args: Record<string, unknown>): Promise<unknown> {
+      if (!shouldAllowRequest('openrouter')) {
+        throw new Error('Circuit open for openrouter — MCP call blocked');
+      }
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (authType === 'bearer' && authValue) {
         headers['Authorization'] = `Bearer ${authValue}`;
@@ -74,16 +79,22 @@ function buildHttpMCPClient(
         headers['X-MCP-Auth'] = authValue;
       }
 
-      const res = await fetch(url, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ method, args }),
-      });
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ method, args }),
+        });
 
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+        }
+        recordSuccess('openrouter');
+        return res.json() as Promise<unknown>;
+      } catch (err) {
+        recordFailure('openrouter', classifyError(err));
+        throw err;
       }
-      return res.json() as Promise<unknown>;
     },
   };
 }

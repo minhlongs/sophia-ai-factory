@@ -13,6 +13,8 @@ import { getD1 } from '@/seed/db/client'
 import { decryptSecret } from '@/tree/crypto/encrypt-secret'
 import { fromCents, sanitizeErrorText } from './commission-cents'
 import { logger } from '@/seed/utils/logger-utility'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError, FailureKind } from '@/seed/types/failure-kind'
 
 const NOWPAYMENTS_API_BASE = 'https://api.nowpayments.io/v1'
 const RATE_LIMIT_MS = 200 // 5 requests/sec
@@ -42,41 +44,65 @@ async function sendSinglePayout(
   apiKey: string,
   payload: PayoutPayload,
 ): Promise<string> {
-  const resp = await fetch(`${NOWPAYMENTS_API_BASE}/payout`, {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      withdrawals: [
-        {
-          address: payload.address,
-          currency: 'usdttrc20',
-          amount: payload.amountUsdt,
-          ipn_callback_url: payload.ipn_callback_url,
-          extra_id: payload.extraId,
-        },
-      ],
-    }),
-  })
+  // Circuit breaker: check if NOWPayments is available
+  if (!shouldAllowRequest('nowpayments')) {
+    throw new Error('Circuit breaker open for NOWPayments — too many failures')
+  }
 
-  if (!resp.ok) {
-    const rawErr = await resp.text()
-    // H3: sanitize before logging — strips addresses, keys
-    const safeErr = sanitizeErrorText(rawErr)
-    logger.error('[NOWPayments] Payout API error', new Error(safeErr), {
-      status: resp.status,
+  try {
+    const resp = await fetch(`${NOWPAYMENTS_API_BASE}/payout`, {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        withdrawals: [
+          {
+            address: payload.address,
+            currency: 'usdttrc20',
+            amount: payload.amountUsdt,
+            ipn_callback_url: payload.ipn_callback_url,
+            extra_id: payload.extraId,
+          },
+        ],
+      }),
     })
-    throw new Error(`NOWPayments payout API error ${resp.status}: ${safeErr}`)
-  }
 
-  const data = (await resp.json()) as { withdrawals?: WithdrawalResponse[] }
-  const withdrawal = data.withdrawals?.[0]
-  if (!withdrawal?.id) {
-    throw new Error('NOWPayments payout response missing withdrawal id')
+    if (!resp.ok) {
+      const rawErr = await resp.text()
+      // H3: sanitize before logging — strips addresses, keys
+      const safeErr = sanitizeErrorText(rawErr)
+      logger.error('[NOWPayments] Payout API error', new Error(safeErr), {
+        status: resp.status,
+      })
+      // Circuit breaker: classify HTTP status
+      const kind = resp.status === 401 || resp.status === 403
+        ? FailureKind.AUTH_FAILURE
+        : resp.status === 429
+          ? FailureKind.RATE_LIMIT
+          : FailureKind.SERVER_ERROR
+      recordFailure('nowpayments', kind)
+      throw new Error(`NOWPayments payout API error ${resp.status}: ${safeErr}`)
+    }
+
+    const data = (await resp.json()) as { withdrawals?: WithdrawalResponse[] }
+    const withdrawal = data.withdrawals?.[0]
+    if (!withdrawal?.id) {
+      throw new Error('NOWPayments payout response missing withdrawal id')
+    }
+
+    // Circuit breaker: record success
+    recordSuccess('nowpayments')
+    return withdrawal.id
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error
+    if (error instanceof Error && error.message.includes('NOWPayments payout API')) throw error
+    // Circuit breaker: classify network errors
+    const kind = classifyError(error)
+    recordFailure('nowpayments', kind)
+    throw error
   }
-  return withdrawal.id
 }
 
 export interface BatchQueueInput {

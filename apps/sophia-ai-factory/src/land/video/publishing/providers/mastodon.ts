@@ -7,6 +7,8 @@
 
 import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publisher-interface';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 const MAX_STATUS_LENGTH = 500;
 
@@ -69,30 +71,41 @@ export class MastodonPublisher implements Publisher {
       return `mock_mastodon_${Date.now()}`;
     }
 
-    const status = buildStatusText(meta, videoUrl);
+    if (shouldAllowRequest('mastodon') === false) {
+      throw new Error('Circuit breaker open for mastodon');
+    }
 
-    const res = await fetch(`${this.instanceUrl}/api/v1/statuses`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ status, visibility: 'public' }),
-    });
+    try {
+      const status = buildStatusText(meta, videoUrl);
 
-    if (!res.ok) {
-      const body = await res.text().catch((err) => {
-        logger.warn('Failed to read Mastodon status response', { error: String(err), context: 'MastodonPublisher.upload' });
-        return '';
+      const res = await fetch(`${this.instanceUrl}/api/v1/statuses`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status, visibility: 'public' }),
       });
-      throw new Error(`Mastodon /api/v1/statuses failed (${res.status}): ${body.slice(0, 300)}`);
-    }
 
-    const data = (await res.json()) as MastodonStatusResponse;
-    if (!data.id) {
-      throw new Error(`Mastodon status returned no id: ${data.error ?? 'unknown'}`);
+      if (!res.ok) {
+        const body = await res.text().catch((err) => {
+          logger.warn('Failed to read Mastodon status response', { error: String(err), context: 'MastodonPublisher.upload' });
+          return '';
+        });
+        recordFailure('mastodon', classifyError(new Error(`Mastodon /api/v1/statuses failed (${res.status}): ${body.slice(0, 300)}`)));
+        throw new Error(`Mastodon /api/v1/statuses failed (${res.status}): ${body.slice(0, 300)}`);
+      }
+
+      const data = (await res.json()) as MastodonStatusResponse;
+      if (!data.id) {
+        throw new Error(`Mastodon status returned no id: ${data.error ?? 'unknown'}`);
+      }
+      recordSuccess('mastodon');
+      return data.id;
+    } catch (error) {
+      recordFailure('mastodon', classifyError(error));
+      throw error;
     }
-    return data.id;
   }
 
   async pollStatus(externalPostId: string): Promise<PublishStatus> {

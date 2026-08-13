@@ -1,6 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { validateOpenRouter, validateElevenLabs, validateDID, validateAirtable } from './services';
 
+// Mock circuit breaker — allow all requests in tests
+vi.mock('@/seed/security/circuit-breaker', () => ({
+  shouldAllowRequest: () => true,
+  recordSuccess: () => {},
+  recordFailure: () => {},
+}));
+
+// Mock failure-kind classifier
+vi.mock('@/seed/types/failure-kind', () => ({
+  classifyError: () => 'SERVER_ERROR' as never,
+}));
+
 // Mock global fetch
 const globalFetch = global.fetch = vi.fn();
 

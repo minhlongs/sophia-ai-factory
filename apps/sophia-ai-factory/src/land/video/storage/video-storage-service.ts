@@ -12,6 +12,8 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { getVideoBucket } from './r2-binding';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 export interface VideoStorageResult {
   permanentUrl: string;
@@ -45,33 +47,44 @@ export async function downloadAndStore(
     return { permanentUrl: heygenUrl, bucket: 'none', path: '', sizeBytes: 0 };
   }
 
-  const response = await fetch(heygenUrl);
-  if (!response.ok) {
-    throw new Error(`[VideoStorageService] Failed to download video: HTTP ${response.status}`);
+  if (!shouldAllowRequest('r2')) {
+    throw new Error('[VideoStorageService] Circuit breaker open for r2 — too many failures');
   }
 
-  const body = await response.arrayBuffer();
-  const sizeBytes = body.byteLength;
+  try {
+    const response = await fetch(heygenUrl);
+    if (!response.ok) {
+      throw new Error(`[VideoStorageService] Failed to download video: HTTP ${response.status}`);
+    }
 
-  await r2.bucket.put(key, body, {
-    httpMetadata: { contentType: 'video/mp4' },
-  });
+    recordSuccess('r2');
+    const body = await response.arrayBuffer();
+    const sizeBytes = body.byteLength;
 
-  const permanentUrl = r2.publicBaseUrl
-    ? `${r2.publicBaseUrl}/${key}`
-    : heygenUrl;
+    await r2.bucket.put(key, body, {
+      httpMetadata: { contentType: 'video/mp4' },
+    });
 
-  logger.info('[VideoStorageService] Video stored in R2', {
-    campaignId,
-    key,
-    sizeBytes,
-    usingPublicUrl: r2.publicBaseUrl !== null,
-  });
+    const permanentUrl = r2.publicBaseUrl
+      ? `${r2.publicBaseUrl}/${key}`
+      : heygenUrl;
 
-  return {
-    permanentUrl,
-    bucket: 'VIDEO_BUCKET',
-    path: key,
-    sizeBytes,
-  };
+    logger.info('[VideoStorageService] Video stored in R2', {
+      campaignId,
+      key,
+      sizeBytes,
+      usingPublicUrl: r2.publicBaseUrl !== null,
+    });
+
+    return {
+      permanentUrl,
+      bucket: 'VIDEO_BUCKET',
+      path: key,
+      sizeBytes,
+    };
+  } catch (err) {
+    const kind = classifyError(err);
+    recordFailure('r2', kind);
+    throw err;
+  }
 }

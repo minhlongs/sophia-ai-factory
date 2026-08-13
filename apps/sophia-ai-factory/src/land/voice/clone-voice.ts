@@ -20,6 +20,8 @@ import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { assertSafeAudioUrl } from '@/seed/security/assert-safe-audio-url';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, FailureKind } from '@/seed/types/failure-kind';
 
 export interface CloneVoiceInput {
   userId: string;
@@ -130,6 +132,11 @@ export async function cloneVoice(input: CloneVoiceInput): Promise<CloneVoiceResu
     form.append('files', blob, filename);
   }
 
+  // Circuit breaker: check if ElevenLabs is available before fetch
+  if (!shouldAllowRequest('elevenlabs')) {
+    throw new Error('Circuit breaker open for ElevenLabs — too many failures');
+  }
+
   try {
     const res = await fetch(ELEVENLABS_ADD_VOICE_URL, {
       method: 'POST',
@@ -142,6 +149,13 @@ export async function cloneVoice(input: CloneVoiceInput): Promise<CloneVoiceResu
         return '';
       });
       logger.warn('[clone-voice] ElevenLabs non-2xx', { status: res.status, body: body.slice(0, 200) });
+      // Circuit breaker: classify HTTP status and record failure
+      const kind = res.status === 401 || res.status === 403
+        ? FailureKind.AUTH_FAILURE
+        : res.status === 429 || res.status === 402
+          ? FailureKind.RATE_LIMIT
+          : FailureKind.SERVER_ERROR
+      recordFailure('elevenlabs', kind)
       throw new Error(`Voice provider returned ${res.status}`);
     }
     const json = (await res.json()) as ElevenLabsAddVoiceResponse;
@@ -149,8 +163,15 @@ export async function cloneVoice(input: CloneVoiceInput): Promise<CloneVoiceResu
     if (!voiceId) {
       throw new Error('Voice provider returned no voice_id');
     }
+    // Circuit breaker: record success
+    recordSuccess('elevenlabs')
     return { voiceId, name: input.name.trim(), source, samplesUploaded: samples.length };
   } catch (err) {
+    // HTTP-status failures are already recorded in the non-2xx branch
+    if (!(err instanceof Error && err.message.startsWith('Voice provider returned'))) {
+      const kind = classifyError(err)
+      recordFailure('elevenlabs', kind)
+    }
     logger.error('[clone-voice] failed', toError(err), { userId: input.userId, name: input.name });
     throw err;
   }

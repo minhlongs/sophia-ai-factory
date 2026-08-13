@@ -9,6 +9,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import type {
   SpeechGenerateParams,
   SpeechGenerateResult,
@@ -51,6 +53,10 @@ export class FishSpeechClient {
    * Synchronous-style: sends request and waits for result.
    */
   async generateSpeech(params: SpeechGenerateParams): Promise<SpeechGenerateResult> {
+    if (!shouldAllowRequest('fish-speech')) {
+      throw new FishSpeechClientError(0, 'Circuit breaker open for Fish Speech — too many failures');
+    }
+
     const input: FishSpeechApiInput = {
       text: params.text,
       ...(params.voice ? { voice: params.voice } : {}),
@@ -91,7 +97,13 @@ export class FishSpeechClient {
 
       logger.info('[FishSpeechClient] Speech generated', { audioUrl, durationSec });
 
+      recordSuccess('fish-speech');
       return { audioUrl, durationSec };
+    } catch (error) {
+      if (error instanceof FishSpeechClientError) throw error;
+      const kind = classifyError(error);
+      recordFailure('fish-speech', kind);
+      throw error;
     } finally {
       clearTimeout(timer);
     }

@@ -1,15 +1,26 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { LinkedInPublisher } from '@/land/video/publishing/providers/linkedin-publisher';
 
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
+vi.mock('@/seed/security/circuit-breaker', () => ({
+  shouldAllowRequest: vi.fn().mockReturnValue(true),
+  recordSuccess: vi.fn(),
+  recordFailure: vi.fn(),
+}));
+
+vi.mock('@/seed/types/failure-kind', () => ({
+  classifyError: vi.fn().mockReturnValue('SERVER_ERROR'),
+}));
+
+import { LinkedInPublisher } from '@/land/video/publishing/providers/linkedin-publisher';
+
 const AUTHOR_URN = 'urn:li:person:ABC123';
 
 describe('LinkedInPublisher', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     delete process.env.LINKEDIN_CLIENT_ID;
   });
 

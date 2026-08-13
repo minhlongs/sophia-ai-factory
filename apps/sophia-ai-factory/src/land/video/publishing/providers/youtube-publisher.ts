@@ -6,6 +6,8 @@
 
 import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publisher-interface';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 const YOUTUBE_VIDEOS_URL = 'https://www.googleapis.com/youtube/v3/videos';
 function isMockMode(): boolean { return !process.env.YOUTUBE_CLIENT_ID; }
@@ -29,6 +31,11 @@ export class YouTubePublisher implements Publisher {
       return `mock_youtube_${Date.now()}`;
     }
 
+    if (!shouldAllowRequest('youtube')) {
+      throw new Error('Circuit breaker open for YouTube — too many failures');
+    }
+
+    try {
     // Fetch video binary
     const videoRes = await fetch(videoUrl);
     if (!videoRes.ok) throw new Error(`Failed to fetch video: ${videoRes.status}`);
@@ -84,26 +91,38 @@ export class YouTubePublisher implements Publisher {
     }
 
     const result = (await uploadRes.json()) as YouTubeVideoResource;
+    recordSuccess('youtube');
     return result.id;
+    } catch (error) {
+      recordFailure('youtube', classifyError(error));
+      throw error;
+    }
   }
 
   async pollStatus(externalPostId: string): Promise<PublishStatus> {
     if (isMockMode() || externalPostId.startsWith('mock_')) return 'live';
 
-    const res = await fetch(
-      `${YOUTUBE_VIDEOS_URL}?part=status&id=${encodeURIComponent(externalPostId)}`,
-      { headers: { Authorization: `Bearer ${this.accessToken}` } },
-    );
+    if (!shouldAllowRequest('youtube')) return 'processing';
 
-    if (!res.ok) return 'processing';
+    try {
+      const res = await fetch(
+        `${YOUTUBE_VIDEOS_URL}?part=status&id=${encodeURIComponent(externalPostId)}`,
+        { headers: { Authorization: `Bearer ${this.accessToken}` } },
+      );
 
-    const data = (await res.json()) as { items?: YouTubeVideoResource[] };
-    const item = data.items?.[0];
-    const uploadStatus = item?.status?.uploadStatus;
+      if (!res.ok) return 'processing';
 
-    if (uploadStatus === 'processed') return 'live';
-    if (uploadStatus === 'failed' || uploadStatus === 'rejected') return 'failed';
-    return 'processing';
+      const data = (await res.json()) as { items?: YouTubeVideoResource[] };
+      const item = data.items?.[0];
+      const uploadStatus = item?.status?.uploadStatus;
+
+      if (uploadStatus === 'processed') { recordSuccess('youtube'); return 'live'; }
+      if (uploadStatus === 'failed' || uploadStatus === 'rejected') return 'failed';
+      return 'processing';
+    } catch (error) {
+      recordFailure('youtube', classifyError(error));
+      return 'processing';
+    }
   }
 
   async getMetrics(externalPostId: string): Promise<MetricsJson> {
@@ -111,21 +130,31 @@ export class YouTubePublisher implements Publisher {
       return { views: 0, likes: 0, comments: 0 };
     }
 
-    const res = await fetch(
-      `${YOUTUBE_VIDEOS_URL}?part=statistics&id=${encodeURIComponent(externalPostId)}`,
-      { headers: { Authorization: `Bearer ${this.accessToken}` } },
-    );
+    if (!shouldAllowRequest('youtube')) {
+      return { views: 0, likes: 0, comments: 0 };
+    }
 
-    if (!res.ok) return { views: 0, likes: 0, comments: 0 };
+    try {
+      const res = await fetch(
+        `${YOUTUBE_VIDEOS_URL}?part=statistics&id=${encodeURIComponent(externalPostId)}`,
+        { headers: { Authorization: `Bearer ${this.accessToken}` } },
+      );
 
-    const data = (await res.json()) as { items?: YouTubeVideoResource[] };
-    const stats = data.items?.[0]?.statistics;
+      if (!res.ok) return { views: 0, likes: 0, comments: 0 };
 
-    return {
-      views: Number(stats?.viewCount ?? 0),
-      likes: Number(stats?.likeCount ?? 0),
-      comments: Number(stats?.commentCount ?? 0),
-    };
+      const data = (await res.json()) as { items?: YouTubeVideoResource[] };
+      const stats = data.items?.[0]?.statistics;
+
+      recordSuccess('youtube');
+      return {
+        views: Number(stats?.viewCount ?? 0),
+        likes: Number(stats?.likeCount ?? 0),
+        comments: Number(stats?.commentCount ?? 0),
+      };
+    } catch (error) {
+      recordFailure('youtube', classifyError(error));
+      return { views: 0, likes: 0, comments: 0 };
+    }
   }
 
 async delete(postId: string): Promise<void> {

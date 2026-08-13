@@ -1,13 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { PinterestPublisher } from '@/land/video/publishing/providers/pinterest-publisher';
 
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
+vi.mock('@/seed/security/circuit-breaker', () => ({
+  shouldAllowRequest: vi.fn().mockReturnValue(true),
+  recordSuccess: vi.fn(),
+  recordFailure: vi.fn(),
+}));
+
+vi.mock('@/seed/types/failure-kind', () => ({
+  classifyError: vi.fn().mockReturnValue('SERVER_ERROR'),
+}));
+
+import { PinterestPublisher } from '@/land/video/publishing/providers/pinterest-publisher';
+
 describe('PinterestPublisher', () => {
   beforeEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
     delete process.env.PINTEREST_CLIENT_ID;
   });
 

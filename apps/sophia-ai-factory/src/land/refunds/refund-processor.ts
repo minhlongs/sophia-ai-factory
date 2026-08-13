@@ -19,6 +19,8 @@
 
 import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError, FailureKind } from '@/seed/types/failure-kind'
 import { success, failure, type Result } from '@/seed/types/result'
 import type { Tier } from '@/seed/types'
 import { getMcuMonthlyLimit } from '@/seed/config/tiers/unified-limits'
@@ -232,30 +234,48 @@ async function callNowPaymentsRefund(
     return
   }
 
+  if (!shouldAllowRequest('nowpayments')) {
+    throw new Error('Circuit breaker open for NOWPayments — too many failures')
+  }
+
   // NOWPayments refund: POST /v1/payment/{paymentId}/refund
   // The exact endpoint and payload depend on NOWPayments API version.
   // For crypto payments, this sends the refund request to NOWPayments which
   // then initiates the blockchain transaction back to the customer wallet.
-  const resp = await fetch(`${NOWPAYMENTS_API_BASE}/payment/${_paymentId}/refund`, {
-    method: 'POST',
-    headers: {
-      'x-api-key': apiKey,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      payment_id: _paymentId,
-    }),
-  })
+  try {
+    const resp = await fetch(`${NOWPAYMENTS_API_BASE}/payment/${_paymentId}/refund`, {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        payment_id: _paymentId,
+      }),
+    })
 
-  if (!resp.ok) {
-    const errorBody = await resp.text().catch(() => 'unknown')
-    throw new RefundProcessError(
-      'NOWPAYMENTS_API_ERROR',
-      `NOWPayments refund API returned ${resp.status}: ${errorBody}`,
-    )
+    if (!resp.ok) {
+      const errorBody = await resp.text().catch(() => 'unknown')
+      const kind = resp.status === 401 || resp.status === 403
+        ? FailureKind.AUTH_FAILURE
+        : resp.status === 429
+          ? FailureKind.RATE_LIMIT
+          : FailureKind.SERVER_ERROR
+      recordFailure('nowpayments', kind)
+      throw new RefundProcessError(
+        'NOWPAYMENTS_API_ERROR',
+        `NOWPayments refund API returned ${resp.status}: ${errorBody}`,
+      )
+    }
+
+    recordSuccess('nowpayments')
+    logger.info('[RefundProcessor] NOWPayments refund API success', { paymentId: _paymentId })
+  } catch (error) {
+    if (error instanceof RefundProcessError) throw error
+    const kind = classifyError(error)
+    recordFailure('nowpayments', kind)
+    throw error
   }
-
-  logger.info('[RefundProcessor] NOWPayments refund API success', { paymentId: _paymentId })
 }
 
 // ── Tier helpers ───────────────────────────────────────────────────────────────
