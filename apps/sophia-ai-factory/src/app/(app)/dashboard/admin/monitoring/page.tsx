@@ -69,7 +69,7 @@ export default async function MonitoringPage({
   const honeycombKeyOk = hasHoneycombApiKey();
 
   return (
-    <div className="space-y-6">
+    <main className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-muted-foreground-100">
           {isVi ? 'Giám Sát Hệ Thống' : 'System Monitoring'}
@@ -215,6 +215,6 @@ export default async function MonitoringPage({
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }

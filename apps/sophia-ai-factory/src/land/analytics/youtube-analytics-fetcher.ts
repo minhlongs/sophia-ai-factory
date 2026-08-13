@@ -6,6 +6,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 
 const YT_ANALYTICS_URL = 'https://youtubeanalytics.googleapis.com/v2/reports';
 
@@ -54,6 +56,10 @@ export async function fetchYouTubeAnalytics(
 ): Promise<YouTubeAnalyticsRow[]> {
   if (videoIds.length === 0) return [];
 
+  if (!shouldAllowRequest('youtube-analytics')) {
+    throw new Error('[youtube-analytics-fetcher] Circuit breaker open — too many failures');
+  }
+
   const filters = `video==${videoIds.join(',')}`;
   const url = new URL(YT_ANALYTICS_URL);
   url.searchParams.set('ids', 'channel==MINE');
@@ -63,36 +69,49 @@ export async function fetchYouTubeAnalytics(
   url.searchParams.set('dimensions', 'video,day');
   url.searchParams.set('filters', filters);
 
-  const res = await fetch(url.toString(), {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
+  try {
+    const res = await fetch(url.toString(), {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(30_000),
+    });
 
-  if (!res.ok) {
-    const body = await res.text();
-    logger.warn('[youtube-analytics-fetcher] API error', { status: res.status, body: body.slice(0, 200) });
-    throw new Error(`YouTube Analytics API ${res.status}: ${body.slice(0, 200)}`);
+    if (!res.ok) {
+      const kind = classifyHttpStatus(res.status);
+      recordFailure('youtube-analytics', kind);
+      const body = await res.text();
+      logger.warn('[youtube-analytics-fetcher] API error', { status: res.status, body: body.slice(0, 200) });
+      throw new Error(`YouTube Analytics API ${res.status}: ${body.slice(0, 200)}`);
+    }
+
+    recordSuccess('youtube-analytics');
+    const json = await res.json() as {
+      columnHeaders?: Array<{ name: string }>;
+      rows?: Array<[string, string, ...number[]]>;
+    };
+
+    if (!json.rows || json.rows.length === 0) return [];
+
+    // columnHeaders order: video, day, views, estimatedMinutesWatched,
+    // averageViewDuration, impressions, impressionClickThroughRate,
+    // likes, comments, shares
+    return json.rows.map((row) => ({
+      videoId: row[0],
+      date: row[1],
+      views: row[2] ?? 0,
+      estimatedMinutesWatched: row[3] ?? 0,
+      averageViewDuration: row[4] ?? 0,
+      impressions: row[5] ?? 0,
+      impressionClickThroughRate: row[6] ?? 0,
+      likes: row[7] ?? 0,
+      comments: row[8] ?? 0,
+      shares: row[9] ?? 0,
+    }));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('YouTube Analytics API')) {
+      throw error;
+    }
+    const kind = classifyError(error);
+    recordFailure('youtube-analytics', kind);
+    throw error;
   }
-
-  const json = await res.json() as {
-    columnHeaders?: Array<{ name: string }>;
-    rows?: Array<[string, string, ...number[]]>;
-  };
-
-  if (!json.rows || json.rows.length === 0) return [];
-
-  // columnHeaders order: video, day, views, estimatedMinutesWatched,
-  // averageViewDuration, impressions, impressionClickThroughRate,
-  // likes, comments, shares
-  return json.rows.map((row) => ({
-    videoId: row[0],
-    date: row[1],
-    views: row[2] ?? 0,
-    estimatedMinutesWatched: row[3] ?? 0,
-    averageViewDuration: row[4] ?? 0,
-    impressions: row[5] ?? 0,
-    impressionClickThroughRate: row[6] ?? 0,
-    likes: row[7] ?? 0,
-    comments: row[8] ?? 0,
-    shares: row[9] ?? 0,
-  }));
 }

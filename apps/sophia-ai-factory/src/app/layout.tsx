@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { SkipNav } from '@/components/skip-nav';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -14,7 +15,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi" dir="ltr">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <SkipNav />
+        {children}
+      </body>
     </html>
   );
 }

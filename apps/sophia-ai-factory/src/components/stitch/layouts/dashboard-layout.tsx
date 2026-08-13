@@ -210,7 +210,7 @@ export function DashboardLayout({
         pathname={pathname}
       />
 
-      <main className="ml-[280px] mt-16 p-lg max-w-container-max mx-auto">
+      <main id="main-content" className="ml-[280px] mt-16 p-lg max-w-container-max mx-auto">
         {(title || subtitle || actions) && (
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-xl gap-md">
             <div>

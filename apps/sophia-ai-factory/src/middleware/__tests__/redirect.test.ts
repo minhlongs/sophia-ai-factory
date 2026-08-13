@@ -13,7 +13,7 @@ describe('middleware redirect behavior', () => {
     expect(res.headers.get('location')).toBe('/signup');
   });
 
-  it('never targets the live 500 locale-prefixed /vi/login', () => {
+  it('redirects to bare /login path (not locale-prefixed)', () => {
     const res = NextResponse.redirect('/login');
     expect(res.headers.get('location')).toBe('/login');
     expect(res.headers.get('location')).not.toContain('/vi');

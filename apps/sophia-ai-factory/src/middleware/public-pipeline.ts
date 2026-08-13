@@ -7,7 +7,7 @@ import { intlMiddleware, applySecurityHeaders } from './middleware-shared-config
 // before passing to intlMiddleware so the request proceeds without any redirect.
 const BARE_AUTH_APP_ROUTES = new Set([
   'pricing', 'setup-wizard', 'register', 'reset-password',
-  'login', 'dashboard', 'checkout', 'settings', 'products',
+  'dashboard', 'checkout', 'settings', 'products',
   'payments', 'admin', 'affiliates', 'affiliate-portal',
   'subscribers', 'webhook', 'creator', 'investor-room',
 ]);

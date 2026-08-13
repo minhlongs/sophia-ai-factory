@@ -24,6 +24,8 @@ import { createServerClient } from '@/seed/db/client';
 import { getVideoBucket } from '@/land/video/storage/r2-binding';
 import { recordCost } from '@/land/video/templates/cost-ledger';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 import { WanVideoClient } from '@/land/video/generation/wan21-client';
 import { FishSpeechClient } from '@/land/video/generation/fish-speech-client';
 import { muxVideoAudio } from '@/land/video/assembly/ffmpeg-muxer';
@@ -129,11 +131,27 @@ async function uploadBufferToR2(key: string, data: ArrayBuffer, contentType: str
 }
 
 async function downloadToBuffer(url: string): Promise<ArrayBuffer> {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`[videoGenerate] Failed to download from ${url}: ${res.status}`);
+  if (!shouldAllowRequest('video-download')) {
+    throw new Error('[videoGenerate] Circuit breaker open for video-download — too many failures');
   }
-  return res.arrayBuffer();
+
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(60_000) });
+    if (!res.ok) {
+      const kind = classifyHttpStatus(res.status);
+      recordFailure('video-download', kind);
+      throw new Error(`[videoGenerate] Failed to download from ${url}: ${res.status}`);
+    }
+    recordSuccess('video-download');
+    return res.arrayBuffer();
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('[videoGenerate] Failed to download from')) {
+      throw error;
+    }
+    const kind = classifyError(error);
+    recordFailure('video-download', kind);
+    throw error;
+  }
 }
 
 export const videoGenerate = inngest.createFunction(

@@ -43,6 +43,7 @@ echo "Local: $LOCAL_SHA  Live: $LIVE_SHA"
 # Verify actual service endpoints instead of root:
 curl -s -o /dev/null -w "%{http_code}" https://sophia.agencyos.network/api/health  # must be 200
 curl -s -o /dev/null -w "%{http_code}" https://sophia.agencyos.network/login        # must be 200
+curl -s -o /dev/null -w "%{http_code}" https://sophia.agencyos.network/vi/login     # must be 200
 ```
 
 **Endpoint reference:**
@@ -57,7 +58,7 @@ curl -s -o /dev/null -w "%{http_code}" https://sophia.agencyos.network/login    
 - Tests: ✅ 1398/1398 passed
 - Deploy: ✅ npm run deploy:full → wrangler deployed (CF-direct)
 - Migrations: ✅ none new | ✅ <N> applied via apply-migrations.sh
-- Production HTTP: ✅ 200 (root `sophia.agencyos.network` → 307 redirect, `/api/health` → 200, `/login` → 200)
+- Production HTTP: ✅ 200 (root `sophia.agencyos.network` → 307 redirect, `/api/health` → 200, `/login` → 200, `/vi/login` → 200)
 - Deploy SHA Match: ✅ /api/version shortSha == <local_short_sha>
 - Deploy verified: <ISO timestamp>
 ```
@@ -105,7 +106,6 @@ When production has pre-existing issues that are tracked separately:
 - Mark them as KNOWN-RED in deploy reports
 - Do NOT block deploy for issues that existed BEFORE this deploy
 - Document the known issue with evidence (route, status, timestamp)
-- P0 redirect loop (2026-08-12): `/` → 307, `/vi/login` → 500 — tracked in separate pipeline
 
 ## Historical Note
 

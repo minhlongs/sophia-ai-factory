@@ -14,6 +14,8 @@ import { createServerClient } from '@/seed/db/client';
 import { recordCost } from '@/land/video/templates/cost-ledger';
 import { assertValidTransition } from '@/land/video/generation/video-job-fsm';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 import type { VideoJobStatus } from '@/land/video/generation/video-job-fsm';
 
 interface VideoJobRow {
@@ -53,9 +55,21 @@ export const videoUpload = inngest.createFunction(
       const url = job.final_r2_key;
       if (url.startsWith('http')) {
         try {
-          const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(10_000) });
-          if (!res.ok) logger.warn('[videoUpload] Video URL not accessible', { jobId, url, status: res.status });
-        } catch {
+          if (!shouldAllowRequest('video-upload')) {
+            logger.warn('[videoUpload] Circuit breaker open for video-upload — skipping URL check', { jobId });
+          } else {
+            const res = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(10_000) });
+            if (res.ok) {
+              recordSuccess('video-upload');
+            } else {
+              const kind = classifyHttpStatus(res.status);
+              recordFailure('video-upload', kind);
+              logger.warn('[videoUpload] Video URL not accessible', { jobId, url, status: res.status });
+            }
+          }
+        } catch (err) {
+          const kind = classifyError(err);
+          recordFailure('video-upload', kind);
           logger.warn('[videoUpload] Video URL check failed (non-fatal)', { jobId, url });
         }
       }
