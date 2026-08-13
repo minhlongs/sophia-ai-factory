@@ -128,9 +128,9 @@ describe('buildProviderPool', () => {
     process.env.ELEVENLABS_API_KEY = 'platform-eleven-key';
     process.env.DID_API_KEY = 'platform-did-key';
     process.env.HEYGEN_API_KEY = 'platform-heygen-key';
-    getUserApiKey.mockResolvedValue('user-byok-key');
-    getCircuitState.mockResolvedValue({ state: 'closed', recentFailures: 0, recentSuccesses: 5 });
-    resolveUserApiKey.mockResolvedValue('resolved-key-abc');
+    vi.mocked(getUserApiKey).mockResolvedValue('user-byok-key');
+    vi.mocked(getCircuitState).mockResolvedValue({ state: 'closed', recentFailures: 0, recentSuccesses: 5 });
+    vi.mocked(resolveUserApiKey).mockResolvedValue('resolved-key-abc');
   });
 
   afterEach(() => {
