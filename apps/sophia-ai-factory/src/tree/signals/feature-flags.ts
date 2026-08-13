@@ -5,6 +5,8 @@
 
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError } from '@/seed/types/failure-kind'
 
 const POSTHOG_DECIDE_URL = 'https://us.i.posthog.com/decide/?v=3'
 const CACHE_TTL_SECONDS = 60

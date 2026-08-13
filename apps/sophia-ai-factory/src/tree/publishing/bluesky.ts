@@ -6,6 +6,8 @@
  * Falls back to mock responses when BLUESKY_PDS_URL is absent.
  */
 
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from '@/seed/types/channel-provider';
 import { logger } from '@/seed/utils/logger-utility';
 

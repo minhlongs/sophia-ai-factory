@@ -3,6 +3,8 @@
  * Uses D1 table welcome_email_outbox (migration 0073).
  */
 
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import { logger } from '@/seed/utils/logger-utility';
 import { sendEmail } from './sender';
 import { renderEmail, type TemplateKey, type TemplateDataMap } from './render-email';
@@ -154,16 +156,22 @@ async function handleFailure(db: D1Database, row: OutboxRow, error: string, now:
 }
 
 async function sendAdminAlert(message: string): Promise<void> {
+  if (!shouldAllowRequest('telegram')) {
+    return;
+  }
   const chatId = process.env.ADMIN_TELEGRAM_CHAT_ID;
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!chatId || !token) return;
   try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'HTML' }),
     });
-  } catch {
+    if (res.ok) recordSuccess('telegram');
+    else recordFailure('telegram', classifyError(new Error(`HTTP ${res.status}`)));
+  } catch (err) {
+    recordFailure('telegram', classifyError(err));
     // best-effort — never propagate
   }
 }

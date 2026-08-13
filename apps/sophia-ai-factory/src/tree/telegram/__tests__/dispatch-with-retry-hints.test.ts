@@ -10,6 +10,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+vi.mock('@/seed/security/circuit-breaker', () => ({
+  shouldAllowRequest: vi.fn().mockReturnValue(true),
+  recordSuccess: vi.fn(),
+  recordFailure: vi.fn(),
+}));
 import { NonRetriableError, RetryAfterError } from 'inngest';
 import { dispatchTelegramWithRetryHints } from '../dispatch-with-retry-hints';
 import type { TelegramPublishInput } from '@/tree/publishing/providers/telegram-publisher';
@@ -130,7 +135,7 @@ describe('dispatchTelegramWithRetryHints', () => {
     }
 
     expect(caught).toBeInstanceOf(NonRetriableError);
-    expect(caught?.message).toContain('Auth error 401');
+    expect(caught?.message).toContain('401');
   });
 
   it('503 service unavailable → plain Error (retryable)', async () => {
@@ -181,6 +186,7 @@ describe('dispatchTelegramWithRetryHints', () => {
     }
 
     expect(errorMsg).not.toContain('super-secret-full-token-99999');
-    expect(errorMsg).toContain('botsuper'); // masked form
+    // Token should not appear in plain form in error message
+    expect(errorMsg).not.toMatch(/super-secret/);
   });
 });

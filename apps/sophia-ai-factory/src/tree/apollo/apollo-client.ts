@@ -8,6 +8,8 @@
  * Documented at https://docs.apollo.io/reference/people-search.
  */
 
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import { logger } from '@/seed/utils/logger-utility';
 
 const APOLLO_BASE = 'https://api.apollo.io';

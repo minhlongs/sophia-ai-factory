@@ -1,3 +1,5 @@
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import type { PlatformAdapter, PublishParams, PublishResult, PublishStatus } from './platform-adapter';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -8,7 +10,11 @@ export const instagramAdapter: PlatformAdapter = {
   platform: 'instagram',
 
   async uploadVideo(accessToken: string, params: PublishParams): Promise<PublishResult> {
-    // Instagram Reels: two-step container → publish flow
+    if (!shouldAllowRequest('instagram')) {
+      throw new Error('[instagram-adapter] Circuit breaker open for instagram');
+    }
+    try {
+      // Instagram Reels: two-step container → publish flow
     // igUserId is stored in credential metadata and passed via accessToken prefix: "igUserId:token"
     const [igUserId, token] = accessToken.includes(':')
       ? accessToken.split(':', 2)
@@ -63,6 +69,7 @@ export const instagramAdapter: PlatformAdapter = {
 
     if (!publishRes.ok) {
       const err = await publishRes.text();
+      recordFailure('instagram', classifyError(new Error(err)));
       throw new Error(`Instagram publish failed: ${publishRes.status} ${err}`);
     }
 
@@ -75,6 +82,11 @@ export const instagramAdapter: PlatformAdapter = {
       status: 'published',
       url: `https://www.instagram.com/reel/${result.id}`,
     };
+    } catch (err) {
+      const kind = classifyError(err);
+      recordFailure('instagram', kind);
+      throw err;
+    }
   },
 
   async checkStatus(

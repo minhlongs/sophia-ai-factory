@@ -7,9 +7,14 @@
 
 import { getResendKey } from '@/tree/credentials/get-provider-key';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import type { MissionHandlerResult, MissionContext } from '@/seed/types/missions';
 
 export async function handle(ctx: MissionContext): Promise<MissionHandlerResult> {
+  if (!shouldAllowRequest('email')) {
+    return { ok: false, error: 'Circuit breaker open for email' };
+  }
   const { userId, params } = ctx;
   const recipients = (params?.recipients as string[]) ?? [];
   const subject = (params?.subject as string) ?? 'Message from Sophia AI Factory';

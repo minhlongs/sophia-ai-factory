@@ -6,6 +6,8 @@
 
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError } from '@/seed/types/failure-kind'
 import { isServerOnly, validateEventProps, type EventName, Events } from './event-types'
 
 const POSTHOG_ENDPOINT = 'https://us.i.posthog.com/i/v0/e/'
@@ -32,6 +34,10 @@ export async function captureServer(opts: CaptureOptions): Promise<void> {
     throw err
   }
 
+  if (!shouldAllowRequest('posthog')) {
+    logger.warn('[signals] PostHog capture skipped — circuit breaker open')
+    return
+  }
   const apiKey = process.env.POSTHOG_PROJECT_KEY
   if (!apiKey) {
     logger.warn('[signals] POSTHOG_PROJECT_KEY not set — skipping capture')
@@ -62,11 +68,14 @@ export async function captureServer(opts: CaptureOptions): Promise<void> {
       body: JSON.stringify(payload),
     })
 
-    if (!res.ok) {
+    if (res.ok) {
+      recordSuccess('posthog');
+    } else {
+      recordFailure('posthog', classifyError(new Error(`HTTP ${res.status}`)));
       logger.warn('[signals] PostHog capture non-OK', { status: res.status, event })
     }
   } catch (err) {
-    // Fire-and-forget: log but never throw to caller
+    recordFailure('posthog', classifyError(err));
     logger.warn('[signals] PostHog capture failed', {
       event,
       error: getErrorMessage(err),

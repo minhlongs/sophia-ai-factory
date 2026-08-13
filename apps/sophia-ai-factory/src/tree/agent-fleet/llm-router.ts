@@ -10,6 +10,8 @@
  */
 
 import { MODEL_COSTS, estimateCost, getCostForModel } from './llm-cost-tracker';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 export type { TenantUsage } from './llm-cost-tracker';
 export { MODEL_COSTS, trackUsage, getUsageSummary, _resetUsage } from './llm-cost-tracker';

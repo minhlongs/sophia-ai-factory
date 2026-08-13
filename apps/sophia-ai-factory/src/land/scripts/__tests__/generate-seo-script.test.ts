@@ -21,6 +21,17 @@ import {
 } from '@/land/scripts/generate-seo-script';
 import { resetOpenRouterCircuit } from '@/seed/inference/openrouter-client';
 
+vi.mock('@/seed/security/circuit-breaker', () => ({
+  shouldAllowRequest: vi.fn().mockReturnValue(true),
+  recordSuccess: vi.fn(),
+  recordFailure: vi.fn(),
+}));
+
+vi.mock('@/seed/types/failure-kind', () => ({
+  classifyError: vi.fn().mockReturnValue('SERVER_ERROR'),
+  classifyHttpStatus: vi.fn().mockReturnValue('RATE_LIMIT'),
+}));
+
 const ORIGINAL_FETCH = globalThis.fetch;
 const ORIGINAL_ENV = { ...process.env };
 afterAll(() => {

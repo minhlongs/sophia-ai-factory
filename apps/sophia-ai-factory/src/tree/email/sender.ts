@@ -6,6 +6,8 @@
  * Falls back to dry-run logging when key is not configured.
  */
 
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import { toError } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -27,6 +29,9 @@ export interface EmailResult {
 }
 
 export async function sendEmail(params: EmailParams): Promise<EmailResult> {
+  if (!shouldAllowRequest('email')) {
+    throw new Error('[email-sender] Circuit breaker open for email');
+  }
   const apiKey = process.env.RESEND_API_KEY;
   const from = params.from ?? process.env.EMAIL_FROM ?? 'Sophia AI <noreply@mekongmind.com>';
 

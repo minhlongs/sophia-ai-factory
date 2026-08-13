@@ -5,6 +5,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 const REDDIT_AUTHORIZE = 'https://www.reddit.com/api/v1/authorize';
 const REDDIT_TOKEN_URL = 'https://www.reddit.com/api/v1/access_token';
@@ -47,65 +49,97 @@ export function getAuthorizationUrl(state: string): string {
 }
 
 export async function exchangeCodeForTokens(code: string): Promise<RedditTokenResponse> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const res = await fetch(REDDIT_TOKEN_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: basicAuthHeader(),
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': 'SophiaAIFactory/1.0',
-    },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: `${appUrl}/api/oauth/reddit/callback`,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read Reddit token exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
-      return '';
-    });
-    throw new Error(`Reddit token exchange failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+  if (!shouldAllowRequest('reddit')) {
+    throw new Error('[Reddit] Circuit breaker open for reddit');
   }
-  return res.json() as Promise<RedditTokenResponse>;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+  try {
+    const res = await fetch(REDDIT_TOKEN_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: basicAuthHeader(),
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'SophiaAIFactory/1.0',
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: `${appUrl}/api/oauth/reddit/callback`,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read Reddit token exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
+        return '';
+      });
+      recordFailure('reddit', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`Reddit token exchange failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    }
+    recordSuccess('reddit');
+    return res.json() as Promise<RedditTokenResponse>;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('reddit', classifyError(error));
+    throw error;
+  }
 }
 
 export async function refreshAccessToken(refreshToken: string): Promise<RedditTokenResponse> {
-  const res = await fetch(REDDIT_TOKEN_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: basicAuthHeader(),
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'User-Agent': 'SophiaAIFactory/1.0',
-    },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read Reddit token refresh response', { error: String(err), context: 'refreshAccessToken' });
-      return '';
-    });
-    throw new Error(`Reddit token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+  if (!shouldAllowRequest('reddit')) {
+    throw new Error('[Reddit] Circuit breaker open for reddit');
   }
-  return res.json() as Promise<RedditTokenResponse>;
+  try {
+    const res = await fetch(REDDIT_TOKEN_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: basicAuthHeader(),
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'SophiaAIFactory/1.0',
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read Reddit token refresh response', { error: String(err), context: 'refreshAccessToken' });
+        return '';
+      });
+      recordFailure('reddit', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`Reddit token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    }
+    recordSuccess('reddit');
+    return res.json() as Promise<RedditTokenResponse>;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('reddit', classifyError(error));
+    throw error;
+  }
 }
 
 export async function getUserInfo(accessToken: string): Promise<RedditUserInfo> {
-  const res = await fetch(REDDIT_ME_URL, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      'User-Agent': 'SophiaAIFactory/1.0',
-    },
-  });
-  if (!res.ok) {
-    logger.error('[reddit-oauth] getUserInfo failed', new Error(`HTTP ${res.status}`));
-    throw new Error(`Reddit /me failed: HTTP ${res.status}`);
+  if (!shouldAllowRequest('reddit')) {
+    throw new Error('[Reddit] Circuit breaker open for reddit');
   }
-  const data = (await res.json()) as { id?: string; name?: string };
-  if (!data.id || !data.name) throw new Error('Reddit /me returned no id/name');
-  return { id: data.id, name: data.name };
+  try {
+    const res = await fetch(REDDIT_ME_URL, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'User-Agent': 'SophiaAIFactory/1.0',
+      },
+    });
+    if (!res.ok) {
+      recordFailure('reddit', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`Reddit /me failed: HTTP ${res.status}`);
+    }
+    recordSuccess('reddit');
+    const data = (await res.json()) as { id?: string; name?: string };
+    if (!data.id || !data.name) throw new Error('Reddit /me returned no id/name');
+    return { id: data.id, name: data.name };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('reddit', classifyError(error));
+    throw error;
+  }
 }

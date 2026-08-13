@@ -6,6 +6,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 export const MASTODON_SCOPES = 'read write';
 
@@ -31,35 +33,46 @@ export interface MastodonAccountInfo {
 
 /** Register a new app on the Mastodon instance (one-time, but called per connect flow). */
 export async function registerMastodonApp(instanceUrl: string): Promise<MastodonAppCredentials> {
+  if (!shouldAllowRequest('mastodon')) {
+    throw new Error('[Mastodon] Circuit breaker open for mastodon');
+  }
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
   if (!appUrl) throw new Error('NEXT_PUBLIC_APP_URL not set');
   const normalizedInstance = instanceUrl.replace(/\/$/, '');
-  const res = await fetch(`${normalizedInstance}/api/v1/apps`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_name: 'Sophia AI Factory',
-      redirect_uris: `${appUrl}/api/oauth/mastodon/callback`,
-      scopes: MASTODON_SCOPES,
-      website: appUrl,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read Mastodon app registration response', { error: String(err), context: 'registerApp' });
-      return '';
+  try {
+    const res = await fetch(`${normalizedInstance}/api/v1/apps`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_name: 'Sophia AI Factory',
+        redirect_uris: `${appUrl}/api/oauth/mastodon/callback`,
+        scopes: MASTODON_SCOPES,
+        website: appUrl,
+      }),
     });
-    throw new Error(`Mastodon app registration failed on ${normalizedInstance}: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    if (!res.ok) {
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read Mastodon app registration response', { error: String(err), context: 'registerApp' });
+        return '';
+      });
+      recordFailure('mastodon', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`Mastodon app registration failed on ${normalizedInstance}: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    }
+    recordSuccess('mastodon');
+    const data = (await res.json()) as { client_id?: string; client_secret?: string; redirect_uri?: string };
+    if (!data.client_id || !data.client_secret) {
+      throw new Error('Mastodon /api/v1/apps returned no client credentials');
+    }
+    return {
+      client_id: data.client_id,
+      client_secret: data.client_secret,
+      redirect_uri: `${appUrl}/api/oauth/mastodon/callback`,
+    };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('mastodon', classifyError(error));
+    throw error;
   }
-  const data = (await res.json()) as { client_id?: string; client_secret?: string; redirect_uri?: string };
-  if (!data.client_id || !data.client_secret) {
-    throw new Error('Mastodon /api/v1/apps returned no client credentials');
-  }
-  return {
-    client_id: data.client_id,
-    client_secret: data.client_secret,
-    redirect_uri: `${appUrl}/api/oauth/mastodon/callback`,
-  };
 }
 
 export function getAuthorizationUrl(
@@ -86,40 +99,61 @@ export async function exchangeCodeForTokens(
   clientSecret: string,
   code: string,
 ): Promise<MastodonTokenResponse> {
+  if (!shouldAllowRequest('mastodon')) {
+    throw new Error('[Mastodon] Circuit breaker open for mastodon');
+  }
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
   const normalizedInstance = instanceUrl.replace(/\/$/, '');
-  const res = await fetch(`${normalizedInstance}/oauth/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      redirect_uri: `${appUrl}/api/oauth/mastodon/callback`,
-      grant_type: 'authorization_code',
-      code,
-      scope: MASTODON_SCOPES,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read Mastodon token exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
-      return '';
+  try {
+    const res = await fetch(`${normalizedInstance}/oauth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: `${appUrl}/api/oauth/mastodon/callback`,
+        grant_type: 'authorization_code',
+        code,
+        scope: MASTODON_SCOPES,
+      }),
     });
-    throw new Error(`Mastodon token exchange failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    if (!res.ok) {
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read Mastodon token exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
+        return '';
+      });
+      recordFailure('mastodon', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`Mastodon token exchange failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    }
+    recordSuccess('mastodon');
+    return res.json() as Promise<MastodonTokenResponse>;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('mastodon', classifyError(error));
+    throw error;
   }
-  return res.json() as Promise<MastodonTokenResponse>;
 }
 
 export async function getAccountInfo(instanceUrl: string, accessToken: string): Promise<MastodonAccountInfo> {
-  const normalizedInstance = instanceUrl.replace(/\/$/, '');
-  const res = await fetch(`${normalizedInstance}/api/v1/accounts/verify_credentials`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!res.ok) {
-    logger.error('[mastodon-oauth] getAccountInfo failed', new Error(`HTTP ${res.status}`));
-    throw new Error(`Mastodon /verify_credentials failed: HTTP ${res.status}`);
+  if (!shouldAllowRequest('mastodon')) {
+    throw new Error('[Mastodon] Circuit breaker open for mastodon');
   }
-  const data = (await res.json()) as MastodonAccountInfo;
-  if (!data.id) throw new Error('Mastodon /verify_credentials returned no id');
-  return data;
+  const normalizedInstance = instanceUrl.replace(/\/$/, '');
+  try {
+    const res = await fetch(`${normalizedInstance}/api/v1/accounts/verify_credentials`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) {
+      recordFailure('mastodon', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`Mastodon /verify_credentials failed: HTTP ${res.status}`);
+    }
+    recordSuccess('mastodon');
+    const data = (await res.json()) as MastodonAccountInfo;
+    if (!data.id) throw new Error('Mastodon /verify_credentials returned no id');
+    return data;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('mastodon', classifyError(error));
+    throw error;
+  }
 }

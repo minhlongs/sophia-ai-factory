@@ -1,7 +1,12 @@
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
 
 export async function setTelegramWebhook() {
+  if (!shouldAllowRequest('telegram')) {
+    return { ok: false, description: 'Circuit breaker open for telegram' };
+  }
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
 
@@ -26,11 +31,13 @@ export async function setTelegramWebhook() {
 
     if (!response.ok) {
       const errorBody = await response.text();
+      recordFailure('telegram', classifyError(new Error(errorBody)));
       return { ok: false, description: `Telegram API ${response.status}: ${errorBody}` };
     }
-
+    recordSuccess('telegram');
     return response.json();
   } catch (err) {
+    recordFailure('telegram', classifyError(err));
     return { ok: false, description: `Network error: ${getErrorMessage(err)}` };
   }
 }
@@ -119,6 +126,9 @@ export async function sendTelegramMessageWithKeyboard(
 }
 
 export async function sendTelegramMessage(chatId: string, text: string) {
+  if (!shouldAllowRequest('telegram')) {
+    return null;
+  }
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) {
     return null;
@@ -133,9 +143,10 @@ export async function sendTelegramMessage(chatId: string, text: string) {
         chatId,
       });
       await response.json().catch(() => {});
+      recordFailure('telegram', classifyError(new Error(`HTTP ${response.status}`)));
       return null;
     }
-
+    recordSuccess('telegram');
     return await response.json();
   } catch {
     return null;

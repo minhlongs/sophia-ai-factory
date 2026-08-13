@@ -7,6 +7,8 @@
 
 import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publisher-interface';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 const MAX_STATUS_LENGTH = 500;
 
@@ -68,59 +70,86 @@ export class MastodonPublisher implements Publisher {
       logger.warn('[MastodonPublisher] Mock mode — MASTODON_INSTANCE_URL missing');
       return `mock_mastodon_${Date.now()}`;
     }
-
+    if (!shouldAllowRequest('mastodon')) {
+      throw new Error('[MastodonPublisher] Circuit breaker open for mastodon');
+    }
     const status = buildStatusText(meta, videoUrl);
-
-    const res = await fetch(`${this.instanceUrl}/api/v1/statuses`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ status, visibility: 'public' }),
-    });
-
-    if (!res.ok) {
-      const body = await res.text().catch((err) => {
-        logger.warn('Failed to read Mastodon status response', { error: String(err), context: 'MastodonPublisher.upload' });
-        return '';
+    try {
+      const res = await fetch(`${this.instanceUrl}/api/v1/statuses`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status, visibility: 'public' }),
       });
-      throw new Error(`Mastodon /api/v1/statuses failed (${res.status}): ${body.slice(0, 300)}`);
-    }
 
-    const data = (await res.json()) as MastodonStatusResponse;
-    if (!data.id) {
-      throw new Error(`Mastodon status returned no id: ${data.error ?? 'unknown'}`);
+      if (!res.ok) {
+        const body = await res.text().catch((err) => {
+          logger.warn('Failed to read Mastodon status response', { error: String(err), context: 'MastodonPublisher.upload' });
+          return '';
+        });
+        recordFailure('mastodon', classifyError(new Error(`HTTP ${res.status}`)));
+        throw new Error(`Mastodon /api/v1/statuses failed (${res.status}): ${body.slice(0, 300)}`);
+      }
+
+      recordSuccess('mastodon');
+      const data = (await res.json()) as MastodonStatusResponse;
+      if (!data.id) {
+        throw new Error(`Mastodon status returned no id: ${data.error ?? 'unknown'}`);
+      }
+      return data.id;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+      recordFailure('mastodon', classifyError(error));
+      throw error;
     }
-    return data.id;
   }
 
   async pollStatus(externalPostId: string): Promise<PublishStatus> {
     // Mastodon posts are synchronous
     if (isMockMode() || externalPostId.startsWith('mock_')) return 'live';
-    const res = await fetch(`${this.instanceUrl}/api/v1/statuses/${externalPostId}`, {
-      headers: { Authorization: `Bearer ${this.accessToken}` },
-    });
-    if (res.status === 404) return 'failed';
-    if (res.ok) return 'live';
-    return 'processing';
+    if (!shouldAllowRequest('mastodon')) {
+      return 'processing';
+    }
+    try {
+      const res = await fetch(`${this.instanceUrl}/api/v1/statuses/${externalPostId}`, {
+        headers: { Authorization: `Bearer ${this.accessToken}` },
+      });
+      recordSuccess('mastodon');
+      if (res.status === 404) return 'failed';
+      if (res.ok) return 'live';
+      return 'processing';
+    } catch (error) {
+      recordFailure('mastodon', classifyError(error));
+      return 'processing';
+    }
   }
 
   async getMetrics(externalPostId: string): Promise<MetricsJson> {
     if (isMockMode() || externalPostId.startsWith('mock_')) {
       return { views: 0, likes: 0, comments: 0, shares: 0 };
     }
-    const res = await fetch(`${this.instanceUrl}/api/v1/statuses/${externalPostId}`, {
-      headers: { Authorization: `Bearer ${this.accessToken}` },
-    });
-    if (!res.ok) return { views: 0, likes: 0, comments: 0, shares: 0 };
-    const data = (await res.json()) as MastodonStatusStats;
-    return {
-      views: 0,
-      likes: data.favourites_count ?? 0,
-      comments: data.replies_count ?? 0,
-      shares: data.reblogs_count ?? 0,
-    };
+    if (!shouldAllowRequest('mastodon')) {
+      return { views: 0, likes: 0, comments: 0, shares: 0 };
+    }
+    try {
+      const res = await fetch(`${this.instanceUrl}/api/v1/statuses/${externalPostId}`, {
+        headers: { Authorization: `Bearer ${this.accessToken}` },
+      });
+      recordSuccess('mastodon');
+      if (!res.ok) return { views: 0, likes: 0, comments: 0, shares: 0 };
+      const data = (await res.json()) as MastodonStatusStats;
+      return {
+        views: 0,
+        likes: data.favourites_count ?? 0,
+        comments: data.replies_count ?? 0,
+        shares: data.reblogs_count ?? 0,
+      };
+    } catch (error) {
+      recordFailure('mastodon', classifyError(error));
+      return { views: 0, likes: 0, comments: 0, shares: 0 };
+    }
   }
 
 async delete(postId: string): Promise<void> {

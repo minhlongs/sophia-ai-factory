@@ -6,6 +6,8 @@
 import crypto from 'crypto'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError, getErrorMessage } from '@/seed/utils/to-error'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError } from '@/seed/types/failure-kind'
 import { triggerWebhookFailedAlert } from '@/forest/alerts/realtime-alert-service'
 import { generateWebhookSignature } from './webhook-notification-signature'
 import type { WebhookPayload, WebhookDeliveryResult, WebhookMetadata } from './webhook-notification-types'
@@ -22,6 +24,11 @@ export async function sendWebhookAlert(
   payload: WebhookPayload,
   secret?: string
 ): Promise<WebhookDeliveryResult> {
+  if (!shouldAllowRequest('webhooks')) {
+    logger.warn('[Webhook Alert] Circuit breaker open for webhooks, skipping', { url: webhookUrl })
+    return { success: false, attempts: 0, error: 'circuit_breaker_open' }
+  }
+
   const maxRetries = 3
   const timeoutMs = 10000
   let lastError: string | undefined
@@ -40,15 +47,18 @@ export async function sendWebhookAlert(
       const deliveryTime = Date.now() - startTime
 
       if (response.ok) {
+        recordSuccess('webhooks');
         logger.info('[Webhook Alert] Delivered successfully', { url: webhookUrl, eventId: payload.eventId, attempt, deliveryTimeMs: deliveryTime })
         return { success: true, attempts: attempt, responseStatus: response.status, deliveryTimeMs: deliveryTime }
       }
 
       lastError = `HTTP ${response.status}: ${response.statusText}`
+      recordFailure('webhooks', classifyError(new Error(`HTTP ${response.status}`)))
       logger.warn('[Webhook Alert] Non-OK response', { url: webhookUrl, status: response.status, attempt })
     } catch (error) {
       const deliveryTime = Date.now() - startTime
       lastError = getErrorMessage(error)
+      recordFailure('webhooks', classifyError(error))
       logger.warn('[Webhook Alert] Delivery failed', { url: webhookUrl, error: lastError, attempt, deliveryTimeMs: deliveryTime })
       if (attempt < maxRetries) await sleep(Math.pow(2, attempt - 1) * 1000)
     }

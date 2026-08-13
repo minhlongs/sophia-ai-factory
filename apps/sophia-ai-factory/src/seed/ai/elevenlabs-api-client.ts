@@ -8,6 +8,8 @@
 import { logger } from '@/seed/utils/logger-utility';
 import { Tier } from '@/seed/types';
 import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/seed/services/errors';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 
 /** Get default voice ID based on tier (ElevenLabs pre-made voice IDs) */
 export function getDefaultVoiceId(tier: Tier): string {
@@ -63,6 +65,10 @@ export async function generateElevenLabsVoiceover(
   const defaultVoiceId = voiceId || getDefaultVoiceId(tier);
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${defaultVoiceId}`;
 
+  if (!shouldAllowRequest('elevenlabs')) {
+    throw new Error('[ElevenLabs] Circuit breaker open for elevenlabs');
+  }
+
   let response: Response;
 
   if (deps?.withTimeout) {
@@ -107,6 +113,7 @@ export async function generateElevenLabsVoiceover(
   }
 
   if (!response.ok) {
+    recordFailure('elevenlabs', classifyHttpStatus(response.status));
     const errorText = await response.text();
     if (response.status === 401 || response.status === 403) {
       throw new ProviderInvalidKeyError('elevenlabs', errorText);
@@ -117,6 +124,7 @@ export async function generateElevenLabsVoiceover(
     throw new Error(`ElevenLabs API failed: ${response.status} - ${errorText}`);
   }
 
+  recordSuccess('elevenlabs');
   const audioBuffer = await response.arrayBuffer();
   const audioUrl = await uploadAudioToStorage(new Uint8Array(audioBuffer), {
     userId: 'elevenlabs',

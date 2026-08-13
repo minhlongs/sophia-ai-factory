@@ -1,3 +1,5 @@
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import type { PlatformAdapter, PublishParams, PublishResult, PublishStatus } from './platform-adapter';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -9,7 +11,11 @@ export const youtubeAdapter: PlatformAdapter = {
   platform: 'youtube',
 
   async uploadVideo(accessToken: string, params: PublishParams): Promise<PublishResult> {
-    const metadata = {
+    if (!shouldAllowRequest('youtube')) {
+      throw new Error('[youtube-adapter] Circuit breaker open for youtube');
+    }
+    try {
+      const metadata = {
       snippet: {
         title: params.title,
         description: params.description,
@@ -76,6 +82,11 @@ export const youtubeAdapter: PlatformAdapter = {
       status: 'processing',
       url: `https://www.youtube.com/watch?v=${result.id}`,
     };
+    } catch (err) {
+      const kind = classifyError(err);
+      recordFailure('youtube', kind);
+      throw err;
+    }
   },
 
   async checkStatus(

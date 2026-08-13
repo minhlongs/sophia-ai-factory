@@ -7,6 +7,8 @@
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { isServerOnly, validateEventProps, type EventName, Events } from './event-types'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError } from '@/seed/types/failure-kind'
 
 const POSTHOG_ENDPOINT = 'https://us.i.posthog.com/i/v0/e/'
 
@@ -55,6 +57,11 @@ export async function captureServer(opts: CaptureOptions): Promise<void> {
     timestamp: new Date().toISOString(),
   }
 
+  if (!shouldAllowRequest('posthog')) {
+    logger.warn('[signals] Circuit breaker open for posthog, skipping capture')
+    return
+  }
+
   try {
     const res = await fetch(POSTHOG_ENDPOINT, {
       method: 'POST',
@@ -63,10 +70,14 @@ export async function captureServer(opts: CaptureOptions): Promise<void> {
     })
 
     if (!res.ok) {
+      recordFailure('posthog', classifyError(new Error(`HTTP ${res.status}`)))
       logger.warn('[signals] PostHog capture non-OK', { status: res.status, event })
+    } else {
+      recordSuccess('posthog')
     }
   } catch (err) {
     // Fire-and-forget: log but never throw to caller
+    recordFailure('posthog', classifyError(err))
     logger.warn('[signals] PostHog capture failed', {
       event,
       error: getErrorMessage(err),

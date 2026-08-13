@@ -227,6 +227,9 @@ Full doctrine: `.claude/rules/sophia-no-tech-doctrine.md`
 
 - `npm run build` → 0 TypeScript errors
 - `npm test` → all tests pass (6744+ tests)
+- Circuit breaker on all external HTTP calls (OpenRouter, ElevenLabs, D-ID, HeyGen, NOWPayments, ClickBank, Replicate, fal.ai)
+- Per-kind error classification: AUTH_FAILURE → immediate open, RATE_LIMIT → cooldown, SERVER_ERROR → retry with backoff
+- No bare try/catch for external HTTP without failure kind classification
 - Zero `:any` types in production code
 - Zero `console.log`/`console.warn`/`console.error` — use `@/seed/utils/logger-utility`
 - Zod validation on all API inputs

@@ -8,6 +8,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 const THREADS_DIALOG = 'https://threads.net/oauth/authorize';
 const THREADS_TOKEN_URL = 'https://graph.threads.net/oauth/access_token';
@@ -44,85 +46,117 @@ export function getAuthorizationUrl(state: string): string {
 }
 
 export async function exchangeCodeForTokens(code: string): Promise<ThreadsTokenResponse> {
+  if (!shouldAllowRequest('threads')) {
+    throw new Error('[Threads] Circuit breaker open for threads');
+  }
   const appId = process.env.THREADS_APP_ID ?? '';
   const appSecret = process.env.THREADS_APP_SECRET ?? '';
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
 
-  // Step 1: short-lived token via POST body (no secret in URL)
-  const shortRes = await fetch(THREADS_TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: appId,
-      client_secret: appSecret,
-      code,
-      grant_type: 'authorization_code',
-      redirect_uri: `${appUrl}/api/oauth/threads/callback`,
-    }),
-  });
-  if (!shortRes.ok) {
-    const body = await shortRes.text().catch((err) => {
-      logger.warn('Failed to read Threads short-lived exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
-      return '';
+  try {
+    // Step 1: short-lived token via POST body (no secret in URL)
+    const shortRes = await fetch(THREADS_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: appId,
+        client_secret: appSecret,
+        code,
+        grant_type: 'authorization_code',
+        redirect_uri: `${appUrl}/api/oauth/threads/callback`,
+      }),
     });
-    throw new Error(`Threads short-lived exchange failed: HTTP ${shortRes.status} — ${body.slice(0, 200)}`);
-  }
-  const short = (await shortRes.json()) as ThreadsTokenResponse;
-  if (!short.access_token) throw new Error('Threads: no short-lived access_token');
+    if (!shortRes.ok) {
+      const body = await shortRes.text().catch((err) => {
+        logger.warn('Failed to read Threads short-lived exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
+        return '';
+      });
+      recordFailure('threads', classifyError(new Error(`HTTP ${shortRes.status}`)));
+      throw new Error(`Threads short-lived exchange failed: HTTP ${shortRes.status} — ${body.slice(0, 200)}`);
+    }
+    const short = (await shortRes.json()) as ThreadsTokenResponse;
+    if (!short.access_token) throw new Error('Threads: no short-lived access_token');
 
-  // Step 2: exchange for long-lived (60d) via POST body (secret not in URL)
-  const longRes = await fetch(THREADS_LONG_LIVED_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'th_exchange_token',
-      client_secret: appSecret,
-      access_token: short.access_token,
-    }),
-  });
-  if (!longRes.ok) {
-    const body = await longRes.text().catch((err) => {
-      logger.warn('Failed to read Threads long-lived exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
-      return '';
+    // Step 2: exchange for long-lived (60d) via POST body (secret not in URL)
+    const longRes = await fetch(THREADS_LONG_LIVED_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'th_exchange_token',
+        client_secret: appSecret,
+        access_token: short.access_token,
+      }),
     });
-    throw new Error(`Threads long-lived exchange failed: HTTP ${longRes.status} — ${body.slice(0, 200)}`);
+    if (!longRes.ok) {
+      const body = await longRes.text().catch((err) => {
+        logger.warn('Failed to read Threads long-lived exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
+        return '';
+      });
+      recordFailure('threads', classifyError(new Error(`HTTP ${longRes.status}`)));
+      throw new Error(`Threads long-lived exchange failed: HTTP ${longRes.status} — ${body.slice(0, 200)}`);
+    }
+    recordSuccess('threads');
+    return longRes.json() as Promise<ThreadsTokenResponse>;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('threads', classifyError(error));
+    throw error;
   }
-  return longRes.json() as Promise<ThreadsTokenResponse>;
 }
 
 export async function refreshLongLivedToken(currentToken: string): Promise<ThreadsTokenResponse> {
-  const appSecret = process.env.THREADS_APP_SECRET ?? '';
-
-  // Refresh via POST body (secret not in URL)
-  const res = await fetch(THREADS_LONG_LIVED_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'th_refresh_token',
-      access_token: currentToken,
-      client_secret: appSecret,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read Threads token refresh response', { error: String(err), context: 'refreshLongLivedToken' });
-      return '';
-    });
-    throw new Error(`Threads token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+  if (!shouldAllowRequest('threads')) {
+    throw new Error('[Threads] Circuit breaker open for threads');
   }
-  return res.json() as Promise<ThreadsTokenResponse>;
+  const appSecret = process.env.THREADS_APP_SECRET ?? '';
+  try {
+    // Refresh via POST body (secret not in URL)
+    const res = await fetch(THREADS_LONG_LIVED_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'th_refresh_token',
+        access_token: currentToken,
+        client_secret: appSecret,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read Threads token refresh response', { error: String(err), context: 'refreshLongLivedToken' });
+        return '';
+      });
+      recordFailure('threads', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`Threads token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    }
+    recordSuccess('threads');
+    return res.json() as Promise<ThreadsTokenResponse>;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('threads', classifyError(error));
+    throw error;
+  }
 }
 
 export async function getUserInfo(accessToken: string): Promise<ThreadsUserInfo> {
-  // Use Authorization header — avoid exposing token in URL (browser logs, Referer)
-  const res = await fetch(`${THREADS_USER_URL}?fields=id,username,name`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!res.ok) {
-    logger.error('[threads-oauth] getUserInfo failed', new Error(`HTTP ${res.status}`));
-    throw new Error(`Threads /me failed: HTTP ${res.status}`);
+  if (!shouldAllowRequest('threads')) {
+    throw new Error('[Threads] Circuit breaker open for threads');
   }
-  const data = (await res.json()) as ThreadsUserInfo;
-  if (!data.id) throw new Error('Threads /me returned no id');
-  return data;
+  try {
+    // Use Authorization header — avoid exposing token in URL (browser logs, Referer)
+    const res = await fetch(`${THREADS_USER_URL}?fields=id,username,name`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) {
+      recordFailure('threads', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`Threads /me failed: HTTP ${res.status}`);
+    }
+    recordSuccess('threads');
+    const data = (await res.json()) as ThreadsUserInfo;
+    if (!data.id) throw new Error('Threads /me returned no id');
+    return data;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('threads', classifyError(error));
+    throw error;
+  }
 }

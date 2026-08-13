@@ -7,6 +7,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+
+vi.mock('@/seed/security/circuit-breaker', () => ({
+  shouldAllowRequest: vi.fn().mockReturnValue(true),
+  recordSuccess: vi.fn(),
+  recordFailure: vi.fn(),
+}))
 import {
   getIsoWeek,
   buildIssueTitle,

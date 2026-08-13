@@ -17,6 +17,8 @@
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'
 import type { MissionContext, MissionHandlerResult } from '@/forest/missions/types'
 import { logger } from '@/seed/utils/logger-utility'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError } from '@/seed/types/failure-kind'
 
 const ELEVENLABS_VOICES_ADD_URL = 'https://api.elevenlabs.io/v1/voices/add'
 
@@ -83,6 +85,11 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
     return stubResponse(name, description, 'no_sample_urls')
   }
 
+  if (!shouldAllowRequest('elevenlabs')) {
+    logger.warn('[voice:clone] Circuit breaker open for elevenlabs, returning stub')
+    return stubResponse(name, description, 'circuit_breaker_open')
+  }
+
   try {
     const form = new FormData()
     form.append('name', name)
@@ -105,6 +112,7 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
         logger.warn('Failed to read response text', { error: String(err), context: 'voiceClone' });
         return '<unreadable>';
       })
+      recordFailure('elevenlabs', classifyError(new Error(`HTTP ${res.status}`)))
       logger.warn('[voice:clone] ElevenLabs rejected', { status: res.status, body: errorText.slice(0, 500) })
       return {
         ok: false,
@@ -112,6 +120,7 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
       }
     }
 
+    recordSuccess('elevenlabs');
     const data = (await res.json()) as ElevenLabsAddResponse
     return {
       ok: true,
@@ -125,6 +134,7 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
       },
     }
   } catch (err) {
+    recordFailure('elevenlabs', classifyError(err))
     logger.error('[voice:clone] live call failed', err instanceof Error ? err : new Error(String(err)))
     return { ok: false, error: 'voice_clone_failed' }
   }

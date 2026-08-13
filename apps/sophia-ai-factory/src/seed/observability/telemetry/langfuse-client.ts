@@ -12,6 +12,8 @@
 import type { LlmCallTrace } from './llm-trace'
 import { buildTraceId } from './llm-trace'
 import { scrubPIIDeep } from './pii-scrubber'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError } from '@/seed/types/failure-kind'
 
 export const DEFAULT_HOST = 'https://cloud.langfuse.com'
 const DEFAULT_TIMEOUT_MS = 2000
@@ -89,6 +91,10 @@ export async function sendToLangfuse(
   const scrubbed = scrubPIIDeep(event)
 
   try {
+    if (!shouldAllowRequest('langfuse')) {
+      // Circuit open — fail-soft, don't block caller
+      return
+    }
     await fetch(`${host}/api/public/ingestion`, {
       method:  'POST',
       headers: {
@@ -98,7 +104,9 @@ export async function sendToLangfuse(
       body:   JSON.stringify({ batch: [scrubbed] }),
       signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
     })
-  } catch {
+    recordSuccess('langfuse')
+  } catch (error) {
+    recordFailure('langfuse', classifyError(error))
     // Swallow — telemetry must never block caller.
     // Covers: network failure, AbortSignal.timeout, btoa non-ASCII throw.
   }

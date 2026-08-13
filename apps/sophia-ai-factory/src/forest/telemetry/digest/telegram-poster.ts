@@ -12,6 +12,8 @@
 
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError } from '@/seed/types/failure-kind'
 
 export interface TelegramPostParams {
   tldr: string
@@ -67,6 +69,11 @@ export async function postTelegramDigest(
 
   const text = buildTelegramMessage(params)
 
+  if (!shouldAllowRequest('telegram')) {
+    logger.warn('[digest/telegram] Circuit breaker open for telegram, skipping')
+    return { ok: false, skipped: true, reason: 'circuit_breaker_open' }
+  }
+
   try {
     const res = await fetch(`${TELEGRAM_API}/bot${botToken}/sendMessage`, {
       method: 'POST',
@@ -84,13 +91,16 @@ export async function postTelegramDigest(
         logger.warn('Failed to read response body', { error: String(err), context: 'postTelegramDigest' });
         return '';
       })
+      recordFailure('telegram', classifyError(new Error(`HTTP ${res.status}`)))
       logger.warn('[digest/telegram] sendMessage non-OK', { status: res.status, body: body.slice(0, 200) })
       return { ok: false, reason: `http_${res.status}` }
     }
 
+    recordSuccess('telegram');
     logger.info('[digest/telegram] message sent')
     return { ok: true }
   } catch (err) {
+    recordFailure('telegram', classifyError(err))
     logger.warn('[digest/telegram] sendMessage failed', {
       error: getErrorMessage(err),
     })

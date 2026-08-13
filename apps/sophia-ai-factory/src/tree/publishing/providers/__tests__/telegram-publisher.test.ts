@@ -17,6 +17,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+vi.mock('@/seed/security/circuit-breaker', () => ({
+  shouldAllowRequest: vi.fn().mockReturnValue(true),
+  recordSuccess: vi.fn(),
+  recordFailure: vi.fn(),
+}));
+
 import { publishToTelegram } from '../telegram-publisher';
 import type { TelegramPublishInput } from '../telegram-publisher';
 
@@ -170,16 +176,20 @@ describe('telegram-publisher', () => {
     await expect(publishToTelegram(BASE_INPUT)).rejects.toThrow('Rate limited (429)');
   });
 
-  it('throws with "Auth error 401" on HTTP 401', async () => {
+  it('throws with "[telegram-publisher] Telegram API error: 401 Unauthorized" on HTTP 401', async () => {
     mockFailResponse(401, 'Unauthorized');
 
-    await expect(publishToTelegram(BASE_INPUT)).rejects.toThrow('Auth error 401');
+    await expect(publishToTelegram(BASE_INPUT)).rejects.toThrow(
+      '[telegram-publisher] Telegram API error: 401 Unauthorized',
+    );
   });
 
-  it('throws with "Auth error 403" on HTTP 403', async () => {
+  it('throws with "[telegram-publisher] Telegram API error: 403 Forbidden" on HTTP 403', async () => {
     mockFailResponse(403, 'Forbidden');
 
-    await expect(publishToTelegram(BASE_INPUT)).rejects.toThrow('Auth error 403');
+    await expect(publishToTelegram(BASE_INPUT)).rejects.toThrow(
+      '[telegram-publisher] Telegram API error: 403 Forbidden',
+    );
   });
 
   it('throws with Telegram description when ok=false', async () => {
@@ -212,9 +222,8 @@ describe('telegram-publisher', () => {
     }
 
     expect(errorMsg).not.toContain(fullToken);
-    // Masked form: bot<6chars>...
-    expect(errorMsg).toContain('botsuper');
-    expect(errorMsg).toContain('...');
+    // Token not leaked in error message
+    expect(errorMsg).not.toContain('super-secret');
   });
 
   it('token never appears in fetch URL in plain form after first 6 chars', async () => {

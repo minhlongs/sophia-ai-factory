@@ -5,6 +5,8 @@
  * Falls back to mock responses when MASTODON_INSTANCE_URL is absent.
  */
 
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from '@/seed/types/channel-provider';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -64,7 +66,11 @@ export class MastodonPublisher implements Publisher {
   }
 
   async upload(videoUrl: string, meta: PublishMeta): Promise<string> {
-    if (isMockMode()) {
+    if (!shouldAllowRequest('mastodon')) {
+      throw new Error('[mastodon] Circuit breaker open for mastodon');
+    }
+    try {
+      if (isMockMode()) {
       logger.warn('[MastodonPublisher] Mock mode — MASTODON_INSTANCE_URL missing');
       return `mock_mastodon_${Date.now()}`;
     }
@@ -87,14 +93,21 @@ export class MastodonPublisher implements Publisher {
       } catch (err) {
         logger.warn('Failed to read Mastodon response body', undefined, { error: String(err), context: 'MastodonPublisher.upload' });
       }
+      recordFailure('mastodon', classifyError(new Error(`HTTP ${res.status}`)));
       throw new Error(`Mastodon /api/v1/statuses failed (${res.status}): ${body.slice(0, 300)}`);
     }
 
+    recordSuccess('mastodon');
     const data = (await res.json()) as MastodonStatusResponse;
     if (!data.id) {
       throw new Error(`Mastodon status returned no id: ${data.error ?? 'unknown'}`);
     }
     return data.id;
+    } catch (err) {
+      const kind = classifyError(err);
+      recordFailure('mastodon', kind);
+      throw err;
+    }
   }
 
   async pollStatus(externalPostId: string): Promise<PublishStatus> {

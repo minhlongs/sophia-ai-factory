@@ -5,6 +5,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { classifyError } from '@/seed/types/failure-kind';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 
 const X_AUTHORIZE_URL = 'https://twitter.com/i/oauth2/authorize';
 const X_TOKEN_URL = 'https://api.x.com/2/oauth2/token';
@@ -68,6 +70,10 @@ function basicAuthHeader(): string {
 }
 
 export async function exchangeCodeForTokens(code: string, codeVerifier: string): Promise<TwitterTokenResponse> {
+  if (!shouldAllowRequest('twitter')) {
+    throw new Error('[twitter-oauth] Circuit breaker open for twitter');
+  }
+  try {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
   const res = await fetch(X_TOKEN_URL, {
     method: 'POST',
@@ -91,10 +97,20 @@ export async function exchangeCodeForTokens(code: string, codeVerifier: string):
     }
     throw new Error(`X token exchange failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
-  return res.json() as Promise<TwitterTokenResponse>;
+    recordSuccess('twitter');
+    return res.json() as Promise<TwitterTokenResponse>;
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('[twitter-oauth] Circuit breaker')) throw error;
+    recordFailure('twitter', classifyError(error));
+    throw error;
+  }
 }
 
 export async function refreshAccessToken(refreshToken: string): Promise<TwitterTokenResponse> {
+  if (!shouldAllowRequest('twitter')) {
+    throw new Error('[twitter-oauth] Circuit breaker open for twitter');
+  }
+  try {
   const res = await fetch(X_TOKEN_URL, {
     method: 'POST',
     headers: {
@@ -115,10 +131,20 @@ export async function refreshAccessToken(refreshToken: string): Promise<TwitterT
     }
     throw new Error(`X token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
   }
-  return res.json() as Promise<TwitterTokenResponse>;
+    recordSuccess('twitter');
+    return res.json() as Promise<TwitterTokenResponse>;
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('[twitter-oauth] Circuit breaker')) throw error;
+    recordFailure('twitter', classifyError(error));
+    throw error;
+  }
 }
 
 export async function getUserInfo(accessToken: string): Promise<TwitterUserInfo> {
+  if (!shouldAllowRequest('twitter')) {
+    throw new Error('[twitter-oauth] Circuit breaker open for twitter');
+  }
+  try {
   const res = await fetch(X_USER_ME, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -128,5 +154,11 @@ export async function getUserInfo(accessToken: string): Promise<TwitterUserInfo>
   }
   const json = (await res.json()) as { data?: TwitterUserInfo };
   if (!json.data) throw new Error('X /users/me returned no data');
-  return json.data;
+    recordSuccess('twitter');
+    return json.data;
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('[twitter-oauth] Circuit breaker')) throw error;
+    recordFailure('twitter', classifyError(error));
+    throw error;
+  }
 }

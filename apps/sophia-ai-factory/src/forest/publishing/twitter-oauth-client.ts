@@ -5,6 +5,8 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 const X_AUTHORIZE_URL = 'https://twitter.com/i/oauth2/authorize';
 const X_TOKEN_URL = 'https://api.x.com/2/oauth2/token';
@@ -68,61 +70,93 @@ function basicAuthHeader(): string {
 }
 
 export async function exchangeCodeForTokens(code: string, codeVerifier: string): Promise<TwitterTokenResponse> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const res = await fetch(X_TOKEN_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: basicAuthHeader(),
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: `${appUrl}/api/oauth/twitter/callback`,
-      code_verifier: codeVerifier,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read X token exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
-      return '';
-    });
-    throw new Error(`X token exchange failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+  if (!shouldAllowRequest('twitter')) {
+    throw new Error('[Twitter] Circuit breaker open for twitter');
   }
-  return res.json() as Promise<TwitterTokenResponse>;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+  try {
+    const res = await fetch(X_TOKEN_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: basicAuthHeader(),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: `${appUrl}/api/oauth/twitter/callback`,
+        code_verifier: codeVerifier,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read X token exchange response', { error: String(err), context: 'exchangeCodeForTokens' });
+        return '';
+      });
+      recordFailure('twitter', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`X token exchange failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    }
+    recordSuccess('twitter');
+    return res.json() as Promise<TwitterTokenResponse>;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('twitter', classifyError(error));
+    throw error;
+  }
 }
 
 export async function refreshAccessToken(refreshToken: string): Promise<TwitterTokenResponse> {
-  const res = await fetch(X_TOKEN_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: basicAuthHeader(),
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read X token refresh response', { error: String(err), context: 'refreshAccessToken' });
-      return '';
-    });
-    throw new Error(`X token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+  if (!shouldAllowRequest('twitter')) {
+    throw new Error('[Twitter] Circuit breaker open for twitter');
   }
-  return res.json() as Promise<TwitterTokenResponse>;
+  try {
+    const res = await fetch(X_TOKEN_URL, {
+      method: 'POST',
+      headers: {
+        Authorization: basicAuthHeader(),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      }),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read X token refresh response', { error: String(err), context: 'refreshAccessToken' });
+        return '';
+      });
+      recordFailure('twitter', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`X token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    }
+    recordSuccess('twitter');
+    return res.json() as Promise<TwitterTokenResponse>;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('twitter', classifyError(error));
+    throw error;
+  }
 }
 
 export async function getUserInfo(accessToken: string): Promise<TwitterUserInfo> {
-  const res = await fetch(X_USER_ME, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!res.ok) {
-    logger.error('[twitter-oauth] getUserInfo failed', new Error(`HTTP ${res.status}`));
-    throw new Error(`X /users/me failed: HTTP ${res.status}`);
+  if (!shouldAllowRequest('twitter')) {
+    throw new Error('[Twitter] Circuit breaker open for twitter');
   }
-  const json = (await res.json()) as { data?: TwitterUserInfo };
-  if (!json.data) throw new Error('X /users/me returned no data');
-  return json.data;
+  try {
+    const res = await fetch(X_USER_ME, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!res.ok) {
+      recordFailure('twitter', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`X /users/me failed: HTTP ${res.status}`);
+    }
+    recordSuccess('twitter');
+    const json = (await res.json()) as { data?: TwitterUserInfo };
+    if (!json.data) throw new Error('X /users/me returned no data');
+    return json.data;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('twitter', classifyError(error));
+    throw error;
+  }
 }

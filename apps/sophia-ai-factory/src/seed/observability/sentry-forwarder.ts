@@ -10,6 +10,9 @@
  * @module lib/observability/sentry-forwarder
  */
 
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError } from '@/seed/types/failure-kind'
+
 export interface SentryForwardEvent {
   level: 'error' | 'warning'
   message: string
@@ -111,6 +114,10 @@ export async function forwardToSentry(evt: SentryForwardEvent): Promise<void> {
   const envelope = `${envelopeHeader}\n${itemHeader}\n${body}`
 
   try {
+    if (!shouldAllowRequest('sentry')) {
+      // Circuit open — fail-soft, don't block caller
+      return
+    }
     await fetch(`${endpoint}/api/${projectId}/envelope/`, {
       method: 'POST',
       headers: {
@@ -120,7 +127,9 @@ export async function forwardToSentry(evt: SentryForwardEvent): Promise<void> {
       body: envelope,
       signal: AbortSignal.timeout(2000),
     })
-  } catch {
+    recordSuccess('sentry')
+  } catch (error) {
+    recordFailure('sentry', classifyError(error))
     // Fire-and-forget — silently discard
   }
 }

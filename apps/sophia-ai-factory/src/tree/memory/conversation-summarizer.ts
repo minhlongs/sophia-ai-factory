@@ -10,6 +10,8 @@
  * Layer rule: tree → seed only. No imports from forest/ or land/.
  */
 
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import type { ChatMessage } from '@/seed/ai/provider-interface';
 import { logger } from '@/seed/utils/logger-utility';
 

@@ -5,6 +5,8 @@
  * @module lib/audit/checks/provider-connectivity
  */
 
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import type { CheckResult, AuditEnv } from '@/tree/audit/zero-gap-types'
 
 interface ProviderResult {
@@ -15,6 +17,9 @@ interface ProviderResult {
 
 async function checkHeyGen(apiKey?: string): Promise<ProviderResult> {
   if (!apiKey) return { name: 'HeyGen', ok: false, detail: 'HEYGEN_API_KEY not configured' }
+  if (!shouldAllowRequest('heygen')) {
+    return { name: 'HeyGen', ok: false, detail: 'Circuit breaker open for heygen' }
+  }
   try {
     const controller = new AbortController()
     setTimeout(() => controller.abort(), 8000)
@@ -22,14 +27,19 @@ async function checkHeyGen(apiKey?: string): Promise<ProviderResult> {
       headers: { 'X-Api-Key': apiKey },
       signal: controller.signal,
     })
+    recordSuccess('heygen');
     return { name: 'HeyGen', ok: res.status === 200, detail: `HTTP ${res.status}` }
-  } catch {
+  } catch (error) {
+    recordFailure('heygen', classifyError(error));
     return { name: 'HeyGen', ok: false, detail: 'Connection timeout or refused' }
   }
 }
 
 async function checkResend(apiKey?: string): Promise<ProviderResult> {
   if (!apiKey) return { name: 'Resend', ok: false, detail: 'RESEND_API_KEY not configured' }
+  if (!shouldAllowRequest('resend')) {
+    return { name: 'Resend', ok: false, detail: 'Circuit breaker open for resend' }
+  }
   try {
     const controller = new AbortController()
     setTimeout(() => controller.abort(), 8000)
@@ -37,19 +47,26 @@ async function checkResend(apiKey?: string): Promise<ProviderResult> {
       headers: { Authorization: `Bearer ${apiKey}` },
       signal: controller.signal,
     })
+    recordSuccess('resend');
     return { name: 'Resend', ok: res.status === 200, detail: `HTTP ${res.status}` }
-  } catch {
+  } catch (error) {
+    recordFailure('resend', classifyError(error));
     return { name: 'Resend', ok: false, detail: 'Connection timeout or refused' }
   }
 }
 
 async function checkNowPayments(): Promise<ProviderResult> {
+  if (!shouldAllowRequest('nowpayments')) {
+    return { name: 'NOWPayments', ok: false, detail: 'Circuit breaker open for nowpayments' }
+  }
   try {
     const controller = new AbortController()
     setTimeout(() => controller.abort(), 8000)
     const res = await fetch('https://api.nowpayments.io/v1/status', { signal: controller.signal })
+    recordSuccess('nowpayments');
     return { name: 'NOWPayments', ok: res.status === 200, detail: `HTTP ${res.status}` }
-  } catch {
+  } catch (error) {
+    recordFailure('nowpayments', classifyError(error));
     return { name: 'NOWPayments', ok: false, detail: 'Connection timeout or refused' }
   }
 }

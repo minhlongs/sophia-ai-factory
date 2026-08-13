@@ -9,6 +9,8 @@
 import { createServerClient } from '@/seed/db/client';
 import { hmacSha256 } from '@/tree/audit/crypto-utils';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 interface MissionRow {
   id: string;
@@ -68,6 +70,11 @@ export async function fireMissionWebhook(missionId: string, url: string): Promis
 
   const signature = signingSecret ? hmacSha256(payload, signingSecret) : '';
 
+  if (!shouldAllowRequest('webhooks')) {
+    logger.warn('[Webhook] Circuit breaker open for webhooks, skipping delivery', { missionId, url });
+    return;
+  }
+
   let lastError: string | null = null;
 
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -84,6 +91,7 @@ export async function fireMissionWebhook(missionId: string, url: string): Promis
 
       const resp = await fetch(url, { method: 'POST', headers, body: payload });
       if (resp.ok) {
+        recordSuccess('webhooks');
         // Mark fired
         await db
           .from('engine_missions')
@@ -93,8 +101,10 @@ export async function fireMissionWebhook(missionId: string, url: string): Promis
         return;
       }
       lastError = `HTTP ${resp.status}`;
+      recordFailure('webhooks', classifyError(new Error(`HTTP ${resp.status}`)));
     } catch (err) {
       lastError = err instanceof Error ? err.message : String(err);
+      recordFailure('webhooks', classifyError(err));
     }
   }
 

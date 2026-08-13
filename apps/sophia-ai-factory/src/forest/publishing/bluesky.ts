@@ -8,6 +8,8 @@
 
 import type { Publisher, PublishMeta, PublishStatus, MetricsJson } from './publisher-interface';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 const DEFAULT_PDS = 'https://bsky.social';
 const MAX_POST_LENGTH = 300;
@@ -46,6 +48,9 @@ export class BlueskyPublisher implements Publisher {
       logger.warn('[BlueskyPublisher] Mock mode — BLUESKY_PDS_URL missing');
       return `mock_bluesky_${Date.now()}`;
     }
+    if (!shouldAllowRequest('bluesky')) {
+      throw new Error('[BlueskyPublisher] Circuit breaker open for bluesky');
+    }
 
     const text = buildPostText(meta);
     const createdAt = new Date().toISOString();
@@ -81,34 +86,42 @@ export class BlueskyPublisher implements Publisher {
     };
     if (facets.length > 0) record.facets = facets;
 
-    const res = await fetch(`${this.pdsUrl}/xrpc/com.atproto.repo.createRecord`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.accessJwt}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        repo: this.did,
-        collection: 'app.bsky.feed.post',
-        record,
-      }),
-    });
-
-    if (!res.ok) {
-      const body = await res.text().catch((err) => {
-        logger.warn('Failed to read Bluesky createRecord response', { error: String(err), context: 'BlueskyPublisher.upload' });
-        return '';
+    try {
+      const res = await fetch(`${this.pdsUrl}/xrpc/com.atproto.repo.createRecord`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.accessJwt}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          repo: this.did,
+          collection: 'app.bsky.feed.post',
+          record,
+        }),
       });
-      throw new Error(`Bluesky createRecord failed (${res.status}): ${body.slice(0, 300)}`);
-    }
 
-    const data = (await res.json()) as AtprotoCreateRecordResponse;
-    if (!data.uri) {
-      throw new Error(`Bluesky createRecord returned no uri: ${data.message ?? data.error ?? 'unknown'}`);
+      if (!res.ok) {
+        const body = await res.text().catch((err) => {
+          logger.warn('Failed to read Bluesky createRecord response', { error: String(err), context: 'BlueskyPublisher.upload' });
+          return '';
+        });
+        recordFailure('bluesky', classifyError(new Error(`HTTP ${res.status}`)));
+        throw new Error(`Bluesky createRecord failed (${res.status}): ${body.slice(0, 300)}`);
+      }
+
+      recordSuccess('bluesky');
+      const data = (await res.json()) as AtprotoCreateRecordResponse;
+      if (!data.uri) {
+        throw new Error(`Bluesky createRecord returned no uri: ${data.message ?? data.error ?? 'unknown'}`);
+      }
+      // uri format: at://did:plc:xxx/app.bsky.feed.post/rkey — use rkey as external post id
+      const rkey = data.uri.split('/').pop() ?? data.uri;
+      return rkey;
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+      recordFailure('bluesky', classifyError(error));
+      throw error;
     }
-    // uri format: at://did:plc:xxx/app.bsky.feed.post/rkey — use rkey as external post id
-    const rkey = data.uri.split('/').pop() ?? data.uri;
-    return rkey;
   }
 
   async pollStatus(externalPostId: string): Promise<PublishStatus> {
@@ -129,37 +142,48 @@ export async function createAtprotoSession(
   appPassword: string,
   pdsUrl?: string,
 ): Promise<{ accessJwt: string; refreshJwt: string; did: string; handle: string }> {
+  if (!shouldAllowRequest('bluesky')) {
+    throw new Error('[Bluesky] Circuit breaker open for bluesky');
+  }
   const base = (pdsUrl ?? process.env.BLUESKY_PDS_URL ?? DEFAULT_PDS).replace(/\/$/, '');
-  const res = await fetch(`${base}/xrpc/com.atproto.server.createSession`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ identifier, password: appPassword }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read Bluesky createSession response', { error: String(err), context: 'createAtprotoSession' });
-      return '';
+  try {
+    const res = await fetch(`${base}/xrpc/com.atproto.server.createSession`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier, password: appPassword }),
     });
-    throw new Error(`Bluesky createSession failed (${res.status}): ${body.slice(0, 200)}`);
+    if (!res.ok) {
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read Bluesky createSession response', { error: String(err), context: 'createAtprotoSession' });
+        return '';
+      });
+      recordFailure('bluesky', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`Bluesky createSession failed (${res.status}): ${body.slice(0, 200)}`);
+    }
+    recordSuccess('bluesky');
+    const data = (await res.json()) as {
+      accessJwt?: string;
+      refreshJwt?: string;
+      did?: string;
+      handle?: string;
+      error?: string;
+      message?: string;
+    };
+    if (!data.accessJwt || !data.did) {
+      throw new Error(`Bluesky createSession returned no session: ${data.message ?? data.error ?? 'unknown'}`);
+    }
+    logger.info('[bluesky] Session created', { did: data.did });
+    return {
+      accessJwt: data.accessJwt,
+      refreshJwt: data.refreshJwt ?? '',
+      did: data.did,
+      handle: data.handle ?? identifier,
+    };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('bluesky', classifyError(error));
+    throw error;
   }
-  const data = (await res.json()) as {
-    accessJwt?: string;
-    refreshJwt?: string;
-    did?: string;
-    handle?: string;
-    error?: string;
-    message?: string;
-  };
-  if (!data.accessJwt || !data.did) {
-    throw new Error(`Bluesky createSession returned no session: ${data.message ?? data.error ?? 'unknown'}`);
-  }
-  logger.info('[bluesky] Session created', { did: data.did });
-  return {
-    accessJwt: data.accessJwt,
-    refreshJwt: data.refreshJwt ?? '',
-    did: data.did,
-    handle: data.handle ?? identifier,
-  };
 }
 
 /** Refresh an AT Protocol session using refreshJwt. */
@@ -167,27 +191,38 @@ export async function refreshAtprotoSession(
   refreshJwt: string,
   pdsUrl?: string,
 ): Promise<{ accessJwt: string; refreshJwt: string; did: string }> {
-  const base = (pdsUrl ?? process.env.BLUESKY_PDS_URL ?? DEFAULT_PDS).replace(/\/$/, '');
-  const res = await fetch(`${base}/xrpc/com.atproto.server.refreshSession`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${refreshJwt}` },
-  });
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read Bluesky refreshSession response', { error: String(err), context: 'refreshAtprotoSession' });
-      return '';
-    });
-    throw new Error(`Bluesky refreshSession failed (${res.status}): ${body.slice(0, 200)}`);
+  if (!shouldAllowRequest('bluesky')) {
+    throw new Error('[Bluesky] Circuit breaker open for bluesky');
   }
-  const data = (await res.json()) as {
-    accessJwt?: string;
-    refreshJwt?: string;
-    did?: string;
-  };
-  if (!data.accessJwt || !data.did) throw new Error('Bluesky refreshSession returned no tokens');
-  return {
-    accessJwt: data.accessJwt,
-    refreshJwt: data.refreshJwt ?? refreshJwt,
-    did: data.did,
-  };
+  const base = (pdsUrl ?? process.env.BLUESKY_PDS_URL ?? DEFAULT_PDS).replace(/\/$/, '');
+  try {
+    const res = await fetch(`${base}/xrpc/com.atproto.server.refreshSession`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${refreshJwt}` },
+    });
+    if (!res.ok) {
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read Bluesky refreshSession response', { error: String(err), context: 'refreshAtprotoSession' });
+        return '';
+      });
+      recordFailure('bluesky', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`Bluesky refreshSession failed (${res.status}): ${body.slice(0, 200)}`);
+    }
+    recordSuccess('bluesky');
+    const data = (await res.json()) as {
+      accessJwt?: string;
+      refreshJwt?: string;
+      did?: string;
+    };
+    if (!data.accessJwt || !data.did) throw new Error('Bluesky refreshSession returned no tokens');
+    return {
+      accessJwt: data.accessJwt,
+      refreshJwt: data.refreshJwt ?? refreshJwt,
+      did: data.did,
+    };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('bluesky', classifyError(error));
+    throw error;
+  }
 }

@@ -16,6 +16,8 @@
  *     (check telegram_paired_chats table for a valid chat_id)
  */
 
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import { logger } from '@/seed/utils/logger-utility';
 import { Tier } from '@/seed/types';
 

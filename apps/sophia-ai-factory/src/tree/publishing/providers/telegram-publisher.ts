@@ -18,6 +18,8 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 import { escapeMarkdownV2, truncateMarkdownV2Safely } from '@/tree/telegram/format-markdown-v2';
 
 const TELEGRAM_API = 'https://api.telegram.org';
@@ -116,6 +118,9 @@ export async function publishToTelegram(
   input: TelegramPublishInput,
 ): Promise<TelegramPublishResult> {
   const { jobId, videoUrl, caption, chatId } = input;
+  if (!shouldAllowRequest('telegram')) {
+    throw new Error('[telegram-publisher] Circuit breaker open for telegram');
+  }
 
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) {
@@ -124,6 +129,10 @@ export async function publishToTelegram(
 
   if (!chatId) {
     throw new Error('[telegram-publisher] chatId is empty — pairing may have been revoked');
+  }
+
+  if (!shouldAllowRequest('telegram')) {
+    throw new Error('[telegram-publisher] Circuit breaker open for telegram');
   }
 
   const safeCaption = caption ? sanitizeCaption(caption) : '';
@@ -150,6 +159,7 @@ export async function publishToTelegram(
       body: JSON.stringify(payload),
     });
   } catch (err) {
+    recordFailure('telegram', classifyError(err));
     throw new Error(`[telegram-publisher] Network error: ${getErrorMessage(err)}`);
   }
 
@@ -168,8 +178,9 @@ export async function publishToTelegram(
       // ignore parse failure
     }
     const retryAfterSec = bodyRetry ?? (Number.isFinite(headerRetry) ? headerRetry : 60);
+    recordFailure('telegram', classifyError(new Error('rate_limited')));
     throw new TelegramApiError(
-      `[telegram-publisher] Rate limited (429). Retry-After: ${retryAfterSec}s. Token: ${maskToken(token)}`,
+      `[telegram-publisher] Rate limited (429). Retry-After: ${retryAfterSec}s.`,
       { status: 429, retryAfterSec, bodySnippet: bodyText.slice(0, 200) },
     );
   }
@@ -179,9 +190,9 @@ export async function publishToTelegram(
       logger.warn('Failed to read Telegram 401/403 response', { error: String(err), context: 'publishToTelegram' });
       return '';
     });
+    recordFailure('telegram', classifyHttpStatus(res.status));
     throw new TelegramApiError(
-      `[telegram-publisher] Auth error ${res.status} — token may be invalid or bot lacks admin rights in channel. ` +
-        `Token: ${maskToken(token)}. Response: ${body.slice(0, 200)}`,
+      `[telegram-publisher] Telegram API error: ${res.status} ${body.slice(0, 200)}`,
       { status: res.status, bodySnippet: body.slice(0, 200) },
     );
   }
@@ -194,15 +205,17 @@ export async function publishToTelegram(
     try {
       body = await res.text();
     } catch (err) {
-      logger.warn('Failed to read Telegram response body after parse failure', undefined, { error: String(err), context: 'publishToTelegram' });
+      logger.warn('[TelegramPublisher] Failed to read response body after parse failure', { error: String(err) });
     }
+    recordFailure('telegram', classifyHttpStatus(res.status));
     throw new TelegramApiError(
-      `[telegram-publisher] Failed to parse Telegram response (HTTP ${res.status}): ${body.slice(0, 200)}`,
+      `[telegram-publisher] Failed to parse Telegram response: ${body.slice(0, 200) || 'empty body'}`,
       { status: res.status, bodySnippet: body.slice(0, 200) },
     );
   }
 
   if (!data.ok || !data.result) {
+    recordFailure('telegram', classifyHttpStatus(res.status));
     throw new TelegramApiError(
       `[telegram-publisher] Telegram API error: ${data.description ?? 'unknown'} ` +
         `(code ${data.error_code ?? res.status})`,
@@ -229,6 +242,7 @@ export async function publishToTelegram(
   }
 
   logger.info('[telegram-publisher] Video posted', { jobId, chatId, messageId, externalUrl });
+  recordSuccess('telegram');
 
   return {
     externalPostId: String(messageId),

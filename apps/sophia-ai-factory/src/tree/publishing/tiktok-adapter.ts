@@ -1,3 +1,5 @@
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import type { PlatformAdapter, PublishParams, PublishResult, PublishStatus } from './platform-adapter';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -8,7 +10,11 @@ export const tiktokAdapter: PlatformAdapter = {
   platform: 'tiktok',
 
   async uploadVideo(accessToken: string, params: PublishParams): Promise<PublishResult> {
-    const videoRes = await fetch(params.videoUrl);
+    if (!shouldAllowRequest('tiktok')) {
+      throw new Error('[tiktok-adapter] Circuit breaker open for tiktok');
+    }
+    try {
+      const videoRes = await fetch(params.videoUrl);
     if (!videoRes.ok) throw new Error(`Failed to fetch video from ${params.videoUrl}`);
     const videoBuffer = await videoRes.arrayBuffer();
 
@@ -64,6 +70,11 @@ export const tiktokAdapter: PlatformAdapter = {
       platformVideoId: initData.data.publish_id,
       status: 'processing',
     };
+    } catch (err) {
+      const kind = classifyError(err);
+      recordFailure('tiktok', kind);
+      throw err;
+    }
   },
 
   async checkStatus(

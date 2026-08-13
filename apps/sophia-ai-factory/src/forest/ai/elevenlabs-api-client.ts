@@ -9,6 +9,8 @@ import { logger } from '@/seed/utils/logger-utility';
 import { Tier } from '@/seed/types';
 import { withTimeout } from '@/tree/byok/with-timeout';
 import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/seed/services/errors';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 /** Get default voice ID based on tier (ElevenLabs pre-made voice IDs) */
 export function getDefaultVoiceId(tier: Tier): string {
@@ -51,45 +53,56 @@ export async function generateElevenLabsVoiceover(
   apiKey: string,
   voiceId?: string
 ): Promise<VoiceoverOutput> {
+  if (!shouldAllowRequest('elevenlabs')) {
+    throw new Error('[ElevenLabs] Circuit breaker open for elevenlabs');
+  }
   const defaultVoiceId = voiceId || getDefaultVoiceId(tier);
   const url = `https://api.elevenlabs.io/v1/text-to-speech/${defaultVoiceId}`;
 
-  const response = await withTimeout(url, {
-    method: 'POST',
-    headers: {
-      'Accept': 'audio/mpeg',
-      'Content-Type': 'application/json',
-      'xi-api-key': apiKey,
-    },
-    body: JSON.stringify({
-      text,
-      model_id: tier === 'ENTERPRISE' ? 'eleven_multilingual_v2' : 'eleven_monolingual_v1',
-      voice_settings: {
-        stability: 0.5,
-        similarity_boost: 0.75,
-        style: tier === 'ENTERPRISE' ? 0.5 : 0.0,
-        use_speaker_boost: tier !== 'BASIC',
+  try {
+    const response = await withTimeout(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'audio/mpeg',
+        'Content-Type': 'application/json',
+        'xi-api-key': apiKey,
       },
-    }),
-    provider: 'elevenlabs',
-  });
+      body: JSON.stringify({
+        text,
+        model_id: tier === 'ENTERPRISE' ? 'eleven_multilingual_v2' : 'eleven_monolingual_v1',
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75,
+          style: tier === 'ENTERPRISE' ? 0.5 : 0.0,
+          use_speaker_boost: tier !== 'BASIC',
+        },
+      }),
+      provider: 'elevenlabs',
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    if (response.status === 401 || response.status === 403) {
-      throw new ProviderInvalidKeyError('elevenlabs', errorText);
+    if (!response.ok) {
+      const errorText = await response.text();
+      recordFailure('elevenlabs', classifyError(new Error(`HTTP ${response.status}`)));
+      if (response.status === 401 || response.status === 403) {
+        throw new ProviderInvalidKeyError('elevenlabs', errorText);
+      }
+      if (response.status === 429 || response.status === 402) {
+        throw new ProviderQuotaExceededError('elevenlabs', errorText);
+      }
+      throw new Error(`ElevenLabs API failed: ${response.status} - ${errorText}`);
     }
-    if (response.status === 429 || response.status === 402) {
-      throw new ProviderQuotaExceededError('elevenlabs', errorText);
-    }
-    throw new Error(`ElevenLabs API failed: ${response.status} - ${errorText}`);
+
+    recordSuccess('elevenlabs');
+    const audioBuffer = await response.arrayBuffer();
+    const audioUrl = await uploadAudioToStorage(new Uint8Array(audioBuffer));
+    const estimatedDuration = Math.floor(text.length / 15);
+
+    return { audio_url: audioUrl, duration: estimatedDuration };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('elevenlabs', classifyError(error));
+    throw error;
   }
-
-  const audioBuffer = await response.arrayBuffer();
-  const audioUrl = await uploadAudioToStorage(new Uint8Array(audioBuffer));
-  const estimatedDuration = Math.floor(text.length / 15);
-
-  return { audio_url: audioUrl, duration: estimatedDuration };
 }
 
 /** Mock voiceover generator for fallback when API key is absent or call fails */

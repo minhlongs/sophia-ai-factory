@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
 import { getWAEBinding } from '@/seed/observability/telemetry/wae-client';
 import { emitBurnRateAlert } from '@/seed/observability/telemetry/sentry-metrics';
+import { logger } from '@/seed/utils/logger-utility';
 import type { AnalyticsEngineDataset } from '@cloudflare/workers-types';
 
 interface SLOConfig {
@@ -83,7 +84,7 @@ interface WAEBinding {
 async function fetchWAEData(env: { WAE?: AnalyticsEngineDataset }, startTime: number, endTime: number): Promise<WAERow[]> {
   const wae = getWAEBinding(env);
   if (!wae) {
-    console.log('[SLO Cron] WAE binding not available');
+    logger.info('[SLO Cron] WAE binding not available');
     return [];
   }
 
@@ -265,7 +266,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         totalRequests: metrics.totalRequests,
       });
     } catch (err) {
-      console.error(`[SLO Cron] Failed to compute burn rate for ${slo.name}:`, err);
+      logger.error(`[SLO Cron] Failed to compute burn rate for ${slo.name}:`, err as Error);
       results.push({
         slo: slo.name,
         error: String(err),

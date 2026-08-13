@@ -12,6 +12,8 @@
 
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError } from '@/seed/types/failure-kind'
 
 export interface TelegramPostParams {
   tldr: string
@@ -57,6 +59,9 @@ export function buildTelegramMessage(params: TelegramPostParams): string {
 export async function postTelegramDigest(
   params: TelegramPostParams,
 ): Promise<TelegramPostResult> {
+  if (!shouldAllowRequest('telegram')) {
+    return { ok: false, reason: 'Circuit breaker open for telegram' }
+  }
   const botToken = process.env.TELEGRAM_BOT_TOKEN
   const chatId = process.env.TELEGRAM_CHAT_ID
 
@@ -85,12 +90,15 @@ export async function postTelegramDigest(
         return '';
       })
       logger.warn('[digest/telegram] sendMessage non-OK', { status: res.status, body: body.slice(0, 200) })
+      recordFailure('telegram', classifyError(new Error(`HTTP ${res.status}`)))
       return { ok: false, reason: `http_${res.status}` }
     }
 
     logger.info('[digest/telegram] message sent')
+    recordSuccess('telegram')
     return { ok: true }
   } catch (err) {
+    recordFailure('telegram', classifyError(err))
     logger.warn('[digest/telegram] sendMessage failed', {
       error: getErrorMessage(err),
     })

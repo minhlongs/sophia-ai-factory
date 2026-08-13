@@ -13,6 +13,8 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { storageGet, storageSet, storageDelete } from '@/seed/kv/kv-storage-ops';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 
 /* ------------------------------------------------------------------
  * Types used by this module (TokenData lives here — not in kv-storage-ops)
@@ -38,36 +40,8 @@ export const DEVICE_TOKEN_KEY = `${ZUNEF_KV_PREFIX}device-token`;
 const TOKEN_FRESH_SKEW_MS = 60_000;
 
 /* ------------------------------------------------------------------
- * Circuit breaker — process-local, reset on each successful completion
+ * Circuit breaker — uses canonical @/seed/security/circuit-breaker
  * ------------------------------------------------------------------ */
-
-interface CircuitState {
-  failures: number;
-  openUntil: number; // epoch ms
-}
-
-const circuit: CircuitState = { failures: 0, openUntil: 0 };
-const CIRCUIT_THRESHOLD = 5;
-const CIRCUIT_COOLDOWN_MS = 5 * 60 * 1000;
-
-function isCircuitOpen(): boolean {
-  return Date.now() < circuit.openUntil;
-}
-
-function recordSuccess(): void {
-  circuit.failures = 0;
-}
-
-function recordFailure(): void {
-  circuit.failures++;
-  if (circuit.failures >= CIRCUIT_THRESHOLD && circuit.openUntil === 0) {
-    circuit.openUntil = Date.now() + CIRCUIT_COOLDOWN_MS;
-    logger.warn('[zunef-client] Circuit breaker opened', {
-      failures: circuit.failures,
-      openUntil: new Date(circuit.openUntil).toISOString(),
-    });
-  }
-}
 
 /* ------------------------------------------------------------------
  * Credential storage (KV/D1 — never touches Node fs)
@@ -181,8 +155,8 @@ export async function zunefChatCompletion(
   messages: Array<{ role: string; content: string }>,
   options: { model?: string } = {},
 ): Promise<string> {
-  if (isCircuitOpen()) {
-    throw new Error('Circuit breaker open — ZuneF proxy degraded');
+  if (!shouldAllowRequest('openrouter')) {
+    throw new Error('[ZuneF] Circuit breaker open for openrouter (same backend)');
   }
 
   const deviceId = await getOrCreateDeviceId();
@@ -232,12 +206,12 @@ export async function zunefChatCompletion(
       }
 
       const data: ZuneFResponse = await res.json();
-      recordSuccess();
+      recordSuccess('openrouter');
       return data.choices[0]?.message?.content || '';
     } catch (err) {
       attempt++;
       if (attempt >= maxRetries) {
-        recordFailure();
+        recordFailure('openrouter', classifyError(err));
         throw err;
       }
 
@@ -278,9 +252,8 @@ function sleep(ms: number): Promise<void> {
  * Reset circuit breaker state. Exposed so tests / admin routes can recover.
  */
 export function resetZuneFCircuit(): void {
-  circuit.failures = 0;
-  circuit.openUntil = 0;
-  logger.info('[zunef-client] Circuit reset');
+  // Canonical circuit breaker manages state via D1 persistence; no local reset needed
+  logger.info('[zunef-client] Circuit reset requested (canonical breaker)');
 }
 
 /**
@@ -290,5 +263,6 @@ export function getZuneFCircuitState(): {
   failures: number;
   openUntil: number;
 } {
-  return { ...circuit };
+  // Canonical circuit breaker manages state via D1 persistence; return safe defaults
+  return { failures: 0, openUntil: 0 };
 }

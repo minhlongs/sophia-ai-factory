@@ -12,6 +12,8 @@ import { getD1, createServerClient } from '@/seed/db/client';
 import { encryptToken, decryptToken } from './token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import { refreshAccessToken as refreshTikTok } from '@/land/tiktok/tiktok-token-manager';
 import { refreshAccessToken as refreshYouTube } from '@/land/youtube/youtube-oauth-client';
 import { refreshAccessToken as refreshTwitter } from '@/land/video/publishing/providers/twitter-oauth-client';
@@ -31,114 +33,158 @@ const LOCK_STALE_S = 600; // 10 minutes
 async function refreshInstagramLongLivedToken(
   currentToken: string,
 ): Promise<{ access_token: string; expires_in: number }> {
+  if (!shouldAllowRequest('instagram')) {
+    throw new Error('[Instagram] Circuit breaker open for instagram');
+  }
   const appId = process.env.INSTAGRAM_APP_ID;
   const appSecret = process.env.INSTAGRAM_APP_SECRET;
   if (!appId || !appSecret) {
     throw new Error('INSTAGRAM_APP_ID / INSTAGRAM_APP_SECRET not configured');
   }
-  const res = await fetch(
-    `https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${currentToken}`,
-  );
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
-      return '';
-    });
-    throw new Error(`Instagram token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+  try {
+    const res = await fetch(
+      `https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${currentToken}`,
+    );
+    if (!res.ok) {
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
+        return '';
+      });
+      recordFailure('instagram', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`Instagram token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    }
+    recordSuccess('instagram');
+    return res.json() as Promise<{ access_token: string; expires_in: number }>;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('instagram', classifyError(error));
+    throw error;
   }
-  return res.json() as Promise<{ access_token: string; expires_in: number }>;
 }
 
 /** Pinterest: standard OAuth2 refresh_token grant */
 async function refreshPinterestToken(
   refreshToken: string,
 ): Promise<{ access_token: string; expires_in: number }> {
+  if (!shouldAllowRequest('pinterest')) {
+    throw new Error('[Pinterest] Circuit breaker open for pinterest');
+  }
   const clientId = process.env.PINTEREST_CLIENT_ID;
   const clientSecret = process.env.PINTEREST_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     throw new Error('PINTEREST_CLIENT_ID / PINTEREST_CLIENT_SECRET not configured');
   }
   const credentials = btoa(`${clientId}:${clientSecret}`);
-  const res = await fetch('https://api.pinterest.com/v5/oauth/token', {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${credentials}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
-      return '';
+  try {
+    const res = await fetch('https://api.pinterest.com/v5/oauth/token', {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${credentials}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ grant_type: 'refresh_token', refresh_token: refreshToken }),
     });
-    throw new Error(`Pinterest token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    if (!res.ok) {
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
+        return '';
+      });
+      recordFailure('pinterest', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`Pinterest token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    }
+    recordSuccess('pinterest');
+    return res.json() as Promise<{ access_token: string; expires_in: number }>;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('pinterest', classifyError(error));
+    throw error;
   }
-  return res.json() as Promise<{ access_token: string; expires_in: number }>;
 }
 
 /** LinkedIn: standard OAuth2 refresh_token grant */
 async function refreshLinkedInToken(
   refreshToken: string,
 ): Promise<{ access_token: string; expires_in: number }> {
+  if (!shouldAllowRequest('linkedin')) {
+    throw new Error('[LinkedIn] Circuit breaker open for linkedin');
+  }
   const clientId = process.env.LINKEDIN_CLIENT_ID;
   const clientSecret = process.env.LINKEDIN_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
     throw new Error('LINKEDIN_CLIENT_ID / LINKEDIN_CLIENT_SECRET not configured');
   }
-  const res = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-      client_id: clientId,
-      client_secret: clientSecret,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
-      return '';
+  try {
+    const res = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
     });
-    throw new Error(`LinkedIn token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    if (!res.ok) {
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
+        return '';
+      });
+      recordFailure('linkedin', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`LinkedIn token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    }
+    recordSuccess('linkedin');
+    return res.json() as Promise<{ access_token: string; expires_in: number }>;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('linkedin', classifyError(error));
+    throw error;
   }
-  return res.json() as Promise<{ access_token: string; expires_in: number }>;
 }
 
 /** Zalo OA: standard OAuth2 refresh_token grant */
 async function refreshZaloToken(
   refreshToken: string,
 ): Promise<{ access_token: string; expires_in: number }> {
+  if (!shouldAllowRequest('zalo')) {
+    throw new Error('[Zalo] Circuit breaker open for zalo');
+  }
   const appId = process.env.ZALO_APP_ID;
   const appSecret = process.env.ZALO_APP_SECRET;
   if (!appId || !appSecret) {
     throw new Error('ZALO_APP_ID / ZALO_APP_SECRET not configured');
   }
-  const res = await fetch('https://oauth.zaloapp.com/v4/oa/access_token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      secret_key: appSecret,
-    },
-    body: new URLSearchParams({
-      app_id: appId,
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
-      return '';
+  try {
+    const res = await fetch('https://oauth.zaloapp.com/v4/oa/access_token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        secret_key: appSecret,
+      },
+      body: new URLSearchParams({
+        app_id: appId,
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      }),
     });
-    throw new Error(`Zalo token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    if (!res.ok) {
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
+        return '';
+      });
+      recordFailure('zalo', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`Zalo token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    }
+    const data = (await res.json()) as { access_token?: string; expires_in?: number; error?: number; message?: string };
+    if (data.error && data.error !== 0) {
+      throw new Error(`Zalo token refresh error ${data.error}: ${data.message ?? 'unknown'}`);
+    }
+    recordSuccess('zalo');
+    return { access_token: data.access_token ?? '', expires_in: data.expires_in ?? 86400 };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('zalo', classifyError(error));
+    throw error;
   }
-  const data = (await res.json()) as { access_token?: string; expires_in?: number; error?: number; message?: string };
-  if (data.error && data.error !== 0) {
-    throw new Error(`Zalo token refresh error ${data.error}: ${data.message ?? 'unknown'}`);
-  }
-  return { access_token: data.access_token ?? '', expires_in: data.expires_in ?? 86400 };
 }
 
 /**
@@ -218,33 +264,45 @@ async function refreshMastodonToken(
     return { accessToken: decryptedToken, expiresIn: 365 * 24 * 3600, rotatedRefreshToken: null };
   }
 
-  const res = await fetch(`${normalizedInstance}/oauth/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: mastodonClientId,
-      client_secret: mastodonClientSecret,
-      grant_type: 'refresh_token',
-      refresh_token: refreshToken,
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch((err) => {
-      logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
-      return '';
-    });
-    throw new Error(`Mastodon token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+  if (!shouldAllowRequest('mastodon')) {
+    throw new Error('[Mastodon] Circuit breaker open for mastodon');
   }
 
-  const data = (await res.json()) as { access_token?: string; expires_in?: number; refresh_token?: string };
-  if (!data.access_token) throw new Error('Mastodon token refresh returned no access_token');
+  try {
+    const res = await fetch(`${normalizedInstance}/oauth/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: mastodonClientId,
+        client_secret: mastodonClientSecret,
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+      }),
+    });
 
-  return {
-    accessToken: data.access_token,
-    expiresIn: data.expires_in ?? 365 * 24 * 3600,
-    rotatedRefreshToken: data.refresh_token && data.refresh_token !== refreshToken ? data.refresh_token : null,
-  };
+    if (!res.ok) {
+      const body = await res.text().catch((err) => {
+        logger.warn('Failed to read oauth token refresh response', { error: String(err), context: 'refresh*' });
+        return '';
+      });
+      recordFailure('mastodon', classifyError(new Error(`HTTP ${res.status}`)));
+      throw new Error(`Mastodon token refresh failed: HTTP ${res.status} — ${body.slice(0, 200)}`);
+    }
+
+    recordSuccess('mastodon');
+    const data = (await res.json()) as { access_token?: string; expires_in?: number; refresh_token?: string };
+    if (!data.access_token) throw new Error('Mastodon token refresh returned no access_token');
+
+    return {
+      accessToken: data.access_token,
+      expiresIn: data.expires_in ?? 365 * 24 * 3600,
+      rotatedRefreshToken: data.refresh_token && data.refresh_token !== refreshToken ? data.refresh_token : null,
+    };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker')) throw error;
+    recordFailure('mastodon', classifyError(error));
+    throw error;
+  }
 }
 
 /**

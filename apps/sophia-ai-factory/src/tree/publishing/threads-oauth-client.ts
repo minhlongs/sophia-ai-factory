@@ -7,6 +7,8 @@
  * getUserInfo uses Authorization header (not ?access_token= query param).
  */
 
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import { logger } from '@/seed/utils/logger-utility';
 
 const THREADS_DIALOG = 'https://threads.net/oauth/authorize';

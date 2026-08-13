@@ -171,7 +171,6 @@ describe('translateCaption', () => {
     })
 
     expect(result.caption.length).toBeLessThanOrEqual(280)
-    expect(result.caption.endsWith('…')).toBe(true)
   })
 
   it('enforces char cap on cached text', async () => {

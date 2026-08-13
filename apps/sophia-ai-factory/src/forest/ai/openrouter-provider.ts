@@ -20,6 +20,8 @@ import type {
   ProviderCapabilities,
 } from '@/seed/ai/provider-interface';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 

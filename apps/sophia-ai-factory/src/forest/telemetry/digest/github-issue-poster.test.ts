@@ -1,3 +1,8 @@
+vi.mock('@/seed/security/circuit-breaker', () => ({
+  shouldAllowRequest: vi.fn().mockReturnValue(true),
+  recordSuccess: vi.fn(),
+  recordFailure: vi.fn(),
+}));
 /**
  * Tests for GitHub Issue idempotent upsert
  *

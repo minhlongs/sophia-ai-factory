@@ -12,6 +12,8 @@
 import { z } from 'zod'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError } from '@/seed/types/failure-kind'
 
 // ── Zod schemas for GH API responses ─────────────────────────────────────────
 
@@ -75,23 +77,35 @@ export async function findExistingIssue(
   title: string,
   token: string,
 ): Promise<{ number: number; html_url: string } | null> {
+  if (!shouldAllowRequest('github')) {
+    logger.warn('[digest/gh] Circuit breaker open for github, skipping')
+    return null
+  }
   const url = `https://api.github.com/repos/${repo}/issues?labels=metrics%3Aweekly&state=open&per_page=20`
 
-  const res = await fetch(url, { headers: ghHeaders(token) })
-  if (!res.ok) {
-    logger.warn('[digest/gh] list issues non-OK', { status: res.status })
+  try {
+    const res = await fetch(url, { headers: ghHeaders(token) })
+    if (!res.ok) {
+      recordFailure('github', classifyError(new Error(`HTTP ${res.status}`)))
+      logger.warn('[digest/gh] list issues non-OK', { status: res.status })
+      return null
+    }
+
+    recordSuccess('github');
+    const raw = await res.json()
+    const parsed = GhIssueListSchema.safeParse(raw)
+    if (!parsed.success) {
+      logger.warn('[digest/gh] issue list parse error', { error: parsed.error.message })
+      return null
+    }
+
+    const match = parsed.data.find((i) => i.title === title)
+    return match ? { number: match.number, html_url: match.html_url } : null
+  } catch (err) {
+    recordFailure('github', classifyError(err))
+    logger.warn('[digest/gh] findExistingIssue failed', { error: getErrorMessage(err) })
     return null
   }
-
-  const raw = await res.json()
-  const parsed = GhIssueListSchema.safeParse(raw)
-  if (!parsed.success) {
-    logger.warn('[digest/gh] issue list parse error', { error: parsed.error.message })
-    return null
-  }
-
-  const match = parsed.data.find((i) => i.title === title)
-  return match ? { number: match.number, html_url: match.html_url } : null
 }
 
 /**
@@ -113,6 +127,11 @@ export async function upsertGithubIssue(
 
   const { title, body, labels = ['metrics:weekly'] } = params
 
+  if (!shouldAllowRequest('github')) {
+    logger.warn('[digest/gh] Circuit breaker open for github, skipping')
+    return null
+  }
+
   try {
     const existing = await findExistingIssue(repo, title, token)
 
@@ -127,9 +146,11 @@ export async function upsertGithubIssue(
         },
       )
       if (!res.ok) {
+        recordFailure('github', classifyError(new Error(`HTTP ${res.status}`)))
         logger.warn('[digest/gh] PATCH issue non-OK', { status: res.status })
         return null
       }
+      recordSuccess('github');
       const updated = GhIssueSchema.parse(await res.json())
       logger.info('[digest/gh] issue updated', { number: updated.number })
       return { url: updated.html_url, action: 'updated', issueNumber: updated.number }
@@ -142,13 +163,16 @@ export async function upsertGithubIssue(
       body: JSON.stringify({ title, body, labels }),
     })
     if (!res.ok) {
+      recordFailure('github', classifyError(new Error(`HTTP ${res.status}`)))
       logger.warn('[digest/gh] POST issue non-OK', { status: res.status })
       return null
     }
+    recordSuccess('github');
     const created = GhIssueSchema.parse(await res.json())
     logger.info('[digest/gh] issue created', { number: created.number })
     return { url: created.html_url, action: 'created', issueNumber: created.number }
   } catch (err) {
+    recordFailure('github', classifyError(err))
     logger.warn('[digest/gh] upsert failed', {
       error: getErrorMessage(err),
     })

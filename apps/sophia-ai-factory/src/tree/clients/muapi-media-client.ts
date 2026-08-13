@@ -8,6 +8,8 @@
  * Ref: github.com/SamurAIGPT/Generative-Media-Skills
  */
 
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import { toError } from '@/seed/utils/to-error'
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -67,6 +69,9 @@ function getApiKey(): string {
 export async function submitMediaJob(
   req: MediaGenerationRequest
 ): Promise<MediaGenerationResult> {
+  if (!shouldAllowRequest('muapi')) {
+    return { success: false, error: 'Circuit breaker open for muapi' };
+  }
   try {
     const res = await fetch(`${MUAPI_BASE}/generate`, {
       method: 'POST',
@@ -104,6 +109,7 @@ export async function submitMediaJob(
       created_at: string
     }
 
+    recordSuccess('muapi');
     return {
       success: true,
       job: {
@@ -115,6 +121,7 @@ export async function submitMediaJob(
       },
     }
   } catch (err) {
+    recordFailure('muapi', classifyError(err));
     return { success: false, error: toError(err).message }
   }
 }
@@ -123,6 +130,9 @@ export async function submitMediaJob(
  * Poll job status from muapi.ai
  */
 export async function getJobStatus(jobId: string): Promise<MediaGenerationResult> {
+  if (!shouldAllowRequest('muapi')) {
+    return { success: false, error: 'Circuit breaker open for muapi' };
+  }
   try {
     const res = await fetch(`${MUAPI_BASE}/jobs/${jobId}`, {
       headers: { Authorization: `Bearer ${getApiKey()}` },
@@ -146,6 +156,7 @@ export async function getJobStatus(jobId: string): Promise<MediaGenerationResult
       completed_at?: string
     }
 
+    recordSuccess('muapi');
     return {
       success: true,
       job: {
@@ -162,6 +173,7 @@ export async function getJobStatus(jobId: string): Promise<MediaGenerationResult
       },
     }
   } catch (err) {
+    recordFailure('muapi', classifyError(err));
     return { success: false, error: toError(err).message }
   }
 }

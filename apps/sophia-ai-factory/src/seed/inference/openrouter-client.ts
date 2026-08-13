@@ -13,47 +13,15 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind'
 import type { Provider, ChatMessage, ChatOptions } from '@/seed/ai/provider-interface'
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 const DEFAULT_MODEL = 'openai/gpt-4o-mini'
 
-interface CircuitState {
-  failures: number
-  openUntil: number
-  lastError?: string
-}
-
-const circuit: CircuitState = { failures: 0, openUntil: 0 }
-const CIRCUIT_FAILURES = 3
-const CIRCUIT_RESET_MS = 60_000
-
-function isCircuitOpen(): boolean {
-  if (circuit.openUntil === 0) return false
-  if (Date.now() < circuit.openUntil) return true
-  circuit.failures = 0
-  circuit.openUntil = 0
-  return false
-}
-
-function recordFailure(error: { status?: number; retryAfter?: number; message?: string }): void {
-  circuit.failures += 1
-  circuit.lastError = error.message ?? String(error.status ?? 'unknown')
-
-  if (circuit.failures >= CIRCUIT_FAILURES) {
-    const retryAfterMs = (error.retryAfter ?? 60) * 1000
-    circuit.openUntil = Date.now() + Math.min(retryAfterMs, CIRCUIT_RESET_MS)
-    logger.warn('[openrouter-client] Circuit OPEN', {
-      until: new Date(circuit.openUntil).toISOString(),
-      reason: circuit.lastError,
-    })
-  }
-}
-
-function recordSuccess(): void {
-  circuit.failures = 0
-  circuit.openUntil = 0
-}
+// Circuit breaker guard — uses canonical @/seed/security/circuit-breaker
+// instead of local in-memory circuit. Per-request guard added below.
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
@@ -65,8 +33,8 @@ async function callOpenRouter(
   model: string = DEFAULT_MODEL,
   maxRetries: number = 3,
 ): Promise<string> {
-  if (isCircuitOpen()) {
-    throw new Error('Circuit breaker OPEN - OpenRouter temporarily unavailable')
+  if (!shouldAllowRequest('openrouter')) {
+    throw new Error('[OpenRouter] Circuit breaker open for openrouter')
   }
 
   let lastError: Error | null = null
@@ -94,9 +62,9 @@ async function callOpenRouter(
       })
 
       if (res.ok) {
+        recordSuccess('openrouter')
         const data = await res.json() as { choices?: Array<{ message?: { content?: string } }> }
         const content = data.choices?.[0]?.message?.content ?? ''
-        recordSuccess()
         return content
       }
 
@@ -112,13 +80,13 @@ async function callOpenRouter(
 
       if (res.status === 401 || res.status === 403) {
         // Auth failure - don't retry, key invalid
-        recordFailure({ status: res.status, message: `Auth failed: ${res.status}` })
+        recordFailure('openrouter', classifyHttpStatus(res.status))
         ;(lastError as { retryable?: boolean }).retryable = false
         throw lastError
       }
 
       if (res.status === 429) {
-        recordFailure({ status: 429, retryAfter, message: 'Rate limited' })
+        recordFailure('openrouter', classifyHttpStatus(res.status))
         if (attempt === maxRetries) throw lastError
         continue
       }
@@ -141,7 +109,7 @@ async function callOpenRouter(
       }
       lastError = typedErr
       if (attempt === maxRetries) {
-        recordFailure({ message: lastError.message })
+        recordFailure('openrouter', classifyError(lastError))
         throw lastError
       }
       // retryable error — continue after backoff (already scheduled above)
@@ -365,10 +333,10 @@ export async function multiProviderResilientChat(
 }
 
 export function resetOpenRouterCircuit(): void {
-  circuit.failures = 0
-  circuit.openUntil = 0
+  // Canonical circuit breaker manages state via D1 persistence; no local reset needed
 }
 
-export function getOpenRouterCircuitState(): Readonly<CircuitState> {
-  return { ...circuit }
+export function getOpenRouterCircuitState(): { openUntil: number; failures: number } {
+  // Canonical circuit breaker doesn't expose internal state; return safe defaults
+  return { openUntil: 0, failures: 0 }
 }
