@@ -5,7 +5,7 @@ export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
   const t = await getTranslations('stitch.auth.login');
 
   return (
-    <div
+    <main
       className="min-h-screen flex flex-col items-center justify-center bg-[#0F0F11] p-6 antialiased"
       data-testid="login-page"
     >
@@ -54,6 +54,6 @@ export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
           </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
