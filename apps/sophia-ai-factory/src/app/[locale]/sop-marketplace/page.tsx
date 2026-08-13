@@ -66,8 +66,8 @@ export default async function SOPMarketplacePage({ params, searchParams }: PageP
   const t = await getTranslations({ locale, namespace: 'sop.marketplace' });
 
   return (
-    <div className="min-h-screen bg-[#0F0F11]">
+    <main className="min-h-screen bg-[#0F0F11]">
       <MarketplaceStitchSection fetchUrl="/api/sop-marketplace?limit=100" />
-    </div>
+    </main>
   );
 }

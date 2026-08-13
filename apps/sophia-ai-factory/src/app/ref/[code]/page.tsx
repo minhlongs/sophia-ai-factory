@@ -93,7 +93,7 @@ export default async function ReferralPage({ params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-background text-white">
+    <main className="min-h-screen bg-background text-white">
       {/* Hero */}
       <div className="max-w-3xl mx-auto px-6 py-20 text-center">
         <div className="flex items-center justify-center gap-2 mb-6">
@@ -152,6 +152,6 @@ export default async function ReferralPage({ params }: Props) {
       <div className="text-center pb-10 text-xs text-muted-foreground/50">
         {t('footer')}
       </div>
-    </div>
+    </main>
   )
 }

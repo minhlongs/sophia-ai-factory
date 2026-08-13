@@ -67,11 +67,11 @@ async function AdminSOPReviewsContent({ locale, userId }: { locale: string; user
 
   if (!d1) {
     return (
-      <div className="min-h-screen bg-background p-8">
+      <main className="min-h-screen bg-background p-8">
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-muted-foreground">Database unavailable</p>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -107,7 +107,7 @@ async function AdminSOPReviewsContent({ locale, userId }: { locale: string; user
   };
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <main className="min-h-screen bg-background p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -296,7 +296,7 @@ async function AdminSOPReviewsContent({ locale, userId }: { locale: string; user
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

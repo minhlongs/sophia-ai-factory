@@ -24,13 +24,13 @@ export default async function ApplyPage({ params, searchParams }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <main className="min-h-screen bg-background p-8">
       <div className="max-w-2xl mx-auto">
         <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
           <ApplyPageClient locale={locale} submitted={submitted === 'true'} />
         </Suspense>
       </div>
-    </div>
+    </main>
   );
 }
 
@@ -39,7 +39,7 @@ async function ApplyPageClient({ locale, submitted }: { locale: string; submitte
   const benefitsItems = t('apply.benefits.items') as unknown as string[];
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <main className="min-h-screen bg-background p-8">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-10">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-6">
@@ -170,6 +170,6 @@ async function ApplyPageClient({ locale, submitted }: { locale: string; submitte
           </a>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

@@ -21,13 +21,13 @@ export default async function NewListingPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <main className="min-h-screen bg-background p-8">
       <div className="max-w-3xl mx-auto">
         <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
           <NewListingPageClient locale={locale} userId={access.userId!} />
         </Suspense>
       </div>
-    </div>
+    </main>
   );
 }
 

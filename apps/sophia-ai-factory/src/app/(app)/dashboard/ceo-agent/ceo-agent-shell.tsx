@@ -23,7 +23,7 @@ export function CeoAgentShell({ locale, userId }: ShellProps) {
   const [activeTab, setActiveTab] = useState('briefing');
 
   return (
-    <div className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto p-6">
         {/* Header */}
         <div className="mb-6">
@@ -61,6 +61,6 @@ export function CeoAgentShell({ locale, userId }: ShellProps) {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </main>
   );
 }

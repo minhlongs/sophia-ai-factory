@@ -30,7 +30,7 @@ async function SOPCreatorDashboard({ locale, userId }: { locale: string; userId:
   const t = await getTranslations({ locale, namespace: 'sop.creator' });
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <main className="min-h-screen bg-background p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -49,7 +49,7 @@ async function SOPCreatorDashboard({ locale, userId }: { locale: string; userId:
         {/* Client-side tabs */}
         <SOPClientTabs locale={locale} userId={userId} />
       </div>
-    </div>
+    </main>
   );
 }
 

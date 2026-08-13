@@ -41,11 +41,11 @@ async function ListingDetail({ locale, listingId, userId }: { locale: string; li
   const d1 = getD1();
   if (!d1) {
     return (
-      <div className="min-h-screen bg-background p-8">
+      <main className="min-h-screen bg-background p-8">
         <div className="max-w-3xl mx-auto text-center">
           <p className="text-muted-foreground">Database unavailable</p>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -77,7 +77,7 @@ async function ListingDetail({ locale, listingId, userId }: { locale: string; li
   };
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <main className="min-h-screen bg-background p-8">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
@@ -265,7 +265,7 @@ async function ListingDetail({ locale, listingId, userId }: { locale: string; li
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 
