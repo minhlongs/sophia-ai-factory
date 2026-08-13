@@ -11,6 +11,10 @@ import { createServerClient } from '@/seed/db/client';
 import { encryptToken } from '@/tree/crypto/token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 import { randomUUID } from 'crypto';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+
+const SERVICE_NAME = 'pinterest-oauth';
 
 const STATE_MAX_AGE_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -92,41 +96,65 @@ export async function GET(request: NextRequest) {
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/oauth/pinterest/callback`;
 
   // Exchange code → tokens
-  const credentials = btoa(`${clientId}:${clientSecret}`);
-  const tokenRes = await fetch('https://api.pinterest.com/v5/oauth/token', {
-    method: 'POST',
-    headers: {
-      Authorization: `Basic ${credentials}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: redirectUri,
-    }),
-  });
-
-  if (!tokenRes.ok) {
-    logger.error('[Pinterest Callback] Token exchange failed', new Error(`HTTP ${tokenRes.status}`));
-    return NextResponse.json({ error: 'Token exchange failed' }, { status: 502 });
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[${SERVICE_NAME}] Circuit breaker open`);
   }
-
-  const tokenData = (await tokenRes.json()) as PinterestTokenResponse;
+  let tokenData: PinterestTokenResponse;
+  try {
+    const credentials = btoa(`${clientId}:${clientSecret}`);
+    const tokenRes = await fetch('https://api.pinterest.com/v5/oauth/token', {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${credentials}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri,
+      }),
+    });
+    if (!tokenRes.ok) {
+      const kind = classifyHttpStatus(tokenRes.status);
+      recordFailure(SERVICE_NAME, kind);
+      logger.error('[Pinterest Callback] Token exchange failed', new Error(`HTTP ${tokenRes.status}`));
+      return NextResponse.json({ error: 'Token exchange failed' }, { status: 502 });
+    }
+    tokenData = (await tokenRes.json()) as PinterestTokenResponse;
+    recordSuccess(SERVICE_NAME);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker open')) throw error;
+    const kind = classifyError(error);
+    recordFailure(SERVICE_NAME, kind);
+    throw error;
+  }
   if (!tokenData.access_token) {
     return NextResponse.json({ error: 'No access token returned' }, { status: 502 });
   }
 
   // Fetch Pinterest user info
-  const meRes = await fetch('https://api.pinterest.com/v5/user_account', {
-    headers: { Authorization: `Bearer ${tokenData.access_token}` },
-  });
-
-  if (!meRes.ok) {
-    logger.error('[Pinterest Callback] User info fetch failed', new Error(`HTTP ${meRes.status}`));
-    return NextResponse.json({ error: 'Failed to fetch Pinterest account info' }, { status: 502 });
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[${SERVICE_NAME}] Circuit breaker open`);
   }
-
-  const meData = (await meRes.json()) as PinterestUserResponse;
+  let meData: PinterestUserResponse;
+  try {
+    const meRes = await fetch('https://api.pinterest.com/v5/user_account', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+    if (!meRes.ok) {
+      const kind = classifyHttpStatus(meRes.status);
+      recordFailure(SERVICE_NAME, kind);
+      logger.error('[Pinterest Callback] User info fetch failed', new Error(`HTTP ${meRes.status}`));
+      return NextResponse.json({ error: 'Failed to fetch Pinterest account info' }, { status: 502 });
+    }
+    meData = (await meRes.json()) as PinterestUserResponse;
+    recordSuccess(SERVICE_NAME);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker open')) throw error;
+    const kind = classifyError(error);
+    recordFailure(SERVICE_NAME, kind);
+    throw error;
+  }
   if (!meData.id) {
     return NextResponse.json({ error: 'Missing Pinterest user ID' }, { status: 502 });
   }
@@ -134,16 +162,30 @@ export async function GET(request: NextRequest) {
   // Pinterest publishes Pins to a *board*, not the user. Fetch first board so
   // publish-execute can use external_account_id directly as board_id (KISS:
   // multi-board picker UI deferred). Without this step, publish jobs fail 4xx.
-  const boardsRes = await fetch('https://api.pinterest.com/v5/boards?page_size=1', {
-    headers: { Authorization: `Bearer ${tokenData.access_token}` },
-  });
-  if (!boardsRes.ok) {
-    logger.error('[Pinterest Callback] Boards fetch failed', new Error(`HTTP ${boardsRes.status}`));
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/integrations/channels?error=pinterest_no_boards`,
-    );
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[${SERVICE_NAME}] Circuit breaker open`);
   }
-  const boardsData = (await boardsRes.json()) as { items?: Array<{ id: string; name: string }> };
+  let boardsData: { items?: Array<{ id: string; name: string }> };
+  try {
+    const boardsRes = await fetch('https://api.pinterest.com/v5/boards?page_size=1', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+    if (!boardsRes.ok) {
+      const kind = classifyHttpStatus(boardsRes.status);
+      recordFailure(SERVICE_NAME, kind);
+      logger.error('[Pinterest Callback] Boards fetch failed', new Error(`HTTP ${boardsRes.status}`));
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/integrations/channels?error=pinterest_no_boards`,
+      );
+    }
+    boardsData = (await boardsRes.json()) as { items?: Array<{ id: string; name: string }> };
+    recordSuccess(SERVICE_NAME);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker open')) throw error;
+    const kind = classifyError(error);
+    recordFailure(SERVICE_NAME, kind);
+    throw error;
+  }
   const firstBoard = boardsData.items?.[0];
   if (!firstBoard) {
     return NextResponse.redirect(

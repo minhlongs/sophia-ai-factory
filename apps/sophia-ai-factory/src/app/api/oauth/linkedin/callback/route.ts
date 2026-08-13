@@ -11,6 +11,10 @@ import { createServerClient } from '@/seed/db/client';
 import { encryptToken } from '@/tree/crypto/token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 import { randomUUID } from 'crypto';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+
+const SERVICE_NAME = 'linkedin-oauth';
 
 const STATE_MAX_AGE_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -90,42 +94,66 @@ export async function GET(request: NextRequest) {
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/oauth/linkedin/callback`;
 
   // Exchange code → tokens
-  const tokenRes = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: redirectUri,
-      client_id: process.env.LINKEDIN_CLIENT_ID ?? '',
-      client_secret: process.env.LINKEDIN_CLIENT_SECRET ?? '',
-    }),
-  });
-
-  if (!tokenRes.ok) {
-    logger.error('[LinkedIn Callback] Token exchange failed', new Error(`HTTP ${tokenRes.status}`));
-    return NextResponse.json({ error: 'Token exchange failed' }, { status: 502 });
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[${SERVICE_NAME}] Circuit breaker open`);
   }
-
-  const tokenData = (await tokenRes.json()) as LinkedInTokenResponse;
+  let tokenData: LinkedInTokenResponse;
+  try {
+    const tokenRes = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri,
+        client_id: process.env.LINKEDIN_CLIENT_ID ?? '',
+        client_secret: process.env.LINKEDIN_CLIENT_SECRET ?? '',
+      }),
+    });
+    if (!tokenRes.ok) {
+      const kind = classifyHttpStatus(tokenRes.status);
+      recordFailure(SERVICE_NAME, kind);
+      logger.error('[LinkedIn Callback] Token exchange failed', new Error(`HTTP ${tokenRes.status}`));
+      return NextResponse.json({ error: 'Token exchange failed' }, { status: 502 });
+    }
+    tokenData = (await tokenRes.json()) as LinkedInTokenResponse;
+    recordSuccess(SERVICE_NAME);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker open')) throw error;
+    const kind = classifyError(error);
+    recordFailure(SERVICE_NAME, kind);
+    throw error;
+  }
   if (!tokenData.access_token) {
     return NextResponse.json({ error: 'No access token returned' }, { status: 502 });
   }
 
   // Fetch LinkedIn profile info
-  const profileRes = await fetch('https://api.linkedin.com/v2/me', {
-    headers: {
-      Authorization: `Bearer ${tokenData.access_token}`,
-      'X-Restli-Protocol-Version': '2.0.0',
-    },
-  });
-
-  if (!profileRes.ok) {
-    logger.error('[LinkedIn Callback] Profile fetch failed', new Error(`HTTP ${profileRes.status}`));
-    return NextResponse.json({ error: 'Failed to fetch LinkedIn profile' }, { status: 502 });
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[${SERVICE_NAME}] Circuit breaker open`);
   }
-
-  const profile = (await profileRes.json()) as LinkedInProfileResponse;
+  let profile: LinkedInProfileResponse;
+  try {
+    const profileRes = await fetch('https://api.linkedin.com/v2/me', {
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`,
+        'X-Restli-Protocol-Version': '2.0.0',
+      },
+    });
+    if (!profileRes.ok) {
+      const kind = classifyHttpStatus(profileRes.status);
+      recordFailure(SERVICE_NAME, kind);
+      logger.error('[LinkedIn Callback] Profile fetch failed', new Error(`HTTP ${profileRes.status}`));
+      return NextResponse.json({ error: 'Failed to fetch LinkedIn profile' }, { status: 502 });
+    }
+    profile = (await profileRes.json()) as LinkedInProfileResponse;
+    recordSuccess(SERVICE_NAME);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker open')) throw error;
+    const kind = classifyError(error);
+    recordFailure(SERVICE_NAME, kind);
+    throw error;
+  }
   if (!profile.id) {
     return NextResponse.json({ error: 'Missing LinkedIn profile ID' }, { status: 502 });
   }

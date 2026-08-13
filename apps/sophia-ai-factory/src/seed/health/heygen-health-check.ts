@@ -11,6 +11,8 @@
  */
 
 import type { KVNamespace } from '@cloudflare/workers-types';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind'
 
 interface HeyGenHealthResponse {
   healthy: boolean;
@@ -19,11 +21,16 @@ interface HeyGenHealthResponse {
   details?: string;
 }
 
+const SERVICE_NAME = 'heygen-health'
 const KV_CACHE_KEY = 'health:heygen';
 const KV_CACHE_TTL_SECONDS = 60;
 const HEYGEN_PING_TIMEOUT_MS = 5_000;
 
 async function pingHeyGen(apiKey: string): Promise<HeyGenHealthResponse> {
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[${SERVICE_NAME}] Circuit breaker open`)
+  }
+
   const checkedAt = new Date().toISOString();
   try {
     const controller = new AbortController();
@@ -39,13 +46,21 @@ async function pingHeyGen(apiKey: string): Promise<HeyGenHealthResponse> {
       clearTimeout(timeout);
     }
     if (res.ok || res.status === 401) {
+      recordSuccess(SERVICE_NAME)
       return { healthy: true, providerStatus: 'ok', checkedAt };
     }
     if (res.status >= 500) {
+      const kind = classifyHttpStatus(res.status)
+      recordFailure(SERVICE_NAME, kind)
       return { healthy: false, providerStatus: 'down', checkedAt, details: `HeyGen returned ${res.status}` };
     }
+    const kind = classifyHttpStatus(res.status)
+    recordFailure(SERVICE_NAME, kind)
     return { healthy: false, providerStatus: 'degraded', checkedAt, details: `HeyGen returned ${res.status}` };
   } catch (err) {
+    if (err instanceof Error && err.message.includes('Circuit breaker open')) throw err
+    const kind = classifyError(err)
+    recordFailure(SERVICE_NAME, kind)
     const msg = err instanceof Error ? err.message : String(err);
     const isTimeout = msg.includes('abort') || msg.includes('timeout');
     return {
@@ -87,7 +102,12 @@ export async function isHeyGenHealthy(): Promise<boolean> {
     }
   }
 
-  const result = await pingHeyGen(apiKey);
+  let result: HeyGenHealthResponse;
+  try {
+    result = await pingHeyGen(apiKey);
+  } catch {
+    result = { healthy: false, providerStatus: 'down', checkedAt: new Date().toISOString() };
+  }
 
   if (kv) {
     try {

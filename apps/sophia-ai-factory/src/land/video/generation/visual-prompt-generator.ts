@@ -6,7 +6,11 @@
  * PII stripped before sending.
  */
 
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+
 const PII_PATTERN = /\b[\w.+-]+@[\w-]+\.[a-z]{2,}\b|\b\d{9,}\b/gi;
+const SERVICE_NAME = 'nhÃ  cung cáº¥p dá»‹ch vá»¥ AI';
 
 function stripPii(text: string): string {
   return text.replace(PII_PATTERN, '[REDACTED]');
@@ -63,6 +67,10 @@ export async function generateVisualPrompts(
     },
   ];
 
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    return { scenes: [{ index: 0, description: 'A professional product showcase scene with clean background' }] };
+  }
+
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -79,8 +87,12 @@ export async function generateVisualPrompts(
     });
 
     if (!res.ok) {
+      const kind = classifyHttpStatus(res.status);
+      recordFailure(SERVICE_NAME, kind);
       return { scenes: [{ index: 0, description: 'A professional product showcase scene with clean background' }] };
     }
+
+    recordSuccess(SERVICE_NAME);
 
     const data = (await res.json()) as AnthropicResponse;
     const raw = data.content[0];
@@ -92,7 +104,9 @@ export async function generateVisualPrompts(
     return {
       scenes: limited.map((description, index) => ({ index, description })),
     };
-  } catch {
+  } catch (error) {
+    const kind = classifyError(error);
+    recordFailure(SERVICE_NAME, kind);
     return {
       scenes: [{ index: 0, description: 'A professional product showcase scene with clean background' }],
     };

@@ -12,6 +12,10 @@ import { createServerClient } from '@/seed/db/client';
 import { encryptToken } from '@/tree/crypto/token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 import { randomUUID } from 'crypto';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+
+const SERVICE_NAME = 'instagram-oauth';
 
 const STATE_MAX_AGE_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -78,57 +82,96 @@ export async function GET(request: NextRequest) {
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/oauth/instagram/callback`;
 
   // Exchange code → short-lived token
-  const tokenRes = await fetch('https://graph.facebook.com/v19.0/oauth/access_token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      client_id: process.env.INSTAGRAM_APP_ID ?? '',
-      client_secret: process.env.INSTAGRAM_APP_SECRET ?? '',
-      code,
-      redirect_uri: redirectUri,
-    }),
-  });
-
-  if (!tokenRes.ok) {
-    logger.error('[Instagram Callback] Short-lived token exchange failed', new Error(`HTTP ${tokenRes.status}`));
-    return NextResponse.json({ error: 'Token exchange failed' }, { status: 502 });
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[${SERVICE_NAME}] Circuit breaker open`);
   }
-
-  const tokenData = (await tokenRes.json()) as { access_token?: string; error?: { message: string } };
+  let tokenData: { access_token?: string; error?: { message: string } };
+  try {
+    const tokenRes = await fetch('https://graph.facebook.com/v19.0/oauth/access_token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: process.env.INSTAGRAM_APP_ID ?? '',
+        client_secret: process.env.INSTAGRAM_APP_SECRET ?? '',
+        code,
+        redirect_uri: redirectUri,
+      }),
+    });
+    if (!tokenRes.ok) {
+      const kind = classifyHttpStatus(tokenRes.status);
+      recordFailure(SERVICE_NAME, kind);
+      logger.error('[Instagram Callback] Short-lived token exchange failed', new Error(`HTTP ${tokenRes.status}`));
+      return NextResponse.json({ error: 'Token exchange failed' }, { status: 502 });
+    }
+    tokenData = (await tokenRes.json()) as { access_token?: string; error?: { message: string } };
+    recordSuccess(SERVICE_NAME);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker open')) throw error;
+    const kind = classifyError(error);
+    recordFailure(SERVICE_NAME, kind);
+    throw error;
+  }
   if (!tokenData.access_token) {
     return NextResponse.json({ error: 'No access token returned' }, { status: 502 });
   }
 
   // Exchange short-lived → long-lived (60-day)
-  const longLivedParams = new URLSearchParams({
-    grant_type: 'fb_exchange_token',
-    client_id: process.env.INSTAGRAM_APP_ID ?? '',
-    client_secret: process.env.INSTAGRAM_APP_SECRET ?? '',
-    fb_exchange_token: tokenData.access_token,
-  });
-
-  const longLivedRes = await fetch(
-    `https://graph.facebook.com/v19.0/oauth/access_token?${longLivedParams.toString()}`,
-  );
-
-  if (!longLivedRes.ok) {
-    logger.error('[Instagram Callback] Long-lived token exchange failed', new Error(`HTTP ${longLivedRes.status}`));
-    return NextResponse.json({ error: 'Long-lived token exchange failed' }, { status: 502 });
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[${SERVICE_NAME}] Circuit breaker open`);
   }
-
-  const longLivedData = (await longLivedRes.json()) as {
-    access_token?: string;
-    expires_in?: number;
-  };
+  let longLivedData: { access_token?: string; expires_in?: number };
+  try {
+    const longLivedParams = new URLSearchParams({
+      grant_type: 'fb_exchange_token',
+      client_id: process.env.INSTAGRAM_APP_ID ?? '',
+      client_secret: process.env.INSTAGRAM_APP_SECRET ?? '',
+      fb_exchange_token: tokenData.access_token,
+    });
+    const longLivedRes = await fetch(
+      `https://graph.facebook.com/v19.0/oauth/access_token?${longLivedParams.toString()}`,
+    );
+    if (!longLivedRes.ok) {
+      const kind = classifyHttpStatus(longLivedRes.status);
+      recordFailure(SERVICE_NAME, kind);
+      logger.error('[Instagram Callback] Long-lived token exchange failed', new Error(`HTTP ${longLivedRes.status}`));
+      return NextResponse.json({ error: 'Long-lived token exchange failed' }, { status: 502 });
+    }
+    longLivedData = (await longLivedRes.json()) as { access_token?: string; expires_in?: number };
+    recordSuccess(SERVICE_NAME);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker open')) throw error;
+    const kind = classifyError(error);
+    recordFailure(SERVICE_NAME, kind);
+    throw error;
+  }
   if (!longLivedData.access_token) {
     return NextResponse.json({ error: 'No long-lived token returned' }, { status: 502 });
   }
 
   // Fetch IG account info
-  const meRes = await fetch(
-    `https://graph.facebook.com/v19.0/me?fields=id,name&access_token=${longLivedData.access_token}`,
-  );
-  const meData = (await meRes.json()) as { id?: string; name?: string };
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[${SERVICE_NAME}] Circuit breaker open`);
+  }
+  let meData: { id?: string; name?: string };
+  try {
+    const meRes = await fetch(
+      `https://graph.facebook.com/v19.0/me?fields=id,name&access_token=${longLivedData.access_token}`,
+    );
+    if (!meRes.ok) {
+      const kind = classifyHttpStatus(meRes.status);
+      recordFailure(SERVICE_NAME, kind);
+    }
+    meData = (await meRes.json()) as { id?: string; name?: string };
+    if (!meRes.ok) {
+      return NextResponse.json({ error: 'Failed to fetch Instagram account info' }, { status: 502 });
+    }
+    recordSuccess(SERVICE_NAME);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker open')) throw error;
+    const kind = classifyError(error);
+    recordFailure(SERVICE_NAME, kind);
+    throw error;
+  }
   if (!meData.id) {
     return NextResponse.json({ error: 'Failed to fetch Instagram account info' }, { status: 502 });
   }

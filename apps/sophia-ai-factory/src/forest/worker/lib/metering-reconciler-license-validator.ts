@@ -1,8 +1,12 @@
 import type { Discrepancy } from '@/seed/types/billing-contracts';
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 import type { Env } from '../index';
 import type { AggregatedUsage, LicenseValidationResult } from './metering-reconciler-types';
 import { logErrorToKv } from './metering-reconciler-error-logger';
+
+const CB_SERVICE_NAME = 'raas-gateway';
 
 interface RaasSyncResponse {
   valid?: boolean;
@@ -22,6 +26,10 @@ export async function validateLicense(
       return { valid: false, error: 'RaaS API key not configured' };
     }
 
+    if (!shouldAllowRequest(CB_SERVICE_NAME)) {
+      return { valid: false, error: `[${CB_SERVICE_NAME}] Circuit breaker open` };
+    }
+
     const response = await fetch('https://raas.agencyos.network/api/license/sync', {
       method: 'POST',
       headers: {
@@ -32,6 +40,8 @@ export async function validateLicense(
     });
 
     if (!response.ok) {
+      const kind = classifyHttpStatus(response.status);
+      recordFailure(CB_SERVICE_NAME, kind);
       return {
         valid: false,
         error: `RaaS Gateway error: ${response.status} ${response.statusText}`,
@@ -39,6 +49,7 @@ export async function validateLicense(
     }
 
     const data = (await response.json()) as RaasSyncResponse;
+    recordSuccess(CB_SERVICE_NAME);
 
     return {
       valid: data.valid === true || data.status === 'active',
@@ -46,6 +57,8 @@ export async function validateLicense(
       status: data.status,
     };
   } catch (error) {
+    const kind = classifyError(error);
+    recordFailure(CB_SERVICE_NAME, kind);
     return {
       valid: false,
       error: error instanceof Error ? error.message : 'Unknown error validating license',

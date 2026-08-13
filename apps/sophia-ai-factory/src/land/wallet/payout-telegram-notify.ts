@@ -4,6 +4,10 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+
+const SERVICE_NAME = 'telegram-notify';
 
 interface UserRow {
   telegram_chat_id: string | null;
@@ -40,11 +44,23 @@ async function sendTelegramMessage(chatId: string, text: string): Promise<void> 
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return;
 
-  await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
-  });
+  if (!shouldAllowRequest(SERVICE_NAME)) return;
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
+    });
+    if (!res.ok) {
+      const kind = classifyHttpStatus(res.status);
+      recordFailure(SERVICE_NAME, kind);
+    } else {
+      recordSuccess(SERVICE_NAME);
+    }
+  } catch (error) {
+    const kind = classifyError(error);
+    recordFailure(SERVICE_NAME, kind);
+  }
 }
 
 /**

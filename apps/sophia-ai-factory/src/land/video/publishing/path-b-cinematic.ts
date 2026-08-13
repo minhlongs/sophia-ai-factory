@@ -8,8 +8,12 @@
 
 import { getVideoBucket, tenantScopedKey } from '@/land/video/storage/r2-binding';
 import { recordCost } from '@/land/video/templates/cost-ledger';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 import { logger } from '@/seed/utils/logger-utility';
 import type { ScenePrompt } from '@/land/video/generation/visual-prompt-generator';
+
+const SERVICE_NAME = 'runpod';
 
 export interface PathBInput {
   jobId: string;
@@ -48,13 +52,29 @@ async function submitRunpodJob(
   durationSec: number,
   fps: number,
 ): Promise<RunpodSubmitResponse> {
-  const res = await fetch(`https://api.runpod.io/v2/${endpointId}/run`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ input: { prompts: scenes.map((s) => s.description), duration: durationSec, fps } }),
-  });
-  if (!res.ok) throw new Error(`[PathB] Runpod submit failed: ${res.status}`);
-  return res.json() as Promise<RunpodSubmitResponse>;
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[${SERVICE_NAME}] Circuit breaker open`);
+  }
+  try {
+    const res = await fetch(`https://api.runpod.io/v2/${endpointId}/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ input: { prompts: scenes.map((s) => s.description), duration: durationSec, fps } }),
+    });
+    if (!res.ok) {
+      const kind = classifyHttpStatus(res.status);
+      recordFailure(SERVICE_NAME, kind);
+      throw new Error(`[PathB] Runpod submit failed: ${res.status}`);
+    }
+    const result = (await res.json()) as RunpodSubmitResponse;
+    recordSuccess(SERVICE_NAME);
+    return result;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker open')) throw error;
+    const kind = classifyError(error);
+    recordFailure(SERVICE_NAME, kind);
+    throw error;
+  }
 }
 
 async function pollRunpodJob(
@@ -63,15 +83,30 @@ async function pollRunpodJob(
   runpodJobId: string,
 ): Promise<RunpodStatusResponse> {
   for (let i = 0; i < MAX_POLLS; i++) {
-    const res = await fetch(`https://api.runpod.io/v2/${endpointId}/status/${runpodJobId}`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
-    if (!res.ok) throw new Error(`[PathB] Runpod status check failed: ${res.status}`);
-    const status = (await res.json()) as RunpodStatusResponse;
+    if (!shouldAllowRequest(SERVICE_NAME)) {
+      throw new Error(`[${SERVICE_NAME}] Circuit breaker open`);
+    }
+    try {
+      const res = await fetch(`https://api.runpod.io/v2/${endpointId}/status/${runpodJobId}`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      if (!res.ok) {
+        const kind = classifyHttpStatus(res.status);
+        recordFailure(SERVICE_NAME, kind);
+        throw new Error(`[PathB] Runpod status check failed: ${res.status}`);
+      }
+      const status = (await res.json()) as RunpodStatusResponse;
+      recordSuccess(SERVICE_NAME);
 
-    if (status.status === 'COMPLETED') return status;
-    if (status.status === 'FAILED' || status.status === 'CANCELLED') {
-      throw new Error(`[PathB] Runpod job ${runpodJobId} ended with status: ${status.status}`);
+      if (status.status === 'COMPLETED') return status;
+      if (status.status === 'FAILED' || status.status === 'CANCELLED') {
+        throw new Error(`[PathB] Runpod job ${runpodJobId} ended with status: ${status.status}`);
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Circuit breaker open')) throw error;
+      const kind = classifyError(error);
+      recordFailure(SERVICE_NAME, kind);
+      throw error;
     }
 
     await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
@@ -112,9 +147,25 @@ export async function renderCinematicVideo(input: PathBInput): Promise<PathBResu
     throw new Error(`[PathB] Runpod job ${submitted.id} completed but no download_url`);
   }
 
-  const videoRes = await fetch(downloadUrl);
-  if (!videoRes.ok) throw new Error(`[PathB] Failed to download video: ${videoRes.status}`);
-  const videoBytes = await videoRes.arrayBuffer();
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[${SERVICE_NAME}] Circuit breaker open`);
+  }
+  let videoBytes: ArrayBuffer;
+  try {
+    const videoRes = await fetch(downloadUrl);
+    if (!videoRes.ok) {
+      const kind = classifyHttpStatus(videoRes.status);
+      recordFailure(SERVICE_NAME, kind);
+      throw new Error(`[PathB] Failed to download video: ${videoRes.status}`);
+    }
+    videoBytes = await videoRes.arrayBuffer();
+    recordSuccess(SERVICE_NAME);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker open')) throw error;
+    const kind = classifyError(error);
+    recordFailure(SERVICE_NAME, kind);
+    throw error;
+  }
 
   const ref = await getVideoBucket();
   if (ref) {

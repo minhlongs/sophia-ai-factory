@@ -7,6 +7,11 @@ import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { lookupCache, writeCache, type CacheKey } from '@/land/llm/cache/llm-cache'
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind'
+
+const SERVICE_NAME_POSTHOG = 'posthog-api'
+const SERVICE_NAME_OPENROUTER = 'openrouter'
 
 const POSTHOG_QUERY_URL = 'https://us.i.posthog.com/api/projects/@current/events/'
 
@@ -17,13 +22,26 @@ export async function fetchTopEvents(): Promise<PostHogEvent[]> {
   const apiKey = process.env.POSTHOG_PERSONAL_API_KEY
   if (!apiKey) { logger.warn('[digest] POSTHOG_PERSONAL_API_KEY not set'); return [] }
 
+  if (!shouldAllowRequest(SERVICE_NAME_POSTHOG)) {
+    throw new Error(`[${SERVICE_NAME_POSTHOG}] Circuit breaker open`)
+  }
+
   const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
   try {
     const res = await fetch(`${POSTHOG_QUERY_URL}?after=${since}&limit=100`, { headers: { Authorization: `Bearer ${apiKey}` } })
-    if (!res.ok) { logger.warn('[digest] PostHog events API non-OK', { status: res.status }); return [] }
+    if (!res.ok) {
+      const kind = classifyHttpStatus(res.status)
+      recordFailure(SERVICE_NAME_POSTHOG, kind)
+      logger.warn('[digest] PostHog events API non-OK', { status: res.status })
+      return []
+    }
     const data = (await res.json()) as PostHogEventsResponse
+    recordSuccess(SERVICE_NAME_POSTHOG)
     return data.results ?? []
   } catch (err) {
+    if (err instanceof Error && err.message.includes('Circuit breaker open')) throw err
+    const kind = classifyError(err)
+    recordFailure(SERVICE_NAME_POSTHOG, kind)
     logger.warn('[digest] PostHog events fetch failed', { error: getErrorMessage(err) })
     return []
   }
@@ -65,6 +83,10 @@ export async function summarizeWithAI(eventsSummary: string): Promise<string> {
   const cached = await lookupCache(cacheKey)
   if (cached) { logger.info('[digest] LLM cache hit — skipping OpenRouter call'); return cached.response }
 
+  if (!shouldAllowRequest(SERVICE_NAME_OPENROUTER)) {
+    throw new Error(`[${SERVICE_NAME_OPENROUTER}] Circuit breaker open`)
+  }
+
   try {
     const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -74,10 +96,16 @@ export async function summarizeWithAI(eventsSummary: string): Promise<string> {
     if (res.ok) {
       const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }>; usage?: { prompt_tokens?: number; completion_tokens?: number } }
       const content = data.choices?.[0]?.message?.content ?? eventsSummary
+      recordSuccess(SERVICE_NAME_OPENROUTER)
       void writeCache(cacheKey, { response: content, inputTokens: data.usage?.prompt_tokens, outputTokens: data.usage?.completion_tokens }).catch(() => {})
       return content
     }
+    const kind = classifyHttpStatus(res.status)
+    recordFailure(SERVICE_NAME_OPENROUTER, kind)
   } catch (err) {
+    if (err instanceof Error && err.message.includes('Circuit breaker open')) throw err
+    const kind = classifyError(err)
+    recordFailure(SERVICE_NAME_OPENROUTER, kind)
     logger.warn('[digest] OpenRouter summarize failed', { error: getErrorMessage(err) })
   }
   return eventsSummary

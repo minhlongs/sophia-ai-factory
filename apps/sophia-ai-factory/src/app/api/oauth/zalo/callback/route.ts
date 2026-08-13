@@ -11,6 +11,10 @@ import { createServerClient } from '@/seed/db/client';
 import { encryptToken } from '@/tree/crypto/token-crypto';
 import { logger } from '@/seed/utils/logger-utility';
 import { randomUUID } from 'crypto';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+
+const SERVICE_NAME = 'zalo-oauth';
 
 const STATE_MAX_AGE_MS = 10 * 60 * 1000; // 10 minutes
 
@@ -94,41 +98,67 @@ export async function GET(request: NextRequest) {
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/oauth/zalo/callback`;
 
   // Exchange code → tokens
-  const tokenRes = await fetch('https://oauth.zaloapp.com/v4/oa/access_token', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      secret_key: appSecret,
-    },
-    body: new URLSearchParams({
-      app_id: appId,
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: redirectUri,
-    }),
-  });
-
-  if (!tokenRes.ok) {
-    logger.error('[Zalo Callback] Token exchange failed', new Error(`HTTP ${tokenRes.status}`));
-    return NextResponse.json({ error: 'Token exchange failed' }, { status: 502 });
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[${SERVICE_NAME}] Circuit breaker open`);
   }
-
-  const tokenData = (await tokenRes.json()) as ZaloTokenResponse;
+  let tokenData: ZaloTokenResponse;
+  try {
+    const tokenRes = await fetch('https://oauth.zaloapp.com/v4/oa/access_token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        secret_key: appSecret,
+      },
+      body: new URLSearchParams({
+        app_id: appId,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri,
+      }),
+    });
+    if (!tokenRes.ok) {
+      const kind = classifyHttpStatus(tokenRes.status);
+      recordFailure(SERVICE_NAME, kind);
+      logger.error('[Zalo Callback] Token exchange failed', new Error(`HTTP ${tokenRes.status}`));
+      return NextResponse.json({ error: 'Token exchange failed' }, { status: 502 });
+    }
+    tokenData = (await tokenRes.json()) as ZaloTokenResponse;
+    recordSuccess(SERVICE_NAME);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker open')) throw error;
+    const kind = classifyError(error);
+    recordFailure(SERVICE_NAME, kind);
+    throw error;
+  }
   if (tokenData.error && tokenData.error !== 0) {
     logger.error('[Zalo Callback] Token error', new Error(`Zalo error ${tokenData.error}: ${tokenData.message}`));
     return NextResponse.json({ error: tokenData.message ?? 'Token error' }, { status: 502 });
   }
-
   if (!tokenData.access_token) {
     return NextResponse.json({ error: 'No access token returned' }, { status: 502 });
   }
 
   // Fetch OA info
-  const oaRes = await fetch('https://openapi.zalo.me/v3/oa/getoa', {
-    headers: { access_token: tokenData.access_token },
-  });
-
-  const oaInfo = (await oaRes.json()) as ZaloOAInfoResponse;
+  if (!shouldAllowRequest(SERVICE_NAME)) {
+    throw new Error(`[${SERVICE_NAME}] Circuit breaker open`);
+  }
+  let oaInfo: ZaloOAInfoResponse;
+  try {
+    const oaRes = await fetch('https://openapi.zalo.me/v3/oa/getoa', {
+      headers: { access_token: tokenData.access_token },
+    });
+    if (!oaRes.ok) {
+      const kind = classifyHttpStatus(oaRes.status);
+      recordFailure(SERVICE_NAME, kind);
+    }
+    oaInfo = (await oaRes.json()) as ZaloOAInfoResponse;
+    recordSuccess(SERVICE_NAME);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Circuit breaker open')) throw error;
+    const kind = classifyError(error);
+    recordFailure(SERVICE_NAME, kind);
+    throw error;
+  }
   const resolvedOaId = oaInfo.data?.oa_id ?? oaId ?? 'unknown';
   const displayName = oaInfo.data?.name ?? resolvedOaId;
 

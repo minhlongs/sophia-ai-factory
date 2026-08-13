@@ -13,8 +13,11 @@
 
 import type { OfferProvider, AffiliateOffer, ListOffersOpts } from '../provider-interface'
 import { asTrending } from '../provider-interface'
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
+import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind'
 
 const NETWORK_SLUG = 'amazon'
+const CB_SERVICE_NAME = 'amazon-pa'
 const PA_API_HOST = 'webservices.amazon.com'
 const PA_API_REGION = 'us-east-1'
 const SERVICE = 'ProductAdvertisingAPI'
@@ -148,6 +151,9 @@ export class AmazonProvider implements OfferProvider {
   async listOffers(opts?: ListOffersOpts): Promise<AffiliateOffer[]> {
     if (!this.accessKey || !this.secretKey || !this.partnerTag) return mockOffers()
     try {
+      if (!shouldAllowRequest(CB_SERVICE_NAME)) {
+        return mockOffers()
+      }
       const body = JSON.stringify({
         Keywords: opts?.niche ?? 'bestseller',
         PartnerTag: this.partnerTag,
@@ -160,10 +166,17 @@ export class AmazonProvider implements OfferProvider {
       const res = await fetch(`https://${PA_API_HOST}/paapi5/searchitems`, {
         method: 'POST', headers, body,
       })
-      if (!res.ok) return mockOffers()
+      if (!res.ok) {
+        const kind = classifyHttpStatus(res.status)
+        recordFailure(CB_SERVICE_NAME, kind)
+        return mockOffers()
+      }
       const json = await res.json() as PaApiResponse
+      recordSuccess(CB_SERVICE_NAME)
       return (json.SearchResult?.Items ?? []).map(i => mapItem(i, this.partnerTag!))
-    } catch {
+    } catch (error) {
+      const kind = classifyError(error)
+      recordFailure(CB_SERVICE_NAME, kind)
       return mockOffers()
     }
   }
@@ -171,6 +184,7 @@ export class AmazonProvider implements OfferProvider {
   async getOffer(externalId: string): Promise<AffiliateOffer | null> {
     if (!this.accessKey || !this.secretKey || !this.partnerTag) return mockOffers()[0]
     try {
+      if (!shouldAllowRequest(CB_SERVICE_NAME)) return null
       const body = JSON.stringify({
         ItemIds: [externalId],
         PartnerTag: this.partnerTag,
@@ -181,11 +195,18 @@ export class AmazonProvider implements OfferProvider {
       const res = await fetch(`https://${PA_API_HOST}/paapi5/getitems`, {
         method: 'POST', headers, body,
       })
-      if (!res.ok) return null
+      if (!res.ok) {
+        const kind = classifyHttpStatus(res.status)
+        recordFailure(CB_SERVICE_NAME, kind)
+        return null
+      }
       const json = await res.json() as { ItemsResult?: { Items?: AmazonItem[] } }
       const item = json.ItemsResult?.Items?.[0]
+      recordSuccess(CB_SERVICE_NAME)
       return item ? mapItem(item, this.partnerTag) : null
-    } catch {
+    } catch (error) {
+      const kind = classifyError(error)
+      recordFailure(CB_SERVICE_NAME, kind)
       return null
     }
   }
