@@ -9,7 +9,9 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { getUserApiKey } from '@/tree/byok/user-api-key-store';
+// eslint-disable-next-line no-restricted-imports -- forest→land orchestration: video generation service clients
 import { getHeyGenClient } from '@/land/heygen/heygen-client';
+// eslint-disable-next-line no-restricted-imports -- forest→land orchestration: video generation service clients
 import { createDidTalk } from '@/land/did/did-client';
 import { POLL_INTERVAL_MS, POLL_MAX_ATTEMPTS } from './video-generate-helpers';
 

@@ -12,8 +12,11 @@ import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+// eslint-disable-next-line no-restricted-imports -- forest→land orchestration: video generation service clients
 import { WanVideoClient } from '@/land/video/generation/wan21-client';
+// eslint-disable-next-line no-restricted-imports -- forest→land orchestration: video generation service clients
 import { FishSpeechClient } from '@/land/video/generation/fish-speech-client';
+// eslint-disable-next-line no-restricted-imports -- forest→land orchestration: R2 bucket binding
 import { getVideoBucket } from '@/land/video/storage/r2-binding';
 import { CheckpointService } from '@/forest/pipeline';
 

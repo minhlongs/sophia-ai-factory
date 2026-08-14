@@ -92,7 +92,7 @@ function CustomTooltip({ active, payload, label }: CustomTooltipProps) {
   return null;
 }
 
-export function UsageChart({ data, metric, granularity, loading, title = 'Usage Over Time' }: UsageChartProps) {
+export function UsageChart({ data, metric: _metric, granularity, loading, title = 'Usage Over Time' }: UsageChartProps) {
   const t = useTranslations('dashboard.analytics');
 
   const chartData: ChartDataPoint[] = useMemo(() => {
