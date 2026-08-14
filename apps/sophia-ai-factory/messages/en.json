@@ -6381,7 +6381,9 @@
       },
       "stepNavigation": "Step Navigation",
       "back": "Back",
-      "continueToVoice": "Continue to Voice"
+      "continueToVoice": "Continue to Voice",
+      "stepProgress": "Step Progress",
+      "subtitle": "Subtitle"
     }
   },
   "audit": {

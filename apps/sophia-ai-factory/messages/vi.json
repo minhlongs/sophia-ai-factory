@@ -6388,7 +6388,9 @@
       },
       "stepNavigation": "Điều Hướng Bước",
       "back": "Quay Lại",
-      "continueToVoice": "Tiếp Tục Đến Giọng Nói"
+      "continueToVoice": "Tiếp Tục Đến Giọng Nói",
+      "stepProgress": "Tiến độ",
+      "subtitle": "Tiêu đề phụ"
     }
   },
   "audit": {
