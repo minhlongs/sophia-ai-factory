@@ -110,6 +110,7 @@ export function route(prompt: string, _hasLocalMode?: boolean): RouteDecision {
 /**
  * Build a TaskContext from a prompt and complexity classification.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for scoring-based provider selection
 function buildTaskContext(prompt: string, complexity: Complexity): TaskContext {
   return {
     intent: prompt,

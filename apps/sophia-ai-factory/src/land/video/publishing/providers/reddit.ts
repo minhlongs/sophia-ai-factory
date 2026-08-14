@@ -196,6 +196,7 @@ export class RedditPublisher implements Publisher {
     }
   }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async delete(postId: string): Promise<void> {
   // Platform-specific deletion not implemented
   logger.warn("[reddit.ts] delete not implemented");

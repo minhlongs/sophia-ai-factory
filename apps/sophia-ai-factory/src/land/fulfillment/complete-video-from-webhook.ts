@@ -21,8 +21,6 @@ import { grantCompensationCredit } from '@/land/fulfillment/compensation'
 import { sendBundleRenderFailedEmail } from '@/land/billing/email/send-bundle-render-failed-email'
 import {
   findByHeygenJobId,
-  markPermanentFailureCAS,
-  recordAttemptCAS,
   recordWebhookAttemptCAS,
   markWebhookPermanentFailureCAS,
 } from '@/seed/db/repositories/videos-repo'

@@ -70,6 +70,7 @@ export async function storeReport(
 
 export async function downloadStoredReport(
   reportId: string,
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   format: string
 ): Promise<Buffer | null> {
   const db = await import('@/seed/db/client').then((m) => m.createServerClient())

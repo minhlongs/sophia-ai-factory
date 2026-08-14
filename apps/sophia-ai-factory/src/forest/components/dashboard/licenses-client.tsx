@@ -217,6 +217,7 @@ function ActionBtn({ icon: Icon, label, onClick, busy }: {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getTierColor(tier: string): string {
   switch (tier) {
     case 'MASTER': return 'bg-primary/10 text-primary border border-primary/20';
@@ -226,6 +227,7 @@ function getTierColor(tier: string): string {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function getStatusColor(status: string): string {
   if (status === 'active') return 'bg-emerald-500/10 text-emerald-400';
   if (status === 'revoked') return 'bg-red-500/10 text-red-400';

@@ -137,6 +137,7 @@ export async function getActiveKeyVersion(): Promise<number> {
   return row?.version ?? 1
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function getPreviousKeyVersion(): Promise<KeyVersionRow | null> {
   const db = getD1()
   if (!db) return null
@@ -152,6 +153,7 @@ async function getPreviousKeyVersion(): Promise<KeyVersionRow | null> {
     .first<KeyVersionRow>()
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function canUsePreviousVersion(row: KeyVersionRow | null): Promise<boolean> {
   if (!row) return false
   if (!row.rotated_at) return false

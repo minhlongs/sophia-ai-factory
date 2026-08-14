@@ -14,7 +14,7 @@
 
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
-import { MemoryExtractor, type ChatMessage, type ExtractionResult } from '@/tree/memory/memory-extractor';
+import { MemoryExtractor, type ChatMessage } from '@/tree/memory/memory-extractor'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 

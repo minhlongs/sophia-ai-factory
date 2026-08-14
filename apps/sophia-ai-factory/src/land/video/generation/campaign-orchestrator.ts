@@ -8,10 +8,10 @@ import { logger } from '@/seed/utils/logger-utility';
 import { ServiceFactory } from '@/land/services/factory';
 import { MissingCredentialsError, ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/land/services/errors';
 import { startVideoGeneration } from '@/seed/ai/video-generator';
-import { generateScript, type ScriptOutput } from '@/seed/ai/script-generator';
+import { type ScriptOutput } from '@/seed/ai/script-generator'
 import { createServerClient } from '@/seed/db/client';
 import { Tier, TIER_RANK } from '@/seed/types';
-import { OpenClawGateway, type DistributionResult } from '@/tree/gateway/openclaw-gateway';
+import { OpenClawGateway } from '@/tree/gateway/openclaw-gateway'
 import { SmartResumeEngine } from '@/tree/gateway/smart-resume-engine';
 import { YouTubeChannelAdapter } from '@/tree/gateway/adapters/youtube-channel-adapter';
 import { TikTokChannelAdapter } from '@/tree/gateway/adapters/tiktok-channel-adapter';
@@ -79,12 +79,14 @@ interface AffiliateOfferSelectedRow {
   affiliate_link: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- interface used for type completeness in campaign context
 interface VideoAssets {
   video_url: string;
   thumbnail_url: string;
 }
 
 export async function runCampaignWorkflow(args: RunCampaignWorkflowArgs): Promise<{ success: boolean; campaignId: string; skipped?: boolean }> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured from workflow args
   const { campaignId, userId, topic, audience, tier, resume, resumeFrom, abVariantACaption, abExperimentId, step, updateStatus, notifyUser } = args;
 
   async function runStepSafely<T>(

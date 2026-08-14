@@ -2,7 +2,7 @@
  * Instrument Inngest event handlers with OpenTelemetry spans.
  */
 
-import { startSpan, getTracer } from '@/seed/telemetry/opentelemetry-setup';
+import { getTracer } from '@/seed/telemetry/opentelemetry-setup'
 
 /**
  * Wrap an Inngest function handler with tracing.
@@ -59,6 +59,7 @@ export function createInngestSpan(eventName: string) {
     },
   });
   const startTime = Date.now();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for future span error metadata
   let isError = false;
 
   return {

@@ -177,6 +177,7 @@ function resolvePeriodLabel(input: string): string {
   return 'current_month';
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function fetchRevenue(input: string, userId: string): Promise<RevenueSummary | null> {
   const periodLabel = resolvePeriodLabel(input);
   const db = createServerClient();

@@ -35,6 +35,7 @@ interface GenerateScriptInput {
  * Falls back to mock if API key is not configured.
  */
 export async function generateScript(input: GenerateScriptInput) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { topic, audience, tier, userId, licenseKey, licenseNonce, orgId, affiliateOffer } = input;
   const stopTimer = startTimer();
 

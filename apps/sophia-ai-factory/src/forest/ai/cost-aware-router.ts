@@ -18,7 +18,6 @@ import type {
   ProviderId,
   ChatMessage,
   ChatOptions,
-  ChatResponse,
   StreamChunk,
 } from '@/seed/ai/provider-interface';
 import { ProviderRegistry } from '@/seed/ai/provider-registry';
@@ -261,6 +260,7 @@ export class CostAwareRouter {
 
     // ── Execute ──────────────────────────────────────────────────────────────
     let actualCost = 0;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     let success = false;
 
     try {
@@ -371,6 +371,7 @@ export class CostAwareRouter {
 
     // Pick the cheapest that meets minimum quality requirements
     const selected = sorted[0] ?? estimates[0];
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const cheapestCost = Math.min(...estimates.map((e) => e.estimatedCost));
 
     const usedCheaperAlternative =

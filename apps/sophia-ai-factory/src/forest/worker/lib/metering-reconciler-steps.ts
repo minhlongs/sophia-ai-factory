@@ -124,6 +124,7 @@ export async function runValidateStep(
 export async function runMarkReconciledStep(
   meteringLogs: MeteringLog[],
   validatedLicenses: Awaited<ReturnType<typeof validateAllLicenses>>['validatedLicenses'],
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   ctx: StepContext
 ): Promise<number> {
   logger.info('[Reconciliation Runner] Marking logs as reconciled');

@@ -140,6 +140,7 @@ export function SetupWizardPage() {
 
       // Navigate to dashboard on success
       window.location.href = '/dashboard';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       setSaveError(t('errors.saveFailed'));
       setSaveFailed(true);

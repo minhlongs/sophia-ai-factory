@@ -154,6 +154,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     status = response.status;
     isError = status >= 400;
     return response;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   } catch (err) {
     isError = true;
     // L2: return a safe error response with security headers instead of throwing

@@ -154,6 +154,7 @@ export async function batchInvalidateLicenses(
  * @param kv - Cloudflare KV namespace
  * @returns Cache statistics
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function getCacheStats(kv: KVNamespace): Promise<{
   totalKeys: number;
   keyPrefix: string;

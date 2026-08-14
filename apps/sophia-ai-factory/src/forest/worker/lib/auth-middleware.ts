@@ -50,6 +50,7 @@ function base64UrlDecode(input: string): Uint8Array {
 }
 
 // Base64url encode helper
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function base64UrlEncode(input: ArrayBuffer): string {
   const bytes = new Uint8Array(input);
   let binary = '';

@@ -58,6 +58,7 @@ function pLimit<T>(
   return new Promise((resolve) => {
     const results: Array<PromiseSettledResult<T>> = new Array(tasks.length);
     let next = 0;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
     let running = 0;
     let completed = 0;
 

@@ -12,6 +12,7 @@ export function generateUsageCSV(
     tokensOutput: number
     tier: string
   }>,
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   filters: ReportFilters
 ): string {
   const headers = [

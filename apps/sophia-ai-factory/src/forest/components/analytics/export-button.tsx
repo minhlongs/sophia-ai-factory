@@ -32,7 +32,6 @@ export function ExportButton({
   disabled = false,
   loading = false,
   onExport,
-  dateRange,
   className,
   upgradeHint,
 }: ExportButtonProps) {

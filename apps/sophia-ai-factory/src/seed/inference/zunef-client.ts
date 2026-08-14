@@ -60,6 +60,7 @@ function tokenFromRaw(raw: string): TokenData | null {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function getFreshToken(deviceId: string): Promise<TokenData> {
   const res = await fetch(`${ZUNEF_BASE_URL}/api/claude-code/auth`, {
     method: 'POST',

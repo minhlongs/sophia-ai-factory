@@ -11,24 +11,17 @@ import {
   Video,
   BarChart2,
   HelpCircle,
-  Code,
   Rocket,
   KeyRound,
   KeySquare,
   FileText,
-  GitBranch,
   ShoppingBag,
   Coins,
   Plug,
   Webhook,
   Store,
   BookOpen,
-  Brain,
-  TrendingUp,
-  Shield,
-  Bot,
   Sparkles,
-  Share2,
   Activity,
   ServerCog,
   Database,
@@ -45,6 +38,7 @@ interface DashboardSidebarNavProps {
   isVi: boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- prop reserved for future locale-aware rendering
 export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps) {
   const pathname = usePathname();
   const t = useTranslations("dashboard");

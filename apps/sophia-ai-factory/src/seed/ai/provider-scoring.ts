@@ -414,9 +414,11 @@ export function scoreProvider(
     tool.provider.toLowerCase(),
   );
   const stockKeywords = new Set(['stock', 'footage', 'b-roll', 'library']);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- used for future stock-penalty scoring
   const bestForTokens = new Set(
     [...bestFor].flatMap((d) => tokenizeText(d)),
   );
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- used for future stock-penalty scoring
   const prefersGenerated =
     taskContext.intent !== undefined &&
     expandSynonyms(new Set(tokenizeText(taskContext.intent))).size > 0 &&

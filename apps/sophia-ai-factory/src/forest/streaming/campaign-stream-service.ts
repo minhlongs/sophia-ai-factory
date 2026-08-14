@@ -12,8 +12,6 @@ import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type {
   CampaignStreamEvent,
-  CampaignStreamEventType,
-  ErrorEvent,
   StepCompleteEvent,
   StreamState,
 } from './campaign-stream-types';

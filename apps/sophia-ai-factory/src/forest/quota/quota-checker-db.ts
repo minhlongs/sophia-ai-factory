@@ -12,6 +12,7 @@ interface QuotaLimitsRow {
   custom_daily_requests: number | null;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface CreditsUsedRow {
   credits_used: number | null;
 }

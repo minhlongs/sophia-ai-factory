@@ -14,7 +14,7 @@
  * @module tree/memory/memory-consolidator
  */
 
-import { MemoryRepository, type StoredMemory } from './memory-repository';
+import { MemoryRepository } from './memory-repository'
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 

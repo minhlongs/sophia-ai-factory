@@ -16,6 +16,7 @@ const ANTHROPIC_BASE_URL = 'https://api.anthropic.com/v1';
  * Resolve which LLM backend to use for a given user.
  * Throws 'NO_LLM_CONFIGURED' if no provider is available.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function resolveLlmRoute(userId: string): Promise<LlmRoute> {
   // BYO local LLM is deprecated/removed to ensure synchronization. Direct to DeepSeek or Anthropic.
 

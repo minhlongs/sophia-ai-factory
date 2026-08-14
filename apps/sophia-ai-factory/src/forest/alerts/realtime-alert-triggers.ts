@@ -116,6 +116,7 @@ export async function logViolationAndAlert(params: {
 
   const violationId = await (async () => {
     try {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { data: rawData, error } = await db
         .from('violations')
         .insert({

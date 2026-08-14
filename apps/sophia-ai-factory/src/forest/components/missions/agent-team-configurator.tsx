@@ -49,7 +49,6 @@ import {
   Loader2,
   CheckCircle2,
   AlertCircle,
-  Bot,
   Settings2,
 } from 'lucide-react';
 import type { Agent } from '@/forest/agents/types';

@@ -156,6 +156,7 @@ function scoreEpc(aff: Affiliate): number {
  * Only applies when cryptoVolumeUsd is present.
  * Returns null when not applicable (non-crypto affiliates).
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function scoreCryptoVolume(aff: Affiliate): number | null {
   if (aff.cryptoVolumeUsd == null) return null;
   if (aff.cryptoVolumeUsd <= 0) return 0;

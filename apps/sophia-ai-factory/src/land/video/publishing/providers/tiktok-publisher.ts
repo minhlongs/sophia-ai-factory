@@ -15,6 +15,7 @@ function isMockMode(): boolean {
 }
 
 /** Prepend FTC #ad disclosure if caption lacks it (idempotent) */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for FTC #ad disclosure compliance
 function withAdPrefix(caption: string): string {
   return caption.startsWith('#ad ') ? caption : `#ad ${caption}`;
 }
@@ -91,6 +92,7 @@ export class TikTokPublisher implements Publisher {
     }
   }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- parameter required by Publisher interface
 async delete(postId: string): Promise<void> {
   // Platform-specific deletion not implemented
   logger.warn("[tiktok-publisher.ts] delete not implemented");

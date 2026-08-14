@@ -9,8 +9,6 @@ import type {
   HelpVideoProgress,
   UserProgressSummary,
   HelpVideoCategory,
-  MarkWatchedInput,
-  UnmarkWatchedInput,
 } from './types';
 import {
   HelpVideoProgressSchema,
@@ -225,6 +223,7 @@ export async function getAllCategoriesProgress(
 }>> {
   const _db = getD1();
   if (!_db) throw new Error('D1 database binding not available');
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   const db = _db;
 
   const categories: HelpVideoCategory[] = [

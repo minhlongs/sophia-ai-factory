@@ -69,6 +69,7 @@ function fromCents(cents: number): string {
   return `$${(cents / 100).toFixed(2)}`;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function formatTimestamp(unixSec: number): string {
   return new Date(unixSec * 1000).toLocaleDateString(undefined, {
     year: 'numeric', month: 'short', day: 'numeric',

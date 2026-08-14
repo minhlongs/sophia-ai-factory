@@ -346,6 +346,7 @@ function buildSubscriptionUpdateStatements(
   return stmts
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function handleBatchFallback(
   orgId: string,
   tier: Tier,
@@ -420,6 +421,7 @@ async function safelyRecordAudit(
   } catch (e) { safeCatch('Audit record')(e) }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function safelyFinalizePromoRedemption(
   userId: string,
   ipn: NowPaymentsIpnPayload,

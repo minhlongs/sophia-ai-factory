@@ -9,10 +9,7 @@ import { Resend } from 'resend'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { createServerClient } from '@/seed/db/client'
-import {
-  buildBundleRenderFailedEmail,
-  type BundleRenderFailedContext,
-} from './templates/bundle-render-failed'
+import { buildBundleRenderFailedEmail,  } from './templates/bundle-render-failed'
 
 let resendClient: Resend | null = null
 

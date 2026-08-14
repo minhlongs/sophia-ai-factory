@@ -10,8 +10,6 @@
 'use client';
 
 import {
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -37,6 +35,7 @@ export function UsageChart({
   data,
   granularity,
   showCredits = true,
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   showTokens = false,
   height = 300,
 }: UsageChartProps) {

@@ -16,7 +16,7 @@
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import { memory } from '@/land/openclaw/memory-adapter';
-import { getContextManager, type ContextCheckResult } from './context-manager';
+import { getContextManager } from './context-manager'
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 

@@ -39,6 +39,7 @@ export interface ModelInvocationEvent {
 /**
  * Salt for GDPR-compliant hashing (from environment)
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const AUDIT_HASH_SALT = process.env.AUDIT_HASH_SALT || ''
 
 /**

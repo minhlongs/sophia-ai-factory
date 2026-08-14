@@ -11,7 +11,7 @@ import { handleFailed } from './nowpayments-ipn-subscription'
 import { dispatchFinished, dispatchRefunded } from './nowpayments-ipn-dispatch'
 import { enqueueDlqEntry, countUnresolvedDlq, type D1LikeClient } from './nowpayments-ipn-dead-letter'
 import { recordDroppedEvent } from './nowpayments-ipn-dropped-events'
-import { type Result } from '@/seed/types/result'
+
 import { writeDeadLetterToR2, generateDeadLetterKey } from '@/seed/r2/bucket-ops'
 
 export interface NowPaymentsIpnPayload {

@@ -41,6 +41,7 @@ export function genericDbError(message = 'database error') {
 
 // ── Fluent chain builders ────────────────────────────────────────────────────
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface EqChain {
   eq: (col: string, val: unknown) => EqChain
   neq: (col: string, val: unknown) => EqChain

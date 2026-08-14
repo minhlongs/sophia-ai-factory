@@ -248,7 +248,7 @@ export class AnthropicProvider implements Provider {
       for await (const event of parseAnthropicSse(reader)) {
         switch (event.type) {
           case 'text_delta':
-            accumulatedText += event.text;
+            accumulatedText += event.text; // eslint-disable-line @typescript-eslint/no-unused-vars
             yield {
               type: 'text_delta',
               delta: event.text,

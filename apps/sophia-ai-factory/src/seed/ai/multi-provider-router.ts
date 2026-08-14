@@ -18,7 +18,6 @@
  */
 
 import type {
-  Provider,
   ProviderId,
   ChatMessage,
   ChatOptions,

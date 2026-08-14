@@ -52,11 +52,13 @@ function verticalCaseExpr(): string {
 }
 
 /** MRR per tier from TIER_CONFIGS */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function tierMrr(tier: string): number {
   const normalized = tier?.toUpperCase() as Tier;
   return TIER_CONFIGS[normalized]?.price ?? 0;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface LicenseDateRow {
   tier: string;
   day: string;

@@ -7,14 +7,6 @@
 
 import type { CheckResult, AuditEnv } from '@/tree/audit/zero-gap-types'
 
-interface VitestResult {
- numPassedTests?: number
- numFailedTests?: number
- numTotalTests?: number
- success?: boolean
- testResults?: Array<{ status: string; numPassingAsserts?: number }>
-}
-
 function flattenKeys(obj: Record<string, unknown>, prefix = ''): string[] {
  const keys: string[] = []
  for (const [k, v] of Object.entries(obj)) {

@@ -18,10 +18,8 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  ArrowUpDown,
   Shield,
   Zap,
-  ExternalLink,
 } from 'lucide-react';
 
 interface BillingSummary {
@@ -177,6 +175,7 @@ export function AdminBillingClient({
     });
   }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   function pct(n: number, total: number): string {
     if (total === 0) return '0%';
     return `${((n / total) * 100).toFixed(1)}%`;

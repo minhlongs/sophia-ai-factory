@@ -9,12 +9,9 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   RefreshCw,
   DollarSign,
-  Clock,
   CheckCircle2,
-  Search,
   Loader2,
   ChevronDown,
-  ChevronLeft,
   ChevronRight,
   Wallet,
   TrendingUp,
@@ -43,13 +40,6 @@ const PAYOUT_METHODS: { value: PayoutMethod; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
-const PAYMENT_METHODS = [
-  { value: 'usdt_trc20', label: 'USDT TRC20' },
-  { value: 'usdt_erc20', label: 'USDT ERC20' },
-  { value: 'bank_transfer', label: 'Bank Transfer' },
-  { value: 'other', label: 'Other' },
-];
-
 export function PayoutsClient({
   initialData,
 }: {
@@ -59,6 +49,7 @@ export function PayoutsClient({
   const [loading, setLoading] = useState(!initialData?.items.length);
   const [error, setError] = useState<string | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [markingId, setMarkingId] = useState<string | null>(null);
 
   // Modal state
@@ -144,13 +135,6 @@ export function PayoutsClient({
     const d = new Date(ts * 1000);
     return d.toLocaleDateString('vi-VN', { day: '2-digit', month: 'short', year: 'numeric' });
   }
-
-  const PAYOUT_METHOD_LABELS: Record<string, string> = {
-    usdt_trc20: 'USDT TRC20',
-    usdt_erc20: 'USDT ERC20',
-    bank_transfer: 'Bank Transfer',
-    other: 'Other',
-  };
 
   const minPayout = data?.min_payout_usd ?? 50;
 

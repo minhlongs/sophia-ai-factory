@@ -11,7 +11,6 @@ import {
   CheckCircle2,
   Clock,
   Loader2,
-  ExternalLink,
   AlertTriangle,
   Building2,
   User,

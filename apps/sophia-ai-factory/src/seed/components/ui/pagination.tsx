@@ -13,6 +13,8 @@ const Pagination = React.forwardRef<
     currentPage: number;
     onPageChange: (page: number) => void;
   }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 >(({ totalItems, itemsPerPage, currentPage, onPageChange, className, ...props }, ref) => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 

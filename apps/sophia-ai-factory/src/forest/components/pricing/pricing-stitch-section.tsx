@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { UNIFIED_TIERS } from "@/seed/config/tiers";
 import { usePricingData } from "./pricing-data";
-import { formatPrice, formatVnd, centsToVnd } from "./pricing-card";
+import { formatPrice } from './pricing-card'
 import { CouponInput, type PromoDiscount } from "./coupon-input";
 import dynamic from "next/dynamic";
 import { useCsrfToken } from "@/seed/security/use-csrf-token";

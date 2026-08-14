@@ -7,7 +7,7 @@ import { startVideoGeneration } from '@/seed/ai/video-generator'
 import { type ScriptOutput } from '@/seed/ai/script-generator'
 import { createServerClient } from '@/seed/db/client'
 import { Tier, TIER_RANK } from '@/seed/types'
-import { OpenClawGateway, type DistributionResult } from '@/tree/gateway/openclaw-gateway'
+import { OpenClawGateway } from '@/tree/gateway/openclaw-gateway'
 import { SmartResumeEngine } from '@/tree/gateway/smart-resume-engine'
 import { YouTubeChannelAdapter } from '@/tree/gateway/adapters/youtube-channel-adapter'
 import { TikTokChannelAdapter } from '@/tree/gateway/adapters/tiktok-channel-adapter'
@@ -58,6 +58,7 @@ interface AffiliateOfferSelectedRow {
   affiliate_link: string
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface VideoAssets {
   video_url: string
   thumbnail_url: string
@@ -293,7 +294,6 @@ export const generateCampaign = inngest.createFunction(
       await runStepSafely('checkpoint-video-ready', async () => {
         await resumeEngine.checkpoint(campaignId, 'poll-video-status', { video_url: videoAssets.video_url, thumbnail_url: videoAssets.thumbnail_url })
       })
-
 
  // ── Mid-flight tier re-validation before the most expensive step ──────────────
  // User tier can change mid-flight (downgrade via NOWPayments cancellation or

@@ -142,6 +142,7 @@ export function UsageChart({ data, metric, granularity, loading, title = 'Usage 
     return (0 - min) / (max - min);
   };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   const off = gradientOffset();
 
   return (

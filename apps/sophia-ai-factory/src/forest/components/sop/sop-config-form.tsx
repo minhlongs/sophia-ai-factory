@@ -41,7 +41,6 @@ function parseSchema(raw: string | null | undefined): JsonSchema | null {
 }
 
 function FieldInput({
-  fieldKey,
   prop,
   value,
   required,

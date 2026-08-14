@@ -16,11 +16,6 @@
 import type {
   Provider,
   ProviderId,
-  ChatMessage,
-  ChatOptions,
-  ChatResponse,
-  StreamChunk,
-  ProviderCapabilities,
 } from '@/seed/ai/provider-interface';
 import type { ByokProvider } from '@/tree/byok/user-api-key-store';
 import { ProviderRegistry } from '@/seed/ai/provider-registry';

@@ -154,6 +154,7 @@ function getD1Sync(): D1Database {
 /**
  * Get D1 binding via Cloudflare context symbol set by opennextjs-cloudflare
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function getD1Async(): Promise<D1Database> {
   const ctxSymbol = Symbol.for('__cloudflare-context__');
   const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[ctxSymbol];
@@ -199,6 +200,7 @@ export function createServerClient(override?: D1Database): D1Client {
 /**
  * Lazy query chain that resolves D1 binding when executing.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 class LazyQueryChain {
   private calls: { method: string; args: unknown[] }[] = [];
   private table: string;

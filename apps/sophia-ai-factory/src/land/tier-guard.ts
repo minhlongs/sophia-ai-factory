@@ -1,5 +1,5 @@
 import { Tier } from "@/seed/types";
-import { type UnifiedTierLimits } from "@/seed/config/tiers";
+
 import { resolveUserTier } from "@/seed/db/resolve-user-tier";
 import {
   checkLimit as seedCheckLimit,
@@ -32,6 +32,7 @@ export function enforceLimitFromResult(result: LimitCheckResult): void {
 
 export const tierGuard = {
   async checkLimit(userId: string, limitType: LimitType): Promise<LimitCheckResultWithTier> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
     const userTier = await resolveUserTier(userId);
     let currentUsage = 0;
 

@@ -24,6 +24,7 @@ export { QUOTA_LIMITS };
 /** Maximum date range for queries (90 days) — prevents expensive full-table scans */
 const MAX_DATE_RANGE_DAYS = 90;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface UsageDataRow { credits_used: number; }
 
 /**

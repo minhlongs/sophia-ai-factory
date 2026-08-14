@@ -29,6 +29,7 @@ interface DateRange {
   end: string;   // YYYY-MM-DD
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface YtApiRow {
   dimensions?: string[];
   metrics?: number[];

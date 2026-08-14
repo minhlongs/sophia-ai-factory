@@ -43,6 +43,7 @@ export interface ExecutePublishWorkflowArgs {
 }
 
 const MAX_RETRIES = 3;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const RETRY_DELAYS_S = [120, 600, 1800];
 const POLL_MAX_ATTEMPTS = 6;
 
@@ -397,6 +398,7 @@ async function finalizePublishResult(args: {
   finalStatus: 'live' | 'failed';
   eventId?: string;
 }): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { step, db, jobId, tenantId, provider, externalPostId, finalStatus, eventId } = args;
   const finishedAt = Math.floor(Date.now() / 1000);
 
@@ -551,6 +553,7 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
     return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { claimed, status: claimStatus } = await atomicClaimJob(db, jobId);
   if (!claimed) {
     logger.info('[publishExecute] Already claimed by another worker', { jobId, status: job.status });

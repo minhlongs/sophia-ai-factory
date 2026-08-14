@@ -12,7 +12,6 @@ import {
   initializeLogQueue,
   flushLogs,
   hashIpSync,
-  LOGGER_CONFIG,
 } from './enrichment-log-queue';
 import { logger } from '@/seed/utils/logger-utility';
 

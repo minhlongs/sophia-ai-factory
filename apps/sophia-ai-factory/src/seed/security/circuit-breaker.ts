@@ -18,8 +18,6 @@ import { createServerClient } from '@/seed/db/client'
 import {
   CircuitState,
   FailureKind,
-  classifyError,
-  classifyHttpStatus,
 } from '@/seed/types/failure-kind'
 import {
   DEFAULT_THRESHOLDS,

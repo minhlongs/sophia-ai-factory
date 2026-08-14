@@ -55,6 +55,7 @@ export function ProviderCredentialsStep({
   savedCredentials,
   latencies,
 }: ProviderCredentialsStepProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
   const tProviders = useTranslations('setupWizard.providers')
   const tRouting = useTranslations('setupWizard.routingStrategy')
   const getSaved = (provider: string) =>
