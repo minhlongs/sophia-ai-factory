@@ -1,4 +1,5 @@
 'use client';
+// i18n-namespace: stitch.campaigns
 
 import React from 'react';
 import { MoreVertical } from 'lucide-react';
@@ -98,10 +99,14 @@ export function CampaignCard({
 
       {/* Metrics row */}
       <div className="grid grid-cols-3 gap-2">
-        {(['views', 'revenue', 'ctr'] as const).map((key) => (
+        {([
+          ['views', t('metrics.views')],
+          ['revenue', t('metrics.revenue')],
+          ['ctr', t('metrics.ctr')],
+        ] as const).map(([key, label]) => (
           <div key={key} className="text-center">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-              {t(`metrics.${key}`)}
+              {label}
             </p>
             <p className="text-sm font-bold text-foreground mt-0.5">
               {campaign.metrics[key]}

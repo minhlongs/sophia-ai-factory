@@ -34,9 +34,13 @@ async function* getFiles(dir, pattern) {
 }
 
 /**
- * Extract namespace from useTranslations() or getTranslations() call
+ * Extract namespace from useTranslations() or getTranslations() call,
+ * or from a // i18n-namespace: <ns> comment (for files receiving t as a prop).
  */
 function extractNamespace(content) {
+  // Check comment hint first (for prop-passed t functions)
+  const commentHint = content.match(/\/\/\s*i18n-namespace:\s*([a-zA-Z_.-]+)/);
+  if (commentHint) return commentHint[1];
   // Match useTranslations('namespace') or getTranslations("namespace") with dots
   const stringForm = content.match(/(?:useTranslations|getTranslations)\(['"`]([a-zA-Z_.-]+)['"`]\)/);
   if (stringForm) return stringForm[1];
