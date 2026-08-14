@@ -134,17 +134,6 @@ export function UsageChart({ data, metric, granularity, loading, title = 'Usage 
     );
   }
 
-  const gradientOffset = () => {
-    if (!data || data.length === 0) return 0;
-    const max = Math.max(...data.map((d) => d[metric]));
-    const min = Math.min(...data.map((d) => d[metric]));
-    if (max === min) return 0.5;
-    return (0 - min) / (max - min);
-  };
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const off = gradientOffset();
-
   return (
     <Card className="bg-card border-border">
       <CardHeader>

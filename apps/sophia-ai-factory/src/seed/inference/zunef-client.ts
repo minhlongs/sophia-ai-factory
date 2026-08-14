@@ -60,28 +60,6 @@ function tokenFromRaw(raw: string): TokenData | null {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function getFreshToken(deviceId: string): Promise<TokenData> {
-  const res = await fetch(`${ZUNEF_BASE_URL}/api/claude-code/auth`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ deviceId }),
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Auth failed: ${res.status} ${text}`);
-  }
-
-  const parsed: { token: string; expiresIn: number } = await res.json();
-  const tokenData: TokenData = {
-    token: parsed.token,
-    expiresAt: Date.now() + parsed.expiresIn * 1_000,
-  };
-  await storageSet(DEVICE_TOKEN_KEY, JSON.stringify(tokenData));
-  return tokenData;
-}
-
 async function loadValidToken(): Promise<string | null> {
   const raw = await storageGet(DEVICE_TOKEN_KEY);
   if (!raw) return null;

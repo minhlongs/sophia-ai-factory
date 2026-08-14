@@ -69,8 +69,7 @@ const PROVIDER_LABEL: Record<string, { vi: string; en: string }> = {
   heygen:     { vi: 'HeyGen (Tạo video)', en: 'HeyGen (Video Rendering)' },
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function buildProviderErrorMessage(campaignId: string, provider: string, type: 'quota' | 'key', rawError: string): string {
+function buildProviderErrorMessage(campaignId: string, provider: string, type: 'quota' | 'key', _rawError: string): string {
   const label = PROVIDER_LABEL[provider] ?? { vi: provider, en: provider }
   const reasonVi = type === 'quota'
     ? 'Hết hạn ngạch (hết tiền/credits) hoặc bị giới hạn lượt gọi.'

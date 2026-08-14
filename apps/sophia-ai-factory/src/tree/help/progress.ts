@@ -221,10 +221,8 @@ export async function getAllCategoriesProgress(
   watched: number;
   completion_percentage: number;
 }>> {
-  const _db = getD1();
-  if (!_db) throw new Error('D1 database binding not available');
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const db = _db;
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
 
   const categories: HelpVideoCategory[] = [
     'getting-started',

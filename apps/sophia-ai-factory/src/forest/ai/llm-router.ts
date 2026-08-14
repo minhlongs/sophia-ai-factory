@@ -108,18 +108,6 @@ export function route(prompt: string, _hasLocalMode?: boolean): RouteDecision {
 // ── Scoring-based provider selection ─────────────────────────────────────────
 
 /**
- * Build a TaskContext from a prompt and complexity classification.
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for scoring-based provider selection
-function buildTaskContext(prompt: string, complexity: Complexity): TaskContext {
-  return {
-    intent: prompt,
-    motionRequired: complexity === 'complex',
-    assetType: complexity === 'complex' ? 'video' : undefined,
-  }
-}
-
-/**
  * Score and rank available providers for a given task context.
  *
  * Uses the 7-dimension scoring engine to pick the best provider among

@@ -59,15 +59,12 @@ export function createInngestSpan(eventName: string) {
     },
   });
   const startTime = Date.now();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for future span error metadata
-  let isError = false;
 
   return {
     span,
     finish: (error?: Error) => {
       const duration = Date.now() - startTime;
       if (error) {
-        isError = true;
         span.recordException(error);
         span.setStatus({ code: 1, message: error.message });
       }

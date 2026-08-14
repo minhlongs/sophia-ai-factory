@@ -89,8 +89,7 @@ export function detectInjection(input: string): GuardResult {
   }
 
   // Multiple medium hits → escalate to high
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const mediumCount = reasons.filter((r, i) =>
+  const mediumCount = reasons.filter((r) =>
     PATTERNS.find(p => p.id === r)?.severity === 'medium',
   ).length
   if (mediumCount >= 2) {

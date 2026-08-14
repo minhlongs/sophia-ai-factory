@@ -185,8 +185,7 @@ export async function createPayOsInvoice(input: PayOsCheckoutInput): Promise<Pay
     throw new Error('PayOS env vars missing: PAYOS_CLIENT_ID, PAYOS_API_KEY, PAYOS_CHECKSUM_KEY')
   }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { tier, userId, orderId, customerEmail } = input
+  const { tier, userId: _userId, orderId, customerEmail } = input
   const config = getPayOsTierConfig(tier)
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'
 

@@ -67,8 +67,7 @@ export function getStatusLevel(
 export function formatQuotaResponse(
   usage: { hourly: number; daily: number; monthly: number; requests: number },
   limits: QuotaLimit,
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-  tier: string,
+  _tier: string,
 ) {
   const percentages = calculatePercentages(
     { hourly: usage.hourly, daily: usage.daily, monthly: usage.monthly },

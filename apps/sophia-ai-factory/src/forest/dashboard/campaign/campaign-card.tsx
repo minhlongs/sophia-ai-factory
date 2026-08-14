@@ -41,11 +41,8 @@ export function CampaignCard({
   className,
 }: CampaignCardProps) {
   const t = useTranslations('dashboard.campaigns.card');
-  const tStatus = useTranslations('campaign.status');
   const format = useFormatter();
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const statusLabel = tStatus(campaign.status);
   const progress = campaign.progress ?? 0;
   const hasVideo = !!campaign.video_url;
 

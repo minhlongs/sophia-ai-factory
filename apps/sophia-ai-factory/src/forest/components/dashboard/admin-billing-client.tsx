@@ -175,12 +175,6 @@ export function AdminBillingClient({
     });
   }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-  function pct(n: number, total: number): string {
-    if (total === 0) return '0%';
-    return `${((n / total) * 100).toFixed(1)}%`;
-  }
-
   return (
     <div className="space-y-6">
       {renderHeader(loading, fetchSummary)}

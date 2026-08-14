@@ -49,8 +49,6 @@ export function PayoutsClient({
   const [loading, setLoading] = useState(!initialData?.items.length);
   const [error, setError] = useState<string | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [markingId, setMarkingId] = useState<string | null>(null);
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);

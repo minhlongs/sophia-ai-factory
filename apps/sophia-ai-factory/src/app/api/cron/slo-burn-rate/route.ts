@@ -114,25 +114,6 @@ async function computeBurnRate(
   p95: number;
   p99: number;
 }> {
-  // Build route filter for SQL
-  const routeConditions = slo.routes.map(r => `pathname LIKE '${r}%'`).join(' OR ');
-
-  // Query request data from D1 (using our middleware metrics stored in D1 if available)
-  // For now, we'll use a placeholder query. In production, this should query
-  // a dedicated metrics table or aggregate from WAE.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const query = `
-    SELECT
-      COUNT(*) as total,
-      SUM(CASE WHEN status < 400 THEN 1 ELSE 0 END) as good,
-      SUM(CASE WHEN status >= 500 THEN 1 ELSE 0 END) as bad,
-      SUM(CASE WHEN status >= 500 THEN 1 ELSE 0 END) * 1.0 / COUNT(*) as error_rate
-    FROM request_logs
-    WHERE ${routeConditions}
-    AND created_at >= ?1
-    AND created_at < ?2
-  `;
-
   // Since we don't have a request_logs table yet, we'll return mock data
   // and the cron will write zero-values. The real implementation should
   // either:

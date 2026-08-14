@@ -216,20 +216,3 @@ function ActionBtn({ icon: Icon, label, onClick, busy }: {
     </button>
   );
 }
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getTierColor(tier: string): string {
-  switch (tier) {
-    case 'MASTER': return 'bg-primary/10 text-primary border border-primary/20';
-    case 'ENTERPRISE': return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
-    case 'PREMIUM': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-    default: return 'bg-muted text-muted-foreground';
-  }
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getStatusColor(status: string): string {
-  if (status === 'active') return 'bg-emerald-500/10 text-emerald-400';
-  if (status === 'revoked') return 'bg-red-500/10 text-red-400';
-  return 'bg-amber-500/10 text-amber-400'; // expired
-}

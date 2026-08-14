@@ -79,15 +79,8 @@ interface AffiliateOfferSelectedRow {
   affiliate_link: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- interface used for type completeness in campaign context
-interface VideoAssets {
-  video_url: string;
-  thumbnail_url: string;
-}
-
 export async function runCampaignWorkflow(args: RunCampaignWorkflowArgs): Promise<{ success: boolean; campaignId: string; skipped?: boolean }> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured from workflow args
-  const { campaignId, userId, topic, audience, tier, resume, resumeFrom, abVariantACaption, abExperimentId, step, updateStatus, notifyUser } = args;
+  const { campaignId, userId, topic, audience, tier, resume, resumeFrom, abVariantACaption: _abVariantACaption, abExperimentId, step, updateStatus, notifyUser } = args;
 
   async function runStepSafely<T>(
     stepName: string,

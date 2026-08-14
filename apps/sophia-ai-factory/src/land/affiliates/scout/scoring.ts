@@ -151,20 +151,6 @@ function scoreEpc(aff: Affiliate): number {
   return Math.min(aff.epc / MAX_EPC_USD, 1.0);
 }
 
-/**
- * Crypto volume score: log scale, threshold $1M daily volume.
- * Only applies when cryptoVolumeUsd is present.
- * Returns null when not applicable (non-crypto affiliates).
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function scoreCryptoVolume(aff: Affiliate): number | null {
-  if (aff.cryptoVolumeUsd == null) return null;
-  if (aff.cryptoVolumeUsd <= 0) return 0;
-  // log scale: 1M → 0.5, 10M → 0.75, 100M → 1.0
-  const logScore = Math.log10(aff.cryptoVolumeUsd) / Math.log10(100 * CRYPTO_VOLUME_THRESHOLD_USD);
-  return Math.min(Math.max(logScore, 0), 1.0);
-}
-
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
