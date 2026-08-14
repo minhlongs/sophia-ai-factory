@@ -6390,7 +6390,8 @@
       "back": "Quay Lại",
       "continueToVoice": "Tiếp Tục Đến Giọng Nói",
       "stepProgress": "Tiến độ",
-      "subtitle": "Tiêu đề phụ"
+      "subtitle": "Tiêu đề phụ",
+      "scriptEditor": "Trình soạn thảo kịch bản"
     }
   },
   "audit": {
