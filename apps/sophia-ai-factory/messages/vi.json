@@ -5678,7 +5678,10 @@
         "previousPage": "Previous Page",
         "nextPage": "Next Page",
         "deployStatus": "Deploy Status",
-        "userActions": "Actions for {name}"
+        "userActions": "Actions for {name}",
+        "userGrowth": "User Growth",
+        "moreOptions": "More Options",
+        "recentSignups": "Recent Signups"
       },
       "userInitials": "U",
       "chart": {
@@ -5742,6 +5745,27 @@
         "d1Queries": {
           "label": "D1 Queries/s"
         }
+      },
+      "charts": {
+        "userGrowth": "User Growth",
+        "userGrowthSub": "User Growth Sub"
+      },
+      "deploy": {
+        "status": "Status"
+      },
+      "users": {
+        "title": "Title",
+        "viewAll": "View All",
+        "headers": {
+          "user": "User",
+          "tier": "Tier",
+          "date": "Date",
+          "status": "Status"
+        }
+      },
+      "systems": {
+        "title": "Title",
+        "allOperational": "All Operational"
       }
     },
     "affiliatePortal": {
@@ -5778,7 +5802,8 @@
         "auditLog": "Nhat ky kiem tra",
         "systemHealth": "He thong",
         "label": "Label",
-        "logout": "Logout"
+        "logout": "Logout",
+        "searchPlaceholder": "Search Placeholder"
       },
       "header": {
         "searchPlaceholder": "Tim kiem chien dich...",
@@ -5812,7 +5837,12 @@
         "avgConversion": "Chuyen doi TB",
         "activeRenders": "Dang render",
         "last30Days": "30 ngay chien dich gan day",
-        "industryAvg": "Muc tieu TB nganh: 3.2%"
+        "industryAvg": "Muc tieu TB nganh: 3.2%",
+        "activeCampaigns": "Active Campaigns",
+        "running": "Running",
+        "thisMonth": "This Month",
+        "gpuUsage": "Gpu Usage",
+        "cores": "Cores"
       },
       "recentProjects": {
         "title": "Du an gan day",
@@ -5825,8 +5855,11 @@
         "privacy": "Chinh sach bao mat",
         "terms": "Dieu khoan dich vu",
         "documentation": "Tai lieu",
-        "copyright": "© {year} Sophia AI Factory. Da dang ky ban quyen."
-      }
+        "copyright": "© {year} Sophia AI Factory. Da dang ky ban quyen.",
+        "help": "Help"
+      },
+      "heading": "Heading",
+      "description": "Description"
     },
     "affiliate": {
       "aria": {
@@ -5836,7 +5869,8 @@
         "conversionsSection": "Chuyển đổi gần đây",
         "conversionsTable": "Bảng chuyển đổi gần đây",
         "referralSection": "Liên kết giới thiệu",
-        "walletSection": "Ví"
+        "walletSection": "Ví",
+        "socialShareSection": "Social Share Section"
       },
       "common": {
         "search": "Tìm kiếm",
@@ -5895,6 +5929,13 @@
           "paid": "ĐÃ THANH TOÁN",
           "pending": "ĐANG CHỜ",
           "clawback": "THU HỒI"
+        },
+        "headers": {
+          "product": "Product",
+          "amount": "Amount",
+          "commission": "Commission",
+          "status": "Status",
+          "date": "Date"
         }
       },
       "referral": {
@@ -5920,7 +5961,14 @@
         "availableBalance": "Số Dư Khả Dụng",
         "withdraw": "Rút Tiền",
         "minimumWithdrawal": "Rút tối thiểu {amount}",
-        "toggleVisibility": "Hiện/ẩn địa chỉ ví"
+        "toggleVisibility": "Hiện/ẩn địa chỉ ví",
+        "balance": "Balance",
+        "address": "Address"
+      },
+      "share": {
+        "title": "Title",
+        "referralLink": "Referral Link",
+        "copyLink": "Copy Link"
       }
     },
     "referral": {
@@ -6249,7 +6297,9 @@
         "channel": "Kênh",
         "date": "Ngày",
         "last30Days": "30 ngày qua",
-        "clear": "Xóa bộ lọc"
+        "clear": "Xóa bộ lọc",
+        "searchPlaceholder": "Search Placeholder",
+        "clearAll": "Clear All"
       },
       "actions": {
         "createCampaign": "Tạo Chiến dịch",
@@ -6283,7 +6333,8 @@
         "engine": "Sophia Engine v2.4",
         "apiDocs": "Tài liệu API",
         "privacy": "Chính sách Bảo mật",
-        "terms": "Điều khoản Dịch vụ"
+        "terms": "Điều khoản Dịch vụ",
+        "copyright": "Copyright"
       },
       "aria": {
         "filterBar": "Lọc chiến dịch",
@@ -6493,5 +6544,18 @@
       "thumbnail": "Thumbnail",
       "cancel": "Cancel"
     }
+  },
+  "aria": {
+    "moreOptions": "More Options",
+    "channelIcons": "Channel Icons"
+  },
+  "placeholder": {
+    "thumbnail": "Thumbnail"
+  },
+  "lastPublished": "Last Published",
+  "emptyState": {
+    "title": "Title",
+    "description": "Description",
+    "cta": "Cta"
   }
 }

@@ -5671,7 +5671,10 @@
         "previousPage": "Previous Page",
         "nextPage": "Next Page",
         "deployStatus": "Deploy Status",
-        "userActions": "Actions for {name}"
+        "userActions": "Actions for {name}",
+        "userGrowth": "User Growth",
+        "moreOptions": "More Options",
+        "recentSignups": "Recent Signups"
       },
       "userInitials": "U",
       "chart": {
@@ -5735,6 +5738,27 @@
         "d1Queries": {
           "label": "D1 Queries/s"
         }
+      },
+      "charts": {
+        "userGrowth": "User Growth",
+        "userGrowthSub": "User Growth Sub"
+      },
+      "deploy": {
+        "status": "Status"
+      },
+      "users": {
+        "title": "Title",
+        "viewAll": "View All",
+        "headers": {
+          "user": "User",
+          "tier": "Tier",
+          "date": "Date",
+          "status": "Status"
+        }
+      },
+      "systems": {
+        "title": "Title",
+        "allOperational": "All Operational"
       }
     },
     "affiliatePortal": {
@@ -5771,7 +5795,8 @@
         "auditLog": "Audit Log",
         "systemHealth": "System Health",
         "label": "Label",
-        "logout": "Logout"
+        "logout": "Logout",
+        "searchPlaceholder": "Search Placeholder"
       },
       "header": {
         "searchPlaceholder": "Search campaigns...",
@@ -5805,7 +5830,12 @@
         "avgConversion": "Avg. Conversion",
         "activeRenders": "Active Renders",
         "last30Days": "Last 30 days active campaigns",
-        "industryAvg": "Target industry avg: 3.2%"
+        "industryAvg": "Target industry avg: 3.2%",
+        "activeCampaigns": "Active Campaigns",
+        "running": "Running",
+        "thisMonth": "This Month",
+        "gpuUsage": "Gpu Usage",
+        "cores": "Cores"
       },
       "recentProjects": {
         "title": "Recent Projects",
@@ -5818,8 +5848,11 @@
         "privacy": "Privacy Policy",
         "terms": "Terms of Service",
         "documentation": "Documentation",
-        "copyright": "© {year} Sophia AI Factory. All rights reserved."
-      }
+        "copyright": "© {year} Sophia AI Factory. All rights reserved.",
+        "help": "Help"
+      },
+      "heading": "Heading",
+      "description": "Description"
     },
     "affiliate": {
       "aria": {
@@ -5829,7 +5862,8 @@
         "conversionsSection": "Recent conversions",
         "conversionsTable": "Recent conversions table",
         "referralSection": "Referral link",
-        "walletSection": "Wallet"
+        "walletSection": "Wallet",
+        "socialShareSection": "Social Share Section"
       },
       "common": {
         "search": "Search",
@@ -5888,6 +5922,13 @@
           "paid": "PAID",
           "pending": "PENDING",
           "clawback": "CLAWBACK"
+        },
+        "headers": {
+          "product": "Product",
+          "amount": "Amount",
+          "commission": "Commission",
+          "status": "Status",
+          "date": "Date"
         }
       },
       "referral": {
@@ -5913,7 +5954,14 @@
         "availableBalance": "Available Balance",
         "withdraw": "Withdraw",
         "minimumWithdrawal": "Minimum withdrawal {amount}",
-        "toggleVisibility": "Toggle wallet address visibility"
+        "toggleVisibility": "Toggle wallet address visibility",
+        "balance": "Balance",
+        "address": "Address"
+      },
+      "share": {
+        "title": "Title",
+        "referralLink": "Referral Link",
+        "copyLink": "Copy Link"
       }
     },
     "referral": {
@@ -6242,7 +6290,9 @@
         "channel": "Channel",
         "date": "Date",
         "last30Days": "Last 30 Days",
-        "clear": "Clear filters"
+        "clear": "Clear filters",
+        "searchPlaceholder": "Search Placeholder",
+        "clearAll": "Clear All"
       },
       "actions": {
         "createCampaign": "Create Campaign",
@@ -6276,7 +6326,8 @@
         "engine": "Sophia Engine v2.4",
         "apiDocs": "API Documentation",
         "privacy": "Privacy Policy",
-        "terms": "Terms of Service"
+        "terms": "Terms of Service",
+        "copyright": "Copyright"
       },
       "aria": {
         "filterBar": "Filter campaigns",
@@ -6486,5 +6537,18 @@
       "thumbnail": "Thumbnail",
       "cancel": "Cancel"
     }
+  },
+  "aria": {
+    "moreOptions": "More Options",
+    "channelIcons": "Channel Icons"
+  },
+  "placeholder": {
+    "thumbnail": "Thumbnail"
+  },
+  "lastPublished": "Last Published",
+  "emptyState": {
+    "title": "Title",
+    "description": "Description",
+    "cta": "Cta"
   }
 }
