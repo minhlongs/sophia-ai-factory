@@ -22,20 +22,14 @@
 
 import { inngest } from '@/seed/inngest/client';
 import { createServerClient } from '@/seed/db/client';
-import { getVideoBucket } from '@/land/video/storage/r2-binding';
 import { recordCost } from '@/land/video/templates/cost-ledger';
 import { logger } from '@/seed/utils/logger-utility';
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
-import { WanVideoClient } from '@/land/video/generation/wan21-client';
-import { FishSpeechClient } from '@/land/video/generation/fish-speech-client';
 import { muxVideoAudio } from '@/land/video/assembly/ffmpeg-muxer';
 import { insertAiPromptVideo } from '@/seed/db/repositories/videos-repo';
 import { getBrandKit } from '@/seed/db/repositories/brand-kits-repo';
 import { generateSubtitles } from '@/land/video/assembly/subtitle-generator';
 import { composeFinalVideo, applyBrandKit } from '@/land/video/assembly/composer-ffmpeg';
-import { CheckpointService } from '@/forest/pipeline';
-import type { VideoGenerateRequestedEvent, ProviderVideoJobStatus } from '@/land/video/templates/types';
+import type { VideoGenerateRequestedEvent } from '@/land/video/templates/types';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { getUserRoutingStrategy, getDefaultStrategyForTier } from '@/seed/db/get-user-routing-strategy';
 import { buildProviderPool } from '@/forest/quota/provider-pool';
@@ -43,119 +37,15 @@ import { selectWithStrategy, NoProvidersAvailableError } from '@/forest/quota/ro
 import type { RoutingContext } from '@/seed/config/routing-strategies';
 import { generateElevenLabsVoiceover } from '@/seed/ai/elevenlabs-api-client';
 import { getUserApiKey } from '@/tree/byok/user-api-key-store';
-import { getHeyGenClient } from '@/land/heygen/heygen-client';
-import { createDidTalk } from '@/land/did/did-client';
+import {
+  emitProgress, writeStageCheckpoint,
+  getWanClient, getFishSpeechClient, getVideoBucket,
+  uploadBufferToR2, downloadToBuffer,
+  POLL_MAX_ATTEMPTS,
+} from './video-generate-helpers';
+import { pollHeyGenVideo, pollDidVideo, pollWanVideo } from './video-generate-visual';
 
-/** Progress payload emitted via inngest.send for SSE streaming */
-interface ProgressPayload {
-  type: 'campaign.progress';
-  campaignId: string;
-  step: 'scripting' | 'tts' | 'visual' | 'compose' | 'publish' | 'complete' | 'error';
-  progress: number;
-  message: string;
-  timestamp: number;
-}
-
-/**
- * Emit a campaign.progress event for SSE subscribers.
- * Uses inngest.send() for cross-function event delivery.
- */
-async function emitProgress(
-  campaignId: string,
-  step: ProgressPayload['step'],
-  progress: number,
-  message: string,
-): Promise<void> {
-  const payload: ProgressPayload = {
-    type: 'campaign.progress',
-    campaignId,
-    step,
-    progress,
-    message,
-    timestamp: Date.now(),
-  };
-  await inngest.send({
-    id: `progress-${campaignId}-${step}-${payload.timestamp}`,
-    name: 'campaign.progress',
-    data: payload,
-  });
-  logger.info('[videoGenerate] Progress emitted', { campaignId, step, progress, message });
-}
-
-const POLL_INTERVAL_MS = 20_000; // 20s between polls
-const POLL_MAX_ATTEMPTS = 18; // 18 × 20s = 6 min max wait
-
-/**
- * Write a non-blocking checkpoint for the current pipeline stage.
- * Failures are logged but never thrown — checkpoint is observability, not control flow.
- */
-async function writeStageCheckpoint(
-  pipelineId: string,
-  stage: string,
-  status: 'in_progress' | 'completed' | 'failed' | 'skipped',
-  tenantId: string,
-  artifacts: Record<string, unknown> = {},
-  error?: string,
-): Promise<void> {
-  try {
-    const svc = new CheckpointService(tenantId);
-    await svc.writeCheckpoint(pipelineId, stage, status, artifacts, {
-      pipelineType: 'video_generation',
-      error,
-    });
-  } catch (err) {
-    logger.warn('[videoGenerate] Checkpoint write failed (non-fatal)', {
-      pipelineId,
-      stage,
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
-}
-
-function getWanClient(): WanVideoClient {
-  const apiKey = process.env.WAN_API_KEY;
-  if (!apiKey) throw new Error('[videoGenerate] WAN_API_KEY not configured');
-  return new WanVideoClient({ apiKey });
-}
-
-function getFishSpeechClient(): FishSpeechClient {
-  const apiKey = process.env.FISH_SPEECH_API_KEY;
-  if (!apiKey) throw new Error('[videoGenerate] FISH_SPEECH_API_KEY not configured');
-  return new FishSpeechClient({ apiKey });
-}
-
-async function uploadBufferToR2(key: string, data: ArrayBuffer, contentType: string): Promise<void> {
-  const ref = await getVideoBucket();
-  if (!ref) {
-    logger.warn('[videoGenerate] R2 bucket not available — skipping upload', { key });
-    return;
-  }
-  await ref.bucket.put(key, data, { httpMetadata: { contentType } });
-}
-
-async function downloadToBuffer(url: string): Promise<ArrayBuffer> {
-  if (!shouldAllowRequest('video-download')) {
-    throw new Error('[videoGenerate] Circuit breaker open for video-download — too many failures');
-  }
-
-  try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(60_000) });
-    if (!res.ok) {
-      const kind = classifyHttpStatus(res.status);
-      recordFailure('video-download', kind);
-      throw new Error(`[videoGenerate] Failed to download from ${url}: ${res.status}`);
-    }
-    recordSuccess('video-download');
-    return res.arrayBuffer();
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('[videoGenerate] Failed to download from')) {
-      throw error;
-    }
-    const kind = classifyError(error);
-    recordFailure('video-download', kind);
-    throw error;
-  }
-}
+// ── Inngest Function ───────────────────────────────────────────────────────
 
 export const videoGenerate = inngest.createFunction(
   { id: 'video-generate', retries: 2, concurrency: { limit: 3 } },
@@ -340,30 +230,15 @@ export const videoGenerate = inngest.createFunction(
     const hasHeyGenKey = visualPool.find(c => c.provider === 'heygen')?.hasUserKey;
     const hasDidKey = visualPool.find(c => c.provider === 'd-id')?.hasUserKey;
 
+    // Adapter: Inngest step.sleep(label, duration) → SleepFn(label, ms)
+    const sleepFn = (label: string, ms: number) => step.sleep(label, `${Math.ceil(ms / 1000)}s`);
+
     if (visualDecision?.provider === 'heygen' && hasHeyGenKey) {
       try {
-        const heygenClient = await getHeyGenClient(userId);
-        if (heygenClient) {
-          const videoId = await heygenClient.createVideo({
-            avatarId: 'Daisy-inskirt-20220818',
-            voiceId: 'en-US-JennyNeural',
-            script: prompt,
-            title: missionId,
-          });
-
-          for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
-            await step.sleep(`heygen-poll-${attempt}`, POLL_INTERVAL_MS);
-            const status = await heygenClient.getVideoStatus(videoId);
-            if (status.status === 'completed' && status.video_url) {
-              finalVideoUrl = status.video_url;
-              selectedVisualProvider = 'heygen';
-              break;
-            }
-            if (status.status === 'failed') {
-              logger.warn('[videoGenerate] HeyGen video failed', { videoId, error: status.error });
-              break;
-            }
-          }
+        const result = await pollHeyGenVideo(userId, prompt, missionId, sleepFn);
+        if (result.videoUrl) {
+          finalVideoUrl = result.videoUrl;
+          selectedVisualProvider = result.provider;
         }
       } catch (err) {
         logger.warn('[videoGenerate] HeyGen visual failed, falling back to Wan Video', {
@@ -375,30 +250,10 @@ export const videoGenerate = inngest.createFunction(
 
     if (!finalVideoUrl && visualDecision?.provider === 'd-id' && hasDidKey) {
       try {
-        const didKey = await getUserApiKey(userId, 'd-id');
-        if (didKey) {
-          const talk = await createDidTalk(didKey, {
-            sourceUrl: 'https://studio.d-id.com/agents/default-avatar.png',
-            script: prompt,
-          });
-
-          for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
-            await step.sleep(`did-poll-${attempt}`, POLL_INTERVAL_MS);
-            const pollRes = await fetch(`https://api.d-id.com/talks/${talk.id}`, {
-              headers: { Authorization: `Basic ${didKey}` },
-            });
-            if (!pollRes.ok) break;
-            const pollData = await pollRes.json() as { status?: string; result_url?: string };
-            if (pollData.status === 'done' && pollData.result_url) {
-              finalVideoUrl = pollData.result_url;
-              selectedVisualProvider = 'd-id';
-              break;
-            }
-            if (pollData.status === 'failed' || pollData.status === 'error') {
-              logger.warn('[videoGenerate] D-ID talk failed', { talkId: talk.id, status: pollData.status });
-              break;
-            }
-          }
+        const result = await pollDidVideo(userId, prompt, sleepFn);
+        if (result.videoUrl) {
+          finalVideoUrl = result.videoUrl;
+          selectedVisualProvider = result.provider;
         }
       } catch (err) {
         logger.warn('[videoGenerate] D-ID visual failed, falling back to Wan Video', {
@@ -410,64 +265,38 @@ export const videoGenerate = inngest.createFunction(
 
     // Wan Video (fallback when HeyGen/D-ID did not produce a URL)
     if (!finalVideoUrl) {
-      const wanClient = getWanClient();
-      const submitResult = await wanClient.generateVideo({ prompt, duration: 5 });
-      const wanJobId2 = submitResult.jobId;
-
-      // Poll Wan Video until ready
-      for (let attempt = 0; attempt < POLL_MAX_ATTEMPTS; attempt++) {
-        await step.sleep(`poll-wait-${attempt}`, POLL_INTERVAL_MS);
-
-        const statusResult = await step.run(`poll-video-status-${attempt}`, async () => {
-          return wanClient.getJobStatus(wanJobId2);
-        }) as ProviderVideoJobStatus;
-
-        if (statusResult.status === 'succeeded' && statusResult.videoUrl) {
-          finalVideoUrl = statusResult.videoUrl;
-          selectedVisualProvider = 'wan-video';
-          break;
+      try {
+        const result = await pollWanVideo(prompt, sleepFn);
+        if (result.videoUrl) {
+          finalVideoUrl = result.videoUrl;
+          selectedVisualProvider = result.provider;
         }
-        if (statusResult.status === 'failed' || statusResult.status === 'canceled') {
-          await emitProgress(missionId, 'error', 0, `Lỗi tạo video / Video generation failed: ${statusResult.status}`);
-          await writeStageCheckpoint(missionId, 'poll_video_ready', 'failed', tenantId, {}, statusResult.status);
-          throw new Error(
-            `[videoGenerate] Wan job ${wanJobId2} ended with status: ${statusResult.status} — ${statusResult.error ?? ''}`,
-          );
-        }
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        await emitProgress(missionId, 'error', 0, `Lỗi tạo video / Video generation failed: ${errorMsg}`);
+        await writeStageCheckpoint(missionId, 'poll_video_ready', 'failed', tenantId, {}, errorMsg);
+        throw err;
       }
-
-      if (!finalVideoUrl) {
-        await emitProgress(missionId, 'error', 0, `Hết thời gian chờ / Video generation timed out after ${POLL_MAX_ATTEMPTS} polls`);
-        await writeStageCheckpoint(missionId, 'poll_video_ready', 'failed', tenantId, {}, 'timeout');
-        throw new Error(`[videoGenerate] Wan job ${wanJobId2} did not complete after ${POLL_MAX_ATTEMPTS} polls`);
-      }
-
-      // Checkpoint: poll-video-ready succeeded (Wan Video path)
-      await writeStageCheckpoint(missionId, 'poll_video_ready', 'completed', tenantId, {
-        asset_manifest: {
-          audioR2Key,
-          brandKitApplied: false,
-          assets: [
-            { type: 'audio', r2Key: audioR2Key, mimeType: 'audio/mpeg' },
-            { type: 'video', r2Key: '', mimeType: 'video/mp4' },
-          ],
-        },
-        metadata: { wanJobId: wanJobId2, finalVideoUrl },
-      });
-    } else {
-      // HeyGen/D-ID produced the video — checkpoint success
-      await writeStageCheckpoint(missionId, 'poll_video_ready', 'completed', tenantId, {
-        asset_manifest: {
-          audioR2Key,
-          brandKitApplied: false,
-          assets: [
-            { type: 'audio', r2Key: audioR2Key, mimeType: 'audio/mpeg' },
-            { type: 'video', r2Key: '', mimeType: 'video/mp4' },
-          ],
-        },
-        metadata: { provider: selectedVisualProvider, finalVideoUrl },
-      });
     }
+
+    if (!finalVideoUrl) {
+      await emitProgress(missionId, 'error', 0, `Hết thời gian chờ / Video generation timed out after ${POLL_MAX_ATTEMPTS} polls`);
+      await writeStageCheckpoint(missionId, 'poll_video_ready', 'failed', tenantId, {}, 'timeout');
+      throw new Error(`[videoGenerate] Visual generation failed — no provider returned a video URL`);
+    }
+
+    // Checkpoint: poll-video-ready succeeded
+    await writeStageCheckpoint(missionId, 'poll_video_ready', 'completed', tenantId, {
+      asset_manifest: {
+        audioR2Key,
+        brandKitApplied: false,
+        assets: [
+          { type: 'audio', r2Key: audioR2Key, mimeType: 'audio/mpeg' },
+          { type: 'video', r2Key: '', mimeType: 'video/mp4' },
+        ],
+      },
+      metadata: { provider: selectedVisualProvider, finalVideoUrl },
+    });
 
     // Emit: video generation complete (40%)
     await emitProgress(missionId, 'visual', 40, 'Video AI đã tạo xong / AI video generation complete');
