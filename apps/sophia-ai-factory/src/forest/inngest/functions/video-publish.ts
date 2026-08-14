@@ -27,14 +27,6 @@ interface VideoJobRow {
   final_r2_key?: string | null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface AutoPublishConfig {
-  channel_id: string;
-  caption_template: string | null;
-  hashtags_json: string | null;
-  product_link: string | null;
-}
-
 export const videoPublish = inngest.createFunction(
   { id: 'video-publish', retries: 3 },
   { event: 'video.uploaded' },

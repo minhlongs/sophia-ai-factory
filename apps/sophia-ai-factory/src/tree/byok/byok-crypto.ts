@@ -19,8 +19,6 @@ const IV_BYTES = 12
 const VERSION_BYTES = 1
 const KEY_LEN_BITS = 256
 const KEY_LEN_BYTES = KEY_LEN_BITS / 8
-const DUAL_DECRYPT_WINDOW_MS = 7 * 24 * 60 * 60 * 1000; // 7 days for safe rotation window
-
 interface KeyVersionRow {
   version: number
   encrypted_key: string
@@ -135,33 +133,6 @@ export async function getActiveKeyVersion(): Promise<number> {
     .first<{ version: number }>()
 
   return row?.version ?? 1
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function getPreviousKeyVersion(): Promise<KeyVersionRow | null> {
-  const db = getD1()
-  if (!db) return null
-
-  return db
-    .prepare(
-      `SELECT version, encrypted_key, rotated_at, is_active
-       FROM key_versions
-       WHERE is_active = 0
-       ORDER BY version DESC
-       LIMIT 1`,
-    )
-    .first<KeyVersionRow>()
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function canUsePreviousVersion(row: KeyVersionRow | null): Promise<boolean> {
-  if (!row) return false
-  if (!row.rotated_at) return false
-
-  const rotatedAt = Date.parse(row.rotated_at)
-  if (Number.isNaN(rotatedAt)) return false
-
-  return Date.now() - rotatedAt <= DUAL_DECRYPT_WINDOW_MS
 }
 
 async function importKeyByVersion(version: number): Promise<CryptoKey> {
