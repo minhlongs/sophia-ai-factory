@@ -54,8 +54,8 @@ describe('DEFAULT_THRESHOLDS', () => {
     expect(DEFAULT_THRESHOLDS.failureWindowMs).toBe(60_000)
   })
 
-  it('max services is 500', () => {
-    expect(DEFAULT_THRESHOLDS.maxServices).toBe(500)
+  it('max services is 2000', () => {
+    expect(DEFAULT_THRESHOLDS.maxServices).toBe(2000)
   })
 })
 

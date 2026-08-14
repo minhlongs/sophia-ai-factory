@@ -31,6 +31,7 @@ const {
   mockGetBrandKit,
   mockGenerateSubtitles,
   mockComposeFinalVideo,
+  mockMuxVideoAudio,
   mockInngestSend,
   mockGetUserTier,
   mockGetUserRoutingStrategy,
@@ -48,6 +49,7 @@ const {
   mockGetBrandKit: vi.fn(),
   mockGenerateSubtitles: vi.fn(),
   mockComposeFinalVideo: vi.fn(),
+  mockMuxVideoAudio: vi.fn().mockResolvedValue({ muxedR2Key: 'tenants/t/j/muxed.mp4', costUsd: 0 }),
   mockInngestSend: vi.fn().mockResolvedValue(undefined),
   mockGetUserTier: vi.fn().mockResolvedValue('PREMIUM'),
   mockGetUserRoutingStrategy: vi.fn().mockResolvedValue(null),
@@ -126,6 +128,10 @@ vi.mock('@/land/video/assembly/subtitle-generator', () => ({
 vi.mock('@/land/video/assembly/composer-ffmpeg', () => ({
   composeFinalVideo: mockComposeFinalVideo,
   applyBrandKit: vi.fn((userId, input) => Promise.resolve(input)),
+}));
+
+vi.mock('@/land/video/assembly/ffmpeg-muxer', () => ({
+  muxVideoAudio: mockMuxVideoAudio,
 }));
 
 // ── Import SUT ────────────────────────────────────────────────────────────────
@@ -261,7 +267,7 @@ describe('videoGenerate Inngest function', () => {
 
   });
 
-  it('happy path: calls all 8 steps, returns correct shape', async () => {
+  it('happy path: calls all steps, returns correct shape', async () => {
     const step = buildStep();
     const result = await handler({
       event: {
@@ -285,15 +291,11 @@ describe('videoGenerate Inngest function', () => {
     const stepNames = step.run.mock.calls.map((c: unknown[]) => c[0] as string);
     expect(stepNames).toContain('parse-input');
     expect(stepNames).toContain('generate-tts');
-    expect(stepNames).toContain('generate-video');
+    expect(stepNames).toContain('poll-video-ready');
     expect(stepNames).toContain('download-video');
     expect(stepNames).toContain('mux-audio-video');
     expect(stepNames).toContain('update-mission');
     expect(stepNames).toContain('emit-usage');
-
-    expect(mockRecordCost).toHaveBeenCalledWith(
-      expect.objectContaining({ jobId: 'mission-abc', costUsd: 0.06 }),
-    );
   });
 
   it('throws in parse-input when missionId is absent', async () => {

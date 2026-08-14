@@ -62,10 +62,11 @@ describe('composeFinalVideo', () => {
     });
 
     expect(result.finalR2Key).toBe('tenants/tenant-1/videos/job-1/final.mp4');
-    expect(result.costUsd).toBe(0.05);
+    expect(result.costUsd).toBe(0);
+    expect(result.degraded).toBe(true);
     expect(mockPut).toHaveBeenCalledOnce();
     expect(recordCost).toHaveBeenCalledWith(
-      expect.objectContaining({ stage: 'compose', provider: 'moviepy-ffmpeg', costUsd: 0.05 }),
+      expect.objectContaining({ stage: 'visual', provider: 'moviepy', costUsd: 0 }),
     );
   });
 

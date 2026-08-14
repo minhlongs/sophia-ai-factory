@@ -20,6 +20,24 @@ Plans: /path/to/project-b/plans/"
 
 ---
 
+#### File Ownership (CRITICAL)
+
+Before any implementation phase begins, the pipeline MUST:
+
+1. **Define ownership per phase** — each phase in `.orchestrate/latest/plan.md` gets a `## File Ownership` section listing exact files that phase may modify
+2. **Check for overlap** — if two phases claim the same file, STOP and resolve before execution
+3. **Verify at execution start** — implementation agent must confirm no overlap with uncompleted phases before writing code
+
+Format in plan:
+```markdown
+## Phase: Implement Feature X
+## File Ownership
+- apps/sophia-ai-factory/src/forest/inngest/functions/feature-x.ts
+- apps/sophia-ai-factory/src/land/feature-x/handler.ts
+```
+
+If a phase needs a file owned by another phase, it must wait or use the defined interface (never modify the other phase's file directly).
+
 #### Sequential Chaining
 Chain subagents when tasks have dependencies or require outputs from previous steps:
 - **Planning → Implementation → Simplification → Testing → Review**: Use for feature development (tests verify simplified code)

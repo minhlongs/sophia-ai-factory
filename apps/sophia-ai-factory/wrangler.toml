@@ -168,6 +168,13 @@ OTEL_SAMPLERATE = "0.01"  # 1% sampling in production for cost control
 # COMMIT_SHA and DEPLOYED_AT are injected as CF Secrets (not vars) via wrangler-set-build-vars.sh
 # === P1-VARS-END ===
 
+# === WAVE18-LLM-FLAGS-BEGIN ===
+# Enable real LLM calls in workflows (1 = live, 0 = stub)
+WORKFLOW_REAL_LLM_ENABLED = "1"
+# Enable LLM response caching in llm_cache D1 table
+LLM_CACHE_ENABLED = "1"
+# === WAVE18-LLM-FLAGS-END ===
+
 # === P2-CRONS-BEGIN ===
 # P2 appends cron triggers here (error-digest, heartbeat)
 # === P2-CRONS-END ===

@@ -101,15 +101,15 @@ describe('GET /api/cron/email-drip', () => {
     expect(res.status).toBe(200)
     const body = (await res.json()) as {
       ok: boolean
-      enqueued: number
-      affiliateEnqueued: number
-      activationEnqueued: number
-      winBackEnqueued: number
+      handover: number
+      affiliate: number
+      activation: number
+      winBack: number
     }
     expect(body.ok).toBe(true)
-    expect(body.enqueued).toBe(0)
-    expect(body.affiliateEnqueued).toBe(0)
-    expect(body.activationEnqueued).toBe(0)
-    expect(body.winBackEnqueued).toBe(0)
+    expect(body.handover).toBe(0)
+    expect(body.affiliate).toBe(0)
+    expect(body.activation).toBe(0)
+    expect(body.winBack).toBe(0)
   })
 })

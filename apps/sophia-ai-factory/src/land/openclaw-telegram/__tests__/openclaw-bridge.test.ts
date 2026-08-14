@@ -20,8 +20,16 @@ vi.mock('@/seed/db/client', () => ({
   getD1: vi.fn(),
 }));
 
-vi.mock('@/forest/quota/quota-checker-overage', () => ({
+vi.mock('@/seed/db/get-user-tier', () => ({
+  getUserTier: vi.fn(),
+}));
+
+vi.mock('@/tree/quota/quota-checker', () => ({
   getQuotaStatus: vi.fn(),
+}));
+
+vi.mock('@/seed/config/quota-limits', () => ({
+  QUOTA_LIMITS: { MASTER: 2000, ENTERPRISE: 1000, PREMIUM: 500, BASIC: 100 },
 }));
 
 vi.mock('@/land/affiliates/dashboard-stats', () => ({
@@ -105,6 +113,8 @@ describe('openclaw-bridge', () => {
   });
 
   it('uppercases tier from license', async () => {
+    // Reset and set up fresh mock queue for this test
+    mockSingle.mockReset();
     mockSingle
       .mockResolvedValueOnce({ data: { settings: JSON.stringify({ display_name: 'Tho', locale: 'vi' }) } })
       .mockResolvedValueOnce({ data: { email: 'tho@example.com', name: 'Tho' } })

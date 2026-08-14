@@ -154,9 +154,17 @@ export async function composeFinalVideo(input: ComposeInput): Promise<ComposeRes
   let degraded = false;
 
   if (!flyUrl) {
-    logger.warn('[Composer] MOVIEPY_FLY_URL not set — using stub final mp4', { jobId });
-    videoBytes = Buffer.from(STUB_MP4_B64, 'base64').buffer;
-  } else {
+    logger.warn('[Composer] MOVIEPY_FLY_URL not set — returning stub mp4', { jobId });
+    const stubBytes = new Uint8Array([0x00, 0x00, 0x00, 0x1c, 0x66, 0x74, 0x79, 0x70]);
+    const ref = await getVideoBucket();
+    if (ref) {
+      await ref.bucket.put(finalR2Key, stubBytes, { httpMetadata: { contentType: 'video/mp4' } });
+    }
+    await recordCost({ jobId, stage: 'visual', provider: 'moviepy', units: 1, costUsd: 0 });
+    return { finalR2Key, costUsd: 0, degraded: true };
+  }
+
+  {
     try {
       const res = await withBreaker(BREAKER_NAME, () => callFly(flyUrl, input));
       videoBytes = await res.arrayBuffer();

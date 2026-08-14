@@ -24,6 +24,25 @@
 - **IMPORTANT:** make sure you don't use fake data, mocks, cheats, tricks, temporary solutions, just to pass the build or github actions.
 - **IMPORTANT:** Always fix failing tests follow the recommendations and delegate to `tester` agent to run tests again, only finish your session when all tests pass.
 
+#### 2b. Structured Completion Report
+After all tasks in a phase are complete, produce a completion report:
+
+```markdown
+## Completion Report
+- **Phase:** {name}
+- **Files Modified:** {list with brief description}
+- **Files Created:** {list}
+- **Tests Added:** {count}
+- **Build:** [pass/fail]
+- **Type-check:** [pass/fail]
+- **Unit tests:** [pass/fail + coverage %]
+- **Integration tests:** [pass/fail]
+- **Known Issues:** {list or "none"}
+- **Next Phase Dependencies:** {what next phase needs, or "none"}
+```
+
+Do NOT mark a phase complete without this report.
+
 #### 3. Code Quality
 - After testing passes, delegate to `code-reviewer` agent to review clean, tested code.
 - Follow coding standards and conventions

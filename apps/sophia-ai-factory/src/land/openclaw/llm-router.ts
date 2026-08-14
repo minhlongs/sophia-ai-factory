@@ -6,12 +6,12 @@
  *   standard → Qwen 3 32B → fallback Claude Haiku
  *   max      → Claude Sonnet/Opus directly
  *
- * Circuit breaker: in-memory, resets after 60s, trips after 3 consecutive fails.
+ * Circuit breaker: delegated to @/seed/security/circuit-breaker, keyed per provider.
  */
 
 import { estimateCost, getCostForModel } from './llm-cost-tracker';
 import { shouldAllowRequest, recordSuccess, recordFailure, reset as resetCircuit } from '@/seed/security/circuit-breaker';
-import { classifyError, FailureKind } from '@/seed/types/failure-kind';
+import { classifyError } from '@/seed/types/failure-kind';
 
 export type { TenantUsage } from './llm-cost-tracker';
 export { MODEL_COSTS, trackUsage, getUsageSummary, _resetUsage } from './llm-cost-tracker';
@@ -38,28 +38,18 @@ export interface LLMRouteResult {
 
 // ── Circuit breaker (delegated to seed circuit breaker) ──────────────────────
 const QWEN_SERVICE = 'qwen-local'
-
-function isCircuitOpen(): boolean {
-  return !shouldAllowRequest(QWEN_SERVICE)
-}
-
-function recordQwenFailure(): void {
-  recordFailure(QWEN_SERVICE, FailureKind.SERVER_ERROR)
-}
-
-function recordQwenSuccess(): void {
-  recordSuccess(QWEN_SERVICE)
-}
+const ANTHROPIC_SERVICE = 'anthropic-direct'
 
 export function _resetCircuit(): void {
   resetCircuit(QWEN_SERVICE)
+  resetCircuit(ANTHROPIC_SERVICE)
 }
 
 // ── Provider calls ──────────────────────────────────────────────────────────
 
-async function callQwen(prompt: string, baseUrl: string, timeoutMs: number): Promise<string> {
-  if (!shouldAllowRequest('openrouter')) {
-    throw new Error('Circuit open for openrouter — fable-5 call blocked');
+async function callQwen(prompt: string, baseUrl: string, timeoutMs: number, circuitEnabled: boolean): Promise<string> {
+  if (circuitEnabled && !shouldAllowRequest(QWEN_SERVICE)) {
+    throw new Error('Circuit open for qwen-local');
   }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -73,10 +63,10 @@ async function callQwen(prompt: string, baseUrl: string, timeoutMs: number): Pro
     clearTimeout(timer);
     if (!res.ok) throw new Error(`Qwen HTTP ${res.status}`);
     const data = await res.json() as { response?: string };
-    recordSuccess('openrouter');
+    recordSuccess(QWEN_SERVICE);
     return data.response ?? '';
   } catch (err) {
-    recordFailure('openrouter', classifyError(err));
+    recordFailure(QWEN_SERVICE, classifyError(err));
     throw err;
   } finally {
     clearTimeout(timer);
@@ -84,8 +74,8 @@ async function callQwen(prompt: string, baseUrl: string, timeoutMs: number): Pro
 }
 
 async function callClaude(prompt: string, model: string, apiKey: string): Promise<string> {
-  if (!shouldAllowRequest('openrouter')) {
-    throw new Error('Circuit open for openrouter — Anthropic call blocked');
+  if (!shouldAllowRequest(ANTHROPIC_SERVICE)) {
+    throw new Error('Circuit open for anthropic-direct');
   }
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -103,10 +93,10 @@ async function callClaude(prompt: string, model: string, apiKey: string): Promis
     });
     if (!res.ok) throw new Error(`Anthropic HTTP ${res.status}`);
     const data = await res.json() as { content?: { text?: string }[] };
-    recordSuccess('openrouter');
+    recordSuccess(ANTHROPIC_SERVICE);
     return data.content?.[0]?.text ?? '';
   } catch (err) {
-    recordFailure('openrouter', classifyError(err));
+    recordFailure(ANTHROPIC_SERVICE, classifyError(err));
     throw err;
   }
 }
@@ -137,14 +127,11 @@ export async function routeLLM(tier: LLMTier, prompt: string, opts: LLMRouteOpti
   }
 
   const circuitEnabled = process.env.DISABLE_LLM_CIRCUIT_BREAKER !== 'true';
-  if (!circuitEnabled || !isCircuitOpen()) {
-    try {
-      const text = await callQwen(prompt, qwenBaseUrl, qwenTimeoutMs);
-      recordQwenSuccess();
-      return { text, model: 'qwen3:32b', provider: 'qwen', tier, costPer1kInput: 0, costPer1kOutput: 0, estimatedCostUsd: 0 };
-    } catch {
-      recordQwenFailure();
-    }
+  try {
+    const text = await callQwen(prompt, qwenBaseUrl, qwenTimeoutMs, circuitEnabled);
+    return { text, model: 'qwen3:32b', provider: 'qwen', tier, costPer1kInput: 0, costPer1kOutput: 0, estimatedCostUsd: 0 };
+  } catch {
+    // Qwen unavailable or circuit open — fall through to Claude Haiku
   }
 
   const text = await callClaude(prompt, haikuModel, apiKey);

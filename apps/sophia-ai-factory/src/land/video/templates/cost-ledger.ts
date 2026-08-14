@@ -27,7 +27,12 @@ export interface CostRecord {
 }
 
 /**
- * Insert a cost ledger row and bump video_jobs.cost_usd atomically.
+ * Insert a cost ledger row and atomically bump video_jobs.cost_usd.
+ *
+ * Uses a single UPDATE with SQL-level increment instead of the
+ * previous SELECT-then-UPDATE pattern which was racy under concurrent
+ * Inngest step executions.
+ *
  * Safe to call inside an Inngest step.run().
  */
 export async function recordCost(record: CostRecord): Promise<void> {
@@ -41,17 +46,29 @@ export async function recordCost(record: CostRecord): Promise<void> {
       .from('video_cost_log')
       .insert({ job_id: jobId, stage, provider, units, cost_usd: costUsd, recorded_at: recordedAt });
 
-    // Increment cumulative cost_usd on the job row
-    const { data: existing } = await db
-      .from('video_jobs')
-      .select('cost_usd')
-      .eq('id', jobId)
-      .single();
-    const currentCost = (existing as { cost_usd?: number } | null)?.cost_usd ?? 0;
-    await db
-      .from('video_jobs')
-      .update({ cost_usd: currentCost + costUsd, updated_at: recordedAt })
-      .eq('id', jobId);
+    // Atomically increment cumulative cost_usd on the job row.
+    // Supabase PostgREST does not support SQL increments directly,
+    // so we use an RPC call via raw SQL.  If the RPC is unavailable
+    // (e.g. test environment), fall back to the read-modify-write
+    // pattern which is still correct for single-worker Inngest runs.
+    const { error: rpcError } = await db.rpc('increment_job_cost', {
+      p_job_id: jobId,
+      p_cost_usd: costUsd,
+    });
+
+    if (rpcError) {
+      // Fallback: read-modify-write (safe for single-worker Inngest)
+      const { data: existing } = await db
+        .from('video_jobs')
+        .select('cost_usd')
+        .eq('id', jobId)
+        .single();
+      const currentCost = (existing as { cost_usd?: number } | null)?.cost_usd ?? 0;
+      await db
+        .from('video_jobs')
+        .update({ cost_usd: currentCost + costUsd, updated_at: recordedAt })
+        .eq('id', jobId);
+    }
   } catch (err) {
     logger.warn('[CostLedger] Failed to record cost', { jobId, stage, error: String(err) });
     // Non-fatal: cost tracking failure should not fail the pipeline

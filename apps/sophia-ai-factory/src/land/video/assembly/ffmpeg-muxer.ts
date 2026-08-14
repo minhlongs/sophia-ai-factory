@@ -77,7 +77,6 @@ interface CloudconvertJobResponse {
 const CLOUDCONVERT_API = 'https://api.cloudconvert.com/v2';
 const POLL_INTERVAL_MS = 3_000;
 const POLL_MAX_ATTEMPTS = 40; // 40 × 3s = 2 min max
-const STUB_MP4_B64 = 'AAAAHGZ0eXBpc29tAAACAGlzb21pc28yYXZjMQAAAAhmcmVlAAAAG21kYXQ=';
 
 // ── Internal helpers ───────────────────────────────────────────────────────────
 
@@ -262,8 +261,8 @@ async function downloadAndUploadToR2(
  * Mux a video track + audio track into a single MP4 via Cloudconvert.
  * Uploads the result to R2 and returns the public URL.
  *
- * When CLOUDCONVERT_API_KEY is absent, a stub MP4 is written to R2 instead
- * so the pipeline keeps moving in dev/test environments.
+ * When CLOUDCONVERT_API_KEY is absent, an error is thrown — the pipeline
+ * must not silently produce a stub MP4 that downstream steps would treat as real.
  */
 export async function muxVideoAudio(
   params: MuxVideoAudioParams,
@@ -279,20 +278,11 @@ export async function muxVideoAudio(
   const apiKey = process.env.CLOUDCONVERT_API_KEY;
 
   if (!apiKey) {
-    logger.warn(
-      '[FFmpegMuxer] CLOUDCONVERT_API_KEY not set — writing stub mp4',
+    logger.error(
+      '[FFmpegMuxer] CLOUDCONVERT_API_KEY not set — cannot mux audio/video',
       { outputKey },
     );
-
-    const stubBytes = Buffer.from(STUB_MP4_B64, 'base64');
-    const ref = await getVideoBucket();
-    if (ref) {
-      await ref.bucket.put(outputKey, stubBytes, {
-        httpMetadata: { contentType: 'video/mp4' },
-      });
-    }
-    const url = ref ? buildPublicUrl(ref, outputKey) : outputKey;
-    return { url, durationMs: 0 };
+    throw new Error('[FFmpegMuxer] CLOUDCONVERT_API_KEY is required for audio/video muxing. Pipeline cannot proceed without it.');
   }
 
   logger.info('[FFmpegMuxer] Submitting Cloudconvert mux job', { outputKey });

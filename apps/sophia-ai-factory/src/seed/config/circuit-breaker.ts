@@ -36,7 +36,8 @@ export const DEFAULT_THRESHOLDS: CircuitBreakerThresholds = {
   degradedThreshold: 3,
   openThreshold: 5,
   failureWindowMs: 60_000, // 1 minute window
-  maxServices: 500,
+  /** Per-key cardinality: provider:tenant entries need higher ceiling */
+  maxServices: 2_000,
 }
 
 /** Circuit breaker state persisted to D1 */

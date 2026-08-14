@@ -19,6 +19,13 @@
 - **[IMPORTANT]** Follow the codebase structure and code standards in `./docs` during implementation.
 - **[IMPORTANT]** Do not just simulate the implementation or mocking them, always implement the real code.
 
+## TODO/FIXME Policy
+
+- **NO** TODO/FIXME comments in committed production code
+- Workarounds must be documented in the commit message, not in code
+- Track technical debt in GitHub issues, not inline comments
+- If a workaround is unavoidable, add a `// TRACKED: {issue-url}` comment instead of TODO
+
 ## Code Quality Guidelines
 - Read and follow codebase structure and code standards in `./docs`
 - Don't be too harsh on code linting, but **make sure there are no syntax errors and code are compilable**
@@ -41,16 +48,3 @@
 - Handle edge cases and error scenarios
 - **DO NOT** create new enhanced files, update to the existing files directly.
 
-## Sophia-Specific Standards
-- Zero `:any` types — use proper TypeScript interfaces
-- Zod validation on all API inputs
-- Server Actions for data mutations (not API routes)
-- Test before every commit — `npm test` must pass
-- Tier enum: BASIC | PREMIUM | ENTERPRISE | MASTER (uppercase only)
-
-## Canonical Import Paths (post-consolidation 2026-04-14)
-- Auth: `import { getCurrentUser } from '@/seed/auth/better-auth-session'`
-- Tier: `import { getUserTier } from '@/seed/db/get-user-tier'`
-- DB: `import { createServerClient } from '@/seed/db/client'` (sync, no await)
-- Tier config: `import { TIER_CONFIGS, TIER_CONFIG } from '@/seed/config/tiers'`
-- BANNED imports: `@/lib/auth`, `@/lib/subscription`, `@/lib/unified-tier-config`, `@/lib/tier-gate`

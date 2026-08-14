@@ -48,10 +48,11 @@ describe('renderCinematicVideo', () => {
     });
 
     expect(result.visualR2Key).toBe('tenants/tenant-1/videos/job-1/visual.mp4');
-    expect(result.runpodJobId).toBeNull();
     expect(result.costUsd).toBe(0);
     expect(mockPut).toHaveBeenCalledOnce();
-    expect(recordCost).not.toHaveBeenCalled();
+    expect(recordCost).toHaveBeenCalledWith(
+      expect.objectContaining({ stage: 'visual', provider: 'runpod', costUsd: 0 }),
+    );
   });
 
   it('submits job, polls, downloads, uploads to R2', async () => {

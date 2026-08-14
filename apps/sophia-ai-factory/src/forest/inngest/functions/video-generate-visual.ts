@@ -20,6 +20,8 @@ import { POLL_INTERVAL_MS, POLL_MAX_ATTEMPTS } from './video-generate-helpers';
 export interface VisualProviderResult {
   videoUrl: string | null;
   provider: string;
+  /** The job/prediction ID assigned by the provider (only set for Wan 2.1). */
+  wanJobId?: string;
 }
 
 type SleepFn = (label: string, ms: number) => Promise<void>;
@@ -107,7 +109,7 @@ export async function pollWanVideo(
     const status = await wanClient.getJobStatus(jobId);
 
     if (status.status === 'succeeded' && status.videoUrl) {
-      return { videoUrl: status.videoUrl, provider: 'wan-video' };
+      return { videoUrl: status.videoUrl, provider: 'wan-video', wanJobId: jobId };
     }
     if (status.status === 'failed' || status.status === 'canceled') {
       throw new Error(`[videoGenerate] Wan job ${jobId} ended with status: ${status.status} — ${status.error ?? ''}`);

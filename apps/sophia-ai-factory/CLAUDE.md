@@ -10,122 +10,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ---
 
-## Commands
+## Financial Code Patterns
 
-All commands run from `apps/sophia-ai-factory/`:
-
-```bash
-npm run dev              # Next.js dev server on :3000
-npm run build            # Production build (0 TypeScript errors required)
-npm run lint             # ESLint (src/**)
-npm run type-check       # TypeScript --noEmit
-npm test                 # Vitest (pretest runs i18n:validate)
-npx vitest run <path>    # Single test file/pattern
-npm run test:coverage    # Coverage report
-npm run test:e2e         # Playwright E2E (requires NEXT_PUBLIC_MOCK_AI_SERVICES=true)
-npm run verify           # Full verification (build + tests + secrets audit)
-npm run deploy:full      # CF-direct deploy with SHA verification (MANDATORY)
-npm run deploy:verify    # sophia-doctor.mjs health checks
-npm run ci               # CI gate (typecheck + lint + test + secrets + audit)
-```
-
----
-
-## Architecture (4-Layer Model)
-
-`src/` follows strict layer boundaries. Import direction is enforced:
-
-| Layer | Purpose | Import Path | Example |
-|-------|---------|-------------|---------|
-| **seed** | Foundational primitives (auth, DB, config, types, security, logger) | `@/seed/...` | `@/seed/auth/better-auth-session` |
-| **tree** | Domain-specific reusable logic (BYOK, handover, audit, telegram, credentials) | `@/tree/...` | `@/tree/byok/`, `@/tree/telegram/` |
-| **forest** | Infrastructure orchestrators (Inngest jobs, RAAS gateway, usage metering, quota) | `@/forest/...` | `@/forest/inngest/`, `@/forest/quota/` |
-| **land** | Business workflows (billing, payouts, affiliates, promo, refunds) | `@/land/...` | `@/land/billing/`, `@/land/payouts/` |
-
-**Import rules:**
-- `seed` → importable by ALL layers (foundational)
-- `tree` → imports `seed` only
-- `forest` → imports `seed`, `tree` (+ may CALL `land` for orchestration)
-- `land` → imports `seed`, `tree`, `forest`
-
-**Forbidden:** `seed` → `tree/forest/land`; `tree` → `forest/land`; `land` → `forest` (circular).
-
-Full rules: `.claude/rules/sophia-layer-architecture.md`
-
----
-
-## Financial Code Patterns (Proven)
-
-These patterns are battle-tested across Payment Pipeline Hardening + Revenue & Trust Sprint. Use them for ALL financial/money code.
-
-### Atomic Lock (Idempotency)
-
-D1 SQLite has no transactions. Use INSERT ON CONFLICT DO NOTHING for atomic ownership:
-
-```sql
-INSERT INTO payment_events (event_id, event_type, payload, processed, created_at)
-VALUES (?1, ?2, ?3, 0, ?4)
-ON CONFLICT(event_id) DO NOTHING
-```
-
-Check `meta.changes`: 0 = lock already held (duplicate). 1 = this caller owns the lock.
-Pattern used in: `refund_events`, `commission_events`, `payment_events`, `topup_events`.
-
-### Result<T,E> for Error Discrimination
-
-Never `throw` in financial code. Return `Result<T,E>` so callers handle each error variant:
-
-```typescript
-import { success, failure, type Result } from '@/seed/types/result'
-// success(data) / failure({ code: 'SPECIFIC_ERROR', message: '...' })
-```
-
-### Event ID Formats
-
-- Payments: `nowpayments_{payment_id}_{status}`
-- ClickBank: `clickbank_{receipt}_{transactionType}`
-- Top-ups: `topup_{payment_id}_{status}`
-- Refunds: `refund_{purchase_id}`
-
-### Stale Lock Recovery
-
-After 5 min, treat unprocessed locks as stale — mark processed and retry:
-
-```typescript
-if (lockAgeMs > 5 * 60 * 1000) {
-  await db.prepare('UPDATE payment_events SET processed = 1 WHERE event_id = ?1').bind(eventId).run()
-}
-```
-
-### Circuit Breaker Patterns (Resilience)
-
-Every external HTTP call must use the circuit breaker. Key patterns:
-
-```typescript
-import { recordFailure, recordSuccess, shouldAllowRequest } from '@/seed/security/circuit-breaker'
-import { classifyError } from '@/seed/types/failure-kind'
-
-// Before call
-if (!shouldAllowRequest('openrouter')) {
-  throw new Error('Circuit open for openrouter')
-}
-
-try {
-  const result = await callExternalService()
-  recordSuccess('openrouter')
-  return result
-} catch (error) {
-  const kind = classifyError(error)
-  recordFailure('openrouter', kind)
-  throw error
-}
-```
-
-**Critical rules:**
-- HALF_OPEN probe failure → immediately re-open circuit (not stuck)
-- Failure window decay: entries older than `failureWindowMs` auto-reset failureCount and state
-- LRU eviction uses `lastAccessAt` (not `lastFailureAt`) — healthy services should not be evicted
-- AUTH_FAILURE opens circuit immediately (no cooldown wait)
+Battle-tested patterns for ALL financial/money code:
+- **Atomic Lock**: `INSERT ... ON CONFLICT DO NOTHING` (D1 has no transactions). Check `meta.changes` for ownership.
+- **Result<T,E>**: Never `throw` in financial code. Return `success(data)` / `failure({ code, message })`.
+- **Event ID formats**: `nowpayments_{id}_{status}`, `clickbank_{receipt}_{type}`, `topup_{id}_{status}`, `refund_{purchase_id}`
+- **Stale lock recovery**: After 5 min, treat unprocessed locks as stale — mark processed and retry.
+- **Circuit breaker**: Every external HTTP call uses `shouldAllowRequest` / `recordSuccess` / `recordFailure` from `@/seed/security/circuit-breaker`. HALF_OPEN probe failure → immediately re-open. AUTH_FAILURE → immediate open (no cooldown).
 
 ---
 
@@ -237,9 +129,6 @@ Full doctrine: `.claude/rules/sophia-no-tech-doctrine.md`
 - Tier enum: `BASIC | PREMIUM | ENTERPRISE | MASTER` (uppercase only)
 - No land→forest imports (enforced by ESLint `no-restricted-imports`). Run `npm run lint` to catch.
 - Deploy: working tree must be clean (`deploy-with-sha.sh` rejects dirty trees). Commit docs before deploy.
-- Circuit breaker on all external HTTP calls (OpenRouter, ElevenLabs, D-ID, HeyGen, NOWPayments, ClickBank, Replicate, fal.ai)
-- Per-kind error classification: AUTH_FAILURE → immediate open, RATE_LIMIT → cooldown, SERVER_ERROR → retry with backoff
-- No bare try/catch for external HTTP without failure kind classification
 
 ---
 

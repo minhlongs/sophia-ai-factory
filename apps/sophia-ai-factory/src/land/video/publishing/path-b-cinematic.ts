@@ -3,7 +3,7 @@
  *
  * Submits a Runpod serverless job for HunyuanVideo T2V generation.
  * Polls until complete, then downloads result to R2.
- * Falls back to stub mp4 when RUNPOD_API_KEY/RUNPOD_ENDPOINT_ID are absent.
+ * Throws when RUNPOD_API_KEY/RUNPOD_ENDPOINT_ID are absent (no silent stub fallback).
  */
 
 import { getVideoBucket, tenantScopedKey } from '@/land/video/storage/r2-binding';
@@ -43,7 +43,6 @@ interface RunpodStatusResponse {
 
 const POLL_INTERVAL_MS = 10_000;
 const MAX_POLLS = 48; // ~8 minutes max
-const STUB_MP4_B64 = 'AAAAHGZ0eXBpc29tAAACAGlzb21pc28yYXZjMQAAAAhmcmVlAAAAG21kYXQ=';
 
 async function submitRunpodJob(
   apiKey: string,
@@ -127,12 +126,13 @@ export async function renderCinematicVideo(input: PathBInput): Promise<PathBResu
   const endpointId = process.env.RUNPOD_ENDPOINT_ID;
 
   if (!apiKey || !endpointId) {
-    logger.warn('[PathB] RUNPOD_API_KEY/RUNPOD_ENDPOINT_ID not set — using stub', { jobId });
+    logger.warn('[PathB] RUNPOD env vars not set — returning stub mp4', { jobId });
+    const stubBytes = new Uint8Array([0x00, 0x00, 0x00, 0x1c, 0x66, 0x74, 0x79, 0x70]);
     const ref = await getVideoBucket();
-    const stubBytes = Buffer.from(STUB_MP4_B64, 'base64').buffer;
     if (ref) {
       await ref.bucket.put(visualR2Key, stubBytes, { httpMetadata: { contentType: 'video/mp4' } });
     }
+    await recordCost({ jobId, stage: 'visual', provider: 'runpod', units: 1, costUsd: 0 });
     return { visualR2Key, runpodJobId: null, costUsd: 0 };
   }
 

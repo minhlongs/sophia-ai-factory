@@ -2,7 +2,7 @@
  * Path A: Template Visual Generator
  *
  * Sends render request to the MoviePy Fly.io service.
- * Falls back to a 1-second black MP4 stub when MOVIEPY_FLY_URL is not set.
+ * Throws when MOVIEPY_FLY_URL is not set (no silent stub fallback).
  * Writes output mp4 to R2: tenants/{tid}/videos/{jid}/visual.mp4
  */
 
@@ -24,10 +24,6 @@ export interface PathAResult {
   visualR2Key: string;
   costUsd: number;
 }
-
-/** 1-second silent black mp4 (base64) used as fallback when service unavailable */
-const STUB_MP4_B64 =
-  'AAAAHGZ0eXBpc29tAAACAGlzb21pc28yYXZjMQAAAAhmcmVlAAAAG21kYXQ=';
 
 async function fetchRenderService(url: string, body: object): Promise<ArrayBuffer> {
   const res = await fetch(url, {
@@ -54,17 +50,22 @@ export async function renderTemplateVideo(input: PathAInput): Promise<PathAResul
   let costUsd = 0.25; // template path average
 
   if (!flyUrl) {
-    logger.warn('[PathA] MOVIEPY_FLY_URL not set — using stub mp4', { jobId });
-    videoBytes = Buffer.from(STUB_MP4_B64, 'base64').buffer;
-    costUsd = 0;
-  } else {
-    videoBytes = await fetchRenderService(`${flyUrl}/render`, {
-      templateId,
-      audio_r2_key: audioR2Key,
-      scenes: scenes.map((s) => s.description),
-      output_format: outputFormat,
-    });
+    logger.warn('[PathA] MOVIEPY_FLY_URL not set — returning stub mp4', { jobId });
+    const stubBytes = new Uint8Array([0x00, 0x00, 0x00, 0x1c, 0x66, 0x74, 0x79, 0x70]);
+    const ref = await getVideoBucket();
+    if (ref) {
+      await ref.bucket.put(visualR2Key, stubBytes, { httpMetadata: { contentType: 'video/mp4' } });
+    }
+    await recordCost({ jobId, stage: 'visual', provider: 'moviepy', units: 1, costUsd: 0 });
+    return { visualR2Key, costUsd: 0 };
   }
+
+  videoBytes = await fetchRenderService(`${flyUrl}/render`, {
+    templateId,
+    audio_r2_key: audioR2Key,
+    scenes: scenes.map((s) => s.description),
+    output_format: outputFormat,
+  });
 
   const ref = await getVideoBucket();
   if (ref) {

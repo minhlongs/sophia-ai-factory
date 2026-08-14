@@ -10,51 +10,6 @@ This is **Sophia AI Factory** — a Next.js 16 App Router SaaS platform for AI v
 
 ---
 
-## Commands
-
-All commands run from `apps/sophia-ai-factory/`:
-
-```bash
-npm run dev              # Next.js dev server on :3000
-npm run build            # Production build (0 TypeScript errors required)
-npm run lint             # ESLint (src/**)
-npm run type-check       # TypeScript compiler check (--noEmit)
-npm test                 # Vitest (runs pretest i18n:validate)
-npm run test:watch       # Vitest watch mode
-npx vitest run <path>    # Run specific test file or pattern
-npm run test:coverage    # Coverage report (html, json-summary, text)
-npm run test:e2e         # Playwright E2E (requires NEXT_PUBLIC_MOCK_AI_SERVICES=true)
-npm run verify           # Full verification script (build, tests, secrets audit)
-npm run deploy:full      # CF-direct deploy with SHA verification (MANDATORY)
-npm run deploy:verify    # Run sophia-doctor.mjs health checks
-npm run ci               # CI gate (typecheck, lint, test, secrets, audit)
-```
-
----
-
-## Architecture (4-Layer Model)
-
-Code organization in `src/` follows strict layer boundaries:
-
-| Layer | Purpose | Import Path | Example |
-|-------|---------|-------------|---------|
-| **seed** | Foundational primitives (auth, DB, config, types) | `@/seed/...` | `@/seed/auth/better-auth-session` |
-| **tree** | Domain-specific reusable logic | `@/tree/...` | `@/tree/byok/`, `@/tree/telegram/` |
-| **forest** | Infrastructure orchestrators | `@/forest/...` | `@/forest/inngest/`, `@/forest/quota/` |
-| **land** | Business workflows | `@/land/...` | `@/land/billing/`, `@/land/payouts/` |
-
-**Import rules:**
-- `seed` → importable by ALL layers (foundational)
-- `tree` → imports `seed` only
-- `forest` → imports `seed`, `tree` (+ may CALL `land` for orchestration)
-- `land` → imports `seed`, `tree`, `forest`
-
-**Forbidden:** `seed` → `tree/forest/land`; `tree` → `forest/land`; `land` → `forest` (circular).
-
-See `.claude/rules/sophia-layer-architecture.md` for full details.
-
----
-
 ## Canonical Import Paths (POST-2026-04-14 CONSOLIDATION)
 
 These are the **single sources of truth**. Old paths are deleted; do not create new ones.
@@ -120,21 +75,6 @@ Sophia serves non-technical CEOs. Implications:
 If a feature requires operator-provided third-party credentials to be "complete", it is **out of scope** until made self-configuring or moved to customer side.
 
 Full doctrine: `.claude/rules/sophia-no-tech-doctrine.md`.
-
----
-
-## Quality Gates
-
-- `npm run build` → 0 TypeScript errors
-- `npm test` → all tests pass (6744+ tests)
-- Zero `:any` types in production code
-- Zero `console.log`/`console.warn`/`console.error` — use logger utility
-- Zod validation on all API inputs
-- Server Actions for data mutations (preferred over API routes)
-- Tier enum values: `BASIC | PREMIUM | ENTERPRISE | MASTER` (uppercase only)
-- Circuit breaker on all external HTTP calls (OpenRouter, ElevenLabs, D-ID, HeyGen, NOWPayments, ClickBank, Replicate, fal.ai)
-- Per-kind error classification: AUTH_FAILURE → immediate open, RATE_LIMIT → cooldown, SERVER_ERROR → retry with backoff
-- No bare try/catch for external HTTP without failure kind classification
 
 ---
 

@@ -6,7 +6,7 @@
  * - Polling loop terminates on job finish
  * - Final mp4 is uploaded to R2
  * - Idempotency: returns existing URL when R2 object already present
- * - Stub mp4 path when CLOUDCONVERT_API_KEY is absent
+ * - Error when CLOUDCONVERT_API_KEY is absent (no silent stub)
  * - Error propagation on Cloudconvert failure
  */
 
@@ -93,37 +93,33 @@ describe('muxVideoAudio', () => {
     delete process.env.CLOUDCONVERT_API_KEY;
   });
 
-  // ── Stub path (no API key) ───────────────────────────────────────────────────
+  // ── Missing API key (no silent stub) ──────────────────────────────────────────
 
-  it('writes stub mp4 to R2 and returns key-based URL when API key absent', async () => {
+  it('throws when CLOUDCONVERT_API_KEY is absent', async () => {
+    // No CLOUDCONVERT_API_KEY set (deleted in beforeEach)
+    await expect(
+      muxVideoAudio({
+        videoUrl: STUB_VIDEO_URL,
+        audioUrl: STUB_AUDIO_URL,
+        outputKey: STUB_OUTPUT_KEY,
+      }),
+    ).rejects.toThrow(/CLOUDCONVERT_API_KEY is required/);
+  });
+
+  it('does not write stub mp4 or call R2 when API key absent', async () => {
     const mockPut = vi.fn().mockResolvedValue(undefined);
     const ref = buildBucketRef({ put: mockPut });
     mockGetVideoBucket.mockResolvedValue(ref);
 
-    const result = await muxVideoAudio({
-      videoUrl: STUB_VIDEO_URL,
-      audioUrl: STUB_AUDIO_URL,
-      outputKey: STUB_OUTPUT_KEY,
-    });
+    await expect(
+      muxVideoAudio({
+        videoUrl: STUB_VIDEO_URL,
+        audioUrl: STUB_AUDIO_URL,
+        outputKey: STUB_OUTPUT_KEY,
+      }),
+    ).rejects.toThrow();
 
-    expect(mockPut).toHaveBeenCalledOnce();
-    const [putKey, , putOpts] = mockPut.mock.calls[0] as [string, unknown, { httpMetadata: { contentType: string } }];
-    expect(putKey).toBe(STUB_OUTPUT_KEY);
-    expect(putOpts.httpMetadata.contentType).toBe('video/mp4');
-    expect(result.url).toBe(`${PUBLIC_BASE}/${STUB_OUTPUT_KEY}`);
-    expect(result.durationMs).toBe(0);
-  });
-
-  it('returns outputKey as URL when R2 bucket unavailable and no API key', async () => {
-    mockGetVideoBucket.mockResolvedValue(null);
-
-    const result = await muxVideoAudio({
-      videoUrl: STUB_VIDEO_URL,
-      audioUrl: STUB_AUDIO_URL,
-      outputKey: STUB_OUTPUT_KEY,
-    });
-
-    expect(result.url).toBe(STUB_OUTPUT_KEY);
+    expect(mockPut).not.toHaveBeenCalled();
   });
 
   // ── Idempotency ──────────────────────────────────────────────────────────────
