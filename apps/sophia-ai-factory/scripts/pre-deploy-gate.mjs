@@ -25,7 +25,9 @@ const BASE_URL = process.env.PREVIEW_URL || 'http://localhost:3000';
 const ALLOWLIST = [
   '/billing', '/contact', '/projects', '/projects/new', '/settings', '/docs',
   '/auth/signup', '/features', '/guide', '/privacy', '/reset-password', '/terms',
-  // Pre-existing Stitch design links — routes not yet implemented
+  // next.config.ts redirect destinations (valid redirects, not page routes)
+  '/register', '/sign-up', '/signin', '/chat', '/templates', '/debug', '/app',
+  '/guides', '/support', '/faq', '/help', '/guide/getting-started', '/about',
 ];
 
 let failed = 0;
