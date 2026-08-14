@@ -13,29 +13,33 @@ import { logger } from '@/seed/utils/logger-utility';
 
 export function sanitizeError(err: unknown): string {
   const raw = err instanceof Error ? err.message : String(err);
-  return raw.length > 200 ? raw.slice(0, 197) + '...' : raw;
+  const redacted = raw
+    .replace(/Bearer\s+[A-Za-z0-9._\-]+/gi, 'Bearer [REDACTED]')
+    .replace(/(access_token|refresh_token|client_secret|api_key|token)=[^&\s"']*/gi, '$1=[REDACTED]')
+    .replace(/eyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}/g, '[REDACTED_JWT]');
+  return redacted.length > 200 ? redacted.slice(0, 197) + '...' : redacted;
 }
 
 export function assertSafeVideoUrl(url: string): void {
   if (typeof url !== 'string' || url.length === 0) {
     throw new Error('[publishExecute] Malformed video URL: empty or non-string');
   }
+  let parsed: URL;
   try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-      throw new Error(`[publishExecute] Malformed video URL: ${url}`);
-    }
-    if (parsed.hostname) {
-      const blockedHostnames = ['localhost', '127.0.0.1', '0.0.0.0'];
-      if (blockedHostnames.includes(parsed.hostname)) {
-        throw new Error(`[publishExecute] Blocked untrusted video URL hostname: ${parsed.hostname}`);
-      }
-    }
-  } catch (err) {
-    if (err instanceof TypeError) {
-      throw new Error(`[publishExecute] Malformed video URL: ${url}`);
-    }
-    throw err;
+    parsed = new URL(url);
+  } catch {
+    throw new Error(`[publishExecute] Malformed video URL: ${url}`);
+  }
+  if (parsed.protocol !== 'https:') {
+    throw new Error('[publishExecute] Video URL must use https');
+  }
+  const allowed = new Set(
+    (process.env.R2_PUBLIC_HOSTNAME ?? 'pub-placeholder.r2.dev')
+      .split(',').map((h) => h.trim().toLowerCase()),
+  );
+  const host = parsed.hostname.replace(/\.$/, '').toLowerCase();
+  if (!allowed.has(host)) {
+    throw new Error(`[publishExecute] Blocked untrusted video URL hostname: ${host}`);
   }
 }
 

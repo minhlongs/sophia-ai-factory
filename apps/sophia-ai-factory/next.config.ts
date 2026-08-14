@@ -51,7 +51,6 @@ const nextConfig: NextConfig = {
   // M1 16GB OOM trigger during deploy:full. Removing it from the inner build
   // requires the deploy script to enforce tsc --noEmit BEFORE next build.
   typescript: {
-    ignoreBuildErrors: true,
   },
   images: {
     formats: ['image/avif', 'image/webp'],
