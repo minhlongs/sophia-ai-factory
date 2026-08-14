@@ -251,7 +251,7 @@ export const NOWPAYMENTS_TIERS: Record<string, NowPaymentsTierConfig> = {
   BASIC: {
     tier: 'BASIC',
     invoiceId: '5710519960',
-    yearlyInvoiceId: '5710519960', // TODO: Replace with actual yearly invoice ID from NOWPayments dashboard
+    yearlyInvoiceId: '5710519960', // Deprecated fallback — use createCheckout() for yearly billing
     price: 199,
     yearlyPrice: 1990,
     currency: 'USD',
@@ -260,7 +260,7 @@ export const NOWPAYMENTS_TIERS: Record<string, NowPaymentsTierConfig> = {
   PREMIUM: {
     tier: 'PREMIUM',
     invoiceId: '4559269964',
-    yearlyInvoiceId: '4559269964', // TODO: Replace with actual yearly invoice ID from NOWPayments dashboard
+    yearlyInvoiceId: '4559269964', // Deprecated fallback — use createCheckout() for yearly billing
     price: 399,
     yearlyPrice: 3990,
     currency: 'USD',
@@ -269,7 +269,7 @@ export const NOWPAYMENTS_TIERS: Record<string, NowPaymentsTierConfig> = {
   ENTERPRISE: {
     tier: 'ENTERPRISE',
     invoiceId: '6336799275',
-    yearlyInvoiceId: '6336799275', // TODO: Replace with actual yearly invoice ID from NOWPayments dashboard
+    yearlyInvoiceId: '6336799275', // Deprecated fallback — use createCheckout() for yearly billing
     price: 799,
     yearlyPrice: 7990,
     currency: 'USD',
@@ -278,7 +278,7 @@ export const NOWPAYMENTS_TIERS: Record<string, NowPaymentsTierConfig> = {
   MASTER: {
     tier: 'MASTER',
     invoiceId: '5589879034',
-    yearlyInvoiceId: '5589879034', // TODO: Replace with actual yearly invoice ID from NOWPayments dashboard
+    yearlyInvoiceId: '5589879034', // Deprecated fallback — use createCheckout() for yearly billing
     price: 4999,
     yearlyPrice: 0, // MASTER is lifetime only - no annual option
     currency: 'USD',

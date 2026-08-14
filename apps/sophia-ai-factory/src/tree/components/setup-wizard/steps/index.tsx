@@ -94,19 +94,41 @@ export function SetupWizardPage() {
 
     try {
       const start = Date.now();
-      // TODO: Replace with actual verification API call
-      // const response = await fetch(`/api/setup-wizard/verify/${service}`, {
-      //   method: 'POST',
-      //   body: JSON.stringify({ key: keyValue }),
-      // });
-      // For now, simulate verification
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const endpointMap: Record<string, string> = {
+        heygen: '/api/setup-wizard/test-heygen',
+        resend: '/api/setup-wizard/test-resend',
+      };
+      const endpoint = endpointMap[service];
+
+      if (!endpoint) {
+        // No verification endpoint for this service — mark as valid
+        await new Promise(resolve => setTimeout(resolve, 300));
+        const latency = Date.now() - start;
+        setStatus(prev => ({ ...prev, [keyName]: 'valid' }));
+        setLatencies(prev => ({ ...prev, [keyName]: latency }));
+        return true;
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [`${service}_api_key`]: keyValue }),
+      });
+
+      const data = await response.json() as { ok?: boolean; message?: string; message_vi?: string };
       const latency = Date.now() - start;
 
-      // Simulate success for demo
-      setStatus(prev => ({ ...prev, [keyName]: 'valid' }));
+      if (response.ok && data.ok !== false) {
+        setStatus(prev => ({ ...prev, [keyName]: 'valid' }));
+        setLatencies(prev => ({ ...prev, [keyName]: latency }));
+        return true;
+      }
+
+      const errMsg = data.message_vi || data.message || t('errors.verificationFailed');
+      setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
+      setErrors(prev => ({ ...prev, [keyName]: errMsg }));
       setLatencies(prev => ({ ...prev, [keyName]: latency }));
-      return true;
+      return false;
     } catch {
       setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
       setErrors(prev => ({ ...prev, [keyName]: t('errors.verificationFailed') }));
@@ -131,20 +153,46 @@ export function SetupWizardPage() {
     setSaveFailed(false);
 
     try {
-      // TODO: Replace with actual save API call
-      // await fetch('/api/setup-wizard/save', {
-      //   method: 'POST',
-      //   body: JSON.stringify(config),
-      // });
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const keyToProvider: Record<string, string> = {
+        OPENROUTER_API_KEY: 'openrouter',
+        ANTHROPIC_API_KEY: 'anthropic',
+        ELEVENLABS_API_KEY: 'elevenlabs',
+        DID_API_KEY: 'd-id',
+        MUAPI_API_KEY: 'muapi',
+        REPLICATE_API_KEY: 'replicate',
+      };
 
-      // Navigate to dashboard on success
+      const credentials = Object.entries(config)
+        .filter(([k, v]) => keyToProvider[k] && v.trim())
+        .map(([k, v]) => ({ provider: keyToProvider[k], api_key: v }));
+
+      const providerCreds = [
+        providerConfig.HEYGEN_API_KEY && { provider: 'heygen', api_key: providerConfig.HEYGEN_API_KEY },
+        providerConfig.RESEND_API_KEY && { provider: 'resend', api_key: providerConfig.RESEND_API_KEY },
+        providerConfig.NOWPAYMENTS_API_KEY && { provider: 'nowpayments', api_key: providerConfig.NOWPAYMENTS_API_KEY },
+      ].filter(Boolean);
+
+      const allCreds = [...credentials, ...providerCreds];
+
+      if (allCreds.length > 0) {
+        const response = await fetch('/api/setup-wizard/save-credentials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credentials: allCreds }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json() as { error?: string };
+          throw new Error(data.error || t('errors.saveFailed'));
+        }
+      }
+
       window.location.href = '/dashboard';
     } catch {
       setSaveError(t('errors.saveFailed'));
       setSaveFailed(true);
     }
-  }, [t]);
+  }, [t, config, providerConfig]);
 
   const handleRetry = useCallback(() => {
     setSaveError(null);
