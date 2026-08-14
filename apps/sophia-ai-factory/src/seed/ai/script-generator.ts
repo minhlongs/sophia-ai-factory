@@ -41,8 +41,7 @@ interface ScriptGenDeps {
  * @param deps - Injected dependencies to avoid static layer-boundary imports.
  */
 export async function generateScript(input: GenerateScriptInput, deps?: ScriptGenDeps) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured from GenerateScriptInput
-  const { topic, audience, tier, userId, licenseKey, licenseNonce, orgId, affiliateOffer } = input;
+  const { topic, audience, tier, userId, licenseKey, licenseNonce, orgId: _orgId, affiliateOffer } = input;
   const stopTimer = deps?.startTimer?.();
 
   const context = deps?.getUsageContext?.();
@@ -99,8 +98,7 @@ export async function generateScript(input: GenerateScriptInput, deps?: ScriptGe
     let parsed: ScriptOutput;
     try {
       parsed = JSON.parse(content) as ScriptOutput;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- catch block for JSON parse failure
-    } catch (e) {
+    } catch {
       if (deps?.trackUsage) {
         await deps.trackUsage({
           userId: finalUserId,

@@ -7,7 +7,6 @@
 
 import { D1Client } from '@/seed/db/d1-client-rpc';
 import { toError } from '@/seed/utils/to-error';
-import { logger } from '@/seed/utils/logger-utility';
 import type { D1Database } from '@cloudflare/workers-types';
 export type { D1Database };
 export { D1Client };
@@ -152,29 +151,6 @@ function getD1Sync(): D1Database {
 }
 
 /**
- * Get D1 binding via Cloudflare context symbol set by opennextjs-cloudflare
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function getD1Async(): Promise<D1Database> {
-  const ctxSymbol = Symbol.for('__cloudflare-context__');
-  const ctx = (globalThis as Record<symbol, { env?: Record<string, unknown> }>)[ctxSymbol];
-  if (ctx?.env?.DB) {
-    return ctx.env.DB as D1Database;
-  }
-
-  try {
-    const { getCloudflareContext } = await import('@opennextjs/cloudflare');
-    const cfCtx = await getCloudflareContext();
-    const db = (cfCtx.env as Record<string, unknown>).DB as D1Database;
-    if (db) return db;
-  } catch {
-    /* not available */
-  }
-
-  return getD1Sync();
-}
-
-/**
  * Safe variant of createServerClient() — never throws.
  * Returns null when no D1 binding is available (e.g. during build-time page data collection).
  * Callers must handle the null case explicitly.
@@ -195,63 +171,6 @@ export function createServerClient(override?: D1Database): D1Client {
   if (!db) throw new Error('D1 database binding not available');
 
   return new D1Client(db);
-}
-
-/**
- * Lazy query chain that resolves D1 binding when executing.
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-class LazyQueryChain {
-  private calls: { method: string; args: unknown[] }[] = [];
-  private table: string;
-  private getDb: () => Promise<D1Database>;
-
-  constructor(table: string, getDb: () => Promise<D1Database>) {
-    this.table = table;
-    this.getDb = getDb;
-
-    const proxy: LazyQueryChain = new Proxy(this, {
-      get(target, prop) {
-        if (prop === 'then') {
-          return (
-            onfulfilled: (v: unknown) => unknown,
-            onrejected: (e: unknown) => unknown,
-          ) => target.execute().then(onfulfilled, onrejected);
-        }
-
-        if (prop === 'single' || prop === 'maybeSingle') {
-          return () => {
-            target.calls.push({ method: prop as string, args: [] });
-            return target.execute();
-          };
-        }
-
-        return (...args: unknown[]) => {
-          target.calls.push({ method: prop as string, args });
-          return proxy;
-        };
-      },
-    }) as unknown as LazyQueryChain;
-    return proxy;
-  }
-
-  private async execute() {
-    try {
-      const db = await this.getDb();
-      const client = new D1Client(db);
-      let chain = client.from(this.table) as unknown as Record<string, (...args: unknown[]) => unknown>;
-      for (const call of this.calls) {
-        const result = chain[call.method](...call.args);
-        if (result instanceof Promise) return result;
-        chain = result as Record<string, (...args: unknown[]) => unknown>;
-      }
-      return chain;
-    } catch (err) {
-      const d1Err = err instanceof Error ? err : new Error(String(err));
-      logger.error('[D1Client] LazyQueryChain execution failed', d1Err);
-      throw d1Err;
-    }
-  }
 }
 
 /**
