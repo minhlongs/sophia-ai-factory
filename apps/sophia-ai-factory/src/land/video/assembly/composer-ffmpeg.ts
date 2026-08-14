@@ -143,8 +143,7 @@ function thumbnailFromHeader(value: string | null): ArrayBuffer | undefined {
  * breaker around the upstream MoviePy fly call.
  */
 export async function composeFinalVideo(input: ComposeInput): Promise<ComposeResult> {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- destructured for type completeness with ComposeInput
-  const { jobId, tenantId, audioR2Key, visualR2Key } = input;
+  const { jobId, tenantId, audioR2Key: _audioR2Key, visualR2Key: _visualR2Key } = input;
   const finalR2Key = tenantScopedKey(tenantId, jobId, 'final.mp4');
   const flyUrl = process.env.MOVIEPY_FLY_URL;
   const costUsd = needsRichCompose(input) ? 0.07 : 0.05;

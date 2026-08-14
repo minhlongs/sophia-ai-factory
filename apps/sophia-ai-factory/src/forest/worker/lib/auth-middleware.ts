@@ -49,20 +49,6 @@ function base64UrlDecode(input: string): Uint8Array {
   return bytes;
 }
 
-// Base64url encode helper
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function base64UrlEncode(input: ArrayBuffer): string {
-  const bytes = new Uint8Array(input);
-  let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
-}
-
 // Decode JWT without verification (for getting header/payload)
 function decodeJwt(token: string): DecodedJwt {
   const parts = token.split('.');

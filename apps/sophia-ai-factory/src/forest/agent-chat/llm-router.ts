@@ -18,10 +18,6 @@ const ANTHROPIC_BASE_URL = 'https://api.anthropic.com/v1';
 
 // ── Model context windows (tokens) ─────────────────────────────────────────────
 
-/** Models with their context window sizes, sorted by capacity. */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const MODEL_CATALOG: Array<{ model: string; provider: LlmRoute['provider']; baseUrl: string; apiKey: string; contextWindow: number }> = [];
-
 function buildCatalog(): Array<{ model: string; provider: LlmRoute['provider']; baseUrl: string; apiKey: string; contextWindow: number }> {
   const catalog: Array<{ model: string; provider: LlmRoute['provider']; baseUrl: string; apiKey: string; contextWindow: number }> = [];
 

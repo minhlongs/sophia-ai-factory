@@ -147,30 +147,3 @@ export async function batchInvalidateLicenses(
   const keys = licenseNonces.map(nonce => getLicenseKey(nonce));
   await Promise.all(keys.map(key => kv.delete(key)));
 }
-
-/**
- * Get cache statistics for monitoring
- *
- * @param kv - Cloudflare KV namespace
- * @returns Cache statistics
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function getCacheStats(kv: KVNamespace): Promise<{
-  totalKeys: number;
-  keyPrefix: string;
-}> {
-  try {
-    // Note: KV doesn't provide efficient count by prefix
-    // This is a placeholder for future implementation
-    return {
-      totalKeys: 0,
-      keyPrefix: CACHE_CONFIG.keyPrefix,
-    };
-  } catch (error) {
-    logger.error('[KV License Cache] Stats error', error instanceof Error ? error : new Error(String(error)));
-    return {
-      totalKeys: 0,
-      keyPrefix: CACHE_CONFIG.keyPrefix,
-    };
-  }
-}

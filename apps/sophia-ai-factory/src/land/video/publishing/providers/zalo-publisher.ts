@@ -37,8 +37,7 @@ export class ZaloVerificationRequiredError extends Error {
     this.name = 'ZaloVerificationRequiredError';
   }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async delete(postId: string): Promise<void> {
+async delete(_postId: string): Promise<void> {
   // Platform-specific deletion not implemented
   logger.warn("[zalo-publisher.ts] delete not implemented");
 }}

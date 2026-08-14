@@ -32,8 +32,6 @@ export function enforceLimitFromResult(result: LimitCheckResult): void {
 
 export const tierGuard = {
   async checkLimit(userId: string, limitType: LimitType): Promise<LimitCheckResultWithTier> {
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const userTier = await resolveUserTier(userId);
     let currentUsage = 0;
 
     if (limitType === "videoTemplates") {

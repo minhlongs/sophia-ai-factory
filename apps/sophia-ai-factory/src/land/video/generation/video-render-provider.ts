@@ -57,8 +57,7 @@ function getConfiguredProvider(): 'heygen' | 'mock' | 'facefusion' | 'wav2lip' |
 }
 
 async function submitMockProvider(
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-  input: VideoRenderProviderInput,
+  _input: VideoRenderProviderInput,
 ): Promise<VideoRenderProviderResult> {
   const videoId = crypto.randomUUID();
   const providerJobId = `mock_${videoId.replace(/-/g, '').slice(0, 16)}`;

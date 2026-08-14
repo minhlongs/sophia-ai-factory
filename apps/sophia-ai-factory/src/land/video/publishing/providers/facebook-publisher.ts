@@ -139,8 +139,7 @@ export class FacebookPublisher implements Publisher {
     }
   }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async delete(postId: string): Promise<void> {
+async delete(_postId: string): Promise<void> {
   // Platform-specific deletion not implemented
   logger.warn("[facebook-publisher.ts] delete not implemented");
 }}

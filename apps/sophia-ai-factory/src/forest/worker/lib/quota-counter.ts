@@ -5,12 +5,6 @@
  * and hard limit enforcement at 150% overage.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface Env {
-  KV_KV: KVNamespace;
-  HARD_LIMIT_PERCENT: string;
-}
-
 interface QuotaResponse {
   allowed: boolean;
   remaining: number;

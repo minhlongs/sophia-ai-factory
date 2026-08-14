@@ -370,8 +370,7 @@ export class CostAwareRouter {
 
     // Pick the cheapest that meets minimum quality requirements
     const selected = sorted[0] ?? estimates[0];
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const cheapestCost = Math.min(...estimates.map((e) => e.estimatedCost));
+    const _cheapestCost = Math.min(...estimates.map((e) => e.estimatedCost));
 
     const usedCheaperAlternative =
       selected.id !== routeDecision.provider ||

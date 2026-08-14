@@ -51,8 +51,6 @@ export async function publishVideo(
     const { createVideoPublish, updateVideoPublishStatus } = await import(
       '@/seed/db/repositories/video-publishes-repo'
     );
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { getVideoBucket } = await import('../storage/r2-binding');
     const { createFeedbackCycle } = await import('@/tree/sop/performance-feedback-engine');
 
     // Verify video exists and user has access (check both videos table and engine_missions)

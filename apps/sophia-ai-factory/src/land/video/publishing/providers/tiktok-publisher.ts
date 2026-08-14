@@ -92,8 +92,7 @@ export class TikTokPublisher implements Publisher {
     }
   }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- parameter required by Publisher interface
-async delete(postId: string): Promise<void> {
+async delete(_postId: string): Promise<void> {
   // Platform-specific deletion not implemented
   logger.warn("[tiktok-publisher.ts] delete not implemented");
 }}

@@ -307,8 +307,7 @@ export class SophiaToolExecutor implements IToolExecutor {
     const query = (args.query as string)?.trim();
     if (!query) return this.error('query is required');
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const mediaType = (args.media_type as string) ?? 'all';
+    const _mediaType = (args.media_type as string) ?? 'all';
     const limit = Math.min(Math.max((args.limit as number) ?? 10, 1), 50);
 
     // Search in R2 media manifests.
