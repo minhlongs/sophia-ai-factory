@@ -215,5 +215,6 @@ describe('NOWPayments webhook: tier_upgraded emission', () => {
     captureSpy.mockRestore()
     processSpy.mockRestore()
     processSpy.mockRestore()
+    vi.useRealTimers()
   }, 20000)
 })

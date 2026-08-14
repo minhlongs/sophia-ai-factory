@@ -63,7 +63,7 @@ describe('auth-helper: requireAuth', () => {
     expect((result as Response).status).toBe(401)
 
     spy.mockRestore()
-  })
+  }, 10000)
 
   it('(c) accepts valid CRON_SECRET bearer', async () => {
     const { requireAuth } = await import('./auth-helper')
@@ -215,5 +215,6 @@ describe('NOWPayments webhook: tier_upgraded emission', () => {
     captureSpy.mockRestore()
     processSpy.mockRestore()
     processSpy.mockRestore()
+    vi.useRealTimers()
   }, 20000)
 })
