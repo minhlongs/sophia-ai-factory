@@ -58,8 +58,7 @@ export const videoUpload = inngest.createFunction(
           if (!res.ok) {
             logger.warn('[videoUpload] Video URL not accessible', { jobId, url, status: res.status });
           }
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (err) {
+        } catch {
           logger.warn('[videoUpload] Video URL check failed (non-fatal)', { jobId, url });
         }
       }

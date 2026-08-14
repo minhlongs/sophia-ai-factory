@@ -5,11 +5,6 @@ function genId(): string {
   return crypto.randomUUID().replace(/-/g, '');
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function randomPassword(): string {
-  return crypto.randomUUID().replace(/-/g, '').slice(0, 16);
-}
-
 /** Create a new user in D1's Better Auth `user` table. Returns userId or throws. */
 export async function createCustomerUser(
   db: D1Database,

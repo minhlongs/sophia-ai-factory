@@ -58,12 +58,6 @@ interface AffiliateOfferSelectedRow {
   affiliate_link: string
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface VideoAssets {
-  video_url: string
-  thumbnail_url: string
-}
-
 export const generateCampaign = inngest.createFunction(
   { id: 'generate-campaign', retries: 3 },
   { event: 'campaign.created' },
