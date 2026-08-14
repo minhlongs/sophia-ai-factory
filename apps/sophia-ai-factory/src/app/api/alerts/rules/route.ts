@@ -29,7 +29,7 @@ interface AlertRuleRow {
  * GET /api/alerts/rules
  * Fetch all alert rules for current user
  */
-export async function GET(request: NextRequest) { // eslint-disable-line @typescript-eslint/no-unused-vars
+export async function GET(_request: NextRequest) {
   try {
     // Get current user
     const user = await getCurrentUser();

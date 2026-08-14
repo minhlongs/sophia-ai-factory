@@ -14,12 +14,6 @@ function isMockMode(): boolean {
   return !process.env.TIKTOK_CLIENT_KEY;
 }
 
-/** Prepend FTC #ad disclosure if caption lacks it (idempotent) */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- reserved for FTC #ad disclosure compliance
-function withAdPrefix(caption: string): string {
-  return caption.startsWith('#ad ') ? caption : `#ad ${caption}`;
-}
-
 export class TikTokPublisher implements Publisher {
   constructor(private readonly accessToken: string) {}
 

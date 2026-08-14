@@ -15,7 +15,6 @@ import { logger } from '@/seed/utils/logger-utility';
 import {
   campaignStream,
   encodeSSE,
-  MAX_STREAM_DURATION_MS, // eslint-disable-line @typescript-eslint/no-unused-vars
 } from '@/forest/streaming/campaign-stream-service';
 import type { ErrorEvent } from '@/forest/streaming/campaign-stream-types';
 

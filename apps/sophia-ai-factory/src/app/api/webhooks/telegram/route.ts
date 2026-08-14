@@ -9,33 +9,14 @@ import {
   handleResults,
   handleSubscribe,
   handleDiscover,
-  handleTextMessage, // eslint-disable-line @typescript-eslint/no-unused-vars
-  handleUnknown, // eslint-disable-line @typescript-eslint/no-unused-vars
   handleCallbackQuery,
-  handleTicket, // eslint-disable-line @typescript-eslint/no-unused-vars
-  handleMissions, // eslint-disable-line @typescript-eslint/no-unused-vars
   handleCampaignList,
   handleCampaignCancel,
   handleAnalytics,
   withMiddleware,
 } from '@/tree/telegram/telegram-command-handlers'
 import {
-  handleVersion, // eslint-disable-line @typescript-eslint/no-unused-vars
-  handleTier, // eslint-disable-line @typescript-eslint/no-unused-vars
-  handleQuota, // eslint-disable-line @typescript-eslint/no-unused-vars
-  handleAffiliate, // eslint-disable-line @typescript-eslint/no-unused-vars
-  handleVideos, // eslint-disable-line @typescript-eslint/no-unused-vars
-  handleHandover, // eslint-disable-line @typescript-eslint/no-unused-vars
-  handleFree100, // eslint-disable-line @typescript-eslint/no-unused-vars
-  handleEmbed, // eslint-disable-line @typescript-eslint/no-unused-vars
-  handleTranslate, // eslint-disable-line @typescript-eslint/no-unused-vars
-  handleCloneVoice, // eslint-disable-line @typescript-eslint/no-unused-vars
-  handleSeoScript, // eslint-disable-line @typescript-eslint/no-unused-vars
-  handleSchedulePublish, // eslint-disable-line @typescript-eslint/no-unused-vars
-} from '@/land/openclaw-telegram/openclaw-handlers'
-import {
   handleCampaign as handleCampaignFsm,
-  handleFsmTextInput, // eslint-disable-line @typescript-eslint/no-unused-vars
   handleOfferCallback,
   handleConfirmCommand,
 } from '@/tree/telegram/telegram-bot-campaign-handlers'

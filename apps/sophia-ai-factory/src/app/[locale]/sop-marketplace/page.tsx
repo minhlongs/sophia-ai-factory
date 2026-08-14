@@ -61,9 +61,8 @@ export async function generateMetadata({ searchParams, params }: PageProps): Pro
   };
 }
 
-export default async function SOPMarketplacePage({ params, searchParams }: PageProps) { // eslint-disable-line @typescript-eslint/no-unused-vars
-  const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: 'sop.marketplace' }); // eslint-disable-line @typescript-eslint/no-unused-vars
+export default async function SOPMarketplacePage({ params, searchParams: _searchParams }: PageProps) {
+  const { locale: _locale } = await params;
 
   return (
     <main className="min-h-screen bg-[#0F0F11]">

@@ -39,28 +39,6 @@ function getD1(): D1Database | null {
   }
 }
 
-interface SubOrgRow {
-  org_id: string;
-  next_billing_at: string;
-  tier: string;
-  email: string;
-  name: string | null;
-}
-
-async function getExpiringSubs(db: D1Database, days: number): Promise<SubOrgRow[]> { // eslint-disable-line @typescript-eslint/no-unused-vars
-  const query = `
-    SELECT o.id as org_id, o.next_billing_at, o.active_tier as tier,
-           u.email, u.name
-    FROM orgs o
-    JOIN users u ON u.id = o.owner_id
-    WHERE o.next_billing_at IS NOT NULL
-      AND date(o.next_billing_at) = date('now', '+' || ? || ' days')
-    ORDER BY o.next_billing_at ASC
-  `;
-  const result = await db.prepare(query).bind(days).all<SubOrgRow>();
-  return result.results;
-}
-
 interface SubscriptionRow {
   org_id: string;
   plan: string;

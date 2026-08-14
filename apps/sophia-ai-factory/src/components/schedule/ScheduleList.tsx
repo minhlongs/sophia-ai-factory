@@ -17,7 +17,7 @@ interface ScheduleListProps {
 export default function ScheduleList({
   schedules,
   loading,
-  error, // eslint-disable-line @typescript-eslint/no-unused-vars
+  error: _error,
   onToggle,
   onDelete,
   onRefresh,

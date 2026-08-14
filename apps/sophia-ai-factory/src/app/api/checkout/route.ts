@@ -79,7 +79,6 @@ export const GET = withRateLimit(async function GET(request: NextRequest) {
  */
 // @ts-expect-error withRateLimit wraps NextRequest; type mismatch is intentional
 export const POST = withRateLimit(async function POST(request: NextRequest) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'; // eslint-disable-line @typescript-eslint/no-unused-vars
   try {
     const body = await request.json();
 

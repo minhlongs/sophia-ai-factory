@@ -28,7 +28,7 @@ interface GraphQLQueryRequest {
 async function executeQuery(
   query: string,
   variables?: Record<string, unknown>,
-  operationName?: string // eslint-disable-line @typescript-eslint/no-unused-vars
+  _operationName?: string
 ): Promise<unknown> {
   try {
     // Parse the query
@@ -57,7 +57,7 @@ async function executeQuery(
  */
 async function resolveQuery(
   queryString: string,
-  variables?: Record<string, unknown> // eslint-disable-line @typescript-eslint/no-unused-vars
+  _variables?: Record<string, unknown>
 ): Promise<unknown> {
   // Simple regex-based extraction for analytics query
   // This is a basic implementation - for production use graphql-tools
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
 /**
  * GET handler for GraphQL endpoint (schema introspection hint)
  */
-export async function GET(request: NextRequest) { // eslint-disable-line @typescript-eslint/no-unused-vars
+export async function GET(_request: NextRequest) {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

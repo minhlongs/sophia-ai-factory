@@ -77,7 +77,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const now = Math.floor(Date.now() / 1000); // eslint-disable-line @typescript-eslint/no-unused-vars
     const startTimestamp = start;
     const endTimestamp = end;
 

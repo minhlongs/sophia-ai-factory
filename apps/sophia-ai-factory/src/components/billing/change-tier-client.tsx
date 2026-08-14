@@ -11,8 +11,6 @@ import type { Tier } from '@/seed/types';
 import TierPlanSelector from './TierPlanSelector';
 import TierConfirmationModal from './TierConfirmationModal';
 
-const SELECTABLE_TIERS: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE']; // eslint-disable-line @typescript-eslint/no-unused-vars
-
 type SubmitState =
   | { status: 'idle' }
   | { status: 'loading' }

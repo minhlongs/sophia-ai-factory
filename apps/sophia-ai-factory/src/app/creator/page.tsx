@@ -25,10 +25,6 @@ import { ReferralSection } from '@/components/billing/referral-section';
 import type { CreatorProfileView } from '@/land/sop-marketplace';
 import type { SopChallengeRow, UserChallengeProgressRow } from '@/tree/sop/sop-types';
 
-function formatUsd(cents: number): string { // eslint-disable-line @typescript-eslint/no-unused-vars
-  return `$${(cents / 100).toFixed(2)}`;
-}
-
 function DashboardView({
   profile,
   totalInstalls,

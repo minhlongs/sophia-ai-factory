@@ -1,6 +1,5 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ArrowRight, AlertCircle, CheckCircle, HelpCircle } from 'lucide-react';
 
@@ -34,17 +33,7 @@ type HelpPageProps = {
   type: 'sops' | 'troubleshooting' | 'faq';
 };
 
-const ICON_MAP: Record<string, React.ReactNode> = { // eslint-disable-line @typescript-eslint/no-unused-vars
-  Store: null,
-  Settings: null,
-  Play: null,
-  BarChart2: null,
-  Sparkles: null,
-  Target: null,
-};
-
 export default function HelpPage({ locale, data, pageTitle, pageSubtitle, type }: HelpPageProps) {
-  const t = useTranslations('common'); // eslint-disable-line @typescript-eslint/no-unused-vars
   const isVi = locale.startsWith('vi');
 
   const renderSops = () => (

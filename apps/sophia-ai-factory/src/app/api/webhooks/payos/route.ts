@@ -27,36 +27,6 @@ const PAYOS_CHECKSUM_KEY = process.env.PAYOS_CHECKSUM_KEY
 // Underpayment threshold: accept as full if >= 99% of expected amount
 const UNDERPAYMENT_THRESHOLD = 0.99
 
-/** F-06: Log a lost payment event to the DLQ (payment_events table) for later recovery. */
-async function logToDlq(db: ReturnType<typeof createServerClient>, payload: { // eslint-disable-line @typescript-eslint/no-unused-vars
-  orderCode: string
-  paymentLinkId: string
-  userId: string
-  tier: Tier
-  amount: number
-  rawBody: string
-  reason: string
-}): Promise<void> {
-  try {
-    await db.from('payment_events').upsert({
-      event_id: `dlq_payos_${payload.paymentLinkId}`,
-      event_type: 'payos.dlq_lost_event',
-      payload: payload.rawBody,
-      processed: 0,
-      created_at: new Date().toISOString(),
-    })
-    logger.error('[PayOS DLQ] Lost payment event recorded', {
-      orderCode: payload.orderCode,
-      paymentLinkId: payload.paymentLinkId,
-      userId: payload.userId,
-      tier: payload.tier,
-      amount: payload.amount,
-      reason: payload.reason,
-    })
-  } catch (err) {
-    logger.error('[PayOS DLQ] Failed to record DLQ entry', err instanceof Error ? err : undefined)
-  }
-}
 
 
 export async function POST(request: NextRequest) {

@@ -115,7 +115,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
     let body: unknown;
     try {
       body = await request.json();
-    } catch (error) { // eslint-disable-line @typescript-eslint/no-unused-vars
+    } catch {
       return NextResponse.json(
         { error: 'Invalid JSON body', code: 'INVALID_JSON' },
         { status: 400 }

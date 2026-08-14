@@ -2706,6 +2706,48 @@
         "title": "Title",
         "description": "Description"
       }
+    },
+    "sopReviews": {
+      "title": "Title",
+      "subtitle": "Subtitle",
+      "stats": {
+        "pending": "Pending",
+        "published": "Published",
+        "total": "Total"
+      },
+      "sections": {
+        "pendingReviews": "Pending Reviews",
+        "publishedListings": "Published Listings"
+      },
+      "table": {
+        "columns": {
+          "title": "Title",
+          "creator": "Creator",
+          "category": "Category",
+          "price": "Price",
+          "submitted": "Submitted",
+          "actions": "Actions",
+          "installs": "Installs",
+          "rating": "Rating",
+          "updated": "Updated"
+        },
+        "uncategorized": "Uncategorized"
+      },
+      "actions": {
+        "view": "View",
+        "approve": "Approve",
+        "reject": "Reject"
+      },
+      "empty": {
+        "pending": {
+          "title": "Title",
+          "description": "Description"
+        },
+        "published": {
+          "title": "Title",
+          "description": "Description"
+        }
+      }
     }
   },
   "common": {

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Plus, Save } from 'lucide-react';
 import { Card, CardHeader, CardContent, Button, Input, Badge } from '@/components/stitch';;
 export default function WebhookConfigPage() {
-  const [webhooks, setWebhooks] = useState([ // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [webhooks, _setWebhooks] = useState([
     {
       id: '1',
       name: 'Payment Events',

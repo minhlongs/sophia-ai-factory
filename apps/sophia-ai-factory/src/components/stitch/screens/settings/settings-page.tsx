@@ -88,7 +88,6 @@ const LOCALE_OPTIONS: LocaleOption[] = [
 export default function SettingsPage({
   userName: propUserName,
   userEmail: propUserEmail,
-  currentTier: propCurrentTier, // eslint-disable-line @typescript-eslint/no-unused-vars
 }: SettingsPageProps = {}) {
   const t = useTranslations('stitch.settingsPage');
   const [activeNav, setActiveNav] = useState('account');

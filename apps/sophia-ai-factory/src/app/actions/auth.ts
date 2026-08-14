@@ -32,7 +32,7 @@ export async function activateCouponAfterLoginAction(coupon: string, tier: strin
     }
 
     // Check if coupon is already used by this user
-    const { data: existingRedeem, error: redeemError } = await db // eslint-disable-line @typescript-eslint/no-unused-vars
+    const { data: existingRedeem } = await db
       .from('coupon_redemptions')
       .select('id')
       .eq('coupon_id', couponData.id)

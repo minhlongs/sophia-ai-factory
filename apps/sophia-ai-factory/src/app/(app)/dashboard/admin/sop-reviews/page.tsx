@@ -26,7 +26,6 @@ export const dynamic = 'force-dynamic';
 export default async function AdminSOPReviewsPage({ params }: PageProps) {
   const { locale } = await params;
   const access = await checkAdminAccess();
-  const t = await getTranslations({ locale, namespace: 'admin' }); // eslint-disable-line @typescript-eslint/no-unused-vars
 
   // Check if user is admin
   if (!access.isAdmin) {
@@ -55,9 +54,8 @@ async function checkAdminAccess(): Promise<{ hasAccess: boolean; isAdmin: boolea
   return { hasAccess: isAdmin, isAdmin, userId: user.id };
 }
 
-async function AdminSOPReviewsContent({ locale, userId }: { locale: string; userId: string }) { // eslint-disable-line @typescript-eslint/no-unused-vars
+async function AdminSOPReviewsContent({ locale, userId: _userId }: { locale: string; userId: string }) {
   const t = await getTranslations({ locale, namespace: 'admin.sopReviews' });
-  const tSopStatus = await getTranslations({ locale, namespace: 'sop.status' });
 
   // Fetch pending review listings
   const { getD1 } = await import('@/seed/db/client');
@@ -96,13 +94,6 @@ async function AdminSOPReviewsContent({ locale, userId }: { locale: string; user
 
   const formatDate = (timestamp: number) => new Date(timestamp * 1000).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US');
   const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
-
-  const statusLabels: Record<string, string> = { // eslint-disable-line @typescript-eslint/no-unused-vars
-    draft: tSopStatus('draft'),
-    published: tSopStatus('published'),
-    archived: tSopStatus('archived'),
-    pending_review: tSopStatus('pending_review'),
-  };
 
   return (
     <main className="min-h-screen bg-background p-8">

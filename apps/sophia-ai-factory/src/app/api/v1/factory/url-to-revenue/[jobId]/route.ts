@@ -18,7 +18,7 @@ export async function GET(
   { params }: { params: Promise<{ jobId: string }> },
 ): Promise<NextResponse> {
   const { jobId } = await params;
-  return withRateLimit(async (r: NextRequest) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  return withRateLimit(async (_r: NextRequest) => {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

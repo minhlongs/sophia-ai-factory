@@ -7,11 +7,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
-import { getWAEBinding } from '@/seed/observability/telemetry/wae-client';
 import { emitBurnRateAlert } from '@/seed/observability/telemetry/sentry-metrics';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import type { AnalyticsEngineDataset } from '@cloudflare/workers-types';
 
 interface SLOConfig {
   name: string;
@@ -58,49 +56,13 @@ const SLO_CONFIGS: SLOConfig[] = [
   },
 ];
 
-function matchesRoute(pathname: string, routePatterns: string[]): boolean {
-  return routePatterns.some(pattern => pathname.startsWith(pattern));
-}
-
-function getSLOForRoute(pathname: string): SLOConfig[] { // eslint-disable-line @typescript-eslint/no-unused-vars
-  return SLO_CONFIGS.filter(slo => matchesRoute(pathname, slo.routes));
-}
-
-interface WAERow {
-  route: string;
-  method: string;
-  status: string;
-  isError: string;
-  workerId: string;
-  durationMs: number;
-  timestamp: number;
-  isErrorFlag: number;
-}
-
-interface WAEBinding { // eslint-disable-line @typescript-eslint/no-unused-vars
-  fetch?: (input: RequestInfo, init?: RequestInit) => Promise<Response>;
-  // Add other WAE methods as needed
-}
-
-async function fetchWAEData(env: { WAE?: AnalyticsEngineDataset }, startTime: number, endTime: number): Promise<WAERow[]> { // eslint-disable-line @typescript-eslint/no-unused-vars
-  const wae = getWAEBinding(env);
-  if (!wae) {
-    logger.info('[SLO Cron] WAE binding not available');
-    return [];
-  }
-
-  // In Workers, we'd use the WAE SQL API. For now, we read from our in-memory metrics
-  // as a fallback since WAE query requires separate API call.
-  // This will be populated by the middleware's in-memory metrics.
-  return [];
-}
 
 async function computeBurnRate(
   db: ReturnType<typeof createServerClient>,
   slo: SLOConfig,
-  yearMonth: string, // eslint-disable-line @typescript-eslint/no-unused-vars
-  windowStart: string, // eslint-disable-line @typescript-eslint/no-unused-vars
-  windowEnd: string // eslint-disable-line @typescript-eslint/no-unused-vars
+  _yearMonth: string,
+  _windowStart: string,
+  _windowEnd: string
 ): Promise<{
   totalRequests: number;
   goodRequests: number;

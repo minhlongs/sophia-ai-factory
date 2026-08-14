@@ -13,7 +13,6 @@ import {
   Search,
   Bell as Notifications,
   HelpCircle as HelpOutline,
-  ArrowRight as ArrowForward, // eslint-disable-line @typescript-eslint/no-unused-vars
 } from 'lucide-react';
 import { Avatar } from '../ui/avatar';
 import { Input } from '../ui/input';
@@ -52,7 +51,7 @@ export function TopAppBar({
   const pathnameFromHook = usePathname();
   const pathname = providedPathname || pathnameFromHook;
 
-  const activeItems = navItems.map(item => ({ // eslint-disable-line @typescript-eslint/no-unused-vars
+  navItems.map(item => ({
     ...item,
     active: pathname === item.href || pathname?.startsWith(item.href + '/'),
   }));

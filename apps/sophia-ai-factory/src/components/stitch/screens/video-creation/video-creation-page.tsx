@@ -20,8 +20,6 @@ import {
 /* ------------------------------------------------------------------ */
 
 const MAX_CHARS = 5000;
-const TOTAL_STEPS = 4; // eslint-disable-line @typescript-eslint/no-unused-vars
-
 const STEPS = [
   { id: 1, key: 'script', Icon: FileText },
   { id: 2, key: 'voice', Icon: Mic },

@@ -15,7 +15,7 @@ import { logger } from '@/seed/utils/logger-utility'
 
 const SOPHIA_HEYGEN_WEBHOOK_URL = 'https://sophia.agencyos.network/api/webhooks/heygen'
 
-export async function POST(request: NextRequest): Promise<NextResponse> { // eslint-disable-line @typescript-eslint/no-unused-vars
+export async function POST(_request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser()
   if (!user) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })

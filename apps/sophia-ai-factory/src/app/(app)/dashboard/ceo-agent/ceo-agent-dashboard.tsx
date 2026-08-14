@@ -14,7 +14,6 @@ interface DashboardProps {
 // ── Briefing tab (server-rendered, no client deps) ───────────────────────────
 
 async function BriefingTab({ locale, userId }: { locale: string; userId: string }) {
-  const t = await getTranslations({ locale, namespace: 'dashboard.ceoAgent' }); // eslint-disable-line @typescript-eslint/no-unused-vars
   const { generateDailyBriefing } = await import('@/forest/agents/daily-briefing/briefing-generator');
   const { DailyBriefingCard } = await import('@/forest/components/agents/daily-briefing-card');
   const briefing = await generateDailyBriefing(userId, locale);

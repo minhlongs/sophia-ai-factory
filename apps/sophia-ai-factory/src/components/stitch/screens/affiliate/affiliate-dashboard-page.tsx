@@ -7,10 +7,8 @@ import {
   UserCheck,
   DollarSign,
   Clock,
-  Link, // eslint-disable-line @typescript-eslint/no-unused-vars
   Copy,
   Check,
-  Download, // eslint-disable-line @typescript-eslint/no-unused-vars
   Wallet,
   Globe,
   GitBranch,

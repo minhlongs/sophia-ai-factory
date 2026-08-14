@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   return GET(req);
 }
 
-async function handleRollup(req: NextRequest) { // eslint-disable-line @typescript-eslint/no-unused-vars
+async function handleRollup(_req: NextRequest) {
 
   const cronCtx = startCronCheckIn(CRON_NAME);
   const db = getD1();
