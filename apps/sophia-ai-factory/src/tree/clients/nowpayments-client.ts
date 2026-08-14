@@ -14,7 +14,6 @@ import { Tier } from '@/seed/types'
 import { getOneTimeSkuById, getOneTimeSkuByInvoiceId, ONE_TIME_INVOICE_IDS } from '@/seed/config/one-time-skus'
 import type { OneTimeSku } from '@/seed/types'
 import { verifyInboundWebhook } from '@/seed/security/signature'
-import { logger } from '@/seed/utils/logger-utility'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // 1. SDK Factory

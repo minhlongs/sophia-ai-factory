@@ -11,7 +11,7 @@ import Link from 'next/link';
 import type { SopInstallationRow, SopTemplateRow } from '@/tree/sop/sop-types';
 import { CategoryBadge } from './category-badge';
 import { Button } from '@/seed/components/ui/button';
-import { Play, Eye } from 'lucide-react';
+import { Eye } from 'lucide-react';
 
 interface InstallWithTemplate extends SopInstallationRow {
   template: SopTemplateRow | null;

@@ -11,7 +11,6 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
-import { getErrorMessage } from '@/seed/utils/to-error';
 import type { LlmRoute } from './types';
 
 const DEEPSEEK_BASE_URL = 'https://api.deepseek.com/v1';

@@ -14,7 +14,7 @@
 import { logger } from '@/seed/utils/logger-utility';
 import { storageGet, storageSet, storageDelete } from '@/seed/kv/kv-storage-ops';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+import { classifyError } from '@/seed/types/failure-kind';
 
 /* ------------------------------------------------------------------
  * Types used by this module (TokenData lives here — not in kv-storage-ops)
@@ -37,7 +37,7 @@ export const DEVICE_ID_KEY = `${ZUNEF_KV_PREFIX}device-id`;
 export const DEVICE_TOKEN_KEY = `${ZUNEF_KV_PREFIX}device-token`;
 
 /** Treat a token as fresh if it has more than this much remaining time. */
-const TOKEN_FRESH_SKEW_MS = 60_000;
+const _TOKEN_FRESH_SKEW_MS = 60_000;
 
 /* ------------------------------------------------------------------
  * Circuit breaker — uses canonical @/seed/security/circuit-breaker

@@ -7,7 +7,7 @@
  * @module land/operations/sop-billing-payouts
  */
 
-import type { SopDefinition, SopStepDef } from './types';
+import type { SopDefinition } from './types';
 
 // ── SOP 5: AI Avatar Video Agency ────────────────────────────────────────────
 

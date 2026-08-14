@@ -3,7 +3,6 @@ import { getErrorMessage } from '@/seed/utils/to-error';
 import { trackUsage, hashLicenseKey, startTimer } from '@/forest/usage-metering';
 import { getUsageContext } from '@/forest/usage-metering/context';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
-import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/seed/services/errors';
 import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 import {
   generateMockScript,

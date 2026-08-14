@@ -25,7 +25,7 @@ import { coinbaseClient } from './client-coinbase';
 import { mockClient } from './client-mock';
 import { scoreAffiliate } from './scoring';
 import type { ScoringContext } from './scoring';
-import { isCategoryAllowedForTenant, isCategoryAllowed } from '@/seed/security/geo-gate';
+import { isCategoryAllowedForTenant } from '@/seed/security/geo-gate';
 import { getOrDefault } from '@/seed/tenant-settings/registry';
 import { DEFAULT_SCORING } from '@/seed/tenant-settings/defaults';
 import type { ScoringSettings } from '@/seed/tenant-settings/defaults';

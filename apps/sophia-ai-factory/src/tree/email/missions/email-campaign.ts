@@ -7,8 +7,7 @@
 
 import { getResendKey } from '@/tree/credentials/get-provider-key';
 import { logger } from '@/seed/utils/logger-utility';
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError } from '@/seed/types/failure-kind';
+import { shouldAllowRequest } from '@/seed/security/circuit-breaker';
 import type { MissionHandlerResult, MissionContext } from '@/seed/types/missions';
 
 export async function handle(ctx: MissionContext): Promise<MissionHandlerResult> {

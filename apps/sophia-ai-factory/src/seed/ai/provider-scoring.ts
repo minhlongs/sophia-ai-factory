@@ -13,7 +13,6 @@
  * Layer rule: seed only — imports from seed/ utilities exclusively.
  */
 
-import type { Logger } from '@/seed/utils/logger-utility';
 import { createLogger } from '@/seed/utils/logger-utility';
 
 const logger = createLogger('seed/ai/provider-scoring');

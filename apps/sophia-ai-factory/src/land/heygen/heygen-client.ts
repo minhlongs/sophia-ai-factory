@@ -1,8 +1,7 @@
 
 import { Tier } from "@/seed/types";
 import { getErrorMessage } from '@/seed/utils/to-error';
-import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/tree/usage-metering';
-import { getUsageContext } from '@/tree/usage-metering';
+import { trackUsage, calculateCredits, startTimer } from '@/tree/usage-metering';
 import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/land/services/errors';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError, FailureKind } from '@/seed/types/failure-kind';

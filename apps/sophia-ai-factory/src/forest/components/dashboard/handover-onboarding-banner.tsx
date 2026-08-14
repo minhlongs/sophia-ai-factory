@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { X, ChevronRight, Loader2 } from 'lucide-react';
+import { X, ChevronRight } from 'lucide-react';
 
 interface OnboardingData {
   handoverId: string;

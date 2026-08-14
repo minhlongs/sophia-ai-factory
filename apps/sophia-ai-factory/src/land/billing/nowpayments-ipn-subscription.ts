@@ -649,7 +649,7 @@ export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<Result
       return success(undefined)
     }
 
-    const db = getDb()
+    const _db = getDb()
     const _d1 = getD1()
     if (!_d1) return failure(new IPNError('D1_BINDING_UNAVAILABLE'))
     const d1 = _d1!

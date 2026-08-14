@@ -1,6 +1,5 @@
 'use client';
 
-import { Progress } from '@/seed/components/ui/progress';
 import { cn } from '@/seed/utils/cn';
 import { CampaignProgressBarProps } from './types';
 

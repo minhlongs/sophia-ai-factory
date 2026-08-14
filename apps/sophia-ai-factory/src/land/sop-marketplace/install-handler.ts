@@ -22,7 +22,7 @@ import {
   createSopInstall as dbCreateSopInstall,
   getSopInstall as dbGetSopInstall,
 } from '@/seed/db/marketplace-ops';
-import { calculateCreatorCommission, recordSopSaleCommission } from './commission-split'
+import { recordSopSaleCommission } from './commission-split'
 import { captureSopInstalled } from '@/tree/signals/posthog-capture';
 
 // ── Actions ─────────────────────────────────────────────────────────────

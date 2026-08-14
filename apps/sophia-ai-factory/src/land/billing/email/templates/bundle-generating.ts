@@ -7,7 +7,7 @@
  * @module lib/billing/email/templates/bundle-generating
  */
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'
+const _APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'
 const SUPPORT_EMAIL = 'support@mekongmind.com'
 
 export interface BundleGeneratingContext {

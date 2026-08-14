@@ -8,9 +8,6 @@
  */
 
 import type { Complexity } from '@/seed/ai/provider-interface'
-import type { ChatMessage, ChatOptions } from '@/seed/ai/provider-interface'
-import { ProviderRegistry } from '@/seed/ai/provider-registry'
-import { multiProviderChat } from '@/seed/ai/llm-router'
 import type { ProviderScore, TaskContext, ToolInfo } from '@/seed/ai/provider-scoring'
 import { scoreProvider, rankProviders } from '@/seed/ai/provider-scoring'
 import { createLogger } from '@/seed/utils/logger-utility'

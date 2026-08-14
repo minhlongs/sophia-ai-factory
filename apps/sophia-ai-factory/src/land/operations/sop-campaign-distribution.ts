@@ -7,7 +7,7 @@
  * @module land/operations/sop-campaign-distribution
  */
 
-import type { SopDefinition, SopStepDef } from './types';
+import type { SopDefinition } from './types';
 
 // ── SOP 4: UGC Creator Agency ────────────────────────────────────────────────
 

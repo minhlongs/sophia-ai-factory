@@ -16,7 +16,7 @@ export interface SLOMetricPoint {
   workerId?: string;
 }
 
-const DATASET_NAME = 'sophia_slo_metrics';
+const _DATASET_NAME = 'sophia_slo_metrics';
 
 /**
  * Write a metric point to Workers Analytics Engine

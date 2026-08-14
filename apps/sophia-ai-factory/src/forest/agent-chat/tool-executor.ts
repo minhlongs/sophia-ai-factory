@@ -10,11 +10,9 @@
  */
 
 import { createLogger } from '@/seed/utils/logger-utility';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { TIER_CONFIGS } from '@/seed/config/tiers';
 import { getBalance, deductCredits } from '@/tree/mcu/credits-repo';
-import { memory } from '@/land/openclaw/memory-adapter';
 import { getMemoryConsolidationService } from './memory-consolidation-service';
 import { AgentToolName, type AgentToolDefinition, type AgentToolResult, type IToolExecutor } from './tool-registry';
 

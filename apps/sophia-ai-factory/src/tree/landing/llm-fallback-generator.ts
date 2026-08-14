@@ -24,7 +24,7 @@ import { NICHE_LABELS, type NicheSlug } from '@/seed/config/niche-list';
 const LLM_TIMEOUT_MS = 20000;
 const DEFAULT_MODEL = 'openai/gpt-4o-mini';
 
-const SYSTEM_PROMPT = `You are a bilingual (Vietnamese + English) content writer for an AI video generation SaaS platform called Sophia AI Factory.
+const _SYSTEM_PROMPT = `You are a bilingual (Vietnamese + English) content writer for an AI video generation SaaS platform called Sophia AI Factory.
 Your job: create marketing landing page content for a specific business niche.
 
 Rules:

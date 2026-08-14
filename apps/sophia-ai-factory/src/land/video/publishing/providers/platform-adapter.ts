@@ -3,7 +3,7 @@
  * Extends base Publisher with token management capabilities
  */
 
-import type { Publisher, PublishMeta, MetricsJson } from './publisher-interface';
+import type { Publisher } from './publisher-interface';
 
 export interface PlatformAdapter extends Publisher {
   /**

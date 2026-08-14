@@ -17,6 +17,6 @@ export function formatCurrency(cents: number, currency: string = 'USD'): string 
 /**
  * Parse currency string to cents
  */
-export function parseCurrencyToCents(amount: number, currency: string = 'USD'): number {
+export function parseCurrencyToCents(amount: number, _currency: string = 'USD'): number {
   return Math.round(amount * 100);
 }

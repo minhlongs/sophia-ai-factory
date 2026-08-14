@@ -168,7 +168,7 @@ export class ToolUseLoop {
 
       if (this.options.emitToolEvents) {
         // Emit tool_call event first
-        const toolCallEvent: SseEvent = {
+        const _toolCallEvent: SseEvent = {
           type: 'tool_call',
           data: { id: call.id, name: call.name, args: call.args },
         };

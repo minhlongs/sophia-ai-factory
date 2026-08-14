@@ -18,7 +18,7 @@ import { logger } from '@/seed/utils/logger-utility'
 import { getStaleDlqEntries, reenqueueDlqEntry } from '@/land/billing/nowpayments-ipn-dead-letter'
 
 const STALE_AGE_HOURS = 1
-const MAX_REENQUEUE_ATTEMPTS = 3
+const _MAX_REENQUEUE_ATTEMPTS = 3
 
 export const dlqReaper = inngest.createFunction(
   { id: 'dlq-reaper', retries: 1 },

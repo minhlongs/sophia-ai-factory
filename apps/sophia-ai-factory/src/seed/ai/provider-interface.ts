@@ -13,7 +13,6 @@
  * Layer rule: seed only — no imports from tree/, forest/, or land/.
  */
 
-import type { Logger } from '@/seed/utils/logger-utility';
 
 export type Complexity = 'simple' | 'medium' | 'complex'
 

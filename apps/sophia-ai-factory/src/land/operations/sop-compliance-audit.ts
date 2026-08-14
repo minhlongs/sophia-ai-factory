@@ -8,7 +8,7 @@
  * @module land/operations/sop-compliance-audit
  */
 
-import type { SopDefinition, SopStepDef } from './types';
+import type { SopDefinition } from './types';
 
 // ── SOP 7: Compliance Audit Program ──────────────────────────────────────────
 

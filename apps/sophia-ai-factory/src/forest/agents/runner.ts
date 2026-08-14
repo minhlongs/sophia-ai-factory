@@ -4,7 +4,6 @@
  * Purpose: Runs agent tasks by calling OpenRouter and handling results
  */
 
-import type { AgentTask, Agent } from './types';
 import type { Tier } from '@/seed/types';
 import { assertTierAllowsAgent, AgentTierBlockedError } from './enforcement-gate';
 import {

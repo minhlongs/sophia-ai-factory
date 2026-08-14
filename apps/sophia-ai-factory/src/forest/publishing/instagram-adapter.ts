@@ -5,7 +5,7 @@ import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 
 const SERVICE_NAME = 'instagram-adapter' as const;
 const IG_API = 'https://graph.facebook.com/v19.0';
-const MAX_DURATION_SEC = 90;
+const _MAX_DURATION_SEC = 90;
 
 export const instagramAdapter: PlatformAdapter = {
   platform: 'instagram',
@@ -14,7 +14,7 @@ export const instagramAdapter: PlatformAdapter = {
     if (!shouldAllowRequest(SERVICE_NAME)) {
       throw new Error(`[circuit-breaker] Circuit open for ${SERVICE_NAME}`);
     }
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
+    const _appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
     const [igUserId, token] = accessToken.includes(':')
       ? accessToken.split(':', 2)
       : ['me', accessToken];

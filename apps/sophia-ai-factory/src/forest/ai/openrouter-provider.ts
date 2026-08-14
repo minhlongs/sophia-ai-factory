@@ -26,7 +26,7 @@ import { classifyError } from '@/seed/types/failure-kind';
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 /** OpenAI-compatible models supported via OpenRouter gateway. */
-const OPENROUTER_MODELS = [
+const _OPENROUTER_MODELS = [
   'openai/gpt-4o',
   'openai/gpt-4o-mini',
   'openai/gpt-4-turbo',
@@ -209,7 +209,7 @@ export class OpenRouterProvider implements Provider {
       throw new Error(`[OpenRouterProvider] Circuit breaker open for ${SERVICE_NAME}`);
     }
 
-    const model = options.model ?? DEFAULT_MODEL;
+    const _model = options.model ?? DEFAULT_MODEL;
     const body = this.buildRequestBody(messages, options, true);
 
     let response: Response;

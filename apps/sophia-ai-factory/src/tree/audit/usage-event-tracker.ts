@@ -9,7 +9,6 @@
 
 import { createServerClient } from '@/seed/db/client'
 import { insertTyped } from '@/seed/db/insert-typed'
-import { hashIpAddress, generateUserPseudonym } from '@/tree/audit/audit-hashing'
 import { logger } from '@/seed/utils/logger-utility'
 import { toError } from '@/seed/utils/to-error'
 

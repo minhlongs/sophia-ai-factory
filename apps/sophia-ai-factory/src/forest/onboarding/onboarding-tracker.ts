@@ -60,7 +60,7 @@ const MILESTONE_SEQUENCE: OnboardingMilestone[] = [
   'retro_completed',
 ];
 
-const PHASE_MILESTONES: Record<number, OnboardingMilestone[]> = {
+const _PHASE_MILESTONES: Record<number, OnboardingMilestone[]> = {
   1: ['contract_signed', 'welcome_email_sent', 'kickoff_scheduled', 'kickoff_completed', 'discovery_completed'],
   2: ['channels_connected', 'brand_assets_loaded'],
   3: ['first_post_published', 'first_report_delivered', 'team_trained', 'retro_completed'],

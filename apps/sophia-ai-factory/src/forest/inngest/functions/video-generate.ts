@@ -34,14 +34,12 @@ import { getBrandKit } from '@/seed/db/repositories/brand-kits-repo';
 import { generateSubtitles } from '@/land/video/assembly/subtitle-generator';
 import { composeFinalVideo, applyBrandKit } from '@/land/video/assembly/composer-ffmpeg';
 import { CheckpointService } from '@/forest/pipeline';
-import { captureServer } from '@/tree/signals/posthog-capture';
-import { Events } from '@/tree/signals/event-types';
 import type { VideoGenerateRequestedEvent, ProviderVideoJobStatus } from '@/land/video/templates/types';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { getUserRoutingStrategy, getDefaultStrategyForTier } from '@/seed/db/get-user-routing-strategy';
 import { buildProviderPool } from '@/forest/quota/provider-pool';
 import { selectWithStrategy, NoProvidersAvailableError } from '@/forest/quota/routing-strategy';
-import type { VideoTaskType, RoutingContext } from '@/seed/config/routing-strategies';
+import type { RoutingContext } from '@/seed/config/routing-strategies';
 
 /** Progress payload emitted via inngest.send for SSE streaming */
 interface ProgressPayload {

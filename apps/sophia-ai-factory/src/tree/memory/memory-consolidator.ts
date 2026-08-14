@@ -70,7 +70,7 @@ export class MemoryConsolidator {
    */
   async decayOldMemories(userId: string): Promise<number> {
     try {
-      const db = this.repo;
+      const _db = this.repo;
       // Access the underlying D1 binding for a bulk update.
       const { getD1 } = await import('@/seed/db/client');
       const d1Db = getD1();

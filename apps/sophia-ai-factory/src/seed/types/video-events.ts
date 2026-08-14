@@ -6,7 +6,6 @@
  * them without cross-layer dependency violations.
  */
 
-import type { Tier } from './index';
 
 export type VideoGenerateRequestedEvent = {
   missionId: string;

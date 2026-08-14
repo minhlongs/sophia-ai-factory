@@ -10,8 +10,8 @@
  * - Audit logging
  */
 
-import { DeployApproval, DeployAttestation, DeployOverride, DeployApprovalStatus, QuorumStatus, ApprovalDetailDto, DeployManifest, CreateApprovalPayload } from './types'
-import { createManifest, generateApprovalId, generateAttestationId } from './manifest-generator'
+import { DeployApproval, DeployAttestation, DeployOverride, DeployApprovalStatus, ApprovalDetailDto } from './types'
+import { generateApprovalId, generateAttestationId } from './manifest-generator'
 import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 

@@ -4,7 +4,6 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Check, AlertTriangle, Route } from 'lucide-react';
 import { cn } from '@/tree/components/setup-wizard/wizard-stepper';
-import type { ProviderConfig } from '@/tree/components/setup-wizard/steps/provider-credentials-step';
 
 interface ReviewStepProps {
   config: {

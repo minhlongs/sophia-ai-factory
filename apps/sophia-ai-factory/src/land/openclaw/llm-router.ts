@@ -9,7 +9,7 @@
  * Circuit breaker: in-memory, resets after 60s, trips after 3 consecutive fails.
  */
 
-import { MODEL_COSTS, estimateCost, getCostForModel } from './llm-cost-tracker';
+import { estimateCost, getCostForModel } from './llm-cost-tracker';
 import { shouldAllowRequest, recordSuccess, recordFailure, reset as resetCircuit } from '@/seed/security/circuit-breaker';
 import { classifyError, FailureKind } from '@/seed/types/failure-kind';
 

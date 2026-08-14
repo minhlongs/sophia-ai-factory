@@ -3,8 +3,6 @@
  * Layer: tree (domain-reusable, imports seed only)
  */
 
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError } from '@/seed/types/failure-kind';
 import { getD1 } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'

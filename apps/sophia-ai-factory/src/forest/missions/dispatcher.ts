@@ -17,7 +17,7 @@ import { getCommand } from '@/tree/missions/command-registry';
 import { fireMissionWebhook } from '@/forest/webhooks/missions/fire-webhook';
 import { logger } from '@/seed/utils/logger-utility';
 import type { MissionHandlerResult, MissionContext } from '@/tree/missions/types';
-import { clearMissionCheckpoint, loadMissionCheckpoint, saveMissionCheckpoint } from '@/tree/missions/checkpoint-persistence';
+import { clearMissionCheckpoint } from '@/tree/missions/checkpoint-persistence';
 
 // ── Checkpoint persistence (inline for dispatcher) ─────────────────────────────
 

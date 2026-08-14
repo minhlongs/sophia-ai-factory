@@ -2,7 +2,7 @@ import type { PlatformAdapter, PublishParams, PublishResult, PublishStatus } fro
 import { logger } from '@/seed/utils/logger-utility';
 
 const IG_API = 'https://graph.facebook.com/v19.0';
-const MAX_DURATION_SEC = 90;
+const _MAX_DURATION_SEC = 90;
 
 export const instagramAdapter: PlatformAdapter = {
   platform: 'instagram',

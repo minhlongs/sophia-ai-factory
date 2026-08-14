@@ -1,7 +1,6 @@
 import { Tier } from "@/seed/types";
-import { getTierConfig, UNIFIED_TIERS, type UnifiedTierLimits } from "@/seed/config/tiers";
+import { type UnifiedTierLimits } from "@/seed/config/tiers";
 import { resolveUserTier } from "@/seed/db/resolve-user-tier";
-import { templateService } from "@/land/services/template-service";
 import {
   checkLimit as seedCheckLimit,
   checkTierFeature,

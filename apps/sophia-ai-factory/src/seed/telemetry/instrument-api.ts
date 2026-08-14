@@ -3,7 +3,7 @@
  * Wraps a Next.js App Router route handler to create spans and record metrics.
  */
 
-import { startSpan, getTracer } from '@/seed/telemetry/opentelemetry-setup';
+import { getTracer } from '@/seed/telemetry/opentelemetry-setup';
 import { record as recordMetrics } from '@/seed/observability/telemetry/metrics';
 
 /**

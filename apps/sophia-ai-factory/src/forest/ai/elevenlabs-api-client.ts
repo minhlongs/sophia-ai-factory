@@ -5,7 +5,6 @@
  * @module ai/elevenlabs-api-client
  */
 
-import { logger } from '@/seed/utils/logger-utility';
 import { Tier } from '@/seed/types';
 import { withTimeout } from '@/tree/byok/with-timeout';
 import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/seed/services/errors';

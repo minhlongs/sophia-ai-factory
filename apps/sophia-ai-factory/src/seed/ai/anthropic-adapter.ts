@@ -17,7 +17,7 @@ import {
 } from './anthropic-sse-parser'
 import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/seed/services/errors'
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
-import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind'
+import { classifyHttpStatus } from '@/seed/types/failure-kind'
 
 import { logger } from '@/seed/utils/logger-utility'
 

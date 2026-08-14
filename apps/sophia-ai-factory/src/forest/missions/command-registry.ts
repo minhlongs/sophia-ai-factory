@@ -4,7 +4,7 @@
  * Purpose: Central registry for all mission commands and their handlers
  */
 
-import type { MissionDefinition, MissionHandler, MissionContext, MissionHandlerResult } from './types';
+import type { MissionDefinition, MissionContext, MissionHandlerResult } from './types';
 
 /**
  * Global registry storage

@@ -6,7 +6,6 @@
  * @module @/types/audit-log
  */
 
-import type { Json } from '@/seed/types'
 
 /**
  * Hash chain entry for audit log integrity verification

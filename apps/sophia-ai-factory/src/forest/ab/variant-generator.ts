@@ -94,7 +94,7 @@ async function callLlm(input: VariantGeneratorInput): Promise<Omit<GeneratedVari
       ? 'Write captions in Vietnamese.'
       : 'Write captions in English.';
 
-  const systemPrompt = `You are a conversion copywriter specializing in short-form video captions.
+  const _systemPrompt = `You are a conversion copywriter specializing in short-form video captions.
 Generate exactly 2 variants (A and B) of a title/caption that test different hooks or angles.
 Variant A = original angle (curiosity/problem). Variant B = contrasting angle (result/benefit).
 Also generate a thumbnail visual prompt for each variant — concise, vivid, 1 sentence.

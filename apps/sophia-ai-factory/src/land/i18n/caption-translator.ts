@@ -14,7 +14,6 @@
  */
 
 import { z } from 'zod'
-import { withTimeout } from '@/tree/byok/with-timeout'
 import { logger } from '@/seed/utils/logger-utility'
 import { enforceCharCap } from './channel-caption-rules'
 import { resilientChatCompletion } from '@/seed/inference/openrouter-client'

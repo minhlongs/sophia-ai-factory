@@ -7,7 +7,6 @@
 
 import { checkRateLimit as checkSqlRateLimit, RATE_LIMITS } from '@/seed/security/sql-rate-limiter'
 import type { RateLimitConfig, RateLimitResult as SqlRateLimitResult } from '@/seed/security/sql-rate-limiter'
-import { createServerClient } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 
 /**

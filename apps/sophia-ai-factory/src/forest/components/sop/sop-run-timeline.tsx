@@ -12,7 +12,7 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import type { SopRunRow } from '@/tree/sop/sop-types';
 import { RunStatusBadge } from './run-status-badge';
-import { ExternalLink, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react';
+import { ExternalLink, XCircle, Loader2 } from 'lucide-react';
 
 interface TimelineStep {
   missionId: string;

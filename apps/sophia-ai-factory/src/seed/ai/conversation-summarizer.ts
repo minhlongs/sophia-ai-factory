@@ -74,7 +74,7 @@ export class ConversationSummarizer {
     actionItems: string[];
   } {
     const userMessages = messages.filter((m) => m.role === 'user');
-    const assistantMessages = messages.filter((m) => m.role === 'assistant');
+    const _assistantMessages = messages.filter((m) => m.role === 'assistant');
 
     const topics = this.extractTopics(userMessages);
     const decisions = this.extractDecisions(messages);

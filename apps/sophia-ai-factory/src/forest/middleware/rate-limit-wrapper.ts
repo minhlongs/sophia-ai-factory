@@ -170,7 +170,7 @@ export function getRateLimitStatus(
 } {
   const pathname = new URL(request.url).pathname
   const limitConfig = config || getRateLimitConfig(pathname)
-  const clientKey = getClientIdentifier(request)
+  const _clientKey = getClientIdentifier(request)
 
   // Peek at current state without incrementing
   // This is a simplified version - just returns the config

@@ -8,7 +8,7 @@
  * @module land/operations/sop-affiliate-management
  */
 
-import type { SopDefinition, SopStepDef } from './types';
+import type { SopDefinition } from './types';
 
 // ── SOP 6: Affiliate Partner Program ─────────────────────────────────────────
 

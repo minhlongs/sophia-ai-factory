@@ -11,7 +11,7 @@
  * agent fleet orchestrator. Not affiliated with the public project at
  * github.com/openclaw/openclaw (a personal AI assistant gateway).
  */
-import { spawnAgentFleet, OpenclawTenantMissingError } from '@/tree/agent-fleet/spawn-agent-fleet';
+import { spawnAgentFleet } from '@/tree/agent-fleet/spawn-agent-fleet';
 import { withTenantScope, runAsTenant } from './with-tenant';
 import { onEvent, emit } from './event-bus';
 import { activateSkill } from './skill-loader';

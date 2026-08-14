@@ -13,7 +13,6 @@ import { createServerClient } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import type { D1Database } from '@cloudflare/workers-types';
 import type {
   DashboardResult,
   DashboardData,

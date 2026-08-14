@@ -6,7 +6,6 @@
 
 import { checkRateLimit as checkSqlRateLimit, RATE_LIMITS, getClientIdentifier } from '@/seed/security/sql-rate-limiter'
 import type { RateLimitConfig, RateLimitResult } from '@/seed/security/sql-rate-limiter'
-import { logger } from '@/seed/utils/logger-utility'
 
 export type { RateLimitConfig, RateLimitResult }
 export { RATE_LIMITS, getClientIdentifier }

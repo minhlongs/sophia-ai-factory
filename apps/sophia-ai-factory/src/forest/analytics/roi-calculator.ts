@@ -5,7 +5,6 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import { logger } from '@/seed/utils/logger-utility';
 
 interface RaasLicenseRoiRow {
   tier: string;

@@ -11,7 +11,6 @@ import { BEARER_PREFIX, getJwkSet, getExpectedIssuer } from '@/seed/security/jwt
 import type { ExtendedJwtPayload, JwtValidationResult } from '@/seed/security/jwt-validator-types'
 // EnrichedJwtClaims is imported directly (not via re-export) to avoid TS2308 chain conflicts.
 // Import from '@/seed/auth/enriched-jwt' when needed.
-import type { EnrichedJwtClaims } from '@/seed/auth/enriched-jwt'
 
 export type { JwtPayload, ExtendedJwtPayload, JwtValidationResult } from './jwt-validator-types'
 export type { EnrichedJwtClaims } from '@/seed/auth/enriched-jwt'

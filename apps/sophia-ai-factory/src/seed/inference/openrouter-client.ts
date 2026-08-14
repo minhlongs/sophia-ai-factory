@@ -15,7 +15,7 @@
 import { logger } from '@/seed/utils/logger-utility'
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
 import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind'
-import type { Provider, ChatMessage, ChatOptions } from '@/seed/ai/provider-interface'
+import type { Provider, ChatMessage } from '@/seed/ai/provider-interface'
 
 const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 const DEFAULT_MODEL = 'openai/gpt-4o-mini'
@@ -72,7 +72,7 @@ async function callOpenRouter(
         logger.warn('Failed to read OpenRouter error response', { error: String(err), context: 'callOpenRouter' });
         return '';
       })
-      const retryAfter = res.headers.get('Retry-After')
+      const _retryAfter = res.headers.get('Retry-After')
         ? parseInt(res.headers.get('Retry-After')!, 10)
         : undefined
 
@@ -261,7 +261,7 @@ export async function multiProviderResilientChat(
       : [{ role: 'user', content: prompt }]
 
   const primaryProvider = options.primary.provider
-  const primaryModel = options.primary.model ?? primaryProvider.getCapabilities(
+  const _primaryModel = options.primary.model ?? primaryProvider.getCapabilities(
     primaryProvider.id === 'openrouter' ? DEFAULT_MODEL : 'claude-sonnet-4-6',
   )
 

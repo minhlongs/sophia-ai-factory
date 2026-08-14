@@ -12,7 +12,7 @@
 import { createServerClient } from '@/seed/db/client';
 import { createLogger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
-import type { Campaign, CampaignStatus } from '@/seed/types';
+import type { CampaignStatus } from '@/seed/types';
 
 // ── Logger ───────────────────────────────────────────────────────────────────
 

@@ -49,7 +49,6 @@ export interface GeneratedProposal {
   };
 }
 
-import { logger } from '@/seed/utils/logger-utility';
 import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
 
 export async function generateProposal(

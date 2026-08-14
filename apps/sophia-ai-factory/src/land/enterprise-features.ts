@@ -144,7 +144,7 @@ export async function getEnterpriseFeatureGate(
  */
 export function resolveEnterpriseLimits(tier: Tier): Partial<ReturnType<typeof getUnifiedTierLimits>> {
   if (!hasMasterAccess(tier)) return {};
-  const base = getUnifiedTierLimits(tier);
+  const _base = getUnifiedTierLimits(tier);
   return {
     templates: Infinity,
     campaignsPerMonth: Infinity,

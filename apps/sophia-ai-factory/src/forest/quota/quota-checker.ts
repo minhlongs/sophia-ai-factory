@@ -10,7 +10,7 @@
  * @module quota/quota-checker
  */
 
-import { getCachedUsage, updateCachedUsage, invalidateQuotaCache, atomicIncrementQuota } from './quota-checker-kv-cache';
+import { getCachedUsage, atomicIncrementQuota } from './quota-checker-kv-cache';
 import { getEffectiveQuotaLimits, calculateCurrentUsage } from './quota-checker-db';
 import { logOverageEvent } from './quota-checker-overage';
 import type { QuotaCheckContext, QuotaConfig, EnhancedQuotaCheckResult, ExceededType } from './quota-checker-types';

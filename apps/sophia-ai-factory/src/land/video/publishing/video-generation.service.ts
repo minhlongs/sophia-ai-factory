@@ -13,7 +13,6 @@ import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { TIER_ALLOWED_VIDEO } from '@/seed/config/tiers';
 import { reserveVideoSlot, releaseVideoSlot } from '@/tree/quota/video-quota';
 import { emitVideoGenerate } from '@/tree/video/events';
-import type { VideoJobStatus } from '../generation/video-job-fsm';
 
 // ─── Public Types ───────────────────────────────────────────────────────────────
 

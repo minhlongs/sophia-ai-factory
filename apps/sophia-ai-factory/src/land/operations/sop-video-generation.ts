@@ -9,7 +9,7 @@
  * @module land/operations/sop-video-generation
  */
 
-import type { SopDefinition, SopStepDef } from './types';
+import type { SopDefinition } from './types';
 
 // ── SOP 1: Faceless YouTube Cash Cow ────────────────────────────────────────
 

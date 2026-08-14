@@ -9,7 +9,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import { Tier } from '@/seed/types';
 import { ProviderQuotaExceededError, ProviderInvalidKeyError } from '@/seed/services/errors';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
+import { classifyHttpStatus } from '@/seed/types/failure-kind';
 
 /** Get default voice ID based on tier (ElevenLabs pre-made voice IDs) */
 export function getDefaultVoiceId(tier: Tier): string {

@@ -5,7 +5,7 @@
  * Supports batching for efficiency and idempotency keys for deduplication.
  */
 
-import { calculateOverage, getTierPricing } from './overage-calculator';
+import { calculateOverage } from './overage-calculator';
 
 /**
  * Usage event structure for queue
@@ -90,7 +90,7 @@ export function createUsageEvent(
  * Create batch emitter for efficient event batching
  * Automatically flushes when batch size is reached
  */
-export function createBatchEmitter(maxBatchSize: number = 10): BatchEmitter {
+export function createBatchEmitter(_maxBatchSize: number = 10): BatchEmitter {
   const events: UsageEvent[] = [];
 
   return {

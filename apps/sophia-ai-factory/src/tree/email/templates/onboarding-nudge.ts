@@ -3,7 +3,7 @@
  * @module lib/email/templates/onboarding-nudge
  */
 
-import { htmlWrapper, ctaButton, magicLinkNote, htmlToText, BASE_URL } from './shared-layout';
+import { htmlWrapper, ctaButton, magicLinkNote, htmlToText } from './shared-layout';
 
 export interface OnboardingNudgeData {
   ownerFullName: string;

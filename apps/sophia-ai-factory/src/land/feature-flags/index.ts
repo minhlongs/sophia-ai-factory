@@ -6,7 +6,6 @@
  * Usage: isEnabled(flagKey, userId, env?) -> boolean
  * env is optional — reads from globalThis.EXPERIMENT_KV when omitted.
  */
-import { createServerClient } from '@/seed/db/client';
 
 export interface FeatureFlag {
   percent: number;

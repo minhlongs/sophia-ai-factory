@@ -11,7 +11,7 @@ import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/securit
 import { classifyError } from '@/seed/types/failure-kind';
 
 const THREADS_BASE = 'https://graph.threads.net/v1.0';
-const THREADS_TOKEN_URL = 'https://graph.threads.net/oauth/access_token';
+const _THREADS_TOKEN_URL = 'https://graph.threads.net/oauth/access_token';
 const THREADS_LONG_LIVED_URL = 'https://graph.threads.net/access_token';
 
 export interface ThreadsTokenResponse {

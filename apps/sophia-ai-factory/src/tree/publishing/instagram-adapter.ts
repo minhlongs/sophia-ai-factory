@@ -1,10 +1,10 @@
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { shouldAllowRequest, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError } from '@/seed/types/failure-kind';
 import type { PlatformAdapter, PublishParams, PublishResult, PublishStatus } from './platform-adapter';
 import { logger } from '@/seed/utils/logger-utility';
 
 const IG_API = 'https://graph.facebook.com/v19.0';
-const MAX_DURATION_SEC = 90;
+const _MAX_DURATION_SEC = 90;
 
 export const instagramAdapter: PlatformAdapter = {
   platform: 'instagram',

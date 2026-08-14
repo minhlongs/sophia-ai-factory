@@ -4,7 +4,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/seed/components/ui/card";
 import { Button } from "@/seed/components/ui/button";
-import { Badge } from "@/seed/components/ui/badge";
 import { Loader2, Play, Download, AlertCircle } from "lucide-react";
 import { useCampaignStream } from "@/forest/hooks/use-campaign-stream";
 import { StepIndicator, Step } from "@/forest/components/progress/step-indicator";

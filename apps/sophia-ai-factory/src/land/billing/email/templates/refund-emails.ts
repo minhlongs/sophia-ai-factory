@@ -6,7 +6,7 @@
  */
 
 const SUPPORT_EMAIL = 'support@mekongmind.com'
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'
+const _APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://sophia.agencyos.network'
 
 export interface RefundEmailCtx {
   userEmail: string

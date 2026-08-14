@@ -3,12 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader } from '@/seed/components/ui/card';
-import { Badge } from '@/seed/components/ui/badge';
 import { Button } from '@/seed/components/ui/button';
 import { CampaignStatusBadge } from './campaign-status-badge';
 import { CampaignProgressBar } from './campaign-progress-bar';
 import { cn } from '@/seed/utils/cn';
-import { Campaign, CampaignStatus } from '@/seed/types';
+import { CampaignStatus } from '@/seed/types';
 import { useTranslations } from 'next-intl';
 import { useFormatter } from 'next-intl';
 import {

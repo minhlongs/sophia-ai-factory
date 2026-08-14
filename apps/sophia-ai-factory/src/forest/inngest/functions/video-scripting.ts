@@ -57,7 +57,7 @@ interface VideoJobRow {
   prompt: string;
 }
 
-const SCRIPT_SYSTEM_PROMPT = `You are a professional video script writer for Sophia AI Factory.
+const _SCRIPT_SYSTEM_PROMPT = `You are a professional video script writer for Sophia AI Factory.
 Write a concise, engaging video script (60-90 seconds when spoken) based on the user's prompt.
 Include scene descriptions in [brackets] and narrator text.
 Output in Vietnamese by default unless the prompt is in English.`;

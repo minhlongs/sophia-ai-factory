@@ -6,7 +6,7 @@
  * them without cross-layer dependency violations.
  */
 
-import type { ChannelProvider, PublishStatus, ChannelStatus, PublishMeta, MetricsJson } from './channel-provider';
+import type { ChannelProvider, PublishStatus, ChannelStatus } from './channel-provider';
 
 /** D1 row for publishing_channels table */
 export interface PublishingChannel {

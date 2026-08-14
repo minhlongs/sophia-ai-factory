@@ -6,8 +6,7 @@
  * Falls back to dry-run logging when key is not configured.
  */
 
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError } from '@/seed/types/failure-kind';
+import { shouldAllowRequest } from '@/seed/security/circuit-breaker';
 import { toError } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
 

@@ -17,7 +17,6 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/seed/components/ui/button';
 import { Input } from '@/seed/components/ui/input';
 import { Textarea } from '@/seed/components/ui/textarea';
-import { Switch } from '@/seed/components/ui/switch';
 import {
   Select,
   SelectContent,

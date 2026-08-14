@@ -4,8 +4,6 @@
  * Auth: HTTP Basic (client_id:client_secret) for all token requests.
  */
 
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyError } from '@/seed/types/failure-kind';
 import { logger } from '@/seed/utils/logger-utility';
 
 const REDDIT_AUTHORIZE = 'https://www.reddit.com/api/v1/authorize';
