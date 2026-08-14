@@ -1,5 +1,3 @@
-import { NextRequest } from 'next/server'
-import { logger } from '@/seed/utils/logger-utility'
 
 export interface OpenRouterChoice {
   message: { role: string; content: string }

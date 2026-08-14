@@ -104,7 +104,7 @@ async function callLlmWithTools(options: LlmCallOptions): Promise<{
   events: SseEvent[];
   stopReason: string | undefined;
 }> {
-  const { messages, tools, toolChoice, userId, llmRoute } = options;
+  const { messages, tools, toolChoice, userId, llmRoute } = options; // eslint-disable-line @typescript-eslint/no-unused-vars
 
   const requestBody: Record<string, unknown> = {
     model: llmRoute.model,

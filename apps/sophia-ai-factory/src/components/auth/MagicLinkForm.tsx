@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/seed/components/ui/button';
 import { Input } from '@/seed/components/ui/input';

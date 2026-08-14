@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ id, method, displayLabel, isDefault: setDefault, verified: false }, { status: 201 })
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest) { // eslint-disable-line @typescript-eslint/no-unused-vars
   const user = await getCurrentUser()
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

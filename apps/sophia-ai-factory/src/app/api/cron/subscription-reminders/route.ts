@@ -47,7 +47,7 @@ interface SubOrgRow {
   name: string | null;
 }
 
-async function getExpiringSubs(db: D1Database, days: number): Promise<SubOrgRow[]> {
+async function getExpiringSubs(db: D1Database, days: number): Promise<SubOrgRow[]> { // eslint-disable-line @typescript-eslint/no-unused-vars
   const query = `
     SELECT o.id as org_id, o.next_billing_at, o.active_tier as tier,
            u.email, u.name

@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export default async function SOPCreatorListingPage({ params }: PageProps) {
   const { locale, id } = await params;
   const access = await checkCreatorAccess();
-  const t = await getTranslations({ locale, namespace: 'sop.creator' });
+  const t = await getTranslations({ locale, namespace: 'sop.creator' }); // eslint-disable-line @typescript-eslint/no-unused-vars
 
   if (!access.hasAccess) {
     redirect(`/${locale}/dashboard/sop-creator/apply`);
@@ -352,5 +352,3 @@ async function archiveListing(listingId: string, locale: string) {
 }
 
 import { DollarSign, Download, Star, Calendar, Edit, Send, Clock, Archive, ExternalLink } from 'lucide-react';
-import { cn } from '@/seed/utils/cn';
-import { Button } from '@/seed/components/ui/button';

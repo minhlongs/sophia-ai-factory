@@ -8,7 +8,7 @@ import { requireAuth } from './auth';
 import { enforceMfaGate } from './mfa';
 import { intlMiddleware, applySecurityHeaders, SUPPORTED_LOCALES } from './middleware-shared-config';
 
-function buildDashboardLoginRedirect(request: NextRequest, fallbackLocale: string): NextResponse {
+function buildDashboardLoginRedirect(request: NextRequest, fallbackLocale: string): NextResponse { // eslint-disable-line @typescript-eslint/no-unused-vars
   const loginUrl = new URL('/login', request.url);
   loginUrl.searchParams.set('callbackUrl', request.nextUrl.pathname + request.nextUrl.search);
   return NextResponse.redirect(loginUrl);

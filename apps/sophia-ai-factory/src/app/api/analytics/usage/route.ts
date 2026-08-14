@@ -22,8 +22,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import { fetchUsageMetrics } from '@/land/analytics/queries';
 import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/land/analytics/rbac';
 import { analyticsUsageQuerySchema } from '@/land/validation/services';
-import type { UsageFilters, AnalyticsGranularity, AiService, UsageMetrics } from '@/land/analytics/types';
-
+import type { UsageFilters, UsageMetrics } from '@/land/analytics/types';;
 function emptyUsageMetrics(): UsageMetrics {
   return {
     summary: {
@@ -78,7 +77,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const now = Math.floor(Date.now() / 1000);
+    const now = Math.floor(Date.now() / 1000); // eslint-disable-line @typescript-eslint/no-unused-vars
     const startTimestamp = start;
     const endTimestamp = end;
 

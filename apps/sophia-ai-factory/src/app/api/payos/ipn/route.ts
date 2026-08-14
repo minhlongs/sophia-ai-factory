@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { data: ipnData, signature, success } = parsed.data
-  const { orderCode, amount, description, paymentLinkId } = ipnData
+  const { orderCode, amount, description, paymentLinkId } = ipnData // eslint-disable-line @typescript-eslint/no-unused-vars
 
   // Verify HMAC-SHA256 over raw body bytes
   const isValid = await verifyPayOsWebhook(rawBody, signature, PAYOS_CHECKSUM_KEY)

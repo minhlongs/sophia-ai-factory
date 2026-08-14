@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import { Search, Filter, Download, ArrowUpRight, ArrowDownRight, Eye } from 'lucide-react';
-import { DashboardLayout, Card, CardHeader, CardContent, Button, Badge, Table, Input } from '@/components/stitch';
-
+import { DashboardLayout, Card, Button, Badge, Table, Input } from '@/components/stitch';;
 const mockPayments = [
   {
     id: '1',

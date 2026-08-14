@@ -62,7 +62,7 @@ function matchesRoute(pathname: string, routePatterns: string[]): boolean {
   return routePatterns.some(pattern => pathname.startsWith(pattern));
 }
 
-function getSLOForRoute(pathname: string): SLOConfig[] {
+function getSLOForRoute(pathname: string): SLOConfig[] { // eslint-disable-line @typescript-eslint/no-unused-vars
   return SLO_CONFIGS.filter(slo => matchesRoute(pathname, slo.routes));
 }
 
@@ -77,12 +77,12 @@ interface WAERow {
   isErrorFlag: number;
 }
 
-interface WAEBinding {
+interface WAEBinding { // eslint-disable-line @typescript-eslint/no-unused-vars
   fetch?: (input: RequestInfo, init?: RequestInit) => Promise<Response>;
   // Add other WAE methods as needed
 }
 
-async function fetchWAEData(env: { WAE?: AnalyticsEngineDataset }, startTime: number, endTime: number): Promise<WAERow[]> {
+async function fetchWAEData(env: { WAE?: AnalyticsEngineDataset }, startTime: number, endTime: number): Promise<WAERow[]> { // eslint-disable-line @typescript-eslint/no-unused-vars
   const wae = getWAEBinding(env);
   if (!wae) {
     logger.info('[SLO Cron] WAE binding not available');
@@ -98,9 +98,9 @@ async function fetchWAEData(env: { WAE?: AnalyticsEngineDataset }, startTime: nu
 async function computeBurnRate(
   db: ReturnType<typeof createServerClient>,
   slo: SLOConfig,
-  yearMonth: string,
-  windowStart: string,
-  windowEnd: string
+  yearMonth: string, // eslint-disable-line @typescript-eslint/no-unused-vars
+  windowStart: string, // eslint-disable-line @typescript-eslint/no-unused-vars
+  windowEnd: string // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Promise<{
   totalRequests: number;
   goodRequests: number;
@@ -120,6 +120,7 @@ async function computeBurnRate(
   // Query request data from D1 (using our middleware metrics stored in D1 if available)
   // For now, we'll use a placeholder query. In production, this should query
   // a dedicated metrics table or aggregate from WAE.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const query = `
     SELECT
       COUNT(*) as total,

@@ -107,7 +107,7 @@ interface SOPSListProps {
   t: ReturnType<typeof useTranslations>;
 }
 
-function SOPSList({ locale, userId, t }: SOPSListProps) {
+function SOPSList({ locale, userId, t }: SOPSListProps) { // eslint-disable-line @typescript-eslint/no-unused-vars
   // Placeholder - will be replaced with actual SOPs fetching
   return (
     <div className="bg-card border rounded-lg p-8 text-center">
@@ -127,7 +127,7 @@ interface EarningsSectionProps {
   t: ReturnType<typeof useTranslations>;
 }
 
-function EarningsSection({ locale, userId, t }: EarningsSectionProps) {
+function EarningsSection({ locale, userId, t }: EarningsSectionProps) { // eslint-disable-line @typescript-eslint/no-unused-vars
   // Placeholder - will be replaced with actual earnings data
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

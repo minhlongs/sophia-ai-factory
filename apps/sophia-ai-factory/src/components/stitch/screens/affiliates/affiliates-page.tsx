@@ -1,9 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Mail, Plus, MoreVertical, TrendingUp, DollarSign } from 'lucide-react';
-import { DashboardLayout, Card, CardHeader, CardContent, Button, Badge, Table, Input, Avatar } from '@/components/stitch';
-
+import { Search, Mail, Plus, MoreVertical, TrendingUp } from 'lucide-react';;import { DashboardLayout, Card, Button, Badge, Table, Input, Avatar } from '@/components/stitch';;
 const mockAffiliates = [
   {
     id: '1',

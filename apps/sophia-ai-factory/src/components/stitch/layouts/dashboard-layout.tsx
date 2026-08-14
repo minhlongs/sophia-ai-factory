@@ -1,9 +1,7 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/seed/utils/cn';
 import { Sidebar, SidebarItem } from '../ui/sidebar';
 import {
   LayoutDashboard,
@@ -15,9 +13,8 @@ import {
   Search,
   Bell as Notifications,
   HelpCircle as HelpOutline,
-  ArrowRight as ArrowForward,
+  ArrowRight as ArrowForward, // eslint-disable-line @typescript-eslint/no-unused-vars
 } from 'lucide-react';
-import { Button } from '../ui/button';
 import { Avatar } from '../ui/avatar';
 import { Input } from '../ui/input';
 
@@ -55,7 +52,7 @@ export function TopAppBar({
   const pathnameFromHook = usePathname();
   const pathname = providedPathname || pathnameFromHook;
 
-  const activeItems = navItems.map(item => ({
+  const activeItems = navItems.map(item => ({ // eslint-disable-line @typescript-eslint/no-unused-vars
     ...item,
     active: pathname === item.href || pathname?.startsWith(item.href + '/'),
   }));

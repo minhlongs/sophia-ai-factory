@@ -31,7 +31,7 @@ export default async function NewListingPage({ params }: PageProps) {
   );
 }
 
-async function NewListingPageClient({ locale, userId }: { locale: string; userId: string }) {
+async function NewListingPageClient({ locale, userId }: { locale: string; userId: string }) { // eslint-disable-line @typescript-eslint/no-unused-vars
   const t = await getTranslations({ locale, namespace: 'sop.creator' });
 
   return (

@@ -1,6 +1,5 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
 import { AlertCircle } from 'lucide-react';
 import type { Tier } from '@/seed/types';
 

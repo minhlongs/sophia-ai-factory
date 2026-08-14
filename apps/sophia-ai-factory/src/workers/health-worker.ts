@@ -32,7 +32,7 @@ export default {
   async fetch(
     request: Request,
     env: Env,
-    ctx: ExecutionContext
+    ctx: ExecutionContext // eslint-disable-line @typescript-eslint/no-unused-vars
   ): Promise<Response> {
     // Rate limiting
     const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';

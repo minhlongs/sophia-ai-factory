@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl';
 import { Calendar, X } from 'lucide-react';
-import { Button } from '@/seed/components/ui/button';
 import type { ScheduleFormState } from './use-schedule-form';
 import { INTERVAL_OPTIONS } from './use-schedule-form';
 

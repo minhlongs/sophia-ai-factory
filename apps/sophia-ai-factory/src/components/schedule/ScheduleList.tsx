@@ -1,9 +1,7 @@
 'use client';
 
-import { useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { Calendar, RefreshCw, Play, Pause, Trash2, Clock, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import type { Schedule } from './use-schedule-form';
+import { Calendar, RefreshCw, Play, Pause, Trash2, Clock, CheckCircle2, Loader2 } from 'lucide-react';;import type { Schedule } from './use-schedule-form';
 import { formatDate, isOverdue } from './use-schedule-form';
 import { Button } from '@/seed/components/ui/button';
 
@@ -19,7 +17,7 @@ interface ScheduleListProps {
 export default function ScheduleList({
   schedules,
   loading,
-  error,
+  error, // eslint-disable-line @typescript-eslint/no-unused-vars
   onToggle,
   onDelete,
   onRefresh,

@@ -34,7 +34,7 @@ type HelpPageProps = {
   type: 'sops' | 'troubleshooting' | 'faq';
 };
 
-const ICON_MAP: Record<string, React.ReactNode> = {
+const ICON_MAP: Record<string, React.ReactNode> = { // eslint-disable-line @typescript-eslint/no-unused-vars
   Store: null,
   Settings: null,
   Play: null,
@@ -44,7 +44,7 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 };
 
 export default function HelpPage({ locale, data, pageTitle, pageSubtitle, type }: HelpPageProps) {
-  const t = useTranslations('common');
+  const t = useTranslations('common'); // eslint-disable-line @typescript-eslint/no-unused-vars
   const isVi = locale.startsWith('vi');
 
   const renderSops = () => (

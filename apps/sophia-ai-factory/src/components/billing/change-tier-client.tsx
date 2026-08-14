@@ -7,12 +7,11 @@ import { Card, CardContent } from '@/seed/components/ui/card';
 import Link from 'next/link';
 import { CheckCircle2, Loader2, ArrowUpRight } from 'lucide-react';
 import { changeTierAction, type ChangeTierTiming } from '@/app/actions/billing';
-import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import type { Tier } from '@/seed/types';
 import TierPlanSelector from './TierPlanSelector';
 import TierConfirmationModal from './TierConfirmationModal';
 
-const SELECTABLE_TIERS: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE'];
+const SELECTABLE_TIERS: Tier[] = ['BASIC', 'PREMIUM', 'ENTERPRISE']; // eslint-disable-line @typescript-eslint/no-unused-vars
 
 type SubmitState =
   | { status: 'idle' }

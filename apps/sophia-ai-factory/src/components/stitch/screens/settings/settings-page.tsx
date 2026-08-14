@@ -21,7 +21,6 @@ import {
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { cn } from '@/seed/utils/cn';
-import { Button } from '@/seed/components/ui/button';
 import { Input } from '@/seed/components/ui/input';
 
 /* -- Types ----------------------------------------------------------------- */
@@ -89,7 +88,7 @@ const LOCALE_OPTIONS: LocaleOption[] = [
 export default function SettingsPage({
   userName: propUserName,
   userEmail: propUserEmail,
-  currentTier: propCurrentTier,
+  currentTier: propCurrentTier, // eslint-disable-line @typescript-eslint/no-unused-vars
 }: SettingsPageProps = {}) {
   const t = useTranslations('stitch.settingsPage');
   const [activeNav, setActiveNav] = useState('account');

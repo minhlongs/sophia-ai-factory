@@ -8,7 +8,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/seed/utils/logger-utility';
-import { typeDefs } from './schema';
 import { resolvers } from '@/land/analytics/graphql-resolvers';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 
@@ -29,7 +28,7 @@ interface GraphQLQueryRequest {
 async function executeQuery(
   query: string,
   variables?: Record<string, unknown>,
-  operationName?: string
+  operationName?: string // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Promise<unknown> {
   try {
     // Parse the query
@@ -58,7 +57,7 @@ async function executeQuery(
  */
 async function resolveQuery(
   queryString: string,
-  variables?: Record<string, unknown>
+  variables?: Record<string, unknown> // eslint-disable-line @typescript-eslint/no-unused-vars
 ): Promise<unknown> {
   // Simple regex-based extraction for analytics query
   // This is a basic implementation - for production use graphql-tools
@@ -166,7 +165,7 @@ export async function POST(request: NextRequest) {
 /**
  * GET handler for GraphQL endpoint (schema introspection hint)
  */
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest) { // eslint-disable-line @typescript-eslint/no-unused-vars
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

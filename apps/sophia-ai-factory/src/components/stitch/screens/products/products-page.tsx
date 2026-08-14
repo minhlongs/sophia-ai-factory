@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Search, MoreVertical, Edit, Trash2, Eye } from 'lucide-react';
-import { DashboardLayout, Card, CardHeader, CardContent, Button, Badge, Table, Input } from '@/components/stitch';
+import { Plus, Search, MoreVertical, Edit, Eye } from 'lucide-react';;import { DashboardLayout, Card, CardHeader, CardContent, Button, Badge, Table, Input } from '@/components/stitch';
 
 const mockProducts = [
   { id: '1', name: 'Basic AI Video Pack', type: 'Video Generation', price: '$49', status: 'active', subscribers: 124 },

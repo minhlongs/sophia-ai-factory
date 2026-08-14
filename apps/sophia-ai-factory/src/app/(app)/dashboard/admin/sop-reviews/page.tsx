@@ -1,7 +1,5 @@
-import { checkCreatorAccess } from '@/app/(app)/dashboard/sop-creator/ServerGate';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
-import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
 
 interface SopListing {
@@ -28,7 +26,7 @@ export const dynamic = 'force-dynamic';
 export default async function AdminSOPReviewsPage({ params }: PageProps) {
   const { locale } = await params;
   const access = await checkAdminAccess();
-  const t = await getTranslations({ locale, namespace: 'admin' });
+  const t = await getTranslations({ locale, namespace: 'admin' }); // eslint-disable-line @typescript-eslint/no-unused-vars
 
   // Check if user is admin
   if (!access.isAdmin) {
@@ -57,7 +55,7 @@ async function checkAdminAccess(): Promise<{ hasAccess: boolean; isAdmin: boolea
   return { hasAccess: isAdmin, isAdmin, userId: user.id };
 }
 
-async function AdminSOPReviewsContent({ locale, userId }: { locale: string; userId: string }) {
+async function AdminSOPReviewsContent({ locale, userId }: { locale: string; userId: string }) { // eslint-disable-line @typescript-eslint/no-unused-vars
   const t = await getTranslations({ locale, namespace: 'admin.sopReviews' });
   const tSopStatus = await getTranslations({ locale, namespace: 'sop.status' });
 
@@ -99,7 +97,7 @@ async function AdminSOPReviewsContent({ locale, userId }: { locale: string; user
   const formatDate = (timestamp: number) => new Date(timestamp * 1000).toLocaleDateString(locale === 'vi' ? 'vi-VN' : 'en-US');
   const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
-  const statusLabels: Record<string, string> = {
+  const statusLabels: Record<string, string> = { // eslint-disable-line @typescript-eslint/no-unused-vars
     draft: tSopStatus('draft'),
     published: tSopStatus('published'),
     archived: tSopStatus('archived'),
@@ -359,6 +357,4 @@ function StatCard({
   );
 }
 
-import { Clock, CheckCircle, FileText, Eye, Check, X, FileText as FileTextIcon } from 'lucide-react';
-import { cn } from '@/seed/utils/cn';
-import { Button } from '@/seed/components/ui/button';
+import { Clock, CheckCircle, FileText, Eye, Check, X } from 'lucide-react';

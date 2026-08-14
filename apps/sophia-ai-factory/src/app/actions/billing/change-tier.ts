@@ -9,7 +9,6 @@
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
-import { getD1 } from '@/seed/db/client';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { revalidatePath } from 'next/cache';
 import { logger } from '@/seed/utils/logger-utility';

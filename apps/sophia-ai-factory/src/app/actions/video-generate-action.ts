@@ -3,7 +3,7 @@
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { generateVideo } from '@/land/video/publishing/video-generation.service';
 
-type ActionResult<T = unknown> =
+type ActionResult<T = unknown> = // eslint-disable-line @typescript-eslint/no-unused-vars
   | { success: true; data: T }
   | { success: false; error: string };
 

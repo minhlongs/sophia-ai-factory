@@ -1,8 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Brain, TrendingUp, Shield, Bot, Zap, FileCheck, BarChart3 } from "lucide-react";
-import { FadeInView } from "@/seed/components/ui/fade-in-view";
+import { Brain, TrendingUp, Bot, Zap, FileCheck, BarChart3 } from "lucide-react";;import { FadeInView } from "@/seed/components/ui/fade-in-view";
 import { Container } from "@/seed/components/ui/container";
 
 const CAPABILITIES = [

@@ -10,7 +10,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getOrDefault, set, merge, deleteNamespace } from '@/seed/tenant-settings/registry';
 import { SETTINGS_NAMESPACES, SettingsValidationError } from '@/seed/tenant-settings/types';

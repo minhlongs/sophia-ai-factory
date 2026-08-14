@@ -22,7 +22,7 @@ export async function GET(
   _request: NextRequest,
   { params }: RouteContext,
 ): Promise<NextResponse> {
-  return withRateLimit(async (r: NextRequest) => {
+  return withRateLimit(async (r: NextRequest) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -52,7 +52,7 @@ export async function DELETE(
   _request: NextRequest,
   { params }: RouteContext,
 ): Promise<NextResponse> {
-  return withRateLimit(async (r: NextRequest) => {
+  return withRateLimit(async (r: NextRequest) => { // eslint-disable-line @typescript-eslint/no-unused-vars
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

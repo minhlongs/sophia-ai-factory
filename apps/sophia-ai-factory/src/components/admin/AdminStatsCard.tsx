@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Activity, BarChart2, Coins, Database, Inbox, KeyRound, ServerCog, Webhook } from 'lucide-react';
 
 export interface PanelRow {
   label: string;

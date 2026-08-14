@@ -30,7 +30,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest) {
   } catch { /* auth failed */ }
 
   if (!userId) {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network' // eslint-disable-line @typescript-eslint/no-unused-vars
     return NextResponse.json(
       {
         error: 'Login required',

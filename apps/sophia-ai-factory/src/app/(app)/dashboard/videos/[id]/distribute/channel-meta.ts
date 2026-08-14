@@ -3,7 +3,6 @@
  * @module app/(app)/dashboard/videos/[id]/distribute/channel-meta
  */
 
-import type { ChannelProvider } from '@/seed/types/channel-provider';
 
 export const PROVIDER_LABELS: Record<string, string> = {
   tiktok: 'TikTok',

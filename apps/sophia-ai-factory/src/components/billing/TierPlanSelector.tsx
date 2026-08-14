@@ -1,7 +1,6 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Button } from '@/seed/components/ui/button';
 import { UNIFIED_TIERS } from '@/seed/config/tiers';
 import type { Tier } from '@/seed/types';
 

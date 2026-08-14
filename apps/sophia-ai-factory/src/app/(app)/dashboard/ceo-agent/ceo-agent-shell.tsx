@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { BrainCircuit, BarChart3, TrendingUp, Play } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/seed/components/ui/tabs';
+import { BrainCircuit, BarChart3, TrendingUp } from 'lucide-react';;import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/seed/components/ui/tabs';
 import { CeoAgentDashboard } from './ceo-agent-dashboard';
 import { CeoAgentOnboardingWrapper } from '@/forest/components/agents/ceo-agent-onboarding-wrapper';
 

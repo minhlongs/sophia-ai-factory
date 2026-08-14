@@ -10,11 +10,8 @@ import { calculateDiscount } from '@/land/promo/promo-discount-calculator';
 import { triggerAutoHandover } from '@/tree/handover/auto-handover';
 import { logger } from '@/seed/utils/logger-utility';
 import { writeOrder, findActivePendingOrder } from '@/land/orders/pending-order-repo';
-import { derivePeriod, assertPeriodAllowed, assertPaymentMethodAllowed } from '@/land/checkout/checkout-validators';
-import type { PendingOrderPeriod, PaymentMethod } from '@/land/orders/pending-order-types';
+import { derivePeriod, assertPeriodAllowed } from '@/land/checkout/checkout-validators';;import type { PendingOrderPeriod, PaymentMethod } from '@/land/orders/pending-order-types';
 import { createPayOsInvoice } from '@/land/payments/payos';
-import { track } from '@/tree/signals/track';
-import { D1Events } from '@/tree/signals/d1-event-types';
 import { verifyCsrfToken } from '@/seed/security/csrf';
 
 /**
@@ -82,7 +79,7 @@ export const GET = withRateLimit(async function GET(request: NextRequest) {
  */
 // @ts-expect-error withRateLimit wraps NextRequest; type mismatch is intentional
 export const POST = withRateLimit(async function POST(request: NextRequest) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'; // eslint-disable-line @typescript-eslint/no-unused-vars
   try {
     const body = await request.json();
 

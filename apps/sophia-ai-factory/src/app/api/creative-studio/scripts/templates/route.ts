@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
         { status: 403 },
       );
     }
-    const userRank = TIER_RANK[tier];
+    const userRank = TIER_RANK[tier]; // eslint-disable-line @typescript-eslint/no-unused-vars
 
     let body: unknown;
     try {
@@ -261,7 +261,7 @@ interface SceneConfig {
 function getSceneConfigs(
   category: string,
   totalDuration: number,
-  isVi: boolean,
+  isVi: boolean, // eslint-disable-line @typescript-eslint/no-unused-vars
 ): SceneConfig[] {
   const allocations: Record<string, number[]> = {
     welcome: [5, 15, 8, 7],

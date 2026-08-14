@@ -8,8 +8,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/seed/auth/require-admin'
-import { ByokKeyRotatedError, getUserCredential } from '@/tree/credentials/user-credentials-repo'
-import { listHeyGenWebhooks } from '@/land/heygen/webhook-registrar'
+import { getUserCredential } from '@/tree/credentials/user-credentials-repo'
+;import { listHeyGenWebhooks } from '@/land/heygen/webhook-registrar'
 import { getD1 } from '@/seed/db/client'
 
 export const dynamic = 'force-dynamic'

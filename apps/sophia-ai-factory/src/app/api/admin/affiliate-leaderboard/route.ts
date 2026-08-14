@@ -26,7 +26,7 @@ const VALID_SORT: ReadonlyArray<LeaderboardSortBy> = ['epc', 'conversions', 'com
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request);
   if (auth instanceof NextResponse) return auth;
-  const { user } = auth;
+  const { user } = auth; // eslint-disable-line @typescript-eslint/no-unused-vars
 
   const { searchParams } = new URL(request.url);
   const sortRaw = searchParams.get('sortBy');

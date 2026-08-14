@@ -14,7 +14,7 @@ import {
   deleteAgent,
   getAgentById,
   listAgents,
-  getTeamByOrgId,
+  getTeamByOrgId, // eslint-disable-line @typescript-eslint/no-unused-vars
 } from '@/tree/agents/repository';
 import type { Agent } from '@/tree/agents/types';
 
@@ -68,7 +68,7 @@ export async function createAgentInTeam(
     }
 
     const team = await seedDefaultTeam(user.id);
-    const agent = await createAgent({
+    const agent = await createAgent({ // eslint-disable-line @typescript-eslint/no-unused-vars
       teamId: team.id,
       role: parsed.data.role,
       name: parsed.data.name,

@@ -9,8 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
-import { getOrDefault, set, merge } from '@/seed/tenant-settings/registry';
-import { validatorFor } from '@/seed/tenant-settings/namespace-validators';
+import { getOrDefault, merge } from '@/seed/tenant-settings/registry';;import { validatorFor } from '@/seed/tenant-settings/namespace-validators';
 import { SettingsValidationError } from '@/seed/tenant-settings/types';
 import { DEFAULT_STORAGE } from '@/seed/tenant-settings/defaults';
 import { logger } from '@/seed/utils/logger-utility';

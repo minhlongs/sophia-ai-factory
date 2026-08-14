@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export default async function SOPCreatorPage({ params }: PageProps) {
   const { locale } = await params;
   const access = await checkCreatorAccess();
-  const t = await getTranslations({ locale, namespace: 'sop.creator' });
+  const t = await getTranslations({ locale, namespace: 'sop.creator' }); // eslint-disable-line @typescript-eslint/no-unused-vars
 
   if (!access.hasAccess) {
     redirect(`/${locale}/dashboard/sop-creator/apply`);

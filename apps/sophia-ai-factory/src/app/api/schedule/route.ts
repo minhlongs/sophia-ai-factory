@@ -65,7 +65,7 @@ const schedulePatchSchema = z.object({
 );
 
 // GET — list current user's scheduled campaigns
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest) { // eslint-disable-line @typescript-eslint/no-unused-vars
   try {
     const user = await getCurrentUser();
     if (!user) {

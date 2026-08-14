@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Activity, Coins, KeyRound, ServerCog } from 'lucide-react';
 
 interface QuickLink {
   icon: React.ComponentType<{ className?: string }>;

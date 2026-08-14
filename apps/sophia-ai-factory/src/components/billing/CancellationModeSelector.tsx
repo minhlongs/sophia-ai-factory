@@ -1,8 +1,6 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Button } from '@/seed/components/ui/button';
-import { AlertCircle } from 'lucide-react';
 import type { CancelMode } from './cancel-subscription-modal';
 
 interface CancellationModeSelectorProps {

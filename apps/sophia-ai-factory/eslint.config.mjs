@@ -40,6 +40,12 @@ const eslintConfig = defineConfig([
       "src/lib/utils/to-error.ts",
     ],
     rules: {
+      "@typescript-eslint/no-unused-vars": ["warn", {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        destructuredArrayIgnorePattern: "^_",
+        caughtErrorsIgnorePattern: "^_",
+      }],
       "no-restricted-syntax": ["error", noAsErrorRule],
       // React Compiler rules — demoted from error to warn for high-volume cases
       // where refactor is invasive but the underlying pattern is widely acceptable

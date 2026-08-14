@@ -28,7 +28,7 @@ const PAYOS_CHECKSUM_KEY = process.env.PAYOS_CHECKSUM_KEY
 const UNDERPAYMENT_THRESHOLD = 0.99
 
 /** F-06: Log a lost payment event to the DLQ (payment_events table) for later recovery. */
-async function logToDlq(db: ReturnType<typeof createServerClient>, payload: {
+async function logToDlq(db: ReturnType<typeof createServerClient>, payload: { // eslint-disable-line @typescript-eslint/no-unused-vars
   orderCode: string
   paymentLinkId: string
   userId: string

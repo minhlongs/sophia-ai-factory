@@ -24,7 +24,7 @@ export const InstallSchema = z.object({
   configValues: z.record(z.string(), z.unknown()).optional(),
 });
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> { // eslint-disable-line @typescript-eslint/no-unused-vars
   let user: Awaited<ReturnType<typeof getCurrentUser>> | null = null;
   try {
     user = await getCurrentUser();

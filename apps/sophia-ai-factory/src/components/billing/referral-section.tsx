@@ -13,8 +13,7 @@ import { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { useQuery } from '@tanstack/react-query';
 import { Copy, CheckCircle2, Users, DollarSign } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/seed/components/ui/card';
-import { Button } from '@/seed/components/ui/button';
+import { Card, CardContent } from '@/seed/components/ui/card';;import { Button } from '@/seed/components/ui/button';
 
 interface ReferralResponse {
   code: string;

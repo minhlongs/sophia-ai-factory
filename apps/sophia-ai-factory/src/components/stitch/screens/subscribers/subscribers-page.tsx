@@ -1,9 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Search, Mail, Phone, MoreVertical, Trash2 } from 'lucide-react';
-import { DashboardLayout, Card, CardHeader, CardContent, Button, Badge, Table, Input, Avatar } from '@/components/stitch';
-
+import { Search, Mail, Phone, MoreVertical } from 'lucide-react';;import { DashboardLayout, Card, Button, Badge, Table, Input, Avatar } from '@/components/stitch';;
 const mockSubscribers = [
   {
     id: '1',
