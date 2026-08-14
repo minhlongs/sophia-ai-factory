@@ -151,7 +151,7 @@ vi.mock('@/forest/publishing/zalo-publisher', () => ({ ZaloPublisher: vi.fn().mo
 vi.mock('@/forest/publishing/threads', () => ({ ThreadsPublisher: vi.fn().mockImplementation(() => publisherObj) }));
 vi.mock('@/forest/publishing/reddit', () => ({ RedditPublisher: vi.fn().mockImplementation(() => publisherObj) }));
 vi.mock('@/forest/publishing/bluesky', () => ({ BlueskyPublisher: vi.fn().mockImplementation(() => publisherObj) }));
-vi.mock('@/forest/publishing/mastodon', () => ({ MastodonPublisher: vi.fn().mockImplementation(() => publisherObj) }));
+vi.mock('@/land/video/publishing/providers/mastodon', () => ({ MastodonPublisher: vi.fn().mockImplementation(() => publisherObj) }));
 
 // ── Re-import error types from mocked module ──────────────────────────────────
 
