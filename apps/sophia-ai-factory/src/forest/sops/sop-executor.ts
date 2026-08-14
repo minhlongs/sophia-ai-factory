@@ -14,6 +14,8 @@
 import { inngest } from '@/seed/inngest/client';
 import { createServerClient, getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
+import { getUserCredential } from '@/tree/credentials/user-credentials-repo';
 import { buildSOPGraph } from '@/tree/sop/dag-builder';
 import type { LinearStep } from '@/tree/sop/dag-builder';
 import { planExecution } from '@/tree/sop/parallel-planner';
@@ -50,12 +52,31 @@ async function executeStepTool(
   step: SopStepDef,
   inputJson: string,
   priorResults: SopStepResult[],
+  userId: string,
 ): Promise<Record<string, unknown>> {
-  void inputJson;
-  void priorResults;
   switch (step.tool) {
-    case 'ai-script':
-      return { script: '[PLACEHOLDER] Generated script for ' + step.name_en, word_count: 0, stub: true };
+    case 'ai-script': {
+      const openrouterKey = await getUserCredential(userId, 'openrouter');
+      if (!openrouterKey) {
+        return { script: '', word_count: 0, stub: true, error: 'OpenRouter API key not configured — add it in Settings > Integrations' };
+      }
+
+      const promptTemplate = (step.config?.prompt as string) ?? `Generate a professional ${step.name_en} script for a social media video. Be concise and engaging.`;
+      const argsJson = inputJson ? JSON.parse(inputJson) as Record<string, string> : {};
+      const prompt = Object.entries(argsJson).reduce(
+        (p, [k, v]) => p.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v)),
+        promptTemplate,
+      );
+
+      const content = await resilientChatCompletion(prompt, {
+        openRouterKey: openrouterKey,
+        model: 'openai/gpt-4o-mini',
+      });
+
+      const wordCount = content.split(/\s+/).filter(Boolean).length;
+
+      return { script: content, word_count: wordCount, stub: false };
+    }
     case 'ai-tts':
       return { audio_url: 'https://placeholder.example.com/audio.mp3', duration_sec: 0, stub: true };
     case 'ai-video':
@@ -88,7 +109,7 @@ async function runNode(
   let stepError: string | null = null;
 
   try {
-    output = await executeStepTool(sopStep, inputJson, priorResults);
+    output = await executeStepTool(sopStep, inputJson, priorResults, analyticsCtx.userId);
     stepStatus = 'completed';
   } catch (err) {
     stepStatus = 'failed';
