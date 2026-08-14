@@ -87,8 +87,6 @@ const BARE_AUTH_APP_ROUTES = new Set([
       '/guides': '/guide',
       '/faq': '/guide',
       '/help': '/guide',
-      '/guide/getting-started': '/guide',
-      '/support': '/dashboard/support',
     };
     const barePath = pathLocale && isSupportedLocale(pathLocale) ? pathname.slice(`/${pathLocale}`.length) || '/' : pathname;
     if (REDIRECTS[barePath]) {
