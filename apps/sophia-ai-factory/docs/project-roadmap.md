@@ -1,18 +1,20 @@
 # Sophia AI Factory — Strategic Roadmap from Open-Source Distillation
 
-**Date:** 2026-04-30 | **Last Sync:** 2026-07-02 | **Research:** 8 OSS projects, 6 monetization patterns, 7 orchestration patterns
+**Date:** 2026-04-30 | **Last Sync:** 2026-08-14 | **Research:** 8 OSS projects, 6 monetization patterns, 7 orchestration patterns
 
 ---
 
 ## Key Takeaway
 
-Sophia's architecture is already competitive. Gaps are in **monetization UX** (credit display, usage-pressure conversion) and **growth** (affiliate program). Video pipeline is solid — needs polish, not rebuild.
+Sophia's architecture is already competitive. Gaps are in **monetization UX** (credit display, usage-pressure conversion) and **growth** (affiliate program). Video pipeline is solid — needs polish, not rebuild. **Resilience is now production-ready** — circuit breaker covers all external HTTP calls.
 
 ---
 
-## Status Snapshot (2026-07-02)
+## Status Snapshot (2026-08-14)
 
-**Sprint 3 Wave (2026-07-02)** — Programmatic landing pages expanded: 10 new niches (25 total, +67% coverage), AI video hub page at `/ai-video` with emoji grid, niche URLs added to sitemap (50 new entries), health endpoint fixed (dead proxy → local check, was returning 500). Code review passed. 6705 tests green. Web test sweep confirmed all 15 existing niche pages return 200, `/vi/guides` redirect works, `/vi/ai-video` now returns 200.
+**Circuit Breaker + ESLint Sprint (2026-08-13/14)** — Major resilience + code quality milestone. Shipped circuit breaker primitive (4-state machine: CLOSED→DEGRADED→OPEN→HALF_OPEN) with D1-persisted registry. Wired into all 8 external providers (OpenRouter, ElevenLabs, D-ID, HeyGen, NOWPayments, ClickBank, Replicate, fal.ai) across 7 batches. Per-kind failure classification: AUTH_FAILURE → immediate open, RATE_LIMIT → cooldown, SERVER_ERROR → retry. ESLint reduced from 321 warnings to 0 across 102 files. Setup Wizard wired to real verification/save endpoints. Accessibility: `<main>` landmark, skip-nav, locale provider. 6703 tests green. Deployed `30fd3080`.
+
+**Sprint 3 Wave (2026-07-02)** — Programmatic landing pages expanded: 10 new niches (25 total, +67% coverage), AI video hub page at `/ai-video` with emoji grid, niche URLs added to sitemap (50 new entries), health endpoint fixed (dead proxy → local check, was returning 500). Code review passed. 6705 tests green.
 
 **Polish Wave (2026-07-01)** — Middleware Option B fix (API routes through centralized security, skip locale redirect), `/vi/guides` → `/guide` redirect, pricing page code-split (CheckoutPanel dynamic import). Sprint 2 audit confirms all 3 items already implemented. Roadmap synced.
 

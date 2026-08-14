@@ -1,6 +1,35 @@
 # Project Changelog
 
-**Last Updated:** 2026-07-03 | **Current Version:** 0.1.4 | **Honest Score:** 88/100 (doctrine ceiling)
+**Last Updated:** 2026-08-14 | **Current Version:** 0.1.5 | **Honest Score:** 91.5/100 (doctrine ceiling)
+
+---
+
+## 2026-08-14 — ESLint 0 Warnings + Setup Wizard Real Endpoints
+
+**Severity: HIGH | Type: Code Quality + Feature | Status: DEPLOYED**
+
+### Changes
+- **ESLint 0 warnings** — Eliminated all 66 ESLint warnings across the codebase. Reduced `no-unused-vars` from 321 to 0. Cleaned unused imports in 102 files. Fixed `accumulatedText` typo. All changes compile and all 6703 tests pass.
+- **Setup Wizard verification wired** — `verifyKey` now calls real API verification endpoints (`/api/setup-wizard/test-heygen`, `/api/setup-wizard/test-resend`) instead of simulating with `setTimeout`. Falls back to soft-validation for services without dedicated endpoints.
+- **Setup Wizard save wired** — `handleSave` now calls `/api/setup-wizard/save-credentials` to persist provider credentials via existing endpoint. Previously navigated to dashboard without saving.
+- **NOWPayments fallback clarification** — Deprecated yearly invoice ID comments updated to clarify these are emergency fallbacks, not primary billing path (use `createCheckout()`).
+
+**Commits:** `30fd3080`, `6736fd63`, `b3eb6be0`, `47a993c4`
+
+---
+
+## 2026-08-13 — Circuit Breaker Resilience + Accessibility
+
+**Severity: CRITICAL | Type: Security + Accessibility | Status: DEPLOYED**
+
+### Changes
+- **Circuit breaker primitive** — New `seed/security/circuit-breaker.ts` with 4-state machine (CLOSED→DEGRADED→OPEN→HALF_OPEN). D1-persisted registry, 500-entry LRU, per-kind failure classification.
+- **Failure kind classification** — New `seed/types/failure-kind.ts` with enum: AUTH_FAILURE, RATE_LIMIT, SERVER_ERROR, NETWORK_ERROR. AUTH_FAILURE opens circuit immediately.
+- **Full external HTTP wiring** — Circuit breaker wired into all 7 batches covering: OpenRouter, ElevenLabs, D-ID, HeyGen, NOWPayments, ClickBank, Replicate, fal.ai. Includes quality gate enforcer (`seed/config/circuit-breaker.ts`).
+- **Accessibility fixes** — Added `<main>` landmark to 8 pages, skip-nav link, root layout with `lang`/`title`, locale provider registration. Fixes WCAG 2.1 AA compliance gaps.
+- **Locale routing fix** — `/vi/login` 500 error resolved. Locale redirect middleware stabilized.
+
+**Commits:** `f049d4c7` through `233b02ac` (7 commits)
 
 ---
 
