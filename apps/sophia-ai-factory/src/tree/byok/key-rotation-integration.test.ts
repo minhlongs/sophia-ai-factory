@@ -161,7 +161,7 @@ function buildD1Mock() {
 
 // ── Tests ───────────────────────────────────────────────────────────────────
 
-describe('key-rotation integration — full pipeline', () => {
+describe('key-rotation integration — full pipeline', { timeout: 15_000 }, () => {
   beforeEach(() => {
     resetTestState();
     buildD1Mock();

@@ -23,6 +23,7 @@ import { enqueueWelcomeEmail } from '@/tree/email/outbox'
 import { UNDERPAYMENT_THRESHOLD } from './nowpayments-ipn-underpaid'
 import { success, failure, type Result } from '@/seed/types/result'
 import { IPNError } from './nowpayments-ipn-errors'
+import { calculatePeriodEnd, stackedPeriodEnd, wouldDowngradeTier } from './nowpayments-ipn-utils'
 
 // Amount mismatch tolerance: 1% of expected price — prevents price-manipulation attacks
 const AMOUNT_MISMATCH_THRESHOLD = 0.01
@@ -164,35 +165,6 @@ async function setupDatabaseAndContext(
   return { d1, db, tier, billingPeriod, periodEnd, now, orgId }
 }
 
-function calculatePeriodEnd(billingPeriod: 'monthly' | 'yearly' | 'lifetime'): string {
-  if (billingPeriod === 'lifetime') {
-    return new Date('2099-12-31T23:59:59Z').toISOString()
-  }
-  const days = billingPeriod === 'yearly' ? 365 : 30
-  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString()
-}
-
-/**
- * Stacked period end for duplicate/same-tier re-payments.
- * If the subscription still has remaining time (current_period_end > now),
- * the new period is appended to the existing end instead of resetting the
- * clock — the customer keeps the time they already paid for.
- */
-export function stackedPeriodEnd(
-  existingPeriodEnd: string | null | undefined,
-  billingPeriod: 'monthly' | 'yearly' | 'lifetime',
-  now: string,
-  defaultPeriodEnd: string
-): string {
-  if (billingPeriod === 'lifetime') return defaultPeriodEnd
-  if (!existingPeriodEnd) return defaultPeriodEnd
-  const existingMs = Date.parse(existingPeriodEnd)
-  const nowMs = Date.parse(now)
-  if (!Number.isFinite(existingMs) || existingMs <= nowMs) return defaultPeriodEnd
-  const days = billingPeriod === 'yearly' ? 365 : 30
-  return new Date(existingMs + days * 24 * 60 * 60 * 1000).toISOString()
-}
-
 async function resolveBillingPeriod(ipn: NowPaymentsIpnPayload, isLifetime: boolean): Promise<'monthly' | 'yearly' | 'lifetime'> {
   if (isLifetime) return 'lifetime'
 
@@ -288,13 +260,6 @@ async function runPostActivationWorkflow(
   await safelyCreditReferralReward(userId, tier, ipn, db, d1)
 }
 
-function wouldDowngradeTier(currentPlan: string, newTier: Tier): boolean {
-  const TIER_RANK: Record<string, number> = { basic: 0, premium: 1, enterprise: 2, master: 3 }
-  const currentRank = TIER_RANK[currentPlan.toLowerCase()] ?? -1
-  const newRank = TIER_RANK[newTier.toLowerCase()] ?? -1
-  return currentRank > newRank
-}
-
 function buildSubscriptionUpdateStatements(
   currentSub: unknown,
   wouldDowngrade: boolean,
@@ -344,42 +309,6 @@ function buildSubscriptionUpdateStatements(
   }
 
   return stmts
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function handleBatchFallback(
-  orgId: string,
-  tier: Tier,
-  billingPeriod: 'monthly' | 'yearly' | 'lifetime',
-  periodEnd: string,
-  now: string,
-  ipn: NowPaymentsIpnPayload,
-  db: ReturnType<typeof getDb>,
-  d1: D1Database,
-  batchErr: unknown
-): Promise<void> {
-  logger.warn('[NOWPayments] D1 batch failed, falling back to individual updates', batchErr instanceof Error ? batchErr : { message: String(batchErr) })
-  try {
-    const { data: existingSub2 } = await db.from('subscriptions').select('id, current_period_end').eq('org_id', orgId).single()
-    if (existingSub2) {
-      const stackedEnd = stackedPeriodEnd(
-        (existingSub2 as { current_period_end?: string | null }).current_period_end,
-        billingPeriod,
-        now,
-        periodEnd
-      )
-      await db.from('subscriptions').update({ plan: tier.toLowerCase(), status: 'active', current_period_end: stackedEnd, updated_at: now }).eq('org_id', orgId)
-    } else {
-      await db.from('subscriptions').insert({ org_id: orgId, plan: tier.toLowerCase(), status: 'active', current_period_start: now, current_period_end: periodEnd })
-    }
-    await db.from('organizations').update({ plan: tier.toLowerCase(), updated_at: now }).eq('id', orgId)
-    if (ipn.order_id) {
-      await markOrderCompleted(ipn.order_id, ipn.payment_id)
-    }
-  } catch (fallbackErr) {
-    logger.error('[NOWPayments] Fallback sequential writes also failed', fallbackErr instanceof Error ? fallbackErr : { message: String(fallbackErr) })
-    throw new Error('Subscription activation failed — both batch and fallback')
-  }
 }
 
 async function createNewOrgAndSubscription(

@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { stackedPeriodEnd } from '@/land/billing/nowpayments-ipn-subscription'
+import { stackedPeriodEnd } from '@/land/billing/nowpayments-ipn-utils'
 
 const NOW = '2026-08-13T00:00:00Z'
 
