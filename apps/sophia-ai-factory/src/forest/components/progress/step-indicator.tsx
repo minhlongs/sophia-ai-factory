@@ -7,10 +7,6 @@ import { Progress } from '@/seed/components/ui/progress';
 import { Card, CardContent } from '@/seed/components/ui/card';
 import { CheckCircle2, Circle, AlertCircle, Loader2 } from 'lucide-react';
 import { cn } from '@/seed/utils/cn';
-import { createLogger } from '@/seed/utils/logger-utility';
-
-const logger = createLogger('forest/components/progress/step-indicator');
-
 /** A single pipeline step definition. */
 export interface Step {
   /** Stable identifier for the step (e.g. "script", "tts"). */
@@ -96,10 +92,6 @@ export function StepIndicator({
   const t = useTranslations('streaming.steps');
   const tCommon = useTranslations('common');
   const clampedProgress = Math.min(100, Math.max(0, progress));
-
-  const activeState = activeStep >= 0 && activeStep < steps.length
-    ? resolveStepState(activeStep, activeStep, status)
-    : 'pending';
 
   return (
     <Card className={cn('overflow-hidden', className)}>

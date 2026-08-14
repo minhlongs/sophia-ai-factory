@@ -28,11 +28,11 @@ function checkRateLimit(key: string): boolean {
   return true;
 }
 
-export default {
+const healthWorker = {
   async fetch(
     request: Request,
     env: Env,
-    ctx: ExecutionContext // eslint-disable-line @typescript-eslint/no-unused-vars
+    _ctx: ExecutionContext
   ): Promise<Response> {
     // Rate limiting
     const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
@@ -131,3 +131,5 @@ export default {
     });
   },
 };
+
+export default healthWorker;

@@ -47,7 +47,6 @@ describe('GET /api/admin/email-outbox', () => {
   });
 
   it('admin sees outbox snapshot', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test-only shape cast
     vi.mocked(requireAdmin).mockResolvedValue({ user: { id: 'u1', role: 'admin' } } as any);
     vi.mocked(getEmailOutboxSnapshot).mockResolvedValue(STUB);
     const resp = await GET(mockReq);
@@ -57,7 +56,6 @@ describe('GET /api/admin/email-outbox', () => {
   });
 
   it('returns 500 if primitive throws', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test-only shape cast
     vi.mocked(requireAdmin).mockResolvedValue({ user: { id: 'u1', role: 'admin' } } as any);
     vi.mocked(getEmailOutboxSnapshot).mockRejectedValue(new Error('boom'));
     const resp = await GET(mockReq);

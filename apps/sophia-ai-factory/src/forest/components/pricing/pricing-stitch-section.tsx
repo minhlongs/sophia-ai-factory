@@ -48,7 +48,7 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
   const [loading, setLoading] = useState<string | null>(null);
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
   const [appliedDiscount, setAppliedDiscount] = useState<PromoDiscount | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("nowpayments");
+  const [paymentMethod, _setPaymentMethod] = useState<PaymentMethod>("nowpayments");
   const [checkoutData, setCheckoutData] = useState<{
     tier: string;
     url?: string;
@@ -182,13 +182,6 @@ export function PricingStitchSection({ isAuthenticated = false, currentTier }: {
     }
     const pricingInfo = PRICING_TIERS.find((p) => p.tier === tierKey);
     return pricingInfo ? pricingInfo.monthlyPrice : 0;
-  }
-
-  /** Get display price string for a tier */
-  function getDisplayPrice(tierKey: string): string {
-    if (tierKey === "MASTER") return t("custom_price");
-    const cents = getPriceCents(tierKey);
-    return formatPrice(cents, locale);
   }
 
   /** Get features list for a tier */

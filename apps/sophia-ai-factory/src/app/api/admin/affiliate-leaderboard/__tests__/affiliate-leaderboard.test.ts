@@ -51,7 +51,6 @@ describe('GET /api/admin/affiliate-leaderboard', () => {
   });
 
   it('returns 200 with leaderboard data for admin', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RequireAdminResult union requires cast for partial user shape
     vi.mocked(requireAdmin).mockResolvedValue({ user: { id: 'u1', role: 'admin' } } as any);
     vi.mocked(getTopAffiliates).mockResolvedValue([
       { affiliateId: 'a1', email: 'a@x.com', name: 'Alex', totalClicks: 10, totalConversions: 2, totalCommissionUsd: 50, epc: 5 },
@@ -62,7 +61,6 @@ describe('GET /api/admin/affiliate-leaderboard', () => {
   });
 
   it('returns 500 if primitive throws', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RequireAdminResult union requires cast for partial user shape
     vi.mocked(requireAdmin).mockResolvedValue({ user: { id: 'u1', role: 'admin' } } as any);
     vi.mocked(getTopAffiliates).mockRejectedValue(new Error('boom'));
 

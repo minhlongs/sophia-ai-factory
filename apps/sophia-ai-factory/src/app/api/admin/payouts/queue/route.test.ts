@@ -37,7 +37,6 @@ beforeEach(() => {
   (globalThis as unknown as { __env: Record<string, unknown> }).__env = { DB: mockDb };
   mockAll.mockResolvedValue({ results: [] });
   // Default: authenticated admin.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- test-only shortcut for partial user shape
   vi.mocked(requireAdmin).mockResolvedValue({ user: { id: 'u1', role: 'admin' } } as any);
 });
 

@@ -333,6 +333,7 @@ export function MarketplaceStitchSection({
                   {(item.authorBrandName || item.authorUserId) && (
                     <p className="text-[10px] text-[#52525B] flex items-center gap-1">
                       {item.authorLogoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- dynamic author logo URL
                         <img src={item.authorLogoUrl} alt="" className="w-3.5 h-3.5 rounded object-contain inline-block" />
                       ) : null}
                       <span>

@@ -72,7 +72,7 @@ export function Avatar({
       {...props}
     >
       {src ? (
-        <img
+        <img // eslint-disable-line @next/next/no-img-element -- dynamic src URL
           src={src}
           alt={alt}
           className={cn(

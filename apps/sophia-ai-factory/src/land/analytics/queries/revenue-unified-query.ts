@@ -15,8 +15,6 @@
  */
 
 import { getD1 } from '@/seed/db/client';
-import { TIER_CONFIGS } from '@/seed/config/tiers';
-import type { Tier } from '@/seed/types';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -49,17 +47,6 @@ function verticalCaseExpr(): string {
     WHEN an.slug IN (${cryptoList}) THEN 'crypto'
     ELSE 'product'
   END`;
-}
-
-/** MRR per tier from TIER_CONFIGS */
-function tierMrr(tier: string): number {
-  const normalized = tier?.toUpperCase() as Tier;
-  return TIER_CONFIGS[normalized]?.price ?? 0;
-}
-
-interface LicenseDateRow {
-  tier: string;
-  day: string;
 }
 
 interface ConversionAggRow {

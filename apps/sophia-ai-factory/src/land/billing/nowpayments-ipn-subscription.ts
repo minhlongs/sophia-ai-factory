@@ -421,12 +421,11 @@ async function safelyRecordAudit(
   } catch (e) { safeCatch('Audit record')(e) }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function safelyFinalizePromoRedemption(
   userId: string,
   ipn: NowPaymentsIpnPayload,
-  db: ReturnType<typeof getDb>,
-  d1: D1Database
+  _db: ReturnType<typeof getDb>,
+  _d1: D1Database
 ): Promise<void> {
   if (!ipn.order_id) return
 

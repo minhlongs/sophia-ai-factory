@@ -213,10 +213,12 @@ export const stitchClasses = {
   containerMax: 'max-w-container-max',
 };
 
-export default {
+const stitchDesignTokens = {
   colors: stitchColors,
   spacing: stitchSpacing,
   borderRadius: stitchBorderRadius,
   typography: stitchTypography,
   classes: stitchClasses,
 };
+
+export default stitchDesignTokens;

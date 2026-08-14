@@ -175,6 +175,7 @@ async function ListingDetail({ locale, listingId, userId }: { locale: string; li
                 {listing.thumbnail_url && (
                   <div>
                     <dt className="text-muted-foreground text-sm mb-2">{t('detail.fields.thumbnail')}</dt>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- dynamic external URL, no remotePatterns configured */}
                     <img
                       src={listing.thumbnail_url}
                       alt="Thumbnail"

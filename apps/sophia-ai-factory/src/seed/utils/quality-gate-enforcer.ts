@@ -144,4 +144,5 @@ export function printReport(report: UnwiredReport): void {
   }
 }
 
-export default { scanForUnwiredExternalCalls, printReport };
+const qualityGateEnforcer = { scanForUnwiredExternalCalls, printReport };
+export default qualityGateEnforcer;

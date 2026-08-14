@@ -115,6 +115,7 @@ export default function LandingHero() {
             <div className="flex -space-x-3">
               {AVATARS.map((src, i) => (
                 <div key={i} className="w-10 h-10 rounded-full border-2 border-surface-container overflow-hidden bg-surface-bright">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- external avatar URLs */}
                   <img className="w-full h-full object-cover" src={src} alt={`Creator ${i + 1}`} />
                 </div>
               ))}

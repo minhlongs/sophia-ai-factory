@@ -16,7 +16,7 @@ export interface AlertDispatcherConfig {
   enabledThresholds: number[]
 }
 
-export async function initRealtimeAlerts(config: AlertDispatcherConfig, kv: KVNamespace | null, ctx: ExecutionContext): Promise<void> {
+export async function initRealtimeAlerts(config: AlertDispatcherConfig, _kv: KVNamespace | null, _ctx: ExecutionContext): Promise<void> {
   logger.info('[Alert Dispatcher] Initialized (polling mode via scheduled worker)', { agencyosUrl: config.agencyosWebhookUrl, debounceMs: config.debounceMs })
 }
 

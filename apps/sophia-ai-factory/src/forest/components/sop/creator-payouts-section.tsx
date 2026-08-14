@@ -134,7 +134,7 @@ export function CreatorPayoutsSection() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 

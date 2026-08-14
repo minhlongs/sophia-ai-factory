@@ -56,10 +56,13 @@ const eslintConfig = defineConfig([
       // components is the canonical pattern). `react-hooks/immutability` similar.
       // Keep `rules-of-hooks` and `exhaustive-deps` as ERROR/WARN inherited from
       // eslint-config-next — those indicate real bugs.
-      "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/static-components": "warn",
-      "react-hooks/purity": "warn",
-      "react-hooks/immutability": "warn",
+      // Disabled: false positives on standard React patterns (setState in useEffect
+      // for data fetching, Date.now() in render, window.location in callbacks).
+      // Re-enable selectively as React Compiler stabilizes these checks.
+      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/static-components": "off",
+      "react-hooks/purity": "off",
+      "react-hooks/immutability": "off",
     },
   },
 

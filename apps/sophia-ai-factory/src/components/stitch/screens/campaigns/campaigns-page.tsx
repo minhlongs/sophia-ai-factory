@@ -218,6 +218,7 @@ function CampaignCard({
         )}
       >
         {campaign.thumbnail ? (
+          // eslint-disable-next-line @next/next/no-img-element -- dynamic thumbnail URL
           <img
             src={campaign.thumbnail}
             alt=""

@@ -260,13 +260,12 @@ export class CostAwareRouter {
 
     // ── Execute ──────────────────────────────────────────────────────────────
     let actualCost = 0;
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    let success = false;
+    let _success = false;
 
     try {
       const result = await this.router.chat(prompt, messages, adjustedOptions);
       actualCost = result.estimatedCost;
-      success = true;
+      _success = true;
 
       // ── Budget governance: reconcile ───────────────────────────────────────
       if (this.budgetTracker && entryId) {

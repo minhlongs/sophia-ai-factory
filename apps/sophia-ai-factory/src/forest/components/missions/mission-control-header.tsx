@@ -46,7 +46,7 @@ export function MissionControlHeader({ onMissionCreated }: MissionControlHeaderP
     } finally {
       setSubmitting(false);
     }
-  }, [prompt, submitting, onMissionCreated]);
+  }, [prompt, submitting, onMissionCreated, csrfHeaders]);
 
   const handlePauseAll = useCallback(async () => {
     await fetch('/api/agents/pause', { method: 'POST', headers: { ...csrfHeaders } });
