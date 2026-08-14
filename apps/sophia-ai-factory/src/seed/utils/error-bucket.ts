@@ -75,7 +75,7 @@ function isExternalError(error: Error): boolean {
  */
 export async function bestEffortCleanup(
   fn: () => Promise<void>,
-  description: string,
+  _description: string,
 ): Promise<void> {
   try {
     await fn();

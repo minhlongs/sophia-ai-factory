@@ -8,7 +8,6 @@
  */
 
 import { Metadata } from "next";
-import { getTranslations } from "next-intl/server";
 
 export const revalidate = 3600;
 export const dynamic = "force-static";
@@ -83,7 +82,6 @@ function StatusBadge({ status }: { status: "pass" | "warning" | "info" }) {
 
 export default async function BenchmarksPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "common" });
 
   const isVi = locale === "vi";
   const benchmarks = isVi ? VI_BENCHMARKS : EN_BENCHMARKS;

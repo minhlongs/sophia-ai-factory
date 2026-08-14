@@ -7,7 +7,7 @@ import { getD1 } from '@/seed/db/client';
 import { validatePromoCode } from '@/land/promo/promo-validator';
 import { applyPromoCode } from '@/land/promo/promo-applier';
 import { logger } from '@/seed/utils/logger-utility';
-import type { D1Database } from '@cloudflare/workers-types';
+import type { D1Database as _D1Database } from '@cloudflare/workers-types';
 
 export interface RedeemFree100Input {
   code: string;

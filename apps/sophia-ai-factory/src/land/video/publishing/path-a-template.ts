@@ -46,8 +46,7 @@ export async function renderTemplateVideo(input: PathAInput): Promise<PathAResul
   const visualR2Key = tenantScopedKey(tenantId, jobId, 'visual.mp4');
   const flyUrl = process.env.MOVIEPY_FLY_URL;
 
-  let videoBytes: ArrayBuffer;
-  let costUsd = 0.25; // template path average
+  const costUsd = 0.25; // template path average
 
   if (!flyUrl) {
     logger.warn('[PathA] MOVIEPY_FLY_URL not set — returning stub mp4', { jobId });
@@ -60,7 +59,7 @@ export async function renderTemplateVideo(input: PathAInput): Promise<PathAResul
     return { visualR2Key, costUsd: 0 };
   }
 
-  videoBytes = await fetchRenderService(`${flyUrl}/render`, {
+  const videoBytes = await fetchRenderService(`${flyUrl}/render`, {
     templateId,
     audio_r2_key: audioR2Key,
     scenes: scenes.map((s) => s.description),

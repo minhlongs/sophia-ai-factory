@@ -261,6 +261,8 @@ const eslintConfig = defineConfig([
       "src/forest/inngest/functions/auto-discover-affiliates.ts",
       "src/forest/inngest/functions/conversion-to-ledger.ts",
       "src/forest/inngest/functions/index.ts",
+      // publishing/orchestrates land OAuth token refresh per cross-layer-orchestration.md (forest→land)
+      "src/forest/publishing/oauth-platform-refreshers.ts",
     // agents/runner.ts — orchestrator that calls land signals/telemetry (mekong-exempt: agent orchestration)
 // ab/experiment-store — reads land/tracking for A/B attribution (mekong-exempt)
 "src/forest/ab/experiment-store.ts",

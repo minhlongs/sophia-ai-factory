@@ -34,7 +34,7 @@ import { getUserTier } from '@/seed/db/get-user-tier';
 import { getUserRoutingStrategy, getDefaultStrategyForTier } from '@/seed/db/get-user-routing-strategy';
 import {
   emitProgress, writeStageCheckpoint,
-  getWanClient, getVideoBucket,
+  getVideoBucket,
   uploadBufferToR2, downloadToBuffer,
 } from './video-generate-helpers';
 import { executeTtsStep } from './video-generate-tts';
