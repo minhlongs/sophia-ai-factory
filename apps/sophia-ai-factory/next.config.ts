@@ -83,13 +83,7 @@ const nextConfig: NextConfig = {
       { source: '/templates', destination: '/dashboard/create', permanent: false },
       { source: '/debug', destination: '/dashboard/system-health', permanent: false },
       { source: '/app', destination: '/dashboard', permanent: false },
-      // Docs & help
-      { source: '/docs', destination: '/guide', permanent: false },
-      { source: '/guides', destination: '/guide', permanent: false },
-      { source: '/support', destination: '/dashboard/support', permanent: false },
-      { source: '/faq', destination: '/guide/faq', permanent: false },
-      { source: '/help', destination: '/guide', permanent: false },
-      { source: '/guide/getting-started', destination: '/guide', permanent: false },
+      // Docs & help — handled in middleware.ts (locale-aware redirects needed on CF Workers)
       // Landing
       { source: '/about', destination: '/', permanent: false },
       { source: '/contact', destination: '/', permanent: false },

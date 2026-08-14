@@ -79,15 +79,24 @@ const BARE_AUTH_APP_ROUTES = new Set([
 
   // API routes bypass locale redirect — dispatched through handleApiPipeline below
   if (!pathname.startsWith('/api/')) {
-  if (pathLocale && !isSupportedLocale(pathLocale) && !BARE_AUTH_APP_ROUTES.has(pathname.split('/')[1])) return redirectToDefault(request);
-  }
+    // Locale-aware redirects: next.config.ts redirects to localeless paths, but on CF Workers
+    // the middleware intercepts the destination BEFORE the page route resolves. Handle here
+    // so the redirect chain ends at the correct locale-prefixed page.
+    const REDIRECTS: Record<string, string> = {
+      '/docs': '/guide',
+      '/guides': '/guide',
+      '/faq': '/guide',
+      '/help': '/guide',
+      '/guide/getting-started': '/guide',
+      '/support': '/dashboard/support',
+    };
+    const barePath = pathLocale && isSupportedLocale(pathLocale) ? pathname.slice(`/${pathLocale}`.length) || '/' : pathname;
+    if (REDIRECTS[barePath]) {
+      const locale = isSupportedLocale(pathLocale) ? pathLocale! : 'vi';
+      return NextResponse.redirect(new URL(`${locale}${REDIRECTS[barePath]}`, request.url), 307);
+    }
 
-
-  // /guides → /guide redirect (locale-prefixed paths — next.config redirects don't match on CF Workers)
-  if (pathLocale && isSupportedLocale(pathLocale) && pathname === `/${pathLocale}/guides`) {
-    const url = request.nextUrl.clone();
-    url.pathname = `/${pathLocale}/guide`;
-    return NextResponse.redirect(url, 308);
+    if (pathLocale && !isSupportedLocale(pathLocale) && !BARE_AUTH_APP_ROUTES.has(pathname.split('/')[1])) return redirectToDefault(request);
   }
 
   // E2E/SEO compatibility: tests and legacy links use /vi/login, /en/pricing etc
