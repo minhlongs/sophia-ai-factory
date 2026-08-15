@@ -28,9 +28,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
-import { batchIngestUsage } from '@/forest/usage-metering/aggregator';
+import { batchIngestUsage } from '@/tree/usage-metering/aggregator';
 import { batchIngestionRequestSchema } from '@/land/validation/services';
-import type { BatchUsageRecord, ApiKeyRecord } from '@/forest/usage-metering/types';
+import type { BatchUsageRecord, ApiKeyRecord } from '@/tree/usage-metering/types';
 import type { D1Response } from '@/seed/db/types';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { isOriginAllowed } from '@/seed/security/cors-security-configuration';

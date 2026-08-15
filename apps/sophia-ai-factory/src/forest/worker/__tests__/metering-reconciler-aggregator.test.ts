@@ -14,7 +14,7 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   },
 }));
 
-vi.mock('@/forest/usage-metering/kv-metering-log-sync', () => ({
+vi.mock('@/tree/usage-metering/kv-metering-log-sync', () => ({
   getMeteringLogs: vi.fn(),
   markAsReconciled: vi.fn().mockResolvedValue(true),
 }));
@@ -86,7 +86,7 @@ describe('markReconciledLogs', () => {
   });
 
   it('marks logs as reconciled for valid licenses', async () => {
-    const { markAsReconciled } = await import('@/forest/usage-metering/kv-metering-log-sync');
+    const { markAsReconciled } = await import('@/tree/usage-metering/kv-metering-log-sync');
 
     const meteringLogs = [
       { eventId: 'evt_1', licenseNonce: 'lic_a', service: 'svc', creditsUsed: 10, timestamp: 1000, userId: 'u1' },
@@ -104,7 +104,7 @@ describe('markReconciledLogs', () => {
   });
 
   it('returns 0 when no licenses are valid', async () => {
-    const { markAsReconciled } = await import('@/forest/usage-metering/kv-metering-log-sync');
+    const { markAsReconciled } = await import('@/tree/usage-metering/kv-metering-log-sync');
 
     const meteringLogs = [
       { eventId: 'evt_1', licenseNonce: 'lic_a', service: 'svc', creditsUsed: 10, timestamp: 1000, userId: 'u1' },
@@ -120,7 +120,7 @@ describe('markReconciledLogs', () => {
   });
 
   it('returns 0 for empty metering logs', async () => {
-    const { markAsReconciled } = await import('@/forest/usage-metering/kv-metering-log-sync');
+    const { markAsReconciled } = await import('@/tree/usage-metering/kv-metering-log-sync');
 
     const count = await markReconciledLogs([], new Map());
     expect(markAsReconciled).not.toHaveBeenCalled();

@@ -7,7 +7,7 @@ import { enforceMfaGate } from './mfa';
 import { withAuth, isPublicApiRoute } from '@/forest/middleware/auth-guard';
 import { getSizeLimit, rejectOversizedRequest } from './request-size-limit';
 import { handleApiRoute } from '../middleware-api-handler';
-import { emitUsageEvent } from '@/forest/usage-metering';
+import { emitUsageEvent } from '@/tree/usage-metering';
 import { logger } from '@/seed/utils/logger-utility';
 import { applySecurityHeaders } from './middleware-shared-config';
 

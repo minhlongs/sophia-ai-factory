@@ -1,8 +1,8 @@
 import { createServerClient, getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import { QUOTA_LIMITS } from '@/forest/usage-metering/aggregator';
-import type { QuotaLimit } from '@/forest/usage-metering/types';
+import { QUOTA_LIMITS } from '@/tree/usage-metering/aggregator';
+import type { QuotaLimit } from '@/tree/usage-metering/types';
 import type { CachedQuota } from './quota-checker-types';
 
 interface QuotaLimitsRow {

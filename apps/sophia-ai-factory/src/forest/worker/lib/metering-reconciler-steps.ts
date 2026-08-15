@@ -16,7 +16,7 @@
 import type { Env } from '../index';
 import type { ReconciliationReport, ReconciliationConfig } from '@/seed/types/billing-contracts';
 import { detectDiscrepancies } from './kv-discrepancy-detector';
-import { syncUsageEventsToKv } from '@/forest/usage-metering/kv-metering-log-sync';
+import { syncUsageEventsToKv } from '@/tree/usage-metering/kv-metering-log-sync';
 import { logger } from '@/seed/utils/logger-utility';
 import {
   aggregateByLicenseAndFeature,

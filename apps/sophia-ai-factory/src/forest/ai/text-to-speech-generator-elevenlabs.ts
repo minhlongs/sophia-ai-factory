@@ -2,8 +2,8 @@ import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import { Tier } from '@/seed/types';
-import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/forest/usage-metering';
-import { getUsageContext } from '@/forest/usage-metering/context';
+import { trackUsage, hashLicenseKey, calculateCredits, startTimer } from '@/tree/usage-metering';
+import { getUsageContext } from '@/tree/usage-metering/context';
 import {
   generateElevenLabsVoiceover,
   generateMockVoiceover,

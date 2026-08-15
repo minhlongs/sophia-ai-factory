@@ -10,7 +10,7 @@ import type { D1QueryChain } from '@/seed/db/d1-query-chain';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import type { LicenseFilters, LicenseMetrics, LicenseUtilization } from '../types';
-import { QUOTA_LIMITS } from '@/forest/usage-metering/aggregator';
+import { QUOTA_LIMITS } from '@/tree/usage-metering/aggregator';
 
 interface LicenseRow { nonce: string; tier: string; expires_at: number | null; is_revoked: boolean }
 interface UsageRow { credits_used: number | null }

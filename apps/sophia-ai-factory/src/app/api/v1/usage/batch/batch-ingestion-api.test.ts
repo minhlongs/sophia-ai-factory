@@ -75,12 +75,12 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 }));
 
 // Mock batchIngestUsage - must be hoisted
-vi.mock('@/forest/usage-metering/aggregator', () => ({
+vi.mock('@/tree/usage-metering/aggregator', () => ({
   batchIngestUsage: vi.fn(),
 }));
 
 // Import after mocks
-import { batchIngestUsage } from '@/forest/usage-metering/aggregator';
+import { batchIngestUsage } from '@/tree/usage-metering/aggregator';
 const mockBatchIngestUsage = vi.mocked(batchIngestUsage);
 
 describe('Batch Usage Ingestion API - Authentication', () => {

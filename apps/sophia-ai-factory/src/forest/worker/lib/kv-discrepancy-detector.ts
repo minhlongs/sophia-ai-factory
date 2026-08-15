@@ -13,7 +13,7 @@
  * @module worker/kv-discrepancy-detector
  */
 
-import type { MeteringLogEntry } from '@/forest/usage-metering/kv-metering-log-sync';
+import type { MeteringLogEntry } from '@/tree/usage-metering/kv-metering-log-sync';
 import type { Discrepancy, DiscrepancySeverity } from '@/seed/types/billing-contracts';
 import { logger } from '@/seed/utils/logger-utility';
 

@@ -1,4 +1,4 @@
-import { getMeteringLogs, markAsReconciled, type MeteringLogEntry } from '@/forest/usage-metering/kv-metering-log-sync';
+import { getMeteringLogs, markAsReconciled, type MeteringLogEntry } from '@/tree/usage-metering/kv-metering-log-sync';
 import type { AggregatedUsage, LicenseValidationResult } from './metering-reconciler-types';
 
 /** Aggregate metering logs by license+service key. */

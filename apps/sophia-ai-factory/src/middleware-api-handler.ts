@@ -4,7 +4,7 @@ import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/seed/securit
 import { getCurrentUserFromHeaders, AuthSystemError } from '@/seed/auth/better-auth-session'
 import { getUserTier } from '@/seed/db/get-user-tier'
 import { isPublicApiRoute } from '@/forest/middleware/auth-guard'
-import { emitUsageEvent } from '@/forest/usage-metering'
+import { emitUsageEvent } from '@/tree/usage-metering'
 import { logger } from '@/seed/utils/logger-utility'
 import { verifyInternalSecret } from '@/seed/security/verify-internal-secret'
 import { track } from '@/forest/telemetry/track'
