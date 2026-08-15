@@ -105,7 +105,7 @@ export async function handleAffiliate(chatId: string): Promise<void> {
   const lines = stats.conversions
     .slice(0, 5)
     .map(
-      (c) =>
+      (c: { conversionId: string; commissionUsd: number; status: string }) =>
         `• \`${c.conversionId.slice(0, 8)}\` — $${c.commissionUsd.toFixed(2)} (${c.status})`,
     );
   await sendMessage(
@@ -131,7 +131,7 @@ export async function handleVideos(chatId: string, statusFilter?: string): Promi
     return;
   }
   const lines = list.videos.map(
-    (v) => `• \`${v.id.slice(0, 8)}\` — ${v.title ?? 'Untitled'} _(${v.status})_`,
+    (v: { id: string; title: string | null; status: string }) => `• \`${v.id.slice(0, 8)}\` — ${v.title ?? 'Untitled'} _(${v.status})_`,
   );
   await sendMessage(chatId, `🎬 *Videos* — ${list.count} kết quả\n${lines.join('\n')}`);
 }
@@ -331,14 +331,14 @@ export async function handleSeoScript(chatId: string, rawArg: string): Promise<v
     return;
   }
   const coverageLine = out.result.keywordCoverage
-    .map((c) => `${c.keyword} ×${c.hits}`)
+    .map((c: { keyword: string; hits: number }) => `${c.keyword} ×${c.hits}`)
     .join(', ');
   await sendMessage(
     chatId,
     `🧠 *SEO Script* — score ${out.result.seoScore}/100 (${out.result.wordCount} words)\n` +
       (coverageLine ? `_Coverage:_ ${coverageLine}\n` : '') +
       `\`\`\`\n${out.result.script}\n\`\`\`\n` +
-      `📝 _Title ideas:_\n${out.result.suggestedTitles.map((t) => `• ${t}`).join('\n')}`,
+      `📝 _Title ideas:_\n${out.result.suggestedTitles.map((t: string) => `• ${t}`).join('\n')}`,
   );
 }
 
