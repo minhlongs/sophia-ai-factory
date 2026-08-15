@@ -35,22 +35,24 @@ font-family: var(--font-geist-mono); /* data/mono fallback */
 Color semantics live in `globals.css` and Tailwind 4 utilities.
 
 ### Light mode (default)
-- **Background**: warm cream paper (light)
-- **Foreground**: deep indigo ink
-- **Primary**: amber gold
+- **Background**: warm cream paper (`40 30% 97%`)
+- **Foreground**: deep indigo ink (`240 12% 12%`)
+- **Primary**: amber gold (`35 80% 44%` → `#CA7F16`)
 - **Primary foreground**: white
 - **Primary container**: warm amber tint
-- **Secondary**: subtle lavender indigo
-- **Muted**: light stone
-- **Accent**: indigo
+- **Secondary**: terracotta (`18 40% 48%` → `#AB6749`)
+- **Muted**: muted cream (`40 20% 94%`)
+- **Accent**: lighter amber for hover (`35 60% 50%` → `#CC8C33`)
 
 ### Dark mode (`.dark` class)
-- **Background**: `#0e0e12`
-- **Foreground**: `#e7e4f0`
-- **Primary**: `#c3c3ee` (indigo)
-- **Primary container**: `#4e4f74`
-- **Secondary**: `#c6c4dd`
-- **Muted**: `#131318`
+Primary **inherits** the amber token from `:root` — the indigo override was removed, so `--primary` is `35 80% 44%` in both modes.
+- **Background**: `240 13% 6%` (`#0d0d11`)
+- **Foreground**: `255 29% 92%` (`#e8e5f1`)
+- **Primary**: amber `35 80% 44%` (`#CA7F16`) — inherited
+- **Primary container**: `238 20% 38%` (`#4e4f74`)
+- **Secondary**: `245 27% 82%` (`#c7c5dd`)
+- **Muted**: `240 12% 8%` (`#121217`)
+- **Accent / ring**: indigo `240 56% 85%` (`#c3c3ee`)
 
 ## 3. UI Components
 

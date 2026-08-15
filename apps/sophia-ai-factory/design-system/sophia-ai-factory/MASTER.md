@@ -25,11 +25,12 @@ All values are HSL unless noted. Source: `src/app/globals.css`.
 
 | Role | Token | Hex equivalent |
 |------|-------|---|
-| Primary | `var(--primary)` / `var(--color-primary)` | `#E5A340` (amber gold) |
-| Primary container | `var(--primary-container)` | warm amber tint |
-| Accent | `--accent` | `#6366F1` (indigo) |
-| Background (light) | `var(--background)` | warm cream paper |
-| Background (dark) | `.dark --background` | `#0e0e12` |
+| Primary (both modes) | `var(--primary)` | `#CA7F16` (amber gold, `35 80% 44%`) |
+| Primary container (light) | `var(--primary-container)` | warm amber tint |
+| Accent (light) | `--accent` | `#CC8C33` (lighter amber for hover) |
+| Accent / ring (dark) | `.dark --accent` | `#C3C3EE` (indigo) |
+| Background (light) | `var(--background)` | warm cream paper (`40 30% 97%`) |
+| Background (dark) | `.dark --background` | `#0d0d11` (`240 13% 6%`) |
 | Foreground | `var(--foreground)` | deep indigo ink |
 
 ## Typography / Kiểu Chữ
