@@ -110,7 +110,7 @@ export interface MiscSettings {
 
 export const DEFAULT_BRANDING: BrandingSettings = {
   logoUrl: null,
-  primaryColor: '#7c3aed',
+  primaryColor: '#CA7F16',
   accentColor: null,
   welcomeMessage: null,
   customDomain: null,
