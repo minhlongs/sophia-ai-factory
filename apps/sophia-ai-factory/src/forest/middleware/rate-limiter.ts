@@ -226,6 +226,7 @@ const AUTH_ENDPOINT_PATTERNS = [
   '/api/auth/login',
   '/api/auth/mfa/challenge',
   '/api/auth/admin/challenge',
+  '/api/auth/sign-up/email',
 ]
 
 /**

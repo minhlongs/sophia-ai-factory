@@ -11,7 +11,6 @@ export async function GET() {
     const health = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      uptime: Math.floor(process?.uptime?.() ?? 0),
       environment: process.env.NODE_ENV ?? 'unknown',
     };
 
