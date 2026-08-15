@@ -1,10 +1,11 @@
+'use client';
+
 import { Link } from "@/navigation";
-import { getTranslations } from "next-intl/server";
-import { Button } from "@/seed/components/ui/button";
+import { useTranslations } from "next-intl";
 import { ArrowLeft, Home } from "lucide-react";
 
-export default async function NotFound() {
-  const t = await getTranslations("notFoundPage");
+export default function NotFound() {
+  const t = useTranslations("notFoundPage");
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] p-6 text-center space-y-8">
       <div className="relative">
@@ -18,34 +19,31 @@ export default async function NotFound() {
         </div>
       </div>
 
-      <div className="space-y-4 max-w-md mx-auto">
-        <h2 className="text-3xl font-bold text-white">{t("heading")}</h2>
-        <p className="text-muted-foreground text-lg">{t("description")}</p>
+      <div className="space-y-3">
+        <h2 className="text-2xl sm:text-3xl font-bold text-foreground">
+          {t("heading")}
+        </h2>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          {t("description")}
+        </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md justify-center">
+      <div className="flex flex-col sm:flex-row gap-3">
         <Link href="/">
-          <Button
-            size="lg"
-            className="w-full sm:w-auto gap-2 bg-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/80"
-          >
-            <Home className="w-4 h-4" aria-hidden="true" />
+          <span className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary text-primary-foreground px-6 py-3 text-sm font-semibold hover:opacity-90 transition-all">
+            <Home className="w-4 h-4" />
             {t("returnHome")}
-          </Button>
+          </span>
         </Link>
         <Link href="/dashboard">
-          <Button
-            variant="outline"
-            size="lg"
-            className="w-full sm:w-auto gap-2 border-white/20 hover:bg-white/10"
-          >
-            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
+          <span className="inline-flex items-center justify-center gap-2 rounded-lg border border-border px-6 py-3 text-sm font-semibold text-foreground hover:bg-card transition-colors">
+            <ArrowLeft className="w-4 h-4" />
             {t("goToDashboard")}
-          </Button>
+          </span>
         </Link>
       </div>
 
-      <div className="pt-12 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground w-full max-w-2xl border-t border-border mt-8">
+      <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground pt-4 border-t border-border">
         <Link href="/#features" className="hover:text-[var(--neon-cyan)]">
           {t("features")}
         </Link>

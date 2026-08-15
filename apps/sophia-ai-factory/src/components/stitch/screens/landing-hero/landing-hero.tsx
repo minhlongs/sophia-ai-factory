@@ -56,7 +56,7 @@ export default function LandingHero() {
               {locale === 'en' ? 'VI' : 'EN'}
             </button>
             <Link href="/login" className="text-on-surface-variant hover:text-on-surface transition-colors font-medium text-sm">{t('nav.login')}</Link>
-            <Link href="/auth/signup" className="bg-primary text-primary-foreground font-bold px-5 py-2.5 rounded-lg text-sm hover:opacity-90 transition-all shadow-lg shadow-primary/20">
+            <Link href="/register" className="bg-primary text-primary-foreground font-bold px-5 py-2.5 rounded-lg text-sm hover:opacity-90 transition-all shadow-lg shadow-primary/20">
               {t('nav.getStarted')}
             </Link>
           </div>
@@ -87,7 +87,7 @@ export default function LandingHero() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 mb-16">
             <Link
-              href="/auth/signup"
+              href="/register"
               className="bg-primary text-primary-foreground px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transition-all shadow-lg shadow-primary/30 flex items-center gap-2 group"
             >
               {t('cta.startFree')}

@@ -254,7 +254,7 @@ export function LoginForm({ redirectTo }: LoginFormProps) {
       <p className="text-center text-sm text-zinc-400">
         {t('noAccount')}{' '}
         <Link
-          href="/auth/signup"
+          href="/register"
           className="text-primary hover:opacity-80 font-medium transition-opacity"
         >
           {t('signUp')}
