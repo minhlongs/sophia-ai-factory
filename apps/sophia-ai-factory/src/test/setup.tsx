@@ -4,21 +4,21 @@
  */
 
 import * as React from 'react';
-import { vi } from 'vitest';
+import { vi, beforeEach, afterEach } from 'vitest';
 
 // ── D1 / R2 / KV mocks ───────────────────────────────────────────────────
 function createD1Mock() {
-  const makeStmt = () => ({
-    first: vi.fn().mockResolvedValue(null),
-    all: vi.fn().mockResolvedValue({ results: [], meta: { changes: 0, duration: 1 } }),
-    run: vi.fn().mockResolvedValue({ success: true, meta: { changes: 0, duration: 1 } }),
-    bind: vi.fn().mockReturnThis(),
-  });
   return {
-    prepare: vi.fn().mockImplementation((_sql: string) => makeStmt()),
-    batch: vi.fn().mockResolvedValue([]),
-    exec: vi.fn().mockResolvedValue({ results: [], meta: { changes: 0 } }),
-    dump: vi.fn().mockResolvedValue({ data: '' }),
+    prepare: (_sql: string) => ({
+      bind: (..._vals: unknown[]) => ({
+        first: async () => null,
+        all: async () => ({ results: [], meta: { changes: 0, duration: 1 } }),
+        run: async () => ({ success: true, meta: { changes: 0, duration: 1 } }),
+      }),
+    }),
+    batch: async (_stmts: unknown[]) => {},
+    exec: async (_sql: string) => ({ results: [], meta: { changes: 0 } }),
+    dump: async () => ({ data: '' }),
     transaction: { statements: [] },
   };
 }
@@ -47,128 +47,123 @@ const kvMock = {
 // ── NextResponse mock ─────────────────────────────────────────────────────
 //
 // Tests need three things from the NextResponse mock:
-// 1) Static factory methods: NextResponse.json / .redirect / .next
-// 2) Constructor support: new NextResponse(body?, init?)
-// 3) instanceof NextResponse checks in middleware/guards
 //
-// Both 2 and 3 are satisfied by a single mock object whose prototype chain
-// reaches the real global Response. The mock is callable as a function (tests
-// do `NextResponse.json(...)`) and constructable (production code does
-// `new NextResponse(body, init)`). `instanceof NextResponse` checks succeed
-// because every Response returned by the mock carries NextResponseMock in its
-// prototype chain.
+// 1. Static factory methods used across the codebase:
+//
+//      NextResponse.json(data, { status })
+//      NextResponse.redirect(url, { status })
+//      NextResponse.next({ status })
+//
+// 2. Constructor usage:
+//
+//      new NextResponse(body?, init?)
+//
+//    This is required by:
+//    - `src/middleware/middleware-api-handler.ts` (new NextResponse(…, { status }))
+//    - many API route tests that write:
+//        new NextResponse(JSON.stringify({ error }), { status: 401 })
+//    - the SSE mission stream route (`src/app/api/v1/missions/[id]/stream/route.ts`)
+//      which returns an event-stream body typed as `NextResponse`.
+//
+// 3. instanceof checks:
+//
+//      if (authResult instanceof NextResponse) return authResult;
+//
+//    Used in middleware pipelines and admin guards.
+//    When tests use vi.mock('next/server', …) with a function-based mock the
+//    binding that instanceof sees is the same function object, so we make
+//    the mock function's prototype equal to the Response prototype.
+//
+// Both (2) and (3) are satisfied by making the mock function itself the
+// Response constructor (because in jsdom `new Response(...)` is callable)
+// and assigning its prototype to `Response.prototype`.
 // ─────────────────────────────────────────────────────────────────────────
 
-// Declared first because vi.mock (hoisted by vitest) must capture these.
-class _NextResponseMock {
-  private _res: Response;
+const GlobalResponse =
+  // jsdom always has a global Response; vitest is fine with it.
+  // Keep the explicit cast to satisfy TS when the global is missing.
+  globalThis.Response;
 
-  constructor(body?: BodyInit | null, init?: ResponseInit) {
-    const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
-    this._res = new GlobalResponse(body, init);
-  }
-
-  static json(data: unknown, init?: { status?: number; headers?: Record<string, string> }): Response {
-    const body = typeof data === 'string' ? data : JSON.stringify(data);
-    const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
-    return new GlobalResponse(body, {
-      status: init?.status ?? 200,
-      headers: { 'content-type': 'application/json', ...init?.headers },
-    });
-  }
-
-  static redirect(url: string | URL, init?: number | { status?: number }): Response {
-    const status = typeof init === 'number' ? init : (init?.status ?? 307);
-    const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
-    return new GlobalResponse(null, {
-      status,
-      headers: { location: typeof url === 'string' ? url : url.toString() },
-    });
-  }
-
-  static next(init?: { status?: number }): Response {
-    const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
-    return new GlobalResponse(null, { status: init?.status ?? 200 });
-  }
-
-  static rewrite(url: string | URL, init?: ResponseInit): Response {
-    const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
-    return new GlobalResponse(null, { status: init?.status ?? 200, ...init });
-  }
+function nextResponseFactoryFn(
+  this: Response,
+  body?: BodyInit | null,
+  init?: ResponseInit,
+): Response {
+  if (body instanceof Response) return body;
+  return new GlobalResponse(body, init);
 }
 
-// Make `instanceof _NextResponseMock` resolve true for any Response created
-// through our mock. We do this by templating a thin wrapper class whose
-// prototype chain goes through `_NextResponseMock` but whose instances ARE
-// real `Response` objects (so all fetch/body methods continue to work).
-const NextResponseMock = (() => {
-  const GlobalResponse = (globalThis as unknown as Record<string, typeof Response>).Response;
+// Make `instanceof NextResponse` true for any Response produced by this mock.
+Object.setPrototypeOf(nextResponseFactoryFn, GlobalResponse);
+Object.setPrototypeOf(nextResponseFactoryFn.prototype, GlobalResponse.prototype);
 
-  // Each time `new NextResponseMock(...)` is called, redirect it through the
-  // real Response constructor so Vitest / fetch sees a genuine Response.
-  const Real = GlobalResponse;
-  function C(this: Response, ...args: ConstructorParameters<typeof Response>) {
-    return Reflect.construct(Real, args, new.target);
-  }
-  // Template link: instances of C are also instances of _NextResponseMock
-  C.prototype = Object.create(_NextResponseMock.prototype);
-  C.prototype.constructor = _NextResponseMock;
-
-  // Per-instance cookies interface — next-intl middleware calls
-  // response.cookies.set() on NextResponse instances. Add a lightweight
-  // cookie store so intlMiddleware doesn't crash in tests.
-  const cookiesMap = new WeakMap<object, ReturnType<typeof createCookieJar>>();
-  Object.defineProperty(C.prototype, 'cookies', {
-    get() {
-      if (!cookiesMap.has(this)) {
-        const store = new Map<string, { name: string; value: string }>();
-        cookiesMap.set(this, {
-          get: (name: string) => store.get(name),
-          getAll: () => Array.from(store.values()),
-          set: (name: string, value: string) => { store.set(name, { name, value }); },
-          delete: (name: string) => { store.delete(name); },
-          deleteAll: () => { store.clear(); },
-          has: (name: string) => store.has(name),
-          [Symbol.iterator]: function* () {
-            for (const [name, value] of store) yield { name, value };
-          },
-          *entries() {
-            for (const [name, entry] of store) yield [name, entry.value] as [string, string];
-          },
-          get size() { return store.size; },
-        });
-      }
-      return cookiesMap.get(this);
-    },
-    configurable: true,
+// Attach the static factory methods
+nextResponseFactoryFn.json = (data: unknown, init?: { status?: number }): Response => {
+  const body = typeof data === 'string' ? data : JSON.stringify(data);
+  return new GlobalResponse(body, {
+    status: init?.status ?? 200,
+    headers: { 'content-type': 'application/json' },
   });
+};
 
-  // Stamp a plain Response so `instanceof NextResponse` passes for results of
-  // the static factories (json/redirect/next). Without this the route guards
-  // (`auth instanceof NextResponse`) miss auth-failure responses under Vitest.
-  const stamp = (res: Response): Response => {
-    Object.setPrototypeOf(res, C.prototype);
-    return res;
+nextResponseFactoryFn.redirect = (url: string | URL, init?: { status?: number }): Response => {
+  return new GlobalResponse(null, {
+    status: init?.status ?? 307,
+    headers: { location: typeof url === 'string' ? url : url.toString() },
+  });
+};
+
+nextResponseFactoryFn.next = (init?: { status?: number }): Response => {
+  return new GlobalResponse(null, { status: init?.status ?? 200 });
+};
+
+// Exported mock binding
+const NextResponseMock = nextResponseFactoryFn;
+
+// ── Mock NextRequest on next/server ───────────────────────────────────────
+// Needed because vi.mock('next/server') replaces the whole module with plain JSON.
+// Tests still construct `new NextRequest(url)` from `next/server`.
+vi.mock('next/server', () => ({
+  NextResponse: NextResponseMock,
+  NextRequest: MockNextRequest,
+}));
+
+// ── Minimal NextRequest factory ───────────────────────────────────────────
+let mockNextResponseImplementation: {
+  json: (data: unknown, init?: { status?: number }) => Response;
+  redirect: (url: string | URL, init?: { status?: number }) => Response;
+  next: (init?: { status?: number }) => Response;
+} = {
+  json: (data: unknown, init?: { status?: number }) => {
+    const body = typeof data === 'string' ? data : JSON.stringify(data);
+    return new Response(body, {
+      status: init?.status ?? 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  },
+  redirect: (url: string | URL, init?: { status?: number }) => {
+    return new Response(null, {
+      status: init?.status ?? 307,
+      headers: { location: typeof url === 'string' ? url : url.toString() },
+    });
+  },
+  next: (init?: { status?: number }) => {
+    return new Response(null, { status: init?.status ?? 200 });
+  },
+};
+
+export function configureNextResponse(
+  overrides: Partial<{
+    json: (data: unknown, init?: { status?: number }) => Response;
+    redirect: (url: string | URL, init?: { status?: number }) => Response;
+    next: (init?: { status?: number }) => Response;
+  }>,
+) {
+  mockNextResponseImplementation = {
+    ...mockNextResponseImplementation,
+    ...overrides,
   };
-
-  // Static factory methods: return real Response instances carrying the mock
-  // prototype so they pass instanceof checks too.
-  C.json = (data: unknown, init?: { status?: number }): Response =>
-    stamp(_NextResponseMock.json(data, init));
-  C.redirect = (url: string | URL, init?: number | { status?: number }): Response =>
-    stamp(_NextResponseMock.redirect(url, init));
-  C.next = (init?: { status?: number }): Response =>
-    stamp(_NextResponseMock.next(init));
-  C.rewrite = (url: string | URL, init?: ResponseInit): Response =>
-    stamp(_NextResponseMock.rewrite(url, init));
-
-  return C as unknown as typeof _NextResponseMock;
-})();
-
-// Re-point the wrapper so instanceof works through the final prototype chain.
-const _RealRes = (globalThis as unknown as Record<string, typeof Response>).Response;
-Object.setPrototypeOf(NextResponseMock, _RealRes);
-Object.setPrototypeOf(NextResponseMock.prototype, _RealRes.prototype);
+}
 
 // ── SSRF-safe NextRequest ────────────────────────────────────────────────
 class MockNextRequest extends Request {
@@ -177,6 +172,7 @@ class MockNextRequest extends Request {
 
   constructor(url: string | URL, init?: RequestInit) {
     const urlStr = typeof url === 'string' ? url : url.toString();
+    // @ts-ignore - ssrf-safe constructor with allowedTargets
     super(urlStr, init);
     this.cookies = createCookieJar();
     this.nextUrl = new URL(urlStr, 'http://localhost');
@@ -186,7 +182,7 @@ class MockNextRequest extends Request {
     (this.nextUrl as any).clone = () => new URL(this.nextUrl.toString());
   }
 
-  // @ts-expect-error - Cloudflare Request<…, Cf Properties<…>> LSP mismatch unavoidable for test mock; runtime clone() is correct
+  // @ts-ignore - Cloudflare Request<…, Cf Properties<…>> LSP mismatch unavoidable for test mock; runtime clone() is correct
   clone(): Request {
     const cloneUrl = this.nextUrl.toString();
     const cloned = new MockNextRequest(cloneUrl);
@@ -230,7 +226,7 @@ function createCookieJar() {
   };
 }
 
-// ── Mock next/link ───────────────────────────────────────────────────────
+// ── Mock next/link ────────────────────────────────────────────────────────
 type LinkProps = Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'> & {
   href?: string | (() => string);
   children?: React.ReactNode;
@@ -250,11 +246,3 @@ globalThis.console = {
   log: vi.fn(),
   error: globalThis.console.error,
 };
-
-// vitest hoists vi.mock to the top of the file during transformation, so
-// NextResponseMock and MockNextRequest — referenced inside the factory — must
-// already be declared above this call.
-vi.mock('next/server', () => ({
-  NextResponse: NextResponseMock,
-  NextRequest: MockNextRequest,
-}));
