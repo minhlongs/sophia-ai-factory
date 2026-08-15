@@ -15,7 +15,7 @@
 
 import Script from 'next/script'
 import { useEffect } from 'react'
-import { captureUtmFromUrl } from './utm-capture'
+import { captureUtmFromUrl } from '@/seed/utils/utm-capture'
 
 interface Ga4ScriptProps {
   measurementId: string

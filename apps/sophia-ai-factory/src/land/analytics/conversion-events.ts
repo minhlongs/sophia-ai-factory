@@ -20,7 +20,7 @@
  * @module lib/analytics/conversion-events
  */
 
-import { getUtmParams } from './utm-capture'
+import { getUtmParams } from '@/seed/utils/utm-capture'
 
 /** GA4 gtag function type — subset we use */
 type GtagFn = (command: string, action: string, params?: Record<string, unknown>) => void

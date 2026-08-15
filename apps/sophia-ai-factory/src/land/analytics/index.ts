@@ -8,7 +8,7 @@
  */
 export * from './agent-performance-resolver';
 export * from './analytics-normalizer';
-export * from './analytics-number-formatters';
+export * from '@/seed/utils/analytics-number-formatters';
 export * from './analytics-query-resolvers';
 export * from './analytics-timeseries-helpers';
 export * from './chart-export';
@@ -27,6 +27,6 @@ export * from './roi-calculator';
 export * from './sse-broadcaster';
 // UsageSummary excluded — billing/usage-aggregator-types exports the canonical version
 export type { AiService, AnalyticsGranularity, UsageFilters, TimeSeriesPoint, ServiceBreakdown, UsageMetrics, RevenuePeriod, TierRevenue, RevenueTrend, RevenueMetrics, LicenseStatus, LicenseFilters, LicenseUtilization, LicenseMetrics, AnalyticsErrorResponse, UserContext, ViolationType, ViolationSeverity, ViolationEvent, ViolationSummary, ViolationFilters, } from './types';
-export * from './utm-capture';
+export * from '@/seed/utils/utm-capture';
 export * from './video-render-benchmark';
 export * from './youtube-analytics-fetcher';

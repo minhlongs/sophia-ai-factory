@@ -13,7 +13,7 @@ export {
   formatCurrency,
   formatPercentage,
   calculatePercentChange,
-} from '@/land/analytics/analytics-number-formatters'
+} from '@/seed/utils/analytics-number-formatters'
 
 export {
   formatDate,
