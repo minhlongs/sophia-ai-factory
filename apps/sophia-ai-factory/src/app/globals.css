@@ -168,10 +168,7 @@
   --popover: 240 12% 11%;
   --popover-foreground: 255 29% 92%;
 
-  /* ── Brand (indigo) ──────────────────────────────────────────────────── */
-  --primary: 240 56% 85%;               /* #c3c3ee — indigo */
-  --primary-foreground: 238 24% 31%;    /* #3c3d61 */
-
+  
   --secondary: 245 27% 82%;             /* #c6c4dd */
   --secondary-foreground: 240 14% 28%;  /* #3e3e52 */
 

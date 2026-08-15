@@ -87,3 +87,6 @@ worker-configuration.d.ts
 _scratch/
 
 plans/
+
+# Installed agent skills (bulk data, not source)
+.claude/skills/
