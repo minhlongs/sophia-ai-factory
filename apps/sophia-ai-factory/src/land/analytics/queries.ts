@@ -9,7 +9,5 @@ export {
   fetchUsageMetrics,
   fetchRevenueMetrics,
   fetchLicenseMetrics,
-  fetchViolations,
-  fetchViolationSummary,
   fetchRevenueSnapshot,
 } from './queries/index';

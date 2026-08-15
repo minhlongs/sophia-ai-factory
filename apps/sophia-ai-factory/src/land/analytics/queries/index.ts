@@ -7,4 +7,3 @@ export * from './revenue-nowpayments';
 export * from './revenue-queries';
 export * from './revenue-unified-query';
 export * from './usage-queries';
-export * from './violation-queries';
