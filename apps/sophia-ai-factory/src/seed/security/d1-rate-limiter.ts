@@ -7,7 +7,8 @@
  * by distributing requests across isolates.
  *
  * Uses INSERT OR REPLACE pattern for atomic UPSERT.
- * Fail-open: on D1 errors, logs error and allows request.
+ * Fail-closed: on D1 errors, logs error and denies request.
+ * A rate-limit failure must never become a bypass.
  */
 
 import { getD1 } from '@/seed/db/client';
@@ -60,12 +61,12 @@ export async function checkD1RateLimit(
 
   const db = getD1();
   if (!db) {
-    logger.error(
-      'D1 rate limit: D1 binding unavailable, allowing request (fail-open)',
-    );
+    // Fail-closed: if D1 is unavailable, deny the request.
+    // A rate-limit check failure must never become an auth bypass.
+    logger.error('D1 rate limit: D1 binding unavailable, denying request');
     return {
-      allowed: true,
-      remaining: config.maxRequests,
+      allowed: false,
+      remaining: 0,
       resetAt: now + config.windowSeconds,
     };
   }
@@ -156,11 +157,12 @@ export async function checkD1RateLimit(
       };
     }
 
-    // Transient error (network, timeout) - fail open
-    logger.error('D1 rate limit check failed (transient), failing open', error);
+    // Fail-closed on ALL errors (transient or permanent).
+    // A D1 hiccup during a brute-force burst must not become an auth bypass.
+    logger.error('D1 rate limit check failed, denying request', error);
     return {
-      allowed: true,
-      remaining: config.maxRequests,
+      allowed: false,
+      remaining: 0,
       resetAt: Math.floor(Date.now() / 1000) + config.windowSeconds,
     };
   }

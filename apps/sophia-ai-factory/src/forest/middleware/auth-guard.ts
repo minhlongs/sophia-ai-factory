@@ -198,60 +198,79 @@ export class AuthError extends Error {
  * These routes do NOT require authentication even under blanket auth guard.
  */
 export function isPublicApiRoute(pathname: string): boolean {
-  // Exact/prefix matches for public endpoints
-  const publicPatterns = [
-    // Health checks (public)
+  // Pinned exact paths only. Broad prefixes were removed (2026-08-15 security audit)
+  // because any new subpath under /api/auth, /api/webhooks, /api/cron, etc. became
+  // public automatically. New public endpoints must be added explicitly here.
+  const exactPublic = new Set([
+    // Health / status (public)
     '/api/health',
     '/api/sophia-index/health',
-  '/api/public',
-
-    // Version endpoint (public)
+    '/api/public',
     '/api/version',
-
-    // Webhooks (external service callbacks - authenticated via signature, not session)
-    '/api/webhooks',
-
-    // Auth endpoints (login, logout, callback, session, signup, MFA setup, reset)
-    '/api/auth',
-    '/api/oauth',
-
-    // Public API documentation
-    '/api/openapi',
+    '/api/version-badge',
+    '/api/version-text',
+    '/api/robots.txt',
+    '/api/sitemap.xml',
     '/api/status.json',
-
-    // CSP reports (browser sent, no auth)
     '/api/csp-report',
-
-    // Public check endpoint (tier/feature check without login)
     '/api/check-access',
+    '/api/openapi.json',
 
-    // Cron endpoints (internal scheduler - uses INTERNAL_CRON_SECRET)
-    '/api/cron',
+    // Explicit Better Auth routes (must stay public — Better Auth handles its own auth)
+    '/api/auth/sign-in/email',
+    '/api/auth/sign-up/email',
+    '/api/auth/sign-in/password-reset/request',
+    '/api/auth/sign-in/password-reset/confirm',
+    '/api/auth/magic-link',
+    '/api/auth/callback',
+    '/api/auth/session',
+    '/api/auth/logout',
+    '/api/auth/mfa/setup',
+    '/api/auth/mfa/verify',
+    '/api/auth/mfa/challenge',
+    '/api/auth/mfa/status',
+    '/api/auth/mfa/disable',
+    '/api/auth/admin-challenge',
+    '/api/auth/youtube/callback',
+    '/api/auth/youtube/disconnect',
+    '/api/auth/tiktok/callback',
 
-    // Inngest webhook (external job scheduler)
+    // Explicit webhook routes (authenticated via signature, not session)
+    '/api/webhooks/nowpayments',
+    '/api/webhooks/clickbank',
+    '/api/webhooks/shopify',
+    '/api/webhooks/stripe',
+    '/api/webhooks/payos',
+
+    // Internal scheduler (authenticated via INTERNAL_CRON_SECRET, not session)
+    '/api/cron/email-drip',
+    '/api/cron/d1-backup',
+    '/api/cron/usage-aggregation',
+    '/api/cron/affiliate-payout',
+    '/api/cron/payment-reconciliation',
+
+    // Inngest SSE webhook
     '/api/inngest',
 
-    // Checkout status (uses orderId as bearer token, not session)
+    // Checkout / order flows (token-based, not session)
     '/api/checkout/status',
+    '/api/pricing/stripe-checkout',
 
-    // Token-based email flows (magic link, email verification, password reset)
+    // Token-based email flows
     '/api/welcome/resend',
     '/api/welcome/validate',
     '/api/account/delete/confirm',
     '/api/account/change-email/verify',
-  ];
+    '/api/sign-in/email-verification',
+  ]);
 
-  for (const pattern of publicPatterns) {
-    // Exact match
-    if (pathname === pattern) return true;
-    // Prefix match: if pattern is a directory (or prefix), any subpath is also public
-    if (pathname.startsWith(pattern + '/')) return true;
-    // Wildcard suffix match (e.g., '/api/sign-*')
-    if (pattern.endsWith('*') && pathname.startsWith(pattern.slice(0, -1))) return true;
-  }
+  if (exactPublic.has(pathname)) return true;
 
-  // /api/sign-* pattern (email verification, password reset tokens)
+  // Stable token-based flow prefix family
   if (pathname.startsWith('/api/sign-')) return true;
+  if (pathname.startsWith('/api/auth/')) return false; // default deny
+  if (pathname.startsWith('/api/webhooks/')) return false; // default deny
+  if (pathname.startsWith('/api/cron/')) return false; // default deny
 
   return false;
 }
