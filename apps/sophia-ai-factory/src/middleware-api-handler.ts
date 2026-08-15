@@ -55,7 +55,7 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
        status: 429,
        headers: {
          'Content-Type': 'application/json',
-         'Retry-After': String(Math.max(0, rateLimitResult.reset - Math.floor(Date.now() / 1000))),
+         'Retry-After': String(Math.max(0, Math.ceil((rateLimitResult.reset - Date.now()) / 1000))),
          'X-RateLimit-Limit': String(rateLimitConfig.maxRequests),
          'X-RateLimit-Remaining': '0',
          'X-RateLimit-Reset': String(rateLimitResult.reset),

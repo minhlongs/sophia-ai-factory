@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateMagicLinkToken, consumeMagicLink } from '@/tree/handover/handover-magic-link';
 import { getD1 } from '@/seed/db/client';
 import { getAuth } from '@/seed/auth/better-auth-server';
+import { getSessionCookieName, isProductionEnvironment } from '@/seed/auth/cookie-name';
 import { logger } from '@/seed/utils/logger-utility';
 import { writeAuditLog } from '@/tree/admin/audit-log';
 import { signCookieValue, hashEmail } from '@/seed/auth/sign-cookie-value';
@@ -186,11 +187,8 @@ export async function POST(request: NextRequest, ctx: RouteParams): Promise<Next
     if (!secret) {
       logger.error('[Welcome/Consume] Missing BETTER_AUTH_SECRET — cannot sign session cookie');
     } else {
-      // Must match better-auth-server.ts `useSecureCookies` logic exactly:
-      // useSecureCookies = process.env.NODE_ENV !== 'development'
-      // On Cloudflare Workers production, NODE_ENV is 'production' → __Secure- prefix.
-      const useSecureCookies = process.env.NODE_ENV !== 'development';
-      const cookieName = `${useSecureCookies ? '__Secure-' : ''}better-auth.session_token`;
+      const cookieName = getSessionCookieName();
+      const useSecureCookies = isProductionEnvironment();
       const signedValue = await signCookieValue(session.token, secret);
       const expires = new Date(session.expiresAt).toUTCString();
       const cookieAttrParts = [
@@ -200,7 +198,6 @@ export async function POST(request: NextRequest, ctx: RouteParams): Promise<Next
         'SameSite=Lax',
         `Expires=${expires}`,
       ];
-      // Only add Secure flag when using __Secure- prefix (matches useSecureCookies in better-auth-server.ts)
       if (useSecureCookies) cookieAttrParts.splice(2, 0, 'Secure');
       const cookieAttrs = cookieAttrParts.join('; ');
       response.headers.append('Set-Cookie', cookieAttrs);

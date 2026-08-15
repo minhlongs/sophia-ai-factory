@@ -285,7 +285,7 @@ export const OPENAPI_SPEC: OpenApiSpec = {
         type: 'apiKey',
         in: 'cookie',
         name: 'better-auth.session_token',
-        description: 'Better Auth session cookie (set after login).',
+        description: 'Better Auth session cookie. Derives __Secure- prefix from NODE_ENV via seed/auth/cookie-name.getSessionCookieName() during runtime; spec literal shows dev-mode value.',
       },
     },
     schemas: {

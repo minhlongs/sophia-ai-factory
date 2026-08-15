@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/seed/utils/logger-utility';
 import { getAuth } from '@/seed/auth/better-auth-server';
+import { getSessionCookieName } from '@/seed/auth/cookie-name';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,8 @@ export async function POST(request: NextRequest) {
     // Revoke session server-side via Better Auth
     try {
       const auth = getAuth();
-      const sessionToken = request.cookies.get('better-auth.session_token')?.value;
+      const sessionCookieName = getSessionCookieName();
+      const sessionToken = request.cookies.get(sessionCookieName)?.value;
       if (sessionToken) {
         await auth.api.revokeSession({
           body: { token: sessionToken },
@@ -31,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({ message: 'Logged out successfully' });
     response.cookies.delete('auth-token');
-    response.cookies.delete('better-auth.session_token');
+    response.cookies.delete(getSessionCookieName());
     return response;
   } catch (error) {
     logger.error('[auth/logout] POST error', error instanceof Error ? error : new Error(String(error)));
