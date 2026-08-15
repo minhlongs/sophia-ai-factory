@@ -32,9 +32,11 @@ rm -f "${BUNDLE_SERVER}.bak"
 
 # Post-patch assertion: verify that the most commonly-imported D3 named exports
 # are present. Exit non-zero so CI/deploy catches a broken patch immediately.
+# Exports are comma-separated within a single `export const range=void 0,...,sym=void 0,...;`
+# statement, so only the first symbol (`range`) is preceded by `export const`.
 CRITICAL_EXPORTS="range,timeYear,timeFormat,utcWeek,interpolate,group,merge"
 for sym in $(echo "$CRITICAL_EXPORTS" | tr ',' '\n'); do
-  if ! grep -q "export const ${sym}" "$BUNDLE_SERVER"; then
+  if ! grep -q "${sym}=void 0" "$BUNDLE_SERVER"; then
     echo "❌ Post-patch assertion failed: '$sym' not exported from empty-client-pkg stub"
     exit 1
   fi
