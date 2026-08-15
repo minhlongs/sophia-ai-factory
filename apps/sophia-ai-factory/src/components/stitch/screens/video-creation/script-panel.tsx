@@ -53,8 +53,8 @@ export function ScriptPanel({
           onChange={onScriptChange}
           placeholder={t('scriptPlaceholder')}
           rows={6}
-          className="stitch-scrollbar w-full resize-none rounded-lg border bg-black p-4 text-foreground placeholder-[#acaab5] outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-[#c3c3ee]"
-          style={{ borderColor: '#484750' }}
+          className="stitch-scrollbar w-full resize-none rounded-lg border bg-black p-4 text-foreground placeholder-[muted-foreground] outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-[primary]"
+          style={{ borderColor: 'border' }}
           aria-label={t('scriptInput')}
         />
 
@@ -66,8 +66,8 @@ export function ScriptPanel({
           <div
             className="stitch-scrollbar max-h-64 overflow-y-auto rounded-lg border p-4 leading-relaxed md:p-6"
             style={{
-              backgroundColor: '#131318',
-              borderColor: '#484750',
+              backgroundColor: 'muted',
+              borderColor: 'border',
               color: 'rgba(231, 228, 240, 0.8)',
             }}
           >
@@ -90,7 +90,7 @@ export function ScriptPanel({
           <div className="flex items-center gap-2">
             <div
               className="h-1.5 w-24 overflow-hidden rounded-full"
-              style={{ backgroundColor: '#25252e' }}
+              style={{ backgroundColor: 'muted' }}
             >
               <div
                 className={`h-2 rounded-full transition-all ${

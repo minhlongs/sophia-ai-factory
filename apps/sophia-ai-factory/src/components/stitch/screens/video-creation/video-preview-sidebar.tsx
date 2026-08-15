@@ -89,14 +89,14 @@ export function VideoPreviewSidebar({
         >
           <button
             type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-[#c3c3ee] text-[#3c3d61]"
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground"
             aria-label={t('playVoicePreview')}
           >
             <Play className="h-4 w-4" aria-hidden="true" />
           </button>
           <div
             className="relative h-1 flex-1 overflow-hidden rounded-full"
-            style={{ backgroundColor: '#25252e' }}
+            style={{ backgroundColor: 'muted' }}
             role="progressbar"
             aria-valuenow={33}
             aria-valuemin={0}
@@ -129,10 +129,10 @@ export function VideoPreviewSidebar({
                 onClick={() => onStyleChange(style.id)}
                 className={`group relative overflow-hidden rounded-lg transition-all ${
                   isSelected
-                    ? 'border-2 border-[#c3c3ee] bg-[#c3c3ee]/5'
-                    : 'border bg-[#1f1f26] hover:border-[#c3c3ee]/50'
+                    ? 'border-2 border-primary bg-primary/5'
+                    : 'border bg-muted hover:border-primary/50'
                 }`}
-                style={!isSelected ? { borderColor: '#484750' } : undefined}
+                style={!isSelected ? { borderColor: 'border' } : undefined}
                 aria-label={t(`visualStyles.${style.id}`)}
                 aria-pressed={isSelected}
               >
@@ -149,7 +149,7 @@ export function VideoPreviewSidebar({
                 <div className="p-2 text-center">
                   <span
                     className={`text-[11px] font-bold ${
-                      isSelected ? 'text-[#c3c3ee]' : 'text-muted-foreground'
+                      isSelected ? 'text-primary' : 'text-muted-foreground'
                     }`}
                   >
                     {t(`visualStyles.${style.id}`)}

@@ -23,9 +23,9 @@ export function VideoStepper({ currentStep }: { currentStep: number }) {
               <div
                 className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
                   isActive
-                    ? 'bg-[#c3c3ee] text-[#3c3d61]'
+                    ? 'bg-primary text-primary-foreground'
                     : isPast
-                      ? 'bg-[#c3c3ee] text-[#3c3d61]'
+                      ? 'bg-primary text-primary-foreground'
                       : 'bg-muted text-muted-foreground'
                 }`}
                 aria-current={isActive ? 'step' : undefined}

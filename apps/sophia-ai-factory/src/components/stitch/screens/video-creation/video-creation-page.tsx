@@ -93,7 +93,7 @@ export default function VideoCreationPage({
       {/* ── Main Content ──────────────────────────────────────────────── */}
       <div
         className="flex flex-1 overflow-hidden"
-        style={{ backgroundColor: '#131318' }}
+        style={{ backgroundColor: 'muted' }}
       >
         {/* ── Script Panel ── */}
         <ScriptPanel
@@ -117,8 +117,8 @@ export default function VideoCreationPage({
       <footer
         className="flex items-center justify-between border-t px-4 py-4 md:px-8"
         style={{
-          backgroundColor: '#131318',
-          borderColor: '#484750',
+          backgroundColor: 'muted',
+          borderColor: 'border',
         }}
       >
         <button
