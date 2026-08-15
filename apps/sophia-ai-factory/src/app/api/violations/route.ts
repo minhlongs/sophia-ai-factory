@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { logger } from '@/seed/utils/logger-utility';
-import { fetchViolations, fetchViolationSummary } from '@/land/analytics/queries';
+import { fetchViolations, fetchViolationSummary } from '@/land/analytics/queries/violation-queries';
 import { violationsQuerySchema } from '@/land/validation/services';
 import type { ViolationFilters } from '@/land/analytics/types';
 import { authenticateRequest, applyRbac } from './violations-auth';

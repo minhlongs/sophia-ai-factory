@@ -22,7 +22,7 @@ vi.mock('@/land/analytics/rbac', () => ({
   checkAdmin: vi.fn(),
 }));
 
-vi.mock('@/land/analytics/queries', () => ({
+vi.mock('@/land/analytics/queries/violation-queries', () => ({
   fetchViolations: vi.fn(),
   fetchViolationSummary: vi.fn(),
 }));
@@ -42,7 +42,7 @@ vi.mock('@/seed/security/rate-limiter', () => ({
 import { GET } from './route';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyLicenseAccess, getUserLicenseNonce, checkAdmin } from '@/land/analytics/rbac';
-import { fetchViolations, fetchViolationSummary } from '@/land/analytics/queries';
+import { fetchViolations, fetchViolationSummary } from '@/land/analytics/queries/violation-queries';
 import { validateApiKey } from '@/seed/security/api-key-validator';
 import { validateJwt } from '@/seed/security/jwt-validator';
 import { checkRateLimit } from '@/seed/security/rate-limiter';
