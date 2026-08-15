@@ -200,21 +200,7 @@
     "form-data": "^4.0.6",
     "glob": "^13.0.6",
     "undici": "^7.25.0",
-    "@babel/core": "^7.29.7"
-  },
-  "pnpm": {
-    "overrides": {
-      "serialize-javascript": "^7.0.5",
-      "postcss": "^8.5.10",
-      "@grpc/grpc-js": "^1.14.4",
-      "protobufjs": "^8.6.0",
-      "ws": "^8.19.0",
-      "vite": "^8.0.16",
-      "posthog": "^1.0.0-rc5",
-      "form-data": "^4.0.6",
-      "glob": "^13.0.6",
-      "undici": "^7.25.0",
-      "@babel/core": "^7.29.7"
-    }
+    "@babel/core": "^7.29.7",
+    "d3-time-format": "^4.0.0"
   }
 }
