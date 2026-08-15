@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getUserOrganization } from '@/seed/db/auth';
 import { getD1 } from '@/seed/db/client';
+import { errorResponse, handleThrownError } from '@/seed/api';
 import { getOrgBranding, upsertOrgBranding } from '@/tree/branding/org-branding-repo';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -25,10 +26,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const org = await getUserOrganization(user.id);
   if (!org) return NextResponse.json({ branding: null });
 
-  const db = getD1();
-  if (!db) throw new Error('D1 database binding not available');
-  const branding = await getOrgBranding(db, org.id);
-  return NextResponse.json({ branding, orgId: org.id });
+  try {
+    const db = getD1();
+    if (!db) throw new Error('D1 database binding not available');
+    const branding = await getOrgBranding(db, org.id);
+    return NextResponse.json({ branding, orgId: org.id });
+  } catch (err) {
+    return handleThrownError(err, 'Failed to load branding', 'BRANDING_LOAD_FAILED');
+  }
 }
 
 const putSchema = z.object({
@@ -56,11 +61,8 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
   let body: z.infer<typeof putSchema>;
   try {
     body = putSchema.parse(await request.json());
-  } catch (err) {
-    return NextResponse.json(
-      { error: 'Invalid input', details: err instanceof Error ? err.message : String(err) },
-      { status: 400 },
-    );
+  } catch {
+    return errorResponse('Invalid input', 'VALIDATION_ERROR', 400);
   }
 
   try {
@@ -70,7 +72,6 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     logger.info('[Branding/PUT] updated', { orgId: org.id, by: user.id });
     return NextResponse.json({ branding });
   } catch (err) {
-    logger.error('[Branding/PUT] failed', err instanceof Error ? err : undefined);
-    return NextResponse.json({ error: 'Failed to save branding' }, { status: 500 });
+    return handleThrownError(err, 'Failed to save branding', 'BRANDING_SAVE_FAILED');
   }
 }

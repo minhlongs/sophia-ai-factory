@@ -3,7 +3,7 @@
  * Import this module early to surface missing config at startup.
  *
  * Usage:
- *   import { getValidatedEnv } from '@/lib/env-validation';
+ *   import { getValidatedEnv } from '@/seed/utils/env-validation';
  *   const env = getValidatedEnv();
  *   env.BETTER_AUTH_SECRET // typed string
  */

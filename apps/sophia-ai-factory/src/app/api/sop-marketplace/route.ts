@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getD1 } from "@/seed/db/client";
+import { errorResponse, handleThrownError } from "@/seed/api";
 import { listPublishedListings } from "@/tree/sop/sop-repo-marketplace";
 import { fetchAuthorBrandings } from "@/tree/branding/org-branding-repo";
 
@@ -38,10 +39,7 @@ export async function GET(request: NextRequest) {
       sort: searchParams.get("sort") || "newest",
     });
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid query parameters", details: parsed.error.flatten() },
-        { status: 400 },
-      );
+      return errorResponse("Invalid query parameters", "VALIDATION_ERROR", 400);
     }
     const { category, limit, offset, sort } = parsed.data;
 
@@ -93,10 +91,6 @@ export async function GET(request: NextRequest) {
       sort,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json(
-      { error: "marketplace_failed", message },
-      { status: 500 },
-    );
+    return handleThrownError(err, "Failed to load marketplace", "MARKETPLACE_FAILED");
   }
 }

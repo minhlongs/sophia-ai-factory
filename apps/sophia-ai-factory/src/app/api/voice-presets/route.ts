@@ -17,7 +17,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { listPresetsForTier, type VoicePreset } from '@/seed/voices/presets';
-import { logger } from '@/seed/utils/logger-utility';
+import { handleThrownError } from '@/seed/api';
 
 /** Public projection of a VoicePreset — strips internal `coquiSpeaker`. */
 interface PublicVoicePreset {
@@ -52,8 +52,7 @@ export async function GET(): Promise<NextResponse> {
   try {
     tier = await resolveUserTier(user.id);
   } catch (err) {
-    logger.warn('[voice-presets] getUserTier failed', { userId: user.id, error: String(err) });
-    return NextResponse.json({ error: 'Failed to resolve tier' }, { status: 500 });
+    return handleThrownError(err, 'Failed to resolve tier', 'TIER_RESOLVE_FAILED');
   }
 
   const presets = listPresetsForTier(tier).map(toPublic);

@@ -17,6 +17,7 @@ import { inngest } from '@/seed/inngest/client';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { reserveVideoSlot, releaseVideoSlot } from '@/forest/quota/video-quota';
 import { logger } from '@/seed/utils/logger-utility';
+import { errorResponse } from '@/seed/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -61,10 +62,7 @@ export async function POST(
 
       const parsed = GenerateVideoBody.safeParse(body);
       if (!parsed.success) {
-        return NextResponse.json(
-          { error: 'Validation failed', details: parsed.error.flatten().fieldErrors },
-          { status: 400 },
-        );
+        return errorResponse('Invalid request body', 'VALIDATION_ERROR', 400);
       }
 
       // ── Read mission from D1 ──────────────────────────────────────────────
@@ -84,9 +82,10 @@ export async function POST(
       }
 
       if (BLOCKED_STATUSES.has(mission.status)) {
-        return NextResponse.json(
-          { error: `Cannot trigger video generation for mission in status: ${mission.status}` },
-          { status: 409 },
+        return errorResponse(
+          'Cannot generate video for this mission',
+          'MISSION_STATUS_BLOCKED',
+          409,
         );
       }
 
@@ -96,12 +95,10 @@ export async function POST(
       const tier = await resolveUserTier(userId);
       const reservation = await reserveVideoSlot(userId, tier);
       if (!reservation.reserved) {
-        return NextResponse.json(
-          {
-            error: `Video quota exceeded (${reservation.used}/${reservation.limit} used this month). Resets ${reservation.resetAt}.`,
-            code: 'QUOTA_EXCEEDED',
-          },
-          { status: 429 },
+        return errorResponse(
+          'Video quota exceeded. Please upgrade your plan or wait for quota reset.',
+          'QUOTA_EXCEEDED',
+          429,
         );
       }
 

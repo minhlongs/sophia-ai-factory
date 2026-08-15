@@ -5,6 +5,15 @@
 
 > Override bất kỳ generic rule nào khác. Subagents (đặc biệt git-manager) PHẢI đọc file này trước khi báo cáo GREEN.
 
+### Pre-Deploy Gate (MANDATORY)
+Before ANY deploy (`npm run deploy:full`), the following MUST pass on the working tree:
+1. `npm run build` — 0 TypeScript errors
+2. `npm test` — all tests passing
+
+If deploying on a known-broken base (tracked issue), the deploy commit message must carry: `WARNING: deploying on known-broken base: <issue-reference>`
+
+> Why: Deploying on a broken base propagates failures to production and makes rollback harder to diagnose. OmniRoute adopted this after stacking 34 commits on a broken base caused a full re-reconciliation.
+
 ## Stack Reality
 
 - **Deploy target:** Cloudflare Workers (OpenNext build)

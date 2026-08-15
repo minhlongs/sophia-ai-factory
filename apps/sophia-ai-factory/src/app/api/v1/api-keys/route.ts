@@ -9,8 +9,8 @@ import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { createApiKey, listApiKeys, tierToRateLimit } from '@/forest/api-keys/d1-store';
-import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
+import { errorResponse, handleThrownError } from '@/seed/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,8 +40,7 @@ export async function GET(req: NextRequest) {
     const keys = await listApiKeys(db, user.id);
     return NextResponse.json({ keys });
   } catch (err) {
-    logger.error('[ApiKeys] List failed', err instanceof Error ? err : undefined);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    return handleThrownError(err, 'Failed to list API keys', 'API_KEY_LIST_FAILED');
   }
 }
 
@@ -53,7 +52,7 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
   const parsed = CreateKeySchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
+    return errorResponse('Invalid request body', 'VALIDATION_ERROR', 400);
   }
 
   const db = getD1();
@@ -65,7 +64,6 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
     const result = await createApiKey(db, user.id, parsed.data.name, rateLimit, parsed.data.permissions);
     return NextResponse.json(result, { status: 201 });
   } catch (err) {
-    logger.error('[ApiKeys] Create failed', err instanceof Error ? err : undefined);
-    return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    return handleThrownError(err, 'Failed to create API key', 'API_KEY_CREATE_FAILED');
   }
 }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 5 } });

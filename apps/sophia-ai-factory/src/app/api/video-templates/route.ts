@@ -22,7 +22,7 @@ import {
   type TemplateCategory,
   type TemplateTier,
 } from '@/seed/templates/presets';
-import { logger } from '@/seed/utils/logger-utility';
+import { handleThrownError } from '@/seed/api';
 
 interface PublicTemplatePreset {
   id: string;
@@ -72,8 +72,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     tier = normaliseTier(await resolveUserTier(user.id));
   } catch (err) {
-    logger.warn('[video-templates] getUserTier failed', { userId: user.id, error: String(err) });
-    return NextResponse.json({ error: 'Failed to resolve tier' }, { status: 500 });
+    return handleThrownError(err, 'Failed to resolve tier', 'TIER_RESOLVE_FAILED');
   }
 
   const { searchParams } = new URL(request.url);

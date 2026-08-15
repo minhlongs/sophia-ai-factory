@@ -15,6 +15,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import { checkRateLimit, getClientIdentifier as getD1ClientId } from '@/seed/security/sql-rate-limiter';
 import { createRateLimitHeaders } from '@/forest/middleware/rate-limiter';
 import { getD1 } from '@/seed/db/client';
+import { errorResponse, handleThrownError } from '@/seed/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,10 +47,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const body = await request.json().catch(() => null);
   const parsed = Body.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { ok: false, error: 'Invalid input', details: parsed.error.flatten() },
-      { status: 400 },
-    );
+    return errorResponse('Invalid input', 'VALIDATION_ERROR', 400);
   }
 
   const { token, newPassword } = parsed.data;
@@ -86,7 +84,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     logger.info('[reset-password/confirm] password updated', { userId });
     return NextResponse.json({ ok: true });
   } catch (err) {
-    logger.error('[reset-password/confirm] error', err instanceof Error ? err : new Error(String(err)));
-    return NextResponse.json({ ok: false, error: 'Internal server error' }, { status: 500 });
+    return handleThrownError(err, 'Internal server error', 'RESET_PASSWORD_FAILED');
   }
 }

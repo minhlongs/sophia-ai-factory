@@ -9,6 +9,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { handleThrownError } from '@/seed/api';
 
 interface MediaJobRow {
   id: string;
@@ -46,8 +47,6 @@ export async function GET(): Promise<NextResponse> {
 
     return NextResponse.json({ images: rows ?? [] });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error('[creative-studio/images] Unexpected error', new Error(message));
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    return handleThrownError(err, 'Internal server error', 'IMAGE_LIST_FAILED');
   }
 }

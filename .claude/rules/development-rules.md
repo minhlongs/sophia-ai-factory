@@ -18,10 +18,12 @@
 - Use `sequential-thinking` and `debug` skills for sequential thinking, analyzing code, debugging, etc. if needed
 - **[IMPORTANT]** Follow the codebase structure and code standards in `./docs` during implementation.
 - **[IMPORTANT]** Do not just simulate the implementation or mocking them, always implement the real code.
+> Why: Simulated or mocked implementations pass tests locally but fail in production where the real APIs, databases, and third-party services behave differently. Only real code reveals actual integration issues.
 
 ## TODO/FIXME Policy
 
 - **NO** TODO/FIXME comments in committed production code
+> Why: TODO/FIXME comments in production code create false confidence that known issues are tracked when they often are not. Technical debt should be visible in issue trackers, not buried in source files where audits miss it.
 - Workarounds must be documented in the commit message, not in code
 - Track technical debt in GitHub issues, not inline comments
 - If a workaround is unavoidable, add a `// TRACKED: {issue-url}` comment instead of TODO

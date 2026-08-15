@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getAuthorizationUrl } from '@/land/youtube/youtube-oauth-client';
 import { logger } from '@/seed/utils/logger-utility';
+import { handleThrownError } from '@/seed/api';
 
 async function buildSignedState(userId: string): Promise<string> {
   const secret = process.env.OAUTH_STATE_SECRET;
@@ -35,8 +36,6 @@ export async function GET(request: Request): Promise<NextResponse> {
     logger.info('[oauth/youtube/connect] Redirecting to Google OAuth', { userId: user.id });
     return NextResponse.redirect(authUrl);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Internal error';
-    logger.error('[oauth/youtube/connect] Error', err instanceof Error ? err : new Error(message));
-    return NextResponse.json({ error: message }, { status: 500 });
+    return handleThrownError(err, 'Failed to initiate OAuth', 'OAUTH_CONNECT_FAILED');
   }
 }

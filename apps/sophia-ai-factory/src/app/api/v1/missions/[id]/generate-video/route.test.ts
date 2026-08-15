@@ -155,7 +155,7 @@ describe('POST /api/v1/missions/[id]/generate-video', () => {
     const { status, json } = await callPOST({ voiceoverText: 'no prompt here' });
 
     expect(status).toBe(400);
-    expect(json.error).toMatch(/validation failed/i);
+    expect(json.code).toBe('VALIDATION_ERROR');
     expect(mockInngestSend).not.toHaveBeenCalled();
   });
 

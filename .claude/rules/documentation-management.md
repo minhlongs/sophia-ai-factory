@@ -1,5 +1,10 @@
 # Project Documentation Management
 
+### Documentation Accuracy (MANDATORY)
+Before publishing any documentation change, verify the described behavior against the actual code (grep/read the source). **Never document plausible behavior — only verified behavior.**
+
+> Why: Documentation that describes how code "should" work (rather than how it actually works) creates false confidence and wastes debugging time when behavior diverges from docs.
+
 ### Roadmap & Changelog Maintenance
 - **Project Roadmap** (`./docs/development-roadmap.md`): Living document tracking project phases, milestones, and progress
 - **Project Changelog** (`./docs/project-changelog.md`): Detailed record of all significant changes, features, and fixes

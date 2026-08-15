@@ -19,6 +19,7 @@ import { McpCustomServerSchema } from '@/seed/tenant-settings/namespace-validato
 import type { McpSettings, McpCustomServer } from '@/seed/tenant-settings/defaults';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
+import { errorResponse } from '@/seed/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -81,7 +82,7 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
 
   const parsed = AddServerSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.message }, { status: 400 });
+    return errorResponse('Invalid request body', 'VALIDATION_ERROR', 400);
   }
 
   const serverData = parsed.data;
@@ -92,7 +93,7 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
     try {
       encryptedAuthValue = await encryptToken(serverData.authValue);
     } catch {
-      return NextResponse.json({ error: 'Failed to encrypt auth value — check OAUTH_TOKEN_ENC_KEY' }, { status: 500 });
+      return errorResponse('Failed to encrypt credentials', 'ENCRYPTION_FAILED', 500);
     }
   }
 

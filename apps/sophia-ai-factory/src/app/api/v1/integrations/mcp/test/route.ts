@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { resolveTenantMcpServers } from '@/land/openclaw/mcp-gateway';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
+import { handleThrownError } from '@/seed/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,7 +54,6 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
     await client.call('ping', {});
     return NextResponse.json({ ok: true, name, status: 'reachable' });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ ok: false, name, error: msg });
+    return handleThrownError(err, 'Server healthcheck failed', 'MCP_TEST_FAILED');
   }
 }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 10 } });

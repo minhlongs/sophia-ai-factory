@@ -199,7 +199,7 @@ export async function GET(
               });
               controller.enqueue(encoder.encode(sseMessage('error', {
                 code: 'db_transient',
-                message: err instanceof Error ? err.message.slice(0, 200) : 'db error',
+                message: 'A temporary error occurred. Please try again.',
               }, null)));
             }
           }

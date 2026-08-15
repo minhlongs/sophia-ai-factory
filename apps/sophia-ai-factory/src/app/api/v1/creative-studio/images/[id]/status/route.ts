@@ -13,6 +13,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { getJobStatus } from '@/tree/clients/muapi-media-client';
 import { logger } from '@/seed/utils/logger-utility';
+import { errorResponse } from '@/seed/api';
 
 interface MediaJobRow {
   id: string;
@@ -45,11 +46,11 @@ export async function GET(
 
   if (fetchError) {
     logger.error('[creative-studio/images/status] D1 fetch failed', new Error(fetchError.message));
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    return errorResponse('Internal server error', 'DATABASE_ERROR', 500);
   }
 
   if (!job) {
-    return NextResponse.json({ message: 'Job not found' }, { status: 404 });
+    return errorResponse('Job not found', 'NOT_FOUND', 404);
   }
 
   // If still in-flight, refresh from MuAPI

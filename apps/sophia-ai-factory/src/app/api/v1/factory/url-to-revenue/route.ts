@@ -11,8 +11,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { startUrlToRevenue } from '@/land/factory/url-to-revenue';
-import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
+import { errorResponse, handleThrownError } from '@/seed/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,10 +43,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
 
   const parsed = RequestSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Validation error', details: parsed.error.flatten() },
-      { status: 422 },
-    );
+    return errorResponse('Invalid request body', 'VALIDATION_ERROR', 422);
   }
 
   try {
@@ -61,9 +58,6 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
 
     return NextResponse.json(result, { status: 202 });
   } catch (err) {
-    logger.error('[url-to-revenue] Start failed', err instanceof Error ? err : new Error(String(err)), {
-      userId: user.id,
-    });
-    return NextResponse.json({ error: 'Failed to start job' }, { status: 500 });
+    return handleThrownError(err, 'Failed to start job', 'URL_TO_REVENUE_FAILED');
   }
 }, { addHeaders: true, config: { intervalMs: 60_000, maxRequests: 10 } });

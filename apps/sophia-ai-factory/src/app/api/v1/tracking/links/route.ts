@@ -14,6 +14,7 @@ import { createTrackingLink } from '@/land/tracking/edge-link';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
+import { errorResponse } from '@/seed/api';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,10 +39,7 @@ export const POST = withRateLimit(async function POST(request: NextRequest): Pro
 
   const parsed = CreateLinkSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Validation error', details: parsed.error.flatten() },
-      { status: 422 },
-    );
+    return errorResponse('Invalid request body', 'VALIDATION_ERROR', 422);
   }
 
   try {

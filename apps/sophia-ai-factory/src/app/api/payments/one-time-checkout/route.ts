@@ -19,6 +19,7 @@ import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { errorResponse, handleThrownError } from '@/seed/api';
 
 /** 30 minutes — window for detecting duplicate pending purchases. */
 const DEDUPE_WINDOW_SECS = 30 * 60
@@ -90,15 +91,12 @@ export const POST = withRateLimit(async function POST(request: Request) {
     const body = await request.json();
     const parsed = oneTimeCheckoutSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Invalid request', details: parsed.error.flatten() },
-        { status: 400 }
-      );
+      return errorResponse('Invalid request', 'VALIDATION_ERROR', 400);
     }
 
     const sku = getOneTimeSkuById(parsed.data.skuId);
     if (!sku) {
-      return NextResponse.json({ error: `Unknown SKU: ${parsed.data.skuId}` }, { status: 400 });
+      return errorResponse('Invalid SKU', 'INVALID_SKU', 400);
     }
 
     const userId = await resolveUserId(request, parsed.data.userId);
@@ -136,10 +134,6 @@ export const POST = withRateLimit(async function POST(request: Request) {
     }
     return NextResponse.json({ url });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json(
-      { error: `Failed to create one-time checkout: ${message}` },
-      { status: 500 }
-    );
+    return handleThrownError(error, 'Failed to create checkout', 'CHECKOUT_FAILED');
   }
 }, { addHeaders: true, config: { intervalMs: 60000, maxRequests: 10 } });

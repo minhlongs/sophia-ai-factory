@@ -15,6 +15,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { verifyCsrfToken } from '@/seed/security/csrf';
+import { errorResponse, handleThrownError } from '@/seed/api';
 
 interface ScheduledCampaignRow {
   id: string;
@@ -91,8 +92,7 @@ export async function GET(_req: NextRequest) {
       schedules: (data as unknown as ScheduledCampaignRow[]) ?? [],
     });
   } catch (err) {
-    logger.error('[api/schedule] Unexpected error', err instanceof Error ? err : new Error(String(err)));
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleThrownError(err, 'Failed to fetch schedules', 'SCHEDULE_LIST_FAILED');
   }
 }
 
@@ -116,10 +116,7 @@ export async function POST(req: NextRequest) {
 
     const parsed = scheduleCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Invalid schedule input', details: parsed.error.flatten().fieldErrors },
-        { status: 400 },
-      );
+      return errorResponse('Invalid schedule input', 'VALIDATION_ERROR', 400);
     }
     const { topic, template_script, interval_days, next_run_date } = parsed.data;
 
@@ -150,8 +147,7 @@ export async function POST(req: NextRequest) {
       schedule: row as unknown as ScheduledCampaignRow,
     });
   } catch (err) {
-    logger.error('[api/schedule] POST error', err instanceof Error ? err : new Error(String(err)));
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleThrownError(err, 'Failed to create schedule', 'SCHEDULE_CREATE_FAILED');
   }
 }
 
@@ -175,10 +171,7 @@ export async function PATCH(req: NextRequest) {
 
     const parsed = schedulePatchSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Invalid schedule input', details: parsed.error.flatten().fieldErrors },
-        { status: 400 },
-      );
+      return errorResponse('Invalid schedule input', 'VALIDATION_ERROR', 400);
     }
     const { id, is_active, interval_days, next_run_date, topic } = parsed.data;
 
@@ -215,8 +208,7 @@ export async function PATCH(req: NextRequest) {
       schedule: row as unknown as ScheduledCampaignRow,
     });
   } catch (err) {
-    logger.error('[api/schedule] PATCH error', err instanceof Error ? err : new Error(String(err)));
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleThrownError(err, 'Failed to update schedule', 'SCHEDULE_UPDATE_FAILED');
   }
 }
 
@@ -274,7 +266,6 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    logger.error('[api/schedule] DELETE error', err instanceof Error ? err : new Error(String(err)));
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return handleThrownError(err, 'Failed to delete schedule', 'SCHEDULE_DELETE_FAILED');
   }
 }
