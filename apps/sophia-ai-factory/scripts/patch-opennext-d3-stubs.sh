@@ -30,4 +30,15 @@ NEW="contents: \"export default {}; export const $DECLS;\","
 sed -i.bak "s|$OLD.*|$NEW|" "$BUNDLE_SERVER"
 rm -f "${BUNDLE_SERVER}.bak"
 
+# Post-patch assertion: verify that the most commonly-imported D3 named exports
+# are present. Exit non-zero so CI/deploy catches a broken patch immediately.
+CRITICAL_EXPORTS="range,timeYear,timeFormat,utcWeek,interpolate,group,merge"
+for sym in $(echo "$CRITICAL_EXPORTS" | tr ',' '\n'); do
+  if ! grep -q "export const ${sym}" "$BUNDLE_SERVER"; then
+    echo "❌ Post-patch assertion failed: '$sym' not exported from empty-client-pkg stub"
+    exit 1
+  fi
+done
+
 echo "✅ Patched OpenNext empty-client-side-packages to export common D3 named symbols"
+echo "✅ Post-patch assertion passed (checked: $CRITICAL_EXPORTS)"

@@ -48,14 +48,15 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
 
  const rateLimitResult = await checkRateLimit(identifier, rateLimitConfig)
  if (!rateLimitResult.success) {
+   const retryAfter = Math.max(0, Math.ceil((rateLimitResult.reset - Date.now()) / 1000))
    const responseTimeMs = Date.now() - startTime
    const rateLimitResponse = new NextResponse(
-     JSON.stringify({ error: 'Too many requests', retryAfter: rateLimitResult.reset }),
+     JSON.stringify({ error: 'Too many requests', retryAfter }),
      {
        status: 429,
        headers: {
          'Content-Type': 'application/json',
-         'Retry-After': String(Math.max(0, Math.ceil((rateLimitResult.reset - Date.now()) / 1000))),
+         'Retry-After': String(retryAfter),
          'X-RateLimit-Limit': String(rateLimitConfig.maxRequests),
          'X-RateLimit-Remaining': '0',
          'X-RateLimit-Reset': String(rateLimitResult.reset),

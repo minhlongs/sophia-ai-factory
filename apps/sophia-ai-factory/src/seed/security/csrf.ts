@@ -18,9 +18,13 @@ const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS'])
 
 /**
  * Paths that bypass CSRF checks entirely:
- * - /api/auth/*   — Better Auth manages its own CSRF
- * - /api/webhooks/* — auth via signature (NOWPayments, Telegram IPN)
- * - /api/cron/*   — Cloudflare Workers internal triggers
+ * - /api/auth/*   — Better Auth manages its own session/CSRF state.
+ * - /api/webhooks/* — authenticated via provider signature (NOWPayments, PayOS,
+ *   Telegram IPN, etc.), not browser cookies.
+ * - /api/csp-report — browser-initiated CSP violation reports; no user action.
+ *
+ * /api/cron/* is NOT in this list; it uses CRON_PREFIX + validateCronRequest()
+ * to enforce INTERNAL_CRON_SECRET / Cloudflare Cron header / Authorization bearer.
  */
 // CSP violation reports are POSTed by the browser without a CSRF token —
 // the request is browser-initiated, not user form-initiated. Bypass.
@@ -103,22 +107,6 @@ function timingSafeEqual(a: string, b: string): boolean {
 /**
  * Attach a csrf-token cookie to the response.
  *
- * Rationale — why double-submit cookie is sufficient for this app:
- * - `httpOnly=false` so JS can read the token and echo it in the x-csrf-token header.
- *   (If httpOnly=true, client-side code could never read the cookie — the pattern breaks.)
- * - `SameSite=Strict` ensures the cookie is sent only on same-site navigations.
- *   Cross-origin POSTs (the CSRF threat surface) do not include this cookie at all,
- *   so the attacker cannot forge a token the server will accept.
- * - This app has no cross-origin form submissions; all state-changing requests are
- *   same-origin SPA POSTs. That's the precondition double-submit cookie relies on.
- *
- * Bypass prefixes (see shouldBypassCsrf) are each justified:
- * - /api/auth/* — Better Auth manages its own session + CSRF state.
- * - /api/webhooks/* — authenticated via provider signature (NOWPayments, Stripe),
- *   not via cookie, so CSRF check would add cost without coverage.
- * - /api/mcp/* && /api/inngest/* — token- or secret-authenticated; same logic.
- * - /api/cron/* — authenticated via INTERNAL_CRON_SECRET header.
- *
  * Secure in production — cookie uses Secure flag when NODE_ENV=production.
  */
 export function setCsrfCookie(response: NextResponse, token: string): void {
@@ -148,31 +136,6 @@ function parseCookieHeader(cookieHeader: string, name: string): string | undefin
 }
 
 /**
- * CSRF BYPASS RATIONALE — why double-submit cookie is safe for this app
- * =======================================================================
- *
- * Threat model: cross-origin attacker forges a state-changing POST/PUT/PATCH/DELETE
- * from the victim's browser to this origin, leveraging the victim's cookies.
- *
- * Why double-submit cookie blocks it here:
- * - httpOnly=false: JS can read the token and echo it in the x-csrf-token header.
- *   (If httpOnly=true the client can't read it and the pattern breaks.)
- * - SameSite=Strict: the cookie is sent only on same-site navigations. A cross-origin
- *   attacker POST never includes this cookie, so they cannot forge a matching token.
- * - All state-changing requests in this app are same-origin SPA posts.
- *   That's the precondition double-submit cookie relies on.
- *
- * Bypass paths and why each is safe without a CSRF check:
- * - /api/auth/* — Better Auth manages its own session/CSRF state internally.
- * - /api/webhooks/* — authenticated via provider signature (NOWPayments, ClickBank,
- *   Shopify, Stripe, Payos), not via browser cookies. CSRF check adds latency without
- *   coverage because attacker cannot forge a valid provider signature.
- * - /api/mcp/* && /api/inngest/* — authenticated via internal token/secret; same logic.
- * - /api/cron/* — authenticated via INTERNAL_CRON_SECRET header; non-browser.
- *
- * Constant-time comparison (timingSafeEqual) prevents timing side-channel attacks
- * on the token string.
- *
  * Verify that the incoming request carries a valid CSRF token.
  * Compares the csrf-token cookie against the x-csrf-token header
  * using a constant-time compare.
