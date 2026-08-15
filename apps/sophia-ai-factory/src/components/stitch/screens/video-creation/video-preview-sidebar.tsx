@@ -25,24 +25,19 @@ export function VideoPreviewSidebar({
 
   return (
     <aside
-      className="hidden w-[320px] flex-shrink-0 overflow-y-auto border-l p-4 md:block lg:p-6 stitch-scrollbar"
-      style={{
-        backgroundColor: '#131318',
-        borderColor: '#484750',
-      }}
+      className="hidden w-[320px] flex-shrink-0 overflow-y-auto border-l border-border bg-background p-4 md:block lg:p-6 stitch-scrollbar"
       aria-label={t('sidebarLabel')}
     >
       {/* Preview */}
       <section className="mb-8">
-        <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-[#acaab5]">
+        <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">
           {t('preview')}
         </h3>
         <div
-          className="group relative cursor-pointer overflow-hidden rounded-xl border"
-          style={{ borderColor: '#484750' }}
+          className="group relative cursor-pointer overflow-hidden rounded-xl border border-border"
         >
           <div className="aspect-video w-full overflow-hidden">
-            <div className="flex h-full w-full items-center justify-center text-[#acaab5]">
+            <div className="flex h-full w-full items-center justify-center text-muted-foreground">
               <Play className="h-12 w-12" aria-hidden="true" />
             </div>
           </div>
@@ -63,18 +58,14 @@ export function VideoPreviewSidebar({
 
       {/* Voice Preview */}
       <section className="mb-8">
-        <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-[#acaab5]">
+        <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">
           {t('voicePreview')}
         </h3>
         <div className="relative">
           <select
             value={selectedVoice}
             onChange={(e) => onVoiceChange(e.target.value)}
-            className="w-full appearance-none rounded-lg border px-4 py-2.5 pr-10 text-sm text-[#e7e4f0] outline-none transition-all focus:ring-2 focus:ring-[#c3c3ee]/50"
-            style={{
-              backgroundColor: '#1f1f26',
-              borderColor: '#484750',
-            }}
+            className="w-full appearance-none rounded-lg border border-border bg-muted px-4 py-2.5 pr-10 text-sm text-foreground outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/40"
             aria-label={t('voicePreview')}
           >
             {VOICE_OPTIONS.map((voice) => (
@@ -84,7 +75,7 @@ export function VideoPreviewSidebar({
             ))}
           </select>
           <ChevronDown
-            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#acaab5]"
+            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
             size={18}
             aria-hidden="true"
           />
@@ -125,7 +116,7 @@ export function VideoPreviewSidebar({
 
       {/* Visual Style */}
       <section>
-        <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-[#acaab5]">
+        <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">
           {t('visualStyle')}
         </h3>
         <div className="grid grid-cols-2 gap-3">
@@ -158,7 +149,7 @@ export function VideoPreviewSidebar({
                 <div className="p-2 text-center">
                   <span
                     className={`text-[11px] font-bold ${
-                      isSelected ? 'text-[#c3c3ee]' : 'text-[#acaab5]'
+                      isSelected ? 'text-[#c3c3ee]' : 'text-muted-foreground'
                     }`}
                   >
                     {t(`visualStyles.${style.id}`)}
@@ -166,7 +157,7 @@ export function VideoPreviewSidebar({
                 </div>
                 {isSelected && (
                   <div className="absolute right-1 top-1" aria-hidden="true">
-                    <CheckCircle className="h-4 w-4 text-[#c3c3ee]" />
+                    <CheckCircle className="h-4 w-4 text-primary" />
                   </div>
                 )}
               </button>

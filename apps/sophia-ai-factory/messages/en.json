@@ -5444,6 +5444,8 @@
         "errorPasswordTooShort": "Password must be at least 8 characters",
         "errorEmailExists": "An account with this email already exists",
         "errorGeneric": "Registration failed. Please try again.",
+        "errorRateLimited": "Too many attempts. Please wait a moment and try again.",
+        "errorServiceUnavailable": "Registration is temporarily unavailable. Please try again later.",
         "errorPasswordUppercase": "Password must include at least one uppercase letter",
         "errorPasswordLowercase": "Password must include at least one lowercase letter",
         "errorPasswordNumber": "Password must include at least one number",

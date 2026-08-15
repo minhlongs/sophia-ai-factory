@@ -104,4 +104,27 @@ Components follow shadcn/ui patterns with Tailwind 4 utilities and `tailwindcss-
 - Semantic HTML: `<button>`, `<input>`, `<main>`, `<nav>`.
 
 ---
-Last updated: 2026-08-15 — reconciled against `globals.css` shipped tokens.
+
+## 8. Motion
+
+- Keep it purposeful and brief.
+- Use `transition-all duration-200` for interactive states.
+- Reduce motion when the user prefers reduced motion.
+- Avoid decorative motion that doesn’t communicate state.
+
+## 9. Accessibility
+
+- Maintain contrast ratios for all text on every background.
+- Never remove focus outlines without a visible replacement.
+- Use semantic elements and labels.
+- Ensure keyboard operability for every interaction.
+
+## 10. Recent Changes (Release Notes)
+
+| Date | Change |
+|------|---------|
+| 2026-08-16 | Normalize registration failure UX; classify rate limit, service unavailable, and password cases in the register form. |
+| 2026-08-15 | Reconcile design tokens against `globals.css` as single source of truth. |
+
+---
+Last updated: 2026-08-16 — reconciled against `globals.css` shipped tokens.

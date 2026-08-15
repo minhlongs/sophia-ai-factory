@@ -59,14 +59,20 @@ export default function RegisterPage() {
       });
 
       if (result.error) {
+        const code = (result.error as { code?: string }).code?.toLowerCase() ?? '';
         const msg = result.error.message?.toLowerCase() ?? '';
-        if (msg.includes('already') || msg.includes('exist') || msg.includes('duplicate')) {
+        const status = (result.error as { status?: number }).status ?? 0;
+
+        if (code === 'user_already_exists' || code === 'email_already_exists' || msg.includes('already') || msg.includes('exist') || msg.includes('duplicate')) {
           setError(t('errorEmailExists') || 'An account with this email already exists');
-        } else if (msg.includes('password')) {
-          // Server-side password validation — translate to user-friendly message
+        } else if (code === 'password_too_short' || code === 'invalid_password' || code === 'weak_password' || msg.includes('password')) {
           setError(t('errorPasswordComplexity') || 'Password must be at least 8 characters with uppercase, lowercase, and a number');
+        } else if (status === 429) {
+          setError(t('errorRateLimited') || 'Too many attempts. Please wait a moment and try again.');
+        } else if (status === 503) {
+          setError(t('errorServiceUnavailable') || 'Registration is temporarily unavailable. Please try again later.');
         } else {
-          setError(result.error.message ?? (t('errorGeneric') || 'Registration failed. Please try again.'));
+          setError(t('errorGeneric') || 'Registration failed. Please try again.');
         }
         return;
       }

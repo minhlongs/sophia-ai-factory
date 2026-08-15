@@ -26,7 +26,7 @@ export function VideoStepper({ currentStep }: { currentStep: number }) {
                     ? 'bg-[#c3c3ee] text-[#3c3d61]'
                     : isPast
                       ? 'bg-[#c3c3ee] text-[#3c3d61]'
-                      : 'bg-[#25252e] text-[#acaab5]'
+                      : 'bg-muted text-muted-foreground'
                 }`}
                 aria-current={isActive ? 'step' : undefined}
                 aria-label={`${t('step')} ${step.id}`}
@@ -35,7 +35,7 @@ export function VideoStepper({ currentStep }: { currentStep: number }) {
               </div>
               <span
                 className={`hidden text-xs font-medium sm:block ${
-                  isActive ? 'text-[#e7e4f0]' : 'text-[#acaab5]'
+                  isActive ? 'text-foreground' : 'text-muted-foreground'
                 }`}
               >
                 {t(`steps.${step.key}`)}
@@ -44,7 +44,7 @@ export function VideoStepper({ currentStep }: { currentStep: number }) {
             {idx < STEPS.length - 1 && (
               <div
                 className={`hidden h-px flex-1 sm:block ${
-                  isPast ? 'bg-[#c3c3ee]' : 'bg-[#484750]'
+                  isPast ? 'bg-primary' : 'bg-border'
                 }`}
                 aria-hidden="true"
               />

@@ -65,27 +65,23 @@ export default function VideoCreationPage({
     <>
       {/* ── Header ────────────────────────────────────────────────────── */}
       <header
-        className="border-b px-4 py-2 md:px-8"
-        style={{
-          backgroundColor: '#131318',
-          borderColor: '#484750',
-        }}
+        className="border-b border-border bg-background px-4 py-2 md:px-8"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={handleBack}
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-[#acaab5] transition-colors hover:bg-[#25252e] hover:text-[#e7e4f0]"
+              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               aria-label={t('back')}
             >
               <ArrowLeft className="h-4 w-4" aria-hidden="true" />
             </button>
             <div>
-              <h1 className="text-base font-bold text-[#e7e4f0] md:text-lg">
+              <h1 className="text-base font-bold text-foreground md:text-lg">
                 {t('title')}
               </h1>
-              <p className="text-xs text-[#acaab5] md:text-sm">
+              <p className="text-xs text-muted-foreground md:text-sm">
                 {t('subtitle')}
               </p>
             </div>
@@ -128,8 +124,7 @@ export default function VideoCreationPage({
         <button
           type="button"
           onClick={handleBack}
-          className="flex items-center gap-2 rounded-lg border px-6 py-2.5 text-sm font-medium text-[#acaab5] transition-all hover:border-[#acaab5] hover:text-[#e7e4f0]"
-          style={{ borderColor: '#484750' }}
+          className="flex items-center gap-2 rounded-lg border border-border px-6 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:border-muted-foreground hover:text-foreground"
           aria-label={t('back')}
         >
           <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -138,10 +133,7 @@ export default function VideoCreationPage({
         <button
           type="button"
           onClick={handleContinue}
-          className="flex items-center gap-2 rounded-lg bg-[#c3c3ee] px-8 py-2.5 font-bold text-[#3c3d61] shadow-lg transition-all hover:scale-105 active:scale-95"
-          style={{
-            boxShadow: '0 10px 15px -3px rgba(195, 195, 238, 0.2)',
-          }}
+          className="flex items-center gap-2 rounded-lg bg-primary px-8 py-2.5 font-bold text-primary-foreground shadow-lg transition-all hover:scale-105 active:scale-95"
           aria-label={t('continueToVoice')}
         >
           {t('continueToVoice')}

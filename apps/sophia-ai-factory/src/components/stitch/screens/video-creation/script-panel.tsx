@@ -29,17 +29,13 @@ export function ScriptPanel({
     <div className="flex-1 flex flex-col">
       {/* Panel Header */}
       <div
-        className="flex items-center justify-between border-b px-6 py-4"
-        style={{
-          backgroundColor: '#1a1a21',
-          borderColor: '#484750',
-        }}
+        className="flex items-center justify-between border-b border-border bg-background px-6 py-4"
       >
-        <h2 className="text-lg font-bold text-[#e7e4f0]">{t('scriptEditor')}</h2>
+        <h2 className="text-lg font-bold text-foreground">{t('scriptEditor')}</h2>
         <button
           type="button"
           onClick={onAIGenerate}
-          className="group flex items-center gap-2 rounded-lg bg-[#25252e] px-4 py-2 text-sm text-[#e7e4f0] transition-all hover:bg-[#4e4f74]"
+          className="group flex items-center gap-2 rounded-lg bg-muted px-4 py-2 text-sm text-foreground transition-all hover:bg-primary-container"
           aria-label={t('aiGenerate')}
         >
           <Sparkles
@@ -57,14 +53,14 @@ export function ScriptPanel({
           onChange={onScriptChange}
           placeholder={t('scriptPlaceholder')}
           rows={6}
-          className="stitch-scrollbar w-full resize-none rounded-lg border bg-black p-4 text-[#e7e4f0] placeholder-[#acaab5] outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-[#c3c3ee]"
+          className="stitch-scrollbar w-full resize-none rounded-lg border bg-black p-4 text-foreground placeholder-[#acaab5] outline-none transition-all focus:border-transparent focus:ring-2 focus:ring-[#c3c3ee]"
           style={{ borderColor: '#484750' }}
           aria-label={t('scriptInput')}
         />
 
         {/* Generated Script Preview */}
         <div>
-          <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-[#acaab5]">
+          <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {t('generatedPreview')}
           </h3>
           <div
@@ -89,7 +85,7 @@ export function ScriptPanel({
         </div>
 
         {/* Character Counter */}
-        <div className="flex items-center justify-between text-xs text-[#acaab5]">
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{t('characterCount', { count: charCount, max: MAX_CHARS })}</span>
           <div className="flex items-center gap-2">
             <div
@@ -97,16 +93,13 @@ export function ScriptPanel({
               style={{ backgroundColor: '#25252e' }}
             >
               <div
-                className="h-full rounded-full transition-all"
-                style={{
-                  width: `${percentUsed}%`,
-                  backgroundColor:
-                    percentUsed >= 90
-                      ? 'rgba(239, 68, 68, 0.6)'
-                      : percentUsed >= 70
-                        ? 'rgba(234, 179, 8, 0.6)'
-                        : 'rgba(195, 195, 238, 0.4)',
-                }}
+                className={`h-2 rounded-full transition-all ${
+                      percentUsed >= 90
+                        ? 'bg-red-500/60'
+                        : percentUsed >= 70
+                          ? 'bg-yellow-500/60'
+                          : 'bg-primary/40'
+                    }`}
               />
             </div>
             <span className="font-medium">{percentUsed}%</span>

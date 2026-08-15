@@ -5451,6 +5451,8 @@
         "errorPasswordTooShort": "Mật khẩu phải có ít nhất 8 ký tự",
         "errorEmailExists": "Email này đã được đăng ký",
         "errorGeneric": "Đăng ký thất bại. Vui lòng thử lại.",
+        "errorRateLimited": "Thao tác quá nhiều lần. Vui lòng đợi một chút và thử lại.",
+        "errorServiceUnavailable": "Đăng ký tạm thời bị đóng. Vui lòng thử lại sau.",
         "errorPasswordUppercase": "Mật khẩu phải có ít nhất một chữ hoa",
         "errorPasswordLowercase": "Mật khẩu phải có ít nhất một chữ thường",
         "errorPasswordNumber": "Mật khẩu phải có ít nhất một chữ số",
