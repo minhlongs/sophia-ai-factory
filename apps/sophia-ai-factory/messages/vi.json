@@ -27,6 +27,39 @@
       "businessIdPlaceholder": "ví dụ 1122334455",
       "businessIdHelp": "Tùy chọn. ID Business Manager từ business.facebook.com"
     },
+    "whatsappTemplates": {
+      "title": "Chọn Mẫu WhatsApp",
+      "subtitle": "Chọn gói mẫu dựng sẵn và tùy chỉnh cho chiến dịch WhatsApp của bạn",
+      "categories": {
+        "marketing": "Marketing",
+        "notifications": "Thông báo",
+        "support": "Hỗ trợ"
+      },
+      "steps": {
+        "select": "Chọn mẫu",
+        "edit": "Tùy chỉnh",
+        "confirm": "Xác nhận"
+      },
+      "selectTemplate": "Chọn Gói Mẫu",
+      "selectTemplateHelp": "Chọn từ các mẫu dựng sẵn cho Marketing, Thông báo và Hỗ trợ",
+      "editTemplate": "Tùy Chỉnh Mẫu",
+      "editTemplateHelp": "Điền các biến dưới đây để cá nhân hóa mẫu của bạn",
+      "variables": "Biến",
+      "preview": "Xem trước",
+      "confirmTitle": "Sẵn Sàng Lưu",
+      "confirmMessage": "Mẫu tùy chỉnh của bạn sẽ được lưu và sẵn sàng dùng trong chiến dịch WhatsApp.",
+      "summary": "Tóm tắt",
+      "template": "Mẫu",
+      "category": "Danh mục",
+      "variablesFilled": "Biến Đã Điền",
+      "saveAndFinish": "Lưu & Hoàn Tất",
+      "saving": "Đang lưu...",
+      "successMessage": "Mẫu đã được lưu thành công! Bạn có thể dùng nó trong chiến dịch WhatsApp ngay.",
+      "errors": {
+        "noCredentials": "Vui lòng lưu thông tin WhatsApp trước trong Trợ Lý Thiết Lập",
+        "saveFailed": "Lưu mẫu thất bại. Vui lòng thử lại."
+      }
+    },
     "doctrine": {
       "aria_label": "Nhắc nhở doctrine BYOK của Sophia",
       "title": "Trước khi bắt đầu — 3 điều bạn nên biết",
@@ -4250,7 +4283,45 @@
     "unlisted": "Không công khai",
     "public": "Công khai",
     "publishNow": "Xuất bản ngay",
-    "subtitle": "Xuất bản một-click đến YouTube, TikTok, Instagram và hơn nữa"
+    "subtitle": "Xuất bản một-click đến YouTube, TikTok, Instagram và hơn nữa",
+    "queue": {
+      "title": "Hàng đợi Xuất bản",
+      "subtitle": "Theo dõi và quản lý công việc xuất bản WhatsApp",
+      "loading": "Đang tải hàng đợi...",
+      "empty": {
+        "title": "Chưa có Công việc Xuất bản",
+        "message": "Lên lịch xuất bản WhatsApp đầu tiên từ trình soạn thảo video hoặc thuật sắp xếp.",
+        "cta": "Tạo Mẫu WhatsApp"
+      },
+      "table": {
+        "video": "Video",
+        "template": "Mẫu",
+        "target": "Đích",
+        "status": "Trạng thái",
+        "created": "Tạo lúc",
+        "actions": "Hành động"
+      },
+      "status": {
+        "pending": "Chờ",
+        "scheduled": "Đã lên lịch",
+        "sent": "Đã gửi",
+        "failed": "Thất bại",
+        "pending_approval": "Cần phê duyệt"
+      },
+      "actions": {
+        "approve": "Phê duyệt",
+        "retry": "Thử lại",
+        "delivered": "Đã gửi"
+      },
+      "approvalBanner": {
+        "title": "Xuất bản Đầu tiên Cần Phê Duyệt",
+        "message": "Xuất bản WhatsApp đầu tiên của bạn cần phê duyệt rõ ràng. Nhấn \"Phê duyệt\" trên công việc chờ để tiếp tục.",
+        "note": "Đây là biện pháp bảo mật một lần để ngăn gửi nhầm."
+      },
+      "legend": {
+        "title": "Chú thích Trạng thái"
+      }
+    }
   },
   "analytics": {
     "syncNow": "Đồng bộ ngay",

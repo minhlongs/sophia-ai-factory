@@ -27,6 +27,39 @@
       "businessIdPlaceholder": "e.g. 1122334455",
       "businessIdHelp": "Optional. Meta Business Manager ID from business.facebook.com"
     },
+    "whatsappTemplates": {
+      "title": "WhatsApp Template Selection",
+      "subtitle": "Choose a pre-built template pack and customize it for your WhatsApp campaigns",
+      "categories": {
+        "marketing": "Marketing",
+        "notifications": "Notifications",
+        "support": "Support"
+      },
+      "steps": {
+        "select": "Select Template",
+        "edit": "Customize",
+        "confirm": "Confirm"
+      },
+      "selectTemplate": "Select a Template Pack",
+      "selectTemplateHelp": "Choose from pre-built templates across Marketing, Notifications, and Support categories",
+      "editTemplate": "Customize Template",
+      "editTemplateHelp": "Fill in the variables below to personalize your template",
+      "variables": "Variables",
+      "preview": "Preview",
+      "confirmTitle": "Ready to Save",
+      "confirmMessage": "Your customized template will be saved and ready to use in WhatsApp campaigns.",
+      "summary": "Summary",
+      "template": "Template",
+      "category": "Category",
+      "variablesFilled": "Variables Filled",
+      "saveAndFinish": "Save & Finish",
+      "saving": "Saving...",
+      "successMessage": "Template saved successfully! You can now use it in your campaigns.",
+      "errors": {
+        "noCredentials": "Please save WhatsApp credentials first in the Setup Wizard",
+        "saveFailed": "Failed to save template. Please try again."
+      }
+    },
     "doctrine": {
       "aria_label": "Sophia BYOK doctrine reminder",
       "title": "Before you start — 3 things you should know",
@@ -4250,7 +4283,45 @@
     "unlisted": "Unlisted",
     "public": "Public",
     "publishNow": "Publish Now",
-    "subtitle": "One-click publishing to YouTube, TikTok, Instagram, and more"
+    "subtitle": "One-click publishing to YouTube, TikTok, Instagram, and more",
+    "queue": {
+      "title": "Publish Queue",
+      "subtitle": "Monitor and manage your WhatsApp publish jobs",
+      "loading": "Loading publish queue...",
+      "empty": {
+        "title": "No Publish Jobs Yet",
+        "message": "Schedule your first WhatsApp publish from the video editor or setup wizard.",
+        "cta": "Create WhatsApp Template"
+      },
+      "table": {
+        "video": "Video",
+        "template": "Template",
+        "target": "Target",
+        "status": "Status",
+        "created": "Created",
+        "actions": "Actions"
+      },
+      "status": {
+        "pending": "Pending",
+        "scheduled": "Scheduled",
+        "sent": "Sent",
+        "failed": "Failed",
+        "pending_approval": "Approval Needed"
+      },
+      "actions": {
+        "approve": "Approve",
+        "retry": "Retry",
+        "delivered": "Delivered"
+      },
+      "approvalBanner": {
+        "title": "First Publish Requires Approval",
+        "message": "Your first WhatsApp publish requires explicit approval. Click \"Approve\" on the pending job to continue.",
+        "note": "This is a one-time security measure to prevent accidental sends."
+      },
+      "legend": {
+        "title": "Status Legend"
+      }
+    }
   },
   "analytics": {
     "syncNow": "Sync Now",
