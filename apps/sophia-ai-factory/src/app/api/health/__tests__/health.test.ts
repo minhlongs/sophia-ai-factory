@@ -147,7 +147,7 @@ describe('/api/health', () => {
 
       expect(body.status).toBe('healthy');
       expect(body.version).toBeDefined();
-      expect((body.version as Record<string, string>).shortSha).toBe('abc123456');
+      expect((body.version as Record<string, string>).shortSha).toBe('abc12345');
       expect(body.components).toBeDefined();
 
       const components = body.components as Record<string, Record<string, unknown>>;
