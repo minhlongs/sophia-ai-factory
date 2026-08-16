@@ -11,6 +11,22 @@
     }
   },
   "setupWizard": {
+    "whatsapp": {
+      "title": "Thiết lập WhatsApp Business",
+      "subtitle": "Nhập thông tin tài khoản WhatsApp Business từ Meta Business Suite.",
+      "phoneNumberIdLabel": "Phone Number ID",
+      "phoneNumberIdPlaceholder": "ví dụ 1234567890123456",
+      "phoneNumberIdHelp": "Tìm trong Meta Business Suite → WhatsApp → Cài đặt → Số điện thoại",
+      "tokenLabel": "WhatsApp Access Token",
+      "tokenPlaceholder": "EAA...",
+      "tokenHelp": "Token truy cập vĩnh viễn từ Meta App → Cài đặt → Cơ bản → Access Token",
+      "wabaIdLabel": "WhatsApp Business Account ID (WABA)",
+      "wabaIdPlaceholder": "ví dụ 9876543210",
+      "wabaIdHelp": "Tùy chọn. WABA ID từ Meta Business Suite → WhatsApp → Chi tiết tài khoản",
+      "businessIdLabel": "Meta Business ID",
+      "businessIdPlaceholder": "ví dụ 1122334455",
+      "businessIdHelp": "Tùy chọn. ID Business Manager từ business.facebook.com"
+    },
     "doctrine": {
       "aria_label": "Nhắc nhở doctrine BYOK của Sophia",
       "title": "Trước khi bắt đầu — 3 điều bạn nên biết",

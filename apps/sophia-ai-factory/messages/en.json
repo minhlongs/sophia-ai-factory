@@ -11,6 +11,22 @@
     }
   },
   "setupWizard": {
+    "whatsapp": {
+      "title": "WhatsApp Business Setup",
+      "subtitle": "Enter your WhatsApp Business Account credentials from Meta Business Suite.",
+      "phoneNumberIdLabel": "Phone Number ID",
+      "phoneNumberIdPlaceholder": "e.g. 1234567890123456",
+      "phoneNumberIdHelp": "Find this in Meta Business Suite → WhatsApp → Settings → Phone Numbers",
+      "tokenLabel": "WhatsApp Access Token",
+      "tokenPlaceholder": "EAA...",
+      "tokenHelp": "Permanent access token from Meta App → Settings → Basic → Access Token",
+      "wabaIdLabel": "WhatsApp Business Account ID (WABA)",
+      "wabaIdPlaceholder": "e.g. 9876543210",
+      "wabaIdHelp": "Optional. Your WABA ID from Meta Business Suite → WhatsApp → Account Details",
+      "businessIdLabel": "Meta Business ID",
+      "businessIdPlaceholder": "e.g. 1122334455",
+      "businessIdHelp": "Optional. Meta Business Manager ID from business.facebook.com"
+    },
     "doctrine": {
       "aria_label": "Sophia BYOK doctrine reminder",
       "title": "Before you start — 3 things you should know",

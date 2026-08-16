@@ -8,7 +8,7 @@
  * Bilingual: Vietnamese + English labels/help text.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { ApiKeyInput } from '@/tree/components/setup-wizard/api-key-input';
 import { useTranslations } from 'next-intl';
 
