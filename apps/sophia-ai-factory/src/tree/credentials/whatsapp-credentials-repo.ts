@@ -6,7 +6,7 @@
  */
 
 import { getD1 } from '@/seed/db/client'
-import { encrypt, decrypt } from '@/tree/byok/byok-crypto'
+import { encryptApiKey } from '@/tree/byok/byok-crypto'
 import { logger } from '@/seed/utils/logger-utility'
 
 export interface WhatsAppCredentialInput {
@@ -43,7 +43,7 @@ export async function upsertWhatsAppCredential(
   const d1 = getD1()
   if (!d1) throw new Error('D1 binding not available')
 
-  const encrypted = await encrypt(input.waToken)
+  const encrypted = await encryptApiKey(input.waToken)
   const nowIso = new Date().toISOString()
 
   await d1

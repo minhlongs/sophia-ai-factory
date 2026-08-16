@@ -49,6 +49,6 @@ export async function POST(request: Request) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     logger.error('[SaveWhatsAppCreds] Failed', { error: msg })
-    return NextResponse.json({ error: 'SAVE_FAILED', message: msg }, { status: 500 })
+    return NextResponse.json({ error: 'SAVE_FAILED' }, { status: 500 })
   }
 }
