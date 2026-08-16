@@ -23,10 +23,11 @@ export const CHANNEL_COOLDOWN_SECONDS: Record<ChannelProvider, number> = {
   threads: 1 * 3600,     // 1 h
   facebook: 2 * 3600,    // 2 h
   reddit: 6 * 3600,      // 6 h — subreddit-aware deferred to later
-  bluesky: 30 * 60,      // 30 min
-  mastodon: 30 * 60,     // 30 min
+  bluesky: 30 * 60,     // 30 min
+  mastodon: 30 * 60,    // 30 min
   zalo: 4 * 3600,        // 4 h — Zalo OA quota limited
   telegram: 5 * 60,      // 5 min — channel, low risk
+  whatsapp: 10 * 60,    // 10 min — template-based, moderate cooldown
 };
 
 /** Maximum posts per channel within any rolling 60-minute window. */

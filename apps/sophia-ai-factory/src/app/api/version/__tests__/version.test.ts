@@ -10,6 +10,14 @@ function buildRequest(headers: Record<string, string> = {}): NextRequest {
   return new NextRequest('http://localhost/api/version', { headers });
 }
 
+function headersRecord(resp: Response): Record<string, string> {
+  const out: Record<string, string> = {};
+  resp.headers.forEach((value, key) => {
+    out[key.toLowerCase()] = value;
+  });
+  return out;
+}
+
 const ENV_KEYS = ['COMMIT_SHA', 'DEPLOYED_AT', 'DEPLOY_BRANCH', 'INTROSPECT_TOKEN'] as const;
 const originalEnv: Record<string, string | undefined> = {};
 
@@ -38,10 +46,11 @@ describe('GET /api/version', () => {
 
   it('sets Cache-Control on the public response', async () => {
     const resp = await GET(buildRequest());
-    const cc = resp.headers.get('cache-control');
-    expect(cc).toMatch(/public/);
-    expect(cc).toMatch(/s-maxage=60/);
-    expect(cc).toMatch(/stale-while-revalidate/);
+    const h = headersRecord(resp);
+    expect(h['cache-control']).toBeDefined();
+    expect(h['cache-control']).toMatch(/public/);
+    expect(h['cache-control']).toMatch(/s-maxage=60/);
+    expect(h['cache-control']).toMatch(/stale-while-revalidate/);
   });
 
   it('omits commitSha + branch from the public payload', async () => {
@@ -62,7 +71,8 @@ describe('GET /api/version', () => {
   it('admin response is NOT cached (no Cache-Control header)', async () => {
     process.env.INTROSPECT_TOKEN = 'topsecret';
     const resp = await GET(buildRequest({ authorization: 'Bearer topsecret' }));
-    expect(resp.headers.get('cache-control')).toBeNull();
+    const h = headersRecord(resp);
+    expect(h['cache-control']).toBeUndefined();
   });
 
   it('falls back to public when Bearer token does not match', async () => {

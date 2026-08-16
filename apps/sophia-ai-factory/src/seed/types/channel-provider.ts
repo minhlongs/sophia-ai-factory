@@ -1,5 +1,5 @@
 /** Channel provider types — canonical source for cross-layer access */
-export type ChannelProvider = 'tiktok' | 'youtube' | 'instagram' | 'pinterest' | 'linkedin' | 'zalo' | 'facebook' | 'twitter' | 'threads' | 'reddit' | 'bluesky' | 'mastodon' | 'telegram';
+export type ChannelProvider = 'tiktok' | 'youtube' | 'instagram' | 'pinterest' | 'linkedin' | 'zalo' | 'facebook' | 'twitter' | 'threads' | 'reddit' | 'bluesky' | 'mastodon' | 'telegram' | 'whatsapp';
 
 /** Platform subset for publishing integrations (Youtube, TikTok, Instagram) */
 export type Platform = 'youtube' | 'tiktok' | 'instagram';

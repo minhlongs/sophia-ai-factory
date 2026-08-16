@@ -90,5 +90,6 @@ export function buildPostUrl(provider: string, externalPostId: string, externalA
   if (provider === 'pinterest') return `https://www.pinterest.com/pin/${externalPostId}`;
   if (provider === 'linkedin') return `https://www.linkedin.com/feed/update/${externalPostId}`;
   if (provider === 'zalo') return `https://zalo.me/${externalPostId}`;
+  if (provider === 'whatsapp') return `https://wa.me/${externalPostId}`;
   return `https://www.instagram.com/p/${externalPostId}`;
 }

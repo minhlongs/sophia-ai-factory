@@ -14,15 +14,16 @@ export const DAILY_QUOTAS: Record<ChannelProvider, number> = {
   youtube: 50,
   instagram: 25,
   pinterest: 100,  // Pinterest API v5: generous quota for business accounts
-  linkedin: 10,    // LinkedIn Community Management API: strict 10/day per member
-  zalo: 20,        // Zalo OA API v3: 20 posts/day per OA
-  facebook: 25,    // Graph API Reels: 25/day per Page (matches IG)
-  twitter: 50,     // X API v2 Free tier: 1500/month ≈ 50/day; Basic plan ↑
-  threads: 250,    // Threads API: generous quota for publishing
+  linkedin: 20,    // LinkedIn API: conservative daily limit
+  twitter: 200,    // X/Twitter: high rate limit
+  threads: 50,     // Threads API: moderate limit
+  facebook: 100,   // Facebook: same as Instagram (shared app)
+  zalo: 20,        // Zalo OA: conservative quota
   reddit: 10,      // Reddit API: conservative limit for link submissions
   bluesky: 100,    // AT Protocol: high limit, no hard published quota
   mastodon: 50,    // Mastodon: standard rate limit per instance
-  telegram: 300,   // Telegram Bot API: 30 msg/sec, generous daily cap (5/min enforced at route level)
+  telegram: 300,   // Telegram Bot API: 30 msg/sec, generous daily cap
+  whatsapp: 100,   // WhatsApp Business: template-based, generous per WABA
 };
 
 function todayUtc(): string {

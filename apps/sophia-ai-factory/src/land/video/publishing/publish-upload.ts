@@ -14,6 +14,7 @@ import { PinterestPublisher } from '@/land/video/publishing/providers/pinterest-
 import { LinkedInPublisher } from '@/land/video/publishing/providers/linkedin-publisher';
 import { ZaloPublisher } from '@/land/video/publishing/providers/zalo-publisher';
 import { ThreadsPublisher } from '@/land/video/publishing/providers/threads';
+import { WhatsAppAdapter } from '@/land/video/publishing/providers/whatsapp-adapter';
 import type { PublishingChannel, PublishingJob, Publisher } from '@/seed/types';
 import type { Step } from './publish-types';
 import { sanitizeError } from './publish-url-utils';
@@ -40,6 +41,8 @@ export function buildPublisher(channel: Pick<PublishingChannel, 'provider' | 'ex
       return new ZaloPublisher(accessToken);
     case 'threads':
       return new ThreadsPublisher(accessToken, channel.external_account_id);
+    case 'whatsapp':
+      return new WhatsAppAdapter(channel.external_account_id, accessToken);
     default:
       throw new Error(`Unknown provider: ${channel.provider}`);
   }

@@ -16,6 +16,11 @@ describe('GET /api/openapi', () => {
 
   it('sets a public Cache-Control header', async () => {
     const resp = await GET();
-    expect(resp.headers.get('cache-control')).toMatch(/public/);
+    const entries: Record<string, string> = {};
+    resp.headers.forEach((value, key) => {
+      entries[key.toLowerCase()] = value;
+    });
+    expect(entries['cache-control']).toBeDefined();
+    expect(entries['cache-control']).toMatch(/public/);
   });
 });

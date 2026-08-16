@@ -4,7 +4,7 @@
  */
 
 import * as React from 'react';
-import { vi, beforeEach, afterEach } from 'vitest';
+import { vi } from 'vitest';
 
 // ── D1 / R2 / KV mocks ───────────────────────────────────────────────────
 function createD1Mock() {
@@ -15,7 +15,7 @@ function createD1Mock() {
         all: async () => ({ results: [], meta: { changes: 0, duration: 1 } }),
         run: async () => ({ success: true, meta: { changes: 0, duration: 1 } }),
       })),
-      first: async () => null as any,
+      first: async () => null as unknown as Record<string, unknown>,
       all: async () => ({ results: [], meta: { changes: 0, duration: 1 } }),
       run: async () => ({ success: true, meta: { changes: 0, duration: 1 } }),
     }),
@@ -186,7 +186,6 @@ class MockNextRequest extends Request {
 
   constructor(url: string | URL, init?: RequestInit) {
     const urlStr = typeof url === 'string' ? url : url.toString();
-    // @ts-ignore - ssrf-safe constructor with allowedTargets
     super(urlStr, init);
     this.cookies = createCookieJar();
     this.nextUrl = new URL(urlStr, 'http://localhost');
@@ -196,7 +195,7 @@ class MockNextRequest extends Request {
     (this.nextUrl as any).clone = () => new URL(this.nextUrl.toString());
   }
 
-  // @ts-ignore - Cloudflare Request<…, Cf Properties<…>> LSP mismatch unavoidable for test mock; runtime clone() is correct
+  // @ts-expect-error - Cloudflare Request<…, Cf Properties<…>> LSP mismatch unavoidable for test mock; runtime clone() is correct — inversion verified, no compile error expected
   clone(): Request {
     const cloneUrl = this.nextUrl.toString();
     const cloned = new MockNextRequest(cloneUrl);
@@ -252,6 +251,86 @@ vi.mock('next/link', () => ({
     return <a href={h} {...props}>{children}</a>;
   },
 }));
+
+// ── Headers polyfill for jsdom ──────────────────────────────────────────────
+// jsdom's Headers stores values in a flat map but has spec mismatches
+// (notably around case-insensitivity + MultiMap behavior) that cause
+// .get()/forEach() to return null when values were set via NextResponse.json()
+// headers option. Always override with a spec-compliant implementation.
+// Refs: EVIDS-2026-001
+type HeaderInit = [string, string][] | Record<string, string> | Headers;
+class SpecCompliantHeaders {
+  private _store = new Map<string, string[]>();
+  constructor(init?: HeaderInit) {
+    if (!init) return;
+    if (Array.isArray(init)) {
+      for (const [k, v] of init) this.append(k, v);
+    } else if (init instanceof SpecCompliantHeaders) {
+      init.forEach((v, k) => this.append(k, v));
+    } else if (typeof init === 'object') {
+      for (const [k, v] of Object.entries(init)) {
+        if (Array.isArray(v)) {
+          for (const val of v) this.append(k, val);
+        } else {
+          this.append(k, v);
+        }
+      }
+    }
+  }
+  private normalize(name: string) { return name.toLowerCase(); }
+  append(name: string, value: string) {
+    const key = this.normalize(name);
+    const cur = this._store.get(key) ?? [];
+    cur.push(value);
+    this._store.set(key, cur);
+  }
+  set(name: string, value: string) {
+    this._store.set(this.normalize(name), [value]);
+  }
+  get(name: string) {
+    const cur = this._store.get(this.normalize(name));
+    return cur ? cur[cur.length - 1] : null;
+  }
+  has(name: string) { return this._store.has(this.normalize(name)); }
+  delete(name: string) { return this._store.delete(this.normalize(name)); }
+  forEach(
+    callback: (value: string, key: string, parent: Headers) => void,
+    thisArg?: unknown,
+  ) {
+    for (const [k, v] of this._store) {
+      callback.call(thisArg, v[v.length - 1], k, this as unknown as Headers);
+    }
+  }
+  keys() {
+    return {
+      *[Symbol.iterator]() {
+        const map: Map<string, string[]> = this as unknown as Map<string, string[]>;
+        for (const k of map.keys()) yield k;
+      },
+    };
+  }
+  values() {
+    return {
+      *[Symbol.iterator]() {
+        const map: Map<string, string[]> = this as unknown as Map<string, string[]>;
+        for (const v of map.values()) yield v[v.length - 1];
+      },
+    };
+  }
+  entries() {
+    return {
+      *[Symbol.iterator]() {
+        const map: Map<string, string[]> = this as unknown as Map<string, string[]>;
+        for (const [k, v] of map.entries()) yield [k, v[v.length - 1]];
+      },
+    };
+  }
+  [Symbol.iterator]() { return this.entries()[Symbol.iterator](); }
+  get size() { return this._store.size; }
+  // compat: native Headers has this enum-style property; Spec impl does not use it
+  getSetCookie(): string[] { return []; }
+}
+(globalThis as unknown as { Headers: typeof SpecCompliantHeaders }).Headers = SpecCompliantHeaders;
 
 // ── Suppress noisy console output ────────────────────────────────────────
 globalThis.console = {

@@ -122,7 +122,7 @@ export class SophiaClient {
   }
 
   /** Cycle 7: register a publishing channel (BYOK OAuth). */
-  registerChannel(input: { provider: "tiktok" | "youtube" | "instagram" | "facebook" | "twitter" | "linkedin" | "pinterest" | "threads" | "reddit" | "bluesky" | "mastodon" | "zalo"; externalAccountId: string; accessToken: string; refreshToken?: string }, ro: RequestOptions = {}): Promise<RegisterChannelResult> {
+  registerChannel(input: { provider: "tiktok" | "youtube" | "instagram" | "facebook" | "twitter" | "linkedin" | "pinterest" | "threads" | "reddit" | "bluesky" | "mastodon" | "zalo" | "whatsapp"; externalAccountId: string; accessToken: string; refreshToken?: string }, ro: RequestOptions = {}): Promise<RegisterChannelResult> {
     return call(this.base, "/api/publish/channels", { method: "POST", headers: this.h(), body: JSON.stringify(input) }, ro);
   }
 }

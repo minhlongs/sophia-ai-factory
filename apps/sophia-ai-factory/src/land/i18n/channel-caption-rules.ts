@@ -46,6 +46,11 @@ const CHANNEL_RULES_MAP: Record<ChannelProvider, ChannelCaptionRule> = {
     charCap: 1000,
     hashtagStyle: 'mixed_vi_en',
   },
+  whatsapp: {
+    targetLocale: 'vi',
+    charCap: 1024,
+    hashtagStyle: 'mixed_vi_en',
+  },
   telegram: {
     targetLocale: 'vi',
     charCap: 4096,

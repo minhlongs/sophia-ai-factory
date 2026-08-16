@@ -84,8 +84,11 @@ describe('GDPR Account Export — GET /api/account/export', () => {
   it('includes Content-Disposition header for file download', async () => {
     const req = new NextRequest('http://localhost/api/account/export');
     const res = await GET(req);
-    expect(res.headers.get('content-disposition')).toContain('attachment');
-    expect(res.headers.get('content-disposition')).toContain(TENANT_ID);
+    const cd = res.headers.get('content-disposition');
+    expect(cd).not.toBeNull();
+    expect(cd).toContain('attachment');
+    expect(cd).toContain(TENANT_ID);
+    expect(cd).toContain('filename=');
   });
 
   it('returns 503 when D1 unavailable', async () => {
