@@ -43,8 +43,10 @@ const kvMock = {
 
 (globalThis as Record<string, unknown>).__env = {
   KV: kvMock,
+  EXPERIMENT_KV: kvMock,
   DB: d1Mock,
   R2: r2Mock,
+  NEXT_INC_CACHE_R2_BUCKET: r2Mock,
 };
 
 // ── NextResponse mock ─────────────────────────────────────────────────────
@@ -77,62 +79,60 @@ const kvMock = {
 //    binding that instanceof sees is the same function object, so we make
 //    the mock function's prototype equal to the Response prototype.
 //
-// Both (2) and (3) are satisfied by making the mock function itself the
-// Response constructor (because in jsdom `new Response(...)` is callable)
-// and assigning its prototype to `Response.prototype`.
+// Both (2) and (3) are satisfied by making the mock a class extending Response.
+// This ensures `instanceof NextResponse` works for both constructor and static methods.
 // ─────────────────────────────────────────────────────────────────────────
 
-const GlobalResponse =
-  // jsdom always has a global Response; vitest is fine with it.
-  // Keep the explicit cast to satisfy TS when the global is missing.
-  globalThis.Response;
+const GlobalResponse = globalThis.Response;
 
-function nextResponseFactoryFn(
-  this: Response,
-  body?: BodyInit | null,
-  init?: ResponseInit,
-): Response {
-  if (body instanceof Response) return body;
-  return new GlobalResponse(body, init);
+// Base class that properly extends Response
+class NextResponseClass extends GlobalResponse {
+  cookies: Map<string, string> = new Map();
+
+  constructor(body?: BodyInit | null, init?: ResponseInit) {
+    super(body, init);
+  }
+
+  // Override getSetCookie to return empty array (compatible with tests)
+  getSetCookie(): string[] { return []; }
 }
 
-// Make `instanceof NextResponse` true for any Response produced by this mock.
-Object.setPrototypeOf(nextResponseFactoryFn, GlobalResponse);
-Object.setPrototypeOf(nextResponseFactoryFn.prototype, GlobalResponse.prototype);
+// Attach static factory methods (cast to avoid Response base-class type conflicts)
+{
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const NRC = NextResponseClass as any;
 
-// Attach the static factory methods
-const withResponseProperties = (response: Response, body: BodyInit | null, init: ResponseInit = {}) => {
-  Object.defineProperties(response, {
-    body: { value: body, enumerable: true, writable: true, configurable: true },
-    headers: { value: new Headers((init.headers as Record<string, string> | undefined) ?? {}), enumerable: true, writable: true, configurable: true },
-    status: { value: (init.status as number | undefined) ?? 200, enumerable: true, writable: true, configurable: true },
-    statusText: { value: init.statusText ?? '', enumerable: true, writable: true, configurable: true },
-    ok: { get() { const s = (init.status as number | undefined) ?? 200; return s >= 200 && s < 300; }, enumerable: true, configurable: true },
-  });
-  (response as unknown as Record<string, unknown>).json = () => Promise.resolve(typeof body === 'string' ? JSON.parse(body) : body);
-};
+  NRC.json = function(data: unknown, init?: { status?: number; headers?: Record<string, string> }): NextResponseClass {
+    const body = typeof data === 'string' ? data : JSON.stringify(data);
+    // Merge headers: user headers take precedence over defaults (case-insensitive)
+    const userHeaders = init?.headers ?? {};
+    const hasContentType = Object.keys(userHeaders).some(k => k.toLowerCase() === 'content-type');
+    const headers: Record<string, string> = {
+      ...(hasContentType ? {} : { 'content-type': 'application/json' }),
+      ...userHeaders,
+    };
+    return new NextResponseClass(body, { status: init?.status ?? 200, headers });
+  };
 
-nextResponseFactoryFn.json = (data: unknown, init?: { status?: number }): Response => {
-  const body = typeof data === 'string' ? data : JSON.stringify(data);
-  const response = Object.create(nextResponseFactoryFn.prototype) as Response;
-  withResponseProperties(response, body, { status: init?.status ?? 200, headers: { 'content-type': 'application/json' } });
-  return response;
-};
+  NRC.redirect = function(url: string | URL, init?: { status?: number }): NextResponseClass {
+    return new NextResponseClass(null, { status: init?.status ?? 307, headers: { location: typeof url === 'string' ? url : url.toString() } });
+  };
 
-nextResponseFactoryFn.redirect = (url: string | URL, init?: { status?: number }): Response => {
-  const response = Object.create(nextResponseFactoryFn.prototype) as Response;
-  withResponseProperties(response, null, { status: init?.status ?? 307, headers: { location: typeof url === 'string' ? url : url.toString() } });
-  return response;
-};
+  NRC.next = function(init?: { status?: number }): NextResponseClass {
+    const res = new NextResponseClass(null, { status: init?.status ?? 200 });
+    res.cookies = new Map();
+    return res;
+  };
 
-nextResponseFactoryFn.next = (init?: { status?: number }): Response => {
-  const response = Object.create(nextResponseFactoryFn.prototype) as Response;
-  withResponseProperties(response, null, { status: init?.status ?? 200 });
-  return response;
-};
+  NRC.rewrite = function(url: URL, init?: { request?: { headers: Headers } }): NextResponseClass {
+    const res = new NextResponseClass(null, { status: 200 });
+    res.cookies = new Map();
+    return res;
+  };
+}
 
 // Exported mock binding
-const NextResponseMock = nextResponseFactoryFn;
+const NextResponseMock = NextResponseClass;
 
 // ── Mock NextRequest on next/server ───────────────────────────────────────
 // Needed because vi.mock('next/server') replaces the whole module with plain JSON.
@@ -284,6 +284,7 @@ class SpecCompliantHeaders {
     cur.push(value);
     this._store.set(key, cur);
   }
+  // set replaces instead of appending (for headers like content-type that should be single-valued)
   set(name: string, value: string) {
     this._store.set(this.normalize(name), [value]);
   }
@@ -302,26 +303,26 @@ class SpecCompliantHeaders {
     }
   }
   keys() {
+    const store = this._store;
     return {
       *[Symbol.iterator]() {
-        const map: Map<string, string[]> = this as unknown as Map<string, string[]>;
-        for (const k of map.keys()) yield k;
+        for (const k of store.keys()) yield k;
       },
     };
   }
   values() {
+    const store = this._store;
     return {
       *[Symbol.iterator]() {
-        const map: Map<string, string[]> = this as unknown as Map<string, string[]>;
-        for (const v of map.values()) yield v[v.length - 1];
+        for (const v of store.values()) yield v[v.length - 1];
       },
     };
   }
   entries() {
+    const store = this._store;
     return {
       *[Symbol.iterator]() {
-        const map: Map<string, string[]> = this as unknown as Map<string, string[]>;
-        for (const [k, v] of map.entries()) yield [k, v[v.length - 1]];
+        for (const [k, v] of store.entries()) yield [k, v[v.length - 1]];
       },
     };
   }
