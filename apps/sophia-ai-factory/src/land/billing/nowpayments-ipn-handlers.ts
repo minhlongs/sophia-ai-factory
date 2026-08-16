@@ -6,6 +6,7 @@
 
 import { logger } from '@/seed/utils/logger-utility'
 import { safeCatch } from '@/seed/utils/safe-catch'
+import { detectStaleLock } from '@/seed/utils/stale-lock-recovery'
 import { getDb } from './nowpayments-ipn-db'
 import { handleFailed } from './nowpayments-ipn-subscription'
 import { dispatchFinished, dispatchRefunded } from './nowpayments-ipn-dispatch'
@@ -88,23 +89,27 @@ export async function processNowPaymentsIpn(
     // Use atomic UPDATE with WHERE processed = 0 to ensure only ONE process wins
     // the race to recover the stale lock. processed = 2 means "recovery in progress".
     // Only the process that gets changes === 1 proceeds to delete and retry.
-    const lockAgeMs = Date.now() - new Date(existing.created_at ?? now).getTime()
-    if (lockAgeMs > 5 * 60 * 1000) {
+    const staleDetect = await detectStaleLock(db as unknown as import('@/seed/utils/stale-lock-recovery').StaleLockDatabase, eventId)
+    if (!staleDetect.ok) {
+      logger.error('[NOWPayments] Stale lock detection failed', staleDetect.error, { eventId, payment_id })
+      return { success: false, message: 'Database query failure' }
+    }
+    if (staleDetect.value) {
       const updateResult = await db
         .prepare('UPDATE payment_events SET processed = 2 WHERE event_id = ?1 AND processed = 0')
         .bind(eventId)
-        .run()
+        .run<{ changes: number }>()
 
       if (updateResult.meta?.changes === 1) {
         // This process won the race - proceed with fresh lock
         logger.error('[NOWPayments] Stale lock recovered — re-enqueuing for retry', {
-          eventId, payment_id, payment_status, lockAgeMs,
+          eventId, payment_id, payment_status,
         })
         try {
           await db
             .prepare('DELETE FROM payment_events WHERE event_id = ?1')
             .bind(eventId)
-            .run()
+            .run<{ changes: number }>()
         } catch (e) { safeCatch('Stale lock delete')(e) }
         return { success: false, message: 'Stale lock recovered — retry' }
       }

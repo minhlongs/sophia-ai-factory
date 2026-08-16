@@ -60,6 +60,14 @@ export interface CircuitBreakerEntry {
   cooldownUntil: number | null
   /** Last time this entry was accessed (for LRU eviction) */
   lastAccessAt: number
+  /** Lockout (cooldown) duration override for this specific entry; 0 means default per-kind cooldown. */
+  lockoutSeconds: number
+  /** Count of consecutive NETWORK-level failures on this entry. */
+  consecutiveConnectionFailures: number
+  /** Timestamp of the last NETWORK failure on this entry. */
+  lastConnectionFailureAt: number | null
+  /** End of the connection-driven cool-down window (ms epoch). Rejects even when state is CLOSED. */
+  connectionCooldownUntil: number | null
 }
 
 /** Get cooldown duration for a failure kind */

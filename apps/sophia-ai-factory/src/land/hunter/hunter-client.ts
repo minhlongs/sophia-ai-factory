@@ -70,8 +70,9 @@ function buildUrl(path: string, params: Record<string, string | undefined>, apiK
 }
 
 async function callHunter<T>(path: string, params: Record<string, string | undefined>, apiKey: string): Promise<T> {
-  if (!shouldAllowRequest('hunter')) {
-    throw new Error('Circuit breaker open for hunter — too many failures')
+  const hunterKeyRef = `hunter:${apiKey.slice(0, 8)}`
+  if (!shouldAllowRequest('hunter', hunterKeyRef)) {
+    throw new Error('Circuit breaker open for Hunter — too many failures')
   }
 
   try {
@@ -93,11 +94,11 @@ async function callHunter<T>(path: string, params: Record<string, string | undef
       throw err;
     }
 
-    recordSuccess('hunter')
+    recordSuccess('hunter', hunterKeyRef)
     return res.json() as Promise<T>;
   } catch (err) {
     const kind = classifyError(err)
-    recordFailure('hunter', kind)
+    recordFailure('hunter', kind, hunterKeyRef)
     throw err
   }
 }

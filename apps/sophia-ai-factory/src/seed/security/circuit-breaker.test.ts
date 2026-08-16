@@ -210,7 +210,7 @@ describe('Circuit Breaker — 4-State Machine', () => {
       expect(getState(SERVICE).state).toBe(CircuitState.DEGRADED)
 
       // Simulate old failure (outside 60s window) by directly setting entry
-      __testSetEntry(SERVICE, { lastFailureAt: Date.now() - 70_000 })
+      __testSetEntry(SERVICE, undefined, { lastFailureAt: Date.now() - 70_000 })
 
       // Next failure should reset count first, then increment
       recordFailure(SERVICE, FailureKind.SERVER_ERROR)
@@ -230,7 +230,7 @@ describe('Circuit Breaker — 4-State Machine', () => {
       recordFailure('svc-new', FailureKind.TIMEOUT)
 
       // Set old access time on svc-old via test helper
-      __testSetEntry('svc-old', { lastAccessAt: Date.now() - 100_000 })
+      __testSetEntry('svc-old', undefined, { lastAccessAt: Date.now() - 100_000 })
 
       // Set recent access on svc-mid (via shouldAllowRequest)
       shouldAllowRequest('svc-mid')

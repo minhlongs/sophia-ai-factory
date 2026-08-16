@@ -10,12 +10,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 
-// NOTE: `NextResponse` import resolves to vi.mock binding in this file scope.
-// Use the shared `Response` base class for instanceof assertions so the
-// expression is stable across module-binding differences between vitest files.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _NextResponseAssertion = NextResponse;
-
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUserFromHeaders: vi.fn(),
 }));

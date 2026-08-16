@@ -54,9 +54,11 @@ export function generateComplianceJSON(data: ComplianceReportData): string {
 
 /** Format bytes to human-readable size */
 export function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B'
+  const safe = Number(bytes)
+  if (!Number.isFinite(safe) || safe <= 0) return '0 B'
+  const clamped = Math.max(0, safe)
   const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'] as const
+  const i = Math.min(Math.floor(Math.log(clamped) / Math.log(k)), sizes.length - 1)
+  return `${parseFloat((clamped / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
 }
