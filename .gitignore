@@ -97,3 +97,7 @@ sync-*.sh
 
 # Orchestration pipeline state
 .orchestrate/
+
+# Stryker mutation testing sandbox + local temp scratch
+.stryker-tmp/
+.tmp/

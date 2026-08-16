@@ -1,6 +1,17 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import sonarjs from "eslint-plugin-sonarjs";
+
+// ─── Phase 2: Complexity Ratchet (2026-08-16) ───────────────────────────────
+// SonarJS + built-in rules to block hot-spot growth. Frozen baseline ensures
+// suppressions never grow; only decrement count via `npm run lint:fix` + cleanup.
+const COMPLEXITY_THRESHOLDS = {
+  'sonarjs/cognitive-complexity': ['warn', 15],
+  'max-lines-per-function': ['warn', 200],
+  'max-depth': ['warn', 4],
+  'max-nested-callbacks': ['warn', 3],
+}
 
 // Regression guard for Phase 13→22 toError() migration: flag any bare `as Error`
 // cast in production code. Only `to-error.ts` is exempted (its JSDoc mentions
@@ -39,6 +50,7 @@ const eslintConfig = defineConfig([
       "src/**/*.spec.tsx",
       "src/lib/utils/to-error.ts",
     ],
+    plugins: { sonarjs },
     rules: {
       "@typescript-eslint/no-unused-vars": ["warn", {
         argsIgnorePattern: "^_",
@@ -47,6 +59,16 @@ const eslintConfig = defineConfig([
         caughtErrorsIgnorePattern: "^_",
       }],
       "no-restricted-syntax": ["error", noAsErrorRule],
+      // ─── Phase 2: Complexity Ratchet (2026-08-16) ─────────────────────────────
+      // Warn boundaries first: warn at 15 / 200 / 4 / 3. Remaining legacy hot-spots
+      // can be migrated to error thresholds later without new comments.
+      // No spread helper/mutator here: plain object so ESLint 9 flat config stays valid.
+      // Frozen baseline: new eslint-disable comments are forbidden; count must decrease.
+      'sonarjs/cognitive-complexity': ['warn', 15],
+      'max-lines-per-function': ['warn', 200],
+      'max-depth': ['warn', 4],
+      'max-nested-callbacks': ['warn', 3],
+      // ─── End Complexity Ratchet ──────────────────────────────────────────────
       // React Compiler rules — demoted from error to warn for high-volume cases
       // where refactor is invasive but the underlying pattern is widely acceptable
       // in production React 19 codebases. These remain enforced (visible in lint

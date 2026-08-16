@@ -14,8 +14,8 @@ const TARGET_FILES = [
 ];
 
 function buildArgs(targets) {
-  const args = ['run'];
-  if (targets.length) args.push(...targets);
+  const args = ['run', '--ignorePatterns', '.claude'];
+  if (targets.length) args.push(`-m`, targets.join(','));
   return args;
 }
 
@@ -32,7 +32,7 @@ function spawnStryker(targets) {
   const args = buildArgs(targets);
 
   return new Promise((resolve, reject) => {
-    const child = spawn('npx', args, { cwd: REPO_DIR, stdio: 'pipe' });
+    const child = spawn(process.execPath, [path.join(REPO_DIR, 'node_modules', '.bin', 'stryker'), ...args], { cwd: REPO_DIR, stdio: 'pipe' });
     const chunks = [];
     child.stdout.on('data', (chunk) => chunks.push(chunk));
     child.stderr.on('data', (chunk) => chunks.push(chunk));
