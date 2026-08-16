@@ -52,7 +52,7 @@ interface HandoverStats {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   const url = new URL(request.url);
   const status = url.searchParams.get('status');

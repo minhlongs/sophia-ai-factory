@@ -13,7 +13,7 @@ import { fetchBillingSummaryData, buildBillingSummary } from './billing-summary-
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin(req);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   try {
 

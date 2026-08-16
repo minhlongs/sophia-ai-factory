@@ -12,7 +12,7 @@ vi.mock('@/seed/utils/to-error', () => ({
   toError: (e: unknown) => (e instanceof Error ? e : new Error(String(e))),
 }));
 
-// Mock the admin auth gate as a whole so instanceof NextResponse checks work.
+// Mock the admin auth gate as a whole so instanceof Response checks work.
 vi.mock('@/seed/auth/require-admin', () => ({
   requireAdmin: vi.fn(),
 }));
@@ -42,7 +42,7 @@ beforeEach(() => {
 
 describe('GET /api/admin/payouts/queue', () => {
   it('returns 401 when user is not authenticated', async () => {
-    // Use dynamic import so instanceof NextResponse matches the route's own reference.
+    // Use dynamic import so instanceof Response matches the route's own reference.
     vi.mocked(requireAdmin).mockImplementation(async () => {
       const { NextResponse: NR } = await import('next/server');
       return NR.json({ error: 'Unauthorized' }, { status: 401 });

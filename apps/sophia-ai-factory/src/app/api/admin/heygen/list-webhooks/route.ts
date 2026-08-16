@@ -18,7 +18,7 @@ interface UserRow { id: string; email: string }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request)
-  if (auth instanceof NextResponse) return auth
+  if (auth instanceof Response) return auth
 
   const userId = request.nextUrl.searchParams.get('userId')
   if (!userId) {

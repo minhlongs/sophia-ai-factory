@@ -10,6 +10,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest, NextResponse } from 'next/server';
 
+// NOTE: `NextResponse` import resolves to vi.mock binding in this file scope.
+// Use the shared `Response` base class for instanceof assertions so the
+// expression is stable across module-binding differences between vitest files.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _NextResponseAssertion = NextResponse;
+
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUserFromHeaders: vi.fn(),
 }));
@@ -40,8 +46,8 @@ describe('requireAdmin', () => {
 
     const result = await requireAdmin(makeRequest());
 
-    expect(result).toBeInstanceOf(NextResponse);
-    const res = result as NextResponse;
+    expect(result).toBeInstanceOf(Response);
+    const res = result as Response;
     expect(res.status).toBe(401);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('Unauthorized');
@@ -58,8 +64,8 @@ describe('requireAdmin', () => {
 
     const result = await requireAdmin(makeRequest());
 
-    expect(result).toBeInstanceOf(NextResponse);
-    const res = result as NextResponse;
+    expect(result).toBeInstanceOf(Response);
+    const res = result as Response;
     expect(res.status).toBe(403);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('Forbidden: admin role required');
@@ -78,7 +84,7 @@ describe('requireAdmin', () => {
 
     const result = await requireAdmin(makeRequest());
 
-    expect(result).not.toBeInstanceOf(NextResponse);
+    expect(result).not.toBeInstanceOf(Response);
     const { user } = result as { user: typeof adminUser };
     expect(user).toEqual(adminUser);
     expect(mockIsUserAdmin).toHaveBeenCalledTimes(1);
@@ -93,7 +99,7 @@ describe('requireAdmin', () => {
     const req = new Request('http://localhost/api/admin/test');
     const result = await requireAdmin(req);
 
-    expect(result).not.toBeInstanceOf(NextResponse);
+    expect(result).not.toBeInstanceOf(Response);
     const { user } = result as { user: typeof adminUser };
     expect(user.role).toBe('admin');
     expect(mockIsUserAdmin).toHaveBeenCalledTimes(1);
@@ -105,8 +111,8 @@ describe('requireAdmin', () => {
 
     const result = await requireAdmin(makeRequest());
 
-    expect(result).toBeInstanceOf(NextResponse);
-    const res = result as NextResponse;
+    expect(result).toBeInstanceOf(Response);
+    const res = result as Response;
     expect(res.status).toBe(503);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('Authentication service temporarily unavailable');
@@ -120,8 +126,8 @@ describe('requireAdmin', () => {
 
     const result = await requireAdmin(makeRequest());
 
-    expect(result).toBeInstanceOf(NextResponse);
-    const res = result as NextResponse;
+    expect(result).toBeInstanceOf(Response);
+    const res = result as Response;
     expect(res.status).toBe(503);
     const body = await res.json() as { error: string };
     expect(body.error).toBe('Authentication service temporarily unavailable');

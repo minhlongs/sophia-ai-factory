@@ -178,6 +178,7 @@
     "lint-staged": "^17.0.4",
     "msw": "^2.12.8",
     "node-gyp": "^11.5.0",
+    "node-pty": "^1.1.0",
     "ora": "^9.3.0",
     "patch-package": "8.0.1",
     "secretlint": "^13.0.0",

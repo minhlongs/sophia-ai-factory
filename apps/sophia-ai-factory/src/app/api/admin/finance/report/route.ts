@@ -52,7 +52,7 @@ function parsePeriod(fromStr: string, toStr: string) {
 export async function GET(req: NextRequest) {
   // Layer 1: admin role + recent re-authentication (ASVS V3.5.1)
   const auth = await requireAdminWithRecentAuth(req);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   // Layer 2: internal secret (timing-safe, rejects when not configured)
   const unauthorized = requireInternal(req);

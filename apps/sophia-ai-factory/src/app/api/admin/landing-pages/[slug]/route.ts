@@ -29,7 +29,7 @@ request: NextRequest,
 { params }: RouteParams,
 ): Promise<NextResponse> {
 const adminAuth = await requireAdmin(request);
-if (adminAuth instanceof NextResponse) return adminAuth;
+if (adminAuth instanceof Response) return adminAuth;
 await requireMasterTier();
 
 try {
@@ -50,7 +50,7 @@ request: NextRequest,
 { params }: RouteParams,
 ): Promise<NextResponse> {
 const adminAuth = await requireAdmin(request);
-if (adminAuth instanceof NextResponse) return adminAuth;
+if (adminAuth instanceof Response) return adminAuth;
 await requireMasterTier();
 
 try {
@@ -81,7 +81,7 @@ request: NextRequest,
 { params }: RouteParams,
 ): Promise<NextResponse> {
 const adminAuth = await requireAdmin(request);
-if (adminAuth instanceof NextResponse) return adminAuth;
+if (adminAuth instanceof Response) return adminAuth;
 await requireMasterTier();
 
 try {

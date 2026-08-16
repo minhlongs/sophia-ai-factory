@@ -34,7 +34,7 @@ export async function POST(
   context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const auth = await requireAdmin(request)
-  if (auth instanceof NextResponse) return auth
+  if (auth instanceof Response) return auth
 
   const { id } = await context.params
 

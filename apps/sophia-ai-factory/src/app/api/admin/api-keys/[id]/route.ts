@@ -32,7 +32,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const auth = await requireAdminWithRecentAuth(request);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
   const userId = auth.user.id;
 
   const keyId = (await params).id

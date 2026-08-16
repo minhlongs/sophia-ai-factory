@@ -30,7 +30,7 @@ const DLQ_SIZE_CAP = 1000
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request)
-  if (auth instanceof NextResponse) return auth
+  if (auth instanceof Response) return auth
 
   try {
     const { searchParams } = new URL(request.url)

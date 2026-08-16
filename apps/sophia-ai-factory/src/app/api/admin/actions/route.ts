@@ -49,7 +49,7 @@ interface PurchaseRow { id: string; credits_remaining: number }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request)
-  if (auth instanceof NextResponse) return auth
+  if (auth instanceof Response) return auth
 
   let body: z.infer<typeof bodySchema>
   try {

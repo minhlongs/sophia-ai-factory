@@ -9,12 +9,15 @@ import { vi, beforeEach, afterEach } from 'vitest';
 // ── D1 / R2 / KV mocks ───────────────────────────────────────────────────
 function createD1Mock() {
   return {
-    prepare: (_sql: string) => ({
-      bind: (..._vals: unknown[]) => ({
+    prepare: vi.fn().mockReturnValue({
+      bind: vi.fn().mockImplementation((..._vals: unknown[]) => ({
         first: async () => null,
         all: async () => ({ results: [], meta: { changes: 0, duration: 1 } }),
         run: async () => ({ success: true, meta: { changes: 0, duration: 1 } }),
-      }),
+      })),
+      first: async () => null as any,
+      all: async () => ({ results: [], meta: { changes: 0, duration: 1 } }),
+      run: async () => ({ success: true, meta: { changes: 0, duration: 1 } }),
     }),
     batch: async (_stmts: unknown[]) => {},
     exec: async (_sql: string) => ({ results: [], meta: { changes: 0 } }),
@@ -98,23 +101,34 @@ Object.setPrototypeOf(nextResponseFactoryFn, GlobalResponse);
 Object.setPrototypeOf(nextResponseFactoryFn.prototype, GlobalResponse.prototype);
 
 // Attach the static factory methods
+const withResponseProperties = (response: Response, body: BodyInit | null, init: ResponseInit = {}) => {
+  Object.defineProperties(response, {
+    body: { value: body, enumerable: true, writable: true, configurable: true },
+    headers: { value: new Headers((init.headers as Record<string, string> | undefined) ?? {}), enumerable: true, writable: true, configurable: true },
+    status: { value: (init.status as number | undefined) ?? 200, enumerable: true, writable: true, configurable: true },
+    statusText: { value: init.statusText ?? '', enumerable: true, writable: true, configurable: true },
+    ok: { get() { const s = (init.status as number | undefined) ?? 200; return s >= 200 && s < 300; }, enumerable: true, configurable: true },
+  });
+  (response as unknown as Record<string, unknown>).json = () => Promise.resolve(typeof body === 'string' ? JSON.parse(body) : body);
+};
+
 nextResponseFactoryFn.json = (data: unknown, init?: { status?: number }): Response => {
   const body = typeof data === 'string' ? data : JSON.stringify(data);
-  return new GlobalResponse(body, {
-    status: init?.status ?? 200,
-    headers: { 'content-type': 'application/json' },
-  });
+  const response = Object.create(nextResponseFactoryFn.prototype) as Response;
+  withResponseProperties(response, body, { status: init?.status ?? 200, headers: { 'content-type': 'application/json' } });
+  return response;
 };
 
 nextResponseFactoryFn.redirect = (url: string | URL, init?: { status?: number }): Response => {
-  return new GlobalResponse(null, {
-    status: init?.status ?? 307,
-    headers: { location: typeof url === 'string' ? url : url.toString() },
-  });
+  const response = Object.create(nextResponseFactoryFn.prototype) as Response;
+  withResponseProperties(response, null, { status: init?.status ?? 307, headers: { location: typeof url === 'string' ? url : url.toString() } });
+  return response;
 };
 
 nextResponseFactoryFn.next = (init?: { status?: number }): Response => {
-  return new GlobalResponse(null, { status: init?.status ?? 200 });
+  const response = Object.create(nextResponseFactoryFn.prototype) as Response;
+  withResponseProperties(response, null, { status: init?.status ?? 200 });
+  return response;
 };
 
 // Exported mock binding

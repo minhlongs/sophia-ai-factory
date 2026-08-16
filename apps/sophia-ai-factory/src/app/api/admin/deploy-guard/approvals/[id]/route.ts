@@ -13,7 +13,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<Response> {
   const auth = await requireAdmin(request)
-  if (auth instanceof NextResponse) return auth
+  if (auth instanceof Response) return auth
 
   try {
     const { id } = await params

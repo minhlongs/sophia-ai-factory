@@ -23,8 +23,7 @@ const patchSchema = z.object({
 
 export async function GET(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   const auth = await requireAdmin(request);
-if (auth instanceof NextResponse) return auth;
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   const { id } = await params;
 
@@ -49,7 +48,7 @@ if (auth instanceof NextResponse) return auth;
 
 export async function PATCH(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   const auth = await requireAdminWithRecentAuth(request);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
   const { user: admin } = auth;
 
   const { id } = await params;

@@ -47,7 +47,7 @@ const Schema = z.object({
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
   const { user: admin } = auth;
 
   // F02: Re-authentication challenge (ASVS V3.5.1)

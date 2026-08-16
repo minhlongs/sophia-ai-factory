@@ -65,7 +65,7 @@ const DEFAULT_SECTIONS: Record<string, Section> = {
 
 export async function GET() {
   const auth = await requireAdmin(undefined as unknown as NextRequest);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
   const list = Array.from(packs.values()).sort(
     (a, b) => (a.createdAt > b.createdAt ? -1 : 1),
   );
@@ -83,7 +83,7 @@ const createSchema = z.object({
 
 export async function POST(request: NextRequest) {
   const auth = await requireAdmin(request);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
   const currentUserId = auth.user.id;
 
   const body = await request.json().catch(() => ({}));

@@ -29,7 +29,7 @@ export async function PATCH(
   context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   const auth = await requireAdminWithRecentAuth(request)
-  if (auth instanceof NextResponse) return auth
+  if (auth instanceof Response) return auth
 
   const { id } = await context.params
 

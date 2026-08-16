@@ -26,7 +26,7 @@ const markBillableSchema = z.object({
 
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin(req);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   try {
     const body = await req.json();

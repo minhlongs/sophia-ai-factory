@@ -20,7 +20,7 @@ const bodySchema = z.object({
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdminWithRecentAuth(request)
-  if (auth instanceof NextResponse) return auth
+  if (auth instanceof Response) return auth
 
   let body: z.infer<typeof bodySchema>
   try {

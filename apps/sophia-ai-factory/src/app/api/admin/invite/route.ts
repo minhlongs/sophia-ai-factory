@@ -17,7 +17,7 @@ const VALID_TIERS: Tier[] = ["BASIC", "PREMIUM", "ENTERPRISE", "MASTER"];
 // Wrap handler with rate limiting (20 requests per minute for admin endpoints)
 export const POST = withRateLimit(async function POST(request: NextRequest) {
   const auth = await requireAdminWithRecentAuth(request);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   try {
     const body = await request.json();

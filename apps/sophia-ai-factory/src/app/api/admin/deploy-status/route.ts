@@ -20,7 +20,7 @@ interface CronRow { last_at: number | null }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request)
-  if (auth instanceof NextResponse) return auth
+  if (auth instanceof Response) return auth
 
   const now = Math.floor(Date.now() / 1000)
 

@@ -68,6 +68,7 @@ function buildRequest(
 describe("POST /api/admin/promo-codes/bulk-generate", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // mock with admin user plus rejection override already present
     vi.mocked(requireAdmin).mockResolvedValue({ user: ADMIN });
     vi.mocked(rateLimit).mockResolvedValue({
       allowed: true,

@@ -20,9 +20,10 @@ export default function RootNotFound() {
             The page you are looking for does not exist or has been moved.
           </p>
         </div>
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- not-found boundary is outside NextIntl; locale Link unavailable here */}
         <a
           href="/vi"
-          className="inline-block rounded-lg bg-primary text-primary-foreground px-6 py-3 text-sm font-semibold hover:opacity-90 transition-opacity"
+          className="inline-block rounded-lg bg-primary bg-primary-foreground px-6 py-3 text-sm font-semibold hover:opacity-90 transition-opacity"
         >
           Về trang chủ / Back to home
         </a>

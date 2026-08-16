@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   const { searchParams } = new URL(request.url);
   const fromParam = searchParams.get('from');

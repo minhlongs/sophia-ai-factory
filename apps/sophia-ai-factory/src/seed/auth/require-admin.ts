@@ -241,7 +241,7 @@ export async function requireAdminOrDeploy(request: NextRequest | Request): Prom
  *
  * Usage:
  * const auth = await requireAdminWithRecentAuth(request);
- * if (auth instanceof NextResponse) return auth;
+ * if (auth instanceof Response) return auth;
  * // proceed with mutation — admin identity + recent auth confirmed
  */
 export async function requireAdminWithRecentAuth(
@@ -282,7 +282,7 @@ export async function requireAdminWithRecentAuth(
  *
  * Usage:
  *   const auth = await requireAdmin(request);
- *   if (auth instanceof NextResponse) return auth;
+ *   if (auth instanceof Response) return auth;
  *   const { user } = auth;
  */
 export async function requireAdmin(

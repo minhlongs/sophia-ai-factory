@@ -68,7 +68,7 @@ async function buildIpnSignature(payload: Record<string, unknown>, secret: strin
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request)
-  if (auth instanceof NextResponse) return auth
+  if (auth instanceof Response) return auth
 
   const nowPaymentsIpnSecret = getNowPaymentsIpnSecret()
   if (!nowPaymentsIpnSecret) {

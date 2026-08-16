@@ -31,7 +31,7 @@ function getD1Binding(): D1Database {
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin(req);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   try {
     const rawParams = Object.fromEntries(req.nextUrl.searchParams.entries());

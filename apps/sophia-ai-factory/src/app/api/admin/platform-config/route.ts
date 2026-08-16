@@ -19,7 +19,7 @@ const setSchema = z.object({
  */
 export async function GET(request: NextRequest) {
   const auth = await requireAdminWithRecentAuth(request);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   const key = request.nextUrl.searchParams.get('key');
   if (!key || !PLATFORM_CONFIG_KEYS.includes(key as typeof PLATFORM_CONFIG_KEYS[number])) {
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   const auth = await requireAdminWithRecentAuth(request);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   let body: z.infer<typeof setSchema>;
   try {

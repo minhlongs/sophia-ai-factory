@@ -39,7 +39,7 @@ export async function GET(
   { params }: { params: { id: string } },
 ) {
   const auth = await requireAdmin(undefined as unknown as NextRequest);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   const pack = packs.get(params.id);
   if (!pack) {
@@ -54,7 +54,7 @@ export async function PATCH(
   { params }: { params: { id: string } },
 ) {
   const auth = await requireAdmin(request);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   const pack = packs.get(params.id);
   if (!pack) {
@@ -85,7 +85,7 @@ export async function DELETE(
   { params }: { params: { id: string } },
 ) {
   const auth = await requireAdmin(undefined as unknown as NextRequest);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   if (!packs.has(params.id)) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });

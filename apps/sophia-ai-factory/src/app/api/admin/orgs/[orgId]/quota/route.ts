@@ -24,7 +24,7 @@ export async function PATCH(
   { params }: { params: Promise<{ orgId: string }> }
 ) {
   const auth = await requireAdminWithRecentAuth(request);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
   const adminUserId = auth.user.id;
 
   try {

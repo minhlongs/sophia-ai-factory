@@ -22,7 +22,7 @@ type Params = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   const auth = await requireAdmin(request);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   const { id } = await params;
   if (!id) return NextResponse.json({ error: 'User id required' }, { status: 400 });

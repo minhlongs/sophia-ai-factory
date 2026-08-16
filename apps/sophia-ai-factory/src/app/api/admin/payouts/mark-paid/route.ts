@@ -17,7 +17,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin(req);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
   const adminId = auth.user.id;
 
   let body: unknown;

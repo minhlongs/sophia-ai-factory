@@ -22,7 +22,7 @@ import type { OverageEventRow } from '@/tree/database/supabase-types';
 
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin(req);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   try {
     const searchParams = req.nextUrl.searchParams;

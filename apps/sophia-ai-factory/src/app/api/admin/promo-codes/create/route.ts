@@ -31,7 +31,7 @@ const createCodeSchema = z.object({
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdminWithRecentAuth(request);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
 
   const { user: admin } = auth;
 

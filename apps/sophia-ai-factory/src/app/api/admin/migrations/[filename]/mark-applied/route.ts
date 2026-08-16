@@ -28,7 +28,7 @@ export async function POST(
   { params }: { params: Promise<{ filename: string }> },
 ): Promise<NextResponse> {
   const auth = await requireAdminWithRecentAuth(request)
-  if (auth instanceof NextResponse) return auth
+  if (auth instanceof Response) return auth
 
   const { filename } = await params
 
@@ -80,7 +80,7 @@ export async function GET(
   { params }: { params: Promise<{ filename: string }> },
 ): Promise<NextResponse> {
   const auth = await requireAdminWithRecentAuth(request)
-  if (auth instanceof NextResponse) return auth
+  if (auth instanceof Response) return auth
 
   const { filename } = await params
 

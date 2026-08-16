@@ -24,7 +24,7 @@ interface AppliedRow {
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request)
-  if (auth instanceof NextResponse) return auth
+  if (auth instanceof Response) return auth
 
   const db = getD1();
   if (!db) throw new Error('D1 database binding not available');

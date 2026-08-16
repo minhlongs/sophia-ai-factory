@@ -21,6 +21,7 @@ export * from './publish-execute';
 export * from './repurpose-analyze';
 export * from './repurpose-clip-generate';
 export * from './thumbnail-ab-selector';
+export * from './variant-ab-selector';
 export * from './token-refresh-cron';
 export * from './url-revenue-video-handler';
 export * from './video-compose';

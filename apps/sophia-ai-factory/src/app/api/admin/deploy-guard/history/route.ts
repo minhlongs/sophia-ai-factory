@@ -10,7 +10,7 @@ import { logger } from '@/seed/utils/logger-utility'
 
 export async function GET(request: NextRequest): Promise<Response> {
   const auth = await requireAdmin(request)
-  if (auth instanceof NextResponse) return auth
+  if (auth instanceof Response) return auth
 
   try {
     const searchParams = request.nextUrl.searchParams

@@ -27,7 +27,7 @@ const replaySchema = z.object({
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request)
-  if (auth instanceof NextResponse) return auth
+  if (auth instanceof Response) return auth
 
   try {
     const body = await request.json().catch(() => null)

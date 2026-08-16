@@ -22,7 +22,7 @@ interface RouteParams { params: Promise<{ id: string }> }
 
 export async function POST(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   const auth = await requireAdmin(request);
-  if (auth instanceof NextResponse) return auth;
+  if (auth instanceof Response) return auth;
   const { user: admin } = auth;
 
   const { id } = await params;

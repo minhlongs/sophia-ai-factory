@@ -32,7 +32,7 @@ const bodySchema = z.object({
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request)
-  if (auth instanceof NextResponse) return auth
+  if (auth instanceof Response) return auth
 
   let body: { skuId: 'STARTER_BUNDLE'; timeoutMs: number }
   try {

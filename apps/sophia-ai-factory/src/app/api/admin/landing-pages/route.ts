@@ -22,7 +22,7 @@ export async function GET(
 request: NextRequest,
 ): Promise<NextResponse> {
 const adminAuth = await requireAdmin(request);
-if (adminAuth instanceof NextResponse) return adminAuth;
+if (adminAuth instanceof Response) return adminAuth;
 await requireMasterTier();
 
 try {
@@ -38,7 +38,7 @@ export async function POST(
 request: NextRequest,
 ): Promise<NextResponse> {
 const adminAuth = await requireAdmin(request);
-if (adminAuth instanceof NextResponse) return adminAuth;
+if (adminAuth instanceof Response) return adminAuth;
 await requireMasterTier();
 
 try {

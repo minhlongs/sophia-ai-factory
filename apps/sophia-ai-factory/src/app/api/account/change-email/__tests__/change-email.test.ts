@@ -153,7 +153,7 @@ describe('GET /api/account/change-email/verify', () => {
 
   it('redirects to error when token missing', async () => {
     const res = await VERIFY_GET(makeReq('userId=user-1'));
-    expect(res.status).toBe(302);
+    expect(res.status).toBe(307);
     expect(res.headers.get('location')).toContain('error=email-change-invalid');
   });
 
@@ -228,7 +228,7 @@ describe('GET /api/account/change-email/verify', () => {
       deleteStmt,
     ]));
     const res = await VERIFY_GET(makeReq('token=tok-x&userId=user-1'));
-    expect(res.status).toBe(302);
+    expect(res.status).toBe(307);
     expect(res.headers.get('location')).toContain('?ok=email-changed');
     expect(updateStmt.run).toHaveBeenCalled();
     expect(deleteStmt.run).toHaveBeenCalled();
