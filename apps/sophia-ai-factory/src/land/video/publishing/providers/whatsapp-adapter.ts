@@ -20,6 +20,7 @@ import type { Publisher, PublishMeta, MetricsJson } from './publisher-interface'
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError, FailureKind } from '@/seed/types/failure-kind';
+import { logWhatsAppMessage } from '@/tree/credentials/whatsapp-message-logger';
 
 const GRAPH_API_VERSION = 'v19.0';
 const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
@@ -41,7 +42,18 @@ export class WhatsAppAdapter implements Publisher {
       throw new Error('Circuit breaker open for WhatsApp — too many failures');
     }
     if (isMockMode()) {
-      return this.mockId('upload');
+      const mockId = this.mockId('upload');
+      void this.persistLog({
+        userId: 0,
+        templateId: 0,
+        channel: 'whatsapp',
+        direction: 'outbound',
+        recipient: '',
+        externalMessageId: mockId,
+        status: 'mock',
+        sendMeta: null,
+      }).catch(() => {});
+      return mockId;
     }
 
     try {
@@ -63,14 +75,70 @@ export class WhatsAppAdapter implements Publisher {
       if (!res.ok) {
         const kind = this.classifyStatus(res.status);
         recordFailure('whatsapp', kind);
-        if (kind === FailureKind.RATE_LIMIT || kind === FailureKind.SERVER_ERROR) return this.mockId('upload');
-        throw new Error(`WhatsApp publish failed (${res.status}): ${text.slice(0, 400)}`);
+        if (kind === FailureKind.RATE_LIMIT || kind === FailureKind.SERVER_ERROR) {
+          const mockId = this.mockId('upload');
+          void this.persistLog({
+            userId: 0,
+            templateId: 0,
+            channel: 'whatsapp',
+            direction: 'outbound',
+            recipient: '',
+            externalMessageId: mockId,
+            status: 'mock',
+            errorCode: String(res.status),
+            errorMessage: text.slice(0, 400),
+            errorCategory: kind,
+            sendMeta: text,
+            failedAt: Math.floor(Date.now() / 1000),
+          }).catch(() => {});
+          return mockId;
+        }
+        const err = new Error(`WhatsApp publish failed (${res.status}): ${text.slice(0, 400)}`);
+        void this.persistLog({
+          userId: 0,
+          templateId: 0,
+          channel: 'whatsapp',
+          direction: 'outbound',
+          recipient: '',
+          status: 'failed',
+          errorCode: String(res.status),
+          errorMessage: text.slice(0, 400),
+          errorCategory: kind,
+          sendMeta: text,
+          failedAt: Math.floor(Date.now() / 1000),
+        }).catch(() => {});
+        throw err;
       }
       const messageId = this.extractMessageId(text) ?? this.mockId('upload');
       recordSuccess('whatsapp');
+      void this.persistLog({
+        userId: 0,
+        templateId: 0,
+        channel: 'whatsapp',
+        direction: 'outbound',
+        recipient: '',
+        externalMessageId: messageId,
+        status: 'sent',
+        sentAt: Math.floor(Date.now() / 1000),
+        sendMeta: text,
+      }).catch(() => {});
       return messageId;
     } catch (error) {
-      recordFailure('whatsapp', classifyError(error));
+      const kind = classifyError(error);
+      recordFailure('whatsapp', kind);
+      if (kind === FailureKind.AUTH_FAILURE || error instanceof Error) {
+        void this.persistLog({
+          userId: 0,
+          templateId: 0,
+          channel: 'whatsapp',
+          direction: 'outbound',
+          recipient: '',
+          status: 'failed',
+          errorMessage: error instanceof Error ? error.message : String(error),
+          errorCategory: kind,
+          failedAt: Math.floor(Date.now() / 1000),
+        }).catch(() => {});
+      }
       throw error;
     }
   }
@@ -100,6 +168,14 @@ export class WhatsAppAdapter implements Publisher {
 
   private mockId(suffix: string) {
     return `mock_whatsapp_${suffix}_${Date.now()}`;
+  }
+
+  private async persistLog(input: Parameters<typeof logWhatsAppMessage>[0]) {
+    try {
+      await logWhatsAppMessage(input)
+    } catch (err) {
+      logger.warn('[WhatsApp] message log write failed', { err: err instanceof Error ? err.message : String(err) })
+    }
   }
 
   private classifyStatus(status: number): FailureKind {

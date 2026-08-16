@@ -40,8 +40,8 @@ describe('WhatsAppAdapter', () => {
       });
 
       expect(id).toBe('wa-msg-99');
-      const [url, opts] = vi.mocked(fetch).mock.calls[0];
-      const body = JSON.parse(opts.body as string);
+      const [, opts] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse((opts.body ?? '{}') as string);
       expect(body.messaging_product).toBe('whatsapp');
       expect(body.recipient_type).toBe('individual');
       expect(body.to).toBe('');
