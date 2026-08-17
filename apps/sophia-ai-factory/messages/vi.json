@@ -6649,5 +6649,72 @@
     "title": "Title",
     "description": "Description",
     "cta": "Cta"
+  },
+  "approvals": {
+    "title": "Hàng Chờ Phê Duyệt",
+    "description": "Xem xét và quản lý các yêu cầu phê duyệt từ AI",
+    "emptyTitle": "Không có yêu cầu chờ duyệt",
+    "emptyDescription": "Tất cả hành động của agent đã được duyệt hoặc không có yêu cầu mới.",
+    "approve": "Phê duyệt",
+    "reject": "Từ chối",
+    "reason": "Lý do",
+    "reasonPlaceholder": "Nhập lý do (tuỳ chọn)",
+    "resolvedAt": "Phê duyệt lúc",
+    "actions": {
+      "approveTitle": "Phê duyệt hành động này",
+      "rejectTitle": "Từ chối hành động này",
+      "approveSuccess": "Đã phê duyệt",
+      "rejectSuccess": "Đã từ chối"
+    },
+    "status": {
+      "pending": "Chờ duyệt",
+      "approved": "Đã phê duyệt",
+      "rejected": "Đã từ chối"
+    },
+    "fields": {
+      "agentId": "Agent",
+      "action": "Hành động",
+      "summary": "Tóm tắt",
+      "cost": "Chi phí dự kiến",
+      "expires": "Hết hạn",
+      "created": "Tạo lúc"
+    },
+    "actionsLabel": "Hành động",
+    "navLabel": "Phê duyệt",
+    "pageTitle": "Hàng Chờ Phê Duyệt"
+  },
+  "autonomy": {
+    "title": "Cấp độ tự chủ",
+    "description": "Điều chỉnh mức độ tự chủ của AI agent. Mức thấp hơn đảm bảo an toàn tối đa; mức cao hơn tăng tốc độ vận hành.",
+    "pageTitle": "Cài đặt Tự chủ",
+    "saving": "Đang lưu...",
+    "levels": {
+      "level0": "Thủ công",
+      "level0Description": "Toàn bộ hành động đều cần người phê duyệt",
+      "level1": "Đề xuất",
+      "level1Description": "Agent đề xuất, bạn xác nhận",
+      "level2": "Bán tự động",
+      "level2Description": "Agent tự động xử lý thao tác thông thường, bạn phê duyệt ngoại lệ",
+      "level3": "Tự động",
+      "level3Description": "Agent tự động trong phạm vi bảo vệ, ghi log tất cả hành động",
+      "level4": "Tự chủ hoàn toàn",
+      "level4Description": "Agent hoàn toàn tự chủ, giám sát tối thiểu"
+    }
+  },
+  "rollback": {
+    "panelTitle": "Hoàn tác",
+    "pageTitle": "Hoàn tác Mission",
+    "pageDescription": "Hoàn tác mission về trạng thái trước đó",
+    "reasonLabel": "Lý do hoàn tác",
+    "reasonPlaceholder": "Giải thích tại sao mission cần được hoàn tác...",
+    "reasonMinLength": "Lý do phải có ít nhất 5 ký tự",
+    "confirmMessage": "Bạn có chắc chắn muốn hoàn tác mission này không? Hành động này sẽ được ghi lại.",
+    "triggerRollback": "Hoàn tác Mission",
+    "processing": "Đang xử lý...",
+    "rollbackSuccess": "Ghi lại hoàn tác thành công",
+    "rollbackFailed": "Hoàn tác mission thất bại",
+    "alreadyRolledBack": "Mission này đã được hoàn tác trước đó.",
+    "historyTitle": "Lịch sử Hoàn tác",
+    "noHistory": "Không tìm thấy lịch sử hoàn tác cho mission này."
   }
 }

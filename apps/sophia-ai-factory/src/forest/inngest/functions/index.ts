@@ -31,6 +31,9 @@ export * from './video-scripting';
 export * from './video-tts';
 export * from './video-upload';
 export * from './video-visual';
+// Agent protocol (Phase 3A)
+export * from './agent-mission-executor';
+export * from './agent-approval-handler';
 // payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/
 export { payoutBatcher } from '@/forest/jobs';
 export { pendingPromoterCron } from '@/forest/jobs';

@@ -6642,5 +6642,72 @@
     "title": "Title",
     "description": "Description",
     "cta": "Cta"
+  },
+  "approvals": {
+    "title": "Approval Queue",
+    "description": "Review and manage pending agent approvals",
+    "emptyTitle": "No pending approvals",
+    "emptyDescription": "All agent actions are approved or there are no pending requests.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "reason": "Reason",
+    "reasonPlaceholder": "Enter a reason (optional)",
+    "resolvedAt": "Resolved at",
+    "actions": {
+      "approveTitle": "Approve this action",
+      "rejectTitle": "Reject this action",
+      "approveSuccess": "Action approved",
+      "rejectSuccess": "Action rejected"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "fields": {
+      "agentId": "Agent",
+      "action": "Action",
+      "summary": "Summary",
+      "cost": "Estimated Cost",
+      "expires": "Expires",
+      "created": "Created"
+    },
+    "actionsLabel": "Actions",
+    "navLabel": "Approvals",
+    "pageTitle": "Approval Queue"
+  },
+  "autonomy": {
+    "title": "Autonomy Level",
+    "description": "Adjust how autonomously the AI agent operates. Lower levels maximize safety; higher levels increase throughput.",
+    "pageTitle": "Autonomy Settings",
+    "saving": "Saving...",
+    "levels": {
+      "level0": "Manual",
+      "level0Description": "Every action requires human approval",
+      "level1": "Suggest",
+      "level1Description": "Agent proposes actions, human confirms",
+      "level2": "Semi-auto",
+      "level2Description": "Agent executes routine actions, human approves exceptions",
+      "level3": "Auto",
+      "level3Description": "Agent executes within guardrails, logs all actions",
+      "level4": "Full autonomy",
+      "level4Description": "Agent operates independently, minimal oversight"
+    }
+  },
+  "rollback": {
+    "panelTitle": "Rollback",
+    "pageTitle": "Mission Rollback",
+    "pageDescription": "Rollback a mission to a previous state",
+    "reasonLabel": "Reason for rollback",
+    "reasonPlaceholder": "Explain why this mission needs to be rolled back...",
+    "reasonMinLength": "Reason must be at least 5 characters",
+    "confirmMessage": "Are you sure you want to rollback this mission? This action will be logged.",
+    "triggerRollback": "Rollback Mission",
+    "processing": "Processing...",
+    "rollbackSuccess": "Rollback recorded successfully",
+    "rollbackFailed": "Failed to rollback mission",
+    "alreadyRolledBack": "This mission has already been rolled back.",
+    "historyTitle": "Rollback History",
+    "noHistory": "No rollback history found for this mission."
   }
 }

@@ -1,6 +1,57 @@
 import { Inngest, EventSchemas } from "inngest";
 import { Tier } from "@/seed/types";
 
+export type AgentMissionStartedData = {
+  data: {
+    runId: string;
+    agentId: string;
+    missionId: string;
+    workspaceId: string;
+    autonomyLevel?: number;
+    inputJson?: Record<string, unknown>;
+  };
+};
+
+export type AgentApprovalRequestedData = {
+  data: {
+    runId: string;
+    approvalId: string;
+    actionType: string;
+    actionSummary: string;
+    missionId: string;
+  };
+};
+
+export type AgentApprovalResolvedData = {
+  data: {
+    approvalId: string;
+    runId: string;
+    status: "approved" | "rejected";
+    reviewerId: string;
+    comment?: string;
+  };
+};
+
+export type AgentMissionCompletedData = {
+  data: {
+    runId: string;
+    agentId: string;
+    missionId: string;
+    totalCostCents: number;
+    totalTokens: number;
+  };
+};
+
+export type AgentMissionFailedData = {
+  data: {
+    runId: string;
+    agentId: string;
+    missionId: string;
+    errorCode: string;
+    errorMessage: string;
+  };
+};
+
 type CampaignCreatedEvent = {
   data: {
     campaignId: string;
@@ -172,6 +223,60 @@ type Events = {
   "payout.batched": PayoutBatchedEvent;
   "payout.confirmed": PayoutConfirmedEvent;
   "payout.reconcile.alert": PayoutReconcileAlertEvent;
+  "agent.mission.started": AgentMissionStartedEvent;
+  "agent.approval.requested": AgentApprovalRequestedEvent;
+  "agent.approval.resolved": AgentApprovalResolvedEvent;
+  "agent.mission.completed": AgentMissionCompletedEvent;
+  "agent.mission.failed": AgentMissionFailedEvent;
+};
+
+type AgentMissionStartedEvent = {
+  data: {
+    runId: string;
+    agentId: string;
+    missionId: string;
+    workspaceId: string;
+  };
+};
+
+type AgentApprovalRequestedEvent = {
+  data: {
+    runId: string;
+    approvalId: string;
+    actionType: string;
+    actionSummary: string;
+    missionId: string;
+  };
+};
+
+type AgentApprovalResolvedEvent = {
+  data: {
+    approvalId: string;
+    runId: string;
+    status: "approved" | "rejected";
+    reviewerId: string;
+    comment?: string;
+  };
+};
+
+type AgentMissionCompletedEvent = {
+  data: {
+    runId: string;
+    agentId: string;
+    missionId: string;
+    totalCostCents: number;
+    totalTokens: number;
+  };
+};
+
+type AgentMissionFailedEvent = {
+  data: {
+    runId: string;
+    agentId: string;
+    missionId: string;
+    errorCode: string;
+    errorMessage: string;
+  };
 };
 
 export const inngest = new Inngest({

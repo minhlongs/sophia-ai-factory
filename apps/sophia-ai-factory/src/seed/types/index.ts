@@ -224,3 +224,4 @@ export type {
 export type { VideoGenerateRequestedEvent } from './video-events';
 export { D1Events } from './d1-events';
 export * from './landing-page-types';
+export * from './creative-domain';

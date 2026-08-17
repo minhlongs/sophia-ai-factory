@@ -9,6 +9,7 @@
  * @module land/publish/api/handler
  */
 import { z } from 'zod';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -28,7 +29,7 @@ export interface WhatsAppPublishResult {
 }
 
 type PublishErrorCode =
-  | 'VIDEO_NOT_FOUND' | 'FORBIDDEN' | 'NOT_APPROVED'
+  | 'UNAUTHENTICATED' | 'VIDEO_NOT_FOUND' | 'FORBIDDEN' | 'NOT_APPROVED'
   | 'NO_WHATSAPP_CREDENTIALS' | 'INSERT_FAILED'
   | 'INVALID_INPUT' | 'D1_UNAVAILABLE';
 
@@ -89,14 +90,20 @@ export async function approveWhatsappSend(userId: string): Promise<Result<void>>
 /**
  * Schedule a video for WhatsApp Business publish.
  *
- * Flow: validate input, verify video ownership, check approval gate,
+ * Flow: validate input, verify auth, verify video ownership, check approval gate,
  * verify WhatsApp credentials, insert publishing_jobs row.
  * Returns a discriminated Result — callers never need try/catch.
  */
 export async function scheduleWhatsAppPublish(
-  userId: string,
   input: WhatsAppPublishInput,
 ): Promise<Result<WhatsAppPublishResult>> {
+  // Auth
+  const user = await getCurrentUser();
+  if (!user) {
+    return failure(new WhatsAppPublishError('UNAUTHENTICATED', 'Authentication required'));
+  }
+  const userId = user.id;
+
   const parsed = whatsappPublishSchema.safeParse(input);
   if (!parsed.success) {
     return failure(

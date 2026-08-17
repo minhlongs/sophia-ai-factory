@@ -133,28 +133,12 @@ export function WhatsAppTemplatesClient() {
     setError(null);
 
     try {
-      // Get WhatsApp credentials from localStorage or prompt user to save first
-      const savedCreds = localStorage.getItem('whatsapp_credentials');
-      if (!savedCreds) {
-        setError(t('errors.noCredentials') || 'Please save WhatsApp credentials first in the Setup Wizard');
-        setIsSubmitting(false);
-        return;
-      }
-
-      const creds = JSON.parse(savedCreds);
-      const payload = {
-        phoneNumberId: creds.phoneNumberId,
-        waToken: creds.waToken,
-        wabaId: creds.wabaId,
-        businessId: creds.businessId,
-        templateId: selectedTemplate.id,
-        variables,
-      };
-
+      // Credentials are stored server-side in whatsapp_templates.
+      // Client only sends template selection — server resolves credentials by user + template.
       const response = await fetch('/api/setup-wizard/save-whatsapp-credentials', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ templateId: selectedTemplate.id, variables }),
       });
 
       if (!response.ok) {

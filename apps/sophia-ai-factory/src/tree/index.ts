@@ -17,3 +17,6 @@ export * from './handover';
 export * from './memory';
 export * from './sop';
 export * from './telegram';
+
+export * from './autonomy';
+export * from './rollback';
