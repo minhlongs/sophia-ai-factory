@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { requireAdmin } from '@/seed/auth/require-admin';
 import { getD1 } from '@/seed/db/client';
 import { toError } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
@@ -16,10 +17,9 @@ const PatchBodySchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await getCurrentUserFromHeaders(request.headers);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const adminResult = await requireAdmin(request.headers);
+    if (adminResult instanceof NextResponse) return adminResult;
+    const user = adminResult.user;
 
     const d1 = getD1();
     if (!d1) {
@@ -59,10 +59,9 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const user = await getCurrentUserFromHeaders(request.headers);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const adminResult = await requireAdmin(request.headers);
+    if (adminResult instanceof NextResponse) return adminResult;
+    const user = adminResult.user;
 
     const d1 = getD1();
     if (!d1) {
