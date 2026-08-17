@@ -17,7 +17,7 @@ const PatchBodySchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const adminResult = await requireAdmin(request.headers);
+    const adminResult = await requireAdmin(request);
     if (adminResult instanceof NextResponse) return adminResult;
     const user = adminResult.user;
 
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const adminResult = await requireAdmin(request.headers);
+    const adminResult = await requireAdmin(request);
     if (adminResult instanceof NextResponse) return adminResult;
     const user = adminResult.user;
 
