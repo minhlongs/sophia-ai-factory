@@ -1,3 +1,4 @@
+// i18n-namespace: monetization
 /**
  * Summary Cards — monetization dashboard overview
  * Displays aggregate revenue, cost, ROI, and unit metrics.

@@ -2304,7 +2304,8 @@
         "updated": "Created",
         "loading": "Loading...",
         "empty": "No provenance records yet.",
-        "noAsset": "Enter an asset id above to trace its provenance chain."
+        "noAsset": "Enter an asset id above to trace its provenance chain.",
+        "actions": "Actions"
       },
       "actions": {
         "view": "View record",

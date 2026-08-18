@@ -2304,7 +2304,8 @@
         "updated": "Ngày tạo",
         "loading": "Đang tải...",
         "empty": "Chưa có bản ghi nguồn gốc nào.",
-        "noAsset": "Nhập ID tài sản ở trên để theo dõi chuỗi nguồn gốc."
+        "noAsset": "Nhập ID tài sản ở trên để theo dõi chuỗi nguồn gốc.",
+        "actions": "Thao tác"
       },
       "actions": {
         "view": "Xem bản ghi",

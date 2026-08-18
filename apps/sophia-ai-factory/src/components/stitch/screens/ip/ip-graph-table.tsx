@@ -1,3 +1,4 @@
+// i18n-namespace: dashboard.ip
 'use client';
 
 import {

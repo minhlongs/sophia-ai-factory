@@ -1,3 +1,4 @@
+// i18n-namespace: monetization
 /**
  * Channel Table — top ROI channels and revenue attribution breakdown.
  */
