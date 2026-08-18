@@ -58,21 +58,20 @@ add_verify "0101-publishing-jobs-rename-video-job-id-to-video-id" \
   "SELECT name FROM sqlite_master WHERE type='table' AND name='publishing_jobs'"
 
 # ─── Helper: run a verification query against D1 ─────────────────────────────
+# NOTE: wrangler's --file mode returns only summary rows (no per-query result
+# data), which makes grep-based row extraction unreliable. Use --command mode
+# instead so verification queries return actual row data.
 run_verify() {
   local migration_name="$1"
   local verify_sql="$2"
-  local tmp_sql
-  tmp_sql=$(mktemp -t migration-verify)
-  echo "$verify_sql" > "$tmp_sql"
   local output
   output=$(npx wrangler d1 execute "$DB_NAME" \
     --config "$WRANGLER_CONFIG" \
     --remote \
-    --file="$tmp_sql" 2>/dev/null || true)
-  rm -f "$tmp_sql"
+    --command "$verify_sql" 2>/dev/null || true)
 
-  # Pass if output has non-empty results array
-  if echo "$output" | grep -q '"results":\s*\[' && ! echo "$output" | grep -qP '"results":\s*\[\s*\]'; then
+  # Pass if output has a non-empty results array with at least one row object.
+  if echo "$output" | grep -q '"results":\s*\[' && ! echo "$output" | grep -qE '"results":\s*\[\s*\]'; then
     return 0
   elif echo "$output" | grep -qE '"results":\s*\[\s*\]'; then
     return 1
@@ -85,10 +84,85 @@ run_verify() {
   return 1
 }
 
-# ─── Pre-execution guard: sqlite_master existence check for DROP/RENAME ──────
+# ─── Pre-execution guard: column-existence check for ADD COLUMN ──────────────
+# For migrations using ALTER TABLE <t> ADD [COLUMN] <c>, verify the column does NOT
+# already exist in pragma_table_info before executing. If it exists, skip with
+# warning. This makes re-runs idempotent-safe without editing individual migration
+# files (SQLite has no ADD COLUMN IF NOT EXISTS).
+#
+# NOTE: macOS ships ugrep as `grep -P`, which rejects variable-length lookbehind
+# assertions. Parse with sed instead so the guard runs on the supported toolchain.
+guard_add_column() {
+  local migration_file="$1"
+  local tmp_guard_sql
+  tmp_guard_sql=$(mktemp -t migration-guard-add)
+
+  local add_col_lines=()
+  while IFS= read -r line; do
+    # Match: ALTER TABLE <t> ADD [COLUMN] <c>
+    if echo "$line" | grep -qiE 'ALTER[[:space:]]+TABLE[[:space:]]+[^;[:space:]]+[[:space:]]+ADD([[:space:]]+COLUMN)?[[:space:]]+[^;[:space:]]+'; then
+      add_col_lines+=("$line")
+    fi
+  done < "$migration_file"
+
+  if [ "${#add_col_lines[@]}" -eq 0 ]; then
+    rm -f "$tmp_guard_sql"
+    return 0
+  fi
+
+  local checks=()
+  local guard_tbl=""
+  for line in "${add_col_lines[@]}"; do
+    local tbl col
+    tbl=$(echo "$line" | sed -nE 's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+([^;[:space:]]+).*/\1/p' | tr -d ';' | tr -d ' ' || true)
+    col=$(echo "$line" | sed -nE 's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+[^;[:space:]]+[[:space:]]+ADD([[:space:]]+COLUMN)?[[:space:]]+([^;[:space:]]+).*/\2/p' | tr -d ';' | tr -d ' ' || true)
+    if [ -n "$tbl" ] && [ -n "$col" ]; then
+      if [ -z "$guard_tbl" ]; then
+        guard_tbl="$tbl"
+      fi
+      # pragma_table_info has no table_name column; filter on name only.
+      checks+=("(name='${col}')")
+    fi
+  done
+
+  if [ "${#checks[@]}" -eq 0 ]; then
+    rm -f "$tmp_guard_sql"
+    return 0
+  fi
+
+  local combined_where
+  combined_where=$(IFS=' OR '; echo "${checks[*]}")
+
+  cat > "$tmp_guard_sql" <<EOSQL
+SELECT COUNT(*) AS cnt FROM pragma_table_info('${guard_tbl}')
+WHERE ${combined_where};
+EOSQL
+
+  local count
+  count=$(npx wrangler d1 execute "$DB_NAME" \
+    --config "$WRANGLER_CONFIG" \
+    --remote \
+    --command "$(cat "$tmp_guard_sql")" 2>/dev/null \
+    | grep -oE '"cnt"[[:space:]]*:[[:space:]]*[0-9]+' | grep -oE '[0-9]+$' || echo "0")
+  rm -f "$tmp_guard_sql"
+
+  if [ "${count:-0}" -gt 0 ]; then
+    echo "WARNING: Pre-flight guard: column(s) already exist in pragma_table_info."
+    echo "   Columns checked: ${checks[*]}"
+    echo "   Columns found:   ${count}"
+    echo "   -> Skipping migration (safe: column likely already added by prior run)."
+    return 1
+  fi
+  return 0
+}
+
+# ─── Pre-execution guard: table-existence check for DROP/RENAME ──────────────
 # For migrations using DROP TABLE or ALTER TABLE RENAME, verify referenced tables
 # exist in sqlite_master before executing. If missing, skip with warning.
 # This makes re-runs idempotent-safe without editing individual migration files.
+#
+# NOTE: macOS ships ugrep as `grep -P`, which rejects variable-length lookbehind
+# assertions. Parse with sed instead so the guard runs on the supported toolchain.
 guard_drop_rename() {
   local migration_file="$1"
   local tmp_guard_sql
@@ -98,12 +172,15 @@ guard_drop_rename() {
   while IFS= read -r line; do
     local tbl=""
     # Match: DROP TABLE <name>;  (with or without IF EXISTS)
-    tbl=$(echo "$line" | grep -oP '(?<=DROP TABLE\s)(\S+)' | tr -d ';' | tr -d ' ' || true)
+    tbl=$(echo "$line" | sed -nE 's/^[[:space:]]*DROP[[:space:]]+TABLE[[:space:]]+IF[[:space:]]+EXISTS[[:space:]]+([^;[:space:]]+).*/\1/p' | tr -d ';' | tr -d ' ' || true)
+    if [ -z "$tbl" ]; then
+      tbl=$(echo "$line" | sed -nE 's/^[[:space:]]*DROP[[:space:]]+TABLE[[:space:]]+([^;[:space:]]+).*/\1/p' | tr -d ';' | tr -d ' ' || true)
+    fi
     if [ -n "$tbl" ]; then
       tables_to_check+=("$tbl")
     fi
     # Match: ALTER TABLE <old> RENAME TO <new>;
-    tbl=$(echo "$line" | grep -oP '(?<=ALTER TABLE\s)(\S+)' | tr -d ';' | tr -d ' ' || true)
+    tbl=$(echo "$line" | sed -nE 's/^[[:space:]]*ALTER[[:space:]]+TABLE[[:space:]]+([^;[:space:]]+).*/\1/p' | tr -d ';' | tr -d ' ' || true)
     if [ -n "$tbl" ]; then
       tables_to_check+=("$tbl")
     fi
@@ -130,8 +207,8 @@ EOSQL
   count=$(npx wrangler d1 execute "$DB_NAME" \
     --config "$WRANGLER_CONFIG" \
     --remote \
-    --file="$tmp_guard_sql" 2>/dev/null \
-    | grep -o '"cnt":[0-9]*' | cut -d: -f2 || echo "0")
+    --command "$(cat "$tmp_guard_sql")" 2>/dev/null \
+    | grep -oE '"cnt"[[:space:]]*:[[:space:]]*[0-9]+' | grep -oE '[0-9]+$' || echo "0")
   rm -f "$tmp_guard_sql"
 
   local expected=${#tables_to_check[@]}
@@ -178,14 +255,11 @@ for m in $MIGRATIONS; do
   MIGRATION_NAME=$(basename "$m" .sql)
 
   # Guard: skip migrations already recorded in D1 d1_migrations table
-  TMP_SQL=$(mktemp -t migration-check)
-  echo "SELECT COUNT(*) AS cnt FROM d1_migrations WHERE name = '${MIGRATION_NAME}'" > "$TMP_SQL"
   APPLIED_COUNT_DB=$(npx wrangler d1 execute "$DB_NAME" \
     --config "$WRANGLER_CONFIG" \
     --remote \
-    --file="$TMP_SQL" \
-    2>/dev/null | grep -o '"cnt":[0-9]*' | cut -d: -f2 || echo "0")
-  rm -f "$TMP_SQL"
+    --command "SELECT COUNT(*) AS cnt FROM d1_migrations WHERE name = '${MIGRATION_NAME}'" \
+    2>/dev/null | grep -oE '"cnt"[[:space:]]*:[[:space:]]*[0-9]+' | grep -oE '[0-9]+$' || echo "0")
   if [ "${APPLIED_COUNT_DB:-0}" -gt 0 ]; then
     echo "SKIPPED: ${MIGRATION_NAME} already applied"
     SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
@@ -195,6 +269,13 @@ for m in $MIGRATIONS; do
   # Pre-flight guard for DROP/RENAME pattern migrations
   if ! guard_drop_rename "$m"; then
     echo "SKIPPED: ${MIGRATION_NAME} — sqlite_master guard (tables not present)"
+    SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
+    continue
+  fi
+
+  # Pre-flight guard for ADD COLUMN pattern migrations (idempotency)
+  if ! guard_add_column "$m"; then
+    echo "SKIPPED: ${MIGRATION_NAME} — column guard (column already exists)"
     SKIPPED_COUNT=$((SKIPPED_COUNT + 1))
     continue
   fi
