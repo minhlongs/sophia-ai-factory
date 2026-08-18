@@ -42,6 +42,9 @@ export * from './experiment-feedback-cron';
 // Phase 4.3: Creative Memory Feedback Loop
 export * from './learning-velocity-cron';
 export * from './strategy-feedback';
+// Phase 5: Auto-Creative Playbook (COMPOUND stage)
+export * from './pattern-detection-cron';
+export * from './auto-apply-monitor';
 // Phase 6: IP & Provenance Deep Dive
 export * from '@/forest/provenance/provenance-bridge';
 // payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/

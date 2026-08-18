@@ -16,6 +16,8 @@ import {
   videoGenerate,
   learningVelocityCron,
   strategyFeedback,
+  patternDetectionCron,
+  autoApplyMonitor,
   performanceAggregationCron,
   batchVideoFanout,
   repurposeAnalyze,
@@ -69,5 +71,8 @@ export const { GET, POST, PUT } = serve({
     // Phase 4.3: Creative Memory Feedback Loop — daily learning velocity + event-triggered strategy
     learningVelocityCron,
     strategyFeedback,
+    // Phase 5: Auto-Creative Playbook (COMPOUND stage) — daily pattern detection + auto-apply monitor
+    patternDetectionCron,
+    autoApplyMonitor,
   ],
 });
