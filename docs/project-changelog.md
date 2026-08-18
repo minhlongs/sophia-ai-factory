@@ -2,8 +2,8 @@
 
 > This file is an index. Full entries are split by quarter for faster loading.
 
-**Last entry:** 2026-06-22 (OTEL Staging Verified, SOC2 Prep, Deploy Guard Live)  
-**Current Production SHA:** 7c8dc4c5 (deployed 2026-06-21)
+**Last entry:** 2026-08-18 (Phase 7 Monetization OS deployed)  
+**Current Production SHA:** b821abd9 (deployed 2026-08-18)
 
 ---
 
@@ -11,7 +11,8 @@
 
 | Quarter | Date Range | File |
 |---------|-----------|------|
-| 2026 Q2 | 2026-04-01 → present | [changelog/2026-Q2.md](changelog/2026-Q2.md) |
+| 2026 Q3 | 2026-07-01 → present | [changelog/2026-Q3.md](changelog/2026-Q3.md) |
+| 2026 Q2 | 2026-04-01 → 2026-06-30 | [changelog/2026-Q2.md](changelog/2026-Q2.md) |
 | 2026 Q1 | 2026-01-15 → 2026-03-31 | [changelog/2026-Q1.md](changelog/2026-Q1.md) |
 | 2025 archive | pre-2026 | [changelog/2025-archive.md](changelog/2025-archive.md) — no entries (project started Jan 2026) |
 
