@@ -53,6 +53,8 @@ function makeEvent(overrides: Partial<import('@/seed/types/creative-domain').Per
     workspaceId: 'ws_001',
     assetId: 'asset_001',
     projectId: 'proj_001',
+    entityType: 'asset',
+    entityId: 'asset_001',
     channel: 'youtube',
     eventType: 'view',
     count: 100,
@@ -497,7 +499,8 @@ describe('Row mapping', () => {
     const { performanceRowToDomain } = await import('../index');
     const row = {
       id: 'pevt_001', workspace_id: 'ws_001', asset_id: 'asset_001',
-      project_id: 'proj_001', channel: 'youtube', event_type: 'view',
+      project_id: 'proj_001', entity_type: 'asset', entity_id: 'asset_001',
+      channel: 'youtube', event_type: 'view',
       count: 10, value_cents: 50, recorded_at: NOW_S, raw_data: '{"key":"val"}',
     };
     const domain = performanceRowToDomain(row);

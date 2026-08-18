@@ -314,6 +314,8 @@ export interface PerformanceEvent {
   workspaceId: string;
   assetId: string;
   projectId: string;
+  entityType: string; // 'asset' | 'mission' | 'campaign'
+  entityId: string;
   channel: string;
   eventType: string; // 'impression' | 'view' | 'click' | 'like' | 'share' | 'save' | 'follow' | 'conversion' | 'revenue'
   count: number;

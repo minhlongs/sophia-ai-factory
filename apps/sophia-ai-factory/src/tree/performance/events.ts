@@ -24,6 +24,8 @@ interface PerformanceEventRow {
   workspace_id: string;
   asset_id: string;
   project_id: string;
+  entity_type: string;
+  entity_id: string;
   channel: string;
   event_type: string;
   count: number;
@@ -40,6 +42,8 @@ function rowToDomain(row: PerformanceEventRow): PerformanceEvent {
     workspaceId: row.workspace_id,
     assetId: row.asset_id,
     projectId: row.project_id,
+    entityType: row.entity_type,
+    entityId: row.entity_id,
     channel: row.channel,
     eventType: row.event_type,
     count: row.count,
@@ -54,6 +58,8 @@ function domainToRow(event: PerformanceEvent): Omit<PerformanceEventRow, 'id'> {
     workspace_id: event.workspaceId,
     asset_id: event.assetId,
     project_id: event.projectId,
+    entity_type: event.entityType,
+    entity_id: event.entityId,
     channel: event.channel,
     event_type: event.eventType,
     count: event.count,
@@ -83,13 +89,13 @@ export async function recordPerformanceEvent(
     await db
       .prepare(
         `INSERT INTO performance_events
-           (id, workspace_id, asset_id, project_id, channel, event_type, count, value_cents, recorded_at, raw_data)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           (id, workspace_id, asset_id, project_id, entity_type, entity_id, channel, event_type, count, value_cents, recorded_at, raw_data)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         row.id, row.workspace_id, row.asset_id, row.project_id,
-        row.channel, row.event_type, row.count, row.value_cents,
-        row.recorded_at, row.raw_data,
+        row.entity_type, row.entity_id, row.channel, row.event_type,
+        row.count, row.value_cents, row.recorded_at, row.raw_data,
       )
       .run();
   } catch (err) {
