@@ -4,6 +4,31 @@
 
 ---
 
+## 2026-08-16 — Phase 5: Distribution Intelligence (DISTRIBUTION INTELLIGENCE)
+
+**Severity: MEDIUM | Type: Feature | Status: SHIPPED**
+
+### Changes
+- **Cross-platform analytics** — `/dashboard/analytics/cross-platform` (CrossPlatformAnalyticsClient) with Recharts pie + bar charts consuming `/api/performance/aggregates` and `/api/roi`.
+- **Performance events & aggregation APIs** — `GET /api/performance/events`, `GET /api/performance/aggregates` (+ Inngest `performance-aggregation` job). 3 new migrations (0243 performance_events, 0244 roi_tracking, 0245 performance_events_columns).
+- **ROI tracking** — `src/tree/roi` (index.ts + tracker.ts) + `GET /api/roi`.
+- **Schedule & queue management** — `/dashboard/publish/schedule` (ScheduleManagementClient) with list + cancel.
+- **Content repurposing** — `/dashboard/repurpose` (RepurposeWorkflowClient) + `POST /api/repurpose/jobs`.
+- **Agent runs + creative missions APIs** — `GET /api/agent-runs/[id]`, `GET /api/creative-missions/[id]` + list route, with integration tests.
+- **Agent rollback cron** — `forest/inngest/functions/agent-rollback-cron.ts`.
+- **Creative domain types** — extended `seed/types/creative-domain.ts` + `tree/performance/events.ts`.
+
+### Verification
+- `npm run type-check` → 0 errors
+- `npm run build` → 0 errors
+- `npm test` → 6886 passed (no regression)
+- `npm run lint` → 0 errors on all Phase 5 files
+
+### Plan
+`plans/260816-2200-phase5-distribution-intelligence/plan.md`
+
+---
+
 ## 2026-08-18 — Phase 6: IP & Provenance Deep Dive (CREATIVE INTELLIGENCE)
 
 **Severity: MEDIUM | Type: Feature | Status: SHIPPED**
