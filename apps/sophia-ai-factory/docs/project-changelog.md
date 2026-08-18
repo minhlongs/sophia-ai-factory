@@ -4,6 +4,33 @@
 
 ---
 
+## 2026-08-18 — Security: Push Review IDOR Findings (creative-missions)
+
+**Severity: LOW | Type: Security | Status: RESOLVED**
+
+A push security review flagged 4 IDOR/authorization findings in Phase 5 routes.
+Investigation confirmed: **all authorization is implemented correctly** — the
+false positives came from `getCurrentUser` being imported-but-unused in
+`creative-missions/route.ts`, which made the scanner think auth was missing.
+
+- **`creative-missions/route.ts`** — removed unused `getCurrentUser` import. Auth
+  (`getCurrentUser`) + workspace membership (`org_members`) checks live in
+  `land/creative-mission/actions.ts` for createMission / listMissions /
+  getMission / updateMissionStatus, per 4-layer architecture (routes delegate
+  to land layer, which is the canonical pattern).
+- **`creative-missions/[id]/route.ts`** — delegates to `getMission` /
+  `updateMissionStatus` (land layer). Verified: workspace membership + creator /
+  admin-owner authorization present.
+- **`agent-runs/[id]/route.ts`** — local `verifyWorkspaceAccess()` helper +
+  `org_members` check on GET and PATCH. Verified.
+- **`performance/aggregates`, `performance/events`, `roi`** — local
+  `verifyWorkspaceAccess()` + `org_members` check on all handlers. Verified.
+- **`repurpose/jobs/route.ts`** — `getCurrentUser()` + `user.id` scoping. Verified.
+
+**Commit:** `395b6443`
+
+---
+
 ## 2026-08-16 — Phase 5: Distribution Intelligence (DISTRIBUTION INTELLIGENCE)
 
 **Severity: MEDIUM | Type: Feature | Status: SHIPPED**
