@@ -19,3 +19,4 @@ export * from './promo-library';
 export * from './leaderboard';
 export * from './provider-interface';
 export * from './trending-discovery';
+export * from './content-affiliate-link';

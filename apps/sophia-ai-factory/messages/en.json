@@ -6844,5 +6844,29 @@
     "alreadyRolledBack": "This mission has already been rolled back.",
     "historyTitle": "Rollback History",
     "noHistory": "No rollback history found for this mission."
+  },
+  "monetization": {
+    "pageTitle": "Revenue Management",
+    "pageDescription": "Overview of your workspace revenue, costs, and business performance",
+    "totalRevenue": "Total Revenue",
+    "totalCost": "Total Cost",
+    "roi": "ROI",
+    "unitCount": "Unit Count",
+    "avgRevenuePerUnit": "Revenue / Unit",
+    "avgCostPerUnit": "Cost / Unit",
+    "channelBreakdown": "Channel Breakdown",
+    "channel": "Channel",
+    "revenue": "Revenue",
+    "cost": "Cost",
+    "units": "Units",
+    "roiPercent": "ROI (%)",
+    "attribution": "Revenue Attribution",
+    "dynamicPricing": "Dynamic Pricing",
+    "currentTier": "Current Tier",
+    "baseCostMCU": "Base Cost / MCU",
+    "adjustedCostMCU": "Adjusted Cost / MCU",
+    "multiplier": "Multiplier",
+    "noData": "No revenue data yet. Start creating content to track performance.",
+    "loading": "Loading..."
   }
 }

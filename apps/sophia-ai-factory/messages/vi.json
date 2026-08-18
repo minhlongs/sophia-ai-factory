@@ -6851,5 +6851,29 @@
     "alreadyRolledBack": "Mission này đã được hoàn tác trước đó.",
     "historyTitle": "Lịch sử Hoàn tác",
     "noHistory": "Không tìm thấy lịch sử hoàn tác cho mission này."
+  },
+  "monetization": {
+    "pageTitle": "Quản lý Thu nhập",
+    "pageDescription": "Tổng quan doanh thu, chi phí và hiệu quả kinh doanh của workspace",
+    "totalRevenue": "Tổng Doanh thu",
+    "totalCost": "Tổng Chi phí",
+    "roi": "Tỷ suất ROI",
+    "unitCount": "Số đơn vị",
+    "avgRevenuePerUnit": "Doanh thu / Đơn vị",
+    "avgCostPerUnit": "Chi phí / Đơn vị",
+    "channelBreakdown": "Phân bổ theo Kênh",
+    "channel": "Kênh",
+    "revenue": "Doanh thu",
+    "cost": "Chi phí",
+    "units": "Đơn vị",
+    "roiPercent": "ROI (%)",
+    "attribution": "Phân bổ Doanh thu",
+    "dynamicPricing": "Giá động",
+    "currentTier": "Gói hiện tại",
+    "baseCostMCU": "Chi phí gốc / MCU",
+    "adjustedCostMCU": "Chi phí điều chỉnh / MCU",
+    "multiplier": "Hệ số",
+    "noData": "Chưa có dữ liệu doanh thu. Hãy bắt đầu tạo nội dung để theo dõi.",
+    "loading": "Đang tải..."
   }
 }

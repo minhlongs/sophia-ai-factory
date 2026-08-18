@@ -9,3 +9,5 @@ export { fetchUsageMetrics } from './usage-queries';
 export { fetchRevenueMetrics } from './revenue-queries';
 export { fetchLicenseMetrics } from './campaign-queries';
 export { fetchRevenueSnapshot } from './revenue-nowpayments';
+export { aggregateRevenueAttribution } from './revenue-attribution';
+export type { RevenueAttributionRow } from './revenue-attribution';

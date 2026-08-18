@@ -293,6 +293,8 @@ const eslintConfig = defineConfig([
 // agent-sidebar components — reads land/agent-chat types for UI (mekong-exempt)
 "src/forest/components/agent-sidebar/chat-message-list.tsx",
 "src/forest/components/agent-sidebar/use-agent-chat.ts",
+// analytics re-export barrel — canonical impl lives in land/analytics (mekong-exempt)
+"src/forest/analytics/roi-calculator.ts",
 // analytics components — reads land/analytics for dashboard (mekong-exempt)
 "src/forest/components/analytics/ErrorRateChart.tsx",
 "src/forest/components/analytics/LicenseMetricsTable.tsx",
