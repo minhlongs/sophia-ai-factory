@@ -13,6 +13,8 @@ import {
   Monitor,
   History,
   Activity,
+  Network,
+  GitBranch,
 } from 'lucide-react';
 
 /* ───────────────────────────────────────────────────────────────
@@ -69,6 +71,8 @@ export const MAIN_NAV: NavItem[] = [
   { label: 'campaigns', icon: Send, href: '/campaigns' },
   { label: 'videos', icon: Play, href: '/videos' },
   { label: 'analytics', icon: BarChart3, href: '/analytics' },
+  { label: 'ip', icon: Network, href: '/ip' },
+  { label: 'provenance', icon: GitBranch, href: '/provenance' },
 ];
 
 export const MANAGEMENT_NAV: NavItem[] = [

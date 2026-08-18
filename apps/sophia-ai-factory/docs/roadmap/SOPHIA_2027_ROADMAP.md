@@ -33,40 +33,47 @@
 - `docs/architecture/IP_GRAPH.md`
 - `docs/architecture/AGENT_PROTOCOL.md`
 
-### Phase 2: Business Integration (2026-08-17 🔄 IN PROGRESS)
+### Phase 2: Business Integration (2026-08-17 ✅ COMPLETE)
 
 **Goal**: Connect new domain model to existing business workflows
 
 - [x] Mission Server Actions (land/creative-mission/actions.ts)
 - [x] IDOR security fixes (workspace membership verification)
-- [x] Distribution OS abstraction (D1 schema + adapter pattern) ✅ Phase 4 complete
-- [x] Performance Intelligence module (PerformanceEvent D1 repository + Experiment lifecycle) ✅ Phase 3 complete
-- [x] Experiment framework (A/B testing for creative) ✅ Phase 3 complete
-- [ ] Creative Mission API routes
-- [ ] Integration tests for mission → content graph → distribution flow
+- [x] Distribution OS abstraction (D1 schema + adapter pattern)
+- [x] Performance Intelligence module (PerformanceEvent D1 repository + Experiment lifecycle)
+- [x] Experiment framework (A/B testing for creative)
+- [x] Creative Mission API routes (app/api/creative-missions + [id])
+- [x] Integration tests for mission → content graph → distribution flow (12 tests passing)
 
 **Deliverables**:
+- `src/app/api/creative-missions/route.ts`
+- `src/app/api/creative-missions/[id]/route.ts`
+- `src/app/api/creative-missions/__tests__/route.integration.test.ts`
 - `docs/architecture/DISTRIBUTION_OS.md`
 - `docs/architecture/PERFORMANCE_INTELLIGENCE.md`
 - `docs/architecture/DATA_FLYWHEEL.md`
 
-### Phase 3: Autonomous Execution (2026-08-18 → 2026-08-20)
+### Phase 3: Autonomous Execution (2026-08-18 → 2026-08-18) ✅ COMPLETE
 
 **Goal**: Agents can execute missions end-to-end with proper approval gates
 
 - [x] AI Provider abstraction (model-agnostic provider registry) — tree/ai-providers (34 tests, 2026-08-16)
-- [ ] Agent Protocol integration with Inngest (long-running missions)
-- [ ] Approval workflow UI + API
-- [ ] Autonomy level configuration per mission
-- [x] Cost tracking per agent run → mission budget — tree/ai-providers/usage-tracker (in ai-provider module)
+- [x] Agent Protocol integration with Inngest (long-running missions) — `agent-mission-executor.ts`, `agent-approval-handler.ts`
+- [x] Approval workflow API — `app/api/approvals/[id]/route.ts` (PATCH admin/owner + IDOR, 8 tests)
+- [x] Agent Runs API — `app/api/agent-runs/[id]/route.ts` (GET status + PATCH cancel, 7 tests)
+- [x] Autonomy level configuration per mission (enforced in agent-mission-executor)
+- [x] Cost tracking per agent run → mission budget — tree/ai-providers/usage-tracker
 - [x] Circuit breaker on all AI provider calls — tree/ai-providers/circuit.ts (wraps seed/security/circuit-breaker)
-- [ ] Rollback automation (failed agent runs)
+- [x] Rollback automation (failed agent runs) — `agent-rollback-cron.ts` (auto-retry on failure)
+- [x] 15 new integration tests (7 agent-runs + 8 approvals), all passing
 
 **Deliverables**:
-- `src/tree/ai-providers/index.ts` (barrel export)
-- `src/tree/performance/index.ts` (barrel export)
-- `docs/architecture/AI_PROVIDER_ABSTRACTION.md` (pending)
-- `docs/architecture/BUZZ_BOUNDARY.md` (pending)
+- `src/app/api/agent-runs/[id]/route.ts`
+- `src/app/api/agent-runs/__tests__/route.integration.test.ts`
+- `src/app/api/approvals/[id]/route.ts`
+- `src/app/api/approvals/__tests__/route.integration.test.ts`
+- `src/forest/inngest/functions/agent-rollback-cron.ts`
+- 6840 total tests passing (phase 3: +15)
 
 ### Phase 4: Creative Learning Loop (2026-08-21 → 2026-09-15)
 

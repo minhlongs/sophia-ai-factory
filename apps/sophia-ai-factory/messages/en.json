@@ -824,6 +824,8 @@
       "new_project": "New Project",
       "campaigns": "Campaigns",
       "analytics": "Analytics",
+      "ip": "IP Graph",
+      "provenance": "Provenance",
       "funnels": "Funnels",
       "my_videos": "My Videos",
       "voices": "Voices",
@@ -1175,7 +1177,17 @@
       "funnel_no_data": "No data yet — start by generating your first campaign",
       "funnel_error": "Could not load funnel data. Please try again later.",
       "funnel_date_range": "Showing data from the last {days} days.",
-      "funnel_sidebar": "Funnels"
+      "funnel_sidebar": "Funnels",
+      "loading": "Loading",
+      "no_workspace": "No workspace",
+      "total_events": "Total events",
+      "total_channels": "Total channels",
+      "active": "Active",
+      "avg_roi": "Avg roi",
+      "across_channels": "Across channels",
+      "event_distribution": "Event distribution",
+      "roi_by_channel": "Roi by channel",
+      "unauthorized": "Unauthorized"
     },
     "trialBanner": {
       "title": "Your trial expires tomorrow! Upgrade now to keep access →",
@@ -2182,6 +2194,129 @@
       "title": "Title",
       "subtitle": "Subtitle",
       "loading": "Loading"
+    },
+    "publish": {
+      "cancelled": "Cancelled",
+      "cancel_failed": "Cancel failed",
+      "scheduled_publishes": "Scheduled publishes",
+      "no_scheduled": "No scheduled",
+      "cancel": "Cancel",
+      "unauthorized": "Unauthorized",
+      "loading": "Loading"
+    },
+    "repurpose": {
+      "enter_video_id": "Enter video id",
+      "create_failed": "Create failed",
+      "create_repurpose": "Create repurpose",
+      "video_id_placeholder": "Video id placeholder",
+      "create": "Create",
+      "recent_jobs": "Recent jobs",
+      "no_jobs": "No jobs",
+      "unauthorized": "Unauthorized",
+      "loading": "Loading"
+    },
+    "ip": {
+      "title": "IP Graph",
+      "subtitle": "Manage your universes, worlds, series, characters, themes and brands",
+      "unauthorized": "Unauthorized",
+      "search": "Search IP entities...",
+      "filter": {
+        "all": "All types"
+      },
+      "type": {
+        "universe": "Universe",
+        "world": "World",
+        "series": "Series",
+        "character": "Character",
+        "theme": "Theme",
+        "brand": "Brand"
+      },
+      "status": {
+        "draft": "Draft",
+        "planned": "Planned",
+        "in_production": "In Production",
+        "review": "Review",
+        "approved": "Approved",
+        "published": "Published",
+        "archived": "Archived"
+      },
+      "list": {
+        "title": "IP Entities",
+        "count": "entities",
+        "name": "Name",
+        "type": "Type",
+        "status": "Status",
+        "parent": "Parent",
+        "updated": "Updated",
+        "actions": "Actions",
+        "loading": "Loading...",
+        "empty": "No IP entities yet. Create one to get started.",
+        "hasParent": "Has parent",
+        "root": "Root"
+      },
+      "actions": {
+        "view": "View entity",
+        "edit": "Edit entity"
+      },
+      "create": {
+        "title": "Create IP Entity",
+        "subtitle": "Add a new universe, world, series, character, theme or brand",
+        "type": "Type",
+        "name": "Name",
+        "namePlaceholder": "Entity name",
+        "description": "Description",
+        "descriptionPlaceholder": "Brief description",
+        "parent": "Parent",
+        "parentPlaceholder": "Parent entity id (optional)",
+        "submit": "Create Entity"
+      }
+    },
+    "provenance": {
+      "title": "Provenance Chain",
+      "subtitle": "Trace the origin, edits and approvals behind every creative asset",
+      "unauthorized": "Unauthorized",
+      "search": "Search provenance records...",
+      "filter": {
+        "all": "All actions"
+      },
+      "action": {
+        "created": "Created",
+        "generated": "Generated",
+        "edited": "Edited",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "published": "Published",
+        "derived": "Derived",
+        "archived": "Archived"
+      },
+      "actor": {
+        "agent": "Agent",
+        "human": "Human"
+      },
+      "list": {
+        "title": "Provenance Records",
+        "count": "records",
+        "asset": "Asset",
+        "action": "Action",
+        "actor": "Actor",
+        "model": "Model",
+        "source": "Source Asset",
+        "updated": "Created",
+        "loading": "Loading...",
+        "empty": "No provenance records yet.",
+        "noAsset": "Enter an asset id above to trace its provenance chain."
+      },
+      "actions": {
+        "view": "View record",
+        "trace": "Trace chain"
+      },
+      "create": {
+        "title": "Trace an Asset",
+        "subtitle": "Enter an asset id to view its full provenance chain",
+        "assetId": "Asset ID",
+        "assetIdPlaceholder": "e.g. asset_abc123",
+        "submit": "Trace Provenance"
+      }
     }
   },
   "account": {

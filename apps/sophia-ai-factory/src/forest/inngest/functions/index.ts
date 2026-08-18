@@ -34,6 +34,12 @@ export * from './video-visual';
 // Agent protocol (Phase 3A)
 export * from './agent-mission-executor';
 export * from './agent-approval-handler';
+// Phase 3: Autonomous Execution
+export * from './agent-rollback-cron';
+// Phase 4: Creative Learning Loop
+export * from './performance-aggregation';
+// Phase 6: IP & Provenance Deep Dive
+export * from '@/forest/provenance/provenance-bridge';
 // payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/
 export { payoutBatcher } from '@/forest/jobs';
 export { pendingPromoterCron } from '@/forest/jobs';

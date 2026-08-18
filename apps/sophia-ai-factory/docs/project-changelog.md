@@ -1,6 +1,30 @@
 # Project Changelog
 
-**Last Updated:** 2026-08-14 | **Current Version:** 0.1.5 | **Honest Score:** 91.5/100 (doctrine ceiling)
+**Last Updated:** 2026-08-18 | **Current Version:** 0.1.5 | **Honest Score:** 91.5/100 (doctrine ceiling)
+
+---
+
+## 2026-08-18 — Phase 6: IP & Provenance Deep Dive (CREATIVE INTELLIGENCE)
+
+**Severity: MEDIUM | Type: Feature | Status: SHIPPED**
+
+### Changes
+- **Provenance API** — `GET /api/provenance?assetId=X&includeDerivatives=true` → `{ chain, derivatives }`. Auth (401), workspace access (403), validation (400). 5 integration tests.
+- **IP Graph API** — `POST /api/ip-graph` (create), `GET /api/ip-graph?workspaceId=X&type=Y` (list), `PATCH /api/ip-graph/[id]` (status), `GET /api/ip-graph/[id]/children`. 7 unit tests + 4 integration tests.
+- **Forest orchestration** — `forest/provenance/provenance-bridge.ts` Inngest function bridging `agent.mission.completed` → provenance records + creative-memory learning entry. Registered in `forest/inngest/functions/index.ts`. 7 tests.
+- **UI pages** — `/dashboard/ip` (IpGraphClient: entity table + create form + status dropdown) and `/dashboard/provenance` (ProvenanceChainClient: asset trace form + chain/derivatives table). Both wired to live API.
+- **Sidebar nav** — added `ip` (Network) + `provenance` (GitBranch) to MAIN_NAV in `dashboard-shell-types.ts`; bilingual labels in `messages/en.json` + `messages/vi.json`.
+- **i18n** — added `dashboard.ip` (34 keys) + `dashboard.provenance` (34 keys) namespaces, bilingual.
+- **Code quality** — split `IpGraphClient` (277 lines) into `IpGraphTable` (188 lines) per 200-line file-size rule. ESLint 0 errors, 0 warnings on all new files.
+
+### Verification
+- `npm run type-check` → 0 errors
+- `npm run build` → 0 errors (both routes rendered)
+- `npm test` → 6886 passed | 34 skipped | 10 todo (no regression)
+- `npm run lint` → 0 errors on all Phase 6 files
+
+### Plan
+`plans/260817-0000-phase6-ip-provenance-deep-dive/plan.md`
 
 ---
 

@@ -824,6 +824,8 @@
       "new_project": "Dự Án Mới",
       "campaigns": "Chiến Dịch",
       "analytics": "Phân Tích",
+      "ip": "Sở hữu Trí Tuệ",
+      "provenance": "Xuất Xứ",
       "funnels": "Kênh Chuyển Đổi",
       "my_videos": "Video Của Tôi",
       "voices": "Giọng Đọc",
@@ -1158,8 +1160,8 @@
       "tier_adoption_title": "Biểu Đồ Phân Bổ Gói Dịch Vụ",
       "gateTitle": "Phân Tích Doanh Thu",
       "loadErrorBanner": "Không thể tải dữ liệu phân tích. Đang hiển thị chế độ giới hạn — vui lòng tải lại trang để thử lại.",
-      "24h": "24h",
-      "accept-language": "Accept-Language",
+      "24h": "24 giờ",
+      "accept-language": "Tiếng Việt",
       "csv": "CSV",
       "png": "PNG",
       "recent_campaigns_title": "Chiến Dịch Gần Đây",
@@ -1175,7 +1177,17 @@
       "funnel_no_data": "Chưa có dữ liệu — hãy bắt đầu bằng cách tạo chiến dịch đầu tiên của bạn",
       "funnel_error": "Không thể tải dữ liệu kênh chuyển đổi. Vui lòng thử lại sau.",
       "funnel_date_range": "Hiển thị dữ liệu từ {days} ngày qua.",
-      "funnel_sidebar": "Kênh Chuyển Đổi"
+      "funnel_sidebar": "Kênh Chuyển Đổi",
+      "loading": "Đang tải...",
+      "no_workspace": "Chưa gán workspace",
+      "total_events": "Tổng sự kiện",
+      "total_channels": "Kênh hoạt động",
+      "active": "Hoạt động",
+      "avg_roi": "ROI trung bình",
+      "across_channels": "Trên các kênh",
+      "event_distribution": "Phân bố sự kiện",
+      "roi_by_channel": "ROI theo kênh",
+      "unauthorized": "Chưa xác thực"
     },
     "trialBanner": {
       "title": "Gói dùng thử của bạn hết hạn vào ngày mai! Nâng cấp ngay để giữ tính năng →",
@@ -2182,6 +2194,129 @@
       "title": "Title",
       "subtitle": "Subtitle",
       "loading": "Loading"
+    },
+    "publish": {
+      "cancelled": "Đã hủy",
+      "cancel_failed": "Hủy thất bại",
+      "scheduled_publishes": "Xuất bản đã lên lịch",
+      "no_scheduled": "Chưa có xuất bản nào",
+      "cancel": "Hủy",
+      "unauthorized": "Chưa xác thực",
+      "loading": "Đang tải..."
+    },
+    "repurpose": {
+      "enter_video_id": "Nhập ID video",
+      "create_failed": "Tạo thất bại",
+      "create_repurpose": "Tạo nội dung tái sử dụng",
+      "video_id_placeholder": "ID video hoặc URL",
+      "create": "Tạo",
+      "recent_jobs": "Công việc gần đây",
+      "no_jobs": "Chưa có công việc",
+      "unauthorized": "Chưa xác thực",
+      "loading": "Đang tải..."
+    },
+    "ip": {
+      "title": "Đồ thị IP",
+      "subtitle": "Quản lý vũ trụ, thế giới, series, nhân vật, chủ đề và thương hiệu của bạn",
+      "unauthorized": "Chưa xác thực",
+      "search": "Tìm kiếm thực thể IP...",
+      "filter": {
+        "all": "Tất cả loại"
+      },
+      "type": {
+        "universe": "Vũ trụ",
+        "world": "Thế giới",
+        "series": "Series",
+        "character": "Nhân vật",
+        "theme": "Chủ đề",
+        "brand": "Thương hiệu"
+      },
+      "status": {
+        "draft": "Bản nháp",
+        "planned": "Đã lên kế hoạch",
+        "in_production": "Đang sản xuất",
+        "review": "Đang xét duyệt",
+        "approved": "Đã duyệt",
+        "published": "Đã xuất bản",
+        "archived": "Đã lưu trữ"
+      },
+      "list": {
+        "title": "Các thực thể IP",
+        "count": "thực thể",
+        "name": "Tên",
+        "type": "Loại",
+        "status": "Trạng thái",
+        "parent": "Bố mẹ",
+        "updated": "Cập nhật lần cuối",
+        "actions": "Thao tác",
+        "loading": "Đang tải...",
+        "empty": "Chưa có thực thể IP nào. Tạo một thực thể để bắt đầu.",
+        "hasParent": "Có bố mẹ",
+        "root": "Gốc"
+      },
+      "actions": {
+        "view": "Xem thực thể",
+        "edit": "Chỉnh sửa thực thể"
+      },
+      "create": {
+        "title": "Tạo thực thể IP",
+        "subtitle": "Thêm một vũ trụ, thế giới, series, nhân vật, chủ đề hoặc thương hiệu",
+        "type": "Loại",
+        "name": "Tên",
+        "namePlaceholder": "Tên thực thể",
+        "description": "Mô tả",
+        "descriptionPlaceholder": "Mô tả ngắn",
+        "parent": "Bố mẹ",
+        "parentPlaceholder": "ID thực thể bố mẹ (tùy chọn)",
+        "submit": "Tạo thực thể"
+      }
+    },
+    "provenance": {
+      "title": "Chuỗi nguồn gốc",
+      "subtitle": "Theo dõi nguồn gốc, các lần chỉnh sửa và phê duyệt của từng tài sản sáng tạo",
+      "unauthorized": "Chưa xác thực",
+      "search": "Tìm kiếm bản ghi nguồn gốc...",
+      "filter": {
+        "all": "Tất cả hành động"
+      },
+      "action": {
+        "created": "Đã tạo",
+        "generated": "Đã tạo bằng AI",
+        "edited": "Đã chỉnh sửa",
+        "approved": "Đã phê duyệt",
+        "rejected": "Đã từ chối",
+        "published": "Đã xuất bản",
+        "derived": "Đã phái sinh",
+        "archived": "Đã lưu trữ"
+      },
+      "actor": {
+        "agent": "Agent",
+        "human": "Con người"
+      },
+      "list": {
+        "title": "Bản ghi nguồn gốc",
+        "count": "bản ghi",
+        "asset": "Tài sản",
+        "action": "Hành động",
+        "actor": "Người thực hiện",
+        "model": "Mô hình",
+        "source": "Tài sản nguồn",
+        "updated": "Ngày tạo",
+        "loading": "Đang tải...",
+        "empty": "Chưa có bản ghi nguồn gốc nào.",
+        "noAsset": "Nhập ID tài sản ở trên để theo dõi chuỗi nguồn gốc."
+      },
+      "actions": {
+        "view": "Xem bản ghi",
+        "trace": "Theo dõi chuỗi"
+      },
+      "create": {
+        "title": "Theo dõi một tài sản",
+        "subtitle": "Nhập ID tài sản để xem chuỗi nguồn gốc đầy đủ",
+        "assetId": "ID tài sản",
+        "assetIdPlaceholder": "ví dụ: asset_abc123",
+        "submit": "Theo dõi nguồn gốc"
+      }
     }
   },
   "account": {
