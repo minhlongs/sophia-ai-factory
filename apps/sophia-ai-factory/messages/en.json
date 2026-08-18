@@ -2318,6 +2318,36 @@
         "assetIdPlaceholder": "e.g. asset_abc123",
         "submit": "Trace Provenance"
       }
+    },
+    "playbook": {
+      "title": "Auto Playbook",
+      "subtitle": "Turn performance data into immediately-usable content rules",
+      "empty": "No patterns detected yet. Run detection or add experiment data.",
+      "detect": "Detect",
+      "generate": "Generate",
+      "apply": "Apply this rule to the next campaign",
+      "autoApply": "Auto-Apply",
+      "autoApplyOn": "Enable auto-apply",
+      "autoApplyOff": "Disable auto-apply",
+      "confidence": "Confidence",
+      "sample": "Sample",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "rollback": "Rollback",
+      "rollbackConfirm": "Roll back this rule? Already-applied campaigns will use the old rule.",
+      "metricDropWarning": "Performance dropped {pct}% — consider rollback",
+      "noData": "No data",
+      "platform": "Platform",
+      "goal": "Goal",
+      "ruleVi": "Rule (VI)",
+      "ruleEn": "Rule (EN)",
+      "appliedCount": "Applied",
+      "rollbackCount": "Rollbacks",
+      "insufficientData": "Insufficient data to suggest a pattern",
+      "detectedAt": "Detected at",
+      "applied": "Applied",
+      "autoApplying": "Auto-applying…"
     }
   },
   "account": {
@@ -6869,5 +6899,38 @@
     "multiplier": "Multiplier",
     "noData": "No revenue data yet. Start creating content to track performance.",
     "loading": "Loading..."
+  },
+  "playbook": {
+    "title": "Auto Playbook",
+    "subtitle": "Turn performance data into immediately-usable content rules",
+    "empty": "No patterns detected yet. Run detection or add experiment data.",
+    "detect": "Detect",
+    "generate": "Generate",
+    "apply": "Apply Now",
+    "autoApply": "Auto-Apply",
+    "autoApplyOn": "Enable auto-apply",
+    "autoApplyOff": "Disable auto-apply",
+    "confidence": "Confidence",
+    "sample": "Sample",
+    "high": "High",
+    "medium": "Medium",
+    "low": "Low",
+    "rollback": "Rollback",
+    "rollbackConfirm": "Roll back this rule? Already-applied campaigns will use the old rule.",
+    "metricDropWarning": "Performance dropped {pct}% — consider rollback",
+    "noData": "No data",
+    "platform": "Platform",
+    "goal": "Goal",
+    "ruleVi": "Rule (VI)",
+    "ruleEn": "Rule (EN)",
+    "appliedCount": "Applied",
+    "rollbackCount": "Rollbacks",
+    "insufficientData": "Insufficient data to suggest a pattern",
+    "detectedAt": "Detected at"
+  },
+  "playbookRule": {
+    "apply": "Apply this rule to the next campaign",
+    "applied": "Applied",
+    "autoApplying": "Auto-applying…"
   }
 }

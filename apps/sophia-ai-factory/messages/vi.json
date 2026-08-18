@@ -2318,6 +2318,36 @@
         "assetIdPlaceholder": "ví dụ: asset_abc123",
         "submit": "Theo dõi nguồn gốc"
       }
+    },
+    "playbook": {
+      "title": "Playbook Tự Động",
+      "subtitle": "Biến dữ liệu hiệu suất thành quy tắc nội dung có thể áp dụng ngay",
+      "empty": "Chưa có pattern nào được phát hiện. Chạy nền tảng hoặc thêm dữ liệu experiment.",
+      "detect": "Phát hiện",
+      "generate": "Tạo quy tắc",
+      "apply": "Áp dụng quy tắc này cho chiến dịch tiếp theo",
+      "autoApply": "Tự động áp dụng",
+      "autoApplyOn": "Bật tự động áp dụng",
+      "autoApplyOff": "Tắt tự động áp dụng",
+      "confidence": "Độ tin cậy",
+      "sample": "Mẫu",
+      "high": "Cao",
+      "medium": "Trung bình",
+      "low": "Thấp",
+      "rollback": "Hoàn tác",
+      "rollbackConfirm": "Hoàn tác quy tắc này? Các chiến dịch đã áp dụng sẽ dùng quy tắc cũ.",
+      "metricDropWarning": "Hiệu suất giảm {pct}% — xem xét hoàn tác",
+      "noData": "Chưa có dữ liệu",
+      "platform": "Nền tảng",
+      "goal": "Mục tiêu",
+      "ruleVi": "Quy tắc (VI)",
+      "ruleEn": "Quy tắc (EN)",
+      "appliedCount": "Lần áp dụng",
+      "rollbackCount": "Lần hoàn tác",
+      "insufficientData": "Dữ liệu chưa đủ để đề xuất pattern",
+      "detectedAt": "Phát hiện lúc",
+      "applied": "Đã áp dụng",
+      "autoApplying": "Đang tự động áp dụng…"
     }
   },
   "account": {
@@ -6876,5 +6906,38 @@
     "multiplier": "Hệ số",
     "noData": "Chưa có dữ liệu doanh thu. Hãy bắt đầu tạo nội dung để theo dõi.",
     "loading": "Đang tải..."
+  },
+  "playbook": {
+    "title": "Tự động hóa Playbook",
+    "subtitle": "Biến dữ liệu hiệu suất thành quy tắc nội dung có thể áp dụng ngay",
+    "empty": "Chưa có pattern nào được phát hiện. Chạy nền tảng hoặc thêm dữ liệu experiment.",
+    "detect": "Phát hiện",
+    "generate": "Tạo quy tắc",
+    "apply": "Áp dụng ngay",
+    "autoApply": "Tự động áp dụng",
+    "autoApplyOn": "Bật tự động áp dụng",
+    "autoApplyOff": "Tắt tự động áp dụng",
+    "confidence": "Độ tin cậy",
+    "sample": "Mẫu",
+    "high": "Cao",
+    "medium": "Trung bình",
+    "low": "Thấp",
+    "rollback": "Hoàn tác",
+    "rollbackConfirm": "Hoàn tác quy tắc này? Các chiến dịch đã áp dụng sẽ dùng quy tắc cũ.",
+    "metricDropWarning": "Hiệu suất giảm {pct}% — xem xét hoàn tác",
+    "noData": "Chưa có dữ liệu",
+    "platform": "Nền tảng",
+    "goal": "Mục tiêu",
+    "ruleVi": "Quy tắc (VI)",
+    "ruleEn": "Quy tắc (EN)",
+    "appliedCount": "Lần áp dụng",
+    "rollbackCount": "Lần hoàn tác",
+    "insufficientData": "Dữ liệu chưa đủ để đề xuất pattern",
+    "detectedAt": "Phát hiện lúc"
+  },
+  "playbookRule": {
+    "apply": "Áp dụng quy tắc này cho chiến dịch tiếp theo",
+    "applied": "Đã áp dụng",
+    "autoApplying": "Đang tự động áp dụng…"
   }
 }
