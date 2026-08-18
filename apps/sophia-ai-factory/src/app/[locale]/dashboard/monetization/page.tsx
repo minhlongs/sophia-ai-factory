@@ -6,6 +6,8 @@
 export const dynamic = 'force-dynamic';
 
 import { getTranslations } from 'next-intl/server';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { getD1 } from '@/seed/db/client';
 import { SummaryCards } from './summary-cards';
 import { ChannelTable } from './channel-table';
 
@@ -45,12 +47,43 @@ export interface MonetizationData {
 export default async function MonetizationPage() {
   const t = await getTranslations('monetization');
 
+  const user = await getCurrentUser();
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <p className="text-sm text-rose-600">{t('loading')}</p>
+      </div>
+    );
+  }
+
+  const db = getD1();
+  if (!db) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <p className="text-sm text-rose-600">Database unavailable</p>
+      </div>
+    );
+  }
+
+  const membership = await db
+    .prepare('SELECT org_id FROM org_members WHERE user_id = ? ORDER BY created_at ASC LIMIT 1')
+    .bind(user.id)
+    .first<{ org_id: string }>();
+
+  if (!membership?.org_id) {
+    return (
+      <div className="mx-auto max-w-6xl px-4 py-6">
+        <p className="text-sm text-[hsl(240,12%,45%)]">{t('loading')}</p>
+      </div>
+    );
+  }
+
   let data: MonetizationData | null = null;
   let error: string | null = null;
 
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/monetization?workspaceId=default`, {
+    const res = await fetch(`${baseUrl}/api/monetization?workspaceId=${encodeURIComponent(membership.org_id)}`, {
       cache: 'no-store',
     });
     if (res.ok) {

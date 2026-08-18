@@ -1,6 +1,13 @@
 -- Extend affiliate_network_credentials CHECK constraint to include ad network types.
 -- SQLite does not support DROP CHECK, so we recreate the table.
--- Safe to re-run (idempotent via CREATE TABLE IF NOT EXISTS + INSERT).
+-- Idempotent: guarded by _migration_0248_applied so re-runs are no-ops.
+
+CREATE TABLE IF NOT EXISTS _migration_0248_applied (
+  applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO _migration_0248_applied (applied_at) VALUES (CURRENT_TIMESTAMP)
+  WHERE NOT EXISTS (SELECT 1 FROM _migration_0248_applied);
 
 CREATE TABLE IF NOT EXISTS _affiliate_network_credentials_new (
   id TEXT PRIMARY KEY,
