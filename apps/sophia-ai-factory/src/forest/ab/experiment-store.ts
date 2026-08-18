@@ -13,6 +13,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import type {
   AbExperiment,
   AbExperimentRow,
+  ContentType,
   CreateExperimentInput,
   ExperimentCounterUpdate,
   WinnerVariant,
@@ -27,6 +28,7 @@ function rowToExperiment(row: AbExperimentRow): AbExperiment {
     id: row.id,
     videoId: row.video_id,
     tenantId: row.tenant_id,
+    contentType: row.content_type ?? 'thumbnail',
     variantACaption: row.variant_a_caption,
     variantBCaption: row.variant_b_caption,
     variantAThumbUrl: row.variant_a_thumb_url,
@@ -58,19 +60,21 @@ export async function createExperiment(input: CreateExperimentInput): Promise<st
   const id = generateShortId() + generateShortId(); // 16-char unique ID
   const now = new Date().toISOString();
 
+  const contentType = input.contentType ?? 'thumbnail';
   await db
     .prepare(
       `INSERT INTO ab_experiments
-         (id, video_id, tenant_id, variant_a_caption, variant_b_caption,
+         (id, video_id, tenant_id, content_type, variant_a_caption, variant_b_caption,
           variant_a_thumb_url, variant_b_thumb_url,
           impressions_a, impressions_b, conversions_a, conversions_b,
           winner, status, created_at, decided_at, offer_id, bundle_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, NULL, 'active', ?, NULL, ?, ?)`
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, NULL, 'active', ?, NULL, ?, ?)`
     )
     .bind(
       id,
       input.videoId,
       input.tenantId,
+      contentType,
       input.variantACaption,
       input.variantBCaption,
       input.variantAThumbUrl ?? null,
@@ -200,6 +204,28 @@ export async function getActiveExperimentsOlderThan(
        ORDER BY created_at ASC`
     )
     .bind(cutoff)
+    .all<AbExperimentRow>();
+
+  return (results ?? []).map(rowToExperiment);
+}
+
+/**
+ * Fetch active experiments filtered by content type.
+ * Used by content-specific crons (caption, hook, CTA experiments).
+ */
+export async function getActiveByContentType(
+  contentType: ContentType,
+): Promise<AbExperiment[]> {
+  const db = getD1();
+  if (!db) throw new Error('D1 database binding not available');
+
+  const { results } = await db
+    .prepare(
+      `SELECT * FROM ab_experiments
+       WHERE status = 'active' AND content_type = ?
+       ORDER BY created_at ASC`
+    )
+    .bind(contentType)
     .all<AbExperimentRow>();
 
   return (results ?? []).map(rowToExperiment);

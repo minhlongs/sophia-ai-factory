@@ -50,6 +50,7 @@ function makeExperiment(overrides: Partial<AbExperiment> = {}): AbExperiment {
     id: 'exp-001',
     videoId: 'vid-001',
     tenantId: 'tenant-001',
+    contentType: 'thumbnail',
     variantACaption: 'Title A',
     variantBCaption: 'Title B',
     variantAThumbUrl: null,

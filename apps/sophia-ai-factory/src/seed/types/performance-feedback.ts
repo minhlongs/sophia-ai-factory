@@ -38,3 +38,22 @@ export interface PromptOptimization {
   appliedAt?: number
   createdAt: number
 }
+
+/**
+ * AI-generated strategy recommendation derived from accumulated
+ * high-confidence performance signals. Written to creative_memory
+ * by strategy-feedback Inngest function.
+ */
+export interface StrategyRecommendation {
+  id: string
+  workspaceId: string
+  signalCount: number
+  signalSummary: string
+  recommendation: string
+  reasoning: string
+  confidence: 'high' | 'medium' | 'low'
+  category: string
+  applied: boolean
+  appliedAt?: number
+  createdAt: number
+}

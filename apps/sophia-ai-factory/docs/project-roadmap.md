@@ -10,7 +10,9 @@ Sophia's architecture is already competitive. Gaps are in **monetization UX** (c
 
 ---
 
-## Status Snapshot (2026-08-14)
+## Status Snapshot (2026-08-18)
+
+**Phase 4: Creative Learning Loop — COMPLETE (2026-08-18)** — Closed the LEARN loop in the SOPHIA flywheel. Performance aggregation (15-min cron) writes high-confidence signals into `creative_memory`. Learning velocity cron computes improvement rate 0-100 per (workspace, entity_type, channel) daily. Strategy feedback fires on ≥5 accumulated signals and generates one actionable recommendation via BYOK OpenRouter. A/B framework extended from thumbnails to captions, hooks, and CTAs; experiment winners are written back to creative memory daily. Cross-channel ROI analytics (14 channels) handle zero-data gracefully. Decay mechanics (30-day half-life) prune stale memories at read time. All content bilingual Vietnamese + English. Build 0 TS errors, tests all pass, ESLint 0 new suppressions.
 
 **Circuit Breaker + ESLint Sprint (2026-08-13/14)** — Major resilience + code quality milestone. Shipped circuit breaker primitive (4-state machine: CLOSED→DEGRADED→OPEN→HALF_OPEN) with D1-persisted registry. Wired into all 8 external providers (OpenRouter, ElevenLabs, D-ID, HeyGen, NOWPayments, ClickBank, Replicate, fal.ai) across 7 batches. Per-kind failure classification: AUTH_FAILURE → immediate open, RATE_LIMIT → cooldown, SERVER_ERROR → retry. ESLint reduced from 321 warnings to 0 across 102 files. Setup Wizard wired to real verification/save endpoints. Accessibility: `<main>` landmark, skip-nav, locale provider. 6703 tests green. Deployed `30fd3080`.
 

@@ -14,6 +14,9 @@ import {
   storageTrackerDaily,
   accountDeleteFinalizeCron,
   videoGenerate,
+  learningVelocityCron,
+  strategyFeedback,
+  performanceAggregationCron,
   batchVideoFanout,
   repurposeAnalyze,
   repurposeClipGenerate,
@@ -21,6 +24,7 @@ import {
   tokenRefreshCron,
   thumbnailAbSelector,
   sopExecute,
+  experimentFeedbackCron,
 } from "@/forest/inngest/functions/index";
 
 // Deprecated handlers (Phase 06 video_jobs chain + URL-to-Revenue) removed from
@@ -58,5 +62,12 @@ export const { GET, POST, PUT } = serve({
     thumbnailAbSelector,
     // SOP execution engine (Phase 01 Solo SOPs)
     sopExecute,
+    // Phase 4: Creative Learning Loop — 15-min performance aggregation
+    performanceAggregationCron,
+    // Phase 4.2: Experiment Framework Extension — daily winner→creative_memory write
+    experimentFeedbackCron,
+    // Phase 4.3: Creative Memory Feedback Loop — daily learning velocity + event-triggered strategy
+    learningVelocityCron,
+    strategyFeedback,
   ],
 });

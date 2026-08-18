@@ -10,10 +10,17 @@
 export type ExperimentStatus = 'active' | 'decided' | 'expired';
 export type WinnerVariant = 'a' | 'b' | 'no_winner';
 
+/**
+ * Content types supported by the A/B experiment framework.
+ * 'thumbnail' is the original type; caption/hook/CTA were added in Phase 4.2.
+ */
+export type ContentType = 'thumbnail' | 'caption' | 'hook' | 'cta';
+
 /** Represents a row in the ab_experiments D1 table. */
 export interface AbExperiment {
   id: string;
   videoId: string;
+  contentType: ContentType;
   tenantId: string;
   variantACaption: string;
   variantBCaption: string;
@@ -35,6 +42,8 @@ export interface AbExperiment {
 export interface CreateExperimentInput {
   videoId: string;
   tenantId: string;
+  /** Content type tested in this experiment. Defaults to 'thumbnail' at DB level. */
+  contentType?: ContentType;
   variantACaption: string;
   variantBCaption: string;
   variantAThumbUrl?: string;
@@ -64,6 +73,7 @@ export interface AbExperimentRow {
   id: string;
   video_id: string;
   tenant_id: string;
+  content_type: ContentType;
   variant_a_caption: string;
   variant_b_caption: string;
   variant_a_thumb_url: string | null;

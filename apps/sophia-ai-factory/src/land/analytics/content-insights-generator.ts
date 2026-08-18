@@ -9,18 +9,17 @@ import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { logger } from '@/seed/utils/logger-utility';
 import type { AnalyticsSummary } from '@/seed/db/repositories/video-analytics-repo';
 import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
+import {
+  buildInsightsPrompt,
+  buildContentRoiPrompt,
+  type TopVideoMetric,
+  type ContentRoiSummary,
+} from '@/seed/inference/prompt-builders';
 
 export interface ContentInsight {
   insight: string;
   recommendation: string;
   confidence: 'high' | 'medium' | 'low';
-}
-
-interface TopVideoMetric {
-  videoId: string;
-  views: number;
-  ctr: number;
-  watchTimeSec: number;
 }
 
 /**
@@ -40,7 +39,12 @@ export async function generateContentInsights(
     return [];
   }
 
-  const prompt = buildInsightsPrompt(summary, topVideos);
+  const summaryText = `Total views: ${summary.totalViews}
+- Avg CTR: ${(summary.avgCtr * 100).toFixed(2)}%
+- Avg completion rate: ${(summary.avgCompletionRate * 100).toFixed(1)}%
+- Total watch time: ${Math.round(summary.totalWatchTimeSec / 3600)}h`;
+
+  const prompt = buildInsightsPrompt(summaryText, topVideos);
 
   try {
     const content = await resilientChatCompletion(prompt, {
@@ -57,30 +61,43 @@ export async function generateContentInsights(
   }
 }
 
-function buildInsightsPrompt(summary: AnalyticsSummary, topVideos: TopVideoMetric[]): string {
-  const top = topVideos.slice(0, 3).map(v =>
-    `- Views: ${v.views}, CTR: ${(v.ctr * 100).toFixed(1)}%, WatchTime: ${Math.round(v.watchTimeSec / 60)}min`,
-  ).join('\n');
+/**
+ * Generate ROI-aware content insights.
+ * Caller pre-fetches ROI data (forest layer) and passes it as roiProjects.
+ * Returns 3-5 structured ROI recommendations — never throws.
+ *
+ * @param userId - workspace owner
+ * @param summaryText - pre-formatted performance summary
+ * @param roiProjects - top projects by ROI (pre-fetched by caller)
+ * @param hasData - false when roi_records is empty
+ */
+export async function generateRoiInsights(
+  userId: string,
+  summaryText: string,
+  roiProjects: ContentRoiSummary[],
+  hasData: boolean,
+): Promise<ContentInsight[]> {
+  const apiKey = await resolveUserApiKey(userId, 'openrouter', process.env.OPENROUTER_API_KEY);
+  const anthropicKey = process.env.ANTHROPIC_API_KEY ?? undefined;
 
-  return `You are a content strategy analyst. Given these YouTube video performance metrics, identify patterns in high-performing content and suggest 3-5 improvements for future videos.
+  if (!apiKey && !anthropicKey) {
+    logger.warn('[content-insights-generator] No API keys configured for ROI insights');
+    return [];
+  }
 
-Summary (last 30 days):
-- Total views: ${summary.totalViews}
-- Avg CTR: ${(summary.avgCtr * 100).toFixed(2)}%
-- Avg completion rate: ${(summary.avgCompletionRate * 100).toFixed(1)}%
-- Total watch time: ${Math.round(summary.totalWatchTimeSec / 3600)}h
+  const prompt = buildContentRoiPrompt(summaryText, roiProjects, hasData);
 
-Top performing videos:
-${top || 'No data yet'}
+  try {
+    const content = await resilientChatCompletion(prompt, {
+      openRouterKey: apiKey,
+      anthropicKey,
+      enableFallback: !!anthropicKey,
+    });
 
-Respond ONLY with valid JSON in this exact format:
-{
-  "insights": [
-    {
-      "insight": "specific observation about what works",
-      "recommendation": "actionable next step",
-      "confidence": "high" | "medium" | "low"
-    }
-  ]
-}`;
+    const parsed = JSON.parse(content) as { insights?: ContentInsight[] };
+    return Array.isArray(parsed.insights) ? parsed.insights.slice(0, 5) : [];
+  } catch (err) {
+    logger.warn('[content-insights-generator] ROI insights AI call failed', { error: String(err) });
+    return [];
+  }
 }

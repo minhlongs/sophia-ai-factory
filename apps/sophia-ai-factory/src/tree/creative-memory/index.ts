@@ -14,3 +14,9 @@ export {
   newMemoryId,
 } from './types';
 export type { CreativeMemoryError } from './types';
+
+export {
+  computeDecayedConfidence,
+  computeDecayScore,
+  filterActiveMemories,
+} from './decay';

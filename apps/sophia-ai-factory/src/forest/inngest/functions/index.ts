@@ -38,6 +38,10 @@ export * from './agent-approval-handler';
 export * from './agent-rollback-cron';
 // Phase 4: Creative Learning Loop
 export * from './performance-aggregation';
+export * from './experiment-feedback-cron';
+// Phase 4.3: Creative Memory Feedback Loop
+export * from './learning-velocity-cron';
+export * from './strategy-feedback';
 // Phase 6: IP & Provenance Deep Dive
 export * from '@/forest/provenance/provenance-bridge';
 // payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/

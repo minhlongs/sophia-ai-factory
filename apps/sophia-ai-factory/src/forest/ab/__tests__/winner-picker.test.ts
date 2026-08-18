@@ -23,6 +23,7 @@ const BASE_EXPERIMENT: AbExperiment = {
   id: 'test-exp-001',
   videoId: 'video-001',
   tenantId: 'tenant-001',
+  contentType: 'thumbnail',
   variantACaption: 'Title A',
   variantBCaption: 'Title B',
   variantAThumbUrl: null,

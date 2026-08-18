@@ -194,6 +194,13 @@ type Events = {
   "payout.batched": PayoutBatchedEvent;
   "payout.confirmed": PayoutConfirmedEvent;
   "payout.reconcile.alert": PayoutReconcileAlertEvent;
+  // Phase 4.3: Creative Memory Feedback Loop — signal accumulation trigger
+  "creative-memory/signal-accumulated": {
+    data: {
+      workspaceId: string;
+      signalCount: number;
+    };
+  };
 };
 
 // Create a client to send and receive events

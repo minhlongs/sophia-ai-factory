@@ -1,6 +1,26 @@
 # Project Changelog
 
-**Last Updated:** 2026-08-18 | **Current Version:** 0.1.5 | **Honest Score:** 91.5/100 (doctrine ceiling)
+**Last Updated:** 2026-08-18 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** e0225b3b
+
+---
+
+## 2026-08-18 (Phase 4 Creative Learning Loop deployed) — Performance Intelligence + Creative Memory Decay + Strategy Feedback
+
+**Severity: P1 FEATURE | Type: Creative Intelligence | Status: COMPLETE**
+
+Closed the LEARN loop in the SOPHIA flywheel (VISION → CREATE → DISTRIBUTE → MEASURE → LEARN → COMPOUND). Four sub-phases shipped:
+
+**Phase 4.1 — Performance Aggregation (15-min cron):** Fixed wrong Inngest import (`@/tree/inngest/client` → `@/seed/inngest/client`). Extended `performance-aggregation.ts` to write high-confidence aggregates into `creative_memory` via `recordLearning()`. New `learning_velocity` table (migration `0249_learning_velocity.sql`) tracks improvement rate per (workspace, entity_type, channel). `LearningVelocityMetric` and `VelocitySnapshot` types added to `seed/types/learning-velocity.ts`.
+
+**Phase 4.2 — A/B Framework Extension:** Generalised thumbnail-only experiment runner to support captions, hooks, and CTAs. New `ContentType` enum in `ab-types.ts` extended from `['thumbnail']` to `['thumbnail', 'caption', 'hook', 'cta']`. New `content-variant-generator.ts` uses BYOK OpenRouter (with deterministic fallback) to generate two variants for any content type. New `experiment-feedback-cron.ts` daily cron writes decided experiment winners to creative memory as `experiment:<id>:winner`.
+
+**Phase 4.3 — Learning Velocity + Strategy Feedback:** `learning-velocity-cron.ts` (daily) splits the 7-day window into early (days 0-3) vs late (days 4-7), computes velocity score 0-100 and trend (improving/stable/declining). `strategy-feedback.ts` (event-triggered, ≥5 high-confidence signals) calls BYOK OpenRouter via `resilientChatCompletion` to generate ONE actionable strategy recommendation. AI failures degrade gracefully — never throws. `StrategyRecommendation` type tracks `applied: boolean` + `appliedAt` for later measurement.
+
+**Phase 4.4 — Cross-Channel ROI Analytics:** `content-roi-resolver.ts` joins content_projects + roi_records + performance_events with zero-data graceful handling (`hasData: false`, no errors). `cross-channel-resolver.ts` aggregates performance + ROI per channel provider across all 14 channels. Both resolvers are read-only D1 SELECTs — no writes, no side effects.
+
+**Phase 4.5 — Documentation & Quality Gates:** Architecture docs updated: `PERFORMANCE_INTELLIGENCE.md` (aggregation pipeline, learning velocity, strategy feedback loop), `CREATIVE_MEMORY.md` (decay mechanics, experiment winner tracking, LEARN loop). All content bilingual Vietnamese + English.
+
+**Files:** 8 code files modified/created | **Migrations:** 2 (`0249_learning_velocity.sql`, `0250_*`) | **Build:** 0 TS errors | **Tests:** all pass | **ESLint:** 0 new suppressions
 
 ---
 

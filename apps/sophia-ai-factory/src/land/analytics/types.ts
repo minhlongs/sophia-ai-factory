@@ -238,3 +238,29 @@ export interface ViolationFilters {
   endTimestamp?: number;
   resolved?: boolean;
 }
+
+// ============================================================================
+// Learning Velocity Types
+// ============================================================================
+
+/**
+ * Learning velocity summary per entity/channel
+ */
+export interface LearningVelocitySummary {
+  entityType: string;
+  channel: string;
+  velocityScore: number;
+  eventCount: number;
+  trend: 'improving' | 'stable' | 'declining';
+  avgMetrics: Record<string, number>;
+}
+
+/**
+ * Learning velocity response for admin dashboard
+ */
+export interface LearningVelocityResponse {
+  workspaceId: string;
+  summaries: LearningVelocitySummary[];
+  totalEntities: number;
+  totalChannels: number;
+}
