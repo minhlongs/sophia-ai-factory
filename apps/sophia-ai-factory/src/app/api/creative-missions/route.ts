@@ -9,7 +9,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createMission, listMissions } from '@/land/creative-mission';
 import { getErrorMessage } from '@/seed/utils/to-error';
 
