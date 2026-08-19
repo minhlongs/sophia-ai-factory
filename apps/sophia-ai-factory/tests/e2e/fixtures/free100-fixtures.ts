@@ -23,6 +23,7 @@
  */
 
 import { openDb, ensureTablesExist } from './free100-db-helpers';
+import { randomUUID } from 'crypto';
 
 // ── Seed helpers ──────────────────────────────────────────────────────────────
 
@@ -108,6 +109,8 @@ export function seedTestUser(opts: SeedUserOptions): SeededUser {
 export interface SeedVideoOptions {
   userId: string;
   r2Key?: string;
+  /** Explicit video id. Defaults to `e2e-vid-<userId>` if omitted. */
+  videoId?: string;
 }
 
 export interface SeededVideo {
@@ -117,19 +120,23 @@ export interface SeededVideo {
 /**
  * Seed a completed video row in local D1.
  * provider='ai-prompt', status='completed', r2_key set.
+ *
+ * The video row is required by GET /api/v1/distribute/jobs/[videoId]/status,
+ * which verifies ownership via `SELECT user_id FROM videos WHERE id = ?`
+ * (route.ts:66-73) before returning publishing_jobs.
  */
 export function seedCompletedVideo(opts: SeedVideoOptions): SeededVideo {
   const db = openDb();
   ensureTablesExist(db);
 
-  const videoId = `e2e-vid-${opts.userId.slice(0, 16)}`;
+  const videoId = opts.videoId ?? `e2e-vid-${opts.userId.slice(0, 16)}`;
   const r2Key = opts.r2Key ?? `e2e-videos/${videoId}/output.mp4`;
   const now = Math.floor(Date.now() / 1000);
 
   db.prepare(`
     INSERT OR REPLACE INTO videos (
-      id, user_id, status, provider, r2_key, title, created_at, updated_at
-    ) VALUES (?, ?, 'completed', 'ai-prompt', ?, 'E2E Test Video', ?, datetime('now'))
+      id, user_id, heygen_job_id, status, provider, r2_key, title, created_at, updated_at
+    ) VALUES (?, ?, '', 'completed', 'ai-prompt', ?, 'E2E Test Video', ?, datetime('now'))
   `).run(videoId, opts.userId, r2Key, now);
 
   db.close();
@@ -188,6 +195,291 @@ export function tearDown(userId: string): void {
   const orgId = `org-${userId}`;
   db.prepare(`DELETE FROM org_members WHERE user_id = ?`).run(userId);
   db.prepare(`DELETE FROM organizations WHERE id = ?`).run(orgId);
+
+  db.close();
+}
+
+// ── Creative Economy flywheel seeds (migrations 0233-0243) ────────────────────
+// Used by tests/e2e/creative-mission-flywheel.spec.ts to seed the full
+// Vision → Create → Distribute → Measure → Learn → Compound loop into local D1.
+
+export interface SeedCreativeMissionOptions {
+  userId: string;
+  workspaceId: string;
+  title: string;
+  objective: string;
+  audience: string;
+  geography: string;
+  channels: string[];
+  monetizationGoals: string[];
+}
+
+export interface SeededCreativeMission {
+  missionId: string;
+}
+
+/**
+ * Seed a creative_missions row for the flywheel E2E test.
+ * Returns the missionId so callers can chain agent runs + publishing jobs.
+ */
+export function seedCreativeMission(opts: SeedCreativeMissionOptions): SeededCreativeMission {
+  const db = openDb();
+  ensureTablesExist(db);
+
+  // UUID: GET /api/v1/distribute/jobs/[videoId]/status validates videoId as
+  // z.string().uuid() (route.ts:23). The missionId doubles as the videoId in
+  // the flywheel spec, so it MUST be a UUID to pass that gate.
+  const missionId = randomUUID();
+  const now = Math.floor(Date.now() / 1000);
+
+  db.prepare(`
+    INSERT OR REPLACE INTO creative_missions (
+      id, workspace_id, creator_id, title, objective, audience, geography,
+      timeframe_start, timeframe_end, channels, monetization_goals,
+      constraints, success_metrics, status, current_phase, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    missionId,
+    opts.workspaceId,
+    opts.userId,
+    opts.title,
+    opts.objective,
+    opts.audience,
+    opts.geography,
+    now,
+    now + 86400,
+    JSON.stringify(opts.channels),
+    JSON.stringify(opts.monetizationGoals),
+    '{}',
+    '{}',
+    'draft',
+    'init',
+    now,
+    now,
+  );
+
+  db.close();
+  return { missionId };
+}
+
+export interface SeedAgentRunOptions {
+  runId: string;
+  agentId: string;
+  missionId: string;
+  workspaceId: string;
+  status: string;
+  phase: string;
+  output: Record<string, unknown>;
+}
+
+/**
+ * Seed an agent_runs row for a mission. Output is stored as JSON in output_json.
+ */
+export function seedAgentRun(opts: SeedAgentRunOptions): void {
+  const db = openDb();
+  ensureTablesExist(db);
+
+  const now = Math.floor(Date.now() / 1000);
+
+  db.prepare(`
+    INSERT OR REPLACE INTO agent_runs (
+      id, agent_id, workspace_id, mission_id, status, phase,
+      output_json, started_at, ended_at, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    opts.runId,
+    opts.agentId,
+    opts.workspaceId,
+    opts.missionId,
+    opts.status,
+    opts.phase,
+    JSON.stringify(opts.output),
+    now,
+    opts.status === 'completed' ? now : null,
+    now,
+  );
+
+  db.close();
+}
+
+export interface SeedPerformanceOptions {
+  channel: string;
+  eventType: string;
+  count: number;
+  valueCents: number;
+}
+
+/**
+ * Seed performance_events rows for a workspace. Each call inserts one event;
+ * the caller passes an array to simulate a full performance history.
+ */
+export function seedPerformanceEvents(
+  workspaceId: string,
+  missionId: string,
+  events: SeedPerformanceOptions[],
+): void {
+  const db = openDb();
+  ensureTablesExist(db);
+
+  // NOTE: recorded_at is stored in MILLISECONDS. The aggregates route
+  // (src/app/api/performance/aggregates/route.ts) filters
+  // `recorded_at >= Date.now() - 24h`, so seeding seconds-based timestamps
+  // would make every event appear 1000x too old and return zero aggregates.
+  const now = Date.now();
+
+  const insert = db.prepare(`
+    INSERT INTO performance_events (
+      id, workspace_id, project_id, event_type, entity_type, entity_id,
+      metrics_json, channel, recorded_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  for (const e of events) {
+    insert.run(
+      `e2e-perf-${workspaceId}-${missionId}-${e.eventType}-${now}-${Math.random().toString(36).slice(2, 8)}`,
+      workspaceId,
+      missionId,
+      e.eventType,
+      'mission',
+      missionId,
+      JSON.stringify({ count: e.count, value_cents: e.valueCents }),
+      e.channel,
+      now,
+    );
+  }
+
+  db.close();
+}
+
+export interface SeedCreativeMemoryOptions {
+  workspaceId: string;
+  category: string;
+  key: string;
+  value: Record<string, unknown>;
+  confidence: string;
+  source: string;
+  evidence: string;
+}
+
+export interface SeededCreativeMemory {
+  id: string;
+}
+
+/**
+ * Seed a creative_memory row. Uses INSERT OR IGNORE keyed on the
+ * uq_creative_memory_active partial unique index (workspace, category, key, scope, scope_id).
+ */
+export function seedCreativeMemory(opts: SeedCreativeMemoryOptions): SeededCreativeMemory {
+  const db = openDb();
+  ensureTablesExist(db);
+
+  const now = Math.floor(Date.now() / 1000);
+  const id = `e2e-mem-${opts.workspaceId}-${opts.category}-${Date.now().toString(36)}`;
+
+  db.prepare(`
+    INSERT OR IGNORE INTO creative_memory (
+      id, workspace_id, category, key, value, confidence, source, evidence,
+      scope, scope_id, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'global', NULL, ?, ?)
+  `).run(
+    id,
+    opts.workspaceId,
+    opts.category,
+    opts.key,
+    JSON.stringify(opts.value),
+    opts.confidence,
+    opts.source,
+    JSON.stringify([opts.evidence]),
+    now,
+    now,
+  );
+
+  db.close();
+  return { id };
+}
+
+export interface SeedPublishingJobOptions {
+  id: string;
+  tenantId: string;
+  videoId: string;
+  channelId: string;
+  provider: string;
+  status: string;
+}
+
+/**
+ * Seed a publishing_jobs row for the flywheel distribution step.
+ *
+ * status must satisfy the CHECK constraint in migrations 0091/0101:
+ *   'scheduled' | 'uploading' | 'processing' | 'live' | 'failed'
+ * 'completed' is not a valid value — callers that want a "done" job should pass 'live'.
+ */
+export function seedPublishingJob(opts: SeedPublishingJobOptions): void {
+  const db = openDb();
+  ensureTablesExist(db);
+
+  const VALID_STATUSES = ['scheduled', 'uploading', 'processing', 'live', 'failed'] as const;
+  type ValidStatus = (typeof VALID_STATUSES)[number];
+  const status: ValidStatus = (VALID_STATUSES as readonly string[]).includes(opts.status)
+    ? (opts.status as ValidStatus)
+    : 'live';
+
+  const now = Math.floor(Date.now() / 1000);
+
+  // The distribute status route (v1/distribute/jobs/[videoId]/status) enforces
+  // ownership via a JOIN on publishing_channels.user_id = session.user.id.
+  // Seed a matching publishing_channels row so the seeded job is reachable.
+  // publishing_channels schema (migration 0083): id, tenant_id, user_id,
+  // provider, external_account_id, access_token, status, created_at, updated_at.
+  // No channel_id column — the route joins pj.channel_id = pc.id.
+  db.prepare(`
+    INSERT OR REPLACE INTO publishing_channels (
+      id, tenant_id, user_id, provider, external_account_id,
+      access_token, status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?)
+  `).run(
+    opts.channelId,
+    opts.tenantId,
+    opts.tenantId,
+    opts.provider,
+    opts.channelId,
+    'e2e-test-token',
+    now,
+    now,
+  );
+
+  db.prepare(`
+    INSERT OR REPLACE INTO publishing_jobs (
+      id, tenant_id, video_id, channel_id, status, scheduled_at, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    opts.id,
+    opts.tenantId,
+    opts.videoId,
+    opts.channelId,
+    status,
+    now,
+    now,
+  );
+
+  db.close();
+}
+
+/**
+ * Tear down all flywheel rows seeded for a workspace (cascade cleanup).
+ * Call in test.afterAll to keep local D1 clean.
+ */
+export function tearDownFlywheel(workspaceId: string, userId?: string): void {
+  const db = openDb();
+
+  db.prepare(`DELETE FROM performance_events WHERE workspace_id = ?`).run(workspaceId);
+  db.prepare(`DELETE FROM agent_runs WHERE workspace_id = ?`).run(workspaceId);
+  db.prepare(`DELETE FROM creative_memory WHERE workspace_id = ?`).run(workspaceId);
+  db.prepare(`DELETE FROM creative_missions WHERE workspace_id = ?`).run(workspaceId);
+  db.prepare(`DELETE FROM publishing_channels WHERE user_id = ?`).run(userId ?? workspaceId);
+  db.prepare(`DELETE FROM publishing_jobs WHERE tenant_id = ?`).run(workspaceId);
+  // videos are keyed by user_id, not workspace_id — pass userId when known
+  if (userId) db.prepare(`DELETE FROM videos WHERE user_id = ?`).run(userId);
 
   db.close();
 }
