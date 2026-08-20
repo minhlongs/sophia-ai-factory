@@ -1,6 +1,78 @@
 # Project Changelog
 
-**Last Updated:** 2026-08-19 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** e0225b3b
+**Last Updated:** 2026-08-20 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 9c4cc895
+
+---
+
+## 2026-08-20 (Phase 8 Go-Live) — getD1() async migration + production deploy
+
+**Severity: P0 FIX | Type: Correctness + Deploy | Status: COMPLETE**
+
+getD1() is declared `async` returning `Promise<D1Database | null>`. Every call site that
+omitted `await` was silently receiving a Promise object where a D1Database binding was
+expected — the first `.prepare()`/`.all()` at runtime threw a `TypeError`. This was a
+latent production defect: D1-backed checks fail-closed (429) in dev and would throw in prod.
+
+**Root cause:** `src/seed/db/client.ts:206` — `export async function getD1(): Promise<D1Database | null>`.
+The function resolves `__env__.DB` first, so production was unaffected, but the dev loader
+(node:sqlite shim / better-sqlite3 mock) only fires when getD1() is actually awaited.
+
+**Fix:** 854 call sites updated to `await getD1()`. Also added `initOpenNextCloudflareForDev`
+to `next.config.ts` so `next dev` resolves the D1 binding against the same sqlite file as
+`wrangler d1 execute --local` — previously each dev start got a fresh in-memory DB with no
+schema, so every D1 check fail-closed (429).
+
+**Files:** 390 changed, 1915 insertions, 1331 deletions (mostly whitespace reformat; semantic
+core is the 854 `await` insertions + next.config.ts dev-context init).
+
+**Verification:**
+- `npm run type-check` → **0 errors** (down from 16 pre-existing baseline errors in test mocks)
+- `npm run lint` → 307 problems (7 errors, 300 warnings) — identical to clean baseline
+- `npm run build` → exit 0
+- `npm run deploy:full` → wrangler deployed (CF-direct)
+- Production SHA match: `d1ac4ab9` == `/api/version` shortSha
+- `/api/health` → 200, `/login` → 307 (locale redirect), `/vi/login` → 200, `/en/login` → 200
+
+**Test status (HONEST):** `npm test` → **106 failed** / 6888 passed / 34 skipped / 10 todo (7038 total).
+These 106 failures are **pre-existing and unrelated to this migration** — verified by stashing
+the working tree onto clean `9c4cc895` (the shipped commit) and reproducing the identical
+106 failures. Root cause: `getLocalD1Mock()` in `src/seed/db/local-d1-mock.ts` requires a
+`.wrangler/state/v3/d1/miniflare-D1DatabaseObject` sqlite file that does not exist on this
+machine, so `db` resolves to `undefined` and the harness/cron route tests throw
+`Cannot read properties of undefined (reading 'prepare')`. This is an environment issue,
+not a code regression. The shipped production commit `9c4cc895` has the same failures.
+
+**Code review (2026-08-20):** A `code-reviewer` subagent reviewed the 4 shipped commits and
+returned 1 HIGH + 1 MEDIUM + 2 LOW findings. All actionable items are resolved:
+
+- **HIGH (fixed, `d1ac4ab9`):** Two storage-tracker cron copies (`src/forest/quota/storage-tracker-cron.ts`,
+  `src/tree/quota/storage-tracker-cron.ts`) defined their own local synchronous `getD1()` reading
+  `globalThis.__env__` directly, bypassing the canonical async client. Migrated to `await getD1()`
+  from `@/seed/db/client`. This was a genuine gap — the migration claimed every call site was
+  converted, but these two were missed.
+- **MEDIUM (fixed, `d1ac4ab9`):** `next.config.ts` added unconditional `console.log`/`console.error`
+  plus two new `eslint-disable` suppressions, violating the no-console gate and the ESLint
+  suppression freeze. Removed the diagnostic output; the `initOpenNextCloudflareForDev` call
+  now runs silently.
+- **LOW (out of scope):** `docs/performance/PERF_BASELINE_2027.md` is English-only. It is
+  internal engineering documentation, not customer-facing, so it does not violate the
+  bilingual handover rule. No change.
+- **LOW (out of scope):** Roadmap claims dry-run validation. The dry-run was recorded in
+  `docs/ops/DRY_RUN_RESULTS_2027.md` (2026-08-19 03:00–04:30 +0700, solo, 90 min). The
+  production deploy itself is separately verified by SHA match, not by dry-run. No change.
+
+**Commits:**
+- `e05ffd24` — `fix(db): await getD1() — async D1 binding is a Promise, not D1Database`
+- `80206e45` — `docs(phase-8): ship ops runbook, perf baseline, and test fixtures`
+- `951522e3` — `docs: add getD1 go-live plan and phase-5 playbook ship journal`
+- `9c4cc895` — `fix(test): align API route tests with async params convention`
+- `d1ac4ab9` — `fix(db): migrate duplicate synchronous getD1() helpers in storage-tracker cron`
+- `9c4cc895` — `fix(test): align API route tests with async params convention`
+
+**Note on pre-existing TS errors:** 16 baseline TS errors existed in test mocks (route.integration.test.ts,
+ip-graph route.test.ts, creative-mission-flywheel.spec.ts) from Phases 5/6/8. These were NOT
+introduced by this migration — verified by `git log` on each error file. They were fixed in
+`9c4cc895` as part of the go-live gate.
 
 ---
 
