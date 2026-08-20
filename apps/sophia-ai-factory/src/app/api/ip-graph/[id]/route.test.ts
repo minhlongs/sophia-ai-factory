@@ -70,14 +70,14 @@ describe('GET /api/ip-graph/[id]', () => {
 
   it('returns 401 when unauthenticated', async () => {
     mockGetCurrentUser.mockResolvedValueOnce(null);
-    const res = await GET(new Request('http://localhost/api/ip-graph/ip_1'), { params: { id: 'ip_1' } });
+    const res = await GET(new Request('http://localhost/api/ip-graph/ip_1'), { params: Promise.resolve({ id: 'ip_1' }) });
     expect(res.status).toBe(401);
   });
 
   it('returns 404 when entity not found', async () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
     mockGetIP.mockResolvedValueOnce(null);
-    const res = await GET(new Request('http://localhost/api/ip-graph/ip_missing'), { params: { id: 'ip_missing' } });
+    const res = await GET(new Request('http://localhost/api/ip-graph/ip_missing'), { params: Promise.resolve({ id: 'ip_missing' }) });
     expect(res.status).toBe(404);
   });
 
@@ -86,7 +86,7 @@ describe('GET /api/ip-graph/[id]', () => {
     mockGetIP.mockResolvedValueOnce(sampleIP);
     grantAccess();
 
-    const res = await GET(new Request('http://localhost/api/ip-graph/ip_1'), { params: { id: 'ip_1' } });
+    const res = await GET(new Request('http://localhost/api/ip-graph/ip_1'), { params: Promise.resolve({ id: 'ip_1' }) });
     expect(res.status).toBe(200);
     const data = (await res.json()) as { entity: { name: string } };
     expect(data.entity.name).toBe('U1');
@@ -113,7 +113,7 @@ describe('PATCH /api/ip-graph/[id]', () => {
         body: JSON.stringify({ status: 'approved' }),
         headers: { 'Content-Type': 'application/json' },
       }),
-      { params: { id: 'ip_1' } },
+      { params: Promise.resolve({ id: 'ip_1' }) },
     );
     expect(res.status).toBe(403);
   });
@@ -130,7 +130,7 @@ describe('PATCH /api/ip-graph/[id]', () => {
         body: JSON.stringify({ status: 'approved' }),
         headers: { 'Content-Type': 'application/json' },
       }),
-      { params: { id: 'ip_1' } },
+      { params: Promise.resolve({ id: 'ip_1' }) },
     );
     expect(res.status).toBe(200);
     const data = (await res.json()) as { entity: { status: string } };
@@ -155,7 +155,7 @@ describe('GET /api/ip-graph/[id]/children', () => {
       { ...sampleIP, id: 'ip_2', name: 'S1', type: 'series', parentId: 'ip_1' },
     ]);
 
-    const res = await GET_children(new Request('http://localhost/api/ip-graph/ip_1/children'), { params: { id: 'ip_1' } });
+    const res = await GET_children(new Request('http://localhost/api/ip-graph/ip_1/children'), { params: Promise.resolve({ id: 'ip_1' }) });
     expect(res.status).toBe(200);
     const data = (await res.json()) as { children: { name: string }[] };
     expect(data.children).toHaveLength(1);

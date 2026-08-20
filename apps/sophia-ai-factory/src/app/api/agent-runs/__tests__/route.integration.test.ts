@@ -96,7 +96,7 @@ describe('Phase 3: Agent Runs API integration', () => {
       });
       setWorkspaceMembership(true);
 
-      const res = await GET(makeReq('GET', 'http://localhost/api/agent-runs/run_001'), { params: { id: 'run_001' } });
+      const res = await GET(makeReq('GET', 'http://localhost/api/agent-runs/run_001'), { params: Promise.resolve({ id: 'run_001' }) });
       expect(res.status).toBe(200);
       const data = await json<{ agentRun: { id: string } }>(res);
       expect(data.agentRun.id).toBe('run_001');
@@ -108,14 +108,14 @@ describe('Phase 3: Agent Runs API integration', () => {
         error: { code: 'NOT_FOUND', message: 'Agent run not found' },
       });
 
-      const res = await GET(makeReq('GET', 'http://localhost/api/agent-runs/run_nonexistent'), { params: { id: 'run_nonexistent' } });
+      const res = await GET(makeReq('GET', 'http://localhost/api/agent-runs/run_nonexistent'), { params: Promise.resolve({ id: 'run_nonexistent' }) });
       expect(res.status).toBe(404);
     });
 
     it('returns 401 when not authenticated', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(null);
 
-      const res = await GET(makeReq('GET', 'http://localhost/api/agent-runs/run_001'), { params: { id: 'run_001' } });
+      const res = await GET(makeReq('GET', 'http://localhost/api/agent-runs/run_001'), { params: Promise.resolve({ id: 'run_001' }) });
       expect(res.status).toBe(401);
     });
 
@@ -137,7 +137,7 @@ describe('Phase 3: Agent Runs API integration', () => {
       });
       // setWorkspaceMembership(false) already set in beforeEach
 
-      const res = await GET(makeReq('GET', 'http://localhost/api/agent-runs/run_001'), { params: { id: 'run_001' } });
+      const res = await GET(makeReq('GET', 'http://localhost/api/agent-runs/run_001'), { params: Promise.resolve({ id: 'run_001' }) });
       expect(res.status).toBe(403);
     });
   });
@@ -178,7 +178,7 @@ describe('Phase 3: Agent Runs API integration', () => {
 
       const res = await PATCH(
         makeReq('PATCH', 'http://localhost/api/agent-runs/run_001', { reason: 'User cancelled' }),
-        { params: { id: 'run_001' } },
+        { params: Promise.resolve({ id: 'run_001' }) },
       );
       expect(res.status).toBe(200);
       const data = await json<{ status: string }>(res);
@@ -198,7 +198,7 @@ describe('Phase 3: Agent Runs API integration', () => {
 
       const res = await PATCH(
         makeReq('PATCH', 'http://localhost/api/agent-runs/run_nonexistent', {}),
-        { params: { id: 'run_nonexistent' } },
+        { params: Promise.resolve({ id: 'run_nonexistent' }) },
       );
       expect(res.status).toBe(404);
     });
@@ -222,7 +222,7 @@ describe('Phase 3: Agent Runs API integration', () => {
 
       const res = await PATCH(
         makeReq('PATCH', 'http://localhost/api/agent-runs/run_001', { reason: 'trying to hack' }),
-        { params: { id: 'run_001' } },
+        { params: Promise.resolve({ id: 'run_001' }) },
       );
       expect(res.status).toBe(403);
       expect(updateAgentRun).not.toHaveBeenCalled();

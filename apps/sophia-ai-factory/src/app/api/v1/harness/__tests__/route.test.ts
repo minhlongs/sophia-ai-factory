@@ -154,7 +154,7 @@ describe('Harness Engineering API Routes', () => {
         { test_name: 'r2_storage', status: 'success', duration_ms: 45, metadata: { bucket: 'test-bucket' } }
       ]
     });
-    const res = await updatePATCH(req, { params: { id: jobId } });
+    const res = await updatePATCH(req, { params: Promise.resolve({ id: jobId }) });
     expect(res.status).toBe(200);
 
     const body = await res.json() as { success: boolean };

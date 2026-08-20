@@ -91,7 +91,7 @@ describe('Phase 3: Approvals API integration', () => {
 
       const res = await PATCH(
         makeReq('PATCH', 'http://localhost/api/approvals/appr_001', { approved: true }),
-        { params: { id: 'appr_001' } },
+        { params: Promise.resolve({ id: 'appr_001' }) },
       );
       expect(res.status).toBe(200);
       const data = await json<{ status: string; approvalId: string }>(res);
@@ -117,7 +117,7 @@ describe('Phase 3: Approvals API integration', () => {
 
       const res = await PATCH(
         makeReq('PATCH', 'http://localhost/api/approvals/appr_002', { approved: false, reason: 'Needs rework' }),
-        { params: { id: 'appr_002' } },
+        { params: Promise.resolve({ id: 'appr_002' }) },
       );
       expect(res.status).toBe(200);
       const data = await json<{ status: string; approvalId: string }>(res);
@@ -133,7 +133,7 @@ describe('Phase 3: Approvals API integration', () => {
 
       const res = await PATCH(
         makeReq('PATCH', 'http://localhost/api/approvals/appr_nonexistent', { approved: true }),
-        { params: { id: 'appr_nonexistent' } },
+        { params: Promise.resolve({ id: 'appr_nonexistent' }) },
       );
       expect(res.status).toBe(404);
     });
@@ -147,7 +147,7 @@ describe('Phase 3: Approvals API integration', () => {
 
       const res = await PATCH(
         makeReq('PATCH', 'http://localhost/api/approvals/appr_001', { approved: true }),
-        { params: { id: 'appr_001' } },
+        { params: Promise.resolve({ id: 'appr_001' }) },
       );
       expect(res.status).toBe(401);
     });
@@ -165,7 +165,7 @@ describe('Phase 3: Approvals API integration', () => {
 
       const res = await PATCH(
         makeReq('PATCH', 'http://localhost/api/approvals/appr_001', { approved: true }),
-        { params: { id: 'appr_001' } },
+        { params: Promise.resolve({ id: 'appr_001' }) },
       );
       expect(res.status).toBe(403);
       expect(resolveApproval).not.toHaveBeenCalled();
@@ -184,7 +184,7 @@ describe('Phase 3: Approvals API integration', () => {
 
       const res = await PATCH(
         makeReq('PATCH', 'http://localhost/api/approvals/appr_001', { approved: true }),
-        { params: { id: 'appr_001' } },
+        { params: Promise.resolve({ id: 'appr_001' }) },
       );
       expect(res.status).toBe(403);
       expect(resolveApproval).not.toHaveBeenCalled();
@@ -203,7 +203,7 @@ describe('Phase 3: Approvals API integration', () => {
 
       const res = await PATCH(
         makeReq('PATCH', 'http://localhost/api/approvals/appr_001', { approved: true }),
-        { params: { id: 'appr_001' } },
+        { params: Promise.resolve({ id: 'appr_001' }) },
       );
       expect(res.status).toBe(404);
     });
@@ -211,7 +211,7 @@ describe('Phase 3: Approvals API integration', () => {
     it('returns 400 for invalid request body', async () => {
       const res = await PATCH(
         makeReq('PATCH', 'http://localhost/api/approvals/appr_001', { approved: 'not-a-boolean' }),
-        { params: { id: 'appr_001' } },
+        { params: Promise.resolve({ id: 'appr_001' }) },
       );
       expect(res.status).toBe(400);
     });

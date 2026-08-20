@@ -171,7 +171,7 @@ describe('Phase 2: Creative Mission [id] API integration', () => {
         },
       });
 
-      const res = await itemGet(makeReq('GET', 'http://localhost/api/creative-missions/msn_001'), { params: { id: 'msn_001' } });
+      const res = await itemGet(makeReq('GET', 'http://localhost/api/creative-missions/msn_001'), { params: Promise.resolve({ id: 'msn_001' }) });
 
       expect(res.status).toBe(200);
       const data = await json<{ mission: { id: string } }>(res);
@@ -185,7 +185,7 @@ describe('Phase 2: Creative Mission [id] API integration', () => {
         error: { code: 'NOT_FOUND', message: 'Mission not found' },
       });
 
-      const res = await itemGet(makeReq('GET', 'http://localhost/api/creative-missions/msn_nonexistent'), { params: { id: 'msn_nonexistent' } });
+      const res = await itemGet(makeReq('GET', 'http://localhost/api/creative-missions/msn_nonexistent'), { params: Promise.resolve({ id: 'msn_nonexistent' }) });
 
       expect(res.status).toBe(404);
     });
@@ -200,7 +200,7 @@ describe('Phase 2: Creative Mission [id] API integration', () => {
         value: { missionId: 'msn_001' },
       });
 
-      const res = await itemPatch(makeReq('PATCH', 'http://localhost/api/creative-missions/msn_001', { status: 'planned' }), { params: { id: 'msn_001' } });
+      const res = await itemPatch(makeReq('PATCH', 'http://localhost/api/creative-missions/msn_001', { status: 'planned' }), { params: Promise.resolve({ id: 'msn_001' }) });
 
       expect(res.status).toBe(200);
       const data = await json<{ missionId: string; status: string }>(res);
@@ -210,7 +210,7 @@ describe('Phase 2: Creative Mission [id] API integration', () => {
     });
 
     it('returns 400 for invalid status', async () => {
-      const res = await itemPatch(makeReq('PATCH', 'http://localhost/api/creative-missions/msn_001', { status: 'invalid_status' }), { params: { id: 'msn_001' } });
+      const res = await itemPatch(makeReq('PATCH', 'http://localhost/api/creative-missions/msn_001', { status: 'invalid_status' }), { params: Promise.resolve({ id: 'msn_001' }) });
 
       expect(res.status).toBe(400);
     });
@@ -221,7 +221,7 @@ describe('Phase 2: Creative Mission [id] API integration', () => {
         error: { code: 'NOT_FOUND', message: 'Mission not found' },
       });
 
-      const res = await itemPatch(makeReq('PATCH', 'http://localhost/api/creative-missions/msn_nonexistent', { status: 'planned' }), { params: { id: 'msn_nonexistent' } });
+      const res = await itemPatch(makeReq('PATCH', 'http://localhost/api/creative-missions/msn_nonexistent', { status: 'planned' }), { params: Promise.resolve({ id: 'msn_nonexistent' }) });
 
       expect(res.status).toBe(404);
     });
@@ -266,7 +266,7 @@ describe('Phase 2: Full flow — mission lifecycle end-to-end', () => {
           },
         },
     });
-    const getRes = await itemGet(makeReq('GET', `http://localhost/api/creative-missions/${missionId}`), { params: { id: missionId } });
+    const getRes = await itemGet(makeReq('GET', `http://localhost/api/creative-missions/${missionId}`), { params: Promise.resolve({ id: missionId }) });
     expect(getRes.status).toBe(200);
     const getData = await json<{ mission: { id: string; status: string } }>(getRes);
     expect(getData.mission.id).toBe(missionId);
@@ -274,7 +274,7 @@ describe('Phase 2: Full flow — mission lifecycle end-to-end', () => {
 
     // Step 3: Update status
     vi.mocked(updateMissionStatus).mockResolvedValue({ ok: true, value: { missionId } });
-    const patchRes = await itemPatch(makeReq('PATCH', `http://localhost/api/creative-missions/${missionId}`, { status: 'planned' }), { params: { id: missionId } });
+    const patchRes = await itemPatch(makeReq('PATCH', `http://localhost/api/creative-missions/${missionId}`, { status: 'planned' }), { params: Promise.resolve({ id: missionId }) });
     expect(patchRes.status).toBe(200);
     const patchData = await json<{ missionId: string; status: string }>(patchRes);
     expect(patchData.status).toBe('planned');

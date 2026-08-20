@@ -28,7 +28,7 @@ import {
 async function csrfHeaders(page: { context(): { cookies(): Promise<{ name: string; value: string }[]> } }) {
   const cookies = await page.context().cookies();
   const token = cookies.find((c) => c.name === 'csrf-token')?.value ?? '';
-  return token ? { 'x-csrf-token': token } : {};
+  return token ? { 'x-csrf-token': token } : undefined;
 }
 
 test.describe('Creative Mission Flywheel', () => {
@@ -65,7 +65,7 @@ test.describe('Creative Mission Flywheel', () => {
     const membership = openDb()
       .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
       .bind(userId)
-      .get<{ org_id: string }>();
+      .get() as { org_id: string } | undefined;
     if (!membership) {
       test.skip(true, 'Test user has no workspace membership — cannot run flywheel');
       return;
