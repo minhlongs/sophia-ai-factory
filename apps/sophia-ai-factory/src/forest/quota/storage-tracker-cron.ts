@@ -10,6 +10,7 @@
  */
 
 import { inngest } from '@/seed/inngest/client';
+import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 interface R2Env {
@@ -26,13 +27,6 @@ interface StorageBreakdown {
 function getR2(): R2Bucket | null {
   const env = (globalThis as unknown as { __env?: R2Env }).__env;
   return env?.VIDEO_BUCKET ?? env?.NEXT_INC_CACHE_R2_BUCKET ?? null;
-}
-
-/** Get D1 binding */
-function getD1(): D1Database | null {
-  const env = (globalThis as unknown as Record<string, Record<string, unknown>>).__env;
-  if (env?.DB) return env.DB as D1Database;
-  return (globalThis as Record<string, unknown>).__D1_DB as D1Database | undefined ?? null;
 }
 
 /** List all distinct tenant IDs from video_jobs */
@@ -120,7 +114,7 @@ export const storageTrackerDaily = inngest.createFunction(
   async ({ step }) => {
     // Resolve bindings at function body scope (not inside step.run — D1Database
     // is not JSON-serialisable and cannot be returned from a step checkpoint).
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       logger.error('[StorageTracker] D1 binding unavailable — aborting run');
       return { processed: 0, error: 'D1 unavailable' };

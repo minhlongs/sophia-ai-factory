@@ -209,23 +209,6 @@ const finalConfig = process.env.SKIP_SENTRY_BUILD === '1'
 // internal module location and misses the real state dir.
 void initOpenNextCloudflareForDev({
   persist: { path: path.join(os.homedir(), '.wrangler/state/v3') },
-}).then(() => {
-  // eslint-disable-next-line no-console
-  const sym = Symbol.for('__cloudflare-context__');
-  const ctx = (globalThis as Record<symbol, unknown>)[sym];
-  console.log('[next.config] initOpenNextCloudflareForDev resolved. Symbol state:', {
-    hasSymbol: ctx !== undefined,
-    ctxKeys: ctx ? Object.keys(ctx as object) : null,
-    hasEnv: ctx && typeof (ctx as { env?: unknown }).env !== 'undefined',
-    envKeys: ctx && (ctx as { env?: Record<string, unknown> }).env
-      ? Object.keys((ctx as { env?: Record<string, unknown> }).env as Record<string, unknown>).slice(0, 14)
-      : null,
-    hasDB: ctx && (ctx as { env?: Record<string, unknown> }).env && typeof ((ctx as { env?: Record<string, unknown> }).env as Record<string, unknown>).DB !== 'undefined',
-    asyncLocalStorage: typeof (globalThis as { AsyncLocalStorage?: unknown }).AsyncLocalStorage,
-  });
-}).catch((err) => {
-  // eslint-disable-next-line no-console
-  console.error('[next.config] initOpenNextCloudflareForDev REJECTED:', err instanceof Error ? err.stack : String(err));
 });
 
 export default finalConfig;
