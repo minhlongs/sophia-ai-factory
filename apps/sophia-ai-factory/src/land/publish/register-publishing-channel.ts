@@ -91,7 +91,7 @@ export async function registerPublishingChannel(
   input: RegisterChannelInput,
 ): Promise<RegisterChannelResult> {
   validateRegisterInput(input);
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const nowSec = Math.floor(Date.now() / 1000);
 

@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     if (adminResult instanceof NextResponse) return adminResult;
     const user = adminResult.user;
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return NextResponse.json({ error: 'Database not available' }, { status: 503 });
     }
@@ -63,7 +63,7 @@ export async function PATCH(request: NextRequest) {
     if (adminResult instanceof NextResponse) return adminResult;
     const user = adminResult.user;
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return NextResponse.json({ error: 'Database not available' }, { status: 503 });
     }

@@ -26,7 +26,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const auth = await requireAdmin(request)
   if (auth instanceof Response) return auth
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const { results } = await db
     .prepare(`SELECT filename, applied_at, applied_by_user_id, notes FROM supabase_migrations_applied`)

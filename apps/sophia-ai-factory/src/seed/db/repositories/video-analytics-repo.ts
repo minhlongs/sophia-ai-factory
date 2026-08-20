@@ -58,7 +58,7 @@ export interface AnalyticsSummary {
 }
 
 export async function upsertVideoAnalytics(data: UpsertVideoAnalyticsInput): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   await db
     .prepare(
@@ -96,7 +96,7 @@ export async function getVideoAnalytics(
   platform?: string,
   dateRange?: DateRange,
 ): Promise<VideoAnalyticsRow[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   let sql = 'SELECT * FROM video_analytics WHERE user_id = ? AND video_id = ?';
   const params: unknown[] = [userId, videoId];
@@ -118,7 +118,7 @@ export async function getTopVideos(
   limit: number,
   dateRange?: DateRange,
 ): Promise<{ videoId: string; platformVideoId: string; platform: string; total: number }[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const col = metric === 'ctr'
     ? 'CASE WHEN SUM(impressions) > 0 THEN CAST(SUM(clicks) AS REAL) / SUM(impressions) ELSE 0 END'
@@ -145,7 +145,7 @@ export async function getTopVideos(
 }
 
 export async function getAnalyticsSummary(userId: string, dateRange: DateRange): Promise<AnalyticsSummary> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const row = await db
     .prepare(

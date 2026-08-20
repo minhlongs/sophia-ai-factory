@@ -43,13 +43,13 @@ describe('user-api-key-store', () => {
     })
 
     it('throws when D1 unavailable', async () => {
-      vi.mocked(getD1).mockReturnValue(null)
+      vi.mocked(getD1).mockResolvedValue(null)
       await expect(setUserApiKey('u-1', 'openrouter', 'sk-or-x')).rejects.toThrow('BYOK_D1_UNAVAILABLE')
     })
 
     it('upserts encrypted blob (never plaintext) into D1', async () => {
       const { d1, prepare, bind, run } = makeD1()
-      vi.mocked(getD1).mockReturnValue(d1)
+      vi.mocked(getD1).mockResolvedValue(d1)
 
       await setUserApiKey('u-1', 'anthropic', 'sk-ant-secret')
 
@@ -79,13 +79,13 @@ describe('user-api-key-store', () => {
   describe('getUserApiKey', () => {
     it('returns null on missing row', async () => {
       const { d1 } = makeD1()
-      vi.mocked(getD1).mockReturnValue(d1)
+      vi.mocked(getD1).mockResolvedValue(d1)
       const result = await getUserApiKey('u-missing', 'openrouter')
       expect(result).toBeNull()
     })
 
     it('returns null when D1 unavailable', async () => {
-      vi.mocked(getD1).mockReturnValue(null)
+      vi.mocked(getD1).mockResolvedValue(null)
       const result = await getUserApiKey('u-1', 'openrouter')
       expect(result).toBeNull()
     })
@@ -131,7 +131,7 @@ describe('user-api-key-store', () => {
         }
       })
 
-      vi.mocked(getD1).mockReturnValue({ prepare } as any)
+      vi.mocked(getD1).mockResolvedValue({ prepare } as any)
       const plain = 'sk-or-v1-roundtrip-xyz'
       await setUserApiKey('u-42', 'openrouter', plain)
       const got = await getUserApiKey('u-42', 'openrouter')
@@ -145,7 +145,7 @@ describe('user-api-key-store', () => {
           first: async () => ({ encrypted_key: new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]) }),
         }),
       })
-      vi.mocked(getD1).mockReturnValue({ prepare } as any)
+      vi.mocked(getD1).mockResolvedValue({ prepare } as any)
 
       const got = await getUserApiKey('u-tampered', 'anthropic')
       expect(got).toBeNull()
@@ -153,7 +153,7 @@ describe('user-api-key-store', () => {
 
     it('returns null when D1 throws', async () => {
       const prepare = vi.fn().mockImplementation(() => { throw new Error('D1 down') })
-      vi.mocked(getD1).mockReturnValue({ prepare } as any)
+      vi.mocked(getD1).mockResolvedValue({ prepare } as any)
       const got = await getUserApiKey('u-1', 'openrouter')
       expect(got).toBeNull()
     })
@@ -162,7 +162,7 @@ describe('user-api-key-store', () => {
   describe('clearUserApiKey', () => {
     it('runs DELETE with user+provider bound params', async () => {
       const { d1, prepare, bind, run } = makeD1()
-      vi.mocked(getD1).mockReturnValue(d1)
+      vi.mocked(getD1).mockResolvedValue(d1)
 
       await clearUserApiKey('u-1', 'openrouter')
 
@@ -180,7 +180,7 @@ describe('user-api-key-store', () => {
           all: async () => ({ results: [{ provider: 'anthropic' }, { provider: 'openrouter' }] }),
         }),
       })
-      vi.mocked(getD1).mockReturnValue({ prepare } as any)
+      vi.mocked(getD1).mockResolvedValue({ prepare } as any)
 
       const result = await listUserApiKeyProviders('u-1')
       expect(result).toEqual(['anthropic', 'openrouter'])
@@ -188,7 +188,7 @@ describe('user-api-key-store', () => {
 
     it('returns [] on D1 throw', async () => {
       const prepare = vi.fn().mockImplementation(() => { throw new Error('boom') })
-      vi.mocked(getD1).mockReturnValue({ prepare } as any)
+      vi.mocked(getD1).mockResolvedValue({ prepare } as any)
       const result = await listUserApiKeyProviders('u-1')
       expect(result).toEqual([])
     })

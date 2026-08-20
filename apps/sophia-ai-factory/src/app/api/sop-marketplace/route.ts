@@ -28,7 +28,7 @@ const MarketplaceParams = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error("D1 binding not available");
     const db = _db;
     const { searchParams } = new URL(request.url);

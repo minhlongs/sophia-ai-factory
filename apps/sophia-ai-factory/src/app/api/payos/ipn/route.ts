@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
   // 1. Atomically insert event row; ON CONFLICT DO NOTHING ensures only one
   // webhook caller wins the race. The RETURNING clause gives us the processed
   // flag in a single round-trip, eliminating the TOCTOU between INSERT and SELECT.
-  const d1 = getD1()
+  const d1 = await getD1()
   if (!d1) return NextResponse.json({ error: 'Database unavailable' }, { status: 500 })
   const { results: insertResults } = await d1
     .prepare(
@@ -218,7 +218,7 @@ export async function POST(request: NextRequest) {
 
     // Activate tier atomically via D1 batch
     try {
-      const d1 = getD1()
+      const d1 = await getD1()
   if (!d1) return NextResponse.json({ error: 'Database unavailable' }, { status: 500 })
       const { data: existingSub } = await db.from('subscriptions').select('id').eq('org_id', orgId ?? '').single()
 
@@ -247,7 +247,7 @@ if (stmts.length > 0) await d1.batch(stmts)
  logger.warn('[PayOS IPN] Batch failed, verifying state before fallback', { error: String(batchErr) })
  // FIX 3: Verify actual DB state before applying fallback mutations
  try {
-  const d1State = getD1()
+  const d1State = await getD1()
   const subRow = await d1State!.prepare(
    'SELECT plan, status FROM subscriptions WHERE org_id = ?1 LIMIT 1'
   ).bind(orgId).first()
@@ -273,7 +273,7 @@ if (stmts.length > 0) await d1.batch(stmts)
 
 // Audit trail (non-fatal)
 try {
-  const d1 = getD1()
+  const d1 = await getD1()
   if (!d1) return NextResponse.json({ error: 'Database unavailable' }, { status: 500 })
   await recordAudit(d1, {
     tableName: 'subscriptions',

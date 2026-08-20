@@ -156,7 +156,7 @@ function getGlobalQueryStats(): { totalQueries: number; errorCount: number } {
  */
 export async function getD1CapacityReport(): Promise<D1CapacityReport> {
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return {
         totalQueries: 0,

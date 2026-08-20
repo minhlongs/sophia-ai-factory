@@ -23,7 +23,7 @@ const BUDGET_KV_TYPE = 'budget' as const;
 export async function loadBudgetEntriesFromD1(
   tenantId: string,
 ): Promise<BudgetEntry[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     logger.warn('[BudgetTracker] D1 client unavailable');
     return [];
@@ -73,7 +73,7 @@ export async function persistBudgetEntryToD1(
   tenantId: string,
   entry: BudgetEntry,
 ): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     logger.warn('[BudgetTracker] D1 client unavailable, skipping persist');
     return;

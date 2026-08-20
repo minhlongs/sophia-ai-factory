@@ -124,7 +124,7 @@ export async function triggerAutoHandover(opts: AutoHandoverOptions): Promise<Au
   } = opts
   const fullName = opts.fullName ?? email.split('@')[0].split('.').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
 
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
 

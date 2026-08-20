@@ -44,7 +44,7 @@ export async function createBatchJob(input: {
   inputR2Key?: string;
   idempotencyKey?: string;
 }): Promise<CreateBatchJobResult> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -70,14 +70,14 @@ export async function createBatchJob(input: {
 }
 
 export async function getBatchJob(id: string): Promise<BatchJob | null> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   return db.prepare('SELECT * FROM batch_jobs WHERE id = ?').bind(id).first<BatchJob>() ?? null;
 }
 
 export async function getBatchJobByIdempotencyKey(idempotencyKey: string): Promise<BatchJob | null> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   return db
@@ -87,7 +87,7 @@ export async function getBatchJobByIdempotencyKey(idempotencyKey: string): Promi
 }
 
 export async function listBatchJobs(userId: string): Promise<BatchJob[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   const result = await db
@@ -102,7 +102,7 @@ export async function updateBatchJobStatus(
   status: string,
   completedAt?: string,
 ): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   if (completedAt) {
@@ -123,7 +123,7 @@ export async function incrementBatchProgress(
   field: 'completed_videos' | 'failed_videos',
   costCents?: number,
 ): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   // H6 fix: validate costCents is a non-negative integer before SQL interpolation.
@@ -145,7 +145,7 @@ export async function insertBatchVideos(
   batchId: string,
   rows: Array<{ rowIndex: number; inputData: string }>,
 ): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   const CHUNK_SIZE = 50;
@@ -170,7 +170,7 @@ export async function insertBatchVideos(
 }
 
 export async function getBatchVideos(batchId: string): Promise<BatchVideo[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   const result = await db
@@ -185,7 +185,7 @@ export async function updateBatchVideoStatus(
   status: string,
   extra?: { missionId?: string; outputVideoUrl?: string; errorMessage?: string },
 ): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   const completedAt = ['done', 'failed', 'cancelled'].includes(status) ? new Date().toISOString() : null;
@@ -212,7 +212,7 @@ export async function updateBatchVideoStatus(
 }
 
 export async function cancelPendingBatchVideos(batchId: string): Promise<number> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   const result = await db

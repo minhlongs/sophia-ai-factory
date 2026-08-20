@@ -47,7 +47,7 @@ export async function getAffiliateClickStats(
   fromTs: number,
   toTs: number,
 ): Promise<AffiliateClickStats> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   const clickRow = await db
@@ -96,7 +96,7 @@ export async function getRecentConversions(
 ): Promise<ConversionFeedRow[]> {
   const safeLimit = Math.max(1, Math.min(200, Math.floor(limit)));
   const safeOffset = Math.max(0, Math.floor(offset));
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   const result = await db

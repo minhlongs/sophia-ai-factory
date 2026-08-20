@@ -65,7 +65,7 @@ export async function resolveCrossChannel(
 ): Promise<CrossChannelDashboard> {
   if (!workspaceId) return { ...EMPTY_DASHBOARD, workspaceId };
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     logger.warn('[CrossChannelResolver] D1 unavailable');
     return { ...EMPTY_DASHBOARD, workspaceId };

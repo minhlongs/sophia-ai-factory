@@ -5,8 +5,12 @@ import { intlMiddleware, applySecurityHeaders } from './middleware-shared-config
 // Routes without [locale] segment — intlMiddleware would 307-redirect them,
 // breaking users and E2E tests. Detect locale-prefixed versions and strip the prefix
 // before passing to intlMiddleware so the request proceeds without any redirect.
+// NOTE: setup-wizard is intentionally NOT here. Its canonical route is
+// src/app/[locale]/setup-wizard/page.tsx (moved there in 8cb31b49 "wave 3").
+// Keeping it here rewrote /en/setup-wizard → /setup-wizard, a path that no longer
+// exists, producing a 404 instead of the wizard.
 const BARE_AUTH_APP_ROUTES = new Set([
-  'setup-wizard', 'reset-password',
+  'reset-password',
   'dashboard', 'checkout', 'settings', 'products',
   'payments', 'admin', 'affiliates', 'affiliate-portal',
   'subscribers', 'webhook', 'creator', 'investor-room',

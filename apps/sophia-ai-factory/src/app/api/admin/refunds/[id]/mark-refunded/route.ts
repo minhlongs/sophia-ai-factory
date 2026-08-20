@@ -106,7 +106,7 @@ export async function POST(
       },
     })
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     const userRow = await db.prepare('SELECT email FROM user WHERE id = ?1').bind(refund.user_id).first<UserRow>()
     if (userRow) {
@@ -159,7 +159,7 @@ interface CachedResult {
 /** Return cached result if key exists and not expired, else null. */
 async function checkIdempotency(key: string, refundId: string): Promise<CachedResult | null> {
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     const row = await db
       .prepare(
@@ -178,7 +178,7 @@ async function checkIdempotency(key: string, refundId: string): Promise<CachedRe
 /** Persist idempotency key (24h TTL). */
 async function storeIdempotency(key: string, refundId: string, body: CachedResult): Promise<void> {
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     await db
       .prepare(

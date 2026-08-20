@@ -80,7 +80,7 @@ function parseLandingPage(row: LandingPageRow): LandingPage {
 /** Get a single landing page by slug. Returns null if not found. */
 export async function getBySlug(slug: string): Promise<LandingPage | null> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
 
@@ -109,7 +109,7 @@ export async function getBySlug(slug: string): Promise<LandingPage | null> {
 /** List all landing pages, ordered by newest first. */
 export async function listAll(): Promise<LandingPage[]> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
 
@@ -133,7 +133,7 @@ export async function listAll(): Promise<LandingPage[]> {
 /** List only published landing pages. Used by generateStaticParams at build time. */
 export async function listPublished(): Promise<LandingPage[]> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
 
@@ -158,7 +158,7 @@ export async function listPublished(): Promise<LandingPage[]> {
 /** Get all slug IDs for generateStaticParams. Returns only published pages. */
 export async function getAllSlugs(): Promise<string[]> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
 
@@ -177,7 +177,7 @@ export async function getAllSlugs(): Promise<string[]> {
 
 /** Create a new landing page. Returns the created page. */
 export async function create(input: CreateLandingPageInput): Promise<LandingPage> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
 
@@ -220,7 +220,7 @@ export async function update(
   slug: string,
   input: UpdateLandingPageInput,
 ): Promise<LandingPage | null> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
 
@@ -270,7 +270,7 @@ export async function update(
 
 /** Delete a landing page by slug. Returns true if deleted, false if not found. */
 export async function remove(slug: string): Promise<boolean> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
 
@@ -284,7 +284,7 @@ export async function remove(slug: string): Promise<boolean> {
 
 /** Toggle is_published for a landing page. Returns the updated page. */
 export async function togglePublish(slug: string): Promise<LandingPage | null> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
 

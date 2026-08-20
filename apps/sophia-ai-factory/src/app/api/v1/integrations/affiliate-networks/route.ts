@@ -37,7 +37,7 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {
@@ -69,7 +69,7 @@ export const POST = withRateLimit(async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
   }
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {

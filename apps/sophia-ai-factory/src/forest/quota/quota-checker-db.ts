@@ -67,7 +67,7 @@ export async function calculateCurrentUsage(
   const monthStart = Math.floor(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1) / 1000);
 
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     const db = _db;
     const result = await db

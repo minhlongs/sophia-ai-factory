@@ -34,7 +34,7 @@ export function isValidPlanTransition(
 export async function createDistributionPlan(
   plan: Omit<DistributionPlan, 'id' | 'createdAt' | 'updatedAt'>,
 ): Promise<DistributionPlan> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new DistributionError('D1_UNAVAILABLE', 'D1 not available');
 
   const id = newDistributionPlanId();
@@ -74,7 +74,7 @@ export async function getDistributionPlan(
   id: string,
   workspaceId: string,
 ): Promise<DistributionPlan> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new DistributionError('D1_UNAVAILABLE', 'D1 not available');
 
   const row = await db
@@ -93,7 +93,7 @@ export async function listDistributionPlans(
   workspaceId: string,
   status?: DistributionPlan['status'],
 ): Promise<DistributionPlan[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new DistributionError('D1_UNAVAILABLE', 'D1 not available');
 
   let query = 'SELECT * FROM distribution_plans WHERE workspace_id = ?1';
@@ -115,7 +115,7 @@ export async function updateDistributionPlanStatus(
   status: DistributionPlan['status'],
   workspaceId: string,
 ): Promise<DistributionPlan> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new DistributionError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);

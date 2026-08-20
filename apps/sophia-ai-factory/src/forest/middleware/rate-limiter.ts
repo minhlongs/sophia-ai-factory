@@ -275,3 +275,81 @@ export async function checkAuthRateLimit(
 
   return null
 }
+
+// ── D1-Backed Admin Endpoint Rate Limiting ────────────────────────────────
+// Admin endpoints (/dashboard/admin/*, /api/admin/*) use D1-backed counters
+// for cross-isolate rate limiting. Default: 100 req/min, configurable.
+
+/** Default admin rate limit: 100 requests per 60 seconds */
+export const ADMIN_RATE_LIMIT_CONFIG = {
+  maxRequests: 100,
+  windowSeconds: 60,
+} as const
+
+/** Check if pathname is an admin endpoint (dashboard page or API route). */
+function isAdminEndpoint(pathname: string): boolean {
+  return pathname.startsWith('/dashboard/admin') || pathname.startsWith('/api/admin')
+}
+
+/**
+ * Resolve the language from Accept-Language header for bilingual error messages.
+ * Returns 'vi' if Vietnamese is preferred, 'en' otherwise.
+ */
+function resolveLang(request: NextRequest): 'vi' | 'en' {
+  const acceptLanguage = request.headers.get('accept-language') ?? ''
+  return acceptLanguage.toLowerCase().startsWith('vi') ? 'vi' : 'en'
+}
+
+/**
+ * Check rate limit using D1 for admin endpoints (cross-isolate).
+ * Returns a 429 bilingual (vi/en) response if rate limited, null if allowed
+ * or non-admin route.
+ *
+ * Admin endpoints use D1-backed counters to prevent abuse while allowing
+ * legitimate administrative operations. Default 100 req/min accommodates
+ * dashboard page loads + API calls from admin sessions.
+ */
+export async function checkAdminRateLimit(
+  request: NextRequest,
+): Promise<NextResponse | null> {
+  const url = request.nextUrl?.pathname ?? ''
+  const pathname = url || new URL(request.url).pathname
+
+  if (!isAdminEndpoint(pathname)) {
+    return null
+  }
+
+  const clientId = getClientIdentifier(request)
+  const result = await checkD1RateLimit(clientId, {
+    maxRequests: ADMIN_RATE_LIMIT_CONFIG.maxRequests,
+    windowSeconds: ADMIN_RATE_LIMIT_CONFIG.windowSeconds,
+  })
+
+  if (!result.allowed) {
+    const retryAfter = result.resetAt - Math.floor(Date.now() / 1000)
+    const lang = resolveLang(request)
+
+    const message = lang === 'vi'
+      ? 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+      : 'Rate limit exceeded. Please try again later.'
+
+    return NextResponse.json(
+      {
+        error: 'Too Many Requests',
+        message,
+        retryAfter,
+      },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(retryAfter),
+          'X-RateLimit-Limit': String(ADMIN_RATE_LIMIT_CONFIG.maxRequests),
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': String(result.resetAt),
+        },
+      },
+    )
+  }
+
+  return null
+}

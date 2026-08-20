@@ -25,7 +25,7 @@
  * Screenshots saved to: test-results/ (Playwright auto)
  */
 
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect, type Page } from './fixtures/auth-fixture'
 import { signIn, type SignInResult } from './fixtures/auth-helpers'
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -46,24 +46,36 @@ async function signUpNewUser(baseURL: string): Promise<SignInResult> {
   const api = await createRequest.newContext({ baseURL })
   try {
     // Step 1: GET sign-in page to establish session and get CSRF token
-    const csrfResp = await api.get('/api/auth/sign-in')
+    // Better Auth requires an Origin header matching a trusted origin on all
+    // auth POSTs; the GET that seeds the CSRF cookie must carry it too.
+    const origin = baseURL.replace(/\/$/, '')
+    const csrfResp = await api.get('/api/auth/sign-in', {
+      headers: { Origin: origin },
+    })
     if (!csrfResp.ok()) {
       throw new Error(`Failed to load CSRF token: HTTP ${csrfResp.status()}`)
     }
 
-    // Extract CSRF token from Set-Cookie headers (may be string or array)
+    // Extract CSRF token from Set-Cookie headers (may be string or array).
+    // Sophia's own CSRF system (src/seed/security/csrf.ts) sets the
+    // `csrf-token` cookie and expects it echoed in the `x-csrf-token` header
+    // on state-changing POSTs. Better Auth also sets `better-auth.csrf`, but
+    // the Sophia middleware gate is what enforces /api/promo/* and other
+    // non-auth routes. Carry BOTH tokens to satisfy both systems.
     const setCookieHeaders = csrfResp.headers()['set-cookie']
     const cookiesList = Array.isArray(setCookieHeaders) ? setCookieHeaders : (setCookieHeaders ? [setCookieHeaders] : [])
-    const csrfCookie = cookiesList.find((c: string) => c.startsWith('better-auth.csrf='))
-    const csrfToken = csrfCookie
-      ? decodeURIComponent(csrfCookie.split(';')[0].split('=')[1] || '')
-      : ''
+    const pick = (name: string) => {
+      const c = cookiesList.find((x: string) => x.startsWith(name + '='))
+      return c ? decodeURIComponent(c.split(';')[0].split('=').slice(1).join('=')) : ''
+    }
+    const csrfToken = pick('csrf-token') || pick('better-auth.csrf')
 
     // Step 2: POST sign-up with CSRF token
     const resp = await api.post('/api/auth/sign-up', {
       data: { email, password, name: `Journey User ${timestamp}` },
       headers: {
         'content-type': 'application/json',
+        Origin: origin,
         ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
       },
     })
@@ -94,11 +106,35 @@ async function redeemFREE100(
   name: string,
 ): Promise<{ token: string; url: string }> {
   const { request: createRequest } = await import('@playwright/test')
+  const origin = baseURL.replace(/\/$/, '')
   const api = await createRequest.newContext({ baseURL })
   try {
+    // Seed the CSRF cookie first — /api/promo/* is enforced by Sophia's own
+    // CSRF gate (src/seed/security/csrf.ts), which requires the `csrf-token`
+    // cookie echoed in the `x-csrf-token` header on state-changing POSTs.
+    const csrfResp = await api.get('/api/auth/sign-in', {
+      headers: { Origin: origin },
+    })
+    if (!csrfResp.ok()) {
+      throw new Error(`Failed to load CSRF token: HTTP ${csrfResp.status()}`)
+    }
+    const setCookieHeaders = csrfResp.headers()['set-cookie']
+    const cookiesList = Array.isArray(setCookieHeaders)
+      ? setCookieHeaders
+      : setCookieHeaders ? [setCookieHeaders] : []
+    const pick = (n: string) => {
+      const c = cookiesList.find((x: string) => x.startsWith(n + '='))
+      return c ? decodeURIComponent(c.split(';')[0].split('=').slice(1).join('=')) : ''
+    }
+    const csrfToken = pick('csrf-token') || pick('better-auth.csrf')
+
     const resp = await api.post('/api/promo/redeem-free', {
       data: { code: 'FREE100', email, name },
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        Origin: origin,
+        ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
+      },
     })
 
     if (!resp.ok()) {
@@ -123,6 +159,8 @@ async function redeemFREE100(
 
 // ── Tests ────────────────────────────────────────────────────────────────────
 
+// configure() must be called at the top level (outside any describe block) —
+// calling it inside test.describe() throws "_currentSuite is not a suite".
 test.describe.configure({ mode: 'serial' })
 
 test.describe('Sophia Handover — E2E Journey Specs', () => {

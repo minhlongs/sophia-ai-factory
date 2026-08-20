@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     let d1: D1Database;
     try {
-      const _d1 = getD1();
+      const _d1 = await getD1();
       if (!_d1) throw new Error('D1 database binding not available');
       d1 = _d1;
     } catch {

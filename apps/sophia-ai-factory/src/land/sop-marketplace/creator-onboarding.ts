@@ -123,7 +123,7 @@ export async function registerCreator(formData: {
       });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
@@ -193,7 +193,7 @@ export async function getCreatorProfile(): Promise<Result<CreatorProfileView, Cr
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
@@ -241,7 +241,7 @@ export async function updateCreatorProfile(
       });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }

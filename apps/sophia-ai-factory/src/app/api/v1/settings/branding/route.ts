@@ -40,7 +40,7 @@ export const GET = withRateLimit(async function GET(req: NextRequest): Promise<N
   const user = await getCurrentUserFromHeaders(req.headers);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {
@@ -61,7 +61,7 @@ export const PATCH = withRateLimit(async function PATCH(req: NextRequest): Promi
     return NextResponse.json({ error: 'PATCH body must be a plain object' }, { status: 400 });
   }
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {

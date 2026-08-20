@@ -52,7 +52,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   });
   if (rateLimited) return rateLimited;
 
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) {
     logger.error('[Welcome/Resend] D1 unavailable');
     return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });

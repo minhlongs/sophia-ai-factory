@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
   if (auth instanceof Response) return auth
 
   const cronCtx = startCronCheckIn(CRON_NAME)
-  const db = getD1()
+  const db = await getD1()
 
   if (db && await wasRecentlyRun(db, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
     finishCronCheckIn(cronCtx, CRON_NAME)

@@ -128,7 +128,7 @@ export function canTransition(from: CreativeMissionStatus, to: CreativeMissionSt
 // ── Repository ───────────────────────────────────────────────────────────────
 
 export async function createMission(mission: Mission): Promise<Mission> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new MissionError('D1_UNAVAILABLE', 'D1 not available');
   const now = Math.floor(Date.now() / 1000);
   mission.id = mission.id || newMissionId();
@@ -180,7 +180,7 @@ export async function createMission(mission: Mission): Promise<Mission> {
 }
 
 export async function getMission(id: string): Promise<Mission | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new MissionError('D1_UNAVAILABLE', 'D1 not available');
   const row = await db.prepare(`SELECT * FROM creative_missions WHERE id = ?1 LIMIT 1`).bind(id).first<MissionRow>();
   if (!row) return null;
@@ -197,7 +197,7 @@ export async function getMissionWithGoals(id: string): Promise<(Mission & { goal
 }
 
 export async function listMissions(workspaceId: string, status?: CreativeMissionStatus): Promise<Mission[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new MissionError('D1_UNAVAILABLE', 'D1 not available');
   let q = `SELECT * FROM creative_missions WHERE workspace_id = ?1`;
   const params: unknown[] = [workspaceId];
@@ -211,7 +211,7 @@ export async function listMissions(workspaceId: string, status?: CreativeMission
 }
 
 export async function updateMissionStatus(id: string, newStatus: CreativeMissionStatus, currentPhase: string): Promise<Mission> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new MissionError('D1_UNAVAILABLE', 'D1 not available');
   const existing = await getMission(id);
   if (!existing) throw new MissionError('NOT_FOUND', `Mission ${id} not found`);
@@ -229,13 +229,13 @@ export async function updateMissionStatus(id: string, newStatus: CreativeMission
 }
 
 export async function recordSpend(id: string, amountCents: number): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new MissionError('D1_UNAVAILABLE', 'D1 not available');
   await db.prepare(`UPDATE creative_missions SET spent_cents = spent_cents + ?, updated_at = ? WHERE id = ?`).bind(amountCents, Math.floor(Date.now() / 1000), id).run();
 }
 
 export async function deleteMission(id: string): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new MissionError('D1_UNAVAILABLE', 'D1 not available');
   await db.prepare(`DELETE FROM creative_missions WHERE id = ?1`).bind(id).run();
 }

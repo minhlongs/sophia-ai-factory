@@ -24,7 +24,7 @@ export const autoApplyMonitor = inngest.createFunction(
   { id: 'auto-apply-monitor' },
   { cron: '0 4 * * *' }, // daily at 04:00 UTC
   async () => {
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       logger.error('[auto-apply-monitor] D1 not available');
       return { scanned: 0, rolledBack: 0 };

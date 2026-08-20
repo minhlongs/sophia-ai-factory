@@ -42,7 +42,7 @@ export async function enqueueCommissionDlq(
   failureReason: string,
   retryCount: number = 0,
 ): Promise<Result<void, Error>> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) {
     return failure(new Error('D1 binding not available'))
   }
@@ -96,7 +96,7 @@ export async function getStaleCommissionEntries(
   maxAgeHours: number = 24,
   limit: number = 50,
 ): Promise<CommissionDlqEntry[]> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) {
     logger.error('[commission-dlq] D1 binding not available')
     return []
@@ -146,7 +146,7 @@ export async function getStaleCommissionEntries(
  * Mark a DLQ entry as resolved.
  */
 export async function resolveCommissionDlqEntry(eventId: string): Promise<void> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) return
 
   const now = new Date().toISOString()

@@ -198,7 +198,7 @@ export async function GET(req: NextRequest) {
   const cronCtx = startCronCheckIn(CRON_NAME)
   let db: D1Database
   try {
-    const _db = getD1()
+    const _db = await getD1()
     if (!_db) throw new Error('D1 database binding not available')
     db = _db
   } catch (err) {

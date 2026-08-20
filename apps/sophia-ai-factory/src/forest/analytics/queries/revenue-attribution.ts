@@ -45,7 +45,7 @@ export async function aggregateRevenueAttribution(
   workspaceId: string,
   opts?: { since?: number },
 ): Promise<RevenueAttributionRow[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     logger.warn('[RevenueAttribution] D1 unavailable — returning empty result');
     return EMPTY;
@@ -190,7 +190,7 @@ export async function getContentUnitAttribution(
 ): Promise<ContentUnitAttribution[]> {
   if (!workspaceId) return EMPTY_UNIT;
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     logger.warn('[RevenueAttribution] D1 unavailable for unit attribution');
     return EMPTY_UNIT;

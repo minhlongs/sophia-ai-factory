@@ -91,7 +91,7 @@ describe('GET /api/admin/ops/snapshot', () => {
   it('returns 503 when D1 is unavailable', async () => {
     mockRequireAdmin.mockResolvedValue({ user: ADMIN_USER })
     const { getD1 } = await import('@/seed/db/client')
-    vi.mocked(getD1).mockReturnValue(null)
+    vi.mocked(getD1).mockResolvedValue(null)
 
     const res = await GET(buildRequest())
     expect(res.status).toBe(503)

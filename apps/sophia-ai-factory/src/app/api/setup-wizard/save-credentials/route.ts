@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
 
   // Mark onboarding complete in DB (primary) — cookie fallback handled by /api/setup/save
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 unavailable');
     const db = _db;
     const nowMs = Date.now()

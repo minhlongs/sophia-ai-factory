@@ -14,7 +14,7 @@ export async function checkCreatorAccess(): Promise<{
     return { hasAccess: false, userId: null, tier: null };
   }
 
-  const d1 = getD1();
+  const d1 = await getD1();
   if (!d1) {
     return { hasAccess: false, userId: user.id, tier: null };
   }

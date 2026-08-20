@@ -33,7 +33,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     if (!ALLOWED_PROVIDERS.has(provider))
       return NextResponse.json({ error: 'Unknown provider' }, { status: 404 });
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
     try {

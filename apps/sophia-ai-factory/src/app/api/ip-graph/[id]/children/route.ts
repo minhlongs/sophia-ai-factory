@@ -17,7 +17,7 @@ async function verifyWorkspaceAccess(workspaceId: string, userId: string): Promi
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getCurrentUser();
   if (!user) {
@@ -25,7 +25,8 @@ export async function GET(
   }
 
   try {
-    const parent = await getIP(params.id);
+    const { id } = await params;
+    const parent = await getIP(id);
     if (!parent) {
       return NextResponse.json({ error: 'Parent not found' }, { status: 404 });
     }
@@ -35,7 +36,7 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const children = await getIPChildren(params.id);
+    const children = await getIPChildren(id);
     return NextResponse.json({ children });
   } catch {
     return NextResponse.json({ error: 'Failed to fetch children' }, { status: 500 });

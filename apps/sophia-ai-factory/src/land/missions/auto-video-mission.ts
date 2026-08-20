@@ -89,7 +89,7 @@ async function insertMissionRow(
 ): Promise<string> {
   const id = newMissionId();
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     await db
       .prepare(
@@ -107,7 +107,7 @@ async function insertMissionRow(
 
 async function markMissionFailed(missionId: string, errCode: string, errMessage: string): Promise<void> {
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     await db
       .prepare(
@@ -124,7 +124,7 @@ async function markMissionFailed(missionId: string, errCode: string, errMessage:
 
 async function markMissionSucceeded(missionId: string, result: AutoVideoMissionResult): Promise<void> {
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     await db
       .prepare(

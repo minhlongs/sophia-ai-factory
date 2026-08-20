@@ -75,7 +75,7 @@ describe('registerCreator', () => {
     );
 
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getD1).mockReturnValue({} as unknown as D1Database);
+    vi.mocked(getD1).mockResolvedValue({} as unknown as D1Database);
     vi.mocked(dbGet).mockResolvedValue(null); // not yet registered
     vi.mocked(dbCreate).mockResolvedValue(mockProfile as any);
 
@@ -105,7 +105,7 @@ describe('registerCreator', () => {
     const { getCreatorProfile: dbGet } = await import('@/seed/db/marketplace-ops');
 
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getD1).mockReturnValue({} as unknown as D1Database);
+    vi.mocked(getD1).mockResolvedValue({} as unknown as D1Database);
     vi.mocked(dbGet).mockResolvedValue(mockProfile as any);
 
     const result = await registerCreator(validFormData);
@@ -156,7 +156,7 @@ describe('getCreatorProfile', () => {
     const { getCreatorProfile: dbGet } = await import('@/seed/db/marketplace-ops');
 
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getD1).mockReturnValue({} as unknown as D1Database);
+    vi.mocked(getD1).mockResolvedValue({} as unknown as D1Database);
     vi.mocked(dbGet).mockResolvedValue(mockProfile as any);
 
     const result = await getCreatorProfile();
@@ -174,7 +174,7 @@ describe('getCreatorProfile', () => {
     const { getCreatorProfile: dbGet } = await import('@/seed/db/marketplace-ops');
 
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getD1).mockReturnValue({} as unknown as D1Database);
+    vi.mocked(getD1).mockResolvedValue({} as unknown as D1Database);
     vi.mocked(dbGet).mockResolvedValue(null);
 
     const result = await getCreatorProfile();
@@ -195,7 +195,7 @@ describe('updateCreatorProfile', () => {
     );
 
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getD1).mockReturnValue({} as unknown as D1Database);
+    vi.mocked(getD1).mockResolvedValue({} as unknown as D1Database);
     vi.mocked(dbGet).mockResolvedValue(mockProfile as any);
     vi.mocked(dbUpdate).mockResolvedValue({
       ...mockProfile,

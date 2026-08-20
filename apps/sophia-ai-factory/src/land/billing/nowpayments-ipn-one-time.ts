@@ -119,7 +119,7 @@ export async function handleOneTimeFinished(
 
     // Update pending_orders to completed (FIX: was never updated for one-time)
     try {
-    const _d1b = getD1()
+    const _d1b = await getD1()
     if (_d1b) {
     await _d1b.prepare('UPDATE pending_orders SET status=?, payment_id=?, completed_at=? WHERE order_id=?').bind('completed', ipn.payment_id, Math.floor(Date.now() / 1000), ipn.order_id)
     }
@@ -127,7 +127,7 @@ export async function handleOneTimeFinished(
 
     // Audit trail
     try {
-      const _d1 = getD1();
+      const _d1 = await getD1();
       if (!_d1) throw new Error('D1 database binding not available');
       const d1 = _d1;
       await recordAudit(d1, {
@@ -241,7 +241,7 @@ export async function handleOneTimeRefunded(
 
     // Audit trail
     try {
-      const _d1 = getD1();
+      const _d1 = await getD1();
       if (!_d1) throw new Error('D1 database binding not available');
       const d1 = _d1;
       await recordAudit(d1, {
@@ -263,7 +263,7 @@ export async function handleOneTimeRefunded(
     // The user's tier was set by the one-time purchase (e.g. FREE100 → MASTER).
     // A full refund should undo that upgrade.
     try {
-      const _d1 = getD1();
+      const _d1 = await getD1();
       if (!_d1) throw new Error('D1 database binding not available');
       const d1 = _d1;
     const nowSec = Math.floor(Date.now() / 1000)

@@ -55,7 +55,7 @@ function newJobId(): string {
  * Check if the user has approved WhatsApp outbound sends.
  */
 export async function checkApprovalStatus(userId: string): Promise<Result<boolean>> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) return failure(new WhatsAppPublishError('D1_UNAVAILABLE', 'D1 not available'));
   const row = await db
     .prepare(
@@ -72,7 +72,7 @@ export async function checkApprovalStatus(userId: string): Promise<Result<boolea
  * Mark the user as having approved WhatsApp outbound sends.
  */
 export async function approveWhatsappSend(userId: string): Promise<Result<void>> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) return failure(new WhatsAppPublishError('D1_UNAVAILABLE', 'D1 not available'));
   const result = await db
     .prepare(`UPDATE whatsapp_templates SET whatsapp_approved = 1 WHERE user_id = ?1`)
@@ -111,7 +111,7 @@ export async function scheduleWhatsAppPublish(
     );
   }
   const { videoId, target, templateId } = parsed.data;
-  const db = getD1();
+  const db = await getD1();
   if (!db) return failure(new WhatsAppPublishError('D1_UNAVAILABLE', 'D1 not available'));
 
   // RBAC: video must belong to caller

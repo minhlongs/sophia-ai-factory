@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check per-user redemption in D1
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     const existing = await db
       .prepare('SELECT id FROM coupon_redemptions WHERE user_id = ? AND coupon_code = ? LIMIT 1')

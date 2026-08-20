@@ -49,7 +49,7 @@ export { MarkWatchedInputSchema, UnmarkWatchedInputSchema } from '@/tree/help/ty
 
 /** Fetch all videos ordered by order_index. Includes unpublished (for admin). */
 export async function listAllHelpVideos(): Promise<HelpVideo[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const rows = await db
@@ -60,7 +60,7 @@ export async function listAllHelpVideos(): Promise<HelpVideo[]> {
 
 /** Fetch published videos only (for public library page). */
 export async function listPublishedHelpVideos(): Promise<HelpVideo[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const rows = await db
@@ -74,7 +74,7 @@ export async function getHelpVideoBySlug(slug: string): Promise<HelpVideo | null
   const safe = z.string().min(1).max(100).safeParse(slug)
   if (!safe.success) return null
 
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const row = await db
@@ -95,7 +95,7 @@ export async function getHelpVideoForTooltip(slug: string): Promise<HelpVideo | 
 export async function listHelpVideosByCategory(
   category: HelpVideoCategory,
 ): Promise<HelpVideo[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const rows = await db
@@ -144,7 +144,7 @@ export type UpdateHelpVideoInput = z.infer<typeof UpdateHelpVideoInputSchema>
 /** Create a new help video. Returns the created video. */
 export async function createHelpVideo(input: CreateHelpVideoInput): Promise<HelpVideo> {
   const validated = CreateHelpVideoInputSchema.parse(input)
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -180,7 +180,7 @@ export async function createHelpVideo(input: CreateHelpVideoInput): Promise<Help
 /** Update a help video by ID. Returns the updated video or null if not found. */
 export async function updateHelpVideo(id: string, input: UpdateHelpVideoInput): Promise<HelpVideo | null> {
   const validated = UpdateHelpVideoInputSchema.parse(input)
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -245,7 +245,7 @@ export async function updateHelpVideo(id: string, input: UpdateHelpVideoInput): 
 
 /** Delete a help video by ID. Returns true if deleted, false if not found. */
 export async function deleteHelpVideo(id: string): Promise<boolean> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -264,7 +264,7 @@ export async function getHelpVideoById(id: string): Promise<HelpVideo | null> {
   const safe = z.string().min(1).max(100).safeParse(id)
   if (!safe.success) return null
 
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const row = await db

@@ -70,7 +70,7 @@ function rowToDomain(row: ProvenanceRow): ProvenanceRecord {
 }
 
 export async function recordProvenance(record: ProvenanceRecord): Promise<ProvenanceRecord> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new ProvenanceError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);
@@ -113,7 +113,7 @@ export async function recordProvenance(record: ProvenanceRecord): Promise<Proven
 }
 
 export async function getProvenanceChain(assetId: string): Promise<ProvenanceRecord[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new ProvenanceError('D1_UNAVAILABLE', 'D1 not available');
 
   const result = await db
@@ -125,7 +125,7 @@ export async function getProvenanceChain(assetId: string): Promise<ProvenanceRec
 }
 
 export async function getDerivatives(assetId: string): Promise<ProvenanceRecord[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new ProvenanceError('D1_UNAVAILABLE', 'D1 not available');
 
   const result = await db

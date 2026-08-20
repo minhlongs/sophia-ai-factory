@@ -34,7 +34,7 @@ export function normalizePlanToTier(plan: string | null | undefined): Tier {
 
 export async function getUserTier(userId: string): Promise<Tier> {
   try {
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) return 'BASIC' as Tier;
 
     // Primary: user-scoped subscription (FREE100 customers have no org)

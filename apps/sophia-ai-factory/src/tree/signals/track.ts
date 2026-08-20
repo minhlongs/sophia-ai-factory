@@ -14,8 +14,8 @@ import { getD1 } from '@/seed/db/client'
 import { type D1EventType, schemaForEvent } from './d1-event-types'
 
 /** Get raw D1Database from CF runtime env (edge-compatible, no Node APIs) */
-function getD1Raw(): D1Database {
-  const _db = getD1();
+async function getD1Raw(): Promise<D1Database> {
+  const _db = await getD1();
   if (!_db) throw new Error('[signals/d1] D1 binding not available');
   return _db;
 }
@@ -41,7 +41,7 @@ export function track<T extends D1EventType>(
   void (async () => {
     try {
       const safe = schemaForEvent(event).parse(props)
-      const db = getD1Raw()
+      const db = await getD1Raw()
       await db
         .prepare(
           'INSERT INTO signals_events (ts, event_type, actor, org_id, props_json) VALUES (?, ?, ?, ?, ?)',

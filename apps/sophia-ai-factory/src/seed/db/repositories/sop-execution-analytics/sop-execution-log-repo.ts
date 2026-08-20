@@ -27,7 +27,7 @@ export async function logStepExecution(params: {
   costCents?: number;
   errorMessage?: string;
 }): Promise<string> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   const id = crypto.randomUUID();
@@ -79,7 +79,7 @@ export async function getExecutionSteps(
   executionId: string,
 ): Promise<SopExecutionLogRow[]> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
     const result = await db

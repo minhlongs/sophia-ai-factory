@@ -78,7 +78,7 @@ interface RawAudit {
  */
 export async function getTenantSummary(tenantId: string): Promise<TenantSummary | null> {
   if (!tenantId) return null;
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   const user = await db

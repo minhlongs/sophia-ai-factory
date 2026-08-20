@@ -60,7 +60,7 @@ export async function getFunnelDashboard(
   fromTs: number,
   toTs: number,
 ): Promise<FunnelDashboard> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   const activation: ActivationFunnel = await getActivationFunnel(fromTs, toTs);

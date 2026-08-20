@@ -41,7 +41,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const windowSeconds = windowSecondsRaw ? Math.max(60, Number(windowSecondsRaw)) : undefined;
 
   try {
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return NextResponse.json({ ok: false, reason: 'D1_UNAVAILABLE', ts }, { status: 200 });
     }

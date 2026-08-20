@@ -68,16 +68,27 @@ interface SignInResponseBody {
 export async function signIn(opts: SignInOptions): Promise<SignInResult> {
   const api = await createRequestContext.newContext({ baseURL: opts.baseURL })
   try {
-    // Step 1: GET sign-in page to establish session and get CSRF token
+    // Step 1: GET sign-in page to establish session and get CSRF token.
+    // The middleware's verifyCsrfToken (src/seed/security/csrf.ts) compares the
+    // `csrf-token` COOKIE value against the `x-csrf-token` HEADER. Better Auth
+    // also sets a separate `better-auth.csrf` cookie, but that is NOT the value
+    // the middleware checks — only `csrf-token` satisfies the check. Without it,
+    // every state-changing request returns `csrf_token_invalid`.
     const csrfResp = await api.get('/api/auth/sign-in')
     if (!csrfResp.ok()) {
       throw new Error(`Failed to load CSRF token: HTTP ${csrfResp.status()}`)
     }
 
-    // Extract CSRF token from Set-Cookie headers (may be string or array)
     const setCookieHeaders = csrfResp.headers()['set-cookie']
-    const cookiesList = Array.isArray(setCookieHeaders) ? setCookieHeaders : (setCookieHeaders ? [setCookieHeaders] : [])
-    const csrfCookie = cookiesList.find((c: string) => c.startsWith('better-auth.csrf='))
+    const cookiesList = Array.isArray(setCookieHeaders)
+      ? setCookieHeaders
+      : (setCookieHeaders ? [setCookieHeaders] : [])
+
+    // Prefer the middleware's `csrf-token` cookie; fall back to better-auth.csrf
+    // only for older server versions that used the Better Auth cookie name.
+    const csrfCookie =
+      cookiesList.find((c: string) => c.startsWith('csrf-token=')) ||
+      cookiesList.find((c: string) => c.startsWith('better-auth.csrf='))
     const csrfToken = csrfCookie
       ? decodeURIComponent(csrfCookie.split(';')[0].split('=')[1] || '')
       : ''

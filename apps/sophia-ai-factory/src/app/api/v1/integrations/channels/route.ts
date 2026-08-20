@@ -43,7 +43,7 @@ export const GET = withRateLimit(async function GET(req: NextRequest) {
   }
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
   try {

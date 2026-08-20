@@ -7,7 +7,7 @@
  * - Stale lock recovery (> 5 min old) → stale lock cleared, returns "Stale lock cleared"
  * - Lock younger than 5 min → returns "Already processing", no handler called
  *
- * RED TESTS (it.todo): marked as TODO — require Phase 2 implementation to pass.
+ * RED TESTS (it.todo): pending — require TOCTOU race fix implementation to pass.
  * The current INSERT-then-SELECT pattern has a TOCTOU window that these tests expose.
  *
  * @vitest

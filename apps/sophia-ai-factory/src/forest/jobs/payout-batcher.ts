@@ -39,7 +39,7 @@ export const payoutBatcher = inngest.createFunction(
   },
   { cron: '0 12 * * 0' },
   async ({ step }) => {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     const db = _db;
 
@@ -96,7 +96,7 @@ export const payoutBatcher = inngest.createFunction(
         }
 
         await step.run(`insert-batch-${batchId}`, async () => {
-          const _db = getD1();
+          const _db = await getD1();
           if (!_db) throw new Error('D1 database binding not available');
           const innerDb = _db;
           await innerDb

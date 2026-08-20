@@ -55,7 +55,7 @@ async function findOrResolveUser(
   } catch { /* not logged in */ }
 
   // Look up by email in D1
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) {
     return { userId: null, sessionEmailVerified: false };
   }
@@ -147,7 +147,7 @@ export const POST = withRateLimit(
       // (matches endpoint contract: "Creates user if not found, fires auto-handover")
       if (!userId) {
         try {
-          const _db = getD1();
+          const _db = await getD1();
           if (!_db) {
             throw new Error('D1 unavailable');
           }

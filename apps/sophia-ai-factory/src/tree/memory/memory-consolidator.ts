@@ -73,7 +73,7 @@ export class MemoryConsolidator {
       const _db = this.repo;
       // Access the underlying D1 binding for a bulk update.
       const { getD1 } = await import('@/seed/db/client');
-      const d1Db = getD1();
+      const d1Db = await getD1();
       if (!d1Db) throw new Error('D1 database binding not available');
 
       const cutoff = Date.now() - DECAY_PERIOD_DAYS * 24 * 60 * 60 * 1000;
@@ -121,7 +121,7 @@ export class MemoryConsolidator {
     try {
       // Fetch current score first to compute the new value.
       const { getD1 } = await import('@/seed/db/client');
-      const d1Db = getD1();
+      const d1Db = await getD1();
       if (!d1Db) throw new Error('D1 database binding not available');
 
       const row = await d1Db
@@ -287,7 +287,7 @@ export class MemoryConsolidator {
 
       let boosted = 0;
       const { getD1 } = await import('@/seed/db/client');
-      const d1Db = getD1();
+      const d1Db = await getD1();
       if (!d1Db) return 0;
 
       const now = Date.now();
@@ -327,7 +327,7 @@ export class MemoryConsolidator {
     newRelevance: number,
   ): Promise<void> {
     const { getD1 } = await import('@/seed/db/client');
-    const d1Db = getD1();
+    const d1Db = await getD1();
     if (!d1Db) return;
 
     const contentJson = JSON.stringify({ text: newText });
@@ -348,7 +348,7 @@ export class MemoryConsolidator {
   /** Delete a memory by ID. */
   private async deleteMemory(memoryId: string): Promise<void> {
     const { getD1 } = await import('@/seed/db/client');
-    const d1Db = getD1();
+    const d1Db = await getD1();
     if (!d1Db) return;
 
     await d1Db

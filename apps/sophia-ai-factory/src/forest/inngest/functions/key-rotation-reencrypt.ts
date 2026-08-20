@@ -41,7 +41,7 @@ function toBytes(blob: ArrayBuffer | Uint8Array): Uint8Array {
 }
 
 async function reencryptUserApiKeys(keyVersion: number, oldVersion: number): Promise<number> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   let total = 0;
@@ -87,7 +87,7 @@ async function reencryptUserApiKeys(keyVersion: number, oldVersion: number): Pro
 }
 
 async function reencryptProviderCredentials(keyVersion: number, oldVersion: number): Promise<number> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   let total = 0;
@@ -133,7 +133,7 @@ async function reencryptProviderCredentials(keyVersion: number, oldVersion: numb
 }
 
 async function reencryptPlatformCredentials(keyVersion: number, oldVersion: number): Promise<number> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   let total = 0;
@@ -232,7 +232,7 @@ export const keyRotationReencrypt = inngest.createFunction(
 
     // 1. Retire old key version (set is_active=0, rotated_at=NOW)
     await step.run('retire-old-version', async () => {
-      const db = getD1();
+      const db = await getD1();
       if (!db) throw new Error('D1 database binding not available');
       const now = Math.floor(Date.now() / 1000);
       await db
@@ -279,7 +279,7 @@ export const keyRotationCron = inngest.createFunction(
   { cron: '0 0 1 */3 *' },
   async ({ step }) => {
     const latestVersion = await step.run('check-latest-version', async () => {
-      const db = getD1();
+      const db = await getD1();
       if (!db) throw new Error('D1 database binding not available');
 
       const row = await db
@@ -335,7 +335,7 @@ export const keyRotationCron = inngest.createFunction(
 
     // Key version is 90 days or older — trigger rotation
     const rotationResult = await step.run('create-new-version-and-fire-event', async () => {
-      const db = getD1();
+      const db = await getD1();
       if (!db) throw new Error('D1 database binding not available');
 
       const oldVersion = latestVersion.version;

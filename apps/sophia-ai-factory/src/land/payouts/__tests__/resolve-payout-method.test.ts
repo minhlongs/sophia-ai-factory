@@ -49,7 +49,7 @@ describe('resolvePayoutMethod', () => {
   })
 
   it('prefers Stripe when stripe_payout_enabled=1 and stripe_account_id set', async () => {
-    mockedGetD1.mockReturnValue(
+    mockedGetD1.mockResolvedValue(
       makeD1Mock({ stripe: { stripe_account_id: 'acct_abc' } }) as unknown as D1Database,
     )
     const result = await resolvePayoutMethod('tenant-1', 'aff-1')
@@ -57,7 +57,7 @@ describe('resolvePayoutMethod', () => {
   })
 
   it('falls back to USDT crypto when Stripe not enabled', async () => {
-    mockedGetD1.mockReturnValue(
+    mockedGetD1.mockResolvedValue(
       makeD1Mock({
         stripe: null,
         crypto: {
@@ -77,7 +77,7 @@ describe('resolvePayoutMethod', () => {
   })
 
   it('defaults network to TRC20 when crypto row has null network', async () => {
-    mockedGetD1.mockReturnValue(
+    mockedGetD1.mockResolvedValue(
       makeD1Mock({
         stripe: null,
         crypto: {
@@ -92,7 +92,7 @@ describe('resolvePayoutMethod', () => {
   })
 
   it('returns null when neither Stripe nor crypto method is set', async () => {
-    mockedGetD1.mockReturnValue(
+    mockedGetD1.mockResolvedValue(
       makeD1Mock({ stripe: null, crypto: null }) as unknown as D1Database,
     )
     const result = await resolvePayoutMethod('tenant-1', 'aff-4')
@@ -101,7 +101,7 @@ describe('resolvePayoutMethod', () => {
 
   it('treats stripe row with null stripe_account_id as missing (SQL guard)', async () => {
     // SQL filters this out, but defense-in-depth: even if row sneaks through, fall back
-    mockedGetD1.mockReturnValue(
+    mockedGetD1.mockResolvedValue(
       makeD1Mock({
         stripe: null, // simulating the guarded SQL returning nothing
         crypto: {

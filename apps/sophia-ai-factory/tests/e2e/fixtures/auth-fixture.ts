@@ -62,4 +62,4 @@ export const test = base.extend<AuthFixtures>({
   },
 })
 
-export { expect }
+export { expect, type Page }

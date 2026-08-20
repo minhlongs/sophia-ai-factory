@@ -52,7 +52,7 @@ const DB_ERROR_SENTINEL = Symbol('db_error');
  */
 async function getVideoAccessRow(videoId: string): Promise<VideoAccessRow | null | typeof DB_ERROR_SENTINEL> {
   try {
-  const db = getD1()
+  const db = await getD1()
   if (!db) throw new Error('D1 database binding not available')
     return await db
       .prepare(

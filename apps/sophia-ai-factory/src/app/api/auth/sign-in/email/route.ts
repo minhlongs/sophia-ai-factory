@@ -76,7 +76,7 @@ export async function POST(request: Request): Promise<Response> {
     return NextResponse.json({ error: 'Authentication service unavailable' }, { status: 503 });
   }
 
-  const db = getD1();
+  const db = await getD1();
   let userId: string | null = null;
 
   // Pre-check lock (best-effort — never block sign-in on infra errors).

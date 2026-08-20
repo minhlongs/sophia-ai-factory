@@ -37,7 +37,7 @@ async function ListingDetail({ locale, listingId, userId }: { locale: string; li
   const { getD1 } = await import('@/seed/db/client');
   const { getSopListing } = await import('@/seed/db/marketplace-ops');
 
-  const d1 = getD1();
+  const d1 = await getD1();
   if (!d1) {
     return (
       <main className="min-h-screen bg-background p-8">

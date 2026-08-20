@@ -37,7 +37,7 @@ export const agentRollbackCron = inngest.createFunction(
   async () => {
     logger.info('agentRollbackCron: starting scan');
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       logger.error('agentRollbackCron: D1 not available');
       return { scanned: 0, retried: 0 };

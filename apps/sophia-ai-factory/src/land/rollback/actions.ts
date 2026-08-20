@@ -47,8 +47,8 @@ const RollbackMissionSchema = z.object({
 // Helpers
 // ---------------------------------------------------------------------------
 
-function getWorkspaceIdForUser(userId: string): Promise<string | null> {
-  const d1 = getD1();
+async function getWorkspaceIdForUser(userId: string): Promise<string | null> {
+  const d1 = await getD1();
   if (!d1) return Promise.resolve(null);
   return d1
     .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
@@ -63,7 +63,7 @@ async function assertWorkspaceAdmin(
   workspaceId: string,
 ): Promise<Result<void, RollbackActionError>> {
   try {
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) return failure({ code: 'DB_ERROR', message: 'Database not available' });
 
     const membership = await d1
@@ -114,7 +114,7 @@ export async function rollbackMissionAction(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
@@ -180,7 +180,7 @@ export async function getRollbackHistoryAction(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }

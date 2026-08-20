@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic';
 export default async function AutonomySettingsPage() {
   const t = await getTranslations('autonomy');
   const user = await getCurrentUser();
-  const d1 = getD1();
+  const d1 = await getD1();
 
   let initialLevel = 1;
 

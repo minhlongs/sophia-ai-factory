@@ -10,10 +10,10 @@
  *
  *   ```ts
  *   verify: async ({ hash, password }) => {
- *     const d1 = getD1()
+ *     const d1 = await getD1()
  *     const user = ... // resolve user from hash lookup context
  *     // NOTE: Better Auth does not inject userId into verify(); userId must be
- *     // resolved separately. See TODO below.
+ *     // resolved separately via the Better Auth Limitation pattern below.
  *     const { verifyPassword } = await import('@/tree/crypto/password-hash')
  *     return verifyWithLockout(d1, userId, () => verifyPassword(password, hash))
  *   }

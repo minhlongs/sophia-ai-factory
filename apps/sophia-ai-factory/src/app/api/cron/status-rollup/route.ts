@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
 async function handleRollup(_req: NextRequest) {
 
   const cronCtx = startCronCheckIn(CRON_NAME);
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     failCronCheckIn(cronCtx, CRON_NAME, new Error('D1 not available'));
     return NextResponse.json({ ok: false, error: 'D1 not available' }, { status: 503 });

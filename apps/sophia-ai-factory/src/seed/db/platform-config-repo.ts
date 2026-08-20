@@ -26,7 +26,7 @@ export type PlatformConfigKey = (typeof CONFIG_KEYS)[number];
  * Returns null if key doesn't exist.
  */
 export async function getPlatformConfig(key: PlatformConfigKey): Promise<string | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) return null;
 
   const row = await db
@@ -52,7 +52,7 @@ export async function setPlatformConfig(
   value: string,
   userId?: string,
 ): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) return;
 
   const encrypted = await encryptValue(value);
@@ -75,7 +75,7 @@ export async function setPlatformConfig(
  * Delete a platform config value.
  */
 export async function deletePlatformConfig(key: PlatformConfigKey): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) return;
 
   await db.prepare('DELETE FROM platform_configs WHERE key = ?').bind(key).run();
@@ -85,7 +85,7 @@ export async function deletePlatformConfig(key: PlatformConfigKey): Promise<void
  * Check if a platform config key exists and has a value.
  */
 export async function hasPlatformConfig(key: PlatformConfigKey): Promise<boolean> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) return false;
 
   const row = await db

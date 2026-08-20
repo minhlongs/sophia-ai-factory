@@ -85,7 +85,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Atomic UPDATE with optimistic lock — only succeeds if backup_codes_json
     // hasn't changed since we read it (prevents double-use race).
-    const d1Raw = getD1();
+    const d1Raw = await getD1();
     if (!d1Raw) {
       return NextResponse.json({ error: 'server_error' }, { status: 500 });
     }

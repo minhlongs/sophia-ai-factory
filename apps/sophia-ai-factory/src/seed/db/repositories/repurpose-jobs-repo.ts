@@ -29,7 +29,7 @@ export async function createRepurposeJob(input: {
 userId: string;
 sourceVideoId: string;
 }): Promise<RepurposeJob> {
-const db = getD1();
+const db = await getD1();
 if (!db) throw new Error('Database unavailable');
 const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
 
@@ -46,13 +46,13 @@ return (await getRepurposeJob(id))!;
 }
 
 export async function getRepurposeJob(id: string): Promise<RepurposeJob | null> {
-const db = getD1();
+const db = await getD1();
 if (!db) return null;
 return db.prepare('SELECT * FROM repurpose_jobs WHERE id = ?').bind(id).first<RepurposeJob>() ?? null;
 }
 
 export async function listRepurposeJobs(userId: string): Promise<RepurposeJob[]> {
-const db = getD1();
+const db = await getD1();
 if (!db) return [];
 const result = await db
 .prepare('SELECT * FROM repurpose_jobs WHERE user_id = ? ORDER BY created_at DESC LIMIT 50')
@@ -66,7 +66,7 @@ id: string,
 status: string,
 extra?: { clipManifest?: string; totalClips?: number },
 ): Promise<void> {
-const db = getD1();
+const db = await getD1();
 if (!db) return;
 
 if (extra?.clipManifest !== undefined && extra?.totalClips !== undefined) {
@@ -99,7 +99,7 @@ score?: number;
 title?: string;
 }>,
 ): Promise<void> {
-const db = getD1();
+const db = await getD1();
 if (!db || clips.length === 0) return;
 
 const stmt = db.prepare(
@@ -116,7 +116,7 @@ logger.info('[repurpose-jobs-repo] Inserted repurpose clips', { jobId, count: cl
 }
 
 export async function getRepurposeClips(jobId: string): Promise<RepurposeClip[]> {
-const db = getD1();
+const db = await getD1();
 if (!db) return [];
 const result = await db
 .prepare('SELECT * FROM repurpose_clips WHERE job_id = ? ORDER BY clip_index ASC')
@@ -130,7 +130,7 @@ clipId: string,
 status: string,
 outputVideoId?: string,
 ): Promise<void> {
-const db = getD1();
+const db = await getD1();
 if (!db) return;
 
 if (outputVideoId) {
@@ -147,7 +147,7 @@ await db
 }
 
 export async function incrementRepurposeProgress(jobId: string): Promise<void> {
-const db = getD1();
+const db = await getD1();
 if (!db) return;
 await db
 .prepare(

@@ -99,7 +99,7 @@ export async function reserveVideoSlot(
   }
 
   const now = new Date().toISOString();
-  const _d1 = getD1();
+  const _d1 = await getD1();
   if (!_d1) throw new Error('D1 database binding not available');
   const d1 = _d1;
   const { results } = await d1
@@ -138,7 +138,7 @@ export async function reserveVideoSlot(
 export async function releaseVideoSlot(userId: string): Promise<void> {
   const yearMonth = currentYearMonth();
   const now = new Date().toISOString();
-  const _d1 = getD1();
+  const _d1 = await getD1();
   if (!_d1) throw new Error('D1 database binding not available');
   const d1 = _d1;
   await d1
@@ -163,7 +163,7 @@ export async function releaseVideoSlot(userId: string): Promise<void> {
 export async function incrementVideoUsage(userId: string): Promise<void> {
   const yearMonth = currentYearMonth();
   const now = new Date().toISOString();
-  const _d1 = getD1();
+  const _d1 = await getD1();
   if (!_d1) throw new Error('D1 database binding not available');
   const d1 = _d1;
   await d1

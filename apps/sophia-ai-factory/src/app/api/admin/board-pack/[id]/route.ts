@@ -36,12 +36,13 @@ const patchSchema = z.object({
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const auth = await requireAdmin(undefined as unknown as NextRequest);
   if (auth instanceof Response) return auth;
 
-  const pack = packs.get(params.id);
+  const { id } = await params;
+  const pack = packs.get(id);
   if (!pack) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -51,12 +52,13 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const auth = await requireAdmin(request);
   if (auth instanceof Response) return auth;
 
-  const pack = packs.get(params.id);
+  const { id } = await params;
+  const pack = packs.get(id);
   if (!pack) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
@@ -82,15 +84,16 @@ export async function PATCH(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const auth = await requireAdmin(undefined as unknown as NextRequest);
   if (auth instanceof Response) return auth;
 
-  if (!packs.has(params.id)) {
+  const { id } = await params;
+  if (!packs.has(id)) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  packs.delete(params.id);
+  packs.delete(id);
   return NextResponse.json({ ok: true });
 }

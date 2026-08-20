@@ -22,7 +22,7 @@ export default async function ApprovalsPage() {
     return <div className="p-8 text-center text-destructive">Authentication required</div>;
   }
 
-  const d1 = getD1();
+  const d1 = await getD1();
   if (!d1) {
     return <div className="p-8 text-center text-destructive">Database not available</div>;
   }

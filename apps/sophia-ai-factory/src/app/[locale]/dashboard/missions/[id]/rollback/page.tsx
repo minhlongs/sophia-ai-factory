@@ -31,7 +31,7 @@ export default async function RollbackPage({ params }: RollbackPageProps) {
     notFound();
   }
 
-  const d1 = getD1();
+  const d1 = await getD1();
   if (!d1) {
     notFound();
   }

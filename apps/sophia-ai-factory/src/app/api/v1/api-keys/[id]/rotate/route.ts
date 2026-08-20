@@ -50,7 +50,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Validation failed', details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
     try {

@@ -23,7 +23,7 @@ async function d1Store(
   key: string,
   value: unknown,
 ): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const id = `${tenantId}:${type}:${key}`;
   const now = Date.now();
@@ -43,7 +43,7 @@ async function d1Query(
   type: MemoryType,
   key: string,
 ): Promise<unknown | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const row = await db
     .prepare(

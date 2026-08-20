@@ -205,7 +205,7 @@ export async function markRefunded(paymentId: string): Promise<void> {
  * This implementation eliminates the TOCTOU race in the previous SELECT-then-UPDATE pattern.
  */
 export async function decrementCredits(purchaseId: string): Promise<boolean> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const now = Math.floor(Date.now() / 1000);

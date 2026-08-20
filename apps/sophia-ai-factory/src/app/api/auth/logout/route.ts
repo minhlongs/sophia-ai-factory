@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   try {
     // Revoke session server-side via Better Auth
     try {
-      const auth = getAuth();
+      const auth = await getAuth();
       const sessionCookieName = getSessionCookieName();
       const sessionToken = request.cookies.get(sessionCookieName)?.value;
       if (sessionToken) {

@@ -136,7 +136,7 @@ export async function GET(req: NextRequest) {
 
   let db: D1Database | null = null;
   try {
-    db = getD1();
+    db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
   } catch (err) {
     logger.error('[video-status-sync] D1 unavailable', err instanceof Error ? err : undefined);

@@ -81,7 +81,7 @@ export function memoryRowToDomain(row: {
  * Increments version on update.
  */
 export async function upsertMemory(entry: CreativeMemory): Promise<CreativeMemory> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new CreativeMemoryError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);
@@ -160,7 +160,7 @@ export async function upsertMemory(entry: CreativeMemory): Promise<CreativeMemor
  * Query memory by category + key, optionally scoped.
  */
 export async function getMemory(workspaceId: string, category: MemoryCategory, key: string, scope?: CreativeMemory['scope'], scopeId?: string): Promise<CreativeMemory | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new CreativeMemoryError('D1_UNAVAILABLE', 'D1 not available');
 
   const row = await db
@@ -183,7 +183,7 @@ export async function getMemory(workspaceId: string, category: MemoryCategory, k
  * Query memory by category only, optionally filtered by scope.
  */
 export async function getMemoryByCategory(workspaceId: string, category: MemoryCategory, scope?: string, scopeId?: string): Promise<CreativeMemory[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new CreativeMemoryError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);
@@ -206,7 +206,7 @@ export async function getMemoryByCategory(workspaceId: string, category: MemoryC
  * List all memory keys for a workspace.
  */
 export async function listMemoryKeys(workspaceId: string): Promise<Array<{ category: string; key: string; scope: string; updatedAt: number }>> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new CreativeMemoryError('D1_UNAVAILABLE', 'D1 not available');
 
   const result = await db
@@ -225,7 +225,7 @@ export async function listMemoryKeys(workspaceId: string): Promise<Array<{ categ
  * Soft-delete memory by id.
  */
 export async function deleteMemory(id: string): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new CreativeMemoryError('D1_UNAVAILABLE', 'D1 not available');
   await db.prepare(`UPDATE creative_memory SET is_deleted = 1 WHERE id = ?1`).bind(id).run();
 }
@@ -234,7 +234,7 @@ export async function deleteMemory(id: string): Promise<void> {
  * Hard-delete memory by id (use with caution — breaks provenance).
  */
 export async function purgeMemory(id: string): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new CreativeMemoryError('D1_UNAVAILABLE', 'D1 not available');
   await db.prepare(`DELETE FROM creative_memory WHERE id = ?1`).bind(id).run();
 }

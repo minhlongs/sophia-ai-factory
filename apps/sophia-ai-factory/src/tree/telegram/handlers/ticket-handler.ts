@@ -17,11 +17,11 @@ export async function handleTicket(chatId: string, userId: string, ticketText: s
 
   // Attempt to persist the ticket — fail silently if table absent
   try {
-    const db = tryCreateServerClient()
-if (!db) {
-  await sendMessage(chatId, 'Database unavailable. Please try again later.');
-  return;
-}
+    const db = await tryCreateServerClient()
+    if (!db) {
+      await sendMessage(chatId, 'Database unavailable. Please try again later.');
+      return;
+    }
 
     await db.from('support_tickets').insert({
       user_id: userId,

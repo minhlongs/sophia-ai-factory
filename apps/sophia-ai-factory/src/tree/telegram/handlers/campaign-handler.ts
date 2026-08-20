@@ -1,5 +1,5 @@
 import { TelegramFSM, BotState } from '@/tree/telegram/telegram-fsm-state-manager'
-import { tryCreateServerClient, D1Client } from '@/seed/db/client'
+import { tryCreateServerClientSync, D1Client } from '@/seed/db/client'
 import { inngest } from '@/tree/inngest'
 import { Tier } from '@/seed/types'
 import { backupSessionState } from '@/tree/telegram/telegram-state-backup-service'
@@ -10,7 +10,7 @@ import { truncateMarkdownV2Safely } from '../format-markdown-v2'
 let _campaignDb: D1Client | null = null
 export function resetCampaignDb() { _campaignDb = null; }
 function getCampaignDb(): D1Client | null {
-  if (!_campaignDb) _campaignDb = tryCreateServerClient();
+  if (!_campaignDb) _campaignDb = tryCreateServerClientSync();
   return _campaignDb;
 }
 

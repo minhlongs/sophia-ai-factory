@@ -76,7 +76,7 @@ export { rowToDomain as performanceRowToDomain, domainToRow as performanceDomain
 export async function recordPerformanceEvent(
   event: PerformanceEvent,
 ): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new PerformanceError('D1_UNAVAILABLE', 'D1 not available');
 
   const id = event.id || newPerformanceEventId();
@@ -114,7 +114,7 @@ export async function getPerformanceEvents(
     dateRange?: { from: number; to: number };
   },
 ): Promise<PerformanceEvent[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new PerformanceError('D1_UNAVAILABLE', 'D1 not available');
 
   const conditions = ['workspace_id = ?1'];

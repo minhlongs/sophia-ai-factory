@@ -55,7 +55,7 @@ function rowToExperiment(row: AbExperimentRow): AbExperiment {
  * Returns the created experiment ID.
  */
 export async function createExperiment(input: CreateExperimentInput): Promise<string> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const id = generateShortId() + generateShortId(); // 16-char unique ID
   const now = new Date().toISOString();
@@ -94,7 +94,7 @@ export async function createExperiment(input: CreateExperimentInput): Promise<st
  * Uses SQLite atomic increment to avoid race conditions.
  */
 export async function incrementCounter(update: ExperimentCounterUpdate): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const col =
     update.variant === 'a'
@@ -118,7 +118,7 @@ export async function markWinner(
   experimentId: string,
   winner: WinnerVariant,
 ): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const now = new Date().toISOString();
 
@@ -140,7 +140,7 @@ export async function markWinner(
 
 /** Fetch a single experiment by ID. */
 export async function getExperiment(id: string): Promise<AbExperiment | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const row = await db
     .prepare('SELECT * FROM ab_experiments WHERE id = ? LIMIT 1')
@@ -152,7 +152,7 @@ export async function getExperiment(id: string): Promise<AbExperiment | null> {
 
 /** Fetch all active experiments for a tenant. */
 export async function getActiveExperiments(tenantId: string): Promise<AbExperiment[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const { results } = await db
     .prepare(
@@ -171,7 +171,7 @@ export async function getAllExperiments(
   tenantId: string,
   limit = 50,
 ): Promise<AbExperiment[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const { results } = await db
     .prepare(
@@ -193,7 +193,7 @@ export async function getAllExperiments(
 export async function getActiveExperimentsOlderThan(
   minAgeHours: number,
 ): Promise<AbExperiment[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const cutoff = new Date(Date.now() - minAgeHours * 60 * 60 * 1000).toISOString();
 
@@ -216,7 +216,7 @@ export async function getActiveExperimentsOlderThan(
 export async function getActiveByContentType(
   contentType: ContentType,
 ): Promise<AbExperiment[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   const { results } = await db

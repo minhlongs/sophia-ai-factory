@@ -45,7 +45,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   }
 
     const creds = await registerMastodonApp(normalized);
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
 

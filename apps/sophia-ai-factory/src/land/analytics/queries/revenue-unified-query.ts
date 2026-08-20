@@ -138,7 +138,7 @@ function buildDateSeries(
 export async function fetchUnifiedRevenue(
   periodDays: 7 | 30 | 90,
 ): Promise<UnifiedRevenueSummary> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   const toDate = new Date();

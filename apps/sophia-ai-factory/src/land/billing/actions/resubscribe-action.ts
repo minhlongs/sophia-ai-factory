@@ -54,7 +54,7 @@ export async function resubscribe(): Promise<Result<ResubscribeResult, BillingEr
     }
 
     // Get D1
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }

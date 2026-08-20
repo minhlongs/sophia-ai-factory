@@ -48,7 +48,7 @@ export async function createExperiment(params: {
   trafficPct?: number
   createdBy: string
 }): Promise<string> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   const id = crypto.randomUUID()
@@ -74,7 +74,7 @@ export async function createExperiment(params: {
 
 /** Fetch all active experiments for a given SOP template. */
 export async function getActiveExperiments(sopTemplateId: string): Promise<SopExperiment[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   try {
@@ -101,7 +101,7 @@ export async function assignVariant(params: {
   userId: string
   executionId?: string
 }): Promise<{ variantKey: string; variantValue: unknown } | null> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   const { experimentId, userId, executionId } = params
@@ -154,7 +154,7 @@ export async function recordOutcome(params: {
   executionId: string
   outcomeJson: Record<string, unknown>
 }): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   try {
@@ -174,7 +174,7 @@ export async function recordOutcome(params: {
 
 /** Aggregate assignment outcomes per variant for an experiment. */
 export async function evaluateExperiment(experimentId: string): Promise<ExperimentEvaluation> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   const { results } = await db

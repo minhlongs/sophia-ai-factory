@@ -49,7 +49,7 @@ describe('GET /api/affiliate/payouts', () => {
 
   it('converts total_cents → total_usd in response', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>)
-    vi.mocked(getD1).mockReturnValue(mockD1Returning([
+    vi.mocked(getD1).mockResolvedValue(mockD1Returning([
       {
         id: 'b1',
         total_cents: 2550, // $25.50
@@ -79,7 +79,7 @@ describe('GET /api/affiliate/payouts', () => {
   it('caps limit at 100', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>)
     const d1 = mockD1Returning([])
-    vi.mocked(getD1).mockReturnValue(d1 as unknown as D1Database)
+    vi.mocked(getD1).mockResolvedValue(d1 as unknown as D1Database)
     await GET(buildRequest({ limit: '999' }))
     const prepared = d1.prepare.mock.results[0].value
     // Third bind arg is limit
@@ -88,7 +88,7 @@ describe('GET /api/affiliate/payouts', () => {
 
   it('returns empty list cleanly', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>)
-    vi.mocked(getD1).mockReturnValue(mockD1Returning([]) as unknown as D1Database)
+    vi.mocked(getD1).mockResolvedValue(mockD1Returning([]) as unknown as D1Database)
     const resp = await GET(buildRequest())
     const body = (await resp.json()) as { batches: unknown[] }
     expect(body.batches).toEqual([])
@@ -96,7 +96,7 @@ describe('GET /api/affiliate/payouts', () => {
 
   it('handles stripe_connect payment_method rows', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue({ id: 'u1' } as Awaited<ReturnType<typeof getCurrentUser>>)
-    vi.mocked(getD1).mockReturnValue(mockD1Returning([
+    vi.mocked(getD1).mockResolvedValue(mockD1Returning([
       {
         id: 'b2',
         total_cents: 10000,

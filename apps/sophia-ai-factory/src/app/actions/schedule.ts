@@ -20,7 +20,7 @@ export async function createScheduleAction(input: CreateScheduleInput) {
     }
 
     const db = createServerClient();
-    const d1db = getD1();
+    const d1db = await getD1();
     if (!d1db) throw new Error('D1 database binding not available');
 
     const scheduleId = crypto.randomUUID();
@@ -55,7 +55,7 @@ export async function toggleScheduleAction(id: string, currentActive: number) {
     }
 
     const db = createServerClient();
-    const d1db = getD1();
+    const d1db = await getD1();
     if (!d1db) throw new Error('D1 database binding not available');
 
     const newActive = currentActive === 1 ? 0 : 1;
@@ -85,7 +85,7 @@ export async function deleteScheduleAction(id: string) {
     }
 
     const db = createServerClient();
-    const d1db = getD1();
+    const d1db = await getD1();
     if (!d1db) throw new Error('D1 database binding not available');
 
     const { error } = await db
@@ -113,7 +113,7 @@ export async function getSchedulesAction() {
     }
 
     const db = createServerClient();
-    const d1db = getD1();
+    const d1db = await getD1();
     if (!d1db) throw new Error('D1 database binding not available');
 
     const { data, error } = await db

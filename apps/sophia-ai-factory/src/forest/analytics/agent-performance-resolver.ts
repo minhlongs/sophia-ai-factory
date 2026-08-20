@@ -172,8 +172,8 @@ export async function resolveAgentPerformance(
 }
 
 /** Get D1 database — canonical pattern */
-export function getD1ForAnalytics(): D1Database {
-  const _db = getD1();
+export async function getD1ForAnalytics(): Promise<D1Database> {
+  const _db = await getD1();
   if (!_db) throw new Error('[analytics/agent-performance] D1 binding not available');
   return _db;
 }

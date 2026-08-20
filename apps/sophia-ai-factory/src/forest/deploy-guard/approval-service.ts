@@ -32,7 +32,7 @@ export class ApprovalService {
     filesChanged: number
     requiredAttestations?: number
   }): Promise<{ approvalId: string; status: DeployApprovalStatus }> {
-    const db = getD1()
+    const db = await getD1()
     if (!db) throw new Error('Database not available')
 
     const id = generateApprovalId()
@@ -91,7 +91,7 @@ export class ApprovalService {
    * Get approval by ID with attestations.
    */
   async getApproval(approvalId: string): Promise<ApprovalDetailDto | null> {
-    const db = getD1()
+    const db = await getD1()
     if (!db) return null
 
     // Get approval
@@ -125,7 +125,7 @@ export class ApprovalService {
     signature: string,
     operatorHost: string
   ): Promise<{ success: boolean; remaining: number; quorumReached: boolean }> {
-    const db = getD1()
+    const db = await getD1()
     if (!db) throw new Error('Database not available')
 
     // Check approval exists and is pending
@@ -195,7 +195,7 @@ export class ApprovalService {
    * Mark approval as approved (quorum reached or manual approval).
    */
   async approveApproval(approvalId: string): Promise<void> {
-    const db = getD1()
+    const db = await getD1()
     if (!db) throw new Error('Database not available')
 
     const now = Math.floor(Date.now() / 1000)
@@ -218,7 +218,7 @@ export class ApprovalService {
    * Reject an approval with a rationale.
    */
   async rejectApproval(approvalId: string, operatorId: string, reason: string): Promise<void> {
-    const db = getD1()
+    const db = await getD1()
     if (!db) throw new Error('Database not available')
 
     // Check approval exists and is pending
@@ -259,7 +259,7 @@ export class ApprovalService {
     requestedBy: string
     reason: string
   }): Promise<DeployOverride> {
-    const db = getD1()
+    const db = await getD1()
     if (!db) throw new Error('Database not available')
 
     const id = `override_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
@@ -298,7 +298,7 @@ export class ApprovalService {
    * List pending approvals.
    */
   async listPending(limit: number = 50, offset: number = 0): Promise<DeployApproval[]> {
-    const db = getD1()
+    const db = await getD1()
     if (!db) return []
 
     const rows = await db
@@ -319,7 +319,7 @@ export class ApprovalService {
    * Queries admin_audit_log for DEPLOY_GUARD_* actions.
    */
   async getHistory(limit: number = 100, cursor?: string): Promise<{ entries: Record<string, unknown>[]; nextCursor: string | null }> {
-    const db = getD1()
+    const db = await getD1()
     if (!db) return { entries: [], nextCursor: null }
 
     // Query admin_audit_log for deploy guard events
@@ -389,7 +389,7 @@ export class ApprovalService {
     reason: string
     metadata: Record<string, unknown> | null
   }): Promise<void> {
-    const db = getD1()
+    const db = await getD1()
     if (!db) return // non-fatal if DB unavailable
 
     const now = Math.floor(Date.now() / 1000)
@@ -423,7 +423,7 @@ export class ApprovalService {
    * Check if a deployment is allowed (quorum reached or valid override exists).
    */
   async isDeploymentAllowed(commitSha: string): Promise<{ allowed: boolean; reason?: string }> {
-    const db = getD1()
+    const db = await getD1()
     if (!db) return { allowed: true, reason: 'DB unavailable, allowing through' }
 
     // Check for override

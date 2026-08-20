@@ -46,6 +46,7 @@ vi.mock('@/seed/db/client', () => ({
   createServerClient: vi.fn(() => mockSupabase),
   createClient: vi.fn(() => mockSupabase),
   tryCreateServerClient: vi.fn(() => mockSupabase),
+  tryCreateServerClientSync: vi.fn(() => mockSupabase),
 }))
 
 // Mock Inngest

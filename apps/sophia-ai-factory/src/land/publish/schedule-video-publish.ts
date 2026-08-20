@@ -85,7 +85,7 @@ export async function schedulePublish(
     );
   }
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   // RBAC: video must belong to caller

@@ -45,7 +45,7 @@ export async function POST(
   }
 
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     const db = _db;
     await db
@@ -84,7 +84,7 @@ export async function GET(
 
   const { filename } = await params
 
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const row = await db

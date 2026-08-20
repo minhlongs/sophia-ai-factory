@@ -74,7 +74,7 @@ export async function getAutonomyConfig(
   agentType = 'global',
 ): Promise<Result<AutonomyConfig, AutonomyRepoError>> {
   try {
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) return failure({ code: 'DB_UNAVAILABLE', message: 'D1 database binding not available' });
 
     const row = await d1
@@ -167,7 +167,7 @@ export async function setAutonomyLevel(
       return failure({ code: 'DB_ERROR', message: `Invalid autonomy level: ${level}. Must be 0-4.` });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) return failure({ code: 'DB_UNAVAILABLE', message: 'D1 database binding not available' });
 
     const id = `${workspaceId}:${agentType}`;

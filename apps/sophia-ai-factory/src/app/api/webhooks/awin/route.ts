@@ -70,7 +70,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const transactionId = String(payload.id ?? '')
   if (!transactionId) return NextResponse.json({ ok: true, skipped: 'no_transaction_id' })
 
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) {
     logger.warn('[awin-webhook] D1 unavailable');
     return NextResponse.json({ ok: true, skipped: 'db_unavailable' });

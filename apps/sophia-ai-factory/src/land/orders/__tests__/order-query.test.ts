@@ -35,13 +35,13 @@ describe('getUserOrders', () => {
   })
 
   it('returns empty array for user with no purchases', async () => {
-    mockedGetD1.mockReturnValue(makeD1Mock([]) as unknown as D1Database)
+    mockedGetD1.mockResolvedValue(makeD1Mock([]) as unknown as D1Database)
     const result = await getUserOrders('user-123')
     expect(result).toEqual([])
   })
 
   it('maps a purchase row with no video to null videoStatus', async () => {
-    mockedGetD1.mockReturnValue(makeD1Mock([
+    mockedGetD1.mockResolvedValue(makeD1Mock([
       {
         purchase_id: 'p-1',
         sku: 'starter-10',
@@ -66,7 +66,7 @@ describe('getUserOrders', () => {
   })
 
   it('maps a purchase row with queued video correctly', async () => {
-    mockedGetD1.mockReturnValue(makeD1Mock([
+    mockedGetD1.mockResolvedValue(makeD1Mock([
       {
         purchase_id: 'p-2',
         sku: 'growth-20',

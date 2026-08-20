@@ -25,7 +25,7 @@ export const dlqReaper = inngest.createFunction(
   { cron: '0 * * * *' },
   async ({ step }) => {
     const stale = await step.run('fetch-stale-dlq', async () => {
-      const _db = getD1();
+      const _db = await getD1();
       if (!_db) throw new Error('D1 database binding not available');
       const db = _db as unknown as D1LikeClient;
       return getStaleDlqEntries(db, STALE_AGE_HOURS)
@@ -43,7 +43,7 @@ export const dlqReaper = inngest.createFunction(
 
     for (const entry of stale) {
       const result = await step.run(`reenqueue-${entry.event_id}`, async () => {
-        const _db = getD1();
+        const _db = await getD1();
         if (!_db) throw new Error('D1 database binding not available');
         const db = _db as unknown as D1LikeClient;
         const ok = await reenqueueDlqEntry(db, entry.event_id)

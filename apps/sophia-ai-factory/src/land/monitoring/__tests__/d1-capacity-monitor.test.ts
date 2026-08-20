@@ -72,7 +72,7 @@ describe('D1CapacityMonitor', () => {
   });
 
   it('should return green alert level when no D1 binding is available', async () => {
-    vi.mocked(getD1).mockReturnValue(null);
+    vi.mocked(getD1).mockResolvedValue(null);
 
     const report = await getD1CapacityReport();
 
@@ -85,7 +85,7 @@ describe('D1CapacityMonitor', () => {
   });
 
   it('should return a valid report with D1 binding present', async () => {
-    vi.mocked(getD1).mockReturnValue(buildMockDb());
+    vi.mocked(getD1).mockResolvedValue(buildMockDb());
 
     const report = await getD1CapacityReport();
 
@@ -101,7 +101,7 @@ describe('D1CapacityMonitor', () => {
   });
 
   it('should include at least one recommendation', async () => {
-    vi.mocked(getD1).mockReturnValue(buildMockDb());
+    vi.mocked(getD1).mockResolvedValue(buildMockDb());
 
     const report = await getD1CapacityReport();
 
@@ -109,7 +109,7 @@ describe('D1CapacityMonitor', () => {
   });
 
   it('should handle D1 query errors gracefully', async () => {
-    vi.mocked(getD1).mockReturnValue({
+    vi.mocked(getD1).mockResolvedValue({
       prepare: () => {
         throw new Error('D1 query failed');
       },
@@ -126,7 +126,7 @@ describe('D1CapacityMonitor', () => {
     (globalThis as unknown as Record<string, number>).__D1_QUERY_COUNT = 100;
     (globalThis as unknown as Record<string, number>).__D1_ERROR_COUNT = 3; // 3% error rate
 
-    vi.mocked(getD1).mockReturnValue(buildMockDb());
+    vi.mocked(getD1).mockResolvedValue(buildMockDb());
 
     const report = await getD1CapacityReport();
 
@@ -137,7 +137,7 @@ describe('D1CapacityMonitor', () => {
   });
 
   it('should handle empty sqlite_master results', async () => {
-    vi.mocked(getD1).mockReturnValue(buildMockDb({ tableRows: {} }));
+    vi.mocked(getD1).mockResolvedValue(buildMockDb({ tableRows: {} }));
 
     const report = await getD1CapacityReport();
 
@@ -146,7 +146,7 @@ describe('D1CapacityMonitor', () => {
   });
 
   it('should return numeric latency values', async () => {
-    vi.mocked(getD1).mockReturnValue(buildMockDb());
+    vi.mocked(getD1).mockResolvedValue(buildMockDb());
 
     const report = await getD1CapacityReport();
 
@@ -156,7 +156,7 @@ describe('D1CapacityMonitor', () => {
 
   it('should return green alert level when metrics are healthy', async () => {
     // Clean counters = healthy
-    vi.mocked(getD1).mockReturnValue(buildMockDb());
+    vi.mocked(getD1).mockResolvedValue(buildMockDb());
 
     const report = await getD1CapacityReport();
 

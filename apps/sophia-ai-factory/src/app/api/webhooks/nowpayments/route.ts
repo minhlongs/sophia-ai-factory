@@ -142,6 +142,14 @@ return NextResponse.json({ received: true })
 // Process the IPN event (subscriptions, one-time purchases)
 const result = await processNowPaymentsIpn(ipn)
 
+// Idempotent replay: already-processed IPNs return 200 OK with no side-effects.
+// The atomic lock (INSERT ... ON CONFLICT DO NOTHING on payment_events.event_id)
+// guarantees this branch is reached only for genuine replays, never for a
+// concurrent in-flight request (which gets "Already processing" instead).
+if (result.message === 'Already processed') {
+return NextResponse.json({ received: true, deduplicated: true })
+}
+
 if (!result.success) {
 logger.error('[NOWPayments Webhook] IPN processing failed', new Error(result.message), {
 payment_id: ipn.payment_id,
@@ -166,7 +174,7 @@ track(D1Events.PAYMENT_SUCCESS, 'webhook', { amount_usd: ipn.price_amount, curre
 let fromTier: string = 'unknown'
 try {
   // Check D1 availability before calling resolveUserTier
-  const d1Check = getD1()
+  const d1Check = await getD1()
   if (!d1Check) {
     await writeDeadLetterToR2(generateDeadLetterKey('nowpayments', `resolve_tier_${ipn.payment_id}`), {
       webhookType: 'nowpayments',
@@ -186,7 +194,7 @@ logger.warn('[NOWPayments Webhook] resolveUserTier failed, using fallback', tier
 track(D1Events.TIER_CONVERSION, userId, { from_tier: fromTier, to_tier: tierName, amount_usd: ipn.price_amount, provider: 'nowpayments' }, userId)
 
 // Emit outbound webhook event (fire-and-forget) — guard D1 availability
-const db = getD1();
+const db = await getD1();
 if (db) {
 emit({ DB: db }, 'payment.received', {
 tenantId: userId,

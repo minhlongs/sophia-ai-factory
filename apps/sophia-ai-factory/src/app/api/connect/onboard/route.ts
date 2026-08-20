@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid request body', detail: getErrorMessage(err) }, { status: 400 });
   }
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const existing = (await db
     .prepare('SELECT stripe_account_id FROM user_payout_settings WHERE user_id = ?')

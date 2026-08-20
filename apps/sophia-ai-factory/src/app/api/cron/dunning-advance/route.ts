@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
   if (authError) return authError;
 
   const cronCtx = startCronCheckIn(CRON_NAME);
-  const d1 = getD1();
+  const d1 = await getD1();
 
   if (d1 && await wasRecentlyRun(d1, CRON_NAME, IDEMPOTENCY_WINDOW_MS)) {
     finishCronCheckIn(cronCtx, CRON_NAME);

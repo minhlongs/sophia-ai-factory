@@ -92,7 +92,7 @@ export async function searchAuditLog(input: AuditSearchInput): Promise<AuditLogR
                LIMIT ? OFFSET ?`;
   binds.push(limit, offset);
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const result = await db.prepare(sql).bind(...binds).all<RawRow>();
   return (result.results ?? []).map((r) => ({
@@ -121,7 +121,7 @@ export async function getTopActions(
   limit: number = 20,
 ): Promise<ActionFrequency[]> {
   const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const result = await db
     .prepare(

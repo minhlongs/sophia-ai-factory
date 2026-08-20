@@ -181,7 +181,7 @@ export async function pruneOldMemories(userId: string): Promise<void> {
 
     if (toDelete.length > 0) {
       const { getD1 } = await import('@/seed/db/client');
-      const db = getD1();
+      const db = await getD1();
       if (db) {
         for (const convId of toDelete) {
           await db

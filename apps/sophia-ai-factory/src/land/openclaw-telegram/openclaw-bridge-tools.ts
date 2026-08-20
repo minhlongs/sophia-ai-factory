@@ -140,7 +140,7 @@ export type SchedulePublishBridgeResult =
 export async function callSchedulePublish(
   input: SchedulePublishBridgeInput,
 ): Promise<SchedulePublishBridgeResult> {
-  const d1 = getD1();
+  const d1 = await getD1();
   if (!d1) {
     return { ok: false, code: 'DB_ERROR', message: 'Database not available' };
   }

@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
 
   const tenantId = user.id
   const affiliateId = user.id
-  const db = getD1()
+  const db = await getD1()
   if (!db) throw new Error('D1 database binding not available')
 
   const result = await db

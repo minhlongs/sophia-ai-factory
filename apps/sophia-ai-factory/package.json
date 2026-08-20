@@ -34,6 +34,8 @@
     "test:load:soak": "k6 run tests/load/k6-soak.js",
     "test:load:stress": "k6 run tests/load/k6-stress.js",
     "perf:check": "tsx scripts/perf-check.ts",
+    "perf:bundle": "tsx scripts/perf/bundle-analyzer.ts",
+    "test:perf:load": "PERF_TARGET_URL=${PERF_TARGET_URL:-https://sophia.agencyos.network} vitest run tests/perf/load-baseline.spec.ts",
     "setup:production": "tsx scripts/production-setup.ts",
     "infra:sync": "./scripts/infra-sync.sh",
     "i18n:validate": "node scripts/validate-i18n-keys.mjs",

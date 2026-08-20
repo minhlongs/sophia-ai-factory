@@ -23,7 +23,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     const row = await db
       .prepare(

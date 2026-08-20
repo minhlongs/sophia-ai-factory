@@ -131,7 +131,7 @@ function makeDb(
 describe('completeVideoFromWebhook', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getD1).mockReturnValue(makeD1() as unknown as D1Database)
+    vi.mocked(getD1).mockResolvedValue(makeD1() as unknown as D1Database)
     vi.mocked(createServerClient).mockReturnValue(makeDb() as unknown as ReturnType<typeof createServerClient>)
   })
 
@@ -200,7 +200,7 @@ describe('completeVideoFromWebhook', () => {
     const runFn = vi.fn().mockResolvedValue({ success: true, meta: { changes: 0 } })
     const bindFn = vi.fn().mockReturnValue({ run: runFn })
     const prepareFn = vi.fn().mockReturnValue({ bind: bindFn })
-    vi.mocked(getD1).mockReturnValue({ prepare: prepareFn } as unknown as D1Database)
+    vi.mocked(getD1).mockResolvedValue({ prepare: prepareFn } as unknown as D1Database)
 
     await completeVideoFromWebhook({
       video_id: 'heygen-abc',
@@ -219,7 +219,7 @@ describe('completeVideoFromWebhook', () => {
 describe('failVideoFromWebhook', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getD1).mockReturnValue(makeD1() as unknown as D1Database)
+    vi.mocked(getD1).mockResolvedValue(makeD1() as unknown as D1Database)
     vi.mocked(createServerClient).mockReturnValue(makeDb() as unknown as ReturnType<typeof createServerClient>)
     vi.mocked(markPermanentFailureCAS).mockResolvedValue(true)
     vi.mocked(recordAttemptCAS).mockResolvedValue(2)

@@ -96,7 +96,7 @@ async function importMasterKey(): Promise<CryptoKey> {
 }
 
 async function loadKeyVersion(version: number): Promise<CryptoKey | null> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) return null
 
   const row = await db
@@ -119,7 +119,7 @@ async function loadKeyVersion(version: number): Promise<CryptoKey | null> {
 }
 
 export async function getActiveKeyVersion(): Promise<number> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) return 1
 
   const row = await db
@@ -150,7 +150,7 @@ function isDuplicateKeyVersionError(error: unknown): boolean {
 }
 
 export async function ensureKeyVersionRow(version: number): Promise<void> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) return
 
   const existing = await db

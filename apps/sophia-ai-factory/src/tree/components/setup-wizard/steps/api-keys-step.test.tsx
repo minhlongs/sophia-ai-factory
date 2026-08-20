@@ -73,6 +73,7 @@ describe('ApiKeysStep', () => {
         verifyKey={mockVerifyKey}
         status={defaultStatus}
         errors={{}}
+        onNext={vi.fn()}
       />
     );
     expect(screen.getByText('AI Service Configuration')).toBeDefined();
@@ -87,6 +88,7 @@ describe('ApiKeysStep', () => {
         verifyKey={mockVerifyKey}
         status={defaultStatus}
         errors={{}}
+        onNext={vi.fn()}
       />
     );
     expect(screen.getByLabelText(/OpenRouter API Key/i)).toBeDefined();
@@ -105,6 +107,7 @@ describe('ApiKeysStep', () => {
         verifyKey={mockVerifyKey}
         status={defaultStatus}
         errors={{}}
+        onNext={vi.fn()}
       />
     );
     expect(screen.queryByLabelText(/HeyGen/i)).toBeNull();
@@ -118,6 +121,7 @@ describe('ApiKeysStep', () => {
         verifyKey={mockVerifyKey}
         status={defaultStatus}
         errors={{}}
+        onNext={vi.fn()}
       />
     );
     expect(screen.getByLabelText(/Anthropic API Key/i)).toBeDefined();
@@ -131,6 +135,7 @@ describe('ApiKeysStep', () => {
         verifyKey={mockVerifyKey}
         status={defaultStatus}
         errors={{}}
+        onNext={vi.fn()}
       />
     );
     const anthropicInput = screen.getByLabelText(/Anthropic API Key/i);
@@ -147,6 +152,7 @@ describe('ApiKeysStep', () => {
         verifyKey={mockVerifyKey}
         status={defaultStatus}
         errors={{}}
+        onNext={vi.fn()}
       />
     );
 
@@ -174,6 +180,7 @@ describe('ApiKeysStep', () => {
         verifyKey={mockVerifyKey}
         status={defaultStatus}
         errors={{}}
+        onNext={vi.fn()}
       />
     );
 

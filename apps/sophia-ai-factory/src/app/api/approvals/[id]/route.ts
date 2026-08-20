@@ -22,7 +22,7 @@ const resolveSchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getCurrentUser();
@@ -39,8 +39,9 @@ export async function PATCH(
       );
     }
 
+    const { id } = await params;
     // Fetch approval + linked agent run for workspace IDOR check
-    const approvalResult = await getApproval(params.id);
+    const approvalResult = await getApproval(id);
     if (!approvalResult.ok) {
       if (approvalResult.error.code === 'NOT_FOUND') {
         return NextResponse.json({ error: 'Approval not found' }, { status: 404 });
@@ -84,13 +85,13 @@ export async function PATCH(
     }
 
     const status = parsed.data.approved ? 'approved' : 'rejected';
-    const result = await resolveApproval(params.id, status, user.id, parsed.data.reason);
+    const result = await resolveApproval(id, status, user.id, parsed.data.reason);
 
     if (!result.ok) {
       return NextResponse.json({ error: result.error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ status, approvalId: params.id });
+    return NextResponse.json({ status, approvalId: id });
   } catch (err) {
     return NextResponse.json(
       { error: 'internal_error', details: getErrorMessage(err) },

@@ -47,7 +47,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid input', details: getErrorMessage(err) }, { status: 400 });
   }
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   // Check duplicate email

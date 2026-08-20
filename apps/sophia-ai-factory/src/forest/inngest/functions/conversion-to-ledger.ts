@@ -40,7 +40,7 @@ export const conversionToLedger = inngest.createFunction(
     const { conversionEventId, tenantId } = event.data
 
     const conversion = await step.run('fetch-conversion', async () => {
-      const _db = getD1();
+      const _db = await getD1();
       if (!_db) throw new Error('D1 database binding not available');
       const db = _db;
       return db
@@ -67,7 +67,7 @@ export const conversionToLedger = inngest.createFunction(
     }
 
     const tenantTier = await step.run('fetch-tenant-tier', async () => {
-      const _db = getD1();
+      const _db = await getD1();
       if (!_db) throw new Error('D1 database binding not available');
       const db = _db;
       const row = await db
@@ -83,7 +83,7 @@ export const conversionToLedger = inngest.createFunction(
     // schema (`vn_pit_enabled` column on tenant_settings) was never deployed to
     // remote D1, so this is the only working source of truth.
     const vnPitEnabled = await step.run('fetch-tenant-vn-pit', async () => {
-      const _db = getD1();
+      const _db = await getD1();
       if (!_db) throw new Error('D1 database binding not available');
       const db = _db;
       const row = await db

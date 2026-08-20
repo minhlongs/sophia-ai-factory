@@ -77,7 +77,7 @@ async function handleExport(): Promise<NextResponse> {
 
   let db: D1Database;
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     db = _db;
   } catch (err) {

@@ -106,7 +106,7 @@ export const offerSyncCron = inngest.createFunction(
   { cron: '0 * * * *' },
   async ({ step }) => {
     const results: UpsertResult[] = await step.run('sync-all-networks', async () => {
-      const db = getD1()
+      const db = await getD1()
       const settled = await Promise.allSettled(
         PROVIDERS.map(async provider => {
           try {

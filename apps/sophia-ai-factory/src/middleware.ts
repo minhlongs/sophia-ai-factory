@@ -9,7 +9,7 @@ import { handleCorsPrelight } from './middleware/cors';
 import { handleApiPipeline } from './middleware/api-pipeline';
 import { handleDashboardPipeline } from './middleware/dashboard-pipeline';
 import { handlePublicPipeline } from './middleware/public-pipeline';
-import { checkAuthRateLimit } from '@/forest/middleware/rate-limiter';
+import { checkAuthRateLimit, checkAdminRateLimit } from '@/forest/middleware/rate-limiter';
 import type { AnalyticsEngineDataset } from '@cloudflare/workers-types';
 
 /** L2: apply security headers to error responses that bypass the normal pipeline */
@@ -69,7 +69,7 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   if (isInternalOrStatic(pathname)) return NextResponse.next();
 
 const BARE_AUTH_APP_ROUTES = new Set([
-  'pricing', 'setup-wizard', 'reset-password',
+  'pricing', 'reset-password',
   'dashboard', 'checkout', 'settings', 'products', 'payments',
   'admin', 'affiliates', 'affiliate-portal', 'subscribers',
   'webhook', 'creator', 'investor-room',
@@ -130,6 +130,10 @@ const BARE_AUTH_APP_ROUTES = new Set([
   const authRateLimitResponse = await checkAuthRateLimit(request);
   if (authRateLimitResponse) return authRateLimitResponse;
 
+  // Security: D1-backed admin rate limiting (cross-isolate) for /dashboard/admin/* and /api/admin/*
+  const adminRateLimitResponse = await checkAdminRateLimit(request);
+  if (adminRateLimitResponse) return adminRateLimitResponse;
+
   const nonce = generateNonce();
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(CSP_NONCE_HEADER, nonce);
@@ -161,9 +165,11 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     status = response.status;
     isError = status >= 400;
     return response;
-  } catch {
+  } catch (err) {
     isError = true;
     // L2: return a safe error response with security headers instead of throwing
+    // TEMP-DIAG: surface the real cause so dev isn't a black box.
+    console.error('[middleware] proxyImpl threw:', err instanceof Error ? err.stack : String(err));
     return applySecurityHeaders(
       NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     );

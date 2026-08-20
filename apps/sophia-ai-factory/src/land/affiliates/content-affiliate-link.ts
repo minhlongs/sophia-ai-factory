@@ -33,7 +33,7 @@ export async function linkContentToAffiliate(opts: {
   workspaceId: string; projectId: string; assetId?: string; linkId: string
   affiliateCode?: string; network?: string; attributionId?: string
 }): Promise<Result<ContentAffiliateLink, Error>> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) return failure(new Error('D1 database binding not available'))
   const id = `cal_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
   try {
@@ -62,7 +62,7 @@ export async function linkContentToAffiliate(opts: {
 export async function getContentAffiliateLinks(opts: {
   workspaceId: string; projectId?: string
 }): Promise<Result<ContentAffiliateLink[], Error>> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) return failure(new Error('D1 database binding not available'))
   const where = opts.projectId
     ? ' WHERE workspace_id = ? AND content_project_id = ? ORDER BY created_at DESC'

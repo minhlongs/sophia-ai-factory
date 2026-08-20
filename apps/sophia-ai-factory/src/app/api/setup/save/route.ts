@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
 
     // Mark onboarding complete in DB (primary) and cookie (fallback resilience)
     try {
-      const db = getD1()
+      const db = await getD1()
       if (!db) throw new Error('D1 database binding not available')
       const nowMs = Date.now()
       db

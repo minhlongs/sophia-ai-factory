@@ -74,7 +74,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const email = parsed.data.email.toLowerCase().trim();
 
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
 
     // Look up user by email in Better Auth's "user" table

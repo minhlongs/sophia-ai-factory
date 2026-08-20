@@ -59,7 +59,7 @@ async function AdminSOPReviewsContent({ locale, userId: _userId }: { locale: str
 
   // Fetch pending review listings
   const { getD1 } = await import('@/seed/db/client');
-  const d1 = getD1();
+  const d1 = await getD1();
 
   if (!d1) {
     return (

@@ -262,13 +262,33 @@ export function isPublicApiRoute(pathname: string): boolean {
     '/api/account/delete/confirm',
     '/api/account/change-email/verify',
     '/api/sign-in/email-verification',
+
+    // Promo codes — public by design (route docs: "Auth optional — creates
+    // user from email if not logged in"). Lost in the 2026-08-15 security
+    // audit that narrowed the allow-list to exact paths; restored here as
+    // exact paths so a future private promo subpath can never become public
+    // silently. Both routes are public: validate (pre-check) + redeem-free
+    // (creates user + fires auto-handover + returns magic link).
+    '/api/promo/redeem-free',
+    '/api/promo/validate',
   ]);
 
   if (exactPublic.has(pathname)) return true;
 
   // Stable token-based flow prefix family
   if (pathname.startsWith('/api/sign-')) return true;
-  if (pathname.startsWith('/api/auth/')) return false; // default deny
+  // Better Auth owns its own auth for ALL /api/auth/* paths (catch-all route).
+  // These endpoints (csrf, sign-in, session, sign-up, mfa, callback, etc.) are
+  // intentionally unauthenticated at the gateway layer — Better Auth enforces
+  // its own auth/CSRF policy per-route. A blanket "default deny" here 401'd
+  // Better Auth's GET endpoints (e.g. /api/auth/csrf, /api/auth/session)
+  // before they could seed CSRF tokens or return session state, breaking the
+  // E2E auth fixture and every session-based flow.
+  // Security posture is preserved: the exact-public allow-list above is the
+  // authoritative set, and unknown /api/auth/* subpaths still reach Better Auth,
+  // which 404s them. /api/webhooks/* and /api/cron/* stay default-deny because
+  // they are signature-authenticated and not covered by a catch-all handler.
+  if (pathname.startsWith('/api/auth/')) return true;
   if (pathname.startsWith('/api/webhooks/')) return false; // default deny
   if (pathname.startsWith('/api/cron/')) return false; // default deny
 

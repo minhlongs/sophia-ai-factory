@@ -1,5 +1,5 @@
 import { TelegramFSM, BotState } from '@/tree/telegram/telegram-fsm-state-manager'
-import { tryCreateServerClient, D1Client } from '@/seed/db/client'
+import { tryCreateServerClientSync, D1Client } from '@/seed/db/client'
 import { backupSessionState } from '@/tree/telegram/telegram-state-backup-service'
 import { sendMessage } from '@/tree/telegram/handlers/utils'
 import { logger } from '@/seed/utils/logger-utility'
@@ -7,7 +7,7 @@ import { logger } from '@/seed/utils/logger-utility'
 let _emailDb: D1Client | null = null
 export function resetEmailDb() { _emailDb = null; }
 function getEmailDb(): D1Client {
-  if (!_emailDb) _emailDb = tryCreateServerClient();
+  if (!_emailDb) _emailDb = tryCreateServerClientSync();
   if (!_emailDb) throw new Error('D1 database binding not available');
   return _emailDb;
 }

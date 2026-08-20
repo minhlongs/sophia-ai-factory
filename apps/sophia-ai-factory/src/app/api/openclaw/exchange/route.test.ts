@@ -84,7 +84,7 @@ beforeEach(() => {
   mintCounts = {};
   process.env.BETTER_AUTH_SECRET = 'test-secret-route';
   mockGetUser.mockResolvedValue(baseUser as never);
-  mockGetD1.mockReturnValue(makeD1Mock() as unknown as D1Database);
+  mockGetD1.mockResolvedValue(makeD1Mock() as unknown as D1Database);
 });
 
 // ── Tests ─────────────────────────────────────────────────────────────────────

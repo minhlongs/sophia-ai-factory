@@ -141,7 +141,7 @@ function isValidTransition(from: ExperimentStatus, to: ExperimentStatus): boolea
 export async function createExperiment(
   experiment: Experiment,
 ): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new PerformanceError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);
@@ -184,7 +184,7 @@ export async function createExperiment(
 }
 
 export async function getExperiment(id: string): Promise<Experiment> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new PerformanceError('D1_UNAVAILABLE', 'D1 not available');
 
   const expRow = await db
@@ -207,7 +207,7 @@ export async function listExperiments(
   workspaceId: string,
   opts?: { projectId?: string; status?: ExperimentStatus },
 ): Promise<Experiment[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new PerformanceError('D1_UNAVAILABLE', 'D1 not available');
 
   const conditions = ['workspace_id = ?1'];
@@ -235,7 +235,7 @@ export async function listExperiments(
 }
 
 export async function startExperiment(id: string): Promise<Experiment> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new PerformanceError('D1_UNAVAILABLE', 'D1 not available');
 
   const existing = await db
@@ -266,7 +266,7 @@ export async function completeExperiment(
   id: string,
   opts?: { winnerVariantId?: string; confidence?: number; result?: string },
 ): Promise<Experiment> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new PerformanceError('D1_UNAVAILABLE', 'D1 not available');
 
   const existing = await db
@@ -308,7 +308,7 @@ export async function recordExperimentResult(
   variantId: string,
   result: Omit<ExperimentResult, 'id' | 'experimentId' | 'variantId' | 'recordedAt'>,
 ): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new PerformanceError('D1_UNAVAILABLE', 'D1 not available');
 
   const id = 'eres_' + crypto.randomUUID().replace(/-/g, '').slice(0, 24);
@@ -341,7 +341,7 @@ export async function recordExperimentResult(
 export async function getExperimentResults(
   experimentId: string,
 ): Promise<ExperimentResult[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new PerformanceError('D1_UNAVAILABLE', 'D1 not available');
 
   const result = await db

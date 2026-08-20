@@ -68,7 +68,7 @@ export async function persistHook(
 ): Promise<void> {
   const id = `${tenantId}:${event}:${handlerModule}`;
   const now = Date.now();
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   await db
     .prepare(
@@ -87,7 +87,7 @@ export async function loadHooks(
   tenantId: string,
   event: string,
 ): Promise<string[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const result = await db
     .prepare(

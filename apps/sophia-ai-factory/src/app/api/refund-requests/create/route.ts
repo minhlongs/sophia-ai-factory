@@ -49,7 +49,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   try {
     // Verify purchase ownership
-    const db = getD1()
+    const db = await getD1()
     if (!db) throw new Error('D1 database binding not available')
     const purchase = await db
       .prepare(`SELECT id, user_id, payment_id, amount_cents, status, created_at, paid_at FROM user_purchases WHERE id = ?1 AND kind = 'one_time'`)

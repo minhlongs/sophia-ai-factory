@@ -64,7 +64,7 @@ export async function deductCredits(
   if (amount <= 0) return true;
 
   try {
-    const _d1 = getD1();
+    const _d1 = await getD1();
     if (!_d1) throw new Error('D1 database binding not available');
     const d1 = _d1;
 
@@ -107,7 +107,7 @@ export async function addCredits(
   if (amount <= 0) return true;
 
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     const d1 = _db;
 

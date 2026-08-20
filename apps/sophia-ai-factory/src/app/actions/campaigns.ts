@@ -52,7 +52,7 @@ if (!membership) {
  return { success: false, message: 'Forbidden: user is not a member of any organization' };
 }
 
-const d1db = getD1();
+const d1db = await getD1();
 if (!d1db) throw new Error('D1 database binding not available');
 
   // TIER CHECK: Multi-channel access

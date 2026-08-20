@@ -31,7 +31,7 @@ const updateStatusSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getCurrentUser();
@@ -39,7 +39,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const result = await getMission({ missionId: params.id });
+    const { id } = await params;
+    const result = await getMission({ missionId: id });
 
     if (!result.ok) {
       if (result.error.code === 'NOT_FOUND') {
@@ -62,7 +63,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const body = await request.json();
@@ -74,8 +75,9 @@ export async function PATCH(
       );
     }
 
+    const { id } = await params;
     const result = await updateMissionStatus({
-      missionId: params.id,
+      missionId: id,
       status: parsed.data.status,
     });
 

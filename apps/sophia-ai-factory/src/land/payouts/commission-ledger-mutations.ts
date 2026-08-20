@@ -19,7 +19,7 @@ export async function claimLedgerRows(
   batchId: string,
 ): Promise<number> {
   if (ledgerIds.length === 0) return 0
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const placeholders = ledgerIds.map(() => '?').join(',')
@@ -43,7 +43,7 @@ export async function markLedgerPaid(
   batchId: string,
 ): Promise<void> {
   if (ledgerIds.length === 0) return
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const now = Math.floor(Date.now() / 1000)
@@ -63,7 +63,7 @@ export async function markLedgerPaid(
  * Allows next cron run to retry the same affiliate.
  */
 export async function rollbackPayingRows(batchId: string): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const now = Math.floor(Date.now() / 1000)
@@ -81,7 +81,7 @@ export async function rollbackPayingRows(batchId: string): Promise<void> {
  * Sum all paid net cents (commission - withheld) for reconciliation (C1).
  */
 export async function sumPaidCommissionsCents(tenantId: string): Promise<number> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const result = await db
@@ -101,7 +101,7 @@ export async function sumPaidCommissionsCents(tenantId: string): Promise<number>
 export async function getPaidBatchSummary(
   tenantId: string,
 ): Promise<{ payout_batch_id: string; total_cents: number }[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const result = await db

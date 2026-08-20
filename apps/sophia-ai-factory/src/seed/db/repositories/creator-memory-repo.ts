@@ -42,7 +42,7 @@ export async function addMemory(params: {
   sourceExecutionId?: string;
   expiresAt?: number;
 }): Promise<string> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const id = crypto.randomUUID();
@@ -99,7 +99,7 @@ export async function getRelevantMemories(
   },
 ): Promise<CreatorMemoryDbRow[]> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
     const now = Date.now();
@@ -162,7 +162,7 @@ export async function updateMemoryRelevance(
   id: string,
   relevanceScore: number,
 ): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   const clamped = Math.max(0.0, Math.min(1.0, relevanceScore));
@@ -190,7 +190,7 @@ export async function updateMemoryRelevance(
  */
 export async function pruneExpiredMemories(): Promise<number> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
     const now = Date.now();

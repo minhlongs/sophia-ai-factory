@@ -19,7 +19,7 @@ export async function getPlatformCredential(
   userId: string,
   platform: string,
 ): Promise<PlatformCredential | null> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   return db
@@ -38,7 +38,7 @@ export async function upsertPlatformCredential(input: {
   platformChannelName?: string;
   scopes?: string;
 }): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
@@ -79,7 +79,7 @@ export async function deletePlatformCredential(
   userId: string,
   platform: string,
 ): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   await db
@@ -91,7 +91,7 @@ export async function deletePlatformCredential(
 export async function listPlatformCredentials(
   userId: string,
 ): Promise<PlatformCredential[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   const result = await db

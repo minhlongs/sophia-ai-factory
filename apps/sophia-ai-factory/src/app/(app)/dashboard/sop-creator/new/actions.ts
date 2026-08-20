@@ -22,7 +22,7 @@ export async function createNewListing(formData: {
       return { success: false, error: { message: 'Authentication required' } };
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return { success: false, error: { message: 'Database not available' } };
     }

@@ -12,7 +12,7 @@ async function handleConsolidate(request: NextRequest): Promise<NextResponse> {
   if (authError) return authError;
 
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     const activeUsers = await db
       .prepare(

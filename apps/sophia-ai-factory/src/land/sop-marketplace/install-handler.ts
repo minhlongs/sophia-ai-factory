@@ -58,7 +58,7 @@ export async function installSop(
     }
 
     // 2. Get database binding
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
@@ -184,7 +184,7 @@ export async function uninstallSop(
     }
 
     // 2. Get database binding
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }

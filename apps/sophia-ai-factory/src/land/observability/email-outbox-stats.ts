@@ -74,7 +74,7 @@ function mapRecent(r: RawRecent): OutboxRecentRow {
 
 /** Aggregate snapshot of the email outbox. */
 export async function getEmailOutboxSnapshot(): Promise<OutboxSnapshot> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const nowSec = Math.floor(Date.now() / 1000);
 

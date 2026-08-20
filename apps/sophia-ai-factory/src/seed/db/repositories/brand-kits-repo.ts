@@ -29,7 +29,7 @@ logoOpacity?: number | null;
 }
 
 export async function getBrandKit(userId: string): Promise<BrandKit | null> {
-const db = getD1();
+const db = await getD1();
 if (!db) return null;
 const result = await db
 .prepare('SELECT * FROM brand_kits WHERE user_id = ?')
@@ -39,7 +39,7 @@ return result ?? null;
 }
 
 export async function upsertBrandKit(input: UpsertBrandKitInput): Promise<BrandKit> {
-const db = getD1();
+const db = await getD1();
 if (!db) throw new Error('Database unavailable');
 const existing = await getBrandKit(input.userId);
 
@@ -113,7 +113,7 @@ asset: 'logo_r2_key' | 'intro_r2_key' | 'outro_r2_key' | 'font_r2_key',
 if (!ALLOWED_ASSET_COLUMNS.has(asset)) {
 throw new Error(`Invalid asset column: ${asset}`);
 }
-const db = getD1();
+const db = await getD1();
 if (!db) return;
 db.prepare(`UPDATE brand_kits SET ${asset} = NULL, updated_at = datetime('now') WHERE user_id = ?`)
 .bind(userId)

@@ -33,7 +33,7 @@ export async function createRefundRequest(params: {
   reason: string
   customerWalletAddress: string
 }): Promise<string> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const id = crypto.randomUUID().replace(/-/g, '')
   await db
@@ -48,7 +48,7 @@ export async function createRefundRequest(params: {
 }
 
 export async function listPendingRefunds(): Promise<RefundRequest[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const result = await db
     .prepare(`SELECT * FROM refund_requests ORDER BY created_at DESC LIMIT 200`)
@@ -57,7 +57,7 @@ export async function listPendingRefunds(): Promise<RefundRequest[]> {
 }
 
 export async function getRefundById(id: string): Promise<RefundRequest | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const row = await db
     .prepare(`SELECT * FROM refund_requests WHERE id = ?1`)
@@ -73,7 +73,7 @@ export async function updateRefundStatus(params: {
   adminNotes?: string
   refundTxHash?: string
 }): Promise<boolean> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   // H9 fix (2026-07-01): AND status = 'pending' prevents TOCTOU race
   // where two concurrent PATCH requests could both pass the status check
@@ -109,7 +109,7 @@ export async function getRefundByPurchaseAndUser(
   purchaseId: string,
   userId: string,
 ): Promise<RefundRequest | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const row = await db
     .prepare(
@@ -134,7 +134,7 @@ export async function processRefundStatus(params: {
   adminNotes?: string
   refundTxHash: string
 }): Promise<number> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) throw new Error('D1 database binding not available')
 
   const result = await db
@@ -184,7 +184,7 @@ export async function createRefundLedgerEntry(params: {
   mcuClawedBack: number
   txHash: string
 }): Promise<string> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) throw new Error('D1 database binding not available')
 
   const id = crypto.randomUUID().replace(/-/g, '')

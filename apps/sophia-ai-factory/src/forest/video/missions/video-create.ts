@@ -12,7 +12,7 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
   const script = (params?.script as string) ?? 'Hello, this is your AI avatar video.';
   const title = (params?.title as string) ?? 'AI Video';
 
-  const _rawDb = getD1();
+  const _rawDb = await getD1();
   if (!_rawDb) throw new Error('D1 database binding not available');
   const rawDb = _rawDb;
   const db = createServerClient();

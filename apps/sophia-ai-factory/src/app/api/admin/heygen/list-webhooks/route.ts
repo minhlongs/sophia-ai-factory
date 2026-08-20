@@ -26,7 +26,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   // Verify user exists
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const user = await db.prepare('SELECT id, email FROM user WHERE id = ?1').bind(userId).first<UserRow>()

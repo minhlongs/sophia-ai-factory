@@ -52,7 +52,7 @@ async function handler(request: NextRequest): Promise<NextResponse> {
   const cronCtx = startCronCheckIn(CRON_NAME);
   const startedAt = Date.now();
   const counts: UpdateCounts = { to_active: 0, to_at_risk: 0, to_churned: 0, unchanged: 0 };
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   try {

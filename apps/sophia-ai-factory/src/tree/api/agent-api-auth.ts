@@ -63,7 +63,7 @@ export async function generateApiKey(
   const now = Math.floor(Date.now() / 1000);
 
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
     await db
@@ -91,7 +91,7 @@ export async function generateApiKey(
 export async function validateApiKey(rawKey: string): Promise<ApiKey | null> {
   try {
     const keyHash = await sha256Hex(rawKey);
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
     const now = Math.floor(Date.now() / 1000);
@@ -127,7 +127,7 @@ export async function validateApiKey(rawKey: string): Promise<ApiKey | null> {
  */
 export async function checkRateLimit(apiKeyId: string): Promise<RateLimitResult> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
     const now = Math.floor(Date.now() / 1000);
@@ -174,7 +174,7 @@ export async function logApiRequest(params: {
   ipAddress?: string;
 }): Promise<void> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
     await db
@@ -208,7 +208,7 @@ export async function logApiRequest(params: {
 /** Revoke an API key (set is_active = 0). */
 export async function revokeApiKey(keyId: string): Promise<void> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
     await db.prepare(`UPDATE api_keys SET is_active = 0 WHERE id = ?`).bind(keyId).run();

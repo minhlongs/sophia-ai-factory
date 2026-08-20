@@ -82,7 +82,7 @@ export async function provisionTierChange(params: {
   const isDowngrade = TIER_RANK[targetTier] < TIER_RANK[currentTier]
   const eventType = isDowngrade ? 'downgrade' : 'upgrade'
 
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 

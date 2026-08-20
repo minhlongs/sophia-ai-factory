@@ -35,7 +35,7 @@ export const analyticsSync = inngest.createFunction(
   async ({ step }) => {
     // Fetch all users with published YouTube videos
     const publishedVideos = await step.run('fetch-published-videos', async () => {
-      const _db = getD1();
+      const _db = await getD1();
       if (!_db) throw new Error('D1 database binding not available');
       const db = _db;
       const { results } = await db

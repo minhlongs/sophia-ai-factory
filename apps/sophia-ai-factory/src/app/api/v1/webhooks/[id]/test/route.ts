@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const rl = globalRateLimiter.checkLimit(getClientIdentifier(r), { intervalMs: 60_000, maxRequests: 5 });
     if (!rl.allowed) return createRateLimitResponse(rl);
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
     try {

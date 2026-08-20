@@ -32,7 +32,7 @@ export async function acquireCommissionEventLock(
   eventType: string,
   payload: Record<string, unknown>,
 ): Promise<LockResult> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) {
     logger.error('[commission-ledger] D1 binding not available')
     return { acquired: false, alreadyProcessed: false }
@@ -83,7 +83,7 @@ export async function acquireCommissionEventLock(
  * Mark a commission event as processed (lock release).
  */
 export async function markCommissionEventProcessed(eventId: string): Promise<void> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) {
     logger.error('[commission-ledger] D1 binding not available for mark processed')
     return
@@ -106,7 +106,7 @@ export async function markCommissionEventProcessed(eventId: string): Promise<voi
  * Release a lock on transient failure (delete the lock row to allow retry).
  */
 export async function releaseCommissionEventLock(eventId: string): Promise<void> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) return
 
   try {

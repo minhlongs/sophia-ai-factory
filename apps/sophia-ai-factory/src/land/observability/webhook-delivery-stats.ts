@@ -79,7 +79,7 @@ function mapAttempt(r: RawAttempt): WebhookAttemptRow {
 
 /** Aggregate snapshot of webhook delivery health. */
 export async function getWebhookDeliverySnapshot(): Promise<WebhookDeliverySnapshot> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   const [endpointRow, totalsRes, failuresRes, successesRes] = await Promise.all([

@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
   const { id } = await params;
 
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     const row = await db
       .prepare(`SELECT * FROM customer_handovers WHERE id = ?1 LIMIT 1`)
@@ -61,7 +61,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams): Prom
   }
 
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     const result = await db
       .prepare(`UPDATE customer_handovers SET status = ?1 WHERE id = ?2`)

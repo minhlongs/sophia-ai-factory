@@ -87,7 +87,7 @@ async function importMasterKey(): Promise<CryptoKey> {
 }
 
 async function loadKeyVersion(version: number): Promise<CryptoKey | null> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) return null
 
   const row = await db
@@ -110,7 +110,7 @@ async function loadKeyVersion(version: number): Promise<CryptoKey | null> {
 }
 
 async function getPreviousKeyVersion(): Promise<KeyVersionRow | null> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) return null
 
   return db

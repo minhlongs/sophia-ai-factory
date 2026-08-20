@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
 
   const tenantId = user.id
   const affiliateId = user.id
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) {
     logger.error('[Affiliate/PayoutMethod] D1 unavailable');
     return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
@@ -105,7 +105,7 @@ export async function GET(_request: NextRequest) {
 
   const tenantId = user.id
   const affiliateId = user.id
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) {
     logger.error('[Affiliate/PayoutMethod/GET] D1 unavailable');
     return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });
@@ -146,7 +146,7 @@ export async function DELETE(request: NextRequest) {
 
   const tenantId = user.id
   const affiliateId = user.id
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) {
     logger.error('[Affiliate/PayoutMethod/DELETE] D1 unavailable');
     return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });

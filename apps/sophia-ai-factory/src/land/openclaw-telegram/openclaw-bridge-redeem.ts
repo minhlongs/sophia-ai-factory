@@ -37,7 +37,7 @@ export async function callRedeemFree100(input: RedeemFree100Input): Promise<Rede
       return { success: false, error: 'payment_required' };
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) throw new Error('D1 database binding not available');
 
     // Check if user already exists

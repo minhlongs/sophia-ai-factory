@@ -18,7 +18,7 @@ import type {
 export async function enqueueVideo(
   input: EnqueueVideoInput,
 ): Promise<string> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
 
@@ -60,7 +60,7 @@ export async function enqueueVideo(
  * NOT for real customer fulfillment.
  */
 export async function markVideoCompletedSynthetic(videoId: string): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   const now = Math.floor(Date.now() / 1000)
@@ -81,7 +81,7 @@ export async function markVideoCompletedSynthetic(videoId: string): Promise<void
 
 /** Transition video from 'queued' to 'processing' (HeyGen job started). */
 export async function markVideoProcessing(videoId: string, heygenJobId: string): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   const now = Math.floor(Date.now() / 1000)
@@ -101,7 +101,7 @@ export async function markVideoProcessing(videoId: string, heygenJobId: string):
 
 /** Record a failed attempt (non-CAS). Status stays 'queued' for retry cron pickup. */
 export async function recordAttempt(videoId: string, errorMsg: string): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   const now = Math.floor(Date.now() / 1000)
@@ -120,7 +120,7 @@ export async function recordAttempt(videoId: string, errorMsg: string): Promise<
 
 /** Mark video as permanently failed after MAX_ATTEMPTS exhausted (non-CAS). */
 export async function markPermanentFailure(videoId: string, reason: string): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   const now = Math.floor(Date.now() / 1000)
@@ -139,7 +139,7 @@ export async function markPermanentFailure(videoId: string, reason: string): Pro
 
 /** Revoke access for all videos linked to a purchase (e.g. on refund). */
 export async function revokeAccessByPurchaseId(purchaseId: string): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   const now = Math.floor(Date.now() / 1000)
@@ -162,7 +162,7 @@ export async function revokeAccessByPurchaseId(purchaseId: string): Promise<void
 export async function insertAiPromptVideo(
   input: InsertAiPromptVideoInput,
 ): Promise<InsertAiPromptVideoResult> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   const now = Math.floor(Date.now() / 1000)

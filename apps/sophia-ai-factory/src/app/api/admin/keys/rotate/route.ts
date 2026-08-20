@@ -28,13 +28,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     return NextResponse.json({ error: 'D1 database binding not available' }, { status: 503 });
   }
 
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return NextResponse.json({ error: 'D1 database binding not available' }, { status: 503 });
     }

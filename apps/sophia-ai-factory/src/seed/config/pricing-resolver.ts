@@ -23,7 +23,7 @@ interface PricingOverrideRow {
  */
 export async function getEffectiveSkuPrice(skuId: string): Promise<number> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     const db = _db;
     const row = await db
@@ -51,7 +51,7 @@ export async function setSkuPrice(
   priceCents: number,
   adminUserId: string,
 ): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   await db
@@ -73,7 +73,7 @@ export async function setSkuPrice(
  */
 export async function listPricingOverrides(): Promise<PricingOverrideRow[]> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     const db = _db;
     const result = await db.prepare('SELECT * FROM pricing_overrides ORDER BY sku').all<PricingOverrideRow>()
@@ -89,7 +89,7 @@ export async function listPricingOverrides(): Promise<PricingOverrideRow[]> {
 export async function getAllEffectivePrices(): Promise<Record<string, number>> {
   const overrides: Record<string, number> = {}
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
     const result = await db.prepare('SELECT sku, price_cents, enabled FROM pricing_overrides').all<PricingOverrideRow>()

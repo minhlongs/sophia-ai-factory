@@ -43,7 +43,7 @@ interface SubscriptionRow {
 
 async function isUserInDunning(userId: string): Promise<boolean> {
   try {
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) return false;
 
     const row = await d1
@@ -69,7 +69,7 @@ export async function cancelSubscription(): Promise<Result<CancelResult, Billing
     }
 
     // Get D1
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }

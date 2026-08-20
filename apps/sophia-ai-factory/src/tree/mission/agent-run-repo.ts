@@ -132,7 +132,7 @@ export async function createAgentRun(
   input: CreateAgentRunInput
 ): Promise<Result<AgentRunRecord, { code: string; message: string }>> {
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'D1 not available' });
     }
@@ -173,7 +173,7 @@ export async function getAgentRun(
   id: string
 ): Promise<Result<AgentRunRecord | null, { code: string; message: string }>> {
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'D1 not available' });
     }
@@ -191,7 +191,7 @@ export async function updateAgentRun(
   patch: UpdateAgentRunInput
 ): Promise<Result<AgentRunRecord, { code: string; message: string }>> {
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'D1 not available' });
     }
@@ -233,7 +233,7 @@ export async function appendAgentLog(
   entry: AgentLogEntry
 ): Promise<Result<AgentLogEntry, { code: string; message: string }>> {
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'D1 not available' });
     }
@@ -259,7 +259,7 @@ export async function createApproval(
   input: CreateApprovalInput
 ): Promise<Result<Record<string, unknown>, { code: string; message: string }>> {
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'D1 not available' });
     }
@@ -303,7 +303,7 @@ export async function getApproval(
   id: string
 ): Promise<Result<Record<string, unknown> | null, { code: string; message: string }>> {
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'D1 not available' });
     }
@@ -323,7 +323,7 @@ export async function resolveApproval(
   comment?: string
 ): Promise<Result<Record<string, unknown>, { code: string; message: string }>> {
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'D1 not available' });
     }
@@ -372,7 +372,7 @@ export async function listPendingApprovals(
   offset = 0
 ): Promise<Result<{ approvals: PendingApprovalRecord[]; count: number }, { code: string; message: string }>> {
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'D1 not available' });
     }

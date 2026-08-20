@@ -1,10 +1,12 @@
 import type { NextConfig } from "next";
 import type { Configuration } from "webpack";
 import path from 'node:path';
+import os from 'node:os';
 import createNextIntlPlugin from 'next-intl/plugin';
 import withBundleAnalyzer from '@next/bundle-analyzer';
 import withPWAInit from '@ducanh2912/next-pwa';
 import { withSentryConfig } from '@sentry/nextjs';
+import { initOpenNextCloudflareForDev } from '@opennextjs/cloudflare';
 // CSP is now injected per-request by middleware (nonce-based).
 // buildCSPHeader import intentionally removed from next.config.ts.
 
@@ -189,6 +191,41 @@ const finalConfig = process.env.SKIP_SENTRY_BUILD === '1'
   telemetry: false,
   // Note: The plugin's default behavior is to throw on upload errors (fail-fast).
   // No explicit `throwOnError` option exists; errors propagate naturally.
+});
+
+// Initialize the OpenNext Cloudflare dev context so that getCloudflareContext()
+// (and therefore the D1 binding via __cloudflare-context__) is populated during
+// `next dev`. Without this call, the edge chunk (middleware/proxy) receives an
+// empty CF context and every D1-backed check fail-closes (429).
+// The function is async and intentionally not awaited — it bootstraps the
+// context for the dev server; see @opennextjs/cloudflare docs.
+// `persist` points getPlatformProxy() at the wrangler state dir so the dev
+// D1 binding is the SAME sqlite file that `wrangler d1 execute --local` uses.
+// Without it, every `next dev` start gets a fresh empty in-memory D1 with no
+// schema, and every D1-backed check (rate limits, signals_events, tag cache)
+// fail-closes — e.g. /api/health returns 429 because the rate_limits table
+// doesn't exist. Production is unaffected (it reads __env__.DB directly).
+// The path is absolute because a relative path resolves from the OpenNext
+// internal module location and misses the real state dir.
+void initOpenNextCloudflareForDev({
+  persist: { path: path.join(os.homedir(), '.wrangler/state/v3') },
+}).then(() => {
+  // eslint-disable-next-line no-console
+  const sym = Symbol.for('__cloudflare-context__');
+  const ctx = (globalThis as Record<symbol, unknown>)[sym];
+  console.log('[next.config] initOpenNextCloudflareForDev resolved. Symbol state:', {
+    hasSymbol: ctx !== undefined,
+    ctxKeys: ctx ? Object.keys(ctx as object) : null,
+    hasEnv: ctx && typeof (ctx as { env?: unknown }).env !== 'undefined',
+    envKeys: ctx && (ctx as { env?: Record<string, unknown> }).env
+      ? Object.keys((ctx as { env?: Record<string, unknown> }).env as Record<string, unknown>).slice(0, 14)
+      : null,
+    hasDB: ctx && (ctx as { env?: Record<string, unknown> }).env && typeof ((ctx as { env?: Record<string, unknown> }).env as Record<string, unknown>).DB !== 'undefined',
+    asyncLocalStorage: typeof (globalThis as { AsyncLocalStorage?: unknown }).AsyncLocalStorage,
+  });
+}).catch((err) => {
+  // eslint-disable-next-line no-console
+  console.error('[next.config] initOpenNextCloudflareForDev REJECTED:', err instanceof Error ? err.stack : String(err));
 });
 
 export default finalConfig;

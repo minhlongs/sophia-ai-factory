@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const origin = request.headers.get('origin');
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) {
     const response = NextResponse.json(
       { status: 'unknown', uptime90d: null, incident: null },

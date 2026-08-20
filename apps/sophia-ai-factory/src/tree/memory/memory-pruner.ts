@@ -101,7 +101,7 @@ export class MemoryPruner {
    */
   async pruneExpired(): Promise<number> {
     try {
-      const db = getD1();
+      const db = await getD1();
       if (!db) throw new Error('D1 database binding not available');
 
       const now = Date.now();
@@ -166,7 +166,7 @@ export class MemoryPruner {
    */
   async decayRelevance(): Promise<number> {
     try {
-      const db = getD1();
+      const db = await getD1();
       if (!db) throw new Error('D1 database binding not available');
 
       const cutoff = Date.now() - this.config.decayPeriodDays * 24 * 60 * 60 * 1000;
@@ -218,7 +218,7 @@ export class MemoryPruner {
    */
   async consolidateDuplicates(): Promise<number> {
     try {
-      const db = getD1();
+      const db = await getD1();
       if (!db) throw new Error('D1 database binding not available');
 
       // Fetch candidate memories (excluding preferences).

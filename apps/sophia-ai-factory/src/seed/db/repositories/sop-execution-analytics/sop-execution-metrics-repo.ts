@@ -25,7 +25,7 @@ export async function logExecutionCompletion(params: {
   stepsFailed: number;
   qualityScore?: number;
 }): Promise<string> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   const id = crypto.randomUUID();
@@ -84,7 +84,7 @@ export async function rateExecution(
   rating: number,
   feedbackText?: string,
 ): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   const now = Date.now();
@@ -113,7 +113,7 @@ export async function getSOPPerformanceMetrics(
   limit = 100,
 ): Promise<SOPPerformanceSummary | null> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
     const row = await db
@@ -171,7 +171,7 @@ export async function getCreatorPerformanceMetrics(
   limit = 100,
 ): Promise<CreatorPerformanceSummary | null> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
     const row = await db

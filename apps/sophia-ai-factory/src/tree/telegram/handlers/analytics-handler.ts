@@ -39,7 +39,7 @@ interface ConversionRow {
  */
 export async function handleAnalytics(chatId: string): Promise<void> {
   try {
-    const db = tryCreateServerClient();
+    const db = await tryCreateServerClient();
 
 if (!db) {
   await sendMessage(chatId, 'Database unavailable. Please try again later.');

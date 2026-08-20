@@ -227,7 +227,7 @@ export const sopExecute = inngest.createFunction(
     // ── Apply Prompt Optimizations ─────────────────────────────────────────
     sopSteps = await step.run('apply-prompt-optimizations', async () => {
       try {
-        const _db = getD1();
+        const _db = await getD1();
         if (!_db) throw new Error('D1 database binding not available');
         const db = _db;
         const { results } = await db

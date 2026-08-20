@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return NextResponse.json({ error: 'Database not available' }, { status: 503 });
     }

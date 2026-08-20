@@ -33,7 +33,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) {
       logger.error('[Welcome/Status] D1 unavailable');
       return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });

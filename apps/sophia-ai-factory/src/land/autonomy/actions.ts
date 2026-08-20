@@ -50,7 +50,7 @@ const SetAutonomyLevelSchema = z.object({
 
 async function getPrimaryWorkspaceId(userId: string): Promise<string | null> {
   try {
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) return null;
     const row = await d1
       .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
@@ -67,7 +67,7 @@ async function assertWorkspaceMembership(
   workspaceId: string,
 ): Promise<Result<void, AutonomyActionError>> {
   try {
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) return failure({ code: 'DB_ERROR', message: 'Database not available' });
     const membership = await d1
       .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
@@ -97,7 +97,7 @@ export async function getAutonomyConfigAction(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) return failure({ code: 'DB_ERROR', message: 'Database not available' });
 
     const targetWorkspaceId = workspaceId ?? (await getPrimaryWorkspaceId(user.id));
@@ -146,7 +146,7 @@ export async function setAutonomyLevelAction(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) return failure({ code: 'DB_ERROR', message: 'Database not available' });
 
     const workspaceId = await getPrimaryWorkspaceId(user.id);

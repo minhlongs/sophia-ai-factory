@@ -24,7 +24,7 @@ interface CommissionSummary {
 }
 
 async function getCommissionAggregate(): Promise<CommissionSummary> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   const result = await db

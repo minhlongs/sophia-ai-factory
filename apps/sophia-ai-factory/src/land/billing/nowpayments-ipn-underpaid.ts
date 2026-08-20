@@ -30,7 +30,7 @@ export async function markUnderpaid(
   actuallyPaid: number,
 ): Promise<Result<void, IPNError>> {
   try {
-    const _d1 = getD1();
+    const _d1 = await getD1();
     if (!_d1) return failure(new IPNError('D1_BINDING_UNAVAILABLE'));
     const d1 = _d1;
     const amountCents = Math.round(actuallyPaid * 100)

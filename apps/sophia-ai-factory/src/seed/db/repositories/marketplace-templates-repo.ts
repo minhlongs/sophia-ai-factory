@@ -23,7 +23,7 @@ export async function createMarketplaceTemplate(input: {
   previewR2Key?: string;
   priceCents?: number;
 }): Promise<MarketplaceTemplate> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const id = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
@@ -40,7 +40,7 @@ export async function createMarketplaceTemplate(input: {
 }
 
 export async function getMarketplaceTemplate(templateId: string): Promise<MarketplaceTemplate | null> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   return db
@@ -53,7 +53,7 @@ export async function listPublicTemplates(
   limit: number = 20,
   offset: number = 0,
 ): Promise<MarketplaceTemplate[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const result = await db
@@ -64,7 +64,7 @@ export async function listPublicTemplates(
 }
 
 export async function listUserTemplates(userId: string): Promise<MarketplaceTemplate[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   const result = await db
@@ -79,7 +79,7 @@ export async function updateTemplateVisibility(
   creatorId: string,
   isPublic: boolean,
 ): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   await db
@@ -89,7 +89,7 @@ export async function updateTemplateVisibility(
 }
 
 export async function incrementTemplateDownloads(templateId: string): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   await db
@@ -99,7 +99,7 @@ export async function incrementTemplateDownloads(templateId: string): Promise<vo
 }
 
 export async function updateTemplateRating(templateId: string, newRating: number): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   await db

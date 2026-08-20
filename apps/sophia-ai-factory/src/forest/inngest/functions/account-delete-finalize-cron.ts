@@ -37,7 +37,7 @@ export const accountDeleteFinalizeCron = inngest.createFunction(
   { cron: '0 */6 * * *' },
   async ({ step }) => {
     const pending = await step.run('fetch-pending', async (): Promise<PendingRow[]> => {
-      const _db = getD1();
+      const _db = await getD1();
       if (!_db) throw new Error('D1 database binding not available');
       const db = _db;
       const rs = await db
@@ -59,7 +59,7 @@ export const accountDeleteFinalizeCron = inngest.createFunction(
 
     for (const row of pending) {
       const result = await step.run(`cascade-${row.user_id}`, async () => {
-        const _db = getD1();
+        const _db = await getD1();
         if (!_db) throw new Error('D1 database binding not available');
         const db = _db;
         return cascadeDeleteAccount(db, row.user_id, row.tenant_id);

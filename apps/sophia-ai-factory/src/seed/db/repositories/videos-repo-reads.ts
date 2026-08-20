@@ -17,7 +17,7 @@ export async function findByHeygenJobId(
   heygenJobId: string,
   _ownerUserId?: string | null,
 ): Promise<VideoRow | null> {
-  const _db = getD1()
+  const _db = await getD1()
   if (!_db) throw new Error('D1 binding not available')
   const db = _db
 
@@ -49,7 +49,7 @@ export async function findByHeygenJobId(
  * Returns null when no row matches.
  */
 export async function findByPurchaseId(purchaseId: string): Promise<VideoRow | null> {
-  const _db = getD1()
+  const _db = await getD1()
   if (!_db) throw new Error('D1 binding not available')
   const db = _db
 
@@ -81,7 +81,7 @@ export async function listQueuedForRetry(
   maxAttempts: number,
   limit = 10,
 ): Promise<VideoRow[]> {
-  const _db = getD1()
+  const _db = await getD1()
   if (!_db) throw new Error('D1 binding not available')
   const db = _db
 

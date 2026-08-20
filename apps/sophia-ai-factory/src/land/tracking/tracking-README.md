@@ -63,10 +63,10 @@ Content-Type: application/json
 - GDPR compliant: no PII in database
 - `TRACKING_HMAC_SECRET` env var drives the per-tenant hash key
 
-## TODO: Signature Verification
+## Signature Verification
 
-Network-specific HMAC signature verification is not yet implemented.
-Current security: unguessable base62 link IDs.
+Network-specific HMAC signature verification is enabled by default.
+Disable via `POSTBACK_SIGNATURE_VERIFICATION_ENABLED=false` env var (dev/staging only).
 
-When ready, enable via `POSTBACK_SIGNATURE_VERIFICATION_ENABLED=true` env var.
-Implementation location: `src/app/api/postback/[network]/route.ts`
+Implementation: `src/land/postback/hmac-verifier.ts`
+Route integration: `src/app/api/postback/[network]/route.ts`

@@ -20,7 +20,7 @@ export async function recordAttemptCAS(
   videoId: string,
   errorMsg: string,
 ): Promise<number | null> {
-  const _db = getD1()
+  const _db = await getD1()
   if (!_db) throw new Error('D1 binding not available')
   const db = _db
   const now = Math.floor(Date.now() / 1000)
@@ -52,7 +52,7 @@ export async function markPermanentFailureCAS(
   reason: string,
   minAttemptCount: number,
 ): Promise<boolean> {
-  const _db = getD1()
+  const _db = await getD1()
   if (!_db) throw new Error('D1 binding not available')
   const db = _db
   const now = Math.floor(Date.now() / 1000)
@@ -88,7 +88,7 @@ export async function markPermanentFailure(
   videoId: string,
   reason: string,
 ): Promise<boolean> {
-  const _db = getD1()
+  const _db = await getD1()
   if (!_db) throw new Error('D1 binding not available')
   const db = _db
   const now = Math.floor(Date.now() / 1000)
@@ -117,7 +117,7 @@ export async function recordWebhookAttemptCAS(
   videoId: string,
   errorMsg: string,
 ): Promise<number | null> {
-  const _db = getD1()
+  const _db = await getD1()
   if (!_db) throw new Error('D1 binding not available')
   const db = _db
   const now = Math.floor(Date.now() / 1000)
@@ -149,7 +149,7 @@ export async function markWebhookPermanentFailureCAS(
   reason: string,
   minAttemptCount: number,
 ): Promise<boolean> {
-  const _db = getD1()
+  const _db = await getD1()
   if (!_db) throw new Error('D1 binding not available')
   const db = _db
   const now = Math.floor(Date.now() / 1000)

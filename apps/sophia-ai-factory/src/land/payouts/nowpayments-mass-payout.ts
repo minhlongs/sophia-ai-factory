@@ -121,7 +121,7 @@ export interface BatchQueueInput {
  * Converts cents → USDT float at API call boundary.
  */
 export async function queueBatch(input: BatchQueueInput): Promise<{ externalPaymentId: string }> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const apiKey = process.env.NOWPAYMENTS_API_KEY

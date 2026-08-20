@@ -33,7 +33,7 @@ export async function createFeedbackCycle(params: {
   const evaluateAt = params.publishedAt + EVALUATE_AFTER_SECONDS
 
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     const db = _db;
     await db
@@ -60,7 +60,7 @@ export async function getPendingEvaluations(now?: number): Promise<FeedbackCycle
   const cutoff = now ?? Math.floor(Date.now() / 1000)
 
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
     const { results } = await db
@@ -97,7 +97,7 @@ export async function evaluatePerformance(
   const evaluation = computeEvaluation(metrics)
 
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
     await db
@@ -132,7 +132,7 @@ export async function suggestOptimization(params: {
   const now = Math.floor(Date.now() / 1000)
 
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
     await db
@@ -163,7 +163,7 @@ export async function applyOptimization(optimizationId: string): Promise<void> {
   const now = Math.floor(Date.now() / 1000)
 
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
     await db
@@ -183,7 +183,7 @@ export async function applyOptimization(optimizationId: string): Promise<void> {
  */
 export async function getOptimizationsForSOP(sopId: string): Promise<PromptOptimization[]> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
     const { results } = await db
@@ -213,7 +213,7 @@ export async function runPerformanceFeedbackAndOptimization(): Promise<number> {
     return 0;
   }
 
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   let processedCount = 0;

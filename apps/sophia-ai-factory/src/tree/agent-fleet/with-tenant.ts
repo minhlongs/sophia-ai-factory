@@ -51,7 +51,7 @@ export async function withTenantScope<T>(
   tenantId: string,
   fn: (db: D1Database) => Promise<T>,
 ): Promise<T> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   return fn(db);

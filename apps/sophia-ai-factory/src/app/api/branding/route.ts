@@ -27,7 +27,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (!org) return NextResponse.json({ branding: null });
 
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     const branding = await getOrgBranding(db, org.id);
     return NextResponse.json({ branding, orgId: org.id });
@@ -66,7 +66,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
   }
 
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     const branding = await upsertOrgBranding(db, org.id, body);
     logger.info('[Branding/PUT] updated', { orgId: org.id, by: user.id });

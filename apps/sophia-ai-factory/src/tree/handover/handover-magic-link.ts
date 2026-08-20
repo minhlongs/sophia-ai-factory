@@ -25,7 +25,7 @@ export async function createMagicLinkToken(
   handoverId: string,
   opts?: { ttlHours?: number; source?: string },
 ): Promise<string> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const token = generateToken();
@@ -52,7 +52,7 @@ export async function validateMagicLinkToken(
   token: string,
 ): Promise<CustomerHandoverRow | null> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     const db = _db;
     const row = await db
@@ -83,7 +83,7 @@ export async function validateMagicLinkToken(
  * means only the first writer's UPDATE has changes>0 — the loser must abort.
  */
 export async function consumeMagicLink(handoverId: string, token: string): Promise<boolean> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   const now = Math.floor(Date.now() / 1000);
@@ -108,7 +108,7 @@ export async function consumeMagicLink(handoverId: string, token: string): Promi
  */
 export async function markFirstRun(customerUserId: string): Promise<void> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
     const now = Math.floor(Date.now() / 1000);
@@ -133,7 +133,7 @@ export async function markFirstRun(customerUserId: string): Promise<void> {
  */
 export async function markFirstSopInstall(customerUserId: string): Promise<void> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
     const now = Math.floor(Date.now() / 1000);

@@ -83,7 +83,7 @@ class RefundProcessError extends Error {
 export async function processRefund(
   input: RefundProcessInput,
 ): Promise<Result<RefundProcessResult, RefundError>> {
-  const db = getD1()
+  const db = await getD1()
   if (!db) {
     return failure({ code: 'INTERNAL_ERROR', message: 'D1 database binding not available' })
   }
@@ -293,7 +293,7 @@ interface SubscriptionRow {
  * Resolve the current tier for a user by looking up their org subscription.
  * Returns BASIC as fallback if no subscription or org membership found.
  */
-async function resolveCurrentTier(userId: string, db: NonNullable<ReturnType<typeof getD1>>): Promise<Tier> {
+async function resolveCurrentTier(userId: string, db: NonNullable<Awaited<ReturnType<typeof getD1>>>): Promise<Tier> {
   try {
     const membership = await db
       .prepare('SELECT org_id FROM org_members WHERE user_id = ?1 LIMIT 1')
@@ -331,7 +331,7 @@ async function resolveCurrentTier(userId: string, db: NonNullable<ReturnType<typ
 async function rollbackTier(
   userId: string,
   targetTier: Tier,
-  db: NonNullable<ReturnType<typeof getD1>>,
+  db: NonNullable<Awaited<ReturnType<typeof getD1>>>,
 ): Promise<void> {
   const dbPlan = TIER_DB_MAPPING[targetTier] ?? 'basic'
   const nowSec = Math.floor(Date.now() / 1000)

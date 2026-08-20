@@ -102,7 +102,7 @@ export class SophiaToolExecutor implements IToolExecutor {
 
   private async getCampaigns(args: Record<string, unknown>): Promise<AgentToolResult> {
     const { getD1 } = await import('@/seed/db/client');
-    const db = getD1();
+    const db = await getD1();
     if (!db) return this.error('Database not available');
 
     const statusFilter = args.status as string | undefined;
@@ -134,7 +134,7 @@ export class SophiaToolExecutor implements IToolExecutor {
 
   private async getCampaignDetail(args: Record<string, unknown>): Promise<AgentToolResult> {
     const { getD1 } = await import('@/seed/db/client');
-    const db = getD1();
+    const db = await getD1();
     if (!db) return this.error('Database not available');
 
     const campaignId = args.campaign_id as string;
@@ -187,7 +187,7 @@ export class SophiaToolExecutor implements IToolExecutor {
 
     // Create campaign directly via D1 (createCampaignCore only sends Inngest event).
     const { getD1 } = await import('@/seed/db/client');
-    const db = getD1();
+    const db = await getD1();
     if (!db) return this.error('Database not available');
 
     const campaignId = crypto.randomUUID();
@@ -230,7 +230,7 @@ export class SophiaToolExecutor implements IToolExecutor {
 
   private async cancelCampaign(args: Record<string, unknown>): Promise<AgentToolResult> {
     const { getD1 } = await import('@/seed/db/client');
-    const db = getD1();
+    const db = await getD1();
     if (!db) return this.error('Database not available');
 
     const campaignId = args.campaign_id as string;
@@ -261,7 +261,7 @@ export class SophiaToolExecutor implements IToolExecutor {
   private async listVideoModels(): Promise<AgentToolResult> {
     // Return models from BYOK config — what the user has configured.
     const { getD1 } = await import('@/seed/db/client');
-    const db = getD1();
+    const db = await getD1();
     if (!db) return this.error('Database not available');
 
     const { results } = await db
@@ -281,7 +281,7 @@ export class SophiaToolExecutor implements IToolExecutor {
 
   private async listVoiceModels(): Promise<AgentToolResult> {
     const { getD1 } = await import('@/seed/db/client');
-    const db = getD1();
+    const db = await getD1();
     if (!db) return this.error('Database not available');
 
     const { results } = await db
@@ -301,7 +301,7 @@ export class SophiaToolExecutor implements IToolExecutor {
 
   private async searchMedia(args: Record<string, unknown>): Promise<AgentToolResult> {
     const { getD1 } = await import('@/seed/db/client');
-    const db = getD1();
+    const db = await getD1();
     if (!db) return this.error('Database not available');
 
     const query = (args.query as string)?.trim();

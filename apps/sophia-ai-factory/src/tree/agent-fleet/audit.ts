@@ -28,7 +28,7 @@ export async function audit(entry: AuditEntry): Promise<void> {
   const metaJson = metadata ? JSON.stringify(metadata) : null;
 
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     const db = _db;
     await db
@@ -49,7 +49,7 @@ export async function queryAuditLog(
   tenantId: string,
   limit = 50,
 ): Promise<AuditRow[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const result = await db

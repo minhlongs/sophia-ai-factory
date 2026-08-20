@@ -78,7 +78,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     let report: AgentPerformanceReport;
     try {
-      const db = getD1ForAnalytics();
+      const db = await getD1ForAnalytics();
       report = await resolveAgentPerformance(db, orgId, win as WindowOption, role);
     } catch (error) {
       logger.warn('[Analytics AgentPerformance] Returning empty report', {

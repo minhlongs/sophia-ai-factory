@@ -61,7 +61,7 @@ export async function resolveAgentHealth(): Promise<AgentHealthSummary> {
   const now = Date.now();
   if (cache && cache.expires > now) return cache.summary;
 
-  const db = getD1();
+  const db = await getD1();
   const since = new Date(now - 24 * 60 * 60 * 1000).toISOString();
 
   // Success/fail counts per role from signals_events

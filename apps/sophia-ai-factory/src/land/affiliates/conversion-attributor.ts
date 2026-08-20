@@ -86,7 +86,7 @@ export async function safeAttributeClick(tid: string): Promise<AttributionLookup
     return { data: null, error: null }
   }
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     logger.warn('[conversion-attributor] D1 binding not available');
     return { data: null, error: null }
@@ -160,7 +160,7 @@ export async function safeAttributeByNetwork(
     return { data: null, error: null }
   }
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     logger.warn('[conversion-attributor] D1 binding not available', { network });
     return { data: null, error: null }

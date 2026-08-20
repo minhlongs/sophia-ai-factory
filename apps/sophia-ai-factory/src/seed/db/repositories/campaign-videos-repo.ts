@@ -1,4 +1,4 @@
-import { getD1 } from '@/seed/db/client';
+import { getD1Sync } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -35,7 +35,7 @@ export function insertCampaignVideo(
 	campaignId: string,
 	options?: { videoUrl?: string; costCents?: number },
 ): string | null {
-	const _db = getD1();
+	const _db = getD1Sync();
 	if (!_db) {
 		logger.warn('[campaign-videos-repo] D1 unavailable — insert skipped', { campaignId });
 		return null;
@@ -58,7 +58,7 @@ export function markCampaignVideoCompleted(
 	videoUrl: string,
 	costCents?: number,
 ): void {
-	const _db = getD1();
+	const _db = getD1Sync();
 	if (!_db) return;
 	const db = _db;
 	db.prepare(
@@ -76,7 +76,7 @@ export function markCampaignVideoCompleted(
 
 /** Mark a campaign_video as failed. */
 export function markCampaignVideoFailed(videoId: string, errorMessage: string): void {
-	const _db = getD1();
+	const _db = getD1Sync();
 	if (!_db) return;
 	const db = _db;
 	db.prepare(
@@ -93,7 +93,7 @@ export function markCampaignVideoFailed(videoId: string, errorMessage: string): 
 
 /** Cancel all pending videos for a campaign. Returns count cancelled. */
 export async function cancelPendingCampaignVideos(campaignId: string): Promise<number> {
-	const _db = getD1();
+	const _db = getD1Sync();
 	if (!_db) return 0;
 	const db = _db;
 	const result = await db
@@ -109,7 +109,7 @@ export async function cancelPendingCampaignVideos(campaignId: string): Promise<n
 
 /** List all videos for a campaign, ordered by created_at. */
 export async function getCampaignVideos(campaignId: string): Promise<CampaignVideoRow[]> {
-	const _db = getD1();
+	const _db = getD1Sync();
 	if (!_db) return [];
 	const db = _db;
 	const result = await db
@@ -128,7 +128,7 @@ export async function getCampaignVideos(campaignId: string): Promise<CampaignVid
 // ── Refund badge cap ──────────────────────────────────────────────────────────
 
 export async function getRefundBadgeCap(campaignId: string): Promise<CapResult> {
-	const _db = getD1();
+	const _db = getD1Sync();
 	if (!_db) {
 		logger.warn('[campaign-videos-repo] D1 unavailable — cap=0', { campaignId });
 		return { completedCount: 0, cap: 0, creditsPerUnit: CREDITS_PER_VIDEO };

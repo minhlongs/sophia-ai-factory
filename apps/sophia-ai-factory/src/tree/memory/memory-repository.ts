@@ -71,7 +71,7 @@ const DEFAULT_RELEVANCE = 1.0;
  * Errors are logged and re-thrown — callers handle failure.
  */
 export class MemoryRepository {
-  private readonly getDb: () => ReturnType<typeof getD1>;
+  private readonly getDb: () => Promise<Awaited<ReturnType<typeof getD1>>>;
 
   constructor() {
     // Store the accessor function so we can call it per-operation
@@ -102,7 +102,7 @@ export class MemoryRepository {
       expiresAt?: number;
     },
   ): Promise<StoredMemory> {
-    const db = this.getDb();
+    const db = await this.getDb();
     if (!db) throw new Error('D1 database binding not available');
 
     const id = crypto.randomUUID();
@@ -165,7 +165,7 @@ export class MemoryRepository {
     opts?: MemoryQueryOptions,
   ): Promise<StoredMemory[]> {
     try {
-      const db = this.getDb();
+      const db = await this.getDb();
       if (!db) throw new Error('D1 database binding not available');
 
       const now = Date.now();
@@ -216,7 +216,7 @@ export class MemoryRepository {
         updated_at: number;
       }>();
 
-      return (result.results ?? []).map((row) => this.rowToMemory(row));
+      return (result.results ?? []).map((row) => this.rowToMemory(row as never));
     } catch (err) {
       logger.error('[MemoryRepository] query failed', {
         userId,
@@ -301,7 +301,7 @@ export class MemoryRepository {
    */
   async deleteExpired(): Promise<number> {
     try {
-      const db = this.getDb();
+      const db = await this.getDb();
       if (!db) throw new Error('D1 database binding not available');
 
       const now = Date.now();

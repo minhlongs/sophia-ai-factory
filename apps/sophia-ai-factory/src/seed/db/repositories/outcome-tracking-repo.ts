@@ -51,7 +51,7 @@ export async function recordOutcome(params: {
   metricValue: number;
   source?: string;
 }): Promise<string> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const id = crypto.randomUUID();
@@ -96,7 +96,7 @@ export async function recordBatchOutcomes(
 ): Promise<string[]> {
   if (outcomes.length === 0) return [];
 
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
   const now = Math.floor(Date.now() / 1000);
@@ -124,7 +124,7 @@ export async function recordBatchOutcomes(
 /** Fetch all outcome rows for a given execution. Returns empty array on error. */
 export async function getExecutionOutcomes(executionId: string): Promise<OutcomeMetric[]> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
     const result = await db
@@ -147,7 +147,7 @@ export async function getExecutionOutcomes(executionId: string): Promise<Outcome
 /** Fetch recent outcome rows for a user. Returns [] on error. */
 export async function getRecentOutcomes(userId: string, limit = 20): Promise<OutcomeMetric[]> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
     const result = await db
@@ -172,7 +172,7 @@ export async function getTopSopsByRevenue(
   limit = 5,
 ): Promise<Array<{ sopId: string; totalRevenue: number }>> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
     const result = await db
@@ -208,7 +208,7 @@ export async function getSOPOutcomeSummary(
   opts: { fromDate?: number; toDate?: number } = {},
 ): Promise<OutcomeSummary> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
     const conditions = ['sop_id = ?1'];
@@ -273,7 +273,7 @@ export async function getCreatorOutcomeSummary(
   opts: { fromDate?: number; toDate?: number; limit?: number } = {},
 ): Promise<CreatorSopOutcome[]> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;;
     const conditions = ['user_id = ?1'];

@@ -37,7 +37,7 @@ export async function setUserApiKey(
   if (!userId || !provider || !plainKey) {
     throw new Error('BYOK_SET_INVALID_ARGS')
   }
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('BYOK_D1_UNAVAILABLE');
   const d1 = _db;
   if (!d1) throw new Error('BYOK_D1_UNAVAILABLE')
@@ -73,7 +73,7 @@ export async function getUserApiKey(
   provider: ByokProvider,
 ): Promise<string | null> {
   if (!userId || !provider) return null
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) return null; // Graceful degrade: no D1 → null (fallback to env)
   const d1 = _db;
 
@@ -107,7 +107,7 @@ export async function clearUserApiKey(
   provider: ByokProvider,
 ): Promise<void> {
   if (!userId || !provider) throw new Error('BYOK_CLEAR_INVALID_ARGS')
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const d1 = _db;
   if (!d1) throw new Error('BYOK_D1_UNAVAILABLE')
@@ -126,7 +126,7 @@ export async function listUserApiKeyProviders(
   userId: string,
 ): Promise<ByokProvider[]> {
   if (!userId) return []
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const d1 = _db;
   if (!d1) return []

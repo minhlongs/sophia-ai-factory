@@ -59,7 +59,7 @@ export async function getUserCredential(
   provider: ProviderType,
 ): Promise<string | null> {
   if (!userId || !provider) return null
-  const db = getD1()
+  const db = await getD1()
   if (!db) throw new Error('D1 database binding not available')
   const d1 = db
 
@@ -108,7 +108,7 @@ export async function setUserCredential(
   if (!userId || !provider || !plaintext) {
     throw new Error('setUserCredential: userId, provider and plaintext are required')
   }
-  const d1 = getD1();
+  const d1 = await getD1();
   if (!d1) throw new Error('D1 database binding not available');
   const encryptedValue = await encryptValue(plaintext, userId)
   const keyVersion = await getActiveKeyVersion()
@@ -139,7 +139,7 @@ export async function deleteUserCredential(
   provider: ProviderType,
 ): Promise<void> {
   if (!userId || !provider) throw new Error('deleteUserCredential: userId and provider required')
-  const d1 = getD1();
+  const d1 = await getD1();
   if (!d1) throw new Error('D1 database binding not available');
   await d1
     .prepare(`DELETE FROM user_provider_credentials WHERE user_id = ?1 AND provider = ?2`)
@@ -152,7 +152,7 @@ export async function deleteUserCredential(
  */
 export async function listUserProviders(userId: string): Promise<CredentialSummary[]> {
   if (!userId) return []
-  const db = getD1()
+  const db = await getD1()
   if (!db) throw new Error('D1 database binding not available')
   const d1 = db
 

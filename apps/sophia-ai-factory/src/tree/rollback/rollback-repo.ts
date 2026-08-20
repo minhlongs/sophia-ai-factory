@@ -67,7 +67,7 @@ export async function logRollback(
   input: RollbackInput,
 ): Promise<Result<RollbackRecord, RollbackRepoError>> {
   try {
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'D1 database binding not available' });
     }
@@ -125,7 +125,7 @@ export async function getRollbackHistory(
   missionId: string,
 ): Promise<Result<RollbackRecord[], RollbackRepoError>> {
   try {
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'D1 database binding not available' });
     }

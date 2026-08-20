@@ -11,13 +11,16 @@ export function track(
   props: Record<string, unknown>,
   orgId?: string | null,
 ): void {
-  const db = getD1();
-  if (!db) return;
-
-  void db
-    .prepare(
-      'INSERT INTO signals_events (ts, event_type, actor, org_id, props_json) VALUES (?, ?, ?, ?, ?)',
-    )
-    .bind(Date.now(), event, actor, orgId ?? null, JSON.stringify(props))
-    .run();
+  // Fire-and-forget: never blocks the caller. D1 errors are swallowed with a
+  // warn log — track() must not turn a telemetry miss into a request failure.
+  void (async () => {
+    const db = await getD1();
+    if (!db) return;
+    void db
+      .prepare(
+        'INSERT INTO signals_events (ts, event_type, actor, org_id, props_json) VALUES (?, ?, ?, ?, ?)',
+      )
+      .bind(Date.now(), event, actor, orgId ?? null, JSON.stringify(props))
+      .run();
+  })();
 }

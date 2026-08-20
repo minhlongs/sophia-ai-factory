@@ -8,6 +8,9 @@
  */
 
 import { logger } from '@/seed/utils/logger-utility';
+import * as path from 'path';
+import * as fs from 'fs';
+import { createRequire } from 'module';
 
 // ---- Types ----
 
@@ -48,18 +51,44 @@ all(...bindings: unknown[]): Record<string, unknown>[];
 raw(all: boolean): SqliteStmt;
 }
 
+// Apply canonical D1 migrations so the local mock mirrors production schema.
+// Failures are non-fatal: migrations with ALTER/DROP on partially-migrated
+// state are skipped, and CREATE TABLE IF NOT EXISTS is idempotent.
+function applyMigrations(db: SqliteDb): void {
+  try {
+    const migDir = path.resolve(
+      ((globalThis as unknown) as Record<string, { cwd?: () => string }>).
+        process?.cwd?.() || '',
+      '../../migrations',
+    );
+    if (!fs.existsSync(migDir)) return;
+    const files = fs.readdirSync(migDir).filter((f: string) => f.endsWith('.sql')).sort();
+    for (const f of files) {
+      try {
+        db.exec(fs.readFileSync(path.join(migDir, f), 'utf-8'));
+      } catch {
+        // Non-fatal: skip migrations that depend on partial state
+      }
+    }
+  } catch {
+    // Non-fatal: migrations are best-effort for the local mock
+  }
+}
+
 // ---- Helpers ----
 
 function findLocalD1Path(): string | null {
-// Edge runtime does not support Node.js filesystem APIs, bypass
-if (typeof (globalThis as Record<string, unknown>).EdgeRuntime !== 'undefined') {
+// Edge runtime does not support Node.js filesystem APIs, bypass.
+// Production CF Workers define EdgeRuntime and truly cannot run
+// better-sqlite3, so bail there. In dev, Next.js also defines EdgeRuntime
+// on the edge chunk (middleware/proxy) but that chunk actually runs on
+// Node.js (Turbopack dev server) where better-sqlite3 is available, so
+// only bail when we are genuinely in a production edge context.
+if (typeof (globalThis as Record<string, unknown>).EdgeRuntime !== 'undefined' && process.env.NODE_ENV === 'production') {
 return null;
 }
 
 try {
-const path = eval('require')('path');
-const fs = eval('require')('fs');
-
 const cwd = ((globalThis as unknown) as Record<string, { cwd?: () => string }>).process?.cwd?.() || '';
 const homeDir = ((globalThis as unknown) as Record<string, { env?: Record<string, string | undefined> }>).process?.env?.HOME || '';
 const candidates = [
@@ -209,12 +238,18 @@ class SQLiteD1Database implements LocalD1Database {
 private db: SqliteDb;
 
 constructor(sqlitePath: string) {
-if (typeof (globalThis as Record<string, unknown>).EdgeRuntime !== 'undefined') {
+if (typeof (globalThis as Record<string, unknown>).EdgeRuntime !== 'undefined' && process.env.NODE_ENV === 'production') {
 throw new Error('SQLiteD1Database is not supported in Edge Runtime');
 }
-const Database = eval('require')('better-sqlite3');
+const Database = createRequire(import.meta.url)('better-sqlite3');
 this.db = new Database(sqlitePath);
 this.db.pragma('foreign_keys = OFF');
+
+// Apply the canonical migration set so the local D1 mock mirrors the
+// production schema. Without this, every D1-backed check (auth rate
+// limiting, quota enforcement, circuit breaker) fails with
+// "no such table" and fail-closed, denying all requests with 429.
+applyMigrations(this.db);
 
 // Ensure dunning tables exist for local testing and dev flow
 this.db.exec(`
@@ -321,15 +356,16 @@ this.db.exec(query);
  * Returns null if not running in development/test or if local database file doesn't exist.
  */
 export function getLocalD1Mock(): LocalD1Database | null {
-if (typeof (globalThis as Record<string, unknown>).EdgeRuntime !== 'undefined') {
+if (typeof (globalThis as Record<string, unknown>).EdgeRuntime !== 'undefined' && process.env.NODE_ENV === 'production') {
 return null;
 }
 
-const envNodeEnv = ((globalThis as unknown) as Record<string, { env?: { NODE_ENV?: string } }>).process?.env?.NODE_ENV;
-if (envNodeEnv !== 'development' && envNodeEnv !== 'test') {
-return null;
-}
-
+// Only attempt the local D1 mock when a local wrangler D1 sqlite exists.
+// The previous NODE_ENV gate returned null for production builds and for
+// dev/test servers that don't set NODE_ENV, which made getD1() fall through
+// to null and caused every D1-backed rate-limit check to fail-closed
+// (denying all requests with 429). The binding is only useful when the
+// file is actually present, so gate on that instead.
 const sqlitePath = findLocalD1Path();
 if (!sqlitePath) {
 logger.warn('[D1 mock] Local wrangler state D1 sqlite not found. Did you run pnpm dev/setup?');

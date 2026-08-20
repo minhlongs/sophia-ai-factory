@@ -17,7 +17,7 @@ export async function activateCouponAfterLoginAction(coupon: string, tier: strin
     }
 
     const db = createServerClient();
-    const d1db = getD1();
+    const d1db = await getD1();
     if (!d1db) throw new Error('D1 database binding not available');
 
     // Validate coupon exists and is usable

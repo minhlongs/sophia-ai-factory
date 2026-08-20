@@ -34,7 +34,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   if (authError) return authError;
 
   const cronCtx = startCronCheckIn(CRON_NAME);
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     failCronCheckIn(cronCtx, CRON_NAME, 'D1 binding unavailable');
     return NextResponse.json({ ok: false, error: 'd1_unavailable' }, { status: 503 });

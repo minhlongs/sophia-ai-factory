@@ -40,7 +40,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   const cronCtx = startCronCheckIn(CRON_NAME);
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     logger.error('[cron/sop-scheduler] D1 binding not available');
     failCronCheckIn(cronCtx, CRON_NAME, new Error('DB binding unavailable'));

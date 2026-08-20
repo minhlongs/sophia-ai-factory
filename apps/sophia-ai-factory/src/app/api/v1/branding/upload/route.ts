@@ -210,7 +210,7 @@ async function postHandler(req: NextRequest): Promise<NextResponse> {
   const base = bucketRef.publicBaseUrl ?? '';
   const publicUrl = base ? `${base}/${r2Key}` : `https://pub-placeholder.r2.dev/${r2Key}`;
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     logger.warn('[branding/upload] DB unavailable — URL not persisted', { r2Key });
     return NextResponse.json({ url: publicUrl, kind: brandingKind });

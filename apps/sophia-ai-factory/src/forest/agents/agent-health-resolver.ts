@@ -29,7 +29,7 @@ function getTimeWindow() {
  * Aggregates task statistics by agent role over the last 24 hours
  */
 export async function getAgentHealthSummary(): Promise<AgentHealthSummary> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('Database not available');
 
   const { start, end } = getTimeWindow();

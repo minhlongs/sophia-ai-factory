@@ -29,7 +29,7 @@ interface HourlyGroupRow {
  * @returns Array of hourly summary records grouped by tenant + license
  */
 export async function calculateHourlyRollup(hourTimestamp: number): Promise<HourlySummaryRecord[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const hourStart = hourTimestamp;

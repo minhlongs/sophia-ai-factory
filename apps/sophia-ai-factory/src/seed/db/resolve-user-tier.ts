@@ -51,7 +51,7 @@ export { getUserTier, normalizePlanToTier } from './get-user-tier'
 
 async function getAffiliateTier(userId: string): Promise<Tier> {
   try {
-    const d1 = getD1()
+    const d1 = await getD1()
     if (!d1) return 'BASIC'
 
     const row = await d1

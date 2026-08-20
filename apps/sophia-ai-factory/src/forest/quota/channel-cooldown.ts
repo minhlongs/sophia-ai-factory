@@ -51,7 +51,7 @@ export interface CooldownCheckResult {
 async function tryGetRawDb(): Promise<D1Database | null> {
   try {
     const { getD1 } = await import('@/seed/db/client');
-    return getD1();
+    return await getD1();
   } catch {
     return null;
   }

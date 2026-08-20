@@ -42,7 +42,7 @@ const FLOORS = {
 
 async function tryCount(sql: string): Promise<number> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     const db = _db;
     const row = await db.prepare(sql).first<{ n: number | string }>();

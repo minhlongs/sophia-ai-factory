@@ -32,7 +32,7 @@ export interface ROIAggregate {
 }
 
 export async function recordROI(record: Omit<ROIRecord, 'roi'>): Promise<ROIRecord> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new PerformanceError('D1_UNAVAILABLE', 'D1 not available');
 
   const roi =
@@ -70,7 +70,7 @@ export async function getWorkspaceROI(
   workspaceId: string,
   opts?: { channel?: string; since?: number },
 ): Promise<ROIAggregate | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new PerformanceError('D1_UNAVAILABLE', 'D1 not available');
 
   const conditions: string[] = ['workspace_id = ?'];
@@ -119,7 +119,7 @@ export async function getTopROIChannels(
   limit = 10,
   since?: number,
 ): Promise<ROIAggregate[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new PerformanceError('D1_UNAVAILABLE', 'D1 not available');
 
   const conditions = ['workspace_id = ?'];

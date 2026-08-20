@@ -150,7 +150,7 @@ function derivativeRowToDomain(row: DerivativeRow): DerivativeAsset {
 // ---------------------------------------------------------------------------
 
 export async function createProject(project: ContentProject): Promise<ContentProject> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new ContentGraphError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);
@@ -191,7 +191,7 @@ export async function createProject(project: ContentProject): Promise<ContentPro
 }
 
 export async function getProject(id: string): Promise<ContentProject | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new ContentGraphError('D1_UNAVAILABLE', 'D1 not available');
 
   const row = await db.prepare(`SELECT * FROM content_projects WHERE id = ?1 LIMIT 1`).bind(id).first<ProjectRow>();
@@ -199,7 +199,7 @@ export async function getProject(id: string): Promise<ContentProject | null> {
 }
 
 export async function listProjects(workspaceId: string, missionId?: string): Promise<ContentProject[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new ContentGraphError('D1_UNAVAILABLE', 'D1 not available');
 
   let sql = `SELECT * FROM content_projects WHERE workspace_id = ?1`;
@@ -215,7 +215,7 @@ export async function listProjects(workspaceId: string, missionId?: string): Pro
 }
 
 export async function updateProjectStatus(id: string, status: ContentStatus): Promise<ContentProject | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new ContentGraphError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);
@@ -230,7 +230,7 @@ export async function updateProjectStatus(id: string, status: ContentStatus): Pr
 // ---------------------------------------------------------------------------
 
 export async function createAsset(asset: ContentAsset): Promise<ContentAsset> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new ContentGraphError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);
@@ -269,7 +269,7 @@ export async function createAsset(asset: ContentAsset): Promise<ContentAsset> {
 }
 
 export async function getAsset(id: string): Promise<ContentAsset | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new ContentGraphError('D1_UNAVAILABLE', 'D1 not available');
 
   const row = await db.prepare(`SELECT * FROM content_assets WHERE id = ?1 LIMIT 1`).bind(id).first<AssetRow>();
@@ -277,7 +277,7 @@ export async function getAsset(id: string): Promise<ContentAsset | null> {
 }
 
 export async function listAssets(projectId: string): Promise<ContentAsset[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new ContentGraphError('D1_UNAVAILABLE', 'D1 not available');
 
   const result = await db.prepare(`SELECT * FROM content_assets WHERE project_id = ?1 ORDER BY created_at ASC`).bind(projectId).all<AssetRow>();
@@ -285,7 +285,7 @@ export async function listAssets(projectId: string): Promise<ContentAsset[]> {
 }
 
 export async function updateAssetStatus(id: string, status: ContentStatus): Promise<ContentAsset | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new ContentGraphError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);
@@ -300,7 +300,7 @@ export async function updateAssetStatus(id: string, status: ContentStatus): Prom
 // ---------------------------------------------------------------------------
 
 export async function createDerivative(derivative: DerivativeAsset): Promise<DerivativeAsset> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new ContentGraphError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);
@@ -333,7 +333,7 @@ export async function createDerivative(derivative: DerivativeAsset): Promise<Der
 }
 
 export async function getDerivativesOf(assetId: string): Promise<DerivativeAsset[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new ContentGraphError('D1_UNAVAILABLE', 'D1 not available');
 
   const result = await db

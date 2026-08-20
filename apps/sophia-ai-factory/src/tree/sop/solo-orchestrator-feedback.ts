@@ -33,7 +33,7 @@ interface MetricRow {
 // Returns empty array if table doesn't exist (graceful fallback).
 async function fetchMetrics(userId: string): Promise<MetricRow[]> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     const db = _db;
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()

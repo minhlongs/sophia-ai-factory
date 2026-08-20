@@ -159,7 +159,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const windowStart = nowSec - RATE_WINDOW_SECONDS;
   const retryAfterSec = RATE_WINDOW_SECONDS;
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     logger.error('[openclaw/exchange] D1 unavailable');
     return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });

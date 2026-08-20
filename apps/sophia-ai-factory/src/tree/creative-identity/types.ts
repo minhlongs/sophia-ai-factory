@@ -116,7 +116,7 @@ export function newIdentityId(): string {
  * Get the active CreativeIdentity for a workspace.
  */
 export async function getActiveIdentity(workspaceId: string): Promise<CreativeIdentity | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new CreativeIdentityError('D1_UNAVAILABLE', 'D1 not available');
 
   const row = await db
@@ -132,7 +132,7 @@ export async function getActiveIdentity(workspaceId: string): Promise<CreativeId
  * Get a specific identity by id.
  */
 export async function getIdentity(id: string): Promise<CreativeIdentity | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new CreativeIdentityError('D1_UNAVAILABLE', 'D1 not available');
 
   const row = await db
@@ -148,7 +148,7 @@ export async function getIdentity(id: string): Promise<CreativeIdentity | null> 
  * List all versions for a workspace.
  */
 export async function listIdentityVersions(workspaceId: string): Promise<CreativeIdentity[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new CreativeIdentityError('D1_UNAVAILABLE', 'D1 not available');
 
   const result = await db
@@ -164,7 +164,7 @@ export async function listIdentityVersions(workspaceId: string): Promise<Creativ
  * Deactivates previous versions automatically.
  */
 export async function createIdentity(identity: CreativeIdentity): Promise<CreativeIdentity> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new CreativeIdentityError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);
@@ -216,7 +216,7 @@ export async function createIdentity(identity: CreativeIdentity): Promise<Creati
  * Update an existing identity, bumping version and deactivating old versions.
  */
 export async function updateIdentity(identity: CreativeIdentity): Promise<CreativeIdentity> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new CreativeIdentityError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);
@@ -274,7 +274,7 @@ export async function updateIdentity(identity: CreativeIdentity): Promise<Creati
  * Soft-delete (deactivate) an identity.
  */
 export async function deactivateIdentity(id: string): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new CreativeIdentityError('D1_UNAVAILABLE', 'D1 not available');
 
   await db.prepare(`UPDATE creative_identities SET is_active = 0 WHERE id = ?1`).bind(id).run();

@@ -29,7 +29,7 @@ export async function submitCreatorApplication(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }

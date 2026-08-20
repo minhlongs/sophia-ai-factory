@@ -32,7 +32,7 @@ async function verifyWorkspaceAccess(workspaceId: string | undefined, userId: st
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getCurrentUser();
@@ -40,7 +40,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const result = await getAgentRun(params.id);
+    const { id } = await params;
+    const result = await getAgentRun(id);
 
     if (!result.ok) {
       if (result.error.code === 'NOT_FOUND') {
@@ -71,7 +72,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const user = await getCurrentUser();
@@ -79,6 +80,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { id } = await params;
     const body = await request.json();
     const parsed = cancelSchema.safeParse(body);
     if (!parsed.success) {
@@ -89,7 +91,7 @@ export async function PATCH(
     }
 
     // Verify run exists + user has workspace access before cancelling
-    const existing = await getAgentRun(params.id);
+    const existing = await getAgentRun(id);
     if (!existing.ok) {
       if (existing.error.code === 'NOT_FOUND') {
         return NextResponse.json({ error: 'Agent run not found' }, { status: 404 });
@@ -107,7 +109,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const cancelResult = await updateAgentRun(params.id, {
+    const cancelResult = await updateAgentRun(id, {
       status: 'cancelled',
       phase: 'cancelled',
       errorMessage: parsed.data.reason ?? 'Cancelled by user',
@@ -117,7 +119,7 @@ export async function PATCH(
       return NextResponse.json({ error: cancelResult.error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ status: 'cancelled', agentRunId: params.id });
+    return NextResponse.json({ status: 'cancelled', agentRunId: id });
   } catch (err) {
     return NextResponse.json(
       { error: 'internal_error', details: getErrorMessage(err) },

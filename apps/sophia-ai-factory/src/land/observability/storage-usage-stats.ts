@@ -64,7 +64,7 @@ export async function getStorageSnapshot(
   const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
   const nowSec = Math.floor(Date.now() / 1000);
   const staleCutoff = nowSec - staleAfterSec;
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   const [summaryRow, topRes] = await Promise.all([

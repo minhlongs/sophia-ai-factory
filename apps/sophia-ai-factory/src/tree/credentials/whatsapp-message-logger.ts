@@ -47,7 +47,7 @@ export interface WhatsAppMessageLogRow {
 }
 
 export async function logWhatsAppMessage(input: WhatsAppMessageLogInput): Promise<WhatsAppMessageLogRow> {
-  const d1 = getD1()
+  const d1 = await getD1()
   if (!d1) throw new Error('D1 binding not available')
 
   const nowEpoch = Math.floor(Date.now() / 1000)
@@ -93,7 +93,7 @@ export async function updateWhatsAppMessageStatus(
   id: number,
   patch: Partial<Pick<WhatsAppMessageLogInput, 'status' | 'errorCode' | 'errorMessage' | 'errorCategory' | 'failedAt' | 'deliveredAt' | 'readAt' | 'externalMessageId'>>,
 ): Promise<void> {
-  const d1 = getD1()
+  const d1 = await getD1()
   if (!d1) throw new Error('D1 binding not available')
 
   const updateMap: Record<string, string> = {

@@ -93,7 +93,7 @@ export async function recordPlatformTOSCheck(params: {
 /** Mark a compliance record as verified (e.g., after human review). */
 export async function verifyRecord(recordId: string): Promise<void> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
     await db
@@ -115,7 +115,7 @@ export async function getComplianceReport(
   userId: string,
   opts?: { fromDate?: number; toDate?: number }
 ): Promise<ComplianceReport> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   const bindings: (string | number)[] = [userId];
@@ -161,7 +161,7 @@ export async function getComplianceReport(
  * Returns false when any unverified row exists, or when no rows exist at all.
  */
 export async function isCompliant(executionId: string): Promise<boolean> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   const row = await db
@@ -179,7 +179,7 @@ export async function isCompliant(executionId: string): Promise<boolean> {
 
 /** Retrieve all compliance records associated with an execution, oldest first. */
 export async function getRecordsForExecution(executionId: string): Promise<ComplianceRecord[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   const result = await db

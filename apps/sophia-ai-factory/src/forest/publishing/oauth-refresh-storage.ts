@@ -18,7 +18,7 @@ const LOCK_STALE_S = 600; // 10 minutes
  */
 export async function acquireRefreshLock(channelId: string, now: number): Promise<boolean> {
   const staleBefore = now - LOCK_STALE_S;
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const rawDb = _db;
   const result = await rawDb

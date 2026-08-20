@@ -17,7 +17,7 @@ export const repurposeClipGenerate = inngest.createFunction(
     return await step.run('generate-clip', async () => {
       await updateRepurposeClipStatus(clipId, 'generating');
 
-      const _db = getD1();
+      const _db = await getD1();
       if (!_db) throw new Error('D1 database binding not available');
       const db = _db;
       const job = await db

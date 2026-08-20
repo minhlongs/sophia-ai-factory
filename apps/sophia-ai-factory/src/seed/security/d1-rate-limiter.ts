@@ -59,7 +59,7 @@ export async function checkD1RateLimit(
   const now = Math.floor(Date.now() / 1000);
   const cutoff = now - config.windowSeconds;
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     // Fail-closed: if D1 is unavailable, deny the request.
     // A rate-limit check failure must never become an auth bypass.
@@ -176,7 +176,7 @@ let _tableEnsured = false;
  * Ensure the d1_rate_limits table exists.
  * Uses a per-isolate boolean flag to skip the DDL after first call.
  */
-async function ensureTable(db: ReturnType<typeof getD1>): Promise<void> {
+async function ensureTable(db: Awaited<ReturnType<typeof getD1>>): Promise<void> {
   if (_tableEnsured || !db) return;
 
   try {

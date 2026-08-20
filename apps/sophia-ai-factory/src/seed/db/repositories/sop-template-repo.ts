@@ -59,7 +59,7 @@ export async function createTemplate(params: {
   name: string; description?: string; graphJson: SOPGraph;
   category?: string; createdBy: string;
 }): Promise<string> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const id = crypto.randomUUID();
@@ -88,7 +88,7 @@ export async function createTemplate(params: {
 /** Fetch template by ID. Parses graph_json. Returns null if not found or on error. */
 export async function getTemplate(id: string): Promise<SopTemplateRow | null> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
     const raw = await db
@@ -114,7 +114,7 @@ export async function listTemplates(opts: {
   activeOnly?: boolean; limit?: number;
 } = {}): Promise<SopTemplateSummary[]> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
     const conditions: string[] = [];
@@ -153,7 +153,7 @@ export async function updateTemplate(
   id: string,
   updates: { name?: string; description?: string; graphJson?: SOPGraph; category?: string; isActive?: boolean },
 ): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const now = Math.floor(Date.now() / 1000);
@@ -180,7 +180,7 @@ export async function updateTemplate(
 
 /** Archive a template (is_active = 0). Preserves history. Throws on D1 error. */
 export async function deactivateTemplate(id: string): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const now = Math.floor(Date.now() / 1000);

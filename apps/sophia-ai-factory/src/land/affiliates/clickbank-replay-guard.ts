@@ -25,7 +25,7 @@ export async function isReplay(
   transactionType: string,
   db?: unknown,
 ): Promise<boolean> {
-  const d1 = db ?? getD1()
+  const d1 = db ?? await getD1()
   if (!d1) {
     logger.warn('[clickbank-replay-guard] D1 binding not available — allowing through')
     return false

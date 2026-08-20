@@ -73,7 +73,7 @@ export async function createWorkflow(
   presetName?: string,
   workflowPresets?: Record<string, { id: string; name: string; description: string; mode: string; steps: WorkflowStep[] }>,
 ): Promise<WorkflowWithSteps> {
-  const db = getD1()
+  const db = await getD1()
   const workflowId = newId()
   const now = new Date().toISOString()
 
@@ -166,7 +166,7 @@ export async function getWorkflow(
   id: string,
   orgId: string,
 ): Promise<WorkflowWithSteps | null> {
-  const db = getD1()
+  const db = await getD1()
 
   const wf = await db
     .prepare('SELECT * FROM workflows WHERE id=? AND org_id=?')
@@ -195,7 +195,7 @@ export async function listWorkflows(
   orgId: string,
   limit = 20,
 ): Promise<WorkflowRow[]> {
-  const db = getD1()
+  const db = await getD1()
   const cap = Math.min(limit, 100)
 
   const { results } = await db
@@ -217,7 +217,7 @@ export async function markWorkflowStatus(
   status: WorkflowRow['status'],
   finalResult?: string | null,
 ): Promise<void> {
-  const db = getD1()
+  const db = await getD1()
   const now = new Date().toISOString()
 
   await db

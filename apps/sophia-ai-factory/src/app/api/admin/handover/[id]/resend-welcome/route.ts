@@ -26,7 +26,7 @@ export async function POST(request: NextRequest, { params }: RouteParams): Promi
   const { user: admin } = auth;
 
   const { id } = await params;
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   const handover = await db

@@ -38,7 +38,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
     try {

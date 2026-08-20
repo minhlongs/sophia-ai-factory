@@ -31,7 +31,7 @@ export async function consolidateEpisodicToSemantic(
   userId: string,
   opts?: { sincMs?: number; limit?: number },
 ): Promise<ConsolidationSummary> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const now = Date.now();

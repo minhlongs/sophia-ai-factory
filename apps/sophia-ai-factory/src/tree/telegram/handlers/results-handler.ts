@@ -1,11 +1,11 @@
-import { tryCreateServerClient, D1Client } from '@/seed/db/client';
+import { tryCreateServerClientSync, D1Client } from '@/seed/db/client';
 import { sendMessage } from '@/tree/telegram/handlers/utils';
 import { logger } from '@/seed/utils/logger-utility';
 
 let _resultsDb: D1Client | null = null;
 export function resetResultsDb() { _resultsDb = null; }
 function getResultsDb(): D1Client | null {
-  if (!_resultsDb) _resultsDb = tryCreateServerClient();
+  if (!_resultsDb) _resultsDb = tryCreateServerClientSync();
   return _resultsDb;
 }
 

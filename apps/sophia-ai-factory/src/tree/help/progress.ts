@@ -24,7 +24,7 @@ export async function getVideoProgress(
   videoId: string,
   locale: 'en' | 'vi' = 'en'
 ): Promise<HelpVideoProgress | null> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -59,7 +59,7 @@ export async function getWatchedVideoIds(
   userId: string,
   locale: 'en' | 'vi' = 'en'
 ): Promise<string[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -80,7 +80,7 @@ export async function markVideoWatched(
   videoId: string,
   locale: 'en' | 'vi' = 'en'
 ): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -102,7 +102,7 @@ export async function unmarkVideoWatched(
   videoId: string,
   locale: 'en' | 'vi' = 'en'
 ): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -120,7 +120,7 @@ export async function getUserProgress(
   userId: string,
   locale: 'en' | 'vi' = 'en'
 ): Promise<UserProgressSummary> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -166,7 +166,7 @@ export async function getCategoryProgress(
   watched: number;
   completion_percentage: number;
 }> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -221,7 +221,7 @@ export async function getAllCategoriesProgress(
   watched: number;
   completion_percentage: number;
 }>> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   const categories: HelpVideoCategory[] = [
@@ -254,7 +254,7 @@ export async function getRecentlyWatched(
   video_id: string;
   watched_at: number;
 }>> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -280,7 +280,7 @@ export async function getWatchHistory(
   userId: string,
   locale?: 'en' | 'vi'
 ): Promise<HelpVideoProgress[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 

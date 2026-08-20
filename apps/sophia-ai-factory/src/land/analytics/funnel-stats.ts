@@ -103,7 +103,7 @@ export async function getActivationFunnel(
   toTs: number,
 ): Promise<ActivationFunnel> {
   if (fromTs > toTs) throw new Error('fromTs must be <= toTs');
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   const fromIso = new Date(fromTs * 1000).toISOString();
@@ -181,7 +181,7 @@ export async function getTierConversionRates(
   toTs: number,
 ): Promise<TierConversionRates> {
   if (fromTs > toTs) throw new Error('fromTs must be <= toTs');
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   const fromIso = new Date(fromTs * 1000).toISOString();
@@ -249,7 +249,7 @@ export async function getPromoCodeEffectiveness(
   limit = 10,
 ): Promise<PromoCodeEffectiveness> {
   if (fromTs > toTs) throw new Error('fromTs must be <= toTs');
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   // promo_code_redemptions.redeemed_at is Unix epoch INTEGER
@@ -318,7 +318,7 @@ export async function getCheckoutAbandonmentRate(
   toTs: number,
 ): Promise<CheckoutAbandonmentRate> {
   if (fromTs > toTs) throw new Error('fromTs must be <= toTs');
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   // signals_events.ts is Unix milliseconds

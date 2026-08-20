@@ -60,7 +60,7 @@ export async function checkMissionQuota(
   const resetAt = nextMonthResetAtIso();
 
   try {
-    const _d1 = getD1();
+    const _d1 = await getD1();
     if (!_d1) {
       return { allowed: true, used: 0, limit, resetAt };
     }

@@ -51,7 +51,7 @@ export async function GET(req: NextRequest, ctx: RouteCtx) {
     const user = await getCurrentUserFromHeaders(r.headers);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
     try {
@@ -78,7 +78,7 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
     }
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
     try {
@@ -132,7 +132,7 @@ export async function PATCH(req: NextRequest, ctx: RouteCtx) {
       );
     }
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
     try {
@@ -162,7 +162,7 @@ export async function DELETE(req: NextRequest, ctx: RouteCtx) {
     const user = await getCurrentUserFromHeaders(r.headers);
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
     try {

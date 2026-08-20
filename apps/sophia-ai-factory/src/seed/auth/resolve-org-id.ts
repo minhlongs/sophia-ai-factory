@@ -14,7 +14,7 @@
 
 import { getD1 } from '@/seed/db/client'
 
-export function getD1Raw(): D1Database | null {
+export async function getD1Raw(): Promise<D1Database | null> {
   return getD1();
 }
 
@@ -23,7 +23,7 @@ export async function resolveOrgId(
   db?: D1Database | null,
 ): Promise<string | null> {
   if (!userId) return null
-  const d1 = db ?? getD1Raw()
+  const d1 = db ?? await getD1Raw()
   if (!d1) return null
   try {
     const row = await d1
@@ -51,7 +51,7 @@ export async function resolveOrgOwnerUserId(
   db?:   D1Database | null,
 ): Promise<string | null> {
   if (!orgId) return null
-  const d1 = db ?? getD1Raw()
+  const d1 = db ?? await getD1Raw()
   if (!d1) return null
   try {
     const row = await d1

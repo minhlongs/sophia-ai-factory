@@ -56,7 +56,7 @@ export default async function MonetizationPage() {
     );
   }
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-6">

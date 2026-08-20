@@ -43,7 +43,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'No overrides provided' }, { status: 400 });
     }
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       logger.error('[OrgQuotaOverride] D1 binding not available');
       return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });

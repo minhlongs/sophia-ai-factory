@@ -34,7 +34,7 @@ interface CronRowRaw {
 
 /** All cron rows ordered by most recent run first. */
 export async function listCronRunSummaries(): Promise<CronRunSummary[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const result = await db
     .prepare(

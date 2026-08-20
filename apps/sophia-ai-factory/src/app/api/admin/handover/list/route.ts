@@ -61,7 +61,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const offset = Number(url.searchParams.get('offset') ?? '0');
 
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
 
     if (wantStats) {

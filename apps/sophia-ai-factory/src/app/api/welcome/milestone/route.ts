@@ -37,7 +37,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const nowMs = Date.now();
 
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) {
       logger.error('[Welcome/Milestone] D1 unavailable');
       return NextResponse.json({ error: 'service_unavailable' }, { status: 503 });

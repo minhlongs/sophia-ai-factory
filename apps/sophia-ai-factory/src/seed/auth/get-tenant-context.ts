@@ -34,7 +34,7 @@ export async function getTenantContext(
   db?:    D1Database | null,
 ): Promise<TenantContext | null> {
   if (!userId) return null
-  const d1 = db ?? getD1()
+  const d1 = db ?? await getD1()
   if (!d1) return null
 
   try {

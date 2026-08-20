@@ -113,7 +113,7 @@ interface TemplateRow {
  * Queries the whatsapp_approved flag on their whatsapp_templates row.
  */
 async function checkApprovalStatus(userId: string): Promise<Result<boolean>> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) return failure(new ScheduleWhatsAppError('D1_UNAVAILABLE', 'D1 not available'));
 
   const row = await db
@@ -133,7 +133,7 @@ async function checkApprovalStatus(userId: string): Promise<Result<boolean>> {
  * Updates all whatsapp_templates rows for the user.
  */
 async function setApprovalStatus(userId: string): Promise<Result<void>> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) return failure(new ApproveWhatsAppError('D1_UNAVAILABLE', 'D1 not available'));
 
   const result = await db
@@ -188,7 +188,7 @@ export async function scheduleWhatsApp(
     return failure(new ScheduleWhatsAppError('UNAUTHENTICATED', 'Authentication required'));
   }
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) return failure(new ScheduleWhatsAppError('D1_UNAVAILABLE', 'D1 not available'));
 
   // 3. Verify video ownership
@@ -294,7 +294,7 @@ export async function approveWhatsApp(
     return failure(new ApproveWhatsAppError('UNAUTHENTICATED', 'Authentication required'));
   }
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) return failure(new ApproveWhatsAppError('D1_UNAVAILABLE', 'D1 not available'));
 
   // Check if already approved

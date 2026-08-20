@@ -23,7 +23,7 @@ export const performanceAggregationCron = inngest.createFunction(
   },
   { cron: '*/15 * * * *' },
   async () => {
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       logger.warn('[performance-aggregation] D1 unavailable, skipping');
       return { skipped: true, reason: 'D1_UNAVAILABLE' };

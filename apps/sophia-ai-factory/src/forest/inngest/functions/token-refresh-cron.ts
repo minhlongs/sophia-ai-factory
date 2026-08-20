@@ -8,7 +8,7 @@ export const tokenRefreshCron = inngest.createFunction(
   { cron: '0 3 * * *' },
   async ({ step }) => {
     const userIds = await step.run('get-users-with-credentials', async () => {
-      const _db = getD1();
+      const _db = await getD1();
       if (!_db) throw new Error('D1 database binding not available');
       const db = _db;
       const result = await db

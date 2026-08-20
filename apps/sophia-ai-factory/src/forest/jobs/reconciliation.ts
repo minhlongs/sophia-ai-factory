@@ -30,7 +30,7 @@ interface ReconcileResult {
 }
 
 async function reconcileTenant(tenantId: string): Promise<ReconcileResult> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -73,7 +73,7 @@ export const reconciliationCron = inngest.createFunction(
   },
   { cron: '0 4 * * *' },
   async ({ step }) => {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     const db = _db;
 

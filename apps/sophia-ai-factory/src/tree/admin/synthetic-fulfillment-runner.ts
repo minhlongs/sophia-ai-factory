@@ -58,7 +58,7 @@ interface VideoRow {
 
 async function checkEmailSent(purchaseId: string): Promise<number | null> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
     const row = await db
@@ -214,7 +214,7 @@ export async function runSyntheticFulfillment(
     await new Promise<void>((r) => setTimeout(r, POLL_INTERVAL_MS))
 
     try {
-      const _db = getD1();
+      const _db = await getD1();
     if (!_db) throw new Error('D1 binding not available');
     const db = _db;
       const row = await db

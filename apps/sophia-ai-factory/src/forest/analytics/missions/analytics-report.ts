@@ -47,7 +47,7 @@ export async function handle(ctx: MissionContext): Promise<MissionHandlerResult>
   const { userId } = ctx;
 
   const balance = await getBalance(userId);
-  const d1 = getD1();
+  const d1 = await getD1();
 
   if (!d1) {
     return {

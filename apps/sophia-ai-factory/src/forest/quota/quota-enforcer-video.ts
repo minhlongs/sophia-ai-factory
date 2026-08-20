@@ -55,7 +55,7 @@ function videoCacheKey(tenantId: string, yyyymm: string): string {
 
 /** Read current month video count from D1 (source of truth) */
 async function readVideoCountFromDb(tenantId: string): Promise<number> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) return 0;
 
   const yyyymm = currentYYYYMM();

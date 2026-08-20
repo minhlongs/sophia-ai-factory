@@ -68,7 +68,7 @@ describe('insertAiPromptVideo', () => {
   });
 
   it('returns videoId equal to missionId on new insert', async () => {
-    vi.mocked(getD1).mockReturnValue(makeD1FirstReturns({ id: 'mission-xyz' }));
+    vi.mocked(getD1).mockResolvedValue(makeD1FirstReturns({ id: 'mission-xyz' }));
 
     const result = await insertAiPromptVideo(INPUT);
     expect(result.videoId).toBe('mission-xyz');
@@ -77,7 +77,7 @@ describe('insertAiPromptVideo', () => {
 
   it('returns alreadyExisted=true when row existed (INSERT OR IGNORE no-op)', async () => {
     // D1 .first() returns null when INSERT OR IGNORE skipped the row
-    vi.mocked(getD1).mockReturnValue(makeD1FirstReturns(null));
+    vi.mocked(getD1).mockResolvedValue(makeD1FirstReturns(null));
 
     const result = await insertAiPromptVideo(INPUT);
     expect(result.videoId).toBe('mission-xyz');
@@ -86,19 +86,19 @@ describe('insertAiPromptVideo', () => {
 
   it('calling twice with same missionId returns alreadyExisted on second call', async () => {
     // First call: insert succeeds (.first() returns the row)
-    vi.mocked(getD1).mockReturnValueOnce(makeD1FirstReturns({ id: 'mission-xyz' }));
+    vi.mocked(getD1).mockResolvedValueOnce(makeD1FirstReturns({ id: 'mission-xyz' }));
     const first = await insertAiPromptVideo(INPUT);
     expect(first.alreadyExisted).toBe(false);
 
     // Second call: INSERT OR IGNORE is a no-op (.first() returns null)
-    vi.mocked(getD1).mockReturnValueOnce(makeD1FirstReturns(null));
+    vi.mocked(getD1).mockResolvedValueOnce(makeD1FirstReturns(null));
     const second = await insertAiPromptVideo(INPUT);
     expect(second.videoId).toBe(first.videoId);
     expect(second.alreadyExisted).toBe(true);
   });
 
   it('accepts custom title without error', async () => {
-    vi.mocked(getD1).mockReturnValue(makeD1FirstReturns({ id: 'mission-xyz' }));
+    vi.mocked(getD1).mockResolvedValue(makeD1FirstReturns({ id: 'mission-xyz' }));
 
     const result = await insertAiPromptVideo({ ...INPUT, title: 'My Custom Video' });
     expect(result.videoId).toBe('mission-xyz');
@@ -106,7 +106,7 @@ describe('insertAiPromptVideo', () => {
   });
 
   it('propagates D1 throw (real error contract — no .error field)', async () => {
-    vi.mocked(getD1).mockReturnValue(
+    vi.mocked(getD1).mockResolvedValue(
       makeD1Throws('D1_ERROR: UNIQUE constraint failed: videos.id'),
     );
 

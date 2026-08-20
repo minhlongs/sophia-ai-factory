@@ -20,7 +20,7 @@ function genId(): string {
 
 /** Fetch promo code row by code string (case-insensitive). */
 export async function getCodeByCode(code: string): Promise<PromoCodeRow | null> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const row = await db
@@ -32,7 +32,7 @@ export async function getCodeByCode(code: string): Promise<PromoCodeRow | null> 
 
 /** Atomically increment used_count using CAS pattern. */
 export async function incrementUsedCount(codeId: string): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   await db
@@ -59,7 +59,7 @@ export async function incrementAndRecord(input: {
   handoverId?: string;
   status?: RedemptionStatus;
 }): Promise<RedemptionRow> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const id = genId();
@@ -114,7 +114,7 @@ export async function incrementAndRecord(input: {
 
 /** Count how many times a user has redeemed a specific promo code (non-reverted). */
 export async function getRedemptionCount(codeId: string, userId: string): Promise<number> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const row = await db
@@ -141,7 +141,7 @@ export async function recordRedemption(input: {
   handoverId?: string;
   status?: RedemptionStatus;
 }): Promise<RedemptionRow> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const id = genId();
@@ -194,7 +194,7 @@ export async function findReservedRedemption(
   userId: string,
   promoCode: string,
 ): Promise<RedemptionRow | null> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const row = await db
@@ -214,7 +214,7 @@ export async function finalizeRedemption(
   paymentId: string,
   handoverId?: string,
 ): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   await db
@@ -229,7 +229,7 @@ export async function finalizeRedemption(
 
 /** List promo codes for admin panel with optional filters. */
 export async function listAdminCodes(filters: ListAdminFilters = {}): Promise<PromoCodeRow[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const parts: string[] = ['SELECT * FROM promo_codes WHERE 1=1'];
@@ -264,7 +264,7 @@ export async function createCode(
   input: CreatePromoInput,
   adminId: string,
 ): Promise<PromoCodeRow> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const id = genId();
@@ -321,7 +321,7 @@ export async function updateCodeStatus(
   codeId: string,
   status: 'active' | 'disabled' | 'expired',
 ): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   await db
@@ -336,7 +336,7 @@ export async function listRedemptionsByCode(
   limit = 50,
   offset = 0,
 ): Promise<RedemptionRow[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const { results } = await db
@@ -356,7 +356,7 @@ export async function setUserTrialExpiry(
   userId: string,
   trialEndsAt: number,
 ): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const nowSec = Math.floor(Date.now() / 1000);
@@ -374,7 +374,7 @@ export async function setUserTrialExpiry(
 
 /** Get users with expired trials (trial_ends_at <= now and status still active). */
 export async function getExpiredTrialUsers(nowSec: number): Promise<{ user_id: string; email: string | null }[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const { results } = await db

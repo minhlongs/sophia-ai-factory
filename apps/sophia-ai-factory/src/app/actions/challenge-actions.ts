@@ -13,7 +13,7 @@ export async function claimChallengeRewardAction(formData: FormData): Promise<vo
     return;
   }
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   const challenge = await db

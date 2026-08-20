@@ -6,7 +6,7 @@
  * This file re-exports those symbols for back-compat.
  */
 
-import { createServerClient } from '@/seed/db/client'
+import { tryCreateServerClientSync } from '@/seed/db/client'
 import { logger } from '@/seed/utils/logger-utility'
 
 export interface RateLimitResult {
@@ -45,7 +45,7 @@ interface RateLimitRpcRow {
  * Returns current count after increment
  */
 async function incrementRateLimit(
-  db: ReturnType<typeof createServerClient>,
+  db: NonNullable<ReturnType<typeof tryCreateServerClientSync>>,
   identifier: string,
   windowSeconds: number
 ): Promise<number> {
@@ -81,8 +81,23 @@ export async function checkRateLimit(
     };
   }
 
+  // Use the non-throwing sync client: createServerClient() calls getD1Sync()
+  // which throws when the D1 binding is unavailable (local dev edge runtime),
+  // and a thrown rate-limit check becomes a fail-closed 429 for every request.
+  // tryCreateServerClientSync() returns null instead, so we can distinguish
+  // "no D1 binding" (fail closed) from "D1 error" (also fail closed) without
+  // an exception propagating through the middleware.
+  const db = tryCreateServerClientSync()
+  if (!db) {
+    logger.error('SQL rate limit: D1 client unavailable, denying request')
+    return {
+      success: false,
+      remaining: 0,
+      reset: now + config.windowSeconds * 1000,
+    }
+  }
+
   try {
-    const db = createServerClient()
     const fullIdentifier = `${config.identifier}:${identifier}`
     const currentCount = await incrementRateLimit(
       db,
@@ -134,7 +149,11 @@ export function getClientIdentifier(
 export async function cleanupExpiredRateLimits(
   retentionHours: number = 24
 ): Promise<number> {
-  const db = createServerClient()
+  const db = tryCreateServerClientSync()
+  if (!db) {
+    logger.error('Rate limit cleanup: D1 client unavailable')
+    return 0
+  }
   const cutoff = new Date(Date.now() - retentionHours * 60 * 60 * 1000).toISOString()
 
   try {

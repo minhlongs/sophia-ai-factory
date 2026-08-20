@@ -118,7 +118,7 @@ export async function listRefundablePurchasesAction(): Promise<RefundablePurchas
   if (!user) return [];
 
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
 
     const nowSec = Math.floor(Date.now() / 1000);

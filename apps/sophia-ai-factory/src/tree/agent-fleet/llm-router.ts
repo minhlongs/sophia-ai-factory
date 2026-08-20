@@ -83,7 +83,7 @@ async function callQwen(prompt: string, baseUrl: string, timeoutMs: number): Pro
     const res = await fetch(`${baseUrl}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'qwen3:32b', prompt, stream: false }),
+      body: JSON.stringify({ model: 'qwen3:32b', prompt: `You must respond in English only. Never respond in Chinese.\n\n${prompt}`, stream: false }),
       signal: controller.signal,
     });
     clearTimeout(timer);

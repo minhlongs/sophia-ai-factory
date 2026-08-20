@@ -11,7 +11,7 @@
  * Layer rule: tree — imports seed only.
  */
 
-import { getD1 } from '@/seed/db/client';
+import { getD1Sync } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import { BudgetMode } from './budget-modes';
@@ -156,7 +156,7 @@ export class BudgetTracker {
 
   // ── Private helpers ─────────────────────────────────────────────────────────
 
-  private getDb() { try { return getD1(); } catch { return null; } }
+  private getDb() { try { return getD1Sync(); } catch { return null; } }
 
   private find(entryId: string): BudgetEntry {
     const entry = this.entries.find((e) => e.id === entryId);

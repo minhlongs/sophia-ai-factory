@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) {
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
   }

@@ -78,7 +78,7 @@ function mapTask(r: RawTaskRow): AgentTaskAssignment {
 /** Fetch recent sessions ordered by created_at DESC. Returns [] on error. */
 export async function getRecentSessions(limit = 20): Promise<AgentSession[]> {
   try {
-    const db = getD1()
+    const db = await getD1()
     if (!db) throw new Error('D1 database binding not available')
     const result = await db
       .prepare(
@@ -99,7 +99,7 @@ export async function getRecentSessions(limit = 20): Promise<AgentSession[]> {
 /** Fetch all task assignments for a session. Returns [] on error. */
 export async function getTasksForSession(sessionId: string): Promise<AgentTaskAssignment[]> {
   try {
-    const db = getD1()
+    const db = await getD1()
     if (!db) throw new Error('D1 database binding not available')
     const result = await db
       .prepare(
@@ -121,7 +121,7 @@ export async function getTasksForSession(sessionId: string): Promise<AgentTaskAs
 export async function getTasksForSessions(sessionIds: string[]): Promise<Record<string, AgentTaskAssignment[]>> {
   if (sessionIds.length === 0) return {};
   try {
-    const db = getD1()
+    const db = await getD1()
     if (!db) throw new Error('D1 database binding not available')
     const placeholders = sessionIds.map((_, i) => `?${i + 1}`).join(',');
     const result = await db
@@ -151,7 +151,7 @@ export async function getTasksForSessions(sessionIds: string[]): Promise<Record<
 /** Get aggregate session counts. */
 export async function getSessionStats(): Promise<{ active: number; completed: number; failed: number }> {
   try {
-    const db = getD1()
+    const db = await getD1()
     if (!db) throw new Error('D1 database binding not available')
     const result = await db
       .prepare(

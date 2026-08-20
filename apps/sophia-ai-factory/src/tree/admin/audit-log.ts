@@ -36,7 +36,7 @@ export async function writeAuditLog(params: {
   payload?: Record<string, unknown>
 }): Promise<void> {
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     const db = _db;
     await db

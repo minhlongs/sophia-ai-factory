@@ -23,7 +23,7 @@ interface MissionRow {
  * Handle /missions command — shows recent missions + status.
  */
 export async function handleMissions(chatId: string): Promise<void> {
-  const db = tryCreateServerClient();
+  const db = await tryCreateServerClient();
 if (!db) {
   await sendMessage(chatId, 'Database unavailable. Please try again later.');
   return;

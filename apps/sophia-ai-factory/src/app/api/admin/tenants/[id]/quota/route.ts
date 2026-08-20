@@ -39,7 +39,7 @@ export async function GET(
 
   const { id: tenantId } = await params;
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
   }

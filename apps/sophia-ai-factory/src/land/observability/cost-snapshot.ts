@@ -79,7 +79,7 @@ export async function getCostSnapshot(
 ): Promise<CostSnapshot> {
   if (fromTs > toTs) throw new Error('fromTs must be <= toTs');
   const safeLimit = Math.max(1, Math.min(100, Math.floor(limit)));
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   // Window filter shared by all queries — recorded_at is unix seconds.

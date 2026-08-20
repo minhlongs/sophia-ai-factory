@@ -29,7 +29,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams): Promi
   }
 
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     const db = _db;
     const userRow = await db
@@ -69,7 +69,7 @@ async function createSessionForUser(
   request: NextRequest,
 ): Promise<{ token: string; expiresAt: Date } | null> {
   try {
-    const auth = getAuth();
+    const auth = await getAuth();
     const ctx = await (auth as unknown as { $context: Promise<{
       internalAdapter: {
         createSession: (
@@ -150,7 +150,7 @@ export async function POST(request: NextRequest, ctx: RouteParams): Promise<Next
   // Look up customer email for audit log (hashed for PII protection)
   let emailHash: string | null = null;
   try {
-    const _db = getD1();
+    const _db = await getD1();
     if (!_db) throw new Error('D1 database binding not available');
     const db = _db;
     const u = await db

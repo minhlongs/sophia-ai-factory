@@ -74,7 +74,7 @@ export const experimentFeedbackCron = inngest.createFunction(
   },
   { cron: '0 3 * * *' }, // daily at 03:00 UTC
   async ({ step }) => {
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       logger.error('[experiment-feedback-cron] D1 not available');
       return { processed: 0, written: 0 };

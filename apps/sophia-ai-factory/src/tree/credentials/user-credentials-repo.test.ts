@@ -43,7 +43,7 @@ describe('lib/credentials/user-credentials-repo', () => {
         bind: vi.fn().mockReturnValue({ first: vi.fn().mockResolvedValue(null) }),
       }),
     }
-    mockedGetD1.mockReturnValue(mockD1 as unknown as D1Database)
+    mockedGetD1.mockResolvedValue(mockD1 as unknown as D1Database)
 
     const { getUserCredential } = await import('./user-credentials-repo')
     const result = await getUserCredential('user-1', 'heygen')
@@ -59,7 +59,7 @@ describe('lib/credentials/user-credentials-repo', () => {
         }),
       }),
     }
-    mockedGetD1.mockReturnValue(mockD1 as unknown as D1Database)
+    mockedGetD1.mockResolvedValue(mockD1 as unknown as D1Database)
 
     const { getUserCredential } = await import('./user-credentials-repo')
     const result = await getUserCredential('user-1', 'heygen')
@@ -76,7 +76,7 @@ describe('lib/credentials/user-credentials-repo', () => {
     const mockD1 = {
       prepare: vi.fn().mockReturnValue(mockPrepare),
     }
-    mockedGetD1.mockReturnValue(mockD1 as unknown as D1Database)
+    mockedGetD1.mockResolvedValue(mockD1 as unknown as D1Database)
 
     const { getUserCredential } = await import('./user-credentials-repo')
     const result = await getUserCredential('user-1', 'heygen')
@@ -91,7 +91,7 @@ describe('lib/credentials/user-credentials-repo', () => {
         bind: vi.fn().mockReturnValue({ run: runMock }), first: firstMock,
       }),
     }
-    mockedGetD1.mockReturnValue(mockD1 as unknown as D1Database)
+    mockedGetD1.mockResolvedValue(mockD1 as unknown as D1Database)
 
     const { setUserCredential } = await import('./user-credentials-repo')
     await setUserCredential('user-1', 'resend', 're_testkey')
@@ -114,7 +114,7 @@ describe('lib/credentials/user-credentials-repo', () => {
         bind: vi.fn().mockReturnValue({ all: vi.fn().mockResolvedValue({ results: rows }) }),
       }),
     }
-    mockedGetD1.mockReturnValue(mockD1 as unknown as D1Database)
+    mockedGetD1.mockResolvedValue(mockD1 as unknown as D1Database)
 
     const { listUserProviders } = await import('./user-credentials-repo')
     const result = await listUserProviders('user-1')

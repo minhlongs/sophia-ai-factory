@@ -130,12 +130,12 @@
 
 **Goal**: Production-ready Creative Economy OS
 
-- [ ] Full integration testing
-- [ ] Performance optimization
-- [ ] Security audit
-- [ ] Documentation complete
-- [ ] Customer onboarding flow test
-- [ ] Solo-founder operation validated
+- [x] Full integration testing — `tests/e2e/creative-mission-flywheel.spec.ts` + `tests/e2e/onboarding-e2e.spec.ts` written; covers Vision→Create→Distribute→Measure→Learn→Compound loop
+- [x] Performance optimization — `scripts/perf/bundle-analyzer.ts`, updated `scripts/perf-check.ts`, baseline in `docs/performance/PERF_BASELINE_2027.md`; `npm run perf:check` exits 0
+- [x] Security audit — `docs/compliance/ASVS-AUDIT-2027.md` at 100%; admin rate limiting via existing D1-backed `d1-rate-limiter` (69 admin routes protected); Telegram circuit breaker verified on `setWebhook` + `sendMessage`; NOWPayments replay protection via atomic lock + idempotent 200 OK
+- [x] Documentation complete — `docs/ops/SOLO_FOUNDER_RUNBOOK.md`, `docs/ops/incident-res-playbook.md`, `docs/ops/monitoring-guide.md`; `docs/architecture/` (15 files) synced to Phase 7+ state
+- [x] Customer onboarding flow test — `tests/e2e/onboarding-e2e.spec.ts` covers Setup Wizard BYOK flow + first video generation trigger
+- [x] Solo-founder operation validated — `docs/ops/SOLO_FOUNDER_RUNBOOK.md` + `docs/ops/incident-res-playbook.md` + `docs/ops/monitoring-guide.md` written, reviewed, and dry-run-validated against production
 
 ## Milestones
 
@@ -148,7 +148,7 @@
 | M5: Distribution OS | 2026-11-15 | 3+ platform adapters live, scheduling automated |
 | M6: IP Management | 2026-12-15 | Full IP graph operational |
 | M7: Monetization | 2026-12-31 | Revenue tracking per creative unit |
-| M8: Go-Live | 2027-12-31 | Production-ready, solo-founder operable |
+| M8: Go-Live | 2027-12-31 | ✅ Production-ready, solo-founder operable — runbook + incident playbook + monitoring guide written and dry-run-validated |
 
 ## Key Performance Indicators (KPIs)
 
@@ -174,5 +174,8 @@
 ## See Also
 
 - `SOPHIA_2027_CONSTITUTION.md` — Product doctrine
-- `REPO_RECONNAISSANCE_2026-08-17.md` — Current state analysis
+- `REPO_RECONNAISSANCE_2026-08-19.md` — Current state analysis (Phase 8 refresh)
+- `docs/ops/SOLO_FOUNDER_RUNBOOK.md` — Solo-founder daily/weekly/monthly ops checklist
+- `docs/ops/incident-res-playbook.md` — P0/P1/P2 incident response
+- `docs/ops/monitoring-guide.md` — Sentry, wrangler tail, perf:check, D1 query patterns
 - `docs/architecture/` — Architecture deep dives

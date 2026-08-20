@@ -37,7 +37,7 @@ export function isValidAssetTransition(
 export async function createDistributionAsset(
   asset: Omit<DistributionAsset, 'id' | 'createdAt'>,
 ): Promise<DistributionAsset> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new DistributionError('D1_UNAVAILABLE', 'D1 not available');
 
   const id = newDistributionAssetId();
@@ -81,7 +81,7 @@ export async function getDistributionAsset(
   id: string,
   workspaceId: string,
 ): Promise<DistributionAsset> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new DistributionError('D1_UNAVAILABLE', 'D1 not available');
 
   const row = await db
@@ -100,7 +100,7 @@ export async function listDistributionAssets(
   workspaceId: string,
   planId?: string,
 ): Promise<DistributionAsset[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new DistributionError('D1_UNAVAILABLE', 'D1 not available');
 
   let query = 'SELECT * FROM distribution_assets WHERE workspace_id = ?1';
@@ -122,7 +122,7 @@ export async function updateDistributionAssetStatus(
   status: DistributionAsset['status'],
   workspaceId: string,
 ): Promise<DistributionAsset> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new DistributionError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);
@@ -176,7 +176,7 @@ export async function markDistributionAssetFailed(
   error: string,
   workspaceId: string,
 ): Promise<DistributionAsset> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new DistributionError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);

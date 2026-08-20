@@ -46,7 +46,7 @@ export async function completeOnboardingAction(
     // plain UPDATE silently no-ops for those users and leaves them stuck in
     // the /dashboard → /dashboard/onboarding redirect loop. Insert-on-conflict
     // makes the flag durable regardless of prior profile state.
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     await db
       .prepare(

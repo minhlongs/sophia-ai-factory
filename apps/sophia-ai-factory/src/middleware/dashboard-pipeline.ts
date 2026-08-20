@@ -36,7 +36,7 @@ export async function handleDashboardPipeline(
   // Admin tier/role gate for /dashboard/admin/*
   if (cleanPath.startsWith('/dashboard/admin') && session.user?.id) {
     try {
-      const db = getD1();
+      const db = await getD1();
       if (!db) {
         logger.error('[Middleware] Database unavailable for admin check');
         return NextResponse.redirect(new URL('/dashboard?error=admin_required', request.url));

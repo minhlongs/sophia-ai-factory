@@ -12,7 +12,7 @@ import { toNextJsHandler } from 'better-auth/next-js';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest): Promise<Response> {
-  const auth = getAuth();
+  const auth = await getAuth();
   if (!auth) {
     return NextResponse.json({ error: 'Authentication service unavailable' }, { status: 503 });
   }

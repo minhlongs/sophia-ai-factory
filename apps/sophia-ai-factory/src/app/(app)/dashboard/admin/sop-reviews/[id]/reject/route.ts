@@ -24,7 +24,7 @@ export async function rejectSopListing(listingId: string, reason: string): Promi
       return { success: false, error: 'Admin access required' };
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return { success: false, error: 'Database not available' };
     }

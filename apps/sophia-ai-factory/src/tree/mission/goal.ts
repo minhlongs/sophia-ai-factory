@@ -77,7 +77,7 @@ function domainToRow(g: CreativeGoal): Omit<GoalRow, 'created_at' | 'updated_at'
 }
 
 export async function createGoal(goal: CreativeGoal): Promise<CreativeGoal> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new GoalError('D1_UNAVAILABLE', 'D1 not available');
   const now = Math.floor(Date.now() / 1000);
   goal.id = goal.id || newGoalId();
@@ -103,7 +103,7 @@ export async function createGoal(goal: CreativeGoal): Promise<CreativeGoal> {
 }
 
 export async function getGoalsByMission(missionId: string): Promise<CreativeGoal[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new GoalError('D1_UNAVAILABLE', 'D1 not available');
   const result = await db
     .prepare(`SELECT * FROM creative_goals WHERE mission_id = ?1 ORDER BY priority DESC`)
@@ -113,7 +113,7 @@ export async function getGoalsByMission(missionId: string): Promise<CreativeGoal
 }
 
 export async function getGoalsByWorkspace(workspaceId: string): Promise<CreativeGoal[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new GoalError('D1_UNAVAILABLE', 'D1 not available');
   const result = await db
     .prepare(`SELECT * FROM creative_goals WHERE workspace_id = ?1 ORDER BY priority DESC`)
@@ -123,7 +123,7 @@ export async function getGoalsByWorkspace(workspaceId: string): Promise<Creative
 }
 
 export async function updateGoalProgress(id: string, currentValue: number): Promise<CreativeGoal> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new GoalError('D1_UNAVAILABLE', 'D1 not available');
   const now = Math.floor(Date.now() / 1000);
   await db.prepare(`UPDATE creative_goals SET current_value = ?, updated_at = ? WHERE id = ?`).bind(currentValue, now, id).run();
@@ -133,7 +133,7 @@ export async function updateGoalProgress(id: string, currentValue: number): Prom
 }
 
 export async function deleteGoal(id: string): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new GoalError('D1_UNAVAILABLE', 'D1 not available');
   await db.prepare(`DELETE FROM creative_goals WHERE id = ?1`).bind(id).run();
 }

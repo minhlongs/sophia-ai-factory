@@ -40,7 +40,7 @@ function resolveLocalized(video: HelpVideo, locale: 'en' | 'vi'): LocalizedHelpV
 // ---------------------------------------------------------------------------
 
 export async function createHelpVideo(input: CreateHelpVideoInput): Promise<HelpVideo> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -91,7 +91,7 @@ export async function createHelpVideo(input: CreateHelpVideoInput): Promise<Help
 // ---------------------------------------------------------------------------
 
 export async function updateHelpVideo(id: string, input: UpdateHelpVideoInput): Promise<HelpVideo> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -178,7 +178,7 @@ export async function updateHelpVideo(id: string, input: UpdateHelpVideoInput): 
 // ---------------------------------------------------------------------------
 
 export async function deleteHelpVideo(id: string): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -208,7 +208,7 @@ export async function deleteHelpVideo(id: string): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function markWatched(input: MarkWatchedInput): Promise<HelpVideoProgress> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -244,7 +244,7 @@ export async function markWatched(input: MarkWatchedInput): Promise<HelpVideoPro
 // ---------------------------------------------------------------------------
 
 export async function unmarkWatched(input: UnmarkWatchedInput): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -266,7 +266,7 @@ export async function unmarkWatched(input: UnmarkWatchedInput): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function getHelpVideoById(id: string, locale: 'en' | 'vi'): Promise<LocalizedHelpVideo | null> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -282,7 +282,7 @@ export async function getHelpVideoById(id: string, locale: 'en' | 'vi'): Promise
 }
 
 export async function getHelpVideoBySlug(slug: string, locale: 'en' | 'vi'): Promise<LocalizedHelpVideo | null> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -298,7 +298,7 @@ export async function getHelpVideoBySlug(slug: string, locale: 'en' | 'vi'): Pro
 }
 
 export async function listHelpVideos(category?: HelpVideoCategory, locale: 'en' | 'vi' = 'en'): Promise<LocalizedHelpVideo[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 
@@ -318,7 +318,7 @@ export async function listHelpVideos(category?: HelpVideoCategory, locale: 'en' 
 }
 
 export async function listPublishedHelpVideos(locale: 'en' | 'vi' = 'en'): Promise<LocalizedHelpVideo[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 

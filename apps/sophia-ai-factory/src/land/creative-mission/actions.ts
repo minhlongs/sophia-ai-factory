@@ -109,7 +109,7 @@ export async function createMission(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
@@ -186,7 +186,7 @@ export async function updateMissionStatus(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
@@ -278,7 +278,7 @@ export async function listMissions(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
@@ -329,7 +329,7 @@ export async function getMission(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
@@ -395,7 +395,7 @@ export async function startMissionExecution(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
@@ -488,7 +488,7 @@ export async function requestApproval(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
@@ -574,7 +574,7 @@ export async function resolveApprovalAction(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
@@ -678,7 +678,7 @@ export async function listPendingApprovalsAction(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const d1 = getD1();
+    const d1 = await getD1();
     if (!d1) {
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }

@@ -30,7 +30,7 @@ export const strategyFeedback = inngest.createFunction(
       return { generated: false };
     }
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       logger.error('[strategy-feedback] D1 not available');
       return { generated: false };

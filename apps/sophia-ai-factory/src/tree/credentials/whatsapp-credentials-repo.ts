@@ -40,7 +40,7 @@ export async function upsertWhatsAppCredential(
   if (!input.phoneNumberId) throw new Error('phoneNumberId is required')
   if (!input.waToken) throw new Error('waToken is required')
 
-  const d1 = getD1()
+  const d1 = await getD1()
   if (!d1) throw new Error('D1 binding not available')
 
   const encrypted = await encryptApiKey(input.waToken)
@@ -67,7 +67,7 @@ export async function upsertWhatsAppCredential(
  * Retrieve stored credential metadata for a user (no plaintext).
  */
 export async function listWhatsAppCredentials(userId: string): Promise<WhatsAppCredentialRecord[]> {
-  const d1 = getD1()
+  const d1 = await getD1()
   if (!d1) return []
 
   const { results } = await d1
@@ -87,7 +87,7 @@ export async function listWhatsAppCredentials(userId: string): Promise<WhatsAppC
  * Delete a WhatsApp credential by id.
  */
 export async function deleteWhatsAppCredential(userId: string, id: number): Promise<void> {
-  const d1 = getD1()
+  const d1 = await getD1()
   if (!d1) throw new Error('D1 binding not available')
 
   const result = await d1

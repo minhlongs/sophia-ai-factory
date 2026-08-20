@@ -50,7 +50,7 @@ async function requireMaster(): Promise<
       return failure({ code: 'UNAUTHORIZED', message: 'Not authenticated' });
     }
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'Database not available' });
     }
@@ -86,7 +86,7 @@ export async function listOrgs(): Promise<
     const auth = await requireMaster();
     if (!auth.ok) return auth;
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'Database not available' });
     }
@@ -126,7 +126,7 @@ export async function getOrgDetail(
     const auth = await requireMaster();
     if (!auth.ok) return auth;
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'Database not available' });
     }
@@ -201,7 +201,7 @@ export async function createOrg(
       return failure({ code: 'VALIDATION', message: 'Organization name is required' });
     }
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'Database not available' });
     }
@@ -255,7 +255,7 @@ export async function inviteMember(
       return failure({ code: 'VALIDATION', message: `Role must be one of: ${validRoles.join(', ')}` });
     }
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'Database not available' });
     }
@@ -306,7 +306,7 @@ export async function removeMember(
     const auth = await requireMaster();
     if (!auth.ok) return auth;
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'Database not available' });
     }

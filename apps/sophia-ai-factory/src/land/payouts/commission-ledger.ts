@@ -60,7 +60,7 @@ export interface InsertLedgerInput {
  * Converts USD → cents. Idempotent via IGNORE on UNIQUE(conversion_event_id).
  */
 export async function insertPendingLedger(input: InsertLedgerInput): Promise<void> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const now = Math.floor(Date.now() / 1000)
@@ -86,7 +86,7 @@ export async function insertPendingLedger(input: InsertLedgerInput): Promise<voi
  * Flip pending → payable for rows whose payable_at has passed.
  */
 export async function flipPendingToPayable(nowTs: number): Promise<number> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const result = await db
@@ -106,7 +106,7 @@ export async function flipPendingToPayable(nowTs: number): Promise<number> {
 export async function getPayableAggregates(
   tenantId: string,
 ): Promise<{ affiliate_id: string; total_cents: number; row_count: number }[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const result = await db
@@ -131,7 +131,7 @@ export async function getPayableLedgerIds(
   tenantId: string,
   affiliateId: string,
 ): Promise<string[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const result = await db
@@ -153,7 +153,7 @@ export async function getEarningsSummary(
   fromTs: number,
   toTs: number,
 ): Promise<{ status: LedgerStatus; total_usd: number; count: number }[]> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const result = await db

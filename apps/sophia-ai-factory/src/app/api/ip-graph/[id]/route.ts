@@ -22,7 +22,7 @@ async function verifyWorkspaceAccess(workspaceId: string, userId: string): Promi
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getCurrentUser();
   if (!user) {
@@ -30,7 +30,8 @@ export async function GET(
   }
 
   try {
-    const ip = await getIP(params.id);
+    const { id } = await params;
+    const ip = await getIP(id);
     if (!ip) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
@@ -48,7 +49,7 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const user = await getCurrentUser();
   if (!user) {
@@ -63,7 +64,8 @@ export async function PATCH(
   }
 
   try {
-    const existing = await getIP(params.id);
+    const { id } = await params;
+    const existing = await getIP(id);
     if (!existing) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
@@ -75,7 +77,7 @@ export async function PATCH(
 
     // Only status can be updated via this endpoint
     if (body.status && typeof body.status === 'string') {
-      const updated = await updateIPStatus(params.id, body.status as IP['status']);
+      const updated = await updateIPStatus(id, body.status as IP['status']);
       return NextResponse.json({ entity: updated });
     }
 

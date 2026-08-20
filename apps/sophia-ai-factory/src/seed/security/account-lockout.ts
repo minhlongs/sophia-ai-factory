@@ -148,7 +148,7 @@ export async function resetFailedLogin(
  */
 export async function checkAccountLockByUserId(userId: string): Promise<AccountLockStatus> {
   try {
-    const db = getD1()
+    const db = await getD1()
     return checkAccountLock(db, userId)
   } catch (err) {
     logger.error('checkAccountLockByUserId binding error', err instanceof Error ? err : new Error(String(err)))

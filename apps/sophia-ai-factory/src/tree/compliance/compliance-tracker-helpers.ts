@@ -51,7 +51,7 @@ export interface InsertParams {
 
 /** Insert a compliance_metadata row; returns the generated UUID. */
 export async function insertComplianceRecord(params: InsertParams): Promise<string> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 binding not available');
   const db = _db;
   const id = crypto.randomUUID();

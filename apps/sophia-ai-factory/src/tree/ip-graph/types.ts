@@ -71,7 +71,7 @@ function rowToDomain(row: IPRow): IP {
 // ---------------------------------------------------------------------------
 
 export async function createIP(entity: IP): Promise<IP> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new IPGraphError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);
@@ -111,7 +111,7 @@ export async function createIP(entity: IP): Promise<IP> {
 }
 
 export async function getIP(id: string): Promise<IP | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new IPGraphError('D1_UNAVAILABLE', 'D1 not available');
 
   const row = await db.prepare(`SELECT * FROM ip_entities WHERE id = ?1 LIMIT 1`).bind(id).first<IPRow>();
@@ -119,7 +119,7 @@ export async function getIP(id: string): Promise<IP | null> {
 }
 
 export async function listIP(workspaceId: string, type?: IP['type']): Promise<IP[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new IPGraphError('D1_UNAVAILABLE', 'D1 not available');
 
   let sql = `SELECT * FROM ip_entities WHERE workspace_id = ?1`;
@@ -135,7 +135,7 @@ export async function listIP(workspaceId: string, type?: IP['type']): Promise<IP
 }
 
 export async function getIPChildren(parentId: string): Promise<IP[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new IPGraphError('D1_UNAVAILABLE', 'D1 not available');
 
   const result = await db.prepare(`SELECT * FROM ip_entities WHERE parent_id = ?1 ORDER BY created_at ASC`).bind(parentId).all<IPRow>();
@@ -143,7 +143,7 @@ export async function getIPChildren(parentId: string): Promise<IP[]> {
 }
 
 export async function updateIPStatus(id: string, status: ContentStatus): Promise<IP | null> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new IPGraphError('D1_UNAVAILABLE', 'D1 not available');
 
   const now = Math.floor(Date.now() / 1000);

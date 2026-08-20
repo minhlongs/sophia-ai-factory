@@ -63,7 +63,7 @@ export interface VideoNeedingExperiment {
 export async function findVideosNeedingExperiments(
   limit = 20,
 ): Promise<VideoNeedingExperiment[]> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   const { results } = await db
@@ -124,7 +124,7 @@ export async function createThumbnailAbExperiment(
   } = options;
 
   // Idempotency: skip if active experiment already exists
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   const existing = await db
@@ -194,7 +194,7 @@ export async function selectWinningThumbnail(
     return false;
   }
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
 
   await db

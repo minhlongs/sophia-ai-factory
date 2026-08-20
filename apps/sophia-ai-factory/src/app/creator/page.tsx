@@ -249,7 +249,7 @@ export default async function CreatorPage() {
     : 0;
 
   // Fetch earnings breakdown, active challenges, and user progress
-  const db = getD1();
+  const db = await getD1();
   let earningsBreakdown = { totalEarned: 0, pending: 0, payable: 0, paid: 0 };
   let challenges: SopChallengeRow[] = [];
   let userProgress: UserChallengeProgressRow[] = [];

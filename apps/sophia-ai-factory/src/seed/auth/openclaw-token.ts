@@ -121,7 +121,7 @@ export async function verifyOpenclawToken(raw: string): Promise<VerifiedOpenclaw
 
   // JTI revocation check.
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     const revoked = await db
       .prepare('SELECT 1 FROM openclaw_revoked_tokens WHERE jti = ?1 LIMIT 1')
@@ -144,7 +144,7 @@ export async function verifyOpenclawToken(raw: string): Promise<VerifiedOpenclaw
  * When an endpoint is added it MUST be admin-only.
  */
 export async function revokeOpenclawToken(jti: string, reason?: string): Promise<void> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const nowSec = Math.floor(Date.now() / 1000);
   await db
@@ -175,7 +175,7 @@ export async function getCurrentUserOrOpenclawBearer(headers: Headers): Promise<
     const verified = await verifyOpenclawToken(bearer);
     if (verified) {
       try {
-        const db = getD1();
+        const db = await getD1();
         if (!db) throw new Error('D1 database binding not available');
         const row = await db
           .prepare(

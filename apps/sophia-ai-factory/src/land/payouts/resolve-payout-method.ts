@@ -34,7 +34,7 @@ export async function resolvePayoutMethod(
   tenantId: string,
   affiliateId: string,
 ): Promise<ResolvedPayoutMethod | null> {
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
 

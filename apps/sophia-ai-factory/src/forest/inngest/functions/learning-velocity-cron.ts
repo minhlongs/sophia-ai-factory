@@ -23,7 +23,7 @@ export const learningVelocityCron = inngest.createFunction(
     const nowMs = Date.now();
     const windowStartMs = nowMs - LOOKBACK_MS;
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       logger.error('[learning-velocity-cron] D1 not available');
       return { computed: 0 };
@@ -130,7 +130,7 @@ function computeVelocityScore(
 }
 
 async function computeVelocity(
-  db: NonNullable<ReturnType<typeof getD1>>,
+  db: NonNullable<Awaited<ReturnType<typeof getD1>>>,
   workspaceId: string,
   entityType: string,
   channel: string,
@@ -172,7 +172,7 @@ async function computeVelocity(
 }
 
 async function writeVelocity(
-  db: NonNullable<ReturnType<typeof getD1>>,
+  db: NonNullable<Awaited<ReturnType<typeof getD1>>>,
   metric: LearningVelocityMetric,
 ): Promise<void> {
   await db.prepare(

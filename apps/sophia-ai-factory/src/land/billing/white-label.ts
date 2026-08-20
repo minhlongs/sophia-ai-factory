@@ -35,7 +35,7 @@ export async function updateWhiteLabelBranding(
       return failure({ code: 'UNAUTHORIZED', message: 'Not authenticated' });
     }
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'Database not available' });
     }
@@ -73,7 +73,7 @@ export async function getWhiteLabelBranding(
       return failure({ code: 'UNAUTHORIZED', message: 'Not authenticated' });
     }
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) {
       return failure({ code: 'DB_UNAVAILABLE', message: 'Database not available' });
     }

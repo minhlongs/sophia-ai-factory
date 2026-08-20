@@ -150,7 +150,7 @@ describe('installSop', () => {
     const { getSopListing } = await import('@/seed/db/marketplace-ops');
 
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getD1).mockReturnValue(makeD1Mock() as unknown as D1Database);
+    vi.mocked(getD1).mockResolvedValue(makeD1Mock() as unknown as D1Database);
     vi.mocked(getSopListing).mockResolvedValue(mockListing as any);
 
     const result = await installSop('listing-001');
@@ -179,7 +179,7 @@ describe('installSop', () => {
     const { getSopListing } = await import('@/seed/db/marketplace-ops');
 
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getD1).mockReturnValue(makeD1Mock() as unknown as D1Database);
+    vi.mocked(getD1).mockResolvedValue(makeD1Mock() as unknown as D1Database);
     vi.mocked(getSopListing).mockResolvedValue(null);
 
     const result = await installSop('listing-nonexistent');
@@ -196,7 +196,7 @@ describe('installSop', () => {
     const { getSopListing } = await import('@/seed/db/marketplace-ops');
 
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getD1).mockReturnValue(makeD1Mock() as unknown as D1Database);
+    vi.mocked(getD1).mockResolvedValue(makeD1Mock() as unknown as D1Database);
     vi.mocked(getSopListing).mockResolvedValue({ ...mockListing, status: 'draft' } as any);
 
     const result = await installSop('listing-draft');
@@ -242,7 +242,7 @@ describe('installSop', () => {
       })),
     } as unknown as D1Database;
 
-    vi.mocked(getD1).mockReturnValue(duplicateD1);
+    vi.mocked(getD1).mockResolvedValue(duplicateD1);
     vi.mocked(getSopListing).mockResolvedValue(mockListing as any);
 
     const result = await installSop('listing-001');
@@ -289,7 +289,7 @@ describe('installSop', () => {
       })),
     } as unknown as D1Database;
 
-    vi.mocked(getD1).mockReturnValue(limitD1);
+    vi.mocked(getD1).mockResolvedValue(limitD1);
     vi.mocked(getSopListing).mockResolvedValue(mockListing as any);
 
     const result = await installSop('listing-001');
@@ -308,7 +308,7 @@ describe('uninstallSop', () => {
     const { getSopInstall } = await import('@/seed/db/marketplace-ops');
 
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getD1).mockReturnValue(makeD1Mock() as unknown as D1Database);
+    vi.mocked(getD1).mockResolvedValue(makeD1Mock() as unknown as D1Database);
     vi.mocked(getSopInstall).mockResolvedValue(mockInstall as any);
 
     const result = await uninstallSop('license-abc-123');
@@ -325,7 +325,7 @@ describe('uninstallSop', () => {
     const { getSopInstall } = await import('@/seed/db/marketplace-ops');
 
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    vi.mocked(getD1).mockReturnValue(makeD1Mock() as unknown as D1Database);
+    vi.mocked(getD1).mockResolvedValue(makeD1Mock() as unknown as D1Database);
     vi.mocked(getSopInstall).mockResolvedValue({
       ...mockInstall,
       user_id: 'different-user',

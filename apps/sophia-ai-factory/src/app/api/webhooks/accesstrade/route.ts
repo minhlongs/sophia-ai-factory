@@ -70,7 +70,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const conversionId = payload.conversion_id
   if (!conversionId) return NextResponse.json({ ok: true, skipped: 'no_conversion_id' })
 
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) {
     logger.warn('[accesstrade-webhook] D1 unavailable');
     return NextResponse.json({ ok: true, skipped: 'db_unavailable' });

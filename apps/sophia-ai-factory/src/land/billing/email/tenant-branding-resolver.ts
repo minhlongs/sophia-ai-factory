@@ -35,7 +35,7 @@ function getD1(): D1Database | null {
  * Safe to call from any email sender — returns nulls when unset.
  */
 export async function resolveEmailBranding(tenantId: string): Promise<ResolvedEmailBranding> {
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     return { fromName: null, footerMarkdown: null, logoUrl: null };
   }

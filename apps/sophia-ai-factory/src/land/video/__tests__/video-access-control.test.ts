@@ -61,7 +61,7 @@ describe('authorizeVideoAccess', () => {
   })
 
   it('returns not_found when no video row exists', async () => {
-    vi.mocked(getD1).mockReturnValue(makeD1WithRow(null))
+    vi.mocked(getD1).mockResolvedValue(makeD1WithRow(null))
 
     const result = await authorizeVideoAccess(VIDEO_ID, USER_ID)
     expect('denied' in result).toBe(true)
@@ -69,7 +69,7 @@ describe('authorizeVideoAccess', () => {
   })
 
   it('returns unauthorized when user_id does not match', async () => {
-    vi.mocked(getD1).mockReturnValue(
+    vi.mocked(getD1).mockResolvedValue(
       makeD1WithRow({ id: VIDEO_ID, user_id: 'other-user', r2_key: R2_KEY, access_revoked: 0 }),
     )
 
@@ -79,7 +79,7 @@ describe('authorizeVideoAccess', () => {
   })
 
   it('returns revoked when access_revoked = 1', async () => {
-    vi.mocked(getD1).mockReturnValue(
+    vi.mocked(getD1).mockResolvedValue(
       makeD1WithRow({ id: VIDEO_ID, user_id: USER_ID, r2_key: R2_KEY, access_revoked: 1 }),
     )
 
@@ -89,7 +89,7 @@ describe('authorizeVideoAccess', () => {
   })
 
   it('returns not_ready when r2_key is null', async () => {
-    vi.mocked(getD1).mockReturnValue(
+    vi.mocked(getD1).mockResolvedValue(
       makeD1WithRow({ id: VIDEO_ID, user_id: USER_ID, r2_key: null, access_revoked: 0 }),
     )
 
@@ -99,7 +99,7 @@ describe('authorizeVideoAccess', () => {
   })
 
   it('returns r2_unavailable when R2 bucket is not available', async () => {
-    vi.mocked(getD1).mockReturnValue(
+    vi.mocked(getD1).mockResolvedValue(
       makeD1WithRow({ id: VIDEO_ID, user_id: USER_ID, r2_key: R2_KEY, access_revoked: 0 }),
     )
     vi.mocked(getVideoBucket).mockResolvedValue(null)
@@ -110,7 +110,7 @@ describe('authorizeVideoAccess', () => {
   })
 
   it('returns granted with r2Key + bucket when all checks pass (public bucket)', async () => {
-    vi.mocked(getD1).mockReturnValue(
+    vi.mocked(getD1).mockResolvedValue(
       makeD1WithRow({ id: VIDEO_ID, user_id: USER_ID, r2_key: R2_KEY, access_revoked: 0 }),
     )
     const bucket = makeR2Bucket('https://cdn.example.com')
@@ -125,7 +125,7 @@ describe('authorizeVideoAccess', () => {
   })
 
   it('returns granted with r2Key + bucket for private bucket (streaming)', async () => {
-    vi.mocked(getD1).mockReturnValue(
+    vi.mocked(getD1).mockResolvedValue(
       makeD1WithRow({ id: VIDEO_ID, user_id: USER_ID, r2_key: R2_KEY, access_revoked: 0 }),
     )
     const bucket = makeR2Bucket(null)

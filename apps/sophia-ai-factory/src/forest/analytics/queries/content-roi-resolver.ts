@@ -77,7 +77,7 @@ export async function resolveContentRoi(
 ): Promise<WorkspaceContentRoi> {
   if (!workspaceId) return { ...EMPTY_WORKSPACE, workspaceId };
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     logger.warn('[ContentRoiResolver] D1 unavailable');
     return { ...EMPTY_WORKSPACE, workspaceId };

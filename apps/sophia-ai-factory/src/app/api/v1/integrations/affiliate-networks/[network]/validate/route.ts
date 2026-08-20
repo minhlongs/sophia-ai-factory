@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     if (!VALID_NETWORKS.has(network))
       return NextResponse.json({ error: 'Unknown network' }, { status: 404 });
 
-    const db = getD1();
+    const db = await getD1();
     if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
     try {

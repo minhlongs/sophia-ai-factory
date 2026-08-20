@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true, action: 'no-op', reason: 'no batch id' })
   }
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) throw new Error('D1 database binding not available');
   const now = Math.floor(Date.now() / 1000);
 

@@ -50,7 +50,7 @@ export async function POST(
 
   try {
     const offers = await provider.listOffers({ limit: 50 })
-    const db = getD1()
+    const db = await getD1()
     const now = Math.floor(Date.now() / 1000)
     let synced = 0
 

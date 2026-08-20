@@ -58,7 +58,7 @@ export async function PATCH(
     // Previous behavior wrote audit log after update — if audit failed silently,
     // the status change was unlogged. D1 batch ties them together.
     try {
-      const db = getD1();
+      const db = await getD1();
       if (db) {
         const now = Math.floor(Date.now() / 1000)
         await db.batch([
@@ -87,7 +87,7 @@ export async function PATCH(
     }
 
     // Fetch user email for notification
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
     const userRow = await db.prepare('SELECT email FROM user WHERE id = ?1').bind(refund.user_id).first<UserRow>()
     if (userRow) {

@@ -79,9 +79,10 @@ function makeErrorResponse(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
-  const campaignId = params.id;
+  const { id } = await params;
+  const campaignId = id;
 
   if (!campaignId) {
     return makeErrorResponse(400, {

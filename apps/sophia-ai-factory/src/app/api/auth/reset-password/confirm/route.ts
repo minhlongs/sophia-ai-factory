@@ -53,7 +53,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const { token, newPassword } = parsed.data;
 
   try {
-    const db = getD1();
+    const db = await getD1();
     if (!db) throw new Error('D1 database binding not available');
 
     // Verify HMAC + TTL + one-time-use guard (consumes jti atomically)

@@ -58,7 +58,7 @@ export async function GET(
     );
   }
 
-  const db = getD1();
+  const db = await getD1();
   if (!db) {
     return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
   }

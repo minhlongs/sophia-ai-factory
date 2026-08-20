@@ -19,6 +19,10 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ── Local D1 resolution ──────────────────────────────────────────────────────
 
@@ -159,5 +163,92 @@ export function ensureTablesExist(db: Database.Database): void {
       created_at INTEGER NOT NULL DEFAULT (unixepoch()),
       provider TEXT NOT NULL DEFAULT ''
     );
+  `);
+
+  // Flywheel tables (migrations 0233-0243) — needed by creative-mission-flywheel E2E spec.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS creative_missions (
+      id TEXT PRIMARY KEY,
+      workspace_id TEXT NOT NULL,
+      creator_id TEXT NOT NULL,
+      brand_id TEXT,
+      title TEXT NOT NULL DEFAULT '',
+      objective TEXT NOT NULL DEFAULT '',
+      audience TEXT NOT NULL DEFAULT '',
+      geography TEXT NOT NULL DEFAULT '',
+      timeframe_start INTEGER NOT NULL,
+      timeframe_end INTEGER NOT NULL,
+      budget_cents INTEGER NOT NULL DEFAULT 0,
+      spent_cents INTEGER NOT NULL DEFAULT 0,
+      autonomy_level INTEGER NOT NULL DEFAULT 2,
+      channels TEXT NOT NULL DEFAULT '[]',
+      monetization_goals TEXT NOT NULL DEFAULT '[]',
+      constraints TEXT NOT NULL DEFAULT '{}',
+      success_metrics TEXT NOT NULL DEFAULT '{}',
+      status TEXT NOT NULL DEFAULT 'draft',
+      current_phase TEXT NOT NULL DEFAULT 'init',
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_creative_missions_workspace ON creative_missions (workspace_id, status, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS agent_runs (
+      id TEXT PRIMARY KEY,
+      agent_id TEXT NOT NULL,
+      workspace_id TEXT NOT NULL,
+      mission_id TEXT,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+      started_at INTEGER,
+      ended_at INTEGER,
+      status TEXT NOT NULL DEFAULT 'queued',
+      phase TEXT NOT NULL DEFAULT 'planning',
+      input_json TEXT,
+      output_json TEXT,
+      error_json TEXT,
+      error_message TEXT,
+      autonomy_level INTEGER NOT NULL DEFAULT 0,
+      total_cost_cents INTEGER NOT NULL DEFAULT 0,
+      total_tokens INTEGER NOT NULL DEFAULT 0,
+      retry_count INTEGER NOT NULL DEFAULT 0,
+      parent_run_id TEXT,
+      metadata TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_agent_runs_mission ON agent_runs(mission_id);
+    CREATE INDEX IF NOT EXISTS idx_agent_runs_workspace ON agent_runs(workspace_id);
+
+    CREATE TABLE IF NOT EXISTS performance_events (
+      id TEXT PRIMARY KEY,
+      workspace_id TEXT NOT NULL,
+      project_id TEXT,
+      event_type TEXT NOT NULL,
+      entity_type TEXT NOT NULL,
+      entity_id TEXT NOT NULL,
+      metrics_json TEXT NOT NULL DEFAULT '{}',
+      channel TEXT,
+      recorded_at INTEGER NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch())
+    );
+    CREATE INDEX IF NOT EXISTS idx_perf_events_workspace ON performance_events(workspace_id, recorded_at DESC);
+
+    CREATE TABLE IF NOT EXISTS creative_memory (
+      id TEXT PRIMARY KEY,
+      workspace_id TEXT NOT NULL,
+      category TEXT NOT NULL,
+      key TEXT NOT NULL,
+      value TEXT NOT NULL,
+      confidence TEXT NOT NULL DEFAULT 'medium',
+      source TEXT NOT NULL DEFAULT 'manual',
+      evidence TEXT NOT NULL DEFAULT '[]',
+      scope TEXT NOT NULL DEFAULT 'global',
+      scope_id TEXT,
+      version INTEGER NOT NULL DEFAULT 1,
+      is_deleted INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL,
+      expires_at INTEGER
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_creative_memory_active
+      ON creative_memory (workspace_id, category, key, scope, scope_id)
+      WHERE is_deleted = 0;
   `);
 }

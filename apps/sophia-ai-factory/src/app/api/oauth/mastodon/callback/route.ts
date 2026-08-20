@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Resolve state nonce from server-side store (consumes it — single-use)
-  const _db = getD1();
+  const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;
   const statePayload = await consumeOauthState(stateNonce, db);
