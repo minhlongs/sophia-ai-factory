@@ -33,7 +33,7 @@ export const learningVelocityCron = inngest.createFunction(
     const combos = await db.prepare(
       `SELECT DISTINCT workspace_id, entity_type, channel
        FROM performance_events
-       WHERE created_at >= ? AND created_at <= ?`,
+       WHERE recorded_at >= ? AND recorded_at <= ?`,
     ).bind(windowStartMs, nowMs).all<{
       workspace_id: string;
       entity_type: string;
@@ -73,11 +73,11 @@ export const learningVelocityCron = inngest.createFunction(
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-interface EventRow {
+export interface EventRow {
   metrics_json: string;
 }
 
-function parseMetrics(row: EventRow): Record<string, number> {
+export function parseMetrics(row: EventRow): Record<string, number> {
   try {
     const raw = JSON.parse(row.metrics_json) as Record<string, unknown>;
     const out: Record<string, number> = {};
@@ -90,7 +90,7 @@ function parseMetrics(row: EventRow): Record<string, number> {
   }
 }
 
-function avgMetrics(rows: EventRow[]): Record<string, number> {
+export function avgMetrics(rows: EventRow[]): Record<string, number> {
   const accum: Record<string, number[]> = {};
   for (const r of rows) {
     for (const [k, v] of Object.entries(parseMetrics(r))) {
@@ -105,7 +105,7 @@ function avgMetrics(rows: EventRow[]): Record<string, number> {
   return out;
 }
 
-function computeVelocityScore(
+export function computeVelocityScore(
   early: Record<string, number>,
   late: Record<string, number>,
 ): number {
@@ -129,7 +129,7 @@ function computeVelocityScore(
   return Math.round(Math.max(0, Math.min(100, (avg + 1) * 50)));
 }
 
-async function computeVelocity(
+export async function computeVelocity(
   db: NonNullable<Awaited<ReturnType<typeof getD1>>>,
   workspaceId: string,
   entityType: string,
@@ -141,7 +141,8 @@ async function computeVelocity(
   const all = await db.prepare(
     `SELECT metrics_json FROM performance_events
      WHERE workspace_id = ? AND entity_type = ? AND channel = ?
-       AND created_at >= ? AND created_at <= ?`,
+       AND recorded_at >= ? AND recorded_at <= ?
+     ORDER BY recorded_at ASC`,
   ).bind(workspaceId, entityType, channel, windowStartMs, nowMs)
     .all<EventRow>();
 
@@ -171,7 +172,7 @@ async function computeVelocity(
   };
 }
 
-async function writeVelocity(
+export async function writeVelocity(
   db: NonNullable<Awaited<ReturnType<typeof getD1>>>,
   metric: LearningVelocityMetric,
 ): Promise<void> {
