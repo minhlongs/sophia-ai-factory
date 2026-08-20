@@ -17,10 +17,12 @@ interface ApiKeysStepProps {
   status: Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>;
   errors: Record<string, string>;
   latencies?: Record<string, number>;
+  onNext: () => void;
 }
 
-export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, latencies }: ApiKeysStepProps) {
+export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, latencies, onNext }: ApiKeysStepProps) {
   const t = useTranslations('setupWizard.apiKeys');
+  const actions = useTranslations('setupWizard.actions');
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -115,6 +117,16 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, l
           helpText={t('replicate.help')}
           latency={latencies?.REPLICATE_API_KEY}
         />
+      </div>
+
+      <div className="flex justify-end pt-2">
+        <button
+          type="button"
+          onClick={onNext}
+          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:opacity-90 transition-opacity"
+        >
+          {actions('next')}
+        </button>
       </div>
     </div>
   );

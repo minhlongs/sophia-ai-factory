@@ -34,6 +34,7 @@ interface ProviderCredentialsStepProps {
   onTestKey: (provider: string, fieldKey: keyof ProviderConfig, value: string) => Promise<boolean>
   savedCredentials: CredentialSummary[]
   latencies?: Record<string, number>
+  onNext: () => void
 }
 
 function SavedHint({ hint }: { hint: string | null }) {
@@ -54,8 +55,10 @@ export function ProviderCredentialsStep({
   onTestKey,
   savedCredentials,
   latencies,
+  onNext,
 }: ProviderCredentialsStepProps) {
   const tRouting = useTranslations('setupWizard.routingStrategy')
+  const actions = useTranslations('setupWizard.actions')
   const getSaved = (provider: string) =>
     savedCredentials.find((c) => c.provider === provider) ?? null
 
@@ -211,6 +214,16 @@ export function ProviderCredentialsStep({
             </label>
           ))}
         </div>
+      </div>
+
+      <div className="flex justify-end pt-4 border-t">
+        <button
+          type="button"
+          onClick={onNext}
+          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:opacity-90 transition-opacity"
+        >
+          {actions('next')}
+        </button>
       </div>
     </div>
   )

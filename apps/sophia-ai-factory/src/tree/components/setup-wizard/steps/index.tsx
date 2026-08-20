@@ -217,7 +217,7 @@ export function SetupWizardPage() {
           )}
 
           {currentStep === 'system_check' && (
-            <SystemCheckStep />
+            <SystemCheckStep onNext={handleNext} />
           )}
 
           {currentStep === 'api_keys' && (
@@ -228,6 +228,7 @@ export function SetupWizardPage() {
               status={status}
               errors={errors}
               latencies={latencies}
+              onNext={handleNext}
             />
           )}
 
@@ -240,6 +241,7 @@ export function SetupWizardPage() {
               onTestKey={verifyKey}
               savedCredentials={[]}
               latencies={latencies}
+              onNext={handleNext}
             />
           )}
 

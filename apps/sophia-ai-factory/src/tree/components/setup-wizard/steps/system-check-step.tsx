@@ -3,8 +3,13 @@ import { AlertCircle, Cloud, Check, Shield } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { ByokDoctrineBanner } from '@/tree/components/setup-wizard/byok-doctrine-banner';
 
-export function SystemCheckStep() {
+interface SystemCheckStepProps {
+  onNext: () => void;
+}
+
+export function SystemCheckStep({ onNext }: SystemCheckStepProps) {
   const t = useTranslations('setup_wizard.system_check');
+  const actions = useTranslations('setupWizard.actions');
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -35,6 +40,16 @@ export function SystemCheckStep() {
       <div className="bg-accent/10 border border-accent/20 p-4 rounded-lg text-sm text-accent flex gap-2">
         <AlertCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
         <p>{t('next_step')}</p>
+      </div>
+
+      <div className="flex justify-end pt-2">
+        <button
+          type="button"
+          onClick={onNext}
+          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:opacity-90 transition-opacity"
+        >
+          {actions('next')}
+        </button>
       </div>
     </div>
   );
