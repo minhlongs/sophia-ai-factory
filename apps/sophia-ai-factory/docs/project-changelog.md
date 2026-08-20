@@ -1,6 +1,36 @@
 # Project Changelog
 
-**Last Updated:** 2026-08-18 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** e0225b3b
+**Last Updated:** 2026-08-19 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** e0225b3b
+
+---
+
+## 2026-08-19 (Phase 8 Documentation Sync) — Ops Runbook + Incident Playbook + Monitoring Guide
+
+**Severity: P1 FEATURE | Type: Documentation | Status: COMPLETE**
+
+Phase 8 Step 8: Documentation Sync. Created three operator-facing docs, updated roadmap and changelog, refreshed architecture reconnaissance.
+
+**Created files:**
+- `docs/ops/SOLO_FOUNDER_RUNBOOK.md` — daily ops checklist (15 min), weekly review (30 min), monthly tasks (2 hrs), deploy procedure, rollback procedure, troubleshooting guide. Bilingual vi/en.
+- `docs/ops/incident-res-playbook.md` — P0/P1/P2 severity classification, response procedures per severity, communication template (internal + customer-facing), protected flow quick reference, escalation matrix, post-incident checklist. Bilingual vi/en.
+- `docs/ops/monitoring-guide.md` — Sentry dashboard guide, wrangler tail usage, perf:check SLO targets, D1 query patterns, circuit breaker monitoring, alert reference table.
+
+**Updated files:**
+- `docs/roadmap/SOPHIA_2027_ROADMAP.md` — Phase 8 items 8.1–8.6 all checked; M8 milestone marked complete; added See Also links to new ops docs.
+- `docs/architecture/REPO_RECONNAISSANCE_2026-08-19.md` — corrected stale claims: Telegram circuit breaker verified present on `setWebhook` + `sendMessage` (src/tree/telegram/telegram-client.ts lines 7, 34, 37, 40, 129, 146, 149); admin rate limiting infrastructure verified present (src/middleware.ts line 130 `checkAuthRateLimit`, src/forest/middleware/rate-limiter.ts, src/seed/security/d1-rate-limiter.ts); NOWPayments replay protection verified present (nowpayments-ipn-handlers.ts:61-72 atomic lock `INSERT ... ON CONFLICT DO NOTHING`); TODO/FIXME count corrected from ~650 to ~3 actionable markers (27 false positives filtered).
+
+**Verification against source:**
+- Telegram circuit breaker: `grep -rn "shouldAllowRequest\|recordSuccess\|recordFailure" src/tree/telegram/` — 7 matches across telegram-client.ts
+- Admin rate limiting: `grep -rn "checkAuthRateLimit" src/middleware.ts` — line 130; `src/forest/middleware/rate-limiter.ts` exists with LRU + D1-backed rate limiter
+- NOWPayments replay: `nowpayments-ipn-handlers.ts:61-72` — atomic lock pattern confirmed
+- TODO/FIXME: `grep -rn "TODO\|FIXME" src/ --include="*.ts"` — only `account-lockout-hook.ts:16` (tracked issue), `mastodon.ts` mock-mode descriptions, `MASTODON_SCOPES` constant (not TODO/FIXME keywords)
+- Admin routes: 69 `route.ts` files in `src/app/api/admin/`
+- Sentry: `src/seed/observability/sentry-forwarder.ts` + `sentry-options.ts` + `sentry.server.config.ts` + `sentry.client.config.ts` + `sentry.edge.config.ts`
+- Logger: `src/seed/utils/logger-utility.ts` + `logger-internals.ts` (structured JSON, no console.log)
+- Perf check: `scripts/perf-check.ts` (226 lines, queries D1 for SLO validation)
+- Deploy: `scripts/deploy-with-sha.sh` (SHA injection, pre-push gate, post-deploy smoke)
+
+**Files:** 3 created, 3 modified | **Build:** 0 TS errors (docs only) | **Tests:** no change | **ESLint:** 0 new suppressions (docs only)
 
 ---
 
@@ -1239,3 +1269,34 @@ Admin bulk promo code generator for non-technical operators. New route `/admin/p
 ---
 
 **Archive:** See `./archive/project-changelog-2025-and-earlier.md` for entries before 2026-04-27 (v1.8.0 → v0.5.0).
+
+---
+
+## v1.14.17 — Setup Wizard Navigation Wiring + Onboarding E2E — 2026-08-20
+
+**Severity: LOW | Type: Fix | Status: SHIPPED**
+
+Setup Wizard was dead after the Welcome step. `SystemCheckStep`, `ApiKeysStep` and
+`ProviderCredentialsStep` each rendered without navigation controls, so clicking
+"Get Started" advanced to System Check and then stopped — no button existed to
+reach API Keys, Providers, Review or Finish.
+
+**Root cause:** the three step components only accepted an `onNext` prop in
+theory; `steps/index.tsx` never passed `handleNext`, and no Continue button was
+rendered in any of them.
+
+**Fix:**
+- `system-check-step.tsx`, `api-keys-step.tsx`, `provider-credentials-step.tsx` —
+  added `onNext: () => void` prop, `useTranslations('setupWizard.actions')`, and a
+  Continue button at the bottom of each step.
+- `steps/index.tsx` — wired `onNext={handleNext}` on all three steps.
+- `tests/e2e/onboarding-e2e.spec.ts` — new E2E spec (12 tests, 10 pass, 2 skip
+  for real-key requirements). Full navigation flow test now fills all required
+  keys (OpenRouter, ElevenLabs, D-ID, HeyGen) before Review so Confirm & Save is
+  enabled (`review-step.tsx: disabled={loading || !hasRequired}` requires the
+  `otherKeys` group's required entries, not just OpenRouter + HeyGen), and mocks
+  `POST /api/setup-wizard/save-credentials` to avoid 403 `csrf_token_invalid` on
+  E2E environments.
+
+**Tests:** 12 Playwright tests (10 pass, 2 skipped). No regression in vitest.
+**Plan:** Phase 8 Step 2 (onboarding E2E coverage).
