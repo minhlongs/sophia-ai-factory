@@ -3794,8 +3794,9 @@
     "breadcrumb_checkout": "Breadcrumb checkout",
     "page_title": "Page title",
     "success_title": "Thanh toán thành công!",
-    "success_desc": "Cảm ơn bạn đã đặt hàng. Chúng đang xác nhận giao dịch của bạn.",
+    "success_desc": "Cảm ơn bạn đã đặt hàng. Chúng tôi đang xác nhận giao dịch của bạn.",
     "success_tier": "Gói {tier} của bạn đang được kích hoạt.",
+    "success_sku": "Đơn hàng {sku} của bạn đang được xác nhận.",
     "success_no_order": "Không tìm thấy mã đơn hàng. Nếu bạn vừa thanh toán, vui lòng kiểm tra email để xác nhận.",
     "go_to_dashboard": "Vào bảng điều khiển"
   },

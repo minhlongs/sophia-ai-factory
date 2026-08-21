@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 interface PaymentSuccessPageProps {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ tier?: string; order_id?: string }>;
+  searchParams: Promise<{ tier?: string; sku?: string; order_id?: string }>;
 }
 
 export default async function PaymentSuccessPage({
@@ -21,6 +21,7 @@ export default async function PaymentSuccessPage({
   const sp = await searchParams;
   const orderId = sp.order_id ?? "";
   const tier = sp.tier ?? "";
+  const sku = sp.sku ?? "";
 
   const t = await getTranslations("checkout");
   const hasOrder = Boolean(orderId);
@@ -40,7 +41,7 @@ export default async function PaymentSuccessPage({
           </h1>
 
           <p className="text-muted-foreground text-sm">
-            {tier ? t("success_tier", { tier }) : t("success_desc")}
+            {sku ? t("success_sku", { sku }) : tier ? t("success_tier", { tier }) : t("success_desc")}
           </p>
         </div>
 

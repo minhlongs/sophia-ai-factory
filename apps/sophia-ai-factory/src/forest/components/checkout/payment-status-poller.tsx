@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { CheckCircle, Loader2 } from 'lucide-react'
 
 interface PaymentStatusPollerProps {
   orderId: string
@@ -30,6 +30,7 @@ export function PaymentStatusPoller({ orderId, locale }: PaymentStatusPollerProp
   const router = useRouter()
   const [attempt, setAttempt] = useState(0)
   const [timedOut, setTimedOut] = useState(false)
+  const [isComplete, setIsComplete] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const isVi = locale?.startsWith('vi')
@@ -43,7 +44,7 @@ export function PaymentStatusPoller({ orderId, locale }: PaymentStatusPollerProp
 
       if (data.status === 'completed') {
         if (intervalRef.current) clearInterval(intervalRef.current)
-        window.location.reload()
+        setIsComplete(true)
         return
       }
 
@@ -75,6 +76,24 @@ export function PaymentStatusPoller({ orderId, locale }: PaymentStatusPollerProp
       if (intervalRef.current) clearInterval(intervalRef.current)
     }
   }, [pollStatus])
+
+  if (isComplete) {
+    return (
+      <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-6 text-center">
+        <div className="flex items-center justify-center gap-2 mb-3">
+          <CheckCircle className="h-5 w-5 text-emerald-400" />
+          <p className="font-semibold text-emerald-300">
+            {isVi ? 'Giao dịch đã hoàn tất!' : 'Payment confirmed!'}
+          </p>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {isVi
+            ? 'Thanh toán của bạn đã được xác nhận. Trang sẽ tải lại trong 3 giây...'
+            : 'Your payment has been confirmed. Reloading in 3 seconds...'}
+        </p>
+      </div>
+    )
+  }
 
   if (timedOut) {
     return (

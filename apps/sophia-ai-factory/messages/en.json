@@ -3796,6 +3796,7 @@
     "success_title": "Payment Successful!",
     "success_desc": "Thank you for your order. We are confirming your payment now.",
     "success_tier": "Your {tier} plan is being activated.",
+    "success_sku": "Your {sku} order is being confirmed.",
     "success_no_order": "No order reference was provided. If you just paid, please check your email for confirmation.",
     "go_to_dashboard": "Go to dashboard"
   },

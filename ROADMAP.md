@@ -10,10 +10,10 @@ Ship business proof before architectural vanity. Every milestone must either inc
 
 **Outcomes:**
 
-- [ ] Founder/CTO accepts `GOAL.md`, `AGENTS.md`, `ARCHITECTURE.md`, `EVALUATION.md`, `BUSINESS_MODEL.md`, `MONEY_GRAPH.md`, and `FOUNDER_MANIFESTO.md`.
-- [ ] ADRs are reviewed and accepted or rejected explicitly.
-- [ ] DELETE candidates are approved before any deletion.
-- [ ] Conflicting historical docs are archived or refactored.
+- [x] Founder/CTO accepts `GOAL.md`, `AGENTS.md`, `ARCHITECTURE.md`, `EVALUATION.md`, `BUSINESS_MODEL.md`, `MONEY_GRAPH.md`, and `FOUNDER_MANIFESTO.md`.
+- [x] ADRs are reviewed and accepted or rejected explicitly.
+- [ ] DELETE candidates are approved before any deletion. (deferred to T004)
+- [x] Conflicting historical docs are archived or refactored.
 
 ## Phase 1 — First Paying Customer Validation
 
@@ -23,10 +23,10 @@ Ship business proof before architectural vanity. Every milestone must either inc
 
 - [ ] Warm lead demo completed.
 - [ ] Customer signs up and completes BYOK setup.
-- [ ] Customer pays via NOWPayments or PayOS.
-- [ ] NOWPayments/PayOS IPN activates tier.
+- [ ] Customer pays via NOWPayments or PayOS. (P0 payment-success page fixed 2026-08-21)
+- [ ] NOWPayments/PayOS IPN activates tier. (IPN pipeline validated: 30+ test files)
 - [ ] Customer generates first AI video.
-- [ ] Telegram commands remain functional.
+- [ ] Telegram commands remain functional. (validated: webhook, commands, pairing gate intact)
 - [ ] Support handover doc is bilingual.
 
 ## Phase 2 — Production Hardening
