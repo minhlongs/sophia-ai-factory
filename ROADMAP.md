@@ -35,13 +35,13 @@ Ship business proof before architectural vanity. Every milestone must either inc
 
 **Outcomes:**
 
-- [ ] `npm run build` passes from `apps/sophia-ai-factory`.
-- [ ] `npm test` passes.
-- [ ] `npm run type-check` passes.
-- [ ] `npm run deploy:full` succeeds.
-- [ ] `/api/version` live SHA matches local commit SHA.
-- [ ] Protected flows pass smoke checks.
-- [ ] Dependency audit high-risk items are triaged.
+- [x] `npm run build` passes from `apps/sophia-ai-factory`. (verified 2026-08-21: exit 0, SKIP_SENTRY + SKIP_SYMBOL)
+- [x] `npm test` passes. (verified 2026-08-21: 7112/7112 passed, 0 failed)
+- [x] `npm run type-check` passes. (verified 2026-08-21: exit 0)
+- [ ] `npm run deploy:full` succeeds. (requires prod deploy — not run in this session)
+- [ ] `/api/version` live SHA matches local commit SHA. (requires prod deploy)
+- [ ] Protected flows pass smoke checks. (requires prod deploy)
+- [x] Dependency audit high-risk items are triaged. (T005 complete: `plans/reports/t005-dependency-audit.md`)
 
 ## Phase 3 — Unit Economics and Pricing
 
