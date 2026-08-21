@@ -2,6 +2,12 @@
  * AgentRegistry — concrete implementation
  * Layer: forest (reusable infrastructure orchestrators)
  *
+ * @deprecated 2026-08-16 — duplicate agent protocol infrastructure. New agent
+ * execution should use `@/tree/agent-protocol`. This file is retained
+ * because the Inngest agent-mission-executor currently depends on it.
+ * Removal permitted after 2026-09-16. Tracked in
+ * `@/seed/types/deprecation-markers` (DEPRECATION_REGISTRY).
+ *
  * @module forest/agent-protocol
  */
 

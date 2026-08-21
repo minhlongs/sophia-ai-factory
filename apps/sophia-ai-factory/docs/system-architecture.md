@@ -856,3 +856,91 @@ land/   ──▶  forest/  ──▶  tree/  ──▶  seed/
 Layer boundaries are enforced via `no-restricted-imports` in `apps/sophia-ai-factory/eslint.config.mjs` (Phase 07 — 2026-05-03). Run `npm run lint` to verify. Zero new violations expected in non-exempt files.
 
 **Related:** Scout report (`plans/260503-1030-sophia-mekong-restructure/`), PRs #23–#28 (layer moves), PR #29 (this phase — ESLint + docs).
+
+---
+
+## 12. Sophia 2027 — Creative Economy OS (Transformation Layer)
+
+> **Codename:** CREATIVE ECONOMY OS. **Target:** 2026-08-17 → 2027-12-31.
+> **Status:** In progress. **Full spec:** `docs/strategy/SOPHIA_2027_CONSTITUTION.md`.
+
+Sophia is evolving from an "AI Video Factory" into an **Autonomous Creative
+Economy OS**. This is an integration/wiring effort — **not a rewrite**. The
+transformation extends the existing 4-layer architecture rather than replacing
+it. The core metric shifts from *videos generated* to **economic output per
+creative unit**.
+
+### 12.1 The Flywheel
+
+```
+VISION → CREATE → DISTRIBUTE → MEASURE → LEARN → COMPOUND
+```
+
+Each arrow is a domain primitive wired into the existing layer structure.
+
+### 12.2 Domain Primitives (seed)
+
+`src/seed/types/creative-domain.ts` (661 lines) is the canonical source of truth
+for all 30 transformation entity types. It is **extended, never rewritten**:
+
+| Entity | Purpose |
+|--------|---------|
+| `CreativeIdentity` | Voice, tone, positioning, beliefs, constraints, formats |
+| `CreativeMemory` | Typed/versioned/scoped/auditable memory |
+| `CreativeMissionStatus` | 9-state lifecycle: draft → planned → approval_required → running → paused → review → completed → learning → iterating |
+| `AgentDefinition` / `AgentContext` / `AgentDecision` / `AgentAction` / `AgentResult` / `AgentApproval` / `AgentRun` | Agent protocol contract |
+| `AgentPermission` | tool, scopes, requiresApproval, maxCostCents |
+| `AutonomyLevel` | 0–4 autonomy scale |
+| `ProvenanceRecord` | Append-only audit trail |
+| `IP` | Universe → world → series → character → theme → brand |
+| `ContentProject` / `ContentAsset` / `DerivativeAsset` | Content graph |
+| `DistributionPlan` / `ChannelConfig` / `DistributionAsset` | Multi-platform distribution |
+| `PerformanceEvent` / `PerformanceSnapshot` | Performance model |
+| `RevenueEvent` | Economy tracking |
+| `Experiment` / `ExperimentVariant` | A/B testing primitives |
+| `AIProvider` / `ModelPolicy` / `ModelInfo` | Model-agnostic provider abstraction |
+
+### 12.3 Domain Repositories (tree)
+
+| Module | Responsibility |
+|--------|----------------|
+| `tree/creative-memory/` | CRUD + query + confidence decay for `CreativeMemory` |
+| `tree/creative-identity/` | CRUD + query for `CreativeIdentity` |
+| `tree/content-graph/` | Content lifecycle (Idea → Concept → Brief → Script → Storyboard → Production → Asset → Derivative → Distribution → Performance) |
+| `tree/ip-graph/` | IP entity relationships + derivative traversal |
+| `tree/agent-protocol/` | `executeAgent()` — runs an `AgentDefinition` against an `AgentContext`, wired through `seed/ai/` provider abstraction, respecting `AutonomyLevel` approval gates |
+| `tree/autonomy/` | `checkActionAllowed(level, action)` — maps autonomy levels to allowed actions |
+| `tree/performance/` | Performance events + experiments |
+| `tree/distribution/` | Distribution plans + assets |
+| `tree/learning/` | `analyzePerformance()` → `extractInsights()` → `updateCreativeMemory()` → `generateRecommendations()` |
+| `tree/mission/` | Mission lifecycle (`canTransition`, `createApproval`, `resolveApproval`) |
+
+### 12.4 Wire-Up Rules
+
+1. **Extend, never replace.** `seed/ai/provider-interface.ts` is already
+   model-agnostic. New creative providers extend it (`CreativeProvider`), never
+   rewrite the `Provider` contract.
+2. **No fourth workflow engine.** Inngest owns long-running workflows. The
+   `tree/mission/` lifecycle is domain logic, not a workflow engine.
+3. **No new agent framework.** Wire existing types into existing agent
+   infrastructure (`tree/agent-protocol/agent-executor.ts`).
+4. **Forest → Land orchestration only.** Inngest/cron/quota jobs (forest) dispatch
+   business workflow (land). See `cross-layer-orchestration.md`.
+5. **Deprecate, never delete.** All deprecated artifacts are tracked in
+   `src/seed/types/deprecation-markers.ts` (`DEPRECATION_REGISTRY`). Removal is
+   permitted only after a 2-sprint buffer.
+
+### 12.5 Verification
+
+- `npx tsc --noEmit` → 0 errors ✅
+- Domain tests: 160/160 passing across 14 files ✅
+- E2E creative mission test: 10/10 passing (`src/__tests__/integration/creative-mission-e2e.test.ts`) ✅
+- No protected flows (Setup Wizard / Telegram / NOWPayments) touched ✅
+- No `:any` types in new files ✅
+- No `console.log`/`console.warn`/`console.error` in new files ✅
+- No `TODO`/`FIXME`/`HACK`/`XXX` in new files ✅
+
+**See also:** `docs/architecture/CREATIVE_MEMORY.md`, `CONTENT_GRAPH.md`,
+`IP_GRAPH.md`, `AGENT_PROTOCOL.md`, `AUTONOMY.md`, `PROVENANCE.md`,
+`DISTRIBUTION_OS.md`, `PERFORMANCE_INTELLIGENCE.md`, `DATA_FLYWHEEL.md`,
+`DEPRECATION_CANDIDATES.md`.

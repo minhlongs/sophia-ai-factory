@@ -3,6 +3,12 @@
  *
  * computeNext(workflow, missions) → next action for the cron stepper.
  * Deterministic, unit-testable without D1.
+ *
+ * @deprecated 2026-08-16 — duplicate of `@/land/workflows/compute-next`.
+ * The forest copy lacks `parallel_group`/`depends_on` DAG support and is not
+ * used by the live cron stepper. Migrate to `@/land/workflows/compute-next`.
+ * Removal permitted after 2026-09-16. Tracked in
+ * `@/seed/types/deprecation-markers` (DEPRECATION_REGISTRY).
  */
 
 import type { WorkflowRow, StepMissionRow } from '@/seed/db/workflow-repository'

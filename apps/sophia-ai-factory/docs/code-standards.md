@@ -638,3 +638,50 @@ comment annotation is used instead of an ESLint disable directive.
 
 Revocation criteria: if a page begins surfacing content to customers (e.g., exported to PDF
 for client reports), migrate that page to the customer-touched category and add `t()` calls.
+
+---
+
+## 22. Deprecation Standards
+
+> All deprecation candidates are tracked in `src/seed/types/deprecation-markers.ts`
+> (`DEPRECATION_REGISTRY`).
+
+### Policy
+
+1. **Never delete working functionality.** Deprecate → migrate → remove after a
+   2-sprint buffer.
+2. **Single source of truth.** `DEPRECATION_REGISTRY` is the canonical list of all
+   deprecated artifacts. Do not scatter `@deprecated` tags without registering here.
+3. **Every deprecated entry must carry:**
+   - `target`: Absolute file path or module specifier
+   - `replacement`: What replaces it
+   - `deprecatedAt` / `removableAfter`: ISO dates (deprecatedAt + 2 sprints = removableAfter)
+   - `reason`: Why this artifact is being deprecated
+   - `kind`: `'duplicate'` | `'superseded'` | `'legacy'`
+   - `callers`: Files that import the deprecated target
+
+### Process
+
+1. **Mark**: Add `@deprecated` JSDoc comment with replacement. Register in `DEPRECATION_REGISTRY`.
+2. **ESLint**: Add deprecation warning rule (warn-only for 2 sprints, then error).
+3. **Migrate**: Update all internal callers.
+4. **Buffer**: Wait 2 sprints for external consumers to adapt.
+5. **Remove**: Delete + update docs. Call `getRemovalReady()` to check eligibility.
+
+### Querying the Registry
+
+```ts
+import { DEPRECATION_REGISTRY, getDeprecation, listByKind, getRemovalReady, deprecationCount } from '@/seed/types/deprecation-markers';
+
+getDeprecation('@/forest/workflows/compute-next'); // → DeprecationEntry | undefined
+listByKind('duplicate');                           // → all duplicate entries
+getRemovalReady();                                  // → entries past their removableAfter date
+deprecationCount();                                 // → total count
+```
+
+### What Must NOT Be Deprecated
+
+- Setup Wizard / Telegram Bot / NOWPayments payment flow (protected flows)
+- Circuit Breaker / Result<T,E> pattern (core security primitives)
+- 4-layer architecture (foundational structure)
+- `seed/types/creative-domain.ts` entity types (extend, never replace)

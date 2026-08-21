@@ -2,6 +2,14 @@
  * spawn-agent-fleet.ts — Parallel/sequential agent fleet executor
  * Phase 12: OpenClaw Orchestrator primitive
  *
+ * @deprecated 2026-08-16 — superseded by `@/tree/agent-protocol/agent-executor`.
+ * This fleet executor bypasses AgentProtocol: it does not enforce
+ * AutonomyLevel approval gates, record provenance per run, or use the typed
+ * agent protocol. OpenClaw callers that need autonomy-aware execution should
+ * migrate to `executeAgent()`.
+ * Removal permitted after 2026-09-16. Tracked in
+ * `@/seed/types/deprecation-markers` (DEPRECATION_REGISTRY).
+ *
  * Constraints:
  *  - tenantId REQUIRED — throws OpenclawTenantMissingError if missing
  *  - Each task gets isolated context (tenantId injected)

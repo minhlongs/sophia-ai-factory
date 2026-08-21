@@ -4,6 +4,12 @@
  *
  * Wraps claude-mem MCP if available; falls back to D1 memory_kv table.
  * All keys are tenant-scoped.
+ *
+ * @deprecated 2026-08-16 — superseded by `@/tree/creative-memory`. This adapter
+ * writes memory without CreativeMemory typing, versioning, scoping, or
+ * provenance. Memory must flow through the typed creative-memory repo.
+ * Removal permitted after 2026-10-16 (longer buffer for OpenClaw migration).
+ * Tracked in `@/seed/types/deprecation-markers` (DEPRECATION_REGISTRY).
  */
 
 import { getD1 } from '@/seed/db/client';

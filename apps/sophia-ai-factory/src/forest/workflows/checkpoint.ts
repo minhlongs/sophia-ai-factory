@@ -5,6 +5,12 @@
  * D1-backed workflow stepper. Uses existing `missions.result` column
  * for checkpoint payload (no migration needed).
  *
+ * @deprecated 2026-08-16 — duplicate of `@/seed/missions/checkpoint`. The
+ * forest copy violates layer rules (a pure utility in the infrastructure
+ * layer). The seed copy is layer-compliant and is the live implementation.
+ * Removal permitted after 2026-09-16. Tracked in
+ * `@/seed/types/deprecation-markers` (DEPRECATION_REGISTRY).
+ *
  * When a step mission is interrupted (Worker cold-start, timeout, crash),
  * the stepper can resume from the last checkpoint instead of restarting.
  */

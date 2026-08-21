@@ -53,9 +53,32 @@ The Sophia 2027 transformation introduces new abstractions that subsume old code
 
 **Action**: Audit all `Asset` references. Migrate to specific types. Remove generic after 2 sprints.
 
+## Deprecation Registry (Phase 4 — 2026-08-16)
+
+All deprecation candidates are now tracked in a single source of truth:
+
+**`src/seed/types/deprecation-markers.ts`** — `DEPRECATION_REGISTRY` array with
+`target`, `replacement`, `deprecatedAt`, `removableAfter`, `reason`, `kind`,
+and `callers` per entry. Helpers: `getDeprecation()`, `listByKind()`,
+`getRemovalReady()`.
+
+| # | Target | Replacement | Kind | Removable After |
+|---|--------|-------------|------|-----------------|
+| 1 | `@/forest/workflows/compute-next` | `@/land/workflows/compute-next` | duplicate | 2026-09-16 |
+| 2 | `@/forest/workflows/supervisor-steps` | `@/land/workflows/supervisor-steps` | duplicate | 2026-09-16 |
+| 3 | `@/forest/workflows/checkpoint` | `@/seed/missions/checkpoint` | duplicate | 2026-09-16 |
+| 4 | `@/tree/agent-fleet/spawn-agent-fleet` | `@/tree/agent-protocol/agent-executor` | superseded | 2026-09-16 |
+| 5 | `@/forest/agent-protocol` | `@/tree/agent-protocol` | duplicate | 2026-09-16 |
+| 6 | `@/land/openclaw/memory-adapter` | `@/tree/creative-memory` | legacy | 2026-10-16 |
+| 7 | `@/src/lib/*` | `@/seed/*`, `@/tree/*` | legacy | TBD |
+
+Every target above carries a `@deprecated` JSDoc tag with its migration path.
+No deletions have been made — the policy is **deprecate → migrate → remove
+after a 2-sprint buffer**.
+
 ## Deprecation Process
 
-1. **Mark**: Add `@deprecated` JSDoc comment with replacement
+1. **Mark**: Add `@deprecated` JSDoc comment with replacement (also register in `DEPRECATION_REGISTRY`)
 2. **ESLint**: Add deprecation warning rule (warn-only for 2 sprints, then error)
 3. **Migrate**: Update all internal callers
 4. **Buffer**: Wait 2 sprints for external consumers to adapt
