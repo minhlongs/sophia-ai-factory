@@ -9,3 +9,6 @@ Files moved here on 2026-05-20 during docs harness alignment (`plans/260520-2151
 | `design-guidelines-2026-03-27.md` | 2026-03-27 "Deep Space" draft contradicts shipped Geist design tokens. Demoted from canonical-5 in favor of `deployment-guide.md`. Live design system lives in `apps/sophia-ai-factory/docs/design-guidelines.md`. |
 | `webhook-configuration-guide-stripe-polar-legacy.md` | Stripe + Polar configuration. Polar REJECTED for Sophia (see CLAUDE.md). Current provider = NOWPayments; see `apps/sophia-ai-factory/docs/nowpayments-configuration.md`. |
 | `sophia-local-mode-{dogfood,installer,runbook}.md` | Local-mode docs not refreshed since 2026-04-17 (33+ days stale at archive). No current customer demo path. Re-promote if local-mode returns to roadmap. |
+| `opc-goal-conflicting.md` | Moved from `.opc/goal.md`. Claims 99.9% uptime SLA, SOC2 Type II compliance, 10+ enterprise clients, and "RaaS (Responsible AI as a Service)" positioning — none of which match current Constitution truth. Archived 2026-08-21 per T001 Constitution acceptance. |
+
+| `opc-goal-conflicting.md` | Moved from `.opc/goal.md`. Claims 99.9% uptime SLA, SOC2 Type II compliance, 10+ enterprise clients, and "RaaS (Responsible AI as a Service)" positioning - none of which match current Constitution truth. Archived 2026-08-21 per T001 Constitution acceptance. |

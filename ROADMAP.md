@@ -12,8 +12,8 @@ Ship business proof before architectural vanity. Every milestone must either inc
 
 - [x] Founder/CTO accepts `GOAL.md`, `AGENTS.md`, `ARCHITECTURE.md`, `EVALUATION.md`, `BUSINESS_MODEL.md`, `MONEY_GRAPH.md`, and `FOUNDER_MANIFESTO.md`.
 - [x] ADRs are reviewed and accepted or rejected explicitly.
-- [ ] DELETE candidates are approved before any deletion. (deferred to T004)
-- [x] Conflicting historical docs are archived or refactored.
+- [x] DELETE candidates are approved before any deletion. (T004 — regenerable artifacts deleted; `.agents/` preserved pending T006)
+- [x] Conflicting historical docs are archived or refactored. (T002 — `.opc/goal.md` archived)
 
 ## Phase 1 — First Paying Customer Validation
 

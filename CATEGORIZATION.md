@@ -21,7 +21,7 @@
 |---|---|
 | `AGENTS.md` | Existing file was stale ClaudeKit/OpenCode boilerplate; replaced with Sophia agent contract. |
 | `docs/ARCHITECTURE.md` | Existing architecture doc may conflict with current CF-direct/no-tech doctrine; Constitution `ARCHITECTURE.md` is now root truth. |
-| `.opc/goal.md` | Conflicts with current no-code/no-tech RaaS positioning and should be refactored or archived. |
+| `.opc/goal.md` | **ARCHIVED 2026-08-21** — moved to `docs/archive/opc-goal-conflicting.md`. Claimed 99.9% SLA, SOC2 Type II, 10+ enterprise clients, and "RaaS" positioning; none match Constitution truth. |
 | `docs/development-roadmap.md` | Valuable history, but current roadmap should be `ROADMAP.md`. |
 | `src/lib/*` | Compatibility area remains, but new auth/db/tier imports must use `seed`. Refactor only by risk. |
 | `.github/workflows/*` | Some workflows are useful scan templates but conflict with CF-direct deploy doctrine if treated as production deploy. |
