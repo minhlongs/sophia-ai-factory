@@ -93,6 +93,9 @@ sync-*.sh
 
 # Claude worktree backups (generated operational artifacts)
 .claude/worktrees.bak/
+
+# Subagent orchestration runtime state (generated, not source)
+.claude/agent-memory/
 .stitch-tokens.json
 
 # Orchestration pipeline state
