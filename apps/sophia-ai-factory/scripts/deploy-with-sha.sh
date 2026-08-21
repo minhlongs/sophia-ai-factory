@@ -81,7 +81,7 @@ if [ "${ALLOW_UNPUSHED_DEPLOY:-0}" != "1" ]; then
     log_info "Git index refresh completed with entries needing update (non-critical — continuing)"
   fi
   # grep returns exit 1 when no match (clean working tree) — this is expected behavior.
-  STATUS_PORCELAIN=$(git -C "$REPO_ROOT" status --porcelain 2>>"$DEPLOY_LOG" | grep -vE "^[? ][?MD ] (\.cleo(/)?$|\.claude/worktrees(/|\.bak/)|\.orchestrate(/|$))|^[?m? ][?MD ] (\.cleo(/)?$|\.claude/worktrees(/|\.bak/)|\.orchestrate(/|$))" 2>>"$DEPLOY_LOG") || true
+  STATUS_PORCELAIN=$(git -C "$REPO_ROOT" status --porcelain 2>>"$DEPLOY_LOG" | grep -vE "^[? ][?MD ] (\.cleo(/)?$|\.claude/(worktrees(/|\.bak/)|agent-memory(/|$))|\.orchestrate(/|$))|^[?m? ][?MD ] (\.cleo(/)?$|\.claude/(worktrees(/|\.bak/)|agent-memory(/|$))|\.orchestrate(/|$))" 2>>"$DEPLOY_LOG") || true
   if [ -n "$STATUS_PORCELAIN" ]; then
     echo "❌ Refusing to deploy: git status reports a dirty working tree."
     echo "Affected files:"
