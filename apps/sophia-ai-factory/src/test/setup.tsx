@@ -81,9 +81,9 @@ const kvMock = {
 //
 // Both (2) and (3) are satisfied by making the mock a class extending Response.
 // This ensures `instanceof NextResponse` works for both constructor and static methods.
-// Resolved from a merge conflict: the class-based form is kept because it provides
-// the `.cookies` Map and `getSetCookie()` that middleware and route tests depend on,
-// which the function-based alternative did not expose.
+// The class-based form is kept because it provides the `.cookies` Map and
+// `getSetCookie()` that middleware and route tests depend on, which the
+// function-based alternative did not expose.
 // ─────────────────────────────────────────────────────────────────────────
 
 const GlobalResponse = globalThis.Response;
