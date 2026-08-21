@@ -400,6 +400,8 @@ export interface AgentContext {
   autonomyLevel: AutonomyLevel;
   budgetRemainingCents: number;
   correlationId: string;
+  /** Action ids the human has explicitly approved for this run. */
+  approvedActionIds?: string[];
 }
 
 export interface AgentDecision {

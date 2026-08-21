@@ -175,7 +175,7 @@ async function aggregateWorkspace(
   }
 }
 
-function mergeMetrics(events: Array<{ metrics_json: string }>): Record<string, number> {
+export function mergeMetrics(events: Array<{ metrics_json: string }>): Record<string, number> {
   const accumulator: Record<string, number[]> = {};
   for (const ev of events) {
     try {

@@ -14,6 +14,7 @@ export {
   updateAssetStatus,
   createDerivative,
   getDerivativesOf,
+  getContentLineage,
   newProjectId,
   newAssetId,
 } from './types';

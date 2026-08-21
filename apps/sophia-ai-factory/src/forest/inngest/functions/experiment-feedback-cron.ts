@@ -45,7 +45,7 @@ interface FeedbackResult {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function buildWinnerPayload(row: DecidedExperimentRow): Record<string, unknown> {
+export function buildWinnerPayload(row: DecidedExperimentRow): Record<string, unknown> {
   if (row.winner === 'no_winner') {
     return { decision: 'no_winner', content_type: row.content_type };
   }

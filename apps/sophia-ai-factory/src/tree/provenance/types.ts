@@ -135,3 +135,32 @@ export async function getDerivatives(assetId: string): Promise<ProvenanceRecord[
 
   return (result.results ?? []).map(rowToDomain);
 }
+
+/**
+ * Chronological timeline for an asset: every provenance record for the
+ * asset, ordered by creation time. Equivalent to `getProvenanceChain`
+ * but named for the timeline view used by the dashboard.
+ */
+export async function getProvenanceTimeline(assetId: string): Promise<ProvenanceRecord[]> {
+  return getProvenanceChain(assetId);
+}
+
+/**
+ * All provenance records linked to a specific agent run.
+ *
+ * Useful for auditing what a single agent execution produced and what
+ * model/tools were used.
+ */
+export async function getAgentRunProvenance(runId: string): Promise<ProvenanceRecord[]> {
+  const db = await getD1();
+  if (!db) throw new ProvenanceError('D1_UNAVAILABLE', 'D1 not available');
+
+  const result = await db
+    .prepare(
+      `SELECT * FROM provenance_records WHERE agent_run_id = ?1 ORDER BY created_at ASC`,
+    )
+    .bind(runId)
+    .all<ProvenanceRow>();
+
+  return (result.results ?? []).map(rowToDomain);
+}

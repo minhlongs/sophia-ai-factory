@@ -4,6 +4,7 @@
  */
 export * from './anthropic-adapter';
 export * from './anthropic-sse-parser';
+export * from './creative-provider';
 export * from './elevenlabs-api-client';
 export * from './provider-scoring';
 export * from './provider-registry';

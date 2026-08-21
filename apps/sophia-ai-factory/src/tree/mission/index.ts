@@ -13,6 +13,7 @@ export {
   deleteMission,
   canTransition,
   newMissionId,
+  getMissionMetrics,
 } from './types';
 
 export {

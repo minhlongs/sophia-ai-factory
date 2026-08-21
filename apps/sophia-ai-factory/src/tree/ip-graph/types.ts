@@ -152,3 +152,32 @@ export async function updateIPStatus(id: string, status: ContentStatus): Promise
   const row = await db.prepare(`SELECT * FROM ip_entities WHERE id = ?1 LIMIT 1`).bind(id).first<IPRow>();
   return row ? rowToDomain(row) : null;
 }
+
+// ─── Derivative traversal ───────────────────────────────────────────────────
+
+/**
+ * Full IP derivative tree: recursively collect every descendant of an
+ * IP entity through parent_id references.
+ *
+ * Uses a simple breadth-first traversal; the graph is shallow in
+ * practice (universe → series → character → theme → brand).
+ */
+export async function getIPDerivatives(ipId: string): Promise<IP[]> {
+  const seen = new Set<string>();
+  const queue: string[] = [ipId];
+  const result: IP[] = [];
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    if (seen.has(current)) continue;
+    seen.add(current);
+
+    const children = await getIPChildren(current);
+    for (const child of children) {
+      result.push(child);
+      queue.push(child.id);
+    }
+  }
+
+  return result;
+}

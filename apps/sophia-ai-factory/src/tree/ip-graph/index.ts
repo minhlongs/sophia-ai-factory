@@ -8,6 +8,7 @@ export {
   getIP,
   listIP,
   getIPChildren,
+  getIPDerivatives,
   updateIPStatus,
   newIpId,
 } from './types';
