@@ -97,7 +97,7 @@ if [ "${ALLOW_UNPUSHED_DEPLOY:-0}" != "1" ]; then
     exit 2
   fi
   # grep returns exit 1 when no match (no untracked files) — this is expected.
-  UNTRACKED=$(git -C "$REPO_ROOT" ls-files --others --exclude-standard 2>>"$DEPLOY_LOG" | grep -vE '^\.cleo(/)?$|^\.claude/worktrees(/|\.bak/)|^\.orchestrate(/|$)' 2>>"$DEPLOY_LOG") || true
+  UNTRACKED=$(git -C "$REPO_ROOT" ls-files --others --exclude-standard 2>>"$DEPLOY_LOG" | grep -vE '^\.cleo(/)?$|^\.claude/(worktrees(/|\.bak/)|agent-memory(/|$))|^\.orchestrate(/|$)' 2>>"$DEPLOY_LOG") || true
   if [ -n "$UNTRACKED" ]; then
     echo "❌ Refusing to deploy: untracked files in working tree."
     echo "Affected files:"
