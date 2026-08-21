@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle, Loader2 } from 'lucide-react'
+import { Link } from '@/navigation'
 
 interface PaymentStatusPollerProps {
   orderId: string
@@ -32,10 +33,13 @@ export function PaymentStatusPoller({ orderId, locale }: PaymentStatusPollerProp
   const [timedOut, setTimedOut] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const pollingRef = useRef(false)
 
   const isVi = locale?.startsWith('vi')
 
   const pollStatus = useCallback(async () => {
+    if (pollingRef.current) return
+    pollingRef.current = true
     try {
       const res = await fetch(`/api/checkout/status?orderId=${encodeURIComponent(orderId)}`)
       if (!res.ok) return
@@ -54,6 +58,9 @@ export function PaymentStatusPoller({ orderId, locale }: PaymentStatusPollerProp
         return
       }
     } catch { /* network error, try again next tick */ }
+    finally {
+      pollingRef.current = false
+    }
   }, [orderId, locale, router])
 
   useEffect(() => {
@@ -88,9 +95,17 @@ export function PaymentStatusPoller({ orderId, locale }: PaymentStatusPollerProp
         </div>
         <p className="text-sm text-muted-foreground">
           {isVi
-            ? 'Thanh toán của bạn đã được xác nhận. Trang sẽ tải lại trong 3 giây...'
-            : 'Your payment has been confirmed. Reloading in 3 seconds...'}
+            ? 'Thanh toán của bạn đã được xác nhận. Vui lòng kiểm tra email để nhận hóa đơn.'
+            : 'Your payment has been confirmed. Please check your email for a receipt.'}
         </p>
+        <div className="mt-4">
+          <Link
+            href={`/${locale}/dashboard`}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-accent px-6 py-2.5 text-sm font-semibold text-primary-foreground transition hover:from-primary/90 hover:to-accent/90"
+          >
+            {isVi ? 'Vào bảng điều khiển' : 'Go to dashboard'}
+          </Link>
+        </div>
       </div>
     )
   }
