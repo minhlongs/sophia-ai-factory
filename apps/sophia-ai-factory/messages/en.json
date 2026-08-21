@@ -3792,7 +3792,12 @@
     "grand_total_price": "Grand total price",
     "breadcrumb_billing": "Breadcrumb billing",
     "breadcrumb_checkout": "Breadcrumb checkout",
-    "page_title": "Page title"
+    "page_title": "Page title",
+    "success_title": "Payment Successful!",
+    "success_desc": "Thank you for your order. We are confirming your payment now.",
+    "success_tier": "Your {tier} plan is being activated.",
+    "success_no_order": "No order reference was provided. If you just paid, please check your email for confirmation.",
+    "go_to_dashboard": "Go to dashboard"
   },
   "onboardingFlow": {
     "title": "Set up Sophia AI",
