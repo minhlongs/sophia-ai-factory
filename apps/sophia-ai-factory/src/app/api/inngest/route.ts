@@ -27,6 +27,7 @@ import {
   thumbnailAbSelector,
   sopExecute,
   experimentFeedbackCron,
+  youtubeContentPipeline,
 } from "@/forest/inngest/functions/index";
 
 // Deprecated handlers (Phase 06 video_jobs chain + URL-to-Revenue) removed from

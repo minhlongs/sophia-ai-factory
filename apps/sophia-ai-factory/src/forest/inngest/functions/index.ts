@@ -31,6 +31,8 @@ export * from './video-scripting';
 export * from './video-tts';
 export * from './video-upload';
 export * from './video-visual';
+// YouTube content pipeline (Phase 2: Pipeline Integration)
+export * from './youtube-content-pipeline';
 // Agent protocol (Phase 3A)
 export * from './agent-mission-executor';
 export * from './agent-approval-handler';

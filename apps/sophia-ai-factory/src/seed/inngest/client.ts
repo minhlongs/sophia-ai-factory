@@ -157,6 +157,17 @@ type CampaignProgressEvent = {
   };
 };
 
+type YouTubeContentPipelineRequestedEvent = {
+  data: {
+    userId: string;
+    channelConfigId: string;
+    topic?: string | null;
+    requestedAt?: number;
+    resume?: boolean;
+    resumeFrom?: string;
+  };
+};
+
 type Events = {
   "campaign.created": CampaignCreatedEvent;
   "campaign.progress": CampaignProgressEvent;
@@ -201,6 +212,8 @@ type Events = {
       signalCount: number;
     };
   };
+  // YouTube content pipeline (autonomous content generation)
+  "youtube.content.pipeline.requested": YouTubeContentPipelineRequestedEvent;
 };
 
 // Create a client to send and receive events
