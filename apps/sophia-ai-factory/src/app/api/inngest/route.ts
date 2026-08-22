@@ -75,5 +75,7 @@ export const { GET, POST, PUT } = serve({
     // Phase 5: Auto-Creative Playbook (COMPOUND stage) — daily pattern detection + auto-apply monitor
     patternDetectionCron,
     autoApplyMonitor,
+    // Phase 3: YouTube Content Pipeline — strategy → script → SEO → quality → publish
+    youtubeContentPipeline,
   ],
 });
