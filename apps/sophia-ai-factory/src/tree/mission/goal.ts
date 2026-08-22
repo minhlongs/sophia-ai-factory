@@ -4,7 +4,7 @@
  */
 
 import { getD1 } from '@/seed/db/client';
-import type { CreativeGoal, GoalType } from '@/seed/types/creative-domain';
+import type { CreativeGoal, GoalType } from '@/seed/types/creative-economy';
 
 export class GoalError extends Error {
   code: string;

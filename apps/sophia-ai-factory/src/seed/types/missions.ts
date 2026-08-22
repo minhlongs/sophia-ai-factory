@@ -5,6 +5,11 @@
  *
  * These types were moved from forest/missions/types to seed to comply with
  * the 4-layer architecture: tree can import seed, but not forest.
+ *
+ * @deprecated This module is a DUPLICATE of `tree/missions/types.ts` and
+ * must NOT be extended. New mission-handler types go in `tree/missions/`.
+ * It is NOT deleted because 4 callers still depend on it; migration is
+ * tracked for Phase 2. See docs/architecture/DEPRECATION_CANDIDATES.md.
  */
 
 // ── Mission Context ────────────────────────────────────────────────────────
@@ -12,7 +17,10 @@
 /**
  * Context passed to a mission handler
  * Contains the input parameters, user identity, and metadata
+ *
+ * @deprecated Use `tree/missions/types.ts` instead.
  */
+/** @deprecated Duplicate of `tree/missions/types.ts`. */
 export interface MissionContext {
   /** Unique mission instance ID */
   missionId: string;

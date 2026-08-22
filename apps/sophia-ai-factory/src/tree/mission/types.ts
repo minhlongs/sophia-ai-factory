@@ -12,7 +12,10 @@
  */
 
 import { getD1 } from '@/seed/db/client';
-import type { Mission, CreativeMissionStatus, AutonomyLevel, CreativeGoal } from '@/seed/types/creative-domain';
+// Mission lifecycle types route through the Creative Economy barrel so the
+// canonical contract surface has a single import home. creative-domain.ts
+// remains the type author; the barrel re-exports it unchanged.
+import type { Mission, CreativeMissionStatus, AutonomyLevel, CreativeGoal } from '@/seed/types/creative-economy';
 
 export class MissionError extends Error {
   code: string;

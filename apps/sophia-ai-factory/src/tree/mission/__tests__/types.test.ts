@@ -20,7 +20,7 @@ import {
   createMission,
   updateMissionStatus,
 } from '../types';
-import type { Mission, CreativeMissionStatus } from '@/seed/types/creative-domain';
+import type { Mission, CreativeMissionStatus } from '@/seed/types/creative-economy';
 
 interface PreparedStmt {
   first?: unknown;

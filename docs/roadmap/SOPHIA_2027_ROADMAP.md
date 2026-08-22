@@ -1,6 +1,6 @@
 # Sophia AI Factory — Roadmap 2027
 
-> **Last updated:** 2026-08-21
+> **Last updated:** 2026-08-22
 > **Vision:** Hệ thống factory AI tự động hóa toàn bộ chuỗi sáng tạo nội dung — từ ý tưởng đến phân phối.
 > An AI-powered factory that automates the entire creative content pipeline — from ideation to distribution.
 
@@ -14,12 +14,23 @@
 Thiết lập nền tảng pháp lý, kỹ thuật, và quy trình cho toàn bộ dự án.
 Establish the legal, technical, and procedural foundation for the entire project.
 
-### Deliverables
-- [ ] Deprecation audit hoàn thành — xác định rõ KEEP / MERGE / DELETE cho toàn bộ codebase
-- [ ] Deprecation Candidates document (xem `docs/architecture/DEPRECATION_CANDIDATES.md`)
-- [ ] Constitutions: coding standards, architectural principles, quality gates
-- [ ] Phase gates defined (xem `docs/quality/PHASE_GATES.md`)
-- [ ] Codebase summary + architecture docs updated
+### Deliverables — Trạng thái đã xác minh / Verified status
+
+> Chỉ đánh dấu những gì đã được xác minh bằng bằng chứng (build/test/grep). Không đánh dấu kỳ vọng.
+> Only mark what has been verified with evidence (build/test/grep). No aspirational checkmarks.
+
+- [x] **Reconnaissance** — `docs/architecture/REPO_RECONNAISSANCE_2026-08-17.md`
+  *(done 2026-08-17, refreshed 2026-08-22 via `REPO_RECONNAISSANCE_2026-08-22-REFRESH.md`)*
+- [x] **Constitution** — `docs/strategy/SOPHIA_2027_CONSTITUTION.md` *(done)*
+- [x] **Canonical contracts** — `src/seed/types/creative-economy/`
+  (15 interfaces, 13 events, errors, ids, Zod schemas) *(done, tests green)*
+- [x] **Step B** — `ICreativeMemoryStore` contract *(done)*
+- [x] **Step D** — mission deprecation + barrel wiring
+  *(done, verified: tsc 0 errors, lint 0 new, 7689 tests pass, build exit 0)*
+- [x] **Step C** — layer-mapping ADR
+  (`docs/architecture-decisions/ADR-creative-economy-layer-mapping.md`) *(done — this run)*
+- [ ] **Step E** — validation gate *(in progress)*
+- [ ] **Phase 1–8** — *(NOT STARTED)*
 
 ### Dependencies
 - Codebase audit (đang thực hiện)
