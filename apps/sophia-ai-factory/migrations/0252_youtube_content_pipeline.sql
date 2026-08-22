@@ -1,4 +1,4 @@
--- Migration 20260822_01: YouTube Content Pipeline
+-- Migration 0252: YouTube Content Pipeline
 -- Phase 2: Pipeline Integration — autonomous YouTube content pipeline schema.
 -- Tables: channel configs, content calendar, generated strategies/scripts/SEO,
 -- learning snapshots + recommendations.

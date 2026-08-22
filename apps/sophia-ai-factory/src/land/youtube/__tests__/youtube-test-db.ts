@@ -2,7 +2,7 @@
  * Shared test-DB helper for land/youtube modules.
  *
  * Boots an in-memory SQLite D1 shim with the YouTube content-pipeline tables
- * from migration 20260822_01 so repo functions can be exercised end-to-end
+ * from migration 0252 so repo functions can be exercised end-to-end
  * without a live Cloudflare D1 binding.
  *
  * @module land/youtube/__tests__/youtube-test-db
@@ -24,7 +24,7 @@ const { DatabaseSync } = req('node:sqlite') as {
   };
 };
 
-/** Subset of migration 20260822_01 covering tables touched by land/youtube. */
+/** Subset of migration 0252 covering tables touched by land/youtube. */
 export const YOUTUBE_SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS youtube_channel_configs (
   id TEXT PRIMARY KEY,
