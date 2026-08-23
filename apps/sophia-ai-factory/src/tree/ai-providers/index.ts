@@ -1,6 +1,10 @@
 /**
  * AI Provider Abstraction — barrel export.
  *
+ * @deprecated Dead code — tracked in DEPRECATION_REGISTRY
+ * (seed/types/deprecation-markers.ts, target 'tree/ai-providers').
+ * 0 importers; removal eligible after 2026-09-06. Do not add new imports.
+ *
  * @module tree/ai-providers
  */
 

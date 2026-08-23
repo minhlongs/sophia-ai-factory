@@ -104,6 +104,16 @@ export const DEPRECATION_REGISTRY: readonly DeprecationEntry[] = [
     kind: 'legacy',
     callers: ['@/land/openclaw/index'],
   },
+  // ── Dead AI provider config module ───────────────────────────────────────
+  {
+    target: 'tree/ai-providers',
+    replacement: 'none — dead code; rebuild fresh on seed/ai Provider contract if persisted tenant config is ever needed',
+    deprecatedAt: '2026-08-23',
+    removableAfter: '2026-09-06',
+    reason: 'Dead code: 0 importers (verified 2026-08-23) and its D1 tables (ai_providers, ai_usage) were never created in any migration. Runtime transport lives in seed/ai.',
+    kind: 'legacy',
+    callers: [],
+  },
   // ── Legacy compatibility shims ──────────────────────────────────────────
   {
     target: '@/src/lib/*',

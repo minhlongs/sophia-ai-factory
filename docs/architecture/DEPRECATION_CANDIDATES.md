@@ -44,9 +44,9 @@
 | Area | Path | Verdict | Reason |
 |------|------|---------|--------|
 | Seed AI | `seed/ai/` | **KEEP** | Primary AI provider abstraction. Consolidation target. |
-| Tree AI Providers | `tree/ai-providers/` | **MERGE** | Merge unique capabilities (nếu có) vào `seed/ai/`, rồi xóa. |
+| Tree AI Providers | `tree/ai-providers/` | **DEPRECATED** | Dead code: 0 importers (verified 2026-08-23); `ai_providers`/`ai_usage` tables absent from all migrations. Hai concern khác nhau (runtime transport vs persisted config) — KHÔNG merge. Removal tracked post-buffer via `DEPRECATION_REGISTRY` (removable after 2026-09-06). |
 
-> **Action:** So sánh feature matrix trước. Merge unique features, xóa `tree/ai-providers/`.
+> **Action:** KHÔNG merge. `tree/ai-providers/` đã đánh dấu `@deprecated` + thêm registry entry; chỉ xóa sau 2026-09-06 (2-sprint buffer). `seed/ai/` giữ nguyên làm canonical runtime transport.
 
 ---
 
@@ -144,8 +144,8 @@
 | Verdict | Count | Description |
 |---------|-------|-------------|
 | **KEEP** | 7 | Canonical layers, giữ nguyên |
-| **MERGE** | 12 | Consolidate unique features vào canonical, rồi xóa |
-| **DEPRECATED** | 2 | Đánh dấu `@deprecated`, KHÔNG xóa (còn callers), migrate ở Phase 2 |
+| **MERGE** | 11 | Consolidate unique features vào canonical, rồi xóa |
+| **DEPRECATED** | 3 | Đánh dấu `@deprecated`, KHÔNG xóa ngay; tracked via `DEPRECATION_REGISTRY` (2-sprint buffer) |
 | **DELETE-LATER** | 3 | An toàn xóa sau khi audit + test |
 | **UNKNOWN** | 3 | Cần audit sâu hơn trước khi quyết định |
 

@@ -1,3 +1,4 @@
+// DEPRECATED: tracked in DEPRECATION_REGISTRY (seed/types/deprecation-markers.ts, target 'tree/ai-providers') — removal eligible after 2026-09-06.
 /**
  * Circuit Breaker Integration for AI Providers.
  *

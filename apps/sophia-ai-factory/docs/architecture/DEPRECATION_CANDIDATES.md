@@ -71,6 +71,7 @@ and `callers` per entry. Helpers: `getDeprecation()`, `listByKind()`,
 | 5 | `@/forest/agent-protocol` | `@/tree/agent-protocol` | duplicate | 2026-09-16 |
 | 6 | `@/land/openclaw/memory-adapter` | `@/tree/creative-memory` | legacy | 2026-10-16 |
 | 7 | `@/src/lib/*` | `@/seed/*`, `@/tree/*` | legacy | TBD |
+| 8 | `tree/ai-providers` | none — rebuild fresh on `seed/ai` Provider contract if persisted tenant config is ever needed | legacy | 2026-09-06 |
 
 Every target above carries a `@deprecated` JSDoc tag with its migration path.
 No deletions have been made — the policy is **deprecate → migrate → remove

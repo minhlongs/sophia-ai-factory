@@ -1,3 +1,4 @@
+// DEPRECATED: tracked in DEPRECATION_REGISTRY (seed/types/deprecation-markers.ts, target 'tree/ai-providers') — removal eligible after 2026-09-06.
 /**
  * AI Provider Error — typed errors with error codes for circuit breaker
  * and retry classification across all AI provider operations.
