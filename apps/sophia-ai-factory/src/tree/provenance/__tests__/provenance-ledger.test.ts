@@ -251,6 +251,42 @@ describe('ProvenanceLedger', () => {
       const result = await ledger.query({ workspaceId: 'ws_001' });
       expect(result.ok).toBe(false);
     });
+
+    it('applies a time range (from/to) filter', async () => {
+      mocks.mockGetD1.mockReturnValue(
+        buildDb([
+          stmt({
+            all: {
+              results: [provenanceRow({ id: 'prov_range' })],
+              meta: { changes: 1, duration: 1 },
+            },
+          }),
+        ]),
+      );
+      const result = await ledger.query({
+        workspaceId: 'ws_001',
+        from: 1_000_000,
+        to: 2_000_000,
+      });
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.value).toHaveLength(1);
+    });
+
+    it('applies a limit to the result set', async () => {
+      mocks.mockGetD1.mockReturnValue(
+        buildDb([
+          stmt({
+            all: {
+              results: [provenanceRow({ id: 'prov_limit' })],
+              meta: { changes: 1, duration: 1 },
+            },
+          }),
+        ]),
+      );
+      const result = await ledger.query({ workspaceId: 'ws_001', limit: 50 });
+      expect(result.ok).toBe(true);
+      if (result.ok) expect(result.value).toHaveLength(1);
+    });
   });
 
   describe('hasAction', () => {

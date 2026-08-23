@@ -166,6 +166,12 @@ describe('CreativeMemoryStore', () => {
       expect(result.ok).toBe(true);
       if (result.ok) expect(result.value).toBe(false);
     });
+
+    it('returns failure when D1 is unavailable during delete', async () => {
+      mocks.mockGetD1.mockReturnValue(null);
+      const result = await store.delete('mem_1' as never);
+      expect(result.ok).toBe(false);
+    });
   });
 
   describe('query', () => {

@@ -34,6 +34,17 @@ original 8-phase product roadmap unchanged).
 | Protected flows (Setup Wizard, Telegram @Sophia_Bbot, NOWPayments IPN) | untouched |
 | `npm run deploy:full` | exit 0, SHA `21caa1d8` matches `/api/version`, `/api/health` → 200, `/login` → 200 |
 
+### Coverage closure (escrow item 6, closed 2026-08-23)
+The result gate found `tree/creative-memory` at ~88.6% and `tree/provenance` at ~87.6%,
+below the §8 success metric of ≥90%. Closed with pure test additions — no production
+change — and re-measured with `vitest --coverage`:
+
+| Domain | Before | After | What was added |
+|---|---|---|---|
+| `tree/creative-memory` | 88.6% lines | **92.3%** | `decay.test.ts` (the `decay.ts` module had sat at 0% since Phase 0) + `delete` D1-unavailable branch |
+| `tree/provenance` | 87.6% lines | **93.7%** | `query` time-range (`from`/`to`) and `limit` branches |
+
+Full suite grew 7751 → **7770** passed. tsc 0, lint unchanged (11 errors, all pre-existing).
 ---
 
 ## 2. Triage — what was deliberately NOT done this cycle
@@ -65,6 +76,9 @@ Inngest-client merge is OUT of Phase 1. Nothing in the Phase 1 diff touches thos
    same base. Phase 1 deployed with `SKIP_TESTS=1` and the commit message carrying
    `WARNING: deploying on known-broken base: actions.test.ts:322`. Fix in the dedicated
    lint-cleanup pipeline, not in a feature phase.
+6. ~~**MED (coverage)** — `tree/creative-memory` ~88.6% and `tree/provenance` ~87.6% fell
+   below the §8 ≥90% metric.~~ **CLOSED** — see "Coverage closure" above. Pure test
+   additions, no production change; both now ≥92%.
 
 ---
 
