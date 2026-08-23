@@ -12,3 +12,6 @@ export {
   newProvenanceId,
 } from './types';
 export type { ProvenanceError } from './types';
+
+// ─── IProvenanceLedger adapter (Phase 1B) ─────────────────────────────────────
+export { ProvenanceLedger, provenanceLedger } from './provenance-ledger';

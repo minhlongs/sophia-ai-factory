@@ -20,3 +20,6 @@ export {
   computeDecayScore,
   filterActiveMemories,
 } from './decay';
+
+// ─── ICreativeMemoryStore adapter (Phase 1A) ─────────────────────────────────
+export { CreativeMemoryStore, creativeMemoryStore } from './creative-memory-store';

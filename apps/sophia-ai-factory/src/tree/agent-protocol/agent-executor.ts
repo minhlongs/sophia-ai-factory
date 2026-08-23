@@ -41,6 +41,15 @@ export class ExecutorError extends Error {
   }
 }
 
+/**
+ * Execution result enriched with token accounting for D1 agent_runs
+ * bookkeeping. Extends the canonical AgentResult with totalTokens.
+ */
+export interface AgentExecutionResult extends AgentResult {
+  /** Total tokens consumed (input + output) across the provider call. */
+  totalTokens: number;
+}
+
 // ─── Executor ────────────────────────────────────────────────────────────────
 
 /**
@@ -62,7 +71,7 @@ export async function executeAgent(
   definition: AgentDefinition,
   context: AgentContext,
   registry: ProviderRegistry,
-): Promise<Result<AgentResult, ExecutorError>> {
+): Promise<Result<AgentExecutionResult, ExecutorError>> {
   const startedAt = Date.now();
   const correlationId = context.correlationId;
 
@@ -213,7 +222,7 @@ export async function executeAgent(
 
   // ── 7. Result ─────────────────────────────────────────────────────────
   const durationMs = Date.now() - startedAt;
-  const result: AgentResult = {
+  const result: AgentExecutionResult = {
     success: true,
     output: response.content,
     artifacts: [provenanceRecordId ?? `agent-run:${definition.id}`],
@@ -222,6 +231,7 @@ export async function executeAgent(
     ),
     durationMs,
     provenanceRecordId,
+    totalTokens: response.usage.inputTokens + response.usage.outputTokens,
   };
 
   logger.info('[AgentExecutor] agent completed', {

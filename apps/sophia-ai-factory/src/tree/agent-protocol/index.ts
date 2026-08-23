@@ -9,4 +9,10 @@ export {
 export type {
   ExecutorErrorCode,
   ExecutorError,
+  AgentExecutionResult,
 } from './agent-executor';
+export {
+  agentDefinitionRegistry,
+  InMemoryAgentDefinitionRegistry,
+  type AgentDefinitionRegistry,
+} from './agent-registry';
