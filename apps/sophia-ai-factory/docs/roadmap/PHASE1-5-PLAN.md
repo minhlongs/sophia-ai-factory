@@ -1,7 +1,7 @@
 # PHASE 1.5 — Provider Abstraction (SOPHIA 2027 Transformation)
 
 > **Codename:** CREATIVE ECONOMY OS
-> **Shipped:** pending · commit `<SHIP-SHA>` · CF-direct deploy
+> **Shipped:** 2026-08-23 · commit `47a4a80bd` · CF-direct deploy · GREEN (SHA match + health 200)
 > **Scope:** triaged single-cycle slice deferred from Phase 1 (`docs/roadmap/PHASE1-PLAN.md` §2).
 
 This document records **what shipped**, **what was deliberately not done**, and **where
@@ -37,7 +37,7 @@ Full rationale: `.orchestrate/latest/plan.md` §2 (decision + rejected alternati
 
 ---
 
-## 2. Gate results (so far — Steps 1–3 gates green)
+## 2. Gate results (final — all green; see `.orchestrate/latest/ship-report.md`)
 
 | Gate | Result |
 |---|---|
