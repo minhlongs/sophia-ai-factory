@@ -1,7 +1,7 @@
 # PHASE 1.6 — Inngest Client Merge (SOPHIA 2027 Transformation)
 
 > **Codename:** CREATIVE ECONOMY OS
-> **Date:** 2026-08-23 · commit `<SHIP-SHA>` (orchestrator fills at ship) · CF-direct deploy
+> **Date:** 2026-08-23 · commit `ba900e0c` (orchestrator fills at ship) · CF-direct deploy
 > **Scope:** workflow-consolidation slice — merge duplicate Inngest clients via strangler pattern.
 
 This document records **what shipped**, **gate results so far**, and **where the remaining
@@ -95,7 +95,7 @@ Carried unchanged from `docs/roadmap/PHASE1-5-PLAN.md` §3:
 | `apps/sophia-ai-factory/docs/project-changelog.md` | Phase 1.6 entry added at top (merge summary, registry #9, migration counts, gates). |
 | `apps/sophia-ai-factory/CLAUDE.md` | Canonical Import Paths table: added Inngest client row (`@/seed/inngest/client`). |
 | `apps/sophia-ai-factory/docs/architecture/DEPRECATION_CANDIDATES.md` | Registry table gained entry #9 (`@/tree/inngest/client`) matching the code registry. |
-| `apps/sophia-ai-factory/docs/roadmap/SOPHIA_2027_ROADMAP.md` | Transformation Cycles table: Phase 1.6 row ⏳ Deferred → ✅ Shipped `<SHIP-SHA>`. |
+| `apps/sophia-ai-factory/docs/roadmap/SOPHIA_2027_ROADMAP.md` | Transformation Cycles table: Phase 1.6 row ⏳ Deferred → ✅ Shipped `ba900e0c`. |
 | `apps/sophia-ai-factory/docs/roadmap/PHASE1-6-PLAN.md` | This file (new). |
 
 ---
