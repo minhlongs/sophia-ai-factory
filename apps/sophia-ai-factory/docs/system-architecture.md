@@ -145,7 +145,7 @@ graph TD
   - **Storage**: Cloudflare R2 `sophia-ai-factory-opennext-cache` (video outputs) + D1 metadata tracking
   - **Workflow**: Mission script complete → Inngest trigger `video-gen-handler` → API calls (Wan 2.1 + Fish Speech) → poll for job completion → R2 upload → D1 update
   - **Schema**: Migration 0096 adds `output_video_url, output_audio_url, video_job_id` to `engine_missions` table
-  - **Inngest Registration** (Wave 13): `src/forest/inngest/client.ts` registers `video-gen` event schema (`{missionId, scriptId, avatarId, voiceId, duration}`). Trigger endpoint: `POST /api/v1/missions/[id]/generate-video` (accepts same body, replaces ad-hoc queue pattern).
+  - **Inngest Registration** (Wave 13): Trigger endpoint: `POST /api/v1/missions/[id]/generate-video` (accepts same body, replaces ad-hoc queue pattern). Since Phase 1.6 (2026-08-23) the canonical client and merged event schema live in `src/seed/inngest/client.ts`; the serve route (`src/app/api/inngest/route.ts`) resolves the client through the `src/forest/inngest/client.ts` layer seam.
   - **Rate Limiting**: All 37 v1 routes wrapped with `withRateLimit()` (tier-aware burst buckets)
 
 ### 8. Mobile Command Center (Telegram)
@@ -160,6 +160,25 @@ graph TD
   3. **Trigger**: Bot inserts record into D1 `campaigns` and sends `campaign.created` event to Inngest.
   4. **Feedback**: Bot replies with "Campaign Started".
   5. **Notification**: (Future) System sends push notification back to Telegram on completion.
+
+### 9. Inngest Canonical Client (Phase 1.6 — 2026-08-23)
+
+- **Single client instance.** The only `new Inngest()` in the codebase is
+  `src/seed/inngest/client.ts` (app id `sophia-ai-factory`). It carries the merged
+  33-key event schema: `src/seed/inngest/event-types.ts` (shared `Events` record) +
+  `src/seed/inngest/agent-event-types.ts` (5 agent-mission payload types). Barrel:
+  `src/seed/inngest/index.ts`.
+- **Why seed.** The event schema is a cross-layer contract; `seed` is the foundational
+  layer every other layer may import. Previously two same-id clients (seed + tree) held
+  divergent schemas, silently defeating Inngest's type safety.
+- **Tree shim (deprecated).** `src/tree/inngest/client.ts` + `index.ts` are `@deprecated`
+  re-export shims → `DEPRECATION_REGISTRY` entry #9 (target `@/tree/inngest/client`,
+  kind `duplicate`, removable after **2026-09-20**). All 13 former tree importers were
+  migrated path-only to `@/seed/inngest/client`.
+- **Forest seam.** `src/forest/inngest/client.ts` re-exports the seed client so the serve
+  route (`src/app/api/inngest/route.ts`) keeps the documented forest boundary. The serve
+  route stays on the forest seam by design.
+- **Canonical import:** `import { inngest } from '@/seed/inngest/client'`.
 
 ## Security Architecture
 

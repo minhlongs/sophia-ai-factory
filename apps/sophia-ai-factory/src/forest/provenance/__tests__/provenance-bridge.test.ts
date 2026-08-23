@@ -18,7 +18,7 @@ const {
   return { mockGetAgentRun, mockRecordProvenance, mockNewProvenanceId, mockRecordLearning };
 });
 
-vi.mock('@/tree/inngest/client', () => ({
+vi.mock('@/seed/inngest/client', () => ({
   inngest: {
     createFunction: vi.fn((_opts: unknown, trigger: unknown, fn: unknown) => ({ trigger, fn })),
   },

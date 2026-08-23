@@ -6,7 +6,7 @@
  * This module owns the DB insert + Inngest send pattern to avoid duplication.
  */
 
-import { inngest } from '@/tree/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import type { Tier } from "@/seed/types";
 
 export interface CampaignInsertData {

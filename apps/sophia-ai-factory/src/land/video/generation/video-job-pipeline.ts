@@ -6,7 +6,7 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import { inngest } from '@/tree/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { checkVideoBudget, type RenderPath } from '../templates/cost-guardrail';
 

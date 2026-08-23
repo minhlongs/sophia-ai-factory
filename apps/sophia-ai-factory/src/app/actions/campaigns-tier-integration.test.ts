@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createCampaign } from './campaigns';
 import { tierGuard } from '@/land/tier-guard';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { inngest } from '@/tree/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 
 // Mock D1 client — replaces Supabase
 const mocks = vi.hoisted(() => {
@@ -75,7 +75,7 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: vi.fn(),
 }));
 
-vi.mock('@/tree/inngest/client', () => ({
+vi.mock('@/seed/inngest/client', () => ({
   inngest: { send: vi.fn() }
 }));
 

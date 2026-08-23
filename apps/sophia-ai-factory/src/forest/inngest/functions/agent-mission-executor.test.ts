@@ -10,7 +10,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('@/tree/inngest/client', () => ({
+vi.mock('@/seed/inngest/client', () => ({
   inngest: {
     createFunction: vi.fn((_opts: unknown, _trigger: unknown, fn: unknown) => ({
       trigger: { event: 'agent.mission.started' },

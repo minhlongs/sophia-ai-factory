@@ -1,9 +1,12 @@
 /**
- * Forest Inngest client — re-export from tree layer.
+ * Forest Inngest client — layer seam over the canonical seed client.
  *
- * Forest orchestrates workflows defined in tree. The Inngest client lives
- * in tree as a cross-layer primitive. This re-export maintains the layer
- * boundary: forest may import tree.
+ * Forest functions and the serve route resolve their Inngest client through
+ * this module to keep the documented layer boundary. The implementation and
+ * merged event schema live in seed/inngest; the former duplicate tree client
+ * was consolidated into it.
+ *
+ * Layer: forest.
  */
 
-export * from '@/tree/inngest/client';
+export { inngest } from "@/seed/inngest/client";

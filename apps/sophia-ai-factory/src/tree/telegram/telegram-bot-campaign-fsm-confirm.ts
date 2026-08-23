@@ -7,7 +7,7 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
-import { inngest } from '@/tree/inngest';
+import { inngest } from '@/seed/inngest/client';
 import { generateShortCode } from '@/tree/affiliates';
 import { logger } from '@/seed/utils/logger-utility';
 import { sendTelegramMessage } from '@/tree/telegram/telegram-client';

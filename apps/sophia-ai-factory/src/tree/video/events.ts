@@ -6,7 +6,7 @@
  * cross-layer dependency violations.
  */
 
-import { inngest } from '@/tree/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import type { VideoGenerateRequestedEvent } from '@/seed/types/video-events';
 
 export interface EmitVideoGenerateInput {

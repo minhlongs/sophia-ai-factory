@@ -1,4 +1,4 @@
-import { inngest } from "@/forest/inngest/client";
+import { inngest } from "@/seed/inngest/client";
 
 export const helloWorld = inngest.createFunction(
   { id: "hello-world" },

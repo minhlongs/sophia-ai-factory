@@ -1,0 +1,197 @@
+/**
+ * Merged Inngest event schema — canonical seed event contract.
+ *
+ * Union of the former seed and tree clients (33 event keys). Agent-mission
+ * payload types live in ./agent-event-types. Reconciliation notes:
+ * `url_revenue.video.requested.userId` is optional (handler reads tenantId);
+ * `agent.mission.started` carries the rich autonomy payload its sender emits.
+ *
+ * Layer: seed (foundational — no domain imports).
+ *
+ * @module seed/inngest/event-types
+ */
+
+import { Tier } from "@/seed/types";
+import type {
+  AgentMissionStartedData,
+  AgentApprovalRequestedData,
+  AgentApprovalResolvedData,
+  AgentMissionCompletedData,
+  AgentMissionFailedData,
+} from "./agent-event-types";
+
+type CampaignCreatedEvent = {
+  data: {
+    campaignId: string;
+    userId: string;
+    topic: string;
+    audience: string;
+    tier: Tier;
+    resume?: boolean;
+    resumeFrom?: "script" | "tts" | "video" | "finalize";
+  };
+};
+
+type CampaignProgressEvent = {
+  data: {
+    campaignId: string;
+    step: 'scripting' | 'tts' | 'visual' | 'compose' | 'publish' | 'complete' | 'error';
+    progress: number;
+    message: string;
+    timestamp: number;
+  };
+};
+
+type VideoJobPayload = {
+  data: {
+    jobId: string;
+    tenantId: string;
+    userId: string;
+    attempt?: number;
+  };
+};
+
+type VideoGenerateRequestedEvent = {
+  data: {
+    missionId: string;
+    userId: string;
+    prompt: string;
+    voiceoverText?: string;
+    aspectRatio?: '16:9' | '9:16' | '1:1';
+    durationSec?: number;
+    language?: 'en' | 'vi';
+  };
+};
+
+type BatchVideoFanoutEvent = { data: { batchId: string; userId: string } };
+
+type UrlRevenueVideoRequestedEvent = {
+  data: {
+    jobId: string;
+    tenantId: string;
+    userId?: string;
+    prompt: string;
+    locale: string;
+    channel: string;
+    trackingLink?: string;
+  };
+};
+
+type SopExecutionRequestedEvent = {
+  data: {
+    executionId: string;
+    userId: string;
+    orgId: string;
+    sopTemplateId: string;
+    installationId?: string;
+    inputJson: string;
+  };
+};
+
+type SopStepCompletedEvent = {
+  data: { executionId: string; stepOrder: number; result: Record<string, unknown> };
+};
+
+type RepurposeAnalyzeEvent = {
+  data: {
+    jobId: string;
+    userId: string;
+    videoUrl: string;
+    transcript: Array<{ text: string; start_ms: number; end_ms: number }>;
+  };
+};
+
+type RepurposeClipGenerateEvent = {
+  data: {
+    clipId: string;
+    jobId: string;
+    videoUrl: string;
+    startMs: number;
+    endMs: number;
+    userId: string;
+  };
+};
+
+type AnalyticsSyncRequestedEvent = { data: { userId: string; requestedAt: number } };
+
+type KeyRotationRequestedEvent = { data: { keyVersion: number; reason?: string } };
+
+type YouTubeContentPipelineRequestedEvent = {
+  data: {
+    userId: string;
+    channelConfigId: string;
+    topic?: string | null;
+    requestedAt?: number;
+    resume?: boolean;
+    resumeFrom?: string;
+  };
+};
+
+type ConversionCreatedEvent = { data: { conversionEventId: string; tenantId: string } };
+
+type CommissionMaturedEvent = { data: { updatedCount: number; promotedAt: number } };
+
+type PayoutBatchedEvent = {
+  data: {
+    batchId: string;
+    affiliateId: string;
+    /** Payout amount in INTEGER cents (no float drift). */
+    totalCents: number;
+    externalPaymentId: string;
+  };
+};
+
+type PayoutConfirmedEvent = {
+  data: { batchId: string; externalPaymentId: string; confirmedAt: number };
+};
+
+type PayoutReconcileAlertEvent = {
+  data: {
+    tenantId: string;
+    /** All amounts in INTEGER cents. */
+    ledgerTotalCents: number;
+    batchTotalCents: number;
+    diffCents: number;
+  };
+};
+
+/**
+ * Merged event record served by the single canonical Inngest client.
+ * 33 keys: the 28 former seed events plus the 5 agent-mission events that
+ * previously lived only in the tree client.
+ */
+export type Events = {
+  "campaign.created": CampaignCreatedEvent;
+  "campaign.progress": CampaignProgressEvent;
+  "test/hello.world": { data: Record<string, unknown> };
+  "key.rotation.requested": KeyRotationRequestedEvent;
+  "url_revenue.video.requested": UrlRevenueVideoRequestedEvent;
+  "video.requested": VideoJobPayload;
+  "video.script.ready": VideoJobPayload;
+  "video.tts.ready": VideoJobPayload;
+  "video.visual.ready": VideoJobPayload;
+  "video.composed": VideoJobPayload;
+  "video.uploaded": VideoJobPayload;
+  "video.published": VideoJobPayload;
+  "publish.scheduled": VideoJobPayload;
+  "publish.token.refresh": { data: Record<string, never> };
+  "video/generate.requested": VideoGenerateRequestedEvent;
+  "batch/video.fanout": BatchVideoFanoutEvent;
+  "sop/execution.requested": SopExecutionRequestedEvent;
+  "sop/step.completed": SopStepCompletedEvent;
+  "repurpose/analyze.requested": RepurposeAnalyzeEvent;
+  "repurpose/clip.generate": RepurposeClipGenerateEvent;
+  "analytics/sync.requested": AnalyticsSyncRequestedEvent;
+  "conversion.created": ConversionCreatedEvent;
+  "commission.matured": CommissionMaturedEvent;
+  "payout.batched": PayoutBatchedEvent;
+  "payout.confirmed": PayoutConfirmedEvent;
+  "payout.reconcile.alert": PayoutReconcileAlertEvent;
+  "creative-memory/signal-accumulated": { data: { workspaceId: string; signalCount: number } };
+  "youtube.content.pipeline.requested": YouTubeContentPipelineRequestedEvent;
+  "agent.mission.started": AgentMissionStartedData;
+  "agent.approval.requested": AgentApprovalRequestedData;
+  "agent.approval.resolved": AgentApprovalResolvedData;
+  "agent.mission.completed": AgentMissionCompletedData;
+  "agent.mission.failed": AgentMissionFailedData;
+};

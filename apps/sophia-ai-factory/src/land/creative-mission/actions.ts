@@ -24,7 +24,7 @@ import {
   canTransition,
   getMissionWithGoals as dbGetMissionWithGoals,
 } from '@/tree/mission';
-import { inngest } from '@/tree/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import type { CreativeMissionStatus } from '@/seed/types/creative-domain';
 
 // ── Types ──────────────────────────────────────────────────────────────────

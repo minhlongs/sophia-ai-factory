@@ -15,7 +15,7 @@
  * @module forest/provenance
  */
 
-import { inngest } from '@/tree/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { getAgentRun } from '@/tree/mission/agent-run-repo';
 import { recordProvenance, newProvenanceId } from '@/tree/provenance';

@@ -9,7 +9,7 @@
  * @module forest/inngest/functions
  */
 
-import { inngest } from '@/tree/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
 import {
   executeAgent,

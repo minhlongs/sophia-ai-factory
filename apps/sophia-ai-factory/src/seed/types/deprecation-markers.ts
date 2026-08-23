@@ -114,6 +114,31 @@ export const DEPRECATION_REGISTRY: readonly DeprecationEntry[] = [
     kind: 'legacy',
     callers: [],
   },
+  // ── Duplicate Inngest clients ─────────────────────────────────────────────
+  {
+    target: '@/tree/inngest/client',
+    replacement: '@/seed/inngest/client',
+    deprecatedAt: '2026-08-23',
+    removableAfter: '2026-09-20',
+    reason:
+      "Duplicate Inngest client (same app id 'sophia-ai-factory', divergent event schemas). Schemas merged into the canonical seed client; the tree client is now a re-export shim left in place until every caller migrates plus a 2-sprint buffer.",
+    kind: 'duplicate',
+    callers: [
+      '@/app/actions/campaigns-tier-integration.test',
+      '@/forest/inngest/functions/agent-approval-handler',
+      '@/forest/inngest/functions/agent-mission-executor',
+      '@/forest/inngest/functions/agent-rollback-cron',
+      '@/forest/provenance/provenance-bridge',
+      '@/land/campaigns/create-campaign-core',
+      '@/land/creative-mission/actions',
+      '@/land/openclaw/queue',
+      '@/land/openclaw/schedule',
+      '@/land/video/generation/video-job-pipeline',
+      '@/tree/telegram/handlers/campaign-handler',
+      '@/tree/telegram/telegram-bot-campaign-fsm-confirm',
+      '@/tree/video/events',
+    ],
+  },
   // ── Legacy compatibility shims ──────────────────────────────────────────
   {
     target: '@/src/lib/*',

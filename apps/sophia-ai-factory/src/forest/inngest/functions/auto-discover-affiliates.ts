@@ -6,7 +6,7 @@
  * and sends a Telegram notification summary.
  */
 
-import { inngest } from "@/forest/inngest/client";
+import { inngest } from "@/seed/inngest/client";
 import { getAllPrograms, getCategories } from "@/land/affiliates";
 import {
   scoreAffiliates,

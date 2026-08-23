@@ -9,7 +9,7 @@
  *  - Audit log on enqueue
  */
 
-import { inngest } from '@/tree/inngest/client';
+import { inngest } from '@/seed/inngest/client';
 import { audit } from '@/tree/agent-fleet/audit';
 
 export interface EnqueueOptions {

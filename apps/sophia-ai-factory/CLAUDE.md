@@ -37,6 +37,7 @@ Single sources of truth. Old paths deleted; do not create new ones.
 | Circuit breaker | `import { recordFailure, recordSuccess, shouldAllowRequest } from '@/seed/security/circuit-breaker'` |
 | Failure classification | `import { classifyError, classifyHttpStatus, FailureKind } from '@/seed/types/failure-kind'` |
 | Quota cache ops | `import { invalidateQuotaCache } from '@/seed/kv/quota-cache-ops'` |
+| Inngest client | `import { inngest } from '@/seed/inngest/client'` |
 | Locale-aware Link | `import { Link } from '@/navigation'` (named export) |
 
 **BANNED imports:** `@/lib/auth`, `@/lib/subscription`, `@/lib/unified-tier-config`, `@/lib/tier-gate`.

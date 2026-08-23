@@ -1,6 +1,56 @@
 # Project Changelog
 
-**Last Updated:** 2026-08-20 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 9c4cc895
+**Last Updated:** 2026-08-23 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 9c4cc895
+
+---
+
+## 2026-08-23 (Phase 1.6 — SOPHIA 2027) — Inngest client merge (workflow consolidation)
+
+**Severity: P1 REFACTOR | Type: Consolidation (strangler pattern) | Status: COMPLETE (ship pending)**
+
+Two live `Inngest` clients shared the same app id (`sophia-ai-factory`) but held divergent
+event schemas (seed: 28 events; tree: 5 agent-mission events). A function created against
+one schema could receive events only the other schema knew about with no type error — the
+type safety Inngest provides was silently defeated. Phase 1.6 merges both into one canonical
+seed client; behavior is preserved (same app id, superset schema, import-path-only migration).
+
+**What changed:**
+- **Canonical client:** `src/seed/inngest/client.ts` (19 lines) — the sole `new Inngest()`
+  in the codebase. Merged 33-key `Events` schema split into `src/seed/inngest/event-types.ts`
+  (197 lines) + `src/seed/inngest/agent-event-types.ts` (73 lines) to respect the ≤200-line
+  file gate. Barrel: `src/seed/inngest/index.ts`.
+- **Schema reconciliation:** `url_revenue.video.requested.userId` made optional (handler
+  reads `tenantId`; sender deprecated per ADR 0007); `agent.mission.started` carries the
+  rich payload its sender actually emits (`autonomyLevel`, `inputJson`), removing the
+  executor's unsafe cast.
+- **Tree shim deprecated:** `src/tree/inngest/client.ts` + `index.ts` are now `@deprecated`
+  re-export shims → `DEPRECATION_REGISTRY` entry #9 (target `@/tree/inngest/client`,
+  kind `duplicate`, deprecatedAt 2026-08-23, removableAfter **2026-09-20**).
+- **Forest seam:** `src/forest/inngest/client.ts` re-exports the seed client; the serve
+  route (`src/app/api/inngest/route.ts`) stays on the forest seam by design, untouched.
+- **Migration counts:** 13 tree importers + 2 forest importers (`auto-discover-affiliates`,
+  `hello-world`) migrated path-only to `@/seed/inngest/client` — including the two protected
+  Telegram handlers (`campaign-handler.ts`, `telegram-bot-campaign-fsm-confirm.ts`); zero
+  logic changes. 53 existing seed importers unchanged.
+- **Merge tests:** new `src/seed/inngest/__tests__/client-merge.test.ts` — 9 tests against
+  real exported instances (single-instance reference equality across all 4 import paths,
+  33-key schema exactness, rich agent payload acceptance, app id).
+
+**Verification (so far):**
+- `npx tsc --noEmit` → 0 errors
+- `grep -rn "new Inngest(" src/` → exactly 1 hit (seed client)
+- `grep -rn "from '@/tree/inngest" src/ | grep -v src/tree/inngest/` → 0 stragglers
+- Seed + forest Inngest suites: 102/102 passed (12 files)
+- Client-merge suite: 9/9 passed
+- Telegram suite (protected flow): 97/97 passed (8 files)
+- Registry test: `deprecationCount()` === 9
+- Zero `:any` / `console.*` / TODO/FIXME in touched files; all touched files ≤200 lines
+
+**Pending:** full test suite + `npm run build` + CF-direct deploy + SHA verification.
+Known-broken deploy base carried forward: `src/land/youtube/__tests__/actions.test.ts:322`
+(pre-existing, unrelated — test mocks the client internally).
+
+**Plan:** `docs/roadmap/PHASE1-6-PLAN.md` · **Registry:** `src/seed/types/deprecation-markers.ts` #9
 
 ---
 
