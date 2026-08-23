@@ -4,6 +4,20 @@
 > **Codename**: CREATIVE ECONOMY OS  
 > **Owner**: Solo-founder operation  
 
+## Transformation Cycles (SOPHIA 2027 CREATIVE ECONOMY OS)
+
+> The 2026-08-17 → 2027-12-31 transformation mission runs as triaged single-cycle slices
+> alongside the product phases above. Each cycle ships a bounded strangler-pattern slice
+> without touching protected flows.
+
+| Cycle | Scope | Status |
+|---|---|---|
+| Phase 0 | Canonical contracts barrel (`seed/types/creative-economy/`) + mission deprecation | ✅ Shipped `44f15d1dc` |
+| **Phase 1 — Creative Foundation** | CreativeMemory + Provenance adapters, Agent Protocol strangler, CreativeIdentity/Autonomy coverage (115 tests, 7751 total passing) | ✅ Shipped `21caa1d89` (2026-08-23) — see `docs/roadmap/PHASE1-PLAN.md` |
+| Phase 1.5 | Provider Abstraction (`seed/ai/` consolidation, 26 importers) | ⏳ Deferred |
+| Phase 1.6 | Workflow consolidation → `seed/inngest/` (duplicate Inngest clients) | ⏳ Deferred |
+| Phase 2 | Mission lifecycle + Agent Protocol (owns the mission state-machine decision point) | ⏳ Planned |
+
 ## Phases
 
 ### Phase 1: Foundation (2026-08-16 ✅ COMPLETE)
