@@ -1,12 +1,12 @@
 # Project Changelog
 
-**Last Updated:** 2026-08-24 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 9c4cc895
+**Last Updated:** 2026-08-24 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 6dd1401e
 
 ---
 
 ## 2026-08-24 (Mission Lifecycle + Agent Protocol — SOPHIA 2027) — single transition authority + agent event loop closure
 
-**Severity: P1 REFACTOR | Type: Consolidation (strangler pattern) | Status: COMPLETE (ship pending)**
+**Severity: P1 REFACTOR | Type: Consolidation (strangler pattern) | Status: COMPLETE (shipped `6dd1401e`)**
 
 Mission status had four writers with three rulebooks and one bypass: the tree authority
 (`NEXT_STATUS`/`canTransition`), a land Server Action that re-implemented the check and
@@ -50,7 +50,8 @@ row already said "running" — silent data corruption.
   suites added; route-registration test asserts all four functions are served
 - Zero protected-flow files touched (Setup Wizard / Telegram / NOWPayments untouched)
 
-**Pending:** full test suite + CF-direct deploy + SHA verification.
+**Shipped:** CF-direct deploy verified — `/api/version` shortSha `6dd1401e` matches local commit;
+smoke green (`/api/health` 200, `/vi/login` 200, `/api/inngest` 401 unsigned-reject).
 Known-broken deploy base carried forward: `src/land/youtube/__tests__/actions.test.ts:322`.
 
 ---
