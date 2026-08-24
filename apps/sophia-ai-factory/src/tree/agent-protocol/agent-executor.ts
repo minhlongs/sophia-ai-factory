@@ -21,6 +21,8 @@ import { isActionAllowed } from '@/tree/autonomy/autonomy-repo';
 import { recordProvenance } from '@/tree/provenance/index';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
+import { resolveModelForCapability } from '@/tree/agent-protocol';
+import { getModelPricing, estimateCost } from '@/seed/ai/cost-estimator';
 
 // ─── Executor types ─────────────────────────────────────────────────────────
 
@@ -171,6 +173,9 @@ export async function executeAgent(
     approvalRequired: p.requiresApproval,
   }));
 
+  // Resolve the model once for both the provider call and cost estimation.
+  const resolvedModel = resolveModelForCapability(definition.modelPolicy?.capability ?? 'text');
+
   // ── 5. Provider call ──────────────────────────────────────────────────
   const messages: ChatMessage[] = [
     { role: 'system', content: definition.role },
@@ -180,9 +185,10 @@ export async function executeAgent(
   let response;
   try {
     response = await provider.chat(messages, {
-      model: (definition.modelPolicy?.capability as string) ?? 'text',
+      model: resolvedModel,
       apiKey: '',
-      maxTokens: definition.timeoutMs,
+      maxTokens: 2048,
+      timeoutMs: definition.timeoutMs,
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'unknown';
@@ -222,13 +228,30 @@ export async function executeAgent(
 
   // ── 7. Result ─────────────────────────────────────────────────────────
   const durationMs = Date.now() - startedAt;
+
+  // Compute cost using seed cost estimator
+  const pricing = getModelPricing(resolvedModel, response.provider);
+  let costCents: number;
+  if (pricing) {
+    // estimateCost returns USD; convert to cents
+    const costUsd = estimateCost(
+      messages,
+      resolvedModel,
+      { maxTokens: 2048, providerId: response.provider },
+    );
+    costCents = Math.round(costUsd * 100);
+  } else {
+    // Fallback to existing formula when model not in pricing table
+    const totalTokens = response.usage.inputTokens + response.usage.outputTokens;
+    costCents = Math.ceil(totalTokens * 0.001 * 100);
+    logger.warn('[AgentExecutor] model not in pricing table, used fallback', { model: resolvedModel });
+  }
+
   const result: AgentExecutionResult = {
     success: true,
     output: response.content,
     artifacts: [provenanceRecordId ?? `agent-run:${definition.id}`],
-    costCents: Math.round(
-      (response.usage.inputTokens * 0.015 + response.usage.outputTokens * 0.06) / 100,
-    ),
+    costCents,
     durationMs,
     provenanceRecordId,
     totalTokens: response.usage.inputTokens + response.usage.outputTokens,

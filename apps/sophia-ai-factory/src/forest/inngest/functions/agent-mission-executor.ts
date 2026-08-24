@@ -9,10 +9,12 @@
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { executeAgent, agentDefinitionRegistry } from '@/tree/agent-protocol';
-import { getSharedRegistry } from '@/forest/ai/provider-factory';
+import { buildProviders } from '@/forest/ai/provider-factory';
 import { createAgentRun, updateAgentRun, appendAgentLog } from '@/tree/mission/agent-run-repo';
 import type { UpdateAgentRunInput } from '@/tree/mission/agent-run-repo';
-import type { AgentContext, AutonomyLevel } from '@/seed/types/creative-domain';
+import { getMission, recordSpend } from '@/tree/mission/repository';
+import type { Mission } from '@/seed/types/creative-domain';
+import type { AgentContext, AutonomyLevel, CreativeMemory } from '@/seed/types/creative-domain';
 import { emitMissionCompleted, emitMissionFailed, advanceMissionToReview } from './agent-mission-lifecycle';
 
 // ---------------------------------------------------------------------------
@@ -24,6 +26,31 @@ function toAutonomyLevel(value: number | undefined): AutonomyLevel {
   if (value === undefined || value === null) return 0;
   const clamped = Math.min(4, Math.max(0, Math.round(value)));
   return clamped as AutonomyLevel;
+}
+
+/** Build a CreativeMemory entry from the mission brief. */
+function buildMissionMemory(mission: Mission): CreativeMemory {
+  const { objective, audience, constraints } = mission;
+  return {
+    id: `mission-brief-${mission.id}`,
+    workspaceId: mission.workspaceId,
+    category: 'creative',
+    key: 'mission_brief',
+    value: {
+      objective,
+      audience,
+      constraints,
+    },
+    confidence: 'high',
+    source: 'human_edit',
+    evidence: JSON.stringify([mission.id]),
+    scope: 'campaign',
+    scopeId: mission.id,
+    version: 1,
+    isDeleted: false,
+    createdAt: Math.floor(Date.now() / 1000),
+    updatedAt: Math.floor(Date.now() / 1000),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -108,23 +135,68 @@ export const agentMissionExecutor = inngest.createFunction(
       throw new Error(`Agent ${agentId} not registered`);
     }
 
-    // Step 4: Build the canonical AgentContext
+    // Step 4: Fetch mission for real budget + BYOK owner + brief
+    const mission = await getMission(missionId);
+    if (!mission) {
+      logger.error('agentMissionExecutor: mission not found', { runId, missionId });
+      const failPatch: UpdateAgentRunInput = {
+        status: 'failed',
+        phase: 'failed',
+        errorMessage: `Mission ${missionId} not found`,
+        errorJson: { code: 'MISSION_NOT_FOUND', missionId },
+        endedAt: Math.floor(Date.now() / 1000),
+      };
+      await updateAgentRun(runId, failPatch);
+      throw new Error(`Mission ${missionId} not found`);
+    }
+
+    // Step 5: Compute real remaining budget — fail fast if exhausted
+    const budgetDeltaCents = mission.budgetCents - mission.spentCents;
+    const budgetRemainingCents = Math.max(0, budgetDeltaCents);
+    if (budgetRemainingCents <= 0) {
+      logger.error('agentMissionExecutor: budget exceeded', { runId, missionId, budgetRemainingCents, budgetDeltaCents });
+      const failPatch: UpdateAgentRunInput = {
+        status: 'failed',
+        phase: 'failed',
+        errorMessage: 'Mission budget exhausted',
+        errorJson: { code: 'BUDGET_EXCEEDED', budgetRemainingCents: 0 },
+        endedAt: Math.floor(Date.now() / 1000),
+      };
+      await updateAgentRun(runId, failPatch);
+      throw new Error('Mission budget exhausted');
+    }
+
+    // Step 6: Build per-run BYOK provider registry keyed to mission creator
+    const providerResult = await buildProviders({
+      userId: mission.creatorId,
+      providers: [
+        { id: 'openrouter', label: 'OpenRouter' },
+        { id: 'anthropic', label: 'Anthropic' },
+      ],
+      autoRegister: true,
+    });
+    const providerRegistry = providerResult.registry;
+
+    // Step 7: Build the canonical AgentContext with real budget + mission brief
     const context: AgentContext = {
       workspaceId,
       missionId,
-      memory: [],
+      memory: [buildMissionMemory(mission)],
       autonomyLevel: toAutonomyLevel(autonomyLevel),
-      budgetRemainingCents: 50000,
+      budgetRemainingCents,
       correlationId: runId,
     };
 
-    // Step 5: Execute through the canonical tree/agent-protocol executor
+    // Step 8: Execute through the canonical tree/agent-protocol executor
     try {
-      const providerRegistry = getSharedRegistry();
       const execution = await executeAgent(definition, context, providerRegistry);
 
       if (execution.ok) {
         const result = execution.value;
+
+        // Mark the run completed FIRST — the durable record of success. A
+        // later spend-recording failure must not flip a completed run to
+        // failed; budget staleness is reconciled by the rollback cron.
         const patch: UpdateAgentRunInput = {
           status: 'completed',
           phase: 'completed',
@@ -134,6 +206,20 @@ export const agentMissionExecutor = inngest.createFunction(
           endedAt: Math.floor(Date.now() / 1000),
         };
         await updateAgentRun(runId, patch);
+
+        // Record spend so subsequent runs see reduced budget
+        try {
+          await recordSpend(missionId, result.costCents);
+        } catch (spendErr) {
+          const spendMessage = spendErr instanceof Error ? spendErr.message : String(spendErr);
+          logger.error('agentMissionExecutor: failed to record spend (budget stale, cron will reconcile)', {
+            runId,
+            missionId,
+            costCents: result.costCents,
+            error: spendMessage,
+          });
+        }
+
         await emitMissionCompleted(inngest, {
           runId,
           agentId,

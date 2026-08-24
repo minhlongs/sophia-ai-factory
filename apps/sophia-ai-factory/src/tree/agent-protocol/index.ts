@@ -16,3 +16,8 @@ export {
   InMemoryAgentDefinitionRegistry,
   type AgentDefinitionRegistry,
 } from './agent-registry';
+export {
+  MODEL_BY_CAPABILITY,
+  resolveModelForCapability,
+  registerBuiltinAgents,
+} from './builtin-agents';

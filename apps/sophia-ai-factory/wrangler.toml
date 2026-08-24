@@ -175,6 +175,13 @@ WORKFLOW_REAL_LLM_ENABLED = "1"
 LLM_CACHE_ENABLED = "1"
 # === WAVE18-LLM-FLAGS-END ===
 
+# === BYOK-PROVIDER-WIRING-BEGIN ===
+# Platform feature flag for BYOK (Bring Your Own Key) provider resolution.
+# When "1", isByokEnabled() returns true and resolveUserApiKey() consults
+# the user's stored keys. NOT an operator credential — doctrine-compliant.
+BYOK_ENABLED = "1"
+# === BYOK-PROVIDER-WIRING-END ===
+
 # === P2-CRONS-BEGIN ===
 # P2 appends cron triggers here (error-digest, heartbeat)
 # === P2-CRONS-END ===
