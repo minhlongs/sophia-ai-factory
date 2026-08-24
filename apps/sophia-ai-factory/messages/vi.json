@@ -3844,6 +3844,70 @@
     "exploreSops": "Khám phá SOP",
     "renew": "Gia hạn"
   },
+  "missionConsole": {
+    "pageTitle": "Nhiệm vụ AI",
+    "pageDescription": "Theo dõi các nhiệm vụ AI của bạn và duyệt kết quả",
+    "emptyTitle": "Chưa có nhiệm vụ nào",
+    "emptyDescription": "Các nhiệm vụ AI của bạn sẽ xuất hiện tại đây khi được tạo",
+    "noWorkspace": "Bạn chưa thuộc không gian làm việc nào. Hãy tạo hoặc tham gia một không gian làm việc trước.",
+    "viewDetails": "Xem chi tiết",
+    "backToList": "Quay lại danh sách nhiệm vụ",
+    "statuses": {
+      "draft": "Bản nháp",
+      "planned": "Đã lên kế hoạch",
+      "approval_required": "Cần phê duyệt",
+      "running": "Đang chạy",
+      "paused": "Tạm dừng",
+      "review": "Chờ duyệt",
+      "completed": "Hoàn thành",
+      "learning": "Đang học",
+      "iterating": "Đang cải tiến"
+    },
+    "brief": {
+      "objective": "Mục tiêu",
+      "audience": "Đối tượng",
+      "geography": "Khu vực",
+      "timeframe": "Thời gian",
+      "budget": "Ngân sách",
+      "spent": "Đã chi",
+      "autonomyLevel": "Mức tự động",
+      "channels": "Kênh phân phối",
+      "none": "Không có",
+      "goals": "Mục tiêu cụ thể",
+      "goalsEmpty": "Chưa đặt mục tiêu cụ thể cho nhiệm vụ này"
+    },
+    "runs": {
+      "title": "Các lần chạy AI gần nhất",
+      "empty": "AI chưa chạy lần nào cho nhiệm vụ này",
+      "agent": "Agent",
+      "status": "Trạng thái",
+      "phase": "Giai đoạn",
+      "cost": "Chi phí",
+      "tokens": "Số token",
+      "started": "Bắt đầu",
+      "ended": "Kết thúc",
+      "output": "Kết quả AI tạo ra",
+      "error": "Lỗi",
+      "statuses": {
+        "queued": "Đang chờ",
+        "running": "Đang chạy",
+        "completed": "Hoàn thành",
+        "failed": "Thất bại",
+        "cancelled": "Đã hủy",
+        "awaiting_approval": "Chờ phê duyệt"
+      }
+    },
+    "review": {
+      "title": "Quyết định của bạn",
+      "humanNote": "Bạn là người quyết định cuối cùng. AI không thể tự hoàn thành nhiệm vụ — chỉ bạn mới có thể duyệt kết quả hoặc yêu cầu làm lại.",
+      "approve": "Duyệt — hoàn thành nhiệm vụ",
+      "iterating": "Yêu cầu làm lại",
+      "deciding": "Đang xử lý...",
+      "approveSuccess": "Đã duyệt! Nhiệm vụ được đánh dấu hoàn thành.",
+      "iterateSuccess": "Đã ghi nhận. Nhiệm vụ quay lại giai đoạn cải tiến.",
+      "actionFailed": "Không thực hiện được quyết định ({code}). Trang đã được cập nhật — vui lòng thử lại."
+    }
+  },
   "errors": {
     "boundary": {
       "title": "Đã xảy ra lỗi",

@@ -3844,6 +3844,70 @@
     "exploreSops": "Explore SOPs",
     "renew": "Renew"
   },
+  "missionConsole": {
+    "pageTitle": "AI Missions",
+    "pageDescription": "Track your AI missions and approve their results",
+    "emptyTitle": "No missions yet",
+    "emptyDescription": "Your AI missions will appear here once created",
+    "noWorkspace": "You are not part of any workspace yet. Please create or join a workspace first.",
+    "viewDetails": "View details",
+    "backToList": "Back to missions",
+    "statuses": {
+      "draft": "Draft",
+      "planned": "Planned",
+      "approval_required": "Approval required",
+      "running": "Running",
+      "paused": "Paused",
+      "review": "In review",
+      "completed": "Completed",
+      "learning": "Learning",
+      "iterating": "Iterating"
+    },
+    "brief": {
+      "objective": "Objective",
+      "audience": "Audience",
+      "geography": "Geography",
+      "timeframe": "Timeframe",
+      "budget": "Budget",
+      "spent": "Spent",
+      "autonomyLevel": "Autonomy level",
+      "channels": "Channels",
+      "none": "None",
+      "goals": "Goals",
+      "goalsEmpty": "No goals defined for this mission yet"
+    },
+    "runs": {
+      "title": "Latest AI runs",
+      "empty": "AI has not run yet for this mission",
+      "agent": "Agent",
+      "status": "Status",
+      "phase": "Phase",
+      "cost": "Cost",
+      "tokens": "Tokens",
+      "started": "Started",
+      "ended": "Ended",
+      "output": "AI output",
+      "error": "Error",
+      "statuses": {
+        "queued": "Queued",
+        "running": "Running",
+        "completed": "Completed",
+        "failed": "Failed",
+        "cancelled": "Cancelled",
+        "awaiting_approval": "Awaiting approval"
+      }
+    },
+    "review": {
+      "title": "Your decision",
+      "humanNote": "You make the final call. AI cannot complete a mission on its own — only you can approve the result or send it back for another round.",
+      "approve": "Approve — complete mission",
+      "iterating": "Request another round",
+      "deciding": "Working...",
+      "approveSuccess": "Approved! Mission marked as completed.",
+      "iterateSuccess": "Done. The mission goes back for another round of improvements.",
+      "actionFailed": "Could not apply your decision ({code}). The page was refreshed — please try again."
+    }
+  },
   "errors": {
     "boundary": {
       "title": "Something went wrong",

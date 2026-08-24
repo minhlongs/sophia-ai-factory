@@ -152,7 +152,10 @@ export async function executeAgent(
   const healthy = registry.getHealthy();
   if (healthy.length === 0) {
     return failure(
-      new ExecutorError('NO_PROVIDER', 'No AI providers registered in the registry'),
+      new ExecutorError(
+        'NO_PROVIDER',
+        'No AI providers configured for this workspace. Open Setup Wizard and add your AI provider API key to start missions.',
+      ),
     );
   }
   const provider = healthy[0].provider;

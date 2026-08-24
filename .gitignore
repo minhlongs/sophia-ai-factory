@@ -104,3 +104,6 @@ sync-*.sh
 # Stryker mutation testing sandbox + local temp scratch
 .stryker-tmp/
 .tmp/
+
+# Per-project agent memory (session artifacts, not source)
+.claude/projects/

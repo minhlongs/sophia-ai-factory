@@ -186,6 +186,39 @@ export async function getAgentRun(
   }
 }
 
+/**
+ * List agent runs for one mission, scoped to its workspace (belt-and-braces:
+ * both filters are bound parameters). Newest first.
+ */
+export async function listAgentRunsForMission(
+  missionId: string,
+  workspaceId: string,
+  limit = 10
+): Promise<Result<AgentRunRecord[], { code: string; message: string }>> {
+  try {
+    const db = await getD1();
+    if (!db) {
+      return failure({ code: 'DB_UNAVAILABLE', message: 'D1 not available' });
+    }
+    const result = await db
+      .prepare(
+        `SELECT * FROM agent_runs WHERE mission_id = ? AND workspace_id = ? ORDER BY created_at DESC LIMIT ?`
+      )
+      .bind(missionId, workspaceId, limit)
+      .all<Record<string, unknown>>();
+
+    const rows = result.results ?? [];
+    return success(rows.map(rowToRun));
+  } catch (err) {
+    logger.error('listAgentRunsForMission failed', {
+      error: err instanceof Error ? err.message : String(err),
+      missionId,
+      workspaceId,
+    });
+    return failure({ code: 'DB_ERROR', message: err instanceof Error ? err.message : 'Unknown DB error' });
+  }
+}
+
 export async function updateAgentRun(
   id: string,
   patch: UpdateAgentRunInput

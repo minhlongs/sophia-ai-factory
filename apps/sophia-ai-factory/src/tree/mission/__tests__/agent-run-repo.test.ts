@@ -16,6 +16,7 @@ import { getD1 } from '@/seed/db/client';
 import {
   createAgentRun,
   getAgentRun,
+  listAgentRunsForMission,
   updateAgentRun,
   appendAgentLog,
   createApproval,
@@ -105,6 +106,67 @@ describe('agent-run-repo', () => {
       expect(result.ok).toBe(true);
       if (!result.ok) return;
       expect(result.value).toBeNull();
+    });
+  });
+
+  describe('listAgentRunsForMission', () => {
+    it('queries scoped by mission AND workspace, newest first, honoring limit', async () => {
+      let capturedSql = '';
+      const bindMock = vi.fn().mockReturnValue({
+        all: vi.fn().mockReturnValue(Promise.resolve({ results: [runRow()] })),
+      });
+      const prepareMock = vi.fn().mockImplementation((sql: string) => {
+        capturedSql = sql;
+        return { bind: bindMock };
+      });
+      vi.mocked(getD1).mockReturnValue({
+        prepare: prepareMock,
+      } as unknown as ReturnType<typeof getD1>);
+
+      const result = await listAgentRunsForMission('mission-1', 'ws-1', 5);
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value).toHaveLength(1);
+      expect(result.value[0]?.agentId).toBe('agent-1');
+      expect(result.value[0]?.workspaceId).toBe('ws-1');
+      expect(capturedSql).toContain('WHERE mission_id = ? AND workspace_id = ?');
+      expect(capturedSql).toContain('ORDER BY created_at DESC LIMIT ?');
+      expect(bindMock).toHaveBeenCalledWith('mission-1', 'ws-1', 5);
+    });
+
+    it('defaults limit to 10', async () => {
+      const bindMock = vi.fn().mockReturnValue({
+        all: vi.fn().mockReturnValue(Promise.resolve({ results: [] })),
+      });
+      vi.mocked(getD1).mockReturnValue({
+        prepare: vi.fn().mockReturnValue({ bind: bindMock }),
+      } as unknown as ReturnType<typeof getD1>);
+
+      const result = await listAgentRunsForMission('mission-1', 'ws-1');
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value).toEqual([]);
+      expect(bindMock).toHaveBeenCalledWith('mission-1', 'ws-1', 10);
+    });
+
+    it('returns DB_UNAVAILABLE when D1 is not available', async () => {
+      vi.mocked(getD1).mockReturnValue(null as unknown as ReturnType<typeof getD1>);
+
+      const result = await listAgentRunsForMission('mission-1', 'ws-1');
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error.code).toBe('DB_UNAVAILABLE');
+    });
+
+    it('returns DB_ERROR when the query throws', async () => {
+      vi.mocked(getD1).mockImplementation(() => {
+        throw new Error('connection lost');
+      });
+
+      const result = await listAgentRunsForMission('mission-1', 'ws-1');
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error.code).toBe('DB_ERROR');
     });
   });
 
