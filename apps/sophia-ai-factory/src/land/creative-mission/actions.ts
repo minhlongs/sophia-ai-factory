@@ -15,17 +15,14 @@ import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import {
+  beginMissionExecution,
   createApproval,
-  getApproval,
-  resolveApproval,
-  listPendingApprovals,
-} from '@/tree/mission';
-import {
-  canTransition,
   getMissionWithGoals as dbGetMissionWithGoals,
+  listPendingApprovals,
+  resolveApproval,
+  updateMissionStatus as treeUpdateMissionStatus,
 } from '@/tree/mission';
 import { inngest } from '@/seed/inngest/client';
-import type { CreativeMissionStatus } from '@/seed/types/creative-domain';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -37,6 +34,23 @@ export type MissionError = {
 export type MissionAction = {
   missionId: string;
 };
+
+/**
+ * Map a caught error to the action failure shape. Tree-layer MissionError
+ * codes (NOT_FOUND | INVALID_TRANSITION | EXECUTION_START_INVALID |
+ * CONCURRENT_MODIFICATION) pass through unchanged; anything else logs and
+ * maps to INTERNAL.
+ */
+function actionFailure(scope: string, err: unknown): MissionError {
+  if (err instanceof Error && err.name === 'MissionError') {
+    // Name-based detection: the barrel exports MissionError as a type only.
+    return { code: (err as Error & { code: string }).code, message: err.message };
+  }
+
+  const error = toError(err);
+  logger.error(`${scope} failed`, error);
+  return { code: 'INTERNAL', message: error.message };
+}
 
 // ── Validation Schemas ─────────────────────────────────────────────────────
 
@@ -159,9 +173,7 @@ export async function createMission(
 
     return success({ missionId: mission.id });
   } catch (err) {
-    const error = toError(err);
-    logger.error('[CreativeMission] createMission failed', error);
-    return failure({ code: 'INTERNAL', message: error.message });
+    return failure(actionFailure('[CreativeMission] createMission', err));
   }
 }
 
@@ -191,11 +203,11 @@ export async function updateMissionStatus(
       return failure({ code: 'DB_ERROR', message: 'Database not available' });
     }
 
-    // Get current mission state
+    // Read only what permission checks need; transitions belong to tree.
     const mission = await d1
-      .prepare('SELECT * FROM creative_missions WHERE id = ?')
+      .prepare('SELECT workspace_id, creator_id, current_phase FROM creative_missions WHERE id = ?')
       .bind(parsed.data.missionId)
-      .first();
+      .first<{ workspace_id: string; creator_id: string; current_phase: string }>();
 
     if (!mission) {
       return failure({ code: 'NOT_FOUND', message: 'Mission not found' });
@@ -225,35 +237,19 @@ export async function updateMissionStatus(
       }
     }
 
-    // Validate transition
-    const currentStatus = mission.status as CreativeMissionStatus;
-    const newStatus = parsed.data.status;
+    // Single transition authority: validation, optimistic concurrency guard,
+    // and the write live in the tree layer. Phase preserved (status-only).
+    const updated = await treeUpdateMissionStatus(
+      parsed.data.missionId,
+      parsed.data.status,
+      mission.current_phase
+    );
 
-    if (!canTransition(currentStatus, newStatus)) {
-      return failure({
-        code: 'INVALID_TRANSITION',
-        message: `Cannot transition from ${currentStatus} to ${newStatus}`,
-      });
-    }
-
-    // Update status
-    await d1
-      .prepare('UPDATE creative_missions SET status = ?, updated_at = ? WHERE id = ?')
-      .bind(newStatus, Math.floor(Date.now() / 1000), parsed.data.missionId)
-      .run();
-
-    logger.info('[CreativeMission] Updated mission status', {
-      missionId: parsed.data.missionId,
-      from: currentStatus,
-      to: newStatus,
-      userId: user.id,
-    });
+    logger.info('[CreativeMission] Updated mission status', { missionId: parsed.data.missionId, status: updated.status, userId: user.id });
 
     return success({ missionId: parsed.data.missionId });
   } catch (err) {
-    const error = toError(err);
-    logger.error('[CreativeMission] updateMissionStatus failed', error);
-    return failure({ code: 'INTERNAL', message: error.message });
+    return failure(actionFailure('[CreativeMission] updateMissionStatus', err));
   }
 }
 
@@ -302,9 +298,7 @@ export async function listMissions(
     const missions = result.results ?? [];
     return success({ missions, count: missions.length });
   } catch (err) {
-    const error = toError(err);
-    logger.error('[CreativeMission] listMissions failed', error);
-    return failure({ code: 'INTERNAL', message: error.message });
+    return failure(actionFailure('[CreativeMission] listMissions', err));
   }
 }
 
@@ -367,16 +361,16 @@ export async function getMission(
 
     return success({ mission: missionWithGoals });
   } catch (err) {
-    const error = toError(err);
-    logger.error('[CreativeMission] getMission failed', error);
-    return failure({ code: 'INTERNAL', message: error.message });
+    return failure(actionFailure('[CreativeMission] getMission', err));
   }
 }
 
 /**
- * Start mission execution by emitting an Inngest event.
- * The agent-mission-executor Inngest function will pick up the event,
- * create the AgentRun in D1, execute the agent, and update mission status.
+ * Start mission execution: atomically flips the mission to 'running' (phase
+ * 'executing') via the tree authority — legal only from draft/planned/
+ * approval_required/paused — then emits agent.mission.started. The
+ * agent-mission-executor writes agent_runs only; on success the lifecycle
+ * path advances the mission to 'review' for human review of artifacts.
  */
 export async function startMissionExecution(
   data: z.infer<typeof startMissionExecutionSchema>
@@ -420,11 +414,9 @@ export async function startMissionExecution(
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 
-    // Update mission status to running
-    await d1
-      .prepare('UPDATE creative_missions SET status = ?, updated_at = ? WHERE id = ?')
-      .bind('running', Math.floor(Date.now() / 1000), parsed.data.missionId)
-      .run();
+    // Atomic 'running' flip via the tree authority — invalid start states and
+    // concurrent writers reject BEFORE any Inngest event is emitted.
+    await beginMissionExecution(parsed.data.missionId);
 
     // Emit Inngest event to trigger agent execution
     const runId = `run_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
@@ -450,9 +442,7 @@ export async function startMissionExecution(
 
     return success({ runId, agentId: parsed.data.agentId });
   } catch (err) {
-    const error = toError(err);
-    logger.error('[CreativeMission] startMissionExecution failed', error);
-    return failure({ code: 'INTERNAL', message: error.message });
+    return failure(actionFailure('[CreativeMission] startMissionExecution', err));
   }
 }
 
@@ -541,9 +531,7 @@ export async function requestApproval(
 
     return success({ approvalId });
   } catch (err) {
-    const error = toError(err);
-    logger.error('[Approval] requestApproval failed', error);
-    return failure({ code: 'INTERNAL', message: error.message });
+    return failure(actionFailure('[Approval] requestApproval', err));
   }
 }
 
@@ -641,9 +629,7 @@ export async function resolveApprovalAction(
 
     return success({ status });
   } catch (err) {
-    const error = toError(err);
-    logger.error('[Approval] resolveApprovalAction failed', error);
-    return failure({ code: 'INTERNAL', message: error.message });
+    return failure(actionFailure('[Approval] resolveApprovalAction', err));
   }
 }
 
@@ -711,8 +697,6 @@ export async function listPendingApprovalsAction(
       count: result.value.count,
     });
   } catch (err) {
-    const error = toError(err);
-    logger.error('[Approval] listPendingApprovalsAction failed', error);
-    return failure({ code: 'INTERNAL', message: error.message });
+    return failure(actionFailure('[Approval] listPendingApprovalsAction', err));
   }
 }

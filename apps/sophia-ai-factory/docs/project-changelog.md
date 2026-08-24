@@ -1,6 +1,57 @@
 # Project Changelog
 
-**Last Updated:** 2026-08-23 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 9c4cc895
+**Last Updated:** 2026-08-24 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 9c4cc895
+
+---
+
+## 2026-08-24 (Mission Lifecycle + Agent Protocol — SOPHIA 2027) — single transition authority + agent event loop closure
+
+**Severity: P1 REFACTOR | Type: Consolidation (strangler pattern) | Status: COMPLETE (ship pending)**
+
+Mission status had four writers with three rulebooks and one bypass: the tree authority
+(`NEXT_STATUS`/`canTransition`), a land Server Action that re-implemented the check and
+wrote its own raw SQL, an execution-start action with zero validation
+(`UPDATE … SET status='running'` on any state), and an executor that never touched mission
+status at all. Separately, four agent Inngest functions were exported but never registered
+in `serve()`, so any emitted `agent.mission.started` was silently dropped while the mission
+row already said "running" — silent data corruption.
+
+**What changed:**
+- **Single enforced authority:** all status writes live in `src/tree/mission/`
+  (`types.ts` lifecycle rules + `repository.ts` guarded CRUD). Land Server Actions keep
+  auth/Zod/workspace checks and delegate; zero raw `UPDATE creative_missions SET status`
+  remain in `land/`. Forest consumers call the same tree functions.
+- **Optimistic concurrency:** every guarded write is `UPDATE … WHERE id = ? AND status = ?`;
+  `meta.changes === 0` rejects with `CONCURRENT_MODIFICATION` (D1 has no transactions).
+- **Execution start legalized as a named rule:** `EXECUTION_START_FROM`
+  (`draft/planned/approval_required/paused`) + atomic `beginMissionExecution(id)` replace
+  the unvalidated bypass. Review/completed/learning/iterating can never start execution;
+  invalid starts reject before any Inngest event is emitted.
+- **Machine never self-completes:** run success advances the mission to `'review'` for human
+  review of artifacts (`running → review` is legal); run failure leaves mission status
+  untouched — the rollback cron retries (max 3 within 30-min window), humans intervene via
+  existing transitions.
+- **Agent event loop closed:** executor emits `agent.mission.completed` /
+  `agent.mission.failed` via `forest/inngest/functions/agent-mission-lifecycle.ts`, payloads
+  typed against `seed/inngest/agent-event-types.ts`. Success also triggers the provenance
+  bridge (artifact provenance records + creative-memory learning entry).
+- **All four agent functions registered in serve():** `agentMissionExecutor`,
+  `agentApprovalHandler`, `agentRollbackCron`, `provenanceBridge`. Deliberately inert until
+  provider wiring ships: the shared registry is empty → executor fails fast `NO_PROVIDER`;
+  autonomy gate fails closed; no sender exists yet for `agent.approval.resolved`.
+- **Doc fix:** `docs/architecture/MISSION_LIFECYCLE.md` previously showed a forbidden
+  `PLANNED → PAUSED` edge — removed; `planned` may only advance to `approval_required`.
+- **Decision record:** `docs/architecture-decisions/ADR-mission-state-machine.md`
+  (9-state union canonical, spec names aliases, DB column untouched).
+
+**Verification:**
+- `grep -rn "UPDATE creative_missions" src/land/` → 0 hits
+- Transition matrix, execution-start, concurrency-guard, emission, and registration test
+  suites added; route-registration test asserts all four functions are served
+- Zero protected-flow files touched (Setup Wizard / Telegram / NOWPayments untouched)
+
+**Pending:** full test suite + CF-direct deploy + SHA verification.
+Known-broken deploy base carried forward: `src/land/youtube/__tests__/actions.test.ts:322`.
 
 ---
 

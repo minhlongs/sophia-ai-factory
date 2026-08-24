@@ -1,102 +1,128 @@
 # Agent Protocol Architecture
 
-> **Layer**: forest  
-> **Module**: `src/forest/agent-protocol/`  
-> **Status**: Production-ready (Phase 1)
+> **Layer**: tree (canonical executor + registry) + forest (Inngest functions)  
+> **Module**: `src/tree/agent-protocol/` (`agent-executor.ts`, `agent-registry.ts`) · Inngest functions in `src/forest/inngest/functions/`  
+> **Event contracts**: `src/seed/inngest/agent-event-types.ts`  
+> **Status**: Registered and live — deliberately inert on execution until provider wiring ships (see [Deliberate Inertness](#deliberate-inertness-until-provider-wiring))
 
 ## Purpose
 
 Agent Protocol defines the shared contract for all Sophia autonomous agents. It ensures:
-- Every agent action has a defined permission scope
+- Every agent action passes the workspace autonomy gate (fail-closed)
 - Cost is tracked and bounded per agent run
-- Human approval is requested when autonomy level requires it
-- Rollback plans exist before execution
-- Audit trails are complete
+- Human approval is enforced per permission (`requiresApproval`)
+- Audit trails are complete (provenance records per artifact)
 
-## Core Contract
+## Core Executor Contract
+
+The canonical executor lives in `src/tree/agent-protocol/agent-executor.ts`:
 
 ```typescript
-interface AgentProtocol {
-  initializeContext(ctx: AgentExecutionContext): Promise<void>;
-  plan(context: AgentExecutionContext): Promise<AgentDecision>;
-  execute(decision: AgentDecision): Promise<AgentResult>;
-  handleApproval?(request: AgentApproval): Promise<AgentDecision>;
-  rollback?(runId: string, plan: RollbackPlan): Promise<void>;
-}
+executeAgent(
+  definition: AgentDefinition,
+  context: AgentContext,
+  registry: ProviderRegistry,
+): Promise<Result<AgentExecutionResult, ExecutorError>>
 ```
+
+Executor failure codes (`ExecutorErrorCode`): `NO_PROVIDER`, `NO_PROVIDER_HEALTHY`, `AUTONOMY_DENIED`, `PROVIDER_ERROR`, `BUDGET_EXCEEDED`, `EXECUTION_FAILED`.
+
+Agent definitions are resolved from `agentDefinitionRegistry` (`src/tree/agent-protocol/agent-registry.ts`). Types come from `src/seed/types/creative-domain.ts` (`AgentDefinition`, `AgentContext`, `AgentPermission`).
 
 ## Autonomy Levels
 
-| Level | Name | Auto-Approve Cost | Can Execute |
-|---|---|---|---|
-| 0 | OBSERVE_ONLY | 0 cents | No |
-| 1 | SUGGEST | 0 cents | No |
-| 2 | EXECUTE_SAFE | 500 cents | Yes (safe actions) |
-| 3 | EXECUTE_BROAD | 2000 cents | Yes (medium cost) |
-| 4 | FULL_AUTONOMY | ∞ | Yes (all, with policy) |
+Five levels (`AutonomyLevel = 0 | 1 | 2 | 3 | 4`), enforced by the pure gate `checkActionAllowed()` in `src/tree/autonomy/autonomy-repo.ts`. Config errors fall back to level 0 (deny) — the gate fails closed.
+
+| Level | Behavior |
+|---|---|
+| 0 | Deny everything |
+| 1 | Deny everything (agent only proposes) |
+| 2 | Read-only actions only: `read_mission`, `list_approvals`, `get_status`, `fetch_metrics`, `read_logs` |
+| 3 | All routine actions; blocked: `spend_credits`, `delete_mission`, `update_billing`, `revoke_credentials`, `webhook_deregister` |
+| 4 | Allow all |
 
 ## Permission Model
 
 ```typescript
 interface AgentPermission {
-  tool: string;           // tool pattern (supports wildcards)
-  scopes: string[];       // allowed scope contexts
+  tool: string;
+  scopes: string[];
   requiresApproval: boolean;
-  maxCostCents?: number;  // per-action cost ceiling
+  maxCostCents?: number;
 }
 ```
 
-## Agent Runner Lifecycle
+Every declared permission independently passes the autonomy gate, and any permission with `requiresApproval` must be backed by an approved action id in the context — otherwise the run fails with `AUTONOMY_DENIED` before any provider call.
+
+## Mission Event Loop
+
+All five payloads are typed in `src/seed/inngest/agent-event-types.ts`; senders construct payloads against these contracts so keys cannot drift.
 
 ```
-1. Initialize Context
-   ↓ Load workspace, brand, mission, memory, permissions
-2. Plan
-   ↓ Generate decision (tool calls, parameters, estimated cost)
-3. Check Permission
-   ↓ validatePermission(agent, action, autonomyLevel)
-   - Tool allowed?
-   - Cost within limit?
-   - Autonomy level permits?
-   - If fails → return failure
-4. Check Approval
-   ↓ requiresApproval(action, autonomyLevel)
-   - If approval needed → PAUSE, emit approval request
-   - Human approves → continue
-   - Human rejects → ABORT
-5. Execute
-   ↓ Run tool with circuit breaker + cost tracking
-6. Record Result
-   ↓ Log outcome, cost, duration
-7. Rollback if needed
-   ↓ If execution failed with side effects → rollback
+startMissionExecution (land Server Action)
+  │  beginMissionExecution() — atomic 'running' flip via tree authority
+  ▼
+agent.mission.started ──────────► agent-mission-executor (Inngest)
+  { runId, agentId, missionId,      │ creates agent_runs row, runs executeAgent()
+    workspaceId,                    ├─ success ─► agent.mission.completed
+    autonomyLevel?, inputJson? }    │            + mission advanced to 'review'
+                                    └─ failure ─► agent.mission.failed
+                                                   (mission status untouched)
+
+agent.mission.completed ────────► provenance-bridge (Inngest)
+  { runId, agentId, missionId,      │ records provenance per artifact
+    totalCostCents, totalTokens }   │ (run-level record when no artifacts exist)
+                                    └─ records creative-memory learning entry
+
+agent.mission.failed ───────────► (audit trail event; no consumer yet.
+  { runId, agentId, missionId,       recovery is pull-based: rollback cron)
+    errorCode, errorMessage }
+
+agent.approval.resolved ────────► agent-approval-handler (Inngest)
+  { approvalId, runId,              no production sender yet — handler dormant
+    status, reviewerId, comment? }
+
+agent-rollback-cron (every 5 min): scans failed agent_runs within the last
+30 minutes, retry_count < 3 → re-dispatches agent.mission.started (LIMIT 50).
 ```
 
-## Cost Tracking
+### Emission helpers
 
-Every agent action:
-1. Estimates cost before execution (`estimatedCostCents`)
-2. Records actual cost after execution (`actualCostCents`)
-3. Enforces `maxCostCents` per permission + per mission budget
-4. Circuit breaker on external API calls (classified by failure kind)
+`src/forest/inngest/functions/agent-mission-lifecycle.ts` owns emission and the review handoff:
 
-## Integration Points
+- `emitMissionCompleted(client, payload)` / `emitMissionFailed(client, payload)` — payload types imported from the seed contracts (no inline literals).
+- `advanceMissionToReview(missionId)` — wraps tree `updateMissionStatus(id, 'review', 'review')`. Machine hands artifacts to human review and never self-completes a mission. A rejected transition (e.g. concurrent human edit) is logged non-fatally; the run outcome is not masked.
 
-- **Land**: Billing tracks agent costs against workspace quota
-- **Tree**: Mission lifecycle enforces autonomy level per mission
-- **Forest**: Inngest runs long-horizon agent loops (continuous operation at level 4)
-- **Seed**: Types define the contract (`AgentDefinition`, `AgentContext`, `AgentAction`, etc.)
+On failure the mission status is deliberately untouched — the rollback cron retries, humans intervene through existing transitions (see `MISSION_LIFECYCLE.md`).
+
+## Registration
+
+All four agent functions are registered in `serve()` at `src/app/api/inngest/route.ts`: `agentMissionExecutor`, `agentApprovalHandler`, `agentRollbackCron`, `provenanceBridge`. A route-registration test asserts every import appears in the served array.
+
+## Deliberate Inertness (until provider wiring ships)
+
+Registration is live, but real AI execution is intentionally dormant:
+
+- `getSharedRegistry()` (`forest/ai/provider-factory.ts`) returns an **empty** provider registry until a provider-wiring cycle resolves workspace BYOK keys into it.
+- An empty registry makes `executeAgent` fail fast with `NO_PROVIDER`.
+- The autonomy gate adds a second deterministic fail-fast layer (`isActionAllowed` falls back to deny on config error).
+- Failed runs are marked `failed` in `agent_runs` and retried at most 3 times by the rollback cron — a loud, bounded failure replacing the previous silent event drop.
+
+This is honest-by-design: faking provider resolution would violate the no-mocks rule. The dormant handlers (`agentApprovalHandler` has no sender; `provenanceBridge` fires only after a successful run) stay inert until their product cycles ship.
 
 ## Security Model
 
 - Agents CANNOT exceed their defined permission scope
-- Agents CANNOT bypass approval gates at levels 0-3
-- All tool invocations are logged to provenance
-- Sensitive operations (publishing, billing) always require approval regardless of level
+- Agents CANNOT bypass approval gates — missing approval evidence fails the run closed
+- All tool invocations are recorded to provenance
+- Sensitive operations (spend, delete, billing, credentials) are blocked below level 4
 
 ## See Also
 
-- `src/seed/types/creative-domain.ts` — Full agent type definitions
-- `src/forest/autonomy/` — Autonomy level enforcement
-- `src/forest/agent-protocol/types.ts` — AgentRunner implementation
-- `CREATIVE_MEMORY.md` — Memory available to agents during planning
+- `../architecture-decisions/ADR-mission-state-machine.md` — who may write mission status
+- `MISSION_LIFECYCLE.md` — transition map, execution-start rule, machine-vs-human writes
+- `../../src/tree/agent-protocol/agent-executor.ts` — canonical executor
+- `../../src/seed/inngest/agent-event-types.ts` — five payload contracts
+- `../../src/forest/inngest/functions/agent-mission-lifecycle.ts` — emission + review handoff
+- `PROVENANCE.md` — provenance record model
+- `CREATIVE_MEMORY.md` — memory available to agents during planning

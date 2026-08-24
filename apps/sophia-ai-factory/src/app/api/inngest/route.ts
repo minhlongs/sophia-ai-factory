@@ -28,6 +28,10 @@ import {
   sopExecute,
   experimentFeedbackCron,
   youtubeContentPipeline,
+  agentMissionExecutor,
+  agentApprovalHandler,
+  agentRollbackCron,
+  provenanceBridge,
 } from "@/forest/inngest/functions/index";
 
 // Deprecated handlers (Phase 06 video_jobs chain + URL-to-Revenue) removed from
@@ -77,5 +81,13 @@ export const { GET, POST, PUT } = serve({
     autoApplyMonitor,
     // Phase 3: YouTube Content Pipeline — strategy → script → SEO → quality → publish
     youtubeContentPipeline,
+    // Agent protocol loop (mission lifecycle + provenance). Deliberately
+    // inert today: no production senders exist for approval events yet, and
+    // the executor fails fast (NO_PROVIDER / autonomy deny) until provider
+    // wiring ships — a loud, bounded failure replaces a silent event drop.
+    agentMissionExecutor,
+    agentApprovalHandler,
+    agentRollbackCron,
+    provenanceBridge,
   ],
 });

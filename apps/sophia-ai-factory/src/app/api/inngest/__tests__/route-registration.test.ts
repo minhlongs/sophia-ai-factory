@@ -76,4 +76,31 @@ describe('Inngest route registration', () => {
     const registered = mocks.serve.mock.calls[0][0].functions;
     expect(registered).toContain(barrel.youtubeContentPipeline);
   });
+
+  // ── Agent protocol loop registration (mission lifecycle + provenance) ──────
+  // All four agent functions must be present in serve(). A missing entry
+  // silently drops the emitted event and the mission pipeline never runs.
+
+  it('registers agentMissionExecutor (consumes agent.mission.started)', async () => {
+    await import('@/app/api/inngest/route');
+    const registered = mocks.serve.mock.calls[0][0].functions;
+    expect(barrel.agentMissionExecutor).toBeDefined();
+    expect(registered).toContain(barrel.agentMissionExecutor);
+  });
+
+  it('registers agentApprovalHandler (consumes approval events)', async () => {
+    await import('@/app/api/inngest/route');
+    const registered = mocks.serve.mock.calls[0][0].functions;
+    expect(barrel.agentApprovalHandler).toBeDefined();
+    expect(registered).toContain(barrel.agentApprovalHandler);
+  });
+
+  it('registers agentRollbackCron and provenanceBridge', async () => {
+    await import('@/app/api/inngest/route');
+    const registered = mocks.serve.mock.calls[0][0].functions;
+    expect(barrel.agentRollbackCron).toBeDefined();
+    expect(barrel.provenanceBridge).toBeDefined();
+    expect(registered).toContain(barrel.agentRollbackCron);
+    expect(registered).toContain(barrel.provenanceBridge);
+  });
 });

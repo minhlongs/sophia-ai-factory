@@ -1,8 +1,13 @@
 /**
  * Tests for tree/mission lifecycle (Sophia 2027 Phase 1).
  *
- * Covers: canTransition (valid/invalid), createMission, updateMissionStatus
- *         (valid transitions), D1_UNAVAILABLE + NOT_FOUND error paths.
+ * Covers: canTransition (valid/invalid grid), the named execution-start rule
+ *         (EXECUTION_START_FROM / canStartExecution), createMission,
+ *         updateMissionStatus (valid transitions), D1_UNAVAILABLE +
+ *         NOT_FOUND error paths.
+ *
+ * Guarded-write behavior (beginMissionExecution, optimistic concurrency)
+ * is covered against real SQL in repository.test.ts.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -17,6 +22,8 @@ vi.mock('@/seed/db/client', () => ({
 
 import {
   canTransition,
+  canStartExecution,
+  EXECUTION_START_FROM,
   createMission,
   updateMissionStatus,
 } from '../types';
@@ -146,12 +153,49 @@ describe('tree/mission', () => {
       ['draft → running (skip)', 'draft', 'running', false],
       ['draft → completed (skip)', 'draft', 'completed', false],
       ['planned → running (skip approval)', 'planned', 'running', false],
+      // Pins the corrected state machine: pausing requires an execution
+      // history, so a mission that was never run cannot pause.
+      ['planned → paused (no execution yet)', 'planned', 'paused', false],
       ['approval_required → paused', 'approval_required', 'paused', false],
+      ['review → paused', 'review', 'paused', false],
       ['completed → running', 'completed', 'running', false],
       ['learning → draft', 'learning', 'draft', false],
       ['unknown → any', 'unknown', 'draft', false],
     ])('%s is invalid', (_label: string, from: string, to: string, expected: boolean) => {
       expect(canTransition(from as CreativeMissionStatus, to as CreativeMissionStatus)).toBe(expected);
+    });
+
+    it('falls back to false for unknown target status', () => {
+      expect(canTransition('draft', 'nonexistent' as CreativeMissionStatus)).toBe(false);
+    });
+  });
+
+  // ── Execution-start rule ──────────────────────────────────────────────────
+
+  describe('canStartExecution / EXECUTION_START_FROM', () => {
+    it('allows start from exactly draft/planned/approval_required/paused', () => {
+      expect([...EXECUTION_START_FROM].sort()).toEqual(
+        ['approval_required', 'draft', 'paused', 'planned'].sort(),
+      );
+    });
+
+    it.each(['draft', 'planned', 'approval_required', 'paused'] as const)(
+      'canStartExecution: %s → true',
+      (from) => {
+        expect(canStartExecution(from)).toBe(true);
+        expect(EXECUTION_START_FROM).toContain(from);
+      },
+    );
+
+    it.each(['running', 'review', 'completed', 'learning', 'iterating'] as const)(
+      'canStartExecution: %s → false',
+      (from) => {
+        expect(canStartExecution(from)).toBe(false);
+      },
+    );
+
+    it('returns false for unknown status', () => {
+      expect(canStartExecution('nonexistent' as CreativeMissionStatus)).toBe(false);
     });
   });
 

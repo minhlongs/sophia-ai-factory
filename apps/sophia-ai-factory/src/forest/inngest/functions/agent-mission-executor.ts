@@ -2,40 +2,18 @@
  * Agent Mission Executor — Inngest function
  * Layer: forest (reusable infrastructure orchestrators)
  *
- * Consumes `agent.mission.started` and runs the agent through the canonical
- * tree/agent-protocol executor. Bookkeeping (agent_runs rows + agent logs)
- * is written to D1 via tree/mission/agent-run-repo.
- *
- * @module forest/inngest/functions
+ * Consumes `agent.mission.started`, runs the canonical tree/agent-protocol
+ * executor, emits completion/failure via agent-mission-lifecycle.ts, and
+ * hands successful missions to human review (never self-completes).
  */
-
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
-import {
-  executeAgent,
-  agentDefinitionRegistry,
-} from '@/tree/agent-protocol';
+import { executeAgent, agentDefinitionRegistry } from '@/tree/agent-protocol';
 import { getSharedRegistry } from '@/forest/ai/provider-factory';
-import {
-  createAgentRun,
-  updateAgentRun,
-  appendAgentLog,
-} from '@/tree/mission/agent-run-repo';
+import { createAgentRun, updateAgentRun, appendAgentLog } from '@/tree/mission/agent-run-repo';
 import type { UpdateAgentRunInput } from '@/tree/mission/agent-run-repo';
 import type { AgentContext, AutonomyLevel } from '@/seed/types/creative-domain';
-
-// ---------------------------------------------------------------------------
-// Event types
-// ---------------------------------------------------------------------------
-
-interface AgentMissionStartedData {
-  runId: string;
-  agentId: string;
-  missionId: string;
-  workspaceId: string;
-  autonomyLevel?: number;
-  inputJson?: Record<string, unknown>;
-}
+import { emitMissionCompleted, emitMissionFailed, advanceMissionToReview } from './agent-mission-lifecycle';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -59,8 +37,9 @@ export const agentMissionExecutor = inngest.createFunction(
   },
   { event: 'agent.mission.started' },
   async ({ event, step }) => {
-    const data = event.data as AgentMissionStartedData;
-    const { runId, agentId, missionId, workspaceId, autonomyLevel, inputJson } = data;
+    // Typed by the merged seed schema (EventSchemas.fromRecord<Events>) —
+    // payload keys compile-checked against AgentMissionStartedData.
+    const { runId, agentId, missionId, workspaceId, autonomyLevel, inputJson } = event.data;
 
     logger.info('agentMissionExecutor: started', { runId, agentId, missionId, workspaceId });
 
@@ -155,6 +134,15 @@ export const agentMissionExecutor = inngest.createFunction(
           endedAt: Math.floor(Date.now() / 1000),
         };
         await updateAgentRun(runId, patch);
+        await emitMissionCompleted(inngest, {
+          runId,
+          agentId,
+          missionId,
+          totalCostCents: result.costCents,
+          totalTokens: result.totalTokens,
+        });
+        // Machine hands artifacts to human review; never self-completes.
+        await advanceMissionToReview(missionId);
 
         logger.info('agentMissionExecutor: completed', {
           runId,
@@ -173,6 +161,14 @@ export const agentMissionExecutor = inngest.createFunction(
         endedAt: Math.floor(Date.now() / 1000),
       };
       await updateAgentRun(runId, failPatch);
+      // Mission status deliberately untouched on failure — rollback cron retries.
+      await emitMissionFailed(inngest, {
+        runId,
+        agentId,
+        missionId,
+        errorCode: executorError.code,
+        errorMessage: executorError.message,
+      });
 
       logger.error('agentMissionExecutor: failed', {
         runId,
@@ -189,6 +185,13 @@ export const agentMissionExecutor = inngest.createFunction(
         errorMessage: message,
         errorJson: { code: 'RUNTIME_ERROR', message },
         endedAt: Math.floor(Date.now() / 1000),
+      });
+      await emitMissionFailed(inngest, {
+        runId,
+        agentId,
+        missionId,
+        errorCode: 'RUNTIME_ERROR',
+        errorMessage: message,
       });
       throw err;
     }

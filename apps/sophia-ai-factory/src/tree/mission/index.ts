@@ -17,6 +17,12 @@ export {
 } from './types';
 
 export {
+  EXECUTION_START_FROM,
+  canStartExecution,
+  beginMissionExecution,
+} from './types';
+
+export {
   createGoal,
   getGoalsByMission,
   getGoalsByWorkspace,

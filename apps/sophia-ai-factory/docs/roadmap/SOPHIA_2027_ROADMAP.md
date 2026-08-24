@@ -16,7 +16,7 @@
 | **Phase 1 — Creative Foundation** | CreativeMemory + Provenance adapters, Agent Protocol strangler, CreativeIdentity/Autonomy coverage (115 tests, 7751 total passing) | ✅ Shipped `21caa1d89` (2026-08-23) — see `docs/roadmap/PHASE1-PLAN.md` |
 | Phase 1.5 | Provider Abstraction — kept `seed/ai` + `tree/ai-providers` distinct; dead `tree/ai-providers` module deprecated (registry entry, removable 2026-09-06) | ✅ Shipped `47a4a80bd` (2026-08-23) — see `docs/roadmap/PHASE1-5-PLAN.md` |
 | Phase 1.6 | Workflow consolidation — merged duplicate seed/tree Inngest clients into canonical `seed/inngest/` (33-key schema; tree shim deprecated, removable 2026-09-20) | ✅ Shipped `ba900e0c` (2026-08-23) — see `docs/roadmap/PHASE1-6-PLAN.md` |
-| Phase 2 | Mission lifecycle + Agent Protocol (owns the mission state-machine decision point) | ⏳ Planned |
+| Phase 2 | Mission lifecycle + Agent Protocol — single transition authority in `tree/mission` (optimistic concurrency, named execution-start rule), executor emits completed/failed and hands success to human review, all four agent functions registered (inert until provider wiring) | ✅ Shipped `<SHIP-SHA>` — see `docs/architecture-decisions/ADR-mission-state-machine.md` |
 
 ## Phases
 
