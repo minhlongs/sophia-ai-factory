@@ -30,6 +30,7 @@ interface PerformanceEventRow {
   event_type: string;
   count: number;
   value_cents: number | null;
+  metrics_json: string | null;
   recorded_at: number;
   raw_data: string | null;
 }
@@ -54,6 +55,10 @@ function rowToDomain(row: PerformanceEventRow): PerformanceEvent {
 }
 
 function domainToRow(event: PerformanceEvent): Omit<PerformanceEventRow, 'id'> {
+  // metrics_json is the canonical read column (migration 0243, NOT NULL).
+  // It must always hold parseable JSON, so an absent rawData serializes
+  // to '{}' rather than NULL.
+  const serialized = event.rawData ? JSON.stringify(event.rawData) : '{}';
   return {
     workspace_id: event.workspaceId,
     asset_id: event.assetId,
@@ -63,8 +68,11 @@ function domainToRow(event: PerformanceEvent): Omit<PerformanceEventRow, 'id'> {
     channel: event.channel,
     event_type: event.eventType,
     count: event.count,
-    value_cents: event.valueCents ?? null,
+    // Column is NOT NULL DEFAULT 0 (migration 0245) — an explicit NULL bind
+    // would violate the constraint, so absent valueCents coerces to 0.
+    value_cents: event.valueCents ?? 0,
     recorded_at: event.recordedAt,
+    metrics_json: serialized,
     raw_data: event.rawData ? JSON.stringify(event.rawData) : null,
   };
 }
@@ -89,13 +97,13 @@ export async function recordPerformanceEvent(
     await db
       .prepare(
         `INSERT INTO performance_events
-           (id, workspace_id, asset_id, project_id, entity_type, entity_id, channel, event_type, count, value_cents, recorded_at, raw_data)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           (id, workspace_id, asset_id, project_id, entity_type, entity_id, channel, event_type, count, value_cents, metrics_json, recorded_at, raw_data)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         row.id, row.workspace_id, row.asset_id, row.project_id,
         row.entity_type, row.entity_id, row.channel, row.event_type,
-        row.count, row.value_cents, row.recorded_at, row.raw_data,
+        row.count, row.value_cents, row.metrics_json, row.recorded_at, row.raw_data,
       )
       .run();
   } catch (err) {

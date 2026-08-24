@@ -311,6 +311,7 @@ CREATE TABLE IF NOT EXISTS performance_events (
   event_type TEXT NOT NULL,
   count INTEGER NOT NULL DEFAULT 1,
   value_cents INTEGER NOT NULL DEFAULT 0,
+  metrics_json TEXT NOT NULL DEFAULT '{}',
   recorded_at INTEGER NOT NULL DEFAULT 0,
   raw_data TEXT
 );

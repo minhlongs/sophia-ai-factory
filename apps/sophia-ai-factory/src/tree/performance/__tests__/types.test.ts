@@ -501,7 +501,8 @@ describe('Row mapping', () => {
       id: 'pevt_001', workspace_id: 'ws_001', asset_id: 'asset_001',
       project_id: 'proj_001', entity_type: 'asset', entity_id: 'asset_001',
       channel: 'youtube', event_type: 'view',
-      count: 10, value_cents: 50, recorded_at: NOW_S, raw_data: '{"key":"val"}',
+      count: 10, value_cents: 50, recorded_at: NOW_S,
+      metrics_json: '{"key":"val"}', raw_data: '{"key":"val"}',
     };
     const domain = performanceRowToDomain(row);
 

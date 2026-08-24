@@ -25,6 +25,8 @@ import {
   analyticsSync,
   tokenRefreshCron,
   thumbnailAbSelector,
+  variantAbSelector,
+  abWinnerPickerCron,
   sopExecute,
   experimentFeedbackCron,
   youtubeContentPipeline,
@@ -67,6 +69,8 @@ export const { GET, POST, PUT } = serve({
     analyticsSync,
     tokenRefreshCron,
     thumbnailAbSelector,
+    variantAbSelector,
+    abWinnerPickerCron,
     // SOP execution engine (Phase 01 Solo SOPs)
     sopExecute,
     // Phase 4: Creative Learning Loop — 15-min performance aggregation

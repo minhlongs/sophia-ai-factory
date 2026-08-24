@@ -13,6 +13,7 @@ import { buildProviders } from '@/forest/ai/provider-factory';
 import { createAgentRun, getAgentRun, updateAgentRun, appendAgentLog } from '@/tree/mission/agent-run-repo';
 import type { UpdateAgentRunInput } from '@/tree/mission/agent-run-repo';
 import { getMission, recordSpend } from '@/tree/mission/repository';
+import { newPerformanceEventId, recordPerformanceEvent } from '@/tree/performance';
 import type { Mission } from '@/seed/types/creative-domain';
 import type { AgentContext, AutonomyLevel, CreativeMemory } from '@/seed/types/creative-domain';
 import { emitMissionCompleted, emitMissionFailed, advanceMissionToReview } from './agent-mission-lifecycle';
@@ -236,6 +237,30 @@ export const agentMissionExecutor = inngest.createFunction(
             missionId,
             costCents: result.costCents,
             error: spendMessage,
+          });
+        }
+
+        try {
+          await recordPerformanceEvent({
+            id: newPerformanceEventId(),
+            workspaceId,
+            assetId: '',
+            projectId: '',
+            entityType: 'mission',
+            entityId: missionId,
+            channel: 'agent',
+            eventType: 'mission_completed',
+            count: 1,
+            valueCents: result.costCents,
+            rawData: { agentId, totalTokens: result.totalTokens, runId },
+            recordedAt: Date.now(),
+          });
+        } catch (performanceErr) {
+          const performanceMessage = performanceErr instanceof Error ? performanceErr.message : String(performanceErr);
+          logger.error('agentMissionExecutor: failed to record performance event', {
+            runId,
+            missionId,
+            error: performanceMessage,
           });
         }
 

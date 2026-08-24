@@ -67,32 +67,9 @@ CREATE TABLE IF NOT EXISTS learning_velocity (
 );
 `;
 
-// The shared SCHEMA defines performance_events with `raw_data`, but production
-// migration 0243 uses `metrics_json` (matching the source code). Override it so
-// the test DB matches production exactly.
-const PERFORMANCE_EVENTS_SQL = `
-DROP TABLE IF EXISTS performance_events;
-CREATE TABLE performance_events (
-  id TEXT PRIMARY KEY,
-  workspace_id TEXT NOT NULL,
-  asset_id TEXT NOT NULL DEFAULT '',
-  project_id TEXT NOT NULL DEFAULT '',
-  entity_type TEXT NOT NULL,
-  entity_id TEXT NOT NULL,
-  channel TEXT NOT NULL DEFAULT '',
-  event_type TEXT NOT NULL,
-  count INTEGER NOT NULL DEFAULT 1,
-  value_cents INTEGER NOT NULL DEFAULT 0,
-  metrics_json TEXT NOT NULL DEFAULT '{}',
-  recorded_at INTEGER NOT NULL,
-  created_at INTEGER NOT NULL DEFAULT 0
-);
-`;
-
 function createTestDb() {
   const db = new DatabaseSync(':memory:');
   db.exec(SCHEMA);
-  db.exec(PERFORMANCE_EVENTS_SQL);
   db.exec(LEARNING_VELOCITY_SQL);
   return db;
 }
@@ -240,10 +217,11 @@ describe('computeVelocity — insufficient events', () => {
     for (let i = 0; i < 3; i++) {
       await db.prepare(
         `INSERT INTO performance_events
-         (id, workspace_id, entity_type, entity_id, channel, event_type, metrics_json, recorded_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, workspace_id, entity_type, entity_id, channel, event_type, metrics_json, raw_data, recorded_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         `evt-${i}`, 'ws-1', 'video', `ent-${i}`, 'youtube', 'impression',
+        JSON.stringify({ clicks: 10 + i, views: 100 + i * 10 }),
         JSON.stringify({ clicks: 10 + i, views: 100 + i * 10 }),
         1000 + i * 100,
       ).run();
@@ -274,10 +252,11 @@ describe('computeVelocity — sufficient events', () => {
       const baseMetric = 10 + i * 5; // steadily increasing
       await db.prepare(
         `INSERT INTO performance_events
-         (id, workspace_id, entity_type, entity_id, channel, event_type, metrics_json, recorded_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, workspace_id, entity_type, entity_id, channel, event_type, metrics_json, raw_data, recorded_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         `evt-${i}`, 'ws-1', 'video', `ent-${i}`, 'youtube', 'impression',
+        JSON.stringify({ clicks: baseMetric, views: baseMetric * 10 }),
         JSON.stringify({ clicks: baseMetric, views: baseMetric * 10 }),
         1000 + i * 100,
       ).run();
@@ -305,10 +284,11 @@ describe('computeVelocity — sufficient events', () => {
     for (let i = 0; i < 5; i++) {
       await db.prepare(
         `INSERT INTO performance_events
-         (id, workspace_id, entity_type, entity_id, channel, event_type, metrics_json, recorded_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+         (id, workspace_id, entity_type, entity_id, channel, event_type, metrics_json, raw_data, recorded_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).bind(
         `evt-${i}`, 'ws-1', 'video', `ent-${i}`, 'youtube', 'impression',
+        JSON.stringify({ clicks: 10 }),
         JSON.stringify({ clicks: 10 }),
         5000 + i * 100, // outside 1000–2500 window
       ).run();
