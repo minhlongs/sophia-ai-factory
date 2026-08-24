@@ -26,6 +26,7 @@ interface FailedRun {
   autonomyLevel: number;
   retryCount: number;
   errorMessage: string;
+  inputJson?: Record<string, unknown>;
 }
 
 export const agentRollbackCron = inngest.createFunction(
@@ -48,7 +49,14 @@ export const agentRollbackCron = inngest.createFunction(
     // Find failed runs in the scan window that haven't exhausted retries
     const rows = await db
       .prepare(
-        `SELECT id, agent_id, mission_id, workspace_id, autonomy_level, retry_count, error_message
+        `SELECT id,
+                agent_id      AS agentId,
+                mission_id    AS missionId,
+                workspace_id  AS workspaceId,
+                autonomy_level AS autonomyLevel,
+                retry_count   AS retryCount,
+                error_message AS errorMessage,
+                input_json    AS inputJson
          FROM agent_runs
          WHERE status = 'failed'
            AND ended_at >= ?
@@ -69,6 +77,17 @@ export const agentRollbackCron = inngest.createFunction(
     let retried = 0;
     for (const run of failedRuns) {
       try {
+        // Parse inputJson from D1 TEXT column — raw string must not reach dispatch
+        let parsedInput: Record<string, unknown> | undefined;
+        try {
+          parsedInput = run.inputJson
+            ? (typeof run.inputJson === 'string'
+                ? JSON.parse(run.inputJson)
+                : run.inputJson)
+            : undefined;
+        } catch {
+          parsedInput = undefined;
+        }
         // Mark run as retrying
         const updated = await db
           .prepare(
@@ -90,6 +109,7 @@ export const agentRollbackCron = inngest.createFunction(
             missionId: run.missionId,
             workspaceId: run.workspaceId,
             autonomyLevel: run.autonomyLevel,
+            inputJson: parsedInput,
           },
         });
 

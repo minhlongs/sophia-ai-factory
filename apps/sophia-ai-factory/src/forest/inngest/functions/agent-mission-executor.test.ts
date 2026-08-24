@@ -17,9 +17,10 @@ import type { AgentDefinition, AgentPermission, AutonomyLevel } from '@/seed/typ
 // ── Test setup ────────────────────────────────────────────────────────────────
 
 // Hoisted mocks — must be at module top level for vitest hoisting
-const { mockGetMission, mockRecordSpend, mockCreateAgentRun, mockUpdateAgentRun, mockAppendAgentLog, mockEmitMissionCompleted, mockEmitMissionFailed, mockAdvanceMissionToReview, mockBuildProviders, mockExecuteAgent, mockAgentDefinitionRegistry } = vi.hoisted(() => ({
+const { mockGetMission, mockRecordSpend, mockGetAgentRun, mockCreateAgentRun, mockUpdateAgentRun, mockAppendAgentLog, mockEmitMissionCompleted, mockEmitMissionFailed, mockAdvanceMissionToReview, mockBuildProviders, mockExecuteAgent, mockAgentDefinitionRegistry } = vi.hoisted(() => ({
   mockGetMission: vi.fn(),
   mockRecordSpend: vi.fn(),
+  mockGetAgentRun: vi.fn(),
   mockCreateAgentRun: vi.fn(),
   mockUpdateAgentRun: vi.fn(),
   mockAppendAgentLog: vi.fn(),
@@ -61,6 +62,7 @@ vi.mock('@/forest/ai/provider-factory', () => ({
 }));
 
 vi.mock('@/tree/mission/agent-run-repo', () => ({
+  getAgentRun: (...args: unknown[]) => mockGetAgentRun(...args),
   createAgentRun: (...args: unknown[]) => mockCreateAgentRun(...args),
   updateAgentRun: (...args: unknown[]) => mockUpdateAgentRun(...args),
   appendAgentLog: (...args: unknown[]) => mockAppendAgentLog(...args),
@@ -172,6 +174,8 @@ function setupMocks() {
   vi.clearAllMocks();
   mockGetMission.mockResolvedValue(mockMission);
   mockRecordSpend.mockResolvedValue(undefined);
+  // Default: no existing agent_run row → first-run path (INSERT fires)
+  mockGetAgentRun.mockResolvedValue({ ok: true, value: null });
   mockCreateAgentRun.mockResolvedValue(mockRunResult);
   mockUpdateAgentRun.mockResolvedValue({ ok: true, value: {} });
   mockAppendAgentLog.mockResolvedValue(undefined);
@@ -418,6 +422,109 @@ describe('agentMissionExecutor', () => {
         errorCode: 'RUNTIME_ERROR',
         errorMessage: 'Network timeout',
       })
+    );
+  });
+
+  // ── Resume-path tests (retry/resume repair slice) ──────────────────────────
+
+  it('resumes existing run without duplicate create when status is running', async () => {
+    // Cron re-dispatched the same runId; row exists with status='running'
+    mockGetAgentRun.mockResolvedValue({
+      ok: true,
+      value: {
+        id: 'run_123',
+        agentId: 'sophia-content-writer',
+        workspaceId: 'ws_123',
+        missionId: 'mission_123',
+        autonomyLevel: 3,
+        status: 'running',
+        phase: 'retrying',
+        retryCount: 1,
+        totalCostCents: 0,
+        totalTokens: 0,
+        createdAt: Math.floor(Date.now() / 1000),
+      },
+    });
+
+    const result = await getHandler()(makeCtx(baseEvent.data));
+
+    expect(mockGetAgentRun).toHaveBeenCalledWith('run_123');
+    // Resume path must NOT attempt a second INSERT for the same runId
+    expect(mockCreateAgentRun).not.toHaveBeenCalled();
+    // Execution continues through the full pipeline
+    expect(mockGetMission).toHaveBeenCalledWith('mission_123');
+    expect(mockExecuteAgent).toHaveBeenCalledTimes(1);
+    expect(result.success).toBe(true);
+  });
+
+  it('runs normal first-run path with createAgentRun when no existing row', async () => {
+    // Default setupMocks(): getAgentRun returns { ok: true, value: null }
+    const result = await getHandler()(makeCtx(baseEvent.data));
+
+    expect(mockGetAgentRun).toHaveBeenCalledWith('run_123');
+    // Regression guard: first-run INSERT must fire
+    expect(mockCreateAgentRun).toHaveBeenCalled();
+    expect(result.success).toBe(true);
+  });
+
+  it('falls through to createAgentRun on terminal status and handles DB_ERROR gracefully', async () => {
+    // Row exists but terminal → not resumable → falls to createAgentRun
+    mockGetAgentRun.mockResolvedValue({
+      ok: true,
+      value: {
+        id: 'run_terminal',
+        agentId: 'sophia-content-writer',
+        workspaceId: 'ws_123',
+        missionId: 'mission_123',
+        autonomyLevel: 3,
+        status: 'completed',
+        phase: 'completed',
+        retryCount: 3,
+        totalCostCents: 100,
+        totalTokens: 200,
+        createdAt: Math.floor(Date.now() / 1000),
+      },
+    });
+    // EXPLICIT per-test mock override: INSERT hits PK violation (row already exists)
+    mockCreateAgentRun.mockResolvedValueOnce({
+      ok: false,
+      error: { code: 'DB_ERROR', message: 'UNIQUE constraint failed: agent_runs.id' },
+    });
+
+    // Handler surfaces the failure as a thrown error — handled rejection, not a crash
+    await expect(getHandler()(makeCtx({ ...baseEvent.data, runId: 'run_terminal' }))).rejects.toThrow(
+      'Failed to create agent_run'
+    );
+    expect(mockCreateAgentRun).toHaveBeenCalled();
+  });
+
+  it('enforces budget check on resume path via getMission', async () => {
+    // Resume an existing running run
+    mockGetAgentRun.mockResolvedValue({
+      ok: true,
+      value: {
+        id: 'run_budget',
+        agentId: 'sophia-content-writer',
+        workspaceId: 'ws_123',
+        missionId: 'mission_123',
+        autonomyLevel: 3,
+        status: 'running',
+        phase: 'retrying',
+        retryCount: 2,
+        totalCostCents: 0,
+        totalTokens: 0,
+        createdAt: Math.floor(Date.now() / 1000),
+      },
+    });
+
+    await getHandler()(makeCtx({ ...baseEvent.data, runId: 'run_budget' }));
+
+    // Budget still derived from fresh mission row (10000 - 2000 = 8000)
+    expect(mockGetMission).toHaveBeenCalledWith('mission_123');
+    expect(mockExecuteAgent).toHaveBeenCalledWith(
+      mockDefinition,
+      expect.objectContaining({ budgetRemainingCents: 8000 }),
+      mockProviderRegistry
     );
   });
 });

@@ -10,7 +10,7 @@ import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { executeAgent, agentDefinitionRegistry } from '@/tree/agent-protocol';
 import { buildProviders } from '@/forest/ai/provider-factory';
-import { createAgentRun, updateAgentRun, appendAgentLog } from '@/tree/mission/agent-run-repo';
+import { createAgentRun, getAgentRun, updateAgentRun, appendAgentLog } from '@/tree/mission/agent-run-repo';
 import type { UpdateAgentRunInput } from '@/tree/mission/agent-run-repo';
 import { getMission, recordSpend } from '@/tree/mission/repository';
 import type { Mission } from '@/seed/types/creative-domain';
@@ -70,28 +70,47 @@ export const agentMissionExecutor = inngest.createFunction(
 
     logger.info('agentMissionExecutor: started', { runId, agentId, missionId, workspaceId });
 
-    // Step 1: Initialize AgentRun in D1
-    const created = await createAgentRun({
-      id: runId,
-      agentId,
-      workspaceId,
-      missionId,
-      autonomyLevel: toAutonomyLevel(autonomyLevel),
-      inputJson,
-      metadata: { triggeredBy: 'inngest', missionId },
-    });
+    // Step 1: Initialize AgentRun in D1 — resume-aware
+    // Cron retries re-dispatch the same runId; the row already exists with
+    // status='running'|'retrying'. Creating a new row would PK-violate, so we
+    // detect the existing row first and skip the INSERT on the resume path.
+    const existingRun = await getAgentRun(runId);
+    let run: { id: string; phase: string };
 
-    if (!created.ok) {
-      logger.error('agentMissionExecutor: failed to create agent_run', {
-        runId,
-        error: created.error,
+    if (existingRun.ok && existingRun.value) {
+      const existing = existingRun.value;
+      if (existing.status === 'running') {
+        run = existing;
+        logger.info('agentMissionExecutor: resumed existing agent run (retry)', {
+          runId,
+          previousRetryCount: existing.retryCount,
+        });
+      } else {
+        const created = await createAgentRun({
+          id: runId, agentId, workspaceId, missionId,
+          autonomyLevel: toAutonomyLevel(autonomyLevel),
+          inputJson,
+          metadata: { triggeredBy: 'inngest', missionId },
+        });
+        if (!created.ok) {
+          logger.error('agentMissionExecutor: failed to create agent_run', { runId, error: created.error });
+          throw new Error(`Failed to create agent_run: ${created.error?.message ?? 'unknown'}`);
+        }
+        run = created.value;
+      }
+    } else {
+      const created = await createAgentRun({
+        id: runId, agentId, workspaceId, missionId,
+        autonomyLevel: toAutonomyLevel(autonomyLevel),
+        inputJson,
+        metadata: { triggeredBy: 'inngest', missionId },
       });
-      throw new Error(
-        `Failed to create agent_run: ${created.error?.message ?? 'unknown'}`
-      );
+      if (!created.ok) {
+        logger.error('agentMissionExecutor: failed to create agent_run', { runId, error: created.error });
+        throw new Error(`Failed to create agent_run: ${created.error?.message ?? 'unknown'}`);
+      }
+      run = created.value;
     }
-
-    const run = created.value;
 
     const log = (level: 'info' | 'warn' | 'error', message: string, metadata?: Record<string, unknown>) => {
       appendAgentLog({
