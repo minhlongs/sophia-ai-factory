@@ -1,24 +1,35 @@
 /**
  * Inngest: Auto-Apply Monitor (Phase 5c — Auto-Creative Playbook)
  *
- * Every 24h, scans playbook-sourced SOP installations whose `autoApply`
- * flag is on and checks whether the applied rule is still performing.
- * If a campaign's metric drops >20% vs its 48h baseline, the rule is
- * rolled back (rollback_count incremented, autoApply disabled) and the
- * user is notified. Manual override is always available.
+ * Every 24h, scans playbook-sourced SOP installations whose autoApply
+ * is on and evaluates execution health via sop_executions (the canonical
+ * SOP runs table with installation_id and status).
  *
- * Layer: forest (infrastructure orchestration). Calls land helpers via
- * dynamic import to respect the forest→land orchestration exception.
+ * Health check: compares recent 7-day failure rate against a 30-day
+ * baseline (days 8-30). Triggers rollback if:
+ *   - recent failure rate > baseline failure rate * 2, OR
+ *   - recent failure rate > 50% (absolute threshold)
+ *
+ * Rollback: disables autoApply on the installation config and increments
+ * playbook_rules.rollback_count. Manual override is always available.
+ *
+ * Layer: forest (infrastructure orchestration).
  */
 
 import { inngest } from '@/seed/inngest/client';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 
-/** Metric drop threshold (relative to baseline) that triggers rollback. */
-const ROLLBACK_DROP_THRESHOLD = 0.20;
-/** Rolling window used for the baseline comparison (seconds). */
-const BASELINE_WINDOW_SEC = 48 * 60 * 60;
+/** Recent evaluation window: last 7 days (seconds). */
+const RECENT_WINDOW_SEC = 7 * 24 * 60 * 60;
+/** Baseline lookback start: 30 days before now (seconds). */
+const BASELINE_WINDOW_SEC = 30 * 24 * 60 * 60;
+/** Baseline upper bound: must be older than the recent window (seconds). */
+const BASELINE_MIN_AGE_SEC = 7 * 24 * 60 * 60;
+/** Rollback fires when recent failure rate exceeds baseline by this factor. */
+const ROLLBACK_FAILURE_MULTIPLIER = 2;
+/** Rollback fires when recent failure rate exceeds this absolute rate. */
+const ABSOLUTE_FAILURE_THRESHOLD = 0.5;
 
 export const autoApplyMonitor = inngest.createFunction(
   { id: 'auto-apply-monitor' },
@@ -72,9 +83,14 @@ interface EvalResult {
   dropPct: number;
 }
 
+interface FailureCounts {
+  total: number;
+  failed: number | null;
+}
+
 /**
- * Evaluate one playbook rule. Compares the latest performance_events
- * window against the baseline. Returns whether a rollback fired.
+ * Evaluate one playbook rule by comparing recent sop_executions failure
+ * rate against the baseline window. Returns whether a rollback fired.
  */
 async function evaluateRule(
   db: D1Database,
@@ -83,11 +99,7 @@ async function evaluateRule(
 ): Promise<EvalResult> {
   let ruleId = '';
   try {
-    const config = JSON.parse(configValues) as {
-      ruleId?: string;
-      platform?: string;
-      goal?: string;
-    };
+    const config = JSON.parse(configValues) as { ruleId?: string };
     ruleId = config.ruleId ?? '';
   } catch {
     return { rolledBack: false, ruleId: '', dropPct: 0 };
@@ -96,36 +108,52 @@ async function evaluateRule(
   if (!ruleId) return { rolledBack: false, ruleId: '', dropPct: 0 };
 
   const nowSec = Math.floor(Date.now() / 1000);
+  const recentStart = nowSec - RECENT_WINDOW_SEC;
   const baselineStart = nowSec - BASELINE_WINDOW_SEC;
-  const recentStart = nowSec - BASELINE_WINDOW_SEC / 2;
+  const baselineEnd = nowSec - BASELINE_MIN_AGE_SEC;
 
-  // Baseline: avg metric over the full 48h window.
-  const baseline = await db
-    .prepare(
-      `SELECT AVG(metric_value) AS avg_val
-       FROM performance_events
-       WHERE installation_id = ?1 AND created_at >= ?2 AND created_at <= ?3`,
-    )
-    .bind(installationId, baselineStart, nowSec)
-    .first<{ avg_val: number | null }>();
-
-  // Recent: avg metric over the most recent 24h.
+  // Recent window: terminal executions in the last 7 days.
   const recent = await db
     .prepare(
-      `SELECT AVG(metric_value) AS avg_val
-       FROM performance_events
-       WHERE installation_id = ?1 AND created_at >= ?2 AND created_at <= ?3`,
+      `SELECT COUNT(*) AS total,
+              SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed
+       FROM sop_executions
+       WHERE installation_id = ?1
+         AND created_at >= ?2
+         AND status IN ('failed', 'completed')`,
     )
-    .bind(installationId, recentStart, nowSec)
-    .first<{ avg_val: number | null }>();
+    .bind(installationId, recentStart)
+    .first<FailureCounts>();
 
-  const baselineVal = baseline?.avg_val ?? 0;
-  const recentVal = recent?.avg_val ?? 0;
+  // Baseline window: terminal executions from days 8-30 before now.
+  const baseline = await db
+    .prepare(
+      `SELECT COUNT(*) AS total,
+              SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed
+       FROM sop_executions
+       WHERE installation_id = ?1
+         AND created_at >= ?2
+         AND created_at < ?3
+         AND status IN ('failed', 'completed')`,
+    )
+    .bind(installationId, baselineStart, baselineEnd)
+    .first<FailureCounts>();
 
-  if (baselineVal <= 0) return { rolledBack: false, ruleId, dropPct: 0 };
+  const recentTotal = recent?.total ?? 0;
+  if (recentTotal === 0) return { rolledBack: false, ruleId, dropPct: 0 };
 
-  const dropPct = (baselineVal - recentVal) / baselineVal;
-  if (dropPct <= ROLLBACK_DROP_THRESHOLD) {
+  const recentFailureRate = (recent?.failed ?? 0) / recentTotal;
+  const baselineTotal = baseline?.total ?? 0;
+  const baselineFailureRate = baselineTotal > 0
+    ? (baseline?.failed ?? 0) / baselineTotal
+    : 0;
+
+  // dropPct keeps the caller-facing field name; semantically it is now
+  // the failure-rate delta (recent minus baseline).
+  const dropPct = recentFailureRate - baselineFailureRate;
+  const spike = recentFailureRate > baselineFailureRate * ROLLBACK_FAILURE_MULTIPLIER;
+  const absolute = recentFailureRate > ABSOLUTE_FAILURE_THRESHOLD;
+  if (!spike && !absolute) {
     return { rolledBack: false, ruleId, dropPct };
   }
 

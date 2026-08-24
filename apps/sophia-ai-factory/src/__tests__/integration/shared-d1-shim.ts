@@ -305,15 +305,16 @@ CREATE TABLE IF NOT EXISTS performance_events (
   id TEXT PRIMARY KEY,
   workspace_id TEXT NOT NULL,
   asset_id TEXT NOT NULL DEFAULT '',
-  project_id TEXT NOT NULL DEFAULT '',
+  project_id TEXT,
   entity_type TEXT NOT NULL,
   entity_id TEXT NOT NULL,
-  channel TEXT NOT NULL DEFAULT '',
+  channel TEXT,
   event_type TEXT NOT NULL,
   count INTEGER NOT NULL DEFAULT 1,
   value_cents INTEGER NOT NULL DEFAULT 0,
   metrics_json TEXT NOT NULL DEFAULT '{}',
   recorded_at INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL DEFAULT 0,
   raw_data TEXT
 );
 

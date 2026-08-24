@@ -90,6 +90,34 @@ describe('Schema alignment — recordPerformanceEvent writes metrics_json', () =
     expect(row.raw_data).toBe(JSON.stringify({ impressions: 500, clicks: 12 }));
   });
 
+  it('INSERT with asset_id persists and round-trips correctly', async () => {
+    const raw = createTestDb();
+    mockGetD1.mockResolvedValue(makeD1(raw));
+
+    await recordPerformanceEvent({
+      id: newPerformanceEventId(),
+      workspaceId: 'ws-e2e',
+      assetId: 'asset_video_001',
+      projectId: 'proj_alpha',
+      entityType: 'video',
+      entityId: 'vid-1',
+      channel: 'youtube',
+      eventType: 'impression',
+      count: 1,
+      valueCents: 10,
+      rawData: { views: 1000 },
+      recordedAt: Date.now(),
+    });
+
+    const row = raw
+      .prepare('SELECT asset_id, project_id, channel FROM performance_events')
+      .get() as Record<string, unknown>;
+
+    expect(row.asset_id).toBe('asset_video_001');
+    expect(row.project_id).toBe('proj_alpha');
+    expect(row.channel).toBe('youtube');
+  });
+
   it('absent rawData serializes to {} so NOT NULL metrics_json stays valid', async () => {
     const raw = createTestDb();
     mockGetD1.mockResolvedValue(makeD1(raw));
