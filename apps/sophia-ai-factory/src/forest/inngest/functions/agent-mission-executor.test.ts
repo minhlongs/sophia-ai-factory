@@ -1,23 +1,39 @@
 /**
  * Tests for agent-mission-executor — per-run BYOK provider wiring + real budget
+ * + identity/memory flywheel wiring
  * Layer: forest (reusable infrastructure orchestrators)
  *
  * Verifies:
  * - Per-run provider registry keyed to mission creator (no cross-tenant bleed)
  * - Real budget from mission row (BUDGET_EXCEEDED before provider call)
  * - Mission brief pushed into context.memory
+ * - Workspace CreativeIdentity loaded into context (non-fatal on D1 failure)
+ * - Stored memories merged into context.memory alongside the brief
+ * - Agent learning persisted as CreativeMemory after successful runs
  * - Spend recorded on success
  * - All failure modes emit proper agent_run rows + mission.failed events
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import type { Mission } from '@/seed/types/creative-domain';
-import type { AgentDefinition, AgentPermission, AutonomyLevel } from '@/seed/types/creative-domain';
+import type {
+  Mission,
+  AgentDefinition,
+  AgentPermission,
+  AutonomyLevel,
+  CreativeIdentity,
+  CreativeMemory,
+} from '@/seed/types/creative-domain';
 
 // ── Test setup ────────────────────────────────────────────────────────────────
 
 // Hoisted mocks — must be at module top level for vitest hoisting
-const { mockGetMission, mockRecordSpend, mockGetAgentRun, mockCreateAgentRun, mockUpdateAgentRun, mockAppendAgentLog, mockEmitMissionCompleted, mockEmitMissionFailed, mockAdvanceMissionToReview, mockBuildProviders, mockExecuteAgent, mockAgentDefinitionRegistry } = vi.hoisted(() => ({
+const {
+  mockGetMission, mockRecordSpend, mockGetAgentRun, mockCreateAgentRun,
+  mockUpdateAgentRun, mockAppendAgentLog, mockEmitMissionCompleted,
+  mockEmitMissionFailed, mockAdvanceMissionToReview, mockBuildProviders,
+  mockExecuteAgent, mockAgentDefinitionRegistry,
+  mockGetActiveIdentity, mockMemoryQuery, mockMemoryPut,
+} = vi.hoisted(() => ({
   mockGetMission: vi.fn(),
   mockRecordSpend: vi.fn(),
   mockGetAgentRun: vi.fn(),
@@ -34,6 +50,9 @@ const { mockGetMission, mockRecordSpend, mockGetAgentRun, mockCreateAgentRun, mo
     has: vi.fn(),
     register: vi.fn(),
   },
+  mockGetActiveIdentity: vi.fn(),
+  mockMemoryQuery: vi.fn(),
+  mockMemoryPut: vi.fn(),
 }));
 
 // Mock all dependencies
@@ -71,6 +90,20 @@ vi.mock('@/tree/mission/agent-run-repo', () => ({
 vi.mock('@/tree/mission/repository', () => ({
   getMission: (...args: unknown[]) => mockGetMission(...args),
   recordSpend: (...args: unknown[]) => mockRecordSpend(...args),
+}));
+
+vi.mock('@/tree/creative-identity', () => ({
+  getActiveIdentity: (...args: unknown[]) => mockGetActiveIdentity(...args),
+}));
+
+vi.mock('@/tree/creative-memory', () => ({
+  creativeMemoryStore: {
+    query: (...args: unknown[]) => mockMemoryQuery(...args),
+    put: (...args: unknown[]) => mockMemoryPut(...args),
+    get: vi.fn(),
+    delete: vi.fn(),
+    summarize: vi.fn(),
+  },
 }));
 
 vi.mock('./agent-mission-lifecycle', () => ({
@@ -161,12 +194,56 @@ const mockRunResult = {
   },
 };
 
+const mockIdentity: CreativeIdentity = {
+  id: 'ci_ws_123',
+  workspaceId: 'ws_123',
+  voiceDescription: 'calm premium storyteller',
+  tone: 'warm',
+  formality: 0.4,
+  energy: 0.7,
+  beliefs: ['audience first'],
+  positioning: 'premium calm tech',
+  targetAudience: 'solo founders',
+  forbiddenPatterns: ['guru speak'],
+  requiredDisclosures: [],
+  preferredFormats: [],
+  referenceWorks: [],
+  version: 1,
+  isActive: true,
+  createdAt: 100,
+  updatedAt: 100,
+  updatedBy: 'user_1',
+};
+
+const storedMemory: CreativeMemory = {
+  id: 'mem_stored',
+  workspaceId: 'ws_123',
+  category: 'creative',
+  key: 'audience_insight',
+  value: { insight: 'hooks beat explainers for this audience' },
+  confidence: 'medium',
+  source: 'agent',
+  evidence: '["run_prev"]',
+  scope: 'campaign',
+  scopeId: 'mission_other',
+  version: 2,
+  isDeleted: false,
+  createdAt: 100,
+  updatedAt: 200,
+};
+
 const mockAgentRunResult = {
   ok: true,
   value: {
     output: { content: 'Hello world' },
     costCents: 150,
     totalTokens: 500,
+    decision: {
+      type: 'execute',
+      reasoning: 'test decision',
+      confidence: 0.8,
+      requiresHumanApproval: false,
+    },
   },
 };
 
@@ -188,6 +265,13 @@ function setupMocks() {
   });
   mockExecuteAgent.mockResolvedValue(mockAgentRunResult);
   mockAgentDefinitionRegistry.get.mockReturnValue(mockDefinition);
+  // Identity/memory defaults: no active identity, empty store.
+  mockGetActiveIdentity.mockResolvedValue(null);
+  mockMemoryQuery.mockResolvedValue({
+    ok: true,
+    value: { entries: [] as CreativeMemory[], total: 0 },
+  });
+  mockMemoryPut.mockResolvedValue({ ok: true, value: 'mem_new' as never });
 }
 
 const baseEvent = {
@@ -525,6 +609,103 @@ describe('agentMissionExecutor', () => {
       mockDefinition,
       expect.objectContaining({ budgetRemainingCents: 8000 }),
       mockProviderRegistry
+    );
+  });
+
+  // ── Identity + memory flywheel tests ────────────────────────────────────────
+
+  it('loads the workspace identity and passes it into the AgentContext', async () => {
+    mockGetActiveIdentity.mockResolvedValueOnce(mockIdentity);
+
+    await getHandler()(makeCtx(baseEvent.data));
+
+    expect(mockGetActiveIdentity).toHaveBeenCalledWith('ws_123');
+    expect(mockExecuteAgent).toHaveBeenCalledWith(
+      mockDefinition,
+      expect.objectContaining({ creativeIdentity: mockIdentity }),
+      mockProviderRegistry
+    );
+  });
+
+  it('merges stored memories from the store into context.memory after the brief', async () => {
+    mockMemoryQuery.mockResolvedValueOnce({
+      ok: true,
+      value: { entries: [storedMemory], total: 1 },
+    });
+
+    await getHandler()(makeCtx(baseEvent.data));
+
+    // Read path uses the canonical store query with limit 5
+    expect(mockMemoryQuery).toHaveBeenCalledWith({ workspaceId: 'ws_123', limit: 5 });
+
+    const ctxArg = mockExecuteAgent.mock.calls[0]?.[1] as { memory: CreativeMemory[] } | undefined;
+    expect(ctxArg).toBeDefined();
+    // Brief leads; stored entry follows.
+    expect(ctxArg!.memory[0].key).toBe('mission_brief');
+    expect(ctxArg!.memory[1].id).toBe('mem_stored');
+  });
+
+  it('persists an agent learning memory with correct shape after a successful run', async () => {
+    await getHandler()(makeCtx(baseEvent.data));
+
+    expect(mockMemoryPut).toHaveBeenCalledTimes(1);
+    const putArg = mockMemoryPut.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(putArg.workspaceId).toBe('ws_123');
+    expect(putArg.category).toBe('creative');
+    expect(putArg.key).toBe('agent_learning_sophia-content-writer');
+    expect(putArg.source).toBe('agent');
+    expect(putArg.scope).toBe('campaign');
+    expect(putArg.scopeId).toBe('mission_123');
+    expect(JSON.parse(putArg.evidence as string)).toEqual(['run_123', 'mission_123']);
+    // decision.confidence 0.8 → 'high'
+    expect(putArg.confidence).toBe('high');
+    // Value carries an insight summary of the OUTPUT — never a raw prompt.
+    const value = putArg.value as { insight: string };
+    expect(value.insight).toContain('Hello world');
+  });
+
+  it('keeps the run green when the memory store throws (read + write non-fatal)', async () => {
+    mockMemoryQuery.mockRejectedValueOnce(new Error('D1 exploded on read'));
+    mockMemoryPut.mockRejectedValueOnce(new Error('D1 exploded on write'));
+
+    const result = await getHandler()(makeCtx(baseEvent.data));
+
+    expect(result.success).toBe(true);
+    expect(mockEmitMissionCompleted).toHaveBeenCalled();
+    expect(mockAdvanceMissionToReview).toHaveBeenCalledWith('mission_123');
+
+    // Fallback: mission brief only
+    const ctxArg = mockExecuteAgent.mock.calls[0]?.[1] as { memory: CreativeMemory[] } | undefined;
+    expect(ctxArg?.memory).toHaveLength(1);
+    expect(ctxArg?.memory[0].key).toBe('mission_brief');
+
+    const { logger } = await import('@/seed/utils/logger-utility');
+    const warnMock = vi.mocked(logger.warn);
+    expect(warnMock).toHaveBeenCalledWith(
+      expect.stringContaining('memory query threw'),
+      expect.anything(),
+    );
+    expect(warnMock).toHaveBeenCalledWith(
+      expect.stringContaining('agent learning write threw'),
+      expect.anything(),
+    );
+  });
+
+  it('keeps the run green when getActiveIdentity throws (D1 unavailable)', async () => {
+    mockGetActiveIdentity.mockRejectedValueOnce(new Error('D1_UNAVAILABLE: D1 not available'));
+
+    const result = await getHandler()(makeCtx(baseEvent.data));
+
+    expect(result.success).toBe(true);
+    expect(mockExecuteAgent).toHaveBeenCalledTimes(1);
+    // creativeIdentity stays undefined — executor skips the identity message.
+    const ctxArg = mockExecuteAgent.mock.calls[0]?.[1] as { creativeIdentity?: CreativeIdentity } | undefined;
+    expect(ctxArg?.creativeIdentity).toBeUndefined();
+
+    const { logger } = await import('@/seed/utils/logger-utility');
+    expect(vi.mocked(logger.warn)).toHaveBeenCalledWith(
+      expect.stringContaining('creative identity'),
+      expect.objectContaining({ workspaceId: 'ws_123' }),
     );
   });
 });

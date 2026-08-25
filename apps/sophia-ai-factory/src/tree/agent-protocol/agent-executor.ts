@@ -16,6 +16,7 @@ import type {
   AgentDecision,
   AgentAction,
   AgentResult,
+  CreativeIdentity,
 } from '@/seed/types/creative-domain';
 import { isActionAllowed } from '@/tree/autonomy/autonomy-repo';
 import { recordProvenance } from '@/tree/provenance/index';
@@ -45,11 +46,65 @@ export class ExecutorError extends Error {
 
 /**
  * Execution result enriched with token accounting for D1 agent_runs
- * bookkeeping. Extends the canonical AgentResult with totalTokens.
+ * bookkeeping. Extends the canonical AgentResult with totalTokens and the
+ * decision the executor committed to (consumed downstream for memory
+ * persistence confidence).
  */
 export interface AgentExecutionResult extends AgentResult {
   /** Total tokens consumed (input + output) across the provider call. */
   totalTokens: number;
+  /** Decision built during execution — carries confidence for memory write-back. */
+  decision?: AgentDecision;
+}
+
+/**
+ * Render a compact identity block for the system prompt (Constitution §6:
+ * every agent must respect workspace creative identity). Deliberately
+ * truncated — voice/tone/beliefs/constraints only, no raw dumps.
+ */
+export function buildIdentityBlock(identity: CreativeIdentity): string {
+  const lines: string[] = [
+    'CREATIVE IDENTITY (must be respected in all output):',
+    `- Voice: ${identity.voiceDescription}`,
+    `- Tone: ${identity.tone} (formality ${identity.formality}, energy ${identity.energy})`,
+  ];
+  if (identity.beliefs.length > 0) {
+    lines.push(`- Beliefs: ${identity.beliefs.slice(0, 5).join('; ')}`);
+  }
+  if (identity.positioning) {
+    lines.push(`- Positioning: ${identity.positioning}`);
+  }
+  if (identity.targetAudience) {
+    lines.push(`- Target audience: ${identity.targetAudience}`);
+  }
+  if (identity.forbiddenPatterns.length > 0) {
+    lines.push(`- Forbidden patterns (NEVER use): ${identity.forbiddenPatterns.slice(0, 10).join('; ')}`);
+  }
+  if (identity.requiredDisclosures.length > 0) {
+    lines.push(`- Required disclosures (MUST include): ${identity.requiredDisclosures.join('; ')}`);
+  }
+  return lines.join('\n');
+}
+
+/**
+ * Build the chat message array for an agent run. Identity-first prompting
+ * (Constitution §6): when the workspace has an active CreativeIdentity it
+ * leads the prompt as a system block. Without one the legacy two-message
+ * shape is preserved byte-for-byte.
+ */
+export function buildAgentMessages(
+  definition: AgentDefinition,
+  context: AgentContext,
+): ChatMessage[] {
+  const messages: ChatMessage[] = [];
+  if (context.creativeIdentity) {
+    messages.push({ role: 'system', content: buildIdentityBlock(context.creativeIdentity) });
+  }
+  messages.push(
+    { role: 'system', content: definition.role },
+    { role: 'user', content: JSON.stringify(context.memory?.slice(0, 5) ?? {}) },
+  );
+  return messages;
 }
 
 // ─── Executor ────────────────────────────────────────────────────────────────
@@ -180,10 +235,7 @@ export async function executeAgent(
   const resolvedModel = resolveModelForCapability(definition.modelPolicy?.capability ?? 'text');
 
   // ── 5. Provider call ──────────────────────────────────────────────────
-  const messages: ChatMessage[] = [
-    { role: 'system', content: definition.role },
-    { role: 'user', content: JSON.stringify(context.memory?.slice(0, 5) ?? {}) },
-  ];
+  const messages = buildAgentMessages(definition, context);
 
   let response;
   try {
@@ -258,6 +310,7 @@ export async function executeAgent(
     durationMs,
     provenanceRecordId,
     totalTokens: response.usage.inputTokens + response.usage.outputTokens,
+    decision,
   };
 
   logger.info('[AgentExecutor] agent completed', {
