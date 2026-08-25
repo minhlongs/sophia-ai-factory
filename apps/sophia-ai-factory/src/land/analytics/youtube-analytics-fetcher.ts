@@ -22,6 +22,8 @@ export interface YouTubeAnalyticsRow {
   likes: number;
   comments: number;
   shares: number;
+  /** Estimated revenue in micro USD (1 USD = 1,000,000 micro USD). */
+  estimatedRevenue: number;
 }
 
 interface DateRange {
@@ -38,6 +40,8 @@ const METRICS = [
   'likes',
   'comments',
   'shares',
+  // MUST stay last: row parsing is positional (index 10). Do not reorder.
+  'estimatedRevenue',
 ].join(',');
 
 /**
@@ -88,7 +92,7 @@ export async function fetchYouTubeAnalytics(
 
     // columnHeaders order: video, day, views, estimatedMinutesWatched,
     // averageViewDuration, impressions, impressionClickThroughRate,
-    // likes, comments, shares
+    // likes, comments, shares, estimatedRevenue
     return json.rows.map((row) => ({
       videoId: row[0],
       date: row[1],
@@ -100,6 +104,7 @@ export async function fetchYouTubeAnalytics(
       likes: row[7] ?? 0,
       comments: row[8] ?? 0,
       shares: row[9] ?? 0,
+      estimatedRevenue: row[10] ?? 0,
     }));
   } catch (error) {
     if (error instanceof Error && error.message.includes('YouTube Analytics API')) {

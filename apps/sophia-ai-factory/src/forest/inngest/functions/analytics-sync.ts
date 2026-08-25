@@ -13,6 +13,7 @@ import { getDecryptedCredentials, storeCredentials } from '@/forest/publishing/c
 import { refreshAccessToken } from '@/land/youtube/youtube-oauth-client';
 import { fetchYouTubeAnalytics } from '@/land/analytics/youtube-analytics-fetcher';
 import { normalizeYouTubeMetrics } from '@/land/analytics/analytics-normalizer';
+import { writeYouTubeRevenueEvents, type RevenueRowInput } from '@/land/analytics/revenue-ingestion';
 import { upsertVideoAnalytics } from '@/seed/db/repositories/video-analytics-repo';
 
 interface PublishedVideoRow {
@@ -66,12 +67,13 @@ export const analyticsSync = inngest.createFunction(
 
     const dateRange = getDateRange(30);
     let totalSynced = 0;
+    let totalRevenueEvents = 0;
 
     for (const [userId, videos] of byUser.entries()) {
-      const synced = await step.run(`sync-user-${userId}`, async () => {
+      const userResult = await step.run(`sync-user-${userId}`, async () => {
         // Get and potentially refresh YouTube credentials
         let creds = await getDecryptedCredentials(userId, 'youtube');
-        if (!creds) return 0;
+        if (!creds) return { count: 0, revenueWritten: 0 };
 
         // Refresh token if expired
         if (creds.isExpired && creds.refreshToken) {
@@ -84,10 +86,10 @@ export const analyticsSync = inngest.createFunction(
               expiresIn: refreshed.expires_in,
             });
             creds = await getDecryptedCredentials(userId, 'youtube');
-            if (!creds) return 0;
+            if (!creds) return { count: 0, revenueWritten: 0 };
           } catch (err) {
             logger.warn('[analytics-sync] Token refresh failed', { userId, err: String(err) });
-            return 0;
+            return { count: 0, revenueWritten: 0 };
           }
         }
 
@@ -97,17 +99,23 @@ export const analyticsSync = inngest.createFunction(
           rows = await fetchYouTubeAnalytics(creds.accessToken, videoIds, dateRange);
         } catch (err) {
           logger.warn('[analytics-sync] Fetch failed', { userId, err: String(err) });
-          return 0;
+          return { count: 0, revenueWritten: 0 };
         }
 
         // Build lookup map: platform_video_id → video_id
         const vidMap = new Map(videos.map(v => [v.platform_video_id, v.video_id]));
 
         let count = 0;
+        const revenueRows: RevenueRowInput[] = [];
         for (const raw of rows) {
           const normalized = normalizeYouTubeMetrics(raw);
           const videoId = vidMap.get(raw.videoId);
           if (!videoId) continue;
+          revenueRows.push({
+            videoId,
+            date: normalized.date,
+            estimatedRevenueCents: normalized.estimatedRevenueCents,
+          });
 
           try {
             await upsertVideoAnalytics({
@@ -131,11 +139,24 @@ export const analyticsSync = inngest.createFunction(
           }
         }
 
-        logger.info('[analytics-sync] User synced', { userId, count });
-        return count;
+        // Revenue ingestion — additive, never fails the analytics sync.
+        let revenueWritten = 0;
+        try {
+          const result = await writeYouTubeRevenueEvents({ userId, rows: revenueRows });
+          revenueWritten = result.written;
+        } catch (err) {
+          logger.warn('[analytics-sync] Revenue ingestion failed (non-fatal)', {
+            userId,
+            err: String(err),
+          });
+        }
+
+        logger.info('[analytics-sync] User synced', { userId, count, revenueWritten });
+        return { count, revenueWritten };
       });
 
-      totalSynced += synced;
+      totalSynced += userResult.count;
+      totalRevenueEvents += userResult.revenueWritten;
     }
 
     // Step 3: Run feedback loop evaluations & prompt optimizations
@@ -153,7 +174,7 @@ export const analyticsSync = inngest.createFunction(
       }
     });
 
-    logger.info('[analytics-sync] Complete', { totalSynced, optimizedCount });
-    return { synced: totalSynced, optimizedCount };
+    logger.info('[analytics-sync] Complete', { totalSynced, optimizedCount, totalRevenueEvents });
+    return { synced: totalSynced, optimizedCount, revenueEvents: totalRevenueEvents };
   },
 );

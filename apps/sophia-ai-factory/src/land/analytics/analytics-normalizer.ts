@@ -20,6 +20,8 @@ export interface NormalizedMetrics {
   comments: number;
   shares: number;
   engagementRate: number;
+  /** Estimated revenue in USD cents (converted from YouTube micro USD). */
+  estimatedRevenueCents: number;
 }
 
 /**
@@ -30,6 +32,8 @@ export interface NormalizedMetrics {
  *   averageViewDuration as a ratio proxy (stored as-is when no duration known).
  * - ctr = impressionClickThroughRate (already a ratio from YT API, e.g. 0.045 = 4.5%)
  * - engagementRate = (likes + comments + shares) / views
+ * - estimatedRevenueCents = estimatedRevenue / 10_000
+ *   (micro USD ÷ 10⁶ → USD, × 100 → cents; clamped at 0)
  */
 export function normalizeYouTubeMetrics(raw: YouTubeAnalyticsRow): NormalizedMetrics {
   const watchTimeSec = Math.round(raw.estimatedMinutesWatched * 60);
@@ -50,6 +54,10 @@ export function normalizeYouTubeMetrics(raw: YouTubeAnalyticsRow): NormalizedMet
     ? (raw.likes + raw.comments + raw.shares) / raw.views
     : 0;
 
+  // micro USD ÷ 10⁶ × 100 = ÷ 10⁴. Clamp at 0 (API never returns negatives,
+  // but guard against malformed rows).
+  const estimatedRevenueCents = Math.max(0, Math.round(raw.estimatedRevenue / 10_000));
+
   return {
     videoId: raw.videoId,
     date: raw.date,
@@ -63,5 +71,6 @@ export function normalizeYouTubeMetrics(raw: YouTubeAnalyticsRow): NormalizedMet
     comments: raw.comments,
     shares: raw.shares,
     engagementRate,
+    estimatedRevenueCents,
   };
 }
