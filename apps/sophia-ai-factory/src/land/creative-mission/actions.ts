@@ -627,6 +627,32 @@ export async function resolveApprovalAction(
       userId: user.id,
     });
 
+    // Close the approval loop: notify the Inngest agent-approval-handler so it
+    // resumes (approved) or fails (rejected) the agent run. Fire-and-forget —
+    // an emit failure must never flip the approve/reject outcome returned below.
+    const resolvedRow = result.value;
+    const runId =
+      typeof resolvedRow.agent_run_id === 'string'
+        ? resolvedRow.agent_run_id
+        : (approval.agent_run_id as string);
+    try {
+      await inngest.send({
+        name: 'agent.approval.resolved',
+        data: {
+          approvalId: parsed.data.approvalId,
+          runId,
+          status,
+          reviewerId: user.id,
+          comment: parsed.data.reason,
+        },
+      });
+    } catch (err) {
+      logger.warn('[Approval] agent.approval.resolved emit failed (non-fatal)', {
+        approvalId: parsed.data.approvalId,
+        error: toError(err).message,
+      });
+    }
+
     return success({ status });
   } catch (err) {
     return failure(actionFailure('[Approval] resolveApprovalAction', err));

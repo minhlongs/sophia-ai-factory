@@ -6,6 +6,8 @@
  *   - startMissionExecution returns EXECUTION_START_INVALID WITHOUT emitting
  *     the Inngest event (atomic flip rejects before send)
  *   - startMissionExecution happy path emits agent.mission.started rich payload
+ *   - resolveApprovalAction emits agent.approval.resolved (approval loop closure)
+ *     and a send failure never flips the approve/reject outcome
  *
  * Harness: vi.mock module style (see campaigns-tier-integration.test.ts).
  *
@@ -20,6 +22,7 @@ const mocks = vi.hoisted(() => ({
   inngestSend: vi.fn(),
   treeUpdateMissionStatus: vi.fn(),
   beginMissionExecution: vi.fn(),
+  resolveApproval: vi.fn(),
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
@@ -40,7 +43,7 @@ vi.mock('@/tree/mission', () => ({
   createApproval: vi.fn(),
   getMissionWithGoals: vi.fn(),
   listPendingApprovals: vi.fn(),
-  resolveApproval: vi.fn(),
+  resolveApproval: mocks.resolveApproval,
   updateMissionStatus: mocks.treeUpdateMissionStatus,
   createMission: vi.fn(),
 }));
@@ -218,6 +221,117 @@ describe('land/creative-mission actions', () => {
         expect(result.error.code).toBe('NOT_FOUND');
       }
       expect(mocks.beginMissionExecution).not.toHaveBeenCalled();
+      expect(mocks.inngestSend).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── resolveApprovalAction: approval loop closure ───────────────────────────
+
+  describe('resolveApprovalAction', () => {
+    const validInput = { approvalId: 'apr_1', approved: true, reason: 'looks good' };
+
+    /** D1 queue: approval row, agent run, membership, admin access. */
+    function approveD1() {
+      return makeD1([
+        { id: 'apr_1', agent_run_id: 'run_1', status: 'pending' },
+        { workspace_id: 'ws_1' },
+        1,
+        1,
+      ]);
+    }
+
+    it('emits agent.approval.resolved with the handler payload shape', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(approveD1());
+      mocks.resolveApproval.mockResolvedValue({
+        ok: true,
+        value: { id: 'apr_1', agent_run_id: 'run_1', status: 'approved' },
+      });
+      mocks.inngestSend.mockResolvedValue(undefined);
+
+      const { resolveApprovalAction } = await import('../actions');
+      const result = await resolveApprovalAction(validInput);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.status).toBe('approved');
+      }
+      expect(mocks.inngestSend).toHaveBeenCalledTimes(1);
+
+      const sent = mocks.inngestSend.mock.calls[0][0];
+      expect(sent.name).toBe('agent.approval.resolved');
+      expect(sent.data).toEqual({
+        approvalId: 'apr_1',
+        runId: 'run_1',
+        status: 'approved',
+        reviewerId: 'user_1',
+        comment: 'looks good',
+      });
+    });
+
+    it('keeps the success response unchanged when inngest.send throws', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(approveD1());
+      mocks.resolveApproval.mockResolvedValue({
+        ok: true,
+        value: { id: 'apr_1', agent_run_id: 'run_1', status: 'approved' },
+      });
+      mocks.inngestSend.mockRejectedValue(new Error('Inngest unreachable'));
+
+      const { resolveApprovalAction } = await import('../actions');
+      const result = await resolveApprovalAction(validInput);
+
+      // Non-fatal emit: the approve outcome must not flip on send failure.
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.status).toBe('approved');
+      }
+      expect(mocks.inngestSend).toHaveBeenCalledTimes(1);
+      expect(mocks.logger.warn).toHaveBeenCalled();
+    });
+
+    it('emits rejected status and omits comment when reason is absent', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(approveD1());
+      mocks.resolveApproval.mockResolvedValue({
+        ok: true,
+        value: { id: 'apr_1', agent_run_id: 'run_1', status: 'rejected' },
+      });
+      mocks.inngestSend.mockResolvedValue(undefined);
+
+      const { resolveApprovalAction } = await import('../actions');
+      const result = await resolveApprovalAction({ approvalId: 'apr_1', approved: false });
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.status).toBe('rejected');
+      }
+      const sent = mocks.inngestSend.mock.calls[0][0];
+      expect(sent.name).toBe('agent.approval.resolved');
+      expect(sent.data).toEqual({
+        approvalId: 'apr_1',
+        runId: 'run_1',
+        status: 'rejected',
+        reviewerId: 'user_1',
+        comment: undefined,
+      });
+    });
+
+    it('does not emit when the tree resolve fails', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(approveD1());
+      mocks.resolveApproval.mockResolvedValue({
+        ok: false,
+        error: { code: 'ALREADY_RESOLVED', message: 'Approval apr_1 already resolved' },
+      });
+
+      const { resolveApprovalAction } = await import('../actions');
+      const result = await resolveApprovalAction(validInput);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe('ALREADY_RESOLVED');
+      }
       expect(mocks.inngestSend).not.toHaveBeenCalled();
     });
   });
