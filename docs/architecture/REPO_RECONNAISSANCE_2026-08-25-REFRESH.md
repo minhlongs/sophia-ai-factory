@@ -1,4 +1,3 @@
-Canonical: docs/architecture/REPO_RECONNAISSANCE_2026-08-25-REFRESH.md — do not edit this copy.
 # Repository Reconnaissance Refresh — 2026-08-25
 
 > **Delta against:** `docs/architecture/REPO_RECONNAISSANCE_2026-08-17.md` (289 lines, 18 sections — FROZEN, never edited) and `REPO_RECONNAISSANCE_2026-08-22-REFRESH.md`.

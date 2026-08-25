@@ -1,8 +1,10 @@
 # Sophia 2027 Constitution / Hiến pháp Sophia 2027
 
-> Effective: 2026-08-20
+> Version: 1.1 · Effective: 2026-08-25 (supersedes v1.0, effective 2026-08-20)
 > Codename: Creative Economy OS
 > Supersedes all prior strategic documents for Sophia AI Factory.
+> Canonical copy: this file (repo-root `docs/strategy/`). App-side copies are mirrors — do not edit them.
+> Code citations use symbol anchors (verified against HEAD `125c48e51` on 2026-08-25); see [REPO_RECONNAISSANCE_2026-08-25-REFRESH.md](../architecture/REPO_RECONNAISSANCE_2026-08-25-REFRESH.md).
 
 ---
 
@@ -30,6 +32,7 @@
 - [20. Delete List / Danh sách Xóa](#20-delete-list--danh-sách-xóa)
 - [21. Decision Rules / Quy tắc Ra quyết định](#21-decision-rules--quy-tắc-ra-quy-định)
 - [22. References / Tham chiếu](#22-references--tham-chiếu)
+- [Amendment Changelog / Nhật ký Sửa đổi](#amendment-changelog--nhật-ký-sửa-đổi)
 
 ---
 
@@ -57,6 +60,7 @@ Sứ mệnh của Sophia là cung cấp hạ tầng kinh tế biến một ý t�
 - **What it is NOT:** An AI video factory, a content farm, a social media scheduler, or a replacement for human creativity.
 - **Target user:** Non-technical CEOs running Revenue-as-a-Service (RaaS) businesses.
 - **Core value proposition:** Turn creative ideas into economic output with full ownership and provenance.
+- **Shipped state (2026-08-25):** Agent protocol, Creative Memory, Provenance, Mission Lifecycle, Autonomy Levels, and the Experiment Engine are live in production; revenue ingestion (YouTube + TikTok) feeds the bilingual Creative Economy dashboard. See the [08-25 refresh](../architecture/REPO_RECONNAISSANCE_2026-08-25-REFRESH.md).
 
 ### VN
 
@@ -64,6 +68,7 @@ Sứ mệnh của Sophia là cung cấp hạ tầng kinh tế biến một ý t�
 - **Nó KHÔNG phải là:** Nhà máy video AI, trang trại nội dung, trình lập lịch mạng xã hội, hay sự thay thế cho sáng tạo của con người.
 - **Người dùng mục tiêu:** CEO không biết kỹ thuật vận hành doanh nghiệp Dịch vụ dưới dạng Doanh thu (RaaS).
 - **Giá trị cốt lõi:** Biến ý tưởng sáng tạo thành đầu ra kinh tế với toàn quyền sở hữu và truy xuất nguồn gốc.
+- **Trạng thái đã triển khai (2026-08-25):** Agent protocol, Bộ nhớ Sáng tạo, Truy xuất nguồn gốc, Vòng đời Mission, Mức Tự động hóa và Experiment Engine đã hoạt động trên production; ingestion doanh thu (YouTube + TikTok) cung cấp dữ liệu cho dashboard Kinh tế Sáng tạo song ngữ. Xem [bản refresh 08-25](../architecture/REPO_RECONNAISSANCE_2026-08-25-REFRESH.md).
 
 ---
 
@@ -97,13 +102,13 @@ Sophia rõ ràng KHÔNG nhằm:
 
 ### EN
 
-**North Star Metric: Economic Output Per Creative Unit (EOPCU)**
+**North Star Metric: Creative Leverage** — economic output per creative unit.
 
-This is the total revenue generated per distinct creative idea (concept, story, or mission). It replaces the old "number of videos" metric.
+Creative Leverage is the total revenue generated per distinct creative idea (concept, story, or mission). It replaces the old "number of videos" metric. One concept, one name: "Creative Leverage" is the term used everywhere in Sophia; the formula below is its measurement definition (historically abbreviated EOPCU — that abbreviation is retired as a brand term).
 
-**Formula:**
+**Measurement definition:**
 ```
-EOPCU = (total revenue from content derived from one creative unit) / (cost to produce all derivatives)
+Creative Leverage = (total revenue from content derived from one creative unit) / (cost to produce all derivatives)
 ```
 
 **Why this matters:**
@@ -114,13 +119,13 @@ EOPCU = (total revenue from content derived from one creative unit) / (cost to p
 
 ### VN
 
-**Chỉ số La bàn: Đầu ra Kinh tế trên mỗi Đơn vị Sáng tạo (EOPCU)**
+**Chỉ số La bàn: Đòn bẩy Sáng tạo (Creative Leverage)** — đầu ra kinh tế trên mỗi đơn vị sáng tạo.
 
-Đây là tổng doanh thu tạo ra trên mỗi ý tưởng sáng tạo riêng biệt (khái niệm, câu chuyện, hoặc nhiệm vụ). Nó thay thế chỉ số cũ "số lượng video".
+Đòn bẩy Sáng tạo là tổng doanh thu tạo ra trên mỗi ý tưởng sáng tạo riêng biệt (khái niệm, câu chuyện, hoặc nhiệm vụ). Nó thay thế chỉ số cũ "số lượng video". Một khái niệm, một tên gọi: "Creative Leverage" là thuật ngữ dùng thống nhất trong Sophia; công thức dưới đây là định nghĩa đo lường của nó (tên viết tắt cũ EOPCU không còn được dùng làm thuật ngữ).
 
-**Công thức:**
+**Định nghĩa đo lường:**
 ```
-EOPCU = (tổng doanh thu từ nội dung bắt nguồn từ một đơn vị sáng tạo) / (chi phí sản xuất tất cả các bản sao)
+Creative Leverage = (tổng doanh thu từ nội dung bắt nguồn từ một đơn vị sáng tạo) / (chi phí sản xuất tất cả các bản sao)
 ```
 
 **Tại sao điều này quan trọng:**
@@ -167,13 +172,13 @@ Mô hình kinh tế của Sophia: **TƯỞNG TƯỢNG -> TẠO -> PHÂN PHỐI -
 
 Every piece of content in Sophia can be traced to its origin. The human operator:
 
-- **Approves** before publish at Autonomy Levels 0-2. (Ref: `seed/types/creative-domain.ts:373` -- `AutonomyLevel = 0 | 1 | 2 | 3 | 4`)
+- **Approves** before publish at Autonomy Levels 0-2. (Ref: `AutonomyLevel` in `seed/types/creative-domain.ts` -- `AutonomyLevel = 0 | 1 | 2 | 3 | 4`)
 - **Reviews** agent decisions at Levels 3-4 (post-publish audit).
 - **Edits** any memory, identity, or content at any time.
 - **Overrides** any agent decision. No agent action is irreversible without explicit human approval.
 - **Owns all IP.** Sophia never claims ownership over generated content.
 
-The operator's `CreativeIdentity` (`seed/types/creative-domain.ts:60-90`) defines the brand voice, tone, beliefs, and constraints that ALL agents must respect.
+The operator's `CreativeIdentity` (interface `CreativeIdentity` in `seed/types/creative-domain.ts`) defines the brand voice, tone, beliefs, and constraints that ALL agents must respect.
 
 ### VN
 
@@ -181,13 +186,13 @@ The operator's `CreativeIdentity` (`seed/types/creative-domain.ts:60-90`) define
 
 Mỗi nội dung trong Sophia đều có thể truy nguyên về nguồn gốc. Người vận hành:
 
-- **Phê duyệt** trước khi xuất bản ở Mức Tự động hóa 0-2. (Tham chiếu: `seed/types/creative-domain.ts:373` -- `AutonomyLevel = 0 | 1 | 2 | 3 | 4`)
+- **Phê duyệt** trước khi xuất bản ở Mức Tự động hóa 0-2. (Tham chiếu: `AutonomyLevel` trong `seed/types/creative-domain.ts` -- `AutonomyLevel = 0 | 1 | 2 | 3 | 4`)
 - **Xem xét** quyết định của agent ở Mức 3-4 (kiểm toán sau xuất bản).
 - **Chỉnh sửa** bất kỳ bộ nhớ, nhận diện hay nội dung nào bất cứ lúc nào.
 - **Ghi đè** bất kỳ quyết định nào của agent. Không có hành động agent nào là không thể đảo ngược mà không có sự phê duyệt rõ ràng của con người.
 - **Sở hữu toàn bộ IP.** Sophia không bao giờ tuyên bố sở hữu nội dung được tạo ra.
 
-`CreativeIdentity` của người vận hành (`seed/types/creative-domain.ts:60-90`) định nghĩa giọng thương hiệu, tông, niềm tin và ràng buộc mà TẤT CẢ agent phải tuân thủ.
+`CreativeIdentity` của người vận hành (interface `CreativeIdentity` trong `seed/types/creative-domain.ts`) định nghĩa giọng thương hiệu, tông, niềm tin và ràng buộc mà TẤT CẢ agent phải tuân thủ.
 
 ---
 
@@ -201,10 +206,10 @@ Every autonomous action by an agent must have four properties:
 |----------|-------------|---------|
 | **Permission** | What the agent is allowed to do | `AgentPermission.tool = 'generate_script'` |
 | **Scope** | Boundaries of the action | `AgentPermission.scopes = ['campaign:123']` |
-| **Audit trail** | Permanent record of what happened | `ProvenanceRecord` (ref: `seed/types/creative-domain.ts:511-528`) |
+| **Audit trail** | Permanent record of what happened | `ProvenanceRecord` (interface in `seed/types/creative-domain.ts`) |
 | **Rollback path** | Ability to undo | `isDeleted: boolean` on CreativeMemory; status transitions on Mission |
 
-**Autonomy Levels** (ref: `seed/types/creative-domain.ts:373`):
+**Autonomy Levels** (ref: `AutonomyLevel` in `seed/types/creative-domain.ts`):
 
 | Level | Name | Human Involvement | Typical Use |
 |-------|------|-------------------|-------------|
@@ -214,7 +219,7 @@ Every autonomous action by an agent must have four properties:
 | 3 | Monitored | Agent acts freely, human reviews after | Proven operators, lower-stakes content |
 | 4 | Autonomous | Agent acts independently | System tasks, routine operations |
 
-**Approval level mapping** (ref: `AgentPermission.requiresApproval` at `seed/types/creative-domain.ts:378`):
+**Approval level mapping** (ref: `AgentPermission.requiresApproval` in `seed/types/creative-domain.ts`):
 
 - Levels 0-2: `requiresApproval = true` for all publish actions
 - Level 3: `requiresApproval = false` for publish, `true` for high-cost actions
@@ -228,10 +233,10 @@ Mỗi hành động tự động bởi agent phải có bốn thuộc tính:
 |-----------|-------|-------|
 | **Quyền** | Agent được phép làm gì | `AgentPermission.tool = 'generate_script'` |
 | **Phạm vi** | Giới hạn của hành động | `AgentPermission.scopes = ['campaign:123']` |
-| **Dấu vết kiểm toán** | Ghi vĩnh viễn những gì đã xảy ra | `ProvenanceRecord` (tham chiếu: `seed/types/creative-domain.ts:511-528`) |
+| **Dấu vết kiểm toán** | Ghi vĩnh viễn những gì đã xảy ra | `ProvenanceRecord` (interface trong `seed/types/creative-domain.ts`) |
 | **Đường lùi** | Khả năng đảo ngược | `isDeleted: boolean` trên CreativeMemory; chuyển trạng thái trên Mission |
 
-**Mức Tự động hóa** (tham chiếu: `seed/types/creative-domain.ts:373`):
+**Mức Tự động hóa** (tham chiếu: `AutonomyLevel` trong `seed/types/creative-domain.ts`):
 
 | Mức | Tên | Mức độ Tham gia của Người | Sử dụng điển hình |
 |-----|-----|--------------------------|-------------------|
@@ -265,7 +270,7 @@ Sophia tracks four interconnected graphs that together model the entire creative
 ### 8.4 Distribution Graph / Đồ thị Phân phối
 - Multi-platform publishing: YouTube, TikTok, X, Instagram, blog.
 - Tracks per-platform performance and optimization.
-- Defined by `DistributionPlan`, `ChannelConfig`, `DistributionAsset` (ref: `seed/types/creative-domain.ts:272-306`)
+- Defined by `DistributionPlan`, `ChannelConfig`, `DistributionAsset` (interfaces in `seed/types/creative-domain.ts`)
 
 ### EN
 
@@ -281,7 +286,7 @@ Bốn đồ thị này không độc lập. Chúng tạo thành **Con lăn Dữ 
 
 ### EN
 
-Every asset in Sophia has an append-only provenance record (ref: `seed/types/creative-domain.ts:511-528`).
+Every asset in Sophia has an append-only provenance record (ref: `ProvenanceRecord` in `seed/types/creative-domain.ts`). Provenance is now a shipped subsystem: `src/tree/provenance/` plus the `provenanceBridge` Inngest function (see the 08-25 refresh).
 
 Provenance records track:
 - **Who** created or modified the asset (human, agent, or system)
@@ -298,7 +303,7 @@ Provenance is **immutable by design**. Records can be appended but never modifie
 
 ### VN
 
-Mỗi tài sản trong Sophia đều có bản ghi truy xuất nguồn gốc chỉ bổ sung (tham chiếu: `seed/types/creative-domain.ts:511-528`).
+Mỗi tài sản trong Sophia đều có bản ghi truy xuất nguồn gốc chỉ bổ sung (tham chiếu: `ProvenanceRecord` trong `seed/types/creative-domain.ts`). Truy xuất nguồn gốc hiện đã là hệ thống con hoạt động: `src/tree/provenance/` và hàm Inngest `provenanceBridge` (xem bản refresh 08-25).
 
 Bản ghi truy xuất nguồn gốc theo dõi:
 - **Ai** đã tạo hoặc chỉnh sửa tài sản (con người, agent, hay hệ thống)
@@ -314,7 +319,7 @@ Truy xuất nguồn gốc **không thể thay đổi theo thiết kế**. Bản 
 
 ### EN
 
-Sophia monetizes through a tiered subscription model (ref: `seed/config/tiers.ts`):
+Sophia monetizes through a tiered subscription model (ref: `TIER_CONFIGS` in `seed/config/tiers/`):
 
 | Tier | Target | Key Features |
 |------|--------|-------------|
@@ -323,7 +328,7 @@ Sophia monetizes through a tiered subscription model (ref: `seed/config/tiers.ts
 | **ENTERPRISE** | Scaling businesses | Unlimited missions, all channels, advanced analytics, API access |
 | **MASTER** | Agency operators | Full platform, white-label, multi-workspace, priority support |
 
-Revenue events are tracked per-asset and per-project (ref: `seed/types/creative-domain.ts:355-367`).
+Revenue events are tracked per-asset and per-project (ref: `RevenueEvent` in `seed/types/creative-domain.ts`). Since 2026-08-25, live revenue producers write into `performance_events`: YouTube (`event_type='revenue'`, `src/land/analytics/revenue-ingestion.ts`) and TikTok Shop conversions (`event_type='conversion'`, `src/land/analytics/tiktok-revenue-ingestion.ts`), both consumed by the bilingual Creative Economy dashboard.
 
 **Protected flows** (DO NOT BREAK):
 1. Setup Wizard -- BYOK onboarding
@@ -332,7 +337,7 @@ Revenue events are tracked per-asset and per-project (ref: `seed/types/creative-
 
 ### VN
 
-Sophia kiếm tiền qua mô hình đăng ký theo bậc (tham chiếu: `seed/config/tiers.ts`):
+Sophia kiếm tiền qua mô hình đăng ký theo bậc (tham chiếu: `TIER_CONFIGS` trong `seed/config/tiers/`):
 
 | Bậc | Đối tượng | Tính năng chính |
 |-----|-----------|-----------------|
@@ -367,7 +372,7 @@ VISION -> CREATE -> DISTRIBUTE -> MEASURE -> LEARN -> COMPOUND
 
 **Stage 6: COMPOUND** -- Apply learned insights to next vision cycle. Each iteration is smarter than the last.
 
-The flywheel is powered by `CreativeMemory` (ref: `seed/types/creative-domain.ts:115-131`) which persists learnings across missions.
+The flywheel is powered by `CreativeMemory` (interface in `seed/types/creative-domain.ts`) which persists learnings across missions. Creative Memory is now shipped: `src/tree/creative-memory/` + API route `src/app/api/creative-memory/route.ts` (see the 08-25 refresh).
 
 ### VN
 
@@ -394,9 +399,10 @@ Con lăn Dữ liệu là cỗ máy cốt lõi tạo ra giá trị cộng dồn:
 Sophia uses a provider abstraction layer (ref: `seed/ai/provider-interface.ts`) that decouples the platform from any specific AI model.
 
 **Key principles:**
-- Never hard-code a model name. Use `ModelPolicy` (ref: `seed/types/creative-domain.ts:571-578`) to specify capability and cost requirements.
-- `AIProvider` (ref: `seed/types/creative-domain.ts:580-588`) supports multiple provider types: `openai_compatible`, `openrouter`, `byok_api_key`, `local`.
-- Model routing is dynamic: `ModelRequest` specifies what's needed, `ModelResponse` reports what was used (ref: `seed/types/creative-domain.ts:602-618`).
+- Never hard-code a model name. Use `ModelPolicy` (interface in `seed/types/creative-domain.ts`) to specify capability and cost requirements.
+- `AIProvider` (interface in `seed/types/creative-domain.ts`) supports multiple provider types: `openai_compatible`, `openrouter`, `byok_api_key`, `local`.
+- Model routing is dynamic: `ModelRequest` specifies what's needed, `ModelResponse` reports what was used (interfaces in `seed/types/creative-domain.ts`).
+- Provider selection is per-run and BYOK-keyed: the agent protocol's per-run provider registry resolves providers from the mission creator's own keys (commit `553ee6284`).
 - Users bring their own keys (BYOK) -- the platform never owns API keys.
 
 **What this means for operators:** Switch AI providers without changing anything. Your content and memory persist regardless of which model generated it.
@@ -406,9 +412,10 @@ Sophia uses a provider abstraction layer (ref: `seed/ai/provider-interface.ts`) 
 Sophia sử dụng lớp trừu tượng nhà cung cấp (tham chiếu: `seed/ai/provider-interface.ts`) tách nền tảng khỏi bất kỳ model AI cụ thể nào.
 
 **Nguyên tắc chính:**
-- Không bao giờ hard-code tên model. Sử dụng `ModelPolicy` (tham chiếu: `seed/types/creative-domain.ts:571-578`) để xác định yêu cầu năng lực và chi phí.
-- `AIProvider` (tham chiếu: `seed/types/creative-domain.ts:580-588`) hỗ trợ nhiều loại nhà cung cấp.
+- Không bao giờ hard-code tên model. Sử dụng `ModelPolicy` (interface trong `seed/types/creative-domain.ts`) để xác định yêu cầu năng lực và chi phí.
+- `AIProvider` (interface trong `seed/types/creative-domain.ts`) hỗ trợ nhiều loại nhà cung cấp.
 - Routing model là động: `ModelRequest` xác định nhu cầu, `ModelResponse` báo cáo đã dùng gì.
+- Chọn nhà cung cấp theo từng lần chạy và theo key BYOK: registry nhà cung cấp per-run của agent protocol phân giải từ key của chính người tạo mission (commit `553ee6284`).
 - Người dùng tự mang key (BYOK) -- nền tảng không bao giờ sở hữu key API.
 
 ---
@@ -468,7 +475,7 @@ Sophia hoạt động trong kiến trúc đa hệ thống. Các ranh giới là:
 ### EN
 
 - User data stays in the user's workspace. No cross-workspace data leakage.
-- AI provider keys are encrypted references, never plaintext. (Ref: `AIProvider.apiKeyRef` at `seed/types/creative-domain.ts:584`)
+- AI provider keys are encrypted references, never plaintext. (Ref: `AIProvider.apiKeyRef` in `seed/types/creative-domain.ts`)
 - Provenance records are workspace-scoped.
 - No content is shared across workspaces unless the operator explicitly exports.
 
@@ -538,9 +545,11 @@ Sophia hoạt động trong kiến trúc đa hệ thống. Các ranh giới là:
 
 ### EN
 
+**Baseline (2026-08-25, per the [08-25 refresh](../architecture/REPO_RECONNAISSANCE_2026-08-25-REFRESH.md)):** revenue producers are now live (YouTube `event_type='revenue'`, TikTok `event_type='conversion'`) and the Creative Economy dashboard consumes them — the "$0 dashboard" era is closed. Baseline values populate after the first full `analyticsSync` cron cycle; targets below are measured from that point.
+
 | KPI | Target | Measurement |
 |-----|--------|-------------|
-| **EOPCU** (North Star) | >$5 per creative unit within 6 months | Revenue / creative units per quarter |
+| **Creative Leverage** (North Star) | >$5 per creative unit within 6 months | Revenue / creative units per quarter |
 | **Derivative Ratio** | >10 derivatives per creative idea | Assets created / creative concepts per month |
 | **Distribution Coverage** | >3 platforms per content project | Platforms with published derivatives / total platforms |
 | **Memory Hit Rate** | >70% of agent decisions reference memory | Memory-informed decisions / total decisions per month |
@@ -551,7 +560,7 @@ Sophia hoạt động trong kiến trúc đa hệ thống. Các ranh giới là:
 
 | Chỉ số | Mục tiêu | Đo lường |
 |--------|---------|----------|
-| **EOPCU** (La bàn) | >$5 trên mỗi đơn vị sáng tạo trong 6 tháng | Doanh thu / đơn vị sáng tạo theo quý |
+| **Creative Leverage** (La bàn) | >$5 trên mỗi đơn vị sáng tạo trong 6 tháng | Doanh thu / đơn vị sáng tạo theo quý |
 | **Tỷ lệ Bản sao** | >10 bản sao trên mỗi ý tưởng sáng tạo | Tài sản tạo ra / khái niệm sáng tạo mỗi tháng |
 | **Phạm vi Phân phối** | >3 nền tảng trên mỗi dự án nội dung | Nền tảng đã xuất bản / tổng nền tảng |
 | **Tỷ lệ Hit Bộ nhớ** | >70% quyết định agent tham chiếu bộ nhớ | Quyết định có bộ nhớ / tổng quyết định mỗi tháng |
@@ -590,9 +599,9 @@ Sophia hoạt động trong kiến trúc đa hệ thống. Các ranh giới là:
 
 **What Sophia does NOT keep:**
 
-1. **No raw AI prompts in memory.** Only derived insights and confidence scores. The `prompt` field in `ProvenanceRecord` (`seed/types/creative-domain.ts:520`) is for audit, not memory.
-2. **No expired data.** Memory entries with `expiresAt` past current time are treated as deleted (ref: `seed/types/creative-domain.ts:130`).
-3. **No soft-deleted data in queries.** `isDeleted: true` entries are excluded from all queries (ref: `seed/types/creative-domain.ts:127`).
+1. **No raw AI prompts in memory.** Only derived insights and confidence scores. The `prompt` field on `ProvenanceRecord` (`seed/types/creative-domain.ts`) is for audit, not memory.
+2. **No expired data.** Memory entries with `expiresAt` past current time are treated as deleted (field on `CreativeMemory` in `seed/types/creative-domain.ts`).
+3. **No soft-deleted data in queries.** `isDeleted: true` entries are excluded from all queries (field on `CreativeMemory` in `seed/types/creative-domain.ts`).
 4. **No orphaned derivatives.** When a source asset is archived, its derivatives are flagged for review.
 5. **No abandoned experiments.** Experiments in `draft` status older than 30 days are auto-cancelled.
 
@@ -635,17 +644,38 @@ Sophia hoạt động trong kiến trúc đa hệ thống. Các ranh giới là:
 
 | Document | Path |
 |----------|------|
-| Domain Types | `apps/sophia-ai-factory/src/seed/types/creative-domain.ts` (661 lines) |
+| Domain Types | `apps/sophia-ai-factory/src/seed/types/creative-domain.ts` (663 lines at HEAD `125c48e51`) |
+| Creative Economy Contracts | `apps/sophia-ai-factory/src/seed/types/creative-economy/` (canonical barrel, 17 `I*` interfaces) |
 | AI Provider Interface | `apps/sophia-ai-factory/src/seed/ai/provider-interface.ts` |
 | Creative Memory Architecture | [CREATIVE_MEMORY.md](../architecture/CREATIVE_MEMORY.md) |
 | IP Graph Architecture | [IP_GRAPH.md](../architecture/IP_GRAPH.md) |
 | Content Graph Architecture | [CONTENT_GRAPH.md](../architecture/CONTENT_GRAPH.md) |
-| Repo Reconnaissance | [REPO_RECONNAISSANCE_2026-08-17.md](REPO_RECONNAISSANCE_2026-08-17.md) |
+| Repo Reconnaissance (original, frozen) | [REPO_RECONNAISSANCE_2026-08-17.md](../architecture/REPO_RECONNAISSANCE_2026-08-17.md) |
+| Repo Reconnaissance (latest refresh) | [REPO_RECONNAISSANCE_2026-08-25-REFRESH.md](../architecture/REPO_RECONNAISSANCE_2026-08-25-REFRESH.md) |
 | Implementation Plan | `.orchestrate/latest/plan.md` |
 | Code Standards | `apps/sophia-ai-factory/CLAUDE.md` |
 | Deploy Verification | `.claude/rules/sophia-deploy-verify.md` |
 | Layer Architecture | `.claude/rules/sophia-layer-architecture.md` |
 | No-Tech Doctrine | `.claude/rules/sophia-no-tech-doctrine.md` |
+
+---
+
+## Amendment Changelog / Nhật ký Sửa đổi
+
+### v1.1 — 2026-08-25 (ratified alongside Recon Refresh 2026-08-25)
+
+| Change | Why |
+|--------|-----|
+| North Star unified to **Creative Leverage** (mission verbatim: "economic output per creative unit"); EOPCU retained only as the retired abbreviation of the measurement formula (§4, §18) | Root copy said "EOPCU", app copy said "Creative Leverage" — one concept, one name, one section |
+| All file:line citations converted to **symbol-name anchors** (`AutonomyLevel`, `CreativeIdentity`, `ProvenanceRecord`, `CreativeMemory`, `RevenueEvent`, `ModelPolicy`, `AIProvider`, `apiKeyRef`, `TIER_CONFIGS`) and re-verified by grep against HEAD `125c48e51` (§6, §7, §8, §9, §10, §11, §12, §15, §20) | `creative-domain.ts` grew to 663 lines; line numbers drift on every refactor, symbols survive |
+| Fixed stale path `seed/config/tiers.ts` → `seed/config/tiers/` (`TIER_CONFIGS`) (§10) | File no longer exists at the cited path; tiers live in the `seed/config/tiers/` directory |
+| KPI baselines + framing updated to shipped state; cross-linked the 08-25 refresh (§2, §18) | Agent protocol, memory, provenance, mission lifecycle, autonomy, experiments, and revenue producers are now live — v1.0 framing predated them |
+| §22 references updated: domain types 663 lines, creative-economy contracts barrel added, recon links point to `../architecture/` (original frozen + latest refresh) | Old §22 cited 661 lines and a broken relative link to the recon file |
+| Version 1.0 → 1.1; Effective 2026-08-20 → 2026-08-25; canonical-copy header added | Ratification of the reconciled single source of truth (root `docs/` canonical per P2 decision) |
+
+### v1.0 — 2026-08-20
+
+Initial ratification. 22 sections, bilingual EN+VN.
 
 ---
 
