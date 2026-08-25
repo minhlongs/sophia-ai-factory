@@ -13,6 +13,8 @@ import { calculateCommission } from '@/land/affiliates/commission-calculator'
 import { insertPendingLedger } from '@/land/payouts/commission-ledger'
 import { toCents } from '@/land/payouts/commission-cents'
 import { getD1 } from '@/seed/db/client'
+import { writeConversionRevenueEvent } from '@/land/analytics/tiktok-revenue-ingestion'
+import { logger } from '@/seed/utils/logger-utility'
 
 const CLAWBACK_WINDOW_DAYS = 14
 const SECONDS_PER_DAY = 86400
@@ -131,12 +133,38 @@ export const conversionToLedger = inngest.createFunction(
       })
     })
 
+    // Bridge to performance_events so affiliate revenue shows in the
+    // creative economy dashboard. Never fails the handler — dashboard
+    // visibility is best-effort, the ledger row above is the source of truth.
+    const revenueWritten = await step.run('write-performance-event', async () => {
+      try {
+        const result = await writeConversionRevenueEvent({
+          conversionEventId,
+          tenantId,
+          affiliateId: conversion.affiliate_id,
+          grossAmountUsd: conversion.gross_amount_usd,
+          commissionUsd,
+          attributedAt: conversion.attributed_at,
+          offerId: conversion.offer_id,
+        })
+        return result.written
+      } catch (err) {
+        // Dashboard bridge is best-effort; log and continue.
+        logger.warn('[conversion-to-ledger] performance event write failed', {
+          conversionEventId,
+          error: err instanceof Error ? err.message : String(err),
+        })
+        return 0
+      }
+    })
+
     return {
       ledgerId,
       commissionUsd,
       commissionPct,
       withheldCents,
       payableAt,
+      revenueWritten,
     }
   },
 )
