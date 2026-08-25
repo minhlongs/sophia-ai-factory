@@ -621,25 +621,6 @@ export interface ModelResponse {
 }
 
 // =============================================================================
-// SIGNAL PROVIDERS
-// =============================================================================
-
-export interface MarketSignal {
-  id: string;
-  workspaceId: string;
-  type: SignalType;
-  source: string;
-  title: string;
-  summary: string;
-  data: Record<string, unknown>;
-  confidence: number;
-  relevanceScore: number;
-  expiresAt?: number;
-  consumed: boolean;
-  createdAt: number;
-}
-
-// =============================================================================
 // UTILITY
 // =============================================================================
 
