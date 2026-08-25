@@ -90,9 +90,9 @@ export const DEPRECATION_REGISTRY: readonly DeprecationEntry[] = [
     replacement: '@/tree/agent-protocol',
     deprecatedAt: '2026-08-16',
     removableAfter: '2026-09-16',
-    reason: 'Forest-layer agent protocol duplicates tree/agent-protocol. Forest is infrastructure; the agent execution contract belongs in tree (domain-reusable). forest/agent-protocol/registry.ts is retained for Inngest integration only.',
+    reason: 'Forest-layer agent protocol duplicates tree/agent-protocol. Forest is infrastructure; the agent execution contract belongs in tree (domain-reusable). Verified 2026-08-26: zero external importers remain — the only reference is a self-import of forest/agent-protocol/types inside forest/agent-protocol/registry.ts; the Inngest agent-mission-executor imports tree/agent-protocol directly. Removal-ready after the buffer date.',
     kind: 'duplicate',
-    callers: ['@/forest/inngest/functions/agent-mission-executor'],
+    callers: [],
   },
   // ── Implicit memory ─────────────────────────────────────────────────────
   {

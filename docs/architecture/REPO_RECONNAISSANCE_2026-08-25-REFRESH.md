@@ -97,3 +97,18 @@ Canonical contracts: `src/seed/types/creative-economy/` barrel (`44f15d1dc`) —
 ---
 
 *Generated 2026-08-25 by docs-manager (P1, Sophia 2027 Transformation Slice 1). All commands run from `apps/sophia-ai-factory/` unless noted. Next refresh trigger: any slice that changes layer counts, migrations, or abstraction status.*
+
+---
+
+## Delta 2026-08-26 (Phase 1 execution)
+
+Appended by docs-manager (Phase E docs pass). Everything below verified against the working tree on 2026-08-26; the frozen sections above are untouched.
+
+1. **MarketSignal dedup CLOSED** — `grep -c "^export interface MarketSignal" src/seed/types/creative-domain.ts` = **1**. The §10/Carried-forward-debt entry "2 declarations" is resolved.
+2. **Identity + memory wired into agent runs** — new `src/forest/inngest/functions/agent-context.ts` (identity/memory loaders, autonomy mapping, learning persistence); `agent-mission-executor.ts` loads workspace identity + stored memories into `AgentContext`; `agent-executor.ts:221-222` prepends a system message built by `buildIdentityBlock()` when `context.creativeIdentity` is present. Constitution §6 identity requirement now enforced at runtime.
+3. **Approval loop CLOSED** — `resolveApprovalAction` (`src/land/creative-mission/actions.ts:548`) emits `agent.approval.resolved` fire-and-forget after a successful resolve; `agentApprovalHandler` consumes it (`agent-approval-handler.ts:36`). The route.ts comment "no production senders exist for approval events yet" was rewritten to match.
+4. **content-graph tests added** — `src/tree/content-graph/__tests__/` now exists (types + integration tests), mirroring the `ip-graph/__tests__/` pattern; the §46 debt note "duy nhất thiếu `__tests__/`" is resolved.
+5. **Correction to §7 / New-facts #4 ("34 registered functions")** — `serve()` in `src/app/api/inngest/route.ts` registers **33** functions at HEAD `33d8b82d5` (counted from the `functions: [...]` array). The 08-22 base (`458de9008`) registered **27**, so the growth claim stands but the absolute number was off by one.
+6. **Deprecation registry updated** — `@/forest/agent-protocol` entry reason corrected: zero external importers remain (only a self-import of `forest/agent-protocol/types` inside `registry.ts`; the executor imports `tree/agent-protocol` directly). `removableAfter: 2026-09-16` unchanged.
+7. **Root `CLAUDE.md` fixed** — the stale "`src/lib/` exists for compatibility" note now states the directory was deleted (`b5a2b3eed`); the Carried-forward-debt row "`src/lib/` compat zone (doc-only)" is fully closed.
+8. **Unchanged:** layer counts, migration count (219), protected flows — none touched by Phase 1 execution.

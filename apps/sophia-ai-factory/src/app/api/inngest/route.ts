@@ -85,10 +85,14 @@ export const { GET, POST, PUT } = serve({
     autoApplyMonitor,
     // Phase 3: YouTube Content Pipeline — strategy → script → SEO → quality → publish
     youtubeContentPipeline,
-    // Agent protocol loop (mission lifecycle + provenance). Deliberately
-    // inert today: no production senders exist for approval events yet, and
-    // the executor fails fast (NO_PROVIDER / autonomy deny) until provider
-    // wiring ships — a loud, bounded failure replaces a silent event drop.
+    // Agent protocol loop (mission lifecycle + approval + provenance).
+    // Production senders exist for both trigger events: `agent.mission.started`
+    // is emitted by land/creative-mission/actions.ts on mission creation, and
+    // `agent.approval.resolved` is emitted fire-and-forget by
+    // resolveApprovalAction (same file) after an approval resolves OK. The
+    // executor runs missions through tree/agent-protocol with per-run BYOK
+    // providers and still fails fast (NO_PROVIDER / autonomy deny) when a run
+    // cannot proceed — a loud, bounded failure replaces a silent event drop.
     agentMissionExecutor,
     agentApprovalHandler,
     agentRollbackCron,

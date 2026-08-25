@@ -110,6 +110,6 @@ Before substantive work, read in order:
 ## Notes
 
 - **Root package.json** is tooling only. Always run commands from `apps/sophia-ai-factory/`.
-- `src/lib/` exists for compatibility; new primitives belong in `seed/`, `tree/`, `forest/`, or `land/`.
+- `src/lib/` no longer exists (deleted by commit `b5a2b3eed`); all new primitives belong in `seed/`, `tree/`, `forest/`, or `land/`.
 - Inngest owns long-running workflows (video generation, multi-step processes). Do not run these in request path.
 - NOWPayments is primary payment provider; PayOS is Vietnam domestic backup. Polar.sh and PayPal are banned for Sophia billing.
