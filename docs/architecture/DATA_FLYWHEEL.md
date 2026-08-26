@@ -85,6 +85,42 @@ The flywheel compounds when:
 - Distribution strategy adapts to channel-specific learnings (LEARN → DISTRIBUTE)
 - ROI tracking feeds back into cost estimation (MEASURE → VISION)
 
+### Market Signal Edge / Cạnh tín hiệu thị trường (Phase 2)
+
+As of Sophia 2027 Phase 2, the VISION stage has its own automated input edge — **external signals → trend intelligence → creative decisions**:
+
+```
+EXTERNAL WORLD ──► market_signals ──► trend_detections ──► VISION
+ (YouTube trending,        │                   │
+  Google Trends RSS)       │ hourly cron       │ detectTrends()
+                           ▼                   ▼
+                 market-signals-ingest    velocity + z-score +
+                 (Inngest, retries=2)     seasonal/audience multipliers
+                                          + 7-day SES forecast
+```
+
+| Piece | Where | Cadence |
+|---|---|---|
+| Ingestion | `forest/inngest/functions/market-signals-ingest-cron.ts` → `tree/market-signals/store.ts` | hourly (`0 * * * *`), per-workspace error isolation |
+| Detection + forecast | `tree/trend-intelligence/detect.ts` (+ `detect-math`, `forecast`) | on demand; detections persisted with momentum + evidence ids |
+| Read exposure | `land/graphs/actions.ts`, `GET /api/graphs/[type]` | auth-gated read-only |
+
+Rules for this edge:
+1. Sources are BYOK-only or keyless-public (Google Trends RSS). Operator credentials are forbidden (no-tech doctrine).
+2. Signals dedupe on (source, title-hash, day-window) and expire — the signal table is a stream, not an archive.
+3. A `TrendDetection` row must carry `evidence_ids` pointing back to the signals/events that produced it — same auditability bar as creative-memory updates.
+4. Trend multipliers are reused from `tree/youtube-strategy/trend-scorer.ts` (single source, DRY).
+
+### VN
+
+**Cạnh tín hiệu thị trường (Phase 2):** từ Phase 2, giai đoạn VISION có thêm luồng đầu vào tự động — **tín hiệu bên ngoài → phát hiện xu hướng → quyết định sáng tạo**. Cron mỗi giờ nạp YouTube trending (BYOK) và Google Trends RSS (không cần key) vào bảng `market_signals`; engine phát hiện xu hướng tính velocity + z-score với hệ số mùa vụ/người xem, kèm dự báo 7 ngày, lưu vào `trend_detections`.
+
+Quy tắc:
+1. Nguồn dữ liệu chỉ dùng BYOK hoặc public không cần key — nghiêm cấm credential của operator.
+2. Tín hiệu được khử trùng lặp theo (nguồn, hash tiêu đề, cửa sổ ngày) và có hạn sử dụng — bảng signal là dòng chảy, không phải kho lưu trữ.
+3. Mỗi dòng `TrendDetection` phải mang `evidence_ids` trỏ về các tín hiệu/sự kiện đã sinh ra nó — cùng chuẩn kiểm chứng như creative memory.
+4. Hệ số xu hướng tái sử dụng từ `tree/youtube-strategy/trend-scorer.ts` (một nguồn duy nhất).
+
 ### Data Flow Diagram / Sơ đồ luồng dữ liệu
 
 ```

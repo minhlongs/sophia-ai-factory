@@ -94,23 +94,25 @@ Design the core domain model: CreativeIdentity, CreativeMemory, Mission, Agent P
 
 ## Phase 2 — Creative Intelligence (2027-Q1)
 
+> **Status update 2026-08-26:** Phase 2 execution complete (lanes A–H). Checkmarks below are evidence-backed only: each item has code + passing tests on the working tree. Production migration apply + deploy happen after this roadmap update; backtest KPI remains unvalidated against real data.
+
 ### Muc Tieu / Objective
 Xây dựng hệ thống phân tích thị trường, xu hướng, graph relationships, và performance modeling cho nội dung sáng tạo.
 Build market analysis, trend intelligence, graph relationships, and performance modeling for creative content.
 
 ### Deliverables
-- [ ] **Market Signals** — real-time market signal ingestion (social media, trending topics)
-- [ ] **Trend Intelligence** — trend detection + forecasting engine
-- [ ] **IP Graph** — intellectual property relationship graph (content → creator → audience)
-- [ ] **Content Graph** — content relationship mapping (series, adaptations, references)
-- [ ] **Experiment Engine** — A/B testing framework cho creative content
-- [ ] **Performance Model** — predictive performance scoring cho content pieces
-- [ ] Provider abstraction mở rộng cho thêm AI services
+- [x] **Market Signals** — real-time market signal ingestion *(done 2026-08-26: `tree/market-signals/` store + YouTube BYOK source + Google Trends RSS source, hourly cron `market-signals-ingest` registered in Inngest route (functions array 34), migrations 0255, 51+10 tests)*
+- [x] **Trend Intelligence** — trend detection + forecasting engine *(done 2026-08-26: `tree/trend-intelligence/` detect + SES 7-day forecast, pure math ≥90% branch coverage, signals→detections integration test, migration 0256, 46 tests)*
+- [x] **IP Graph** — intellectual property relationship graph *(pre-existing `tree/ip-graph/` since earlier phases; Phase 2 added read-only exposure via `land/graphs/actions.ts` + `GET /api/graphs/ip-lineage`, auth-gated 401, 23 action tests)*
+- [x] **Content Graph** — content relationship mapping *(pre-existing `tree/content-graph/`; Phase 2 added `getContentPerformance` export + read-only exposure via `/api/graphs/content-lineage` and `content-performance`)*
+- [x] **Experiment Engine** — A/B testing framework *(production `forest/ab/` pre-existing; Phase 2 closed schema debt: migration 0254 creates missing `experiments`/`experiment_variants`/`experiment_results` tables, aligned `tree/performance/experiment.ts`, added read-only `forest/ab/engine-bridge.ts` unified view; learning-loop E2E + 12-concurrent-experiments KPI green, 85 tests)*
+- [x] **Performance Model** — predictive performance scoring *(done 2026-08-26: `tree/performance/scoring.ts` deterministic heuristic + `scripts/backtest-performance-model.ts` CLI, 26 tests. ⚠️ Backtest precision validated only on synthetic fixture (100%); production replay pending — model ships low-confidence until real-data validation. See `docs/architecture/PERFORMANCE_INTELLIGENCE.md`)*
+- [x] Provider abstraction mở rộng cho thêm AI services *(done 2026-08-26: OpenRouter image-generation adapter in `seed/ai/providers/openrouter-image-adapter.ts` — BYOK-keyable, circuit breaker wired, 16 contract tests)*
 
 ### Dependencies
-- Phase 1 domain models complete
-- Provider abstraction stable
-- Database schema supports graph relationships
+- Phase 1 domain models complete ✅ (shipped 2026-08-26, SHA 1df573d8)
+- Provider abstraction stable ✅
+- Database schema supports graph relationships ✅ (migrations 0254–0256 additive)
 
 ### Risks
 - R1: Market signal data quality varies wildly
@@ -118,16 +120,16 @@ Build market analysis, trend intelligence, graph relationships, and performance 
 - R3: Performance model cần training data chưa có
 
 ### KPIs
-- Trend detection latency < 1 hour
-- Content graph query response < 500ms
-- Experiment engine supports 10+ concurrent experiments
-- Performance model accuracy > 70% (top quartile)
+- Trend detection latency < 1 hour *(by construction: hourly ingest cron; real-data confirmation pending post-deploy)*
+- Content graph query response < 500ms *(soft-asserted in tests on seeded fixtures; prod measurement pending)*
+- Experiment engine supports 10+ concurrent experiments *(✅ verified: 12 concurrent creations, 0 failures)*
+- Performance model accuracy > 70% (top quartile) *(⚠️ NOT yet validated — synthetic fixture only; production replay pending)*
 
 ### Exit Criteria
-- Market signals ingesting từ ≥ 3 sources
-- IP graph và content graph có visualization
-- Experiment engine đã chạy ≥ 5 real experiments
-- Performance model validated against historical data
+- Market signals ingesting từ ≥ 3 sources *(pending — 2 sources shipped: YouTube trending BYOK + Google Trends RSS; deploy + workspace config required before first real ingestion cycle)*
+- IP graph và content graph có visualization *(pending — read-only JSON API shipped (`/api/graphs/[type]`); UI visualization not in Phase 2 scope)*
+- Experiment engine đã chạy ≥ 5 real experiments *(pending — schema debt closed (0254), engine ready; needs production data)*
+- Performance model validated against historical data *(⚠️ pending — see deliverable note above)*
 
 ---
 

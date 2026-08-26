@@ -2,8 +2,8 @@
 
 > This file is an index. Full entries are split by quarter for faster loading.
 
-**Last entry:** 2026-08-26 (Sophia 2027 Phase 1 domain primitives)
-**Current Production SHA:** 1df573d8 (deployed 2026-08-26)
+**Last entry:** 2026-08-26 (Sophia 2027 Phase 2 Creative Intelligence)
+**Current Production SHA:** 1df573d8 (deployed 2026-08-26; Phase 2 deploy pending at time of entry)
 
 ---
 
@@ -20,6 +20,7 @@
 
 ## Recent Entries (Q3 2026 — latest 5)
 
+- **2026-08-26** — Sophia 2027 Phase 2 Creative Intelligence: market signal ingestion (hourly cron, YouTube BYOK + Google Trends RSS), cross-channel trend detection + 7-day forecast, graph read API (`/api/graphs/[type]`, auth-gated), experiment schema debt closed (migration 0254) + AB engine bridge, heuristic performance scorer + backtest CLI, OpenRouter image adapter. Migrations 0254–0256. ~430 targeted tests green; full gates at Lane H.
 - **2026-08-26** — Sophia 2027 Phase 1 domain primitives: CreativeIdentity injection, CreativeMemory flywheel, approval-event loop closure, MarketSignal dedupe, 34 content-graph tests. SHA 1df573d8.
 - **2026-06-29** — Deploy Speedup + Health Worker Fix: Added `SKIP_SYMBOL_UPLOAD=1` to deploy script, skipping 3519-file R2 source map upload (saves ~30 min per deploy). Fixed health worker secret put non-fatal (already-set error). Production SHA b868840b verified live.
 - **2026-06-22** — OpenTelemetry Staging Verified: Full OTel instrumentation deployed to staging with Honeycomb integration verified. Production rollout prepared with 1% samplerate. SOC 2 controls walkthrough documented, auditor engagement complete. Deploy guard multi-operator approvals now live. BYOK rotation framework prepared with versioning infrastructure.
