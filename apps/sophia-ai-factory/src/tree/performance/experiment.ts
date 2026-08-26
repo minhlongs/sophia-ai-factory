@@ -32,16 +32,19 @@ export function newExperimentId(): string {
 }
 
 // ─── Row types ─────────────────────────────────────────────────────────────
+// Shapes mirror migrations/0254_experiments_tables.sql exactly:
+// content columns are nullable (no NOT NULL), and experiments.status has no
+// CHECK constraint, so the raw status is coerced at the mapping boundary.
 
 interface ExperimentRow {
   id: string;
   workspace_id: string;
-  project_id: string;
-  hypothesis: string;
-  metric: string;
-  audience: string;
-  channel: string;
-  status: ExperimentStatus;
+  project_id: string | null;
+  hypothesis: string | null;
+  metric: string | null;
+  audience: string | null;
+  channel: string | null;
+  status: string;
   started_at: number | null;
   ended_at: number | null;
   winner_variant_id: string | null;
@@ -74,6 +77,19 @@ interface ResultRow {
 
 // ─── Row ↔ Domain mapping ──────────────────────────────────────────────────
 
+const EXPERIMENT_STATUSES: readonly ExperimentStatus[] = [
+  'draft',
+  'running',
+  'completed',
+  'cancelled',
+];
+
+function coerceStatus(raw: string): ExperimentStatus {
+  return EXPERIMENT_STATUSES.includes(raw as ExperimentStatus)
+    ? (raw as ExperimentStatus)
+    : 'draft';
+}
+
 function experimentRowToDomain(
   row: ExperimentRow,
   variants: ExperimentVariant[] = [],
@@ -81,12 +97,12 @@ function experimentRowToDomain(
   return {
     id: row.id,
     workspaceId: row.workspace_id,
-    projectId: row.project_id,
-    hypothesis: row.hypothesis,
-    metric: row.metric,
-    audience: row.audience,
-    channel: row.channel,
-    status: row.status,
+    projectId: row.project_id ?? '',
+    hypothesis: row.hypothesis ?? '',
+    metric: row.metric ?? '',
+    audience: row.audience ?? '',
+    channel: row.channel ?? '',
+    status: coerceStatus(row.status),
     variants,
     startedAt: row.started_at ?? undefined,
     endedAt: row.ended_at ?? undefined,
@@ -110,6 +126,15 @@ function variantRowToDomain(row: VariantRow): ExperimentVariant {
 }
 
 function resultRowToDomain(row: ResultRow): ExperimentResult {
+  let parsedMetadata: Record<string, unknown> = {};
+  if (row.metadata) {
+    try {
+      parsedMetadata = JSON.parse(row.metadata) as Record<string, unknown>;
+    } catch {
+      // Corrupt metadata — preserve raw string for debugging but don't crash
+      parsedMetadata = { _corrupt: true, _raw: row.metadata };
+    }
+  }
   return {
     id: row.id,
     experimentId: row.experiment_id,
@@ -118,7 +143,7 @@ function resultRowToDomain(row: ResultRow): ExperimentResult {
     conversions: row.conversions,
     conversionRate: row.conversion_rate,
     revenueCents: row.revenue_cents,
-    metadata: row.metadata ? JSON.parse(row.metadata) as Record<string, unknown> : {},
+    metadata: parsedMetadata,
     recordedAt: row.recorded_at,
   };
 }
@@ -244,10 +269,11 @@ export async function startExperiment(id: string): Promise<Experiment> {
     .first<ExperimentRow>();
 
   if (!existing) throw new PerformanceError('NOT_FOUND', `Experiment ${id} not found`);
-  if (!isValidTransition(existing.status, 'running')) {
+  const coercedStatus = coerceStatus(existing.status);
+  if (!isValidTransition(coercedStatus, 'running')) {
     throw new PerformanceError(
       'INVALID_TRANSITION',
-      `Cannot transition ${existing.status} → running`,
+      `Cannot transition ${coercedStatus} → running`,
     );
   }
 
@@ -275,10 +301,11 @@ export async function completeExperiment(
     .first<ExperimentRow>();
 
   if (!existing) throw new PerformanceError('NOT_FOUND', `Experiment ${id} not found`);
-  if (!isValidTransition(existing.status, 'completed')) {
+  const coercedStatus = coerceStatus(existing.status);
+  if (!isValidTransition(coercedStatus, 'completed')) {
     throw new PerformanceError(
       'INVALID_TRANSITION',
-      `Cannot transition ${existing.status} → completed`,
+      `Cannot transition ${coercedStatus} → completed`,
     );
   }
 
@@ -348,12 +375,12 @@ export async function getExperimentResults(
     .prepare(
       `SELECT er.*, v.name AS variant_name
        FROM experiment_results er
-       JOIN experiment_variants v ON er.variant_id = v.id
+       LEFT JOIN experiment_variants v ON er.variant_id = v.id
        WHERE er.experiment_id = ?1
        ORDER BY er.recorded_at DESC`,
     )
     .bind(experimentId)
-    .all<ResultRow & { variant_name: string }>();
+    .all<ResultRow & { variant_name: string | null }>();
 
   return (result.results ?? []).map(resultRowToDomain);
 }
