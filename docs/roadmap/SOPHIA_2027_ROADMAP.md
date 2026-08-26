@@ -140,12 +140,12 @@ Triển khai hệ thống multi-agent production graph — agents tự động s
 Deploy multi-agent production graph — agents autonomously produce content with human approval checkpoints.
 
 ### Deliverables
-- [ ] **Multi-Agent Production Graph** — orchestrated agent workflows cho content production
-- [ ] **Human Approval Gates** — configurable approval checkpoints trước khi publish
-- [ ] **Autonomy Levels** — tiered autonomy (Level 0: full human, Level 3: full auto)
-- [ ] **Retry/Resume** — automatic retry + resume cho failed production runs
+- [x] **Multi-Agent Production Graph** — orchestrated agent workflows cho content production *(✅ DONE 2026-08-27 — Lane E: 5 source files + 79 tests; 3 templates article-factory / video-brief / repurpose-derivative; runner `src/forest/inngest/functions/production-graph-runner.ts`; 3 graph agents in `src/tree/agent-protocol/graph-agents.ts`; validate rejects cycle/unknown-agent/multi-sink; migration 0257)*
+- [x] **Human Approval Gates** — configurable approval checkpoints trước khi publish *(✅ DONE 2026-08-27 — Lane C: `requestApprovalAndAwait` filter-loop adapter + `agent.approval.requested` first sender + `*/15` timeout cron; 29 scoped tests, 128 broader; zero new UI — approvals render on existing `/dashboard/approvals`)*
+- [x] **Autonomy Levels** — tiered autonomy (Level 0: full human, Level 3: full auto) *(✅ DONE 2026-08-27 — Lane B: L0–L3 → AutonomyLevel 0–4 mapping; fail-closed resolver `src/tree/autonomy/effective-autonomy.ts` (18 tests); per-mission-type policy table + CRUD; executor surgical edit, 100/100 tests)*
+- [x] **Retry/Resume** — automatic retry + resume cho failed production runs *(✅ DONE 2026-08-27 — Lane D: exponential backoff `min(30′, 5′·2^n)` + terminal `RETRIES_EXHAUSTED` + wide-window scan; 37 tests; rollback cron reuses same runId)*
 - [x] **Creative Learning** — agents học từ feedback loops (performance data + human edits) *(Phase 4 modules: performance-aggregation, learning-velocity, experiment-feedback, winner-picker, ROI tracker — 70 tests, schema bug fixed, production SQL bug fixed)*
-- [ ] Production monitoring + alerting dashboard
+- [x] Production monitoring + alerting dashboard *(✅ DONE 2026-08-27 — Lane G: `/dashboard/system-health` page + 6 KPIs + pending approvals + HarnessHealthCard; `src/land/production-monitoring/` (15 tests); 3 alert triggers; i18n `productionMonitoring` 27 keys symmetric VN/EN; build exit 0)*
 
 ### Dependencies
 - Phase 2 intelligence systems complete
@@ -158,16 +158,16 @@ Deploy multi-agent production graph — agents autonomously produce content with
 - R3: Feedback loops cần thời gian để收敛
 
 ### KPIs
-- Production pipeline完成率 > 90% (không cần human intervention)
-- Human approval turnaround < 4 hours
-- Retry success rate > 85%
-- Content quality score improvement > 20% over baseline
+- Production pipeline完成率 > 90% (không cần human intervention) *(now measured: dashboard KPI `completionPct` from `production_graph_runs`; production baseline pending real run data post-deploy)*
+- Human approval turnaround < 4 hours *(now measured: dashboard KPI `approvalTurnaroundMedianHours` from `agent_approvals` resolved durations; production baseline pending)*
+- Retry success rate > 85% *(now measured: dashboard KPI `retrySuccessPct` = completed runs with `retry_count > 0` / completed; production baseline pending)*
+- Content quality score improvement > 20% over baseline *(pending — requires production run data)*
 
 ### Exit Criteria
-- ≥ 3 complete production pipelines operational
-- Autonomy levels configurable per mission type
-- Creative learning shows measurable improvement
-- Production dashboard operational
+- ≥ 3 complete production pipelines operational *(✅ 3 templates shipped: article-factory, video-brief, repurpose-derivative — each a validated linear DAG with publish sink; plus the two pre-existing live pipelines)*
+- Autonomy levels configurable per mission type *(✅ `mission_type_policies` table + resolver + UI on `/dashboard/settings/autonomy`)*
+- Creative learning shows measurable improvement *(pending — learning loop shipped in Phase 4 modules; improvement measurement requires production data)*
+- Production dashboard operational *(✅ `/dashboard/system-health` + `/vi/dashboard/system-health` bilingual, 6 KPIs, pending approvals, HarnessHealthCard)*
 
 ---
 

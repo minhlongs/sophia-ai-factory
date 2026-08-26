@@ -108,3 +108,72 @@ Tất cả kết quả dùng `Result<T, E>` — không throw exception qua biên
 - `AGENT_PROTOCOL.md` — Agent lifecycle (Definition → Context → Decision → Action → Result)
 - `seed/types/creative-domain.ts` line 373 — `AutonomyLevel` type
 - `tree/autonomy` — repo layer (underlying `getAutonomyConfig` / `setAutonomyLevel`)
+
+---
+
+## Phase 3 addition: mission-type autonomy policies / Thêm Phase 3: chính sách tự trị theo loại nhiệm vụ
+
+> Added 2026-08-27 (Sophia 2027 Phase 3 — Autonomous Factory).
+> Thêm ngày 2026-08-27 (Sophia 2027 Phase 3 — Nhà Máy Sản Xuất Tự Động).
+
+### Operator tiers L0–L3 / Các cấp điều khiển L0–L3
+
+The 5-level ladder above maps onto operator-facing tiers. Tier L2 (Supervised) is the **built-in default** when nothing is configured.
+Thang bậc 5 cấp ở trên ánh xạ lên các cấp điều khiển. Cấp **L2 (Giám sát)** là **mặc định** khi chưa cấu hình gì.
+
+| Operator tier / Cấp | Stored autonomy | Behavior / Hành vi runtime |
+|---|---|---|
+| **L0** Manual / Thủ công | 0 | No automatic runs — everything goes through the console. / Không chạy tự động — mọi việc qua điều khiển. |
+| **L1** Assisted / Hỗ trợ | 2 | Agents do read-only work; every draft needs human review. / AI chỉ làm việc đọc; mọi bản nháp cần người duyệt. |
+| **L2** Supervised / Giám sát (**default / mặc định**) | 3 | Agents run freely through content steps; **publish nodes always require approval**. / AI chạy tự do các bước nội dung; **các node đăng luôn cần duyệt**. |
+| **L3** Full auto / Tự động hoàn toàn | 4 | No approval; blocked by `max_cost_cents_per_run` + `max_auto_retries`. / Không cần duyệt; bị giới hạn bởi ngân sách và số lần thử lại. |
+
+### Storage / Lưu trữ
+
+`mission_type_policies` (migration `migrations/0257_production_factory.sql`), keyed by `(workspace_id, mission_type)`:
+
+```
+id TEXT PK · workspace_id · mission_type · autonomy_tier INTEGER DEFAULT 2
+require_publish_approval INTEGER DEFAULT 1 · max_cost_cents_per_run INTEGER NULL
+max_auto_retries INTEGER DEFAULT 3 · created_at · updated_at
+UNIQUE(workspace_id, mission_type)
+```
+
+Workspace-global policy lives in the same table with `mission_type = 'global'`. The `creative_missions.mission_type` column (new in 0257, `DEFAULT 'general'`) enables per-mission-type policies.
+
+### Effective autonomy resolver / Bộ giải quyết tự trị thực tế
+
+`src/tree/autonomy/effective-autonomy.ts` — `resolveEffectiveAutonomy({ workspaceId, missionType, missionAutonomyLevel })`. Priority chain:
+
+1. mission-type policy (`mission_type_policies` row for the exact type)
+2. workspace global policy (same table, `mission_type = 'global'`)
+3. legacy autonomy config (`getAutonomyConfig` — stored level passed through untouched, preserving today's deny-if-level<3 behavior)
+4. built-in default: **L2 Supervised, `require_publish_approval = 1`** (fail-closed)
+
+`buildEffectiveAutonomy` is pure and deterministic — identical inputs always yield an identical result. A mission-row `autonomy_level` only ever **caps** the stored level (fail-closed direction: never unlocks). Any read failure degrades down the chain and lands on the built-in default; the function never throws.
+
+Policy shape carried on `AgentContext.effectivePolicy` (optional field on `AgentContext` — backward compatible: `undefined` ⇒ old behavior byte-for-byte):
+
+```
+{ tier, storedLevel, requiresApproval(actionType), budgetCapCents, maxAutoRetries }
+```
+
+`requiresApproval` is `tier <= 2 && require_publish_approval && actionType.startsWith('publish')` — L3 full-auto never requires approval.
+
+### Enforcement / Thực thi
+
+`src/tree/agent-protocol/agent-executor.ts` — surgical edit only: the two `isGateAllowed` call sites now read `context.effectivePolicy` and delegate to `isGateAllowed` (defined at line 118). Signature `executeAgent(definition, context, registry)` is unchanged. Legacy paths without `effectivePolicy` keep today's exact behavior.
+
+### UI surface / Giao diện người dùng
+
+The existing `/dashboard/settings/autonomy` page is extended (no new page): `src/components/autonomy-settings.tsx` gains a per-mission-type table; `src/land/autonomy/actions.ts` gains `listMissionTypePoliciesAction` and `setMissionTypePolicyAction`.
+
+### Approval gate wiring / Kết nối cổng duyệt
+
+Publish nodes in a production graph (`src/forest/inngest/functions/production-graph-runner.ts`) call `requestApprovalAndAwait` when the effective policy requires approval (tiers ≤ L2). Full-auto tiers (L3) grant the `publish_content` token directly — no human gate. See [PRODUCTION_FACTORY.md](../PRODUCTION_FACTORY.md) §3 for the pause-and-await mechanism and the `*/15` timeout cron safety net.
+
+### Related / Liên quan
+
+- [PRODUCTION_FACTORY.md](../PRODUCTION_FACTORY.md) — production graph DAG, approval gates, retry/resume, dashboard
+- `tree/autonomy/policy-repo.ts` — `getMissionTypePolicy`, `listMissionTypePolicies`, `setMissionTypePolicy`, `deleteMissionTypePolicy`, `DEFAULT_MAX_AUTO_RETRIES`
+- `seed/types/production-factory.ts` — `AutonomyTier = 0|1|2|3`, `MissionTypePolicy`
