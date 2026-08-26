@@ -18,7 +18,7 @@ import type {
   AgentResult,
   CreativeIdentity,
 } from '@/seed/types/creative-domain';
-import { isActionAllowed } from '@/tree/autonomy/autonomy-repo';
+import { isActionAllowed, checkActionAllowed } from '@/tree/autonomy/autonomy-repo';
 import { recordProvenance } from '@/tree/provenance/index';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
@@ -110,6 +110,24 @@ export function buildAgentMessages(
 // ─── Executor ────────────────────────────────────────────────────────────────
 
 /**
+ * Autonomy gate for one action. When the context carries a resolved
+ * per-mission-type policy (AgentContext.effectivePolicy) the decision is made
+ * synchronously from its stored level; otherwise the legacy workspace-level
+ * gate is consulted, preserving prior behavior byte-for-byte.
+ */
+async function isGateAllowed(
+  context: AgentContext,
+  agentId: string,
+  actionType: string,
+): Promise<boolean> {
+  const policy = context.effectivePolicy;
+  if (policy) {
+    return checkActionAllowed(policy.storedLevel, actionType);
+  }
+  return isActionAllowed(context.workspaceId, actionType, agentId);
+}
+
+/**
  * Execute a single agent run.
  *
  * Flow:
@@ -133,11 +151,7 @@ export async function executeAgent(
   const correlationId = context.correlationId;
 
   // ── 1. Autonomy gate ──────────────────────────────────────────────────
-  const autonomyResult = await isActionAllowed(
-    context.workspaceId,
-    'execute_agent',
-    definition.id,
-  );
+  const autonomyResult = await isGateAllowed(context, definition.id, 'execute_agent');
   if (!autonomyResult) {
     logger.warn('[AgentExecutor] autonomy denied', { correlationId, agentId: definition.id });
     return failure(
@@ -156,11 +170,7 @@ export async function executeAgent(
   // run before any provider call.
   const approvedActionIds = new Set(context.approvedActionIds ?? []);
   for (const permission of definition.permissions) {
-    const allowed = await isActionAllowed(
-      context.workspaceId,
-      permission.tool,
-      definition.id,
-    );
+    const allowed = await isGateAllowed(context, definition.id, permission.tool);
     if (!allowed) {
       logger.warn('[AgentExecutor] tool permission denied', {
         correlationId,
