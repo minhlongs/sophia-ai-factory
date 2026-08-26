@@ -22,3 +22,7 @@ export * from './ids'
 // Overlapping names with './schema' are deduped by `export *`.
 export * from './entities-schema'
 export * from './schema'
+// Production Factory contracts (Phase 3) live one level up in
+// ../production-factory.ts; re-exported here so the Creative Economy barrel
+// remains the single import surface for mission/graph/run types.
+export * from '../production-factory'

@@ -2,7 +2,7 @@
  * Phase 1.6 — Inngest client merge guard.
  *
  * Proves the strangler consolidation holds: every legacy import path resolves
- * to the ONE canonical seed client, the merged schema carries all 33 event
+ * to the ONE canonical seed client, the merged schema carries all 36 event
  * keys, and the rich agent.mission.started payload is wired into the record.
  *
  * Uses the real exported instances — no mocks that fake the client.
@@ -20,7 +20,8 @@ import type { Events } from '@/seed/inngest/event-types';
 
 /**
  * Source of truth for the merged schema's event keys: the 28 former seed
- * events plus the 5 agent-mission events absorbed from the tree client.
+ * events, the 5 agent-mission events absorbed from the tree client, and the
+ * 3 production-graph events added for the autonomous production factory.
  */
 const EXPECTED_EVENT_KEYS = [
   'campaign.created',
@@ -56,6 +57,9 @@ const EXPECTED_EVENT_KEYS = [
   'agent.approval.resolved',
   'agent.mission.completed',
   'agent.mission.failed',
+  'production.graph.started',
+  'production.graph.completed',
+  'production.graph.failed',
 ] as const;
 
 type ExpectedKey = (typeof EXPECTED_EVENT_KEYS)[number];
@@ -90,12 +94,12 @@ describe('Inngest client merge (Phase 1.6)', () => {
   });
 
   describe('merged schema completeness', () => {
-    it('expected key list holds exactly 33 unique event keys', () => {
-      expect(EXPECTED_EVENT_KEYS).toHaveLength(33);
-      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(33);
+    it('expected key list holds exactly 36 unique event keys', () => {
+      expect(EXPECTED_EVENT_KEYS).toHaveLength(36);
+      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(36);
     });
 
-    it('Events record key set exactly matches the 33 expected keys', () => {
+    it('Events record key set exactly matches the 36 expected keys', () => {
       // Compile-time: keysAreExact is `true` only if keyof Events === expected.
       expect(keysAreExact).toBe(true);
     });

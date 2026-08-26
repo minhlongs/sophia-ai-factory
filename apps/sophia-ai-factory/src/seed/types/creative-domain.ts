@@ -402,6 +402,21 @@ export interface AgentContext {
   correlationId: string;
   /** Action ids the human has explicitly approved for this run. */
   approvedActionIds?: string[];
+  /**
+   * Resolved per-mission-type autonomy policy. When undefined the executor
+   * falls back to the legacy workspace-level autonomy gate (unchanged behavior).
+   */
+  effectivePolicy?: {
+    /** Operator-facing tier: L0 manual · L1 assisted · L2 supervised · L3 full auto. */
+    tier: 0 | 1 | 2 | 3;
+    /** Canonical stored autonomy level (0-4) enforced by the executor gate. */
+    storedLevel: AutonomyLevel;
+    /** Whether the given action/tool requires human approval before execution. */
+    requiresApproval: (actionType: string) => boolean;
+    /** Per-run budget cap in cents; null = uncapped. */
+    budgetCapCents: number | null;
+    maxAutoRetries: number;
+  };
 }
 
 export interface AgentDecision {

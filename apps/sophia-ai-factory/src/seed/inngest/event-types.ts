@@ -1,8 +1,10 @@
 /**
  * Merged Inngest event schema — canonical seed event contract.
  *
- * Union of the former seed and tree clients (33 event keys). Agent-mission
- * payload types live in ./agent-event-types. Reconciliation notes:
+ * Union of the former seed and tree clients plus the production-graph
+ * events (36 event keys). Agent-mission payload types live in
+ * ./agent-event-types; production-graph payload types live in
+ * @/seed/types/production-factory. Reconciliation notes:
  * `url_revenue.video.requested.userId` is optional (handler reads tenantId);
  * `agent.mission.started` carries the rich autonomy payload its sender emits.
  *
@@ -19,6 +21,11 @@ import type {
   AgentMissionCompletedData,
   AgentMissionFailedData,
 } from "./agent-event-types";
+import type {
+  ProductionGraphStartedEvent,
+  ProductionGraphCompletedEvent,
+  ProductionGraphFailedEvent,
+} from "@/seed/types/production-factory";
 
 type CampaignCreatedEvent = {
   data: {
@@ -157,8 +164,9 @@ type PayoutReconcileAlertEvent = {
 
 /**
  * Merged event record served by the single canonical Inngest client.
- * 33 keys: the 28 former seed events plus the 5 agent-mission events that
- * previously lived only in the tree client.
+ * 36 keys: the 28 former seed events, the 5 agent-mission events that
+ * previously lived only in the tree client, and the 3 production-graph
+ * events added for the autonomous production factory.
  */
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
@@ -194,4 +202,7 @@ export type Events = {
   "agent.approval.resolved": AgentApprovalResolvedData;
   "agent.mission.completed": AgentMissionCompletedData;
   "agent.mission.failed": AgentMissionFailedData;
+  "production.graph.started": ProductionGraphStartedEvent;
+  "production.graph.completed": ProductionGraphCompletedEvent;
+  "production.graph.failed": ProductionGraphFailedEvent;
 };
