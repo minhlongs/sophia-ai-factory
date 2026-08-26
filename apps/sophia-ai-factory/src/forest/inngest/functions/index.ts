@@ -51,6 +51,9 @@ export * from './pattern-detection-cron';
 export * from './auto-apply-monitor';
 // Phase 6: IP & Provenance Deep Dive
 export * from '@/forest/provenance/provenance-bridge';
+// Phase 3: Production Graph + Approval Timeout
+export * from './production-graph-runner';
+export * from './approval-timeout-cron';
 // payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/
 export { payoutBatcher } from '@/forest/jobs';
 export { pendingPromoterCron } from '@/forest/jobs';

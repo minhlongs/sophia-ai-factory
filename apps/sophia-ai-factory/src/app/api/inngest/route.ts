@@ -35,6 +35,8 @@ import {
   agentRollbackCron,
   provenanceBridge,
   marketSignalsIngestCron,
+  productionGraphRunner,
+  approvalTimeoutCron,
 } from "@/forest/inngest/functions/index";
 
 // Deprecated handlers (Phase 06 video_jobs chain + URL-to-Revenue) removed from
@@ -100,5 +102,8 @@ export const { GET, POST, PUT } = serve({
     agentApprovalHandler,
     agentRollbackCron,
     provenanceBridge,
+    // Phase 3: production graph runner + approval timeout cron
+    productionGraphRunner,
+    approvalTimeoutCron,
   ],
 });
