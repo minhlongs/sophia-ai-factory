@@ -5,7 +5,10 @@ export type AlertType =
   | 'webhook_delivery_failed'
   | 'quota_exceeded'
   | 'payment_failed'
-  | 'subscription_cancelled';
+  | 'subscription_cancelled'
+  | 'production.run_cancelled'
+  | 'production.approval_expired'
+  | 'production.budget_cap';
 
 /** Alert severity levels */
 export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';

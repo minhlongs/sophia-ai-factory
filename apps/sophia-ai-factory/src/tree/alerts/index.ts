@@ -11,4 +11,9 @@
  */
 export * from './realtime-alert-service';
 export * from './realtime-alert-types';
+export {
+  triggerRetriesExhaustedAlert,
+  triggerApprovalExpiredAlert,
+  triggerBudgetCapAlert,
+} from './production-alert-triggers';
 // quota-alert-handler module does not exist — removed
