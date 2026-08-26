@@ -22,6 +22,9 @@ import {
   createApproval,
   getApproval,
   resolveApproval,
+  markRunAwaitingApproval,
+  failAwaitingRun,
+  expireStaleApprovals,
 } from '../agent-run-repo';
 
 const now = Math.floor(Date.now() / 1000);
@@ -197,6 +200,177 @@ describe('agent-run-repo', () => {
       expect(result.ok).toBe(false);
       if (result.ok) return;
       expect(result.error.code).toBe('ALREADY_RESOLVED');
+    });
+  });
+
+  describe('markRunAwaitingApproval', () => {
+    it('returns flipped=true when the guarded UPDATE changes a row', async () => {
+      let capturedSql = '';
+      const runMock = vi.fn().mockResolvedValue({ meta: { changes: 1 } });
+      vi.mocked(getD1).mockReturnValue({
+        prepare: vi.fn().mockImplementation((sql: string) => {
+          capturedSql = sql;
+          return { bind: vi.fn().mockReturnValue({ run: runMock }) };
+        }),
+      } as unknown as ReturnType<typeof getD1>);
+
+      const result = await markRunAwaitingApproval('run-1');
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value.flipped).toBe(true);
+      expect(capturedSql).toContain("SET status = 'awaiting_approval', phase = 'awaiting_approval'");
+      expect(capturedSql).toContain("WHERE id = ? AND status = 'running'");
+    });
+
+    it('returns flipped=false when the run is not running (0 rows changed)', async () => {
+      vi.mocked(getD1).mockReturnValue({
+        prepare: vi.fn().mockReturnValue({
+          bind: vi.fn().mockReturnValue({ run: vi.fn().mockResolvedValue({ meta: { changes: 0 } }) }),
+        }),
+      } as unknown as ReturnType<typeof getD1>);
+
+      const result = await markRunAwaitingApproval('run-1');
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value.flipped).toBe(false);
+    });
+
+    it('returns DB_UNAVAILABLE when D1 is not available', async () => {
+      vi.mocked(getD1).mockReturnValue(null as unknown as ReturnType<typeof getD1>);
+      const result = await markRunAwaitingApproval('run-1');
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error.code).toBe('DB_UNAVAILABLE');
+    });
+  });
+
+  describe('failAwaitingRun', () => {
+    it('fails the run only when it is awaiting_approval (guarded)', async () => {
+      let capturedSql = '';
+      const bindMock = vi.fn().mockReturnValue({
+        run: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+      });
+      vi.mocked(getD1).mockReturnValue({
+        prepare: vi.fn().mockImplementation((sql: string) => {
+          capturedSql = sql;
+          return { bind: bindMock };
+        }),
+      } as unknown as ReturnType<typeof getD1>);
+
+      const result = await failAwaitingRun('run-1', { code: 'APPROVAL_REJECTED' }, 'rejected');
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value.failed).toBe(true);
+      expect(capturedSql).toContain("WHERE id = ? AND status = 'awaiting_approval'");
+      expect(bindMock).toHaveBeenCalledWith(
+        'rejected',
+        JSON.stringify({ code: 'APPROVAL_REJECTED' }),
+        expect.any(Number),
+        'run-1'
+      );
+    });
+
+    it('returns failed=false when the run already left awaiting_approval', async () => {
+      vi.mocked(getD1).mockReturnValue({
+        prepare: vi.fn().mockReturnValue({
+          bind: vi.fn().mockReturnValue({ run: vi.fn().mockResolvedValue({ meta: { changes: 0 } }) }),
+        }),
+      } as unknown as ReturnType<typeof getD1>);
+
+      const result = await failAwaitingRun('run-1', { code: 'APPROVAL_TIMEOUT' }, 'timeout');
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value.failed).toBe(false);
+    });
+  });
+
+  describe('expireStaleApprovals', () => {
+    const overdueRow = (id: string, runId: string): Record<string, unknown> => ({
+      id,
+      agent_run_id: runId,
+    });
+
+    function buildDb(overdue: Array<Record<string, unknown>>, flipChanges = 1) {
+      const runCalls: Array<{ sql: string; args: unknown[] }> = [];
+      const db = {
+        prepare: vi.fn().mockImplementation((sql: string) => ({
+          bind: vi.fn().mockImplementation((...args: unknown[]) => ({
+            all: vi.fn().mockResolvedValue({ results: overdue }),
+            run: vi.fn().mockImplementation(() => {
+              runCalls.push({ sql, args });
+              return Promise.resolve({ meta: { changes: flipChanges } });
+            }),
+          })),
+        })),
+      };
+      return { db, runCalls };
+    }
+
+    it('expires overdue pending approvals and fails their awaiting runs', async () => {
+      const { db, runCalls } = buildDb([overdueRow('appr-1', 'run-1'), overdueRow('appr-2', 'run-2')]);
+      vi.mocked(getD1).mockReturnValue(db as unknown as ReturnType<typeof getD1>);
+
+      const result = await expireStaleApprovals('2026-08-26T12:00:00.000Z');
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value.expiredCount).toBe(2);
+      expect(result.value.expired).toEqual([
+        { id: 'appr-1', agentRunId: 'run-1' },
+        { id: 'appr-2', agentRunId: 'run-2' },
+      ]);
+
+      const approvalFlips = runCalls.filter((c) => c.sql.includes('UPDATE agent_approvals'));
+      const runFails = runCalls.filter((c) => c.sql.includes('UPDATE agent_runs'));
+      expect(approvalFlips).toHaveLength(2);
+      expect(runFails).toHaveLength(2);
+      expect(approvalFlips[0]?.sql).toContain("SET status = 'expired'");
+      expect(approvalFlips[0]?.sql).toContain("WHERE id = ? AND status = 'pending'");
+      expect(runFails[0]?.sql).toContain("WHERE id = ? AND status = 'awaiting_approval'");
+      const errorJson = JSON.parse(runFails[0]?.args[1] as string) as Record<string, unknown>;
+      expect(errorJson.code).toBe('APPROVAL_TIMEOUT');
+      expect(errorJson.approvalId).toBe('appr-1');
+    });
+
+    it('returns zero when nothing is overdue', async () => {
+      const { db, runCalls } = buildDb([]);
+      vi.mocked(getD1).mockReturnValue(db as unknown as ReturnType<typeof getD1>);
+
+      const result = await expireStaleApprovals();
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value.expiredCount).toBe(0);
+      expect(result.value.expired).toEqual([]);
+      expect(runCalls).toHaveLength(0);
+    });
+
+    it('skips approvals that lost the guarded flip (concurrent resolve)', async () => {
+      const { db, runCalls } = buildDb([overdueRow('appr-1', 'run-1')], 0);
+      vi.mocked(getD1).mockReturnValue(db as unknown as ReturnType<typeof getD1>);
+
+      const result = await expireStaleApprovals();
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value.expiredCount).toBe(0);
+      // No run fail issued when the approval flip changed 0 rows.
+      expect(runCalls.filter((c) => c.sql.includes('UPDATE agent_runs'))).toHaveLength(0);
+    });
+
+    it('rejects an invalid nowIso', async () => {
+      const { db } = buildDb([]);
+      vi.mocked(getD1).mockReturnValue(db as unknown as ReturnType<typeof getD1>);
+
+      const result = await expireStaleApprovals('not-a-date');
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error.code).toBe('INVALID_TIME');
+    });
+
+    it('returns DB_UNAVAILABLE when D1 is not available', async () => {
+      vi.mocked(getD1).mockReturnValue(null as unknown as ReturnType<typeof getD1>);
+      const result = await expireStaleApprovals();
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error.code).toBe('DB_UNAVAILABLE');
     });
   });
 });

@@ -1,9 +1,12 @@
 /**
- * Tests for agent-rollback-cron — scan window, retry cap, atomic claim,
- * payload fidelity, snake_case alias, inputJson parsing, null D1,
- * empty scan, multi-tenant safety.
+ * Tests for agent-rollback-cron — backoff-aware retry scan, terminal
+ * RETRIES_EXHAUSTED flip, atomic claim (double-scan safety), payload
+ * fidelity, inputJson parsing, null D1, empty scan, multi-tenant safety.
  *
- * Mocks at the getD1 level to test actual SQL parameter binding.
+ * Mocks at the getD1 level with a STATEFUL fake that simulates the guarded
+ * flip (UPDATE ... WHERE status='failed' only changes rows still failed), so
+ * double-scan behavior is tested against the real SQL semantics the cron
+ * relies on.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -41,29 +44,136 @@ vi.mock('@/seed/utils/logger-utility', () => ({
 const { agentRollbackCron } = await import('../agent-rollback-cron');
 
 // Extract the handler from the InngestFunction wrapper (same pattern as executor tests)
-type CronHandler = () => Promise<{ scanned: number; retried: number }>;
+type CronResult = { scanned: number; retried: number; cancelled: number };
+type CronHandler = () => Promise<CronResult>;
 function getHandler(): CronHandler {
   return (agentRollbackCron as unknown as { _handler: CronHandler })._handler;
 }
 
-// ── Test helpers ─────────────────────────────────────────────────────────────
+// ── Stateful fake D1 ─────────────────────────────────────────────────────────
 
-const MAX_RETRIES = 3;
+interface FakeRunRow {
+  id: string;
+  agent_id: string;
+  mission_id: string | null;
+  workspace_id: string;
+  autonomy_level: number;
+  retry_count: number;
+  ended_at: number | null; // epoch seconds
+  error_message: string;
+  input_json: string | null;
+  status: string;
+  phase: string;
+  error_json: string | null;
+  mission_type: string | null; // from LEFT JOIN creative_missions
+}
 
-/** Build a mock D1 database object that tracks prepare().bind() args. */
-function buildMockD1(rows: Record<string, unknown>[], updateChanges = 1) {
-  const bindArgs: unknown[][] = [];
-  const stmt = {
-    bind: vi.fn((...args: unknown[]) => {
-      bindArgs.push(args);
-      return {
-        all: vi.fn().mockResolvedValue({ results: rows }),
-        run: vi.fn().mockResolvedValue({ meta: { changes: updateChanges } }),
-      };
-    }),
+interface FakePolicyRow {
+  workspace_id: string;
+  mission_type: string;
+  max_auto_retries: number;
+}
+
+interface FakeD1 {
+  db: { prepare: (sql: string) => unknown };
+  runs: FakeRunRow[];
+  policies: FakePolicyRow[];
+  /** SQL texts executed, in order — for assertion on statement shape. */
+  executedSql: string[];
+}
+
+function buildFakeD1(
+  runs: FakeRunRow[],
+  policies: FakePolicyRow[] = [],
+  /** Force every UPDATE .run() to report this change count (race simulation). */
+  forcedChangeCount?: number
+): FakeD1 {
+  const executedSql: string[] = [];
+
+  const makeStmt = (sql: string) => {
+    const executeAll = async (bound: unknown[]) => {
+      executedSql.push(sql);
+      if (sql.includes('FROM mission_type_policies')) {
+        return { results: policies.map((p) => ({
+          workspaceId: p.workspace_id,
+          missionType: p.mission_type,
+          maxAutoRetries: p.max_auto_retries,
+        })) };
+      }
+      // SELECT failed runs — simulate the WHERE/ORDER/LIMIT of the real SQL
+      const limit = typeof bound[0] === 'number' ? bound[0] : 100;
+      const results = runs
+        .filter((r) => r.status === 'failed')
+        .sort((a, b) => (a.ended_at ?? 0) - (b.ended_at ?? 0))
+        .slice(0, limit)
+        .map((r) => ({
+          id: r.id,
+          agentId: r.agent_id,
+          missionId: r.mission_id,
+          workspaceId: r.workspace_id,
+          autonomyLevel: r.autonomy_level,
+          retryCount: r.retry_count,
+          endedAt: r.ended_at,
+          errorMessage: r.error_message,
+          inputJson: r.input_json,
+          missionType: r.mission_type,
+        }));
+      return { results };
+    };
+    const executeRun = async (bound: unknown[]) => {
+      executedSql.push(sql);
+      if (forcedChangeCount !== undefined) return { meta: { changes: forcedChangeCount } };
+      // Guarded UPDATE: id is always the LAST bound param in both UPDATEs
+      const id = bound[bound.length - 1] as string;
+      const row = runs.find((r) => r.id === id);
+      if (!row || row.status !== 'failed') return { meta: { changes: 0 } };
+      if (sql.includes("status = 'running'")) {
+        row.status = 'running';
+        row.phase = 'retrying';
+        row.retry_count += 1;
+      } else if (sql.includes("status = 'cancelled'")) {
+        row.status = 'cancelled';
+        row.phase = 'cancelled';
+        row.error_json = bound[0] as string;
+        row.ended_at = bound[1] as number;
+      }
+      return { meta: { changes: 1 } };
+    };
+    // Real D1 allows .all()/.run() directly OR after .bind(); mirror both.
+    return {
+      all: () => executeAll([]),
+      run: () => executeRun([]),
+      bind: (...bound: unknown[]) => ({
+        all: () => executeAll(bound),
+        run: () => executeRun(bound),
+      }),
+    };
   };
-  const db = { prepare: vi.fn(() => stmt) };
-  return { db, bindArgs, stmt };
+
+  return {
+    db: { prepare: (sql: string) => makeStmt(sql) },
+    runs,
+    policies,
+    executedSql,
+  };
+}
+
+function makeRun(overrides: Partial<FakeRunRow> & { id: string }): FakeRunRow {
+  return {
+    agent_id: 'agent_1',
+    mission_id: 'm1',
+    workspace_id: 'ws_1',
+    autonomy_level: 2,
+    retry_count: 0,
+    ended_at: Math.floor(Date.now() / 1000) - 60 * 60, // failed 1h ago → always due
+    error_message: 'boom',
+    input_json: null,
+    status: 'failed',
+    phase: 'failed',
+    error_json: null,
+    mission_type: null,
+    ...overrides,
+  };
 }
 
 // ── Tests ────────────────────────────────────────────────────────────────────
@@ -74,60 +184,159 @@ describe('agentRollbackCron', () => {
     mockInngestSend.mockResolvedValue(undefined);
   });
 
-  it('scan window filter — bound param = Date.now() - 30min (tolerance)', async () => {
-    const { db, bindArgs } = buildMockD1([]);
-    mockGetD1.mockResolvedValue(db);
+  it('SELECT has no fixed time window — only status filter + LIMIT', async () => {
+    const fake = buildFakeD1([]);
+    mockGetD1.mockResolvedValue(fake.db);
 
     await getHandler()();
 
-    // First prepare().bind() call is the SELECT query — check bound params
-    expect(bindArgs[0]).toBeDefined();
-    const [windowCutoff, retryCap] = bindArgs[0] as [number, number];
-
-    // windowCutoff = floor((Date.now() - 30min) / 1000), within 2s tolerance
-    const expected = Math.floor((Date.now() - 30 * 60 * 1000) / 1000);
-    expect(windowCutoff).toBeGreaterThanOrEqual(expected - 2);
-    expect(windowCutoff).toBeLessThanOrEqual(expected + 2);
-
-    // retry cap = MAX_RETRIES (3)
-    expect(retryCap).toBe(MAX_RETRIES);
+    const select = fake.executedSql.find((s) => s.includes('FROM agent_runs'));
+    expect(select).toBeDefined();
+    expect(select).toContain("status = 'failed'");
+    expect(select).toContain('LIMIT ?');
+    // The old hard 30-minute cutoff must be gone
+    expect(select).not.toContain('ended_at >=');
+    // No SQL math — backoff is computed in JS
+    expect(select).not.toMatch(/pow|POWER|EXP\(/i);
   });
 
-  it('retry cap filter — retry_count < 3 bound param', async () => {
-    const { db, bindArgs } = buildMockD1([]);
-    mockGetD1.mockResolvedValue(db);
+  it('old run (>30 min) is retried — no longer dropped by a scan window', async () => {
+    const twoHoursAgo = Math.floor(Date.now() / 1000) - 2 * 60 * 60;
+    const fake = buildFakeD1([makeRun({ id: 'run_old', ended_at: twoHoursAgo, retry_count: 0 })]);
+    mockGetD1.mockResolvedValue(fake.db);
 
-    await getHandler()();
+    const result = await getHandler()();
 
-    const [, retryCap] = bindArgs[0] as [number, number];
-    expect(retryCap).toBe(3);
+    expect(result).toEqual({ scanned: 1, retried: 1, cancelled: 0 });
+    expect(mockInngestSend).toHaveBeenCalledTimes(1);
+    const dispatched = mockInngestSend.mock.calls[0][0] as { data: Record<string, unknown> };
+    expect(dispatched.data.runId).toBe('run_old');
   });
 
-  it('atomic claim — meta.changes === 0 → row skipped, no dispatch', async () => {
-    const row = { id: 'run_1', agentId: 'agent_1', missionId: 'm1', workspaceId: 'ws_1', autonomyLevel: 2, retryCount: 0, errorMessage: 'fail', inputJson: null };
-    const { db } = buildMockD1([row], 0); // UPDATE returns 0 changes
+  it('fresh failure inside backoff window → not retried this scan', async () => {
+    const oneMinuteAgo = Math.floor(Date.now() / 1000) - 60; // retryCount 0 → 5 min backoff
+    const fake = buildFakeD1([makeRun({ id: 'run_fresh', ended_at: oneMinuteAgo, retry_count: 0 })]);
+    mockGetD1.mockResolvedValue(fake.db);
+
+    const result = await getHandler()();
+
+    expect(result).toEqual({ scanned: 1, retried: 0, cancelled: 0 });
+    expect(mockInngestSend).not.toHaveBeenCalled();
+    expect(fake.runs[0].status).toBe('failed'); // untouched
+  });
+
+  it('backoff grows with retryCount — 10-min-old run due at retryCount 1, not at 2', async () => {
+    const tenMinAgo = Math.floor(Date.now() / 1000) - 10 * 60 - 5; // just past 10 min
+    const due = buildFakeD1([makeRun({ id: 'run_due', ended_at: tenMinAgo, retry_count: 1 })]);
+    mockGetD1.mockResolvedValue(due.db);
+    expect((await getHandler()()).retried).toBe(1);
+
+    mockInngestSend.mockClear();
+    const notDue = buildFakeD1([makeRun({ id: 'run_not_due', ended_at: tenMinAgo, retry_count: 2 })]);
+    mockGetD1.mockResolvedValue(notDue.db);
+    expect((await getHandler()()).retried).toBe(0);
+    expect(mockInngestSend).not.toHaveBeenCalled();
+  });
+
+  it('retries exhausted → terminal cancelled with RETRIES_EXHAUSTED error_json', async () => {
+    const fake = buildFakeD1([
+      makeRun({ id: 'run_done', retry_count: 3, error_message: 'still broken' }),
+    ]);
+    mockGetD1.mockResolvedValue(fake.db);
+
+    const result = await getHandler()();
+
+    expect(result).toEqual({ scanned: 1, retried: 0, cancelled: 1 });
+    expect(mockInngestSend).not.toHaveBeenCalled();
+    const row = fake.runs[0];
+    expect(row.status).toBe('cancelled');
+    expect(row.phase).toBe('cancelled');
+    const errorJson = JSON.parse(row.error_json ?? '{}') as Record<string, unknown>;
+    expect(errorJson.code).toBe('RETRIES_EXHAUSTED');
+    expect(errorJson.retryCount).toBe(3);
+    expect(errorJson.maxAutoRetries).toBe(3);
+    expect(errorJson.lastError).toBe('still broken');
+  });
+
+  it('policy max_auto_retries overrides the default cap', async () => {
+    // retry_count 1 with policy cap 1 → exhausted even though default cap is 3
+    const fake = buildFakeD1(
+      [makeRun({ id: 'run_pol', retry_count: 1, mission_type: 'video' })],
+      [{ workspace_id: 'ws_1', mission_type: 'video', max_auto_retries: 1 }]
+    );
+    mockGetD1.mockResolvedValue(fake.db);
+
+    const result = await getHandler()();
+
+    expect(result.cancelled).toBe(1);
+    expect(result.retried).toBe(0);
+    const errorJson = JSON.parse(fake.runs[0].error_json ?? '{}') as Record<string, unknown>;
+    expect(errorJson.code).toBe('RETRIES_EXHAUSTED');
+    expect(errorJson.maxAutoRetries).toBe(1);
+  });
+
+  it('policy table unreadable → falls back to default cap without crashing', async () => {
+    const db = {
+      prepare: (sql: string) => ({
+        bind: () => ({
+          all: async () => {
+            if (sql.includes('mission_type_policies')) throw new Error('no such table');
+            return { results: [] };
+          },
+          run: async () => ({ meta: { changes: 0 } }),
+        }),
+      }),
+    };
     mockGetD1.mockResolvedValue(db);
 
     const result = await getHandler()();
 
-    expect(result.scanned).toBe(1);
-    expect(result.retried).toBe(0);
+    expect(result).toEqual({ scanned: 0, retried: 0, cancelled: 0 });
+  });
+
+  it('double scan → no double dispatch (guarded flip WHERE status=failed)', async () => {
+    const fake = buildFakeD1([makeRun({ id: 'run_dup', retry_count: 0 })]);
+    mockGetD1.mockResolvedValue(fake.db);
+
+    const first = await getHandler()();
+    expect(first.retried).toBe(1);
+    expect(mockInngestSend).toHaveBeenCalledTimes(1);
+
+    // Second scan over the SAME stateful DB: row is now 'running', so the
+    // SELECT no longer returns it and no second dispatch can happen.
+    const second = await getHandler()();
+    expect(second).toEqual({ scanned: 0, retried: 0, cancelled: 0 });
+    expect(mockInngestSend).toHaveBeenCalledTimes(1);
+    expect(fake.runs[0].retry_count).toBe(1); // incremented exactly once
+  });
+
+  it('concurrent claim race — guarded UPDATE reports 0 changes → no dispatch', async () => {
+    // Simulates another scan flipping the row between SELECT and UPDATE: the
+    // guarded UPDATE (WHERE id AND status='failed') reports meta.changes === 0
+    // and the cron must skip dispatch for that row.
+    const fake = buildFakeD1([makeRun({ id: 'run_race' })], [], 0);
+    mockGetD1.mockResolvedValue(fake.db);
+
+    const result = await getHandler()();
+
+    expect(result).toEqual({ scanned: 1, retried: 0, cancelled: 0 });
     expect(mockInngestSend).not.toHaveBeenCalled();
   });
 
   it('payload fidelity — dispatched event has all 6 fields including inputJson', async () => {
-    const row = {
-      id: 'run_full',
-      agentId: 'agent_full',
-      missionId: 'm_full',
-      workspaceId: 'ws_full',
-      autonomyLevel: 3,
-      retryCount: 1,
-      errorMessage: 'timeout',
-      inputJson: '{"prompt":"Generate ad copy","model":"gpt-4"}',
-    };
-    const { db } = buildMockD1([row]);
-    mockGetD1.mockResolvedValue(db);
+    const fake = buildFakeD1([
+      makeRun({
+        id: 'run_full',
+        agent_id: 'agent_full',
+        mission_id: 'm_full',
+        workspace_id: 'ws_full',
+        autonomy_level: 3,
+        retry_count: 1,
+        error_message: 'timeout',
+        input_json: '{"prompt":"Generate ad copy","model":"Claude-Fable"}',
+      }),
+    ]);
+    mockGetD1.mockResolvedValue(fake.db);
 
     await getHandler()();
 
@@ -145,107 +354,88 @@ describe('agentRollbackCron', () => {
         missionId: 'm_full',
         workspaceId: 'ws_full',
         autonomyLevel: 3,
-        inputJson: { prompt: 'Generate ad copy', model: 'gpt-4' },
+        inputJson: { prompt: 'Generate ad copy', model: 'Claude-Fable' },
       })
     );
   });
 
-  it('snake_case alias — D1 rows with snake_case keys are read as camelCase', async () => {
-    // Simulate D1 returning raw snake_case column names (as if AS alias wasn't applied).
-    // The cron's SELECT AS aliases ensure code can read camelCase keys.
-    const row = {
-      id: 'run_alias',
-      agentId: 'agent_alias',  // aliased via SELECT AS agentId
-      missionId: 'm_alias',    // aliased via SELECT AS missionId
-      workspaceId: 'ws_alias', // aliased via SELECT AS workspaceId
-      autonomyLevel: 1,        // aliased via SELECT AS autonomyLevel
-      retryCount: 0,
-      errorMessage: 'crash',
-      inputJson: null,
-    };
-    const { db } = buildMockD1([row]);
-    mockGetD1.mockResolvedValue(db);
-
-    await getHandler()();
-
-    const dispatched = mockInngestSend.mock.calls[0][0] as {
-      data: Record<string, unknown>;
-    };
-
-    // All camelCase keys must be populated (not undefined)
-    expect(dispatched.data.agentId).toBe('agent_alias');
-    expect(dispatched.data.missionId).toBe('m_alias');
-    expect(dispatched.data.workspaceId).toBe('ws_alias');
-    expect(dispatched.data.autonomyLevel).toBe(1);
-  });
-
   it('inputJson parsed from JSON string in D1 row to object in dispatch', async () => {
-    const row = {
-      id: 'run_json',
-      agentId: 'agent_json',
-      missionId: 'm_json',
-      workspaceId: 'ws_json',
-      autonomyLevel: 2,
-      retryCount: 0,
-      errorMessage: 'fail',
-      inputJson: '{"prompt":"Hello","temperature":0.7}', // TEXT column → JSON string
-    };
-    const { db } = buildMockD1([row]);
-    mockGetD1.mockResolvedValue(db);
+    const fake = buildFakeD1([
+      makeRun({ id: 'run_json', input_json: '{"prompt":"Hello","temperature":0.7}' }),
+    ]);
+    mockGetD1.mockResolvedValue(fake.db);
 
     await getHandler()();
 
-    const dispatched = mockInngestSend.mock.calls[0][0] as {
-      data: Record<string, unknown>;
-    };
-
-    // inputJson must be a parsed object, not the raw string
+    const dispatched = mockInngestSend.mock.calls[0][0] as { data: Record<string, unknown> };
     expect(typeof dispatched.data.inputJson).toBe('object');
     expect(dispatched.data.inputJson).toEqual({ prompt: 'Hello', temperature: 0.7 });
   });
 
-  it('D1 null → { scanned: 0, retried: 0 }', async () => {
+  it('malformed inputJson degrades to undefined instead of crashing the scan', async () => {
+    const fake = buildFakeD1([makeRun({ id: 'run_bad_json', input_json: '{not-json' })]);
+    mockGetD1.mockResolvedValue(fake.db);
+
+    const result = await getHandler()();
+
+    expect(result.retried).toBe(1);
+    const dispatched = mockInngestSend.mock.calls[0][0] as { data: Record<string, unknown> };
+    expect(dispatched.data.inputJson).toBeUndefined();
+  });
+
+  it('run without mission_id is not dispatched (executor requires a mission)', async () => {
+    const fake = buildFakeD1([makeRun({ id: 'run_orphan', mission_id: null })]);
+    mockGetD1.mockResolvedValue(fake.db);
+
+    const result = await getHandler()();
+
+    expect(result).toEqual({ scanned: 1, retried: 0, cancelled: 0 });
+    expect(mockInngestSend).not.toHaveBeenCalled();
+    expect(fake.runs[0].status).toBe('failed'); // left failed, surfaced via warn log
+  });
+
+  it('NULL ended_at is treated as immediately due (row never stranded)', async () => {
+    const fake = buildFakeD1([makeRun({ id: 'run_null_ended', ended_at: null })]);
+    mockGetD1.mockResolvedValue(fake.db);
+
+    const result = await getHandler()();
+
+    expect(result.retried).toBe(1);
+  });
+
+  it('D1 null → { scanned: 0, retried: 0, cancelled: 0 }', async () => {
     mockGetD1.mockResolvedValue(null);
 
     const result = await getHandler()();
 
-    expect(result).toEqual({ scanned: 0, retried: 0 });
+    expect(result).toEqual({ scanned: 0, retried: 0, cancelled: 0 });
     expect(mockInngestSend).not.toHaveBeenCalled();
   });
 
-  it('empty scan window → { scanned: 0, retried: 0 }', async () => {
-    const { db } = buildMockD1([]); // no failed runs
-    mockGetD1.mockResolvedValue(db);
+  it('empty scan → { scanned: 0, retried: 0, cancelled: 0 }', async () => {
+    const fake = buildFakeD1([]);
+    mockGetD1.mockResolvedValue(fake.db);
 
     const result = await getHandler()();
 
-    expect(result).toEqual({ scanned: 0, retried: 0 });
+    expect(result).toEqual({ scanned: 0, retried: 0, cancelled: 0 });
     expect(mockInngestSend).not.toHaveBeenCalled();
   });
 
-  it('multi-tenant safety — row workspace_id=A only dispatched with workspace_id=A', async () => {
-    const rowA = {
-      id: 'run_a',
-      agentId: 'agent_a',
-      missionId: 'm_a',
-      workspaceId: 'ws_TENANT_A',
-      autonomyLevel: 2,
-      retryCount: 0,
-      errorMessage: 'err_a',
-      inputJson: null,
-    };
-    const rowB = {
-      id: 'run_b',
-      agentId: 'agent_b',
-      missionId: 'm_b',
-      workspaceId: 'ws_TENANT_B',
-      autonomyLevel: 3,
-      retryCount: 1,
-      errorMessage: 'err_b',
-      inputJson: '{"prompt":"B prompt"}',
-    };
-    const { db } = buildMockD1([rowA, rowB]);
-    mockGetD1.mockResolvedValue(db);
+  it('multi-tenant safety — each row dispatched with its own workspace payload', async () => {
+    const fake = buildFakeD1([
+      makeRun({ id: 'run_a', agent_id: 'agent_a', mission_id: 'm_a', workspace_id: 'ws_TENANT_A' }),
+      makeRun({
+        id: 'run_b',
+        agent_id: 'agent_b',
+        mission_id: 'm_b',
+        workspace_id: 'ws_TENANT_B',
+        autonomy_level: 3,
+        retry_count: 1,
+        input_json: '{"prompt":"B prompt"}',
+      }),
+    ]);
+    mockGetD1.mockResolvedValue(fake.db);
 
     const result = await getHandler()();
 
@@ -265,5 +455,23 @@ describe('agentRollbackCron', () => {
     expect(eventB.data.runId).toBe('run_b');
     expect(eventB.data.agentId).toBe('agent_b');
     expect(eventB.data.missionId).toBe('m_b');
+  });
+
+  it('mixed batch — due retried, not-due skipped, exhausted cancelled in one scan', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const fake = buildFakeD1([
+      makeRun({ id: 'run_due', ended_at: nowSec - 3600, retry_count: 0 }),
+      makeRun({ id: 'run_backoff', ended_at: nowSec - 60, retry_count: 0 }),
+      makeRun({ id: 'run_exhausted', ended_at: nowSec - 3600, retry_count: 3 }),
+    ]);
+    mockGetD1.mockResolvedValue(fake.db);
+
+    const result = await getHandler()();
+
+    expect(result).toEqual({ scanned: 3, retried: 1, cancelled: 1 });
+    expect(mockInngestSend).toHaveBeenCalledTimes(1);
+    expect((mockInngestSend.mock.calls[0][0] as { data: Record<string, unknown> }).data.runId).toBe('run_due');
+    expect(fake.runs.find((r) => r.id === 'run_backoff')?.status).toBe('failed');
+    expect(fake.runs.find((r) => r.id === 'run_exhausted')?.status).toBe('cancelled');
   });
 });
