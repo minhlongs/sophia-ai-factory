@@ -34,6 +34,7 @@ import {
   agentApprovalHandler,
   agentRollbackCron,
   provenanceBridge,
+  marketSignalsIngestCron,
 } from "@/forest/inngest/functions/index";
 
 // Deprecated handlers (Phase 06 video_jobs chain + URL-to-Revenue) removed from
@@ -85,6 +86,8 @@ export const { GET, POST, PUT } = serve({
     autoApplyMonitor,
     // Phase 3: YouTube Content Pipeline — strategy → script → SEO → quality → publish
     youtubeContentPipeline,
+    // Phase 2: Market Signals ingestion — hourly cron
+    marketSignalsIngestCron,
     // Agent protocol loop (mission lifecycle + approval + provenance).
     // Production senders exist for both trigger events: `agent.mission.started`
     // is emitted by land/creative-mission/actions.ts on mission creation, and

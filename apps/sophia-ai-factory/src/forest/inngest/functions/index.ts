@@ -9,6 +9,8 @@ export * from './account-delete-finalize-email';
 export * from './analytics-sync';
 export * from './auto-discover-affiliates';
 export * from './batch-video-fanout';
+// Phase 2: Market Signals ingestion
+export * from './market-signals-ingest-cron';
 export * from './conversion-to-ledger';
 // Helpers moved to land/video/generation/
 export * from '@/land/video/generation/generate-campaign-db';
