@@ -1,4 +1,4 @@
-import type { PlatformAdapter, PublishParams, PublishResult, PublishStatus } from '@/tree/publishing/platform-adapter';
+import type { PlatformAdapter, PublishParams, PublishResult, PublishStatus } from './platform-adapter';
 import { logger } from '@/seed/utils/logger-utility';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';

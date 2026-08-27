@@ -32,6 +32,8 @@ export interface DashboardSummary {
   netCents: number;
   eventCount: number;
   windowDays: number;
+  /** ROI percent ((revenue - cost) / cost * 100); null when cost <= 0. */
+  roiPct?: number | null;
 }
 
 /** One aggregated asset row for the top-assets table. */

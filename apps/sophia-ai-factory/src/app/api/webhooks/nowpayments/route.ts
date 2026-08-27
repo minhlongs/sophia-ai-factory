@@ -7,7 +7,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { parseIpnWebhook, lookupInvoice } from '@/tree/clients/nowpayments-client'
 import { processNowPaymentsIpn } from '@/land/billing/nowpayments-ipn-handlers'
 import { processTopupIpn } from '@/land/billing/overage-topup'
-import { ipnPayloadSchema } from '@/land/billing/ipn-payload-schema'
+import { confirmCommercePayment } from '@/land/commerce/commerce-payment'
+import { ipnPayloadSchema, type IpnPayload } from '@/land/billing/ipn-payload-schema'
 import { logger } from '@/seed/utils/logger-utility'
 import { captureTierUpgraded } from '@/tree/signals/posthog-capture'
 import { track } from '@/tree/signals/track'
@@ -45,6 +46,42 @@ export async function GET() {
     timestamp: new Date().toISOString(),
     methods: ['POST'],
   })
+}
+
+/**
+ * Route confirmed/finished IPNs whose order_id matches a commerce order to
+ * the commerce confirmation chain. Returns a response when the IPN was
+ * handled (commerce success or hard error), or null when the order is not a
+ * commerce order so the standard tier-activation chain processes it.
+ */
+async function routeCommerceIpn(ipn: IpnPayload): Promise<NextResponse | null> {
+if (!ipn.order_id || (ipn.payment_status !== 'confirmed' && ipn.payment_status !== 'finished')) {
+return null
+}
+
+const commerceResult = await confirmCommercePayment({
+orderId: ipn.order_id,
+paymentId: ipn.payment_id,
+paymentStatus: ipn.payment_status,
+paidAmount: ipn.actually_paid,
+paidCurrency: ipn.pay_currency,
+})
+
+if (commerceResult.ok) {
+return NextResponse.json({ received: true, commerce: true })
+}
+
+// Not a commerce order — fall through to the standard IPN chain.
+if (commerceResult.error.code === 'ORDER_NOT_FOUND') {
+return null
+}
+
+logger.error('[NOWPayments Webhook] Commerce IPN processing failed', new Error(commerceResult.error.message), {
+payment_id: ipn.payment_id,
+payment_status: ipn.payment_status,
+order_id: ipn.order_id,
+})
+return NextResponse.json({ error: commerceResult.error.message }, { status: 500 })
 }
 
 export async function POST(request: NextRequest) {
@@ -138,6 +175,12 @@ return NextResponse.json({ error: topupResult.message }, { status: 500 })
 
 return NextResponse.json({ received: true })
 }
+
+// Route digital-product commerce orders (order_id present in commerce_orders)
+// to the commerce confirmation chain. The protected tier-activation flow
+// below is untouched for every non-commerce order.
+const commerceResponse = await routeCommerceIpn(ipn)
+if (commerceResponse) return commerceResponse
 
 // Process the IPN event (subscriptions, one-time purchases)
 const result = await processNowPaymentsIpn(ipn)

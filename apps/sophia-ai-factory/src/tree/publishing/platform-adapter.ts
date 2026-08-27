@@ -1,4 +1,4 @@
-export type Platform = 'youtube' | 'tiktok' | 'instagram';
+export type Platform = 'youtube' | 'tiktok' | 'instagram' | 'facebook' | 'x' | 'whatsapp' | 'blog';
 
 export interface PublishParams {
   videoUrl: string;

@@ -2,7 +2,7 @@
  * Merged Inngest event schema — canonical seed event contract.
  *
  * Union of the former seed and tree clients plus the production-graph
- * events (36 event keys). Agent-mission payload types live in
+ * events (38 event keys). Agent-mission payload types live in
  * ./agent-event-types; production-graph payload types live in
  * @/seed/types/production-factory. Reconciliation notes:
  * `url_revenue.video.requested.userId` is optional (handler reads tenantId);
@@ -136,7 +136,35 @@ type YouTubeContentPipelineRequestedEvent = {
 
 type ConversionCreatedEvent = { data: { conversionEventId: string; tenantId: string } };
 
+type DistributionPlanCreatedEvent = { data: { planId: string; workspaceId: string } };
+
 type CommissionMaturedEvent = { data: { updatedCount: number; promotedAt: number } };
+
+type RevenueEventRecordedEvent = {
+  data: {
+    source: 'ad-revenue' | 'sponsorship' | 'affiliate' | 'commerce';
+    externalId: string;
+    amountCents: number;
+    currency: string;
+    workspaceId: string;
+    assetId?: string;
+    projectId?: string;
+    recordedAtMs: number;
+    metadata?: Record<string, unknown>;
+  };
+};
+
+type CommercePaymentConfirmedEvent = {
+  data: {
+    orderId: string;
+    productId: string;
+    workspaceId: string;
+    paymentId: string;
+    /** Order total in INTEGER cents. */
+    amountCents: number;
+    currency: string;
+  };
+};
 
 type PayoutBatchedEvent = {
   data: {
@@ -164,9 +192,11 @@ type PayoutReconcileAlertEvent = {
 
 /**
  * Merged event record served by the single canonical Inngest client.
- * 36 keys: the 28 former seed events, the 5 agent-mission events that
- * previously lived only in the tree client, and the 3 production-graph
- * events added for the autonomous production factory.
+ * 39 keys: the 28 former seed events, the 5 agent-mission events that
+ * previously lived only in the tree client, the 3 production-graph
+ * events added for the autonomous production factory, the
+ * revenue/event.recorded event added for revenue ingestion, and the
+ * commerce/payment.confirmed event added for digital product commerce.
  */
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
@@ -191,7 +221,10 @@ export type Events = {
   "repurpose/clip.generate": RepurposeClipGenerateEvent;
   "analytics/sync.requested": AnalyticsSyncRequestedEvent;
   "conversion.created": ConversionCreatedEvent;
+  "distribution/plan.created": DistributionPlanCreatedEvent;
   "commission.matured": CommissionMaturedEvent;
+  "revenue/event.recorded": RevenueEventRecordedEvent;
+  "commerce/payment.confirmed": CommercePaymentConfirmedEvent;
   "payout.batched": PayoutBatchedEvent;
   "payout.confirmed": PayoutConfirmedEvent;
   "payout.reconcile.alert": PayoutReconcileAlertEvent;

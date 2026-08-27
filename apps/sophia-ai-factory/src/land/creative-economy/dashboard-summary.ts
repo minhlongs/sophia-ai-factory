@@ -18,6 +18,7 @@ import { createServerClient } from '@/seed/db/client';
 import { success, failure } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
+import { computeRoi } from './roi-modeling';
 import type { DashboardSummary, DashboardResult } from './types';
 
 const schema = z.object({
@@ -86,6 +87,7 @@ export async function getDashboardSummary(
       netCents,
       eventCount,
       windowDays: 30,
+      roiPct: computeRoi(revenueCents, costCents),
     });
   } catch (err) {
     const error = toError(err);

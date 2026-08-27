@@ -12,6 +12,7 @@ import { AssetTable } from '../asset-table';
 import { VelocityChart } from '../velocity-chart';
 import { MemoryList } from '../memory-list';
 import { PlaybookCards } from '../playbook-cards';
+import { InvestmentAdvice } from '../investment-advice';
 import type {
   DashboardSummary,
   AssetPerformanceRow,
@@ -19,6 +20,7 @@ import type {
   MemoryInsight,
   PlaybookHealthRow,
 } from '@/land/creative-economy/types';
+import type { InvestmentAdviceRow } from '@/land/creative-economy/investment-advisor-math';
 
 const t = (key: string) => key;
 
@@ -161,5 +163,49 @@ describe('PlaybookCards', () => {
   it('renders empty state when no playbooks installed', () => {
     render(<PlaybookCards rows={[]} t={t} />);
     expect(screen.getByText('noPlaybooks')).toBeDefined();
+  });
+});
+
+describe('InvestmentAdvice', () => {
+  const adviceRow = (overrides: Partial<InvestmentAdviceRow> = {}): InvestmentAdviceRow => ({
+    entityId: 'a1',
+    entityType: 'asset',
+    channel: 'youtube',
+    revenueCents: 3500,
+    costCents: 1000,
+    roiPct: 250,
+    velocityScore: 60,
+    roiScore: 100,
+    compositeScore: 84,
+    recommendation: 'scale_up',
+    reasons: ['POSITIVE_ROI', 'FAST_LEARNING'],
+    ...overrides,
+  });
+
+  it('renders ranked rows with recommendation badge and reasons', () => {
+    render(<InvestmentAdvice rows={[adviceRow()]} t={t} />);
+    expect(screen.getByText('investmentTitle')).toBeDefined();
+    expect(screen.getByText('a1')).toBeDefined();
+    expect(screen.getByText('recommendation_scale_up')).toBeDefined();
+    expect(screen.getByText('84')).toBeDefined();
+    expect(screen.getByText('250.0%')).toBeDefined();
+    expect(screen.getByText('60')).toBeDefined();
+    expect(screen.getByText('reason_POSITIVE_ROI, reason_FAST_LEARNING')).toBeDefined();
+  });
+
+  it('renders em-dash placeholders for null ROI and velocity', () => {
+    render(
+      <InvestmentAdvice
+        rows={[adviceRow({ roiPct: null, velocityScore: null, recommendation: 'insufficient_data', reasons: ['NO_COST_DATA', 'NO_VELOCITY_DATA'] })]}
+        t={t}
+      />,
+    );
+    expect(screen.getAllByText('—')).toHaveLength(2);
+    expect(screen.getByText('recommendation_insufficient_data')).toBeDefined();
+  });
+
+  it('renders empty state when no investment data', () => {
+    render(<InvestmentAdvice rows={[]} t={t} />);
+    expect(screen.getByText('noInvestments')).toBeDefined();
   });
 });

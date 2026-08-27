@@ -18,6 +18,13 @@ vi.mock('@/land/billing/nowpayments-ipn-handlers', () => ({
   processNowPaymentsIpn: mockProcessIpn,
 }))
 
+vi.mock('@/land/commerce/commerce-payment', () => ({
+  confirmCommercePayment: vi.fn().mockResolvedValue({
+    ok: false,
+    error: { code: 'ORDER_NOT_FOUND', message: 'Not a commerce order' },
+  }),
+}))
+
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: mockLogger,
 }))

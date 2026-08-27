@@ -8,7 +8,9 @@ export * from './account-delete-finalize-cron';
 export * from './account-delete-finalize-email';
 export * from './analytics-sync';
 export * from './auto-discover-affiliates';
+export * from './audience-analysis-cron';
 export * from './batch-video-fanout';
+export * from './distribution-fanout';
 // Phase 2: Market Signals ingestion
 export * from './market-signals-ingest-cron';
 export * from './conversion-to-ledger';
@@ -54,6 +56,10 @@ export * from '@/forest/provenance/provenance-bridge';
 // Phase 3: Production Graph + Approval Timeout
 export * from './production-graph-runner';
 export * from './approval-timeout-cron';
+// Distribution OS Phase 3: Revenue Events ingestion
+export * from './revenue-events-ingest';
+// Distribution OS Phase 4: Commerce digital fulfillment
+export * from './commerce-fulfillment';
 // payout/sop/storage-tracker — canonical source is forest/jobs/ and forest/sops/
 export { payoutBatcher } from '@/forest/jobs';
 export { pendingPromoterCron } from '@/forest/jobs';

@@ -10,3 +10,6 @@ export { getAssetPerformance } from './asset-performance';
 export { getCreativeMemory } from './memory-insights';
 export { getPlaybookHealth } from './playbook-health';
 export { getLearningVelocity } from './learning-velocity';
+export { getInvestmentAdvice } from './investment-advisor';
+export * from './roi-modeling';
+export * from './investment-advisor-math';

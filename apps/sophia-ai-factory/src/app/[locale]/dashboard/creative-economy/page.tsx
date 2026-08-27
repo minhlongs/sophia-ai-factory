@@ -19,18 +19,21 @@ import {
   getCreativeMemory,
   getPlaybookHealth,
   getLearningVelocity,
+  getInvestmentAdvice,
   type DashboardResult,
   type DashboardSummary,
   type AssetPerformanceRow,
   type MemoryInsight,
   type PlaybookHealthRow,
   type VelocityPoint,
+  type InvestmentAdviceRow,
 } from '@/land/creative-economy';
 import { SummaryCards } from './summary-cards';
 import { AssetTable } from './asset-table';
 import { MemoryList } from './memory-list';
 import { PlaybookCards } from './playbook-cards';
 import { VelocityChart } from './velocity-chart';
+import { InvestmentAdvice } from './investment-advice';
 
 function SectionError({ message, t }: { message: string; t: (key: string) => string }) {
   return (
@@ -76,13 +79,15 @@ export default async function CreativeEconomyPage() {
 
   const workspaceId = membership.org_id;
 
-  const [summaryRes, assetsRes, memoryRes, playbookRes, velocityRes] = await Promise.all([
-    getDashboardSummary({ workspaceId }),
-    getAssetPerformance({ workspaceId, limit: 10 }),
-    getCreativeMemory({ workspaceId, limit: 5 }),
-    getPlaybookHealth({ workspaceId }),
-    getLearningVelocity({ workspaceId }),
-  ]);
+  const [summaryRes, assetsRes, memoryRes, playbookRes, velocityRes, investmentRes] =
+    await Promise.all([
+      getDashboardSummary({ workspaceId }),
+      getAssetPerformance({ workspaceId, limit: 10 }),
+      getCreativeMemory({ workspaceId, limit: 5 }),
+      getPlaybookHealth({ workspaceId }),
+      getLearningVelocity({ workspaceId }),
+      getInvestmentAdvice({ workspaceId }),
+    ]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
@@ -96,6 +101,7 @@ export default async function CreativeEconomyPage() {
       <VelocitySection result={velocityRes} t={(k, v) => t(k, v)} />
       <MemorySection result={memoryRes} t={(k, v) => t(k, v)} />
       <PlaybookSection result={playbookRes} t={(k, v) => t(k, v)} />
+      <InvestmentSection result={investmentRes} t={(k, v) => t(k, v)} />
     </div>
   );
 }
@@ -167,4 +173,15 @@ function PlaybookSection({
       <PlaybookCards rows={result.value} t={t} />
     </div>
   );
+}
+
+function InvestmentSection({
+  result,
+  t,
+}: {
+  result: DashboardResult<InvestmentAdviceRow[]>;
+  t: TFn;
+}) {
+  if (!result.ok) return <SectionError message={result.error.message} t={t} />;
+  return <InvestmentAdvice rows={result.value} t={t} />;
 }

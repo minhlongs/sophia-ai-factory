@@ -331,10 +331,13 @@ const eslintConfig = defineConfig([
 // inngest functions — orchestrate land domain services (mekong-exempt)
 "src/forest/inngest/functions/analytics-sync.ts",
 "src/forest/inngest/functions/batch-video-fanout.ts",
+"src/forest/inngest/functions/distribution-fanout.ts",
 "src/forest/inngest/functions/generate-campaign.ts",
 "src/forest/inngest/functions/publish-execute.ts",
 "src/forest/inngest/functions/repurpose-analyze.ts",
 "src/forest/inngest/functions/repurpose-clip-generate.ts",
+"src/forest/inngest/functions/revenue-events-ingest.ts",
+"src/forest/inngest/functions/commerce-fulfillment.ts",
 "src/forest/inngest/functions/video-compose.ts",
 "src/forest/inngest/functions/video-generate.ts",
 "src/forest/inngest/functions/video-publish.ts",

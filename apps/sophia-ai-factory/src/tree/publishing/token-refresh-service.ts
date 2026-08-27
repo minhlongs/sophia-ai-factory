@@ -4,8 +4,11 @@ import { youtubeAdapter } from './youtube-adapter';
 import { tiktokAdapter } from './tiktok-adapter';
 import { instagramAdapter } from './instagram-adapter';
 import { logger } from '@/seed/utils/logger-utility';
-import type { Platform, PlatformAdapter } from './platform-adapter';
+import type { Platform } from '@/seed/types/channel-provider';
+import type { PlatformAdapter } from './platform-adapter';
 
+// OAuth token refresh applies only to the OAuth-based publishing platforms.
+// Facebook page tokens are refreshed via distribution-registry.refreshPlatformToken.
 const adapters: Record<Platform, PlatformAdapter> = {
   youtube: youtubeAdapter,
   tiktok: tiktokAdapter,
