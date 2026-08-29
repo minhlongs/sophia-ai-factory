@@ -1,6 +1,34 @@
 # Project Changelog
 
-**Last Updated:** 2026-08-25 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 6dd1401e
+**Last Updated:** 2026-08-29 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 48d8810ae
+
+---
+
+## 2026-08-29 (SOPHIA 2027 KILLER TEST) — end-to-end acceptance flight for the creative-mission-full graph
+
+**Severity: P1 ACCEPTANCE | Type: Test + 1 small delta | Status: COMPLETE (uncommitted)**
+
+A deterministic e2e flight (`src/forest/inngest/functions/__tests__/killer-mission-e2e.test.ts`) drives the single production-graph-runner engine against the SEA AI-native entrepreneurship media business input: `budgetCents: 50_000`, `autonomyLevel: 2`, channels `[youtube, tiktok, x]`, languages `[vi, en]`, audience `founders + operators`, geography `Southeast Asia`. Asserts all 10 success criteria explicitly.
+
+**What changed:**
+
+- **D1 — Second approval gate (SCOPE DECISION).** The shipped `creative-mission-full` template keeps **one** publish node (`human-approval`, `isPublishNode: true`; `distribution-plan` is NOT marked). The killer test's graph definition marks **both** `human-approval` and `distribution-plan` as `isPublishNode: true`, so the engine's per-node gate loop fires twice. The runner's gate logic is already generic (inline per iteration, `production-graph-runner.ts:272–317`) — zero runner change. Kept out of the shipped template deliberately: workspaces already seeded with the 1-gate template; `ensureTemplatesSeeded` skips existing slugs. Two gates is a **test-scoped expression**, not a template change. A product decision to ship 2 gates lives in `templates.ts` + a migration note — separate from this flight.
+- **D4 — Creative Memory write-back (the only production delta, ~10 lines).** The runner's terminal-success path (after `completeRun`, before `advanceMissionToReview`) now calls the existing `persistAgentLearning` adapter from `./agent-context` (same forest→forest import already present at runner:62 for `loadMissionMemories`): `persistAgentLearning({ workspaceId, missionId, agentId: sinkAgentId, runId: graphRunId, confidence, output: sinkOutput })`. Scope is `campaign` / `scopeId: missionId` — the adapter writes that scope internally (agent-context.ts:86–87); the invalid `'mission'` value never appears. Non-fatal by construction (adapter has its own try/catch + `logger.warn`); deliberately OUTSIDE the checkpoint stream — never written into `node_states_json` or sentEvent payloads — so byte-identical determinism (minus `agentRunId`) is preserved.
+- **D6 — Budget guard exercised.** `budgetCents: 50_000` (cents) flows from the mission row; the runner's `BUDGET_EXCEEDED` guard (`production-graph-runner.ts:320–330`) fires per node before execution. The killer flight includes a dedicated budget-exceeded case asserting the run fails at the mathematically correct node with `errorCode: 'BUDGET_EXCEEDED'` and partial spend recorded.
+- **D7 — Secret hygiene.** No provider is hardcoded into the domain; providers flow only through `buildProviders` (the BYOK factory, `forest/ai/provider-factory.ts:90`). The killer flight walks every `setNodeStates` checkpoint batch and every sentEvent payload and asserts no `apiKey|api_key|token|secret` field with a non-empty string value reaches the executor.
+- **Determinism.** `deterministic: true` → fixed clock `1_700_000_000_000`; two flights byte-identical minus `agentRunId`.
+- **Resumability.** Persisted completed stages are skipped on resume; the killer flight asserts this across the 2-gate path.
+- **Status choreography.** Two consecutive publish nodes produce exactly 4 approval-flip status transitions: `running → awaiting_approval (G1) → running → awaiting_approval (G2) → running`, with exactly 2 `requestApprovalAndAwait` calls.
+
+**Scope decisions recorded:**
+- "Edit" in the acceptance criteria is satisfied by inspect + cancel + re-run with modified input (no in-place node-edit primitive exists; building one is out of killer-test scope).
+- "Publication adapter" is asserted at the registry seam (`distribution-registry.ts:50 executePublish`) — the graph does NOT add a publish-execution node; real publishing stays in the distribution fanout (separation of concerns; protected flows untouched).
+- "Experiment" is asserted at the `performance` / `learning` node outputs — the existing A/B machinery (`forest/ab`, `sop_experiments`) is NOT re-wired into the graph (criterion 7: no duplicate machinery).
+
+**Escrow / open items:**
+- One pre-existing non-blocking lint warning remains: `getCapabilities(model: string)` carries an unused argument (baseline pattern, not introduced by this flight). No new TODOs created.
+
+**Verification:** `npm run build` 0 errors; `npm test` green; lint count frozen; no new `eslint-disable`; no `:any`; no `console.*` in touched files; zero changes to Setup Wizard, Telegram webhook, or NOWPayments IPN; zero new migrations (D4 reuses the existing `creative_memory` table).
 
 ---
 
