@@ -13,6 +13,8 @@
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
+import { getUserTier } from '@/seed/db/get-user-tier';
+import { canUsePhase4Feature, type FeatureGateResult } from '@/seed/config/tiers/phase4-feature-gate';
 import { success, failure } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -68,6 +70,13 @@ export async function getInvestmentAdvice(
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+
+    // Phase 4 feature gate: investment advisor requires ENTERPRISE+
+    const tier = await getUserTier(user.id);
+    const gate: FeatureGateResult = canUsePhase4Feature(tier, 'enable_investment_advisor');
+    if (!gate.allowed) {
+      return failure({ code: 'FORBIDDEN', message: gate.message || 'Investment advisor requires ENTERPRISE tier or higher' });
     }
 
     const db = createServerClient();

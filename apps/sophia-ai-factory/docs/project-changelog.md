@@ -1,6 +1,60 @@
 # Project Changelog
 
-**Last Updated:** 2026-08-24 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 6dd1401e
+**Last Updated:** 2026-08-25 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 6dd1401e
+
+---
+
+## 2026-08-25 (Phase 6 Billing Consolidation — SOPHIA 2027) — Phase 4 feature gates wired into 4 land Server Actions
+
+**Severity: P1 ENHANCEMENT | Type: Tier Gating | Status: COMPLETE (uncommitted, tests green)**
+
+Phase 4 introduced Distribution OS + Commerce + Creative Economy behind per-feature flags.
+Phase 6 wires those flags into the four land Server Actions that customers actually call, so a
+BASIC-tier customer gets a typed `FORBIDDEN` instead of silently hitting the catalog.
+
+**What changed:**
+- **`src/seed/config/tiers/tier-configs.ts`** — added 5 Phase 4 features to PREMIUM/ENTERPRISE/MASTER
+  tier feature sets: `enable_distribution_os`, `enable_commerce_catalog`, `enable_creative_economy`,
+  `enable_investment_advisor`, `enable_audience_targeting`. `tierHasFeature(tier, feature)` now
+  resolves them; BASIC has none.
+- **`src/seed/types/index.ts`** — added `Phase4Feature` union (`enable_distribution_os`,
+  `enable_commerce_catalog`, `enable_creative_economy`, `enable_investment_advisor`,
+  `enable_audience_targeting`) to `FeatureFlag`.
+- **`src/seed/config/tiers/phase4-feature-gate.ts`** (new) — single entry point
+  `canUsePhase4Feature(userTier, feature): FeatureGateResult` with `allowed`, `requiredTier`,
+  `message`. Plus `getPhase4FeaturesForTier()` and `getMinimumTierForPhase4Feature()`.
+- **`src/seed/config/flags.ts`** — added the 5 Phase 4 flags to `FEATURE_FLAGS` (with `requiredTier`)
+  and `DEFAULT_FLAGS` (all `enabled: true`).
+- **`src/land/creative-economy/investment-advisor.ts`** — gated by `enable_investment_advisor`
+  (ENTERPRISE+). BASIC → `FORBIDDEN`; unauthenticated → `NOT_AUTHENTICATED`.
+- **`src/land/commerce/actions/{create,list,update}-product.ts`** — each gated by
+  `enable_commerce_catalog` (PREMIUM+). Auth check moved before the gate so the gate runs only
+  for authenticated callers.
+- **`src/land/commerce/__tests__/tier-gating.test.ts`** (new, 16 tests) — all four tiers covered
+  per action using the in-memory D1 shim (`freshDb` / `makeD1` / `mockGetD1`); deterministic,
+  no live platform data.
+- **`src/land/creative-economy/__tests__/investment-advisor.test.ts`** — 11 tests including the
+  ENTERPRISE gate (BASIC forbidden, PREMIUM forbidden, ENTERPRISE/MASTER allowed).
+
+**Tier mapping (source of truth):**
+| Feature | Minimum tier |
+|---|---|
+| `enable_commerce_catalog` | PREMIUM |
+| `enable_creative_economy` | PREMIUM |
+| `enable_distribution_os` | PREMIUM |
+| `enable_audience_targeting` | PREMIUM |
+| `enable_investment_advisor` | ENTERPRISE |
+
+**Verification:**
+- `npm run typecheck` → 0 errors
+- Commerce tier-gating (16) + investment-advisor (11) → all pass
+- `npm run build` → exit 0
+- Lint: 11 pre-existing errors (all in `src/land/refunds/` — unrelated to this change); **0 new**
+
+**Escrow / TODO:**
+- Phase 4 `enable_distribution_os` and `enable_audience_targeting` flags are defined and
+  resolvable by the gate but not yet wired into any land action — gated actions will be wired in
+  the Distribution OS workstream.
 
 ---
 

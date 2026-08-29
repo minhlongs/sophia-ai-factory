@@ -24,7 +24,13 @@ export type FeatureFlag =
   | "enable_api_integrations"
   | "enable_auto_update"
   | "enable_early_access"
-  | "enable_ui_redesign";
+  | "enable_ui_redesign"
+  // Phase 4 features (Distribution + Commerce + Creative Economics)
+  | "enable_distribution_os"
+  | "enable_commerce_catalog"
+  | "enable_creative_economy"
+  | "enable_investment_advisor"
+  | "enable_audience_targeting";
 
 // User representation (mock for now, will integrate with auth later)
 export interface User {

@@ -45,7 +45,7 @@ The routing decision is made by `routeCommerceIpn` in the webhook route. A non-c
 | `commerce-order.ts` | Order lifecycle: `createOrder`, `markOrderPaid`, `markOrderFulfilled` |
 | `commerce-payment.ts` | `confirmCommercePayment` — the IPN→order bridge |
 | `digital-fulfillment.ts` | `fulfillOrder` — exactly-once grant |
-| `actions/` | Server Actions (`create-product`, `list-products`, `update-product`) |
+| `actions/` | Server Actions (`create-product`, `list-products`, `update-product`) — **all gated by `enable_commerce_catalog` (PREMIUM+)** |
 | `index.ts` | Public API barrel (internal helpers NOT re-exported) |
 
 Forest orchestration: `src/forest/inngest/functions/commerce-fulfillment.ts` (forest→land orchestration exception).
@@ -105,6 +105,31 @@ Deterministic fixtures via the in-memory D1 shim (`freshDb` / `makeD1`). No live
 - `commerce-order.test.ts` — lifecycle transitions, idempotent `markOrderPaid`
 - `commerce-payment.test.ts` — IPN bridge, `ORDER_NOT_FOUND` fall-through, replay safety
 - `digital-fulfillment.test.ts` — exactly-once grant, duplicate delivery
+
+## Tier Gating / Gating theo gói (Phase 6)
+
+All three commerce Server Actions are gated by the **`enable_commerce_catalog`** feature flag:
+
+| Action | Feature Flag | Required Tier |
+|--------|--------------|---------------|
+| `createProductAction` | `enable_commerce_catalog` | PREMIUM+ |
+| `listCommerceProducts` | `enable_commerce_catalog` | PREMIUM+ |
+| `updateCommerceProduct` | `enable_commerce_catalog` | PREMIUM+ |
+
+The gate is enforced in `src/seed/config/tiers/phase4-feature-gate.ts` via `canUsePhase4Feature(tier, 'enable_commerce_catalog')`. The gate returns:
+- `allowed: true` for PREMIUM, ENTERPRISE, MASTER tiers
+- `allowed: false, requiredTier: 'PREMIUM', message: 'Commerce catalog requires PREMIUM tier or higher'` for BASIC tier
+
+**Vietnamese:** Ba Server Actions thương mại đều bị gating bởi feature flag `enable_commerce_catalog`. Chỉ PREMIUM, ENTERPRISE, MASTER mới được truy cập. BASIC sẽ nhận lỗi FORBIDDEN với thông báo yêu cầu PREMIUM+.
+
+## Testing Coverage / Độ bao phủ kiểm thử (Phase 6)
+
+Tier-gating tests in `src/land/commerce/__tests__/tier-gating.test.ts` (16 tests):
+- `createProductAction`: 6 tests (unauthenticated, BASIC forbidden, PREMIUM allowed, ENTERPRISE/MASTER allowed, validation error, workspace access denial)
+- `listCommerceProducts`: 5 tests (unauthenticated, BASIC forbidden, PREMIUM allowed, ENTERPRISE/MASTER allowed, validation error)
+- `updateCommerceProduct`: 5 tests (unauthenticated, BASIC forbidden, PREMIUM allowed, ENTERPRISE/MASTER allowed, validation error)
+
+All tests use the in-memory D1 shim (`freshDb` / `makeD1` / `mockGetD1`) for deterministic execution without live platform data.
 
 ## Non-Goals / Không làm (Phase 4)
 

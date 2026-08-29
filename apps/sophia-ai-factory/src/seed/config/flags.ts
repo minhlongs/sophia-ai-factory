@@ -68,6 +68,37 @@ export const FEATURE_FLAGS: Record<FeatureFlag, FlagConfig> = {
     defaultEnabled: true,
     requiredTier: "BASIC",
   },
+  // Phase 4 features (Distribution + Commerce + Creative Economics)
+  enable_distribution_os: {
+    name: "Distribution OS",
+    description: "Enable multi-channel content distribution and scheduling",
+    defaultEnabled: true,
+    requiredTier: "PREMIUM",
+  },
+  enable_commerce_catalog: {
+    name: "Commerce Catalog",
+    description: "Enable digital product catalog and sales",
+    defaultEnabled: true,
+    requiredTier: "PREMIUM",
+  },
+  enable_creative_economy: {
+    name: "Creative Economy",
+    description: "Enable creative economy analytics and revenue tracking",
+    defaultEnabled: true,
+    requiredTier: "PREMIUM",
+  },
+  enable_investment_advisor: {
+    name: "Investment Advisor",
+    description: "Enable AI-powered investment recommendations for content assets",
+    defaultEnabled: true,
+    requiredTier: "ENTERPRISE",
+  },
+  enable_audience_targeting: {
+    name: "Audience Targeting",
+    description: "Enable audience segmentation and targeting features",
+    defaultEnabled: true,
+    requiredTier: "PREMIUM",
+  },
 };
 
 const DEFAULT_FLAGS: FeatureFlagConfig = {
@@ -98,6 +129,27 @@ const DEFAULT_FLAGS: FeatureFlagConfig = {
   enable_ui_redesign: {
     enabled: true,
     description: "Enable the new two-tone design system — amber for landing pages, indigo for dashboard",
+  },
+  // Phase 4 features
+  enable_distribution_os: {
+    enabled: true,
+    description: "Enable multi-channel content distribution and scheduling",
+  },
+  enable_commerce_catalog: {
+    enabled: true,
+    description: "Enable digital product catalog and sales",
+  },
+  enable_creative_economy: {
+    enabled: true,
+    description: "Enable creative economy analytics and revenue tracking",
+  },
+  enable_investment_advisor: {
+    enabled: true,
+    description: "Enable AI-powered investment recommendations for content assets",
+  },
+  enable_audience_targeting: {
+    enabled: true,
+    description: "Enable audience segmentation and targeting features",
   },
 };
 

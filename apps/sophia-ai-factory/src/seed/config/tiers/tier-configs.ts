@@ -44,6 +44,11 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
       'enable_affiliate_engine',
       'enable_roi_calculator',
       'enable_api_integrations', // API access + webhooks unlocked at PREMIUM (Growth) tier
+      // Phase 4 features
+      'enable_distribution_os',
+      'enable_commerce_catalog',
+      'enable_creative_economy',
+      'enable_audience_targeting',
     ] satisfies FeatureFlag[],
     limits: {
       youtubeChannels: UNIFIED_TIERS.PREMIUM.youtubeChannels,
@@ -66,6 +71,12 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
       'enable_roi_calculator',
       'enable_api_integrations',
       'enable_auto_update',
+      // Phase 4 features
+      'enable_distribution_os',
+      'enable_commerce_catalog',
+      'enable_creative_economy',
+      'enable_investment_advisor',
+      'enable_audience_targeting',
     ] satisfies FeatureFlag[],
     limits: {
       youtubeChannels: UNIFIED_TIERS.ENTERPRISE.youtubeChannels,
@@ -91,6 +102,12 @@ export const TIER_CONFIGS: Record<Tier, TierConfig> = {
       'enable_api_integrations',
       'enable_auto_update',
       'enable_early_access',
+      // Phase 4 features
+      'enable_distribution_os',
+      'enable_commerce_catalog',
+      'enable_creative_economy',
+      'enable_investment_advisor',
+      'enable_audience_targeting',
     ] satisfies FeatureFlag[],
     limits: {
       youtubeChannels: UNIFIED_TIERS.MASTER.youtubeChannels,

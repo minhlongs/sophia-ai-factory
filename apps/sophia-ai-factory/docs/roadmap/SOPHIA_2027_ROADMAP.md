@@ -17,6 +17,8 @@
 | Phase 1.5 | Provider Abstraction — kept `seed/ai` + `tree/ai-providers` distinct; dead `tree/ai-providers` module deprecated (registry entry, removable 2026-09-06) | ✅ Shipped `47a4a80bd` (2026-08-23) — see `docs/roadmap/PHASE1-5-PLAN.md` |
 | Phase 1.6 | Workflow consolidation — merged duplicate seed/tree Inngest clients into canonical `seed/inngest/` (33-key schema; tree shim deprecated, removable 2026-09-20) | ✅ Shipped `ba900e0c` (2026-08-23) — see `docs/roadmap/PHASE1-6-PLAN.md` |
 | Phase 2 | Mission lifecycle + Agent Protocol — single transition authority in `tree/mission` (optimistic concurrency, named execution-start rule), executor emits completed/failed and hands success to human review, all four agent functions registered (inert until provider wiring) | ✅ Shipped `6dd1401e` — see `docs/architecture-decisions/ADR-mission-state-machine.md` |
+| **Phase 4 — Distribution + Commerce + Creative Economy** | Distribution OS (channel adapters + registry), Commerce (digital product catalog + NOWPayments IPN routing), Creative Economy (dashboard + revenue ingestion) | ✅ Shipped `fd37f353` (2026-08-27) — 8546 tests, COMMERCE.md |
+| **Phase 6 — Billing Consolidation** | Phase 4 feature gates wired into 4 land Server Actions (investment-advisor + 3 commerce actions); 16 tier-gating tests; 27 total new tests | ✅ Shipped (2026-08-25) — typecheck/build/test green |
 
 ## Phases
 

@@ -9,9 +9,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { freshDb, makeD1 } from '@/__tests__/integration/shared-d1-shim';
 
-const { mockCreateServerClient, mockGetCurrentUser } = vi.hoisted(() => ({
+const { mockCreateServerClient, mockGetCurrentUser, mockGetUserTier } = vi.hoisted(() => ({
   mockCreateServerClient: vi.fn(),
   mockGetCurrentUser: vi.fn(),
+  mockGetUserTier: vi.fn(),
 }));
 vi.mock('@/seed/db/client', () => ({
   createServerClient: mockCreateServerClient,
@@ -19,6 +20,9 @@ vi.mock('@/seed/db/client', () => ({
 }));
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: mockGetCurrentUser,
+}));
+vi.mock('@/seed/db/get-user-tier', () => ({
+  getUserTier: mockGetUserTier,
 }));
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
@@ -82,6 +86,7 @@ function insertEvent(
 beforeEach(() => {
   vi.clearAllMocks();
   mockGetCurrentUser.mockResolvedValue(mockUser);
+  mockGetUserTier.mockResolvedValue('ENTERPRISE');
 });
 
 describe('getInvestmentAdvice', () => {
@@ -192,5 +197,30 @@ describe('getInvestmentAdvice', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value).toEqual([]);
+  });
+
+  it('rejects BASIC tier users (investment advisor is ENTERPRISE+)', async () => {
+    mockGetUserTier.mockResolvedValueOnce('BASIC');
+    setupDb();
+    const result = await getInvestmentAdvice({ workspaceId: 'ws-1' });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('FORBIDDEN');
+  });
+
+  it('rejects PREMIUM tier users (investment advisor requires ENTERPRISE+)', async () => {
+    mockGetUserTier.mockResolvedValueOnce('PREMIUM');
+    setupDb();
+    const result = await getInvestmentAdvice({ workspaceId: 'ws-1' });
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('FORBIDDEN');
+  });
+
+  it('allows ENTERPRISE and MASTER tier users', async () => {
+    for (const tier of ['ENTERPRISE', 'MASTER'] as const) {
+      mockGetUserTier.mockResolvedValueOnce(tier);
+      const db = setupDb();
+      const result = await getInvestmentAdvice({ workspaceId: 'ws-1' });
+      expect(result.ok).toBe(true);
+    }
   });
 });
