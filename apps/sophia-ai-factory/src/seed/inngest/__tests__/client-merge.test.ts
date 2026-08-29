@@ -2,7 +2,7 @@
  * Phase 1.6 — Inngest client merge guard.
  *
  * Proves the strangler consolidation holds: every legacy import path resolves
- * to the ONE canonical seed client, the merged schema carries all 39 event
+ * to the ONE canonical seed client, the merged schema carries all 40 event
  * keys, and the rich agent.mission.started payload is wired into the record.
  *
  * Uses the real exported instances — no mocks that fake the client.
@@ -21,9 +21,10 @@ import type { Events } from '@/seed/inngest/event-types';
 /**
  * Source of truth for the merged schema's event keys: the 28 former seed
  * events, the 5 agent-mission events absorbed from the tree client, the
- * 3 production-graph events added for the autonomous production factory,
- * the revenue/event.recorded event added for revenue ingestion, and the
- * commerce/payment.confirmed event added for digital product commerce.
+ * 4 production-graph events added for the autonomous production factory
+ * (started/completed/failed/cancelled), the revenue/event.recorded event
+ * added for revenue ingestion, and the commerce/payment.confirmed event
+ * added for digital product commerce.
  */
 const EXPECTED_EVENT_KEYS = [
   'campaign.created',
@@ -65,6 +66,7 @@ const EXPECTED_EVENT_KEYS = [
   'production.graph.started',
   'production.graph.completed',
   'production.graph.failed',
+  'production.graph.cancelled',
 ] as const;
 
 type ExpectedKey = (typeof EXPECTED_EVENT_KEYS)[number];
@@ -99,12 +101,12 @@ describe('Inngest client merge (Phase 1.6)', () => {
   });
 
   describe('merged schema completeness', () => {
-    it('expected key list holds exactly 39 unique event keys', () => {
-      expect(EXPECTED_EVENT_KEYS).toHaveLength(39);
-      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(39);
+    it('expected key list holds exactly 40 unique event keys', () => {
+      expect(EXPECTED_EVENT_KEYS).toHaveLength(40);
+      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(40);
     });
 
-    it('Events record key set exactly matches the 39 expected keys', () => {
+    it('Events record key set exactly matches the 40 expected keys', () => {
       // Compile-time: keysAreExact is `true` only if keyof Events === expected.
       expect(keysAreExact).toBe(true);
     });
