@@ -171,6 +171,25 @@ export async function createMission(
       userId: user.id,
     });
 
+    // ── SIDE-CHANNEL: mission.created (Q9/Q10 funnel entry) — non-fatal.
+    // Fires AFTER the row commit so the event never appears if creation
+    // rolled back. Telemetry failure must not abort the 201 path.
+    try {
+      const { emitMissionCreated } = await import('@/tree/performance/loop-emitters-runner');
+      await emitMissionCreated({
+        workspaceId: parsed.data.workspaceId,
+        missionId: mission.id,
+        autonomyLevel: parsed.data.autonomyLevel,
+        budgetCents: parsed.data.budgetCents,
+        recordedAt: Date.now(),
+      });
+    } catch (err) {
+      logger.warn('[CreativeMission.createMission] mission.created emit failed (non-fatal)', {
+        missionId: mission.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
     return success({ missionId: mission.id });
   } catch (err) {
     return failure(actionFailure('[CreativeMission] createMission', err));

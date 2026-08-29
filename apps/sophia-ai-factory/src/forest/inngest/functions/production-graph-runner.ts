@@ -38,6 +38,7 @@ import { executeAgent, agentDefinitionRegistry } from '@/tree/agent-protocol';
 import { PUBLISH_CONTENT_TOOL } from '@/tree/agent-protocol/graph-agents';
 import { buildProviders } from '@/forest/ai/provider-factory';
 import { getMission, recordSpend } from '@/tree/mission/repository';
+import { getD1 } from '@/seed/db/client';
 import { newPerformanceEventId, recordPerformanceEvent } from '@/tree/performance';
 import { resolveEffectiveAutonomy } from '@/tree/autonomy/effective-autonomy';
 import {
@@ -61,6 +62,14 @@ import {
   loadMissionMemories,
   persistAgentLearning,
 } from './agent-context';
+import {
+  emitAgentStarted,
+  emitAgentFailed,
+  emitApprovalRequested,
+  emitApprovalApproved,
+  emitApprovalRejected,
+} from '@/tree/performance/loop-emitters-runner';
+import { classifyAutonomyFailure } from '@/tree/performance/loop-events';
 import { advanceMissionToReview } from './agent-mission-lifecycle';
 import { requestApprovalAndAwait } from './agent-approval-gate';
 import type { ApprovalDecision, ApprovalGateStep } from './agent-approval-gate';
@@ -294,7 +303,58 @@ export const productionGraphRunner = inngest.createFunction(
           },
           { step: toApprovalGateStep(step) },
         );
+
+        // ── SIDE-CHANNEL: approval.requested (Q2/Q6) — non-fatal, OUTSIDE checkpoint ──
+        // Resolve the approval row id non-fatally; the ApprovalDecision union
+        // carries no approvalId. Emitted once per gate suspend.
+        try {
+          const approvalRow = await resolveApprovalRow(graphRunId);
+          await emitApprovalRequested({
+            workspaceId,
+            missionId,
+            graphRunId,
+            nodeId,
+            approvalId: approvalRow?.id ?? '',
+            actionType: PUBLISH_CONTENT_TOOL,
+            recordedAt: runnerContext.nowMs(),
+          });
+        } catch (err) {
+          logger.warn('productionGraphRunner: approval.requested emit failed (non-fatal)', {
+            graphRunId, nodeId,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+
         const gateOutcome = handleApprovalDecision(decision, graphRunId);
+        // ── SIDE-CHANNEL: approval.approved / approval.rejected (Q2/Q6) ──
+        // The ApprovalDecision union carries no approvalId — resolve it
+        // non-fatally from the approval row keyed by the run id.
+        const approvalRow = await resolveApprovalRow(graphRunId);
+        const approvalIdForEvent = approvalRow?.id ?? '';
+        if (gateOutcome === 'approved') {
+          await emitApprovalApproved({
+            workspaceId,
+            missionId,
+            graphRunId,
+            nodeId,
+            approvalId: approvalIdForEvent,
+            actionType: PUBLISH_CONTENT_TOOL,
+            latencySeconds: 0,
+            recordedAt: runnerContext.nowMs(),
+          });
+        } else {
+          await emitApprovalRejected({
+            workspaceId,
+            missionId,
+            graphRunId,
+            nodeId,
+            approvalId: approvalIdForEvent,
+            actionType: PUBLISH_CONTENT_TOOL,
+            reasonCode: gateOutcome === 'rejected' ? 'APPROVAL_REJECTED' : 'APPROVAL_TIMEOUT',
+            latencySeconds: 0,
+            recordedAt: runnerContext.nowMs(),
+          });
+        }
         if (gateOutcome !== 'approved') {
           const code: GraphRunnerErrorCode =
             gateOutcome === 'rejected' ? 'APPROVAL_REJECTED' : 'APPROVAL_TIMEOUT';
@@ -346,6 +406,17 @@ export const productionGraphRunner = inngest.createFunction(
         inputJson: state.node.inputJson,
       });
 
+      // ── SIDE-CHANNEL: agent.started (Q7/Q8) — non-fatal, OUTSIDE checkpoint ─
+      await emitAgentStarted({
+        workspaceId,
+        missionId,
+        graphRunId,
+        nodeId,
+        agentSlug: state.node.agentSlug,
+        agentRunId,
+        recordedAt: runnerContext.nowMs(),
+      });
+
       const creativeIdentity = await loadWorkspaceIdentity(workspaceId);
       const memory = await loadMissionMemories(mission);
       const context: AgentContext = {
@@ -379,6 +450,22 @@ export const productionGraphRunner = inngest.createFunction(
           totalCostCents += execution.value.costCents;
           totalTokens += execution.value.totalTokens;
         }
+        // ── SIDE-CHANNEL: agent.failed (Q7) — non-fatal, OUTSIDE checkpoint ─
+        await emitAgentFailed({
+          workspaceId,
+          missionId,
+          graphRunId,
+          nodeId,
+          agentSlug: state.node.agentSlug,
+          agentRunId,
+          errorCode: error.code,
+          errorMessage: error.message ?? error.code,
+          failureClass: classifyAutonomyFailure(error, { code: error.code, message: error.message ?? undefined }),
+          costCents: execution.ok ? execution.value.costCents : 0,
+          totalTokens: execution.ok ? execution.value.totalTokens : 0,
+          durationMs: execution.ok ? execution.value.durationMs : 0,
+          recordedAt: endedAt,
+        });
         await checkpoint(graphRunId, states);
         await failTerminal(graphRunId, 'running', error, { totalCostCents, totalTokens });
         await emitFailed(step, logCtx, error, retryCount);
@@ -684,6 +771,29 @@ async function recordNodePerformance(args: {
       nodeId: args.nodeId,
       error: err instanceof Error ? err.message : String(err),
     });
+  }
+}
+
+/**
+ * Resolve the approval id for a run — the ApprovalDecision union (see
+ * agent-approval-gate.ts:68-72) carries no approvalId/timestamps, so the
+ * side-channel emit asks the approval row directly. NON-FATAL: a missing
+ * row yields '' and the emit still proceeds (idempotent, allowlisted).
+ */
+async function resolveApprovalRow(graphRunId: string): Promise<{ id: string } | null> {
+  try {
+    const db = await getD1();
+    if (!db) return null;
+    return await db
+      .prepare(`SELECT id FROM agent_approvals WHERE agent_run_id = ?1 ORDER BY created_at DESC LIMIT 1`)
+      .bind(graphRunId)
+      .first<{ id: string }>();
+  } catch (err) {
+    logger.warn('productionGraphRunner: resolveApprovalRow failed (non-fatal)', {
+      graphRunId,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
   }
 }
 

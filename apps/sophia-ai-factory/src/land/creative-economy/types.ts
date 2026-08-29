@@ -79,5 +79,38 @@ export interface VelocityPoint {
   windowEndMs: number;
 }
 
+/**
+ * One mission-scoped economic measurement boundary (Phase H).
+ *
+ * Every cost / outcome field is nullable. A missing source datum is NULL —
+ * the writer never synthesizes a value and never computes ROI. Callers that
+ * need ROI must compute it themselves, and only when both revenue AND a cost
+ * are present (see SOPHIA_VALUE_SCORECARD.md Group 6).
+ *
+ * Source-of-truth map:
+ *   creative_cost   → recordSpend totals (tree/mission/repository.ts)
+ *   production_cost → recordSpend totals
+ *   distribution_cost → recordSpend totals
+ *   revenue         → existing idempotent revenue bridges (YouTube / TikTok /
+ *                     ad-revenue / sponsorship / affiliate / commerce →
+ *                     performance_events)
+ *   leads           → NO producer. Always NULL.
+ *   conversions     → NO producer. Always NULL.
+ *
+ * @module land/creative-economy/types
+ */
+export interface CreativeEconomicSnapshot {
+  id: string;
+  workspaceId: string;
+  missionId: string | null;
+  creativeCost: number | null;
+  productionCost: number | null;
+  distributionCost: number | null;
+  leads: number | null;
+  conversions: number | null;
+  revenue: number | null;
+  recordedAt: number;
+}
+
 /** Union result type used by all five actions. */
 export type DashboardResult<T> = Result<T, DashboardError>;

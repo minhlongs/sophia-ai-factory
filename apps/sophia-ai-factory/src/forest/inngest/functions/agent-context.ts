@@ -14,6 +14,7 @@
 import { logger } from '@/seed/utils/logger-utility';
 import { getActiveIdentity } from '@/tree/creative-identity';
 import { creativeMemoryStore } from '@/tree/creative-memory';
+import { emitMemoryUsed } from '@/tree/performance/loop-emitters-cost';
 import {
   createAgentRun,
   getAgentRun,
@@ -185,7 +186,18 @@ export async function persistAgentLearning(args: {
       logger.warn('[agent-context] failed to persist agent learning (non-fatal)', {
         workspaceId, runId, error: result.error?.message ?? 'unknown',
       });
+      return;
     }
+    // ── SIDE-CHANNEL: memory.used (Q5) — non-fatal, scope stays campaign/missionId.
+    await emitMemoryUsed({
+      workspaceId,
+      missionId,
+      agentId,
+      runId,
+      confidence: mapConfidenceToMemoryConfidence(confidence),
+      memoryCount: 1,
+      recordedAt: Date.now(),
+    });
   } catch (err) {
     logger.warn('[agent-context] agent learning write threw (non-fatal)', {
       workspaceId, runId, error: err instanceof Error ? err.message : String(err),
