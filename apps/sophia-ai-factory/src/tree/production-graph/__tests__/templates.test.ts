@@ -1,7 +1,7 @@
 /**
  * Production Graph templates — unit tests.
  *
- * Covers: template constant contracts (3 templates, unique slugs, linear DAG
+ * Covers: template constant contracts (4 templates, unique slugs, linear DAG
  * shape, exactly one publish sink per template, registered agent slugs),
  * templateGraphId format, and ensureTemplatesSeeded behavior (fresh seed,
  * idempotent re-seed, partial seed, CONFLICT tolerance, error propagation).
@@ -35,7 +35,21 @@ import {
   ensureTemplatesSeeded,
 } from '../templates';
 
-const KNOWN_SLUGS = new Set(['sophia-researcher', 'sophia-editor', 'sophia-strategist']);
+const KNOWN_SLUGS = new Set([
+  'sophia-researcher',
+  'sophia-editor',
+  'sophia-strategist',
+  'sophia-scout',
+  'sophia-creative-director',
+  'sophia-writer',
+  'sophia-storyboard',
+  'sophia-production',
+  'sophia-qa',
+  'sophia-provenance',
+  'sophia-distribution-plan',
+  'sophia-performance',
+  'sophia-learning',
+]);
 
 function makeStoredGraph(workspaceId: string, slug: string): ProductionGraph {
   return {
@@ -52,11 +66,11 @@ function makeStoredGraph(workspaceId: string, slug: string): ProductionGraph {
 }
 
 describe('GRAPH_TEMPLATES constants', () => {
-  it('ships exactly three templates with unique slugs', () => {
-    expect(GRAPH_TEMPLATES).toHaveLength(3);
+  it('ships exactly four templates with unique slugs', () => {
+    expect(GRAPH_TEMPLATES).toHaveLength(4);
     const slugs = GRAPH_TEMPLATES.map((t) => t.slug);
-    expect(new Set(slugs).size).toBe(3);
-    expect(slugs).toEqual(['article-factory', 'video-brief', 'repurpose-derivative']);
+    expect(new Set(slugs).size).toBe(4);
+    expect(slugs).toEqual(['article-factory', 'video-brief', 'repurpose-derivative', 'creative-mission-full']);
   });
 
   it('every template has a non-empty name and matching missionType', () => {
@@ -71,11 +85,19 @@ describe('GRAPH_TEMPLATES constants', () => {
       const result = validateGraphDefinition(template.definition, KNOWN_SLUGS);
       expect(result.ok, `template ${template.slug} must validate`).toBe(true);
       if (!result.ok) continue;
-      // Linear DAG: exactly one sink, and it is the publish node.
+      // Linear DAG: exactly one sink.
       expect(result.value.sinkIds).toHaveLength(1);
+      // The sink is the publish node for simple templates; for creative-mission-full,
+      // Human Approval is the publish gate (middle) and Learning is the sink.
       const sinkId = result.value.sinkIds[0];
       const sinkNode = template.definition.nodes.find((n) => n.id === sinkId);
-      expect(sinkNode?.isPublishNode).toBe(true);
+      const publishNodes = template.definition.nodes.filter((n) => n.isPublishNode === true);
+      if (template.slug === 'creative-mission-full') {
+        // Human Approval is the publish/gate node; Learning is the sink.
+        expect(publishNodes.map((n) => n.id)).toEqual(['human-approval']);
+      } else {
+        expect(sinkNode?.isPublishNode).toBe(true);
+      }
     }
   });
 
@@ -114,7 +136,7 @@ describe('ensureTemplatesSeeded', () => {
     vi.clearAllMocks();
   });
 
-  it('seeds all three templates on a fresh workspace', async () => {
+  it('seeds all four templates on a fresh workspace', async () => {
     mocks.getGraphBySlug.mockResolvedValue({ ok: true, value: null });
     mocks.createGraph.mockImplementation(async (workspaceId: string, input: { slug: string }) => ({
       ok: true,
@@ -125,8 +147,8 @@ describe('ensureTemplatesSeeded', () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.value.seeded).toBe(3);
-    expect(mocks.createGraph).toHaveBeenCalledTimes(3);
+    expect(result.value.seeded).toBe(4);
+    expect(mocks.createGraph).toHaveBeenCalledTimes(4);
 
     // Each create call carries the deterministic id, template flag, and definition.
     for (let i = 0; i < GRAPH_TEMPLATES.length; i += 1) {
@@ -161,7 +183,7 @@ describe('ensureTemplatesSeeded', () => {
     if (!result.ok) return;
     expect(result.value.seeded).toBe(0);
     expect(mocks.createGraph).not.toHaveBeenCalled();
-    expect(mocks.getGraphBySlug).toHaveBeenCalledTimes(3);
+    expect(mocks.getGraphBySlug).toHaveBeenCalledTimes(4);
   });
 
   it('seeds only the missing templates on a partially seeded workspace', async () => {
@@ -178,11 +200,11 @@ describe('ensureTemplatesSeeded', () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.value.seeded).toBe(2);
+    expect(result.value.seeded).toBe(3);
     const createdSlugs = mocks.createGraph.mock.calls.map(
       (call) => (call[1] as { slug: string }).slug,
     );
-    expect(createdSlugs).toEqual(['video-brief', 'repurpose-derivative']);
+    expect(createdSlugs).toEqual(['video-brief', 'repurpose-derivative', 'creative-mission-full']);
   });
 
   it('treats a CONFLICT on create as already-seeded and continues', async () => {
@@ -201,8 +223,8 @@ describe('ensureTemplatesSeeded', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     // CONFLICT counts as already present, not as newly seeded.
-    expect(result.value.seeded).toBe(2);
-    expect(mocks.createGraph).toHaveBeenCalledTimes(3);
+    expect(result.value.seeded).toBe(3);
+    expect(mocks.createGraph).toHaveBeenCalledTimes(4);
   });
 
   it('propagates a non-CONFLICT create failure', async () => {

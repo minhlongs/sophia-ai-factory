@@ -25,6 +25,7 @@ import type {
   ProductionGraphStartedEvent,
   ProductionGraphCompletedEvent,
   ProductionGraphFailedEvent,
+  ProductionGraphCancelledEvent,
 } from "@/seed/types/production-factory";
 
 type CampaignCreatedEvent = {
@@ -192,11 +193,12 @@ type PayoutReconcileAlertEvent = {
 
 /**
  * Merged event record served by the single canonical Inngest client.
- * 39 keys: the 28 former seed events, the 5 agent-mission events that
- * previously lived only in the tree client, the 3 production-graph
- * events added for the autonomous production factory, the
- * revenue/event.recorded event added for revenue ingestion, and the
- * commerce/payment.confirmed event added for digital product commerce.
+ * 40 keys: the 28 former seed events, the 5 agent-mission events that
+ * previously lived only in the tree client, the 4 production-graph
+ * events added for the autonomous production factory (including
+ * cancelled), the revenue/event.recorded event added for revenue
+ * ingestion, and the commerce/payment.confirmed event added for
+ * digital product commerce.
  */
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
@@ -238,4 +240,5 @@ export type Events = {
   "production.graph.started": ProductionGraphStartedEvent;
   "production.graph.completed": ProductionGraphCompletedEvent;
   "production.graph.failed": ProductionGraphFailedEvent;
+  "production.graph.cancelled": ProductionGraphCancelledEvent;
 };

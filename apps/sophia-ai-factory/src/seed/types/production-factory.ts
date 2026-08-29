@@ -33,7 +33,8 @@ export type ProductionGraphRunPhase =
   | 'executing'
   | 'awaiting_approval'
   | 'publishing'
-  | 'review';
+  | 'review'
+  | 'cancelled';
 
 /** Checkpoint status of a single graph node inside a run. */
 export type ProductionGraphNodeStatus =
@@ -153,6 +154,8 @@ export type ProductionGraphStartedEvent = {
     workspaceId: string;
     missionType: string;
     retryCount: number;
+    /** When true, run executes with fixed time source and random seed. */
+    deterministic?: boolean;
   };
 };
 
@@ -178,5 +181,17 @@ export type ProductionGraphFailedEvent = {
     errorCode: string;
     errorMessage: string;
     retryCount: number;
+  };
+};
+
+/** Payload for `production.graph.cancelled`. */
+export type ProductionGraphCancelledEvent = {
+  data: {
+    graphRunId: string;
+    graphId: string;
+    missionId: string;
+    workspaceId: string;
+    cancelledAt: number;
+    reason?: string;
   };
 };

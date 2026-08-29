@@ -4,11 +4,17 @@
  *
  * Consumes `production.graph.started`, executes the graph node-by-node in
  * topological order via the canonical tree/agent-protocol executor, and
- * emits `production.graph.completed` / `production.graph.failed`.
+ * emits `production.graph.completed` / `production.graph.failed` / `production.graph.cancelled`.
  *
  * Resume: completed nodes are skipped from the persisted node_states_json
  * checkpoint. Publish nodes whose effective policy requires approval pause
  * on the approval gate before executing.
+ *
+ * Deterministic mode: when `deterministic=true` in event data, uses injectable
+ * time source (fixed timestamp) and fixed random seed for reproducible execution.
+ *
+ * Cancellation: checks for cancellation status at each node boundary and
+ * emits `production.graph.cancelled` when cancelled via API.
  *
  * Follows the agent-mission-executor pattern: provider building and agent
  * execution run directly (non-serializable objects never cross step.run);
@@ -20,11 +26,13 @@
 
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
+import type { Result } from '@/seed/types/result';
 import type { AgentContext } from '@/seed/types/creative-domain';
 import type {
   ProductionGraphRunError,
   ProductionGraphRunPhase,
   ProductionGraphRunStatus,
+  ProductionGraphCancelledEvent,
 } from '@/seed/types/production-factory';
 import { executeAgent, agentDefinitionRegistry } from '@/tree/agent-protocol';
 import { PUBLISH_CONTENT_TOOL } from '@/tree/agent-protocol/graph-agents';
@@ -64,6 +72,9 @@ const APPROVAL_TIMEOUT_MS = 24 * 60 * 60 * 1000; // 24h human review window
 const EXECUTING_PHASE: ProductionGraphRunPhase = 'executing';
 const PUBLISHING_PHASE: ProductionGraphRunPhase = 'publishing';
 
+/** Deterministic mode fixed timestamp (epoch ms). */
+const DETERMINISTIC_TIMESTAMP = 1_700_000_000_000; // 2023-11-14 fixed time
+
 /** Failure codes emitted on production.graph.failed. */
 export type GraphRunnerErrorCode =
   | 'RUN_NOT_FOUND'
@@ -74,27 +85,49 @@ export type GraphRunnerErrorCode =
   | 'APPROVAL_REJECTED'
   | 'APPROVAL_TIMEOUT'
   | 'NODE_FAILED'
-  | 'DB_ERROR';
+  | 'DB_ERROR'
+  | 'CANCELLED';
 
 /** Minimal structural step surface the helpers need (Inngest step satisfies it). */
 interface EmitStep {
   sendEvent(
     id: string,
-    payload: {
-      name: 'production.graph.failed';
-      data: {
-        graphRunId: string;
-        graphId: string;
-        missionId: string;
-        workspaceId: string;
-        errorCode: string;
-        errorMessage: string;
-        retryCount: number;
-      };
-    },
+    payload:
+      | {
+          name: 'production.graph.failed';
+          data: {
+            graphRunId: string;
+            graphId: string;
+            missionId: string;
+            workspaceId: string;
+            errorCode: string;
+            errorMessage: string;
+            retryCount: number;
+          };
+        }
+      | {
+          name: 'production.graph.cancelled';
+          data: {
+            graphRunId: string;
+            graphId: string;
+            missionId: string;
+            workspaceId: string;
+            cancelledAt: number;
+            reason?: string;
+          };
+        },
   ): Promise<unknown>;
 }
 
+/** Context passed through the execution loop for deterministic mode. */
+interface RunnerContext {
+  deterministic: boolean;
+  nowMs: () => number;
+  getRun: (runId: string) => Promise<
+    Result<import('@/seed/types/production-factory').ProductionGraphRun | null, import('@/tree/production-graph/repo').GraphRepoError>
+  >;
+  graphRunId: string;
+}
 
 // ---------------------------------------------------------------------------
 // Function
@@ -104,8 +137,19 @@ export const productionGraphRunner = inngest.createFunction(
   { id: 'production-graph-runner', retries: 1 },
   { event: 'production.graph.started' },
   async ({ event, step }) => {
-    const { graphRunId, graphId, missionId, workspaceId, missionType, retryCount } = event.data;
+    const {
+      graphRunId,
+      graphId,
+      missionId,
+      workspaceId,
+      missionType,
+      retryCount,
+      deterministic = false,
+    } = event.data;
     const logCtx = { graphRunId, graphId, missionId, workspaceId };
+
+    // Deterministic mode: inject fixed time source
+    const nowMs = deterministic ? () => DETERMINISTIC_TIMESTAMP : Date.now;
 
     // Step 1: Load run + graph + mission.
     const run = await getRun(graphRunId);
@@ -176,8 +220,30 @@ export const productionGraphRunner = inngest.createFunction(
     let totalCostCents = run.value.totalCostCents;
     let totalTokens = run.value.totalTokens;
 
+    // Runner context for cancellation checks
+    const runnerContext: RunnerContext = {
+      deterministic,
+      nowMs,
+      getRun,
+      graphRunId,
+    };
+
     // Step 7: Execute nodes in topological order.
     for (const nodeId of validated.value.topologicalOrder) {
+      // Cancellation check at node boundary (before starting each node)
+      const cancelCheck = await checkCancellation(runnerContext);
+      if (cancelCheck.cancelled) {
+        await handleCancellation(
+          step,
+          logCtx,
+          cancelCheck.reason ?? 'Cancelled by user',
+          retryCount,
+          totalCostCents,
+          totalTokens,
+        );
+        return { ok: false as const, code: 'CANCELLED' };
+      }
+
       const state = states.get(nodeId);
       if (!state) continue;
       if (state.status === 'completed' || state.status === 'skipped') {
@@ -196,7 +262,7 @@ export const productionGraphRunner = inngest.createFunction(
           message: `Agent ${state.node.agentSlug} not registered`,
           details: { nodeId },
         };
-        markNodeFailed(states, nodeId, error.message ?? 'unknown');
+        markNodeFailed(states, nodeId, error.message ?? 'unknown', runnerContext.nowMs);
         await checkpoint(graphRunId, states);
         await failTerminal(graphRunId, 'running', error, { totalCostCents, totalTokens });
         await emitFailed(step, logCtx, error, retryCount);
@@ -236,7 +302,7 @@ export const productionGraphRunner = inngest.createFunction(
             message: `Publish node ${nodeId} ${gateOutcome}`,
             details: { nodeId },
           };
-          markNodeFailed(states, nodeId, error.message ?? gateOutcome);
+          markNodeFailed(states, nodeId, error.message ?? gateOutcome, runnerContext.nowMs);
           await checkpoint(graphRunId, states);
           await failTerminal(graphRunId, 'awaiting_approval', error, { totalCostCents, totalTokens });
           await emitFailed(step, logCtx, error, retryCount);
@@ -268,7 +334,7 @@ export const productionGraphRunner = inngest.createFunction(
       const agentRunId = `${graphRunId}:${nodeId}:${retryCount}`;
       state.status = 'running';
       state.agentRunId = agentRunId;
-      state.startedAt = Date.now();
+      state.startedAt = runnerContext.nowMs();
 
       await initAgentRun({
         runId: agentRunId,
@@ -294,7 +360,7 @@ export const productionGraphRunner = inngest.createFunction(
       };
 
       const execution = await executeAgent(definition, context, providerRegistry);
-      const endedAt = Date.now();
+      const endedAt = runnerContext.nowMs();
 
       if (!execution.ok || !execution.value.success) {
         const message = execution.ok
@@ -338,7 +404,22 @@ export const productionGraphRunner = inngest.createFunction(
         costCents: execution.value.costCents,
         totalTokens: execution.value.totalTokens,
         durationMs: execution.value.durationMs,
+        recordedAt: runnerContext.nowMs(),
       });
+    }
+
+    // Final cancellation check after all nodes complete (before marking complete)
+    const finalCancelCheck = await checkCancellation(runnerContext);
+    if (finalCancelCheck.cancelled) {
+      await handleCancellation(
+        step,
+        logCtx,
+        finalCancelCheck.reason ?? 'Cancelled by user',
+        retryCount,
+        totalCostCents,
+        totalTokens,
+      );
+      return { ok: false as const, code: 'CANCELLED' };
     }
 
     // Step 8: Terminal success — complete run, emit, advance mission.
@@ -375,6 +456,75 @@ export const productionGraphRunner = inngest.createFunction(
     return { ok: true as const, totalCostCents, totalTokens };
   },
 );
+
+// ---------------------------------------------------------------------------
+// Cancellation Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Check if the run has been cancelled by reading the current status from DB.
+ * Returns { cancelled: true, reason } if cancelled, { cancelled: false } otherwise.
+ */
+async function checkCancellation(ctx: RunnerContext): Promise<{ cancelled: boolean; reason?: string }> {
+  try {
+    const runResult = await ctx.getRun(ctx.graphRunId);
+    if (!runResult.ok || !runResult.value) {
+      // Run not found — treat as not cancelled (will be handled as error elsewhere)
+      return { cancelled: false };
+    }
+    if (runResult.value.status === 'cancelled') {
+      const errorJson = runResult.value.errorJson;
+      let reason = 'Cancelled by user';
+      if (errorJson) {
+        try {
+          const parsed = JSON.parse(errorJson) as { message?: string; details?: { reason?: string } };
+          reason = parsed.message ?? parsed.details?.reason ?? reason;
+        } catch {
+          // Ignore parse errors, use default reason
+        }
+      }
+      return { cancelled: true, reason };
+    }
+    return { cancelled: false };
+  } catch {
+    // On DB error, assume not cancelled to avoid false positives
+    return { cancelled: false };
+  }
+}
+
+/**
+ * Handle cancellation: mark run as cancelled, emit cancelled event, log.
+ */
+async function handleCancellation(
+  step: EmitStep,
+  logCtx: { graphRunId: string; graphId: string; missionId: string; workspaceId: string },
+  reason: string,
+  retryCount: number,
+  totalCostCents: number,
+  totalTokens: number,
+): Promise<void> {
+  logger.info('productionGraphRunner: graph run cancelled', {
+    ...logCtx,
+    reason,
+    totalCostCents,
+    totalTokens,
+  });
+
+  const cancelledAt = Date.now();
+
+  // Emit production.graph.cancelled event
+  await step.sendEvent('emit-cancelled', {
+    name: 'production.graph.cancelled',
+    data: {
+      graphRunId: logCtx.graphRunId,
+      graphId: logCtx.graphId,
+      missionId: logCtx.missionId,
+      workspaceId: logCtx.workspaceId,
+      cancelledAt,
+      reason,
+    } as ProductionGraphCancelledEvent['data'],
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -435,12 +585,13 @@ function markNodeFailed(
   states: Map<string, GraphNodeRuntimeState>,
   nodeId: string,
   errorMessage: string,
+  nowMs: () => number,
 ): void {
   const state = states.get(nodeId);
   if (!state) return;
   state.status = 'failed';
   state.errorMessage = errorMessage;
-  state.endedAt = Date.now();
+  state.endedAt = nowMs();
 }
 
 /** Best-effort terminal failure write — never throws into the handler. */
@@ -483,6 +634,7 @@ async function recordNodePerformance(args: {
   costCents: number;
   totalTokens: number;
   durationMs: number;
+  recordedAt: number;
 }): Promise<void> {
   try {
     await recordPerformanceEvent({
@@ -503,7 +655,7 @@ async function recordNodePerformance(args: {
         totalTokens: args.totalTokens,
         durationMs: args.durationMs,
       },
-      recordedAt: Date.now(),
+      recordedAt: args.recordedAt,
     });
   } catch (err) {
     logger.warn('productionGraphRunner: performance event failed (non-fatal)', {

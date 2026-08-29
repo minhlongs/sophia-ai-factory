@@ -1,7 +1,7 @@
 /**
  * Production Graph — built-in deterministic templates.
  *
- * Three starter graphs shipped per workspace. Every template is a linear
+ * Four starter graphs shipped per workspace. Every template is a linear
  * DAG with exactly one sink, and the sink is the publish node. Agent slugs
  * reference the graph agents registered by tree/agent-protocol/graph-agents.
  *
@@ -24,7 +24,7 @@ export interface ProductionGraphTemplate {
 }
 
 /**
- * The three built-in templates. Deterministic constants — same shapes in
+ * The four built-in templates. Deterministic constants — same shapes in
  * every workspace. Node ids and agent slugs are stable contracts.
  */
 export const GRAPH_TEMPLATES: readonly ProductionGraphTemplate[] = [
@@ -78,6 +78,42 @@ export const GRAPH_TEMPLATES: readonly ProductionGraphTemplate[] = [
       edges: [
         { from: 'summarize', to: 'thread' },
         { from: 'thread', to: 'newsletter' },
+      ],
+    },
+  },
+  {
+    slug: 'creative-mission-full',
+    name: 'Creative Mission Full',
+    missionType: 'creative-mission-full',
+    definition: {
+      nodes: [
+        { id: 'scout', agentSlug: 'sophia-scout', name: 'Scout' },
+        { id: 'research', agentSlug: 'sophia-researcher', name: 'Research' },
+        { id: 'strategy', agentSlug: 'sophia-strategist', name: 'Strategy' },
+        { id: 'creative-director', agentSlug: 'sophia-creative-director', name: 'Creative Director' },
+        { id: 'writer', agentSlug: 'sophia-writer', name: 'Writer' },
+        { id: 'storyboard', agentSlug: 'sophia-storyboard', name: 'Storyboard' },
+        { id: 'production', agentSlug: 'sophia-production', name: 'Production' },
+        { id: 'qa', agentSlug: 'sophia-qa', name: 'QA' },
+        { id: 'provenance', agentSlug: 'sophia-provenance', name: 'Provenance' },
+        { id: 'human-approval', agentSlug: 'sophia-editor', name: 'Human Approval', isPublishNode: true },
+        { id: 'distribution-plan', agentSlug: 'sophia-distribution-plan', name: 'Distribution Plan' },
+        { id: 'performance', agentSlug: 'sophia-performance', name: 'Performance' },
+        { id: 'learning', agentSlug: 'sophia-learning', name: 'Learning' },
+      ],
+      edges: [
+        { from: 'scout', to: 'research' },
+        { from: 'research', to: 'strategy' },
+        { from: 'strategy', to: 'creative-director' },
+        { from: 'creative-director', to: 'writer' },
+        { from: 'writer', to: 'storyboard' },
+        { from: 'storyboard', to: 'production' },
+        { from: 'production', to: 'qa' },
+        { from: 'qa', to: 'provenance' },
+        { from: 'provenance', to: 'human-approval' },
+        { from: 'human-approval', to: 'distribution-plan' },
+        { from: 'distribution-plan', to: 'performance' },
+        { from: 'performance', to: 'learning' },
       ],
     },
   },
