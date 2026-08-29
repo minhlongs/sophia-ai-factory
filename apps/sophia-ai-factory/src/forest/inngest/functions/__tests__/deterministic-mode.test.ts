@@ -44,6 +44,7 @@ const mocks = vi.hoisted(() => ({
   loadWorkspaceIdentity: vi.fn(),
   loadMissionMemories: vi.fn(),
   advanceMissionToReview: vi.fn(),
+  persistAgentLearning: vi.fn(),
   requestApprovalAndAwait: vi.fn(),
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
@@ -106,6 +107,7 @@ vi.mock('../agent-context', () => ({
   initAgentRun: (...args: unknown[]) => mocks.initAgentRun(...args),
   loadWorkspaceIdentity: (...args: unknown[]) => mocks.loadWorkspaceIdentity(...args),
   loadMissionMemories: (...args: unknown[]) => mocks.loadMissionMemories(...args),
+  persistAgentLearning: (...args: unknown[]) => mocks.persistAgentLearning(...args),
 }));
 
 vi.mock('../agent-mission-lifecycle', () => ({
@@ -349,6 +351,7 @@ beforeEach(() => {
   mocks.loadMissionMemories.mockResolvedValue([]);
   mocks.toAutonomyLevel.mockImplementation((level: number) => level);
   mocks.advanceMissionToReview.mockResolvedValue({ advanced: true });
+  mocks.persistAgentLearning.mockResolvedValue(undefined);
   mocks.recordSpend.mockResolvedValue(undefined);
   mocks.newPerformanceEventId.mockReturnValue('perf_det');
   mocks.recordPerformanceEvent.mockResolvedValue(undefined);
