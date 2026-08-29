@@ -59,6 +59,7 @@ import {
   initAgentRun,
   loadWorkspaceIdentity,
   loadMissionMemories,
+  persistAgentLearning,
 } from './agent-context';
 import { advanceMissionToReview } from './agent-mission-lifecycle';
 import { requestApprovalAndAwait } from './agent-approval-gate';
@@ -442,6 +443,26 @@ export const productionGraphRunner = inngest.createFunction(
         totalTokens,
       },
     });
+
+    // Creative Memory write-back: surface what the sink node (learning)
+    // produced as a campaign-scoped insight. Non-fatal — the run is already
+    // terminal-success; persistAgentLearning has its own try/catch + warn.
+    // Deliberately NOT written into node_states_json / sentEvent payloads.
+    if (sinkState?.outputJson) {
+      const sinkAgentId = sinkState.node.agentSlug ?? 'sophia-learning';
+      const sinkOutput = JSON.parse(sinkState.outputJson);
+      const confidence = typeof sinkOutput === 'object' && sinkOutput !== null
+        ? sinkOutput.confidence
+        : undefined;
+      await persistAgentLearning({
+        workspaceId,
+        missionId,
+        agentId: sinkAgentId,
+        runId: graphRunId,
+        confidence: typeof confidence === 'number' ? confidence : undefined,
+        output: sinkOutput,
+      });
+    }
 
     await advanceMissionToReview(missionId);
 
