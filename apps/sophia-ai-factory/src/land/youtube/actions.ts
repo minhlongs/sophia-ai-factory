@@ -13,7 +13,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { success, failure, type Result } from '@/seed/types/result';
 import { createChannelConfig, getChannelConfig, getChannelConfigById } from './channel-config';
-import { type ChannelConfig, type CreateChannelConfigInput } from './channel-config-types';
+import { type CreateChannelConfigInput } from './channel-config-types';
 import { createCalendarEntry, evaluateFrequency, type CreateCalendarEntryInput } from './content-calendar';
 import { inngest } from '@/seed/inngest/client';
 
@@ -148,7 +148,7 @@ export async function scheduleContentAction(
 
 /** Trigger the content pipeline for a channel config (best-effort Inngest emit). */
 export async function triggerContentPipelineAction(
-  input: { channelConfigId: string; topic?: string },
+  input: { channelConfigId: string; topic?: string; now?: Date },
 ): Promise<Result<{ triggered: boolean; reason?: string }, TriggerPipelineActionError>> {
   const user = await getCurrentUser();
   if (!user) return failure({ code: 'UNAUTHENTICATED', message: 'You must be signed in' });
@@ -167,6 +167,7 @@ export async function triggerContentPipelineAction(
       cadence: config.cadence,
       postsPerWeek: config.postsPerWeek,
       bufferDays: config.contentBufferDays,
+      now: input.now,
     });
 
     if (!freq.shouldGenerate) {

@@ -305,18 +305,23 @@ describe('triggerContentPipelineAction', () => {
 
   it('returns triggered: false when frequency gates block generation', async () => {
     seedConfig();
-    // Seed a full content buffer so evaluateFrequency blocks.
+    // Use a fixed "now" date and seed entries in the future relative to it
+    // so listUpcomingEntries (which filters scheduled_at >= now) sees them.
+    const fixedNow = new Date('2026-08-25T00:00:00Z');
+    // Seed a full content buffer (3 entries) within the buffer horizon (3 days)
+    // so evaluateFrequency's buffer gate blocks generation.
     for (let i = 0; i < 3; i++) {
+      const scheduledAt = new Date(fixedNow.getTime() + (i + 1) * 24 * 60 * 60 * 1000).toISOString();
       testDb.raw
         .prepare(
           `INSERT INTO youtube_content_calendar
            (id, user_id, channel_config_id, title, status, scheduled_at)
            VALUES (?, ?, ?, ?, 'scheduled', ?)`,
         )
-        .run(`cal-${i}`, USER_ID, CONFIG_ID, `title-${i}`, `2026-08-2${3 + i}T00:00:00Z`);
+        .run(`cal-${i}`, USER_ID, CONFIG_ID, `title-${i}`, scheduledAt);
     }
 
-    const result = await triggerContentPipelineAction({ channelConfigId: CONFIG_ID });
+    const result = await triggerContentPipelineAction({ channelConfigId: CONFIG_ID, now: fixedNow });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value.triggered).toBe(false);
