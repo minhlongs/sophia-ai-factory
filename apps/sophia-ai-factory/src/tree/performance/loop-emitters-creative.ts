@@ -39,6 +39,11 @@ export async function emitCreativeAccepted(args: LoopEventContext & {
 /**
  * Q3 — creative output edited by human before acceptance. Fires on edit.
  * Answers: "how much human rework is needed?".
+ *
+ * DEFERRAL NOTE (Phase 2 Wiring): No edit/save UI flow exists in
+ * creative-mission/actions.ts or forest. This emitter has no production call
+ * site yet. Wire it in when the creative-edit UI ships — wiring to a fake
+ * site would produce garbage data.
  */
 export async function emitCreativeEdited(args: LoopEventContext & {
   missionId: string;

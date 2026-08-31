@@ -142,6 +142,36 @@ describe('listFeedbackByWorkspace', () => {
   });
 });
 
+describe('listFeedbackByMission', () => {
+  it('filters by workspaceId when provided', async () => {
+    setupDb();
+    // Different checkpoints required: idempotency key is (missionId, checkpoint, day)
+    // — it does NOT include workspaceId, so same checkpoint would collide.
+    await saveFeedback(makeInput({ workspaceId: 'ws-1', missionId: 'mission-1', checkpoint: 'mission_complete' }));
+    await saveFeedback(makeInput({ workspaceId: 'ws-2', missionId: 'mission-1', checkpoint: 'creative_rejected' }));
+    const ws1Rows = await listFeedbackByMission('mission-1', 'ws-1');
+    expect(ws1Rows).toHaveLength(1);
+    expect(ws1Rows[0].workspaceId).toBe('ws-1');
+    const ws2Rows = await listFeedbackByMission('mission-1', 'ws-2');
+    expect(ws2Rows).toHaveLength(1);
+    expect(ws2Rows[0].workspaceId).toBe('ws-2');
+  });
+
+  it('returns all rows when workspaceId omitted (backward compatible)', async () => {
+    setupDb();
+    await saveFeedback(makeInput({ workspaceId: 'ws-1', missionId: 'mission-1', checkpoint: 'mission_complete' }));
+    await saveFeedback(makeInput({ workspaceId: 'ws-2', missionId: 'mission-1', checkpoint: 'creative_rejected' }));
+    const rows = await listFeedbackByMission('mission-1');
+    expect(rows).toHaveLength(2);
+  });
+
+  it('returns empty when no feedback for mission', async () => {
+    setupDb();
+    const rows = await listFeedbackByMission('nonexistent');
+    expect(rows).toHaveLength(0);
+  });
+});
+
 describe('aggregateFeedbackByWorkspace', () => {
   it('computes totals, by-checkpoint, and top reasons', async () => {
     setupDb();

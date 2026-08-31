@@ -205,17 +205,18 @@ export async function listFeedbackByWorkspace(
   return (result.results ?? []).map(rowToStored);
 }
 
-/** Fetch all feedback rows for a mission. */
-export async function listFeedbackByMission(missionId: string): Promise<FeedbackStored[]> {
+/** Fetch all feedback rows for a mission, optionally scoped to a workspace. */
+export async function listFeedbackByMission(missionId: string, workspaceId?: string): Promise<FeedbackStored[]> {
   const db = await getD1();
   if (!db) return [];
   const result = await db
     .prepare(
       `SELECT * FROM reality_feedback
        WHERE mission_id = ?1
+         AND (?2 IS NULL OR workspace_id = ?2)
        ORDER BY created_at ASC`,
     )
-    .bind(missionId)
+    .bind(missionId, workspaceId ?? null)
     .all<FeedbackRow>();
   return (result.results ?? []).map(rowToStored);
 }

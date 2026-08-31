@@ -72,6 +72,11 @@ CREATE TABLE IF NOT EXISTS reality_feedback (
   created_at INTEGER NOT NULL DEFAULT 0
 );`;
 
+// creative_missions is provided by the shared D1 shim (matches migration
+// 0233) — it is the mission funnel source of truth since the MED-3 fix:
+// insights reads status from creative_missions, not performance_events
+// (mission.completed has no production writer).
+
 function setupDb(): ReturnType<typeof freshDb> {
   const raw = freshDb();
   raw.exec(PERFORMANCE_EVENTS_SCHEMA);
@@ -109,25 +114,35 @@ function insertEvent(
 }
 
 describe('getRealityLoopInsights', () => {
-  it('computes mission funnel, creative acceptance, and derived rates', async () => {
+  it('computes mission funnel from creative_missions status, creative acceptance from events, and derived rates', async () => {
     const raw = setupDb();
-    insertEvent(raw, { id: 'c1', workspaceId: 'ws-1', eventType: 'mission.created' });
-    insertEvent(raw, { id: 'c2', workspaceId: 'ws-1', eventType: 'mission.created' });
-    insertEvent(raw, { id: 'c3', workspaceId: 'ws-1', eventType: 'mission.completed' });
+    // MED-3 fix: funnel reads creative_missions.status (source of truth), not
+    // performance_events — mission.completed has no production writer.
+    raw.exec(
+      `INSERT INTO creative_missions (id, workspace_id, creator_id, title, status) VALUES
+         ('m1', 'ws-1', 'u-1', 'Mission 1', 'draft'),
+         ('m2', 'ws-1', 'u-1', 'Mission 2', 'running'),
+         ('m3', 'ws-1', 'u-1', 'Mission 3', 'completed'),
+         ('m4', 'ws-1', 'u-1', 'Mission 4', 'review'),
+         ('m5', 'ws-2', 'u-2', 'Mission 5', 'completed')`,
+    );
     insertEvent(raw, { id: 'a1', workspaceId: 'ws-1', eventType: 'creative.accepted' });
     insertEvent(raw, { id: 'a2', workspaceId: 'ws-1', eventType: 'creative.accepted' });
     insertEvent(raw, { id: 'r1', workspaceId: 'ws-1', eventType: 'creative.rejected' });
     insertEvent(raw, { id: 'e1', workspaceId: 'ws-1', eventType: 'creative.edited' });
 
     const insights = await getRealityLoopInsights('ws-1');
-    expect(insights.missionsCreated).toBe(2);
-    expect(insights.missionsCompleted).toBe(1);
+    // 4 missions in ws-1 (m5 belongs to ws-2 — workspace-scoped).
+    expect(insights.missionsCreated).toBe(4);
+    // 'completed' (m3) + 'review' (m4) — review is the terminal success state
+    // set by advanceMissionToReview; it never auto-completes.
+    expect(insights.missionsCompleted).toBe(2);
     expect(insights.completionRate).toBeCloseTo(0.5);
     expect(insights.creativeAccepted).toBe(2);
     expect(insights.creativeRejected).toBe(1);
     expect(insights.acceptanceRate).toBeCloseTo(2 / 3);
     expect(insights.humanCorrections).toBe(1);
-    expect(insights.correctionRate).toBe(1); // 1 correction / 1 completion
+    expect(insights.correctionRate).toBeCloseTo(0.5); // 1 correction / 2 completions
   });
 
   it('aggregates agent.failed taxonomy from metrics_json', async () => {

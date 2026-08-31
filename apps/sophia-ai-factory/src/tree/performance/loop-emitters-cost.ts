@@ -40,6 +40,11 @@ export async function emitMemoryUsed(args: LoopEventContext & {
 /**
  * Q5 — Creative Memory corrected by human. Fires on human correction.
  * Answers: "memory correction rate < 10%?" (Phase F gate).
+ *
+ * DEFERRAL NOTE (Phase 2 Wiring): No human-correction hook exists in
+ * agent-context.ts or persist-agent-learning. This emitter has no production
+ * call site yet. Wire it in when the memory-correction UI ships — wiring to
+ * a fake site would produce garbage data.
  */
 export async function emitMemoryCorrected(args: LoopEventContext & {
   missionId: string;

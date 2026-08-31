@@ -66,14 +66,19 @@ export async function getRealityLoopInsights(
     const db = createServerClient();
 
     // Mission funnel (Q1, Q8, Q9, Q10) — created vs completed.
+    // MED-3 fix: `creative_missions` is the source of truth for mission status.
+    // `mission.completed` is in REALITY_LOOP_EVENT_TYPES but has NO production
+    // writer — querying performance_events would return 0 forever. Read status
+    // from the table directly instead. `IN ('completed', 'review')` because
+    // advanceMissionToReview sets status='review' and never auto-completes;
+    // `completed` is reachable via updateMissionStatus action.
     const funnel = await db
       .prepare(
         `SELECT
-           SUM(CASE WHEN event_type = 'mission.created' THEN count ELSE 0 END) AS created,
-           SUM(CASE WHEN event_type = 'mission.completed' THEN count ELSE 0 END) AS completed
-         FROM performance_events
-         WHERE workspace_id = ?1
-           AND event_type IN ('mission.created', 'mission.completed')`,
+           COUNT(*) AS created,
+           SUM(CASE WHEN status IN ('completed', 'review') THEN 1 ELSE 0 END) AS completed
+         FROM creative_missions
+         WHERE workspace_id = ?1`,
       )
       .bind(workspaceId)
       .first<{ created: number | null; completed: number | null }>();

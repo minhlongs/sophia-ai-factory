@@ -672,6 +672,48 @@ export async function resolveApprovalAction(
       });
     }
 
+    // ── SIDE-CHANNEL: creative.accepted / creative.rejected (Q3) — non-fatal.
+    // Approval resolve is the human creative decision. Look up mission_id from
+    // agent_runs (the action only has workspace_id + agent_run_id). Emit based
+    // on status; skip silently if lookup fails or mission_id is null (legacy
+    // runs) — low-frequency path, one extra SELECT is acceptable.
+    try {
+      const runRow = await d1
+        .prepare('SELECT mission_id FROM agent_runs WHERE id = ?')
+        .bind(runId)
+        .first<{ mission_id: string | null }>();
+      const { emitCreativeAccepted, emitCreativeRejected } = await import('@/tree/performance/loop-emitters-creative');
+      if (runRow?.mission_id) {
+        if (status === 'approved') {
+          await emitCreativeAccepted({
+            workspaceId: agentRun.workspace_id,
+            missionId: runRow.mission_id,
+            graphRunId: runId,
+            nodeId: parsed.data.approvalId,
+            assetId: '',
+            agentSlug: 'human-approval',
+            recordedAt: Date.now(),
+          });
+        } else {
+          await emitCreativeRejected({
+            workspaceId: agentRun.workspace_id,
+            missionId: runRow.mission_id,
+            graphRunId: runId,
+            nodeId: parsed.data.approvalId,
+            assetId: '',
+            agentSlug: 'human-approval',
+            reasonCode: parsed.data.reason ?? 'REJECTED',
+            recordedAt: Date.now(),
+          });
+        }
+      }
+    } catch (err) {
+      logger.warn('[Approval] creative.accepted/rejected emit failed (non-fatal)', {
+        approvalId: parsed.data.approvalId, status,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
     return success({ status });
   } catch (err) {
     return failure(actionFailure('[Approval] resolveApprovalAction', err));

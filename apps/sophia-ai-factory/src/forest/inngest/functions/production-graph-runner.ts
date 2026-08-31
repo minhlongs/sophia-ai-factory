@@ -171,7 +171,7 @@ export const productionGraphRunner = inngest.createFunction(
     const graph = await getGraphById(graphId);
     if (!graph.ok || !graph.value) {
       const error: ProductionGraphRunError = { code: 'GRAPH_NOT_FOUND', message: `Graph ${graphId} not found` };
-      await failTerminal(graphRunId, run.value.status, error);
+      await failTerminal(graphRunId, run.value.status, error, undefined, workspaceId, missionId);
       await emitFailed(step, logCtx, error, retryCount);
       return { ok: false as const, code: 'GRAPH_NOT_FOUND' };
     }
@@ -179,7 +179,7 @@ export const productionGraphRunner = inngest.createFunction(
     const mission = await getMission(missionId);
     if (!mission) {
       const error: ProductionGraphRunError = { code: 'MISSION_NOT_FOUND', message: `Mission ${missionId} not found` };
-      await failTerminal(graphRunId, run.value.status, error);
+      await failTerminal(graphRunId, run.value.status, error, undefined, workspaceId, missionId);
       await emitFailed(step, logCtx, error, retryCount);
       return { ok: false as const, code: 'MISSION_NOT_FOUND' };
     }
@@ -193,7 +193,7 @@ export const productionGraphRunner = inngest.createFunction(
         message: validated.error.message,
         details: { validationCode: validated.error.code },
       };
-      await failTerminal(graphRunId, run.value.status, error);
+      await failTerminal(graphRunId, run.value.status, error, undefined, workspaceId, missionId);
       await emitFailed(step, logCtx, error, retryCount);
       return { ok: false as const, code: 'INVALID_GRAPH' };
     }
@@ -274,7 +274,7 @@ export const productionGraphRunner = inngest.createFunction(
         };
         markNodeFailed(states, nodeId, error.message ?? 'unknown', runnerContext.nowMs);
         await checkpoint(graphRunId, states);
-        await failTerminal(graphRunId, 'running', error, { totalCostCents, totalTokens });
+        await failTerminal(graphRunId, 'running', error, { totalCostCents, totalTokens }, workspaceId, missionId);
         await emitFailed(step, logCtx, error, retryCount);
         return { ok: false as const, code: 'NODE_FAILED' };
       }
@@ -365,7 +365,7 @@ export const productionGraphRunner = inngest.createFunction(
           };
           markNodeFailed(states, nodeId, error.message ?? gateOutcome, runnerContext.nowMs);
           await checkpoint(graphRunId, states);
-          await failTerminal(graphRunId, 'awaiting_approval', error, { totalCostCents, totalTokens });
+          await failTerminal(graphRunId, 'awaiting_approval', error, { totalCostCents, totalTokens }, workspaceId, missionId);
           await emitFailed(step, logCtx, error, retryCount);
           return { ok: false as const, code };
         }
@@ -385,7 +385,7 @@ export const productionGraphRunner = inngest.createFunction(
           message: 'Mission budget exhausted before node execution',
           details: { nodeId, totalCostCents },
         };
-        await failTerminal(graphRunId, 'running', error, { totalCostCents, totalTokens });
+        await failTerminal(graphRunId, 'running', error, { totalCostCents, totalTokens }, workspaceId, missionId);
         await emitFailed(step, logCtx, error, retryCount);
         return { ok: false as const, code: 'BUDGET_EXCEEDED' };
       }
@@ -467,7 +467,7 @@ export const productionGraphRunner = inngest.createFunction(
           recordedAt: endedAt,
         });
         await checkpoint(graphRunId, states);
-        await failTerminal(graphRunId, 'running', error, { totalCostCents, totalTokens });
+        await failTerminal(graphRunId, 'running', error, { totalCostCents, totalTokens }, workspaceId, missionId);
         await emitFailed(step, logCtx, error, retryCount);
         return { ok: false as const, code: 'NODE_FAILED' };
       }
@@ -708,6 +708,8 @@ async function failTerminal(
   expectedStatus: ProductionGraphRunStatus,
   error: ProductionGraphRunError,
   totals?: { totalCostCents: number; totalTokens: number },
+  workspaceId?: string,
+  missionId?: string,
 ): Promise<void> {
   try {
     await failRun(graphRunId, expectedStatus, error, totals ?? { totalCostCents: 0, totalTokens: 0 });
@@ -716,6 +718,29 @@ async function failTerminal(
       graphRunId,
       error: err instanceof Error ? err.message : String(err),
     });
+  }
+
+  // ── SIDE-CHANNEL: mission.abandoned (Q8) — non-fatal, OUTSIDE failRun ──
+  // Terminal-failed runs are the semantic for mission.abandoned: the run died
+  // and the mission will never complete. No `abandoned` status exists in the
+  // CreativeMissionStatus enum (9 states only). Emit only when both IDs are
+  // available — skip silently otherwise (e.g. RUN_NOT_FOUND before load).
+  if (workspaceId && missionId) {
+    try {
+      const { emitMissionAbandoned } = await import('@/tree/performance/loop-emitters-runner');
+      await emitMissionAbandoned({
+        workspaceId,
+        missionId,
+        reason: error.code,
+        stage: expectedStatus,
+        recordedAt: Date.now(),
+      });
+    } catch (err) {
+      logger.warn('productionGraphRunner: mission.abandoned emit failed (non-fatal)', {
+        graphRunId, workspaceId, missionId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
   }
 }
 
