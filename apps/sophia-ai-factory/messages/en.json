@@ -7075,7 +7075,18 @@
     "reason_NO_VELOCITY_DATA": "No velocity data",
     "reason_FAST_LEARNING": "Fast learning",
     "reason_SLOW_LEARNING": "Slow learning",
-    "reason_NEUTRAL_LEARNING": "Neutral learning"
+    "reason_NEUTRAL_LEARNING": "Neutral learning",
+    "cancel": "Cancel",
+    "correctMemory": "Correct Memory",
+    "correctMemoryTitle": "Correct Learning Entry",
+    "correctedContent": "Corrected Content",
+    "correctionReason": "Reason for Correction",
+    "correctionReasonPlaceholder": "Explain why this correction is needed...",
+    "correctedContentPlaceholder": "Enter the corrected information...",
+    "correcting": "Correcting...",
+    "correctSuccess": "Memory corrected successfully",
+    "correctError": "Failed to correct memory",
+    "memoryCorrected": "Memory Corrected"
   },
   "productionMonitoring": {
     "pageTitle": "System Health",

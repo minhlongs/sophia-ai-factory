@@ -7082,7 +7082,18 @@
     "reason_NO_VELOCITY_DATA": "Không có dữ liệu tốc độ",
     "reason_FAST_LEARNING": "Học tập nhanh",
     "reason_SLOW_LEARNING": "Học tập chậm",
-    "reason_NEUTRAL_LEARNING": "Học tập trung tính"
+    "reason_NEUTRAL_LEARNING": "Học tập trung tính",
+    "correctMemory": "Chỉnh sửa Bộ nhớ",
+    "correctMemoryTitle": "Chỉnh sửa Mục Học tập",
+    "correctedContent": "Nội dung đã chỉnh sửa",
+    "correctionReason": "Lý do Chỉnh sửa",
+    "correctionReasonPlaceholder": "Giải thích lý do cần chỉnh sửa...",
+    "correctedContentPlaceholder": "Nhập thông tin đã chỉnh sửa...",
+    "correcting": "Đang chỉnh sửa...",
+    "correctSuccess": "Đã chỉnh sửa bộ nhớ thành công",
+    "correctError": "Không thể chỉnh sửa bộ nhớ",
+    "memoryCorrected": "Bộ nhớ Đã Chỉnh sửa",
+    "cancel": "Hủy"
   },
   "productionMonitoring": {
     "pageTitle": "Sức khỏe Hệ thống",
