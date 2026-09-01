@@ -50,6 +50,7 @@ const CRON_ROUTES = {
   ],
   '*/15 * * * *': [
     '/api/cron/smoke-one-time',
+    '/api/cron/circuit-breaker-scan',
   ],
   '5 * * * *': [
     '/api/cron/usage-export',
@@ -105,6 +106,10 @@ const CRON_ROUTES = {
   ],
   '0 7 * * *': [
     '/api/cron/llm-cache-purge',
+    '/api/cron/billing-anomaly-scan',
+  ],
+  '*/30 * * * *': [
+    '/api/cron/mission-abandon-scan',
   ],
 };
 
