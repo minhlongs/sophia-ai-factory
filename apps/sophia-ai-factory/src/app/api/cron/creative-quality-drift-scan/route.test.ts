@@ -4,6 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { GET } from './route';
 
 // Mock dependencies
@@ -63,7 +64,7 @@ describe('GET /api/cron/creative-quality-drift-scan', () => {
     headers: new Headers({
       'Authorization': 'Bearer test-cron-secret',
     }),
-  } as unknown as Request;
+  } as unknown as NextRequest;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -90,14 +91,14 @@ describe('GET /api/cron/creative-quality-drift-scan', () => {
     (verifyCronAuth as any).mockReturnValueOnce(
       new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     );
-    const req = new Request('https://test.com/api/cron/creative-quality-drift-scan', {
+    const req = new NextRequest('https://test.com/api/cron/creative-quality-drift-scan', {
       method: 'GET',
       headers: new Headers({}),
     });
 
     const response = await GET(req);
     expect(response.status).toBe(401);
-    const body = await response.json();
+    const body = await response.json() as Record<string, unknown>;
     expect(body.error).toBe('Unauthorized');
   });
 
@@ -105,14 +106,14 @@ describe('GET /api/cron/creative-quality-drift-scan', () => {
     (verifyCronAuth as any).mockReturnValueOnce(
       new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
     );
-    const req = new Request('https://test.com/api/cron/creative-quality-drift-scan', {
+    const req = new NextRequest('https://test.com/api/cron/creative-quality-drift-scan', {
       method: 'GET',
       headers: new Headers({ 'Authorization': 'Bearer wrong-secret' }),
     });
 
     const response = await GET(req);
     expect(response.status).toBe(401);
-    const body = await response.json();
+    const body = await response.json() as Record<string, unknown>;
     expect(body.error).toBe('Unauthorized');
   });
 
@@ -121,7 +122,7 @@ describe('GET /api/cron/creative-quality-drift-scan', () => {
 
     const response = await GET(mockRequest);
     expect(response.status).toBe(200);
-    const body = await response.json();
+    const body = await response.json() as Record<string, unknown>;
     expect(body.status).toBe('ok');
     expect(body.alerted).toBe(0);
     expect(recordCronRun).toHaveBeenCalledWith(mockDb, 'creative-quality-drift-scan', 'success');
@@ -138,7 +139,7 @@ describe('GET /api/cron/creative-quality-drift-scan', () => {
 
     const response = await GET(mockRequest);
     expect(response.status).toBe(200);
-    const body = await response.json();
+    const body = await response.json() as Record<string, unknown>;
     expect(body.status).toBe('ok');
     expect(body.alerted).toBe(0);
     expect(triggerCreativeQualityDriftAlert).not.toHaveBeenCalled();
@@ -157,7 +158,7 @@ describe('GET /api/cron/creative-quality-drift-scan', () => {
 
     const response = await GET(mockRequest);
     expect(response.status).toBe(200);
-    const body = await response.json();
+    const body = await response.json() as Record<string, unknown>;
     expect(body.status).toBe('ok');
     expect(body.alerted).toBe(1);
     expect(triggerCreativeQualityDriftAlert).toHaveBeenCalledWith(
@@ -188,7 +189,7 @@ describe('GET /api/cron/creative-quality-drift-scan', () => {
 
     const response = await GET(mockRequest);
     expect(response.status).toBe(200);
-    const body = await response.json();
+    const body = await response.json() as Record<string, unknown>;
     expect(body.alerted).toBe(0);
     expect(markAlertThrottled).not.toHaveBeenCalled();
   });
@@ -198,7 +199,7 @@ describe('GET /api/cron/creative-quality-drift-scan', () => {
 
     const response = await GET(mockRequest);
     expect(response.status).toBe(200);
-    const body = await response.json();
+    const body = await response.json() as Record<string, unknown>;
     expect(body.status).toBe('skipped');
     expect(body.reason).toBe('already-ran');
     // scan must not run after skip
@@ -218,7 +219,7 @@ describe('GET /api/cron/creative-quality-drift-scan', () => {
 
     const response = await GET(mockRequest);
     expect(response.status).toBe(200);
-    const body = await response.json();
+    const body = await response.json() as Record<string, unknown>;
     expect(body.alerted).toBe(0);
     expect(body.throttled).toBe(1);
     expect(triggerCreativeQualityDriftAlert).not.toHaveBeenCalled();
@@ -234,7 +235,7 @@ describe('GET /api/cron/creative-quality-drift-scan', () => {
 
     const response = await GET(mockRequest);
     expect(response.status).toBe(200);
-    const body = await response.json();
+    const body = await response.json() as Record<string, unknown>;
     expect(body.status).toBe('ok');
     expect(body.alerted).toBe(0);
     expect(triggerCreativeQualityDriftAlert).not.toHaveBeenCalled();
@@ -250,7 +251,7 @@ describe('GET /api/cron/creative-quality-drift-scan', () => {
 
     const response = await GET(mockRequest);
     expect(response.status).toBe(200);
-    const body = await response.json();
+    const body = await response.json() as Record<string, unknown>;
     expect(body.alerted).toBe(0);
     expect(triggerCreativeQualityDriftAlert).not.toHaveBeenCalled();
   });
@@ -263,7 +264,7 @@ describe('GET /api/cron/creative-quality-drift-scan', () => {
 
     const response = await GET(mockRequest);
     expect(response.status).toBe(500);
-    const body = await response.json();
+    const body = await response.json() as Record<string, unknown>;
     expect(body.error).toBe('scan failed');
     expect(logger.error).toHaveBeenCalled();
     expect(recordCronRun).toHaveBeenCalledWith(mockDb, 'creative-quality-drift-scan', 'failure', expect.any(String));

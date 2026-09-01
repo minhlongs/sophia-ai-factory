@@ -5,7 +5,18 @@ export type AlertType =
   | 'webhook_delivery_failed'
   | 'quota_exceeded'
   | 'payment_failed'
-  | 'subscription_cancelled';
+  | 'subscription_cancelled'
+  | 'production.run_cancelled'
+  | 'production.approval_expired'
+  | 'production.budget_cap'
+  // P3 platform infrastructure alerts (Phase 3 Production Hardening)
+  | 'platform.circuit_breaker'
+  | 'platform.billing_anomaly'
+  | 'platform.mission_abandon_spike'
+  // Phase 2B production alert types (Reality Loop observability)
+  | 'platform.agent_cost_overrun'
+  | 'platform.creative_quality_drift'
+  | 'platform.distribution_pipeline';
 
 /** Alert severity levels */
 export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';

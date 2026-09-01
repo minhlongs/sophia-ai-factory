@@ -56,7 +56,6 @@ describe('triggerCreativeQualityDriftAlert', () => {
         severity: 'high',
         title: expect.stringContaining('ws-123'),
         message: expect.stringContaining('55%'),
-        message: expect.stringContaining('85%'),
         metadata: expect.objectContaining({
           workspaceId: 'ws-123',
           currentAcceptanceRate: 0.55,

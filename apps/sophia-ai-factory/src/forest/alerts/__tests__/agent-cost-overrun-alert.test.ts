@@ -56,8 +56,6 @@ describe('triggerAgentCostOverrunAlert', () => {
         severity: 'critical',
         title: expect.stringContaining('OVER BUDGET'),
         message: expect.stringContaining('105%'),
-        message: expect.stringContaining('$105.00'),
-        message: expect.stringContaining('$100.00'),
         metadata: expect.objectContaining({
           missionId: 'mission-123',
           workspaceId: 'ws-123',
@@ -103,7 +101,6 @@ describe('triggerAgentCostOverrunAlert', () => {
         severity: 'high',
         title: expect.stringContaining('90%'),
         message: expect.stringContaining('Projected: 120%'),
-        message: expect.stringContaining('$2.50/hr'),
       })
     );
   });
