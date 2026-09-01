@@ -8,7 +8,11 @@ export type AlertType =
   | 'subscription_cancelled'
   | 'production.run_cancelled'
   | 'production.approval_expired'
-  | 'production.budget_cap';
+  | 'production.budget_cap'
+  // P3 platform infrastructure alerts (Phase 3 Production Hardening)
+  | 'platform.circuit_breaker'
+  | 'platform.billing_anomaly'
+  | 'platform.mission_abandon_spike';
 
 /** Alert severity levels */
 export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical';

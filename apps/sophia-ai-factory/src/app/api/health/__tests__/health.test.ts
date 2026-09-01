@@ -22,6 +22,7 @@ const probeKvSpy = vi.fn();
 const probeR2Spy = vi.fn();
 const getStateSpy = vi.fn();
 const getBuildMetadataSpy = vi.fn();
+const getEmitterHealthSpy = vi.fn();
 
 function installRouteMocks() {
   vi.doMock('@/seed/health/probe-d1', () => ({
@@ -47,6 +48,9 @@ function installRouteMocks() {
       HALF_OPEN: 'HALF_OPEN',
     },
   }));
+  vi.doMock('@/tree/performance/emitter-health', () => ({
+    getEmitterHealth: (...args: unknown[]) => getEmitterHealthSpy(...args),
+  }));
   vi.doMock('@opennextjs/cloudflare', () => ({
     getCloudflareContext: vi.fn().mockRejectedValue(new Error('Not in CF context')),
   }));
@@ -58,6 +62,7 @@ function resetAllSpies() {
   probeR2Spy.mockReset();
   getStateSpy.mockReset();
   getBuildMetadataSpy.mockReset();
+  getEmitterHealthSpy.mockReset();
 
   // Default healthy responses
   probeD1Spy.mockResolvedValue({ status: 'up', latency: 2 });
@@ -67,6 +72,14 @@ function resetAllSpies() {
   getBuildMetadataSpy.mockReturnValue({
     sha: 'abc1234567890',
     deployedAt: '2026-08-16T00:00:00Z',
+  });
+  getEmitterHealthSpy.mockResolvedValue({
+    totalEventTypes: 13,
+    wired: 11,
+    deferred: 2,
+    staleEmitterTypes: [],
+    entries: [],
+    maxLagMs: null,
   });
 }
 
@@ -139,12 +152,29 @@ describe('/api/health', () => {
   });
 
   describe('authenticated path (HEALTH_TOKEN set)', () => {
-    it('includes version and components when token provided', async () => {
+    it('returns 401 when Authorization header is missing', async () => {
       process.env.HEALTH_TOKEN = 'test-token';
       const { GET } = await freshImportRoute();
-      const resp = await GET(buildRequest());
+      const req = new Request('http://localhost/api/health');
+      const resp = await GET(req);
+
+      expect(resp.status).toBe(401);
+      const body = (await resp.json()) as Record<string, unknown>;
+      expect(body.error).toBe('Unauthorized');
+      expect(body.version).toBeUndefined();
+      expect(body.components).toBeUndefined();
+    });
+
+    it('includes version and components when correct Bearer token provided', async () => {
+      process.env.HEALTH_TOKEN = 'test-token';
+      const { GET } = await freshImportRoute();
+      const req = new Request('http://localhost/api/health', {
+        headers: { authorization: 'Bearer test-token' },
+      });
+      const resp = await GET(req);
       const body = (await resp.json()) as Record<string, unknown>;
 
+      expect(resp.status).toBe(200);
       expect(body.status).toBe('healthy');
       expect(body.version).toBeDefined();
       expect((body.version as Record<string, string>).shortSha).toBe('abc12345');
@@ -155,6 +185,20 @@ describe('/api/health', () => {
       expect(components.kv?.status).toBe('ok');
       expect(components.r2?.status).toBe('ok');
       expect(components.circuitBreaker?.status).toBe('ok');
+    });
+
+    it('returns 401 when Bearer token is incorrect', async () => {
+      process.env.HEALTH_TOKEN = 'test-token';
+      const { GET } = await freshImportRoute();
+      const req = new Request('http://localhost/api/health', {
+        headers: { authorization: 'Bearer wrong-token' },
+      });
+      const resp = await GET(req);
+
+      expect(resp.status).toBe(401);
+      const body = (await resp.json()) as Record<string, unknown>;
+      expect(body.version).toBeUndefined();
+      expect(body.components).toBeUndefined();
     });
   });
 
@@ -168,7 +212,10 @@ describe('/api/health', () => {
       });
 
       const { GET } = await freshImportRoute();
-      const resp = await GET(buildRequest());
+      const req = new Request('http://localhost/api/health', {
+        headers: { authorization: 'Bearer test-token' },
+      });
+      const resp = await GET(req);
       const body = (await resp.json()) as Record<string, unknown>;
 
       expect(resp.status).toBe(503);
@@ -187,7 +234,10 @@ describe('/api/health', () => {
       });
 
       const { GET } = await freshImportRoute();
-      const resp = await GET(buildRequest());
+      const req = new Request('http://localhost/api/health', {
+        headers: { authorization: 'Bearer test-token' },
+      });
+      const resp = await GET(req);
       const body = (await resp.json()) as Record<string, unknown>;
 
       expect(resp.status).toBe(200);
@@ -201,7 +251,10 @@ describe('/api/health', () => {
       getStateSpy.mockReturnValue({ state: 'OPEN', failureCount: 5 });
 
       const { GET } = await freshImportRoute();
-      const resp = await GET(buildRequest());
+      const req = new Request('http://localhost/api/health', {
+        headers: { authorization: 'Bearer test-token' },
+      });
+      const resp = await GET(req);
       const body = (await resp.json()) as Record<string, unknown>;
 
       expect(resp.status).toBe(200);
@@ -219,7 +272,10 @@ describe('/api/health', () => {
       probeKvSpy.mockRejectedValue(new Error('KV module import failed'));
 
       const { GET } = await freshImportRoute();
-      const resp = await GET(buildRequest());
+      const req = new Request('http://localhost/api/health', {
+        headers: { authorization: 'Bearer test-token' },
+      });
+      const resp = await GET(req);
       const body = (await resp.json()) as Record<string, unknown>;
       const components = body.components as Record<string, Record<string, unknown>>;
 
@@ -235,7 +291,10 @@ describe('/api/health', () => {
       probeD1Spy.mockRejectedValue(new Error('D1 import error'));
 
       const { GET } = await freshImportRoute();
-      const resp = await GET(buildRequest());
+      const req = new Request('http://localhost/api/health', {
+        headers: { authorization: 'Bearer test-token' },
+      });
+      const resp = await GET(req);
       const body = (await resp.json()) as Record<string, unknown>;
       const components = body.components as Record<string, Record<string, unknown>>;
 
@@ -253,7 +312,10 @@ describe('/api/health', () => {
       probeKvSpy.mockResolvedValue({ status: 'down', latency: 50, error: 'KV down' });
 
       const { GET } = await freshImportRoute();
-      const resp = await GET(buildRequest());
+      const req = new Request('http://localhost/api/health', {
+        headers: { authorization: 'Bearer test-token' },
+      });
+      const resp = await GET(req);
       const body = (await resp.json()) as Record<string, unknown>;
 
       expect(body.status).toBe('unhealthy');
@@ -271,7 +333,10 @@ describe('/api/health', () => {
       });
 
       const { GET } = await freshImportRoute();
-      const resp = await GET(buildRequest());
+      const req = new Request('http://localhost/api/health', {
+        headers: { authorization: 'Bearer test-token' },
+      });
+      const resp = await GET(req);
 
       expect(resp.status).toBe(503);
       const body = (await resp.json()) as Record<string, unknown>;

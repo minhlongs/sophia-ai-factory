@@ -16,6 +16,18 @@ interface ComponentStatus {
   error?: string;
 }
 
+interface RealityLoopComponentStatus {
+  status: 'ok' | 'degraded' | 'unknown';
+  wired: number;
+  deferred: number;
+  totalEventTypes: number;
+  /** Wired emitters with events ever emitted whose last emit is within 24h but lagging — informational. */
+  lagging: string[];
+  /** Wired emitters with no event in the trailing 24h (or never emitted). */
+  staleEmitterTypes: string[];
+  maxLagMs: number | null;
+}
+
 interface HealthResponse {
   status: 'healthy' | 'degraded' | 'unhealthy';
   timestamp: string;
@@ -26,6 +38,7 @@ interface HealthResponse {
     kv: ComponentStatus;
     r2: ComponentStatus;
     circuitBreaker: { status: string; openServices: string[] };
+    realityLoop: RealityLoopComponentStatus;
   };
 }
 
@@ -170,31 +183,86 @@ async function checkCircuitBreaker(): Promise<{
   }
 }
 
+/** Check Reality Loop emitter health — non-blocking, read-only D1 aggregate */
+async function checkRealityLoop(): Promise<RealityLoopComponentStatus> {
+  try {
+    const { getEmitterHealth } = await import('@/tree/performance/emitter-health');
+    const report = await getEmitterHealth();
+    // lagging = wired emitters that HAVE emitted before but lag > 12h (info tier)
+    const lagging = report.entries
+      .filter((e) => e.wired && e.lagMs !== null && e.lagMs > 12 * 60 * 60 * 1000 && !e.stale)
+      .map((e) => e.eventType);
+    return {
+      status: report.staleEmitterTypes.length > 0 ? 'degraded' : 'ok',
+      wired: report.wired,
+      deferred: report.deferred,
+      totalEventTypes: report.totalEventTypes,
+      lagging,
+      staleEmitterTypes: report.staleEmitterTypes,
+      maxLagMs: report.maxLagMs,
+    };
+  } catch {
+    // D1 read failure → static wiring-only fallback (never fails health)
+    return {
+      status: 'unknown',
+      wired: 11,
+      deferred: 2,
+      totalEventTypes: 13,
+      lagging: [],
+      staleEmitterTypes: [],
+      maxLagMs: null,
+    };
+  }
+}
+
+/**
+ * Constant-time comparison of the request's Authorization header against
+ * the configured token. Returns true only when a token is configured AND
+ * the request presents an exact `Bearer <token>` match.
+ */
+async function verifyHealthToken(request: Request | undefined, healthToken: string | undefined): Promise<boolean> {
+  if (!request) return false;
+  const trimmed = healthToken?.trim();
+  if (!trimmed) return false;
+  const auth = request.headers.get('authorization') ?? '';
+  if (auth.length !== `Bearer ${trimmed}`.length) return false;
+  // Simple constant-time compare (avoids importing crypto for this one check).
+  let result = 0;
+  const expected = `Bearer ${trimmed}`;
+  for (let i = 0; i < expected.length; i += 1) {
+    result |= expected.charCodeAt(i) ^ auth.charCodeAt(i);
+  }
+  return result === 0;
+}
+
 /** Compute aggregate status from individual component statuses */
 function aggregateStatus(
   dbStatus: string,
   cbStatus: string,
   kvStatus: string,
+  realityLoopStatus: 'ok' | 'degraded' | 'unknown',
 ): AggregateStatus {
   if (dbStatus === 'error') return 'unhealthy';
-  if (cbStatus === 'degraded' || kvStatus === 'error') return 'degraded';
+  if (cbStatus === 'degraded' || kvStatus === 'error' || realityLoopStatus === 'degraded') return 'degraded';
   return 'healthy';
 }
 
-export async function GET(_req?: Request) {
+export async function GET(req?: Request) {
   try {
     // Run all component checks concurrently — non-blocking
-    const [database, kv, r2, circuitBreaker] = await Promise.all([
+    const [database, kv, r2, circuitBreaker, realityLoop] = await Promise.all([
       checkDatabase(),
       checkKV(),
       checkR2(),
       checkCircuitBreaker(),
+      checkRealityLoop(),
     ]);
 
     const status = aggregateStatus(
       database.status,
       circuitBreaker.status,
       kv.status,
+      realityLoop.status,
     );
 
     const { getBuildMetadata } = await import('@/seed/health/build-metadata');
@@ -213,7 +281,18 @@ export async function GET(_req?: Request) {
     const healthToken = env?.HEALTH_TOKEN as string | undefined
       ?? process.env.HEALTH_TOKEN;
 
-    const isAuthorized = healthToken !== undefined && healthToken !== '';
+    const isAuthorized = await verifyHealthToken(req, healthToken);
+
+    // If HEALTH_TOKEN is configured but request is not authorized, return 401
+    if (healthToken?.trim() && !isAuthorized) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+        },
+      });
+    }
 
     const body: HealthResponse = {
       status,
@@ -231,6 +310,7 @@ export async function GET(_req?: Request) {
         kv,
         r2,
         circuitBreaker,
+        realityLoop,
       };
     }
 
