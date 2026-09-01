@@ -204,6 +204,7 @@ export function isPublicApiRoute(pathname: string): boolean {
   const exactPublic = new Set([
     // Health / status (public)
     '/api/health',
+    '/api/reality-loop/health',
     '/api/sophia-index/health',
     '/api/public',
     '/api/version',
