@@ -21,12 +21,30 @@ This runbook defines recovery procedures for Sophia AI Factory's production infr
 
 ### D1 Database (`sophia-raas-db`)
 
-**Purpose:** Primary data store for user profiles, billing records, campaigns, videos.
+**Purpose:** Primary data store for user profiles, billing records, campaigns, videos, **platform alerts**, and **cron run logs**.
 - **Binding:** `DB` in `wrangler.toml`
 - **Database ID:** `78bd1961-b62d-43bb-b551-0c5d7d389506`
 - **Backup Strategy:** Daily automated exports + manual snapshots before deployments
 
 **Data criticality:** HIGH — Contains user accounts, payment records, campaign state.
+
+### New D1 tables added in Phase 3 (Production Hardening)
+
+These tables are part of the **D1 recovery scope** — any full restore MUST include them or alert throttling / anomaly detection breaks silently:
+
+| Table | Purpose | Created via |
+|-------|---------|-------------|
+| `user_alerts` | Platform + tenant alerts (category: `platform`, `tenant`, `security`, `billing`, `usage`, `system`) | migration `0264_user_alerts.sql` |
+| `cron_run_log` | Per-cron run status (success/failure/skipped) + idempotency gating | existing migration |
+| `circuit_breaker_state` | Service circuit-breaker state (OPEN/CLOSED/HALF_OPEN) | existing migration |
+
+**Restore validation after D1 restore** — confirm these tables exist before declaring recovery green:
+```bash
+npx wrangler d1 execute sophia-raas-db --command="SELECT name FROM sqlite_master WHERE type='table' AND name IN ('user_alerts','cron_run_log','circuit_breaker_state');" --remote
+# Expected: 3 rows
+```
+
+**Alert throttle KV:** The `EXPERIMENT_KV` namespace also stores transient alert-throttle keys (e.g. `billing_alert:<workspaceId>`, `abandon_alert:global`, `cb_alert:<service>`) with short TTLs (15 min – 6h). These self-heal on next cron run after a KV reset — no separate KV backup required.
 
 ### R2 Bucket (`sophia-ai-factory-opennext-cache`)
 
@@ -435,7 +453,8 @@ wrangler tail --name sophia-ai-factory
 | 2026-04-28 | DevOps Team | Initial draft — DR procedures + RTO/RPO definitions |
 | 2026-05-18 | debugger agent | Full DR drill completed — RTO = 13s, RPO = 0s |
 | 2026-06-17 | Claude Opus 4.8 | Quarterly verification drill — infrastructure audit, schema analysis, next drill scheduled |
+| 2026-08-31 | Phase 3 hardening | Added `user_alerts` + `cron_run_log` + `circuit_breaker_state` to D1 recovery scope; documented alert-throttle KV self-heal |
 
-**Last reviewed:** 2026-06-17
-**Next review:** 2026-09-01 (quarterly)
-**Next drill:** 2026-09-01 (Q3 full restore test)
+**Last reviewed:** 2026-08-31
+**Next review:** 2026-12-01 (quarterly)
+**Next drill:** 2026-12-01 (Q4 full restore test)

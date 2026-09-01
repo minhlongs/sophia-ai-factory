@@ -1,7 +1,7 @@
 # Incident Response Runbook — Sophia AI Factory
 
-**Version:** 1.0.0  
-**Last updated:** 2026-05-22  
+**Version:** 1.1.0  
+**Last updated:** 2026-08-31  
 **Scope:** Production at https://sophia.agencyos.network  
 **Deploy:** CF-direct via wrangler CLI (GitHub Actions disabled by design)
 
@@ -173,6 +173,9 @@ npx wrangler tail --status error | grep -i timeout
 # - /api/cron/d1-backup (manual + scheduled, 6am UTC)
 # - /api/cron/daily-rollup (mission rollup, 2am UTC)
 # - /api/cron/affiliate-payout-sync (payout batch, 1am UTC)
+# - /api/cron/circuit-breaker-scan (slash-15 min — P3 alert cron)
+# - /api/cron/billing-anomaly-scan (07:00 UTC daily — P3 alert cron)
+# - /api/cron/mission-abandon-scan (slash-30 min — P3 alert cron)
 # - 12 others listed in Phase 1 synthesis (see unscheduled candidates)
 ```
 
@@ -180,6 +183,30 @@ npx wrangler tail --status error | grep -i timeout
 - All cron handlers MUST log to `cron_run_log` (verified at handler entry)
 - `CRON_SECRET` MUST be provisioned in CF Workers secrets (document in deploy checklist)
 - Handlers returning >30s must be split into smaller units or moved to Inngest
+
+### P3 Alert Crons (New — Phase 3 Production Hardening)
+
+Three new observability crons detect anomalies and write to the `user_alerts` D1 table (AlertCategory = `platform`):
+
+| Cron | Schedule | Table read | Alert key | Throttle (KV) |
+|------|----------|------------|-----------|---------------|
+| `/api/cron/circuit-breaker-scan` | slash-15 min | `circuit_breaker_state` | `cb_alert:<service>` (per open) | 15 min |
+| `/api/cron/billing-anomaly-scan` | 07:00 UTC daily | `production_graph_runs` + `org_members` | `billing_alert:<workspaceId>` | 6h |
+| `/api/cron/mission-abandon-scan` | slash-30 min | `performance_events` | `abandon_alert:global` | 2h |
+
+**Detection rule:** 24h spend/breaches vs 7-day rolling baseline. Fires when multiplier exceeded (3x for billing, 3x for circuit-breaker opens, 5x for abandon rate).
+
+**Manual trigger (force re-scan):**
+```bash
+curl -X POST https://sophia.agencyos.network/api/cron/billing-anomaly-scan \
+  -H "Authorization: Bearer $CRON_SECRET"
+curl -X POST https://sophia.agencyos.network/api/cron/mission-abandon-scan \
+  -H "Authorization: Bearer $CRON_SECRET"
+```
+
+**Alert throttle:** Backed by `EXPERIMENT_KV` (no new namespace). If KV binding is missing, alerts still fire (dedup best-effort via `user_alerts` per-run constraint).
+
+**Health check endpoint:** `GET /api/reality-loop/health` (public shape when no `HEALTH_TOKEN` bearer; full emitter detail when authenticated). Verifies the 13 canonical Reality Loop event types: 11 wired, 2 deferred (`creative.edited`, `memory.corrected`).
 
 ---
 
@@ -502,7 +529,7 @@ Next update: [HH:MM UTC]
 
 ---
 
-## Appendix: Procedures Missing (Phase 4 Candidates)
+## Appendix: Procedures Missing (Phase 4+ Candidates)
 
 - [ ] **D1 restore drill** — full database recovery from R2 backup, test in staging monthly
 - [ ] **BYOK master key rotation** — procedure to re-encrypt all stored keys
