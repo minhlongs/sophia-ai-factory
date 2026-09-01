@@ -51,6 +51,11 @@ const CRON_ROUTES = {
   '*/15 * * * *': [
     '/api/cron/smoke-one-time',
     '/api/cron/circuit-breaker-scan',
+    '/api/cron/distribution-pipeline-scan',
+    '/api/cron/agent-cost-overrun-scan',
+  ],
+  '0 * * * *': [
+    '/api/cron/creative-quality-drift-scan',
   ],
   '5 * * * *': [
     '/api/cron/usage-export',

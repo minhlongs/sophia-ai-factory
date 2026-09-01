@@ -92,7 +92,7 @@ binding = "AI"
 # "0 7 * * *"  — daily 07:00 UTC → /api/cron/llm-cache-purge (Phase 4E.3: expire-then-delete llm_cache rows)
 # "0 */4 * * *" — every 4 hours → /api/cron/affiliate-scout (PREMIUM+ affiliate network discovery)
 # "30 3 * * *" — daily 03:30 UTC → /api/cron/hash-chain-verification (SOC 2 CC7.2 audit log integrity check)
-crons = ["* * * * *", "*/2 * * * *", "*/5 * * * *", "*/10 * * * *", "*/15 * * * *", "5 * * * *", "7 * * * *", "10 * * * *", "0 9 * * *", "0 */4 * * *", "0 0 * * *", "0 0 1 * *", "0 1 * * *", "5 1 * * *", "0 2 * * *", "30 2 * * *", "0 3 * * *", "30 3 * * *", "0 4 * * *", "0 5 * * *", "0 6 * * *", "0 6 * * 1", "0 7 * * *", "*/30 * * * *"]
+crons = ["* * * * *", "*/2 * * * *", "*/5 * * * *", "*/10 * * * *", "*/15 * * * *", "5 * * * *", "7 * * * *", "10 * * * *", "0 9 * * *", "0 */4 * * *", "0 0 * * *", "0 0 1 * *", "0 1 * * *", "5 1 * * *", "0 2 * * *", "30 2 * * *", "0 3 * * *", "30 3 * * *", "0 4 * * *", "0 5 * * *", "0 6 * * *", "0 6 * * 1", "0 7 * * *", "*/30 * * * *", "0 * * * *"]
 # "* * * * *"   — every minute  → /api/cron/workflow-stepper (engine missions, every-minute advance)
 # "*/2 * * * *"  — every 2 min  → /api/cron/fulfillment-retry (F3: retry queue, exp backoff; dead since 2026-05-02 commit a4d54d8d)
 #                              → /api/cron/email-outbox-flush (drains welcome_email_outbox; closes FREE100 handover funnel)
@@ -103,6 +103,9 @@ crons = ["* * * * *", "*/2 * * * *", "*/5 * * * *", "*/10 * * * *", "*/15 * * * 
 # "*/15 * * * *" — every 15 min → /api/cron/circuit-breaker-scan (platform alert on OPEN breaker)
 # "0 7 * * *"   — daily 07:00 UTC → /api/cron/billing-anomaly-scan (3x baseline spend alert)
 # "*/30 * * * *" — every 30 min → /api/cron/mission-abandon-scan (abandon-spike SLO alert)
+# "*/15 * * * *" — every 15 min → /api/cron/distribution-pipeline-scan (failure rate, latency, zero-post stall)
+# "0 * * * *"   — hourly at minute 0 → /api/cron/creative-quality-drift-scan (acceptance rate drift)
+# "*/15 * * * *" — every 15 min → /api/cron/agent-cost-overrun-scan (budget overrun + burn rate projection)
 # === P3-ALERT-CRONS-END ===
 # REMOVED: "*/1 * * * *" — every 1 min orphan (workflow-stepper has no live handler in inject-scheduled-handler.mjs CRON_ROUTES; was burning invocations)
 # P2: "0 5 * * *" — daily 05:00 UTC → /api/cron/error-digest (D1 self-monitoring)
