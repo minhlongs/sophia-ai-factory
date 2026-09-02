@@ -68,7 +68,7 @@ The platform code, deployment process, incident documentation, and governance fr
 | **Disaster Recovery** | D1 restore untested; Inngest no backup | P0 |
 | **Security Operations** | No MFA verified, no audit logging, no automated scanning | P0 |
 | **Financial Ops** | No infrastructure cost allocation, no experiment registry | P1 |
-| **Customer Ops** | No support ticketing, no NPS, no churn definition | P1 |
+| **Customer Ops** | Support ticketing committed (not deployed); no NPS, no churn definition | P1 |
 | **Strategic Visibility** | No CEO dashboard, key metrics not instrumented | P1 |
 
 ---
@@ -165,10 +165,11 @@ Execute the **Minimum Viable Handover** to reach 75/100 (Nearly Ready):
 | 2 | Verify MFA enabled on Cloudflare, GitHub, NOWPayments | Founder + Tech Lead | P1 #13 |
 | 2 | Document all secret values in password manager | Founder | BLOCKER #2 |
 | 3-4 | Execute D1 restore to scratch database (drill) | Tech Lead | BLOCKER #5 |
-| 5 | Implement simple support ticketing (GitHub Issues or Linear) | Tech Lead | P1 #17 |
+| 5 | ~~Implement simple support ticketing~~ ✅ COMMITTED (ec2e16eb0, deploy blocked) | Tech Lead | P1 #17 |
 | 5 | Define churn metric (no login 90 days = churned) | CEO | P1 #19 |
-| 5-6 | Build cohort retention view (monthly D1 query) | Tech Lead | P1 #18 |
-| 6-7 | Implement per-request AI cost tracking | Tech Lead | P1 #14 |
+| 5-6 | ~~Build cohort retention view~~ ✅ ALREADY SHIPPED | Tech Lead | P1 #18 |
+| 6-7 | ~~Implement per-request AI cost tracking~~ ✅ ALREADY SHIPPED | Tech Lead | P1 #14 |
+| 1 | **[UNBLOCK] Enable Analytics Engine in CF dashboard → re-deploy** | Founder | Deploy blocker |
 | 8 | Document credential rotation policy (quarterly) | Founder + Tech Lead | P0 #12 |
 
 **After Week 1:** Score ~70 (Nearly Ready)
@@ -253,6 +254,25 @@ docs/operations/sop/
 2. **Tech Lead:** Execute D1 restore drill (days 3-4) and technical fixes
 3. **CEO:** Define churn metric, review financial gaps
 4. **All:** Reconvene at Day 8 for readiness reassessment
+
+---
+
+## 8-Day Handover Plan — Execution Status (2026-09-02)
+
+| Phase | Status | Detail |
+|-------|--------|--------|
+| Phase 1: Access Transfer | ⏳ PENDING FOUNDER | See `FOUNDER_ACTION_CHECKLIST.md` |
+| Phase 2: MFA Verification | ⏳ PENDING FOUNDER + TECH LEAD | See `FOUNDER_ACTION_CHECKLIST.md` |
+| Phase 3: D1 Restore Drill | ⏳ PENDING TECH LEAD | See `FOUNDER_ACTION_CHECKLIST.md` |
+| Phase 4: Support Ticketing | ✅ COMMITTED (deploy blocked) | `ec2e16eb0` — migration 0266 applied to prod D1 |
+| Phase 5: Cohort Retention | ✅ ALREADY SHIPPED | Pre-existing, verified |
+| Phase 6: AI Cost Tracking | ✅ ALREADY SHIPPED | Pre-existing, verified |
+| Phase 7: Credential Rotation | ⏳ PENDING TECH LEAD | See `FOUNDER_ACTION_CHECKLIST.md` |
+| Phase 8: Reassessment | ⏳ PENDING ALL | After phases 1-3, 7 complete |
+
+**Deploy blocker:** Cloudflare Analytics Engine (code 10089). Verified that `wrangler.toml` is byte-identical to baseline `5dd1f071` — the WAE binding was added by commit `34b0eb736` (ancestor of baseline), so this is NOT a regression from Phase 4. It is a pre-existing or account-level condition. Resolution requires enabling Analytics Engine in the Cloudflare dashboard, then re-running `npm run deploy:full`.
+
+**Production status:** Baseline `5dd1f071` healthy. `/api/support/tickets` route does NOT exist at baseline — the HTTP 401 comes from middleware auth guard. Phase 4 code is NOT live. Migration 0266 (support_tickets table) applied to production D1.
 
 ---
 

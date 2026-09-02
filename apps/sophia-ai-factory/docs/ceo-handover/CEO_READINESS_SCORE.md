@@ -112,13 +112,13 @@
 |---|---|---|
 | Onboarding flow | ✅ Works | 100 |
 | Tier activation | ✅ Works | 100 |
-| Support ticketing | ❌ None | 0 |
+| Support ticketing | ⚠️ Partial (committed, not deployed) | 50 |
 | NPS/feedback | ❌ None | 0 |
 | Retention tracking | ⚠️ Partial | 50 |
 | Churn definition | ❌ None | 0 |
 | Customer communication | ✅ Telegram | 100 |
 
-**Why 60:** Onboarding works; no support system, no feedback loop, no churn metric.
+**Why 60:** Onboarding works; no feedback loop, no churn metric. Support ticketing infrastructure (migration 0266 + `POST/GET /api/support/tickets`) is committed as `ec2e16eb0` and applied to production D1, but not yet deployed live — blocked by Cloudflare Analytics Engine (code 10089).
 
 ---
 
