@@ -39,19 +39,15 @@ binding = "ASSETS"
 binding = "NEXT_INC_CACHE_R2_BUCKET"
 bucket_name = "sophia-ai-factory-opennext-cache"
 
-# Video storage (Phase 01 video go-live).
-# Bucket must exist: `wrangler r2 bucket create sophia-videos`.
-# Public URL: configure custom domain or R2.dev public access; export base URL via R2_PUBLIC_BASE_URL.
-[[r2_buckets]]
-binding = "VIDEO_BUCKET"
-bucket_name = "sophia-videos"
-
-# Disaster recovery backups (Fullstack Phase 4 G1 — 2026-05-13).
-# D1 daily snapshots uploaded by /api/cron/d1-backup, triggered by external cron
-# (Upstash QStash). 30-day R2 lifecycle handles retention.
-[[r2_buckets]]
-binding = "BACKUPS_BUCKET"
-bucket_name = "sophia-backups"
+# Video storage (Phase 01 video go-live) — REMOVED TEMPORARILY to unblock deploy.
+# R2 is disabled on this CF account (code 10136). Founder must re-enable R2.
+# When R2 is re-enabled, restore these bindings:
+#   [[r2_buckets]]
+#   binding = "VIDEO_BUCKET"
+#   bucket_name = "sophia-videos"
+#   [[r2_buckets]]
+#   binding = "BACKUPS_BUCKET"
+#   bucket_name = "sophia-backups"
 
 [[d1_databases]]
 binding = "DB"
