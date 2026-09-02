@@ -1,0 +1,124 @@
+# DISASTER RECOVERY READINESS — SOPHIA AI FACTORY
+
+> Baseline SHA: `5dd1f071` | Generated: 2026-09-02
+> **AUDIT STATUS: READ-ONLY.** No recovery procedure was executed.
+> Every entry is verified against implementation, not assumed.
+
+---
+
+## Recovery Targets
+
+| Asset | RPO | RTO | BACKUP EXISTS | RESTORE VERIFIED | STATUS |
+|---|---|---|---|---|---|
+| **D1 Database** (`sophia-raas-db`) | 24h (daily dump) | 4h (manual) | ✅ Yes — `/api/cron/d1-backup` → R2 `sophia-backups` | ❌ NOT VERIFIED | **CRITICAL GAP** |
+| **R2 Cache** (`sophia-ai-factory-opennext-cache`) | N/A (cache) | N/A (rebuild) | ✅ N/A | N/A | OK |
+| **R2 Backups** (`sophia-backups`) | N/A (backup store) | N/A | ✅ 30-day lifecycle | N/A | OK |
+| **Worker config** (`wrangler.toml`) | N/A (git) | N/A (redeploy) | ✅ In git | ✅ Redeploy proven (5 historical deploys) | OK |
+| **Inngest event log** | Unknown | Unknown | ❌ No backup identified | ❌ | **GAP** |
+| **Customer BYOK keys** | N/A (customer-owned) | N/A | N/A | N/A | OK (BYOK doctrine) |
+
+---
+
+## D1 Database Recovery
+
+### Backup mechanism (VERIFIED — exists and is real)
+
+- **Route:** `GET|POST /api/cron/d1-backup`
+- **Auth:** `CRON_SECRET` (Bearer / `x-cron-secret` header / `?token=` query)
+- **Output:** `sophia-backups/d1-YYYY-MM-DD.sql` (one object per day)
+- **Retention:** 30-day R2 lifecycle (hardcoded in `wrangler.toml`)
+- **Idempotency:** Skips if backup succeeded in last 12h
+- **Size limit:** 50 MiB hard ceiling (`MAX_DUMP_BYTES`)
+- **Observability:** `cron_run_log` table + Better Stack heartbeat (`BACKUP_HEARTBEAT_URL`)
+
+### Recovery procedure (from code comments + deploy-verify.md)
+
+```bash
+# 1. Trigger backup (if stale)
+curl -X POST https://sophia.agencyos.network/api/cron/d1-backup \
+  -H "Authorization: Bearer $CRON_SECRET"
+
+# 2. List available backups
+npx wrangler s3 object list sophia-backups --prefix d1-
+
+# 3. Restore from a specific dump
+npx wrangler d1 execute sophia-raas-db --file=migrations/<dump.sql> --remote
+```
+
+### ⚠️ CRITICAL GAP — Restore is NOT verified
+
+**Evidence:** No restore test has ever been executed. No automated restore procedure exists. The backup route is reachable via authenticated curl but is NOT operator-registered with an external cron (per no-tech doctrine).
+
+**Impact:** In a D1 failure, recovery depends on a manual `wrangler d1 execute` that has never been tested against the current schema (69+ migrations). If the dump format or migration ordering is wrong, restore silently produces a broken database.
+
+**Likelihood:** Medium (D1 is Cloudflare-managed; full loss is unlikely, but partial corruption is plausible)
+
+**Owner:** Tech Lead
+
+**Recommended action:**
+1. Execute one restore test to a **scratch/staging D1** immediately
+2. Document the restore result (row counts, schema check, app health)
+3. Add a monthly restore drill to the ops calendar
+4. Track in `docs/operations/` as a known-unverified procedure until proven
+
+---
+
+## Inngest Event Log
+
+**Status: GAP**
+
+No backup or recovery procedure identified for the Inngest event log. Inngest owns long-running workflows (video generation, multi-step processes). If the Inngest store is lost, in-flight workflows are lost with no recovery path.
+
+**Impact:** High — in-flight missions mid-execution would be orphaned
+**Likelihood:** Low (Inngest is managed infrastructure)
+**Owner:** Tech Lead
+
+---
+
+## Deployment Rollback
+
+**Status: VERIFIED** (procedure exists, historically exercised)
+
+```bash
+cd apps/sophia-ai-factory
+npx wrangler rollback --name sophia-ai-factory --message "<reason>" --yes
+```
+
+Or redeploy a specific commit:
+```bash
+git checkout <sha>
+npm run deploy:full
+git checkout main
+```
+
+**Evidence:** 5 historical manual wrangler deploys documented in `sophia-deploy-verify.md` (`d84f3a6e`, `e53c7dd2`, `aafd1ba4`, `0520585b`, `f418f3df`).
+
+---
+
+## CEO DR Checklist
+
+If the platform is down:
+
+1. **Verify it's actually down** — `curl https://sophia.agencyos.network/api/health` (expect 200)
+2. **Check the last deploy** — `curl https://sophia.agencyos.network/api/version` → compare `shortSha` to `git rev-parse HEAD | cut -c1-8`
+3. **Roll back if regression** — `npx wrangler rollback --name sophia-ai-factory --yes`
+4. **If D1 is the cause** — trigger backup, then restore from latest dump
+5. **Notify customers** — Telegram bot + email (channels identified in `ACCESS_OWNERSHIP_MATRIX.md`)
+6. **Postmortem within 24h** — document what happened, what was done, what's still open
+
+---
+
+## Summary
+
+| Check | Result |
+|---|---|
+| Backup mechanism exists | ✅ YES |
+| Backup is automated | ⚠️ Manual trigger (no external cron) |
+| Restore procedure documented | ✅ YES |
+| Restore ever tested | ❌ NO |
+| Rollback procedure documented | ✅ YES |
+| Rollback historically exercised | ✅ YES (5 deploys) |
+| Inngest backup | ❌ NONE |
+| **Overall DR readiness** | **PARTIAL — restore unverified is the binding gap** |
+
+*Generated by CEO HANDOVER AUDIT, Phase 7.*
