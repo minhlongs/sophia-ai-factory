@@ -165,11 +165,11 @@ Execute the **Minimum Viable Handover** to reach 75/100 (Nearly Ready):
 | 2 | Verify MFA enabled on Cloudflare, GitHub, NOWPayments | Founder + Tech Lead | P1 #13 |
 | 2 | Document all secret values in password manager | Founder | BLOCKER #2 |
 | 3-4 | Execute D1 restore to scratch database (drill) | Tech Lead | BLOCKER #5 |
-| 5 | ~~Implement simple support ticketing~~ ✅ COMMITTED (ec2e16eb0, deploy blocked) | Tech Lead | P1 #17 |
+| 5 | ~~Implement simple support ticketing~~ ✅ COMMITTED (ec2e16eb0 + 19ab1797b + e9a5bbfe, deploy blocked) | Tech Lead | P1 #17 |
 | 5 | Define churn metric (no login 90 days = churned) | CEO | P1 #19 |
 | 5-6 | ~~Build cohort retention view~~ ✅ ALREADY SHIPPED | Tech Lead | P1 #18 |
 | 6-7 | ~~Implement per-request AI cost tracking~~ ✅ ALREADY SHIPPED | Tech Lead | P1 #14 |
-| 1 | **[UNBLOCK] Enable Analytics Engine in CF dashboard → re-deploy** | Founder | Deploy blocker |
+| 1 | **[UNBLOCK] Enable R2 in CF dashboard → re-deploy** | Founder | Deploy blocker (WAE 10089 RESOLVED, R2 10136 still blocking) |
 | 8 | Document credential rotation policy (quarterly) | Founder + Tech Lead | P0 #12 |
 
 **After Week 1:** Score ~70 (Nearly Ready)
@@ -264,13 +264,13 @@ docs/operations/sop/
 | Phase 1: Access Transfer | ⏳ PENDING FOUNDER | See `FOUNDER_ACTION_CHECKLIST.md` |
 | Phase 2: MFA Verification | ⏳ PENDING FOUNDER + TECH LEAD | See `FOUNDER_ACTION_CHECKLIST.md` |
 | Phase 3: D1 Restore Drill | ⏳ PENDING TECH LEAD | See `FOUNDER_ACTION_CHECKLIST.md` |
-| Phase 4: Support Ticketing | ✅ COMMITTED (deploy blocked) | `ec2e16eb0` — migration 0266 applied to prod D1 |
+| Phase 4: Support Ticketing | ✅ COMMITTED (deploy blocked) | `ec2e16eb0` + `19ab1797b` + `e9a5bbfe` — migration 0266 applied to prod D1 |
 | Phase 5: Cohort Retention | ✅ ALREADY SHIPPED | Pre-existing, verified |
 | Phase 6: AI Cost Tracking | ✅ ALREADY SHIPPED | Pre-existing, verified |
 | Phase 7: Credential Rotation | ⏳ PENDING TECH LEAD | See `FOUNDER_ACTION_CHECKLIST.md` |
 | Phase 8: Reassessment | ⏳ PENDING ALL | After phases 1-3, 7 complete |
 
-**Deploy blocker:** Cloudflare Analytics Engine (code 10089). Verified that `wrangler.toml` is byte-identical to baseline `5dd1f071` — the WAE binding was added by commit `34b0eb736` (ancestor of baseline), so this is NOT a regression from Phase 4. It is a pre-existing or account-level condition. Resolution requires enabling Analytics Engine in the Cloudflare dashboard, then re-running `npm run deploy:full`.
+**Deploy blocker:** R2 disabled on CF account (code 10136). WAE (code 10089) was **cleared** by removing the binding from `wrangler.toml` (commit `19ab1797b`). The remaining blocker is R2 — the OpenNext cache bucket (`NEXT_INC_CACHE_R2_BUCKET`) is required by the adapter and cannot be removed. Two non-critical R2 bindings (`VIDEO_BUCKET`, `BACKUPS_BUCKET`) were also removed (commit `e9a5bbfe`). Resolution requires enabling R2 in the Cloudflare dashboard, then re-running `npm run deploy:full`.
 
 **Production status:** Baseline `5dd1f071` healthy. `/api/support/tickets` route does NOT exist at baseline — the HTTP 401 comes from middleware auth guard. Phase 4 code is NOT live. Migration 0266 (support_tickets table) applied to production D1.
 

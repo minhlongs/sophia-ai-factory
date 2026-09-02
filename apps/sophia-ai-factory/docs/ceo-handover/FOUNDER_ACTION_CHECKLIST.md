@@ -6,15 +6,19 @@
 
 ---
 
-## 🔴 BLOCKER — Enable Analytics Engine (before any deploy)
+## 🔴 BLOCKER — Enable R2 + Analytics Engine (before any deploy)
 
-**Why:** Cloudflare deploy fails with code 10089 ("You need to enable Analytics Engine"). The `WAE` binding in `wrangler.toml` is NOT new — it was added by commit `34b0eb736` (ancestor of baseline `5dd1f071`), so this is an account-level condition, not a code regression.
+**Why:** Cloudflare deploy fails with two account-level errors:
+- **Code 10089** — Workers Analytics Engine not enabled (WAE binding removed from `wrangler.toml` in commit `19ab1797b`, but the account condition may still block if re-added)
+- **Code 10136** — R2 is disabled on the account. The OpenNext cache bucket (`NEXT_INC_CACHE_R2_BUCKET`) is **required** by the adapter and cannot be removed. This is the current blocker.
+
+Both are account-level infrastructure conditions, NOT code regressions. The baseline `5dd1f071` was deployed when R2 was enabled; it has since been disabled.
 
 **Founder làm:**
 1. [ ] Đăng nhập Cloudflare dashboard (`dash.cloudflare.com`)
-2. [ ] Account → Workers & Pages → Analytics Engine
-3. [ ] Enable Analytics Engine cho account `f691e83094f776311a1bfe3f8b126f1c`
-4. [ ] Sau khi enable: `cd apps/sophia-ai-factory && npm run deploy:full`
+2. [ ] Account → R2 → Object Storage → **Enable R2** (one-time purchase, ~$0.015/GB)
+3. [ ] Account → Workers & Pages → Analytics Engine → **Enable** (if not already)
+4. [ ] Sau khi enable cả hai: `cd apps/sophia-ai-factory && npm run deploy:full`
 5. [ ] Verify: `/api/version` shortSha == local SHA (không chỉ HTTP 200)
 
 **Tech Lead kiểm tra:**
@@ -22,6 +26,8 @@
 curl -s https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4
 # Kết quả phải là SHA commit mới (không phải 5dd1f071)
 ```
+
+**Lưu ý:** Sau khi R2 enable, hai binding `VIDEO_BUCKET` và `BACKUPS_BUCKET` cần restore lại trong `wrangler.toml` (đã comment trong file). Xem hướng dẫn inline trong `wrangler.toml`.
 
 ---
 
