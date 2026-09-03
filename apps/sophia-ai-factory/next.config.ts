@@ -47,6 +47,35 @@ const nextConfig: NextConfig = {
     // copyWorkerdPackages never copies into the output node_modules.
     '@better-auth/kysely-adapter',
     '@better-auth/core',
+    // Sentry — heavy SDK, runtime-only; source maps optional per no-tech doctrine
+    '@sentry/nextjs',
+    '@sentry/node',
+    '@sentry/core',
+    '@sentry/react',
+    // LangChain / LangGraph — heavy graph runtime, not needed in worker bundle
+    '@langchain/langgraph',
+    '@langchain/core',
+    // Firebase — client-only SDK, never executes on server
+    '@firebase/firestore',
+    '@firebase/app',
+    // Redis clients — not used in production (features disabled via env)
+    '@redis/client',
+    '@upstash/redis',
+    // Hapi — only used in test utilities, not production code paths
+    '@hapi/hapi',
+    // Google GenAI — client-only SDK
+    '@google/genai',
+    // OpenTelemetry — instrumentation only, not needed in worker
+    '@opentelemetry/api',
+    '@opentelemetry/sdk-node',
+    '@opentelemetry/resources',
+    '@opentelemetry/semantic-conventions',
+    '@opentelemetry/instrumentation',
+    '@opentelemetry/exporter-trace-otlp-grpc',
+    '@opentelemetry/exporter-trace-otlp-http',
+    '@opentelemetry/auto-instrumentations-node',
+    // uncrypto — used by @upstash/redis; externalize to avoid workerd crypto.web.mjs resolution failure
+    'uncrypto',
   ],
   // Gated by scripts/deploy-with-sha.sh Step 0.5 (`npm run type-check`).
   // Next's in-build typecheck is redundant once the gate runs — and was the

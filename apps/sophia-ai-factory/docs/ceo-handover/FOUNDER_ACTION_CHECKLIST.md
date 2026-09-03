@@ -6,19 +6,27 @@
 
 ---
 
-## 🔴 BLOCKER — Enable R2 + Analytics Engine (before any deploy)
+## 🔴 BLOCKER — Upgrade Cloudflare Workers Plan to PAID (before any deploy)
 
-**Why:** Cloudflare deploy fails with two account-level errors:
-- **Code 10089** — Workers Analytics Engine not enabled (WAE binding removed from `wrangler.toml` in commit `19ab1797b`, but the account condition may still block if re-added)
-- **Code 10136** — R2 is disabled on the account. The OpenNext cache bucket (`NEXT_INC_CACHE_R2_BUCKET`) is **required** by the adapter and cannot be removed. This is the current blocker.
+**Why (CORRECTED 2026-09-03):** Cloudflare deploy fails with ONE account-level error:
+- **3 MiB compressed script size limit** — The account is on the **FREE** plan. The deployed
+  `handler.mjs` is **8.10 MiB gzipped** (40.86 MiB uncompressed). FREE = 3 MiB, PAID = 10 MiB.
+  Gap = **5.10 MiB over the free limit**. This is the ONLY blocker.
 
-Both are account-level infrastructure conditions, NOT code regressions. The baseline `5dd1f071` was deployed when R2 was enabled; it has since been disabled.
+**R2 is NOT the blocker (previous diagnosis was WRONG):** The R2 API returns `success: true`
+with existing buckets including `sophia-ai-factory-opennext-cache` (created 2026-03-21),
+`sophia-backups`, `sophia-staging-cache`, `sophia-symbols`. R2 is ENABLED and the required
+cache bucket exists. No R2 enable step is needed.
+
+**Account verification (CF API, OAuth token from `~/.wrangler/config/default.toml`):**
+- Account: `f691e83094f776311a1bfe3f8b126f1c` (billwill.mentor@gmail.com's account)
+- Type: `standard`, Plan: `None` → **FREE tier** (3 MiB limit)
 
 **Founder làm:**
 1. [ ] Đăng nhập Cloudflare dashboard (`dash.cloudflare.com`)
-2. [ ] Account → R2 → Object Storage → **Enable R2** (one-time purchase, ~$0.015/GB)
-3. [ ] Account → Workers & Pages → Analytics Engine → **Enable** (if not already)
-4. [ ] Sau khi enable cả hai: `cd apps/sophia-ai-factory && npm run deploy:full`
+2. [ ] Workers → **Upgrade to Workers Paid plan** ($5/month, raises limit to 10 MiB)
+3. [ ] Link: https://dash.cloudflare.com/f691e83094f776311a1bfe3f8b126f1c/workers/plans
+4. [ ] Sau khi upgrade: `cd apps/sophia-ai-factory && npm run deploy:full`
 5. [ ] Verify: `/api/version` shortSha == local SHA (không chỉ HTTP 200)
 
 **Tech Lead kiểm tra:**
@@ -27,7 +35,12 @@ curl -s https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*
 # Kết quả phải là SHA commit mới (không phải 5dd1f071)
 ```
 
-**Lưu ý:** Sau khi R2 enable, hai binding `VIDEO_BUCKET` và `BACKUPS_BUCKET` cần restore lại trong `wrangler.toml` (đã comment trong file). Xem hướng dẫn inline trong `wrangler.toml`.
+**Lưu ý:** Bundle size cannot be shrunk below 3 MiB by code changes alone — the OpenNext
+esbuild repackaging hardcodes an externalization list that ignores `override.external`
+and `serverExternalPackages`. The only mechanism is the `EMPTY_PKGS` patch
+(`patches/@opennextjs+cloudflare+1.19.9.patch`), which already stubs d3/recharts/html2canvas/
+jszip/framer-motion/better-sqlite3. Escalating to stub @sentry/* or @opentelemetry/* is
+a defensive option if the PAID plan is ever unavailable.
 
 ---
 
