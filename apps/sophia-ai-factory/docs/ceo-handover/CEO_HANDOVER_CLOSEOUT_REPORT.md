@@ -2,7 +2,8 @@
 
 > **Codename:** OWNERLESS FOUNDER TEST
 > **Baseline SHA:** `5dd1f071` | **Production URL:** https://sophia.agencyos.network
-> **Audit Date:** 2026-09-03 | **Closeout Commit:** (pending)
+> **Audit Date:** 2026-09-03 | **Closeout Commit:** `5c96fca2e` (R2 bindings restored + deployed)
+> **Post-Deploy Verification:** 2026-09-05 — SHA `5c96fca2` verified live, backup route reaches auth gate
 > **Question:** "Can the founder disappear for 30 days while the CEO retains operational control of Sophia?"
 
 ---
@@ -14,9 +15,9 @@
 | Metric | Value |
 |--------|-------|
 | Current Readiness Score | **56.75 / 100** (verified arithmetic) |
-| Handover Gates Passed | **3 / 10** |
+| Handover Gates Passed | **3 / 10** (Gate 5 now PARTIAL — binding restored, execution pending) |
 | Scenarios Requiring Founder | **4 / 10** (corrected from original 7/10) |
-| Critical Blockers Remaining | **6** |
+| Critical Blockers Remaining | **6** (5 full + 1 partial) |
 | Projected Score After MVH (8 days) | **~80.5 / 100** |
 
 **Bottom line:** The platform is architecturally sound but operationally fragile. Single-person dependency on Cloudflare account ownership, untested disaster recovery, and undeployed support infrastructure make a 30-day founder absence unsafe today.
@@ -140,7 +141,8 @@ Consolidated from `FOUNDER_ACTION_CHECKLIST.md`, `ACCESS_OWNERSHIP_MATRIX.md`, `
 |-------|--------|
 | Placeholders | ✅ PASS — only `{owner}/{repo}` in github-issue-poster.ts (legitimate template) |
 | Health degraded | ✅ EXPECTED — 11/13 wired emitters stale → degraded; 2 deferred by design (creative.edited, memory.corrected) |
-| D1 backup | ⚠️ Route exists, **BACKUPS_BUCKET binding commented out** (wrangler.toml L49-50) |
+| D1 backup binding | ✅ **RESTORED 2026-09-05** — `VIDEO_BUCKET` + `BACKUPS_BUCKET` uncommented in `wrangler.toml`, deployed as `5c96fca2` |
+| D1 backup execution | ⚠️ Route now **REACHES AUTH GATE** (verified 403 with empty token) — but `cron_run_log` confirms d1-backup has **NEVER executed** (0 entries, bucket empty) |
 | D1 restore | ❌ **NEVER TESTED** — run-drill.js exists, 0 production executions |
 | Inngest backup | ❌ NONE — no export/import procedure |
 
@@ -152,14 +154,14 @@ Consolidated from `FOUNDER_ACTION_CHECKLIST.md`, `ACCESS_OWNERSHIP_MATRIX.md`, `
 | 2. Tech Lead deploy scope | ❌ BLOCKED | Founder sole owner |
 | 3. GitHub Tech Lead Owner | ❌ BLOCKED | Founder sole owner |
 | 4. NOWPayments Tech Lead | ❌ BLOCKED | Founder sole admin |
-| 5. D1 backup functional | ❌ BLOCKED | Binding commented out |
+| 5. D1 backup functional | ✅ **PARTIAL PASS** — binding restored + route live; execution requires CRON_SECRET (founder-held) |
 | 6. D1 restore tested | ❌ BLOCKED | Never executed |
 | 7. Secrets in password manager | ❌ BLOCKED | 14 secrets CF-only |
 | 8. Health semantics correct | ✅ PASS | — |
-| 9. Support ticketing live | ❌ BLOCKED | Deploy blocked by R2 10136 |
+| 9. Support ticketing live | ❌ BLOCKED | Route `ec2e16eb0` committed + migration 0266 applied; not deployed live |
 | 10. CEO Day-1 test passes | ✅ PASS | Script documented |
 
-**Decision: NO-GO (7/10 gates blocked)**
+**Decision: NO-GO (6/10 gates blocked)**
 
 ### Phase 9 — Founder Action Pack
 
@@ -212,7 +214,8 @@ The founder **cannot** disappear for 30 days. Minimum 8-day remediation required
 6. Verify MFA on CF, GH, NOWPayments
 
 ### Week 2 — P1 (Tech Lead Executes)
-7. Uncomment `BACKUPS_BUCKET` in `wrangler.toml` lines 49-50 → redeploy
+7. ~~Uncomment `BACKUPS_BUCKET` in `wrangler.toml` lines 49-50 → redeploy~~ ✅ **DONE 2026-09-05** (commit `5c96fca2e`, SHA verified live)
+7b. **Trigger first real backup** — Tech Lead runs: `curl -X POST https://sophia.agencyos.network/api/cron/d1-backup -H "Authorization: Bearer $CRON_SECRET"` (CRON_SECRET from CF dashboard — founder must share)
 8. Run D1 restore drill: `node scripts/dr/run-drill.js`
 9. Deploy support ticketing (route `ec2e16eb0` → prod)
 10. Add Tech Lead as Inngest/Sentry Admin
@@ -235,6 +238,26 @@ The founder **cannot** disappear for 30 days. Minimum 8-day remediation required
 
 ---
 
+## POST-DEPLOY RE-VERIFICATION (2026-09-05)
+
+> **Scope:** One verified fix (R2 bindings) committed + deployed + re-verified. No other infrastructure changed.
+
+| Check | Command | Result |
+|-------|---------|--------|
+| Config parses | `python3 -c "import tomllib; tomllib.load(open('wrangler.toml','rb'))"` | ✅ 3 R2 bindings valid |
+| Build passes | `npm run build` | ✅ exit 0 |
+| Deploy | `npm run deploy:full` | ✅ wrangler deployed |
+| SHA match | `curl .../api/version` shortSha == `5c96fca2` | ✅ **DEPLOY VERIFIED** |
+| HTTP health | `curl .../api/health` | ✅ 200 |
+| HTTP login | `curl .../login` | ✅ 200 |
+| Backup route binding | `curl -X POST .../api/cron/d1-backup` (no token) | ✅ 403 "Invalid or missing cron secret" — **binding loads** (was 500 "binding unavailable" before) |
+| Backup history | `SELECT * FROM cron_run_log WHERE cron_name='d1-backup'` | ⚠️ **0 rows** — never executed |
+| sophia-backups bucket | R2 list | ⚠️ **empty** — no `d1-*.sql` object |
+
+**Net effect:** Gate 5 moved from ❌ BLOCKED → ✅ PARTIAL PASS. The binding is restored and the route is live; the *first execution* still requires the founder to share `CRON_SECRET` with the Tech Lead.
+
+---
+
 ## NEXT REVIEW
 
 **Scheduled:** 2026-09-11 (after Week 1+2 remediation)
@@ -242,4 +265,4 @@ The founder **cannot** disappear for 30 days. Minimum 8-day remediation required
 
 ---
 
-*Closeout complete. 10 phases executed. 10 documents created/updated. Audit verified against live infrastructure.*
+*Closeout complete. 10 phases executed. 10 documents created/updated. Audit verified against live infrastructure. One verified fix (R2 bindings) deployed 2026-09-05 as `5c96fca2e`.*
