@@ -39,15 +39,15 @@ binding = "ASSETS"
 binding = "NEXT_INC_CACHE_R2_BUCKET"
 bucket_name = "sophia-ai-factory-opennext-cache"
 
-# Video storage (Phase 01 video go-live) — REMOVED TEMPORARILY to unblock deploy.
-# R2 is disabled on this CF account (code 10136). Founder must re-enable R2.
-# When R2 is re-enabled, restore these bindings:
-#   [[r2_buckets]]
-#   binding = "VIDEO_BUCKET"
-#   bucket_name = "sophia-videos"
-#   [[r2_buckets]]
-#   binding = "BACKUPS_BUCKET"
-#   bucket_name = "sophia-backups"
+# Video storage (Phase 01 video go-live) — VIDEO_BUCKET restored 2026-09-05
+# (R2 is enabled on this account; sophia-videos bucket exists).
+[[r2_buckets]]
+binding = "VIDEO_BUCKET"
+bucket_name = "sophia-videos"
+# BACKUPS_BUCKET restored 2026-09-05 — required for /api/cron/d1-backup route.
+[[r2_buckets]]
+binding = "BACKUPS_BUCKET"
+bucket_name = "sophia-backups"
 
 [[d1_databases]]
 binding = "DB"
