@@ -32,7 +32,7 @@ interface TestUrlSpec {
 
 // Hunter excluded: ?api_key= leaks via wrangler tail logs. Validate via mission call instead.
 // Replicate excluded: validation happens on first createVideo call instead; no lightweight test endpoint.
-type TestableProvider = Exclude<ByokProvider, 'heygen' | 'hunter' | 'replicate'>;
+type TestableProvider = Exclude<ByokProvider, 'heygen' | 'hunter' | 'replicate' | 'hermes'>;
 
 const TEST_ENDPOINT: Record<TestableProvider, TestUrlSpec> = {
   openrouter: {

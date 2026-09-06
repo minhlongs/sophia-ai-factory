@@ -120,6 +120,7 @@ const PROVIDER_DEFAULTS: Record<ProviderId, ModelPricing> = {
   elevenlabs: { type: 'tts', perChar: 0.00003 },
   wan: { type: 'video', perSecond: 0.15 },
   'fish-speech': { type: 'tts', perChar: 0.000005 },
+  hermes: { type: 'text', input: 0.5, output: 2.0 },
 };
 
 // ── Token estimation ──────────────────────────────────────────────────────────
