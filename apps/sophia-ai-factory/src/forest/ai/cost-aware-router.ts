@@ -434,6 +434,7 @@ export class CostAwareRouter {
       elevenlabs: 'elevenlabs/eleven_turbo_v2_5',
       wan: 'wan/wan-2-1-t2v',
       'fish-speech': 'fish-speech/fish-speech-1-5',
+      hermes: 'hermes/hermes-1',
     };
 
     return fallbackModels[providerId] ?? 'openai/gpt-4o-mini';

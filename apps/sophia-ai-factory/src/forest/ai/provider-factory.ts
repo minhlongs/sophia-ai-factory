@@ -23,6 +23,7 @@ import { logger } from '@/seed/utils/logger-utility';
 import { resolveUserApiKey, isByokEnabled } from '@/tree/byok/resolve-user-api-key';
 import { OpenRouterProvider } from './openrouter-provider';
 import { AnthropicProvider } from './anthropic-provider';
+import { HermesAntigravityAdapter } from '@/seed/ai/providers/hermes-antigravity-adapter';
 
 // ── Configuration ──────────────────────────────────────────────────────────────
 
@@ -142,7 +143,7 @@ async function resolveApiKey(
 ): Promise<string | null> {
   // BYOK first: try user's stored key (only for BYOK-supported providers)
   const byokProvider = providerId as ByokProvider;
-  const byokSupported: ByokProvider[] = ['openrouter', 'anthropic', 'elevenlabs'];
+  const byokSupported: ByokProvider[] = ['openrouter', 'anthropic', 'elevenlabs', 'hermes'];
 
   if (userId && isByokEnabled() && byokSupported.includes(byokProvider)) {
     try {
@@ -190,6 +191,13 @@ function createProvider(config: ProviderConfig, apiKey: string): Provider {
     case 'anthropic':
       return new AnthropicProvider({
         apiKey,
+        label: config.label,
+      });
+
+    case 'hermes':
+      return new HermesAntigravityAdapter({
+        apiKey,
+        baseUrl: config.baseUrl,
         label: config.label,
       });
 

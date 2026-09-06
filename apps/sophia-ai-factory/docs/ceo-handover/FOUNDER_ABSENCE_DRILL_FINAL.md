@@ -14,8 +14,8 @@
 | **Cloudflare Workers** | Paid plan ACTIVE ✅ | Account has `workers:write` scope, bundle 8.10 MiB < 10 MiB limit |
 | **Support ticketing** (migration 0266) | Committed + applied to prod D1 ✅ | `0266_support_tickets.sql` applied; route code committed as `ec2e16eb0`; **NOT deployed live** — blocked by CF Analytics Engine (code 10089) |
 | **Cloudflare Analytics Engine** | WAE 10089 RESOLVED ✅ | Only R2 10136 still blocking deploy |
-| **R2** | Enabled ✅ | `sophia-ai-factory-opennext-cache` bucket active; `sophia-backups` bucket exists but `BACKUPS_BUCKET` binding **commented out** in `wrangler.toml` (lines 49-50) |
-| **D1 backup** | Route exists, **backup BROKEN** ⚠️ | `/api/cron/d1-backup/route.ts` present, but `BACKUPS_BUCKET` binding missing → runtime failure |
+| **R2** | Enabled ✅ | All 3 buckets active: `sophia-ai-factory-opennext-cache`, `sophia-videos`, `sophia-backups` — bindings restored 2026-09-05 (commit `5c96fca2e`) |
+| **D1 backup** | Route **LIVE** ✅ binding restored; **NEVER EXECUTED** ⚠️ | `/api/cron/d1-backup/route.ts` reaches auth gate (403 with empty token); `cron_run_log` shows 0 executions; `sophia-backups` bucket empty |
 | **D1 restore** | Procedure documented, **NEVER TESTED** ❌ | `scripts/dr/run-drill.js` exists but no production drill executed |
 | **Secrets** | 14+ in CF, **not in password manager** ❌ | Telegram token only in CF secret, not in `.env.production` |
 
