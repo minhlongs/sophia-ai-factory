@@ -1,277 +1,447 @@
-# Plan: Sophia Hermes Integration Phase 1
+# Post-Commit Forensic Audit: db4852d50
 
-> Source of truth: `docs/CEO_HANDOVER_AUDIT.md` Section 11
-> Prerequisite: Hermes OAuth secret rotation (account owner action — NOT a code task)
-> Scope: Thin, read-only provider bridge ONLY
+## Overview
 
----
+**Commit:** `db4852d50826b5c5a845705bc5a57483a8dca855`
+**Author:** minhlongs
+**Date:** Mon Sep 7 13:40:15 2026 +0800
+**Subject:** `feat(ai): provider certification enforcement + image provider v1`
+**Scope:** 40 files changed, +5843/-455
 
-## Reframed Problem
+**Purpose:** Read-only post-commit forensic audit answering 8 questions (A through H). No edits, no commits, no production deployments.
 
-Sophia is a cloud SaaS for AI video/image generation. Hermes is a local plugin (loopback 127.0.0.1:8100). They share no runtime, DB, or credentials today. The audit requires a Hermes provider adapter so Sophia can route image generation requests to Hermes when it becomes available as a BYOK provider.
+**Work mode:** DEBUGGER agent (investigation and diagnosis focus).
 
-**Blocker:** Hermes `bridge/auth.py` hardcodes a real Google OAuth client secret in a public GitHub repo — CRITICAL security exposure. This must be rotated before any integration code is written or tested against real Hermes.
-
-**V1 scope:** Mock-only adapter that wires into Sophia's existing provider infrastructure, ready for real Hermes API when credentials are available. No production Hermes calls.
-
----
-
-## File Ownership
-
-| Phase | Files |
-|---|---|
-| Phase A: Provider Interface Extension | `src/seed/ai/provider-interface.ts` (add `'hermes'` to ProviderId) |
-| Phase B: Hermes Adapter | `src/seed/ai/providers/hermes-antigravity-adapter.ts` (NEW) |
-| Phase C: Registry Registration | `src/forest/ai/provider-factory.ts` (register hermes in shared registry) |
-| Phase D: Cost Table | `src/seed/config/routing-strategies.ts` (add `'hermes'` to VideoProvider if needed) OR new creative-only cost table |
-| Phase E: Tests | `src/seed/ai/providers/__tests__/hermes-adapter.test.ts` (NEW) |
-| Phase F: Docs | `docs/HERMES_INTEGRATION_V1.md` (NEW) |
-
-**Constraint:** No changes to auth, billing, video pipelines, or protected flows (Setup Wizard / Telegram / NOWPayments).
+**Report output:** `plans/reports/post-command-5-forensic-audit.md`
 
 ---
 
-## Phase A: Extend ProviderId Type (2 files)
+## Commit Manifest
 
-**What:** Add `'hermes'` to the provider type system so the adapter can be registered.
+Files changed (grouped by concern):
 
-**File 1:** `src/seed/ai/provider-interface.ts:28`
-```ts
-export type ProviderId = 'openrouter' | 'Claude-Fable' | 'elevenlabs' | 'wan' | 'fish-speech' | 'hermes';
-```
+**Provider Certification (new)**
+- `src/seed/ai/provider-certification.ts` — 5-state enum + enforcement logic
+- `src/seed/ai/__tests__/provider-certification.test.ts` — certification tests
+- `src/seed/ai/provider-registry.ts` — registry integration with certification
+- `src/seed/ai/cost-estimator.ts` — cost estimation changes
 
-**File 2:** `src/tree/byok/user-api-key-store.ts:16` — add `'hermes'` to `ByokProvider`:
-```ts
-export type ByokProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'heygen' | 'replicate' | 'muapi' | 'apollo' | 'hunter' | 'hermes';
-```
+**Image Generation (new)**
+- `src/seed/ai/providers/openrouter-image-generation-adapter.ts` — OpenRouter image adapter
+- `src/seed/ai/providers/__tests__/openrouter-image-generation-adapter.test.ts` — image adapter tests
+- `src/forest/inngest/functions/creative-image-generate.ts` — Inngest image job
+- `src/forest/inngest/functions/__tests__/creative-image-generate.test.ts` — Inngest image tests
 
-**Acceptance:**
-- [ ] TypeScript compiles with 0 new errors
-- [ ] All existing providers unaffected
-- [ ] BYOK store accepts hermes keys
+**Router / Factory changes**
+- `src/forest/ai/provider-factory.ts` — factory integration with certification
+- `src/forest/ai/cost-aware-router.ts` — router integration with certification
 
-**Agent:** `fullstack-developer`
+**Hermes removal**
+- `src/seed/ai/providers/hermes-antigravity-adapter.ts` — DELETED
+- `src/seed/ai/providers/__tests__/hermes-antigravity-adapter.test.ts` — DELETED
 
----
+**BYOK / API Key store**
+- `src/tree/byok/user-api-key-store.ts` — key store changes
+- `src/app/api/user/byok/test/route.ts` — BYOK test endpoint
 
-## Phase B: Hermes Adapter (Core)
+**Type changes**
+- `src/seed/types/creative-intelligence.ts`
+- `src/seed/types/creative-storyboard.ts`
+- `src/seed/types/creative.ts`
+- `src/seed/types/failure-kind.ts`
+- `src/seed/types/failure-kind.test.ts`
 
-**What:** Create `HermesAntigravityAdapter` following `OpenRouterImageAdapter` pattern.
+**Circuit breaker**
+- `src/seed/config/circuit-breaker.ts`
 
-**File (NEW):** `src/seed/ai/providers/hermes-antigravity-adapter.ts`
-
-**Design:**
-```ts
-export class HermesAntigravityAdapter implements Provider {
-  readonly id: ProviderId = 'hermes';
-  readonly label: string;
-  readonly apiKey: string | undefined;
-  readonly baseUrl: string; // default: http://127.0.0.1:8100
-
-  constructor(config: HermesAdapterConfig = {}) { ... }
-
-  async chat(messages, options): Promise<ChatResponse> { ... }
-  async *stream(messages, options): AsyncGenerator<StreamChunk> { ... }
-  countTokens(messages, model): number { ... }
-  estimateCost(messages, model, options?): number { ... }
-  getCapabilities(model): ProviderCapabilities { ... }
-}
-```
-
-**Contract (from audit):**
-- Base URL: `http://127.0.0.1:8100` (local Hermes)
-- Auth: Bearer token (BYOK — user provides their own Hermes API key)
-- Zero construction-time throw on missing keys (Provider contract rule)
-- Real HTTP call to Hermes when available; fail gracefully when not reachable
-- Circuit breaker + failure classification per seed patterns
-- Supports: `generate()` for image generation
-
-**Acceptance:**
-- [ ] `HermesAntigravityAdapter` implements `Provider` interface
-- [ ] Construction never throws for missing credentials
-- [ ] `chat()` uses `shouldAllowRequest`/`recordSuccess`/`recordFailure`
-- [ ] `estimateCost()` returns 0 for Hermes (local, no per-request cost)
-- [ ] `getCapabilities()` returns appropriate capabilities
-- [ ] Timeout handling with `AbortController`
-- [ ] Error classification: AUTH_FAILURE → immediate open, RATE_LIMIT → cooldown
-
-**Agent:** `fullstack-developer`
+**Docs (added)**
+- `docs/HERMES_PROVIDER_CERTIFICATION.md`
+- `docs/IMAGE_PROVIDER_V1.md`
+- `docs/PROVIDER_CERTIFICATION_POLICY.md`
+- `docs/HERMES_INTELLIGENCE_V2.md`
+- `docs/SOPHIA_FULL_SYSTEM_RECONCILIATION.md`
+- `docs/changelog/2026-Q3.md`
+- `plans/reports/recon-*.md` (12 recon reports)
 
 ---
 
-## Phase C: Registry Registration
-
-**What:** Register Hermes in the shared provider factory + extend BYOK support.
-
-**File:** `src/forest/ai/provider-factory.ts`
-
-**Changes (3 locations in this file):**
-
-1. **Import** `HermesAntigravityAdapter` from `@/seed/ai/providers/hermes-antigravity-adapter`
-2. **`createProvider()` switch** (line 182): add case:
-   ```ts
-   case 'hermes':
-     return new HermesAntigravityAdapter({ apiKey, baseUrl: config.baseUrl, label: config.label });
-   ```
-3. **`resolveApiKey()` byokSupported list** (line 145): add `'hermes'`:
-   ```ts
-   const byokSupported: ByokProvider[] = ['openrouter', 'Claude-Fable', 'elevenlabs', 'hermes'];
-   ```
-
-**Acceptance:**
-- [ ] `getSharedRegistry()` includes hermes when configured
-- [ ] `createProvider()` handles `'hermes'` case
-- [ ] BYOK key resolution works for hermes
-- [ ] Fallback chain works: hermes → openrouter → Claude-Fable
-- [ ] Health tracking works for hermes provider
-
-**Agent:** `fullstack-developer`
+## Audit Questions (A-H)
 
 ---
 
-## Phase D: Cost Table (Creative-Only)
+### Question A: Provider Certification Enforcement
 
-**What:** Add Hermes to the cost estimation for creative image generation.
+**Question:** Does the provider certification system actually enforce constraints at runtime, or is it advisory/decorative?
 
-**Decision needed:** Hermes runs locally — cost per request = $0. But we need a cost entry so the routing strategy can consider it.
+**Read-only files:**
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/provider-certification.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/provider-registry.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/forest/ai/provider-factory.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/forest/ai/cost-aware-router.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/__tests__/provider-certification.test.ts`
 
-**Option 1 (preferred):** Add `hermes` to `PROVIDER_COST_PER_UNIT` with `creative: 0` (free, local).
-**Option 2:** Create separate `CREATIVE_PROVIDER_COST` table if Hermes is NOT a `VideoProvider`.
+**Approach:**
+1. Read `provider-certification.ts` — identify the 5-state enum values and all exported functions
+2. Grep all callers of certification functions across `provider-registry.ts`, `provider-factory.ts`, `cost-aware-router.ts` — trace every call site
+3. Determine: do any call sites enforce a hard gate (throw / return error / skip provider) vs. only logging/advisory behavior?
+4. Read `provider-certification.test.ts` — count how many test cases assert hard enforcement vs. only advisory behavior
+5. Check for missing enforcement paths: grep for places where a provider is used WITHOUT certification check
 
-**Since Hermes is NOT a VideoProvider** (video routing is separate from creative image routing), the cleanest approach is:
-- Add `'hermes'` to a new `CreativeImageProvider` type in routing-strategies.ts
-- Add `CREATIVE_IMAGE_PROVIDER_COST` table
-- Or: keep Hermes cost in the adapter's `estimateCost()` method only (simplest for V1)
-
-**V1 decision:** Keep Hermes cost in adapter only (`estimateCost() → 0`). No routing-strategies.ts changes needed for V1 since Creative Cell uses its own Inngest function, not the video routing pipeline.
-
-**Acceptance:**
-- [ ] Hermes adapter returns cost=0 from `estimateCost()`
-- [ ] No changes to video routing pipeline
-- [ ] Creative Cell Inngest function can use Hermes adapter via registry
-
-**Agent:** `fullstack-developer`
-
----
-
-## Phase E: Tests
-
-**What:** Comprehensive test suite for Hermes adapter + registration.
-
-**Files (NEW):**
-- `src/seed/ai/providers/__tests__/hermes-adapter.test.ts`
-- `src/seed/ai/__tests__/provider-registry-hermes.test.ts` (if separate file warranted)
-
-**Test cases (minimum):**
-1. ✅ Construction with/without API key
-2. ✅ `chat()` happy path (mock HTTP 200 with image data)
-3. ✅ `chat()` missing API key → throws with clear message
-4. ✅ `chat()` HTTP 401/403 → ProviderInvalidKeyError
-5. ✅ `chat()` HTTP 429/5xx → ProviderQuotaExceededError (retryable)
-6. ✅ `chat()` timeout → ProviderNetworkError
-7. ✅ `chat()` circuit breaker open → throws
-8. ✅ `estimateCost()` returns 0
-9. ✅ `getCapabilities()` returns expected capabilities
-10. ✅ Registry includes hermes after registration
-11. ✅ Fallback chain works with hermes
-
-**Pattern:** Follow `vi.hoisted()` mock pattern from `creative-image-generate.test.ts`.
-
-**Acceptance:**
-- [ ] All 11+ tests pass
-- [ ] 0 new `:any` types
-- [ ] 0 new eslint-disable suppressions
-- [ ] Circuit breaker integration tested
-
-**Agent:** `tester`
+**Acceptance criteria:**
+- [ ] Enum values listed with exact definitions
+- [ ] Every caller of certification functions identified with enforcement behavior (hard gate vs advisory)
+- [ ] Gap analysis: which providers/paths skip certification
+- [ ] Test coverage assessment: hard enforcement vs advisory test ratio
 
 ---
 
-## Phase F: Documentation
+### Question B: Hermes Architectural Decision
 
-**What:** Create bilingual docs for Hermes integration.
+**Question:** Was the Hermes adapter deleted entirely, or are there dangling references, orphaned imports, or dead code paths still pointing to it?
 
-**File (NEW):** `docs/HERMES_INTEGRATION_V1.md`
+**Read-only files:**
+- Verify `hermes-antigravity-adapter.ts` is deleted from `src/seed/ai/providers/`
+- Verify `hermes-antigravity-adapter.test.ts` is deleted from `src/seed/ai/providers/__tests__/`
+- `src/seed/ai/provider-registry.ts` — check for Hermes references
+- `src/forest/ai/provider-factory.ts` — check for Hermes references
+- `src/seed/ai/index.ts` — check exports
 
-**Content:**
-- Architecture (thin, read-only provider bridge)
-- Prerequisites (OAuth secret rotation)
-- Adapter contract
-- BYOK key configuration
-- Testing instructions
-- Known limitations (local-only, no image.edit, no shared DB)
-- Next phases
+**Approach:**
+1. `grep -r "hermes" --include="*.ts" --include="*.tsx"` across entire `src/` tree
+2. `grep -r "antigravity" --include="*.ts" --include="*.tsx"` across entire `src/` tree
+3. Check `provider-registry.ts` for any Hermes entries in provider maps/enums
+4. Check `provider-factory.ts` for Hermes case branches or type guards
+5. Check `src/seed/ai/index.ts` for re-exports of deleted file
+6. Check `docs/` for stale Hermes references that contradict deletion
 
-**Acceptance:**
-- [ ] Bilingual Vietnamese + English
-- [ ] No developer jargon in customer-facing sections
-- [ ] Links to CEO_HANDOVER_AUDIT.md Section 11
-
-**Agent:** `docs-manager`
-
----
-
-## Risks & Gates
-
-| Risk | Mitigation |
-|---|---|
-| Hermes OAuth secret still hardcoded in public repo | **BLOCKER** — document in plan, do NOT proceed to real API testing until rotated |
-| Hermes local-only (127.0.0.1:8100) unreachable from CF Workers | Adapter fails gracefully; BYOK key from user's own Hermes instance |
-| No Hermes test suite exists | Write minimal tests as part of this phase |
-| ProviderId type change affects all consumers | TypeScript compiler catches all breakage; all existing adapters unaffected |
+**Acceptance criteria:**
+- [ ] Zero references to Hermes/antigravity in compiled code paths (docs excluded)
+- [ ] Registry has no Hermes entry in provider map
+- [ ] Factory has no Hermes case branch
+- [ ] No broken imports that would cause compile errors
+- [ ] Docs accurately reflect deletion (not stale)
 
 ---
 
-## Ship Plan
+### Question C: OpenRouter Image Capability Truth
 
-**Step 1 — Pre-Deploy Checklist:**
-- [ ] `git status` clean
-- [ ] `npm run typecheck` — 0 new errors
-- [ ] `npm test` — all pass (8908+ baseline)
-- [ ] `npm run build` — exit 0
-- [ ] Protected flows untouched (Setup Wizard / Telegram / NOWPayments)
-- [ ] 0 new `:any` types
-- [ ] 0 new eslint-disable suppressions
+**Question:** Does the OpenRouter image generation adapter actually work, or does it have untested/incorrect claims about capabilities?
 
-**Step 2 — Commit + PR:**
-- Conventional commit: `feat(hermes): add Hermes provider adapter (Phase 1)`
-- PR with full body documenting scope
+**Read-only files:**
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/providers/openrouter-image-generation-adapter.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/providers/__tests__/openrouter-image-generation-adapter.test.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/provider-interface.ts` — interface the adapter must satisfy
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/provider-certification.ts` — certification state assigned
 
-**Step 3 — Verify:**
-- `npm run deploy:full` (if deploying)
-- SHA match verification
-- Production smoke test
+**Approach:**
+1. Read adapter source — identify: supported models, capabilities declared, error handling, actual API call structure
+2. Read adapter tests — identify: what is actually tested vs mocked, coverage gaps
+3. Compare declared capabilities against what the test actually exercises
+4. Check if the adapter implements the full provider interface or has stub/TODO methods
+5. Trace the actual HTTP call path — is it a real OpenRouter API endpoint or a mock?
+6. Verify the adapter correctly implements any certification state it claims
 
-**Step 4 — Docs Update:**
-- Update `docs/HERMES_INTEGRATION_V1.md`
-- Update ship report
-
----
-
-## Definition of Done
-
-PASS only if:
-- ✅ `HermesAntigravityAdapter` implements `Provider` interface
-- ✅ Registration in `ProviderRegistry` works
-- ✅ Circuit breaker integration works
-- ✅ All 11+ tests pass
-- ✅ No auth/billing/video-pipeline regression
-- ✅ No production deployment (V1 is mock-only)
-- ✅ Bilingual docs created
-- ✅ OAuth secret rotation documented as prerequisite
+**Acceptance criteria:**
+- [ ] Declared capabilities listed with evidence (file:line)
+- [ ] Test cases enumerated with what each actually validates
+- [ ] Gap analysis: declared vs tested capabilities
+- [ ] Assessment: working adapter vs prototype vs stub
 
 ---
 
-## Execution Order
+### Question D: Cloudflare Compatibility
 
-```
-Phase A (ProviderId type) → Phase B (Adapter) → Phase C (Registry) → Phase D (Cost) → Phase E (Tests) → Phase F (Docs)
-```
+**Question:** Can all new code run in Cloudflare Workers/Pages (no Node.js-only APIs)?
 
-Each phase spawns via `Task` tool to appropriate agent. Verify after each phase before proceeding.
+**Read-only files:**
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/provider-certification.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/providers/openrouter-image-generation-adapter.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/forest/inngest/functions/creative-image-generate.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/cost-estimator.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/tree/byok/user-api-key-store.ts`
+
+**Approach:**
+1. Grep new/changed files for Node.js-only APIs: `fs.`, `path.`, `require(`, `__dirname`, `__filename`, `process.env` (in non-cron context), `Buffer.from` (verify usage), `crypto.randomUUID` (CF-compatible), `child_process`
+2. Check for `import` of Node.js built-in modules (`node:fs`, `node:path`, `node:crypto`)
+3. Verify the image generation adapter uses only `fetch()` and CF-compatible APIs
+4. Check creative-image-generate.ts for any Node.js-only patterns in the Inngest function body
+5. Check if provider-certification.ts uses any platform-specific code
+6. Verify no `process.exit()`, `process.cwd()`, or similar Worker-incompatible calls
+
+**Acceptance criteria:**
+- [ ] Zero Node.js-only API usage in new files (or documented exceptions)
+- [ ] All fetch calls use CF-compatible patterns
+- [ ] No blocking I/O (fs.readFileSync, etc.)
+- [ ] Environment variable access uses CF-compatible pattern (env.VAR_NAME, not process.env)
+- [ ] Assessment: safe for CF Workers/Pages deployment
 
 ---
 
-*Plan written: 2026-09-06*
-*Source: CEO_HANDOVER_AUDIT.md Section 11*
-*Status: READY FOR PLAN GATE*
+### Question E: Image Job End-to-End Truth
+
+**Question:** Does the image generation pipeline work end-to-end from Inngest trigger to provider call to result storage, or are there broken links?
+
+**Read-only files:**
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/forest/inngest/functions/creative-image-generate.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/forest/inngest/functions/__tests__/creative-image-generate.test.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/providers/openrouter-image-generation-adapter.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/provider-registry.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/provider-certification.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/forest/ai/provider-factory.ts`
+
+**Approach:**
+1. Read `creative-image-generate.ts` — trace the full function body from entry to provider call to result handling
+2. Map the data flow: trigger -> provider selection -> image generation -> result storage
+3. Identify any broken links: missing function calls, undefined variables, unimplemented branches
+4. Read the test file — determine if the test exercises the full path or only isolated units
+5. Check if the Inngest function is properly registered in the Inngest client (grep for `createFunction` or `inngest.createFunction`)
+6. Verify provider selection in the function uses the certification system correctly
+7. Check error handling: what happens when the provider call fails? Retry? Dead letter? Silent drop?
+
+**Acceptance criteria:**
+- [ ] Complete data flow map from trigger to storage (with file:line references)
+- [ ] Every step in the pipeline has a concrete implementation (no TODO/placeholder)
+- [ ] Error handling paths identified and assessed (retry strategy, dead letter)
+- [ ] Test coverage assessment: full-path integration test vs isolated unit tests
+- [ ] Registration verified: function is reachable from Inngest trigger
+
+---
+
+### Question F: Test Baseline Reconciliation
+
+**Question:** Why did the test count drop from 8855 to 8841 (delta -14), and is this loss fully explained by the Hermes deletion or are there other causes?
+
+**Read-only files:**
+- `src/seed/ai/providers/__tests__/hermes-antigravity-adapter.test.ts` — DELETED (count tests)
+- `src/seed/ai/providers/__tests__/openrouter-image-generation-adapter.test.ts` — NEW (count tests)
+- `src/seed/ai/__tests__/provider-certification.test.ts` — NEW (count tests)
+- `src/forest/inngest/functions/__tests__/creative-image-generate.test.ts` — NEW (count tests)
+- `src/seed/types/failure-kind.test.ts` — CHANGED (count delta)
+- `src/seed/ai/provider-certification.ts` — changes may affect existing tests
+
+**Approach:**
+1. `git show db4852d50~1:src/seed/ai/providers/__tests__/hermes-antigravity-adapter.test.ts | grep -c "it("` — count deleted Hermes tests
+2. `grep -c "it(" src/seed/ai/providers/__tests__/openrouter-image-generation-adapter.test.ts` — count new image adapter tests
+3. `grep -c "it(" src/seed/ai/__tests__/provider-certification.test.ts` — count certification tests
+4. `grep -c "it(" src/forest/inngest/functions/__tests__/creative-image-generate.test.ts` — count image job tests
+5. Run `git diff db4852d50~1..db4852d50 -- src/seed/types/failure-kind.test.ts` — check if test count changed
+6. Grep for `describe.skip`, `it.skip`, `xit(`, `test.skip` in new files — count skipped tests
+7. Check if any existing tests broke due to certification changes (grep for test files that import changed modules)
+8. Mathematical reconciliation: old_count - deleted + new + delta_existing = expected_new_count vs actual 8841
+
+**Acceptance criteria:**
+- [ ] Hermes test count (deleted) documented with exact number
+- [ ] New test counts documented (image adapter, certification, image job)
+- [ ] Mathematical reconciliation showing exact delta explanation
+- [ ] Any unexplained delta identified with probable cause
+- [ ] Skipped/newly-skip tests documented
+- [ ] Whether delta -14 is: (a) fully explained, (b) partially explained, or (c) unexplained
+
+---
+
+### Question G: Security Regression
+
+**Question:** Does this commit introduce any security regressions (exposed keys, broken auth, injection vectors, unsafe deserialization)?
+
+**Read-only files:**
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/tree/byok/user-api-key-store.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/user/byok/test/route.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/provider-certification.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/providers/openrouter-image-generation-adapter.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/forest/inngest/functions/creative-image-generate.ts`
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/config/circuit-breaker.ts`
+
+**Approach:**
+1. Read `user-api-key-store.ts` — check for: key encryption, key exposure in logs/errors, proper access control, no plaintext storage
+2. Read `byok/test/route.ts` — check for: auth enforcement, input validation, rate limiting, no key leakage in responses
+3. Grep all changed files for: `console.log` with sensitive data, hardcoded secrets, `eval(`, `new Function(`, unsanitized user input in queries
+4. Check `openrouter-image-generation-adapter.ts` for: API key handling, no key in URL params, proper headers
+5. Check `creative-image-generate.ts` for: injection via user-supplied prompts, image URL handling, resource exhaustion
+6. Check `circuit-breaker.ts` for: state mutation safety, no race conditions in state transitions
+7. Check if any Zod validation was removed or weakened in changed files
+8. `grep -r "process.env\." src/ --include="*.ts"` in new files — verify no hardcoded keys
+
+**Acceptance criteria:**
+- [ ] API key handling assessed across all key store and adapter files
+- [ ] No hardcoded secrets in any changed file
+- [ ] Auth enforcement verified on BYOK test endpoint
+- [ ] Input validation assessed for injection vectors
+- [ ] Console.log audit: no sensitive data in production logging
+- [ ] Overall security assessment: REGRESSION / SAFE / CONDITIONAL
+
+---
+
+### Question H: Architecture Integrity
+
+**Question:** Does this commit maintain or violate the existing architecture (import hierarchy, module boundaries, type safety, tier constraints)?
+
+**Read-only files:**
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/index.ts` — module boundary
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/provider-registry.ts` — registry
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/forest/ai/provider-factory.ts` — factory
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/forest/ai/cost-aware-router.ts` — router
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/provider-certification.ts` — new module
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/ai/provider-interface.ts` — interface contract
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/CLAUDE.md` — architecture rules
+- `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/docs/` — architecture docs
+
+**Approach:**
+1. Check import hierarchy: does `seed/` import from `forest/`? (forbidden direction) — grep for violations
+2. Check if `provider-certification.ts` lives in the correct module boundary (`seed/ai/`)
+3. Check if `openrouter-image-generation-adapter.ts` follows the adapter pattern established by other providers
+4. Verify the provider interface contract is not broken — check for `:any` types, missing interface methods
+5. Check for banned imports: `@/lib/auth`, `@/lib/subscription`, `@/lib/unified-tier-config`, `@/lib/tier-gate`
+6. Verify tier enum compliance: all tier references use `BASIC | PREMIUM | ENTERPRISE | MASTER` (uppercase)
+7. Check for `:any` types in all changed files
+8. Verify the adapter correctly extends/implements the provider interface
+9. Check if the 5-state certification enum introduces a new state that conflicts with existing states
+
+**Acceptance criteria:**
+- [ ] Import hierarchy violations: 0 (or documented exceptions)
+- [ ] Module boundary compliance: certification in seed/ai, not forest/
+- [ ] Adapter pattern followed consistently with existing providers
+- [ ] Zero `:any` types in changed files
+- [ ] Tier enum compliance verified
+- [ ] Banned import check: zero violations
+- [ ] Interface contract: provider implements full interface
+- [ ] Overall architecture assessment: CONSISTENT / DEGRADED / VIOLATED
+
+---
+
+## Execution Plan
+
+### Phase 1: Test Baseline Reconciliation (Question F)
+
+**Rationale:** Start here because understanding the test delta is foundational to all other audit questions. If tests were broken, it affects certification enforcement (A), image adapter quality (C), and end-to-end flow (E).
+
+**Agent:** `debugger`
+**Steps:**
+1. Run `git show db4852d50~1:src/seed/ai/providers/__tests__/hermes-antigravity-adapter.test.ts | grep -c "it("` to count deleted tests
+2. Count new tests in `provider-certification.test.ts`, `openrouter-image-generation-adapter.test.ts`, `creative-image-generate.test.ts`
+3. Run `git diff db4852d50~1..db4852d50 -- src/seed/types/failure-kind.test.ts` for delta
+4. Grep for skipped tests in new files
+5. Mathematical reconciliation
+6. Document findings
+
+### Phase 2: Provider Certification Enforcement (Question A)
+
+**Agent:** `debugger`
+**Steps:**
+1. Read `provider-certification.ts` — full source
+2. Trace all call sites in registry, factory, router
+3. Read certification test file — count enforcement vs advisory tests
+4. Gap analysis: which paths lack certification checks
+5. Document findings
+
+### Phase 3: Hermes Cleanup Verification (Question B)
+
+**Agent:** `debugger`
+**Steps:**
+1. `grep -r "hermes" --include="*.ts" --include="*.tsx"` across `src/`
+2. `grep -r "antigravity" --include="*.ts" --include="*.tsx"` across `src/`
+3. Check registry, factory, index.ts for references
+4. Check docs for stale references
+5. Document findings
+
+### Phase 4: OpenRouter Image Adapter (Question C)
+
+**Agent:** `debugger`
+**Steps:**
+1. Read adapter source — full source
+2. Read adapter tests — full source
+3. Compare declared capabilities vs tested capabilities
+4. Check interface implementation completeness
+5. Document findings
+
+### Phase 5: Cloudflare Compatibility (Question D)
+
+**Agent:** `debugger`
+**Steps:**
+1. Grep all new/changed files for Node.js-only APIs
+2. Check fetch usage patterns
+3. Verify env access patterns
+4. Check for blocking I/O
+5. Document findings
+
+### Phase 6: Image Job End-to-End (Question E)
+
+**Agent:** `debugger`
+**Steps:**
+1. Read `creative-image-generate.ts` — trace full data flow
+2. Verify Inngest function registration
+3. Check error handling paths
+4. Compare test coverage vs actual flow
+5. Document findings
+
+### Phase 7: Security Audit (Question G)
+
+**Agent:** `debugger`
+**Steps:**
+1. Read key store and BYOK endpoint — check for key exposure
+2. Grep for hardcoded secrets, console.log with sensitive data
+3. Check input validation and auth enforcement
+4. Assess circuit breaker for race conditions
+5. Document findings
+
+### Phase 8: Architecture Integrity (Question H)
+
+**Agent:** `debugger`
+**Steps:**
+1. Check import hierarchy violations
+2. Verify module boundaries
+3. Check for banned imports and `:any` types
+4. Verify adapter pattern and interface contracts
+5. Document findings
+
+### Phase 9: Final Report
+
+**Agent:** `debugger`
+**Steps:**
+1. Compile all findings from Phases 1-8
+2. Write comprehensive report to `plans/reports/post-command-5-forensic-audit.md`
+3. Include: TL;DR, per-question findings, risk assessment, recommendations
+
+---
+
+## Guardrails
+
+- **READ-ONLY:** No file edits, no commits, no production deployments
+- **No git operations:** Only `git show`, `git diff`, `git log` for historical inspection
+- **No test execution:** Do not run tests — use grep and source analysis only
+- **No dependency changes:** Do not install, update, or remove packages
+- **Work context:** `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory`
+- **Reports path:** `/Users/macbook/sophia-ai-factory/plans/reports/`
+
+---
+
+## Agent Configuration
+
+| Phase | Agent Type | Description |
+|-------|-----------|-------------|
+| 1-8 | `debugger` | Read-only investigation and diagnosis |
+| 9 | `debugger` | Report compilation and writing |
+
+**Total estimated tokens:** High (40 files to read, comprehensive grep operations)
+**Estimated time:** 15-20 minutes (parallel phases where possible)
+
+---
+
+## Success Criteria
+
+The audit is complete when:
+1. All 8 questions (A-H) have documented findings with evidence (file:line references)
+2. Each question has a clear verdict: PASS / CONDITIONAL / FAIL
+3. Mathematical test reconciliation is complete (Phase 1)
+4. Final report written to `plans/reports/post-command-5-forensic-audit.md`
+5. Zero edits to production code
+
+---
+
+## Notes
+
+- Commit db4852d50 is already deployed (40 files, +5843/-455)
+- Test baseline dropped from 8855 to 8841 (delta -14)
+- Hermes adapter fully deleted from source
+- New files: provider-certification, openrouter-image-generation-adapter, creative-image-generate
+- Production deployment is FORBIDDEN for this audit
+- All recon reports in `plans/reports/recon-*.md` are part of this commit but are documentation only

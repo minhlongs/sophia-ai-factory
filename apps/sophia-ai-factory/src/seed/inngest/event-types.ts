@@ -191,61 +191,14 @@ type PayoutReconcileAlertEvent = {
   };
 };
 
-type CreativeImageRequestedEvent = {
-  data: {
-    missionId: string;
-    userId: string;
-    jobId: string;
-    prompt: string;
-    negativePrompt?: string;
-    aspectRatio?: '1:1' | '16:9' | '9:16' | '4:3';
-    style?: string;
-    seed?: number;
-    idempotencyKey?: string;
-    constraints?: {
-      aspectRatio: '1:1' | '16:9' | '9:16' | '4:3';
-      style?: string;
-      timeoutMs: number;
-      maxCostCents?: number;
-    };
-  };
-};
-
-type CreativeImageCompletedEvent = {
-  data: {
-    jobId: string;
-    missionId: string;
-    userId: string;
-    assetRef: string;
-    provider: string;
-    costCents?: number;
-    latencyMs?: number;
-    promptHash: string;
-    generatedAt: string;
-  };
-};
-
-type CreativeImageFailedEvent = {
-  data: {
-    jobId: string;
-    missionId: string;
-    userId: string;
-    error: string;
-    code: string;
-    kind: import('@/seed/types/failure-kind').FailureKind;
-    attempt: number;
-  };
-};
-
 /**
  * Merged event record served by the single canonical Inngest client.
- * 43 keys: the 28 former seed events, the 5 agent-mission events that
+ * 40 keys: the 28 former seed events, the 5 agent-mission events that
  * previously lived only in the tree client, the 4 production-graph
  * events added for the autonomous production factory (including
  * cancelled), the revenue/event.recorded event added for revenue
- * ingestion, the commerce/payment.confirmed event added for
- * digital product commerce, and the 3 creative image lifecycle events
- * added for Creative Cell V1.
+ * ingestion, and the commerce/payment.confirmed event added for
+ * digital product commerce.
  */
 export type Events = {
   "campaign.created": CampaignCreatedEvent;
@@ -288,7 +241,4 @@ export type Events = {
   "production.graph.completed": ProductionGraphCompletedEvent;
   "production.graph.failed": ProductionGraphFailedEvent;
   "production.graph.cancelled": ProductionGraphCancelledEvent;
-  "creative/image.requested": CreativeImageRequestedEvent;
-  "creative/image.completed": CreativeImageCompletedEvent;
-  "creative/image.failed": CreativeImageFailedEvent;
 };

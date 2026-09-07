@@ -23,9 +23,8 @@ import type { Events } from '@/seed/inngest/event-types';
  * events, the 5 agent-mission events absorbed from the tree client, the
  * 4 production-graph events added for the autonomous production factory
  * (started/completed/failed/cancelled), the revenue/event.recorded event
- * added for revenue ingestion, the commerce/payment.confirmed event
- * added for digital product commerce, and the 3 creative image lifecycle
- * events added for Creative Cell V1.
+ * added for revenue ingestion, and the commerce/payment.confirmed event
+ * added for digital product commerce.
  */
 const EXPECTED_EVENT_KEYS = [
   'campaign.created',
@@ -68,9 +67,6 @@ const EXPECTED_EVENT_KEYS = [
   'production.graph.completed',
   'production.graph.failed',
   'production.graph.cancelled',
-  'creative/image.requested',
-  'creative/image.completed',
-  'creative/image.failed',
 ] as const;
 
 type ExpectedKey = (typeof EXPECTED_EVENT_KEYS)[number];
@@ -105,9 +101,9 @@ describe('Inngest client merge (Phase 1.6)', () => {
   });
 
   describe('merged schema completeness', () => {
-    it('expected key list holds exactly 43 unique event keys', () => {
-      expect(EXPECTED_EVENT_KEYS).toHaveLength(43);
-      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(43);
+    it('expected key list holds exactly 40 unique event keys', () => {
+      expect(EXPECTED_EVENT_KEYS).toHaveLength(40);
+      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(40);
     });
 
     it('Events record key set exactly matches the 40 expected keys', () => {
