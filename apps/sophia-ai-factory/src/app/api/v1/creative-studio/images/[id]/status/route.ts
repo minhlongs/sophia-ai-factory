@@ -20,6 +20,7 @@ interface MediaJobRow {
   status: string;
   result_url: string | null;
   thumbnail_url: string | null;
+  provider: string | null;
 }
 
 export async function GET(
@@ -39,7 +40,7 @@ export async function GET(
   // Fetch job — IDOR protection: user_id must match
   const { data: job, error: fetchError } = await db
     .from('media_jobs')
-    .select('id, status, result_url, thumbnail_url')
+    .select('id, status, result_url, thumbnail_url, provider')
     .eq('id', id)
     .eq('user_id', user.id)
     .maybeSingle() as { data: MediaJobRow | null; error: { message: string } | null };
@@ -51,6 +52,16 @@ export async function GET(
 
   if (!job) {
     return errorResponse('Job not found', 'NOT_FOUND', 404);
+  }
+
+  // fal-ai jobs are terminal on creation — return cached row without polling
+  if (job.provider === 'fal-ai') {
+    return NextResponse.json({
+      id: job.id,
+      status: job.status,
+      resultUrl: job.result_url,
+      thumbnailUrl: job.thumbnail_url,
+    });
   }
 
   // If still in-flight, refresh from MuAPI

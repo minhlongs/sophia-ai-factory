@@ -22,7 +22,7 @@ import { globalRateLimiter, getClientIdentifier, createRateLimitResponse } from 
 export const dynamic = 'force-dynamic';
 
 const Body = z.object({
-  provider: z.enum(['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi', 'apollo']),
+  provider: z.enum(['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi', 'apollo', 'fal-ai']),
 });
 
 interface TestUrlSpec {
@@ -58,6 +58,10 @@ const TEST_ENDPOINT: Record<TestableProvider, TestUrlSpec> = {
   apollo: {
     url: 'https://api.apollo.io/api/v1/auth/health',
     authHeader: (k) => ({ 'X-Api-Key': k }),
+  },
+  'fal-ai': {
+    url: 'https://queue.fal.run/',
+    authHeader: (k) => ({ Authorization: `Key ${k}` }),
   },
   // Hunter intentionally omitted: their endpoints require api_key as a query-string
   // param which would leak the key into Cloudflare's outbound-fetch logs visible via

@@ -17,6 +17,9 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { createServerClient } from '@/seed/db/client';
 import { submitMediaJob, SUPPORTED_MODELS } from '@/tree/clients/muapi-media-client';
+import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
+import { FalImageProvider } from '@/seed/ai/providers/fal-image-provider';
+import { ImageGenerationError } from '@/seed/ai/image-generation-provider';
 import { logger } from '@/seed/utils/logger-utility';
 
 // ─── Input Schema ─────────────────────────────────────────────────────────────
@@ -37,12 +40,28 @@ export type ImageGenerateResult =
 
 // ─── Tier model access map ────────────────────────────────────────────────────
 
+/**
+ * fal-ai models available per tier. fal-ai is EXPERIMENTAL — only specific
+ * models unlocked per tier. Model names use the `fal-ai/` prefix convention.
+ */
+const TIER_ALLOWED_FAL_MODELS: Record<string, string[]> = {
+  BASIC: ['fal-ai/flux-schnell'],
+  PREMIUM: ['fal-ai/flux-schnell'],
+  ENTERPRISE: ['fal-ai/flux-schnell', 'fal-ai/flux/dev', 'fal-ai/flux-pro'],
+  MASTER: ['fal-ai/flux-schnell', 'fal-ai/flux/dev', 'fal-ai/flux-pro'],
+};
+
 const TIER_ALLOWED_MODELS: Record<string, string[]> = {
   BASIC: ['flux-schnell'],
   PREMIUM: ['flux-schnell', 'flux-dev', 'hidream'],
   ENTERPRISE: SUPPORTED_MODELS.image,
   MASTER: SUPPORTED_MODELS.image,
 };
+
+/** Check if a model is a fal-ai model (uses the fal-ai/ prefix). */
+function isFalModel(model: string): boolean {
+  return model.startsWith('fal-ai/');
+}
 
 // ─── Action ──────────────────────────────────────────────────────────────────
 
@@ -69,6 +88,62 @@ export async function generateImageAction(
 
   // Step 3: Tier gate
   const tier = await resolveUserTier(user.id);
+
+  // fal-ai models use separate tier gating
+  if (isFalModel(model)) {
+    const allowedFalModels = TIER_ALLOWED_FAL_MODELS[tier] ?? TIER_ALLOWED_FAL_MODELS.BASIC;
+    if (!allowedFalModels.includes(model)) {
+      return {
+        success: false,
+        error: `Model "${model}" is not available for your ${tier} plan.`,
+        code: 'TIER_GATE',
+      };
+    }
+
+    // Step 4 (fal-ai): Resolve BYOK key and generate synchronously
+    const apiKey = await resolveUserApiKey(user.id, 'fal-ai', process.env.FAL_KEY);
+    if (!apiKey) {
+      return { success: false, error: 'fal.ai API key not configured', code: 'NO_API_KEY' };
+    }
+
+    const falProvider = new FalImageProvider({
+      apiKey,
+      model,
+      keyRef: user.id,
+    });
+
+    try {
+      const result = await falProvider.generate({ prompt, aspectRatio });
+
+      // Step 5 (fal-ai): Insert media_jobs row — sync provider, terminal on creation
+      const jobId = `fal-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      const db = createServerClient();
+      const { error: insertError } = await db.from('media_jobs').insert({
+        id: jobId,
+        user_id: user.id,
+        type: 'image',
+        model,
+        prompt,
+        status: 'completed',
+        result_url: result.assetRef,
+        provider: 'fal-ai',
+      }) as { error: { message: string } | null };
+
+      if (insertError) {
+        logger.error('[image-generate-action] D1 insert failed for fal-ai', new Error(insertError.message));
+        return { success: false, error: 'Failed to record job', code: 'DB_ERROR' };
+      }
+
+      return { success: true, jobId };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const code = err instanceof ImageGenerationError ? err.code : 'FAL_ERROR';
+      logger.warn('[image-generate-action] fal-ai generation failed', { error: message, code });
+      return { success: false, error: message, code };
+    }
+  }
+
+  // MuAPI path (existing, unchanged)
   const allowedModels = TIER_ALLOWED_MODELS[tier] ?? TIER_ALLOWED_MODELS.BASIC;
   if (!allowedModels.includes(model)) {
     return {

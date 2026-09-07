@@ -2,9 +2,22 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-08-18 (Phase 7 Monetization OS shipped, SHA b821abd9 verified)
+**Last Updated:** 2026-09-08 (SUPREME COMMAND #7 — fal.ai Image Adapter, Experimental, code complete, deploy pending)
 **Target:** $1M ARR, 100/100 a16z solo company score
 **Go-Live Shipped (2026-05-03):** Production deployment https://sophia.agencyos.network (SHA 5b1f711f). GAP1: Magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2: Self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt email VAT 10%, dashboard period_end). GAP3: Mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission control widget, public /status page 90d uptime, D+1/D+7 lifecycle emails). Infrastructure: 9 smoke tests PASS (200 HTTP), 4431 tests 100% pass, build < 10s, 0 TS errors.
+
+---
+
+## Q3 2026: Multi-Provider Image Generation (2026-09-08)
+
+### Overview
+Added fal.ai as an experimental image generation provider alongside existing MuAPI. The `ImageGenerationProvider` interface enables pluggable providers with circuit breaker wrapping, BYOK key resolution, and tier-based model gating.
+
+| Phase | Status | Completion | Details |
+|-------|--------|-----------|---------|
+| **SC7: fal.ai Image Adapter** | 🟡 CODE COMPLETE | 2026-09-08 | `FalImageProvider` class (189 LOC), circuit breaker wrapped, BYOK for `FAL_KEY`, EXPERIMENTAL certification, tier gating (BASIC/PREMIUM = fal-schnell, ENTERPRISE+/MASTER = all). Wired into action + API route + status route. 36 new tests. Deploy pending user approval. |
+
+**Verification:** 8829 tests pass, 0 TS errors, G1-G10 gates all green.
 
 ---
 
