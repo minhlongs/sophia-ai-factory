@@ -21,6 +21,7 @@ import type {
   StreamChunk,
 } from '@/seed/ai/provider-interface';
 import { ProviderRegistry } from '@/seed/ai/provider-registry';
+import { estimateCostV2 } from '@/seed/ai/cost-estimator';
 import { logger } from '@/seed/utils/logger-utility';
 import { classifyComplexity, selectRoute, type Complexity } from './llm-router';
 import type { MultiProviderRouter, RoutedChatResult } from './multi-provider-router';
@@ -330,6 +331,19 @@ export class CostAwareRouter {
 
   /**
    * Select the best provider from the chain based on cost + health.
+   *
+   * Cost ranking uses `estimateCostV2()` so that providers with
+   * `kind: 'unknown'` or `kind: 'unmetered'` are never ranked below
+   * the cheapest metered provider. This prevents the router from
+   * treating a local unmetered runtime as "free" when its real
+   * resource cost is not billed per-request.
+   *
+   * Ranking rules (when preferCheaper is true):
+   * - Metered providers: sort by `usd` ascending.
+   * - Unknown providers: treated as (cheapestMeteredCost + epsilon) so they
+   *   never rank below the cheapest metered provider.
+   * - Unmetered providers: treated as (cheapestMeteredCost + small epsilon) so
+   *   they rank equal-to-or-worse-than the cheapest metered provider.
    */
   private selectCostAwareProvider(
     chain: Array<{
@@ -346,26 +360,53 @@ export class CostAwareRouter {
   ): CostAwareRouteDecision {
     const routeDecision = selectRoute(complexity);
 
-    // Estimate cost for each provider in the chain
+    // Estimate cost for each provider in the chain using V2 semantics.
     const estimates = chain.map((entry) => {
       const model =
         entry.id === routeDecision.provider
           ? options.model ?? routeDecision.model
           : this.getDefaultModel(entry.id, complexity);
 
-      const estimatedCost = entry.provider.estimateCost(messages, model, options);
+      const costV2 = estimateCostV2(messages, model, { providerId: entry.id });
       return {
         id: entry.id,
         model,
-        estimatedCost,
+        estimatedCost: costV2.usd,
+        costKind: costV2.kind,
         health: entry.health,
         capabilities: entry.provider.getCapabilities(model),
       };
     });
 
+    // Compute the cheapest metered cost for ranking purposes.
+    const meteredCosts = estimates
+      .filter((e) => e.costKind === 'metered')
+      .map((e) => e.estimatedCost);
+    const cheapestMeteredCost = meteredCosts.length > 0
+      ? Math.min(...meteredCosts)
+      : 0;
+
+    // Ranking key: unknown/unmetered providers are treated as
+    // worst-case so they never rank below the cheapest metered provider.
+    const EPSILON = 0.000001; // 1 micro-dollar — below any real cost difference.
+    const rankCost = (e: typeof estimates[number]): number => {
+      switch (e.costKind) {
+        case 'metered':
+          return e.estimatedCost;
+        case 'unknown':
+          // Unknown: never rank below cheapest metered.
+          return cheapestMeteredCost + EPSILON;
+        case 'unmetered':
+          // Unmetered: rank equal-to-or-worse-than cheapest metered.
+          return cheapestMeteredCost + EPSILON;
+        default:
+          return e.estimatedCost;
+      }
+    };
+
     // Sort by cost (cheapest first) when preferCheaper is enabled
     const sorted = this.preferCheaper
-      ? [...estimates].sort((a, b) => a.estimatedCost - b.estimatedCost)
+      ? [...estimates].sort((a, b) => rankCost(a) - rankCost(b))
       : estimates;
 
     // Pick the cheapest that meets minimum quality requirements
@@ -434,7 +475,6 @@ export class CostAwareRouter {
       elevenlabs: 'elevenlabs/eleven_turbo_v2_5',
       wan: 'wan/wan-2-1-t2v',
       'fish-speech': 'fish-speech/fish-speech-1-5',
-      hermes: 'hermes/hermes-1',
     };
 
     return fallbackModels[providerId] ?? 'openai/gpt-4o-mini';

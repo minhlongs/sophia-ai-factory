@@ -16,6 +16,7 @@ import type { Provider, ProviderId, ProviderHealth, ChatMessage, ChatOptions } f
 import { ProviderHealthTracker } from './provider-health';
 import { estimateCost } from './cost-estimator';
 import { logger } from '@/seed/utils/logger-utility';
+import { isCertificationBlocking, getCertification } from '@/seed/ai/provider-certification';
 
 // ── Registry entry ────────────────────────────────────────────────────────────
 
@@ -164,8 +165,16 @@ export class ProviderRegistry {
    * Build a fallback chain for a preferred provider.
    *
    * Returns an ordered list starting with the preferred provider (if
-   * healthy), followed by the remaining fallback-order providers that
-   * are healthy.  Providers not in the fallback order are excluded.
+   * healthy and certified), followed by the remaining fallback-order
+   * providers that are healthy and certified.  Providers not in the
+   * fallback order are excluded.
+   *
+   * Certification is enforced at the selection boundary: a provider
+   * whose certification state is BLOCKED is never included in the
+   * chain, regardless of health.  This is a defensive guard that
+   * complements the factory-level gate — even if a provider were
+   * registered through a path that bypasses `buildProviders()`, the
+   * router still refuses to select it.
    *
    * @param preferred — Provider to try first.
    * @param alternates — Additional provider ids to include after the
@@ -178,11 +187,16 @@ export class ProviderRegistry {
   ): Array<{ id: ProviderId; provider: Provider; health: ProviderHealth }> {
     const chain: Array<{ id: ProviderId; provider: Provider; health: ProviderHealth }> = [];
 
-    // 1. Preferred provider first (if registered and healthy).
+    // 1. Preferred provider first (if registered, healthy, and certified).
     const preferredEntry = this.entries.get(preferred);
     if (preferredEntry) {
       const health = preferredEntry.health.getHealth();
-      if (health.healthy) {
+      if (health.healthy && isCertificationBlocking(preferred)) {
+        logger.warn('[ProviderRegistry] Preferred provider blocked by certification — excluded from chain', undefined, {
+          providerId: preferred,
+          certState: getCertification(preferred).state,
+        });
+      } else if (health.healthy) {
         chain.push({ id: preferred, provider: preferredEntry.provider, health });
       }
     }
@@ -193,7 +207,12 @@ export class ProviderRegistry {
       const entry = this.entries.get(id);
       if (!entry) continue;
       const health = entry.health.getHealth();
-      if (health.healthy) {
+      if (health.healthy && isCertificationBlocking(id)) {
+        logger.warn('[ProviderRegistry] Provider blocked by certification — excluded from chain', undefined, {
+          providerId: id,
+          certState: getCertification(id).state,
+        });
+      } else if (health.healthy) {
         chain.push({ id, provider: entry.provider, health });
       }
     }
@@ -204,7 +223,12 @@ export class ProviderRegistry {
       const entry = this.entries.get(id);
       if (!entry) continue;
       const health = entry.health.getHealth();
-      if (health.healthy) {
+      if (health.healthy && isCertificationBlocking(id)) {
+        logger.warn('[ProviderRegistry] Alternate provider blocked by certification — excluded from chain', undefined, {
+          providerId: id,
+          certState: getCertification(id).state,
+        });
+      } else if (health.healthy) {
         chain.push({ id, provider: entry.provider, health });
       }
     }

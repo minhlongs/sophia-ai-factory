@@ -23,7 +23,8 @@ import { logger } from '@/seed/utils/logger-utility';
 import { resolveUserApiKey, isByokEnabled } from '@/tree/byok/resolve-user-api-key';
 import { OpenRouterProvider } from './openrouter-provider';
 import { AnthropicProvider } from './anthropic-provider';
-import { HermesAntigravityAdapter } from '@/seed/ai/providers/hermes-antigravity-adapter';
+import { isCertificationBlocking, getCertification } from '@/seed/ai/provider-certification';
+import { ProviderNotCertifiedError } from '@/seed/ai/provider-certification';
 
 // ── Configuration ──────────────────────────────────────────────────────────────
 
@@ -109,6 +110,18 @@ export async function buildProviders(
       continue;
     }
 
+    if (isCertificationBlocking(config.id)) {
+      const cert = getCertification(config.id);
+      logger.warn('[ProviderFactory] Provider blocked by certification', undefined, {
+        providerId: config.id,
+        certState: cert.state,
+        security: cert.security,
+        health: cert.health,
+        reason: cert.reason,
+      });
+      throw new ProviderNotCertifiedError(config.id, cert.state, cert.reason);
+    }
+
     const provider = createProvider(config, apiKey);
 
     instances.set(config.id, provider);
@@ -143,7 +156,7 @@ async function resolveApiKey(
 ): Promise<string | null> {
   // BYOK first: try user's stored key (only for BYOK-supported providers)
   const byokProvider = providerId as ByokProvider;
-  const byokSupported: ByokProvider[] = ['openrouter', 'anthropic', 'elevenlabs', 'hermes'];
+  const byokSupported: ByokProvider[] = ['openrouter', 'anthropic', 'elevenlabs'];
 
   if (userId && isByokEnabled() && byokSupported.includes(byokProvider)) {
     try {
@@ -191,13 +204,6 @@ function createProvider(config: ProviderConfig, apiKey: string): Provider {
     case 'anthropic':
       return new AnthropicProvider({
         apiKey,
-        label: config.label,
-      });
-
-    case 'hermes':
-      return new HermesAntigravityAdapter({
-        apiKey,
-        baseUrl: config.baseUrl,
         label: config.label,
       });
 

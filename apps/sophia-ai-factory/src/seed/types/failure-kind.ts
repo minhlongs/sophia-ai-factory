@@ -22,6 +22,8 @@ export enum FailureKind {
   NETWORK = 'NETWORK',
   /** Unclassified — default fallback */
   UNKNOWN = 'UNKNOWN',
+  /** Provider certification gate blocked instantiation */
+  PROVIDER_NOT_CERTIFIED = 'PROVIDER_NOT_CERTIFIED',
 }
 
 /** Circuit breaker states — 4-state machine */
@@ -52,6 +54,9 @@ export function classifyError(error: unknown): FailureKind {
   const msg = error.message.toLowerCase()
   const name = error.name.toLowerCase()
 
+  if (name === 'providernotcertifiederror' || msg.includes('provider_not_certified')) {
+    return FailureKind.PROVIDER_NOT_CERTIFIED
+  }
   if (name === 'aborterror' || msg.includes('timeout') || msg.includes('timed out')) {
     return FailureKind.TIMEOUT
   }

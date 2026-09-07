@@ -15,6 +15,7 @@ describe('FailureKind enum', () => {
       'TIMEOUT',
       'NETWORK',
       'UNKNOWN',
+      'PROVIDER_NOT_CERTIFIED',
     ])
   })
 })

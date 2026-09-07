@@ -9,7 +9,7 @@
  * @module forest/inngest/functions/__tests__/creative-image-generate
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -56,8 +56,9 @@ vi.mock('@/seed/security/circuit-breaker', () => ({
   recordFailure: mocks.recordFailure,
 }));
 
-import { creativeImageGenerate } from '@/forest/inngest/functions/creative-image-generate';
+import { creativeImageGenerate, resolveImageProvider } from '@/forest/inngest/functions/creative-image-generate';
 import { createServerClient } from '@/seed/db/client';
+import { OpenRouterImageGenerationAdapter } from '@/seed/ai/providers/openrouter-image-generation-adapter';
 
 // ---------------------------------------------------------------------------
 // D1 mock helpers
@@ -275,5 +276,35 @@ describe('creativeImageGenerate', () => {
     expect(mocks.recordFailure).toHaveBeenCalled();
     expect(result.success).toBe(false);
     expect(result.error?.code).toBe('MAX_RETRIES_EXCEEDED');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Provider resolution
+// ---------------------------------------------------------------------------
+
+describe('resolveImageProvider', () => {
+  const originalKey = process.env.OPENROUTER_API_KEY;
+
+  afterEach(() => {
+    if (originalKey !== undefined) {
+      process.env.OPENROUTER_API_KEY = originalKey;
+    } else {
+      delete process.env.OPENROUTER_API_KEY;
+    }
+  });
+
+  it('returns OpenRouterImageGenerationAdapter when OPENROUTER_API_KEY is set', () => {
+    process.env.OPENROUTER_API_KEY = 'sk-test-key';
+    const provider = resolveImageProvider();
+    expect(provider).toBeInstanceOf(OpenRouterImageGenerationAdapter);
+    expect(provider.id).toBe('openrouter-image');
+  });
+
+  it('returns InlineMockImageProvider when OPENROUTER_API_KEY is absent', () => {
+    delete process.env.OPENROUTER_API_KEY;
+    const provider = resolveImageProvider();
+    expect(provider).not.toBeInstanceOf(OpenRouterImageGenerationAdapter);
+    expect(provider.id).toBe('mock-image');
   });
 });

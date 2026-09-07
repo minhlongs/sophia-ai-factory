@@ -17,6 +17,7 @@ export * from './video-generator';
 
 // ── Image generation providers ───────────────────────────────────────────────────
 export * from './providers/openrouter-image-adapter';
+export * from './providers/openrouter-image-generation-adapter';
 
 // ── Context window & token management (Phase 7) ───────────────────────────────
 export * from './context-window';

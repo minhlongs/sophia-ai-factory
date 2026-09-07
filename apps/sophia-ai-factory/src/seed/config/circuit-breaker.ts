@@ -18,6 +18,7 @@ export const FAILURE_COOLDOWNS: Record<FailureKind, number> = {
   [FailureKind.NETWORK]: 180_000,         // 3 minutes
   [FailureKind.SERVER_ERROR]: 300_000,    // 5 minutes
   [FailureKind.UNKNOWN]: 120_000,         // 2 minutes (conservative default)
+  [FailureKind.PROVIDER_NOT_CERTIFIED]: 0, // Immediate — certification is a permanent gate, not a transient failure
 }
 
 /** State transition thresholds */
@@ -77,5 +78,5 @@ export function getCooldownMs(kind: FailureKind): number {
 
 /** Check if a failure kind should immediately open the circuit */
 export function shouldImmediateOpen(kind: FailureKind): boolean {
-  return kind === FailureKind.AUTH_FAILURE
+  return kind === FailureKind.AUTH_FAILURE || kind === FailureKind.PROVIDER_NOT_CERTIFIED
 }

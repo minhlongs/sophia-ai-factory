@@ -38,6 +38,7 @@ import type {
   ImageGenerationInput as ProviderInput,
   ImageGenerationProvider,
 } from "@/seed/ai/image-generation-provider";
+import { OpenRouterImageGenerationAdapter } from "@/seed/ai/providers/openrouter-image-generation-adapter";
 import { createHash } from "node:crypto";
 import { createServerClient } from "@/seed/db/client";
 
@@ -75,6 +76,30 @@ class InlineMockImageProvider implements ImageGenerationProvider {
   async health() {
     return { healthy: true, latencyMs: 10 };
   }
+}
+
+// ---------------------------------------------------------------------------
+// Provider resolution
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolve the image generation provider based on environment configuration.
+ *
+ * If OPENROUTER_API_KEY is set, returns a real OpenRouterImageGenerationAdapter.
+ * Otherwise, falls back to the InlineMockImageProvider for development/testing.
+ *
+ * This is the single resolution point — no other module decides which provider
+ * to use for creative image generation.
+ */
+export function resolveImageProvider(): ImageGenerationProvider {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (apiKey) {
+    return new OpenRouterImageGenerationAdapter({
+      apiKey,
+      label: 'OpenRouter Image Generation',
+    });
+  }
+  return new InlineMockImageProvider();
 }
 
 // ---------------------------------------------------------------------------
@@ -228,8 +253,8 @@ export const creativeImageGenerate = inngest.createFunction(
       return { success: false, error: { code: "CIRCUIT_OPEN", message: "Circuit breaker open" } };
     }
 
-    // Resolve provider (V1: Mock only)
-    const provider: ImageGenerationProvider = new InlineMockImageProvider();
+    // Resolve provider (real OpenRouter if key set, otherwise mock)
+    const provider: ImageGenerationProvider = resolveImageProvider();
 
     // Map job input -> provider input (Escrow MED-2: single mapping point)
     const providerInput = mapJobInputToProviderInput(

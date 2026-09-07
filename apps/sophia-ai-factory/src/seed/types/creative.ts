@@ -47,3 +47,32 @@ export {
   DEFAULT_CREATIVE_CONSTRAINTS,
   validateCreativeConstraints,
 } from './creative-constraints';
+
+// Creative Intelligence (Hermes V2)
+export type {
+  CreativeReasoningRequest,
+  CreativeReasoningResponse,
+  PromptOptimizeRequest,
+  PromptOptimizeResponse,
+} from './creative-intelligence';
+
+export {
+  CreativeReasoningRequestSchema,
+  CreativeReasoningResponseSchema,
+  PromptOptimizeRequestSchema,
+  PromptOptimizeResponseSchema,
+  validateReasoningResponse,
+  validateOptimizeResponse,
+} from './creative-intelligence';
+
+// Creative Storyboard (Hermes V2)
+export type {
+  CreativeScene,
+  CreativeStoryboard,
+} from './creative-storyboard';
+
+export {
+  CreativeSceneSchema,
+  CreativeStoryboardSchema,
+  validateStoryboard,
+} from './creative-storyboard';

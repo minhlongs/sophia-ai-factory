@@ -25,7 +25,7 @@ export type Complexity = 'simple' | 'medium' | 'complex'
  * catch-all for any OpenAI-compatible API reached through the OpenRouter
  * gateway; `anthropic` is the direct Messages API.
  */
-export type ProviderId = 'openrouter' | 'anthropic' | 'elevenlabs' | 'wan' | 'fish-speech' | 'hermes';
+export type ProviderId = 'openrouter' | 'anthropic' | 'elevenlabs' | 'wan' | 'fish-speech';
 
 // ── Message types ─────────────────────────────────────────────────────────────
 

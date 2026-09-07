@@ -16,6 +16,34 @@
 import type { ChatMessage, ProviderId } from './provider-interface';
 import { logger } from '@/seed/utils/logger-utility';
 
+// ── Cost kind ─────────────────────────────────────────────────────────────────
+
+/**
+ * Describes how a provider/model combination is billed.
+ *
+ * Used by `estimateCostV2()` so the router can distinguish zero-cost
+ * providers that are genuinely free from those that simply have unknown
+ * or unmetered pricing.
+ *
+ * - `metered` — billed per token/character/second (most providers).
+ * - `unmetered` — real resource cost but not billed per-request (e.g. local runtime).
+ * - `internal` — platform-internal, no external billing.
+ * - `unknown` — provider exists but pricing is not known; treat as worst-case.
+ */
+export type CostKind = 'metered' | 'unmetered' | 'internal' | 'unknown';
+
+/**
+ * Cost estimate with economic honesty metadata.
+ *
+ * `usd` is the estimated cost in USD. `kind` indicates how the cost
+ * was determined so downstream consumers (routers, dashboards) can
+ * make informed ranking decisions.
+ */
+export interface CostEstimate {
+  usd: number;
+  kind: CostKind;
+}
+
 // ── Pricing primitives ────────────────────────────────────────────────────────
 
 /** Cost per 1K input tokens (USD). */
@@ -120,7 +148,6 @@ const PROVIDER_DEFAULTS: Record<ProviderId, ModelPricing> = {
   elevenlabs: { type: 'tts', perChar: 0.00003 },
   wan: { type: 'video', perSecond: 0.15 },
   'fish-speech': { type: 'tts', perChar: 0.000005 },
-  hermes: { type: 'text', input: 0.5, output: 2.0 },
 };
 
 // ── Token estimation ──────────────────────────────────────────────────────────
@@ -268,6 +295,72 @@ export function getModelsForProvider(providerId: ProviderId): string[] {
     }
     return id.startsWith(prefix);
   });
+}
+
+// ── Cost kind (V2) ────────────────────────────────────────────────────────────
+
+/**
+ * Known cost kind per provider.
+ *
+ * Providers not listed here default to `unknown`. This mapping is
+ * authoritative for `estimateCostV2()` and `getModelCostKind()`.
+ */
+const PROVIDER_COST_KIND: Record<ProviderId, CostKind> = {
+  openrouter: 'metered',
+  anthropic: 'metered',
+  elevenlabs: 'metered',
+  wan: 'metered',
+  'fish-speech': 'metered',
+};
+
+/**
+ * Get the cost kind for a provider/model combination.
+ *
+ * @param providerId — Provider identifier.
+ * @param _model — Model identifier (reserved for future per-model overrides).
+ * @returns The cost kind for this provider.
+ */
+export function getModelCostKind(
+  providerId: ProviderId,
+  _model?: string,
+): CostKind {
+  return PROVIDER_COST_KIND[providerId] ?? 'unknown';
+}
+
+/**
+ * Estimate cost with economic honesty metadata.
+ *
+ * Unlike `estimateCost()` which returns a raw number, this returns a
+ * `CostEstimate` with a `kind` field that distinguishes metered,
+ * unmetered, internal, and unknown providers.
+ *
+ * The router uses this to avoid ranking unknown/unmetered providers
+ * as "cheapest" when their true cost is uncertain.
+ *
+ * @param messages — Messages that will be sent.
+ * @param model — Model identifier.
+ * @param options — Additional options (maxTokens, providerId).
+ * @returns Cost estimate with kind metadata.
+ */
+export function estimateCostV2(
+  messages: ChatMessage[],
+  model: string,
+  options?: { maxTokens?: number; providerId?: ProviderId },
+): CostEstimate {
+  const providerId = options?.providerId ?? inferProvider(model);
+  const kind = getModelCostKind(providerId, model);
+
+  if (kind === 'unknown') {
+    return { usd: 0, kind: 'unknown' };
+  }
+
+  if (kind === 'unmetered') {
+    return { usd: 0, kind: 'unmetered' };
+  }
+
+  // Metered: delegate to existing cost estimation for accurate USD value.
+  const usd = estimateCost(messages, model, options);
+  return { usd, kind: 'metered' };
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
