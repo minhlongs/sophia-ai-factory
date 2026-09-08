@@ -1,6 +1,31 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-08 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 0104cfdcf
+**Last Updated:** 2026-09-09 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 13fcd4789
+
+---
+
+## 2026-09-09 (SUPREME COMMAND #13 — SYNC FAL.AI `completed_at` TEMPORAL TRUTH FIX, COMPLETE)
+
+**Severity: P2 FIX | Type: Code Fix + Schema Migration | Status: SHIPPED**
+
+CMD #12 audit found sync Fal.ai write paths set `completed_at = requestedAt` (request-START time), making `(completed_at - started_at) ≈ 0` and discarding real provider latency. Economics dashboard reported ~0ms for sync Fal.ai jobs.
+
+**What changed:**
+- **`src/app/api/v1/creative-studio/images/generate/route.ts:140`** — `completed_at: requestedAt` → `completed_at: Math.floor(Date.now() / 1000)`, captured AFTER `falProvider.generate()` resolves. Added `latency_ms: result.latencyMs` to the INSERT.
+- **`src/app/actions/image-generate-action.ts:174`** — same change; `Date.now()` executes AFTER BOTH `falProvider.generate()` (line 129) AND `storeFalImageInR2()` (line 138).
+- **`migrations/0271_add_latency_ms_to_media_jobs.sql`** — `ALTER TABLE media_jobs ADD COLUMN latency_ms INTEGER;` (nullable, backward compatible). Required because the column was missing from production schema despite being referenced in both INSERTs.
+
+**Temporal contract restored:**
+- `completed_at` now reflects true completion time (platform observes terminal state AFTER provider + R2 resolve)
+- `latency_ms` preserves real provider latency (2000–15000 ms) instead of the derived ~0ms
+- Attribution window bias improved from ~5s early → ~0s (SAFE → SAFE, improved)
+- Economics dashboard now shows real latency for sync Fal.ai
+
+**Tests:** 8928 passing (no regressions). Typecheck clean. Build exit 0.
+
+**Deploy:** CF-direct. Code fix SHA `22ba9d20` (verified via `/api/version` shortSha match, HTTP 200 on `/api/health` + `/login`). Migration applied via `wrangler d1 execute sophia-raas-db --file=migrations/0271_add_latency_ms_to_media_jobs.sql --remote` (changes: 1, verified via `PRAGMA table_info(media_jobs)` → cid 20 `latency_ms INTEGER NULL`). Migration committed + pushed as SHA `3aa6dbb6c`.
+
+**Backfill:** N/A — production `media_jobs` table empty (0 rows). No pre-fix rows to restore.
 
 ---
 
