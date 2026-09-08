@@ -137,6 +137,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         gross_margin: null,
         requested_at: result.requestedAt ?? requestedAt,
         started_at: result.startedAt ?? requestedAt,
+        completed_at: requestedAt,
       }) as { error: { message: string } | null };
 
       if (insertError) {
