@@ -1,8 +1,34 @@
 # Project Changelog
 
-**Last Updated:** 2026-08-29 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 48d8810ae
+**Last Updated:** 2026-08-31 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 0104cfdcf
 
 ---
+
+## 2026-08-31 (SUPREME COMMAND #9 — CREATIVE ECONOMICS V1) — minimum economic control loop for Sophia's creative machine
+
+**Severity: P1 FEATURE | Type: New Module | Status: COMPLETE + SHIPPED**
+
+Sophia can now answer 7 operational questions: (1) Is the provider working reliably? (2) How long does each job take? (3) How much does each job cost? (4) How much revenue is associated with usage? (5) What is the gross margin? (6) Which failures matter operationally? (7) When should Sophia stop routing traffic to a provider?
+
+**What changed:**
+
+- **Canonical economics types (`seed/types/creative-job-economics.ts`)** — Cost classification taxonomy (METERED / UNMETERED / UNKNOWN), error category taxonomy (AUTH / RATE_LIMIT / TIMEOUT / PROVIDER / VALIDATION / NETWORK / INTERNAL / UNKNOWN), provider health status enum (HEALTHY / DEGRADED / UNHEALTHY / INSUFFICIENT_DATA). UNKNOWN cost stored as NULL, never numeric zero.
+- **Provider reliability metrics (`tree/media-jobs/media-job-economics-query.ts`)** — Success rate, failure rate, P50/P95 latency, retry rate, provider error rate over a configurable time window. NULL rates for empty rows (no fake precision).
+- **Economic aggregation (`tree/media-jobs/media-job-economics-aggregate.ts`)** — Jobs, successful/failed counts, known/unknown cost jobs, total known provider cost, average known cost per successful job, revenue attributed, known gross margin + percentage. Distinguishes COMPLETE / PARTIAL / UNKNOWN data.
+- **Provider health policy (`tree/media-jobs/provider-health-policy.ts`)** — Deterministic classification from success rate, failure rate, p95 latency, sample size. Default thresholds: HEALTHY ≥90% success + ≤5% failure + p95 ≤15s; UNHEALTHY <70% success OR (<85% + p95 >30s); INSUFFICIENT_DATA <10 jobs.
+- **Error category mapper (`tree/media-jobs/error-category-mapper.ts`)** — FailureKind → ErrorCategory mapping. Raw provider messages never exposed to users.
+- **Economic decision formatter (`tree/media-jobs/economic-decision-formatter.ts`)** — Human-readable output: provider, status, jobs, success rate, P50/P95, known cost, unknown cost jobs, revenue attributed, known gross margin, data confidence (HIGH/MEDIUM/LOW).
+- **Operator API (`app/api/v1/creative-studio/economics/route.ts`)** — GET endpoint, auth required (401 if not logged in), read-only, returns aggregated per-provider metrics. No secrets exposed (no API keys, no Authorization headers, no raw credentials).
+- **D1 migration (`migrations/0269_creative_media_jobs_economic.sql`)** — Adds economic columns to `media_jobs`: provider_cost, cost_currency, cost_classification, revenue_attribution, gross_margin, error_category, retry_count, requested_at, started_at. All nullable for backward compatibility.
+- **Bilingual docs (`docs/CREATIVE_ECONOMICS_V1.md`, `docs/creative-economics-data-retention.md`)** — Full Vietnamese + English reference. Data retention policy: telemetry stores operational metrics only — never full prompts, API keys, OAuth tokens, Authorization headers, or personal data.
+
+**Test coverage:** 54 dedicated tests across 6 test files (cost classification, gross margin, NULL handling, success/failure rates, P50/P95, retry rate, health classification, error mapping, output formatting, data confidence). 8883 total tests passing (baseline 8839 + 54 new − 10 pre-existing gap = net +44; full regression green).
+
+**Deploy:** CF-direct via `deploy-with-sha.sh`. SHA `0104cfdcf` verified live at `https://sophia.agencyos.network`. Migration 0269 applied to production D1 (12 queries). Post-deploy smoke: `/api/health` → 200, `/login` → 200.
+
+**Constraints honored:** No second image provider added. Hermes NOT reactivated. Google Flow NOT integrated. Billing NOT rewritten. Pricing tiers NOT redesigned. No new observability platform. No unnecessary SaaS dependencies. Provider secrets NOT exposed. Authorization headers NOT logged. Protected flows untouched. Tests NOT weakened. No automatic deploy.
+
+**Escrow / open items:** None blocking. Health policy is OBSERVE → CLASSIFY → REPORT only — no autonomous traffic shutdown (by design, per SUPREME COMMAND #9 Phase 6). Future: wire economic columns into the Fal.ai job lifecycle instrumentation (Phase 2 of the original command was scoped to the schema + aggregation layer; live cost capture from provider adapters is a follow-up slice).
 
 ## 2026-08-29 (SOPHIA 2027 KILLER TEST) — end-to-end acceptance flight for the creative-mission-full graph
 

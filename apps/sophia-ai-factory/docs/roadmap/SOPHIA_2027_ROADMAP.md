@@ -20,6 +20,7 @@
 | **Phase 4 — Distribution + Commerce + Creative Economy** | Distribution OS (channel adapters + registry), Commerce (digital product catalog + NOWPayments IPN routing), Creative Economy (dashboard + revenue ingestion) | ✅ Shipped `fd37f353` (2026-08-27) — 8546 tests, COMMERCE.md |
 | **Phase 3 — KILLER TEST (acceptance flight)** | Deterministic e2e flight of `creative-mission-full` against the SEA AI-native entrepreneurship media business input (2 publish gates, 4 approval-flip status choreography, $500/mo budget guard, campaign-scoped Creative Memory write-back, byte-identical replay, no-secrets payload walk). The only production delta is a ~10-line `persistAgentLearning` call in the runner's terminal-success path. | ✅ COMPLETE (2026-08-29) — see `docs/project-changelog.md` 2026-08-29 |
 | **Phase 6 — Billing Consolidation** | Phase 4 feature gates wired into 4 land Server Actions (investment-advisor + 3 commerce actions); 16 tier-gating tests; 27 total new tests | ✅ Shipped (2026-08-25) — typecheck/build/test green |
+| **Phase 13 — Creative Economics V1 (SUPREME COMMAND #9)** | Minimum economic control loop — provider reliability metrics, cost classification (METERED/UNMETERED/UNKNOWN), error taxonomy, provider health policy (HEALTHY/DEGRADED/UNHEALTHY/INSUFFICIENT_DATA), economic decision output, GET `/api/v1/creative-studio/economics` endpoint. 54 dedicated tests, 8883 total passing. | ✅ Shipped `0104cfdcf` (2026-08-31) — migration 0269 applied, CF-direct GREEN |
 
 ## Phases
 
