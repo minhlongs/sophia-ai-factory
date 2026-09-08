@@ -168,9 +168,10 @@ describe('FalImageProvider', () => {
     });
 
     it('429 → RATE_LIMIT retryable error', async () => {
-      fetchMock.mockResolvedValueOnce(
-        new Response('Rate limited', { status: 429 }),
-      );
+      // Retryable: mock 3x so retry exhausts and throws the 429 error
+      fetchMock.mockResolvedValueOnce(new Response('Rate limited', { status: 429 }));
+      fetchMock.mockResolvedValueOnce(new Response('Rate limited', { status: 429 }));
+      fetchMock.mockResolvedValueOnce(new Response('Rate limited', { status: 429 }));
 
       const provider = createProvider();
       await expect(provider.generate({ prompt: 'test' })).rejects.toMatchObject({
@@ -180,9 +181,10 @@ describe('FalImageProvider', () => {
     });
 
     it('500 → SERVER_ERROR retryable error', async () => {
-      fetchMock.mockResolvedValueOnce(
-        new Response('Internal Server Error', { status: 500 }),
-      );
+      // Retryable: mock 3x so retry exhausts and throws the 500 error
+      fetchMock.mockResolvedValueOnce(new Response('Internal Server Error', { status: 500 }));
+      fetchMock.mockResolvedValueOnce(new Response('Internal Server Error', { status: 500 }));
+      fetchMock.mockResolvedValueOnce(new Response('Internal Server Error', { status: 500 }));
 
       const provider = createProvider();
       await expect(provider.generate({ prompt: 'test' })).rejects.toMatchObject({
@@ -192,9 +194,10 @@ describe('FalImageProvider', () => {
     });
 
     it('502 → SERVER_ERROR retryable error', async () => {
-      fetchMock.mockResolvedValueOnce(
-        new Response('Bad Gateway', { status: 502 }),
-      );
+      // Retryable: mock 3x so retry exhausts and throws the 502 error
+      fetchMock.mockResolvedValueOnce(new Response('Bad Gateway', { status: 502 }));
+      fetchMock.mockResolvedValueOnce(new Response('Bad Gateway', { status: 502 }));
+      fetchMock.mockResolvedValueOnce(new Response('Bad Gateway', { status: 502 }));
 
       const provider = createProvider();
       await expect(provider.generate({ prompt: 'test' })).rejects.toMatchObject({
@@ -244,8 +247,11 @@ describe('FalImageProvider', () => {
       // Simulate AbortSignal.timeout firing — fetch rejects with AbortError.
       // Use a real Error with name='AbortError' (DOMException may not be
       // instanceof Error in the test runtime).
+      // TIMEOUT is retryable — mock 3x so retry exhausts and throws TIMEOUT.
       const abortError = new Error('The operation was aborted.');
       abortError.name = 'AbortError';
+      fetchMock.mockRejectedValueOnce(abortError);
+      fetchMock.mockRejectedValueOnce(abortError);
       fetchMock.mockRejectedValueOnce(abortError);
 
       const provider = createProvider({ timeoutMs: 5000 });
@@ -372,11 +378,105 @@ describe('FalImageProvider', () => {
     });
   });
 
-  describe('EXPERIMENTAL certification', () => {
-    it('registers as EXPERIMENTAL at module load', () => {
+  describe('PRODUCTION_CANDIDATE certification', () => {
+    it('registers as PRODUCTION_CANDIDATE at module load', () => {
       const cert = getCertification('fal-ai');
-      expect(cert.state).toBe(ProviderCertificationState.EXPERIMENTAL);
-      expect(cert.reason).toContain('Experimental');
+      expect(cert.state).toBe(ProviderCertificationState.PRODUCTION_CANDIDATE);
+      expect(cert.security).toBe('PASS');
+      expect(cert.health).toBe('PASS');
+      expect(cert.canary).toBe('PASS');
+      expect(cert.reason).toContain('R2 + billing');
+    });
+  });
+
+  describe('economic enrichment', () => {
+    it('returns costCents=1 and costClassification=METERED for flux-schnell', async () => {
+      fetchMock.mockResolvedValueOnce(
+        new Response(JSON.stringify(VALID_RESPONSE), { status: 200 }),
+      );
+
+      const provider = createProvider({ model: 'fal-ai/flux-schnell' });
+      const result = await provider.generate({ prompt: 'test' });
+
+      expect(result.costCents).toBe(1);
+      expect(result.costClassification).toBe('METERED');
+    });
+
+    it('returns costClassification=UNKNOWN and costCents=undefined for unknown model', async () => {
+      fetchMock.mockResolvedValueOnce(
+        new Response(JSON.stringify(VALID_RESPONSE), { status: 200 }),
+      );
+
+      const provider = createProvider({ model: 'fal-ai/nonexistent-model' });
+      const result = await provider.generate({ prompt: 'test' });
+
+      expect(result.costCents).toBeUndefined();
+      expect(result.costClassification).toBe('UNKNOWN');
+    });
+
+    it('returns costCents=5 for flux-pro', async () => {
+      fetchMock.mockResolvedValueOnce(
+        new Response(JSON.stringify(VALID_RESPONSE), { status: 200 }),
+      );
+
+      const provider = createProvider({ model: 'fal-ai/flux-pro' });
+      const result = await provider.generate({ prompt: 'test' });
+
+      expect(result.costCents).toBe(5);
+      expect(result.costClassification).toBe('METERED');
+    });
+
+    it('returns retryCount=1 on clean success', async () => {
+      fetchMock.mockResolvedValueOnce(
+        new Response(JSON.stringify(VALID_RESPONSE), { status: 200 }),
+      );
+
+      const provider = createProvider();
+      const result = await provider.generate({ prompt: 'test' });
+
+      expect(result.retryCount).toBe(1);
+    });
+
+    it('returns retryCount=3 on retry-exhausted failure', async () => {
+      // 3 failures → retry exhausted
+      fetchMock.mockResolvedValue(new Response('Server Error', { status: 500 }));
+
+      const provider = createProvider();
+      try {
+        await provider.generate({ prompt: 'test' });
+      } catch (err) {
+        expect(err).toBeInstanceOf(ImageGenerationError);
+        expect((err as ImageGenerationError).retryCount).toBe(3);
+      }
+    });
+
+    it('returns requestedAt and startedAt that are present and ordered', async () => {
+      fetchMock.mockResolvedValueOnce(
+        new Response(JSON.stringify(VALID_RESPONSE), { status: 200 }),
+      );
+
+      const provider = createProvider();
+      const result = await provider.generate({ prompt: 'test' });
+
+      expect(result.requestedAt).toBeDefined();
+      expect(result.startedAt).toBeDefined();
+      expect(result.requestedAt!).toBeLessThanOrEqual(result.startedAt!);
+      // Both are epoch seconds (not ms) — should be 10 digits in 2026
+      expect(result.requestedAt!.toString().length).toBe(10);
+    });
+
+    it('failure error carries retryCount from provider', async () => {
+      fetchMock.mockResolvedValue(new Response('Server Error', { status: 500 }));
+
+      const provider = createProvider();
+      try {
+        await provider.generate({ prompt: 'test' });
+      } catch (err) {
+        expect(err).toBeInstanceOf(ImageGenerationError);
+        const imgErr = err as ImageGenerationError;
+        expect(imgErr.retryCount).toBe(3);
+        expect(imgErr.code).toBe(FailureKind.SERVER_ERROR);
+      }
     });
   });
 

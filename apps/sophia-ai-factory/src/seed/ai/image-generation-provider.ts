@@ -28,6 +28,11 @@ export interface ImageGenerationInput {
 
 /**
  * Result returned by a successful image generation.
+ *
+ * Economic fields (costCents, costClassification, retryCount,
+ * requestedAt, startedAt) are OPTIONAL so existing callers and tests
+ * are not broken. When present they feed the economic control loop
+ * (SUPREME COMMAND #9) with real data instead of NULL.
  */
 export interface ImageGenerationResult {
   /** URL or reference to the generated image asset. */
@@ -40,6 +45,14 @@ export interface ImageGenerationResult {
   latencyMs: number;
   /** Optional provider-specific metadata. */
   metadata?: Record<string, unknown>;
+  /** Cost classification (METERED / UNKNOWN / UNMETERED). */
+  costClassification?: 'METERED' | 'UNKNOWN' | 'UNMETERED';
+  /** Number of attempts made (1 = no retry, 3 = exhausted). */
+  retryCount?: number;
+  /** Epoch seconds when the request entered the provider lifecycle. */
+  requestedAt?: number;
+  /** Epoch seconds right before the actual HTTP fetch began. */
+  startedAt?: number;
 }
 
 /**
@@ -76,6 +89,8 @@ export class ImageGenerationError extends Error {
   public readonly code: string;
   public readonly provider: string;
   public readonly retryable: boolean;
+  /** Number of attempts made before this error (1 = first try). Optional — not all callers track it. */
+  public retryCount?: number;
 
   constructor(message: string, code: string, provider: string, retryable: boolean = false) {
     super(message);

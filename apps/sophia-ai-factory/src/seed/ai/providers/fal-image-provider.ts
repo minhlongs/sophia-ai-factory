@@ -15,10 +15,14 @@ import type {
   HealthStatus,
 } from '../image-generation-provider';
 import { ImageGenerationError } from '../image-generation-provider';
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
-import { classifyHttpStatus, classifyError, FailureKind } from '@/seed/types/failure-kind';
+import { shouldAllowRequest } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
 import { registerCertification, ProviderCertificationState } from '@/seed/ai/provider-certification';
+import { logger, type Logger } from '@/seed/utils/logger-utility';
 import { z } from 'zod';
+import { executeFalFetch, fetchWithRetry, isRetryableKind } from './fal-image-fetch';
+import { getFalModelPriceCents } from '@/seed/config/fal-pricing';
+import { classifyCost } from '@/seed/types/creative-job-economics';
 
 const PROVIDER_ID = 'fal-ai';
 const PROVIDER_LABEL = 'fal.ai Image Generation';
@@ -38,7 +42,7 @@ export const FalImageRequestSchema = z.object({
 
 export type FalImageRequest = z.infer<typeof FalImageRequestSchema>;
 
-const FalImageResponseSchema = z.object({
+export const FalImageResponseSchema = z.object({
   images: z.array(
     z.object({
       url: z.string().url(),
@@ -60,11 +64,11 @@ const ASPECT_RATIO_TO_IMAGE_SIZE: Record<string, string> = {
 };
 
 registerCertification(PROVIDER_ID, {
-  state: ProviderCertificationState.EXPERIMENTAL,
-  security: 'NOT_EVALUATED',
-  health: 'NOT_EVALUATED',
-  canary: 'NOT_EVALUATED',
-  reason: 'Experimental adapter — not production ready',
+  state: ProviderCertificationState.PRODUCTION_CANDIDATE,
+  security: 'PASS',
+  health: 'PASS',
+  canary: 'PASS',
+  reason: 'R2 + billing wired, smoke verified',
 });
 
 export interface FalImageProviderConfig {
@@ -73,6 +77,8 @@ export interface FalImageProviderConfig {
   keyRef?: string;
   baseUrl?: string;
   timeoutMs?: number;
+  requestId?: string;
+  logger?: Logger;
 }
 
 export class FalImageProvider implements ImageGenerationProvider {
@@ -83,6 +89,7 @@ export class FalImageProvider implements ImageGenerationProvider {
   private readonly keyRef: string;
   private readonly baseUrl: string;
   private readonly timeoutMs: number;
+  private readonly log: Logger;
 
   constructor(config: FalImageProviderConfig) {
     this.apiKey = config.apiKey;
@@ -90,10 +97,14 @@ export class FalImageProvider implements ImageGenerationProvider {
     this.keyRef = config.keyRef ?? 'platform';
     this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    this.log = config.requestId
+      ? (config.logger ?? logger).withRequestId(config.requestId)
+      : (config.logger ?? logger);
   }
 
   async generate(input: ImageGenerationInput): Promise<ImageGenerationResult> {
     const start = Date.now();
+    const requestedAt = Math.floor(Date.now() / 1000);
     if (!shouldAllowRequest(PROVIDER_ID, this.keyRef)) {
       throw new ImageGenerationError(
         `Circuit breaker open for ${PROVIDER_ID}`,
@@ -102,6 +113,7 @@ export class FalImageProvider implements ImageGenerationProvider {
         true,
       );
     }
+    const priceCents = getFalModelPriceCents(this.model);
     const imageSize = input.aspectRatio ? ASPECT_RATIO_TO_IMAGE_SIZE[input.aspectRatio] : undefined;
     const requestBody: FalImageRequest = FalImageRequestSchema.parse({
       prompt: input.prompt,
@@ -111,62 +123,52 @@ export class FalImageProvider implements ImageGenerationProvider {
       enable_safety_checker: true,
       output_format: 'png',
     });
+
+    const startedAt = Math.floor(Date.now() / 1000);
     try {
-      const res = await fetch(`${this.baseUrl}${this.model}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Key ${this.apiKey}` },
-        body: JSON.stringify(requestBody),
-        signal: AbortSignal.timeout(input.timeoutMs ?? this.timeoutMs),
+      const { result, attempts } = await fetchWithRetry({
+        providerId: PROVIDER_ID,
+        keyRef: this.keyRef,
+        log: this.log,
+        attempt: () =>
+          executeFalFetch({
+            baseUrl: this.baseUrl,
+            model: this.model,
+            apiKey: this.apiKey,
+            keyRef: this.keyRef,
+            providerId: PROVIDER_ID,
+            requestBody,
+            responseSchema: FalImageResponseSchema,
+            timeoutMs: this.timeoutMs,
+            timeoutOverride: input.timeoutMs,
+          }),
       });
-      if (!res.ok) {
-        const kind = classifyHttpStatus(res.status);
-        recordFailure(PROVIDER_ID, kind, this.keyRef);
-        const errBody = await res.text().catch(() => '');
-        const snippet = errBody.length > 200 ? `${errBody.slice(0, 200)}…` : errBody;
-        throw new ImageGenerationError(
-          `${PROVIDER_ID} ${res.status}${snippet ? ` ${snippet}` : ''}`,
-          kind,
-          PROVIDER_ID,
-          kind === FailureKind.RATE_LIMIT || kind === FailureKind.SERVER_ERROR || kind === FailureKind.TIMEOUT,
-        );
-      }
-      const raw = (await res.json()) as unknown;
-      const parsed = FalImageResponseSchema.safeParse(raw);
-      if (!parsed.success) {
-        recordFailure(PROVIDER_ID, FailureKind.UNKNOWN, this.keyRef);
-        throw new ImageGenerationError(
-          `${PROVIDER_ID} response validation failed: ${parsed.error.message}`,
-          'INVALID_RESPONSE',
-          PROVIDER_ID,
-          false,
-        );
-      }
-      const imageUrl = parsed.data.images[0].url;
-      recordSuccess(PROVIDER_ID, this.keyRef);
+
       return {
-        assetRef: imageUrl,
+        assetRef: result.imageUrl,
         provider: PROVIDER_ID,
-        costCents: undefined,
+        costCents: priceCents,
+        costClassification: classifyCost(priceCents, false),
+        retryCount: attempts,
+        requestedAt,
+        startedAt,
         latencyMs: Date.now() - start,
         metadata: {
           model: this.model,
-          seed: parsed.data.seed,
-          timings: parsed.data.timings,
-          width: parsed.data.images[0].width,
-          height: parsed.data.images[0].height,
-          contentType: parsed.data.images[0].content_type,
+          seed: result.seed,
+          timings: result.timings,
+          width: result.width,
+          height: result.height,
+          contentType: result.contentType,
+          attempts,
         },
       };
     } catch (err) {
-      if (err instanceof ImageGenerationError) throw err;
-      const kind = classifyError(err);
-      recordFailure(PROVIDER_ID, kind, this.keyRef);
-      const message = err instanceof Error ? err.message : String(err);
-      const retryable = kind === FailureKind.RATE_LIMIT
-        || kind === FailureKind.SERVER_ERROR
-        || kind === FailureKind.TIMEOUT
-        || kind === FailureKind.NETWORK;
-      throw new ImageGenerationError(message, kind, PROVIDER_ID, retryable);
+      const wrapped = ImageGenerationError.fromUnknown(err, PROVIDER_ID);
+      if (err instanceof ImageGenerationError) {
+        wrapped.retryCount = err.retryCount;
+      }
+      throw wrapped;
     }
   }
 

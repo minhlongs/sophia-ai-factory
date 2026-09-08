@@ -20,7 +20,13 @@ import { submitMediaJob, SUPPORTED_MODELS } from '@/tree/clients/muapi-media-cli
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { FalImageProvider } from '@/seed/ai/providers/fal-image-provider';
 import { ImageGenerationError } from '@/seed/ai/image-generation-provider';
+import { storeFalImageInR2 } from '@/land/image/fal-image-r2-service';
+import { deductCredits } from '@/tree/mcu/credits-repo';
+import { trackUsage, calculateCredits, hashLicenseKey, resolveUserLicenseNonce } from '@/tree/usage-metering';
 import { logger } from '@/seed/utils/logger-utility';
+import { classifyCost } from '@/seed/types/creative-job-economics';
+import { mapFailureKindToErrorCategory } from '@/tree/media-jobs/error-category-mapper';
+import { FailureKind } from '@/seed/types/failure-kind';
 
 // ─── Input Schema ─────────────────────────────────────────────────────────────
 
@@ -106,18 +112,44 @@ export async function generateImageAction(
       return { success: false, error: 'fal.ai API key not configured', code: 'NO_API_KEY' };
     }
 
+    // jobId generated first so it is deterministic for both the R2 storage key
+    // and the requestId-scoped provider logging (structured observability).
+    const jobId = `fal-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
     const falProvider = new FalImageProvider({
       apiKey,
       model,
       keyRef: user.id,
+      requestId: jobId,
     });
+
+    const startTime = Date.now();
 
     try {
       const result = await falProvider.generate({ prompt, aspectRatio });
 
+      // Step 4.5 (fal-ai): Self-host the fal CDN image into R2.
+
+      let resultUrl = result.assetRef;
+      let storageKey = '';
+      let bucket = '';
+      let sizeBytes = 0;
+      try {
+        const r2 = await storeFalImageInR2(result.assetRef, jobId);
+        resultUrl = r2.permanentUrl;
+        storageKey = r2.storageKey;
+        bucket = r2.bucket;
+        sizeBytes = r2.sizeBytes;
+      } catch (r2Err) {
+        // R2 download/PUT failed — do not mark the job completed with a
+        // transient CDN URL. Surface 500 so the caller can retry.
+        logger.error('[image-generate-action] fal-ai R2 persist failed', r2Err instanceof Error ? r2Err : new Error(String(r2Err)));
+        return { success: false, error: 'Failed to persist generated image', code: 'STORAGE_ERROR' };
+      }
+
       // Step 5 (fal-ai): Insert media_jobs row — sync provider, terminal on creation
-      const jobId = `fal-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
       const db = createServerClient();
+      const requestedAt = Math.floor(startTime / 1000);
       const { error: insertError } = await db.from('media_jobs').insert({
         id: jobId,
         user_id: user.id,
@@ -125,8 +157,20 @@ export async function generateImageAction(
         model,
         prompt,
         status: 'completed',
-        result_url: result.assetRef,
+        result_url: resultUrl,
+        mime: 'image/png',
+        size: sizeBytes,
+        storage_key: storageKey || null,
+        bucket: bucket || null,
         provider: 'fal-ai',
+        provider_cost: result.costCents ?? null,
+        cost_currency: result.costCents != null ? 'USD' : null,
+        cost_classification: result.costClassification ?? classifyCost(result.costCents, false),
+        retry_count: result.retryCount ?? null,
+        revenue_attribution: null,
+        gross_margin: null,
+        requested_at: result.requestedAt ?? requestedAt,
+        started_at: result.startedAt ?? requestedAt,
       }) as { error: { message: string } | null };
 
       if (insertError) {
@@ -134,10 +178,69 @@ export async function generateImageAction(
         return { success: false, error: 'Failed to record job', code: 'DB_ERROR' };
       }
 
+      // Step 6 (fal-ai): Charge MCU credits ONCE after R2 persist + D1 insert.
+      // Retry happens inside the provider; credit deduction is a platform
+      // side effect charged exactly once on success (no double-charge).
+      const creditsToCharge = calculateCredits('fal-ai', 'imageGenerate', 1, tier);
+      const licenseNonce = await resolveUserLicenseNonce(user.id);
+      const deducted = await deductCredits(user.id, creditsToCharge, jobId, 'fal-ai:imageGenerate');
+      if (!deducted) {
+        logger.warn('[image-generate-action] fal-ai credit deduction failed', { userId: user.id, jobId });
+        return { success: false, error: 'Insufficient credits', code: 'INSUFFICIENT_CREDITS' };
+      }
+
+      // Step 7 (fal-ai): Emit usage event for metering parity with HeyGen.
+      if (licenseNonce) {
+        await trackUsage({
+          userId: user.id,
+          licenseKeyHash: hashLicenseKey(licenseNonce),
+          licenseNonce,
+          service: 'fal-ai',
+          endpoint: '/api/v1/creative-studio/images/generate',
+          action: 'imageGenerate',
+          creditsUsed: creditsToCharge,
+          requestId: jobId,
+          modelName: model,
+          tierAtRequest: tier,
+          statusCode: 200,
+          responseTimeMs: result.latencyMs,
+        });
+      }
+
       return { success: true, jobId };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const code = err instanceof ImageGenerationError ? err.code : 'FAL_ERROR';
+      const retryCount = err instanceof ImageGenerationError ? err.retryCount : undefined;
+      const failureKind = Object.values(FailureKind).includes(code as FailureKind)
+        ? (code as FailureKind)
+        : FailureKind.UNKNOWN;
+      const errorCategory = mapFailureKindToErrorCategory(failureKind);
+      const failedAt = Math.floor(Date.now() / 1000);
+
+      // Best-effort: record the failed job for the economic loop.
+      // Never let insert failure mask the original error to the user.
+      try {
+        const db = createServerClient();
+        await db.from('media_jobs').insert({
+          id: jobId,
+          user_id: user.id,
+          type: 'image',
+          model,
+          prompt,
+          status: 'failed',
+          provider: 'fal-ai',
+          error_category: errorCategory,
+          retry_count: retryCount ?? null,
+          cost_classification: 'UNKNOWN',
+          requested_at: failedAt,
+          started_at: failedAt,
+          latency_ms: Date.now() - startTime,
+        });
+      } catch (dbErr) {
+        logger.error('[image-generate-action] failed to record failed job', dbErr instanceof Error ? dbErr : new Error(String(dbErr)));
+      }
+
       logger.warn('[image-generate-action] fal-ai generation failed', { error: message, code });
       return { success: false, error: message, code };
     }
@@ -170,6 +273,8 @@ export async function generateImageAction(
     model,
     prompt,
     status: 'pending',
+    cost_classification: 'UNKNOWN',
+    requested_at: Math.floor(Date.now() / 1000),
   }) as { error: { message: string } | null };
 
   if (insertError) {

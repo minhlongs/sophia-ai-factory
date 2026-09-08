@@ -18,6 +18,10 @@ import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
 import { FalImageProvider } from '@/seed/ai/providers/fal-image-provider';
 import { ImageGenerationError } from '@/seed/ai/image-generation-provider';
 import { logger } from '@/seed/utils/logger-utility';
+import { trackUsage } from '@/forest/orchestration';
+import { classifyCost } from '@/seed/types/creative-job-economics';
+import { mapFailureKindToErrorCategory } from '@/tree/media-jobs/error-category-mapper';
+import { FailureKind } from '@/seed/types/failure-kind';
 
 const bodySchema = z.object({
   prompt: z.string().min(1).max(2000),
@@ -89,12 +93,33 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const falProvider = new FalImageProvider({ apiKey, model, keyRef: user.id });
 
+    const startTime = Date.now();
+
     try {
       const result = await falProvider.generate({ prompt, aspectRatio });
+
+      // Track usage for successful job with all required UsageEventInput fields
+      const userEmail = user.email || user.id || '';
+      await trackUsage({
+        userId: user.id,
+        licenseKeyHash: userEmail,
+        licenseNonce: user.id || '',
+        service: 'fal-ai',
+        endpoint: 'image-generation',
+        action: 'completed',
+        tokensInput: result.latencyMs > 0 ? 0 : undefined, // Fal.ai result doesn't expose tokens directly
+        tokensOutput: undefined,
+        creditsUsed: result.costCents || 0,
+        tierAtRequest: tier,
+        idempotencyKey: `${user.id}-${Date.now()}`,
+        modelName: model,
+        responseTimeMs: result.latencyMs,
+      });
 
       // Sync provider: insert terminal row with result_url
       const jobId = `fal-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
       const db = createServerClient();
+      const requestedAt = Math.floor(startTime / 1000);
       const { error: insertError } = await db.from('media_jobs').insert({
         id: jobId,
         user_id: user.id,
@@ -104,6 +129,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         status: 'completed',
         result_url: result.assetRef,
         provider: 'fal-ai',
+        provider_cost: result.costCents ?? null,
+        cost_currency: result.costCents != null ? 'USD' : null,
+        cost_classification: result.costClassification ?? classifyCost(result.costCents, false),
+        retry_count: result.retryCount ?? null,
+        revenue_attribution: null,
+        gross_margin: null,
+        requested_at: result.requestedAt ?? requestedAt,
+        started_at: result.startedAt ?? requestedAt,
       }) as { error: { message: string } | null };
 
       if (insertError) {
@@ -115,8 +148,55 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const code = err instanceof ImageGenerationError ? err.code : 'FAL_ERROR';
+      const retryCount = err instanceof ImageGenerationError ? err.retryCount : undefined;
+      const failureKind = Object.values(FailureKind).includes(code as FailureKind)
+        ? (code as FailureKind)
+        : FailureKind.UNKNOWN;
+      const errorCategory = mapFailureKindToErrorCategory(failureKind);
+      const failedAt = Math.floor(Date.now() / 1000);
       logger.warn('[creative-studio/images/generate] fal-ai generation failed', { error: message, code });
       const status = code === 'CIRCUIT_BREAKER_OPEN' ? 502 : 502;
+
+      // Best-effort: record the failed job for the economic loop.
+      // Never let insert failure mask the original error to the caller.
+      try {
+        const failJobId = `fal-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+        const db = createServerClient();
+        await db.from('media_jobs').insert({
+          id: failJobId,
+          user_id: user.id,
+          type: 'image',
+          model,
+          prompt,
+          status: 'failed',
+          provider: 'fal-ai',
+          error_category: errorCategory,
+          retry_count: retryCount ?? null,
+          cost_classification: 'UNKNOWN',
+          requested_at: failedAt,
+          started_at: failedAt,
+          latency_ms: Date.now() - startTime,
+        });
+      } catch (dbErr) {
+        logger.error('[creative-studio/images/generate] failed to record failed job', dbErr instanceof Error ? dbErr : new Error(String(dbErr)));
+      }
+
+      // Track usage for failed job with all required UsageEventInput fields
+      const userEmail = user.email || user.id || '';
+      await trackUsage({
+        userId: user.id,
+        licenseKeyHash: userEmail,
+        licenseNonce: user.id || '',
+        service: 'fal-ai',
+        endpoint: 'image-generation',
+        action: 'failed',
+        creditsUsed: 0,
+        tierAtRequest: tier,
+        idempotencyKey: `${user.id}-${Date.now()}`,
+        errorMessage: message,
+        responseTimeMs: 0,
+      });
+
       return NextResponse.json({ message }, { status });
     }
   }
@@ -148,6 +228,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     model,
     prompt,
     status: 'pending',
+    cost_classification: 'UNKNOWN',
+    requested_at: Math.floor(Date.now() / 1000),
   }) as { error: { message: string } | null };
 
   if (insertError) {

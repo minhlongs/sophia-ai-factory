@@ -5,6 +5,7 @@
 export * from './channel-cooldown-rules';
 export * from './crypto-banned-channels';
 export * from './crypto-disclaimer-registry';
+export * from './fal-pricing';
 export * from './defaults';
 export * from './environment-config';
 export * from './flags';

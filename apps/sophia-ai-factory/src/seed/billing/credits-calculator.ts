@@ -5,10 +5,10 @@
  * @module seed/billing/credits-calculator
  */
 
-export type ServiceType = 'openrouter' | 'heygen' | 'elevenlabs' | 'muapi' | 'remotion';
+export type ServiceType = 'openrouter' | 'heygen' | 'elevenlabs' | 'muapi' | 'remotion' | 'fal-ai';
 
 export interface CreditRate {
-  creditsPerToken: number;
+  creditsPerToken?: number;
   creditsPerSecond?: number;
   baseCredits?: number;
 }
@@ -43,6 +43,13 @@ const RATES_BY_SERVICE_TIER: Record<string, Record<string, CreditRate>> = {
     PREMIUM: { creditsPerToken: 0, creditsPerSecond: 0.004, baseCredits: 0.4 },
     ENTERPRISE: { creditsPerToken: 0, creditsPerSecond: 0.003, baseCredits: 0.3 },
     MASTER: { creditsPerToken: 0, creditsPerSecond: 0.002, baseCredits: 0.2 },
+  },
+  // fal.ai is free upstream — platform charges per-call credits (tier-scaled).
+  'fal-ai': {
+    BASIC: { baseCredits: 1 },
+    PREMIUM: { baseCredits: 0.8 },
+    ENTERPRISE: { baseCredits: 0.6 },
+    MASTER: { baseCredits: 0.4 },
   },
 };
 

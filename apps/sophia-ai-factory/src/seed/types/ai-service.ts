@@ -1,5 +1,5 @@
 /** Supported AI services — canonical source for cross-layer access */
-export type AiService = 'heygen' | 'elevenlabs' | 'openrouter';
+export type AiService = 'heygen' | 'elevenlabs' | 'openrouter' | 'fal-ai';
 export interface UsageEventInput {
   userId: string; licenseKeyHash: string; licenseNonce: string; service: AiService;
   endpoint: string; action: string; tokensInput?: number; tokensOutput?: number;

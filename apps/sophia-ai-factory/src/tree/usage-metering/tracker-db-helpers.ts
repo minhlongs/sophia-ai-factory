@@ -6,13 +6,47 @@
  * and usage event insertion.
  */
 
-import { createServerClient } from '@/seed/db/client';
+import { createServerClient, getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { insertTyped } from '@/seed/db/insert-typed';
 import type { UsageEventInput, IngestionResult } from './types';
 import type { D1Response } from '@/seed/db/types';
 import { invalidateQuotaCache } from '@/tree/quota/quota-checker-kv-cache';
 import { invalidateRealTimeCache } from '@/tree/usage-metering/realtime-tracker-kv-ops';
+
+/**
+ * Resolve the primary license nonce for a user.
+ *
+ * Returns the most recently created license nonce, or null if the user has
+ * no license row. Used by billing/usage callers that need a license context
+ * from a bare userId (e.g. image generation routes).
+ */
+export async function resolveUserLicenseNonce(userId: string): Promise<string | null> {
+  try {
+    const d1 = await getD1();
+    if (!d1) {
+      // Fallback to supabase-style client when D1 binding unavailable (tests).
+      const db = createServerClient();
+      const { data } = await db
+        .from('raas_licenses')
+        .select('nonce')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      if (!data || typeof data !== 'object' || !('nonce' in data)) return null;
+      return (data as { nonce: string }).nonce ?? null;
+    }
+    const row = await d1
+      .prepare('SELECT nonce FROM raas_licenses WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 1')
+      .bind(userId)
+      .first<{ nonce: string }>();
+    return row?.nonce ?? null;
+  } catch (error) {
+    logger.debug('[resolveUserLicenseNonce] lookup failed', error instanceof Error ? error : new Error(String(error)));
+    return null;
+  }
+}
 
 /**
  * Resolve external customer ID from license metadata

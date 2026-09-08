@@ -50,7 +50,11 @@ export const CREDIT_RULES: Record<string, Record<string, CreditRule>> = {
   openrouter: {
     chatCompletion: { type: 'per-1k-tokens', creditsPer1k: 1 },
     default: { type: 'per-call', credits: 1 },
-  }
+  },
+  'fal-ai': {
+    imageGenerate: { type: 'per-call', credits: 1 },
+    default: { type: 'per-call', credits: 1 },
+  },
 } as const;
 
 /**
