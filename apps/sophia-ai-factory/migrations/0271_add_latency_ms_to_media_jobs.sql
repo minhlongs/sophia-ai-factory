@@ -1,4 +1,4 @@
--- Migration 0270: Add latency_ms to media_jobs
+-- Migration 0271: Add latency_ms to media_jobs
 --
 -- Required by SUPREME COMMAND #13 (temporal integrity fix).
 -- Sync Fal.ai success paths now write result.latencyMs into this column so the
