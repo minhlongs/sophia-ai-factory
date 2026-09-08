@@ -37,6 +37,7 @@ import {
   marketSignalsIngestCron,
   productionGraphRunner,
   approvalTimeoutCron,
+  revenueAttribution,
 } from "@/forest/inngest/functions/index";
 
 // Deprecated handlers (Phase 06 video_jobs chain + URL-to-Revenue) removed from
@@ -105,5 +106,7 @@ export const { GET, POST, PUT } = serve({
     // Phase 3: production graph runner + approval timeout cron
     productionGraphRunner,
     approvalTimeoutCron,
+    // SUPREME COMMAND #10 — Phase 2: Revenue attribution ingestion (every 12h)
+    revenueAttribution,
   ],
 });

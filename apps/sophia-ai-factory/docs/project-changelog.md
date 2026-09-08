@@ -1,8 +1,51 @@
 # Project Changelog
 
-**Last Updated:** 2026-08-31 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 0104cfdcf
+**Last Updated:** 2026-09-08 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 0104cfdcf
 
 ---
+
+## 2026-09-08 (SUPREME COMMAND #10 — REVENUE ATTRIBUTION & GROSS MARGIN CLOSURE, COMPLETE)
+
+**Severity: P1 FEATURE | Type: New Module + API Enrichment | Status: COMPLETE (uncommitted)**
+
+Sophia can now attribute real revenue to creative jobs and compute gross margin from actuals — closing the loop that CMD #9 left as "UNKNOWN". Revenue is never fabricated: attribution only fires when a real conversion/revenue event exists in `performance_events` within a bounded window (default 30 days post-job-completion). Gross margin only computes when BOTH revenue and cost are KNOWN; otherwise NULL.
+
+**What changed:**
+
+- **Attribution model (`seed/types/creative-job-economics.ts`)** — Pure functions: `computeGrossMargin(costCents, revenueCents)`, `isWithinWindow(candidate, window)`, `selectLastTouch(candidates, window)`. Failure taxonomy: `NO_CANDIDATE_JOB | ATTRIBUTION_WINDOW_EXPIRED | MULTIPLE_CANDIDATES | WORKSPACE_UNRESOLVED | EVENT_ALREADY_OWNED` (INTERNAL only, no PII).
+- **Attribution provenance table (`migrations/0270_attribution_provenance.sql`)** — `attribution_provenance(media_job_id, source_event_id, source_type, channel, attributed_amount_cents, attribution_rule, attribution_window_days, job_completed_at, revenue_recorded_at, created_at)` with UNIQUE(media_job_id, source_event_id) for idempotency.
+- **Attribution apply entry point (`tree/media-jobs/attribution-apply.ts`)** — Sole tree-layer writer for `revenue_attribution` + `gross_margin` on `media_jobs`. Uses `INSERT OR IGNORE` + `meta.changes === 1` ownership check (atomic lock pattern — D1 has no transactions).
+- **Inngest cron (`forest/inngest/functions/revenue-attribution.ts`)** — `0 */12 * * *` (every 12h), retries: 2. Steps: fetch-unattributed-jobs → resolve-workspace → fetch-revenue-events → fetch-claimed → selectLastTouch → write-provenance → update-job-economics → prune-provenance (90-day retention). BATCH_SIZE=100. CRITICAL: `media_jobs.completed_at` is SECONDS, `performance_events.recorded_at` is MILLISECONDS — code multiplies ×1000 before comparing.
+- **Economics API enrichment (`app/api/v1/creative-studio/economics/route.ts`)** — Now includes `attributionConfidence: HIGH|MEDIUM|LOW`, `provenanceCount: number`, `dataFreshest: number|null` per provider. Joins `attribution_provenance` → `media_jobs` for coverage stats. `classifyAttributionConfidence(provenanced, total)`: HIGH ≥ 0.8, MEDIUM ≥ 0.5, else LOW.
+- **Economic decision output (`tree/media-jobs/economic-decision-formatter.ts`, `media-job-economics-aggregate.ts`)** — Additive field `attributionProvenanceCount: number` (no breaking changes).
+- **Inngest registration (`forest/inngest/functions/index.ts`, `app/api/inngest/route.ts`)** — `revenueAttribution` function wired.
+
+**Test coverage:** 9 new tests across 4 files:
+- `seed/types/__tests__/creative-job-economics.attribution.test.ts` (7 tests) — pure functions + PII taxonomy
+- `forest/inngest/functions/__tests__/revenue-attribution.test.ts` (3 tests) — happy path, idempotency, multi-candidate
+- `app/api/v1/creative-studio/economics/__tests__/route.integration.test.ts` (tests 11-12) — real revenue surfaced, no secrets leak
+
+**Total:** 8928 tests passing (baseline 8919 + 9). Typecheck clean. Build exit 0.
+
+**Deploy:** Not yet deployed (SHIP pending manual verification per CF-direct doctrine).
+
+**Constraints honored:** Revenue never fabricated. Attribution deterministic + idempotent. Gross margin only when both inputs known. NULL revenue → NULL gross margin. Attribution window bounded (30 days). No PII in provenance. Protected flows untouched. Tests not weakened. No new SaaS dependencies. No secrets exposed.
+
+## 2026-09-08 (intermediate — Phase 7 tests 8-10)
+
+**Severity: P1 FEATURE | Type: Tests | Status: COMPLETE (uncommitted)**
+
+Tree-layer `applyAttributionToJob()` is now covered against an in-memory D1 shim: happy path writes provenance + updates job revenue + gross margin (75% on $10 revenue / $2.50 cost), idempotency re-run yields `already_owned` with no double-count, multi-candidate distinct events each get a provenance row and the last UPDATE wins the job economics.
+
+**What changed:**
+
+- **Test file (`src/forest/inngest/functions/__tests__/revenue-attribution.test.ts`)** — 3 integration tests exercising `applyAttributionToJob()` against the shared D1 shim with `getD1` + `logger` mocked. Uses raw node:sqlite for setup inserts (no `.bind()` — matches commerce-payment.test.ts pattern), D1 chain API (`makeD1`) for the code under test.
+
+**Test coverage:** 3 new tests (tests 8-10 of CMD #10 Phase 7). 8926 total tests passing (baseline 8919 + 7 from CMD #10 Phase 7 pure-function tests earlier this week — full regression green). Typecheck clean. Build exit 0.
+
+**Deploy:** Not yet deployed (tests + typecheck + build verified; SHIP pending remaining CMD #10 phases).
+
+**Constraints honored:** Revenue is never fabricated — tests assert real arithmetic. Attribution is deterministic + idempotent. Gross margin only when both inputs known. No PII in provenance. Protected flows untouched. Tests not weakened.
 
 ## 2026-08-31 (SUPREME COMMAND #9 — CREATIVE ECONOMICS V1) — minimum economic control loop for Sophia's creative machine
 

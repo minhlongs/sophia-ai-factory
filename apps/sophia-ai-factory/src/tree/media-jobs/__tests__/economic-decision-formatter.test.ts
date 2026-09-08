@@ -50,6 +50,7 @@ function makeEconomics(overrides: Partial<ProviderEconomicMetrics> = {}): Provid
     averageKnownCostPerJob: 153.75,
     revenueAttributed: 45600,
     knownGrossMarginPercent: 72.5,
+    attributionProvenanceCount: 80,
     dataConfidence: 'HIGH',
     ...overrides,
   };

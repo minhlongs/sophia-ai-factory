@@ -27,6 +27,7 @@ export interface EconomicDecisionOutput {
   unknownCostJobs: number;
   revenueAttributed: string;
   knownGrossMargin: string;
+  attributionProvenanceCount: number;
   dataConfidence: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
@@ -100,6 +101,7 @@ export function formatEconomicDecision(
     unknownCostJobs: economics.unknownCostJobs,
     revenueAttributed: formatCents(economics.revenueAttributed),
     knownGrossMargin: formatPercentOrUnknown(economics.knownGrossMarginPercent),
+    attributionProvenanceCount: economics.attributionProvenanceCount,
     dataConfidence: computeDataConfidence(totalJobs, knownCostJobs),
   };
 }

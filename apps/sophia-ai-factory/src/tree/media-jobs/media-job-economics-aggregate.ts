@@ -31,6 +31,7 @@ export interface ProviderEconomicMetrics {
   averageKnownCostPerJob: number | null;
   revenueAttributed: number | null;
   knownGrossMarginPercent: number | null;
+  attributionProvenanceCount: number;
   dataConfidence: 'HIGH' | 'MEDIUM' | 'LOW';
 }
 
@@ -62,6 +63,7 @@ export function aggregateEconomicMetrics(
       averageKnownCostPerJob: null,
       revenueAttributed: null,
       knownGrossMarginPercent: null,
+      attributionProvenanceCount: 0,
       dataConfidence: 'LOW',
     };
   }
@@ -131,6 +133,11 @@ export function aggregateEconomicMetrics(
     dataConfidence = 'LOW';
   }
 
+  // Attribution provenance count — number of jobs with a provenance row.
+  // Derived from revenue_attribution presence as a proxy (provenance write
+  // always precedes revenue_attribution update in the attribution cron).
+  const attributionProvenanceCount = revenueRows.length;
+
   return {
     provider,
     totalJobs,
@@ -142,6 +149,7 @@ export function aggregateEconomicMetrics(
     averageKnownCostPerJob,
     revenueAttributed,
     knownGrossMarginPercent,
+    attributionProvenanceCount,
     dataConfidence,
   };
 }
