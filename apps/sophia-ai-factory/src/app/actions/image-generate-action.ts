@@ -171,7 +171,8 @@ export async function generateImageAction(
         gross_margin: null,
         requested_at: result.requestedAt ?? requestedAt,
         started_at: result.startedAt ?? requestedAt,
-        completed_at: requestedAt,
+        completed_at: Math.floor(Date.now() / 1000),
+        latency_ms: result.latencyMs,
       }) as { error: { message: string } | null };
 
       if (insertError) {
