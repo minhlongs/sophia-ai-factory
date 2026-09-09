@@ -92,7 +92,7 @@ All integrations are configured via the **Setup Wizard** (single onboarding step
 |---|---|---|---|
 | 🔴 **Founder account** | OPERATOR REQUIRED | P0-01 Tracked | Operator executes `docs/runbooks/OPERATOR-BOOTSTRAP.md` to register and promote a real owner account. |
 | 🟡 **fal.ai Key** | CUSTOMER BYOK | P0-02 Resolved in Code | Code is fail-closed. Onboarding customer inputs their own key in `/vi/setup` (Setup Wizard). |
-| 🟡 **Local SHA ≠ Live SHA** | OPERATOR REQUIRED | P3-01 Tracked | Operator pushes commits and runs `npm run deploy:full` to sync production to latest git commit. |
+| 🟢 **Local SHA == Live SHA** | VERIFIED LIVE | P3-01 Shipped | Commit `12b8a022` deployed to Cloudflare Workers. Verified `/api/version` matches local commit. |
 | 🟢 **Degraded health** | KNOWN-RED | Documented | Telemetry/reality-loop artifact from zero active production missions; normal behavior on cold system. |
 | 🟢 **Sentry sourcemaps** | BY-DESIGN | Documented | Minified stack traces captured; operator tokens not required per no-tech doctrine ceiling (8/10). |
 

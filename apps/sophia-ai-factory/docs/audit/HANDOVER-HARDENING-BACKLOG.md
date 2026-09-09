@@ -248,11 +248,11 @@ These are areas where the certification found evidence weak or doctrine overclai
 | **P2-01** | revalidateTag doctrine | **✅ SHIPPED** | `sophia-no-tech-doctrine.md` lines 57 + 64 corrected. Verified: `revalidateTag`=0, `tagCache`=0, `revalidatePath`=47 in src/. Doctrine now states "path-only invalidation (no tagCache)". |
 | **P2-02** | Backup lifecycle | **✅ SHIPPED** | `sophia-no-tech-doctrine.md` line 67 clarified: R2 lifecycle is CF Dashboard setting, not wrangler-configurable. |
 | **P2-03** | Sentry sourcemaps | **NO ACTION** | Doctrine-documented ceiling, correctly scored. |
-| **P3-01** | Stale deploy | **OPERATOR REQUIRED** | No code change. Operator must deploy latest commit. |
+| **P3-01** | Stale deploy | **✅ SHIPPED & VERIFIED** | Deployed commit `12b8a022` via CF-direct doctrine. Verified `curl https://sophia.agencyos.network/api/version` → `shortSha: "12b8a022"`. Local SHA == Live SHA. |
 
-**Code changes & runbooks shipped: 4 items (P1-01, P1-02, P2-01, P2-02) + Disaster Recovery (RUN-DR-001) & Canary SOP (RUN-CANARY-001).**
-**Operator actions remaining: 2 (P0-01 real founder registration in D1, P3-01 deploy sync via `npm run deploy:full`).**
-**Tests: 8928 passed, 0 failures. Build: exit 0.**
+**Code changes & runbooks shipped: 5 items (P1-01, P1-02, P2-01, P2-02, P3-01) + Disaster Recovery (RUN-DR-001) & Canary SOP (RUN-CANARY-001).**
+**Operator actions remaining: 1 (P0-01 real founder registration in D1).**
+**Tests: 8928 passed, 0 failures. Build: exit 0. Live SHA: 12b8a022.**
 
 ---
 

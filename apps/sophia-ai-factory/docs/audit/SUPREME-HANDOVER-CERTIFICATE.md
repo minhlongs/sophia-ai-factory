@@ -12,7 +12,7 @@
 ```
 ╔══════════════════════════════════════════════════════════════╗
 ║  SUPREME HANDOVER STATUS  : CONDITIONAL (SUBSTANTIALLY HARDENED)║
-║  PRODUCTION SHA           : 34219be6 (live)                  ║
+║  PRODUCTION SHA           : 12b8a022 (live)                  ║
 ║  CODE STATUS              : 100% HARDENED & VERIFIED          ║
 ║  BUILD & TYPECHECK        : 0 ERRORS (PASS)                  ║
 ║  TEST REGRESSION          : 8,928 PASSED, 0 FAILED           ║
@@ -20,7 +20,7 @@
 ║  BYOK COVERAGE            : COMPLETE (fal.ai in Wizard)      ║
 ║  DISASTER RECOVERY        : SOP RUN-DR-001 CERTIFIED         ║
 ║  CANARY SPECIFICATION     : SOP RUN-CANARY-001 (8 IDs)       ║
-║  OPERATOR ACTIONS PENDING : 2 (Founder D1 role, Deploy sync) ║
+║  OPERATOR ACTIONS PENDING : 1 (Founder D1 role setup)        ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
@@ -50,7 +50,7 @@ The platform is **READY FOR OPERATOR SIGN-OFF**. With two out-of-band operationa
 | **P1-02** | Missing Bootstrap Runbook | 🟡 GAP | **RESOLVED (SHIPPED).** Documented in `docs/runbooks/OPERATOR-BOOTSTRAP.md`. |
 | **P2-01** | `revalidateTag` doctrine drift | 🟡 DEGRADED | **RESOLVED (SHIPPED).** Doctrine in `.claude/rules/sophia-no-tech-doctrine.md` reconciled with code reality: path-only invalidation across 47 routes (`revalidatePath`). |
 | **P2-02** | Backup retention verification | 🟡 DEGRADED | **RESOLVED (SHIPPED).** Comprehensive DR SOP created in `docs/runbooks/DISASTER-RECOVERY.md` (`RUN-DR-001`), documenting non-destructive ephemeral testing and RTO/RPO targets. |
-| **P3-01** | Local SHA ≠ Live SHA | 🟡 STALE | **OPERATOR REQUIRED.** Ready for operator execution of `git push origin main` and `npm run deploy:full`. |
+| **P3-01** | Local SHA ≠ Live SHA | 🟡 STALE | **RESOLVED (SHIPPED & VERIFIED).** Deployed commit `12b8a022` to Cloudflare Workers via CF-direct doctrine (`deploy-with-sha.sh`). Verified `curl https://sophia.agencyos.network/api/version` → `shortSha: "12b8a022"`. |
 
 ---
 
@@ -98,16 +98,16 @@ All 33 ABSOLUTE RULES have been rigorously followed:
 
 To achieve official **GREEN — CUSTOMER HANDOVER READY**, the operator must perform:
 
-1. **Step 1 — Founder Account Provisioning:**
-   Follow `docs/runbooks/OPERATOR-BOOTSTRAP.md` to register a real founder account and set `user_profiles.role = 'admin'` in production D1.
-2. **Step 2 — Production Deploy Synchronization:**
-   Execute:
+1. **Step 1 — Founder Account Provisioning (Sole Remaining Out-of-Band Blocker):**
+   Follow `docs/runbooks/OPERATOR-BOOTSTRAP.md` to register a real founder account and set `user_profiles.role = 'admin'` in production D1:
    ```bash
-   git push origin main
-   cd apps/sophia-ai-factory
-   npm run deploy:full
+   # Step 1.1: Register real founder at https://sophia.agencyos.network/vi/signup
+   # Step 1.2: Find user_id in production D1
+   npx wrangler d1 execute sophia-raas-db --remote --command "SELECT id, email, created_at FROM user WHERE email = '<real_founder_email>';"
+   # Step 1.3: Elevate role to admin in user_profiles
+   npx wrangler d1 execute sophia-raas-db --remote --command "UPDATE user_profiles SET role = 'admin' WHERE user_id = '<user_id>';"
    ```
-3. **Step 3 — Final Canary Smoke:**
+2. **Step 2 — Final Canary Smoke:**
    Log in as founder, input BYOK `FAL_API_KEY` in Setup Wizard (`/vi/setup`), and run a test canary generation as detailed in `docs/runbooks/CANARY-VERIFICATION.md`.
 
 ---
