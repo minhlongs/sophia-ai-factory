@@ -107,6 +107,12 @@
         "placeholder": "r8_...",
         "help": "Lấy key tại replicate.com/account/api-tokens",
         "optionalBadge": "Thêm sau"
+      },
+      "falai": {
+        "label": "fal-ai API Key (Hình Ảnh)",
+        "placeholder": "key-...",
+        "help": "Lấy key tại fal.ai/dashboard/keys",
+        "optionalBadge": "Thêm sau"
       }
     },
     "errors": {
@@ -4116,6 +4122,9 @@
       },
       "replicate": {
         "format": "Khóa Replicate bắt đầu bằng r8_ — sao chép tại replicate.com/account/api-tokens."
+      },
+      "falai": {
+        "format": "Key fal-ai bắt đầu bằng key- — lấy tại fal.ai/dashboard/keys."
       }
     },
     "picker": {

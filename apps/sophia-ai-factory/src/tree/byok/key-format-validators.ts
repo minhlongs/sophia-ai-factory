@@ -16,7 +16,7 @@
  * Mirror of UserSettableProvider in byok-key-form. Kept inline so this lib
  * stays free of the 'use client' boundary and can run server-side too.
  */
-export type ValidatorProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'muapi' | 'apollo' | 'hunter' | 'replicate'
+export type ValidatorProvider = 'openrouter' | 'anthropic' | 'elevenlabs' | 'd-id' | 'muapi' | 'apollo' | 'hunter' | 'replicate' | 'fal-ai'
 
 export interface ValidatorResult {
   /** True if the key passes provider-specific format checks. */
@@ -173,6 +173,16 @@ export function validateReplicate(key: string): ValidatorResult {
   return { ok: true }
 }
 
+/** fal.ai key: `key-<uuid>`. */
+export function validateFalAI(key: string): ValidatorResult {
+  const trimmed = sanitizeCredential(key)
+  if (trimmed.length < MIN_LENGTH) return shortFail()
+  if (!/^key-[A-Za-z0-9_-]+$/.test(trimmed)) {
+    return { ok: false, errorKey: 'byok.validate.falai.format' }
+  }
+  return { ok: true }
+}
+
 /**
  * Provider-agnostic dispatcher used by the form. Falls back to length-only
  * check for any provider not explicitly enumerated (defensive forward-compat).
@@ -195,6 +205,8 @@ export function validateProviderKey(provider: ValidatorProvider, key: string): V
       return validateHunter(key)
     case 'replicate':
       return validateReplicate(key)
+    case 'fal-ai':
+      return validateFalAI(key)
     default: {
       const trimmed = sanitizeCredential(key)
       return trimmed.length >= MIN_LENGTH ? { ok: true } : shortFail()

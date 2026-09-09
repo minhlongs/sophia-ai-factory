@@ -11,6 +11,7 @@ interface ApiKeysStepProps {
     DID_API_KEY: string;
     MUAPI_API_KEY: string;
     REPLICATE_API_KEY: string;
+    FAL_API_KEY: string;
   };
   updateConfig: (key: string, value: string) => void;
   verifyKey: (service: string, keyName: string, keyValue: string) => Promise<boolean>;
@@ -116,6 +117,21 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, l
           placeholder={t('replicate.placeholder')}
           helpText={t('replicate.help')}
           latency={latencies?.REPLICATE_API_KEY}
+        />
+      </div>
+
+      <div className="mt-4">
+        <ApiKeyInput
+          id="fal-ai"
+          label={`${t('falai.label')}  (${t('falai.optionalBadge')})`}
+          value={config.FAL_API_KEY}
+          onChange={(v) => updateConfig('FAL_API_KEY', v)}
+          onVerify={() => verifyKey('fal-ai', 'FAL_API_KEY', config.FAL_API_KEY)}
+          status={status.FAL_API_KEY}
+          errorMessage={errors.FAL_API_KEY}
+          placeholder={t('falai.placeholder')}
+          helpText={t('falai.help')}
+          latency={latencies?.FAL_API_KEY}
         />
       </div>
 

@@ -38,6 +38,7 @@ interface SetupWizardConfig {
   DID_API_KEY: string;
   MUAPI_API_KEY: string;
   REPLICATE_API_KEY: string;
+  FAL_API_KEY: string;
   HEYGEN_API_KEY: string;
   RESEND_API_KEY: string;
   NOWPAYMENTS_API_KEY: string;
@@ -54,6 +55,7 @@ export function SetupWizardPage() {
     DID_API_KEY: '',
     MUAPI_API_KEY: '',
     REPLICATE_API_KEY: '',
+    FAL_API_KEY: '',
     HEYGEN_API_KEY: '',
     RESEND_API_KEY: '',
     NOWPAYMENTS_API_KEY: '',
@@ -160,27 +162,48 @@ export function SetupWizardPage() {
         DID_API_KEY: 'd-id',
         MUAPI_API_KEY: 'muapi',
         REPLICATE_API_KEY: 'replicate',
+        FAL_API_KEY: 'fal-ai',
       };
 
-      const credentials = Object.entries(config)
+      // Split credentials by save path
+      const byokCredentials = Object.entries(config)
         .filter(([k, v]) => keyToProvider[k] && v.trim())
         .map(([k, v]) => ({ provider: keyToProvider[k], api_key: v }));
 
       const providerCreds = [
-        providerConfig.HEYGEN_API_KEY && { provider: 'heygen', api_key: providerConfig.HEYGEN_API_KEY },
-        providerConfig.RESEND_API_KEY && { provider: 'resend', api_key: providerConfig.RESEND_API_KEY },
-        providerConfig.NOWPAYMENTS_API_KEY && { provider: 'nowpayments', api_key: providerConfig.NOWPAYMENTS_API_KEY },
-      ].filter(Boolean);
+        providerConfig.HEYGEN_API_KEY ? { provider: 'heygen', api_key: providerConfig.HEYGEN_API_KEY } : null,
+        providerConfig.RESEND_API_KEY ? { provider: 'resend', api_key: providerConfig.RESEND_API_KEY } : null,
+        providerConfig.NOWPAYMENTS_API_KEY ? { provider: 'nowpayments', api_key: providerConfig.NOWPAYMENTS_API_KEY } : null,
+      ].filter((c): c is { provider: string; api_key: string } => c !== null);
 
-      const allCreds = [...credentials, ...providerCreds];
+      // Save BYOK keys to /api/user/byok (one call per provider)
+      if (byokCredentials.length > 0) {
+        for (const { provider, api_key } of byokCredentials) {
+          const response = await fetch('/api/user/byok', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ provider, key: api_key }),
+          });
+          if (!response.ok) {
+            const data = await response.json() as { error?: string };
+            throw new Error(data.error || t('errors.saveFailed'));
+          }
+        }
+      }
 
-      if (allCreds.length > 0) {
+      // Save provider credentials to /api/setup-wizard/save-credentials (flat schema)
+      if (providerCreds.length > 0) {
+        const flatCreds: Record<string, string> = {};
+        for (const { provider, api_key } of providerCreds) {
+          if (provider === 'heygen') flatCreds.heygen_api_key = api_key;
+          else if (provider === 'resend') flatCreds.resend_api_key = api_key;
+          else if (provider === 'nowpayments') flatCreds.nowpayments_api_key = api_key;
+        }
         const response = await fetch('/api/setup-wizard/save-credentials', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ credentials: allCreds }),
+          body: JSON.stringify(flatCreds),
         });
-
         if (!response.ok) {
           const data = await response.json() as { error?: string };
           throw new Error(data.error || t('errors.saveFailed'));

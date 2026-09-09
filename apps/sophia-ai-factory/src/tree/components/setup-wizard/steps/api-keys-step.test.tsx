@@ -1,7 +1,7 @@
 /**
  * Basic rendering + interaction tests for ApiKeysStep.
- * Verifies all 5 provider fields render and verify callbacks fire correctly.
- * Provider list: openrouter, anthropic, elevenlabs, d-id, muapi (heygen removed).
+ * Verifies all provider fields render and verify callbacks fire correctly.
+ * Provider list: openrouter, anthropic, elevenlabs, d-id, muapi, replicate, fal-ai.
  */
 
 import React from 'react';
@@ -34,6 +34,10 @@ vi.mock('next-intl', () => ({
       'replicate.placeholder': 'r8_...',
       'replicate.help': 'Get your key at replicate.com/account/api-tokens',
       'replicate.optionalBadge': 'Add later',
+      'falai.label': 'fal-ai API Key (Images)',
+      'falai.placeholder': 'key-...',
+      'falai.help': 'Get your key at fal.ai/dashboard/keys',
+      'falai.optionalBadge': 'Add later',
     };
     return translations[key] ?? key;
   },
@@ -46,6 +50,7 @@ const defaultConfig = {
   DID_API_KEY: '',
   MUAPI_API_KEY: '',
   REPLICATE_API_KEY: '',
+  FAL_API_KEY: '',
 };
 
 const defaultStatus: Record<string, 'idle' | 'validating' | 'valid' | 'invalid'> = {
@@ -55,6 +60,7 @@ const defaultStatus: Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>
   DID_API_KEY: 'idle',
   MUAPI_API_KEY: 'idle',
   REPLICATE_API_KEY: 'idle',
+  FAL_API_KEY: 'idle',
 };
 
 describe('ApiKeysStep', () => {
@@ -80,7 +86,7 @@ describe('ApiKeysStep', () => {
     expect(screen.getByText('Enter API keys for the AI services powering Sophia.')).toBeDefined();
   });
 
-  it('renders all 6 provider fields', () => {
+  it('renders all 7 provider fields', () => {
     render(
       <ApiKeysStep
         config={defaultConfig}
@@ -97,6 +103,7 @@ describe('ApiKeysStep', () => {
     expect(screen.getByLabelText(/D-ID API Key/i)).toBeDefined();
     expect(screen.getByLabelText(/MuAPI Key/i)).toBeDefined();
     expect(screen.getByLabelText(/Replicate API Key/i)).toBeDefined();
+    expect(screen.getByLabelText(/fal-ai API Key/i)).toBeDefined();
   });
 
   it('does not render HeyGen field (removed from provider list)', () => {
@@ -156,15 +163,15 @@ describe('ApiKeysStep', () => {
       />
     );
 
-    // Render order: openrouter(0), elevenlabs(1), did(2), anthropic(3), muapi(4), replicate(5)
+    // Render order: openrouter(0), elevenlabs(1), did(2), anthropic(3), muapi(4), replicate(5), fal-ai(6)
     const verifyButtons = screen.getAllByText('Verify');
-    expect(verifyButtons.length).toBe(6);
+    expect(verifyButtons.length).toBe(7);
     fireEvent.click(verifyButtons[3]);
     expect(mockVerifyKey).toHaveBeenCalledWith('anthropic', 'ANTHROPIC_API_KEY', 'sk-ant-test-123');
   });
 
   it('calls verifyKey with correct provider for each field', async () => {
-    // Render order: openrouter(0), elevenlabs(1), did(2), anthropic(3), muapi(4), replicate(5)
+    // Render order: openrouter(0), elevenlabs(1), did(2), anthropic(3), muapi(4), replicate(5), fal-ai(6)
     const configWithKeys = {
       OPENROUTER_API_KEY: 'key1',
       ELEVENLABS_API_KEY: 'key2',
@@ -172,6 +179,7 @@ describe('ApiKeysStep', () => {
       ANTHROPIC_API_KEY: 'key4',
       MUAPI_API_KEY: 'key5',
       REPLICATE_API_KEY: 'key6',
+      FAL_API_KEY: 'key7',
     };
     render(
       <ApiKeysStep
@@ -185,7 +193,7 @@ describe('ApiKeysStep', () => {
     );
 
     const verifyButtons = screen.getAllByText('Verify');
-    expect(verifyButtons.length).toBe(6);
+    expect(verifyButtons.length).toBe(7);
 
     fireEvent.click(verifyButtons[0]);
     expect(mockVerifyKey).toHaveBeenCalledWith('openrouter', 'OPENROUTER_API_KEY', 'key1');
@@ -204,5 +212,8 @@ describe('ApiKeysStep', () => {
 
     fireEvent.click(verifyButtons[5]);
     expect(mockVerifyKey).toHaveBeenCalledWith('replicate', 'REPLICATE_API_KEY', 'key6');
+
+    fireEvent.click(verifyButtons[6]);
+    expect(mockVerifyKey).toHaveBeenCalledWith('fal-ai', 'FAL_API_KEY', 'key7');
   });
 });

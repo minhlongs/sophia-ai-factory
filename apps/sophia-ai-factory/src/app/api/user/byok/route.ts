@@ -26,7 +26,7 @@ import { getErrorMessage } from '@/seed/utils/to-error'
 import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter'
 import { validateProviderKey, sanitizeCredential, type ValidatorProvider } from '@/tree/byok/key-format-validators'
 
-const PROVIDERS = ['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi', 'apollo', 'hunter'] as const
+const PROVIDERS = ['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi', 'apollo', 'hunter', 'fal-ai'] as const
 
 const PostSchema = z.object({
   provider: z.enum(PROVIDERS),

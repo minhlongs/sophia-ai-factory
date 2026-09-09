@@ -107,6 +107,12 @@
         "placeholder": "r8_...",
         "help": "Get your key at replicate.com/account/api-tokens",
         "optionalBadge": "Add later"
+      },
+      "falai": {
+        "label": "fal-ai API Key (Images)",
+        "placeholder": "key-...",
+        "help": "Get your key at fal.ai/dashboard/keys",
+        "optionalBadge": "Add later"
       }
     },
     "errors": {
@@ -4116,6 +4122,9 @@
       },
       "replicate": {
         "format": "Replicate keys start with r8_ — copy yours at replicate.com/account/api-tokens."
+      },
+      "falai": {
+        "format": "fal-ai keys start with key- — copy yours at fal.ai/dashboard/keys."
       }
     },
     "picker": {

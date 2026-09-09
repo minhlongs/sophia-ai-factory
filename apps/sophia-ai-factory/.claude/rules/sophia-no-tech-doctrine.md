@@ -54,15 +54,15 @@ If a feature requires operator-side third-party setup to be "fully green", it is
 | Layer | Score | Notes |
 |-------|------:|-------|
 | L1 Database | 7/10 | D1 + R2 lifecycle backup (no external cron) |
-| L2 Server | 9/10 | tagCache wired, all bindings live |
+| L2 Server | 9/10 | All bindings live (D1, R2, KV) |
 | L3 Networking | 9/10 | DMARC `p=none` operational; `p=quarantine` discretionary |
 | L4 Cloud | 9.5/10 | Cross-layer exemptions documented |
 | L5 CI/CD | 10/10 | Pre-push fail-mode + deploy guard active |
 | L6 Security | 9/10 | 0 HIGH vulns, 3 `:any` in prod (mostly migration noise) |
 | L7 Monitoring | 8/10 | Sentry captures errors; sourcemaps optional |
 | L8 Containers | 10/10 | Serverless — N/A by audit framework |
-| L9 CDN | 9/10 | revalidateTag/Path live via tagCache D1 |
-| L10 Backup | 7/10 | Route + bucket + 30d lifecycle; no external cron |
+| L9 CDN | 9/10 | revalidatePath live (47 sites); path-only invalidation (no tagCache) |
+| L10 Backup | 7/10 | Route + bucket; R2 lifecycle via CF Dashboard (not wrangler-configurable); no external cron |
 | **TOTAL** | **91.5/100** | **Final ceiling under no-tech doctrine.** Going higher requires either (a) operator infra (rejected by doctrine), or (b) sustained operational track record (months of DR drills, monthly restore tests). |
 
 ## Anti-Patterns Forbidden by This Doctrine
