@@ -9,6 +9,7 @@
 
 import { getD1 } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { isUserAdminWithRole } from '@/seed/auth/is-user-admin';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -41,13 +42,18 @@ export interface OrgDetail extends OrgRow {
 
 // ── Authorization helper ───────────────────────────────────────────────
 
-async function requireMaster(): Promise<
+export async function requireMaster(): Promise<
   Result<{ userId: string }, { code: string; message: string }>
 > {
   try {
     const user = await getCurrentUser();
     if (!user) {
       return failure({ code: 'UNAUTHORIZED', message: 'Not authenticated' });
+    }
+
+    const { isAdmin } = await isUserAdminWithRole(user);
+    if (isAdmin || user.role === 'admin') {
+      return success({ userId: user.id });
     }
 
     const db = await getD1();

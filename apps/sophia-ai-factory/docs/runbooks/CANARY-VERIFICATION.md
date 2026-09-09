@@ -67,7 +67,7 @@ Canary CHỈ được phép thực thi khi hội đủ 3 điều kiện sau:
 
 | Điều kiện / Prerequisite | Trạng thái hiện tại / Current Status | Cách xác minh / Verification |
 |---|---|---|
-| **1. Tài khoản Operator thật** | ⚠️ OPERATOR REQUIRED (P0-01) | Phải có tài khoản admin thật theo `docs/runbooks/OPERATOR-BOOTSTRAP.md`. CẤM dùng user test/seed. |
+| **1. Tài khoản Operator thật** | ✅ AUTOMATED (P0-01) | Tạo tài khoản admin thật qua Zero-Touch bootstrap (`FOUNDER_EMAIL`) theo `docs/runbooks/OPERATOR-BOOTSTRAP.md`. CẤM dùng user test/seed. |
 | **2. Khóa FAL_KEY hợp lệ** | ⚠️ BYOK REQUIRED (P0-02) | Người dùng cấu hình khóa fal.ai thật qua Setup Wizard (`/vi/setup` hoặc `/api/user/byok`). |
 | **3. Số dư MCU Credits đủ** | Cần ≥ 1 MCU | Kiểm tra số dư MCU credits của tài khoản trước khi gọi API. |
 
