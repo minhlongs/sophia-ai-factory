@@ -38,6 +38,7 @@ import {
   productionGraphRunner,
   approvalTimeoutCron,
   revenueAttribution,
+  opsTelegramAlert,
 } from "@/forest/inngest/functions/index";
 
 // Deprecated handlers (Phase 06 video_jobs chain + URL-to-Revenue) removed from
@@ -108,5 +109,7 @@ export const { GET, POST, PUT } = serve({
     approvalTimeoutCron,
     // SUPREME COMMAND #10 — Phase 2: Revenue attribution ingestion (every 12h)
     revenueAttribution,
+    // Customer Ops Watchdog & Telegram Alerts
+    opsTelegramAlert,
   ],
 });

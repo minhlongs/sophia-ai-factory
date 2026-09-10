@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
   treeUpdateMissionStatus: vi.fn(),
   beginMissionExecution: vi.fn(),
   resolveApproval: vi.fn(),
+  runMissionPreflightCheck: vi.fn(),
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
@@ -36,6 +37,10 @@ vi.mock('@/seed/db/client', () => ({
 
 vi.mock('@/seed/inngest/client', () => ({
   inngest: { send: mocks.inngestSend },
+}));
+
+vi.mock('@/forest/mission/preflight-check', () => ({
+  runMissionPreflightCheck: mocks.runMissionPreflightCheck,
 }));
 
 vi.mock('@/tree/mission', () => ({
@@ -207,6 +212,64 @@ describe('land/creative-mission actions', () => {
         expect(result.value.agentId).toBe('ag_1');
         expect(result.value.runId).toBe(sent.data.runId);
       }
+    });
+
+    it('passes estimatedCostCents to runMissionPreflightCheck when skipPreflight is false', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(
+        makeD1([{ workspace_id: 'ws_1', creator_id: 'user_1' }, 1]),
+      );
+      mocks.runMissionPreflightCheck.mockResolvedValue({
+        passed: true,
+        gates: {} as unknown,
+      });
+      mocks.beginMissionExecution.mockResolvedValue({ status: 'running' });
+      mocks.inngestSend.mockResolvedValue(undefined);
+
+      const { startMissionExecution } = await import('../actions');
+      const result = await startMissionExecution({
+        ...validInput,
+        skipPreflight: false,
+        estimatedCostCents: 250,
+      });
+
+      expect(result.ok).toBe(true);
+      expect(mocks.runMissionPreflightCheck).toHaveBeenCalledWith({
+        userId: 'user_1',
+        workspaceId: 'ws_1',
+        estimatedCostCents: 250,
+        overrides: {
+          membershipVerified: true,
+        },
+      });
+    });
+
+    it('fails closed when runMissionPreflightCheck fails due to cost spike or billing failure', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(
+        makeD1([{ workspace_id: 'ws_1', creator_id: 'user_1' }, 1]),
+      );
+      mocks.runMissionPreflightCheck.mockResolvedValue({
+        passed: false,
+        failureCode: 'BILLING_FAILURE',
+        failureReason: 'Preflight aborted: Estimated cost (600¢) exceeds single mission limit (500¢)',
+        gates: {} as unknown,
+      });
+
+      const { startMissionExecution } = await import('../actions');
+      const result = await startMissionExecution({
+        ...validInput,
+        skipPreflight: false,
+        estimatedCostCents: 600,
+      });
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe('BILLING_FAILURE');
+        expect(result.error.message).toContain('exceeds single mission limit');
+      }
+      expect(mocks.beginMissionExecution).not.toHaveBeenCalled();
+      expect(mocks.inngestSend).not.toHaveBeenCalled();
     });
 
     it('returns NOT_FOUND without touching tree or Inngest when mission missing', async () => {

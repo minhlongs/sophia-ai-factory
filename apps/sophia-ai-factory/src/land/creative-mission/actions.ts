@@ -100,6 +100,7 @@ const startMissionExecutionSchema = z.object({
   agentId: z.string().min(1, 'Agent ID is required'),
   autonomyLevel: z.number().min(0).max(4, 'Autonomy level must be 0-4').default(0),
   skipPreflight: z.boolean().optional(),
+  estimatedCostCents: z.number().optional(),
 });
 
 // ── Actions ────────────────────────────────────────────────────────────────
@@ -445,6 +446,7 @@ export async function startMissionExecution(
       const preflight = await runMissionPreflightCheck({
         userId: user.id,
         workspaceId: mission.workspace_id,
+        estimatedCostCents: parsed.data.estimatedCostCents,
         overrides: {
           membershipVerified: true,
         },

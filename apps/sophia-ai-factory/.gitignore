@@ -84,6 +84,7 @@ plans/reports/*.md
 worker-configuration.d.ts
 
 .claude/agent-memory/
+.claude/session/
 _scratch/
 
 plans/

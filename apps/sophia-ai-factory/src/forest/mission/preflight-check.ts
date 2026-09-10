@@ -27,12 +27,16 @@ import {
 } from '@/seed/ai/capability-model';
 import { inngest } from '@/seed/inngest/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { FailureKind } from '@/seed/types/failure-kind';
 import {
   listUserApiKeyProviders,
   getUserApiKey,
   type ByokProvider,
 } from '@/tree/byok/user-api-key-store';
 import { getBalance } from '@/tree/mcu/credits-repo';
+
+/** Maximum allowed cost in cents for a single mission execution ($5.00) */
+export const MAX_SINGLE_MISSION_COST_CENTS = 500;
 
 export interface PreflightGateCheck {
   passed: boolean;
@@ -67,6 +71,8 @@ export interface MissionPreflightOptions {
   capability?: AICapability;
   /** Specific required BYOK provider, if any. */
   requiredProvider?: ByokProvider;
+  /** Estimated cost of single mission in cents (spike guard). */
+  estimatedCostCents?: number;
   /** Optional overrides for testing/dependency injection */
   overrides?: {
     storageReady?: boolean;
@@ -215,6 +221,27 @@ export async function runMissionPreflightCheck(
   };
 
   // ── 3. ENTITLEMENT GATE ──────────────────────────────────────────────────────
+  // Spike guard: fail-closed if estimated cost exceeds single mission threshold
+  if (
+    typeof opts.estimatedCostCents === 'number' &&
+    opts.estimatedCostCents > 0 &&
+    opts.estimatedCostCents > MAX_SINGLE_MISSION_COST_CENTS
+  ) {
+    const spikeFail: PreflightGateCheck = {
+      passed: false,
+      code: FailureKind.BILLING_FAILURE,
+      message: `Preflight aborted: Estimated cost (${opts.estimatedCostCents}¢) exceeds single mission limit (${MAX_SINGLE_MISSION_COST_CENTS}¢)`,
+      details: {
+        estimatedCostCents: opts.estimatedCostCents,
+        maxCostCents: MAX_SINGLE_MISSION_COST_CENTS,
+      },
+    };
+    return buildPreflightFailure('entitlement', spikeFail, opts, {
+      auth: authGate,
+      ownership: ownershipGate,
+    });
+  }
+
   let tier = opts.overrides?.tier;
   let mcuBalance = opts.overrides?.mcuBalance;
 
@@ -256,7 +283,7 @@ export async function runMissionPreflightCheck(
     passed: true,
     code: 'ENTITLEMENT_OK',
     message: 'Entitlement and MCU balance verified',
-    details: { tier, mcuBalance },
+    details: { tier, mcuBalance, estimatedCostCents: opts.estimatedCostCents },
   };
 
   // ── 4. PROVIDER CREDENTIAL GATE ──────────────────────────────────────────────

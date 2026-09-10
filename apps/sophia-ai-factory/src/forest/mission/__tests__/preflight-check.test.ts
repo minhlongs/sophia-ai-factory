@@ -15,7 +15,10 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { runMissionPreflightCheck } from '../preflight-check';
+import {
+  runMissionPreflightCheck,
+  MAX_SINGLE_MISSION_COST_CENTS,
+} from '../preflight-check';
 
 // ── MOCKS ───────────────────────────────────────────────────────────────────
 
@@ -168,6 +171,62 @@ describe('runMissionPreflightCheck', () => {
       overrides: { storageReady: true, queueReady: true },
     });
 
+    expect(result.gates.entitlement.passed).toBe(true);
+  });
+
+  // 3b. Spike Guard (Cost Limit Gate)
+  it('fails fail-closed with BILLING_FAILURE when estimatedCostCents > MAX_SINGLE_MISSION_COST_CENTS', async () => {
+    const result = await runMissionPreflightCheck({
+      userId: 'usr_default',
+      workspaceId: 'ws_123',
+      estimatedCostCents: 600, // > 500
+      overrides: { storageReady: true, queueReady: true },
+    });
+
+    expect(result.passed).toBe(false);
+    expect(result.failureCode).toBe('BILLING_FAILURE');
+    expect(result.failureReason).toContain(
+      `Preflight aborted: Estimated cost (600¢) exceeds single mission limit (${MAX_SINGLE_MISSION_COST_CENTS}¢)`
+    );
+    expect(result.gates.entitlement.passed).toBe(false);
+    expect(result.gates.entitlement.code).toBe('BILLING_FAILURE');
+  });
+
+  it('passes entitlement gate when estimatedCostCents is within bounds (e.g. 150¢)', async () => {
+    const result = await runMissionPreflightCheck({
+      userId: 'usr_default',
+      workspaceId: 'ws_123',
+      estimatedCostCents: 150,
+      overrides: { storageReady: true, queueReady: true },
+    });
+
+    expect(result.passed).toBe(true);
+    expect(result.gates.entitlement.passed).toBe(true);
+    expect(result.gates.entitlement.details).toMatchObject({
+      estimatedCostCents: 150,
+    });
+  });
+
+  it('succeeds when estimatedCostCents is undefined (backward compatibility)', async () => {
+    const result = await runMissionPreflightCheck({
+      userId: 'usr_default',
+      workspaceId: 'ws_123',
+      overrides: { storageReady: true, queueReady: true },
+    });
+
+    expect(result.passed).toBe(true);
+    expect(result.gates.entitlement.passed).toBe(true);
+  });
+
+  it('skips spike guard when estimatedCostCents <= 0', async () => {
+    const result = await runMissionPreflightCheck({
+      userId: 'usr_default',
+      workspaceId: 'ws_123',
+      estimatedCostCents: 0,
+      overrides: { storageReady: true, queueReady: true },
+    });
+
+    expect(result.passed).toBe(true);
     expect(result.gates.entitlement.passed).toBe(true);
   });
 

@@ -1,6 +1,24 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-10 | **Current Version:** 0.1.7 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** c35840f4
+**Last Updated:** 2026-09-10 | **Current Version:** 1.28.0 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** b77c5504
+
+---
+
+## 2026-09-10 (v1.28.0 — CUSTOMER OPERATIONS & HARDENING SPRINT, IN PROGRESS)
+
+**Severity: P1 OPERATIONS & HARDENING | Type: Architecture Hardening + Handover Documentation | Status: IN PROGRESS**
+
+Following the successful production deployment and verification of the Supreme Customer-Readiness Repair baseline (`b77c5504`), this sprint addresses proactive operations, soft limits, preflight checks, and definitive handover certification for a non-technical CEO under CF-direct and No-Tech doctrines.
+
+**Verified Baseline (`b77c5504`):**
+- Resolved all 5 empirical P0 blockers: pricing contradictions across 4 files unified to `UNIFIED_TIERS` ($199/$399/$799/$4,999), Setup Wizard fail-closed save gate, founder email anti-spoofing via `emailVerified`, BYOK provider factory enum alignment (`fal-ai`, `replicate`), and 7-gate mission preflight validation.
+- 107/107 automated customer-readiness tests passing across 15 test suites.
+- Live deployment verified on Cloudflare Workers (`sophia.agencyos.network`) with `/api/version` shortSha match `b77c5504`.
+
+**Sprint Improvement Options:**
+- **Option A (Customer Ops Watchdog & Health Endpoint):** Proactive Telegram alert emission on critical provider interrupts (BYOK key expiration, `FailureKind.AUTH_FAILURE`) via `forest/inngest/functions/ops-telegram-alert.ts` using existing `TELEGRAM_BOT_TOKEN`, coupled with a real-code `/api/health` endpoint validating D1 DB connectivity and cache health.
+- **Option B (Usage Pressure & Soft Limits):** 80% MCU monthly usage boundary warning widget for dashboard navigation, combined with an 8th gate in `forest/mission/preflight-check.ts` enforcing cost-spike protection (`estimatedCostCents` guard against single-mission exhaustion > $5.00/500 cents or exceeding remaining budget).
+- **Option C (Archive & Graduate — Phase 1 Executed):** Established definitive operator sign-off runbook at `docs/audit/customer-readiness/GREEN-GRADUATION-CHECKLIST.md` documenting core invariants, live fal.ai verification steps, and SQL audit queries for transitioning the system from YELLOW to GREEN certification.
 
 ---
 

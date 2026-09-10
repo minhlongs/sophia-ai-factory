@@ -56,6 +56,8 @@ export * from '@/forest/provenance/provenance-bridge';
 // Phase 3: Production Graph + Approval Timeout
 export * from './production-graph-runner';
 export * from './approval-timeout-cron';
+// Operations & Alerts
+export * from './ops-telegram-alert';
 // Distribution OS Phase 3: Revenue Events ingestion
 export * from './revenue-events-ingest';
 // SUPREME COMMAND #10 — Phase 2: Revenue attribution ingestion
