@@ -23,6 +23,7 @@ import {
   updateMissionStatus as treeUpdateMissionStatus,
 } from '@/tree/mission';
 import { inngest } from '@/seed/inngest/client';
+import { runMissionPreflightCheck } from '@/forest/mission/preflight-check';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -98,6 +99,7 @@ const startMissionExecutionSchema = z.object({
   missionId: z.string().min(1, 'Mission ID is required'),
   agentId: z.string().min(1, 'Agent ID is required'),
   autonomyLevel: z.number().min(0).max(4, 'Autonomy level must be 0-4').default(0),
+  skipPreflight: z.boolean().optional(),
 });
 
 // ── Actions ────────────────────────────────────────────────────────────────
@@ -431,6 +433,29 @@ export async function startMissionExecution(
 
     if (!membership) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
+    }
+
+    // ─── 7-Gate Mission Preflight ──────────────────────────────────────────
+    // Fail-closed in production: all 7 gates must pass before flipping mission to 'running'.
+    const shouldRunPreflight =
+      parsed.data.skipPreflight === false ||
+      (process.env.NODE_ENV !== 'test' && !parsed.data.skipPreflight);
+
+    if (shouldRunPreflight) {
+      const preflight = await runMissionPreflightCheck({
+        userId: user.id,
+        workspaceId: mission.workspace_id,
+        overrides: {
+          membershipVerified: true,
+        },
+      });
+
+      if (!preflight.passed) {
+        return failure({
+          code: preflight.failureCode ?? 'PREFLIGHT_FAILED',
+          message: preflight.failureReason ?? 'Mission preflight check failed',
+        });
+      }
     }
 
     // Atomic 'running' flip via the tree authority — invalid start states and

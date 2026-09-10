@@ -24,14 +24,15 @@ import { logger } from '@/seed/utils/logger-utility';
  */
 export interface DeleteTable {
   table: string;
-  column: 'org_id' | 'user_id' | 'tenant_id';
+  column: 'org_id' | 'user_id' | 'tenant_id' | 'creator_id';
 }
 
 /** Dependents-first deletion order.
  *
  * Column semantics:
  *   org_id     → org-scoped tables (most business data)
- *   user_id    → user-scoped tables (personal API keys, videos)
+ *   user_id    → user-scoped tables (personal API keys, videos, media jobs)
+ *   creator_id → creator-scoped tables (creative missions)
  *   tenant_id  → the top-level tenant row itself
  */
 export const ACCOUNT_DELETE_ORDER: readonly DeleteTable[] = [
@@ -48,10 +49,13 @@ export const ACCOUNT_DELETE_ORDER: readonly DeleteTable[] = [
   { table: 'org_balances',         column: 'org_id'    },
   { table: 'transactions',         column: 'org_id'    },
   { table: 'missions',             column: 'org_id'    },
+  { table: 'creative_missions',    column: 'creator_id'},
+  { table: 'media_jobs',           column: 'user_id'   },
   { table: 'referral_codes',       column: 'org_id'    },
   { table: 'raas_api_keys',        column: 'org_id'    },
   { table: 'raas_api_usage',       column: 'org_id'    },
   { table: 'usage_logs',           column: 'org_id'    },
+  { table: 'user_api_keys',        column: 'user_id'   },
   { table: 'raas_user_api_keys',   column: 'user_id'   },
   { table: 'videos',               column: 'user_id'   },
   { table: 'sessions',             column: 'tenant_id' },
@@ -203,6 +207,7 @@ export async function cascadeDeleteAccount(
         case 'org_id':
           bindValue = orgId ?? '';
           break;
+        case 'creator_id':
         case 'user_id':
           bindValue = userId;
           break;
@@ -215,7 +220,7 @@ export async function cascadeDeleteAccount(
         .prepare(`DELETE FROM ${table} WHERE ${column} = ?`)
         .bind(bindValue)
         .run();
-      const c = r.meta?.rows_written ?? 0;
+      const c = r.meta?.changes ?? r.meta?.rows_written ?? 0;
       byTable[table] = c;
       total += c;
     } catch {

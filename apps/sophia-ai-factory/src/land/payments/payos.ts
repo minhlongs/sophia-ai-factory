@@ -8,6 +8,7 @@
 import { z } from 'zod'
 import { FEATURE_PAYOS } from '@/seed/config/flags'
 import type { Tier } from '@/seed/types'
+import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits'
 import { verifyInboundWebhook } from '@/land/webhooks/signature'
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
 import { classifyError } from '@/seed/types/failure-kind'
@@ -30,10 +31,10 @@ function getUsdToVnd(): number {
 
 // ── Tier VND prices (USD * USD_TO_VND, rounded to nearest 1000 VND) ─────────
 const TIER_USD_PRICES: Record<Tier, number> = {
-  BASIC: 199,
-  PREMIUM: 399,
-  ENTERPRISE: 799,
-  MASTER: 4999,
+  BASIC: UNIFIED_TIERS.BASIC.price,
+  PREMIUM: UNIFIED_TIERS.PREMIUM.price,
+  ENTERPRISE: UNIFIED_TIERS.ENTERPRISE.price,
+  MASTER: UNIFIED_TIERS.MASTER.price,
 }
 
 export interface PayOsTierConfig {

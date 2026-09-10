@@ -147,12 +147,19 @@ describe('cascadeDeleteAccount', () => {
     const res = await cascadeDeleteAccount(db, 'user-1', 'tenant-1');
 
     for (const dt of ACCOUNT_DELETE_ORDER) {
+      const expectedBind =
+        dt.column === 'org_id'
+          ? ''
+          : dt.column === 'user_id' || dt.column === 'creator_id'
+            ? 'user-1'
+            : 'tenant-1';
+
       expect(
         calls.some(
           (c) =>
             c.sql.includes(`FROM ${dt.table}`) &&
             c.sql.includes(`WHERE ${dt.column} = ?`) &&
-            c.binds[0] === (dt.column === 'org_id' ? '' : dt.column === 'user_id' ? 'user-1' : 'tenant-1'),
+            c.binds[0] === expectedBind,
         ),
       ).toBe(true);
     }

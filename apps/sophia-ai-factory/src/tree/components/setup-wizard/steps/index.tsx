@@ -13,7 +13,17 @@ import { Compass, HelpCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 
 const STEPS = ['Welcome', 'Account', 'AI Keys', 'Billing', 'Blueprint', 'Ready'] as const;
 
-function MissionBlueprintStep({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
+function MissionBlueprintStep({
+  onNext,
+  onBack,
+  saveError,
+  isSaving,
+}: {
+  onNext: () => void;
+  onBack: () => void;
+  saveError?: string | null;
+  isSaving?: boolean;
+}) {
   const faqs = [
     { q: 'WHAT DO I ENTER? / Tôi cần nhập gì?', a: 'Paste a product link, blog URL, or 1-line concept. Sophia handles viral hooks.' },
     { q: 'WHAT WILL SOPHIA DO? / Sophia sẽ làm gì?', a: 'Generates scripts, synthesizes voice, renders AI imagery, adds captions & produces MP4.' },
@@ -49,12 +59,28 @@ function MissionBlueprintStep({ onNext, onBack }: { onNext: () => void; onBack: 
         ))}
       </div>
 
+      {saveError && (
+        <div className="p-3 rounded-lg border border-destructive/30 bg-destructive/10 text-xs text-destructive font-medium">
+          {saveError}
+        </div>
+      )}
+
       <div className="flex justify-between items-center pt-4 border-t border-border">
-        <button type="button" onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2 flex items-center gap-1.5">
+        <button
+          type="button"
+          onClick={onBack}
+          disabled={isSaving}
+          className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2 flex items-center gap-1.5 disabled:opacity-50"
+        >
           <ArrowLeft className="w-4 h-4" /> Quay lại / Back
         </button>
-        <button type="button" onClick={onNext} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2">
-          Tiếp tục / Continue <ArrowRight className="w-4 h-4" />
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={isSaving}
+          className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2"
+        >
+          {isSaving ? 'Đang lưu / Saving...' : 'Tiếp tục / Continue'} <ArrowRight className="w-4 h-4" />
         </button>
       </div>
     </div>
@@ -78,6 +104,7 @@ export function SetupWizardPage() {
   const [latencies, setLatencies] = useState<Record<string, number>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const updateConfig = useCallback((key: string, value: string) => {
     setConfig(prev => ({ ...prev, [key]: value }));
@@ -117,9 +144,10 @@ export function SetupWizardPage() {
     }
   }, [t]);
 
-  const handleSave = useCallback(async () => {
+  const handleSave = useCallback(async (): Promise<boolean> => {
     setSaveError(null);
     setSaveFailed(false);
+    setIsSaving(true);
     try {
       const keyMap: Record<string, string> = {
         OPENROUTER_API_KEY: 'openrouter',
@@ -142,15 +170,24 @@ export function SetupWizardPage() {
           throw new Error(d.error || t('errors.saveFailed'));
         }
       }
+      return true;
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : t('errors.saveFailed'));
+      const msg = e instanceof Error ? e.message : t('errors.saveFailed');
+      setSaveError(msg);
       setSaveFailed(true);
+      return false;
+    } finally {
+      setIsSaving(false);
     }
   }, [t, config]);
 
   const handleNext = useCallback(async () => {
     if (currentStepIndex === 4) {
-      await handleSave();
+      const saved = await handleSave();
+      if (!saved) {
+        // FAIL-CLOSED: Stop advancement if saving credentials failed
+        return;
+      }
     }
     if (currentStepIndex < STEPS.length - 1) {
       setCurrentStepIndex(prev => prev + 1);
@@ -173,8 +210,22 @@ export function SetupWizardPage() {
             <ApiKeysStep config={config} updateConfig={updateConfig} verifyKey={verifyKey} status={status} errors={errors} latencies={latencies} onNext={handleNext} onBack={handleBack} />
           )}
           {currentStepIndex === 3 && <PaymentStep onNext={handleNext} onBack={handleBack} />}
-          {currentStepIndex === 4 && <MissionBlueprintStep onNext={handleNext} onBack={handleBack} />}
-          {currentStepIndex === 5 && <FinishStep saveError={saveError} saveFailed={saveFailed} onRetry={handleSave} />}
+          {currentStepIndex === 4 && (
+            <MissionBlueprintStep
+              onNext={handleNext}
+              onBack={handleBack}
+              saveError={saveError}
+              isSaving={isSaving}
+            />
+          )}
+          {currentStepIndex === 5 && (
+            <FinishStep
+              saveError={saveError}
+              saveFailed={saveFailed}
+              onRetry={handleSave}
+              onNavigateToStep={setCurrentStepIndex}
+            />
+          )}
         </div>
       </div>
     </div>

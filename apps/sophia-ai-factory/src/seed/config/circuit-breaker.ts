@@ -19,6 +19,13 @@ export const FAILURE_COOLDOWNS: Record<FailureKind, number> = {
   [FailureKind.SERVER_ERROR]: 300_000,    // 5 minutes
   [FailureKind.UNKNOWN]: 120_000,         // 2 minutes (conservative default)
   [FailureKind.PROVIDER_NOT_CERTIFIED]: 0, // Immediate — certification is a permanent gate, not a transient failure
+  [FailureKind.OWNERSHIP_FAILURE]: 0,     // Immediate — authz failure
+  [FailureKind.BILLING_FAILURE]: 0,       // Immediate — quota/entitlement failure
+  [FailureKind.PROVIDER_AUTH_FAILURE]: 0, // Immediate — bad provider credentials
+  [FailureKind.PROVIDER_CAPABILITY_FAILURE]: 0, // Immediate — unsupported capability
+  [FailureKind.MISSION_FAILURE]: 60_000,  // 1 minute cooldown
+  [FailureKind.STORAGE_FAILURE]: 120_000, // 2 minutes cooldown
+  [FailureKind.WEBHOOK_FAILURE]: 60_000,  // 1 minute cooldown
 }
 
 /** State transition thresholds */

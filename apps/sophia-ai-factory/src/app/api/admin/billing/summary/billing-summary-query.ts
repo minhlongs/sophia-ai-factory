@@ -7,6 +7,7 @@
 
 import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
+import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits';
 
 // -------------------------------------------------------------------------
 // Types
@@ -59,10 +60,10 @@ interface MRRResult {
 // -------------------------------------------------------------------------
 
 const TIER_PRICING: Record<string, number> = {
-  BASIC:      4900,   // $49/month
-  PREMIUM:    9900,   // $99/month
-  ENTERPRISE: 24900,  // $249/month
-  MASTER:     49900,  // $499/month
+  BASIC:      UNIFIED_TIERS.BASIC.priceInCents,
+  PREMIUM:    UNIFIED_TIERS.PREMIUM.priceInCents,
+  ENTERPRISE: UNIFIED_TIERS.ENTERPRISE.priceInCents,
+  MASTER:     UNIFIED_TIERS.MASTER.priceInCents,
 };
 
 /**

@@ -152,6 +152,17 @@ describe('POST /api/user/byok', () => {
     expect(mockSet).toHaveBeenCalledWith(USER?.id, 'muapi', 'muapi-valid-key-1234567890abcdef')
   })
 
+  it('200 when replicate key is stored', async () => {
+    mockGetCurrentUser.mockResolvedValue(USER)
+    mockSet.mockResolvedValue(undefined)
+    const res = await POST(makeRequest('POST', {
+      provider: 'replicate',
+      key: 'r8_abcdefghijklmnopqrstuvwxyz1234567890',
+    }))
+    expect(res.status).toBe(200)
+    expect(mockSet).toHaveBeenCalledWith(USER?.id, 'replicate', 'r8_abcdefghijklmnopqrstuvwxyz1234567890')
+  })
+
   it('400 when heygen provider is submitted (removed from enum)', async () => {
     mockGetCurrentUser.mockResolvedValue(USER)
     const res = await POST(makeRequest('POST', { provider: 'heygen', key: 'some-heygen-key-1234567890' }))

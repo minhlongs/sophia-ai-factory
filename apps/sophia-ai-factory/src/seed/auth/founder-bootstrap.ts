@@ -13,6 +13,7 @@ export interface BootstrapUser {
   id: string;
   email: string;
   name?: string | null;
+  emailVerified?: boolean | number | null;
 }
 
 /**
@@ -22,6 +23,10 @@ export interface BootstrapUser {
  * - Updates user_profiles table: role = 'admin', subscription_tier = 'MASTER'
  * - Updates subscriptions table: tier = 'MASTER', plan = 'master'
  * - Records an immutable audit log entry in admin_audit_log
+ *
+ * Fail-closed security rule:
+ * Rejects promotion if emailVerified is false or 0. Checks user.emailVerified first,
+ * falling back to checking D1 "user".emailVerified before any role/tier elevation.
  *
  * Fail-safe: wrapped in try/catch to never disrupt the user signup flow.
  */
@@ -45,6 +50,40 @@ export async function bootstrapFounderIfConfigured(
 
   const normalizedUserEmail = user.email.trim().toLowerCase();
   if (!founderEmails.includes(normalizedUserEmail)) {
+    return false;
+  }
+
+  // Fail-closed gate: verify that the email address is verified before elevating privileges
+  let isEmailVerified = Boolean(user.emailVerified);
+
+  if (!isEmailVerified) {
+    try {
+      const db = await getD1();
+      if (db) {
+        const row = await db
+          .prepare('SELECT emailVerified FROM "user" WHERE id = ?1 LIMIT 1')
+          .bind(user.id)
+          .first<{ emailVerified?: boolean | number | null }>();
+        if (row && (row.emailVerified === true || row.emailVerified === 1)) {
+          isEmailVerified = true;
+        }
+      }
+    } catch (err) {
+      logger.warn('[FounderBootstrap] Failed checking emailVerified in database', toError(err), {
+        userId: user.id,
+      });
+    }
+  }
+
+  if (!isEmailVerified) {
+    logger.warn(
+      '[FounderBootstrap] Refusing to elevate unverified user to founder/admin role (fail-closed)',
+      undefined,
+      {
+        userId: user.id,
+        email: user.email,
+      }
+    );
     return false;
   }
 

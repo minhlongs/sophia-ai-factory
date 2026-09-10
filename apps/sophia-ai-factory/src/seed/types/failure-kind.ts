@@ -24,6 +24,22 @@ export enum FailureKind {
   UNKNOWN = 'UNKNOWN',
   /** Provider certification gate blocked instantiation */
   PROVIDER_NOT_CERTIFIED = 'PROVIDER_NOT_CERTIFIED',
+
+  // ── Phase 11 Structured Failure Taxonomy ──────────────────────────────────
+  /** Ownership / multi-tenant authorization failure */
+  OWNERSHIP_FAILURE = 'OWNERSHIP_FAILURE',
+  /** Billing, tier, or insufficient entitlement failure */
+  BILLING_FAILURE = 'BILLING_FAILURE',
+  /** BYOK provider credential missing, expired, or invalid */
+  PROVIDER_AUTH_FAILURE = 'PROVIDER_AUTH_FAILURE',
+  /** Requested AI capability not supported by configured providers */
+  PROVIDER_CAPABILITY_FAILURE = 'PROVIDER_CAPABILITY_FAILURE',
+  /** Mission execution or state machine lifecycle failure */
+  MISSION_FAILURE = 'MISSION_FAILURE',
+  /** Storage subsystem (R2 / object store) unavailable */
+  STORAGE_FAILURE = 'STORAGE_FAILURE',
+  /** Payment or external webhook processing failure */
+  WEBHOOK_FAILURE = 'WEBHOOK_FAILURE',
 }
 
 /** Circuit breaker states — 4-state machine */
@@ -72,6 +88,71 @@ export function classifyError(error: unknown): FailureKind {
   if (msg.includes('500') || msg.includes('502') || msg.includes('503') || msg.includes('504')) {
     return FailureKind.SERVER_ERROR
   }
+  if (msg.includes('ownership') || msg.includes('workspace_access_denied') || msg.includes('forbidden')) {
+    return FailureKind.OWNERSHIP_FAILURE
+  }
+  if (msg.includes('billing') || msg.includes('insufficient_entitlement') || msg.includes('insufficient mcu')) {
+    return FailureKind.BILLING_FAILURE
+  }
+  if (msg.includes('missing_provider_credential') || msg.includes('no_byok_credentials')) {
+    return FailureKind.PROVIDER_AUTH_FAILURE
+  }
+  if (msg.includes('capability_not_supported') || msg.includes('unsupported capability')) {
+    return FailureKind.PROVIDER_CAPABILITY_FAILURE
+  }
+  if (msg.includes('storage_unavailable') || msg.includes('r2_error')) {
+    return FailureKind.STORAGE_FAILURE
+  }
+  if (msg.includes('webhook') || msg.includes('ipn_error') || msg.includes('nowpayments_error')) {
+    return FailureKind.WEBHOOK_FAILURE
+  }
+  if (msg.includes('mission_failed') || msg.includes('execution_start_invalid') || msg.includes('mission error')) {
+    return FailureKind.MISSION_FAILURE
+  }
 
   return FailureKind.UNKNOWN
+}
+
+// ── Correlation Context & Propagation ───────────────────────────────────────
+
+export interface CorrelationContext {
+  correlationId: string;
+  requestId?: string;
+  missionId?: string;
+  provider?: string;
+  artifactId?: string;
+  timestamp: number;
+}
+
+/**
+ * Create or initialize a traceable correlation context.
+ */
+export function createCorrelationContext(
+  params: Partial<CorrelationContext> & { correlationId?: string } = {}
+): CorrelationContext {
+  const correlationId =
+    params.correlationId ??
+    `corr_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  return {
+    correlationId,
+    requestId: params.requestId,
+    missionId: params.missionId,
+    provider: params.provider,
+    artifactId: params.artifactId,
+    timestamp: params.timestamp ?? Date.now(),
+  };
+}
+
+/**
+ * Propagate correlation context forward through lifecycle stages:
+ * request → mission → provider → artifact.
+ */
+export function propagateCorrelation(
+  current: CorrelationContext,
+  updates: Partial<Omit<CorrelationContext, 'correlationId' | 'timestamp'>>
+): CorrelationContext {
+  return {
+    ...current,
+    ...updates,
+  };
 }

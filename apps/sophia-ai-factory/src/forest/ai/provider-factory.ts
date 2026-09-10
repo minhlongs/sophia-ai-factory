@@ -156,7 +156,7 @@ async function resolveApiKey(
 ): Promise<string | null> {
   // BYOK first: try user's stored key (only for BYOK-supported providers)
   const byokProvider = providerId as ByokProvider;
-  const byokSupported: ByokProvider[] = ['openrouter', 'anthropic', 'elevenlabs'];
+  const byokSupported: ByokProvider[] = ['openrouter', 'anthropic', 'elevenlabs', 'fal-ai', 'replicate'];
 
   if (userId && isByokEnabled() && byokSupported.includes(byokProvider)) {
     try {

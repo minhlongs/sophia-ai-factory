@@ -81,6 +81,7 @@ describe('founder-bootstrap', () => {
     const result = await bootstrapFounderIfConfigured({
       id: 'usr_founder',
       email: 'FOUNDER@AgencyOS.Network',
+      emailVerified: true,
     });
 
     expect(result).toBe(true);
@@ -112,6 +113,7 @@ describe('founder-bootstrap', () => {
     const result = await bootstrapFounderIfConfigured({
       id: 'usr_founder_2',
       email: 'founder@agencyos.network',
+      emailVerified: true,
     });
 
     expect(result).toBe(true);
@@ -125,6 +127,7 @@ describe('founder-bootstrap', () => {
     const result = await bootstrapFounderIfConfigured({
       id: 'usr_founder_3',
       email: 'founder@agencyos.network',
+      emailVerified: true,
     });
 
     expect(result).toBe(false);
@@ -142,8 +145,58 @@ describe('founder-bootstrap', () => {
     const result = await bootstrapFounderIfConfigured({
       id: 'usr_founder_4',
       email: 'founder@agencyos.network',
+      emailVerified: true,
     });
 
     expect(result).toBe(false);
+  });
+
+  it('rejects promotion when founder email is unverified (fail-closed anti-spoofing)', async () => {
+    process.env.FOUNDER_EMAIL = 'founder@agencyos.network';
+
+    const mockRun = vi.fn().mockResolvedValue({ success: true });
+    const mockBind = vi.fn().mockReturnValue({ run: mockRun });
+    const mockPrepare = vi.fn().mockReturnValue({ bind: mockBind });
+    const mockBatch = vi.fn().mockResolvedValue([]);
+
+    mockGetD1.mockResolvedValue({
+      prepare: mockPrepare,
+      batch: mockBatch,
+    } as unknown as Awaited<ReturnType<typeof getD1>>);
+
+    // Attacker attempts to register with founder email but without verifying email
+    const result = await bootstrapFounderIfConfigured({
+      id: 'usr_attacker_spoof',
+      email: 'founder@agencyos.network',
+      emailVerified: false,
+    });
+
+    expect(result).toBe(false);
+    expect(mockBatch).not.toHaveBeenCalled();
+    expect(mockPrepare).not.toHaveBeenCalledWith(expect.stringContaining('UPDATE "user" SET role = \'admin\''));
+  });
+
+  it('allows promotion when user email is verified in database', async () => {
+    process.env.FOUNDER_EMAIL = 'founder@agencyos.network';
+
+    const mockRun = vi.fn().mockResolvedValue({ success: true });
+    const mockFirst = vi.fn().mockResolvedValue({ emailVerified: 1 });
+    const mockBind = vi.fn().mockReturnValue({ run: mockRun, first: mockFirst });
+    const mockPrepare = vi.fn().mockReturnValue({ bind: mockBind });
+    const mockBatch = vi.fn().mockResolvedValue([]);
+
+    mockGetD1.mockResolvedValue({
+      prepare: mockPrepare,
+      batch: mockBatch,
+    } as unknown as Awaited<ReturnType<typeof getD1>>);
+
+    // emailVerified not passed directly on user object, but DB says verified
+    const result = await bootstrapFounderIfConfigured({
+      id: 'usr_verified_in_db',
+      email: 'founder@agencyos.network',
+    });
+
+    expect(result).toBe(true);
+    expect(mockBatch).toHaveBeenCalledOnce();
   });
 });

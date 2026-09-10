@@ -11,6 +11,7 @@
 import { NowPaymentsSDK } from '@nowpaymentsio/nowpayments-sdk-nodejs'
 import type { Payment as SdkPayment } from '@nowpaymentsio/nowpayments-sdk-nodejs'
 import { Tier } from '@/seed/types'
+import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits'
 import { getOneTimeSkuById, getOneTimeSkuByInvoiceId, ONE_TIME_INVOICE_IDS } from '@/seed/config/one-time-skus'
 import type { OneTimeSku } from '@/seed/types'
 import { verifyInboundWebhook } from '@/seed/security/signature'
@@ -52,10 +53,10 @@ export function resetNowPaymentsSDK(): void {
 // ═══════════════════════════════════════════════════════════════════════════
 
 export const TIER_PRICE_CONFIG: Record<string, { price: number; yearlyPrice: number; currency: string; name: string }> = {
-  BASIC:      { price: 199,  yearlyPrice: 1990,  currency: 'USD', name: 'Starter' },
-  PREMIUM:    { price: 399,  yearlyPrice: 3990,  currency: 'USD', name: 'Growth' },
-  ENTERPRISE: { price: 799,  yearlyPrice: 7990,  currency: 'USD', name: 'Premium' },
-  MASTER:     { price: 4999, yearlyPrice: 0,     currency: 'USD', name: 'Master' },
+  BASIC:      { price: UNIFIED_TIERS.BASIC.price,      yearlyPrice: UNIFIED_TIERS.BASIC.yearlyPrice,      currency: 'USD', name: UNIFIED_TIERS.BASIC.name },
+  PREMIUM:    { price: UNIFIED_TIERS.PREMIUM.price,    yearlyPrice: UNIFIED_TIERS.PREMIUM.yearlyPrice,    currency: 'USD', name: UNIFIED_TIERS.PREMIUM.name },
+  ENTERPRISE: { price: UNIFIED_TIERS.ENTERPRISE.price, yearlyPrice: UNIFIED_TIERS.ENTERPRISE.yearlyPrice, currency: 'USD', name: UNIFIED_TIERS.ENTERPRISE.name },
+  MASTER:     { price: UNIFIED_TIERS.MASTER.price,     yearlyPrice: UNIFIED_TIERS.MASTER.yearlyPrice,     currency: 'USD', name: UNIFIED_TIERS.MASTER.name },
 }
 
 // ═══════════════════════════════════════════════════════════════════════════

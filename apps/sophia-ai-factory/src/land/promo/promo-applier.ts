@@ -10,13 +10,14 @@ import { triggerAutoHandover } from '@/tree/handover/auto-handover';
 import { logger } from '@/seed/utils/logger-utility';
 import type { ApplyOptions, ApplyResult, RedemptionStatus } from './promo-types';
 import type { Tier } from '@/seed/types';
+import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits';
 
 /** Tier price map in cents (used for fixed_off / percent_off calculations). */
 const TIER_PRICE_CENTS: Record<string, number> = {
-  BASIC: 19900,
-  PREMIUM: 39900,
-  ENTERPRISE: 79900,
-  MASTER: 499900,
+  BASIC: UNIFIED_TIERS.BASIC.priceInCents,
+  PREMIUM: UNIFIED_TIERS.PREMIUM.priceInCents,
+  ENTERPRISE: UNIFIED_TIERS.ENTERPRISE.priceInCents,
+  MASTER: UNIFIED_TIERS.MASTER.priceInCents,
 };
 
 const VALID_TIERS = new Set<string>(['BASIC', 'PREMIUM', 'ENTERPRISE', 'MASTER']);
