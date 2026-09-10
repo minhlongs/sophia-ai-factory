@@ -2,24 +2,25 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-09-10 (Founder Bootstrap Authorization Remediation Shipped — CF-Direct Deployed SHA c35840f4, 8,944 tests passing)
+**Last Updated:** 2026-09-10 (Customer Handover Productization Shipped — CF-Direct Deployed SHA c3b2e7e6, 9,092 tests passing, 100/100 independence score)
 **Target:** $1M ARR, 100/100 a16z solo company score
 **Go-Live Shipped (2026-05-03):** Production deployment https://sophia.agencyos.network (SHA 5b1f711f). GAP1: Magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2: Self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt email VAT 10%, dashboard period_end). GAP3: Mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission control widget, public /status page 90d uptime, D+1/D+7 lifecycle emails). Infrastructure: 9 smoke tests PASS (200 HTTP), 4431 tests 100% pass, build < 10s, 0 TS errors.
 
 ---
 
-## Q3 2026: Handover Hardening & Multi-Provider Image Generation (2026-09-10)
+## Q3 2026: Customer Handover Productization & Operational Independence (2026-09-10)
 
 ### Overview
-Hardened the entire platform for customer handover to non-technical CEOs: fal.ai BYOK integration in Setup Wizard, format validation, fail-closed provider credential resolution, complete operational runbooks (RUN-BOOT-001, RUN-DR-001, RUN-CANARY-001), production synchronization, and zero-touch founder bootstrap authorization remediation.
+Transformed Sophia AI Factory from technical readiness into a fully customer-operable, customer-owned, CEO-friendly production SaaS platform with a certified 100/100 customer operational independence score. Shipped canonical 6-step onboarding (`/vi/setup`, `/en/setup`) with live upstream HTTP BYOK validation probes, customer-facing System Health Center and CEO-safe Incident UX (`/settings/system-health`), First-Run success flow with pre-flight MCU/USD cost estimation and blueprints (`/dashboard/missions/new`), tenant-scoped usage transparency and ownership delegation (`/settings/usage`, `/settings/ownership`), sanitized diagnostic bundle generation (`/operations`), automated customer journey test suite (41/41 passing), and complete 10-part customer runbook package (`docs/customer/*`).
 
 | Phase | Status | Completion | Details |
 |-------|--------|-----------|---------|
+| **CHP: Customer Handover Productization** | ✅ SHIPPED | 2026-09-10 | Canonical 6-step onboarding, live HTTP BYOK validation (fal.ai, OpenRouter, ElevenLabs, D-ID), customer health dashboard (5 safe error categories, 4 action zones), first-run wizard with cost estimation, usage metering & ownership delegation, sanitized diagnostics, 10 customer runbooks (`docs/customer/*`), Handover Sign-off Pack & Exit Charter. Deployed live via CF-direct doctrine (`shortSha: "c3b2e7e6"`). |
 | **SC7: fal.ai Image Adapter** | ✅ SHIPPED | 2026-09-10 | `FalImageProvider` class (189 LOC), circuit breaker wrapped, BYOK for `FAL_KEY`, EXPERIMENTAL certification, tier gating. Wired into action + API route + status route. Live deployed in commit `12b8a022`. |
 | **HHS: Handover Hardening Sprint** | ✅ SHIPPED | 2026-09-10 | Setup Wizard fal.ai BYOK UI (`api-keys-step.tsx`, `index.tsx`), regex key validation (`validateFalAI`), BYOK route isolation, bilingual copy, doctrine reconciliation (`revalidatePath` on 47 routes), runbooks (OPERATOR-BOOTSTRAP, DISASTER-RECOVERY, CANARY-VERIFICATION). Deployed live via CF-direct doctrine (`shortSha: "12b8a022"`). |
 | **FBR: Founder Bootstrap Remediation** | ✅ SHIPPED | 2026-09-10 | Zero-touch founder promotion hook (`src/seed/auth/founder-bootstrap.ts`) wired to Better Auth `user.create.after`, migration 0272 for `user_profiles.role`, unified `requireMaster()` gate in `src/land/admin/org-manager.ts`, immutable audit logging. Deployed live via CF-direct doctrine (`shortSha: "c35840f4"`). |
 
-**Verification:** 8,944 tests pass, 0 TS errors, 0 high/critical security defects, live production endpoints returning HTTP 200, shortSha matching c35840f4.
+**Verification:** 9,092 tests pass across 884 files (0 failures), 41/41 customer journey tests pass, 0 TS errors, 0 lint errors, live production endpoints returning HTTP 200, shortSha matching c3b2e7e6.
 
 ---
 
