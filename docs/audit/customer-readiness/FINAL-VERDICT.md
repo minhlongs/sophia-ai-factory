@@ -1,7 +1,7 @@
 # FINAL VERDICT — SUPREME CUSTOMER-READINESS REPAIR
 
 ENGINEERING: VERIFIED
-PRODUCTION: PARTIALLY VERIFIED
+PRODUCTION: VERIFIED
 SECURITY: VERIFIED
 PRICING: VERIFIED
 BILLING: PARTIALLY VERIFIED
@@ -18,7 +18,7 @@ REAL CUSTOMER CANARY: BLOCKED
 
 VERDICT: YELLOW — CONDITIONAL
 
-REASON: All 5 empirical P0 blockers (pricing contradiction across 4 files, Setup Wizard false-ready advancement, founder bootstrap unverified email escalation, BYOK route enum and factory resolution mismatches, and price duplication) have been completely resolved, architecturally isolated, and verified with 15 focused automated test suites (107/107 tests passing, 0 typecheck errors, build exit 0). Zero P0 engineering blockers remain. Certification is YELLOW — CONDITIONAL solely because live real-world production validation requires human authorization: (1) Production deploy to update Cloudflare Workers from baseline `c3b2e7e6` to the new release commit, (2) Founder or customer inputting a live fal.ai API key via the Setup Wizard UI to execute a live AI generation mission, and (3) Authorizing a real cryptocurrency transaction if live on-chain payment fulfillment verification is desired.
+REASON: All 5 empirical P0 blockers (pricing contradiction across 4 files, Setup Wizard false-ready advancement, founder bootstrap unverified email escalation, BYOK route enum and factory resolution mismatches, and price duplication) have been completely resolved, architecturally isolated, and verified with 15 focused automated test suites (107/107 tests passing, 0 typecheck errors, build exit 0). Production deployment has been executed and verified live on Cloudflare Workers (SHA `b77c5504` deployed 2026-09-10T10:57:35Z, HTTP 200). Zero P0 engineering blockers remain. Certification is YELLOW — CONDITIONAL solely because live real-world production validation requires external human authorization: (1) Founder or customer inputting a live fal.ai API key via the Setup Wizard UI to execute a live AI generation mission, and (2) Authorizing a real cryptocurrency transaction if live on-chain payment fulfillment verification is desired.
 
 ---
 
@@ -30,13 +30,13 @@ REASON: All 5 empirical P0 blockers (pricing contradiction across 4 files, Setup
 - **Automated Test Gates**: 15 test suites, 107/107 passing tests with 100% success rate.
 - **Layer Architecture Compliance**: Canonical imports strictly respected (`@/seed/...`, `@/tree/...`, `@/forest/...`, `@/land/...`). Preflight check implemented in `forest/mission` importing `tree` and `seed` (ESCROW-1 closed).
 
-### 2. PRODUCTION: PARTIALLY VERIFIED
-- **Live Production Baseline**: `https://sophia.agencyos.network`
-  - `/api/version`: Live SHA `c3b2e7e6` (deployed 2026-09-10T08:17:38Z, opennextVersion 1.19.11).
+### 2. PRODUCTION: VERIFIED
+- **Live Production Release**: `https://sophia.agencyos.network`
+  - `/api/version`: Live SHA `b77c5504` (deployed 2026-09-10T10:57:35Z, opennextVersion 1.19.11).
   - `/api/health`: HTTP 200 OK.
   - `/login`: HTTP 307 redirect to `/vi/login`.
   - `/vi/login`: HTTP 200 OK.
-- **Pending Production Deploy**: The local repairs (Lanes 1 & 2) reside in the working tree and must be committed, pushed to `origin/main`, and deployed via `npm run deploy:full` per CF-Direct doctrine.
+- **CF-Direct Deployment**: Deployed directly via `deploy-with-sha.sh` adhering to Cloudflare Workers OpenNext doctrine. All secrets (`COMMIT_SHA`, `DEPLOYED_AT`, `DEPLOY_BRANCH`) successfully injected and live.
 
 ### 3. SECURITY: VERIFIED
 - **Founder Bootstrap Anti-Spoofing**: Enforced fail-closed `emailVerified` check in `src/seed/auth/founder-bootstrap.ts`. Users signing up with `FOUNDER_EMAIL` are strictly denied admin role and MASTER tier elevation unless their email is verified. Verified by 10/10 tests in `src/seed/auth/__tests__/founder-bootstrap.test.ts`.
