@@ -16,6 +16,13 @@ describe('FailureKind enum', () => {
       'NETWORK',
       'UNKNOWN',
       'PROVIDER_NOT_CERTIFIED',
+      'OWNERSHIP_FAILURE',
+      'BILLING_FAILURE',
+      'PROVIDER_AUTH_FAILURE',
+      'PROVIDER_CAPABILITY_FAILURE',
+      'MISSION_FAILURE',
+      'STORAGE_FAILURE',
+      'WEBHOOK_FAILURE',
     ])
   })
 })
