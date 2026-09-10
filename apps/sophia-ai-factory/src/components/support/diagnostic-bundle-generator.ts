@@ -6,6 +6,8 @@
  * @module components/support/diagnostic-bundle-generator
  */
 
+import type { SafeDiagnosticBundle } from '@/tree/diagnostics/safe-bundle-generator';
+
 export interface ActiveProviderStatus {
   name: string;
   configured: boolean;
@@ -141,9 +143,13 @@ export function generateDiagnosticBundle(input: DiagnosticBundleInput): Sanitize
   };
 }
 
-export function downloadDiagnosticBundle(bundle: SanitizedDiagnosticBundle, filename?: string): void {
+export function downloadDiagnosticBundle(
+  bundle: SanitizedDiagnosticBundle | SafeDiagnosticBundle,
+  filename?: string
+): void {
   const jsonContent = JSON.stringify(bundle, null, 2);
-  const name = filename || `sophia-diagnostic-${bundle.tenant.maskedId}-${Date.now()}.json`;
+  const maskedId = 'tenant' in bundle ? bundle.tenant.maskedId : bundle.context.maskedUserId;
+  const name = filename || `sophia-diagnostic-${maskedId}-${Date.now()}.json`;
 
   if (typeof window === 'undefined' || typeof document === 'undefined') {
     return;

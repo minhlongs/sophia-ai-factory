@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { PlayCircle, Clock, CheckCircle2, AlertCircle, Share2, Youtube, Send, FileText, LifeBuoy, Cpu } from 'lucide-react';
 import { SupportTicketModal } from '@/components/support/support-ticket-modal';
-import { generateSafeDiagnosticBundle, type SafeDiagnosticBundle } from '@/tree/diagnostics/safe-bundle-generator';
-import type { ActiveProviderStatus } from '@/components/support/diagnostic-bundle-generator';
+import { generateSafeDiagnosticBundle } from '@/tree/diagnostics/safe-bundle-generator';
+import { downloadDiagnosticBundle, type ActiveProviderStatus } from '@/components/support/diagnostic-bundle-generator';
 
 export interface BatchJobItem {
   id: string;
@@ -38,19 +38,6 @@ export interface CustomerOperationsViewProps {
   activeProviders?: ActiveProviderStatus[];
 }
 
-function triggerDownload(bundle: SafeDiagnosticBundle) {
-  if (typeof window === 'undefined') return;
-  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `sophia-diagnostic-${bundle.context.maskedUserId}-${Date.now()}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
 export function CustomerOperationsView({
   locale, userId, batchQueue, syndication, openTicketsCount, appVersion, commitSha, activeProviders = [],
 }: CustomerOperationsViewProps) {
@@ -67,7 +54,7 @@ export function CustomerOperationsView({
       rawErrorLogs: batchQueue.failedCount > 0 ? ['Batch render failures detected in queue'] : [],
       systemHealth: batchQueue.failedCount > 0 ? 'DEGRADED' : 'OPERATIONAL',
     });
-    triggerDownload(bundle);
+    downloadDiagnosticBundle(bundle);
   }
 
   const statusBadge = (st: BatchJobItem['status']) => {
