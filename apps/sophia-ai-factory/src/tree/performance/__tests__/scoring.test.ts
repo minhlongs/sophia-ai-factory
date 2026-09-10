@@ -3,7 +3,7 @@
  * Tests determinism, edge cases, quartile boundaries, and factor explanations.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   computeScore,
   type PerformanceMetrics,
@@ -119,6 +119,15 @@ const zeroEventsMetrics: PerformanceMetrics = {
 // ─── Determinism tests ──────────────────────────────────────────────────────
 
 describe('computeScore — determinism', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(1789000000000));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('same input produces identical output', () => {
     const result1 = computeScore(baseMetrics);
     const result2 = computeScore(baseMetrics);

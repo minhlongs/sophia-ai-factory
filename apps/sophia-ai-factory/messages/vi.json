@@ -133,7 +133,14 @@
       "system": "Kiểm tra hệ thống",
       "aiKeys": "Khóa AI",
       "providers": "Nhà cung cấp",
-      "review": "Xem lại"
+      "review": "Xem lại",
+      "account": "Tài khoản",
+      "aiProvider": "Khóa AI",
+      "payments": "Thanh toán",
+      "firstMission": "Kế hoạch",
+      "ready": "Sẵn sàng",
+      "blueprint": "Kế hoạch",
+      "billing": "Thanh toán"
     },
     "actions": {
       "back": "Quay lại",
@@ -188,7 +195,10 @@
           "Vài phút thời gian của bạn"
         ]
       },
-      "getStarted": "Bắt Đầu"
+      "getStarted": "Bắt Đầu",
+      "stepIndicator": "Bước 1 / 6: Chào Mừng",
+      "valueProp": "Nền tảng sáng tạo video AI tự trị dành riêng cho CEO không chuyên kỹ thuật.",
+      "timeEstimate": "Thời gian thiết lập: ~5 phút"
     },
     "review": {
       "title": "Xem Xét Cấu Hình",
@@ -240,6 +250,119 @@
         "title": "Thiếu Khóa Bắt Buộc",
         "description": "Một số API key bắt buộc đang thiếu. Vui lòng quay lại và nhập các key thiếu để tiếp tục."
       }
+    },
+    "account": {
+      "title": "Không Gian Làm Việc & Tài Khoản",
+      "subtitle": "Cấu hình tên doanh nghiệp, tông giọng thương hiệu và quyền sở hữu.",
+      "stepIndicator": "Bước 2 / 6: Tài Khoản",
+      "workspaceName": "Tên Không Gian Làm Việc",
+      "workspaceNamePlaceholder": "ví dụ: AI Empire Media",
+      "primaryContact": "Email Liên Hệ Chính",
+      "brandTone": "Tông Giọng Thương Hiệu",
+      "brandToneHelp": "Chọn phong cách ngôn ngữ cho các kịch bản video AI của bạn.",
+      "tones": {
+        "professional": "Chuyên nghiệp & Đáng tin cậy",
+        "energetic": "Năng động & Lan tỏa",
+        "casual": "Gần gũi & Thân thiện",
+        "educational": "Giáo dục & Thực tế"
+      },
+      "defaultLanguage": "Ngôn Ngữ Video Mặc Định",
+      "languages": {
+        "vi": "Tiếng Việt (Vietnamese)",
+        "en": "Tiếng Anh (English)"
+      },
+      "ownerRoleBadge": "Quyền Chủ Sở Hữu (Owner)",
+      "ownerRoleDesc": "Tài khoản của bạn tự động nắm quyền Quản trị tối cao (Owner). Bạn có thể mời thành viên sau.",
+      "continue": "Lưu & Tiếp Tục"
+    },
+    "aiProvider": {
+      "title": "Tích Hợp Khóa AI (BYOK)",
+      "subtitle": "Kết nối các nhà cung cấp AI với mô hình Mang Khóa Riêng (Bring Your Own Keys).",
+      "stepIndicator": "Bước 3 / 6: Khóa AI",
+      "doctrineReminder": "Khóa của bạn được mã hóa AES-GCM-256 và chỉ dùng cho các yêu cầu tạo video của bạn.",
+      "falai": {
+        "name": "fal.ai (Tạo hình ảnh & Visuals)",
+        "description": "Tạo hình ảnh siêu thực từ prompt cho từng cảnh quay."
+      },
+      "openrouter": {
+        "name": "OpenRouter / Anthropic (Viết kịch bản)",
+        "description": "Mô hình ngôn ngữ lớn để tạo kịch bản giữ chân người xem."
+      },
+      "elevenlabs": {
+        "name": "ElevenLabs (Lồng tiếng AI)",
+        "description": "Giọng đọc truyền cảm tự nhiên đa ngôn ngữ."
+      },
+      "did": {
+        "name": "D-ID / HeyGen (Avatar AI)",
+        "description": "Tạo nhân vật MC ảo nói chuyện tự nhiên cho video."
+      },
+      "maskedKeyLabel": "Khóa đã lưu",
+      "testConnection": "Kiểm tra kết nối",
+      "testing": "Đang kiểm tra...",
+      "valid": "Kết nối thành công",
+      "invalid": "Khóa không hợp lệ",
+      "optional": "Thêm sau",
+      "required": "Bắt buộc"
+    },
+    "payments": {
+      "title": "Cổng Thanh Toán & Gói Dịch Vụ",
+      "subtitle": "Kích hoạt quyền truy cập hạn mức và phương thức thanh toán an toàn.",
+      "stepIndicator": "Bước 4 / 6: Thanh Toán",
+      "activeTier": "Gói Hiện Tại",
+      "mcuAllocation": "Hạn Mức Compute Hàng Tháng",
+      "mcuHelp": "MCU (Mission Compute Unit) được dùng cho các tác vụ điều phối tự động của Sophia.",
+      "cryptoCheckout": "Thanh toán Tiền điện tử (NOWPayments)",
+      "cryptoDesc": "Thanh toán tức thì bằng USDT, USDC, BTC qua mạng lưới phi tập trung an toàn.",
+      "vietQrCheckout": "Thanh toán VietQR Nội địa (PayOS)",
+      "vietQrDesc": "Chuyển khoản ngân hàng Việt Nam tự động kích hoạt trong 30 giây.",
+      "enterpriseNotice": "Cần giải pháp chuyên biệt? Liên hệ gói Doanh nghiệp không giới hạn.",
+      "continue": "Tiếp Tục"
+    },
+    "firstMission": {
+      "title": "Kế Hoạch Video Đầu Tiên (Mission Blueprint)",
+      "subtitle": "Tất cả thông tin non-technical CEO cần biết trước khi khởi chạy chiến dịch video tự động.",
+      "stepIndicator": "Bước 5 / 6: Kế Hoạch",
+      "badge": "Chiến dịch Mẫu Khởi động",
+      "faqs": {
+        "whatToEnter": {
+          "q": "Tôi cần nhập gì?",
+          "a": "Dán liên kết sản phẩm, bài viết blog hoặc một ý tưởng 1 dòng. Sophia sẽ tự động phân tích và tạo kịch bản lan tỏa."
+        },
+        "whatSophiaDoes": {
+          "q": "Sophia sẽ làm gì?",
+          "a": "Tự động viết kịch bản, lồng tiếng AI, kết xuất hình ảnh, phụ đề động và dựng video MP4 hoàn chỉnh."
+        },
+        "duration": {
+          "q": "Mất bao lâu?",
+          "a": "Từ 60 đến 90 giây từ lúc bấm nút đến khi video sẵn sàng xem lại."
+        },
+        "cost": {
+          "q": "Chi phí bao nhiêu?",
+          "a": "Khoảng $0.03 chi phí nhà cung cấp trực tiếp (không tính chênh lệch) + 40 MCU từ gói hàng tháng của bạn."
+        },
+        "resultLocation": {
+          "q": "Kết quả hiển thị ở đâu?",
+          "a": "Trực tiếp trong Bảng điều khiển Nhiệm vụ và gửi thông báo xem trước qua Telegram Bot của bạn."
+        }
+      },
+      "back": "Quay lại",
+      "continue": "Tiếp tục"
+    },
+    "ready": {
+      "title": "Sophia Đã Sẵn Sàng!",
+      "subtitle": "Toàn bộ hệ thống đã được cấu hình thành công. Bạn đã sẵn sàng vận hành đế chế video AI.",
+      "stepIndicator": "Bước 6 / 6: Sẵn Sàng",
+      "badge": "Sẵn sàng Vận hành 100%",
+      "scorecard": {
+        "title": "Bảng Kiểm tra Sẵn sàng",
+        "workspace": "Không gian làm việc đã khởi tạo",
+        "byok": "Khóa AI được mã hóa và sẵn sàng",
+        "billing": "Hạn mức tính toán đã kích hoạt",
+        "pipeline": "Dây chuyền sản xuất video hoạt động"
+      },
+      "launchFirstMission": "Khởi chạy Chiến dịch Đầu tiên",
+      "goToDashboard": "Vào Bảng điều khiển Chính",
+      "readRunbooks": "Xem Hướng dẫn Vận hành CEO"
     }
   },
   "landing": {
@@ -7295,5 +7418,284 @@
     "usefulYes": "Hữu ích",
     "usefulNo": "Không hữu ích",
     "topReason": "Lý do hàng đầu"
+  },
+  "byokStatus": {
+    "title": "Trạng Thái Khóa API (BYOK)",
+    "subtitle": "Chu trình an toàn 7 trạng thái bảo vệ khóa và đảm bảo tính liên tục vận hành.",
+    "maskingGuarantee": "Mọi khóa hiển thị đều được mã hóa và ẩn dạng ****...${last4}.",
+    "states": {
+      "NOT_CONFIGURED": {
+        "label": "Chưa Cấu Hình",
+        "description": "Khóa API chưa được nhập. Cần thêm khóa để kích hoạt dịch vụ này.",
+        "badge": "Chưa kết nối",
+        "action": "Thêm khóa ngay"
+      },
+      "VALIDATING": {
+        "label": "Đang Kiểm Tra",
+        "description": "Đang gửi yêu cầu kiểm tra thực tế tới nhà cung cấp để xác nhận khóa.",
+        "badge": "Đang xác thực",
+        "action": "Vui lòng đợi..."
+      },
+      "ACTIVE": {
+        "label": "Hoạt Động Tốt",
+        "description": "Khóa hợp lệ và nhà cung cấp sẵn sàng tiếp nhận yêu cầu sản xuất video.",
+        "badge": "Sẵn sàng",
+        "action": "Đổi khóa"
+      },
+      "INVALID": {
+        "label": "Khóa Không Hợp Lệ",
+        "description": "Nhà cung cấp từ chối khóa (mã lỗi 401/403). Vui lòng kiểm tra lại ký tự khóa.",
+        "badge": "Cần sửa",
+        "action": "Cập nhật khóa"
+      },
+      "REVOKED": {
+        "label": "Đã Thu Hồi",
+        "description": "Khóa đã bị chủ sở hữu thu hồi và xóa hoàn toàn khỏi hệ thống mã hóa.",
+        "badge": "Đã vô hiệu",
+        "action": "Kích hoạt lại"
+      },
+      "PROVIDER_UNAVAILABLE": {
+        "label": "Nhà Cung Cấp Tạm Nghẽn",
+        "description": "Máy chủ nhà cung cấp không phản hồi hoặc hết thời gian chờ. Hệ thống sẽ tự động thử lại.",
+        "badge": "Tạm gián đoạn",
+        "action": "Kiểm tra lại"
+      },
+      "UNKNOWN": {
+        "label": "Chưa Xác Định",
+        "description": "Chưa có tín hiệu trạng thái gần đây. Hãy kiểm tra kết nối.",
+        "badge": "Chờ kiểm tra",
+        "action": "Kiểm tra ngay"
+      }
+    }
+  },
+  "incidentUx": {
+    "title": "Trung Tâm Xử Lý Sự Cố Thân Thiện",
+    "subtitle": "Phân loại sự cố an toàn bằng ngôn ngữ kinh doanh rõ ràng, kèm hướng dẫn hành động cụ thể.",
+    "categories": {
+      "KEY_EXPIRED_OR_INVALID": {
+        "label": "Khóa API Hết Hạn hoặc Không Hợp Lệ",
+        "description": "Nhà cung cấp AI từ chối xác thực. Thường do khóa bị hết hạn hoặc bị xóa trên trang nhà cung cấp.",
+        "badge": "Cần cập nhật khóa",
+        "suggestion": "Truy cập trang cài đặt nhà cung cấp, tạo khóa mới và cập nhật vào Sophia."
+      },
+      "PROVIDER_RATE_LIMIT": {
+        "label": "Giới Hạn Tốc Độ Từ Nhà Cung Cấp",
+        "description": "Bạn đã gửi quá nhiều yêu cầu trong một thời gian ngắn tới nhà cung cấp AI.",
+        "badge": "Tạm nghẽn tốc độ",
+        "suggestion": "Hệ thống tự động xếp hàng chờ và thử lại. Bạn không bị trừ thêm chi phí."
+      },
+      "QUOTA_EXHAUSTED": {
+        "label": "Hết Hạn Mức hoặc Số Dư Tài Khoản",
+        "description": "Tài khoản nhà cung cấp AI hoặc gói dịch vụ của bạn đã hết số dư khả dụng.",
+        "badge": "Hết số dư",
+        "suggestion": "Nạp thêm tín dụng vào tài khoản nhà cung cấp hoặc nâng cấp gói Sophia để tiếp tục."
+      },
+      "NETWORK_TIMEOUT": {
+        "label": "Hết Thời Gian Chờ Kết Nối Mạng",
+        "description": "Kết nối mạng giữa Sophia và máy chủ AI bị gián đoạn tạm thời.",
+        "badge": "Mạng chập chờn",
+        "suggestion": "Nhấn nút \"Thử lại\" bên dưới. Tiến trình sẽ tiếp tục từ bước an toàn gần nhất."
+      },
+      "ASSET_VALIDATION_FAILED": {
+        "label": "Tài Nguyên Bị Từ Chối Kiểm Duyệt",
+        "description": "Hình ảnh, giọng nói hoặc nội dung kịch bản bị bộ lọc an toàn của nhà cung cấp chặn lại.",
+        "badge": "Vi phạm kiểm duyệt",
+        "suggestion": "Điều chỉnh nội dung kịch bản hoặc hình ảnh cho phù hợp với chính sách nhà cung cấp."
+      }
+    },
+    "actionZones": {
+      "whatHappened": {
+        "title": "Chuyện gì đã xảy ra?",
+        "label": "Nguyên nhân sự cố",
+        "helpText": "Giải thích chi tiết nguyên nhân sự cố không dùng thuật ngữ kỹ thuật phức tạp."
+      },
+      "whatYouCanDo": {
+        "title": "Bạn có thể làm gì?",
+        "label": "Hướng dẫn khắc phục",
+        "helpText": "Các bước đơn giản từng bước để bạn tự xử lý và khôi phục hoạt động ngay."
+      },
+      "tryAgain": {
+        "title": "Thử Lại Ngay",
+        "button": "Thử Lại Nhiệm Vụ",
+        "retrying": "Đang thử lại...",
+        "success": "Thử lại thành công!",
+        "failure": "Thử lại chưa thành công. Vui lòng liên hệ hỗ trợ."
+      },
+      "contactSupport": {
+        "title": "Liên Hệ Hỗ Trợ",
+        "button": "Mở Phiếu Hỗ Trợ Kèm Chẩn Đoán",
+        "tooltip": "Tự động đính kèm báo cáo ẩn danh giúp đội ngũ xử lý nhanh chóng.",
+        "escalationNotice": "Đội ngũ kỹ thuật trực 24/7 sẵn sàng xử lý các sự cố khẩn cấp."
+      }
+    },
+    "allClear": {
+      "title": "Mọi Dịch Vụ Đều Hoạt Động Bình Thường",
+      "description": "Không có sự cố nào được ghi nhận. Toàn bộ dây chuyền sản xuất video hoạt động trơn tru."
+    }
+  },
+  "operations": {
+    "title": "Trung Tâm Vận Hành Khách Hàng",
+    "subtitle": "Quản lý hàng đợi sản xuất hàng loạt, giám sát kênh phát hành và tài liệu vận hành.",
+    "tabs": {
+      "overview": "Tổng Quan",
+      "batchQueue": "Hàng Đợi Sản Xuất",
+      "syndication": "Kênh Phát Hành",
+      "systemStatus": "Trạng Thái Hệ Thống",
+      "logs": "Nhật Ký Vận Hành",
+      "runbooks": "Sổ Tay Vận Hành CEO"
+    },
+    "systemStatus": {
+      "title": "Trạng Thái Dịch Vụ Cốt Lõi",
+      "allOperational": "Tất cả dịch vụ hoạt động tốt",
+      "degraded": "Một số dịch vụ đang chậm",
+      "actionRequired": "Cần hành động xử lý",
+      "services": {
+        "core": "Sophia Core (Hệ Thống Lõi)",
+        "auth": "Xác Thực & Tài Khoản",
+        "ai": "Nhà Cung Cấp AI (BYOK)",
+        "storage": "Lưu Trữ Video (Cloudflare R2)",
+        "pipeline": "Dây Chuyền Dựng Video",
+        "billing": "Thanh Toán & Hạn Mức",
+        "telegram": "Thông Báo Telegram Bot"
+      }
+    },
+    "queues": {
+      "title": "Hàng Đợi Video Hàng Loạt",
+      "running": "Đang Thực Hiện",
+      "scheduled": "Đã Lên Lịch",
+      "completed": "Đã Hoàn Thành",
+      "failed": "Thất Bại",
+      "totalJobs": "Tổng Số Nhiệm Vụ",
+      "emptyQueue": "Hiện không có video nào trong hàng đợi.",
+      "viewDetails": "Xem chi tiết",
+      "retryJob": "Chạy lại"
+    },
+    "syndication": {
+      "title": "Giám Sát Kênh Phát Hành Đa Nền Tảng",
+      "youtube": "Kênh YouTube Shorts",
+      "tiktok": "Kênh TikTok Shop",
+      "telegram": "Kênh Thông Báo Telegram",
+      "connected": "Đã kết nối",
+      "notConnected": "Chưa kết nối",
+      "syncing": "Đang đồng bộ",
+      "lastSync": "Đồng bộ lần cuối"
+    },
+    "logs": {
+      "title": "Nhật Ký Vận Hành An Toàn",
+      "description": "Nhật ký hoạt động của hệ thống, không chứa thông tin mật hoặc dữ liệu cá nhân.",
+      "filter": "Lọc theo mức độ",
+      "timestamp": "Thời Gian",
+      "level": "Mức Độ",
+      "message": "Nội Dung Sự Kiện",
+      "downloadLogs": "Tải Nhật Ký Vận Hành (JSON)"
+    },
+    "runbooks": {
+      "title": "Sổ Tay Vận Hành CEO (10 Cuốn)",
+      "description": "Tài liệu song ngữ từng bước hướng dẫn non-technical CEO làm chủ toàn bộ nền tảng.",
+      "viewRunbook": "Mở Sổ Tay",
+      "quickstart": "01. Khởi Động Nhanh Trong 10 Phút",
+      "onboarding": "02. Thiết Lập Không Gian & Thương Hiệu",
+      "byok": "03. Quản Lý Khóa API Nhà Cung Cấp",
+      "billing": "04. Hạn Mức Tín Dụng & Thanh Toán",
+      "operations": "05. Hướng Dẫn Vận Hành Sản Xuất",
+      "troubleshooting": "06. Xử Lý Sự Cố Thường Gặp",
+      "security": "07. An Toàn Thông Tin & Quyền Riêng Tư",
+      "disasterRecovery": "08. Phục Hồi Khi Có Sự Cố Đám Mây",
+      "ownership": "09. Quản Lý Thành Viên & Vai Trò",
+      "exit": "10. Xuất Dữ Liệu & Quyền Chuyển Giao"
+    }
+  },
+  "support": {
+    "title": "Trung Tâm Hỗ Trợ Khách Hàng",
+    "subtitle": "Gửi yêu cầu hỗ trợ trực tiếp tới đội ngũ kỹ thuật kèm gói chẩn đoán an toàn.",
+    "submitTicket": {
+      "title": "Gửi Phiếu Hỗ Trợ",
+      "button": "Tạo Phiếu Mới",
+      "modalTitle": "Tạo Yêu Cầu Hỗ Trợ",
+      "subject": "Tiêu Đề",
+      "subjectPlaceholder": "Mô tả ngắn gọn vấn đề gặp phải...",
+      "category": "Danh Mục Sự Cố",
+      "categories": {
+        "byok": "Khóa API / Nhà cung cấp",
+        "rendering": "Lỗi Dựng Video / Pipeline",
+        "billing": "Thanh toán & Hạn mức",
+        "account": "Tài khoản & Phân quyền",
+        "other": "Vấn đề khác"
+      },
+      "description": "Chi Tiết Vấn Đề",
+      "descriptionPlaceholder": "Mô tả chi tiết những gì xảy ra, thời điểm và các bước bạn đã thử...",
+      "priority": "Mức Độ Ưu Tiên",
+      "priorities": {
+        "low": "Thấp (Câu hỏi chung)",
+        "normal": "Bình thường (Ảnh hưởng nhỏ)",
+        "high": "Cao (Lỗi chức năng quan trọng)",
+        "urgent": "Khẩn cấp (Toàn bộ hệ thống dừng)"
+      },
+      "submitting": "Đang gửi phiếu...",
+      "submitSuccess": "Phiếu hỗ trợ đã được gửi thành công! Đội ngũ sẽ phản hồi sớm.",
+      "submitError": "Không thể gửi phiếu hỗ trợ. Vui lòng thử lại sau.",
+      "myTickets": "Phiếu Hỗ Trợ Của Tôi",
+      "noTickets": "Bạn chưa có phiếu hỗ trợ nào."
+    },
+    "exportDiagnosticBundle": {
+      "title": "Gói Chẩn Đoán An Toàn",
+      "button": "Tải Gói Chẩn Đoán (JSON)",
+      "downloading": "Đang tạo báo cáo...",
+      "downloadSuccess": "Tải báo cáo chẩn đoán thành công!",
+      "downloadError": "Không thể tạo báo cáo chẩn đoán.",
+      "description": "Tập tin JSON chứa thông tin phiên bản, trạng thái dịch vụ và mã lỗi ẩn danh."
+    },
+    "redactedNotice": {
+      "title": "Cam Kết Bảo Mật Tuyệt Đối",
+      "description": "Gói chẩn đoán tự động loại bỏ toàn bộ API key, mật khẩu, dữ liệu kịch bản video và thông tin định danh cá nhân (PII).",
+      "guarantee": "Không có thông tin bí mật nào được xuất ra khỏi trình duyệt của bạn.",
+      "safeAuditPledge": "Tuân thủ Quy tắc Sắt số 11 & 12: Không bao giờ để lộ hoặc ghi nhật ký khóa bí mật."
+    }
+  },
+  "systemHealth": {
+    "title": "Trung Tâm Trạng Thái Hệ Thống",
+    "subtitle": "Theo dõi trạng thái các dịch vụ cốt lõi và hướng dẫn xử lý khi có sự cố.",
+    "refreshButton": "Làm Mới Trạng Thái",
+    "allClearTitle": "Mọi Dịch Vụ Đều Hoạt Động Bình Thường",
+    "allClearDesc": "Tất cả các dịch vụ nền tảng đều phản hồi tốt. Không phát hiện sự cố nào.",
+    "activeIncidentsTitle": "Sự Cố Đang Cần Xử Lý ({count})",
+    "servicesTitle": "Dịch Vụ Cốt Lõi (7 Thành Phần)",
+    "statuses": {
+      "READY": "Sẵn Sàng",
+      "DEGRADED": "Chậm",
+      "ACTION_REQUIRED": "Cần Xử Lý",
+      "CONNECTED": "Đã Kết Nối",
+      "NOT_CONNECTED": "Chưa Kết Nối"
+    }
+  },
+  "customerOperations": {
+    "title": "Trung Tâm Vận Hành",
+    "batchQueueTitle": "Hàng Đợi Sản Xuất",
+    "channelsTitle": "Kênh Phát Hành Đa Nền Tảng",
+    "recentJobsTitle": "Nhiệm Vụ Gần Đây",
+    "downloadDiagnostics": "Tải Chẩn Đoán An Toàn",
+    "openSupportModal": "Mở Phiếu Hỗ Trợ"
+  },
+  "firstRun": {
+    "title": "Tạo Chiến Dịch Video Đầu Tiên",
+    "subtitle": "Chỉ với một liên kết hoặc ý tưởng, Sophia sẽ tự động sản xuất video hoàn chỉnh trong 60-90 giây.",
+    "templateSelectorTitle": "Chọn Mẫu Chiến Dịch Bắt Đầu",
+    "costEstimatorTitle": "Dự Toán Chi Phí & Thời Gian Minh Bạch",
+    "zeroHiddenFeesGuarantee": "Cam kết 0% phụ phí ẩn: Chi phí API được tính trực tiếp từ nhà cung cấp theo biểu giá gốc.",
+    "launchButton": "Khởi Chạy Video Đầu Tiên",
+    "templates": {
+      "viralShorts": {
+        "name": "Viral Shorts Explainer (60 giây)",
+        "description": "Kịch bản thu hút cao, hình ảnh biến đổi liên tục, nhịp độ nhanh cho YouTube Shorts và TikTok."
+      },
+      "affiliateShowcase": {
+        "name": "Affiliate Product Showcase (30 giây)",
+        "description": "Tập trung chuyển đổi, làm nổi bật lợi ích sản phẩm kèm lời kêu gọi hành động rõ ràng."
+      },
+      "dailyWisdom": {
+        "name": "Daily News & Wisdom (45 giây)",
+        "description": "Tin tức tóm tắt và bài học súc tích, phong cách trực quan trang nhã."
+      }
+    }
   }
 }

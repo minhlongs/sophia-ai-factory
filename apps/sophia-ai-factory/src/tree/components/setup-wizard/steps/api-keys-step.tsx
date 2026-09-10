@@ -19,9 +19,10 @@ interface ApiKeysStepProps {
   errors: Record<string, string>;
   latencies?: Record<string, number>;
   onNext: () => void;
+  onBack?: () => void;
 }
 
-export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, latencies, onNext }: ApiKeysStepProps) {
+export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, latencies, onNext, onBack }: ApiKeysStepProps) {
   const t = useTranslations('setupWizard.apiKeys');
   const actions = useTranslations('setupWizard.actions');
 
@@ -135,7 +136,16 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, l
         />
       </div>
 
-      <div className="flex justify-end pt-2">
+      <div className="flex justify-between items-center pt-2">
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2"
+          >
+            Quay lại / Back
+          </button>
+        ) : <div />}
         <button
           type="button"
           onClick={onNext}

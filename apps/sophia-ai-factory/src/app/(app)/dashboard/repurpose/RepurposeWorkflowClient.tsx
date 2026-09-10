@@ -49,8 +49,7 @@ export function RepurposeWorkflowClient({ jobs: initialJobs }: { jobs: Repurpose
         // Refresh jobs list
         const listRes = await fetch('/api/repurpose/jobs');
         if (listRes.ok) {
-          const listData = await listRes.json();
-          // @ts-ignore — update optimistic list from server
+          const listData = (await listRes.json()) as { jobs?: RepurposeJob[] };
           setJobs(listData.jobs ?? []);
         }
       } catch (err) {

@@ -3,52 +3,68 @@
 import React, { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import { WelcomeStep } from './welcome-step';
+import { AccountStep } from './account-step';
 import { ApiKeysStep } from './api-keys-step';
-import { ProviderCredentialsStep, type ProviderConfig } from './provider-credentials-step';
-import { ReviewStep } from './review-step';
+import { PaymentStep } from './payment-step';
 import { FinishStep } from './finish-step';
-import { SystemCheckStep } from './system-check-step';
 import { WizardStepper } from '@/tree/components/setup-wizard/wizard-stepper';
 import { ByokDoctrineBanner } from '@/tree/components/setup-wizard/byok-doctrine-banner';
+import { Compass, HelpCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 
-const STEPS = [
-  'welcome',
-  'system_check',
-  'api_keys',
-  'provider_credentials',
-  'review',
-  'finish',
-] as const;
+const STEPS = ['Welcome', 'Account', 'AI Keys', 'Billing', 'Blueprint', 'Ready'] as const;
 
-type StepKey = typeof STEPS[number];
+function MissionBlueprintStep({ onNext, onBack }: { onNext: () => void; onBack: () => void }) {
+  const faqs = [
+    { q: 'WHAT DO I ENTER? / Tôi cần nhập gì?', a: 'Paste a product link, blog URL, or 1-line concept. Sophia handles viral hooks.' },
+    { q: 'WHAT WILL SOPHIA DO? / Sophia sẽ làm gì?', a: 'Generates scripts, synthesizes voice, renders AI imagery, adds captions & produces MP4.' },
+    { q: 'HOW LONG WILL IT TAKE? / Mất bao lâu?', a: '60 to 90 seconds from click to finished campaign video.' },
+    { q: 'WHAT WILL IT COST? / Chi phí bao nhiêu?', a: '~$0.03 provider API compute (direct at 0% markup) + 40 MCU from your monthly plan.' },
+    { q: 'WHERE WILL RESULT APPEAR? / Kết quả ở đâu?', a: 'Directly in your Mission Dashboard with instant Telegram preview bot alerts.' },
+  ];
 
-const STEP_LABELS: Record<StepKey, string> = {
-  welcome: 'Welcome',
-  system_check: 'System Check',
-  api_keys: 'API Keys',
-  provider_credentials: 'Providers',
-  review: 'Review',
-  finish: 'Finish',
-};
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+      <div>
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-2">
+          <Compass className="w-3.5 h-3.5" />
+          First Campaign Blueprint / Kế hoạch Video Đầu Tiên
+        </div>
+        <h2 className="text-xl font-semibold text-foreground">
+          How Sophia Runs Your First Mission / Quy trình khởi tạo
+        </h2>
+        <p className="text-sm text-muted-foreground mt-1">
+          Everything non-technical CEOs need to know before launching their first autonomous video.
+        </p>
+      </div>
 
-interface SetupWizardConfig {
-  OPENROUTER_API_KEY: string;
-  ANTHROPIC_API_KEY: string;
-  ELEVENLABS_API_KEY: string;
-  DID_API_KEY: string;
-  MUAPI_API_KEY: string;
-  REPLICATE_API_KEY: string;
-  FAL_API_KEY: string;
-  HEYGEN_API_KEY: string;
-  RESEND_API_KEY: string;
-  NOWPAYMENTS_API_KEY: string;
-  ROUTING_STRATEGY: 'auto' | 'manual';
+      <div className="grid gap-2.5">
+        {faqs.map((item, idx) => (
+          <div key={idx} className="p-3.5 rounded-xl border border-border bg-card/80 flex items-start gap-3">
+            <HelpCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+            <div className="text-xs space-y-0.5">
+              <h4 className="font-semibold text-foreground">{item.q}</h4>
+              <p className="text-muted-foreground">{item.a}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex justify-between items-center pt-4 border-t border-border">
+        <button type="button" onClick={onBack} className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2 flex items-center gap-1.5">
+          <ArrowLeft className="w-4 h-4" /> Quay lại / Back
+        </button>
+        <button type="button" onClick={onNext} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2">
+          Tiếp tục / Continue <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export function SetupWizardPage() {
   const t = useTranslations('setupWizard');
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [config, setConfig] = useState<SetupWizardConfig>({
+  const [config, setConfig] = useState({
     OPENROUTER_API_KEY: '',
     ANTHROPIC_API_KEY: '',
     ELEVENLABS_API_KEY: '',
@@ -56,31 +72,14 @@ export function SetupWizardPage() {
     MUAPI_API_KEY: '',
     REPLICATE_API_KEY: '',
     FAL_API_KEY: '',
-    HEYGEN_API_KEY: '',
-    RESEND_API_KEY: '',
-    NOWPAYMENTS_API_KEY: '',
-    ROUTING_STRATEGY: 'auto',
   });
   const [status, setStatus] = useState<Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [latencies, setLatencies] = useState<Record<string, number>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveFailed, setSaveFailed] = useState(false);
-  const [providerConfig, setProviderConfig] = useState<ProviderConfig>({
-    HEYGEN_API_KEY: '',
-    RESEND_API_KEY: '',
-    NOWPAYMENTS_API_KEY: '',
-    HEYGEN_WEBHOOK_SECRET: '',
-    ROUTING_STRATEGY: 'priority',
-  });
 
   const updateConfig = useCallback((key: string, value: string) => {
-    setConfig(prev => ({ ...prev, [key]: value }));
-  }, []);
-
-  const updateProviderConfig = useCallback((key: string, value: string) => {
-    setProviderConfig(prev => ({ ...prev, [key]: value }));
-    // Also sync to main config
     setConfig(prev => ({ ...prev, [key]: value }));
   }, []);
 
@@ -90,42 +89,22 @@ export function SetupWizardPage() {
       setErrors(prev => ({ ...prev, [keyName]: t('errors.emptyKey') }));
       return false;
     }
-
     setStatus(prev => ({ ...prev, [keyName]: 'validating' }));
     setErrors(prev => ({ ...prev, [keyName]: '' }));
-
     try {
       const start = Date.now();
-      const endpointMap: Record<string, string> = {
-        heygen: '/api/setup-wizard/test-heygen',
-        resend: '/api/setup-wizard/test-resend',
-      };
-      const endpoint = endpointMap[service];
-
-      if (!endpoint) {
-        // No verification endpoint for this service — mark as valid
-        await new Promise(resolve => setTimeout(resolve, 300));
-        const latency = Date.now() - start;
-        setStatus(prev => ({ ...prev, [keyName]: 'valid' }));
-        setLatencies(prev => ({ ...prev, [keyName]: latency }));
-        return true;
-      }
-
-      const response = await fetch(endpoint, {
+      const res = await fetch('/api/setup-wizard/validate-key', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [`${service}_api_key`]: keyValue }),
+        body: JSON.stringify({ provider: service, api_key: keyValue }),
       });
-
-      const data = await response.json() as { ok?: boolean; message?: string; message_vi?: string };
-      const latency = Date.now() - start;
-
-      if (response.ok && data.ok !== false) {
+      const data = await res.json() as { valid?: boolean; message?: string; message_vi?: string; latencyMs?: number };
+      const latency = data.latencyMs ?? (Date.now() - start);
+      if (res.ok && data.valid) {
         setStatus(prev => ({ ...prev, [keyName]: 'valid' }));
         setLatencies(prev => ({ ...prev, [keyName]: latency }));
         return true;
       }
-
       const errMsg = data.message_vi || data.message || t('errors.verificationFailed');
       setStatus(prev => ({ ...prev, [keyName]: 'invalid' }));
       setErrors(prev => ({ ...prev, [keyName]: errMsg }));
@@ -138,24 +117,11 @@ export function SetupWizardPage() {
     }
   }, [t]);
 
-  const handleNext = useCallback(() => {
-    if (currentStepIndex < STEPS.length - 1) {
-      setCurrentStepIndex(prev => prev + 1);
-    }
-  }, [currentStepIndex]);
-
-  const handleBack = useCallback(() => {
-    if (currentStepIndex > 0) {
-      setCurrentStepIndex(prev => prev - 1);
-    }
-  }, [currentStepIndex]);
-
   const handleSave = useCallback(async () => {
     setSaveError(null);
     setSaveFailed(false);
-
     try {
-      const keyToProvider: Record<string, string> = {
+      const keyMap: Record<string, string> = {
         OPENROUTER_API_KEY: 'openrouter',
         ANTHROPIC_API_KEY: 'anthropic',
         ELEVENLABS_API_KEY: 'elevenlabs',
@@ -164,137 +130,53 @@ export function SetupWizardPage() {
         REPLICATE_API_KEY: 'replicate',
         FAL_API_KEY: 'fal-ai',
       };
-
-      // Split credentials by save path
-      const byokCredentials = Object.entries(config)
-        .filter(([k, v]) => keyToProvider[k] && v.trim())
-        .map(([k, v]) => ({ provider: keyToProvider[k], api_key: v }));
-
-      const providerCreds = [
-        providerConfig.HEYGEN_API_KEY ? { provider: 'heygen', api_key: providerConfig.HEYGEN_API_KEY } : null,
-        providerConfig.RESEND_API_KEY ? { provider: 'resend', api_key: providerConfig.RESEND_API_KEY } : null,
-        providerConfig.NOWPAYMENTS_API_KEY ? { provider: 'nowpayments', api_key: providerConfig.NOWPAYMENTS_API_KEY } : null,
-      ].filter((c): c is { provider: string; api_key: string } => c !== null);
-
-      // Save BYOK keys to /api/user/byok (one call per provider)
-      if (byokCredentials.length > 0) {
-        for (const { provider, api_key } of byokCredentials) {
-          const response = await fetch('/api/user/byok', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ provider, key: api_key }),
-          });
-          if (!response.ok) {
-            const data = await response.json() as { error?: string };
-            throw new Error(data.error || t('errors.saveFailed'));
-          }
-        }
-      }
-
-      // Save provider credentials to /api/setup-wizard/save-credentials (flat schema)
-      if (providerCreds.length > 0) {
-        const flatCreds: Record<string, string> = {};
-        for (const { provider, api_key } of providerCreds) {
-          if (provider === 'heygen') flatCreds.heygen_api_key = api_key;
-          else if (provider === 'resend') flatCreds.resend_api_key = api_key;
-          else if (provider === 'nowpayments') flatCreds.nowpayments_api_key = api_key;
-        }
-        const response = await fetch('/api/setup-wizard/save-credentials', {
+      const entries = Object.entries(config).filter(([k, v]) => keyMap[k] && v.trim());
+      for (const [k, v] of entries) {
+        const res = await fetch('/api/user/byok', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(flatCreds),
+          body: JSON.stringify({ provider: keyMap[k], key: v }),
         });
-        if (!response.ok) {
-          const data = await response.json() as { error?: string };
-          throw new Error(data.error || t('errors.saveFailed'));
+        if (!res.ok) {
+          const d = await res.json() as { error?: string };
+          throw new Error(d.error || t('errors.saveFailed'));
         }
       }
-
-      window.location.href = '/dashboard';
-    } catch {
-      setSaveError(t('errors.saveFailed'));
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : t('errors.saveFailed'));
       setSaveFailed(true);
     }
-  }, [t, config, providerConfig]);
+  }, [t, config]);
 
-  const handleRetry = useCallback(() => {
-    setSaveError(null);
-    setSaveFailed(false);
-  }, []);
+  const handleNext = useCallback(async () => {
+    if (currentStepIndex === 4) {
+      await handleSave();
+    }
+    if (currentStepIndex < STEPS.length - 1) {
+      setCurrentStepIndex(prev => prev + 1);
+    }
+  }, [currentStepIndex, handleSave]);
 
-  const currentStep = STEPS[currentStepIndex];
+  const handleBack = useCallback(() => {
+    if (currentStepIndex > 0) setCurrentStepIndex(prev => prev - 1);
+  }, [currentStepIndex]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <WizardStepper currentStep={currentStepIndex + 1} steps={Array.from(STEPS)} />
         <ByokDoctrineBanner />
-
-        <WizardStepper
-          currentStep={currentStepIndex}
-          steps={STEPS.map(s => STEP_LABELS[s as StepKey])}
-        />
-
-        <div className="mt-8 animate-in fade-in slide-in-from-right-4 duration-300">
-          {currentStep === 'welcome' && (
-            <WelcomeStep onNext={handleNext} />
+        <div className="bg-card border border-border rounded-2xl p-6 sm:p-8 shadow-sm">
+          {currentStepIndex === 0 && <WelcomeStep onNext={handleNext} />}
+          {currentStepIndex === 1 && <AccountStep onNext={handleNext} onBack={handleBack} />}
+          {currentStepIndex === 2 && (
+            <ApiKeysStep config={config} updateConfig={updateConfig} verifyKey={verifyKey} status={status} errors={errors} latencies={latencies} onNext={handleNext} onBack={handleBack} />
           )}
-
-          {currentStep === 'system_check' && (
-            <SystemCheckStep onNext={handleNext} />
-          )}
-
-          {currentStep === 'api_keys' && (
-            <ApiKeysStep
-              config={config}
-              updateConfig={updateConfig}
-              verifyKey={verifyKey}
-              status={status}
-              errors={errors}
-              latencies={latencies}
-              onNext={handleNext}
-            />
-          )}
-
-          {currentStep === 'provider_credentials' && (
-            <ProviderCredentialsStep
-              config={providerConfig}
-              updateConfig={updateProviderConfig}
-              status={status}
-              errors={errors}
-              onTestKey={verifyKey}
-              savedCredentials={[]}
-              latencies={latencies}
-              onNext={handleNext}
-            />
-          )}
-
-          {currentStep === 'review' && (
-            <ReviewStep
-              config={config}
-              providerConfig={providerConfig}
-              onConfirm={handleSave}
-              onBack={handleBack}
-              loading={saveFailed}
-            />
-          )}
-
-          {currentStep === 'finish' && (
-            <FinishStep
-              saveError={saveError}
-              saveFailed={saveFailed}
-              onRetry={handleRetry}
-            />
-          )}
+          {currentStepIndex === 3 && <PaymentStep onNext={handleNext} onBack={handleBack} />}
+          {currentStepIndex === 4 && <MissionBlueprintStep onNext={handleNext} onBack={handleBack} />}
+          {currentStepIndex === 5 && <FinishStep saveError={saveError} saveFailed={saveFailed} onRetry={handleSave} />}
         </div>
       </div>
     </div>
   );
 }
-
-// Re-export individual steps for testing
-export { WelcomeStep } from './welcome-step';
-export { ApiKeysStep } from './api-keys-step';
-export { ProviderCredentialsStep } from './provider-credentials-step';
-export { ReviewStep } from './review-step';
-export { FinishStep } from './finish-step';
-export { SystemCheckStep } from './system-check-step';

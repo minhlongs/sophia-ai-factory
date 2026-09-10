@@ -15,7 +15,7 @@
 ║  PRODUCTION READINESS     : 100% READY FOR CUSTOMER HANDOVER ║
 ║  CODE STATUS              : 100% HARDENED, MIGRATED & VERIFIED║
 ║  BUILD & TYPECHECK        : 0 ERRORS (PASS)                  ║
-║  TEST REGRESSION          : 8,943 PASSED, 0 FAILED           ║
+║  TEST REGRESSION          : 8,944 PASSED, 0 FAILED           ║
 ║  SECURITY DEFECTS         : 0 HIGH / CRITICAL                ║
 ║  FOUNDER BOOTSTRAP        : ZERO-TOUCH AUTOMATED (P0-01 GREEN)║
 ║  BYOK COVERAGE            : COMPLETE (fal.ai in Wizard)      ║
@@ -51,7 +51,7 @@ The platform is officially certified as **CUSTOMER HANDOVER SAFE (GREEN)**. With
 | **P1-02** | Missing Bootstrap Runbook | 🟡 GAP | **RESOLVED (SHIPPED & HARDENED).** Documented in `docs/runbooks/OPERATOR-BOOTSTRAP.md` (RUN-BOOT-001) with Zero-Touch Primary and Break-Glass Secondary procedures. |
 | **P2-01** | `revalidateTag` doctrine drift | 🟡 DEGRADED | **RESOLVED (SHIPPED).** Doctrine in `.claude/rules/sophia-no-tech-doctrine.md` reconciled with code reality: path-only invalidation across 47 routes (`revalidatePath`). |
 | **P2-02** | Backup retention verification | 🟡 DEGRADED | **RESOLVED (SHIPPED).** Comprehensive DR SOP created in `docs/runbooks/DISASTER-RECOVERY.md` (`RUN-DR-001`), documenting non-destructive ephemeral testing and RTO/RPO targets. |
-| **P3-01** | Local SHA ≠ Live SHA | 🟡 STALE | **RESOLVED (SHIPPED & VERIFIED).** Deployed commit `12b8a022` to Cloudflare Workers via CF-direct doctrine (`deploy-with-sha.sh`). Verified `curl https://sophia.agencyos.network/api/version` → `shortSha: "12b8a022"`. |
+| **P3-01** | Local SHA ≠ Live SHA | 🟡 STALE | **RESOLVED (SHIPPED & VERIFIED).** Deployed commit `c35840f4` to Cloudflare Workers via CF-direct doctrine (`deploy-with-sha.sh`). Verified `curl https://sophia.agencyos.network/api/version` → `shortSha: "c35840f4"`. |
 
 ---
 

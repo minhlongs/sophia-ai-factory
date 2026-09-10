@@ -101,8 +101,8 @@ export interface ScoreResult {
 export function computeScore(
   metrics: PerformanceMetrics,
   config: ScorerConfig = DEFAULT_CONFIG,
+  now: number = Date.now(),
 ): ScoreResult {
-  const now = Date.now();
 
   // --- Engagement Rate ---
   // engagements / max(views, impressions) — avoid division by zero

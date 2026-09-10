@@ -1,6 +1,25 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-09 | **Current Version:** 0.1.6 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 34219be6
+**Last Updated:** 2026-09-10 | **Current Version:** 0.1.7 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** c35840f4
+
+---
+
+## 2026-09-10 (FOUNDER BOOTSTRAP AUTHORIZATION REMEDIATION, COMPLETE)
+
+**Severity: P0 AUTH REMEDIATION | Type: Code Fix + Schema Migration + Architecture Hardening | Status: SHIPPED**
+
+Following comprehensive audit of the proposed manual SQL bootstrap command, a full 5-phase remediation was executed to replace manual database privilege escalation with an automated, auditable, zero-touch founder authorization architecture certified as `CUSTOMER HANDOVER SAFE (GREEN)`.
+
+**What changed:**
+- **`migrations/0272_user_profiles_role.sql`** — Added tracked `role TEXT DEFAULT 'user'` column with `idx_user_profiles_role` to `user_profiles`, eliminating schema drift.
+- **`src/seed/auth/founder-bootstrap.ts`** — Implemented zero-touch bootstrap hook `bootstrapFounderIfConfigured(user)` checking `FOUNDER_EMAIL` secret. Atomically elevates `"user".role = 'admin'`, `user_profiles.role = 'admin'`, `subscriptions.tier = 'MASTER'`, and inserts immutable record into `admin_audit_log` with action type `'FOUNDER_BOOTSTRAP'`.
+- **`src/seed/auth/better-auth-server.ts`** — Wired `bootstrapFounderIfConfigured` inside `databaseHooks.user.create.after`, minting session tokens after elevation to eliminate cookie cache split-brain.
+- **`src/land/admin/org-manager.ts`** — Unified `requireMaster()` gate to grant access to system admins (`isAdmin || user.role === 'admin'`) alongside active MASTER tier subscribers.
+- **`docs/runbooks/OPERATOR-BOOTSTRAP.md`** — Updated RUN-BOOT-001 with zero-touch automated primary procedure and break-glass atomic secondary SQL, correcting column name to `onboarding_completed_at`.
+
+**Tests:** 8,944 passing across 868 test files (0 failures). Typecheck clean (0 errors). Build exit 0.
+
+**Deploy:** CF-direct doctrine. Commit SHA `c35840f4` deployed to production Cloudflare Workers (`sophia.agencyos.network`). Remote D1 migration 0272 verified with `pragma_table_info('user_profiles')`. Authoritative shortSha match `c35840f4`. HTTP 200 smoke tests verified.
 
 ---
 

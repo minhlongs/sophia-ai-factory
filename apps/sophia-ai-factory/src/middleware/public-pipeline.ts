@@ -45,6 +45,18 @@ export async function handlePublicPipeline(
     return applyCorsHeaders(NextResponse.redirect(target), origin);
   }
 
+  // Canonical onboarding redirect: /setup-wizard → /[locale]/setup
+  if (path === '/setup-wizard' || path === '/setup-wizard/') {
+    const target = new URL('/vi/setup', request.url);
+    return applyCorsHeaders(NextResponse.redirect(target), origin);
+  }
+  const setupWizardMatch = path.match(/^\/(en|vi)\/setup-wizard\/?$/);
+  if (setupWizardMatch) {
+    const locale = setupWizardMatch[1];
+    const target = new URL(`/${locale}/setup`, request.url);
+    return applyCorsHeaders(NextResponse.redirect(target), origin);
+  }
+
   // If request has a locale prefix on a bare route, rewrite to bare path first
   const stripped = stripLocalePrefix(request.nextUrl.pathname);
   let localeForCookie: string | null = null;

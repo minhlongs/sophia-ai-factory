@@ -133,7 +133,14 @@
       "system": "System Check",
       "aiKeys": "AI Keys",
       "providers": "Providers",
-      "review": "Review"
+      "review": "Review",
+      "account": "Account",
+      "aiProvider": "AI Keys",
+      "payments": "Billing",
+      "firstMission": "Blueprint",
+      "ready": "Ready",
+      "blueprint": "Blueprint",
+      "billing": "Billing"
     },
     "actions": {
       "back": "Back",
@@ -188,7 +195,10 @@
           "A few minutes of your time"
         ]
       },
-      "getStarted": "Get Started"
+      "getStarted": "Get Started",
+      "stepIndicator": "Step 1 of 6: Welcome",
+      "valueProp": "Autonomous AI video factory built for non-technical CEOs.",
+      "timeEstimate": "Estimated setup time: ~5 minutes"
     },
     "review": {
       "title": "Review Your Configuration",
@@ -240,6 +250,119 @@
         "title": "Missing Required Keys",
         "description": "Some required API keys are missing. Please go back and enter the missing keys to continue."
       }
+    },
+    "account": {
+      "title": "Workspace Identity & Account",
+      "subtitle": "Configure your business identity, brand tone, and ownership.",
+      "stepIndicator": "Step 2 of 6: Account",
+      "workspaceName": "Workspace Name",
+      "workspaceNamePlaceholder": "e.g., AI Empire Media",
+      "primaryContact": "Primary Contact Email",
+      "brandTone": "Brand Tone",
+      "brandToneHelp": "Select language style for your AI video scripts.",
+      "tones": {
+        "professional": "Professional & Authoritative",
+        "energetic": "Energetic & Viral",
+        "casual": "Casual & Relatable",
+        "educational": "Educational & Practical"
+      },
+      "defaultLanguage": "Default Video Language",
+      "languages": {
+        "vi": "Vietnamese (Tiếng Việt)",
+        "en": "English (Tiếng Anh)"
+      },
+      "ownerRoleBadge": "Workspace Owner Role",
+      "ownerRoleDesc": "Your account is assigned sovereign Owner permissions. You can invite team members later.",
+      "continue": "Save & Continue"
+    },
+    "aiProvider": {
+      "title": "AI Provider BYOK Integration",
+      "subtitle": "Connect your own AI providers with zero platform markup.",
+      "stepIndicator": "Step 3 of 6: AI Keys",
+      "doctrineReminder": "Your keys are AES-GCM-256 encrypted and only invoked for your video renders.",
+      "falai": {
+        "name": "fal.ai (Image & Visual Generation)",
+        "description": "Generates photorealistic scene visuals from prompts."
+      },
+      "openrouter": {
+        "name": "OpenRouter / Anthropic (Scriptwriting)",
+        "description": "LLM intelligence for high-retention video scripts."
+      },
+      "elevenlabs": {
+        "name": "ElevenLabs (Voice Synthesis)",
+        "description": "Ultra-realistic expressive voiceovers in any language."
+      },
+      "did": {
+        "name": "D-ID / HeyGen (Talking Avatars)",
+        "description": "Lifelike AI digital presenters and talking heads."
+      },
+      "maskedKeyLabel": "Encrypted Key",
+      "testConnection": "Test Connection",
+      "testing": "Testing...",
+      "valid": "Connection Active",
+      "invalid": "Invalid API Key",
+      "optional": "Optional / Add Later",
+      "required": "Required"
+    },
+    "payments": {
+      "title": "Payment Gateway & Subscription",
+      "subtitle": "Activate compute allowances and secure checkout channels.",
+      "stepIndicator": "Step 4 of 6: Billing",
+      "activeTier": "Current Tier",
+      "mcuAllocation": "Monthly MCU Compute Allowance",
+      "mcuHelp": "MCU credits power autonomous agent orchestration and video pipeline operations.",
+      "cryptoCheckout": "Crypto Checkout (NOWPayments)",
+      "cryptoDesc": "Instant checkout via USDT, USDC, BTC with instant activation.",
+      "vietQrCheckout": "Domestic VietQR (PayOS)",
+      "vietQrDesc": "Instant Vietnam bank transfer with auto-activation in 30 seconds.",
+      "enterpriseNotice": "Need custom scale? Contact our enterprise team for dedicated capacity.",
+      "continue": "Continue"
+    },
+    "firstMission": {
+      "title": "First Mission Blueprint",
+      "subtitle": "Everything non-technical CEOs need to know before launching their first autonomous video.",
+      "stepIndicator": "Step 5 of 6: Blueprint",
+      "badge": "Starter Campaign Blueprint",
+      "faqs": {
+        "whatToEnter": {
+          "q": "What do I enter?",
+          "a": "Paste a product link, blog URL, or 1-line concept. Sophia handles viral hooks."
+        },
+        "whatSophiaDoes": {
+          "q": "What will Sophia do?",
+          "a": "Generates scripts, synthesizes voice, renders AI imagery, adds captions & produces MP4."
+        },
+        "duration": {
+          "q": "How long will it take?",
+          "a": "60 to 90 seconds from click to finished campaign video."
+        },
+        "cost": {
+          "q": "What will it cost?",
+          "a": "~$0.03 direct provider API compute (0% platform markup) + 40 MCU from your plan."
+        },
+        "resultLocation": {
+          "q": "Where will results appear?",
+          "a": "Directly in your Mission Dashboard with instant Telegram preview bot alerts."
+        }
+      },
+      "back": "Back",
+      "continue": "Continue"
+    },
+    "ready": {
+      "title": "Sophia is Ready!",
+      "subtitle": "All systems are configured. You are ready to launch and scale your autonomous video empire.",
+      "stepIndicator": "Step 6 of 6: Ready",
+      "badge": "100% Operational Ready",
+      "scorecard": {
+        "title": "Readiness Scorecard",
+        "workspace": "Workspace initialized & active",
+        "byok": "BYOK keys securely encrypted & verified",
+        "billing": "Compute allowances activated",
+        "pipeline": "Autonomous video pipeline ready"
+      },
+      "launchFirstMission": "Launch Your First Campaign",
+      "goToDashboard": "Go to Main Dashboard",
+      "readRunbooks": "Read CEO Operational Runbooks"
     }
   },
   "landing": {
@@ -7288,5 +7411,284 @@
     "usefulYes": "Useful",
     "usefulNo": "Not useful",
     "topReason": "Top reason"
+  },
+  "byokStatus": {
+    "title": "BYOK API Key Lifecycle",
+    "subtitle": "7-state safety lifecycle protecting your keys and guaranteeing operational continuity.",
+    "maskingGuarantee": "All stored keys are AES-GCM-256 encrypted and displayed masked as ****...${last4}.",
+    "states": {
+      "NOT_CONFIGURED": {
+        "label": "Not Configured",
+        "description": "API key has not been entered. Add a key to activate this service.",
+        "badge": "Disconnected",
+        "action": "Add Key"
+      },
+      "VALIDATING": {
+        "label": "Validating",
+        "description": "Sending live upstream probe to verify key authenticity and reachability.",
+        "badge": "Validating",
+        "action": "Please wait..."
+      },
+      "ACTIVE": {
+        "label": "Active & Healthy",
+        "description": "Key is valid and upstream provider is responsive and ready for production.",
+        "badge": "Active",
+        "action": "Rotate Key"
+      },
+      "INVALID": {
+        "label": "Invalid Key",
+        "description": "Upstream provider rejected credentials (401/403). Please verify and update key.",
+        "badge": "Action Required",
+        "action": "Update Key"
+      },
+      "REVOKED": {
+        "label": "Revoked",
+        "description": "Key has been revoked by workspace owner and purged from secure storage.",
+        "badge": "Disabled",
+        "action": "Re-enable"
+      },
+      "PROVIDER_UNAVAILABLE": {
+        "label": "Provider Unavailable",
+        "description": "Upstream provider timed out or is temporarily unreachable. Safe fallback active.",
+        "badge": "Degraded",
+        "action": "Retry Ping"
+      },
+      "UNKNOWN": {
+        "label": "Status Unknown",
+        "description": "No recent health telemetry received. Run a manual probe to check status.",
+        "badge": "Pending Check",
+        "action": "Probe Now"
+      }
+    }
+  },
+  "incidentUx": {
+    "title": "Customer Incident Center",
+    "subtitle": "CEO-safe incident classification with plain-language explanations and immediate recovery steps.",
+    "categories": {
+      "KEY_EXPIRED_OR_INVALID": {
+        "label": "API Key Expired or Invalid",
+        "description": "Upstream AI provider rejected authorization. Key may have expired or was revoked.",
+        "badge": "Key Action Needed",
+        "suggestion": "Visit your provider dashboard, generate a fresh key, and update it in Settings."
+      },
+      "PROVIDER_RATE_LIMIT": {
+        "label": "Provider Rate Limit Reached",
+        "description": "Request volume exceeded provider per-minute or per-second throughput limits.",
+        "badge": "Rate Throttled",
+        "suggestion": "Sophia automatically queues and retries with backoff. Zero extra compute deducted."
+      },
+      "QUOTA_EXHAUSTED": {
+        "label": "Quota or Balance Depleted",
+        "description": "Your provider account balance or monthly Sophia compute quota has been fully consumed.",
+        "badge": "Balance Empty",
+        "suggestion": "Top up credits on your provider portal or upgrade your Sophia tier to resume."
+      },
+      "NETWORK_TIMEOUT": {
+        "label": "Network Connection Timeout",
+        "description": "Temporary network latency spike between Sophia and external AI cluster.",
+        "badge": "Timeout",
+        "suggestion": "Click \"Try Again\" below. Execution safely resumes from the last checkpoint."
+      },
+      "ASSET_VALIDATION_FAILED": {
+        "label": "Asset Validation Rejected",
+        "description": "Content, prompt, or image was filtered by provider safety or moderation policies.",
+        "badge": "Content Filtered",
+        "suggestion": "Modify script phrasing or prompt keywords to adhere to provider safety guidelines."
+      }
+    },
+    "actionZones": {
+      "whatHappened": {
+        "title": "What Happened?",
+        "label": "Incident Cause",
+        "helpText": "Plain-language explanation of the issue without technical developer jargon."
+      },
+      "whatYouCanDo": {
+        "title": "What You Can Do",
+        "label": "Remediation Steps",
+        "helpText": "Step-by-step actionable guide to resolve the issue independently."
+      },
+      "tryAgain": {
+        "title": "Try Again",
+        "button": "Retry Mission",
+        "retrying": "Retrying...",
+        "success": "Retried successfully!",
+        "failure": "Retry did not resolve the issue. Please contact support."
+      },
+      "contactSupport": {
+        "title": "Contact Support",
+        "button": "Submit Ticket with Diagnostics",
+        "tooltip": "Automatically attaches redacted diagnostics to expedite resolution.",
+        "escalationNotice": "Support team is on standby 24/7 for critical priority incidents."
+      }
+    },
+    "allClear": {
+      "title": "All Systems Operational",
+      "description": "No active incidents detected. All video creation pipelines are running smoothly."
+    }
+  },
+  "operations": {
+    "title": "Customer Operations Center",
+    "subtitle": "Manage batch video queues, monitor syndication channels, and access CEO runbooks.",
+    "tabs": {
+      "overview": "Overview",
+      "batchQueue": "Batch Queue",
+      "syndication": "Syndication Channels",
+      "systemStatus": "System Status",
+      "logs": "Operation Logs",
+      "runbooks": "CEO Runbooks"
+    },
+    "systemStatus": {
+      "title": "Core Service Status",
+      "allOperational": "All Services Operational",
+      "degraded": "Degraded Performance",
+      "actionRequired": "Action Required",
+      "services": {
+        "core": "Sophia Core Engine",
+        "auth": "Authentication & Identity",
+        "ai": "AI Providers (BYOK)",
+        "storage": "Media Storage (Cloudflare R2)",
+        "pipeline": "Autonomous Video Pipeline",
+        "billing": "Billing & Quota",
+        "telegram": "Telegram Notification Bot"
+      }
+    },
+    "queues": {
+      "title": "Batch Video Queue",
+      "running": "Running",
+      "scheduled": "Scheduled",
+      "completed": "Completed",
+      "failed": "Failed",
+      "totalJobs": "Total Jobs",
+      "emptyQueue": "No jobs currently in the processing queue.",
+      "viewDetails": "View Details",
+      "retryJob": "Retry Job"
+    },
+    "syndication": {
+      "title": "Multi-Channel Syndication Monitor",
+      "youtube": "YouTube Shorts Channel",
+      "tiktok": "TikTok Shop Channel",
+      "telegram": "Telegram Alerts Channel",
+      "connected": "Connected",
+      "notConnected": "Not Connected",
+      "syncing": "Syncing",
+      "lastSync": "Last Synced"
+    },
+    "logs": {
+      "title": "Customer Operation Logs",
+      "description": "Safe activity logs filtered of sensitive credentials and personal data.",
+      "filter": "Filter by Level",
+      "timestamp": "Timestamp",
+      "level": "Level",
+      "message": "Event Message",
+      "downloadLogs": "Download Operation Logs (JSON)"
+    },
+    "runbooks": {
+      "title": "CEO Operational Runbooks (10 Manuals)",
+      "description": "Step-by-step bilingual manuals empowering non-technical CEOs to run everything independently.",
+      "viewRunbook": "Open Runbook",
+      "quickstart": "01. Quickstart in 10 Minutes",
+      "onboarding": "02. Workspace & Brand Setup",
+      "byok": "03. BYOK Provider Key Management",
+      "billing": "04. Billing, Credits & Checkout",
+      "operations": "05. Campaign & Queue Operations",
+      "troubleshooting": "06. Troubleshooting & Recovery",
+      "security": "07. Security & Privacy Guarantees",
+      "disasterRecovery": "08. Cloud Outage & Recovery",
+      "ownership": "09. Team Roles & Ownership",
+      "exit": "10. Data Portability & Exit Policy"
+    }
+  },
+  "support": {
+    "title": "Customer Support Center",
+    "subtitle": "Submit support tickets directly with sanitized diagnostic bundles attached.",
+    "submitTicket": {
+      "title": "Submit Support Ticket",
+      "button": "New Support Ticket",
+      "modalTitle": "Create Support Request",
+      "subject": "Subject",
+      "subjectPlaceholder": "Brief summary of the issue...",
+      "category": "Category",
+      "categories": {
+        "byok": "API Key / Providers",
+        "rendering": "Video Rendering / Pipeline",
+        "billing": "Billing & Credits",
+        "account": "Account & Permissions",
+        "other": "Other Inquiry"
+      },
+      "description": "Detailed Description",
+      "descriptionPlaceholder": "Describe what happened, when it occurred, and steps you already tried...",
+      "priority": "Priority Level",
+      "priorities": {
+        "low": "Low (General Question)",
+        "normal": "Normal (Minor Issue)",
+        "high": "High (Feature Blocked)",
+        "urgent": "Urgent (System Down)"
+      },
+      "submitting": "Submitting...",
+      "submitSuccess": "Support ticket submitted successfully! Our team will respond shortly.",
+      "submitError": "Failed to submit ticket. Please try again later.",
+      "myTickets": "My Support Tickets",
+      "noTickets": "You have no active support tickets."
+    },
+    "exportDiagnosticBundle": {
+      "title": "Sanitized Diagnostic Bundle",
+      "button": "Download Diagnostic Bundle (JSON)",
+      "downloading": "Generating bundle...",
+      "downloadSuccess": "Diagnostic bundle downloaded successfully!",
+      "downloadError": "Failed to generate diagnostic bundle.",
+      "description": "JSON file containing client version, service status, and sanitized error categories."
+    },
+    "redactedNotice": {
+      "title": "Privacy & Security Guarantee",
+      "description": "The diagnostic bundle strictly redacts all API keys, passwords, script contents, and PII.",
+      "guarantee": "Zero secrets or raw tokens are ever exported from your browser.",
+      "safeAuditPledge": "Certified compliant with Absolute Rules #11 & #12: Never expose or log secrets."
+    }
+  },
+  "systemHealth": {
+    "title": "Customer Health Center",
+    "subtitle": "Real-time overview of core platform services with actionable recommendations.",
+    "refreshButton": "Refresh Health",
+    "allClearTitle": "All Systems Operational",
+    "allClearDesc": "All core platform services are responding normally. No incidents detected.",
+    "activeIncidentsTitle": "Active Incidents Requiring Attention ({count})",
+    "servicesTitle": "Core Services (7 Components)",
+    "statuses": {
+      "READY": "Ready",
+      "DEGRADED": "Degraded",
+      "ACTION_REQUIRED": "Action Required",
+      "CONNECTED": "Connected",
+      "NOT_CONNECTED": "Not Connected"
+    }
+  },
+  "customerOperations": {
+    "title": "Operations Center",
+    "batchQueueTitle": "Batch Video Queue",
+    "channelsTitle": "Multi-Channel Syndication",
+    "recentJobsTitle": "Recent Jobs",
+    "downloadDiagnostics": "Download Diagnostic Report",
+    "openSupportModal": "Open Support Ticket"
+  },
+  "firstRun": {
+    "title": "Create Your First Video Campaign",
+    "subtitle": "With just a link or one-line concept, Sophia automatically renders a complete video in 60-90 seconds.",
+    "templateSelectorTitle": "Select Starter Campaign Template",
+    "costEstimatorTitle": "Pre-Flight Cost & Latency Transparency",
+    "zeroHiddenFeesGuarantee": "0% Hidden Fees Guarantee: Direct provider API compute pricing with zero markup.",
+    "launchButton": "Launch First Video",
+    "templates": {
+      "viralShorts": {
+        "name": "Viral Shorts Explainer (60s)",
+        "description": "High-retention script with dynamic visuals and pacing optimized for YouTube Shorts and TikTok."
+      },
+      "affiliateShowcase": {
+        "name": "Affiliate Product Showcase (30s)",
+        "description": "Conversion-focused format highlighting core benefits with clear call-to-action overlay."
+      },
+      "dailyWisdom": {
+        "name": "Daily News & Wisdom (45s)",
+        "description": "Concise news synthesis and thought-provoking insights with elegant aesthetic visuals."
+      }
+    }
   }
 }

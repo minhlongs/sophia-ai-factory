@@ -345,6 +345,7 @@ const eslintConfig = defineConfig([
 "src/forest/inngest/functions/video-tts.ts",
 "src/forest/inngest/functions/video-upload.ts",
 "src/forest/inngest/functions/video-visual.ts",
+"src/forest/inngest/functions/youtube-content-pipeline.ts",
 // missions — orchestrate land video/lead services (mekong-exempt)
 "src/forest/missions/api-key-auth.ts",
 "src/forest/missions/dispatcher.ts",

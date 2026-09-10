@@ -14,6 +14,7 @@
 import { createServerClient } from '@/seed/db/client'
 import { markForRecovery, type StaleLockDatabase } from '@/seed/utils/stale-lock-recovery'
 import { logger } from '@/seed/utils/logger-utility'
+import { toError } from '@/seed/utils/to-error'
 
 /** Run the reaper once and return summary counters. */
 export async function runD1LockReaper(): Promise<{ processed: number; recovered: number; degraded: number; errors: number }> {
@@ -52,7 +53,7 @@ export async function runD1LockReaper(): Promise<{ processed: number; recovered:
       }
     }
   } catch (error) {
-    reaperLogger.error('[D1LockReaper] Fatal scan failure', error as Error)
+    reaperLogger.error('[D1LockReaper] Fatal scan failure', toError(error))
     errors += 1
   }
 

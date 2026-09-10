@@ -1,9 +1,3 @@
-// @ts-nocheck — dev/test shim only. node:sqlite (Node 22 built-in) has no type
-// declarations in @types/node, and @cloudflare/workers-types does not export
-// D1Statement/D1Meta as named types (they are abstract classes). The shim
-// mirrors the D1 binding surface at runtime; type-checking it adds noise to
-// the production tsc baseline for zero benefit.
-
 /**
  * node:sqlite-backed D1 shim — dev/test fallback for the Cloudflare D1 binding.
  *
@@ -29,17 +23,26 @@
 import { DatabaseSync } from 'node:sqlite';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { D1Database, D1Statement, D1Result } from '@cloudflare/workers-types';
+import type {
+  D1Database,
+  D1PreparedStatement,
+  D1Result,
+  D1ExecResult,
+  D1DatabaseSession,
+  D1SessionBookmark,
+  D1SessionConstraint,
+} from '@cloudflare/workers-types';
+import { toError } from '@/seed/utils/to-error';
 
 // ─── Statement ────────────────────────────────────────────────────────────────
 
-class NodeSqliteStatement implements D1Statement {
-  private db: InstanceType<typeof DatabaseSync>;
+class NodeSqliteStatement implements D1PreparedStatement {
+  private db: DatabaseSync;
   private query: string;
   private bindings: unknown[];
 
   constructor(
-    db: InstanceType<typeof DatabaseSync>,
+    db: DatabaseSync,
     query: string,
     bindings: unknown[] = [],
   ) {
@@ -50,56 +53,77 @@ class NodeSqliteStatement implements D1Statement {
     this.bindings = bindings.map(v => (typeof v === 'boolean' ? (v ? 1 : 0) : v));
   }
 
-  bind(...values: unknown[]): D1Statement {
+  bind(...values: unknown[]): D1PreparedStatement {
     const resolved = values.length === 1 && Array.isArray(values[0]) ? values[0] : values;
     return new NodeSqliteStatement(this.db, this.query, resolved);
   }
 
-  private stmt(): InstanceType<typeof DatabaseSync.prepare> {
+  private stmt(): ReturnType<DatabaseSync['prepare']> {
     return this.db.prepare(this.query);
   }
 
+  first<T = unknown>(colName: string): Promise<T | null>;
+  first<T = Record<string, unknown>>(): Promise<T | null>;
   async first<T = unknown>(colName?: string): Promise<T | null> {
     try {
       const row = this.stmt().get(...this.bindings) as Record<string, unknown> | undefined;
       if (!row) return null;
       return (colName ? row[colName] : row) as T;
     } catch (e) {
-      throw new Error(`[node-sqlite-d1] first() failed: ${this.query} — ${(e as Error).message}`);
+      throw new Error(`[node-sqlite-d1] first() failed: ${this.query} — ${toError(e).message}`);
     }
   }
 
-  async run(): Promise<D1Result> {
+  async run<T = Record<string, unknown>>(): Promise<D1Result<T>> {
     try {
       const info = this.stmt().run(...this.bindings);
+      const changes = info.changes ?? 0;
       return {
         success: true,
         results: [],
         meta: {
-          changes: info.changes ?? 0,
+          changes,
           last_row_id: Number(info.lastInsertRowid ?? 0),
           duration: 0,
+          size_after: 0,
+          rows_read: 0,
+          rows_written: changes,
+          changed_db: changes > 0,
         },
       };
     } catch (e) {
-      throw new Error(`[node-sqlite-d1] run() failed: ${this.query} — ${(e as Error).message}`);
+      throw new Error(`[node-sqlite-d1] run() failed: ${this.query} — ${toError(e).message}`);
     }
   }
 
-  async all<T = unknown>(): Promise<{ success: boolean; results: T[]; meta: { changes: number; duration: number } }> {
+  async all<T = Record<string, unknown>>(): Promise<D1Result<T>> {
     try {
-      const rows = this.stmt().all(...this.bindings) as Record<string, unknown>[];
-      return { success: true, results: rows as T[], meta: { changes: 0, duration: 0 } };
+      const rows = this.stmt().all(...this.bindings) as T[];
+      return {
+        success: true,
+        results: rows,
+        meta: {
+          changes: 0,
+          last_row_id: 0,
+          duration: 0,
+          size_after: 0,
+          rows_read: rows.length,
+          rows_written: 0,
+          changed_db: false,
+        },
+      };
     } catch (e) {
-      throw new Error(`[node-sqlite-d1] all() failed: ${this.query} — ${(e as Error).message}`);
+      throw new Error(`[node-sqlite-d1] all() failed: ${this.query} — ${toError(e).message}`);
     }
   }
 
-  async raw(): Promise<unknown[]> {
+  raw<T = unknown[]>(options: { columnNames: true }): Promise<[string[], ...T[]]>;
+  raw<T = unknown[]>(options?: { columnNames?: false }): Promise<T[]>;
+  async raw<T = unknown[]>(_options?: { columnNames?: boolean }): Promise<[string[], ...T[]] | T[]> {
     try {
-      return this.stmt().all(...this.bindings) as unknown[];
+      return this.stmt().all(...this.bindings) as unknown as T[];
     } catch (e) {
-      throw new Error(`[node-sqlite-d1] raw() failed: ${this.query} — ${(e as Error).message}`);
+      throw new Error(`[node-sqlite-d1] raw() failed: ${this.query} — ${toError(e).message}`);
     }
   }
 }
@@ -107,7 +131,7 @@ class NodeSqliteStatement implements D1Statement {
 // ─── Database ─────────────────────────────────────────────────────────────────
 
 export class NodeSqliteD1Database implements D1Database {
-  private db: InstanceType<typeof DatabaseSync>;
+  private db: DatabaseSync;
 
   constructor(path: string) {
     this.db = new DatabaseSync(path);
@@ -118,7 +142,7 @@ export class NodeSqliteD1Database implements D1Database {
     applyMigrations(this.db);
   }
 
-  prepare(query: string): D1Statement {
+  prepare(query: string): D1PreparedStatement {
     return new NodeSqliteStatement(this.db, query);
   }
 
@@ -126,14 +150,25 @@ export class NodeSqliteD1Database implements D1Database {
     throw new Error('Dump not implemented in node:sqlite D1 shim');
   }
 
-  async batch(statements: D1Statement[]): Promise<D1Result[]> {
-    const results: D1Result[] = [];
-    for (const s of statements) results.push(await s.run());
+  async batch<T = unknown>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]> {
+    const results: D1Result<T>[] = [];
+    for (const s of statements) results.push(await s.run<T>());
     return results;
   }
 
-  async exec(query: string): Promise<void> {
+  async exec(query: string): Promise<D1ExecResult> {
     this.db.exec(query);
+    return { count: 0, duration: 0 };
+  }
+
+  withSession(
+    _constraintOrBookmark?: D1SessionBookmark | D1SessionConstraint,
+  ): D1DatabaseSession {
+    return {
+      prepare: (q: string) => this.prepare(q),
+      batch: <T = unknown>(stmts: D1PreparedStatement[]) => this.batch<T>(stmts),
+      getBookmark: () => null,
+    };
   }
 }
 

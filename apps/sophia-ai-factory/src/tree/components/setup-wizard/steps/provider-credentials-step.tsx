@@ -1,50 +1,46 @@
 "use client";
 
 /**
- * Provider Credentials Step — setup wizard step for HeyGen, Resend, NOWPayments keys.
+ * Provider Credentials Step — Setup wizard step for HeyGen, Resend, NOWPayments.
+ * Bilingual: Vietnamese + English. File size < 200 lines.
  *
- * HeyGen: required for video generation (customer must supply own key)
- * Resend: optional (falls back to platform's key for transactional emails)
- * NOWPayments: optional for now (platform shared provider for MVP)
- *
- * Bilingual: Vietnamese + English labels/help text.
- *
- * @module app/setup-wizard/components/steps/provider-credentials-step
+ * @module tree/components/setup-wizard/steps/provider-credentials-step
  */
 
-import React from 'react'
-import { ApiKeyInput } from '@/tree/components/setup-wizard/api-key-input'
-import { ByokHelpTip } from '@/components/onboarding/byok-help-tip'
-import { useTranslations } from 'next-intl'
-import type { CredentialSummary } from '@/tree/credentials/user-credentials-repo'
+import React from 'react';
+import { ApiKeyInput } from '@/tree/components/setup-wizard/api-key-input';
+import { ByokHelpTip } from '@/components/onboarding/byok-help-tip';
+import { useTranslations } from 'next-intl';
+import { maskApiKey } from '@/tree/byok/provider-health-checker';
+import type { CredentialSummary } from '@/tree/credentials/user-credentials-repo';
 
 export interface ProviderConfig {
-  HEYGEN_API_KEY: string
-  RESEND_API_KEY: string
-  NOWPAYMENTS_API_KEY: string
-  HEYGEN_WEBHOOK_SECRET: string
-  ROUTING_STRATEGY: 'priority' | 'costOptimized' | 'leastUsed'
+  HEYGEN_API_KEY: string;
+  RESEND_API_KEY: string;
+  NOWPAYMENTS_API_KEY: string;
+  HEYGEN_WEBHOOK_SECRET: string;
+  ROUTING_STRATEGY: 'priority' | 'costOptimized' | 'leastUsed';
 }
 
 interface ProviderCredentialsStepProps {
-  config: ProviderConfig
-  updateConfig: (key: keyof ProviderConfig, value: string) => void
-  status: Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>
-  errors: Record<string, string>
-  onTestKey: (provider: string, fieldKey: keyof ProviderConfig, value: string) => Promise<boolean>
-  savedCredentials: CredentialSummary[]
-  latencies?: Record<string, number>
-  onNext: () => void
+  config: ProviderConfig;
+  updateConfig: (key: keyof ProviderConfig, value: string) => void;
+  status: Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>;
+  errors: Record<string, string>;
+  onTestKey: (provider: string, fieldKey: keyof ProviderConfig, value: string) => Promise<boolean>;
+  savedCredentials: CredentialSummary[];
+  latencies?: Record<string, number>;
+  onNext: () => void;
+  onBack?: () => void;
 }
 
 function SavedHint({ hint }: { hint: string | null }) {
-  if (!hint) return null
+  if (!hint) return null;
   return (
-    <p className="text-xs text-green-600 mt-1">
-      Key saved: {hint} &nbsp;·&nbsp; Enter new value to replace /
-      Khóa đã lưu — nhập giá trị mới để thay thế
+    <p className="text-xs text-emerald-600 mt-1">
+      Saved / Đã lưu: {maskApiKey(hint)} &nbsp;·&nbsp; Nhập giá trị mới để thay thế
     </p>
-  )
+  );
 }
 
 export function ProviderCredentialsStep({
@@ -56,30 +52,31 @@ export function ProviderCredentialsStep({
   savedCredentials,
   latencies,
   onNext,
+  onBack,
 }: ProviderCredentialsStepProps) {
-  const tRouting = useTranslations('setupWizard.routingStrategy')
-  const actions = useTranslations('setupWizard.actions')
+  const tRouting = useTranslations('setupWizard.routingStrategy');
+  const actions = useTranslations('setupWizard.actions');
   const getSaved = (provider: string) =>
-    savedCredentials.find((c) => c.provider === provider) ?? null
+    savedCredentials.find((c) => c.provider === provider)?.display_hint ?? null;
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div>
         <h2 className="text-xl font-semibold text-foreground">
           Provider Keys / Khóa nhà cung cấp
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Configure your own API keys so videos and emails run under your account.
+          Configure video rendering and transaction providers under your own accounts.
           <br />
-          Cấu hình khóa API để video và email chạy dưới tài khoản của bạn.
+          Cấu hình nhà cung cấp video và giao dịch chạy trực tiếp dưới tài khoản của bạn.
         </p>
       </div>
 
-      {/* HeyGen — required */}
-      <div className="space-y-2">
+      {/* HeyGen */}
+      <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider bg-red-100 text-red-700 px-2 py-0.5 rounded">
-            Required / Bắt buộc
+          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-primary/10 text-primary">
+            Avatar Video Engine / Khuyến nghị
           </span>
         </div>
         <ApiKeyInput
@@ -91,55 +88,16 @@ export function ProviderCredentialsStep({
           status={status.HEYGEN_API_KEY ?? 'idle'}
           errorMessage={errors.HEYGEN_API_KEY}
           placeholder="e.g. hk_..."
-          required
-          helpText="Your HeyGen API key for video generation. Get it from app.heygen.com → Account → API. / Khóa HeyGen để tạo video."
+          helpText="Your HeyGen API key for avatar synthesis. Get it from app.heygen.com → Settings."
           latency={latencies?.HEYGEN_API_KEY}
         />
-        <SavedHint hint={getSaved('heygen')?.display_hint ?? null} />
-
-        {/* HeyGen Webhook callout */}
-        <div className="mt-3 rounded-lg border border-sky-900/50 bg-sky-950/30 p-4 space-y-3">
-          <p className="text-sm font-semibold text-sky-300">
-            🔗 Connect HeyGen Webhook (Optional but Recommended) / Kết nối HeyGen Webhook (Khuyến nghị)
-          </p>
-          <ol className="text-xs text-muted-foreground-400 space-y-1.5 list-none">
-            <li>1. Open HeyGen → <span className="text-muted-foreground-300">app.heygen.com</span> → Account → API → Webhooks</li>
-            <li>2. Add this URL / Thêm URL này:</li>
-            <li>
-              <span className="flex items-center gap-2">
-                <code className="flex-1 bg-muted-900 text-emerald-400 rounded px-2 py-1 text-xs font-mono select-all">
-                  https://sophia.agencyos.network/api/webhooks/heygen
-                </code>
-                <button
-                  type="button"
-                  onClick={() => navigator.clipboard.writeText('https://sophia.agencyos.network/api/webhooks/heygen')}
-                  className="shrink-0 text-xs px-2 py-1 bg-muted-700 hover:bg-muted-600 text-muted-foreground-200 rounded transition-colors"
-                >
-                  Copy
-                </button>
-              </span>
-            </li>
-            <li>3. Copy the signing secret HeyGen shows you / Sao chép secret mà HeyGen hiển thị</li>
-            <li>4. Paste below / Dán vào bên dưới</li>
-          </ol>
-          <ApiKeyInput
-            id="heygen_webhook_secret"
-            label="HeyGen Webhook Secret (Optional)"
-            value={config.HEYGEN_WEBHOOK_SECRET ?? ''}
-            onChange={(v) => updateConfig('HEYGEN_WEBHOOK_SECRET', v)}
-            onVerify={async () => true}
-            status="idle"
-            errorMessage=""
-            placeholder="HeyGen webhook signing secret..."
-            helpText="Paste the signing secret from HeyGen webhook settings. / Dán secret từ cài đặt webhook HeyGen."
-          />
-        </div>
+        <SavedHint hint={getSaved('heygen')} />
       </div>
 
-      {/* Resend — optional */}
-      <div className="space-y-2">
+      {/* Resend */}
+      <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">
+          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-muted text-muted-foreground">
             Optional / Tùy chọn
           </span>
         </div>
@@ -152,17 +110,17 @@ export function ProviderCredentialsStep({
           status={status.RESEND_API_KEY ?? 'idle'}
           errorMessage={errors.RESEND_API_KEY}
           placeholder="re_..."
-          helpText="Your Resend key for transactional emails. Falls back to platform key if not set. / Khóa Resend cho email. Nếu không nhập, hệ thống sẽ dùng khóa của nền tảng."
+          helpText="Key for transactional email notifications. Falls back to platform default if empty."
           latency={latencies?.RESEND_API_KEY}
         />
-        <SavedHint hint={getSaved('resend')?.display_hint ?? null} />
+        <SavedHint hint={getSaved('resend')} />
       </div>
 
-      {/* NOWPayments — optional */}
-      <div className="space-y-2">
+      {/* NOWPayments */}
+      <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider bg-muted-100 text-foreground px-2 py-0.5 rounded">
-            Advanced / Nâng cao
+          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-muted text-muted-foreground">
+            Crypto Billing (Optional / Tùy chọn)
           </span>
         </div>
         <ApiKeyInput
@@ -174,57 +132,55 @@ export function ProviderCredentialsStep({
           status={status.NOWPAYMENTS_API_KEY ?? 'idle'}
           errorMessage={errors.NOWPAYMENTS_API_KEY}
           placeholder="NOWPayments API key..."
-          helpText="Optional. Platform's payment provider is shared. Only set if running your own NOWPayments account. / Tùy chọn. Nền tảng dùng chung tài khoản thanh toán. Chỉ cần nếu bạn chạy tài khoản NOWPayments riêng."
+          helpText="Optional: Only required if you operate an isolated merchant account."
           latency={latencies?.NOWPAYMENTS_API_KEY}
         />
         <ByokHelpTip provider="nowpayments" />
-        <SavedHint hint={getSaved('nowpayments')?.display_hint ?? null} />
+        <SavedHint hint={getSaved('nowpayments')} />
       </div>
 
-      {/* Routing Strategy Selector */}
-      <div className="space-y-2 pt-4 border-t">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-            {tRouting('label')}
-          </span>
-        </div>
-        <p className="text-sm text-muted-foreground">{tRouting('help')}</p>
-        <div className="grid gap-3 sm:grid-cols-3">
+      {/* Routing Strategy */}
+      <div className="space-y-2 pt-2 border-t border-border/50">
+        <label className="text-xs font-semibold text-foreground block">
+          {tRouting('label')} / Chiến lược điều phối AI
+        </label>
+        <div className="grid gap-2 sm:grid-cols-3">
           {(['priority', 'costOptimized', 'leastUsed'] as const).map((strategy) => (
-            <label
+            <button
               key={strategy}
-              className={`cursor-pointer p-3 rounded-lg border-2 transition-all ${
+              type="button"
+              onClick={() => updateConfig('ROUTING_STRATEGY', strategy)}
+              className={`p-2.5 rounded-lg border text-left transition-all text-xs ${
                 config.ROUTING_STRATEGY === strategy
-                  ? 'border-primary bg-primary/5'
-                  : 'border-muted-200 hover:border-muted-300'
+                  ? 'border-primary bg-primary/5 font-semibold text-primary'
+                  : 'border-border text-muted-foreground hover:border-border/80'
               }`}
             >
-              <input
-                type="radio"
-                name="routingStrategy"
-                value={strategy}
-                checked={config.ROUTING_STRATEGY === strategy}
-                onChange={() => updateConfig('ROUTING_STRATEGY', strategy)}
-                className="sr-only"
-              />
-              <div className="font-medium">{tRouting(`${strategy}.label`)}</div>
-              <div className="text-xs text-muted-foreground mt-1">
-                {tRouting(`${strategy}.description`)}
-              </div>
-            </label>
+              <div>{tRouting(`${strategy}.label`)}</div>
+              <div className="text-[10px] opacity-80 mt-0.5">{tRouting(`${strategy}.description`)}</div>
+            </button>
           ))}
         </div>
       </div>
 
-      <div className="flex justify-end pt-4 border-t">
+      <div className="flex justify-between items-center pt-4 border-t border-border">
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-sm text-muted-foreground hover:text-foreground font-medium px-4 py-2"
+          >
+            Quay lại / Back
+          </button>
+        ) : <div />}
         <button
           type="button"
           onClick={onNext}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:opacity-90 transition-opacity"
+          className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all"
         >
           {actions('next')}
         </button>
       </div>
     </div>
-  )
+  );
 }
