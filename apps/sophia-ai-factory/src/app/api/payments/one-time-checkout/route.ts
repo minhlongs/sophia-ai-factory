@@ -118,11 +118,13 @@ export const POST = withRateLimit(async function POST(request: Request) {
     }
 
     let url: string
+    const orderId = `sophia_${userId}_${Date.now()}`
     try {
       const result = await createOneTimeCheckout({
         skuId: sku.id,
         userId,
         customerEmail: parsed.data.customerEmail,
+        orderId,
       });
       url = result.invoiceUrl;
     } catch (sdkErr) {
@@ -130,7 +132,7 @@ export const POST = withRateLimit(async function POST(request: Request) {
         error: sdkErr instanceof Error ? sdkErr.message : String(sdkErr),
         skuId: sku.id,
       });
-      url = createOneTimeInvoiceUrl(sku, userId, parsed.data.customerEmail);
+      url = createOneTimeInvoiceUrl(sku, userId, parsed.data.customerEmail, orderId);
     }
     return NextResponse.json({ url });
   } catch (error) {

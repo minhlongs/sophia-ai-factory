@@ -99,7 +99,6 @@ const startMissionExecutionSchema = z.object({
   missionId: z.string().min(1, 'Mission ID is required'),
   agentId: z.string().min(1, 'Agent ID is required'),
   autonomyLevel: z.number().min(0).max(4, 'Autonomy level must be 0-4').default(0),
-  skipPreflight: z.boolean().optional(),
   estimatedCostCents: z.number().optional(),
 });
 
@@ -437,27 +436,21 @@ export async function startMissionExecution(
     }
 
     // ─── 7-Gate Mission Preflight ──────────────────────────────────────────
-    // Fail-closed in production: all 7 gates must pass before flipping mission to 'running'.
-    const shouldRunPreflight =
-      parsed.data.skipPreflight === false ||
-      (process.env.NODE_ENV !== 'test' && !parsed.data.skipPreflight);
+    // Fail-closed: all 7 gates must pass before flipping mission to 'running'.
+    const preflight = await runMissionPreflightCheck({
+      userId: user.id,
+      workspaceId: mission.workspace_id,
+      estimatedCostCents: parsed.data.estimatedCostCents,
+      overrides: {
+        membershipVerified: true,
+      },
+    });
 
-    if (shouldRunPreflight) {
-      const preflight = await runMissionPreflightCheck({
-        userId: user.id,
-        workspaceId: mission.workspace_id,
-        estimatedCostCents: parsed.data.estimatedCostCents,
-        overrides: {
-          membershipVerified: true,
-        },
+    if (!preflight.passed) {
+      return failure({
+        code: preflight.failureCode ?? 'PREFLIGHT_FAILED',
+        message: preflight.failureReason ?? 'Mission preflight check failed',
       });
-
-      if (!preflight.passed) {
-        return failure({
-          code: preflight.failureCode ?? 'PREFLIGHT_FAILED',
-          message: preflight.failureReason ?? 'Mission preflight check failed',
-        });
-      }
     }
 
     // Atomic 'running' flip via the tree authority — invalid start states and

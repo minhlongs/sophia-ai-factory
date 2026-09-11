@@ -32,13 +32,23 @@ function resolveApiKey(): string {
   }
 }
 
+function resolveIpnSecret(): string | undefined {
+  try {
+    const g = globalThis as Record<string, unknown>
+    const env = (g.__env ?? process.env) as Record<string, string | undefined>
+    return env.NOWPAYMENTS_IPN_SECRET ?? process.env.NOWPAYMENTS_IPN_SECRET ?? undefined
+  } catch {
+    return process.env.NOWPAYMENTS_IPN_SECRET ?? undefined
+  }
+}
+
 export function createNowPaymentsSDK(): NowPaymentsSDK {
   if (sdkInstance) return sdkInstance
   const apiKey = resolveApiKey()
   if (!apiKey) throw new Error('NOWPAYMENTS_API_KEY is required for SDK operations')
   sdkInstance = new NowPaymentsSDK({
     apiKey,
-    ipnSecret: process.env.NOWPAYMENTS_IPN_SECRET || undefined,
+    ipnSecret: resolveIpnSecret(),
   })
   return sdkInstance
 }
@@ -68,6 +78,7 @@ export interface CreateCheckoutInput {
   userId: string
   customerEmail?: string
   period?: 'monthly' | 'yearly'
+  orderId?: string
 }
 
 export async function createCheckout(input: CreateCheckoutInput): Promise<{
@@ -85,8 +96,7 @@ export async function createCheckout(input: CreateCheckoutInput): Promise<{
   }
   const priceAmount = isYearly ? config.yearlyPrice : config.price
 
-  const timestamp = Date.now()
-  const orderId = `sophia_${input.userId}_${timestamp}`
+  const orderId = input.orderId || `sophia_${input.userId}_${Date.now()}`
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'
 
   let successUrl = `${appUrl}/payment-success?tier=${input.tierId}&order_id=${orderId}`
@@ -118,6 +128,7 @@ export interface CreateOneTimeCheckoutInput {
   skuId: string
   userId: string
   customerEmail?: string
+  orderId?: string
 }
 
 export async function createOneTimeCheckout(input: CreateOneTimeCheckoutInput): Promise<{
@@ -129,8 +140,7 @@ export async function createOneTimeCheckout(input: CreateOneTimeCheckoutInput): 
   const sku = getOneTimeSkuById(input.skuId)
   if (!sku) throw new Error(`Unknown SKU: ${input.skuId}`)
 
-  const timestamp = Date.now()
-  const orderId = `sophia_${input.userId}_${timestamp}`
+  const orderId = input.orderId || `sophia_${input.userId}_${Date.now()}`
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'
 
   let successUrl = `${appUrl}/payment-success?sku=${input.skuId}&order_id=${orderId}`
@@ -295,7 +305,7 @@ const NOWPAYMENTS_CHECKOUT_BASE =
  * Kept for emergency fallback when NOWPayments API is unreachable.
  * Supports period for yearly billing when yearlyInvoiceId is configured.
  */
-export function createInvoiceUrl(tierId: string, userId: string, customerEmail?: string, period?: 'monthly' | 'yearly'): string {
+export function createInvoiceUrl(tierId: string, userId: string, customerEmail?: string, period?: 'monthly' | 'yearly', orderId?: string): string {
   const tierConfig = NOWPAYMENTS_TIERS[tierId]
   if (!tierConfig) throw new Error(`Unknown tier: ${tierId}`)
 
@@ -305,16 +315,15 @@ export function createInvoiceUrl(tierId: string, userId: string, customerEmail?:
     throw new Error(`Yearly billing not available for tier: ${tierId}`)
   }
 
-  const timestamp = Date.now()
-  const orderId = `sophia_${userId}_${timestamp}`
+  const resolvedOrderId = orderId || `sophia_${userId}_${Date.now()}`
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'
 
-  const successParams = new URLSearchParams({ tier: tierId, order_id: orderId })
+  const successParams = new URLSearchParams({ tier: tierId, order_id: resolvedOrderId })
   if (customerEmail) successParams.set('email', encodeURIComponent(customerEmail))
 
   const params = new URLSearchParams({
     iid: invoiceId,
-    order_id: orderId,
+    order_id: resolvedOrderId,
     success_url: `${appUrl}/payment-success?${successParams.toString()}`,
     cancel_url: `${appUrl}/pricing`,
   })
@@ -325,17 +334,16 @@ export function createInvoiceUrl(tierId: string, userId: string, customerEmail?:
 /**
  * @deprecated Use createOneTimeCheckout() instead.
  */
-export function createOneTimeInvoiceUrl(sku: OneTimeSku, userId: string, customerEmail?: string): string {
-  const timestamp = Date.now()
-  const orderId = `sophia_${userId}_${timestamp}`
+export function createOneTimeInvoiceUrl(sku: OneTimeSku, userId: string, customerEmail?: string, orderId?: string): string {
+  const resolvedOrderId = orderId || `sophia_${userId}_${Date.now()}`
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'
 
-  const successParams = new URLSearchParams({ sku: sku.id, order_id: orderId })
+  const successParams = new URLSearchParams({ sku: sku.id, order_id: resolvedOrderId })
   if (customerEmail) successParams.set('email', encodeURIComponent(customerEmail))
 
   const params = new URLSearchParams({
     iid: sku.invoiceId,
-    order_id: orderId,
+    order_id: resolvedOrderId,
     success_url: `${appUrl}/payment-success?${successParams.toString()}`,
     cancel_url: `${appUrl}/pricing`,
   })

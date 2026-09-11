@@ -64,6 +64,11 @@ describe('GET /api/mission/[id]', () => {
     const data = (await r.json()) as Record<string, unknown>;
     expect(data.id).toBe('m1');
   });
+  it('403 when mission belongs to another workspace (IDOR guard)', async () => {
+    auth(); grant(); m.getMissionWithGoals.mockResolvedValueOnce(mission({ workspaceId: 'ws_other' }));
+    const r = await GET(new Request('http://localhost/api/mission/m1?workspaceId=ws_1'), params('m1'));
+    expect(r.status).toBe(403);
+  });
 });
 
 describe('PATCH /api/mission/[id]', () => {
@@ -103,6 +108,12 @@ describe('PATCH /api/mission/[id]', () => {
     const r = await PATCH(PATCH_J('http://localhost/api/mission/m1', validBody), params('m1'));
     expect(r.status).toBe(404);
   });
+  it('403 when mission does not belong to workspace on update (IDOR guard)', async () => {
+    auth(); grant();
+    m.updateMissionStatus.mockRejectedValueOnce(new Error('Mission m1 does not belong to workspace ws_1'));
+    const r = await PATCH(PATCH_J('http://localhost/api/mission/m1', validBody), params('m1'));
+    expect(r.status).toBe(403);
+  });
 });
 
 describe('DELETE /api/mission/[id]', () => {
@@ -127,5 +138,11 @@ describe('DELETE /api/mission/[id]', () => {
     expect(r.status).toBe(200);
     const data = (await r.json()) as Record<string, unknown>;
     expect(data.ok).toBe(true);
+  });
+  it('403 when mission does not belong to workspace on delete (IDOR guard)', async () => {
+    auth(); grant();
+    m.deleteMission.mockRejectedValueOnce(new Error('Mission m1 does not belong to workspace ws_1'));
+    const r = await DELETE(new Request('http://localhost/api/mission/m1?workspaceId=ws_1'), params('m1'));
+    expect(r.status).toBe(403);
   });
 });

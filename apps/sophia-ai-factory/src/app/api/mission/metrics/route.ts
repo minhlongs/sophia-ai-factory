@@ -51,9 +51,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const metrics = await getMissionMetrics(parsed.data.missionId);
+    const metrics = await getMissionMetrics(parsed.data.missionId, parsed.data.workspaceId);
     return NextResponse.json(metrics);
   } catch (err) {
-    return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
+    const message = getErrorMessage(err);
+    if (message.includes('does not belong to workspace') || (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'FORBIDDEN')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

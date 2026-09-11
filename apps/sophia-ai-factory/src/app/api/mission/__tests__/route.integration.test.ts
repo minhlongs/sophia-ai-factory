@@ -119,4 +119,10 @@ describe('POST /api/mission/metrics', () => {
     const data = (await r.json()) as Record<string, unknown>;
     expect(data.missionId).toBe('m1');
   });
+  it('403 when mission does not belong to workspace (IDOR guard)', async () => {
+    auth(); grant();
+    m.getMissionMetrics.mockRejectedValueOnce(new Error('Mission m1 does not belong to workspace ws_1'));
+    const r = await postMetrics(POST_J('http://localhost/api/mission/metrics', { workspaceId: 'ws_1', missionId: 'm1' }));
+    expect(r.status).toBe(403);
+  });
 });

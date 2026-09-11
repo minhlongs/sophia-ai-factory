@@ -36,7 +36,7 @@ function createMockD1(targetOrgId = 'org_tenant_A') {
       bind: vi.fn((...binds: unknown[]) => ({
         all: vi.fn(async () => {
           queries.push({ sql, binds });
-          if (sql.includes('SELECT org_id FROM user WHERE id = ?')) {
+          if (sql.includes('SELECT org_id FROM org_members WHERE user_id = ?') || sql.includes('SELECT org_id FROM user WHERE id = ?')) {
             return { results: [{ org_id: targetOrgId }] };
           }
           if (sql.includes('FROM video_jobs')) {

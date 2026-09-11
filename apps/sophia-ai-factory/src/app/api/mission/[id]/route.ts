@@ -54,6 +54,9 @@ export async function GET(request: Request, { params }: RouteContext) {
     if (!mission) {
       return NextResponse.json({ error: 'Mission not found' }, { status: 404 });
     }
+    if (mission.workspaceId !== workspaceId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     return NextResponse.json(mission);
   } catch (err) {
     return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
@@ -88,10 +91,13 @@ export async function PATCH(request: Request, { params }: RouteContext) {
   }
 
   try {
-    const mission = await updateMissionStatus(id, parsed.data.status, parsed.data.currentPhase);
+    const mission = await updateMissionStatus(id, parsed.data.status, parsed.data.currentPhase, parsed.data.workspaceId);
     return NextResponse.json(mission);
   } catch (err) {
     const message = getErrorMessage(err);
+    if (message.includes('does not belong to workspace') || (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'FORBIDDEN')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     if (message.includes('not found')) {
       return NextResponse.json({ error: message }, { status: 404 });
     }
@@ -121,10 +127,17 @@ export async function DELETE(request: Request, { params }: RouteContext) {
   }
 
   try {
-    await deleteMission(id);
+    await deleteMission(id, workspaceId);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
+    const message = getErrorMessage(err);
+    if (message.includes('does not belong to workspace') || (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'FORBIDDEN')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    if (message.includes('not found')) {
+      return NextResponse.json({ error: message }, { status: 404 });
+    }
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 

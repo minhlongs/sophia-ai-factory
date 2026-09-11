@@ -22,10 +22,19 @@ vi.mock('@/seed/config/tiers', () => ({
     MASTER: { name: 'Master', monthlyCredits: 1000, priceUsd: 999 },
   },
   TIER_CONFIG: { BASIC: { name: 'Basic', monthlyCredits: 10, priceUsd: 0 } },
+  UNIFIED_TIERS: {
+    BASIC: { billingType: 'monthly', yearlyPrice: undefined },
+    PREMIUM: { billingType: 'monthly', yearlyPrice: undefined },
+    ENTERPRISE: { billingType: 'monthly', yearlyPrice: undefined },
+    MASTER: { billingType: 'monthly', yearlyPrice: undefined },
+  },
 }))
 
 vi.mock('@/seed/db/client', () => ({
-  getD1: vi.fn(() => ({ prepare: vi.fn(() => ({ bind: vi.fn(() => ({ first: vi.fn(), run: vi.fn() })) })) })),
+  getD1: vi.fn(() => ({
+    prepare: vi.fn(() => ({ bind: vi.fn(() => ({ first: vi.fn(), run: vi.fn() })) })),
+    batch: vi.fn().mockResolvedValue([]),
+  })),
   createServerClient: vi.fn(() => ({})),
 }))
 
@@ -43,12 +52,12 @@ vi.mock('@/tree/clients/nowpayments-client', () => ({
   NOWPAYMENTS_TIERS: { PREMIUM: { price: 199 }, BASIC: { price: 0 }, ENTERPRISE: { price: 499 }, MASTER: { price: 999 } },
 }))
 
-vi.mock('@/land/video/templates/onboarding-video', () => ({ createOnboardingVideo: vi.fn(), ONBOARDING_TIERS: [] }))
+vi.mock('@/land/video/templates/onboarding-video', () => ({ createOnboardingVideo: vi.fn(), ONBOARDING_TIERS: new Set() }))
 vi.mock('@/tree/handover/auto-handover', () => ({ triggerAutoHandover: vi.fn() }))
 vi.mock('@/land/orders/pending-order-repo', () => ({
-  markOrderCompleted: vi.fn(),
-  markOrderFailed: vi.fn(),
-  getOrderById: vi.fn(),
+  markOrderCompleted: vi.fn().mockResolvedValue(undefined),
+  markOrderFailed: vi.fn().mockResolvedValue(undefined),
+  getOrderById: vi.fn().mockResolvedValue(null),
 }))
 vi.mock('@/land/promo/promo-repo', () => ({
   findReservedRedemption: vi.fn(),
@@ -60,9 +69,22 @@ vi.mock('@/tree/email/outbox', () => ({ enqueueWelcomeEmail: vi.fn() }))
 
 vi.mock('../nowpayments-ipn-db', () => ({
   getDb: vi.fn(() => ({
-    from: vi.fn(() => ({
-      select: vi.fn(() => ({ eq: vi.fn(() => ({ single: vi.fn(() => ({ data: null, error: null })), maybeSingle: vi.fn(() => ({ data: null, error: null })) })) })),
-      insert: vi.fn(() => ({ error: null })),
+    from: vi.fn((table: string) => ({
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          single: vi.fn(() => ({
+            data: table === 'org_members' ? { org_id: 'org_auto_1' } : null,
+            error: null,
+          })),
+          maybeSingle: vi.fn(() => ({ data: null, error: null })),
+        })),
+      })),
+      insert: vi.fn(() => ({
+        error: null,
+        select: vi.fn(() => ({
+          single: vi.fn(() => ({ data: { id: 'org_auto_1' }, error: null })),
+        })),
+      })),
       update: vi.fn(() => ({ eq: vi.fn(() => ({ error: null })) })),
       delete: vi.fn(() => ({ eq: vi.fn(() => ({ error: null })) })),
     })),
@@ -80,7 +102,7 @@ describe('Subscription Lifecycle — handleFinished', () => {
   it('rejects missing invoice_id', async () => {
     const payload = buildIpnPayload({ invoice_id: undefined })
     const { getTierByInvoiceId } = await import('@/tree/clients/nowpayments-client')
-    vi.mocked(getTierByInvoiceId).mockReturnValue(null as never)
+    vi.mocked(getTierByInvoiceId).mockReturnValueOnce(null as never)
 
     // Should not throw — returns early with warning
     await expect(handleFinished(payload)).resolves.toHaveProperty('ok', true)

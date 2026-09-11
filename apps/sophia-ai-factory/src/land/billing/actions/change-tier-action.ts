@@ -36,6 +36,7 @@ export type BillingErrorCode =
   | 'ALREADY_ON_TIER'
   | 'IN_DUNNING'
   | 'MASTER_REQUIRES_SEPARATE_FLOW'
+  | 'UPGRADE_REQUIRES_PAYMENT'
   | 'DB_ERROR'
   | 'INVALID_TIER'
   | 'GRACE_PERIOD_EXPIRED';
@@ -199,41 +200,27 @@ export async function changeTier(
 
     // Determine if upgrade or downgrade
     const isDowngrade = (TIER_RANK[targetTier] ?? 0) < (TIER_RANK[currentTier] ?? 0);
-    const currentPrice = await getTierPriceInCents(currentTier);
-    const targetPrice = await getTierPriceInCents(targetTier);
 
-    let proratedAmount = 0;
-    let effectiveDate: string;
-
-    if (isDowngrade) {
-      // Calculate prorated credit for unused days on current tier
-      proratedAmount = calculateProRataCredit(
-        currentPrice,
-        sub.current_period_start,
-        sub.current_period_end,
-      );
-      // Downgrades take effect at end of cycle
-      effectiveDate = sub.current_period_end;
-    } else {
-      // Upgrade: take effect immediately
-      // Prorated amount = prorated cost of new tier minus prorated refund of old tier
-      const proRataCredit = calculateProRataCredit(
-        currentPrice,
-        sub.current_period_start,
-        sub.current_period_end,
-      );
-      const newTierCost = Math.round(
-        targetPrice *
-          ((new Date(sub.current_period_end).getTime() - Date.now()) /
-            (new Date(sub.current_period_end).getTime() - new Date(sub.current_period_start).getTime())),
-      );
-      proratedAmount = Math.max(0, newTierCost - proRataCredit);
-      effectiveDate = new Date().toISOString();
+    // Upgrades must go through the payment checkout flow — never a free D1 write.
+    // Downgrades (reducing tier or cancelling) are allowed to proceed immediately.
+    if (!isDowngrade) {
+      return failure({
+        code: 'UPGRADE_REQUIRES_PAYMENT',
+        message: 'Upgrades require payment. Please complete checkout to activate the new tier.',
+      });
     }
 
-    // Persist the tier change via D1 (immediate for upgrades, end_of_cycle for downgrades)
+    // Downgrade: calculate prorated credit for unused days on current tier.
+    // Downgrades take effect at end of billing cycle.
+    const currentPrice = await getTierPriceInCents(currentTier);
+    const proratedAmount = calculateProRataCredit(
+      currentPrice,
+      sub.current_period_start,
+      sub.current_period_end,
+    );
+    const effectiveDate = sub.current_period_end;
+
     const now = new Date().toISOString();
-    const eventType = isDowngrade ? 'downgrade' : 'upgrade';
 
     // Get user_profiles settings for credit tracking
     const settingsRow = await d1
@@ -248,62 +235,40 @@ export async function changeTier(
       // ignore parse errors
     }
 
-    if (isDowngrade) {
-      // Store downgrade as end-of-cycle pending change
-      settings.tier_change_request = {
-        target_tier: targetTier,
-        timing: 'end_of_cycle',
-        requested_at: Math.floor(Date.now() / 1000),
-        from_tier: currentTier,
-      };
+    // Store downgrade as end-of-cycle pending change
+    settings.tier_change_request = {
+      target_tier: targetTier,
+      timing: 'end_of_cycle',
+      requested_at: Math.floor(Date.now() / 1000),
+      from_tier: currentTier,
+    };
 
-      // Store prorated credit
-      if (proratedAmount > 0) {
-        const existingCredit = (settings.account_credit_cents as number) ?? 0;
-        settings.account_credit_cents = existingCredit + proratedAmount;
-        settings.last_credit_reason = `pro_rata_downgrade_${currentTier}_to_${targetTier}`;
-        settings.last_credit_at = Math.floor(Date.now() / 1000);
-      }
-
-      await d1.batch([
-        d1.prepare('UPDATE subscriptions SET cancel_at_period_end = 1, updated_at = ? WHERE org_id = ?')
-          .bind(now, orgId),
-        d1.prepare(
-          `INSERT INTO tier_change_events (user_id, org_id, from_tier, to_tier, event_type)
-           VALUES (?, ?, ?, ?, ?)`,
-        ).bind(user.id, orgId, currentTier, targetTier, `pending_${eventType}`),
-        d1.prepare('UPDATE user_profiles SET settings = ?, updated_at = ? WHERE user_id = ?')
-          .bind(JSON.stringify(settings), now, user.id),
-      ]);
-    } else {
-      // Upgrade: immediate provisioning with new period start
-      const newPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
-      // Clear pending tier_change_request
-      delete settings.tier_change_request;
-
-      await d1.batch([
-        d1.prepare(
-          'UPDATE subscriptions SET plan = ?, current_period_start = ?, current_period_end = ?, cancel_at_period_end = 0, updated_at = ? WHERE org_id = ?',
-        ).bind(targetTier.toLowerCase(), now, newPeriodEnd, now, orgId),
-        d1.prepare(
-          `INSERT INTO tier_change_events (user_id, org_id, from_tier, to_tier, event_type)
-           VALUES (?, ?, ?, ?, ?)`,
-        ).bind(user.id, orgId, currentTier, targetTier, eventType),
-        d1.prepare('UPDATE user_profiles SET settings = ?, updated_at = ? WHERE user_id = ?')
-          .bind(JSON.stringify(settings), now, user.id),
-      ]);
-
-      effectiveDate = now;
+    // Store prorated credit for the unused portion of the current period
+    if (proratedAmount > 0) {
+      const existingCredit = (settings.account_credit_cents as number) ?? 0;
+      settings.account_credit_cents = existingCredit + proratedAmount;
+      settings.last_credit_reason = `pro_rata_downgrade_${currentTier}_to_${targetTier}`;
+      settings.last_credit_at = Math.floor(Date.now() / 1000);
     }
 
-    logger.info('[ChangeTier] Tier change processed', {
+    await d1.batch([
+      d1.prepare('UPDATE subscriptions SET cancel_at_period_end = 1, updated_at = ? WHERE org_id = ?')
+        .bind(now, orgId),
+      d1.prepare(
+        `INSERT INTO tier_change_events (user_id, org_id, from_tier, to_tier, event_type)
+         VALUES (?, ?, ?, ?, ?)`,
+      ).bind(user.id, orgId, currentTier, targetTier, 'pending_downgrade'),
+      d1.prepare('UPDATE user_profiles SET settings = ?, updated_at = ? WHERE user_id = ?')
+        .bind(JSON.stringify(settings), now, user.id),
+    ]);
+
+    logger.info('[ChangeTier] Downgrade scheduled', {
       userId: user.id,
       orgId,
       from: currentTier,
       to: targetTier,
       proratedAmount,
-      eventType,
+      effectiveDate,
     });
 
     return success({

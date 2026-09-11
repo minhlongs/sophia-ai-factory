@@ -94,7 +94,7 @@ describe('POST /api/mission/[id]/approvals', () => {
     expect(r.status).toBe(200);
     const data = (await r.json()) as Record<string, unknown>;
     expect(data.status).toBe('approved');
-    expect(m.resolveApproval).toHaveBeenCalledWith('ap1', 'approved', 'user1', 'Looks good');
+    expect(m.resolveApproval).toHaveBeenCalledWith('ap1', 'approved', 'user1', 'Looks good', 'ws_1');
   });
 
   it('200 resolves approval as rejected', async () => {
@@ -102,7 +102,14 @@ describe('POST /api/mission/[id]/approvals', () => {
     m.resolveApproval.mockResolvedValueOnce({ ok: true, value: { ...approval(), status: 'rejected' } });
     const r = await POST(POST_J('http://localhost/api/mission/m1/approvals', { ...validBody, approved: false }));
     expect(r.status).toBe(200);
-    expect(m.resolveApproval).toHaveBeenCalledWith('ap1', 'rejected', 'user1', 'Looks good');
+    expect(m.resolveApproval).toHaveBeenCalledWith('ap1', 'rejected', 'user1', 'Looks good', 'ws_1');
+  });
+
+  it('403 approval belongs to another workspace (IDOR guard)', async () => {
+    auth(); grant();
+    m.resolveApproval.mockResolvedValueOnce({ ok: false, error: { code: 'FORBIDDEN', message: 'Approval does not belong to workspace ws_1' } });
+    const r = await POST(POST_J('http://localhost/api/mission/m1/approvals', validBody));
+    expect(r.status).toBe(403);
   });
 
   it('404 approval not found', async () => {

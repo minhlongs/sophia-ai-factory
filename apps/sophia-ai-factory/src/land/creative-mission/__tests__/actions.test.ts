@@ -83,6 +83,7 @@ const USER = { id: 'user_1' };
 describe('land/creative-mission actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.runMissionPreflightCheck.mockResolvedValue({ passed: true, gates: {} });
   });
 
   // ── updateMissionStatus: tree error-code passthrough ───────────────────────
@@ -214,7 +215,7 @@ describe('land/creative-mission actions', () => {
       }
     });
 
-    it('passes estimatedCostCents to runMissionPreflightCheck when skipPreflight is false', async () => {
+    it('passes estimatedCostCents to runMissionPreflightCheck unconditionally', async () => {
       mocks.getCurrentUser.mockResolvedValue(USER);
       mocks.getD1.mockReturnValue(
         makeD1([{ workspace_id: 'ws_1', creator_id: 'user_1' }, 1]),
@@ -229,7 +230,6 @@ describe('land/creative-mission actions', () => {
       const { startMissionExecution } = await import('../actions');
       const result = await startMissionExecution({
         ...validInput,
-        skipPreflight: false,
         estimatedCostCents: 250,
       });
 
@@ -259,7 +259,6 @@ describe('land/creative-mission actions', () => {
       const { startMissionExecution } = await import('../actions');
       const result = await startMissionExecution({
         ...validInput,
-        skipPreflight: false,
         estimatedCostCents: 600,
       });
 

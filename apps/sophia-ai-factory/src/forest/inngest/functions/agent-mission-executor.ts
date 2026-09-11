@@ -13,6 +13,7 @@ import { buildProviders } from '@/forest/ai/provider-factory';
 import { updateAgentRun, appendAgentLog } from '@/tree/mission/agent-run-repo';
 import type { UpdateAgentRunInput } from '@/tree/mission/agent-run-repo';
 import { getMission, recordSpend } from '@/tree/mission/repository';
+import { deductCredits } from '@/tree/mcu/credits-repo';
 import { newPerformanceEventId, recordPerformanceEvent } from '@/tree/performance';
 import type { AgentContext } from '@/seed/types/creative-domain';
 import { emitMissionCompleted, emitMissionFailed, advanceMissionToReview } from './agent-mission-lifecycle';
@@ -145,8 +146,12 @@ export const agentMissionExecutor = inngest.createFunction(
     };
 
     // Step 8: Execute through the canonical tree/agent-protocol executor
+    // Wrapped in step.run so Inngest treats provider execution as a durable,
+    // idempotent step — preventing duplicate provider execution and billing on retries.
     try {
-      const execution = await executeAgent(definition, context, providerRegistry);
+      const execution = await step.run('execute-agent', async () =>
+        executeAgent(definition, context, providerRegistry)
+      );
 
       if (execution.ok) {
         const result = execution.value;
@@ -174,6 +179,38 @@ export const agentMissionExecutor = inngest.createFunction(
             missionId,
             costCents: result.costCents,
             error: spendMessage,
+          });
+        }
+
+        // Deduct MCU credits for actual provider cost (P0-02)
+        // 1 MCU = $0.10 (10 cents). Conversion: Math.ceil(costCents / 10).
+        // Non-fatal: run is already completed; failure is logged.
+        try {
+          const mcuAmount = Math.ceil(result.costCents / 10);
+          if (mcuAmount > 0) {
+            const deducted = await deductCredits(
+              mission.creatorId,
+              mcuAmount,
+              missionId,
+              'agent_mission_execution',
+            );
+            if (!deducted) {
+              logger.warn('agentMissionExecutor: MCU credit deduction failed — insufficient credits or no balance row', {
+                runId,
+                missionId,
+                userId: mission.creatorId,
+                mcuAmount,
+                costCents: result.costCents,
+              });
+            }
+          }
+        } catch (creditErr) {
+          const creditMessage = creditErr instanceof Error ? creditErr.message : String(creditErr);
+          logger.error('agentMissionExecutor: unexpected error deducting MCU credits', {
+            runId,
+            missionId,
+            userId: mission.creatorId,
+            error: creditMessage,
           });
         }
 

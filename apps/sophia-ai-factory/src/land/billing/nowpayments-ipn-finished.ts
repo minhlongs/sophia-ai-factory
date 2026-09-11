@@ -71,13 +71,23 @@ async function validateIpnAndGetUserId(ipn: NowPaymentsIpnPayload): Promise<stri
   }
 
   const invoiceId = ipn.invoice_id
-  if (!invoiceId) {
-    logger.warn('[NOWPayments] finished: missing invoice_id', { paymentId: ipn.payment_id })
+  if (!invoiceId && !ipn.order_id) {
+    logger.warn('[NOWPayments] finished: missing invoice_id and order_id', { paymentId: ipn.payment_id })
     return null
   }
-  const tierConfig = getTierByInvoiceId(invoiceId)
+  // Primary: resolve tier from pre-created invoice IDs (static config)
+  const tierConfig = invoiceId ? getTierByInvoiceId(invoiceId) : null
   if (!tierConfig) {
-    logger.warn('[NOWPayments] finished: unknown invoice_id', { invoiceId, paymentId: ipn.payment_id })
+    // Fallback: SDK-created checkouts don't use static invoice IDs — resolve via order_id → pending_orders
+    if (ipn.order_id) {
+      const pendingOrder = await getOrderById(ipn.order_id).catch(() => null)
+      if (!pendingOrder) {
+        logger.warn('[NOWPayments] finished: unknown invoice_id and no pending_order match', { invoiceId, orderId: ipn.order_id, paymentId: ipn.payment_id })
+        return null
+      }
+      return parseUserIdFromOrderId(ipn.order_id) || null
+    }
+    logger.warn('[NOWPayments] finished: unknown invoice_id, no order_id', { invoiceId, paymentId: ipn.payment_id })
     return null
   }
   return parseUserIdFromOrderId(ipn.order_id || '') || null
@@ -100,9 +110,16 @@ async function setupDatabaseAndContext(
   if (!_d1) throw new Error('D1 database binding not available')
   const d1 = _d1!
 
-  const tierConfig = getTierByInvoiceId(ipn.invoice_id!)
-  if (!tierConfig) return null
-  const tier: Tier = tierConfig.tier
+  const tierConfig = ipn.invoice_id ? getTierByInvoiceId(ipn.invoice_id) : null
+  let tier: Tier
+  if (tierConfig) {
+    tier = tierConfig.tier
+  } else {
+    // Fallback: SDK-created checkouts — resolve tier from pending_orders
+    const pendingOrder = ipn.order_id ? await getOrderById(ipn.order_id).catch(() => null) : null
+    if (!pendingOrder?.tier) return null
+    tier = pendingOrder.tier as Tier
+  }
   const isLifetime = UNIFIED_TIERS[tier]?.billingType === 'lifetime'
   const billingPeriod = await resolveBillingPeriod(ipn, isLifetime)
 

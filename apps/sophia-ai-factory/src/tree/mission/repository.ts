@@ -160,11 +160,14 @@ export async function listMissions(workspaceId: string, status?: CreativeMission
   return (result.results ?? []).map(rowToDomain);
 }
 
-export async function updateMissionStatus(id: string, newStatus: CreativeMissionStatus, currentPhase: string): Promise<Mission> {
+export async function updateMissionStatus(id: string, newStatus: CreativeMissionStatus, currentPhase: string, workspaceId?: string): Promise<Mission> {
   const db = await getD1();
   if (!db) throw new MissionError('D1_UNAVAILABLE', 'D1 not available');
   const existing = await getMission(id);
   if (!existing) throw new MissionError('NOT_FOUND', `Mission ${id} not found`);
+  if (workspaceId && existing.workspaceId !== workspaceId) {
+    throw new MissionError('FORBIDDEN', `Mission ${id} does not belong to workspace ${workspaceId}`);
+  }
   if (!canTransition(existing.status, newStatus)) {
     throw new MissionError('INVALID_TRANSITION', `${existing.status} → ${newStatus} not allowed`);
   }
@@ -181,9 +184,16 @@ export async function updateMissionStatus(id: string, newStatus: CreativeMission
   return updated;
 }
 
-export async function recordSpend(id: string, amountCents: number): Promise<void> {
+export async function recordSpend(id: string, amountCents: number, workspaceId?: string): Promise<void> {
   const db = await getD1();
   if (!db) throw new MissionError('D1_UNAVAILABLE', 'D1 not available');
+  if (workspaceId) {
+    const existing = await getMission(id);
+    if (!existing) throw new MissionError('NOT_FOUND', `Mission ${id} not found`);
+    if (existing.workspaceId !== workspaceId) {
+      throw new MissionError('FORBIDDEN', `Mission ${id} does not belong to workspace ${workspaceId}`);
+    }
+  }
   await db.prepare(`UPDATE creative_missions SET spent_cents = spent_cents + ?, updated_at = ? WHERE id = ?`).bind(amountCents, Math.floor(Date.now() / 1000), id).run();
 
   // ── SIDE-CHANNEL: mission.cost_recorded (Q4 economics, non-fatal) ──────
@@ -212,8 +222,15 @@ export async function recordSpend(id: string, amountCents: number): Promise<void
   }
 }
 
-export async function deleteMission(id: string): Promise<void> {
+export async function deleteMission(id: string, workspaceId?: string): Promise<void> {
   const db = await getD1();
   if (!db) throw new MissionError('D1_UNAVAILABLE', 'D1 not available');
+  if (workspaceId) {
+    const existing = await getMission(id);
+    if (!existing) throw new MissionError('NOT_FOUND', `Mission ${id} not found`);
+    if (existing.workspaceId !== workspaceId) {
+      throw new MissionError('FORBIDDEN', `Mission ${id} does not belong to workspace ${workspaceId}`);
+    }
+  }
   await db.prepare(`DELETE FROM creative_missions WHERE id = ?1`).bind(id).run();
 }

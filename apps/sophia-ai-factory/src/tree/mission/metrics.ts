@@ -42,7 +42,7 @@ export interface MissionMetrics {
  * Uses simple COUNT/SUM aggregations; no throws — returns a zeroed
  * metrics object when the mission does not exist.
  */
-export async function getMissionMetrics(missionId: string): Promise<MissionMetrics> {
+export async function getMissionMetrics(missionId: string, workspaceId?: string): Promise<MissionMetrics> {
   const db = await getD1();
   if (!db) throw new MissionError('D1_UNAVAILABLE', 'D1 not available');
 
@@ -61,6 +61,10 @@ export async function getMissionMetrics(missionId: string): Promise<MissionMetri
       performanceEventCount: 0,
       revenueCents: 0,
     };
+  }
+
+  if (workspaceId && mission.workspaceId !== workspaceId) {
+    throw new MissionError('FORBIDDEN', `Mission ${missionId} does not belong to workspace ${workspaceId}`);
   }
 
   const { getGoalsByMission } = await import('./goal');

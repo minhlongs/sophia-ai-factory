@@ -14,12 +14,12 @@ export function getDb() {
 
 export function parseUserIdFromOrderId(orderId: string): string | null {
   // Format: sophia_{userId}_{timestamp}
-  // userId may contain underscores, so we split on first 2 underscores only
-  if (!orderId.startsWith('sophia_')) return null
+  // userId may contain underscores, so we extract everything between "sophia_" and the final timestamp delimiter
+  if (!orderId || !orderId.startsWith('sophia_')) return null
   const rest = orderId.slice('sophia_'.length)
-  const firstUnderscore = rest.indexOf('_')
-  if (firstUnderscore === -1) return null
-  const userId = rest.slice(0, firstUnderscore)
+  const lastUnderscore = rest.lastIndexOf('_')
+  if (lastUnderscore === -1) return null
+  const userId = rest.slice(0, lastUnderscore)
   return userId || null
 }
 

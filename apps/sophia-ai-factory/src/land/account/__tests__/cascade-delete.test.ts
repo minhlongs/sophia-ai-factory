@@ -81,7 +81,7 @@ function makeDb(
         if (
           sql.includes('SELECT') &&
           sql.includes('org_id') &&
-          sql.includes('FROM user WHERE id')
+          (sql.includes('FROM org_members WHERE user_id') || sql.includes('FROM user WHERE id'))
         ) {
           return {
             all: vi.fn().mockResolvedValue({

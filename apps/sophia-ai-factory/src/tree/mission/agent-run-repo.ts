@@ -353,7 +353,8 @@ export async function resolveApproval(
   id: string,
   status: 'approved' | 'rejected',
   reviewerId: string,
-  comment?: string
+  comment?: string,
+  workspaceId?: string
 ): Promise<Result<Record<string, unknown>, { code: string; message: string }>> {
   try {
     const db = await getD1();
@@ -363,6 +364,12 @@ export async function resolveApproval(
     const row = await db.prepare(`SELECT * FROM agent_approvals WHERE id = ?`).bind(id).first<Record<string, unknown>>();
     if (!row) {
       return failure({ code: 'NOT_FOUND', message: `Approval ${id} not found` });
+    }
+    if (workspaceId && row.agent_run_id) {
+      const runRow = await db.prepare(`SELECT workspace_id FROM agent_runs WHERE id = ?`).bind(row.agent_run_id).first<{ workspace_id: string }>();
+      if (runRow && runRow.workspace_id !== workspaceId) {
+        return failure({ code: 'FORBIDDEN', message: `Approval ${id} does not belong to workspace ${workspaceId}` });
+      }
     }
     if (row.status !== 'pending') {
       return failure({ code: 'ALREADY_RESOLVED', message: `Approval ${id} already resolved` });

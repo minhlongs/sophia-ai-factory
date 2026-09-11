@@ -82,10 +82,16 @@ export async function POST(request: Request) {
   }
 
   const status = parsed.data.approved ? 'approved' : 'rejected';
-  const result = await resolveApproval(parsed.data.approvalId, status, user.id, parsed.data.reason);
+  const result = await resolveApproval(
+    parsed.data.approvalId,
+    status,
+    user.id,
+    parsed.data.reason,
+    parsed.data.workspaceId
+  );
   if (!result.ok) {
     const code = result.error.code;
-    const httpStatus = code === 'NOT_FOUND' ? 404 : code === 'ALREADY_RESOLVED' ? 409 : 500;
+    const httpStatus = code === 'NOT_FOUND' ? 404 : code === 'FORBIDDEN' ? 403 : code === 'ALREADY_RESOLVED' ? 409 : 500;
     return NextResponse.json({ error: result.error.message }, { status: httpStatus });
   }
 

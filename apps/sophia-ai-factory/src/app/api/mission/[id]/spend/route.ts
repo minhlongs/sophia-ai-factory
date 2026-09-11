@@ -58,7 +58,7 @@ export async function POST(request: Request, { params }: RouteContext) {
   }
 
   try {
-    await recordSpend(id, parsed.data.amount);
+    await recordSpend(id, parsed.data.amount, parsed.data.workspaceId);
     return NextResponse.json({
       ok: true,
       missionId: id,
@@ -67,6 +67,13 @@ export async function POST(request: Request, { params }: RouteContext) {
       description: parsed.data.description,
     });
   } catch (err) {
-    return NextResponse.json({ error: getErrorMessage(err) }, { status: 500 });
+    const message = getErrorMessage(err);
+    if (message.includes('does not belong to workspace') || (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'FORBIDDEN')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    if (message.includes('not found')) {
+      return NextResponse.json({ error: message }, { status: 404 });
+    }
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

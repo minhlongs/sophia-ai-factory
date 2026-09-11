@@ -82,15 +82,14 @@ describe('Tier Change Self-Service Contract', () => {
     d1Config.settings = '{}';
   });
 
-  // ── 1. upgrade BASIC→PREMIUM ────────────────────────────────────────────
-  it('upgrade BASIC to PREMIUM calculates correct prorated amount', async () => {
+  // ── 1. upgrade BASIC→PREMIUM (P0-01 security gate) ──────────────────────
+  it('upgrade BASIC to PREMIUM fails closed and requires payment checkout', async () => {
     const { changeTier } = await import('@/land/billing/actions/change-tier-action');
     const result = await changeTier('PREMIUM');
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.value.newTier).toBe('PREMIUM');
-      expect(result.value.proratedAmount).toBeGreaterThanOrEqual(0);
-      expect(result.value.effectiveDate).toBeTruthy();
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.code).toBe('UPGRADE_REQUIRES_PAYMENT');
+      expect(result.error.message).toContain('Upgrades require payment');
     }
   });
 
@@ -137,13 +136,15 @@ describe('Tier Change Self-Service Contract', () => {
 
   // ── 5. concurrent tier changes ──────────────────────────────────────────
   it('concurrent tier changes only process one (atomic lock)', async () => {
+    d1Config.subscription = PREMIUM_SUB;
+
     const { changeTier } = await import('@/land/billing/actions/change-tier-action');
     const [resultA, resultB] = await Promise.all([
-      changeTier('PREMIUM'),
-      changeTier('PREMIUM'),
+      changeTier('BASIC'),
+      changeTier('BASIC'),
     ]);
     const okCount = [resultA, resultB].filter(r => r.ok).length;
-    // At least one should succeed (or first succeeds, second fails)
+    // At least one should succeed (or both process idempotently)
     expect(okCount).toBeGreaterThanOrEqual(1);
   });
 });

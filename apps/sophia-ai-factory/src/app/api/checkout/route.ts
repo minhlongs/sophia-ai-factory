@@ -275,14 +275,26 @@ if (promoCode && validation?.valid && calc.isFreeOrder && validation.discountTyp
           try {
             let invoiceUrl: string
             try {
-              const result = await createCheckout({ tierId: tier, userId, customerEmail, period: period === 'monthly' || period === 'yearly' ? period : undefined });
+              const result = await createCheckout({
+                tierId: tier,
+                userId,
+                customerEmail,
+                period: period === 'monthly' || period === 'yearly' ? period : undefined,
+                orderId,
+              });
               invoiceUrl = result.invoiceUrl;
             } catch (sdkErr) {
               logger.warn('[Checkout/POST] SDK checkout failed, falling back to pre-created invoice', {
                 error: sdkErr instanceof Error ? sdkErr.message : String(sdkErr),
                 tier,
               });
-              invoiceUrl = createInvoiceUrl(tier, userId, customerEmail, period === 'monthly' || period === 'yearly' ? period : undefined);
+              invoiceUrl = createInvoiceUrl(
+                tier,
+                userId,
+                customerEmail,
+                period === 'monthly' || period === 'yearly' ? period : undefined,
+                orderId,
+              );
             }
             await writeOrder({
               order_id: orderId,

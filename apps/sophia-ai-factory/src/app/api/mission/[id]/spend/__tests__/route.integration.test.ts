@@ -63,6 +63,13 @@ describe('POST /api/mission/[id]/spend', () => {
     expect(data.category).toBe('ads');
   });
 
+  it('403 when mission does not belong to workspace (IDOR guard)', async () => {
+    auth(); grant();
+    m.recordSpend.mockRejectedValueOnce(new Error('Mission m1 does not belong to workspace ws_1'));
+    const r = await POST(POST_J('http://localhost/api/mission/m1/spend', validBody), params('m1'));
+    expect(r.status).toBe(403);
+  });
+
   it('500 when recordSpend throws', async () => {
     auth(); grant();
     m.recordSpend.mockRejectedValueOnce(new Error('DB failure'));

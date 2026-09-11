@@ -28,7 +28,7 @@ import type {
 
 // Hoisted mocks — must be at module top level for vitest hoisting
 const {
-  mockGetMission, mockRecordSpend, mockGetAgentRun, mockCreateAgentRun,
+  mockGetMission, mockRecordSpend, mockDeductCredits, mockGetAgentRun, mockCreateAgentRun,
   mockUpdateAgentRun, mockAppendAgentLog, mockEmitMissionCompleted,
   mockEmitMissionFailed, mockAdvanceMissionToReview, mockBuildProviders,
   mockExecuteAgent, mockAgentDefinitionRegistry,
@@ -36,6 +36,7 @@ const {
 } = vi.hoisted(() => ({
   mockGetMission: vi.fn(),
   mockRecordSpend: vi.fn(),
+  mockDeductCredits: vi.fn(),
   mockGetAgentRun: vi.fn(),
   mockCreateAgentRun: vi.fn(),
   mockUpdateAgentRun: vi.fn(),
@@ -90,6 +91,10 @@ vi.mock('@/tree/mission/agent-run-repo', () => ({
 vi.mock('@/tree/mission/repository', () => ({
   getMission: (...args: unknown[]) => mockGetMission(...args),
   recordSpend: (...args: unknown[]) => mockRecordSpend(...args),
+}));
+
+vi.mock('@/tree/mcu/credits-repo', () => ({
+  deductCredits: (...args: unknown[]) => mockDeductCredits(...args),
 }));
 
 vi.mock('@/tree/creative-identity', () => ({
@@ -251,6 +256,7 @@ function setupMocks() {
   vi.clearAllMocks();
   mockGetMission.mockResolvedValue(mockMission);
   mockRecordSpend.mockResolvedValue(undefined);
+  mockDeductCredits.mockResolvedValue(true);
   // Default: no existing agent_run row → first-run path (INSERT fires)
   mockGetAgentRun.mockResolvedValue({ ok: true, value: null });
   mockCreateAgentRun.mockResolvedValue(mockRunResult);
@@ -292,7 +298,9 @@ function makeCtx(eventData: typeof baseEvent.data): ExecutorContext {
   return {
     event: { data: eventData },
     step: {
-      run: vi.fn<(name: string, fn: () => Promise<unknown>) => Promise<unknown>>(),
+      run: vi.fn<(name: string, fn: () => Promise<unknown>) => Promise<unknown>>(
+        (_name, fn) => fn()
+      ),
       sleep: vi.fn<(name: string, delay: number) => Promise<void>>(),
     },
   };
@@ -411,6 +419,28 @@ describe('agentMissionExecutor', () => {
     await getHandler()(makeCtx(baseEvent.data));
 
     expect(mockRecordSpend).toHaveBeenCalledWith('mission_123', 150);
+  });
+
+  it('deducts MCU credits on successful execution (P0-02)', async () => {
+    // 150 cents -> Math.ceil(150 / 10) = 15 MCU
+    await getHandler()(makeCtx(baseEvent.data));
+
+    expect(mockDeductCredits).toHaveBeenCalledWith(
+      'creator_456',
+      15,
+      'mission_123',
+      'agent_mission_execution',
+    );
+  });
+
+  it('executes agent inside step.run for durable idempotency (P0-03)', async () => {
+    const ctx = makeCtx(baseEvent.data);
+    await getHandler()(ctx);
+
+    expect(ctx.step.run).toHaveBeenCalledWith(
+      'execute-agent',
+      expect.any(Function),
+    );
   });
 
   it('fails with MISSION_NOT_FOUND when mission does not exist', async () => {
