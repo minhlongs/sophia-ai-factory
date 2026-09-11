@@ -153,3 +153,81 @@ Biên bản này xác nhận rằng Lãnh đạo điều hành mới / Bên ti�
 - **Hệ Thống Trợ Giúp Trong Ứng Dụng:** Truy cập mục `/operations` hoặc `/settings/system-health` và nhấp **"Gửi Hỗ Trợ"** (Thời gian phản hồi cam kết: từ 4 đến 12 giờ).
 - **Kênh Telegram Hỗ Trợ Chính Thức:** Trao đổi trực tiếp với đội ngũ Chăm sóc Khách hàng Cấp cao qua Telegram.
 - **Hỗ Trợ Khẩn Cấp 24/7:** Dành riêng cho khách hàng gói ENTERPRISE và MASTER khi gặp sự cố gián đoạn phát sóng quan trọng.
+
+---
+
+## 🏛️ 7. Technical & Operational Architecture Reference
+## Tài Liệu Tham Khảo Kỹ Thuật & Kiến Trúc Vận Hành
+
+### 1. Production Release / Phiên Bản Phát Hành Thực Tế
+- **Live Production SHA:** `984e166d` *(Xác thực trực tiếp tại `https://sophia.agencyos.network/api/version`)*
+- **Git Commit:** `984e166d28dfaca00e7967cb788f28b1b0d4d0c4` (`feat(handover): productize customer operations`)
+- **Deployment Timestamp:** `2026-09-11T12:44:54Z`
+- **Runtime Environment:** Cloudflare Workers via OpenNext v1.19.11
+
+### 2. Architecture Summary / Tóm Tắt Kiến Trúc Hệ Thống
+- **Frontend / API:** Next.js 16 App Router on Cloudflare Workers (triển khai CF-Direct doctrine).
+- **Database:** Cloudflare D1 SQLite relational database (`sophia-raas-db`) truy vấn đồng bộ qua `createServerClient()`.
+- **Media & Asset Vault:** Cloudflare R2 Object Storage lưu trữ video, thumbnail và audio tracks.
+- **Authentication:** Better Auth v1.6.2 với multi-tenant organization workspaces và cookie phiên bảo mật cao.
+- **Background Orchestration:** Inngest durable job execution xử lý render video AI đa bước và tracking affiliate.
+
+### 3. Customer Ownership & Role Model / Mô Hình Sở Hữu & Phân Quyền
+- **Three-Tier Roles:** `owner` (toàn quyền quản trị & thanh toán), `admin` (quản lý chiến dịch & nhóm), `member` (nhân viên vận hành).
+- **Privilege Protection:** Tài khoản `member` không thể tự nâng quyền hoặc xóa workspace của tổ chức.
+- **Founder Bootstrap:** Bó hẹp chặt chẽ theo email người sở hữu đã xác thực.
+
+### 4. Required External Accounts / Danh Sách Tài Khoản Dịch Vụ Cần Có
+- **AI Providers (BYOK):** `fal.ai` (render video), `ElevenLabs` (lồng tiếng/TTS), `OpenRouter` (trí tuệ kịch bản).
+- **Payment Processing:** `NOWPayments` (thanh toán crypto IPN) và `PayOS` dự phòng (VietQR nội địa).
+- **Infrastructure:** `Cloudflare` (Workers, D1, R2, KV).
+- **Distribution:** `Telegram` (Bot token từ @BotFather để nhận thông báo).
+
+### 5. BYOK Setup & Security / Thiết Lập Khóa API Người Dùng
+- **Mã Hóa:** AES-GCM-256 client credential encryption (`src/seed/crypto/aes-gcm.ts`) với vector khởi tạo ngẫu nhiên (IV).
+- **Zero Exposure:** Khóa API chỉ ghi (write-only); không bao giờ hiển thị dạng văn bản rõ hoặc trả về client sau khi lưu.
+- **Zero-Leak Logging:** Trình ghi nhật ký tự động loại bỏ mọi bearer token và authorization header.
+
+### 6. Billing & Usage Integrity / Thanh Toán & Hạn Mức Tính Toán
+- **Xác Thực Thanh Toán:** Vòng đời thuê bao fail-closed; chặn hoàn toàn việc người dùng tự nâng gói miễn phí.
+- **Khấu Trừ Nguyên Tử:** MCU compute units được khấu trừ qua SQL có điều kiện (`WHERE credits >= ?`) để chống âm số dư.
+- **Chống Trùng Lặp Webhook:** Khóa nguyên tử trên bảng `payment_events` (`INSERT ON CONFLICT DO NOTHING`) loại bỏ rủi ro cộng tiền 2 lần.
+
+### 7. Deployment Ownership / Quy Trình Triển Khai Nền Tảng
+- **Học Thuyết:** CF-Direct doctrine (`npm run deploy:full`) sử dụng trực tiếp Wrangler CLI triển khai lên Cloudflare.
+- **Cổng Kiểm Tra:** Tự động kiểm tra `api/version` khớp với git commit SHA cục bộ trước khi xác nhận thành công.
+
+### 8. Backup Ownership & Retention / Sao Lưu & Lưu Trữ Dữ Liệu
+- **D1 Snapshotting:** Sao lưu cơ sở dữ liệu D1 hằng ngày vào kho lưu trữ Cloudflare R2 (`/api/cron/d1-backup`).
+- **Vòng Đời Lưu Trữ:** Chính sách tự động xóa sau 30 ngày (rolling expiration) được kích hoạt trên Cloudflare R2.
+
+### 9. Monitoring & Observability / Giám Sát & Theo Dõi Hệ Thống
+- **Customer Health Center:** Trang theo dõi sức khỏe an toàn cho CEO tại `/vi/settings/system-health` và `/operations`.
+- **Worker Logs:** Xem luồng log theo thời gian thực qua Cloudflare Wrangler CLI (`wrangler tail`).
+- **Bắt Lỗi Sentry:** Thu thập lỗi client và server với minified stack traces.
+
+### 10. Incident Response / Quy Trình Ứng Phó Sự Cố
+- **Phân Loại Lỗi An Toàn:** Chuẩn hóa mã lỗi thân thiện với người dùng không chuyên (`FailureKind`).
+- **Chỉ Dẫn Hành Động:** Mọi thông báo lỗi đều hướng dẫn rõ điều gì xảy ra, cần làm gì và có nên thử lại không.
+- **Cẩm Nang Xử Lý:** Quy trình chi tiết 10 sự cố thường gặp được tài liệu hóa trong `06-TROUBLESHOOTING.md`.
+
+### 11. Security Reporting & IDOR Protection / An Toàn Thông Tin & Phân Quyền IDOR
+- **Double-Layer IDOR Guard:** Kiểm tra quyền workspace ở tầng route (`verifyWorkspaceAccess`) kết hợp với kiểm tra ở tầng domain repository (`entity.workspaceId === workspaceId`), trả về HTTP 403 nếu vi phạm ranh giới tenant.
+- **Lọc Dữ Liệu Nhạy Cảm:** Xuất báo cáo chẩn đoán tự động gỡ bỏ session cookie và API credentials.
+
+### 12. Support Escalation / Tuyến Hỗ Trợ Kỹ Thuật
+- **Vé Hỗ Trợ Trong Ứng Dụng:** Gửi yêu cầu tại `/operations` kèm gói chẩn đoán hệ thống tự động đã làm sạch.
+- **Kênh VIP Telegram:** Kênh hỗ trợ ưu tiên trực tiếp dành riêng cho CEO vận hành.
+
+### 13. Disaster Recovery Procedure / Quy Trình Khôi Phục Thảm Họa
+- **Lệnh Khôi Phục Đơn Giản:** Khôi phục cơ sở dữ liệu SQLite từ bản sao lưu R2 bằng lệnh `npx wrangler d1 execute sophia-raas-db --file=<dump.sql> --remote`.
+- **Kế Hoạch Dự Phòng:** Kịch bản ứng phó sự cố toàn diện được quy định trong `08-DISASTER-RECOVERY.md`.
+
+### 14. Exit Procedure & Data Portability / Quy Trình Rút Lui & Xuất Dữ Liệu
+- **Xóa Dữ Liệu Phân Tầng:** Quy trình cascade delete xóa sạch tài khoản, credentials, chiến dịch và tài nguyên qua `src/land/account/cascade-delete.ts`.
+- **Xuất Dữ Liệu Toàn Diện:** Xuất toàn bộ dữ liệu video, kịch bản, hóa đơn sang định dạng JSON tiêu chuẩn (`10-CUSTOMER-EXIT.md`).
+
+### 15. Known Limitations / Giới Hạn Kỹ Thuật Cần Lưu Ý
+- **Thời Gian Thực Thi Worker:** Giới hạn xử lý đồng bộ của Cloudflare Workers là 30 giây; toàn bộ tác vụ render video AI nặng được giao cho Inngest chạy nền.
+- **Tính Nhất Quán Của R2:** Video mới xuất bản lên R2 có thể mất 2-3 giây để đồng bộ hoàn toàn qua các điểm CDN toàn cầu.
+
