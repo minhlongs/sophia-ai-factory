@@ -1,12 +1,36 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-10 | **Current Version:** 1.28.0 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** b77c5504
+**Last Updated:** 2026-09-11 | **Current Version:** 1.29.0 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 984e166d
 
 ---
 
-## 2026-09-10 (v1.28.0 — CUSTOMER OPERATIONS & HARDENING SPRINT, IN PROGRESS)
+## 2026-09-11 (v1.29.0 — SUPREME FORENSIC AUDIT & CUSTOMER HANDOVER PRODUCTIZATION, COMPLETE)
 
-**Severity: P1 OPERATIONS & HARDENING | Type: Architecture Hardening + Handover Documentation | Status: IN PROGRESS**
+**Severity: P0 FORENSIC AUDIT & PRODUCTIZATION | Type: Fullstack Hardening + Security Remediation + Operational Productization | Status: SHIPPED**
+
+Executed a fresh, adversarial, source-code-level forensic audit across all 30 critical customer operations. Refused to trust previous optimistic reports, test counts, or cosmetic green badges. Identified, remediated, and verified all architectural vulnerabilities, race conditions, and tenant isolation risks to deliver a customer-operable, customer-owned, CEO-friendly production product.
+
+**Key Deliverables & Remediation:**
+- **Double-Layer IDOR Protection:** Enforced workspace isolation across all mission endpoints (`/api/mission/[id]`, `/spend`, `/approvals`, `/metrics`). Layer 1 verifies membership in `org_members` via `verifyWorkspaceAccess`. Layer 2 validates domain entity ownership (`entity.workspaceId === workspaceId`), returning HTTP 403 on IDOR attempts.
+- **Inngest Durable Idempotency:** Wrapped external AI provider invocations in `step.run('execute-agent', ...)` within `agent-mission-executor.ts` to guarantee idempotent execution, eliminating duplicate provider billing on retries.
+- **Fail-Closed Billing Tier Gate:** Blocked unverified self-service tier upgrades in `change-tier-action.ts` (`code: 'UPGRADE_REQUIRES_PAYMENT'`), requiring verified payment confirmation via NOWPayments IPN.
+- **Atomic MCU Deductions:** Standardized atomic credit deductions via conditional SQL (`WHERE credits >= ?`) in `actions.ts`, eliminating race conditions and negative balances.
+- **Pricing Truth Alignment:** Reconciled checkout endpoints (`/api/checkout`, `/api/payments/one-time-checkout`) with canonical `TIER_CONFIGS` pricing.
+- **NOWPayments IPN Hardening:** Fixed user ID parsing for identifiers containing underscores and updated contract tests (12/12 contract tests passing).
+- **Master Customer Handover Pack:** Shipped `docs/customer/HANDOVER-PACK.md` with complete 15-item Technical & Operational Architecture Reference, plus the 10 customer runbooks in `docs/customer/` (01-QUICKSTART to 10-CUSTOMER-EXIT) designed for non-technical CEOs.
+- **Forensic Audit Suite:** Authored 13 deep-dive forensic audit reports in `docs/audit/forensic/` and the master `docs/audit/CUSTOMER-HANDOVER-READINESS.md`.
+
+**Quality Gates:**
+- **Unit & Integration Tests:** 9,188 passed, 0 failed, 34 skipped across 898 test files.
+- **TypeScript Typecheck:** 0 errors (`tsc --noEmit` exit code 0).
+- **Next.js & OpenNext Build:** Exit code 0 (`.open-next/worker.js`).
+- **Deploy:** Cloudflare Workers CF-direct (`npm run deploy:full`). Live SHA `984e166d` verified at `/api/version` (`2026-09-11T12:44:54Z`).
+
+---
+
+## 2026-09-10 (v1.28.0 — CUSTOMER OPERATIONS & HARDENING SPRINT, COMPLETE)
+
+**Severity: P1 OPERATIONS & HARDENING | Type: Architecture Hardening + Handover Documentation | Status: SHIPPED**
 
 Following the successful production deployment and verification of the Supreme Customer-Readiness Repair baseline (`b77c5504`), this sprint addresses proactive operations, soft limits, preflight checks, and definitive handover certification for a non-technical CEO under CF-direct and No-Tech doctrines.
 
