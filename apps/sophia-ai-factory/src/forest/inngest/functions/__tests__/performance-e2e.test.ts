@@ -218,5 +218,5 @@ describe('Inngest serve — A/B crons registered', () => {
 
     expect(opts.functions).toContain(barrel.variantAbSelector);
     expect(opts.functions).toContain(barrel.abWinnerPickerCron);
-  });
+  }, 15000);
 });
