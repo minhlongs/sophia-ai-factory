@@ -1,6 +1,29 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-11 | **Current Version:** 1.29.0 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 984e166d
+**Last Updated:** 2026-09-12 | **Current Version:** 1.30.0 | **Honest Score:** 91.5/100 (doctrine ceiling) | **Current Production SHA:** 6fa03ad9
+
+---
+
+## 2026-09-12 (v1.30.0 — ZERO LAYER BOUNDARY DEBT & 100% 4-LAYER COMPLIANCE, COMPLETE)
+
+**Severity: P0 ARCHITECTURE HYGIENE & ESCROW RESOLUTION | Type: Refactor + Boundary Compliance + Live Edge Deployment | Status: SHIPPED**
+
+Remediated the tracked architectural escrow debt: eliminated the two pre-existing `land -> forest` boundary import violations identified by `scripts/check-layer-boundaries.sh` so that the codebase complies 100% with the 4-layer architecture rules (`seed -> tree -> forest -> land`).
+
+**Key Deliverables & Remediation:**
+- **Preflight Check Domain Relocation:** Relocated `runMissionPreflightCheck` to `src/tree/mission/preflight-check.ts` (pure domain logic with only `seed` and `tree` dependencies). Maintained `src/forest/mission/preflight-check.ts` as a backwards-compatible re-export.
+- **Land Layer Inversion:** Updated `src/land/creative-mission/actions.ts` to import `runMissionPreflightCheck` from `@/tree/mission/preflight-check`.
+- **Publish Workflow Inversion:** Updated `src/land/openclaw-telegram/openclaw-bridge-tools.ts` to route publish actions through `@/land/publish/schedule-video-publish`.
+- **Tree Barrel Export:** Exported `runMissionPreflightCheck`, `MAX_SINGLE_MISSION_COST_CENTS`, and preflight types from the `tree/mission` barrel.
+- **Unit Test Mock Realignment:** Updated `actions.test.ts` to mock the canonical `@/tree/mission/preflight-check` path.
+- **Boundary Verification:** `npm run check:boundaries` verified with **0 violations** across all 4 layers.
+
+**Quality Gates:**
+- **Unit & Integration Tests:** 9,188 passed, 0 failed, 34 skipped across 898 test files (100% pass rate).
+- **TypeScript Typecheck:** 0 errors (`tsc --noEmit` exit code 0).
+- **ESLint:** 0 errors (`npm run lint` exit code 0).
+- **Layer Boundaries:** 0 violations (`npm run check:boundaries`).
+- **Deploy:** Cloudflare Workers CF-direct (`bash scripts/deploy-with-sha.sh`). Live SHA `6fa03ad9` verified at `/api/version` (`2026-09-12T04:18:44Z`).
 
 ---
 
