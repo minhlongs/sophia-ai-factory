@@ -160,9 +160,9 @@ Biên bản này xác nhận rằng Lãnh đạo điều hành mới / Bên ti�
 ## Tài Liệu Tham Khảo Kỹ Thuật & Kiến Trúc Vận Hành
 
 ### 1. Production Release / Phiên Bản Phát Hành Thực Tế
-- **Live Production SHA:** `984e166d` *(Xác thực trực tiếp tại `https://sophia.agencyos.network/api/version`)*
-- **Git Commit:** `984e166d28dfaca00e7967cb788f28b1b0d4d0c4` (`feat(handover): productize customer operations`)
-- **Deployment Timestamp:** `2026-09-11T12:44:54Z`
+- **Live Production SHA:** `30ecaa21` *(Xác thực trực tiếp tại `https://sophia.agencyos.network/api/version`)*
+- **Git Commit:** `30ecaa21a90ddf96ab8d5264e65ab4b4b3e3124e` (`chore(ci): repair ci:arch script, update secretlint ignore, and clean unused imports`)
+- **Deployment Timestamp:** `2026-09-12T06:55:13Z`
 - **Runtime Environment:** Cloudflare Workers via OpenNext v1.19.11
 
 ### 2. Architecture Summary / Tóm Tắt Kiến Trúc Hệ Thống
