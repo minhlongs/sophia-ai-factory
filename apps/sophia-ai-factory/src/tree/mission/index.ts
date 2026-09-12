@@ -42,6 +42,18 @@ export {
   listPendingApprovals,
 } from './agent-run-repo';
 
+export {
+  runMissionPreflightCheck,
+  MAX_SINGLE_MISSION_COST_CENTS,
+} from './preflight-check';
+
+export type {
+  PreflightGateCheck,
+  MissionPreflightChecklist,
+  MissionPreflightResult,
+  MissionPreflightOptions,
+} from './preflight-check';
+
 export type { PendingApprovalRecord } from './agent-run-repo';
 
 export type { MissionError } from './types';

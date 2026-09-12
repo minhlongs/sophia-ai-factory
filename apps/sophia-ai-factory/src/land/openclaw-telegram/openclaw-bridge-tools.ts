@@ -6,7 +6,7 @@
 import { translateScript, TranslateConfigurationError, type TranslateScriptResult } from '@/land/i18n/translate-script';
 import { cloneVoice, VoiceCloneConfigurationError, type CloneVoiceResult } from '@/land/voice/clone-voice';
 import { generateSeoScript, SeoScriptConfigurationError, type GenerateSeoScriptResult } from '@/land/scripts/generate-seo-script';
-import { schedulePublish as schedulePublishAction } from '@/forest/publishing/schedule-publish';
+import { schedulePublish as schedulePublishAction, PublishConfigurationError } from '@/land/publish/schedule-video-publish';
 import { buildVideoDescription } from '@/land/affiliates/video-description-injector';
 import { getD1 } from '@/seed/db/client';
 
@@ -140,16 +140,10 @@ export type SchedulePublishBridgeResult =
 export async function callSchedulePublish(
   input: SchedulePublishBridgeInput,
 ): Promise<SchedulePublishBridgeResult> {
-  const d1 = await getD1();
-  if (!d1) {
-    return { ok: false, code: 'DB_ERROR', message: 'Database not available' };
-  }
-
   try {
-    const result = await schedulePublishAction(d1, {
+    const result = await schedulePublishAction({
       videoId: input.videoId,
       channelId: input.channelId,
-      tenantId: input.userId,
       userId: input.userId,
       scheduledAt: input.scheduledAt,
       caption: input.caption,
@@ -158,11 +152,14 @@ export async function callSchedulePublish(
       ok: true,
       result: {
         jobId: result.jobId,
-        scheduledAt: input.scheduledAt,
-        status: 'scheduled',
+        scheduledAt: result.scheduledAt,
+        status: result.status,
       },
     };
   } catch (err: unknown) {
+    if (err instanceof PublishConfigurationError) {
+      return { ok: false, code: 'INVALID_INPUT', message: err.message };
+    }
     const message = err instanceof Error ? err.message : 'unknown';
     return { ok: false, code: 'UPSTREAM_FAILED', message };
   }

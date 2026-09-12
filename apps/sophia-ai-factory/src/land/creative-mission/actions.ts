@@ -23,7 +23,7 @@ import {
   updateMissionStatus as treeUpdateMissionStatus,
 } from '@/tree/mission';
 import { inngest } from '@/seed/inngest/client';
-import { runMissionPreflightCheck } from '@/forest/mission/preflight-check';
+import { runMissionPreflightCheck } from '@/tree/mission/preflight-check';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 

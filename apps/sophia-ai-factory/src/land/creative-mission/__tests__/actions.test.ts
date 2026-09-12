@@ -39,6 +39,10 @@ vi.mock('@/seed/inngest/client', () => ({
   inngest: { send: mocks.inngestSend },
 }));
 
+vi.mock('@/tree/mission/preflight-check', () => ({
+  runMissionPreflightCheck: mocks.runMissionPreflightCheck,
+}));
+
 vi.mock('@/forest/mission/preflight-check', () => ({
   runMissionPreflightCheck: mocks.runMissionPreflightCheck,
 }));
