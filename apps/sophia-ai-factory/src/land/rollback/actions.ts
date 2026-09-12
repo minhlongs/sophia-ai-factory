@@ -18,7 +18,6 @@ import {
   logRollback,
   getRollbackHistory,
   type RollbackRecord,
-  type RollbackRepoError,
 } from '@/tree/rollback';
 
 // ---------------------------------------------------------------------------

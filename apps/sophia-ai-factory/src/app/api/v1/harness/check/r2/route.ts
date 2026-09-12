@@ -15,6 +15,7 @@ function verifyHarnessAuth(req: NextRequest): boolean {
   return headerSecret === harnessSecret;
 }
 
+// @allow-mutating-get: R2 harness health check creates and immediately deletes a probe object to verify storage connectivity
 export async function GET(request: NextRequest) {
   try {
     if (!verifyHarnessAuth(request)) {

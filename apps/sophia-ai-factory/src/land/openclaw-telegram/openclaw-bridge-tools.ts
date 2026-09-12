@@ -8,7 +8,6 @@ import { cloneVoice, VoiceCloneConfigurationError, type CloneVoiceResult } from 
 import { generateSeoScript, SeoScriptConfigurationError, type GenerateSeoScriptResult } from '@/land/scripts/generate-seo-script';
 import { schedulePublish as schedulePublishAction, PublishConfigurationError } from '@/land/publish/schedule-video-publish';
 import { buildVideoDescription } from '@/land/affiliates/video-description-injector';
-import { getD1 } from '@/seed/db/client';
 
 // ─── 7. sophia_embed_affiliate (homepage promise algorithm) ──────────────────
 

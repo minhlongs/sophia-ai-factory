@@ -11,7 +11,7 @@
  */
 
 import { createRequire } from 'node:module';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { vi } from 'vitest';
 import { getD1 } from '@/seed/db/client';
 
 const req = createRequire(import.meta.url);
