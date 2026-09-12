@@ -338,7 +338,7 @@ fi
 # Blocks deploy if critical checks fail. Emergency bypass: SKIP_PRE_DEPLOY_GATE=1
 if [ "${SKIP_PRE_DEPLOY_GATE:-0}" != "1" ]; then
   echo "==> pre-deploy gate validation"
-  if ! node scripts/pre-deploy-gate.mjs; then
+  if ! PREVIEW_URL="${PREVIEW_URL:-$PROD_URL}" node scripts/pre-deploy-gate.mjs; then
     echo "❌ Pre-deploy gate failed — aborting deploy"
     echo "Fix the issues above or bypass with SKIP_PRE_DEPLOY_GATE=1 (emergency only)"
     exit 1

@@ -21,7 +21,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
-const BASE_URL = process.env.PREVIEW_URL || 'http://localhost:3000';
+const BASE_URL = process.env.PREVIEW_URL || process.env.PROD_URL || 'http://localhost:3000';
 const ALLOWLIST = [
   '/billing', '/contact', '/projects', '/projects/new', '/settings', '/docs',
   '/auth/signup', '/features', '/guide', '/privacy', '/reset-password', '/terms',
