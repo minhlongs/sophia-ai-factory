@@ -2,7 +2,7 @@
  * Shared test utilities for distribution OS tests.
  */
 
-import { describe, beforeEach, vi } from 'vitest';
+import { vi } from 'vitest';
 import Database from 'better-sqlite3';
 
 export const SCHEMA = `

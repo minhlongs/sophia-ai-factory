@@ -180,7 +180,7 @@ export async function scheduleWhatsApp(
       new ScheduleWhatsAppError('INVALID_INPUT', parsed.error.issues[0]?.message ?? 'Invalid input'),
     );
   }
-  const { videoId, templateId, target, variables } = parsed.data;
+  const { videoId, templateId, target, variables: _variables } = parsed.data;
 
   // 2. Auth
   const user = await getCurrentUser();

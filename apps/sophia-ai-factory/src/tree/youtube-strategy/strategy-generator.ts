@@ -172,7 +172,7 @@ export function generateAngle(topic: string): string {
   return angles[Math.floor(Math.random() * angles.length)];
 }
 
-export function predictViews(topic: string): number {
+export function predictViews(_topic: string): number {
   const base = 5000;
   const variance = base * 0.3;
   return Math.floor(base + Math.random() * variance * 2 - variance);

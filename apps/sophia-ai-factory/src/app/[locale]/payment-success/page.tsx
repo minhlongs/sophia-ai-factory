@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CheckCircle, Loader2, MessageCircle } from "lucide-react";
+import { CheckCircle, MessageCircle } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { PaymentStatusPoller } from "@/forest/components/checkout/payment-status-poller";
 

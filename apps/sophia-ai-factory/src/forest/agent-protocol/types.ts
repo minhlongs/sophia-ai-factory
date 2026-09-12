@@ -26,9 +26,6 @@ import type {
   AgentRun,
   AgentPermission,
   AutonomyLevel,
-  CreativeIdentity,
-  CreativeMemory,
-  ModelPolicy,
 } from '@/seed/types/creative-domain';
 
 // ---------------------------------------------------------------------------

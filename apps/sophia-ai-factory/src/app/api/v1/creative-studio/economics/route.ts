@@ -19,7 +19,6 @@ import { logger } from '@/seed/utils/logger-utility';
 import { computeProviderMetrics } from '@/tree/media-jobs/media-job-economics-query';
 import { aggregateEconomicMetrics } from '@/tree/media-jobs/media-job-economics-aggregate';
 import { assessProviderHealth } from '@/tree/media-jobs/provider-health-policy';
-import { computeGrossMargin } from '@/seed/types/creative-job-economics';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,7 +70,7 @@ function classifyAttributionConfidence(provenanced: number, total: number): 'HIG
  * Aggregates media_jobs by provider, computing reliability + economic
  * metrics and health assessment for each.
  */
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(_request: NextRequest): Promise<NextResponse> {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -27,7 +27,6 @@ const IDEMPOTENCY_WINDOW_MS = 14 * 60 * 1000; // 14m (cron runs every 15m)
 const ALERT_THROTTLE_TTL = 2 * 60 * 60; // 2 hours in KV seconds
 const WARN_THRESHOLD = 0.85; // 85% of budget
 const CRITICAL_THRESHOLD = 1.0; // 100% of budget
-const BURN_RATE_MULTIPLIER = 2; // projected burn 2x remaining budget
 
 interface MissionRow {
   mission_id: string;

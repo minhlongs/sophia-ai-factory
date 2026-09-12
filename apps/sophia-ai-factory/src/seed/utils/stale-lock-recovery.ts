@@ -9,8 +9,6 @@
 
 import type { Result } from '@/seed/types/result'
 import { success, failure } from '@/seed/types/result'
-import { classifyError } from '@/seed/types/failure-kind'
-import { logger } from '@/seed/utils/logger-utility'
 
 /** Default stale threshold (5 minutes). */
 export const DEFAULT_STALE_THRESHOLD_MS = 5 * 60 * 1000
@@ -21,7 +19,7 @@ export interface LockRecord {
 }
 
 type PreparedQuery<TResult = LockRecord> = {
-  bind(...args: unknown[]): { first<T = TResult>(): Promise<TResult | null>; run<Meta = { changes: number }>(): Promise<{ meta?: Meta }> }
+  bind(...args: unknown[]): { first<T = TResult>(): Promise<T | null>; run<Meta = { changes: number }>(): Promise<{ meta?: Meta }> }
 }
 
 export type StaleLockDatabase = {

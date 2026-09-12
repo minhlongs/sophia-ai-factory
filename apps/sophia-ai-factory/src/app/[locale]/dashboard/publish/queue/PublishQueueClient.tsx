@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { useRouter } from '@/navigation';
 import { Link } from '@/navigation';
 import { cn } from '@/tree/components/setup-wizard/wizard-stepper';
 import {
@@ -11,7 +10,6 @@ import {
   XCircle,
   AlertTriangle,
   RefreshCw,
-  MoreVertical,
   MessageCircle,
   Send,
   Shield,
@@ -68,7 +66,6 @@ export function PublishQueueClient() {
   const t = useTranslations('publish.queue');
   const common = useTranslations('common');
   const locale = useLocale();
-  const router = useRouter();
   const [jobs, setJobs] = useState<PublishJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

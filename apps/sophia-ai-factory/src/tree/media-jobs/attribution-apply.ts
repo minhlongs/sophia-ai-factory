@@ -37,11 +37,6 @@ export interface AttributionApplyResult {
   reason: 'attributed' | 'no_candidate' | 'window_expired' | 'already_owned';
 }
 
-interface AttributionProvenanceRow {
-  media_job_id: string;
-  source_event_id: string;
-}
-
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function generateId(): string {

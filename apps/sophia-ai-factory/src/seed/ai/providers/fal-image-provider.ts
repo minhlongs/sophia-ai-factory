@@ -20,7 +20,7 @@ import { classifyError } from '@/seed/types/failure-kind';
 import { registerCertification, ProviderCertificationState } from '@/seed/ai/provider-certification';
 import { logger, type Logger } from '@/seed/utils/logger-utility';
 import { z } from 'zod';
-import { executeFalFetch, fetchWithRetry, isRetryableKind } from './fal-image-fetch';
+import { executeFalFetch, fetchWithRetry } from './fal-image-fetch';
 import { getFalModelPriceCents } from '@/seed/config/fal-pricing';
 import { classifyCost } from '@/seed/types/creative-job-economics';
 

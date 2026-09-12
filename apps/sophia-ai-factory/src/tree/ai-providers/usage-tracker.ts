@@ -13,26 +13,8 @@ import { AIProviderError, AIProviderErrorCode } from './errors'
 import type {
   AIResponse,
   DateRange,
-  UsageRecord,
-  UsageRow,
   UsageSummary,
 } from './types'
-
-// ── Row → Domain Mapping ──────────────────────────────────────────────────────
-
-function mapUsageRow(row: UsageRow): UsageRecord {
-  return {
-    requestId: row.request_id,
-    providerId: row.provider_id,
-    workspaceId: row.workspace_id,
-    model: row.model,
-    tokensIn: row.tokens_in,
-    tokensOut: row.tokens_out,
-    costCents: row.cost_cents,
-    latencyMs: row.latency_ms,
-    createdAt: row.created_at,
-  }
-}
 
 // ── Public API ────────────────────────────────────────────────────────────────
 

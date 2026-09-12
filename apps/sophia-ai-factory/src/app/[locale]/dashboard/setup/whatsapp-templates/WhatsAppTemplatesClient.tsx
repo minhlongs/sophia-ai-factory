@@ -5,7 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from '@/navigation';
 import { Link } from '@/navigation';
 import { cn } from '@/tree/components/setup-wizard/wizard-stepper';
-import { AlertCircle, CheckCircle, XCircle, Edit2, ChevronRight, MessageCircle, Send, AlertTriangle } from 'lucide-react';
+import { AlertCircle, CheckCircle, Edit2, ChevronRight, MessageCircle, Send, AlertTriangle } from 'lucide-react';
 
 interface TemplatePack {
   id: string;
@@ -101,10 +101,6 @@ export function WhatsAppTemplatesClient() {
     { key: 'notifications', label: t('categories.notifications') || 'Notifications', icon: AlertTriangle },
     { key: 'support', label: t('categories.support') || 'Support', icon: AlertCircle },
   ];
-
-  const filteredPacks = selectedTemplate
-    ? TEMPLATE_PACKS.filter((p) => p.id === selectedTemplate.id)
-    : TEMPLATE_PACKS;
 
   const handleSelectTemplate = (pack: TemplatePack) => {
     setSelectedTemplate(pack);

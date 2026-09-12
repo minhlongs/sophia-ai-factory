@@ -7,7 +7,7 @@
  */
 
 import { ImageGenerationError } from '../image-generation-provider';
-import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyHttpStatus, classifyError, FailureKind } from '@/seed/types/failure-kind';
 import type { Logger } from '@/seed/utils/logger-utility';
 import type { FalImageRequest, FalImageResponseSchema } from './fal-image-provider';

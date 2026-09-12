@@ -3,7 +3,6 @@
  * Ported from Lumen's seo-optimizer-agent.
  */
 
-import { logger } from '@/seed/utils/logger-utility';
 
 export interface SEOOptimizationInput {
   readonly title: string;
@@ -282,7 +281,6 @@ function identifyNiche(topic: string): string {
 }
 
 function generateLongTailKeywords(topic: string): string[] {
-  const year = new Date().getFullYear().toString();
   return [
     `how to ${topic}`,
     `${topic} for beginners`,

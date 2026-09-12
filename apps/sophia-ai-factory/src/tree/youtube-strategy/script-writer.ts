@@ -71,8 +71,6 @@ export interface GeneratedScript {
   readonly fullScript: string;
 }
 
-const SECONDS_PER_WORD = 0.25;
-
 /**
  * Generate a complete script for a content strategy using template fallback.
  */
@@ -138,8 +136,6 @@ export function parseAIScriptResponse(
     const parsed = parseJsonResponse(response);
     if (!parsed.title || !parsed.hook) return null;
 
-    const format = normalizeFormat(strategy.contentType);
-    const template = getTemplate(format);
     const sections = normalizeAISections((parsed.sections as Record<string, unknown>[]) ?? [], strategy);
     const hookRaw = parsed.hook as string | Record<string, unknown>;
     const hook: ScriptHook = {

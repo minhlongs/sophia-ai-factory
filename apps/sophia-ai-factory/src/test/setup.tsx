@@ -127,7 +127,7 @@ class NextResponseClass extends GlobalResponse {
     return res;
   };
 
-  NRC.rewrite = function(url: URL, init?: { request?: { headers: Headers } }): NextResponseClass {
+  NRC.rewrite = function(_url: URL, _init?: { request?: { headers: Headers } }): NextResponseClass {
     const res = new NextResponseClass(null, { status: 200 });
     res.cookies = new Map();
     return res;

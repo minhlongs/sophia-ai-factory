@@ -21,7 +21,6 @@ import {
 } from '@/seed/security/circuit-breaker';
 import {
   classifyError,
-  classifyHttpStatus,
   FailureKind,
 } from '@/seed/types/failure-kind';
 

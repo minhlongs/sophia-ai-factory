@@ -3,7 +3,6 @@
  * Ported from Lumen's channel-learning-engine.
  */
 
-import { logger } from '@/seed/utils/logger-utility';
 
 export interface PerformanceMetrics {
   readonly views: number;

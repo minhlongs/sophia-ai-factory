@@ -110,7 +110,7 @@ export const facebookAdapter: PlatformAdapter = {
     accessToken: string,
     platformVideoId: string,
   ): Promise<{ status: PublishStatus; error?: string }> {
-    const [pageId, pageToken] = accessToken.includes(':')
+    const [_pageId, pageToken] = accessToken.includes(':')
       ? accessToken.split(':', 2)
       : ['me', accessToken];
 

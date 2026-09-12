@@ -4,7 +4,6 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { requireAdmin } from '@/seed/auth/require-admin';
 import { getD1 } from '@/seed/db/client';
 import { toError } from '@/seed/utils/to-error';

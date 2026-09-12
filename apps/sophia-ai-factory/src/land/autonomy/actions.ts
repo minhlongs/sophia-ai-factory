@@ -19,9 +19,7 @@ import {
   setAutonomyLevel,
   listMissionTypePolicies,
   setMissionTypePolicy,
-  type AutonomyConfig,
   type AutonomyLevel,
-  type AutonomyRepoError,
 } from '@/tree/autonomy';
 import type { MissionTypePolicy } from '@/seed/types/production-factory';
 

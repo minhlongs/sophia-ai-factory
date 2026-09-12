@@ -65,7 +65,6 @@ const MAX_CLAIMS = 100;
  */
 export function buildProvenance(input: ProvenanceInput = {}): ProvenanceRecord {
   const sources = normalizeSources(input.sources ?? []);
-  const sourceIds = new Set(sources.map((s) => s.id));
   const claims = normalizeClaims(input.claims ?? [], sources);
 
   for (const claim of claims) {

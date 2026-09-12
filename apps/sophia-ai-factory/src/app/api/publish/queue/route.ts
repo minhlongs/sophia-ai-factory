@@ -21,8 +21,6 @@ export async function GET() {
   }
 
   try {
-    const now = Math.floor(Date.now() / 1000);
-
     const jobs = await db
       .prepare(
         `SELECT

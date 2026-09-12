@@ -125,7 +125,7 @@ export function createMockProvider(config: Partial<MockProviderConfig> = {}): Pr
       return (inputTokens + outputTokens) * 0.000001;
     },
 
-    getCapabilities(model: string): ProviderCapabilities {
+    getCapabilities(_model: string): ProviderCapabilities {
       return capabilities;
     },
   };

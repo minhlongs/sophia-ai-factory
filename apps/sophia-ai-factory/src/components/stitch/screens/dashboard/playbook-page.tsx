@@ -5,7 +5,6 @@ import { useTranslations } from 'next-intl';
 import {
   Card,
   CardContent,
-  CardHeader,
   Badge,
   Button,
   Table,

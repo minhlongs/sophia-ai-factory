@@ -12,7 +12,6 @@ import { Sparkles, Clock, Coins, CheckCircle2, ArrowRight, Video } from 'lucide-
 import { Link } from '@/navigation';
 import {
   getFirstRunTemplates,
-  type TemplateId,
   type FirstRunTemplate,
 } from '@/land/missions/first-run-template';
 import { estimateTemplateCost } from '@/land/missions/cost-estimator';
