@@ -10,6 +10,8 @@
 
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
+import { hasWorkspaceRole, verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { getD1 } from '@/seed/db/client';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
@@ -48,13 +50,8 @@ const RollbackMissionSchema = z.object({
 
 async function getWorkspaceIdForUser(userId: string): Promise<string | null> {
   const d1 = await getD1();
-  if (!d1) return Promise.resolve(null);
-  return d1
-    .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
-    .bind(userId)
-    .first<{ org_id: string }>()
-    .then((row) => row?.org_id ?? null)
-    .catch(() => null);
+  if (!d1) return null;
+  return await resolveOrgId(userId, d1);
 }
 
 async function assertWorkspaceAdmin(
@@ -65,17 +62,8 @@ async function assertWorkspaceAdmin(
     const d1 = await getD1();
     if (!d1) return failure({ code: 'DB_ERROR', message: 'Database not available' });
 
-    const membership = await d1
-      .prepare('SELECT role FROM org_members WHERE org_id = ? AND user_id = ?')
-      .bind(workspaceId, userId)
-      .first<{ role: string }>();
-
-    if (!membership) {
-      return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
-    }
-
-    const allowedRoles = ['owner', 'admin'];
-    if (!allowedRoles.includes(membership.role)) {
+    const isAdmin = await hasWorkspaceRole(workspaceId, userId, 'ADMIN', d1);
+    if (!isAdmin) {
       return failure({ code: 'FORBIDDEN', message: 'Only workspace owners or admins can trigger rollback' });
     }
 
@@ -190,12 +178,9 @@ export async function getRollbackHistoryAction(
     }
 
     // Verify user has membership (read-only check)
-    const membership = await d1
-      .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-      .bind(workspaceId, user.id)
-      .first();
+    const hasAccess = await verifyWorkspaceAccess(workspaceId, user.id, d1);
 
-    if (!membership) {
+    if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 

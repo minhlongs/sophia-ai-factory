@@ -3,6 +3,8 @@
  * @module land/adsense/db-helpers
  */
 
+import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
+
 interface D1Row {
   encrypted_credentials: string;
 }
@@ -16,11 +18,7 @@ export async function validateMembership(
   workspaceId: string,
   userId: string,
 ): Promise<boolean> {
-  const row = await db
-    .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-    .bind(workspaceId, userId)
-    .first();
-  return row !== null;
+  return verifyWorkspaceAccess(workspaceId, userId, db);
 }
 
 export async function fetchEncrypted(

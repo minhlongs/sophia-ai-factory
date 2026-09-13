@@ -19,6 +19,7 @@
  */
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { getD1 } from '@/seed/db/client';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import {
@@ -185,12 +186,9 @@ export async function runMissionPreflightCheck(
     } else {
       const d1 = await getD1();
       if (d1) {
-        const member = await d1
-          .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ? LIMIT 1')
-          .bind(workspaceId, resolvedUserId)
-          .first();
+        const hasAccess = await verifyWorkspaceAccess(workspaceId, resolvedUserId, d1);
 
-        if (member) {
+        if (hasAccess) {
           ownershipPassed = true;
         } else {
           ownershipError = `User does not belong to workspace ${workspaceId}`;

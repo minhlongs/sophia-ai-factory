@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { createServerClient } from '@/seed/db/client';
+import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { getWorkspaceROI, getTopROIChannels } from '@/tree/roi';
 import { aggregateRevenueAttribution } from '@/forest/analytics/queries/revenue-attribution';
@@ -24,20 +24,6 @@ const querySchema = z.object({
     z.number().int().positive().optional(),
   ),
 });
-
-async function verifyWorkspaceAccess(orgId: string, userId: string): Promise<boolean> {
-  const db = createServerClient();
-  if (!db) return false;
-  try {
-    const member = await db
-      .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-      .bind(orgId, userId)
-      .first();
-    return !!member;
-  } catch {
-    return false;
-  }
-}
 
 export async function GET(req: NextRequest) {
   try {

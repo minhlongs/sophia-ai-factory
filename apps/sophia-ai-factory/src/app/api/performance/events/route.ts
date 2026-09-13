@@ -9,21 +9,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { createServerClient } from '@/seed/db/client';
+import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { recordPerformanceEvent, newPerformanceEventId } from '@/tree/performance';
 import type { PerformanceEvent } from '@/seed/types/creative-domain';
 import { getErrorMessage } from '@/seed/utils/to-error';
 
 export const dynamic = 'force-dynamic';
-
-async function verifyWorkspaceAccess(workspaceId: string, userId: string): Promise<boolean> {
-  const d1 = createServerClient();
-  const membership = await d1
-    .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-    .bind(workspaceId, userId)
-    .first();
-  return membership !== null;
-}
 
 const eventSchema = z.object({
   workspaceId: z.string().min(1),

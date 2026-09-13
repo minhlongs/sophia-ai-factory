@@ -10,6 +10,8 @@
 
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
+import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { getD1 } from '@/seed/db/client';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
@@ -62,11 +64,7 @@ async function getPrimaryWorkspaceId(userId: string): Promise<string | null> {
   try {
     const d1 = await getD1();
     if (!d1) return null;
-    const row = await d1
-      .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
-      .bind(userId)
-      .first<{ org_id: string }>();
-    return row?.org_id ?? null;
+    return await resolveOrgId(userId, d1);
   } catch {
     return null;
   }
@@ -79,11 +77,8 @@ async function assertWorkspaceMembership(
   try {
     const d1 = await getD1();
     if (!d1) return failure({ code: 'DB_ERROR', message: 'Database not available' });
-    const membership = await d1
-      .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-      .bind(workspaceId, userId)
-      .first();
-    if (!membership) {
+    const hasAccess = await verifyWorkspaceAccess(workspaceId, userId, d1);
+    if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
     return success(undefined);
