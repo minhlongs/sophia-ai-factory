@@ -18,6 +18,7 @@
  */
 
 import { getD1 } from '@/seed/db/client'
+import { resolveOrgId } from '@/seed/auth/resolve-org-id'
 import { logger } from '@/seed/utils/logger-utility'
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker'
 import { classifyError, FailureKind } from '@/seed/types/failure-kind'
@@ -280,10 +281,6 @@ async function callNowPaymentsRefund(
 
 // ── Tier helpers ───────────────────────────────────────────────────────────────
 
-interface OrgMembershipRow {
-  org_id: string
-}
-
 interface SubscriptionRow {
   plan: string
   status: string
@@ -295,19 +292,16 @@ interface SubscriptionRow {
  */
 async function resolveCurrentTier(userId: string, db: NonNullable<Awaited<ReturnType<typeof getD1>>>): Promise<Tier> {
   try {
-    const membership = await db
-      .prepare('SELECT org_id FROM org_members WHERE user_id = ?1 LIMIT 1')
-      .bind(userId)
-      .first<OrgMembershipRow>()
+    const orgId = await resolveOrgId(userId, db)
 
-    if (!membership?.org_id) {
+    if (!orgId) {
       logger.info('[RefundProcessor] No org membership found for user, defaulting to BASIC', { userId })
       return 'BASIC'
     }
 
     const sub = await db
       .prepare('SELECT plan, status FROM subscriptions WHERE org_id = ?1 LIMIT 1')
-      .bind(membership.org_id)
+      .bind(orgId)
       .first<SubscriptionRow>()
 
     if (!sub || sub.status !== 'active') {
@@ -346,18 +340,15 @@ async function rollbackTier(
     .run()
 
   // Update organization plan
-  const orgRow = await db
-    .prepare('SELECT org_id FROM org_members WHERE user_id = ?1 LIMIT 1')
-    .bind(userId)
-    .first<OrgMembershipRow>()
+  const orgId = await resolveOrgId(userId, db)
 
-  if (orgRow?.org_id) {
+  if (orgId) {
     await db
       .prepare(
         `UPDATE organizations SET plan = ?1, updated_at = ?2
          WHERE id = ?3 AND plan != ?1`,
       )
-      .bind(dbPlan, nowSec, orgRow.org_id)
+      .bind(dbPlan, nowSec, orgId)
       .run()
   }
 
@@ -365,6 +356,6 @@ async function rollbackTier(
     userId,
     targetTier,
     dbPlan,
-    orgId: orgRow?.org_id ?? null,
+    orgId: orgId ?? null,
   })
 }

@@ -5,6 +5,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { createServerClient } from '@/seed/db/client';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import {
@@ -25,20 +26,6 @@ const VALID_PLAN_STATUSES: readonly DistributionPlan['status'][] = [
 const PatchBody = z.object({
   status: z.enum(VALID_PLAN_STATUSES as unknown as [string, ...string[]]),
 });
-
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
-async function verifyWorkspaceAccess(
-  workspaceId: string,
-  userId: string,
-): Promise<boolean> {
-  const d1 = createServerClient();
-  const row = await d1
-    .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-    .bind(workspaceId, userId)
-    .first();
-  return row !== null;
-}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

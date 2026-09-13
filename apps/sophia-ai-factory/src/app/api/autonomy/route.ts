@@ -5,6 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/seed/auth/require-admin';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { getD1 } from '@/seed/db/client';
 import { toError } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
@@ -25,12 +26,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Database not available' }, { status: 503 });
     }
 
-    const membership = await d1
-      .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
-      .bind(user.id)
-      .first<{ org_id: string }>();
-
-    const workspaceId = membership?.org_id;
+    const workspaceId = await resolveOrgId(user.id, d1);
     if (!workspaceId) {
       return NextResponse.json({ error: 'No workspace found' }, { status: 404 });
     }
@@ -67,12 +63,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Database not available' }, { status: 503 });
     }
 
-    const membership = await d1
-      .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
-      .bind(user.id)
-      .first<{ org_id: string }>();
-
-    const workspaceId = membership?.org_id;
+    const workspaceId = await resolveOrgId(user.id, d1);
     if (!workspaceId) {
       return NextResponse.json({ error: 'No workspace found' }, { status: 404 });
     }

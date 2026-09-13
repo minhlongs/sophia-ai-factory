@@ -4,6 +4,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
+import { hasWorkspaceRole } from '@/seed/auth/workspace-access';
 import { getD1 } from '@/seed/db/client';
 import { toError } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
@@ -28,17 +30,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Get workspace
-    const membership = await d1
-      .prepare('SELECT org_id, role FROM org_members WHERE user_id = ? LIMIT 1')
-      .bind(user.id)
-      .first<{ org_id: string; role: string }>();
-
-    if (!membership) {
+    const workspaceId = await resolveOrgId(user.id, d1);
+    if (!workspaceId) {
       return NextResponse.json({ error: 'No workspace found' }, { status: 404 });
     }
 
-    const allowedRoles = ['owner', 'admin'];
-    if (!allowedRoles.includes(membership.role)) {
+    const isAuthorized = await hasWorkspaceRole(workspaceId, user.id, 'ADMIN', d1);
+    if (!isAuthorized) {
       return NextResponse.json(
         { error: 'Only workspace owners or admins can trigger rollback' },
         { status: 403 },
@@ -60,7 +58,7 @@ export async function POST(request: NextRequest) {
     // Fetch current mission
     const mission = await d1
       .prepare('SELECT id, status FROM missions WHERE id = ?1 AND workspace_id = ?2')
-      .bind(missionId, membership.org_id)
+      .bind(missionId, workspaceId)
       .first<{ id: string; status: string }>();
 
     if (!mission) {
@@ -69,7 +67,7 @@ export async function POST(request: NextRequest) {
 
     // Log rollback
     const logResult = await logRollback({
-      workspaceId: membership.org_id,
+      workspaceId,
       missionId,
       reason,
       fromStatus: mission.status,
@@ -91,7 +89,7 @@ export async function POST(request: NextRequest) {
     logger.info('[api/rollback] POST success', {
       userId: user.id,
       missionId,
-      workspaceId: membership.org_id,
+      workspaceId,
     });
 
     return NextResponse.json({ ok: true, rollback: logResult.value });

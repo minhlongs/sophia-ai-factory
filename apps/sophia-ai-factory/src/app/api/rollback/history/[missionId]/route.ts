@@ -4,6 +4,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { getD1 } from '@/seed/db/client';
 import { toError } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
@@ -25,12 +26,8 @@ export async function GET(
     }
 
     // Get workspace
-    const membership = await d1
-      .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
-      .bind(user.id)
-      .first<{ org_id: string }>();
-
-    if (!membership) {
+    const workspaceId = await resolveOrgId(user.id, d1);
+    if (!workspaceId) {
       return NextResponse.json({ error: 'No workspace found' }, { status: 404 });
     }
 
@@ -50,7 +47,7 @@ export async function GET(
     }
 
     // Filter to only records belonging to this workspace
-    const filtered = result.value.filter((r) => r.workspaceId === membership.org_id);
+    const filtered = result.value.filter((r) => r.workspaceId === workspaceId);
 
     return NextResponse.json({ ok: true, history: filtered });
   } catch (error) {

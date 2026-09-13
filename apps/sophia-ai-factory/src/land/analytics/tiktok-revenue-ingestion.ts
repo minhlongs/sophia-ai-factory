@@ -14,6 +14,7 @@
  */
 
 import { getD1 } from '@/seed/db/client';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { logger } from '@/seed/utils/logger-utility';
 import { recordPerformanceEventIdempotent } from '@/tree/performance/events';
 
@@ -32,22 +33,14 @@ interface WriteResult {
   skipped: number;
 }
 
-interface OrgMemberRow {
-  org_id: string;
-}
-
 /**
- * Resolve the user's workspace from org_members using the affiliate user_id.
+ * Resolve the user's workspace using canonical resolveOrgId with affiliate user_id.
  * Returns null when the user has no org membership.
  */
 async function resolveWorkspaceId(userId: string): Promise<string | null> {
   const db = await getD1();
   if (!db) return null;
-  const row = await db
-    .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
-    .bind(userId)
-    .first<OrgMemberRow>();
-  return row?.org_id ?? null;
+  return resolveOrgId(userId, db);
 }
 
 /**

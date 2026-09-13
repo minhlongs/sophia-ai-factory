@@ -12,6 +12,7 @@
 'use server';
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { success, failure, type Result } from '@/seed/types/result';
@@ -60,16 +61,10 @@ export async function resubscribe(): Promise<Result<ResubscribeResult, BillingEr
     }
 
     // Get org for user
-    const member = await d1
-      .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
-      .bind(user.id)
-      .first<{ org_id: string }>();
-
-    if (!member) {
+    const orgId = await resolveOrgId(user.id, d1);
+    if (!orgId) {
       return failure({ code: 'NO_ACTIVE_SUBSCRIPTION', message: 'No organization found' });
     }
-
-    const orgId = member.org_id;
 
     // Get the subscription (most recent, even cancelled)
     const sub = await d1

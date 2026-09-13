@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { createServerClient } from '@/seed/db/client';
+import { hasWorkspaceRole } from '@/seed/auth/workspace-access';
 import { getApproval, resolveApproval, getAgentRun } from '@/tree/mission/agent-run-repo';
 import { getErrorMessage } from '@/seed/utils/to-error';
 
@@ -68,16 +68,8 @@ export async function PATCH(
 
     // Verify workspace membership + admin role
     const workspaceId = agentRunResult.value.workspaceId;
-    const d1 = createServerClient();
-    const membership = await d1
-      .prepare('SELECT role FROM org_members WHERE org_id = ? AND user_id = ?')
-      .bind(workspaceId, user.id)
-      .first<{ role: string }>();
-
-    if (!membership) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-    if (!['admin', 'owner'].includes(membership.role)) {
+    const isAuthorized = await hasWorkspaceRole(workspaceId, user.id, 'ADMIN');
+    if (!isAuthorized) {
       return NextResponse.json(
         { error: 'Only workspace owner or admin can resolve approvals' },
         { status: 403 },

@@ -8,6 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { toError } from '@/seed/utils/to-error';
 import { getD1 } from '@/seed/db/client';
 import { csrfForbiddenResponse, verifyCsrfToken } from '@/seed/security/csrf';
@@ -64,13 +65,12 @@ export async function POST(request: NextRequest) {
     const mcuMonthly = TIER_MCU[tier];
 
     // Find user's org — auto-create if missing (old accounts before signup fix)
-    let orgRow = await d1.prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
-      .bind(userId).first<{ org_id: string }>();
+    let orgId = await resolveOrgId(userId, d1);
 
     const statements: D1PreparedStatement[] = [];
     let orgBalanceDelta = couponDef.mcuBonus;
 
-    if (!orgRow) {
+    if (!orgId) {
       const email = (payload.email as string) || 'user';
       const newOrgId = crypto.randomUUID();
       const slug = email.split('@')[0].replace(/[^a-z0-9]/gi, '-').toLowerCase();
@@ -79,21 +79,21 @@ export async function POST(request: NextRequest) {
         d1.prepare('INSERT INTO organizations (id, name, slug) VALUES (?, ?, ?)').bind(newOrgId, email, slug),
         d1.prepare('INSERT INTO org_members (org_id, user_id, role) VALUES (?, ?, ?)').bind(newOrgId, userId, 'owner'),
       );
-      orgRow = { org_id: newOrgId };
+      orgId = newOrgId;
     }
 
     // Check if subscription exists, then INSERT or UPDATE
     const existing = await d1.prepare('SELECT id FROM subscriptions WHERE org_id = ? LIMIT 1')
-      .bind(orgRow.org_id).first();
+      .bind(orgId).first();
     if (existing) {
       statements.push(
         d1.prepare("UPDATE subscriptions SET plan = ?, status = 'active', updated_at = datetime('now') WHERE org_id = ?")
-          .bind(tier, orgRow.org_id),
+          .bind(tier, orgId),
       );
     } else {
       statements.push(
         d1.prepare("INSERT INTO subscriptions (id, org_id, plan, status, created_at, updated_at) VALUES (?, ?, ?, 'active', datetime('now'), datetime('now'))")
-          .bind(crypto.randomUUID(), orgRow.org_id, tier),
+          .bind(crypto.randomUUID(), orgId, tier),
       );
     }
 
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
          ON CONFLICT(org_id) DO UPDATE SET
            balance = balance + excluded.balance,
            updated_at = datetime('now')`,
-      ).bind(orgRow.org_id, orgBalanceDelta),
+      ).bind(orgId, orgBalanceDelta),
       d1.prepare(
         `INSERT INTO user_mcu_balance (user_id, credits_remaining, credits_total_purchased, updated_at)
          VALUES (?, ?, ?, strftime('%s','now'))

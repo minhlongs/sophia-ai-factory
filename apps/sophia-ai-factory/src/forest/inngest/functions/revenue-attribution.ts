@@ -17,6 +17,7 @@
 
 import { inngest } from '@/seed/inngest/client';
 import { getD1 } from '@/seed/db/client';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import type { D1Database } from '@cloudflare/workers-types';
 import { logger } from '@/seed/utils/logger-utility';
 import { computeGrossMargin, selectLastTouch } from '@/seed/types/creative-job-economics';
@@ -26,10 +27,6 @@ interface UnattributedJobRow {
   user_id: string;
   completed_at: number;
   provider_cost: number | null;
-}
-
-interface OrgMemberRow {
-  org_id: string;
 }
 
 interface PerformanceEventRow {
@@ -48,15 +45,11 @@ const ATTRIBUTION_WINDOW_DAYS = 30;
 const BATCH_SIZE = 100;
 
 /**
- * Resolve the user's workspace from org_members (first membership).
+ * Resolve the user's workspace using canonical resolveOrgId.
  * org_id == workspace_id (verified in CMD #10 scout truth table T8/T19).
  */
 async function resolveWorkspaceId(db: D1Database, userId: string): Promise<string | null> {
-  const row = await db
-    .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
-    .bind(userId)
-    .first<OrgMemberRow>();
-  return row?.org_id ?? null;
+  return resolveOrgId(userId, db);
 }
 
 /**

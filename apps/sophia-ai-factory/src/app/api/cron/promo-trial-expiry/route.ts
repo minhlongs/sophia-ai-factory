@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getExpiredTrialUsers } from '@/land/promo/promo-repo';
 import { verifyCronAuth } from '@/seed/security/cron-auth';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { logger } from '@/seed/utils/logger-utility';
 import { getD1 } from '@/seed/db/client';
 import { Resend } from 'resend';
@@ -38,14 +39,11 @@ async function downgradeExpiredTrial(db: D1Database, userId: string): Promise<vo
     .run();
 
   // Downgrade org plan to 'basic' so tier gates take effect
-  const orgRow = await db
-    .prepare(`SELECT org_id FROM org_members WHERE user_id = ?1 LIMIT 1`)
-    .bind(userId)
-    .first<{ org_id: string }>();
-  if (orgRow?.org_id) {
+  const orgId = await resolveOrgId(userId, db);
+  if (orgId) {
     await db
       .prepare(`UPDATE organizations SET plan = 'basic', updated_at = ?1 WHERE id = ?2`)
-      .bind(now, orgRow.org_id)
+      .bind(now, orgId)
       .run();
   }
 }

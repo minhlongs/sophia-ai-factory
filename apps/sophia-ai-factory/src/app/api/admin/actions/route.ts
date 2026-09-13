@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { requireAdmin } from '@/seed/auth/require-admin'
+import { resolveOrgId } from '@/seed/auth/resolve-org-id'
 import { TIER_DB_MAPPING } from '@/seed/config/tiers'
 import { getD1 } from '@/seed/db/client'
 import { writeAuditLog } from '@/tree/admin/audit-log'
@@ -103,9 +104,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       // Update subscription plan via org_members → subscriptions
       const dbPlan = TIER_DB_MAPPING[body.tier as keyof typeof TIER_DB_MAPPING] ?? 'basic'
-      const member = await db.prepare('SELECT org_id FROM org_members WHERE user_id = ?1 LIMIT 1').bind(user.id).first<{ org_id: string }>()
-      if (member) {
-        await db.prepare("UPDATE subscriptions SET plan = ?1 WHERE org_id = ?2 AND status = 'active'").bind(dbPlan, member.org_id).run()
+      const orgId = await resolveOrgId(user.id, db)
+      if (orgId) {
+        await db.prepare("UPDATE subscriptions SET plan = ?1 WHERE org_id = ?2 AND status = 'active'").bind(dbPlan, orgId).run()
       }
       await writeAuditLog({
         actorUserId: auth.user.id,
