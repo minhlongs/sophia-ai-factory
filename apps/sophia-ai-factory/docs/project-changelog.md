@@ -1,6 +1,33 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-13 | **Current Version:** 1.33.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** d6977e37
+**Last Updated:** 2026-09-13 | **Current Version:** 1.34.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** bc700d56
+
+---
+
+## 2026-09-13 (v1.34.0 — CANONICAL WORKSPACE ACCESS PHASE 4, DASHBOARD & SECONDARY ACTIONS CONSOLIDATION & LIVE EDGE DEPLOY, COMPLETE)
+
+**Severity: P0 ARCHITECTURAL UNIFICATION & MULTI-TENANT ACCESS | Type: Security + Multi-Tenancy + Dashboard + Secondary Actions + Live Edge Deployment | Status: SHIPPED**
+
+Completed Phase 4 of the Canonical Workspace Access & Multi-Tenant Authorization Consolidation, eradicating all duplicate raw `org_members` queries across 14 dashboard server pages, secondary server actions, API routes, and quota checker helpers:
+- **Canonical Multi-Tenant Helpers (`src/seed/auth/workspace-access.ts` & `src/seed/auth/resolve-org-id.ts`)**:
+  - Added `getUserWorkspaceIds` supporting both D1 prepared statements (`prepare()`) and query builder syntax (`from()`) with fallback to owned organizations.
+  - Re-exported `resolveOrgId` and `resolveOrgOwnerUserId` from `@/seed/auth/workspace-access`.
+  - Updated `resolveOrgId` and `resolveOrgOwnerUserId` to dynamically handle query builder clients without `prepare()` (supporting mock/test fixtures).
+- **Dashboard Server Component Pages Consolidated (14 pages)**:
+  - `src/app/(app)/dashboard/analytics/cross-platform/page.tsx`, `src/app/(app)/dashboard/ip/page.tsx`, `src/app/(app)/dashboard/provenance/page.tsx`, `src/app/(app)/dashboard/publish/schedule/page.tsx`, `src/app/(app)/dashboard/repurpose/page.tsx`.
+  - `src/app/[locale]/dashboard/approvals/page.tsx`, `src/app/[locale]/dashboard/creative-economy/page.tsx`, `src/app/[locale]/dashboard/missions/[id]/rollback/page.tsx`, `src/app/[locale]/dashboard/missions/new/page.tsx`, `src/app/[locale]/dashboard/missions/page.tsx`, `src/app/[locale]/dashboard/monetization/page.tsx`, `src/app/[locale]/dashboard/reality-loop/page.tsx`, `src/app/[locale]/dashboard/settings/autonomy/page.tsx`, `src/app/[locale]/dashboard/system-health/page.tsx`.
+- **Secondary Server Actions & Quota Checkers Consolidated**:
+  - `src/app/actions/admin.ts`, `src/app/actions/campaigns.ts`, `src/app/actions/billing/change-tier.ts`, `src/app/actions/billing/subscription.ts`.
+  - `src/forest/quota/org-quota-checker.ts` and `src/tree/quota/org-quota-checker.ts`.
+  - `src/seed/db/auth.ts` (`getUserOrganization`).
+- **API Routes Consolidated**:
+  - `src/app/api/approvals/route.ts` (`getUserWorkspaceIds`).
+  - `src/app/api/cron/subscription-reminders/route.ts` (`resolveOrgOwnerUserId`).
+  - `src/app/api/payos/ipn/route.ts` & `src/app/api/webhooks/payos/route.ts` (`resolveOrgId`).
+  - `src/app/api/stream/campaigns/[id]/route.ts` (`resolveOrgId`).
+- **Quality & Verification**:
+  - 0 TypeScript errors (`npm run type-check`), 0 layer boundary violations (`npm run ci:arch`), 9,330+ tests passing (100% green).
+  - Deployed commit `bc700d564` to Cloudflare Workers via CF-direct doctrine; live edge SHA verified `bc700d56` at `https://sophia.agencyos.network/api/version`.
 
 ---
 
