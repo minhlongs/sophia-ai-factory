@@ -1,14 +1,14 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-14 | **Current Version:** 1.36.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** f9f3684d
+**Last Updated:** 2026-09-14 | **Current Version:** 1.36.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** 74dcdeb1
 
 ---
 
 ## 2026-09-14 (v1.36.0 — AGENTIC AFFILIATE DISCOVERY WAVE, SHAREASALE ADAPTER & CANONICAL ACCESS CONSOLIDATION)
 
-**Severity: P0 REVENUE DISCOVERY & MULTI-TENANT ACCESS | Type: Revenue + Affiliate Discovery + Security + Provider Adapters | Status: VERIFIED**
+**Severity: P0 REVENUE DISCOVERY & MULTI-TENANT ACCESS | Type: Revenue + Affiliate Discovery + Security + Provider Adapters | Status: SHIPPED**
 
-Delivered the Agentic Affiliate Discovery Wave and completed the secondary modules consolidation onto canonical workspace access:
+Delivered the Agentic Affiliate Discovery Wave, ShareASale network adapter, and completed secondary modules consolidation onto canonical workspace access:
 - **Agentic Affiliate Discovery Wave (`src/land/affiliates/discovery-wave.ts`)**:
   - Implemented `runAgenticDiscoveryWave` to concurrently scan, score, and rank high-EPC affiliate products across supported networks (ClickBank, Awin, ShareASale).
   - Wired into 6-factor composite quality scoring (EPC, commission, cookie days, payout frequency, approval rate) and fail-closed scam gating (`detectScamRisk`).
@@ -24,6 +24,8 @@ Delivered the Agentic Affiliate Discovery Wave and completed the secondary modul
   - `src/seed/auth/resolve-org-id.ts`: Streamlined with `queryFirst<T>` helper to guarantee D1 `.first()` and `.all()` compatibility under 193 LOC.
 - **Quality & Verification**:
   - 0 TypeScript errors (`npm run type-check`), 0 layer boundary violations (`npm run ci:arch`), 41/41 customer journey tests green, all affiliate suites passing (30 files, 286 tests).
+  - Deployed commit `74dcdeb19` to Cloudflare Workers via CF-direct doctrine; live edge SHA verified `74dcdeb1` at `https://sophia.agencyos.network/api/version`.
+  - Production verification: `/api/health` -> HTTP 200, `/login` -> HTTP 307 (redirect), `/vi/login` -> HTTP 200.
 
 ---
 
