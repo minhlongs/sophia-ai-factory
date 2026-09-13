@@ -122,7 +122,7 @@ All documented in `docs/handover/founder-cheat-sheet-260512.md`. **These do NOT 
 |---|--------|---------------|--------|--------|
 | 10 | Programmatic landing pages for "AI video [niche]" | SEO content strategy | 4h | ✅ SHIPPED — 25 niches, hub page, sitemap, health fix |
 | 11 | Open-source HeyGen alternative (FaceFusion+Wav2Lip+TTS) | SadTalker 13K★ | 2 weeks | 🔴 Backlog |
-| 12 | Auto-affiliate product discovery via next agent wave | Agentic next phase | 1 week | 🔴 Backlog |
+| 12 | Auto-affiliate product discovery via next agent wave | Agentic next phase | 1 week | ✅ SHIPPED — `discovery-wave.ts` (ClickBank, Awin, ShareASale), composite quality scoring + scam gate |
 
 ---
 
@@ -175,6 +175,7 @@ Sophia already uses ClaudeKit's `cook` pipeline (plan→code→review→test). T
 | Phase 11 (tenant isolation) | Completed — Canonical `workspace-access.ts` and `withTenantScope` shipped (2026-09-13) |
 
 ### Backlog
+- ✅ **Agentic Affiliate Discovery Wave & ShareASale Adapter (COMPLETE 2026-09-14)** — Shipped `discovery-wave.ts` (multi-network discovery across ClickBank, Awin, ShareASale), `ShareASaleProvider` adapter, 6-factor composite quality scoring and fail-closed scam gating.
 - ✅ **Secondary Server Actions & Internal Endpoints Hygiene (COMPLETE 2026-09-14)** — Migrated remaining localized `org_members` queries in billing utilities (`subscription-expiry.ts`, `nowpayments-ipn-finished.ts`, `nowpayments-ipn-one-time.ts`) to canonical `resolveOrgId`; verified secondary actions in `src/land/creative-mission/actions.ts`, `src/land/commerce/`, `src/land/production-monitoring/actions.ts`, and `src/land/audience/actions/` are 100% compliant with canonical `verifyWorkspaceAccess`.
 
 ---
