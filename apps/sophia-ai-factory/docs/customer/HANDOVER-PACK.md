@@ -160,9 +160,9 @@ Biên bản này xác nhận rằng Lãnh đạo điều hành mới / Bên ti�
 ## Tài Liệu Tham Khảo Kỹ Thuật & Kiến Trúc Vận Hành
 
 ### 1. Production Release / Phiên Bản Phát Hành Thực Tế
-- **Live Production SHA:** `e3bf4044` *(Xác thực trực tiếp tại `https://sophia.agencyos.network/api/version`)*
-- **Git Commit:** `e3bf4044d40177f326f5398c9e2fdf67dbc4b911` (`fix(gate): default BASE_URL to prod domain in pre-deploy gate to eliminate local port 3000 collision`)
-- **Deployment Timestamp:** `2026-09-13T08:13:31Z`
+- **Live Production SHA:** `d6977e37` *(Xác thực trực tiếp tại `https://sophia.agencyos.network/api/version`)*
+- **Git Commit:** `d6977e37297f3c9df4ebd97108b9ba198d27fb63` (`feat(auth): consolidate canonical workspace access across billing actions, analytics, and api routes`)
+- **Deployment Timestamp:** `2026-09-13T13:15:25Z`
 - **Runtime Environment:** Cloudflare Workers via OpenNext v1.19.11
 
 ### 2. Architecture Summary / Tóm Tắt Kiến Trúc Hệ Thống

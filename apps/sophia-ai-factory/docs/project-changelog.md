@@ -1,6 +1,25 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-13 | **Current Version:** 1.32.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** live
+**Last Updated:** 2026-09-13 | **Current Version:** 1.33.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** d6977e37
+
+---
+
+## 2026-09-13 (v1.33.0 — CANONICAL WORKSPACE ACCESS PHASES 2 & 3, BILLING/ANALYTICS CONSOLIDATION & LIVE EDGE DEPLOY, COMPLETE)
+
+**Severity: P0 ARCHITECTURAL UNIFICATION & MULTI-TENANT ACCESS | Type: Security + Multi-Tenancy + Billing + Analytics + Live Edge Deployment | Status: SHIPPED**
+
+Completed Phases 2 & 3 of the Canonical Workspace Access & Multi-Tenant Authorization Consolidation, eradicating all duplicate raw `org_members` queries across the remaining 18 critical modules:
+- **Billing Actions & Workflows**:
+  - Migrated `change-tier-action.ts`, `cancel-subscription-action.ts`, and `resubscribe-action.ts` to canonical `resolveOrgId`.
+  - Consolidated refund processor (`refund-processor.ts`) `resolveCurrentTier` and `rollbackTier` to canonical `resolveOrgId`.
+- **Analytics & Revenue Ingestion**:
+  - Unified `revenue-ingestion.ts` (YouTube Analytics) and `tiktok-revenue-ingestion.ts` (TikTok / affiliate conversion revenue) using canonical `resolveOrgId`.
+  - Unified Inngest background cron `revenue-attribution.ts` using canonical `resolveOrgId`.
+- **Remaining API Endpoints**:
+  - Eliminated redundant route helpers and raw SQL queries across: `/api/admin/actions`, `/api/agent-runs/[id]`, `/api/approvals/[id]`, `/api/autonomy`, `/api/coupons/activate`, `/api/cron/promo-trial-expiry`, `/api/distribution/[id]`, `/api/graphs/[type]`, `/api/production-graph-runs/[id]`, `/api/rollback`, `/api/rollback/history/[missionId]`.
+- **Quality & Verification**:
+  - 0 TypeScript errors (`npm run type-check`), 0 layer boundary violations (`npm run ci:arch`), 9,325/9,325 tests passing (100% green).
+  - Deployed commit `d6977e372` to Cloudflare Workers via CF-direct doctrine; live edge SHA verified `d6977e37` at `https://sophia.agencyos.network/api/version`.
 
 ---
 
