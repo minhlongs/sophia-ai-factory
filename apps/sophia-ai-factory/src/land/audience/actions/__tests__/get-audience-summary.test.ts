@@ -155,7 +155,8 @@ describe('getAudienceSummary', () => {
 
   it('returns INTERNAL on unexpected database error', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    mockFirst.mockRejectedValueOnce(new Error('D1 connection lost'));
+    mockFirst.mockResolvedValueOnce({ role: 'MEMBER' });
+    mockListSegments.mockRejectedValueOnce(new Error('D1 connection lost'));
 
     const result = await getAudienceSummary({ workspaceId: 'ws-1' });
     expect(result.ok).toBe(false);

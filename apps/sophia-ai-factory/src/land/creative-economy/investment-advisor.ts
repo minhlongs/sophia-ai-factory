@@ -12,6 +12,7 @@
 
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { createServerClient } from '@/seed/db/client';
 import { getUserTier } from '@/seed/db/get-user-tier';
 import { canUsePhase4Feature, type FeatureGateResult } from '@/seed/config/tiers/phase4-feature-gate';
@@ -82,12 +83,8 @@ export async function getInvestmentAdvice(
     const db = createServerClient();
 
     // Verify workspace membership (IDOR prevention)
-    const membership = await db
-      .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-      .bind(parsed.data.workspaceId, user.id)
-      .first();
-
-    if (!membership) {
+    const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id, db);
+    if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 

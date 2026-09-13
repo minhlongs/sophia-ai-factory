@@ -11,6 +11,7 @@
 
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { creativeMemoryStore } from '@/tree/creative-memory/creative-memory-store';
@@ -53,19 +54,6 @@ export interface CorrectMemoryError {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-async function verifyWorkspaceAccess(
-  workspaceId: string,
-  userId: string,
-): Promise<boolean> {
-  const d1 = await getD1();
-  if (!d1) return false;
-  const membership = await d1
-    .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-    .bind(workspaceId, userId)
-    .first();
-  return membership !== null;
-}
-
 async function getMemoryWorkspaceId(memoryId: string): Promise<string | null> {
   const d1 = await getD1();
   if (!d1) return null;
@@ -106,9 +94,10 @@ export async function correctCreativeMemory(
     }
 
     // Verify workspace access
-    const hasAccess = await verifyWorkspaceAccess(workspaceId, user.id);
+    const d1 = await getD1();
+    const hasAccess = await verifyWorkspaceAccess(workspaceId, user.id, d1 ?? undefined);
     if (!hasAccess) {
-      return failure({ code: 'FORBIDDEN', message: 'Access denied to this workspace' });
+      return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 
     // Fetch existing memory

@@ -10,6 +10,7 @@
 
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { createServerClient } from '@/seed/db/client';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
@@ -62,20 +63,6 @@ const listProjectsSchema = z.object({
   missionId: z.string().optional(),
 });
 
-// ── Helper: Verify Workspace Access ──────────────────────────────────────────
-
-async function verifyWorkspaceAccess(
-  workspaceId: string,
-  userId: string,
-): Promise<boolean> {
-  const d1 = createServerClient();
-  const membership = await d1
-    .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-    .bind(workspaceId, userId)
-    .first();
-  return membership !== null;
-}
-
 // ── Actions ──────────────────────────────────────────────────────────────────
 
 /**
@@ -99,7 +86,8 @@ export async function getIpLineageAction(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id);
+    const db = createServerClient();
+    const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id, db);
     if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
@@ -156,7 +144,8 @@ export async function getContentLineageAction(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id);
+    const db = createServerClient();
+    const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id, db);
     if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
@@ -208,7 +197,8 @@ export async function listProjectsAction(
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
 
-    const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id);
+    const db = createServerClient();
+    const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id, db);
     if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }

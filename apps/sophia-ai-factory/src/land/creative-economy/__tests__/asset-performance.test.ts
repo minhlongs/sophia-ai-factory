@@ -145,7 +145,8 @@ describe('getAssetPerformance', () => {
 
   it('returns INTERNAL on unexpected database error', async () => {
     vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
-    mockFirst.mockRejectedValueOnce(new Error('D1 error'));
+    mockFirst.mockResolvedValueOnce({ role: 'MEMBER' });
+    mockAll.mockRejectedValueOnce(new Error('D1 error'));
 
     const result = await getAssetPerformance({ workspaceId: 'ws-1' });
     expect(result.ok).toBe(false);

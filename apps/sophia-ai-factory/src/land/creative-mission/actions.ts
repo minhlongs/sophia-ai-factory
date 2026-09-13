@@ -10,6 +10,11 @@
 
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import {
+  verifyWorkspaceAccess,
+  verifyWorkspaceRole,
+  hasWorkspaceRole,
+} from '@/seed/auth/workspace-access';
 import { getD1 } from '@/seed/db/client';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
@@ -131,12 +136,8 @@ export async function createMission(
     }
 
     // Verify workspace membership (IDOR prevention)
-    const membership = await d1
-      .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-      .bind(parsed.data.workspaceId, user.id)
-      .first();
-
-    if (!membership) {
+    const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id, d1);
+    if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 
@@ -235,12 +236,8 @@ export async function updateMissionStatus(
     }
 
     // Verify workspace membership (IDOR prevention)
-    const membership = await d1
-      .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-      .bind(mission.workspace_id, user.id)
-      .first();
-
-    if (!membership) {
+    const hasAccess = await verifyWorkspaceAccess(mission.workspace_id, user.id, d1);
+    if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 
@@ -248,12 +245,8 @@ export async function updateMissionStatus(
     const isCreator = mission.creator_id === user.id;
     if (!isCreator) {
       // Check if user is workspace admin/owner
-      const adminAccess = await d1
-        .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ? AND role IN (?, ?)')
-        .bind(mission.workspace_id, user.id, 'admin', 'owner')
-        .first();
-
-      if (!adminAccess) {
+      const hasAdmin = await hasWorkspaceRole(mission.workspace_id, user.id, 'ADMIN', d1);
+      if (!hasAdmin) {
         return failure({ code: 'FORBIDDEN', message: 'You do not have permission to update this mission' });
       }
     }
@@ -301,12 +294,8 @@ export async function listMissions(
     }
 
     // Verify workspace membership (IDOR prevention)
-    const membership = await d1
-      .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-      .bind(parsed.data.workspaceId, user.id)
-      .first();
-
-    if (!membership) {
+    const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id, d1);
+    if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 
@@ -357,12 +346,8 @@ export async function getMission(
     }
 
     // Verify workspace membership (IDOR prevention)
-    const membership = await d1
-      .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-      .bind(missionWithGoals.workspaceId, user.id)
-      .first();
-
-    if (!membership) {
+    const hasAccess = await verifyWorkspaceAccess(missionWithGoals.workspaceId, user.id, d1);
+    if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 
@@ -370,12 +355,8 @@ export async function getMission(
     const isCreator = missionWithGoals.creatorId === user.id;
     if (!isCreator) {
       // Check if user is workspace admin/owner
-      const adminAccess = await d1
-        .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ? AND role IN (?, ?)')
-        .bind(missionWithGoals.workspaceId, user.id, 'admin', 'owner')
-        .first();
-
-      if (!adminAccess) {
+      const hasAdmin = await hasWorkspaceRole(missionWithGoals.workspaceId, user.id, 'ADMIN', d1);
+      if (!hasAdmin) {
         return failure({ code: 'FORBIDDEN', message: 'You do not have permission to view this mission' });
       }
     }
@@ -426,12 +407,8 @@ export async function startMissionExecution(
     }
 
     // Verify workspace membership (IDOR prevention)
-    const membership = await d1
-      .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-      .bind(mission.workspace_id, user.id)
-      .first();
-
-    if (!membership) {
+    const hasAccess = await verifyWorkspaceAccess(mission.workspace_id, user.id, d1);
+    if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 
@@ -532,12 +509,8 @@ export async function requestApproval(
       return failure({ code: 'NOT_FOUND', message: 'Mission not found' });
     }
 
-    const membership = await d1
-      .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-      .bind(mission.workspace_id, user.id)
-      .first();
-
-    if (!membership) {
+    const hasAccess = await verifyWorkspaceAccess(mission.workspace_id, user.id, d1);
+    if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 
@@ -626,22 +599,14 @@ export async function resolveApprovalAction(
     }
 
     // Verify workspace membership (IDOR prevention)
-    const membership = await d1
-      .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-      .bind(agentRun.workspace_id, user.id)
-      .first();
-
-    if (!membership) {
+    const hasAccess = await verifyWorkspaceAccess(agentRun.workspace_id, user.id, d1);
+    if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 
     // Verify user is admin/owner
-    const adminAccess = await d1
-      .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ? AND role IN (?, ?)')
-      .bind(agentRun.workspace_id, user.id, 'admin', 'owner')
-      .first();
-
-    if (!adminAccess) {
+    const hasAdmin = await hasWorkspaceRole(agentRun.workspace_id, user.id, 'ADMIN', d1);
+    if (!hasAdmin) {
       return failure({ code: 'FORBIDDEN', message: 'Only workspace owner or admin can resolve approvals' });
     }
 
@@ -777,12 +742,8 @@ export async function listPendingApprovalsAction(
     }
 
     // Verify workspace membership (IDOR prevention)
-    const membership = await d1
-      .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-      .bind(parsed.data.workspaceId, user.id)
-      .first();
-
-    if (!membership) {
+    const hasAccess = await verifyWorkspaceAccess(parsed.data.workspaceId, user.id, d1);
+    if (!hasAccess) {
       return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
     }
 
