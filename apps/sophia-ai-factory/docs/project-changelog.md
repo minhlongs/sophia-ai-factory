@@ -1,6 +1,25 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-13 | **Current Version:** 1.34.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** bc700d56
+**Last Updated:** 2026-09-14 | **Current Version:** 1.35.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** f9f3684d
+
+---
+
+## 2026-09-14 (v1.35.0 — CANONICAL WORKSPACE ACCESS BILLING & SECONDARY ACTIONS CONSOLIDATION & LIVE EDGE DEPLOY, COMPLETE)
+
+**Severity: P0 ARCHITECTURAL UNIFICATION & MULTI-TENANT ACCESS | Type: Security + Multi-Tenancy + Billing + Live Edge Deployment | Status: SHIPPED**
+
+Completed full consolidation of remaining raw `org_members` queries in billing lifecycle utilities onto canonical `resolveOrgId`:
+- **Canonical Multi-Tenant Primitives (`src/seed/auth/resolve-org-id.ts`)**:
+  - Standardized prepared statement whitespace to `WHERE user_id = ? LIMIT 1` (with spaces around `=`) for strict mock compatibility across test suites.
+- **Billing Lifecycle Utilities Consolidated**:
+  - `src/land/billing/subscription-expiry.ts`: Migrated `getSubscriptionPeriodEnd` to canonical `resolveOrgId(userId, db)`.
+  - `src/land/billing/nowpayments-ipn-finished.ts`: Migrated `findOrgIdForUser` to canonical `resolveOrgId(userId, db)`.
+  - `src/land/billing/nowpayments-ipn-one-time.ts`: Migrated `handleOneTimeRefunded` org lookup to canonical `resolveOrgId(userId, d1)`.
+- **Verified Complete Compliance Across Secondary Actions**:
+  - Verified `src/land/creative-mission/actions.ts`, `src/land/commerce/actions/commerce-action-auth.ts`, `src/land/production-monitoring/actions.ts`, and `src/land/audience/actions/get-audience-summary.ts` are 100% compliant with canonical `verifyWorkspaceAccess`.
+- **Quality & Verification**:
+  - 0 TypeScript errors (`npm run type-check`), 0 layer boundary violations (`npm run ci:arch`), 9,329+ tests passing (100% green).
+  - Deployed commit `f9f3684d0` to Cloudflare Workers via CF-direct doctrine; live edge SHA verified `f9f3684d` at `https://sophia.agencyos.network/api/version`.
 
 ---
 
