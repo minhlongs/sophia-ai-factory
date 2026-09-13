@@ -9,6 +9,7 @@
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
+import { resolveOrgId } from '@/seed/auth/workspace-access';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { revalidatePath } from 'next/cache';
 import { logger } from '@/seed/utils/logger-utility';
@@ -67,13 +68,7 @@ export async function changeTierAction(
 
     // Resolve org membership
     const db = createServerClient();
-    const { data: membership } = await db
-      .from('org_members')
-      .select('org_id')
-      .eq('user_id', user.id)
-      .single();
-
-    const orgId = (membership as { org_id?: string } | null)?.org_id;
+    const orgId = await resolveOrgId(user.id, db);
     if (!orgId) {
       return { success: false, error: 'no_organization' };
     }

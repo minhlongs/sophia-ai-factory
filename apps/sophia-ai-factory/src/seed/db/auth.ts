@@ -6,6 +6,7 @@
  */
 
 import { createServerClient } from '@/seed/db/client';
+import { resolveOrgId } from '@/seed/auth/workspace-access';
 
 // Re-export getCurrentUser from Better Auth session module (backward compat)
 export { getCurrentUser } from '@/seed/auth/better-auth-session';
@@ -39,19 +40,26 @@ export async function getUserOrganization(
       .eq('user_id', userId)
       .single();
 
-    if (!member) return null;
-    const m = member as Record<string, string>;
+    let orgId = (member as Record<string, string> | undefined)?.org_id;
+    let role = (member as Record<string, string> | undefined)?.role || 'member';
+
+    if (!orgId) {
+      const resolved = await resolveOrgId(userId, db);
+      if (!resolved) return null;
+      orgId = resolved;
+      role = 'owner';
+    }
 
     const { data: org } = await db
       .from('organizations')
       .select('id, name, slug')
-      .eq('id', m.org_id)
+      .eq('id', orgId)
       .single();
 
     if (!org) return null;
     const o = org as Record<string, string>;
 
-    return { id: o.id, name: o.name, slug: o.slug, role: m.role };
+    return { id: o.id, name: o.name, slug: o.slug, role };
   } catch {
     return null;
   }

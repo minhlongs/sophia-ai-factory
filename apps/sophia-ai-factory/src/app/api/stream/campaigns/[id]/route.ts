@@ -11,6 +11,7 @@
 import { NextRequest } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
+import { resolveOrgId } from '@/seed/auth/workspace-access';
 import { logger } from '@/seed/utils/logger-utility';
 import {
   campaignStream,
@@ -31,14 +32,9 @@ async function verifyCampaignOwnership(
   const db = createServerClient();
 
   // First try org-scoped lookup (preferred for multi-tenant)
-  const { data: orgMember } = await db
-    .from('org_members')
-    .select('org_id')
-    .eq('user_id', userId)
-    .maybeSingle();
+  const orgId = await resolveOrgId(userId, db);
 
-  if (orgMember && (orgMember as { org_id: string }).org_id) {
-    const orgId = (orgMember as { org_id: string }).org_id;
+  if (orgId) {
     const { data: campaign } = await db
       .from('campaigns')
       .select('id')

@@ -1,6 +1,7 @@
 "use server";
 
 import { getD1, createServerClient } from "@/seed/db/client";
+import { resolveOrgId } from "@/seed/auth/workspace-access";
 import { sendCampaignCreatedEvent } from "@/land/campaigns/create-campaign-core";
 import { createCampaignSchema } from "@/land/campaigns/validation";
 import { revalidatePath } from "next/cache";
@@ -42,13 +43,9 @@ let userId: string | undefined = undefined;
 
 // Validate org membership — prevents actions from touching org-scoped tables without membership
 const db = createServerClient();
-const { data: membership } = await db
-.from('org_members')
-.select('org_id')
-        .eq('user_id', userId)
-.maybeSingle();
+const orgId = await resolveOrgId(userId, db);
 
-if (!membership) {
+if (!orgId) {
  return { success: false, message: 'Forbidden: user is not a member of any organization' };
 }
 

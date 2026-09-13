@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserFromHeaders } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
+import { getUserWorkspaceIds } from '@/seed/auth/workspace-access';
 import { toError } from '@/seed/utils/to-error';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -29,14 +30,7 @@ export async function GET(request: NextRequest): Promise<Response> {
     const offset = parseInt(searchParams.get('offset') || '0', 10);
 
     // Find workspace(s) the user belongs to
-    const memberships = await d1
-      .prepare(
-        'SELECT org_id, role FROM org_members WHERE user_id = ? ORDER BY created_at ASC'
-      )
-      .bind(user.id)
-      .all<{ org_id: string; role: string }>();
-
-    const workspaceIds = (memberships.results ?? []).map((m) => m.org_id);
+    const workspaceIds = await getUserWorkspaceIds(user.id, d1);
     if (workspaceIds.length === 0) {
       return NextResponse.json({
         approvals: [],

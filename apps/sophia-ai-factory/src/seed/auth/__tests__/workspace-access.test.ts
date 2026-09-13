@@ -13,6 +13,7 @@ import {
   verifyWorkspaceRole,
   requireWorkspaceAccess,
   requireWorkspaceRole,
+  getUserWorkspaceIds,
   type WorkspaceRole,
 } from '../workspace-access';
 import { logger } from '@/seed/utils/logger-utility';
@@ -299,6 +300,79 @@ describe('workspace-access: Verification Functions', () => {
         workspaceId: 'ws_1',
         userId: 'u_1',
         error: 'D1 connection timeout',
+      })
+    );
+  });
+});
+
+describe('workspace-access: getUserWorkspaceIds', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('returns empty array when userId is null, undefined, or empty', async () => {
+    expect(await getUserWorkspaceIds(null)).toEqual([]);
+    expect(await getUserWorkspaceIds(undefined)).toEqual([]);
+    expect(await getUserWorkspaceIds('')).toEqual([]);
+  });
+
+  it('returns workspace IDs from org_members', async () => {
+    const mockDb = {
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnValue({
+          all: vi.fn().mockResolvedValue({
+            results: [{ org_id: 'ws_1' }, { org_id: 'ws_2' }],
+          }),
+        }),
+      }),
+    };
+
+    const ids = await getUserWorkspaceIds('u_123', mockDb as never);
+    expect(ids).toEqual(['ws_1', 'ws_2']);
+  });
+
+  it('falls back to organizations table when org_members has no rows', async () => {
+    let callCount = 0;
+    const mockDb = {
+      prepare: vi.fn().mockImplementation((sql: string) => {
+        callCount++;
+        return {
+          bind: vi.fn().mockReturnValue({
+            all: vi.fn().mockImplementation(() => {
+              if (sql.includes('org_members')) {
+                return Promise.resolve({ results: [] });
+              }
+              if (sql.includes('organizations')) {
+                return Promise.resolve({ results: [{ id: 'org_owned_1' }] });
+              }
+              return Promise.resolve({ results: [] });
+            }),
+          }),
+        };
+      }),
+    };
+
+    const ids = await getUserWorkspaceIds('u_owner', mockDb as never);
+    expect(ids).toEqual(['org_owned_1']);
+    expect(callCount).toBe(2);
+  });
+
+  it('handles database errors gracefully and logs security warning', async () => {
+    const failingDb = {
+      prepare: vi.fn().mockReturnValue({
+        bind: vi.fn().mockReturnValue({
+          all: vi.fn().mockRejectedValue(new Error('D1 unavailable')),
+        }),
+      }),
+    };
+
+    const ids = await getUserWorkspaceIds('u_err', failingDb as never);
+    expect(ids).toEqual([]);
+    expect(logger.warn).toHaveBeenCalledWith(
+      '[security] get_user_workspaces_error',
+      expect.objectContaining({
+        userId: 'u_err',
+        error: 'D1 unavailable',
       })
     );
   });

@@ -14,6 +14,7 @@ import {
   } from '@/land/payments/payos'
 import { logger } from '@/seed/utils/logger-utility'
 import { createServerClient, getD1Raw } from '@/seed/db/client'
+import { resolveOrgId } from '@/seed/auth/workspace-access'
 import { UNIFIED_TIERS } from '@/seed/config/tiers'
 import { recordAudit } from '@/seed/db/audit/audit-log'
 import { markOrderCompleted, markOrderFailed } from '@/land/orders/pending-order-repo'
@@ -170,12 +171,7 @@ export async function POST(request: NextRequest) {
       : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
 
   try {
-    const { data: membership } = await db
-      .from('org_members')
-      .select('org_id')
-      .eq('user_id', userId)
-      .single()
-    let orgId = membership?.org_id as string | undefined
+    let orgId = (await resolveOrgId(userId, db)) ?? undefined
 
     if (orgId) {
       const { data: existingSub } = await db

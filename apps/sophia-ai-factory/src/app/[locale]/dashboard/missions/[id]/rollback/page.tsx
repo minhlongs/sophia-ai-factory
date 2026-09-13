@@ -7,6 +7,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
+import { resolveOrgId, getWorkspaceMembership, hasMinimumRole } from '@/seed/auth/workspace-access';
 import { getTranslations } from 'next-intl/server';
 import { getRollbackHistory } from '@/tree/rollback';
 import { RollbackPanel } from '@/components/rollback-panel';
@@ -37,11 +38,12 @@ export default async function RollbackPage({ params }: RollbackPageProps) {
   }
 
   // Get workspace
-  const membership = await d1
-    .prepare('SELECT org_id, role FROM org_members WHERE user_id = ? LIMIT 1')
-    .bind(user.id)
-    .first<{ org_id: string; role: string }>();
+  const workspaceId = await resolveOrgId(user.id, d1);
+  if (!workspaceId) {
+    notFound();
+  }
 
+  const membership = await getWorkspaceMembership(workspaceId, user.id, d1);
   if (!membership) {
     notFound();
   }
@@ -49,7 +51,7 @@ export default async function RollbackPage({ params }: RollbackPageProps) {
   // Fetch mission
   const mission = await d1
     .prepare('SELECT id, status FROM missions WHERE id = ?1 AND workspace_id = ?2')
-    .bind(missionId, membership.org_id)
+    .bind(missionId, workspaceId)
     .first<{ id: string; status: string }>();
 
   if (!mission) {
@@ -59,11 +61,10 @@ export default async function RollbackPage({ params }: RollbackPageProps) {
   // Fetch rollback history
   const historyResult = await getRollbackHistory(missionId);
   const history = historyResult.ok
-    ? historyResult.value.filter((r) => r.workspaceId === membership.org_id)
+    ? historyResult.value.filter((r) => r.workspaceId === workspaceId)
     : [];
 
-  const allowedRoles = ['owner', 'admin'];
-  const canRollback = allowedRoles.includes(membership.role) && mission.status !== 'rolled_back';
+  const canRollback = hasMinimumRole(membership.role, 'ADMIN') && mission.status !== 'rolled_back';
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 md:px-6 lg:px-8">

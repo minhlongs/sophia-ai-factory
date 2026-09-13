@@ -5,6 +5,7 @@
 import { Metadata } from 'next';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
+import { getUserWorkspaceIds } from '@/seed/auth/workspace-access';
 import { getTranslations } from 'next-intl/server';
 import { ApprovalQueue } from '@/components/approval-queue';
 
@@ -28,15 +29,8 @@ export default async function ApprovalsPage() {
   }
 
   // Get user's primary workspace (most recently joined)
-  const memberships = await d1
-    .prepare(
-      'SELECT org_id, role FROM org_members WHERE user_id = ? ORDER BY created_at ASC'
-    )
-    .bind(user.id)
-    .all<{ org_id: string; role: string }>();
-
-  const workspaces = (memberships.results ?? []) as Array<{ org_id: string; role: string }>;
-  const primaryWorkspaceId = workspaces[0]?.org_id;
+  const workspaceIds = await getUserWorkspaceIds(user.id, d1);
+  const primaryWorkspaceId = workspaceIds[0];
 
   if (!primaryWorkspaceId) {
     return (

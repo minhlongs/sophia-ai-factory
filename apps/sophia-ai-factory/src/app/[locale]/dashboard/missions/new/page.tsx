@@ -9,6 +9,7 @@ import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
+import { resolveOrgId } from '@/seed/auth/workspace-access';
 import { ensureCustomerOrg } from '@/tree/handover/handover-account-setup';
 import { FirstRunWizard } from '@/components/missions/first-run-wizard';
 import { Link } from '@/navigation';
@@ -43,14 +44,8 @@ export default async function NewMissionPage({ params }: PageProps) {
 
   if (d1) {
     // Find workspace or auto-provision default workspace to prevent vacuum dead-ends
-    const member = await d1
-      .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
-      .bind(user.id)
-      .first<{ org_id: string }>();
-
-    if (member?.org_id) {
-      workspaceId = member.org_id;
-    } else {
+    workspaceId = (await resolveOrgId(user.id, d1)) || '';
+    if (!workspaceId) {
       workspaceId = await ensureCustomerOrg(d1, user.id, user.email || user.id);
     }
   }

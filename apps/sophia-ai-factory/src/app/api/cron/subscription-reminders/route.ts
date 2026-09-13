@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/seed/db/client';
+import { resolveOrgOwnerUserId } from '@/seed/auth/workspace-access';
 import { sendEmail } from '@/tree/email/sender';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
@@ -129,14 +130,7 @@ export async function GET(request: NextRequest) {
 
           if (existing?.length) continue;
 
-          const { data: members } = await db
-            .from('org_members')
-            .select('user_id')
-            .eq('org_id', sub.org_id)
-            .eq('role', 'owner')
-            .limit(1) as { data: OrgMemberRow[] | null };
-
-          const userId = members?.[0]?.user_id;
+          const userId = await resolveOrgOwnerUserId(sub.org_id, db);
           if (!userId) continue;
 
           const { data: users } = await db

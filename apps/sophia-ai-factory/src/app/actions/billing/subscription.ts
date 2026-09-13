@@ -9,6 +9,7 @@
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient, getD1 } from '@/seed/db/client';
+import { resolveOrgId } from '@/seed/auth/workspace-access';
 import { revalidatePath } from 'next/cache';
 import { logger } from '@/seed/utils/logger-utility';
 
@@ -193,19 +194,11 @@ export async function reinstateSubscriptionAction(): Promise<ReinstateSubscripti
     const db = createServerClient();
 
     // Step 1: Find user's organization
-    const { data: orgMember, error: orgError } = await db
-      .from('org_members')
-      .select('org_id')
-      .eq('user_id', user.id)
-      .limit(1)
-      .single();
-
-    if (orgError || !orgMember) {
+    const orgId = await resolveOrgId(user.id, db);
+    if (!orgId) {
       logger.warn('[reinstateSubscriptionAction] No organization found for user', { userId: user.id });
       return { success: false, error: 'no_organization' };
     }
-
-    const orgId = orgMember.org_id;
 
     // Step 2: Find the subscription
     const { data: subscription, error: subError } = await db

@@ -5,6 +5,7 @@
 import { Metadata } from 'next';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
+import { resolveOrgId } from '@/seed/auth/workspace-access';
 import { getTranslations } from 'next-intl/server';
 import { AutonomySettings, type MissionTypePolicyRow } from '@/components/autonomy-settings';
 
@@ -27,12 +28,7 @@ export default async function AutonomySettingsPage() {
 
   if (user && d1) {
     try {
-      const membership = await d1
-        .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
-        .bind(user.id)
-        .first<{ org_id: string }>();
-
-      const workspaceId = membership?.org_id;
+      const workspaceId = await resolveOrgId(user.id, d1);
       if (workspaceId) {
         const row = await d1
           .prepare(

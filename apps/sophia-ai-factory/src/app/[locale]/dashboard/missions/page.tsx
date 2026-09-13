@@ -10,6 +10,7 @@ import { notFound } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
+import { getUserWorkspaceIds } from '@/seed/auth/workspace-access';
 import { getTranslations } from 'next-intl/server';
 import { logger } from '@/seed/utils/logger-utility';
 import { Link } from '@/navigation';
@@ -52,12 +53,7 @@ export default async function MissionsPage() {
   }
 
   // All workspaces this user belongs to.
-  const memberships = await d1
-    .prepare('SELECT org_id FROM org_members WHERE user_id = ?')
-    .bind(user.id)
-    .all<{ org_id: string }>();
-
-  const workspaceIds = (memberships.results ?? []).map((m) => m.org_id);
+  const workspaceIds = await getUserWorkspaceIds(user.id, d1);
 
   if (workspaceIds.length === 0) {
     return (

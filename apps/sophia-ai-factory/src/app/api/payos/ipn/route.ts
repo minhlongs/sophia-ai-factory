@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyPayOsWebhook, payOsIpnSchema, FEATURE_PAYOS, getPayOsTierConfig } from '@/land/payments/payos'
 import { logger } from '@/seed/utils/logger-utility'
 import { createServerClient, getD1 } from '@/seed/db/client'
+import { resolveOrgId } from '@/seed/auth/workspace-access'
 import { UNIFIED_TIERS } from '@/seed/config/tiers'
 import { recordAudit } from '@/seed/db/audit/audit-log'
 import { markOrderCompleted, markOrderFailed } from '@/land/orders/pending-order-repo'
@@ -213,8 +214,7 @@ export async function POST(request: NextRequest) {
         ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
         : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
 
-    const { data: membership } = await db.from('org_members').select('org_id').eq('user_id', userId).single()
-    const orgId = membership?.org_id as string | undefined
+    const orgId = (await resolveOrgId(userId, db)) ?? undefined
 
     // Activate tier atomically via D1 batch
     try {

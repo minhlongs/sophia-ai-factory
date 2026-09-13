@@ -1,4 +1,5 @@
 import { createServerClient } from '@/seed/db/client';
+import { resolveOrgId } from '@/seed/auth/workspace-access';
 import { getOrgQuota } from '@/seed/config/tiers/org-quota-multiplier';
 import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits';
 import { Tier } from '@/seed/types';
@@ -7,13 +8,7 @@ import { logger } from '@/seed/utils/logger-utility';
 export async function getOrgIdForUser(userId: string): Promise<string | null> {
   try {
     const db = createServerClient();
-    const { data } = await db
-      .from('org_members')
-      .select('org_id')
-      .eq('user_id', userId)
-      .limit(1)
-      .maybeSingle();
-    return (data as { org_id: string } | null)?.org_id ?? null;
+    return await resolveOrgId(userId, db);
   } catch (error) {
     logger.error('[OrgQuota] getOrgIdForUser failed', error instanceof Error ? error : undefined);
     return null;

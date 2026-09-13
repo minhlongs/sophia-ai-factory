@@ -15,6 +15,7 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
+import { resolveOrgId } from '@/seed/auth/workspace-access';
 import {
   getProductionDashboardSummary,
   getPendingApprovals,
@@ -90,20 +91,15 @@ export default async function SystemHealthPage() {
     );
   }
 
-  const membership = await db
-    .prepare('SELECT org_id FROM org_members WHERE user_id = ? ORDER BY created_at ASC LIMIT 1')
-    .bind(user.id)
-    .first<{ org_id: string }>();
+  const workspaceId = await resolveOrgId(user.id, db);
 
-  if (!membership?.org_id) {
+  if (!workspaceId) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-6">
         <p className="text-sm text-[hsl(240,12%,45%)]">{t('noWorkspace')}</p>
       </div>
     );
   }
-
-  const workspaceId = membership.org_id;
 
   const [summaryRes, approvalsRes] = await Promise.all([
     getProductionDashboardSummary(workspaceId),

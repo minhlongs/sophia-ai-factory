@@ -2,6 +2,7 @@
 
 import { getCurrentUser } from "@/seed/auth/better-auth-session";
 import { createServerClient } from "@/seed/db/client";
+import { resolveOrgId } from "@/seed/auth/workspace-access";
 
 export interface AdminActivity {
   id: string;
@@ -29,14 +30,10 @@ export async function getAdminStats(): Promise<AdminStats> {
   const db = createServerClient();
 
   // Validate org membership
-  const { data: membership } = await db
-.from('org_members')
-.select('org_id')
-.eq('user_id', user.id)
-.maybeSingle();
+  const orgId = await resolveOrgId(user.id, db);
 
-  if (!membership) {
-   throw new Error('Forbidden: user is not a member of any organization');
+  if (!orgId) {
+    throw new Error('Forbidden: user is not a member of any organization');
   }
 
   // Parallel queries
