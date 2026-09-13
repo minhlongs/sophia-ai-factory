@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
+import { verifyWorkspaceAccess, verifyWorkspaceRole } from '@/seed/auth/workspace-access';
 import {
   upsertMemory,
   listMemoryKeys,
@@ -47,22 +48,6 @@ const createMemorySchema = z.object({
 const deleteMemorySchema = z.object({
   id: z.string().min(1),
 });
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-async function verifyWorkspaceAccess(
-  workspaceId: string,
-  userId: string,
-): Promise<boolean> {
-  const d1 = createServerClient();
-  const membership = await d1
-    .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-    .bind(workspaceId, userId)
-    .first();
-  return membership !== null;
-}
 
 // ---------------------------------------------------------------------------
 // POST — create/upsert memory

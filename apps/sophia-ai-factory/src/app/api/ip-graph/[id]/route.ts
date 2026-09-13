@@ -4,21 +4,12 @@
  */
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { createServerClient } from '@/seed/db/client';
+import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import {
   getIP,
   updateIPStatus,
 } from '@/tree/ip-graph';
 import type { IP } from '@/seed/types/creative-domain';
-
-async function verifyWorkspaceAccess(workspaceId: string, userId: string): Promise<boolean> {
-  const d1 = createServerClient();
-  const membership = await d1
-    .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-    .bind(workspaceId, userId)
-    .first();
-  return membership !== null;
-}
 
 export async function GET(
   request: Request,

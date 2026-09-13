@@ -12,6 +12,8 @@ Sophia's architecture is already competitive. Gaps are in **monetization UX** (c
 
 ## Status Snapshot (2026-09-13)
 
+**Canonical Tenant Isolation & Workspace Access Consolidation (Phase 11 Closure) — COMPLETE (2026-09-13)** — Delivered the canonical multi-tenant workspace security and row-level isolation architecture: unified `src/seed/auth/workspace-access.ts` defining numerical role hierarchy (`OWNER: 50` > `ADMIN: 40` > `OPERATOR: 30` > `MEMBER: 20` > `VIEWER: 10`), fail-closed typed error hierarchy (`WorkspaceAccessDeniedError`, `WorkspaceNotFoundError`, `InsufficientWorkspaceRoleError`), structured security telemetry (`logger.warn`), and safe `withTenantScope` D1 execution primitive supporting background workers with fallback to `organizations` table. Eliminated duplicate SQL access checks across 19 critical routes (`/api/mission/*`, `/api/roi`, `/api/ip-graph/*`, `/api/distribution`, `/api/creative-memory/*`, `/api/content-graph/*`, `/api/creative-intelligence/*`). Added 4 multi-tenant verification suites (80 tests) proving cross-tenant rejection (HTTP 403), privilege elevation rejection, and zero data leakage. 9,268+ tests passing, 0 TS errors, 0 boundary violations (`npm run ci:arch`), deployed via CF-direct doctrine.
+
 **Customer Handover Productization & 100/100 Operational Independence — COMPLETE (2026-09-13)** — Delivered the complete productization and operationalization layer enabling an autonomous, non-technical CEO to operate Sophia without founder touch: canonical 6-step setup wizard (`/[locale]/setup`), 7-state BYOK lifecycle machine (`NOT_CONFIGURED` ➔ `ACTIVE` ➔ `REVOKED`) with 5s fail-closed probe, Customer Health Center (`/settings/system-health`), first-run wizard with transparent USD + MCU cost estimator, multi-tenant usage metering strictly filtered by `WHERE user_id = ?1`, operations center with diagnostic bundle generator, 10 bilingual runbooks (`docs/customer/`), binding data portability charter (`CUSTOMER-EXIT.md`), and 41/41 passing customer journey vitests. Pre-deploy gate hardened against local port collisions. Deployed commit `e3bf4044d` to Cloudflare Workers via CF-direct doctrine; live SHA `e3bf4044` verified at `/api/version` (`2026-09-13T08:13:31Z`), all critical routes returning HTTP 200/307 with clean edge headers.
 
 **CI Pipeline Hardening & Live Edge Deploy — COMPLETE (2026-09-12)** — Hardened CI suite (`ci:arch` script repair, `ci:get-side-effects` probe bypass, secretlint false positive cleanups for redaction test suites), cleaned unused imports to maintain 0 ESLint errors within warning budget, passed all 9,188/9,188 tests, and deployed commit `30ecaa21a` to Cloudflare Workers via CF-direct doctrine. Verified live SHA `30ecaa21` at `/api/version` (`2026-09-12T06:55:13Z`), HTTP 200 on all canonical routes with full edge security headers.
@@ -162,10 +164,10 @@ Sophia already uses ClaudeKit's `cook` pipeline (plan→code→review→test). T
 | New code salvaged | 1 file: `lib/env-validation.ts` → ported to `src/seed/utils/env-validation.ts` |
 | OpenClaw status | Already fully ported to `land/openclaw/` + `tree/agent-fleet/` |
 | Branches deleted | 9 (including combined feat/phase-09-12-affiliate-openclaw) |
-| Phase 11 (tenant isolation) | Deferred — branch had zero unique code |
+| Phase 11 (tenant isolation) | Completed — Canonical `workspace-access.ts` and `withTenantScope` shipped (2026-09-13) |
 
 ### Backlog
-- **Tenant isolation** — deferred from Phase 11. No unique code existed on the branch; feature remains unimplemented on main.
+- **Secondary Server Actions & Internal Endpoints Hygiene** — Migrate remaining localized `org_members` queries in secondary actions (`src/land/creative-mission/actions.ts`, `src/land/commerce/`, `src/land/production-monitoring/actions.ts`) to canonical `workspace-access.ts`.
 
 ---
 

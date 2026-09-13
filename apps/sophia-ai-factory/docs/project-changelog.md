@@ -1,6 +1,29 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-13 | **Current Version:** 1.31.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** e3bf4044
+**Last Updated:** 2026-09-13 | **Current Version:** 1.32.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** live
+
+---
+
+## 2026-09-13 (v1.32.0 — CANONICAL TENANT ISOLATION, WORKSPACE ACCESS CONSOLIDATION & LIVE EDGE DEPLOY, COMPLETE)
+
+**Severity: P0 ARCHITECTURAL SECURITY & TENANT ISOLATION | Type: Security + Multi-Tenancy + Route Consolidation + Live Edge Deployment | Status: SHIPPED**
+
+Delivered the Canonical Tenant Isolation & Workspace Access Consolidation milestone (Phase 11 Closure), establishing centralized, fail-closed multi-tenant workspace isolation across Sophia AI Factory:
+- **Canonical Workspace Access Module (`src/seed/auth/workspace-access.ts`)**:
+  - Implemented single source of truth for workspace authorization with role hierarchy (`OWNER: 50` > `ADMIN: 40` > `OPERATOR: 30` > `MEMBER: 20` > `VIEWER: 10`) and case-insensitive role normalization.
+  - Fail-closed typed security errors: `WorkspaceAccessDeniedError` (403), `WorkspaceNotFoundError` (404), `InsufficientWorkspaceRoleError` (403).
+  - Centralized security event telemetry: `logger.warn('[security] workspace_access_denied', { workspaceId, userId, timestamp })`.
+- **Row-Level Tenant Isolation Primitive (`withTenantScope`)**:
+  - Safe D1 query boundary enforcing tenant context binding (`workspaceId`, `userId`, `role`, `db`).
+  - Typed context helper supporting background workers and Inngest jobs by verifying organization existence and assigning default role `OPERATOR`.
+- **API & Route Consolidation**:
+  - Eliminated duplicate SQL queries across 19 critical endpoints: `/api/mission/*` (`route.ts`, `[id]`, `spend`, `approvals`), `/api/roi`, `/api/ip-graph/*` (`route.ts`, `[id]`, `children`), `/api/distribution`, `/api/creative-memory/*` (`route.ts`, `[id]`, `velocity`, `strategy-feedback`, `experiments`), `/api/content-graph/*` (`route.ts`, `[id]`, `cross-platform`), and `/api/creative-intelligence/*` (`trend-matrix`, `hook-dna`).
+- **Automated Multi-Tenant Verification Suites**:
+  - 4 test suites with 80 new tests proving cross-tenant access rejection (HTTP 403), privilege elevation denial, and zero data leakage between distinct tenant IDs (`workspace-access.test.ts`, `tenant-scope.test.ts`, `cross-tenant-routes.test.ts`, `creative-routes-isolation.test.ts`).
+  - 94 regression tests across 10 domain suites passing 100% green.
+- **Quality & Layer Boundary Compliance**:
+  - 0 TypeScript errors, 0 ESLint errors within frozen budget, 0 layer boundary violations (`npm run ci:arch`). 9,268+ tests passing.
+  - Deployed to Cloudflare Workers via CF-direct doctrine (`npm run deploy:full`) and verified live edge SHA match.
 
 ---
 

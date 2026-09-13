@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { createServerClient } from '@/seed/db/client';
+import { verifyWorkspaceAccess, verifyWorkspaceRole } from '@/seed/auth/workspace-access';
 import { createProject, listProjects, newProjectId } from '@/tree/content-graph';
 import { getErrorMessage } from '@/seed/utils/to-error';
 import type { ContentKind, ContentStatus } from '@/seed/types/creative-domain';
@@ -23,15 +23,6 @@ const createProjectSchema = z.object({
   status: z.enum(CONTENT_STATUSES as [string, ...string[]]).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
-
-async function verifyWorkspaceAccess(workspaceId: string, userId: string): Promise<boolean> {
-  const d1 = createServerClient();
-  const membership = await d1
-    .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-    .bind(workspaceId, userId)
-    .first();
-  return membership !== null;
-}
 
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser();

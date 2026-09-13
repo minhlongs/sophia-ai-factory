@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
+import { verifyWorkspaceAccess, verifyWorkspaceRole } from '@/seed/auth/workspace-access';
 import { deleteMemory } from '@/tree/creative-memory';
 import { memoryRowToDomain } from '@/tree/creative-memory/types';
 import { getErrorMessage } from '@/seed/utils/to-error';
@@ -15,18 +16,6 @@ export const dynamic = 'force-dynamic';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-async function verifyWorkspaceAccess(
-  workspaceId: string,
-  userId: string,
-): Promise<boolean> {
-  const d1 = createServerClient();
-  const membership = await d1
-    .prepare('SELECT 1 FROM org_members WHERE org_id = ? AND user_id = ?')
-    .bind(workspaceId, userId)
-    .first();
-  return membership !== null;
-}
 
 /**
  * The [id] param is a memory ID (prefixed `mem_`).
