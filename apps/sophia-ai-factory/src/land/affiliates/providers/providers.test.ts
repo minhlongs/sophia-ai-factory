@@ -11,6 +11,7 @@ import { AccessTradeProvider } from './accesstrade'
 import { ClickBankProvider } from './clickbank'
 import { AwinProvider } from './awin'
 import { AmazonProvider } from './amazon'
+import { ShareASaleProvider } from './shareasale'
 import type { AffiliateOffer } from '../provider-interface'
 
 function assertOfferShape(offer: AffiliateOffer) {
@@ -197,3 +198,50 @@ describe('AmazonProvider', () => {
     assertOfferShape(offer!)
   })
 })
+
+// ─── ShareASale ──────────────────────────────────────────────────────────────
+
+describe('ShareASaleProvider', () => {
+  afterEach(() => vi.unstubAllEnvs())
+
+  it('returns mock fixture when env vars absent', async () => {
+    const p = new ShareASaleProvider()
+    const offers = await p.listOffers()
+    expect(offers.length).toBeGreaterThan(0)
+    assertOfferShape(offers[0])
+  })
+
+  it('commissionPct is number in mock', async () => {
+    const p = new ShareASaleProvider()
+    const offers = await p.listOffers()
+    expect(typeof offers[0].commissionPct).toBe('number')
+  })
+
+  it('networkSlug is shareasale', () => {
+    expect(new ShareASaleProvider().networkSlug).toBe('shareasale')
+  })
+
+  it('getOffer returns mock when no credentials', async () => {
+    const p = new ShareASaleProvider()
+    const offer = await p.getOffer('sas-mock-001')
+    expect(offer).not.toBeNull()
+    assertOfferShape(offer!)
+  })
+
+  it('getTrending marks isTrending=true', async () => {
+    const p = new ShareASaleProvider()
+    const offers = await p.getTrending('software')
+    expect(offers.every(o => o.isTrending)).toBe(true)
+  })
+
+  it('falls back to mock on fetch failure', async () => {
+    vi.stubEnv('SHAREASALE_TOKEN', 'token')
+    vi.stubEnv('SHAREASALE_AFFILIATE_ID', '12345')
+    vi.spyOn(global, 'fetch').mockResolvedValueOnce(new Response(null, { status: 500 }))
+    const p = new ShareASaleProvider()
+    const offers = await p.listOffers()
+    expect(offers.length).toBeGreaterThan(0)
+    vi.restoreAllMocks()
+  })
+})
+

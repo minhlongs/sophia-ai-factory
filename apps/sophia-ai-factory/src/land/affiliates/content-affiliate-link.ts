@@ -40,13 +40,14 @@ export async function linkContentToAffiliate(opts: {
     const ws = await db.prepare('SELECT 1 FROM org_members WHERE org_id = ? LIMIT 1')
       .bind(opts.workspaceId).first()
     if (!ws) return failure(new Error(`Workspace not found: ${opts.workspaceId}`))
+    const now = Date.now()
     await db.prepare(
       `INSERT OR IGNORE INTO content_affiliate_links (${COLS})
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).bind(
       id, opts.workspaceId, opts.projectId, opts.assetId ?? null,
       opts.linkId, opts.affiliateCode ?? '', opts.network ?? 'unknown',
-      'active', opts.attributionId ?? null, Date.now(),
+      'active', opts.attributionId ?? null, now, now,
     ).run()
     const row = await db.prepare(`SELECT ${COLS} FROM content_affiliate_links WHERE id = ?`)
       .bind(id).first()

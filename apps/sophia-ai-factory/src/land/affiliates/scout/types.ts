@@ -11,6 +11,8 @@ export type Network =
   | 'mock'
   | 'shareasale'
   | 'awin_saas'
+  | 'awin'
+  | 'clickbank'
   | 'rakuten'
   | 'binance'
   | 'bybit'

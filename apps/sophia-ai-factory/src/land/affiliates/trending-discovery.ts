@@ -13,6 +13,7 @@ import { AccessTradeProvider } from './providers/accesstrade'
 import { ClickBankProvider } from './providers/clickbank'
 import { AwinProvider } from './providers/awin'
 import { AmazonProvider } from './providers/amazon'
+import { ShareASaleProvider } from './providers/shareasale'
 import type { AffiliateOffer, OfferProvider } from './provider-interface'
 
 const ALL_PROVIDERS: Record<string, OfferProvider> = {
@@ -21,6 +22,7 @@ const ALL_PROVIDERS: Record<string, OfferProvider> = {
   clickbank: new ClickBankProvider(),
   awin: new AwinProvider(),
   amazon: new AmazonProvider(),
+  shareasale: new ShareASaleProvider(),
 }
 
 export interface TrendingQuery {

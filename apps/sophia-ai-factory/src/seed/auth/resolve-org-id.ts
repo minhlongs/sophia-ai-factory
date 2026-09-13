@@ -18,6 +18,18 @@ export async function getD1Raw(): Promise<D1Database | null> {
   return getD1();
 }
 
+async function queryFirst<T>(stmt: ReturnType<D1Database['prepare']>): Promise<T | null> {
+  if (typeof stmt.first === 'function') {
+    const row = await stmt.first<T>()
+    return row ?? null
+  }
+  if (typeof stmt.all === 'function') {
+    const res = await stmt.all<T>()
+    return res?.results?.[0] ?? null
+  }
+  return null
+}
+
 export async function resolveOrgId(
   userId: string | null | undefined,
   db?: D1Database | D1Client | null,
@@ -28,20 +40,30 @@ export async function resolveOrgId(
 
   if (typeof (d1 as { prepare?: unknown }).prepare === 'function') {
     try {
-      const row = await (d1 as D1Database)
+      const stmt = (d1 as D1Database)
         .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
         .bind(userId)
-        .first<{ org_id: string }>()
+      const row = await queryFirst<{ org_id: string }>(stmt)
       if (row?.org_id) return row.org_id
     } catch {
       // Continue to fallback
     }
     try {
-      const orgRow = await (d1 as D1Database)
+      const stmt = (d1 as D1Database)
         .prepare('SELECT id FROM organizations WHERE user_id = ? LIMIT 1')
         .bind(userId)
-        .first<{ id: string }>()
-      return orgRow?.id ?? null
+      const orgRow = await queryFirst<{ id: string }>(stmt)
+      if (orgRow?.id) return orgRow.id
+    } catch {
+      // Continue to user table fallback
+    }
+    try {
+      const stmt = (d1 as D1Database)
+        .prepare('SELECT org_id FROM user WHERE id = ? LIMIT 1')
+        .bind(userId)
+      const userRow = await queryFirst<{ org_id: string }>(stmt)
+      if (userRow?.org_id) return userRow.org_id
+      return null
     } catch {
       return null
     }
@@ -106,7 +128,7 @@ export async function resolveOrgOwnerUserId(
 
   if (typeof (d1 as { prepare?: unknown }).prepare === 'function') {
     try {
-      const row = await (d1 as D1Database)
+      const stmt = (d1 as D1Database)
         .prepare(
           `SELECT user_id FROM org_members
            WHERE org_id=?
@@ -114,17 +136,18 @@ export async function resolveOrgOwnerUserId(
            LIMIT 1`,
         )
         .bind(orgId)
-        .first<{ user_id: string }>()
+      const row = await queryFirst<{ user_id: string }>(stmt)
       if (row?.user_id) return row.user_id
     } catch {
       // Continue to fallback
     }
     try {
-      const orgRow = await (d1 as D1Database)
+      const stmt = (d1 as D1Database)
         .prepare('SELECT user_id FROM organizations WHERE id=? LIMIT 1')
         .bind(orgId)
-        .first<{ user_id: string }>()
-      return orgRow?.user_id ?? null
+      const orgRow = await queryFirst<{ user_id: string }>(stmt)
+      if (orgRow?.user_id) return orgRow.user_id
+      return null
     } catch {
       return null
     }

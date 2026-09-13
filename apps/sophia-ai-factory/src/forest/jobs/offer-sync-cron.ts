@@ -17,6 +17,7 @@ import { AccessTradeProvider } from '@/land/affiliates/providers/accesstrade'
 import { ClickBankProvider } from '@/land/affiliates/providers/clickbank'
 import { AwinProvider } from '@/land/affiliates/providers/awin'
 import { AmazonProvider } from '@/land/affiliates/providers/amazon'
+import { ShareASaleProvider } from '@/land/affiliates/providers/shareasale'
 import type { AffiliateOffer, OfferProvider } from '@/land/affiliates/provider-interface'
 import { logger } from '@/seed/utils/logger-utility'
 
@@ -35,6 +36,7 @@ const PROVIDERS: OfferProvider[] = [
   new ClickBankProvider(),
   new AwinProvider(),
   new AmazonProvider(),
+  new ShareASaleProvider(),
 ]
 
 /** Default tenant used when syncing global (non-tenant-specific) offers */

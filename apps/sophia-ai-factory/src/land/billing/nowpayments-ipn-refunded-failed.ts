@@ -15,6 +15,7 @@ import { getDb, parseUserIdFromOrderId } from './nowpayments-ipn-db'
 import { markOrderFailed } from '@/land/orders/pending-order-repo'
 import { success, failure, type Result } from '@/seed/types/result'
 import { IPNError } from './nowpayments-ipn-errors'
+import { resolveOrgId } from '@/seed/auth/resolve-org-id'
 
 export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<Result<void, IPNError>> {
   try {
@@ -35,14 +36,21 @@ export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<Result
     // The previous SELECT-based check here was redundant and introduced
     // its own TOCTOU window. Trust the atomic lock as the single source of truth.
 
-    // M13 fix (2026-07-01): Single UPDATE with subquery JOIN eliminates
-    // TOCTOU between SELECT org_id and UPDATE subscriptions. The previous
-    // two-step pattern could miss the subscription if membership changed
-    // between queries.
-    await d1.prepare(
-      `UPDATE subscriptions SET status = 'cancelled', updated_at = ?1
-       WHERE org_id IN (SELECT org_id FROM org_members WHERE user_id = ?2)`
-    ).bind(new Date().toISOString(), userId).run()
+    // Single UPDATE with resolved orgId eliminates TOCTOU between
+    // SELECT org_id and UPDATE subscriptions. Falls back to subquery JOIN
+    // if direct orgId resolution is null.
+    const orgId = await resolveOrgId(userId, d1)
+    if (orgId) {
+      await d1.prepare(
+        `UPDATE subscriptions SET status = 'cancelled', updated_at = ?1
+         WHERE org_id = ?2`
+      ).bind(new Date().toISOString(), orgId).run()
+    } else {
+      await d1.prepare(
+        `UPDATE subscriptions SET status = 'cancelled', updated_at = ?1
+         WHERE org_id IN (SELECT org_id FROM org_members WHERE user_id = ?2)`
+      ).bind(new Date().toISOString(), userId).run()
+    }
 
     await invalidateLicenseCacheOnRefund(userId, d1)
 

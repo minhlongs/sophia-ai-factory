@@ -13,6 +13,7 @@
 
 import type { R2Bucket } from '@cloudflare/workers-types';
 import { logger } from '@/seed/utils/logger-utility';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 
 /**
  * Per-table delete instruction.
@@ -70,32 +71,11 @@ export interface CascadeDeleteResult {
 }
 
 /**
- * Fetch the org_id for a tenant from org_members (canonical D1 schema).
- * Falls back to user table if present (for test/legacy compatibility).
+ * Fetch the org_id for a tenant using canonical resolveOrgId.
  * Returns null if no row found (already deleted or no org).
  */
 async function fetchOrgId(db: D1Database, userId: string): Promise<string | null> {
-  try {
-    const { results } = await db
-      .prepare(`SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1`)
-      .bind(userId)
-      .all<{ org_id: string | null }>();
-    if (results?.[0]?.org_id) {
-      return results[0].org_id;
-    }
-  } catch {
-    // Non-fatal: fallback to user table
-  }
-
-  try {
-    const { results } = await db
-      .prepare(`SELECT org_id FROM user WHERE id = ? LIMIT 1`)
-      .bind(userId)
-      .all<{ org_id: string | null }>();
-    return results?.[0]?.org_id ?? null;
-  } catch {
-    return null;
-  }
+  return resolveOrgId(userId, db);
 }
 
 /**
