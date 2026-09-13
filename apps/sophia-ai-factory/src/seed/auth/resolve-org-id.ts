@@ -29,7 +29,7 @@ export async function resolveOrgId(
   if (typeof (d1 as { prepare?: unknown }).prepare === 'function') {
     try {
       const row = await (d1 as D1Database)
-        .prepare('SELECT org_id FROM org_members WHERE user_id=? LIMIT 1')
+        .prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
         .bind(userId)
         .first<{ org_id: string }>()
       if (row?.org_id) return row.org_id
@@ -38,7 +38,7 @@ export async function resolveOrgId(
     }
     try {
       const orgRow = await (d1 as D1Database)
-        .prepare('SELECT id FROM organizations WHERE user_id=? LIMIT 1')
+        .prepare('SELECT id FROM organizations WHERE user_id = ? LIMIT 1')
         .bind(userId)
         .first<{ id: string }>()
       return orgRow?.id ?? null

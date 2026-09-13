@@ -20,6 +20,7 @@ import { IPNError } from './nowpayments-ipn-errors'
 import { calculatePeriodEnd } from './nowpayments-ipn-utils'
 import { runPostActivationWorkflow } from './nowpayments-post-purchase'
 import { activateSubscriptionForOrg } from './nowpayments-subscription-activate'
+import { resolveOrgId } from '@/seed/auth/workspace-access'
 
 const AMOUNT_MISMATCH_THRESHOLD = 0.01
 
@@ -156,6 +157,6 @@ async function resolveBillingPeriod(ipn: NowPaymentsIpnPayload, isLifetime: bool
 }
 
 async function findOrgIdForUser(userId: string, db: ReturnType<typeof getDb>): Promise<string | undefined> {
-  const { data: membership } = await db.from('org_members').select('org_id').eq('user_id', userId).single()
-  return (membership as { org_id?: string } | null)?.org_id
+  const orgId = await resolveOrgId(userId, db)
+  return orgId ?? undefined
 }

@@ -10,7 +10,9 @@ Sophia's architecture is already competitive. Gaps are in **monetization UX** (c
 
 ---
 
-## Status Snapshot (2026-09-13)
+## Status Snapshot (2026-09-14)
+
+**Canonical Workspace Access Secondary Actions & Billing Consolidation — COMPLETE (2026-09-14)** — Completed full consolidation of remaining raw `org_members` queries in billing lifecycle utilities (`src/land/billing/subscription-expiry.ts`, `src/land/billing/nowpayments-ipn-finished.ts`, and `src/land/billing/nowpayments-ipn-one-time.ts`) onto canonical `resolveOrgId`. Standardized SQL query whitespace in `src/seed/auth/resolve-org-id.ts` for consistent D1 prepared statement matching. Verified that secondary actions across `src/land/creative-mission/actions.ts`, `src/land/commerce/actions/commerce-action-auth.ts`, `src/land/production-monitoring/actions.ts`, and `src/land/audience/actions/` are 100% compliant with canonical `verifyWorkspaceAccess`. 0 TypeScript errors (`npm run type-check`), 0 layer boundary violations (`npm run ci:arch`), all test suites passing green.
 
 **Canonical Workspace Access Phase 4 (Dashboard & Secondary Actions Consolidation) — COMPLETE (2026-09-13)** — Completed Phase 4 of the architectural consolidation of all multi-tenant workspace access across Sophia AI Factory, eradicating remaining duplicate raw `org_members` queries across 14 dashboard server pages, secondary server actions, API routes, and quota checker helpers. Added `getUserWorkspaceIds` with dual client support (D1 prepared statements + query builder `.from()`) and fallback to owned organizations. Re-exported `resolveOrgId` and `resolveOrgOwnerUserId` from `@/seed/auth/workspace-access`. Consolidated dashboard server component pages across 14 routes, secondary server actions (`admin.ts`, `campaigns.ts`, `billing/change-tier.ts`, `billing/subscription.ts`), quota checkers (`forest/quota/org-quota-checker.ts`, `tree/quota/org-quota-checker.ts`), helper module `seed/db/auth.ts`, and API routes (`approvals`, `cron/subscription-reminders`, `payos/ipn`, `webhooks/payos`, `stream/campaigns/[id]`). 0 TypeScript errors (`npm run type-check`), 0 layer boundary violations (`npm run ci:arch`), 9,330+ tests passing (100% green). Deployed commit `bc700d564` to Cloudflare Workers via CF-direct doctrine; live edge SHA verified `bc700d56` at `https://sophia.agencyos.network/api/version`.
 
@@ -171,7 +173,7 @@ Sophia already uses ClaudeKit's `cook` pipeline (plan→code→review→test). T
 | Phase 11 (tenant isolation) | Completed — Canonical `workspace-access.ts` and `withTenantScope` shipped (2026-09-13) |
 
 ### Backlog
-- **Secondary Server Actions & Internal Endpoints Hygiene** — Migrate remaining localized `org_members` queries in secondary actions (`src/land/creative-mission/actions.ts`, `src/land/commerce/`, `src/land/production-monitoring/actions.ts`) to canonical `workspace-access.ts`.
+- ✅ **Secondary Server Actions & Internal Endpoints Hygiene (COMPLETE 2026-09-14)** — Migrated remaining localized `org_members` queries in billing utilities (`subscription-expiry.ts`, `nowpayments-ipn-finished.ts`, `nowpayments-ipn-one-time.ts`) to canonical `resolveOrgId`; verified secondary actions in `src/land/creative-mission/actions.ts`, `src/land/commerce/`, `src/land/production-monitoring/actions.ts`, and `src/land/audience/actions/` are 100% compliant with canonical `verifyWorkspaceAccess`.
 
 ---
 

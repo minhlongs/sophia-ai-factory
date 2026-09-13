@@ -24,6 +24,7 @@ import type { OneTimeSku } from '@/seed/types'
 import { triggerAutoHandover } from '@/tree/handover/auto-handover'
 import { success, failure, type Result } from '@/seed/types/result'
 import { IPNError } from './nowpayments-ipn-errors'
+import { resolveOrgId } from '@/seed/auth/workspace-access'
 
 // TTL helpers ────────────────────────────────────────────────────────────────
 
@@ -271,12 +272,10 @@ export async function handleOneTimeRefunded(
    const subResult = await d1.prepare('UPDATE subscriptions SET plan = ?, updated_at = ? WHERE user_id = ? AND plan != ?')
      .bind('basic', nowSec, userId, 'basic')
      .run()
-   const orgRow = await d1.prepare('SELECT org_id FROM org_members WHERE user_id = ? LIMIT 1')
-     .bind(userId)
-     .first<{ org_id: string }>()
-   if (orgRow?.org_id) {
+   const orgId = await resolveOrgId(userId, d1)
+   if (orgId) {
      await d1.prepare('UPDATE organizations SET plan = ?, updated_at = ? WHERE id = ? AND plan != ?')
-       .bind('basic', nowSec, orgRow.org_id, 'basic')
+       .bind('basic', nowSec, orgId, 'basic')
        .run()
    }
    logger.info('[IPN/OneTime] Tier reverted to basic after refund', {
