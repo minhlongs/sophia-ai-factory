@@ -24,9 +24,13 @@ vi.mock('@/seed/auth/better-auth-session', () => ({
 }))
 
 const mockConvertOfferToCampaign = vi.fn()
-vi.mock('@/land/affiliates/campaign-bridge', () => ({
-  convertOfferToCampaign: (...args: unknown[]) => mockConvertOfferToCampaign(...args),
-}))
+vi.mock('@/land/affiliates/campaign-bridge', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/land/affiliates/campaign-bridge')>()
+  return {
+    ...actual,
+    convertOfferToCampaign: (...args: unknown[]) => mockConvertOfferToCampaign(...args),
+  }
+})
 
 import { POST } from './route'
 

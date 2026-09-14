@@ -10,6 +10,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { convertOfferToCampaignAction } from '../actions/convert-offer-action'
+import {
+  rankedDiscoveredOfferSchema,
+  convertOfferInputSchema,
+} from '../campaign-bridge'
 import { success, failure } from '@/seed/types/result'
 import type { AutoVideoMissionResult } from '@/land/missions/auto-video-mission'
 
@@ -27,9 +31,13 @@ vi.mock('@/seed/db/client', () => ({
 }))
 
 const mockConvertOfferToCampaign = vi.fn()
-vi.mock('../campaign-bridge', () => ({
-  convertOfferToCampaign: (...args: unknown[]) => mockConvertOfferToCampaign(...args),
-}))
+vi.mock('../campaign-bridge', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../campaign-bridge')>()
+  return {
+    ...actual,
+    convertOfferToCampaign: (...args: unknown[]) => mockConvertOfferToCampaign(...args),
+  }
+})
 
 describe('convertOfferToCampaignAction', () => {
   beforeEach(() => {
@@ -110,5 +118,35 @@ describe('convertOfferToCampaignAction', () => {
       expect(result.error.code).toBe('BYOK_REQUIRED')
       expect(result.error.message).toBe('API key needed')
     }
+  })
+
+  describe('schemas from campaign-bridge', () => {
+    it('rankedDiscoveredOfferSchema validates a valid offer and applies defaults', () => {
+      const parsed = rankedDiscoveredOfferSchema.safeParse({
+        externalId: 'cb-test',
+        network: 'clickbank',
+        title: 'Title',
+      })
+      expect(parsed.success).toBe(true)
+      if (parsed.success) {
+        expect(parsed.data.niche).toBe('saas')
+        expect(parsed.data.language).toBe('en')
+        expect(parsed.data.region).toBe('US')
+        expect(parsed.data.isTrending).toBe(false)
+        expect(parsed.data.qualityScore).toBe(0)
+        expect(parsed.data.passesScamGate).toBe(true)
+      }
+    })
+
+    it('convertOfferInputSchema rejects missing offer or invalid languages', () => {
+      const empty = convertOfferInputSchema.safeParse({})
+      expect(empty.success).toBe(false)
+
+      const invalidLang = convertOfferInputSchema.safeParse({
+        offer: { externalId: 'cb-1', network: 'awin', title: 'Test' },
+        primaryLanguage: 'fr',
+      })
+      expect(invalidLang.success).toBe(false)
+    })
   })
 })

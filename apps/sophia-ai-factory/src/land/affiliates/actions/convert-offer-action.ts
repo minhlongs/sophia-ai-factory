@@ -10,48 +10,18 @@
 
 'use server'
 
-import { z } from 'zod'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { resolveOrgId } from '@/seed/auth/resolve-org-id'
 import { createServerClient } from '@/seed/db/client'
 import {
   convertOfferToCampaign,
+  convertOfferInputSchema,
+  type ConvertOfferToCampaignInput,
   type CampaignBridgeErrorCode,
 } from '../campaign-bridge'
 import type { AutoVideoMissionResult } from '@/land/missions/auto-video-mission'
 import { success, failure, type Result } from '@/seed/types/result'
 import { logger } from '@/seed/utils/logger-utility'
-
-export const rankedDiscoveredOfferSchema = z.object({
-  externalId: z.string().min(1),
-  network: z.string().min(1),
-  title: z.string().min(1),
-  description: z.string().default(''),
-  productUrl: z.string().default(''),
-  imageUrl: z.string().default(''),
-  commissionPct: z.number().nullable().optional().default(null),
-  commissionFixedUsd: z.number().nullable().optional().default(null),
-  niche: z.string().default('saas'),
-  language: z.string().default('en'),
-  region: z.string().default('US'),
-  isTrending: z.boolean().default(false),
-  qualityScore: z.number().default(0),
-  passesScamGate: z.boolean().default(true),
-  scoreBreakdown: z.record(z.string(), z.number()).default({}),
-})
-
-export const convertOfferInputSchema = z.object({
-  offer: rankedDiscoveredOfferSchema,
-  primaryLanguage: z.enum(['en', 'vi']).optional(),
-  secondaryLanguage: z.enum(['en', 'vi']).optional(),
-  channelId: z.string().optional(),
-  scheduledAt: z.number().int().positive().optional(),
-  maxAffiliateLinks: z.number().int().min(1).max(10).optional(),
-  nicheHint: z.string().max(100).optional(),
-  topicOverride: z.string().max(200).optional(),
-})
-
-export type ConvertOfferToCampaignInput = z.input<typeof convertOfferInputSchema>
 
 export interface ConvertOfferActionError {
   code:

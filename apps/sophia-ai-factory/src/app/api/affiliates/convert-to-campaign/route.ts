@@ -18,9 +18,9 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import { withRateLimit } from '@/forest/middleware/rate-limit-wrapper'
 import {
   convertOfferToCampaign,
+  convertOfferInputSchema,
   type CampaignBridgeErrorCode,
 } from '@/land/affiliates/campaign-bridge'
-import { convertOfferInputSchema } from '@/land/affiliates/actions/convert-offer-action'
 import { failure } from '@/seed/types/result'
 import { logger } from '@/seed/utils/logger-utility'
 
