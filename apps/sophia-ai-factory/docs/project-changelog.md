@@ -1,6 +1,32 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-14 | **Current Version:** 1.37.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** e214eb35
+**Last Updated:** 2026-09-14 | **Current Version:** 1.38.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** 3bbf900b
+
+---
+
+## 2026-09-14 (v1.38.0 — CUSTOMER HANDOVER PRODUCTIZATION SPRINT — OPERABLE BY NON-TECHNICAL CEO)
+
+**Severity: P0 PRODUCTIZATION & CUSTOMER INDEPENDENCE | Type: Onboarding + Health + BYOK + Billing + Operations | Status: SHIPPED**
+
+Completed the Customer Handover Productization Sprint transforming Sophia AI Factory into a 100% customer-operable, customer-owned SaaS product operable by a non-technical CEO without founder intervention:
+- **P0 Autonomous Discovery-to-Campaign Pipeline (`src/land/affiliates/campaign-bridge.ts`, `convert-offer-action.ts`)**:
+  - One-click bridge converting high-EPC discovered affiliate offers into autonomous video missions (SEO script via BYOK OpenRouter, bilingual translation, HeyGen video render, auto-publish).
+  - Rate-limited endpoint `POST /api/affiliates/convert-to-campaign` (20 req/min) with fail-closed authentication.
+- **P0 Customer Health Center (`src/components/system-health/incident-card.tsx`, `src/land/production-monitoring/customer-health-summary.ts`)**:
+  - Customer-safe operational health page at `/[locale]/settings/system-health` tracking 7 domains (Sophia Core, Authentication, AI Providers, Storage, Video Pipeline, Billing, Telegram).
+  - Non-technical 3-part diagnostic cards: "What Happened", "What It Means", "What You Should Do" with 0 internal errors or query strings exposed.
+- **P0 Customer Onboarding 6-Step Setup Wizard (`src/tree/components/setup-wizard/steps/*`, `use-setup-wizard.ts`)**:
+  - Canonical onboarding flow at `/[locale]/setup` with zero developer jargon.
+  - BYOK key management with AES-256-GCM envelope encryption, write-only masking (`•••••••••••••••• (Saved / Đã lưu an toàn)`), and instant key revocation.
+  - Answers the 5 CEO questions for the first mission (Input, Action, Time, Cost, Output).
+- **P1 Usage & Billing Transparency (`src/land/billing/customer-usage-summary.ts`, `customer-usage-plan.ts`, `usage-plan-summary-cards.tsx`)**:
+  - Full transparent consumption ledger at `/[locale]/settings/usage` showing Plan, Usage, Limit, Remaining, Overage, Provider Rate table, and Next Billing Event.
+  - Tenant-scoped queries with event deduplication, job state hygiene (excluding failed/retried/cancelled from compute charges), and 0% platform markup guarantee on BYOK providers.
+  - 14/14 unit tests green covering duplicate events, failed jobs, retried jobs, cancelled jobs, successful jobs, and cross-tenant access.
+- **Quality & Deployment Verification**:
+  - 0 TypeScript errors (`npm run type-check`), 0 layer boundary violations, all 41 customer journey tests passing in under 1s.
+  - Deployed commit `3bbf900b6` to Cloudflare Workers via CF-direct doctrine; live edge SHA verified `3bbf900b` at `https://sophia.agencyos.network/api/version`.
+  - Production verification: `/api/health` -> HTTP 200, `/login` -> HTTP 200, `/vi/login` -> HTTP 200, `/api/version` -> `3bbf900b`.
 
 ---
 
