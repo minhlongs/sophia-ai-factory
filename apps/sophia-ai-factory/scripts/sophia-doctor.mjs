@@ -234,9 +234,9 @@ async function checkProdHealth() {
 // 8. MCP whitelist sanity
 // ---------------------------------------------------------------------------
 function checkMCPWhitelist() {
-  const gatewayPath = resolve(ROOT, 'src/lib/openclaw/mcp-gateway.ts');
+  const gatewayPath = resolve(ROOT, 'src/land/openclaw/mcp-gateway.ts');
   if (!existsSync(gatewayPath)) {
-    warn('MCP whitelist', 'src/lib/openclaw/mcp-gateway.ts not found');
+    warn('MCP whitelist', 'src/land/openclaw/mcp-gateway.ts not found');
     return;
   }
   const content = readFileSync(gatewayPath, 'utf8');

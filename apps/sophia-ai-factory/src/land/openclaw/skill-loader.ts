@@ -73,9 +73,9 @@ function skillsRoot(): string {
 }
 
 function bundledSkillsRoot(): string {
-  // Relative to this source file location — src/lib/openclaw/skills/
+  // Relative to this source file location — src/land/openclaw/skills/
   const cwd = typeof process !== 'undefined' ? process.cwd() : '/';
-  return `${cwd}/src/lib/openclaw/skills`;
+  return `${cwd}/src/land/openclaw/skills`;
 }
 
 /**
