@@ -38,7 +38,7 @@ export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<Result
 
     // Single UPDATE with resolved orgId eliminates TOCTOU between
     // SELECT org_id and UPDATE subscriptions. Falls back to subquery JOIN
-    // if direct orgId resolution is null.
+    // including organizations and user_id fallback if direct orgId resolution is null.
     const orgId = await resolveOrgId(userId, d1)
     if (orgId) {
       await d1.prepare(
@@ -48,7 +48,11 @@ export async function handleRefunded(ipn: NowPaymentsIpnPayload): Promise<Result
     } else {
       await d1.prepare(
         `UPDATE subscriptions SET status = 'cancelled', updated_at = ?1
-         WHERE org_id IN (SELECT org_id FROM org_members WHERE user_id = ?2)`
+         WHERE org_id IN (
+           SELECT org_id FROM org_members WHERE user_id = ?2
+           UNION
+           SELECT id AS org_id FROM organizations WHERE user_id = ?2
+         ) OR user_id = ?2`
       ).bind(new Date().toISOString(), userId).run()
     }
 
