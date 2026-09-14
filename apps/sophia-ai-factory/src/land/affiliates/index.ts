@@ -22,3 +22,4 @@ export * from './trending-discovery';
 export * from './content-affiliate-link';
 export * from './discovery-wave';
 export * from './providers/shareasale';
+export * from './actions/discover-offers-action';
