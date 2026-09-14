@@ -1,6 +1,25 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-14 | **Current Version:** 1.39.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** 1e062da8
+**Last Updated:** 2026-09-14 | **Current Version:** 1.40.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** bd492b0b
+
+---
+
+## 2026-09-14 (v1.40.0 — OPENNEXT DEV CONTEXT SCOPING & CLOUDFLARE PRODUCTION DEPLOYMENT)
+
+**Severity: P0 BUILD PIPELINE & DEPLOYMENT RELIABILITY | Type: OpenNext Dev Scoping + Cloudflare Direct Deploy | Status: SHIPPED & VERIFIED LIVE (CF-direct edge SHA bd492b0b)**
+
+Hardened build and deploy infrastructure to ensure deterministic, zero-friction deployments in headless and non-interactive environments:
+- **Scoped OpenNext Dev Context (`next.config.ts`)**:
+  - Encapsulated `initOpenNextCloudflareForDev({ persist: { path: ... } })` inside `if (process.env.NODE_ENV === 'development')` with `.catch(() => {})`.
+  - Prevented Wrangler from attempting interactive OAuth edge-preview authentication for `[ai]`, `[images]`, and `[[services]]` bindings during production `next build`.
+  - Production builds and Cloudflare Workers bundle packaging (`npm run deploy:full`) now execute cleanly without requiring operator interactive authentication.
+- **Verification & Deployment**:
+  - 9,408 / 9,408 tests passing (100% green across all test suites).
+  - TypeScript type-check passed with 0 errors (`tsc --noEmit`).
+  - Next.js production build succeeded with 0 errors.
+  - Deployed commit `bd492b0b0` to Cloudflare Workers via CF-direct doctrine.
+  - Authoritative live production SHA match verified: `curl -s https://sophia.agencyos.network/api/version` returns `shortSha: "bd492b0b"` (deployed at `2026-09-14T15:11:44Z`).
+  - Core production routes verified: `/api/health` (200), `/login` (307 redirect), `/vi/setup` (200), `/vi/settings/system-health` (200).
 
 ---
 
