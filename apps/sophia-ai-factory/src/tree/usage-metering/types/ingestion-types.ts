@@ -43,7 +43,7 @@ export interface IngestionResult {
   index?: number;
   success: boolean;
   error?: string;
-  reason?: 'invalid_license' | 'quota_exceeded' | 'validation_error' | 'duplicate';
+  reason?: 'invalid_license' | 'quota_exceeded' | 'validation_error' | 'duplicate' | 'forbidden';
   idempotencyKey?: string;
   recordId?: string;
   existingRecordId?: string;

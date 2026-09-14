@@ -125,6 +125,7 @@ export async function batchIngestUsage(
   const results: IngestionResult[] = [];
   const acceptedRecords: Record<string, unknown>[] = [];
   const quotaCache = new Map<string, QuotaCheckResult>();
+  const seenEventIds = new Set<string>();
   /** In-memory KV counter buffer: key = `userId:service` */
   const kvBuffer = new Map<string, KvCounterEntry>();
 
@@ -140,6 +141,25 @@ export async function batchIngestUsage(
         result.reason = 'validation_error';
         results.push(result);
         continue;
+      }
+
+      // Step 1a: Tenant isolation validation (reject cross-tenant manipulation)
+      if (record.tenant_id !== userId) {
+        result.error = 'Cross-tenant access forbidden: record tenant_id does not match authenticated user';
+        result.reason = 'forbidden';
+        results.push(result);
+        continue;
+      }
+
+      // Step 1b: Idempotency deduplication check (protect against double charges)
+      if (record.event_id) {
+        if (seenEventIds.has(record.event_id)) {
+          result.error = 'Duplicate event: event_id already processed in this batch';
+          result.reason = 'duplicate';
+          results.push(result);
+          continue;
+        }
+        seenEventIds.add(record.event_id);
       }
 
       // Step 2: Verify license
@@ -197,6 +217,7 @@ export async function batchIngestUsage(
         error_message: record.status === 'error' ? 'Client-reported error' : null,
         response_time_ms: record.response_time_ms ?? null,
         created_at: record.timestamp,
+        idempotency_key: record.event_id ?? null,
       });
 
       // Step 4b: Accumulate KV counter delta (batched — one KV.put per userId:service)

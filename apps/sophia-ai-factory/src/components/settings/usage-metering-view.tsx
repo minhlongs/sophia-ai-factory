@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Video, Mic, Image as ImageIcon, Cpu, Coins, Calendar, BarChart3 } from 'lucide-react';
-import type { CustomerUsageReport, DailyUsageBreakdown } from '@/land/billing/customer-usage-summary';
+import { Video, Mic, Image as ImageIcon, Cpu, Calendar, BarChart3 } from 'lucide-react';
+import type { CustomerUsageReport, DailyUsageBreakdown } from '@/land/billing/customer-usage-types';
+import { UsagePlanSummaryCards } from './usage-plan-summary-cards';
+import { UsageProviderTable } from './usage-provider-table';
 
 interface UsageMeteringViewProps {
   report: CustomerUsageReport;
@@ -41,26 +43,29 @@ export function UsageMeteringView({ report }: UsageMeteringViewProps) {
 
   return (
     <div className="space-y-8">
-      {/* Overview Cards */}
+      {/* 1. Plan, Quota, Overage & Next Billing Event Cards */}
+      <UsagePlanSummaryCards report={report} />
+
+      {/* 2. Overview Resource Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          title="Video Generated"
+          title="Video Generated • Render"
           value={`${report.totals.videoMinutes} mins`}
-          subtitle="Render Engine"
+          subtitle="Render Engine (HeyGen/Direct)"
           icon={Video}
           active={activeMetric === 'video'}
           onClick={() => setActiveMetric('video')}
         />
         <MetricCard
-          title="Voiceover"
+          title="Voiceover • Giọng đọc AI"
           value={`${report.totals.elevenLabsChars.toLocaleString()} chars`}
-          subtitle="ElevenLabs AI"
+          subtitle="ElevenLabs AI Voice"
           icon={Mic}
           active={activeMetric === 'voice'}
           onClick={() => setActiveMetric('voice')}
         />
         <MetricCard
-          title="Images & Visuals"
+          title="Images & Visuals • Hình ảnh"
           value={`${report.totals.falAiImages} calls`}
           subtitle="fal.ai Diffusion"
           icon={ImageIcon}
@@ -68,22 +73,22 @@ export function UsageMeteringView({ report }: UsageMeteringViewProps) {
           onClick={() => setActiveMetric('images')}
         />
         <MetricCard
-          title="LLM Intelligence"
+          title="LLM Intelligence • Trí tuệ LLM"
           value={`${report.totals.openRouterTokens.toLocaleString()} tokens`}
-          subtitle="OpenRouter / Anthropic"
+          subtitle="OpenRouter / Claude / GPT"
           icon={Cpu}
           active={activeMetric === 'tokens'}
           onClick={() => setActiveMetric('tokens')}
         />
       </div>
 
-      {/* Daily Usage Chart */}
+      {/* 3. Daily Usage Breakdown Chart */}
       <div className="bg-[#18181B] border border-outline-variant/30 rounded-2xl p-6 shadow-xl">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
             <h3 className="text-lg font-bold text-on-surface flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-primary" />
-              Daily Consumption Breakdown
+              Daily Consumption Breakdown • Biểu đồ tiêu thụ theo ngày
             </h3>
             <p className="text-xs text-on-surface-variant mt-1 flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5" />
@@ -93,16 +98,20 @@ export function UsageMeteringView({ report }: UsageMeteringViewProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setActiveMetric('credits')}
-              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${activeMetric === 'credits' ? 'bg-primary text-white' : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'}`}
+              className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
+                activeMetric === 'credits'
+                  ? 'bg-primary text-white'
+                  : 'bg-surface-container-highest text-on-surface-variant hover:text-on-surface'
+              }`}
             >
-              Total Credits
+              Total MCU Credits
             </button>
           </div>
         </div>
 
         {report.dailyUsage.length === 0 ? (
           <div className="py-16 text-center text-on-surface-variant text-sm border border-dashed border-outline-variant/20 rounded-xl">
-            No consumption recorded yet in this billing cycle.
+            No consumption recorded yet in this billing cycle • Chưa có dữ liệu tiêu thụ trong kỳ này.
           </div>
         ) : (
           <div className="flex items-end gap-2 h-48 pt-6 pb-2 overflow-x-auto custom-scrollbar">
@@ -124,37 +133,8 @@ export function UsageMeteringView({ report }: UsageMeteringViewProps) {
         )}
       </div>
 
-      {/* Provider Details Table */}
-      <div className="bg-[#18181B] border border-outline-variant/30 rounded-2xl p-6 shadow-xl">
-        <h3 className="text-lg font-bold text-on-surface mb-4 flex items-center gap-2">
-          <Coins className="w-5 h-5 text-primary" />
-          Provider Rate & Consumption Accounting
-        </h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-outline-variant/20 text-on-surface-variant text-xs uppercase tracking-wider">
-                <th className="pb-3 font-semibold">Service Provider</th>
-                <th className="pb-3 font-semibold">Metric</th>
-                <th className="pb-3 font-semibold">Units Consumed</th>
-                <th className="pb-3 font-semibold text-right">Estimated Credits</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant/10 text-on-surface">
-              {report.providers.map((p) => (
-                <tr key={p.provider} className="hover:bg-surface-variant/20 transition-colors">
-                  <td className="py-3 font-medium">{p.provider}</td>
-                  <td className="py-3 text-on-surface-variant">{p.metricName}</td>
-                  <td className="py-3 font-mono">{p.totalUnits.toLocaleString()}</td>
-                  <td className="py-3 text-right font-mono text-primary font-semibold">
-                    {p.creditsUsed.toFixed(2)} MCU
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {/* 4. Provider Accounting & Transparency Table */}
+      <UsageProviderTable providers={report.providers} />
     </div>
   );
 }
@@ -162,7 +142,12 @@ export function UsageMeteringView({ report }: UsageMeteringViewProps) {
 function MetricCard({
   title, value, subtitle, icon: Icon, active, onClick,
 }: {
-  title: string; value: string; subtitle: string; icon: React.ComponentType<{ className?: string }>; active: boolean; onClick: () => void;
+  title: string;
+  value: string;
+  subtitle: string;
+  icon: React.ComponentType<{ className?: string }>;
+  active: boolean;
+  onClick: () => void;
 }) {
   return (
     <div
