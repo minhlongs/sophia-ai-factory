@@ -5856,6 +5856,13 @@
     "dashboard": {
       "title": "Tổng quan",
       "subtitle": "Chào mừng trở lại. Tổng quan hoạt động hôm nay.",
+      "onboardingBanner": {
+        "title": "Hoàn tất thiết lập Sophia AI Factory",
+        "subtitle": "Kết nối khóa API (BYOK) và kiểm tra tình trạng hệ thống để kích hoạt sản xuất video tự động.",
+        "cta": "Bắt đầu Setup Wizard",
+        "healthCheck": "Kiểm tra hệ thống",
+        "ready": "Hệ thống đã sẵn sàng sản xuất"
+      },
       "common": {
         "paid": "Đã thanh toán",
         "failed": "Thất bại",
@@ -5880,12 +5887,18 @@
       "topAffiliates": {
         "title": "Đối tác hàng đầu",
         "viewAll": "Xem tất cả",
-        "invite": "Mời đối tác mới"
+        "invite": "Mời đối tác mới",
+        "emptyTitle": "Chưa có đối tác liên kết",
+        "emptyDesc": "Chưa có đối tác tiếp thị nào được ghi nhận. Khám phá các chiến dịch liên kết hoặc tạo đường dẫn giới thiệu đầu tiên.",
+        "discover": "Khám phá chiến dịch"
       },
       "recentTransactions": {
         "title": "Giao dịch gần đây",
         "subtitle": "Thanh toán và hoàn tiền đăng ký mới nhất",
         "showing": "Hiển thị {from}-{to} trong tổng số {total} giao dịch",
+        "emptyTitle": "Chưa có giao dịch phát sinh",
+        "emptyDesc": "Lịch sử thanh toán gói đăng ký và nạp tín dụng MCU sẽ hiển thị tại đây khi phát sinh giao dịch.",
+        "topup": "Nạp MCU",
         "columns": {
           "date": "Ngày",
           "customer": "Khách hàng",
@@ -5946,9 +5959,10 @@
         "orContinueWith": "hoặc tiếp tục với",
         "hasAccount": "Đã có tài khoản?",
         "signIn": "Đăng nhập",
-        "successTitle": "Đăng ký thành công",
-        "successMessage": "Tài khoản của bạn đã được tạo",
-        "goToLogin": "Đi đến đăng nhập",
+        "successTitle": "Tạo tài khoản thành công!",
+        "successMessage": "Chào mừng bạn đến với Sophia AI Factory. Hãy hoàn tất quy trình thiết lập để kết nối nhà cung cấp AI và tạo video đầu tiên.",
+        "startSetup": "Bắt đầu thiết lập hệ thống",
+        "goToLogin": "Đăng nhập tài khoản",
         "and": "Và",
         "or": "Hoặc",
         "googleSignIn": "Đăng nhập bằng Google",

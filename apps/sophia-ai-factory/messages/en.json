@@ -5849,6 +5849,13 @@
     "dashboard": {
       "title": "Dashboard",
       "subtitle": "Welcome back. Here's what's happening with your workspace today.",
+      "onboardingBanner": {
+        "title": "Complete Sophia AI Factory Setup",
+        "subtitle": "Connect your AI API keys (BYOK) and verify system health to activate autonomous video generation.",
+        "cta": "Start Setup Wizard",
+        "healthCheck": "System Health",
+        "ready": "All systems operational and ready for production"
+      },
       "common": {
         "paid": "Paid",
         "failed": "Failed",
@@ -5873,12 +5880,18 @@
       "topAffiliates": {
         "title": "Top Affiliates",
         "viewAll": "View All",
-        "invite": "Invite New Affiliate"
+        "invite": "Invite New Affiliate",
+        "emptyTitle": "No Affiliate Partners Yet",
+        "emptyDesc": "No active affiliate partners found. Discover top campaigns or create your first referral link.",
+        "discover": "Discover Offers"
       },
       "recentTransactions": {
         "title": "Recent Transactions",
         "subtitle": "Latest subscriber payments and refunds",
         "showing": "Showing {from}-{to} of {total} transactions",
+        "emptyTitle": "No Transactions Recorded",
+        "emptyDesc": "Subscription payments, MCU credit top-ups, and payout records will appear here.",
+        "topup": "Top Up MCU",
         "columns": {
           "date": "Date",
           "customer": "Customer",
@@ -5939,9 +5952,10 @@
         "orContinueWith": "or continue with",
         "hasAccount": "Already have an account?",
         "signIn": "Sign in",
-        "successTitle": "Success Title",
-        "successMessage": "Success Message",
-        "goToLogin": "Go To Login",
+        "successTitle": "Account Created Successfully!",
+        "successMessage": "Welcome to Sophia AI Factory. Complete the guided setup wizard to connect your AI providers and launch your first video.",
+        "startSetup": "Start Setup Wizard",
+        "goToLogin": "Sign In to Account",
         "and": "And",
         "or": "Or",
         "googleSignIn": "Google Sign In",

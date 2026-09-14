@@ -95,8 +95,8 @@ export default function RegisterPage() {
 
         <Card className="w-full max-w-[440px] relative z-10 text-center" padding="xl">
           <div className="inline-flex items-center justify-center mb-md">
-            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
-              <CheckCircle className="w-8 h-8 text-emerald-600" />
+            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-950/40 rounded-full flex items-center justify-center">
+              <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
             </div>
           </div>
           <CardHeader className="!p-0">
@@ -107,8 +107,11 @@ export default function RegisterPage() {
               {t('successMessage')}
             </p>
           </CardHeader>
-          <CardContent className="!p-0 mt-xl">
-            <Button fullWidth href="/login">
+          <CardContent className="!p-0 mt-xl space-y-3">
+            <Button fullWidth href="/setup">
+              {t('startSetup')}
+            </Button>
+            <Button fullWidth variant="outline" href="/login">
               {t('goToLogin')}
             </Button>
           </CardContent>
