@@ -22,4 +22,6 @@ export * from './trending-discovery';
 export * from './content-affiliate-link';
 export * from './discovery-wave';
 export * from './providers/shareasale';
+export * from './campaign-bridge';
 export * from './actions/discover-offers-action';
+export * from './actions/convert-offer-action';

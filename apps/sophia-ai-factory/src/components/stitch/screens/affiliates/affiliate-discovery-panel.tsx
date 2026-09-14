@@ -1,10 +1,12 @@
 'use client'
 
 import React, { useState, useTransition } from 'react'
-import { Sparkles, ShieldCheck, ExternalLink, RefreshCw, Check, Copy } from 'lucide-react'
+import { Sparkles, ShieldCheck, RefreshCw, CheckCircle2 } from 'lucide-react'
 import { Card, Button, Badge, Input } from '@/components/stitch'
 import { discoverAffiliateOffersAction } from '@/land/affiliates/actions/discover-offers-action'
+import { convertOfferToCampaignAction } from '@/land/affiliates/actions/convert-offer-action'
 import type { RankedDiscoveredOffer } from '@/land/affiliates/discovery-wave'
+import { AffiliateOfferCard } from './affiliate-offer-card'
 
 const NICHES = ['saas', 'ai', 'marketing', 'health', 'finance', 'education']
 
@@ -13,12 +15,14 @@ export function AffiliateDiscoveryPanel() {
   const [minScore, setMinScore] = useState(0.5)
   const [offers, setOffers] = useState<RankedDiscoveredOffer[]>([])
   const [stats, setStats] = useState<{ scanned: number; qualified: number } | null>(null)
-  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [convertingId, setConvertingId] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   const handleRunDiscovery = () => {
     setErrorMsg(null)
+    setSuccessMsg(null)
     startTransition(async () => {
       const res = await discoverAffiliateOffersAction({
         niche,
@@ -31,20 +35,26 @@ export function AffiliateDiscoveryPanel() {
         return
       }
       setOffers(res.value.topOffers)
-      setStats({
-        scanned: res.value.scannedCount,
-        qualified: res.value.qualifiedCount,
-      })
+      setStats({ scanned: res.value.scannedCount, qualified: res.value.qualifiedCount })
     })
   }
 
-  const handleCopy = async (id: string, url: string) => {
+  const handleCreateCampaign = async (offer: RankedDiscoveredOffer) => {
+    setErrorMsg(null)
+    setSuccessMsg(null)
+    setConvertingId(offer.externalId)
     try {
-      await navigator.clipboard.writeText(url)
-      setCopiedId(id)
-      setTimeout(() => setCopiedId(null), 2000)
-    } catch {
-      // Ignore clipboard write error
+      const res = await convertOfferToCampaignAction({ offer })
+      if (!res.ok) {
+        setErrorMsg(`Campaign creation failed: ${res.error.message}`)
+      } else {
+        const title = res.value.script.primary.suggestedTitles[0] || offer.title
+        setSuccessMsg(`Campaign initialized: "${title}" (Mission: ${res.value.missionId.slice(0, 8)})`)
+      }
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Campaign creation failed')
+    } finally {
+      setConvertingId(null)
     }
   }
 
@@ -58,7 +68,7 @@ export function AffiliateDiscoveryPanel() {
               <span>Agentic Affiliate Discovery Wave</span>
             </div>
             <p className="text-on-surface-variant text-body-sm mt-xs">
-              Autonomous multi-network crawler scanning ClickBank, Awin, and ShareASale with 6-factor composite scoring and fail-closed scam verification.
+              Autonomous multi-network crawler scanning ClickBank, Awin, and ShareASale with scam verification.
             </p>
           </div>
           <Button
@@ -72,9 +82,7 @@ export function AffiliateDiscoveryPanel() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-md mt-md pt-md border-t border-outline/10">
           <div>
-            <label className="block text-label-sm font-medium text-on-surface-variant mb-xs">
-              Target Niche
-            </label>
+            <label className="block text-label-sm font-medium text-on-surface-variant mb-xs">Target Niche</label>
             <div className="flex flex-wrap gap-xs">
               {NICHES.map((n) => (
                 <button
@@ -82,9 +90,7 @@ export function AffiliateDiscoveryPanel() {
                   type="button"
                   onClick={() => setNiche(n)}
                   className={`px-sm py-xs rounded-lg text-label-sm font-medium capitalize transition-colors ${
-                    niche === n
-                      ? 'bg-primary text-on-primary'
-                      : 'bg-surface-variant text-on-surface-variant hover:bg-surface-variant/80'
+                    niche === n ? 'bg-primary text-on-primary' : 'bg-surface-variant text-on-surface-variant hover:bg-surface-variant/80'
                   }`}
                 >
                   {n}
@@ -109,9 +115,7 @@ export function AffiliateDiscoveryPanel() {
           </div>
 
           <div>
-            <label className="block text-label-sm font-medium text-on-surface-variant mb-xs">
-              Active Networks
-            </label>
+            <label className="block text-label-sm font-medium text-on-surface-variant mb-xs">Active Networks</label>
             <div className="flex items-center gap-xs">
               <Badge variant="soft" color="primary">ClickBank</Badge>
               <Badge variant="soft" color="secondary">Awin</Badge>
@@ -123,6 +127,13 @@ export function AffiliateDiscoveryPanel() {
         {errorMsg && (
           <div className="mt-sm p-sm rounded-lg bg-error-container text-on-error-container text-body-sm">
             {errorMsg}
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="mt-sm p-sm rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-body-sm flex items-center gap-xs">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>{successMsg}</span>
           </div>
         )}
 
@@ -141,52 +152,12 @@ export function AffiliateDiscoveryPanel() {
       {offers.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-md">
           {offers.map((offer) => (
-            <Card key={`${offer.network}-${offer.externalId}`} padding="md" className="flex flex-col justify-between">
-              <div>
-                <div className="flex items-start justify-between gap-sm mb-xs">
-                  <Badge variant="outline" color={offer.network === 'clickbank' ? 'primary' : offer.network === 'awin' ? 'secondary' : 'success'}>
-                    {offer.network.toUpperCase()}
-                  </Badge>
-                  <span className="text-label-sm font-bold text-emerald-600">
-                    {Math.round(offer.qualityScore * 100)}% Score
-                  </span>
-                </div>
-                <h4 className="font-headline-sm text-body-lg font-bold text-on-surface line-clamp-1">
-                  {offer.title}
-                </h4>
-                <p className="text-body-sm text-on-surface-variant line-clamp-2 mt-xs">
-                  {offer.description || 'High-converting affiliate product ready for autonomous campaign syndication.'}
-                </p>
-                <div className="mt-sm flex items-center justify-between text-label-sm font-medium">
-                  <span className="text-on-surface-variant">Commission</span>
-                  <span className="text-primary font-bold">
-                    {offer.commissionPct != null ? `${offer.commissionPct}%` : `$${offer.commissionFixedUsd ?? 0}`}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-md pt-sm border-t border-outline/10 flex items-center justify-between gap-xs">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleCopy(offer.externalId, offer.productUrl)}
-                  iconLeft={copiedId === offer.externalId ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                >
-                  {copiedId === offer.externalId ? 'Copied' : 'Copy Link'}
-                </Button>
-                {offer.productUrl && (
-                  <a
-                    href={offer.productUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-xs text-label-sm text-primary hover:underline"
-                  >
-                    <span>View Offer</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                )}
-              </div>
-            </Card>
+            <AffiliateOfferCard
+              key={`${offer.network}-${offer.externalId}`}
+              offer={offer}
+              isConverting={convertingId === offer.externalId}
+              onCreateCampaign={handleCreateCampaign}
+            />
           ))}
         </div>
       )}
