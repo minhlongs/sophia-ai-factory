@@ -236,8 +236,12 @@ const finalConfig = process.env.SKIP_SENTRY_BUILD === '1'
 // doesn't exist. Production is unaffected (it reads __env__.DB directly).
 // The path is absolute because a relative path resolves from the OpenNext
 // internal module location and misses the real state dir.
-void initOpenNextCloudflareForDev({
-  persist: { path: path.join(os.homedir(), '.wrangler/state/v3') },
-});
+if (process.env.NODE_ENV === 'development') {
+  void initOpenNextCloudflareForDev({
+    persist: { path: path.join(os.homedir(), '.wrangler/state/v3') },
+  }).catch(() => {
+    // Non-fatal if local dev platform proxy fails to initialize
+  });
+}
 
 export default finalConfig;
