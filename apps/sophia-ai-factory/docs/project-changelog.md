@@ -1,6 +1,32 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-14 | **Current Version:** 1.36.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** 3acbd9be
+**Last Updated:** 2026-09-14 | **Current Version:** 1.37.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** e214eb35
+
+---
+
+## 2026-09-14 (v1.37.0 — AGENTIC DISCOVERY ACTION, RATE-LIMITED API & CEO DISCOVERY PANEL)
+
+**Severity: P0 REVENUE DISCOVERY & PRODUCTIZATION | Type: Affiliate Discovery + Server Action + UI + API | Status: SHIPPED**
+
+Delivered the complete client and API integration for the Agentic Affiliate Discovery Wave:
+- **Server Action (`src/land/affiliates/actions/discover-offers-action.ts`)**:
+  - Authenticated server action with Better Auth session verification and tenant isolation (`resolveOrgId`).
+  - Strict input validation via Zod (niche, minScore, limit, networks).
+  - Clean error classification (`UNAUTHORIZED`, `INVALID_INPUT`, `EXECUTION_FAILED`).
+  - Unit tests in `src/land/affiliates/__tests__/discover-offers-action.test.ts`.
+- **Public & Authenticated API Endpoint (`POST /api/affiliate-discovery`)**:
+  - Rate-limited (30 req/min) endpoint triggering autonomous discovery waves.
+  - Zod body validation with safe defaults.
+  - Unit tests in `src/app/api/affiliate-discovery/route-post.test.ts`.
+- **CEO Discovery Panel UI (`src/components/stitch/screens/affiliates/affiliate-discovery-panel.tsx`)**:
+  - Interactive panel in the CEO dashboard with instant niche selection, quality threshold slider, and network filters.
+  - Live scam verification badge (100% fail-closed scam gated).
+  - One-click affiliate link copying with visual confirmation.
+  - Extracted `mockAffiliates` into `mock-affiliates.ts` to keep `affiliates-page.tsx` strictly under 200 LOC.
+- **Quality & Production Verification**:
+  - 0 TypeScript errors (`npm run type-check`), 0 ESLint warnings on new code, all 33 test files (299 tests) passing in under 1.5s.
+  - Deployed commit `e214eb359` to Cloudflare Workers via CF-direct doctrine; live edge SHA verified `e214eb35` at `https://sophia.agencyos.network/api/version`.
+  - Production verification: `/api/health` -> HTTP 200, `/api/version` -> `e214eb35`, public `/api/affiliate-discovery` -> HTTP 401 Unauthorized (fail-closed).
 
 ---
 
