@@ -30,13 +30,13 @@ export function CustomerHealthDashboard({ initialHealth, locale = 'vi' }: Custom
   };
 
   const services = [
-    { key: 'core', name: isVi ? 'Sophia Core' : 'Sophia Core', status: health.sophiaCore, isHealthy: health.sophiaCore === 'READY', icon: Cpu },
-    { key: 'auth', name: isVi ? 'Authentication' : 'Authentication', status: 'READY', isHealthy: true, icon: Lock },
-    { key: 'ai', name: isVi ? 'AI Provider' : 'AI Provider', status: health.aiProvider === 'READY' ? 'READY' : 'ACTION REQUIRED', isHealthy: health.aiProvider === 'READY', icon: Sparkles },
-    { key: 'storage', name: isVi ? 'Storage' : 'Storage', status: 'READY', isHealthy: true, icon: HardDrive },
-    { key: 'pipeline', name: isVi ? 'Video Pipeline' : 'Video Pipeline', status: health.videoPipeline === 'READY' ? 'READY' : 'DEGRADED', isHealthy: health.videoPipeline === 'READY', icon: Film },
-    { key: 'billing', name: isVi ? 'Billing' : 'Billing', status: health.billing === 'READY' ? 'READY' : 'ACTION REQUIRED', isHealthy: health.billing === 'READY', icon: CreditCard },
-    { key: 'telegram', name: isVi ? 'Telegram' : 'Telegram', status: health.telegram, isHealthy: health.telegram === 'CONNECTED', icon: Send },
+    { key: 'core', name: 'Sophia Core', labelVi: 'Hệ thống cốt lõi', status: health.sophiaCore, isHealthy: health.sophiaCore === 'READY', icon: Cpu },
+    { key: 'auth', name: 'Authentication', labelVi: 'Xác thực tài khoản', status: health.authentication, isHealthy: health.authentication === 'READY', icon: Lock },
+    { key: 'ai', name: 'AI Provider', labelVi: 'Nhà cung cấp AI (BYOK)', status: health.aiProvider === 'READY' ? 'READY' : 'ACTION REQUIRED', isHealthy: health.aiProvider === 'READY', icon: Sparkles },
+    { key: 'storage', name: 'Storage', labelVi: 'Lưu trữ dữ liệu', status: health.storage, isHealthy: health.storage === 'READY', icon: HardDrive },
+    { key: 'pipeline', name: 'Video Pipeline', labelVi: 'Quy trình tạo video', status: health.videoPipeline === 'READY' ? 'READY' : 'DEGRADED', isHealthy: health.videoPipeline === 'READY', icon: Film },
+    { key: 'billing', name: 'Billing', labelVi: 'Thanh toán & Gói cước', status: health.billing === 'READY' ? 'READY' : 'ACTION REQUIRED', isHealthy: health.billing === 'READY', icon: CreditCard },
+    { key: 'telegram', name: 'Telegram', labelVi: 'Kết nối Telegram Bot', status: health.telegram, isHealthy: health.telegram === 'CONNECTED', icon: Send },
   ];
 
   return (
@@ -71,8 +71,8 @@ export function CustomerHealthDashboard({ initialHealth, locale = 'vi' }: Custom
                   <SvcIcon className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground">{svc.name}</p>
-                  <p className="font-semibold text-foreground text-sm">{svc.status}</p>
+                  <p className="text-xs font-bold text-foreground uppercase tracking-wider">{svc.name}</p>
+                  {isVi && <p className="text-[11px] text-muted-foreground/80 leading-none mt-0.5">{svc.labelVi}</p>}
                 </div>
               </div>
               <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
@@ -81,7 +81,7 @@ export function CustomerHealthDashboard({ initialHealth, locale = 'vi' }: Custom
                   : 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300'
               }`}>
                 {svc.isHealthy ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />}
-                {svc.status}
+                {svc.status.replace('_', ' ')}
               </span>
             </div>
           );

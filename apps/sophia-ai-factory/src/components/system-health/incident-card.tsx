@@ -117,26 +117,33 @@ export function IncidentCard({
         </span>
       </div>
 
-      {/* 4 Standard Action Zones */}
+      {/* 3 Standard Action Zones */}
       <div className="mt-4 space-y-4 text-sm">
         {/* Zone 1: WHAT HAPPENED */}
         <div className="rounded-lg bg-muted/40 p-3" data-testid="zone-what-happened">
-          <p className="font-medium text-foreground flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
-            <span>📌</span> {isVi ? 'Chuyện gì đã xảy ra' : 'What Happened'}
+          <p className="font-medium flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+            <span>📌</span> {isVi ? '1. Chuyện gì đã xảy ra' : '1. What Happened'}
           </p>
           <p className="mt-1 font-semibold text-foreground">{whatHappened}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">{whatItMeans}</p>
         </div>
 
-        {/* Zone 2: WHAT YOU CAN DO */}
+        {/* Zone 2: WHAT IT MEANS */}
+        <div className="rounded-lg bg-muted/20 p-3" data-testid="zone-what-it-means">
+          <p className="font-medium flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+            <span>💡</span> {isVi ? '2. Điều này có ý nghĩa gì' : '2. What It Means'}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{whatItMeans}</p>
+        </div>
+
+        {/* Zone 3: WHAT YOU CAN DO */}
         <div className="rounded-lg bg-primary/5 border border-primary/20 p-3" data-testid="zone-what-you-can-do">
-          <p className="font-medium text-foreground flex items-center gap-1.5 text-xs uppercase tracking-wider text-primary">
-            <span>🛠️</span> {isVi ? 'Bạn có thể làm gì' : 'What You Can Do'}
+          <p className="font-medium flex items-center gap-1.5 text-xs uppercase tracking-wider text-primary">
+            <span>🛠️</span> {isVi ? '3. Bạn có thể làm gì' : '3. What You Can Do'}
           </p>
           <p className="mt-1 text-foreground/90 leading-relaxed">{whatYouCanDo}</p>
         </div>
 
-        {/* Zones 3 & 4: Actions (TRY AGAIN & CONTACT SUPPORT) */}
+        {/* Zones 4 & 5: Actions (TRY AGAIN & CONTACT SUPPORT) */}
         <div className="flex flex-wrap items-center gap-3 pt-1">
           {/* Zone 3: TRY AGAIN */}
           <button

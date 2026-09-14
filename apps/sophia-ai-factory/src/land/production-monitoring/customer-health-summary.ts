@@ -133,11 +133,11 @@ export async function getCustomerHealthSummary(userId: string): Promise<Customer
       });
     }
 
-    const jobs = await db.prepare('SELECT id, status, error, created_at FROM video_jobs WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 5').bind(userId).all<{ id: string; status: string; error: string | null; created_at: number }>();
-    const failed = jobs.results?.find((j) => j.status === 'failed');
-    if (failed) {
+    const missions = await db.prepare('SELECT id, status, error, created_at FROM engine_missions WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 5').bind(userId).all<{ id: string; status: string; error: string | null; created_at: number }>();
+    const failedMission = missions.results?.find((m) => m.status === 'failed');
+    if (failedMission) {
       pipeStatus = 'DEGRADED';
-      incidents.push({ id: `inc-job-${failed.id}`, ...classifyCustomerIncident(failed.error ?? '', 'Video Pipeline'), timestamp: new Date(failed.created_at).toISOString() });
+      incidents.push({ id: `inc-job-${failedMission.id}`, ...classifyCustomerIncident(failedMission.error ?? '', 'Video Pipeline'), timestamp: new Date(failedMission.created_at * 1000).toISOString() });
     }
 
     const sub = await db.prepare('SELECT status FROM subscriptions WHERE user_id = ?1 ORDER BY created_at DESC LIMIT 1').bind(userId).first<{ status: string }>();

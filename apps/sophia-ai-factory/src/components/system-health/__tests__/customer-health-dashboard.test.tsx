@@ -64,6 +64,9 @@ describe('CustomerHealthDashboard', () => {
     expect(screen.queryByTestId('all-systems-operational')).toBeNull();
     expect(screen.getByTestId('incidents-list')).toBeDefined();
     expect(screen.getByText('Chưa cấu hình khóa API cho nhà cung cấp AI nào.')).toBeDefined();
+    expect(screen.getByTestId('zone-what-happened')).toBeDefined();
+    expect(screen.getByTestId('zone-what-it-means')).toBeDefined();
+    expect(screen.getByTestId('zone-what-you-can-do')).toBeDefined();
   });
 
   it('renders English headings and status names when locale is en', () => {
