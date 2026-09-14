@@ -9,6 +9,9 @@ interface PaymentStepProps {
   onNext: () => void;
   onBack: () => void;
   currentTier?: TierType;
+  mcuBalance?: number;
+  subscriptionStatus?: string;
+  renewalDate?: string;
 }
 
 const TIER_DETAILS: Record<TierType, { name: string; mcu: string; videos: string; price: string }> = {
@@ -18,7 +21,14 @@ const TIER_DETAILS: Record<TierType, { name: string; mcu: string; videos: string
   MASTER: { name: 'Master Tier', mcu: 'Unlimited MCU', videos: 'Infinite scaling', price: '$999/mo' },
 };
 
-export function PaymentStep({ onNext, onBack, currentTier = 'PREMIUM' }: PaymentStepProps) {
+export function PaymentStep({
+  onNext,
+  onBack,
+  currentTier = 'PREMIUM',
+  mcuBalance,
+  subscriptionStatus = 'ACTIVE',
+  renewalDate,
+}: PaymentStepProps) {
   const details = TIER_DETAILS[currentTier] ?? TIER_DETAILS.PREMIUM;
 
   return (
@@ -56,7 +66,7 @@ export function PaymentStep({ onNext, onBack, currentTier = 'PREMIUM' }: Payment
               </div>
             </div>
             <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300">
-              ACTIVE
+              {subscriptionStatus}
             </span>
           </div>
 
@@ -67,7 +77,11 @@ export function PaymentStep({ onNext, onBack, currentTier = 'PREMIUM' }: Payment
             </div>
             <div className="flex justify-between py-1">
               <span className="text-muted-foreground">Renewal Cycle:</span>
-              <span className="font-medium text-foreground">30 Days Auto-renew</span>
+              <span className="font-medium text-foreground">30 Days Auto-renew / Gia hạn 30 ngày</span>
+            </div>
+            <div className="flex justify-between py-1">
+              <span className="text-muted-foreground">Next Renewal:</span>
+              <span className="font-medium text-foreground">{renewalDate || '30 days after activation'}</span>
             </div>
           </div>
         </div>
@@ -80,10 +94,10 @@ export function PaymentStep({ onNext, onBack, currentTier = 'PREMIUM' }: Payment
             </div>
             <div>
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Compute Allowance
+                Compute Allowance / Hạn mức MCU
               </span>
               <h3 className="text-lg font-bold text-foreground">
-                {details.mcu}
+                {mcuBalance !== undefined ? `${mcuBalance} MCU` : details.mcu}
               </h3>
             </div>
           </div>
@@ -92,6 +106,10 @@ export function PaymentStep({ onNext, onBack, currentTier = 'PREMIUM' }: Payment
             <div className="flex justify-between py-1">
               <span className="text-muted-foreground">Estimated Production:</span>
               <span className="font-semibold text-primary">{details.videos}</span>
+            </div>
+            <div className="flex justify-between py-1">
+              <span className="text-muted-foreground">Plan Base Quota:</span>
+              <span className="font-medium text-foreground">{details.mcu}</span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-muted-foreground">BYOK AI Costs:</span>

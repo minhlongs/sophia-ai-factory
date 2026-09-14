@@ -18,11 +18,26 @@ interface ApiKeysStepProps {
   status: Record<string, 'idle' | 'validating' | 'valid' | 'invalid'>;
   errors: Record<string, string>;
   latencies?: Record<string, number>;
+  savedProviders?: string[];
+  onRevokeProvider?: (provider: string, keyName: string) => Promise<void>;
+  revokingProvider?: string | null;
   onNext: () => void;
   onBack?: () => void;
 }
 
-export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, latencies, onNext, onBack }: ApiKeysStepProps) {
+export function ApiKeysStep({
+  config,
+  updateConfig,
+  verifyKey,
+  status,
+  errors,
+  latencies,
+  savedProviders = [],
+  onRevokeProvider,
+  revokingProvider,
+  onNext,
+  onBack,
+}: ApiKeysStepProps) {
   const t = useTranslations('setupWizard.apiKeys');
   const actions = useTranslations('setupWizard.actions');
 
@@ -44,6 +59,9 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, l
           required
           helpText={t('openrouter.help')}
           latency={latencies?.OPENROUTER_API_KEY}
+          saved={savedProviders.includes('openrouter')}
+          onRevoke={onRevokeProvider ? () => onRevokeProvider('openrouter', 'OPENROUTER_API_KEY') : undefined}
+          isRevoking={revokingProvider === 'openrouter'}
         />
         <ByokHelpTip provider="openrouter" />
       </div>
@@ -60,6 +78,9 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, l
           placeholder={t('elevenlabs.placeholder')}
           helpText={t('elevenlabs.help')}
           latency={latencies?.ELEVENLABS_API_KEY}
+          saved={savedProviders.includes('elevenlabs')}
+          onRevoke={onRevokeProvider ? () => onRevokeProvider('elevenlabs', 'ELEVENLABS_API_KEY') : undefined}
+          isRevoking={revokingProvider === 'elevenlabs'}
         />
         <ByokHelpTip provider="elevenlabs" />
       </div>
@@ -76,6 +97,9 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, l
           placeholder={t('did.placeholder')}
           helpText={t('did.help')}
           latency={latencies?.DID_API_KEY}
+          saved={savedProviders.includes('d-id')}
+          onRevoke={onRevokeProvider ? () => onRevokeProvider('d-id', 'DID_API_KEY') : undefined}
+          isRevoking={revokingProvider === 'd-id'}
         />
         <ByokHelpTip provider="d-id" />
       </div>
@@ -91,6 +115,9 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, l
         placeholder={t('anthropic.placeholder')}
         helpText={t('anthropic.help')}
         latency={latencies?.ANTHROPIC_API_KEY}
+        saved={savedProviders.includes('anthropic')}
+        onRevoke={onRevokeProvider ? () => onRevokeProvider('anthropic', 'ANTHROPIC_API_KEY') : undefined}
+        isRevoking={revokingProvider === 'anthropic'}
       />
 
       <ApiKeyInput
@@ -104,6 +131,9 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, l
         placeholder={t('muapi.placeholder')}
         helpText={t('muapi.help')}
         latency={latencies?.MUAPI_API_KEY}
+        saved={savedProviders.includes('muapi')}
+        onRevoke={onRevokeProvider ? () => onRevokeProvider('muapi', 'MUAPI_API_KEY') : undefined}
+        isRevoking={revokingProvider === 'muapi'}
       />
 
       <div className="mt-4">
@@ -118,6 +148,9 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, l
           placeholder={t('replicate.placeholder')}
           helpText={t('replicate.help')}
           latency={latencies?.REPLICATE_API_KEY}
+          saved={savedProviders.includes('replicate')}
+          onRevoke={onRevokeProvider ? () => onRevokeProvider('replicate', 'REPLICATE_API_KEY') : undefined}
+          isRevoking={revokingProvider === 'replicate'}
         />
       </div>
 
@@ -133,6 +166,9 @@ export function ApiKeysStep({ config, updateConfig, verifyKey, status, errors, l
           placeholder={t('falai.placeholder')}
           helpText={t('falai.help')}
           latency={latencies?.FAL_API_KEY}
+          saved={savedProviders.includes('fal-ai')}
+          onRevoke={onRevokeProvider ? () => onRevokeProvider('fal-ai', 'FAL_API_KEY') : undefined}
+          isRevoking={revokingProvider === 'fal-ai'}
         />
       </div>
 

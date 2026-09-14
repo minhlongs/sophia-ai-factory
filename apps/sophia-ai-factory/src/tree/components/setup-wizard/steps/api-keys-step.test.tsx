@@ -216,4 +216,29 @@ describe('ApiKeysStep', () => {
     fireEvent.click(verifyButtons[6]);
     expect(mockVerifyKey).toHaveBeenCalledWith('fal-ai', 'FAL_API_KEY', 'key7');
   });
+
+  it('renders saved badges and triggers revoke when savedProviders are provided', () => {
+    const mockRevoke = vi.fn();
+    render(
+      <ApiKeysStep
+        config={defaultConfig}
+        updateConfig={mockUpdateConfig}
+        verifyKey={mockVerifyKey}
+        status={defaultStatus}
+        errors={{}}
+        savedProviders={['openrouter', 'elevenlabs']}
+        onRevokeProvider={mockRevoke}
+        onNext={vi.fn()}
+      />
+    );
+
+    const savedBadges = screen.getAllByText(/Saved & Encrypted/i);
+    expect(savedBadges.length).toBe(2);
+
+    const revokeButtons = screen.getAllByText('Revoke');
+    expect(revokeButtons.length).toBe(2);
+
+    fireEvent.click(revokeButtons[0]);
+    expect(mockRevoke).toHaveBeenCalledWith('openrouter', 'OPENROUTER_API_KEY');
+  });
 });

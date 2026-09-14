@@ -6,9 +6,16 @@ import { ShieldCheck, Building2, User, Globe, ArrowRight, ArrowLeft } from 'luci
 interface AccountStepProps {
   onNext: () => void;
   onBack?: () => void;
+  accountEmail?: string;
+  isOwner?: boolean;
 }
 
-export function AccountStep({ onNext, onBack }: AccountStepProps) {
+export function AccountStep({
+  onNext,
+  onBack,
+  accountEmail = 'ceo@sophia.agency',
+  isOwner = true,
+}: AccountStepProps) {
   const [workspaceName, setWorkspaceName] = useState('Sophia Video Empire');
   const [language, setLanguage] = useState<'vi' | 'en'>('vi');
   const [brandTone, setBrandTone] = useState<'professional' | 'viral' | 'friendly'>('viral');
@@ -18,7 +25,7 @@ export function AccountStep({ onNext, onBack }: AccountStepProps) {
       <div>
         <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium mb-2">
           <ShieldCheck className="w-3.5 h-3.5" />
-          Owner Verified / Đã xác thực chủ sở hữu
+          {isOwner ? 'Owner Verified / Đã xác thực chủ sở hữu' : 'Pending Verification / Chờ xác thực'}
         </div>
         <h2 className="text-xl font-semibold text-foreground">
           Account & Workspace / Tài khoản & Tổ chức
@@ -41,7 +48,7 @@ export function AccountStep({ onNext, onBack }: AccountStepProps) {
               <h3 className="text-sm font-semibold text-foreground">
                 Ownership Identity / Danh tính sở hữu
               </h3>
-              <p className="text-xs text-muted-foreground">Primary Account Holder</p>
+              <p className="text-xs text-muted-foreground font-mono">{accountEmail}</p>
             </div>
           </div>
           <div className="space-y-2 pt-2 border-t border-border/50 text-xs">
@@ -49,6 +56,12 @@ export function AccountStep({ onNext, onBack }: AccountStepProps) {
               <span className="text-muted-foreground">Role / Vai trò:</span>
               <span className="font-semibold text-foreground bg-primary/10 text-primary px-2 py-0.5 rounded">
                 OWNER / Quản trị cao nhất
+              </span>
+            </div>
+            <div className="flex justify-between py-1">
+              <span className="text-muted-foreground">Status / Trạng thái:</span>
+              <span className="text-emerald-600 font-semibold flex items-center gap-1">
+                ✓ {isOwner ? 'Active Owner / Chủ sở hữu' : 'Invited Member / Thành viên'}
               </span>
             </div>
             <div className="flex justify-between py-1">

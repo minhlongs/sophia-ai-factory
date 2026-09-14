@@ -16,6 +16,9 @@ interface ApiKeyInputProps {
   errorMessage?: string;
   required?: boolean;
   latency?: number;
+  saved?: boolean;
+  onRevoke?: () => Promise<void> | void;
+  isRevoking?: boolean;
 }
 
 export function ApiKeyInput({
@@ -29,7 +32,10 @@ export function ApiKeyInput({
   status,
   errorMessage,
   required,
-  latency: latencyProp
+  latency: latencyProp,
+  saved = false,
+  onRevoke,
+  isRevoking = false,
 }: ApiKeyInputProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [internalLatency, setInternalLatency] = useState<number | null>(null);
@@ -60,14 +66,22 @@ export function ApiKeyInput({
         <label htmlFor={id} className="block text-sm font-medium text-foreground">
           {label} {required && <span className="text-destructive">*</span>}
         </label>
-        {helpText && (
-          <div className="group relative">
-            <Info className="w-4 h-4 text-muted-foreground cursor-help" aria-hidden="true" />
-            <div className="absolute right-0 bottom-6 w-64 p-2 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-border">
-              {helpText}
+        <div className="flex items-center gap-2">
+          {saved && !value && (
+            <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <CheckCircle className="w-3 h-3" />
+              Saved & Encrypted / Đã lưu & mã hóa
+            </span>
+          )}
+          {helpText && (
+            <div className="group relative">
+              <Info className="w-4 h-4 text-muted-foreground cursor-help" aria-hidden="true" />
+              <div className="absolute right-0 bottom-6 w-64 p-2 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-border">
+                {helpText}
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <div className="relative flex items-center">
@@ -76,11 +90,11 @@ export function ApiKeyInput({
           type={showPassword ? 'text' : 'password'}
           value={value}
           onChange={(e) => handleTextChange(e.target.value)}
-          placeholder={placeholder}
+          placeholder={saved && !value ? '•••••••••••••••• (Saved / Đã lưu an toàn)' : placeholder}
           className={cn(
             "w-full px-4 py-2 pr-40 border rounded-lg focus:ring-2 focus:ring-primary focus:outline-none transition-all duration-200 bg-background text-foreground",
             status === 'invalid' ? "border-destructive focus:ring-destructive/20" :
-            status === 'valid' ? "border-primary/50 focus:ring-primary/20" :
+            (status === 'valid' || (saved && !value)) ? "border-emerald-500/40 focus:ring-emerald-500/20" :
             "border-input"
           )}
         />
@@ -98,8 +112,8 @@ export function ApiKeyInput({
           {status === 'validating' && (
             <Loader2 className="w-4 h-4 text-primary motion-safe:animate-spin transition-all duration-300" aria-hidden="true" />
           )}
-          
-          {status === 'valid' && (
+
+          {(status === 'valid' || (saved && !value)) && (
             <div className="flex items-center gap-1 transition-all duration-300">
               {latency !== null && (
                 <span className="inline-flex items-center text-[10px] font-bold bg-primary/15 text-primary border border-primary/20 px-1.5 py-0.5 rounded transition-all duration-300">
@@ -114,14 +128,25 @@ export function ApiKeyInput({
             <XCircle className="w-4 h-4 text-destructive transition-all duration-300" aria-hidden="true" />
           )}
 
-          <button
-            type="button"
-            onClick={handleVerify}
-            disabled={status === 'validating' || !value}
-            className="text-[11px] font-semibold bg-muted hover:bg-muted/80 text-foreground px-2 py-0.5 rounded disabled:opacity-50 transition-all duration-100 active:scale-95"
-          >
-            Verify
-          </button>
+          {saved && !value && onRevoke ? (
+            <button
+              type="button"
+              onClick={onRevoke}
+              disabled={isRevoking}
+              className="text-[11px] font-semibold text-destructive hover:bg-destructive/10 px-2 py-0.5 rounded border border-destructive/30 disabled:opacity-50 transition-all duration-100 active:scale-95"
+            >
+              {isRevoking ? 'Revoking...' : 'Revoke'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleVerify}
+              disabled={status === 'validating' || !value}
+              className="text-[11px] font-semibold bg-muted hover:bg-muted/80 text-foreground px-2 py-0.5 rounded disabled:opacity-50 transition-all duration-100 active:scale-95"
+            >
+              Verify
+            </button>
+          )}
         </div>
       </div>
 
@@ -136,6 +161,13 @@ export function ApiKeyInput({
         <p className="text-xs text-primary mt-1 flex items-center gap-1">
           <CheckCircle className="w-3.5 h-3.5" />
           Connection active {latency !== null ? `(${latency}ms)` : ''}
+        </p>
+      )}
+
+      {saved && !value && status === 'idle' && (
+        <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1">
+          <CheckCircle className="w-3.5 h-3.5" />
+          Key active & encrypted at rest. Never displayed. / Khóa hoạt động & mã hóa bảo mật.
         </p>
       )}
 

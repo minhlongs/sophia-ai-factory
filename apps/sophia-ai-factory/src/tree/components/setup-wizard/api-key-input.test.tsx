@@ -177,4 +177,24 @@ describe('ApiKeyInput Component', () => {
 
     vi.useRealTimers();
   });
+
+  it('renders masked placeholder and saved badge when saved is true and value is empty', () => {
+    const mockOnRevoke = vi.fn();
+    render(
+      <ApiKeyInput
+        {...defaultProps}
+        value=""
+        saved={true}
+        onRevoke={mockOnRevoke}
+      />
+    );
+
+    expect(screen.getByText(/Saved & Encrypted/i)).toBeDefined();
+    expect(screen.getByPlaceholderText(/Saved \/ Đã lưu an toàn/i)).toBeDefined();
+    const revokeBtn = screen.getByRole('button', { name: 'Revoke' });
+    expect(revokeBtn).toBeDefined();
+
+    fireEvent.click(revokeBtn);
+    expect(mockOnRevoke).toHaveBeenCalled();
+  });
 });
