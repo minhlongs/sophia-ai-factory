@@ -42,7 +42,7 @@ export function DashboardAffiliatesCard({ affiliates }: DashboardAffiliatesCardP
             <p className="font-body-sm text-on-surface-variant max-w-xs mb-lg">
               {t('topAffiliates.emptyDesc')}
             </p>
-            <Link href="/affiliates/discovery">
+            <Link href="/affiliates">
               <Button size="sm" variant="outline" iconLeft={<Compass className="w-4 h-4" />}>
                 {t('topAffiliates.discover')}
               </Button>
