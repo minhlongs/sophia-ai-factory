@@ -50,6 +50,7 @@ Every claim in `SUPREME-HANDOVER-CERTIFICATE.md` must trace to a phase report in
 | Telegram webhook secret | 9 | `src/app/api/webhooks/telegram/route.ts:84-85` → `X-Telegram-Bot-Api-Secret-Token` | REPRODUCIBLE |
 | Accesstrade HMAC | 9 | `src/app/api/webhooks/accesstrade/route.ts:15` → `verifyHmac` HMAC-SHA256 | REPRODUCIBLE |
 | FailureKind AUTH_FAILURE | 9 | `src/seed/types/failure-kind.ts:43` → `status === 401 \|\| 403` → `AUTH_FAILURE` | REPRODUCIBLE |
+| Verified Production Release `1e062da8` | Sprint | `curl -s https://sophia.agencyos.network/api/version` → `"shortSha":"1e062da8"`, 9401 tests passed | REPRODUCIBLE |
 
 ---
 

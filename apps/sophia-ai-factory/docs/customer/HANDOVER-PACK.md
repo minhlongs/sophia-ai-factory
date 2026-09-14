@@ -160,10 +160,11 @@ Biên bản này xác nhận rằng Lãnh đạo điều hành mới / Bên ti�
 ## Tài Liệu Tham Khảo Kỹ Thuật & Kiến Trúc Vận Hành
 
 ### 1. Production Release / Phiên Bản Phát Hành Thực Tế
-- **Live Production SHA:** `3bbf900b` *(Xác thực trực tiếp tại `https://sophia.agencyos.network/api/version`)*
-- **Git Commit:** `3bbf900b682e8fe8d24363fca9f992b919a86894` (`feat(billing): P1 customer usage and billing transparency accounting`)
-- **Deployment Timestamp:** `2026-09-14T11:43:53Z`
+- **Live Production SHA:** `1e062da8` *(Xác thực trực tiếp tại `https://sophia.agencyos.network/api/version`)*
+- **Git Commit:** `1e062da8b7f8ba1e31d4d3dc220067da510c41fc` (`feat(dashboard): eradicate fake mock data and modularize dashboard under 200 loc`)
+- **Deployment Timestamp:** `2026-09-14T12:54:03Z`
 - **Runtime Environment:** Cloudflare Workers via OpenNext v1.19.11
+- **Quality Gates:** 9,401 / 9,401 tests passed, 0 TypeScript errors, 0 `:any` in production code
 
 ### 2. Architecture Summary / Tóm Tắt Kiến Trúc Hệ Thống
 - **Frontend / API:** Next.js 16 App Router on Cloudflare Workers (triển khai CF-Direct doctrine).
