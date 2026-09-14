@@ -1,6 +1,6 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-14 | **Current Version:** 1.36.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** 74dcdeb1
+**Last Updated:** 2026-09-14 | **Current Version:** 1.36.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** 3acbd9be
 
 ---
 
@@ -17,14 +17,14 @@ Delivered the Agentic Affiliate Discovery Wave, ShareASale network adapter, and 
   - Standardized ShareASale adapter on `OfferProvider` interface with `listOffers`, `getOffer`, and `getTrending`.
   - Full mock fallback resiliency when credentials are not configured or upstream API fails.
   - Wired ShareASale provider into `offer-sync-cron.ts` and `trending-discovery.ts`.
-- **Secondary Modules Canonical Workspace Access**:
+- **Secondary Modules Canonical Workspace Access & Resilient Billing Fallbacks**:
   - `src/land/account/cascade-delete.ts`: Replaced duplicate raw `org_members` SQL query in `getOrgIdForTenant` with canonical `resolveOrgId(userId, db)`.
-  - `src/land/billing/nowpayments-ipn-refunded-failed.ts`: Standardized subscription cancellation lookup on canonical `resolveOrgId(userId, d1)`.
+  - `src/land/billing/nowpayments-ipn-refunded-failed.ts`: Standardized subscription cancellation lookup on canonical `resolveOrgId(userId, d1)`, reinforced with `organizations` UNION and direct `user_id` fallback in subquery to prevent orphaned active subscriptions on refunds.
   - `src/land/affiliates/content-affiliate-link.ts`: Corrected placeholder alignment and timestamps.
   - `src/seed/auth/resolve-org-id.ts`: Streamlined with `queryFirst<T>` helper to guarantee D1 `.first()` and `.all()` compatibility under 193 LOC.
 - **Quality & Verification**:
   - 0 TypeScript errors (`npm run type-check`), 0 layer boundary violations (`npm run ci:arch`), 41/41 customer journey tests green, all affiliate suites passing (30 files, 286 tests).
-  - Deployed commit `74dcdeb19` to Cloudflare Workers via CF-direct doctrine; live edge SHA verified `74dcdeb1` at `https://sophia.agencyos.network/api/version`.
+  - Deployed commit `3acbd9be8` to Cloudflare Workers via CF-direct doctrine; live edge SHA verified `3acbd9be` at `https://sophia.agencyos.network/api/version`.
   - Production verification: `/api/health` -> HTTP 200, `/login` -> HTTP 307 (redirect), `/vi/login` -> HTTP 200.
 
 ---
