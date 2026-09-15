@@ -137,12 +137,12 @@
 
 **Goal**: Revenue optimization per creative unit
 
-- [ ] Revenue attribution per asset/channel
-- [ ] Dynamic pricing for AI generation costs
-- [ ] Affiliate link tracking per content
-- [ ] Ad revenue optimization
-- [ ] Subscription tier enforcement
-- [ ] ROI dashboard (revenue / generation cost)
+- [x] Revenue attribution per asset/channel — `src/forest/analytics/queries/revenue-attribution.ts` (6-CTE resolver)
+- [x] Dynamic pricing for AI generation costs — `src/land/billing/dynamic-pricing.ts` + `dynamic-pricing-config.ts` (tier × volume bracket multipliers)
+- [x] Affiliate link tracking per content — `src/land/affiliates/content-affiliate-link.ts`
+- [x] Ad revenue optimization — `src/land/analytics/ad-revenue-optimizer.ts` (RPM/CPM modeling, duration yield, mid-roll bonus, channel report)
+- [x] Subscription tier enforcement — `src/seed/config/tiers/` + `forest/quota/quota-enforcer.ts`
+- [x] ROI dashboard (revenue / generation cost) — `src/app/[locale]/dashboard/monetization/` (page, summary cards, channel table, `/api/monetization/route.ts`)
 
 ### Phase 8: Go-Live & Polish (2026-12-16 → 2027-12-31)
 
@@ -165,7 +165,7 @@
 | M4: Learning Loop | 2026-10-15 | Creative Memory auto-updates from performance |
 | M5: Distribution OS | 2026-11-15 | 3+ platform adapters live, scheduling automated |
 | M6: IP Management | 2026-12-15 | Full IP graph operational |
-| M7: Monetization | 2026-12-31 | Revenue tracking per creative unit |
+| M7: Monetization | 2026-12-31 | Revenue tracking per creative unit — ✅ All 6 deliverables complete: attribution, dynamic pricing, affiliate tracking, ad-revenue optimizer, tier enforcement, ROI dashboard |
 | M8: Go-Live | 2027-12-31 | ✅ Production-ready, solo-founder operable — runbook + incident playbook + monitoring guide written and dry-run-validated |
 
 ## Key Performance Indicators (KPIs)
