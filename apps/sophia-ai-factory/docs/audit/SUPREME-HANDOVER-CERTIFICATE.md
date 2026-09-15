@@ -51,7 +51,7 @@ The platform is officially certified as **CUSTOMER HANDOVER SAFE (GREEN)**. With
 | **P1-02** | Missing Bootstrap Runbook | 🟡 GAP | **RESOLVED (SHIPPED & HARDENED).** Documented in `docs/runbooks/OPERATOR-BOOTSTRAP.md` (RUN-BOOT-001) with Zero-Touch Primary and Break-Glass Secondary procedures. |
 | **P2-01** | `revalidateTag` doctrine drift | 🟡 DEGRADED | **RESOLVED (SHIPPED).** Doctrine in `.claude/rules/sophia-no-tech-doctrine.md` reconciled with code reality: path-only invalidation across 47 routes (`revalidatePath`). |
 | **P2-02** | Backup retention verification | 🟡 DEGRADED | **RESOLVED (SHIPPED).** Comprehensive DR SOP created in `docs/runbooks/DISASTER-RECOVERY.md` (`RUN-DR-001`), documenting non-destructive ephemeral testing and RTO/RPO targets. |
-| **P3-01** | Local SHA ≠ Live SHA | 🟡 STALE | **RESOLVED (SHIPPED & VERIFIED).** Deployed commit `bd492b0b0` to Cloudflare Workers via CF-direct doctrine (`deploy-with-sha.sh`). Verified `curl https://sophia.agencyos.network/api/version` → `shortSha: "bd492b0b"`. |
+| **P3-01** | Local SHA ≠ Live SHA | 🟡 STALE | **RESOLVED (SHIPPED & VERIFIED).** Deployed commit `f604c0b13` to Cloudflare Workers via CF-direct doctrine (`deploy-with-sha.sh`). Verified `curl https://sophia.agencyos.network/api/version` → `shortSha: "f604c0b1"`. |
 
 ---
 

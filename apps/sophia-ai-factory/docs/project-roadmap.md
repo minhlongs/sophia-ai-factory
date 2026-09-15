@@ -10,7 +10,9 @@ Sophia's architecture is already competitive. Gaps are in **monetization UX** (c
 
 ---
 
-## Status Snapshot (2026-09-14)
+## Status Snapshot (2026-09-15)
+
+**Customer Handover Productization & End-to-End Journey Test Suite (v1.41.0) — COMPLETE (2026-09-15)** — Finalized customer-operable productization by tracing the complete 8-step CEO lifecycle (`SIGNUP → LOGIN → SETUP → PROVIDER CONFIG → DASHBOARD → MISSION → RESULT → USAGE`) through a deterministic, zero-external-cost automated test suite. Delivered `src/tests/customer-journey/end-to-end-journey.test.ts` (11/11 tests passing) covering founder bootstrap, AES-GCM-256 BYOK encryption with tenant AAD binding, transparent pre-flight cost estimation, customer-safe health telemetry, idempotent usage metering, and strict multi-tenant query isolation. Total customer journey verification now 52/52 tests across 5 suites (100% green). Updated `CUSTOMER-HANDOVER-READINESS.md`, `HANDOVER-PACK.md`, and `project-changelog.md` to certified production release `f604c0b1`. Deployed commit `f604c0b13` via CF-direct doctrine; authoritative live production SHA verified `f604c0b1` at `https://sophia.agencyos.network/api/version`. Core production endpoints verified: `/api/health` (200), `/login` (307 redirect to `/vi/login`), `/vi/setup` (200), `/vi/settings/system-health` (200).
 
 **OpenNext Dev Context Scoping & Cloudflare Production Deployment (v1.40.0) — COMPLETE (2026-09-14)** — Hardened build and deployment pipeline by properly scoping `initOpenNextCloudflareForDev` to development mode (`process.env.NODE_ENV === 'development'`) in `next.config.ts`. Eradicated Wrangler interactive OAuth edge-preview prompts during production `next build`. Verified 9,408/9,408 test suite green (100%), 0 TypeScript errors (`tsc --noEmit`), and 0 layer boundary violations. Deployed commit `bd492b0b0` via CF-direct doctrine; authoritative live production SHA verified `bd492b0b` at `https://sophia.agencyos.network/api/version`. Core production endpoints verified: `/api/health` (200), `/login` (307 redirect to `/vi/login`), `/vi/setup` (200), `/vi/settings/system-health` (200).
 

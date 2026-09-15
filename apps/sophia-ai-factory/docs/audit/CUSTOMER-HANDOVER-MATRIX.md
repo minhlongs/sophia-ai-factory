@@ -93,7 +93,7 @@ All integrations are configured via the **Setup Wizard** (single onboarding step
 |---|---|---|---|
 | 🟢 **Founder account** | AUTOMATED & AUDITED | **✅ COMPLETE / GREEN (P0-01)** | Zero-Touch Founder Bootstrap implemented via `FOUNDER_EMAIL` secret. Synchronizes `"user".role`, `user_profiles.role`, `subscriptions.tier = 'MASTER'`, and records immutable audit log. Unified `requireMaster()` gate allows full organization governance. Break-Glass SOP in `docs/runbooks/OPERATOR-BOOTSTRAP.md`. |
 | 🟡 **fal.ai Key** | CUSTOMER BYOK | P0-02 Resolved in Code | Code is fail-closed. Onboarding customer inputs their own key in `/vi/setup` (Setup Wizard). |
-| 🟢 **Local SHA == Live SHA** | VERIFIED LIVE | P3-01 Shipped | Commit `bd492b0b0` deployed to Cloudflare Workers. Verified `/api/version` matches local commit (`shortSha: "bd492b0b"`). |
+| 🟢 **Local SHA == Live SHA** | VERIFIED LIVE | P3-01 Shipped | Commit `f604c0b13` deployed to Cloudflare Workers. Verified `/api/version` matches local commit (`shortSha: "f604c0b1"`). |
 | 🟢 **Degraded health** | KNOWN-RED | Documented | Telemetry/reality-loop artifact from zero active production missions; normal behavior on cold system. |
 | 🟢 **Sentry sourcemaps** | BY-DESIGN | Documented | Minified stack traces captured; operator tokens not required per no-tech doctrine ceiling (8/10). |
 

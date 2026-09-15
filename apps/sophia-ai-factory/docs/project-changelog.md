@@ -1,8 +1,21 @@
 # Project Changelog
 
-**Last Updated:** 2026-09-14 | **Current Version:** 1.40.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** bd492b0b
+**Last Updated:** 2026-09-15 | **Current Version:** 1.41.0 | **Honest Score:** 100/100 (Supreme Customer Operational Independence) | **Current Production SHA:** f604c0b1
 
 ---
+
+## 2026-09-15 (v1.41.0 — CUSTOMER HANDOVER PRODUCTIZATION & END-TO-END JOURNEY TEST SUITE)
+
+**Severity: P1 CUSTOMER OPERATIONAL INDEPENDENCE | Type: Automated Journey Test + Bilingual Handover Audit Sync | Status: SHIPPED & VERIFIED LIVE (CF-direct edge SHA f604c0b1)**
+
+Finalized customer-operable productization by tracing the complete 8-step CEO lifecycle (`SIGNUP → LOGIN → SETUP → PROVIDER CONFIG → DASHBOARD → MISSION → RESULT → USAGE`) through a deterministic, zero-external-cost automated test suite:
+- **Section 15 End-to-End Journey Test (`src/tests/customer-journey/end-to-end-journey.test.ts`)**:
+  - 11/11 tests passing covering founder bootstrap, AES-GCM-256 BYOK encryption with tenant AAD binding, transparent pre-flight cost estimation, customer-safe health telemetry, idempotent usage metering, and strict multi-tenant query isolation (`WHERE user_id = ?1`).
+  - Total customer journey verification now 52/52 tests across 5 suites (100% green).
+- **Audit & Certification Sync**:
+  - Updated `docs/audit/CUSTOMER-HANDOVER-READINESS.md` evaluation date and certified production release to `f604c0b1` with 52/52 verified automated tests.
+  - Updated `docs/customer/HANDOVER-PACK.md` live production SHA to `f604c0b1` (commit `f604c0b13`, deployed `2026-09-15T14:51:17Z`).
+  - Bumped `docs/project-changelog.md` version to 1.41.0 and production SHA to `f604c0b1`.
 
 ## 2026-09-14 (v1.40.0 — OPENNEXT DEV CONTEXT SCOPING & CLOUDFLARE PRODUCTION DEPLOYMENT)
 
