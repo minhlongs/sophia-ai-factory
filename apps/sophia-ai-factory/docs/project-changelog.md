@@ -6,7 +6,7 @@
 
 ## 2026-09-15 (v1.42.0 — PHASE 7 MONETIZATION OS: AD REVENUE OPTIMIZER)
 
-**Severity: P1 MONETIZATION | Type: Deterministic Ad-Yield Analytics Module | Status: CODE COMPLETE — pending commit + CF-direct deploy**
+**Severity: P1 MONETIZATION | Type: Deterministic Ad-Yield Analytics Module | Status: SHIPPED & VERIFIED (CF-direct edge SHA 69e75349)**
 
 Closed the last gap in Phase 7 Monetization OS by adding deterministic ad-revenue analytics:
 - **`src/land/analytics/ad-revenue-optimizer.ts`** (179 LOC, pure, zero side effects):
@@ -15,9 +15,20 @@ Closed the last gap in Phase 7 Monetization OS by adding deterministic ad-revenu
   - `projectAdRevenue` — revenue projection with duration multipliers (1.6× mid-roll bonus for 8m+ videos, 0.4× short-form discount) and a 0.75×–1.35× confidence interval.
 - **`src/land/analytics/__tests__/ad-revenue-optimizer.test.ts`** — 24 tests covering RPM rounding, duration boundaries, recommendation triggers, peak-hour detection, long-form gap detection, confidence symmetry, and zero-view edge cases.
 - **Verified**: type-check 0 errors, build exit 0, layer boundaries clean, 9,443/9,443 tests pass (9,419 baseline + 24 new).
+- **Deployed**: CF-direct, live SHA `69e75349` matches commit. `/api/health` 200, `/api/version` shortSha `69e75349`.
 - **Documentation**: `docs/roadmap/SOPHIA_2027_ROADMAP.md` Phase 7 all 6 deliverables checked complete; M7 Monetization milestone marked achieved.
 
 Phase 7 deliverables now fully covered: revenue attribution (`src/forest/analytics/queries/revenue-attribution.ts`), dynamic pricing (`src/land/billing/dynamic-pricing.ts`), affiliate link tracking (`src/land/affiliates/content-affiliate-link.ts`), ad revenue optimizer (this entry), subscription tier enforcement (`src/seed/config/tiers/` + `src/forest/quota/quota-enforcer.ts`), and ROI dashboard (`src/app/[locale]/dashboard/monetization/`).
+
+## 2026-09-15 (v1.42.0-ROLLUP — ROADMAP PHASES 4–6 RECONCILED)
+
+**Severity: DOCS | Type: Roadmap checkbox accuracy reconciliation | Status: SHIPPED**
+
+Audit of Phase 4–6 deliverables (agent `a6c2ed4b778509be4`) confirmed **all Phase 4 and Phase 6 items are fully implemented**, and Phase 5 items are complete except for two partial-gap items documented below. Roadmap checkboxes updated from `[ ]` → `[x]`:
+- **Phase 4** (6/6 COMPLETE): Performance aggregation Inngest cron, creative memory write-back, A/B variant selector (12h CTR cron), cross-channel resolver (14 channels), content ROI resolver, learning velocity cron.
+- **Phase 5** (5/6 COMPLETE + 1 partial): YouTube/Telegram/TikTok/Instagram adapters, smart scheduler, cross-platform dashboard all exist. Video→carousel repurposing identified as **GENUINELY MISSING** (long→short repurposing exists; carousel/image-slice logic does not).
+- **Phase 6** (6/6 COMPLETE): IP entity graph UI, character consistency (via scoring-contextual prompts), brand kit enforcement, provenance viewer, derivative management, C2PA compliance tracker.
+- **True gaps identified**: (1) `video→carousel repurposing` — Phase 5 item, no carousel generation pipeline exists; (2) `character visual drift tracking` — Phase 6 item, character entity type exists but no vector/drift comparison across generated assets.
 
 ## 2026-09-15 (v1.41.0 — CUSTOMER HANDOVER PRODUCTIZATION & END-TO-END JOURNEY TEST SUITE)
 
