@@ -137,18 +137,25 @@ function isQueueOperational(queueOverride?: boolean): boolean {
   }
 }
 
-/**
- * Execute 7-gate mission preflight check.
- * Returns fail-closed result with individual gate statuses.
- */
-export async function runMissionPreflightCheck(
-  opts: MissionPreflightOptions
-): Promise<MissionPreflightResult> {
-  const { workspaceId, requiredProvider } = opts;
-  const targetCapability: AICapability = opts.capability ?? 'AI_IMAGE';
+interface AuthGateEvaluation {
+  passed: boolean;
+  gate: PreflightGateCheck;
+  resolvedUserId?: string;
+}
 
-  // ── 1. AUTH GATE ─────────────────────────────────────────────────────────────
-  let resolvedUserId = opts.userId;
+interface PreflightGateEvaluation {
+  passed: boolean;
+  gate: PreflightGateCheck;
+}
+
+interface CredentialGateEvaluation {
+  passed: boolean;
+  gate: PreflightGateCheck;
+  configuredProviders: ByokProvider[];
+}
+
+async function evaluateAuthGate(userId?: string): Promise<AuthGateEvaluation> {
+  let resolvedUserId = userId;
   if (!resolvedUserId) {
     try {
       const user = await getCurrentUser();
@@ -161,37 +168,46 @@ export async function runMissionPreflightCheck(
   }
 
   if (!resolvedUserId) {
-    const authFail: PreflightGateCheck = {
+    return {
       passed: false,
-      code: 'NOT_AUTHENTICATED',
-      message: 'User must be authenticated to execute a mission',
+      gate: {
+        passed: false,
+        code: 'NOT_AUTHENTICATED',
+        message: 'User must be authenticated to execute a mission',
+      },
     };
-    return buildPreflightFailure('auth', authFail, opts);
   }
 
-  const authGate: PreflightGateCheck = {
+  return {
     passed: true,
-    code: 'AUTH_OK',
-    message: 'User authenticated',
-    details: { userId: resolvedUserId },
+    resolvedUserId,
+    gate: {
+      passed: true,
+      code: 'AUTH_OK',
+      message: 'User authenticated',
+      details: { userId: resolvedUserId },
+    },
   };
+}
 
-  // ── 2. OWNERSHIP GATE ────────────────────────────────────────────────────────
+async function evaluateOwnershipGate(
+  opts: MissionPreflightOptions,
+  resolvedUserId: string
+): Promise<PreflightGateEvaluation> {
   let ownershipPassed = false;
   let ownershipError = 'Workspace access denied';
 
   try {
-    if (opts.overrides?.membershipVerified || workspaceId === resolvedUserId) {
+    if (opts.overrides?.membershipVerified || opts.workspaceId === resolvedUserId) {
       ownershipPassed = true;
     } else {
       const d1 = await getD1();
       if (d1) {
-        const hasAccess = await verifyWorkspaceAccess(workspaceId, resolvedUserId, d1);
-
+        const hasAccess = await verifyWorkspaceAccess(opts.workspaceId, resolvedUserId, d1);
         if (hasAccess) {
           ownershipPassed = true;
         } else {
-          ownershipError = `User does not belong to workspace ${workspaceId}`;
+          ownershipError = `User does not belong to workspace ${opts.workspaceId}`;
         }
       } else {
         // In local/test environments without D1, allow if explicit
@@ -203,41 +219,49 @@ export async function runMissionPreflightCheck(
   }
 
   if (!ownershipPassed) {
-    const ownershipFail: PreflightGateCheck = {
+    return {
       passed: false,
-      code: 'WORKSPACE_ACCESS_DENIED',
-      message: ownershipError,
+      gate: {
+        passed: false,
+        code: 'WORKSPACE_ACCESS_DENIED',
+        message: ownershipError,
+      },
     };
-    return buildPreflightFailure('ownership', ownershipFail, opts, { auth: authGate });
   }
 
-  const ownershipGate: PreflightGateCheck = {
+  return {
     passed: true,
-    code: 'OWNERSHIP_OK',
-    message: 'Workspace membership verified',
-    details: { workspaceId, userId: resolvedUserId },
+    gate: {
+      passed: true,
+      code: 'OWNERSHIP_OK',
+      message: 'Workspace membership verified',
+      details: { workspaceId: opts.workspaceId, userId: resolvedUserId },
+    },
   };
+}
 
-  // ── 3. ENTITLEMENT GATE ──────────────────────────────────────────────────────
+async function evaluateEntitlementGate(
+  opts: MissionPreflightOptions,
+  resolvedUserId: string
+): Promise<PreflightGateEvaluation> {
   // Spike guard: fail-closed if estimated cost exceeds single mission threshold
   if (
     typeof opts.estimatedCostCents === 'number' &&
     opts.estimatedCostCents > 0 &&
     opts.estimatedCostCents > MAX_SINGLE_MISSION_COST_CENTS
   ) {
-    const spikeFail: PreflightGateCheck = {
+    return {
       passed: false,
-      code: FailureKind.BILLING_FAILURE,
-      message: `Preflight aborted: Estimated cost (${opts.estimatedCostCents}¢) exceeds single mission limit (${MAX_SINGLE_MISSION_COST_CENTS}¢)`,
-      details: {
-        estimatedCostCents: opts.estimatedCostCents,
-        maxCostCents: MAX_SINGLE_MISSION_COST_CENTS,
+      gate: {
+        passed: false,
+        code: FailureKind.BILLING_FAILURE,
+        message: `Preflight aborted: Estimated cost (${opts.estimatedCostCents}¢) exceeds single mission limit (${MAX_SINGLE_MISSION_COST_CENTS}¢)`,
+        details: {
+          estimatedCostCents: opts.estimatedCostCents,
+          maxCostCents: MAX_SINGLE_MISSION_COST_CENTS,
+        },
       },
     };
-    return buildPreflightFailure('entitlement', spikeFail, opts, {
-      auth: authGate,
-      ownership: ownershipGate,
-    });
   }
 
   let tier = opts.overrides?.tier;
@@ -265,26 +289,32 @@ export async function runMissionPreflightCheck(
   const hasQuota = isMaster || (typeof mcuBalance === 'number' && mcuBalance > 0);
 
   if (!hasQuota) {
-    const entitlementFail: PreflightGateCheck = {
+    return {
       passed: false,
-      code: 'INSUFFICIENT_ENTITLEMENT',
-      message: `Insufficient MCU balance (${mcuBalance ?? 0} remaining) on tier ${tier}`,
-      details: { tier, mcuBalance },
+      gate: {
+        passed: false,
+        code: 'INSUFFICIENT_ENTITLEMENT',
+        message: `Insufficient MCU balance (${mcuBalance ?? 0} remaining) on tier ${tier}`,
+        details: { tier, mcuBalance },
+      },
     };
-    return buildPreflightFailure('entitlement', entitlementFail, opts, {
-      auth: authGate,
-      ownership: ownershipGate,
-    });
   }
 
-  const entitlementGate: PreflightGateCheck = {
+  return {
     passed: true,
-    code: 'ENTITLEMENT_OK',
-    message: 'Entitlement and MCU balance verified',
-    details: { tier, mcuBalance, estimatedCostCents: opts.estimatedCostCents },
+    gate: {
+      passed: true,
+      code: 'ENTITLEMENT_OK',
+      message: 'Entitlement and MCU balance verified',
+      details: { tier, mcuBalance, estimatedCostCents: opts.estimatedCostCents },
+    },
   };
+}
 
-  // ── 4. PROVIDER CREDENTIAL GATE ──────────────────────────────────────────────
+async function evaluateCredentialGate(
+  opts: MissionPreflightOptions,
+  resolvedUserId: string
+): Promise<CredentialGateEvaluation> {
   let configuredProviders: ByokProvider[] = [];
   try {
     configuredProviders = await listUserApiKeyProviders(resolvedUserId);
@@ -295,91 +325,196 @@ export async function runMissionPreflightCheck(
     });
   }
 
-  if (requiredProvider) {
+  if (opts.requiredProvider) {
     let specificKeyValid = false;
     try {
-      const plainKey = await getUserApiKey(resolvedUserId, requiredProvider);
+      const plainKey = await getUserApiKey(resolvedUserId, opts.requiredProvider);
       specificKeyValid = Boolean(plainKey && plainKey.trim().length > 0);
     } catch {
       specificKeyValid = false;
     }
 
     if (!specificKeyValid) {
-      const credentialFail: PreflightGateCheck = {
+      return {
         passed: false,
-        code: 'MISSING_PROVIDER_CREDENTIAL',
-        message: `Missing or invalid API key for required provider: ${requiredProvider}`,
-        details: { requiredProvider },
+        configuredProviders,
+        gate: {
+          passed: false,
+          code: 'MISSING_PROVIDER_CREDENTIAL',
+          message: `Missing or invalid API key for required provider: ${opts.requiredProvider}`,
+          details: { requiredProvider: opts.requiredProvider },
+        },
       };
-      return buildPreflightFailure('credential', credentialFail, opts, {
-        auth: authGate,
-        ownership: ownershipGate,
-        entitlement: entitlementGate,
-      });
     }
   } else if (configuredProviders.length === 0) {
-    const credentialFail: PreflightGateCheck = {
+    return {
       passed: false,
-      code: 'NO_BYOK_CREDENTIALS',
-      message: 'No BYOK provider credentials have been configured for user',
-      details: { configuredProviders },
+      configuredProviders,
+      gate: {
+        passed: false,
+        code: 'NO_BYOK_CREDENTIALS',
+        message: 'No BYOK provider credentials have been configured for user',
+        details: { configuredProviders },
+      },
     };
-    return buildPreflightFailure('credential', credentialFail, opts, {
+  }
+
+  return {
+    passed: true,
+    configuredProviders,
+    gate: {
+      passed: true,
+      code: 'CREDENTIAL_OK',
+      message: 'Provider credentials verified',
+      details: {
+        providersCount: configuredProviders.length,
+        requiredProvider: opts.requiredProvider ?? null,
+      },
+    },
+  };
+}
+
+function evaluateCapabilityGate(
+  configuredProviders: ByokProvider[],
+  targetCapability: AICapability
+): PreflightGateEvaluation {
+  const { availableCapabilities } = resolveCapabilities(configuredProviders);
+  const capabilitySupported = availableCapabilities.includes(targetCapability);
+
+  if (!capabilitySupported) {
+    return {
+      passed: false,
+      gate: {
+        passed: false,
+        code: 'CAPABILITY_NOT_SUPPORTED',
+        message: `Configured providers (${configuredProviders.join(', ') || 'none'}) do not support required capability: ${targetCapability}`,
+        details: {
+          targetCapability,
+          configuredProviders,
+          availableCapabilities,
+        },
+      },
+    };
+  }
+
+  return {
+    passed: true,
+    gate: {
+      passed: true,
+      code: 'CAPABILITY_OK',
+      message: `Capability ${targetCapability} is supported by configured providers`,
+      details: { targetCapability, availableCapabilities },
+    },
+  };
+}
+
+function evaluateStorageGate(storageOverride?: boolean): PreflightGateEvaluation {
+  const storageOk = isStorageOperational(storageOverride);
+  if (!storageOk) {
+    return {
+      passed: false,
+      gate: {
+        passed: false,
+        code: 'STORAGE_UNAVAILABLE',
+        message: 'Storage subsystem is not available or disconnected',
+      },
+    };
+  }
+
+  return {
+    passed: true,
+    gate: {
+      passed: true,
+      code: 'STORAGE_OK',
+      message: 'Storage subsystem is available',
+    },
+  };
+}
+
+function evaluateQueueGate(queueOverride?: boolean): PreflightGateEvaluation {
+  const queueOk = isQueueOperational(queueOverride);
+  if (!queueOk) {
+    return {
+      passed: false,
+      gate: {
+        passed: false,
+        code: 'QUEUE_UNAVAILABLE',
+        message: 'Inngest queue subsystem is not reachable or unconfigured',
+      },
+    };
+  }
+
+  return {
+    passed: true,
+    gate: {
+      passed: true,
+      code: 'QUEUE_OK',
+      message: 'Inngest queue subsystem is verified',
+    },
+  };
+}
+
+/**
+ * Execute 7-gate mission preflight check.
+ * Returns fail-closed result with individual gate statuses.
+ */
+export async function runMissionPreflightCheck(
+  opts: MissionPreflightOptions
+): Promise<MissionPreflightResult> {
+  const targetCapability: AICapability = opts.capability ?? 'AI_IMAGE';
+
+  // 1. Auth Gate
+  const authRes = await evaluateAuthGate(opts.userId);
+  if (!authRes.passed) {
+    return buildPreflightFailure('auth', authRes.gate, opts);
+  }
+  const authGate = authRes.gate;
+  const resolvedUserId = authRes.resolvedUserId!;
+
+  // 2. Ownership Gate
+  const ownershipRes = await evaluateOwnershipGate(opts, resolvedUserId);
+  if (!ownershipRes.passed) {
+    return buildPreflightFailure('ownership', ownershipRes.gate, opts, { auth: authGate });
+  }
+  const ownershipGate = ownershipRes.gate;
+
+  // 3. Entitlement Gate
+  const entitlementRes = await evaluateEntitlementGate(opts, resolvedUserId);
+  if (!entitlementRes.passed) {
+    return buildPreflightFailure('entitlement', entitlementRes.gate, opts, {
+      auth: authGate,
+      ownership: ownershipGate,
+    });
+  }
+  const entitlementGate = entitlementRes.gate;
+
+  // 4. Credential Gate
+  const credentialRes = await evaluateCredentialGate(opts, resolvedUserId);
+  if (!credentialRes.passed) {
+    return buildPreflightFailure('credential', credentialRes.gate, opts, {
       auth: authGate,
       ownership: ownershipGate,
       entitlement: entitlementGate,
     });
   }
+  const credentialGate = credentialRes.gate;
 
-  const credentialGate: PreflightGateCheck = {
-    passed: true,
-    code: 'CREDENTIAL_OK',
-    message: 'Provider credentials verified',
-    details: {
-      providersCount: configuredProviders.length,
-      requiredProvider: requiredProvider ?? null,
-    },
-  };
-
-  // ── 5. PROVIDER CAPABILITY GATE ──────────────────────────────────────────────
-  const { availableCapabilities } = resolveCapabilities(configuredProviders);
-  const capabilitySupported = availableCapabilities.includes(targetCapability);
-
-  if (!capabilitySupported) {
-    const capabilityFail: PreflightGateCheck = {
-      passed: false,
-      code: 'CAPABILITY_NOT_SUPPORTED',
-      message: `Configured providers (${configuredProviders.join(', ') || 'none'}) do not support required capability: ${targetCapability}`,
-      details: {
-        targetCapability,
-        configuredProviders,
-        availableCapabilities,
-      },
-    };
-    return buildPreflightFailure('capability', capabilityFail, opts, {
+  // 5. Capability Gate
+  const capabilityRes = evaluateCapabilityGate(credentialRes.configuredProviders, targetCapability);
+  if (!capabilityRes.passed) {
+    return buildPreflightFailure('capability', capabilityRes.gate, opts, {
       auth: authGate,
       ownership: ownershipGate,
       entitlement: entitlementGate,
       credential: credentialGate,
     });
   }
+  const capabilityGate = capabilityRes.gate;
 
-  const capabilityGate: PreflightGateCheck = {
-    passed: true,
-    code: 'CAPABILITY_OK',
-    message: `Capability ${targetCapability} is supported by configured providers`,
-    details: { targetCapability, availableCapabilities },
-  };
-
-  // ── 6. STORAGE GATE ──────────────────────────────────────────────────────────
-  const storageOk = isStorageOperational(opts.overrides?.storageReady);
-  if (!storageOk) {
-    const storageFail: PreflightGateCheck = {
-      passed: false,
-      code: 'STORAGE_UNAVAILABLE',
-      message: 'Storage subsystem is not available or disconnected',
-    };
-    return buildPreflightFailure('storage', storageFail, opts, {
+  // 6. Storage Gate
+  const storageRes = evaluateStorageGate(opts.overrides?.storageReady);
+  if (!storageRes.passed) {
+    return buildPreflightFailure('storage', storageRes.gate, opts, {
       auth: authGate,
       ownership: ownershipGate,
       entitlement: entitlementGate,
@@ -387,22 +522,12 @@ export async function runMissionPreflightCheck(
       capability: capabilityGate,
     });
   }
+  const storageGate = storageRes.gate;
 
-  const storageGate: PreflightGateCheck = {
-    passed: true,
-    code: 'STORAGE_OK',
-    message: 'Storage subsystem is available',
-  };
-
-  // ── 7. QUEUE GATE ────────────────────────────────────────────────────────────
-  const queueOk = isQueueOperational(opts.overrides?.queueReady);
-  if (!queueOk) {
-    const queueFail: PreflightGateCheck = {
-      passed: false,
-      code: 'QUEUE_UNAVAILABLE',
-      message: 'Inngest queue subsystem is not reachable or unconfigured',
-    };
-    return buildPreflightFailure('queue', queueFail, opts, {
+  // 7. Queue Gate
+  const queueRes = evaluateQueueGate(opts.overrides?.queueReady);
+  if (!queueRes.passed) {
+    return buildPreflightFailure('queue', queueRes.gate, opts, {
       auth: authGate,
       ownership: ownershipGate,
       entitlement: entitlementGate,
@@ -411,14 +536,9 @@ export async function runMissionPreflightCheck(
       storage: storageGate,
     });
   }
+  const queueGate = queueRes.gate;
 
-  const queueGate: PreflightGateCheck = {
-    passed: true,
-    code: 'QUEUE_OK',
-    message: 'Inngest queue subsystem is verified',
-  };
-
-  // ── ALL 7 GATES PASSED ───────────────────────────────────────────────────────
+  // All 7 gates passed
   return {
     passed: true,
     gates: {

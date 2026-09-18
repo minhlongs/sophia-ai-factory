@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { rateLimit } from '@/seed/security/rate-limiter';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getWorkspaceROI, getTopROIChannels } from '@/tree/roi';
@@ -30,6 +31,20 @@ export async function GET(req: NextRequest) {
     const user = await getCurrentUser();
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rl = await rateLimit(user.id, 'monetization_overview', 60, 60);
+    if (!rl.allowed) {
+      const retryAfter = Math.max(1, Math.ceil((rl.resetAt - Date.now()) / 1000));
+      return NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': retryAfter.toString(),
+          },
+        },
+      );
     }
 
     const url = new URL(req.url);

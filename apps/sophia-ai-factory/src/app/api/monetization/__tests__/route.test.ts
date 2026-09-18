@@ -24,6 +24,7 @@ const {
   mockGetTopROIChannels,
   mockAggregateRevenueAttribution,
   mockGetDynamicMultiplier,
+  mockRateLimit,
 } = vi.hoisted(() => {
   const mockDbFirst = vi.fn();
   const mockDbBind = vi.fn().mockReturnThis();
@@ -33,6 +34,7 @@ const {
   const mockGetTopROIChannels = vi.fn();
   const mockAggregateRevenueAttribution = vi.fn();
   const mockGetDynamicMultiplier = vi.fn();
+  const mockRateLimit = vi.fn().mockResolvedValue({ allowed: true, resetAt: Date.now() + 60000 });
   return {
     mockDbFirst,
     mockDbBind,
@@ -42,11 +44,16 @@ const {
     mockGetTopROIChannels,
     mockAggregateRevenueAttribution,
     mockGetDynamicMultiplier,
+    mockRateLimit,
   };
 });
 
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: mockGetCurrentUser,
+}));
+
+vi.mock('@/seed/security/rate-limiter', () => ({
+  rateLimit: mockRateLimit,
 }));
 
 vi.mock('@/seed/db/client', () => ({
@@ -80,6 +87,7 @@ const mockUser = { id: 'user_001', email: 'test@example.com', full_name: 'Test',
 
 function authed() {
   mockGetCurrentUser.mockResolvedValue(mockUser);
+  mockRateLimit.mockResolvedValue({ allowed: true, resetAt: Date.now() + 60000 });
 }
 
 function unauthed() {
@@ -200,5 +208,21 @@ describe('GET /api/monetization', () => {
     expect(mockGetWorkspaceROI).toHaveBeenCalledWith('ws_001', { since: 1700000000000 });
     expect(mockGetTopROIChannels).toHaveBeenCalledWith('ws_001', 5, 1700000000000);
     expect(mockAggregateRevenueAttribution).toHaveBeenCalledWith('ws_001', { since: 1700000000000 });
+  });
+
+  it('returns 429 when rate limit is exceeded', async () => {
+    authed();
+    mockRateLimit.mockResolvedValueOnce({
+      allowed: false,
+      resetAt: Date.now() + 30000,
+    });
+    const url = new URL('http://localhost/api/monetization');
+    url.searchParams.set('workspaceId', 'ws_001');
+    const req = new Request(url.toString());
+    const res = await GET(req as never);
+    expect(res.status).toBe(429);
+    expect(res.headers.get('Retry-After')).toBeTruthy();
+    const body = await json<{ error: string }>(res);
+    expect(body.error).toBe('Rate limit exceeded');
   });
 });

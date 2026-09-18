@@ -10,7 +10,7 @@
 
 | Requirement | Verdict | Implementation / Code Proof |
 |---|:---:|---|
-| **7-Gate Preflight Enforcement** | **GREEN** | `runMissionPreflightCheck()` in `forest/mission/preflight-check.ts`. No `skipPreflight` bypass exists in the codebase. |
+| **7-Gate Preflight Enforcement** | **GREEN** | `runMissionPreflightCheck()` in `tree/mission/preflight-check.ts` (re-exported via `forest/mission/preflight-check.ts`). No `skipPreflight` bypass exists in the codebase. |
 | **Provider Call Idempotency** | **GREEN** | `step.run('execute-agent')` in `agent-mission-executor.ts` prevents double-invocation and double-billing on Inngest retries. |
 | **Credit Accounting (MCU)** | **GREEN** | `deductCredits(creatorId, mcuAmount)` executed upon successful agent run; 1 MCU = 10 USD cents. |
 | **Terminal Failure States** | **GREEN** | `CreativeMissionStatus` updated with `'failed' | 'cancelled'`. `markMissionFailed()` transitions stuck runs cleanly. |
