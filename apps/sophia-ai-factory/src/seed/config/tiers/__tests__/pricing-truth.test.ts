@@ -95,4 +95,27 @@ describe('Pricing Truth & Single Source of Truth', () => {
       MASTER: 1,
     });
   });
+
+  it('verifies Admin MRR calculation accurately computes revenue from real D1 subscription plans', () => {
+    const subscriptions = [
+      { plan: 'basic', status: 'active' },
+      { plan: 'premium', status: 'active' },
+      { plan: 'premium', status: 'active' },
+      { plan: 'enterprise', status: 'active' },
+    ];
+
+    const result = calculateMRR(subscriptions);
+    const expectedCents =
+      UNIFIED_TIERS.BASIC.priceInCents +
+      UNIFIED_TIERS.PREMIUM.priceInCents * 2 +
+      UNIFIED_TIERS.ENTERPRISE.priceInCents;
+
+    expect(result.totalCents).toBe(expectedCents);
+    expect(result.breakdown).toEqual({
+      BASIC: 1,
+      PREMIUM: 2,
+      ENTERPRISE: 1,
+      MASTER: 0,
+    });
+  });
 });

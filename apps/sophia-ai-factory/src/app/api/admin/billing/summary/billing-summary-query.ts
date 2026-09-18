@@ -66,23 +66,40 @@ const TIER_PRICING: Record<string, number> = {
   MASTER:     UNIFIED_TIERS.MASTER.priceInCents,
 };
 
+export interface MRRCustomerRecord {
+  plan?: string;
+  status?: string;
+  stripe_customer_id?: string;
+  dunning_state?: string;
+}
+
 /**
- * Calculate MRR from dunning settings.
- * Simplified: distributes customers evenly across tiers.
+ * Calculate MRR from active subscriptions.
+ * Prioritizes actual subscription plans from D1, with fallback for legacy dunning records.
  */
-export function calculateMRR(data: DunningCustomer[]): MRRResult {
+export function calculateMRR(data: MRRCustomerRecord[]): MRRResult {
   const breakdown: Record<string, number> = { BASIC: 0, PREMIUM: 0, ENTERPRISE: 0, MASTER: 0 };
 
   const tiers = Object.keys(TIER_PRICING);
-  let index = 0;
-  for (let i = 0; i < data.length; i++) {
-    const tier = tiers[index % tiers.length];
-    breakdown[tier]++;
-    index++;
+  let roundRobinIndex = 0;
+
+  for (const item of data) {
+    if (item.plan) {
+      const normalized = item.plan.toUpperCase();
+      if (normalized in breakdown) {
+        breakdown[normalized]++;
+      } else {
+        breakdown.BASIC++;
+      }
+    } else {
+      const tier = tiers[roundRobinIndex % tiers.length];
+      breakdown[tier]++;
+      roundRobinIndex++;
+    }
   }
 
   const totalCents = Object.entries(breakdown).reduce(
-    (sum, [tier, count]) => sum + count * TIER_PRICING[tier],
+    (sum, [tier, count]) => sum + count * (TIER_PRICING[tier] ?? 0),
     0
   );
 
@@ -128,7 +145,7 @@ export function aggregateDunningStates(rows: DunningRow[]): BillingSummary['dunn
 // -------------------------------------------------------------------------
 
 export interface BillingSummaryQueryResult {
-  mrrData: DunningCustomer[];
+  mrrData: MRRCustomerRecord[];
   dunningRows: DunningRow[];
   overageRows: OverageRow[];
   activeLicensesCount: number;
@@ -138,8 +155,9 @@ export interface BillingSummaryQueryResult {
 export async function fetchBillingSummaryData(): Promise<BillingSummaryQueryResult> {
   const db = createServerClient();
 
-  const [mrrResult, dunningStatesResult, unbilledOverageResult, activeLicensesResult, issuesResult] =
+  const [subscriptionsResult, mrrResult, dunningStatesResult, unbilledOverageResult, activeLicensesResult, issuesResult] =
     await Promise.all([
+      db.from('subscriptions').select('plan, status').eq('status', 'active'),
       db.from('dunning_settings').select('stripe_customer_id, dunning_state').eq('dunning_state', 'current'),
       db.from('dunning_settings').select('dunning_state').order('dunning_state'),
       db.from('overage_events').select('exceeded_by, tier_at_exceeded').eq('billable', false),
@@ -147,13 +165,18 @@ export async function fetchBillingSummaryData(): Promise<BillingSummaryQueryResu
       db.from('dunning_settings').select('id', { count: 'exact', head: true }).in('dunning_state', ['past_due', 'delinquent', 'suspended']),
     ]);
 
-  if (mrrResult.error)         logger.error('[Billing Summary] Error fetching MRR data');
+  if (subscriptionsResult.error) logger.warn('[Billing Summary] Warning fetching active subscriptions');
   if (dunningStatesResult.error) logger.error('[Billing Summary] Error fetching dunning states');
   if (unbilledOverageResult.error) logger.error('[Billing Summary] Error fetching unbilled overage');
   if (activeLicensesResult.error) logger.error('[Billing Summary] Error fetching active licenses');
 
+  const activeSubs = (subscriptionsResult.data as unknown as MRRCustomerRecord[]) || [];
+  const mrrData = activeSubs.length > 0
+    ? activeSubs
+    : ((mrrResult.data as unknown as MRRCustomerRecord[]) || []);
+
   return {
-    mrrData:             (mrrResult.data as unknown as DunningCustomer[]) || [],
+    mrrData,
     dunningRows:         (dunningStatesResult.data as unknown as DunningRow[]) || [],
     overageRows:         (unbilledOverageResult.data as unknown as OverageRow[]) || [],
     activeLicensesCount: activeLicensesResult.count || 0,

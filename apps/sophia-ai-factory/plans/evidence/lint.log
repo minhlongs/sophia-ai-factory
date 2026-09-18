@@ -47,6 +47,9 @@
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/admin/actions/route.ts
   51:23  warning  Refactor this function to reduce its Cognitive Complexity from 27 to the 15 allowed  sonarjs/cognitive-complexity
 
+/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/admin/billing/summary/billing-summary-query.ts
+  39:11  warning  'DunningCustomer' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/admin/byok-audit/route.ts
   43:23  warning  Refactor this function to reduce its Cognitive Complexity from 19 to the 15 allowed  sonarjs/cognitive-complexity
 
@@ -625,7 +628,7 @@
   29:17  warning  Refactor this function to reduce its Cognitive Complexity from 26 to the 15 allowed  sonarjs/cognitive-complexity
 
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/auth/better-auth-server.ts
-  33:8  warning  Async function 'getAuth' has too many lines (266). Maximum allowed is 200  max-lines-per-function
+  35:8  warning  Async function 'getAuth' has too many lines (255). Maximum allowed is 200  max-lines-per-function
 
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/auth/founder-bootstrap.ts
   33:23  warning  Refactor this function to reduce its Cognitive Complexity from 17 to the 15 allowed  sonarjs/cognitive-complexity
@@ -813,5 +816,5 @@
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/workers/health-worker.ts
   32:9  warning  Refactor this function to reduce its Cognitive Complexity from 29 to the 15 allowed  sonarjs/cognitive-complexity
 
-✖ 332 problems (0 errors, 332 warnings)
+✖ 333 problems (0 errors, 333 warnings)
   0 errors and 24 warnings potentially fixable with the `--fix` option.
