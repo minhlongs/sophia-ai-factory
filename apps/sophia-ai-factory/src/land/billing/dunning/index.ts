@@ -8,3 +8,4 @@ export * from './dunning-attempt-recorder';
 export * from './dunning-kv-cache';
 export * from './dunning-state-machine';
 export * from './dunning-transition-logic';
+export * from './check-user-dunning';

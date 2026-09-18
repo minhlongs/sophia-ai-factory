@@ -68,6 +68,8 @@ export interface CascadeDeleteResult {
   byTable: Record<string, number>;
   /** Number of R2 objects successfully deleted (non-fatal: errors logged, not re-thrown). */
   r2Deleted: number;
+  /** Keys that permanently failed R2 deletion and were queued to DLQ. */
+  r2Failed?: string[];
 }
 
 /**
@@ -148,31 +150,47 @@ async function collectTenantR2Keys(
   return [...keys];
 }
 
+interface R2DeleteSummary {
+  deleted: number;
+  failedKeys: string[];
+}
+
 /**
- * Delete objects from the R2 bucket. Each delete failure is caught and
- * logged — R2 errors must never block account deletion (GDPR compliance:
- * D1 data must be removed on schedule; R2 can be retried asynchronously).
+ * Delete objects from the R2 bucket with retry. Each delete failure is retried
+ * up to 2 times with jittered backoff. Permanently failing keys are captured for DLQ enqueuing.
+ * R2 errors must never block account deletion (GDPR compliance: D1 data must be
+ * removed on schedule; R2 can be retried asynchronously via dead-letter queue).
  */
 async function deleteR2Objects(
   bucket: R2Bucket,
   keys: string[],
-): Promise<number> {
-  if (keys.length === 0) return 0;
+  maxRetries = 2,
+): Promise<R2DeleteSummary> {
+  if (keys.length === 0) return { deleted: 0, failedKeys: [] };
 
   let deleted = 0;
+  const failedKeys: string[] = [];
+
   for (const key of keys) {
-    try {
-      await bucket.delete(key);
-      deleted++;
-    } catch (err) {
-      logger.error(
-        `[cascade-delete] R2 delete failed for key "${key}":`,
-        err instanceof Error ? err : { message: String(err) },
-      );
-      // continue deleting remaining keys — partial R2 failure is acceptable
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        await bucket.delete(key);
+        deleted++;
+        break;
+      } catch (err) {
+        if (attempt === maxRetries) {
+          logger.error(
+            `[cascade-delete] R2 delete failed permanently for key "${key}" after ${maxRetries + 1} attempts:`,
+            err instanceof Error ? err : { message: String(err) },
+          );
+          failedKeys.push(key);
+        } else {
+          await new Promise((resolve) => setTimeout(resolve, 50 * (attempt + 1)));
+        }
+      }
     }
   }
-  return deleted;
+  return { deleted, failedKeys };
 }
 
 export async function cascadeDeleteAccount(
@@ -222,10 +240,34 @@ export async function cascadeDeleteAccount(
     }
   }
 
-  // Phase 3: R2 cleanup (non-fatal — must not block D1 completion)
+  // Phase 3: R2 cleanup with retry and dead-letter queuing (non-fatal)
   let r2Deleted = 0;
+  let r2Failed: string[] | undefined = undefined;
+
   if (r2Bucket !== undefined && r2Keys.length > 0) {
-    r2Deleted = await deleteR2Objects(r2Bucket, r2Keys);
+    const r2Summary = await deleteR2Objects(r2Bucket, r2Keys);
+    r2Deleted = r2Summary.deleted;
+    if (r2Summary.failedKeys.length > 0) {
+      r2Failed = r2Summary.failedKeys;
+      try {
+        await db
+          .prepare(
+            `INSERT INTO audit_log (action_type, target_user_id, payload, created_at)
+             VALUES ('r2_deletion_dead_letter', ?1, ?2, ?3)`,
+          )
+          .bind(
+            userId,
+            JSON.stringify({ tenantId, failedKeys: r2Summary.failedKeys }),
+            new Date().toISOString(),
+          )
+          .run();
+      } catch (dlqErr) {
+        logger.warn('[cascade-delete] Failed to record R2 DLQ entry to audit_log (non-fatal)', {
+          userId,
+          error: dlqErr instanceof Error ? dlqErr.message : String(dlqErr),
+        });
+      }
+    }
   }
 
   // Phase 4: cleanup cooldown row regardless of cascade outcome
@@ -239,5 +281,10 @@ export async function cascadeDeleteAccount(
     /* non-fatal */
   }
 
-  return { totalDeleted: total, byTable, r2Deleted };
+  return {
+    totalDeleted: total,
+    byTable,
+    r2Deleted,
+    ...(r2Failed && r2Failed.length > 0 ? { r2Failed } : {}),
+  };
 }

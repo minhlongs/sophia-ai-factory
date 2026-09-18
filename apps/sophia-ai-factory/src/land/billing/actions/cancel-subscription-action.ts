@@ -17,7 +17,13 @@ import { resolveOrgId } from '@/seed/auth/resolve-org-id';
 import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { success, failure, type Result } from '@/seed/types/result';
+import { isUserInDunning } from '@/land/billing/dunning/check-user-dunning';
 import type { BillingError } from './change-tier-action';
+
+export interface CancelSubscriptionOptions {
+  /** Bypass dunning cache check (e.g. immediately returning from successful checkout redirect) */
+  bypassDunningCache?: boolean;
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -40,28 +46,11 @@ interface SubscriptionRow {
   cancellation_date?: string | null;
 }
 
-// ── Dunning state check ───────────────────────────────────────────────────
-
-async function isUserInDunning(userId: string): Promise<boolean> {
-  try {
-    const d1 = await getD1();
-    if (!d1) return false;
-
-    const row = await d1
-      .prepare('SELECT dunning_state FROM dunning_settings WHERE user_id = ? ORDER BY created_at DESC LIMIT 1')
-      .bind(userId)
-      .first<{ dunning_state: string }>();
-
-    if (!row) return false;
-    return row.dunning_state !== 'current';
-  } catch {
-    return false;
-  }
-}
-
 // ── Main action ───────────────────────────────────────────────────────────
 
-export async function cancelSubscription(): Promise<Result<CancelResult, BillingError>> {
+export async function cancelSubscription(
+  options?: CancelSubscriptionOptions,
+): Promise<Result<CancelResult, BillingError>> {
   try {
     // Auth gate
     const user = await getCurrentUser();
@@ -104,8 +93,12 @@ export async function cancelSubscription(): Promise<Result<CancelResult, Billing
       });
     }
 
-    // Dunning check
-    const inDunning = await isUserInDunning(user.id);
+    // Dunning check with active subscription self-healing and cache-busting
+    const inDunning = await isUserInDunning(user.id, {
+      bypassDunningCache: options?.bypassDunningCache,
+      orgId,
+      db: d1,
+    });
     if (inDunning) {
       return failure({
         code: 'IN_DUNNING',

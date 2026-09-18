@@ -47,7 +47,8 @@ async function processExistingOrgSubscription(
 
     const stmts = buildSubscriptionUpdateStatements(
       currentSub, wouldDowngrade, orgId, tier, periodEnd, now, ipn, d1, billingPeriod,
-      (currentSub as { current_period_end?: string | null } | null)?.current_period_end
+      (currentSub as { current_period_end?: string | null } | null)?.current_period_end,
+      userId
     )
     await d1.batch(stmts)
   } catch (batchErr) {
@@ -66,7 +67,8 @@ function buildSubscriptionUpdateStatements(
   ipn: NowPaymentsIpnPayload,
   d1: D1Database,
   billingPeriod: 'monthly' | 'yearly' | 'lifetime',
-  existingPeriodEnd: string | null | undefined
+  existingPeriodEnd: string | null | undefined,
+  userId?: string
 ): ReturnType<typeof d1.prepare>[] {
   const stmts = currentSub
     ? wouldDowngrade
@@ -101,6 +103,12 @@ function buildSubscriptionUpdateStatements(
         .bind('completed', ipn.payment_id, now, ipn.order_id)
     )
   }
+  if (userId) {
+    stmts.push(
+      d1.prepare("UPDATE dunning_settings SET dunning_state='current', dunning_state_changed_at=? WHERE user_id=?")
+        .bind(now, userId)
+    )
+  }
   return stmts
 }
 
@@ -121,5 +129,13 @@ async function createNewOrgAndSubscription(
   }
   if (ipn.order_id) {
     await markOrderCompleted(ipn.order_id, ipn.payment_id)
+  }
+  try {
+    await db
+      .from('dunning_settings')
+      .update({ dunning_state: 'current', dunning_state_changed_at: now })
+      .eq('user_id', userId)
+  } catch {
+    // non-fatal
   }
 }

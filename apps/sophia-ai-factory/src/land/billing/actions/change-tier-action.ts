@@ -20,6 +20,7 @@ import { getD1 } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import { success, failure, type Result } from '@/seed/types/result';
 import { normalizePlanToTier } from '@/seed/db/get-user-tier';
+import { isUserInDunning } from '@/land/billing/dunning/check-user-dunning';
 import type { Tier } from '@/seed/types';
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -104,29 +105,16 @@ async function getTierPriceInCents(tier: Tier): Promise<number> {
   }
 }
 
-// ── Dunning state check ───────────────────────────────────────────────────
-
-async function isUserInDunning(userId: string): Promise<boolean> {
-  try {
-    const d1 = await getD1();
-    if (!d1) return false;
-
-    const row = await d1
-      .prepare('SELECT dunning_state FROM dunning_settings WHERE user_id = ? ORDER BY created_at DESC LIMIT 1')
-      .bind(userId)
-      .first<{ dunning_state: string }>();
-
-    if (!row) return false;
-    return row.dunning_state !== 'current';
-  } catch {
-    return false;
-  }
+export interface ChangeTierOptions {
+  /** Bypass dunning cache check (e.g. immediately returning from successful checkout redirect) */
+  bypassDunningCache?: boolean;
 }
 
 // ── Main action ───────────────────────────────────────────────────────────
 
 export async function changeTier(
   targetTierRaw: string,
+  options?: ChangeTierOptions,
 ): Promise<Result<ChangeTierResult, BillingError>> {
   try {
     // Auth gate
@@ -184,8 +172,12 @@ export async function changeTier(
       });
     }
 
-    // Dunning check
-    const inDunning = await isUserInDunning(user.id);
+    // Dunning check with active subscription self-healing and cache-busting
+    const inDunning = await isUserInDunning(user.id, {
+      bypassDunningCache: options?.bypassDunningCache,
+      orgId,
+      db: d1,
+    });
     if (inDunning) {
       return failure({
         code: 'IN_DUNNING',

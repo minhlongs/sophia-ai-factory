@@ -381,4 +381,58 @@ describe('cascadeDeleteAccount — R2 cleanup', () => {
     const res = await cascadeDeleteAccount(db, 'user-1', 't-1');
     expect(res.r2Deleted).toBe(0);
   });
+
+  it('retries transient R2 delete failure and succeeds', async () => {
+    let attempts = 0;
+    const bucket = {
+      delete: vi.fn().mockImplementation(async () => {
+        attempts++;
+        if (attempts === 1) throw new Error('R2 transient network glitch');
+        return undefined;
+      }),
+    } as unknown as R2Bucket;
+
+    const { db } = makeDb({
+      r2KeyRows: {
+        video_jobs: [
+          {
+            audio_r2_key: 'audio.wav',
+            visual_r2_key: null,
+            final_r2_key: null,
+          },
+        ],
+      },
+    });
+
+    const res = await cascadeDeleteAccount(db, 'user-1', 't-1', bucket);
+    expect(res.r2Deleted).toBe(1);
+    expect(res.r2Failed).toBeUndefined();
+    expect(attempts).toBe(2);
+  });
+
+  it('records permanently failed R2 keys in r2Failed and audit_log DLQ', async () => {
+    const bucket = {
+      delete: vi.fn().mockRejectedValue(new Error('Permanent R2 500 error')),
+    } as unknown as R2Bucket;
+
+    const { db, calls } = makeDb({
+      r2KeyRows: {
+        batch_jobs: [{ input_r2_key: 'stuck_asset.zip' }],
+      },
+    });
+
+    const res = await cascadeDeleteAccount(db, 'user-1', 't-1', bucket);
+    expect(res.r2Deleted).toBe(0);
+    expect(res.r2Failed).toEqual(['stuck_asset.zip']);
+
+    const dlqCall = calls.find(
+      (c) =>
+        c.sql.includes('INSERT INTO audit_log') &&
+        c.sql.includes('r2_deletion_dead_letter'),
+    );
+    expect(dlqCall).toBeDefined();
+    expect(dlqCall?.binds[0]).toBe('user-1');
+    expect(dlqCall?.binds[1]).toContain('stuck_asset.zip');
+  });
 });
+
