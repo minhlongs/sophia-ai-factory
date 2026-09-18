@@ -52,5 +52,19 @@ User Deletion Request
 
 ## 3. Data Isolation Invariants
 
-1. **Orphan Storage Prevention:** R2 keys are gathered before D1 rows are deleted. If R2 deletion fails, errors are logged with key details to prevent silent untracked accumulation.
-2. **Object Key Guessing Defense:** R2 keys include cryptographic randomness (UUID v4 or random 16-byte hex), preventing unauthenticated sequential enumeration.
+1. **Orphan Storage Prevention & Retry Backoff:** R2 keys are gathered before D1 rows are deleted. R2 deletions are retried up to 2 times with jittered exponential backoff.
+2. **Dead-Letter Queue (DLQ):** Permanently failing R2 keys are recorded in the D1 `audit_log` table under `action_type = 'r2_deletion_dead_letter'` with full tenant and failed key payloads for out-of-band automated reconciliation.
+3. **Object Key Guessing Defense:** R2 keys include cryptographic randomness (UUID v4 or random 16-byte hex), preventing unauthenticated sequential enumeration.
+
+---
+
+## 4. Automated Regression Verification (Evidence)
+
+All data ownership, cascade deletion, and R2 purge invariants are continuously verified by automated test suites:
+
+| Test Suite | File | Tests | Focus Area | Status |
+|---|---|:---:|---|:---:|
+| **Cascade Deletion & DLQ** | [`src/land/account/__tests__/cascade-delete.test.ts`](file:///Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/land/account/__tests__/cascade-delete.test.ts) | 17 | Dependents-first deletion order, R2 collection, retry backoff, and `audit_log` DLQ persistence | **PASS** |
+| **Data Ownership & Deletion** | [`src/land/account/__tests__/data-ownership-and-deletion.test.ts`](file:///Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/land/account/__tests__/data-ownership-and-deletion.test.ts) | 4 | Tenant isolation, ownership boundary enforcement, and deletion lifecycle | **PASS** |
+| **Ownership Management** | [`src/land/account/__tests__/ownership-management.test.ts`](file:///Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/land/account/__tests__/ownership-management.test.ts) | 8 | Workspace ownership transfers, role constraints, and audit logging | **PASS** |
+

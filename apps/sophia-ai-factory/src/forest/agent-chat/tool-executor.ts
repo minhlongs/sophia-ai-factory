@@ -6,11 +6,13 @@
  * Dispatches tool calls to actual business logic in land/ and forest/ modules.
  * Each handler returns a formatted AgentToolResult.
  *
- * Import direction: forest → seed, tree, land (orchestration boundary).
+ * Import direction: forest → seed, tree.
  */
 
 import { createLogger } from '@/seed/utils/logger-utility';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
+import { getD1 } from '@/seed/db/client';
+import { inngest } from '@/seed/inngest/client';
 import { TIER_CONFIGS } from '@/seed/config/tiers';
 import { getBalance, deductCredits } from '@/tree/mcu/credits-repo';
 import { getMemoryConsolidationService } from './memory-consolidation-service';
@@ -101,7 +103,6 @@ export class SophiaToolExecutor implements IToolExecutor {
   // ── Tool Handlers ──────────────────────────────────────────────────────────
 
   private async getCampaigns(args: Record<string, unknown>): Promise<AgentToolResult> {
-    const { getD1 } = await import('@/seed/db/client');
     const db = await getD1();
     if (!db) return this.error('Database not available');
 
@@ -133,7 +134,6 @@ export class SophiaToolExecutor implements IToolExecutor {
   }
 
   private async getCampaignDetail(args: Record<string, unknown>): Promise<AgentToolResult> {
-    const { getD1 } = await import('@/seed/db/client');
     const db = await getD1();
     if (!db) return this.error('Database not available');
 
@@ -185,8 +185,7 @@ export class SophiaToolExecutor implements IToolExecutor {
     const deducted = await deductCredits(this.userId!, 5, 'campaign_creation', 'agent_tool');
     if (!deducted) return this.error('Could not reserve credits for campaign creation.');
 
-    // Create campaign directly via D1 (createCampaignCore only sends Inngest event).
-    const { getD1 } = await import('@/seed/db/client');
+    // Create campaign directly via D1 (Inngest event triggers async pipeline).
     const db = await getD1();
     if (!db) return this.error('Database not available');
 
@@ -212,24 +211,25 @@ export class SophiaToolExecutor implements IToolExecutor {
 
     // Send Inngest event for pipeline processing (fire-and-forget).
     try {
-      const { sendCampaignCreatedEvent } = await import('@/land/campaigns/create-campaign-core');
-      await sendCampaignCreatedEvent({
-        campaignId,
-        userId: this.userId!,
-        topic,
-        audience: '',
-        tier: tier,
+      await inngest.send({
+        name: 'campaign.created',
+        data: {
+          campaignId,
+          userId: this.userId!,
+          topic,
+          audience: '',
+          tier: tier,
+        },
       });
     } catch {
       // Inngest not configured — campaign still created in DB.
     }
 
-    logger.info('Campaign created via tool', { campaignId, userId: this.userId });
+    logger.info('Campaign created via tool', undefined, { campaignId, userId: this.userId });
     return this.ok({ campaign_id: campaignId, name: topic.slice(0, 100), status: 'queued' });
   }
 
   private async cancelCampaign(args: Record<string, unknown>): Promise<AgentToolResult> {
-    const { getD1 } = await import('@/seed/db/client');
     const db = await getD1();
     if (!db) return this.error('Database not available');
 
@@ -254,13 +254,12 @@ export class SophiaToolExecutor implements IToolExecutor {
       .bind(Date.now(), campaignId)
       .run();
 
-    logger.info('Campaign cancelled via tool', { campaignId, userId: this.userId });
+    logger.info('Campaign cancelled via tool', undefined, { campaignId, userId: this.userId });
     return this.ok({ campaign_id: campaignId, new_status: 'cancelled' });
   }
 
   private async listVideoModels(): Promise<AgentToolResult> {
     // Return models from BYOK config — what the user has configured.
-    const { getD1 } = await import('@/seed/db/client');
     const db = await getD1();
     if (!db) return this.error('Database not available');
 
@@ -280,7 +279,6 @@ export class SophiaToolExecutor implements IToolExecutor {
   }
 
   private async listVoiceModels(): Promise<AgentToolResult> {
-    const { getD1 } = await import('@/seed/db/client');
     const db = await getD1();
     if (!db) return this.error('Database not available');
 
@@ -300,7 +298,6 @@ export class SophiaToolExecutor implements IToolExecutor {
   }
 
   private async searchMedia(args: Record<string, unknown>): Promise<AgentToolResult> {
-    const { getD1 } = await import('@/seed/db/client');
     const db = await getD1();
     if (!db) return this.error('Database not available');
 

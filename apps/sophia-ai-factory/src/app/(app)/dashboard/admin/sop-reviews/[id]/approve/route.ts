@@ -1,12 +1,11 @@
-'use server';
-
+import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { revalidatePath } from 'next/cache';
 
-interface ApproveResult {
+export interface ApproveResult {
   success: boolean;
   error?: string;
 }
@@ -45,7 +44,7 @@ export async function approveSopListing(listingId: string): Promise<ApproveResul
       .bind('published', Math.floor(Date.now() / 1000), listingId)
       .run();
 
-    logger.info('[AdminSOPReview] Listing approved', {
+    logger.info('[AdminSOPReview] Listing approved', undefined, {
       listingId,
       approvedBy: user.id,
       tier,
@@ -58,4 +57,13 @@ export async function approveSopListing(listingId: string): Promise<ApproveResul
     logger.error('[AdminSOPReview] Approve error', err instanceof Error ? err : new Error(String(err)));
     return { success: false, error: 'An unexpected error occurred' };
   }
+}
+
+export async function POST(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
+  const { id } = await params;
+  const result = await approveSopListing(id);
+  return NextResponse.json(result, { status: result.success ? 200 : 400 });
 }

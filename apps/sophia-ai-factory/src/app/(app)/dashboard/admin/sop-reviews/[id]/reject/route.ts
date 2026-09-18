@@ -1,12 +1,11 @@
-'use server';
-
+import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { revalidatePath } from 'next/cache';
 
-interface RejectResult {
+export interface RejectResult {
   success: boolean;
   error?: string;
 }
@@ -33,7 +32,7 @@ export async function rejectSopListing(listingId: string, reason: string): Promi
     const listing = await d1
       .prepare('SELECT * FROM sop_listings WHERE id = ? AND status = ?')
       .bind(listingId, 'pending_review')
-      .first();
+      .first<{ description?: string }>();
 
     if (!listing) {
       return { success: false, error: 'Listing not found or not pending review' };
@@ -47,7 +46,7 @@ export async function rejectSopListing(listingId: string, reason: string): Promi
       .bind('draft', updatedDescription, Math.floor(Date.now() / 1000), listingId)
       .run();
 
-    logger.info('[AdminSOPReview] Listing rejected', {
+    logger.info('[AdminSOPReview] Listing rejected', undefined, {
       listingId,
       rejectedBy: user.id,
       tier,
@@ -61,4 +60,23 @@ export async function rejectSopListing(listingId: string, reason: string): Promi
     logger.error('[AdminSOPReview] Reject error', err instanceof Error ? err : new Error(String(err)));
     return { success: false, error: 'An unexpected error occurred' };
   }
+}
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<NextResponse> {
+  const { id } = await params;
+  let reason = 'Not approved by admin';
+  try {
+    const body = (await request.json()) as { reason?: string };
+    if (body.reason && typeof body.reason === 'string') {
+      reason = body.reason;
+    }
+  } catch {
+    // default reason if body is not JSON or empty
+  }
+
+  const result = await rejectSopListing(id, reason);
+  return NextResponse.json(result, { status: result.success ? 200 : 400 });
 }
