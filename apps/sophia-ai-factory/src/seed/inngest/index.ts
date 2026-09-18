@@ -15,3 +15,8 @@ export type {
   AgentMissionCompletedData,
   AgentMissionFailedData,
 } from "./agent-event-types";
+export {
+  sendInngestWithRetry,
+  isTransientInngestError,
+  type InngestRetryOptions,
+} from "./send-with-retry";

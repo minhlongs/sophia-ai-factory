@@ -19,6 +19,7 @@
  */
 
 import { inngest } from '@/seed/inngest/client';
+import { sendInngestWithRetry } from '@/seed/inngest/send-with-retry';
 import { logger } from '@/seed/utils/logger-utility';
 import { getD1 } from '@/seed/db/client';
 import {
@@ -190,24 +191,53 @@ async function redispatchRun(db: D1Database, run: FailedRun): Promise<boolean> {
 
   if (updated.meta.changes === 0) return false; // already picked up by another scan
 
-  await inngest.send({
-    name: 'agent.mission.started',
-    data: {
+  try {
+    await sendInngestWithRetry(() =>
+      inngest.send({
+        name: 'agent.mission.started',
+        data: {
+          runId: run.id,
+          agentId: run.agentId,
+          missionId: run.missionId as string,
+          workspaceId: run.workspaceId,
+          autonomyLevel: run.autonomyLevel,
+          inputJson: parseInputJson(run.inputJson),
+        },
+      }),
+    );
+
+    logger.info('agentRollbackCron: retrying run', {
       runId: run.id,
       agentId: run.agentId,
-      missionId: run.missionId as string,
-      workspaceId: run.workspaceId,
-      autonomyLevel: run.autonomyLevel,
-      inputJson: parseInputJson(run.inputJson),
-    },
-  });
+      attempt: run.retryCount + 1,
+    });
+    return true;
+  } catch (err) {
+    logger.error('agentRollbackCron: redispatch send failed, reverting to failed', {
+      runId: run.id,
+      agentId: run.agentId,
+      attempt: run.retryCount + 1,
+      error: err instanceof Error ? err.message : String(err),
+    });
 
-  logger.info('agentRollbackCron: retrying run', {
-    runId: run.id,
-    agentId: run.agentId,
-    attempt: run.retryCount + 1,
-  });
-  return true;
+    try {
+      await db
+        .prepare(
+          `UPDATE agent_runs
+           SET status = 'failed', phase = 'failed'
+           WHERE id = ? AND status = 'running'`,
+        )
+        .bind(run.id)
+        .run();
+    } catch (revertErr) {
+      logger.error('agentRollbackCron: failed to revert run status', {
+        runId: run.id,
+        error: String(revertErr),
+      });
+    }
+
+    return false;
+  }
 }
 
 /** Decide and act on one failed run row. Never throws — callers still guard. */

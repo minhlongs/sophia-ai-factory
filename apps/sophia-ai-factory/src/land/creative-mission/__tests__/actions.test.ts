@@ -73,12 +73,13 @@ function missionError(code: string, message: string): Error {
 function makeD1(results: Array<unknown>) {
   let i = 0;
   return {
-    prepare: () => ({
-      bind: () => ({
+    prepare: vi.fn(() => ({
+      bind: vi.fn(() => ({
         first: async () => results[i++],
         all: async () => ({ results: (results[i++] as unknown[]) ?? [], meta: {} }),
-      }),
-    }),
+        run: async () => ({ success: true, meta: { changes: 1 } }),
+      })),
+    })),
   };
 }
 
@@ -288,6 +289,55 @@ describe('land/creative-mission actions', () => {
       }
       expect(mocks.beginMissionExecution).not.toHaveBeenCalled();
       expect(mocks.inngestSend).not.toHaveBeenCalled();
+    });
+
+    it('retries transient inngest.send failure and succeeds', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(
+        makeD1([{ workspace_id: 'ws_1', creator_id: 'user_1' }, 1]),
+      );
+      mocks.beginMissionExecution.mockResolvedValue({ status: 'running' });
+      mocks.inngestSend
+        .mockRejectedValueOnce(new Error('fetch failed'))
+        .mockResolvedValueOnce(undefined);
+
+      const { startMissionExecution } = await import('../actions');
+      const result = await startMissionExecution(validInput);
+
+      expect(result.ok).toBe(true);
+      expect(mocks.inngestSend).toHaveBeenCalledTimes(2);
+      if (result.ok) {
+        expect(result.value.agentId).toBe('ag_1');
+      }
+    });
+
+    it('safely rolls back mission in D1 when inngest.send exhausts retries', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      const fakeD1 = makeD1([
+        { workspace_id: 'ws_1', creator_id: 'user_1', status: 'planned', current_phase: 'init' },
+        1,
+      ]);
+      mocks.getD1.mockReturnValue(fakeD1);
+      mocks.beginMissionExecution.mockResolvedValue({ status: 'running' });
+      mocks.inngestSend.mockRejectedValue(new Error('Gateway Timeout 504'));
+
+      const { startMissionExecution } = await import('../actions');
+      const result = await startMissionExecution(validInput);
+
+      expect(result.ok).toBe(false);
+      // inngest.send was attempted 3 times (1 initial + 2 retries)
+      expect(mocks.inngestSend).toHaveBeenCalledTimes(3);
+      // Rollback UPDATE query was executed in D1
+      expect(fakeD1.prepare).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE creative_missions'),
+      );
+      expect(mocks.logger.error).toHaveBeenCalledWith(
+        expect.stringContaining('inngest.send failed, rolling back mission status'),
+        expect.objectContaining({
+          missionId: 'msn_1',
+          previousStatus: 'planned',
+        }),
+      );
     });
   });
 

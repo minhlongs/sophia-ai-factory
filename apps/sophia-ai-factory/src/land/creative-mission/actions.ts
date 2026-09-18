@@ -28,6 +28,7 @@ import {
   updateMissionStatus as treeUpdateMissionStatus,
 } from '@/tree/mission';
 import { inngest } from '@/seed/inngest/client';
+import { sendInngestWithRetry } from '@/seed/inngest/send-with-retry';
 import { runMissionPreflightCheck } from '@/tree/mission/preflight-check';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -400,7 +401,12 @@ export async function startMissionExecution(
     const mission = await d1
       .prepare('SELECT * FROM creative_missions WHERE id = ?')
       .bind(parsed.data.missionId)
-      .first<{ workspace_id: string; creator_id: string }>();
+      .first<{
+        workspace_id: string;
+        creator_id: string;
+        status: string;
+        current_phase?: string | null;
+      }>();
 
     if (!mission) {
       return failure({ code: 'NOT_FOUND', message: 'Mission not found' });
@@ -434,20 +440,58 @@ export async function startMissionExecution(
     // concurrent writers reject BEFORE any Inngest event is emitted.
     await beginMissionExecution(parsed.data.missionId);
 
-    // Emit Inngest event to trigger agent execution
+    // Emit Inngest event to trigger agent execution with retry and safe rollback
     const runId = `run_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-    await inngest.send({
-      id: runId,
-      name: 'agent.mission.started',
-      data: {
-        runId,
-        agentId: parsed.data.agentId,
+    try {
+      await sendInngestWithRetry(() =>
+        inngest.send({
+          id: runId,
+          name: 'agent.mission.started',
+          data: {
+            runId,
+            agentId: parsed.data.agentId,
+            missionId: parsed.data.missionId,
+            workspaceId: mission.workspace_id,
+            autonomyLevel: parsed.data.autonomyLevel,
+          },
+          ts: Date.now(),
+        }),
+      );
+    } catch (sendErr) {
+      logger.error('[CreativeMission] inngest.send failed, rolling back mission status', {
         missionId: parsed.data.missionId,
-        workspaceId: mission.workspace_id,
-        autonomyLevel: parsed.data.autonomyLevel,
-      },
-      ts: Date.now(),
-    });
+        runId,
+        previousStatus: mission.status,
+        error: sendErr instanceof Error ? sendErr.message : String(sendErr),
+      });
+
+      // Rollback mission in D1 to prevent permanent 'running' lockout
+      const db = await getD1();
+      if (db) {
+        try {
+          await db
+            .prepare(
+              `UPDATE creative_missions
+               SET status = ?, current_phase = ?, updated_at = ?
+               WHERE id = ? AND status = 'running'`,
+            )
+            .bind(
+              mission.status,
+              mission.current_phase ?? 'init',
+              Math.floor(Date.now() / 1000),
+              parsed.data.missionId,
+            )
+            .run();
+        } catch (rollbackErr) {
+          logger.error('[CreativeMission] Failed to rollback mission status', {
+            missionId: parsed.data.missionId,
+            error: rollbackErr instanceof Error ? rollbackErr.message : String(rollbackErr),
+          });
+        }
+      }
+
+      throw sendErr;
+    }
 
     logger.info('[CreativeMission] Started mission execution', {
       missionId: parsed.data.missionId,

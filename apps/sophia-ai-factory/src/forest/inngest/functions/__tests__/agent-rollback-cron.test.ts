@@ -123,10 +123,17 @@ function buildFakeD1(
     const executeRun = async (bound: unknown[]) => {
       executedSql.push(sql);
       if (forcedChangeCount !== undefined) return { meta: { changes: forcedChangeCount } };
-      // Guarded UPDATE: id is always the LAST bound param in both UPDATEs
+      // Guarded UPDATE: id is always the LAST bound param in all UPDATEs
       const id = bound[bound.length - 1] as string;
       const row = runs.find((r) => r.id === id);
-      if (!row || row.status !== 'failed') return { meta: { changes: 0 } };
+      if (!row) return { meta: { changes: 0 } };
+      if (sql.includes("SET status = 'failed'")) {
+        if (row.status !== 'running') return { meta: { changes: 0 } };
+        row.status = 'failed';
+        row.phase = 'failed';
+        return { meta: { changes: 1 } };
+      }
+      if (row.status !== 'failed') return { meta: { changes: 0 } };
       if (sql.includes("status = 'running'")) {
         row.status = 'running';
         row.phase = 'retrying';
@@ -473,5 +480,21 @@ describe('agentRollbackCron', () => {
     expect((mockInngestSend.mock.calls[0][0] as { data: Record<string, unknown> }).data.runId).toBe('run_due');
     expect(fake.runs.find((r) => r.id === 'run_backoff')?.status).toBe('failed');
     expect(fake.runs.find((r) => r.id === 'run_exhausted')?.status).toBe('cancelled');
+  });
+
+  it('reverts run status to failed when redispatch inngest.send fails', async () => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const fake = buildFakeD1([
+      makeRun({ id: 'run_fail_send', ended_at: nowSec - 3600, retry_count: 0 }),
+    ]);
+    mockGetD1.mockResolvedValue(fake.db);
+    mockInngestSend.mockRejectedValue(new Error('Inngest unreachable'));
+
+    const result = await getHandler()();
+
+    expect(result).toEqual({ scanned: 1, retried: 0, cancelled: 0 });
+    // Run status must be reverted to 'failed', not left stuck in 'running'
+    const targetRun = fake.runs.find((r) => r.id === 'run_fail_send');
+    expect(targetRun?.status).toBe('failed');
   });
 });
