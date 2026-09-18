@@ -102,9 +102,8 @@ const nextConfig: NextConfig = {
   redirects() {
     return [
       // Root redirect to default locale (vi) - REMOVED: causes redirect loop with middleware
-      // { source: '/', destination: '/vi', permanent: false },
-      { source: '/register', destination: '/login', permanent: false, locale: false },
-      { source: '/sign-up', destination: '/login', permanent: false, locale: false },
+      // Auth aliases
+      { source: '/sign-up', destination: '/register', permanent: false, locale: false },
       { source: '/signin', destination: '/login', permanent: false, locale: false },
       // Settings
       { source: '/settings', destination: '/dashboard/settings', permanent: true },

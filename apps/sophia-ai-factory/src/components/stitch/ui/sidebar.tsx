@@ -1,5 +1,5 @@
 import React from 'react';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { cn } from '@/seed/utils/cn';
 import { LucideIcon } from 'lucide-react';
 import { Badge } from './badge';

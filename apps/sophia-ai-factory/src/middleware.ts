@@ -52,6 +52,13 @@ function isSupportedLocale(segment: string | undefined): boolean {
   return segment !== undefined && SUPPORTED_LOCALES.includes(segment as 'en' | 'vi');
 }
 
+function isUnsupportedLocale(segment: string | undefined): boolean {
+  if (!segment) return false;
+  // Detect ISO/BCP-47 language tags (e.g. /zh-CN, /ja, /fr, /de) that are not supported
+  const isLocalePattern = /^[a-z]{2}(?:-[a-zA-Z]{2,4})?$/i.test(segment);
+  return isLocalePattern && !isSupportedLocale(segment);
+}
+
 function redirectToDefault(request: NextRequest): NextResponse {
   const url = request.nextUrl.clone();
   url.pathname = '/';
@@ -67,13 +74,6 @@ async function proxyImpl(request: NextRequest): Promise<NextResponse> {
   initializeWAEBinding();
 
   if (isInternalOrStatic(pathname)) return NextResponse.next();
-
-const BARE_AUTH_APP_ROUTES = new Set([
-  'pricing', 'reset-password',
-  'dashboard', 'checkout', 'settings', 'products', 'payments',
-  'admin', 'affiliates', 'affiliate-portal', 'subscribers',
-  'webhook', 'creator', 'investor-room',
-]);
 
   const pathLocale = pathname.split('/')[1];
 
@@ -91,10 +91,13 @@ const BARE_AUTH_APP_ROUTES = new Set([
     const barePath = pathLocale && isSupportedLocale(pathLocale) ? pathname.slice(`/${pathLocale}`.length) || '/' : pathname;
     if (REDIRECTS[barePath]) {
       const locale = isSupportedLocale(pathLocale) ? pathLocale! : 'vi';
-      return NextResponse.redirect(new URL(`${locale}${REDIRECTS[barePath]}`, request.url), 307);
+      return NextResponse.redirect(new URL(`/${locale}${REDIRECTS[barePath]}`, request.url), 307);
     }
 
-    if (pathLocale && !isSupportedLocale(pathLocale) && !BARE_AUTH_APP_ROUTES.has(pathname.split('/')[1])) return redirectToDefault(request);
+    // Reject unsupported locale segments (e.g. /zh-CN, /ja, /fr) and redirect to root (/)
+    if (isUnsupportedLocale(pathLocale)) {
+      return redirectToDefault(request);
+    }
   }
 
   // E2E/SEO compatibility: tests and legacy links use /vi/login, /en/pricing etc

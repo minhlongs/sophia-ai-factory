@@ -1,5 +1,5 @@
 import React from 'react';
-import Link from 'next/link';
+import { Link } from '@/navigation';
 import { Loader2 } from 'lucide-react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -92,18 +92,34 @@ export function Button({
     </>
   );
 
-  // Render as Link if href is provided
+  // Render as Link or <a> if href is provided
   if (href) {
+    const isExternal = /^https?:\/\/|^mailto:|^tel:/.test(href);
+    const classes = [
+      baseStyles,
+      variants[variant],
+      sizes[size],
+      widthClass,
+      className,
+    ].filter(Boolean).join(' ');
+
+    if (isExternal) {
+      return (
+        <a
+          href={href}
+          className={classes}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {content}
+        </a>
+      );
+    }
+
     return (
       <Link
         href={href}
-        className={[
-          baseStyles,
-          variants[variant],
-          sizes[size],
-          widthClass,
-          className,
-        ].filter(Boolean).join(' ')}
+        className={classes}
       >
         {content}
       </Link>
