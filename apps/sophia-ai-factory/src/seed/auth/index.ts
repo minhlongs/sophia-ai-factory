@@ -44,5 +44,6 @@ export * from './openclaw-token';
 export * from './require-admin';
 export * from './require-master-tier';
 export * from './reset-password-token';
+export * from './revoke-user-sessions';
 // resolve-org-id excluded — getD1Raw clashes with seed/db/client
 export * from './sign-cookie-value';

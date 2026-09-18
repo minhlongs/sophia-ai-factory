@@ -10,7 +10,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { consumeResetToken } from '@/seed/auth/reset-password-token';
-import { hashPassword } from '@/tree/crypto/password-hash';
+import { revokeAllUserSessions } from '@/seed/auth/revoke-user-sessions';
+import { hashPassword } from '@/seed/security/password-hash';
 import { logger } from '@/seed/utils/logger-utility';
 import { checkRateLimit, getClientIdentifier as getD1ClientId } from '@/seed/security/sql-rate-limiter';
 import { createRateLimitHeaders } from '@/forest/middleware/rate-limiter';
@@ -81,8 +82,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json(GENERIC_TOKEN_ERROR, { status: 400 });
     }
 
-    logger.info('[reset-password/confirm] password updated', { userId });
-    return NextResponse.json({ ok: true });
+    // Invalidate all active user sessions across all devices/browsers (Risk #10 hardening)
+    const revokeResult = await revokeAllUserSessions(userId, db);
+    logger.info('[reset-password/confirm] password updated and sessions revoked', {
+      userId,
+      revokedSessions: revokeResult.revokedCount,
+    });
+
+    const response = NextResponse.json({ ok: true });
+    // Invalidate session cookies for caller's browser
+    const sessionCookieNames = [
+      'better-auth.session_token',
+      '__Secure-better-auth.session_token',
+      'better-auth.session_data',
+      '__Secure-better-auth.session_data',
+      'better-auth.dont_remember',
+    ];
+    for (const cookieName of sessionCookieNames) {
+      response.cookies.delete(cookieName);
+    }
+    return response;
   } catch (err) {
     return handleThrownError(err, 'Internal server error', 'RESET_PASSWORD_FAILED');
   }
