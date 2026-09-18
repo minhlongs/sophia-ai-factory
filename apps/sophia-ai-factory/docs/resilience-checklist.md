@@ -109,9 +109,7 @@ All services with active circuit breaker wiring:
 | `apollo` | `tree/apollo/apollo-client.ts` |
 | `resend-email` | `tree/email/sender.ts`, `tree/email/outbox.ts` |
 | `twitter-oauth` | `tree/publishing/twitter-oauth-client.ts` |
-| `reddit-oauth` | `tree/publishing/reddit-oauth-client.ts` |
 | `bluesky` | `tree/publishing/bluesky.ts` |
-| `threads-oauth` | `tree/publishing/threads-oauth-client.ts` |
 | `telegram-publisher` | `tree/publishing/providers/telegram-publisher.ts` |
 | `tiktok-token` | `tree/publishing/tiktok/tiktok-token-manager.ts` |
 | `muapi-media` | `tree/clients/muapi-media-client.ts` |
@@ -120,14 +118,9 @@ All services with active circuit breaker wiring:
 | `mcp-gateway` | `tree/agent-fleet/mcp-gateway.ts` |
 | `telegram-gateway-notify` | `tree/gateway/adapters/telegram-notification-adapter.ts` |
 | `zalo-oauth` | `tree/publishing/zalo-oauth-client.ts` |
-| `twitter-oauth` | `tree/publishing/twitter-oauth-client.ts` |
 | `mastodon-oauth` | `tree/publishing/mastodon-oauth-client.ts` |
 | `youtube-adapter` | `tree/publishing/youtube-adapter.ts` |
 | `bundle-publisher` | `tree/publishing/bundle-publisher.ts` |
-| `muapi-media` | `tree/clients/muapi-media-client.ts` |
-| `provider-connectivity` | `tree/audit/checks/provider-connectivity.ts` |
-| `llm-router` | `tree/agent-fleet/llm-router.ts` |
-| `mcp-gateway` | `tree/agent-fleet/mcp-gateway.ts` |
 
 ### Forest Layer (orchestrators — imports from seed, tree)
 | Service | File |
@@ -145,11 +138,13 @@ All services with active circuit breaker wiring:
 | `tiktok-adapter` | `forest/publishing/tiktok-adapter.ts` |
 | `x-ads-adapter` | `forest/publishing/x-ads-adapter.ts` |
 | `tiktok-token-manager` | `forest/publishing/tiktok/tiktok-token-manager.ts` |
+| `reddit-oauth` | `forest/publishing/reddit-oauth-client.ts` |
+| `threads-oauth` | `forest/publishing/threads-oauth-client.ts` |
+| `d-id` | `forest/did/did-client.ts` |
 
 ### Land Layer (business workflows — imports from seed, tree, forest)
 | Service | File |
 |---|---|
-| `d-id` | `land/did/did-client.ts` |
 | `heygen` | `land/video/heygen-helpers.ts` |
 | `runpod` | `land/video/publishing/path-b-cinematic.ts` |
 | `amazon-pa` | `land/affiliates/providers/amazon.ts` |
@@ -158,6 +153,31 @@ All services with active circuit breaker wiring:
 | `payos` | `land/payments/payos.ts` |
 | `clickbank` | `land/ingestion/adapters/clickbank-adapter.ts` |
 | `hunter` | `land/hunter/hunter-client.ts` |
+| `hyperbeam` | `land/creative/hyperbeam.ts` |
+| `hyperbeam-session` | `land/creative-mission/actions.ts` |
+| `nowpayments` | `land/billing/nowpayments-client.ts` |
+
+### API Routes & Workers (edge entry points)
+| Service | File |
+|---|---|
+| `openrouter-chat` | `app/api/chat/route.ts` |
+| `openrouter-health` | `app/api/health/providers/route.ts` |
+| `openrouter-marketing` | `app/api/marketing/route.ts` |
+| `openrouter-orchestrate` | `app/api/orchestrate/route.ts` |
+| `openrouter-cron-stepper` | `app/api/cron/stepper/route.ts` |
+| `openrouter-workflow-stepper` | `app/api/cron/workflow-stepper/workflow-stepper-llm-executor.ts` |
+| `runpod-trigger` | `app/api/internal/runpod-trigger/route.ts` |
+| `runpod-status` | `app/api/internal/runpod-status/route.ts` |
+| `tts-coqui` | `app/api/internal/tts/route.ts` |
+| `fly-render-py` | `app/api/internal/render-py/route.ts` |
+| `telegram-uptime-alert` | `app/api/cron/uptime-check/route.ts` |
+| `resend-test` | `tree/email/missions/email-test.ts` |
+| `resend-test-wizard` | `app/api/setup-wizard/test-resend/route.ts` |
+| `ultracode-telegram` | `workers/ultracode-worker.ts` |
+| `bluesky-publisher` | `forest/publishing/bluesky.ts` |
+| `reddit-oauth` | `forest/publishing/reddit-oauth-client.ts` |
+| `threads-oauth` | `forest/publishing/threads-oauth-client.ts` |
+| `youtube-adapter` | `tree/publishing/youtube-adapter.ts` |
 
 ### API Routes (app layer)
 | Service | File |
@@ -177,14 +197,9 @@ All services with active circuit breaker wiring:
 | `runpod-status` | `app/api/internal/runpod-status/route.ts` |
 | `tts-coqui` | `app/api/internal/tts/route.ts` |
 | `fly-render-py` | `app/api/internal/render-py/route.ts` |
-| `telegram-uptime-alert` | `app/api/cron/uptime-check/route.ts` |
 | `resend-test` | `tree/email/missions/email-test.ts` |
 | `resend-test-wizard` | `app/api/setup-wizard/test-resend/route.ts` |
 | `ultracode-telegram` | `workers/ultracode-worker.ts` |
-| `bluesky-publisher` | `tree/publishing/bluesky.ts` |
-| `reddit-oauth` | `tree/publishing/reddit-oauth-client.ts` |
-| `threads-oauth` | `tree/publishing/threads-oauth-client.ts` |
-| `youtube-adapter` | `tree/publishing/youtube-adapter.ts` |
 
 ## Code Review Checklist
 

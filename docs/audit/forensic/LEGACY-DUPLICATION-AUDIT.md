@@ -24,22 +24,22 @@ Every identified item has been traced to its call sites, checked for runtime ref
 
 ## 2. Inventory & Classification Matrix
 
-| Item # | Artifact Path | Classification | Category | Risk / Impact | Recommendation |
+| Item # | Artifact Path | Classification | Category | Risk / Impact | Status / Remediation |
 |---|---|---|---|---|---|
-| **ST-01** | `src/land/query-client.ts.new` | **DEAD** | Stray Artifact | Zero imports; developer copy | Delete file immediately |
-| **ST-02** | `src/seed/utils/index.ts.new` | **DEAD** | Stray Artifact | Zero imports; developer copy | Delete file immediately |
-| **ST-03** | `src/tree/byok/key-format-validators.ts.new` | **DEAD** | Stray Artifact | Zero imports; developer copy | Delete file immediately |
-| **ST-04** | `src/tree/apollo/apollo-client.ts.new` | **DEAD** | Stray Artifact | Zero imports; developer copy | Delete file immediately |
+| **ST-01** | `src/land/query-client.ts.new` | **RESOLVED** | Stray Artifact | Zero imports; developer copy | Deleted file |
+| **ST-02** | `src/seed/utils/index.ts.new` | **RESOLVED** | Stray Artifact | Zero imports; developer copy | Deleted file |
+| **ST-03** | `src/tree/byok/key-format-validators.ts.new` | **RESOLVED** | Stray Artifact | Zero imports; developer copy | Deleted file |
+| **ST-04** | `src/tree/apollo/apollo-client.ts.new` | **RESOLVED** | Stray Artifact | Zero imports; developer copy | Deleted file |
 | **DP-01** | `src/forest/inngest/functions/video-*.ts` (7 files) | **LEGACY** | Deprecated Functions | Retained for replay safety; superseded by `video-orchestrator.ts` | Retain under deprecation notice until Inngest event migration window expires; then archive |
 | **DP-02** | `src/forest/agent-protocol/` | **LEGACY** | Deprecated Subsystem | Pre-Phase 1 agent protocol superseded by `forest/mission/` | Unify exports into canonical mission orchestrator |
 | **DP-03** | `src/forest/workflows/` | **LEGACY** | Deprecated Workflows | Legacy workflow state machines | Reconcile with modern Inngest execution engines |
 | **DP-04** | `src/seed/ai/creative-engine-adapter.ts` | **LEGACY** | Compatibility Shim | Replaced by direct Fal/Replicate providers | Retain until all legacy creative callers are migrated |
-| **CD-01** | `src/forest/did/did-client.ts` vs `src/land/did/did-client.ts` | **DEAD (Land copy)** | Multi-layer Client Duplicate | Divergent error handling; cross-layer boundary violation | Delete `land/did/did-client.ts`; update land callers to import from `forest/did/did-client.ts` |
-| **CD-02** | `src/forest/tiktok/tiktok-oauth-client.ts` vs `src/land/tiktok/tiktok-oauth-client.ts` | **DEAD (Land copy)** | Multi-layer Client Duplicate | 100% byte-for-byte identical file duplicated in two layers | Delete `land/tiktok/tiktok-oauth-client.ts`; re-route callers to `forest/` |
-| **CD-03** | `src/forest/hunter/hunter-client.ts` vs `src/tree/hunter/hunter-client.ts` vs `src/land/hunter/hunter-client.ts` | **DEAD (Tree & Land)** | Multi-layer Client Duplicate | Triplicate client across tree, forest, and land | Consolidate to canonical `forest/hunter/hunter-client.ts` |
-| **CD-04** | `src/forest/reddit/reddit-oauth-client.ts` vs `src/land/reddit/reddit-oauth-client.ts` | **DEAD (Land copy)** | Multi-layer Client Duplicate | Divergent error formatting (`APIError` vs `Error`) | Consolidate into canonical `forest/reddit/reddit-oauth-client.ts` |
-| **CD-05** | `src/forest/threads/threads-oauth-client.ts` vs `src/land/threads/threads-oauth-client.ts` | **DEAD (Land copy)** | Multi-layer Client Duplicate | Divergent error formatting (`APIError` vs `Error`) | Consolidate into canonical `forest/threads/threads-oauth-client.ts` |
-| **SD-01** | `src/seed/validation/services-schemas.ts` vs `src/land/validation/services-schemas.ts` | **DEAD (Land copy)** | Duplicate Schema | 100% byte-for-byte identical duplicate of 127 lines | Delete `land/validation/services-schemas.ts`; import from `seed/validation/services-schemas.ts` |
+| **CD-01** | `src/forest/did/did-client.ts` vs `src/land/did/did-client.ts` | **RESOLVED** | Multi-layer Client Duplicate | Divergent error handling; cross-layer boundary violation | Canonical client in `forest/did/did-client.ts`; `land/did/did-client.ts` re-exports for backwards compatibility; all caller imports unified |
+| **CD-02** | `src/forest/tiktok/tiktok-oauth-client.ts` vs `src/land/tiktok/tiktok-oauth-client.ts` | **RESOLVED** | Multi-layer Client Duplicate | 100% byte-for-byte identical file duplicated in two layers | Canonical in `forest/tiktok/tiktok-oauth-client.ts`; `land/tiktok/tiktok-oauth-client.ts` re-exports |
+| **CD-03** | `src/land/hunter/hunter-client.ts` vs `src/land/intelligence/hunter-client.ts` | **RESOLVED** | Multi-layer Client Duplicate | Duplicate client lacking circuit breaker | Canonical in `land/hunter/hunter-client.ts` with circuit breaker; `land/intelligence/hunter-client.ts` re-exports |
+| **CD-04** | `src/forest/publishing/reddit-oauth-client.ts` vs `src/tree/publishing/reddit-oauth-client.ts` | **RESOLVED** | Multi-layer Client Duplicate | Unhardened tree copy lacking circuit breaker | Canonical in `forest/publishing/reddit-oauth-client.ts` with circuit breaker; dead tree copy removed |
+| **CD-05** | `src/forest/publishing/threads-oauth-client.ts` vs `src/tree/publishing/threads-oauth-client.ts` | **RESOLVED** | Multi-layer Client Duplicate | Unhardened tree copy lacking circuit breaker | Canonical in `forest/publishing/threads-oauth-client.ts` with circuit breaker; dead tree copy removed |
+| **SD-01** | `src/seed/validation/services-schemas.ts` vs `src/land/validation/services-schemas.ts` | **RESOLVED** | Duplicate Schema | 100% byte-for-byte identical duplicate of 127 lines | Canonical in `seed/validation/services-schemas.ts`; `land/validation/services-schemas.ts` re-exports |
 | **SD-02** | `src/forest/video-generation/schemas.ts` vs `src/forest/creative/schemas.ts` | **LIVE** | Overlapping Types | Partially redundant payload definitions | Document boundaries; align onto canonical creative types |
 
 ---

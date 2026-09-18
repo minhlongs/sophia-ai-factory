@@ -8,12 +8,12 @@ vi.mock('@/tree/byok/resolve-user-api-key', () => ({
   resolveUserApiKey: vi.fn(),
 }))
 
-vi.mock('@/land/did/did-client', () => ({
+vi.mock('@/forest/did/did-client', () => ({
   createDidTalk: vi.fn(),
 }))
 
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key'
-import { createDidTalk } from '@/land/did/did-client'
+import { createDidTalk } from '@/forest/did/did-client'
 import { handle } from '../avatar-create-did';
 
 const mockResolve = resolveUserApiKey as ReturnType<typeof vi.fn>

@@ -11,6 +11,7 @@ vi.mock('@/seed/security/circuit-breaker', () => ({
 // Mock failure-kind classifier
 vi.mock('@/seed/types/failure-kind', () => ({
   classifyError: () => 'SERVER_ERROR' as never,
+  classifyHttpStatus: () => 'SERVER_ERROR' as never,
 }));
 
 // Mock global fetch
