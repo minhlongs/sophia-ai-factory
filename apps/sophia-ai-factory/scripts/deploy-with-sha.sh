@@ -552,10 +552,10 @@ retry_cf "secret put DEPLOY_BRANCH" bash -c "echo '$DEPLOY_BRANCH' | npx wrangle
 # Also set for health worker (fix: propagate SHA to health environment)
 # Non-fatal: secret may already exist from previous deploy
 # Non-fatal: secret may already exist from previous deploy (already-set error is expected).
-if ! npx wrangler secret put COMMIT_SHA --name sophia-ai-factory --env health 2>>"$DEPLOY_LOG"; then
+if ! echo "$COMMIT_SHA" | npx wrangler secret put COMMIT_SHA --name sophia-ai-factory --env health 2>>"$DEPLOY_LOG"; then
   log_info "Health worker COMMIT_SHA may already be set (non-fatal — continuing)"
 fi
-if ! npx wrangler secret put DEPLOYED_AT --name sophia-ai-factory --env health 2>>"$DEPLOY_LOG"; then
+if ! echo "$DEPLOYED_AT" | npx wrangler secret put DEPLOYED_AT --name sophia-ai-factory --env health 2>>"$DEPLOY_LOG"; then
   log_info "Health worker DEPLOYED_AT may already be set (non-fatal — continuing)"
 fi
 

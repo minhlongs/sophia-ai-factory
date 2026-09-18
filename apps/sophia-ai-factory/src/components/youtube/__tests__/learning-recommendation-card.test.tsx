@@ -71,6 +71,7 @@ describe('LearningRecommendationCard', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: /approve/ }));
     await waitFor(() => expect(onApprove).toHaveBeenCalledWith('rec-1'));
+    await waitFor(() => expect((screen.getByRole('button', { name: /approve/ }) as HTMLButtonElement).disabled).toBe(false));
   });
 
   it('calls onReject when reject button clicked', async () => {
@@ -80,13 +81,15 @@ describe('LearningRecommendationCard', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: /reject/ }));
     await waitFor(() => expect(onReject).toHaveBeenCalledWith('rec-1'));
+    await waitFor(() => expect((screen.getByRole('button', { name: /reject/ }) as HTMLButtonElement).disabled).toBe(false));
   });
 
   it('disables buttons while busy', async () => {
+    let resolveApprove!: () => void;
     const onApprove = vi.fn(
       () =>
         new Promise<void>((resolve) => {
-          setTimeout(resolve, 50);
+          resolveApprove = resolve;
         }),
     );
     render(
@@ -95,6 +98,8 @@ describe('LearningRecommendationCard', () => {
     const approveBtn = screen.getByRole('button', { name: /approve/ });
     fireEvent.click(approveBtn);
     expect((approveBtn as HTMLButtonElement).disabled).toBe(true);
+    resolveApprove();
+    await waitFor(() => expect((approveBtn as HTMLButtonElement).disabled).toBe(false));
   });
 
   it('renders evidence block when evidence present', () => {
@@ -120,6 +125,7 @@ describe('LearningRecommendationCard', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: /approve/ }));
     await waitFor(() => expect(screen.getByText('network down')).toBeTruthy());
+    await waitFor(() => expect((screen.getByRole('button', { name: /approve/ }) as HTMLButtonElement).disabled).toBe(false));
   });
 
   it('renders low confidence styling', () => {

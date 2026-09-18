@@ -56,12 +56,15 @@ raw(all: boolean): SqliteStmt;
 // state are skipped, and CREATE TABLE IF NOT EXISTS is idempotent.
 function applyMigrations(db: SqliteDb): void {
   try {
-    const migDir = path.resolve(
-      ((globalThis as unknown) as Record<string, { cwd?: () => string }>).
-        process?.cwd?.() || '',
-      '../../migrations',
-    );
-    if (!fs.existsSync(migDir)) return;
+    const cwd = ((globalThis as unknown) as Record<string, { cwd?: () => string }>).process?.cwd?.() || '';
+    const candidates = [
+      path.resolve(cwd, 'migrations'),
+      path.resolve(cwd, '../../migrations'),
+      path.resolve(cwd, '..', 'migrations'),
+      path.resolve(cwd, 'apps/sophia-ai-factory/migrations'),
+    ];
+    const migDir = candidates.find(dir => fs.existsSync(dir));
+    if (!migDir) return;
     const files = fs.readdirSync(migDir).filter((f: string) => f.endsWith('.sql')).sort();
     for (const f of files) {
       try {
@@ -356,26 +359,36 @@ this.db.exec(query);
  * Returns null if not running in development/test or if local database file doesn't exist.
  */
 export function getLocalD1Mock(): LocalD1Database | null {
-if (typeof (globalThis as Record<string, unknown>).EdgeRuntime !== 'undefined' && process.env.NODE_ENV === 'production') {
-return null;
-}
+  if (typeof (globalThis as Record<string, unknown>).EdgeRuntime !== 'undefined' && process.env.NODE_ENV === 'production') {
+    return null;
+  }
 
-// Only attempt the local D1 mock when a local wrangler D1 sqlite exists.
-// The previous NODE_ENV gate returned null for production builds and for
-// dev/test servers that don't set NODE_ENV, which made getD1() fall through
-// to null and caused every D1-backed rate-limit check to fail-closed
-// (denying all requests with 429). The binding is only useful when the
-// file is actually present, so gate on that instead.
-const sqlitePath = findLocalD1Path();
-if (!sqlitePath) {
-logger.warn('[D1 mock] Local wrangler state D1 sqlite not found. Did you run pnpm dev/setup?');
-return null;
-}
+  // Only attempt the local D1 mock when a local wrangler D1 sqlite exists.
+  // The previous NODE_ENV gate returned null for production builds and for
+  // dev/test servers that don't set NODE_ENV, which made getD1() fall through
+  // to null and caused every D1-backed rate-limit check to fail-closed
+  // (denying all requests with 429). The binding is only useful when the
+  // file is actually present, so gate on that instead.
+  const sqlitePath = findLocalD1Path();
+  if (sqlitePath) {
+    try {
+      return new SQLiteD1Database(sqlitePath);
+    } catch (e) {
+      logger.error('[D1 mock] Failed to initialize local D1 database mock', e instanceof Error ? e : new Error(String(e)));
+    }
+  }
 
-try {
-return new SQLiteD1Database(sqlitePath);
-} catch (e) {
-logger.error('[D1 mock] Failed to initialize local D1 database mock', e instanceof Error ? e : new Error(String(e)));
-return null;
-}
+  // Fallback for test runners (CI/Vitest) where local wrangler state hasn't been initialized:
+  // create an in-memory SQLite database instance so tests and local routes have a functioning D1.
+  if (process.env.NODE_ENV === 'test' || process.env.VITEST || !sqlitePath) {
+    try {
+      return new SQLiteD1Database(':memory:');
+    } catch (e) {
+      logger.error('[D1 mock] Failed to initialize in-memory SQLite D1 database mock', e instanceof Error ? e : new Error(String(e)));
+      return null;
+    }
+  }
+
+  logger.warn('[D1 mock] Local wrangler state D1 sqlite not found. Did you run pnpm dev/setup?');
+  return null;
 }
