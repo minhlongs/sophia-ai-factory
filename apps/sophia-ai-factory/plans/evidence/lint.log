@@ -506,7 +506,9 @@
   47:23  warning  Refactor this function to reduce its Cognitive Complexity from 19 to the 15 allowed  sonarjs/cognitive-complexity
 
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/land/account/cascade-delete.ts
-  86:16  warning  Refactor this function to reduce its Cognitive Complexity from 18 to the 15 allowed  sonarjs/cognitive-complexity
+   88:16  warning  Refactor this function to reduce its Cognitive Complexity from 18 to the 15 allowed  sonarjs/cognitive-complexity
+  164:16  warning  Refactor this function to reduce its Cognitive Complexity from 17 to the 15 allowed  sonarjs/cognitive-complexity
+  196:23  warning  Refactor this function to reduce its Cognitive Complexity from 20 to the 15 allowed  sonarjs/cognitive-complexity
 
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/land/affiliates/scout/client-rakuten.ts
   12:10  warning  Refactor this function to reduce its Cognitive Complexity from 19 to the 15 allowed  sonarjs/cognitive-complexity
@@ -816,5 +818,5 @@
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/workers/health-worker.ts
   32:9  warning  Refactor this function to reduce its Cognitive Complexity from 29 to the 15 allowed  sonarjs/cognitive-complexity
 
-✖ 333 problems (0 errors, 333 warnings)
+✖ 335 problems (0 errors, 335 warnings)
   0 errors and 24 warnings potentially fixable with the `--fix` option.
