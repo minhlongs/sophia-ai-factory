@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 import { Suspense } from 'react';
+import { SopReviewActionsClient } from './sop-review-actions-client';
 
 interface SopListing {
   id: string;
@@ -170,31 +171,17 @@ async function AdminSOPReviewsContent({ locale, userId: _userId }: { locale: str
                         {formatDate(listing.created_at)}
                       </td>
                       <td className="p-4">
-                        <div className="flex gap-2">
-                          <a
-                            href={`/${locale}/dashboard/sop-creator/${listing.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-sm btn-secondary"
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            {t('actions.view')}
-                          </a>
-                          <button
-                            className="btn btn-sm btn-primary"
-                            onClick={() => approveListing(listing.id, locale)}
-                          >
-                            <Check className="w-4 h-4 mr-1" />
-                            {t('actions.approve')}
-                          </button>
-                          <button
-                            className="btn btn-sm btn-destructive"
-                            onClick={() => rejectListing(listing.id, locale)}
-                          >
-                            <X className="w-4 h-4 mr-1" />
-                            {t('actions.reject')}
-                          </button>
-                        </div>
+                        <SopReviewActionsClient
+                          listingId={listing.id}
+                          locale={locale}
+                          labels={{
+                            view: t('actions.view'),
+                            approve: t('actions.approve'),
+                            reject: t('actions.reject'),
+                            rejectPrompt: locale === 'vi' ? 'Lý do từ chối (tùy chọn):' : 'Rejection reason (optional):',
+                            defaultRejectReason: locale === 'vi' ? 'Không được quản trị viên duyệt' : 'Not approved by admin',
+                          }}
+                        />
                       </td>
                     </tr>
                   ))}
@@ -289,29 +276,6 @@ async function AdminSOPReviewsContent({ locale, userId: _userId }: { locale: str
   );
 }
 
-// Client-side actions
-async function approveListing(listingId: string, locale: string) {
-  const res = await fetch(`/${locale}/dashboard/admin/sop-reviews/${listingId}/approve`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-  });
-  if (res.ok) {
-    window.location.reload();
-  }
-}
-
-async function rejectListing(listingId: string, locale: string) {
-  const reason = prompt('Rejection reason (optional):');
-  const res = await fetch(`/${locale}/dashboard/admin/sop-reviews/${listingId}/reject`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ reason: reason || 'Not approved by admin' }),
-  });
-  if (res.ok) {
-    window.location.reload();
-  }
-}
-
 function StatCard({
   title,
   value,
@@ -348,4 +312,4 @@ function StatCard({
   );
 }
 
-import { Clock, CheckCircle, FileText, Eye, Check, X } from 'lucide-react';
+import { Clock, CheckCircle, FileText, Eye } from 'lucide-react';
