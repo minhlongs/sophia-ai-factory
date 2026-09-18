@@ -109,3 +109,7 @@ sync-*.sh
 
 # Per-project agent memory (session artifacts, not source)
 .claude/projects/
+
+# Quality harness generated state & evidence
+scripts/harness/state/
+apps/sophia-ai-factory/plans/
