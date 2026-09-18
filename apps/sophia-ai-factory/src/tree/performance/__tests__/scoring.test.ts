@@ -13,6 +13,9 @@ import {
 
 // ─── Test fixtures ────────────────────────────────────────────────────────────
 
+const TEST_NOW = 1700000000000;
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
 const baseMetrics: PerformanceMetrics = {
   assetId: 'asset_test_1',
   workspaceId: 'ws_test_1',
@@ -31,8 +34,8 @@ const baseMetrics: PerformanceMetrics = {
   velocity: 0, // computed by scorer
   retention3s: 0.3,
   retention30s: 0.15,
-  windowStart: Date.now() - 7 * 24 * 60 * 60 * 1000,
-  windowEnd: Date.now(),
+  windowStart: TEST_NOW - SEVEN_DAYS_MS,
+  windowEnd: TEST_NOW,
   eventCount: 150,
 };
 
@@ -51,8 +54,8 @@ const highPerformingMetrics: PerformanceMetrics = {
   totalEngagements: 7500,
   engagementRate: 7500 / 45000, // ~0.1667
   retention3s: 0.6,
-  retention30s: 0.4,
-  eventCount: 500,
+  retention30s: 0.5,
+  eventCount: 700,
 };
 
 const lowPerformingMetrics: PerformanceMetrics = {
