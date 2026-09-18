@@ -36,7 +36,16 @@ export async function dispatchFinished(ipn: NowPaymentsIpnPayload): Promise<void
   const lookup = lookupInvoice(invoiceId)
 
   if (!lookup) {
-    logger.warn('[IPNDispatch] finished: unknown invoice_id', { invoiceId, paymentId: ipn.payment_id })
+    if (ipn.order_id) {
+      logger.info('[IPNDispatch] Dynamic invoice with order_id — routing to subscription handler', {
+        invoiceId,
+        orderId: ipn.order_id,
+        paymentId: ipn.payment_id,
+      })
+      await throwOnError(handleFinished(ipn))
+      return
+    }
+    logger.warn('[IPNDispatch] finished: unknown invoice_id and no order_id', { invoiceId, paymentId: ipn.payment_id })
     return
   }
 

@@ -321,7 +321,7 @@
   41:17  warning  Refactor this function to reduce its Cognitive Complexity from 27 to the 15 allowed  sonarjs/cognitive-complexity
 
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch/screens/auth/register-page.tsx
-  10:16  warning  Function 'RegisterPage' has too many lines (278). Maximum allowed is 200  max-lines-per-function
+  10:16  warning  Function 'RegisterPage' has too many lines (319). Maximum allowed is 200  max-lines-per-function
 
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch/screens/dashboard-overview/dashboard-overview.tsx
   102:16  warning  Function 'DashboardOverview' has too many lines (351). Maximum allowed is 200  max-lines-per-function
@@ -329,8 +329,11 @@
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch/screens/dashboard/playbook-page.tsx
   237:6  warning  React Hook useEffect has a missing dependency: 'load'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
 
+/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch/screens/landing-hero/landing-hero.tsx
+  32:16  warning  Function 'LandingHero' has too many lines (471). Maximum allowed is 200  max-lines-per-function
+
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/components/stitch/screens/login/login-form.tsx
-  13:8  warning  Function 'LoginForm' has too many lines (253). Maximum allowed is 200  max-lines-per-function
+  13:8  warning  Function 'LoginForm' has too many lines (255). Maximum allowed is 200  max-lines-per-function
 
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/components/support/support-ticket-modal.tsx
   24:17  warning  Refactor this function to reduce its Cognitive Complexity from 31 to the 15 allowed  sonarjs/cognitive-complexity
@@ -550,7 +553,7 @@
   105:23  warning  Refactor this function to reduce its Cognitive Complexity from 26 to the 15 allowed  sonarjs/cognitive-complexity
 
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/land/billing/tier-change-provisioner.ts
-  74:23  warning  Refactor this function to reduce its Cognitive Complexity from 23 to the 15 allowed  sonarjs/cognitive-complexity
+  74:23  warning  Refactor this function to reduce its Cognitive Complexity from 24 to the 15 allowed  sonarjs/cognitive-complexity
 
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/land/creative-mission/actions.ts
    15:3   warning  'verifyWorkspaceRole' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -599,7 +602,7 @@
   15:23  warning  Refactor this function to reduce its Cognitive Complexity from 30 to the 15 allowed  sonarjs/cognitive-complexity
 
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/middleware.ts
-  61:16  warning  Refactor this function to reduce its Cognitive Complexity from 36 to the 15 allowed  sonarjs/cognitive-complexity
+  68:16  warning  Refactor this function to reduce its Cognitive Complexity from 35 to the 15 allowed  sonarjs/cognitive-complexity
 
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/middleware/dashboard-pipeline.ts
   11:23  warning  Refactor this function to reduce its Cognitive Complexity from 16 to the 15 allowed  sonarjs/cognitive-complexity
@@ -655,11 +658,11 @@
   95:23  warning  Refactor this function to reduce its Cognitive Complexity from 17 to the 15 allowed  sonarjs/cognitive-complexity
 
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/db/local-d1-mock.ts
-   80:10  warning  Refactor this function to reduce its Cognitive Complexity from 26 to the 15 allowed  sonarjs/cognitive-complexity
-  120:1   warning  Blocks are nested too deeply (5). Maximum allowed is 4                               max-depth
-  121:1   warning  Blocks are nested too deeply (6). Maximum allowed is 4                               max-depth
-  123:1   warning  Blocks are nested too deeply (7). Maximum allowed is 4                               max-depth
-  129:1   warning  Blocks are nested too deeply (5). Maximum allowed is 4                               max-depth
+   83:10  warning  Refactor this function to reduce its Cognitive Complexity from 26 to the 15 allowed  sonarjs/cognitive-complexity
+  123:1   warning  Blocks are nested too deeply (5). Maximum allowed is 4                               max-depth
+  124:1   warning  Blocks are nested too deeply (6). Maximum allowed is 4                               max-depth
+  126:1   warning  Blocks are nested too deeply (7). Maximum allowed is 4                               max-depth
+  132:1   warning  Blocks are nested too deeply (5). Maximum allowed is 4                               max-depth
 
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/seed/db/node-sqlite-d1.ts
   210:17  warning  Refactor this function to reduce its Cognitive Complexity from 22 to the 15 allowed  sonarjs/cognitive-complexity
@@ -810,5 +813,5 @@
 /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/workers/health-worker.ts
   32:9  warning  Refactor this function to reduce its Cognitive Complexity from 29 to the 15 allowed  sonarjs/cognitive-complexity
 
-✖ 331 problems (0 errors, 331 warnings)
+✖ 332 problems (0 errors, 332 warnings)
   0 errors and 24 warnings potentially fixable with the `--fix` option.

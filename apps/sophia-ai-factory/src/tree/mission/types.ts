@@ -41,15 +41,17 @@ export function newMissionId(): string {
 // ── Lifecycle transitions ─────────────────────────────────────────────────────
 
 const NEXT_STATUS: Record<CreativeMissionStatus, CreativeMissionStatus[]> = {
-  draft: ['planned'],
-  planned: ['approval_required'],
-  approval_required: ['running'],
-  running: ['paused', 'review', 'completed'],
-  paused: ['running', 'review'],
-  review: ['completed', 'iterating'],
+  draft: ['planned', 'cancelled'],
+  planned: ['approval_required', 'cancelled'],
+  approval_required: ['running', 'cancelled'],
+  running: ['paused', 'review', 'completed', 'failed', 'cancelled'],
+  paused: ['running', 'review', 'failed', 'cancelled'],
+  review: ['completed', 'iterating', 'failed', 'cancelled'],
   completed: ['learning'],
   learning: ['iterating'],
-  iterating: ['draft', 'planned', 'running'],
+  iterating: ['draft', 'planned', 'running', 'cancelled'],
+  failed: ['draft', 'planned', 'running'],
+  cancelled: ['draft'],
 };
 
 export function canTransition(from: CreativeMissionStatus, to: CreativeMissionStatus): boolean {

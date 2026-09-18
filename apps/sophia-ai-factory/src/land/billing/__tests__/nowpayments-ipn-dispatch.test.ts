@@ -160,13 +160,24 @@ describe('dispatchFinished — subscription + one-time routing', () => {
 
   // ─── Edge Cases (11-14): Finished ──────────────────────────────────────────
 
-  it('case 11: unknown invoice_id → log warn, no handler call', async () => {
-    const payload = buildIpnPayload({ invoice_id: 'unknown_9999999999' })
+  it('case 11: unknown invoice_id with no order_id → log warn, no handler call', async () => {
+    const payload = buildIpnPayload({ invoice_id: 'unknown_9999999999', order_id: undefined })
     vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(null)
 
     await dispatchFinished(payload)
 
     expect(subscriptionHandler.handleFinished).not.toHaveBeenCalled()
+    expect(oneTimeHandler.handleOneTimeFinished).not.toHaveBeenCalled()
+  })
+
+  it('case 11b: dynamic SDK checkout with unknown invoice_id but valid order_id → dispatches to subscription handler', async () => {
+    const payload = buildIpnPayload({ invoice_id: 'dynamic_sdk_99999', order_id: 'sophia_user1_1234567890' })
+    vi.mocked(nowpaymentsClient.lookupInvoice).mockReturnValue(null)
+    vi.mocked(subscriptionHandler.handleFinished).mockResolvedValue({ ok: true, value: undefined })
+
+    await dispatchFinished(payload)
+
+    expect(subscriptionHandler.handleFinished).toHaveBeenCalledWith(payload)
     expect(oneTimeHandler.handleOneTimeFinished).not.toHaveBeenCalled()
   })
 

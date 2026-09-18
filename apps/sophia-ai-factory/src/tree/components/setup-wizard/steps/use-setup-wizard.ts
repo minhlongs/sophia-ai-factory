@@ -16,11 +16,11 @@ export const KEY_TO_PROVIDER: Record<string, string> = {
 
 export function useSetupWizard() {
   const t = useTranslations('setupWizard');
-  const [accountEmail, setAccountEmail] = useState('ceo@sophia.agency');
-  const [isOwner, setIsOwner] = useState(true);
-  const [currentTier, setCurrentTier] = useState<TierType>('PREMIUM');
+  const [accountEmail, setAccountEmail] = useState('');
+  const [isOwner, setIsOwner] = useState(false);
+  const [currentTier, setCurrentTier] = useState<TierType>('BASIC');
   const [mcuBalance, setMcuBalance] = useState<number | undefined>(undefined);
-  const [subscriptionStatus, setSubscriptionStatus] = useState('ACTIVE');
+  const [subscriptionStatus, setSubscriptionStatus] = useState('PENDING');
   const [savedProviders, setSavedProviders] = useState<string[]>([]);
   const [revokingProvider, setRevokingProvider] = useState<string | null>(null);
 

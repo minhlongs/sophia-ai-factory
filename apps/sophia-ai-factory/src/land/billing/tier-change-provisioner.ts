@@ -82,6 +82,16 @@ export async function provisionTierChange(params: {
   const isDowngrade = TIER_RANK[targetTier] < TIER_RANK[currentTier]
   const eventType = isDowngrade ? 'downgrade' : 'upgrade'
 
+  if (!isDowngrade) {
+    logger.warn('[TierProvisioner] Direct upgrade blocked: requires verified payment fulfillment', {
+      userId,
+      orgId,
+      currentTier,
+      targetTier,
+    });
+    return { success: false, error: 'upgrade_requires_payment' };
+  }
+
   const _db = await getD1();
   if (!_db) throw new Error('D1 database binding not available');
   const db = _db;

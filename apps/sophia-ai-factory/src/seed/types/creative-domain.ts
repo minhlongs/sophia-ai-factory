@@ -485,7 +485,9 @@ export type CreativeMissionStatus =
   | 'review'
   | 'completed'
   | 'learning'
-  | 'iterating';
+  | 'iterating'
+  | 'failed'
+  | 'cancelled';
 
 export interface Mission {
   id: string;

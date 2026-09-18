@@ -15,16 +15,8 @@ START_MS=$(date +%s%N)
 
 DB_NAME="sophia-raas-db"
 
-# Count pending migrations
-PENDING_COUNT=$(npx wrangler d1 migrations list "$DB_NAME" --json 2>/dev/null | python3 -c "
-import json, sys
-try:
-  data = json.load(sys.stdin)
-  pending = [m for m in data if not m.get('applied_at')]
-  print(len(pending))
-except Exception:
-  print('0')
-" 2>/dev/null || echo "0")
+# Count pending migrations from wrangler d1 migrations list output
+PENDING_COUNT=$(npx wrangler d1 migrations list "$DB_NAME" --config wrangler.toml --remote 2>/dev/null | grep -E '^[│|][[:space:]]*[0-9]+' | wc -l | tr -d ' ' || echo "0")
 
 END_MS=$(date +%s%N)
 DURATION=$(( (END_MS - START_MS) / 1000000 ))

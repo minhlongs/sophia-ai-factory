@@ -66,6 +66,24 @@ export async function changeTierAction(
       return { success: false, error: 'already_on_tier' };
     }
 
+    const TIER_RANK: Record<Tier, number> = {
+      BASIC: 1,
+      PREMIUM: 2,
+      ENTERPRISE: 3,
+      MASTER: 4,
+    };
+
+    // Upgrades require payment checkout — never a free server action write.
+    const isUpgrade = (TIER_RANK[targetTier] ?? 0) > (TIER_RANK[currentTier] ?? 0);
+    if (isUpgrade) {
+      logger.warn('[changeTierAction] Upgrade rejected: payment checkout required', {
+        userId: user.id,
+        currentTier,
+        targetTier,
+      });
+      return { success: false, error: 'upgrade_requires_payment' };
+    }
+
     // Resolve org membership
     const db = createServerClient();
     const orgId = await resolveOrgId(user.id, db);

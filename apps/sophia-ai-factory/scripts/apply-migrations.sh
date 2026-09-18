@@ -288,6 +288,12 @@ for m in $MIGRATIONS; do
 
   APPLIED_COUNT=$((APPLIED_COUNT + 1))
 
+  # Record applied migration into d1_migrations ledger (idempotent tracking)
+  npx wrangler d1 execute "$DB_NAME" \
+    --config "$WRANGLER_CONFIG" \
+    "${WRANGLER_SCOPE_ARGS[@]}" \
+    --command "INSERT OR IGNORE INTO d1_migrations (name, applied_at) VALUES ('${MIGRATION_NAME}', CURRENT_TIMESTAMP);" 2>/dev/null || true
+
   # Post-flight schema verification
   for entry in "${VERIFY_AFTER[@]}"; do
     v_name="${entry%%|*}"

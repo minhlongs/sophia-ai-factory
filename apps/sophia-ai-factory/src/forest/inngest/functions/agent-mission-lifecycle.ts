@@ -62,3 +62,24 @@ export async function advanceMissionToReview(missionId: string): Promise<{ advan
     return { advanced: false };
   }
 }
+
+/**
+ * Mark a mission as 'failed' in D1 when execution permanently fails.
+ *
+ * Non-fatal by design: logs rejection/swallows so caller handles terminal failure.
+ */
+export async function markMissionFailed(missionId: string, error?: string): Promise<{ marked: boolean }> {
+  try {
+    await updateMissionStatus(missionId, 'failed', 'failed');
+    return { marked: true };
+  } catch (err) {
+    if (!(err instanceof MissionError)) throw err;
+    logger.warn('agentMissionLifecycle: mark-mission-failed rejected (non-fatal)', {
+      missionId,
+      code: err.code,
+      message: err.message,
+      cause: error,
+    });
+    return { marked: false };
+  }
+}

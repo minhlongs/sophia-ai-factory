@@ -41,7 +41,8 @@ export default function ChangeTierClient({ currentTier }: { currentTier: Tier })
     if (isDowngrade(selectedTier)) {
       setConfirmOpen(true);
     } else {
-      void submit(selectedTier, timing);
+      // Upgrades require payment checkout
+      window.location.href = `/api/checkout?tier=${selectedTier.toLowerCase()}`;
     }
   }
 
@@ -58,6 +59,8 @@ export default function ChangeTierClient({ currentTier }: { currentTier: Tier })
         creditCents: result.creditCents,
         effectiveAt: result.effectiveAt,
       });
+    } else if (result.error === 'upgrade_requires_payment') {
+      window.location.href = `/api/checkout?tier=${tier.toLowerCase()}`;
     } else if (result.error === 'already_on_tier') {
       setSubmitState({ status: 'error', message: t('error_already_on_tier') });
     } else if (result.error === 'no_active_subscription') {

@@ -152,6 +152,19 @@ async function cancelExhaustedRun(
     .bind(errorJson, Math.floor(nowMs / 1000), run.id)
     .run();
   if (updated.meta.changes === 0) return false; // picked up by another scan
+
+  if (run.missionId) {
+    try {
+      const { markMissionFailed } = await import('./agent-mission-lifecycle');
+      await markMissionFailed(run.missionId, 'RETRIES_EXHAUSTED');
+    } catch (missionErr) {
+      logger.warn('agentRollbackCron: failed to mark mission failed', {
+        missionId: run.missionId,
+        error: String(missionErr),
+      });
+    }
+  }
+
   logger.info('agentRollbackCron: retries exhausted, run cancelled', {
     runId: run.id,
     retryCount: run.retryCount,
