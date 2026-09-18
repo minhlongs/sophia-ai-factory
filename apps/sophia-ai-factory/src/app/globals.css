@@ -5,277 +5,271 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   "Saigon Factory" Design System
-   1960s Saigon print shop × modern AI automation
-   Warm amber + deep indigo + cream paper tones
+   "Obsidian Cyber-Glass" Design System
+   Sleek AI Automation Platform — Deep Obsidian × Electric Indigo × Cyber Amber
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
   /* ── Surface ─────────────────────────────────────────────────────────── */
-  --background: 40 30% 97%;           /* warm cream paper */
-  --foreground: 240 12% 12%;          /* deep indigo ink */
-  --background-secondary: 40 25% 93%; /* slightly darker cream */
+  --background: 240 18% 4%;            /* #08090D — deep obsidian */
+  --foreground: 210 20% 98%;           /* #F8FAFC — crisp white */
+  --background-secondary: 240 16% 7%;  /* #0E1017 — deep slate */
 
-  --card: 40 20% 99%;                 /* crisp paper white */
-  --card-foreground: 240 12% 12%;
+  --card: 240 16% 9%;                  /* #12141F — obsidian card */
+  --card-foreground: 210 20% 98%;
 
-  --popover: 40 20% 99%;
-  --popover-foreground: 240 12% 12%;
+  --popover: 240 16% 9%;
+  --popover-foreground: 210 20% 98%;
 
   /* ── Brand ────────────────────────────────────────────────────────────── */
-  --primary: 35 80% 44%;              /* warm amber gold */
+  --primary: 246 80% 64%;              /* #6366F1 — electric indigo */
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 18 40% 48%;            /* terracotta */
+  --secondary: 260 70% 65%;            /* #A855F7 — vibrant violet */
   --secondary-foreground: 0 0% 100%;
 
-  --muted: 40 20% 94%;                /* muted cream */
-  --muted-foreground: 240 8% 38%;     /* muted indigo */
+  --muted: 240 14% 12%;                /* #1A1C28 — muted slate */
+  --muted-foreground: 215 16% 65%;     /* #94A3B8 — soft slate text */
 
-  --accent: 35 60% 50%;               /* lighter amber for hover */
+  --accent: 38 92% 50%;                /* #F59E0B — cyber amber */
   --accent-foreground: 0 0% 100%;
 
   /* ── Feedback ─────────────────────────────────────────────────────────── */
-  --destructive: 0 68% 42%;           /* red ochre — WCAG AA on cream */
+  --destructive: 350 89% 60%;          /* #F43F5E — crimson rose */
   --destructive-foreground: 0 0% 100%;
 
   /* ── Borders ──────────────────────────────────────────────────────────── */
-  --border: 35 18% 82%;               /* warm tan border */
-  --input: 35 18% 82%;
-  --ring: 35 70% 40%;                 /* amber focus ring */
+  --border: 240 14% 16%;               /* #222536 — subtle dark border */
+  --input: 240 14% 16%;
+  --ring: 246 80% 64%;                 /* indigo focus ring */
 
   /* ── Radius ───────────────────────────────────────────────────────────── */
-  --radius: 0.375rem;                 /* industrial — sharper than default 0.5rem */
+  --radius: 0.75rem;                  /* 12px — sleek modern curves */
 
-  /* ── Material Design 3 bridge tokens (keep for Stitch compat) ─────────── */
-  --primary-container: 35 70% 88%;
-  --on-primary-container: 240 12% 16%;
-  --secondary-container: 18 35% 90%;
-  --on-secondary-container: 240 12% 16%;
-  --tertiary: 200 30% 35%;
-  --tertiary-container: 200 30% 88%;
+  /* ── Material Design 3 bridge tokens ──────────────────────────────────── */
+  --primary-container: 246 60% 25%;
+  --on-primary-container: 246 100% 92%;
+  --secondary-container: 260 50% 25%;
+  --on-secondary-container: 260 100% 92%;
+  --tertiary: 185 85% 48%;
+  --tertiary-container: 185 60% 20%;
   --on-tertiary: 0 0% 100%;
-  --on-tertiary-container: 200 30% 16%;
+  --on-tertiary-container: 185 100% 90%;
   --surface-container: var(--card);
-  --surface-container-lowest: var(--card);
+  --surface-container-lowest: 240 18% 4%;
   --surface-container-low: var(--muted);
-  --surface-container-high: var(--muted);
-  --surface-container-highest: var(--muted);
+  --surface-container-high: 240 14% 14%;
+  --surface-container-highest: 240 14% 16%;
   --surface-bright: var(--background-secondary);
   --surface-dim: var(--muted);
   --surface-variant: var(--muted);
-  --inverse-surface: 240 12% 14%;
-  --inverse-primary: 35 70% 50%;
+  --inverse-surface: 210 20% 98%;
+  --inverse-primary: 246 80% 64%;
   --outline: var(--border);
-  --outline-variant: var(--border);
+  --outline-variant: 240 14% 14%;
   --error-container: var(--destructive);
   --on-error-container: var(--destructive-foreground);
 
-  /* ── Primary color scale (amber) ──────────────────────────────────────── */
-  --primary-50: 35 85% 96%;
-  --primary-100: 35 80% 90%;
-  --primary-200: 35 78% 78%;
-  --primary-300: 35 78% 62%;
-  --primary-400: 35 78% 50%;
-  --primary-500: 35 80% 44%;
-  --primary-600: 35 82% 36%;
-  --primary-700: 35 82% 26%;
-  --primary-800: 35 82% 18%;
-  --primary-900: 35 82% 12%;
+  /* ── Primary color scale (indigo) ─────────────────────────────────────── */
+  --primary-50: 246 95% 97%;
+  --primary-100: 246 90% 93%;
+  --primary-200: 246 88% 85%;
+  --primary-300: 246 84% 75%;
+  --primary-400: 246 82% 67%;
+  --primary-500: 246 80% 60%;
+  --primary-600: 246 80% 50%;
+  --primary-700: 246 80% 40%;
+  --primary-800: 246 80% 28%;
+  --primary-900: 246 80% 16%;
 
-  /* ── Accent color scale (indigo) ──────────────────────────────────────── */
-  --accent-50: 240 25% 96%;
-  --accent-100: 240 22% 90%;
-  --accent-200: 240 20% 80%;
-  --accent-300: 240 18% 64%;
-  --accent-400: 240 18% 48%;
-  --accent-500: 240 20% 40%;
-  --accent-600: 240 22% 32%;
-  --accent-700: 240 22% 22%;
-  --accent-800: 240 22% 15%;
-  --accent-900: 240 22% 10%;
+  /* ── Accent color scale (amber) ───────────────────────────────────────── */
+  --accent-50: 38 95% 97%;
+  --accent-100: 38 90% 92%;
+  --accent-200: 38 88% 82%;
+  --accent-300: 38 88% 70%;
+  --accent-400: 38 90% 58%;
+  --accent-500: 38 92% 50%;
+  --accent-600: 38 92% 42%;
+  --accent-700: 38 92% 32%;
+  --accent-800: 38 92% 22%;
+  --accent-900: 38 92% 14%;
 
-  /* ── Violet color scale (repurposed as warm plum) ─────────────────────── */
-  --violet-50: 300 25% 96%;
-  --violet-100: 300 22% 90%;
-  --violet-200: 300 20% 80%;
-  --violet-300: 300 25% 64%;
-  --violet-400: 300 25% 48%;
-  --violet-500: 300 28% 40%;
-  --violet-600: 300 28% 32%;
-  --violet-700: 300 28% 22%;
-  --violet-800: 300 28% 15%;
-  --violet-900: 300 28% 10%;
-  --violet-950: 300 28% 7%;
+  /* ── Violet color scale ──────────────────────────────────────────────── */
+  --violet-50: 260 95% 97%;
+  --violet-100: 260 90% 93%;
+  --violet-200: 260 88% 85%;
+  --violet-300: 260 84% 75%;
+  --violet-400: 260 80% 67%;
+  --violet-500: 260 75% 60%;
+  --violet-600: 260 75% 50%;
+  --violet-700: 260 75% 40%;
+  --violet-800: 260 75% 28%;
+  --violet-900: 260 75% 16%;
+  --violet-950: 260 75% 10%;
 
   /* ── Emerald color scale ──────────────────────────────────────────────── */
-  --emerald-50: 160 60% 96%;
-  --emerald-100: 160 55% 90%;
-  --emerald-200: 160 55% 78%;
-  --emerald-300: 160 58% 60%;
-  --emerald-400: 160 60% 45%;
-  --emerald-500: 160 62% 36%;
-  --emerald-600: 160 62% 28%;
-  --emerald-700: 160 62% 20%;
-  --emerald-800: 160 62% 14%;
-  --emerald-900: 160 62% 10%;
-  --emerald-950: 160 62% 7%;
+  --emerald-50: 160 85% 96%;
+  --emerald-100: 160 80% 90%;
+  --emerald-200: 160 78% 78%;
+  --emerald-300: 160 75% 62%;
+  --emerald-400: 160 70% 50%;
+  --emerald-500: 160 75% 42%;
+  --emerald-600: 160 75% 34%;
+  --emerald-700: 160 75% 26%;
+  --emerald-800: 160 75% 18%;
+  --emerald-900: 160 75% 12%;
+  --emerald-950: 160 75% 8%;
 
   /* ── Amber color scale ────────────────────────────────────────────────── */
-  --amber-50: 38 85% 96%;
-  --amber-100: 38 80% 90%;
-  --amber-200: 38 78% 78%;
-  --amber-300: 38 78% 60%;
-  --amber-400: 38 78% 50%;
-  --amber-500: 38 80% 42%;
-  --amber-600: 38 82% 34%;
-  --amber-700: 38 82% 24%;
-  --amber-800: 38 82% 16%;
-  --amber-900: 38 82% 10%;
-  --amber-950: 38 82% 7%;
+  --amber-50: 38 95% 96%;
+  --amber-100: 38 90% 90%;
+  --amber-200: 38 88% 80%;
+  --amber-300: 38 88% 66%;
+  --amber-400: 38 90% 54%;
+  --amber-500: 38 92% 46%;
+  --amber-600: 38 92% 38%;
+  --amber-700: 38 92% 28%;
+  --amber-800: 38 92% 18%;
+  --amber-900: 38 92% 12%;
+  --amber-950: 38 92% 8%;
 
   /* ── Chart Colors ─────────────────────────────────────────────────────── */
-  --chart-1: #c4872e;   /* amber */
-  --chart-2: #2d4a6e;   /* indigo */
-  --chart-3: #c45a3e;   /* terracotta */
-  --chart-4: #4a8c6f;   /* emerald */
-  --chart-5: #8b6b4a;   /* warm brown */
+  --chart-1: #6366F1;   /* electric indigo */
+  --chart-2: #A855F7;   /* violet */
+  --chart-3: #F59E0B;   /* cyber amber */
+  --chart-4: #10B981;   /* emerald */
+  --chart-5: #06B6D4;   /* cyan */
 
   /* ── Legacy bridge tokens ─────────────────────────────────────────────── */
-  --neon-cyan: #c4872e;
-  --neon-cyan-hsl: 35 60% 48%;
-  --neon-purple: #4a3880;
-  --neon-purple-hsl: 255 40% 36%;
-  --neon-pink: #c45a3e;
-  --neon-pink-hsl: 18 55% 50%;
+  --neon-cyan: #06B6D4;
+  --neon-cyan-hsl: 185 85% 48%;
+  --neon-purple: #8B5CF6;
+  --neon-purple-hsl: 260 75% 60%;
+  --neon-pink: #EC4899;
+  --neon-pink-hsl: 330 80% 60%;
 
   /* ── Atmosphere ───────────────────────────────────────────────────────── */
-  --gradient-space: linear-gradient(135deg, #faf7f2 0%, #f0ebe0 100%);
-  --gradient-neon: linear-gradient(135deg, #c4872e 0%, #4a3880 100%);
-  --glass-bg: rgba(250, 247, 242, 0.75);
-  --glass-border: rgba(0, 0, 0, 0.08);
+  --gradient-space: radial-gradient(ellipse at 50% -20%, rgba(99, 102, 241, 0.18) 0%, rgba(168, 85, 247, 0.08) 50%, rgba(8, 9, 13, 0) 100%);
+  --gradient-neon: linear-gradient(135deg, #6366F1 0%, #A855F7 50%, #F59E0B 100%);
+  --glass-bg: rgba(18, 20, 31, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
 }
 
 .dark {
   /* ── Surface ─────────────────────────────────────────────────────────── */
-  --background: 240 13% 6%;             /* #0e0e12 — Stitch Indigo Dark */
-  --foreground: 255 29% 92%;            /* #e7e4f0 */
-  --background-secondary: 240 12% 11%;  /* #191920 */
+  --background: 240 18% 4%;             /* #08090D */
+  --foreground: 210 20% 98%;            /* #F8FAFC */
+  --background-secondary: 240 16% 7%;   /* #0E1017 */
 
-  --card: 240 12% 11%;                  /* #191920 */
-  --card-foreground: 255 29% 92%;
+  --card: 240 16% 9%;                   /* #12141F */
+  --card-foreground: 210 20% 98%;
 
-  --popover: 240 12% 11%;
-  --popover-foreground: 255 29% 92%;
+  --secondary: 260 70% 65%;             /* #A855F7 */
+  --secondary-foreground: 0 0% 100%;
 
-  
-  --secondary: 245 27% 82%;             /* #c6c4dd */
-  --secondary-foreground: 240 14% 28%;  /* #3e3e52 */
+  --muted: 240 14% 12%;                 /* #1A1C28 */
+  --muted-foreground: 215 16% 65%;      /* #94A3B8 */
 
-  --muted: 240 12% 8%;                  /* #131318 */
-  --muted-foreground: 251 7% 69%;       /* #acaab5 */
-
-  --accent: 240 56% 85%;
-  --accent-foreground: 238 24% 31%;
+  --accent: 38 92% 50%;                 /* #F59E0B */
+  --accent-foreground: 0 0% 100%;
 
   /* ── Feedback ─────────────────────────────────────────────────────────── */
-  --destructive: 351 92% 71%;           /* #f97386 */
-  --destructive-foreground: 344 100% 14%; /* #490013 */
+  --destructive: 350 89% 60%;           /* #F43F5E */
+  --destructive-foreground: 0 0% 100%;
 
   /* ── Borders ──────────────────────────────────────────────────────────── */
-  --border: 247 6% 30%;                 /* #484750 */
-  --input: 247 6% 30%;
-  --ring: 35 70% 40%;                 /* amber — matches primary (#b8860b) */
+  --border: 240 14% 16%;                /* #222536 */
+  --input: 240 14% 16%;
+  --ring: 246 80% 64%;                  /* #6366F1 */
 
   /* ── MD3 bridge ───────────────────────────────────────────────────────── */
-  --primary-container: 238 20% 38%;      /* #4e4f74 */
-  --on-primary-container: 244 100% 94%;  /* #e2e0ff */
-  --secondary-container: 237 15% 26%;    /* #393a4d */
-  --on-secondary-container: 242 22% 79%; /* #bebdd5 */
+  --primary-container: 246 60% 25%;
+  --on-primary-container: 246 100% 92%;
+  --secondary-container: 260 50% 25%;
+  --on-secondary-container: 260 100% 92%;
 
-  /* ── Primary scale (gold, dark mode) ──────────────────────────────────── */
-  --primary-50: 38 70% 8%;
-  --primary-100: 38 68% 12%;
-  --primary-200: 38 68% 18%;
-  --primary-300: 38 70% 28%;
-  --primary-400: 38 72% 40%;
-  --primary-500: 38 75% 50%;
-  --primary-600: 38 78% 58%;
-  --primary-700: 38 78% 70%;
-  --primary-800: 38 78% 82%;
-  --primary-900: 38 78% 92%;
+  /* ── Primary scale (indigo, dark mode) ────────────────────────────────── */
+  --primary-50: 246 95% 97%;
+  --primary-100: 246 90% 93%;
+  --primary-200: 246 88% 85%;
+  --primary-300: 246 84% 75%;
+  --primary-400: 246 82% 67%;
+  --primary-500: 246 80% 60%;
+  --primary-600: 246 80% 50%;
+  --primary-700: 246 80% 40%;
+  --primary-800: 246 80% 28%;
+  --primary-900: 246 80% 16%;
 
-  /* ── Accent scale (indigo, dark mode) ─────────────────────────────────── */
-  --accent-50: 240 18% 8%;
-  --accent-100: 240 16% 12%;
-  --accent-200: 240 16% 18%;
-  --accent-300: 240 16% 28%;
-  --accent-400: 240 16% 40%;
-  --accent-500: 240 16% 50%;
-  --accent-600: 240 16% 58%;
-  --accent-700: 240 16% 70%;
-  --accent-800: 240 16% 82%;
-  --accent-900: 240 16% 92%;
+  /* ── Accent scale (amber, dark mode) ──────────────────────────────────── */
+  --accent-50: 38 95% 97%;
+  --accent-100: 38 90% 92%;
+  --accent-200: 38 88% 82%;
+  --accent-300: 38 88% 70%;
+  --accent-400: 38 90% 58%;
+  --accent-500: 38 92% 50%;
+  --accent-600: 38 92% 42%;
+  --accent-700: 38 92% 32%;
+  --accent-800: 38 92% 22%;
+  --accent-900: 38 92% 14%;
 
-  /* ── Violet (plum) dark ───────────────────────────────────────────────── */
-  --violet-50: 300 20% 8%;
-  --violet-100: 300 18% 12%;
-  --violet-200: 300 18% 18%;
-  --violet-300: 300 20% 28%;
-  --violet-400: 300 20% 40%;
-  --violet-500: 300 22% 48%;
-  --violet-600: 300 22% 56%;
-  --violet-700: 300 22% 68%;
-  --violet-800: 300 22% 80%;
-  --violet-900: 300 22% 90%;
-  --violet-950: 300 22% 94%;
+  /* ── Violet dark ──────────────────────────────────────────────────────── */
+  --violet-50: 260 95% 97%;
+  --violet-100: 260 90% 93%;
+  --violet-200: 260 88% 85%;
+  --violet-300: 260 84% 75%;
+  --violet-400: 260 80% 67%;
+  --violet-500: 260 75% 60%;
+  --violet-600: 260 75% 50%;
+  --violet-700: 260 75% 40%;
+  --violet-800: 260 75% 28%;
+  --violet-900: 260 75% 16%;
+  --violet-950: 260 75% 10%;
 
   /* ── Emerald dark ─────────────────────────────────────────────────────── */
-  --emerald-50: 160 50% 6%;
-  --emerald-100: 160 48% 10%;
-  --emerald-200: 160 48% 16%;
-  --emerald-300: 160 50% 24%;
-  --emerald-400: 160 50% 36%;
-  --emerald-500: 160 52% 46%;
-  --emerald-600: 160 52% 54%;
-  --emerald-700: 160 52% 66%;
-  --emerald-800: 160 52% 78%;
-  --emerald-900: 160 52% 88%;
-  --emerald-950: 160 52% 94%;
+  --emerald-50: 160 85% 96%;
+  --emerald-100: 160 80% 90%;
+  --emerald-200: 160 78% 78%;
+  --emerald-300: 160 75% 62%;
+  --emerald-400: 160 70% 50%;
+  --emerald-500: 160 75% 42%;
+  --emerald-600: 160 75% 34%;
+  --emerald-700: 160 75% 26%;
+  --emerald-800: 160 75% 18%;
+  --emerald-900: 160 75% 12%;
+  --emerald-950: 160 75% 8%;
 
   /* ── Amber dark ───────────────────────────────────────────────────────── */
-  --amber-50: 35 70% 6%;
-  --amber-100: 35 68% 10%;
-  --amber-200: 35 68% 16%;
-  --amber-300: 35 70% 24%;
-  --amber-400: 35 72% 38%;
-  --amber-500: 35 75% 48%;
-  --amber-600: 35 78% 56%;
-  --amber-700: 35 78% 68%;
-  --amber-800: 35 78% 80%;
-  --amber-900: 35 78% 90%;
-  --amber-950: 35 78% 94%;
+  --amber-50: 38 95% 96%;
+  --amber-100: 38 90% 90%;
+  --amber-200: 38 88% 80%;
+  --amber-300: 38 88% 66%;
+  --amber-400: 38 90% 54%;
+  --amber-500: 38 92% 46%;
+  --amber-600: 38 92% 38%;
+  --amber-700: 38 92% 28%;
+  --amber-800: 38 92% 18%;
+  --amber-900: 38 92% 12%;
+  --amber-950: 38 92% 8%;
 
   /* ── Chart dark ───────────────────────────────────────────────────────── */
-  --chart-1: #e0a84c;
-  --chart-2: #5a8ab5;
-  --chart-3: #d4846a;
-  --chart-4: #6aad8a;
-  --chart-5: #b8946a;
+  --chart-1: #6366F1;
+  --chart-2: #A855F7;
+  --chart-3: #F59E0B;
+  --chart-4: #10B981;
+  --chart-5: #06B6D4;
 
   /* ── Legacy bridge ────────────────────────────────────────────────────── */
-  --neon-cyan: #e0a84c;
-  --neon-cyan-hsl: 38 70% 59%;
-  --neon-purple: #6a5aaa;
-  --neon-purple-hsl: 255 35% 50%;
-  --neon-pink: #d4846a;
-  --neon-pink-hsl: 18 50% 62%;
-
+  --neon-cyan: #06B6D4;
+  --neon-cyan-hsl: 185 85% 48%;
+  --neon-purple: #8B5CF6;
+  --neon-purple-hsl: 260 75% 60%;
+  --neon-pink: #EC4899;
+  --neon-pink-hsl: 330 80% 60%;
 
   /* ── Atmosphere dark ──────────────────────────────────────────────────── */
-  --gradient-space: linear-gradient(135deg, #0d0d1a 0%, #12121f 100%);
-  --gradient-neon: linear-gradient(135deg, #e0a84c 0%, #6a5aaa 100%);
-  --glass-bg: rgba(13, 13, 26, 0.75);
+  --gradient-space: radial-gradient(ellipse at 50% -20%, rgba(99, 102, 241, 0.18) 0%, rgba(168, 85, 247, 0.08) 50%, rgba(8, 9, 13, 0) 100%);
+  --gradient-neon: linear-gradient(135deg, #6366F1 0%, #A855F7 50%, #F59E0B 100%);
+  --glass-bg: rgba(18, 20, 31, 0.75);
   --glass-border: rgba(255, 255, 255, 0.08);
 }
 
@@ -383,7 +377,7 @@
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', var(--font-dm-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -394,44 +388,83 @@ html {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   "Saigon Factory" Signature Effects
+   Obsidian Cyber-Glass Signature Utilities
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Letterpress / stamped card effect */
-.card-letterpress {
-  box-shadow:
-    inset 0 1px 0 0 hsl(var(--border)),
-    0 1px 3px 0 rgba(0, 0, 0, 0.06);
-  transition: box-shadow 0.25s ease;
-}
-.card-letterpress:hover {
-  box-shadow:
-    inset 0 1px 0 0 hsl(var(--primary) / 0.3),
-    0 4px 12px 0 rgba(0, 0, 0, 0.08);
+/* Ultra-sleek glass panel */
+.glass-panel {
+  background: rgba(18, 20, 31, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Industrial divider — thick line with notch */
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-panel-hover:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 12px 32px -8px rgba(99, 102, 241, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Card glass / letterpress compatibility */
+.card-letterpress, .glass-card {
+  background: rgba(18, 20, 31, 0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.35);
+  transition: all 0.3s ease;
+}
+.card-letterpress:hover, .glass-card:hover {
+  border-color: rgba(99, 102, 241, 0.35);
+  box-shadow: 0 8px 30px -4px rgba(99, 102, 241, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Modern glow accents */
+.glow-primary {
+  box-shadow: 0 0 32px -4px rgba(99, 102, 241, 0.35);
+}
+.glow-amber {
+  box-shadow: 0 0 32px -4px rgba(245, 158, 11, 0.3);
+}
+
+/* High-tech text gradients */
+.text-gradient {
+  background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 50%, #94A3B8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.text-gradient-primary {
+  background: linear-gradient(135deg, #818CF8 0%, #C084FC 50%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Subtle tech divider */
 .divider-industrial {
   position: relative;
   height: 1px;
-  background: hsl(var(--border));
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12) 50%, transparent);
   margin: 2rem 0;
 }
 .divider-industrial::after {
-  content: '◆';
+  content: '✦';
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   background: hsl(var(--background));
   padding: 0 0.75rem;
-  font-size: 0.5rem;
-  color: hsl(var(--muted-foreground));
+  font-size: 0.65rem;
+  color: hsl(var(--primary));
 }
 
-/* Paper texture overlay (subtle noise) */
 .bg-paper {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

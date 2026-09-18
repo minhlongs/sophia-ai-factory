@@ -6,7 +6,7 @@ export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
 
   return (
     <main
-      className="min-h-screen flex flex-col items-center justify-center bg-[#0F0F11] p-6 antialiased"
+      className="min-h-screen flex flex-col items-center justify-center bg-[#08090D] p-6 antialiased relative"
       data-testid="login-page"
     >
       {/* Ambient background accent */}
@@ -14,22 +14,22 @@ export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
         className="fixed inset-0 pointer-events-none overflow-hidden"
         aria-hidden="true"
       >
-        <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-indigo-500/5 rounded-full blur-[120px]" />
-        <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-indigo-500/5 rounded-full blur-[120px]" />
+        <div className="absolute -top-[10%] -left-[10%] w-[45%] h-[45%] bg-indigo-600/10 rounded-full blur-[140px]" />
+        <div className="absolute -bottom-[10%] -right-[10%] w-[45%] h-[45%] bg-purple-600/10 rounded-full blur-[140px]" />
       </div>
 
       <div className="w-full max-w-[440px] relative z-10">
-        {/* Stitch card — indigo-dark theme */}
+        {/* Stitch card — Obsidian Cyber-Glass */}
         <div
-          className="rounded-[12px] border border-zinc-800 bg-[#18181B] p-8 md:p-10 shadow-2xl transition-all duration-500 hover:shadow-indigo-900/10"
+          className="rounded-2xl border border-white/10 bg-[#12141F]/90 p-8 md:p-10 shadow-2xl shadow-indigo-950/40 backdrop-blur-xl transition-all duration-500"
           aria-label={t('title')}
         >
           {/* Logo + Header */}
           <div className="flex flex-col items-center mb-8">
             {/* Brand icon */}
-            <div className="w-10 h-10 mb-6 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <div className="w-12 h-12 mb-6 rounded-2xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-violet-600 flex items-center justify-center shadow-xl shadow-indigo-500/25">
               <svg
-                className="w-5 h-5 text-white"
+                className="w-6 h-6 text-white"
                 viewBox="0 0 24 24"
                 fill="currentColor"
                 aria-hidden="true"
@@ -38,10 +38,10 @@ export async function LoginPage({ redirectTo }: { redirectTo?: string }) {
               </svg>
             </div>
 
-            <h1 className="text-[24px] font-bold text-white tracking-tight mb-1">
+            <h1 className="text-2xl font-black text-white tracking-tight mb-1 font-display">
               {t('heading')}
             </h1>
-            <p className="text-[14px] text-[#A1A1AA]">
+            <p className="text-sm text-slate-400 text-center">
               {t('description')}
             </p>
           </div>

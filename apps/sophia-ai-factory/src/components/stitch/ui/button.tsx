@@ -50,25 +50,26 @@ export function Button({
 
   const variants = {
     primary: `
-      bg-primary text-on-primary
-      hover:bg-primary-container hover:text-on-primary-container
-      shadow-md shadow-primary/20
+      bg-gradient-to-r from-indigo-600 via-indigo-500 to-violet-600 text-white
+      hover:from-indigo-500 hover:via-indigo-400 hover:to-violet-500
+      shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40
+      border border-indigo-400/30
     `,
     secondary: `
-      bg-secondary-container text-on-secondary-container
-      hover:bg-secondary hover:text-on-secondary
+      bg-white/10 text-white border border-white/10
+      hover:bg-white/15 hover:border-white/20
     `,
     outline: `
-      bg-transparent border-2 border-primary text-primary
-      hover:bg-primary-fixed-dim hover:text-on-primary-fixed
+      bg-transparent border border-white/15 text-slate-200
+      hover:bg-white/5 hover:border-indigo-400/50 hover:text-white
     `,
     ghost: `
-      bg-transparent text-primary
-      hover:bg-surface-container hover:text-on-surface
+      bg-transparent text-slate-300
+      hover:bg-white/5 hover:text-white
     `,
     destructive: `
-      bg-destructive text-destructive-foreground
-      hover:bg-destructive/90
+      bg-rose-600 text-white
+      hover:bg-rose-500 shadow-md shadow-rose-600/25
     `,
   };
 
