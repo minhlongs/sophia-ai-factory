@@ -41,14 +41,14 @@ export default async function AdminSOPReviewsPage({ params }: PageProps) {
 
 async function checkAdminAccess(): Promise<{ hasAccess: boolean; isAdmin: boolean; userId: string | null }> {
   const { getCurrentUser } = await import('@/seed/auth/better-auth-session');
-  const { getUserTier } = await import('@/seed/db/get-user-tier');
+  const { resolveUserTier } = await import('@/seed/db/resolve-user-tier');
 
   const user = await getCurrentUser();
   if (!user) {
     return { hasAccess: false, isAdmin: false, userId: null };
   }
 
-  const tier = await getUserTier(user.id);
+  const tier = await resolveUserTier(user.id);
   const isAdmin = tier === 'MASTER' || tier === 'ENTERPRISE';
 
   return { hasAccess: isAdmin, isAdmin, userId: user.id };

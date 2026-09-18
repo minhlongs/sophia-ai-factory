@@ -10,7 +10,7 @@ import { selectWithStrategy, NoProvidersAvailableError } from '@/forest/quota/ro
 import type { RoutingContext } from '@/seed/config/routing-strategies';
 import { generateElevenLabsVoiceover } from '@/seed/ai/elevenlabs-api-client';
 import { getUserApiKey } from '@/tree/byok/user-api-key-store';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { buildProviderPool } from '@/forest/quota/provider-pool';
 import {
   emitProgress, writeStageCheckpoint,
@@ -68,7 +68,7 @@ export async function executeTtsStep(params: TtsStepParams): Promise<TtsStepResu
     try {
       const elevenLabsKey = await getUserApiKey(userId, 'elevenlabs');
       if (elevenLabsKey) {
-        const tier = await getUserTier(userId);
+        const tier = await resolveUserTier(userId);
         // Upload directly to final audioR2Key and return full public URL
         const uploadToR2 = async (data: ArrayBuffer, mime: string, _key: string): Promise<string> => {
           await uploadBufferToR2(audioR2Key, data, mime);

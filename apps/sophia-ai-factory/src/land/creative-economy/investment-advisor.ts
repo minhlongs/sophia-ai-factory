@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { createServerClient } from '@/seed/db/client';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { canUsePhase4Feature, type FeatureGateResult } from '@/seed/config/tiers/phase4-feature-gate';
 import { success, failure } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
@@ -74,7 +74,7 @@ export async function getInvestmentAdvice(
     }
 
     // Phase 4 feature gate: investment advisor requires ENTERPRISE+
-    const tier = await getUserTier(user.id);
+    const tier = await resolveUserTier(user.id);
     const gate: FeatureGateResult = canUsePhase4Feature(tier, 'enable_investment_advisor');
     if (!gate.allowed) {
       return failure({ code: 'FORBIDDEN', message: gate.message || 'Investment advisor requires ENTERPRISE tier or higher' });

@@ -30,7 +30,7 @@ import { getBrandKit } from '@/seed/db/repositories/brand-kits-repo';
 import { generateSubtitles } from '@/land/video/assembly/subtitle-generator';
 import { composeFinalVideo } from '@/land/video/assembly/composer-ffmpeg';
 import type { VideoGenerateRequestedEvent } from '@/land/video/templates/types';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getUserRoutingStrategy, getDefaultStrategyForTier } from '@/seed/db/get-user-routing-strategy';
 import {
   emitProgress, writeStageCheckpoint,
@@ -78,7 +78,7 @@ export const videoGenerate = inngest.createFunction(
     const routingStrategy = await step.run('resolve-routing-strategy', async () => {
       const userStrategy = await getUserRoutingStrategy(userId);
       if (userStrategy) return userStrategy;
-      const tier = await getUserTier(userId);
+      const tier = await resolveUserTier(userId);
       return getDefaultStrategyForTier(tier);
     }) as string;
 

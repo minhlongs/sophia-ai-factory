@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from '@/seed/security/rate-limiting-middleware'
 import { getCurrentUserFromHeaders, AuthSystemError } from '@/seed/auth/better-auth-session'
-import { getUserTier } from '@/seed/db/get-user-tier'
+import { resolveUserTier } from '@/seed/db/resolve-user-tier'
 import { isPublicApiRoute } from '@/forest/middleware/auth-guard'
 import { emitUsageEvent } from '@/tree/usage-metering'
 import { logger } from '@/seed/utils/logger-utility'
@@ -91,7 +91,7 @@ export async function handleApiRoute(request: NextRequest, pathname: string, sta
        })
        return unauthorizedResponse
      }
-     const tier = await getUserTier(user.id)
+     const tier = await resolveUserTier(user.id)
      request.headers.set('x-user-tier', tier)
    } catch (err) {
      if (err instanceof AuthSystemError) {

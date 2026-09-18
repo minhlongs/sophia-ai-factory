@@ -21,7 +21,7 @@ import {
   type VideoProvider,
   type VideoTaskType,
 } from '@/seed/config/routing-strategies';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { checkVideoQuota } from '@/forest/quota/video-quota';
 import { getUserApiKey } from '@/tree/byok/user-api-key-store';
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
@@ -61,7 +61,7 @@ export async function buildProviderPool(
   userId: string,
   context: RoutingContext,
 ): Promise<ProviderCandidate[]> {
-  const tier = await getUserTier(userId);
+  const tier = await resolveUserTier(userId);
   const quota = await checkVideoQuota(userId, tier);
   const candidates: ProviderCandidate[] = [];
 

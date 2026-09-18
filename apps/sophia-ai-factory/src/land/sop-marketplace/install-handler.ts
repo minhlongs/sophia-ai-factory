@@ -13,7 +13,7 @@
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
 import { requireOrgMembership } from '@/seed/db/org-membership';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getSopInstallLimit } from '@/seed/config/tiers';
 import { success, failure, type Result } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
@@ -91,7 +91,7 @@ export async function installSop(
     }
 
     // 6. Get user tier and check install limit
-    const tier = await getUserTier(user.id);
+    const tier = await resolveUserTier(user.id);
     const limit = getSopInstallLimit(tier);
 
     const activeCountRow = await d1

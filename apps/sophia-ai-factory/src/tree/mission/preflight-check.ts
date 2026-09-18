@@ -21,7 +21,7 @@
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import { getD1 } from '@/seed/db/client';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import {
   resolveCapabilities,
   type AICapability,
@@ -245,7 +245,7 @@ export async function runMissionPreflightCheck(
 
   try {
     if (!tier) {
-      tier = await getUserTier(resolvedUserId);
+      tier = await resolveUserTier(resolvedUserId);
     }
     if (typeof mcuBalance !== 'number') {
       const balance = await getBalance(resolvedUserId);

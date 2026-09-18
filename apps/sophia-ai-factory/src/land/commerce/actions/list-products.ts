@@ -14,7 +14,7 @@ import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { success, failure } from '@/seed/types/result';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { canUsePhase4Feature, type FeatureGateResult } from '@/seed/config/tiers/phase4-feature-gate';
 import { listProducts, type CommerceProduct } from '../product-catalog';
 import {
@@ -50,7 +50,7 @@ export async function listCommerceProducts(
     if (!user) {
       return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
     }
-    const tier = await getUserTier(user.id);
+    const tier = await resolveUserTier(user.id);
     const gate: FeatureGateResult = canUsePhase4Feature(tier, 'enable_commerce_catalog');
     if (!gate.allowed) {
       return failure({ code: 'FORBIDDEN', message: gate.message || 'Commerce catalog requires PREMIUM tier or higher' });

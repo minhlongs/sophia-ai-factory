@@ -2,7 +2,7 @@
 
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { logger } from '@/seed/utils/logger-utility';
 import { revalidatePath } from 'next/cache';
 
@@ -19,7 +19,7 @@ export async function rejectSopListing(listingId: string, reason: string): Promi
     }
 
     // Check admin tier
-    const tier = await getUserTier(user.id);
+    const tier = await resolveUserTier(user.id);
     if (tier !== 'MASTER' && tier !== 'ENTERPRISE') {
       return { success: false, error: 'Admin access required' };
     }

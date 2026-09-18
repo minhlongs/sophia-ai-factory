@@ -31,11 +31,11 @@ export async function createSopInstall(
 
   try {
     // Check the user's tier and SOP install limit
-    // Lazy-import to avoid circular dependency: getUserTier reads subscriptions table
-    const { getUserTier } = await import('@/seed/db/get-user-tier');
+    // Lazy-import to avoid circular dependency: resolveUserTier reads subscriptions table
+    const { resolveUserTier } = await import('@/seed/db/resolve-user-tier');
     const { getSopInstallLimit } = await import('@/seed/config/tiers');
 
-    const tier = await getUserTier(input.user_id);
+    const tier = await resolveUserTier(input.user_id);
     const limit = getSopInstallLimit(tier);
 
     // Count current active installs for this user

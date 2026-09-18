@@ -10,7 +10,7 @@
  */
 
 import { createLogger } from '@/seed/utils/logger-utility';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { TIER_CONFIGS } from '@/seed/config/tiers';
 import { getBalance, deductCredits } from '@/tree/mcu/credits-repo';
 import { getMemoryConsolidationService } from './memory-consolidation-service';
@@ -171,7 +171,7 @@ export class SophiaToolExecutor implements IToolExecutor {
     if (!topic) return this.error('topic is required');
 
     // Validate tier — campaign creation requires at least BASIC.
-    const tier = await getUserTier(this.userId!);
+    const tier = await resolveUserTier(this.userId!);
     const tierConfig = TIER_CONFIGS[tier];
     if (!tierConfig) return this.error('Account tier not found');
 

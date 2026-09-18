@@ -11,7 +11,7 @@
 import { getD1 } from '@/seed/db/client';
 import { listUserApiKeyProviders } from '@/tree/byok/user-api-key-store';
 import { getBalance } from '@/tree/mcu/credits-repo';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import {
   resolveCapabilities,
   type AICapability,
@@ -92,7 +92,7 @@ export async function verifyUserReadiness(
     providersConfigured = providers.map((p) => String(p));
 
     // Resolve Tier
-    tier = await getUserTier(userId);
+    tier = await resolveUserTier(userId);
     if (tier === 'MASTER' || tier === 'PREMIUM' || tier === 'ENTERPRISE') {
       subscriptionActive = true;
     }

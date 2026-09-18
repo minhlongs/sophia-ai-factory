@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
-import { getUserTier } from '@/seed/db/get-user-tier';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import { getWorkspaceROI, getTopROIChannels } from '@/tree/roi';
 import { aggregateRevenueAttribution } from '@/forest/analytics/queries/revenue-attribution';
 import { getDynamicMultiplier } from '@/land/billing/dynamic-pricing-config';
@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
       getWorkspaceROI(workspaceId, since ? { since } : undefined),
       getTopROIChannels(workspaceId, 5, since),
       aggregateRevenueAttribution(workspaceId, since ? { since } : undefined),
-      getUserTier(user.id),
+      resolveUserTier(user.id),
     ]);
 
     const roiData: ROIAggregate = roi ?? {

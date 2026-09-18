@@ -20,8 +20,8 @@ export async function checkCreatorAccess(): Promise<{
   }
 
   // Check MASTER tier first
-  const { getUserTier } = await import('@/seed/db/get-user-tier');
-  const tier = await getUserTier(user.id);
+  const { resolveUserTier } = await import('@/seed/db/resolve-user-tier');
+  const tier = await resolveUserTier(user.id);
 
   if (tier === 'MASTER') {
     return { hasAccess: true, userId: user.id, tier };
