@@ -129,26 +129,23 @@ export default function ChangeTierClient({ currentTier }: { currentTier: Tier })
         </CardContent>
       </Card>
 
-      {/* Timing selector (only shown when a tier is selected and it's not a downgrade) */}
+      {/* Upgrade Notice */}
       {selectedTier && !isDowngrade(selectedTier) && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="pt-6 space-y-1">
+            <p className="font-semibold text-sm">{t('upgrade')}: {selectedTier}</p>
+            <p className="text-xs text-muted-foreground">{t('upgrade_notice')}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Downgrade timing selector */}
+      {selectedTier && isDowngrade(selectedTier) && (
         <Card>
           <CardContent className="pt-6 space-y-3">
             <p className="font-medium text-sm">{t('timing_title')}</p>
             <p className="text-xs text-muted-foreground">{t('timing_subtitle')}</p>
             <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                type="button"
-                onClick={() => setTiming('immediate')}
-                className={[
-                  'flex-1 text-left rounded-lg border p-3 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-                  timing === 'immediate'
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-primary/30',
-                ].join(' ')}
-              >
-                <p className="font-medium text-sm">{t('timing_immediate_label')}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{t('timing_immediate_desc')}</p>
-              </button>
               <button
                 type="button"
                 onClick={() => setTiming('end_of_cycle')}
@@ -161,6 +158,19 @@ export default function ChangeTierClient({ currentTier }: { currentTier: Tier })
               >
                 <p className="font-medium text-sm">{t('timing_eoc_label')}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{t('timing_eoc_desc')}</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setTiming('immediate')}
+                className={[
+                  'flex-1 text-left rounded-lg border p-3 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+                  timing === 'immediate'
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border hover:border-primary/30',
+                ].join(' ')}
+              >
+                <p className="font-medium text-sm">{t('timing_immediate_label')}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{t('timing_immediate_desc')}</p>
               </button>
             </div>
           </CardContent>
@@ -184,6 +194,10 @@ export default function ChangeTierClient({ currentTier }: { currentTier: Tier })
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" aria-hidden="true" />
             {t('submitting')}
+          </>
+        ) : selectedTier && !isDowngrade(selectedTier) ? (
+          <>
+            {t('proceed_checkout')} <ArrowUpRight className="ml-1 h-4 w-4" aria-hidden="true" />
           </>
         ) : (
           t('submit')

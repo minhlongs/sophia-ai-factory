@@ -1419,7 +1419,9 @@
         "lose_custom_integrations": "Tích hợp tùy chỉnh",
         "lose_unlimited_channels": "Kênh không giới hạn",
         "lose_seo_optimization": "Tối ưu SEO",
-        "lose_api_access": "Quyền truy cập API"
+        "lose_api_access": "Quyền truy cập API",
+        "upgrade_notice": "Nâng cấp có hiệu lực ngay sau khi xác nhận thanh toán. Bạn sẽ được chuyển đến cổng thanh toán bảo mật.",
+        "proceed_checkout": "Tiến Hành Thanh Toán"
       },
       "refund": {
         "pageTitle": "Hoàn tiền",

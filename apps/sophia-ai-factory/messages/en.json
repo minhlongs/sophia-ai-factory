@@ -1419,7 +1419,9 @@
         "lose_custom_integrations": "Custom integrations",
         "lose_unlimited_channels": "Unlimited channels",
         "lose_seo_optimization": "SEO optimization",
-        "lose_api_access": "API access"
+        "lose_api_access": "API access",
+        "upgrade_notice": "Upgrades take effect immediately upon payment confirmation. You will be redirected to the secure checkout portal.",
+        "proceed_checkout": "Proceed to Checkout"
       },
       "refund": {
         "pageTitle": "Page Title",

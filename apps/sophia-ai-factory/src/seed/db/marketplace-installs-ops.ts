@@ -10,6 +10,8 @@
 
 import type { D1Database } from '@cloudflare/workers-types';
 import { toError } from '@/seed/utils/to-error';
+import { resolveUserTier } from '@/seed/db/resolve-user-tier';
+import { getSopInstallLimit } from '@/seed/config/tiers';
 import type { CreateSopInstallInput, SopInstall } from './marketplace-types';
 
 // ── SOP Install Operations ─────────────────────────────────────────────────
@@ -30,11 +32,6 @@ export async function createSopInstall(
   const resolvedTenantId = tenantId ?? 'default';
 
   try {
-    // Check the user's tier and SOP install limit
-    // Lazy-import to avoid circular dependency: resolveUserTier reads subscriptions table
-    const { resolveUserTier } = await import('@/seed/db/resolve-user-tier');
-    const { getSopInstallLimit } = await import('@/seed/config/tiers');
-
     const tier = await resolveUserTier(input.user_id);
     const limit = getSopInstallLimit(tier);
 
