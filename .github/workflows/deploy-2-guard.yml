@@ -12,24 +12,24 @@ env:
 jobs:
   guard-1-ci:
     name: "Guard 1: CI"
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: "${{ env.NODE_VERSION }}", cache: "npm", cache-dependency-path: "${{ env.APP_DIR }}/package-lock.json" }
-      - run: npm ci && npm run type-check && npm test && npm run lint && npm run build
+        with: { node-version: "22", cache: "npm", cache-dependency-path: "apps/sophia-ai-factory/package-lock.json" }
+      - run: npm ci --legacy-peer-deps && npm run type-check && npm test && npm run lint && npm run build
         working-directory: ${{ env.APP_DIR }}
   guard-2-deploy:
     name: "Guard 2: Deploy"
     needs: guard-1-ci
     if: github.event_name == "push" && github.ref == "refs/heads/main"
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: "${{ env.NODE_VERSION }}", cache: "npm", cache-dependency-path: "${{ env.APP_DIR }}/package-lock.json" }
+        with: { node-version: "22", cache: "npm", cache-dependency-path: "apps/sophia-ai-factory/package-lock.json" }
       - run: npm ci && npm run build
         working-directory: ${{ env.APP_DIR }}
       - run: npx wrangler deploy --name ${{ env.PREVIEW_NAME }} main=${{ env.APP_DIR }}/.open-next/worker.js

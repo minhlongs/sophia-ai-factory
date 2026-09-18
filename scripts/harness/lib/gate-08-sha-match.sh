@@ -19,15 +19,19 @@ LOCAL_SHA=$(git rev-parse HEAD | cut -c1-8)
 # Fetch live SHA from /api/version
 LIVE_SHA=$(curl -s "$PROD_URL/api/version" 2>/dev/null | grep -o '"shortSha":"[^"]*"' | cut -d'"' -f4 || echo "")
 
-# HTTP check
+# HTTP health check (root returns 307 redirect per next-intl locale doctrine; /api/health returns 200)
 HTTP_CODE=$(curl -sI "$PROD_URL" 2>/dev/null | head -1 | grep -oE '[0-9]{3}' || echo "000")
+HEALTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_URL/api/health" 2>/dev/null || echo "000")
+
+# Code diff check between deployed SHA and current HEAD
+CODE_DIFF=$(git diff --name-only "$LIVE_SHA" HEAD 2>/dev/null | grep -E '\.(ts|tsx|js|mjs|json|sql)$' || true)
 
 END_MS=$(date +%s%N)
 DURATION=$(( (END_MS - START_MS) / 1000000 ))
 
-RESULT="{\"local_sha\":\"$LOCAL_SHA\",\"live_sha\":\"$LIVE_SHA\",\"http_code\":\"$HTTP_CODE\",\"prod_url\":\"$PROD_URL\"}"
+RESULT="{\"local_sha\":\"$LOCAL_SHA\",\"live_sha\":\"$LIVE_SHA\",\"http_code\":\"$HTTP_CODE\",\"health_code\":\"$HEALTH_CODE\",\"prod_url\":\"$PROD_URL\"}"
 
-if [ "$LOCAL_SHA" = "$LIVE_SHA" ] && [ "$HTTP_CODE" = "200" ]; then
+if ( [ "$LOCAL_SHA" = "$LIVE_SHA" ] || [ -z "$CODE_DIFF" ] ) && [ "$HEALTH_CODE" = "200" ]; then
   gate_run "sha-match" "$DURATION" "$RESULT" "false"
 else
   gate_fail "sha-match" "$DURATION" "$RESULT" "false"

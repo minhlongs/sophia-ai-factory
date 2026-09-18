@@ -5,9 +5,9 @@
 🔍 Scanning for i18n keys...
 
 📊 Summary:
-   Total t() calls: 2766
-   Unique static keys: 1227
-   Dynamic key prefixes: 18
+   Total t() calls: 3808
+   Unique static keys: 1672
+   Dynamic key prefixes: 32
    Missing static keys: 0
    Unresolved dynamic prefixes: 0
 

@@ -29,6 +29,9 @@ except Exception:
 END_MS=$(date +%s%N)
 DURATION=$(( (END_MS - START_MS) / 1000000 ))
 
+PENDING_COUNT=$(echo "$PENDING_COUNT" | tr -dc '0-9')
+PENDING_COUNT="${PENDING_COUNT:-0}"
+
 if [ "$PENDING_COUNT" -gt 0 ]; then
   gate_fail "migrations" "$DURATION" "{\"pending\":$PENDING_COUNT,\"db\":\"$DB_NAME\"}" "false"
 else

@@ -14,7 +14,7 @@ permissions:
 jobs:
   gate-1-validation:
     name: Gate 1 — Validation (tsc + eslint + vitest)
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: apps/sophia-ai-factory
@@ -27,7 +27,7 @@ jobs:
       # Re-pin to a verified v4.x SHA in follow-up.
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: apps/sophia-ai-factory/package-lock.json
 
