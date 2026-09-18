@@ -151,4 +151,61 @@ describe('Adversarial Forensic Audit Test Suite', () => {
       expect(result.error).toBe('upgrade_requires_payment');
     });
   });
+
+  describe('6. Cross-Tenant IDOR & Workspace Isolation (Fail-Closed)', () => {
+    function mockDbWithMembership(row: { role?: string } | null) {
+      return {
+        prepare: vi.fn().mockReturnValue({
+          bind: vi.fn().mockReturnValue({
+            first: vi.fn().mockResolvedValue(row),
+          }),
+        }),
+      } as unknown as import('@/seed/db/client').D1Database;
+    }
+
+    it('denies access when user is not a member of the workspace (cross-tenant IDOR defense)', async () => {
+      const { verifyWorkspaceAccess } = await import('@/seed/auth/workspace-access');
+      const db = mockDbWithMembership(null);
+
+      const hasAccess = await verifyWorkspaceAccess('ws_tenant_alpha', 'usr_tenant_beta', db);
+      expect(hasAccess).toBe(false);
+    });
+
+    it('fails closed when workspaceId or userId is empty or missing', async () => {
+      const { verifyWorkspaceAccess } = await import('@/seed/auth/workspace-access');
+      const db = mockDbWithMembership({ role: 'OWNER' });
+
+      expect(await verifyWorkspaceAccess('', 'usr_tenant_beta', db)).toBe(false);
+      expect(await verifyWorkspaceAccess('ws_tenant_alpha', '', db)).toBe(false);
+    });
+
+    it('requireWorkspaceAccess throws WorkspaceAccessDeniedError (HTTP 403) on unauthenticated/cross-tenant access', async () => {
+      const { requireWorkspaceAccess, WorkspaceAccessDeniedError } = await import('@/seed/auth/workspace-access');
+      const db = mockDbWithMembership(null);
+
+      await expect(requireWorkspaceAccess('ws_tenant_alpha', 'usr_unauthorized', db)).rejects.toThrow(
+        WorkspaceAccessDeniedError
+      );
+    });
+
+    it('requireWorkspaceRole throws InsufficientWorkspaceRoleError when member role is below required threshold', async () => {
+      const { requireWorkspaceRole, InsufficientWorkspaceRoleError } = await import('@/seed/auth/workspace-access');
+      const db = mockDbWithMembership({ role: 'VIEWER' });
+
+      await expect(requireWorkspaceRole('ws_tenant_alpha', 'usr_viewer', 'ADMIN', db)).rejects.toThrow(
+        InsufficientWorkspaceRoleError
+      );
+    });
+
+    it('grants access when user has valid membership role in target workspace', async () => {
+      const { verifyWorkspaceAccess, requireWorkspaceAccess } = await import('@/seed/auth/workspace-access');
+      const db = mockDbWithMembership({ role: 'ADMIN' });
+
+      const hasAccess = await verifyWorkspaceAccess('ws_tenant_alpha', 'usr_admin', db);
+      expect(hasAccess).toBe(true);
+
+      const membership = await requireWorkspaceAccess('ws_tenant_alpha', 'usr_admin', db);
+      expect(membership.role).toBe('ADMIN');
+    });
+  });
 });
