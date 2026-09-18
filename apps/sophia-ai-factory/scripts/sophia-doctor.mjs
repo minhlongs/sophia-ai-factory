@@ -101,16 +101,22 @@ function loadEnvLocal() {
 
 function checkEnvVars() {
   const env = { ...process.env, ...loadEnvLocal() };
+  const wranglerConfig = resolve(process.env.HOME || '', '.wrangler/config/default.toml');
+  const hasWranglerOAuth = existsSync(wranglerConfig);
+
   // Also check DATABASE_URL as alternative to D1 binding
   const hasDb = env['DATABASE_URL'] || env['DB']; // DB is wrangler binding name
-  const missing = REQUIRED_VARS.filter((v) => !env[v]);
+  const missing = REQUIRED_VARS.filter((v) => {
+    if (v === 'CLOUDFLARE_API_TOKEN' && hasWranglerOAuth) return false;
+    return !env[v];
+  });
   const optMissing = OPTIONAL_TIER_VARS.filter((v) => !env[v]);
 
   const total = REQUIRED_VARS.length + (hasDb ? 0 : 1);
   const presentCount = REQUIRED_VARS.length - missing.length + (hasDb ? 1 : 0);
 
   if (missing.length === 0) {
-    ok(`Env vars (${presentCount}/${REQUIRED_VARS.length} required${optMissing.length ? ` + ${optMissing.length} optional absent` : ''})`);
+    ok(`Env vars (${presentCount}/${REQUIRED_VARS.length} required${hasWranglerOAuth && !env['CLOUDFLARE_API_TOKEN'] ? ' [CF via OAuth]' : ''}${optMissing.length ? ` + ${optMissing.length} optional absent` : ''})`);
   } else {
     fail(
       `Env vars (${presentCount}/${REQUIRED_VARS.length} required)`,
