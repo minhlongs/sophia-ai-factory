@@ -13,8 +13,8 @@ interface AccountStepProps {
 export function AccountStep({
   onNext,
   onBack,
-  accountEmail = 'ceo@sophia.agency',
-  isOwner = true,
+  accountEmail = '',
+  isOwner = false,
 }: AccountStepProps) {
   const [workspaceName, setWorkspaceName] = useState('Sophia Video Empire');
   const [language, setLanguage] = useState<'vi' | 'en'>('vi');
@@ -23,7 +23,7 @@ export function AccountStep({
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
       <div>
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium mb-2">
+        <div className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium mb-2 ${isOwner ? 'bg-primary/10 text-primary' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'}`}>
           <ShieldCheck className="w-3.5 h-3.5" />
           {isOwner ? 'Owner Verified / Đã xác thực chủ sở hữu' : 'Pending Verification / Chờ xác thực'}
         </div>
@@ -48,20 +48,20 @@ export function AccountStep({
               <h3 className="text-sm font-semibold text-foreground">
                 Ownership Identity / Danh tính sở hữu
               </h3>
-              <p className="text-xs text-muted-foreground font-mono">{accountEmail}</p>
+              <p className="text-xs text-muted-foreground font-mono">{accountEmail || 'Pending authentication...'}</p>
             </div>
           </div>
           <div className="space-y-2 pt-2 border-t border-border/50 text-xs">
             <div className="flex justify-between py-1">
               <span className="text-muted-foreground">Role / Vai trò:</span>
               <span className="font-semibold text-foreground bg-primary/10 text-primary px-2 py-0.5 rounded">
-                OWNER / Quản trị cao nhất
+                {isOwner ? 'OWNER / Quản trị cao nhất' : 'MEMBER / Thành viên'}
               </span>
             </div>
             <div className="flex justify-between py-1">
               <span className="text-muted-foreground">Status / Trạng thái:</span>
-              <span className="text-emerald-600 font-semibold flex items-center gap-1">
-                ✓ {isOwner ? 'Active Owner / Chủ sở hữu' : 'Invited Member / Thành viên'}
+              <span className={isOwner ? "text-emerald-600 font-semibold flex items-center gap-1" : "text-amber-600 font-semibold flex items-center gap-1"}>
+                {isOwner ? '✓ Active Owner / Chủ sở hữu' : '⏳ Pending Review / Chờ phê duyệt'}
               </span>
             </div>
             <div className="flex justify-between py-1">

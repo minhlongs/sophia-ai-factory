@@ -20,6 +20,21 @@ describe('AccountStep', () => {
     expect(screen.getByText(/Active Owner \/ Chủ sở hữu/i)).toBeDefined();
   });
 
+  it('renders member role and pending verification when isOwner is false', () => {
+    render(
+      <AccountStep
+        onNext={vi.fn()}
+        onBack={vi.fn()}
+        accountEmail="member@testagency.com"
+        isOwner={false}
+      />
+    );
+
+    expect(screen.getByText('member@testagency.com')).toBeDefined();
+    expect(screen.getByText('MEMBER / Thành viên')).toBeDefined();
+    expect(screen.getByText(/Pending Verification \/ Chờ xác thực/i)).toBeDefined();
+  });
+
   it('allows changing workspace name and triggers navigation', () => {
     const onNext = vi.fn();
     const onBack = vi.fn();

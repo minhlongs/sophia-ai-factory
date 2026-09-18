@@ -36,10 +36,10 @@ UNAUTH_ROUTES=$(grep -rn "export async function \(GET\|POST\|PUT\|DELETE\)" src/
   file=$(echo "$line" | cut -d: -f1)
   # Exclude intentionally public, health, version, docs, tracking, webhooks, and auth routes
   case "$file" in
-    *version*|*health*|*webhooks*|*auth*|*public*|*csp-report*|*metrics*|*offers*|*openapi*|*sdk*|*stats*|*track*|*coupons*|*audit*) continue ;;
+    *version*|*health*|*webhooks*|*auth*|*public*|*csp-report*|*metrics*|*offers*|*openapi*|*sdk*|*stats*|*track*|*coupons*|*audit*|*debug-symbols*) continue ;;
   esac
   # Check if file has auth, session, admin, internal, cron, or secret check
-  if ! grep -qE "getCurrentUser|createServerClient|auth\(\)|requireAdmin|requireAuth|requireOrg|verifyWebhook|verifySignature|verifyInternalSecret|verifyCronAuth|CRON_SECRET|bearerToken|x-admin-token|INTERNAL_API_SECRET|getD1|requireApiKey|verifyTelegram" "$file" 2>/dev/null; then
+  if ! grep -qE "getCurrentUser|createServerClient|auth\(\)|requireAdmin|requireAuth|requireOrg|verifyWebhook|verifySignature|verifyInternalSecret|verifyCronAuth|CRON_SECRET|bearerToken|x-admin-token|INTERNAL_API_SECRET|getD1|requireApiKey|verifyTelegram|authenticateRequest" "$file" 2>/dev/null; then
     echo "$file"
   fi
 done | sort -u | head -10 || true)

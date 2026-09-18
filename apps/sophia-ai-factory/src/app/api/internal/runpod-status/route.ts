@@ -8,6 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyInternalSecret } from '@/seed/security/verify-internal-secret';
 import {
   shouldAllowRequest,
   recordSuccess,
@@ -16,6 +17,10 @@ import {
 import { classifyError, classifyHttpStatus } from '@/seed/types/failure-kind';
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
+  if (!verifyInternalSecret(req)) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { searchParams } = new URL(req.url);
   const runpodJobId = searchParams.get('jobId');
 
