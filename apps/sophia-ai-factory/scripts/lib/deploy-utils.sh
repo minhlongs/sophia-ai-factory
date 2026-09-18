@@ -83,12 +83,19 @@ fetch_url() {
 # Fetch HTTP status code only (outputs "200", "503", etc.). Does not download body.
 fetch_status() {
   local url="$1"
-  curl --fail -sSL \
+  local code
+  code=$(curl -sSL \
     --retry 3 --retry-delay 5 \
     --connect-timeout 10 --max-time 30 \
     -o /dev/null -w "%{http_code}" \
-    "$url" 2>>"$DEPLOY_LOG" || \
-  curl --fail -sSL \
+    "$url" 2>>"$DEPLOY_LOG" || true)
+
+  if [ -n "$code" ] && [ "$code" != "000" ]; then
+    printf '%s' "$code"
+    return 0
+  fi
+
+  curl -sSL \
     --retry 3 --retry-delay 5 \
     --connect-timeout 10 --max-time 30 \
     -o /dev/null -w "%{http_code}" \
