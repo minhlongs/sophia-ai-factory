@@ -53,4 +53,4 @@ jobs:
 
       - name: Gate 4b — License check (block AGPL + GPL-3.0)
         run: |
-          npx license-checker --failOn 'AGPL-3.0;GPL-3.0' --production --summary
+          npx --yes license-checker --failOn 'AGPL-3.0;GPL-3.0' --production --summary

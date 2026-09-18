@@ -11,6 +11,7 @@
  * the hard quota gate via reserveVideoSlot.
  */
 
+import type { ProviderId } from '@/seed/ai/provider-interface';
 import {
   PROVIDER_COST_PER_UNIT,
   PROVIDER_DEFAULT_MODEL,
@@ -69,7 +70,7 @@ export async function buildProviderPool(
   const registry = getSharedRegistry();
 
   // Map video provider IDs to registry ProviderIds for health lookup
-  const providerHealthMap: Record<VideoProvider, 'openrouter' | 'elevenlabs' | 'anthropic' | 'wan' | 'fish-speech' | undefined> = {
+  const providerHealthMap: Record<VideoProvider, ProviderId | undefined> = {
     openrouter: 'openrouter',
     elevenlabs: 'elevenlabs',
     'd-id': undefined,

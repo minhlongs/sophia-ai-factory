@@ -40,3 +40,19 @@ The application exposes 120+ API route handlers under `src/app/api/`. Every rout
 - Every Server Action in `src/land/**/actions.ts` executes `getCurrentUser()` at runtime on the server.
 - The `$0 Enterprise Upgrade` Server Action was eliminated: `changeTierAction()` rejects upgrade requests unless paid checkout is verified.
 - The `skipPreflight` bypass was removed from `StartMissionSchema`. No client payload can disable backend validation gates.
+
+---
+
+## 4. Automated Forensic Regression Suites (Evidence)
+
+All adversarial and boundary security assertions are continuously enforced in [`src/security-tests/adversarial-forensic.test.ts`](file:///Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/security-tests/adversarial-forensic.test.ts):
+
+| Suite | Focus Area | Defense Mechanism | Result |
+|---|---|---|:---:|
+| **1. Billing Anti-Drop** | Dynamic SDK Checkout Webhooks | Dynamic invoices with valid `order_id` route to subscription handler; orphans safely dropped | **PASS** |
+| **2. Mission State Machine** | Terminal Transitions | Strictly enforces `failed` and `cancelled` terminal states; blocks invalid regressions | **PASS** |
+| **3. Founder Bootstrap** | Fail-Closed Auth | Unverified or mismatched `FOUNDER_EMAIL` rejected immediately; no privilege escalation | **PASS** |
+| **4. Mission Access Control** | IDOR Isolation | Access strictly constrained to workspace owner; non-owners blocked | **PASS** |
+| **5. Server Action Guard** | Privilege Escalation | Free tier upgrade attempts via direct Server Action call rejected (`upgrade_requires_payment`) | **PASS** |
+| **6. Workspace Isolation** | Cross-Tenant IDOR & RBAC | `verifyWorkspaceAccess` fails closed on empty/invalid inputs; `requireWorkspaceRole` throws on insufficient role | **PASS** |
+
