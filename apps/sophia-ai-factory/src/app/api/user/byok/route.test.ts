@@ -35,6 +35,10 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }))
 
+vi.mock('@/tree/byok/provider-probe', () => ({
+  probeProviderApiKey: vi.fn(),
+}))
+
 import { GET, POST, DELETE } from './route'
 import { getCurrentUser } from '@/seed/auth/better-auth-session'
 import {
@@ -45,9 +49,11 @@ import {
 import { track } from '@/tree/signals/track'
 import { D1Events } from '@/tree/signals/d1-event-types'
 import { globalRateLimiter } from '@/forest/middleware/rate-limiter'
+import { probeProviderApiKey } from '@/tree/byok/provider-probe'
 
 const mockGetCurrentUser = vi.mocked(getCurrentUser)
 const mockSet            = vi.mocked(setUserApiKey)
+const mockProbe          = vi.mocked(probeProviderApiKey)
 const mockClear          = vi.mocked(clearUserApiKey)
 const mockList           = vi.mocked(listUserApiKeyProviders)
 const mockTrack          = vi.mocked(track)
@@ -228,6 +234,57 @@ describe('POST /api/user/byok', () => {
     expect(res.status).toBe(200)
     const expectedEncoded = Buffer.from('user@example.com:secret123').toString('base64')
     expect(mockSet).toHaveBeenCalledWith(USER?.id, 'd-id', expectedEncoded)
+  })
+
+  it('422 when validateLive is true and probe returns 401 invalid credentials', async () => {
+    mockGetCurrentUser.mockResolvedValue(USER)
+    mockProbe.mockResolvedValue({
+      ok: false,
+      valid: false,
+      provider: 'openrouter',
+      status: 'INVALID',
+      httpStatus: 401,
+      latencyMs: 50,
+      maskedKey: '****...7890',
+      message: 'Invalid API key credentials',
+      message_vi: 'Khóa API không hợp lệ',
+    })
+
+    const res = await POST(makeRequest('POST', {
+      provider: 'openrouter',
+      key: 'sk-or-v1-abcdefghijklmnopqrstuvwxyz1234567890',
+      validateLive: true,
+    }))
+
+    expect(res.status).toBe(422)
+    const json = (await res.json()) as { error: string }
+    expect(json.error).toContain('Invalid API key credentials')
+    expect(mockSet).not.toHaveBeenCalled()
+  })
+
+  it('200 when validateLive is true and probe succeeds', async () => {
+    mockGetCurrentUser.mockResolvedValue(USER)
+    mockSet.mockResolvedValue(undefined)
+    mockProbe.mockResolvedValue({
+      ok: true,
+      valid: true,
+      provider: 'openrouter',
+      status: 'ACTIVE',
+      httpStatus: 200,
+      latencyMs: 45,
+      maskedKey: '****...7890',
+      message: 'Connection successful',
+      message_vi: 'Kết nối thành công',
+    })
+
+    const res = await POST(makeRequest('POST', {
+      provider: 'openrouter',
+      key: 'sk-or-v1-abcdefghijklmnopqrstuvwxyz1234567890',
+      validateLive: true,
+    }))
+
+    expect(res.status).toBe(200)
+    expect(mockSet).toHaveBeenCalledWith(USER?.id, 'openrouter', 'sk-or-v1-abcdefghijklmnopqrstuvwxyz1234567890')
   })
 })
 

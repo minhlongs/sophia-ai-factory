@@ -38,6 +38,13 @@ export function SetupWizardPage() {
 
   const handleNext = useCallback(async () => {
     if (currentStepIndex === 2) {
+      const hasInvalidKeys = Object.entries(config).some(
+        ([k, v]) => KEY_TO_PROVIDER[k] && v.trim() && status[k] === 'invalid'
+      );
+      if (hasInvalidKeys) {
+        return;
+      }
+
       const hasPendingKeys = Object.entries(config).some(
         ([k, v]) => KEY_TO_PROVIDER[k] && v.trim()
       );
@@ -52,7 +59,7 @@ export function SetupWizardPage() {
     if (currentStepIndex < STEPS.length - 1) {
       setCurrentStepIndex((prev) => prev + 1);
     }
-  }, [currentStepIndex, config, handleSave]);
+  }, [currentStepIndex, config, status, handleSave]);
 
   const handleBack = useCallback(() => {
     if (currentStepIndex > 0) setCurrentStepIndex((prev) => prev - 1);
@@ -84,6 +91,8 @@ export function SetupWizardPage() {
               savedProviders={savedProviders}
               onRevokeProvider={handleRevokeProvider}
               revokingProvider={revokingProvider}
+              saveError={saveError}
+              isSaving={isSaving}
               onNext={handleNext}
               onBack={handleBack}
             />

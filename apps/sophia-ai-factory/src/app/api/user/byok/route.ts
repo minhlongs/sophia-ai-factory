@@ -25,12 +25,14 @@ import { logger } from '@/seed/utils/logger-utility'
 import { getErrorMessage } from '@/seed/utils/to-error'
 import { globalRateLimiter, createRateLimitResponse } from '@/forest/middleware/rate-limiter'
 import { validateProviderKey, sanitizeCredential, type ValidatorProvider } from '@/tree/byok/key-format-validators'
+import { probeProviderApiKey } from '@/tree/byok/provider-probe'
 
 const PROVIDERS = ['openrouter', 'anthropic', 'elevenlabs', 'd-id', 'muapi', 'apollo', 'hunter', 'fal-ai', 'replicate'] as const
 
 const PostSchema = z.object({
-  provider: z.enum(PROVIDERS),
-  key:      z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().min(10).max(500)),
+  provider:     z.enum(PROVIDERS),
+  key:          z.preprocess((val) => typeof val === 'string' ? sanitizeCredential(val) : val, z.string().min(10).max(500)),
+  validateLive: z.boolean().optional(),
 }).superRefine((data, ctx) => {
   const validation = validateProviderKey(data.provider as ValidatorProvider, data.key)
   if (!validation.ok) {
@@ -74,10 +76,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: fieldError, details: flat }, { status: 400 })
   }
 
-  const { provider, key } = parsed.data
+  const { provider, key, validateLive } = parsed.data
 
   const validation = validateProviderKey(provider as ValidatorProvider, key)
   const finalKey = validation.ok && validation.autoEncoded ? validation.autoEncoded : key
+
+  if (validateLive) {
+    const probe = await probeProviderApiKey(provider, finalKey)
+    if (!probe.valid && (probe.status === 'INVALID' || probe.httpStatus === 401 || probe.httpStatus === 403)) {
+      return NextResponse.json({
+        error: probe.message,
+        error_vi: probe.message_vi,
+        provider,
+        status: probe.status,
+      }, { status: 422 })
+    }
+  }
 
   try {
     await setUserApiKey(user.id, provider as ByokProvider, finalKey)

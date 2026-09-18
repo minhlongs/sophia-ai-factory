@@ -131,6 +131,18 @@ export function useSetupWizard() {
     try {
       const entries = Object.entries(config).filter(([k, v]) => KEY_TO_PROVIDER[k] && v.trim());
       const newlySaved: string[] = [];
+
+      // Enforce live ping verification on all pending keys before persisting to D1
+      for (const [k, v] of entries) {
+        const provider = KEY_TO_PROVIDER[k];
+        if (status[k] !== 'valid') {
+          const isValid = await verifyKey(provider, k, v);
+          if (!isValid) {
+            throw new Error(`Xác thực ${provider} không thành công / Verification for ${provider} failed. Please verify API key with upstream provider.`);
+          }
+        }
+      }
+
       for (const [k, v] of entries) {
         const provider = KEY_TO_PROVIDER[k];
         const res = await fetch('/api/user/byok', {
@@ -166,7 +178,7 @@ export function useSetupWizard() {
     } finally {
       setIsSaving(false);
     }
-  }, [t, config]);
+  }, [t, config, status, verifyKey]);
 
   return {
     accountEmail,

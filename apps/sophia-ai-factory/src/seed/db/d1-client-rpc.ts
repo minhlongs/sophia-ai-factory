@@ -2,6 +2,7 @@ import { toError } from '@/seed/utils/to-error';
 import type { QueryResult } from '@/seed/db/d1-query-types';
 import { D1QueryChain } from '@/seed/db/d1-query-chain';
 import type { D1Database, D1PreparedStatement, D1Result } from '@cloudflare/workers-types';
+import { withD1Retry } from '@/seed/db/d1-retry';
 
 /**
  * D1 Client — drop-in replacement for Supabase createServerClient()
@@ -23,13 +24,13 @@ export class D1Client {
     return this.db.prepare(sql);
   }
 
-  /** Compatibility: direct execute for raw SQL */
+  /** Compatibility: direct execute for raw SQL with transient retry */
   async execute(sql: string, params?: unknown[]): Promise<D1Result> {
     const stmt = this.db.prepare(sql);
     if (params && params.length > 0) {
       stmt.bind(...params);
     }
-    return stmt.run();
+    return withD1Retry(() => stmt.run());
   }
 
   from<T = Record<string, unknown>>(table: string): D1QueryChain<T> {
@@ -78,16 +79,18 @@ export class D1Client {
  private async debitMcuBalance(orgId: string, amount: number, feature: string): Promise<QueryResult<unknown>> {
  // Atomic: UPDATE + INSERT wrapped in db.batch() prevents balance drift
  // if INSERT fails after UPDATE (mirrors creditMcuBalance pattern).
- const batchResults = await this.db.batch([
- this.db
- .prepare(
- `UPDATE org_balances SET balance = balance - ?, updated_at = datetime('now') WHERE org_id = ? AND balance >= ?`,
- )
- .bind(amount, orgId, amount),
- this.db
- .prepare('INSERT INTO transactions (org_id, amount, type, description) VALUES (?, ?, ?, ?)')
- .bind(orgId, -amount, 'debit', feature),
- ]);
+ const batchResults = await withD1Retry(() =>
+   this.db.batch([
+     this.db
+       .prepare(
+         `UPDATE org_balances SET balance = balance - ?, updated_at = datetime('now') WHERE org_id = ? AND balance >= ?`,
+       )
+       .bind(amount, orgId, amount),
+     this.db
+       .prepare('INSERT INTO transactions (org_id, amount, type, description) VALUES (?, ?, ?, ?)')
+       .bind(orgId, -amount, 'debit', feature),
+   ]),
+ );
 
  // Check if balance update succeeded (rows_written === 1)
  const updateResult = batchResults[0];
@@ -128,18 +131,20 @@ export class D1Client {
     subscriptionId: string,
   ): Promise<QueryResult<unknown>> {
     try {
-      const batchResults = await this.db.batch([
-        this.db
-          .prepare(
-            "INSERT INTO org_balances (org_id, balance, updated_at) VALUES (?, ?, datetime('now')) ON CONFLICT(org_id) DO UPDATE SET balance = balance + ?, updated_at = datetime('now')",
-          )
-          .bind(orgId, amount, amount),
-        this.db
-          .prepare(
-            'INSERT INTO transactions (org_id, amount, type, description) VALUES (?, ?, ?, ?)',
-          )
-          .bind(orgId, amount, 'credit', subscriptionId),
-      ]);
+      const batchResults = await withD1Retry(() =>
+        this.db.batch([
+          this.db
+            .prepare(
+              "INSERT INTO org_balances (org_id, balance, updated_at) VALUES (?, ?, datetime('now')) ON CONFLICT(org_id) DO UPDATE SET balance = balance + ?, updated_at = datetime('now')",
+            )
+            .bind(orgId, amount, amount),
+          this.db
+            .prepare(
+              'INSERT INTO transactions (org_id, amount, type, description) VALUES (?, ?, ?, ?)',
+            )
+            .bind(orgId, amount, 'credit', subscriptionId),
+        ]),
+      );
 
       if (!batchResults || batchResults.length !== 2) {
         return {

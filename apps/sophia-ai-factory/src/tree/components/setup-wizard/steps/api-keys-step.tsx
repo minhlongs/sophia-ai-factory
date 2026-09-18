@@ -21,6 +21,8 @@ interface ApiKeysStepProps {
   savedProviders?: string[];
   onRevokeProvider?: (provider: string, keyName: string) => Promise<void>;
   revokingProvider?: string | null;
+  saveError?: string | null;
+  isSaving?: boolean;
   onNext: () => void;
   onBack?: () => void;
 }
@@ -35,6 +37,8 @@ export function ApiKeysStep({
   savedProviders = [],
   onRevokeProvider,
   revokingProvider,
+  saveError,
+  isSaving,
   onNext,
   onBack,
 }: ApiKeysStepProps) {
@@ -172,6 +176,12 @@ export function ApiKeysStep({
         />
       </div>
 
+      {saveError && (
+        <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm font-medium">
+          {saveError}
+        </div>
+      )}
+
       <div className="flex justify-between items-center pt-2">
         {onBack ? (
           <button
@@ -185,9 +195,10 @@ export function ApiKeysStep({
         <button
           type="button"
           onClick={onNext}
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:opacity-90 transition-opacity"
+          disabled={isSaving}
+          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          {actions('next')}
+          {isSaving ? 'Đang xác thực... / Validating...' : actions('next')}
         </button>
       </div>
     </div>

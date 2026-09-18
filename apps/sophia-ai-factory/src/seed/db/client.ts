@@ -74,6 +74,7 @@ async function loadLocalD1(): Promise<D1Database | null> {
 import type { D1Database } from '@cloudflare/workers-types';
 export type { D1Database };
 export { D1Client };
+export { withD1Retry, isD1TransientError } from '@/seed/db/d1-retry';
 
 // Lazy load of local D1 mock to provide a fallback when the Cloudflare D1
 // binding (__env__.DB) is unavailable — which happens in local dev, where the

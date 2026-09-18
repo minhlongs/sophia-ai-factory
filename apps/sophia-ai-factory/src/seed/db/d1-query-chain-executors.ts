@@ -6,6 +6,7 @@
 import { toError } from '@/seed/utils/to-error'
 import type { QueryResult, FilterOp, OrderSpec } from '@/seed/db/d1-query-types'
 import { parseJsonFields, serializeValue } from '@/seed/db/d1-query-utilities'
+import { withD1Retry } from '@/seed/db/d1-retry'
 
 export const D1_BATCH_LIMIT = 500
 
@@ -165,14 +166,16 @@ export async function execDelete(state: QueryState): Promise<QueryResult<unknown
 
 export async function executeQuery(state: QueryState): Promise<QueryResult<unknown>> {
   try {
-    switch (state.operation) {
-      case 'select': return await execSelect(state)
-      case 'insert': return await execInsert(state)
-      case 'update': return await execUpdate(state)
-      case 'upsert': return await execUpsert(state)
-      case 'delete': return await execDelete(state)
-      default: return { data: null, error: { message: 'Unknown operation' } }
-    }
+    return await withD1Retry(async () => {
+      switch (state.operation) {
+        case 'select': return await execSelect(state)
+        case 'insert': return await execInsert(state)
+        case 'update': return await execUpdate(state)
+        case 'upsert': return await execUpsert(state)
+        case 'delete': return await execDelete(state)
+        default: return { data: null, error: { message: 'Unknown operation' } }
+      }
+    })
   } catch (err) {
     return { data: null, error: { message: toError(err).message } }
   }
