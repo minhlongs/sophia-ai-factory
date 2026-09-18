@@ -38,6 +38,64 @@ export interface VerifyReadinessOptions {
   emailVerified?: boolean;
 }
 
+type D1Database = NonNullable<Awaited<ReturnType<typeof getD1>>>;
+
+async function checkEmailVerified(
+  d1: D1Database | null,
+  userId: string,
+  initialVerified?: boolean
+): Promise<boolean> {
+  if (initialVerified) return true;
+  if (!d1) return false;
+  try {
+    const userRow = await d1
+      .prepare('SELECT emailVerified FROM "user" WHERE id = ?1 LIMIT 1')
+      .bind(userId)
+      .first<{ emailVerified: number | boolean | null }>();
+    return Boolean(userRow?.emailVerified);
+  } catch {
+    return false;
+  }
+}
+
+async function checkSubscriptionActive(
+  d1: D1Database | null,
+  userId: string
+): Promise<boolean> {
+  if (!d1) return false;
+  try {
+    const subRow = await d1
+      .prepare('SELECT status, tier, plan FROM subscriptions WHERE user_id = ?1 LIMIT 1')
+      .bind(userId)
+      .first<{ status?: string; tier?: string; plan?: string }>();
+    return subRow?.status === 'active' || subRow?.status === 'trialing';
+  } catch {
+    return false;
+  }
+}
+
+function collectReadinessIssues(
+  ownerVerified: boolean,
+  byokEncrypted: boolean,
+  mcuBalance: number,
+  capabilitiesCount: number
+): string[] {
+  const issues: string[] = [];
+  if (!ownerVerified) {
+    issues.push('EMAIL_NOT_VERIFIED');
+  }
+  if (!byokEncrypted) {
+    issues.push('NO_BYOK_PROVIDERS_CONFIGURED');
+  }
+  if (mcuBalance <= 0) {
+    issues.push('INSUFFICIENT_MCU_BALANCE');
+  }
+  if (capabilitiesCount === 0) {
+    issues.push('NO_AI_CAPABILITIES_AVAILABLE');
+  }
+  return issues;
+}
+
 /**
  * Perform server-side dynamic readiness verification for a user.
  */
@@ -45,7 +103,6 @@ export async function verifyUserReadiness(
   opts: VerifyReadinessOptions
 ): Promise<SystemReadiness> {
   const { userId } = opts;
-  const issues: string[] = [];
 
   let ownerVerified = Boolean(opts.emailVerified);
   let providersConfigured: string[] = [];
@@ -55,37 +112,8 @@ export async function verifyUserReadiness(
 
   try {
     const d1 = await getD1();
-    if (d1) {
-      // Check user record if emailVerified wasn't provided directly
-      if (!ownerVerified) {
-        try {
-          const userRow = await d1
-            .prepare('SELECT emailVerified FROM "user" WHERE id = ?1 LIMIT 1')
-            .bind(userId)
-            .first<{ emailVerified: number | boolean | null }>();
-
-          if (userRow) {
-            ownerVerified = Boolean(userRow.emailVerified);
-          }
-        } catch {
-          // Table structure fallback
-        }
-      }
-
-      // Check subscription record
-      try {
-        const subRow = await d1
-          .prepare('SELECT status, tier, plan FROM subscriptions WHERE user_id = ?1 LIMIT 1')
-          .bind(userId)
-          .first<{ status?: string; tier?: string; plan?: string }>();
-
-        if (subRow && (subRow.status === 'active' || subRow.status === 'trialing')) {
-          subscriptionActive = true;
-        }
-      } catch {
-        // Fallback
-      }
-    }
+    ownerVerified = await checkEmailVerified(d1, userId, ownerVerified);
+    subscriptionActive = await checkSubscriptionActive(d1, userId);
 
     // Resolve BYOK configured providers
     const providers = await listUserApiKeyProviders(userId);
@@ -112,18 +140,12 @@ export async function verifyUserReadiness(
   const capabilities = capabilityResolution.availableCapabilities;
 
   // Identify issues
-  if (!ownerVerified) {
-    issues.push('EMAIL_NOT_VERIFIED');
-  }
-  if (!byokEncrypted) {
-    issues.push('NO_BYOK_PROVIDERS_CONFIGURED');
-  }
-  if (mcuBalance <= 0) {
-    issues.push('INSUFFICIENT_MCU_BALANCE');
-  }
-  if (capabilities.length === 0) {
-    issues.push('NO_AI_CAPABILITIES_AVAILABLE');
-  }
+  const issues = collectReadinessIssues(
+    ownerVerified,
+    byokEncrypted,
+    mcuBalance,
+    capabilities.length
+  );
 
   // Ready for missions requires: byok configured + MCU balance + at least one capability
   const readyForMissions = byokEncrypted && mcuBalance > 0 && capabilities.length > 0;

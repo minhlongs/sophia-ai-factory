@@ -13,8 +13,8 @@
 Sophia AI Factory claims a strict 4-layer unidirectional architecture:
 $$\text{seed} \longrightarrow \text{tree} \longrightarrow \text{forest} \longrightarrow \text{land}$$
 
-- **`seed/` (Foundational Primitives):** Base D1 database client (`client.ts`), Web Crypto encryption (`encryption.ts`), Better Auth server runtime (`better-auth-server.ts`), core types, logging primitives. Must have zero dependencies on upper layers.
-- **`tree/` (Domain Engines & Repositories):** BYOK credential repositories, AES-GCM-256 AAD encryption, mission state machine (`types.ts`), performance tracking, provider client SDK adapters.
+- **`seed/` (Foundational Primitives):** Base D1 database client (`client.ts`), Web Crypto encryption (`encryption-aes-gcm.ts`), PBKDF2 password hashing with constant-time `timingSafeEqual` (`password-hash.ts`), Better Auth server runtime (`better-auth-server.ts`), rate-limiting engine (`rate-limiter.ts`), core types, logging primitives. Must have zero dependencies on upper layers.
+- **`tree/` (Domain Engines & Repositories):** BYOK credential repositories, AES-GCM-256 AAD encryption, 7-gate mission preflight engine (`preflight-check.ts`), system readiness verification (`readiness-checker.ts`), mission state machine (`types.ts`), performance tracking, provider client SDK adapters.
 - **`forest/` (Orchestrators & Pipelines):** Inngest background event handlers (`agent-mission-executor.ts`, `agent-rollback-cron.ts`), AI capability factory, publishing dispatchers.
 - **`land/` (Applications, UI & Billing Workflows):** Next.js App Router server actions, NOWPayments/PayOS webhook lifecycle handlers, UI screens, customer onboarding wizard.
 
@@ -76,14 +76,14 @@ $$\text{seed} \longrightarrow \text{tree} \longrightarrow \text{forest} \longrig
 
 ### Flow 7: Creative Agent Mission Execution
 - **Entrypoint:** Server Action `startCreativeMissionAction` -> Inngest event `agent.mission.started`.
-- **Preflight Gate:** `runMissionPreflightCheck()` enforces 7 gates:
-  1. Capability gate
-  2. Provider credential validation (BYOK presence)
-  3. MCU Balance > 0
-  4. Budget sufficiency
-  5. Subscription tier quota
-  6. Authorization check
-  7. Fail-closed error handling
+- **Preflight Gate:** `runMissionPreflightCheck()` in `src/tree/mission/preflight-check.ts` enforces 7 fail-closed gates:
+  1. `auth`: user authentication check (`getCurrentUser()`)
+  2. `ownership`: workspace membership verification (`verifyWorkspaceAccess`)
+  3. `entitlement`: spike guard (single mission limit <= 500¢) + MCU balance / tier check
+  4. `credential`: provider BYOK key presence and non-empty check
+  5. `capability`: configured providers support required capability (`resolveCapabilities`)
+  6. `storage`: Cloudflare R2 / storage subsystem operational
+  7. `queue`: Inngest queue client reachable and operational
 - **Inngest Function (`agent-mission-executor.ts`):**
   - Wrapped in `step.run('execute-agent')` for memoized provider calls.
   - Decrypts BYOK credentials with tenant AAD.
@@ -92,3 +92,4 @@ $$\text{seed} \longrightarrow \text{tree} \longrightarrow \text{forest} \longrig
   - Records cost in `creative_missions.spent_cents`.
   - Advances state to `'review'` (never self-completes).
 - **Failure Path:** If execution fails, marks run failed, emits `agent.mission.failed`, and invokes `markMissionFailed(missionId)` so mission status in D1 transitions to `'failed'` (preventing infinite spinning).
+
