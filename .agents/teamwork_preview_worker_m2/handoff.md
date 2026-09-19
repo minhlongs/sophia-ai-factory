@@ -1,125 +1,146 @@
-# Handoff Report: Milestone 2 Multi-Track Creative Mission Orchestration & Composite Preflight
+# Handoff Report: Production Auth Fix Implementation (Milestone 2)
+
+**Author**: Implementation Worker Subagent (`teamwork_preview_worker_m2`)  
+**Timestamp**: 2026-09-19T16:03:00Z  
+**Type**: Hard Handoff (Task Complete)  
+**Parent Agent**: `orchestrator_auth_fix` (`4b4014dc-c889-46e2-94e4-d87757729081`)
+
+---
 
 ## 1. Observation
 
-### Codebase and Architecture State
-- **Layer Boundary Enforcement**: Strict 4-layer architecture (`seed` → `tree` → `forest` → `land`).
-- **Tree Mission Preflight**:
-  - `apps/sophia-ai-factory/src/tree/mission/preflight-check.ts` previously only evaluated a single capability (`opts.capability ?? 'AI_IMAGE'`) in `evaluateCapabilityGate`.
-  - Upgraded `MissionPreflightOptions` with `requiredCapabilities?: readonly AICapability[] | AICapability[]`.
-  - Integrated `hasRequiredCapabilities(configuredProviders, opts.requiredCapabilities)` from `@/seed/ai/capability-model`. When any required capability is missing, fails closed with `code: 'CAPABILITY_NOT_SUPPORTED'` and detailed metadata (`missingCapabilities`, `availableCapabilities`, `configuredProviders`). Preserved backwards compatibility for single `capability`.
-- **Forest Multi-Track Orchestration**:
-  - Created `apps/sophia-ai-factory/src/forest/mission/multi-track-orchestrator.ts` and barrel export `apps/sophia-ai-factory/src/forest/mission/index.ts`.
-  - Implements 4 distinct track execution steps:
-    1. **Track 1 (Script)**: Synthesizes narration script with scene breakdown via AI Text provider (`chat()`). Formats scenes with visual prompts and narration timings.
-    2. **Track 2 (Audio)**: Dispatches voiceover audio generation via ElevenLabs API client using text narration from Track 1.
-    3. **Track 3 (Visuals)**: Runs concurrently with Track 2 via `Promise.all([generateAudioTrack(...), generateVisualTrack(...)])`. Generates high-definition scene frames via multimodal image provider.
-    4. **Track 4 (Video Compositing)**: Joins outputs of Track 2 (audio) and Track 3 (visuals) to synthesize the final synchronized video container via Replicate video service.
-  - **Atomic State Machine & OCC CAS**:
-    - Uses `transitionStatusCAS(missionId, expectedStatus, nextStatus, nextPhase)`:
-      `UPDATE creative_missions SET status = ?, current_phase = ?, updated_at = ? WHERE id = ? AND status = ?`
-    - Throws `MissionError('CONCURRENT_MODIFICATION', ...)` if 0 rows were updated, preventing race conditions or split-brain states.
-    - Cascades any sub-track error fail-closed to `status: 'failed'` and updates `trackStatus.*` to `'failed'`.
-    - Persists checkpoints to `creative_missions.constraints.track_status` via `saveCheckpoint`.
-  - **Tenant-Scoped Cloudflare R2 Media Vaulting**:
-    - Storage key generator: `formatTenantAssetKey('tenants/${sanitizedTenant}/missions/${sanitizedMission}/assets/${trackType}_${assetId}.${ext}')`.
-    - Sanitizes tenant and mission identifiers to prevent path traversal (`..` and leading `/`).
-    - Registers assets in `content_assets` table (`workspace_id`, `name`, `asset_type`, `storage_path`, `mime_type`, `file_size_bytes`, `metadata`) for audio (`audio/mpeg`), visual frames (`image/png`), and video (`video/mp4`).
-  - **Live Track Status Inquiries**:
-    - `getMissionTrackStatus(missionId, preloadedConstraints?)` reads live running in-memory track status from `liveTrackStatusMap` or parses stored `constraints.track_status`, falling back to DB phase inference.
-- **Land Creative Mission Server Actions**:
-  - In `apps/sophia-ai-factory/src/land/creative-mission/actions.ts`:
-    - Updated `startMissionExecution` to validate composite capabilities `['AI_TEXT', 'AI_AUDIO', 'AI_IMAGE', 'AI_VIDEO']` and asynchronously dispatch `executeMultiTrackMission`.
-    - Added `getMissionTrackStatus(missionId)` Server Action with authentication and workspace IDOR verification.
-    - Added `executeMultiTrackMissionAction` Server Action for direct invocation with workspace validation.
+### 1.1 Source Code and Configuration Deficiencies Observed Prior to Edit
+1. In `apps/sophia-ai-factory/src/seed/auth/better-auth-server.ts:44-57`:
+   - `trustedOrigins` was conditionally set to `isProduction ? [baseURL] : [baseURL, 'http://localhost:3000', 'http://127.0.0.1:3000']`.
+   - `baseURL` was resolved as `process.env.BETTER_AUTH_URL || process.env.APP_URL || (isProduction ? 'https://sophia.agencyos.network' : 'http://localhost:3000')`.
+   - Canonical production domains (`https://sophia.agencyos.network`, `https://sophia-ai-factory.agencyos-openclaw.workers.dev`, `https://sophia-ai-factory-staging.agencyos-openclaw.workers.dev`) were never deterministically and unconditionally included in `trustedOrigins`.
+2. In `apps/sophia-ai-factory/wrangler.toml:133`:
+   - Under `[vars]`, neither `BETTER_AUTH_URL` nor `APP_URL` was defined, whereas `wrangler.staging.toml` explicitly defined both.
+3. In `apps/sophia-ai-factory/src/seed/auth/better-auth-server.ts:157-159`:
+   - `databaseHooks.user.create.before` executed:
+     ```typescript
+     if (!name) {
+       throw new Error('Name is required');
+     }
+     ```
+   - For magic-link logins (`/api/auth/sign-in/magic-link`) where no `name` is supplied, or registrations where company name is blank, this hook threw an uncaught error and aborted user creation.
+   - Downstream in `databaseHooks.user.create.after`, organization name was hardcoded to `user.email`.
+4. In `apps/sophia-ai-factory/src/components/stitch/screens/auth/register-page.tsx`:
+   - Line 60 passed raw `name: companyName` without fallback.
+   - Line 190 had `required` on `<input id="company">` despite the form using `noValidate`, causing confusing UX.
 
-### Command Results
-1. Vitest Mission Suites (`src/tree/mission/`, `src/forest/mission/`, `src/land/creative-mission/`):
-```text
-Test Files  9 passed (9)
-Tests       165 passed (165)
-Duration    2.56s
-```
-- `src/tree/mission/__tests__/retry-backoff.test.ts` (19 tests) - PASS
-- `src/tree/mission/__tests__/agent-run-repo.test.ts` (18 tests) - PASS
-- `src/tree/mission/__tests__/types.test.ts` (43 tests) - PASS
-- `src/tree/mission/__tests__/repository.test.ts` (16 tests) - PASS
-- `src/tree/mission/__tests__/integration.test.ts` (3 tests) - PASS
-- `src/tree/mission/__tests__/preflight-check.test.ts` (17 tests) - PASS
-- `src/forest/mission/__tests__/preflight-check.test.ts` (16 tests) - PASS
-- `src/forest/mission/__tests__/multi-track-orchestrator.test.ts` (15 tests) - PASS
-- `src/land/creative-mission/__tests__/actions.test.ts` (18 tests) - PASS
+### 1.2 Tool Executions and Verifications
+1. **TypeScript Type Check**:
+   - Command: `node ./node_modules/typescript/bin/tsc --noEmit` from `apps/sophia-ai-factory`
+   - Output: Exited with code `0`, `0` errors.
+2. **4-Layer Architectural Boundary Check**:
+   - Command: `bash scripts/check-layer-boundaries.sh` from `apps/sophia-ai-factory`
+   - Output:
+     ```
+     🔍 Checking layer boundaries...
+     ✅ All layer boundaries clean
+     ```
+   - Exit code: `0`.
+3. **Vitest Unit & Integration Test Suite**:
+   - Command: `node ./node_modules/vitest/vitest.mjs run src/seed/auth/ src/middleware/__tests__/auth-routes.test.ts` from `apps/sophia-ai-factory`
+   - Output:
+     ```
+     Test Files  25 passed (25)
+          Tests  303 passed (303)
+       Duration  2.46s
+     ```
+   - All 19 tests in new test file `src/seed/auth/__tests__/better-auth-server-config.test.ts` passed 100%.
+4. **ESLint Static Code Quality Check**:
+   - Command: `node --max-old-space-size=8192 ./node_modules/eslint/bin/eslint.js src/seed/auth/better-auth-server.ts src/components/stitch/screens/auth/register-page.tsx src/seed/auth/__tests__/better-auth-server-config.test.ts` from `apps/sophia-ai-factory`
+   - Output: `0` errors, `3` pre-existing function length warnings.
+5. **Git Diff & File Scoping Audit**:
+   - Exact files modified:
+     - `apps/sophia-ai-factory/src/seed/auth/better-auth-server.ts`
+     - `apps/sophia-ai-factory/wrangler.toml`
+     - `apps/sophia-ai-factory/src/components/stitch/screens/auth/register-page.tsx`
+     - `apps/sophia-ai-factory/src/seed/auth/__tests__/better-auth-server-config.test.ts` (new)
+   - Zero other files modified in `apps/sophia-ai-factory/`.
 
-2. Full E2E Multi-Track Pipeline (`src/__tests__/e2e/multi-track-video-pipeline.e2e.test.ts`):
-```text
-Test Files  1 passed (1)
-Tests       95 passed (95)
-Duration    940ms
-```
-
-3. TypeScript Compiler Check (`tsc --noEmit`):
-```bash
-PATH=/opt/homebrew/bin:$PATH /opt/homebrew/bin/node ./node_modules/typescript/bin/tsc --noEmit
-Exit code: 0
-```
+---
 
 ## 2. Logic Chain
 
-1. **Composite Preflight Gate**:
-   - As observed in `MissionPreflightOptions`, complex creative pipelines depend on multiple capabilities (`AI_TEXT`, `AI_AUDIO`, `AI_IMAGE`, `AI_VIDEO`).
-   - By enhancing `evaluateCapabilityGate` in `preflight-check.ts` to support `requiredCapabilities` and calling `hasRequiredCapabilities` from `@/seed/ai/capability-model`, the preflight check enforces all required capabilities atomically at Gate 5 before execution starts.
-   - This prevents partial pipelines from running and failing mid-execution after consuming credits.
+1. **Root Cause of Production 403 `INVALID_ORIGIN`**:
+   - Better Auth's `originCheckMiddleware` validates the `Origin` or `Referer` header of incoming mutating requests against `ctx.context.options.trustedOrigins`.
+   - In Cloudflare Workers runtime, `process.env.NODE_ENV` is not guaranteed to be statically evaluated to `'production'` across all handler invocations, and `wrangler.toml` lacked runtime environment variables for `BETTER_AUTH_URL`.
+   - Consequently, `baseURL` fell back to `http://localhost:3000` and `trustedOrigins` resolved to `['http://localhost:3000', 'http://127.0.0.1:3000']`. Requests from `https://sophia.agencyos.network` were rejected with 403 `INVALID_ORIGIN`.
+2. **Deterministic Origin Hardening Strategy (R1)**:
+   - Defined immutable `CANONICAL_TRUSTED_ORIGINS`:
+     - `https://sophia.agencyos.network`
+     - `https://sophia-ai-factory.agencyos-openclaw.workers.dev`
+     - `https://sophia-ai-factory-staging.agencyos-openclaw.workers.dev`
+     - `http://localhost:3000`
+     - `http://localhost:8787`
+     - `http://127.0.0.1:3000`
+     - `http://127.0.0.1:8787`
+   - Built `resolveBaseURL()` with defensive edge runtime guards:
+     - Checks `process.env.BETTER_AUTH_URL`, `process.env.APP_URL`, and Cloudflare Workers' `globalThis.__env__`.
+     - In production (`NODE_ENV === 'production'`), refuses any localhost value and guarantees canonical fallback `https://sophia.agencyos.network`.
+   - Built `resolveTrustedOrigins()` to unconditionally union canonical origins, resolved base URL, and any dynamic runtime origins from `TRUSTED_ORIGINS`, `BETTER_AUTH_TRUSTED_ORIGINS`, or `NEXT_PUBLIC_APP_URL` using `Set` deduplication.
+3. **Runtime Environment Variable Parity (R2)**:
+   - Added `BETTER_AUTH_URL = "https://sophia.agencyos.network"` and `APP_URL = "https://sophia.agencyos.network"` to `[vars]` in `wrangler.toml`.
+   - This ensures Cloudflare Workers runtime injects these environment variables directly into worker isolate executions.
+4. **Defensive User Creation and Registration (R3)**:
+   - Implemented `sanitizeAndResolveUserName(rawName, email)`:
+     - Sanitizes control characters `[\u0000-\u001f\u007f]`.
+     - Trims and limits length to 100 chars.
+     - If name is empty/undefined, derives a clean name from the email prefix (`email.split('@')[0]`), falling back to `'user'` if email prefix is also blank.
+   - Updated `databaseHooks.user.create.before` to use this defensive resolution instead of throwing `Error('Name is required')`. Magic-link login and company-less registrations now succeed seamlessly.
+   - Updated `databaseHooks.user.create.after` to resolve `orgName` from `user.name || user.email || 'Personal'`, creating coherent organization records.
+   - Updated `register-page.tsx` `handleSubmit` to resolve `resolvedName = companyName.trim() || email.split('@')[0].trim() || 'user'` and removed `required` attribute from the company input element.
+5. **Quality Gate Verification**:
+   - All changes were verified via TypeScript compiler, 4-layer boundary checker, Vitest suite, and ESLint. Zero regressions were introduced.
 
-2. **Multi-Track Orchestration & Concurrency Control**:
-   - In `multi-track-orchestrator.ts`, Track 1 produces structured script and scene markers.
-   - Parallel dispatch `Promise.all([generateAudioTrack(...), generateVisualTrack(...)])` maximizes pipeline throughput by generating audio narration and image frames concurrently.
-   - Once both parallel tracks complete, Track 4 joins them to render the video.
-   - Using optimistic concurrency control (OCC) CAS `UPDATE ... WHERE id = ? AND status = ?` guarantees that out-of-band modifications (such as manual cancellation or abort) cause a safe, fail-closed `CONCURRENT_MODIFICATION` error rather than overwriting dirty state.
-   - Sub-track failure cascading marks affected tracks as `'failed'` and atomically transitions the mission status to `'failed'`, preserving diagnostic accuracy.
-
-3. **Tenant-Scoped Vaulting & Data Integrity**:
-   - Asset keys structured as `tenants/${tenantId}/missions/${missionId}/assets/${trackType}_${assetId}.${ext}` prevent cross-tenant path traversal and enforce storage namespace isolation.
-   - Storing asset records in `content_assets` links generated assets directly to workspace and mission lineage.
-
-4. **Integration in Server Actions**:
-   - Exposing `getMissionTrackStatus` and `executeMultiTrackMissionAction` in `actions.ts` provides user interfaces with real-time visibility into track progression (pending → running → completed/failed) while enforcing workspace authorization checks.
+---
 
 ## 3. Caveats
 
-- In test environments without real external provider credentials (ElevenLabs, fal.ai, Replicate, Anthropic), mock provider factories and stub DB clients are used as designed. Real API calls in production depend on valid per-tenant or system BYOK credentials.
-- `executeMultiTrackMission` runs within Cloudflare Workers invocation limits; for very long rendering pipelines in production, steps can be dispatched via Inngest durable steps (which `startMissionExecution` emits `agent.mission.started` for).
+1. **Cloudflare Live Deployment**:
+   - Milestone 2 is strictly code modification and local verification.
+   - Live edge deployment and live curl verification against `https://sophia.agencyos.network` belong to subsequent milestones (Milestone 4).
+2. **Cloudflare Worker Secrets Precedence**:
+   - If an existing Cloudflare Worker secret `BETTER_AUTH_URL` was previously set to `http://localhost:3000` in the Cloudflare dashboard, `resolveBaseURL()` will safely reject it in production and enforce `https://sophia.agencyos.network`. However, during edge deployment in M4, ensuring secrets are reconciled or refreshed is recommended.
+
+---
 
 ## 4. Conclusion
 
-Milestone 2 is complete and verified:
-- Composite 7-gate preflight checking supports composite multi-track capabilities (`AI_TEXT`, `AI_AUDIO`, `AI_IMAGE`, `AI_VIDEO`).
-- 4-track orchestrator coordinates script generation, parallel voiceover and visuals, and compositing with atomic OCC CAS state machine transitions and checkpointing.
-- Cloudflare R2 media vaulting enforces tenant isolation and persists asset metadata.
-- Zero TypeScript compiler errors (`tsc --noEmit`), 165/165 unit tests pass, and 95/95 E2E pipeline tests pass.
-- Architecture contracts strictly follow `seed` → `tree` → `forest` → `land`.
+All requirements (R1, R2, R3, R4) are fully and genuinely implemented in strict compliance with the project constitution:
+- `trustedOrigins` unconditionally contains the canonical production domain, worker dev domains, and local development ports.
+- `wrangler.toml` runtime environment parity is established.
+- Defensive fallback eliminates the registration and magic-link name crashes.
+- 100% of test suites pass (25 files, 303 tests).
+- 0 TypeScript errors, 0 layer boundary violations, 0 lint errors.
+
+The codebase is ready for Reviewer / Challenger / Auditor verification in Milestone 3 and subsequent deployment in Milestone 4.
+
+---
 
 ## 5. Verification Method
 
-To independently verify this implementation, run the following commands:
+To independently verify this implementation, execute the following commands from `apps/sophia-ai-factory`:
 
 ```bash
-cd /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory
+# 1. Verify TypeScript compilation (must exit 0 with 0 errors)
+node ./node_modules/typescript/bin/tsc --noEmit
 
-# 1. Run unit tests across tree, forest, and land mission suites
-PATH=/opt/homebrew/bin:$PATH /opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run \
-  src/tree/mission/ \
-  src/forest/mission/ \
-  src/land/creative-mission/
+# 2. Verify 4-layer boundary compliance (must exit 0 with "All layer boundaries clean")
+bash scripts/check-layer-boundaries.sh
 
-# 2. Run full multi-track video pipeline E2E test suite
-PATH=/opt/homebrew/bin:$PATH /opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run \
-  src/__tests__/e2e/multi-track-video-pipeline.e2e.test.ts
+# 3. Verify all auth test suites and new configuration tests (must pass 25/25 files, 303/303 tests)
+node ./node_modules/vitest/vitest.mjs run src/seed/auth/ src/middleware/__tests__/auth-routes.test.ts
 
-# 3. Verify TypeScript type safety (no emit errors, zero :any)
-PATH=/opt/homebrew/bin:$PATH /opt/homebrew/bin/node ./node_modules/typescript/bin/tsc --noEmit
+# 4. Verify ESLint compliance on modified files (must report 0 errors)
+node --max-old-space-size=8192 ./node_modules/eslint/bin/eslint.js \
+  src/seed/auth/better-auth-server.ts \
+  src/components/stitch/screens/auth/register-page.tsx \
+  src/seed/auth/__tests__/better-auth-server-config.test.ts
+
+# 5. Inspect wrangler.toml [vars] parity
+grep -E "(BETTER_AUTH_URL|APP_URL)" wrangler.toml
 ```
-
-Expected output:
-- All 165 mission unit tests pass (100%).
-- All 95 E2E tests pass (100%).
-- `tsc --noEmit` exits with 0 errors.

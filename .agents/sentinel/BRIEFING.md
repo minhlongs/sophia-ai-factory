@@ -1,7 +1,7 @@
-# BRIEFING — 2026-09-19T15:42:00Z
+# BRIEFING — 2026-09-19T15:51:30Z
 
 ## Mission
-Coordinate full multi-agent team via Project Orchestrator to execute complete Customer Handover & 100/100 Project Closeout: Package credentials, generate unified bilingual Handover Dossier & Sign-off Pack, execute Day-1 CEO access verification, and formally certify project closure for unattended autonomous operation.
+Coordinate full multi-agent team via Project Orchestrator to resolve Better Auth 403 `INVALID_ORIGIN` on `https://sophia.agencyos.network`, enforce canonical trusted origins and environment variables, harden registration and magic-link flows, and deploy live edge fix with 100% verification.
 
 ## 🔒 My Identity
 - Archetype: sentinel
@@ -24,6 +24,8 @@ Coordinate full multi-agent team via Project Orchestrator to execute complete Cu
 - Handover Orchestrator: 22cdbe68-d341-4130-a518-8face25dcff7 (completed, claimed victory)
 - Handover Victory Auditor: aec1cf5a-c6b7-48c3-9cfb-bce6f1f0c8e2 (completed, VICTORY CONFIRMED)
 - Customer Handover Audit Verdict: VICTORY CONFIRMED (auditor aec1cf5a-c6b7-48c3-9cfb-bce6f1f0c8e2)
+- Auth Fix Orchestrator: 4b4014dc-c889-46e2-94e4-d87757729081
+- Auth Fix Victory Auditor: [to be spawned on victory claim]
 
 ## 🔒 Key Constraints
 - No technical decisions — relay only
@@ -33,37 +35,29 @@ Coordinate full multi-agent team via Project Orchestrator to execute complete Cu
 - Route to General (teamwork_preview_orchestrator) per Routing Decision Table: Multi-stage SWE implementation across creative mission, AI provider routing, bilingual UI, and test suites.
 - Route to General (teamwork_preview_orchestrator) per Routing Decision Table: Auto-Creative Playbook & Campaign Intelligence (Phase 5) full multi-agent implementation across pattern detection, automated playbook generator, and bilingual dashboard UI.
 - Route to General (teamwork_preview_orchestrator) per Routing Decision Table: Customer Handover & 100/100 Project Closeout full multi-agent orchestration.
+- Route to General (teamwork_preview_orchestrator) per Routing Decision Table: Production authentication bug fix, runtime env parity, defensive registration, and CF-direct deployment with 100% verification.
 
 ## User Context
-- **Last user request**: Customer Handover & 100/100 Project Closeout: Package credentials, generate unified bilingual Handover Dossier & Sign-off Pack, execute Day-1 CEO access verification, and formally certify project closure for unattended autonomous operation.
+- **Last user request**: Fix the critical production authentication bug in Sophia AI Factory: Resolve Better Auth 403 `INVALID_ORIGIN` on `https://sophia.agencyos.network`, enforce canonical trusted origins and environment variables, harden registration and magic-link flows, and deploy live edge fix with 100% verification.
 - **Pending clarifications**: none
-- **Delivered results**: Complete Customer Handover & 100/100 Closeout package (5 core deliverables), independently audited and certified with VICTORY CONFIRMED.
+- **Delivered results**: none yet
 
 ## Project Status
-- **Phase**: complete
+- **Phase**: in progress
 - **Route**: General (teamwork_preview_orchestrator)
-- **Active Orchestrator**: 22cdbe68-d341-4130-a518-8face25dcff7 (completed)
-- **Active Victory Auditor**: aec1cf5a-c6b7-48c3-9cfb-bce6f1f0c8e2 (completed, VICTORY CONFIRMED)
+- **Active Orchestrator**: 4b4014dc-c889-46e2-94e4-d87757729081
+- **Active Victory Auditor**: [to be spawned on victory claim]
 - **Crons**:
-  - Cron 1 (task-24): killed
-  - Cron 2 (task-26): killed
-- **Subagents**: all killed via manage_subagents(action="kill_all")
+  - Cron 1 (Progress Reporting): task-30 (`*/8 * * * *`)
+  - Cron 2 (Liveness Check): task-32 (`*/10 * * * *`)
 
 ## Victory Audit Status
-- **Triggered**: yes
-- **Verdict**: VICTORY CONFIRMED
+- **Triggered**: no
+- **Verdict**: pending
 - **Retry count**: 0
-- **Auditor**: aec1cf5a-c6b7-48c3-9cfb-bce6f1f0c8e2
 
 ## Artifact Index
 - /Users/macbook/sophia-ai-factory/ORIGINAL_REQUEST.md — Verbatim user request record
 - /Users/macbook/sophia-ai-factory/.agents/ORIGINAL_REQUEST.md — Coordination copy of user request record
 - /Users/macbook/sophia-ai-factory/.agents/sentinel/BRIEFING.md — Sentinel persistent working memory
-- /Users/macbook/sophia-ai-factory/docs/customer-handover/HANDOVER_DOSSIER_FINAL.md — Unified Customer Handover Dossier (bilingual)
-- /Users/macbook/sophia-ai-factory/docs/customer-handover/HANDOVER_SIGN_OFF_PACK.md — Formal Customer Sign-Off Pack & Exit Agreement
-- /Users/macbook/sophia-ai-factory/docs/customer-handover/FOUNDER_30MIN_TRANSFER.md — Founder 30-Minute Clean Access Transfer Protocol
-- /Users/macbook/sophia-ai-factory/docs/customer-handover/DAY_1_ACCEPTANCE_TEST_REPORT.md — Day-1 Customer Acceptance & Live Edge Verification Report
-- /Users/macbook/sophia-ai-factory/docs/customer-handover/PROJECT_CLOSEOUT_VERDICT.md — Final Project Closure Audit Certificate (100/100 GREEN)
-- /Users/macbook/sophia-ai-factory/.agents/orchestrator_customer_handover/handoff.md — Orchestrator completion handoff report
-- /Users/macbook/sophia-ai-factory/.agents/sentinel_victory_auditor_customer_handover/handoff.md — Independent Victory Auditor Confirmation Report
-- /Users/macbook/sophia-ai-factory/.agents/sentinel/handoff.md — Sentinel final handoff report
+- /Users/macbook/sophia-ai-factory/.agents/orchestrator_auth_fix/ — Orchestrator directory

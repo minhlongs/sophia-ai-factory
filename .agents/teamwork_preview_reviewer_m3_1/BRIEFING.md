@@ -1,51 +1,59 @@
-# BRIEFING — 2026-05-31T07:29:30Z
+# BRIEFING — 2026-09-19T16:08:00Z
 
 ## Mission
-Review and stress-test worker_m3's changes for Milestone 3: Credits & Video Concurrency, verifying correctness, completeness, and robustness.
+Comprehensive code review & adversarial challenge of Worker M2 changes to Better Auth configuration, wrangler.toml, register page, and auth tests.
 
 ## 🔒 My Identity
-- Archetype: teamwork_preview_reviewer
+- Archetype: reviewer-critic
 - Roles: reviewer, critic
-- Working directory: /Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_reviewer_m3_1
-- Original parent: fa4ccdba-2027-47c6-b690-4bf2f401a527
-- Milestone: Milestone 3
+- Working directory: /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_reviewer_m3_1
+- Original parent: 4b4014dc-c889-46e2-94e4-d87757729081
+- Milestone: m3
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
+- Actively check for integrity violations (hardcoded test results, facade implementations, bypassed tasks, fabricated logs)
+- Evidence-based review with explicit APPROVE or REQUEST_CHANGES verdict
 
 ## Current Parent
-- Conversation ID: fa4ccdba-2027-47c6-b690-4bf2f401a527
-- Updated: yes
+- Conversation ID: 4b4014dc-c889-46e2-94e4-d87757729081
+- Updated: not yet
 
 ## Review Scope
 - **Files to review**:
-  - apps/sophia-ai-factory/src/lib/fulfillment/complete-video-from-webhook.ts
-  - apps/sophia-ai-factory/src/seed/db/repositories/user-purchases-repo.ts
-  - apps/sophia-ai-factory/src/app/api/cron/fulfillment-retry/route.ts
-  - apps/sophia-ai-factory/src/lib/fulfillment/__tests__/complete-video-from-webhook.test.ts
-  - apps/sophia-ai-factory/src/seed/db/repositories/__tests__/user-purchases-repo.test.ts
-  - apps/sophia-ai-factory/src/app/api/cron/fulfillment-retry/__tests__/route.test.ts
-- **Interface contracts**: apps/sophia-ai-factory/PROJECT.md or equivalent
-- **Review criteria**: correctness, style, conformance, adversarial risk (concurrency, credits logic, exception handling, data integrity)
+  - `apps/sophia-ai-factory/src/seed/auth/better-auth-server.ts`
+  - `apps/sophia-ai-factory/wrangler.toml`
+  - `apps/sophia-ai-factory/src/components/stitch/screens/auth/register-page.tsx`
+  - `apps/sophia-ai-factory/src/seed/auth/__tests__/better-auth-server-config.test.ts`
+- **Interface contracts**: `AGENTS.md`, `apps/sophia-ai-factory/CLAUDE.md`, `.agents/ORIGINAL_REQUEST.md`
+- **Review criteria**: R1 (canonical trusted origins & baseURL), R2 (wrangler.toml vars), R3 (user name fallback for magic-link & registration), build & tests (tsc, layer boundaries, vitest auth suites), integrity check
 
 ## Review Checklist
-- **Items reviewed**: all 6 files, and related videos repository and sync cron.
-- **Verdict**: REQUEST_CHANGES
-- **Unverified claims**: none
+- **Items reviewed**:
+  - `better-auth-server.ts`: CANONICAL_TRUSTED_ORIGINS, resolveBaseURL(), resolveTrustedOrigins(), sanitizeAndResolveUserName(), handleUserCreateBefore(), databaseHooks.user.create.before/after
+  - `wrangler.toml`: [vars] BETTER_AUTH_URL and APP_URL
+  - `register-page.tsx`: companyName fallback and removal of required attribute
+  - `better-auth-server-config.test.ts`: 19 comprehensive vitest unit tests
+- **Verdict**: APPROVE
+- **Unverified claims**: None; all verified independently
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Webhook fail CAS mismatch for `'processing'` rows. (Confirmed: SQL constraints on `status = 'queued'` will prevent updates in production)
-  - Facade testing verification. (Confirmed: mock masks the production SQL issue)
-  - Dependent cron timeout seconds/milliseconds parsing mismatch. (Confirmed: leads to instant timeouts for all in-flight jobs and credit leakage)
-- **Vulnerabilities found**:
-  - Inability to record HeyGen webhook rendering failure, sticking row in `'processing'`.
-  - Instant timeout of processing jobs in `video-status-sync` cron leading to infinite credit leakage.
-- **Untested angles**: none
+  - Live production origin rejection: Confirmed live SHA ebc7fb59 returns 403 INVALID_ORIGIN on sign-up and magic-link
+  - Unicode/Vietnamese/Emoji handling: Confirmed robust without corruption
+  - Control characters & long name truncation: Verified sanitized and capped at 100 chars
+  - Localhost override prevention in production: Verified resolveBaseURL rejects localhost when NODE_ENV === 'production'
+  - Empty company & magic-link user creation: Verified before/after hooks never throw
+- **Vulnerabilities found**: 0 critical/major vulnerabilities. Minor observation: pure-whitespace env var in resolveBaseURL
+- **Untested angles**: Live edge behavior after new deployment (Milestone 4 scope)
 
 ## Key Decisions Made
-- Issue REQUEST_CHANGES verdict to ensure critical concurrency and state-machine bugs are fixed before shipping.
+- Confirmed zero integrity violations (no hardcoded cheats, facades, or test bypasses)
+- Independent test execution confirmed 100% green pass rates (tsc: 0 errors, layer boundaries: clean, vitest auth: 25 files, 303 tests)
+- Issued verdict: APPROVE
 
 ## Artifact Index
-- /Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_reviewer_m3_1/handoff.md — Final handoff review report
+- `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_reviewer_m3_1/DISPATCH.md` — Dispatch log
+- `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_reviewer_m3_1/progress.md` — Progress and heartbeat
+- `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_reviewer_m3_1/handoff.md` — Final review and challenge report

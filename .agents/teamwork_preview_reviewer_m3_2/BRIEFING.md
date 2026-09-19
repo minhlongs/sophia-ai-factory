@@ -1,55 +1,63 @@
-# BRIEFING — 2026-05-31T07:31:08Z
+# BRIEFING — 2026-09-19T16:07:35Z
 
 ## Mission
-Review the changes made by worker_m3 for Milestone 3: Credits & Video Concurrency, verifying typechecks, running tests, and providing an objective and adversarial review.
+Perform adversarial security, CSRF, and edge-runtime review of Better Auth server config, hooks, and trusted origins.
 
 ## 🔒 My Identity
-- Archetype: preview_reviewer
+- Archetype: reviewer-critic
 - Roles: reviewer, critic
-- Working directory: /Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_reviewer_m3_2/
-- Original parent: fa4ccdba-2027-47c6-b690-4bf2f401a527
-- Milestone: Milestone 3: Credits & Video Concurrency
-- Instance: 1 of 1
+- Working directory: /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_reviewer_m3_2
+- Original parent: 4b4014dc-c889-46e2-94e4-d87757729081
+- Milestone: m3
+- Instance: 2 of 2
 
 ## 🔒 Key Constraints
-- Review-only — do NOT modify implementation code.
-- Must run typechecks (`npm run ci:typecheck`) and tests (`npx vitest run src/lib/fulfillment/__tests__/ src/seed/db/repositories/__tests__/ src/app/api/cron/fulfillment-retry/__tests__/`).
-- Review changes for integrity violations (hardcoded tests, dummy/facade implementations, shortcuts, fabricated verification outputs).
-- Issue verdict (APPROVE or REQUEST_CHANGES).
+- Review-only — do NOT modify implementation code
+- Focus on adversarial security, CSRF, trustedOrigins validation, hook safety, edge runtime isolation
+- Check for integrity violations (hardcoded test results, facade implementations, bypassed tests)
+- Never use console.log / any in production code
+- Cloudflare Workers edge runtime compatibility
 
 ## Current Parent
-- Conversation ID: fa4ccdba-2027-47c6-b690-4bf2f401a527
-- Updated: yes
+- Conversation ID: 4b4014dc-c889-46e2-94e4-d87757729081
+- Updated: not yet
 
 ## Review Scope
 - **Files to review**:
-  - apps/sophia-ai-factory/src/lib/fulfillment/complete-video-from-webhook.ts
-  - apps/sophia-ai-factory/src/seed/db/repositories/user-purchases-repo.ts
-  - apps/sophia-ai-factory/src/app/api/cron/fulfillment-retry/route.ts
-  - apps/sophia-ai-factory/src/lib/fulfillment/__tests__/complete-video-from-webhook.test.ts
-  - apps/sophia-ai-factory/src/seed/db/repositories/__tests__/user-purchases-repo.test.ts
-  - apps/sophia-ai-factory/src/app/api/cron/fulfillment-retry/__tests__/route.test.ts
-- **Interface contracts**: D1 API, Next.js route structures
-- **Review criteria**: correctness, completeness, robustness, interface conformance
+  - `apps/sophia-ai-factory/src/seed/auth/better-auth-server.ts`
+  - `apps/sophia-ai-factory/wrangler.toml`
+  - `apps/sophia-ai-factory/src/components/stitch/screens/auth/register-page.tsx`
+  - `apps/sophia-ai-factory/src/seed/auth/__tests__/better-auth-server-config.test.ts`
+- **Interface contracts**: AGENTS.md, apps/sophia-ai-factory/CLAUDE.md, apps/sophia-ai-factory/.claude/rules/
+- **Review criteria**: CSRF/Origin validation, edge runtime isolation, hook safety (SQLi/XSS/null/undefined), test verification, integrity checks
 
 ## Key Decisions Made
-- Issued APPROVE verdict based on clean compiler build, 100% test pass rate, and robust Compare-And-Swap (CAS) implementations.
-- Highlighted a Major Coverage Gap regarding refund-mid-render failure paths (emails/compensation).
+- Executed independent typecheck, layer boundary audit, Vitest suite, and Sophia Doctor.
+- Analyzed Better Auth origin matcher internals (`matchesOriginPattern`): strict string equality enforced on canonical origins.
+- Verified absence of Node.js-only imports in edge paths; confirmed Web Crypto API compliance.
+- Assessed hook parameter bindings in D1 query executors; confirmed SQLi and XSS defenses are robust.
+- Formulated verdict: APPROVE.
 
 ## Artifact Index
-- /Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_reviewer_m3_2/original_prompt.md — Original dispatch prompt
-- /Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_reviewer_m3_2/BRIEFING.md — Current briefing
-- /Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_reviewer_m3_2/handoff.md — Handoff and review report
+- `handoff.md` — Final review report and verdict
+- `progress.md` — Liveness heartbeat
+- `DISPATCH.md` — Initial dispatch message
 
 ## Review Checklist
-- **Items reviewed**: Checked and verified all 6 target source and test files.
+- **Items reviewed**:
+  - `better-auth-server.ts` (resolveBaseURL, resolveTrustedOrigins, sanitizeAndResolveUserName, hooks)
+  - `wrangler.toml` (vars: BETTER_AUTH_URL, APP_URL)
+  - `register-page.tsx` (handleSubmit fallback, optional companyName)
+  - `better-auth-server-config.test.ts` (19 unit/integration test assertions)
 - **Verdict**: APPROVE
-- **Unverified claims**: None. Verified all claims via typechecks and test suite execution.
+- **Unverified claims**: 0 (all worker claims verified)
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - CAS queries on completion: Handled correctly via row count changes check.
-  - CAS queries on decrement: Handled correctly via D1 changes metadata.
-  - Concurrency & safety limits: Checked and verified cron execution safety thresholds.
-- **Vulnerabilities found**: Refund-mid-render failure paths can result in emails/compensation sent to refunded users (documented under findings).
-- **Untested angles**: None.
+  - Open CORS / CSRF bypass via wildcard origins -> Rejected (no wildcards used; exact origin match).
+  - Malicious origin spoofing (e.g. `*.evil.com`, subdomain injection) -> Blocked by `matchesOriginPattern`.
+  - Node.js runtime leakage in Cloudflare Workers -> None found; uses Web Crypto `crypto.randomUUID()` and defensive `globalThis.__env__` checks.
+  - SQLi in `name`/`email` hooks -> Blocked; D1QueryChain uses parameterized prepared statements with `?` bindings.
+  - Stored/Reflected XSS in email/UI -> Blocked; HTML escaping via `escapeHtml` and strict URL prefix validation.
+- **Vulnerabilities found**: 0
+- **Untested angles**: Live production edge deployment (scheduled for Milestone 4).

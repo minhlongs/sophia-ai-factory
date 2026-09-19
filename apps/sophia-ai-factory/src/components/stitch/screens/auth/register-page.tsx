@@ -56,8 +56,9 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
+      const resolvedName = companyName.trim() || email.split('@')[0].trim() || 'user';
       const result = await authClient.signUp.email({
-        name: companyName,
+        name: resolvedName,
         email,
         password,
         callbackURL: '/dashboard/onboarding',
@@ -187,7 +188,6 @@ export default function RegisterPage() {
                     placeholder={t('companyPlaceholder')}
                     value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
-                    required
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#08090D]/80 border border-white/10 text-white placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 transition-all"
                   />
                 </div>

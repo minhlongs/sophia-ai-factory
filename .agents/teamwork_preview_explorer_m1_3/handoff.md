@@ -1,174 +1,184 @@
-# Handoff Report — Payments & Webhooks Security (Milestone 1)
+# Handoff Report: R4 Deployment & Verification Tooling, Test Suites, and Auth Origin Diagnostics
+
+**Agent**: Explorer 3 (`teamwork_preview_explorer_m1_3`)  
+**Parent Agent**: Orchestrator (`4b4014dc-c889-46e2-94e4-d87757729081`)  
+**Type**: Hard Handoff (Investigation Complete)  
+**Date**: 2026-09-19T15:58:30Z  
+
+---
 
 ## 1. Observation
-I directly observed the following from the codebase:
-- **NOWPayments Webhook Handler**:
-  - File: `apps/sophia-ai-factory/src/land/billing/nowpayments-ipn-handlers.ts`
-  - Lines 35–37:
-    ```typescript
-    if (await isPaymentProcessed(payment_id)) return { success: true, message: 'Already processed' }
 
-    await recordIpnEvent(payment_id, payment_status, ipn as unknown as Record<string, unknown>, false)
-    ```
-  - File: `apps/sophia-ai-factory/src/land/billing/nowpayments-ipn-db.ts`
-  - Lines 20–30 (`isPaymentProcessed`):
-    ```typescript
-    export async function isPaymentProcessed(paymentId: string): Promise<boolean> {
-      try {
-        const db = getDb()
-        const { data } = await db
-          .from('payment_events')
-          .select('processed')
-          .eq('event_id', `nowpayments_${paymentId}`)
-          .single()
-        return data?.processed === 1 || data?.processed === true
-      } catch { return false }
-    }
-    ```
-  - Lines 32–41 (`recordIpnEvent`):
-    ```typescript
-    export async function recordIpnEvent(paymentId: string, status: string, payload: Record<string, unknown>, processed: boolean): Promise<void> {
-      try {
-        const db = getDb()
-        await db.from('payment_events').upsert(
-          { event_id: `nowpayments_${paymentId}`, event_type: `nowpayments.${status}`, payload: JSON.stringify(payload), processed: processed ? 1 : 0, created_at: new Date().toISOString() }
-        )
-      } catch (err) {
-        logger.warn('[NOWPayments] Failed to record IPN event', { paymentId, error: getErrorMessage(err) })
-      }
-    }
-    ```
-- **PayOS Webhook Handler**:
-  - File: `apps/sophia-ai-factory/src/app/api/payos/ipn/route.ts`
-  - Lines 96–102:
-    ```typescript
-    // Idempotency check
-    if (await isPayOsEventProcessed(orderCode)) {
-      return NextResponse.json({ received: true, note: 'Already processed' })
-    }
+1. **Production Endpoint Behavior with Origin Header**:
+   - Command: `curl -s -i -X POST "https://sophia.agencyos.network/api/auth/sign-in/magic-link" -H "Origin: https://sophia.agencyos.network" -H "Content-Type: application/json" -d '{"email":"test@example.com"}'`
+     - Verbatim Result:
+       ```
+       HTTP/2 403
+       content-type: application/json
+       {"message":"Invalid origin","code":"INVALID_ORIGIN"}
+       ```
+   - Command: `curl -s -i -X POST "https://sophia.agencyos.network/api/auth/sign-in/magic-link" -H "Origin: http://localhost:3000" -H "Content-Type: application/json" -d '{"email":"test@example.com"}'`
+     - Verbatim Result:
+       ```
+       HTTP/2 200
+       content-type: application/json
+       {"status":true}
+       ```
+   - Command: `curl -s -i -X POST "https://sophia.agencyos.network/api/auth/sign-in/email" -H "Origin: https://sophia.agencyos.network" -H "Content-Type: application/json" -d '{"email":"test@example.com","password":"test"}'`
+     - Verbatim Result:
+       ```
+       HTTP/2 403
+       {"message":"Invalid origin","code":"INVALID_ORIGIN"}
+       ```
+   - Command: `curl -s -i -X POST "https://sophia.agencyos.network/api/auth/sign-up/email" -H "Origin: https://sophia.agencyos.network" -H "Content-Type: application/json" -d '{"name":"Test","email":"test@example.com","password":"testpassword123"}'`
+     - Verbatim Result:
+       ```
+       HTTP/2 403
+       {"message":"Invalid origin","code":"INVALID_ORIGIN"}
+       ```
 
-    // Record event as unprocessed (reserve row)
-    await recordPayOsEvent(orderCode, success ? 'PAID' : 'CANCELLED', bodyJson, false)
-    ```
-  - Lines 23–33 (`isPayOsEventProcessed`):
-    ```typescript
-    async function isPayOsEventProcessed(orderCode: number): Promise<boolean> {
-      try {
-        const db = createServerClient()
-        const { data } = await db
-          .from('payos_events')
-          .select('processed')
-          .eq('event_id', `payos_${orderCode}`)
-          .single()
-        return data?.processed === 1 || data?.processed === true
-      } catch { return false }
-    }
-    ```
-  - Lines 35–51 (`recordPayOsEvent`):
-    ```typescript
-    async function recordPayOsEvent(orderCode: number, status: string, payload: unknown, processed: boolean): Promise<void> {
-      try {
-        const db = createServerClient()
-        await db.from('payos_events').upsert({
-          event_id: `payos_${orderCode}`,
-          order_code: String(orderCode),
-          status,
-          amount: 0, // updated by caller
-          currency: 'VND',
-          payload: JSON.stringify(payload),
-          processed: processed ? 1 : 0,
-          created_at: new Date().toISOString(),
-        })
-      } catch (err) {
-        logger.warn('[PayOS IPN] Failed to record event', { orderCode, error: String(err) })
-      }
-    }
-    ```
-  - Lines 132–138 (Pending Order matching and fallback):
-    ```typescript
-      const orders = pendingOrders as Array<{ order_id: string; tier: string; invoice_url: string | null }> | null
-      const matchOrder = orders?.find(o => o.invoice_url?.includes(paymentLinkId) || o.invoice_url?.includes(String(orderCode)))
-        ?? orders?.[0]
+2. **Source Code Inspection — Origin Configuration**:
+   - File: `apps/sophia-ai-factory/src/seed/auth/better-auth-server.ts:45-56`:
+     ```typescript
+     const isProduction = process.env.NODE_ENV === 'production';
+     const baseURL =
+       process.env.BETTER_AUTH_URL ||
+       process.env.APP_URL ||
+       (isProduction
+         ? 'https://sophia.agencyos.network'
+         : 'http://localhost:3000');
 
-      const tier = (matchOrder?.tier ?? 'BASIC') as Tier
-      const orderId = matchOrder?.order_id ?? `payos_${userId}_${orderCode}`
-    ```
-- **Database Unique Constraints**:
-  - File: `apps/sophia-ai-factory/migrations/0002-payment-events.sql`
-    ```sql
-    CREATE TABLE IF NOT EXISTS payment_events (
-      id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-      event_id TEXT UNIQUE NOT NULL,
-      event_type TEXT NOT NULL,
-      payload TEXT DEFAULT '{}',
-      processed INTEGER DEFAULT 0,
-      created_at TEXT DEFAULT (datetime('now'))
-    );
-    ```
-    - Shows that `event_id` is defined as `TEXT UNIQUE NOT NULL`.
-  - File: `apps/sophia-ai-factory/migrations/0072-payos-events.sql`
-    ```sql
-    CREATE TABLE IF NOT EXISTS payos_events (
-      event_id TEXT PRIMARY KEY,
-      order_code TEXT NOT NULL,
-      status TEXT NOT NULL,
-      amount INTEGER NOT NULL,
-      currency TEXT NOT NULL DEFAULT 'VND',
-      payload TEXT NOT NULL,
-      processed INTEGER NOT NULL DEFAULT 0,
-      created_at TEXT DEFAULT (datetime('now'))
-    );
-    ```
-    - Shows that `event_id` is defined as `TEXT PRIMARY KEY` (implicitly unique).
-- **PayOS Tier Config Prices**:
-  - File: `apps/sophia-ai-factory/src/land/payments/payos.ts`
-  - Lines 30–34 (`getPayOsTierConfig`):
-    ```typescript
-    export function getPayOsTierConfig(tier: Tier): PayOsTierConfig {
-      const usd = TIER_USD_PRICES[tier]
-      const vnd = Math.round((usd * USD_TO_VND) / 1000) * 1000 // round to 1000 VND
-      return { tier, vndAmount: vnd, usdAmount: usd }
-    }
-    ```
+     const trustedOrigins = isProduction
+       ? [baseURL]
+       : [baseURL, 'http://localhost:3000', 'http://127.0.0.1:3000'];
+     ```
+   - File: `apps/sophia-ai-factory/wrangler.toml:133-150`:
+     - Under `[vars]`, neither `BETTER_AUTH_URL` nor `APP_URL` is defined.
+
+3. **Source Code Inspection — Missing Name Handling**:
+   - File: `apps/sophia-ai-factory/src/seed/auth/better-auth-server.ts:152-160`:
+     ```typescript
+     const rawName = typeof user.name === 'string' ? user.name : '';
+     const name = rawName
+       .replace(/[\u0000-\u001f\u007f]/g, '')
+       .trim()
+       .slice(0, 100);
+     if (!name) {
+       throw new Error('Name is required');
+     }
+     return { data: { ...user, name } };
+     ```
+   - File: `apps/sophia-ai-factory/src/components/stitch/screens/auth/register-page.tsx:59-64`:
+     ```typescript
+     const result = await authClient.signUp.email({
+       name: companyName,
+       email,
+       password,
+       callbackURL: '/dashboard/onboarding',
+     });
+     ```
+
+4. **Vitest Auth Test Execution**:
+   - Command: `node ./node_modules/vitest/vitest.mjs run src/seed/auth/ src/middleware/__tests__/auth-routes.test.ts`
+   - Result:
+     - 24 test files passed (100%)
+     - 284 tests passed (100%)
+     - Duration: 2.79s
+   - Note on sandbox execution: `npm test` and `npx vitest` fail with `env: node: Operation not permitted` due to shebang resolution in macOS sandbox; direct `node ./node_modules/...` succeeds without permission prompts.
+
+5. **Deployment Script Inspection**:
+   - File: `apps/sophia-ai-factory/scripts/deploy-with-sha.sh`:
+     - Line 46: `cd "$APP_DIR"`
+     - Lines 68-109: Checks `git log origin/main..HEAD` and working tree clean status (bypassed by `ALLOW_UNPUSHED_DEPLOY=1`).
+     - Line 309: `npm run type-check`
+     - Line 320: `npm test`
+     - Line 341: `node scripts/pre-deploy-gate.mjs`
+     - Line 366: `SKIP_SENTRY_BUILD=1 SKIP_SYMBOL_UPLOAD=1 npm run build`
+     - Line 429: `npx @opennextjs/cloudflare build --skipNextBuild --noMinify`
+     - Line 471: `bash scripts/apply-migrations.sh "$PREVIOUS_LIVE_SHA"`
+     - Line 496: `npx opennextjs-cloudflare deploy --config wrangler.toml`
+     - Lines 548-550: Injects `COMMIT_SHA`, `DEPLOYED_AT`, `DEPLOY_BRANCH` via `npx wrangler secret put`.
+     - Lines 588-612: Verifies live shortSha and checks `/api/health` and `/login` return HTTP 200.
+
+6. **Sophia Doctor Inspection**:
+   - File: `apps/sophia-ai-factory/scripts/sophia-doctor.mjs`:
+     - 11 checks: `checkNode()`, `checkEnvVars()`, `checkWranglerBindings()`, `checkMigrations()`, `checkTypeScript()`, `checkMCPWhitelist()`, `checkCIDoctrine()`, `checkGit()`, `checkProdVersion()`, `checkProdHealth()`, `checkBetterStack()`.
+     - In proxy environments, `fetch` in `checkProdVersion` and `checkProdHealth` fails with `TypeError: fetch failed (ENOTFOUND)` unless undici's `ProxyAgent` is configured. With `setGlobalDispatcher(new ProxyAgent(proxy))`, both pass HTTP 200.
 
 ---
 
 ## 2. Logic Chain
-1. **Idempotency Races**:
-   - The current check-then-act pattern (`isPaymentProcessed`/`isPayOsEventProcessed` followed by `recordIpnEvent`/`recordPayOsEvent` with `processed = 0`) is non-atomic and permits multiple concurrent processes to read `processed = false` before any of them write `processed = 0` (and eventually `processed = 1`).
-   - Using `.upsert()` inside event-recording functions does not throw a duplicate key error when a record already exists; it silently updates it, masking concurrent operations.
-   - Replacing `.upsert()` with `.insert()` on initial reservation forces the SQLite/D1 database to enforce uniqueness. Concurrent requests trying to insert the same `event_id` will fail with a uniqueness violation.
-   - Catching the uniqueness violation, checking if `processed = 1` (completed, exit with success), or `processed = 0` (active/in-progress, exit/abort), completely prevents concurrent double-processing.
-   - Deleting the event record on handler failure allows the webhook provider to retry successfully.
-   - Transitioning the event ID pattern in NOWPayments to `nowpayments_${paymentId}_${status}` ensures status updates are not blocked, while preventing duplicate execution of the same status handler.
 
-2. **PayOS Amount Verification**:
-   - Currently, the PayOS webhook does not verify the `amount` paid in VND. A malicious request or erroneous QR transfer could pay an arbitrary low amount and successfully activate premium tiers.
-   - Since `getPayOsTierConfig(tier).vndAmount` computes the expected tier price in VND, we can verify the payload `amount` matches `expectedVndAmount`. If they do not match, returning a 400 response prevents fraudulent package registrations.
+1. **From Observation 1 & 2**:
+   - POST requests from `Origin: https://sophia.agencyos.network` to Better Auth routes fail with 403 `INVALID_ORIGIN`, while POST requests from `Origin: http://localhost:3000` return 200 OK.
+   - `better-auth-server.ts` computes `trustedOrigins` based on `baseURL` and `isProduction = process.env.NODE_ENV === 'production'`.
+   - In Cloudflare Workers, `process.env.NODE_ENV` is not guaranteed to be `'production'`.
+   - `wrangler.toml` does not define `BETTER_AUTH_URL` or `APP_URL` in `[vars]`.
+   - Therefore, `baseURL` evaluates to `'http://localhost:3000'`, and `trustedOrigins` evaluates to `['http://localhost:3000', 'http://127.0.0.1:3000']`.
+   - When users browse `https://sophia.agencyos.network`, the browser includes `Origin: https://sophia.agencyos.network`.
+   - Better Auth detects that the request origin is neither in `trustedOrigins` nor matches `baseURL`, and rejects it with 403 `INVALID_ORIGIN`.
 
-3. **Insecure Match Fallback**:
-   - The fallback `?? orders?.[0]` matches the first pending order of the user if the specific `paymentLinkId` or `orderCode` fails to match the `invoice_url`. If a user has a pending `MASTER` checkout and a `BASIC` checkout, they can buy `BASIC`, trigger a match failure, fall back to `orders?.[0]` (which could resolve to the `MASTER` order), and acquire the `MASTER` tier for the price of `BASIC`.
-   - The default fallback `tier = 'BASIC'` when `orders` is empty grants access without an associated pending order record in the database.
-   - Removing the fallback and failing with a 400 error if `matchOrder` is not found closes this exploit vector.
+2. **From Observation 3**:
+   - `better-auth-server.ts:157` checks `if (!name) throw new Error('Name is required')`.
+   - Magic link flows do not provide a name; they only submit `{ email }`.
+   - Registration on `register-page.tsx` submits `{ name: companyName }`. If `companyName` is empty, `name` is empty.
+   - Therefore, magic-link authentication for new users and registration without company name throw an unhandled exception during `user.create.before`.
+   - Falling back to `user.email.split('@')[0] || 'User'` safely satisfies the name requirement while preserving user creation.
+
+3. **From Observation 4 & 5**:
+   - `deploy-with-sha.sh` runs TypeScript check (`npm run type-check`), tests (`npm test`), and `pre-deploy-gate.mjs` before deploying.
+   - Pre-existing auth tests (284 tests) all pass.
+   - However, no test exists for `better-auth-server.ts` configuration or origin verification.
+   - Also, `deploy-with-sha.sh` strictly enforces clean working tree and `origin/main` alignment unless `ALLOW_UNPUSHED_DEPLOY=1` is provided.
 
 ---
 
 ## 3. Caveats
-- I assumed that no third-party plugin or client alters the payload structure before it reaches `POST` in `payos/ipn/route.ts` or `processNowPaymentsIpn`.
-- I did not verify whether other payment routes (like Stripe or Polar) suffer from similar issues, as they are out of the scope of this milestone.
+
+- **Wrangler Remote Execution**: `npx wrangler d1 migrations list sophia-raas-db --remote` in doctor check requires Cloudflare OAuth or API token. In local offline mode without CF credentials, doctor outputs a non-fatal warning for D1 migrations.
+- **Git Working Tree in Sandbox**: The `.agents/` folder contains git-tracked files from past runs. Any agent file writes cause git to show uncommitted files. For Milestone 4 deployment, either stage/commit changes or set `ALLOW_UNPUSHED_DEPLOY=1`.
+- **Turbopack Build**: `npm run build` is hardcoded to Turbopack with `SKIP_SENTRY_BUILD=1 SKIP_SYMBOL_UPLOAD=1` due to M1 memory limits. This is doctrine-compliant per `AGENTS.md`.
 
 ---
 
 ## 4. Conclusion
-- Concurrent duplicate IPN requests can be resolved atomically by replacing check-then-act `.upsert()` calls with immediate `.insert()` statements, checking the database for status on conflict, and deleting the lock key in the catch/failure block to support retry logic. NOWPayments keys must include status.
-- PayOS amount verification is implemented by retrieving the expected price in VND via `getPayOsTierConfig(tier).vndAmount` and comparing it to the received webhook `amount`.
-- The insecure fallback `?? orders?.[0]` must be removed, and the route must return a 400 Bad Request if `matchOrder` is not resolved.
+
+The root cause of the production Better Auth 403 `INVALID_ORIGIN` bug is fully diagnosed and empirically confirmed. The remediation requires:
+1. **`better-auth-server.ts`**: Unconditionally include `https://sophia.agencyos.network`, `https://sophia-ai-factory.agencyos-openclaw.workers.dev`, and localhost in `trustedOrigins` regardless of `NODE_ENV`.
+2. **`wrangler.toml`**: Add `BETTER_AUTH_URL = "https://sophia.agencyos.network"` and `APP_URL = "https://sophia.agencyos.network"` under `[vars]`.
+3. **`better-auth-server.ts` & `register-page.tsx`**: Add defensive fallback for missing/empty name to email prefix.
+4. **Deploy & Verification**: Execute `./scripts/deploy-with-sha.sh` (with `ALLOW_UNPUSHED_DEPLOY=1` if unpushed), followed by curl origin probes and `node scripts/sophia-doctor.mjs`.
 
 ---
 
 ## 5. Verification Method
-1. **Idempotency Races**:
-   - Inspect `apps/sophia-ai-factory/src/land/billing/__tests__/nowpayments-ipn-atomic-upgrade.test.ts` to see how the billing status changes are tracked.
-   - Test command: Run `npx vitest run apps/sophia-ai-factory/src/land/billing/__tests__/nowpayments-ipn-atomic-upgrade.test.ts` or `npm run test` inside `apps/sophia-ai-factory`.
-2. **Review proposed code structure**:
-   - Verify `apps/sophia-ai-factory/src/app/api/payos/ipn/route.ts` rejects mismatching amounts and missing pending orders.
+
+1. **Local Test Execution**:
+   ```bash
+   cd /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory
+   node ./node_modules/typescript/bin/tsc --noEmit
+   node ./node_modules/vitest/vitest.mjs run src/seed/auth/ src/middleware/__tests__/auth-routes.test.ts
+   ```
+2. **Live Production Origin Verification (Post-Deploy)**:
+   ```bash
+   # Magic link sign-in (MUST return 200, NOT 403)
+   curl -s -i -X POST "https://sophia.agencyos.network/api/auth/sign-in/magic-link" \
+     -H "Origin: https://sophia.agencyos.network" \
+     -H "Content-Type: application/json" \
+     -d '{"email":"smoke-test@agencyos.network"}' | grep -E "HTTP/2 (200|400)|INVALID_ORIGIN"
+
+   # Email sign-in (MUST return 401/400 credential error, NOT 403 INVALID_ORIGIN)
+   curl -s -i -X POST "https://sophia.agencyos.network/api/auth/sign-in/email" \
+     -H "Origin: https://sophia.agencyos.network" \
+     -H "Content-Type: application/json" \
+     -d '{"email":"smoke-test@agencyos.network","password":"dummy"}' | grep -E "HTTP/2 (401|400)|INVALID_ORIGIN"
+
+   # Live edge SHA parity check
+   curl -s https://sophia.agencyos.network/api/version | grep -o '"shortSha":"[^"]*"'
+   git rev-parse HEAD | cut -c1-8
+   ```
+3. **Sophia Doctor Verification**:
+   ```bash
+   node scripts/sophia-doctor.mjs
+   ```
+   Must exit 0 with 0 errors.

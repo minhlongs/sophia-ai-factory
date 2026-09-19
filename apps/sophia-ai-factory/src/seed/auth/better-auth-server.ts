@@ -29,6 +29,118 @@ import { revokeAllUserSessions } from '@/seed/auth/revoke-user-sessions';
 type AuthInstance = ReturnType<typeof betterAuth>;
 let _auth: AuthInstance | null = null;
 
+export const CANONICAL_TRUSTED_ORIGINS: readonly string[] = [
+  'https://sophia.agencyos.network',
+  'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
+  'https://sophia-ai-factory-staging.agencyos-openclaw.workers.dev',
+  'http://localhost:3000',
+  'http://localhost:8787',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:8787',
+] as const;
+
+/**
+ * Robust baseURL resolution supporting Node.js and Cloudflare Workers edge runtime.
+ * Never allows production to fall back to localhost even if misconfigured.
+ */
+export function resolveBaseURL(): string {
+  const globalEnv = (globalThis as unknown as { __env__?: Record<string, unknown> })?.__env__;
+  const cfBetterAuthUrl = typeof globalEnv?.BETTER_AUTH_URL === 'string' ? globalEnv.BETTER_AUTH_URL : undefined;
+  const cfAppUrl = typeof globalEnv?.APP_URL === 'string' ? globalEnv.APP_URL : undefined;
+
+  const isProduction = process.env.NODE_ENV === 'production';
+  const envAuthUrl = process.env.BETTER_AUTH_URL || cfBetterAuthUrl || process.env.APP_URL || cfAppUrl;
+  const isLocalEnvUrl = Boolean(envAuthUrl && (envAuthUrl.includes('localhost') || envAuthUrl.includes('127.0.0.1')));
+
+  // In production, ignore accidental localhost env vars and fall back to canonical production URL
+  if (isProduction) {
+    if (envAuthUrl && !isLocalEnvUrl) {
+      return envAuthUrl.replace(/\/+$/, '');
+    }
+    return 'https://sophia.agencyos.network';
+  }
+
+  return (envAuthUrl || 'http://localhost:3000').replace(/\/+$/, '');
+}
+
+/**
+ * Build trustedOrigins: unconditionally and deterministically include all
+ * canonical production, staging, and development domains, plus any dynamic
+ * origins from runtime environment variables.
+ */
+export function resolveTrustedOrigins(customBaseURL?: string): string[] {
+  const base = customBaseURL || resolveBaseURL();
+  const globalEnv = (globalThis as unknown as { __env__?: Record<string, unknown> })?.__env__;
+  const cfBetterAuthUrl = typeof globalEnv?.BETTER_AUTH_URL === 'string' ? globalEnv.BETTER_AUTH_URL : undefined;
+  const cfAppUrl = typeof globalEnv?.APP_URL === 'string' ? globalEnv.APP_URL : undefined;
+  const cfNextPublicAppUrl = typeof globalEnv?.NEXT_PUBLIC_APP_URL === 'string' ? globalEnv.NEXT_PUBLIC_APP_URL : undefined;
+  const cfTrustedOrigins = typeof globalEnv?.TRUSTED_ORIGINS === 'string' ? globalEnv.TRUSTED_ORIGINS : undefined;
+
+  const dynamicOriginCandidates = [
+    base,
+    process.env.BETTER_AUTH_URL,
+    cfBetterAuthUrl,
+    process.env.APP_URL,
+    cfAppUrl,
+    process.env.NEXT_PUBLIC_APP_URL,
+    cfNextPublicAppUrl,
+    ...(process.env.TRUSTED_ORIGINS ? process.env.TRUSTED_ORIGINS.split(',') : []),
+    ...(cfTrustedOrigins ? cfTrustedOrigins.split(',') : []),
+    ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(',') : []),
+  ];
+
+  const originsSet = new Set<string>();
+  for (const canonical of CANONICAL_TRUSTED_ORIGINS) {
+    originsSet.add(canonical);
+  }
+  for (const candidate of dynamicOriginCandidates) {
+    if (typeof candidate === 'string') {
+      const trimmed = candidate.trim().replace(/\/+$/, '');
+      if (trimmed) {
+        originsSet.add(trimmed);
+      }
+    }
+  }
+
+  return Array.from(originsSet);
+}
+
+/**
+ * Defensive user name sanitizer and resolver.
+ * Falls back to sanitized email prefix if name is empty or missing (e.g. magic link login).
+ */
+export function sanitizeAndResolveUserName(rawName?: unknown, email?: unknown): string {
+  const nameStr = typeof rawName === 'string' ? rawName : '';
+  let sanitized = nameStr
+    .replace(/[\u0000-\u001f\u007f]/g, '')
+    .trim()
+    .slice(0, 100);
+
+  if (!sanitized) {
+    const emailStr = typeof email === 'string' ? email : '';
+    const emailPrefix = emailStr.includes('@')
+      ? emailStr.split('@')[0].trim()
+      : emailStr.trim();
+    sanitized = (emailPrefix || 'user')
+      .replace(/[\u0000-\u001f\u007f]/g, '')
+      .trim()
+      .slice(0, 100) || 'user';
+  }
+
+  return sanitized;
+}
+
+export async function handleUserCreateBefore<T extends { name?: unknown; email?: unknown }>(
+  user: T,
+): Promise<{ data: Omit<T, 'name'> & { name: string } }> {
+  const name = sanitizeAndResolveUserName(user.name, user.email);
+  return { data: { ...user, name } };
+}
+
+export function resetAuthForTesting(): void {
+  _auth = null;
+}
+
 /**
  * Get the Better Auth instance (lazy singleton per isolate).
  * Safe to call in request handlers — D1 is available at that point.
@@ -41,19 +153,9 @@ export async function getAuth() {
   const secret = process.env.BETTER_AUTH_SECRET || process.env.JWT_SECRET;
   if (!secret) throw new Error('BETTER_AUTH_SECRET or JWT_SECRET must be set');
 
-  // Determine baseURL and trusted origins
-  const isProduction = process.env.NODE_ENV === 'production';
-  const baseURL =
-    process.env.BETTER_AUTH_URL ||
-    process.env.APP_URL ||
-    (isProduction
-      ? 'https://sophia.agencyos.network'
-      : 'http://localhost:3000');
-
-  // Build trustedOrigins: in development, accept both localhost and 127.0.0.1
-  const trustedOrigins = isProduction
-    ? [baseURL]
-    : [baseURL, 'http://localhost:3000', 'http://127.0.0.1:3000'];
+  // Determine baseURL and trusted origins deterministically
+  const baseURL = resolveBaseURL();
+  const trustedOrigins = resolveTrustedOrigins(baseURL);
 
   // Better Auth's deep generic inference produces a narrower Auth<...> than
   // the default `Auth<BetterAuthOptions>` carried by `ReturnType<typeof betterAuth>`.
@@ -146,17 +248,7 @@ export async function getAuth() {
       user: {
         create: {
           before: async (user) => {
-            // Better Auth's built-in /api/auth/sign-up/email route bypasses
-            // app-level Zod schemas, so this hook is the only choke point where
-            // an unbounded or control-character name can be rejected.
-            const rawName = typeof user.name === 'string' ? user.name : '';
-            const name = rawName
-              .replace(/[\u0000-\u001f\u007f]/g, '')
-              .trim()
-              .slice(0, 100);
-            if (!name) {
-              throw new Error('Name is required');
-            }
+            const name = sanitizeAndResolveUserName(user.name, user.email);
             return { data: { ...user, name } };
           },
           after: async (user) => {
@@ -164,9 +256,11 @@ export async function getAuth() {
               const db = createServerClient();
               if (!db) throw new Error('D1 database binding not available');
               const orgId = crypto.randomUUID();
-              const prefix = user.email.split('@')[0]
-                .replace(/[^a-z0-9]/gi, '-').toLowerCase();
+              const emailStr = typeof user.email === 'string' ? user.email : '';
+              const rawPrefix = emailStr.includes('@') ? emailStr.split('@')[0] : (emailStr || 'user');
+              const prefix = rawPrefix.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'user';
               const slug = `${prefix}-${orgId.slice(0, 6)}`;
+              const orgName = (typeof user.name === 'string' && user.name.trim()) || user.email || 'Personal';
 
               // Retry transient D1 failures at signup. uuidv7 is unique by construction,
               // so retrying the insert is idempotent-safe and gives us ibise/retry budget.
@@ -175,7 +269,7 @@ export async function getAuth() {
               for (let attempt = 0; attempt <= maxRetries; attempt++) {
                 try {
                   await db.from('organizations').insert({
-                    id: orgId, name: user.email, slug,
+                    id: orgId, name: orgName, slug,
                   });
                   await db.from('org_members').insert({
                     org_id: orgId, user_id: user.id, role: 'owner',
@@ -222,7 +316,7 @@ export async function getAuth() {
                 const fallbackSlug = `${prefix}-${fallbackOrgId.slice(0, 6)}`;
                 try {
                   await db.from('organizations').insert({
-                    id: fallbackOrgId, name: user.email, slug: fallbackSlug,
+                    id: fallbackOrgId, name: orgName, slug: fallbackSlug,
                   });
                   await db.from('org_members').insert({
                     org_id: fallbackOrgId, user_id: user.id, role: 'owner',

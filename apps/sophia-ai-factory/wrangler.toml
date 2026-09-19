@@ -131,6 +131,10 @@ preview_id = "f2cf595dec5543dc96f6370bebbc8754"
 # === P3-KV-END ===
 
 [vars]
+# Auth canonical URLs (Workers runtime env parity - R2)
+BETTER_AUTH_URL = "https://sophia.agencyos.network"
+APP_URL = "https://sophia.agencyos.network"
+
 # NEXT_PUBLIC_MOCK_AI_SERVICES — set in .dev.vars for local dev only
 # Production uses real AI services (BYOK keys from customer)
 # R2_PUBLIC_BASE_URL — public base URL for VIDEO_BUCKET (e.g., https://videos.sophia.agencyos.network).

@@ -377,3 +377,92 @@ Ensure all modules adhere strictly to seed → tree → forest → land hierarch
 - [ ] Unit and integration test suites pass with 100% success rate
 - [ ] Sophia Doctor (`npm run doctor`) remains 100% green on production edge
 
+## 2026-09-19T14:56:03Z
+
+The user requested: The full multi-agent team.
+Execute complete Customer Handover & 100/100 Project Closeout: Package credentials, generate the unified bilingual Handover Dossier and Sign-off Pack, execute Day-1 CEO access verification, and formally certify project closure for unattended autonomous operation.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+References:
+- docs/audit/customer-readiness/FINAL-VERDICT.md
+- apps/sophia-ai-factory/docs/ceo-handover/
+- docs/development-roadmap.md
+- apps/sophia-ai-factory/CLAUDE.md
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
+
+## Requirements
+
+### R1. Unified Customer Handover Dossier & Exit Sign-Off Pack
+Consolidate all operational handover documentation into a comprehensive bilingual Handover Dossier (`docs/customer-handover/HANDOVER_DOSSIER_FINAL.md` and `HANDOVER_SIGN_OFF_PACK.md`), covering critical asset registers (Cloudflare, D1, R2, DNS, Payments, AI Providers), access ownership matrix, and the Customer Operational Governance Charter.
+
+### R2. Founder 30-Minute Clean Access Transfer & Security Protocol
+Create the streamlined, actionable Founder 30-Minute Transfer Checklist (`docs/customer-handover/FOUNDER_30MIN_TRANSFER.md`): exact steps for Cloudflare account membership & role transfer, D1 automated backup verification, 1Password/Bitwarden vault export protocol, and BYOK upstream credentials delegation.
+
+### R3. Day-1 Customer Acceptance & Verification Validation
+Execute and document the Day-1 Acceptance Test Suite across production surfaces (`https://sophia.agencyos.network`): probe core health, auth flows, setup wizard onboarding, creative mission workflows, and billing endpoints to empirically verify zero regressions and zero remaining operational blockers.
+
+### R4. Formal Project Closure Certification (100/100 Verdict)
+Synthesize the final Project Closure Audit Certificate (`docs/customer-handover/PROJECT_CLOSEOUT_VERDICT.md`), verifying zero outstanding P0/P1 blockers, 100% test pass rates, live edge SHA parity, and independence score graduation to 100/100 GREEN.
+
+## Acceptance Criteria
+
+### Documentation & Deliverables
+- [ ] Unified Handover Dossier published with complete asset register and access ownership matrix
+- [ ] Actionable Founder 30-Minute Transfer Checklist documented with exact role delegation instructions
+- [ ] Bilingual Sign-off Pack and Customer Acceptance Certificate completed with zero missing sections
+
+### Verification & Live Parity
+- [ ] Live edge SHA matches repository HEAD commit with zero working tree divergence
+- [ ] Production health `/api/health`, `/api/version`, and authenticated routes return valid HTTP statuses
+- [ ] Automated customer journey test suite passes with 100% success rate
+- [ ] Sophia Doctor (`npm run doctor`) confirms 11/11 checks green (0 warnings, 0 errors)
+
+### Independence & Closeout
+- [ ] Verified that the platform operates autonomously without single-founder manual intervention
+- [ ] Independent Victory Auditor issues `VICTORY CONFIRMED` on the closeout package
+
+## 2026-09-19T15:50:21Z
+
+The user requested: The full multi-agent team.
+Fix the critical production authentication bug in Sophia AI Factory: Resolve Better Auth 403 `INVALID_ORIGIN` on `https://sophia.agencyos.network`, enforce canonical trusted origins and environment variables, harden registration and magic-link flows, and deploy live edge fix with 100% verification.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+References:
+- apps/sophia-ai-factory/src/seed/auth/better-auth-server.ts
+- apps/sophia-ai-factory/src/seed/auth/better-auth-client.ts
+- apps/sophia-ai-factory/wrangler.toml
+- apps/sophia-ai-factory/src/components/stitch/screens/auth/register-page.tsx
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
+
+## Requirements
+
+### R1. Production Origin & Trusted Domain Hardening
+Fix Better Auth server configuration in `src/seed/auth/better-auth-server.ts` to deterministically include `https://sophia.agencyos.network`, `https://sophia-ai-factory.agencyos-openclaw.workers.dev`, and localhost in `trustedOrigins` regardless of `process.env.NODE_ENV` in Cloudflare Workers edge runtime.
+
+### R2. Runtime Environment Variable Parity
+Configure `BETTER_AUTH_URL` and `APP_URL` in `wrangler.toml` (`[vars]`) to ensure the Workers runtime always resolves the canonical production base URL, preventing fallback to `http://localhost:3000`.
+
+### R3. Defensive Registration & Magic Link Name Fallback
+Harden user creation hooks in `better-auth-server.ts` and `register-page.tsx` so users registering via magic-link or without an explicit company name gracefully fall back to the email prefix instead of throwing uncaught errors.
+
+### R4. Production Edge Deployment & Live Auth Verification
+Deploy the fix via CF-direct doctrine (`./scripts/deploy-with-sha.sh`), verify that `/api/auth/sign-in/email`, `/api/auth/sign-up/email`, and `/api/auth/sign-in/magic-link` accept requests with `Origin: https://sophia.agencyos.network` with HTTP 200/401 instead of 403 `INVALID_ORIGIN`, and confirm Sophia Doctor remains 11/11 GREEN.
+
+## Acceptance Criteria
+
+### Security & Origin Validation
+- [ ] `curl -s -i -X POST "https://sophia.agencyos.network/api/auth/sign-up/email" -H "Origin: https://sophia.agencyos.network"` returns application status (not 403 `INVALID_ORIGIN`)
+- [ ] `curl -s -i -X POST "https://sophia.agencyos.network/api/auth/sign-in/magic-link" -H "Origin: https://sophia.agencyos.network"` returns HTTP 200 (not 403 `INVALID_ORIGIN`)
+- [ ] `trustedOrigins` in `better-auth-server.ts` unconditionally covers `https://sophia.agencyos.network`
+
+### Code Quality & Deployment
+- [ ] `npm run type-check` exits 0 with 0 TypeScript errors
+- [ ] All auth test suites pass with 100% pass rate
+- [ ] Live edge SHA matches new commit SHA
+- [ ] Sophia Doctor reports 11/11 checks green
+
+
