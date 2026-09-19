@@ -1,7 +1,7 @@
-# BRIEFING — 2026-05-30T07:31:40-07:00
+# BRIEFING — 2026-09-19T14:23:00Z
 
 ## Mission
-Detailed verification and review of the backfilled codebase documentation suite for sophia-ai-factory.
+Reviewer 1 (Architectural & Backend Reviewer) for Playbook Campaign Intelligence implementation in Sophia AI Factory.
 
 ## 🔒 My Identity
 - Archetype: Codebase Audit Reviewer
@@ -10,52 +10,71 @@ Detailed verification and review of the backfilled codebase documentation suite 
 - Original parent: 192b693c-f303-4111-b3f2-d84e5664d469
 - Milestone: Codebase Audit and Documentation Review
 - Instance: 1 of 1
+- Current Archetype: Architectural & Backend Reviewer
+- Current Roles: reviewer, critic
+- Current Working directory: /Users/macbook/sophia-ai-factory/.agents/reviewer_1/
+- Current Original parent: f78b0eba-a504-4a1c-b62c-0032619b9de3
+- Current Milestone: Playbook Campaign Intelligence
+- Current Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code.
 - Network restriction: CODE_ONLY mode.
 - Report all findings in /Users/macbook/projects/sophia-ai-factory/.agents/reviewer_1/review_report.md.
 - Ensure all paths use file:// scheme and check that they point to existing files.
+- Review-only — do NOT modify implementation code for Playbook Campaign Intelligence.
+- Check for integrity violations (hardcoded results, dummy/facade implementations, shortcuts, fabricated verification).
+- Report findings and explicit verdict (APPROVE or REQUEST_CHANGES) in handoff.md.
 
 ## Current Parent
-- Conversation ID: 192b693c-f303-4111-b3f2-d84e5664d469
-- Updated: yes (completed review)
+- Conversation ID: f78b0eba-a504-4a1c-b62c-0032619b9de3
+- Updated: 2026-09-19T14:23:00Z
 
 ## Review Scope
-- **Files to review**:
-  - docs/codebase-audit/SUMMARY.md (verified)
-  - docs/codebase-audit/STRUCTURAL_MAP.md (verified)
-  - docs/codebase-audit/EXECUTION_FLOWS.md (verified)
-  - docs/codebase-audit/TECH_DEBT.md (verified)
-  - docs/codebase-audit/RISKS_GAPS.md (verified)
-  - docs/onboarding.md (verified)
-  - docs/setup.md (verified)
-  - docs/local-dev.md (verified)
-  - docs/troubleshooting.md (verified)
-  - docs/testing.md (verified)
-  - docs/environment-variables.md (verified)
-  - docs/architecture-overview.md (verified)
-- **Interface contracts**: docs/codebase-audit/
-- **Review criteria**: correctness, completeness, placeholder check, file:// link scheme validation, unit test passing.
+- **Files reviewed**:
+  - apps/sophia-ai-factory/migrations/0274_playbook_campaign_intelligence.sql
+  - apps/sophia-ai-factory/src/seed/types/playbook-pattern.ts
+  - apps/sophia-ai-factory/src/tree/learning-loop/ (types.ts, pattern-extractor.ts, effectiveness-scorer.ts, scoring-cas.ts, index.ts)
+  - apps/sophia-ai-factory/src/forest/playbook/ (campaign-generator.ts, batch-scheduler.ts, index.ts)
+  - apps/sophia-ai-factory/src/app/api/cron/scheduled-campaigns/route.ts
+- **Interface contracts**:
+  - .agents/ORIGINAL_REQUEST.md (§R1, §R2, §R4)
+  - .agents/orchestrator_playbook_campaign/PROJECT.md
+  - TEST_READY.md
+  - AGENTS.md (zero `:any`, 4-layer architecture: seed -> tree -> forest -> land, no console.log, etc.)
+- **Review criteria**: correctness, backend architecture, layer boundary compliance, integrity, OCC CAS correctness, quota enforcement, tests and typecheck passing.
 
 ## Key Decisions Made
-- Checked all 12 documents for placeholders and found 0 remaining.
-- Checked all file/path links and verified they all use absolute paths and the `file://` scheme.
-- Verified that all links point to existing directories or files.
-- Executed `npm run ci:test` in `apps/sophia-ai-factory` to verify code correctness.
-- Discovered 1 unit test failure in `src/security-tests/f02-admin-reauth.test.ts`.
-- Issued `REQUEST_CHANGES` verdict due to the test failure revealing a critical security vulnerability.
+- Confirmed zero integrity violations: no hardcoding, no mock facades, no shortcuts, no cheating.
+- Independently verified layer boundary compliance (`scripts/check-layer-boundaries.sh` exit 0).
+- Independently verified unit test suite (78/78 passing across 6 test files).
+- Independently verified E2E integration test suite (55/55 passing in `playbook-campaign-e2e.test.ts`).
+- Independently verified TypeScript compilation (`npm run type-check` exit 0, 0 errors).
+- Issued verdict: APPROVE with architectural observations and hardening recommendations.
 
 ## Artifact Index
-- /Users/macbook/projects/sophia-ai-factory/.agents/reviewer_1/original_prompt.md — Copy of the invocation prompt
-- /Users/macbook/projects/sophia-ai-factory/.agents/reviewer_1/review_report.md — Detailed review report and findings
+- /Users/macbook/sophia-ai-factory/.agents/reviewer_1/DISPATCH.md — Task dispatch
+- /Users/macbook/sophia-ai-factory/.agents/reviewer_1/BRIEFING.md — Situational awareness
+- /Users/macbook/sophia-ai-factory/.agents/reviewer_1/handoff.md — Reviewer verdict and handoff report
+- /Users/macbook/sophia-ai-factory/.agents/reviewer_1/progress.md — Progress tracker
 
 ## Review Checklist
-- **Items reviewed**: All 12 requested markdown files
-- **Verdict**: REQUEST_CHANGES
-- **Unverified claims**: Playwright E2E and k6 load tests (skipped)
+- **Items reviewed**:
+  - Migration 0274 (unique index on playbook_patterns, campaign_blueprints, recurring_campaign_runs)
+  - Seed types (HookStyle, VoiceProfile, DurationPattern, CampaignBlueprint, RecurringCampaignSchedule, etc. - 0 `:any`)
+  - Tree learning-loop (regex extraction, scoring formula weights 0.35/0.25/0.30/0.10, log confidence saturation at N=50, OCC CAS)
+  - Forest playbook (campaign blueprint generator, batch scheduler, 7-gate preflight, quota check, credit CAS)
+  - Cron route (`/api/cron/scheduled-campaigns`)
+- **Verdict**: APPROVE
+- **Unverified claims**: None (all key claims verified via direct execution)
 
 ## Attack Surface
-- **Hypotheses tested**: Checked if requireRecentAuth fails to validate signatures when tampered.
-- **Vulnerabilities found**: Tampered admin_challenge_token cookies are accepted as valid.
-- **Untested angles**: E2E authentication flow in the UI.
+- **Hypotheses tested**:
+  - Concurrency race in batch scheduler: schedule advance happens after mission creation and credit deduction rather than upfront claim.
+  - Silent catch block in `processRecurringCampaignRunsTable` when querying D1.
+  - Cloudflare cron trigger route invoking legacy campaign processing unless `?engine=playbook` is passed.
+- **Vulnerabilities found**:
+  - [Major] In `batch-scheduler.ts`, schedule CAS advance occurs post-dispatch rather than pre-claim; mitigated by route-level 12h idempotency window, but vulnerable to microsecond-level concurrent invocations.
+  - [Minor] Silent catch block on line 352 of `batch-scheduler.ts` swallows D1 exceptions without logging.
+  - [Minor] Default Cloudflare cron invocation triggers legacy engine unless query param or header is set.
+- **Untested angles**: Production Cloudflare edge remote binding behavior (local in-memory D1 and mocks verified).

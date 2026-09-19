@@ -332,3 +332,48 @@ Ensure all new actions and domain modules strictly adhere to seed → tree → f
 - [ ] Bilingual translation keys validated with zero missing keys in `messages/vi.json` and `messages/en.json`
 - [ ] Sophia Doctor (`npm run doctor`) remains 100% green
 
+## 2026-09-19T13:36:30Z
+
+The user requested: The full multi-agent team.
+Implement Auto-Creative Playbook & Campaign Intelligence (Phase 5): Build the creative learning loop with pattern detection, automated recurring campaign playbooks, performance analytics, and a bilingual dashboard management UI.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+References:
+- docs/development-roadmap.md
+- apps/sophia-ai-factory/CLAUDE.md
+- apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
+
+## Requirements
+
+### R1. Creative Learning Loop & Pattern Detection Engine
+Build domain analytics in `src/forest/playbook/` or `src/tree/learning-loop/` that ingests completed creative mission outcomes, extracts high-performing creative variables (hook styles, audio voice profiles, duration patterns), and scores creative effectiveness.
+
+### R2. Automated Playbook & Recurring Campaign Generator
+Implement the automated playbook engine that translates winning patterns into repeatable campaign blueprints, scheduling recurring batch video generation runs with 7-gate preflight checks and quota enforcement.
+
+### R3. Bilingual Playbook & Campaign UI
+Deliver the interactive Playbook management interface in the dashboard with bilingual EN/VI support, displaying pattern analytics, auto-apply toggle rules, and campaign scheduling controls without mock placeholders.
+
+### R4. Quality Gates & 4-Layer Architecture Enforcement
+Ensure all modules adhere strictly to seed → tree → forest → land hierarchy (`bash scripts/check-layer-boundaries.sh` exit 0), compiling with zero TypeScript errors, zero `:any` types, and 100% test suite pass rates.
+
+## Acceptance Criteria
+
+### Architecture & Engine Integrity
+- [ ] Creative learning loop extracts and scores mission patterns with OCC CAS state updates
+- [ ] Automated campaign generator dispatches recurring multi-track missions with preflight checks
+- [ ] Strictly adheres to canonical 4-layer import discipline (`bash scripts/check-layer-boundaries.sh` exit 0)
+
+### UI & Bilingual Experience
+- [ ] Dashboard Playbook interface renders pattern insights and campaign schedules
+- [ ] All customer-facing copy fully bilingual in `messages/vi.json` and `messages/en.json` (0 missing keys)
+- [ ] Zero unhandled errors or layout breaks across mobile/desktop viewports
+
+### Quality & Diagnostics
+- [ ] `npm run type-check` exits with code 0 (zero TypeScript errors)
+- [ ] Unit and integration test suites pass with 100% success rate
+- [ ] Sophia Doctor (`npm run doctor`) remains 100% green on production edge
+

@@ -1,89 +1,192 @@
-# Handoff Report — Forensic Audit of Documentation Backfill
-
-**Auditor:** Forensic Integrity Auditor (Auditor 1)
-**Working Directory:** `/Users/macbook/projects/sophia-ai-factory/.agents/auditor_1/`
-
----
+# Forensic Audit Handoff Report: Phase 5 (Auto-Creative Playbook & Campaign Intelligence)
 
 ## 1. Observation
 
-1. **Scanned Documents**:
-   Scanned all 12 generated files in `/Users/macbook/projects/sophia-ai-factory/docs/`:
-   - `docs/codebase-audit/SUMMARY.md`
-   - `docs/codebase-audit/STRUCTURAL_MAP.md`
-   - `docs/codebase-audit/EXECUTION_FLOWS.md`
-   - `docs/codebase-audit/TECH_DEBT.md`
-   - `docs/codebase-audit/RISKS_GAPS.md`
-   - `docs/onboarding.md`
-   - `docs/setup.md`
-   - `docs/local-dev.md`
-   - `docs/troubleshooting.md`
-   - `docs/testing.md`
-   - `docs/environment-variables.md`
-   - `docs/architecture-overview.md`
+### 1.1 Source Code Inspection
+Directly observed code implementations across all Phase 5 modules:
 
-2. **File References**:
-   Extracted 199 unique `file:///Users/macbook/projects/sophia-ai-factory/` URLs inside the documentation suite. All 199 files/folders exist on the filesystem, as verified by running a Node.js verification script:
-   ```json
-   {
-     "scannedFiles": 12,
-     "placeholdersFound": [],
-     "brokenLinks": [],
-     "validLinksCount": 199
-   }
-   ```
+1. **`src/tree/learning-loop/pattern-extractor.ts`** (305 lines):
+   - Pure domain logic with zero external dependencies, importing only `./types`.
+   - Implements `bucketDurationPattern` with discrete boundaries (`0-15s`, `16-30s`, `31-60s`, `61-90s`, `90s+`).
+   - Implements `classifyHookByRegex` supporting bilingual (EN/VI) semantic patterns (`story_lead`, `problem_agitation`, `curiosity_gap`, `bold_claim`, `statistic_reveal`, `question`).
+   - Implements `extractVoiceProfileFromMetadata` and `extractCreativeVariables` resolving multi-modal media assets (`script`, `audio`, `video`) and constraints.
 
-3. **Entry Points & Sub-App Layout**:
-   - `apps/sophia-ai-factory/package.json` exists.
-   - `apps/sophia-video-bot/pyproject.toml` exists. The directory `/Users/macbook/projects/sophia-ai-factory/apps/sophia-video-bot` contains only this file.
-   - Core 4-layer file paths (e.g., `seed/db/client.ts`, `seed/auth/better-auth-server.ts`, `tree/handover/auto-handover.ts`, `forest/inngest/client.ts`) exist.
+2. **`src/tree/learning-loop/effectiveness-scorer.ts`** (140 lines):
+   - Computes weighted composite score:
+     $$\text{score} = (0.35 \times \text{ctr}) + (0.25 \times \text{retention}) + (0.30 \times \text{conv}) + (0.10 \times \text{efficiency})$$
+   - Normalization handlers for impressions, clicks, watch times, total duration, ad spend, and revenue.
+   - Enforces minimum sample size threshold `MIN_LEARNING_SAMPLE = 5`.
+   - Implements logarithmic confidence saturation:
+     $$\text{sampleScore} = \min\left(1, \frac{\log_2(N + 1)}{\log_2(51)}\right)$$
+     $$\text{composite} = \text{sampleScore} \times 0.6 + \text{consistencyScore} \times 0.4$$
 
-4. **Technical Debt Examples Verification**:
-   - In `apps/sophia-ai-factory/src/forest/sops/sop-executor.ts` (lines 139–369), the `sopExecute` Inngest function is defined but remains unregistered in the serve endpoint `src/app/api/inngest/route.ts`.
-   - The migrations directories `/Users/macbook/projects/sophia-ai-factory/migrations/` and `/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/migrations/` both exist and contain identical migration files.
-   - In `apps/sophia-ai-factory/src/lib/schemas.ts`, lines 24–32 define `webhookHeaderSchema` which validates the obsolete `"Polar-Signature"` header.
-   - In `apps/sophia-ai-factory/src/lib/schemas.ts`, lines 3–20 define `campaignSchema`, lines 48–54 define `createVideoSchema`, and lines 56–60 define `setupConfigSchema`.
+3. **`src/tree/learning-loop/scoring-cas.ts`** (217 lines):
+   - Implements `updatePatternScoreCAS` executing parameterized SQL:
+     ```sql
+     UPDATE playbook_patterns
+     SET avg_metric = ?, sample_size = ?, confidence = ?, confidence_level = ?, detected_at = ?
+     WHERE id = ? AND detected_at = ?
+     ```
+   - Checks `result.meta.changes > 0`. On 0 rows affected, applies exponential jitter backoff and refreshes expected timestamp up to 3 retries or fails with `CONCURRENT_MODIFICATION`.
+   - Implements `transitionMissionLifecycleCAS` enforcing valid state transitions (`completed` $\to$ `learning` $\to$ `iterating`) and checking `result.meta.changes === 0` to throw `LearningLoopError('CONCURRENT_MODIFICATION', ...)`.
 
-5. **Behavioral Test Execution**:
-   Ran the sub-app test suite using `npx vitest run` in the directory `/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory`:
-   - 282 tests passed, 0 failed.
+4. **`src/forest/playbook/campaign-generator.ts`** (320 lines):
+   - Ingests detected patterns from `pattern-store.ts`, filters by `confidence >= MIN_PATTERN_CONFIDENCE` (0.70) for `hook_style`, `duration`, and `voice_style`.
+   - Synthesizes repeatable `CampaignBlueprint` objects with bilingual metadata (`name`, `description`, `suggestedPrompts`).
+   - Persists blueprints to D1 table `campaign_blueprints` using parameterized SQL upsert.
+
+5. **`src/forest/playbook/batch-scheduler.ts`** (389 lines):
+   - Implements `processRecurringCampaignBatch` evaluating active due schedules (`next_run_date <= effectiveToday` and `next_run_at <= nowMs`).
+   - Enforces user tier retrieval (`getUserTier`) and monthly mission quota check (`checkMissionQuota`).
+   - Executes fail-closed 7-gate preflight check (`runMissionPreflightCheck`) requiring `AI_TEXT`, `AI_AUDIO`, `AI_IMAGE`, and `AI_VIDEO`.
+   - Executes atomic credit deduction (`deductCredits`); aborts on credit failure.
+   - Dispatches multi-track mission (`dispatchMultiTrackMission`).
+   - Advances schedule using atomic OCC CAS:
+     ```sql
+     UPDATE scheduled_campaigns
+     SET next_run_date = ?, last_run_date = ?, updated_at = datetime('now')
+     WHERE id = ? AND next_run_date = ?
+     ```
+
+6. **`src/land/playbook/actions.ts`** (964 lines):
+   - Implements typed Server Actions: `getPlaybookOverviewAction`, `toggleRuleAutoApplyAction`, `rollbackRuleAction`, `saveRecurringScheduleAction`, `toggleRecurringScheduleAction`, `triggerBatchRunAction`.
+   - Enforces Better Auth session verification (`getCurrentUser`) and tenant workspace isolation (`verifyWorkspaceAccess`).
+   - `toggleRuleAutoApplyAction` executes OCC CAS `UPDATE playbook_rules SET auto_apply = ?, updated_at = ? WHERE id = ? AND updated_at = ?` and asserts `changes > 0`, returning `CAS_CONFLICT` if 0 rows were updated.
+   - Strictly conforms to 4-layer import discipline: imports only from `@/seed` and `@/tree`; zero imports from `@/forest`.
+
+7. **`src/app/[locale]/dashboard/playbook/page.tsx` & `src/components/stitch/screens/dashboard/playbook-page.tsx`** (27 lines & 953 lines):
+   - Server Component (`page.tsx`) marks `dynamic = 'force-dynamic'`, retrieves active user, and prefetches overview data.
+   - Client Component (`playbook-page.tsx`) mounts interactive Pattern analytics, Playbook rules table with auto-apply toggle and degradation rollback controls, and Recurring Campaign scheduler with live preflight preview.
+   - Zero hardcoded mock data, zero stubbed responses, zero `TODO` comments.
+
+### 1.2 Anti-Cheating & Facade Scan
+- Grep scans for `mock`, `placeholder`, `TODO`, `dummy`, `facade` across all Phase 5 files returned zero hits in production implementation files.
+- No hardcoded test responses or simulated pass strings detected.
+
+### 1.3 Architectural & Quality Gates Verification
+- **Layer Boundary Enforcement**:
+  Command: `bash scripts/check-layer-boundaries.sh`
+  Result: Exit code 0 (`✅ All layer boundaries clean`).
+  Verified: `seed` $\to$ `tree` $\to$ `forest` $\to$ `land`.
+  - Zero imports from `@/forest` in `src/land/playbook/actions.ts`.
+  - Zero imports from `@/land` or `@/forest` in `src/tree/learning-loop/`.
+  - Zero forbidden imports in `src/seed/`.
+- **TypeScript Compilation**:
+  Command: `npm run type-check` (`node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit`)
+  Result: Exit code 0 (0 compilation errors, 0 `:any` additions).
+- **i18n Translation Completeness**:
+  Command: `npm run i18n:validate` (`node scripts/validate-i18n-keys.mjs`)
+  Result:
+  ```
+  Total t() calls: 3986
+  Unique static keys: 1744
+  Dynamic key prefixes: 33
+  Missing static keys: 0
+  Unresolved dynamic prefixes: 0
+  ✅ All translation keys found!
+  ```
+  Exit code 0.
+
+### 1.4 Database Migration & State Machine Verification
+- **Migration `0274_playbook_campaign_intelligence.sql`**:
+  - Defines `uidx_playbook_patterns_upsert` on `(workspace_id, feature_key, feature_value, metric)`.
+  - Defines `campaign_blueprints` table with appropriate columns and index `idx_campaign_blueprints_workspace`.
+  - Defines `recurring_campaign_runs` table with foreign key reference and indexes `idx_recurring_campaign_runs_next` and `idx_recurring_campaign_runs_workspace`.
+- **OCC CAS Concurrency**:
+  - `scoring-cas.ts`: Parameterized bindings and `result.meta.changes > 0` validation verified.
+  - `batch-scheduler.ts`: Parameterized bindings and `changes > 0` validation verified.
+  - `actions.ts`: Parameterized bindings and `changes === 0` conflict rejection verified.
+
+### 1.5 Independent Test Execution
+- **Unit and Integration Suites**:
+  Command: `npx vitest run src/tree/learning-loop/ src/forest/playbook/ src/land/playbook/ src/__tests__/integration/playbook-campaign-e2e.test.ts`
+  Result: **8 test files passed (8/8), 150 tests passed (150/150)**.
+- **Tier 5 Adversarial Suites**:
+  Command: `npx vitest run src/__tests__/e2e/playbook-tier5-adversarial.test.ts src/__tests__/integration/playbook-tier5-concurrency-adversarial.test.ts`
+  Result: **2 test files passed (2/2), 57 tests passed (57/57)**, including 10-parallel-worker OCC CAS race simulation.
+- **Total Tests Passing**: **207 / 207 tests (100% Pass)**.
 
 ---
 
 ## 2. Logic Chain
 
-1. **No Fabrication Check**: Since all 199 `file://` links in the documentation suite resolve to actual existing files/directories on the disk (Observation 2), the documentation does not contain any fabricated file paths. The stub folder `apps/sophia-video-bot/` (Observation 3) matches its documented role as an empty template, proving no dummy files were added to simulate functional compliance.
-2. **Entry Points Check**: Verified that core entry points (such as `better-auth-server.ts`, `auto-handover.ts`, and `client.ts` (Observation 3)) are located exactly at their documented paths.
-3. **Technical Debt Examples Check**: Manual verification of lines 139-369 in `sop-executor.ts`, the duplicate migrations directories, and lines 24-32 in `schemas.ts` (Observation 4) matches the documented technical debt examples in `TECH_DEBT.md` exactly, proving authenticity.
-4. **Placeholder/Syntax Check**: The automated parser detected 0 matches for typical placeholder patterns like `TODO`, `TBD`, or `<placeholder>` across all 12 audited markdown files (Observation 2). A visual spot check of the markdown confirmed correct structure and proper compilation (Observation 4).
-5. **System Validation**: The sub-app test suite was built and run (Observation 5), passing completely and verifying that the code remains fully functional.
+1. **Premise 1 (Anti-Cheating)**:
+   In Development Mode (per `ORIGINAL_REQUEST.md` timestamp `2026-09-19T13:36:30Z`), integrity violations are defined by hardcoded test returns, dummy facade logic, fake verifications, or mock placeholders.
+   - Code inspections and grep scans confirmed that every method in `src/tree/learning-loop/`, `src/forest/playbook/`, `src/land/playbook/`, and `src/components/stitch/screens/dashboard/playbook-page.tsx` implements genuine mathematical, database, and business logic.
+   - Therefore, no anti-cheating violations exist.
+
+2. **Premise 2 (Architectural Discipline)**:
+   The Sophia AI Factory Constitution mandates strict 4-layer separation (`seed` $\to$ `tree` $\to$ `forest` $\to$ `land`).
+   - `scripts/check-layer-boundaries.sh` was run and exited with code 0.
+   - Manual AST/import inspection confirmed `src/land/playbook/actions.ts` calls only `seed` and `tree`, avoiding forbidden `land` $\to$ `forest` imports.
+   - `npm run type-check` executed cleanly with exit code 0.
+   - `npm run i18n:validate` confirmed 0 missing keys across EN and VI locales.
+   - Therefore, architectural integrity is fully intact.
+
+3. **Premise 3 (State Machine & OCC CAS)**:
+   Concurrent operations must not race or overwrite state silently.
+   - Migration 0274 provides the requisite `UNIQUE` index on SQLite/D1 for ON CONFLICT DO UPDATE upserts.
+   - `updatePatternScoreCAS`, `transitionMissionLifecycleCAS`, `advanceScheduleCAS`, and `toggleRuleAutoApplyAction` all enforce optimistic concurrency control via conditional `WHERE id = ? AND expected_state = ?` clauses and verify `meta.changes > 0`.
+   - Tier 5 adversarial concurrency tests verified that 10 parallel workers on conflicting rows fail closed without data corruption.
+   - Therefore, state machine and database integrity are robust and verified.
 
 ---
 
 ## 3. Caveats
 
-- Checked code paths and configuration integrity, but did not perform live calls to external APIs (HeyGen, NOWPayments, PayOS) or trigger remote workers, as external network access is restricted (CODE_ONLY mode).
-- Checked for markdown rendering and compilation statically; did not test rendering on an external web hosting environment.
+- Live deployment to Cloudflare edge (`npm run deploy:full`) was not executed during this local integrity audit; this audit certifies local codebase and artifact integrity as required by the dispatch mandate.
+- All testing utilized deterministic in-memory SQLite emulation via `node:sqlite`, identical to standard Cloudflare D1 local runtime test fixtures.
 
 ---
 
-## 4. Conclusion
+## 4. Conclusion & Forensic Verdict
 
-The backfilled documentation suite is authentic, accurate, and free of cheating or integrity violations. The verdict is **CLEAN**. No mock files are fabricated, all entry points and technical debt references exist exactly as described, and markdown syntax contains no placeholders.
+## Forensic Audit Report
+
+**Work Product**: Phase 5 (Auto-Creative Playbook & Campaign Intelligence)  
+**Profile**: General Project (Integrity Mode: Development)  
+**Verdict**: **CLEAN**
+
+### Phase Results
+- **Anti-Cheating & Facade Check**: **PASS** — Zero hardcoded test return values, zero facade stubs, zero mock placeholders. Genuine implementation throughout.
+- **4-Layer Architecture Check**: **PASS** — `scripts/check-layer-boundaries.sh` exited 0. Zero layer boundary violations.
+- **TypeScript Compilation**: **PASS** — `npm run type-check` exited 0 with 0 errors.
+- **Bilingual i18n Completeness**: **PASS** — `npm run i18n:validate` reported 0 missing static keys and 0 unresolved prefixes.
+- **D1 Migration & State Machine CAS**: **PASS** — Migration 0274 valid SQLite DDL; OCC CAS verified with explicit `changes > 0` validation and rollback protection.
+- **Independent Test Execution**: **PASS** — 207 / 207 tests passed (100% green across 10 test suites).
 
 ---
 
 ## 5. Verification Method
 
-To independently verify the results, execute the following commands:
-1. **Run Link & Placeholder Verification**:
-   ```bash
-   node /Users/macbook/projects/sophia-ai-factory/.agents/auditor_1/verify_integrity.cjs
-   ```
-   *Expected output: `{ "scannedFiles": 12, "placeholdersFound": [], "brokenLinks": [], "validLinksCount": 199 }` with exit code 0.*
+To independently reproduce the forensic audit findings, execute the following commands within `apps/sophia-ai-factory/`:
 
-2. **Run Codebase Test Suite**:
+1. **Layer Boundary Verification**:
    ```bash
-   cd /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory && npx vitest run
+   bash scripts/check-layer-boundaries.sh
    ```
-   *Expected output: All 282 tests pass.*
+   *Expected outcome*: Exit code 0, "✅ All layer boundaries clean".
+
+2. **TypeScript Compilation**:
+   ```bash
+   PATH=/opt/homebrew/bin:/usr/bin:/bin npm run type-check
+   ```
+   *Expected outcome*: Exit code 0, 0 errors.
+
+3. **Bilingual i18n Validation**:
+   ```bash
+   PATH=/opt/homebrew/bin:/usr/bin:/bin npm run i18n:validate
+   ```
+   *Expected outcome*: Exit code 0, "Missing static keys: 0".
+
+4. **Independent Vitest Execution**:
+   ```bash
+   PATH=/opt/homebrew/bin:/usr/bin:/bin npx vitest run \
+     src/tree/learning-loop/ \
+     src/forest/playbook/ \
+     src/land/playbook/ \
+     src/__tests__/integration/playbook-campaign-e2e.test.ts \
+     src/__tests__/e2e/playbook-tier5-adversarial.test.ts \
+     src/__tests__/integration/playbook-tier5-concurrency-adversarial.test.ts
+   ```
+   *Expected outcome*: 10 test files passed, 207 tests passed (100% pass).

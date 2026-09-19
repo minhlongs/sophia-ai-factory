@@ -149,6 +149,12 @@ export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps)
         <span className="font-medium">{t('sidebar.missions')}</span>
       </Link>
       
+      <Link href="/dashboard/playbook" className={linkClass("/dashboard/playbook")}>
+        {renderActiveIndicator("/dashboard/playbook")}
+        <BookOpen className={iconClass("/dashboard/playbook")} aria-hidden="true" />
+        <span className="font-medium">{t('sidebar.playbook')}</span>
+      </Link>
+      
       {/* SOP Automation */}
       <Link href="/dashboard/sop-marketplace" className={linkClass("/dashboard/sop-marketplace")}>
         {renderActiveIndicator("/dashboard/sop-marketplace")}

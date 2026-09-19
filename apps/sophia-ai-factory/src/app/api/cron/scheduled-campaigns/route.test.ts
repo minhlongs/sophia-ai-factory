@@ -12,6 +12,11 @@ const mocks = vi.hoisted(() => ({
   startCronCheckIn: vi.fn(() => ({})),
   finishCronCheckIn: vi.fn(),
   failCronCheckIn: vi.fn(),
+  processRecurringCampaignBatch: vi.fn(),
+}))
+
+vi.mock('@/forest/playbook/batch-scheduler', () => ({
+  processRecurringCampaignBatch: mocks.processRecurringCampaignBatch,
 }))
 
 vi.mock('@/seed/db/client', () => ({
@@ -418,5 +423,37 @@ describe('GET /api/cron/scheduled-campaigns', () => {
     })
     expect(mocks.recordCronRun).toHaveBeenCalledWith(d1, 'scheduled-campaigns', 'success')
     expect(mocks.finishCronCheckIn).toHaveBeenCalledWith({}, 'scheduled-campaigns')
+  })
+
+  it('coordinates processRecurringCampaignBatch when ?engine=playbook', async () => {
+    mocks.processRecurringCampaignBatch.mockResolvedValue({
+      processed: 2,
+      dispatched: 2,
+      skippedQuota: 0,
+      skippedPreflight: 0,
+      failures: [],
+    })
+
+    const req = new NextRequest('https://sophia.agencyos.network/api/cron/scheduled-campaigns?engine=playbook', {
+      headers: { authorization: 'Bearer test-secret' },
+    })
+
+    const res = await GET(req)
+    const body = (await res.json()) as { success: boolean; dispatched: number; processed: number }
+
+    expect(res.status).toBe(200)
+    expect(body.success).toBe(true)
+    expect(body.dispatched).toBe(2)
+    expect(body.processed).toBe(2)
+    expect(mocks.processRecurringCampaignBatch).toHaveBeenCalledWith('2026-06-05')
+  })
+
+  it('rejects unauthorized cron requests with error from verifyCronAuth', async () => {
+    mocks.verifyCronAuth.mockReturnValue(new Response('Unauthorized', { status: 401 }))
+
+    const req = new NextRequest('https://sophia.agencyos.network/api/cron/scheduled-campaigns')
+    const res = await GET(req)
+
+    expect(res.status).toBe(401)
   })
 })
