@@ -134,6 +134,55 @@ export const analyticsSync = inngest.createFunction(
               shares: normalized.shares,
             });
             count++;
+
+            // Update publishing_results with latest metrics snapshot
+            const _db = await getD1();
+            if (_db) {
+              await _db
+                .prepare(
+                  `UPDATE publishing_results
+                   SET metrics_json = ?, recorded_at = ?
+                   WHERE channel_post_id = ?`,
+                )
+                .bind(
+                  JSON.stringify({
+                    views: normalized.views,
+                    likes: normalized.likes,
+                    comments: normalized.comments,
+                    shares: normalized.shares,
+                    watch_time_sec: normalized.watchTimeSec,
+                    updated_at: Math.floor(Date.now() / 1000),
+                  }),
+                  Math.floor(Date.now() / 1000),
+                  raw.videoId,
+                )
+                .run()
+                .catch(() => {});
+            }
+
+            // Record engagement event into performance_events (idempotent)
+            const { recordPerformanceEventIdempotent } = await import('@/tree/performance/events');
+            await recordPerformanceEventIdempotent({
+              id: `pevt_yt_sync_${raw.videoId}_${normalized.date}`,
+              workspaceId: userId,
+              assetId: videoId,
+              projectId: videoId,
+              entityType: 'video',
+              entityId: raw.videoId,
+              channel: 'youtube',
+              eventType: 'engagement',
+              count: normalized.views,
+              valueCents: 0,
+              recordedAt: Date.now(),
+              rawData: {
+                views: normalized.views,
+                likes: normalized.likes,
+                comments: normalized.comments,
+                shares: normalized.shares,
+                watchTimeSec: normalized.watchTimeSec,
+                date: normalized.date,
+              },
+            }).catch(() => {});
           } catch (err) {
             logger.warn('[analytics-sync] Upsert failed', { videoId, err: String(err) });
           }
@@ -159,6 +208,22 @@ export const analyticsSync = inngest.createFunction(
       totalRevenueEvents += userResult.revenueWritten;
     }
 
+    // Step 2: Harvest Instagram Reels metrics
+    let igHarvested = 0;
+    try {
+      const igResult = await step.run('harvest-instagram-reels-metrics', async () => {
+        const { harvestInstagramReelsMetrics } = await import(
+          '@/forest/publishing/instagram-metrics-harvester'
+        );
+        return harvestInstagramReelsMetrics({ limit: 50 });
+      });
+      igHarvested = (igResult as { harvested?: number })?.harvested ?? 0;
+    } catch (igErr) {
+      logger.warn('[analytics-sync] Instagram harvest failed (non-fatal)', {
+        err: String(igErr),
+      });
+    }
+
     // Step 3: Run feedback loop evaluations & prompt optimizations
     const optimizedCount = await step.run('run-performance-feedback-loop', async () => {
       try {
@@ -174,7 +239,34 @@ export const analyticsSync = inngest.createFunction(
       }
     });
 
-    logger.info('[analytics-sync] Complete', { totalSynced, optimizedCount, totalRevenueEvents });
-    return { synced: totalSynced, optimizedCount, revenueEvents: totalRevenueEvents };
+    const summary: {
+      synced: number;
+      optimizedCount: number;
+      revenueEvents: number;
+      instagramHarvested?: number;
+    } = {
+      synced: totalSynced,
+      optimizedCount,
+      revenueEvents: totalRevenueEvents,
+    };
+    if (igHarvested > 0) {
+      summary.instagramHarvested = igHarvested;
+    }
+
+    logger.info('[analytics-sync] Complete', summary);
+    return summary;
+  },
+);
+
+export const instagramReelsHarvestCron = inngest.createFunction(
+  { id: 'instagram-reels-harvest-cron', retries: 2 },
+  { cron: '0 */12 * * *' },
+  async ({ step }) => {
+    return step.run('harvest-instagram-reels', async () => {
+      const { harvestInstagramReelsMetrics } = await import(
+        '@/forest/publishing/instagram-metrics-harvester'
+      );
+      return harvestInstagramReelsMetrics({ limit: 100 });
+    });
   },
 );

@@ -72,7 +72,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     // Find the publishing_result by channel_post_id = videoId
     const { data: resultData } = await db
       .from('publishing_results')
-      .select('id, metrics_json')
+      .select('id, tenant_id, metrics_json')
       .eq('channel_post_id', videoId)
       .maybeSingle();
 
@@ -81,7 +81,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ ok: true });
     }
 
-    const result = resultData as { id: number; metrics_json: string | null };
+    const result = resultData as { id: number; tenant_id: string; metrics_json: string | null };
     const existing = result.metrics_json ? JSON.parse(result.metrics_json) as Record<string, unknown> : {};
 
     const merged = {
@@ -96,6 +96,38 @@ export async function POST(request: Request): Promise<NextResponse> {
       .from('publishing_results')
       .update({ metrics_json: JSON.stringify(merged), recorded_at: Math.floor(Date.now() / 1000) })
       .eq('id', result.id);
+
+    // Ingest engagement metrics into performance_events
+    if (payload.statistics) {
+      try {
+        const { recordPerformanceEventIdempotent } = await import('@/tree/performance/events');
+        const today = new Date().toISOString().slice(0, 10);
+        await recordPerformanceEventIdempotent({
+          id: `pevt_yt_${videoId}_${today}`,
+          workspaceId: result.tenant_id || 'sophia-global',
+          assetId: videoId,
+          projectId: videoId,
+          entityType: 'video',
+          entityId: videoId,
+          channel: 'youtube',
+          eventType: 'engagement',
+          count: Number(merged.views),
+          valueCents: 0,
+          recordedAt: Date.now(),
+          rawData: {
+            views: merged.views,
+            likes: merged.likes,
+            comments: merged.comments,
+            source: 'youtube-webhook',
+          },
+        });
+      } catch (evtErr) {
+        logger.warn('[youtube-notification] Failed to record performance event (non-fatal)', {
+          videoId,
+          error: String(evtErr),
+        });
+      }
+    }
 
     logger.info('[youtube-notification] Metrics updated', { videoId, resultId: result.id });
     return NextResponse.json({ ok: true });

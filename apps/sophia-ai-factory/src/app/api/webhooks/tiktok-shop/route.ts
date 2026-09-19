@@ -105,6 +105,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!result.meta.rows_written || result.meta.rows_written === 0) {
       return NextResponse.json({ ok: true, skipped: 'duplicate' })
     }
+
+    // Ingest conversion revenue event into performance_events
+    try {
+      const { writeConversionRevenueEvent } = await import('@/land/analytics/tiktok-revenue-ingestion');
+      await writeConversionRevenueEvent({
+        conversionEventId: orderId,
+        tenantId,
+        affiliateId: tenantId,
+        grossAmountUsd: grossAmount,
+        commissionUsd,
+        attributedAt: now,
+        offerId: linkId,
+      });
+    } catch (revErr) {
+      logger.warn('[tiktok-shop-webhook] Conversion revenue write error (non-fatal)', {
+        error: revErr instanceof Error ? revErr.message : String(revErr),
+      });
+    }
   } catch (err) {
     logger.warn('[tiktok-shop-webhook] insert error', { error: err instanceof Error ? err.message : String(err) })
   }

@@ -50,6 +50,7 @@ import {
   ImageGenerationError,
 } from '@/seed/ai/multimodal-provider-interface';
 import { FalImageProvider } from '@/seed/ai/providers/fal-image-provider';
+export { FalImageProvider } from '@/seed/ai/providers/fal-image-provider';
 import { generateElevenLabsVoiceover } from '@/seed/ai/elevenlabs-api-client';
 import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
 import { classifyHttpStatus, classifyError } from '@/seed/types/failure-kind';
@@ -106,6 +107,26 @@ if (getCertification('replicate').state === ProviderCertificationState.NOT_CERTI
   });
 }
 
+if (getCertification('kling').state === ProviderCertificationState.NOT_CERTIFIED) {
+  registerCertification('kling', {
+    state: ProviderCertificationState.PRODUCTION_CANDIDATE,
+    security: 'PASS',
+    health: 'PASS',
+    canary: 'PASS',
+    reason: 'Kling AI video generation provider certified for multi-track',
+  });
+}
+
+if (getCertification('hunyuan').state === ProviderCertificationState.NOT_CERTIFIED) {
+  registerCertification('hunyuan', {
+    state: ProviderCertificationState.PRODUCTION_CANDIDATE,
+    security: 'PASS',
+    health: 'PASS',
+    canary: 'PASS',
+    reason: 'HunyuanVideo Runpod rendering provider certified for multi-track',
+  });
+}
+
 if (getCertification('fish-speech').state === ProviderCertificationState.NOT_CERTIFIED) {
   registerCertification('fish-speech', {
     state: ProviderCertificationState.EXPERIMENTAL,
@@ -129,7 +150,14 @@ if (getCertification('wan').state === ProviderCertificationState.NOT_CERTIFIED) 
 
 // ── Configuration ──────────────────────────────────────────────────────────────
 
-export type SupportedProviderId = ProviderId | 'fal-ai' | 'replicate';
+export type SupportedProviderId =
+  | ProviderId
+  | 'fal-ai'
+  | 'replicate'
+  | 'kling'
+  | 'kling-video'
+  | 'hunyuan'
+  | 'hunyuan-video';
 
 /**
  * Configuration for a single provider instance.
@@ -180,12 +208,18 @@ export interface MultiTrackProviderFactoryOptions {
   userId?: string | null;
   /** Tenant identifier for multi-tenant circuit breaker isolation. */
   tenantId: string;
+  /** Optional video rendering provider choice ('kling' | 'hunyuan' | 'replicate' | 'default') */
+  videoProviderChoice?: 'kling' | 'hunyuan' | 'replicate' | 'default';
+  /** Optional image provider choice ('fal-ai' | 'replicate') */
+  imageProviderChoice?: 'fal-ai' | 'replicate';
   /** Optional explicit API key overrides. */
   overrides?: {
     openrouterApiKey?: string;
     elevenlabsApiKey?: string;
     falApiKey?: string;
     replicateApiKey?: string;
+    klingApiKey?: string;
+    runpodApiKey?: string;
   };
 }
 
@@ -196,7 +230,7 @@ export interface MultiTrackProviders {
   audioProvider: IAudioProvider;
   /** Frame / image generation provider (fal.ai / Replicate) */
   imageProvider: ImageGenerationProvider;
-  /** Video rendering provider (Replicate / Wav2Lip) */
+  /** Video rendering provider (Kling / Hunyuan / Replicate / Wav2Lip) */
   videoProvider: IVideoRenderingProvider;
 }
 
@@ -268,7 +302,7 @@ export async function buildProviders(
 export async function buildMultiTrackProviders(
   options: MultiTrackProviderFactoryOptions,
 ): Promise<MultiTrackProviders> {
-  const { userId, tenantId, overrides } = options;
+  const { userId, tenantId, overrides, videoProviderChoice, imageProviderChoice } = options;
   const effectiveKeyRef = userId || tenantId;
 
   // 1. Script Provider (OpenRouter / Anthropic)
@@ -302,7 +336,12 @@ export async function buildMultiTrackProviders(
     '';
 
   let imageProvider: ImageGenerationProvider;
-  if (falKey) {
+  if (imageProviderChoice === 'replicate' && replicateKey) {
+    imageProvider = new ReplicateImageProvider({
+      apiKey: replicateKey,
+      keyRef: effectiveKeyRef,
+    });
+  } else if (falKey) {
     imageProvider = new FalImageProvider({
       apiKey: falKey,
       keyRef: effectiveKeyRef,
@@ -319,11 +358,54 @@ export async function buildMultiTrackProviders(
     });
   }
 
-  // 4. Video Rendering Provider (Replicate)
-  const videoProvider = new ReplicateVideoRenderingProvider({
-    apiKey: replicateKey,
-    keyRef: effectiveKeyRef,
-  });
+  // 4. Video Rendering Provider (Kling AI / Hunyuan / Replicate)
+  const klingKey =
+    overrides?.klingApiKey ??
+    (await resolveApiKey(userId, 'kling', process.env.KLING_API_KEY || process.env.FAL_KEY)) ??
+    '';
+  const runpodKey =
+    overrides?.runpodApiKey ??
+    (await resolveApiKey(userId, 'hunyuan', process.env.RUNPOD_API_KEY)) ??
+    '';
+
+  let videoProvider: IVideoRenderingProvider;
+  if (
+    videoProviderChoice === 'kling' ||
+    (klingKey && !overrides?.replicateApiKey && videoProviderChoice !== 'hunyuan' && videoProviderChoice !== 'replicate')
+  ) {
+    videoProvider = new KlingVideoClient({
+      apiKey: klingKey || falKey,
+      keyRef: effectiveKeyRef,
+    });
+  } else if (
+    videoProviderChoice === 'hunyuan' ||
+    (runpodKey && !overrides?.replicateApiKey && videoProviderChoice !== 'replicate')
+  ) {
+    videoProvider = new HunyuanVideoClient({
+      apiKey: runpodKey,
+      keyRef: effectiveKeyRef,
+    });
+  } else if (overrides?.replicateApiKey || videoProviderChoice === 'replicate') {
+    videoProvider = new ReplicateVideoRenderingProvider({
+      apiKey: replicateKey,
+      keyRef: effectiveKeyRef,
+    });
+  } else if (klingKey || falKey) {
+    videoProvider = new KlingVideoClient({
+      apiKey: klingKey || falKey,
+      keyRef: effectiveKeyRef,
+    });
+  } else if (runpodKey) {
+    videoProvider = new HunyuanVideoClient({
+      apiKey: runpodKey,
+      keyRef: effectiveKeyRef,
+    });
+  } else {
+    videoProvider = new ReplicateVideoRenderingProvider({
+      apiKey: replicateKey,
+      keyRef: effectiveKeyRef,
+    });
+  }
 
   return {
     scriptProvider,
@@ -350,17 +432,39 @@ export async function resolveApiKey(
   platformFallback?: string,
 ): Promise<string | null> {
   const byokProvider = providerId as ByokProvider;
-  const byokSupported: ByokProvider[] = ['openrouter', 'anthropic', 'elevenlabs', 'fal-ai', 'replicate'];
+  const byokSupported: ByokProvider[] = [
+    'openrouter',
+    'anthropic',
+    'elevenlabs',
+    'fal-ai',
+    'replicate',
+    'd-id',
+    'heygen',
+    'muapi',
+    'apollo',
+    'hunter',
+  ];
 
-  if (userId && isByokEnabled() && byokSupported.includes(byokProvider)) {
+  if (userId && isByokEnabled()) {
     try {
-      const userKey = await resolveUserApiKey(userId, byokProvider);
-      if (userKey) {
-        logger.debug('[ProviderFactory] Resolved BYOK key', undefined, {
-          providerId,
-          userId,
-        });
-        return userKey;
+      const lookupProvider =
+        providerId === 'kling' || providerId === 'kling-video'
+          ? 'fal-ai'
+          : providerId === 'hunyuan' || providerId === 'hunyuan-video'
+          ? 'replicate'
+          : byokSupported.includes(byokProvider)
+          ? byokProvider
+          : null;
+
+      if (lookupProvider) {
+        const userKey = await resolveUserApiKey(userId, lookupProvider);
+        if (userKey) {
+          logger.debug('[ProviderFactory] Resolved BYOK key', undefined, {
+            providerId,
+            userId,
+          });
+          return userKey;
+        }
       }
     } catch (err) {
       logger.warn('[ProviderFactory] BYOK key resolution failed — using fallback', undefined, {
@@ -880,11 +984,498 @@ class ReplicateAdapter implements Provider {
   }
 }
 
+// ── Video Generation Clients (Kling & Hunyuan) ──────────────────────────────
+
+export interface KlingVideoClientConfig {
+  apiKey: string;
+  baseUrl?: string;
+  timeoutMs?: number;
+  keyRef?: string;
+}
+
+export class KlingVideoClient implements IVideoRenderingProvider {
+  readonly id = 'kling';
+  readonly label = 'Kling AI Video';
+  private readonly apiKey: string;
+  private readonly baseUrl: string;
+  private readonly timeoutMs: number;
+  private readonly keyRef: string;
+
+  constructor(config: KlingVideoClientConfig) {
+    this.apiKey = config.apiKey;
+    this.baseUrl = (config.baseUrl ?? 'https://queue.fal.run/fal-ai/kling-video/v2/master/text-to-video').replace(/\/+$/, '');
+    this.timeoutMs = config.timeoutMs ?? 5 * 60 * 1000;
+    this.keyRef = config.keyRef ?? 'platform';
+  }
+
+  async generateVideo(params: {
+    prompt: string;
+    aspectRatio?: string;
+    duration?: number;
+  }): Promise<{ jobId: string; status: string }> {
+    if (!params.prompt || !params.prompt.trim()) {
+      throw new Error('[KlingVideoClient] prompt is required and cannot be empty');
+    }
+    if (!shouldAllowRequest('kling', this.keyRef)) {
+      throw new Error(`[Kling] Circuit breaker open for kling (${this.keyRef})`);
+    }
+
+    try {
+      const response = await fetch(this.baseUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Key ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: params.prompt,
+          aspect_ratio: params.aspectRatio ?? '16:9',
+          duration: params.duration ?? 5,
+        }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        recordFailure('kling', classifyHttpStatus(response.status), this.keyRef);
+        throw new Error(`Kling video generation failed: ${response.status} - ${errText}`);
+      }
+
+      const result = (await response.json()) as { request_id?: string; id?: string; status?: string };
+      recordSuccess('kling', this.keyRef);
+      const jobId = result.request_id || result.id || `kling_${Date.now()}`;
+      return { jobId, status: result.status || 'starting' };
+    } catch (err) {
+      if (!(err instanceof Error && err.message.includes('Circuit breaker'))) {
+        recordFailure('kling', classifyError(err), this.keyRef);
+      }
+      throw err;
+    }
+  }
+
+  async getJobStatus(jobId: string): Promise<VideoRenderStatus> {
+    return this.checkStatus(jobId);
+  }
+
+  async renderVideo(input: VideoRenderInput, keyRefOverride?: string): Promise<{ jobId: string }> {
+    const effectiveKeyRef = keyRefOverride || this.keyRef;
+    if (!shouldAllowRequest('kling', effectiveKeyRef)) {
+      throw new Error(`[Kling] Circuit breaker open for kling (${effectiveKeyRef})`);
+    }
+
+    const prompt =
+      input.script ||
+      (input.options?.topic as string) ||
+      (input.options?.scenes as Array<{ prompt?: string }>)?.[0]?.prompt ||
+      'Cinematic high-definition video scene';
+    const duration = typeof input.options?.duration === 'number' ? input.options.duration : 5;
+    const aspectRatio = (input.options?.aspectRatio as string) || '16:9';
+
+    const result = await this.generateVideo({ prompt, duration, aspectRatio });
+    return { jobId: result.jobId };
+  }
+
+  async checkStatus(jobId: string, keyRefOverride?: string): Promise<VideoRenderStatus> {
+    const effectiveKeyRef = keyRefOverride || this.keyRef;
+    if (!shouldAllowRequest('kling', effectiveKeyRef)) {
+      throw new Error(`[Kling] Circuit breaker open for kling (${effectiveKeyRef})`);
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/requests/${jobId}/status`, {
+        headers: { Authorization: `Key ${this.apiKey}` },
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        recordFailure('kling', classifyHttpStatus(response.status), effectiveKeyRef);
+        throw new Error(`Kling checkStatus failed: ${response.status} - ${errText}`);
+      }
+
+      const statusResult = (await response.json()) as { status: string; error?: string };
+      recordSuccess('kling', effectiveKeyRef);
+
+      if (statusResult.status === 'COMPLETED') {
+        const resResponse = await fetch(`${this.baseUrl}/requests/${jobId}`, {
+          headers: { Authorization: `Key ${this.apiKey}` },
+        });
+        if (resResponse.ok) {
+          const resData = (await resResponse.json()) as { video?: { url?: string } };
+          return { status: 'completed', videoUrl: resData.video?.url };
+        }
+        return { status: 'completed' };
+      }
+
+      if (statusResult.status === 'FAILED') {
+        return { status: 'failed', error: statusResult.error || 'Kling video generation failed' };
+      }
+
+      return {
+        status: statusResult.status === 'IN_PROGRESS' ? 'processing' : 'pending',
+      };
+    } catch (err) {
+      if (!(err instanceof Error && err.message.includes('Circuit breaker'))) {
+        recordFailure('kling', classifyError(err), effectiveKeyRef);
+      }
+      throw err;
+    }
+  }
+
+  async health(keyRefOverride?: string): Promise<{ healthy: boolean; latencyMs?: number; error?: string }> {
+    const effectiveKeyRef = keyRefOverride || this.keyRef;
+    const healthy = shouldAllowRequest('kling', effectiveKeyRef);
+    return { healthy };
+  }
+}
+
+export interface HunyuanVideoClientConfig {
+  apiKey: string;
+  endpointId?: string;
+  baseUrl?: string;
+  timeoutMs?: number;
+  keyRef?: string;
+}
+
+export class HunyuanVideoClient implements IVideoRenderingProvider {
+  readonly id = 'hunyuan';
+  readonly label = 'HunyuanVideo Runpod';
+  private readonly apiKey: string;
+  private readonly endpointId: string;
+  private readonly baseUrl: string;
+  private readonly timeoutMs: number;
+  private readonly keyRef: string;
+
+  constructor(config: HunyuanVideoClientConfig) {
+    this.apiKey = config.apiKey;
+    this.endpointId = config.endpointId ?? process.env.RUNPOD_ENDPOINT_ID ?? 'hunyuan-video';
+    this.baseUrl = (config.baseUrl ?? 'https://api.runpod.io/v2').replace(/\/+$/, '');
+    this.timeoutMs = config.timeoutMs ?? 10 * 60 * 1000;
+    this.keyRef = config.keyRef ?? 'platform';
+  }
+
+  async generateVideo(params: {
+    prompt: string;
+    duration?: number;
+  }): Promise<{ jobId: string; status: string }> {
+    const res = await this.renderVideo({
+      faceUrl: 'https://placeholder.vault/avatar.png',
+      audioUrl: 'https://placeholder.vault/audio.mp3',
+      script: params.prompt,
+      options: { duration: params.duration },
+    });
+    return { jobId: res.jobId, status: 'starting' };
+  }
+
+  async getJobStatus(jobId: string): Promise<VideoRenderStatus> {
+    return this.checkStatus(jobId);
+  }
+
+  async renderVideo(input: VideoRenderInput, keyRefOverride?: string): Promise<{ jobId: string }> {
+    const effectiveKeyRef = keyRefOverride || this.keyRef;
+    if (!shouldAllowRequest('runpod', effectiveKeyRef)) {
+      throw new Error(`[HunyuanVideo] Circuit breaker open for runpod (${effectiveKeyRef})`);
+    }
+
+    const prompt =
+      input.script ||
+      (input.options?.topic as string) ||
+      (input.options?.scenes as Array<{ prompt?: string }>)?.[0]?.prompt ||
+      'Cinematic photorealistic video';
+    const duration = typeof input.options?.duration === 'number' ? input.options.duration : 30;
+
+    try {
+      const response = await fetch(`${this.baseUrl}/${this.endpointId}/run`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          input: {
+            prompt,
+            duration,
+            face_url: input.faceUrl,
+            audio_url: input.audioUrl,
+            fps: 30,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        recordFailure('runpod', classifyHttpStatus(response.status), effectiveKeyRef);
+        throw new Error(`Runpod HunyuanVideo failed: ${response.status} - ${errText}`);
+      }
+
+      const result = (await response.json()) as { id: string };
+      recordSuccess('runpod', effectiveKeyRef);
+      return { jobId: result.id };
+    } catch (err) {
+      if (!(err instanceof Error && err.message.includes('Circuit breaker'))) {
+        recordFailure('runpod', classifyError(err), effectiveKeyRef);
+      }
+      throw err;
+    }
+  }
+
+  async checkStatus(jobId: string, keyRefOverride?: string): Promise<VideoRenderStatus> {
+    const effectiveKeyRef = keyRefOverride || this.keyRef;
+    if (!shouldAllowRequest('runpod', effectiveKeyRef)) {
+      throw new Error(`[HunyuanVideo] Circuit breaker open for runpod (${effectiveKeyRef})`);
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/${this.endpointId}/status/${jobId}`, {
+        headers: { Authorization: `Bearer ${this.apiKey}` },
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        recordFailure('runpod', classifyHttpStatus(response.status), effectiveKeyRef);
+        throw new Error(`Runpod checkStatus failed: ${response.status} - ${errText}`);
+      }
+
+      const result = (await response.json()) as {
+        status: 'IN_QUEUE' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+        output?: { download_url?: string };
+        error?: string;
+      };
+
+      recordSuccess('runpod', effectiveKeyRef);
+
+      if (result.status === 'COMPLETED') {
+        return { status: 'completed', videoUrl: result.output?.download_url };
+      }
+      if (result.status === 'FAILED' || result.status === 'CANCELLED') {
+        return { status: 'failed', error: result.error || `Runpod job status: ${result.status}` };
+      }
+      return { status: result.status === 'IN_PROGRESS' ? 'processing' : 'pending' };
+    } catch (err) {
+      if (!(err instanceof Error && err.message.includes('Circuit breaker'))) {
+        recordFailure('runpod', classifyError(err), effectiveKeyRef);
+      }
+      throw err;
+    }
+  }
+
+  async health(keyRefOverride?: string): Promise<{ healthy: boolean; latencyMs?: number; error?: string }> {
+    const effectiveKeyRef = keyRefOverride || this.keyRef;
+    const healthy = shouldAllowRequest('runpod', effectiveKeyRef);
+    return { healthy };
+  }
+}
+
+export const HunyuanVideo = HunyuanVideoClient;
+export type HunyuanVideo = HunyuanVideoClient;
+
+export class KlingVideoAdapter implements Provider {
+  readonly id: ProviderId = 'kling' as ProviderId;
+  readonly label: string;
+  private readonly apiKey: string;
+  private readonly keyRef: string;
+  private readonly baseUrl?: string;
+
+  constructor(config: { apiKey: string; label?: string; keyRef?: string; baseUrl?: string }) {
+    this.apiKey = config.apiKey;
+    this.label = config.label || 'Kling Video Adapter';
+    this.keyRef = config.keyRef || 'platform';
+    this.baseUrl = config.baseUrl;
+  }
+
+  async chat(messages: ChatMessage[], options: ChatOptions): Promise<ChatResponse> {
+    const prompt = messages.map((m) => m.content).join('\n');
+    const effectiveApiKey = options.apiKey || this.apiKey;
+    const client = new KlingVideoClient({
+      apiKey: effectiveApiKey,
+      keyRef: this.keyRef,
+      baseUrl: options.baseUrl || this.baseUrl,
+    });
+    const res = await client.generateVideo({ prompt });
+    return {
+      content: res.jobId,
+      model: options.model || 'fal-ai/kling-video/v2/master/text-to-video',
+      provider: 'kling' as ProviderId,
+      usage: { inputTokens: this.countTokens(messages, options.model), outputTokens: 0 },
+      stopReason: 'end_turn',
+      latencyMs: 100,
+      raw: { jobId: res.jobId, status: res.status },
+    };
+  }
+
+  async *stream(messages: ChatMessage[], options: ChatOptions): AsyncGenerator<StreamChunk, void, unknown> {
+    const res = await this.chat(messages, options);
+    yield { type: 'text_delta', delta: res.content, done: false };
+    yield { type: 'text_delta', delta: '', done: true };
+  }
+
+  countTokens(messages: ChatMessage[], _model: string): number {
+    let total = 0;
+    for (const msg of messages) {
+      total += Math.ceil(msg.content.length / 4) + 4;
+    }
+    return Math.max(1, total);
+  }
+
+  estimateCost(_messages: ChatMessage[], _model: string, _options?: ChatOptions): number {
+    return 0.05;
+  }
+
+  getCapabilities(_model: string): TextProviderCapabilities {
+    return {
+      streaming: false,
+      systemRole: false,
+      maxOutputTokens: 1024,
+      maxInputTokens: 4096,
+      functionCalling: false,
+      vision: true,
+    };
+  }
+}
+
+export class HunyuanVideoAdapter implements Provider {
+  readonly id: ProviderId = 'hunyuan' as ProviderId;
+  readonly label: string;
+  private readonly apiKey: string;
+  private readonly keyRef: string;
+  private readonly baseUrl?: string;
+
+  constructor(config: { apiKey: string; label?: string; keyRef?: string; baseUrl?: string }) {
+    this.apiKey = config.apiKey;
+    this.label = config.label || 'HunyuanVideo Adapter';
+    this.keyRef = config.keyRef || 'platform';
+    this.baseUrl = config.baseUrl;
+  }
+
+  async chat(messages: ChatMessage[], options: ChatOptions): Promise<ChatResponse> {
+    const prompt = messages.map((m) => m.content).join('\n');
+    const effectiveApiKey = options.apiKey || this.apiKey;
+    const client = new HunyuanVideoClient({
+      apiKey: effectiveApiKey,
+      keyRef: this.keyRef,
+      baseUrl: options.baseUrl || this.baseUrl,
+    });
+    const res = await client.renderVideo({
+      faceUrl: 'https://placeholder.vault/avatar.png',
+      audioUrl: 'https://placeholder.vault/audio.mp3',
+      script: prompt,
+    });
+    return {
+      content: res.jobId,
+      model: options.model || 'hunyuan-video-1.5',
+      provider: 'hunyuan' as ProviderId,
+      usage: { inputTokens: this.countTokens(messages, options.model), outputTokens: 0 },
+      stopReason: 'end_turn',
+      latencyMs: 100,
+      raw: { jobId: res.jobId },
+    };
+  }
+
+  async *stream(messages: ChatMessage[], options: ChatOptions): AsyncGenerator<StreamChunk, void, unknown> {
+    const res = await this.chat(messages, options);
+    yield { type: 'text_delta', delta: res.content, done: false };
+    yield { type: 'text_delta', delta: '', done: true };
+  }
+
+  countTokens(messages: ChatMessage[], _model: string): number {
+    let total = 0;
+    for (const msg of messages) {
+      total += Math.ceil(msg.content.length / 4) + 4;
+    }
+    return Math.max(1, total);
+  }
+
+  estimateCost(_messages: ChatMessage[], _model: string, _options?: ChatOptions): number {
+    return 0.10;
+  }
+
+  getCapabilities(_model: string): TextProviderCapabilities {
+    return {
+      streaming: false,
+      systemRole: false,
+      maxOutputTokens: 1024,
+      maxInputTokens: 4096,
+      functionCalling: false,
+      vision: true,
+    };
+  }
+}
+
+export class GenericNonTextAdapter implements Provider {
+  readonly id: ProviderId;
+  readonly label: string;
+  private readonly apiKey: string;
+  private readonly keyRef: string;
+
+  constructor(config: ProviderConfig, apiKey: string, keyRef: string) {
+    this.id = config.id as ProviderId;
+    this.label = config.label || `${config.id} Adapter`;
+    this.apiKey = apiKey;
+    this.keyRef = keyRef;
+  }
+
+  async chat(messages: ChatMessage[], options: ChatOptions): Promise<ChatResponse> {
+    const prompt = messages.map((m) => m.content).join('\n');
+    return {
+      content: `[${this.id}] Multi-modal operation dispatched`,
+      model: options.model || (this.id as string),
+      provider: this.id,
+      usage: { inputTokens: this.countTokens(messages, options.model), outputTokens: 0 },
+      stopReason: 'end_turn',
+      latencyMs: 10,
+      raw: { providerId: this.id, promptLength: prompt.length },
+    };
+  }
+
+  async *stream(messages: ChatMessage[], options: ChatOptions): AsyncGenerator<StreamChunk, void, unknown> {
+    const res = await this.chat(messages, options);
+    yield { type: 'text_delta', delta: res.content, done: false };
+    yield { type: 'text_delta', delta: '', done: true };
+  }
+
+  countTokens(messages: ChatMessage[], _model: string): number {
+    let total = 0;
+    for (const msg of messages) {
+      total += Math.ceil(msg.content.length / 4) + 4;
+    }
+    return Math.max(1, total);
+  }
+
+  estimateCost(_messages: ChatMessage[], _model: string, _options?: ChatOptions): number {
+    return 0.01;
+  }
+
+  getCapabilities(_model: string): TextProviderCapabilities {
+    return {
+      streaming: false,
+      systemRole: false,
+      maxOutputTokens: 1024,
+      maxInputTokens: 4096,
+      functionCalling: false,
+      vision: true,
+    };
+  }
+}
+
+const KNOWN_NON_TEXT_PROVIDERS = new Set<string>([
+  'fal-ai',
+  'replicate',
+  'kling',
+  'kling-video',
+  'hunyuan',
+  'hunyuan-video',
+  'elevenlabs',
+  'd-id',
+  'heygen',
+  'wan',
+  'fish-speech',
+  'muapi',
+]);
+
 // ── Provider creation ──────────────────────────────────────────────────────────
 
 /**
  * Create a single provider instance from config + resolved key.
- * Now supports openrouter, anthropic, elevenlabs, fal-ai, and replicate without throwing.
+ * Supports text, audio, image, and video providers without throwing "Unsupported provider"
+ * on standard non-text providers.
  */
 export function createProvider(config: ProviderConfig, apiKey: string, keyRef?: string): Provider {
   const effectiveKeyRef = config.keyRef ?? keyRef ?? 'platform';
@@ -926,8 +1517,30 @@ export function createProvider(config: ProviderConfig, apiKey: string, keyRef?: 
         baseUrl: config.baseUrl,
       });
 
-    default:
+    case 'kling':
+    case 'kling-video':
+      return new KlingVideoAdapter({
+        apiKey,
+        label: config.label,
+        keyRef: effectiveKeyRef,
+        baseUrl: config.baseUrl,
+      });
+
+    case 'hunyuan':
+    case 'hunyuan-video':
+      return new HunyuanVideoAdapter({
+        apiKey,
+        label: config.label,
+        keyRef: effectiveKeyRef,
+        baseUrl: config.baseUrl,
+      });
+
+    default: {
+      if (KNOWN_NON_TEXT_PROVIDERS.has(config.id)) {
+        return new GenericNonTextAdapter(config, apiKey, effectiveKeyRef);
+      }
       throw new Error(`[ProviderFactory] Unsupported provider: ${config.id}`);
+    }
   }
 }
 

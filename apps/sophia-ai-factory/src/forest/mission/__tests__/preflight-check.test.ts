@@ -98,6 +98,10 @@ describe('runMissionPreflightCheck', () => {
     vi.mocked(getUserApiKey).mockImplementation(async (_userId, provider) => {
       if (provider === 'fal-ai') return 'fal_key_12345';
       if (provider === 'openrouter') return 'or_key_12345';
+      if (provider === 'elevenlabs') return 'el_key_12345';
+      if (provider === 'replicate') return 'rep_key_12345';
+      if ((provider as string) === 'kling') return 'kling_key_12345';
+      if ((provider as string) === 'hunyuan') return 'hunyuan_key_12345';
       return null;
     });
   });

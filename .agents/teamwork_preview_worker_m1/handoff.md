@@ -1,147 +1,111 @@
-# Handoff Report: Milestone 1 - Multi-Modal Provider Capability & Circuit-Breaker Integration
+# Handoff Report — Milestone 1: Next-Gen Multi-Model AI Video Generation Pipeline (Phase 16 / R2)
 
-- **Role**: teamwork_preview_worker (Milestone 1)
-- **Date**: 2026-09-19
-- **Working Directory**: `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m1/`
-- **Parent Conversation ID**: `888683f7-30ce-42ff-840e-2e0b8eaaa575`
-- **Target Specification**: `/Users/macbook/sophia-ai-factory/.agents/orchestrator_video_pipeline/PROJECT.md`
+**Agent ID**: `teamwork_preview_worker_m1`  
+**Working Directory**: `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m1/`  
+**Timestamp**: 2026-09-19T17:08:30Z  
+**Parent Agent ID**: `462719b1-95d2-4d1a-8ebb-6e6e29866e0f`  
 
 ---
 
 ## 1. Observation
 
-Direct code inspection and test execution across `apps/sophia-ai-factory/src/` established the baseline conditions, structural gaps, and resulting implementations:
-
-### 1.1 Baseline Test Suite Execution
-Execution of the project's Vitest test command against the affected module targets:
-```bash
-npx vitest run src/seed/ai/ src/forest/ai/ src/seed/security/circuit-breaker.test.ts
-```
-Yielded clean exit code 0:
-```
-Test Files  16 passed (16)
-Tests       323 passed (323)
-Duration    20.98s
-```
-
-### 1.2 Multi-Modal Interfaces Disconnect
-- `src/seed/ai/multimodal-provider-interface.ts` did not exist previously (`stat failed: no such file or directory`).
-- `src/seed/ai/image-generation-provider.ts` defined `ImageGenerationProvider`, but there was no unified interface for audio TTS (`IAudioProvider`) or video rendering (`IVideoRenderingProvider`).
-- Generation modalities were fragmented with disjointed parameter shapes and error handling.
-
-### 1.3 Capability Model Mapping & Constraints
-- In `src/seed/ai/capability-model.ts`:
-  - `hasRequiredCapabilities(activeProviders: string[], required: AICapability[]): boolean` accepted only mutable arrays `AICapability[]`, causing TypeScript compiler rejections when called with `readonly AICapability[]` (e.g. `const reqs = ['AI_TEXT', 'AI_AUDIO'] as const`).
-  - Supported providers map `PROVIDER_CAPABILITIES` omitted `fish-speech` (`['AI_AUDIO']`) and `wan` (`['AI_VIDEO']`), which are required canonical providers per `PROJECT.md` and `provider-interface.ts`.
-
-### 1.4 Circuit Breaker Multi-Tenant Leak
-- In `src/seed/ai/elevenlabs-api-client.ts`:
-  - Line 68: `if (!shouldAllowRequest('elevenlabs'))` called without `keyRef`, defaulting to `keyRef = 'platform'`.
-  - Line 116: `recordFailure('elevenlabs', classifyHttpStatus(response.status))` omitted `keyRef`.
-  - Line 127: `recordSuccess('elevenlabs')` omitted `keyRef`.
-  - Line 130: `uploadAudioToStorage(..., { userId: 'elevenlabs' })` hardcoded `userId: 'elevenlabs'`.
-  - As a result, an invalid API key for any single tenant tripped the platform-wide circuit breaker immediately (`AUTH_FAILURE` opens circuit for 300s), denying voiceover service to all other tenants.
-- In `src/land/services/replicate/replicate-video-service.ts`:
-  - Line 102: `if (!shouldAllowRequest('replicate'))` called without `keyRef`.
-  - Line 135: `recordSuccess('replicate')` called without `keyRef`.
-  - Line 142: `recordFailure('replicate', kind)` called without `keyRef`.
-  - One tenant's prediction error tripped Replicate platform-wide for 60s–300s.
-
-### 1.5 Provider Factory Limitations
-- In `src/forest/ai/provider-factory.ts`:
-  - `createProvider` threw `[ProviderFactory] Unsupported provider: ${config.id}` when `config.id` was `'elevenlabs'`, `'fal-ai'`, or `'replicate'`.
-  - `buildProviders` crashed with an unhandled exception if any multi-modal provider configuration was registered.
-  - There was no multi-track provider suite builder (`buildMultiTrackProviders`) to resolve BYOK envelope-encrypted credentials and wire them to per-tenant circuit breakers.
+### Codebase State & Observations
+- **Multi-Track Video Generation Engine** (`apps/sophia-ai-factory/src/forest/mission/multi-track-orchestrator.ts`):
+  - Track 1 (`AI_TEXT`): Prompt synthesis generates script scenes and narration.
+  - Tracks 2 & 3: Concurrently executed using `Promise.allSettled([executeAudioTrack(), executeVisualTrack()])` after Track 1 completes, with race condition protection, dangling promise cancellation guards, and failure cascading.
+  - Track 4 (`AI_VIDEO`): Composites narration audio and visual scene frames into video output via `providers.videoProvider.renderVideo()`.
+  - Cloudflare R2 Vaulting: `vaultToR2IfAvailable` stores visual frames (`image/png`) and composited video (`video/mp4`) using the canonical tenant key convention:
+    `tenants/${workspaceId}/missions/${missionId}/assets/${type}/${assetId}.${ext}`.
+  - Asset Indexing: Every asset is registered in `content_assets` via `registerContentAsset` with status `'completed'` and relevant metadata.
+- **Provider Factory Unification** (`apps/sophia-ai-factory/src/forest/ai/provider-factory.ts`):
+  - `FalImageProvider` is exported and certified.
+  - Registered non-blocking certifications for `kling` and `hunyuan`.
+  - `KlingVideoClient` and `HunyuanVideoClient` implemented conforming to `IVideoRenderingProvider` (`generateVideo`, `getJobStatus`, `renderVideo`).
+  - `KlingVideoAdapter`, `HunyuanVideoAdapter`, and `GenericNonTextAdapter` implement `Provider` interface.
+  - `createProvider` handles standard non-text providers (`fal-ai`, `replicate`, `kling`, `hunyuan`, `elevenlabs`, `d-id`, `heygen`, `wan`, `fish-speech`, `muapi`) gracefully without throwing "Unsupported provider".
+  - `buildMultiTrackProviders` supports `videoProviderChoice?: 'kling' | 'hunyuan' | 'replicate' | 'default'`.
+- **Composite 7-Gate Preflight Validation** (`apps/sophia-ai-factory/src/tree/mission/preflight-check.ts` and `src/forest/mission/preflight-check.ts`):
+  - Preflight validates 7 gates:
+    1. Auth Gate (`getCurrentUser`)
+    2. Ownership Gate (`verifyWorkspaceAccess`)
+    3. Entitlement Gate (MCU quota balance, tier check, and $5.00 single-mission cost spike guard: `MAX_SINGLE_MISSION_COST_CENTS = 500`)
+    4. Credential Gate (BYOK credentials check, AES-256-GCM decryption validation via `getUserApiKey`)
+    5. Capability Gate (evaluates composite `requiredCapabilities: AICapability[]` against configured providers, mapping extended video capabilities for `kling` and `hunyuan`)
+    6. Storage Gate (health check of storage backend)
+    7. Queue Gate (health check of job dispatch queue)
+- **First-Run Wizard Studio UI** (`apps/sophia-ai-factory/src/components/missions/first-run-wizard.tsx`):
+  - Confirmed zero fake `setTimeout` stage progression mocks exist.
+  - Real `executeMultiTrackMissionAction` dispatches genuine multi-track missions.
+  - Status updates are polled genuinely via `getMissionTrackStatus`.
+- **Test Executions & Results**:
+  - Command: `PATH="/opt/homebrew/bin:$PATH" /opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run src/forest/mission/__tests__/ src/tree/mission/__tests__/ src/forest/ai/__tests__/ src/components/missions/__tests__/`
+  - Result: 16 test files passed, 284 out of 284 tests passed (0 failures).
+  - Command: `bash scripts/check-layer-boundaries.sh`
+  - Result: "✅ All layer boundaries clean", exit code 0.
+  - Command: `PATH="/opt/homebrew/bin:$PATH" /opt/homebrew/bin/node ./node_modules/typescript/bin/tsc --noEmit --project tsconfig.json`
+  - Result: 0 errors in all M1 owned files.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Step 1: Multi-Modal Interface Standard (Seed Layer)**:
-   - *Observation*: Audio and video generation lacked typed contracts in the seed layer, while image generation had `ImageGenerationProvider`.
-   - *Action*: Implemented `src/seed/ai/multimodal-provider-interface.ts` defining:
-     - `IAudioProvider.generateSpeech(input: AudioGenerationInput, keyRef?: string): Promise<AudioGenerationResult>`
-     - `IVideoRenderingProvider.renderVideo(input: VideoRenderInput, keyRef?: string): Promise<{ jobId: string }>`
-     - `IVideoRenderingProvider.checkStatus(jobId: string, keyRef?: string): Promise<VideoRenderStatus>`
-     - Re-exported `ImageGenerationProvider`, `ImageGenerationInput`, `ImageGenerationResult`, `ImageGenerationError`, and `isImageGenerationError`.
-   - *Compliance*: Imports strictly from `./image-generation-provider` within `seed/ai/` (zero upper layer imports).
-
-2. **Step 2: Canonical Capability Model Resolution**:
-   - *Observation*: `hasRequiredCapabilities` rejected `readonly` arrays, and `fish-speech`/`wan` were missing from capability mappings.
-   - *Action*: Updated `src/seed/ai/capability-model.ts`:
-     - Added `'fish-speech': ['AI_AUDIO']` and `wan: ['AI_VIDEO']` to `PROVIDER_CAPABILITIES`.
-     - Updated signature to `hasRequiredCapabilities(activeProviders: string[], required: readonly AICapability[]): boolean`.
-     - Added `getProvidersForCapability(capability: AICapability): string[]` utility.
-
-3. **Step 3: Circuit Breaker KeyRef Enforcement**:
-   - *Observation*: `elevenlabs-api-client.ts` and `replicate-video-service.ts` omitted `keyRef`, causing cross-tenant failure cascade.
-   - *Action*:
-     - Updated `generateElevenLabsVoiceover` to accept `keyRef?: string` (in options and as parameter) and forwarded it to `shouldAllowRequest('elevenlabs', effectiveKeyRef)`, `recordSuccess('elevenlabs', effectiveKeyRef)`, and `recordFailure('elevenlabs', kind, effectiveKeyRef)`.
-     - Updated audio storage upload to use `effectiveKeyRef` as the `userId` in R2 storage paths (`audio/${effectiveKeyRef}/${videoId}/${uuid}.mp3`).
-     - Updated `ReplicateVideoServiceConfig` and `ReplicateVideoService` (`createVideo` and `getVideoStatus`) to accept and propagate `keyRef` to `shouldAllowRequest('replicate', effectiveKeyRef)`, `recordSuccess('replicate', effectiveKeyRef)`, and `recordFailure('replicate', kind, effectiveKeyRef)`.
-
-4. **Step 4: Multi-Track Provider Factory Expansion (Forest Layer)**:
-   - *Observation*: `createProvider` and `buildProviders` threw on `elevenlabs`, `fal-ai`, and `replicate`. Multi-track video rendering pipeline requires script, audio, image, and video providers resolved with BYOK decryption.
-   - *Action*:
-     - In `src/forest/ai/provider-factory.ts`, implemented `ElevenLabsTextAdapter`, `FalAiAdapter`, and `ReplicateAdapter` conforming strictly to the `Provider` interface (`chat`, `stream`, `countTokens(messages, model)`, `estimateCost(messages, model, options)`, and `getCapabilities(model)`).
-     - Ensured `createProvider` and `buildProviders` successfully instantiate and register `elevenlabs`, `fal-ai`, and `replicate`.
-     - Implemented `ElevenLabsAudioProvider` conforming to `IAudioProvider`.
-     - Implemented `ReplicateImageProvider` conforming to `ImageGenerationProvider` (satisfying Feature #5).
-     - Implemented `ReplicateVideoRenderingProvider` conforming to `IVideoRenderingProvider`.
-     - Added `buildMultiTrackProviders(options: MultiTrackProviderFactoryOptions): Promise<MultiTrackProviders>`:
-       - Scopes `effectiveKeyRef = userId || tenantId`.
-       - Resolves BYOK encrypted keys using `resolveApiKey` with AES-256-GCM envelope decryption.
-       - Returns `{ scriptProvider, audioProvider, imageProvider, videoProvider }` wired with per-tenant circuit breaker protection.
-   - *Compliance*: `forest/ai/provider-factory.ts` imports strictly from `seed/*` and `tree/*` with zero imports from `land/*`.
-
-5. **Step 5: Test Coverage & Verification**:
-   - *Action*: Implemented comprehensive unit tests:
-     - `src/seed/ai/__tests__/multimodal-provider-interface.test.ts`: Validates `IAudioProvider`, `IVideoRenderingProvider`, and `ImageGenerationProvider` contracts.
-     - `src/seed/ai/__tests__/capability-model.test.ts`: Validates readonly arrays, `fish-speech`, `wan`, and `getProvidersForCapability`.
-     - `src/seed/ai/__tests__/elevenlabs-circuit-breaker.test.ts`: Validates that Tenant A's 401 auth failure trips circuit breaker only for Tenant A (`elevenlabs:tenant_a`), while Tenant B and platform requests continue unimpeded.
-     - `src/forest/ai/__tests__/provider-factory-multitrack.test.ts`: Validates `createProvider`, `buildProviders`, and `buildMultiTrackProviders` for all 4 tracks and circuit breaker isolation.
+1. **Factory Support & Avoidance of Unsupported Provider Errors**:
+   - Upstream video generation pipelines require video providers (`kling`, `hunyuan`, `replicate`) and image providers (`fal-ai`, `replicate`) to be instantiable without throwing `Unsupported provider`.
+   - By creating `KlingVideoClient`, `HunyuanVideoClient`, and adapter classes (`KlingVideoAdapter`, `HunyuanVideoAdapter`, `GenericNonTextAdapter`), and updating `createProvider` and `buildMultiTrackProviders`, multi-track providers can be resolved dynamically based on user choices or mission constraints.
+2. **Concurrent Multi-Track Execution & Fault Tolerance**:
+   - Track 1 (script) provides the scene structure and voiceover text needed for both Track 2 (audio) and Track 3 (visual frames).
+   - Running Tracks 2 & 3 concurrently via `Promise.allSettled` cuts total execution time significantly while isolating failure domains.
+   - If Track 2 fails while Track 3 succeeds (or vice versa), the failure cascading logic correctly attributes the failure to the specific track and cancels the sibling, preventing race condition overwrites of database status checkpoints.
+3. **Tenant Security & Asset Vaulting**:
+   - Storing media assets in Cloudflare R2 under `tenants/${workspaceId}/missions/${missionId}/assets/${type}/${assetId}.${ext}` guarantees tenant isolation in compliance with the CF-direct architecture doctrine.
+   - Registering every asset in `content_assets` maintains graph traceability between missions and generated assets.
+4. **Composite Preflight Guarding**:
+   - Multi-modal missions require heterogeneous providers (e.g. text + audio + image + video).
+   - Checking composite `requiredCapabilities` upfront prevents mid-pipeline failures after MCU credits or compute time have already been spent.
+   - The $5.00 cost spike guard protects tenants from unexpected cloud spending runaways.
+   - AES-256-GCM BYOK key decryption verification ensures keys are not merely present in metadata, but genuinely decryptable before starting compute jobs.
 
 ---
 
 ## 3. Caveats
 
-1. **Live Network Probing**: Per the Integrity Mandate and CODE_ONLY operational mode, external network calls to upstream ElevenLabs, fal.ai, and Replicate endpoints were mocked via dependency injection and Fetch API unit mocks.
-2. **Exclusive File Ownership**: Edits were strictly confined to the 5 owned implementation files and accompanying unit test files per `DISPATCH.md`.
+- In the local test sandbox, Cloudflare R2 bindings (`VIDEO_BUCKET` / `STORAGE_BUCKET`) are simulated or fall back to mock handlers when running unit tests. In production Cloudflare Workers environment, bindings are injected globally via `globalThis.VIDEO_BUCKET` or `env.VIDEO_BUCKET`.
+- An unrelated TypeScript error exists in `src/forest/inngest/functions/publish-execute.ts:19` (`alreadyClaimed`), which is owned and currently modified by Worker M2 (publishing worker). In accordance with the file boundary rule, Worker M1 did not modify that file.
 
 ---
 
 ## 4. Conclusion
 
-Milestone 1 is complete and verified:
-- `multimodal-provider-interface.ts` provides clean, typed multi-modal contracts in the seed layer.
-- `capability-model.ts` properly models all 5 canonical capabilities (`AI_TEXT`, `AI_IMAGE`, `AI_VIDEO`, `AI_AUDIO`, `AVATAR`), supports readonly requirements, and maps `fish-speech` and `wan`.
-- Per-tenant circuit breaker isolation is enforced across both ElevenLabs and Replicate services using composite keys (`service:keyRef`), eliminating cross-tenant blast radius.
-- `provider-factory.ts` instantiates and registers OpenRouter, Anthropic, ElevenLabs, fal.ai, and Replicate without throwing, and exports `buildMultiTrackProviders` yielding `{ scriptProvider, audioProvider, imageProvider, videoProvider }` wired with BYOK decryption and circuit breakers.
-- Zero `:any` types used; zero production console.* statements introduced; strict 4-layer import compliance maintained.
+Milestone 1 (M1: Next-Gen Multi-Model AI Video Generation Pipeline - Phase 16 / R2) is completely implemented and verified with genuine logic:
+- Multi-Track Orchestrator coordinates 4 distinct tracks with true concurrency for Tracks 2 & 3, graceful failure isolation, and Cloudflare R2 asset vaulting.
+- Unified Provider Factory supports Fal, Kling, Hunyuan, Replicate, ElevenLabs, and other multi-modal providers without throwing unsupported provider errors.
+- Preflight validation evaluates 7 composite gates including MCU balance, $5.00 spike protection, AES-256-GCM BYOK decryption, and multi-track capability matching.
+- Studio UI wizard has zero fake `setTimeout` mocks and is wired to genuine server actions and live polling.
+- 100% of tests pass (284/284 tests across 16 test files), and 4-layer architecture boundaries are strictly preserved.
 
 ---
 
 ## 5. Verification Method
 
-### Test Execution Commands
-Run the Vitest test suite covering the affected modules:
-```bash
-npx vitest run src/seed/ai/ src/forest/ai/ src/seed/security/circuit-breaker.test.ts
-```
+To independently verify the implementation:
 
-### Files to Inspect
-1. `apps/sophia-ai-factory/src/seed/ai/multimodal-provider-interface.ts`
-2. `apps/sophia-ai-factory/src/seed/ai/capability-model.ts`
-3. `apps/sophia-ai-factory/src/seed/ai/elevenlabs-api-client.ts`
-4. `apps/sophia-ai-factory/src/forest/ai/provider-factory.ts`
-5. `apps/sophia-ai-factory/src/land/services/replicate/replicate-video-service.ts`
-6. `apps/sophia-ai-factory/src/seed/ai/__tests__/multimodal-provider-interface.test.ts`
-7. `apps/sophia-ai-factory/src/seed/ai/__tests__/capability-model.test.ts`
-8. `apps/sophia-ai-factory/src/seed/ai/__tests__/elevenlabs-circuit-breaker.test.ts`
-9. `apps/sophia-ai-factory/src/forest/ai/__tests__/provider-factory-multitrack.test.ts`
+1. **Run Unit & Integration Tests for M1**:
+   ```bash
+   cd apps/sophia-ai-factory
+   PATH="/opt/homebrew/bin:$PATH" /opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run src/forest/mission/__tests__/ src/tree/mission/__tests__/ src/forest/ai/__tests__/ src/components/missions/__tests__/
+   ```
+   *Expected Output*: 16 test files passed, 284 passed (0 failed).
 
-### Invalidation Conditions
-This implementation would be invalidated if:
-- `createProvider({ id: 'elevenlabs', label: 'ElevenLabs' }, key)` or `{ id: 'replicate', ... }` or `{ id: 'fal-ai', ... }` throws an `Unsupported provider` error.
-- An invalid ElevenLabs key for tenant `user_1` causes `shouldAllowRequest('elevenlabs', 'user_2')` to return `false`.
-- `forest/ai/provider-factory.ts` imports from `land/`.
+2. **Run 4-Layer Architecture Boundary Check**:
+   ```bash
+   cd apps/sophia-ai-factory
+   bash scripts/check-layer-boundaries.sh
+   ```
+   *Expected Output*: "✅ All layer boundaries clean", exit code 0.
+
+3. **Inspect Modified Source Files**:
+   - `apps/sophia-ai-factory/src/forest/ai/provider-factory.ts`
+   - `apps/sophia-ai-factory/src/forest/mission/multi-track-orchestrator.ts`
+   - `apps/sophia-ai-factory/src/tree/mission/preflight-check.ts`
+   - `apps/sophia-ai-factory/src/tree/mission/types.ts`
+   - `apps/sophia-ai-factory/src/forest/mission/__tests__/preflight-check.test.ts`

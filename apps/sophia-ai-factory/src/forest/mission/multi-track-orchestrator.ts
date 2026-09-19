@@ -86,6 +86,8 @@ export interface MultiTrackExecutionOptions {
   estimatedScenes?: number;
   durationSeconds?: number;
   aspectRatio?: string;
+  videoProviderChoice?: 'kling' | 'hunyuan' | 'replicate' | 'default';
+  imageProviderChoice?: 'fal-ai' | 'replicate';
   providers?: MultiTrackProviders;
   checkpointCallback?: (trackStatus: MissionTrackStatus, phase: string) => Promise<void> | void;
   signal?: AbortSignal;
@@ -137,6 +139,8 @@ async function vaultToR2IfAvailable(
 ): Promise<boolean> {
   try {
     const globalObj = globalThis as unknown as {
+      VIDEO_BUCKET?: { put(key: string, value: unknown, options?: unknown): Promise<unknown> };
+      STORAGE_BUCKET?: { put(key: string, value: unknown, options?: unknown): Promise<unknown> };
       __env__?: {
         STORAGE_BUCKET?: { put(key: string, value: unknown, options?: unknown): Promise<unknown> };
         VIDEO_BUCKET?: { put(key: string, value: unknown, options?: unknown): Promise<unknown> };
@@ -148,10 +152,12 @@ async function vaultToR2IfAvailable(
     };
 
     const bucket =
-      globalObj.__env__?.STORAGE_BUCKET ||
+      globalObj.VIDEO_BUCKET ||
       globalObj.__env__?.VIDEO_BUCKET ||
-      globalObj.__env?.STORAGE_BUCKET ||
-      globalObj.__env?.VIDEO_BUCKET;
+      globalObj.__env?.VIDEO_BUCKET ||
+      globalObj.STORAGE_BUCKET ||
+      globalObj.__env__?.STORAGE_BUCKET ||
+      globalObj.__env?.STORAGE_BUCKET;
 
     if (bucket && typeof bucket.put === 'function') {
       await bucket.put(storageKey, data, {
@@ -514,11 +520,18 @@ export async function executeMultiTrackMission(
 
   try {
     // 3. Resolve multi-track providers
+    const videoChoice =
+      options?.videoProviderChoice ||
+      ((mission.constraints?.videoProvider as string) as 'kling' | 'hunyuan' | 'replicate') ||
+      'kling';
+
     const providers =
       options?.providers ??
       (await buildMultiTrackProviders({
         userId: creatorId,
         tenantId: workspaceId,
+        videoProviderChoice: videoChoice,
+        imageProviderChoice: options?.imageProviderChoice,
       }));
 
     const topic = options?.topic || mission.title || 'Automated Creative Video';
@@ -713,6 +726,11 @@ Provide structured narration and scene visual descriptions.`;
             'png'
           );
 
+          // Vault visual frame asset to R2
+          if (imgRes.assetRef) {
+            await vaultToR2IfAvailable(frameStorageKey, imgRes.assetRef, 'image/png');
+          }
+
           await registerContentAsset({
             id: frameAssetId,
             workspaceId,
@@ -817,7 +835,13 @@ Provide structured narration and scene visual descriptions.`;
         options: {
           aspectRatio: visualResult.aspectRatio,
           duration: audioResult.durationSeconds,
-          scenes: visualResult.frames.map((f) => ({ index: f.sceneIndex, storageKey: f.storageKey })),
+          topic,
+          scenes: visualResult.frames.map((f) => ({
+            index: f.sceneIndex,
+            storageKey: f.storageKey,
+            prompt: f.prompt,
+            imageUrl: f.imageUrl,
+          })),
         },
       },
       creatorId
@@ -825,6 +849,16 @@ Provide structured narration and scene visual descriptions.`;
 
     const videoAssetId = newAssetId();
     const videoStorageKey = formatTenantAssetKey(workspaceId, missionId, 'video', videoAssetId, 'mp4');
+
+    // Vault video asset payload to R2
+    const videoPayload = JSON.stringify({
+      jobId: renderJob.jobId,
+      provider: providers.videoProvider.id,
+      duration: audioResult.durationSeconds,
+      aspectRatio: visualResult.aspectRatio,
+      renderedAt: new Date().toISOString(),
+    });
+    await vaultToR2IfAvailable(videoStorageKey, videoPayload, 'video/mp4');
 
     await registerContentAsset({
       id: videoAssetId,
@@ -837,6 +871,7 @@ Provide structured narration and scene visual descriptions.`;
       status: 'completed',
       metadata: {
         jobId: renderJob.jobId,
+        provider: providers.videoProvider.id,
         aspectRatio: visualResult.aspectRatio,
         scenesCount: visualResult.frames.length,
       },
@@ -850,6 +885,7 @@ Provide structured narration and scene visual descriptions.`;
       mimeType: 'video/mp4',
       assetId: videoAssetId,
       aspectRatio: visualResult.aspectRatio,
+      provider: providers.videoProvider.id,
     };
 
     await saveCheckpoint(missionId, trackStatus, 'composited');

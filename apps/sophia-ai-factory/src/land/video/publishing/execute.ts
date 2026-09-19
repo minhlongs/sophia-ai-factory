@@ -34,7 +34,7 @@ async function processStandardProvider(args: {
   userId: string;
   step: Step;
   now: number;
-  scheduleRetry: (jobId: string, tenantId: string, userId: string, attempt: number) => Promise<void>;
+  scheduleRetry: (jobId: string, tenantId: string, userId: string, attempt: number, delayMs?: number) => Promise<void>;
   refreshToken?: (channel: PublishingChannel) => Promise<number>;
 }): Promise<ClaimResult> {
   const { db, jobId, job, tenantId, userId, step, now, scheduleRetry, refreshToken } = args;
@@ -98,8 +98,25 @@ export async function executePublishWorkflow(args: ExecutePublishWorkflowArgs): 
     return { skipped: false, jobId, status: 'failed', externalPostId: '', provider: '' };
   }
 
-  const { claimed } = await atomicClaimJob(db, jobId);
-  if (!claimed) {
+  // Defer execution if job is scheduled for a future audience slot
+  if (job.scheduled_at && job.scheduled_at > now) {
+    const delaySec = job.scheduled_at - now;
+    logger.info('[publishExecute] Deferring execution until scheduled slot', {
+      jobId,
+      scheduledAt: job.scheduled_at,
+      delaySec,
+    });
+    await step.sleep(`wait-for-slot-${jobId}`, `${delaySec}s`);
+  }
+
+  const alreadyClaimed = args.alreadyClaimed === true;
+  let isClaimed = alreadyClaimed;
+  if (!alreadyClaimed) {
+    const { claimed } = await atomicClaimJob(db, jobId);
+    isClaimed = claimed;
+  }
+
+  if (!isClaimed) {
     logger.info('[publishExecute] Already claimed by another worker', { jobId, status: job.status });
     return { skipped: true, jobId, status: job.status as string, externalPostId: '', provider: '' };
   }

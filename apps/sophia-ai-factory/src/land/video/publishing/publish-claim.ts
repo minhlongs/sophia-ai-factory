@@ -7,7 +7,7 @@ import { createServerClient } from '@/seed/db/client';
 import { logger } from '@/seed/utils/logger-utility';
 import type { PublishingJob } from '@/seed/types';
 
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 5;
 
 export async function findJobById(db: ReturnType<typeof createServerClient>, jobId: string): Promise<PublishingJob | null> {
   const { data: jobData } = await db
@@ -33,16 +33,28 @@ export async function checkAndMarkMaxRetries(db: ReturnType<typeof createServerC
 }
 
 export async function atomicClaimJob(db: ReturnType<typeof createServerClient>, jobId: string): Promise<{ claimed: boolean; status: string }> {
-  const claimUpdate = await db
-    .from('publishing_jobs')
-    .update({
-      status: 'uploading',
-      started_at: Math.floor(Date.now() / 1000),
-    })
-    .eq('id', jobId)
-    .eq('status', 'scheduled');
+  const rawDb = typeof (db as any).unwrap === 'function' ? (db as any).unwrap() : (db as any).raw || db;
+  const now = Math.floor(Date.now() / 1000);
+  let claimChanges = 0;
 
-  const claimChanges = (claimUpdate as { meta?: { changes?: number } })?.meta?.changes ?? 0;
+  if (rawDb && typeof rawDb.prepare === 'function') {
+    const result = await rawDb
+      .prepare('UPDATE publishing_jobs SET status = ?, started_at = ? WHERE id = ? AND status = ?')
+      .bind('uploading', now, jobId, 'scheduled')
+      .run();
+    claimChanges = result?.meta?.changes ?? 0;
+  } else {
+    const claimUpdate = await db
+      .from('publishing_jobs')
+      .update({
+        status: 'uploading',
+        started_at: now,
+      })
+      .eq('id', jobId)
+      .eq('status', 'scheduled');
+    claimChanges = (claimUpdate as { meta?: { changes?: number } })?.meta?.changes ?? 0;
+  }
+
   if (claimChanges === 0) {
     return { claimed: false, status: 'scheduled' };
   }

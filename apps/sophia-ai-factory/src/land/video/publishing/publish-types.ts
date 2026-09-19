@@ -16,7 +16,8 @@ export interface ExecutePublishWorkflowArgs {
   userId: string;
   step: Step;
   eventId?: string;
-  scheduleRetry: (jobId: string, tenantId: string, userId: string, attempt: number) => Promise<void>;
+  alreadyClaimed?: boolean;
+  scheduleRetry: (jobId: string, tenantId: string, userId: string, attempt: number, delayMs?: number) => Promise<void>;
   refreshToken?: (channel: PublishingChannel) => Promise<number>;
 }
 

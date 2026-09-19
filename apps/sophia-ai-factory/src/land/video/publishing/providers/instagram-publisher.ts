@@ -64,7 +64,7 @@ export class InstagramPublisher implements Publisher {
       const containerId = container.id;
 
       // Step 2: Publish
-      const publishRes = await fetch(`${GRAPH_BASE}/${this.igUserId}/media_publish`, {
+      let publishRes = await fetch(`${GRAPH_BASE}/${this.igUserId}/media_publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -75,7 +75,41 @@ export class InstagramPublisher implements Publisher {
 
       if (!publishRes.ok) {
         const text = await publishRes.text();
-        throw new Error(`Instagram media publish failed (${publishRes.status}): ${text}`);
+        // Meta Graph API error 9007 / 2207027: "The media is not ready for publishing, please wait for a moment"
+        const isProcessing = text.includes('2207027') || text.includes('9007') || text.toLowerCase().includes('not ready');
+        if (isProcessing) {
+          logger.info('[InstagramPublisher] Container still encoding, polling status before publishing', { containerId });
+          let ready = false;
+          for (let poll = 0; poll < 10; poll++) {
+            await new Promise((r) => setTimeout(r, 2000));
+            const statusRes = await fetch(
+              `${GRAPH_BASE}/${containerId}?fields=status_code&access_token=${this.accessToken}`,
+            );
+            if (statusRes.ok) {
+              const statusData = (await statusRes.json()) as IGMediaResponse;
+              if (statusData.status_code === 'FINISHED') {
+                ready = true;
+                break;
+              }
+              if (statusData.status_code === 'ERROR') {
+                throw new Error('Instagram container processing failed on Meta edge');
+              }
+            }
+          }
+          if (ready) {
+            publishRes = await fetch(`${GRAPH_BASE}/${this.igUserId}/media_publish`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                creation_id: containerId,
+                access_token: this.accessToken,
+              }),
+            });
+          }
+        }
+        if (!publishRes.ok) {
+          throw new Error(`Instagram media publish failed (${publishRes.status}): ${text}`);
+        }
       }
 
       const published = (await publishRes.json()) as IGMediaResponse;
@@ -121,7 +155,7 @@ export class InstagramPublisher implements Publisher {
 
     try {
       const res = await fetch(
-        `${GRAPH_BASE}/${externalPostId}/insights?metric=impressions,reach,likes,comments&access_token=${this.accessToken}`,
+        `${GRAPH_BASE}/${externalPostId}/insights?metric=impressions,reach,likes,comments,shares&access_token=${this.accessToken}`,
       );
 
       if (!res.ok) return { views: 0, likes: 0, comments: 0 };
@@ -136,6 +170,7 @@ export class InstagramPublisher implements Publisher {
         reach: find('reach'),
         likes: find('likes'),
         comments: find('comments'),
+        shares: find('shares'),
       };
     } catch (error) {
       recordFailure('instagram', classifyError(error));

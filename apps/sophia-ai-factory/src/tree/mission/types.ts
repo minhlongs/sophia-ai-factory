@@ -187,6 +187,7 @@ export interface MultiTrackVideoResult {
   mimeType: string;
   assetId: string;
   aspectRatio: string;
+  provider?: string;
 }
 
 export interface MultiTrackExecutionResult {

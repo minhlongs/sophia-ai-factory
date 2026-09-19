@@ -82,7 +82,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     // Find result by channel_post_id
     const { data: resultData } = await db
       .from('publishing_results')
-      .select('id, metrics_json')
+      .select('id, tenant_id, metrics_json')
       .eq('channel_post_id', publishId)
       .maybeSingle();
 
@@ -91,7 +91,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ ok: true });
     }
 
-    const result = resultData as { id: number; metrics_json: string | null };
+    const result = resultData as { id: number; tenant_id: string; metrics_json: string | null };
     const existing = result.metrics_json
       ? (JSON.parse(result.metrics_json) as Record<string, unknown>)
       : {};
@@ -111,6 +111,39 @@ export async function POST(request: Request): Promise<NextResponse> {
       .from('publishing_results')
       .update({ metrics_json: JSON.stringify(merged), recorded_at: Math.floor(Date.now() / 1000) })
       .eq('id', result.id);
+
+    // Ingest engagement metrics into performance_events
+    if (stats) {
+      try {
+        const { recordPerformanceEventIdempotent } = await import('@/tree/performance/events');
+        const today = new Date().toISOString().slice(0, 10);
+        await recordPerformanceEventIdempotent({
+          id: `pevt_tt_${publishId}_${today}`,
+          workspaceId: result.tenant_id || 'sophia-global',
+          assetId: publishId,
+          projectId: publishId,
+          entityType: 'video',
+          entityId: publishId,
+          channel: 'tiktok',
+          eventType: 'engagement',
+          count: Number(merged.views),
+          valueCents: 0,
+          recordedAt: Date.now(),
+          rawData: {
+            views: merged.views,
+            likes: merged.likes,
+            comments: merged.comments,
+            shares: merged.shares,
+            source: 'tiktok-webhook',
+          },
+        });
+      } catch (evtErr) {
+        logger.warn('[tiktok-notification] Failed to record performance event (non-fatal)', {
+          publishId,
+          error: String(evtErr),
+        });
+      }
+    }
 
     logger.info('[tiktok-notification] Metrics updated', { publishId, resultId: result.id });
     return NextResponse.json({ ok: true });

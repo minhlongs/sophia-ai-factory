@@ -314,6 +314,38 @@ async function evaluateEntitlementGate(
   };
 }
 
+const EXTENDED_PROVIDER_CAPABILITIES: Record<string, readonly AICapability[]> = {
+  kling: ['AI_VIDEO'],
+  'kling-video': ['AI_VIDEO'],
+  hunyuan: ['AI_VIDEO'],
+  'hunyuan-video': ['AI_VIDEO'],
+};
+
+function resolveExtendedCapabilities(activeProviders: string[]): {
+  availableCapabilities: AICapability[];
+  missingCapabilities: AICapability[];
+} {
+  const base = resolveCapabilities(activeProviders);
+  const availableSet = new Set<AICapability>(base.availableCapabilities);
+
+  for (const provider of activeProviders) {
+    const norm = provider.toLowerCase().trim();
+    const extra = EXTENDED_PROVIDER_CAPABILITIES[norm];
+    if (extra) {
+      for (const cap of extra) {
+        availableSet.add(cap);
+      }
+    }
+  }
+
+  const availableCapabilities = Array.from(availableSet);
+  const missingCapabilities = (['AI_TEXT', 'AI_AUDIO', 'AI_IMAGE', 'AI_VIDEO', 'AVATAR'] as AICapability[]).filter(
+    (cap) => !availableSet.has(cap)
+  );
+
+  return { availableCapabilities, missingCapabilities };
+}
+
 async function evaluateCredentialGate(
   opts: MissionPreflightOptions,
   resolvedUserId: string
@@ -360,6 +392,34 @@ async function evaluateCredentialGate(
         details: { configuredProviders },
       },
     };
+  } else {
+    // Validate AES-256-GCM BYOK key decryption before dispatch
+    const validProviders: ByokProvider[] = [];
+    for (const provider of configuredProviders) {
+      try {
+        const decryptedKey = await getUserApiKey(resolvedUserId, provider);
+        if (decryptedKey && decryptedKey.trim().length > 0) {
+          validProviders.push(provider);
+        }
+      } catch {
+        // Corrupted or invalid AES-256-GCM ciphertext
+      }
+    }
+
+    if (validProviders.length === 0) {
+      return {
+        passed: false,
+        configuredProviders,
+        gate: {
+          passed: false,
+          code: 'INVALID_BYOK_CREDENTIAL',
+          message: 'Configured BYOK credentials failed AES-256-GCM verification or decryption',
+          details: { configuredProviders },
+        },
+      };
+    }
+
+    configuredProviders = validProviders;
   }
 
   return {
@@ -381,16 +441,15 @@ function evaluateCapabilityGate(
   configuredProviders: ByokProvider[],
   opts: MissionPreflightOptions
 ): PreflightGateEvaluation {
+  const { availableCapabilities } = resolveExtendedCapabilities(configuredProviders);
+
   // If composite requiredCapabilities is specified
   if (opts.requiredCapabilities && opts.requiredCapabilities.length > 0) {
-    const satisfied = hasRequiredCapabilities(configuredProviders, opts.requiredCapabilities);
-    const { availableCapabilities } = resolveCapabilities(configuredProviders);
+    const missingCapabilities = opts.requiredCapabilities.filter(
+      (cap) => !availableCapabilities.includes(cap)
+    );
 
-    if (!satisfied) {
-      const missingCapabilities = opts.requiredCapabilities.filter(
-        (cap) => !availableCapabilities.includes(cap)
-      );
-
+    if (missingCapabilities.length > 0) {
       return {
         passed: false,
         gate: {
@@ -423,7 +482,6 @@ function evaluateCapabilityGate(
 
   // Fallback: single capability check (default: AI_IMAGE)
   const targetCapability: AICapability = opts.capability ?? 'AI_IMAGE';
-  const { availableCapabilities } = resolveCapabilities(configuredProviders);
   const capabilitySupported = availableCapabilities.includes(targetCapability);
 
   if (!capabilitySupported) {

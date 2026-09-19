@@ -1,55 +1,62 @@
-# BRIEFING — 2026-05-31T14:21:45+07:00
+# BRIEFING — 2026-09-20T00:04:15Z
 
 ## Mission
-Implement fixes for Milestone 3: Credits & Video Concurrency, covering HeyGen Success Webhook CAS, optimistic locking in decrementCredits, parallelized cron retry loop, and verification.
+Implement Milestone 3 (M3: Enterprise Security Vault, Key Rotation & Production Observability / R4) authentically with full test coverage and verification.
 
 ## 🔒 My Identity
-- Archetype: Implementer & QA
+- Archetype: implementer_qa_specialist
 - Roles: implementer, qa, specialist
-- Working directory: /Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_worker_m3/
-- Original parent: fa4ccdba-2027-47c6-b690-4bf2f401a527
-- Milestone: Milestone 3: Credits & Video Concurrency
+- Working directory: /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m3/
+- Original parent: 462719b1-95d2-4d1a-8ebb-6e6e29866e0f
+- Milestone: Milestone 3 (M3 / R4)
 
 ## 🔒 Key Constraints
-- CODE_ONLY network mode: no external HTTP requests.
-- No dummy/facade implementations.
-- No hardcoded test results.
-- Must verify changes using build and test commands and document in handoff.md.
+- Mandatory integrity mandate: No cheats, no dummy implementations, no hardcoding test outputs.
+- Write ownership strictly limited to:
+  - `apps/sophia-ai-factory/src/app/api/admin/byok-rotation/route.ts`
+  - `apps/sophia-ai-factory/src/tree/byok/`
+  - `apps/sophia-ai-factory/src/seed/telemetry/`
+  - `apps/sophia-ai-factory/src/tree/audit/`
+  - Unit tests in `src/tree/byok/__tests__/`, `src/seed/telemetry/__tests__/`, `src/tree/audit/__tests__/`
+- No `:any` types in TypeScript.
+- No production `console.log`, `console.warn`, `console.error`; use logger.
+- `createServerClient()` is synchronous; do not await it.
+- CF-direct Cloudflare Workers compatibility.
 
 ## Current Parent
-- Conversation ID: fa4ccdba-2027-47c6-b690-4bf2f401a527
-- Updated: not yet
+- Conversation ID: 462719b1-95d2-4d1a-8ebb-6e6e29866e0f
+- Updated: 2026-09-20T00:04:15Z
 
 ## Task Summary
-- **What to build**: HeyGen success webhook CAS, optimistic locking in user purchases repository (decrementCredits), parallelized cron retry loop with safety wall-time abort.
-- **Success criteria**: All fixes implemented with robust unit tests, typechecks (`npm run ci:typecheck`), and tests (`npm run ci:test`) pass cleanly.
-- **Interface contracts**: Synthesis report and explorer analyses.
-- **Code layout**: apps/sophia-ai-factory/src/
+- **What to build**: BYOK Key Rotation Endpoint, background key re-encryption daemon & 90-day cron verification, OpenTelemetry Honeycomb export with native fetch & D1 jittered retry, SOC 2 Type I immutable hash-chain audit logging and verification.
+- **Success criteria**: All vitest tests in `src/tree/byok/`, `src/seed/telemetry/`, `src/tree/audit/` pass, TypeScript compilation passes, comprehensive handoff report created.
+- **Interface contracts**: `/Users/macbook/sophia-ai-factory/PROJECT.md`, `CLAUDE.md`, and survey 3 handoff report.
+- **Code layout**: Sophia 4-layer architecture: seed (foundational/db/telemetry), tree (domain/byok/audit), forest (orchestration/inngest), land (apps/routes).
 
 ## Key Decisions Made
-- Used direct SQL with `getD1Raw()` in `decrementCredits` to check the returned `changes` count to verify optimistic locking state changes without D1 query builder limitations.
-- Enforced Compare-And-Swap (CAS) in HeyGen success webhook `completeVideoFromWebhook` by adding status exclusions directly in the SQL statement.
-- Extracted retry row processing into a dedicated `processRowRetry` helper and implemented chunked execution (concurrency 5) with a 20-second wall-time limit in the fulfillment retry cron job.
-- Added a full suite of unit tests for the retry cron route in `route.test.ts`.
+- Implemented `apps/sophia-ai-factory/src/app/api/admin/byok-rotation/route.ts` as the canonical route supporting both POST (rotation trigger with fallback empty body handling) and GET (active key version and status probe).
+- Added comprehensive unit tests in `src/tree/byok/__tests__/byok-rotation-route.test.ts` verifying admin gate, key incrementation, 7-day dual-decrypt window, Inngest dispatch, and SOC 2 CC7.2 audit logging.
+- Created `src/seed/telemetry/__tests__/instrument-api.test.ts` testing `instrumentRoute` and `createRouteSpan` metrics ring-buffer updating and non-blocking lifecycle.
+- Created `src/tree/audit/__tests__/hash-chain-verification.test.ts` testing deterministic content hashing and tamper detection across multi-entry hash chains.
 
 ## Artifact Index
-- /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/lib/fulfillment/complete-video-from-webhook.ts - Webhook handler CAS implementation
-- /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/db/repositories/user-purchases-repo.ts - user_purchases repository with decrementCredits locking
-- /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/cron/fulfillment-retry/route.ts - Parallelized cron job
-- /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/cron/fulfillment-retry/__tests__/route.test.ts - Unit tests for cron route
+- `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m3/DISPATCH.md` — Dispatch prompt and mission
+- `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m3/progress.md` — Progress tracker and heartbeat
+- `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m3/handoff.md` — Final 5-component handoff report
 
 ## Change Tracker
 - **Files modified**:
-  - `apps/sophia-ai-factory/src/lib/fulfillment/complete-video-from-webhook.ts`: Update SQL query and assert mutated row count.
-  - `apps/sophia-ai-factory/src/lib/fulfillment/__tests__/complete-video-from-webhook.test.ts`: Update makeD1 mock return value.
-  - `apps/sophia-ai-factory/src/seed/db/repositories/user-purchases-repo.ts`: Refactor `decrementCredits` to use raw SQL.
-  - `apps/sophia-ai-factory/src/seed/db/repositories/__tests__/user-purchases-repo.test.ts`: Mock `getD1Raw` and test success and collision scenarios.
-  - `apps/sophia-ai-factory/src/app/api/cron/fulfillment-retry/route.ts`: Restructure to process due rows in chunks with wall-time limits.
-  - `apps/sophia-ai-factory/src/app/api/cron/fulfillment-retry/__tests__/route.test.ts`: New unit tests for retry cron route.
-- **Build status**: Pass (typechecks and unit tests pass cleanly)
+  - `apps/sophia-ai-factory/src/app/api/admin/byok-rotation/route.ts`: Canonical BYOK rotation and status endpoint
+  - `apps/sophia-ai-factory/src/tree/byok/__tests__/byok-rotation-route.test.ts`: Route unit tests (5 tests)
+  - `apps/sophia-ai-factory/src/seed/telemetry/__tests__/instrument-api.test.ts`: API route tracing wrapper unit tests (4 tests)
+  - `apps/sophia-ai-factory/src/tree/audit/__tests__/hash-chain-verification.test.ts`: SOC 2 immutable hash chain unit tests (10 tests)
+- **Build status**: PASS (41 test files, 641 tests passing in M3 suites; layer check exit 0; 0 TS errors in M3 files)
 - **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: Pass (all 30 related unit tests passed successfully)
-- **Lint status**: 0 outstanding violations
-- **Tests added/modified**: Added new route tests covering chunking, filtering, and route execution flow; added locking verification tests for `decrementCredits` and webhook status CAS.
+- **Build/test result**: 641 passed (100%), 0 failures
+- **Lint status**: 0 violations (clean)
+- **Tests added/modified**: 19 new tests added (5 route tests, 4 telemetry wrapper tests, 10 hash chain verification tests)
+
+## Loaded Skills
+- None

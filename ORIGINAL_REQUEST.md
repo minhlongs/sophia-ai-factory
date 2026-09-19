@@ -465,4 +465,83 @@ Deploy the fix via CF-direct doctrine (`./scripts/deploy-with-sha.sh`), verify t
 - [ ] Live edge SHA matches new commit SHA
 - [ ] Sophia Doctor reports 11/11 checks green
 
+## 2026-09-19T16:49:35Z
 
+The user requested: The full multi-agent team.
+Execute the complete Full Roadmap Next Horizon (Phases 15–16 & Enterprise Autonomy): Build the end-to-end Playwright customer journey E2E test suite, advance the multi-model AI video generation engine with multi-track rendering, implement the autonomous social publisher distribution fleet, and ship enterprise AES-256-GCM BYOK key rotation with OpenTelemetry observability.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+References:
+- docs/development-roadmap.md
+- apps/sophia-ai-factory/CLAUDE.md
+- apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
+- apps/sophia-ai-factory/src/seed/auth/better-auth-server.ts
+- apps/sophia-ai-factory/src/forest/mission/
+- apps/sophia-ai-factory/src/forest/publisher/
+- apps/sophia-ai-factory/src/lib/byok/
+
+## Requirements
+
+### R1. Comprehensive Playwright Customer Journey E2E & Reliability Suite (Phase 15)
+Implement and verify an automated end-to-end browser test suite simulating complete bilingual customer journeys:
+- Guest discovery to registration and magic-link authentication (`/vi/login`, `/en/login`, `/register`).
+- 6-step Onboarding Setup Wizard (`/setup`, `/setup-wizard`) with BYOK key validation probes.
+- Creative Studio mission creation (`/dashboard/missions/new`) with pre-flight MCU/USD cost calculation.
+- Scheduled distribution and publishing queue (`/dashboard/videos`).
+- Self-serve subscription checkout with NOWPayments USDT invoice and PayOS VN QR code flows.
+- Performance benchmark verifying TTFB < 300ms and 0 unhandled client-side exceptions.
+
+### R2. Next-Gen Multi-Model AI Video Generation Pipeline (Phase 16)
+Expand the video creation engine to support multi-provider synthesis with fail-closed circuit breakers:
+- Multi-track pipeline coordinating script generation, ElevenLabs TTS voice synthesis, and visual frame synthesis (fal.ai / Kling AI / HunyuanVideo adapters).
+- Pre-flight quota check against tenant MCU balance with envelope-encrypted BYOK API keys.
+- Real-time video preview state machine (`queued` → `scripting` → `rendering` → `completed` / `failed`) with auto-vaulting to Cloudflare R2 (`VIDEO_BUCKET`).
+
+### R3. Autonomous Multi-Channel Social Publisher Fleet
+Implement autonomous scheduled distribution across social platforms:
+- Multi-channel publishing adapters for YouTube Shorts (Data API v3 with auto token refresh), TikTok Shop, Instagram Reels, and Telegram Bot API (`sendVideo`).
+- Idempotent scheduler cron ensuring exactly-once publication and deduplication.
+- Webhook callbacks, automated retry queues with exponential backoff on HTTP 429/5xx, and viral performance metrics ingestion.
+
+### R4. Enterprise Security Vault, Key Rotation & Production Observability
+Harden platform security, credential lifecycle, and runtime observability:
+- Automated BYOK key rotation daemon (`/api/admin/byok-rotation`) supporting AES-256-GCM versioned re-encryption of stored provider keys.
+- OpenTelemetry (OTEL) production instrumentation with Honeycomb tracing for API latencies, D1 query metrics, and error rates.
+- SOC 2 Type I audit evidence registry verification and immutable hash-chain audit logging.
+
+### R5. Layer Architecture Discipline & Live Edge Deployment
+- Strictly preserve the canonical 4-layer import hierarchy (`seed` → `tree` → `forest` → `land`) with 0 violations.
+- Compile cleanly with 0 TypeScript errors and 100% test pass rate across all suites.
+- Deploy to Cloudflare Workers edge via CF-direct doctrine, verify live edge SHA match, and confirm Sophia Doctor reports 11/11 GREEN.
+
+## Acceptance Criteria
+
+### Customer Journey & Reliability (R1)
+- [ ] Playwright E2E suite covers all 5 core journeys with bilingual assertions (VI/EN)
+- [ ] All public and authenticated routes return expected HTTP 200/307 with zero HTTP 500 errors
+- [ ] TTFB measured < 300ms median on production edge endpoints
+
+### AI Video Pipeline & Storage (R2)
+- [ ] Multi-track video orchestration executes atomic state transitions without deadlocks
+- [ ] Synthesized video/audio artifacts vaulted to Cloudflare R2 with tenant-scoped keys
+- [ ] All BYOK API keys remain encrypted with AES-256-GCM
+
+### Publisher Fleet & Distribution (R3)
+- [ ] Social publisher adapters handle multi-channel publishing with token refresh
+- [ ] Distribution cron executes idempotently with zero duplicate dispatches
+- [ ] Exponential backoff retry handler recovers from transient provider rate limits
+
+### Enterprise Security & Telemetry (R4)
+- [ ] BYOK key rotation endpoint re-encrypts keys cleanly with key version increments
+- [ ] OpenTelemetry tracer exports spans and traces without blocking request critical path
+- [ ] Audit logs record immutable security events with hash verification
+
+### Quality Gates & Production Deployment (R5)
+- [ ] `npm run type-check` exits with code 0 (0 TypeScript errors)
+- [ ] All unit and integration test suites pass with 100% success rate
+- [ ] `bash scripts/check-layer-boundaries.sh` exits with code 0
+- [ ] Deployed commit SHA matches live edge `https://sophia.agencyos.network/api/version`
+- [ ] Sophia Doctor (`node scripts/sophia-doctor.mjs`) reports 11/11 GREEN (100% score)

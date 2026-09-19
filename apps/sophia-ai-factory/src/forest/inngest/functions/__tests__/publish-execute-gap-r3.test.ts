@@ -55,6 +55,12 @@ const {
   mockDbInsert.mockReturnValue({ eq: mockDbEq });
   mockDbUpsert.mockReturnValue({ eq: mockDbEq });
 
+  const mockPrepare = vi.fn().mockReturnValue({
+    bind: vi.fn().mockReturnValue({
+      run: vi.fn().mockResolvedValue({ meta: { changes: 1 } }),
+    }),
+  });
+
   const mockCreateServerClient = vi.fn().mockReturnValue({
     from: vi.fn().mockReturnValue({
       select: mockDbSelect,
@@ -64,7 +70,10 @@ const {
       eq: mockDbEq,
       single: mockDbSingle,
       maybeSingle: mockDbMaybeSingle,
-    })
+    }),
+    prepare: mockPrepare,
+    raw: { prepare: mockPrepare },
+    unwrap: () => ({ prepare: mockPrepare }),
   });
   const mockDispatchTelegram = vi.fn();
 
@@ -315,7 +324,7 @@ describe('GAP-R3-e — max retries exceeded → status=failed, no publishing_res
 
     mockCreateServerClient.mockReturnValue({ from: mockDbFrom });
 
-    // Job has retry_count = MAX_RETRIES (3) — should be terminated
+    // Job has retry_count = MAX_RETRIES (5) — should be terminated
     mockDbSingle.mockResolvedValue({
       data: {
         id: JOB_ID,
@@ -324,7 +333,7 @@ describe('GAP-R3-e — max retries exceeded → status=failed, no publishing_res
         channel_id: 'ch-yt',
         video_id: 'vid-xyz',
         caption: null,
-        retry_count: 3,
+        retry_count: 5,
         status: 'scheduled',
       },
     });

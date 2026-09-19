@@ -19,7 +19,7 @@ import type { PublishingChannel, PublishingJob, Publisher } from '@/seed/types';
 import type { Step } from './publish-types';
 import { sanitizeError } from './publish-url-utils';
 
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 5;
 
 export function buildPublisher(channel: Pick<PublishingChannel, 'provider' | 'external_account_id'>, accessToken: string): Publisher {
   switch (channel.provider) {
@@ -43,9 +43,43 @@ export function buildPublisher(channel: Pick<PublishingChannel, 'provider' | 'ex
       return new ThreadsPublisher(accessToken, channel.external_account_id);
     case 'whatsapp':
       return new WhatsAppAdapter(channel.external_account_id, accessToken);
+    case 'telegram':
+      return {
+        upload: async (videoUrl: string, meta) => {
+          const { publishToTelegram } = await import('@/tree/publishing/providers/telegram-publisher');
+          const res = await publishToTelegram({
+            jobId: 'direct',
+            userId: 'direct',
+            videoUrl,
+            caption: meta.caption,
+            chatId: channel.external_account_id,
+          });
+          return res.externalPostId;
+        },
+        pollStatus: async () => 'live',
+        getMetrics: async () => ({ views: 0, likes: 0, comments: 0 }),
+      };
     default:
       throw new Error(`Unknown provider: ${channel.provider}`);
   }
+}
+
+export function extractRetryAfterMs(err: unknown): number | undefined {
+  if (!err) return undefined;
+  if (typeof err === 'object' && err !== null) {
+    const retrySec = (err as { retryAfterSec?: number | null }).retryAfterSec;
+    if (typeof retrySec === 'number' && retrySec > 0) {
+      return retrySec * 1000;
+    }
+  }
+  if (err instanceof Error) {
+    const match = err.message.match(/Retry-After:?\s*(\d+)/i);
+    if (match && match[1]) {
+      const parsed = parseInt(match[1], 10);
+      if (parsed > 0) return parsed * 1000;
+    }
+  }
+  return undefined;
 }
 
 export async function fetchChannelForJob(
@@ -105,7 +139,7 @@ export async function uploadToProvider(args: {
   db: ReturnType<typeof createServerClient>;
   jobId: string;
   retryCount: number;
-  scheduleRetry: (jobId: string, tenantId: string, userId: string, attempt: number) => Promise<void>;
+  scheduleRetry: (jobId: string, tenantId: string, userId: string, attempt: number, delayMs?: number) => Promise<void>;
   tenantId: string;
   userId: string;
 }): Promise<{ externalPostId: string; shouldRetry: boolean; error?: string }> {
@@ -130,7 +164,8 @@ export async function uploadToProvider(args: {
     }).eq('id', jobId);
 
     if (nextStatus === 'scheduled') {
-      await scheduleRetry(jobId, tenantId, userId, retryCount + 1);
+      const delayMs = extractRetryAfterMs(uploadErr);
+      await scheduleRetry(jobId, tenantId, userId, retryCount + 1, delayMs);
     }
 
     return { externalPostId: '', shouldRetry: nextStatus === 'scheduled', error: errorMsg };
