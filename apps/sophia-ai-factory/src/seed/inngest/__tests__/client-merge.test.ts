@@ -67,6 +67,7 @@ const EXPECTED_EVENT_KEYS = [
   'production.graph.completed',
   'production.graph.failed',
   'production.graph.cancelled',
+  'creative.mission.multitrack.requested',
 ] as const;
 
 type ExpectedKey = (typeof EXPECTED_EVENT_KEYS)[number];
@@ -101,16 +102,17 @@ describe('Inngest client merge (Phase 1.6)', () => {
   });
 
   describe('merged schema completeness', () => {
-    it('expected key list holds exactly 40 unique event keys', () => {
-      expect(EXPECTED_EVENT_KEYS).toHaveLength(40);
-      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(40);
+    it('expected key list holds exactly 41 unique event keys', () => {
+      expect(EXPECTED_EVENT_KEYS).toHaveLength(41);
+      expect(new Set(EXPECTED_EVENT_KEYS).size).toBe(41);
     });
 
-    it('Events record key set exactly matches the 40 expected keys', () => {
+    it('Events record key set exactly matches the 41 expected keys', () => {
       // Compile-time: keysAreExact is `true` only if keyof Events === expected.
       expect(keysAreExact).toBe(true);
     });
   });
+
 
   describe('agent event richness', () => {
     it('agent.mission.started payload accepts autonomyLevel + inputJson', () => {

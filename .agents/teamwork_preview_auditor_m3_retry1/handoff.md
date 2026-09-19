@@ -1,129 +1,227 @@
-# Forensic Audit & Handoff Report — Milestone 3 (Credits & Video Concurrency)
+# Forensic Audit Report — Milestone 3 Remediation
 
-This report presents the forensic integrity audit findings for the changes implemented by `worker_m3_retry1` for Milestone 3.
+**Work Product**: Milestone 3 Remediation: Bilingual Creative Studio & Blueprint UI  
+**Target Files**:
+- `apps/sophia-ai-factory/src/components/missions/first-run-wizard.tsx`
+- `apps/sophia-ai-factory/src/components/missions/mission-progress-bar.tsx`
+- `apps/sophia-ai-factory/src/land/missions/cost-estimator.ts`
+- `apps/sophia-ai-factory/src/land/missions/first-run-template.ts`
+- `apps/sophia-ai-factory/messages/en.json`
+- `apps/sophia-ai-factory/messages/vi.json`
+- `apps/sophia-ai-factory/src/components/missions/__tests__/first-run-wizard.test.tsx`
+- `apps/sophia-ai-factory/src/land/missions/__tests__/cost-estimator.test.ts`
 
----
-
-## Forensic Audit Report
-
-**Work Product**: Changes made by worker_m3_retry1 for Milestone 3 (Credits & Video Concurrency)
-**Profile**: General Project
-**Verdict**: CLEAN
-
-### Phase Results
-- **Hardcoded test results**: PASS — Production source code contains no hardcoded test outputs or mock bypasses designed to force unit tests to pass.
-- **Facade detection**: PASS — DB repository helpers and cron logic are genuine implementations querying database schemas directly.
-- **Pre-populated artifact detection**: PASS — No pre-existing verification logs or attestation files were found.
-- **Execution delegation**: PASS — Core logic executes locally inside the workspace without outsourcing execution to pre-built external tools.
-- **Compare-And-Swap constraints**: PASS — CAS queries verified in `videos-repo.ts` and `complete-video-from-webhook.ts`.
-- **Parallel cron chunking**: PASS — Verified parallel execution of batch size 5 with wall-time thresholds in `fulfillment-retry/route.ts`.
-- **Date parsing accuracy**: PASS — Verified corrected unix epoch scaling (`Number(row.created_at) * 1000`) in `video-status-sync/route.ts`.
-- **Type safety validation**: PASS — `tsc --noEmit` and all unit test suites run and pass successfully.
+**Profile**: General Project  
+**Integrity Mode**: Development (per `ORIGINAL_REQUEST.md`)  
+**Verdict**: `CLEAN`
 
 ---
 
 ## 1. Observation
 
-Direct observations and file inspections:
+### Empirical Verification Commands and Verbatim Outputs
 
-1. **Compare-And-Swap (CAS) Helpers (`apps/sophia-ai-factory/src/seed/db/repositories/videos-repo.ts`)**:
-   - `recordWebhookAttemptCAS` (lines 244-270) uses atomic D1 `UPDATE` with a strict `WHERE status = 'processing'` guard.
-   - `markWebhookPermanentFailureCAS` (lines 272-301) uses atomic D1 `UPDATE` with `WHERE status = 'processing' AND attempt_count >= ?4` checks.
-   - Both methods return precise execution values (attempt count or boolean success status) based on returning D1 outcomes:
-     ```typescript
-     const result = await db.prepare(...).bind(videoId, now, errorMsg).first<{ attempt_count: number }>()
-     return result?.attempt_count ?? null
+1. **TypeScript Typecheck**:
+   - Command: `cd apps/sophia-ai-factory && node ./node_modules/typescript/bin/tsc --noEmit`
+   - Result:
+     ```
+     Exit code: 0
+     Output: (clean, 0 diagnostic errors)
      ```
 
-2. **Idempotency Guard in Webhook Completion (`apps/sophia-ai-factory/src/lib/fulfillment/complete-video-from-webhook.ts`)**:
-   - Webhook completion query (lines 121-131) restricts updates using:
-     ```typescript
-     WHERE id = ?1 AND status != 'completed' AND status != 'failed_permanent'
+2. **i18n Key & Dynamic Prefix Validation**:
+   - Command: `cd apps/sophia-ai-factory && node scripts/validate-i18n-keys.mjs`
+   - Result:
      ```
-   - It verifies that at least one row was modified via `(result.meta?.changes ?? 0) > 0` before proceeding to email dispatch and HeyGen logging.
+     🔍 Scanning for i18n keys...
 
-3. **Refund Leak Checks**:
-   - Webhook failure path (lines 245-251) and retry cron failure path (lines 136-150 in `fulfillment-retry/route.ts`) query `user_purchases` for status and skip grants and emails if `status === 'refunded'`:
-     ```typescript
-     const { data: purchaseData } = await clientDb.from('user_purchases').select('status').eq('id', row.purchase_id).single();
-     if ((purchaseData as any)?.status === 'refunded') { ... }
-     ```
+     📊 Summary:
+        Total t() calls: 3886
+        Unique static keys: 1707
+        Dynamic key prefixes: 33
+        Missing static keys: 0
+        Unresolved dynamic prefixes: 0
 
-4. **Unix Epoch Scaling (`apps/sophia-ai-factory/src/app/api/cron/video-status-sync/route.ts`)**:
-   - Corrected epoch milliseconds scaling at line 150:
-     ```typescript
-     const createdAt = new Date(Number(row.created_at) * 1000).getTime();
+     ✅ All translation keys found!
+     Exit code: 0
      ```
 
-5. **Cron Concurrency and Wall-time Safety (`apps/sophia-ai-factory/src/app/api/cron/fulfillment-retry/route.ts`)**:
-   - Line 230-245 processes due rows in chunks of size 5:
+3. **Vitest Unit, Integration, & E2E Suites**:
+   - Command:
+     ```bash
+     cd apps/sophia-ai-factory && node ./node_modules/vitest/vitest.mjs run \
+       src/components/missions/__tests__/first-run-wizard.test.tsx \
+       src/components/missions/__tests__/mission-progress-bar.test.tsx \
+       src/land/missions/__tests__/ \
+       src/forest/mission/__tests__/ \
+       src/land/creative-mission/__tests__/ \
+       src/__tests__/e2e/multi-track-video-pipeline.e2e.test.ts
+     ```
+   - Result:
+     ```
+      Test Files  10 passed (10)
+           Tests  239 passed (239)
+        Start at  18:10:00
+        Duration  1.77s (transform 1.98s, setup 364ms, import 2.71s, tests 2.56s, environment 4.06s)
+     Exit code: 0
+     ```
+
+4. **Zero `:any` Verification Across Modified Files**:
+   - Commands:
+     ```bash
+     grep -En ":\s*any\b|as\s+any\b" apps/sophia-ai-factory/src/components/missions/first-run-wizard.tsx
+     grep -En ":\s*any\b|as\s+any\b" apps/sophia-ai-factory/src/components/missions/mission-progress-bar.tsx
+     grep -En ":\s*any\b|as\s+any\b" apps/sophia-ai-factory/src/land/missions/cost-estimator.ts
+     grep -En ":\s*any\b|as\s+any\b" apps/sophia-ai-factory/src/land/missions/first-run-template.ts
+     grep -En ":\s*any\b|as\s+any\b" apps/sophia-ai-factory/src/components/missions/__tests__/first-run-wizard.test.tsx
+     grep -En ":\s*any\b|as\s+any\b" apps/sophia-ai-factory/src/land/missions/__tests__/cost-estimator.test.ts
+     ```
+   - Result: 0 matches across all modified files.
+
+5. **Zero Production `console.*` Logging**:
+   - Commands:
+     ```bash
+     grep -En "console\.(log|warn|error|info|debug)" apps/sophia-ai-factory/src/components/missions/first-run-wizard.tsx
+     grep -En "console\.(log|warn|error|info|debug)" apps/sophia-ai-factory/src/components/missions/mission-progress-bar.tsx
+     grep -En "console\.(log|warn|error|info|debug)" apps/sophia-ai-factory/src/land/missions/cost-estimator.ts
+     grep -En "console\.(log|warn|error|info|debug)" apps/sophia-ai-factory/src/land/missions/first-run-template.ts
+     ```
+   - Result: 0 matches.
+
+6. **Layer Boundary & Import Rules Audit**:
+   - `first-run-wizard.tsx` (Component layer): Imports from `@/land/missions/first-run-template`, `@/land/missions/cost-estimator`, `@/land/creative-mission/actions`, and type import from `@/forest/mission/multi-track-orchestrator`.
+   - `cost-estimator.ts` (Land layer): Imports within land (`./first-run-template`, `@/land/billing/video-mcu-cost-config`).
+   - `first-run-template.ts` (Land layer): Zero external imports.
+   - `multi-track-orchestrator.ts` (Forest layer): Zero imports from `@/land`. Strict `seed` + `tree` compliance verified.
+
+7. **Localization Authenticity & Ternary Elimination**:
+   - `messages/en.json` (line 1126): `"stageFailureMessage": "Pipeline failed at {stage}. Click retry to restart."`
+   - `messages/vi.json` (line 1126): `"stageFailureMessage": "Gặp sự cố tại bước \"{stage}\". Vui lòng bấm thử lại để tiếp tục."`
+   - `first-run-wizard.tsx` lines 420–428:
      ```typescript
-     const CHUNK_SIZE = 5
-     const MAX_WALL_TIME_MS = 20000
-     for (let i = 0; i < dueRows.length; i += CHUNK_SIZE) {
-       if (Date.now() - startTime > MAX_WALL_TIME_MS) { ... break }
-       const chunk = dueRows.slice(i, i + CHUNK_SIZE)
-       await Promise.all(chunk.map((row) => processRowRetry(row, now, summary)))
+     if (mapped.uiStatus === 'failed') {
+       setStatus('failed');
+       const stageKey = STAGE_TO_KEY[mapped.stage] || 'script_generation';
+       const stageLabel = t(`stages.${stageKey}.label`);
+       setErrorMessage(t('stageFailureMessage', { stage: stageLabel }));
+       clearPolling();
+       return;
      }
      ```
+   - In `TemplateConfigurator`: `getTemplateText(tmpl, field)` retrieves `t(\`templates.${tmpl.id}.${field}\`)` with graceful fallback to `tmpl[field][locale]`.
+   - Zero hardcoded UI language ternaries (`isVi ? ... : ...` or `locale === 'vi' ? ... : ...`) exist in user-facing JSX elements.
 
-6. **Execution Outputs**:
-   - Run typecheck validation:
-     `npm run ci:typecheck` completed successfully with `0` errors.
-   - Run unit tests:
-     `npx vitest run src/lib/fulfillment/__tests__/complete-video-from-webhook.test.ts src/app/api/cron/video-status-sync/route.test.ts src/app/api/cron/fulfillment-retry/__tests__/route.test.ts` passed: `3 passed (3), 23 passed (23)`.
-   - Full Vitest suite run succeeded: `504 passed, 4883 passed, 34 skipped`.
+8. **Sub-Track Failure Detection & Cancelled Attribution**:
+   - `first-run-wizard.tsx` lines 110–118:
+     ```typescript
+     const hasFailedTrack =
+       trackStatus?.video === 'failed' ||
+       trackStatus?.visual === 'failed' ||
+       trackStatus?.audio === 'failed' ||
+       trackStatus?.script === 'failed';
+
+     if (status === 'failed' || status === 'cancelled' || hasFailedTrack) {
+       return resolveFailedStage(trackStatus);
+     }
+     ```
+   - `resolveFailedStage` checks `failed` tracks first (root-cause attribution: video -> visual -> audio -> script), then checks `cancelled` tracks second (attribution of cancelled active phase).
 
 ---
 
 ## 2. Logic Chain
 
-1. **CAS Integrity**: Implementing state checks (`status = 'processing'`) inside raw D1 updates ensures that concurrent webhooks targeting in-flight videos do not trigger false state changes or get ignored due to mismatch with queued-only CAS helper queries.
-2. **Epoch Synchronization**: Multiplying `row.created_at` (stored as integer seconds) by `1000` aligns it with JavaScript's millisecond-based epoch representation. This prevents the system from misinterpreting a newly created video as a 1970 timestamp, preventing premature 24-hour timeout flags.
-3. **Refund leak safety**: The newly integrated Supabase `user_purchases` queries successfully block retry operations and email dispatches on refunded transactions, saving outbound quota and credits.
+1. **Anti-Cheat & Hardcoded Output Analysis**:
+   - `cost-estimator.ts` implements real algorithmic calculation based on live rates ($0.025 fal.ai image, $0.015/1k chars ElevenLabs voice, $0.005 OpenRouter script) with clamping `Math.max(1, input.estimatedScenes)` and `Math.max(10, input.targetWordCount)`.
+   - No hardcoded string checks or bypassing logic were introduced to trick test assertions.
+
+2. **Genuine Execution & Lifecycle Wiring**:
+   - `FirstRunWizard` genuinely binds `createMission` with complete blueprint constraints (`templateId`, `durationSeconds`, `estimatedScenes`, `aspectRatio`, `voiceStyle`, `visualStyle`, `targetWordCount`, `targetPlatform`).
+   - It triggers `executeMultiTrackMissionAction` and establishes active polling via `getMissionTrackStatus` at `POLL_INTERVAL_MS` (1500ms).
+   - Component unmounting cleanly invokes `isMountedRef.current = false` and `clearPolling()`.
+
+3. **Localization Authenticity**:
+   - Translation keys are registered in both `en.json` and `vi.json` with `{stage}` parameter interpolation.
+   - In Vietnamese: `"Gặp sự cố tại bước \"{stage}\". Vui lòng bấm thử lại để tiếp tục."`
+   - In English: `"Pipeline failed at {stage}. Click retry to restart."`
+   - User-facing text contains natural phrasing with zero raw enum or technical jargon leakage.
+
+4. **Constitutional Compliance**:
+   - All touched files exhibit zero `:any` / `as any` types.
+   - All touched files exhibit zero `console.*` statements.
+   - Layer import rules (`seed` -> `tree` -> `forest` -> `land`) are strictly maintained.
+
+5. **Independent Behavioral Verification**:
+   - `tsc --noEmit` verified 0 compiler errors.
+   - `validate-i18n-keys.mjs` confirmed 0 missing keys.
+   - All 10 test suites containing 239 tests execute and pass 100% cleanly.
 
 ---
 
 ## 3. Caveats
 
-- **Missing Refund Gate on Status Sync Cron**: The status sync cron (`video-status-sync/route.ts`) has a timeout path and a HeyGen status poll failure path that call `handleOneBundlePermanentFailure` (lines 71-106). This helper does NOT check if the purchase status is `refunded` before calling `grantCompensationCredit` and `sendBundleRenderFailedEmail`. If a processing video purchase is refunded, and it subsequently times out or is reported failed by HeyGen during a status sync check, a refund leak will occur (compensation credits will be granted and failure emails will still be sent). 
-- *Recommendation*: Update `handleOneBundlePermanentFailure` in `video-status-sync/route.ts` to perform a status query on `user_purchases` and return early if the status is `'refunded'`.
+1. **Parallel Challenger Test File Discrepancy**:
+   - During audit execution, an untracked test file `src/components/missions/__tests__/first-run-wizard-empirical-challenge.test.tsx` was generated concurrently by Challenger 1.
+   - 15 out of 16 tests in that file passed (including 625 state permutation checks).
+   - The single failure in that file occurred because Challenger 1's test looked for keys under `en.missions.new.stages` instead of the canonical `en.dashboard.missions.wizard.stages` specified in `DISPATCH.md`.
+   - The production code correctly uses `dashboard.missions.wizard` and is validated 100% green by `scripts/validate-i18n-keys.mjs`.
+
+2. **Legacy `as any` in Untouched Milestone 1 Test**:
+   - Line 580 of `src/land/creative-mission/__tests__/actions.test.ts` contains `} as any);` to test runtime Zod rejection of an invalid payload shape.
+   - This file was created during Milestone 1 and was not modified in Milestone 3. All files within the scope of Milestone 3 remediation have 0 `:any`.
 
 ---
 
 ## 4. Conclusion
 
-The implementation is **genuine, robust, and clean**. Compare-And-Swap constraints are correctly integrated, D1 database mutations are safe, parallel cron chunking limits concurrency efficiently, and date-scaling arithmetic is accurate. The work product is approved with the verdict **CLEAN**.
+The work product implements genuine, un-cheated logic for all 6 Milestone 3 remediation tasks:
+- Sub-track failure detection and cancelled phase attribution are verified deterministic.
+- UI text is 100% localized via `next-intl` with zero hardcoded language ternaries.
+- Template cards properly query `next-intl` keys.
+- Topic input is bounded at 200 characters.
+- Zero `:any` types in Milestone 3 files.
+- Zero `console.*` in production files.
+- 100% clean test execution (239/239 passing) and zero TypeScript diagnostic errors.
+
+**Verdict**: `CLEAN`
 
 ---
 
 ## 5. Verification Method
 
-To reproduce the validation:
-1. Validate type check status:
+To independently reproduce and verify this audit:
+
+1. **TypeScript Typecheck**:
    ```bash
-   cd apps/sophia-ai-factory && npm run ci:typecheck
+   cd apps/sophia-ai-factory && node ./node_modules/typescript/bin/tsc --noEmit
    ```
-2. Validate targeted tests:
+   *Expected*: Exit code 0, 0 diagnostic errors.
+
+2. **i18n Validation**:
    ```bash
-   cd apps/sophia-ai-factory && npx vitest run src/lib/fulfillment/__tests__/complete-video-from-webhook.test.ts src/app/api/cron/video-status-sync/route.test.ts src/app/api/cron/fulfillment-retry/__tests__/route.test.ts
+   cd apps/sophia-ai-factory && node scripts/validate-i18n-keys.mjs
    ```
-3. Inspect files to check implementation:
-   - `apps/sophia-ai-factory/src/seed/db/repositories/videos-repo.ts` (CAS helpers)
-   - `apps/sophia-ai-factory/src/lib/fulfillment/complete-video-from-webhook.ts` (Webhook failure logic & CAS integration)
-   - `apps/sophia-ai-factory/src/app/api/cron/video-status-sync/route.ts` (Epoch scaling)
-   - `apps/sophia-ai-factory/src/app/api/cron/fulfillment-retry/route.ts` (Concurrently chunked retry loop and refund block)
+   *Expected*: 0 missing static keys, 0 unresolved dynamic prefixes, exit code 0.
 
----
+3. **Zero `:any` in Milestone 3 Files**:
+   ```bash
+   grep -En ":\s*any\b|as\s+any\b" \
+     apps/sophia-ai-factory/src/components/missions/first-run-wizard.tsx \
+     apps/sophia-ai-factory/src/components/missions/mission-progress-bar.tsx \
+     apps/sophia-ai-factory/src/land/missions/cost-estimator.ts \
+     apps/sophia-ai-factory/src/land/missions/first-run-template.ts \
+     apps/sophia-ai-factory/src/components/missions/__tests__/first-run-wizard.test.tsx \
+     apps/sophia-ai-factory/src/land/missions/__tests__/cost-estimator.test.ts
+   ```
+   *Expected*: 0 matches.
 
-## Adversarial Review
-
-**Overall risk assessment**: LOW
-
-## Challenges
-
-### [Low] Challenge 1: Lack of Purchase Refund Check in Video Status Sync Failure Path
-- **Assumption challenged**: That the webhook and retry cron cover all failure paths for refunded purchases.
-- **Attack scenario**: If a video is in `processing` state and the user's purchase is refunded, and subsequently that video times out (24 hours cutoff) or HeyGen returns a polled status of `failed`, the sync cron will execute `handleOneBundlePermanentFailure`. Since this handler does not verify whether the purchase was refunded, it will grant compensation credits and send a failure email.
-- **Blast radius**: Low. Only affects processing videos that are refunded during their render window and subsequently fail/timeout.
-- **Mitigation**: Add a status check query `await clientDb.from('user_purchases').select('status').eq('id', row.purchase_id).single()` in `handleOneBundlePermanentFailure` to skip email and compensation if the purchase status is `'refunded'`, similar to the checks in the webhook and retry cron failure paths.
+4. **Vitest Test Execution**:
+   ```bash
+   cd apps/sophia-ai-factory && node ./node_modules/vitest/vitest.mjs run \
+     src/components/missions/__tests__/first-run-wizard.test.tsx \
+     src/components/missions/__tests__/mission-progress-bar.test.tsx \
+     src/land/missions/__tests__/ \
+     src/forest/mission/__tests__/ \
+     src/land/creative-mission/__tests__/ \
+     src/__tests__/e2e/multi-track-video-pipeline.e2e.test.ts
+   ```
+   *Expected*: 10 passed (10), 239 passed (239), exit code 0.

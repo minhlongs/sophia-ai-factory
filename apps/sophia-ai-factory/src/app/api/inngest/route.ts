@@ -32,6 +32,7 @@ import {
   youtubeContentPipeline,
   agentMissionExecutor,
   agentApprovalHandler,
+  missionMultiTrackExecutor,
   agentRollbackCron,
   provenanceBridge,
   marketSignalsIngestCron,
@@ -40,6 +41,7 @@ import {
   revenueAttribution,
   opsTelegramAlert,
 } from "@/forest/inngest/functions/index";
+
 
 // Deprecated handlers (Phase 06 video_jobs chain + URL-to-Revenue) removed from
 // serve registration on 2026-05-17 per ADR 0007: the underlying `video_jobs`
@@ -102,8 +104,10 @@ export const { GET, POST, PUT } = serve({
     // cannot proceed — a loud, bounded failure replaces a silent event drop.
     agentMissionExecutor,
     agentApprovalHandler,
+    missionMultiTrackExecutor,
     agentRollbackCron,
     provenanceBridge,
+
     // Phase 3: production graph runner + approval timeout cron
     productionGraphRunner,
     approvalTimeoutCron,

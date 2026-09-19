@@ -7,6 +7,7 @@
 
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { getD1 } from '@/seed/db/client';
 import { resolveOrgId } from '@/seed/auth/workspace-access';
@@ -19,20 +20,17 @@ interface PageProps {
   params: Promise<{ locale: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const { locale } = await params;
-  const isVi = locale === 'vi';
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('dashboard.missions.wizard');
   return {
-    title: isVi ? 'Tạo nhiệm vụ video mới | Sophia AI Factory' : 'New Video Mission | Sophia AI Factory',
-    description: isVi
-      ? 'Khởi tạo video đầu tiên của bạn với các mẫu tối ưu sẵn và chi phí minh bạch.'
-      : 'Launch your first AI video with pre-tested templates and transparent pricing.',
+    title: t('metaTitle'),
+    description: t('metaDescription'),
   };
 }
 
 export default async function NewMissionPage({ params }: PageProps) {
   const { locale } = await params;
-  const isVi = locale === 'vi';
+  const t = await getTranslations('dashboard.missions.wizard');
 
   const user = await getCurrentUser();
   if (!user) {
@@ -59,19 +57,17 @@ export default async function NewMissionPage({ params }: PageProps) {
           className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          {isVi ? 'Quay lại danh sách nhiệm vụ' : 'Back to Missions'}
+          {t('backToMissions')}
         </Link>
       </div>
 
       {/* Page Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-foreground">
-          {isVi ? 'Tạo video đầu tiên của bạn' : 'Create Your First Video'}
+          {t('pageTitle')}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {isVi
-            ? 'Sophia sẽ tự động soạn kịch bản, lồng tiếng và dựng video hoàn chỉnh theo mẫu bạn chọn.'
-            : 'Sophia will autonomously write scripts, synthesize voice, and composite video using your selected template.'}
+          {t('pageSubtitle')}
         </p>
       </div>
 
@@ -79,7 +75,7 @@ export default async function NewMissionPage({ params }: PageProps) {
       <FirstRunWizard
         workspaceId={workspaceId}
         userId={user.id}
-        locale={isVi ? 'vi' : 'en'}
+        locale={locale as 'vi' | 'en'}
       />
     </div>
   );

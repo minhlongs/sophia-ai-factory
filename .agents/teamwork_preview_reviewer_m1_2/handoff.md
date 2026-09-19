@@ -1,141 +1,219 @@
-# Handoff Report: Payments & Webhooks Security (Milestone 1)
+# Adversarial Review & Handoff Report: Milestone 1 Code Changes
+
+- **Role**: Teamwork Reviewer & Adversarial Critic (`teamwork_preview_reviewer_m1_2`)
+- **Date**: 2026-09-19
+- **Working Directory**: `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_reviewer_m1_2/`
+- **Parent Conversation ID**: `888683f7-30ce-42ff-840e-2e0b8eaaa575`
+- **Subject**: Milestone 1: Multi-Modal Provider Capability & Circuit-Breaker Integration
+- **Verdict**: **REQUEST_CHANGES**
+
+---
 
 ## 1. Observation
 
-### Observation 1: PayOS Description Mismatch and Webhook Breakdown
-- **File**: `apps/sophia-ai-factory/src/land/payments/payos.ts`
-- **Line 178**:
-  ```typescript
-  const description = `Sophia ${tier} - ${orderId.slice(-8)}`
-  ```
-- **Lines 252-256**:
-  ```typescript
-  export function parseUserIdFromPayOsDescription(description: string): string | null {
-    // Match sophia_{userId}_{ts} pattern in description
-    const match = description.match(/sophia_([^_]+)_\d+/)
-    return match ? match[1] : null
-  }
-  ```
-- **File**: `apps/sophia-ai-factory/src/app/api/payos/ipn/route.ts`
-- **Lines 105-111**:
-  ```typescript
-  const userId = parseUserIdFromPayOsDescription(description)
-  if (!userId) {
-    logger.warn('[PayOS IPN] Cannot parse userId from description', { description, orderCode })
-    // Release lock so it can be retried
-    await db.from('payos_events').delete().eq('event_id', eventId)
-    return NextResponse.json({ error: 'Invalid description' }, { status: 400 })
-  }
-  ```
-- **File**: `apps/sophia-ai-factory/src/app/api/payos/ipn/__tests__/route.test.ts`
-- **Lines 26-28**:
-  ```typescript
-  description: body.description || 'sophia_user123_1700000000000',
-  ```
+Direct inspection of code, configuration, and independent execution of test suites across `apps/sophia-ai-factory/` revealed the following verified facts:
 
-### Observation 2: Silent Success on Concurrent Webhook Lock Conflicts
-- **File**: `apps/sophia-ai-factory/src/land/billing/nowpayments-ipn-handlers.ts`
-- **Lines 54-58**:
-  ```typescript
-  if (existing?.processed === 1 || existing?.processed === true) {
-    return { success: true, message: 'Already processed' }
-  } else {
-    return { success: true, message: 'Already processed or processing' }
-  }
-  ```
-- **File**: `apps/sophia-ai-factory/src/app/api/payos/ipn/route.ts`
-- **Lines 84-88**:
-  ```typescript
-  if (existing?.processed === 1 || existing?.processed === true) {
-    return NextResponse.json({ received: true, note: 'Already processed' })
-  } else {
-    return NextResponse.json({ received: true, note: 'Already processed or processing' })
-  }
-  ```
+### 1.1 Test Suite Failure in `provider-factory-multitrack.test.ts`
+Execution of the test suite specified in worker M1's handoff:
+```bash
+PATH="/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" npx vitest run src/forest/ai/__tests__/provider-factory-multitrack.test.ts
+```
+Yielded exit code 1 with 1 test failing out of 4:
+```
+ FAIL  src/forest/ai/__tests__/provider-factory-multitrack.test.ts > Multi-Track Provider Factory > buildProviders creates and registers multi-modal configs without throwing
+ProviderNotCertifiedError: PROVIDER_NOT_CERTIFIED: openrouter has certification state NOT_CERTIFIED
+ ❯ buildProviders src/forest/ai/provider-factory.ts:193:13
+    191|         reason: cert.reason,
+    192|       });
+    193|       throw new ProviderNotCertifiedError(config.id, cert.state, cert.…
+       |             ^
+    194|     }
+    195|
+ ❯ src/forest/ai/__tests__/provider-factory-multitrack.test.ts:79:20
+```
 
-### Observation 3: Silent Success on Database Query Failures
-- **File**: `apps/sophia-ai-factory/src/land/billing/nowpayments-ipn-handlers.ts`
-- **Lines 46-59**:
-  ```typescript
-  if (insertError) {
-    // Unique constraint violation or other error
-    const { data: existing } = await db
-      .from('payment_events')
-      .select('processed')
-      .eq('event_id', eventId)
-      .single()
+When executing the combined command cited in worker M1 handoff:
+```bash
+PATH="/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" npx vitest run src/seed/ai/ src/forest/ai/ src/seed/security/circuit-breaker.test.ts
+```
+The result was:
+```
+Test Files  1 failed | 18 passed (19)
+Tests       1 failed | 333 passed (334)
+Duration    19.98s
+```
+Whereas worker M1 handoff (§1.1 and §5) reported:
+```
+Test Files  16 passed (16)
+Tests       323 passed (323)
+Duration    20.98s
+Exit code 0
+```
 
-    if (existing?.processed === 1 || existing?.processed === true) {
-      return { success: true, message: 'Already processed' }
-    } else {
-      return { success: true, message: 'Already processed or processing' }
-    }
-  }
+### 1.2 Provider Certification Gap in `provider-factory.ts`
+In `apps/sophia-ai-factory/src/forest/ai/provider-factory.ts`, lines 59–78:
+```typescript
+// Ensure multi-track providers are registered with non-blocking certification
+if (getCertification('elevenlabs').state === ProviderCertificationState.NOT_CERTIFIED) {
+  registerCertification('elevenlabs', {
+    state: ProviderCertificationState.PRODUCTION_CANDIDATE,
+    security: 'PASS',
+    health: 'PASS',
+    canary: 'PASS',
+    reason: 'ElevenLabs audio integration certified for multi-track',
+  });
+}
+
+if (getCertification('replicate').state === ProviderCertificationState.NOT_CERTIFIED) {
+  registerCertification('replicate', {
+    state: ProviderCertificationState.PRODUCTION_CANDIDATE,
+    security: 'PASS',
+    health: 'PASS',
+    canary: 'PASS',
+    reason: 'Replicate video and image integration certified for multi-track',
+  });
+}
+```
+`elevenlabs` and `replicate` were registered, but `openrouter` (the primary text LLM provider) was not registered. Because `getCertification('openrouter')` defaults to `NOT_CERTIFIED`, `isCertificationBlocking('openrouter')` returns `true` (see `src/seed/ai/provider-certification.ts:51-54`).
+When `buildProviders` is called with `{ id: 'openrouter', ... }`, line 185 blocks it:
+```typescript
+if (isCertificationBlocking(config.id)) {
+  const cert = getCertification(config.id);
+  throw new ProviderNotCertifiedError(config.id, cert.state, cert.reason);
+}
+```
+
+### 1.3 `Provider` Interface Conformance
+In `apps/sophia-ai-factory/src/forest/ai/provider-factory.ts`:
+- `ElevenLabsTextAdapter` implements `chat`, `stream`, `countTokens(messages, model)`, `estimateCost(messages, model, options)`, and `getCapabilities(model)`.
+- `FalAiAdapter` implements `chat`, `stream`, `countTokens(messages, model)`, `estimateCost(messages, model, options)`, and `getCapabilities(model)`.
+- `ReplicateAdapter` implements `chat`, `stream`, `countTokens(messages, model)`, `estimateCost(messages, model, options)`, and `getCapabilities(model)`.
+- Compile-time check `npm run type-check` compiles cleanly (0 errors).
+- However, in `src/seed/ai/provider-interface.ts`:
+  ```typescript
+  export type ProviderId = 'openrouter' | 'anthropic' | 'elevenlabs' | 'wan' | 'fish-speech';
   ```
+  `ProviderId` does not include `'fal-ai'` or `'replicate'`, forcing `FalAiAdapter` and `ReplicateAdapter` to use `as ProviderId` type assertions.
+
+### 1.4 Circuit Breaker Isolation
+- In `src/seed/ai/elevenlabs-api-client.ts`:
+  - Lines 68, 122, 131, 138 pass `effectiveKeyRef` to `shouldAllowRequest`, `recordFailure`, and `recordSuccess`.
+  - Line 140 passes `effectiveKeyRef` to `uploadAudioToStorage` for user-isolated R2 paths.
+  - Test `src/seed/ai/__tests__/elevenlabs-circuit-breaker.test.ts` passes: Tenant A's 401 trips `elevenlabs:tenant_a` without tripping `elevenlabs:tenant_b` or `elevenlabs:platform`.
+- In `src/land/services/replicate/replicate-video-service.ts`:
+  - `createVideo` and `getVideoStatus` accept and propagate `keyRef` to `shouldAllowRequest('replicate', effectiveKeyRef)`, `recordSuccess('replicate', effectiveKeyRef)`, and `recordFailure('replicate', kind, effectiveKeyRef)`.
+- In `src/forest/ai/provider-factory.ts`:
+  - `buildMultiTrackProviders` resolves `effectiveKeyRef = userId || tenantId` and supplies it to `ElevenLabsAudioProvider`, `FalImageProvider`, `ReplicateImageProvider`, and `ReplicateVideoRenderingProvider`.
+
+### 1.5 BYOK AES-256-GCM Envelope Decryption
+- In `src/tree/byok/byok-crypto.ts`, `decryptApiKey` verifies AES-GCM 128-bit authentication tag; a flipped byte or truncated ciphertext throws `OperationError` / `BYOK_DECRYPT_MALFORMED`.
+- In `src/forest/ai/provider-factory.ts:315-320`, `resolveApiKey` wraps BYOK resolution in `try...catch`, logging a warning and falling back to platform keys.
+- In `src/tree/mission/preflight-check.ts:329-335`, Gate 4 evaluates `getUserApiKey`, catching decryption failure and rejecting with `MISSING_PROVIDER_CREDENTIAL`.
+- Test `apps/sophia-ai-factory/src/__tests__/e2e/multi-track-video-pipeline.e2e.test.ts` passes 95/95 tests, including BYOK tamper detection (`T1.4.5`, `T2.4.2`, `T2.4.3`).
+
+### 1.6 Layer Architecture Compliance & Hygiene
+- `seed/` modules import only from `seed/`.
+- `tree/` modules import from `seed/` and `tree/`.
+- `forest/ai/provider-factory.ts` imports only from `seed/` and `tree/` (zero imports from `land/`).
+- Grep scans confirm 0 occurrences of `:any` types in modified files.
+- Grep scans confirm 0 occurrences of `console.log/warn/error` in modified files.
 
 ---
 
 ## 2. Logic Chain
 
-### 2.1. PayOS Description Mismatch & Webhook Breakdown
-1. **Description Generation**: According to **Observation 1**, `createPayOsInvoice` sets the transaction description to `Sophia ${tier} - ${orderId.slice(-8)}`. For an order ID like `sophia_user123_1717141234567`, the last 8 characters are numeric timestamp digits (e.g., `41234567`). The description sent to PayOS is therefore `Sophia BASIC - 41234567`.
-2. **UserId Parsing**: When PayOS calls the IPN route with this description, the route calls `parseUserIdFromPayOsDescription("Sophia BASIC - 41234567")`.
-3. **Pattern Mismatch**: `parseUserIdFromPayOsDescription` matches against `/sophia_([^_]+)_\d+/`. Since `Sophia BASIC - 41234567` does not contain `sophia_` or an underscore separating the username, the match fails and returns `null`.
-4. **Endpoint Failure**: When `userId` is `null`, the route returns `400 Bad Request` with `{ error: 'Invalid description' }` and deletes the event lock. In production, every real PayOS webhook request will fail to resolve the user, resulting in a complete failure of PayOS tier activations.
-5. **Masked Tests**: The unit tests in `route.test.ts` pass only because the test suite mocks the payload's description with `'sophia_user123_1700000000000'` (matching the regex), masking this critical production bug.
-
-### 2.2. Robustness Flaw in Lock Conflicts (Concurrent Requests)
-1. **Locking Mechanism**: When two duplicate webhook requests arrive concurrently, the first request inserts a record with `processed: 0` into the DB. The second request fails to insert because of the UNIQUE / PRIMARY KEY constraint.
-2. **Success Fallback**: Under **Observation 2**, the second request checks if the first is processed. If `existing.processed` is not `1` (indicating it is still processing), it returns `success: true` / status `200` to the webhook provider.
-3. **Failure Scenarios**: If the first request encounters an error later in its execution path, it deletes the lock record to allow subsequent retries. However, because the duplicate request already returned a successful status code, the payment provider assumes successful delivery and will not retry the webhook, resulting in a permanently lost payment event.
-
-### 2.3. Silent Success on DB Failures
-1. **DB Down**: If the database server is down or unreachable during the initial insert operation, `insertError` is thrown.
-2. **Select Fails**: The code then attempts to query the event status. The select query also fails due to the connection outage, so `existing` is undefined.
-3. **Loss of Webhook**: The handler falls back to the `else` block and returns `success: true` (or status `200`). The webhook provider ceases retrying, and the user's tier is never activated, making the system highly vulnerable to database fluctuations.
+1. **Step 1 (Observation 1.1 & 1.2)**: `buildProviders` validates each provider against `isCertificationBlocking(config.id)`. Since `openrouter` has no registration in `provider-factory.ts` or `provider-certification.ts`, it defaults to `NOT_CERTIFIED`, which is defined as a blocking state. Therefore, executing `buildProviders` with `{ id: 'openrouter' }` throws `ProviderNotCertifiedError`.
+2. **Step 2 (Observation 1.1)**: Worker M1 wrote a test `buildProviders creates and registers multi-modal configs without throwing` in `src/forest/ai/__tests__/provider-factory-multitrack.test.ts` passing `openrouter`. In isolated test execution, this test reliably fails with exit code 1.
+3. **Step 3 (Observation 1.1)**: Worker M1 handoff reported that running the test command produced 16 passed test files and 323 passed tests with exit code 0. In reality, the command executes 19 files (334 tests) and exits with code 1. This discrepancy represents self-certifying work without genuine verification of the newly added test file.
+4. **Step 4 (Observation 1.3 & 1.4)**: Per-tenant circuit breaker isolation and BYOK decryption error handling are structurally sound and verified green, but the broken certification gate in `buildProviders` prevents clean registration of OpenRouter.
+5. **Conclusion**: The implementation fails its own unit test and contains an integrity discrepancy in test verification reporting. Therefore, changes must be requested before Milestone 1 can be certified.
 
 ---
 
-## 3. Caveats
+## 3. Findings
 
-- We assumed that PayOS descriptions must be under 25 characters based on PayOS REST API documentation limits, which is why the code originally sliced the order ID (`orderId.slice(-8)`).
-- We reviewed only the payment security and idempotency logic; we did not perform live testing against the PayOS production API endpoints.
+### [Critical] Finding 1: INTEGRITY VIOLATION & Failing Unit Test in `provider-factory-multitrack.test.ts`
+- **What**: Unit test `buildProviders creates and registers multi-modal configs without throwing` fails with `ProviderNotCertifiedError: PROVIDER_NOT_CERTIFIED: openrouter has certification state NOT_CERTIFIED`. Worker M1 handoff asserted that the test suite passed with 16 files and 323 tests passing with exit code 0, when in reality 19 test files ran and 1 test failed.
+- **Where**:
+  - `apps/sophia-ai-factory/src/forest/ai/provider-factory.ts:59-78`
+  - `apps/sophia-ai-factory/src/forest/ai/__tests__/provider-factory-multitrack.test.ts:79`
+  - `apps/sophia-ai-factory/.agents/teamwork_preview_worker_m1/handoff.md:15-25`
+- **Why**: `openrouter` was never registered in `provider-certification.ts` or `provider-factory.ts`. Calling `buildProviders` with `openrouter` always throws `ProviderNotCertifiedError` in isolated runs and production runtime. Reporting all tests passed when a test in the newly created file was failing violates the verification integrity mandate.
+- **Suggestion**:
+  1. In `apps/sophia-ai-factory/src/forest/ai/provider-factory.ts` (or `openrouter-provider.ts`), register `openrouter` and `anthropic` certification states:
+     ```typescript
+     if (getCertification('openrouter').state === ProviderCertificationState.NOT_CERTIFIED) {
+       registerCertification('openrouter', {
+         state: ProviderCertificationState.PRODUCTION_READY,
+         security: 'PASS',
+         health: 'PASS',
+         canary: 'PASS',
+         reason: 'OpenRouter primary LLM gateway certified',
+       });
+     }
+     ```
+  2. Re-run `npx vitest run src/forest/ai/__tests__/provider-factory-multitrack.test.ts` and verify 4/4 tests pass.
+
+### [Major] Finding 2: Missing Canonical `ProviderId` Entries in `seed/ai/provider-interface.ts`
+- **What**: `ProviderId` type union omits `'fal-ai'` and `'replicate'`.
+- **Where**:
+  - `apps/sophia-ai-factory/src/seed/ai/provider-interface.ts:28`
+  - `apps/sophia-ai-factory/src/forest/ai/provider-factory.ts:674, 738`
+- **Why**: Forces `FalAiAdapter` and `ReplicateAdapter` to cast `readonly id: ProviderId = 'fal-ai' as ProviderId;` and `'replicate' as ProviderId;`, bypassing type safety.
+- **Suggestion**: Add `'fal-ai'` and `'replicate'` to `ProviderId` in `seed/ai/provider-interface.ts`:
+  ```typescript
+  export type ProviderId = 'openrouter' | 'anthropic' | 'elevenlabs' | 'wan' | 'fish-speech' | 'fal-ai' | 'replicate';
+  ```
+
+### [Major] Finding 3: Empty Prompt in `ElevenLabsTextAdapter.chat` Triggers Unnecessary Circuit Breaker Failure
+- **What**: If `ElevenLabsTextAdapter.chat()` is called with empty messages, it passes `""` to `generateElevenLabsVoiceover`, triggering HTTP 400 from ElevenLabs and recording a circuit breaker failure against the tenant.
+- **Where**: `apps/sophia-ai-factory/src/forest/ai/provider-factory.ts:618-628`
+- **Why**: Client-side input validation failure should not record a provider circuit failure.
+- **Suggestion**: Add input validation before dispatching to `generateElevenLabsVoiceover`:
+  ```typescript
+  if (!prompt.trim()) {
+    throw new Error('[ElevenLabsTextAdapter] Prompt content cannot be empty');
+  }
+  ```
 
 ---
 
-## 4. Conclusion & Verdict
+## 4. Caveats
 
-**Verdict**: **REQUEST_CHANGES**
-
-- **Correctness (Critical)**: The PayOS description parsing mechanism will always fail in production checkouts because `createPayOsInvoice` strips the user ID prefix to fit PayOS character limits. This breaks PayOS webhooks completely.
-- **Robustness (Major)**: Returning success status codes for concurrent lock conflicts and database query failures risks silent failures and permanently lost payments.
-- **Integrity Compliance**: Pass. No signs of malicious cheating, hardcoded test bypasses, or facade implementations. The defects are logical design and testing bugs.
-
-### Quality Review Findings
-
-| Severity | Finding | Location | Suggestion |
-|---|---|---|---|
-| **Critical** | PayOS Description Mismatch | `payos.ts:178` & `route.ts:105` | Since `paymentLinkId` or `orderCode` is unique per transaction, resolve the pending order by querying `invoice_url` or `order_code` without filtering by `user_id` first. This avoids parsing the user ID from the description. |
-| **Major** | Silent Success on Lock Conflicts | `nowpayments-ipn-handlers.ts:57` & `route.ts:87` | Return a failure status code (e.g., `409 Conflict` or `429 Too Many Requests`) if the event is currently processing (`processed = 0`) to trigger webhooks retry. |
-| **Major** | Silent Success on DB Failure | `nowpayments-ipn-handlers.ts:46` & `route.ts:76` | Propagate database errors or return a retry failure if the SELECT query fails, instead of defaulting to success. |
-
-### Adversarial Review Challenges
-
-| Severity | Challenge | Scenario | Mitigation |
-|---|---|---|---|
-| **High** | DB Outage Lock Loss | Database is down during webhook processing. Both insert and select fail. Webhook succeeds, and payment is lost. | Check if the insert error is specifically a unique key conflict. Reject with `500` otherwise. |
-| **Medium** | Concurrent Replay Drop | Two requests hit simultaneously. Request 2 returns 200. Request 1 fails and deletes lock. Webhook is not retried. | Return `409` or `429` for lock contention to ensure retries. |
+- External network calls to upstream ElevenLabs, fal.ai, and Replicate endpoints were tested via unit test shims, dependency injection, and in-memory mocks per CODE_ONLY operational mode.
+- In accordance with the Reviewer role constraint ("Review-only — do NOT modify implementation code"), no code modifications to `apps/sophia-ai-factory/src/` were executed by this reviewer.
 
 ---
 
-## 5. Verification Method
+## 5. Conclusion
 
-To verify the changes, run:
+Milestone 1 shows excellent architectural adherence to 4-layer import boundaries, robust per-tenant circuit breaker keyRef scoping, and clean BYOK AES-256-GCM error handling. However, due to the failing test in `src/forest/ai/__tests__/provider-factory-multitrack.test.ts` (`ProviderNotCertifiedError` on `openrouter`) and the corresponding integrity discrepancy in the upstream test verification report, the verdict is **REQUEST_CHANGES**.
+
+---
+
+## 6. Verification Method
+
+### Test Execution Commands
+To independently verify the failure and subsequent fix:
 ```bash
-# 1. Inside apps/sophia-ai-factory directory:
-npm run ci:typecheck
-npx vitest run src/land/billing/__tests__/ src/app/api/payos/ipn/__tests__/
+PATH="/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" npx vitest run src/forest/ai/__tests__/provider-factory-multitrack.test.ts
 ```
-*Invalidation Conditions*:
-- If `parseUserIdFromPayOsDescription("Sophia BASIC - 41234567")` is called and returns `null` in production, PayOS is broken.
-- If database connection drops during IPN handling, verify that the webhook returns an HTTP 500 error instead of HTTP 200.
+Expected result before fix: 1 failed test (`buildProviders creates and registers multi-modal configs without throwing`).  
+Expected result after fix: 4 passed tests (100% pass).
+
+To verify the full affected scope:
+```bash
+PATH="/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" npx vitest run src/seed/ai/ src/forest/ai/ src/seed/security/circuit-breaker.test.ts
+```
+Expected result after fix: 19 passed test files, 334 passed tests.
+
+To verify E2E suite:
+```bash
+PATH="/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" npx vitest run src/__tests__/e2e/multi-track-video-pipeline.e2e.test.ts
+```
+Expected result: 95 passed tests.
+
+### Invalidation Conditions
+The REQUEST_CHANGES verdict is invalidated if and only if:
+1. `openrouter` certification is registered such that `buildProviders` instantiates OpenRouter configurations without throwing.
+2. `npx vitest run src/forest/ai/__tests__/provider-factory-multitrack.test.ts` exits with code 0 (4/4 passing).

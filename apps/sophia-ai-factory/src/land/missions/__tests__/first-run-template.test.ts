@@ -156,5 +156,23 @@ describe('first-run-template', () => {
         expect(template).toHaveProperty(key);
       });
     });
+
+    it('T-FRT-06: each template contains >= 3 bilingual prompt suggestions with meaningful length', () => {
+      const templates = getFirstRunTemplates();
+      for (const t of templates) {
+        expect(t.suggestedPrompts.length).toBeGreaterThanOrEqual(3);
+        for (const p of t.suggestedPrompts) {
+          expect(p.en.trim().length).toBeGreaterThan(10);
+          expect(p.vi.trim().length).toBeGreaterThan(10);
+        }
+      }
+    });
+
+    it('T-FRT-09: all templates strictly enforce 9:16 aspect ratio', () => {
+      const templates = getFirstRunTemplates();
+      for (const t of templates) {
+        expect(t.aspectRatio).toBe('9:16');
+      }
+    });
   });
 });

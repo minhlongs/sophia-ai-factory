@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => ({
   beginMissionExecution: vi.fn(),
   resolveApproval: vi.fn(),
   runMissionPreflightCheck: vi.fn(),
+  executeMultiTrackMission: vi.fn(),
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
@@ -47,15 +48,21 @@ vi.mock('@/forest/mission/preflight-check', () => ({
   runMissionPreflightCheck: mocks.runMissionPreflightCheck,
 }));
 
-vi.mock('@/tree/mission', () => ({
-  beginMissionExecution: mocks.beginMissionExecution,
-  createApproval: vi.fn(),
-  getMissionWithGoals: vi.fn(),
-  listPendingApprovals: vi.fn(),
-  resolveApproval: mocks.resolveApproval,
-  updateMissionStatus: mocks.treeUpdateMissionStatus,
-  createMission: vi.fn(),
-}));
+vi.mock('@/tree/mission', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/tree/mission')>();
+  return {
+    ...actual,
+    beginMissionExecution: mocks.beginMissionExecution,
+    createApproval: vi.fn(),
+    getMissionWithGoals: vi.fn(),
+    listPendingApprovals: vi.fn(),
+    resolveApproval: mocks.resolveApproval,
+    updateMissionStatus: mocks.treeUpdateMissionStatus,
+    createMission: vi.fn(),
+    dispatchMultiTrackMission: mocks.executeMultiTrackMission,
+  };
+});
+
 
 vi.mock('@/seed/utils/logger-utility', () => ({
   logger: mocks.logger,
@@ -89,6 +96,14 @@ describe('land/creative-mission actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.runMissionPreflightCheck.mockResolvedValue({ passed: true, gates: {} });
+    mocks.executeMultiTrackMission.mockResolvedValue({
+      success: true,
+      missionId: 'msn_multi_1',
+      status: 'review',
+      currentPhase: 'review',
+      trackStatus: { script: 'completed', audio: 'completed', visual: 'completed', video: 'completed' },
+      tracks: {},
+    });
   });
 
   // ── updateMissionStatus: tree error-code passthrough ───────────────────────
@@ -243,6 +258,7 @@ describe('land/creative-mission actions', () => {
         userId: 'user_1',
         workspaceId: 'ws_1',
         estimatedCostCents: 250,
+        requiredCapabilities: ['AI_TEXT', 'AI_AUDIO', 'AI_IMAGE', 'AI_VIDEO'],
         overrides: {
           membershipVerified: true,
         },
@@ -449,6 +465,273 @@ describe('land/creative-mission actions', () => {
         expect(result.error.code).toBe('ALREADY_RESOLVED');
       }
       expect(mocks.inngestSend).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── getMissionTrackStatus: live track state query ──────────────────────────
+
+  describe('getMissionTrackStatus', () => {
+    it('returns track status for authorized user', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(
+        makeD1([
+          {
+            workspace_id: 'ws_1',
+            creator_id: 'user_1',
+            status: 'running',
+            current_phase: 'voice_and_visuals',
+            constraints: JSON.stringify({
+              track_status: {
+                script: 'completed',
+                audio: 'running',
+                visual: 'running',
+                video: 'pending',
+              },
+            }),
+          },
+          1, // membership access verified
+        ])
+      );
+
+      const { getMissionTrackStatus } = await import('../actions');
+      const result = await getMissionTrackStatus('msn_track_query_1');
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.missionId).toBe('msn_track_query_1');
+        expect(result.value.status).toBe('running');
+        expect(result.value.currentPhase).toBe('voice_and_visuals');
+        expect(result.value.trackStatus.script).toBe('completed');
+        expect(result.value.trackStatus.audio).toBe('running');
+        expect(result.value.trackStatus.visual).toBe('running');
+        expect(result.value.trackStatus.video).toBe('pending');
+      }
+    });
+
+    it('fails when user lacks workspace access', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(
+        makeD1([
+          { workspace_id: 'ws_private', creator_id: 'other_user', status: 'running', current_phase: 'executing' },
+          null, // membership access denied
+        ])
+      );
+
+      const { getMissionTrackStatus } = await import('../actions');
+      const result = await getMissionTrackStatus({ missionId: 'msn_forbidden' });
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe('FORBIDDEN');
+      }
+    });
+
+    it('returns NOT_FOUND when mission does not exist', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(makeD1([null]));
+
+      const { getMissionTrackStatus } = await import('../actions');
+      const result = await getMissionTrackStatus('msn_missing');
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe('NOT_FOUND');
+      }
+    });
+  });
+
+  // ── executeMultiTrackMissionAction: Zod, Auth, Preflight, IDOR ───────────
+
+  describe('executeMultiTrackMissionAction', () => {
+    const validInput = {
+      missionId: 'msn_multi_1',
+      topic: 'Autonomous AI Growth in SEA',
+      estimatedScenes: 5,
+      durationSeconds: 60,
+      aspectRatio: '9:16' as const,
+      estimatedCostCents: 150,
+    };
+
+    it('rejects unauthenticated caller with NOT_AUTHENTICATED', async () => {
+      mocks.getCurrentUser.mockResolvedValue(null);
+
+      const { executeMultiTrackMissionAction } = await import('../actions');
+      const result = await executeMultiTrackMissionAction(validInput);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe('NOT_AUTHENTICATED');
+      }
+    });
+
+    it('rejects invalid schema with VALIDATION_ERROR', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+
+      const { executeMultiTrackMissionAction } = await import('../actions');
+      const result = await executeMultiTrackMissionAction({
+        missionId: '',
+        durationSeconds: 9999, // Exceeds max allowable duration (180s)
+      } as unknown as Parameters<typeof executeMultiTrackMissionAction>[0]);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe('VALIDATION_ERROR');
+      }
+    });
+
+    it('returns NOT_FOUND when mission does not exist in D1', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(makeD1([null]));
+
+      const { executeMultiTrackMissionAction } = await import('../actions');
+      const result = await executeMultiTrackMissionAction(validInput);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe('NOT_FOUND');
+      }
+    });
+
+    it('fails with FORBIDDEN when user lacks workspace access (IDOR)', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(
+        makeD1([
+          { workspace_id: 'ws_forbidden', creator_id: 'other_user', status: 'draft' },
+          null, // workspace membership lookup returns null
+        ])
+      );
+
+      const { executeMultiTrackMissionAction } = await import('../actions');
+      const result = await executeMultiTrackMissionAction(validInput);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe('FORBIDDEN');
+        expect(result.error.message).toContain('workspace');
+      }
+    });
+
+    it('fails with FORBIDDEN when user is a workspace member but neither creator nor admin', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(
+        makeD1([
+          { workspace_id: 'ws_1', creator_id: 'other_user', status: 'draft' },
+          { role: 'MEMBER' }, // membership check passes
+          { role: 'MEMBER' }, // ADMIN role check fails (insufficient role)
+        ])
+      );
+
+      const { executeMultiTrackMissionAction } = await import('../actions');
+      const result = await executeMultiTrackMissionAction(validInput);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe('FORBIDDEN');
+        expect(result.error.message).toContain('permission');
+      }
+    });
+
+    it('fails with EXECUTION_START_INVALID when mission status is running or terminal', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(
+        makeD1([
+          { workspace_id: 'ws_1', creator_id: 'user_1', status: 'running' },
+          1, // membership check passes
+        ])
+      );
+
+      const { executeMultiTrackMissionAction } = await import('../actions');
+      const result = await executeMultiTrackMissionAction(validInput);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe('EXECUTION_START_INVALID');
+      }
+    });
+
+    it('fails closed when runMissionPreflightCheck fails due to MCU quota or capabilities', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(
+        makeD1([
+          { workspace_id: 'ws_1', creator_id: 'user_1', status: 'draft' },
+          1, // membership check passes
+        ])
+      );
+      mocks.runMissionPreflightCheck.mockResolvedValue({
+        passed: false,
+        failureCode: 'INSUFFICIENT_ENTITLEMENT',
+        failureReason: 'Insufficient MCU balance (0 remaining)',
+        gates: {},
+      });
+
+      const { executeMultiTrackMissionAction } = await import('../actions');
+      const result = await executeMultiTrackMissionAction(validInput);
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.code).toBe('INSUFFICIENT_ENTITLEMENT');
+        expect(result.error.message).toBe('Insufficient MCU balance (0 remaining)');
+      }
+      expect(mocks.runMissionPreflightCheck).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user_1',
+          workspaceId: 'ws_1',
+          requiredCapabilities: ['AI_TEXT', 'AI_AUDIO', 'AI_IMAGE', 'AI_VIDEO'],
+          estimatedCostCents: 150,
+          overrides: { membershipVerified: true },
+        })
+      );
+    });
+
+    it('executes successfully when caller is creator, status is startable, and preflight passes', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(
+        makeD1([
+          { workspace_id: 'ws_1', creator_id: 'user_1', status: 'draft' },
+          1, // membership check passes
+        ])
+      );
+      mocks.runMissionPreflightCheck.mockResolvedValue({ passed: true, gates: {} });
+
+      const { executeMultiTrackMissionAction } = await import('../actions');
+      const result = await executeMultiTrackMissionAction(validInput);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.status).toBe('review');
+        expect(result.value.currentPhase).toBe('review');
+      }
+      expect(mocks.executeMultiTrackMission).toHaveBeenCalledWith(
+        'msn_multi_1',
+        expect.objectContaining({
+          userId: 'user_1',
+          workspaceId: 'ws_1',
+          topic: 'Autonomous AI Growth in SEA',
+          estimatedScenes: 5,
+          durationSeconds: 60,
+          aspectRatio: '9:16',
+        })
+      );
+    });
+
+    it('executes successfully when caller is not creator but has workspace ADMIN role', async () => {
+      mocks.getCurrentUser.mockResolvedValue(USER);
+      mocks.getD1.mockReturnValue(
+        makeD1([
+          { workspace_id: 'ws_1', creator_id: 'other_user', status: 'planned' },
+          { role: 'ADMIN' }, // membership check
+          { role: 'ADMIN' }, // role check
+        ])
+      );
+      mocks.runMissionPreflightCheck.mockResolvedValue({ passed: true, gates: {} });
+
+      const { executeMultiTrackMissionAction } = await import('../actions');
+      const result = await executeMultiTrackMissionAction(validInput);
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.value.status).toBe('review');
+      }
     });
   });
 });

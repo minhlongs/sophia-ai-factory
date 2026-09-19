@@ -14,6 +14,7 @@ import { describe, it, expect } from 'vitest';
 import {
   resolveCapabilities,
   hasRequiredCapabilities,
+  getProvidersForCapability,
   ALL_CAPABILITIES,
   PROVIDER_CAPABILITIES,
   type AICapability,
@@ -70,8 +71,8 @@ describe('AI Capability Model', () => {
     expect(res.missingCapabilities).toEqual([]);
   });
 
-  it('validates hasRequiredCapabilities accurately', () => {
-    const videoRequirements: AICapability[] = ['AI_TEXT', 'AI_AUDIO', 'AI_VIDEO'];
+  it('validates hasRequiredCapabilities accurately with readonly arrays', () => {
+    const videoRequirements = ['AI_TEXT', 'AI_AUDIO', 'AI_VIDEO'] as const;
 
     // Incomplete stack
     expect(hasRequiredCapabilities(['openrouter'], videoRequirements)).toBe(false);
@@ -82,5 +83,35 @@ describe('AI Capability Model', () => {
 
     // Complete stack with d-id
     expect(hasRequiredCapabilities(['anthropic', 'elevenlabs', 'd-id'], videoRequirements)).toBe(true);
+
+    // Complete multi-track stack with fal-ai and wan
+    expect(
+      hasRequiredCapabilities(['anthropic', 'fish-speech', 'fal-ai', 'wan'], [
+        'AI_TEXT',
+        'AI_AUDIO',
+        'AI_IMAGE',
+        'AI_VIDEO',
+      ] as const),
+    ).toBe(true);
+  });
+
+  it('maps fish-speech to AI_AUDIO and wan to AI_VIDEO', () => {
+    expect(PROVIDER_CAPABILITIES['fish-speech']).toEqual(['AI_AUDIO']);
+    expect(PROVIDER_CAPABILITIES['wan']).toEqual(['AI_VIDEO']);
+  });
+
+  it('retrieves providers for a specific capability using getProvidersForCapability', () => {
+    const audioProviders = getProvidersForCapability('AI_AUDIO');
+    expect(audioProviders).toContain('elevenlabs');
+    expect(audioProviders).toContain('fish-speech');
+
+    const imageProviders = getProvidersForCapability('AI_IMAGE');
+    expect(imageProviders).toContain('fal-ai');
+    expect(imageProviders).toContain('replicate');
+
+    const videoProviders = getProvidersForCapability('AI_VIDEO');
+    expect(videoProviders).toContain('replicate');
+    expect(videoProviders).toContain('wan');
+    expect(videoProviders).toContain('heygen');
   });
 });

@@ -1085,6 +1085,99 @@
         "role_qa": "QA",
         "role_ops": "Ops",
         "role_marketing": "Marketing"
+      },
+      "wizard": {
+        "metaTitle": "New Video Mission | Sophia AI Factory",
+        "metaDescription": "Launch your first AI video with pre-tested templates and transparent pricing.",
+        "backToMissions": "Back to Missions",
+        "pageTitle": "Create Your First Video",
+        "pageSubtitle": "Sophia will autonomously write scripts, synthesize voice, and composite video using your selected template.",
+        "guide": {
+          "q1_label": "1. What to enter?",
+          "q1_desc": "Pick a template or topic",
+          "q2_label": "2. What Sophia does?",
+          "q2_desc": "Script ➔ Voice ➔ Video",
+          "q3_label": "3. Duration?",
+          "q3_desc": "45 - 90 seconds",
+          "q4_label": "4. Cost?",
+          "q4_desc": "~${usd} / {mcu} MCU",
+          "q5_label": "5. Where shown?",
+          "q5_desc": "Live preview & Review"
+        },
+        "templateSelectLabel": "Choose a Proven Template",
+        "topicLabel": "Topic or Video Concept",
+        "topicPlaceholder": "Enter topic or select from suggestions below",
+        "costEstimate": "~${usd} USD ({mcu} MCU)",
+        "durationEstimate": "45 - 90 seconds",
+        "zeroHiddenFees": "Zero Hidden Fees",
+        "launchButton": "Launch Video Mission Now",
+        "launching": "Launching mission...",
+        "launchError": "Failed to launch mission. Please retry.",
+        "timeoutError": "Video generation timed out (3 minutes). Please check the Mission Console.",
+        "successTitle": "First Video Ready!",
+        "successDescription": "Video is composited and ready for your approval in the Review Console.",
+        "reviewButton": "Review Video",
+        "createAnotherButton": "Create Another",
+        "progressTitle": "Video Generation Progress",
+        "progressAriaLabel": "Mission Progress",
+        "interruptedTitle": "Execution Interrupted",
+        "errorFallback": "AI provider error. Retry safely.",
+        "retryButton": "Retry",
+        "stageFailureMessage": "Pipeline failed at {stage}. Click retry to restart.",
+        "stages": {
+          "script_generation": {
+            "label": "Script Generation",
+            "desc": "Writing high-retention script with OpenRouter"
+          },
+          "voice_synthesis": {
+            "label": "Voice Synthesis",
+            "desc": "Synthesizing voiceover with ElevenLabs"
+          },
+          "visual_generation": {
+            "label": "Visual Generation",
+            "desc": "Rendering scenes with fal.ai"
+          },
+          "video_compositing": {
+            "label": "Video Compositing",
+            "desc": "Assembling scenes, audio, and captions"
+          },
+          "ready_for_review": {
+            "label": "Ready for Review",
+            "desc": "Video complete! Ready for one-click approval"
+          }
+        },
+        "templates": {
+          "viral_shorts_explainer": {
+            "name": "Viral Shorts Explainer",
+            "description": "60-second high-retention video with dynamic voiceover and fast-paced visual storytelling.",
+            "badge": "High Retention (60s)",
+            "defaultTopic": "5 Psychological Tricks That Make People Instantly Like You",
+            "prompt0": "3 Morning Habits of High-Performing Founders",
+            "prompt1": "How AI Automation is Transforming Video Creation in 2026",
+            "prompt2": "The 80/20 Rule for Scaling Personal Productivity",
+            "callToAction": "Follow for daily high-value growth insights"
+          },
+          "affiliate_product_showcase": {
+            "name": "Affiliate Product Showcase",
+            "description": "30-second TikTok format focused on problem-solution and conversion-driven CTA overlay.",
+            "badge": "High Conversion (30s)",
+            "defaultTopic": "Ergonomic Desk Gadget That Fixed My Posture in 7 Days",
+            "prompt0": "The Minimal Tech Gear Every Remote Worker Needs",
+            "prompt1": "Ultra-Fast Wireless Charger Review in 30 Seconds",
+            "prompt2": "Budget Productivity Monitor Setup Under $200",
+            "callToAction": "Tap the link in bio to grab yours today with special discount"
+          },
+          "daily_news_wisdom": {
+            "name": "Daily News & Wisdom",
+            "description": "45-second YouTube Shorts format with automated visuals and bite-sized wisdom.",
+            "badge": "Daily Evergreen (45s)",
+            "defaultTopic": "The Power of Compounding: 1% Better Every Single Day",
+            "prompt0": "Why Warren Buffett Reads 500 Pages Every Day",
+            "prompt1": "The 2-Minute Rule to Beat Procrastination Forever",
+            "prompt2": "Top 3 AI Breakthroughs This Week in 45 Seconds",
+            "callToAction": "Save this video and share with someone who needs it"
+          }
+        }
       }
     },
     "apiKeys": {

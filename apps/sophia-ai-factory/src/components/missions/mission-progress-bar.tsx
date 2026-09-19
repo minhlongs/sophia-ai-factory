@@ -8,6 +8,7 @@
  */
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { CheckCircle2, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 
 export type MissionStageId =
@@ -17,8 +18,16 @@ export type MissionStageId =
   | 'VIDEO_COMPOSITING'
   | 'READY_FOR_REVIEW';
 
+export type StageKey =
+  | 'script_generation'
+  | 'voice_synthesis'
+  | 'visual_generation'
+  | 'video_compositing'
+  | 'ready_for_review';
+
 export interface StageDefinition {
   id: MissionStageId;
+  stageKey: StageKey;
   stepNumber: number;
   labelEn: string;
   labelVi: string;
@@ -30,6 +39,7 @@ export interface StageDefinition {
 export const MISSION_STAGES: StageDefinition[] = [
   {
     id: 'SCRIPT_GENERATION',
+    stageKey: 'script_generation',
     stepNumber: 1,
     labelEn: 'Script Generation',
     labelVi: 'Soạn kịch bản SEO',
@@ -39,6 +49,7 @@ export const MISSION_STAGES: StageDefinition[] = [
   },
   {
     id: 'VOICE_SYNTHESIS',
+    stageKey: 'voice_synthesis',
     stepNumber: 2,
     labelEn: 'Voice Synthesis',
     labelVi: 'Lồng tiếng AI',
@@ -48,6 +59,7 @@ export const MISSION_STAGES: StageDefinition[] = [
   },
   {
     id: 'VISUAL_GENERATION',
+    stageKey: 'visual_generation',
     stepNumber: 3,
     labelEn: 'Visual Generation',
     labelVi: 'Tạo hình ảnh AI',
@@ -57,6 +69,7 @@ export const MISSION_STAGES: StageDefinition[] = [
   },
   {
     id: 'VIDEO_COMPOSITING',
+    stageKey: 'video_compositing',
     stepNumber: 4,
     labelEn: 'Video Compositing',
     labelVi: 'Ghép video & Phụ đề',
@@ -66,6 +79,7 @@ export const MISSION_STAGES: StageDefinition[] = [
   },
   {
     id: 'READY_FOR_REVIEW',
+    stageKey: 'ready_for_review',
     stepNumber: 5,
     labelEn: 'Ready for Review',
     labelVi: 'Sẵn sàng duyệt',
@@ -84,15 +98,34 @@ export interface MissionProgressBarProps {
   customPercent?: number;
 }
 
+function getIndicatorClasses(isFailed: boolean, isPast: boolean, isCurrent: boolean): string {
+  if (isFailed) return 'border-destructive bg-destructive/10 text-destructive';
+  if (isPast) return 'border-primary bg-primary text-primary-foreground';
+  if (isCurrent) return 'border-primary bg-primary/20 text-primary ring-2 ring-primary/30';
+  return 'border-border bg-muted/40 text-muted-foreground';
+}
+
+function renderStageIcon(
+  isFailed: boolean,
+  isPast: boolean,
+  isCurrent: boolean,
+  status: string,
+  stepNumber: number
+) {
+  if (isFailed) return <AlertCircle className="h-3.5 w-3.5" />;
+  if (isPast) return <CheckCircle2 className="h-3.5 w-3.5" />;
+  if (isCurrent && status === 'running') return <Loader2 className="h-3.5 w-3.5 animate-spin" />;
+  return stepNumber;
+}
+
 export function MissionProgressBar({
   currentStage,
   status,
   errorMessage,
   onRetry,
-  locale = 'vi',
   customPercent,
 }: MissionProgressBarProps) {
-  const isVi = locale === 'vi';
+  const t = useTranslations('dashboard.missions.wizard');
   const currentIndex = MISSION_STAGES.findIndex((s) => s.id === currentStage);
   const activeIndex = currentIndex >= 0 ? currentIndex : 0;
   const currentDef = MISSION_STAGES[activeIndex] ?? MISSION_STAGES[0];
@@ -104,9 +137,9 @@ export function MissionProgressBar({
       <div className="flex items-center justify-between gap-4">
         <div>
           <h3 className="text-sm font-semibold text-foreground">
-            {isVi ? 'Tiến độ sản xuất video' : 'Video Generation Progress'}
+            {t('progressTitle')}
           </h3>
-          <p className="text-xs text-muted-foreground">{isVi ? currentDef.descVi : currentDef.descEn}</p>
+          <p className="text-xs text-muted-foreground">{t(`stages.${currentDef.stageKey}.desc`)}</p>
         </div>
         <span className="text-lg font-bold text-primary">{percent}%</span>
       </div>
@@ -117,7 +150,7 @@ export function MissionProgressBar({
         aria-valuenow={percent}
         aria-valuemin={0}
         aria-valuemax={100}
-        aria-label={isVi ? 'Tiến độ nhiệm vụ' : 'Mission Progress'}
+        aria-label={t('progressAriaLabel')}
         className="relative h-2 w-full overflow-hidden rounded-full bg-muted"
       >
         <div
@@ -138,32 +171,20 @@ export function MissionProgressBar({
           return (
             <div key={stage.id} className="flex flex-col items-center text-center">
               <div
-                className={`flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-semibold ${
-                  isFailed
-                    ? 'border-destructive bg-destructive/10 text-destructive'
-                    : isPast
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : isCurrent
-                    ? 'border-primary bg-primary/20 text-primary ring-2 ring-primary/30'
-                    : 'border-border bg-muted/40 text-muted-foreground'
-                }`}
+                className={`flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-semibold ${getIndicatorClasses(
+                  isFailed,
+                  isPast,
+                  isCurrent
+                )}`}
               >
-                {isFailed ? (
-                  <AlertCircle className="h-3.5 w-3.5" />
-                ) : isPast ? (
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                ) : isCurrent && status === 'running' ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  stage.stepNumber
-                )}
+                {renderStageIcon(isFailed, isPast, isCurrent, status, stage.stepNumber)}
               </div>
               <span
                 className={`mt-1.5 line-clamp-1 text-[10px] font-medium ${
                   isFailed ? 'text-destructive' : isCurrent || isPast ? 'text-foreground' : 'text-muted-foreground'
                 }`}
               >
-                {isVi ? stage.labelVi : stage.labelEn}
+                {t(`stages.${stage.stageKey}.label`)}
               </span>
             </div>
           );
@@ -177,10 +198,10 @@ export function MissionProgressBar({
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
             <div>
               <h4 className="text-xs font-semibold text-destructive">
-                {isVi ? 'Quá trình xử lý tạm dừng' : 'Execution Interrupted'}
+                {t('interruptedTitle')}
               </h4>
               <p className="text-[11px] text-foreground/80 mt-0.5">
-                {errorMessage || (isVi ? 'Lỗi kết nối AI provider. Bấm thử lại an toàn.' : 'AI provider error. Retry safely.')}
+                {errorMessage || t('errorFallback')}
               </p>
             </div>
           </div>
@@ -191,7 +212,7 @@ export function MissionProgressBar({
               className="inline-flex shrink-0 items-center gap-1 rounded bg-destructive px-2.5 py-1 text-xs font-medium text-destructive-foreground hover:opacity-90 active:scale-95"
             >
               <RefreshCw className="h-3 w-3" />
-              {isVi ? 'Thử lại' : 'Retry'}
+              {t('retryButton')}
             </button>
           )}
         </div>

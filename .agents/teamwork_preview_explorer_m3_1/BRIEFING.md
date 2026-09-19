@@ -1,7 +1,7 @@
-# BRIEFING — 2026-05-31T07:22:00Z
+# BRIEFING — 2026-09-19T10:44:00Z
 
 ## Mission
-Investigate and analyze implementation strategies for Milestone 3 edge cases (Case 3.1, 3.3, 3.4).
+Investigate Creative Studio UI (/dashboard/missions/new, first-run-wizard.tsx, mission-progress-bar.tsx) and plan the transition from fake setTimeout simulation to real mission execution and getMissionTrackStatus polling.
 
 ## 🔒 My Identity
 - Archetype: Teamwork explorer
@@ -9,32 +9,46 @@ Investigate and analyze implementation strategies for Milestone 3 edge cases (Ca
 - Working directory: /Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_explorer_m3_1/
 - Original parent: 699d8c86-9fd2-4f43-9bd2-31aae57a990a
 - Milestone: Milestone 3
+- Working directory (current): /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_explorer_m3_1/
+- Caller parent: 888683f7-30ce-42ff-840e-2e0b8eaaa575
+- Task: Milestone 3 Explorer 1 (Creative Studio UI & Real Track Polling)
 
 ## 🔒 Key Constraints
 - Read-only investigation — do NOT implement
 - Code-only network restrictions (no external HTTP calls)
 - Follow Handoff Protocol with 5-component handoff report
+- Do NOT edit production code in apps/sophia-ai-factory; only produce analysis and plan in handoff.md
+- Use send_message to report back to parent 888683f7-30ce-42ff-840e-2e0b8eaaa575
 
 ## Current Parent
-- Conversation ID: 699d8c86-9fd2-4f43-9bd2-31aae57a990a
-- Updated: 2026-05-31T07:22:00Z
+- Conversation ID: 888683f7-30ce-42ff-840e-2e0b8eaaa575
+- Updated: 2026-09-19T10:44:00Z
 
 ## Investigation State
 - **Explored paths**:
-  - `apps/sophia-ai-factory/src/lib/fulfillment/complete-video-from-webhook.ts`
-  - `apps/sophia-ai-factory/src/seed/db/repositories/user-purchases-repo.ts`
-  - `apps/sophia-ai-factory/src/app/api/cron/fulfillment-retry/route.ts`
-  - `apps/sophia-ai-factory/src/seed/db/d1-query-chain-executors.ts`
-  - `apps/sophia-ai-factory/src/seed/db/repositories/__tests__/user-purchases-repo.test.ts`
+  - `apps/sophia-ai-factory/src/app/[locale]/dashboard/missions/new/page.tsx`
+  - `apps/sophia-ai-factory/src/components/missions/first-run-wizard.tsx`
+  - `apps/sophia-ai-factory/src/components/missions/mission-progress-bar.tsx`
+  - `apps/sophia-ai-factory/src/land/creative-mission/actions.ts`
+  - `apps/sophia-ai-factory/src/forest/mission/multi-track-orchestrator.ts`
+  - `apps/sophia-ai-factory/src/land/missions/first-run-template.ts`
+  - `apps/sophia-ai-factory/src/land/missions/cost-estimator.ts`
+  - `apps/sophia-ai-factory/messages/en.json` & `vi.json`
 - **Key findings**:
-  - **Case 3.1**: Found the webhook success handler, which does R2 copy before DB update. To avoid duplicate R2 copies, we must perform a CAS status update to `'completed'` *before* triggering the R2 copy.
-  - **Case 3.3**: Found `decrementCredits` doing an optimistic lock update without checking if it mutated 1 row. Also discovered a query builder limitation: if an optimistic filter is used on a column that gets modified by the update, the `isSingle` SELECT query will query the old value and thus fail to find the row. Proposed two clean solutions: using `D1Client.unwrap()` for native SQLite query with `RETURNING id`, or fixing the query builder itself to support native `RETURNING` clauses.
-  - **Case 3.4**: Found the sequential loop in retry cron route. Proposed chunking items into batches of 5 and processing concurrently using `Promise.allSettled`.
+  - Found fake setTimeout simulation in `first-run-wizard.tsx` (lines 83-90) transitioning every 1200ms regardless of server status.
+  - Identified `executeMultiTrackMissionAction` as the canonical server action for Creative Studio, as it runs 7-gate preflight check and executes the multi-track pipeline with template parameters.
+  - Clarified that calling `startMissionExecution` first causes `executeMultiTrackMissionAction` to fail because status becomes `running` which is not in `EXECUTION_START_FROM`.
+  - Designed deterministic mapping from backend tracks (`script`, `audio`, `visual`, `video`) and `current_phase` to UI 5 stages (`SCRIPT_GENERATION`, `VOICE_SYNTHESIS`, `VISUAL_GENERATION`, `VIDEO_COMPOSITING`, `READY_FOR_REVIEW`).
+  - Outlined recursive `setTimeout` polling (1.5s interval) with `isMountedRef` and 180s timeout protection.
+  - Designed graceful failure transitions and fresh-start idempotent retries.
 - **Unexplored areas**: None.
 
 ## Key Decisions Made
-- Chose to propose both options for Case 3.3 (raw SQLite vs query builder `RETURNING` support) for robustness and clear architectural options.
-- Chose `Promise.allSettled` for retry cron concurrency to prevent failure of one request from aborting other concurrent requests.
+- Use `executeMultiTrackMissionAction` triggered asynchronously in tandem with a recursive `getMissionTrackStatus` polling loop.
+- Use `useRef` for cleanup on unmount to prevent React memory leaks.
+- Expand `messages/en.json` and `messages/vi.json` for bilingual localization.
 
 ## Artifact Index
-- `/Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_explorer_m3_1/original_prompt.md` — Original request prompt
+- `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_explorer_m3_1/DISPATCH.md` — Assignment instructions
+- `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_explorer_m3_1/handoff.md` — Full 5-component handoff report and implementation blueprint
+- `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_explorer_m3_1/progress.md` — Liveness heartbeat

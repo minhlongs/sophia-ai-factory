@@ -28,10 +28,12 @@ export const PROVIDER_CAPABILITIES: Record<string, readonly AICapability[]> = {
   openrouter: ['AI_TEXT'],
   anthropic: ['AI_TEXT'],
   elevenlabs: ['AI_AUDIO'],
+  'fish-speech': ['AI_AUDIO'],
   'd-id': ['AI_VIDEO', 'AVATAR'],
   heygen: ['AI_VIDEO', 'AVATAR'],
   replicate: ['AI_IMAGE', 'AI_VIDEO'],
   'fal-ai': ['AI_IMAGE'],
+  wan: ['AI_VIDEO'],
   muapi: ['AI_IMAGE', 'AI_VIDEO'],
   apollo: ['AI_TEXT'],
   hunter: ['AI_TEXT'],
@@ -88,9 +90,18 @@ export function resolveCapabilities(activeProviders: string[]): CapabilityResolu
  */
 export function hasRequiredCapabilities(
   activeProviders: string[],
-  required: AICapability[]
+  required: readonly AICapability[]
 ): boolean {
   const resolution = resolveCapabilities(activeProviders);
   const availableSet = new Set(resolution.availableCapabilities);
   return required.every((req) => availableSet.has(req));
+}
+
+/**
+ * Find all registered providers that offer a specific capability.
+ */
+export function getProvidersForCapability(capability: AICapability): string[] {
+  return Object.entries(PROVIDER_CAPABILITIES)
+    .filter(([_, caps]) => caps.includes(capability))
+    .map(([provider]) => provider);
 }

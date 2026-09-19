@@ -1085,6 +1085,99 @@
         "role_qa": "Kiểm Thử",
         "role_ops": "Vận Hành",
         "role_marketing": "Marketing"
+      },
+      "wizard": {
+        "metaTitle": "Tạo nhiệm vụ video mới | Sophia AI Factory",
+        "metaDescription": "Khởi tạo video đầu tiên của bạn với các mẫu tối ưu sẵn và chi phí minh bạch.",
+        "backToMissions": "Quay lại danh sách nhiệm vụ",
+        "pageTitle": "Tạo video đầu tiên của bạn",
+        "pageSubtitle": "Sophia sẽ tự động soạn kịch bản, lồng tiếng và dựng video hoàn chỉnh theo mẫu bạn chọn.",
+        "guide": {
+          "q1_label": "1. Nhập gì?",
+          "q1_desc": "Chọn mẫu hoặc chủ đề",
+          "q2_label": "2. Sophia làm gì?",
+          "q2_desc": "Kịch bản ➔ Giọng đọc ➔ Video hoàn chỉnh",
+          "q3_label": "3. Thời gian?",
+          "q3_desc": "45 - 90 giây",
+          "q4_label": "4. Chi phí?",
+          "q4_desc": "~${usd} USD / {mcu} MCU",
+          "q5_label": "5. Kết quả ở đâu?",
+          "q5_desc": "Trực tiếp tại trang này"
+        },
+        "templateSelectLabel": "Chọn mẫu kịch bản tối ưu sẵn",
+        "topicLabel": "Chủ đề hoặc ý tưởng video của bạn",
+        "topicPlaceholder": "Nhập chủ đề hoặc chọn gợi ý bên dưới",
+        "costEstimate": "~${usd} USD ({mcu} MCU)",
+        "durationEstimate": "45 - 90 giây",
+        "zeroHiddenFees": "Minh bạch 100%, không phí ẩn",
+        "launchButton": "Bắt đầu sản xuất video ngay",
+        "launching": "Đang khởi chạy nhiệm vụ...",
+        "launchError": "Không thể khởi chạy nhiệm vụ. Vui lòng thử lại.",
+        "timeoutError": "Quá trình dựng video vượt quá thời gian chờ (3 phút). Vui lòng kiểm tra lại trong bảng điều khiển.",
+        "successTitle": "Video đầu tiên đã hoàn tất!",
+        "successDescription": "Video đã được dựng hoàn chỉnh và sẵn sàng để bạn duyệt trong bảng kiểm duyệt.",
+        "reviewButton": "Xem & Duyệt Video",
+        "createAnotherButton": "Tạo video khác",
+        "progressTitle": "Tiến độ sản xuất video",
+        "progressAriaLabel": "Tiến độ nhiệm vụ",
+        "interruptedTitle": "Quá trình xử lý tạm dừng",
+        "errorFallback": "Lỗi kết nối dịch vụ AI. Thử lại an toàn.",
+        "retryButton": "Thử lại",
+        "stageFailureMessage": "Gặp sự cố tại bước \"{stage}\". Vui lòng bấm thử lại để tiếp tục.",
+        "stages": {
+          "script_generation": {
+            "label": "Soạn kịch bản thu hút",
+            "desc": "Soạn kịch bản giữ chân người xem bằng trí tuệ nhân tạo"
+          },
+          "voice_synthesis": {
+            "label": "Lồng tiếng AI",
+            "desc": "Tạo giọng đọc truyền cảm tự nhiên bằng ElevenLabs"
+          },
+          "visual_generation": {
+            "label": "Tạo hình ảnh AI",
+            "desc": "Dựng khung cảnh điện ảnh sống động qua fal.ai"
+          },
+          "video_compositing": {
+            "label": "Ghép video & Phụ đề",
+            "desc": "Ghép cảnh, hòa âm và phụ đề chuyển động"
+          },
+          "ready_for_review": {
+            "label": "Sẵn sàng duyệt",
+            "desc": "Video hoàn tất! Sẵn sàng để bạn xem và duyệt ngay"
+          }
+        },
+        "templates": {
+          "viral_shorts_explainer": {
+            "name": "Video giải thích lan tỏa ngắn",
+            "description": "Video 60 giây giữ chân cao với giọng đọc sống động và hình ảnh chuyển cảnh hấp dẫn.",
+            "badge": "Giữ chân cao (60s)",
+            "defaultTopic": "5 Mẹo tâm lý giúp bạn tạo thiện cảm tức thì",
+            "prompt0": "3 Thói quen buổi sáng của các nhà sáng lập hàng đầu",
+            "prompt1": "Tự động hóa AI đang thay đổi ngành sáng tạo video năm 2026 ra sao",
+            "prompt2": "Nguyên lý 80/20 trong tối ưu hiệu suất cá nhân",
+            "callToAction": "Bấm theo dõi để nhận kiến thức giá trị mỗi ngày"
+          },
+          "affiliate_product_showcase": {
+            "name": "Giới thiệu sản phẩm tiếp thị liên kết",
+            "description": "Video 30 giây chuẩn định dạng TikTok tập trung giải quyết vấn đề và kích thích mua hàng.",
+            "badge": "Chuyển đổi cao (30s)",
+            "defaultTopic": "Thiết bị công thái học giúp cải thiện tư thế sau 7 ngày",
+            "prompt0": "Phụ kiện công nghệ tối giản mọi người làm việc từ xa đều cần",
+            "prompt1": "Đánh giá sạc không dây siêu tốc trong 30 giây",
+            "prompt2": "Góc làm việc hai màn hình tiết kiệm dưới 200 đô",
+            "callToAction": "Nhấn vào liên kết ở tiểu sử để nhận ưu đãi hôm nay"
+          },
+          "daily_news_wisdom": {
+            "name": "Tin tức & Tri thức mỗi ngày",
+            "description": "Video 45 giây định dạng YouTube Shorts với hình ảnh tự động và bài học súc tích.",
+            "badge": "Nội dung thường xanh (45s)",
+            "defaultTopic": "Sức mạnh của lãi kép: Tốt hơn 1% mỗi ngày",
+            "prompt0": "Tại sao Warren Buffett đọc 500 trang sách mỗi ngày",
+            "prompt1": "Quy tắc 2 phút để đánh bại sự trì hoãn vĩnh viễn",
+            "prompt2": "Top 3 đột phá AI nổi bật tuần này trong 45 giây",
+            "callToAction": "Lưu video này và chia sẻ cho người bạn quan tâm"
+          }
+        }
       }
     },
     "apiKeys": {

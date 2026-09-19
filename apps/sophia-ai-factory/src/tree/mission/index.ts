@@ -47,6 +47,26 @@ export {
   MAX_SINGLE_MISSION_COST_CENTS,
 } from './preflight-check';
 
+export {
+  getMissionTrackStatus,
+  getCachedTrackStatus,
+  setCachedTrackStatus,
+  clearTrackStatusCache,
+} from './track-status';
+
+export {
+  registerMultiTrackExecutor,
+  getRegisteredExecutor,
+  dispatchMultiTrackMission,
+} from './executor-bridge';
+
+export type {
+  MultiTrackDispatchOptions,
+  MultiTrackExecutorFn,
+} from './executor-bridge';
+
+
+
 export type {
   PreflightGateCheck,
   MissionPreflightChecklist,
@@ -58,3 +78,16 @@ export type { PendingApprovalRecord } from './agent-run-repo';
 
 export type { MissionError } from './types';
 export type { GoalError } from './goal';
+
+export type {
+  SingleTrackState,
+  MissionTrackStatus,
+  ScriptScene,
+  MultiTrackScriptResult,
+  MultiTrackAudioResult,
+  MultiTrackVisualFrame,
+  MultiTrackVisualResult,
+  MultiTrackVideoResult,
+  MultiTrackExecutionResult,
+} from './types';
+

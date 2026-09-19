@@ -1,10 +1,12 @@
 # Progress
 
-Last visited: 2026-05-31T14:23:01+07:00
+Last visited: 2026-09-19T17:45:00+07:00
 
 ## Status
-- [x] Investigate Case 3.1 (HeyGen Webhook Concurrency)
-- [x] Investigate Case 3.3 (Optimistic Locking Failure in decrementCredits)
-- [x] Investigate Case 3.4 (Worker Timeouts in Retry Queue Batch Loops)
-- [x] Synthesize findings & Write handoff.md
-- [x] Send handoff message to main agent
+- [x] Examine `first-run-template.ts` (Viral Shorts 60s, Affiliate Showcase 30s, Daily News 45s)
+- [x] Examine `cost-estimator.ts` (MCU calculation: 30, 40, 50 MCU; USD calculation; scene clamping)
+- [x] Verify option passing to `createMission` and `startMissionExecution`
+- [x] Verify UI preflight cost display in `first-run-wizard.tsx` and `page.tsx`
+- [x] Design comprehensive unit test specifications for Milestone 3
+- [x] Write 5-component `handoff.md` report
+- [x] Send completion message to parent orchestrator

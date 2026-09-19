@@ -37,6 +37,7 @@ export interface ReplicateVideoServiceConfig {
   modelOwner?: string;
   modelName?: string;
   timeoutMs?: number;
+  keyRef?: string;
 }
 
 type ReplicateJobStatus = 'starting' | 'processing' | 'succeeded' | 'failed' | 'canceled';
@@ -74,6 +75,7 @@ export class ReplicateVideoService implements IVideoService {
   private readonly modelOwner: string;
   private readonly modelName: string;
   private readonly timeoutMs: number;
+  private readonly keyRef?: string;
 
   constructor(config: ReplicateVideoServiceConfig) {
     this.apiKey = config.apiKey;
@@ -81,11 +83,13 @@ export class ReplicateVideoService implements IVideoService {
     this.modelOwner = config.modelOwner ?? DEFAULT_MODEL_OWNER;
     this.modelName = config.modelName ?? DEFAULT_MODEL_NAME;
     this.timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    this.keyRef = config.keyRef;
   }
 
   // ─── createVideo ───────────────────────────────────────────────────────────
 
-  async createVideo(params: CreateVideoParams): Promise<string> {
+  async createVideo(params: CreateVideoParams, keyRef?: string): Promise<string> {
+    const effectiveKeyRef = keyRef ?? this.keyRef;
     const input: Record<string, unknown> = {
       face: params.avatarId,   // Source image URL with a face
       audio: params.voiceId,   // Audio file URL to lip-sync
@@ -96,10 +100,11 @@ export class ReplicateVideoService implements IVideoService {
       hasFace: !!params.avatarId,
       hasAudio: !!params.voiceId,
       title: params.title,
+      keyRef: effectiveKeyRef,
     });
 
-    // Circuit breaker: check if Replicate is available
-    if (!shouldAllowRequest('replicate')) {
+    // Circuit breaker: check if Replicate is available for this tenant key
+    if (!shouldAllowRequest('replicate', effectiveKeyRef)) {
       throw new ProviderNetworkError('replicate', 'Circuit breaker open — too many failures');
     }
 
@@ -132,14 +137,14 @@ export class ReplicateVideoService implements IVideoService {
       });
 
       // Circuit breaker: record success
-      recordSuccess('replicate');
+      recordSuccess('replicate', effectiveKeyRef);
       return prediction.id;
     } catch (error) {
-      if (error instanceof ReplicateClientError) throw error;
-
       // Circuit breaker: classify and record failure
       const kind = classifyError(error);
-      recordFailure('replicate', kind);
+      recordFailure('replicate', kind, effectiveKeyRef);
+
+      if (error instanceof ReplicateClientError) throw error;
 
       if (error instanceof DOMException && error.name === 'AbortError') {
         throw new ProviderNetworkError(
@@ -158,7 +163,11 @@ export class ReplicateVideoService implements IVideoService {
 
   // ─── getVideoStatus ────────────────────────────────────────────────────────
 
-  async getVideoStatus(videoId: string): Promise<VideoStatus> {
+  async getVideoStatus(videoId: string, keyRef?: string): Promise<VideoStatus> {
+    const effectiveKeyRef = keyRef ?? this.keyRef;
+    if (!shouldAllowRequest('replicate', effectiveKeyRef)) {
+      throw new ProviderNetworkError('replicate', 'Circuit breaker open — too many failures');
+    }
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -186,6 +195,9 @@ export class ReplicateVideoService implements IVideoService {
         permanentUrl = await this.storeToR2(videoId, videoUrl);
       }
 
+      // Circuit breaker: record success for this keyRef
+      recordSuccess('replicate', effectiveKeyRef);
+
       return {
         id: videoId,
         status,
@@ -193,6 +205,10 @@ export class ReplicateVideoService implements IVideoService {
         error: prediction.error,
       };
     } catch (error) {
+      // Circuit breaker: record failure for this keyRef
+      const kind = classifyError(error);
+      recordFailure('replicate', kind, effectiveKeyRef);
+
       if (error instanceof ReplicateClientError) throw error;
       if (error instanceof DOMException && error.name === 'AbortError') {
         throw new ProviderNetworkError(

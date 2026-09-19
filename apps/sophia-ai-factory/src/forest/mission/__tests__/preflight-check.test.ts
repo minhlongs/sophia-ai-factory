@@ -277,6 +277,40 @@ describe('runMissionPreflightCheck', () => {
     expect(result.gates.capability.passed).toBe(false);
   });
 
+  it('passes composite requiredCapabilities when all modalities are satisfied', async () => {
+    vi.mocked(listUserApiKeyProviders).mockResolvedValue(['openrouter', 'elevenlabs', 'fal-ai', 'replicate']);
+
+    const result = await runMissionPreflightCheck({
+      userId: 'usr_default',
+      workspaceId: 'ws_123',
+      requiredCapabilities: ['AI_TEXT', 'AI_AUDIO', 'AI_IMAGE', 'AI_VIDEO'],
+      overrides: { storageReady: true, queueReady: true },
+    });
+
+    expect(result.passed).toBe(true);
+    expect(result.gates.capability.passed).toBe(true);
+    expect(result.gates.capability.code).toBe('CAPABILITY_OK');
+  });
+
+  it('fails fail-closed when composite requiredCapabilities is missing a modality', async () => {
+    // Missing AI_AUDIO
+    vi.mocked(listUserApiKeyProviders).mockResolvedValue(['openrouter', 'fal-ai', 'replicate']);
+
+    const result = await runMissionPreflightCheck({
+      userId: 'usr_default',
+      workspaceId: 'ws_123',
+      requiredCapabilities: ['AI_TEXT', 'AI_AUDIO', 'AI_IMAGE', 'AI_VIDEO'],
+      overrides: { storageReady: true, queueReady: true },
+    });
+
+    expect(result.passed).toBe(false);
+    expect(result.failureCode).toBe('CAPABILITY_NOT_SUPPORTED');
+    expect(result.gates.capability.passed).toBe(false);
+    expect(result.gates.capability.details).toMatchObject({
+      missingCapabilities: ['AI_AUDIO'],
+    });
+  });
+
   // 6. Storage Gate
   it('fails fail-closed if storage is down', async () => {
     const result = await runMissionPreflightCheck({

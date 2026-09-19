@@ -40,6 +40,8 @@ export * from './youtube-content-pipeline';
 // Agent protocol (Phase 3A)
 export * from './agent-mission-executor';
 export * from './agent-approval-handler';
+export * from './mission-multitrack-executor';
+
 // Phase 3: Autonomous Execution
 export * from './agent-rollback-cron';
 // Phase 4: Creative Learning Loop

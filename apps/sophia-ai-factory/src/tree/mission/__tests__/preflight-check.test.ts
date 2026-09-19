@@ -235,6 +235,41 @@ describe('tree/mission/preflight-check', () => {
       expect(res.failureCode).toBe('CAPABILITY_NOT_SUPPORTED');
       expect(res.gates.capability.passed).toBe(false);
     });
+
+    it('passes composite requiredCapabilities when configured providers satisfy all capabilities', async () => {
+      // openrouter (AI_TEXT), elevenlabs (AI_AUDIO), fal-ai (AI_IMAGE), replicate (AI_VIDEO)
+      mockListUserApiKeyProviders.mockResolvedValue(['openrouter', 'elevenlabs', 'fal-ai', 'replicate']);
+
+      const res = await runMissionPreflightCheck({
+        userId: fakeUserId,
+        workspaceId: fakeWorkspaceId,
+        requiredCapabilities: ['AI_TEXT', 'AI_AUDIO', 'AI_IMAGE', 'AI_VIDEO'],
+        overrides: { storageReady: true, queueReady: true },
+      });
+
+      expect(res.passed).toBe(true);
+      expect(res.gates.capability.passed).toBe(true);
+      expect(res.gates.capability.code).toBe('CAPABILITY_OK');
+    });
+
+    it('fails composite requiredCapabilities when any capability is missing', async () => {
+      // Missing AI_VIDEO
+      mockListUserApiKeyProviders.mockResolvedValue(['openrouter', 'elevenlabs', 'fal-ai']);
+
+      const res = await runMissionPreflightCheck({
+        userId: fakeUserId,
+        workspaceId: fakeWorkspaceId,
+        requiredCapabilities: ['AI_TEXT', 'AI_AUDIO', 'AI_IMAGE', 'AI_VIDEO'],
+        overrides: { storageReady: true, queueReady: true },
+      });
+
+      expect(res.passed).toBe(false);
+      expect(res.failureCode).toBe('CAPABILITY_NOT_SUPPORTED');
+      expect(res.gates.capability.passed).toBe(false);
+      expect(res.gates.capability.details).toMatchObject({
+        missingCapabilities: ['AI_VIDEO'],
+      });
+    });
   });
 
   describe('Gate 6 & 7: Storage & Queue Readiness', () => {

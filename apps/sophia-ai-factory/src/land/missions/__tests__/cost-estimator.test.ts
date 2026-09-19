@@ -14,6 +14,7 @@ import {
   CHARS_PER_WORD_RATIO,
   type MissionPreflightEstimate,
 } from '../cost-estimator';
+import type { TemplateId } from '../first-run-template';
 
 describe('cost-estimator', () => {
   describe('Constants', () => {
@@ -170,6 +171,21 @@ describe('cost-estimator', () => {
       expect(estimate.totalMcu).toBe(30);
       expect(estimate.breakdown).toHaveLength(3);
     });
+
+    it('clamps zero and negative scene and word count to safe minimums', () => {
+      const estimate = estimateMissionPreflight({
+        durationSeconds: 30,
+        estimatedScenes: -3,
+        targetWordCount: 0,
+      });
+      const visualItem = estimate.breakdown.find((b) => b.service === 'fal.ai');
+      expect(visualItem?.estimatedUsd).toBe(0.025);
+      expect(visualItem?.unitMetric).toBe('1 scenes (1 AI images)');
+
+      const voiceItem = estimate.breakdown.find((b) => b.service === 'ElevenLabs');
+      expect(voiceItem?.estimatedUsd).toBe(0.0008);
+      expect(voiceItem?.unitMetric).toBe('55 chars (~10 words)');
+    });
   });
 
   describe('estimateTemplateCost', () => {
@@ -192,7 +208,7 @@ describe('cost-estimator', () => {
     });
 
     it('falls back to default template for invalid ID', () => {
-      const estimate = estimateTemplateCost('invalid' as any);
+      const estimate = estimateTemplateCost('invalid' as unknown as TemplateId);
       expect(estimate.totalMcu).toBe(50); // Default is viral_shorts_explainer
     });
   });

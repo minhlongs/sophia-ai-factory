@@ -24,6 +24,7 @@ import { getD1 } from '@/seed/db/client';
 import { resolveUserTier } from '@/seed/db/resolve-user-tier';
 import {
   resolveCapabilities,
+  hasRequiredCapabilities,
   type AICapability,
 } from '@/seed/ai/capability-model';
 import { inngest } from '@/seed/inngest/client';
@@ -70,6 +71,8 @@ export interface MissionPreflightOptions {
   workspaceId: string;
   /** Required capability for this mission. Default: 'AI_IMAGE' */
   capability?: AICapability;
+  /** Composite required capabilities for multi-track missions. */
+  requiredCapabilities?: readonly AICapability[] | AICapability[];
   /** Specific required BYOK provider, if any. */
   requiredProvider?: ByokProvider;
   /** Estimated cost of single mission in cents (spike guard). */
@@ -376,8 +379,50 @@ async function evaluateCredentialGate(
 
 function evaluateCapabilityGate(
   configuredProviders: ByokProvider[],
-  targetCapability: AICapability
+  opts: MissionPreflightOptions
 ): PreflightGateEvaluation {
+  // If composite requiredCapabilities is specified
+  if (opts.requiredCapabilities && opts.requiredCapabilities.length > 0) {
+    const satisfied = hasRequiredCapabilities(configuredProviders, opts.requiredCapabilities);
+    const { availableCapabilities } = resolveCapabilities(configuredProviders);
+
+    if (!satisfied) {
+      const missingCapabilities = opts.requiredCapabilities.filter(
+        (cap) => !availableCapabilities.includes(cap)
+      );
+
+      return {
+        passed: false,
+        gate: {
+          passed: false,
+          code: 'CAPABILITY_NOT_SUPPORTED',
+          message: `Configured providers (${configuredProviders.join(', ') || 'none'}) do not support required capabilities: ${missingCapabilities.join(', ')}`,
+          details: {
+            requiredCapabilities: opts.requiredCapabilities,
+            missingCapabilities,
+            configuredProviders,
+            availableCapabilities,
+          },
+        },
+      };
+    }
+
+    return {
+      passed: true,
+      gate: {
+        passed: true,
+        code: 'CAPABILITY_OK',
+        message: `Configured providers support all required capabilities: ${opts.requiredCapabilities.join(', ')}`,
+        details: {
+          requiredCapabilities: opts.requiredCapabilities,
+          availableCapabilities,
+        },
+      },
+    };
+  }
+
+  // Fallback: single capability check (default: AI_IMAGE)
+  const targetCapability: AICapability = opts.capability ?? 'AI_IMAGE';
   const { availableCapabilities } = resolveCapabilities(configuredProviders);
   const capabilitySupported = availableCapabilities.includes(targetCapability);
 
@@ -461,8 +506,6 @@ function evaluateQueueGate(queueOverride?: boolean): PreflightGateEvaluation {
 export async function runMissionPreflightCheck(
   opts: MissionPreflightOptions
 ): Promise<MissionPreflightResult> {
-  const targetCapability: AICapability = opts.capability ?? 'AI_IMAGE';
-
   // 1. Auth Gate
   const authRes = await evaluateAuthGate(opts.userId);
   if (!authRes.passed) {
@@ -500,7 +543,7 @@ export async function runMissionPreflightCheck(
   const credentialGate = credentialRes.gate;
 
   // 5. Capability Gate
-  const capabilityRes = evaluateCapabilityGate(credentialRes.configuredProviders, targetCapability);
+  const capabilityRes = evaluateCapabilityGate(credentialRes.configuredProviders, opts);
   if (!capabilityRes.passed) {
     return buildPreflightFailure('capability', capabilityRes.gate, opts, {
       auth: authGate,

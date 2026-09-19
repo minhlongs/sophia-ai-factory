@@ -12,7 +12,6 @@ import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import {
   verifyWorkspaceAccess,
-  verifyWorkspaceRole,
   hasWorkspaceRole,
 } from '@/seed/auth/workspace-access';
 import { getD1 } from '@/seed/db/client';
@@ -21,15 +20,24 @@ import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import {
   beginMissionExecution,
+  canStartExecution,
   createApproval,
+  EXECUTION_START_FROM,
   getMissionWithGoals as dbGetMissionWithGoals,
   listPendingApprovals,
   resolveApproval,
   updateMissionStatus as treeUpdateMissionStatus,
 } from '@/tree/mission';
+import type { CreativeMissionStatus } from '@/seed/types/creative-economy';
 import { inngest } from '@/seed/inngest/client';
 import { sendInngestWithRetry } from '@/seed/inngest/send-with-retry';
 import { runMissionPreflightCheck } from '@/tree/mission/preflight-check';
+import type { AICapability } from '@/seed/ai/capability-model';
+import type {
+  MissionTrackStatus,
+  MultiTrackExecutionResult,
+} from '@/tree/mission';
+
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -106,6 +114,7 @@ const startMissionExecutionSchema = z.object({
   agentId: z.string().min(1, 'Agent ID is required'),
   autonomyLevel: z.number().min(0).max(4, 'Autonomy level must be 0-4').default(0),
   estimatedCostCents: z.number().optional(),
+  requiredCapabilities: z.array(z.string()).optional(),
 });
 
 // ── Actions ────────────────────────────────────────────────────────────────
@@ -420,10 +429,15 @@ export async function startMissionExecution(
 
     // ─── 7-Gate Mission Preflight ──────────────────────────────────────────
     // Fail-closed: all 7 gates must pass before flipping mission to 'running'.
+    const requiredCaps: AICapability[] =
+      (parsed.data.requiredCapabilities as AICapability[]) ??
+      ['AI_TEXT', 'AI_AUDIO', 'AI_IMAGE', 'AI_VIDEO'];
+
     const preflight = await runMissionPreflightCheck({
       userId: user.id,
       workspaceId: mission.workspace_id,
       estimatedCostCents: parsed.data.estimatedCostCents,
+      requiredCapabilities: requiredCaps,
       overrides: {
         membershipVerified: true,
       },
@@ -493,6 +507,25 @@ export async function startMissionExecution(
       throw sendErr;
     }
 
+    // Trigger multi-track orchestrator via Tree Service Bridge
+    try {
+      const { dispatchMultiTrackMission } = await import('@/tree/mission');
+      void dispatchMultiTrackMission(parsed.data.missionId, {
+        userId: user.id,
+        workspaceId: mission.workspace_id,
+      }).catch((orchErr) => {
+        logger.error('[CreativeMission] dispatchMultiTrackMission async execution failed', {
+          missionId: parsed.data.missionId,
+          error: orchErr instanceof Error ? orchErr.message : String(orchErr),
+        });
+      });
+    } catch (importErr) {
+      logger.warn('[CreativeMission] multi-track dispatch skipped', {
+        error: importErr instanceof Error ? importErr.message : String(importErr),
+      });
+    }
+
+
     logger.info('[CreativeMission] Started mission execution', {
       missionId: parsed.data.missionId,
       runId,
@@ -503,6 +536,214 @@ export async function startMissionExecution(
     return success({ runId, agentId: parsed.data.agentId });
   } catch (err) {
     return failure(actionFailure('[CreativeMission] startMissionExecution', err));
+  }
+}
+
+const getMissionTrackStatusSchema = z.union([
+  z.string().min(1, 'Mission ID is required'),
+  z.object({
+    missionId: z.string().min(1, 'Mission ID is required'),
+  }),
+]);
+
+/**
+ * Get live track-level status for a creative mission (script, audio, visual, video).
+ */
+export async function getMissionTrackStatus(
+  input: string | { missionId: string }
+): Promise<
+  Result<
+    {
+      missionId: string;
+      status: string;
+      currentPhase: string;
+      trackStatus: MissionTrackStatus;
+    },
+    MissionError
+  >
+> {
+  try {
+    const parsed = getMissionTrackStatusSchema.safeParse(input);
+    if (!parsed.success) {
+      return failure({
+        code: 'VALIDATION_ERROR',
+        message: parsed.error.issues.map((e) => e.message).join(', '),
+      });
+    }
+
+    const missionId = typeof parsed.data === 'string' ? parsed.data : parsed.data.missionId;
+
+    const user = await getCurrentUser();
+    if (!user) {
+      return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+
+    const d1 = await getD1();
+    if (!d1) {
+      return failure({ code: 'DB_ERROR', message: 'Database not available' });
+    }
+
+    const mission = await d1
+      .prepare('SELECT workspace_id, creator_id, status, current_phase, constraints FROM creative_missions WHERE id = ?')
+      .bind(missionId)
+      .first<{
+        workspace_id: string;
+        creator_id: string;
+        status: string;
+        current_phase: string;
+        constraints: string | null;
+      }>();
+
+    if (!mission) {
+      return failure({ code: 'NOT_FOUND', message: 'Mission not found' });
+    }
+
+    const hasAccess = await verifyWorkspaceAccess(mission.workspace_id, user.id, d1);
+    if (!hasAccess) {
+      return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
+    }
+
+    const { getMissionTrackStatus: getTreeTrackStatus } = await import('@/tree/mission');
+    const trackStatus = await getTreeTrackStatus(missionId, mission.constraints);
+
+
+    return success({
+      missionId,
+      status: mission.status,
+      currentPhase: mission.current_phase,
+      trackStatus,
+    });
+  } catch (err) {
+    return failure(actionFailure('[CreativeMission] getMissionTrackStatus', err));
+  }
+}
+
+const executeMultiTrackMissionSchema = z.object({
+  missionId: z.string().min(1, 'Mission ID is required'),
+  topic: z.string().trim().max(500).optional(),
+  estimatedScenes: z.number().int().min(1).max(20).optional(),
+  durationSeconds: z.number().int().min(15).max(180).optional(),
+  aspectRatio: z.enum(['9:16', '16:9', '1:1', '4:3']).optional(),
+  estimatedCostCents: z.number().int().nonnegative().max(500).optional(),
+  requiredCapabilities: z.array(z.string()).optional(),
+});
+
+export type ExecuteMultiTrackMissionInput = z.infer<typeof executeMultiTrackMissionSchema>;
+
+/**
+ * Synchronous server action to execute a multi-track creative mission.
+ * Enforces Zod schema validation, authentication, workspace IDOR protection,
+ * creator/admin role authorization, legal start-state checks, and the fail-closed
+ * 7-gate preflight check before delegating to the multi-track orchestrator.
+ */
+export async function executeMultiTrackMissionAction(
+  data: z.infer<typeof executeMultiTrackMissionSchema>
+): Promise<Result<MultiTrackExecutionResult, MissionError>> {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return failure({ code: 'NOT_AUTHENTICATED', message: 'Authentication required' });
+    }
+
+    const parsed = executeMultiTrackMissionSchema.safeParse(data);
+    if (!parsed.success) {
+      return failure({
+        code: 'VALIDATION_ERROR',
+        message: parsed.error.issues.map((e) => e.message).join(', '),
+      });
+    }
+
+    const d1 = await getD1();
+    if (!d1) {
+      return failure({ code: 'DB_ERROR', message: 'Database not available' });
+    }
+
+    const mission = await d1
+      .prepare('SELECT workspace_id, creator_id, status FROM creative_missions WHERE id = ?')
+      .bind(parsed.data.missionId)
+      .first<{ workspace_id: string; creator_id: string; status: string }>();
+
+    if (!mission) {
+      return failure({ code: 'NOT_FOUND', message: 'Mission not found' });
+    }
+
+    // 1. Verify workspace membership (IDOR prevention)
+    const hasAccess = await verifyWorkspaceAccess(mission.workspace_id, user.id, d1);
+    if (!hasAccess) {
+      return failure({ code: 'FORBIDDEN', message: 'You do not have access to this workspace' });
+    }
+
+    // 2. Verify creator ownership or workspace ADMIN/OWNER role
+    const isCreator = mission.creator_id === user.id;
+    if (!isCreator) {
+      const hasAdmin = await hasWorkspaceRole(mission.workspace_id, user.id, 'ADMIN', d1);
+      if (!hasAdmin) {
+        return failure({
+          code: 'FORBIDDEN',
+          message: 'You do not have permission to execute this mission',
+        });
+      }
+    }
+
+    // 3. Verify mission status allows starting execution
+    if (!canStartExecution(mission.status as CreativeMissionStatus)) {
+      return failure({
+        code: 'EXECUTION_START_INVALID',
+        message: `Mission status '${mission.status}' cannot start execution. Valid states: ${EXECUTION_START_FROM.join(', ')}`,
+      });
+    }
+
+    // 4. 7-Gate Mission Preflight Check (fail-closed)
+    const requiredCaps: AICapability[] =
+      (parsed.data.requiredCapabilities as AICapability[]) ??
+      ['AI_TEXT', 'AI_AUDIO', 'AI_IMAGE', 'AI_VIDEO'];
+
+    const preflight = await runMissionPreflightCheck({
+      userId: user.id,
+      workspaceId: mission.workspace_id,
+      requiredCapabilities: requiredCaps,
+      estimatedCostCents: parsed.data.estimatedCostCents,
+      overrides: {
+        membershipVerified: true,
+      },
+    });
+
+    if (!preflight.passed) {
+      logger.warn('[CreativeMission] executeMultiTrackMissionAction rejected by preflight', {
+        missionId: parsed.data.missionId,
+        failureCode: preflight.failureCode,
+        failureReason: preflight.failureReason,
+      });
+      return failure({
+        code: preflight.failureCode ?? 'PREFLIGHT_FAILED',
+        message: preflight.failureReason ?? 'Mission preflight check failed',
+      });
+    }
+
+    // 5. Delegate to Tree Service Bridge
+    const { dispatchMultiTrackMission } = await import('@/tree/mission');
+
+    const result = await dispatchMultiTrackMission(parsed.data.missionId, {
+      userId: user.id,
+      workspaceId: mission.workspace_id,
+      topic: parsed.data.topic,
+      estimatedScenes: parsed.data.estimatedScenes,
+      durationSeconds: parsed.data.durationSeconds,
+      aspectRatio: parsed.data.aspectRatio,
+      estimatedCostCents: parsed.data.estimatedCostCents,
+    });
+
+
+    if (!result.success) {
+      return failure({
+        code: 'EXECUTION_FAILED',
+        message: result.error || 'Multi-track execution failed',
+      });
+    }
+
+    return success(result);
+  } catch (err) {
+    return failure(actionFailure('[CreativeMission] executeMultiTrackMissionAction', err));
   }
 }
 

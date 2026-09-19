@@ -8,6 +8,12 @@ export {
   updateMissionStatus,
   listMissions,
   getMission,
+  getMissionTrackStatus,
+  executeMultiTrackMissionAction,
 } from './actions';
 
-export type { MissionError, MissionAction } from './actions';
+export type {
+  MissionError,
+  MissionAction,
+  ExecuteMultiTrackMissionInput,
+} from './actions';

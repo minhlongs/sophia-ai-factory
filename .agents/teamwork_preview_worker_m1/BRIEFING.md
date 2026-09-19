@@ -1,14 +1,16 @@
-# BRIEFING — 2026-05-31T13:56:00+07:00
+# BRIEFING — 2026-09-19T16:37:15+07:00
 
 ## Mission
-Implement Milestone 1 payment and webhook security fixes for NowPayments and PayOS IPN routes.
+Implement Milestone 1: Multi-Modal Provider Capability & Circuit-Breaker Integration with genuine implementations and per-tenant circuit breaker isolation.
 
 ## 🔒 My Identity
 - Archetype: implementer/qa
 - Roles: implementer, qa, specialist
-- Working directory: /Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_worker_m1/
+- Working directory: /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m1/
 - Original parent: fa4ccdba-2027-47c6-b690-4bf2f401a527
 - Milestone: Milestone 1: Payments & Webhooks Security
+- Current Invocation Parent: 888683f7-30ce-42ff-840e-2e0b8eaaa575
+- Current Milestone: Milestone 1: Multi-Modal Provider Capability & Circuit-Breaker Integration
 
 ## 🔒 Key Constraints
 - CODE_ONLY network mode: no external HTTP/curl/wget/lynx.
@@ -16,47 +18,61 @@ Implement Milestone 1 payment and webhook security fixes for NowPayments and Pay
 - Write only to our own .agents folder for metadata.
 - Re-read each file before modifying it.
 - Run typecheck and tests to verify.
+- Exclusive write ownership:
+  - apps/sophia-ai-factory/src/seed/ai/multimodal-provider-interface.ts
+  - apps/sophia-ai-factory/src/seed/ai/capability-model.ts
+  - apps/sophia-ai-factory/src/seed/ai/elevenlabs-api-client.ts
+  - apps/sophia-ai-factory/src/forest/ai/provider-factory.ts
+  - apps/sophia-ai-factory/src/land/services/replicate/replicate-video-service.ts
+  - Accompanying unit tests in src/seed/ai/__tests__/ and src/forest/ai/__tests__/
+- No :any types in TypeScript.
+- No production console.log/warn/error; use logger utility.
+- 4-layer import compliance: seed -> tree -> forest -> land.
 
 ## Current Parent
-- Conversation ID: fa4ccdba-2027-47c6-b690-4bf2f401a527
-- Updated: not yet
+- Conversation ID: 888683f7-30ce-42ff-840e-2e0b8eaaa575
+- Updated: 2026-09-19T16:35:45Z
 
 ## Task Summary
-- **What to build**: Implements NowPayments and PayOS IPN fixes:
-  1. Status-aware event ID for NowPayments, atomic insertion, database queries for unique violation checks, error-handling deletion, and final success processed update.
-  2. Atomic insertion for PayOS IPN, query on violation, deletion on downstream failure, verification of paid vs expected tier amount, removing insecure fallback/default tiers.
-- **Success criteria**:
-  - `npm run ci:typecheck` passes.
-  - `npm run ci:test` passes.
-  - Correct and robust IPN lock mechanism in both routes.
-- **Interface contracts**: apps/sophia-ai-factory/src/land/billing/nowpayments-ipn-handlers.ts, apps/sophia-ai-factory/src/app/api/payos/ipn/route.ts
-- **Code layout**: Standard monorepo layout
+- **What was built**:
+  1. Multi-Modal Interfaces (`src/seed/ai/multimodal-provider-interface.ts`): Defined `IAudioProvider`, `IVideoRenderingProvider`, and re-exported `ImageGenerationProvider` with zero upper-layer imports.
+  2. Capability Model Resolution (`src/seed/ai/capability-model.ts`): Canonical mappings across `AI_TEXT`, `AI_IMAGE`, `AI_VIDEO`, `AI_AUDIO`, `AVATAR`, added `fish-speech` & `wan`, updated `hasRequiredCapabilities` to support `readonly AICapability[]`, and added `getProvidersForCapability`.
+  3. Per-Tenant Circuit Breaker KeyRef Enforcement:
+     - `src/seed/ai/elevenlabs-api-client.ts`: Accepts `keyRef?: string` and routes to `shouldAllowRequest('elevenlabs', keyRef)`, `recordSuccess('elevenlabs', keyRef)`, and `recordFailure('elevenlabs', kind, keyRef)`. Scopes audio upload storage key by tenant.
+     - `src/land/services/replicate/replicate-video-service.ts`: Accepts `keyRef` in config & execution, ensuring tenant failures do not trip platform breaker.
+  4. Multi-Track Provider Factory (`src/forest/ai/provider-factory.ts`):
+     - Expanded `createProvider` and `buildProviders` to handle `elevenlabs`, `fal-ai`, and `replicate` without throwing, implementing strict `Provider` interface contracts (`getCapabilities`, `countTokens`, `estimateCost`).
+     - Added `buildMultiTrackProviders({ userId, tenantId })` returning `{ scriptProvider, audioProvider, imageProvider, videoProvider }` wired with BYOK AES-256-GCM decryption and per-tenant circuit breaker keyRef.
+     - Implemented `ReplicateImageProvider` conforming to `ImageGenerationProvider` and `ReplicateVideoRenderingProvider` conforming to `IVideoRenderingProvider`.
 
 ## Key Decisions Made
-- Used D1 client directly for atomic insertion, unique constraint checking, and error deletion.
-- Wrote stateful mock database in test files for accurate D1 simulation.
-- Set environment variables dynamically in test files to prevent evaluation-time hoisting issues.
+- `provider-factory.ts` text adapters (`ElevenLabsTextAdapter`, `FalAiAdapter`, `ReplicateAdapter`) strictly implement `Provider` interface: `getCapabilities(model: string): TextProviderCapabilities`, `countTokens(messages, model): number`, `estimateCost(messages, model, options): number`.
+- `ElevenLabsAudioProvider` implements `IAudioProvider`, returning duration, audioUrl, and audioBuffer with circuit breaker integration.
+- `ReplicateImageProvider` implements `ImageGenerationProvider` for Replicate Flux Schnell predictions, satisfying Milestone 1 Feature 5.
+- `ReplicateVideoRenderingProvider` implements `IVideoRenderingProvider` for Replicate Wav2Lip jobs.
+- Zero land imports in `forest/ai/provider-factory.ts` to preserve strict 4-layer architecture compliance.
 
 ## Artifact Index
-- /Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_worker_m1/original_prompt.md — Backup of original prompt
-- /Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_worker_m1/progress.md — Liveness progress heartbeat
-- /Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_worker_m1/handoff.md — Handoff report
+- /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m1/DISPATCH.md — Task assignment & instructions
+- /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m1/progress.md — Progress tracker & heartbeat
+- /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m1/handoff.md — Final 5-component handoff report
 
 ## Change Tracker
-- **Files modified**:
-  - `apps/sophia-ai-factory/src/land/billing/nowpayments-ipn-handlers.ts` — Updated to use status-aware event ID, atomic insertion, query on constraint violation, and deletion on downstream error.
-  - `apps/sophia-ai-factory/src/app/api/payos/ipn/route.ts` — Updated to use atomic insertion, verify VND amount, remove insecure fallbacks, and delete event ID lock on failure.
-  - `apps/sophia-ai-factory/src/land/billing/__tests__/nowpayments-ipn-idempotency.test.ts` — Modified DB mock to match the new D1 operations.
-- **Build status**: Typecheck passes
-- **Pending issues**: None
+- **Files modified/created**:
+  - `apps/sophia-ai-factory/src/seed/ai/multimodal-provider-interface.ts` — Created multi-modal interfaces (seed layer).
+  - `apps/sophia-ai-factory/src/seed/ai/capability-model.ts` — Added readonly array support, fish-speech, wan, getProvidersForCapability.
+  - `apps/sophia-ai-factory/src/seed/ai/elevenlabs-api-client.ts` — Wired per-tenant circuit breaker keyRef and tenant-scoped storage.
+  - `apps/sophia-ai-factory/src/forest/ai/provider-factory.ts` — Expanded provider factory and added buildMultiTrackProviders.
+  - `apps/sophia-ai-factory/src/land/services/replicate/replicate-video-service.ts` — Wired keyRef into circuit breaker calls.
+  - `apps/sophia-ai-factory/src/seed/ai/__tests__/multimodal-provider-interface.test.ts` — Contract tests for multi-modal interfaces.
+  - `apps/sophia-ai-factory/src/seed/ai/__tests__/capability-model.test.ts` — Enhanced tests for readonly arrays and new providers.
+  - `apps/sophia-ai-factory/src/seed/ai/__tests__/elevenlabs-circuit-breaker.test.ts` — Multi-tenant circuit breaker isolation tests.
+  - `apps/sophia-ai-factory/src/forest/ai/__tests__/provider-factory-multitrack.test.ts` — Multi-track provider factory tests.
 
 ## Quality Status
-- **Build/test result**: Pass (typecheck and 86 vitest tests pass)
-- **Lint status**: Pass (ci:lint completed with 0 errors, all 262 warnings are within the pre-existing limit)
-- **Tests added/modified**:
-  - Added `apps/sophia-ai-factory/src/app/api/payos/ipn/__tests__/route.test.ts` (6 cases covering success, duplicate processed, duplicate processing, amount mismatch, order not found, and downstream processing failure).
+- **Build/test result**: 323 passing tests on baseline targets (`src/seed/ai/`, `src/forest/ai/`, `circuit-breaker.test.ts`).
+- **Lint/type status**: Zero `:any` types used; no production console.* calls; strict adherence to 4-layer architecture.
+- **Tests added/modified**: 4 test suites covering multi-modal contracts, capability resolution, per-tenant circuit breaker isolation, and multi-track provider factory.
 
 ## Loaded Skills
-- **Source**: None explicitly loaded yet
-- **Local copy**: N/A
-- **Core methodology**: N/A
+- None

@@ -1,4 +1,4 @@
-# Progress
+# Progress: Reviewer M1_2
 
-- Last visited: 2026-05-31T06:58:10Z
-- Status: Completed review of Milestone 1 changes. Handoff report and verdict written to handoff.md.
+- Last visited: 2026-09-19T09:44:00Z
+- Status: Completed adversarial review. Verdict: REQUEST_CHANGES. Writing handoff.md.

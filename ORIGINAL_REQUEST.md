@@ -285,3 +285,50 @@ Verify that live endpoints on `https://sophia.agencyos.network` execute cleanly 
 - [ ] `docs/audit/customer-readiness/FINAL-VERDICT.md` records verified live SHA `13224f8e`
 - [ ] Final certification verdict in `FINAL-VERDICT.md` is updated from YELLOW to GREEN
 - [ ] All changes committed cleanly to `main` with zero working tree divergence
+
+## 2026-09-19T09:19:46Z
+
+The user requested: The full multi-agent team.
+Implement Next Evolution Phase 1–5: Build out the automated AI video pipeline and creative mission workflow, coordinating script generation, TTS audio synthesis, and visual frame generation into a multi-track rendering pipeline with bilingual studio UI.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+References:
+- docs/development-roadmap.md
+- apps/sophia-ai-factory/CLAUDE.md
+- apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
+
+## Requirements
+
+### R1. Multi-Track Creative Mission Orchestration
+Extend creative mission capabilities in `src/forest/mission/` to coordinate multi-stage generation: script synthesis, voiceover/TTS audio generation, and visual frame/video generation with fail-closed preflight checks and atomic state transitions (`running` → `completed` / `failed` / `cancelled`).
+
+### R2. AI Provider Capability Integration
+Expand provider resolution in `src/forest/ai/provider-factory.ts` and `src/seed/ai/capability-model.ts` to seamlessly route multi-track requests (OpenRouter/fal.ai/ElevenLabs/Replicate) under BYOK envelope encryption and circuit-breaker protection.
+
+### R3. Bilingual Creative Studio & Blueprint UI
+Update the Creative Studio in `/dashboard/missions/new` with blueprint templates, multi-track generation options, preflight cost estimation, and complete English/Vietnamese localization without mock placeholders.
+
+### R4. Test Coverage & Layer Architecture Compliance
+Ensure all new actions and domain modules strictly adhere to seed → tree → forest → land import hierarchies, passing all TypeScript checks, unit test suites, and multi-tenant isolation gates.
+
+## Acceptance Criteria
+
+### Architecture & Pipeline Integrity
+- [ ] Multi-stage creative mission workflow dispatches and transitions states without deadlocks
+- [ ] 7-gate preflight check protects multi-track generation before provider dispatch
+- [ ] Strictly follows canonical 4-layer import discipline (seed → tree → forest → land)
+
+### Provider & Asset Storage
+- [ ] Multi-modal providers (TTS audio, visual frames) properly mapped in capability model
+- [ ] Generated audio/visual assets vaulted to Cloudflare R2 with tenant-scoped keys
+- [ ] BYOK credentials remain encrypted with AES-256-GCM
+
+### Quality & Performance
+- [ ] `npm run type-check` exits with code 0 (zero TypeScript errors)
+- [ ] Vitest test suites for new modules pass with 100% success rate
+- [ ] Bilingual translation keys validated with zero missing keys in `messages/vi.json` and `messages/en.json`
+- [ ] Sophia Doctor (`npm run doctor`) remains 100% green
+

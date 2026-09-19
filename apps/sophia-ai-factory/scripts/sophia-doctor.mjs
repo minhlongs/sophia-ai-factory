@@ -205,7 +205,9 @@ function checkMigrations() {
 // ---------------------------------------------------------------------------
 function checkTypeScript() {
   try {
-    execSync('npx tsc --noEmit 2>&1', {
+    const tscBin = resolve(ROOT, 'node_modules/typescript/bin/tsc');
+    const cmd = existsSync(tscBin) ? `"${process.execPath}" "${tscBin}" --noEmit 2>&1` : 'npx tsc --noEmit 2>&1';
+    execSync(cmd, {
       cwd: ROOT, timeout: 30000, encoding: 'utf8', stdio: 'pipe',
     });
     ok('TypeScript: 0 errors');
@@ -216,6 +218,8 @@ function checkTypeScript() {
     fail(`TypeScript: ${errorCount || '?'} error(s)`, lines.slice(0, 3).join(' | '));
   }
 }
+
+
 
 // ---------------------------------------------------------------------------
 // 6. Production /api/version
