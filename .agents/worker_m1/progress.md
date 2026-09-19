@@ -1,33 +1,25 @@
-# Progress — worker_m1
+# Progress — Worker 1 (M1: Customer Handover Dossier & Sign-Off Pack Implementer)
 
-Last visited: 2026-09-19T13:54:10Z
+Last visited: 2026-09-19T15:11:30Z
 
-## Status: Complete (100% Verification Pass)
-
-### Milestone 1 Execution Checklist
-- [x] 1. D1 Migration: `apps/sophia-ai-factory/migrations/0274_playbook_campaign_intelligence.sql`
-  - Added unique index `uidx_playbook_patterns_upsert` on `playbook_patterns(workspace_id, feature_key, feature_value, metric)`
-  - Created table `campaign_blueprints` with indexes
-  - Created table `recurring_campaign_runs` with foreign keys and indexes
-- [x] 2. Seed Types: `apps/sophia-ai-factory/src/seed/types/playbook-pattern.ts`
-  - Added `HookStyle`, `VoiceProfile`, `DurationPattern`, `CampaignBlueprint`, `RecurringCampaignSchedule`, `CreativeEffectivenessScore`, `CASUpdateResult`, `PatternScoreUpdates`
-  - Added `'mission'` to `PlaybookPattern.source` union
-  - Zero `:any` types
-- [x] 3. Tree Layer Engine: `apps/sophia-ai-factory/src/tree/learning-loop/`
-  - [x] `types.ts`
-  - [x] `pattern-extractor.ts`
-  - [x] `effectiveness-scorer.ts`
-  - [x] `scoring-cas.ts`
-  - [x] `index.ts`
-  - Layer boundaries strictly respected: only imports from `@/seed`
-- [x] 4. Unit Tests: `apps/sophia-ai-factory/src/tree/learning-loop/__tests__/`
-  - [x] `pattern-extractor.test.ts` (17 tests passing)
-  - [x] `effectiveness-scorer.test.ts` (11 tests passing)
-  - [x] `scoring-cas.test.ts` (14 tests passing)
-  - Total: 42 tests passing (100%)
-- [x] 5. Verification:
-  - [x] `bash scripts/check-layer-boundaries.sh` (exited 0: "All layer boundaries clean")
-  - [x] `npx vitest run src/tree/learning-loop/` (42/42 tests passing)
-  - [x] `npm run type-check` (0 errors)
-  - [x] ESLint on modified files (0 errors, 0 warnings)
-- [x] 6. Handoff report & message to parent
+## Status
+- [x] Step 1: Initialize DISPATCH.md and BRIEFING.md
+- [x] Step 2: Read ORIGINAL_REQUEST.md, PROJECT.md, and all 3 Reconnaissance Reports
+- [x] Step 3: Audit existing handover files (Suite A and Suite B) and canonical references
+- [x] Step 4: Draft and write `docs/customer-handover/HANDOVER_DOSSIER_FINAL.md` (Comprehensive, fully bilingual, 8 sections)
+  - §1 Executive Summary & Platform Identity
+  - §2 Complete Critical Asset Register (31 assets, 8 categories, 0 empty stubs)
+  - §3 Credentials Topology & 1Password Production Vault (53 production CF secrets, 6 domains, rotation cadence)
+  - §4 Dual-Layer Access Ownership Matrix (Platform Root vs Customer Workspace RBAC OWNER/EDITOR/VIEWER)
+  - §5 Customer Operational Governance Charter (5 Sovereignty Principles + Canonical Pricing)
+  - §6 Standard Operating Runbooks Index (10 customer runbooks + 12 technical runbooks with verified relative links)
+  - §7 Disaster Recovery & Business Continuity (D1 daily snapshots to R2, manual commands, ephemeral drill, emergency restore)
+  - §8 Technical Reference & Architecture Links (Canonical contracts, verification commands)
+- [x] Step 5: Draft and write `docs/customer-handover/HANDOVER_SIGN_OFF_PACK.md` (Formal, bilingual, 5 sections)
+  - §1 Executive Statement & Transition Objectives
+  - §2 Comprehensive Deliverable Acceptance Matrix (D01-D08, all accepted)
+  - §3 Legal Representations, Warranties & Independence Certification (10 Operational Gates certified)
+  - §4 90-Day Transition Support, Escalation Protocol & Warranty Terms (3 phases, SEV-1 to SEV-4 SLA)
+  - §5 Binding Dual Execution Sign-Off (Founder, Incoming CEO, Engineering Witness, Independent Auditor seal)
+- [x] Step 6: Review, verify integrity, ensure zero stubs, ensure proper bilingual fidelity
+- [ ] Step 7: Write 5-component `handoff.md` and send completion notification to parent
