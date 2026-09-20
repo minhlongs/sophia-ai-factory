@@ -4,6 +4,7 @@
  */
 
 import { resolveUserApiKey } from '@/tree/byok/resolve-user-api-key';
+import { calculateHookScore } from '@/tree/trend-intelligence/hook-scorer';
 import { logger } from '@/seed/utils/logger-utility';
 import { toError } from '@/seed/utils/to-error';
 import { resilientChatCompletion } from '@/seed/inference/openrouter-client';
@@ -133,7 +134,16 @@ export async function scoreHighlights(
         const pacing = c.pacing_score ?? 0.5;
         const retention = c.retention_score ?? 0.5;
         const cta = c.cta_score ?? 0.5;
-        const calculatedScore = c.score ?? (hook + pacing + retention + cta) / 4;
+        const evaluation = calculateHookScore({
+          hookText: c.title,
+          scores: {
+            hookScore: hook,
+            pacingScore: pacing,
+            retentionScore: retention,
+            ctaScore: cta,
+          },
+        });
+        const calculatedScore = c.score ?? evaluation.viralScore;
         return {
           ...c,
           score: Math.round(calculatedScore * 100) / 100,

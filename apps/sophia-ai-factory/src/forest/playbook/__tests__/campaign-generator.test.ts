@@ -8,6 +8,7 @@ import type { PlaybookPattern } from '@/seed/types/playbook-pattern';
 import {
   generateCampaignBlueprint,
   saveCampaignBlueprint,
+  generateDailyCampaignBlueprints,
   MIN_PATTERN_CONFIDENCE,
   DEFAULT_ESTIMATED_COST_CENTS,
 } from '../campaign-generator';
@@ -367,4 +368,107 @@ describe('Campaign Generator — src/forest/playbook/campaign-generator', () => 
       expect(saved).toBe(false);
     });
   });
+
+  describe('6. Autonomous Daily Campaign Generator (generateDailyCampaignBlueprints)', () => {
+    it('returns empty array when no patterns meet minConfidence threshold', async () => {
+      const mockAll = vi.fn().mockResolvedValue({ results: [] });
+      const mockBind = vi.fn().mockReturnValue({ all: mockAll });
+      const mockPrepare = vi.fn().mockReturnValue({ bind: mockBind });
+      const mockDb = { prepare: mockPrepare } as unknown as D1Database;
+
+      const blueprints = await generateDailyCampaignBlueprints(mockDb, 0.75);
+
+      expect(blueprints).toEqual([]);
+      expect(mockPrepare).toHaveBeenCalledWith(
+        expect.stringContaining('SELECT id, workspace_id, feature_key'),
+      );
+      expect(mockBind).toHaveBeenCalledWith(0.75);
+    });
+
+    it('groups patterns across multiple workspaces and saves blueprints to D1', async () => {
+      const samplePatterns = [
+        {
+          id: 'p1',
+          workspace_id: 'ws_alpha',
+          feature_key: 'hook_style',
+          feature_value: 'bold_claim',
+          metric: 'ctr',
+          avg_metric: 0.14,
+          sample_size: 40,
+          confidence: 0.88,
+          confidence_level: 'high',
+          source: 'mission',
+          detected_at: 1_760_000_000_000,
+          created_at: 1_760_000_000_000,
+        },
+        {
+          id: 'p2',
+          workspace_id: 'ws_beta',
+          feature_key: 'hook_style',
+          feature_value: 'statistic_reveal',
+          metric: 'ctr',
+          avg_metric: 0.16,
+          sample_size: 55,
+          confidence: 0.92,
+          confidence_level: 'high',
+          source: 'mission',
+          detected_at: 1_760_000_000_000,
+          created_at: 1_760_000_000_000,
+        },
+        {
+          id: 'p3',
+          workspace_id: 'ws_beta',
+          feature_key: 'voice_style',
+          feature_value: 'enthusiastic_recommender',
+          metric: 'conv',
+          avg_metric: 0.08,
+          sample_size: 30,
+          confidence: 0.85,
+          confidence_level: 'high',
+          source: 'mission',
+          detected_at: 1_760_000_000_000,
+          created_at: 1_760_000_000_000,
+        },
+      ];
+
+      const savedStatements: Array<{ sql: string; bindings: unknown[] }> = [];
+
+      const mockDb = {
+        prepare: vi.fn((sql: string) => {
+          return {
+            bind: vi.fn((...args: unknown[]) => {
+              savedStatements.push({ sql, bindings: args });
+              return {
+                all: async () => ({ results: samplePatterns }),
+                run: async () => ({
+                  success: true,
+                  meta: { changes: 1, duration: 1 },
+                }),
+              };
+            }),
+          };
+        }),
+      } as unknown as D1Database;
+
+      const blueprints = await generateDailyCampaignBlueprints(mockDb, 0.7);
+
+      expect(blueprints).toHaveLength(2);
+
+      const alphaBp = blueprints.find((b) => b.workspaceId === 'ws_alpha');
+      expect(alphaBp).toBeDefined();
+      expect(alphaBp?.hookStyle).toBe('bold_claim');
+
+      const betaBp = blueprints.find((b) => b.workspaceId === 'ws_beta');
+      expect(betaBp).toBeDefined();
+      expect(betaBp?.hookStyle).toBe('statistic_reveal');
+      expect(betaBp?.voiceStyle).toBe('enthusiastic_recommender');
+
+      // Verify that save statements were executed on mockDb
+      const insertStmts = savedStatements.filter((s) =>
+        s.sql.includes('INSERT INTO campaign_blueprints'),
+      );
+      expect(insertStmts).toHaveLength(2);
+    });
+  });
 });
+

@@ -17,6 +17,7 @@ export default defineConfig({
     include: [
       'src/**/*.test.{ts,tsx}',
       'src/**/*.contract.test.{ts,tsx}',
+      'tests/**/*.test.{ts,tsx}',
       '../../tests/**/*.test.{ts}',
       'scripts/__tests__/**/*.test.{ts,mts}',
     ],

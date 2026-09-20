@@ -1,58 +1,62 @@
-# BRIEFING — 2026-05-31T14:56:00+07:00
+# BRIEFING — 2026-09-20T03:52:45Z
 
 ## Mission
-Review and verify fixes for Quota Metering & Performance: Case 4.1 (Redis Read-Modify-Write) and Case 4.2 (D1 JS Rollup Performance).
+Perform an independent architectural, security, cryptographic, and adversarial review of Milestone M4 (Mekong AI Hybrid Edge Node Synchronization).
 
 ## 🔒 My Identity
-- Archetype: reviewer_critic
+- Archetype: reviewer
 - Roles: reviewer, critic
-- Working directory: /Users/macbook/projects/sophia-ai-factory/.agents/reviewer_m4_1
-- Original parent: aa61d1be-e9e2-442b-a2c6-60c57f94f9ae
-- Milestone: milestone_4
+- Working directory: /Users/macbook/sophia-ai-factory/.agents/reviewer_m4_1
+- Original parent: 296606c0-04b8-47fd-b8b5-4a63a8f83a7c
+- Milestone: M4
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
-- Review-only — do NOT modify implementation code.
-- Verify Redis Hash implementation using `hincrby` and `expire` in pipeline.
-- Verify D1 custom SQLite prepared statement using conditional aggregations instead of JS `.reduce()`.
-- Run vitest tests under `src/forest/usage-metering/` and `src/forest/quota/`.
-- Run typecheck compiler `npm run ci:typecheck`.
+- Review-only — do NOT modify implementation code
+- DO NOT set BypassSandbox=true in run_command tool calls. Keep BypassSandbox as default (false or omitted).
+- Follow Canonical 4-Layer Architecture and zero Buffer dependencies in edge runtime.
+- Actively check for integrity violations (hardcoded test outputs, dummy implementations, facade code, bypasses).
 
 ## Current Parent
-- Conversation ID: aa61d1be-e9e2-442b-a2c6-60c57f94f9ae
-- Updated: yes
+- Conversation ID: 296606c0-04b8-47fd-b8b5-4a63a8f83a7c
+- Updated: 2026-09-20T03:50:47Z
 
 ## Review Scope
-- **Files to review**:
-  - `apps/sophia-ai-factory/src/forest/usage-metering/realtime-tracker.ts`
-  - `apps/sophia-ai-factory/src/forest/quota/quota-checker-db.ts`
-  - `apps/sophia-ai-factory/src/forest/usage-metering/realtime-tracker.test.ts`
-  - `apps/sophia-ai-factory/src/forest/quota/__tests__/quota-checker-db.test.ts`
-- **Interface contracts**: `PROJECT.md` / `README.md`
-- **Review criteria**: correctness, completeness, performance, test passing, compilation checks.
-
-## Key Decisions Made
-- Confirmed that Redis Hash structure is appropriate to retain O(1) cache invalidation.
-- Confirmed SQLite prepared statement correctly matches binding array parameters.
-- Approved implementations for Case 4.1 and Case 4.2.
+- **Files to review**: `apps/sophia-ai-factory/src/tree/mekong/crypto.ts`, `apps/sophia-ai-factory/src/tree/mekong/tunnel-client.ts`, `apps/sophia-ai-factory/src/tree/mekong/health.ts`, `apps/sophia-ai-factory/src/tree/mekong/hybrid-router.ts`, `apps/sophia-ai-factory/src/forest/ai/hybrid-router.ts`, `apps/sophia-ai-factory/src/forest/jobs/edge-node-monitor.ts`
+- **Interface contracts**: `ORIGINAL_REQUEST.md` (lines 588-620), `PROJECT.md`, `AGENTS.md`
+- **Review criteria**: Web Crypto API compliance, AES-256-GCM, zero Node Buffer, 4-layer architecture, fail-closed timeout, timingSafeEqual, mutual Bearer authentication, test coverage, adversarial robustness
 
 ## Review Checklist
 - **Items reviewed**:
-  - `realtime-tracker.ts` (100% reviewed)
-  - `realtime-tracker-kv-ops.ts` (100% reviewed)
-  - `quota-checker-db.ts` (100% reviewed)
-  - `realtime-tracker.test.ts` (100% reviewed)
-  - `quota-checker-db.test.ts` (100% reviewed)
-- **Verdict**: APPROVED
-- **Unverified claims**: None.
+  - `apps/sophia-ai-factory/src/tree/mekong/crypto.ts`
+  - `apps/sophia-ai-factory/src/tree/mekong/tunnel-client.ts`
+  - `apps/sophia-ai-factory/src/tree/mekong/health.ts`
+  - `apps/sophia-ai-factory/src/tree/mekong/hybrid-router.ts`
+  - `apps/sophia-ai-factory/src/tree/mekong/types.ts`
+  - `apps/sophia-ai-factory/src/tree/mekong/index.ts`
+  - `apps/sophia-ai-factory/src/forest/ai/hybrid-router.ts`
+  - `apps/sophia-ai-factory/src/forest/jobs/edge-node-monitor.ts`
+  - Unit tests in `apps/sophia-ai-factory/src/tree/mekong/__tests__/` (crypto, tunnel-client, health, hybrid-router)
+  - Integration tests in `apps/sophia-ai-factory/src/forest/jobs/__tests__/edge-node-monitor.test.ts`
+- **Verdict**: APPROVE
+- **Unverified claims**: None; all commands independently executed and verified.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Redis pipeline concurrency (atomic `hincrby` verified via unit test).
-  - SQLite parameter alignment (10 bindings matched and verified correct).
-- **Vulnerabilities found**: None.
-- **Untested angles**: Live Upstash production endpoints (mocked for safety & deterministic unit tests).
+  - Web Crypto API zero Node Buffer dependency in edge runtime: Verified (manual base64 encoder/decoder, pure Web Crypto `crypto.subtle`).
+  - AES-256-GCM semantic security and tamper detection: Verified (12-byte random IV via `crypto.getRandomValues`, 128-bit authentication tag, `MekongTamperError` thrown on single-bit alteration).
+  - Constant-time string equality: Verified (bitwise XOR accumulation in `timingSafeEqual`, 64-char SHA-256 hex digest comparison).
+  - Fail-closed probe timeout: Verified (< 500ms timeout returns OFFLINE immediately without socket open).
+  - 15-second offline transition: Verified (15,000ms remains ONLINE; 15,001ms transitions to OFFLINE in D1).
+  - Layer boundary enforcement: Verified (0 violations via `scripts/check-layer-boundaries.sh`).
+- **Vulnerabilities found**: No exploitable vulnerabilities or integrity violations detected.
+- **Untested angles**: Live physical Apple Silicon M1 Max hardware over real WAN Cloudflare Tunnel (tested via deterministic simulation and network mocking).
+
+## Key Decisions Made
+- Confirmed full compliance with Milestone M4 requirements.
+- Issued verdict: APPROVE.
 
 ## Artifact Index
-- `/Users/macbook/projects/sophia-ai-factory/.agents/reviewer_m4_1/review.md` — Detailed review report
-- `/Users/macbook/projects/sophia-ai-factory/.agents/reviewer_m4_1/handoff.md` — Five-component handoff report
+- `/Users/macbook/sophia-ai-factory/.agents/reviewer_m4_1/handoff.md` — formal review report
+- `/Users/macbook/sophia-ai-factory/.agents/reviewer_m4_1/progress.md` — progress log
+- `/Users/macbook/sophia-ai-factory/.agents/reviewer_m4_1/DISPATCH.md` — dispatch log

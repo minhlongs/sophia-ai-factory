@@ -1,48 +1,76 @@
-# BRIEFING — 2026-05-31T14:58:00+07:00
+# BRIEFING — 2026-09-20T03:52:00Z
 
 ## Mission
-Perform a complete integrity forensic check on the work product of Milestone 4: Quota Metering & Performance (Case 4.1 & 4.2).
+Perform independent forensic integrity verification of Milestone M4 (Mekong AI Hybrid Edge Node Synchronization).
 
 ## 🔒 My Identity
 - Archetype: forensic_auditor
-- Roles: [critic, specialist, auditor]
-- Working directory: /Users/macbook/projects/sophia-ai-factory/.agents/auditor_m4
-- Original parent: aa61d1be-e9e2-442b-a2c6-60c57f94f9ae
-- Target: Milestone 4: Quota Metering & Performance
+- Roles: critic, specialist, auditor
+- Working directory: /Users/macbook/sophia-ai-factory/.agents/auditor_m4
+- Original parent: 296606c0-04b8-47fd-b8b5-4a63a8f83a7c
+- Target: Milestone M4 (Mekong AI Hybrid Edge Node Synchronization)
 
 ## 🔒 Key Constraints
 - Audit-only — do NOT modify implementation code
 - Trust NOTHING — verify everything independently
+- DO NOT set BypassSandbox=true in run_command tool calls
+- NEVER PROPOSE A cd COMMAND. Use Cwd parameter
+- Zero tolerance for facades, mock bypasses, or hardcoded results. Binary VETO.
 
 ## Current Parent
-- Conversation ID: aa61d1be-e9e2-442b-a2c6-60c57f94f9ae
-- Updated: not yet
+- Conversation ID: 296606c0-04b8-47fd-b8b5-4a63a8f83a7c
+- Updated: 2026-09-20T03:50:48Z
 
 ## Audit Scope
-- **Work product**: apps/sophia-ai-factory/src/forest/usage-metering/realtime-tracker.ts and apps/sophia-ai-factory/src/forest/quota/quota-checker-db.ts
-- **Profile loaded**: General Project (Development/Demo/Benchmark mode depends on ORIGINAL_REQUEST.md)
+- **Work product**: Milestone M4 (Mekong AI Hybrid Edge Node Synchronization)
+  - `apps/sophia-ai-factory/src/tree/mekong/crypto.ts`
+  - `apps/sophia-ai-factory/src/tree/mekong/tunnel-client.ts`
+  - `apps/sophia-ai-factory/src/tree/mekong/health.ts`
+  - `apps/sophia-ai-factory/src/tree/mekong/hybrid-router.ts`
+  - `apps/sophia-ai-factory/src/tree/mekong/types.ts`
+  - `apps/sophia-ai-factory/src/tree/mekong/index.ts`
+  - `apps/sophia-ai-factory/src/forest/ai/hybrid-router.ts`
+  - `apps/sophia-ai-factory/src/forest/jobs/edge-node-monitor.ts`
+  - `apps/sophia-ai-factory/src/app/api/inngest/route.ts`
+- **Profile loaded**: General Project (Forensic Integrity)
 - **Audit type**: forensic integrity check
 
 ## Audit Progress
 - **Phase**: reporting
 - **Checks completed**:
-  - Read ORIGINAL_REQUEST.md to determine integrity mode (development)
-  - Source code analysis for realtime-tracker.ts & kv-ops.ts (CLEAN - no hardcoded/facade implementations)
-  - Source code analysis for quota-checker-db.ts (CLEAN - real SQL prepared aggregate statements used)
-  - Run build and compile commands (Passed successfully)
-  - Run project test suites (Passed successfully: 4894 passed, 34 skipped)
-  - Adversarial review & check validation (Concluded validation is correct and parameters match perfectly)
-  - Audit report & handoff report generation (Completed)
-- **Checks remaining**: none
+  - Read ORIGINAL_REQUEST.md (lines 588-620) & PROJECT.md
+  - Read worker_m4_rep/handoff.md
+  - Check 1: Genuine Crypto Logic (crypto.ts) — VERIFIED CLEAN
+  - Check 2: Genuine Cloudflare Tunnel Client (tunnel-client.ts) — VERIFIED CLEAN
+  - Check 3: Genuine 15s Heartbeat & D1 Tracking (health.ts) — VERIFIED CLEAN
+  - Check 4: Genuine Hybrid Routing & Economic Truth (hybrid-router.ts) — VERIFIED CLEAN
+  - Check 5: Inngest Registration (api/inngest/route.ts) — VERIFIED CLEAN
+  - Check 6a: Layer Boundary check (`bash scripts/check-layer-boundaries.sh`) — VERIFIED CLEAN (0 violations)
+  - Check 6b: TypeScript Compilation (`tsc --noEmit`) — VERIFIED CLEAN (0 errors)
+  - Check 7a: Mekong & Forest AI test suite (12 files, 145 tests) — VERIFIED CLEAN (100% pass)
+  - Check 7b: Growth Engine E2E test suite (4 files, 141 tests) — VERIFIED CLEAN (100% pass)
+- **Checks remaining**: None
 - **Findings so far**: CLEAN
 
+## Attack Surface
+- **Hypotheses tested**:
+  - Web Crypto AES-256-GCM vs dummy string encoding: Verified genuine `crypto.subtle.encrypt/decrypt` with 12-byte random IVs and 128-bit authentication tag verification.
+  - Constant-time XOR equality vs standard `===`: Verified `timingSafeEqual` with bitwise XOR accumulation over length to prevent timing attacks.
+  - Cloudflare Tunnel probe timeout boundaries: Verified immediate fail-closed return of `OFFLINE` when `timeoutMs < 500`.
+  - 15-second heartbeat staleness boundary: Verified strict edge at 15,000ms (remains ONLINE) vs 15,001ms (transitions to OFFLINE in D1).
+  - Economic routing truth: Verified `costKind: 'unmetered'` ($0.00 marginal cost) for local GPU and `costKind: 'metered'` with certified provider fallback for cloud.
+- **Vulnerabilities found**: None.
+- **Untested angles**: Physical live daemon network latency over real CF edge tunnel (simulated deterministically in CI via harness and mocked fetch).
+
+## Loaded Skills
+- None loaded/required.
+
 ## Key Decisions Made
-- Concluded audit with verdict CLEAN.
-- Generated audit.md and handoff.md.
+- Confirmed all checks are passed with zero facades, mock bypasses, or hardcoded cheats.
+- Verdict: CLEAN.
 
 ## Artifact Index
-- /Users/macbook/projects/sophia-ai-factory/.agents/auditor_m4/original_prompt.md — Original prompt backup
-- /Users/macbook/projects/sophia-ai-factory/.agents/auditor_m4/BRIEFING.md — Briefing file
-- /Users/macbook/projects/sophia-ai-factory/.agents/auditor_m4/progress.md — Liveness progress tracker
-- /Users/macbook/projects/sophia-ai-factory/.agents/auditor_m4/audit.md — Forensic audit report
-- /Users/macbook/projects/sophia-ai-factory/.agents/auditor_m4/handoff.md — Handoff report
+- /Users/macbook/sophia-ai-factory/.agents/auditor_m4/DISPATCH.md — Dispatch instructions
+- /Users/macbook/sophia-ai-factory/.agents/auditor_m4/BRIEFING.md — Situational awareness
+- /Users/macbook/sophia-ai-factory/.agents/auditor_m4/progress.md — Liveness & progress tracking
+- /Users/macbook/sophia-ai-factory/.agents/auditor_m4/handoff.md — Formal forensic audit report

@@ -1119,6 +1119,14 @@
         "successDescription": "Video is composited and ready for your approval in the Review Console.",
         "reviewButton": "Review Video",
         "createAnotherButton": "Create Another",
+        "remixBannerTitle": "Remixing Blueprint: {title}",
+        "remixBannerDesc": "Cloning proven template from @{creator} ({remixes} remixes, {cvr}% CVR)",
+        "remixPill": "Marketplace Blueprint",
+        "balanceStatus": "Balance: {current} MCU / Need: {required} MCU",
+        "balanceVerified": "MCU Verified",
+        "insufficientMcu": "Need {missing} more MCU",
+        "topupMcu": "Top Up MCU",
+        "remixLaunchButton": "1-Click Remix & Launch Mission",
         "progressTitle": "Video Generation Progress",
         "progressAriaLabel": "Mission Progress",
         "interruptedTitle": "Execution Interrupted",
@@ -7840,6 +7848,79 @@
         "name": "Daily News & Wisdom (45s)",
         "description": "Concise news synthesis and thought-provoking insights with elegant aesthetic visuals."
       }
+    }
+  },
+  "blueprintMarketplace": {
+    "title": "Creator Video Blueprint Marketplace",
+    "subtitle": "Discover high-converting video blueprints proven on TikTok, YouTube Shorts, and X. Clone directly into Creative Studio in one click.",
+    "searchPlaceholder": "Search blueprints by title, hook, or keyword...",
+    "filtersTitle": "Filters",
+    "all": "All",
+    "nicheLabel": "Niche",
+    "niches": {
+      "all": "All Niches",
+      "general": "General & Lifestyle",
+      "ecommerce": "E-Commerce & Retail",
+      "saas": "Software & Apps",
+      "fitness": "Health & Fitness",
+      "education": "Education & Skills",
+      "entertainment": "Entertainment & Lifestyle",
+      "finance": "Finance & Wealth",
+      "growth_hacking": "Growth & Startups",
+      "tech": "Technology",
+      "technology": "Technology",
+      "beauty": "Beauty & Fashion"
+    },
+    "platformLabel": "Target Platform",
+    "platforms": {
+      "all": "All Platforms",
+      "tiktok": "TikTok",
+      "youtube_shorts": "YouTube Shorts",
+      "x": "X (Twitter)",
+      "instagram_reels": "Instagram Reels"
+    },
+    "conversionLabel": "Verified Conversion Rate",
+    "conversions": {
+      "all": "Any conversion rate",
+      "gt3": "> 3% Conversion",
+      "gt5": "> 5% High Conversion",
+      "gt10": "> 10% Viral Conversion"
+    },
+    "royaltyLabel": "Royalty Rate",
+    "royalties": {
+      "all": "All royalty rates",
+      "free": "Free (0% Royalty)",
+      "low": "Under 5% Royalty",
+      "standard": "5% - 15% Standard"
+    },
+    "sortLabel": "Sort By",
+    "sortOptions": {
+      "highest_conversion": "Highest Conversion",
+      "most_remixed": "Most Remixed",
+      "newest": "Newest Releases"
+    },
+    "resetFilters": "Reset Filters",
+    "activeFiltersCount": "{count} active filters",
+    "card": {
+      "verifiedBadge": "Verified CVR",
+      "remixes": "{count} remixes",
+      "royalty": "{rate}% Royalty",
+      "scenes": "{count} scenes",
+      "duration": "{seconds}s duration",
+      "estimatedCost": "Est. Cost: ~{mcu} MCU (${usd})",
+      "cloneCta": "Clone to Studio",
+      "byCreator": "By @{name}",
+      "hookStyle": "Hook: {style}"
+    },
+    "empty": {
+      "title": "No video blueprints found",
+      "description": "We couldn't find any blueprints matching your criteria. Try adjusting your filters or search terms.",
+      "clearAction": "Clear All Filters"
+    },
+    "pagination": {
+      "showingResults": "Showing {from} - {to} of {total} blueprints",
+      "prev": "Previous",
+      "next": "Next"
     }
   }
 }

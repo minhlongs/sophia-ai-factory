@@ -26,10 +26,17 @@ import {
 import type { MissionTrackStatus } from '@/tree/mission';
 
 
+import type { MarketplaceBlueprintItem } from '@/seed/types/creator-marketplace';
+import { estimateBlueprintStudioCost } from '@/tree/marketplace/preflight-cost-engine';
+import { Award } from 'lucide-react';
+
 export interface FirstRunWizardProps {
   workspaceId: string;
-  userId: string;
+  userId?: string;
   locale?: 'vi' | 'en';
+  initialBlueprint?: MarketplaceBlueprintItem | null;
+  initialMcuBalance?: number;
+  userTier?: string;
 }
 
 export const POLL_INTERVAL_MS = 1500;
@@ -335,7 +342,7 @@ function buildMissionConstraints(tmpl: FirstRunTemplate) {
 function triggerExecutionAction(
   missionId: string,
   topic: string,
-  tmpl: FirstRunTemplate,
+  tmpl: { estimatedScenes: number; durationSeconds: number; aspectRatio: '9:16' | '16:9' | '1:1' },
   costUsd: number,
   isMounted: () => boolean,
   onDone: (err?: string) => void,
@@ -362,15 +369,36 @@ function triggerExecutionAction(
     });
 }
 
-export function FirstRunWizard({ workspaceId, locale = 'vi' }: FirstRunWizardProps) {
+export function FirstRunWizard({
+  workspaceId,
+  locale = 'vi',
+  initialBlueprint,
+  initialMcuBalance = 0,
+  userTier = 'BASIC',
+}: FirstRunWizardProps) {
   const t = useTranslations('dashboard.missions.wizard');
   const templates = getFirstRunTemplates();
   const [selectedTemplate, setSelectedTemplate] = useState<FirstRunTemplate>(templates[0]);
-  const [topic, setTopic] = useState<string>(selectedTemplate.defaultTopic[locale]);
+  const [topic, setTopic] = useState<string>(
+    initialBlueprint?.title || selectedTemplate.defaultTopic[locale],
+  );
   const [status, setStatus] = useState<'idle' | 'running' | 'completed' | 'failed'>('idle');
   const [currentStage, setCurrentStage] = useState<MissionStageId>('SCRIPT_GENERATION');
   const [missionId, setMissionId] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+
+  const blueprintCost = initialBlueprint
+    ? estimateBlueprintStudioCost(
+        initialBlueprint.estimatedScenes,
+        initialBlueprint.estimatedDurationSeconds,
+        3,
+      )
+    : null;
+
+  const isAllowed =
+    !blueprintCost || userTier === 'MASTER' || initialMcuBalance >= blueprintCost.totalMCU;
+  const missingMcu =
+    blueprintCost && !isAllowed ? blueprintCost.totalMCU - initialMcuBalance : 0;
 
   const pollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef<boolean>(true);
@@ -452,6 +480,12 @@ export function FirstRunWizard({ workspaceId, locale = 'vi' }: FirstRunWizardPro
   };
 
   const handleLaunch = async () => {
+    if (!isAllowed) {
+      setStatus('failed');
+      setErrorMessage(t('insufficientMcu', { missing: missingMcu }));
+      return;
+    }
+
     clearPolling();
     setStatus('running');
     setCurrentStage('SCRIPT_GENERATION');
@@ -461,20 +495,35 @@ export function FirstRunWizard({ workspaceId, locale = 'vi' }: FirstRunWizardPro
     try {
       const now = Math.floor(Date.now() / 1000);
       const missionTitle = (topic || selectedTemplate.name[locale]).slice(0, 200);
+      const budgetCents = blueprintCost
+        ? blueprintCost.totalCostCents
+        : Math.round(costEstimate.totalUsd * 100);
+
+      const constraints = initialBlueprint
+        ? {
+            ...buildMissionConstraints(selectedTemplate),
+            blueprintId: initialBlueprint.id,
+            hookStyle: initialBlueprint.hookStyle,
+            targetPlatform: initialBlueprint.targetPlatform,
+            aspectRatio: initialBlueprint.aspectRatios[0] || '9:16',
+            estimatedScenes: initialBlueprint.estimatedScenes,
+            durationSeconds: initialBlueprint.estimatedDurationSeconds,
+          }
+        : buildMissionConstraints(selectedTemplate);
 
       const createRes = await createMission({
         workspaceId,
         title: missionTitle,
-        objective: `Generate autonomous ${selectedTemplate.durationSeconds}s video for ${selectedTemplate.targetPlatform}. Topic: ${topic}`,
+        objective: `Generate autonomous ${initialBlueprint?.estimatedDurationSeconds ?? selectedTemplate.durationSeconds}s video for ${initialBlueprint?.targetPlatform ?? selectedTemplate.targetPlatform}. Topic: ${topic}`,
         audience: 'General interest mobile viewers',
         geography: locale === 'vi' ? 'Vietnam' : 'Global',
         timeframeStart: now,
         timeframeEnd: now + 3600,
-        budgetCents: Math.round(costEstimate.totalUsd * 100),
+        budgetCents,
         autonomyLevel: 1,
-        channels: [selectedTemplate.targetPlatform],
+        channels: [initialBlueprint?.targetPlatform ?? selectedTemplate.targetPlatform],
         monetizationGoals: [],
-        constraints: buildMissionConstraints(selectedTemplate),
+        constraints,
         successMetrics: { views: 1000, engagement_rate: 0.05 },
       });
 
@@ -491,25 +540,26 @@ export function FirstRunWizard({ workspaceId, locale = 'vi' }: FirstRunWizardPro
         void pollTrackStatus(newId);
       }, 500);
 
+      const execTmpl = initialBlueprint
+        ? {
+            ...selectedTemplate,
+            estimatedScenes: initialBlueprint.estimatedScenes,
+            durationSeconds: initialBlueprint.estimatedDurationSeconds,
+            aspectRatio: (initialBlueprint.aspectRatios[0] as '9:16' | '16:9' | '1:1') || selectedTemplate.aspectRatio,
+          }
+        : selectedTemplate;
+
       triggerExecutionAction(
         newId,
-        missionTitle,
-        selectedTemplate,
-        costEstimate.totalUsd,
+        topic,
+        execTmpl,
+        blueprintCost ? blueprintCost.estimatedUsd : costEstimate.totalUsd,
         () => isMountedRef.current,
-        (err) => {
-          if (!isMountedRef.current) return;
-          if (err) {
-            clearPolling();
+        (execError) => {
+          if (execError) {
             setStatus('failed');
-            setErrorMessage(err || t('launchError'));
-          } else {
-            setStatus((prev) => {
-              if (prev === 'failed') return prev;
-              clearPolling();
-              setCurrentStage('READY_FOR_REVIEW');
-              return 'completed';
-            });
+            setErrorMessage(execError);
+            clearPolling();
           }
         },
       );
@@ -521,6 +571,72 @@ export function FirstRunWizard({ workspaceId, locale = 'vi' }: FirstRunWizardPro
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      {/* Blueprint Remix Banner & Pre-Flight Cost Card */}
+      {initialBlueprint && blueprintCost && (
+        <div className="rounded-xl border border-indigo-500/30 bg-indigo-500/10 p-5 space-y-4 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-indigo-500/20 border border-indigo-500/30 px-2.5 py-0.5 text-xs font-semibold text-indigo-400">
+                {t('remixPill')}
+              </span>
+              <span className="text-xs text-muted-foreground capitalize">
+                {initialBlueprint.targetPlatform.replace('_', ' ')}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-400">
+              <Award className="h-4 w-4" />
+              <span>{(initialBlueprint.conversionRate * 100).toFixed(1)}% CVR</span>
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-base font-bold text-foreground">
+              {t('remixBannerTitle', { title: initialBlueprint.title })}
+            </h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {t('remixBannerDesc', {
+                creator: initialBlueprint.creatorId || 'anonymous',
+                remixes: initialBlueprint.remixCount,
+                cvr: (initialBlueprint.conversionRate * 100).toFixed(1),
+              })}
+            </p>
+          </div>
+
+          {/* Live Pre-Flight Cost Banner */}
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-black/40 p-3.5 border border-white/10 text-xs">
+            <div className="flex items-center gap-3">
+              <Coins className="h-5 w-5 text-amber-400" />
+              <div>
+                <p className="font-semibold text-foreground">
+                  {t('costEstimate', { usd: blueprintCost.estimatedUsd, mcu: blueprintCost.totalMCU })}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {t('balanceStatus', { current: initialMcuBalance, required: blueprintCost.totalMCU })}
+                </p>
+              </div>
+            </div>
+
+            {isAllowed ? (
+              <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 font-semibold text-emerald-400">
+                ✓ {t('balanceVerified')}
+              </span>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-3 py-1 font-semibold text-amber-400">
+                  ⚠️ {t('insufficientMcu', { missing: missingMcu })}
+                </span>
+                <Link
+                  href="/dashboard/billing/topup"
+                  className="rounded-lg bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground hover:opacity-90 transition"
+                >
+                  {t('topupMcu')}
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 5 Questions CEO Guide */}
       <CeoQuestionsGuide t={t} costEstimate={costEstimate} />
 

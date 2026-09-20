@@ -37,6 +37,7 @@ export const PROVIDER_CAPABILITIES: Record<string, readonly AICapability[]> = {
   muapi: ['AI_IMAGE', 'AI_VIDEO'],
   apollo: ['AI_TEXT'],
   hunter: ['AI_TEXT'],
+  hermes: ['AI_TEXT'],
 };
 
 export interface CapabilityResolution {

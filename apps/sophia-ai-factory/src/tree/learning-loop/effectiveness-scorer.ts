@@ -24,22 +24,22 @@ export const MIN_LEARNING_SAMPLE = 5;
  * @param consistency  Metric stability / consistency ratio [0, 1] (default 1.0)
  */
 export function computeLogarithmicConfidence(sampleSize: number, consistency = 1.0): number {
-  if (sampleSize < MIN_LEARNING_SAMPLE) {
+  if (!Number.isFinite(sampleSize) || sampleSize < MIN_LEARNING_SAMPLE) {
     return 0;
   }
 
   // Log2 sample score saturates at N=50
+  const safeConsistency = Number.isFinite(consistency) ? Math.max(0, Math.min(1, consistency)) : 1.0;
   const sampleScore = Math.min(1, Math.log2(sampleSize + 1) / Math.log2(51));
-  const consistencyScore = Math.max(0, Math.min(1, consistency));
-
-  const composite = sampleScore * 0.6 + consistencyScore * 0.4;
-  return Math.round(composite * 1000) / 1000;
+  const composite = sampleScore * 0.6 + safeConsistency * 0.4;
+  return Number.isFinite(composite) ? Math.round(composite * 1000) / 1000 : 0;
 }
 
 /**
  * Determine confidence level category from raw confidence score.
  */
 export function determineConfidenceLevel(confidence: number): 'high' | 'medium' | 'low' {
+  if (!Number.isFinite(confidence)) return 'low';
   if (confidence >= 0.7) return 'high';
   if (confidence >= 0.5) return 'medium';
   return 'low';

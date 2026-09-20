@@ -54,6 +54,13 @@ export type {
   CreativeReasoningResponse,
   PromptOptimizeRequest,
   PromptOptimizeResponse,
+  HookStyle,
+  HookEvaluationInput,
+  HookScoreResult,
+  TrendingPlatform,
+  TrendingSignal,
+  VideoEngagementFeedback,
+  PatternUpdateResult,
 } from './creative-intelligence';
 
 export {
@@ -61,6 +68,13 @@ export {
   CreativeReasoningResponseSchema,
   PromptOptimizeRequestSchema,
   PromptOptimizeResponseSchema,
+  HookStyleSchema,
+  HookEvaluationInputSchema,
+  HookScoreResultSchema,
+  TrendingPlatformSchema,
+  TrendingSignalSchema,
+  VideoEngagementFeedbackSchema,
+  PatternUpdateResultSchema,
   validateReasoningResponse,
   validateOptimizeResponse,
 } from './creative-intelligence';

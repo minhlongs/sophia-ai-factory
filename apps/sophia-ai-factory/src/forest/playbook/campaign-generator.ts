@@ -239,9 +239,12 @@ export async function generateCampaignBlueprint(
 /**
  * Persist a synthesized blueprint into the campaign_blueprints D1 table.
  */
-export async function saveCampaignBlueprint(blueprint: CampaignBlueprint): Promise<boolean> {
+export async function saveCampaignBlueprint(
+  blueprint: CampaignBlueprint,
+  dbOverride?: D1Database,
+): Promise<boolean> {
   try {
-    const d1 = await getD1();
+    const d1 = dbOverride ?? (await getD1());
     if (!d1) {
       const db = createServerClient();
       const { error } = await db.from('campaign_blueprints').insert({
@@ -317,3 +320,112 @@ export async function saveCampaignBlueprint(blueprint: CampaignBlueprint): Promi
     return false;
   }
 }
+
+/**
+ * Autonomous Daily Campaign Generator — Phase 5: Auto-Creative Playbook
+ *
+ * Scans all active workspaces in D1 for high-confidence winning patterns
+ * (confidence >= minConfidence, default 0.70). Groups patterns by workspace,
+ * synthesizes CampaignBlueprint templates with winning variables (hook, voice,
+ * duration, platform), and persists them to the campaign_blueprints table.
+ *
+ * Layer: forest (depends on seed, tree, forest only; zero land imports)
+ */
+export async function generateDailyCampaignBlueprints(
+  db: D1Database,
+  minConfidence: number = MIN_PATTERN_CONFIDENCE,
+): Promise<CampaignBlueprint[]> {
+  const stmt = db.prepare(
+    `SELECT id, workspace_id, feature_key, feature_value, metric, avg_metric,
+            sample_size, confidence, confidence_level, source, detected_at, created_at
+     FROM playbook_patterns
+     WHERE confidence >= ?
+     ORDER BY workspace_id ASC, confidence DESC, detected_at DESC`,
+  );
+
+  const queryRes = await stmt.bind(minConfidence).all<{
+    id: string;
+    workspace_id: string;
+    feature_key: string;
+    feature_value: string;
+    metric: string;
+    avg_metric: number;
+    sample_size: number;
+    confidence: number;
+    confidence_level: 'high' | 'medium' | 'low';
+    source: 'mission' | 'experiment' | 'memory' | 'roi';
+    detected_at: number;
+    created_at: number;
+  }>();
+
+  const rawPatterns = queryRes.results ?? [];
+  const blueprints: CampaignBlueprint[] = [];
+
+  if (rawPatterns.length === 0) {
+    logger.info('[CampaignGenerator] No patterns meet confidence threshold for daily generation', {
+      minConfidence,
+    });
+    return [];
+  }
+
+  // Group patterns by workspace_id
+  const patternsByWorkspace = new Map<string, PlaybookPattern[]>();
+  for (const row of rawPatterns) {
+    const p: PlaybookPattern = {
+      id: row.id,
+      workspaceId: row.workspace_id,
+      featureKey: row.feature_key,
+      featureValue: row.feature_value,
+      metric: row.metric,
+      avgMetric: row.avg_metric,
+      sampleSize: row.sample_size,
+      confidence: row.confidence,
+      confidenceLevel: row.confidence_level,
+      source: row.source,
+      detectedAt: row.detected_at,
+    };
+    const list = patternsByWorkspace.get(row.workspace_id) || [];
+    list.push(p);
+    patternsByWorkspace.set(row.workspace_id, list);
+  }
+
+  // Synthesize and persist a blueprint for each workspace with winning patterns
+  for (const [workspaceId, wsPatterns] of patternsByWorkspace.entries()) {
+    try {
+      const topHook = wsPatterns.find(
+        (p) =>
+          (p.featureKey === 'hook_style' || p.featureKey === 'hook_type') &&
+          p.confidence >= minConfidence,
+      );
+      const hookDesc = topHook ? `Top ${topHook.featureValue}` : 'Daily Viral Playbook';
+      const topic = `Autonomous Daily Growth — ${hookDesc}`;
+
+      const blueprint = await generateCampaignBlueprint(workspaceId, topic, wsPatterns);
+      const saved = await saveCampaignBlueprint(blueprint, db);
+
+      if (saved) {
+        blueprints.push(blueprint);
+        logger.info('[CampaignGenerator] Successfully synthesized daily blueprint', {
+          workspaceId,
+          blueprintId: blueprint.id,
+          hookStyle: blueprint.hookStyle,
+          voiceStyle: blueprint.voiceStyle,
+          platform: blueprint.targetPlatform,
+        });
+      } else {
+        logger.warn('[CampaignGenerator] Failed to persist daily blueprint', {
+          workspaceId,
+          blueprintId: blueprint.id,
+        });
+      }
+    } catch (err) {
+      logger.error('[CampaignGenerator] Error generating daily blueprint for workspace', {
+        workspaceId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  return blueprints;
+}
+

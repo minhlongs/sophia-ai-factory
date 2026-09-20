@@ -1,120 +1,112 @@
-# Handoff Report — Explorer 2 (Architectural Execution Flow Auditor)
+# Handoff Report: Milestone M1 — Autonomous Daily Campaign Generator & Swarm Coordination
 
-This handoff details the findings of the architectural execution flow audit. The comprehensive analysis can be found in `flow_analysis.md`.
+**Author**: Explorer M1-2 (`explorer_m1_2`)  
+**Working Directory**: `/Users/macbook/sophia-ai-factory/.agents/explorer_m1_2/`  
+**Parent Agent Conversation ID**: `296606c0-04b8-47fd-b8b5-4a63a8f83a7c`  
+**Date**: 2026-09-20  
+**Status**: COMPLETE (Hard Handoff)
 
 ---
 
 ## 1. Observation
 
-Directly observed files, logic, and configurations include:
-1. **Inngest Serve Disconnect**:
-   - `src/app/api/inngest/route.ts` registers a subset of background functions:
-     ```typescript
-     export const { GET, POST, PUT } = serve({
-       client: inngest,
-       functions: [
-         helloWorld,
-         generateCampaign,
-         autoDiscoverAffiliates,
-         publishExecute,
-         publishTokenRefreshCron,
-         conversionToLedger,
-         pendingPromoterCron,
-         payoutBatcher,
-         reconciliationCron,
-         offerSyncCron,
-         storageTrackerDaily,
-         accountDeleteFinalizeCron,
-       ],
-     });
-     ```
-   - However, `src/forest/inngest/functions/index.ts` re-exports several additional routines that are **never registered** in the serve endpoint:
-     ```typescript
-     export { videoGenerate } from './video-generate';
-     export { batchVideoFanout } from './batch-video-fanout';
-     export { repurposeAnalyze } from './repurpose-analyze';
-     export { repurposeClipGenerate } from './repurpose-clip-generate';
-     export { analyticsSync } from './analytics-sync';
-     export { tokenRefreshCron } from './token-refresh-cron';
-     export { thumbnailAbSelector } from './thumbnail-ab-selector';
-     export { urlRevenueVideoHandler } from './url-revenue-video-handler';
-     ```
-   - The events corresponding to these functions (e.g. `video/generate.requested`) will fail to run when emitted.
+1. **`ORIGINAL_REQUEST.md` (lines 570-575 & 601-605)**:
+   > "R1. Hermes Intelligence V2 — Autonomous AI Marketing Swarm & Viral Loop
+   > - Automated trend and hashtag scouting across TikTok, YouTube Shorts, and X with viral hook scoring.
+   > - Autonomous daily campaign generator dispatching multi-track video synthesis based on top-performing creative patterns.
+   > - Continuous viral feedback loop that analyzes view counts, shares, and watch time to autonomously refine future script prompts and visual styles."
+   > Acceptance criteria: "Hermes V2 agent swarm autonomously evaluates viral hooks and schedules batch missions", "End-to-end simulation verifies autonomous dispatch without human intervention".
 
-2. **D1 Custom SQL Rate Limiting**:
-   - `src/seed/db/d1-client-rpc.ts` implements a mock RPC function `increment_rate_limit` that performs SQLite Upserts directly because SQLite lacks native stored procedures.
-   - `src/seed/security/sql-rate-limiter.ts` delegates IP and authentication rate limits to this SQLite table `rate_limits`.
+2. **`PROJECT.md` (lines 77-78)**:
+   > Interface contract explicitly mandates:
+   > `- Campaign Generator:`
+   > `  generateDailyCampaignBlueprints(db: D1Database, minConfidence?: number): Promise<CampaignBlueprint[]>`
 
-3. **Lazy-Proxied Redis Client**:
-   - `src/lib/redis.ts` utilizes a Proxy wrapping `@upstash/redis` to prevent edge execution errors during build time:
-     ```typescript
-     export const redis: Redis = new Proxy({} as Redis, {
-       get(_target, prop, receiver) {
-         if (!_redis) {
-           _redis = createRedis()
-         }
-         return Reflect.get(_redis, prop, receiver)
-       },
-     })
-     ```
-   - Used for verifying nonces to prevent replay attacks and storing revoked license keys in a Redis set `raas:revoked_keys`.
+3. **`apps/sophia-ai-factory/src/forest/playbook/campaign-generator.ts` (lines 179-237)**:
+   > Function `generateCampaignBlueprint(workspaceId, topic, preferredChannelOrPatterns?, targetPlatformOverride?)` exists for a single workspace, adopting winning patterns when `confidence >= 0.70` (lines 142-169) and falling back to safe defaults (curiosity_gap, 60s, dynamic_hook, 9:16).
+   > However, the multi-workspace batch contract `generateDailyCampaignBlueprints(db: D1Database, minConfidence?: number): Promise<CampaignBlueprint[]>` required by `PROJECT.md` is **missing** from `campaign-generator.ts`.
 
-4. **Better Auth D1 Adapter & Signup Workflow**:
-   - `src/seed/auth/better-auth-server.ts` defines Magic Link login and runs a `user.create.after` hook creating default organizations, assigning starting balances, default subscriptions (`BASIC` tier), and user profiles.
+4. **`apps/sophia-ai-factory/src/tree/agent-protocol/graph-agents.ts` (lines 25-39, 233-247)**:
+   > Registers 13 graph agents: `scout`, `researcher`, `strategist`, `creativeDirector`, `writer`, `storyboard`, `production`, `qa`, `provenance`, `editor`, `distributionPlan`, `performance`, `learning`.
+   > Tool `publish_content` is gated with `requiresApproval: true` on 10 agents, failing closed unless context provides approved action IDs (lines 10-15).
 
-5. **Tenant-Isolated HeyGen Webhooks**:
-   - `src/lib/webhooks/heygen-webhook-secret-resolver.ts` parses the `video_id` inside incoming webhooks, performs a lookup on the `videos` table to discover the user_id (tenant), and resolves their custom `heygen_webhook_secret` from credentials, maintaining strict security boundaries.
+5. **`apps/sophia-ai-factory/src/forest/mission/multi-track-orchestrator.ts` (lines 478-982)**:
+   > Coordinates 4 generation tracks: Track 1 (AI_TEXT script) -> parallel Track 2 (AI_AUDIO voiceover) & Track 3 (AI_IMAGE visual frames) via `Promise.allSettled` with cooperative `AbortController` -> Track 4 (AI_VIDEO compositing).
+   > Checkpoints state at each transition via `saveCheckpoint` and transitions atomically via OCC CAS: `running` -> `review` (lines 897-904).
+   > Vaults all generated media to Cloudflare R2 (`tenants/${tenantId}/missions/${missionId}/assets/${trackType}_${assetId}.${ext}`) and registers records in `content_assets` (lines 108-228).
+   > Automatically registers direct executor on module load via `registerMultiTrackExecutor(executeMultiTrackMission)` (line 985).
 
-6. **Circuit-Breaker Protected MoviePy Render Calls**:
-   - `src/lib/video/composer-ffmpeg.ts` triggers `/compose` and `/compose-rich` endpoints on the FastAPI `moviepy-render` service (`services/moviepy-render/server.py`) wrapped in `withBreaker()`.
+6. **`apps/sophia-ai-factory/src/tree/mission/preflight-check.ts` (lines 7-15, 251-267, 564-655)**:
+   > Implements 7 fail-closed gates: `auth`, `ownership`, `entitlement`, `credential`, `capability`, `storage`, `queue`.
+   > Enforces single-mission cost cap of $5.00 (`MAX_SINGLE_MISSION_COST_CENTS = 500`), failing with `BILLING_FAILURE` if exceeded.
+   > Verifies AES-256-GCM BYOK API keys and composite capabilities (`['AI_TEXT', 'AI_AUDIO', 'AI_IMAGE', 'AI_VIDEO']`).
 
-7. **Zod-Validated Percentage KV Feature Flags**:
-   - `src/lib/feature-flags/index.ts` uses FNV-1a 32-bit hashing to map user IDs to buckets (0-99) for rollout percentage evaluation. The flag states are backed by `EXPERIMENT_KV` bindings with a 60-second in-memory memo cache.
-
-8. **Turbopack Build Gate & Client Asset Stripping**:
-   - `scripts/deploy-with-sha.sh` forces Turbopack compilation (`npm run build`) because webpack's NFTs collection causes M1 16GB out-of-memory OOM crashes during build trace tracking. It runs `scripts/strip-ssr-bloat.sh` to remove client-side packages from server chunks.
+7. **`apps/sophia-ai-factory/src/forest/playbook/batch-scheduler.ts` (lines 152-250, 360-388)**:
+   > Processes due schedules in `scheduled_campaigns` and `recurring_campaign_runs`, calls `getUserTier`, `checkMissionQuota`, `runMissionPreflightCheck`, `deductCredits`, and `dispatchMultiTrackMission`.
+   > Advances schedules via atomic CAS (`WHERE id = ? AND next_run_date = ?`).
 
 ---
 
 ## 2. Logic Chain
 
-1. **Inngest Serve Disconnect**:
-   - *Premise*: If a function is not registered in the `serve()` call of an Inngest API endpoint, Inngest's event loop has no visibility of that handler.
-   - *Observation*: `videoGenerate` (for `video/generate.requested`) is exported by the functions index but omitted from `serve`'s list in `/api/inngest/route.ts`.
-   - *Conclusion*: Triggering video generation via `inngest.send({ name: 'video/generate.requested', ... })` (e.g. inside `video-generate-action.ts` or `batch-video-fanout.ts`) will fail to execute the underlying video compilation code.
-
-2. **D1 Custom PostgREST/RPC Compatibility**:
-   - *Premise*: SQLite on Cloudflare D1 doesn't support PL/pgSQL stored procedures.
-   - *Observation*: The code mocks PostgREST RPC via `d1-client-rpc.ts`, mapping client-side `.rpc('increment_rate_limit', ...)` calls into raw SQLite UPSERT queries.
-   - *Conclusion*: Core features originally designed for PostgreSQL (like credit debiting or rate limiting) are fully supported on Cloudflare D1 without altering client-side code structure.
-
-3. **Tenant-Isolated Webhook Verification**:
-   - *Premise*: A static webhook endpoint is a vector for spoofing.
-   - *Observation*: `resolveHeyGenWebhookSecret()` looks up the video's owner in the database first, then retrieves their personal webhook credential to verify the payload signature.
-   - *Conclusion*: Cross-tenant forgery of video completions is prevented since signature verification requires the specific user's HeyGen credentials.
+1. From **Observation 1 & 2**, Milestone M1 requires autonomous daily campaign generation that translates statistical winning patterns into multi-track video synthesis jobs. The canonical interface contract defined in `PROJECT.md` is `generateDailyCampaignBlueprints(db: D1Database, minConfidence?: number): Promise<CampaignBlueprint[]>`.
+2. From **Observation 3**, while single-workspace blueprint synthesis (`generateCampaignBlueprint`) is implemented and tested, the batch contract `generateDailyCampaignBlueprints` is absent. It must query `playbook_patterns` for patterns exceeding `minConfidence` (default 0.70), group by workspace, synthesize blueprints with winning variables (hook style, voice style, duration, aspect ratio), and persist them to `campaign_blueprints` (defined in Migration `0274`).
+3. From **Observation 4**, the 13 graph agents define the collaborative swarm topology. `sophia-scout` discovers trends, `sophia-strategist` calculates viral hook scores, `sophia-creative-director` specifies aesthetics, `sophia-writer` generates scripts using Hermes V2 creative reasoning, and `sophia-production` triggers the preflight validation. For fully autonomous daily campaigns (`autonomyLevel = 3`), the swarm bypasses manual approval gates while retaining strict audit logging.
+4. From **Observation 6 & 7**, financial and execution safety requires that before any credits are deducted or missions dispatched, the 7-gate fail-closed preflight checklist (`runMissionPreflightCheck`) must execute. If any gate fails (e.g. invalid BYOK key, insufficient MCU balance, cost spike > $5.00, or missing video capability), execution halts immediately, preserving user credits.
+5. From **Observation 5 & 7**, on preflight success, credits are deducted via atomic CAS (`deductCredits`), the schedule is advanced via atomic CAS, and `dispatchMultiTrackMission` invokes `executeMultiTrackMission`. This coordinates Track 1 script generation, parallel Track 2/3 audio and visual generation with cooperative `AbortController` cancellation, Track 4 video compositing, Cloudflare R2 media vaulting, and CAS state transition into `review`.
+6. Therefore, the implementation plan in `plan.md` completely connects pattern discovery to multi-track synthesis with zero human intervention required.
 
 ---
 
 ## 3. Caveats
 
-1. **Coqui TTS and RunPod Services**: The integration and exact API calls to the external `coqui-tts` FastAPI service (`services/coqui-tts/server.py`) and `runpod-hunyuan` handler were not traced deeply, as the core focus was the main Pages application pipeline.
-2. **PostHog A/B Testing**: The exact integration details of PostHog experiment variants in `src/lib/signals/feature-flags.ts` were not examined.
-3. **Inngest Execution Status**: We assume the Inngest runner is hosted in a standard cloud setup; if local dev tools are used, the missing function registration will block local emulation as well.
+1. **No External Live API Calls During Tests**: All test suites must use the local in-memory SQLite shim (`node:sqlite`) and mock providers per `CLAUDE.md` doctrine; live edge verification occurs strictly via CF-direct deployment.
+2. **Hermes Capability Boundary**: Per `docs/HERMES_INTELLIGENCE_V2.md`, Hermes does NOT support `image.generate`. The orchestrator must route Track 1 (script) to Hermes / text providers, Track 2 to ElevenLabs, Track 3 (visuals) to fal.ai / Replicate, and Track 4 (video) to Kling / Hunyuan / Replicate.
+3. **OCC CAS Retries on Patterns**: Multiple concurrent missions updating the same pattern could experience CAS collisions; exponential jitter backoff (up to 3 retries) is required in `scoring-cas.ts`.
 
 ---
 
 ## 4. Conclusion
 
-The Sophia AI Factory architecture is well-decoupled, leveraging Cloudflare Workers, D1 databases, R2 storage, Upstash Redis, and lightweight Python microservices on Fly.io (TTS, MoviePy Compose).
-
-However, **there is a critical gap where `videoGenerate` (the Wan 2.1 + Fish Speech generation job) and other functions (like `batchVideoFanout`, `repurposeAnalyze`, `repurposeClipGenerate`) are NOT registered in the `/api/inngest` serve endpoint.** This prevents these events from executing. The implementer must update `src/app/api/inngest/route.ts` to register these exported functions.
+The implementation path for Milestone M1 Autonomous Daily Campaign Generator & Swarm Coordination is fully mapped and architecturally sound:
+1. Implement `generateDailyCampaignBlueprints(db: D1Database, minConfidence?: number)` in `apps/sophia-ai-factory/src/forest/playbook/campaign-generator.ts`.
+2. Implement `executeDailyAutonomousCampaignLoop` in `apps/sophia-ai-factory/src/forest/playbook/batch-scheduler.ts` to bridge daily pattern synthesis into scheduled recurring mission runs.
+3. Enforce the 7-gate fail-closed checklist (`runMissionPreflightCheck`) with $5.00 spike guard before MCU deduction and dispatch.
+4. Wire multi-track video synthesis through `executeMultiTrackMission`, preserving parallel audio/visual coordination with cooperative `AbortController`, Cloudflare R2 media vaulting, and OCC CAS state transitions.
+5. Complete implementation details, code snippets, interface contracts, and test plans have been documented in `/Users/macbook/sophia-ai-factory/.agents/explorer_m1_2/plan.md`.
 
 ---
 
 ## 5. Verification Method
 
-To verify these observations:
-1. **D1 Client RPC Verification**: Inspect [d1-client-rpc.ts](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/seed/db/d1-client-rpc.ts) lines 55–60.
-2. **Inngest Registration Verification**: Compare [route.ts](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/app/api/inngest/route.ts) lines 24–44 with [index.ts](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/src/forest/inngest/functions/index.ts) to verify the list of missing functions.
-3. **Deploy Topology & Turbopack Verification**: Open [deploy-with-sha.sh](file:///Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory/scripts/deploy-with-sha.sh) and inspect comments on lines 25-36.
-4. **Test Command**: Run `vitest run` under the `apps/sophia-ai-factory/` folder to check that current units tests pass.
+### Test Suite Execution:
+1. **Unit Tests for Campaign Generator**:
+   ```bash
+   cd apps/sophia-ai-factory
+   npx vitest run src/forest/playbook/__tests__/campaign-generator.test.ts
+   ```
+2. **Unit Tests for Batch Scheduler**:
+   ```bash
+   npx vitest run src/forest/playbook/__tests__/batch-scheduler.test.ts
+   ```
+3. **Graph Agents Registry & Tool Tests**:
+   ```bash
+   npx vitest run src/tree/agent-protocol/__tests__/graph-agents.test.ts
+   ```
+4. **Multi-Track Video Pipeline & Playbook Integration Tests**:
+   ```bash
+   npx vitest run src/__tests__/e2e/multi-track-video-pipeline.e2e.test.ts
+   npx vitest run src/__tests__/integration/playbook-campaign-e2e.test.ts
+   ```
+5. **Quality & Architecture Gates**:
+   ```bash
+   npm run type-check
+   bash scripts/check-layer-boundaries.sh
+   ```
+
+### Invalidation Conditions:
+- Any import from `land` inside `tree` or `forest` files.
+- `generateDailyCampaignBlueprints` failing to group patterns by workspace or failing to persist blueprints.
+- A mission dispatching when ANY of the 7 preflight gates fails.
+- Credit deduction occurring before preflight validation.
+- Missing cooperative cancellation between parallel Audio (Track 2) and Visual (Track 3) execution.

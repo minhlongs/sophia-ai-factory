@@ -68,7 +68,7 @@ describe('highlight-scorer', () => {
       const clip = res[0];
       expect(clip.start_ms).toBe(1000);
       expect(clip.end_ms).toBe(20000);
-      expect(clip.score).toBe(0.81); // average of 0.9, 0.8, 0.85, 0.7
+      expect(clip.score).toBe(0.84); // weighted viral score: 0.4*0.9 + 0.25*0.8 + 0.2*0.85 + 0.15*0.7 = 0.835 -> 0.84
       expect(clip.hook_score).toBe(0.9);
       expect(clip.pacing_score).toBe(0.8);
       expect(clip.retention_score).toBe(0.85);

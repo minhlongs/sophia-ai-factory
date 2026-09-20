@@ -15,6 +15,7 @@ import {
   getCertification,
   isCertificationBlocking,
   ProviderNotCertifiedError,
+  resolveCertifiedProvider,
 } from '../provider-certification';
 import { FailureKind, classifyError } from '@/seed/types/failure-kind';
 import type { ProviderId } from '@/seed/ai/provider-interface';
@@ -156,5 +157,92 @@ describe('provider-certification', () => {
     registerCertification('test-experimental', experimentalCert());
     // EXPERIMENTAL is a graded state — allows instantiation (not a blocking gate).
     expect(isCertificationBlocking('test-experimental')).toBe(false);
+  });
+
+  describe('resolveCertifiedProvider active fallback diversion', () => {
+    it('11. actively diverts to openrouter when hermes is BLOCKED and openrouter is PRODUCTION_READY', () => {
+      registerCertification('hermes', {
+        state: ProviderCertificationState.BLOCKED,
+        security: 'BLOCKED',
+        health: 'BLOCKED',
+        canary: 'BLOCKED',
+      });
+      registerCertification('openrouter', {
+        state: ProviderCertificationState.PRODUCTION_READY,
+        security: 'PASS',
+        health: 'PASS',
+        canary: 'PASS',
+      });
+
+      const resolution = resolveCertifiedProvider('hermes');
+      expect(resolution.diverted).toBe(true);
+      expect(resolution.provider).toBe('openrouter');
+      expect(resolution.originalProvider).toBe('hermes');
+    });
+
+    it('12. diverts to anthropic secondary fallback when openrouter is also BLOCKED', () => {
+      registerCertification('hermes', {
+        state: ProviderCertificationState.BLOCKED,
+        security: 'BLOCKED',
+        health: 'BLOCKED',
+        canary: 'BLOCKED',
+      });
+      registerCertification('openrouter', {
+        state: ProviderCertificationState.BLOCKED,
+        security: 'BLOCKED',
+        health: 'BLOCKED',
+        canary: 'BLOCKED',
+      });
+      registerCertification('anthropic', {
+        state: ProviderCertificationState.PRODUCTION_READY,
+        security: 'PASS',
+        health: 'PASS',
+        canary: 'PASS',
+      });
+
+      const resolution = resolveCertifiedProvider('hermes', ['openrouter', 'anthropic']);
+      expect(resolution.diverted).toBe(true);
+      expect(resolution.provider).toBe('anthropic');
+      expect(resolution.originalProvider).toBe('hermes');
+    });
+
+    it('13. does not divert when preferred provider is certified', () => {
+      registerCertification('hermes', {
+        state: ProviderCertificationState.PRODUCTION_READY,
+        security: 'PASS',
+        health: 'PASS',
+        canary: 'PASS',
+      });
+
+      const resolution = resolveCertifiedProvider('hermes');
+      expect(resolution.diverted).toBe(false);
+      expect(resolution.provider).toBe('hermes');
+      expect(resolution.originalProvider).toBe('hermes');
+    });
+
+    it('14. throws ProviderNotCertifiedError when all fallback candidates are BLOCKED', () => {
+      registerCertification('hermes', {
+        state: ProviderCertificationState.BLOCKED,
+        security: 'BLOCKED',
+        health: 'BLOCKED',
+        canary: 'BLOCKED',
+      });
+      registerCertification('openrouter', {
+        state: ProviderCertificationState.BLOCKED,
+        security: 'BLOCKED',
+        health: 'BLOCKED',
+        canary: 'BLOCKED',
+      });
+      registerCertification('anthropic', {
+        state: ProviderCertificationState.BLOCKED,
+        security: 'BLOCKED',
+        health: 'BLOCKED',
+        canary: 'BLOCKED',
+      });
+
+      expect(() =>
+        resolveCertifiedProvider('hermes', ['openrouter', 'anthropic']),
+      ).toThrow(ProviderNotCertifiedError);
+    });
   });
 });

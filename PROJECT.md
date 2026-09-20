@@ -1,90 +1,165 @@
-# Project: Sophia AI Factory — Full Roadmap Next Horizon (Phases 15–16 & Enterprise Autonomy)
+# Project: Sophia AI Factory — Autonomous Growth & Revenue Engine ($1M MRR Path)
 
 ## Architecture
-Sophia AI Factory is a Cloudflare Workers-native AI creative studio and autonomous social publishing platform.
-The architecture strictly adheres to the 4-layer dependency model:
-- `seed`: Pure primitives, types, cryptographic utilities, telemetry SDK, database clients (`@/seed/*`).
-- `tree`: Business logic, domain repositories, quotas, BYOK encryption, audit log hashing (`@/tree/*`).
-- `forest`: Workflows, Inngest orchestration, multi-track coordinators, publisher schedulers (`@/forest/*`).
-- `land`: Edge entry points, Next.js Server Actions, route handlers, external publisher adapters, UI components (`@/land/*`, `app/*`).
+Sophia AI Factory is a Cloudflare Workers-native AI creative studio and autonomous revenue engine designed to scale to $1,000,000 MRR (5,000 paying customers at $200 ARPU).
+The system strictly enforces the canonical 4-layer dependency model:
+- `seed`: Pure types, database schemas, cryptographic primitives, capability models, and auth clients (`@/seed/*`).
+- `tree`: Pure domain logic, trend forecasting math, hook scoring, royalty calculations, edge health state machines, and crypto wrappers (`@/tree/*`).
+- `forest`: Asynchronous orchestration, Inngest jobs, swarm coordination, campaign generation, payout batchers, and hybrid routing coordinators (`@/forest/*`).
+- `land`: User interfaces, Next.js Server Actions, edge route handlers, network adapters, and external API clients (`@/land/*`, `app/*`).
 
-Key sub-systems for Next Horizon:
-1. **Multi-Model AI Video Generation Pipeline (Phase 16)**: Multi-track coordinator orchestrating script synthesis (`AI_TEXT`), ElevenLabs TTS (`AI_AUDIO`), visual frame synthesis (`fal.ai` Flux-schnell), and video rendering (`KlingVideoClient`, `HunyuanVideo`). Atomic OCC state machine (`queued` -> `scripting` -> `rendering` -> `completed` / `failed`) with Cloudflare R2 (`VIDEO_BUCKET`) tenant-scoped vaulting.
-2. **Autonomous Multi-Channel Social Publisher Fleet**: Adapters for YouTube Shorts (Data API v3 with auto token refresh), TikTok Shop (Partner API v2 + Direct Post), Instagram Reels (Graph API v19.0 REELS container), and Telegram Bot API (`sendVideo`). OCC atomic CAS job claim, exponential backoff on 429/5xx, and viral performance metrics ingestion.
-3. **Enterprise Security Vault & Observability**: BYOK AES-256-GCM encryption with AAD tenant isolation, automated key rotation daemon (`/api/admin/byok-rotation`), OpenTelemetry (OTEL) with Honeycomb edge tracing, and SOC 2 Type I immutable hash-chain audit logging (`raas_audit_logs`).
-4. **Customer Journey E2E & Reliability Suite (Phase 15)**: Automated Playwright browser test suite covering all 5 bilingual customer journeys (VI/EN), performance TTFB < 300ms, and 0 unhandled client-side exceptions.
+### Core Subsystems:
+1. **Hermes Intelligence V2 & Viral Loop Swarm (R1)**:
+   Autonomous growth swarm coordinating trend discovery across TikTok, YouTube Shorts, and X. Uses 7-day sliding window z-scores, seasonal/audience multipliers, and Single Exponential Smoothing (SES, $\alpha=0.40$). Evaluates viral hook effectiveness across 6 canonical hook styles. Continuous viral feedback loop recalculates Creative Effectiveness Scores (CES) and updates `playbook_patterns` using OCC CAS concurrency.
+2. **Creator Marketplace & Video Blueprint Ecosystem (R2)**:
+   Community marketplace interface (`/marketplace`, `/vi/marketplace`) with faceted search by niche, platform, and conversion rate. One-click blueprint cloning into Creative Studio (`/dashboard/missions/new?blueprintId=...`) with pre-flight MCU/USD cost calculation. Immutable creator royalty attribution engine tracking derivative lineage and recording earnings in `creator_earnings_ledger`.
+3. **Multi-Network Affiliate Commission & Automated USDT Payouts (R3)**:
+   Webhook ingestion for 5 major affiliate networks (TikTok Shop, Amazon Associates, ClickBank, AccessTrade, Awin) with Web Crypto timing-safe HMAC verification and sub-ID click attribution. Automated 14-day anti-fraud clawback hold (`payable_at = attributed_at + 14 * 86400`). Dual-entry accounting ledger reconciling commissions, clawbacks (negative adjustment rows), and net creator earnings. Sunday payout batch processor executing NOWPayments USDT TRC20 mass payouts with OCC CAS row claiming and rate limiting.
+4. **Mekong AI Hybrid Edge Node Synchronization (R4)**:
+   Secure Cloudflare Tunnel connection (`*.cashclaw.cc`) linking Cloudflare Workers to local `mekongd` daemons on Apple Silicon (M1 Max / Ollama / vLLM). Hybrid routing policy directs heavy LLM and TTS tasks to local zero-cost hardware (`CostKind: 'unmetered'`) with transparent failover to cloud BYOK on unreachability. Active pre-flight probe detects offline transitions within <15 seconds.
+5. **Layer Discipline & CF-Direct Live Deployment (R5)**:
+   Strict 4-layer import boundaries (`seed` → `tree` → `forest` → `land`, 0 violations via `check-layer-boundaries.sh`), 0 TypeScript errors, 100% test pass rate, live edge SHA match at `/api/version`, and 11/11 Sophia Doctor green score.
+
+---
 
 ## Feature Inventory
 | # | Feature | Description | Milestone | Source |
 |---|---------|-------------|-----------|--------|
-| 1 | Multi-Track Video Coordinator | Coordinates script synthesis, ElevenLabs TTS audio, visual frames (fal.ai), and video rendering (Kling / Hunyuan) | M1 | ORIGINAL_REQUEST §R2 |
-| 2 | Unified Video Provider Factory | Register Kling AI and HunyuanVideo as standard video rendering providers in `provider-factory.ts` | M1 | Survey 2 |
-| 3 | Composite Pre-Flight Quota Check | 7-gate preflight checking multi-track capabilities (`AI_TEXT`, `AI_AUDIO`, `AI_IMAGE`, `AI_VIDEO`), MCU balance & $5 spike guard | M1 | ORIGINAL_REQUEST §R2 |
-| 4 | BYOK Key Encryption & Vaulting | AES-256-GCM key decryption for ElevenLabs, fal.ai, Kling, Runpod with AAD tenant isolation | M1 | ORIGINAL_REQUEST §R2 |
-| 5 | Real-Time Video Preview State Machine | Atomic state transitions (`queued` -> `scripting` -> `rendering` -> `completed`/`failed`) and D1 `creative_missions` OCC updates | M1 | ORIGINAL_REQUEST §R2 |
-| 6 | Cloudflare R2 Asset Vaulting | Store generated scripts, audio, visuals, and videos under tenant-scoped R2 keys (`VIDEO_BUCKET`) | M1 | ORIGINAL_REQUEST §R2 |
-| 7 | Studio Mission Creation Wiring | Connect `/dashboard/missions/new` (`first-run-wizard.tsx`) to live server actions and track status persistence | M1 | Survey 1 |
-| 8 | YouTube Shorts Publisher Adapter | Resumable upload via Data API v3 with automatic OAuth token refresh and status polling | M2 | ORIGINAL_REQUEST §R3 |
-| 9 | TikTok Shop & Direct Post Adapter | Partner API v2 affiliate product sync + Direct Post video upload with HMAC-SHA256 signatures | M2 | ORIGINAL_REQUEST §R3 |
-| 10 | Instagram Reels Publisher Adapter | Meta Graph API v19.0 REELS container creation, status polling, and publish | M2 | ORIGINAL_REQUEST §R3 |
-| 11 | Telegram Bot Video Publisher | Telegram Bot API `sendVideo` with MarkdownV2 escaping and paired chat verification | M2 | ORIGINAL_REQUEST §R3 |
-| 12 | Idempotent Scheduler Cron | OCC CAS job claim (`atomicClaimJob`), peak audience timezone slots, and channel cooldown deferral | M2 | ORIGINAL_REQUEST §R3 |
-| 13 | Exponential Backoff Retry Queue | Exponential backoff delay on HTTP 429/5xx for social publishing retries in `scheduleRetry` | M2 | ORIGINAL_REQUEST §R3 |
-| 14 | Viral Performance Metrics Ingestion | Webhook receivers (YouTube, TikTok) and recurring analytics sync for social metrics | M2 | ORIGINAL_REQUEST §R3 |
-| 15 | BYOK Key Rotation Endpoint | Admin endpoint `/api/admin/byok-rotation` supporting AES-256-GCM versioned re-encryption | M3 | ORIGINAL_REQUEST §R4 |
-| 16 | Background Key Re-encryption Daemon | Inngest function `keyRotationReencrypt` batch re-encrypting credentials with 7-day dual-decrypt window | M3 | ORIGINAL_REQUEST §R4 |
-| 17 | Automatic 90-Day Key Rotation Cron | Inngest cron checking active key age and provisioning new version if >= 90 days old | M3 | ORIGINAL_REQUEST §R4 |
-| 18 | OpenTelemetry SDK Edge Instrumentation | Edge-compatible OTLP HTTP trace & metric export to Honeycomb via native `fetch()` | M3 | ORIGINAL_REQUEST §R4 |
-| 19 | API Latency & D1 Tracing Wrapper | Higher-order route wrapper `instrumentRoute` recording duration, errors, and percentile metrics | M3 | ORIGINAL_REQUEST §R4 |
-| 20 | SOC 2 Type I Immutable Hash-Chain | Audit log hash chaining (`previous_log_hash`, `content_hash`) in `raas_audit_logs` table | M3 | ORIGINAL_REQUEST §R4 |
-| 21 | Hash-Chain Verification Daemon | Daily automated verification cron validating SHA-256 hash continuity across audit logs | M3 | ORIGINAL_REQUEST §R4 |
-| 22 | HMAC Compliance Receipts | Cryptographically signed compliance receipts for audit records with 1-hour TTL | M3 | ORIGINAL_REQUEST §R4 |
-| 23 | Playwright Guest Auth Journey E2E | Bilingual guest discovery to registration and magic-link authentication (`/vi/login`, `/en/login`, `/register`) | M4 | ORIGINAL_REQUEST §R1 |
-| 24 | Playwright Setup Wizard Journey E2E | 6-step Onboarding Setup Wizard (`/setup`, `/setup-wizard`) with BYOK validation probes | M4 | ORIGINAL_REQUEST §R1 |
-| 25 | Playwright Creative Studio Journey E2E | Creative Studio mission creation (`/dashboard/missions/new`) with pre-flight MCU/USD calculation | M4 | ORIGINAL_REQUEST §R1 |
-| 26 | Playwright Distribution Queue Journey E2E | Scheduled distribution and publishing queue (`/dashboard/videos`) | M4 | ORIGINAL_REQUEST §R1 |
-| 27 | Playwright Checkout Journey E2E | Self-serve subscription checkout with NOWPayments USDT invoice and PayOS VN QR code flows | M4 | ORIGINAL_REQUEST §R1 |
-| 28 | Production Reliability & TTFB Benchmark | HTTP 200/307 verification, 0 HTTP 500 errors, TTFB < 300ms median, and 0 unhandled client exceptions | M4 | ORIGINAL_REQUEST §R1 |
-| 29 | 4-Layer Architecture Enforcement | `scripts/check-layer-boundaries.sh` validation with 0 violations | M5 | ORIGINAL_REQUEST §R5 |
-| 30 | TypeScript Zero-Error Compilation | `npm run type-check` exits with code 0 across entire codebase | M5 | ORIGINAL_REQUEST §R5 |
-| 31 | 100% Test Suite Verification | Full unit and integration test suite execution with 100% pass rate | M5 | ORIGINAL_REQUEST §R5 |
-| 32 | Cloudflare Workers Live Edge Deploy | Deploy via CF-direct doctrine and verify live edge SHA match at `/api/version` | M5 | ORIGINAL_REQUEST §R5 |
-| 33 | Sophia Doctor Production Health Audit | `node scripts/sophia-doctor.mjs` reports 11/11 GREEN (100% score) | M5 | ORIGINAL_REQUEST §R5 |
+| 1 | Cross-Channel Trend Scouting | Automated trend & hashtag scouting across TikTok, YouTube Shorts, and X | M1 | ORIGINAL_REQUEST §R1 |
+| 2 | Mathematical Hook Scoring Engine | Z-score velocity & momentum calculation, SES forecasting ($\alpha=0.40$), and 6-style hook scoring | M1 | ORIGINAL_REQUEST §R1 |
+| 3 | Autonomous Daily Campaign Generator | Translates high-confidence winning patterns into multi-track video campaign blueprints | M1 | ORIGINAL_REQUEST §R1 |
+| 4 | Closed-Loop Viral Feedback Ingestion | Ingests view count, shares, and watch time to update pattern scores via OCC CAS | M1 | ORIGINAL_REQUEST §R1 |
+| 5 | Hermes V2 Capability Model & Provider | Certified text/creative intelligence adapter adhering to `provider-certification.ts` | M1 | ORIGINAL_REQUEST §R1 |
+| 6 | Bilingual Marketplace Discovery Interface | Public `/marketplace` and `/vi/marketplace` with filters by niche, platform, and conversion rate | M2 | ORIGINAL_REQUEST §R2 |
+| 7 | One-Click Studio Blueprint Cloning | Direct cloning into Creative Studio (`/dashboard/missions/new?blueprintId=...`) with pre-flight cost estimation | M2 | ORIGINAL_REQUEST §R2 |
+| 8 | Blueprint Lineage & Remix Tracker | Records derivative relationships, remix counts, and parent provenance in `blueprint_remixes` | M2 | ORIGINAL_REQUEST §R2 |
+| 9 | Creator Royalty Attribution Engine | Calculates creator revenue splits and maintains an immutable earnings ledger | M2 | ORIGINAL_REQUEST §R2 |
+| 10 | Marketplace & Blueprint D1 Migrations | Migration `0275` adding marketplace metadata to `campaign_blueprints` and creating royalty tables | M2 | Survey 2 |
+| 11 | Multi-Network Webhook Ingestion | Webhooks for TikTok Shop, Amazon, ClickBank, AccessTrade, and Awin with HMAC verification | M3 | ORIGINAL_REQUEST §R3 |
+| 12 | Inngest Event Ingestion Bridge | Emits `conversion.created` from webhook routes into Inngest processing pipeline | M3 | Survey 3 |
+| 13 | 14-Day Anti-Fraud Clawback Hold | Enforces 14-day hold (`payable_at = attributed_at + 14 * 86400`) and daily promotion cron | M3 | ORIGINAL_REQUEST §R3 |
+| 14 | Dual-Entry Accounting Ledger | Reconciles commissions, negative-adjustment clawbacks, and net creator earnings | M3 | ORIGINAL_REQUEST §R3 |
+| 15 | NOWPayments USDT Mass Payout Processor | Sunday batch processor executing USDT TRC20 payouts with OCC CAS and rate limiting | M3 | ORIGINAL_REQUEST §R3 |
+| 16 | Daily Financial Reconciliation Job | Reconciles confirmed payout batches against claimed ledger rows, alerting on diffs > $1.00 | M3 | ORIGINAL_REQUEST §R3 |
+| 17 | Mekong Cloudflare Tunnel Communication | Secure tunnel connection to local `mekongd` with Bearer auth and AES-256-GCM encryption | M4 | ORIGINAL_REQUEST §R4 |
+| 18 | Hybrid Task Routing Policy | Directs heavy LLM/TTS to local zero-cost hardware (`unmetered`) with transparent cloud BYOK fallback | M4 | ORIGINAL_REQUEST §R4 |
+| 19 | 15-Second Node Health Monitor | Active pre-flight probe and 1-token heartbeat detecting offline transitions within <15s | M4 | ORIGINAL_REQUEST §R4 |
+| 20 | Edge Nodes D1 State Management | D1 tables `edge_nodes` and `edge_node_heartbeats` for cluster status tracking | M4 | Survey 2 |
+| 21 | Opaque-Box E2E Test Suite (Tiers 1-4) | Comprehensive requirement-driven test suite with >=11xN test cases derived from user specs | E2E Track | Dual Track |
+| 22 | Adversarial Coverage Hardening (Tier 5) | White-box adversarial stress testing with Challenger-Worker-Reviewer loop | M5 | Dual Track |
+| 23 | 4-Layer Architecture Enforcement | Strict zero-violation check via `scripts/check-layer-boundaries.sh` | M5 | ORIGINAL_REQUEST §R5 |
+| 24 | TypeScript Zero-Error Gate | Zero compilation errors across all modules (`npm run type-check`) | M5 | ORIGINAL_REQUEST §R5 |
+| 25 | CF-Direct Production Deployment | Live deployment via CF-direct doctrine with commit SHA verification at `/api/version` | M5 | ORIGINAL_REQUEST §R5 |
+| 26 | Sophia Doctor 11/11 Green Certification | Full health certification via `node scripts/sophia-doctor.mjs` | M5 | ORIGINAL_REQUEST §R5 |
+
+---
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| 1 | M1: Next-Gen Multi-Model AI Video Generation Pipeline | Multi-track coordinator, Kling/Hunyuan/fal.ai adapters in provider factory, composite preflight, R2 vaulting, Studio UI wiring | None | DONE |
-| 2 | M2: Autonomous Multi-Channel Social Publisher Fleet | Social publisher adapters (YouTube, TikTok, Instagram, Telegram), exponential backoff retry in `publish-execute`, metrics harvester | None | DONE |
-| 3 | M3: Enterprise Security Vault, Key Rotation & Observability | `/api/admin/byok-rotation` route, Inngest re-encryption daemon, Honeycomb/OTEL tracing, immutable hash-chain audit logging | None | DONE |
-| 4 | M4: Comprehensive Playwright Customer Journey E2E & Reliability Suite | Playwright E2E customer journey suite (5 bilingual journeys VI/EN), route health audit (zero 500s), TTFB < 300ms benchmark | M1, M2, M3 | DONE |
-| 5 | M5: Layer Architecture Discipline, Full Verification & Live Edge Deploy | Layer boundaries check, `npm run type-check`, full vitest suite pass, CF-direct deploy, live SHA match, Sophia Doctor 11/11 GREEN | M4 | IN_PROGRESS |
+| E2E | E2E Testing Track Orchestrator | Opaque-box test harness, test runner, Tiers 1-4 tests (Features, Boundaries, Pairwise, Real-World), publishes `TEST_READY.md` | None | DONE |
+| 1 | M1: Hermes Intelligence V2 — Autonomous AI Marketing Swarm & Viral Loop | Trend scouting across TikTok/Shorts/X, hook scoring math, daily campaign generator, closed-loop viral feedback with OCC CAS | None | DONE |
+| 2 | M2: Creator Marketplace & Video Blueprint Ecosystem | Bilingual discovery UI, one-click studio cloning with cost estimation, royalty attribution engine, D1 migrations for blueprints & remixes | M1 | DONE |
+| 3 | M3: Multi-Network Affiliate Commission & Automated USDT Payouts Engine | 5-network webhooks with HMAC, Inngest event bridge, 14-day hold, dual-entry accounting ledger, NOWPayments USDT batch processor, daily reconciliation | M2 | DONE |
+| 4 | M4: Mekong AI Hybrid Edge Node Synchronization | Cloudflare Tunnel communication to `mekongd`, hybrid routing policy with cloud BYOK fallback, 15s offline transition detector, edge nodes schema | None | DONE |
+| 5 | M5: Final Milestone: E2E Test Pass, Layer Discipline & Live Edge Deploy | Phase 1 (100% E2E test pass Tiers 1-4), Phase 2 (Adversarial hardening Tier 5), layer boundary check, CF-direct deploy, live SHA match, Sophia Doctor 11/11 GREEN | M1, M2, M3, M4, E2E | DONE |
+
+---
 
 ## Interface Contracts
-### Multi-Track Video Orchestrator
-- Function: `executeMultiTrackMission(missionId: string, options?: MultiTrackOptions): Promise<MultiTrackResult>`
-- File: `apps/sophia-ai-factory/src/forest/mission/multi-track-orchestrator.ts`
-- Events: Emits `creative.mission.multitrack.requested`, `creative.mission.multitrack.progress`, `creative.mission.multitrack.completed`
-- Video Providers: `FalImageProvider` (Flux-schnell), `KlingVideoClient` (fal queue), `HunyuanVideoClient` (Runpod)
 
-### Social Publisher Fleet
-- Interface: `Publisher { upload(videoUrl: string, meta: PublishMeta): Promise<string>; pollStatus(externalPostId: string): Promise<PublishStatus>; getMetrics(externalPostId: string): Promise<MetricsJson>; }`
-- Files: `src/forest/publishing/publisher-interface.ts`, `src/land/video/publishing/providers/*`, `src/tree/publishing/providers/telegram-publisher.ts`
-- Job Scheduling: `scheduleJob(input: SchedulePublishInput): Promise<PublishingJob>`
-- Retry Handler: `scheduleRetry(jobId: string, tenantId: string, userId: string, attempt: number, delayMs?: number): Promise<void>`
+### 1. Hermes V2 & Swarm Intelligence
+- **Trend Discovery**:
+  `scoutTrendingSignals(platform: 'tiktok' | 'youtube_shorts' | 'x', query: string, db: D1Database): Promise<TrendingSignal[]>`
+- **Hook Scoring**:
+  `calculateHookScore(input: HookEvaluationInput): HookScoreResult`
+  Formula: $S_{\text{viral}} = 0.40S_{\text{hook}} + 0.25S_{\text{pacing}} + 0.20S_{\text{retention}} + 0.15S_{\text{cta}}$
+- **Campaign Generator**:
+  `generateDailyCampaignBlueprints(db: D1Database, minConfidence?: number): Promise<CampaignBlueprint[]>`
+- **Feedback Ingestion**:
+  `ingestEngagementFeedback(db: D1Database, feedback: VideoEngagementFeedback): Promise<PatternUpdateResult>`
+  Updates `playbook_patterns` via OCC CAS: `UPDATE playbook_patterns SET score = ?, sample_count = sample_count + 1, updated_at = ? WHERE id = ? AND updated_at = ?`
 
-### Security Vault & Observability
-- Endpoint: `POST /api/admin/byok-rotation` (supports alias to `/api/admin/keys/rotate`)
-- Crypto: `encryptApiKeyText(plain: string, userId: string, keyVersion?: number): Promise<string>`
-- Tracing: `instrumentRoute(route: string, method: string, handler: RouteHandler): RouteHandler`
-- Hash-chain: `computeContentHash(entry: AuditEntry, prevHash: string): string`, `verifyHashChain(logs: AuditLog[]): HashChainVerificationResult`
+### 2. Creator Marketplace & Blueprints
+- **Marketplace Listing Service**:
+  `listMarketplaceBlueprints(db: D1Database, filters: MarketplaceFilters): Promise<PaginatedBlueprints>`
+- **Clone / Remix Action**:
+  `cloneBlueprintForMission(db: D1Database, blueprintId: string, userId: string, tenantId: string): Promise<CloneBlueprintResult>`
+- **Royalty Attribution Engine**:
+  `recordBlueprintRemixAndAccrueRoyalty(db: D1Database, remix: BlueprintRemixInput): Promise<RoyaltyAccrualResult>`
+  Inserts into `blueprint_remixes` and `creator_earnings_ledger` with OCC CAS idempotency.
+
+### 3. Affiliate Ingestion & Mass Payouts
+- **HMAC Verification**:
+  `verifyAffiliateHmac(rawBody: string, signature: string, secret: string, algorithm: 'SHA-256' | 'SHA-1' | 'SHA-512'): Promise<boolean>`
+- **Hold Promotion**:
+  `flipPendingToPayable(db: D1Database, nowTimestamp: number): Promise<number>`
+  Updates `commission_ledger SET status = 'payable' WHERE status = 'pending' AND payable_at <= nowTimestamp`
+- **Payout Batcher**:
+  `processPayoutBatch(db: D1Database, rail: 'nowpayments_usdt' | 'stripe_connect'): Promise<PayoutBatchResult>`
+  Claims rows via CAS: `UPDATE commission_ledger SET status = 'paying', payout_batch_id = ? WHERE status = 'payable' AND payout_batch_id IS NULL`
+- **Clawback Negative-Row Invariant**:
+  `recordClawbackAdjustment(db: D1Database, parentConversionId: string, reason: string): Promise<LedgerAdjustmentResult>`
+  Inserts negative `commission_cents` row with `status = 'clawback'`, never mutating historical records.
+
+### 4. Mekong AI Hybrid Edge Node Protocol
+- **Health Check & Pre-Flight Probe**:
+  `probeEdgeNode(nodeUrl: string, bearerToken: string, timeoutMs?: number): Promise<NodeHealthStatus>`
+  Timeout: `AbortSignal.timeout(2500)`. Transition to offline if unresponsive.
+- **Hybrid Router**:
+  `routeInferenceTask(task: InferenceTask, preferredNodeId?: string): Promise<InferenceResult>`
+  Routes to local `mekongd` if status is `ONLINE`. Falls back transparently to cloud BYOK (`OpenRouter` / `Anthropic` / `ElevenLabs`) if offline or on error.
+
+---
 
 ## Code Layout
-- Playwright E2E Suite: `apps/sophia-ai-factory/tests/e2e/customer-journey-next-horizon.spec.ts`
-- Video Generation Pipeline: `apps/sophia-ai-factory/src/forest/mission/`, `apps/sophia-ai-factory/src/land/video/`
-- Social Publisher Fleet: `apps/sophia-ai-factory/src/forest/publishing/`, `apps/sophia-ai-factory/src/forest/inngest/functions/publish-execute.ts`
-- Security & Key Rotation: `apps/sophia-ai-factory/src/tree/byok/`, `apps/sophia-ai-factory/src/app/api/admin/byok-rotation/`
-- Observability: `apps/sophia-ai-factory/src/seed/telemetry/`, `apps/sophia-ai-factory/src/seed/observability/`
-- Layer Verification: `scripts/check-layer-boundaries.sh`
-- Sophia Doctor: `scripts/sophia-doctor.mjs`
-- Live Edge Deployment: `apps/sophia-ai-factory/scripts/deploy-with-sha.sh`, `npm run deploy:full`
+
+```
+apps/sophia-ai-factory/
+├── migrations/
+│   └── 0275_autonomous_growth_and_revenue.sql           # D1 schema for blueprints, royalties, remixes, edge nodes
+├── src/
+│   ├── seed/
+│   │   ├── types/creative-intelligence.ts               # Hermes V2 contracts & Zod schemas
+│   │   ├── ai/provider-certification.ts                 # Certified provider states
+│   │   └── db/schema/growth-engine.ts                   # D1 table definitions
+│   ├── tree/
+│   │   ├── trend-intelligence/                          # Hook scoring, velocity/momentum z-score math, SES forecast
+│   │   ├── learning-loop/scoring-cas.ts                 # OCC CAS scoring on patterns
+│   │   ├── creator-royalties/attribution.ts             # Royalty attribution math & lineage tracking
+│   │   ├── affiliates/crypto.ts                         # Web Crypto timing-safe HMAC verifiers
+│   │   └── edge/node-health.ts                          # 15s offline transition state machine
+│   ├── forest/
+│   │   ├── playbook/campaign-generator.ts               # Autonomous daily campaign generator
+│   │   ├── jobs/viral-feedback-loop.ts                  # Closed-loop engagement feedback sync
+│   │   ├── marketplace/blueprint-service.ts             # Marketplace search, filtering, cloning
+│   │   ├── jobs/payout-batcher.ts                       # Sunday USDT mass payout batch processor
+│   │   ├── jobs/reconciliation.ts                       # Daily financial reconciliation job
+│   │   └── ai/hybrid-router.ts                          # Hybrid edge vs cloud BYOK router
+│   ├── land/
+│   │   ├── marketplace/                                 # Bilingual marketplace discovery UI
+│   │   ├── missions/cost-estimator.ts                   # Preflight studio cost estimator
+│   │   ├── payouts/nowpayments-mass-payout.ts           # NOWPayments USDT TRC20 client
+│   │   ├── payouts/clawback-handler.ts                  # Negative-row clawbacks
+│   │   └── edge/node-registration.ts                    # Edge node registration endpoints
+│   └── app/
+│       ├── [locale]/(marketing)/marketplace/page.tsx   # Public /marketplace and /vi/marketplace
+│       └── api/webhooks/                                # 5 network webhook routes + NOWPayments IPN
+└── tests/
+    └── e2e/growth-engine/                               # Opaque-box E2E test suite (Tiers 1-4)
+```
+
+---
+
+## Verification Commands
+- Check layer boundaries: `bash scripts/check-layer-boundaries.sh`
+- TypeScript typecheck: `npm run type-check`
+- Unit/Integration tests: `npm test`
+- E2E test suite: `npx vitest run tests/e2e/growth-engine/`
+- Sophia Doctor: `node scripts/sophia-doctor.mjs`
+- CF-direct deploy: `npm run deploy:full`
+- Live SHA match:
+  ```bash
+  curl -s https://sophia.agencyos.network/api/version | jq .shortSha
+  git rev-parse HEAD | cut -c1-8
+  ```

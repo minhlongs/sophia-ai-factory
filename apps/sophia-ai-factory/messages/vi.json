@@ -1119,6 +1119,14 @@
         "successDescription": "Video đã được dựng hoàn chỉnh và sẵn sàng để bạn duyệt trong bảng kiểm duyệt.",
         "reviewButton": "Xem & Duyệt Video",
         "createAnotherButton": "Tạo video khác",
+        "remixBannerTitle": "Nhân bản kịch bản mẫu: {title}",
+        "remixBannerDesc": "Kế thừa mẫu video từ @{creator} ({remixes} lượt nhân bản, {cvr}% chuyển đổi)",
+        "remixPill": "Kịch bản từ Chợ Mẫu",
+        "balanceStatus": "Số dư: {current} MCU / Cần: {required} MCU",
+        "balanceVerified": "Đã xác thực số dư",
+        "insufficientMcu": "Còn thiếu {missing} MCU",
+        "topupMcu": "Nạp thêm MCU",
+        "remixLaunchButton": "Nhân Bản 1 Chạm & Khởi Chạy",
         "progressTitle": "Tiến độ sản xuất video",
         "progressAriaLabel": "Tiến độ nhiệm vụ",
         "interruptedTitle": "Quá trình xử lý tạm dừng",
@@ -7847,6 +7855,79 @@
         "name": "Daily News & Wisdom (45 giây)",
         "description": "Tin tức tóm tắt và bài học súc tích, phong cách trực quan trang nhã."
       }
+    }
+  },
+  "blueprintMarketplace": {
+    "title": "Chợ Kịch Bản Mẫu Video Cho Nhà Sáng Tạo",
+    "subtitle": "Khám phá các mẫu kịch bản video có tỷ lệ chuyển đổi cao đã kiểm chứng trên TikTok, YouTube Shorts và X. Nhân bản trực tiếp vào Studio chỉ với một cú nhấp.",
+    "searchPlaceholder": "Tìm kiếm kịch bản mẫu theo tiêu đề, câu mở đầu hoặc từ khóa...",
+    "filtersTitle": "Bộ lọc",
+    "all": "Tất cả",
+    "nicheLabel": "Chủ đề",
+    "niches": {
+      "all": "Tất cả chủ đề",
+      "general": "Tổng hợp & Đời sống",
+      "ecommerce": "Thương mại điện tử & Bán lẻ",
+      "saas": "Phần mềm & Ứng dụng",
+      "fitness": "Sức khỏe & Thể thao",
+      "education": "Giáo dục & Kỹ năng",
+      "entertainment": "Giải trí & Đời sống",
+      "finance": "Tài chính & Quản lý vốn",
+      "growth_hacking": "Tăng trưởng & Khởi nghiệp",
+      "tech": "Công nghệ",
+      "technology": "Công nghệ",
+      "beauty": "Làm đẹp & Thời trang"
+    },
+    "platformLabel": "Nền tảng mục tiêu",
+    "platforms": {
+      "all": "Tất cả nền tảng",
+      "tiktok": "TikTok",
+      "youtube_shorts": "YouTube Shorts",
+      "x": "X (Twitter)",
+      "instagram_reels": "Instagram Reels"
+    },
+    "conversionLabel": "Tỷ lệ chuyển đổi đã xác thực",
+    "conversions": {
+      "all": "Mọi tỷ lệ",
+      "gt3": "> 3% Chuyển đổi",
+      "gt5": "> 5% Chuyển đổi cao",
+      "gt10": "> 10% Chuyển đổi bùng nổ"
+    },
+    "royaltyLabel": "Mức tác quyền",
+    "royalties": {
+      "all": "Tất cả mức tác quyền",
+      "free": "Miễn phí (0% Tác quyền)",
+      "low": "Dưới 5% Tác quyền",
+      "standard": "5% - 15% Tiêu chuẩn"
+    },
+    "sortLabel": "Sắp xếp theo",
+    "sortOptions": {
+      "highest_conversion": "Tỷ lệ chuyển đổi cao nhất",
+      "most_remixed": "Được nhân bản nhiều nhất",
+      "newest": "Mới phát hành"
+    },
+    "resetFilters": "Đặt lại bộ lọc",
+    "activeFiltersCount": "{count} bộ lọc đang chọn",
+    "card": {
+      "verifiedBadge": "Chuyển đổi xác thực",
+      "remixes": "{count} lượt nhân bản",
+      "royalty": "{rate}% Tác quyền",
+      "scenes": "{count} cảnh",
+      "duration": "{seconds} giây",
+      "estimatedCost": "Ước tính: ~{mcu} MCU (${usd})",
+      "cloneCta": "Nhân bản vào Studio",
+      "byCreator": "Bởi @{name}",
+      "hookStyle": "Mở đầu: {style}"
+    },
+    "empty": {
+      "title": "Không tìm thấy kịch bản mẫu nào",
+      "description": "Không có kịch bản mẫu nào khớp với tiêu chí bạn chọn. Hãy thử nới lỏng bộ lọc hoặc xóa từ khóa tìm kiếm.",
+      "clearAction": "Xóa toàn bộ lọc"
+    },
+    "pagination": {
+      "showingResults": "Hiển thị {from} - {to} trong tổng số {total} kịch bản mẫu",
+      "prev": "Trang trước",
+      "next": "Trang sau"
     }
   }
 }

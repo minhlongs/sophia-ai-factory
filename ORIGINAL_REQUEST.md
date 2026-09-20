@@ -545,3 +545,87 @@ Harden platform security, credential lifecycle, and runtime observability:
 - [ ] `bash scripts/check-layer-boundaries.sh` exits with code 0
 - [ ] Deployed commit SHA matches live edge `https://sophia.agencyos.network/api/version`
 - [ ] Sophia Doctor (`node scripts/sophia-doctor.mjs`) reports 11/11 GREEN (100% score)
+
+## 2026-09-20T01:31:42Z
+
+The user requested: The full multi-agent team.
+Execute the complete Autonomous Growth & Revenue Engine ($1M MRR Path): Build the Hermes V2 autonomous AI marketing swarm and viral growth loop, implement the Creator Marketplace and blueprint remix ecosystem, launch the multi-network affiliate commission engine with automated NOWPayments USDT mass payouts, and ship the Mekong AI hybrid edge node synchronization with live Cloudflare Workers deployment.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+References:
+- docs/mrr-roadmap.md
+- docs/HERMES_INTELLIGENCE_V2.md
+- docs/development-roadmap.md
+- apps/sophia-ai-factory/CLAUDE.md
+- apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
+- apps/sophia-ai-factory/src/forest/mission/
+- apps/sophia-ai-factory/src/forest/publishing/
+- apps/sophia-ai-factory/src/land/video/publishing/
+
+## Requirements
+
+### R1. Hermes Intelligence V2 — Autonomous AI Marketing Swarm & Viral Loop
+Build an autonomous growth agent swarm coordinating trend discovery and viral video generation:
+- Automated trend and hashtag scouting across TikTok, YouTube Shorts, and X with viral hook scoring.
+- Autonomous daily campaign generator dispatching multi-track video synthesis based on top-performing creative patterns.
+- Continuous viral feedback loop that analyzes view counts, shares, and watch time to autonomously refine future script prompts and visual styles.
+
+### R2. Creator Marketplace & Video Blueprint Ecosystem (Phase 17)
+Implement a community-driven creator marketplace for AI video templates:
+- Marketplace discovery interface (`/marketplace`, `/vi/marketplace`) with filtering by niche, platform, and conversion rate.
+- One-click blueprint cloning into Creative Studio (`/dashboard/missions/new`) with pre-flight cost estimation.
+- Creator royalty attribution engine tracking remix usage, calculating creator revenue shares, and maintaining an immutable earnings ledger.
+
+### R3. Multi-Network Affiliate Commission & Automated USDT Payouts Engine
+Implement multi-network affiliate monetization and mass payout infrastructure:
+- Webhook and event ingestion for 5 affiliate networks (TikTok Shop, Amazon Associates, ClickBank, AccessTrade, Awin) with HMAC signature verification and click attribution.
+- Automated payout batch processor via NOWPayments USDT mass-payout API with a 14-day anti-fraud clawback hold.
+- Dual-entry accounting ledger reconciling commissions, clawbacks, and net creator earnings.
+
+### R4. Mekong AI Hybrid Edge Node Synchronization (Private GPU / Offline Mode)
+Bridge Cloudflare Workers cloud execution with private local GPU inference nodes:
+- Secure communication protocol connecting Cloudflare Workers to local `mekongd` daemons via Cloudflare Tunnels.
+- Hybrid routing policy directing heavy LLM and TTS tasks to local zero-cost hardware (M1 Max / Ollama / vLLM) with transparent fallback to cloud BYOK providers on node unreachability.
+- Bidirectional heartbeat and health monitor with encrypted status reporting.
+
+### R5. Layer Architecture Discipline & Live Edge Deployment
+- Strictly preserve canonical 4-layer import hierarchy (`seed` → `tree` → `forest` → `land`) with 0 violations.
+- Maintain 0 TypeScript compilation errors and 100% test pass rate across all new and existing test suites.
+- Deploy to Cloudflare Workers edge via CF-direct doctrine, verify live edge SHA match, and confirm Sophia Doctor reports 11/11 GREEN.
+
+## Acceptance Criteria
+
+### Autonomous Growth & Viral Loop (R1)
+- [ ] Hermes V2 agent swarm autonomously evaluates viral hooks and schedules batch missions
+- [ ] Engagement metrics harvester ingests view/share counts and updates pattern scores
+- [ ] End-to-end simulation verifies autonomous dispatch without human intervention
+
+### Creator Marketplace & Blueprints (R2)
+- [ ] Bilingual marketplace UI allows browsing, searching, and previewing video blueprints
+- [ ] One-click remix imports blueprints directly into Creative Studio with valid parameters
+- [ ] Creator earnings ledger calculates royalties accurately with OCC CAS concurrency protection
+
+### Affiliate Engine & USDT Payouts (R3)
+- [ ] Webhook handlers process affiliate conversion events with HMAC signature verification
+- [ ] Mass payout processor generates NOWPayments USDT payout batches with 14-day hold
+- [ ] Reconciliation engine prevents double-payouts and handles clawbacks correctly
+
+### Mekong Hybrid Edge Node (R4)
+- [ ] Hybrid router routes requests to local `mekongd` node when available and falls back to cloud cleanly
+- [ ] Node heartbeat monitor detects offline transitions within 15 seconds
+- [ ] Tenant credentials and inference payloads remain encrypted in transit
+
+### Quality Gates & Production Deployment (R5)
+- [ ] `npm run type-check` exits with code 0 (0 TypeScript errors)
+- [ ] All unit, integration, and E2E test suites pass with 100% success rate
+- [ ] `bash scripts/check-layer-boundaries.sh` exits with code 0
+- [ ] Deployed commit SHA matches live edge `https://sophia.agencyos.network/api/version`
+- [ ] Sophia Doctor (`node scripts/sophia-doctor.mjs`) reports 11/11 GREEN (100% score)
+
+## 2026-09-20T03:49:57Z
+
+User requested: "go next". The server was restarted. Please revive all monitoring crons and child workers, continue execution of the Autonomous Growth & Revenue Engine ($1M MRR Path): complete Milestone 4 (Mekong AI Hybrid Edge Node Sync), Milestone 5 (Final E2E Verification & CF-Direct Live Edge Deployment to Cloudflare Workers), conduct the mandatory independent Victory Audit, and report final closeout.
+

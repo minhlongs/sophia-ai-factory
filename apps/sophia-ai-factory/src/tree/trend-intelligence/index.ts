@@ -37,3 +37,15 @@ export {
   type TopicWindowStats,
   type DetectOptions,
 } from './detect-math';
+export {
+  calculateHookScore,
+  classifyHookStyle,
+  VIRAL_SCORE_WEIGHTS,
+  CANONICAL_HOOK_STYLES,
+} from './hook-scorer';
+export {
+  scoutTrendingSignals,
+  type ScoutTrendingOptions,
+} from './trend-scout';
+
+

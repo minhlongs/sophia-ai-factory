@@ -16,8 +16,14 @@ import { FirstRunWizard } from '@/components/missions/first-run-wizard';
 import { Link } from '@/navigation';
 import { ArrowLeft } from 'lucide-react';
 
+import { getBlueprintById } from '@/forest/marketplace/blueprint-service';
+import { getBalance } from '@/tree/mcu/credits-repo';
+import { getUserTier } from '@/seed/db/get-user-tier';
+import type { MarketplaceBlueprintItem } from '@/seed/types/creator-marketplace';
+
 interface PageProps {
   params: Promise<{ locale: string }>;
+  searchParams?: Promise<{ blueprintId?: string }>;
 }
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -28,8 +34,10 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function NewMissionPage({ params }: PageProps) {
+export default async function NewMissionPage({ params, searchParams }: PageProps) {
   const { locale } = await params;
+  const sp = searchParams ? await searchParams : {};
+  const blueprintId = sp.blueprintId;
   const t = await getTranslations('dashboard.missions.wizard');
 
   const user = await getCurrentUser();
@@ -47,6 +55,14 @@ export default async function NewMissionPage({ params }: PageProps) {
       workspaceId = await ensureCustomerOrg(d1, user.id, user.email || user.id);
     }
   }
+
+  let initialBlueprint: MarketplaceBlueprintItem | null = null;
+  if (blueprintId && d1) {
+    initialBlueprint = await getBlueprintById(d1, blueprintId);
+  }
+
+  const userBalance = await getBalance(user.id).catch(() => ({ credits_remaining: 0 }));
+  const userTier = await getUserTier(user.id).catch(() => 'BASIC');
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 md:px-6 lg:px-8">
@@ -76,6 +92,9 @@ export default async function NewMissionPage({ params }: PageProps) {
         workspaceId={workspaceId}
         userId={user.id}
         locale={locale as 'vi' | 'en'}
+        initialBlueprint={initialBlueprint}
+        initialMcuBalance={userBalance.credits_remaining}
+        userTier={userTier}
       />
     </div>
   );

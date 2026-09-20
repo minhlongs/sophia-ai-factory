@@ -71,5 +71,8 @@ export { payoutBatcher } from '@/forest/jobs';
 export { pendingPromoterCron } from '@/forest/jobs';
 export { reconciliationCron } from '@/forest/jobs';
 export { offerSyncCron } from '@/forest/jobs';
+export { affiliateHoldPromoterCron } from '@/forest/jobs';
+export { financialReconciliationCron } from '@/forest/jobs';
+export { edgeNodeHealthSweepCron } from '@/forest/jobs';
 export { storageTrackerDaily } from '@/forest/quota';
 export { sopExecute } from '@/forest/sops';
