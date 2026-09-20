@@ -57,7 +57,7 @@ export function TopAppBar({
   }));
 
   return (
-    <header className="h-16 fixed top-0 right-0 z-40 bg-surface-container-lowest border-b border-outline-variant flex items-center px-lg ml-[280px]">
+    <header className="h-16 fixed top-0 right-0 z-40 bg-surface-container-lowest border-b border-outline-variant flex items-center px-lg md:ml-[280px]">
       {/* Search */}
       <div className="flex items-center gap-md w-1/2 max-w-2xl">
         <div className="relative w-full">
@@ -206,7 +206,7 @@ export function DashboardLayout({
         pathname={pathname}
       />
 
-      <main id="main-content" className="ml-[280px] mt-16 p-lg max-w-container-max mx-auto">
+      <main id="main-content" className="md:ml-[280px] ml-0 mt-16 p-4 md:p-lg max-w-container-max mx-auto">
         {(title || subtitle || actions) && (
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-xl gap-md">
             <div>

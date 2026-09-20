@@ -128,7 +128,7 @@ export function PricingComparisonTable({ currentTier }: PricingComparisonTablePr
           <tbody className="divide-y divide-border">
             {rows.map((row) => (
               <tr key={row.label} className="hover:bg-muted/30 transition-colors duration-150">
-                <td className="px-4 py-3 text-sm text-foreground font-medium">{row.label}</td>
+                <td className="px-4 py-3 text-sm text-foreground font-medium sticky left-0 bg-card backdrop-blur-md z-10 min-w-[140px]">{row.label}</td>
                 {row.values.map((val, i) => (
                   <td key={i} className="px-4 py-3 text-center">
                     <Cell value={val} />

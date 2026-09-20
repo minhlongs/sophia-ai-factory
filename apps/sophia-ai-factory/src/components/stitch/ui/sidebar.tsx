@@ -55,6 +55,7 @@ export function Sidebar({
       className={cn(
         'h-screen fixed left-0 top-0 bg-surface-container-lowest border-r border-outline-variant',
         'flex flex-col p-md gap-sm z-50 overflow-y-auto',
+        'hidden md:block',
         collapsed ? 'w-[80px]' : 'w-[280px]',
         className
       )}
