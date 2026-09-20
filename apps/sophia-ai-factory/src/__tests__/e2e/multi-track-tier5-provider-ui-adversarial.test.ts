@@ -662,6 +662,8 @@ describe('Tier 5 White-Box Adversarial Hardening Suite', () => {
         await act(async () => {
           vi.advanceTimersByTime(MAX_POLL_TIMEOUT_MS + 2000);
           await Promise.resolve();
+          vi.runOnlyPendingTimers();
+          await Promise.resolve();
         });
 
         expect(vi.getTimerCount()).toBe(0);

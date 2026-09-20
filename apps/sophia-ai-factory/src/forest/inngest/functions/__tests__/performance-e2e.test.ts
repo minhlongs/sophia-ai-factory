@@ -23,9 +23,13 @@ const { mockGetD1, serveMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/seed/db/client', () => ({ getD1: mockGetD1 }));
-vi.mock('@/seed/utils/logger-utility', () => ({
-  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-}));
+vi.mock('@/seed/utils/logger-utility', () => {
+  const dummy = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
+  return {
+    logger: dummy,
+    createLogger: () => dummy,
+  };
+});
 vi.mock('@/tree/creative-memory', () => ({
   upsertMemory: vi.fn().mockResolvedValue(undefined),
   recordLearning: vi.fn().mockResolvedValue(undefined),
