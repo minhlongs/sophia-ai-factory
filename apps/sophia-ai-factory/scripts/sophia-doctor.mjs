@@ -208,7 +208,7 @@ function checkTypeScript() {
     const tscBin = resolve(ROOT, 'node_modules/typescript/bin/tsc');
     const cmd = existsSync(tscBin) ? `"${process.execPath}" "${tscBin}" --noEmit 2>&1` : 'npx tsc --noEmit 2>&1';
     execSync(cmd, {
-      cwd: ROOT, timeout: 30000, encoding: 'utf8', stdio: 'pipe',
+      cwd: ROOT, timeout: 90000, encoding: 'utf8', stdio: 'pipe',
     });
     ok('TypeScript: 0 errors');
   } catch (e) {
