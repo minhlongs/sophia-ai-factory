@@ -7,7 +7,7 @@ import { Link } from '@/navigation';
 import { cn } from '@/tree/components/setup-wizard/wizard-stepper';
 import { AlertCircle, CheckCircle, Edit2, ChevronRight, MessageCircle, Send, AlertTriangle } from 'lucide-react';
 import { Button } from '@/seed/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/seed/components/ui/alert';
+import { Alert, AlertDescription } from '@/seed/components/ui/alert';
 
 interface TemplatePack {
   id: string;
