@@ -53,3 +53,14 @@ export {
 } from './signature';
 export type { InboundVerifyOptions, VerifyOptions } from './signature';
 
+export {
+  generateWebhookSignature,
+  verifyWebhookSignature,
+  timingSafeEqual as timingSafeEqualHmac,
+  parseSignatureHeader,
+  computeHmacSha256Hex,
+  DEFAULT_TOLERANCE_SECONDS,
+  WEBHOOK_SIGNATURE_HEADER,
+} from './hmac-signer';
+export type { ParsedSignatureHeader } from './hmac-signer';
+

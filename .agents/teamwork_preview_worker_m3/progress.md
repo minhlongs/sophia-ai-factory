@@ -1,38 +1,24 @@
-# Progress Tracking - M3 Implementation
+# Progress Tracking - M3 Implementation (Executive BI & Automated Reporting Engine)
 
-Last visited: 2026-09-20T00:04:10Z
-Current status: All M3 components implemented, tested, verified, and passing quality gates.
+Last visited: 2026-09-20T06:10:00Z
+Current status: All M3 Executive BI components implemented, tested, verified, and passing quality gates (100% pass rate).
 
 ## Milestones & Checklist
-- [x] Read mandatory inputs (ORIGINAL_REQUEST.md, PROJECT.md, survey 3 handoff, CLAUDE.md)
-- [x] Inspect existing codebase for M3 components (byok, telemetry, audit, inngest functions, route)
-- [x] Plan step-by-step implementation and verification
-- [x] Implement/harden `apps/sophia-ai-factory/src/app/api/admin/byok-rotation/route.ts`
-  - Canonical route supporting POST rotation trigger and GET status probe
-  - Admin auth protected (`requireAdminWithRecentAuth`)
-  - Increments `key_version` in `key_versions`
-  - Returns 7-day dual-decrypt window (`dualDecryptWindowMs: 604800000`)
-  - Emits Inngest event `key.rotation.requested`
-  - Records SOC 2 CC7.2 audit log `key_rotation.requested`
-- [x] Verify/harden `apps/sophia-ai-factory/src/tree/byok/`
-  - AES-256-GCM Web Crypto native implementation with AAD tenant isolation
-  - `byok-crypto.ts` and `byok-audit-writer.ts` verified
-  - Unit tests in `src/tree/byok/__tests__/byok-rotation-route.test.ts` (5/5 passing)
-- [x] Verify/harden `apps/sophia-ai-factory/src/seed/telemetry/`
-  - Honeycomb export via native `fetch()` without blocking critical path
-  - SimpleSpanProcessor with OTLP HTTP exporters on Node/Edge platform ESM
-  - Higher-order route wrapper `instrumentRoute` in `instrument-api.ts`
-  - Unit tests in `src/seed/telemetry/__tests__/instrument-api.test.ts` (4/4 passing)
-  - `opentelemetry-setup.test.ts` (5/5 passing)
-  - Jittered exponential backoff D1 retry wrapper `withD1Retry` verified (6/6 passing)
-- [x] Verify/harden `apps/sophia-ai-factory/src/tree/audit/`
-  - Immutable hash-chain in `raas_audit_logs` (`previous_log_hash`, `content_hash`, `hash_chain_valid`)
-  - Deterministic content hashing `computeContentHash`
-  - Pure verification algorithm `verifyHashChain`
-  - Unit tests in `src/tree/audit/__tests__/hash-chain-verification.test.ts` (10/10 passing)
-  - Daily hash chain verification cron at `/api/cron/hash-chain-verification` verified
-- [x] Verify `src/forest/inngest/functions/key-rotation-reencrypt.ts` (250-row batch re-encryption) and `keyRotationCron` (4/4 passing)
-- [x] Run vitest suite across M3 targets (`npx vitest run src/tree/byok/ src/seed/telemetry/ src/tree/audit/`): 41 test files, 641 tests passing (100% pass rate)
-- [x] Verify layer boundaries clean: `bash scripts/check-layer-boundaries.sh` exit 0
-- [x] Zero TypeScript errors in all M3 owned files
-- [ ] Produce `handoff.md` and report completion to parent
+- [x] Read mandatory inputs (ORIGINAL_REQUEST.md, PROJECT.md, TEST_READY.md, Explorer handoffs M3-1, M3-2, M3-3, DISPATCH.md)
+- [x] Verify baseline tests pass (33/33 E2E, 402/402 unit/integration, 0 TS errors, 0 layer violations)
+- [x] Step 1: D1 Migration `apps/sophia-ai-factory/migrations/0278_enterprise_executive_bi.sql`
+- [x] Step 2: Seed Types `apps/sophia-ai-factory/src/seed/types/executive-bi.ts`
+- [x] Step 3: Domain Service `apps/sophia-ai-factory/src/tree/bi/metrics-aggregator.ts`
+- [x] Step 4: Domain Service `apps/sophia-ai-factory/src/tree/bi/export-formatter.ts`
+- [x] Step 5: Forest Service `apps/sophia-ai-factory/src/forest/bi/telegram-digest-sender.ts`
+- [x] Step 6: Forest Service `apps/sophia-ai-factory/src/forest/bi/email-digest-sender.ts`
+- [x] Step 7: Forest Service `apps/sophia-ai-factory/src/forest/bi/executive-digest-dispatcher.ts`
+- [x] Step 8: Edge API Route `apps/sophia-ai-factory/src/app/api/v1/analytics/export/route.ts`
+- [x] Step 9: Unit Tests
+  - [x] `src/__tests__/unit/enterprise/metrics-aggregator.test.ts`
+  - [x] `src/__tests__/unit/enterprise/export-formatter.test.ts`
+  - [x] `src/__tests__/unit/enterprise/digest-sender.test.ts`
+  - [x] `src/__tests__/unit/enterprise/export-route.test.ts`
+- [x] Step 10: Run full verification suite (E2E 33/33, unit/integration 458/458, TypeScript 0 errors, layer check clean)
+- [ ] Step 11: Produce comprehensive 5-component handoff report and notify parent
+

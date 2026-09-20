@@ -1,162 +1,246 @@
-# Handoff Report: Milestone 3 (Enterprise Security Vault, Key Rotation & Production Observability / R4)
+# Milestone 3 Implementation Handoff Report: Executive BI & Automated Reporting Engine
 
-**Agent**: `teamwork_preview_worker_m3`  
-**Role**: implementer, qa, specialist  
-**Date**: 2026-09-20  
-**Target Repository**: `/Users/macbook/sophia-ai-factory` (`apps/sophia-ai-factory`)  
-**Mission**: Implement Milestone 3 (M3: Enterprise Security Vault, Key Rotation & Production Observability / R4) authentically with complete test coverage and verification.
+**Role:** `teamwork_preview_worker` (`teamwork_preview_worker_m3`)  
+**Working Directory:** `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m3/`  
+**Parent Agent:** `78b5382f-0b81-4402-ad59-b06284d61c09` (`parent`)  
+**Milestone:** Milestone 3 (Executive BI & Automated Reporting Engine)  
+**Date:** 2026-09-20T06:12:00Z  
+**Handoff Type:** Hard (Complete, authenticated, verified implementation)  
 
 ---
 
 ## 1. Observation
 
-Direct observations from codebase inspection, implementation, and test execution:
+Direct observations and evidence gathered from the codebase, test executions, layer boundary validations, and TypeScript compilation:
 
-1. **Canonical BYOK Key Rotation Route (`/api/admin/byok-rotation`)**:
-   - Location: `apps/sophia-ai-factory/src/app/api/admin/byok-rotation/route.ts`
-   - Contract verification:
-     * Roadmap (`docs/development-roadmap.md:37`) and `ORIGINAL_REQUEST.md:587` specify the canonical endpoint as `/api/admin/byok-rotation`.
-     * The route was implemented with `dynamic = 'force-dynamic'`, exporting `POST` and `GET`.
-     * `POST` enforces admin authentication via `requireAdminWithRecentAuth(request)`. Unauthorized or non-admin requests return HTTP 403 Forbidden with `{ error: 'Admin access required' }`.
-     * `POST` generates a new version monotonically in table `key_versions` (`SELECT COALESCE(MAX(version), 0) + 1 AS next_version FROM key_versions`), generates a fresh 256-bit Web Crypto master key (`generateMasterKey()`), sets the 7-day dual-decrypt window (`dualDecryptWindowMs: 604800000`), logs the SOC 2 CC7.2 audit event (`key_rotation.requested`), and fires the Inngest background event `key.rotation.requested` with `{ keyVersion, oldVersion, reason }`.
-     * `POST` gracefully handles empty or non-JSON request bodies by falling back to `{ reason: 'Admin BYOK rotation' }` without throwing unhandled `SyntaxError`.
-     * `GET` returns current rotation status and active version:
-       `{ status: 'ready', activeVersion: number, dualDecryptWindowMs: 604800000, keyType: 'master', algorithm: 'AES-256-GCM' }`.
-   - Unit tests created: `apps/sophia-ai-factory/src/tree/byok/__tests__/byok-rotation-route.test.ts` (5 tests, all passing).
+### 1.1 Existing Baseline & Input Analysis
+1. Direct inspection of `/Users/macbook/sophia-ai-factory/.agents/orchestrator_enterprise_scale/PROJECT.md` lines 85–94 established the interface contracts:
+   - `aggregateExecutiveBIMetrics(db: D1Database, orgId: string, dateRange: DateRange): Promise<ExecutiveBIMetricsSummary>`
+   - `dispatchExecutiveDigest(db: D1Database, cadence: 'weekly' | 'monthly'): Promise<DigestDeliveryReceipt>`
+   - `createStreamingExportResponse(dataStream: AsyncIterable<unknown>, format: 'csv' | 'json', filename: string): Response`
+2. Direct inspection of `/Users/macbook/sophia-ai-factory/apps/sophia-ai-factory/src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts` (33 tests) verified the required behaviors:
+   - Peak MRR formula: $\text{mrrCents} = \max_{r \in \text{results}} (r.\text{mrr\_cents})$ (F1-1, S1).
+   - Throughput accumulation: $\sum r.\text{throughput\_count}$ (F1-3, S1).
+   - Viral score arithmetic mean: 2 decimal places rounding (F1-5, S1).
+   - ROI ratio: $\frac{\text{Affiliate Revenue}}{\text{Marketing Spend}}$ with safe fallback $99.0\times$ when spend is 0 and revenue $>0$ (B1), and $0.0\times$ when both are 0 (B2).
+   - Empty date range: returns zeroed metrics without throwing (F1-2).
+   - Date range exclusion: records with timestamps outside the query window are strictly excluded (B5).
+   - Multi-tenant data isolation: data for `orgA` never contaminates queries for `orgB` (P1).
+   - Telegram MarkdownV2 escaping: all 18 reserved characters (`_ * [ ] ( ) ~ ` > # + - = | { } . ! \`) must be escaped with a preceding backslash (F2-2).
+   - Telegram message length: strict conformance to 4096-character limit (F2-3).
+   - Email digest formatting: 2x2 KPI card grid + semantic list fallback + Milestone 1 `wrapWithAgencyBranding` (F3-1 to F3-5).
+   - RFC-4180 CSV export: `\r\n` line breaks, comma quoting, quote doubling `""`, CRLF escaping (F4-1 to F4-5, B4).
+   - Streaming JSON & NDJSON: deterministic formatting, empty set returning `[]` (F5-1 to F5-5).
+3. Inspection of `apps/sophia-ai-factory/migrations/` revealed that D1 table `executive_bi_metrics` was missing from real migrations (previously only simulated in `enterprise-test-harness.ts`).
 
-2. **Background Key Re-encryption Daemon & 90-Day Rotation Cron**:
-   - Location: `apps/sophia-ai-factory/src/forest/inngest/functions/key-rotation-reencrypt.ts`
-   - Verified `keyRotationReencrypt`:
-     * Listens on event `key.rotation.requested`.
-     * Iterates across 3 credential tables in batches of 250 (`BATCH_SIZE = 250`):
-       - `user_api_keys` (`SELECT user_id, provider, encrypted_key, key_version ... LIMIT 250 OFFSET ?`)
-       - `user_provider_credentials` (`SELECT id, user_id, provider, encrypted_value, key_version ... LIMIT 250 OFFSET ?`)
-       - `platform_credentials` (`SELECT id, user_id, platform, access_token_encrypted, refresh_token_encrypted, key_version ... LIMIT 250 OFFSET ?`)
-     * Re-encrypts with new `keyVersion` and updates rows atomically in D1.
-     * Retires the old key version in `key_versions`: `UPDATE key_versions SET is_active = 0, rotated_at = datetime(?, 'unixepoch') WHERE version = ? AND is_active = 1`.
-     * Emits SOC 2 audit events: `key_rotation.reencrypt_start` and `key_rotation.reencrypt_complete`.
-   - Verified `keyRotationCron`:
-     * Runs quarterly on `0 0 1 */3 *`.
-     * Inspects active key age in days: `(Date.now() - created_at) / 86400000`.
-     * If `< 90` days, skips rotation with audit log `key_rotation.cron_skip_too_young`.
-     * If `>= 90` days, generates new master key version in `key_versions` and fires Inngest event `key.rotation.requested`.
-   - Tests: `src/tree/byok/key-rotation.test.ts` (8 tests), `src/tree/byok/key-rotation-integration.test.ts` (4 tests), `src/forest/inngest/functions/key-rotation-cron.test.ts` (4 tests) — all passing.
+### 1.2 Implemented Artifacts
+The following 12 files were created or modified:
+1. `apps/sophia-ai-factory/migrations/0278_enterprise_executive_bi.sql`:
+   - Creates table `executive_bi_metrics` with columns `(id, org_id, period_start, period_end, mrr_cents, throughput_count, viral_score, affiliate_revenue_cents, marketing_spend_cents, channel, created_at)`.
+   - Creates composite index `idx_executive_bi_metrics_org_period` on `(org_id, period_start, period_end)`.
+   - Creates indexes on `(org_id, created_at DESC)`, `(period_start)`, and `(period_end)`.
+2. `apps/sophia-ai-factory/src/seed/types/executive-bi.ts`:
+   - Foundational contracts: `DateRange`, `ExecutiveBIMetricsSummary`, `ExecutiveBIMetricRow`, `ExecutiveBIMetricRecord`, `CreateExecutiveBIMetricInput`, `ExecutiveBIExportFormat`, `ExecutiveBIExportOptions`, `ExecutiveBIError`.
+   - Zero upper-layer imports (pure seed layer).
+3. `apps/sophia-ai-factory/src/tree/bi/metrics-aggregator.ts`:
+   - `aggregateExecutiveBIMetrics(db, orgId, dateRange)`
+   - `recordExecutiveBIMetric(db, input)`
+   - `recordExecutiveBIMetricsBatch(db, inputs)` (overloaded to support both `(db, inputs)` and `(db, orgId, inputs)`)
+   - `calculateRoiRatio(affiliateRevenueCents, marketingSpendCents)`
+   - `calculateAverageViralScore(scores)`
+   - `createEmptyBIMetricsSummary(orgId, dateRange)`
+   - `isValidDateRange(range)`
+   - Zero upper-layer imports (pure tree layer).
+4. `apps/sophia-ai-factory/src/tree/bi/export-formatter.ts`:
+   - `escapeCsvField(val, delimiter, sanitizeFormulas)`
+   - `formatStreamingCsv(headers, rows, options)`
+   - `streamCsv(headers, asyncRows, options)`
+   - `streamJsonArray(asyncRecords, options)`
+   - `createStreamingExportResponse(dataStream, format, filename, options)`
+   - Zero upper-layer imports (pure tree layer).
+5. `apps/sophia-ai-factory/src/forest/bi/telegram-digest-sender.ts`:
+   - `escapeTelegramMarkdownV2(text)` (all 18 reserved characters + `\`)
+   - `formatTelegramDigest(metrics, branding)`
+   - `splitTelegramMarkdownV2(text, maxLength = 4096)`
+   - `sendTelegramExecutiveDigest(telegramConfig, metrics, branding)`
+   - `sendTelegramDigest(metrics, options)` alias
+   - Two-tier dispatch with MarkdownV2 parse failure fallback to plain text.
+6. `apps/sophia-ai-factory/src/forest/bi/email-digest-sender.ts`:
+   - `renderExecutiveDigestInnerHtml(metrics, options)`
+   - `formatEmailDigest(metrics, branding, options)` (2x2 KPI grid + semantic list fallback + Milestone 1 `wrapWithAgencyBranding`)
+   - `sendEmailExecutiveDigest(resendApiKey, recipientEmail, metrics, branding, options)`
+   - `sendEmailDigest(metrics, options)` alias
+7. `apps/sophia-ai-factory/src/forest/bi/executive-digest-dispatcher.ts`:
+   - `dispatchExecutiveDigest(db, cadence, options)`
+   - Dual-channel delivery coordinator (Email + Telegram) with tenant isolation and delivery receipts.
+8. `apps/sophia-ai-factory/src/app/api/v1/analytics/export/route.ts`:
+   - Streaming GET and POST route handlers with `getCurrentUser()`, `getD1()`, `resolveOrgId()`, and `assertTenantScope(userOrgId, requestedOrgId)` protection.
+   - Formats: CSV, JSON, NDJSON.
+   - Paged cursor streaming from D1.
+9. `apps/sophia-ai-factory/src/__tests__/unit/enterprise/metrics-aggregator.test.ts`:
+   - 13 comprehensive unit tests verifying pure calculations, D1 aggregations, date exclusions, multi-tenant isolation, and batch insertion.
+10. `apps/sophia-ai-factory/src/__tests__/unit/enterprise/export-formatter.test.ts`:
+    - 19 unit tests covering RFC-4180 CSV escaping, CRLF lines, quote doubling, formula sanitization, Web Streams CSV generator, and streaming JSON/NDJSON.
+11. `apps/sophia-ai-factory/src/__tests__/unit/enterprise/digest-sender.test.ts`:
+    - 16 unit tests covering MarkdownV2 18-char escaping, currency formatting, safe chunking, Telegram plain-text fallback, 2x2 email KPI cards, and dispatcher orchestration.
+12. `apps/sophia-ai-factory/src/__tests__/unit/enterprise/export-route.test.ts`:
+    - 8 unit & integration tests verifying authentication, D1 lookup, tenant isolation guard (`assertTenantScope`), input validation, and streaming GET/POST responses.
 
-3. **OpenTelemetry Production Instrumentation with Honeycomb**:
-   - Locations:
-     * `apps/sophia-ai-factory/src/seed/telemetry/opentelemetry-setup.ts`
-     * `apps/sophia-ai-factory/src/seed/telemetry/instrument-api.ts`
-     * `apps/sophia-ai-factory/src/seed/db/d1-retry.ts`
-   - Verified:
-     * OTLP HTTP exporters use `@opentelemetry/exporter-*-otlp-http/build/esm/platform/node/...` which binds to standard `fetch()`, avoiding browser DOM globals (`window`, `Blob`) that crash Cloudflare Workers.
-     * `instrumentRoute` wraps route handlers non-blockingly: handler executes immediately, returning response to the caller while span lifecycle, duration computation, and in-memory ring buffer metrics (`recordMetrics(options.route, duration, isError)`) run in `.finally()`.
-     * D1 transient error handling with jittered exponential backoff: `withD1Retry` detects `SQLITE_BUSY`, `database is locked`, `d1_error`, and transient connection failures, retrying up to 3 times with randomized jitter (`0.75 + Math.random() * 0.5`).
-   - Unit tests created: `apps/sophia-ai-factory/src/seed/telemetry/__tests__/instrument-api.test.ts` (4 tests, all passing).
-   - Tests verified: `src/seed/telemetry/__tests__/opentelemetry-setup.test.ts` (5 tests), `src/seed/db/d1-retry.test.ts` (6 tests) — all passing.
+### 1.3 Verification Command Output Proofs
+1. **E2E Test Suite (33 tests)**:
+   ```bash
+   node ./node_modules/vitest/vitest.mjs run src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts
+   ```
+   *Result:*
+   ```
+   ✓ src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts (33 tests) 18ms
+   Test Files  1 passed (1)
+        Tests  33 passed (33)
+     Duration  566ms
+   Exit code: 0
+   ```
+2. **Unit & Integration Test Suite (19 files, 458 tests)**:
+   ```bash
+   node ./node_modules/vitest/vitest.mjs run src/__tests__/unit/enterprise/ src/__tests__/integration/enterprise/
+   ```
+   *Result:*
+   ```
+   ✓ src/__tests__/integration/enterprise/tenant-isolation-integration.test.ts (8 tests)
+   ✓ src/__tests__/integration/enterprise/m1-adversarial-challenger.test.ts (80 tests)
+   ✓ src/__tests__/integration/enterprise/org-invitations-integration.test.ts (6 tests)
+   ✓ src/__tests__/unit/enterprise/export-formatter.test.ts (19 tests)
+   ✓ src/__tests__/integration/enterprise/branding-stress.test.ts (23 tests)
+   ✓ src/__tests__/integration/enterprise/invitations-stress.test.ts (22 tests)
+   ✓ src/__tests__/unit/enterprise/digest-sender.test.ts (16 tests)
+   ✓ src/__tests__/unit/enterprise/rbac-matrix.test.ts (40 tests)
+   ✓ src/__tests__/unit/enterprise/theme-resolver.test.ts (16 tests)
+   ✓ src/__tests__/unit/enterprise/metrics-aggregator.test.ts (13 tests)
+   ✓ src/__tests__/unit/enterprise/email-styler.test.ts (15 tests)
+   ✓ src/__tests__/unit/enterprise/custom-domains.test.ts (24 tests)
+   ✓ src/__tests__/unit/enterprise/seat-quotas.test.ts (6 tests)
+   ✓ src/__tests__/unit/enterprise/export-route.test.ts (8 tests)
+   ✓ src/__tests__/integration/enterprise/custom-domains-integration.test.ts (14 tests)
+   ✓ src/__tests__/integration/enterprise/custom-domains-stress.test.ts (27 tests)
+   ✓ src/__tests__/integration/enterprise/m2-adversarial-challenger.test.ts (9 tests)
+   ✓ src/__tests__/integration/enterprise/rbac-isolation-stress.test.ts (108 tests)
+   ✓ src/__tests__/unit/enterprise/invitation-token.test.ts (4 tests)
 
-4. **SOC 2 Type I Audit Evidence & Immutable Hash-Chain Audit Logging**:
-   - Locations:
-     * Schema: `migrations/0183_raas_audit_logs_hash_chain.sql` (`previous_log_hash TEXT`, `content_hash TEXT NOT NULL`, `hash_chain_valid INTEGER DEFAULT 1`)
-     * Hashing: `apps/sophia-ai-factory/src/seed/security/crypto-utils.ts:145-160` (`computeContentHash`)
-     * Verification: `apps/sophia-ai-factory/src/tree/audit/crypto-utils-signing.ts:79-123` (`verifyHashChain`)
-     * Daily Cron: `apps/sophia-ai-factory/src/app/api/cron/hash-chain-verification/route.ts`
-   - Verified:
-     * Deterministic content hashing canonical format: `action|license_nonce|user_id|ip_address|created_at|previousHash`, hashed via SHA-256 with `AUDIT_HASH_SALT`.
-     * `verifyHashChain` validates chronological continuity: asserts `log.previous_log_hash === prevRecord.content_hash` and `log.content_hash === computeContentHash(log, prevHash)`.
-     * Detects modified action, user impersonation, altered timestamp, swapped logs, and deleted logs with exact invalid index and diagnostic reason.
-     * Daily verification cron (`GET /api/cron/hash-chain-verification`) runs `scripts/audit/verify-hash-chain.mjs`, records cron run status in D1, and dispatches critical alerts on failure.
-   - Unit tests created: `apps/sophia-ai-factory/src/tree/audit/__tests__/hash-chain-verification.test.ts` (10 tests, all passing).
-   - Tests verified: `src/tree/audit/crypto-utils-signing.test.ts` (27 tests, all passing).
-
-5. **Test and Gate Execution Output**:
-   - `export PATH="/opt/homebrew/bin:/usr/bin:/bin" && npx vitest run src/tree/byok/ src/seed/telemetry/ src/tree/audit/`:
-     ```
-     Test Files  41 passed (41)
-          Tests  641 passed (641)
-       Duration  4.17s
-     ```
-   - `export PATH="/opt/homebrew/bin:/usr/bin:/bin" && bash scripts/check-layer-boundaries.sh`:
-     ```
-     🔍 Checking layer boundaries...
-     ✅ All layer boundaries clean
-     ```
-   - `export PATH="/opt/homebrew/bin:/usr/bin:/bin" && npx eslint src/app/api/admin/byok-rotation/ src/tree/byok/__tests__/ src/seed/telemetry/__tests__/instrument-api.test.ts src/tree/audit/__tests__/`:
-     ```
-     0 lint errors.
-     ```
-   - TypeScript compilation across all M3-owned files: 0 errors.
+   Test Files  19 passed (19)
+        Tests  458 passed (458)
+     Duration  2.59s
+   Exit code: 0
+   ```
+3. **TypeScript Strict Typecheck**:
+   ```bash
+   node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit
+   ```
+   *Result:*
+   ```
+   Exit code: 0 (0 errors)
+   ```
+4. **Sophia 4-Layer Architecture Boundary Check**:
+   ```bash
+   bash scripts/check-layer-boundaries.sh
+   ```
+   *Result:*
+   ```
+   🔍 Checking layer boundaries...
+   ✅ All layer boundaries clean
+   Exit code: 0
+   ```
 
 ---
 
 ## 2. Logic Chain
 
-1. **Route Implementation and Interface Symmetry**:
-   - The roadmap and prompt mandate `/api/admin/byok-rotation`.
-   - The preexisting rotation trigger existed at `src/app/api/admin/keys/rotate/route.ts`.
-   - Implementing `src/app/api/admin/byok-rotation/route.ts` with delegation to `src/app/api/admin/keys/rotate/route.ts` preserves exact functional parity, eliminates duplicate logic, handles empty payloads safely, and provides a GET status probe for administrator visibility.
+1. **Schema Migration to D1 Persistence (`0278_enterprise_executive_bi.sql`):**
+   - *Premise*: In prior runs, `executive_bi_metrics` only existed inside `enterprise-test-harness.ts`.
+   - *Deduction*: Production deployment and D1 migration scripts require a physical SQL file conforming to D1 PRAGMA standards.
+   - *Action*: Created `migrations/0278_enterprise_executive_bi.sql` with `ON DELETE CASCADE` foreign keys to `organizations(id)` and composite indexing on `(org_id, period_start, period_end)` to support high-performance paged range scans.
 
-2. **Non-Blocking Observability**:
-   - Serverless Cloudflare Workers environments enforce strict CPU wall-time and disconnect limits.
-   - Using Node platform ESM OTLP exporters guarantees native `fetch()` transport without referencing DOM-only globals (`window`, `Blob`).
-   - `instrumentRoute` ends spans in `.finally()` and buffers latency measurements into an in-memory ring buffer (`metrics.ts`), ensuring zero overhead on request latency and preventing isolate memory leaks via a 1,000-entry sliding window.
+2. **Seed Layer Independence (`seed/types/executive-bi.ts`):**
+   - *Premise*: The 4-layer architecture strictly prohibits `seed` from importing `tree`, `forest`, or `land`.
+   - *Deduction*: All analytical data contracts (`DateRange`, `ExecutiveBIMetricsSummary`, `CreateExecutiveBIMetricInput`, error codes) must reside in `src/seed/types/executive-bi.ts` with zero dependencies.
+   - *Verification*: `bash scripts/check-layer-boundaries.sh` confirmed 0 seed upper-layer violations.
 
-3. **Tamper-Evident Hash Chain Continuity**:
-   - SOC 2 CC7.2 requires proving audit logs cannot be modified undetected.
-   - The SHA-256 hash chain links each audit log entry to its predecessor (`previous_log_hash`).
-   - Any tampering (editing user ID, deleting an entry, swapping entries, or altering timestamps) immediately breaks `verifyHashChain`, returning the exact index of invalidation.
+3. **Domain Calculation Invariants (`tree/bi/metrics-aggregator.ts`):**
+   - *Peak MRR*: Evaluated as $\max(r.\text{mrr\_cents})$ across all batch runs within the period window.
+   - *Zero-Division Protection*: In `calculateRoiRatio`, when `marketingSpendCents === 0` and `affiliateRevenueCents > 0`, returns safe multiplier `99.0` (as verified by test B1). When both revenue and spend are 0, returns `0.0` (test B2). When spend $>0$, returns $\frac{\text{revenue}}{\text{spend}}$ rounded to 2 decimal places.
+   - *Tenant Isolation*: The D1 SQL query explicitly binds `org_id = ?1 AND period_start >= ?2 AND period_end <= ?3`, ensuring zero competitor metrics leakage.
+
+4. **Edge Streaming Architecture (`tree/bi/export-formatter.ts`):**
+   - *Memory Constraint*: Cloudflare Workers isolates have a strict 128MB memory limit.
+   - *Deduction*: Direct string buffering of large datasets risks isolate OOM.
+   - *Action*: Implemented Web Streams `ReadableStream<Uint8Array>` generators (`streamCsv`, `streamJsonArray`) using native `TextEncoder`. Each row is encoded and enqueued as an independent chunk.
+   - *RFC-4180 Compliance*: Standard delimiter `,`, CRLF `\r\n` line endings, and double-quote doubling `""` for any field containing commas, quotes, or newlines.
+
+5. **Multi-Channel Automated Digest Delivery (`forest/bi/`):**
+   - *Telegram*: Bot API MarkdownV2 requires escaping 18 reserved characters. `escapeTelegramMarkdownV2` uses regex `/([_*\[\]()~`>#+\-=|{}.!\\])/g` to escape every reserved character. `splitTelegramMarkdownV2` guards against splitting between backslashes and escaped tokens or inside surrogate pair emoji code units. Two-tier dispatch gracefully falls back to plain text if Telegram returns HTTP 400.
+   - *Email*: `renderExecutiveDigestInnerHtml` builds a responsive 2x2 table grid of KPI cards with a semantic list fallback for screen readers and text clients, wrapped inside Milestone 1's `wrapWithAgencyBranding`.
+   - *Dispatcher*: `dispatchExecutiveDigest` queries all active organizations, aggregates their period metrics, and coordinates dual-channel delivery, compiling an execution receipt.
+
+6. **API Route Multi-Tenant Security (`app/api/v1/analytics/export/route.ts`):**
+   - Enforces 4-step authorization: `getCurrentUser()` -> `getD1()` -> `resolveOrgId()` -> `assertTenantScope()`.
+   - Any cross-tenant attempt immediately fails closed with HTTP 403 `CROSS_TENANT_VIOLATION`.
 
 ---
 
 ## 3. Caveats
 
-- **External Honeycomb Staging/Production Key**: If `HONEYCOMB_API_KEY` is not present in wrangler secrets, `opentelemetry-setup.ts` falls back to checking `platform_configs` (`honeycomb_api_key`). In environments where neither is configured, the OTel exporter fails silently without breaking request execution.
-- **Concurrent Worker M1 Changes**: During `npm run type-check`, temporary TypeScript errors in `src/forest/ai/provider-factory.ts` were observed due to work in progress by peer agent `teamwork_preview_worker_m1`. Zero TypeScript errors exist in any M3-owned files.
+1. **Resend and Telegram API Credentials in Local/CI Environments:**
+   - When running in automated test or CI environments without live `RESEND_API_KEY` or `TELEGRAM_BOT_TOKEN`, both `sendEmailExecutiveDigest` and `sendTelegramExecutiveDigest` automatically operate in dry-run mode (`provider: 'dry-run'`, `skipped: true`) without throwing unhandled exceptions.
+2. **D1 Remote Migration Parity:**
+   - Migration `0278_enterprise_executive_bi.sql` has been created and verified locally against in-memory SQLite (`node:sqlite DatabaseSync`). During Milestone 5 production deployment, this migration must be applied to the remote Cloudflare D1 database `sophia-raas-db` via `bash scripts/apply-migrations.sh`.
+3. **Excel BOM for Non-ASCII Characters:**
+   - Standard RFC-4180 CSV does not require a Byte Order Mark (BOM). If tenants download CSV files containing Vietnamese or non-ASCII characters directly into Microsoft Excel, `includeBom: true` can be passed to prefix `\uFEFF`.
 
 ---
 
 ## 4. Conclusion
 
-Milestone 3 (M3: Enterprise Security Vault, Key Rotation & Production Observability / R4) is completely and authentically implemented:
-- The canonical `/api/admin/byok-rotation` route is fully operational with admin auth, 7-day dual-decrypt window, Inngest event dispatch, and SOC 2 CC7.2 audit logging.
-- Background re-encryption (`keyRotationReencrypt`) in 250-row batches and the quarterly 90-day rotation cron (`keyRotationCron`) are verified.
-- OpenTelemetry instrumentation for Honeycomb via native `fetch()` and D1 retry resilience (`withD1Retry`) are verified with unit tests.
-- SOC 2 Type I immutable hash-chain logging and verification (`computeContentHash`, `verifyHashChain`, daily verification cron) are verified with comprehensive test suites.
-- All 41 test files (641 tests) across `src/tree/byok/`, `src/seed/telemetry/`, and `src/tree/audit/` pass cleanly with 100% success rate.
+Milestone 3 (Executive BI & Automated Reporting Engine) has been fully implemented, verified, and certified:
+- D1 schema migration `0278_enterprise_executive_bi.sql` is defined with composite indexing.
+- Seed types in `seed/types/executive-bi.ts` define foundational contracts with zero violations.
+- Domain services in `tree/bi/` implement peak MRR, video throughput, viral score mean, safe ROI ratios, and Web Streams RFC-4180 CSV / JSON serialization.
+- Forest services in `forest/bi/` coordinate Telegram MarkdownV2 digests with safe chunking, responsive 2x2 HTML email digests with white-label agency branding, and multi-tenant batch dispatching.
+- Edge API route `/api/v1/analytics/export` streams exports with strict Better Auth and `assertTenantScope` multi-tenant protection.
+- 100% of E2E tests (33/33 pass), 100% of unit/integration tests (458/458 pass across 19 suites), 0 TypeScript errors, and 0 layer architecture boundary violations.
 
 ---
 
 ## 5. Verification Method
 
-To independently verify Milestone 3, execute the following commands from `apps/sophia-ai-factory`:
+To independently reproduce and verify this work:
 
-1. **Run All M3 Vitest Suites**:
+1. **Run Executive BI E2E Test Suite (33 tests)**:
    ```bash
-   export PATH="/opt/homebrew/bin:/usr/bin:/bin"
    cd apps/sophia-ai-factory
-   npx vitest run src/tree/byok/ src/seed/telemetry/ src/tree/audit/
+   node ./node_modules/vitest/vitest.mjs run src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts
    ```
-   *Expected output*: `Test Files 41 passed (41)`, `Tests 641 passed (641)`.
+   *Expected:* 33/33 passed in <1s.
 
-2. **Run Route and Re-encryption Integration Tests**:
+2. **Run All Enterprise Unit & Integration Tests (19 test files, 458 tests)**:
    ```bash
-   npx vitest run src/tree/byok/__tests__/byok-rotation-route.test.ts src/tree/byok/key-rotation.test.ts src/tree/byok/key-rotation-integration.test.ts src/forest/inngest/functions/key-rotation-cron.test.ts
+   cd apps/sophia-ai-factory
+   node ./node_modules/vitest/vitest.mjs run src/__tests__/unit/enterprise/ src/__tests__/integration/enterprise/
    ```
-   *Expected output*: All 21 tests pass.
+   *Expected:* 19 passed, 458 passed in <3s.
 
-3. **Run Observability and D1 Retry Tests**:
+3. **Run TypeScript Strict Compilation Check**:
    ```bash
-   npx vitest run src/seed/telemetry/__tests__/ src/seed/db/d1-retry.test.ts
+   cd apps/sophia-ai-factory
+   node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit
    ```
-   *Expected output*: All 15 tests pass.
+   *Expected:* Exit code 0, zero errors.
 
-4. **Run SOC 2 Hash Chain Verification Tests**:
+4. **Run Sophia 4-Layer Architecture Boundary Linter**:
    ```bash
-   npx vitest run src/tree/audit/__tests__/hash-chain-verification.test.ts src/tree/audit/crypto-utils-signing.test.ts
-   ```
-   *Expected output*: All 37 tests pass.
-
-5. **Verify Layer Boundaries**:
-   ```bash
+   cd apps/sophia-ai-factory
    bash scripts/check-layer-boundaries.sh
    ```
-   *Expected output*: `✅ All layer boundaries clean`.
+   *Expected:* "All layer boundaries clean", Exit code 0.
+
+**Invalidation Conditions:**
+- Any test failure in `executive-bi.e2e.test.ts` or `src/__tests__/unit/enterprise/`.
+- Any boundary violation detected by `scripts/check-layer-boundaries.sh`.
+- Any TypeScript compilation error from `tsc --noEmit`.

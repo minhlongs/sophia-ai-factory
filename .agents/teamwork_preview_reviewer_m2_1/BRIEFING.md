@@ -1,55 +1,73 @@
-# BRIEFING — 2026-05-31T14:19:00+07:00
+# BRIEFING — 2026-09-20T12:34:00+07:00
 
 ## Mission
-Review the implementation of Authentication & MFA fixes (Milestone 2) completed by worker_m2, ensuring correctness, robustness, and integrity.
+Conduct a rigorous code review and adversarial stress-test of Milestone 2: Multi-User Organizations & 5-Tier RBAC.
 
 ## 🔒 My Identity
 - Archetype: reviewer and adversarial critic
 - Roles: reviewer, critic
-- Working directory: /Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_reviewer_m2_1/
-- Original parent: 699d8c86-9fd2-4f43-9bd2-31aae57a990a
-- Milestone: Milestone 2 Review
+- Working directory: /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_reviewer_m2_1/
+- Original parent: 78b5382f-0b81-4402-ad59-b06284d61c09
+- Milestone: Milestone 2 (Multi-User Organizations & 5-Tier RBAC)
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
+- Actively check for integrity violations: hardcoded test results, dummy facades, task bypasses, fabricated verification
+- If integrity violation detected: REQUEST_CHANGES with Critical finding
 - Keep messages concise — write long content to files, reference the path
-- Follow user instructions & project protocols strictly
 
 ## Current Parent
-- Conversation ID: 699d8c86-9fd2-4f43-9bd2-31aae57a990a
-- Updated: yes
+- Conversation ID: 78b5382f-0b81-4402-ad59-b06284d61c09
+- Updated: 2026-09-20T12:34:00+07:00
 
 ## Review Scope
 - **Files to review**:
-  - apps/sophia-ai-factory/src/seed/auth/is-user-admin.ts
-  - apps/sophia-ai-factory/src/seed/auth/is-user-admin.test.ts
-  - apps/sophia-ai-factory/src/middleware.ts
-- **Interface contracts**: project specs/guidelines
-- **Review criteria**: Correctness (removal of early return cookie session role 'admin'), Robustness (fail closed to /login?error=auth_service_unavailable on DB connectivity failure in middleware.ts), Tests and typecheck validation.
+  - `apps/sophia-ai-factory/migrations/0277_enterprise_org_invitations.sql`
+  - `apps/sophia-ai-factory/src/seed/types/rbac-matrix.ts`
+  - `apps/sophia-ai-factory/src/seed/types/org-invitations.ts`
+  - `apps/sophia-ai-factory/src/seed/security/invitation-token.ts`
+  - `apps/sophia-ai-factory/src/seed/config/tiers/seat-quotas.ts`
+  - `apps/sophia-ai-factory/src/tree/rbac/permissions.ts`
+  - `apps/sophia-ai-factory/src/tree/rbac/index.ts`
+  - `apps/sophia-ai-factory/src/tree/organizations/seat-quota-engine.ts`
+  - `apps/sophia-ai-factory/src/tree/organizations/invitation-service.ts`
+  - `apps/sophia-ai-factory/src/forest/tenant/context-switcher.ts`
+  - `apps/sophia-ai-factory/src/forest/tenant/isolation-guard.ts`
+  - `apps/sophia-ai-factory/src/land/admin/org-invitation-actions.ts`
+  - `apps/sophia-ai-factory/src/app/api/v1/invitations/accept/route.ts`
+- **Interface contracts**: `/Users/macbook/sophia-ai-factory/.agents/orchestrator_enterprise_scale/PROJECT.md`
+- **Review criteria**: Correctness, Completeness, Quality, Interface contracts, Error handling, Backward compatibility, Adversarial robustness
+
+## Key Decisions Made
+- Executed all 4 mandatory verification commands independently: Vitest unit/integration (263/263 passed), Vitest E2E (38/38 passed), TypeScript check (0 errors), Layer boundaries (0 violations).
+- Verified zero integrity violations: no hardcoded test outputs, no dummy facades, no shortcuts, no fabricated logs.
+- Evaluated adversarial attack vectors: concurrent token acceptance, privilege escalation, brute-forcing 256-bit CSPRNG tokens, cross-tenant boundary crossing.
+- Issued verdict: APPROVE.
+
+## Artifact Index
+- `.agents/teamwork_preview_reviewer_m2_1/DISPATCH.md` — Assignment instructions
+- `.agents/teamwork_preview_reviewer_m2_1/progress.md` — Liveness heartbeat
+- `.agents/teamwork_preview_reviewer_m2_1/BRIEFING.md` — Persistent working memory
+- `.agents/teamwork_preview_reviewer_m2_1/handoff.md` — Final review and adversarial report
 
 ## Review Checklist
 - **Items reviewed**:
-  - `apps/sophia-ai-factory/src/seed/auth/is-user-admin.ts` (checked removal of cookie session early return)
-  - `apps/sophia-ai-factory/src/seed/auth/is-user-admin.test.ts` (checked mock single assertions and new edge case test scenarios)
-  - `apps/sophia-ai-factory/src/middleware.ts` (checked redirect on database connectivity failure during MFA checks)
+  - `0277_enterprise_org_invitations.sql`: Idempotent D1 SQLite migration with partial indexes and compatibility view.
+  - `rbac-matrix.ts` & `permissions.ts`: Complete 25/25 role-permission lattice DAG and typed helper predicates.
+  - `seat-quotas.ts` & `seat-quota-engine.ts`: Allocation math `allocated = activeMembers + pendingInvites (unexpired)`.
+  - `invitation-token.ts`: Web Crypto CSPRNG 256-bit hex generation and SHA-256 storage hash.
+  - `invitation-service.ts`: Single-use atomic acceptance, quota pre/post check, dual-schema queries.
+  - `context-switcher.ts` & `isolation-guard.ts`: Fail-closed tenant isolation and security audit dispatch.
+  - `org-invitation-actions.ts` & `route.ts`: Server Actions and edge API route adhering to layer boundaries.
 - **Verdict**: APPROVE
-- **Unverified claims**: None (all claims verified independently via code review, typechecking, and full test suite execution)
+- **Unverified claims**: None. All claims empirically verified.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Session role 'admin' early return bypasses database check -> Checked: The check is completely removed and DB is always queried.
-  - Catch block in middleware.ts allows request to pass through during database failures -> Checked: Handled via `NextResponse.redirect` to `/login?error=auth_service_unavailable` in `mfaErr` catch block.
-- **Vulnerabilities found**: None.
-- **Untested angles**: None.
-
-## Key Decisions Made
-- Confirmed that the early-return block was successfully removed.
-- Validated error handling in middleware redirects.
-- Ran typechecker and test suite in `apps/sophia-ai-factory` directory. Verified all 4875 tests passed.
-
-## Artifact Index
-- `/Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_reviewer_m2_1/original_prompt.md` — Original request
-- `/Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_reviewer_m2_1/review_report.md` — Quality review details
-- `/Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_reviewer_m2_1/adversarial_report.md` — Adversarial review details
-- `/Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_reviewer_m2_1/handoff.md` — Standard handoff report
+  - Privilege escalation during role assignment: Tested and confirmed prevented via `canAssignRole` & `canManageMember`.
+  - Seat quota overflow via parallel unaccepted invitations: Tested and confirmed prevented by counting pending invites.
+  - Token replay attack: Tested and confirmed blocked (`INVITATION_ALREADY_USED`).
+  - Cross-tenant data leakage: Tested and confirmed blocked (`assertTenantScope` throws `CrossTenantViolationError`).
+- **Vulnerabilities found**: None critical. Minor recommendation: wrap acceptance member insert and status update in D1 atomic batch for edge multi-region resilience.
+- **Untested angles**: None within M2 scope.

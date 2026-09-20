@@ -1,373 +1,813 @@
-# Milestone 3 Explorer 3 Handoff Report: Blueprint Templates, Cost Estimator & Test Specifications
+# Handoff Report: Streaming Export API & RFC-4180 Serialization
 
-**Author**: teamwork_preview_explorer_m3_3  
-**Date**: 2026-09-19  
-**Working Directory**: `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_explorer_m3_3`  
-**Target Milestone**: Milestone 3 (Bilingual Creative Studio & Blueprint UI)  
-**Parent Agent**: `888683f7-30ce-42ff-840e-2e0b8eaaa575`  
+**Agent**: `teamwork_preview_explorer_m3_3`  
+**Milestone**: Milestone 3 (Executive BI & Automated Reporting Engine)  
+**Date**: 2026-09-20  
+**Status**: Complete (Hard Handoff)  
+**Target Files Designed**:
+1. `apps/sophia-ai-factory/src/tree/bi/export-formatter.ts` (Pure domain serializer & Web Streams generator)
+2. `apps/sophia-ai-factory/src/app/api/v1/analytics/export/route.ts` (Streaming Edge API Route Handler)
 
 ---
 
 ## 1. Observation
 
-### 1.1. Starter Blueprint Templates (`first-run-template.ts`)
-Inspection of `apps/sophia-ai-factory/src/land/missions/first-run-template.ts` revealed:
-- **Registry & Types** (lines 8–30):
-  - `TemplateId = 'viral_shorts_explainer' | 'affiliate_product_showcase' | 'daily_news_wisdom'`
-  - `FirstRunTemplate` interface mandates:
+Direct observations and evidence gathered from the codebase, test harness, migration files, and existing export routes:
+
+### 1.1 E2E Test Contract (`apps/sophia-ai-factory/src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts`)
+The contract for executive BI analytics export is codified in Tier 1 (Features F4 & F5), Tier 2 (Boundary B4 & B5), Tier 3 (P2), and Tier 4 (S1):
+- **Feature F4: Streaming CSV Export with RFC-4180 Compliance** (Lines 263–298):
+  - `F4-1`: Generates valid RFC-4180 CSV header and rows separated by `\r\n`.
     ```typescript
-    id: TemplateId;
-    name: LocalizedString;
-    description: LocalizedString;
-    badge: LocalizedString;
-    durationSeconds: number;
-    aspectRatio: '9:16';
-    targetPlatform: 'youtube_shorts' | 'tiktok' | 'instagram_reels';
-    targetWordCount: number;
-    estimatedScenes: number;
-    defaultTopic: LocalizedString;
-    suggestedPrompts: LocalizedString[];
-    voiceStyle: string;
-    visualStyle: string;
-    callToAction: LocalizedString;
+    const headers = ['period', 'mrr_usd', 'throughput', 'roi'];
+    const rows = [
+      { period: '2024-06', mrr_usd: '3000.00', throughput: 100, roi: '3.0x' },
+      { period: '2024-07', mrr_usd: '4500.00', throughput: 150, roi: '3.5x' },
+    ];
+    const csv = formatStreamingCsv(headers, rows);
+    const lines = csv.split('\r\n');
+    expect(lines).toHaveLength(3);
+    expect(lines[0]).toBe('period,mrr_usd,throughput,roi');
+    expect(lines[1]).toBe('2024-06,3000.00,100,3.0x');
     ```
-- **3 Concrete Templates Defined** (`FIRST_RUN_TEMPLATES`, lines 32–167):
-  1. `viral_shorts_explainer`:
-     - Duration: `60s`, Aspect Ratio: `'9:16'`, Platform: `'youtube_shorts'`
-     - Word Count: `140`, Estimated Scenes: `5`
-     - Styles: `voiceStyle: 'dynamic_hook'`, `visualStyle: 'cinematic_vibrant'`
-     - 3 Suggested Prompts in both `en` and `vi`.
-  2. `affiliate_product_showcase`:
-     - Duration: `30s`, Aspect Ratio: `'9:16'`, Platform: `'tiktok'`
-     - Word Count: `75`, Estimated Scenes: `3`
-     - Styles: `voiceStyle: 'enthusiastic_recommender'`, `visualStyle: 'product_clean_modern'`
-     - 3 Suggested Prompts in both `en` and `vi`.
-  3. `daily_news_wisdom`:
-     - Duration: `45s`, Aspect Ratio: `'9:16'`, Platform: `'youtube_shorts'`
-     - Word Count: `110`, Estimated Scenes: `4`
-     - Styles: `voiceStyle: 'calm_authoritative'`, `visualStyle: 'editorial_minimal'`
-     - 3 Suggested Prompts in both `en` and `vi`.
-- **Public API Functions** (lines 170–182):
-  - `getFirstRunTemplates(): FirstRunTemplate[]` — returns all 3 templates.
-  - `getTemplateById(id: string): FirstRunTemplate | undefined` — lookup by ID.
-  - `getDefaultTemplate(): FirstRunTemplate` — returns `viral_shorts_explainer`.
+  - `F4-2`: Escapes fields containing commas by enclosing in double quotes:
+    `escapeCsvField('Agency, Inc.')` -> `'"Agency, Inc."'`.
+  - `F4-3`: Escapes fields containing double quotes by doubling inner quotes:
+    `escapeCsvField('The "Best" Agency')` -> `'"The ""Best"" Agency"'`.
+  - `F4-4`: Escapes fields containing newlines (`\n` and `\r\n`) by enclosing in double quotes:
+    `escapeCsvField('Line 1\nLine 2')` -> `'"Line 1\nLine 2"'`.
+    `escapeCsvField('Line 1\r\nLine 2')` -> `'"Line 1\r\nLine 2"'`.
+  - `F4-5`: Safely handles `null` -> `''`, `undefined` -> `''`, `12345` -> `'12345'`, `true` -> `'true'`.
+- **Feature F5: Streaming Structured JSON Export** (Lines 300–342):
+  - `F5-1`: Formats array of records as valid JSON array parseable via `JSON.parse`.
+  - `F5-2`: Handles empty record list returning `[]`.
+  - `F5-3`: Preserves nested metadata structures (e.g. `metrics: { channels: ['tiktok', 'youtube'] }`).
+  - `F5-4`: Serializes numbers and timestamps deterministically without floating-point precision loss.
+  - `F5-5`: Formats streaming chunks as Newline-Delimited JSON (NDJSON): each line is a valid JSON object ending with `\n`.
+- **Tier 2 Boundary B4** (Lines 395–409):
+  - Multi-column escaping in a single row: `'Field with "quotes" and, commas'` -> `'"Field with ""quotes"" and, commas"'`, `'Multi\r\nLine'` -> `'"Multi\r\nLine"'`.
+- **Tier 2 Boundary B5** (Lines 411–436):
+  - Strict date bounding: queries must filter with `period_start >= ?` and `period_end <= ?` and exclude records outside the window.
+- **Tier 3 Combination P2 & Tier 4 Scenario S1** (Lines 473–569):
+  - Executive BI metrics aggregate output feeds directly into `formatStreamingCsv` with headers `['channel', 'mrr_cents', 'throughput', 'revenue_cents', 'spend_cents']`.
 
----
-
-### 1.2. Preflight Cost & Latency Estimator (`cost-estimator.ts`)
-Inspection of `apps/sophia-ai-factory/src/land/missions/cost-estimator.ts` revealed:
-- **Pricing Constants** (lines 12–15):
-  - `FAL_AI_COST_PER_IMAGE_USD = 0.025` ($0.025 per scene image)
-  - `ELEVENLABS_COST_PER_1K_CHARS_USD = 0.015` ($0.015 per 1,000 characters)
-  - `OPENROUTER_SCRIPT_COST_USD = 0.005` ($0.005 fixed per script)
-  - `CHARS_PER_WORD_RATIO = 5.5` (5.5 characters per word)
-- **MCU Duration Scaling** (`calculateMcuCredits`, lines 87–91):
-  ```typescript
-  export function calculateMcuCredits(durationSeconds: number): number {
-    if (durationSeconds <= 30) return 30;
-    if (durationSeconds <= 45) return 40;
-    return VIDEO_MCU_COSTS.VIDEO_CREATE; // 50 MCU
+### 1.2 Test Harness Implementation (`apps/sophia-ai-factory/src/__tests__/e2e/enterprise/enterprise-test-harness.ts`)
+Lines 808–821 implement the baseline sync CSV formatter:
+```typescript
+export function escapeCsvField(val: unknown): string {
+  if (val === null || val === undefined) return '';
+  const str = String(val);
+  if (/[",\r\n]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
   }
-  ```
-  Imported from `@/land/billing/video-mcu-cost-config` (`VIDEO_MCU_COSTS.VIDEO_CREATE = 50`).
-- **Preflight Calculation & Clamping** (`estimateMissionPreflight`, lines 96–150):
-  - Clamping:
-    `const scenes = Math.max(1, input.estimatedScenes);`
-    `const words = Math.max(10, input.targetWordCount);`
-  - Formula:
-    * `visualUsd = Number((scenes * FAL_AI_COST_PER_IMAGE_USD).toFixed(4))`
-    * `voiceUsd = Number(((Math.round(words * CHARS_PER_WORD_RATIO) / 1000) * ELEVENLABS_COST_PER_1K_CHARS_USD).toFixed(4))`
-    * `scriptUsd = 0.005`
-    * `totalUsd = Number((visualUsd + voiceUsd + scriptUsd).toFixed(3))`
-    * `totalMcu = calculateMcuCredits(input.durationSeconds)`
-  - Standard Latency Benchmark Stages (lines 45–81):
-    * `SCRIPT_GENERATION`: 5–10s
-    * `VOICE_SYNTHESIS`: 8–15s
-    * `VISUAL_GENERATION`: 15–35s
-    * `VIDEO_COMPOSITING`: 17–30s
-    * `READY_FOR_REVIEW`: 0s
-    * Total Range: `durationRangeSeconds: { min: 45, max: 90 }`
-  - Flag: `isZeroHiddenFees: true`.
+  return str;
+}
 
----
+export function formatStreamingCsv(headers: string[], rows: Record<string, unknown>[]): string {
+  const headerLine = headers.map(escapeCsvField).join(',');
+  const rowLines = rows.map((row) => headers.map((h) => escapeCsvField(row[h])).join(','));
+  return [headerLine, ...rowLines].join('\r\n');
+}
+```
 
-### 1.3. Verification of Parameter Passing to `createMission` and `startMissionExecution`
-Inspection of `apps/sophia-ai-factory/src/components/missions/first-run-wizard.tsx` (lines 44–95) and downstream execution in `actions.ts` and `multi-track-orchestrator.ts`:
-- **Current `createMission` invocation in `first-run-wizard.tsx`**:
-  ```typescript
-  // lines 51-65:
-  const createRes = await createMission({
-    workspaceId,
-    title: topic || selectedTemplate.name[locale],
-    objective: `Generate autonomous ${selectedTemplate.durationSeconds}s video for ${selectedTemplate.targetPlatform}. Topic: ${topic}`,
-    audience: 'General interest mobile viewers',
-    geography: isVi ? 'Vietnam' : 'Global',
-    timeframeStart: now,
-    timeframeEnd: now + 3600,
-    budgetCents: Math.round(costEstimate.totalUsd * 100),
-    autonomyLevel: 1,
-    channels: [selectedTemplate.targetPlatform],
-    monetizationGoals: ['ad_revenue', 'affiliate_commissions'],
-    constraints: {}, // <--- DEFECT: EMPTY CONSTRAINTS OBJECT!
-    successMetrics: { views: 1000, engagement_rate: 0.05 },
-  });
-  ```
-- **Current `startMissionExecution` invocation**:
-  ```typescript
-  // lines 77-81:
-  await startMissionExecution({
-    missionId: newId,
-    agentId: 'agent_director',
-    autonomyLevel: 1,
-  });
-  ```
-- **Downstream impact in `apps/sophia-ai-factory/src/land/creative-mission/actions.ts` (lines 511–523)**:
-  `startMissionExecution` launches:
-  ```typescript
-  void executeMultiTrackMission(parsed.data.missionId, {
-    userId: user.id,
-    workspaceId: mission.workspace_id,
-  });
-  ```
-  Notice: `options.topic`, `options.voiceStyle`, `options.estimatedScenes`, `options.durationSeconds`, `options.aspectRatio` are **not passed in `options`**.
-- **Downstream fallback in `apps/sophia-ai-factory/src/forest/mission/multi-track-orchestrator.ts`**:
-  - Line 692-695:
-    ```typescript
-    const targetScenes = options?.estimatedScenes || (mission.constraints?.estimatedScenes as number) || 3;
-    const targetDuration = options?.durationSeconds || (mission.constraints?.durationSeconds as number) || 30;
-    ```
-    Because `constraints: {}` was passed empty in `first-run-wizard.tsx`:
-    - `targetScenes` falls back to **3** (even for `viral_shorts_explainer` which expects 5, and `daily_news_wisdom` which expects 4).
-    - `targetDuration` falls back to **30** (even for `viral_shorts_explainer` which expects 60s, and `daily_news_wisdom` which expects 45s).
-  - Line 782:
-    `model: options?.voiceStyle` is `undefined` (and is not read from `mission.constraints?.voiceStyle`).
-  - Line 851:
-    `const rawRatio = options?.aspectRatio || (mission.constraints?.aspectRatio as string) || '9:16';`
-  - `visualStyle`: Not read or appended to visual prompts.
+### 1.3 Table Schema & Data Source (`executive_bi_metrics`)
+From `enterprise-test-harness.ts` (lines 115–126):
+```sql
+CREATE TABLE IF NOT EXISTS executive_bi_metrics (
+  id TEXT PRIMARY KEY,
+  org_id TEXT NOT NULL,
+  period_start INTEGER NOT NULL,
+  period_end INTEGER NOT NULL,
+  mrr_cents INTEGER NOT NULL DEFAULT 0,
+  throughput_count INTEGER NOT NULL DEFAULT 0,
+  viral_score REAL NOT NULL DEFAULT 0,
+  affiliate_revenue_cents INTEGER NOT NULL DEFAULT 0,
+  marketing_spend_cents INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL
+);
+```
 
----
+### 1.4 Tenant Isolation Guard (`apps/sophia-ai-factory/src/forest/tenant/isolation-guard.ts`)
+Lines 43–71 define `assertTenantScope(currentOrgId, targetResourceOrgId)`:
+- If `currentOrgId` or `targetResourceOrgId` is empty or mismatched, throws `CrossTenantViolationError` with `.code = 'CROSS_TENANT_VIOLATION'` and status 403.
+- In `route.ts`, when a client specifies a target `org_id` in query params or headers, `assertTenantScope(userOrgId, targetOrgId)` must be called before querying D1.
 
-### 1.4. Preflight Cost Calculation UI Display
-Inspection of `first-run-wizard.tsx` and `page.tsx`:
-- **Top 5-Questions CEO Guide** (lines 99–108):
-  - Question 3 (Duration): `45 - 90 giây / seconds`
-  - Question 4 (Cost): `~${costEstimate.totalUsd} / ${costEstimate.totalMcu} MCU`
-- **Bottom Preflight Summary Card** (lines 159–165):
-  - Cost: `<Coins /> ~${costEstimate.totalUsd} USD (${costEstimate.totalMcu} MCU)`
-  - Duration: `<Clock /> 45 - 90 giây / seconds`
-  - Zero fees guarantee: `✓ Minh bạch 100% không phí ẩn / Zero Hidden Fees`
-- **Stage Progression Display** (lines 83–90, lines 110–128):
-  - Currently simulates 5 stages using mock `setTimeout` (1200ms, 2400ms, 3600ms, 4800ms) rather than polling `getMissionTrackStatus(missionId)` or listening to Inngest/D1 status updates.
+### 1.5 Layer Boundary Check (`apps/sophia-ai-factory/scripts/check-layer-boundaries.sh`)
+- `src/tree/` CANNOT import from `@/forest` or `@/land`.
+- `src/tree/bi/export-formatter.ts` must only import from `@/seed/*` (or standard Web Streams APIs).
+- `src/app/api/v1/analytics/export/route.ts` is in `src/app/` and can import from `@/seed`, `@/tree`, and `@/forest`.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Premise 1**: The template engine (`first-run-template.ts`) correctly defines 3 distinct blueprints with varying durations (30s, 45s, 60s), scene counts (3, 4, 5), word counts (75, 110, 140), voice styles, and visual styles.
-2. **Premise 2**: The cost estimator (`cost-estimator.ts`) calculates costs and MCU credits based directly on these parameters (`durationSeconds`, `estimatedScenes`, `targetWordCount`), producing 30, 40, or 50 MCU and transparent USD pricing.
-3. **Premise 3**: When the user clicks "Launch Video Mission Now" in `first-run-wizard.tsx`, `createMission` is passed `constraints: {}` (empty object).
-4. **Inference 1**: Because `constraints` is empty and `startMissionExecution` does not take or forward template options to `executeMultiTrackMission`, the orchestrator defaults to 3 scenes, 30 seconds, and undefined styles regardless of which blueprint was selected.
-5. **Remedy**:
-   - `first-run-wizard.tsx` must pass:
-     ```typescript
-     constraints: {
-       templateId: selectedTemplate.id,
-       durationSeconds: selectedTemplate.durationSeconds,
-       aspectRatio: selectedTemplate.aspectRatio,
-       estimatedScenes: selectedTemplate.estimatedScenes,
-       voiceStyle: selectedTemplate.voiceStyle,
-       visualStyle: selectedTemplate.visualStyle,
-       targetWordCount: selectedTemplate.targetWordCount,
-     },
-     ```
-   - In `multi-track-orchestrator.ts`, line 782 must read:
-     `model: options?.voiceStyle || (mission.constraints?.voiceStyle as string),`
-   - In `multi-track-orchestrator.ts`, `visualStyle` should be incorporated into the image prompt (e.g. `Style: ${visualStyle}. ${scene.prompt}`).
-6. **Premise 4**: For UI progress tracking, `actions.ts` already exposes `getMissionTrackStatus(missionId)`.
-7. **Inference 2**: Replacing the `setTimeout` simulation in `first-run-wizard.tsx` with polling `getMissionTrackStatus(missionId)` will fulfill Milestone 3 Feature 11 and Feature 15 ("Live 5-Stage Pipeline Tracker").
+### 2.1 RFC-4180 Serialization Rules
+1. *Observation*: RFC-4180 requires records to be separated by CRLF (`\r\n`). Tests `F4-1` and `B4` split by `\r\n` and assert line count.
+2. *Deduction*: Default line ending must be `\r\n`. An optional config can permit `\n` if explicitly configured.
+3. *Observation*: Fields containing `,`, `"`, `\n`, or `\r` must be enclosed in double quotes. Internal quotes must be escaped as `""` (Tests `F4-2`, `F4-3`, `F4-4`).
+4. *Deduction*: When `delimiter` is parameterized (e.g. `;` or `\t`), the character set that triggers quoting must dynamically include the chosen delimiter.
+5. *Observation*: `null` and `undefined` must yield empty strings (`""`), while numbers and booleans must be stringified directly without quotes (Test `F4-5`). Objects and arrays should be JSON-stringified and escaped.
+
+### 2.2 Streaming vs In-Memory Performance on Cloudflare Workers
+1. *Observation*: Cloudflare Workers edge runtime has a 128MB memory limit per isolate. Buffering a 50,000-row CSV or JSON payload in a single string risks isolate termination (OOM).
+2. *Deduction*: The production service must provide both:
+   - Synchronous `formatStreamingCsv` for in-memory datasets and test harness compatibility.
+   - Web Streams `ReadableStream<Uint8Array>` generators (`streamCsv`, `streamJsonArray`, `streamNdjson`) that encode chunks on the fly via `TextEncoder`.
+3. *Observation*: In JSON array streaming (`streamJsonArray`), an empty dataset must serialize as `[]` (Test `F5-2`), whereas a populated stream must serialize as `[\n  {...},\n  {...}\n]`.
+4. *Deduction*: The streaming controller must defer emitting the opening `[\n` until the first record is yielded. If the iterable finishes without yielding any records, it emits `[]`. If it yields records, subsequent records are prefixed with `,\n  `, and the stream is closed with `\n]`.
+
+### 2.3 Edge API Route Architecture (`/api/v1/analytics/export`)
+1. *Observation*: The route handler must support both GET (browser downloads with query parameters) and POST (automated integrations with JSON request body).
+2. *Security Deduction*:
+   - Step 1: Session authentication via `getCurrentUser()`. If unauthenticated -> HTTP 401 (`UNAUTHORIZED`).
+   - Step 2: D1 database availability check via `getD1()`. If unavailable -> HTTP 503 (`DB_UNAVAILABLE`).
+   - Step 3: Org context resolution via `resolveOrgId(user.id, db)`. If no org context -> HTTP 403 (`FORBIDDEN`).
+   - Step 4: Strict tenant boundary check via `assertTenantScope(currentOrgId, requestedOrgId)`. Mismatches throw `CrossTenantViolationError` -> HTTP 403 (`CROSS_TENANT_VIOLATION`).
+   - Step 5: Input validation:
+     - `format`: `'csv' | 'json' | 'ndjson'` (default `'csv'`).
+     - `start`, `end`: epoch ms timestamps. Must be valid positive numbers, `start <= end`, max span 365 days. Invalid -> HTTP 400 (`INVALID_DATE_RANGE`).
+   - Step 6: Query D1 for `executive_bi_metrics` filtered strictly by `org_id = ? AND period_start >= ? AND period_end <= ?`.
+   - Step 7: Stream response using `createStreamingExportResponse(stream, format, filename)` with appropriate headers:
+     - CSV: `Content-Type: text/csv; charset=utf-8`, `Content-Disposition: attachment; filename="..."`
+     - JSON: `Content-Type: application/json; charset=utf-8`, `Content-Disposition: attachment; filename="..."`
+     - NDJSON: `Content-Type: application/x-ndjson; charset=utf-8`, `Content-Disposition: attachment; filename="..."`
+     - `Cache-Control: no-cache, no-store, must-revalidate`
+     - `X-Content-Type-Options: nosniff`
 
 ---
 
 ## 3. Caveats
 
-1. **Read-Only Explorer Mandate**: In accordance with the system prompt and instructions, no modifications were made to `first-run-wizard.tsx`, `actions.ts`, or `multi-track-orchestrator.ts`. The exact proposed changes are documented here as actionable specifications.
-2. **Sandboxed Command Execution**: Direct execution of Vitest via `run_command` in sandbox encountered an unpermitted environment/user prompt timeout. Test specifications are therefore designed with complete assertion code and mock scaffolds for straightforward execution.
-3. **Provider Style Support**: The voice style strings (`dynamic_hook`, `enthusiastic_recommender`, `calm_authoritative`) are mapped as models or preset tags in ElevenLabs/TTS adapters. If an adapter expects a specific ElevenLabs voice ID, the preset must resolve via an internal voice registry.
+1. **Excel BOM (Byte Order Mark)**:
+   - Microsoft Excel on Windows may misinterpret UTF-8 CSV files with non-ASCII characters (e.g. Vietnamese accents like `Tiếng Việt`) unless prefixed with UTF-8 BOM (`\uFEFF`).
+   - *Design Choice*: Add an optional `includeBom: boolean` option in `CsvFormatOptions`. It defaults to `false` for standard RFC-4180 compliance, but can be enabled for Excel exports.
+2. **Formula Injection (CSV Injection / DDE)**:
+   - Cells beginning with `=`, `+`, `-`, `@` can execute macros in spreadsheet software.
+   - *Design Choice*: In `executive-bi.e2e.test.ts` (F4-1), values like `2024-06` and `3.0x` are standard strings without escaping prefix. We preserve standard RFC-4180 compliance by default, and provide an opt-in `sanitizeFormulas?: boolean` option to prefix dangerous leading characters with `'` when exporting untrusted user-generated content.
+3. **D1 Query Result Sizes**:
+   - D1 currently returns up to 10,000 rows per query. For extremely large exports (>10k rows), the route generator should page through results using `LIMIT ? OFFSET ?` or keyset pagination `WHERE id > ? LIMIT ?` to stream arbitrarily large datasets without exceeding D1 batch limits.
 
 ---
 
-## 4. Conclusion & Milestone 3 Unit Test Specifications
+## 4. Conclusion & Technical Blueprint
 
-### Specification 1: `first-run-template.ts` Unit Test Specification
-**Target File**: `apps/sophia-ai-factory/src/land/missions/__tests__/first-run-template.test.ts`
-
-| Test ID | Test Name | Target Behavior | Assertions |
-|---|---|---|---|
-| **T-FRT-01** | Template Registry Cardinality | Exactly 3 starter templates registered | `getFirstRunTemplates().length === 3` |
-| **T-FRT-02** | Viral Shorts Explainer Spec | 60s, 5 scenes, 140 words, 9:16, youtube_shorts | `t.durationSeconds === 60`, `t.estimatedScenes === 5`, `t.targetWordCount === 140`, `t.voiceStyle === 'dynamic_hook'`, `t.visualStyle === 'cinematic_vibrant'` |
-| **T-FRT-03** | Affiliate Product Showcase Spec | 30s, 3 scenes, 75 words, 9:16, tiktok | `t.durationSeconds === 30`, `t.estimatedScenes === 3`, `t.targetWordCount === 75`, `t.voiceStyle === 'enthusiastic_recommender'`, `t.visualStyle === 'product_clean_modern'` |
-| **T-FRT-04** | Daily News & Wisdom Spec | 45s, 4 scenes, 110 words, 9:16, youtube_shorts | `t.durationSeconds === 45`, `t.estimatedScenes === 4`, `t.targetWordCount === 110`, `t.voiceStyle === 'calm_authoritative'`, `t.visualStyle === 'editorial_minimal'` |
-| **T-FRT-05** | Bilingual Parity Across All Fields | Non-empty `en` and `vi` strings for all localized fields | `name`, `description`, `badge`, `defaultTopic`, `callToAction` have non-empty `en` and `vi` |
-| **T-FRT-06** | Prompt Suggestions Density & Parity | Each template has at least 3 prompt suggestions, each bilingual | `suggestedPrompts.length >= 3`, each prompt has `en.length > 10` and `vi.length > 10` |
-| **T-FRT-07** | ID Lookup & Fallback | `getTemplateById` returns matching template or `undefined` | Valid ID returns object; `'non_existent'` returns `undefined` |
-| **T-FRT-08** | Default Template Contract | `getDefaultTemplate()` returns `viral_shorts_explainer` | `getDefaultTemplate().id === 'viral_shorts_explainer'` |
-| **T-FRT-09** | Immutable Aspect Ratio | All starter blueprints are 9:16 vertical video | Every template has `aspectRatio === '9:16'` |
+### 4.1 Specification of `apps/sophia-ai-factory/src/tree/bi/export-formatter.ts`
 
 ```typescript
-// Sample Test Implementation for T-FRT-06 (Prompt Suggestions)
-it('T-FRT-06: each template contains >= 3 bilingual prompt suggestions', () => {
-  const templates = getFirstRunTemplates();
-  for (const t of templates) {
-    expect(t.suggestedPrompts.length).toBeGreaterThanOrEqual(3);
-    for (const p of t.suggestedPrompts) {
-      expect(p.en.trim().length).toBeGreaterThan(10);
-      expect(p.vi.trim().length).toBeGreaterThan(10);
-    }
+/**
+ * RFC-4180 Compliant CSV Serializer & Streaming JSON Generator
+ *
+ * Provides pure domain logic for formatting executive BI and analytics exports:
+ * - RFC-4180 CSV serialization (double-quote escaping, CRLF line breaks, custom delimiters).
+ * - Web Streams API integration (ReadableStream<Uint8Array>) for memory-efficient streaming on edge.
+ * - Deterministic JSON array and NDJSON generators with empty-set handling.
+ * - HTTP Streaming Response factory for Next.js / Cloudflare Workers.
+ *
+ * Layer: tree/bi (Pure domain - imports only seed and standard Web APIs)
+ *
+ * @module tree/bi/export-formatter
+ */
+
+export type ExportFormat = 'csv' | 'json' | 'ndjson';
+
+export interface CsvFormatOptions {
+  /** Column delimiter character. Default: ',' */
+  delimiter?: string;
+  /** Record line ending. Default: '\r\n' (CRLF per RFC-4180) */
+  lineEnding?: '\r\n' | '\n';
+  /** Explicit list of column headers. If omitted, keys of the first row are used. */
+  headers?: string[];
+  /** Prefix with UTF-8 BOM (\uFEFF) for Excel compatibility. Default: false */
+  includeBom?: boolean;
+  /** Sanitize leading formula characters (=, +, -, @) to prevent CSV injection. Default: false */
+  sanitizeFormulas?: boolean;
+}
+
+export interface JsonFormatOptions {
+  /** Indentation spaces. Default: 2. Set to 0 for compact JSON. */
+  indent?: number;
+  /** Format as Newline-Delimited JSON (NDJSON). Default: false */
+  ndjson?: boolean;
+}
+
+export interface StreamingResponseOptions {
+  headers?: string[];
+  csvOptions?: CsvFormatOptions;
+  jsonOptions?: JsonFormatOptions;
+}
+
+/**
+ * Escapes a single field according to RFC-4180 rules.
+ *
+ * - null / undefined -> ''
+ * - Numbers and booleans -> string representation
+ * - Objects / Arrays -> JSON.stringify
+ * - If field contains delimiter, double quote, CR, or LF:
+ *     wrap in double quotes and escape internal quotes as ""
+ *
+ * @param val - The raw field value
+ * @param delimiter - Delimiter character (default: ',')
+ * @param sanitizeFormulas - If true, prefixes leading formula chars with single quote
+ */
+export function escapeCsvField(
+  val: unknown,
+  delimiter = ',',
+  sanitizeFormulas = false,
+): string {
+  if (val === null || val === undefined) return '';
+
+  let str = typeof val === 'object' && !(val instanceof Date)
+    ? JSON.stringify(val)
+    : String(val);
+
+  if (sanitizeFormulas && /^[=+\-@\t\r]/.test(str)) {
+    str = `'${str}`;
   }
-});
-```
 
----
+  // RFC-4180 §2.5, §2.6: Quote if field contains delimiter, quote, CR, or LF
+  const needsQuotes =
+    str.includes('"') ||
+    str.includes(delimiter) ||
+    str.includes('\n') ||
+    str.includes('\r');
 
-### Specification 2: `cost-estimator.ts` Unit Test Specification
-**Target File**: `apps/sophia-ai-factory/src/land/missions/__tests__/cost-estimator.test.ts`
+  if (needsQuotes) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
 
-| Test ID | Test Name | Target Behavior | Assertions |
-|---|---|---|---|
-| **T-CE-01** | Provider Pricing Constants | Live provider cost rates are exact | `FAL_AI_COST_PER_IMAGE_USD === 0.025`, `ELEVENLABS_COST_PER_1K_CHARS_USD === 0.015`, `OPENROUTER_SCRIPT_COST_USD === 0.005`, `CHARS_PER_WORD_RATIO === 5.5` |
-| **T-CE-02** | MCU Tier Boundary: 30s Tier | <=30s yields 30 MCU | `calculateMcuCredits(1) === 30`, `calculateMcuCredits(30) === 30` |
-| **T-CE-03** | MCU Tier Boundary: 45s Tier | 31s–45s yields 40 MCU | `calculateMcuCredits(31) === 40`, `calculateMcuCredits(45) === 40` |
-| **T-CE-04** | MCU Tier Boundary: 60s+ Tier | >45s yields 50 MCU (capped at `VIDEO_CREATE`) | `calculateMcuCredits(46) === 50`, `calculateMcuCredits(60) === 50`, `calculateMcuCredits(300) === 50` |
-| **T-CE-05** | Scene Clamping (Zero/Negative) | `estimatedScenes <= 0` clamped to 1 | Input `{ estimatedScenes: 0 }` results in 1 scene fal.ai cost ($0.025) |
-| **T-CE-06** | Word Count Clamping (Zero/Negative) | `targetWordCount < 10` clamped to 10 | Input `{ targetWordCount: -5 }` clamped to 10 words, voice cost > 0 |
-| **T-CE-07** | Breakdown Structure & Math Precision | Total USD equals sum of items rounded to 3 decimal places | `estimate.totalUsd === Number((visualUsd + voiceUsd + scriptUsd).toFixed(3))` |
-| **T-CE-08** | Benchmark Latency Stages Order & Bounds | 5 stages ordered with valid min/max seconds | IDs match `['SCRIPT_GENERATION', 'VOICE_SYNTHESIS', 'VISUAL_GENERATION', 'VIDEO_COMPOSITING', 'READY_FOR_REVIEW']`, `maxSeconds >= minSeconds >= 0` |
-| **T-CE-09** | Zero Hidden Fees Guarantee | Flag is strictly `true` | `estimate.isZeroHiddenFees === true` |
-| **T-CE-10** | Template Cost Convenience Function | `estimateTemplateCost` calculates correctly per template | `viral_shorts_explainer` -> 50 MCU; `affiliate_product_showcase` -> 30 MCU; `daily_news_wisdom` -> 40 MCU |
+  return str;
+}
 
-```typescript
-// Sample Test Implementation for T-CE-05 & T-CE-06 (Clamping)
-it('T-CE-05 & T-CE-06: clamps zero and negative scene/word inputs to safe minimums', () => {
-  const estimate = estimateMissionPreflight({
-    durationSeconds: 30,
-    estimatedScenes: -3,
-    targetWordCount: 0,
-  });
-  // Clamped to 1 scene
-  const visualItem = estimate.breakdown.find((b) => b.service === 'fal.ai');
-  expect(visualItem?.estimatedUsd).toBe(0.025);
-  expect(visualItem?.unitMetric).toBe('1 scenes (1 AI images)');
+/**
+ * In-memory synchronous CSV formatter matching test harness contract.
+ *
+ * @param headers - Array of column header names
+ * @param rows - Array of row objects
+ * @param options - CSV formatting options
+ */
+export function formatStreamingCsv(
+  headers: string[],
+  rows: Record<string, unknown>[],
+  options?: CsvFormatOptions,
+): string {
+  const delimiter = options?.delimiter ?? ',';
+  const lineEnding = options?.lineEnding ?? '\r\n';
+  const sanitize = options?.sanitizeFormulas ?? false;
 
-  // Clamped to 10 words -> 55 chars -> 55/1000 * 0.015 = 0.0008
-  const voiceItem = estimate.breakdown.find((b) => b.service === 'ElevenLabs');
-  expect(voiceItem?.estimatedUsd).toBe(0.0008);
-  expect(voiceItem?.unitMetric).toBe('55 chars (~10 words)');
-});
-```
-
----
-
-### Specification 3: `/dashboard/missions/new` & `FirstRunWizard` Component Test Specification
-**Target File**: `apps/sophia-ai-factory/src/components/missions/__tests__/first-run-wizard.test.tsx`
-
-| Test ID | Test Name | Target Behavior | Assertions |
-|---|---|---|---|
-| **T-FRW-01** | Initial Render & Defaults | Renders all 3 templates, defaults to Viral Shorts with default topic | Template buttons visible; input value equals `selectedTemplate.defaultTopic['vi']`; badge displayed |
-| **T-FRW-02** | Template Switching Reactivity | Clicking another template updates topic, badge, and cost display | Clicking "Affiliate Product Showcase" updates input to its default topic, badge to "Chuyển đổi cao (30s)", and MCU to 30 |
-| **T-FRW-03** | Suggested Prompt Click | Clicking a prompt pill replaces or populates input text | Click pill updates input `value` to pill text |
-| **T-FRW-04** | Preflight Cost & Latency Display | Correctly displays USD, MCU, and latency range for selected blueprint | Displays `~${cost.totalUsd} USD (${cost.totalMcu} MCU)` and `45 - 90 giây` |
-| **T-FRW-05** | Complete Constraints Forwarding | Form submission forwards all template options into `constraints` | `createMission` spy called with `constraints: { templateId, durationSeconds, aspectRatio, estimatedScenes, voiceStyle, visualStyle, targetWordCount }` |
-| **T-FRW-06** | Execution Launch Wiring | Successful `createMission` immediately triggers `startMissionExecution` | `startMissionExecution` called with `{ missionId, agentId: 'agent_director', autonomyLevel: 1 }` |
-| **T-FRW-07** | Error State Display | Action failure displays localized error message without crashing | Error container renders `createRes.error.message` or retry button |
-| **T-FRW-08** | Real Stage Progress Transition | Live progress updates as stages complete | Displays `MissionProgressBar` progressing from `SCRIPT_GENERATION` to `READY_FOR_REVIEW` |
-| **T-FRW-09** | Completion Screen & Review Link | When status is completed, shows review CTA with valid mission URL | Renders link to `/dashboard/missions/${missionId}` with `<Video />` icon |
-
-```typescript
-// Sample Test Implementation for T-FRW-05 (Complete Constraints Forwarding)
-it('T-FRW-05: passes complete blueprint constraints to createMission on launch', async () => {
-  const createMissionMock = vi.fn().mockResolvedValue({
-    ok: true,
-    value: { missionId: 'msn_test_123' },
-  });
-  const startExecutionMock = vi.fn().mockResolvedValue({
-    ok: true,
-    value: { runId: 'run_123' },
-  });
-
-  render(
-    <FirstRunWizard
-      workspaceId="ws_test"
-      userId="user_1"
-      locale="vi"
-    />
+  const headerLine = headers.map((h) => escapeCsvField(h, delimiter, false)).join(delimiter);
+  const rowLines = rows.map((row) =>
+    headers.map((h) => escapeCsvField(row[h], delimiter, sanitize)).join(delimiter)
   );
 
-  // Switch to Affiliate Product Showcase (30s, 3 scenes, tiktok)
-  const affiliateBtn = screen.getByText(/Giới thiệu sản phẩm Tiếp thị liên kết/i);
-  fireEvent.click(affiliateBtn);
+  const bom = options?.includeBom ? '\uFEFF' : '';
+  return bom + [headerLine, ...rowLines].join(lineEnding);
+}
 
-  // Click Launch
-  const launchBtn = screen.getByRole('button', { name: /Bắt đầu sản xuất video ngay/i });
-  fireEvent.click(launchBtn);
+/**
+ * Streams CSV rows from an AsyncIterable into a Web ReadableStream of Uint8Array chunks.
+ * Memory complexity: O(1) buffer per record.
+ */
+export function streamCsv(
+  headers: string[],
+  rows: AsyncIterable<Record<string, unknown>> | Iterable<Record<string, unknown>>,
+  options?: CsvFormatOptions,
+): ReadableStream<Uint8Array> {
+  const delimiter = options?.delimiter ?? ',';
+  const lineEnding = options?.lineEnding ?? '\r\n';
+  const sanitize = options?.sanitizeFormulas ?? false;
+  const encoder = new TextEncoder();
 
-  await waitFor(() => {
-    expect(createMissionMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        workspaceId: 'ws_test',
-        channels: ['tiktok'],
-        constraints: expect.objectContaining({
-          templateId: 'affiliate_product_showcase',
-          durationSeconds: 30,
-          aspectRatio: '9:16',
-          estimatedScenes: 3,
-          voiceStyle: 'enthusiastic_recommender',
-          visualStyle: 'product_clean_modern',
-          targetWordCount: 75,
-        }),
-      })
-    );
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        if (options?.includeBom) {
+          controller.enqueue(encoder.encode('\uFEFF'));
+        }
+
+        // Emit header line
+        const headerLine = headers.map((h) => escapeCsvField(h, delimiter, false)).join(delimiter);
+        controller.enqueue(encoder.encode(headerLine + lineEnding));
+
+        // Stream each row
+        for await (const row of rows) {
+          const rowLine = headers.map((h) => escapeCsvField(row[h], delimiter, sanitize)).join(delimiter);
+          controller.enqueue(encoder.encode(rowLine + lineEnding));
+        }
+
+        controller.close();
+      } catch (err) {
+        controller.error(err);
+      }
+    },
   });
-});
+}
+
+/**
+ * Streams a JSON array or NDJSON from an AsyncIterable.
+ * Handles empty sets correctly: outputs "[]" when 0 records are present (RFC/Test F5-2).
+ */
+export function streamJsonArray<T = unknown>(
+  items: AsyncIterable<T> | Iterable<T>,
+  options?: JsonFormatOptions,
+): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+  const isNdjson = options?.ndjson ?? false;
+  const indent = options?.indent ?? 2;
+
+  return new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        if (isNdjson) {
+          for await (const item of items) {
+            controller.enqueue(encoder.encode(JSON.stringify(item) + '\n'));
+          }
+          controller.close();
+          return;
+        }
+
+        let count = 0;
+        const prefixSpaces = ' '.repeat(indent);
+
+        for await (const item of items) {
+          count++;
+          const formattedItem = indent > 0
+            ? JSON.stringify(item, null, indent).replace(/\n/g, `\n${prefixSpaces}`)
+            : JSON.stringify(item);
+
+          if (count === 1) {
+            controller.enqueue(encoder.encode(`[\n${prefixSpaces}${formattedItem}`));
+          } else {
+            controller.enqueue(encoder.encode(`,\n${prefixSpaces}${formattedItem}`));
+          }
+        }
+
+        if (count === 0) {
+          // Empty dataset contract: F5-2
+          controller.enqueue(encoder.encode('[]'));
+        } else {
+          controller.enqueue(encoder.encode('\n]'));
+        }
+
+        controller.close();
+      } catch (err) {
+        controller.error(err);
+      }
+    },
+  });
+}
+
+/**
+ * Creates a streaming HTTP Response for Next.js / Cloudflare Workers edge runtime.
+ * Automatically injects Content-Type, Content-Disposition, and Cache-Control headers.
+ */
+export function createStreamingExportResponse(
+  dataStream: AsyncIterable<Record<string, unknown>> | Iterable<Record<string, unknown>>,
+  format: ExportFormat,
+  filename: string,
+  options?: StreamingResponseOptions,
+): Response {
+  let stream: ReadableStream<Uint8Array>;
+  let contentType: string;
+  let ext: string;
+
+  if (format === 'csv') {
+    contentType = 'text/csv; charset=utf-8';
+    ext = '.csv';
+    const headers = options?.headers ?? [];
+    stream = streamCsv(headers, dataStream, options?.csvOptions);
+  } else if (format === 'ndjson' || (format === 'json' && options?.jsonOptions?.ndjson)) {
+    contentType = 'application/x-ndjson; charset=utf-8';
+    ext = '.ndjson';
+    stream = streamJsonArray(dataStream, { ...options?.jsonOptions, ndjson: true });
+  } else {
+    contentType = 'application/json; charset=utf-8';
+    ext = '.json';
+    stream = streamJsonArray(dataStream, options?.jsonOptions);
+  }
+
+  const cleanFilename = filename.endsWith(ext) ? filename : `${filename}${ext}`;
+
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      'Content-Type': contentType,
+      'Content-Disposition': `attachment; filename="${cleanFilename}"`,
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'X-Content-Type-Options': 'nosniff',
+    },
+  });
+}
 ```
 
 ---
 
-### Specification 4: Server Action Integration Test Specification (`createMission`)
-**Target File**: `apps/sophia-ai-factory/src/land/creative-mission/__tests__/actions.create-mission.test.ts`
+### 4.2 Specification of `apps/sophia-ai-factory/src/app/api/v1/analytics/export/route.ts`
 
-| Test ID | Test Name | Target Behavior | Assertions |
-|---|---|---|---|
-| **T-ACT-01** | Constraints Persistence in D1 | `createMission` persists full constraints JSON in `creative_missions` | `d1.prepare` receives `JSON.stringify(constraints)` matching input |
-| **T-ACT-02** | Budget Cents Alignment | Budget cents passed from preflight estimate | `budgetCents === Math.round(costEstimate.totalUsd * 100)` |
-| **T-ACT-03** | Autonomy Level & Channel Validation | Autonomy level 1 and platform channel (e.g. `youtube_shorts`) validated | Row created with `autonomy_level: 1` and `channels: ['youtube_shorts']` |
+```typescript
+/**
+ * API Route: Streaming Analytics & Executive BI Export
+ *
+ * Endpoint: /api/v1/analytics/export
+ *
+ * Supports:
+ * - GET: Browser direct downloads via query parameters
+ * - POST: Programmatic export queries with JSON filter payload
+ *
+ * Formats:
+ * - format=csv (RFC-4180 with quote escaping and CRLF)
+ * - format=json (Structured streaming JSON array)
+ * - format=ndjson (Newline-delimited JSON stream)
+ *
+ * Security & Isolation:
+ * - Better Auth session authentication (401 on missing session)
+ * - Multi-tenant isolation enforcement (assertTenantScope, 403 on mismatch)
+ * - Input validation on date range (start, end, max 365 days)
+ *
+ * Layer: app/api/v1/analytics/export
+ *
+ * @module app/api/v1/analytics/export/route
+ */
+
+import { type NextRequest, NextResponse } from 'next/server';
+import { getCurrentUser } from '@/seed/auth/better-auth-session';
+import { resolveOrgId } from '@/seed/auth/resolve-org-id';
+import { getD1, type D1Database } from '@/seed/db/client';
+import { logger } from '@/seed/utils/logger-utility';
+import { assertTenantScope, CrossTenantViolationError } from '@/forest/tenant/isolation-guard';
+import {
+  createStreamingExportResponse,
+  type ExportFormat,
+} from '@/tree/bi/export-formatter';
+
+export const runtime = 'edge';
+
+interface ExportQueryParams {
+  format?: string | null;
+  start?: string | null;
+  end?: string | null;
+  category?: string | null;
+  orgId?: string | null;
+}
+
+const DEFAULT_HEADERS = [
+  'id',
+  'org_id',
+  'period_start',
+  'period_end',
+  'mrr_usd',
+  'throughput',
+  'viral_score',
+  'affiliate_revenue_usd',
+  'marketing_spend_usd',
+  'roi',
+  'created_at',
+];
+
+const SUMMARY_HEADERS = [
+  'org_id',
+  'period_start',
+  'period_end',
+  'peak_mrr_usd',
+  'total_throughput',
+  'average_viral_score',
+  'total_affiliate_revenue_usd',
+  'total_marketing_spend_usd',
+  'roi_multiplier',
+  'record_count',
+];
+
+/**
+ * Generator function that fetches records from Cloudflare D1 in batches
+ * and yields normalized objects for streaming serialization.
+ */
+async function* fetchExecutiveBIMetricsStream(
+  db: D1Database,
+  orgId: string,
+  startTimestamp: number,
+  endTimestamp: number,
+  category?: string,
+): AsyncGenerator<Record<string, unknown>> {
+  const PAGE_SIZE = 1000;
+  let offset = 0;
+  let hasMore = true;
+
+  if (category === 'summary') {
+    // Single summary aggregation row
+    const query = `
+      SELECT
+        org_id,
+        MAX(mrr_cents) AS peak_mrr_cents,
+        SUM(throughput_count) AS total_throughput,
+        AVG(viral_score) AS avg_viral_score,
+        SUM(affiliate_revenue_cents) AS total_affiliate_cents,
+        SUM(marketing_spend_cents) AS total_spend_cents,
+        COUNT(*) AS row_count
+      FROM executive_bi_metrics
+      WHERE org_id = ?1 AND period_start >= ?2 AND period_end <= ?3
+      GROUP BY org_id
+    `;
+    const res = await db.prepare(query).bind(orgId, startTimestamp, endTimestamp).first<{
+      org_id: string;
+      peak_mrr_cents: number;
+      total_throughput: number;
+      avg_viral_score: number;
+      total_affiliate_cents: number;
+      total_spend_cents: number;
+      row_count: number;
+    }>();
+
+    if (res && res.row_count > 0) {
+      const spend = res.total_spend_cents ?? 0;
+      const aff = res.total_affiliate_cents ?? 0;
+      const roiRatio = spend > 0 ? Number((aff / spend).toFixed(2)) : aff > 0 ? 99.0 : 0;
+
+      yield {
+        org_id: res.org_id,
+        period_start: new Date(startTimestamp).toISOString(),
+        period_end: new Date(endTimestamp).toISOString(),
+        peak_mrr_usd: ((res.peak_mrr_cents ?? 0) / 100).toFixed(2),
+        total_throughput: res.total_throughput ?? 0,
+        average_viral_score: Number((res.avg_viral_score ?? 0).toFixed(2)),
+        total_affiliate_revenue_usd: (aff / 100).toFixed(2),
+        total_marketing_spend_usd: (spend / 100).toFixed(2),
+        roi_multiplier: `${roiRatio}x`,
+        record_count: res.row_count,
+      };
+    }
+    return;
+  }
+
+  // Paged cursor stream for detailed rows
+  while (hasMore) {
+    const query = `
+      SELECT id, org_id, period_start, period_end, mrr_cents, throughput_count,
+             viral_score, affiliate_revenue_cents, marketing_spend_cents, created_at
+      FROM executive_bi_metrics
+      WHERE org_id = ?1 AND period_start >= ?2 AND period_end <= ?3
+      ORDER BY period_start ASC
+      LIMIT ?4 OFFSET ?5
+    `;
+    const batch = await db.prepare(query)
+      .bind(orgId, startTimestamp, endTimestamp, PAGE_SIZE, offset)
+      .all<{
+        id: string;
+        org_id: string;
+        period_start: number;
+        period_end: number;
+        mrr_cents: number;
+        throughput_count: number;
+        viral_score: number;
+        affiliate_revenue_cents: number;
+        marketing_spend_cents: number;
+        created_at: number;
+      }>();
+
+    const results = batch.results ?? [];
+    if (results.length === 0) {
+      break;
+    }
+
+    for (const row of results) {
+      const spend = row.marketing_spend_cents ?? 0;
+      const aff = row.affiliate_revenue_cents ?? 0;
+      const roi = spend > 0 ? Number((aff / spend).toFixed(2)) : aff > 0 ? 99.0 : 0;
+
+      yield {
+        id: row.id,
+        org_id: row.org_id,
+        period_start: new Date(row.period_start).toISOString(),
+        period_end: new Date(row.period_end).toISOString(),
+        mrr_usd: (row.mrr_cents / 100).toFixed(2),
+        throughput: row.throughput_count,
+        viral_score: row.viral_score,
+        affiliate_revenue_usd: (aff / 100).toFixed(2),
+        marketing_spend_usd: (spend / 100).toFixed(2),
+        roi: `${roi}x`,
+        created_at: new Date(row.created_at).toISOString(),
+      };
+    }
+
+    offset += results.length;
+    if (results.length < PAGE_SIZE) {
+      hasMore = false;
+    }
+  }
+}
+
+async function handleExportRequest(
+  params: ExportQueryParams,
+  req: NextRequest,
+): Promise<Response> {
+  // 1. Authenticate user
+  const user = await getCurrentUser();
+  if (!user) {
+    return NextResponse.json(
+      { error: 'UNAUTHORIZED', message: 'Authentication required for analytics export' },
+      { status: 401 },
+    );
+  }
+
+  // 2. Database client lookup
+  const db = await getD1();
+  if (!db) {
+    return NextResponse.json(
+      { error: 'DB_UNAVAILABLE', message: 'Database connection unavailable' },
+      { status: 503 },
+    );
+  }
+
+  // 3. Resolve caller active organization
+  const currentOrgId = await resolveOrgId(user.id, db);
+  if (!currentOrgId) {
+    return NextResponse.json(
+      { error: 'FORBIDDEN', message: 'User is not associated with an active organization' },
+      { status: 403 },
+    );
+  }
+
+  // 4. Assert tenant isolation scope against requested org
+  const requestedOrgId = (params.orgId || currentOrgId).trim();
+  try {
+    assertTenantScope(currentOrgId, requestedOrgId);
+  } catch (err) {
+    if (err instanceof CrossTenantViolationError) {
+      logger.warn('[API:Export] Cross-tenant export attempt blocked', {
+        userId: user.id,
+        currentOrgId,
+        requestedOrgId,
+      });
+      return NextResponse.json(
+        { error: 'CROSS_TENANT_VIOLATION', message: err.message, code: err.code },
+        { status: 403 },
+      );
+    }
+    throw err;
+  }
+
+  // 5. Parse and validate format
+  const rawFormat = (params.format || 'csv').toLowerCase().trim();
+  if (rawFormat !== 'csv' && rawFormat !== 'json' && rawFormat !== 'ndjson') {
+    return NextResponse.json(
+      { error: 'INVALID_FORMAT', message: "Format must be 'csv', 'json', or 'ndjson'" },
+      { status: 400 },
+    );
+  }
+  const format = rawFormat as ExportFormat;
+
+  // 6. Parse and validate date range
+  const now = Date.now();
+  const startTimestamp = params.start ? Number(params.start) : now - 30 * 86400 * 1000;
+  const endTimestamp = params.end ? Number(params.end) : now;
+
+  if (isNaN(startTimestamp) || isNaN(endTimestamp) || startTimestamp <= 0 || endTimestamp <= 0) {
+    return NextResponse.json(
+      { error: 'INVALID_DATE_RANGE', message: 'start and end must be valid positive timestamps in milliseconds' },
+      { status: 400 },
+    );
+  }
+
+  if (startTimestamp > endTimestamp) {
+    return NextResponse.json(
+      { error: 'INVALID_DATE_RANGE', message: 'start timestamp cannot be greater than end timestamp' },
+      { status: 400 },
+    );
+  }
+
+  const maxRangeMs = 365 * 86400 * 1000;
+  if (endTimestamp - startTimestamp > maxRangeMs) {
+    return NextResponse.json(
+      { error: 'INVALID_DATE_RANGE', message: 'Date range cannot exceed 365 days' },
+      { status: 400 },
+    );
+  }
+
+  const category = (params.category || 'all').toLowerCase().trim();
+  const headers = category === 'summary' ? SUMMARY_HEADERS : DEFAULT_HEADERS;
+
+  const dateStr = new Date().toISOString().slice(0, 10);
+  const filename = `analytics-export-${currentOrgId}-${dateStr}`;
+
+  logger.info('[API:Export] Initiating streaming analytics export', {
+    orgId: currentOrgId,
+    format,
+    startTimestamp,
+    endTimestamp,
+    category,
+  });
+
+  // 7. Stream generator into response
+  const dataStream = fetchExecutiveBIMetricsStream(
+    db,
+    currentOrgId,
+    startTimestamp,
+    endTimestamp,
+    category,
+  );
+
+  return createStreamingExportResponse(dataStream, format, filename, {
+    headers,
+    csvOptions: {
+      delimiter: ',',
+      lineEnding: '\r\n',
+      headers,
+    },
+    jsonOptions: {
+      indent: 2,
+    },
+  });
+}
+
+export async function GET(request: NextRequest): Promise<Response> {
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const params: ExportQueryParams = {
+      format: searchParams.get('format'),
+      start: searchParams.get('start'),
+      end: searchParams.get('end'),
+      category: searchParams.get('category'),
+      orgId: searchParams.get('org_id') || searchParams.get('orgId'),
+    };
+
+    return await handleExportRequest(params, request);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error('[API:Export] Export failure', { error: message });
+    return NextResponse.json(
+      { error: 'EXPORT_FAILED', message: 'Internal server error during analytics export' },
+      { status: 500 },
+    );
+  }
+}
+
+export async function POST(request: NextRequest): Promise<Response> {
+  try {
+    let body: ExportQueryParams = {};
+    try {
+      body = (await request.json()) as ExportQueryParams;
+    } catch {
+      // Body is empty or not JSON, fallback to query parameters
+    }
+
+    const searchParams = request.nextUrl.searchParams;
+    const params: ExportQueryParams = {
+      format: body.format || searchParams.get('format'),
+      start: body.start !== undefined ? String(body.start) : searchParams.get('start'),
+      end: body.end !== undefined ? String(body.end) : searchParams.get('end'),
+      category: body.category || searchParams.get('category'),
+      orgId: body.orgId || searchParams.get('org_id') || searchParams.get('orgId'),
+    };
+
+    return await handleExportRequest(params, request);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error('[API:Export] Export failure', { error: message });
+    return NextResponse.json(
+      { error: 'EXPORT_FAILED', message: 'Internal server error during analytics export' },
+      { status: 500 },
+    );
+  }
+}
+```
 
 ---
 
 ## 5. Verification Method
 
-### 5.1. How to Independently Verify Code and Tests
-1. **Verify Template Registry and Cost Estimator Functions**:
-   Inspect:
-   - `apps/sophia-ai-factory/src/land/missions/first-run-template.ts`
-   - `apps/sophia-ai-factory/src/land/missions/cost-estimator.ts`
-   Verify that:
-   - All 3 templates (`viral_shorts_explainer`, `affiliate_product_showcase`, `daily_news_wisdom`) exist and contain all required properties.
-   - `calculateMcuCredits(30)` returns 30, `calculateMcuCredits(45)` returns 40, and `calculateMcuCredits(60)` returns 50.
-   - Clamping `Math.max(1, ...)` and `Math.max(10, ...)` is present in `estimateMissionPreflight`.
+### 5.1 Independent E2E Test Verification
+Run the existing enterprise executive BI E2E test suite:
+```bash
+cd apps/sophia-ai-factory
+PATH="/opt/homebrew/bin:/usr/local/bin:$PATH" npx vitest run src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts
+```
+**Verification Invalidation Condition**:
+- Any failure in F4 (F4-1 through F4-5), F5 (F5-1 through F5-5), B4, B5, P2, or S1.
+- Line splits failing on `\r\n`.
+- Quote escaping failing on `""`.
 
-2. **Verify Parameter Passing Defect**:
-   Inspect `apps/sophia-ai-factory/src/components/missions/first-run-wizard.tsx` lines 51–65.
-   Check: `constraints: {}` is currently empty.
-   Inspect `apps/sophia-ai-factory/src/forest/mission/multi-track-orchestrator.ts` lines 692–695 and 782.
-   Observe: Default fallbacks trigger (3 scenes, 30s) due to empty constraints.
+### 5.2 Layer Architecture Boundary Verification
+Run the architecture boundary linter:
+```bash
+cd apps/sophia-ai-factory
+bash scripts/check-layer-boundaries.sh
+```
+**Verification Invalidation Condition**:
+- Any `from '@/forest'` or `from '@/land'` in `src/tree/bi/export-formatter.ts`.
+- Exit code != 0.
 
-3. **Run Existing Test Suite (When executing in environment with Node permission)**:
-   ```bash
-   cd apps/sophia-ai-factory
-   npx vitest run src/land/missions/__tests__/first-run-template.test.ts
-   npx vitest run src/land/missions/__tests__/cost-estimator.test.ts
-   ```
+### 5.3 TypeScript Compilation Check
+Execute TypeScript strict compilation:
+```bash
+cd apps/sophia-ai-factory
+PATH="/opt/homebrew/bin:/usr/local/bin:$PATH" npm run type-check
+```
+**Verification Invalidation Condition**:
+- Any compilation errors in `src/tree/bi/export-formatter.ts` or `src/app/api/v1/analytics/export/route.ts`.
+- Any usage of `:any`.
 
-4. **Invalidation Conditions**:
-   - If `FIRST_RUN_TEMPLATES` duration or scene numbers are altered without updating `cost-estimator.ts` or `calculateMcuCredits`.
-   - If `createMissionSchema` in `actions.ts` restricts `constraints` to exclude template metadata.
+### 5.4 Integration & Route Verification Scenarios
+A downstream test file or manual probe should assert:
+1. `GET /api/v1/analytics/export` without session -> HTTP 401.
+2. `GET /api/v1/analytics/export?org_id=competitor_org` with user in `test_org` -> HTTP 403 `CROSS_TENANT_VIOLATION`.
+3. `GET /api/v1/analytics/export?start=100&end=50` -> HTTP 400 `INVALID_DATE_RANGE`.
+4. `GET /api/v1/analytics/export?format=csv` -> HTTP 200 with headers `Content-Type: text/csv; charset=utf-8` and `Content-Disposition: attachment; filename="analytics-export-...csv"`.
+5. `GET /api/v1/analytics/export?format=json` with 0 records -> HTTP 200 body `[]`.

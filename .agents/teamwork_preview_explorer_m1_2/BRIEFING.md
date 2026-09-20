@@ -1,7 +1,7 @@
-# BRIEFING — 2026-09-19T15:58:50Z
+# BRIEFING — 2026-09-20T11:46:30+07:00
 
 ## Mission
-Investigate R2 (Runtime Environment Variable Parity) and R3 (Defensive Registration & Magic Link Name Fallback) for Better-Auth on Cloudflare Workers.
+Design Milestone 1 Dynamic White-Label Theme Resolver & Brand Kit Injection (theme-resolver.ts, org-branding-repo.ts, layout injection, and layer compliance).
 
 ## 🔒 My Identity
 - Archetype: Explorer
@@ -9,31 +9,36 @@ Investigate R2 (Runtime Environment Variable Parity) and R3 (Defensive Registrat
 - Working directory: /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_explorer_m1_2
 - Original parent: 4b4014dc-c889-46e2-94e4-d87757729081
 - Milestone: Milestone 1 - Discovery & Root-Cause Mapping
+- Current Milestone: Milestone 1 - Dynamic White-Label Theme Resolver & Brand Kit Injection
 
 ## 🔒 Key Constraints
 - Read-only investigation — do NOT implement in production codebase directly
 - Write all findings, analyses, and recommendations into working directory
 - Provide exact code modifications / patches in report and handoff
+- Read-only investigation — do NOT implement directly in production files
+- Adhere strictly to 4-layer architecture boundaries (seed -> tree -> forest -> land)
 
 ## Current Parent
-- Conversation ID: 4b4014dc-c889-46e2-94e4-d87757729081
-- Updated: 2026-09-19T15:58:50Z
+- Conversation ID: 78b5382f-0b81-4402-ad59-b06284d61c09
+- Updated: 2026-09-20T11:46:30+07:00
 
 ## Investigation State
-- **Explored paths**: `apps/sophia-ai-factory/wrangler.toml`, `wrangler.staging.toml`, `src/seed/auth/better-auth-server.ts`, `src/seed/auth/better-auth-client.ts`, `src/components/stitch/screens/auth/register-page.tsx`, `src/components/stitch/screens/login/login-form.tsx`, `src/app/api/auth/[...all]/route.ts`, `src/seed/db/client.ts`, migrations `0001-init.sql`, `0003-better-auth.sql`, `scripts/deploy-with-sha.sh`, `scripts/sophia-doctor.mjs`, `scripts/check-layer-boundaries.sh`
+- **Explored paths**: `apps/sophia-ai-factory/src/tree/branding/org-branding-repo.ts`, `apps/sophia-ai-factory/src/seed/tenant-settings/defaults.ts`, `apps/sophia-ai-factory/src/app/[locale]/layout.tsx`, `apps/sophia-ai-factory/src/app/globals.css`, `apps/sophia-ai-factory/src/middleware.ts`, `apps/sophia-ai-factory/src/components/stitch/ui/sidebar.tsx`, `apps/sophia-ai-factory/scripts/check-layer-boundaries.sh`
 - **Key findings**:
-  1. `BETTER_AUTH_URL` and `APP_URL` are missing from `wrangler.toml` `[vars]` (present in `wrangler.staging.toml`).
-  2. Missing `BETTER_AUTH_URL` causes `baseURL` and `trustedOrigins` in `better-auth-server.ts` to fallback to `localhost:3000` when `NODE_ENV !== 'production'` in edge runtime, returning 403 `INVALID_ORIGIN` for requests with `Origin: https://sophia.agencyos.network` and generating localhost magic links in emails.
-  3. `databaseHooks.user.create.before` in `better-auth-server.ts` throws `Error('Name is required')` when `name` is missing or empty. This crashes magic link registrations (which only supply email) and registration without explicit company name.
-  4. Form in `register-page.tsx` has `noValidate` and passes unvalidated `companyName` directly as `name`.
-- **Unexplored areas**: None for R2/R3 scope; findings are comprehensive and root-causes are confirmed.
+  1. Tailwind v4 in `globals.css` uses `@theme inline` with CSS custom properties expecting space-separated HSL channels (`H S% L%`).
+  2. WCAG 2.1 relative luminance calculation ensures button text (`--primary-foreground`) switches between pure white `#FFFFFF` and deep obsidian `#08090D` dynamically.
+  3. `getTenantBrandingByHostname` in `org-branding-repo.ts` joins `custom_domains` with `org_branding` and `tenant_settings` (`namespace='branding'`).
+  4. In-memory edge memoization with 60s TTL and 500-entry LRU cap eliminates D1 queries on warm SSR requests.
+  5. SSR style injection via `<WhiteLabelThemeStyle>` prevents FOUC; Next.js 15 `headers()` and `getCspNonce()` maintain strict CSP compliance.
+  6. Canonical platform domains bypass DB lookups completely.
+  7. Layer compliance verified: exactly 0 layer violations across `seed`, `tree`, `forest`, and `app`.
+- **Unexplored areas**: None. Blueprint is complete, verified, and ready for worker implementation.
 
 ## Key Decisions Made
-- Formulated exact code changes for `wrangler.toml`, `better-auth-server.ts`, and `register-page.tsx` including robust email prefix fallback and deterministic `trustedOrigins` set.
-- Completed comprehensive `report.md` and 5-component `handoff.md`.
+- Architecture split across 4 layers: `src/seed/types/white-label-branding.ts` (contracts), `src/tree/branding/theme-resolver.ts` (pure math & CSS generation), `src/tree/branding/org-branding-repo.ts` (query & edge memoization), `src/forest/theme/white-label-theme-style.tsx` (SSR style injector), `src/forest/theme/white-label-context.tsx` (client brand context), and `src/app/[locale]/layout.tsx` (Next.js layout integration).
+- Completed 5-component `handoff.md`.
 
 ## Artifact Index
 - DISPATCH.md — Dispatch instructions log
 - progress.md — Liveness and progress tracker
-- report.md — Complete investigation report with exact proposed code changes
 - handoff.md — 5-component handoff report for Worker/Orchestrator

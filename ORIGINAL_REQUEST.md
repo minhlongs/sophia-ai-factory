@@ -629,3 +629,83 @@ Bridge Cloudflare Workers cloud execution with private local GPU inference nodes
 
 User requested: "go next". The server was restarted. Please revive all monitoring crons and child workers, continue execution of the Autonomous Growth & Revenue Engine ($1M MRR Path): complete Milestone 4 (Mekong AI Hybrid Edge Node Sync), Milestone 5 (Final E2E Verification & CF-Direct Live Edge Deployment to Cloudflare Workers), conduct the mandatory independent Victory Audit, and report final closeout.
 
+## 2026-09-20T04:35:33Z
+
+The user requested: The full multi-agent team.
+Execute the complete Enterprise White-Label, Multi-Tenant Organizations, Executive BI, and Resilient Outbound Webhooks Engine (Phase 18–19 Scale Ready): Build the custom domain & dynamic white-label portal engine, implement the multi-user organization hierarchy with 5-tier RBAC and invitation workflows, launch the Executive BI reporting and automated digest engine with multi-format streaming export, deploy the outbound HMAC-signed webhook bus with DLQ retry handling, and verify with live Cloudflare Workers deployment and Sophia Doctor 11/11 GREEN certification.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+References:
+- docs/mrr-roadmap.md
+- docs/development-roadmap.md
+- apps/sophia-ai-factory/CLAUDE.md
+- apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
+- apps/sophia-ai-factory/src/tree/branding/org-branding-repo.ts
+- apps/sophia-ai-factory/src/land/admin/org-manager.ts
+- apps/sophia-ai-factory/src/seed/auth/resolve-org-id.ts
+
+## Requirements
+
+### R1. Enterprise White-Label & Custom Domain Engine (MASTER Tier)
+Build a multi-tenant white-label branding and custom domain engine:
+- D1 schema and management for `custom_domains` with Cloudflare for SaaS verification status tracking (SSL, DNS CNAME, routing).
+- Dynamic white-label theme resolver serving custom agency logos, favicons, brand colors, and portal titles per hostname/tenant.
+- White-label email header and footer formatting for transactional agency-branded notifications.
+
+### R2. Multi-User Organizations & Role-Based Access Control (RBAC)
+Implement multi-user organization collaboration and granular permissions:
+- Complete organization lifecycle: organization creation, member seat quota enforcement per tier, invitation generation with cryptographic single-use tokens, and invitation acceptance.
+- 5-tier RBAC system (`owner`, `admin`, `creator`, `billing_manager`, `viewer`) with typed permission matrix (`canCreateMissions`, `canManageBilling`, `canInviteMembers`, `canPublishVideos`, `canConfigureWebhooks`).
+- Org context switching helper and middleware guard ensuring strict tenant data isolation across all mutation actions.
+
+### R3. Executive Business Intelligence (BI) & Automated Reporting Engine
+Build comprehensive analytics aggregation and automated report delivery:
+- Unified BI metrics aggregator compiling MRR, video generation throughput, viral engagement metrics, and affiliate conversion ROI.
+- Scheduled executive digest dispatcher delivering automated weekly/monthly performance summaries to email outbox and Telegram bot.
+- Streaming multi-format export API supporting CSV, JSON, and structured report summaries with tenant scoping and date range filters.
+
+### R4. Resilient Outbound Webhooks & Event Streaming Bus
+Build an enterprise developer webhook integration system:
+- Outbound webhook subscription manager (`webhook_endpoints`) with event filtering (video rendered, campaign completed, commission earned, payout processed).
+- Timing-safe HMAC-SHA256 signature generator (`X-Sophia-Signature`) for payload integrity verification.
+- Asynchronous webhook delivery queue with exponential backoff retry, jitter, dead letter queue (DLQ) logging, and manual replay capability.
+
+### R5. Layer Architecture Discipline & Live Edge Deployment
+- Strictly preserve canonical 4-layer import hierarchy (`seed` → `tree` → `forest` → `land`) with 0 violations.
+- Maintain 0 TypeScript compilation errors and 100% test pass rate across all new and existing test suites.
+- Apply database migration to remote Cloudflare D1 database (`sophia-raas-db`).
+- Deploy to Cloudflare Workers edge via CF-direct doctrine, verify live edge SHA match, and confirm Sophia Doctor reports 11/11 GREEN.
+
+## Acceptance Criteria
+
+### Enterprise White-Label & Custom Domains (R1)
+- [ ] Custom domain resolver accurately maps hostnames to tenant branding configurations
+- [ ] White-label UI theme injector dynamically provides custom logos, colors, and portal branding
+- [ ] Domain DNS and SSL status validation handles pending, active, and error states cleanly
+
+### Multi-User Organizations & RBAC (R2)
+- [ ] Organization invitation flow creates secure tokens and adds members with assigned roles
+- [ ] RBAC guard enforces permissions accurately across all 5 roles with 0 privilege leakage
+- [ ] Multi-tenant isolation prevents cross-organization data leakage in queries and mutations
+
+### Executive BI & Reporting Engine (R3)
+- [ ] BI aggregator computes accurate multi-channel ROI and operational metrics
+- [ ] Automated digest dispatcher generates and enqueues weekly/monthly summaries
+- [ ] Export API streams RFC-4180 compliant CSV and structured JSON reports
+
+### Resilient Outbound Webhooks (R4)
+- [ ] Webhook dispatcher delivers payloads signed with HMAC-SHA256 signatures
+- [ ] Delivery failures trigger exponential backoff retries and route to DLQ upon final exhaustion
+- [ ] Replay API allows re-dispatching failed webhook deliveries safely
+
+### Quality Gates & Production Deployment (R5)
+- [ ] `npm run type-check` exits with code 0 (0 TypeScript errors)
+- [ ] All unit, integration, and E2E test suites pass with 100% success rate
+- [ ] `bash scripts/check-layer-boundaries.sh` exits with code 0
+- [ ] Remote Cloudflare D1 migration applies cleanly to `sophia-raas-db`
+- [ ] Deployed commit SHA matches live edge `https://sophia.agencyos.network/api/version`
+- [ ] Sophia Doctor (`node scripts/sophia-doctor.mjs`) reports 11/11 GREEN (100% score)
+

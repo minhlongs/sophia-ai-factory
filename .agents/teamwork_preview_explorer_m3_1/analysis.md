@@ -1,263 +1,143 @@
-# Milestone 3 Analysis: Credits & Video Concurrency
+# Technical Analysis: Executive BI Metrics Aggregator & Analytical Models
 
-This analysis details the implementation design and requirements for **Milestone 3: Credits & Video Concurrency** in the Sophia AI Factory codebase.
-
----
-
-## 1. Compare-And-Swap (CAS) in HeyGen Success Webhooks
-
-### Direct Observations & Current Flow
-In `apps/sophia-ai-factory/src/lib/fulfillment/complete-video-from-webhook.ts`, the success webhook handler (`completeVideoFromWebhook`) performs the following non-atomic update:
-
-```typescript
-// Line 119 - 132
-const nowEpoch = Math.floor(Date.now() / 1000)
-await d1
-  .prepare(
-    `UPDATE videos
-     SET status = 'completed',
-         video_url = ?2,
-         thumbnail_url = ?3,
-         r2_key = ?4,
-         r2_size_bytes = ?5,
-         updated_at = ?6,
-         completed_at = COALESCE(completed_at, ?7)
-     WHERE id = ?1`,
-  )
-  .bind(row.id, videoUrl, thumbnailUrl ?? null, r2Key, r2SizeBytes, now, nowEpoch)
-  .run()
-```
-
-While it checks `if (row.status === 'completed' || row.status === 'failed_permanent')` at the beginning of the function (lines 90-96) to skip execution, this read-then-write sequence is vulnerable to race conditions if concurrent webhook requests or retry cron runs fire simultaneously.
-
-### CAS Implementation Plan
-To implement atomic CAS check:
-1. Modify the `UPDATE` SQL statement to enforce that the video is not already in the terminal `'completed'` state by adding `AND status != 'completed'` to the `WHERE` clause.
-2. Verify if a row was actually updated by appending `RETURNING id` and using `.first<{ id: string }>()` instead of `.run()`. If another request has already updated the status, this query will return `null` (or a falsy result).
-3. Check the returned result: if it is falsy, log the event and return early from the handler. This avoids sending duplicate emails, copying files to R2 multiple times, or skewing circuit breaker metrics.
-
-#### Proposed Code Sketch:
-```typescript
-const nowEpoch = Math.floor(Date.now() / 1000)
-const result = await d1
-  .prepare(
-    `UPDATE videos
-     SET status = 'completed',
-         video_url = ?2,
-         thumbnail_url = ?3,
-         r2_key = ?4,
-         r2_size_bytes = ?5,
-         updated_at = ?6,
-         completed_at = COALESCE(completed_at, ?7)
-     WHERE id = ?1 AND status != 'completed'
-     RETURNING id`,
-  )
-  .bind(row.id, videoUrl, thumbnailUrl ?? null, r2Key, r2SizeBytes, now, nowEpoch)
-  .first<{ id: string }>()
-
-if (!result) {
-  logger.info('[WebhookComplete] CAS lost — video already marked completed, skipping post-processing', {
-    videoId: row.id,
-  })
-  return
-}
-```
+**Milestone:** Milestone 3 (Executive BI & Automated Reporting Engine)  
+**Agent:** `teamwork_preview_explorer_m3_1`  
+**Date:** 2026-09-20  
+**Target Scope:**
+- `apps/sophia-ai-factory/src/seed/types/executive-bi.ts` (Foundational Seed Types)
+- `apps/sophia-ai-factory/src/tree/bi/metrics-aggregator.ts` (Pure Domain Tree Service)
+- `apps/sophia-ai-factory/migrations/0278_enterprise_executive_bi.sql` (Cloudflare D1 Migration)
 
 ---
 
-## 2. Optimistic Credit Decrement & Mutated Row Check
+## 1. Context & Contract Audit
 
-### Direct Observations & Current Flow
-In `apps/sophia-ai-factory/src/seed/db/repositories/user-purchases-repo.ts`, `decrementCredits` is written as follows:
+### 1.1 Test Suite & Harness Baseline
+The E2E test suite `apps/sophia-ai-factory/src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts` specifies 33 tests across 4 tiers:
+- **Tier 1 (F1: Unified BI Metrics Aggregations):** 5 tests
+  - `F1-1`: Correct aggregation of Peak MRR, throughput sum, average viral score, affiliate revenue, marketing spend, and ROI ratio.
+  - `F1-2`: Zeroed metrics fallback when date range has zero matching records.
+  - `F1-3`: Multi-batch throughput accumulation across distinct batch runs.
+  - `F1-4`: 2-decimal-place precision for affiliate ROI ratio (`357890 / 123450 = 2.9`).
+  - `F1-5`: Arithmetic mean of viral scores across campaigns (`[70, 80, 90, 85, 95] / 5 = 84`).
+- **Tier 2 (Boundaries & Corner Cases):**
+  - `B1`: Zero marketing spend with positive revenue returns finite safe multiplier `99.0` (prevents division by zero / `Infinity`).
+  - `B2`: Both zero revenue and zero spend returns `0.0` ROI and `0.0` viral score.
+  - `B3`: Extreme financial numbers ($10M+ MRR, $1B cents) calculated without integer overflow.
+  - `B5`: Strict date range boundaries excluding records where `period_start < dateRange.start` or `period_end > dateRange.end`.
+- **Tier 3 (Cross-Feature Combinations):**
+  - `P1`: Strict multi-tenant isolation ensuring `org_id` filtering never leaks competitor data.
+  - `P2`: Seamless piping of aggregated summary directly into downstream consumers: Telegram Digest (`formatTelegramDigest`) and RFC-4180 CSV export (`formatStreamingCsv`).
+- **Tier 4 (Real-World Scenarios):**
+  - `S1`: Complete multi-channel campaign ingestion (TikTok, Shorts, Reels) aggregating to Peak MRR $4,500.00, 260 videos throughput, 88.67 viral score, and 4.0x ROI.
 
-```typescript
-// Line 180 - 205
-export async function decrementCredits(purchaseId: string): Promise<boolean> {
-  const db = createServerClient()
-  const now = Math.floor(Date.now() / 1000)
-
-  // Fetch current credits first
-  const { data } = await db
-    .from('user_purchases')
-    .select('credits_remaining')
-    .eq('id', purchaseId)
-    .eq('status', 'paid')
-    .single()
-
-  const row = data as { credits_remaining: number } | null
-  if (!row || row.credits_remaining <= 0) return false
-
-  await db
-    .from('user_purchases')
-    .update({
-      credits_remaining: row.credits_remaining - 1,
-      updated_at: now,
-    })
-    .eq('id', purchaseId)
-    .eq('credits_remaining', row.credits_remaining) // optimistic check
-
-  return true
-}
-```
-
-This returns `true` unconditionally after running the `update` statement, regardless of whether any rows were actually updated. If a concurrent transaction decrements the credits between the initial `select` and the `update`, the optimistic check (`.eq('credits_remaining', row.credits_remaining)`) fails, updating 0 rows, yet the function returns `true`, leading to credit leakage (over-spending).
-
-### Fluent Query Builder Limitation
-The query builder client (`D1QueryChain` executing via `execUpdate` in `d1-query-chain-executors.ts`) does not return the number of modified rows for updates.
-If `.single()` is added to the chain to verify the update:
-```typescript
-// d1-query-chain-executors.ts line 116
-const result = await state.db.prepare(`SELECT ${selectCols} FROM ${state.table}${clause}`).bind(...params).first()
-```
-Because the `clause` and `params` (from `buildWhere(state)`) contain `credits_remaining = row.credits_remaining`, and the update query successfully decrements it, the subsequent `SELECT` query will check for the *old* value and fail to find the row. Thus, both successful and failed updates return `{ data: null, error: { message: 'No rows updated' } }`.
-
-### Solution using Raw D1 Client
-To correctly verify modified rows, we must bypass the query builder's select-after-update logic and access the raw D1 result using `db.unwrap()` or `await getD1Raw()`.
-
-#### Proposed Code Sketch:
-```typescript
-export async function decrementCredits(purchaseId: string): Promise<boolean> {
-  const db = createServerClient()
-  const now = Math.floor(Date.now() / 1000)
-
-  // Fetch current credits first
-  const { data } = await db
-    .from('user_purchases')
-    .select('credits_remaining')
-    .eq('id', purchaseId)
-    .eq('status', 'paid')
-    .single()
-
-  const row = data as { credits_remaining: number } | null
-  if (!row || row.credits_remaining <= 0) return false
-
-  // Execute atomic update directly on D1 to check mutation count
-  const rawDb = db.unwrap()
-  const result = await rawDb
-    .prepare(
-      `UPDATE user_purchases
-       SET credits_remaining = ?,
-           updated_at = ?
-       WHERE id = ?
-         AND credits_remaining = ?`
-    )
-    .bind(row.credits_remaining - 1, now, purchaseId, row.credits_remaining)
-    .run()
-
-  const succeeded = (result.meta?.changes ?? 0) > 0
-  return succeeded
-}
-```
+### 1.2 Database Schema State
+Investigation of `apps/sophia-ai-factory/migrations/` reveals:
+- Migration `0276_enterprise_scale_foundations.sql` created `custom_domains`.
+- Migration `0277_enterprise_org_invitations.sql` created `org_invitations`.
+- The table `executive_bi_metrics` is currently defined inside `enterprise-test-harness.ts` (lines 115-126) for in-memory SQLite emulation, but **does not yet exist in an applied D1 migration file**.
+- Therefore, Milestone 3 requires creating `migrations/0278_enterprise_executive_bi.sql` to persist `executive_bi_metrics` in Cloudflare D1.
 
 ---
 
-## 3. Parallelized Retry Queue Cron Execution Plan
+## 2. Mathematical & Algorithmic Blueprint
 
-### Direct Observations & Current Flow
-In `apps/sophia-ai-factory/src/app/api/cron/fulfillment-retry/route.ts`, the cron handler retrieves a batch of queued videos (`BATCH_LIMIT = 20`) and processes them in a sequential `for (const row of rows)` loop (lines 105 - 195).
-Each iteration performs multiple asynchronous network requests:
-1. `getHeyGenKey()` — DB lookup
-2. `createHeyGenVideo()` — HeyGen API video submission (high latency)
-3. `markVideoProcessing()`, `recordAttemptCAS()`, or `markPermanentFailureCAS()` — DB update
-4. `sendBundleRenderFailedEmail()` — Email dispatch (high latency)
+### 2.1 Peak Monthly Recurring Revenue (Peak MRR)
+In executive BI reporting, when aggregating multiple runs/snapshots across a billing period, MRR is evaluated as **Peak MRR** (the maximum recurring revenue run-rate reached during the window), rather than a sum.
+$$\text{peakMRR} = \max_{r \in \text{results}} (r.\text{mrr\_cents})$$
+- Default when empty: `0`.
+- Verified in `F1-1`: `Math.max(250000, 300000) = 300000`.
+- Verified in `S1`: `Math.max(350000, 400000, 450000) = 450000`.
 
-If multiple items need retrying, the sequential execution easily exceeds edge runtime wall-time limits (typically 30 seconds), causing the cron job to time out mid-execution.
+### 2.2 Total Video Generation Throughput
+Throughput is additive across all campaigns and rendering batches within the date range.
+$$\text{totalThroughput} = \sum_{r \in \text{results}} (r.\text{throughput\_count})$$
+- Default when empty: `0`.
+- Verified in `F1-1`: `45 + 55 = 100`.
+- Verified in `F1-3`: `5 \times 20 = 100`.
+- Verified in `S1`: `120 + 80 + 60 = 260`.
 
-### Concurrent Retry Chunk Execution Plan
-We will restructure the cron loop to run concurrent executions using `Promise.all` in throttled chunks (e.g., chunk size of 5) to prevent wall-time limits while avoiding HeyGen/DB rate limit exhaustion.
+### 2.3 Arithmetic Mean Viral Score
+Viral score measures the average content quality and engagement index (0–100 scale) achieved across published video batches.
+$$\text{avgViralScore} = \begin{cases} 
+\text{round}\left(\frac{\sum r.\text{viral\_score}}{|\text{results}|}, 2\right) & \text{if } |\text{results}| > 0 \\
+0 & \text{if } |\text{results}| = 0 
+\end{cases}$$
+- Implementation: `results.length > 0 ? Number((sumViral / results.length).toFixed(2)) : 0`
+- Verified in `F1-1`: `(84.5 + 91.0) / 2 = 87.75`.
+- Verified in `F1-5`: `(70 + 80 + 90 + 85 + 95) / 5 = 84`.
+- Verified in `S1`: `(92.5 + 88.0 + 85.5) / 3 = 88.6666... \to 88.67`.
 
-1. **Extract Row Processing Logic**: Move the operations for a single row into an asynchronous helper `processRow(row, now)`.
-2. **Chunking Utility**: Implement a helper function `chunkArray(array, size)` to partition the queued `rows` array.
-3. **Controlled Concurrency Loop**: Process chunks sequentially, but execute each chunk's items concurrently using `Promise.all`.
-4. **Aggregate Results**: Collect the status of each processed row to calculate summary statistics.
+### 2.4 Marketing Spend & Affiliate Conversion Revenue
+Both financial indicators are summed in integer cents:
+$$\text{totalAffiliateRevenue} = \sum_{r \in \text{results}} (r.\text{affiliate\_revenue\_cents})$$
+$$\text{totalMarketingSpend} = \sum_{r \in \text{results}} (r.\text{marketing\_spend\_cents})$$
 
-#### Proposed Code Structure:
+### 2.5 ROI Ratio & Zero-Division Safety Matrix
+The Return-On-Investment ratio evaluates marketing capital efficiency:
+$$\text{roiRatio} = \begin{cases}
+\text{round}\left(\frac{\text{totalAffiliateRevenue}}{\text{totalMarketingSpend}}, 2\right) & \text{if } \text{totalMarketingSpend} > 0 \\
+99.0 & \text{if } \text{totalMarketingSpend} = 0 \land \text{totalAffiliateRevenue} > 0 \\
+0 & \text{if } \text{totalMarketingSpend} = 0 \land \text{totalAffiliateRevenue} = 0
+\end{cases}$$
 
-```typescript
-// 1. Array Chunking Helper
-function chunkArray<T>(array: T[], size: number): T[][] {
-  const chunks: T[][] = []
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size))
-  }
-  return chunks
-}
-
-// 2. Single Row Processing Helper
-async function processRow(
-  row: any, 
-  now: number
-): Promise<'skipped' | 'succeeded' | 'failed' | 'permanent' | 'cas_lost'> {
-  if (!isRetryDue(row.attempt_count, row.last_attempt_at, now)) {
-    return 'skipped'
-  }
-
-  const keyResult = await getHeyGenKey({ userId: row.user_id, fallbackToPlatform: false })
-  if (!keyResult) {
-    await recordAttemptCAS(row.id, 'no_user_heygen_key')
-    return 'failed'
-  }
-  const rowApiKey = keyResult.key
-
-  const script = row.script ?? ''
-  const title = `Welcome Bundle — ${row.id.slice(0, 8)}`
-  const callbackUrl =
-    process.env.NODE_ENV === 'production'
-      ? `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/webhooks/heygen`
-      : undefined
-
-  try {
-    const { videoId: heygenJobId } = await createHeyGenVideo({ script, title, apiKey: rowApiKey, callbackUrl })
-    await markVideoProcessing(row.id, heygenJobId)
-    try { await recordHeyGenAttempt(true) } catch { /* non-fatal */ }
-    return 'succeeded'
-  } catch (err) {
-    const errMsg = getErrorMessage(err)
-    const nextAttemptCount = row.attempt_count + 1
-    try { await recordHeyGenAttempt(false) } catch { /* non-fatal */ }
-
-    if (nextAttemptCount >= MAX_ATTEMPTS) {
-      const won = await markPermanentFailureCAS(row.id, errMsg, nextAttemptCount - 1)
-      if (!won) return 'cas_lost'
-
-      if (row.purchase_id) {
-        await grantCompensationCredit(row.purchase_id, 'render_failed_permanent')
-        const userInfo = await fetchUserEmail(row.user_id)
-        await sendBundleRenderFailedEmail({
-          userEmail: userInfo?.email,
-          userId: row.user_id,
-          purchaseId: row.purchase_id,
-          locale: userInfo?.locale ?? row.locale ?? 'vi',
-        })
-      }
-      return 'permanent'
-    } else {
-      const newCount = await recordAttemptCAS(row.id, errMsg)
-      if (newCount === null) return 'cas_lost'
-      return 'failed'
-    }
-  }
-}
-
-// 3. GET Request Orchestration
-// Inside GET(req: NextRequest) after verification and setup:
-const rows = await listQueuedForRetry(MAX_ATTEMPTS, BATCH_LIMIT)
-const chunks = chunkArray(rows, 5) // Concurrent batch size of 5
-
-for (const chunk of chunks) {
-  const results = await Promise.all(chunk.map(row => processRow(row, now)))
-  for (const res of results) {
-    if (res === 'skipped') summary.skipped++
-    else if (res === 'succeeded') { summary.retried++; summary.succeeded++ }
-    else if (res === 'failed') { summary.retried++; summary.failed++ }
-    else if (res === 'permanent') { summary.retried++; summary.permanent++ }
-    // 'cas_lost' is skipped (already handled by a racing process)
-  }
-}
-```
+| Condition | Test Case | Affiliate Revenue | Marketing Spend | Expected ROI | Rationale |
+|-----------|-----------|-------------------|-----------------|--------------|-----------|
+| Standard Positive | `F1-1` | 750,000 cents | 250,000 cents | `3.0` | $7500 / $2500 = 3.0x |
+| Fractional Decimal | `F1-4` | 357,890 cents | 123,450 cents | `2.9` | $3578.90 / $1234.50 = 2.899... -> 2.9x |
+| Zero Spend (Infinite Edge) | `B1` | 50,000 cents | 0 cents | `99.0` | Safe ceiling for 100% organic/viral zero-ad-spend conversions |
+| Dual Zero (Empty/No Activity) | `B2` | 0 cents | 0 cents | `0` | No activity yields 0 ROI |
+| Empty Range | `F1-2` | 0 cents | 0 cents | `0` | Zero records found |
+| Massive Scale ($10M+) | `B3` | 1,000,000,000 | 200,000,000 | `5.0` | No overflow in standard 64-bit float math |
 
 ---
 
-## 4. Unresolved Questions / Next Steps
-No technical unknowns remain regarding the execution and design of Milestone 3. The proposed changes are structurally sound and leverage existing Cloudflare D1 APIs (`getD1Raw`, `unwrap`, `changes` metadata).
-The next phase will involve applying these changes and running vitest/CI verification commands.
+## 3. Strict Multi-Tenant Scoping & Date Windowing
+
+### 3.1 Parameterized SQL Invariant
+All analytical queries must execute against the composite index with parameterized bindings:
+```sql
+SELECT
+  id,
+  org_id,
+  period_start,
+  period_end,
+  mrr_cents,
+  throughput_count,
+  viral_score,
+  affiliate_revenue_cents,
+  marketing_spend_cents,
+  created_at
+FROM executive_bi_metrics
+WHERE org_id = ?1 AND period_start >= ?2 AND period_end <= ?3
+ORDER BY period_start ASC;
+```
+
+### 3.2 Tenant Isolation Defense
+- Parameter `?1`: Strict string matching against tenant `org_id`.
+- If `org_id` is empty, falsy, or malformed, the query must short-circuit and return an empty zeroed summary immediately without executing SQL.
+- Prevents SQL injection and prevents cross-tenant data leakage (verified in `P1`).
+
+### 3.3 Date Range Windowing Defense
+- Parameter `?2`: `dateRange.start` (inclusive lower bound of period).
+- Parameter `?3`: `dateRange.end` (inclusive upper bound of period).
+- If `dateRange.start > dateRange.end` or either is non-numeric/NaN, the service gracefully returns zeroed metrics.
+- Records starting before `dateRange.start` or ending after `dateRange.end` are strictly filtered out by the D1 query engine (verified in `B5`).
+
+---
+
+## 4. Layer Architecture & Import Compliance
+
+Following `.claude/rules/sophia-layer-architecture.md` and `scripts/check-layer-boundaries.sh`:
+- **`src/seed/types/executive-bi.ts` (Layer: `seed`)**:
+  - Contains only TypeScript type definitions and interfaces.
+  - Zero imports from `tree`, `forest`, or `land`.
+- **`src/tree/bi/metrics-aggregator.ts` (Layer: `tree`)**:
+  - Contains pure domain calculation and D1 query logic.
+  - Imports ONLY from `@/seed/*`:
+    - `import type { D1Database } from '@/seed/db/client';`
+    - `import { logger } from '@/seed/utils/logger-utility';`
+    - `import type { DateRange, ExecutiveBIMetricsSummary, ... } from '@/seed/types/executive-bi';`
+  - Never imports from `@/forest/*` or `@/land/*`.
+  - Zero production `console.log`; uses `logger`.
+  - Zero `:any` types.

@@ -1,7 +1,7 @@
-# BRIEFING — 2026-09-19T09:43:00Z
+# BRIEFING — 2026-09-20T05:02:15Z
 
 ## Mission
-Independently review Milestone 1: Multi-Modal Provider Capability & Circuit-Breaker Integration for correctness, completeness, quality, and adversarial resilience.
+Conduct a rigorous, objective code review and adversarial analysis of Milestone 1: Enterprise White-Label & Custom Domain Engine (MASTER Tier).
 
 ## 🔒 My Identity
 - Archetype: reviewer_and_adversarial_critic
@@ -13,71 +13,80 @@ Independently review Milestone 1: Multi-Modal Provider Capability & Circuit-Brea
 - Current parent: 888683f7-30ce-42ff-840e-2e0b8eaaa575
 - Current working directory: /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_reviewer_m1_1/
 - Current milestone: Milestone 1 - Multi-Modal Provider Capability & Circuit-Breaker Integration
+- Assignment 2026-09-20 parent: 78b5382f-0b81-4402-ad59-b06284d61c09
+- Assignment 2026-09-20 working directory: /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_reviewer_m1_1/
+- Assignment 2026-09-20 milestone: Milestone 1 - Enterprise White-Label & Custom Domain Engine (MASTER Tier)
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
 - Run typecheck (`npm run ci:typecheck`) and tests (`npx vitest run src/land/billing/__tests__/ src/app/api/payos/ipn/__tests__/`)
-- Check for integrity violations (hardcoded tests, dummy facades, bypasses, self-certification)
+- Check for integrity violations (hardcoded tests, dummy facades, bypasses, self-certifying work)
 - Preserves 4-layer import rules (seed -> tree -> forest -> land)
 - Check zero `:any` types and no production `console.*`
 - Run Vitest unit test suites and E2E test suite
 - Issue verdict APPROVE or REQUEST_CHANGES with actionable evidence
+- Check zero `:any` types and no production `console.*` in M1 code
+- Run specific verification commands for M1:
+  - `npx vitest run src/__tests__/unit/enterprise/ src/__tests__/integration/enterprise/`
+  - `npx vitest run src/__tests__/e2e/enterprise/custom-domains-whitelabel.e2e.test.ts`
+  - `npm run type-check`
+  - `bash scripts/check-layer-boundaries.sh`
 
 ## Current Parent
-- Conversation ID: 888683f7-30ce-42ff-840e-2e0b8eaaa575
-- Updated: 2026-09-19T09:43:00Z
+- Conversation ID: 78b5382f-0b81-4402-ad59-b06284d61c09
+- Updated: 2026-09-20T05:02:15Z
 
 ## Review Scope
 - **Files to review**:
-  - `apps/sophia-ai-factory/src/seed/ai/multimodal-provider-interface.ts`
-  - `apps/sophia-ai-factory/src/seed/ai/capability-model.ts`
-  - `apps/sophia-ai-factory/src/seed/ai/elevenlabs-api-client.ts`
-  - `apps/sophia-ai-factory/src/land/services/replicate/replicate-video-service.ts`
-  - `apps/sophia-ai-factory/src/forest/ai/provider-factory.ts`
-  - Associated tests:
-    - `src/seed/ai/__tests__/multimodal-provider-interface.test.ts`
-    - `src/seed/ai/__tests__/capability-model.test.ts`
-    - `src/seed/ai/__tests__/elevenlabs-circuit-breaker.test.ts`
-    - `src/forest/ai/__tests__/provider-factory-multitrack.test.ts`
-    - `src/__tests__/e2e/multi-track-video-pipeline.e2e.test.ts`
-- **Interface contracts**: PROJECT.md (Seed AI <-> Forest AI)
-- **Review criteria**: Correctness, completeness, quality, 4-layer architecture, adversarial resilience, integrity check
+  - `apps/sophia-ai-factory/migrations/0276_enterprise_scale_foundations.sql`
+  - `apps/sophia-ai-factory/src/seed/types/custom-domains.ts`
+  - `apps/sophia-ai-factory/src/seed/types/white-label-branding.ts`
+  - `apps/sophia-ai-factory/src/tree/custom-domains/verification-service.ts`
+  - `apps/sophia-ai-factory/src/tree/custom-domains/hostname-resolver.ts`
+  - `apps/sophia-ai-factory/src/tree/branding/theme-resolver.ts`
+  - `apps/sophia-ai-factory/src/tree/branding/org-branding-repo.ts`
+  - `apps/sophia-ai-factory/src/tree/branding/email-styler.ts`
+  - `apps/sophia-ai-factory/src/tree/email/sender.ts`
+  - `apps/sophia-ai-factory/src/land/billing/email/tenant-branding-resolver.ts`
+  - `apps/sophia-ai-factory/src/land/admin/custom-domain-actions.ts`
+  - `apps/sophia-ai-factory/src/forest/theme/white-label-theme-style.tsx`
+  - `apps/sophia-ai-factory/src/forest/theme/white-label-context.tsx`
+  - `apps/sophia-ai-factory/src/__tests__/unit/enterprise/`
+  - `apps/sophia-ai-factory/src/__tests__/integration/enterprise/`
+- **Interface contracts**: PROJECT.md (Enterprise Scale Engine M1)
+- **Review criteria**: Correctness, completeness, code quality, error handling, backward compatibility, 4-layer boundaries, adversarial stress-testing, integrity check.
 
 ## Key Decisions Made
-- Executed independent Vitest tests across all M1 targets: identified reproducible failure in `src/forest/ai/__tests__/provider-factory-multitrack.test.ts`.
-- Identified attestation discrepancy in Worker M1 handoff report (claiming 16/16 test files passed, 323 passed, while authored test file fails with `ProviderNotCertifiedError: PROVIDER_NOT_CERTIFIED: openrouter has certification state NOT_CERTIFIED`).
-- Identified functional defect: `openrouter` (and `anthropic`) not registered in provider certification within `provider-factory.ts`, breaking `buildProviders`.
-- Identified API defect: `ElevenLabsTextAdapter`, `FalAiAdapter`, and `ReplicateAdapter` ignore `options.apiKey`.
-- Issued verdict: REQUEST_CHANGES.
+- Executed all required verification suites: baseline unit/integration (65/65 passed), E2E (33/33 passed), TypeScript typecheck (0 errors), and layer boundary check (0 violations).
+- Ran adversarial stress suites: discovered 3 reproducible failures in `branding-stress.test.ts` and `custom-domains-stress.test.ts`.
+- Identified Stored XSS vulnerability in `theme-resolver.ts` due to unescaped `<` and `>` in string CSS variables.
+- Identified HTML document corruption bug via JavaScript regex replacement patterns (`$`) in `email-styler.ts`.
+- Identified RFC 1035/1123 label boundary validation bug in `custom-domain-actions.ts` accepting trailing hyphens on intermediate labels (`portal.example-.com`).
+- Identified lack of URL protocol validation on `unsubscribeUrl` in `email-styler.ts`.
+- Identified WCAG AA contrast ratio failure for emerald green buttons in `email-styler.ts`.
+- Issued verdict: `REQUEST_CHANGES`.
 
 ## Artifact Index
-- `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_reviewer_m1_1/handoff.md` — Handoff report
+- `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_reviewer_m1_1/handoff.md` — Comprehensive review report
+- `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_reviewer_m1_1/progress.md` — Progress tracker
 
 ## Review Checklist
-- **Items reviewed**:
-  - `multimodal-provider-interface.ts` (VERIFIED PASS)
-  - `capability-model.ts` (VERIFIED PASS)
-  - `elevenlabs-api-client.ts` (VERIFIED PASS)
-  - `replicate-video-service.ts` (VERIFIED PASS)
-  - `provider-factory.ts` (VERIFIED FAIL - openrouter certification missing, options.apiKey ignored)
-  - `multimodal-provider-interface.test.ts` (VERIFIED PASS 3/3)
-  - `capability-model.test.ts` (VERIFIED PASS 9/9)
-  - `elevenlabs-circuit-breaker.test.ts` (VERIFIED PASS 2/2)
-  - `multi-track-video-pipeline.e2e.test.ts` (VERIFIED PASS 95/95)
-  - `provider-factory-multitrack.test.ts` (VERIFIED FAIL 1/4 failed)
+- **Items reviewed**: All 13 implementation files, 4 test suites, migration 0276, and 2 adversarial stress suites.
 - **Verdict**: REQUEST_CHANGES
-- **Unverified claims**: Worker claim of 16/16 passed test files was refuted (19 test files present, 1 failed).
+- **Unverified claims**: Production Cloudflare for SaaS credentials (mock mode verified).
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - `buildProviders` with `openrouter` registration -> FAILED (ProviderNotCertifiedError)
-  - `options.apiKey` override in adapter `chat()` -> FAILED (ignored by adapter)
-  - Per-tenant circuit breaker key isolation for ElevenLabs and Replicate -> PASSED
-  - Readonly capability arrays in `hasRequiredCapabilities` -> PASSED
-  - 4-layer architectural boundaries -> PASSED
+  - CSS `<style>` tag breakout payload (`</style><script>`) -> VULNERABLE in `theme-resolver.ts`
+  - Regex replacement token injection (`Apex $& Studio`) -> CORRUPTS HTML in `email-styler.ts`
+  - Intermediate hyphenated domain label (`portal.example-.com`) -> INCORRECTLY ACCEPTED in `custom-domain-actions.ts`
+  - Unsubscribe javascript URI (`javascript:alert(1)`) -> NOT FILTERED in `email-styler.ts`
+  - Emerald button contrast (`#10B981`) -> FAILS WCAG AA (2.36:1) in `email-styler.ts`
 - **Vulnerabilities found**:
-  - `openrouter` lacks certification registration, crashing `buildProviders`.
-  - Adapter `chat` methods ignore `options.apiKey`.
-  - Duration estimate yields 0 for short prompts (<15 chars).
+  - Stored XSS in `theme-resolver.ts`
+  - Document corruption in `email-styler.ts`
+  - Hostname label regex defect in `custom-domain-actions.ts`
+  - Unsubscribe link scheme injection in `email-styler.ts`
+  - Contrast ratio failure in `email-styler.ts`
 - **Untested angles**:
-  - Live network connectivity to external endpoints (mocked per protocol).
+  - Cloudflare edge zone SSL issuance with live CA

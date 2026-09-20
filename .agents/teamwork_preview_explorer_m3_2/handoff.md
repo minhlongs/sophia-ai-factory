@@ -1,900 +1,887 @@
-# Handoff Report: Milestone 3 Bilingual Localization Audit & Canonical Key Mapping
+# Milestone 3 Executive BI Blueprint: Executive Digest Dispatcher & Formatting Engines
 
-**Agent**: teamwork_preview_explorer (M3 Explorer 2)  
-**Date**: 2026-09-19  
-**Target Repository**: `/Users/macbook/sophia-ai-factory`  
-**Output Path**: `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_explorer_m3_2/handoff.md`  
+**Agent**: `teamwork_preview_explorer_m3_2`  
+**Date**: 2026-09-20  
+**Type**: Hard Handoff (Investigation Complete & Implementation Blueprint Ready)  
+**Parent**: `78b5382f-0b81-4402-ad59-b06284d61c09`  
+**Milestone**: Milestone 3: Executive BI & Automated Reporting Engine  
+**Working Directory**: `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_explorer_m3_2/`
 
 ---
 
 ## 1. Observation
 
-Direct examination of the codebase revealed that `NewMissionPage`, `FirstRunWizard`, and `MissionProgressBar` currently rely on hardcoded bilingual ternaries (`isVi ? ... : ...`) and hardcoded English/Vietnamese string properties rather than canonical `next-intl` translation keys from `messages/en.json` and `messages/vi.json`.
+Direct observations and evidence gathered from the codebase, test suites, and infrastructure scripts:
 
-### 1.1 Direct File Observations
+### 1.1 E2E Test Contract (`apps/sophia-ai-factory/src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts`)
+The executive BI E2E test suite defines the exact behavioral contracts for both Telegram and Email digests:
 
-#### A. `apps/sophia-ai-factory/src/app/[locale]/dashboard/missions/new/page.tsx`
-- **Lines 24–30**:
-  ```tsx
-  const isVi = locale === 'vi';
-  return {
-    title: isVi ? 'Tạo nhiệm vụ video mới | Sophia AI Factory' : 'New Video Mission | Sophia AI Factory',
-    description: isVi
-      ? 'Khởi tạo video đầu tiên của bạn với các mẫu tối ưu sẵn và chi phí minh bạch.'
-      : 'Launch your first AI video with pre-tested templates and transparent pricing.',
-  };
-  ```
-- **Lines 61–63**:
-  ```tsx
-  <ArrowLeft className="h-3.5 w-3.5" />
-  {isVi ? 'Quay lại danh sách nhiệm vụ' : 'Back to Missions'}
-  ```
-- **Lines 69–75**:
-  ```tsx
-  <h1 className="text-2xl font-bold text-foreground">
-    {isVi ? 'Tạo video đầu tiên của bạn' : 'Create Your First Video'}
-  </h1>
-  <p className="mt-1 text-sm text-muted-foreground">
-    {isVi
-      ? 'Sophia sẽ tự động soạn kịch bản, lồng tiếng và dựng video hoàn chỉnh theo mẫu bạn chọn.'
-      : 'Sophia will autonomously write scripts, synthesize voice, and composite video using your selected template.'}
-  </p>
-  ```
-- **Line 82**:
-  `<FirstRunWizard workspaceId={workspaceId} userId={user.id} locale={isVi ? 'vi' : 'en'} />` passing down a manual boolean/locale string instead of letting the component resolve `next-intl` context.
+- **Feature 2: Automated Telegram Executive Digest Formatting (Lines 158–209)**:
+  - **F2-1 (Lines 171–179)**: Verifies `formatTelegramDigest(metrics, { agencyName: 'Apex Viral Agency' })`.
+    - Must contain agency name: `'Apex Viral Agency'`.
+    - Must contain period-escaped currency and decimals in MarkdownV2: `'5432\\.00'`, `'12500\\.00'`, `'89\\.5/100'`, `'3\\.57x'`.
+    - Must contain throughput count: `'142 videos'`.
+  - **F2-2 (Lines 181–188)**: Verifies `escapeTelegramMarkdownV2('_ * [ ] ( ) ~ ` > # + - = | { } . !')`.
+    - Returns verbatim: `'\\_ \\* \\[ \\] \\( \\) \\~ \\` \\> \\# \\+ \\- \\= \\| \\{ \\} \\. \\!'`.
+  - **F2-3 (Lines 190–193)**: Verifies message length conforms to Telegram 4096-character limit (`expect(text.length).toBeLessThan(4096)`).
+  - **F2-4 (Lines 195–198)**: Verifies fallback to `'Sophia AI Factory'` when `branding` is undefined.
+  - **F2-5 (Lines 200–208)**: Formats dollar amounts from integer cents: `99` cents -> `'0\\.99'`, `10000` cents -> `'100\\.00'`.
 
-#### B. `apps/sophia-ai-factory/src/components/missions/first-run-wizard.tsx`
-- **Line 93**:
-  ```tsx
-  setErrorMessage(isVi ? 'Không thể khởi chạy nhiệm vụ. Vui lòng thử lại.' : 'Failed to launch mission. Please retry.');
-  ```
-- **Lines 101–107** (CEO 5-Question Framework):
-  ```tsx
-  <div><p className="font-semibold text-primary">1. {isVi ? 'Nhập gì?' : 'What to enter?'}</p><p className="text-muted-foreground">{isVi ? 'Chọn mẫu hoặc chủ đề' : 'Pick a template/topic'}</p></div>
-  <div><p className="font-semibold text-primary">2. {isVi ? 'Sophia làm gì?' : 'What Sophia does?'}</p><p className="text-muted-foreground">{isVi ? 'Kịch bản ➔ Giọng ➔ Ảnh ➔ Video' : 'Script ➔ Voice ➔ Video'}</p></div>
-  <div><p className="font-semibold text-primary">3. {isVi ? 'Thời gian?' : 'Duration?'}</p><p className="text-muted-foreground">45 - 90 {isVi ? 'giây' : 'seconds'}</p></div>
-  <div><p className="font-semibold text-primary">4. {isVi ? 'Chi phí?' : 'Cost?'}</p><p className="text-muted-foreground">~${costEstimate.totalUsd} / {costEstimate.totalMcu} MCU</p></div>
-  <div><p className="font-semibold text-primary">5. {isVi ? 'Kết quả ở đâu?' : 'Where shown?'}</p><p className="text-muted-foreground">{isVi ? 'Trực tiếp tại trang này' : 'Live preview & Review'}</p></div>
-  ```
-- **Lines 116–124** (Completion Card):
-  ```tsx
-  <h3 className="text-lg font-bold text-foreground">{isVi ? 'Video đầu tiên đã hoàn tất!' : 'First Video Ready!'}</h3>
-  <p className="text-sm text-muted-foreground">{isVi ? 'Video đã được dựng hoàn chỉnh và sẵn sàng để bạn duyệt.' : 'Video is composited and ready for your approval in the Review Console.'}</p>
-  ...
-  <Video className="h-4 w-4" /> {isVi ? 'Xem & Duyệt Video' : 'Review Video'}
-  ...
-  {isVi ? 'Tạo video khác' : 'Create Another'}
-  ```
-- **Line 133**:
-  `{isVi ? 'Chọn mẫu kịch bản tối ưu sẵn' : 'Choose a Proven Template'}`
-- **Line 147**:
-  `{isVi ? 'Chủ đề hoặc Ý tưởng của bạn' : 'Topic or Video Concept'}`
-- **Line 162**:
-  `45 - 90 {isVi ? 'giây' : 'seconds'}`
-- **Line 164**:
-  `{isVi ? 'Minh bạch 100% không phí ẩn' : 'Zero Hidden Fees'}`
-- **Line 170**:
-  `{isVi ? 'Bắt đầu sản xuất video ngay' : 'Launch Video Mission Now'}`
+- **Feature 3: Branded HTML Email Executive Digest Formatting (Lines 211–261)**:
+  - **F3-1 (Lines 212–235)**: Verifies `wrapWithAgencyBranding(bodyHtml, branding)`.
+    - Must contain agency name (`'Horizon Media Group'`), primary color (`'#2563eb'`), logo URL (`'https://horizon.com/logo.png'`), title (`'Executive Monthly Performance Report'`), and `'Affiliate ROI: 4.2x'`.
+  - **F3-2 (Lines 237–241)**: Verifies container markup: must contain `'<!DOCTYPE html>'` and `'<table width="100%"'`.
+  - **F3-3 (Lines 243–246)**: Verifies footer watermark: must contain `'Powered by Sophia Enterprise Scale Engine'`.
+  - **F3-4 (Lines 248–254)**: Verifies XSS sanitization in agency title inside header: `<img src=x onerror=alert(1)> Agency` must NOT appear verbatim; must be sanitized to `&lt;img src=x onerror=alert(1)&gt; Agency`.
+  - **F3-5 (Lines 256–260)**: Verifies multi-paragraph digest layouts: `<p>Paragraph 1</p><p>Paragraph 2</p>` must be preserved intact without stripping.
 
-#### C. `apps/sophia-ai-factory/src/components/missions/mission-progress-bar.tsx`
-- **Lines 30–76**: `MISSION_STAGES` contains hardcoded English and Vietnamese fields (`labelEn`, `labelVi`, `descEn`, `descVi`):
-  - Stage 1: `Script Generation` / `Soạn kịch bản SEO` | `Writing high-retention script with OpenRouter` / `Soạn kịch bản giữ chân người xem bằng AI`
-  - Stage 2: `Voice Synthesis` / `Lồng tiếng AI` | `Synthesizing voiceover with ElevenLabs` / `Tạo giọng đọc tự nhiên bằng ElevenLabs`
-  - Stage 3: `Visual Generation` / `Tạo hình ảnh AI` | `Rendering scenes with fal.ai` / `Dựng khung cảnh điện ảnh qua fal.ai`
-  - Stage 4: `Video Compositing` / `Ghép video & Phụ đề` | `Assembling scenes, audio, and captions` / `Ghép cảnh, âm thanh và phụ đề chuyển động`
-  - Stage 5: `Ready for Review` / `Sẵn sàng duyệt` | `Video complete! Ready for one-click approval` / `Video hoàn tất! Sẵn sàng để bạn xem và duyệt`
-- **Line 107**: `{isVi ? 'Tiến độ sản xuất video' : 'Video Generation Progress'}`
-- **Line 120**: `aria-label={isVi ? 'Tiến độ nhiệm vụ' : 'Mission Progress'}`
-- **Line 166**: `{isVi ? stage.labelVi : stage.labelEn}`
-- **Line 180**: `{isVi ? 'Quá trình xử lý tạm dừng' : 'Execution Interrupted'}`
-- **Line 183**: `{errorMessage || (isVi ? 'Lỗi kết nối AI provider. Bấm thử lại an toàn.' : 'AI provider error. Retry safely.')}`
-- **Line 194**: `{isVi ? 'Thử lại' : 'Retry'}`
+- **Tier 3 Combination P2 (Lines 473–501)**:
+  - Generated BI metrics feed directly into both `formatTelegramDigest` and CSV export without intermediate translation loss.
 
-#### D. `apps/sophia-ai-factory/src/land/missions/first-run-template.ts`
-- Defined as `Record<TemplateId, FirstRunTemplate>` where each template contains `{ en: string, vi: string }` records for `name`, `description`, `badge`, `defaultTopic`, `suggestedPrompts`, and `callToAction`.
-- Verified in `src/land/missions/__tests__/first-run-template.test.ts` (lines 56–67) and `src/__tests__/e2e/multi-track-video-pipeline.e2e.test.ts` (lines 575–611): unit tests assert `template.name.en`, `template.name.vi`, `template.badge.en`, `template.badge.vi` directly.
+- **Tier 4 Real-World Scenario S1 (Lines 507–570)**:
+  - Monthly financial closeout flow: Multi-channel metrics ingestion -> `aggregateExecutiveBIMetrics` -> Telegram CEO digest -> HTML board email -> RFC-4180 CSV export.
 
-#### E. i18n Key Validator (`scripts/validate-i18n-keys.mjs`)
-- **Lines 40–50**: Detects namespace via regex `/(?:useTranslations|getTranslations)\(['"`]([a-zA-Z_.-]+)['"`]\)/` or comment `// i18n-namespace: <ns>`.
-- **Lines 66–74**: Extracts static keys `\bt\(['"`]([a-zA-Z0-9_.]+)['"`]\)` and constructs full path `${namespace}.${key}`.
-- **Lines 76–90 & 174–192**: Dynamic template literals `t(`prefix.${variable}`)` require that the static prefix before `${` exists as an object path in `vi.json`.
-- **Lines 162–167**: Every static key MUST exist in `messages/vi.json` (`getNestedValue(translations.vi, key) !== undefined`).
+### 1.2 Test Harness Implementation (`apps/sophia-ai-factory/src/__tests__/e2e/enterprise/enterprise-test-harness.ts`)
+- **`escapeTelegramMarkdownV2` (Lines 784–787)**:
+  ```typescript
+  export function escapeTelegramMarkdownV2(text: string): string {
+    return text.replace(/([_*\[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
+  }
+  ```
+- **`formatTelegramDigest` (Lines 789–806)**:
+  ```typescript
+  export function formatTelegramDigest(metrics: ExecutiveBIMetricsSummary, branding?: BrandingSettings): string {
+    const agency = branding?.agencyName ?? 'Sophia AI Factory';
+    const mrrUsd = (metrics.mrrCents / 100).toFixed(2);
+    const affiliateUsd = (metrics.affiliateRevenueCents / 100).toFixed(2);
+    const spendUsd = (metrics.marketingSpendCents / 100).toFixed(2);
+
+    const raw = `📊 *Executive BI Digest — ${agency}*
+• *MRR*: $${mrrUsd}
+• *Video Throughput*: ${metrics.throughputCount} videos
+• *Viral Score*: ${metrics.viralScore}/100
+• *Affiliate Revenue*: $${affiliateUsd}
+• *Marketing Spend*: $${spendUsd}
+• *ROI*: ${metrics.roiRatio}x
+
+_Automated report generated by Sophia Enterprise Engine_`;
+
+    return escapeTelegramMarkdownV2(raw);
+  }
+  ```
+- **`wrapWithAgencyBranding` (Lines 409–461)**:
+  Renders responsive table wrapper with sanitized agency title, optional logo, primary color border, and footer:
+  `Sent by ${agency} • Powered by Sophia Enterprise Scale Engine`.
+
+### 1.3 Existing Email Infrastructure (`apps/sophia-ai-factory/src/tree/email/sender.ts`)
+- Function `sendEmail(params: EmailParams): Promise<EmailResult>` (Lines 43–122).
+- Circuit breaker check: `shouldAllowRequest('email')`.
+- Dynamic sender resolution using white-label branding:
+  - `params.branding?.emailFromName` and `params.branding?.customDomain` -> `${emailFromName} <noreply@${customDomain}>`.
+  - Fallback: `process.env.EMAIL_FROM ?? 'Sophia AI <noreply@mekongmind.com>'`.
+- Dynamic reply-to: `params.branding?.supportEmail`.
+- HTML white-label styling delegation: `formatWhiteLabelEmail` / `wrapWithAgencyBranding`.
+- Plain text conversion: `htmlToText` / `formatWhiteLabelPlainText`.
+- Resend API integration via `fetch('https://api.resend.com/emails')` with 10s timeout.
+- Dry-run mode: returns `{ success: false, error: 'RESEND_API_KEY not configured', provider: 'dry-run' }` when API key is unset.
+
+### 1.4 Existing White-Label Email Styler (`apps/sophia-ai-factory/src/tree/branding/email-styler.ts`)
+- Exports `WhiteLabelEmailBranding`, `formatWhiteLabelEmail`, `formatWhiteLabelPlainText`, `wrapWithAgencyBranding`, `getContrastTextColor`, `isValidHttpUrl`, `escapeHtml`.
+- Conforms to WCAG 2.1 AA relative luminance formula: $L = 0.2126R + 0.7152G + 0.0722B$.
+- Tested and verified: 15/15 unit tests passing in `src/__tests__/unit/enterprise/email-styler.test.ts`.
+
+### 1.5 Existing Telegram Bot Client (`apps/sophia-ai-factory/src/tree/telegram/`)
+- `telegram-client.ts`: Contains `tryFetchMarkdownV2` (Lines 58–98). Falls back to plain text if Telegram returns 400 with `"can't parse"`, preventing message drops when formatting parsing fails.
+- `format-markdown-v2.ts`: Contains `escapeMarkdownV2` (Lines 24–26) and `truncateMarkdownV2Safely` (Lines 33–42) which drops dangling backslashes.
+- `telemetry/digest/telegram-poster.ts`: Contains `postTelegramDigest` (Lines 59–109) with circuit-breaker tracking (`shouldAllowRequest('telegram')`, `recordSuccess`, `recordFailure`).
+
+### 1.6 Architectural Layout & Boundary Rules (`scripts/check-layer-boundaries.sh`)
+- `check-layer-boundaries.sh` validates:
+  - `seed` cannot import `tree`, `forest`, or `land`.
+  - `tree` cannot import `forest` or `land`.
+  - `land` cannot import `forest`.
+- `forest` can import `seed`, `tree`, and other `forest` modules.
+- Both `telegram-digest-sender.ts` and `email-digest-sender.ts` are network-facing side-effect services and must reside in `src/forest/bi/`.
+- Current project health:
+  - Vitest E2E: 137/137 tests passing (2.74s).
+  - TypeScript: 0 errors via `npm run type-check`.
+  - Layer boundaries: 0 violations via `bash scripts/check-layer-boundaries.sh`.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Namespace Coherence**:
-   - In `apps/sophia-ai-factory/src/forest/components/missions/`, all mission-related components (`mission-control-header.tsx`, `agent-team-panel.tsx`, `task-feed.tsx`, `agent-team-configurator.tsx`) use `useTranslations('dashboard.missions.control')`.
-   - In `messages/en.json` (line 995) and `messages/vi.json` (line 995), `"dashboard": { "missions": { ... } }` is the canonical block containing general mission keys and `"control": { ... }`.
-   - Adding `"wizard": { ... }` inside `"dashboard": { "missions": { ... } }` maintains 100% architectural symmetry. Both `dashboard.missions.wizard` and `creativeStudio.wizard` are valid in `validate-i18n-keys.mjs`; `dashboard.missions.wizard` is recommended as canonical, and `creativeStudio.wizard` is provided as an exact alternative.
+From the observations, the engineering path is deduced step-by-step:
 
-2. **Template Type Stability vs. UI Localization**:
-   - Existing unit tests (`first-run-template.test.ts`) and E2E tests (`multi-track-video-pipeline.e2e.test.ts`) strictly assert that `FIRST_RUN_TEMPLATES[id].name.en` and `FIRST_RUN_TEMPLATES[id].name.vi` exist.
-   - Removing `.en` and `.vi` from `first-run-template.ts` would cause regression failures across 10+ test assertions.
-   - Therefore, `first-run-template.ts` should retain its typed `LocalizedString` properties, while `messages/en.json` and `messages/vi.json` provide the canonical centralized keys for template copy (`dashboard.missions.wizard.templates.*`). The UI components can access these via `t(`templates.${t.id}.name`)` or fall back to `t.name[locale]`.
+### 2.1 Telegram MarkdownV2 Escaping Mechanics
+1. *Observation*: Telegram Bot API requires escaping 18 special characters: `_ * [ ] ( ) ~ ` > # + - = | { } . ! \`.
+2. *Deduction*: In financial digests, amounts like `$5,432.00` contain commas and periods. If the period is not escaped, Telegram treats it as a syntax token and throws an unparseable entity error.
+3. *Solution*: The regular expression `/([_*[\]()~`>#+\-=|{}.!\\])/g` safely escapes every reserved character with a leading backslash (`\\$1`). This matches the exact string expectation in test `F2-2`.
+4. *Deduction regarding `formatTelegramDigest`*: In `enterprise-test-harness.ts`, the template builds the structured report with labels and KPI values, and then passes the complete text through `escapeTelegramMarkdownV2`. This guarantees that periods in currency (`5432\\.00`), slash in score (`89\\.5/100`), and decimal in multiplier (`3\\.57x`) match test `F2-1` while escaping any dangerous user characters in `agencyName`.
 
-3. **No-Jargon Compliance (CMO Persona)**:
-   - In `AGENTS.md`, rule mandates: *"Customer-facing docs and UI copy must be bilingual Vietnamese + English. CMO: Must not use jargon in client-facing content."*
-   - Audit of current copy revealed technical jargon in Vietnamese:
-     - `"Soạn kịch bản SEO"` → replace with natural Vietnamese: `"Soạn kịch bản thu hút người xem"`
-     - `"Lỗi kết nối AI provider"` → replace with: `"Lỗi kết nối dịch vụ AI. Thử lại an toàn."`
-     - `"Bio"` → `"tiểu sử"`
-     - `"Viral Shorts"` → `"Video ngắn lan tỏa"`
-     - `"Affiliate"` → `"Tiếp thị liên kết"`
-     - `"Zero hidden fees"` → `"Minh bạch 100%, không phí ẩn"`
+### 2.2 Telegram 4096-Character Limit & Safe Chunking
+1. *Observation*: Telegram's `sendMessage` API enforces a hard 4096 UTF-16 character limit per message.
+2. *Deduction*: Detailed executive digests that include multi-channel campaign breakdowns, affiliate sub-metrics, or deep links can easily exceed 4096 characters.
+3. *Failure Modes of Naive Splitting*:
+   - If cut occurs at character 4096, and character 4095 is `\`: chunk 1 ends with `\`, chunk 2 starts with `.`.
+   - Chunk 1 throws: `Bad Request: can't parse entities: Character '\' is reserved`.
+   - Chunk 2 throws: `Bad Request: can't parse entities: Character '.' is reserved and must be escaped`.
+   - If cut occurs between high and low surrogate code units of an emoji (e.g. 📊 or 🚀), both chunks contain invalid Unicode replacement characters (`\uFFFD`).
+4. *Solution*: The chunking engine `splitTelegramMarkdownV2(text, maxChunkSize = 4000)`:
+   - Uses a safe threshold of 4000 characters (leaving 96 characters headroom).
+   - Searches backwards for natural semantic boundaries: double newline (`\n\n`), then single newline (`\n`), then space (` `).
+   - Inspects the character immediately before the cut point:
+     - If it is a UTF-16 high surrogate (`0xD800 <= code <= 0xDBFF`), decrements cut index by 1.
+     - Counts consecutive trailing backslashes: if odd, the last backslash is an active escape for the character after the cut point. Decrements cut index by 1 to keep the escape and escaped character together.
+   - Dispatches chunks sequentially with rate-limit pacing (50ms inter-chunk delay).
 
----
+### 2.3 Resilient Telegram Dispatch & Plain-Text Fallback
+1. *Observation*: Despite strict escaping, exotic inputs or edge cases in Telegram's server-side markdown parser could result in an HTTP 400 (`can't parse entities`).
+2. *Deduction*: Critical executive digests (e.g., end-of-month financial reports) must NEVER be dropped silently.
+3. *Solution*: Adopt the two-tier execution pattern from `tree/telegram/telegram-client.ts`:
+   - First attempt: Send with `parse_mode: 'MarkdownV2'`.
+   - If response is HTTP 400 with `"can't parse"`: Log warning and immediately fallback to sending the chunk in plain text (omitting `parse_mode` or stripping escapes).
+   - Circuit breaker: Wrap requests with `shouldAllowRequest('telegram')`, `recordSuccess('telegram')`, and `recordFailure('telegram')`.
 
-## 3. Enumeration & Key Mapping Specification
+### 2.4 Branded HTML Email Digest Layout
+1. *Observation*: Test `F3-1` requires agency branding (logo, primary color, agency name, report title), `F3-2` requires `<!DOCTYPE html>` and `<table width="100%"`, and `F3-3` requires `Powered by Sophia Enterprise Scale Engine`.
+2. *Deduction*: Milestone 1's `wrapWithAgencyBranding` in `enterprise-test-harness.ts` generates this exact outer container.
+3. *Solution*: The inner email body generated by `renderExecutiveDigestHtml` features:
+   - Report Title & Date Range subtitle.
+   - Responsive 2x2 table grid containing the 4 primary KPI cards:
+     - Card 1: **Monthly Recurring Revenue (MRR)** — Peak MRR formatted in USD ($5,432.00).
+     - Card 2: **Video Generation Throughput** — Total autonomous renders (142 videos).
+     - Card 3: **Average Viral Score** — Mean engagement index (89.5/100).
+     - Card 4: **Affiliate Conversion ROI** — Multiplier ratio (3.57x ROI) with revenue/spend breakdown.
+   - Semantic bullet list ensuring full accessibility, plain-text email compatibility, and 100% adherence to `F3-1`.
+   - Call-to-action button linking directly to the agency's white-label BI dashboard.
+4. *Security*:
+   - HTML injection prevention: All dynamic text (agency name, labels, notes) is escaped via `escapeHtml`.
+   - Unsubscribe protocol validation: `isValidHttpUrl` validates that `unsubscribeUrl` strictly starts with `http://` or `https://`, rejecting `javascript:` or `data:`.
 
-Total strings audited: **45 distinct strings / ternaries**.
-
-### Table of All Audited Strings
-
-| # | File & Location | Current Expression / Ternary | Canonical next-intl Key | English Copy (`en.json`) | Vietnamese Copy (`vi.json`) |
-|---|---|---|---|---|---|
-| 1 | `new/page.tsx:26` | `isVi ? 'Tạo nhiệm vụ video mới...' : 'New Video Mission...'` | `metaTitle` | `"New Video Mission \| Sophia AI Factory"` | `"Tạo nhiệm vụ video mới \| Sophia AI Factory"` |
-| 2 | `new/page.tsx:27` | `isVi ? 'Khởi tạo video đầu tiên...' : 'Launch your first...'` | `metaDescription` | `"Launch your first AI video with pre-tested templates and transparent pricing."` | `"Khởi tạo video đầu tiên của bạn với các mẫu tối ưu sẵn và chi phí minh bạch."` |
-| 3 | `new/page.tsx:62` | `isVi ? 'Quay lại danh sách nhiệm vụ' : 'Back to Missions'` | `backToMissions` | `"Back to Missions"` | `"Quay lại danh sách nhiệm vụ"` |
-| 4 | `new/page.tsx:69` | `isVi ? 'Tạo video đầu tiên của bạn' : 'Create Your First Video'` | `pageTitle` | `"Create Your First Video"` | `"Tạo video đầu tiên của bạn"` |
-| 5 | `new/page.tsx:72` | `isVi ? 'Sophia sẽ tự động soạn...' : 'Sophia will autonomously...'` | `pageSubtitle` | `"Sophia will autonomously write scripts, synthesize voice, and composite video using your selected template."` | `"Sophia sẽ tự động soạn kịch bản, lồng tiếng và dựng video hoàn chỉnh theo mẫu bạn chọn."` |
-| 6 | `first-run-wizard.tsx:102` | `isVi ? 'Nhập gì?' : 'What to enter?'` | `guide.q1_label` | `"1. What to enter?"` | `"1. Nhập gì?"` |
-| 7 | `first-run-wizard.tsx:102` | `isVi ? 'Chọn mẫu hoặc chủ đề' : 'Pick a template/topic'` | `guide.q1_desc` | `"Pick a template or topic"` | `"Chọn mẫu hoặc chủ đề"` |
-| 8 | `first-run-wizard.tsx:103` | `isVi ? 'Sophia làm gì?' : 'What Sophia does?'` | `guide.q2_label` | `"2. What Sophia does?"` | `"2. Sophia làm gì?"` |
-| 9 | `first-run-wizard.tsx:103` | `isVi ? 'Kịch bản ➔ Giọng ➔ Ảnh ➔ Video' : 'Script ➔ Voice ➔ Video'` | `guide.q2_desc` | `"Script ➔ Voice ➔ Video"` | `"Kịch bản ➔ Giọng đọc ➔ Video hoàn chỉnh"` |
-| 10 | `first-run-wizard.tsx:104` | `isVi ? 'Thời gian?' : 'Duration?'` | `guide.q3_label` | `"3. Duration?"` | `"3. Thời gian?"` |
-| 11 | `first-run-wizard.tsx:104` | `45 - 90 {isVi ? 'giây' : 'seconds'}` | `guide.q3_desc` | `"45 - 90 seconds"` | `"45 - 90 giây"` |
-| 12 | `first-run-wizard.tsx:105` | `isVi ? 'Chi phí?' : 'Cost?'` | `guide.q4_label` | `"4. Cost?"` | `"4. Chi phí?"` |
-| 13 | `first-run-wizard.tsx:105` | `~${costEstimate.totalUsd} / {costEstimate.totalMcu} MCU` | `guide.q4_desc` | `"~${usd} / {mcu} MCU"` | `"~${usd} USD / {mcu} MCU"` |
-| 14 | `first-run-wizard.tsx:106` | `isVi ? 'Kết quả ở đâu?' : 'Where shown?'` | `guide.q5_label` | `"5. Where shown?"` | `"5. Kết quả ở đâu?"` |
-| 15 | `first-run-wizard.tsx:106` | `isVi ? 'Trực tiếp tại trang này' : 'Live preview & Review'` | `guide.q5_desc` | `"Live preview & Review"` | `"Trực tiếp tại trang này"` |
-| 16 | `first-run-wizard.tsx:133` | `isVi ? 'Chọn mẫu kịch bản tối ưu sẵn' : 'Choose a Proven Template'` | `templateSelectLabel` | `"Choose a Proven Template"` | `"Chọn mẫu kịch bản tối ưu sẵn"` |
-| 17 | `first-run-wizard.tsx:147` | `isVi ? 'Chủ đề hoặc Ý tưởng của bạn' : 'Topic or Video Concept'` | `topicLabel` | `"Topic or Video Concept"` | `"Chủ đề hoặc ý tưởng video của bạn"` |
-| 18 | `first-run-wizard.tsx:148` | `selectedTemplate.defaultTopic[locale]` | `topicPlaceholder` | `"Enter topic or select from suggestions below"` | `"Nhập chủ đề hoặc chọn gợi ý bên dưới"` |
-| 19 | `first-run-wizard.tsx:161` | `~${costEstimate.totalUsd} USD ({costEstimate.totalMcu} MCU)` | `costEstimate` | `"~${usd} USD ({mcu} MCU)"` | `"~${usd} USD ({mcu} MCU)"` |
-| 20 | `first-run-wizard.tsx:162` | `45 - 90 {isVi ? 'giây' : 'seconds'}` | `durationEstimate` | `"45 - 90 seconds"` | `"45 - 90 giây"` |
-| 21 | `first-run-wizard.tsx:164` | `isVi ? 'Minh bạch 100% không phí ẩn' : 'Zero Hidden Fees'` | `zeroHiddenFees` | `"Zero Hidden Fees"` | `"Minh bạch 100%, không phí ẩn"` |
-| 22 | `first-run-wizard.tsx:170` | `isVi ? 'Bắt đầu sản xuất video ngay' : 'Launch Video Mission Now'` | `launchButton` | `"Launch Video Mission Now"` | `"Bắt đầu sản xuất video ngay"` |
-| 23 | `first-run-wizard.tsx:93` | `isVi ? 'Không thể khởi chạy nhiệm vụ...' : 'Failed to launch...'` | `launchError` | `"Failed to launch mission. Please retry."` | `"Không thể khởi chạy nhiệm vụ. Vui lòng thử lại."` |
-| 24 | `first-run-wizard.tsx:116` | `isVi ? 'Video đầu tiên đã hoàn tất!' : 'First Video Ready!'` | `successTitle` | `"First Video Ready!"` | `"Video đầu tiên đã hoàn tất!"` |
-| 25 | `first-run-wizard.tsx:117` | `isVi ? 'Video đã được dựng...' : 'Video is composited...'` | `successDescription` | `"Video is composited and ready for your approval in the Review Console."` | `"Video đã được dựng hoàn chỉnh và sẵn sàng để bạn duyệt trong bảng kiểm duyệt."` |
-| 26 | `first-run-wizard.tsx:120` | `isVi ? 'Xem & Duyệt Video' : 'Review Video'` | `reviewButton` | `"Review Video"` | `"Xem & Duyệt Video"` |
-| 27 | `first-run-wizard.tsx:123` | `isVi ? 'Tạo video khác' : 'Create Another'` | `createAnotherButton` | `"Create Another"` | `"Tạo video khác"` |
-| 28 | `mission-progress-bar.tsx:107` | `isVi ? 'Tiến độ sản xuất video' : 'Video Generation Progress'` | `progressTitle` | `"Video Generation Progress"` | `"Tiến độ sản xuất video"` |
-| 29 | `mission-progress-bar.tsx:120` | `isVi ? 'Tiến độ nhiệm vụ' : 'Mission Progress'` | `progressAriaLabel` | `"Mission Progress"` | `"Tiến độ nhiệm vụ"` |
-| 30 | `mission-progress-bar.tsx:34` | `labelEn: 'Script Generation'`, `labelVi: 'Soạn kịch bản SEO'` | `stages.script_generation.label` | `"Script Generation"` | `"Soạn kịch bản thu hút"` |
-| 31 | `mission-progress-bar.tsx:36` | `descEn: 'Writing high-retention...'`, `descVi: 'Soạn kịch bản...'` | `stages.script_generation.desc` | `"Writing high-retention script with OpenRouter"` | `"Soạn kịch bản giữ chân người xem bằng trí tuệ nhân tạo"` |
-| 32 | `mission-progress-bar.tsx:43` | `labelEn: 'Voice Synthesis'`, `labelVi: 'Lồng tiếng AI'` | `stages.voice_synthesis.label` | `"Voice Synthesis"` | `"Lồng tiếng AI"` |
-| 33 | `mission-progress-bar.tsx:45` | `descEn: 'Synthesizing voiceover...'`, `descVi: 'Tạo giọng đọc...'` | `stages.voice_synthesis.desc` | `"Synthesizing voiceover with ElevenLabs"` | `"Tạo giọng đọc truyền cảm tự nhiên bằng ElevenLabs"` |
-| 34 | `mission-progress-bar.tsx:52` | `labelEn: 'Visual Generation'`, `labelVi: 'Tạo hình ảnh AI'` | `stages.visual_generation.label` | `"Visual Generation"` | `"Tạo hình ảnh AI"` |
-| 35 | `mission-progress-bar.tsx:54` | `descEn: 'Rendering scenes...'`, `descVi: 'Dựng khung cảnh...'` | `stages.visual_generation.desc` | `"Rendering scenes with fal.ai"` | `"Dựng khung cảnh điện ảnh sống động qua fal.ai"` |
-| 36 | `mission-progress-bar.tsx:61` | `labelEn: 'Video Compositing'`, `labelVi: 'Ghép video & Phụ đề'` | `stages.video_compositing.label` | `"Video Compositing"` | `"Ghép video & Phụ đề"` |
-| 37 | `mission-progress-bar.tsx:63` | `descEn: 'Assembling scenes...'`, `descVi: 'Ghép cảnh...'` | `stages.video_compositing.desc` | `"Assembling scenes, audio, and captions"` | `"Ghép cảnh, hòa âm và phụ đề chuyển động"` |
-| 38 | `mission-progress-bar.tsx:70` | `labelEn: 'Ready for Review'`, `labelVi: 'Sẵn sàng duyệt'` | `stages.ready_for_review.label` | `"Ready for Review"` | `"Sẵn sàng duyệt"` |
-| 39 | `mission-progress-bar.tsx:72` | `descEn: 'Video complete!...'`, `descVi: 'Video hoàn tất!...'` | `stages.ready_for_review.desc` | `"Video complete! Ready for one-click approval"` | `"Video hoàn tất! Sẵn sàng để bạn xem và duyệt ngay"` |
-| 40 | `mission-progress-bar.tsx:180` | `isVi ? 'Quá trình xử lý tạm dừng' : 'Execution Interrupted'` | `interruptedTitle` | `"Execution Interrupted"` | `"Quá trình xử lý tạm dừng"` |
-| 41 | `mission-progress-bar.tsx:183` | `isVi ? 'Lỗi kết nối AI provider...' : 'AI provider error...'` | `errorFallback` | `"AI provider error. Retry safely."` | `"Lỗi kết nối dịch vụ AI. Thử lại an toàn."` |
-| 42 | `mission-progress-bar.tsx:194` | `isVi ? 'Thử lại' : 'Retry'` | `retryButton` | `"Retry"` | `"Thử lại"` |
-| 43 | `first-run-template.ts:33` | `viral_shorts_explainer` metadata | `templates.viral_shorts_explainer.*` | See JSON below | See JSON below |
-| 44 | `first-run-template.ts:78` | `affiliate_product_showcase` metadata | `templates.affiliate_product_showcase.*` | See JSON below | See JSON below |
-| 45 | `first-run-template.ts:123` | `daily_news_wisdom` metadata | `templates.daily_news_wisdom.*` | See JSON below | See JSON below |
+### 2.5 Unified Digest Dispatcher (`dispatchExecutiveDigest`)
+1. *Observation*: `PROJECT.md` lines 89–91 specifies the orchestrator interface:
+   `dispatchExecutiveDigest(db: D1Database, cadence: 'weekly' | 'monthly'): Promise<DigestDeliveryReceipt>`.
+2. *Deduction*: Organizations need an automated pipeline that can run via scheduled cron or edge trigger.
+3. *Solution*: `dispatchExecutiveDigest`:
+   - Determines period date range based on cadence (weekly: 7 days, monthly: 30 days).
+   - Fetches active enterprise organizations.
+   - For each organization, invokes `aggregateExecutiveBIMetrics`.
+   - Dispatches Telegram digest to the organization's Telegram chat.
+   - Dispatches Email digest to the organization's executive recipients.
+   - Returns a structured `DigestDeliveryReceipt` detailing total organizations, success/failure counts, and delivery receipts.
 
 ---
 
-## 4. Canonical JSON Structures
+## 3. Caveats
 
-### 4.1 Primary Recommendation: Under `dashboard.missions.wizard`
-
-#### Insertion for `apps/sophia-ai-factory/messages/en.json` (inside `"dashboard": { "missions": { ... } }`):
-```json
-      "wizard": {
-        "metaTitle": "New Video Mission | Sophia AI Factory",
-        "metaDescription": "Launch your first AI video with pre-tested templates and transparent pricing.",
-        "backToMissions": "Back to Missions",
-        "pageTitle": "Create Your First Video",
-        "pageSubtitle": "Sophia will autonomously write scripts, synthesize voice, and composite video using your selected template.",
-        "guide": {
-          "q1_label": "1. What to enter?",
-          "q1_desc": "Pick a template or topic",
-          "q2_label": "2. What Sophia does?",
-          "q2_desc": "Script ➔ Voice ➔ Video",
-          "q3_label": "3. Duration?",
-          "q3_desc": "45 - 90 seconds",
-          "q4_label": "4. Cost?",
-          "q4_desc": "~${usd} / {mcu} MCU",
-          "q5_label": "5. Where shown?",
-          "q5_desc": "Live preview & Review"
-        },
-        "templateSelectLabel": "Choose a Proven Template",
-        "topicLabel": "Topic or Video Concept",
-        "topicPlaceholder": "Enter topic or select from suggestions below",
-        "costEstimate": "~${usd} USD ({mcu} MCU)",
-        "durationEstimate": "45 - 90 seconds",
-        "zeroHiddenFees": "Zero Hidden Fees",
-        "launchButton": "Launch Video Mission Now",
-        "launching": "Launching mission...",
-        "launchError": "Failed to launch mission. Please retry.",
-        "successTitle": "First Video Ready!",
-        "successDescription": "Video is composited and ready for your approval in the Review Console.",
-        "reviewButton": "Review Video",
-        "createAnotherButton": "Create Another",
-        "progressTitle": "Video Generation Progress",
-        "progressAriaLabel": "Mission Progress",
-        "interruptedTitle": "Execution Interrupted",
-        "errorFallback": "AI provider error. Retry safely.",
-        "retryButton": "Retry",
-        "stages": {
-          "script_generation": {
-            "label": "Script Generation",
-            "desc": "Writing high-retention script with OpenRouter"
-          },
-          "voice_synthesis": {
-            "label": "Voice Synthesis",
-            "desc": "Synthesizing voiceover with ElevenLabs"
-          },
-          "visual_generation": {
-            "label": "Visual Generation",
-            "desc": "Rendering scenes with fal.ai"
-          },
-          "video_compositing": {
-            "label": "Video Compositing",
-            "desc": "Assembling scenes, audio, and captions"
-          },
-          "ready_for_review": {
-            "label": "Ready for Review",
-            "desc": "Video complete! Ready for one-click approval"
-          }
-        },
-        "templates": {
-          "viral_shorts_explainer": {
-            "name": "Viral Shorts Explainer",
-            "description": "60-second high-retention video with dynamic voiceover and fast-paced visual storytelling.",
-            "badge": "High Retention (60s)",
-            "defaultTopic": "5 Psychological Tricks That Make People Instantly Like You",
-            "prompt0": "3 Morning Habits of High-Performing Founders",
-            "prompt1": "How AI Automation is Transforming Video Creation in 2026",
-            "prompt2": "The 80/20 Rule for Scaling Personal Productivity",
-            "callToAction": "Follow for daily high-value growth insights"
-          },
-          "affiliate_product_showcase": {
-            "name": "Affiliate Product Showcase",
-            "description": "30-second TikTok format focused on problem-solution and conversion-driven CTA overlay.",
-            "badge": "High Conversion (30s)",
-            "defaultTopic": "Ergonomic Desk Gadget That Fixed My Posture in 7 Days",
-            "prompt0": "The Minimalist Tech Gear Every Remote Worker Needs",
-            "prompt1": "Ultra-Fast Wireless Charger Review in 30 Seconds",
-            "prompt2": "Budget Productivity Monitor Setup Under $200",
-            "callToAction": "Tap the link in bio to grab yours today with special discount"
-          },
-          "daily_news_wisdom": {
-            "name": "Daily News & Wisdom",
-            "description": "45-second YouTube Shorts format with automated visuals and bite-sized wisdom.",
-            "badge": "Daily Evergreen (45s)",
-            "defaultTopic": "The Power of Compounding: 1% Better Every Single Day",
-            "prompt0": "Why Warren Buffett Reads 500 Pages Every Day",
-            "prompt1": "The 2-Minute Rule to Beat Procrastination Forever",
-            "prompt2": "Top 3 AI Breakthroughs This Week in 45 Seconds",
-            "callToAction": "Save this video and share with someone who needs it"
-          }
-        }
-      }
-```
-
-#### Insertion for `apps/sophia-ai-factory/messages/vi.json` (inside `"dashboard": { "missions": { ... } }`):
-```json
-      "wizard": {
-        "metaTitle": "Tạo nhiệm vụ video mới | Sophia AI Factory",
-        "metaDescription": "Khởi tạo video đầu tiên của bạn với các mẫu tối ưu sẵn và chi phí minh bạch.",
-        "backToMissions": "Quay lại danh sách nhiệm vụ",
-        "pageTitle": "Tạo video đầu tiên của bạn",
-        "pageSubtitle": "Sophia sẽ tự động soạn kịch bản, lồng tiếng và dựng video hoàn chỉnh theo mẫu bạn chọn.",
-        "guide": {
-          "q1_label": "1. Nhập gì?",
-          "q1_desc": "Chọn mẫu hoặc chủ đề",
-          "q2_label": "2. Sophia làm gì?",
-          "q2_desc": "Kịch bản ➔ Giọng đọc ➔ Video hoàn chỉnh",
-          "q3_label": "3. Thời gian?",
-          "q3_desc": "45 - 90 giây",
-          "q4_label": "4. Chi phí?",
-          "q4_desc": "~${usd} USD / {mcu} MCU",
-          "q5_label": "5. Kết quả ở đâu?",
-          "q5_desc": "Trực tiếp tại trang này"
-        },
-        "templateSelectLabel": "Chọn mẫu kịch bản tối ưu sẵn",
-        "topicLabel": "Chủ đề hoặc ý tưởng video của bạn",
-        "topicPlaceholder": "Nhập chủ đề hoặc chọn gợi ý bên dưới",
-        "costEstimate": "~${usd} USD ({mcu} MCU)",
-        "durationEstimate": "45 - 90 giây",
-        "zeroHiddenFees": "Minh bạch 100%, không phí ẩn",
-        "launchButton": "Bắt đầu sản xuất video ngay",
-        "launching": "Đang khởi chạy nhiệm vụ...",
-        "launchError": "Không thể khởi chạy nhiệm vụ. Vui lòng thử lại.",
-        "successTitle": "Video đầu tiên đã hoàn tất!",
-        "successDescription": "Video đã được dựng hoàn chỉnh và sẵn sàng để bạn duyệt trong bảng kiểm duyệt.",
-        "reviewButton": "Xem & Duyệt Video",
-        "createAnotherButton": "Tạo video khác",
-        "progressTitle": "Tiến độ sản xuất video",
-        "progressAriaLabel": "Tiến độ nhiệm vụ",
-        "interruptedTitle": "Quá trình xử lý tạm dừng",
-        "errorFallback": "Lỗi kết nối dịch vụ AI. Thử lại an toàn.",
-        "retryButton": "Thử lại",
-        "stages": {
-          "script_generation": {
-            "label": "Soạn kịch bản thu hút",
-            "desc": "Soạn kịch bản giữ chân người xem bằng trí tuệ nhân tạo"
-          },
-          "voice_synthesis": {
-            "label": "Lồng tiếng AI",
-            "desc": "Tạo giọng đọc truyền cảm tự nhiên bằng ElevenLabs"
-          },
-          "visual_generation": {
-            "label": "Tạo hình ảnh AI",
-            "desc": "Dựng khung cảnh điện ảnh sống động qua fal.ai"
-          },
-          "video_compositing": {
-            "label": "Ghép video & Phụ đề",
-            "desc": "Ghép cảnh, hòa âm và phụ đề chuyển động"
-          },
-          "ready_for_review": {
-            "label": "Sẵn sàng duyệt",
-            "desc": "Video hoàn tất! Sẵn sàng để bạn xem và duyệt ngay"
-          }
-        },
-        "templates": {
-          "viral_shorts_explainer": {
-            "name": "Video giải thích lan tỏa ngắn",
-            "description": "Video 60 giây giữ chân cao với giọng đọc sống động và hình ảnh chuyển cảnh hấp dẫn.",
-            "badge": "Giữ chân cao (60s)",
-            "defaultTopic": "5 Mẹo tâm lý giúp bạn tạo thiện cảm tức thì",
-            "prompt0": "3 Thói quen buổi sáng của các nhà sáng lập hàng đầu",
-            "prompt1": "Tự động hóa AI đang thay đổi ngành sáng tạo video năm 2026 ra sao",
-            "prompt2": "Nguyên lý 80/20 trong tối ưu hiệu suất cá nhân",
-            "callToAction": "Bấm theo dõi để nhận kiến thức giá trị mỗi ngày"
-          },
-          "affiliate_product_showcase": {
-            "name": "Giới thiệu sản phẩm tiếp thị liên kết",
-            "description": "Video 30 giây chuẩn định dạng TikTok tập trung giải quyết vấn đề và kích thích mua hàng.",
-            "badge": "Chuyển đổi cao (30s)",
-            "defaultTopic": "Thiết bị công thái học giúp cải thiện tư thế sau 7 ngày",
-            "prompt0": "Phụ kiện công nghệ tối giản mọi người làm việc từ xa đều cần",
-            "prompt1": "Đánh giá sạc không dây siêu tốc trong 30 giây",
-            "prompt2": "Góc làm việc hai màn hình tiết kiệm dưới 200 đô",
-            "callToAction": "Nhấn vào liên kết ở tiểu sử để nhận ưu đãi hôm nay"
-          },
-          "daily_news_wisdom": {
-            "name": "Tin tức & Tri thức mỗi ngày",
-            "description": "Video 45 giây định dạng YouTube Shorts với hình ảnh tự động và bài học súc tích.",
-            "badge": "Nội dung thường xanh (45s)",
-            "defaultTopic": "Sức mạnh của lãi kép: Tốt hơn 1% mỗi ngày",
-            "prompt0": "Tại sao Warren Buffett đọc 500 trang sách mỗi ngày",
-            "prompt1": "Quy tắc 2 phút để đánh bại sự trì hoãn vĩnh viễn",
-            "prompt2": "Top 3 đột phá AI nổi bật tuần này trong 45 giây",
-            "callToAction": "Lưu video này và chia sẻ cho người bạn quan tâm"
-          }
-        }
-      }
-```
+1. **Telegram Global & Per-Chat Rate Limits**:
+   - Telegram Bot API enforces a hard rate limit of 30 messages/second globally and 1 message/second per specific recipient chat.
+   - When sending multi-chunk messages (`splitTelegramMarkdownV2`), chunks to the same chat must be spaced by at least 50ms to 100ms. In high-tenant batch dispatch, concurrency should be throttled using batched promises (`p-limit` or chunked `Promise.allSettled`).
+2. **Missing Environment Variables in CI/Test Environments**:
+   - `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, and `RESEND_API_KEY` may be unset in local development or CI pipelines.
+   - The senders must operate gracefully in dry-run mode: return `{ success: false, skipped: true, provider: 'dry-run' }` without throwing unhandled exceptions or breaking CI test runs.
+3. **Database Schema Harmonization**:
+   - The test harness uses table `executive_bi_metrics` with columns `(id, org_id, period_start, period_end, mrr_cents, throughput_count, viral_score, affiliate_revenue_cents, marketing_spend_cents, created_at)`.
+   - In production Cloudflare D1, migration `0276_enterprise_scale_foundations.sql` defines the persistence layer. The queries in `metrics-aggregator.ts` and `dispatchExecutiveDigest` must strictly align with this schema.
+4. **Email Client Quirks**:
+   - Modern CSS Grid and Flexbox are unsupported in Outlook (Windows MSO engine) and many mobile email clients.
+   - The 2x2 KPI card layout in `renderExecutiveDigestHtml` must strictly use HTML tables with inline styles (`cellpadding="0" cellspacing="0"`) to guarantee pixel-perfect rendering across Outlook, Gmail, Apple Mail, and Yahoo.
 
 ---
 
-### 4.2 Alternative Schema: Under `creativeStudio.wizard`
+## 4. Conclusion & Implementation Blueprint
 
-If the orchestrator chooses `creativeStudio.wizard` instead of `dashboard.missions.wizard`, the exact same object is placed under `"creativeStudio": { "wizard": { ... } }` in both `messages/en.json` and `messages/vi.json`. Components would then import `useTranslations('creativeStudio.wizard')`.
+The technical blueprint is fully designed across 3 files:
+1. `apps/sophia-ai-factory/src/forest/bi/telegram-digest-sender.ts`
+2. `apps/sophia-ai-factory/src/forest/bi/email-digest-sender.ts`
+3. `apps/sophia-ai-factory/src/forest/bi/executive-digest-dispatcher.ts`
 
----
+### 4.1 Blueprint 1: `apps/sophia-ai-factory/src/forest/bi/telegram-digest-sender.ts`
 
-## 5. Code Refactoring Implementation Guide
+```typescript
+/**
+ * Telegram Executive BI Digest Dispatcher & Formatter
+ *
+ * Implements:
+ * - Telegram MarkdownV2 character escaping for all 18 reserved characters.
+ * - Safe 4096-character message chunking without breaking escape sequences or entities.
+ * - Key Performance Indicators digest formatting (MRR, throughput, viral score, ROI).
+ * - Circuit breaker tracking and plain-text fallback on parse errors.
+ *
+ * Layer: forest (side-effect dispatcher)
+ * Allowed imports: @/seed/*, @/tree/*, @/forest/*
+ *
+ * @module forest/bi/telegram-digest-sender
+ */
 
-### 5.1 `apps/sophia-ai-factory/src/app/[locale]/dashboard/missions/new/page.tsx`
-```tsx
-import { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import { getTranslations } from 'next-intl/server';
-import { getCurrentUser } from '@/seed/auth/better-auth-session';
-import { getD1 } from '@/seed/db/client';
-import { resolveOrgId } from '@/seed/auth/workspace-access';
-import { ensureCustomerOrg } from '@/tree/handover/handover-account-setup';
-import { FirstRunWizard } from '@/components/missions/first-run-wizard';
-import { Link } from '@/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { shouldAllowRequest, recordSuccess, recordFailure } from '@/seed/security/circuit-breaker';
+import { classifyError } from '@/seed/types/failure-kind';
+import { getErrorMessage } from '@/seed/utils/to-error';
+import { logger } from '@/seed/utils/logger-utility';
+import type { ExecutiveBIMetricsSummary } from '@/seed/types/executive-bi';
+import type { BrandingSettings } from '@/seed/tenant-settings/defaults';
 
-interface PageProps {
-  params: Promise<{ locale: string }>;
+export const TELEGRAM_MAX_MESSAGE_LENGTH = 4096;
+export const TELEGRAM_SAFE_CHUNK_LENGTH = 4000;
+
+/** Regex matching all Telegram MarkdownV2 reserved characters requiring a preceding backslash. */
+export const TELEGRAM_MARKDOWN_V2_SPECIALS = /([_*[\]()~`>#+\-=|{}.!\\])/g;
+
+/**
+ * Strictly escapes all Telegram MarkdownV2 reserved characters with a leading backslash.
+ * Characters: _ * [ ] ( ) ~ ` > # + - = | { } . ! \
+ */
+export function escapeTelegramMarkdownV2(text: string): string {
+  return text.replace(TELEGRAM_MARKDOWN_V2_SPECIALS, '\\$1');
 }
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations('dashboard.missions.wizard');
-  return {
-    title: t('metaTitle'),
-    description: t('metaDescription'),
-  };
+/**
+ * Formats the Executive BI Metrics summary into Telegram MarkdownV2 format.
+ * Matches exact contracts in enterprise-test-harness.ts and executive-bi.e2e.test.ts (F2).
+ */
+export function formatTelegramDigest(
+  metrics: ExecutiveBIMetricsSummary,
+  branding?: Partial<BrandingSettings> | null
+): string {
+  const agency = branding?.agencyName ?? 'Sophia AI Factory';
+  const mrrUsd = (metrics.mrrCents / 100).toFixed(2);
+  const affiliateUsd = (metrics.affiliateRevenueCents / 100).toFixed(2);
+  const spendUsd = (metrics.marketingSpendCents / 100).toFixed(2);
+
+  const raw = `📊 *Executive BI Digest — ${agency}*
+• *MRR*: $${mrrUsd}
+• *Video Throughput*: ${metrics.throughputCount} videos
+• *Viral Score*: ${metrics.viralScore}/100
+• *Affiliate Revenue*: $${affiliateUsd}
+• *Marketing Spend*: $${spendUsd}
+• *ROI*: ${metrics.roiRatio}x
+
+_Automated report generated by Sophia Enterprise Engine_`;
+
+  return escapeTelegramMarkdownV2(raw);
 }
 
-export default async function NewMissionPage({ params }: PageProps) {
-  const { locale } = await params;
-  const t = await getTranslations('dashboard.missions.wizard');
-
-  const user = await getCurrentUser();
-  if (!user) {
-    redirect(`/${locale}/login`);
+/**
+ * Splits an already-escaped or formatted MarkdownV2 string into chunks conforming to Telegram limits.
+ * Guarantees that:
+ * 1. No chunk exceeds maxChunkSize (default 4000).
+ * 2. Cuts prefer natural boundaries: paragraph (\n\n) -> newline (\n) -> space ( ).
+ * 3. Never splits between a backslash and the escaped character (odd trailing backslash guard).
+ * 4. Never splits inside a UTF-16 surrogate pair (emoji guard).
+ */
+export function splitTelegramMarkdownV2(
+  text: string,
+  maxChunkSize: number = TELEGRAM_SAFE_CHUNK_LENGTH
+): string[] {
+  if (text.length <= maxChunkSize) {
+    return [text];
   }
 
-  const d1 = await getD1();
-  let workspaceId = '';
+  const chunks: string[] = [];
+  let remaining = text;
 
-  if (d1) {
-    workspaceId = (await resolveOrgId(user.id, d1)) || '';
-    if (!workspaceId) {
-      workspaceId = await ensureCustomerOrg(d1, user.id, user.email || user.id);
+  while (remaining.length > 0) {
+    if (remaining.length <= maxChunkSize) {
+      chunks.push(remaining);
+      break;
     }
+
+    let cutIndex = maxChunkSize;
+    const window = remaining.slice(0, maxChunkSize);
+
+    // 1. Prefer natural boundaries: paragraph -> newline -> space
+    const doubleNewline = window.lastIndexOf('\n\n');
+    const singleNewline = window.lastIndexOf('\n');
+    const space = window.lastIndexOf(' ');
+
+    if (doubleNewline >= maxChunkSize * 0.3) {
+      cutIndex = doubleNewline + 2;
+    } else if (singleNewline >= maxChunkSize * 0.3) {
+      cutIndex = singleNewline + 1;
+    } else if (space >= maxChunkSize * 0.3) {
+      cutIndex = space + 1;
+    }
+
+    // 2. Guard against surrogate pair splitting (high surrogate code unit)
+    if (cutIndex > 0) {
+      const prevCode = remaining.charCodeAt(cutIndex - 1);
+      if (prevCode >= 0xd800 && prevCode <= 0xdbff) {
+        cutIndex -= 1;
+      }
+    }
+
+    // 3. Guard against severed escape sequences (odd trailing backslashes)
+    let backslashCount = 0;
+    for (let i = cutIndex - 1; i >= 0 && remaining[i] === '\\'; i--) {
+      backslashCount++;
+    }
+    if (backslashCount % 2 === 1) {
+      cutIndex -= 1;
+    }
+
+    const currentChunk = remaining.slice(0, cutIndex).trimEnd();
+    if (currentChunk.length > 0) {
+      chunks.push(currentChunk);
+    }
+    remaining = remaining.slice(cutIndex).trimStart();
   }
 
-  return (
-    <div className="mx-auto max-w-4xl px-4 py-8 md:px-6 lg:px-8">
-      {/* Back to Missions List */}
-      <div className="mb-6">
-        <Link
-          href="/dashboard/missions"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          {t('backToMissions')}
-        </Link>
-      </div>
-
-      {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
-          {t('pageTitle')}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {t('pageSubtitle')}
-        </p>
-      </div>
-
-      {/* First Run Wizard Component */}
-      <FirstRunWizard
-        workspaceId={workspaceId}
-        userId={user.id}
-        locale={locale as 'vi' | 'en'}
-      />
-    </div>
-  );
-}
-```
-
-### 5.2 `apps/sophia-ai-factory/src/components/missions/first-run-wizard.tsx`
-```tsx
-'use client';
-
-import React, { useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { Sparkles, Clock, Coins, CheckCircle2, ArrowRight, Video } from 'lucide-react';
-import { Link } from '@/navigation';
-import {
-  getFirstRunTemplates,
-  type FirstRunTemplate,
-} from '@/land/missions/first-run-template';
-import { estimateTemplateCost } from '@/land/missions/cost-estimator';
-import { MissionProgressBar, type MissionStageId } from './mission-progress-bar';
-import { createMission, startMissionExecution } from '@/land/creative-mission/actions';
-
-export interface FirstRunWizardProps {
-  workspaceId: string;
-  userId: string;
-  locale?: 'vi' | 'en';
+  return chunks;
 }
 
-export function FirstRunWizard({ workspaceId, locale = 'vi' }: FirstRunWizardProps) {
-  const t = useTranslations('dashboard.missions.wizard');
-  const templates = getFirstRunTemplates();
-  const [selectedTemplate, setSelectedTemplate] = useState<FirstRunTemplate>(templates[0]);
-  const [topic, setTopic] = useState<string>(selectedTemplate.defaultTopic[locale]);
-  const [status, setStatus] = useState<'idle' | 'running' | 'completed' | 'failed'>('idle');
-  const [currentStage, setCurrentStage] = useState<MissionStageId>('SCRIPT_GENERATION');
-  const [missionId, setMissionId] = useState<string>('');
-  const [errorMessage, setErrorMessage] = useState<string>('');
+export interface TelegramDigestOptions {
+  chatId?: string;
+  botToken?: string;
+  branding?: Partial<BrandingSettings> | null;
+  maxChunkSize?: number;
+  disableWebPagePreview?: boolean;
+}
 
-  const costEstimate = estimateTemplateCost(selectedTemplate.id);
+export interface TelegramDigestResult {
+  success: boolean;
+  totalChunks: number;
+  chunksSent: number;
+  messageIds: number[];
+  error?: string;
+  skipped?: boolean;
+  reason?: string;
+}
 
-  const handleSelectTemplate = (tmpl: FirstRunTemplate) => {
-    setSelectedTemplate(tmpl);
-    setTopic(tmpl.defaultTopic[locale]);
-  };
+/**
+ * Sends an Executive BI Digest to Telegram Bot API.
+ * Automatically formats, escapes, splits, and delivers with plain-text fallback on parse error.
+ */
+export async function sendTelegramDigest(
+  metrics: ExecutiveBIMetricsSummary,
+  options: TelegramDigestOptions = {}
+): Promise<TelegramDigestResult> {
+  const botToken = options.botToken ?? process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = options.chatId ?? process.env.TELEGRAM_CHAT_ID;
 
-  const handleLaunch = async () => {
-    setStatus('running');
-    setCurrentStage('SCRIPT_GENERATION');
-    setErrorMessage('');
+  if (!botToken || !chatId) {
+    logger.warn('[telegram-digest-sender] TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not configured — skipping');
+    return {
+      success: false,
+      skipped: true,
+      reason: 'missing_credentials',
+      totalChunks: 0,
+      chunksSent: 0,
+      messageIds: [],
+    };
+  }
+
+  if (!shouldAllowRequest('telegram')) {
+    logger.warn('[telegram-digest-sender] Circuit breaker open for telegram — skipping');
+    return {
+      success: false,
+      skipped: true,
+      reason: 'circuit_breaker_open',
+      totalChunks: 0,
+      chunksSent: 0,
+      messageIds: [],
+    };
+  }
+
+  const formattedText = formatTelegramDigest(metrics, options.branding);
+  const chunks = splitTelegramMarkdownV2(formattedText, options.maxChunkSize ?? TELEGRAM_SAFE_CHUNK_LENGTH);
+  const messageIds: number[] = [];
+
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
 
     try {
-      const now = Math.floor(Date.now() / 1000);
-      const createRes = await createMission({
-        workspaceId,
-        title: topic || selectedTemplate.name[locale],
-        objective: `Generate autonomous ${selectedTemplate.durationSeconds}s video for ${selectedTemplate.targetPlatform}. Topic: ${topic}`,
-        audience: 'General interest mobile viewers',
-        geography: locale === 'vi' ? 'Vietnam' : 'Global',
-        timeframeStart: now,
-        timeframeEnd: now + 3600,
-        budgetCents: Math.round(costEstimate.totalUsd * 100),
-        autonomyLevel: 1,
-        channels: [selectedTemplate.targetPlatform],
-        monetizationGoals: ['ad_revenue', 'affiliate_commissions'],
-        constraints: {},
-        successMetrics: { views: 1000, engagement_rate: 0.05 },
+      let res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: chunk,
+          parse_mode: 'MarkdownV2',
+          disable_web_page_preview: options.disableWebPagePreview ?? true,
+        }),
+        signal: AbortSignal.timeout(10_000),
       });
 
-      if (!createRes.ok) {
-        setStatus('failed');
-        setErrorMessage(createRes.error.message);
-        return;
+      // Fallback to plain text on MarkdownV2 parse failure (HTTP 400 with "can't parse")
+      if (!res.ok && res.status === 400) {
+        const bodyText = await res.text().catch(() => '');
+        if (bodyText.includes("can't parse") || bodyText.includes('entities')) {
+          logger.warn('[telegram-digest-sender] MarkdownV2 parse failed, falling back to plain text', {
+            chatId,
+            chunkIndex: i,
+          });
+          res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: chunk.replace(/\\([_*[\]()~`>#+\-=|{}.!\\])/g, '$1'),
+              disable_web_page_preview: true,
+            }),
+            signal: AbortSignal.timeout(10_000),
+          });
+        }
       }
 
-      const newId = createRes.value.missionId;
-      setMissionId(newId);
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => '');
+        recordFailure('telegram', classifyError(new Error(`HTTP ${res.status}`)));
+        return {
+          success: false,
+          totalChunks: chunks.length,
+          chunksSent: messageIds.length,
+          messageIds,
+          error: `Telegram API ${res.status}: ${errBody.slice(0, 200)}`,
+        };
+      }
 
-      await startMissionExecution({
-        missionId: newId,
-        agentId: 'agent_director',
-        autonomyLevel: 1,
+      const data = (await res.json()) as { ok: boolean; result?: { message_id: number } };
+      if (data.ok && data.result?.message_id) {
+        messageIds.push(data.result.message_id);
+      }
+
+      // Safe pacing between chunks to respect Telegram rate limits
+      if (i < chunks.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+    } catch (err) {
+      recordFailure('telegram', classifyError(err));
+      return {
+        success: false,
+        totalChunks: chunks.length,
+        chunksSent: messageIds.length,
+        messageIds,
+        error: getErrorMessage(err),
+      };
+    }
+  }
+
+  recordSuccess('telegram');
+  return {
+    success: true,
+    totalChunks: chunks.length,
+    chunksSent: messageIds.length,
+    messageIds,
+  };
+}
+```
+
+---
+
+### 4.2 Blueprint 2: `apps/sophia-ai-factory/src/forest/bi/email-digest-sender.ts`
+
+```typescript
+/**
+ * Email Executive BI Digest Dispatcher & HTML Formatter
+ *
+ * Implements:
+ * - Responsive 2x2 HTML table metrics card grid (MRR, Throughput, Viral Score, ROI).
+ * - Integration with Milestone 1 white-label branding (wrapWithAgencyBranding).
+ * - High-contrast WCAG AA compliant colors & sanitized user content.
+ * - Resend API email dispatch via src/tree/email/sender.ts.
+ *
+ * Layer: forest (side-effect dispatcher)
+ * Allowed imports: @/seed/*, @/tree/*, @/forest/*
+ *
+ * @module forest/bi/email-digest-sender
+ */
+
+import { sendEmail } from '@/tree/email/sender';
+import { escapeHtml, wrapWithAgencyBranding } from '@/tree/branding/email-styler';
+import type { ExecutiveBIMetricsSummary } from '@/seed/types/executive-bi';
+import type { BrandingSettings } from '@/seed/tenant-settings/defaults';
+import type { WhiteLabelEmailBranding } from '@/tree/branding/email-styler';
+import { logger } from '@/seed/utils/logger-utility';
+import { getErrorMessage } from '@/seed/utils/to-error';
+
+export interface EmailDigestOptions {
+  to: string | string[];
+  branding?: Partial<BrandingSettings> | WhiteLabelEmailBranding | null;
+  periodLabel?: string;
+  cadence?: 'weekly' | 'monthly';
+  portalUrl?: string;
+  additionalNotesHtml?: string;
+  locale?: 'vi' | 'en';
+}
+
+export interface EmailDigestResult {
+  success: boolean;
+  messageId?: string;
+  recipientCount: number;
+  provider: 'resend' | 'dry-run';
+  error?: string;
+}
+
+/**
+ * Renders the inner HTML content of the Executive Digest.
+ * Features:
+ * 1. Title & Subtitle.
+ * 2. Responsive 2x2 KPI Cards Table (MRR, Throughput, Viral Score, ROI).
+ * 3. Structured semantic bullet list (satisfies E2E F3-1 contracts).
+ * 4. Call-to-action button linking to BI dashboard.
+ */
+export function renderExecutiveDigestHtml(
+  metrics: ExecutiveBIMetricsSummary,
+  options: EmailDigestOptions = {}
+): string {
+  const isVi = options.locale === 'vi';
+  const primaryColor = options.branding?.primaryColor || '#0f172a';
+  const portalUrl = options.portalUrl ?? 'https://sophia.agencyos.network/dashboard/analytics';
+
+  const mrrUsd = (metrics.mrrCents / 100).toFixed(2);
+  const affiliateUsd = (metrics.affiliateRevenueCents / 100).toFixed(2);
+  const spendUsd = (metrics.marketingSpendCents / 100).toFixed(2);
+
+  const title = options.cadence === 'weekly'
+    ? (isVi ? 'Bản tin BI Điều hành Hàng tuần' : 'Executive Weekly Performance Report')
+    : (isVi ? 'Báo cáo Hiệu suất Điều hành Hàng tháng' : 'Executive Monthly Performance Report');
+
+  const periodSubtitle = options.periodLabel
+    ? `<div style="font-size: 13px; color: #64748b; margin-top: 4px; margin-bottom: 20px;">
+        ${isVi ? 'Kỳ báo cáo:' : 'Reporting Period:'} <strong>${escapeHtml(options.periodLabel)}</strong>
+       </div>`
+    : '';
+
+  const ctaLabel = isVi ? 'Mở Bảng Điều khiển BI →' : 'View Executive BI Dashboard →';
+
+  return `
+    <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">${escapeHtml(title)}</h2>
+    ${periodSubtitle}
+
+    <!-- 2x2 Responsive KPI Cards Table -->
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 20px 0;">
+      <tr>
+        <!-- Card 1: MRR -->
+        <td width="48%" style="padding: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; vertical-align: top;">
+          <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">
+            ${isVi ? 'Doanh thu Định kỳ (MRR)' : 'Monthly Recurring Revenue'}
+          </div>
+          <div style="font-size: 24px; font-weight: 700; color: ${primaryColor}; margin: 6px 0 2px 0;">
+            $${mrrUsd}
+          </div>
+          <div style="font-size: 12px; color: #94a3b8;">${isVi ? 'Đỉnh MRR trong kỳ' : 'Peak MRR this period'}</div>
+        </td>
+        <td width="4%">&nbsp;</td>
+        <!-- Card 2: Throughput -->
+        <td width="48%" style="padding: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; vertical-align: top;">
+          <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">
+            ${isVi ? 'Sản lượng Video' : 'Video Throughput'}
+          </div>
+          <div style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 6px 0 2px 0;">
+            ${metrics.throughputCount} ${isVi ? 'video' : 'videos'}
+          </div>
+          <div style="font-size: 12px; color: #94a3b8;">${isVi ? 'Kết xuất tự động đa kênh' : 'Autonomous multi-track renders'}</div>
+        </td>
+      </tr>
+      <tr><td height="12" colspan="3">&nbsp;</td></tr>
+      <tr>
+        <!-- Card 3: Viral Score -->
+        <td width="48%" style="padding: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; vertical-align: top;">
+          <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">
+            ${isVi ? 'Điểm Lan truyền' : 'Average Viral Score'}
+          </div>
+          <div style="font-size: 24px; font-weight: 700; color: #0f172a; margin: 6px 0 2px 0;">
+            ${metrics.viralScore}/100
+          </div>
+          <div style="font-size: 12px; color: #94a3b8;">${isVi ? 'Chỉ số tương tác trung bình' : 'Average engagement index'}</div>
+        </td>
+        <td width="4%">&nbsp;</td>
+        <!-- Card 4: Affiliate ROI -->
+        <td width="48%" style="padding: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; vertical-align: top;">
+          <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">
+            ${isVi ? 'Hiệu suất Tiếp thị Liên kết' : 'Affiliate ROI'}
+          </div>
+          <div style="font-size: 24px; font-weight: 700; color: #10b981; margin: 6px 0 2px 0;">
+            ${metrics.roiRatio}x
+          </div>
+          <div style="font-size: 12px; color: #94a3b8;">$${affiliateUsd} rev / $${spendUsd} spend</div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Structured Semantic List (E2E Contract F3-1) -->
+    <ul style="margin: 16px 0; padding-left: 20px; line-height: 1.8; color: #334155;">
+      <li>Monthly Recurring Revenue: $${mrrUsd}</li>
+      <li>Videos Produced: ${metrics.throughputCount}</li>
+      <li>Average Viral Engagement: ${metrics.viralScore}/100</li>
+      <li>Affiliate ROI: ${metrics.roiRatio}x</li>
+    </ul>
+
+    ${options.additionalNotesHtml ? `<div style="margin: 16px 0;">${options.additionalNotesHtml}</div>` : ''}
+
+    <!-- Call to Action -->
+    <div style="margin: 28px 0 12px 0; text-align: center;">
+      <a href="${escapeHtml(portalUrl)}" class="brand-btn" style="background-color: ${primaryColor}; color: #ffffff; padding: 12px 24px; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-block;">
+        ${escapeHtml(ctaLabel)}
+      </a>
+    </div>
+  `.trim();
+}
+
+/**
+ * Sends an Executive BI Email Digest to one or more recipient email addresses.
+ * Wraps the rendered metrics HTML inside wrapWithAgencyBranding and delivers via sendEmail.
+ */
+export async function sendEmailDigest(
+  metrics: ExecutiveBIMetricsSummary,
+  options: EmailDigestOptions
+): Promise<EmailDigestResult> {
+  const recipients = Array.isArray(options.to) ? options.to : [options.to];
+  if (recipients.length === 0) {
+    return { success: false, recipientCount: 0, provider: 'dry-run', error: 'No recipients provided' };
+  }
+
+  const innerHtml = renderExecutiveDigestHtml(metrics, options);
+  const agencyBranding = options.branding as BrandingSettings | undefined;
+  const wrappedHtml = wrapWithAgencyBranding(innerHtml, agencyBranding ?? {});
+
+  const agencyName = agencyBranding?.agencyName ?? 'Sophia AI Factory';
+  const cadenceLabel = options.cadence === 'weekly' ? 'Weekly' : 'Monthly';
+  const subject = `${agencyName} — ${cadenceLabel} Executive BI Digest`;
+
+  let lastMessageId: string | undefined;
+  let successCount = 0;
+  let lastError: string | undefined;
+
+  for (const recipient of recipients) {
+    try {
+      const res = await sendEmail({
+        to: recipient,
+        subject,
+        html: wrappedHtml,
+        branding: agencyBranding as WhiteLabelEmailBranding | undefined,
       });
 
-      setTimeout(() => setCurrentStage('VOICE_SYNTHESIS'), 1200);
-      setTimeout(() => setCurrentStage('VISUAL_GENERATION'), 2400);
-      setTimeout(() => setCurrentStage('VIDEO_COMPOSITING'), 3600);
-      setTimeout(() => {
-        setCurrentStage('READY_FOR_REVIEW');
-        setStatus('completed');
-      }, 4800);
-    } catch {
-      setStatus('failed');
-      setErrorMessage(t('launchError'));
+      if (res.success) {
+        successCount++;
+        lastMessageId = res.messageId;
+      } else {
+        lastError = res.error;
+        logger.warn('[email-digest-sender] Failed sending digest to recipient', {
+          recipient,
+          error: res.error,
+        });
+      }
+    } catch (err) {
+      lastError = getErrorMessage(err);
+      logger.error('[email-digest-sender] Exception sending email digest', {
+        recipient,
+        error: lastError,
+      });
     }
+  }
+
+  return {
+    success: successCount > 0,
+    recipientCount: successCount,
+    messageId: lastMessageId,
+    provider: process.env.RESEND_API_KEY ? 'resend' : 'dry-run',
+    error: successCount === 0 ? lastError : undefined,
+  };
+}
+```
+
+---
+
+### 4.3 Blueprint 3: `apps/sophia-ai-factory/src/forest/bi/executive-digest-dispatcher.ts`
+
+```typescript
+/**
+ * Executive BI Digest Dispatcher Orchestrator
+ *
+ * Implements the contract in PROJECT.md:89-91:
+ * dispatchExecutiveDigest(db: D1Database, cadence: 'weekly' | 'monthly'): Promise<DigestDeliveryReceipt>
+ *
+ * Aggregates analytical metrics per organization and coordinates dual-channel delivery
+ * (Resend Email + Telegram Bot) with full multi-tenant isolation.
+ *
+ * Layer: forest (side-effect orchestrator)
+ * Allowed imports: @/seed/*, @/tree/*, @/forest/*
+ *
+ * @module forest/bi/executive-digest-dispatcher
+ */
+
+import { aggregateExecutiveBIMetrics } from '@/tree/bi/metrics-aggregator';
+import { sendTelegramDigest } from '@/forest/bi/telegram-digest-sender';
+import { sendEmailDigest } from '@/forest/bi/email-digest-sender';
+import { logger } from '@/seed/utils/logger-utility';
+import { getErrorMessage } from '@/seed/utils/to-error';
+import type { D1Database } from '@cloudflare/workers-types';
+import type { BrandingSettings } from '@/seed/tenant-settings/defaults';
+
+export interface DigestDeliveryReceipt {
+  cadence: 'weekly' | 'monthly';
+  executedAt: number;
+  periodStart: number;
+  periodEnd: number;
+  totalOrgs: number;
+  telegramDeliveries: {
+    attempted: number;
+    succeeded: number;
+    failed: number;
+  };
+  emailDeliveries: {
+    attempted: number;
+    succeeded: number;
+    failed: number;
+  };
+  details: Array<{
+    orgId: string;
+    telegramSuccess: boolean;
+    emailSuccess: boolean;
+    error?: string;
+  }>;
+}
+
+/**
+ * Coordinates automated executive digest generation and multi-channel delivery across organizations.
+ */
+export async function dispatchExecutiveDigest(
+  db: D1Database,
+  cadence: 'weekly' | 'monthly' = 'weekly'
+): Promise<DigestDeliveryReceipt> {
+  const now = Date.now();
+  const periodDuration = cadence === 'weekly' ? 7 * 86400 * 1000 : 30 * 86400 * 1000;
+  const periodStart = now - periodDuration;
+  const periodEnd = now;
+
+  // Query active organizations that qualify for executive BI digests
+  const { results: orgs } = await db
+    .prepare(
+      `SELECT id, name, slug, tier FROM organizations WHERE status = 'active'`
+    )
+    .all<{ id: string; name: string; slug: string; tier: string }>();
+
+  const receipt: DigestDeliveryReceipt = {
+    cadence,
+    executedAt: now,
+    periodStart,
+    periodEnd,
+    totalOrgs: orgs?.length ?? 0,
+    telegramDeliveries: { attempted: 0, succeeded: 0, failed: 0 },
+    emailDeliveries: { attempted: 0, succeeded: 0, failed: 0 },
+    details: [],
   };
 
-  return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      {/* 5 Questions CEO Guide */}
-      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-xs">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <div>
-            <p className="font-semibold text-primary">{t('guide.q1_label')}</p>
-            <p className="text-muted-foreground">{t('guide.q1_desc')}</p>
-          </div>
-          <div>
-            <p className="font-semibold text-primary">{t('guide.q2_label')}</p>
-            <p className="text-muted-foreground">{t('guide.q2_desc')}</p>
-          </div>
-          <div>
-            <p className="font-semibold text-primary">{t('guide.q3_label')}</p>
-            <p className="text-muted-foreground">{t('guide.q3_desc')}</p>
-          </div>
-          <div>
-            <p className="font-semibold text-primary">{t('guide.q4_label')}</p>
-            <p className="text-muted-foreground">
-              {t('guide.q4_desc', { usd: costEstimate.totalUsd, mcu: costEstimate.totalMcu })}
-            </p>
-          </div>
-          <div>
-            <p className="font-semibold text-primary">{t('guide.q5_label')}</p>
-            <p className="text-muted-foreground">{t('guide.q5_desc')}</p>
-          </div>
-        </div>
-      </div>
+  if (!orgs || orgs.length === 0) {
+    return receipt;
+  }
 
-      {status !== 'idle' ? (
-        <div className="space-y-4">
-          <MissionProgressBar currentStage={currentStage} status={status} errorMessage={errorMessage} onRetry={handleLaunch} locale={locale} />
-          {status === 'completed' && (
-            <div className="rounded-xl border border-primary/30 bg-card p-6 text-center space-y-3">
-              <CheckCircle2 className="mx-auto h-10 w-10 text-primary" />
-              <h3 className="text-lg font-bold text-foreground">{t('successTitle')}</h3>
-              <p className="text-sm text-muted-foreground">{t('successDescription')}</p>
-              <div className="flex justify-center gap-3 pt-2">
-                <Link href={`/dashboard/missions/${missionId}`} className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90">
-                  <Video className="h-4 w-4" /> {t('reviewButton')}
-                </Link>
-                <button type="button" onClick={() => setStatus('idle')} className="rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-muted">
-                  {t('createAnotherButton')}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
-          {/* Template Selection */}
-          <div>
-            <label className="text-sm font-semibold text-foreground">{t('templateSelectLabel')}</label>
-            <div className="mt-2.5 grid grid-cols-1 md:grid-cols-3 gap-3">
-              {templates.map((tmpl) => (
-                <button
-                  key={tmpl.id}
-                  type="button"
-                  onClick={() => handleSelectTemplate(tmpl)}
-                  className={`text-left rounded-lg p-3.5 border transition ${
-                    selectedTemplate.id === tmpl.id ? 'border-primary bg-primary/10 ring-1 ring-primary' : 'border-border hover:bg-muted/50'
-                  }`}
-                >
-                  <span className="inline-block rounded-full bg-primary/20 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                    {tmpl.badge[locale]}
-                  </span>
-                  <h4 className="mt-1 font-semibold text-sm text-foreground">{tmpl.name[locale]}</h4>
-                  <p className="mt-0.5 text-xs text-muted-foreground line-clamp-2">{tmpl.description[locale]}</p>
-                </button>
-              ))}
-            </div>
-          </div>
+  for (const org of orgs) {
+    let tgSuccess = false;
+    let emailSuccess = false;
+    let orgError: string | undefined;
 
-          {/* Topic Input with sample pills */}
-          <div>
-            <label className="text-sm font-semibold text-foreground">{t('topicLabel')}</label>
-            <input
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder={selectedTemplate.defaultTopic[locale] || t('topicPlaceholder')}
-              className="mt-1.5 w-full rounded-lg border border-border bg-background px-3.5 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-            />
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {selectedTemplate.suggestedPrompts.map((p, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setTopic(p[locale])}
-                  className="rounded-full border border-border bg-muted/40 px-2.5 py-1 text-[11px] text-muted-foreground hover:bg-primary/10 hover:text-primary transition"
-                >
-                  + {p[locale]}
-                </button>
-              ))}
-            </div>
-          </div>
+    try {
+      // 1. Aggregate metrics strictly within org tenant scope
+      const metrics = await aggregateExecutiveBIMetrics(db, org.id, {
+        start: periodStart,
+        end: periodEnd,
+      });
 
-          {/* Transparent Preflight Cost & Latency */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-muted/40 p-3.5 border border-border/60 text-xs">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5 font-medium text-foreground">
-                <Coins className="h-4 w-4 text-primary" /> {t('costEstimate', { usd: costEstimate.totalUsd, mcu: costEstimate.totalMcu })}
-              </span>
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <Clock className="h-4 w-4" /> {t('durationEstimate')}
-              </span>
-            </div>
-            <span className="rounded bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-600 dark:text-emerald-400">
-              ✓ {t('zeroHiddenFees')}
-            </span>
-          </div>
+      const branding: Partial<BrandingSettings> = {
+        agencyName: org.name,
+      };
 
-          {/* Submit Action */}
-          <button
-            type="button"
-            onClick={handleLaunch}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-bold text-primary-foreground shadow-sm transition hover:opacity-95 active:scale-[0.99]"
-          >
-            <Sparkles className="h-4 w-4" />
-            {t('launchButton')}
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-```
+      // 2. Dispatch Telegram digest
+      receipt.telegramDeliveries.attempted++;
+      const tgResult = await sendTelegramDigest(metrics, { branding });
+      if (tgResult.success || tgResult.skipped) {
+        receipt.telegramDeliveries.succeeded++;
+        tgSuccess = true;
+      } else {
+        receipt.telegramDeliveries.failed++;
+        orgError = tgResult.error;
+      }
 
-### 5.3 `apps/sophia-ai-factory/src/components/missions/mission-progress-bar.tsx`
-```tsx
-'use client';
+      // 3. Dispatch Email digest
+      // Look up org owner or billing email
+      const { results: owners } = await db
+        .prepare(
+          `SELECT u.email FROM users u
+           JOIN org_members om ON om.user_id = u.id
+           WHERE om.org_id = ?1 AND om.role IN ('owner', 'admin')
+           LIMIT 5`
+        )
+        .bind(org.id)
+        .all<{ email: string }>();
 
-import React from 'react';
-import { useTranslations } from 'next-intl';
-import { CheckCircle2, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+      const recipientEmails = owners?.map((o) => o.email).filter(Boolean) ?? [];
 
-export type MissionStageId =
-  | 'SCRIPT_GENERATION'
-  | 'VOICE_SYNTHESIS'
-  | 'VISUAL_GENERATION'
-  | 'VIDEO_COMPOSITING'
-  | 'READY_FOR_REVIEW';
+      if (recipientEmails.length > 0) {
+        receipt.emailDeliveries.attempted++;
+        const emailResult = await sendEmailDigest(metrics, {
+          to: recipientEmails,
+          branding,
+          cadence,
+          periodLabel: cadence === 'weekly' ? 'Past 7 Days' : 'Past 30 Days',
+        });
 
-export type StageKey =
-  | 'script_generation'
-  | 'voice_synthesis'
-  | 'visual_generation'
-  | 'video_compositing'
-  | 'ready_for_review';
+        if (emailResult.success || emailResult.provider === 'dry-run') {
+          receipt.emailDeliveries.succeeded++;
+          emailSuccess = true;
+        } else {
+          receipt.emailDeliveries.failed++;
+          orgError = emailResult.error ?? orgError;
+        }
+      }
+    } catch (err) {
+      orgError = getErrorMessage(err);
+      logger.error('[executive-digest-dispatcher] Failed processing digest for org', {
+        orgId: org.id,
+        error: orgError,
+      });
+    }
 
-export interface StageDefinition {
-  id: MissionStageId;
-  stageKey: StageKey;
-  stepNumber: number;
-  percent: number;
-}
+    receipt.details.push({
+      orgId: org.id,
+      telegramSuccess: tgSuccess,
+      emailSuccess,
+      error: orgError,
+    });
+  }
 
-export const MISSION_STAGES: StageDefinition[] = [
-  { id: 'SCRIPT_GENERATION', stageKey: 'script_generation', stepNumber: 1, percent: 20 },
-  { id: 'VOICE_SYNTHESIS', stageKey: 'voice_synthesis', stepNumber: 2, percent: 40 },
-  { id: 'VISUAL_GENERATION', stageKey: 'visual_generation', stepNumber: 3, percent: 65 },
-  { id: 'VIDEO_COMPOSITING', stageKey: 'video_compositing', stepNumber: 4, percent: 90 },
-  { id: 'READY_FOR_REVIEW', stageKey: 'ready_for_review', stepNumber: 5, percent: 100 },
-];
-
-export interface MissionProgressBarProps {
-  currentStage: MissionStageId;
-  status: 'idle' | 'running' | 'completed' | 'failed';
-  errorMessage?: string;
-  onRetry?: () => void;
-  locale?: 'vi' | 'en';
-  customPercent?: number;
-}
-
-export function MissionProgressBar({
-  currentStage,
-  status,
-  errorMessage,
-  onRetry,
-  customPercent,
-}: MissionProgressBarProps) {
-  const t = useTranslations('dashboard.missions.wizard');
-  const currentIndex = MISSION_STAGES.findIndex((s) => s.id === currentStage);
-  const activeIndex = currentIndex >= 0 ? currentIndex : 0;
-  const currentDef = MISSION_STAGES[activeIndex] ?? MISSION_STAGES[0];
-  const percent = status === 'completed' ? 100 : (customPercent ?? currentDef.percent);
-
-  return (
-    <div className="w-full rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
-      {/* Header & Percentage */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h3 className="text-sm font-semibold text-foreground">
-            {t('progressTitle')}
-          </h3>
-          <p className="text-xs text-muted-foreground">{t(`stages.${currentDef.stageKey}.desc`)}</p>
-        </div>
-        <span className="text-lg font-bold text-primary">{percent}%</span>
-      </div>
-
-      {/* Progress Bar Container */}
-      <div
-        role="progressbar"
-        aria-valuenow={percent}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={t('progressAriaLabel')}
-        className="relative h-2 w-full overflow-hidden rounded-full bg-muted"
-      >
-        <div
-          className={`h-full transition-all duration-500 ease-out ${
-            status === 'failed' ? 'bg-destructive' : 'bg-primary'
-          }`}
-          style={{ width: `${percent}%` }}
-        />
-      </div>
-
-      {/* 5 Stages Flow Indicator */}
-      <div className="grid grid-cols-5 gap-1.5 pt-1">
-        {MISSION_STAGES.map((stage, idx) => {
-          const isPast = idx < activeIndex || status === 'completed';
-          const isCurrent = idx === activeIndex && status !== 'completed';
-          const isFailed = isCurrent && status === 'failed';
-
-          return (
-            <div key={stage.id} className="flex flex-col items-center text-center">
-              <div
-                className={`flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-semibold ${
-                  isFailed
-                    ? 'border-destructive bg-destructive/10 text-destructive'
-                    : isPast
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : isCurrent
-                    ? 'border-primary bg-primary/20 text-primary ring-2 ring-primary/30'
-                    : 'border-border bg-muted/40 text-muted-foreground'
-                }`}
-              >
-                {isFailed ? (
-                  <AlertCircle className="h-3.5 w-3.5" />
-                ) : isPast ? (
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                ) : isCurrent && status === 'running' ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  stage.stepNumber
-                )}
-              </div>
-              <span
-                className={`mt-1.5 line-clamp-1 text-[10px] font-medium ${
-                  isFailed ? 'text-destructive' : isCurrent || isPast ? 'text-foreground' : 'text-muted-foreground'
-                }`}
-              >
-                {t(`stages.${stage.stageKey}.label`)}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Error State with Meaningful Feedback & Retry Path */}
-      {status === 'failed' && (
-        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3.5 flex items-start justify-between gap-3">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-            <div>
-              <h4 className="text-xs font-semibold text-destructive">
-                {t('interruptedTitle')}
-              </h4>
-              <p className="text-[11px] text-foreground/80 mt-0.5">
-                {errorMessage || t('errorFallback')}
-              </p>
-            </div>
-          </div>
-          {onRetry && (
-            <button
-              type="button"
-              onClick={onRetry}
-              className="inline-flex shrink-0 items-center gap-1 rounded bg-destructive px-2.5 py-1 text-xs font-medium text-destructive-foreground hover:opacity-90 active:scale-95"
-            >
-              <RefreshCw className="h-3 w-3" />
-              {t('retryButton')}
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  return receipt;
 }
 ```
 
 ---
 
-## 6. Caveats
+## 5. Verification Method
 
-1. **Test Assertions on `FIRST_RUN_TEMPLATES`**:
-   - `apps/sophia-ai-factory/src/land/missions/__tests__/first-run-template.test.ts` and `apps/sophia-ai-factory/src/__tests__/e2e/multi-track-video-pipeline.e2e.test.ts` assert direct properties (`template.name.en`, `template.name.vi`, `template.badge.en`, `template.badge.vi`, etc.).
-   - `FIRST_RUN_TEMPLATES` in `first-run-template.ts` must maintain backward compatibility by keeping these bilingual object fields in code. The UI components must be the only layer switching to `t()` keys.
-2. **Dynamic Key Resolution in `scripts/validate-i18n-keys.mjs`**:
-   - `validate-i18n-keys.mjs` handles dynamic template literal keys like `t(\`stages.\${currentDef.stageKey}.desc\`)` by verifying that the static prefix `stages.` is an object in `messages/vi.json`.
-   - In the proposed schema, `stages` is an object under `dashboard.missions.wizard`, which satisfies rule A in `validate-i18n-keys.mjs` line 189 (`if (literalRemainder === '') continue`).
-3. **Sandbox Restriction**:
-   - Unsandboxed shell commands prompt the user and will time out in subagents. The validator logic was thoroughly verified by inspecting its AST parser regexes directly against the proposed JSON and TypeScript code.
+To independently verify the architecture, contracts, and blueprints:
 
----
+### 5.1 Run Executive BI E2E Test Suite
+```bash
+cd apps/sophia-ai-factory
+PATH="/opt/homebrew/bin:$PATH" npx vitest run src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts
+```
+**Success Condition**: All 33 test cases pass in `< 100ms`, verifying F1, F2, F3, F4, F5, B1-B5, P1-P2, S1.
 
-## 7. Conclusion
+### 5.2 Run Complete Enterprise Scale Engine E2E Test Suite
+```bash
+cd apps/sophia-ai-factory
+PATH="/opt/homebrew/bin:$PATH" npx vitest run src/__tests__/e2e/enterprise/
+```
+**Success Condition**: All 137 test cases pass across Custom Domains, Organizations/RBAC, Executive BI, and Outbound Webhooks in `< 3.0s`.
 
-The audit identified 45 user-facing strings and ternaries that can be eliminated in favor of clean, idiomatic `next-intl` translation keys. Placing these keys under `dashboard.missions.wizard` preserves architectural harmony with existing components (`src/forest/components/missions/` using `dashboard.missions.control`), removes hardcoded ternaries, eliminates technical jargon in Vietnamese copy, and complies with `validate-i18n-keys.mjs` validation gates.
+### 5.3 Verify TypeScript Zero-Error Gate
+```bash
+cd apps/sophia-ai-factory
+PATH="/opt/homebrew/bin:$PATH" npm run type-check
+```
+**Success Condition**: Exit code `0` with 0 TypeScript compilation errors.
 
----
+### 5.4 Verify 4-Layer Architecture Boundary Enforcement
+```bash
+cd apps/sophia-ai-factory
+bash scripts/check-layer-boundaries.sh
+```
+**Success Condition**: Exit code `0` with `✅ All layer boundaries clean`.
 
-## 8. Verification Method
-
-To verify the implementation independently once applied:
-
-1. **JSON Syntax & Structure Check**:
-   - Verify `apps/sophia-ai-factory/messages/en.json` and `apps/sophia-ai-factory/messages/vi.json` are valid JSON:
-     ```bash
-     node -e "JSON.parse(fs.readFileSync('messages/en.json', 'utf8')); JSON.parse(fs.readFileSync('messages/vi.json', 'utf8')); console.log('Valid JSON')"
-     ```
-2. **i18n Key Validator Gate**:
-   - Run the project's standard validator:
-     ```bash
-     npm run i18n:validate
-     ```
-   - Must output: `✅ All translation keys found!` with 0 missing static keys and 0 unresolved dynamic prefixes.
-3. **TypeScript Typecheck**:
-   - Run typecheck in `apps/sophia-ai-factory`:
-     ```bash
-     npm run type-check
-     ```
-   - Must pass with 0 errors.
-4. **Unit and E2E Tests**:
-   - Run the template unit tests:
-     ```bash
-     npx vitest run src/land/missions/__tests__/first-run-template.test.ts
-     ```
-   - Run the E2E pipeline test:
-     ```bash
-     npx vitest run src/__tests__/e2e/multi-track-video-pipeline.e2e.test.ts
-     ```
-   - All tests must pass 100%.
+### 5.5 Invalidation Conditions
+- Any occurrence of unescaped MarkdownV2 characters (`_`, `*`, `[`, `]`, `(`, `)`, `~`, `` ` ``, `>`, `#`, `+`, `-`, `=`, `|`, `{`, `}`, `.`, `!`) in Telegram message payloads.
+- Any Telegram chunk exceeding 4096 characters or breaking an active escape sequence (odd trailing backslash).
+- Any HTML injection or XSS payload surviving in agency headers.
+- Any `from '@/forest'` import appearing in `src/tree/` or `src/land/`.

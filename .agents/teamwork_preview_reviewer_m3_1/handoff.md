@@ -1,244 +1,329 @@
-# Handoff Report: Comprehensive Review & Adversarial Challenge of Production Auth Fix (Milestone 3)
+# Milestone 3 Independent Review & Adversarial Challenge Report: Domain Calculations & Streaming Export
 
-**Author**: Reviewer 1 Subagent (`teamwork_preview_reviewer_m3_1`)  
-**Roles**: Reviewer & Adversarial Critic  
-**Timestamp**: 2026-09-19T16:09:00Z  
-**Verdict**: **APPROVE**  
-**Integrity Evaluation**: **PASSED (ZERO INTEGRITY VIOLATIONS)**  
-**Parent Agent**: `orchestrator_auth_fix` (`4b4014dc-c889-46e2-94e4-d87757729081`)  
+**Reviewer Agent:** `teamwork_preview_reviewer_m3_1`  
+**Working Directory:** `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_reviewer_m3_1/`  
+**Parent Agent:** `78b5382f-0b81-4402-ad59-b06284d61c09`  
+**Milestone:** Milestone 3 (Executive BI & Automated Reporting Engine)  
+**Date:** 2026-09-20T06:14:00Z  
+**Verdict:** `APPROVE`  
+**Handoff Type:** Hard (Complete, self-contained verification)
 
 ---
 
 ## 1. Observation
 
-### 1.1 Live Production Defect Empirical Reproduction
-Direct live probe against production edge (`https://sophia.agencyos.network`, commit SHA `ebc7fb59`):
-1. **Email Sign-Up Request**:
-   - Command:
-     ```bash
-     curl -s -i -X POST "https://sophia.agencyos.network/api/auth/sign-up/email" \
-       -H "Origin: https://sophia.agencyos.network" \
-       -H "Content-Type: application/json" \
-       -d '{"email":"test@example.com","password":"Password123!","name":"Test"}'
-     ```
-   - Verbatim Response:
-     ```http
-     HTTP/2 403
-     cf-ray: a3d9d6255a57fdba-SIN
-     content-type: application/json
+Direct code observations, AST analysis, formula evaluations, and execution outputs verified across the codebase:
 
-     {"message":"Invalid origin","code":"INVALID_ORIGIN"}
-     ```
-2. **Magic-Link Request**:
-   - Command:
-     ```bash
-     curl -s -i -X POST "https://sophia.agencyos.network/api/auth/sign-in/magic-link" \
-       -H "Origin: https://sophia.agencyos.network" \
-       -H "Content-Type: application/json" \
-       -d '{"email":"test@example.com"}'
-     ```
-   - Verbatim Response:
-     ```http
-     HTTP/2 403
-     cf-ray: a3d9d641bda4fdba-SIN
-     content-type: application/json
+### 1.1 Source Code Inspections
+1. **`src/seed/types/executive-bi.ts`**:
+   - Lines 10–90: Defines foundational contracts (`DateRange`, `ExecutiveBIMetricsSummary`, `ExecutiveBIMetricRow`, `ExecutiveBIMetricRecord`, `CreateExecutiveBIMetricInput`, `ExecutiveBIExportFormat`, `ExecutiveBIExportOptions`, `ExecutiveBIErrorCode`, `ExecutiveBIError`).
+   - Lines 1–8: Zero imports from `tree`, `forest`, or `land`. Fully compliant with `seed` layer constraints.
+   - Zero `:any` types.
 
-     {"message":"Invalid origin","code":"INVALID_ORIGIN"}
-     ```
-These observations confirm the exact production defect identified in `ORIGINAL_REQUEST.md` (section `## 2026-09-19T15:50:21Z`).
-
-### 1.2 Worker Implementation Code Observations
-1. **Canonical Trusted Origins & Base URL Hardening (`apps/sophia-ai-factory/src/seed/auth/better-auth-server.ts:32-106`)**:
-   - `CANONICAL_TRUSTED_ORIGINS` lines 32-40:
+2. **`src/tree/bi/metrics-aggregator.ts`**:
+   - Lines 48–64 (`calculateRoiRatio`):
      ```typescript
-     export const CANONICAL_TRUSTED_ORIGINS: readonly string[] = [
-       'https://sophia.agencyos.network',
-       'https://sophia-ai-factory.agencyos-openclaw.workers.dev',
-       'https://sophia-ai-factory-staging.agencyos-openclaw.workers.dev',
-       'http://localhost:3000',
-       'http://localhost:8787',
-       'http://127.0.0.1:3000',
-       'http://127.0.0.1:8787',
-     ] as const;
+     export function calculateRoiRatio(
+       affiliateRevenueCents: number,
+       marketingSpendCents: number,
+     ): number {
+       if (marketingSpendCents > 0) {
+         return Number((affiliateRevenueCents / marketingSpendCents).toFixed(2));
+       }
+       if (affiliateRevenueCents > 0) {
+         return 99.0;
+       }
+       return 0;
+     }
      ```
-   - `resolveBaseURL()` lines 46-64: Resolves from `process.env.BETTER_AUTH_URL`, Cloudflare Workers `globalThis.__env__.BETTER_AUTH_URL`, `process.env.APP_URL`, or `globalThis.__env__.APP_URL`. When `process.env.NODE_ENV === 'production'`, actively rejects any URL containing `localhost` or `127.0.0.1`, unconditionally falling back to `'https://sophia.agencyos.network'`. Trailing slashes are stripped.
-   - `resolveTrustedOrigins()` lines 71-106: Populates a `Set<string>` with all `CANONICAL_TRUSTED_ORIGINS`, adds `base`, dynamic candidates from `TRUSTED_ORIGINS`, `BETTER_AUTH_TRUSTED_ORIGINS`, etc., strips trailing slashes, and deduplicates all entries.
-   - Lines 156-169:
+     Implements division-by-zero protection: returns `99.0` when spend is zero and revenue $>0$, and `0` when both are zero. When spend $>0$, rounds ratio to 2 decimal places.
+   - Lines 69–73 (`calculateAverageViralScore`):
      ```typescript
-     const baseURL = resolveBaseURL();
-     const trustedOrigins = resolveTrustedOrigins(baseURL);
-     _auth = betterAuth({
-       database: d1,
-       secret,
-       baseURL,
-       basePath: '/api/auth',
-       trustedOrigins,
-       ...
+     export function calculateAverageViralScore(scores: number[]): number {
+       if (scores.length === 0) return 0;
+       const sum = scores.reduce((acc, score) => acc + score, 0);
+       return Number((sum / scores.length).toFixed(2));
+     }
      ```
-2. **Cloudflare Workers Runtime Environment Parity (`apps/sophia-ai-factory/wrangler.toml:133-136`)**:
-   - Lines 133-136:
-     ```toml
-     [vars]
-     # Auth canonical URLs (Workers runtime env parity - R2)
-     BETTER_AUTH_URL = "https://sophia.agencyos.network"
-     APP_URL = "https://sophia.agencyos.network"
-     ```
-   - Injects canonical production URL into Cloudflare Workers runtime isolate environment, achieving full parity with `wrangler.staging.toml:71-72`.
-3. **Defensive User Creation & Registration Fallback (`better-auth-server.ts` & `register-page.tsx`)**:
-   - `sanitizeAndResolveUserName()` in `better-auth-server.ts:112-131`: Strips control characters `[\u0000-\u001f\u007f]`, trims, truncates to 100 characters. If empty, extracts the email prefix (splitting on `@`), sanitizes, trims, truncates to 100 characters, falling back to `'user'`. Never throws.
-   - `databaseHooks.user.create.before` in `better-auth-server.ts:250-253`: Replaces the rigid `if (!name) throw new Error('Name is required')` with `sanitizeAndResolveUserName(user.name, user.email)`.
-   - `databaseHooks.user.create.after` in `better-auth-server.ts:258-264, 272, 319`: Hardens `prefix`, `slug`, and `orgName`:
-     ```typescript
-     const emailStr = typeof user.email === 'string' ? user.email : '';
-     const rawPrefix = emailStr.includes('@') ? emailStr.split('@')[0] : (emailStr || 'user');
-     const prefix = rawPrefix.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'user';
-     const slug = `${prefix}-${orgId.slice(0, 6)}`;
-     const orgName = (typeof user.name === 'string' && user.name.trim()) || user.email || 'Personal';
-     ```
-   - In `apps/sophia-ai-factory/src/components/stitch/screens/auth/register-page.tsx:59, 186-193`:
-     `resolvedName = companyName.trim() || email.split('@')[0].trim() || 'user'` passed to `authClient.signUp.email`, and the HTML `required` constraint removed from the company input element.
-4. **Unit & Integration Test Suite (`src/seed/auth/__tests__/better-auth-server-config.test.ts:1-276`)**:
-   - Contains 19 tests verifying:
-     - Canonical trusted origins definition and unconditional inclusion
-     - BaseURL resolution in production, localhost rejection, and Cloudflare Workers `globalThis.__env__` binding
-     - Dynamic origin parsing and Set deduplication
-     - Direct inspection of `wrangler.toml` `[vars]` on disk
-     - Name sanitization (control characters, truncation, empty name, empty email, whitespace)
-     - `databaseHooks.user.create.before` behavior with undefined/empty name
-     - Full `getAuth()` configuration passing to `betterAuth()`
+     Arithmetic mean with 2 decimal places precision.
+   - Lines 98–178 (`aggregateExecutiveBIMetrics`):
+     - Line 103–110: Validates `orgId` and `isValidDateRange(dateRange)`. If invalid, returns zero-initialized summary.
+     - Lines 113–132: Queries D1 table `executive_bi_metrics` with `WHERE org_id = ?1 AND period_start >= ?2 AND period_end <= ?3 ORDER BY period_start ASC`.
+     - Lines 145–154:
+       - Peak MRR: `if (mrr > peakMrr) peakMrr = mrr;` — computes $\max_{r \in \text{results}}(r.\text{mrr\_cents})$.
+       - Throughput accumulation: `totalThroughput += Number(r.throughput_count) || 0;` — accumulation sum.
+       - Viral score mean: `sumViral += Number(r.viral_score) || 0;` followed by `Number((sumViral / results.length).toFixed(2))`.
+       - Affiliate revenue sum: `totalAffiliate += Number(r.affiliate_revenue_cents) || 0;`.
+       - Marketing spend sum: `totalSpend += Number(r.marketing_spend_cents) || 0;`.
+     - Zero upper-layer imports (imports only from `@/seed/*`).
 
-### 1.3 Independent Tool Execution Results
-1. **TypeScript Typecheck**:
-   - Command: `node ./node_modules/typescript/bin/tsc --noEmit` from `apps/sophia-ai-factory`
-   - Exit code: `0`
-   - Diagnostic output: `0` errors.
-2. **Layer Boundary Check**:
-   - Command: `bash scripts/check-layer-boundaries.sh` from `apps/sophia-ai-factory`
-   - Exit code: `0`
-   - Diagnostic output:
-     ```
-     🔍 Checking layer boundaries...
-     ✅ All layer boundaries clean
-     ```
-3. **Vitest Auth Test Suites**:
-   - Command: `node ./node_modules/vitest/vitest.mjs run src/seed/auth/ src/middleware/__tests__/auth-routes.test.ts` from `apps/sophia-ai-factory`
-   - Exit code: `0`
-   - Test count: **25 passed (25 files)**, **303 passed (303 tests)**. Duration: 3.06s.
-4. **ESLint Static Analysis**:
-   - Command: `node --max-old-space-size=8192 ./node_modules/eslint/bin/eslint.js src/seed/auth/better-auth-server.ts src/components/stitch/screens/auth/register-page.tsx src/seed/auth/__tests__/better-auth-server-config.test.ts` from `apps/sophia-ai-factory`
-   - Exit code: `0` (0 errors, 3 pre-existing function length/cognitive complexity warnings).
-5. **No `:any` or `console.log` Rule Compliance**:
-   - Grep for `:\s*any\b` in modified files: 0 matches.
-   - Grep for `console.(log|warn|error|debug)` in modified files: 0 matches.
+3. **`src/tree/bi/export-formatter.ts`**:
+   - Lines 57–83 (`escapeCsvField`):
+     - Null/undefined returns empty string `""`.
+     - Numbers and booleans converted to string representations.
+     - Formula sanitization: prefixes leading `[=+\-@\t\r]` with `'` when `sanitizeFormulas === true`.
+     - Quote and delimiter check: `str.includes('"') || str.includes(delimiter) || str.includes('\n') || str.includes('\r')`.
+     - Internal double-quote escaping: `"${str.replace(/"/g, '""')}"`.
+   - Lines 86–108 (`formatStreamingCsv`): Default line ending `\r\n` (RFC-4180 §2.1), optional UTF-8 BOM (`\uFEFF`), and delimiter customization.
+   - Lines 114–147 (`streamCsv`):
+     - Uses native `ReadableStream<Uint8Array>` and `TextEncoder`.
+     - Consumes `AsyncIterable<Record<string, unknown>>` row-by-row, encoding and enqueuing each line independently.
+     - Memory consumption is strictly $O(1)$ per record buffer.
+   - Lines 153–201 (`streamJsonArray`):
+     - Streams JSON arrays or NDJSON line-by-line.
+     - Handled empty dataset: outputs `[]` when count is 0 (conforming to RFC and Test F5-2).
+   - Lines 207–243 (`createStreamingExportResponse`):
+     - Wraps streams into HTTP `Response`.
+     - Injects `Content-Type` (`text/csv; charset=utf-8`, `application/json`, `application/x-ndjson`).
+     - Injects `Content-Disposition: attachment; filename="..."`.
+     - Injects `Cache-Control: no-cache, no-store, must-revalidate` and `X-Content-Type-Options: nosniff`.
+
+4. **`src/app/api/v1/analytics/export/route.ts`**:
+   - Lines 196–240: 4-step authorization enforcement:
+     1. `getCurrentUser()` (401 if unauthenticated)
+     2. `getD1()` (503 if unavailable)
+     3. `resolveOrgId()` (403 if no active org)
+     4. `assertTenantScope(currentOrgId, requestedOrgId)` (403 `CROSS_TENANT_VIOLATION` if cross-tenant)
+   - Lines 252–276: Timestamp validation: positive integers, `start <= end`, max range 365 days.
+   - Lines 84–189: Paged cursor generator streaming up to 1,000 records per D1 chunk to prevent edge memory exhaustion.
+
+### 1.2 Verification Command Executions (Verbatim Proofs)
+
+1. **Executive BI E2E Test Suite (33 tests)**:
+   ```bash
+   node ./node_modules/vitest/vitest.mjs run src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts
+   ```
+   *Output:*
+   ```
+   ✓ src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts (33 tests) 20ms
+     ✓ Enterprise Executive BI & Reporting E2E Test Suite (33)
+       ✓ Tier 1: Feature Coverage (25)
+         ✓ F1: Unified BI Metrics Aggregations (5)
+         ✓ F2: Automated Telegram Executive Digest Formatting (5)
+         ✓ F3: Branded HTML Email Executive Digest Formatting (5)
+         ✓ F4: Streaming CSV Export with RFC-4180 Compliance (5)
+         ✓ F5: Streaming Structured JSON Export (5)
+       ✓ Tier 2: Boundary & Corner Cases (5)
+         ✓ B1: handles zero marketing spend without division by zero error (returns 0 or fallback)
+         ✓ B2: handles both zero revenue and zero spend returning 0.0 ROI
+         ✓ B3: handles extreme financial numbers ($10M+ MRR) without integer overflow
+         ✓ B4: CSV escaping handles complex multi-column escaping in a single row
+         ✓ B5: strictly excludes records outside requested date range
+       ✓ Tier 3: Cross-Feature Combinations (2)
+         ✓ P1: multi-tenant BI isolation prevents competitor data from polluting aggregation
+         ✓ P2: generated BI metrics feed directly into both Telegram digest and CSV export
+       ✓ Tier 4: Real-World Scenarios (1)
+         ✓ S1: complete Executive Monthly Financial Closeout & Multi-Channel BI Dispatch Workflow
+   Test Files  1 passed (1)
+        Tests  33 passed (33)
+     Duration  714ms
+   Exit code: 0
+   ```
+
+2. **Metrics Aggregator Unit Tests (13 tests)**:
+   ```bash
+   node ./node_modules/vitest/vitest.mjs run src/__tests__/unit/enterprise/metrics-aggregator.test.ts
+   ```
+   *Output:*
+   ```
+   ✓ src/__tests__/unit/enterprise/metrics-aggregator.test.ts (13 tests) 10ms
+     ✓ Unit Tests: Executive BI Metrics Aggregator Service (13)
+       ✓ 1. Pure Calculation Functions (6)
+       ✓ 2. D1 Aggregations & Multi-Tenant Isolation (5)
+       ✓ 3. Record Creation & Atomic Batch Operations (2)
+   Test Files  1 passed (1)
+        Tests  13 passed (13)
+     Duration  950ms
+   Exit code: 0
+   ```
+
+3. **Export Formatter Unit Tests (19 tests)**:
+   ```bash
+   node ./node_modules/vitest/vitest.mjs run src/__tests__/unit/enterprise/export-formatter.test.ts
+   ```
+   *Output:*
+   ```
+   ✓ src/__tests__/unit/enterprise/export-formatter.test.ts (19 tests) 8ms
+     ✓ Unit Tests: Export Formatter Service (19)
+       ✓ 1. RFC-4180 CSV Escaping (escapeCsvField) (8)
+       ✓ 2. In-Memory CSV Serialization (formatStreamingCsv) (3)
+       ✓ 3. Web Streams CSV Generator (streamCsv) (1)
+       ✓ 4. Streaming JSON & NDJSON (streamJsonArray) (4)
+       ✓ 5. HTTP Streaming Response Factory (createStreamingExportResponse) (3)
+   Test Files  1 passed (1)
+        Tests  19 passed (19)
+     Duration  512ms
+   Exit code: 0
+   ```
+
+4. **TypeScript Strict Typecheck**:
+   ```bash
+   node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit
+   ```
+   *Output:*
+   ```
+   Exit code: 0 (0 errors)
+   ```
+
+5. **Sophia 4-Layer Boundary Check**:
+   ```bash
+   bash scripts/check-layer-boundaries.sh
+   ```
+   *Output:*
+   ```
+   🔍 Checking layer boundaries...
+   ✅ All layer boundaries clean
+   Exit code: 0
+   ```
+
+6. **All Enterprise Unit, Integration, and E2E Test Suites (23 files, 595 tests)**:
+   ```bash
+   node ./node_modules/vitest/vitest.mjs run src/__tests__/unit/enterprise/ src/__tests__/integration/enterprise/ src/__tests__/e2e/enterprise/
+   ```
+   *Output:*
+   ```
+   Test Files  23 passed (23)
+        Tests  595 passed (595)
+     Duration  3.93s
+   Exit code: 0
+   ```
 
 ---
 
 ## 2. Logic Chain
 
-1. **Root Cause Analysis Confirmed by Observation 1.1 & 1.2**:
-   - Better Auth validates incoming mutating requests against `trustedOrigins` and `baseURL`.
-   - In Cloudflare Workers runtime, previous code lacked `BETTER_AUTH_URL` under `[vars]` in `wrangler.toml` and dynamically computed `trustedOrigins` conditional on `isProduction` without guaranteed fallback or canonical inclusion.
-   - When requests arrived with `Origin: https://sophia.agencyos.network`, Better Auth rejected them with 403 `INVALID_ORIGIN` (verified live in Observation 1.1).
-2. **Deterministic Resolution and Origin Hardening (R1)**:
-   - Observation 1.2.1 confirms that `CANONICAL_TRUSTED_ORIGINS` unconditionally includes `'https://sophia.agencyos.network'`, `'https://sophia-ai-factory.agencyos-openclaw.workers.dev'`, `'https://sophia-ai-factory-staging.agencyos-openclaw.workers.dev'`, and local development origins (`http://localhost:3000`, `http://localhost:8787`, `http://127.0.0.1:3000`, `http://127.0.0.1:8787`).
-   - `resolveTrustedOrigins()` iterates over `CANONICAL_TRUSTED_ORIGINS` and inserts each item into a `Set`, making origin inclusion completely deterministic and independent of environment variables or `NODE_ENV`.
-   - `resolveBaseURL()` safeguards against localhost pollution in production, guaranteeing that production isolates will never fall back to `http://localhost:3000`.
-3. **Environment Variable Parity (R2)**:
-   - Observation 1.2.2 confirms that `BETTER_AUTH_URL` and `APP_URL` are explicitly declared in `wrangler.toml` under `[vars]`.
-   - When deployed via `deploy:full`, Cloudflare Workers binds these environment variables directly into the isolate environment (`process.env` and `globalThis.__env__`), providing full runtime parity with staging (`wrangler.staging.toml`).
-4. **Defensive User Creation & Crash Prevention (R3)**:
-   - Prior to this change, magic-link sign-ins or registrations with empty company name threw `Error('Name is required')` inside `databaseHooks.user.create.before`.
-   - Observation 1.2.3 confirms that `sanitizeAndResolveUserName()` safely derives a sanitized, control-character-free name from the email prefix or defaults to `'user'`.
-   - Downstream organization creation in `databaseHooks.user.create.after` similarly handles empty names or unusual email prefixes safely.
-   - `register-page.tsx` removes the `required` constraint from Company Name and derives `resolvedName`, aligning frontend UX with backend expectations.
-5. **Quality and Constitutional Compliance**:
-   - Observation 1.3 confirms zero TypeScript compile errors, 100% layer boundary clean, 100% test pass rate (303/303 tests across 25 files), zero lint errors, zero `:any` types, and zero `console.log` violations.
+1. **Integrity Audit & Cheating Detection**:
+   - *Observation*: Inspected `src/tree/bi/metrics-aggregator.ts`, `src/tree/bi/export-formatter.ts`, `src/forest/bi/`, and `src/app/api/v1/analytics/export/route.ts`. Searched for test identifiers (`org_bi_enterprise`, `bi_roi`, hardcoded responses).
+   - *Deduction*: Zero matches found. No conditional shortcuts or mock facades exist in production implementation files. The code runs parameterized SQL queries and real mathematical algorithms.
+   - *Conclusion*: Zero integrity violations detected.
+
+2. **Peak MRR Mathematical Correctness**:
+   - *Observation*: `metrics-aggregator.ts` lines 147–149: `if (mrr > peakMrr) peakMrr = mrr;`. Test F1-1 and S1 verify that among batch records `[350000, 400000, 450000]`, the aggregator outputs `450000`.
+   - *Deduction*: The logic computes the maximum MRR achieved across all campaigns in the period window, rather than an unweighted average or sum.
+   - *Conclusion*: Conforms strictly to the Peak MRR specification.
+
+3. **Throughput Accumulation Correctness**:
+   - *Observation*: `metrics-aggregator.ts` line 150: `totalThroughput += Number(r.throughput_count) || 0;`. Test F1-3 verifies that 5 batches of 20 videos yield exactly 100 videos.
+   - *Deduction*: Video throughput represents total platform production volume. Summation is the correct accumulation metric.
+   - *Conclusion*: Verified correct.
+
+4. **Viral Engagement Score Arithmetic Mean**:
+   - *Observation*: `metrics-aggregator.ts` lines 151 and 156: `sumViral += Number(r.viral_score) || 0;`, `avgViral = Number((sumViral / results.length).toFixed(2));`. Test F1-5 verifies `[70, 80, 90, 85, 95]` produces `84.00`. Test S1 verifies `(92.5 + 88.0 + 85.5) / 3 = 88.67`.
+   - *Deduction*: The formula correctly calculates $\frac{1}{N}\sum_{i=1}^N \text{score}_i$ rounded to 2 decimal places.
+   - *Conclusion*: Verified correct.
+
+5. **ROI Ratio Division-by-Zero Safeguards**:
+   - *Observation*: `calculateRoiRatio` checks `marketingSpendCents > 0`, returning `(revenue / spend).toFixed(2)`. If `spend === 0 && revenue > 0`, it returns `99.0` (Test B1). If `spend === 0 && revenue === 0`, it returns `0.0` (Test B2).
+   - *Deduction*: Pure organic marketing campaigns with zero recorded ad spend generate revenue without expenditure. Returning `Infinity` or `NaN` would break downstream JSON serialization, database storage, and Telegram/email digest string formatting. Returning capped multiplier `99.0` provides a safe, parseable numerical representation.
+   - *Conclusion*: Verified mathematically robust and safe.
+
+6. **RFC-4180 CSV Formatting & Web Streams Memory Safety**:
+   - *Observation*: `escapeCsvField` quotes any field with `,`, `"`, `\n`, or `\r`, and doubles internal quotes `""`. `streamCsv` writes lines terminated by `\r\n`. Test F4-1 to F4-5 and B4 pass cleanly.
+   - *Deduction*: The output adheres strictly to RFC-4180 sections 2.1, 2.5, 2.6, and 2.7. The use of `ReadableStream<Uint8Array>` with `AsyncIterable` ensures that rows are emitted as small stream chunks rather than concatenated into a monolithic in-memory string, preventing isolate out-of-memory errors on Cloudflare Workers' 128MB ceiling.
+   - *Conclusion*: Verified fully RFC-4180 compliant and edge memory safe.
 
 ---
 
-## 3. Caveats
-
-1. **Pre-Deploy vs Post-Deploy Verification**:
-   - Milestone 3 is code review and verification. The live production site (`https://sophia.agencyos.network`) is currently running the prior commit (`ebc7fb59`) and actively returning 403 `INVALID_ORIGIN` (as documented in Observation 1.1). The fix must be deployed to Cloudflare Workers in Milestone 4 (`./scripts/deploy-with-sha.sh`) to resolve the live bug.
-2. **Whitespace in Environment Variables**:
-   - In `resolveBaseURL()`, if an operator intentionally configures `BETTER_AUTH_URL` to a pure-whitespace string like `"   "`, `isLocalEnvUrl` is false and `.replace(/\/+$/, '')` returns `"   "`. In standard deployment, `wrangler.toml` defines a hardcoded valid HTTPS URL, so this does not occur in practice, but adding `.trim()` in future maintenance is recommended as extra defense.
-
----
-
-## 4. Conclusion
-
-**Verdict: APPROVE**
-
-The Worker's code changes directly, correctly, and elegantly resolve all requirements:
-1. **R1**: `CANONICAL_TRUSTED_ORIGINS` and `resolveTrustedOrigins()` ensure `https://sophia.agencyos.network` is unconditionally trusted, and `resolveBaseURL()` guarantees safe baseURL resolution in production without localhost regression.
-2. **R2**: `wrangler.toml` includes `BETTER_AUTH_URL` and `APP_URL` under `[vars]`.
-3. **R3**: `sanitizeAndResolveUserName()` and updated hooks eliminate uncaught throws on magic-link authentication and registrations without company name.
-4. **Quality Gates**: Exited 0 with 0 errors across TypeScript compilation, 4-layer architectural boundaries, and 303 Vitest unit/integration tests.
-5. **Integrity**: Zero integrity violations, zero facades, zero hardcoded shortcuts.
-
-The changes are ready for immediate deployment in Milestone 4.
-
----
-
-## 5. Verification Method
-
-To independently verify these findings, execute the following commands from `apps/sophia-ai-factory`:
-
-```bash
-# 1. Typecheck: Verify 0 errors
-node ./node_modules/typescript/bin/tsc --noEmit
-
-# 2. Layer boundary enforcement: Verify clean architecture
-bash scripts/check-layer-boundaries.sh
-
-# 3. Auth test suite: Verify all 25 test files & 303 tests pass
-node ./node_modules/vitest/vitest.mjs run src/seed/auth/ src/middleware/__tests__/auth-routes.test.ts
-
-# 4. Inspect wrangler.toml [vars]
-grep -E "(BETTER_AUTH_URL|APP_URL)" wrangler.toml
-
-# 5. Live regression proof (reproduces current production bug on commit ebc7fb59):
-curl -s -i -X POST "https://sophia.agencyos.network/api/auth/sign-in/magic-link" \
-  -H "Origin: https://sophia.agencyos.network" \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com"}' | grep -E "(HTTP/|INVALID_ORIGIN)"
-```
-
----
-
-## 6. Review & Adversarial Challenge Report
-
-### Review Summary
-**Verdict**: APPROVE  
-**Confidence**: High (100%)  
-**Integrity Score**: 100/100  
-
-### Findings
-- **[Minor] Finding 1**: Optional whitespace trimming in `resolveBaseURL()`.
-  - *Where*: `apps/sophia-ai-factory/src/seed/auth/better-auth-server.ts:52-60`
-  - *Why*: If an operator passes `"   "` as an environment variable, `envAuthUrl` is truthy and not matching `localhost`, so it would return `"   "` rather than falling back to canonical.
-  - *Suggestion*: Use `const envAuthUrl = (process.env.BETTER_AUTH_URL || cfBetterAuthUrl || process.env.APP_URL || cfAppUrl)?.trim();`. (Non-blocking since `wrangler.toml` explicitly sets a valid URL).
-
-### Verified Claims
-- `CANONICAL_TRUSTED_ORIGINS` contains canonical production domain, worker dev domains, and local dev ports → verified via source inspection & `better-auth-server-config.test.ts` → **PASS**
-- `resolveTrustedOrigins()` unconditionally includes all canonical origins → verified via test suite & code analysis → **PASS**
-- `resolveBaseURL()` rejects localhost in production → verified via unit test `resolveBaseURL in production refuses localhost pollution` → **PASS**
-- `wrangler.toml` declares `BETTER_AUTH_URL` and `APP_URL` in `[vars]` → verified via file inspection & test → **PASS**
-- `sanitizeAndResolveUserName()` falls back to email prefix and `'user'` without throwing → verified via unit tests & adversarial stress script → **PASS**
-- Magic-link login user creation does not throw `Error('Name is required')` → verified via hook tests → **PASS**
-- TypeScript compiler exits 0 with 0 errors → independently verified → **PASS**
-- 4-Layer architectural boundaries clean → independently verified → **PASS**
-- Vitest auth test suites pass 25/25 files (303 tests) → independently verified → **PASS**
+## 3. Adversarial Challenges & Stress-Testing
 
 ### Challenge Summary
-**Overall Risk Assessment**: LOW
+- **Overall Risk Assessment**: LOW
+- **Integrity Violations Found**: 0
 
-### Adversarial Challenges
-1. **Challenge 1: Can an attacker bypass origins via malformed headers?**
-   - *Result*: Better Auth's `originCheckMiddleware` performs strict URL origin matching. `resolveTrustedOrigins` supplies exact canonical origins (protocol + host + port), preventing origin spoofing.
-2. **Challenge 2: Could Vietnamese characters or emojis break name sanitization?**
-   - *Result*: Evaluated `[\u0000-\u001f\u007f]`. Control characters in ASCII 0-31 and 127 are stripped, while multibyte UTF-8 characters (Vietnamese diacritics and emojis) remain intact.
-3. **Challenge 3: Can empty or whitespace inputs bypass company registration?**
-   - *Result*: Handled on client (`resolvedName = companyName.trim() || email.split('@')[0].trim() || 'user'`) AND defended on server (`sanitizeAndResolveUserName`).
-4. **Challenge 4: Integrity Violation Check**:
-   - *Result*: No hardcoded bypasses, mock short-circuits, or fabricated logs found in source code. All tests execute real assertion logic.
+### Challenge Details
+
+#### [Low] Challenge 1: CSV Formula Injection Defense in Export Route
+- **Assumption Challenged**: Fields exported via CSV could contain untrusted user inputs (e.g. channel names or tags) starting with formula characters (`=`, `+`, `-`, `@`).
+- **Attack Scenario**: A malicious tenant member creates a channel named `=cmd|'/C calc'!A0`. An executive opens the exported CSV in Microsoft Excel, potentially triggering dynamic data exchange (DDE) formula execution.
+- **Analysis**: In `export-formatter.ts`, `escapeCsvField` already implements `sanitizeFormulas` which neutralizes formulas with a leading single quote (`'`). However, in `src/app/api/v1/analytics/export/route.ts` line 303, `sanitizeFormulas: true` was not explicitly enabled in the `csvOptions`. Currently, the default exported columns (`mrr_usd`, `throughput`, `viral_score`, `roi`, etc.) are numeric or ISO timestamps.
+- **Mitigation Recommendation**: In future iterations or route enhancements, pass `sanitizeFormulas: true` by default in `csvOptions` in `route.ts` to defend against any future custom text fields.
+
+#### [Informational] Challenge 2: Negative Marketing Spend Input
+- **Assumption Challenged**: `marketingSpendCents` is always non-negative.
+- **Attack Scenario**: If a negative number is supplied (e.g., accounting rebate), `calculateRoiRatio` condition `marketingSpendCents > 0` evaluates to `false`, falling into `affiliateRevenueCents > 0 ? 99.0 : 0`.
+- **Mitigation**: Database migration `0278_enterprise_executive_bi.sql` defines `marketing_spend_cents INTEGER NOT NULL DEFAULT 0`. Spend values in real operations are strictly non-negative.
+
+#### [Verified Robust] Challenge 3: Telegram UTF-16 Emoji and Escape Entity Splitting
+- **Assumption Challenged**: Message splitting could sever a UTF-16 surrogate pair or separate a backslash from an escaped reserved character.
+- **Attack Scenario**: A 4096-character message splits at byte 4000, landing between a high and low surrogate of an emoji (e.g. 📊) or after an odd backslash (`\.`).
+- **Stress-Test Finding**: `splitTelegramMarkdownV2` in `telegram-digest-sender.ts` lines 105–120 explicitly checks `charCodeAt(cutIndex - 1)` for high surrogates (`0xd800–0xdbff`) and checks for odd trailing backslashes, shifting `cutIndex` backward to preserve sequence integrity. Furthermore, on Telegram HTTP 400 parse errors, it automatically falls back to unescaped plain text.
+
+---
+
+## 4. Quality Review Findings
+
+### Review Summary
+**Verdict**: `APPROVE`
+
+### Findings
+- **Critical**: 0
+- **Major**: 0
+- **Minor**: 1
+  - *Location*: `src/app/api/v1/analytics/export/route.ts:303`
+  - *Detail*: `csvOptions` does not explicitly set `sanitizeFormulas: true`.
+  - *Impact*: Low. Exported default fields are numeric, ID, and ISO date strings. Recommend enabling `sanitizeFormulas: true` as standard hygiene.
+
+### Verified Claims
+1. Peak MRR formula evaluates $\max_{r \in \text{results}}(r.\text{mrr\_cents})$ $\rightarrow$ Verified via `aggregateExecutiveBIMetrics` and tests F1-1, S1 $\rightarrow$ **PASS**.
+2. Video throughput accumulates across all runs $\rightarrow$ Verified via `totalThroughput += r.throughput_count` and test F1-3 $\rightarrow$ **PASS**.
+3. Viral score computes arithmetic mean with 2 decimal precision $\rightarrow$ Verified via `calculateAverageViralScore` and tests F1-5, S1 $\rightarrow$ **PASS**.
+4. ROI ratio enforces $99.0\times$ safe fallback for zero spend and $0.0\times$ when both are zero $\rightarrow$ Verified via `calculateRoiRatio` and tests B1, B2 $\rightarrow$ **PASS**.
+5. RFC-4180 CSV compliance with CRLF, comma wrapping, and quote doubling $\rightarrow$ Verified via `escapeCsvField`, `formatStreamingCsv` and tests F4-1 through F4-5, B4 $\rightarrow$ **PASS**.
+6. Web Streams `ReadableStream<Uint8Array>` generators emit chunks without full-dataset memory buffering $\rightarrow$ Verified via `streamCsv`, `streamJsonArray` and unit tests $\rightarrow$ **PASS**.
+7. 4-layer architecture compliance $\rightarrow$ Verified via `scripts/check-layer-boundaries.sh` $\rightarrow$ **PASS (0 violations)**.
+8. TypeScript strict type safety $\rightarrow$ Verified via `tsc --noEmit` $\rightarrow$ **PASS (0 errors)**.
+
+---
+
+## 5. Caveats
+
+1. **Remote Cloudflare D1 Deployment**:
+   - Migration `migrations/0278_enterprise_executive_bi.sql` has been validated against in-memory SQLite (`node:sqlite`). During Milestone 5 deployment, it must be executed against remote D1 `sophia-raas-db` via `bash scripts/apply-migrations.sh`.
+2. **External Telegram & Resend Delivery**:
+   - In automated test and development environments lacking live `TELEGRAM_BOT_TOKEN` or `RESEND_API_KEY`, dispatch services operate in dry-run mode without throwing unhandled errors.
+
+---
+
+## 6. Conclusion
+
+The implementation of Milestone 3 domain calculations and streaming export by `teamwork_preview_worker_m3` is exceptionally well-engineered, mathematically accurate, and architecturally compliant:
+- All domain formulas (Peak MRR, throughput accumulation, viral score mean, ROI zero-spend safeguards) are correct and rigorously tested.
+- Streaming export strictly adheres to RFC-4180 standards and utilizes Web Streams API for $O(1)$ memory safety on Cloudflare Workers edge.
+- Multi-tenant data isolation is enforced at the database query level and API middleware level (`assertTenantScope`).
+- Zero integrity violations, zero fake mocks, and zero bypasses.
+- All 33 E2E tests, 13 metrics unit tests, 19 export formatter unit tests, 595 enterprise tests, TypeScript typecheck (0 errors), and layer boundary check (clean) pass 100%.
+
+**Final Recommendation**: Unconditional **`APPROVE`**.
+
+---
+
+## 7. Verification Method
+
+To independently verify this evaluation:
+
+```bash
+cd apps/sophia-ai-factory
+
+# 1. Run Executive BI E2E suite (33 tests)
+node ./node_modules/vitest/vitest.mjs run src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts
+
+# 2. Run metrics aggregator unit suite (13 tests)
+node ./node_modules/vitest/vitest.mjs run src/__tests__/unit/enterprise/metrics-aggregator.test.ts
+
+# 3. Run export formatter unit suite (19 tests)
+node ./node_modules/vitest/vitest.mjs run src/__tests__/unit/enterprise/export-formatter.test.ts
+
+# 4. Run TypeScript strict typecheck
+node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit
+
+# 5. Run Sophia 4-layer architecture linter
+bash scripts/check-layer-boundaries.sh
+
+# 6. Run all enterprise test suites (23 files, 595 tests)
+node ./node_modules/vitest/vitest.mjs run src/__tests__/unit/enterprise/ src/__tests__/integration/enterprise/ src/__tests__/e2e/enterprise/
+```
+
+**Invalidation Conditions:**
+- Any failing test in `executive-bi.e2e.test.ts`, `metrics-aggregator.test.ts`, or `export-formatter.test.ts`.
+- Any compilation error in `tsc --noEmit`.
+- Any boundary violation in `check-layer-boundaries.sh`.

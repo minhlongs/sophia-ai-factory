@@ -1,28 +1,85 @@
-## Challenge Summary
+# Adversarial Challenge Report: Milestone 2
 
-**Overall risk assessment**: LOW
+**Critic:** `teamwork_preview_reviewer_m2_2` (reviewer, critic)  
+**Parent:** `78b5382f-0b81-4402-ad59-b06284d61c09`  
+**Date:** 2026-09-20  
+**Overall Risk Assessment:** **HIGH**
 
-## Challenges
+---
 
-### [Low] Challenge 1: DB connection saturation during rapid requests
+## 1. Challenge Summary
 
-- **Assumption challenged**: The database can handle unconditional queries to the `user_profiles` table for every auth state check.
-- **Attack scenario**: An admin or a high-frequency route caller sends a burst of requests. Without the session role fast-path, every single request incurs an database lookup to `user_profiles`. This could exhaust DB connection pools if not cached.
-- **Blast radius**: Increased database load, latency, or potential denial of service due to connection exhaustion.
-- **Mitigation**: Introduce a short-lived cache (e.g. Redis or in-memory LRU) or utilize Better Auth's own session hooks to temporarily cache DB profile roles if DB load becomes a bottleneck, while keeping direct DB checks as the baseline.
+This adversarial evaluation stress-tests the assumptions, boundary conditions, and concurrency behaviors of Milestone 2 (Multi-User Organizations & 5-Tier RBAC).
 
-### [Low] Challenge 2: MFA bypass if session data is corrupted/manipulated
+While tenant isolation (`assertTenantScope`), the 5-tier RBAC poset, and SHA-256 token hashing were found to be rock-solid, the **CAS token acceptance mechanism contains a high-severity concurrency vulnerability** that allows race conditions to break single-use invariants and oversubscribe organization seat quotas.
 
-- **Assumption challenged**: Session verification is secure and user profile role is the sole indicator of admin status.
-- **Attack scenario**: A compromised user account obtains temporary admin role assignment through session manipulation if session tokens are spoofed.
-- **Blast radius**: Since we now query `user_profiles` directly, session role manipulation alone does not grant admin status. This direct database lookup serves as a robust defense-in-depth, neutralizing session-spoofing attacks on the role attribute.
-- **Mitigation**: Baseline is already secure due to worker_m2's direct DB check.
+---
 
-## Stress Test Results
+## 2. Adversarial Challenges
 
-- MFA database lookup failure → Simulated by mock throw/database exception in unit tests → middleware redirects to `/login?error=auth_service_unavailable` → **PASS**
-- Session role set to 'admin' but DB profile role set to 'user' → Unit test `queries database and returns false when session role is admin but DB role is user` -> correctly evaluates to `false` and doesn't allow admin actions → **PASS**
+### [Critical] Challenge 1: TOCTOU Double-Consumption via Concurrent Token Acceptance
 
-## Unchallenged Areas
+- **Assumption Challenged:** Sequential testing in `org-invitations-integration.test.ts` assumed that `if (invitation.status !== 'pending') throw ...` is sufficient to prevent double acceptance.
+- **Attack Scenario:**
+  1. An organization sends an invitation link for a high-privilege role (`admin` or `creator`).
+  2. The link is intercepted, shared, or automated via a replay tool.
+  3. Attacker fires two concurrent HTTP requests:
+     - Request 1: `POST /api/v1/invitations/accept` with `user_A`'s bearer token.
+     - Request 2: `POST /api/v1/invitations/accept` with `user_B`'s bearer token.
+  4. At $T_0$, both requests execute Step 1: `SELECT ... WHERE token_hash = ?1`. Both read `status = 'pending'`.
+  5. At $T_1$, both requests pass Step 4: `checkSeatQuota(db, orgId)`.
+  6. At $T_2$, Request 1 inserts `user_A` into `organization_members`.
+  7. At $T_3$, Request 2 inserts `user_B` into `organization_members`. Because `user_A != user_B`, the `UNIQUE(org_id, user_id)` constraint does not trigger.
+  8. At $T_4$, Request 1 runs `UPDATE org_invitations SET status = 'accepted' WHERE id = ? AND status = 'pending'`. 1 row updated.
+  9. At $T_5$, Request 2 runs `UPDATE org_invitations SET status = 'accepted' WHERE id = ? AND status = 'pending'`. 0 rows updated.
+  10. Because line 223 does not check `meta.changes`, Request 2 proceeds to return `{ success: true, orgId, role }`.
+- **Blast Radius:**
+  - Token reuse allows arbitrary numbers of unauthorized users to join an organization.
+  - Seat quotas can be exceeded beyond tier limits.
+  - Organization owner's billing or privacy boundaries are breached.
+- **Mitigation:**
+  - Invert the sequence: Execute the CAS `UPDATE` first.
+  - Assert `meta.changes === 1`. If `0`, immediately abort and throw `INVITATION_ALREADY_USED`.
+  - Alternatively, wrap both the CAS status transition and the member insertion inside an atomic `db.batch([...])` transaction.
 
-- Better Auth session cookie signature verification — out of scope for this review as it's handled internally by the library.
+---
+
+### [Medium] Challenge 2: Non-Transactional Partial Failure during Member Insertion
+
+- **Assumption Challenged:** Assumed that member insertion and token update succeed together.
+- **Attack Scenario:**
+  - If a user who is already a member attempts to accept an invitation for another role:
+    - Step 5 tries to insert into `organization_members` and fails on `UNIQUE(org_id, user_id)`.
+    - It throws, leaving the token in `status = 'pending'`.
+  - Conversely, if member insertion succeeds but the database worker experiences an isolate crash or timeout before Step 6 completes:
+    - The member is added in `organization_members`.
+    - The invitation remains `pending`.
+    - The token can be accepted again by another user.
+- **Blast Radius:** Inconsistent state between `organization_members` and `org_invitations`.
+- **Mitigation:** Use `db.batch()` for atomic transactional state updates across both tables.
+
+---
+
+## 3. Stress Test Results
+
+| Scenario | Expected Behavior | Actual Behavior | Result |
+|---|---|---|---|
+| `assertTenantScope('org_1', 'org_2')` | Throws `CROSS_TENANT_VIOLATION` (403) | Throws `CrossTenantViolationError` (code 403) | **PASS** |
+| `assertTenantScope('', 'org_1')` | Throws `CROSS_TENANT_VIOLATION` | Throws `CrossTenantViolationError` | **PASS** |
+| `assertTenantScope('org_1', '')` | Throws `CROSS_TENANT_VIOLATION` | Throws `CrossTenantViolationError` | **PASS** |
+| `assertTenantScope('   ', 'org_1')` | Throws `CROSS_TENANT_VIOLATION` | Throws `CrossTenantViolationError` | **PASS** |
+| `assertTenantScope('org_1', 'org_1')` | Returns void (no throw) | Returns void (no throw) | **PASS** |
+| `hasOrgPermission('viewer', perm)` for all 5 perms | Returns `false` for all 5 | Returns `false` for all 5 | **PASS** |
+| `hasOrgPermission('admin', 'canManageBilling')` | Returns `false` | Returns `false` | **PASS** |
+| `hasOrgPermission('billing_manager', 'canManageBilling')` | Returns `true` | Returns `true` | **PASS** |
+| `hasOrgPermission('billing_manager', otherPerm)` | Returns `false` | Returns `false` | **PASS** |
+| `canAssignRole('admin', 'owner')` | Returns `false` | Returns `false` | **PASS** |
+| `canAssignRole('admin', 'admin')` | Returns `false` | Returns `false` | **PASS** |
+| Sequential token double-acceptance | Rejects with `INVITATION_ALREADY_USED` | Rejects with `INVITATION_ALREADY_USED` | **PASS** |
+| Concurrent token double-acceptance | Only 1 user becomes member; 2nd rejected | Both users inserted before CAS check; 2nd user succeeds due to unchecked CAS | **FAIL** |
+
+---
+
+## 4. Unchallenged Areas
+
+- Cloudflare remote D1 replication latency across edge regions: tested on local SQLite D1 mock. Remote behavior relies on Cloudflare's primary-leader write consistency, which enforces linearizability on writes.

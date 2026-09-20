@@ -1,165 +1,98 @@
-# Milestone 2 Investigation: Authentication & MFA Analysis
+# Milestone 2 Technical Analysis: D1 Schema, Seat Quotas & Cryptographic Token Lifecycle
 
-This document details the findings and proposals for the two core security issues under Milestone 2:
-1. Bypassing the Better Auth session cookie cache to enforce live database checks for demoted admins.
-2. Implementing a fail-closed behavior for MFA checks in the Edge middleware during D1 database connectivity failures.
-
----
-
-## 1. Enforcing Live Database Role Lookup for Admins
-
-### Current Behavior & Vulnerability
-In `apps/sophia-ai-factory/src/seed/auth/is-user-admin.ts`, the functions `isUserAdmin` and `isUserAdminWithRole` are structured as follows:
-
-```typescript
-export async function isUserAdmin(user: User): Promise<boolean> {
-  const { isAdmin } = await isUserAdminWithRole(user);
-  return isAdmin;
-}
-
-export async function isUserAdminWithRole(
-  user: User
-): Promise<{ isAdmin: boolean; dbRole: string | null }> {
-  if (user.role === 'admin') {
-    return { isAdmin: true, dbRole: 'admin' };
-  }
-
-  const db = createServerClient();
-  const { data: rawData } = await db
-    .from('user_profiles')
-    .select('role')
-    .eq('user_id', user.id)
-    .single();
-  const userData = rawData as UserProfileRoleRow | null;
-  const dbRole = userData?.role ?? null;
-
-  return { isAdmin: dbRole === 'admin', dbRole };
-}
-```
-
-* **The Problem:** Better Auth stores the authenticated user's metadata, including their role, in the session cookie (`user.role`). If an administrator is demoted (role changed to `'user'` in the database), the session cookie may continue to state `user.role === 'admin'` until the cookie is re-issued or session expired. The current early-return fast path (`if (user.role === 'admin')`) relies entirely on the cached cookie, thereby bypassing the database check and allowing a demoted admin to retain administrator access.
-* **Database Details:**
-  * **Table:** The user profiles are stored in the `user_profiles` table.
-  * **Query Mechanics:** Queries are executed via a Supabase-like query interface initialized by calling `createServerClient()`. The query filters by `user_id` and retrieves the `role` column:
-    ```typescript
-    const db = createServerClient();
-    const { data: rawData } = await db
-      .from('user_profiles')
-      .select('role')
-      .eq('user_id', user.id)
-      .single();
-    ```
-
-### Proposed Fix
-To bypass the cached role completely and enforce a live lookup, the early-return fast path check for `'admin'` must be removed. 
-
-#### Proposed `is-user-admin.ts` Change:
-```typescript
-export async function isUserAdminWithRole(
-  user: User
-): Promise<{ isAdmin: boolean; dbRole: string | null }> {
-  // Enforce a live database lookup unconditionally to handle admin demotions correctly.
-  const db = createServerClient();
-  const { data: rawData } = await db
-    .from('user_profiles')
-    .select('role')
-    .eq('user_id', user.id)
-    .single();
-  const userData = rawData as UserProfileRoleRow | null;
-  const dbRole = userData?.role ?? null;
-
-  return { isAdmin: dbRole === 'admin', dbRole };
-}
-```
-
-#### Necessary Test Adjustments in `is-user-admin.test.ts`:
-The unit tests in `apps/sophia-ai-factory/src/seed/auth/is-user-admin.test.ts` assert the fast path:
-```typescript
-  it('returns true when session role is admin (no DB call)', async () => {
-    const result = await isUserAdmin({ ...baseUser, role: 'admin' });
-    expect(result).toBe(true);
-    expect(mockSingle).not.toHaveBeenCalled();
-  });
-```
-When implementing the fix, this test must be updated to expect a database call and verify that the database role overrides the session cookie:
-```typescript
-  it('returns true when DB role is admin (even if session role is admin)', async () => {
-    mockSingle.mockResolvedValue({ data: { role: 'admin' } });
-    const result = await isUserAdmin({ ...baseUser, role: 'admin' });
-    expect(result).toBe(true);
-    expect(mockSingle).toHaveBeenCalledOnce();
-  });
-
-  it('returns false when DB role is user and session role is admin (demoted case)', async () => {
-    mockSingle.mockResolvedValue({ data: { role: 'user' } });
-    const result = await isUserAdmin({ ...baseUser, role: 'admin' });
-    expect(result).toBe(false);
-    expect(mockSingle).toHaveBeenCalledOnce();
-  });
-```
+**Author:** teamwork_preview_explorer_m2_1  
+**Target:** Milestone 2: Multi-User Organizations & Invitations  
+**Date:** 2026-09-20  
 
 ---
 
-## 2. Failing Closed on MFA Check D1 Connectivity Failures
+## 1. D1 Schema Analysis (`org_invitations`)
 
-### Current Behavior & Vulnerability
-In `apps/sophia-ai-factory/src/middleware.ts`, the MFA validation check during dashboard access is structured as follows:
+### 1.1 Context & Background
+The Sophia AI Factory database operates on Cloudflare D1 (SQLite engine at the edge). Prior to Milestone 2, the organization membership table was `org_members` (created in `0001-init.sql`), and member invitations were performed via a synchronous server action in `src/land/admin/org-manager.ts` that required invitees to already exist in `users`.
 
-```typescript
-      // Enforce MFA challenge: redirect to MFA page if session is pending
-      if (!isMfaChallengePath && session.session?.id) {
-        try {
-          const pending = await isSessionMfaPending(session.session.id)
-          if (pending) {
-            return NextResponse.redirect(new URL('/auth/mfa-challenge', request.url))
-          }
-        } catch (mfaErr) {
-          // Non-fatal — log and allow through to avoid locking out users on DB errors
-          logger.error('[Middleware] MFA pending check error', toError(mfaErr))
-        }
-      }
+Milestone 2 introduces asynchronous, cryptographic single-use invitations. This requires a dedicated table `org_invitations`.
+
+### 1.2 Schema Definition
+```sql
+CREATE TABLE IF NOT EXISTS org_invitations (
+  id TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+  org_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  email TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (
+    role IN ('owner', 'admin', 'creator', 'billing_manager', 'viewer')
+  ),
+  token_hash TEXT UNIQUE NOT NULL,
+  expires_at INTEGER NOT NULL,
+  accepted_at INTEGER DEFAULT NULL,
+  created_by TEXT NOT NULL,
+  invited_by TEXT GENERATED ALWAYS AS (created_by) VIRTUAL,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch() * 1000),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (
+    status IN ('pending', 'accepted', 'revoked', 'expired')
+  )
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uidx_org_invitations_token_hash ON org_invitations(token_hash);
+CREATE INDEX IF NOT EXISTS idx_org_invitations_org_status ON org_invitations(org_id, status);
+CREATE INDEX IF NOT EXISTS idx_org_invitations_email ON org_invitations(email);
+CREATE INDEX IF NOT EXISTS idx_org_invitations_expires_at ON org_invitations(expires_at);
+CREATE UNIQUE INDEX IF NOT EXISTS uidx_org_invitations_active_email ON org_invitations(org_id, email) WHERE status = 'pending';
 ```
 
-* **The Problem:** The `catch (mfaErr)` block catches any errors thrown by `isSessionMfaPending` (which queries the D1 database to verify pending challenge state). In the event of a database connectivity failure, the exception is caught, logged, and then ignored (execution falls through). This **fails open**, allowing users with pending MFA challenges to access the dashboard without completing MFA verification.
+### 1.3 Key Architectural Choices
+1. **Hash Storage**: `token_hash` stores the SHA-256 hex digest of the raw token. The raw token is never persisted in D1.
+2. **Virtual Column `invited_by`**: SQLite 3.31+ supports virtual generated columns. Mapping `invited_by GENERATED ALWAYS AS (created_by) VIRTUAL` guarantees 100% backwards compatibility with tests and callers expecting `invited_by` while honoring the prompt's `created_by` specification.
+3. **Partial Unique Index**: `uidx_org_invitations_active_email` prevents creating multiple active pending invitations for the same email within the same organization.
+4. **Millisecond Epoch**: Timestamps (`expires_at`, `created_at`, `accepted_at`) use millisecond precision, matching JavaScript `Date.now()` and Vitest E2E assertions.
 
-### Proposed Fix
-To implement a **fail-closed** strategy, any exception thrown during database lookup must block access by redirecting the user to `/login` or `/auth/mfa-challenge` with an error query parameter.
+---
 
-#### Proposed `middleware.ts` Change:
-```typescript
-      // Enforce MFA challenge: redirect to MFA page if session is pending
-      if (!isMfaChallengePath && session.session?.id) {
-        try {
-          const pending = await isSessionMfaPending(session.session.id)
-          if (pending) {
-            return NextResponse.redirect(new URL('/auth/mfa-challenge', request.url))
-          }
-        } catch (mfaErr) {
-          // Fail closed — log error and redirect to login with service unavailable status
-          logger.error('[Middleware] MFA pending check error — failing closed', toError(mfaErr))
-          return NextResponse.redirect(
-            new URL('/login?error=service_unavailable', request.url)
-          );
-        }
-      }
-```
+## 2. Seat Quota Enforcement Engine Analysis
 
-### Alignment with Existing Fail-Closed Patterns
-This is consistent with the fail-closed patterns already present in `middleware.ts`:
-1. **API MFA Gate (lines 88-106):**
-   ```typescript
-   } catch (mfaApiErr) {
-     logger.error('[Middleware] MFA API check error — failing closed', toError(mfaApiErr))
-     return NextResponse.json(
-       { error: 'Authentication service temporarily unavailable. Please try again.' },
-       { status: 503 },
-     )
-   }
-   ```
-2. **Admin Tier Gate (lines 182-188):**
-   ```typescript
-   } catch (tierErr) {
-     logger.error('[Middleware] Admin tier check failed', toError(tierErr))
-     return NextResponse.redirect(new URL('/dashboard?error=admin_required', request.url))
-   }
-   ```
+### 2.1 Subscription Tier Limits
+The subscription tiers and their corresponding maximum seat capacities are:
+- `free`: 1 seat
+- `starter` / `basic` / `BASIC`: 1 seat
+- `pro` / `premium` / `PREMIUM`: 5 seats
+- `master` / `enterprise` / `MASTER`: 999 seats (unlimited agency seats)
+
+### 2.2 Quota Accounting Equation
+$$\text{Allocated Seats} = \text{Active Members} + \text{Pending Unexpired Invitations}$$
+
+$$\text{Active Members} = |\text{org\_members WHERE org\_id = ?}|$$
+
+$$\text{Pending Invitations} = |\text{org\_invitations WHERE org\_id = ? AND status = 'pending' AND expires\_at > now()}|$$
+
+$$\text{isAllowed} = \text{Allocated Seats} < \text{Max Seats}$$
+
+### 2.3 Race Condition Mitigation
+When multiple invitations are accepted concurrently, checking the seat limit only at invitation time is insufficient. The acceptance handler must perform a secondary atomic seat check before committing member insertion.
+
+---
+
+## 3. Cryptographic Token Generator Analysis
+
+### 3.1 CSPRNG Entropy
+- Source: Web Crypto `crypto.getRandomValues(new Uint8Array(32))`.
+- Size: 32 bytes = 256 bits of entropy.
+- Representation: 64 lowercase hexadecimal characters.
+- Infeasible to brute-force ($2^{256} \approx 1.15 \times 10^{77}$ combinations).
+
+### 3.2 7-Day TTL Lifecycle
+- TTL window: 7 days ($604,800,000$ ms).
+- Token status progression:
+  - Initial: `'pending'`
+  - On acceptance: `'accepted'`
+  - On manual revocation: `'revoked'`
+  - Past TTL: `'expired'` (checked dynamically on access and persisted on failed validation).
+
+### 3.3 Atomic Consumption (Compare-And-Swap)
+- Query:
+  ```sql
+  UPDATE org_invitations 
+  SET status = 'accepted', accepted_at = ?1 
+  WHERE token_hash = ?2 AND status = 'pending';
+  ```
+- If `meta.changes === 0`, token is either invalid, already used, or revoked. The operation fails with `INVITATION_ALREADY_USED`.
+- Paired with `INSERT INTO org_members` within a single D1 batch transaction.

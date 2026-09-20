@@ -7,12 +7,14 @@
  *                     other tiers fall back to Sophia branding
  *   - 'never'       : no watermark
  *
- * @module lib/branding/org-branding-repo
+ * @module tree/branding/org-branding-repo
  */
 
 import { logger } from '@/seed/utils/logger-utility';
 import type { Tier } from '@/seed/types';
 import type { BrandingSettings } from '@/seed/tenant-settings/defaults';
+import { DEFAULT_BRANDING } from '@/seed/tenant-settings/defaults';
+import type { ResolvedTenantBranding } from '@/seed/types/white-label-branding';
 
 export type WatermarkPosition = 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
 export type WatermarkPolicy = 'always' | 'master_plus' | 'never';
@@ -186,4 +188,188 @@ export async function fetchAuthorBrandings(
   }
 
   return result;
+}
+
+// ── In-Memory Edge Memoization Cache & Hostname Resolution ───────────────────
+
+// Standard non-whitelabel hostnames that immediately bypass D1 lookup
+const CANONICAL_DOMAINS = new Set([
+  'sophia.agencyos.network',
+  'sophia-ai-factory.agencyos-openclaw.workers.dev',
+  'localhost',
+  '127.0.0.1',
+  '0.0.0.0',
+]);
+
+export function isCanonicalHostname(hostname: string): boolean {
+  if (!hostname) return true;
+  const clean = hostname.toLowerCase().trim().replace(/:\d+$/, '');
+  if (CANONICAL_DOMAINS.has(clean)) return true;
+  if (clean.endsWith('.workers.dev') || clean.endsWith('.pages.dev') || clean.endsWith('.local')) {
+    return true;
+  }
+  return false;
+}
+
+interface CacheEntry {
+  data: ResolvedTenantBranding | null;
+  expiresAt: number;
+}
+
+const EDGE_CACHE_TTL_MS = 60_000; // 60 seconds
+const EDGE_CACHE_NEGATIVE_TTL_MS = 15_000; // 15 seconds for non-existent domains
+const MAX_CACHE_ENTRIES = 500;
+const hostnameBrandingCache = new Map<string, CacheEntry>();
+
+/**
+ * Invalidate in-memory branding cache for a specific hostname or org.
+ * Should be called when branding or domain verification changes.
+ */
+export function invalidateTenantBrandingCache(hostname?: string, orgId?: string): void {
+  if (hostname) {
+    const clean = hostname.toLowerCase().trim().replace(/:\d+$/, '');
+    hostnameBrandingCache.delete(clean);
+  }
+  if (orgId) {
+    for (const [key, entry] of hostnameBrandingCache.entries()) {
+      if (entry.data?.orgId === orgId) {
+        hostnameBrandingCache.delete(key);
+      }
+    }
+  }
+  if (!hostname && !orgId) {
+    hostnameBrandingCache.clear();
+  }
+}
+
+export function clearBrandingCache(): void {
+  hostnameBrandingCache.clear();
+}
+
+/**
+ * Resolves full white-label tenant branding by hostname.
+ * Joins custom_domains with org_branding and tenant_settings.
+ * Uses in-memory edge memoization for rapid SSR theme resolution.
+ * Returns null if the hostname is canonical or domain is not verified.
+ */
+export async function getTenantBrandingByHostname(
+  db: D1Database,
+  rawHostname: string,
+): Promise<ResolvedTenantBranding | null> {
+  const hostname = rawHostname.toLowerCase().trim().replace(/:\d+$/, '');
+
+  // 1. Fast path: bypass canonical Sophia domains without D1 query
+  if (isCanonicalHostname(hostname)) {
+    return null;
+  }
+
+  // 2. Fast path: check in-memory edge memoization
+  const now = Date.now();
+  const cached = hostnameBrandingCache.get(hostname);
+  if (cached && cached.expiresAt > now) {
+    return cached.data;
+  }
+
+  // 3. Query D1: Join custom_domains with org_branding & tenant_settings
+  try {
+    const sql = `
+      SELECT 
+        cd.id AS domain_id,
+        cd.org_id,
+        cd.hostname,
+        cd.ssl_status,
+        cd.verification_status,
+        cd.active,
+        ob.agency_name,
+        ob.logo_url,
+        ob.primary_color,
+        ob.watermark_position,
+        ob.watermark_opacity,
+        ob.watermark_policy,
+        ts.value AS tenant_settings_value
+      FROM custom_domains cd
+      LEFT JOIN org_branding ob ON cd.org_id = ob.org_id
+      LEFT JOIN tenant_settings ts ON cd.org_id = ts.tenant_id AND ts.namespace = 'branding'
+      WHERE cd.hostname = ?1 
+        AND (cd.active = 1 OR cd.verification_status IN ('verified', 'active') OR cd.ssl_status = 'active')
+      LIMIT 1
+    `;
+
+    interface QueryRow {
+      domain_id: string;
+      org_id: string;
+      hostname: string;
+      ssl_status: string;
+      verification_status: string;
+      active: number;
+      agency_name: string | null;
+      logo_url: string | null;
+      primary_color: string | null;
+      watermark_position: WatermarkPosition | null;
+      watermark_opacity: number | null;
+      watermark_policy: WatermarkPolicy | null;
+      tenant_settings_value: string | null;
+    }
+
+    const row = await db.prepare(sql).bind(hostname).first<QueryRow>();
+
+    if (!row) {
+      // Store negative cache result to prevent repeated D1 lookups on invalid domains
+      if (hostnameBrandingCache.size >= MAX_CACHE_ENTRIES) {
+        const firstKey = hostnameBrandingCache.keys().next().value;
+        if (firstKey) hostnameBrandingCache.delete(firstKey);
+      }
+      hostnameBrandingCache.set(hostname, {
+        data: null,
+        expiresAt: now + EDGE_CACHE_NEGATIVE_TTL_MS,
+      });
+      return null;
+    }
+
+    // Parse JSON settings if present
+    let parsedSettings: Partial<BrandingSettings> | null = null;
+    if (row.tenant_settings_value) {
+      try {
+        parsedSettings = JSON.parse(row.tenant_settings_value) as Partial<BrandingSettings>;
+      } catch {
+        // malformed JSON, proceed with defaults
+      }
+    }
+
+    const resolved: ResolvedTenantBranding = {
+      orgId: row.org_id,
+      hostname: row.hostname,
+      agencyName: parsedSettings?.agencyName ?? row.agency_name ?? null,
+      logoUrl: parsedSettings?.logoUrl ?? row.logo_url ?? null,
+      faviconUrl: parsedSettings?.faviconUrl ?? DEFAULT_BRANDING.faviconUrl,
+      primaryColor: parsedSettings?.primaryColor ?? row.primary_color ?? DEFAULT_BRANDING.primaryColor,
+      accentColor: parsedSettings?.accentColor ?? DEFAULT_BRANDING.accentColor ?? '#F59E0B',
+      welcomeMessage: parsedSettings?.welcomeMessage ?? DEFAULT_BRANDING.welcomeMessage,
+      emailFromName: parsedSettings?.emailFromName ?? DEFAULT_BRANDING.emailFromName,
+      emailFooter: parsedSettings?.emailFooter ?? DEFAULT_BRANDING.emailFooter,
+      socialMeta: parsedSettings?.socialMeta ?? DEFAULT_BRANDING.socialMeta,
+      watermarkPosition: row.watermark_position ?? 'bottom-right',
+      watermarkOpacity: row.watermark_opacity ?? 0.85,
+      watermarkPolicy: row.watermark_policy ?? 'master_plus',
+      isWhiteLabel: true,
+    };
+
+    // Cache warm result
+    if (hostnameBrandingCache.size >= MAX_CACHE_ENTRIES) {
+      const firstKey = hostnameBrandingCache.keys().next().value;
+      if (firstKey) hostnameBrandingCache.delete(firstKey);
+    }
+    hostnameBrandingCache.set(hostname, {
+      data: resolved,
+      expiresAt: now + EDGE_CACHE_TTL_MS,
+    });
+
+    return resolved;
+  } catch (err) {
+    logger.warn('[org-branding-repo] getTenantBrandingByHostname failed', {
+      hostname,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
 }

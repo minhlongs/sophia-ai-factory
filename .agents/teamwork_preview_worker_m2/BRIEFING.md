@@ -1,67 +1,73 @@
-# BRIEFING — 2026-09-19T17:11:00Z
+# BRIEFING — 2026-09-20T05:28:00Z
 
 ## Mission
-Implement Milestone 2 (M2: Autonomous Multi-Channel Social Publisher Fleet / R3) covering social publishing adapters (YouTube, TikTok, Instagram Reels, Telegram), idempotent scheduler cron with OCC CAS claiming & peak slots, exponential backoff retry queue, and viral performance metrics ingestion (including Instagram Reels harvester).
+Implement Milestone 2: Multi-User Organizations & 5-Tier RBAC System, including D1 migration 0277, seed cryptographic contracts, 5-tier role hierarchy predicates, seat quota engine, invitation service, tenant context switcher & isolation guard, admin server actions, invitation acceptance API route, unit & integration tests, and 100% verification.
 
 ## 🔒 My Identity
 - Archetype: worker
 - Roles: implementer, qa, specialist
 - Working directory: /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m2/
-- Original parent: 462719b1-95d2-4d1a-8ebb-6e6e29866e0f
-- Milestone: M2 (Autonomous Multi-Channel Social Publisher Fleet / R3)
+- Original parent: 78b5382f-0b81-4402-ad59-b06284d61c09
+- Milestone: Milestone 2: Multi-User Organizations & 5-Tier RBAC
 
 ## 🔒 Key Constraints
 - Integrity Mandate: Genuine implementation only, no hardcoded test results, dummy facades, or shortcuts.
-- Write Ownership strictly respected:
-  - `apps/sophia-ai-factory/src/forest/inngest/functions/publish-execute.ts`
-  - `apps/sophia-ai-factory/src/forest/publishing/`
-  - `apps/sophia-ai-factory/src/land/video/publishing/`
-  - `apps/sophia-ai-factory/src/forest/inngest/functions/analytics-sync.ts`
-  - Unit tests in `src/forest/publishing/__tests__/` or `src/land/video/publishing/__tests__/`
+- Strictly adhere to canonical 4-layer import hierarchy: seed -> tree -> forest -> land (0 violations).
+- Preserve CF-direct deployment & Sophia layer architecture.
 - No :any types in TypeScript.
-- No console.log/warn/error; use logger utility.
-- Preserving CF-direct deployment & Sophia layer architecture.
+- No production console.log/warn/error; use logger utility.
+- Bilingual customer-facing copy (VI/EN).
+- Web Crypto CSPRNG for tokens (no Node crypto built-ins in edge runtime code).
+- Re-check active seat quota at invitation acceptance time.
+- Single-use invitation tokens with 7-day TTL and SHA-256 storage hash.
+- Strict tenant data isolation with assertTenantScope throwing CROSS_TENANT_VIOLATION.
 
 ## Current Parent
-- Conversation ID: 462719b1-95d2-4d1a-8ebb-6e6e29866e0f
-- Updated: 2026-09-19T17:11:00Z
+- Conversation ID: 78b5382f-0b81-4402-ad59-b06284d61c09
+- Updated: 2026-09-20T05:28:00Z
 
 ## Task Summary
-- **What to build**: Harden social publishing adapters (YT Shorts, TikTok Shop/Direct Post, IG Reels, Telegram Bot API), scheduler cron with OCC CAS job claiming and peak audience slot / cooldown enforcement, exponential backoff retry in publish-execute, and analytics sync / webhook ingestion + IG Reels metrics harvester.
-- **Success criteria**: All vitest tests pass in publishing directories (34 test files, 235 tests pass), 100% clean layer boundary check, zero TypeScript errors (`tsc --noEmit`), zero ESLint errors.
-- **Interface contracts**: apps/sophia-ai-factory/CLAUDE.md, PROJECT.md
+- **What to build**: Complete Milestone 2 Multi-User Organizations & 5-Tier RBAC engine.
+- **Success criteria**:
+  - All unit, integration, and E2E tests pass 100% (102/102 tests pass).
+  - `npm run type-check` exits 0 (0 TS errors).
+  - `bash scripts/check-layer-boundaries.sh` exits 0 (0 layer violations).
+- **Interface contracts**: PROJECT.md, Explorer handoffs M2_1, M2_2, M2_3.
 
 ## Key Decisions Made
-- Added container readiness polling loop to `InstagramPublisher` with retry interval and 9007 / 2207027 error code recognition.
-- Implemented OCC CAS atomic claim `atomicClaimJob` in `runSchedulerCron` (`apps/sophia-ai-factory/src/forest/publishing/scheduler.ts`) with `alreadyClaimed: true` hint passed to Inngest to avoid duplicate race conditions.
-- Upgraded `publish-execute.ts` with `RETRY_BACKOFF_SCHEDULE_SECONDS = [30, 60, 300, 900, 3600]` and `step.sleep` backoff retry delays.
-- Built `apps/sophia-ai-factory/src/forest/publishing/instagram-metrics-harvester.ts` with decoupled insights fetcher, token caching, auto-renewal, and idempotent writes to `publishing_results`, `video_analytics`, and `performance_events`.
-- Updated webhook handlers (`youtube-notification`, `tiktok-notification`, `tiktok-shop`) to feed `performance_events` for engagement and affiliate/shop revenue.
-
-## Artifact Index
-- /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m2/DISPATCH.md - Dispatch requirements
-- /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m2/progress.md - Progress heartbeat
-- /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m2/handoff.md - Final handoff report
+- `org_invitations` table includes both `created_by` and virtual column `invited_by TEXT GENERATED ALWAYS AS (created_by) VIRTUAL` and view `organization_invitations` for 100% schema interoperability.
+- 5-Tier RBAC modeled as a DAG lattice permissions matrix: `owner`, `admin`, `creator`, `billing_manager`, `viewer` with precomputed boolean flags for O(1) evaluation in hot paths.
+- Seat quota engine counts confirmed active members + unexpired pending invites, preventing oversubscription races.
+- Tokens generated via Web Crypto CSPRNG (64 hex characters), store SHA-256 hash in D1, expire in 7 days, and require atomic status transition to prevent double consumption.
+- Strict synchronous `assertTenantScope` guard throws `CrossTenantViolationError` matching `/CROSS_TENANT_VIOLATION/` on any mismatch or invalid ID, logging security audit events.
 
 ## Change Tracker
-- **Files modified**:
-  - `src/land/video/publishing/providers/instagram-publisher.ts`: Media container readiness polling loop, shares metric support
-  - `src/land/video/publishing/publish-upload.ts`: Telegram publisher fallback & rate limit retry-after extractor
-  - `src/forest/publishing/scheduler.ts`: OCC CAS claiming `atomicClaimJob` & peak slot / burst cooldown cron runner
-  - `src/forest/inngest/functions/publish-execute.ts`: Exponential backoff schedule `[30, 60, 300, 900, 3600]` and scheduler cron
-  - `src/forest/publishing/instagram-metrics-harvester.ts`: Harvests IG Reels metrics into `video_analytics` & `performance_events`
-  - `src/forest/inngest/functions/analytics-sync.ts`: Synchronizes YouTube & Instagram analytics into `performance_events`
-- **Build status**: Pass (`npm run type-check`: 0 errors; layer boundary script: 0 errors; vitest: 34 files / 235 tests pass)
+- **Files modified/created**:
+  - `migrations/0277_enterprise_org_invitations.sql`: Table, indexes, and compatibility view.
+  - `src/seed/types/rbac-matrix.ts`: 5-tier role and permission definitions, flags, metadata.
+  - `src/seed/types/org-invitations.ts`: Record and request/response interfaces.
+  - `src/seed/security/invitation-token.ts`: 256-bit CSPRNG token generator and SHA-256 digest.
+  - `src/seed/config/tiers/seat-quotas.ts`: Tier seat quotas (1, 1, 5, 999).
+  - `src/tree/rbac/permissions.ts`: Evaluator, 5 typed predicates, assertion & escalation guards.
+  - `src/tree/rbac/index.ts`: Barrel export.
+  - `src/tree/organizations/seat-quota-engine.ts`: Active members + pending invites check.
+  - `src/tree/organizations/invitation-service.ts`: Create, accept, revoke invitation logic.
+  - `src/forest/tenant/context-switcher.ts`: Multi-org membership validator and switcher.
+  - `src/forest/tenant/isolation-guard.ts`: Strict synchronous tenant scope guard.
+  - `src/land/admin/org-invitation-actions.ts`: Send, accept, revoke server actions.
+  - `src/app/api/v1/invitations/accept/route.ts`: Edge API route for acceptance and inspection.
+  - `src/__tests__/unit/enterprise/rbac-matrix.test.ts`: 40 RBAC unit tests.
+  - `src/__tests__/unit/enterprise/seat-quotas.test.ts`: 6 seat quota unit tests.
+  - `src/__tests__/unit/enterprise/invitation-token.test.ts`: 4 token unit tests.
+  - `src/__tests__/integration/enterprise/org-invitations-integration.test.ts`: 6 invitation integration tests.
+  - `src/__tests__/integration/enterprise/tenant-isolation-integration.test.ts`: 8 tenant isolation integration tests.
+- **Build status**: 100% Pass (102/102 vitest tests, 0 type errors, 0 layer boundary errors)
 - **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: 34 test files, 235 tests passed
-- **Lint status**: 0 errors
-- **Tests added/modified**: 4 new test suites (21 new tests)
-  - `src/forest/publishing/__tests__/scheduler-cron.test.ts`
-  - `src/forest/publishing/__tests__/backoff-retry.test.ts`
-  - `src/forest/publishing/__tests__/webhook-metrics-ingestion.test.ts`
-  - `src/forest/publishing/__tests__/instagram-harvester.test.ts`
+- **Build/test result**: 6 test files, 102 tests passed (64 unit/integration + 38 E2E)
+- **Lint/Type status**: 0 errors
+- **Tests added/modified**: 5 new test suites (64 tests added)
 
 ## Loaded Skills
 - cook: /Users/macbook/sophia-ai-factory/.agent/skills/cook/SKILL.md

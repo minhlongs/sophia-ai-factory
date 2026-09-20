@@ -1,17 +1,14 @@
-# BRIEFING — 2026-09-19T17:45:00+07:00
+# BRIEFING — 2026-09-20T05:59:45Z
 
 ## Mission
-Investigate starter blueprints in first-run-template.ts, preflight cost calculation UX in cost-estimator.ts, verify option passing to createMission and startMissionExecution, and define comprehensive unit test specifications for Milestone 3.
+Investigate Streaming Analytics Export API and RFC-4180 Serialization, designing export-formatter.ts and /api/v1/analytics/export/route.ts based on executive-bi.e2e.test.ts.
 
 ## 🔒 My Identity
 - Archetype: Teamwork explorer
 - Roles: Read-only investigation: analyze problems, synthesize findings, produce structured reports
-- Working directory: /Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_explorer_m3_3/
-- Original parent: 699d8c86-9fd2-4f43-9bd2-31aae57a990a
-- Milestone: Milestone 3 Edge Cases (Credits & Video Concurrency)
-- Current Working Directory: /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_explorer_m3_3/
-- Current Parent: 888683f7-30ce-42ff-840e-2e0b8eaaa575
-- Current Milestone: Milestone 3 (Bilingual Creative Studio & Blueprint UI)
+- Working directory: /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_explorer_m3_3/
+- Original parent: 78b5382f-0b81-4402-ad59-b06284d61c09
+- Milestone: Milestone 3 (Executive BI & Automated Reporting Engine)
 
 ## 🔒 Key Constraints
 - Read-only investigation — do NOT implement
@@ -20,36 +17,31 @@ Investigate starter blueprints in first-run-template.ts, preflight cost calculat
 - Strictly adhere to 4-layer import architecture (seed -> tree -> forest -> land)
 
 ## Current Parent
-- Conversation ID: 888683f7-30ce-42ff-840e-2e0b8eaaa575
-- Updated: 2026-09-19T17:45:00+07:00
+- Conversation ID: 78b5382f-0b81-4402-ad59-b06284d61c09
+- Updated: 2026-09-20T05:56:32Z
 
 ## Investigation State
 - **Explored paths**:
-  - `apps/sophia-ai-factory/src/land/missions/first-run-template.ts`
-  - `apps/sophia-ai-factory/src/land/missions/cost-estimator.ts`
-  - `apps/sophia-ai-factory/src/seed/ai/cost-estimator.ts`
-  - `apps/sophia-ai-factory/src/land/billing/video-mcu-cost-config.ts`
-  - `apps/sophia-ai-factory/src/land/missions/__tests__/first-run-template.test.ts`
-  - `apps/sophia-ai-factory/src/land/missions/__tests__/cost-estimator.test.ts`
-  - `apps/sophia-ai-factory/src/components/missions/first-run-wizard.tsx`
-  - `apps/sophia-ai-factory/src/components/missions/mission-progress-bar.tsx`
-  - `apps/sophia-ai-factory/src/app/[locale]/dashboard/missions/new/page.tsx`
-  - `apps/sophia-ai-factory/src/land/creative-mission/actions.ts`
-  - `apps/sophia-ai-factory/src/forest/mission/multi-track-orchestrator.ts`
-  - `apps/sophia-ai-factory/src/__tests__/e2e/multi-track-video-pipeline.e2e.test.ts`
+  - `apps/sophia-ai-factory/src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts` (Tier 1 F4 & F5, Tier 2 B4 & B5, Tier 3 P2, Tier 4 S1)
+  - `apps/sophia-ai-factory/src/__tests__/e2e/enterprise/enterprise-test-harness.ts` (`escapeCsvField`, `formatStreamingCsv`, table `executive_bi_metrics`)
+  - `apps/sophia-ai-factory/src/forest/tenant/isolation-guard.ts` (`assertTenantScope`, `CrossTenantViolationError`)
+  - `apps/sophia-ai-factory/src/seed/auth/better-auth-session.ts` (`getCurrentUser`)
+  - `apps/sophia-ai-factory/src/seed/auth/resolve-org-id.ts` (`resolveOrgId`)
+  - `apps/sophia-ai-factory/src/app/api/v1/invitations/accept/route.ts` (API route pattern on Edge)
+  - `apps/sophia-ai-factory/scripts/check-layer-boundaries.sh` (layer boundary rules)
 - **Key findings**:
-  - `first-run-template.ts` defines 3 starter templates: Viral Shorts Explainer (60s, 5 scenes, 140 words, 9:16), Affiliate Product Showcase (30s, 3 scenes, 75 words, 9:16), Daily News & Wisdom (45s, 4 scenes, 110 words, 9:16) with complete English & Vietnamese strings.
-  - `cost-estimator.ts` correctly maps duration to MCU credits (30s -> 30 MCU, 45s -> 40 MCU, >45s -> 50 MCU) and computes transparent USD costs with fal.ai ($0.025/scene), ElevenLabs ($0.015/1K chars @ 5.5 chars/word), OpenRouter ($0.005/script).
-  - CRITICAL GAP FOUND: In `first-run-wizard.tsx`, `handleLaunch` passes `constraints: {}` to `createMission`. This causes `executeMultiTrackMission` to default to 3 scenes and 30 seconds instead of the selected template's configuration (e.g. 5 scenes & 60s for Viral Shorts). Furthermore, `voiceStyle` and `visualStyle` are not forwarded from template to `executeMultiTrackMission`.
-  - In `first-run-wizard.tsx`, stage progression is hardcoded with `setTimeout` rather than wired to real status polling via `getMissionTrackStatus(missionId)`.
-  - Existing unit test suites in `first-run-template.test.ts` and `cost-estimator.test.ts` cover basic happy paths, but lack boundary clamping tests (negative or 0 scenes/words, exact duration boundary MCU switching) and there are zero component/integration tests for `FirstRunWizard` and `/dashboard/missions/new`.
-- **Unexplored areas**: None. All target files and integration points analyzed.
+  - RFC-4180 rules codified: CRLF line breaks (`\r\n`), double-quote escaping (`""`), quoting on comma, quote, CR, or LF.
+  - Test F5-2 mandates that empty datasets stream as `[]`.
+  - Web Streams API (`ReadableStream<Uint8Array>`, `TextEncoder`) allows O(1) buffer streaming on Cloudflare Workers edge (128MB limit).
+  - Multi-tenant isolation verified with `assertTenantScope(currentOrgId, requestedOrgId)`.
+  - Complete blueprints for `export-formatter.ts` and `/api/v1/analytics/export/route.ts` documented in `handoff.md`.
+- **Unexplored areas**: None. Complete blueprint delivered.
 
 ## Key Decisions Made
-- Structured the Milestone 3 test specification into three tiers:
-  1. Pure unit tests for `first-run-template.ts` (registry, schema, bilingual completeness, prompt suggestions).
-  2. Pure unit tests for `cost-estimator.ts` (scaling, boundary clamping, floating point precision, latency benchmarks).
-  3. Component & integration tests for `FirstRunWizard` & `/dashboard/missions/new` (template switching, constraint forwarding, preflight cost display, error handling, real status progression).
+- Designed `escapeCsvField` with dynamic delimiter support and opt-in formula injection sanitization.
+- Designed `streamCsv` and `streamJsonArray` with Web Streams API for memory-safe chunked transfers.
+- Routed both GET and POST in `/api/v1/analytics/export/route.ts` to accommodate browser downloads and automated API clients.
+- Enforced fail-closed tenant scoping and 365-day max date range guard.
 
 ## Artifact Index
 - `.agents/teamwork_preview_explorer_m3_3/DISPATCH.md` — Assignment instructions

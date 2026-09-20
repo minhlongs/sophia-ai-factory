@@ -1,15 +1,15 @@
-# TEST_READY — Autonomous Growth & Revenue Engine ($1M MRR Path)
+# TEST_READY — Enterprise Scale Engine (Phase 18–19 Scale Ready)
 
-**Status**: READY (100% Pass Rate, 141/141 tests passing)  
-**Date**: 2026-09-20T01:45:30Z  
-**Author**: `test_writer_e2e_growth`  
-**Working Directory**: `/Users/macbook/sophia-ai-factory/.agents/test_writer_e2e_growth/`  
+**Status**: READY (100% Pass Rate, 137/137 tests passing)  
+**Date**: 2026-09-20T04:50:30Z  
+**Author**: `teamwork_preview_test_writer_enterprise_e2e`  
+**Working Directory**: `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_test_writer_enterprise_e2e/`  
 
 ---
 
 ## Executive Summary
 
-A comprehensive, opaque-box, requirement-driven E2E test suite covering Tiers 1–4 has been authored, verified, and certified for the **Autonomous Growth & Revenue Engine ($1M MRR Path)**. All 141 test cases execute deterministically in **1.15s** via Vitest and in-memory SQLite emulation (`node:sqlite`), adhering strictly to the 4-layer dependency architecture with 0 TypeScript compilation errors and 0 boundary violations.
+A comprehensive, opaque-box, contract-driven E2E test suite covering Tiers 1–4 has been authored, verified, and certified for the **Enterprise Scale Engine (Phase 18–19 Scale Ready)**. All 137 test cases execute deterministically in **2.74s** via Vitest and in-memory SQLite emulation (`node:sqlite DatabaseSync`), strictly adhering to the canonical 4-layer dependency architecture with 0 TypeScript compilation errors and 0 boundary violations.
 
 ---
 
@@ -17,71 +17,88 @@ A comprehensive, opaque-box, requirement-driven E2E test suite covering Tiers 1�
 
 | Tier | Test File | Target Scope | Tests Planned | Tests Implemented | Pass Rate |
 |------|-----------|--------------|:-------------:|:-----------------:|:---------:|
-| **Tier 1** | `tests/e2e/growth-engine/tier1-feature-coverage.test.ts` | 12 core features (>=5 tests per feature) | 60 | 60 | 100% (60/60) |
-| **Tier 2** | `tests/e2e/growth-engine/tier2-boundary-corner.test.ts` | Edge & boundary cases across all 12 features | 60 | 60 | 100% (60/60) |
-| **Tier 3** | `tests/e2e/growth-engine/tier3-pairwise-combinations.test.ts` | Pairwise combinatorial interactions | 15 | 16 | 100% (16/16) |
-| **Tier 4** | `tests/e2e/growth-engine/tier4-real-world-scenarios.test.ts` | 5 realistic full lifecycle workflows | 5 | 5 | 100% (5/5) |
-| **Total** | | | **140** | **141** | **100% (141/141)** |
+| **Tiers 1–4** | `src/__tests__/e2e/enterprise/custom-domains-whitelabel.e2e.test.ts` | Custom Domains & White-Label Portal | 30 | 33 | 100% (33/33) |
+| **Tiers 1–4** | `src/__tests__/e2e/enterprise/organizations-rbac.e2e.test.ts` | Multi-User Organizations & 5-Tier RBAC | 35 | 38 | 100% (38/38) |
+| **Tiers 1–4** | `src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts` | Executive BI & Automated Reporting Engine | 30 | 33 | 100% (33/33) |
+| **Tiers 1–4** | `src/__tests__/e2e/enterprise/outbound-webhooks.e2e.test.ts` | Resilient Outbound Webhooks & Event Bus | 30 | 33 | 100% (33/33) |
+| **Total** | | | **125** | **137** | **100% (137/137)** |
 
 ---
 
-## Feature Coverage Detail (12 Core Features)
+## Feature Coverage Detail
 
-1. **F1: Hermes V2 Trend Scouting (TikTok, YouTube Shorts, X)**
-   - Normalized query parsing, velocity acceleration, momentum z-scores, multi-platform multipliers, unicode/emoji handling, SQL injection resilience.
-2. **F2: Mathematical Hook Scoring Engine & SES Forecasting ($\alpha=0.40$)**
-   - Exact composite formula ($0.40 S_{\text{hook}} + 0.25 S_{\text{pacing}} + 0.20 S_{\text{retention}} + 0.15 S_{\text{cta}}$), 6 hook styles (`question`, `curiosity_gap`, `bold_claim`, `negative_warning`, `story_opener`, `before_after`), SES level recursion ($\alpha=0.40$), widening 95% confidence intervals, ceiling/floor clamps [0, 100].
-3. **F3: Autonomous Daily Campaign Generator**
-   - High-confidence pattern filtering ($\ge 0.70$), vertical 9:16 aspect ratio for TikTok/Shorts, 16:9/1:1 for X, persistence to `campaign_blueprints` in `generated` status.
-4. **F4: Closed-Loop Viral Feedback Ingestion & OCC CAS**
-   - Creative Effectiveness Score (CES) combining CTR, retention, conversion rate, efficiency; atomic CAS updates with timestamp verification; collision detection and rejection on concurrent race conditions; confidence caps.
-5. **F5: Marketplace Discovery Interface (`/marketplace`, `/vi/marketplace`)**
-   - Faceted search by niche, target platform, and conversion rate; text search matching; pagination clamps (page $\ge 1$, pageSize $\le 50$).
-6. **F6: One-Click Studio Blueprint Cloning & Pre-Flight Cost Estimator**
-   - MCU/USD cost calculation ($10 \text{ MCU} = 1\text{ cent}$); $5.00 (500 cents) cost spike ceiling enforcement; mission creation in `creative_missions`; monotonic `remix_count` incrementing.
-7. **F7: Creator Royalty Attribution & Lineage**
-   - Derivative relationship tracking in `blueprint_remixes`; immutable accrual in `creator_earnings_ledger`; self-remix fraud prevention (`CIRCULAR_SELF_REMIX_DENIED`); fractional cent rounding via integer cents.
-8. **F8: 5-Network Affiliate Webhook Ingestion & Timing-Safe HMAC**
-   - Timing-safe Web Crypto HMAC verification (`SHA-256`, `SHA-1`, `SHA-512`); support for TikTok Shop, Amazon Associates, ClickBank, AccessTrade, Awin; sub-ID click attribution; negative/zero commission guards.
-9. **F9: 14-Day Anti-Fraud Clawback Hold & Dual-Entry Ledger**
-   - Exact 14-day hold enforcement (`payable_at = attributed_at + 14 * 86400 * 1000`); negative adjustment row invariant (`status = 'clawback'`) preserving historical records; dual-entry net balance reconciliation.
-10. **F10: NOWPayments USDT Mass Payouts & Daily Financial Reconciliation**
-    - CAS row claiming (`UPDATE commission_ledger SET status = 'paying'`); minimum payout threshold ($1.00 = 100 cents); batch grouping; daily financial reconciliation with $1.00 tolerance.
-11. **F11: Mekong Cloudflare Tunnel & Hybrid Edge Router**
-    - Local Apple Silicon zero-cost routing (`costKind: 'unmetered'`) via Cloudflare Tunnel (`*.cashclaw.cc`); AES-256 payload encryption; transparent failover to cloud BYOK (`costKind: 'metered'`) on node unreachability.
-12. **F12: 15-Second Edge Node Health & Failover**
-    - Active preflight probe ($<2500\text{ms}$ timeout); 15-second heartbeat freshness threshold; automatic transition to `OFFLINE`; seamless recovery to `ONLINE` on restored heartbeat.
+### 1. Custom Domains & White-Label Portal (`custom-domains-whitelabel.e2e.test.ts` — 33 tests)
+- **F1: Custom Domain Registration & CNAME Assignment** (5 tests): Subdomain registration, uppercase/whitespace normalization, persistence to `custom_domains`, multiple domains per org.
+- **F2: Verification Lifecycle** (5 tests): Transitions from `pending_validation` to `active` upon valid CNAME/SSL, remains pending if unpropagated, captures Cloudflare CAA/DNS errors, supports error recovery, 404 on unknown domain ID.
+- **F3: Hostname Routing & Tenant Branding Resolution** (5 tests): Edge routing resolves org context from verified custom hostname, returns null for unverified/unmapped hostnames, default branding fallback, case-insensitive incoming HTTP host headers.
+- **F4: Dynamic White-Label Theme CSS Variable Injection** (5 tests): Extraction of `--theme-primary`, `--theme-secondary`, `--theme-logo`, `--theme-portal-title`, custom CSS injection, CSS breakout defense via quote stripping, color sanitization against injection payloads.
+- **F5: Branded Transactional Email Templating** (5 tests): Branded HTML container wrapping, HTML entity escaping in agency titles (`<script>`/`"` prevention), graceful rendering without logo, default branding fallback, link preservation.
+- **Tier 2 Boundaries & Corners** (5 tests): System-wide unique hostname constraint, trailing whitespace/case-insensitive collision rejection, RFC-1123 syntax validation (disallows IPs, underscores, localhost), diagnostic error logging, unverified domain routing exclusion.
+- **Tier 3 Combinations** (2 tests): Multi-tenant hostname & theme CSS isolation across distinct orgs, dynamic branding update synchronization with CSS variables & transactional email.
+- **Tier 4 Real-World Scenario** (1 test): Complete Agency White-Label Onboarding Journey (registration -> edge safety check -> Cloudflare SaaS verification -> branding customization -> live edge resolution -> theme injection -> branded transactional client email).
+
+### 2. Multi-User Organizations & 5-Tier RBAC (`organizations-rbac.e2e.test.ts` — 38 tests)
+- **F1: Organization Creation & Member Management** (5 tests): Org creation with slug and owner assignment, tier seat quota assignment, unique slug constraint, active status initialization, deterministic member listing.
+- **F2: Tier Seat Quotas Enforcement** (5 tests): Seat allocation reporting (Free: 1, Starter: 1, Pro: 5, Master: 999), seat cap rejection on Free tier, seat filling up to Pro cap, oversubscription blocking on full Pro tier, Master tier high-volume scaling.
+- **F3: Cryptographic Single-Use Invitation Tokens** (5 tests): 256-bit high-entropy CSPRNG tokens (64 hex chars), SHA-256 token hashing for secure DB storage (raw token never stored), exact 7-day TTL expiration, acceptance URL formatting, recipient email normalization.
+- **F4: Invitation Verification, Atomic Consumption & Role Assignment** (5 tests): Valid token acceptance creating member with assigned role, status transition to `accepted` with timestamp, single-use invariant preventing double-consumption attacks, tampered token rejection, seat quota re-validation at acceptance time preventing race conditions.
+- **F5: 5-Tier RBAC Permission Matrix Evaluation** (5 tests): `owner` has all 5 permissions, `admin` has all permissions except billing management, `creator` has creation/publishing only, `billing_manager` has billing management only, `viewer` is strictly read-only with 0 mutation permissions.
+- **F6: Org Context Switching & Tenant Data Isolation Guard** (5 tests): `assertTenantScope` validation, `CROSS_TENANT_VIOLATION` detection on org mismatch, rejection on empty IDs, multi-org user context switching, unauthorized context assertion prevention.
+- **Tier 2 Boundaries & Corners** (5 tests): Expired token rejection (>7 days), duplicate membership constraint handling, non-existent orgId handling, case-insensitive email deduplication, cross-tenant mutation defense.
+- **Tier 3 Combinations** (2 tests): Invitation role directly mapping to active RBAC permissions upon acceptance, dynamic tier upgrading instantly lifting seat quotas and unlocking pending invites.
+- **Tier 4 Real-World Scenario** (1 test): Complete Enterprise Team Onboarding & Multi-Role Collaboration Lifecycle (Master tier org creation -> owner invites CTO, Lead Artist, CFO, Investor -> cryptographic token verification -> acceptance -> seat quota verification -> role-based permission enforcement -> cross-tenant security audit).
+
+### 3. Executive BI & Reporting Engine (`executive-bi.e2e.test.ts` — 33 tests)
+- **F1: Unified BI Metrics Aggregations** (5 tests): Accurate MRR peak tracking, throughput counting, viral score arithmetic mean, affiliate ROI computation ($3.0\times$), zeroed metric fallbacks on empty ranges.
+- **F2: Automated Telegram Executive Digest Formatting** (5 tests): Agency-branded MarkdownV2 formatting, escaping of all 18 MarkdownV2 reserved characters (`_ * [ ] ( ) ~ > # + - = | { } . ! \`), strict message length adherence (<4096 chars), default branding fallback, currency formatting from integer cents.
+- **F3: Branded HTML Email Executive Digest Formatting** (5 tests): Agency-branded executive summary, valid HTML doctype container, powered-by footer, HTML injection sanitization in header, multi-paragraph layout preservation.
+- **F4: Streaming CSV Export with RFC-4180 Compliance** (5 tests): Standard CSV header & row streaming, quote wrapping on fields with commas, double-quote escaping (`""`), CRLF newline escaping, safe serialization of nulls/numbers/booleans.
+- **F5: Streaming Structured JSON Export** (5 tests): JSON array formatting, empty array serialization, preservation of nested metadata structures, deterministic timestamp & floating point formatting, newline-delimited JSON (NDJSON) streaming verification.
+- **Tier 2 Boundaries & Corners** (5 tests): Zero marketing spend zero-division guard (returns finite safe multiplier 99.0x), zero revenue & zero spend handling (returns 0.0x), extreme financial volume ($10M+ MRR) without overflow, complex multi-column CSV escaping in single row, strict exclusion of records outside requested date range.
+- **Tier 3 Combinations** (2 tests): Multi-tenant BI isolation preventing competitor metrics contamination, unified BI aggregation feeding directly into both Telegram digest and CSV export.
+- **Tier 4 Real-World Scenario** (1 test): Complete Executive Monthly Financial Closeout & Multi-Channel BI Dispatch Workflow (Multi-channel campaign metrics ingestion -> peak MRR $4,500, 260 throughput, 4.0x ROI aggregation -> Telegram CEO digest -> HTML board email -> RFC-4180 CSV export).
+
+### 4. Resilient Outbound Webhooks & Event Bus (`outbound-webhooks.e2e.test.ts` — 33 tests)
+- **F1: Webhook Subscription Management & Event Filtering** (5 tests): HTTPS webhook endpoint registration, HTTP protocol rejection, wildcard `*` event subscriptions, event filtering rejection on unsubscribed topics, DB persistence.
+- **F2: Timing-Safe HMAC-SHA256 Signatures** (5 tests): Header generation `t=<timestamp>,v1=<hex>`, deterministic signature reproduction, timestamp sensitivity, secret sensitivity, 64-char hex format.
+- **F3: Signature Verification & Replay Protection** (5 tests): Signature verification matching secret & payload, payload tampering detection, secret mismatch rejection, replay attack protection outside 300s drift window, malformed header rejection.
+- **F4: Resilient Delivery Bus with Jittered Exponential Backoff** (5 tests): HTTP 200 success dispatch, HTTP 500 server error retry scheduling, exponential backoff schedule adherence (`30s, 2m, 10m, 1h, 6h`), jitter within $\pm 10\%$, fetch exception/network timeout handling.
+- **F5: Dead Letter Queue (DLQ) & Manual Replay API** (5 tests): State transition to `dead_letter` after reaching 5 failed attempts, DB persistence with last HTTP response code, manual replay adding `X-Sophia-Replay: true` header and recovering to `success`, replay failure remaining in `dead_letter`, non-existent delivery ID handling.
+- **Tier 2 Boundaries & Corners** (5 tests): Timing attack resistance via constant-time signature comparison, cross-tenant replay attempt rejection, empty payload signing & verification, future timestamp drift rejection (>300s), single-character secret bitflip detection.
+- **Tier 3 Combinations** (2 tests): Multi-tenant delivery isolation, delivery ID and event payload preservation across consecutive retry attempts.
+- **Tier 4 Real-World Scenario** (1 test): Complete Developer Outbound Webhook Lifecycle (Endpoint registration -> initial dispatch -> simulated 503 gateway failure -> consecutive retries through exponential backoff -> transition to DLQ -> server fix & manual replay with recovery to HTTP 200).
 
 ---
 
 ## Runner Commands & Verification Proofs
 
-### 1. Execute Complete Growth Engine E2E Test Suite
+### 1. Execute Enterprise Scale Engine E2E Test Suite (137 tests)
 ```bash
 cd apps/sophia-ai-factory
-npx vitest run tests/e2e/growth-engine/
+PATH="/opt/homebrew/bin:$PATH" npx vitest run src/__tests__/e2e/enterprise/
 ```
 **Output Proof**:
 ```
- ✓ tests/e2e/growth-engine/tier4-real-world-scenarios.test.ts (5 tests) 19ms
- ✓ tests/e2e/growth-engine/tier3-pairwise-combinations.test.ts (16 tests) 20ms
- ✓ tests/e2e/growth-engine/tier2-boundary-corner.test.ts (60 tests) 42ms
- ✓ tests/e2e/growth-engine/tier1-feature-coverage.test.ts (60 tests) 45ms
+ ✓ src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts (33 tests) 43ms
+ ✓ src/__tests__/e2e/enterprise/custom-domains-whitelabel.e2e.test.ts (33 tests) 55ms
+ ✓ src/__tests__/e2e/enterprise/organizations-rbac.e2e.test.ts (38 tests) 156ms
+ ✓ src/__tests__/e2e/enterprise/outbound-webhooks.e2e.test.ts (33 tests) 167ms
 
  Test Files  4 passed (4)
-      Tests  141 passed (141)
-   Duration  1.15s
+      Tests  137 passed (137)
+   Duration  2.74s
 ```
 
 ### 2. TypeScript Compilation Check
 ```bash
 cd apps/sophia-ai-factory
-npm run type-check
+PATH="/opt/homebrew/bin:$PATH" npm run type-check
 ```
 **Output Proof**:
 ```
 > sophia-ai-factory@0.1.5 type-check
 > node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit
+
 Exit code: 0 (0 errors)
 ```
 
@@ -101,12 +118,10 @@ Exit code: 0
 
 ## Artifact Manifest
 
-- Test Harness: `apps/sophia-ai-factory/tests/e2e/growth-engine/growth-engine-harness.ts`
-- Tier 1 Suite: `apps/sophia-ai-factory/tests/e2e/growth-engine/tier1-feature-coverage.test.ts`
-- Tier 2 Suite: `apps/sophia-ai-factory/tests/e2e/growth-engine/tier2-boundary-corner.test.ts`
-- Tier 3 Suite: `apps/sophia-ai-factory/tests/e2e/growth-engine/tier3-pairwise-combinations.test.ts`
-- Tier 4 Suite: `apps/sophia-ai-factory/tests/e2e/growth-engine/tier4-real-world-scenarios.test.ts`
-- Agent Documentation:
-  - `.agents/test_writer_e2e_growth/BRIEFING.md`
-  - `.agents/test_writer_e2e_growth/progress.md`
-  - `.agents/test_writer_e2e_growth/handoff.md`
+- Test Harness: `apps/sophia-ai-factory/src/__tests__/e2e/enterprise/enterprise-test-harness.ts`
+- Custom Domains Suite: `apps/sophia-ai-factory/src/__tests__/e2e/enterprise/custom-domains-whitelabel.e2e.test.ts`
+- Organizations & RBAC Suite: `apps/sophia-ai-factory/src/__tests__/e2e/enterprise/organizations-rbac.e2e.test.ts`
+- Executive BI Suite: `apps/sophia-ai-factory/src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts`
+- Outbound Webhooks Suite: `apps/sophia-ai-factory/src/__tests__/e2e/enterprise/outbound-webhooks.e2e.test.ts`
+- Infrastructure Architecture: `/Users/macbook/sophia-ai-factory/TEST_INFRA.md`
+- Test Readiness Certification: `/Users/macbook/sophia-ai-factory/TEST_READY.md`

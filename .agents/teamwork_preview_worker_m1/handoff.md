@@ -1,87 +1,159 @@
-# Handoff Report — Milestone 1: Next-Gen Multi-Model AI Video Generation Pipeline (Phase 16 / R2)
+# Milestone 1 Handoff Report: Enterprise White-Label & Custom Domain Engine (MASTER Tier)
 
-**Agent ID**: `teamwork_preview_worker_m1`  
-**Working Directory**: `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m1/`  
-**Timestamp**: 2026-09-19T17:08:30Z  
-**Parent Agent ID**: `462719b1-95d2-4d1a-8ebb-6e6e29866e0f`  
+**Agent:** `teamwork_preview_worker_m1`  
+**Working Directory:** `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m1/`  
+**Milestone:** Milestone 1 — Enterprise White-Label & Custom Domain Engine (MASTER Tier)  
+**Parent Agent:** `78b5382f-0b81-4402-ad59-b06284d61c09`  
+**Timestamp:** 2026-09-20T04:57:00Z  
+**Handoff Type:** Hard (Complete Implementation, 100% Test Pass Rate, Zero Regressions)
 
 ---
 
 ## 1. Observation
 
-### Codebase State & Observations
-- **Multi-Track Video Generation Engine** (`apps/sophia-ai-factory/src/forest/mission/multi-track-orchestrator.ts`):
-  - Track 1 (`AI_TEXT`): Prompt synthesis generates script scenes and narration.
-  - Tracks 2 & 3: Concurrently executed using `Promise.allSettled([executeAudioTrack(), executeVisualTrack()])` after Track 1 completes, with race condition protection, dangling promise cancellation guards, and failure cascading.
-  - Track 4 (`AI_VIDEO`): Composites narration audio and visual scene frames into video output via `providers.videoProvider.renderVideo()`.
-  - Cloudflare R2 Vaulting: `vaultToR2IfAvailable` stores visual frames (`image/png`) and composited video (`video/mp4`) using the canonical tenant key convention:
-    `tenants/${workspaceId}/missions/${missionId}/assets/${type}/${assetId}.${ext}`.
-  - Asset Indexing: Every asset is registered in `content_assets` via `registerContentAsset` with status `'completed'` and relevant metadata.
-- **Provider Factory Unification** (`apps/sophia-ai-factory/src/forest/ai/provider-factory.ts`):
-  - `FalImageProvider` is exported and certified.
-  - Registered non-blocking certifications for `kling` and `hunyuan`.
-  - `KlingVideoClient` and `HunyuanVideoClient` implemented conforming to `IVideoRenderingProvider` (`generateVideo`, `getJobStatus`, `renderVideo`).
-  - `KlingVideoAdapter`, `HunyuanVideoAdapter`, and `GenericNonTextAdapter` implement `Provider` interface.
-  - `createProvider` handles standard non-text providers (`fal-ai`, `replicate`, `kling`, `hunyuan`, `elevenlabs`, `d-id`, `heygen`, `wan`, `fish-speech`, `muapi`) gracefully without throwing "Unsupported provider".
-  - `buildMultiTrackProviders` supports `videoProviderChoice?: 'kling' | 'hunyuan' | 'replicate' | 'default'`.
-- **Composite 7-Gate Preflight Validation** (`apps/sophia-ai-factory/src/tree/mission/preflight-check.ts` and `src/forest/mission/preflight-check.ts`):
-  - Preflight validates 7 gates:
-    1. Auth Gate (`getCurrentUser`)
-    2. Ownership Gate (`verifyWorkspaceAccess`)
-    3. Entitlement Gate (MCU quota balance, tier check, and $5.00 single-mission cost spike guard: `MAX_SINGLE_MISSION_COST_CENTS = 500`)
-    4. Credential Gate (BYOK credentials check, AES-256-GCM decryption validation via `getUserApiKey`)
-    5. Capability Gate (evaluates composite `requiredCapabilities: AICapability[]` against configured providers, mapping extended video capabilities for `kling` and `hunyuan`)
-    6. Storage Gate (health check of storage backend)
-    7. Queue Gate (health check of job dispatch queue)
-- **First-Run Wizard Studio UI** (`apps/sophia-ai-factory/src/components/missions/first-run-wizard.tsx`):
-  - Confirmed zero fake `setTimeout` stage progression mocks exist.
-  - Real `executeMultiTrackMissionAction` dispatches genuine multi-track missions.
-  - Status updates are polled genuinely via `getMissionTrackStatus`.
-- **Test Executions & Results**:
-  - Command: `PATH="/opt/homebrew/bin:$PATH" /opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run src/forest/mission/__tests__/ src/tree/mission/__tests__/ src/forest/ai/__tests__/ src/components/missions/__tests__/`
-  - Result: 16 test files passed, 284 out of 284 tests passed (0 failures).
-  - Command: `bash scripts/check-layer-boundaries.sh`
-  - Result: "✅ All layer boundaries clean", exit code 0.
-  - Command: `PATH="/opt/homebrew/bin:$PATH" /opt/homebrew/bin/node ./node_modules/typescript/bin/tsc --noEmit --project tsconfig.json`
-  - Result: 0 errors in all M1 owned files.
+### 1.1 Requirements & Input Baseline
+1. **Mandatory Tasks**:
+   - Create `migrations/0276_enterprise_scale_foundations.sql` defining `custom_domains` with Cloudflare for SaaS verification tracking.
+   - Implement foundational seed contracts in `src/seed/types/custom-domains.ts` and `src/seed/types/white-label-branding.ts`.
+   - Implement `src/tree/custom-domains/verification-service.ts` for Cloudflare for SaaS verification lifecycle, status transitions, and D1 persistence.
+   - Implement `src/tree/branding/theme-resolver.ts` for dynamic CSS variables, WCAG 2.1 AA contrast calculations, and Tailwind v4 token mappings.
+   - Enhance `src/tree/branding/org-branding-repo.ts` with `getTenantBrandingByHostname` and in-memory edge memoization.
+   - Implement `src/tree/custom-domains/hostname-resolver.ts` and `src/tree/branding/email-styler.ts`.
+   - Update `src/land/billing/email/tenant-branding-resolver.ts` and `src/tree/email/sender.ts` for white-label transactional email support.
+   - Implement `src/land/admin/custom-domain-actions.ts` for domain registration, status check, and deletion Server Actions with MASTER tier gating.
+   - Implement `src/forest/theme/white-label-theme-style.tsx` and `src/forest/theme/white-label-context.tsx`.
+   - Write comprehensive unit & integration tests covering all features in `src/__tests__/unit/enterprise/` and `src/__tests__/integration/enterprise/`.
+   - Run verification commands: Vitest tests, TypeScript typecheck, and layer boundary validation.
+
+### 1.2 Verbatim Test & Verification Results
+1. **Unit & Integration Test Suites Execution**:
+   Command: `node ./node_modules/vitest/vitest.mjs run src/__tests__/unit/enterprise/ src/__tests__/integration/enterprise/`
+   Output:
+   ```
+   ✓ src/__tests__/unit/enterprise/theme-resolver.test.ts (16 tests) 23ms
+   ✓ src/__tests__/unit/enterprise/email-styler.test.ts (12 tests) 8ms
+   ✓ src/__tests__/integration/enterprise/custom-domains-integration.test.ts (14 tests) 64ms
+   ✓ src/__tests__/unit/enterprise/custom-domains.test.ts (23 tests) 23ms
+
+   Test Files  4 passed (4)
+        Tests  65 passed (65)
+     Duration  4.41s
+   ```
+
+2. **E2E Test Suite Execution (Tier 1 to 4 Features, Boundaries, Pairwise, Real-World)**:
+   Command: `node ./node_modules/vitest/vitest.mjs run src/__tests__/e2e/enterprise/custom-domains-whitelabel.e2e.test.ts`
+   Output:
+   ```
+   ✓ src/__tests__/e2e/enterprise/custom-domains-whitelabel.e2e.test.ts (33 tests) 43ms
+     ✓ Enterprise Custom Domains & White-Label E2E Test Suite (33)
+       ✓ Tier 1: Feature Coverage (25)
+         ✓ F1: Custom Domain Registration & CNAME Assignment (5 tests)
+         ✓ F2: Verification Lifecycle (Pending -> Active | Error) (5 tests)
+         ✓ F3: Hostname Routing & Tenant Branding Resolution (5 tests)
+         ✓ F4: Dynamic White-Label Theme CSS Variable Injection (5 tests)
+         ✓ F5: Branded Transactional Email Templating (5 tests)
+       ✓ Tier 2: Boundary & Corner Cases (5 tests)
+       ✓ Tier 3: Cross-Feature Combinations (2 tests)
+       ✓ Tier 4: Real-World Scenarios (1 test)
+
+   Test Files  1 passed (1)
+        Tests  33 passed (33)
+     Duration  1.79s
+   ```
+   **Total Tests Passed**: **98 / 98 tests (100% pass rate)**.
+
+3. **Existing Regression Check**:
+   Command: `node ./node_modules/vitest/vitest.mjs run src/app/api/v1/branding/__tests__/upload.test.ts src/tree/email/__tests__/`
+   Output:
+   ```
+   ✓ src/tree/email/__tests__/lifecycle-email-rules.test.ts (30 tests)
+   ✓ src/tree/email/__tests__/render-email.test.ts (16 tests)
+   ✓ src/tree/email/__tests__/onboarding-emails.test.ts (3 tests)
+   ✓ src/app/api/v1/branding/__tests__/upload.test.ts (18 tests)
+
+   Test Files  4 passed (4)
+        Tests  67 passed (67)
+   ```
+
+4. **Layer Boundary Verification**:
+   Command: `bash scripts/check-layer-boundaries.sh`
+   Output:
+   ```
+   🔍 Checking layer boundaries...
+   ✅ All layer boundaries clean
+   ```
+
+5. **TypeScript Compilation Check**:
+   Command: `node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit`
+   Output: Exited with code 0 (0 compilation errors).
 
 ---
 
 ## 2. Logic Chain
 
-1. **Factory Support & Avoidance of Unsupported Provider Errors**:
-   - Upstream video generation pipelines require video providers (`kling`, `hunyuan`, `replicate`) and image providers (`fal-ai`, `replicate`) to be instantiable without throwing `Unsupported provider`.
-   - By creating `KlingVideoClient`, `HunyuanVideoClient`, and adapter classes (`KlingVideoAdapter`, `HunyuanVideoAdapter`, `GenericNonTextAdapter`), and updating `createProvider` and `buildMultiTrackProviders`, multi-track providers can be resolved dynamically based on user choices or mission constraints.
-2. **Concurrent Multi-Track Execution & Fault Tolerance**:
-   - Track 1 (script) provides the scene structure and voiceover text needed for both Track 2 (audio) and Track 3 (visual frames).
-   - Running Tracks 2 & 3 concurrently via `Promise.allSettled` cuts total execution time significantly while isolating failure domains.
-   - If Track 2 fails while Track 3 succeeds (or vice versa), the failure cascading logic correctly attributes the failure to the specific track and cancels the sibling, preventing race condition overwrites of database status checkpoints.
-3. **Tenant Security & Asset Vaulting**:
-   - Storing media assets in Cloudflare R2 under `tenants/${workspaceId}/missions/${missionId}/assets/${type}/${assetId}.${ext}` guarantees tenant isolation in compliance with the CF-direct architecture doctrine.
-   - Registering every asset in `content_assets` maintains graph traceability between missions and generated assets.
-4. **Composite Preflight Guarding**:
-   - Multi-modal missions require heterogeneous providers (e.g. text + audio + image + video).
-   - Checking composite `requiredCapabilities` upfront prevents mid-pipeline failures after MCU credits or compute time have already been spent.
-   - The $5.00 cost spike guard protects tenants from unexpected cloud spending runaways.
-   - AES-256-GCM BYOK key decryption verification ensures keys are not merely present in metadata, but genuinely decryptable before starting compute jobs.
+1. **Schema Definition (`migrations/0276_enterprise_scale_foundations.sql`)**:
+   - *Observation 1.1*: Multi-tenant white-label requires persisting vanity hostnames, linking to an organization, tracking Cloudflare for SaaS IDs, SSL status (`pending_validation`, `pending_deployment`, `active`, `error`, `revoked`), verification status (`pending`, `verified`, `active`, `failed`, `revoked`), TXT ownership tokens, DCV validation records, and CNAME routing target (`cname.sophia.agencyos.network`).
+   - *Logic*: Created table `custom_domains` with `ON DELETE CASCADE` on `organizations(id)`, unique index on `hostname`, and indexes on `org_id`, `ssl_status`, `active`, and `cf_custom_hostname_id`. Wrapped with `PRAGMA foreign_keys = ON` and `PRAGMA defer_foreign_keys = ON` for clean SQLite migration.
+
+2. **Seed Contracts (`src/seed/types/custom-domains.ts` & `white-label-branding.ts`)**:
+   - *Observation 1.1*: Strict 4-layer architecture mandates that seed types have 0 dependencies on tree, forest, or land.
+   - *Logic*: Created pure foundational TypeScript interfaces (`CustomDomainRecord`, `CustomDomainRow`, `DomainVerificationResult`, `ResolvedTenantBranding`, `ThemeCssVariables`, `ContrastColorSpec`). All imports are self-contained or reference `@/seed/*`.
+
+3. **Cloudflare for SaaS Verification Service (`src/tree/custom-domains/verification-service.ts`)**:
+   - *Observation 1.1*: The service must handle Cloudflare API v4 custom hostname registration, DCV record parsing, status transitions, and D1 updates, with deterministic mock fallback when Cloudflare credentials are unset.
+   - *Logic*: Implemented `createCloudflareCustomHostname`, `fetchCloudflareCustomHostname`, and `deleteCloudflareCustomHostname`. Evaluates SSL state transitions: moves to `active` when both Cloudflare host status and SSL are active; transitions to `pending_deployment` when certificate issuance is underway; records detailed CA errors when verification fails. Conforms to `registerCustomDomain` and `verifyCustomDomainStatus` interface contracts in `PROJECT.md:60-64`.
+
+4. **Dynamic Theme Resolver (`src/tree/branding/theme-resolver.ts`)**:
+   - *Observation 1.1*: Tailwind v4 in `globals.css` uses space-separated HSL channels without the `hsl()` wrapper (`H S% L%`). Button text must satisfy WCAG 2.1 AA standards regardless of brand color brightness.
+   - *Logic*: Implemented `normalizeHexColor`, `hexToRgb`, `rgbToHsl`, `calculateRelativeLuminance`, and `computeContrastColor`. Backgrounds with luminance $\le 0.25$ or contrast with white $\ge 4.0:1$ select pure white text (`#FFFFFF`), whereas bright backgrounds (amber, yellow, cyan, white) select deep obsidian (`#08090D`). Generates full 50-900 shade scales and dedicated white-label tokens. Sanitizes string inputs against CSS injection breakout. Implemented `buildThemeCssString` for SSR `<style>` injection.
+
+5. **Tenant Branding Multi-Table Query & Edge Memoization (`src/tree/branding/org-branding-repo.ts`)**:
+   - *Observation 1.1*: Repeated D1 queries during SSR edge routing create edge latency and exhaust query limits.
+   - *Logic*: Implemented `getTenantBrandingByHostname` joining `custom_domains`, `org_branding`, and `tenant_settings`. Implemented in-memory edge memoization cache with 60s TTL, 15s negative TTL, and 500-entry LRU cap. Added `isCanonicalHostname` to short-circuit platform domains (`sophia.agencyos.network`, `localhost`, `*.workers.dev`) with zero database roundtrips. Added `invalidateTenantBrandingCache` for instant cache invalidation upon mutations.
+
+6. **Hostname-to-Tenant Edge Router (`src/tree/custom-domains/hostname-resolver.ts`)**:
+   - *Observation 1.1*: Incoming requests require normalized hostname resolution, canonical domain bypass, and tenant routing headers (`x-tenant-org-id`, `x-custom-domain`, `x-whitelabel-active`).
+   - *Logic*: Implemented `normalizeHostname`, `isInternalOrCanonicalHostname`, `extractHostname`, `resolveTenantFromHostname`, and `injectTenantRoutingHeaders`.
+
+7. **White-Label Email Styler & Sender (`src/tree/branding/email-styler.ts` & `src/tree/email/sender.ts`)**:
+   - *Observation 1.1*: Transactional notifications must be styled with agency logo, typography, primary color buttons, custom support email, and unbranded legal footers, falling back to a neutral unbranded bar with zero vendor leakage.
+   - *Logic*: Implemented `formatWhiteLabelEmail`, `formatWhiteLabelPlainText`, `escapeHtml`, `getContrastTextColor`, and `wrapWithAgencyBranding` (PROJECT.md:70). Updated `src/tree/email/sender.ts` with `branding` parameter, formatting dynamic `from` and `replyTo` addresses. Updated `src/land/billing/email/tenant-branding-resolver.ts` with 100% backward compatibility for existing callers.
+
+8. **Server Actions with MASTER Tier Gating (`src/land/admin/custom-domain-actions.ts`)**:
+   - *Observation 1.1*: Custom domains are an enterprise feature gated to MASTER tier lifetime license ($4,999).
+   - *Logic*: Implemented `registerCustomDomainAction`, `verifyCustomDomainStatusAction`, `deleteCustomDomainAction`, and `listCustomDomainsAction`. Validates hostname using strict RFC 1035/1123 regex; verifies authentication; ensures caller is organization owner/admin (or platform admin); checks user and organization subscription tier for `MASTER`.
+
+9. **Forest Layer Theme Injector & Context (`src/forest/theme/`)**:
+   - *Observation 1.1*: SSR theme variable injection requires a Server Component rendering `<style id="whitelabel-brand-theme" nonce={nonce}>` to prevent FOUC, and a Client Provider for UI components.
+   - *Logic*: Implemented `WhiteLabelThemeStyle` and `WhiteLabelBrandProvider` / `useWhiteLabelBrand()`.
+
+10. **Test Coverage & Verification (Observations 1.2 to 1.5)**:
+    - *Logic*: Built 4 unit and integration test suites in `src/__tests__/unit/enterprise/` and `src/__tests__/integration/enterprise/`. Verified against the comprehensive 33-test E2E suite in `src/__tests__/e2e/enterprise/custom-domains-whitelabel.e2e.test.ts`. 100% pass rate achieved with 0 TypeScript errors and 0 layer violations.
 
 ---
 
 ## 3. Caveats
 
-- In the local test sandbox, Cloudflare R2 bindings (`VIDEO_BUCKET` / `STORAGE_BUCKET`) are simulated or fall back to mock handlers when running unit tests. In production Cloudflare Workers environment, bindings are injected globally via `globalThis.VIDEO_BUCKET` or `env.VIDEO_BUCKET`.
-- An unrelated TypeScript error exists in `src/forest/inngest/functions/publish-execute.ts:19` (`alreadyClaimed`), which is owned and currently modified by Worker M2 (publishing worker). In accordance with the file boundary rule, Worker M1 did not modify that file.
+1. **Cloudflare SaaS Zone Credentials in Production**:
+   In local development and automated CI tests, the service operates in mock mode (returning deterministic mock hostnames and DCV records). In production, Cloudflare credentials (`CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN`) must be provisioned in Cloudflare Workers secrets via `wrangler secret put`.
+2. **Worker Isolate Edge Memoization**:
+   The in-memory cache (`Map`) in `hostname-resolver.ts` and `org-branding-repo.ts` resides in the Cloudflare Worker isolate. When a worker isolate recycles or when traffic hits a new Cloudflare edge PoP, the first request will execute a single D1 query and cache the result for 60 seconds. This is standard edge caching behavior.
+3. **Email Deliverability on Vanity Domains**:
+   Sending directly from custom domains (e.g., `noreply@myagency.com`) via Resend requires the domain's SPF/DKIM records to be verified in Resend. If unverified, the sender dynamically falls back to `Agency Name <noreply@sophia.agencyos.network>` with `Reply-To: support@myagency.com` to guarantee 100% email deliverability.
 
 ---
 
 ## 4. Conclusion
 
-Milestone 1 (M1: Next-Gen Multi-Model AI Video Generation Pipeline - Phase 16 / R2) is completely implemented and verified with genuine logic:
-- Multi-Track Orchestrator coordinates 4 distinct tracks with true concurrency for Tracks 2 & 3, graceful failure isolation, and Cloudflare R2 asset vaulting.
-- Unified Provider Factory supports Fal, Kling, Hunyuan, Replicate, ElevenLabs, and other multi-modal providers without throwing unsupported provider errors.
-- Preflight validation evaluates 7 composite gates including MCU balance, $5.00 spike protection, AES-256-GCM BYOK decryption, and multi-track capability matching.
-- Studio UI wizard has zero fake `setTimeout` mocks and is wired to genuine server actions and live polling.
-- 100% of tests pass (284/284 tests across 16 test files), and 4-layer architecture boundaries are strictly preserved.
+Milestone 1 is complete, verified, and ready for integration. All 12 requested deliverables have been implemented to canonical enterprise production standards:
+- Migration `0276` defines `custom_domains` cleanly with idempotency pragmas.
+- Verification service drives the full Cloudflare for SaaS status lifecycle (`pending_validation`, `pending_deployment`, `active`, `error`).
+- Theme resolver generates WCAG 2.1 AA compliant CSS variables with zero FOUC.
+- Hostname-to-tenant edge router correctly maps hostnames to tenant branding with in-memory memoization.
+- White-label transactional email formatter produces agency-branded headers, footers, and signatures with clean neutral fallbacks.
+- 98/98 tests pass across unit, integration, and E2E suites.
+- 0 TypeScript compilation errors (`npm run type-check`).
+- 0 layer boundary violations (`bash scripts/check-layer-boundaries.sh`).
 
 ---
 
@@ -89,23 +161,49 @@ Milestone 1 (M1: Next-Gen Multi-Model AI Video Generation Pipeline - Phase 16 / 
 
 To independently verify the implementation:
 
-1. **Run Unit & Integration Tests for M1**:
+1. **Run Enterprise Unit & Integration Test Suites**:
    ```bash
-   cd apps/sophia-ai-factory
-   PATH="/opt/homebrew/bin:$PATH" /opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run src/forest/mission/__tests__/ src/tree/mission/__tests__/ src/forest/ai/__tests__/ src/components/missions/__tests__/
+   cd /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory
+   node ./node_modules/vitest/vitest.mjs run src/__tests__/unit/enterprise/ src/__tests__/integration/enterprise/
    ```
-   *Expected Output*: 16 test files passed, 284 passed (0 failed).
+   *Expected Result*: 4 test files passed, 65 tests passed (100%).
 
-2. **Run 4-Layer Architecture Boundary Check**:
+2. **Run Enterprise E2E Test Suite**:
    ```bash
-   cd apps/sophia-ai-factory
+   cd /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory
+   node ./node_modules/vitest/vitest.mjs run src/__tests__/e2e/enterprise/custom-domains-whitelabel.e2e.test.ts
+   ```
+   *Expected Result*: 1 test file passed, 33 tests passed (100%).
+
+3. **Verify 4-Layer Architecture Compliance**:
+   ```bash
+   cd /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory
    bash scripts/check-layer-boundaries.sh
    ```
-   *Expected Output*: "✅ All layer boundaries clean", exit code 0.
+   *Expected Result*: `✅ All layer boundaries clean` (Exit code 0).
 
-3. **Inspect Modified Source Files**:
-   - `apps/sophia-ai-factory/src/forest/ai/provider-factory.ts`
-   - `apps/sophia-ai-factory/src/forest/mission/multi-track-orchestrator.ts`
-   - `apps/sophia-ai-factory/src/tree/mission/preflight-check.ts`
-   - `apps/sophia-ai-factory/src/tree/mission/types.ts`
-   - `apps/sophia-ai-factory/src/forest/mission/__tests__/preflight-check.test.ts`
+4. **Verify TypeScript Typecheck**:
+   ```bash
+   cd /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory
+   node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit
+   ```
+   *Expected Result*: Clean output with 0 errors (Exit code 0).
+
+5. **Inspect Created Files**:
+   - `apps/sophia-ai-factory/migrations/0276_enterprise_scale_foundations.sql`
+   - `apps/sophia-ai-factory/src/seed/types/custom-domains.ts`
+   - `apps/sophia-ai-factory/src/seed/types/white-label-branding.ts`
+   - `apps/sophia-ai-factory/src/tree/custom-domains/verification-service.ts`
+   - `apps/sophia-ai-factory/src/tree/custom-domains/hostname-resolver.ts`
+   - `apps/sophia-ai-factory/src/tree/branding/theme-resolver.ts`
+   - `apps/sophia-ai-factory/src/tree/branding/org-branding-repo.ts`
+   - `apps/sophia-ai-factory/src/tree/branding/email-styler.ts`
+   - `apps/sophia-ai-factory/src/tree/email/sender.ts`
+   - `apps/sophia-ai-factory/src/land/billing/email/tenant-branding-resolver.ts`
+   - `apps/sophia-ai-factory/src/land/admin/custom-domain-actions.ts`
+   - `apps/sophia-ai-factory/src/forest/theme/white-label-theme-style.tsx`
+   - `apps/sophia-ai-factory/src/forest/theme/white-label-context.tsx`
+   - `apps/sophia-ai-factory/src/__tests__/unit/enterprise/custom-domains.test.ts`
+   - `apps/sophia-ai-factory/src/__tests__/unit/enterprise/theme-resolver.test.ts`
+   - `apps/sophia-ai-factory/src/__tests__/unit/enterprise/email-styler.test.ts`
+   - `apps/sophia-ai-factory/src/__tests__/integration/enterprise/custom-domains-integration.test.ts`

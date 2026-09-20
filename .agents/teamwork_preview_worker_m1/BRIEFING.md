@@ -1,7 +1,7 @@
-# BRIEFING — 2026-09-19T16:57:45Z
+# BRIEFING — 2026-09-20T04:56:00Z
 
 ## Mission
-Implement Milestone 1 (M1: Next-Gen Multi-Model AI Video Generation Pipeline - Phase 16 / R2) covering multi-track orchestration, provider factory unification, 7-gate preflight validation, tenant R2 vaulting, and first-run-wizard real integration.
+Implement Milestone 1 (Enterprise White-Label & Custom Domain Engine) - D1 migration 0276, Cloudflare for SaaS verification lifecycle, dynamic theme resolver, hostname edge routing, and white-label transactional email formatting.
 
 ## 🔒 My Identity
 - Archetype: teamwork_preview_worker_m1
@@ -9,50 +9,77 @@ Implement Milestone 1 (M1: Next-Gen Multi-Model AI Video Generation Pipeline - P
 - Working directory: /Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m1
 - Original parent: 462719b1-95d2-4d1a-8ebb-6e6e29866e0f
 - Milestone: M1: Next-Gen Multi-Model AI Video Generation Pipeline - Phase 16 / R2
+- Updated parent: 78b5382f-0b81-4402-ad59-b06284d61c09
+- Active Milestone: Milestone 1: Enterprise White-Label & Custom Domain Engine (MASTER Tier)
 
 ## 🔒 Key Constraints
 - DO NOT CHEAT. All implementations must be genuine.
 - Exclusively own specified files.
 - Follow CF-direct deploy, no-console, no-any, canonical imports.
 - Pass vitest & type-check.
+- Strict 4-layer architecture compliance: seed -> tree -> forest -> land. Zero cross-layer violations.
+- BypassSandbox: true for commands executing node/npm.
 
 ## Current Parent
-- Conversation ID: 462719b1-95d2-4d1a-8ebb-6e6e29866e0f
-- Updated: not yet
+- Conversation ID: 78b5382f-0b81-4402-ad59-b06284d61c09
+- Updated: 2026-09-20T04:56:00Z
 
 ## Task Summary
-- **What to build**: Next-Gen Multi-Model AI Video Generation Pipeline (Multi-track orchestrator, provider factory, composite preflight check, tenant R2 vaulting, Studio UI first-run-wizard).
-- **Success criteria**: Genuine 4-track orchestration (concurrent tracks 2 & 3, join at 4), video provider factory unification, 7-gate composite preflight validation, tenant-scoped R2 vaulting, real wizard progression, passing tests and clean type check.
-- **Interface contracts**: PROJECT.md, apps/sophia-ai-factory/CLAUDE.md
-- **Code layout**: apps/sophia-ai-factory/src/
+- **What to build**: Enterprise White-Label & Custom Domain Engine (custom_domains table, Cloudflare for SaaS verification service, dynamic theme CSS variable resolver with WCAG AA compliance, hostname-to-tenant edge router, white-label transactional email formatter and sender integration, server actions for domain registration/verification/deletion, theme injection and context components).
+- **Success criteria**:
+  1. Migration 0276 created and valid.
+  2. All types in seed/types/custom-domains.ts & white-label-branding.ts.
+  3. Verification service with state transitions, mock fallback, D1 CRUD.
+  4. Theme resolver with WCAG 2.1 AA luminance & Tailwind v4 tokens.
+  5. Org branding repo enhanced with getTenantBrandingByHostname and memoization.
+  6. Hostname resolver and email styler implemented.
+  7. Sender & tenant branding resolver updated.
+  8. Server actions implemented.
+  9. Theme style and context components created.
+  10. Full unit, integration, and E2E test coverage.
+  11. Passing vitest (98/98 tests pass), type-check (0 errors), check-layer-boundaries (0 violations).
+- **Interface contracts**: PROJECT.md, Explorer handoffs m1_1, m1_2, m1_3
+- **Code layout**: apps/sophia-ai-factory/
 
 ## Key Decisions Made
-- Unify Video & Multi-modal Provider Factory: Implemented `KlingVideoClient` (with circuit breaker) and `HunyuanVideoClient` conforming to `IVideoRenderingProvider`. Added `KlingVideoAdapter`, `HunyuanVideoAdapter`, and `GenericNonTextAdapter` so standard non-text providers do not throw "Unsupported provider".
-- Integrated explicit `videoProviderChoice` in `buildMultiTrackProviders` and `MultiTrackExecutionOptions`.
-- Added tenant-scoped Cloudflare R2 vaulting for Track 3 visual frames and Track 4 composited video to `VIDEO_BUCKET` / `STORAGE_BUCKET` using key format `tenants/${tenantId}/missions/${missionId}/assets/...` and indexed in `content_assets`.
-- Enhanced Composite 7-Gate Preflight: Validates composite `requiredCapabilities`, $5.00 single-mission cost spike guard (`MAX_SINGLE_MISSION_COST_CENTS = 500`), MCU balance, and AES-256-GCM BYOK decryption verification.
-- Verified Studio UI First-Run Wizard: Live multi-track execution and polling status verified with 0 fake `setTimeout` mocks.
+- In-memory edge memoization: Map with 60s TTL, 15s negative TTL, 500 entry LRU cap in hostname-resolver and org-branding-repo to eliminate edge D1 saturation.
+- Pure WCAG 2.1 AA relative luminance calculation for contrast foreground selection (#FFFFFF vs #08090D) across all brand palettes.
+- Robust deterministic mock fallback in verification service when Cloudflare credentials are absent for automated testing and CI.
+- Strict sanitization of all tenant inputs to prevent CSS or HTML injection attacks in themes and emails.
+- Preserved backward compatibility in `tenant-branding-resolver.ts` returning exact 3-property shape when D1 is unavailable.
 
 ## Change Tracker
-- **Files modified**:
-  - `apps/sophia-ai-factory/src/forest/ai/provider-factory.ts` — Kling & Hunyuan clients/adapters, non-text provider handling, videoProviderChoice
-  - `apps/sophia-ai-factory/src/forest/mission/multi-track-orchestrator.ts` — R2 asset vaulting for frames and video, video choice dispatch
-  - `apps/sophia-ai-factory/src/tree/mission/preflight-check.ts` — Extended provider capabilities, AES-256-GCM BYOK key decryption validation
-  - `apps/sophia-ai-factory/src/tree/mission/types.ts` — Added provider?: string to MultiTrackVideoResult
-  - `apps/sophia-ai-factory/src/forest/mission/__tests__/preflight-check.test.ts` — Extended mock keys for multi-modal providers
-- **Build status**: PASS (284 tests passed across 16 test suites; tsc clean on all M1 files)
+- **Files modified/created**:
+  - `apps/sophia-ai-factory/migrations/0276_enterprise_scale_foundations.sql`
+  - `apps/sophia-ai-factory/src/seed/types/custom-domains.ts`
+  - `apps/sophia-ai-factory/src/seed/types/white-label-branding.ts`
+  - `apps/sophia-ai-factory/src/tree/custom-domains/verification-service.ts`
+  - `apps/sophia-ai-factory/src/tree/custom-domains/hostname-resolver.ts`
+  - `apps/sophia-ai-factory/src/tree/branding/theme-resolver.ts`
+  - `apps/sophia-ai-factory/src/tree/branding/org-branding-repo.ts`
+  - `apps/sophia-ai-factory/src/tree/branding/email-styler.ts`
+  - `apps/sophia-ai-factory/src/tree/email/sender.ts`
+  - `apps/sophia-ai-factory/src/land/billing/email/tenant-branding-resolver.ts`
+  - `apps/sophia-ai-factory/src/land/admin/custom-domain-actions.ts`
+  - `apps/sophia-ai-factory/src/forest/theme/white-label-theme-style.tsx`
+  - `apps/sophia-ai-factory/src/forest/theme/white-label-context.tsx`
+  - `apps/sophia-ai-factory/src/__tests__/unit/enterprise/custom-domains.test.ts`
+  - `apps/sophia-ai-factory/src/__tests__/unit/enterprise/theme-resolver.test.ts`
+  - `apps/sophia-ai-factory/src/__tests__/unit/enterprise/email-styler.test.ts`
+  - `apps/sophia-ai-factory/src/__tests__/integration/enterprise/custom-domains-integration.test.ts`
+- **Build status**: PASS (tsc --noEmit exits with code 0)
 - **Pending issues**: None
 
 ## Quality Status
-- **Build/test result**: PASS (16 test files passed, 284/284 tests passed)
-- **Lint status**: Clean; zero `:any` types introduced; 4-layer boundaries verified clean (`check-layer-boundaries.sh`)
-- **Tests added/modified**: `src/forest/mission/__tests__/preflight-check.test.ts`, verified `src/forest/mission/__tests__/multi-track-orchestrator.test.ts`, `src/tree/mission/__tests__/preflight-check.test.ts`, `src/components/missions/__tests__/first-run-wizard.test.tsx`
+- **Build/test result**: PASS (98/98 tests passed: 51 unit tests, 14 integration tests, 33 E2E tests)
+- **Lint status**: Clean; 0 layer violations (`scripts/check-layer-boundaries.sh` passed)
+- **Tests added/modified**: 4 new comprehensive test suites covering custom domains, theme resolution, email styling, and D1 integration
 
 ## Loaded Skills
-- none
+- cook: /Users/macbook/sophia-ai-factory/.agent/skills/cook/SKILL.md (Smart Feature Implementation)
 
 ## Artifact Index
 - DISPATCH.md — Assignment from parent
-- BRIEFING.md — Persistent situational awareness
+- BRIEFING.md — Situational awareness
 - progress.md — Heartbeat and progress tracking
-- handoff.md — Comprehensive 5-component handoff report
+- handoff.md — Final 5-component report

@@ -1,157 +1,368 @@
-# Milestone 1: Payments & Webhooks Security Review Report
+# Milestone 1 Remediation Final Review & Adversarial Audit Report
 
-**Review Date**: 2026-05-31
-**Assigned Agent**: `teamwork_preview_reviewer`
-**Working Directory**: `/Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_reviewer_m1_final_1/`
+- **Reviewer Agent**: `teamwork_preview_reviewer_m1_final_1`
+- **Archetype / Roles**: Reviewer & Adversarial Critic
+- **Working Directory**: `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_reviewer_m1_final_1/`
+- **Parent Conversation ID**: `78b5382f-0b81-4402-ad59-b06284d61c09`
+- **Target Specification**: `/Users/macbook/sophia-ai-factory/.agents/orchestrator_enterprise_scale/PROJECT.md`
+- **Remediation Report Reviewed**: `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m1_remediation/handoff.md`
+- **Date**: 2026-09-20T12:15:00+07:00
+- **Final Verdict**: **`APPROVE`**
 
 ---
 
-## Quality Review Summary
+## Review Summary
 
-**Verdict**: **APPROVE**
+**Verdict**: **`APPROVE`**  
+**Overall Risk Assessment**: **`LOW`**  
+**Integrity Assessment**: **`0 INTEGRITY VIOLATIONS DETECTED`** (No hardcoded test outputs, no facade implementations, no task-bypassing shortcuts, no fabricated logs, fully verified independent CLI execution).
 
-No integrity violations, cheat codes, or facade implementations were detected. All implementations are complete, robust, typecheck without warning, and pass their unit test suites cleanly.
+All 5 defects identified during Iteration 1 by Reviewer 1 (`teamwork_preview_reviewer_m1_1`), Reviewer 2 (`teamwork_preview_reviewer_m1_2`), and Challenger 2 (`teamwork_preview_challenger_m1_2`) have been thoroughly, genuinely, and defensively remediated. 100% of unit, integration, stress, and E2E test suites pass with zero errors (256/256 passed), TypeScript compiles with 0 errors, and layer boundary enforcement reports 0 architectural violations.
 
 ---
 
 ## 1. Observation
 
-We directly observed and verified the following:
-* **Files Under Review**:
-  * `apps/sophia-ai-factory/src/land/billing/nowpayments-ipn-handlers.ts`
-  * `apps/sophia-ai-factory/src/app/api/payos/ipn/route.ts`
-  * `apps/sophia-ai-factory/src/land/billing/__tests__/nowpayments-ipn-idempotency.test.ts`
-  * `apps/sophia-ai-factory/src/app/api/payos/ipn/__tests__/route.test.ts`
+Direct code inspection and independent terminal execution of all mandatory gate commands across `apps/sophia-ai-factory` yielded the following verified facts:
 
-* **Typechecking command and output**:
-  Command executed: `npm run ci:typecheck` in `/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory`
+### 1.1 Mandatory Verification Command Results
+
+1. **Enterprise Unit and Integration Suites**:
+   - Command:
+     ```bash
+     /opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run src/__tests__/unit/enterprise/ src/__tests__/integration/enterprise/
+     ```
+   - Verbatim Output:
+     ```
+     ✓ src/__tests__/unit/enterprise/theme-resolver.test.ts (16 tests)
+     ✓ src/__tests__/unit/enterprise/email-styler.test.ts (15 tests)
+     ✓ src/__tests__/integration/enterprise/custom-domains-integration.test.ts (14 tests)
+     ✓ src/__tests__/integration/enterprise/custom-domains-stress.test.ts (27 tests)
+     ✓ src/__tests__/unit/enterprise/custom-domains.test.ts (24 tests)
+     ✓ src/__tests__/integration/enterprise/branding-stress.test.ts (23 tests)
+
+     Test Files  6 passed (6)
+          Tests  119 passed (119)
+       Duration  3.11s
+     ```
+   - Status: **PASS (119/119 passed, 0 failed)**.
+
+2. **Enterprise E2E Suites**:
+   - Command:
+     ```bash
+     /opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run src/__tests__/e2e/enterprise/
+     ```
+   - Verbatim Output:
+     ```
+     ✓ src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts (33 tests) 22ms
+     ✓ src/__tests__/e2e/enterprise/custom-domains-whitelabel.e2e.test.ts (33 tests) 22ms
+     ✓ src/__tests__/e2e/enterprise/organizations-rbac.e2e.test.ts (38 tests) 39ms
+     ✓ src/__tests__/e2e/enterprise/outbound-webhooks.e2e.test.ts (33 tests) 40ms
+
+     Test Files  4 passed (4)
+          Tests  137 passed (137)
+       Duration  924ms
+     ```
+   - Status: **PASS (137/137 passed, 0 failed)**.
+
+3. **TypeScript Typecheck**:
+   - Command:
+     ```bash
+     /opt/homebrew/bin/node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit
+     ```
+   - Verbatim Output: Exited with code `0`. Stdout/Stderr completely empty.
+   - Status: **PASS (0 compilation errors)**.
+
+4. **Canonical 4-Layer Architecture Gate**:
+   - Command:
+     ```bash
+     bash scripts/check-layer-boundaries.sh
+     ```
+   - Verbatim Output:
+     ```
+     🔍 Checking layer boundaries...
+     ✅ All layer boundaries clean
+     ```
+   - Status: **PASS (0 layer violations)**.
+
+---
+
+### 1.2 Verbatim Inspection of Remediated Source Files
+
+#### Finding 1: CSS `<style>` Breakout / Stored XSS Mitigation
+- **File**: `apps/sophia-ai-factory/src/tree/branding/theme-resolver.ts:248-265`
+  ```typescript
+  const sanitizeCssVarValue = (val: string): string => {
+    return val
+      .replace(/<\/style/gi, '')
+      .replace(/[<>";{}\\]/g, '');
+  };
+
+  if (branding?.agencyName) {
+    // Sanitize string to prevent CSS escape breakout and SSR HTML style tag breakout
+    vars['--brand-agency-name'] = `"${sanitizeCssVarValue(branding.agencyName)}"`;
+  }
+  if (branding?.logoUrl) {
+    vars['--brand-logo-url'] = `url("${sanitizeCssVarValue(branding.logoUrl)}")`;
+  }
+  if (branding?.faviconUrl) {
+    vars['--brand-favicon-url'] = `url("${sanitizeCssVarValue(branding.faviconUrl)}")`;
+  }
   ```
-  > sophia-ai-factory@0.1.0 ci:typecheck
-  > tsc --noEmit
+- **Defense-in-depth in Component**: `apps/sophia-ai-factory/src/forest/theme/white-label-theme-style.tsx:21-29`
+  ```tsx
+  export function WhiteLabelThemeStyle({ themeCss, nonce }: WhiteLabelThemeStyleProps) {
+    if (!themeCss) return null;
+
+    // Defensively escape any </style sequences to prevent SSR HTML style tag breakout
+    const sanitizedCss = themeCss.replace(/<\/style/gi, '<\\/style');
+
+    return (
+      <style
+        id="whitelabel-brand-theme"
+        nonce={nonce}
+        dangerouslySetInnerHTML={{ __html: sanitizedCss }}
+      />
+    );
+  }
   ```
-  *Result*: Compilation completed successfully with exit code `0` (no errors).
+- *Observation*: `<` and `>` are completely stripped from CSS variable strings, and `</style` (case-insensitive) is removed. In addition, the SSR React component defensively escapes any residual `</style` into `<\\/style`, rendering stored XSS impossible.
 
-* **Unit Testing command and output**:
-  Command executed: `npx vitest run src/land/billing/__tests__/ src/app/api/payos/ipn/__tests__/` in `/Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory`
+#### Finding 2: Regex Replacement Token (`$`, `$&`, `$1`) DOM Corruption Mitigation
+- **File**: `apps/sophia-ai-factory/src/tree/branding/email-styler.ts:140-147`
+  ```typescript
+  if (styledBody.includes('<body') && styledBody.includes('</body>')) {
+    let doc = styledBody;
+    // Inject header after <body> opening
+    doc = doc.replace(/(<body[^>]*>)/i, (match) => `${match}\n${headerHtml}`);
+    // Inject footer before </body> closing
+    doc = doc.replace(/<\/body>/i, (match) => `\n${footerHtml}\n${match}`);
+    return doc;
+  }
   ```
-  RUN  v4.1.6 /Users/macbook/projects/sophia-ai-factory/apps/sophia-ai-factory
-
-  ✓ src/land/billing/__tests__/nowpayments-ipn-idempotency.test.ts (8 tests) 14ms
-  ✓ src/land/billing/__tests__/onboarding-ipn-trigger.test.ts (5 tests) 4ms
-  ✓ src/land/billing/__tests__/tier-change-provisioner.test.ts (6 tests) 6ms
-  ✓ src/app/api/payos/ipn/__tests__/route.test.ts (8 tests) 14ms
-  ✓ src/land/billing/__tests__/nowpayments-ipn-one-time.test.ts (14 tests) 8ms
-  ✓ src/land/billing/__tests__/nowpayments-ipn-dispatch.test.ts (18 tests) 8ms
-  ✓ src/land/billing/__tests__/nowpayments-ipn-atomic-upgrade.test.ts (4 tests) 9ms
-  ✓ src/land/billing/__tests__/tier-transition-matrix.test.ts (16 tests) 20ms
-
-  Test Files  8 passed | 1 skipped (9)
-       Tests  79 passed | 31 skipped (110)
+- **File**: `apps/sophia-ai-factory/src/tree/branding/email-styler.ts:300-316`
+  ```typescript
+  output = output.replace(
+    /background:\s*linear-gradient\([^)]+\)/gi,
+    () => `background-color:${primaryColor}`
+  );
+  output = output.replace(/#7c3aed/gi, () => primaryColor);
   ```
-  *Result*: 79 tests passed, 0 failed.
+- **File**: `apps/sophia-ai-factory/src/land/billing/email/tenant-branding-resolver.ts:149-152`
+  ```typescript
+  return html.includes('</body>')
+    ? html.replace('</body>', () => `${footerHtml}</body>`)
+    : html + footerHtml;
+  ```
+- *Observation*: All instances of `String.prototype.replace(regex, str)` using dynamic variables have been converted to replacer functions `(match) => ...` or `() => ...`. JavaScript's regex engine therefore does not parse `$1`, `$&`, `$'` sequences, eliminating DOM corruption when agency names, slogans, or pricing contain `$`.
 
-* **NOWPayments IPN Locking / Idempotency**:
-  * Line 38 of `nowpayments-ipn-handlers.ts` uses `.insert()` instead of upsert:
-    ```typescript
-    const { error: insertError } = await db.from('payment_events').insert({
-      event_id: eventId,
-      ...
-    })
-    ```
-  * Lines 86-90 releases lock on execution catch block:
-    ```typescript
-    // 3. Release the lock on failure to enable retries
-    try {
-      await db.from('payment_events').delete().eq('event_id', eventId)
-    } catch (delErr) { ... }
-    ```
+#### Finding 3: RFC 1035/1123 Hostname Validation & Platform Domain Hardening
+- **File**: `apps/sophia-ai-factory/src/land/admin/custom-domain-actions.ts:38-74`
+  ```typescript
+  const HOSTNAME_REGEX = /^(?!-)(?:(?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$/i;
+  const FORBIDDEN_DOMAINS = new Set([
+    'sophia.agencyos.network',
+    'agencyos.network',
+    'localhost',
+    'workers.dev',
+    'pages.dev',
+  ]);
 
-* **PayOS Webhook Signature & Lock Release**:
-  * Line 55 of `route.ts` verifies raw body bytes against signature:
-    ```typescript
-    const isValid = await verifyPayOsWebhook(rawBody, signature, PAYOS_CHECKSUM_KEY)
-    ```
-  * Line 65 of `route.ts` atomically locks the event:
-    ```typescript
-    const { error: insertError } = await db.from('payos_events').insert({ ... })
-    ```
-  * Line 244 of `route.ts` deletes the lock on catch/failure block:
-    ```typescript
-    try {
-      await db.from('payos_events').delete().eq('event_id', eventId)
-    } catch (delErr) { ... }
-    ```
-  * Line 161 of `route.ts` verifies amount match before executing:
-    ```typescript
-    const expectedVndAmount = getPayOsTierConfig(tier).vndAmount
-    if (amount !== expectedVndAmount) { ... }
-    ```
+  export function validateHostname(hostname: string): Result<string, CustomDomainError> {
+    const normalized = hostname.trim().toLowerCase();
+
+    if (!normalized || normalized.length < 4 || normalized.length > 253) {
+      return failure({
+        code: 'INVALID_HOSTNAME',
+        message: 'Hostname length must be between 4 and 253 characters',
+      });
+    }
+
+    // Check forbidden/reserved platform domains first so reserved names like localhost fail with appropriate error
+    for (const forbidden of FORBIDDEN_DOMAINS) {
+      if (normalized === forbidden || normalized.endsWith(`.${forbidden}`)) {
+        return failure({
+          code: 'INVALID_HOSTNAME',
+          message: 'Cannot register root platform domains or internal reserved hostnames',
+        });
+      }
+    }
+
+    if (!HOSTNAME_REGEX.test(normalized)) {
+      return failure({
+        code: 'INVALID_HOSTNAME',
+        message: 'Invalid hostname format. Must be a valid Fully Qualified Domain Name (e.g., portal.myagency.com)',
+      });
+    }
+
+    return success(normalized);
+  }
+  ```
+- **File**: `apps/sophia-ai-factory/src/tree/custom-domains/verification-service.ts:115-124`
+  ```typescript
+  if (cfHostStatus === 'blocked' || rawSslStatus === 'error' || rawSslStatus === 'timed_out' || rawSslStatus === 'revoked') {
+    sslStatus = rawSslStatus === 'revoked' ? 'revoked' : 'error';
+    verificationStatus = rawSslStatus === 'revoked' ? 'revoked' : 'failed';
+    if (errors.length === 0) {
+      errors.push(
+        cfHostStatus === 'blocked'
+          ? 'Hostname is blocked by Cloudflare'
+          : `SSL validation failed with status: ${rawSslStatus}`
+      );
+    }
+  }
+  ```
+- *Observation*:
+  1. `HOSTNAME_REGEX` enforces lookarounds `(?!-)` and `(?<!-)\.` on every individual label, rejecting `portal.example-.com` and `portal.-bad.com`.
+  2. The TLD is restricted to alphabetic characters `[a-zA-Z]{2,63}$`, rejecting trailing hyphens.
+  3. `FORBIDDEN_DOMAINS` includes `pages.dev` and is evaluated before `HOSTNAME_REGEX`, ensuring single-label reserved names (`localhost`) yield the clear platform domain error message.
+  4. `cfHostStatus === 'blocked'` is mapped explicitly to `sslStatus: 'error'` and `verificationStatus: 'failed'`.
+
+#### Finding 4: Unrestricted Protocol / URI Scheme in `unsubscribeUrl`
+- **File**: `apps/sophia-ai-factory/src/tree/branding/email-styler.ts:66-70 & 272-278`
+  ```typescript
+  export function isValidHttpUrl(url: string | null | undefined): boolean {
+    if (!url) return false;
+    const trimmed = url.trim();
+    return /^https?:\/\//i.test(trimmed);
+  }
+  ...
+  // Unbranded unsubscribe link (strictly validated http:// or https://)
+  if (unsubscribeUrl && isValidHttpUrl(unsubscribeUrl)) {
+    rows.push(
+      `<p style="font-size:11px;color:#71717a;margin:12px 0 0 0;text-align:center;">
+        <a href="${escapeHtml(unsubscribeUrl.trim())}" style="color:#71717a;text-decoration:underline;">${unsubscribeLabel}</a>
+      </p>`
+    );
+  }
+  ```
+- *Observation*: `isValidHttpUrl` strictly enforces `^https?:\/\/`, rejecting `javascript:`, `data:`, and relative paths. Non-http(s) values are safely suppressed from email output.
+
+#### Finding 5: WCAG 2.1 AA Relative Luminance & Hex Shorthand Expansion
+- **File**: `apps/sophia-ai-factory/src/tree/branding/email-styler.ts:93-106`
+  ```typescript
+  export function getContrastTextColor(hexColor: string): string {
+    const normalized = normalizeHexColor(hexColor, DEFAULT_PRIMARY_COLOR);
+    const rgb = hexToRgb(normalized);
+    const luminance = calculateRelativeLuminance(rgb);
+
+    // Contrast ratio with white (luminance 1.0): (1.0 + 0.05) / (luminance + 0.05)
+    const contrastRatioWithWhite = (1.0 + 0.05) / (luminance + 0.05);
+
+    // Backgrounds with luminance <= 0.25 (or contrast with white >= 4.0:1) maintain high contrast with white.
+    // Brighter backgrounds (lime #00FF00, emerald #10B981, yellow, cyan) select dark text #09090b.
+    const isLightForeground = contrastRatioWithWhite >= 4.0 || luminance <= 0.25;
+
+    return isLightForeground ? '#ffffff' : '#09090b';
+  }
+  ```
+- *Observation*:
+  1. `getContrastTextColor` is harmonized with `theme-resolver.ts` using W3C relative luminance ($L = 0.2126R + 0.7152G + 0.0722B$).
+  2. For `#00FF00` ($L = 0.7152$), dark text `#09090b` is selected with contrast ratio $\approx 14.5:1$ (exceeding WCAG AA 4.5:1).
+  3. For `#10B981` ($L = 0.3639$), dark text `#09090b` is selected with contrast ratio $\approx 7.5:1$.
+  4. 3-character hex `#0f0` is expanded by `normalizeHexColor` to `#00FF00`, providing uniform behavior across web and email styling.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Safety from Race Conditions (Idempotency)**: The change from `.upsert()` to `.insert()` makes the event reservation atomic. Because the database enforces a `UNIQUE` constraint on `payment_events.event_id` and a `PRIMARY KEY` on `payos_events.event_id`, only one concurrent insert request can succeed. Any subsequent/duplicate requests will result in an error (`UNIQUE constraint failed` / `Primary key violation`), which is caught and handled cleanly (either returning success for finished jobs or 409 conflict for currently running jobs).
-2. **Resilience & Fault Tolerance (Lock Release)**: If downstream payment processing throws an exception (e.g. database timeout, network issue, bad API state), the handlers correctly catch the error, log it, and perform a `DELETE` query to remove the reserved event row. This releases the lock so that the payment providers' automatic retries can succeed upon next delivery.
-3. **Underpayment Attack Prevention (Amount Check)**: The PayOS route queries the original `pending_orders` table to retrieve the exact subscription tier expected, looks up the static VND price via `getPayOsTierConfig`, and compares it directly against the IPN's actual received `amount`. This prevents underpayment attacks (e.g. a malicious user paying only 1,000 VND for a 4,975,000 VND tier).
-4. **Signature Integrity (Timing-Safe & Raw Body)**: PayOS signature checking is performed over the original `rawBody` string captured before any JSON parsing. This avoids JSON parser discrepancies (which could lead to signature bypass). The signature matches are verified via `timingSafeEqual` in `@/lib/webhooks/signature`, which executes in constant time to prevent timing side-channel attacks.
+1. **Integrity & Authenticity Check**:
+   - The implementation code across `src/tree/branding/`, `src/forest/theme/`, `src/land/admin/`, and `src/tree/custom-domains/` was inspected for hardcoded test checks, mock facades, or shortcuts.
+   - None were found. The fixes employ canonical mathematical algorithms (W3C relative luminance), standard RFC 1035/1123 regular expressions with lookarounds, defensive DOM escaping, and standard replacer functions.
+   - All 256 test cases across unit, integration, stress, and E2E suites were executed live in the local environment and passed.
+
+2. **Resolution of Finding 1 (Stored XSS / Style Breakout)**:
+   - *Premise*: Angle brackets `<` and `>` allowed `<style>` termination in SSR.
+   - *Remedy*: `sanitizeCssVarValue` strips `<` and `>` and removes `</style` sequences. `WhiteLabelThemeStyle` escapes `</style` to `<\\/style`.
+   - *Verification*: `theme-resolver.test.ts` and `branding-stress.test.ts` confirm that `<style>` breakout payloads render safely as benign CSS identifiers with no closing tags.
+
+3. **Resolution of Finding 2 (Regex Token Injection)**:
+   - *Premise*: `doc.replace(/(<body[^>]*>)/i, ...)` evaluated `$1`, `$&`, `$'` in dynamic brand strings.
+   - *Remedy*: Replaced with function replacers `(match) => ...`.
+   - *Verification*: `branding-stress.test.ts` test case "empirically reveals HTML corruption via regex replacement tokens ($&, $1)" passes cleanly without duplicate `<body>` tags.
+
+4. **Resolution of Finding 3 (Hostname Regex & Forbidden Domains)**:
+   - *Premise*: Hyphens on intermediate labels passed `HOSTNAME_REGEX`, and `pages.dev` was not restricted.
+   - *Remedy*: Lookarounds applied to all intermediate labels `(?:(?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+`, `pages.dev` added to `FORBIDDEN_DOMAINS`, and forbidden check prioritized over regex formatting check.
+   - *Verification*: `custom-domains-stress.test.ts` rejects `portal.example-.com` and returns reserved platform domain error for `localhost`.
+
+5. **Resolution of Finding 4 (Unsubscribe URL Scheme)**:
+   - *Premise*: `javascript:` URLs were rendered into `<a href="...">`.
+   - *Remedy*: `isValidHttpUrl` validates `^https?:\/\/`. Invalid URLs are omitted.
+   - *Verification*: `email-styler.test.ts` and `branding-stress.test.ts` confirm that `javascript:` links are rejected.
+
+6. **Resolution of Finding 5 (WCAG AA Contrast & Shorthand Hex)**:
+   - *Premise*: YIQ formula selected white text on lime green and emerald green with contrast < 3:1.
+   - *Remedy*: W3C relative luminance formula adopted from `theme-resolver.ts`, and `normalizeHexColor` expands 3-digit shorthand.
+   - *Verification*: `email-styler.test.ts` confirms `#00FF00`, `#10B981`, and `#0f0` select `#09090b` with >7:1 contrast.
+
+7. **Conclusion**:
+   - Every condition identified in the Iteration 1 rejection reports has been resolved. The codebase is secure, architecturally compliant, and fully verified.
 
 ---
 
 ## 3. Caveats
 
-* The locking mechanism depends entirely on the database schema enforcing `UNIQUE`/`PRIMARY KEY` constraints on the event ID columns. If the constraints are dropped manually, concurrency security is lost.
-* If the `DELETE` query itself fails inside the `catch` block (e.g., database node disconnects completely), a stale lock will remain. This would prevent subsequent retries from executing unless manual cleanup or an automated cleanup worker cleans up stuck processing entries. Given the low probability and availability of retries, this is an acceptable tradeoff.
+- **Mock Cloudflare API in Local Environment**: Local test executions run with deterministic in-memory mock responses for Cloudflare for SaaS API endpoints when `CLOUDFLARE_ZONE_ID` and `CLOUDFLARE_API_TOKEN` are unconfigured. The D1 persistence layer, state transitions, and server actions run against authentic SQLite databases (`DatabaseSync`).
+- No modifications were made to Milestones 2–5 or preexisting billing flows.
 
 ---
 
-## 4. Quality Review Findings
+## 4. Adversarial Challenge & Stress Test Results
 
-### [Verified Claims]
-- **Type safety** → verified via running `npm run ci:typecheck` → **PASS**
-- **Test suite execution** → verified via `npx vitest run src/land/billing/__tests__/ src/app/api/payos/ipn/__tests__/` → **PASS**
-- **Idempotency collision rejection** → verified via `nowpayments-ipn-idempotency.test.ts` and `route.test.ts` where duplicate events get rejected/skipped → **PASS**
-- **Lock release on exception** → verified via unit tests injecting exceptions and confirming event deleted → **PASS**
-
-### [Coverage Gaps]
-* No major gaps. Lock mechanisms and signature validations are fully verified.
-
-### [Unverified Items]
-* Direct execution against production SQLite/D1 database (we mock DB operations in unit tests, but SQL constraints are conceptually covered by SQLite runtime).
-
----
-
-## 5. Adversarial Review (Critic Challenge)
-
-**Overall Risk Assessment**: **LOW**
-
-### Challenges & Stress Tests
-
-#### [Medium] Phantom Lock Vulnerability
-* **Assumption challenged**: Assumes the `delete` command in the `catch` block will always succeed to release the lock.
-* **Attack scenario**: If the database crashes or becomes read-only midway through the transaction, the `delete` command fails. A stale `processed = 0` event is left behind. The payment provider retries the webhook, but the handler returns "Already processing" indefinitely.
-* **Blast radius**: The payment webhook gets stuck. The user's account isn't upgraded until manual intervention removes the stale lock.
-* **Mitigation**: Add a timestamp skew check. If `processed = 0` but the event's `created_at` timestamp is older than 15 minutes, allow the system to assume the previous process died, delete/overwrite the lock, and retry the processing.
-
-#### [Low] Amount Mismatch Price Inflation/Deflation
-* **Assumption challenged**: Assumes the static conversion mapping `USD_TO_VND` (default `25000`) is stable.
-* **Attack scenario**: If `USD_TO_VND` is updated in the configuration but existing pending orders were created under the old rate, the amount verification might reject valid payments.
-* **Blast radius**: User payment fails and lock is released, but order remains pending and must be recreated.
-* **Mitigation**: Persist the expected VND price inside the `pending_orders` table when the order is initially created rather than computing it dynamically on IPN arrival.
+| Attack Scenario | Test Input / Condition | Expected Behavior | Actual Behavior | Result |
+|---|---|---|---|---|
+| **SSR Style Tag Breakout** | `agencyName: 'Agency</style><script>alert(1)</script>'` | Strip `<>`, prevent `</style>` termination | Rendered inside quotes as `Agency scriptalert(1)/script` | **PASS** |
+| **Email DOM Corruption** | `agencyName: 'Apex $& Studio'` with full HTML body | Avoid evaluating `$&` as regex match | Header renders `Apex $&amp; Studio` without injecting `<body>` | **PASS** |
+| **Email URI XSS** | `unsubscribeUrl: 'javascript:alert(document.cookie)'` | Reject non-http(s) protocol | Unsubscribe link suppressed completely | **PASS** |
+| **Intermediate Hyphen Hostname** | `hostname: 'portal.example-.com'` | Reject invalid DNS label per RFC 1035 | Fails validation with `INVALID_HOSTNAME` | **PASS** |
+| **Reserved Domain Precedence** | `hostname: 'localhost'` | Specific platform domain error | Fails with `"Cannot register root platform domains..."` | **PASS** |
+| **Blocked Cloudflare Hostname** | Cloudflare status `'blocked'` | Map to error & failed | `sslStatus: 'error'`, `verificationStatus: 'failed'` | **PASS** |
+| **WCAG AA Lime Green** | `primaryColor: '#00FF00'` | Select dark text (`#09090b`) | Returns `#09090b`, contrast $\approx 14.5:1$ | **PASS** |
+| **WCAG AA Emerald Green** | `primaryColor: '#10B981'` | Select dark text (`#09090b`) | Returns `#09090b`, contrast $\approx 7.5:1$ | **PASS** |
+| **Shorthand Hex Color** | `primaryColor: '#0f0'` | Normalize to `#00FF00` | Normalized to `#00FF00` and dark text selected | **PASS** |
 
 ---
 
-## 6. Verification Method
+## 5. Integrity Audit
 
-To independently run verification, run:
-1. **Type Check**:
-   ```bash
-   cd apps/sophia-ai-factory
-   npm run ci:typecheck
-   ```
-2. **Unit Tests**:
-   ```bash
-   cd apps/sophia-ai-factory
-   npx vitest run src/land/billing/__tests__/ src/app/api/payos/ipn/__tests__/
-   ```
-   All 79 tests must pass.
+- [x] **No hardcoded test values in application code**: Inspected `theme-resolver.ts`, `email-styler.ts`, `custom-domain-actions.ts`, and `verification-service.ts`. All logic is generalized.
+- [x] **No dummy/facade implementations**: All functions execute genuine business logic and state transitions.
+- [x] **No bypassed gates**: TypeScript compiler, layer boundary checker, unit test runner, integration test runner, and E2E test runner were all executed directly via terminal commands.
+- [x] **No self-certifying work without independent verification**: Reviewer independently ran all test suites from the terminal and confirmed 100% pass rates.
+
+---
+
+## 6. Conclusion
+
+Milestone 1 (Enterprise White-Label & Custom Domain Engine) is thoroughly remediated, architecturally compliant with the canonical 4-layer hierarchy, robust against adversarial attacks, and 100% green across all automated verification gates.
+
+**Final Verdict**: **`APPROVE`**
+
+---
+
+## 7. Verification Method
+
+To independently reproduce this verification:
+
+```bash
+cd /Users/macbook/sophia-ai-factory/apps/sophia-ai-factory
+
+# 1. Run Unit & Integration Test Suites (119 tests)
+/opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run src/__tests__/unit/enterprise/ src/__tests__/integration/enterprise/
+
+# 2. Run Adversarial Stress Suites specifically (50 tests)
+/opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run src/__tests__/integration/enterprise/branding-stress.test.ts src/__tests__/integration/enterprise/custom-domains-stress.test.ts
+
+# 3. Run E2E Test Suites (137 tests)
+/opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run src/__tests__/e2e/enterprise/
+
+# 4. Run TypeScript Zero-Error Gate
+/opt/homebrew/bin/node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit
+
+# 5. Run Canonical Layer Boundary Gate
+bash scripts/check-layer-boundaries.sh
+```
+
+### Invalidation Conditions
+This approval is invalidated if any of the 5 verification commands fails, if `<style>` breakout is achievable via unsanitized characters, if regex token replacement corrupts email documents, or if any layer boundary violation is introduced.

@@ -1,7 +1,7 @@
-# BRIEFING — 2026-05-31T14:06:15+07:00
+# BRIEFING — 2026-09-20T12:15:00+07:00
 
 ## Mission
-Review the changes made by worker_m1_retry2 for Milestone 1: Payments & Webhooks Security, including NOWPayments IPN and PayOS IPN security implementations.
+Conduct a rigorous final verification review and adversarial challenge of Milestone 1 remediations (Enterprise White-Label & Custom Domain Engine).
 
 ## 🔒 My Identity
 - Archetype: reviewer and critic
@@ -10,46 +10,59 @@ Review the changes made by worker_m1_retry2 for Milestone 1: Payments & Webhooks
 - Original parent: fa4ccdba-2027-47c6-b690-4bf2f401a527
 - Milestone: Milestone 1: Payments & Webhooks Security
 - Instance: 1 of 1
+- Current Assignment: Milestone 1: Enterprise White-Label & Custom Domain Engine Remediations
+- Current Parent: 78b5382f-0b81-4402-ad59-b06284d61c09
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code.
 - Must verify via typechecking and running unit tests.
 - Check for integrity violations (hardcoded test results, facade implementations, etc.).
+- Active integrity inspection: reject shortcuts, fake passes, or bypasses.
 
 ## Current Parent
-- Conversation ID: fa4ccdba-2027-47c6-b690-4bf2f401a527
-- Updated: 2026-05-31T14:06:15+07:00
+- Conversation ID: 78b5382f-0b81-4402-ad59-b06284d61c09
+- Updated: 2026-09-20T12:15:00+07:00
 
 ## Review Scope
 - **Files to review**:
-  - apps/sophia-ai-factory/src/land/billing/nowpayments-ipn-handlers.ts
-  - apps/sophia-ai-factory/src/app/api/payos/ipn/route.ts
-  - apps/sophia-ai-factory/src/land/billing/__tests__/nowpayments-ipn-idempotency.test.ts
-  - apps/sophia-ai-factory/src/app/api/payos/ipn/__tests__/route.test.ts
-- **Interface contracts**: Correctness, completeness, robustness, and idempotency + signature checks.
-- **Review criteria**: No integrity violations, compile without errors, all tests pass, proper security handles.
+  - `src/tree/branding/theme-resolver.ts`
+  - `src/forest/theme/white-label-theme-style.tsx`
+  - `src/tree/branding/email-styler.ts`
+  - `src/land/billing/email/tenant-branding-resolver.ts`
+  - `src/land/admin/custom-domain-actions.ts`
+  - `src/tree/custom-domains/verification-service.ts`
+- **Interface contracts**: PROJECT.md Section 1 (Custom Domains & White-Label)
+- **Review criteria**: 0 integrity violations, 0 layer boundary errors, 0 type errors, 100% tests pass, complete resolution of all 5 defects from Reviewer 1, Reviewer 2, and Challenger 2.
 
 ## Key Decisions Made
-- Confirmed that build typecheck (npm run ci:typecheck) succeeds.
-- Verified that all unit tests in src/land/billing/__tests__/ and src/app/api/payos/ipn/__tests__/ pass without issue.
-- Investigated the signature validation, constant-time comparisons, amount verification, lock releases, and transaction batch operations.
+- Executed all 4 verification commands independently via terminal (119 unit/integration tests passed, 137 E2E tests passed, 0 typecheck errors, 0 layer boundary errors).
+- Tested adversarial stress scenarios: `<style>` breakout, regex `$` token interpretation, RFC hostname intermediate hyphen rejection, unsubscribe URL scheme validation, and WCAG AA relative luminance contrast.
+- Confirmed genuine, non-facade implementation across all 5 remediation targets.
+- Issued verdict: APPROVE.
 
 ## Artifact Index
-- /Users/macbook/projects/sophia-ai-factory/.agents/teamwork_preview_reviewer_m1_final_1/handoff.md — Handoff report and review verdict.
+- `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_reviewer_m1_final_1/handoff.md` — Final review report and verdict.
 
 ## Review Checklist
 - **Items reviewed**:
-  - apps/sophia-ai-factory/src/land/billing/nowpayments-ipn-handlers.ts
-  - apps/sophia-ai-factory/src/app/api/payos/ipn/route.ts
-  - apps/sophia-ai-factory/src/land/billing/__tests__/nowpayments-ipn-idempotency.test.ts
-  - apps/sophia-ai-factory/src/app/api/payos/ipn/__tests__/route.test.ts
+  - `src/tree/branding/theme-resolver.ts`
+  - `src/forest/theme/white-label-theme-style.tsx`
+  - `src/tree/branding/email-styler.ts`
+  - `src/land/billing/email/tenant-branding-resolver.ts`
+  - `src/land/admin/custom-domain-actions.ts`
+  - `src/tree/custom-domains/verification-service.ts`
+  - `src/__tests__/unit/enterprise/`
+  - `src/__tests__/integration/enterprise/`
+  - `src/__tests__/e2e/enterprise/`
 - **Verdict**: APPROVE
-- **Unverified claims**: None (Typecheck and tests are fully verified via CLI execution).
+- **Unverified claims**: None (All test commands, AST inspections, and stress cases independently verified).
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Signature validation bypass (securely rejected by `verifyInboundWebhook`).
-  - Concurrency lock collision / race condition (successfully protected by UNIQUE constraint insert and checks).
-  - Failure/exception recovery (lock released correctly by deleting reservation row, allowing retry).
-- **Vulnerabilities found**: None.
-- **Untested angles**: Database hardware/connection failure precisely when performing `delete` to release lock (would leave a phantom lock, mitigated by manual cleanup or automated event reconciliation job).
+  - Style tag breakout via `agencyName` / `logoUrl`: Defended by `sanitizeCssVarValue` + `replace(/<\/style/gi, '<\\/style')`.
+  - Regex replacement corruption via `$1`, `$&`, `$'`: Defended by replacer functions `(match) => ...`.
+  - Hostname injection with hyphens (`portal.example-.com`): Defended by tightened `HOSTNAME_REGEX` enforcing RFC 1035/1123 label lookarounds.
+  - Script execution via `unsubscribeUrl` (`javascript:`): Defended by `isValidHttpUrl` enforcing `^https?:\/\/`.
+  - Visual illegibility / WCAG AA failure on bright greens (`#00FF00`, `#10B981`): Defended by W3C relative luminance selecting dark text `#09090b`.
+- **Vulnerabilities found**: None remaining.
+- **Untested angles**: Live Cloudflare SaaS network edge (evaluated with deterministic mock API client, as expected in local test environments).
