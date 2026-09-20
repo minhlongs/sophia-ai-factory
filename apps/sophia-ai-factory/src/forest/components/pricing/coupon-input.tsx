@@ -114,12 +114,13 @@ export function CouponInput({ onDiscountApplied, onDiscountCleared, userId }: Co
   return (
     <>
       <div className="mx-auto max-w-md mb-10">
-        <label className="block text-sm font-medium text-muted-foreground mb-2 text-center">
+        <label htmlFor="coupon-code-input" className="block text-sm font-medium text-muted-foreground mb-2 text-center">
           {t("label")}
         </label>
 
         <div className="flex gap-2">
           <input
+            id="coupon-code-input"
             type="text"
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
@@ -127,6 +128,8 @@ export function CouponInput({ onDiscountApplied, onDiscountCleared, userId }: Co
             placeholder={tPromo("placeholder")}
             disabled={isApplied || status === "loading"}
             maxLength={32}
+            aria-invalid={status === "error" ? true : undefined}
+            aria-describedby={message ? "coupon-message" : undefined}
             className="flex-1 rounded-lg border border-border bg-muted px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-60 uppercase tracking-widest"
           />
 
@@ -150,6 +153,8 @@ export function CouponInput({ onDiscountApplied, onDiscountCleared, userId }: Co
 
         {message && (
           <p
+            id="coupon-message"
+            role={status === "error" ? "alert" : "status"}
             className={`mt-2 text-center text-xs font-medium ${
               status === "error" ? "text-red-400" : "text-emerald-400"
             }`}
@@ -291,21 +296,25 @@ function FreeRedemptionModal({ modal, onClose, tLabel: t }: FreeRedemptionModalP
             </div>
 
             <div>
-              <label className="block text-xs text-muted-foreground mb-1">{t("free_email_label")}</label>
+              <label htmlFor="free-redemption-email" className="block text-xs text-muted-foreground mb-1">{t("free_email_label")}</label>
               <input
+                id="free-redemption-email"
                 ref={emailRef}
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t("free_email_placeholder")}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? "free-redemption-error" : undefined}
                 className="w-full rounded-lg border border-border bg-muted px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs text-muted-foreground mb-1">{t("free_name_label")}</label>
+              <label htmlFor="free-redemption-name" className="block text-xs text-muted-foreground mb-1">{t("free_name_label")}</label>
               <input
+                id="free-redemption-name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -314,7 +323,7 @@ function FreeRedemptionModal({ modal, onClose, tLabel: t }: FreeRedemptionModalP
               />
             </div>
 
-            {error && <p className="text-xs text-red-400">{error}</p>}
+            {error && <p id="free-redemption-error" role="alert" className="text-xs text-red-400">{error}</p>}
 
             <button
               type="submit"

@@ -3047,6 +3047,7 @@
         "rejected": "Rejected"
       },
       "actions": {
+        "dismiss": "Dismiss",
         "runVerification": "Run 11-Point Verification",
         "runningVerification": "Executing Verification...",
         "runDrill": "Run DR Backup Drill",

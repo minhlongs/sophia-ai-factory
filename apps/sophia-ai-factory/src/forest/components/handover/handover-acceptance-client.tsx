@@ -616,6 +616,8 @@ export function HandoverAcceptanceClient({
                   <button
                     key={idx}
                     type="button"
+                    role="checkbox"
+                    aria-checked={checked}
                     onClick={() => handleCheckboxToggle(idx)}
                     className={cn(
                       'w-full text-left p-3 rounded-lg border transition-all flex items-start gap-3',
@@ -645,10 +647,11 @@ export function HandoverAcceptanceClient({
             {/* Signer Form Fields */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
               <div>
-                <label className="text-xs font-semibold text-foreground block mb-1.5">
+                <label htmlFor="signer-name-input" className="text-xs font-semibold text-foreground block mb-1.5">
                   {t('signOff.form.nameLabel')} <span className="text-destructive">*</span>
                 </label>
                 <input
+                  id="signer-name-input"
                   type="text"
                   required
                   value={signerName}
@@ -659,10 +662,11 @@ export function HandoverAcceptanceClient({
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-foreground block mb-1.5">
+                <label htmlFor="signer-role-input" className="text-xs font-semibold text-foreground block mb-1.5">
                   {t('signOff.form.roleLabel')} <span className="text-destructive">*</span>
                 </label>
                 <input
+                  id="signer-role-input"
                   type="text"
                   required
                   value={signerRole}
@@ -673,10 +677,11 @@ export function HandoverAcceptanceClient({
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-foreground block mb-1.5">
+                <label htmlFor="signer-email-input" className="text-xs font-semibold text-foreground block mb-1.5">
                   {t('signOff.form.emailLabel')} <span className="text-destructive">*</span>
                 </label>
                 <input
+                  id="signer-email-input"
                   type="email"
                   required
                   value={signerEmail}
@@ -690,6 +695,8 @@ export function HandoverAcceptanceClient({
             {/* Legal Certification Checkbox */}
             <button
               type="button"
+              role="checkbox"
+              aria-checked={legalConsent}
               onClick={() => setLegalConsent(!legalConsent)}
               className="w-full text-left p-3.5 rounded-lg bg-muted/40 border border-border flex items-start gap-3 cursor-pointer"
             >
@@ -740,6 +747,7 @@ export function HandoverAcceptanceClient({
               <button
                 type="button"
                 onClick={() => setShowFounderModal(false)}
+                aria-label={t('founder30.close') || 'Close'}
                 className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               >
                 <X className="w-5 h-5" />

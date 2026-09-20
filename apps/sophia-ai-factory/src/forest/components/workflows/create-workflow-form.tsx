@@ -79,13 +79,15 @@ export function CreateWorkflowForm({ onCancel, locale = 'en' }: Props) {
           rows={4}
           placeholder={label(WORKFLOW_LABELS.promptPlaceholder)}
           disabled={isPending}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? "workflow-prompt-error" : undefined}
           className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 resize-none"
           required
           minLength={10}
           maxLength={2000}
         />
         {error && (
-          <p className="mt-1 text-xs text-destructive">{error}</p>
+          <p id="workflow-prompt-error" role="alert" className="mt-1 text-xs text-destructive">{error}</p>
         )}
       </div>
 

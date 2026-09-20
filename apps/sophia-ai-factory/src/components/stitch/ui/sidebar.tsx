@@ -72,9 +72,9 @@ export function Sidebar({
         </div>
         {!collapsed && (
           <div>
-            <h1 className="font-headline-md text-headline-md text-primary font-bold truncate">
+            <span className="font-headline-md text-headline-md text-primary font-bold truncate">
               {brandName}
-            </h1>
+            </span>
             <p className="font-label-sm text-label-sm text-on-surface-variant truncate">
               {brandTagline}
             </p>

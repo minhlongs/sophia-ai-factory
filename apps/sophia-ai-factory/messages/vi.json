@@ -3047,6 +3047,7 @@
         "rejected": "Đã Từ Chối"
       },
       "actions": {
+        "dismiss": "Đóng",
         "runVerification": "Chạy Kiểm Tra 11 Điểm",
         "runningVerification": "Đang Thực Hiện Kiểm Tra...",
         "runDrill": "Diễn Tập Sao Lưu DR",

@@ -294,7 +294,7 @@ export function HandoverAdminConsoleClient({
       {exportNotice && (
         <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-medium flex items-center justify-between">
           <span>{exportNotice}</span>
-          <button type="button" onClick={() => setExportNotice(null)} className="p-1 hover:opacity-75">
+          <button type="button" onClick={() => setExportNotice(null)} aria-label={t('actions.dismiss') || 'Dismiss'} className="p-1 hover:opacity-75">
             <X className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -652,6 +652,7 @@ export function HandoverAdminConsoleClient({
               <button
                 type="button"
                 onClick={() => setSelectedRecord(null)}
+                aria-label={t('certModal.close') || 'Close inspection modal'}
                 className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               >
                 <X className="w-4 h-4" />

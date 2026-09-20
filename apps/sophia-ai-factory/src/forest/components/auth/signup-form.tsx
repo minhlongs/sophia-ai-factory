@@ -107,6 +107,7 @@ export function SignupForm({ t }: SignupFormProps) {
       {/* Error banner */}
       {error && (
         <div
+          id="signup-error"
           role="alert"
           className="rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3 text-sm text-red-400"
         >
@@ -147,6 +148,8 @@ export function SignupForm({ t }: SignupFormProps) {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={t.email_placeholder}
+            aria-invalid={error === t.error_email_exists ? true : undefined}
+            aria-describedby={error === t.error_email_exists ? "signup-error" : undefined}
             className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
           />
         </div>
@@ -167,6 +170,12 @@ export function SignupForm({ t }: SignupFormProps) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder={t.password_placeholder}
+            aria-invalid={
+              error === t.error_password_too_short || error === t.error_password_mismatch ? true : undefined
+            }
+            aria-describedby={
+              error === t.error_password_too_short || error === t.error_password_mismatch ? "signup-error" : undefined
+            }
             className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
           />
         </div>
@@ -186,6 +195,8 @@ export function SignupForm({ t }: SignupFormProps) {
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             placeholder={t.confirm_placeholder}
+            aria-invalid={error === t.error_password_mismatch ? true : undefined}
+            aria-describedby={error === t.error_password_mismatch ? "signup-error" : undefined}
             className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-violet-500/50"
           />
         </div>

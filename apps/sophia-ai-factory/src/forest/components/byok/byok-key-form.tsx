@@ -283,20 +283,23 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
               {isEditing ? (
                 <form onSubmit={(e) => handleSingleSubmit(e, p)} className="space-y-3">
                   <div className="space-y-1">
-                    <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <label htmlFor={`byok-key-${p}`} className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                       API Key
                     </label>
                     <input
+                      id={`byok-key-${p}`}
                       type="password"
                       autoComplete="off"
                       value={keyInputs[p] || ''}
                       onChange={(e) => handleInputChange(p, e.target.value)}
                       placeholder={pInfo.hint}
                       disabled={isPending}
+                      aria-invalid={keyInputs[p]?.trim() && !validations[p]?.ok ? true : undefined}
+                      aria-describedby={keyInputs[p]?.trim() && !validations[p]?.ok ? `byok-error-${p}` : undefined}
                       className="w-full rounded-lg border-border bg-background px-3 py-1.5 text-xs text-foreground font-mono placeholder:text-muted-foreground focus:outline-none focus:border-primary-500/50"
                     />
                     {keyInputs[p]?.trim() && !validations[p]?.ok && validations[p]?.errorKey && (
-                      <p className="text-xs text-rose-400 mt-1" role="alert">
+                      <p id={`byok-error-${p}`} className="text-xs text-rose-400 mt-1" role="alert">
                         {t(stripNamespace(validations[p]!.errorKey!))}
                       </p>
                     )}

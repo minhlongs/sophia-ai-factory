@@ -112,9 +112,9 @@ export default function CampaignsPage({
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
         <div>
-          <h2 className="text-[28px] font-bold text-foreground tracking-tight">
+          <h1 className="text-[28px] font-bold text-foreground tracking-tight">
             {t('title')}
-          </h2>
+          </h1>
           <p className="text-muted-foreground mt-1">
             {t('subtitle')}
           </p>
