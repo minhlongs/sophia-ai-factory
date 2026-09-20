@@ -9,7 +9,7 @@
 
 ## Overview
 - Priority: P1
-- Status: pending
+- Status: completed
 - Effort: 2h
 - Description: Create missing `loading.tsx` and `error.tsx` boundary files across all 15 dashboard subroutes and key public routes using existing `DashboardSkeleton` and `DashboardError` primitives to guarantee resilient UX.
 
@@ -95,16 +95,16 @@ This phase strictly owns and creates the following files:
 5. Verify with `npm run type-check`.
 
 ## Todo List
-- [ ] Create top-level dashboard `loading.tsx` and `error.tsx`
-- [ ] Create 15 dashboard subroute `loading.tsx` files
-- [ ] Create 15 dashboard subroute `error.tsx` files
-- [ ] Create public route `loading.tsx` and `error.tsx` files
-- [ ] Run `npm run type-check` to verify 0 errors
+- [x] Create top-level dashboard `loading.tsx` and `error.tsx`
+- [x] Create 15 dashboard subroute `loading.tsx` files
+- [x] Create 15 dashboard subroute `error.tsx` files
+- [x] Create public route `loading.tsx` and `error.tsx` files
+- [x] Run `npm run type-check` to verify 0 errors
 
 ## Success Criteria
-- [ ] Every dashboard route has a corresponding `loading.tsx` and `error.tsx`
-- [ ] TypeScript check passes with 0 errors
-- [ ] No regression on existing tests
+- [x] Every dashboard route has a corresponding `loading.tsx` and `error.tsx`
+- [x] TypeScript check passes with 0 errors
+- [x] No regression on existing tests
 
 ## Risk Assessment & Mitigations
 - **Risk:** Next.js client component hydration mismatch in `error.tsx`.

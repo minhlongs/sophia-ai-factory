@@ -33,7 +33,7 @@ Upgrade Sophia AI Factory UI/UX to a polished, modern, resilient, accessible, re
 
 | Phase | Name | Status | File |
 |-------|------|--------|------|
-| 1 | Loading & Error Boundaries | pending | [phase-01-loading-error-boundaries.md](./phase-01-loading-error-boundaries.md) |
+| 1 | Loading & Error Boundaries | completed | [phase-01-loading-error-boundaries.md](./phase-01-loading-error-boundaries.md) |
 | 2 | Design System Polish | pending | [phase-02-design-system-polish.md](./phase-02-design-system-polish.md) |
 | 3 | Accessibility (WCAG 2.1 AA) | pending | [phase-03-accessibility-wcag.md](./phase-03-accessibility-wcag.md) |
 | 4 | Mobile & Responsive | pending | [phase-04-mobile-responsive.md](./phase-04-mobile-responsive.md) |
