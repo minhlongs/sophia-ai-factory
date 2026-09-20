@@ -709,3 +709,74 @@ Build an enterprise developer webhook integration system:
 - [ ] Deployed commit SHA matches live edge `https://sophia.agencyos.network/api/version`
 - [ ] Sophia Doctor (`node scripts/sophia-doctor.mjs`) reports 11/11 GREEN (100% score)
 
+
+
+## 2026-09-20T07:44:20Z
+
+The user requested: The full multi-agent team.
+Execute the complete Phase 20: 100/100 Automated Customer Handover, Project Closeout & Operational Acceptance Engine: Build the interactive customer handover portal and acceptance sign-off engine (`/dashboard/handover`, `/admin/handover`), implement the automated CEO Day-1 operational verification suite executing all 11 critical checkpoints programmatically, deploy the customer ownership delegation and credential sanitization export tools with automated DR backup verification, publish the bilingual customer runbook reader with immutable handover certificate generation, and verify with live Cloudflare Workers deployment and Sophia Doctor 11/11 GREEN certification.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+References:
+- docs/development-roadmap.md
+- docs/mrr-roadmap.md
+- apps/sophia-ai-factory/CLAUDE.md
+- apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
+- apps/sophia-ai-factory/docs/ceo-handover/CEO_HANDOVER_CLOSEOUT_REPORT.md
+- apps/sophia-ai-factory/docs/ceo-handover/CEO_DAY_1_ACCESS_TEST.md
+- apps/sophia-ai-factory/docs/ceo-handover/FOUNDER_FINAL_30_MINUTE_ACTIONS.md
+- apps/sophia-ai-factory/docs/ceo-handover/CEO_HANDOVER_GATE_FINAL.md
+- apps/sophia-ai-factory/src/tree/handover/auto-handover.ts
+- apps/sophia-ai-factory/src/tree/handover/handover-doc-generator.ts
+
+## Requirements
+
+### R1. Interactive Customer Handover & Acceptance Sign-off Portal
+Build a customer-facing interactive Acceptance Dashboard with bilingual guidance (Vietnamese & English):
+- Dedicated handover interface (`/dashboard/handover`, `/vi/dashboard/handover`) allowing the customer/CEO to review all system deliverables, verify account capabilities, and track handover progress.
+- Administrative handover management console (`/admin/handover`) for the operator/founder to track sign-off status across all tenants and trigger automated verification.
+- Immutable digital acceptance sign-off flow generating a cryptographically verifiable Handover Certificate (stored in D1 `customer_handovers` with SHA-256 hash and timestamp).
+
+### R2. Automated CEO Day-1 Operational Verification Suite
+Implement an automated operational verification runner executing the 11 critical checkpoints from `CEO_DAY_1_ACCESS_TEST.md`:
+- Automated test API (`/api/admin/handover/verify`) programmatically validating Cloudflare Workers edge responsiveness, D1 database CRUD and read-after-write consistency, R2 bucket bindings (`VIDEO_BUCKET`, `BACKUPS_BUCKET`), Better Auth session cookie authentication, NOWPayments IPN readiness, Telegram bot alert connectivity, and Better Stack heartbeat monitor.
+- Automated Disaster Recovery (DR) drill execution verifying D1 database backup creation to R2 and integrity validation.
+
+### R3. Customer Ownership Delegation, Credential Sanitization & Runbook Package
+Deliver complete customer operational self-sufficiency tools:
+- Customer environment export generator creating a sanitized `.env.production` bundle with verified configuration keys, masking secrets while validating structure against `env.example`.
+- Bilingual customer runbook portal (`/dashboard/docs/runbooks`) rendering all 10 operational SOPs (Deployment, Disaster Recovery, BYOK Setup, Incident Response, Billing Ops, Health Monitoring) with offline export (Markdown & HTML).
+- Clear 30-minute founder action plan checklist integrated directly into the handover dashboard.
+
+### R4. Quality Gates, Live Edge Deployment & Sophia Doctor 11/11 GREEN
+- Strictly preserve canonical 4-layer import hierarchy (`seed` → `tree` → `forest` → `land`) with 0 violations.
+- Maintain 0 TypeScript compilation errors and 100% test pass rate across all new and existing test suites.
+- Apply any required database migrations cleanly to remote Cloudflare D1 (`sophia-raas-db`).
+- Deploy to Cloudflare Workers edge via CF-direct doctrine, verify live edge SHA match, and confirm Sophia Doctor reports 11/11 GREEN (100% score).
+
+## Acceptance Criteria
+
+### Customer Handover Portal & Sign-Off (R1)
+- [ ] Bilingual handover portal (`/dashboard/handover`, `/vi/dashboard/handover`) displays live delivery status and verification checklist
+- [ ] Digital sign-off flow creates an immutable audit record in D1 with verified timestamp and hash
+- [ ] Admin console (`/admin/handover`) allows monitoring and approving customer handovers
+
+### CEO Day-1 Automated Verification (R2)
+- [ ] Verification suite programmatically checks all 11 CEO Day-1 operational checkpoints
+- [ ] DR backup validation executes and verifies snapshot integrity in R2 storage
+- [ ] Verification results return clear pass/fail status with diagnostic metrics
+
+### Customer Delegation & Runbooks (R3)
+- [ ] Environment generator exports structured, sanitized customer deployment configurations
+- [ ] Runbook portal renders all customer operational runbooks with bilingual support
+- [ ] Handover certificate can be downloaded or exported as a standalone document
+
+### Quality Gates & Production Deployment (R4)
+- [ ] `npm run type-check` exits with code 0 (0 TypeScript errors)
+- [ ] All unit, integration, and E2E test suites pass with 100% success rate
+- [ ] `bash scripts/check-layer-boundaries.sh` exits with code 0
+- [ ] Deployed commit SHA matches live edge `https://sophia.agencyos.network/api/version`
+- [ ] Sophia Doctor (`node scripts/sophia-doctor.mjs`) reports 11/11 GREEN (100% score)

@@ -1,165 +1,86 @@
-# Project: Sophia AI Factory — Autonomous Growth & Revenue Engine ($1M MRR Path)
+# Project: Sophia AI Factory — Phase 20: 100/100 Automated Customer Handover, Project Closeout & Operational Acceptance Engine
 
 ## Architecture
-Sophia AI Factory is a Cloudflare Workers-native AI creative studio and autonomous revenue engine designed to scale to $1,000,000 MRR (5,000 paying customers at $200 ARPU).
-The system strictly enforces the canonical 4-layer dependency model:
-- `seed`: Pure types, database schemas, cryptographic primitives, capability models, and auth clients (`@/seed/*`).
-- `tree`: Pure domain logic, trend forecasting math, hook scoring, royalty calculations, edge health state machines, and crypto wrappers (`@/tree/*`).
-- `forest`: Asynchronous orchestration, Inngest jobs, swarm coordination, campaign generation, payout batchers, and hybrid routing coordinators (`@/forest/*`).
-- `land`: User interfaces, Next.js Server Actions, edge route handlers, network adapters, and external API clients (`@/land/*`, `app/*`).
-
-### Core Subsystems:
-1. **Hermes Intelligence V2 & Viral Loop Swarm (R1)**:
-   Autonomous growth swarm coordinating trend discovery across TikTok, YouTube Shorts, and X. Uses 7-day sliding window z-scores, seasonal/audience multipliers, and Single Exponential Smoothing (SES, $\alpha=0.40$). Evaluates viral hook effectiveness across 6 canonical hook styles. Continuous viral feedback loop recalculates Creative Effectiveness Scores (CES) and updates `playbook_patterns` using OCC CAS concurrency.
-2. **Creator Marketplace & Video Blueprint Ecosystem (R2)**:
-   Community marketplace interface (`/marketplace`, `/vi/marketplace`) with faceted search by niche, platform, and conversion rate. One-click blueprint cloning into Creative Studio (`/dashboard/missions/new?blueprintId=...`) with pre-flight MCU/USD cost calculation. Immutable creator royalty attribution engine tracking derivative lineage and recording earnings in `creator_earnings_ledger`.
-3. **Multi-Network Affiliate Commission & Automated USDT Payouts (R3)**:
-   Webhook ingestion for 5 major affiliate networks (TikTok Shop, Amazon Associates, ClickBank, AccessTrade, Awin) with Web Crypto timing-safe HMAC verification and sub-ID click attribution. Automated 14-day anti-fraud clawback hold (`payable_at = attributed_at + 14 * 86400`). Dual-entry accounting ledger reconciling commissions, clawbacks (negative adjustment rows), and net creator earnings. Sunday payout batch processor executing NOWPayments USDT TRC20 mass payouts with OCC CAS row claiming and rate limiting.
-4. **Mekong AI Hybrid Edge Node Synchronization (R4)**:
-   Secure Cloudflare Tunnel connection (`*.cashclaw.cc`) linking Cloudflare Workers to local `mekongd` daemons on Apple Silicon (M1 Max / Ollama / vLLM). Hybrid routing policy directs heavy LLM and TTS tasks to local zero-cost hardware (`CostKind: 'unmetered'`) with transparent failover to cloud BYOK on unreachability. Active pre-flight probe detects offline transitions within <15 seconds.
-5. **Layer Discipline & CF-Direct Live Deployment (R5)**:
-   Strict 4-layer import boundaries (`seed` → `tree` → `forest` → `land`, 0 violations via `check-layer-boundaries.sh`), 0 TypeScript errors, 100% test pass rate, live edge SHA match at `/api/version`, and 11/11 Sophia Doctor green score.
-
----
+- Layer discipline: Canonical 4-layer hierarchy (`seed` → `tree` → `forest` → `land`).
+  - `seed`: Type definitions (`verification-types.ts`, `handover-types.ts`), crypto utility (`certificate-hasher.ts`).
+  - `tree`: Core domain engines: `customer-handover-service.ts`, `handover-certificate-engine.ts`, `day1-verification-engine.ts`, `dr-drill-executor.ts`, `env-export-generator.ts`, `runbook-catalog-service.ts`.
+  - `forest`: Composite workflows and UI orchestrations: `verification-orchestrator.ts`, `handover-acceptance-client.tsx`, `handover-admin-console-client.tsx`, `runbook-reader-client.tsx`.
+  - `land`: Next.js 16 App Router pages and API routes:
+    - Customer portal: `src/app/[locale]/dashboard/handover/page.tsx`
+    - Admin console: `src/app/(app)/admin/handover/page.tsx`
+    - Runbook reader: `src/app/[locale]/dashboard/docs/runbooks/page.tsx` & `[slug]/page.tsx`
+    - Verification API: `src/app/api/admin/handover/verify/route.ts`
+    - Env export API: `src/app/api/admin/handover/export-env/route.ts`
+    - Server actions: `src/land/actions/handover-actions.ts`
 
 ## Feature Inventory
 | # | Feature | Description | Milestone | Source |
 |---|---------|-------------|-----------|--------|
-| 1 | Cross-Channel Trend Scouting | Automated trend & hashtag scouting across TikTok, YouTube Shorts, and X | M1 | ORIGINAL_REQUEST §R1 |
-| 2 | Mathematical Hook Scoring Engine | Z-score velocity & momentum calculation, SES forecasting ($\alpha=0.40$), and 6-style hook scoring | M1 | ORIGINAL_REQUEST §R1 |
-| 3 | Autonomous Daily Campaign Generator | Translates high-confidence winning patterns into multi-track video campaign blueprints | M1 | ORIGINAL_REQUEST §R1 |
-| 4 | Closed-Loop Viral Feedback Ingestion | Ingests view count, shares, and watch time to update pattern scores via OCC CAS | M1 | ORIGINAL_REQUEST §R1 |
-| 5 | Hermes V2 Capability Model & Provider | Certified text/creative intelligence adapter adhering to `provider-certification.ts` | M1 | ORIGINAL_REQUEST §R1 |
-| 6 | Bilingual Marketplace Discovery Interface | Public `/marketplace` and `/vi/marketplace` with filters by niche, platform, and conversion rate | M2 | ORIGINAL_REQUEST §R2 |
-| 7 | One-Click Studio Blueprint Cloning | Direct cloning into Creative Studio (`/dashboard/missions/new?blueprintId=...`) with pre-flight cost estimation | M2 | ORIGINAL_REQUEST §R2 |
-| 8 | Blueprint Lineage & Remix Tracker | Records derivative relationships, remix counts, and parent provenance in `blueprint_remixes` | M2 | ORIGINAL_REQUEST §R2 |
-| 9 | Creator Royalty Attribution Engine | Calculates creator revenue splits and maintains an immutable earnings ledger | M2 | ORIGINAL_REQUEST §R2 |
-| 10 | Marketplace & Blueprint D1 Migrations | Migration `0275` adding marketplace metadata to `campaign_blueprints` and creating royalty tables | M2 | Survey 2 |
-| 11 | Multi-Network Webhook Ingestion | Webhooks for TikTok Shop, Amazon, ClickBank, AccessTrade, and Awin with HMAC verification | M3 | ORIGINAL_REQUEST §R3 |
-| 12 | Inngest Event Ingestion Bridge | Emits `conversion.created` from webhook routes into Inngest processing pipeline | M3 | Survey 3 |
-| 13 | 14-Day Anti-Fraud Clawback Hold | Enforces 14-day hold (`payable_at = attributed_at + 14 * 86400`) and daily promotion cron | M3 | ORIGINAL_REQUEST §R3 |
-| 14 | Dual-Entry Accounting Ledger | Reconciles commissions, negative-adjustment clawbacks, and net creator earnings | M3 | ORIGINAL_REQUEST §R3 |
-| 15 | NOWPayments USDT Mass Payout Processor | Sunday batch processor executing USDT TRC20 payouts with OCC CAS and rate limiting | M3 | ORIGINAL_REQUEST §R3 |
-| 16 | Daily Financial Reconciliation Job | Reconciles confirmed payout batches against claimed ledger rows, alerting on diffs > $1.00 | M3 | ORIGINAL_REQUEST §R3 |
-| 17 | Mekong Cloudflare Tunnel Communication | Secure tunnel connection to local `mekongd` with Bearer auth and AES-256-GCM encryption | M4 | ORIGINAL_REQUEST §R4 |
-| 18 | Hybrid Task Routing Policy | Directs heavy LLM/TTS to local zero-cost hardware (`unmetered`) with transparent cloud BYOK fallback | M4 | ORIGINAL_REQUEST §R4 |
-| 19 | 15-Second Node Health Monitor | Active pre-flight probe and 1-token heartbeat detecting offline transitions within <15s | M4 | ORIGINAL_REQUEST §R4 |
-| 20 | Edge Nodes D1 State Management | D1 tables `edge_nodes` and `edge_node_heartbeats` for cluster status tracking | M4 | Survey 2 |
-| 21 | Opaque-Box E2E Test Suite (Tiers 1-4) | Comprehensive requirement-driven test suite with >=11xN test cases derived from user specs | E2E Track | Dual Track |
-| 22 | Adversarial Coverage Hardening (Tier 5) | White-box adversarial stress testing with Challenger-Worker-Reviewer loop | M5 | Dual Track |
-| 23 | 4-Layer Architecture Enforcement | Strict zero-violation check via `scripts/check-layer-boundaries.sh` | M5 | ORIGINAL_REQUEST §R5 |
-| 24 | TypeScript Zero-Error Gate | Zero compilation errors across all modules (`npm run type-check`) | M5 | ORIGINAL_REQUEST §R5 |
-| 25 | CF-Direct Production Deployment | Live deployment via CF-direct doctrine with commit SHA verification at `/api/version` | M5 | ORIGINAL_REQUEST §R5 |
-| 26 | Sophia Doctor 11/11 Green Certification | Full health certification via `node scripts/sophia-doctor.mjs` | M5 | ORIGINAL_REQUEST §R5 |
-
----
+| 1 | D1 Schema Migration `0280` | Adds `acceptance_status`, `signer_name`, `signer_email`, `signer_role`, `certificate_hash`, `verification_results`, `signed_at`, `verification_passed_at` to `customer_handovers` | M1 | Survey |
+| 2 | Handover Domain Engine & Service | DB queries and state updates for customer handovers, certificates, and verification runs | M1 | Survey |
+| 3 | Certificate Hasher & Generator | SHA-256 tamper-evident certificate generator with canonical JSON and markdown export | M1 | Survey |
+| 4 | Environment Sanitizer | Generates clean `.env.production` bundle matching `env.example`, masking secrets while preserving structure | M1 | Survey |
+| 5 | Runbook Catalog Service | Ingests and renders 10 operational SOPs with bilingual support and offline export | M1 | Survey |
+| 6 | 11-Checkpoint Verification Probes | Individual probes for Edge, D1 CRUD, R2 bindings, Auth, NOWPayments, Telegram, Better Stack, DR drill, BYOK encryption, Runbooks, SHA parity | M2 | Survey |
+| 7 | Verification Orchestrator & API | Concurrent runner at `/api/admin/handover/verify` producing JSON diagnostics | M2 | Survey |
+| 8 | Automated DR Drill Executor | Probes D1 read/write consistency, verifies R2 `BACKUPS_BUCKET` snapshots, and validates restore schemas | M2 | Survey |
+| 9 | Handover Server Actions | `signHandoverAcceptanceAction`, `triggerHandoverVerificationAction`, `exportSanitizedEnvAction` | M2 | Survey |
+| 10 | Customer Handover Portal (`/dashboard/handover`) | Bilingual customer acceptance interface with deliverables audit, health card, founder checklist, and sign-off | M3 | Survey |
+| 11 | Admin Handover Console (`/admin/handover`) | Operator console for tracking tenant handovers, running automated Day-1 tests, and inspecting certificates | M3 | Survey |
+| 12 | Customer Runbook Reader (`/dashboard/docs/runbooks`) | In-app reader for 10 operational SOPs with bilingual toggle, code copy, and Markdown/HTML export | M3 | Survey |
+| 13 | Sidebar Navigation & i18n | Navigation links in customer dashboard and admin sidebar; full EN/VI translations | M3 | Survey |
+| 14 | Unit & Integration Test Suite | Comprehensive tests for verification runner, certificate engine, env sanitizer, and runbook service | M4 | Survey |
+| 15 | Layer Boundary & Type Safety Checks | 0 layer boundary violations (`scripts/check-layer-boundaries.sh`), 0 TypeScript errors | M4 | Survey |
+| 16 | Adversarial Challenger & Forensic Audit | Verification against mock implementations and edge case robustness | M4 | Survey |
+| 17 | Remote Cloudflare D1 Migration | Apply `0280_customer_handover_acceptance.sql` to production `sophia-raas-db` | M5 | Survey |
+| 18 | CF-Direct Production Deployment | Deploy to Cloudflare Workers via `npm run deploy:full`, verify live SHA match | M5 | Survey |
+| 19 | Sophia Doctor 11/11 Certification | Execute `node scripts/sophia-doctor.mjs` verifying 100% green health on production | M5 | Survey |
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| E2E | E2E Testing Track Orchestrator | Opaque-box test harness, test runner, Tiers 1-4 tests (Features, Boundaries, Pairwise, Real-World), publishes `TEST_READY.md` | None | DONE |
-| 1 | M1: Hermes Intelligence V2 — Autonomous AI Marketing Swarm & Viral Loop | Trend scouting across TikTok/Shorts/X, hook scoring math, daily campaign generator, closed-loop viral feedback with OCC CAS | None | DONE |
-| 2 | M2: Creator Marketplace & Video Blueprint Ecosystem | Bilingual discovery UI, one-click studio cloning with cost estimation, royalty attribution engine, D1 migrations for blueprints & remixes | M1 | DONE |
-| 3 | M3: Multi-Network Affiliate Commission & Automated USDT Payouts Engine | 5-network webhooks with HMAC, Inngest event bridge, 14-day hold, dual-entry accounting ledger, NOWPayments USDT batch processor, daily reconciliation | M2 | DONE |
-| 4 | M4: Mekong AI Hybrid Edge Node Synchronization | Cloudflare Tunnel communication to `mekongd`, hybrid routing policy with cloud BYOK fallback, 15s offline transition detector, edge nodes schema | None | DONE |
-| 5 | M5: Final Milestone: E2E Test Pass, Layer Discipline & Live Edge Deploy | Phase 1 (100% E2E test pass Tiers 1-4), Phase 2 (Adversarial hardening Tier 5), layer boundary check, CF-direct deploy, live SHA match, Sophia Doctor 11/11 GREEN | M1, M2, M3, M4, E2E | DONE |
-
----
+| 1 | D1 Migration & Core Domain Engine | Schema migration 0280, seed types, certificate hasher, handover service, env sanitizer, runbook service | none | PLANNED |
+| 2 | CEO Day-1 Verification Engine & APIs | 11-checkpoint probes, DR drill executor, verification orchestrator, `/api/admin/handover/verify`, server actions | M1 | PLANNED |
+| 3 | Handover Portals, Admin Console & UI | Customer portal (`/dashboard/handover`), Admin console (`/admin/handover`), Runbook reader (`/dashboard/docs/runbooks`), sidebar nav, i18n | M1, M2 | PLANNED |
+| 4 | Dual-Track Testing & Quality Gates | Vitest unit/integration tests, E2E test verification, layer boundary checks, typecheck, challenger & forensic audit | M1, M2, M3 | PLANNED |
+| 5 | Remote D1 Migration, Deploy & Doctor 11/11 | Remote D1 migration, CF-direct deploy, live edge SHA match, Sophia Doctor 11/11 GREEN, final closeout | M4 | PLANNED |
 
 ## Interface Contracts
+### `src/seed/handover/handover-types.ts`
+- Data models for `CustomerHandoverRecord`, `HandoverAcceptanceInput`, `HandoverCertificate`, `VerificationRunReport`, `CheckpointResult`.
 
-### 1. Hermes V2 & Swarm Intelligence
-- **Trend Discovery**:
-  `scoutTrendingSignals(platform: 'tiktok' | 'youtube_shorts' | 'x', query: string, db: D1Database): Promise<TrendingSignal[]>`
-- **Hook Scoring**:
-  `calculateHookScore(input: HookEvaluationInput): HookScoreResult`
-  Formula: $S_{\text{viral}} = 0.40S_{\text{hook}} + 0.25S_{\text{pacing}} + 0.20S_{\text{retention}} + 0.15S_{\text{cta}}$
-- **Campaign Generator**:
-  `generateDailyCampaignBlueprints(db: D1Database, minConfidence?: number): Promise<CampaignBlueprint[]>`
-- **Feedback Ingestion**:
-  `ingestEngagementFeedback(db: D1Database, feedback: VideoEngagementFeedback): Promise<PatternUpdateResult>`
-  Updates `playbook_patterns` via OCC CAS: `UPDATE playbook_patterns SET score = ?, sample_count = sample_count + 1, updated_at = ? WHERE id = ? AND updated_at = ?`
+### `src/seed/handover/certificate-hasher.ts`
+- `export async function generateCertificateSha256(payload: HandoverCertificatePayload): Promise<string>`
+- `export async function verifyCertificateSha256(payload: HandoverCertificatePayload, expectedHash: string): Promise<boolean>`
 
-### 2. Creator Marketplace & Blueprints
-- **Marketplace Listing Service**:
-  `listMarketplaceBlueprints(db: D1Database, filters: MarketplaceFilters): Promise<PaginatedBlueprints>`
-- **Clone / Remix Action**:
-  `cloneBlueprintForMission(db: D1Database, blueprintId: string, userId: string, tenantId: string): Promise<CloneBlueprintResult>`
-- **Royalty Attribution Engine**:
-  `recordBlueprintRemixAndAccrueRoyalty(db: D1Database, remix: BlueprintRemixInput): Promise<RoyaltyAccrualResult>`
-  Inserts into `blueprint_remixes` and `creator_earnings_ledger` with OCC CAS idempotency.
+### `src/tree/handover/customer-handover-service.ts`
+- `getCustomerHandover(db: D1Database, userIdOrHandoverId: string): Promise<CustomerHandoverRecord | null>`
+- `listAllCustomerHandovers(db: D1Database, filter?: HandoverFilter): Promise<CustomerHandoverRecord[]>`
+- `recordHandoverAcceptance(db: D1Database, input: HandoverAcceptanceInput): Promise<HandoverCertificate>`
 
-### 3. Affiliate Ingestion & Mass Payouts
-- **HMAC Verification**:
-  `verifyAffiliateHmac(rawBody: string, signature: string, secret: string, algorithm: 'SHA-256' | 'SHA-1' | 'SHA-512'): Promise<boolean>`
-- **Hold Promotion**:
-  `flipPendingToPayable(db: D1Database, nowTimestamp: number): Promise<number>`
-  Updates `commission_ledger SET status = 'payable' WHERE status = 'pending' AND payable_at <= nowTimestamp`
-- **Payout Batcher**:
-  `processPayoutBatch(db: D1Database, rail: 'nowpayments_usdt' | 'stripe_connect'): Promise<PayoutBatchResult>`
-  Claims rows via CAS: `UPDATE commission_ledger SET status = 'paying', payout_batch_id = ? WHERE status = 'payable' AND payout_batch_id IS NULL`
-- **Clawback Negative-Row Invariant**:
-  `recordClawbackAdjustment(db: D1Database, parentConversionId: string, reason: string): Promise<LedgerAdjustmentResult>`
-  Inserts negative `commission_cents` row with `status = 'clawback'`, never mutating historical records.
+### `src/tree/handover/day1-verification-engine.ts`
+- `runAllDay1Probes(env: CloudflareEnv, options?: ProbeOptions): Promise<VerificationRunReport>`
 
-### 4. Mekong AI Hybrid Edge Node Protocol
-- **Health Check & Pre-Flight Probe**:
-  `probeEdgeNode(nodeUrl: string, bearerToken: string, timeoutMs?: number): Promise<NodeHealthStatus>`
-  Timeout: `AbortSignal.timeout(2500)`. Transition to offline if unresponsive.
-- **Hybrid Router**:
-  `routeInferenceTask(task: InferenceTask, preferredNodeId?: string): Promise<InferenceResult>`
-  Routes to local `mekongd` if status is `ONLINE`. Falls back transparently to cloud BYOK (`OpenRouter` / `Anthropic` / `ElevenLabs`) if offline or on error.
+### `src/tree/handover/dr-drill-executor.ts`
+- `executeDrDrillProbe(env: CloudflareEnv): Promise<DrDrillResult>`
 
----
+### `src/tree/handover/env-export-generator.ts`
+- `generateSanitizedEnvProduction(envExampleContent: string, currentEnv: Record<string, string | undefined>): { sanitizedContent: string; missingKeys: string[]; totalKeys: number }`
+
+### `src/tree/handover/runbook-catalog-service.ts`
+- `getRunbookCatalog(locale: 'en' | 'vi'): RunbookMetadata[]`
+- `getRunbookContent(slug: string, locale: 'en' | 'vi'): Promise<RunbookContent | null>`
 
 ## Code Layout
-
-```
-apps/sophia-ai-factory/
-├── migrations/
-│   └── 0275_autonomous_growth_and_revenue.sql           # D1 schema for blueprints, royalties, remixes, edge nodes
-├── src/
-│   ├── seed/
-│   │   ├── types/creative-intelligence.ts               # Hermes V2 contracts & Zod schemas
-│   │   ├── ai/provider-certification.ts                 # Certified provider states
-│   │   └── db/schema/growth-engine.ts                   # D1 table definitions
-│   ├── tree/
-│   │   ├── trend-intelligence/                          # Hook scoring, velocity/momentum z-score math, SES forecast
-│   │   ├── learning-loop/scoring-cas.ts                 # OCC CAS scoring on patterns
-│   │   ├── creator-royalties/attribution.ts             # Royalty attribution math & lineage tracking
-│   │   ├── affiliates/crypto.ts                         # Web Crypto timing-safe HMAC verifiers
-│   │   └── edge/node-health.ts                          # 15s offline transition state machine
-│   ├── forest/
-│   │   ├── playbook/campaign-generator.ts               # Autonomous daily campaign generator
-│   │   ├── jobs/viral-feedback-loop.ts                  # Closed-loop engagement feedback sync
-│   │   ├── marketplace/blueprint-service.ts             # Marketplace search, filtering, cloning
-│   │   ├── jobs/payout-batcher.ts                       # Sunday USDT mass payout batch processor
-│   │   ├── jobs/reconciliation.ts                       # Daily financial reconciliation job
-│   │   └── ai/hybrid-router.ts                          # Hybrid edge vs cloud BYOK router
-│   ├── land/
-│   │   ├── marketplace/                                 # Bilingual marketplace discovery UI
-│   │   ├── missions/cost-estimator.ts                   # Preflight studio cost estimator
-│   │   ├── payouts/nowpayments-mass-payout.ts           # NOWPayments USDT TRC20 client
-│   │   ├── payouts/clawback-handler.ts                  # Negative-row clawbacks
-│   │   └── edge/node-registration.ts                    # Edge node registration endpoints
-│   └── app/
-│       ├── [locale]/(marketing)/marketplace/page.tsx   # Public /marketplace and /vi/marketplace
-│       └── api/webhooks/                                # 5 network webhook routes + NOWPayments IPN
-└── tests/
-    └── e2e/growth-engine/                               # Opaque-box E2E test suite (Tiers 1-4)
-```
-
----
-
-## Verification Commands
-- Check layer boundaries: `bash scripts/check-layer-boundaries.sh`
-- TypeScript typecheck: `npm run type-check`
-- Unit/Integration tests: `npm test`
-- E2E test suite: `npx vitest run tests/e2e/growth-engine/`
-- Sophia Doctor: `node scripts/sophia-doctor.mjs`
-- CF-direct deploy: `npm run deploy:full`
-- Live SHA match:
-  ```bash
-  curl -s https://sophia.agencyos.network/api/version | jq .shortSha
-  git rev-parse HEAD | cut -c1-8
-  ```
+- `apps/sophia-ai-factory/migrations/0280_customer_handover_acceptance.sql`
+- `apps/sophia-ai-factory/src/seed/handover/`
+- `apps/sophia-ai-factory/src/tree/handover/`
+- `apps/sophia-ai-factory/src/forest/handover/`
+- `apps/sophia-ai-factory/src/forest/components/handover/`
+- `apps/sophia-ai-factory/src/forest/components/runbooks/`
+- `apps/sophia-ai-factory/src/land/actions/handover-actions.ts`
+- `apps/sophia-ai-factory/src/app/[locale]/dashboard/handover/page.tsx`
+- `apps/sophia-ai-factory/src/app/(app)/admin/handover/page.tsx`
+- `apps/sophia-ai-factory/src/app/[locale]/dashboard/docs/runbooks/`
+- `apps/sophia-ai-factory/src/app/api/admin/handover/`
+- `apps/sophia-ai-factory/tests/handover/`

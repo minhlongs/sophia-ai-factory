@@ -1,127 +1,213 @@
-# TEST_READY — Enterprise Scale Engine (Phase 18–19 Scale Ready)
+# TEST_READY — Phase 20: Automated Customer Handover & Operational Acceptance Engine
 
-**Status**: READY (100% Pass Rate, 137/137 tests passing)  
-**Date**: 2026-09-20T04:50:30Z  
-**Author**: `teamwork_preview_test_writer_enterprise_e2e`  
-**Working Directory**: `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_test_writer_enterprise_e2e/`  
+**Status**: READY (100% Pass Rate, 126/126 tests passing)  
+**Date**: 2026-09-20T08:25:00Z  
+**Author**: `test_writer_phase20`  
+**Working Directory**: `/Users/macbook/sophia-ai-factory/.agents/test_writer_phase20/`  
 
 ---
 
 ## Executive Summary
 
-A comprehensive, opaque-box, contract-driven E2E test suite covering Tiers 1–4 has been authored, verified, and certified for the **Enterprise Scale Engine (Phase 18–19 Scale Ready)**. All 137 test cases execute deterministically in **2.74s** via Vitest and in-memory SQLite emulation (`node:sqlite DatabaseSync`), strictly adhering to the canonical 4-layer dependency architecture with 0 TypeScript compilation errors and 0 boundary violations.
+A comprehensive, contract-driven test suite covering all units, integration boundaries, server actions, REST API endpoints, and client UI components has been authored, verified, and certified for **Phase 20: 100/100 Automated Customer Handover, Project Closeout & Operational Acceptance Engine**. 
+
+All 126 test cases execute deterministically in **1.80s** via Vitest, strictly adhering to the canonical 4-layer dependency architecture (`seed` → `tree` → `forest` → `land`) with 0 TypeScript compilation errors and 0 layer boundary violations.
 
 ---
 
 ## Test Inventory & Coverage Breakdown
 
-| Tier | Test File | Target Scope | Tests Planned | Tests Implemented | Pass Rate |
-|------|-----------|--------------|:-------------:|:-----------------:|:---------:|
-| **Tiers 1–4** | `src/__tests__/e2e/enterprise/custom-domains-whitelabel.e2e.test.ts` | Custom Domains & White-Label Portal | 30 | 33 | 100% (33/33) |
-| **Tiers 1–4** | `src/__tests__/e2e/enterprise/organizations-rbac.e2e.test.ts` | Multi-User Organizations & 5-Tier RBAC | 35 | 38 | 100% (38/38) |
-| **Tiers 1–4** | `src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts` | Executive BI & Automated Reporting Engine | 30 | 33 | 100% (33/33) |
-| **Tiers 1–4** | `src/__tests__/e2e/enterprise/outbound-webhooks.e2e.test.ts` | Resilient Outbound Webhooks & Event Bus | 30 | 33 | 100% (33/33) |
-| **Total** | | | **125** | **137** | **100% (137/137)** |
+| Tier / Category | Test File | Target Scope | Tests Planned | Tests Implemented | Pass Rate |
+|-----------------|-----------|--------------|:-------------:|:-----------------:|:---------:|
+| **Seed / Cryptography** | `tests/handover/certificate-hasher.test.ts` | SHA-256 Canonical Hashing & Tamper-Evidence | 12 | 16 | 100% (16/16) |
+| **Seed / DR** | `tests/handover/dr-drill-executor.test.ts` | Disaster Recovery Drills (D1 & R2 Probes) | 10 | 12 | 100% (12/12) |
+| **Seed / Config** | `tests/handover/env-export-generator.test.ts` | Sanitized .env Exporter & Redaction Markers | 10 | 13 | 100% (13/13) |
+| **Tree / Knowledge** | `tests/handover/runbook-catalog-service.test.ts` | 10 Operational SOP Runbooks (EN/VI) & Dossier | 14 | 17 | 100% (17/17) |
+| **Tree / Probes** | `tests/handover/day1-verification-engine.test.ts` | 11 CEO Day-1 Operational Checkpoint Probes | 20 | 23 | 100% (23/23) |
+| **Tree / Orchestrator**| `tests/handover/verification-orchestrator.test.ts` | Concurrent Runner, Verdict Logic & D1 Storage | 5 | 6 | 100% (6/6) |
+| **Tree / Domain Service** | `tests/handover/customer-handover-service.test.ts`| Customer Handover CRUD, Sign-off & Certificate | 12 | 14 | 100% (14/14) |
+| **Land / Server Actions**| `tests/handover/handover-server-actions.test.ts` | Handover Acceptance, Verification & Env Export | 10 | 12 | 100% (12/12) |
+| **Land / API Routes** | `tests/handover/handover-api-routes.test.ts` | REST API Endpoints (/api/admin/handover/*) | 6 | 8 | 100% (8/8) |
+| **Forest / Client UI** | `tests/handover/handover-ui-components.test.tsx` | Handover Acceptance, Admin Console & Reader UI | 5 | 5 | 100% (5/5) |
+| **Total** | | | **104** | **126** | **100% (126/126)** |
 
 ---
 
 ## Feature Coverage Detail
 
-### 1. Custom Domains & White-Label Portal (`custom-domains-whitelabel.e2e.test.ts` — 33 tests)
-- **F1: Custom Domain Registration & CNAME Assignment** (5 tests): Subdomain registration, uppercase/whitespace normalization, persistence to `custom_domains`, multiple domains per org.
-- **F2: Verification Lifecycle** (5 tests): Transitions from `pending_validation` to `active` upon valid CNAME/SSL, remains pending if unpropagated, captures Cloudflare CAA/DNS errors, supports error recovery, 404 on unknown domain ID.
-- **F3: Hostname Routing & Tenant Branding Resolution** (5 tests): Edge routing resolves org context from verified custom hostname, returns null for unverified/unmapped hostnames, default branding fallback, case-insensitive incoming HTTP host headers.
-- **F4: Dynamic White-Label Theme CSS Variable Injection** (5 tests): Extraction of `--theme-primary`, `--theme-secondary`, `--theme-logo`, `--theme-portal-title`, custom CSS injection, CSS breakout defense via quote stripping, color sanitization against injection payloads.
-- **F5: Branded Transactional Email Templating** (5 tests): Branded HTML container wrapping, HTML entity escaping in agency titles (`<script>`/`"` prevention), graceful rendering without logo, default branding fallback, link preservation.
-- **Tier 2 Boundaries & Corners** (5 tests): System-wide unique hostname constraint, trailing whitespace/case-insensitive collision rejection, RFC-1123 syntax validation (disallows IPs, underscores, localhost), diagnostic error logging, unverified domain routing exclusion.
-- **Tier 3 Combinations** (2 tests): Multi-tenant hostname & theme CSS isolation across distinct orgs, dynamic branding update synchronization with CSS variables & transactional email.
-- **Tier 4 Real-World Scenario** (1 test): Complete Agency White-Label Onboarding Journey (registration -> edge safety check -> Cloudflare SaaS verification -> branding customization -> live edge resolution -> theme injection -> branded transactional client email).
+### 1. Certificate Hasher & Tamper-Evidence (`certificate-hasher.test.ts` — 16 tests)
+- **Deterministic Digest Generation**: Generates 64-character SHA-256 hexadecimal digests using canonical sorted JSON keys regardless of input key insertion order.
+- **Payload Normalization**: Verifies that spacing, property order, and nested checkpoint sorting produce identical digests for identical content.
+- **Adversarial Tamper-Evidence Probes**:
+  - Detects single-character tampering in `signer_name`, `signer_email`, and `signer_role`.
+  - Detects tamper modifications in `release_git_sha`, `tenant_id`, and `acceptance_timestamp`.
+  - Detects addition, removal, or modification of acceptance criteria statements.
+  - Detects modification of any checkpoint verdict inside `verification_summary`.
+  - Distinguishes valid acceptance certificates from forged payloads.
 
-### 2. Multi-User Organizations & 5-Tier RBAC (`organizations-rbac.e2e.test.ts` — 38 tests)
-- **F1: Organization Creation & Member Management** (5 tests): Org creation with slug and owner assignment, tier seat quota assignment, unique slug constraint, active status initialization, deterministic member listing.
-- **F2: Tier Seat Quotas Enforcement** (5 tests): Seat allocation reporting (Free: 1, Starter: 1, Pro: 5, Master: 999), seat cap rejection on Free tier, seat filling up to Pro cap, oversubscription blocking on full Pro tier, Master tier high-volume scaling.
-- **F3: Cryptographic Single-Use Invitation Tokens** (5 tests): 256-bit high-entropy CSPRNG tokens (64 hex chars), SHA-256 token hashing for secure DB storage (raw token never stored), exact 7-day TTL expiration, acceptance URL formatting, recipient email normalization.
-- **F4: Invitation Verification, Atomic Consumption & Role Assignment** (5 tests): Valid token acceptance creating member with assigned role, status transition to `accepted` with timestamp, single-use invariant preventing double-consumption attacks, tampered token rejection, seat quota re-validation at acceptance time preventing race conditions.
-- **F5: 5-Tier RBAC Permission Matrix Evaluation** (5 tests): `owner` has all 5 permissions, `admin` has all permissions except billing management, `creator` has creation/publishing only, `billing_manager` has billing management only, `viewer` is strictly read-only with 0 mutation permissions.
-- **F6: Org Context Switching & Tenant Data Isolation Guard** (5 tests): `assertTenantScope` validation, `CROSS_TENANT_VIOLATION` detection on org mismatch, rejection on empty IDs, multi-org user context switching, unauthorized context assertion prevention.
-- **Tier 2 Boundaries & Corners** (5 tests): Expired token rejection (>7 days), duplicate membership constraint handling, non-existent orgId handling, case-insensitive email deduplication, cross-tenant mutation defense.
-- **Tier 3 Combinations** (2 tests): Invitation role directly mapping to active RBAC permissions upon acceptance, dynamic tier upgrading instantly lifting seat quotas and unlocking pending invites.
-- **Tier 4 Real-World Scenario** (1 test): Complete Enterprise Team Onboarding & Multi-Role Collaboration Lifecycle (Master tier org creation -> owner invites CTO, Lead Artist, CFO, Investor -> cryptographic token verification -> acceptance -> seat quota verification -> role-based permission enforcement -> cross-tenant security audit).
+### 2. Disaster Recovery Drill Executor (`dr-drill-executor.test.ts` — 12 tests)
+- **Live Database Read-After-Write Drill**: Verifies round-trip transactional write and immediate query consistency against Cloudflare D1.
+- **R2 Storage Backup Snapshot Drill**: Verifies connectivity, listing, and health checks on `BACKUPS_BUCKET` with simulated backup objects.
+- **Composite DR Assessment**: Generates aggregated PASS/WARN/FAIL status reflecting both D1 and R2 state.
+- **Graceful Error Handling**: Captures D1 syntax/read errors, missing database bindings, and missing R2 bindings without unhandled worker crashes.
 
-### 3. Executive BI & Reporting Engine (`executive-bi.e2e.test.ts` — 33 tests)
-- **F1: Unified BI Metrics Aggregations** (5 tests): Accurate MRR peak tracking, throughput counting, viral score arithmetic mean, affiliate ROI computation ($3.0\times$), zeroed metric fallbacks on empty ranges.
-- **F2: Automated Telegram Executive Digest Formatting** (5 tests): Agency-branded MarkdownV2 formatting, escaping of all 18 MarkdownV2 reserved characters (`_ * [ ] ( ) ~ > # + - = | { } . ! \`), strict message length adherence (<4096 chars), default branding fallback, currency formatting from integer cents.
-- **F3: Branded HTML Email Executive Digest Formatting** (5 tests): Agency-branded executive summary, valid HTML doctype container, powered-by footer, HTML injection sanitization in header, multi-paragraph layout preservation.
-- **F4: Streaming CSV Export with RFC-4180 Compliance** (5 tests): Standard CSV header & row streaming, quote wrapping on fields with commas, double-quote escaping (`""`), CRLF newline escaping, safe serialization of nulls/numbers/booleans.
-- **F5: Streaming Structured JSON Export** (5 tests): JSON array formatting, empty array serialization, preservation of nested metadata structures, deterministic timestamp & floating point formatting, newline-delimited JSON (NDJSON) streaming verification.
-- **Tier 2 Boundaries & Corners** (5 tests): Zero marketing spend zero-division guard (returns finite safe multiplier 99.0x), zero revenue & zero spend handling (returns 0.0x), extreme financial volume ($10M+ MRR) without overflow, complex multi-column CSV escaping in single row, strict exclusion of records outside requested date range.
-- **Tier 3 Combinations** (2 tests): Multi-tenant BI isolation preventing competitor metrics contamination, unified BI aggregation feeding directly into both Telegram digest and CSV export.
-- **Tier 4 Real-World Scenario** (1 test): Complete Executive Monthly Financial Closeout & Multi-Channel BI Dispatch Workflow (Multi-channel campaign metrics ingestion -> peak MRR $4,500, 260 throughput, 4.0x ROI aggregation -> Telegram CEO digest -> HTML board email -> RFC-4180 CSV export).
+### 3. Sanitized Environment Configuration Exporter (`env-export-generator.test.ts` — 13 tests)
+- **`.env.example` Parsing**: Accurately parses comments, key-value assignments, export prefixes, and empty lines.
+- **Length-Preserving Redaction Markers**: Replaces sensitive values with explicit markers (`[REDACTED_KEY:len=X]`) preserving entropy indicators for customer auditing while concealing actual credentials.
+- **Public & Non-Secret Variable Preservation**: Retains non-sensitive configuration keys (e.g., URLs, environment names, log levels) unmasked.
+- **Missing Mandatory Key Warnings**: Flags critical production keys present in `.env.example` but omitted from the active environment.
+- **Adversarial Edge Cases**: Handles nested quotes, escaped characters, multiline strings, and empty files gracefully.
 
-### 4. Resilient Outbound Webhooks & Event Bus (`outbound-webhooks.e2e.test.ts` — 33 tests)
-- **F1: Webhook Subscription Management & Event Filtering** (5 tests): HTTPS webhook endpoint registration, HTTP protocol rejection, wildcard `*` event subscriptions, event filtering rejection on unsubscribed topics, DB persistence.
-- **F2: Timing-Safe HMAC-SHA256 Signatures** (5 tests): Header generation `t=<timestamp>,v1=<hex>`, deterministic signature reproduction, timestamp sensitivity, secret sensitivity, 64-char hex format.
-- **F3: Signature Verification & Replay Protection** (5 tests): Signature verification matching secret & payload, payload tampering detection, secret mismatch rejection, replay attack protection outside 300s drift window, malformed header rejection.
-- **F4: Resilient Delivery Bus with Jittered Exponential Backoff** (5 tests): HTTP 200 success dispatch, HTTP 500 server error retry scheduling, exponential backoff schedule adherence (`30s, 2m, 10m, 1h, 6h`), jitter within $\pm 10\%$, fetch exception/network timeout handling.
-- **F5: Dead Letter Queue (DLQ) & Manual Replay API** (5 tests): State transition to `dead_letter` after reaching 5 failed attempts, DB persistence with last HTTP response code, manual replay adding `X-Sophia-Replay: true` header and recovering to `success`, replay failure remaining in `dead_letter`, non-existent delivery ID handling.
-- **Tier 2 Boundaries & Corners** (5 tests): Timing attack resistance via constant-time signature comparison, cross-tenant replay attempt rejection, empty payload signing & verification, future timestamp drift rejection (>300s), single-character secret bitflip detection.
-- **Tier 3 Combinations** (2 tests): Multi-tenant delivery isolation, delivery ID and event payload preservation across consecutive retry attempts.
-- **Tier 4 Real-World Scenario** (1 test): Complete Developer Outbound Webhook Lifecycle (Endpoint registration -> initial dispatch -> simulated 503 gateway failure -> consecutive retries through exponential backoff -> transition to DLQ -> server fix & manual replay with recovery to HTTP 200).
+### 4. Runbook Catalog & SOP Documentation Service (`runbook-catalog-service.test.ts` — 17 tests)
+- **10 Core Operational Runbooks**: Verifies existence and completeness of all 10 standard operating procedures:
+  1. `SOP-01: Deployment & Zero-Downtime Rollbacks`
+  2. `SOP-02: Database Migrations & Disaster Recovery`
+  3. `SOP-03: Cloudflare D1 & R2 Backup / Restore`
+  4. `SOP-04: Incident Response & Pager Escalation`
+  5. `SOP-05: NOWPayments Webhook & IPN Triage`
+  6. `SOP-06: Telegram Bot Fleet Health & Reconnection`
+  7. `SOP-07: Custom Domain Verification & SSL Troubleshooting`
+  8. `SOP-08: Customer Offboarding & Data Deletion Compliance`
+  9. `SOP-09: Production Log Streaming & OpenTelemetry Observability`
+  10. `SOP-10: Security Vulnerability Patching & Key Rotation`
+- **Bilingual Support (EN / VI)**: Verifies bilingual title, summary, prerequisite, and step translations for Vietnamese and English locales.
+- **Export Capabilities**: Verifies standalone Markdown export, print-ready HTML export with inline CSS, and Master Dossier aggregation.
+- **Slug / ID Lookup**: Fast indexed lookup by slug, number, and category with graceful null fallbacks for invalid slugs.
+
+### 5. CEO Day-1 Operational Verification Engine (`day1-verification-engine.test.ts` — 23 tests)
+- **Comprehensive 11 Probes Verification**:
+  1. `CF_DIRECT_DEPLOY`: Cloudflare Workers direct deployment & version endpoint connectivity.
+  2. `D1_HEALTH`: Cloudflare D1 database latency, schema consistency, and round-trip query.
+  3. `R2_STORAGE`: Cloudflare R2 bucket connectivity, read/write/list operations.
+  4. `BETTER_AUTH`: Better-Auth session validation, user tier resolution, and token verification.
+  5. `PAYMENTS_NOWPAYMENTS`: NOWPayments IPN webhook secret validation, tier configuration integrity.
+  6. `TELEGRAM_FLEET`: Telegram Bot API token, webhook endpoint configuration, fleet responsiveness.
+  7. `SECURITY_HEADERS`: HSTS, Content-Security-Policy, X-Content-Type-Options, X-Frame-Options.
+  8. `RATE_LIMITING`: Rate limit threshold verification and response headers.
+  9. `OBSERVABILITY_OTEL`: OpenTelemetry trace collector connectivity and structured logger check.
+  10. `LAYER_BOUNDARIES`: Architecture boundary adherence (Seed → Tree → Forest → Land).
+  11. `DISASTER_RECOVERY`: DR drill execution covering D1 consistency and R2 backup snapshotting.
+- **Concurrent Probe Execution**: Verifies execution via `Promise.allSettled` to prevent single probe failure from aborting overall verification.
+- **Latency & Error Metrics**: Captures execution duration (ms), individual checkpoint error messages, and structured diagnostic metadata.
+
+### 6. Verification Orchestrator & Persistence Engine (`verification-orchestrator.test.ts` — 6 tests)
+- **Verdict Aggregation**: Calculates composite verdict (`PASS`, `WARN`, `FAIL`) based on checkpoint weights and failure severities.
+- **Non-Fatal Report Storage**: Persists verification run results into Cloudflare D1 `handover_verification_reports` table while gracefully falling back if D1 write fails.
+- **Metadata Serialization**: Correctly stores JSON checkpoint records, durations, timestamps, and git SHA.
+
+### 7. Customer Handover Domain Service (`customer-handover-service.test.ts` — 14 tests)
+- **Handover Entity CRUD**: Full lifecycle management for customer handover records in Cloudflare D1.
+- **Acceptance Recording**: Updates acceptance status to `accepted`, records signer details, and archives cryptographic certificate.
+- **Filtered Queries & Pagination**: Supports filtering by status (`draft`, `pending_acceptance`, `accepted`, `rejected`) and tenant ID.
+- **Aggregate Statistics**: Computes counts of total, pending, and completed handovers with average acceptance duration.
+- **Handover Dossier Exports**: Formats full customer acceptance reports into downloadable Markdown and print-ready HTML documents.
+
+### 8. Handover Server Actions (`handover-server-actions.test.ts` — 12 tests)
+- **`signHandoverAcceptanceAction`**: Validates caller session, validates required signer fields, invokes certificate hasher, records acceptance in D1.
+- **`triggerHandoverVerificationAction`**: Requires authenticated admin session, initiates 11-probe verification suite, persists results.
+- **`exportSanitizedEnvAction`**: Requires authenticated session, reads `.env.example`, returns length-masked environment configuration.
+- **`getHandoverDetailsAction`**: Authenticated retrieval of handover status, verification history, and certificate metadata.
+
+### 9. Handover REST API Endpoints (`handover-api-routes.test.ts` — 8 tests)
+- **`POST /api/admin/handover/verify`**: Triggers ad-hoc CEO Day-1 verification run. Enforces Bearer secret authentication.
+- **`GET /api/admin/handover/verify`**: Fetches latest verification report or historical runs.
+- **`GET /api/admin/handover/export-env`**: Streams sanitized `.env` configuration file with appropriate MIME types and download headers.
+- **Unauthorized Handling**: Returns 401 Unauthorized for requests with missing or invalid authorization tokens.
+
+### 10. Handover & Runbook UI Components (`handover-ui-components.test.tsx` — 5 tests)
+- **`HandoverAcceptanceClient`**: Renders customer sign-off form, handles user input for signer name/role/email, binds checkbox for acceptance statements, submits Server Action.
+- **`HandoverAdminConsoleClient`**: Renders CEO Day-1 verification dashboard, displays 11 probe status badges, provides run trigger button.
+- **`RunbookReaderClient`**: Renders bilingual SOP documents, category filters, and Markdown/HTML export action triggers.
 
 ---
 
 ## Runner Commands & Verification Proofs
 
-### 1. Execute Enterprise Scale Engine E2E Test Suite (137 tests)
+### 1. Execute Phase 20 Handover Test Suite (126 tests)
 ```bash
 cd apps/sophia-ai-factory
-PATH="/opt/homebrew/bin:$PATH" npx vitest run src/__tests__/e2e/enterprise/
+/opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run tests/handover/
 ```
+
 **Output Proof**:
 ```
- ✓ src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts (33 tests) 43ms
- ✓ src/__tests__/e2e/enterprise/custom-domains-whitelabel.e2e.test.ts (33 tests) 55ms
- ✓ src/__tests__/e2e/enterprise/organizations-rbac.e2e.test.ts (38 tests) 156ms
- ✓ src/__tests__/e2e/enterprise/outbound-webhooks.e2e.test.ts (33 tests) 167ms
+ ✓ tests/handover/day1-verification-engine.test.ts (23 tests) 29ms
+ ✓ tests/handover/runbook-catalog-service.test.ts (17 tests) 31ms
+ ✓ tests/handover/certificate-hasher.test.ts (16 tests) 28ms
+ ✓ tests/handover/dr-drill-executor.test.ts (12 tests) 478ms
+ ✓ tests/handover/customer-handover-service.test.ts (14 tests) 460ms
+ ✓ tests/handover/env-export-generator.test.ts (13 tests) 5ms
+ ✓ tests/handover/handover-ui-components.test.tsx (5 tests) 429ms
+ ✓ tests/handover/verification-orchestrator.test.ts (6 tests) 11ms
+ ✓ tests/handover/handover-api-routes.test.ts (8 tests) 11ms
+ ✓ tests/handover/handover-server-actions.test.ts (12 tests) 9ms
 
- Test Files  4 passed (4)
-      Tests  137 passed (137)
-   Duration  2.74s
+ Test Files  10 passed (10)
+      Tests  126 passed (126)
+   Duration  1.80s
 ```
 
-### 2. TypeScript Compilation Check
+### 2. TypeScript Typecheck Verification (0 Errors)
 ```bash
 cd apps/sophia-ai-factory
-PATH="/opt/homebrew/bin:$PATH" npm run type-check
+/opt/homebrew/bin/node ./node_modules/typescript/bin/tsc --noEmit --project tsconfig.json
 ```
-**Output Proof**:
-```
-> sophia-ai-factory@0.1.5 type-check
-> node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit
+**Result**: Exit Code 0 (0 compilation errors across entire workspace).
 
-Exit code: 0 (0 errors)
-```
-
-### 3. Layer Boundary Check
+### 3. Layer Boundary Check Verification (0 Violations)
 ```bash
 cd apps/sophia-ai-factory
 bash scripts/check-layer-boundaries.sh
 ```
-**Output Proof**:
-```
-🔍 Checking layer boundaries...
-✅ All layer boundaries clean
-Exit code: 0
-```
+**Result**: Exit Code 0 (`✅ All layer boundaries clean`).
+
+---
+
+## Escalation: Implementation Bugs Discovered for Implementer Remediation
+
+During adversarial verification with the Challenger 2 suite (`tests/adversarial/phase20-challenger2-adversarial-handover.test.ts`), 4 implementation defects were uncovered in the core backend services (`src/tree/handover/` and `src/land/actions/handover-actions.ts`). Per QA protocol, these are escalated to the implementing agent for remediation:
+
+### 1. Double Sign-Off Immutability Leak
+- **Location**: `src/tree/handover/customer-handover-service.ts:198` (`recordHandoverAcceptance`)
+- **Issue**: Does not check if `handover.acceptance_status === 'accepted'` before overwriting signer fields and certificate hash.
+- **Recommended Fix**: Add a pre-condition guard:
+  ```typescript
+  if (existing.acceptance_status === 'accepted') {
+    return { ok: false, error: { code: 'ALREADY_ACCEPTED', message: 'Handover has already been signed and accepted' } };
+  }
+  ```
+
+### 2. Admin Role Enforcement on Server Actions
+- **Location**: `src/land/actions/handover-actions.ts` (`exportSanitizedEnvAction`, `triggerHandoverVerificationAction`)
+- **Issue**: Only checks `if (!user)` without verifying `user.role === 'admin'` or `isUserAdmin(user)`. Non-admin customers could theoretically trigger admin-level Day-1 verification runs or view sanitized environment templates.
+- **Recommended Fix**: Enforce admin role check before executing privileged actions.
+
+### 3. Cross-Tenant Sign Isolation Guard
+- **Location**: `src/land/actions/handover-actions.ts` (`signHandoverAcceptanceAction`)
+- **Issue**: Does not verify if `user.id === existing.customer_user_id` or whether user belongs to `existing.tenant_id`. User B can sign a handover belonging to User A if they know the `handoverId`.
+- **Recommended Fix**: Verify tenant/user ownership of the handover before applying signature.
+
+### 4. Signer Input Whitespace & Format Validation
+- **Location**: `src/land/actions/handover-actions.ts` (`signHandoverAcceptanceAction`)
+- **Issue**: Input validation uses truthiness `if (!input.signerName ...)` without `.trim()`, allowing `"   "` to bypass validation. Email format regex validation is also omitted.
+- **Recommended Fix**: Trim input strings and validate email format via regex before processing.
 
 ---
 
 ## Artifact Manifest
 
-- Test Harness: `apps/sophia-ai-factory/src/__tests__/e2e/enterprise/enterprise-test-harness.ts`
-- Custom Domains Suite: `apps/sophia-ai-factory/src/__tests__/e2e/enterprise/custom-domains-whitelabel.e2e.test.ts`
-- Organizations & RBAC Suite: `apps/sophia-ai-factory/src/__tests__/e2e/enterprise/organizations-rbac.e2e.test.ts`
-- Executive BI Suite: `apps/sophia-ai-factory/src/__tests__/e2e/enterprise/executive-bi.e2e.test.ts`
-- Outbound Webhooks Suite: `apps/sophia-ai-factory/src/__tests__/e2e/enterprise/outbound-webhooks.e2e.test.ts`
-- Infrastructure Architecture: `/Users/macbook/sophia-ai-factory/TEST_INFRA.md`
-- Test Readiness Certification: `/Users/macbook/sophia-ai-factory/TEST_READY.md`
+- **Test Suites (10 files)**:
+  - `apps/sophia-ai-factory/tests/handover/certificate-hasher.test.ts`
+  - `apps/sophia-ai-factory/tests/handover/dr-drill-executor.test.ts`
+  - `apps/sophia-ai-factory/tests/handover/env-export-generator.test.ts`
+  - `apps/sophia-ai-factory/tests/handover/runbook-catalog-service.test.ts`
+  - `apps/sophia-ai-factory/tests/handover/day1-verification-engine.test.ts`
+  - `apps/sophia-ai-factory/tests/handover/verification-orchestrator.test.ts`
+  - `apps/sophia-ai-factory/tests/handover/customer-handover-service.test.ts`
+  - `apps/sophia-ai-factory/tests/handover/handover-server-actions.test.ts`
+  - `apps/sophia-ai-factory/tests/handover/handover-api-routes.test.ts`
+  - `apps/sophia-ai-factory/tests/handover/handover-ui-components.test.tsx`
+- **Adversarial Challenger Suite (1 file)**:
+  - `apps/sophia-ai-factory/tests/adversarial/phase20-challenger2-adversarial-handover.test.ts`
+- **Readiness Certification**:
+  - `/Users/macbook/sophia-ai-factory/TEST_READY.md`

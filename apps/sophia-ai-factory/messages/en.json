@@ -986,7 +986,9 @@
       "creative_studio": "Creative studio",
       "sop_creator": "Sop creator",
       "challenges": "Challenges",
-      "playbook": "Auto Playbook"
+      "playbook": "Auto Playbook",
+      "handover": "Customer Handover",
+      "runbooks": "CEO Runbooks"
     },
     "notFound": {
       "title": "Page Not Found",
@@ -3033,6 +3035,80 @@
     "loading": "Loading"
   },
   "admin": {
+    "handover": {
+      "title": "Customer Handover Management Console",
+      "subtitle": "Monitor onboarding velocity, execute Day-1 verification suites, and inspect acceptance sign-offs.",
+      "stats": {
+        "total": "Total Handovers",
+        "active": "Active Studios",
+        "accepted": "Fully Accepted",
+        "pending": "Pending Acceptance",
+        "atRisk": "At Risk / Incomplete",
+        "rejected": "Rejected"
+      },
+      "actions": {
+        "runVerification": "Run 11-Point Verification",
+        "runningVerification": "Executing Verification...",
+        "runDrill": "Run DR Backup Drill",
+        "runningDrill": "Executing Drill...",
+        "exportEnv": "Export Sanitized .env.production",
+        "exportingEnv": "Exporting...",
+        "inspectCert": "Inspect Certificate",
+        "resendWelcome": "Resend Welcome Email"
+      },
+      "verification": {
+        "title": "CEO Day-1 Operational Verification Suite",
+        "verdictPass": "ALL 11 CHECKPOINTS PASSED (100% GREEN)",
+        "verdictFail": "VERIFICATION FAILED — ACTION REQUIRED",
+        "verdictWarn": "VERIFICATION COMPLETED WITH WARNINGS",
+        "lastRun": "Last Run",
+        "duration": "Duration",
+        "passed": "Passed",
+        "failed": "Failed",
+        "warnings": "Warnings",
+        "details": "Details",
+        "latency": "Latency",
+        "checkpoint": "Checkpoint",
+        "status": "Status"
+      },
+      "drDrill": {
+        "title": "Automated Disaster Recovery (DR) Drill",
+        "tablesVerified": "Tables Verified in Schema",
+        "readWriteProbe": "D1 Read-After-Write Probe",
+        "r2Snapshot": "R2 Backup Snapshot Presence",
+        "status": "Status",
+        "latency": "Drill Latency"
+      },
+      "table": {
+        "title": "Tenant Handover Directory",
+        "searchPlaceholder": "Search by agency name, customer ID, or signer...",
+        "filterAll": "All ({count})",
+        "filterPending": "Pending ({count})",
+        "filterAccepted": "Accepted ({count})",
+        "filterAtRisk": "At Risk ({count})",
+        "agency": "Agency / Studio",
+        "tier": "Tier",
+        "status": "Lifecycle",
+        "acceptance": "Acceptance Status",
+        "signer": "Signer & Role",
+        "certHash": "Certificate SHA-256",
+        "created": "Created At",
+        "actions": "Actions",
+        "noHandovers": "No tenant handovers found matching filter criteria.",
+        "inspectAction": "Inspect Certificate",
+        "viewPortalAction": "View Customer Portal"
+      },
+      "certModal": {
+        "title": "Verified Acceptance Certificate Inspection",
+        "close": "Close",
+        "hash": "Tamper-Proof SHA-256 Digest",
+        "signedAt": "Signed At",
+        "signer": "Signer",
+        "role": "Role",
+        "tier": "Tier",
+        "sha": "Git Commit SHA"
+      }
+    },
     "users": {
       "title": "User Management",
       "invite": "Invite New Client",
@@ -5631,7 +5707,123 @@
   "format": "Format",
   "from": "From",
   "granularity": "Granularity",
-  "handover": "Handover",
+  "handover": {
+    "title": "Handover",
+    "portalTitle": "Customer Handover & Acceptance Portal",
+    "portalSubtitle": "Review deliverables, inspect system health, and sign your operational acceptance certificate.",
+    "founder30Button": "Founder 30-Min Action Plan",
+    "milestones": {
+      "title": "Onboarding Milestones",
+      "contract": "Contract & Provisioning",
+      "initialSetup": "Platform Setup & BYOK",
+      "verification": "Day-1 Operational Verification",
+      "acceptance": "Executive Acceptance Sign-Off",
+      "completed": "Completed",
+      "active": "Active",
+      "pending": "Pending"
+    },
+    "deliverables": {
+      "title": "Platform Deliverables & Verified Capabilities",
+      "subtitle": "15 enterprise assets and operational pipelines ready for sovereign management.",
+      "edgeRuntime": "Cloudflare Workers Edge Engine",
+      "database": "Cloudflare D1 Relational Storage",
+      "mediaVault": "Cloudflare R2 Media Vault",
+      "backupsVault": "Cloudflare R2 Backups Vault",
+      "byokVault": "AES-256-GCM BYOK Credentials Vault",
+      "telegramBot": "Telegram Alert & Notification Bot",
+      "creativeEngine": "Autonomous Multi-Track Video Studio",
+      "runbooks": "10 Bilingual Customer Runbooks",
+      "nowpayments": "NOWPayments USDT Crypto Billing",
+      "payos": "PayOS Domestic QR Gateway Backup",
+      "betterAuth": "Better Auth Session Security & RBAC",
+      "observability": "Honeycomb OpenTelemetry Spans",
+      "sentry": "Sentry Error Tracking & Alerts",
+      "drAutomation": "Automated Disaster Recovery Daemon",
+      "whiteLabel": "Custom Domains & Dynamic White-Label",
+      "verified": "Verified & Ready"
+    },
+    "deliverablesDescriptions": {
+      "edge": "Multi-region Cloudflare Workers edge runtime (TTFB < 300ms)",
+      "d1": "Cloudflare D1 relational database with read-after-write consistency",
+      "r2-media": "Cloudflare R2 media storage bucket for synthesized video assets",
+      "r2-backups": "Cloudflare R2 backups bucket for automated disaster recovery dumps",
+      "byok": "AES-256-GCM envelope-encrypted API keys vault with zero retention",
+      "telegram": "Telegram alert & notification bot (@Sophia_Bbot) integration",
+      "creative": "Autonomous multi-track video generation & scripting pipeline",
+      "runbooks": "10 bilingual customer operational SOPs from quickstart to exit",
+      "nowpayments": "NOWPayments USDT crypto billing engine (TRC-20 / ERC-20)",
+      "payos": "PayOS Vietnam domestic VietQR automated banking fallback",
+      "auth": "Better Auth session security, CSRF protection, and 5-tier RBAC",
+      "telemetry": "Honeycomb OpenTelemetry distributed tracing & latency tracking",
+      "sentry": "Sentry production client & edge exception telemetry",
+      "dr": "Automated disaster recovery scheduler with RPO <= 24h & RTO <= 15m",
+      "branding": "Multi-tenant white-label theming, custom domains, and dynamic logos"
+    },
+    "health": {
+      "title": "Day-1 Operational Health Verification",
+      "subtitle": "Real-time edge health probes executing across production infrastructure.",
+      "edgeStatus": "Edge Responsiveness",
+      "shaMatch": "Live Git Commit Parity",
+      "dbStatus": "Cloudflare D1 Consistency",
+      "r2Status": "Cloudflare R2 Storage Vault",
+      "backupStatus": "Automated DR Snapshot Parity",
+      "healthy": "Healthy & Operational",
+      "parity": "Exact Parity Verified",
+      "verdict": "11/11 Probes Verified (100% Score)"
+    },
+    "founder30": {
+      "title": "Founder 30-Minute Clean Transfer Action Plan",
+      "subtitle": "The 4 essential steps for completing ownership transfer cleanly and securely.",
+      "task1Title": "1. Cloudflare Account Access & Admin Delegation (10 min)",
+      "task1Desc": "Navigate to Cloudflare Dashboard -> Manage Account -> Members. Invite incoming CEO or technical lead with Administrator role.",
+      "task2Title": "2. GitHub Repository Ownership & Branch Rules (5 min)",
+      "task2Desc": "Transfer repository or grant Admin rights on GitHub. Verify main branch protection rules require passing checks.",
+      "task3Title": "3. 1Password / Bitwarden Shared Vault Transfer (10 min)",
+      "task3Desc": "Deposit all 14 production secrets into shared customer vault: BETTER_AUTH_SECRET, CRON_SECRET, API_ENCRYPTION_KEY, NOWPAYMENTS keys, TELEGRAM keys.",
+      "task4Title": "4. Digital Acceptance Certificate Sign-Off (5 min)",
+      "task4Desc": "Complete the 4-point verification checklist below and execute digital signature to generate the tamper-evident certificate.",
+      "close": "Close Action Plan"
+    },
+    "signOff": {
+      "title": "Formal Operational Acceptance Sign-Off",
+      "description": "By signing below, you certify that all system components, credentials, and documentation have been inspected and accepted for sovereign operation.",
+      "checkpoints": {
+        "runbooks": "I have received, reviewed, and archived all 10 Customer Runbooks.",
+        "videoTested": "I have generated and verified my first video creation run in Creative Studio.",
+        "keysSecured": "I confirm all API keys and credentials are encrypted under my sole custody.",
+        "supportUnderstood": "I understand the diagnostic export procedures, disaster recovery, and support channels."
+      },
+      "form": {
+        "nameLabel": "Full Legal Name",
+        "namePlaceholder": "e.g., Alex Morgan",
+        "roleLabel": "Executive Role / Title",
+        "rolePlaceholder": "e.g., Chief Executive Officer (CEO)",
+        "emailLabel": "Signer Work Email",
+        "emailPlaceholder": "e.g., ceo@company.com",
+        "confirmCheckbox": "I solemnly certify that I have authority to execute this acceptance sign-off on behalf of the client organization.",
+        "submitButton": "Digitally Sign & Certify Acceptance",
+        "signing": "Verifying & Generating Certificate...",
+        "signedSuccess": "Handover Acceptance Successfully Certified!"
+      }
+    },
+    "certificate": {
+      "badge": "OFFICIAL CERTIFICATE OF ACCEPTANCE",
+      "title": "Sophia AI Factory Operational Acceptance Certificate",
+      "subtitle": "Tamper-evident attestation sealed with SHA-256 cryptographic digest.",
+      "certId": "Certificate ID",
+      "issuedTo": "Accepted By",
+      "signerRole": "Signer Role",
+      "studio": "Agency / Studio",
+      "timestamp": "Timestamp (UTC)",
+      "sha256": "SHA-256 Tamper-Proof Digest",
+      "deployedSha": "Production Commit SHA",
+      "healthVerdict": "Operational Health Verdict",
+      "downloadMd": "Download Certificate (.MD)",
+      "downloadHtml": "Download Printable (.HTML)",
+      "print": "Print / Save PDF",
+      "verifiedBadge": "100/100 CERTIFIED"
+    }
+  },
   "hard": "Hard",
   "hash, response, input_tokens, output_tokens, cost_usd, expires_at, embedding": "Hash, response, input tokens, output tokens, cost usd, expires at, embedding",
   "hero-cta-copy-v1": "Hero cta copy v1",
@@ -7922,5 +8114,28 @@
       "prev": "Previous",
       "next": "Next"
     }
+  },
+  "runbooks": {
+    "title": "Customer Operational Runbooks",
+    "subtitle": "10 step-by-step bilingual operational manuals empowering sovereign platform governance.",
+    "searchPlaceholder": "Search across all 10 runbooks...",
+    "allCategories": "All Categories",
+    "readTime": "min read",
+    "downloadMarkdown": "Download Markdown",
+    "downloadHtml": "Print / Export HTML",
+    "downloadMaster": "Download Master Dossier (10 SOPs)",
+    "copied": "Copied to clipboard!",
+    "copySnippet": "Copy",
+    "tableOfContents": "Table of Contents",
+    "backToOverview": "Back to Runbooks Index",
+    "nextRunbook": "Next Runbook",
+    "prevRunbook": "Previous Runbook",
+    "author": "Author",
+    "lastVerified": "Last Verified",
+    "language": "Language",
+    "languageEn": "English",
+    "languageVi": "Tiếng Việt",
+    "emptySearch": "No runbooks match your search criteria."
   }
 }
+

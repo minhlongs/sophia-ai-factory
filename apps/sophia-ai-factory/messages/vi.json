@@ -986,7 +986,9 @@
       "creative_studio": "Studio sáng tạo",
       "sop_creator": "Tạo SOP",
       "challenges": "Thử thách",
-      "playbook": "Chiến lược Playbook"
+      "playbook": "Chiến lược Playbook",
+      "handover": "Bàn Giao Vận Hành",
+      "runbooks": "Sổ Tay CEO"
     },
     "notFound": {
       "title": "Không tìm thấy trang",
@@ -3033,6 +3035,80 @@
     "loading": "Đang đăng nhập"
   },
   "admin": {
+    "handover": {
+      "title": "Bảng Điều Khiển Quản Lý Bàn Giao",
+      "subtitle": "Theo dõi tiến độ bàn giao khách hàng, chạy bộ kiểm tra Day-1 và kiểm tra chứng thư nghiệm thu.",
+      "stats": {
+        "total": "Tổng Lượt Bàn Giao",
+        "active": "Studio Đang Hoạt Động",
+        "accepted": "Đã Nghiệm Thu Hoàn Toàn",
+        "pending": "Chờ Nghiệm Thu",
+        "atRisk": "Cần Hỗ Trợ / Chưa Xong",
+        "rejected": "Đã Từ Chối"
+      },
+      "actions": {
+        "runVerification": "Chạy Kiểm Tra 11 Điểm",
+        "runningVerification": "Đang Thực Hiện Kiểm Tra...",
+        "runDrill": "Diễn Tập Sao Lưu DR",
+        "runningDrill": "Đang Diễn Tập Sao Lưu...",
+        "exportEnv": "Xuất File .env.production An Toàn",
+        "exportingEnv": "Đang Xuất File...",
+        "inspectCert": "Xem Chứng Thư",
+        "resendWelcome": "Gửi Lại Thư Chào Mừng"
+      },
+      "verification": {
+        "title": "Bộ Kiểm Tra Vận Hành CEO Day-1 Tự Động",
+        "verdictPass": "TOÀN BỘ 11 ĐIỂM KIỂM TRA ĐÃ ĐẠT (100% XANH)",
+        "verdictFail": "KIỂM TRA THẤT BẠI — CẦN XỬ LÝ",
+        "verdictWarn": "HOÀN TẤT VỚI CẢNH BÁO",
+        "lastRun": "Lần Chạy Gần Nhất",
+        "duration": "Thời Gian",
+        "passed": "Đạt",
+        "failed": "Thất Bại",
+        "warnings": "Cảnh Báo",
+        "details": "Chi Tiết",
+        "latency": "Độ Trễ",
+        "checkpoint": "Hạng Mục",
+        "status": "Trạng Thái"
+      },
+      "drDrill": {
+        "title": "Diễn Tập Khôi Phục Sự Cố Tự Động (DR)",
+        "tablesVerified": "Bảng Đã Xác Minh Trong Schema",
+        "readWriteProbe": "Kiểm Tra Ghi-Đọc D1",
+        "r2Snapshot": "Bản Sao Lưu R2 Gần Nhất",
+        "status": "Trạng Thái",
+        "latency": "Độ Trễ Diễn Tập"
+      },
+      "table": {
+        "title": "Danh Mục Bàn Giao Khách Hàng",
+        "searchPlaceholder": "Tìm theo tên agency, mã khách hàng hoặc người ký...",
+        "filterAll": "Tất Cả ({count})",
+        "filterPending": "Chờ Ký ({count})",
+        "filterAccepted": "Đã Nghiệm Thu ({count})",
+        "filterAtRisk": "Cần Hỗ Trợ ({count})",
+        "agency": "Doanh Nghiệp / Studio",
+        "tier": "Gói",
+        "status": "Vòng Đời",
+        "acceptance": "Nghiệm Thu",
+        "signer": "Người Ký & Vai Trò",
+        "certHash": "Mã Băm SHA-256",
+        "created": "Ngày Tạo",
+        "actions": "Thao Tác",
+        "noHandovers": "Không tìm thấy hồ sơ bàn giao nào phù hợp với bộ lọc.",
+        "inspectAction": "Xem Chứng Thư",
+        "viewPortalAction": "Mở Cổng Khách Hàng"
+      },
+      "certModal": {
+        "title": "Kiểm Tra Chứng Thư Nghiệm Thu Đã Xác Thực",
+        "close": "Đóng",
+        "hash": "Mã Băm Bảo Toàn SHA-256",
+        "signedAt": "Thời Điểm Ký",
+        "signer": "Người Ký",
+        "role": "Vai Trò",
+        "tier": "Gói Dịch Vụ",
+        "sha": "Mã Git Commit Thực Tế"
+      }
+    },
     "users": {
       "title": "Quản lý người dùng",
       "invite": "Mời khách hàng mới",
@@ -5631,7 +5707,123 @@
   "format": "Format",
   "from": "From",
   "granularity": "Granularity",
-  "handover": "Handover",
+  "handover": {
+    "title": "Bàn Giao Vận Hành",
+    "portalTitle": "Cổng Bàn Giao & Nghiệm Thu Khách Hàng",
+    "portalSubtitle": "Kiểm tra danh mục bàn giao, xác minh sức khỏe hệ thống và ký biên bản nghiệm thu điện tử.",
+    "founder30Button": "Kế Hoạch 30 Phút Của Founder",
+    "milestones": {
+      "title": "Cột Mốc Tiếp Quản",
+      "contract": "Hợp Đồng & Cấp Phát Tài Nguyên",
+      "initialSetup": "Thiết Lập Studio & Khóa AI",
+      "verification": "Xác Thực Vận Hành Ngày Đầu (Day-1)",
+      "acceptance": "Ký Nghiệm Thu Tiếp Quản",
+      "completed": "Đã Hoàn Thành",
+      "active": "Đang Thực Hiện",
+      "pending": "Chờ Tiếp Quản"
+    },
+    "deliverables": {
+      "title": "Danh Mục Tài Sản Đã Bàn Giao & Năng Lực Vận Hành",
+      "subtitle": "15 cấu phần doanh nghiệp và quy trình vận hành tự chủ sẵn sàng bàn giao.",
+      "edgeRuntime": "Máy Chủ Cloudflare Workers Edge",
+      "database": "Cơ Sở Dữ Liệu Cloudflare D1",
+      "mediaVault": "Kho Lưu Trữ Đa Phương Tiện Cloudflare R2",
+      "backupsVault": "Kho Sao Lưu Khôi Phục Cloudflare R2",
+      "byokVault": "Két Mã Hóa Khóa API AES-256-GCM",
+      "telegramBot": "Bot Cảnh Báo & Thông Báo Telegram",
+      "creativeEngine": "Studio Sản Xuất Video Đa Kênh Tự Động",
+      "runbooks": "Bộ 10 Cẩm Nang Vận Hành Song Ngữ",
+      "nowpayments": "Cổng Thanh Toán Crypto NOWPayments USDT",
+      "payos": "Cổng Thanh Toán VietQR PayOS Dự Phòng",
+      "betterAuth": "Bảo Mật Phiên Đăng Nhập & Phân Quyền RBAC",
+      "observability": "Truy Vết Độ Trễ Honeycomb OpenTelemetry",
+      "sentry": "Theo Dõi Lỗi Sản Xuất Sentry",
+      "drAutomation": "Tiến Trình Sao Lưu Thảm Họa Tự Động",
+      "whiteLabel": "Tên Miền Riêng & Giao Diện Tùy Chỉnh",
+      "verified": "Đã Xác Thực & Sẵn Sàng"
+    },
+    "deliverablesDescriptions": {
+      "edge": "Môi trường máy chủ biên đa vùng Cloudflare Workers (độ trễ phản hồi TTFB < 300ms)",
+      "d1": "Cơ sở dữ liệu quan hệ Cloudflare D1 với tính nhất quán đọc sau khi ghi tức thì",
+      "r2-media": "Kho lưu trữ tệp đa phương tiện Cloudflare R2 cho tài nguyên video đã tổng hợp",
+      "r2-backups": "Kho lưu trữ bản sao lưu Cloudflare R2 phục vụ phục hồi thảm họa tự động",
+      "byok": "Két lưu trữ khóa API mã hóa phong bì AES-256-GCM không lưu trữ bản rõ",
+      "telegram": "Tích hợp bot thông báo & cảnh báo vận hành Telegram (@Sophia_Bbot)",
+      "creative": "Quy trình tự động sản xuất kịch bản và dựng video đa luồng",
+      "runbooks": "Bộ 10 quy trình vận hành SOP chuẩn song ngữ từ khởi động đến bàn giao",
+      "nowpayments": "Hệ thống thanh toán tiền điện tử NOWPayments USDT (chuẩn TRC-20 / ERC-20)",
+      "payos": "Cổng thanh toán quét mã VietQR tự động qua ngân hàng nội địa PayOS",
+      "auth": "Bảo mật phiên đăng nhập Better Auth, phòng chống CSRF và phân quyền RBAC 5 cấp",
+      "telemetry": "Hệ thống phân tích truy vết phân tán & theo dõi độ trễ Honeycomb OpenTelemetry",
+      "sentry": "Hệ thống thu thập và cảnh báo ngoại lệ phần mềm thời gian thực Sentry",
+      "dr": "Lập lịch phục hồi thảm họa tự động với RPO <= 24 giờ và RTO <= 15 phút",
+      "branding": "Giao diện đa khách hàng nhãn trắng, tên miền riêng và logo tùy chỉnh linh hoạt"
+    },
+    "health": {
+      "title": "Xác Thực Sức Khỏe Vận Hành Day-1",
+      "subtitle": "Kiểm tra thời gian thực tất cả dịch vụ trên hạ tầng thực tế.",
+      "edgeStatus": "Độ Phản Hồi Máy Chủ Edge",
+      "shaMatch": "Khớp Mã Git Commit Thực Tế",
+      "dbStatus": "Tính Nhất Quán Cơ Sở Dữ Liệu D1",
+      "r2Status": "Kho Lưu Trữ R2",
+      "backupStatus": "Sao Lưu Dự Phòng Định Kỳ",
+      "healthy": "Sẵn Sàng & Ổn Định",
+      "parity": "Mã Nguồn Khớp Tuyệt Đối",
+      "verdict": "11/11 Điểm Kiểm Tra Đã Đạt (100% Sẵn Sàng)"
+    },
+    "founder30": {
+      "title": "Kế Hoạch Bàn Giao 30 Phút Của Nhà Sáng Lập",
+      "subtitle": "4 bước cốt lõi để hoàn tất chuyển giao quyền kiểm soát an toàn và độc lập.",
+      "task1Title": "1. Phân Quyền Tài Khoản Cloudflare & Quản Trị Viên (10 phút)",
+      "task1Desc": "Vào Cloudflare Dashboard -> Manage Account -> Members. Mời CEO hoặc trưởng nhóm kỹ thuật mới với vai trò Administrator.",
+      "task2Title": "2. Chuyển Giao Quyền Sở Hữu Mã Nguồn GitHub (5 phút)",
+      "task2Desc": "Chuyển giao repo hoặc cấp quyền Admin trên GitHub. Kiểm tra quy tắc bảo vệ nhánh main bắt buộc vượt qua kiểm tra.",
+      "task3Title": "3. Chuyển Giao Két Bảo Mật 1Password / Bitwarden (10 phút)",
+      "task3Desc": "Bàn giao toàn bộ 14 mã bí mật sản xuất: BETTER_AUTH_SECRET, CRON_SECRET, API_ENCRYPTION_KEY, khóa NOWPAYMENTS, khóa TELEGRAM.",
+      "task4Title": "4. Ký Chứng Thư Nghiệm Thu Điện Tử (5 phút)",
+      "task4Desc": "Hoàn tất 4 điều khoản nghiệm thu bên dưới và thực hiện ký điện tử để tạo chứng thư bảo toàn SHA-256.",
+      "close": "Đóng Kế Hoạch"
+    },
+    "signOff": {
+      "title": "Ký Biên Bản Nghiệm Thu Bàn Giao Chính Thức",
+      "description": "Bằng việc ký xác nhận bên dưới, bạn chứng nhận toàn bộ thành phần hệ thống, quyền truy cập và tài liệu đã được kiểm tra và chấp thuận tiếp quản toàn diện.",
+      "checkpoints": {
+        "runbooks": "Tôi đã tiếp nhận, đọc hiểu và lưu trữ đầy đủ 10 Cẩm Nang Vận Hành.",
+        "videoTested": "Tôi đã tạo và kiểm tra thành công video đầu tiên trong Creative Studio.",
+        "keysSecured": "Tôi xác nhận toàn bộ khóa API và thông tin bảo mật đã nằm dưới quyền kiểm soát độc quyền của tôi.",
+        "supportUnderstood": "Tôi đã nắm rõ quy trình gửi báo cáo chẩn đoán, khôi phục sự cố và kênh hỗ trợ kỹ thuật."
+      },
+      "form": {
+        "nameLabel": "Họ và Tên Đầy Đủ",
+        "namePlaceholder": "Ví dụ: Nguyễn Văn An",
+        "roleLabel": "Chức Danh / Vai Trò",
+        "rolePlaceholder": "Ví dụ: Giám Đốc Điều Hành (CEO)",
+        "emailLabel": "Email Công Việc Của Người Ký",
+        "emailPlaceholder": "Ví dụ: ceo@congty.com",
+        "confirmCheckbox": "Tôi long trọng cam đoan có thẩm quyền đại diện doanh nghiệp để ký xác nhận nghiệm thu tiếp quản này.",
+        "submitButton": "Ký Điện Tử & Xác Nhận Nghiệm Thu",
+        "signing": "Đang Xác Minh & Tạo Chứng Thư...",
+        "signedSuccess": "Đã Nghiệm Thu Bàn Giao Thành Công!"
+      }
+    },
+    "certificate": {
+      "badge": "CHỨNG THƯ NGHIỆM THU CHÍNH THỨC",
+      "title": "Chứng Thư Nghiệm Thu Bàn Giao Sophia AI Factory",
+      "subtitle": "Chứng thư bảo toàn nguyên vẹn được niêm phong bằng mã băm mật mã SHA-256.",
+      "certId": "Mã Chứng Thư",
+      "issuedTo": "Bên Nghiệm Thu",
+      "signerRole": "Vai Trò",
+      "studio": "Doanh Nghiệp / Studio",
+      "timestamp": "Thời Điểm Ký (UTC)",
+      "sha256": "Mã Băm Bảo Toàn SHA-256",
+      "deployedSha": "Mã Git Commit Đã Triển Khai",
+      "healthVerdict": "Kết Quả Kiểm Tra Sức Khỏe",
+      "downloadMd": "Tải Chứng Thư (.MD)",
+      "downloadHtml": "Tải Bản In (.HTML)",
+      "print": "In / Lưu PDF",
+      "verifiedBadge": "100/100 ĐÃ CHỨNG THỰC"
+    }
+  },
   "hard": "Hard",
   "hash, response, input_tokens, output_tokens, cost_usd, expires_at, embedding": "Hash, response, input tokens, output tokens, cost usd, expires at, embedding",
   "hero-cta-copy-v1": "Hero cta copy v1",
@@ -7929,5 +8121,28 @@
       "prev": "Trang trước",
       "next": "Trang sau"
     }
+  },
+  "runbooks": {
+    "title": "Sổ Tay Vận Hành Khách Hàng",
+    "subtitle": "10 cẩm nang vận hành song ngữ từng bước làm chủ toàn bộ nền tảng.",
+    "searchPlaceholder": "Tìm kiếm trong 10 cuốn sổ tay...",
+    "allCategories": "Tất Cả Danh Mục",
+    "readTime": "phút đọc",
+    "downloadMarkdown": "Tải Bản Markdown",
+    "downloadHtml": "In / Xuất HTML",
+    "downloadMaster": "Tải Trọn Bộ Sổ Tay (10 SOP)",
+    "copied": "Đã sao chép vào bộ nhớ tạm!",
+    "copySnippet": "Sao Chép",
+    "tableOfContents": "Mục Lục Nhanh",
+    "backToOverview": "Quay Lại Danh Mục Sổ Tay",
+    "nextRunbook": "Sổ Tay Kế Tiếp",
+    "prevRunbook": "Sổ Tay Trước",
+    "author": "Tác Giả",
+    "lastVerified": "Xác Minh Gần Nhất",
+    "language": "Ngôn Ngữ",
+    "languageEn": "English",
+    "languageVi": "Tiếng Việt",
+    "emptySearch": "Không tìm thấy cẩm nang nào khớp với từ khóa."
   }
 }
+
