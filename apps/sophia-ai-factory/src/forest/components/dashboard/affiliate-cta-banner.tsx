@@ -9,6 +9,7 @@
 
 import { useState, useEffect } from "react";
 import { TrendingUp, ArrowRight, X } from "lucide-react";
+import { Button } from "@/seed/components/ui/button";
 import { useTranslations } from "next-intl";
 import { Link } from "@/navigation";
 
@@ -68,14 +69,16 @@ export function AffiliateCTABanner() {
           {t("cta_banner_cta")}
           <ArrowRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
         </Link>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={dismiss}
-          className="p-1 rounded hover:bg-white/10 transition-colors text-white/50 hover:text-white"
+          className="text-white/50 hover:text-white"
           aria-label={t("cta_banner_dismiss")}
         >
           <X className="w-4 h-4" aria-hidden="true" />
-        </button>
+        </Button>
       </div>
     </div>
   );

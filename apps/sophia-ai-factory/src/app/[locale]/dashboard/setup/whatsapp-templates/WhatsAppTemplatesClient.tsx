@@ -6,6 +6,8 @@ import { useRouter } from '@/navigation';
 import { Link } from '@/navigation';
 import { cn } from '@/tree/components/setup-wizard/wizard-stepper';
 import { AlertCircle, CheckCircle, Edit2, ChevronRight, MessageCircle, Send, AlertTriangle } from 'lucide-react';
+import { Button } from '@/seed/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from '@/seed/components/ui/alert';
 
 interface TemplatePack {
   id: string;
@@ -223,16 +225,16 @@ export function WhatsAppTemplatesClient() {
 
         {/* Error/Success Messages */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-            <span>{error}</span>
-          </div>
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="w-5 h-5" aria-hidden="true" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
         {success && step === 'confirm' && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 flex-shrink-0" aria-hidden="true" />
-            <span>{t('successMessage') || 'Template saved successfully! You can now use it in your campaigns.'}</span>
-          </div>
+          <Alert className="mb-6 border-green-200 bg-green-50 text-green-700">
+            <CheckCircle className="w-5 h-5 text-green-600" aria-hidden="true" />
+            <AlertDescription>{t('successMessage') || 'Template saved successfully! You can now use it in your campaigns.'}</AlertDescription>
+          </Alert>
         )}
 
         {/* Step Content */}
@@ -334,18 +336,17 @@ export function WhatsAppTemplatesClient() {
               </div>
 
               <div className="flex justify-end gap-4 mt-8 pt-6 border-t border-border">
-                <button
+                <Button
+                  variant="outline"
                   onClick={handleBack}
-                  className="px-6 py-2 border border-border rounded-lg text-foreground hover:bg-muted transition-colors"
                 >
                   {common('back') || 'Back'}
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => setStep('confirm')}
-                  className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
                 >
                   {common('next') || 'Continue'}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -383,31 +384,30 @@ export function WhatsAppTemplatesClient() {
               </div>
 
               <div className="flex justify-center gap-4">
-                <button
+                <Button
+                  variant="outline"
                   onClick={handleBack}
-                  className="px-6 py-2 border border-border rounded-lg text-foreground hover:bg-muted transition-colors"
                 >
                   {common('back') || 'Back'}
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting
                     ? t('saving') || 'Saving...'
                     : t('saveAndFinish') || 'Save & Finish'}
-                </button>
+                </Button>
               </div>
 
               {success && (
                 <div className="mt-6 pt-6 border-t border-border">
-                  <button
+                  <Button
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
                     onClick={handleFinish}
-                    className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     {common('goToDashboard') || 'Go to Dashboard'}
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>

@@ -8,6 +8,7 @@
 
 import { useState, useCallback } from 'react'
 import { Play, Loader2, Download } from 'lucide-react'
+import { Button } from '@/seed/components/ui/button'
 import { AuditScoreCard } from './audit-score-card'
 import { AuditCheckRow } from './audit-check-row'
 import type { CheckResult } from '@/tree/audit/zero-gap-types'
@@ -115,10 +116,12 @@ export function AuditRunnerButton() {
     <div className="space-y-6">
       {/* Trigger button */}
       <div className="flex flex-wrap gap-3 items-center">
-        <button
+        <Button
+          variant="glow"
+          size="xl"
           onClick={runAudit}
           disabled={state === 'running'}
-          className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-black font-black text-lg shadow-lg hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed disabled:scale-100"
+          className="font-black"
         >
           {state === 'running' ? (
             <>
@@ -131,16 +134,16 @@ export function AuditRunnerButton() {
               Run Zero-GAP Audit
             </>
           )}
-        </button>
+        </Button>
 
         {state === 'done' && (
-          <button
+          <Button
+            variant="outline"
             onClick={downloadReport}
-            className="inline-flex items-center gap-2 px-4 py-3 rounded-xl border border-white/20 hover:border-white/40 text-sm font-medium transition-colors"
           >
             <Download className="w-4 h-4" aria-hidden="true" />
             Download Report
-          </button>
+          </Button>
         )}
       </div>
 

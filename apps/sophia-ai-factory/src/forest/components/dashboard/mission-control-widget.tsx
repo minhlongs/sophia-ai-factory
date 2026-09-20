@@ -12,6 +12,7 @@ import { RecentActivitySparkline } from './mission-control/recent-activity-spark
 import { PrimaryCtaButton } from './mission-control/primary-cta';
 import { useMissionControlData } from './mission-control/use-mission-control-data';
 import { RefreshCw } from 'lucide-react';
+import { Button } from '@/seed/components/ui/button';
 
 interface MissionControlWidgetProps {
 	isVi?: boolean;
@@ -31,18 +32,18 @@ export function MissionControlWidget({ isVi = false }: MissionControlWidgetProps
 				<p className="text-muted-foreground text-xs mb-4">
 					{error instanceof Error ? error.message : (isVi ? 'Lỗi không xác định' : 'Unknown error')}
 				</p>
-				<button
+				<Button
 					onClick={async () => {
 						setRetrying(true);
 						await refetch();
 						setRetrying(false);
 					}}
 					disabled={retrying}
-					className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-primary hover:bg-primary disabled:opacity-60 rounded-lg text-white transition-colors"
+					className="gap-2"
 				>
 					<RefreshCw className={`w-4 h-4 ${retrying ? 'animate-spin' : ''}`} aria-hidden="true" />
 					{isVi ? 'Thử lại' : 'Retry'}
-				</button>
+				</Button>
 			</div>
 		);
 	}

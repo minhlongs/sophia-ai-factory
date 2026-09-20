@@ -23,6 +23,7 @@ import {
   Wifi,
   WifiOff,
 } from 'lucide-react';
+import { Button } from '@/seed/components/ui/button';
 
 interface HarnessResult {
   test_name: string;
@@ -154,13 +155,15 @@ export function HarnessHealthCard() {
             </span>
           )}
 
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={triggerJob}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+            className="gap-1.5"
           >
             <Play className="w-3 h-3" aria-hidden="true" />
             Run Check
-          </button>
+          </Button>
         </div>
       </div>
 

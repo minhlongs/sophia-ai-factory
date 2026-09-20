@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Copy, Check } from "lucide-react";
+import { Button } from "@/seed/components/ui/button";
 import { cn } from '@/seed/utils/cn';
 
 interface GuideCodeBlockProps {
@@ -31,9 +32,11 @@ export function GuideCodeBlock({ code, language, className }: GuideCodeBlockProp
             {language}
           </span>
         )}
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={handleCopy}
-          className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded hover:bg-muted/50"
+          className="ml-auto"
           aria-label="Sao chép mã"
         >
           {copied ? (
@@ -47,7 +50,7 @@ export function GuideCodeBlock({ code, language, className }: GuideCodeBlockProp
               <span>Sao chép</span>
             </>
           )}
-        </button>
+        </Button>
       </div>
       {/* Code content */}
       <pre className="px-4 py-4 overflow-x-auto text-sm font-mono text-muted-foreground leading-relaxed whitespace-pre">

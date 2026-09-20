@@ -6,6 +6,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Button } from '@/seed/components/ui/button';
 import type { MemoryInsight } from '@/land/creative-economy/types';
 
 interface MemoryListProps {
@@ -113,21 +114,22 @@ function CorrectionForm({
       )}
 
       <div className="flex gap-2 pt-2">
-        <button
+        <Button
           type="submit"
+          size="sm"
           disabled={isSubmitting}
-          className="px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isSubmitting ? t('correcting') : t('correctMemory')}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={onClose}
           disabled={isSubmitting}
-          className="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-md hover:bg-slate-50 disabled:opacity-50"
         >
           {t('cancel')}
-        </button>
+        </Button>
       </div>
     </form>
   );

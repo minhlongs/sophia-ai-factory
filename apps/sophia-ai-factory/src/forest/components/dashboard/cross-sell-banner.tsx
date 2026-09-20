@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "@/navigation";
 import { X, Zap, Video } from "lucide-react";
+import { Button } from "@/seed/components/ui/button";
 import { useTranslations } from "next-intl";
 
 type BannerVariant = "raas" | "video" | null;
@@ -78,13 +79,15 @@ export function CrossSellBanner({ variant }: CrossSellBannerProps) {
       </Link>
 
       {/* Dismiss */}
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={handleDismiss}
-        className="shrink-0 p-1 rounded-md text-muted-foreground hover:text-foreground transition-colors"
+        className="shrink-0"
         aria-label={t("dismiss")}
       >
         <X className="w-4 h-4" />
-      </button>
+      </Button>
     </div>
   );
 }

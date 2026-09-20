@@ -10,7 +10,7 @@
 
 ## Overview
 - Priority: P1
-- Status: pending
+- Status: completed
 - Effort: 3h
 - Description: Modernize components across dashboard views and forest UI components by replacing raw unstyled HTML elements (`<button>`, custom card divs, hardcoded badges/alerts) with standardized Obsidian Cyber-Glass `@/seed/components/ui/` primitives.
 
@@ -81,18 +81,18 @@ This phase strictly owns and modifies the following files:
 7. Verify build and types with `npm run type-check`.
 
 ## Todo List
-- [ ] Refactor dashboard action buttons in `WhatsAppTemplatesClient.tsx` & `PublishQueueClient.tsx`
-- [ ] Refactor pipeline trigger button in `trigger-pipeline-button.tsx`
-- [ ] Refactor system health & memory list buttons in `memory-list.tsx` & `harness-health-card.tsx`
-- [ ] Refactor BYOK components in `byok-key-form.tsx` & `byok-provider-picker.tsx`
-- [ ] Refactor dashboard widget banners in `cross-sell-banner.tsx`, `affiliate-cta-banner.tsx`, `mission-control-widget.tsx`
-- [ ] Refactor audit components in `audit-runner-button.tsx` & `audit-check-row.tsx`
-- [ ] Verify `npm run type-check` passes
+- [x] Refactor dashboard action buttons in `WhatsAppTemplatesClient.tsx` & `PublishQueueClient.tsx`
+- [x] Refactor pipeline trigger button in `trigger-pipeline-button.tsx`
+- [x] Refactor system health & memory list buttons in `memory-list.tsx` & `harness-health-card.tsx`
+- [x] Refactor BYOK components in `byok-key-form.tsx` & `byok-provider-picker.tsx`
+- [x] Refactor dashboard widget banners in `cross-sell-banner.tsx`, `affiliate-cta-banner.tsx`, `mission-control-widget.tsx`
+- [x] Refactor audit components in `audit-runner-button.tsx` & `audit-check-row.tsx`
+- [x] Verify `npm run type-check` passes
 
 ## Success Criteria
-- [ ] No raw `<button>` elements in the targeted files
-- [ ] All interactive buttons possess unified focus ring, hover transition, and disabled styles
-- [ ] TypeScript check clean (0 errors)
+- [x] No raw `<button>` elements in the targeted files (with documented exceptions for FAB & ARIA listbox)
+- [x] All interactive buttons possess unified focus ring, hover transition, and disabled styles
+- [x] TypeScript check clean (0 errors)
 
 ## Risk Assessment & Mitigations
 - **Risk:** Unintentional layout shifts due to differing default padding in `<Button>`.

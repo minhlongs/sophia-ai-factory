@@ -8,6 +8,7 @@
 
 import { useState, useEffect } from "react";
 import { MessageCircle, Hash, X } from "lucide-react";
+import { Button } from "@/seed/components/ui/button";
 import { useTranslations } from "next-intl";
 
 const DISMISSED_KEY = "community_cta_dismissed";
@@ -77,14 +78,16 @@ export function CommunityCTABanner() {
       </div>
 
       {/* Right: dismiss */}
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
         onClick={dismiss}
-        className="absolute right-3 top-1/2 -translate-y-1/2 sm:static sm:translate-y-0 p-1 rounded hover:bg-white/10 transition-colors text-white/70 hover:text-white"
+        className="absolute right-3 top-1/2 -translate-y-1/2 sm:static sm:translate-y-0 text-white/70 hover:text-white"
         aria-label={t("dismiss")}
       >
         <X className="w-4 h-4" aria-hidden="true" />
-      </button>
+      </Button>
     </div>
   );
 }

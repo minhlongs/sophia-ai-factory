@@ -8,6 +8,7 @@
 
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react'
+import { Button } from '@/seed/components/ui/button'
 import { cn } from '@/seed/utils/cn'
 import type { CheckResult } from '@/tree/audit/zero-gap-types'
 
@@ -32,9 +33,11 @@ export function AuditCheckRow({ check }: AuditCheckRowProps) {
 
   return (
     <div className={cn('rounded-lg border bg-white/5 backdrop-blur-sm transition-colors', statusBg(check.status))}>
-      <button
-        className="w-full flex items-center gap-3 px-4 py-3 text-left"
+      <Button
+        variant="ghost"
+        className="w-full justify-start px-4 py-3 h-auto text-left"
         onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
       >
         <StatusIcon status={check.status} />
         <span className="flex-1 font-medium text-sm text-foreground">{check.name}</span>
@@ -47,7 +50,7 @@ export function AuditCheckRow({ check }: AuditCheckRowProps) {
         ) : (
           <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" aria-hidden="true" />
         )}
-      </button>
+      </Button>
 
       {expanded && (
         <div className="px-4 pb-4 space-y-2 border-t border-white/5">

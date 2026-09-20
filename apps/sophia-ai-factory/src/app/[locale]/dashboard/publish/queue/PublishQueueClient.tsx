@@ -15,6 +15,7 @@ import {
   Shield,
   Loader2,
 } from 'lucide-react';
+import { Button } from '@/seed/components/ui/button';
 
 interface PublishJob {
   id: string;
@@ -175,13 +176,14 @@ export function PublishQueueClient() {
               {t('subtitle') || 'Monitor and manage your WhatsApp publish jobs'}
             </p>
           </div>
-          <button
+          <Button
+            variant="outline"
             onClick={fetchJobs}
-            className="px-4 py-2 border border-border rounded-lg text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+            className="flex items-center gap-2"
           >
             <RefreshCw className="w-4 h-4" />
             {common('refresh') || 'Refresh'}
-          </button>
+          </Button>
         </div>
 
         {/* Approval Gate Banner */}
@@ -211,12 +213,13 @@ export function PublishQueueClient() {
               <AlertTriangle className="w-5 h-5" />
               <span>{error}</span>
             </div>
-            <button
+            <Button
+              variant="outline"
+              size="sm"
               onClick={fetchJobs}
-              className="px-3 py-1 text-sm border border-red-300 rounded hover:bg-red-50 transition-colors"
             >
               {common('retry') || 'Retry'}
-            </button>
+            </Button>
           </div>
         )}
 
@@ -298,10 +301,11 @@ export function PublishQueueClient() {
                         <td className="px-4 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             {job.status === 'pending_approval' && (
-                              <button
+                              <Button
+                                size="sm"
                                 onClick={() => handleApprove(job.id)}
                                 disabled={approvingJobId === job.id}
-                                className="px-3 py-1.5 text-xs bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors disabled:opacity-50 flex items-center gap-1"
+                                className="bg-orange-600 hover:bg-orange-700 text-white"
                               >
                                 {approvingJobId === job.id ? (
                                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -309,16 +313,17 @@ export function PublishQueueClient() {
                                   <Shield className="w-3 h-3" />
                                 )}
                                 {t('actions.approve') || 'Approve'}
-                              </button>
+                              </Button>
                             )}
                             {job.status === 'failed' && (
-                              <button
+                              <Button
+                                size="sm"
                                 onClick={() => handleRetry(job.id)}
-                                className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center gap-1"
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
                               >
                                 <RefreshCw className="w-3 h-3" />
                                 {t('actions.retry') || 'Retry'}
-                              </button>
+                              </Button>
                             )}
                             {job.status === 'sent' && (
                               <span className="px-3 py-1.5 text-xs text-green-600 font-medium">

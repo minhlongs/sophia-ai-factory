@@ -26,6 +26,7 @@ import {
   Loader2,
   Edit2
 } from 'lucide-react'
+import { Button } from '@/seed/components/ui/button'
 import { ByokHelpTip } from '@/components/onboarding/byok-help-tip'
 import { validateProviderKey } from '@/tree/byok/key-format-validators'
 
@@ -238,7 +239,7 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
       {status && (
         <div className="rounded-lg bg-muted/20 border-border px-4 py-2.5 text-sm text-foreground flex items-center justify-between">
           <span>{status}</span>
-          <button onClick={() => setStatus(null)} className="text-xs text-muted-foreground hover:text-foreground">Dismiss</button>
+          <Button variant="ghost" size="sm" onClick={() => setStatus(null)} className="text-xs">Dismiss</Button>
         </div>
       )}
 
@@ -311,21 +312,24 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
                     )}
                   </div>
                   <div className="flex gap-2">
-                    <button
+                    <Button
                       type="submit"
+                      size="sm"
                       disabled={isPending || !validations[p]?.ok}
-                      className="flex-1 bg-primary-600 hover:bg-primary-500 text-xs font-semibold text-foreground h-8 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      className="flex-1"
                     >
                       {isPending ? 'Saving...' : 'Save Key'}
-                    </button>
+                    </Button>
                     {isConfigured && (
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={() => toggleEditing(p, false)}
-                        className="border-border bg-muted/10 hover:bg-muted/50 text-xs font-semibold text-muted-foreground hover:text-foreground h-8 px-3 rounded-lg transition-all"
+                        className="flex-1"
                       >
                         Cancel
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </form>
@@ -345,11 +349,13 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
                     )}
                   </div>
                   <div className="flex gap-2">
-                    <button
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleTest(p)}
                       disabled={isPending || testingProvider === p}
-                      className="flex-1 border-border bg-muted/10 hover:bg-muted/50 text-xs font-semibold text-blue-400 hover:text-blue-300 h-8 rounded-lg flex items-center justify-center gap-1.5 transition-all"
+                      className="flex-1 text-blue-400 hover:text-blue-300"
                     >
                       {testingProvider === p ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -357,25 +363,29 @@ export function ByokKeyForm({ configured: initialConfigured }: ByokKeyFormProps)
                         <Wifi className="h-3.5 w-3.5" />
                       )}
                       {t('test_button')}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => toggleEditing(p, true)}
                       disabled={isPending}
-                      className="flex-1 border-border bg-muted/10 hover:bg-muted/50 text-xs font-semibold text-amber-400 hover:text-amber-300 h-8 rounded-lg flex items-center justify-center gap-1.5 transition-all"
+                      className="flex-1 text-amber-400 hover:text-amber-300"
                     >
                       <Edit2 className="h-3.5 w-3.5" />
                       Edit
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => handleClear(p)}
                       disabled={isPending}
-                      className="border-border bg-muted/10 hover:bg-rose-500/5 text-xs font-semibold text-rose-500 hover:text-rose-400 h-8 px-2.5 rounded-lg flex items-center justify-center transition-all"
+                      className="text-rose-500 hover:text-rose-400"
                       aria-label="Delete key"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
