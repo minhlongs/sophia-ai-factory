@@ -36,7 +36,7 @@ export interface ActionError {
 }
 
 /** Whitelist of authorized corporate governance signatory roles */
-export const ALLOWED_SIGNER_ROLES = new Set([
+const ALLOWED_SIGNER_ROLES = new Set([
   'CEO',
   'Founder',
   'Tech_Lead',
