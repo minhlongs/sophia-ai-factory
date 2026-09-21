@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { MoreVertical } from 'lucide-react';
-import { DashboardLayout, Button } from '@/components/stitch';
+import { Download, Plus } from 'lucide-react';
+import { Button } from '@/components/stitch';
 import { useTranslations } from 'next-intl';
 import type { DashboardData, DashboardMetric } from '@/forest/dashboard/types';
 import type { SystemReadiness } from '@/tree/readiness/readiness-checker';
@@ -21,7 +21,13 @@ interface DashboardPageProps {
 }
 
 export default function DashboardPage({ initialData, readiness }: DashboardPageProps) {
-  const t = useTranslations('stitch.dashboard');
+  let t: (key: string) => string;
+  try {
+    const hookT = useTranslations('stitch.dashboard');
+    t = (key: string) => hookT(key);
+  } catch {
+    t = (key: string) => key;
+  }
 
   // Fallback default empty metrics
   const metrics: DashboardMetric[] = initialData?.metrics || [
@@ -34,33 +40,34 @@ export default function DashboardPage({ initialData, readiness }: DashboardPageP
   // Zero-mock affiliates: empty if none provided
   const topAffiliates = initialData?.topAffiliates || [];
 
-  // Zero-mock transactions: empty if none provided
+  // Support all activities (campaigns/missions + transactions)
   const recentTransactions: DashboardTransactionItem[] =
-    initialData?.recentActivities
-      ?.filter((a) => a.type === 'payment')
-      .map((a) => ({
-        id: a.id,
-        date: a.date,
-        customer: a.description,
-        amount: a.amount || '$0.00',
-        status: a.status,
-      })) || [];
+    initialData?.recentActivities?.map((a) => ({
+      id: a.id,
+      date: a.date,
+      customer: a.description,
+      amount: a.amount || (a.type === 'campaign' ? 'AI Video Mission' : '$0.00'),
+      status: a.status,
+    })) || [];
 
   return (
-    <DashboardLayout
-      title={t('title')}
-      subtitle={t('subtitle')}
-      actions={
-        <>
-          <Button variant="outline" iconLeft={<MoreVertical className="w-4 h-4" />}>
+    <div className="space-y-6" data-testid="dashboard-overview-content">
+      {/* Dashboard Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white tracking-tight">{t('title')}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{t('subtitle')}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" iconLeft={<Download className="w-4 h-4" />}>
             {t('actions.exportData')}
           </Button>
-          <Button iconLeft={<MoreVertical className="w-4 h-4" />}>
+          <Button iconLeft={<Plus className="w-4 h-4" />}>
             {t('actions.addProduct')}
           </Button>
-        </>
-      }
-    >
+        </div>
+      </div>
+
       {/* CEO Onboarding & System Readiness Callout */}
       <DashboardOnboardingBanner readiness={readiness} />
 
@@ -68,13 +75,13 @@ export default function DashboardPage({ initialData, readiness }: DashboardPageP
       <DashboardMetricsGrid metrics={metrics} />
 
       {/* Chart & Affiliates Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-lg mb-xl">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         <DashboardRevenueChart />
         <DashboardAffiliatesCard affiliates={topAffiliates} />
       </div>
 
-      {/* Recent Transactions Table */}
+      {/* Recent Activity Table */}
       <DashboardTransactionsCard transactions={recentTransactions} />
-    </DashboardLayout>
+    </div>
   );
 }

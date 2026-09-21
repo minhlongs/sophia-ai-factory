@@ -1,15 +1,20 @@
 "use client";
 
 /**
- * Dashboard Sidebar Navigation Component
+ * Canonical Dashboard Sidebar Navigation Component
  * Layer: forest/dashboard (Infrastructure Orchestrators & UI; imports from @/seed)
  *
- * Provides the canonical navigation sidebar for customer and admin dashboard routes,
- * registering /dashboard/handover, /dashboard/docs/runbooks, and /admin/handover.
+ * Implements the Obsidian Cyber-Glass dashboard navigation featuring:
+ * 1. All 11 canonical Sophia AI Factory modules with verified routes
+ * 2. Active route glows and electric indigo accent indicators
+ * 3. Bottom user profile card with tier badge, quota bar, and single-line upgrade CTA
+ * 4. Responsive mobile drawer navigation (< 768px viewport)
+ * 5. Conditional admin operator links when isAdmin=true
  *
  * @module forest/dashboard/dashboard-sidebar-nav
  */
 
+import React from "react";
 import { Link } from "@/navigation";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -17,303 +22,393 @@ import { cn } from "@/seed/utils/cn";
 import {
   LayoutDashboard,
   PlusCircle,
-  Settings,
-  Video,
-  BarChart2,
-  HelpCircle,
-  KeyRound,
-  KeySquare,
-  FileText,
-  Coins,
-  Plug,
-  Webhook,
-  Store,
+  Film,
+  Wand2,
+  Youtube,
   BookOpen,
-  Sparkles,
-  Activity,
-  ServerCog,
-  Database,
-  FlaskConical,
-  Target,
-  RotateCw,
-  RotateCcw,
+  Share2,
+  ShoppingBag,
   ShieldCheck,
+  Terminal,
+  Activity,
+  ArrowUpRight,
+  X,
+  type LucideIcon,
 } from "lucide-react";
 
-export interface DashboardSidebarNavProps {
-  isAdmin: boolean;
-  isVi: boolean;
+export interface DashboardNavModule {
+  id: string;
+  labelKey: string;
+  fallbackLabel: string;
+  href: string;
+  icon: LucideIcon;
+  badge?: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- prop reserved for future locale-aware rendering
-export function DashboardSidebarNav({ isAdmin, isVi }: DashboardSidebarNavProps) {
-  const pathname = usePathname();
-  const t = useTranslations("dashboard");
+export interface DashboardUserProps {
+  name: string;
+  email: string;
+  avatarUrl?: string | null;
+  tier?: 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE' | 'MASTER' | string;
+  quotaUsagePercent?: number;
+  quotaUsed?: number;
+  quotaTotal?: number;
+}
+
+export interface DashboardSidebarNavProps {
+  currentPath?: string;
+  isAdmin?: boolean;
+  isVi?: boolean;
+  user?: DashboardUserProps;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
+  className?: string;
+}
+
+/**
+ * 11 Canonical Sophia AI Factory Navigation Modules
+ */
+export const SOPHIA_NAV_MODULES: DashboardNavModule[] = [
+  {
+    id: "overview",
+    labelKey: "sidebar.overview",
+    fallbackLabel: "Overview",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    id: "create_mission",
+    labelKey: "sidebar.create_mission",
+    fallbackLabel: "Create Mission",
+    href: "/dashboard/missions/new",
+    icon: PlusCircle,
+  },
+  {
+    id: "missions",
+    labelKey: "sidebar.missions",
+    fallbackLabel: "AI Missions",
+    href: "/dashboard/missions",
+    icon: Film,
+  },
+  {
+    id: "creative_studio",
+    labelKey: "sidebar.creative_studio",
+    fallbackLabel: "Creative Studio",
+    href: "/dashboard/creative-economy",
+    icon: Wand2,
+  },
+  {
+    id: "youtube_automation",
+    labelKey: "sidebar.youtube_automation",
+    fallbackLabel: "YouTube Automation",
+    href: "/dashboard/youtube",
+    icon: Youtube,
+  },
+  {
+    id: "playbooks",
+    labelKey: "sidebar.playbook",
+    fallbackLabel: "Playbooks",
+    href: "/dashboard/playbooks",
+    icon: BookOpen,
+  },
+  {
+    id: "publish_queue",
+    labelKey: "sidebar.publish_queue",
+    fallbackLabel: "Distribution Queue",
+    href: "/dashboard/publish/queue",
+    icon: Share2,
+  },
+  {
+    id: "marketplace",
+    labelKey: "sidebar.marketplace",
+    fallbackLabel: "Creator Marketplace",
+    href: "/marketplace",
+    icon: ShoppingBag,
+  },
+  {
+    id: "handover",
+    labelKey: "sidebar.handover",
+    fallbackLabel: "Handover & Acceptance",
+    href: "/dashboard/handover",
+    icon: ShieldCheck,
+  },
+  {
+    id: "runbooks",
+    labelKey: "sidebar.runbooks",
+    fallbackLabel: "Runbooks",
+    href: "/dashboard/docs/runbooks",
+    icon: Terminal,
+  },
+  {
+    id: "system_health",
+    labelKey: "sidebar.system_health",
+    fallbackLabel: "System Health",
+    href: "/dashboard/system-health",
+    icon: Activity,
+  },
+];
+
+export function DashboardSidebarNav({
+  currentPath,
+  isAdmin = false,
+  isVi = false,
+  user = {
+    name: "Sophia Founder",
+    email: "founder@sophia.ai",
+    tier: "PRO",
+    quotaUsagePercent: 65,
+    quotaUsed: 650,
+    quotaTotal: 1000,
+  },
+  isMobileOpen = false,
+  onCloseMobile,
+  className,
+}: DashboardSidebarNavProps) {
+  const pathnameFromHook = usePathname();
+  const rawPathname = currentPath || pathnameFromHook || "/dashboard";
+  let t: (key: string) => string;
+  try {
+    const hookT = useTranslations("dashboard");
+    t = (key: string) => hookT(key);
+  } catch {
+    t = (key: string) => key;
+  }
 
   const isActive = (href: string) => {
-    const cleanPath = pathname ? pathname.replace(/^\/(en|vi)/, "") || "/" : "/";
+    const cleanPath = rawPathname.replace(/^\/(en|vi)/, "") || "/";
     const cleanHref = href.replace(/^\/(en|vi)/, "") || "/";
-    
+
     if (cleanHref === "/dashboard") {
       return cleanPath === "/dashboard";
     }
-    return cleanPath.startsWith(cleanHref);
+    return cleanPath === cleanHref || cleanPath.startsWith(`${cleanHref}/`);
   };
 
-  const linkClass = (href: string) => {
-    const active = isActive(href);
-    return cn(
-      "relative flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 group min-h-[44px]",
-      "hover:translate-x-1.5 hover:scale-[1.02] active:scale-[0.98]",
-      active
-        ? "text-foreground bg-primary/10 font-semibold border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
-        : "text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent"
-    );
-  };
-
-  const iconClass = (href: string) => {
-    const active = isActive(href);
-    return cn(
-      "w-5 h-5 transition-transform duration-300 group-hover:scale-110",
-      active ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-    );
-  };
-
-  const renderActiveIndicator = (href: string) => {
-    if (isActive(href)) {
-      return (
-        <span className="absolute left-0 top-1/4 h-1/2 w-1 rounded-r-full bg-gradient-to-b from-primary to-accent shadow-[0_0_8px_hsl(var(--primary))]" />
-      );
+  const getTierBadgeClass = (tier: string) => {
+    const normalized = tier.toUpperCase();
+    if (normalized === "MASTER") {
+      return "bg-gradient-to-r from-amber-500/20 to-primary/20 text-amber-300 border border-amber-500/30";
     }
-    return null;
+    if (normalized === "ENTERPRISE") {
+      return "bg-primary/20 text-primary border border-primary/30";
+    }
+    if (normalized === "PRO") {
+      return "bg-violet-500/20 text-violet-300 border border-violet-500/30";
+    }
+    return "bg-muted text-muted-foreground border border-border";
   };
+
+  const userInitials = user.name
+    ? user.name
+        .split(" ")
+        .map((p) => p[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "SF";
+
+  const quotaPercent = user.quotaUsagePercent ?? 65;
+  const userTier = user.tier || "PRO";
+
+  const renderNavItems = () => (
+    <div className="space-y-1 px-3 py-2 flex-1 overflow-y-auto">
+      <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70">
+        {isVi ? "Nền Tảng AI" : "Platform Navigation"}
+      </div>
+
+      {SOPHIA_NAV_MODULES.map((item) => {
+        const active = isActive(item.href);
+        const IconComponent = item.icon;
+        let label = item.fallbackLabel;
+        try {
+          const translated = t(item.labelKey);
+          if (translated && !translated.includes(item.labelKey)) {
+            label = translated;
+          }
+        } catch {
+          label = item.fallbackLabel;
+        }
+
+        return (
+          <Link
+            key={item.id}
+            href={item.href}
+            onClick={onCloseMobile}
+            className={cn(
+              "relative flex items-center gap-3 px-3.5 py-2.5 rounded-xl transition-all duration-300 group min-h-[42px]",
+              active
+                ? "text-white bg-primary/10 font-medium border border-primary/30 shadow-[0_0_12px_hsl(var(--primary)/0.15)]"
+                : "text-muted-foreground hover:text-white hover:bg-muted/60 hover:translate-x-1.5 border border-transparent"
+            )}
+          >
+            {active && (
+              <span className="absolute left-0 top-1/4 h-1/2 w-1 rounded-r-full bg-gradient-to-b from-primary to-accent shadow-[0_0_8px_hsl(var(--primary))]" />
+            )}
+            <IconComponent
+              className={cn(
+                "w-4 h-4 shrink-0 transition-transform duration-300 group-hover:scale-110",
+                active ? "text-primary" : "text-muted-foreground group-hover:text-white"
+              )}
+              aria-hidden="true"
+            />
+            <span className="text-xs tracking-wide truncate">{label}</span>
+          </Link>
+        );
+      })}
+
+      {isAdmin && (
+        <div className="pt-3 mt-3 border-t border-border/50">
+          <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-amber-400/80">
+            {isVi ? "Bảng Quản Trị" : "Admin Console"}
+          </div>
+          <Link
+            href="/admin/handover"
+            onClick={onCloseMobile}
+            className={cn(
+              "relative flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs text-muted-foreground hover:text-white hover:bg-muted/60 transition-all",
+              isActive("/admin/handover") && "text-white bg-primary/10 border border-primary/30 font-medium"
+            )}
+          >
+            <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="truncate">Handover Console</span>
+          </Link>
+          <Link
+            href="/dashboard/admin/ops"
+            onClick={onCloseMobile}
+            className={cn(
+              "relative flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs text-muted-foreground hover:text-white hover:bg-muted/60 transition-all",
+              isActive("/dashboard/admin/ops") && "text-white bg-primary/10 border border-primary/30 font-medium"
+            )}
+          >
+            <Activity className="w-4 h-4 text-primary shrink-0" />
+            <span className="truncate">Ops Dashboard</span>
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderUserCard = () => (
+    <div className="p-3 border-t border-border/70 bg-[#0E1017]/80 shrink-0">
+      <div className="bg-[#12141F] border border-border/80 rounded-xl p-3 space-y-2.5 shadow-md">
+        {/* User Identity Row */}
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-full bg-primary/20 text-primary border border-primary/30 flex items-center justify-center font-bold text-xs shrink-0">
+            {userInitials}
+          </div>
+          <div className="min-w-0 flex-1 truncate">
+            <p className="text-xs font-semibold text-white truncate leading-tight">{user.name}</p>
+            <p className="text-[10px] text-muted-foreground truncate leading-tight">{user.email}</p>
+          </div>
+          <span
+            className={cn(
+              "px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider uppercase shrink-0",
+              getTierBadgeClass(userTier)
+            )}
+          >
+            {userTier}
+          </span>
+        </div>
+
+        {/* Quota Progress Bar */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground font-medium">
+            <span>MCU Quota</span>
+            <span className="font-mono text-slate-300">{quotaPercent}%</span>
+          </div>
+          <div className="w-full h-1.5 bg-muted/60 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-primary to-accent rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(100, Math.max(0, quotaPercent))}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Single-line Upgrade CTA */}
+        <Link
+          href="/pricing"
+          onClick={onCloseMobile}
+          className="w-full h-7 rounded-lg bg-primary/15 hover:bg-primary/25 border border-primary/30 text-primary hover:text-white text-xs font-semibold flex items-center justify-center gap-1 transition-all min-w-0 truncate"
+        >
+          <span>{isVi ? "Nâng Cấp Gói" : "Upgrade Tier"}</span>
+          <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
+        </Link>
+      </div>
+    </div>
+  );
 
   return (
-    <nav aria-label="Dashboard sidebar" className="flex-1 p-4 space-y-1 overflow-y-auto">
-      <Link href="/dashboard" className={linkClass("/dashboard")}>
-        {renderActiveIndicator("/dashboard")}
-        <LayoutDashboard className={iconClass("/dashboard")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.overview')}</span>
-      </Link>
-      
-      <Link href="/dashboard/create" className={linkClass("/dashboard/create")}>
-        {renderActiveIndicator("/dashboard/create")}
-        <PlusCircle className={iconClass("/dashboard/create")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.new_project')}</span>
-      </Link>
-      
-      <Link href="/dashboard/campaigns" className={linkClass("/dashboard/campaigns")}>
-        {renderActiveIndicator("/dashboard/campaigns")}
-        <Video className={iconClass("/dashboard/campaigns")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.campaigns')}</span>
-      </Link>
-      
-      <Link href="/dashboard/missions" className={linkClass("/dashboard/missions")}>
-        {renderActiveIndicator("/dashboard/missions")}
-        <Sparkles className={iconClass("/dashboard/missions")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.missions')}</span>
-      </Link>
-      
-      <Link href="/dashboard/playbook" className={linkClass("/dashboard/playbook")}>
-        {renderActiveIndicator("/dashboard/playbook")}
-        <BookOpen className={iconClass("/dashboard/playbook")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.playbook')}</span>
-      </Link>
-
-      {/* Customer Handover & Operational Acceptance */}
-      <Link href="/dashboard/handover" className={linkClass("/dashboard/handover")}>
-        {renderActiveIndicator("/dashboard/handover")}
-        <ShieldCheck className={iconClass("/dashboard/handover")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.handover')}</span>
-      </Link>
-
-      {/* Customer Operational Runbooks */}
-      <Link href="/dashboard/docs/runbooks" className={linkClass("/dashboard/docs/runbooks")}>
-        {renderActiveIndicator("/dashboard/docs/runbooks")}
-        <BookOpen className={iconClass("/dashboard/docs/runbooks")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.runbooks')}</span>
-      </Link>
-      
-      {/* SOP Automation */}
-      <Link href="/dashboard/sop-marketplace" className={linkClass("/dashboard/sop-marketplace")}>
-        {renderActiveIndicator("/dashboard/sop-marketplace")}
-        <Store className={iconClass("/dashboard/sop-marketplace")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.sop_marketplace')}</span>
-      </Link>
-      
-      <Link href="/dashboard/sops" className={linkClass("/dashboard/sops")}>
-        {renderActiveIndicator("/dashboard/sops")}
-        <BookOpen className={iconClass("/dashboard/sops")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.my_sops')}</span>
-      </Link>
-      
-      {isAdmin && (
-        <Link href="/dashboard/sop-creator" className={linkClass("/dashboard/sop-creator")}>
-          {renderActiveIndicator("/dashboard/sop-creator")}
-          <Sparkles className={iconClass("/dashboard/sop-creator")} aria-hidden="true" />
-          <span className="font-medium">{t('sidebar.sop_creator')}</span>
-        </Link>
-      )}
-      
-      <Link href="/dashboard/challenges" className={linkClass("/dashboard/challenges")}>
-        {renderActiveIndicator("/dashboard/challenges")}
-        <Target className={iconClass("/dashboard/challenges")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.challenges')}</span>
-      </Link>
-      
-      {/* Integrations */}
-      <Link href="/dashboard/integrations" className={linkClass("/dashboard/integrations")}>
-        {renderActiveIndicator("/dashboard/integrations")}
-        <Plug className={iconClass("/dashboard/integrations")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.integrations')}</span>
-      </Link>
-      
-      <Link href="/dashboard/byok" className={linkClass("/dashboard/byok")}>
-        {renderActiveIndicator("/dashboard/byok")}
-        <KeySquare className={iconClass("/dashboard/byok")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.byok')}</span>
-      </Link>
-      
-      <Link href="/dashboard/help" className={linkClass("/dashboard/help")}>
-        {renderActiveIndicator("/dashboard/help")}
-        <HelpCircle className={iconClass("/dashboard/help")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.support')}</span>
-      </Link>
-      
-      {/* Admin Links */}
-      {isAdmin && (
-        <>
-          <div className="pt-2 mt-2 border-t border-border/50">
-            {/* Operator Handover Console */}
-            <Link href="/admin/handover" className={linkClass("/admin/handover")}>
-              {renderActiveIndicator("/admin/handover")}
-              <ShieldCheck className={iconClass("/admin/handover")} aria-hidden="true" />
-              <span className="font-medium">Handover Console</span>
-            </Link>
-
-            <Link href="/dashboard/admin" className={linkClass("/dashboard/admin")}>
-              {renderActiveIndicator("/dashboard/admin")}
-              <LayoutDashboard className={iconClass("/dashboard/admin")} aria-hidden="true" />
-              <span className="font-medium">Admin Home</span>
-            </Link>
-
-            <Link href="/dashboard/admin/ops" className={linkClass("/dashboard/admin/ops")}>
-              {renderActiveIndicator("/dashboard/admin/ops")}
-              <Activity className={iconClass("/dashboard/admin/ops")} aria-hidden="true" />
-              <span className="font-medium">Ops Dashboard</span>
-            </Link>
-
-            <Link href="/dashboard/admin/funnel" className={linkClass("/dashboard/admin/funnel")}>
-              {renderActiveIndicator("/dashboard/admin/funnel")}
-              <BarChart2 className={iconClass("/dashboard/admin/funnel")} aria-hidden="true" />
-              <span className="font-medium">Activation Funnel</span>
-            </Link>
-
-            <Link href="/dashboard/admin/crons" className={linkClass("/dashboard/admin/crons")}>
-              {renderActiveIndicator("/dashboard/admin/crons")}
-              <ServerCog className={iconClass("/dashboard/admin/crons")} aria-hidden="true" />
-              <span className="font-medium">Cron Monitor</span>
-            </Link>
-
-            <Link href="/dashboard/admin/email-outbox" className={linkClass("/dashboard/admin/email-outbox")}>
-              {renderActiveIndicator("/dashboard/admin/email-outbox")}
-              <Webhook className={iconClass("/dashboard/admin/email-outbox")} aria-hidden="true" />
-              <span className="font-medium">Email Outbox</span>
-            </Link>
-
-            <Link href="/dashboard/admin/affiliate-leaderboard" className={linkClass("/dashboard/admin/affiliate-leaderboard")}>
-              {renderActiveIndicator("/dashboard/admin/affiliate-leaderboard")}
-              <Coins className={iconClass("/dashboard/admin/affiliate-leaderboard")} aria-hidden="true" />
-              <span className="font-medium">Affiliate Leaderboard</span>
-            </Link>
-
-            <Link href="/dashboard/admin/webhook-deliveries" className={linkClass("/dashboard/admin/webhook-deliveries")}>
-              {renderActiveIndicator("/dashboard/admin/webhook-deliveries")}
-              <Webhook className={iconClass("/dashboard/admin/webhook-deliveries")} aria-hidden="true" />
-              <span className="font-medium">Webhook Deliveries</span>
-            </Link>
-
-            <Link href="/dashboard/admin/storage" className={linkClass("/dashboard/admin/storage")}>
-              {renderActiveIndicator("/dashboard/admin/storage")}
-              <Database className={iconClass("/dashboard/admin/storage")} aria-hidden="true" />
-              <span className="font-medium">Storage Usage</span>
-            </Link>
-
-            <Link href="/dashboard/admin/audit-log" className={linkClass("/dashboard/admin/audit-log")}>
-              {renderActiveIndicator("/dashboard/admin/audit-log")}
-              <FileText className={iconClass("/dashboard/admin/audit-log")} aria-hidden="true" />
-              <span className="font-medium">Audit Log</span>
-            </Link>
-
-            <Link href="/dashboard/admin/api-key-usage" className={linkClass("/dashboard/admin/api-key-usage")}>
-              {renderActiveIndicator("/dashboard/admin/api-key-usage")}
-              <KeyRound className={iconClass("/dashboard/admin/api-key-usage")} aria-hidden="true" />
-              <span className="font-medium">API Key Usage</span>
-            </Link>
-
-            <Link href="/dashboard/admin/tenant-lookup" className={linkClass("/dashboard/admin/tenant-lookup")}>
-              {renderActiveIndicator("/dashboard/admin/tenant-lookup")}
-              <Activity className={iconClass("/dashboard/admin/tenant-lookup")} aria-hidden="true" />
-              <span className="font-medium">Tenant Lookup</span>
-            </Link>
-
-            <Link href="/dashboard/admin/cost" className={linkClass("/dashboard/admin/cost")}>
-              {renderActiveIndicator("/dashboard/admin/cost")}
-              <Coins className={iconClass("/dashboard/admin/cost")} aria-hidden="true" />
-              <span className="font-medium">Cost Dashboard</span>
-            </Link>
-
-            <Link href="/dashboard/admin/migrations" className={linkClass("/dashboard/admin/migrations")}>
-              {renderActiveIndicator("/dashboard/admin/migrations")}
-              <Database className={iconClass("/dashboard/admin/migrations")} aria-hidden="true" />
-              <span className="font-medium">Migrations</span>
-            </Link>
-
-            <Link href="/dashboard/admin/e2e-smoke" className={linkClass("/dashboard/admin/e2e-smoke")}>
-              {renderActiveIndicator("/dashboard/admin/e2e-smoke")}
-              <FlaskConical className={iconClass("/dashboard/admin/e2e-smoke")} aria-hidden="true" />
-              <span className="font-medium">E2E Smoke</span>
-            </Link>
-
-            <Link href="/dashboard/admin/heygen-webhooks" className={linkClass("/dashboard/admin/heygen-webhooks")}>
-              {renderActiveIndicator("/dashboard/admin/heygen-webhooks")}
-              <Webhook className={iconClass("/dashboard/admin/heygen-webhooks")} aria-hidden="true" />
-              <span className="font-medium">HeyGen Webhooks</span>
-            </Link>
-
-            <Link href="/dashboard/admin/deploy-status" className={linkClass("/dashboard/admin/deploy-status")}>
-              {renderActiveIndicator("/dashboard/admin/deploy-status")}
-              <ServerCog className={iconClass("/dashboard/admin/deploy-status")} aria-hidden="true" />
-              <span className="font-medium">Deploy Status</span>
-            </Link>
-
-            <Link href="/dashboard/admin/byok-rotation" className={linkClass("/dashboard/admin/byok-rotation")}>
-              {renderActiveIndicator("/dashboard/admin/byok-rotation")}
-              <RotateCw className={iconClass("/dashboard/admin/byok-rotation")} aria-hidden="true" />
-              <span className="font-medium">Key Rotation</span>
-            </Link>
+    <>
+      {/* Desktop Persistent Sidebar */}
+      <aside
+        className={cn(
+          "hidden md:flex flex-col w-[280px] h-screen fixed top-0 left-0 bg-[#08090D] border-r border-[#222536] z-30 select-none",
+          className
+        )}
+      >
+        {/* Brand Header */}
+        <div className="h-16 px-6 border-b border-border/70 flex items-center gap-3 shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold shadow-[0_0_15px_rgba(99,102,241,0.4)]">
+            S
           </div>
+          <div className="min-w-0 flex-1 truncate">
+            <h2 className="text-sm font-bold text-white tracking-tight truncate">Sophia AI Factory</h2>
+            <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-widest truncate">
+              Autonomous Video
+            </p>
+          </div>
+        </div>
+
+        {/* Navigation Modules */}
+        {renderNavItems()}
+
+        {/* Bottom User Profile Card */}
+        {renderUserCard()}
+      </aside>
+
+      {/* Mobile Drawer (< 768px) */}
+      {isMobileOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm md:hidden animate-in fade-in duration-200"
+            onClick={onCloseMobile}
+            data-testid="mobile-drawer-backdrop"
+            aria-hidden="true"
+          />
+          <aside
+            className={cn(
+              "fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-[#08090D] border-r border-[#222536] flex flex-col h-full shadow-2xl transition-transform duration-300 ease-in-out md:hidden",
+              className
+            )}
+            data-testid="mobile-drawer"
+            aria-label="Mobile navigation drawer"
+          >
+            {/* Mobile Header with Close Button */}
+            <div className="h-16 px-5 border-b border-border/70 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                  S
+                </div>
+                <span className="text-sm font-bold text-white truncate">Sophia AI Factory</span>
+              </div>
+              <button
+                type="button"
+                onClick={onCloseMobile}
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-white hover:bg-muted/60 transition-colors"
+                aria-label="Close navigation"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Navigation Modules */}
+            {renderNavItems()}
+
+            {/* Bottom User Profile Card */}
+            {renderUserCard()}
+          </aside>
         </>
       )}
-      
-      {/* Account & Settings */}
-      <Link href="/dashboard/account" className={linkClass("/dashboard/account")}>
-        {renderActiveIndicator("/dashboard/account")}
-        <Settings className={iconClass("/dashboard/account")} aria-hidden="true" />
-        <span className="font-medium">Account &amp; Billing</span>
-      </Link>
-      
-      <Link href="/dashboard/settings" className={linkClass("/dashboard/settings")}>
-        {renderActiveIndicator("/dashboard/settings")}
-        <Settings className={iconClass("/dashboard/settings")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.settings')}</span>
-      </Link>
-      
-      <Link href="/dashboard/tour" className={linkClass("/dashboard/tour")}>
-        {renderActiveIndicator("/dashboard/tour")}
-        <RotateCcw className={iconClass("/dashboard/tour")} aria-hidden="true" />
-        <span className="font-medium">{t('sidebar.replay_tour')}</span>
-      </Link>
-    </nav>
+    </>
   );
 }

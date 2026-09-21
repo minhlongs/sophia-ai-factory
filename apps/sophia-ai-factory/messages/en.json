@@ -988,7 +988,12 @@
       "challenges": "Challenges",
       "playbook": "Auto Playbook",
       "handover": "Customer Handover",
-      "runbooks": "CEO Runbooks"
+      "runbooks": "CEO Runbooks",
+      "create_mission": "Create Mission",
+      "youtube_automation": "YouTube Automation",
+      "publish_queue": "Distribution Queue",
+      "marketplace": "Creator Marketplace",
+      "system_health": "System Health"
     },
     "notFound": {
       "title": "Page Not Found",
@@ -6224,6 +6229,7 @@
         "subtitle": "Total sales performance this quarter",
         "period": "Last 30 Days",
         "periods": {
+          "7d": "Last 7 Days",
           "30d": "Last 30 Days",
           "6m": "Last 6 Months",
           "ytd": "Year to Date"

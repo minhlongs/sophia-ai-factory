@@ -988,7 +988,12 @@
       "challenges": "Thử thách",
       "playbook": "Chiến lược Playbook",
       "handover": "Bàn Giao Vận Hành",
-      "runbooks": "Sổ Tay CEO"
+      "runbooks": "Sổ Tay CEO",
+      "create_mission": "Tạo Nhiệm Vụ",
+      "youtube_automation": "Tự Động Hóa YouTube",
+      "publish_queue": "Hàng Đợi Xuất Bản",
+      "marketplace": "Chợ Sáng Tạo",
+      "system_health": "Sức Khỏe Hệ Thống"
     },
     "notFound": {
       "title": "Không tìm thấy trang",
@@ -6231,6 +6236,7 @@
         "subtitle": "Hiệu suất bán hàng quý này",
         "period": "30 ngày qua",
         "periods": {
+          "7d": "7 ngày qua",
           "30d": "30 ngày qua",
           "6m": "6 tháng qua",
           "ytd": "Năm hiện tại"

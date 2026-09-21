@@ -780,3 +780,66 @@ Deliver complete customer operational self-sufficiency tools:
 - [ ] `bash scripts/check-layer-boundaries.sh` exits with code 0
 - [ ] Deployed commit SHA matches live edge `https://sophia.agencyos.network/api/version`
 - [ ] Sophia Doctor (`node scripts/sophia-doctor.mjs`) reports 11/11 GREEN (100% score)
+
+## Follow-up — 2026-09-21T07:07:08Z
+
+The user requested: The full multi-agent team.
+Execute the complete Full Platform Obsidian Cyber-Glass Dashboard UI/UX Overhaul: Replace the broken Stitch prototype layout with a production-grade, pixel-perfect Obsidian Cyber-Glass dashboard experience (`#08090D` obsidian background, `#12141F` glass cards, `#6366F1` electric indigo accents, `#F59E0B` cyber amber highlights). Wire the canonical `DashboardSidebarNav` featuring real Sophia AI Factory capabilities (AI Missions, Creative Studio, YouTube Automation, Creator Marketplace, Handover, Runbooks), rebuild the revenue chart with smooth bottom-up SVG/gradient rendering, polish the topbar, and deploy live to Cloudflare Workers edge with bit-for-bit SHA verification and Sophia Doctor 11/11 GREEN certification.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+References:
+- apps/sophia-ai-factory/src/app/globals.css
+- apps/sophia-ai-factory/src/seed/components/ui/card.tsx
+- apps/sophia-ai-factory/src/seed/components/ui/button.tsx
+- apps/sophia-ai-factory/src/forest/dashboard/dashboard-sidebar-nav.tsx
+- apps/sophia-ai-factory/src/components/stitch/screens/dashboard/dashboard-page.tsx
+- apps/sophia-ai-factory/CLAUDE.md
+- apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
+
+## Requirements
+
+### R1. Obsidian Cyber-Glass Dashboard Shell & Canonical Navigation
+Build an executive-grade dashboard layout shell and sidebar navigation:
+- Wire the canonical `DashboardSidebarNav` (`src/forest/dashboard/dashboard-sidebar-nav.tsx`) with real Sophia AI modules: Overview, Create Mission (`/dashboard/missions/new`), AI Missions (`/dashboard/missions`), Creative Studio (`/dashboard/creative-economy`), YouTube Automation (`/dashboard/youtube`), Playbooks (`/dashboard/playbooks`), Distribution Queue (`/dashboard/publish/queue`), Creator Marketplace (`/marketplace`), Handover & Acceptance (`/dashboard/handover`), Runbooks (`/dashboard/docs/runbooks`), and System Health (`/dashboard/system-health`).
+- Implement sleek active indicators with subtle gradient glows (`bg-primary/10`, `border-primary/30`), hover translations, and responsive mobile drawer navigation.
+- Fix user profile section at bottom with proper avatar, tier badge (MASTER, ENTERPRISE, PRO), and seamless upgrade CTA without text collision.
+
+### R2. Rebuilt Revenue & Performance Chart (Bottom-Up Gradient)
+Re-engineer the broken revenue visualization into a high-end financial chart:
+- Eliminate inverted top-down ceiling bars; construct authentic bottom-up bars or smooth SVG area gradient curves with proper baseline alignment (`bottom: 0`, `items-end`).
+- Add hover tooltips, date axis labels (Mon - Sun), and interactive time range selector (7 days, 30 days, 6 months, YTD).
+- Apply Obsidian glass styling with subtle grid lines, glowing active state, and zero CSS class bugs.
+
+### R3. TopBar, Executive KPI Cards & Recent Activity Tables
+Redesign dashboard content widgets according to the Obsidian Cyber-Glass design system:
+- **TopBar**: Fixed header with backdrop-blur (`backdrop-blur-xl bg-background/80 border-b border-border`), clean search input with icon, notification bell with unread badge, locale switcher (VI/EN), and high-contrast user menu.
+- **KPI Metrics Grid**: 4 glowing glass cards (`bg-card/85 border border-border`) for Total Campaigns, Active Jobs, Videos Generated, and Success Rate, featuring trend badges (`+12%`, `neutral`), Lucide icons with tinted background pills, and letterpress shadow.
+- **Onboarding Banner & Quick Actions**: Restyle the BYOK setup banner with proper flex spacing, badges, and primary action buttons (`/dashboard/setup`, `/dashboard/system-health`).
+- **Recent Activity / Missions Table**: Clean table layout with status pills (`completed`, `processing`, `failed`), timestamps, and quick action links.
+
+### R4. Quality Gates, Edge Deployment & Verification
+- Strictly preserve canonical 4-layer import hierarchy (`seed` → `tree` → `forest` → `land`) with 0 violations.
+- Maintain 0 TypeScript compilation errors and 100% test pass rate across all existing and new UI test suites.
+- Deploy to Cloudflare Workers edge via CF-direct doctrine, verify live edge SHA match at `https://sophia.agencyos.network/api/version`, and confirm Sophia Doctor reports 11/11 GREEN.
+
+## Acceptance Criteria
+
+### Obsidian Cyber-Glass Layout (R1)
+- [ ] Sidebar navigation renders all real Sophia AI modules with proper icons, labels, and active route indicators
+- [ ] Zero text overlap in the sidebar user card and plan quota bar
+- [ ] Mobile responsive drawer allows full navigation on viewport < 768px
+
+### Revenue Chart & Metrics (R2 & R3)
+- [ ] Revenue chart bars grow strictly from the bottom up with clean spacing and hover interactions
+- [ ] All 4 metric cards display glassmorphism styling, clean borders, and proper typography
+- [ ] TopBar renders search, notifications, locale switch, and user profile cleanly without visual glitches
+
+### Quality Gates & Live Edge Deployment (R4)
+- [ ] `npm run type-check` exits with code 0 (0 TypeScript errors)
+- [ ] All unit, integration, and E2E test suites pass with 100% success rate
+- [ ] `bash scripts/check-layer-boundaries.sh` exits with code 0
+- [ ] Deployed commit SHA matches live edge `https://sophia.agencyos.network/api/version`
+- [ ] Sophia Doctor (`node scripts/sophia-doctor.mjs`) reports 11/11 GREEN (100% score)
