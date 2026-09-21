@@ -45,18 +45,36 @@ export async function setUserApiKey(
   const encrypted = await encryptApiKey(plainKey, userId)
   const keyVersion = await getActiveKeyVersion()
 
-  await d1
-    .prepare(
-      `INSERT INTO user_api_keys (user_id, provider, encrypted_key, key_version, key_validated_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, datetime('now'))
-       ON CONFLICT(user_id, provider) DO UPDATE SET
-         encrypted_key = excluded.encrypted_key,
-         key_version = excluded.key_version,
-         key_validated_at = excluded.key_validated_at,
-         updated_at    = datetime('now')`,
-    )
-    .bind(userId, provider, encrypted, keyVersion, Date.now())
-    .run()
+  try {
+    await d1
+      .prepare(
+        `INSERT INTO user_api_keys (user_id, provider, encrypted_key, key_version, key_validated_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, datetime('now'))
+         ON CONFLICT(user_id, provider) DO UPDATE SET
+           encrypted_key = excluded.encrypted_key,
+           key_version = excluded.key_version,
+           key_validated_at = excluded.key_validated_at,
+           updated_at    = datetime('now')`,
+      )
+      .bind(userId, provider, encrypted, keyVersion, Date.now())
+      .run()
+  } catch (err: unknown) {
+    if (String(err).includes('key_validated_at')) {
+      await d1
+        .prepare(
+          `INSERT INTO user_api_keys (user_id, provider, encrypted_key, key_version, updated_at)
+           VALUES (?, ?, ?, ?, datetime('now'))
+           ON CONFLICT(user_id, provider) DO UPDATE SET
+             encrypted_key = excluded.encrypted_key,
+             key_version = excluded.key_version,
+             updated_at    = datetime('now')`,
+        )
+        .bind(userId, provider, encrypted, keyVersion)
+        .run()
+    } else {
+      throw err
+    }
+  }
 }
 
 /**

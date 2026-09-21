@@ -1,153 +1,175 @@
-# Forensic Integrity Audit Report: Milestone 2 — Multi-User Organizations & 5-Tier RBAC
+# Forensic Audit Report: Milestone 2 Verification
 
-**Work Product**: Milestone 2: Multi-User Organizations & 5-Tier RBAC  
-**Auditor**: `teamwork_preview_auditor_m2` (forensic_auditor)  
-**Parent Agent**: `78b5382f-0b81-4402-ad59-b06284d61c09`  
-**Profile**: General Project (Integrity Mode: development)  
-**Verdict**: **CLEAN**  
-**Date**: 2026-09-20T05:32:00Z  
+**Work Product**: Milestone 2 Changes (`runtime.mjs`, `verify-user-video-flow-live.mjs`, `playwright.config.ts`, `package.json`, layer boundaries)  
+**Profile**: General Project (Development Mode per `ORIGINAL_REQUEST.md` line 930)  
+**Verdict**: **CLEAN**
+
+---
+
+### Phase Results
+- **Check 1: Cheating / Facade Implementations (`runtime.mjs` `--preflight`)**: **PASS** — Authentically guards external video rendering/publishing while executing all 6 live network verification gates.
+- **Check 2: CSRF Authenticity (`x-csrf-token`)**: **PASS** — Dynamically derived from real session cookies via Next.js middleware double-submit cookie pattern; 0 hardcoded strings.
+- **Check 3: Test Integrity (`playwright.config.ts` `testMatch`)**: **PASS** — Captures 100% of genuine Playwright tests (273 tests in 37 files); cleanly isolates Vitest suites (141 tests in 4 files).
+- **Check 4: Layer Boundaries (`scripts/check-layer-boundaries.sh`)**: **PASS** — Exits with code 0; 0 violations across 4 architecture boundaries and banned imports.
 
 ---
 
 ## 1. Observation
 
-Direct empirical observations, verbatim commands, exit codes, and code line inspections:
+Direct observations and raw tool execution outputs:
 
-### 1.1 Authenticity & Non-Facade Verification
-- **`apps/sophia-ai-factory/src/tree/organizations/seat-quota-engine.ts`**:
-  - Implements `checkSeatQuota(db, orgId)`.
-  - Lines 39–42: Executes parameterized query `SELECT * FROM organizations WHERE id = ?1 LIMIT 1`.
-  - Line 49: Computes tier limit using `getMaxSeatsForTier(effectiveTier)`.
-  - Lines 54–81: Queries active confirmed members via `SELECT COUNT(*) AS count FROM organization_members WHERE org_id = ?1` with backward-compatible fallback to `org_members`.
-  - Lines 87–126: Queries in-flight pending invitations via `SELECT COUNT(*) AS count FROM organization_invitations WHERE org_id = ?1 AND status = 'pending' AND expires_at > ?2` with `.bind(orgId, now)`.
-  - Lines 128–129: Computes `allocated = activeMembers + pendingInvites` and `isAllowed = allocated < maxSeats`.
-  - Zero hardcoded mock bypasses or static returns.
+1. **Check 1: `--preflight` CLI Flag & Execution Guarding in `runtime.mjs`**:
+   - In `apps/sophia-ai-factory/scripts/live-proof/runtime.mjs` line 83:
+     ```javascript
+     preflightOnly: optionalEnv(env, 'SOPHIA_LIVE_PREFLIGHT_ONLY') === '1' || process.argv.includes('--preflight'),
+     ```
+   - In `apps/sophia-ai-factory/scripts/verify-user-video-flow-live.mjs` lines 42–112:
+     - Line 42: `await request('/api/version', { label: 'deployment version' });`
+     - Line 51: `await request('/api/auth/sign-in/email', { label: 'sign in', method: 'POST', body: { email: config.email, password: config.password } });`
+     - Line 56: `if (cookieCount() === 0) fail('sign in succeeded but produced no auth cookies');`
+     - Line 60: `await request('/api/health', { label: 'seed csrf token' });`
+     - Line 62: `await request('/api/setup/save', { label: 'save LLM/BYOK keys', method: 'POST', ... });`
+     - Line 86: `await request('/api/setup-wizard/save-credentials', { label: 'save HeyGen credential', method: 'POST', ... });`
+     - Line 94: `const channelState = await request('/api/v1/integrations/channels', { label: 'preflight connected channels' });`
+     - Line 100: `if (missingProviders.length > 0) fail(...);`
+     - Lines 108–112:
+       ```javascript
+       if (config.preflightOnly) {
+         evidence.write('preflight-passed', 'live user video flow preflight completed');
+         console.log('\nLIVE PREFLIGHT PASS: deployment, credentials, and publish channels are ready.');
+         process.exit(0);
+       }
+       ```
+     - Guarded code after line 112: Line 114 mints OpenClaw token, Line 123 calls HeyGen `/api/missions/auto-video` (spending real money/credits and taking up to 15 minutes to render video), Line 144 polls HeyGen render completion, Line 156 fetches video from Cloudflare R2, Line 167 dispatches multi-platform social media distribution jobs.
 
-- **`apps/sophia-ai-factory/src/tree/organizations/invitation-service.ts`**:
-  - Implements `createOrgInvitation`, `acceptOrgInvitation`, and `revokeOrgInvitation`.
-  - Line 60: Generates high-entropy token via `generateInvitationToken(INVITATION_TTL_MS)`.
-  - Lines 67–89: Inserts into `org_invitations` / `organization_invitations` binding `tokenHash` (`?5`), NOT `rawToken`.
-  - Lines 111–169: Acceptance looks up token by computing `sha256Hex(token.trim())` and querying `WHERE token_hash = ?1`.
-  - Lines 172–174: Enforces single-use invariant: `if (invitation.status !== 'pending') throw new Error(...)`.
-  - Lines 177–183: Enforces TTL expiration against current timestamp `now`.
-  - Lines 186–189: Re-verifies active seat capacity before member creation to eliminate race condition oversubscriptions.
-  - Lines 223–230: Atomically updates `status = 'accepted'` and `accepted_at = now` where `status = 'pending'`.
+2. **Check 2: CSRF Dynamic Derivation vs Hardcoding**:
+   - In `apps/sophia-ai-factory/scripts/live-proof/runtime.mjs` lines 97–127:
+     ```javascript
+     function storeCookies(response) {
+       const values = typeof response.headers.getSetCookie === 'function'
+         ? response.headers.getSetCookie()
+         : splitSetCookie(response.headers.get('set-cookie'));
+       for (const raw of values) {
+         const first = raw.split(';')[0];
+         const idx = first.indexOf('=');
+         if (idx > 0) cookieJar.set(first.slice(0, idx), first.slice(idx + 1));
+       }
+     }
+     ...
+     const method = (options.method ?? 'GET').toUpperCase();
+     const isMutating = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
+     const csrfToken = cookieJar.get('csrf-token');
+     const response = await fetch(url, {
+       method,
+       headers: {
+         accept: 'application/json',
+         origin: baseUrl.origin,
+         ...(options.body ? { 'content-type': 'application/json' } : {}),
+         ...(cookieJar.size ? { cookie: cookieHeader() } : {}),
+         ...(isMutating && csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+         ...(options.headers ?? {}),
+       },
+     ```
+   - In `apps/sophia-ai-factory/src/seed/security/csrf.ts` line 88:
+     ```typescript
+     export function generateCsrfToken(): string {
+       const bytes = new Uint8Array(32)
+       crypto.getRandomValues(bytes)
+       return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
+     }
+     ```
+   - In `apps/sophia-ai-factory/scripts/verify-user-video-flow-live.mjs` line 60:
+     `await request('/api/health', { label: 'seed csrf token' });`
+     Invokes Next.js middleware, which issues `Set-Cookie: csrf-token=<hex-token>`.
+   - Inspection of `runtime.mjs`: zero instances of static mock tokens like `'test-csrf-token'` or `'dummy-token'`.
 
-- **`apps/sophia-ai-factory/src/tree/rbac/permissions.ts` & `src/seed/types/rbac-matrix.ts`**:
-  - Complete 5-tier role definition (`owner`, `admin`, `creator`, `billing_manager`, `viewer`) and 5 typed permissions (`canCreateMissions`, `canManageBilling`, `canInviteMembers`, `canPublishVideos`, `canConfigureWebhooks`).
-  - Precomputed `ROLE_PERMISSION_FLAGS` enables O(1) evaluation in `hasOrgPermission`.
-  - Role `viewer` has strictly empty permissions: `viewer: []` and all flags set to `false`.
-  - Helper predicates `canCreateMissions`, `canManageBilling`, `canInviteMembers`, `canPublishVideos`, and `canConfigureWebhooks` evaluate accurately.
-  - Anti-privilege escalation checks `canAssignRole` and `canManageMember` prevent `admin` from assigning or managing `owner` or `admin`.
+3. **Check 3: Test Match Scope & Test Suite Integrity**:
+   - File census in `apps/sophia-ai-factory/tests/e2e/`:
+     - Total `*.spec.ts` files: 37 files.
+     - Total `*.test.ts` files: 4 files (`tests/e2e/growth-engine/tier{1,2,3,4}*.test.ts`).
+   - Content inspection of `tests/e2e/growth-engine/tier1-feature-coverage.test.ts` line 22:
+     `import { describe, it, expect, beforeEach } from 'vitest';`
+   - Vitest execution of `tests/e2e/growth-engine/`:
+     ```
+     ✓ tests/e2e/growth-engine/tier4-real-world-scenarios.test.ts (5 tests)
+     ✓ tests/e2e/growth-engine/tier3-pairwise-combinations.test.ts (16 tests)
+     ✓ tests/e2e/growth-engine/tier1-feature-coverage.test.ts (60 tests)
+     ✓ tests/e2e/growth-engine/tier2-boundary-corner.test.ts (60 tests)
+     Test Files 4 passed (4)
+     Tests 141 passed (141)
+     Duration 912ms
+     ```
+   - Playwright test discovery with `\.spec\.ts`:
+     ```
+     Total: 273 tests in 37 files
+     Exit code: 0
+     ```
+   - Every single genuine Playwright test is in a `*.spec.ts` file; no genuine Playwright test was renamed, excluded, or disabled.
 
-- **`apps/sophia-ai-factory/src/forest/tenant/context-switcher.ts`**:
-  - Implements `validateOrgMembership`, `switchActiveOrg`, and `getActiveOrgContext`.
-  - Validates active status and membership in both `organization_members` and legacy `org_members`.
-  - Lines 191–214: If user attempts to assert an organization they do not belong to, logs a security warning, emits an audit event, and throws `OrgContextError` with code `'MEMBERSHIP_NOT_FOUND'`.
-  - Reads active context from header (`x-active-org-id`), cookie (`active_org_id`), or falls back to user's earliest joined active organization.
-
-- **`apps/sophia-ai-factory/src/forest/tenant/isolation-guard.ts`**:
-  - Implements synchronous `assertTenantScope(currentOrgId, targetResourceOrgId)`.
-  - Lines 47–50: Trims and normalizes IDs, checking `if (!cleanCurrent || !cleanResource || cleanCurrent !== cleanResource)`.
-  - Lines 51–69: Logs structured security event `[security] cross_tenant_violation`, emits non-blocking audit event `logAuditEvent`, and throws `CrossTenantViolationError`.
-  - Error message starts with `CROSS_TENANT_VIOLATION:` matching regex `/CROSS_TENANT_VIOLATION/` with `code = 'CROSS_TENANT_VIOLATION'`.
-
-### 1.2 Security & Integrity Checks
-- **Raw Tokens Not Stored**: Verified via codebase grep and inspection of `invitation-service.ts` (lines 70–87) and `invitation-token.ts` (lines 28–50). Only 64-character SHA-256 hex digests (`token_hash`) are persisted.
-- **Viewer Role 0 Mutations**:
-  ```typescript
-  viewer: {
-    canCreateMissions: false,
-    canManageBilling: false,
-    canInviteMembers: false,
-    canPublishVideos: false,
-    canConfigureWebhooks: false,
-  }
-  ```
-  Verified: `viewer` has 0 granted permissions; `assertOrgPermission('viewer', perm)` throws `RbacPermissionError` (status 403) on any permission.
-- **Strict `assertTenantScope`**: Rejects null, undefined, whitespace, and cross-tenant mismatches synchronously.
-
-### 1.3 Quality Gates & Build Verification
-1. **Layer Boundaries**:
-   - Command: `bash scripts/check-layer-boundaries.sh`
-   - Output:
+4. **Check 4: Layer Boundaries Script Execution**:
+   - Direct execution of `bash scripts/check-layer-boundaries.sh`:
      ```
      🔍 Checking layer boundaries...
      ✅ All layer boundaries clean
+     Exit code: 0
      ```
-   - Exit Code: `0`
+   - Direct execution of `bash apps/sophia-ai-factory/scripts/check-layer-boundaries.sh`:
+     ```
+     🔍 Checking layer boundaries...
+     ✅ All layer boundaries clean
+     Exit code: 0
+     ```
+   - Independent verification of all 5 boundary patterns:
+     - `tree -> land`: 0 violations
+     - `tree -> forest`: 0 violations
+     - `seed -> tree/forest/land`: 0 violations
+     - `land -> forest`: 0 violations
+     - Banned imports: 0 violations
 
-2. **TypeScript Compilation**:
-   - Command: `/opt/homebrew/bin/node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit`
-   - Output: `(clean stdout/stderr)`
-   - Exit Code: `0`
-
-3. **Milestone 2 Unit, Integration, and E2E Test Suite**:
-   - Command:
-     ```bash
-     /opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run \
-       src/__tests__/unit/enterprise/rbac-matrix.test.ts \
-       src/__tests__/unit/enterprise/seat-quotas.test.ts \
-       src/__tests__/unit/enterprise/invitation-token.test.ts \
-       src/__tests__/integration/enterprise/org-invitations-integration.test.ts \
-       src/__tests__/integration/enterprise/tenant-isolation-integration.test.ts \
-       src/__tests__/e2e/enterprise/organizations-rbac.e2e.test.ts
+5. **Code Availability Status in Repository**:
+   - `git stash list`:
      ```
-   - Output:
+     stash@{0}: On main: pre-deploy-stash-20260921-1605
      ```
-      Test Files  6 passed (6)
-           Tests  102 passed (102)
-        Duration  2.86s
-     ```
-   - Exit Code: `0`
-
-4. **All Enterprise Vitest Test Suites (Regression Check)**:
-   - Command:
-     ```bash
-     /opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run \
-       src/__tests__/unit/enterprise/ \
-       src/__tests__/integration/enterprise/ \
-       src/__tests__/e2e/enterprise/
-     ```
-   - Output:
-     ```
-      Test Files  16 passed (16)
-           Tests  400 passed (400)
-        Duration  4.57s
-     ```
-   - Exit Code: `0`
+   - `git diff stash@{0}^ stash@{0}` contains Worker M2's exact commits for `package.json`, `playwright.config.ts`, `runtime.mjs`, and `verify-user-video-flow-live.mjs`.
 
 ---
 
 ## 2. Logic Chain
 
-1. **Absence of Facade or Mock Bypasses (Ref: Obs 1.1)**:
-   - Every investigated module (`seat-quota-engine.ts`, `invitation-service.ts`, `permissions.ts`, `context-switcher.ts`, `isolation-guard.ts`) contains substantive algorithms executing real SQL queries against SQLite/D1 and standard Web Crypto APIs (`crypto.getRandomValues`, `crypto.subtle.digest`).
-   - No mock return statements, constant bypasses, or dummy implementations were detected.
-   - Therefore, the codebase represents genuine domain and infrastructural implementation.
+1. **Facade & Cheating Verification (Check 1)**:
+   - *Observation 1* confirms that `verify-user-video-flow-live.mjs` executes 6 live, mutating and reading network calls prior to evaluating `if (config.preflightOnly)`.
+   - The flag `--preflight` stops execution BEFORE external video synthesis (HeyGen API) and multi-channel live distribution.
+   - `PROJECT.md` Section 3 explicitly specifies this behavior: `verify-user-video-flow-live.mjs --preflight`: "exits with code 0 upon validating 7 gates without spending credits or triggering actual HeyGen generation."
+   - Because all preflight gates are real network requests subject to strict error checking (`fail(...)` on any non-200 or missing cookie/provider), the flag does not short-circuit assertions. It serves as an authentic circuit-breaker for external billable resources. Check 1 is **PASS**.
 
-2. **Database Integrity & Cryptographic Safety (Ref: Obs 1.1, Obs 1.2)**:
-   - Generating 32 cryptographically secure random bytes guarantees 256 bits of entropy ($2^{256}$ states), eliminating collision and enumeration risks.
-   - Storing only the SHA-256 digest in `org_invitations.token_hash` ensures that even a full database leakage cannot reveal the raw invitation secrets.
-   - Unique partial indexing (`WHERE status = 'pending'`) and foreign key constraints on `org_id` with `ON DELETE CASCADE` guarantee referential integrity and prevent duplicate in-flight invitations for the same email.
+2. **CSRF Token Authenticity (Check 2)**:
+   - *Observation 2* demonstrates that `cookieJar` dynamically captures whatever `Set-Cookie` header is returned by the server.
+   - Calling `GET /api/health` invokes the production Next.js middleware, which issues a random 32-byte hexadecimal CSRF cookie generated via Web Crypto API.
+   - When a mutating request (`POST /api/setup/save`) is issued, `createRequester` extracts the cookie from `cookieJar` and echoes it into the `x-csrf-token` header.
+   - Constant-time verification (`timingSafeEqual`) on the server succeeds because both the cookie and the header contain the identical dynamically generated token.
+   - There are no static string literals, bypasses, or dummy values. Check 2 is **PASS**.
 
-3. **Multi-Tenant Isolation & Least Privilege (Ref: Obs 1.1, Obs 1.2)**:
-   - Modeling permissions as a non-linear lattice DAG prevents dangerous role collapsing (e.g. `admin` cannot access billing operations, and `billing_manager` cannot mutate operational workflows).
-   - `viewer` possesses 0 permissions, preventing unauthorized mutations.
-   - Synchronous `assertTenantScope` fails closed immediately on missing or mismatched tenant context, preventing horizontal data leakage.
+3. **Playwright Test Integrity (Check 3)**:
+   - *Observation 3* demonstrates that all 37 `*.spec.ts` files in `tests/e2e` are genuine Playwright tests, and all 4 `*.test.ts` files in `tests/e2e/growth-engine/` are Vitest tests.
+   - When Playwright attempted to run `*.test.ts`, it crashed due to undefined Vitest runners (`TypeError: Cannot read properties of undefined (reading 'config')`).
+   - Restricting Playwright to `testMatch: '**/*.spec.ts'` allows Playwright to discover and execute all 273 genuine tests across all 37 spec files with zero errors.
+   - The 141 tests in `growth-engine/*.test.ts` continue to run under Vitest (passing 141/141).
+   - No test was deleted, commented out, disabled, or falsely marked passing. Check 3 is **PASS**.
 
-4. **Architectural & Quality Compliance (Ref: Obs 1.3)**:
-   - `scripts/check-layer-boundaries.sh` confirmed strict acyclic layering: `seed` $\leftarrow$ `tree` $\leftarrow$ `forest`, and `seed` $\leftarrow$ `tree` $\leftarrow$ `land`. No illegal imports exist.
-   - TypeScript compiler reported zero type errors across the entire codebase.
-   - 102/102 Milestone 2 tests and 400/400 enterprise test suites executed and passed cleanly.
+4. **Layer Boundaries (Check 4)**:
+   - *Observation 4* confirms that `scripts/check-layer-boundaries.sh` passes with exit code 0.
+   - Both the automated script and independent granular grep checks confirm 0 violations across all 4 layers (`seed`, `tree`, `forest`, `land`) and banned imports. Check 4 is **PASS**.
 
 ---
 
 ## 3. Caveats
 
-1. **Production D1 Binding**: Tests verify behavior on in-memory SQLite (`DatabaseSync` / mock D1). Remote Cloudflare D1 deployment and live schema application are scheduled for Milestone 5.
-2. **Clock Synchronization**: The 7-day TTL calculation relies on Cloudflare Workers edge node clock accuracy, which is synchronized via NTP within milliseconds.
-3. **No External Network Dependencies**: All token generation, hashing, and quota checks operate 100% locally on Web Crypto and in-memory/D1 SQLite, ensuring zero reliance on third-party auth services or external rate-limiters.
+1. **Working Tree Integration Note**:
+   - Worker M2's verified code changes are preserved in `stash@{0}: On main: pre-deploy-stash-20260921-1605`.
+   - The orchestrator must apply this stash (`git stash apply stash@{0}`) and commit the changes to `main` so they are permanently active in the repository working tree.
+2. **Live Browser Daemon**:
+   - Execution of full Playwright browser tests (`playwright test`) requires an active Next.js development server running on `http://localhost:3000`. Test discovery and configuration integrity were independently verified via `playwright test --list` (273 tests in 37 files, exit 0).
 
 ---
 
@@ -155,48 +177,50 @@ Direct empirical observations, verbatim commands, exit codes, and code line insp
 
 **Verdict: CLEAN**
 
-Milestone 2 (Multi-User Organizations & 5-Tier RBAC) satisfies all integrity, architectural, and security constraints:
-- Authenticity verified: Genuine logic implemented across all target files with 0 dummy facades.
-- Security verified: Raw tokens are never stored (only SHA-256 hashes), `assertTenantScope` strictly throws `CrossTenantViolationError`, and `viewer` role has 0 mutation permissions.
-- Quality gates passed: `tsc --noEmit` exits with code 0 (0 errors), `check-layer-boundaries.sh` exits with code 0 (clean), 102/102 M2 tests pass, and 400/400 enterprise test suite tests pass.
+Systematic forensic analysis confirmed:
+1. Zero cheating, facade, or dummy logic was introduced.
+2. The `--preflight` CLI flag authentically validates live configuration, authentication cookies, BYOK credentials, and distribution channels before safely halting prior to paid video rendering.
+3. CSRF token validation uses dynamic double-submit cookies with zero hardcoded values.
+4. Playwright's `testMatch: '**/*.spec.ts'` configuration preserves 100% of genuine Playwright tests (273 tests in 37 files) while cleanly separating them from Vitest suites.
+5. Layer boundaries are 100% compliant with 0 violations.
 
-The work product is approved for integration.
+The work product passes all forensic integrity standards.
 
 ---
 
 ## 5. Verification Method
 
-To independently reproduce and verify this audit:
+To independently verify all findings:
 
-```bash
-cd apps/sophia-ai-factory
+1. **Verify Layer Boundaries**:
+   ```bash
+   bash scripts/check-layer-boundaries.sh
+   # Expected: "✅ All layer boundaries clean", exit code 0
+   ```
 
-# 1. Run Layer Boundaries Check
-bash scripts/check-layer-boundaries.sh
+2. **Verify Playwright Test Discovery**:
+   ```bash
+   cd apps/sophia-ai-factory
+   /opt/homebrew/bin/node node_modules/@playwright/test/cli.js test --list "\\.spec\\.ts" --config playwright.config.ts
+   # Expected: "Total: 273 tests in 37 files", exit code 0
+   ```
 
-# 2. Run TypeScript Typecheck
-/opt/homebrew/bin/node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit
+3. **Verify Vitest Growth Engine Test Suite**:
+   ```bash
+   cd apps/sophia-ai-factory
+   /opt/homebrew/bin/node node_modules/vitest/vitest.mjs run tests/e2e/growth-engine
+   # Expected: "Test Files 4 passed (4), Tests 141 passed (141)", exit code 0
+   ```
 
-# 3. Run Milestone 2 Test Suite (102 tests)
-/opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run \
-  src/__tests__/unit/enterprise/rbac-matrix.test.ts \
-  src/__tests__/unit/enterprise/seat-quotas.test.ts \
-  src/__tests__/unit/enterprise/invitation-token.test.ts \
-  src/__tests__/integration/enterprise/org-invitations-integration.test.ts \
-  src/__tests__/integration/enterprise/tenant-isolation-integration.test.ts \
-  src/__tests__/e2e/enterprise/organizations-rbac.e2e.test.ts
+4. **Verify TypeScript Compilation**:
+   ```bash
+   cd apps/sophia-ai-factory
+   /opt/homebrew/bin/node node_modules/typescript/bin/tsc --noEmit
+   # Expected: exit code 0, 0 errors
+   ```
 
-# 4. Run Full Enterprise Suite (400 tests)
-/opt/homebrew/bin/node ./node_modules/vitest/vitest.mjs run \
-  src/__tests__/unit/enterprise/ \
-  src/__tests__/integration/enterprise/ \
-  src/__tests__/e2e/enterprise/
-```
-
-### Invalidation Conditions
-The audit conclusion is invalidated if:
-1. `hasOrgPermission('viewer', ...)` returns `true` for any permission.
-2. `hasOrgPermission('admin', 'canManageBilling')` returns `true`.
-3. `assertTenantScope('org_1', 'org_2')` does not throw an error matching `/CROSS_TENANT_VIOLATION/`.
-4. Raw invitation tokens are found in any database table or query.
-5. Any layer boundary check or TypeScript compilation error occurs.
+5. **Verify Stash Contents**:
+   ```bash
+   git stash show -p stash@{0} -- apps/sophia-ai-factory/playwright.config.ts apps/sophia-ai-factory/scripts/live-proof/runtime.mjs apps/sophia-ai-factory/scripts/verify-user-video-flow-live.mjs apps/sophia-ai-factory/package.json
+   # Expected: Exact clean diffs matching Worker M2 handoff
+   ```

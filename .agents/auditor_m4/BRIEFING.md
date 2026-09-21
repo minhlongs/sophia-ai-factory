@@ -1,14 +1,15 @@
-# BRIEFING — 2026-09-20T03:52:00Z
+# BRIEFING — 2026-09-21T09:55:00Z
 
 ## Mission
-Perform independent forensic integrity verification of Milestone M4 (Mekong AI Hybrid Edge Node Synchronization).
+Conduct a rigorous forensic integrity audit on Milestone 4 deliverables: Customer Handover Portal, Day-1 Verification Engine, Acceptance Sign-off with Web Crypto SHA-256 Certificates, and Quality Gates.
 
 ## 🔒 My Identity
 - Archetype: forensic_auditor
 - Roles: critic, specialist, auditor
 - Working directory: /Users/macbook/sophia-ai-factory/.agents/auditor_m4
 - Original parent: 296606c0-04b8-47fd-b8b5-4a63a8f83a7c
-- Target: Milestone M4 (Mekong AI Hybrid Edge Node Synchronization)
+- Subsequent parent: aec71178-85c7-4ba9-8d2b-a28cf210eac5
+- Target: Milestone M4 (Customer Handover Portal, Day-1 Verification Engine, Tamper-Evident Acceptance Sign-off)
 
 ## 🔒 Key Constraints
 - Audit-only — do NOT modify implementation code
@@ -16,58 +17,55 @@ Perform independent forensic integrity verification of Milestone M4 (Mekong AI H
 - DO NOT set BypassSandbox=true in run_command tool calls
 - NEVER PROPOSE A cd COMMAND. Use Cwd parameter
 - Zero tolerance for facades, mock bypasses, or hardcoded results. Binary VETO.
+- ORIGINAL_REQUEST.md constraints take absolute precedence over any contradictory dispatch.
 
 ## Current Parent
-- Conversation ID: 296606c0-04b8-47fd-b8b5-4a63a8f83a7c
-- Updated: 2026-09-20T03:50:48Z
+- Conversation ID: aec71178-85c7-4ba9-8d2b-a28cf210eac5
+- Updated: 2026-09-21T09:51:28Z
 
 ## Audit Scope
-- **Work product**: Milestone M4 (Mekong AI Hybrid Edge Node Synchronization)
-  - `apps/sophia-ai-factory/src/tree/mekong/crypto.ts`
-  - `apps/sophia-ai-factory/src/tree/mekong/tunnel-client.ts`
-  - `apps/sophia-ai-factory/src/tree/mekong/health.ts`
-  - `apps/sophia-ai-factory/src/tree/mekong/hybrid-router.ts`
-  - `apps/sophia-ai-factory/src/tree/mekong/types.ts`
-  - `apps/sophia-ai-factory/src/tree/mekong/index.ts`
-  - `apps/sophia-ai-factory/src/forest/ai/hybrid-router.ts`
-  - `apps/sophia-ai-factory/src/forest/jobs/edge-node-monitor.ts`
-  - `apps/sophia-ai-factory/src/app/api/inngest/route.ts`
+- **Work product**: Milestone M4 (Customer Handover & Acceptance Infrastructure)
+  - `/dashboard/handover` and `/admin/handover` pages & components
+  - `/api/admin/handover/verify` and `day1-verification-engine.ts`
+  - `src/seed/handover/certificate-hasher.ts` and `signHandoverAcceptanceAction`
+  - Quality gates: TypeScript, Layer boundaries, Sophia Doctor, Live Edge parity
 - **Profile loaded**: General Project (Forensic Integrity)
 - **Audit type**: forensic integrity check
 
 ## Audit Progress
 - **Phase**: reporting
 - **Checks completed**:
-  - Read ORIGINAL_REQUEST.md (lines 588-620) & PROJECT.md
-  - Read worker_m4_rep/handoff.md
-  - Check 1: Genuine Crypto Logic (crypto.ts) — VERIFIED CLEAN
-  - Check 2: Genuine Cloudflare Tunnel Client (tunnel-client.ts) — VERIFIED CLEAN
-  - Check 3: Genuine 15s Heartbeat & D1 Tracking (health.ts) — VERIFIED CLEAN
-  - Check 4: Genuine Hybrid Routing & Economic Truth (hybrid-router.ts) — VERIFIED CLEAN
-  - Check 5: Inngest Registration (api/inngest/route.ts) — VERIFIED CLEAN
-  - Check 6a: Layer Boundary check (`bash scripts/check-layer-boundaries.sh`) — VERIFIED CLEAN (0 violations)
-  - Check 6b: TypeScript Compilation (`tsc --noEmit`) — VERIFIED CLEAN (0 errors)
-  - Check 7a: Mekong & Forest AI test suite (12 files, 145 tests) — VERIFIED CLEAN (100% pass)
-  - Check 7b: Growth Engine E2E test suite (4 files, 141 tests) — VERIFIED CLEAN (100% pass)
+  - Read ORIGINAL_REQUEST.md (entry at 2026-09-21T07:53:49Z)
+  - Read orchestrator_real_execution/PROJECT.md
+  - Read teamwork_preview_worker_m4/handoff.md
+  - Check 1: `/dashboard/handover` and `/admin/handover` (0 mock arrays, authentic D1 queries verified) — PASS
+  - Check 2: `/api/admin/handover/verify` and `day1-verification-engine.ts` (all 11 checkpoints run authentic logic, 0 hardcoded pass flags) — PASS
+  - Check 3: `certificate-hasher.ts` and `signHandoverAcceptanceAction` (Web Crypto SHA-256, constant-time compare, genuine D1 insert into `customer_handovers` and `handover_certificates`) — PASS
+  - Check 4: Quality Gates:
+    - `tsc --noEmit` -> 0 errors — PASS
+    - `bash scripts/check-layer-boundaries.sh` -> 0 violations ("All layer boundaries clean") — PASS
+    - `node scripts/sophia-doctor.mjs` -> 11/11 GREEN — PASS
+    - Live edge version parity (`curl https://sophia.agencyos.network/api/version` vs `git rev-parse HEAD | cut -c1-8`) -> `63753ab2` bit-for-bit parity — PASS
+  - Check 5: Vitest test suites (15 test files, 217 tests pass; 9 domain files, 139 tests pass) — PASS
 - **Checks remaining**: None
-- **Findings so far**: CLEAN
+- **Findings so far**: CLEAN (Verdict: CLEAN)
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Web Crypto AES-256-GCM vs dummy string encoding: Verified genuine `crypto.subtle.encrypt/decrypt` with 12-byte random IVs and 128-bit authentication tag verification.
-  - Constant-time XOR equality vs standard `===`: Verified `timingSafeEqual` with bitwise XOR accumulation over length to prevent timing attacks.
-  - Cloudflare Tunnel probe timeout boundaries: Verified immediate fail-closed return of `OFFLINE` when `timeoutMs < 500`.
-  - 15-second heartbeat staleness boundary: Verified strict edge at 15,000ms (remains ONLINE) vs 15,001ms (transitions to OFFLINE in D1).
-  - Economic routing truth: Verified `costKind: 'unmetered'` ($0.00 marginal cost) for local GPU and `costKind: 'metered'` with certified provider fallback for cloud.
+  - Mock data arrays in dashboard/admin handover: Verified zero static arrays; D1 queries `getCustomerHandover`, `listAllCustomerHandovers`, `getHandoverStats` are authentic.
+  - Facade pass flags in Day-1 verification engine: Verified all 11 probes execute genuine logic (real AES-256-GCM crypto, SQL nonce consistency, Telegram/Version network probes, DR backup drill).
+  - Web Crypto SHA-256 certificate hashing: Verified native `crypto.subtle.digest('SHA-256')`, deterministic canonicalization, and constant-time XOR comparison (`constantTimeEqual`).
+  - Single-byte tampering resistance: Verified with 36 adversarial tests; any modification of customer name, signer name, role, or SHA invalidates digest.
+  - Double sign-off protection: Verified fail-closed `ALREADY_ACCEPTED` rejection in both action and domain service.
 - **Vulnerabilities found**: None.
-- **Untested angles**: Physical live daemon network latency over real CF edge tunnel (simulated deterministically in CI via harness and mocked fetch).
+- **Untested angles**: None within M4 scope.
 
 ## Loaded Skills
-- None loaded/required.
+- None loaded.
 
 ## Key Decisions Made
-- Confirmed all checks are passed with zero facades, mock bypasses, or hardcoded cheats.
-- Verdict: CLEAN.
+- All checks verified empirically. Zero facades, zero mocks, zero hardcoded cheat flags.
+- Final Verdict: CLEAN.
 
 ## Artifact Index
 - /Users/macbook/sophia-ai-factory/.agents/auditor_m4/DISPATCH.md — Dispatch instructions

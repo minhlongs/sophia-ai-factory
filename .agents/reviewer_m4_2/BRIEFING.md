@@ -1,90 +1,75 @@
-# BRIEFING — 2026-09-20T03:51:00Z
+# BRIEFING — 2026-09-21T09:53:40Z
 
 ## Mission
-Independent functional, architectural, reliability, and adversarial review of Milestone M4 (Health Monitoring, 15s Offline Transition & Hybrid Routing).
+Independent review and adversarial verification of Milestone 4: Digital Sign-off & Immutable SHA-256 Handover Certificate, quality gates, and edge deployment parity.
 
 ## 🔒 My Identity
-- Archetype: reviewer-critic
+- Archetype: reviewer_critic
 - Roles: reviewer, critic
-- Working directory: /Users/macbook/projects/sophia-ai-factory/.agents/reviewer_m4_2
-- Original parent: aa61d1be-e9e2-442b-a2c6-60c57f94f9ae
-- Milestone: Reviewing Quota Metering & Performance
-- Instance: 1 of 1
-- Current working directory: /Users/macbook/sophia-ai-factory/.agents/reviewer_m4_2
-- Milestone: M4 Health Monitoring, 15s Offline Transition & Hybrid Routing
-- Current parent: 296606c0-04b8-47fd-b8b5-4a63a8f83a7c
+- Working directory: /Users/macbook/sophia-ai-factory/.agents/reviewer_m4_2
+- Original parent: aec71178-85c7-4ba9-8d2b-a28cf210eac5
+- Milestone: Milestone 4
+- Instance: 2 of 2
 
 ## 🔒 Key Constraints
-- Review-only — do NOT modify implementation code.
-- No network access (CODE_ONLY mode).
-- Follow workflow protocol strictly.
-- DO NOT set BypassSandbox=true in run_command tool calls. Keep BypassSandbox as default (false or omitted).
-- Check for integrity violations: hardcoded test results, facade implementations, shortcuts, fabricated verification.
-- Reviewer & Critic roles: verify claims and stress-test failure modes.
+- Review-only — do NOT modify implementation code
+- Check for integrity violations (hardcoded tests, dummy implementations, shortcuts, fake verifications)
+- Verify live edge SHA parity with git rev-parse HEAD
 
 ## Current Parent
-- Conversation ID: 296606c0-04b8-47fd-b8b5-4a63a8f83a7c
-- Updated: 2026-09-20T03:50:47Z
+- Conversation ID: aec71178-85c7-4ba9-8d2b-a28cf210eac5
+- Updated: 2026-09-21T09:53:40Z
 
 ## Review Scope
 - **Files to review**:
-  - `apps/sophia-ai-factory/src/tree/mekong/health.ts`
-  - `apps/sophia-ai-factory/src/tree/mekong/hybrid-router.ts`
-  - `apps/sophia-ai-factory/src/tree/mekong/tunnel-client.ts`
-  - `apps/sophia-ai-factory/src/tree/mekong/crypto.ts`
-  - `apps/sophia-ai-factory/src/tree/mekong/types.ts`
-  - `apps/sophia-ai-factory/src/forest/jobs/edge-node-monitor.ts`
-  - `apps/sophia-ai-factory/src/forest/ai/hybrid-router.ts`
-  - `apps/sophia-ai-factory/src/app/api/inngest/route.ts`
-  - `apps/sophia-ai-factory/src/seed/ai/provider-certification.ts`
-  - Test suites: `src/tree/mekong/`, `src/forest/ai/`, `src/forest/jobs/__tests__/edge-node-monitor.test.ts`
+  - `src/land/actions/handover-actions.ts`
+  - `src/seed/handover/certificate-hasher.ts`
+  - `src/tree/handover/customer-handover-service.ts`
+  - `src/tree/handover/handover-certificate-engine.ts`
+  - `tests/handover/handover-server-actions.test.ts`
+  - `tests/handover/certificate-hasher.test.ts`
+  - `tests/handover/adversarial-handover.test.ts`
+  - `tests/handover/adversarial-tamper-verification.test.ts`
+  - `migrations/0280_customer_handover_acceptance.sql`
 - **Interface contracts**:
-  - `/Users/macbook/sophia-ai-factory/ORIGINAL_REQUEST.md` (lines 588-620)
-  - `/Users/macbook/sophia-ai-factory/PROJECT.md`
-  - `/Users/macbook/sophia-ai-factory/.agents/worker_m4_rep/handoff.md`
-- **Review criteria**:
-  - `probeEdgeNode` pre-flight check logic with fail-closed validation (< 500ms timeout returns OFFLINE).
-  - `checkClusterHealth` strictly enforces 15-second offline transition rule (`nowMs - last_heartbeat_at > 15000` marks node as OFFLINE in D1).
-  - `processNodeHeartbeat` ingests telemetry, evaluates VRAM saturation (>95%) and queue depth (>10) to set DEGRADED status, and updates D1.
-  - `hybrid-router.ts` polymorphic signature supporting `(task, db)`, `(task, db, preferredNodeId)`, and `(task, preferredNodeId, db)`.
-  - Local execution directs heavy tasks to local GPU hardware with `CostKind: 'unmetered'` ($0.00 marginal cost).
-  - Transparent cloud BYOK fallback (`CostKind: 'metered'`) on unreachability, stale heartbeat, probe failure, or tunnel error with zero user disruption.
-  - Integration with `seed/ai/provider-certification.ts`.
-  - Inngest cron `edgeNodeHealthSweepCron` registration in `src/app/api/inngest/route.ts`.
+  - `/Users/macbook/sophia-ai-factory/.agents/ORIGINAL_REQUEST.md` (2026-09-21T07:53:49Z)
+  - `/Users/macbook/sophia-ai-factory/.agents/orchestrator_real_execution/PROJECT.md`
+  - `/Users/macbook/sophia-ai-factory/.agents/teamwork_preview_worker_m4/handoff.md`
+- **Review criteria**: correctness, native Web Crypto SHA-256 hashing, timing-safe equality, atomic D1 persistence, layer boundaries, type check, edge deployment parity.
 
 ## Key Decisions Made
-- Confirmed zero integrity violations: no hardcoded test values, no facades, no shortcuts.
-- Confirmed full correctness across all 4 review criteria and adversarial stress testing.
-- Verified all 4 verification commands run cleanly with 100% pass rate.
-- Issued formal verdict: APPROVE.
+- Confirmed zero integrity violations: no hardcoded fake hashes, no dummy implementations, authentic Web Crypto API digest and timing-safe equality.
+- Executed all unit, server action, certificate hasher, and adversarial test suites with 100% pass rate.
+- Executed full TypeScript compilation (0 errors), layer boundaries check (clean), and Sophia Doctor (11/11 green).
+- Verified live edge SHA parity (`63753ab2` matches `git rev-parse HEAD | cut -c1-8`).
+- Verdict: APPROVE.
+
+## Artifact Index
+- `.agents/reviewer_m4_2/DISPATCH.md` — Inbound instructions
+- `.agents/reviewer_m4_2/BRIEFING.md` — Persistent awareness & state
+- `.agents/reviewer_m4_2/progress.md` — Heartbeat log
+- `.agents/reviewer_m4_2/handoff.md` — Comprehensive review & adversarial verification report
 
 ## Review Checklist
 - **Items reviewed**:
-  - `apps/sophia-ai-factory/src/tree/mekong/health.ts` -> VERIFIED & APPROVED
-  - `apps/sophia-ai-factory/src/tree/mekong/hybrid-router.ts` -> VERIFIED & APPROVED
-  - `apps/sophia-ai-factory/src/tree/mekong/tunnel-client.ts` -> VERIFIED & APPROVED
-  - `apps/sophia-ai-factory/src/tree/mekong/crypto.ts` -> VERIFIED & APPROVED
-  - `apps/sophia-ai-factory/src/forest/jobs/edge-node-monitor.ts` -> VERIFIED & APPROVED
-  - `apps/sophia-ai-factory/src/app/api/inngest/route.ts` -> VERIFIED & APPROVED
-  - `apps/sophia-ai-factory/src/seed/ai/provider-certification.ts` -> VERIFIED & APPROVED
+  - `signHandoverAcceptanceAction` in `src/land/actions/handover-actions.ts`: Verified
+  - `certificate-hasher.ts` (native Web Crypto, canonicalization, constantTimeEqual): Verified
+  - D1 persistence in `customer_handovers` and `handover_certificates`: Verified
+  - Handover test suites: 15 files, 205 tests passed
+  - TypeScript type check: 0 errors
+  - Layer boundaries check: 0 violations
+  - Sophia Doctor: 11/11 GREEN
+  - Cloudflare Workers live edge SHA: `63753ab2` matches local HEAD
 - **Verdict**: APPROVE
-- **Unverified claims**: None. All worker claims verified independently.
+- **Unverified claims**: None. All claims independently verified.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Heartbeat boundary: 15,000ms stays ONLINE; 15,001ms transitions to OFFLINE in D1 -> PASS
-  - Fail-closed probe: timeout < 500ms, missing token, missing URL -> returns OFFLINE immediately -> PASS
-  - Mutual auth verification: invalid node hash triggers fail-closed OFFLINE -> PASS
-  - Hardware degradation: VRAM > 95% or queueDepth > 10 marks node DEGRADED -> PASS
-  - Ciphertext tampering: AEAD tag mismatch throws `MekongTamperError` -> PASS
-  - Polymorphic argument handling in router -> (task, db), (task, db, id), (task, id, db) all resolve cleanly -> PASS
-  - Cloud BYOK fallback on missing DB, stale heartbeat, offline node, or tunnel error -> PASS
-  - 4-layer architecture compliance -> 0 violations -> PASS
-- **Vulnerabilities found**: None.
-- **Untested angles**: None within M4 scope.
-
-## Artifact Index
-- `/Users/macbook/sophia-ai-factory/.agents/reviewer_m4_2/BRIEFING.md` — Agent briefing & situational awareness
-- `/Users/macbook/sophia-ai-factory/.agents/reviewer_m4_2/progress.md` — Liveness heartbeat
-- `/Users/macbook/sophia-ai-factory/.agents/reviewer_m4_2/DISPATCH.md` — Dispatch logs
-- `/Users/macbook/sophia-ai-factory/.agents/reviewer_m4_2/handoff.md` — 5-Component Formal Review Report & Verdict
+  - Duplicate sign-off attempt to overwrite immutable certificate: Fails closed with ALREADY_ACCEPTED
+  - Single-byte tampering across payload fields (customerName, signerName, signerRole, deployedSha, checkpoints): 100% detected
+  - Unauthorized signer roles (Hacker, developer, root, contractor, etc.): Rejected with INVALID_INPUT
+  - Timing side-channel on hash verification: Protected via XOR-accumulator constantTimeEqual
+  - Cross-tenant sign-off: Rejected with FORBIDDEN
+  - Unauthenticated access: Rejected with UNAUTHORIZED
+- **Vulnerabilities found**: None. All attack vectors mitigated and covered by automated regression tests.
+- **Untested angles**: None within Milestone 4 scope.

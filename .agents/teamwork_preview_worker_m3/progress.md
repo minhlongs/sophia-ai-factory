@@ -1,24 +1,30 @@
-# Progress Tracking - M3 Implementation (Executive BI & Automated Reporting Engine)
+# Progress Tracking - Worker M3 (Cryptographic & Integration Verification Specialist)
 
-Last visited: 2026-09-20T06:10:00Z
-Current status: All M3 Executive BI components implemented, tested, verified, and passing quality gates (100% pass rate).
+Last visited: 2026-09-21T09:25:40Z
 
-## Milestones & Checklist
-- [x] Read mandatory inputs (ORIGINAL_REQUEST.md, PROJECT.md, TEST_READY.md, Explorer handoffs M3-1, M3-2, M3-3, DISPATCH.md)
-- [x] Verify baseline tests pass (33/33 E2E, 402/402 unit/integration, 0 TS errors, 0 layer violations)
-- [x] Step 1: D1 Migration `apps/sophia-ai-factory/migrations/0278_enterprise_executive_bi.sql`
-- [x] Step 2: Seed Types `apps/sophia-ai-factory/src/seed/types/executive-bi.ts`
-- [x] Step 3: Domain Service `apps/sophia-ai-factory/src/tree/bi/metrics-aggregator.ts`
-- [x] Step 4: Domain Service `apps/sophia-ai-factory/src/tree/bi/export-formatter.ts`
-- [x] Step 5: Forest Service `apps/sophia-ai-factory/src/forest/bi/telegram-digest-sender.ts`
-- [x] Step 6: Forest Service `apps/sophia-ai-factory/src/forest/bi/email-digest-sender.ts`
-- [x] Step 7: Forest Service `apps/sophia-ai-factory/src/forest/bi/executive-digest-dispatcher.ts`
-- [x] Step 8: Edge API Route `apps/sophia-ai-factory/src/app/api/v1/analytics/export/route.ts`
-- [x] Step 9: Unit Tests
-  - [x] `src/__tests__/unit/enterprise/metrics-aggregator.test.ts`
-  - [x] `src/__tests__/unit/enterprise/export-formatter.test.ts`
-  - [x] `src/__tests__/unit/enterprise/digest-sender.test.ts`
-  - [x] `src/__tests__/unit/enterprise/export-route.test.ts`
-- [x] Step 10: Run full verification suite (E2E 33/33, unit/integration 458/458, TypeScript 0 errors, layer check clean)
-- [ ] Step 11: Produce comprehensive 5-component handoff report and notify parent
+## Status
+Verification complete across all 5 requirement domains. All quality gates, cryptographic proofs, and integration tests passed with 100% success rate.
 
+## Plan & Milestones
+- [x] Initialize DISPATCH.md, BRIEFING.md, and progress.md
+- [x] Read authoritative request, PROJECT.md, and explorer report
+- [x] Inspect source code and existing tests for:
+  - NOWPayments IPN route & client (`src/app/api/webhooks/nowpayments/route.ts`, `src/tree/clients/nowpayments-client.ts`)
+  - Better Auth & Tenant Isolation (`src/seed/auth/resolve-org-id.ts`, `src/seed/auth/workspace-access.ts`)
+  - Telegram Bot Webhook Security (`src/app/api/webhooks/telegram/route.ts`)
+  - DR Drill Executor probes (`src/tree/handover/dr-drill-executor.ts`)
+- [x] Hardened Telegram webhook route test suite (`src/app/api/webhooks/telegram/route.test.ts`) to comprehensively test `X-Telegram-Bot-Api-Secret-Token` enforcement, dormant mode, and 401 fail-closed logic.
+- [x] Preserved existing SOP commission ledger tests in `src/land/sop-marketplace/__tests__/commission-split.test.ts`.
+- [x] Execute tests with Vitest, capturing exact traces:
+  - NOWPayments test suites: 3 test files, 36 passed
+  - Land billing test suites: 31 test files, 302 passed
+  - Seed auth test suites: 24 test files, 294 passed
+  - Handover DR & lifecycle probes: 14 test files, 169 passed
+  - Telegram webhook security tests: 1 test file, 8 passed
+  - Combined suite: 74 test files passed, 820 tests passed, 0 failures
+- [x] Run Quality Gates:
+  - `tsc --noEmit` (0 TypeScript compilation errors)
+  - `bash scripts/check-layer-boundaries.sh` (exit code 0, all layer boundaries clean)
+  - Sophia Doctor (`node scripts/sophia-doctor.mjs`): 11/11 GREEN (100% score)
+- [ ] Generate comprehensive 5-component `handoff.md`
+- [ ] Notify parent orchestrator via `send_message`
