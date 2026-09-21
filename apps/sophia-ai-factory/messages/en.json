@@ -2328,7 +2328,9 @@
         "date": "Date",
         "reward": "Reward",
         "status": "Status"
-      }
+      },
+      "noHistoryTitle": "No Referral Rewards Yet",
+      "noHistoryDesc": "Share your referral link with agency owners to earn rewards on their subscriptions."
     },
     "campaigns": {
       "title": "Campaigns",
@@ -3314,6 +3316,14 @@
           "description": "Description"
         }
       }
+    },
+    "licenses": {
+      "emptyTitle": "No licenses found",
+      "emptyDesc": "No license keys match your current filter criteria. Try adjusting your search or tier filter."
+    },
+    "payouts": {
+      "emptyTitle": "Payout queue is empty",
+      "emptyDesc": "There are no users with pending balances ready for payout. Users appear here once their balance reaches the minimum threshold."
     }
   },
   "common": {
@@ -3670,7 +3680,9 @@
       "delete": "Delete",
       "manual": "Manual",
       "firstInstallTitle": "Your first SOP is installed!",
-      "firstInstallDesc": "Great start! Explore more SOPs in the marketplace or run this one now."
+      "firstInstallDesc": "Great start! Explore more SOPs in the marketplace or run this one now.",
+      "emptyTitle": "No SOPs installed yet",
+      "emptyDesc": "Explore our marketplace of battle-tested automation playbooks to install your first SOP."
     },
     "detail_page": {
       "overview": "Overview",
@@ -3730,7 +3742,9 @@
       "partial": "Partial",
       "backToSops": "Back to SOPs",
       "backToRuns": "Back to Runs",
-      "title": "Run Details"
+      "title": "Run Details",
+      "emptyRunsTitle": "No Execution Runs Yet",
+      "emptyRunsDesc": "Trigger this SOP manually or wait for the scheduled cron run to see execution history."
     },
     "edit": {
       "title": "Edit Playbook",
@@ -7255,7 +7269,9 @@
     "checks": "Checks",
     "pwf": "P/W/F",
     "detail": "Detail",
-    "view": "View"
+    "view": "View",
+    "noRunsTitle": "No Architecture Audits Yet",
+    "noRunsDesc": "Run your first Zero-Gap architecture audit above to inspect system health and compliance."
   },
   "setup_wizard": {
     "system_check": {
@@ -7570,7 +7586,9 @@
     "correcting": "Correcting...",
     "correctSuccess": "Memory corrected successfully",
     "correctError": "Failed to correct memory",
-    "memoryCorrected": "Memory Corrected"
+    "memoryCorrected": "Memory Corrected",
+    "noMemoryTitle": "No Learning Memory Yet",
+    "noMemoryDesc": "Insights and adaptations from your campaign runs will appear here as the system learns."
   },
   "productionMonitoring": {
     "pageTitle": "System Health",
@@ -8139,4 +8157,3 @@
     "emptySearch": "No runbooks match your search criteria."
   }
 }
-

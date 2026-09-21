@@ -10,6 +10,7 @@ import { useTranslations } from 'next-intl'
 import { Link } from '@/navigation'
 import { Clock, ExternalLink } from 'lucide-react'
 import { cn } from '@/seed/utils/cn'
+import { EmptyState } from '@/seed/components/ui/empty-state'
 
 interface AuditRunSummaryRow {
   id: string
@@ -46,9 +47,11 @@ export function AuditHistoryTable({ runs }: AuditHistoryTableProps) {
 
   if (runs.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground text-sm">
-        {t('noRuns')}
-      </div>
+      <EmptyState
+        icon={Clock}
+        title={t('noRunsTitle')}
+        description={t('noRunsDesc')}
+      />
     )
   }
 

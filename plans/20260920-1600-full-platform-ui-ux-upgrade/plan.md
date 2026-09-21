@@ -1,7 +1,7 @@
 ---
 title: "Full Platform UI/UX Upgrade"
 description: "Obsidian Cyber-Glass design system rollout across all public and dashboard views — loading/error boundaries, primitive adoption, WCAG AA, mobile polish, empty states, i18n."
-status: pending
+status: completed
 priority: P1
 effort: 12h
 branch: main
@@ -35,10 +35,10 @@ Upgrade Sophia AI Factory UI/UX to a polished, modern, resilient, accessible, re
 |-------|------|--------|------|
 | 1 | Loading & Error Boundaries | completed | [phase-01-loading-error-boundaries.md](./phase-01-loading-error-boundaries.md) |
 | 2 | Design System Polish | completed | [phase-02-design-system-polish.md](./phase-02-design-system-polish.md) |
-| 3 | Accessibility (WCAG 2.1 AA) | pending | [phase-03-accessibility-wcag.md](./phase-03-accessibility-wcag.md) |
-| 4 | Mobile & Responsive | pending | [phase-04-mobile-responsive.md](./phase-04-mobile-responsive.md) |
-| 5 | Empty States & i18n | pending | [phase-05-empty-states-i18n.md](./phase-05-empty-states-i18n.md) |
-| 6 | Final Verification | pending | [phase-06-final-verify.md](./phase-06-final-verify.md) |
+| 3 | Accessibility (WCAG 2.1 AA) | completed | [phase-03-accessibility-wcag.md](./phase-03-accessibility-wcag.md) |
+| 4 | Mobile & Responsive | completed | [phase-04-mobile-responsive.md](./phase-04-mobile-responsive.md) |
+| 5 | Empty States & i18n | completed | [phase-05-empty-states-i18n.md](./phase-05-empty-states-i18n.md) |
+| 6 | Final Verification | completed | [phase-06-final-verify.md](./phase-06-final-verify.md) |
 
 ## Success Criteria
 

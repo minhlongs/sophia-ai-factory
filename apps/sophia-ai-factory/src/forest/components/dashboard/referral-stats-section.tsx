@@ -8,6 +8,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Gift, Users } from 'lucide-react';
+import { EmptyState } from '@/seed/components/ui/empty-state';
 
 interface RewardRow {
   id: string;
@@ -48,10 +49,11 @@ export function ReferralStatsSection({ history, locale }: ReferralStatsSectionPr
       </div>
 
       {history.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-8 md:py-12 text-center">
-          <Users className="w-10 h-10 md:w-12 md:h-12 text-muted-foreground/40 mb-3" aria-hidden="true" />
-          <p className="text-muted-foreground text-sm">{t('noHistory')}</p>
-        </div>
+        <EmptyState
+          icon={Users}
+          title={t('noHistoryTitle')}
+          description={t('noHistoryDesc')}
+        />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

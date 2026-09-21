@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { Link } from '@/navigation';
 import { cn } from '@/tree/components/setup-wizard/wizard-stepper';
 import {
   Clock,
@@ -16,6 +15,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { Button } from '@/seed/components/ui/button';
+import { EmptyState } from '@/seed/components/ui/empty-state';
 
 interface PublishJob {
   id: string;
@@ -226,22 +226,16 @@ export function PublishQueueClient() {
         {/* Jobs Table */}
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           {jobs.length === 0 ? (
-            <div className="p-12 text-center">
-              <Send className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-1">
-                {t('empty.title') || 'No Publish Jobs Yet'}
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                {t('empty.message') || 'Schedule your first WhatsApp publish from the video editor or setup wizard.'}
-              </p>
-              <Link
-                href={`/${locale}/dashboard/setup/whatsapp-templates`}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
-              >
-                <MessageCircle className="w-4 h-4" />
-                {t('empty.cta') || 'Create WhatsApp Template'}
-              </Link>
-            </div>
+            <EmptyState
+              icon={Send}
+              title={t('empty.title') || 'No Publish Jobs Yet'}
+              description={t('empty.message') || 'Schedule your first WhatsApp publish from the video editor or setup wizard.'}
+              cta={{
+                label: t('empty.cta') || 'Create WhatsApp Template',
+                href: '/dashboard/setup/whatsapp-templates',
+              }}
+              className="border-0 rounded-none bg-transparent py-12"
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">

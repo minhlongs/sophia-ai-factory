@@ -9,7 +9,7 @@
 
 ## Overview
 - Priority: P1
-- Status: pending
+- Status: completed
 - Effort: 3h
 - Description: Standardize zero-data views using the unified `<EmptyState>` primitive across all dashboard tables and lists, and perform a complete bilingual audit ensuring all customer-facing UI strings exist in both `messages/en.json` and `messages/vi.json`.
 
@@ -76,24 +76,24 @@ This phase strictly owns and modifies the following files:
 9. Run `npm run type-check`.
 
 ## Todo List
-- [ ] Add empty state translation keys to `messages/en.json`
-- [ ] Add matching translation keys to `messages/vi.json`
-- [ ] Unify empty state in `installation-list-table.tsx`
-- [ ] Unify empty state in `installation-runs-tab.tsx`
-- [ ] Unify empty state in `memory-list.tsx`
-- [ ] Unify empty state in `licenses-client.tsx`
-- [ ] Unify empty state in `payouts-client.tsx`
-- [ ] Unify empty state in `referral-stats-section.tsx`
-- [ ] Unify empty state in `audit-history-table.tsx`
-- [ ] Unify empty state in `creator-payouts-section.tsx`
-- [ ] Unify empty state in `PublishQueueClient.tsx`
-- [ ] Verify i18n JSON validity and run `npm run type-check`
+- [x] Add empty state translation keys to `messages/en.json`
+- [x] Add matching translation keys to `messages/vi.json`
+- [x] Unify empty state in `installation-list-table.tsx`
+- [x] Unify empty state in `installation-runs-tab.tsx`
+- [x] Unify empty state in `memory-list.tsx`
+- [x] Unify empty state in `licenses-client.tsx`
+- [x] Unify empty state in `payouts-client.tsx`
+- [x] Unify empty state in `referral-stats-section.tsx`
+- [x] Unify empty state in `audit-history-table.tsx`
+- [x] Unify empty state in `creator-payouts-section.tsx`
+- [x] Unify empty state in `PublishQueueClient.tsx`
+- [x] Verify i18n JSON validity and run `npm run type-check`
 
 ## Success Criteria
-- [ ] All 10 targeted data lists and tables use `<EmptyState>` when data array is empty
-- [ ] Every empty state has bilingual titles, descriptions, and CTA labels
-- [ ] `messages/en.json` and `messages/vi.json` are valid JSON with matching keys
-- [ ] TypeScript type-check passes with 0 errors
+- [x] All 10 targeted data lists and tables use `<EmptyState>` when data array is empty
+- [x] Every empty state has bilingual titles, descriptions, and CTA labels
+- [x] `messages/en.json` and `messages/vi.json` are valid JSON with matching keys
+- [x] TypeScript type-check passes with 0 errors
 
 ## Risk Assessment & Mitigations
 - **Risk:** Malformed JSON breaking NextIntlClientProvider during hydration.

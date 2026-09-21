@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-09-10 (Customer Handover Productization Shipped — CF-Direct Deployed SHA c3b2e7e6, 9,092 tests passing, 100/100 independence score)
+**Last Updated:** 2026-09-20 (Full Platform UI/UX Upgrade — Obsidian Cyber-Glass rollout, empty states, i18n unification — pending deploy)
 **Target:** $1M ARR, 100/100 a16z solo company score
 **Go-Live Shipped (2026-05-03):** Production deployment https://sophia.agencyos.network (SHA 5b1f711f). GAP1: Magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2: Self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt email VAT 10%, dashboard period_end). GAP3: Mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission control widget, public /status page 90d uptime, D+1/D+7 lifecycle emails). Infrastructure: 9 smoke tests PASS (200 HTTP), 4431 tests 100% pass, build < 10s, 0 TS errors.
 
@@ -15,6 +15,7 @@ Transformed Sophia AI Factory from technical readiness into a fully customer-ope
 
 | Phase | Status | Completion | Details |
 |-------|--------|-----------|---------|
+| **UIUX: Full Platform UI/UX Upgrade** | ✅ COMPLETE (pending deploy) | 2026-09-20 | All 6 phases of `plans/20260920-1600-full-platform-ui-ux-upgrade/` shipped: (1) loading/error boundaries on 15+ dashboard subroutes, (2) design system polish with amber primary tokens, (3) WCAG 2.1 AA accessibility (44px touch targets, aria-labels on icon buttons), (4) mobile & responsive (sidebar hide on mobile, sticky pricing), (5) empty state unification onto canonical `<EmptyState>` primitive across 10 components + 100% vi/en key parity, (6) final verification. `npm run type-check` 0 errors, `npm run build` exit 0, 1032/1033 test files pass (11 pre-existing node:sqlite known-broken excluded), 0 layer boundary violations, 0 new eslint-suppressions, all protected flows untouched. |
 | **CHP: Customer Handover Productization** | ✅ SHIPPED | 2026-09-10 | Canonical 6-step onboarding, live HTTP BYOK validation (fal.ai, OpenRouter, ElevenLabs, D-ID), customer health dashboard (5 safe error categories, 4 action zones), first-run wizard with cost estimation, usage metering & ownership delegation, sanitized diagnostics, 10 customer runbooks (`docs/customer/*`), Handover Sign-off Pack & Exit Charter. Deployed live via CF-direct doctrine (`shortSha: "c3b2e7e6"`). |
 | **SC7: fal.ai Image Adapter** | ✅ SHIPPED | 2026-09-10 | `FalImageProvider` class (189 LOC), circuit breaker wrapped, BYOK for `FAL_KEY`, EXPERIMENTAL certification, tier gating. Wired into action + API route + status route. Live deployed in commit `12b8a022`. |
 | **HHS: Handover Hardening Sprint** | ✅ SHIPPED | 2026-09-10 | Setup Wizard fal.ai BYOK UI (`api-keys-step.tsx`, `index.tsx`), regex key validation (`validateFalAI`), BYOK route isolation, bilingual copy, doctrine reconciliation (`revalidatePath` on 47 routes), runbooks (OPERATOR-BOOTSTRAP, DISASTER-RECOVERY, CANARY-VERIFICATION). Deployed live via CF-direct doctrine (`shortSha: "12b8a022"`). |

@@ -2328,7 +2328,9 @@
         "date": "Ngày",
         "reward": "Thưởng",
         "status": "Trạng Thái"
-      }
+      },
+      "noHistoryTitle": "Chưa Có Phần Thưởng Giới Thiệu",
+      "noHistoryDesc": "Chia sẻ liên kết giới thiệu để nhận hoa hồng khi họ đăng ký gói dịch vụ."
     },
     "campaigns": {
       "title": "Chiến dịch",
@@ -3314,6 +3316,14 @@
           "description": "Description"
         }
       }
+    },
+    "licenses": {
+      "emptyTitle": "Không tìm thấy giấy phép",
+      "emptyDesc": "Không có khoá giấy phép nào khớp với bộ lọc hiện tại. Hãy thử điều chỉnh tìm kiếm hoặc bộ lọc gói."
+    },
+    "payouts": {
+      "emptyTitle": "Hàng đợi thanh toán trống",
+      "emptyDesc": "Không có người dùng nào có số dư chờ thanh toán. Người dùng sẽ xuất hiện ở đây khi số dư đạt mức tối thiểu."
     }
   },
   "common": {
@@ -3670,7 +3680,9 @@
       "delete": "Xóa",
       "manual": "Thủ công",
       "firstInstallTitle": "SOP đầu tiên đã được cài đặt!",
-      "firstInstallDesc": "Bắt đầu tốt! Khám phá thêm SOPs trong marketplace hoặc chạy SOP này ngay."
+      "firstInstallDesc": "Bắt đầu tốt! Khám phá thêm SOPs trong marketplace hoặc chạy SOP này ngay.",
+      "emptyTitle": "Chưa cài đặt SOP nào",
+      "emptyDesc": "Khám phá kho playbook tự động hóa để cài đặt quy trình SOP đầu tiên của bạn."
     },
     "detail_page": {
       "overview": "Tổng Quan",
@@ -3730,7 +3742,9 @@
       "partial": "Một Phần",
       "backToSops": "Quay Lại SOPs",
       "backToRuns": "Quay Lại Lịch Sử",
-      "title": "Chi Tiết Lần Chạy"
+      "title": "Chi Tiết Lần Chạy",
+      "emptyRunsTitle": "Chưa Có Lịch Sử Chạy",
+      "emptyRunsDesc": "Kích hoạt SOP này thủ công hoặc đợi lịch chạy tự động để xem lịch sử thực thi."
     },
     "edit": {
       "title": "Sửa Playbook",
@@ -7262,7 +7276,9 @@
     "checks": "Kiểm Tra",
     "pwf": "T/C/L",
     "detail": "Chi Tiết",
-    "view": "Xem"
+    "view": "Xem",
+    "noRunsTitle": "Chưa Có Lần Kiểm Tra Nào",
+    "noRunsDesc": "Chạy đợt kiểm tra kiến trúc Zero-Gap đầu tiên ở trên để đánh giá sức khỏe và độ tuân thủ hệ thống."
   },
   "setup_wizard": {
     "system_check": {
@@ -7577,7 +7593,9 @@
     "correctSuccess": "Đã chỉnh sửa bộ nhớ thành công",
     "correctError": "Không thể chỉnh sửa bộ nhớ",
     "memoryCorrected": "Bộ nhớ Đã Chỉnh sửa",
-    "cancel": "Hủy"
+    "cancel": "Hủy",
+    "noMemoryTitle": "Chưa Có Dữ Liệu Bộ Nhớ",
+    "noMemoryDesc": "Các phân tích và tối ưu hóa từ chiến dịch sẽ xuất hiện ở đây khi hệ thống tự học."
   },
   "productionMonitoring": {
     "pageTitle": "Sức khỏe Hệ thống",
@@ -8146,4 +8164,3 @@
     "emptySearch": "Không tìm thấy cẩm nang nào khớp với từ khóa."
   }
 }
-

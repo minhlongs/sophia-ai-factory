@@ -7,6 +7,8 @@
 
 import { useState } from 'react';
 import { Button } from '@/seed/components/ui/button';
+import { EmptyState } from '@/seed/components/ui/empty-state';
+import { Brain } from 'lucide-react';
 import type { MemoryInsight } from '@/land/creative-economy/types';
 
 interface MemoryListProps {
@@ -142,7 +144,11 @@ export function MemoryList({ insights, t }: MemoryListProps) {
     return (
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <h3 className="text-sm font-semibold text-slate-700">{t('memoryTitle')}</h3>
-        <p className="mt-2 text-sm text-slate-500">{t('noMemory')}</p>
+        <EmptyState
+          icon={Brain}
+          title={t('noMemoryTitle')}
+          description={t('noMemoryDesc')}
+        />
       </section>
     );
   }

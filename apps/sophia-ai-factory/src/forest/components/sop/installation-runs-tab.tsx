@@ -8,6 +8,8 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import type { SopRunRow } from '@/tree/sop/sop-types';
 import { RunStatusBadge } from './run-status-badge';
+import { Play } from 'lucide-react';
+import { EmptyState } from '@/seed/components/ui/empty-state';
 
 interface Props {
   runs: SopRunRow[];
@@ -37,7 +39,13 @@ export function InstallationRunsTab({ runs, installationId }: Props) {
   const t = useTranslations('sop.run');
 
   if (runs.length === 0) {
-    return <p className="text-muted-foreground text-sm py-8 text-center">{t('noMissions')}</p>;
+    return (
+      <EmptyState
+        icon={Play}
+        title={t('emptyRunsTitle')}
+        description={t('emptyRunsDesc')}
+      />
+    );
   }
 
   return (

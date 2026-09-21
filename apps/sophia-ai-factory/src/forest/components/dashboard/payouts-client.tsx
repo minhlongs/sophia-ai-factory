@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   RefreshCw,
   DollarSign,
@@ -16,6 +17,7 @@ import {
   Wallet,
   TrendingUp,
 } from 'lucide-react';
+import { EmptyState } from '@/seed/components/ui/empty-state';
 
 interface QueueItem {
   user_id: string;
@@ -45,6 +47,7 @@ export function PayoutsClient({
 }: {
   initialData?: ApiResult;
 }): React.JSX.Element {
+  const t = useTranslations('admin.payouts');
   const [data, setData] = useState<ApiResult | null>(initialData ?? null);
   const [loading, setLoading] = useState(!initialData?.items.length);
   const [error, setError] = useState<string | null>(null);
@@ -216,11 +219,13 @@ export function PayoutsClient({
                 </tr>
               ) : !data?.items.length ? (
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-12 text-center text-muted-foreground"
-                  >
-                    Payout queue is empty
+                  <td colSpan={6} className="p-0">
+                    <EmptyState
+                      icon={Wallet}
+                      title={t('emptyTitle')}
+                      description={t('emptyDesc')}
+                      className="border-0 rounded-none bg-transparent py-12"
+                    />
                   </td>
                 </tr>
               ) : (

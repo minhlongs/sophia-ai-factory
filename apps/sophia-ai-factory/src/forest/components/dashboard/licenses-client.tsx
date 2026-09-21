@@ -6,7 +6,9 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { KeyRound, RefreshCw, CheckCircle, XCircle, Search, Loader2 } from 'lucide-react';
+import { EmptyState } from '@/seed/components/ui/empty-state';
 
 interface License {
   id: string;
@@ -26,6 +28,7 @@ interface ApiResult {
 }
 
 export function LicensesClient({ initialLicenses }: { initialLicenses?: License[] } = {}): React.JSX.Element {
+  const t = useTranslations('admin.licenses');
   const [licenses, setLicenses] = useState<License[]>(initialLicenses ?? []);
   const [loading, setLoading] = useState(!initialLicenses?.length);
   const [search, setSearch] = useState('');
@@ -134,8 +137,13 @@ export function LicensesClient({ initialLicenses }: { initialLicenses?: License[
                 </tr>
               ) : licenses.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
-                    No licenses found
+                  <td colSpan={7} className="p-0">
+                    <EmptyState
+                      icon={KeyRound}
+                      title={t('emptyTitle')}
+                      description={t('emptyDesc')}
+                      className="border-0 rounded-none bg-transparent py-12"
+                    />
                   </td>
                 </tr>
               ) : (

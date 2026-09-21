@@ -137,7 +137,7 @@ describe('MemoryList', () => {
 
   it('renders empty state when no memory', () => {
     render(<MemoryList insights={[]} t={t} />);
-    expect(screen.getByText('noMemory')).toBeDefined();
+    expect(screen.getByText('noMemoryTitle')).toBeDefined();
   });
 });
 

@@ -11,7 +11,8 @@ import Link from 'next/link';
 import type { SopInstallationRow, SopTemplateRow } from '@/tree/sop/sop-types';
 import { CategoryBadge } from './category-badge';
 import { Button } from '@/seed/components/ui/button';
-import { Eye } from 'lucide-react';
+import { Eye, Package } from 'lucide-react';
+import { EmptyState } from '@/seed/components/ui/empty-state';
 
 interface InstallWithTemplate extends SopInstallationRow {
   template: SopTemplateRow | null;
@@ -41,15 +42,12 @@ export function InstallationListTable({ installations, locale }: InstallationLis
 
   if (installations.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
-        <p className="text-muted-foreground">{t('empty')}</p>
-        <Link
-          href="/dashboard/sop-marketplace"
-          className="inline-flex items-center px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors"
-        >
-          {t('emptyAction')}
-        </Link>
-      </div>
+      <EmptyState
+        icon={Package}
+        title={t('emptyTitle')}
+        description={t('emptyDesc')}
+        cta={{ label: t('emptyAction'), href: '/dashboard/sop-marketplace' }}
+      />
     );
   }
 

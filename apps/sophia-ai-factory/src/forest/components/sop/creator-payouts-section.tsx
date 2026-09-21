@@ -17,6 +17,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Wallet, Clock, History, Plus, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import { EmptyState } from '@/seed/components/ui/empty-state';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -240,11 +241,11 @@ export function CreatorPayoutsSection() {
           <p className="text-sm text-white/50 mb-4">{t('payouts.payoutHistoryDesc')}</p>
 
           {batches.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <History className="w-10 h-10 text-white/20 mb-3" aria-hidden="true" />
-              <p className="text-sm text-white/50">{t('payouts.noPayouts')}</p>
-              <p className="text-xs text-white/30 mt-1">{t('payouts.noPayoutsDesc')}</p>
-            </div>
+            <EmptyState
+              icon={History}
+              title={t('payouts.noPayouts')}
+              description={t('payouts.noPayoutsDesc')}
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
