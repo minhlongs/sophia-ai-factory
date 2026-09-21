@@ -68,6 +68,11 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   logger: mocks.logger,
 }));
 
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+}));
+
 /** Build a MissionError-shaped error (name-based detection in actionFailure). */
 function missionError(code: string, message: string): Error {
   const err = new Error(message);
