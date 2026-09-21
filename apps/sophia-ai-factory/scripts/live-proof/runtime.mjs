@@ -65,7 +65,7 @@ export function parseLiveConfig(env, fail) {
     }
   }
 
-  const openrouterKey = optionalEnv(env, 'SOPHIA_LIVE_OPENROUTER_API_KEY') || (preflightOnly ? 'preflight-dummy-openrouter-key' : undefined);
+  const openrouterKey = optionalEnv(env, 'SOPHIA_LIVE_OPENROUTER_API_KEY') || (preflightOnly ? 'sk-or-v1-preflight-dummy-key' : undefined);
   const anthropicKey = optionalEnv(env, 'SOPHIA_LIVE_ANTHROPIC_API_KEY');
   if (!openrouterKey && !anthropicKey && !preflightOnly) {
     fail('set SOPHIA_LIVE_OPENROUTER_API_KEY or SOPHIA_LIVE_ANTHROPIC_API_KEY');

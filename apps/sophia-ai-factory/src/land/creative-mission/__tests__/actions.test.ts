@@ -25,12 +25,21 @@ const mocks = vi.hoisted(() => ({
   resolveApproval: vi.fn(),
   runMissionPreflightCheck: vi.fn(),
   executeMultiTrackMission: vi.fn(),
+  hasWorkspaceRole: vi.fn().mockResolvedValue(true),
   logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 
 vi.mock('@/seed/auth/better-auth-session', () => ({
   getCurrentUser: mocks.getCurrentUser,
 }));
+
+vi.mock('@/seed/auth/workspace-access', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/seed/auth/workspace-access')>();
+  return {
+    ...actual,
+    hasWorkspaceRole: mocks.hasWorkspaceRole,
+  };
+});
 
 vi.mock('@/seed/db/client', () => ({
   getD1: mocks.getD1,
@@ -100,6 +109,7 @@ const USER = { id: 'user_1' };
 describe('land/creative-mission actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.hasWorkspaceRole.mockResolvedValue(true);
     mocks.runMissionPreflightCheck.mockResolvedValue({ passed: true, gates: {} });
     mocks.executeMultiTrackMission.mockResolvedValue({
       success: true,
@@ -617,6 +627,7 @@ describe('land/creative-mission actions', () => {
     });
 
     it('fails with FORBIDDEN when user is a workspace member but neither creator nor admin', async () => {
+      mocks.hasWorkspaceRole.mockResolvedValueOnce(false);
       mocks.getCurrentUser.mockResolvedValue(USER);
       mocks.getD1.mockReturnValue(
         makeD1([
