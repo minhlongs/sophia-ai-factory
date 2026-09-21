@@ -2,8 +2,8 @@
 
 > This file is an index. Full entries are split by quarter for faster loading.
 
-**Last entry:** 2026-09-20 (Full Platform UI/UX Upgrade — Obsidian Cyber-Glass rollout, empty states, i18n unification)
-**Current Production SHA:** pending deploy
+**Last entry:** 2026-09-21 (Full Platform UI/UX Upgrade — Obsidian Cyber-Glass rollout deployed, SHA 835510c3)
+**Current Production SHA:** 835510c3
 
 ---
 
@@ -20,7 +20,7 @@
 
 ## Recent Entries (Q3 2026 — latest 5)
 
-- **2026-09-20** — **Full Platform UI/UX Upgrade — Obsidian Cyber-Glass Rollout (Pending Deploy).** Completed all 6 phases of `plans/20260920-1600-full-platform-ui-ux-upgrade/`: (1) loading/error boundaries on 15+ dashboard subroutes, (2) design system polish with amber primary tokens, (3) WCAG 2.1 AA accessibility (44px touch targets, aria-labels on icon buttons), (4) mobile & responsive (sidebar hide on mobile, sticky pricing), (5) empty state unification onto canonical `<EmptyState>` primitive across 10 components + 100% vi/en key parity, (6) final verification. `npm run type-check` 0 errors, `npm run build` exit 0, 1032/1033 test files pass (11 pre-existing node:sqlite known-broken excluded), 0 layer boundary violations, 0 new eslint-suppressions, all protected flows untouched.
+- **2026-09-21** — **Full Platform UI/UX Upgrade — Obsidian Cyber-Glass Rollout (Deployed, SHA 835510c3).** Completed all 6 phases of `plans/20260920-1600-full-platform-ui-ux-upgrade/`: (1) loading/error boundaries on 15+ dashboard subroutes, (2) design system polish with amber primary tokens, (3) WCAG 2.1 AA accessibility (44px touch targets, aria-labels on icon buttons), (4) mobile & responsive (sidebar hide on mobile, sticky pricing), (5) empty state unification onto canonical `<EmptyState>` primitive across 10 components + 100% vi/en key parity, (6) final verification. `npm run type-check` 0 errors, `npm run build` exit 0, 1032/1033 test files pass (11 pre-existing node:sqlite known-broken excluded), 0 layer boundary violations, 0 new eslint-suppressions, all protected flows untouched.
 - **2026-09-12** — **Zero Layer Boundary Debt & 100% 4-Layer Architecture Compliance (SHA 6fa03ad9).** Remediated the final architectural escrow debt: eliminated the 2 pre-existing `land -> forest` boundary import violations identified by `scripts/check-layer-boundaries.sh` (`runMissionPreflightCheck` relocated to `src/tree/mission/preflight-check.ts` and `openclaw-bridge-tools` routed through `src/land/publish/schedule-video-publish.ts`). `npm run check:boundaries` verified at 0 violations across all 4 layers (`seed -> tree -> forest -> land`). 9,188/9,188 tests passing (100%), 0 TS errors, 0 lint errors. Deployed to Cloudflare Workers via CF-direct doctrine with live SHA `6fa03ad9`.
 - **2026-09-11** — **Supreme Forensic Audit & Customer Handover Productization (SHA 12d72d2a).** Addressed founder trust mandate through a rigorous, adversarial source-code-level forensic audit of all 30 critical customer operations. Shipped double-layer IDOR protection on mission endpoints, Inngest `step.run()` idempotency, fail-closed billing upgrade controls, atomic SQL MCU balance deductions, pricing truth reconciliation, 13 forensic audit reports, and master `docs/customer/HANDOVER-PACK.md` with 10 customer runbooks. 9,188/9,188 tests passing across 898 test files. Deployed live via CF-direct doctrine; commit SHA `12d72d2a` verified live at `/api/version`.
 - **2026-09-10** — **Founder Bootstrap Authorization Remediation & Production Deployment (SHA c35840f4).** Zero-touch founder promotion hook (`src/seed/auth/founder-bootstrap.ts`) wired to Better Auth `user.create.after`, schema migration 0272 for `user_profiles.role`, unified `requireMaster()` gate in `src/land/admin/org-manager.ts`, immutable audit logging. Deployed live via CF-direct doctrine (`shortSha: "c35840f4"`). 8,944 tests passing.
