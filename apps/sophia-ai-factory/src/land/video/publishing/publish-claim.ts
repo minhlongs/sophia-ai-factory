@@ -33,7 +33,9 @@ export async function checkAndMarkMaxRetries(db: ReturnType<typeof createServerC
 }
 
 export async function atomicClaimJob(db: ReturnType<typeof createServerClient>, jobId: string): Promise<{ claimed: boolean; status: string }> {
-  const rawDb = typeof (db as any).unwrap === 'function' ? (db as any).unwrap() : (db as any).raw || db;
+  const unwrappable = db as unknown as { unwrap?: () => unknown; raw?: unknown; prepare?: unknown };
+  const rawCandidate = typeof unwrappable.unwrap === 'function' ? unwrappable.unwrap() : unwrappable.raw || db;
+  const rawDb = rawCandidate as { prepare?: (sql: string) => { bind: (...args: unknown[]) => { run: () => Promise<{ meta?: { changes?: number } }> } } };
   const now = Math.floor(Date.now() / 1000);
   let claimChanges = 0;
 

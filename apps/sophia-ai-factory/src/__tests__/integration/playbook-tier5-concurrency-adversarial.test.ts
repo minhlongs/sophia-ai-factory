@@ -396,7 +396,7 @@ describe('Tier 5 Adversarial Hardening: Concurrency & Race Conditions', () => {
       ).run(WS_ID, initialTs);
 
       // Custom mock: attempt 0 fails changes = 0, then refresh returns null (row was deleted)
-      let attempt = 0;
+      const attempt = 0;
       const deleteD1 = {
         prepare: vi.fn((sql: string) => ({
           bind: vi.fn(() => ({

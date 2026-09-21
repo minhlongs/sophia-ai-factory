@@ -112,7 +112,7 @@ describe('Challenger M1 R2: Empirical Stress & Concurrency Verification', () => 
     const minOracle = Math.min(...possibleA11Values);
     const maxOracle = Math.max(...possibleA11Values);
 
-    let totalRuns = 50;
+    const totalRuns = 50;
     let perfectRuns = 0;
     let droppedUpdatesTotal = 0;
 
@@ -175,7 +175,7 @@ describe('Challenger M1 R2: Empirical Stress & Concurrency Verification', () => 
 
   // ── CHALLENGE 2: Cold start race condition (E5) across ALL dimensions ──
   it('C2: Cold start race condition (E5) verifies 0 dropped updates across ALL generated dimensions', async () => {
-    let coldStartRuns = 20;
+    const coldStartRuns = 20;
 
     for (let run = 0; run < coldStartRuns; run++) {
       const d1 = createRealSqliteD1();
