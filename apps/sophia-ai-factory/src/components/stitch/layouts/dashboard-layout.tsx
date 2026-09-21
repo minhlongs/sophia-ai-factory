@@ -127,7 +127,7 @@ export function TopAppBar({
 
         {/* Help */}
         <Link
-          href="/dashboard/help"
+          href="/dashboard/docs/runbooks"
           className="p-2 rounded-lg text-muted-foreground hover:text-white hover:bg-white/[0.05] transition-all hidden sm:block"
           aria-label="Help"
         >
