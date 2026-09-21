@@ -10,6 +10,7 @@
 
 'use server';
 
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { getD1 } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { isUserAdmin } from '@/seed/auth/is-user-admin';
@@ -167,6 +168,12 @@ export async function signHandoverAcceptanceAction(
       certificateHash: result.certificate.certificateSha256,
     });
 
+    revalidatePath('/dashboard/handover');
+    revalidatePath('/[locale]/dashboard/handover');
+    revalidatePath('/admin/handover');
+    revalidateTag('customer_handover', 'max');
+    revalidateTag(`handover_${cleanHandoverId}`, 'max');
+
     return success(result);
   } catch (err) {
     logger.error('[handover-actions] signHandoverAcceptanceAction failed', err instanceof Error ? err : undefined);
@@ -244,6 +251,14 @@ export async function triggerHandoverVerificationAction(
           error: dbErr instanceof Error ? dbErr.message : String(dbErr),
         });
       }
+    }
+
+    revalidatePath('/dashboard/handover');
+    revalidatePath('/[locale]/dashboard/handover');
+    revalidatePath('/admin/handover');
+    revalidateTag('customer_handover', 'max');
+    if (handoverId) {
+      revalidateTag(`handover_${handoverId}`, 'max');
     }
 
     return success(report);

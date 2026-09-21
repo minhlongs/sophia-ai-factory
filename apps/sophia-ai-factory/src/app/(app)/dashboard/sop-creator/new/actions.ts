@@ -53,6 +53,11 @@ export async function createNewListing(formData: {
 
     if (result.ok) {
       logger.info('[NewListing] Created', { userId: user.id, listingId: result.value.listingId });
+      const { revalidatePath, revalidateTag } = await import('next/cache');
+      revalidatePath('/dashboard/sop-creator');
+      revalidatePath('/[locale]/dashboard/sop-creator');
+      revalidatePath('/dashboard/sop-marketplace');
+      revalidateTag('sop_listings', 'max');
       return { success: true, data: { listingId: result.value.listingId } };
     } else {
       return { success: false, error: { message: result.error.message } };

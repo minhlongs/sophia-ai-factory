@@ -9,6 +9,7 @@
 'use server';
 
 import { z } from 'zod';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import {
   verifyWorkspaceAccess,
@@ -203,6 +204,9 @@ export async function createMission(
       });
     }
 
+    revalidatePath('/dashboard/missions');
+    revalidatePath('/[locale]/dashboard/missions');
+    revalidateTag('missions', 'max');
     return success({ missionId: mission.id });
   } catch (err) {
     return failure(actionFailure('[CreativeMission] createMission', err));
@@ -271,6 +275,10 @@ export async function updateMissionStatus(
 
     logger.info('[CreativeMission] Updated mission status', { missionId: parsed.data.missionId, status: updated.status, userId: user.id });
 
+    revalidatePath('/dashboard/missions');
+    revalidatePath(`/[locale]/dashboard/missions/${parsed.data.missionId}`);
+    revalidateTag('missions', 'max');
+    revalidateTag(`mission_${parsed.data.missionId}`, 'max');
     return success({ missionId: parsed.data.missionId });
   } catch (err) {
     return failure(actionFailure('[CreativeMission] updateMissionStatus', err));
@@ -533,6 +541,10 @@ export async function startMissionExecution(
       userId: user.id,
     });
 
+    revalidatePath('/dashboard/missions');
+    revalidatePath(`/[locale]/dashboard/missions/${parsed.data.missionId}`);
+    revalidateTag('missions', 'max');
+    revalidateTag(`mission_${parsed.data.missionId}`, 'max');
     return success({ runId, agentId: parsed.data.agentId });
   } catch (err) {
     return failure(actionFailure('[CreativeMission] startMissionExecution', err));
@@ -741,6 +753,10 @@ export async function executeMultiTrackMissionAction(
       });
     }
 
+    revalidatePath('/dashboard/missions');
+    revalidatePath(`/[locale]/dashboard/missions/${parsed.data.missionId}`);
+    revalidateTag('missions', 'max');
+    revalidateTag(`mission_${parsed.data.missionId}`, 'max');
     return success(result);
   } catch (err) {
     return failure(actionFailure('[CreativeMission] executeMultiTrackMissionAction', err));
@@ -826,6 +842,10 @@ export async function requestApproval(
       workspaceId: mission.workspace_id,
     });
 
+    revalidatePath('/dashboard/missions');
+    revalidatePath(`/[locale]/dashboard/missions/${parsed.data.missionId}`);
+    revalidateTag('approvals', 'max');
+    revalidateTag(`mission_${parsed.data.missionId}`, 'max');
     return success({ approvalId });
   } catch (err) {
     return failure(actionFailure('[Approval] requestApproval', err));
@@ -984,6 +1004,8 @@ export async function resolveApprovalAction(
       });
     }
 
+    revalidatePath('/dashboard/missions');
+    revalidateTag('approvals', 'max');
     return success({ status });
   } catch (err) {
     return failure(actionFailure('[Approval] resolveApprovalAction', err));

@@ -111,6 +111,11 @@ export async function submitCreatorApplication(
       subscribers: input.subscribers,
     });
 
+    const { revalidatePath, revalidateTag } = await import('next/cache');
+    revalidatePath('/dashboard/sop-creator/apply');
+    revalidatePath('/[locale]/dashboard/sop-creator/apply');
+    revalidateTag('creator_applications', 'max');
+
     return success({ applicationId });
   } catch (err) {
     logger.error('[SubmitCreatorApplication] Unexpected error', err instanceof Error ? err : new Error(String(err)));

@@ -17,6 +17,7 @@
 
 'use server';
 
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { createServerClient, getD1, type D1Client, type D1Database } from '@/seed/db/client';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
@@ -463,6 +464,9 @@ export async function toggleRuleAutoApplyAction(
       };
     }
 
+    revalidatePath('/dashboard/playbook');
+    revalidatePath('/[locale]/dashboard/playbook');
+    revalidateTag('playbook_rules', 'max');
     return {
       success: true,
       data: { ruleId, autoApply: enabled, updatedAt: now },
@@ -546,6 +550,9 @@ export async function rollbackRuleAction(
       rollbackCount,
     });
 
+    revalidatePath('/dashboard/playbook');
+    revalidatePath('/[locale]/dashboard/playbook');
+    revalidateTag('playbook_rules', 'max');
     return {
       success: true,
       data: { ruleId, rollbackCount, autoApply: false },
@@ -672,6 +679,9 @@ export async function saveRecurringScheduleAction(
       isActive: params.isActive,
     });
 
+    revalidatePath('/dashboard/playbook');
+    revalidatePath('/[locale]/dashboard/playbook');
+    revalidateTag('playbook_schedules', 'max');
     return {
       success: true,
       data: { scheduleId },
@@ -742,6 +752,9 @@ export async function toggleRecurringScheduleAction(
       );
     }
 
+    revalidatePath('/dashboard/playbook');
+    revalidatePath('/[locale]/dashboard/playbook');
+    revalidateTag('playbook_schedules', 'max');
     return {
       success: true,
       data: { scheduleId, isActive },
@@ -940,6 +953,12 @@ export async function triggerBatchRunAction(
       blueprintId: params.blueprintId,
     });
 
+    revalidatePath('/dashboard/playbook');
+    revalidatePath('/[locale]/dashboard/playbook');
+    revalidatePath('/dashboard/missions');
+    revalidatePath('/[locale]/dashboard/missions');
+    revalidateTag('playbook_runs', 'max');
+    revalidateTag('missions', 'max');
     return {
       success: true,
       data: {
