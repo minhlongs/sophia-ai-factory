@@ -143,6 +143,11 @@ vi.mock('@/seed/utils/logger-utility', () => ({
   },
 }));
 
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+}));
+
 // ── Imports Under Test ──────────────────────────────────────────────────────
 import {
   updatePatternScoreCAS,

@@ -17,6 +17,11 @@ vi.mock('@/seed/auth/is-user-admin', () => ({
   isUserAdminWithRole: vi.fn().mockResolvedValue({ isAdmin: true, dbRole: 'admin' }),
 }));
 
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+}));
+
 import { isUserAdmin } from '@/seed/auth/is-user-admin';
 import * as authSession from '@/seed/auth/better-auth-session';
 import * as dbClient from '@/seed/db/client';
