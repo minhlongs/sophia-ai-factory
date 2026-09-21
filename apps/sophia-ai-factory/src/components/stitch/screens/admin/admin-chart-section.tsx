@@ -4,7 +4,11 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { CHART_GRADIENT_ID, CHART_LABELS } from './admin-page-types';
 
-export function AdminChartSection() {
+export interface AdminChartSectionProps {
+  growthRate?: string;
+}
+
+export function AdminChartSection({ growthRate = '0.0%' }: AdminChartSectionProps = {}) {
   const t = useTranslations('stitch.admin');
 
   return (
@@ -14,7 +18,7 @@ export function AdminChartSection() {
           <h3 className="text-lg font-bold text-on-surface">{t('charts.userGrowth')}</h3>
           <p className="text-xs text-on-surface-variant mt-1">{t('charts.userGrowthSub')}</p>
         </div>
-        <span className="text-xs font-bold text-primary">+24.8%</span>
+        <span className="text-xs font-bold text-on-surface-variant">{growthRate}</span>
       </div>
 
       <div className="relative h-48 w-full">

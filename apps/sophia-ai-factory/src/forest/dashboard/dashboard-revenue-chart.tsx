@@ -11,64 +11,36 @@
  * 4. Interactive hover tooltips displaying formatted USD revenue
  * 5. Strictly aligned Mon-Sun date labels (1:1 column rhythm)
  * 6. Subtle horizontal reference grid lines
+ * 7. Zero-Mock & Truth-in-UI: Zero data renders authentic empty state ($0, neutral trend, empty placeholder)
  *
  * @module forest/dashboard/dashboard-revenue-chart
  */
 
 import React, { useState } from "react";
+import { ArrowUpRight, ArrowDownRight, Minus, TrendingUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/seed/utils/cn";
+import type { ChartPeriod, RevenueDataPoint, RevenuePoint } from "./types";
 
-export type ChartPeriod = "7d" | "30d" | "6m" | "ytd";
-
-export interface RevenueDataPoint {
-  label: string;
-  revenue: number;
-  percentage: number;
-}
+export type { ChartPeriod, RevenueDataPoint, RevenuePoint };
 
 export interface DashboardRevenueChartProps {
   data?: RevenueDataPoint[];
+  periodData?: Partial<Record<ChartPeriod, RevenueDataPoint[]>>;
   currentPeriod?: ChartPeriod;
   onPeriodChange?: (period: ChartPeriod) => void;
+  trendPercentage?: string;
+  trend?: "up" | "down" | "neutral";
   className?: string;
 }
 
-const PERIOD_DATA_SETS: Record<ChartPeriod, RevenueDataPoint[]> = {
-  "7d": [
-    { label: "Mon", revenue: 4200, percentage: 44 },
-    { label: "Tue", revenue: 6500, percentage: 68 },
-    { label: "Wed", revenue: 4800, percentage: 50 },
-    { label: "Thu", revenue: 8900, percentage: 92 },
-    { label: "Fri", revenue: 7200, percentage: 75 },
-    { label: "Sat", revenue: 9600, percentage: 100 },
-    { label: "Sun", revenue: 6800, percentage: 70 },
-  ],
-  "30d": [
-    { label: "W1", revenue: 18400, percentage: 62 },
-    { label: "W2", revenue: 24100, percentage: 81 },
-    { label: "W3", revenue: 21300, percentage: 72 },
-    { label: "W4", revenue: 29800, percentage: 100 },
-  ],
-  "6m": [
-    { label: "Apr", revenue: 42000, percentage: 48 },
-    { label: "May", revenue: 56000, percentage: 64 },
-    { label: "Jun", revenue: 63000, percentage: 72 },
-    { label: "Jul", revenue: 71000, percentage: 81 },
-    { label: "Aug", revenue: 82000, percentage: 93 },
-    { label: "Sep", revenue: 88000, percentage: 100 },
-  ],
-  ytd: [
-    { label: "Q1", revenue: 125000, percentage: 55 },
-    { label: "Q2", revenue: 184000, percentage: 81 },
-    { label: "Q3", revenue: 228000, percentage: 100 },
-  ],
-};
-
 export function DashboardRevenueChart({
   data,
+  periodData,
   currentPeriod: controlledPeriod,
   onPeriodChange,
+  trendPercentage,
+  trend,
   className,
 }: DashboardRevenueChartProps) {
   let t: (key: string) => string;
@@ -96,9 +68,14 @@ export function DashboardRevenueChart({
     { key: "ytd", label: t("revenueChart.periods.ytd") || "Year to Date" },
   ];
 
-  const chartData = data || PERIOD_DATA_SETS[activePeriod] || PERIOD_DATA_SETS["7d"];
+  // Zero-mock data flow: strictly derived from live props or clean zero-state
+  const chartData = data || (periodData ? periodData[activePeriod] : undefined) || [];
 
-  const totalRevenue = chartData.reduce((acc, curr) => acc + curr.revenue, 0);
+  const totalRevenue = chartData.reduce((acc, curr) => acc + (curr.revenue || 0), 0);
+
+  // Dynamic trend badge computation: eliminate hardcoded +18.4%
+  const activeTrend = trend || (totalRevenue > 0 ? "up" : "neutral");
+  const activeTrendPercentage = trendPercentage || (totalRevenue > 0 ? "+0.0%" : "0.0%");
 
   return (
     <div
@@ -115,9 +92,33 @@ export function DashboardRevenueChart({
             <h4 className="text-base font-bold text-white tracking-tight">
               {t("revenueChart.title")}
             </h4>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/15 text-primary border border-primary/25">
-              +18.4%
-            </span>
+            {activeTrend === "up" && (
+              <span
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                data-testid="revenue-trend-badge"
+              >
+                <ArrowUpRight className="w-3 h-3 mr-0.5" />
+                {activeTrendPercentage}
+              </span>
+            )}
+            {activeTrend === "down" && (
+              <span
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                data-testid="revenue-trend-badge"
+              >
+                <ArrowDownRight className="w-3 h-3 mr-0.5" />
+                {activeTrendPercentage}
+              </span>
+            )}
+            {activeTrend === "neutral" && (
+              <span
+                className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/[0.05] text-slate-400 border border-white/[0.08]"
+                data-testid="revenue-trend-badge"
+              >
+                <Minus className="w-3 h-3 mr-0.5" />
+                {activeTrendPercentage}
+              </span>
+            )}
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
             {t("revenueChart.subtitle")} • Total:{" "}
@@ -158,49 +159,79 @@ export function DashboardRevenueChart({
           <div className="border-b border-white/20 w-full" />
         </div>
 
-        {/* Bottom-Up Columns Container */}
-        <div
-          className="h-56 flex items-end justify-between gap-3 relative z-10"
-          data-testid="chart-columns-container"
-        >
-          {chartData.map((item, idx) => (
-            <div
-              key={`${item.label}-${idx}`}
-              className="flex-1 h-full flex flex-col justify-end items-center relative group"
-              data-testid={`chart-column-${idx}`}
-            >
-              {/* Hover Tooltip */}
-              <div
-                className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-30 px-2.5 py-1 rounded-md bg-[#08090D] border border-white/20 shadow-2xl text-[11px] font-mono text-white whitespace-nowrap"
-                role="tooltip"
-              >
-                <span className="text-slate-400 mr-1">{item.label}:</span>
-                <span className="font-bold text-primary">${item.revenue.toLocaleString()}</span>
-              </div>
-
-              {/* Column Track & Bottom-Up Bar */}
-              <div className="w-full h-full bg-white/[0.03] border border-white/[0.04] rounded-t-md relative flex flex-col justify-end overflow-hidden group-hover:border-primary/40 transition-colors">
-                <div
-                  className="w-full bg-gradient-to-t from-primary/80 via-primary to-indigo-400 rounded-t-md transition-all duration-500 ease-out group-hover:from-primary group-hover:to-cyan-400 group-hover:shadow-[0_0_16px_rgba(99,102,241,0.6)]"
-                  style={{ height: `${Math.min(100, Math.max(8, item.percentage))}%` }}
-                  data-testid={`revenue-bar-${idx}`}
-                />
-              </div>
+        {chartData.length === 0 ? (
+          <div
+            className="h-56 flex flex-col items-center justify-center text-center p-6 relative z-10"
+            data-testid="chart-empty-state"
+          >
+            <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-2.5 text-slate-400">
+              <TrendingUp className="w-5 h-5 opacity-40" />
             </div>
-          ))}
-        </div>
-
-        {/* Date / Period Axis Labels strictly aligned 1:1 with columns */}
-        <div className="flex justify-between gap-3 mt-3 pt-2 border-t border-white/[0.06]">
-          {chartData.map((item, idx) => (
+            <p className="text-xs font-semibold text-slate-300">
+              {t("revenueChart.emptyTitle") || "No Revenue Recorded"}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5 max-w-xs">
+              {t("revenueChart.emptyDesc") || "No transaction revenue recorded for this period."}
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Bottom-Up Columns Container */}
             <div
-              key={`label-${idx}`}
-              className="flex-1 text-center text-xs font-mono text-muted-foreground group-hover:text-white transition-colors"
+              className="h-56 flex items-end justify-between gap-3 relative z-10"
+              data-testid="chart-columns-container"
             >
-              <span>{item.label}</span>
+              {chartData.map((item, idx) => {
+                const label = item.label || item.period || `P${idx + 1}`;
+                const heightStyle =
+                  item.percentage !== undefined && !isNaN(item.percentage)
+                    ? `${Math.min(100, Math.max(8, item.percentage))}%`
+                    : undefined;
+
+                return (
+                  <div
+                    key={`${label}-${idx}`}
+                    className="flex-1 h-full flex flex-col justify-end items-center relative group"
+                    data-testid={`chart-column-${idx}`}
+                  >
+                    {/* Hover Tooltip */}
+                    <div
+                      className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-30 px-2.5 py-1 rounded-md bg-[#08090D] border border-white/20 shadow-2xl text-[11px] font-mono text-white whitespace-nowrap"
+                      role="tooltip"
+                    >
+                      <span className="text-slate-400 mr-1">{label}:</span>
+                      <span className="font-bold text-primary">${(item.revenue || 0).toLocaleString()}</span>
+                    </div>
+
+                    {/* Column Track & Bottom-Up Bar */}
+                    <div className="w-full h-full bg-white/[0.03] border border-white/[0.04] rounded-t-md relative flex flex-col justify-end overflow-hidden group-hover:border-primary/40 transition-colors">
+                      <div
+                        className="w-full bg-gradient-to-t from-primary/80 via-primary to-indigo-400 rounded-t-md transition-all duration-500 ease-out group-hover:from-primary group-hover:to-cyan-400 group-hover:shadow-[0_0_16px_rgba(99,102,241,0.6)]"
+                        style={heightStyle ? { height: heightStyle } : undefined}
+                        data-testid={`revenue-bar-${idx}`}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
+
+            {/* Date / Period Axis Labels strictly aligned 1:1 with columns */}
+            <div className="flex justify-between gap-3 mt-3 pt-2 border-t border-white/[0.06]">
+              {chartData.map((item, idx) => {
+                const label = item.label || item.period || `P${idx + 1}`;
+                return (
+                  <div
+                    key={`label-${idx}`}
+                    className="flex-1 text-center text-xs font-mono text-muted-foreground group-hover:text-white transition-colors"
+                  >
+                    <span>{label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

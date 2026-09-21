@@ -1,17 +1,71 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Plus, Search, MoreVertical, Edit, Eye } from 'lucide-react';;import { DashboardLayout, Card, CardHeader, CardContent, Button, Badge, Table, Input } from '@/components/stitch';
+import { Plus, Search, MoreVertical, Edit, Eye } from 'lucide-react';
+import { DashboardLayout, Card, CardHeader, CardContent, Button, Badge, Table, Input } from '@/components/stitch';
+import { UNIFIED_TIERS } from '@/seed/config/tiers/unified-limits';
 
-const mockProducts = [
-  { id: '1', name: 'Basic AI Video Pack', type: 'Video Generation', price: '$49', status: 'active', subscribers: 124 },
-  { id: '2', name: 'Pro Content Suite', type: 'Full Suite', price: '$99', status: 'active', subscribers: 89 },
-  { id: '3', name: 'Enterprise Plan', type: 'Custom', price: 'Custom', status: 'draft', subscribers: 0 },
-  { id: '4', name: 'Starter Bundle', type: 'Video Generation', price: '$29', status: 'active', subscribers: 342 },
+export interface ProductItem {
+  id: string;
+  name: string;
+  type: string;
+  price: string;
+  status: 'active' | 'draft' | 'archived';
+  subscribers: number;
+}
+
+export interface ProductsPageProps {
+  initialProducts?: ProductItem[];
+}
+
+/**
+ * Authentic Sophia AI Factory Tiers as default catalog items.
+ * Guaranteed 0-subscriber initial baseline — no synthetic numbers.
+ */
+export const CANONICAL_TIER_PRODUCTS: ProductItem[] = [
+  {
+    id: 'starter',
+    name: `${UNIFIED_TIERS.BASIC.name} Plan`,
+    type: 'Autonomous Video Generation',
+    price: `$${UNIFIED_TIERS.BASIC.price}`,
+    status: 'active',
+    subscribers: 0,
+  },
+  {
+    id: 'growth',
+    name: `${UNIFIED_TIERS.PREMIUM.name} Plan`,
+    type: 'Multi-Channel AI Studio',
+    price: `$${UNIFIED_TIERS.PREMIUM.price}`,
+    status: 'active',
+    subscribers: 0,
+  },
+  {
+    id: 'scale',
+    name: `${UNIFIED_TIERS.ENTERPRISE.name} Plan`,
+    type: 'Enterprise Agency Automation',
+    price: `$${UNIFIED_TIERS.ENTERPRISE.price}`,
+    status: 'active',
+    subscribers: 0,
+  },
+  {
+    id: 'master',
+    name: `${UNIFIED_TIERS.MASTER.name} License`,
+    type: 'Perpetual Factory License',
+    price: `$${UNIFIED_TIERS.MASTER.price}`,
+    status: 'active',
+    subscribers: 0,
+  },
 ];
 
-export default function ProductsPage() {
+export default function ProductsPage({ initialProducts }: ProductsPageProps = {}) {
   const [search, setSearch] = useState('');
+
+  const productList = initialProducts ?? CANONICAL_TIER_PRODUCTS;
+  const filteredProducts = productList.filter(
+    (product) =>
+      product.name.toLowerCase().includes(search.toLowerCase()) ||
+      product.type.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <DashboardLayout
@@ -43,7 +97,7 @@ export default function ProductsPage() {
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-lg mb-xl">
-        {mockProducts.map((product) => (
+        {filteredProducts.map((product) => (
           <Card key={product.id} hoverable padding="lg">
             <CardHeader className="!p-0">
               <div className="flex items-start justify-between">
@@ -92,7 +146,8 @@ export default function ProductsPage() {
         </CardHeader>
         <CardContent>
           <Table
-            data={mockProducts}
+            data={filteredProducts}
+            emptyMessage="No products configured yet. Click 'Add Product' to create a new package."
             columns={[
               { key: 'name', header: 'Product', cell: (row) => (
                 <div>

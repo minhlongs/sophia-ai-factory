@@ -22,6 +22,7 @@ import type {
   RecentActivity,
   AffiliateStats,
   DashboardTimeframe,
+  RevenueDataPoint,
 } from './types';
 import { Campaign } from '@/seed/types';
 
@@ -46,11 +47,13 @@ export async function fetchDashboardData(
       recentCampaignsResult,
       transactionsResult,
       affiliatesResult,
+      revenueResult,
     ] = await Promise.all([
       fetchCampaignMetrics(userId),
       fetchRecentCampaigns(userId, limit),
       fetchRecentTransactions(userId, limit),
       fetchTopAffiliates(userId, limit),
+      fetchRevenueData(userId, timeframe),
     ]);
 
     // Check for errors in any sub-request
@@ -113,6 +116,7 @@ export async function fetchDashboardData(
         campaignMetrics: campaignMetricsResult.data,
         recentActivities: recentActivities.slice(0, limit),
         topAffiliates: affiliatesResult.data,
+        revenueData: revenueResult.ok ? revenueResult.data : [],
         timeframe,
       },
     };
@@ -266,6 +270,58 @@ export async function fetchRecentTransactions(
   } catch (error) {
     // Return empty rather than fail - transactions are optional for dashboard
     logger.warn('[dashboard] Could not fetch transactions', toError(error));
+    return { ok: true, data: [] };
+  }
+}
+
+/**
+ * Fetch real revenue data points for the dashboard chart.
+ * Queries transactions table in D1, returning empty array (zero-state) when no data exists.
+ */
+export async function fetchRevenueData(
+  userId: string,
+  _timeframe?: DashboardTimeframe
+): Promise<DashboardResult<RevenueDataPoint[]>> {
+  try {
+    const db = createServerClient();
+
+    const result = await db
+      .from('transactions')
+      .select('created_at, amount_cents, status')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true });
+
+    if (result.error || !result.data || result.data.length === 0) {
+      return { ok: true, data: [] };
+    }
+
+    const rows = result.data as Array<{
+      created_at: string;
+      amount_cents: number;
+      status: string;
+    }>;
+
+    const revenueMap = new Map<string, number>();
+    for (const row of rows) {
+      const label = new Date(row.created_at).toLocaleDateString('en-US', {
+        weekday: 'short',
+      });
+      revenueMap.set(label, (revenueMap.get(label) || 0) + (row.amount_cents || 0) / 100);
+    }
+
+    const maxRevenue = Math.max(...Array.from(revenueMap.values()), 1);
+
+    const points: RevenueDataPoint[] = Array.from(revenueMap.entries()).map(
+      ([label, revenue]) => ({
+        label,
+        revenue,
+        percentage: Math.round((revenue / maxRevenue) * 100),
+      })
+    );
+
+    return { ok: true, data: points };
+  } catch (error) {
+    logger.warn('[dashboard] Could not fetch revenue data', toError(error));
     return { ok: true, data: [] };
   }
 }

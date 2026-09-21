@@ -4,11 +4,33 @@ import React, { useState } from 'react';
 import { Search, Mail, Plus, MoreVertical, TrendingUp, Sparkles, Users } from 'lucide-react';
 import { DashboardLayout, Card, Button, Badge, Table, Input, Avatar } from '@/components/stitch';
 import { AffiliateDiscoveryPanel } from './affiliate-discovery-panel';
-import { mockAffiliates } from './mock-affiliates';
+import { mockAffiliates, type MockAffiliate } from './mock-affiliates';
 
-export default function AffiliatesPage() {
+export interface AffiliatesPageProps {
+  initialAffiliates?: MockAffiliate[];
+  stats?: {
+    total?: number;
+    active?: number;
+    totalCommission?: string;
+    pendingCommission?: string;
+  };
+}
+
+export default function AffiliatesPage({ initialAffiliates, stats }: AffiliatesPageProps = {}) {
   const [activeTab, setActiveTab] = useState<'partners' | 'discovery'>('partners');
   const [search, setSearch] = useState('');
+
+  const affiliatesList = initialAffiliates ?? mockAffiliates;
+  const filteredAffiliates = affiliatesList.filter(
+    (item) =>
+      item.name.toLowerCase().includes(search.toLowerCase()) ||
+      item.email.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalCount = stats?.total ?? affiliatesList.length;
+  const activeCount = stats?.active ?? affiliatesList.filter((a) => a.status === 'active').length;
+  const totalCommission = stats?.totalCommission ?? '$0';
+  const pendingCommission = stats?.pendingCommission ?? '$0';
 
   return (
     <DashboardLayout
@@ -72,21 +94,21 @@ export default function AffiliatesPage() {
                 </div>
                 <div>
                   <p className="font-label-md text-label-md text-on-surface-variant">Total Affiliates</p>
-                  <p className="font-headline-md text-headline-md text-on-surface">24</p>
+                  <p className="font-headline-md text-headline-md text-on-surface">{totalCount}</p>
                 </div>
               </div>
             </Card>
             <Card padding="md">
               <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Active</p>
-              <p className="font-headline-md text-headline-md text-emerald-600">18</p>
+              <p className="font-headline-md text-headline-md text-emerald-600">{activeCount}</p>
             </Card>
             <Card padding="md">
               <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Total Commission</p>
-              <p className="font-headline-md text-headline-md text-on-surface">$8,200</p>
+              <p className="font-headline-md text-headline-md text-on-surface">{totalCommission}</p>
             </Card>
             <Card padding="md">
               <p className="font-label-md text-label-md text-on-surface-variant mb-xs">Pending</p>
-              <p className="font-headline-md text-headline-md text-amber-600">$1,980</p>
+              <p className="font-headline-md text-headline-md text-amber-600">{pendingCommission}</p>
             </Card>
           </div>
 
@@ -111,7 +133,8 @@ export default function AffiliatesPage() {
           {/* Affiliates List */}
           <Card padding="none">
             <Table
-              data={mockAffiliates}
+              data={filteredAffiliates}
+              emptyMessage="No affiliate partners registered yet. Use 'Discover Offers' to source high-converting affiliate campaigns or invite partners."
               columns={[
                 { key: 'affiliate', header: 'Affiliate', cell: (row) => (
                   <div className="flex items-center gap-md">

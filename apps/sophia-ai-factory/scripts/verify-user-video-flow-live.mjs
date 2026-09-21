@@ -57,6 +57,8 @@ if (cookieCount() === 0) fail('sign in succeeded but produced no auth cookies');
 evidence.record('sign-in', 'passed', { cookieCount: cookieCount() });
 console.log('PASS sign in');
 
+await request('/api/health', { label: 'seed csrf token' });
+
 await request('/api/setup/save', {
   label: 'save LLM/BYOK keys',
   method: 'POST',

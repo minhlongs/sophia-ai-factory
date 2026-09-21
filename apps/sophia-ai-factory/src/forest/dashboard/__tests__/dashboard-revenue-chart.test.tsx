@@ -13,21 +13,33 @@ vi.mock('next-intl', () => ({
       'revenueChart.periods.30d': 'Last 30 Days',
       'revenueChart.periods.6m': 'Last 6 Months',
       'revenueChart.periods.ytd': 'Year to Date',
+      'revenueChart.emptyTitle': 'No Revenue Recorded',
+      'revenueChart.emptyDesc': 'No transaction revenue recorded for this period.',
     };
     return translations[key] || key;
   },
 }));
 
+const SAMPLE_DATA = [
+  { label: 'Mon', revenue: 4200, percentage: 44 },
+  { label: 'Tue', revenue: 6500, percentage: 68 },
+  { label: 'Wed', revenue: 4800, percentage: 50 },
+  { label: 'Thu', revenue: 8900, percentage: 92 },
+  { label: 'Fri', revenue: 7200, percentage: 75 },
+  { label: 'Sat', revenue: 9600, percentage: 100 },
+  { label: 'Sun', revenue: 6800, percentage: 70 },
+];
+
 describe('DashboardRevenueChart — Bottom-Up Financial Visualization', () => {
-  it('renders bottom-up bars anchored strictly at baseline', () => {
-    render(<DashboardRevenueChart />);
+  it('renders bottom-up bars anchored strictly at baseline when data is provided', () => {
+    render(<DashboardRevenueChart data={SAMPLE_DATA} />);
 
     const container = screen.getByTestId('chart-columns-container');
     expect(container.className).toContain('items-end');
 
     // All bars should have bottom-up height style and gradient fill
     const bars = document.querySelectorAll('[data-testid^="revenue-bar-"]');
-    expect(bars.length).toBeGreaterThanOrEqual(4);
+    expect(bars.length).toBe(7);
 
     bars.forEach((bar) => {
       const height = (bar as HTMLElement).style.height;
@@ -37,8 +49,27 @@ describe('DashboardRevenueChart — Bottom-Up Financial Visualization', () => {
     });
   });
 
+  it('renders zero-mock empty state when data is empty or undefined', () => {
+    render(<DashboardRevenueChart data={[]} />);
+
+    expect(screen.getByTestId('chart-empty-state')).toBeDefined();
+    expect(screen.getByText('No Revenue Recorded')).toBeDefined();
+    expect(screen.getByText('$0')).toBeDefined();
+
+    // Neutral trend badge
+    const badge = screen.getByTestId('revenue-trend-badge');
+    expect(badge.textContent).toContain('0.0%');
+  });
+
+  it('renders dynamic positive trend badge when revenue is present', () => {
+    render(<DashboardRevenueChart data={SAMPLE_DATA} trend="up" trendPercentage="+18.4%" />);
+
+    const badge = screen.getByTestId('revenue-trend-badge');
+    expect(badge.textContent).toContain('+18.4%');
+  });
+
   it('renders all 7 day axis labels strictly aligned with columns', () => {
-    render(<DashboardRevenueChart currentPeriod="7d" />);
+    render(<DashboardRevenueChart data={SAMPLE_DATA} currentPeriod="7d" />);
 
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     for (const day of weekdays) {
@@ -61,13 +92,13 @@ describe('DashboardRevenueChart — Bottom-Up Financial Visualization', () => {
   });
 
   it('displays hover tooltips with formatted USD currency values', () => {
-    render(<DashboardRevenueChart currentPeriod="7d" />);
+    render(<DashboardRevenueChart data={SAMPLE_DATA} currentPeriod="7d" />);
 
     const tooltips = screen.getAllByRole('tooltip');
     expect(tooltips.length).toBe(7);
 
     // Verify first tooltip displays currency formatting
-    expect(tooltips[0].textContent).toContain('$');
+    expect(tooltips[0].textContent).toContain('$4,200');
   });
 
   it('applies Obsidian Cyber-Glass container styling', () => {

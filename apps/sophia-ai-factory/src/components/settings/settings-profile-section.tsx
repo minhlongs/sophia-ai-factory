@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { User, Upload, CheckCircle } from 'lucide-react';
+import React, { useState, useTransition } from 'react';
+import { User, Upload, CheckCircle, Loader2 } from 'lucide-react';
 import { Input } from '@/seed/components/ui/input';
+import { updateUserProfileAction } from '@/land/account/actions';
 
 interface SettingsProfileSectionProps {
   initialName?: string;
@@ -12,11 +13,23 @@ interface SettingsProfileSectionProps {
 export function SettingsProfileSection({ initialName = '', email = '' }: SettingsProfileSectionProps) {
   const [userName, setUserName] = useState(initialName);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setError(null);
+    setSaved(false);
+
+    startTransition(async () => {
+      const result = await updateUserProfileAction({ name: userName });
+      if (result.success) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      } else {
+        setError(result.error || 'Failed to update profile');
+      }
+    });
   };
 
   return (
@@ -43,6 +56,7 @@ export function SettingsProfileSection({ initialName = '', email = '' }: Setting
             <Input
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
+              disabled={isPending}
               className="bg-surface-container-highest border-outline-variant/30 text-xs"
             />
           </div>
@@ -66,11 +80,14 @@ export function SettingsProfileSection({ initialName = '', email = '' }: Setting
           <div className="pt-2 flex items-center gap-3">
             <button
               type="submit"
-              className="bg-primary hover:bg-primary/90 text-white font-bold px-5 py-2 rounded-xl text-xs transition-all shadow-lg shadow-primary/20 active:scale-95"
+              disabled={isPending}
+              className="bg-primary hover:bg-primary/90 disabled:opacity-50 text-white font-bold px-5 py-2 rounded-xl text-xs transition-all shadow-lg shadow-primary/20 active:scale-95 flex items-center gap-2"
             >
+              {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               Save Profile
             </button>
             {saved && <span className="text-xs text-green-400 font-semibold">Changes saved successfully.</span>}
+            {error && <span className="text-xs text-rose-400 font-semibold">{error}</span>}
           </div>
         </form>
       </div>

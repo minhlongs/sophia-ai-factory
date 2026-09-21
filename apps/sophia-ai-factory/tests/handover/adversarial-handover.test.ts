@@ -7,15 +7,22 @@
  * 2. Unauthorized Access Protection (RBAC & auth on server actions)
  * 3. Invalid Signer Inputs & Whitespace Bypasses
  * 4. Runbook Deep-link & 404 Fallback
+ * 5. Diagnostic Verify API Auth & Authorization Adversarial Gate
+ * 6. Partial Check Failures & Exception Resilience
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { NextRequest, NextResponse } from 'next/server';
 import type { D1Database } from '@/seed/db/client';
 import type {
   CustomerHandoverRecord,
   HandoverAcceptanceInput,
   HandoverCertificate,
+  VerificationRunReport,
 } from '@/seed/handover/handover-types';
+import { GET as getVerifyRoute, POST as postVerifyRoute } from '@/app/api/admin/handover/verify/route';
+import * as requireAdminModule from '@/seed/auth/require-admin';
+import * as orchestratorModule from '@/forest/handover/verification-orchestrator';
 
 // Mock dependencies for server actions and database
 vi.mock('@/seed/db/client', () => ({
@@ -506,6 +513,337 @@ describe('Adversarial Challenger Suite: Phase 20 Handover Engine', () => {
         params: Promise.resolve({ locale: 'en', slug: '01' }),
       });
       expect(numResult).toBeDefined();
+    });
+  });
+
+  // =========================================================================
+  // CHALLENGE 5: /api/admin/handover/verify Auth & Authorization Gate
+  // =========================================================================
+  describe('5. /api/admin/handover/verify Auth & Authorization Gate', () => {
+    const originalEnv = { ...process.env };
+
+    beforeEach(() => {
+      process.env = { ...originalEnv };
+      process.env.CRON_SECRET = 'cron_secret_alpha_999';
+      process.env.INTERNAL_API_SECRET = 'internal_secret_beta_888';
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+    });
+
+    it('EMPIRICAL PROBE 5.1: Rejects unauthenticated GET request (missing secret, no cookies)', async () => {
+      vi.spyOn(requireAdminModule, 'requireAdminOrDeploy').mockResolvedValue(
+        NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+      );
+
+      const req = new NextRequest('http://localhost:3000/api/admin/handover/verify');
+      const res = await getVerifyRoute(req);
+
+      expect(res.status).toBe(401);
+      const json = await res.json() as Record<string, unknown>;
+      expect(json.error).toBe('Unauthorized');
+    });
+
+    it('EMPIRICAL PROBE 5.2: Rejects non-admin session with HTTP 403 Forbidden', async () => {
+      vi.spyOn(requireAdminModule, 'requireAdminOrDeploy').mockResolvedValue(
+        NextResponse.json({ error: 'Forbidden: admin role required' }, { status: 403 }),
+      );
+
+      const req = new NextRequest('http://localhost:3000/api/admin/handover/verify');
+      const res = await getVerifyRoute(req);
+
+      expect(res.status).toBe(403);
+      const json = await res.json() as Record<string, unknown>;
+      expect(json.error).toContain('Forbidden');
+    });
+
+    it('EMPIRICAL PROBE 5.3: Rejects invalid or forged Bearer token', async () => {
+      vi.spyOn(requireAdminModule, 'requireAdminOrDeploy').mockResolvedValue(
+        NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+      );
+
+      const req = new NextRequest('http://localhost:3000/api/admin/handover/verify', {
+        headers: { Authorization: 'Bearer forged_hacker_token_123' },
+      });
+      const res = await getVerifyRoute(req);
+
+      expect(res.status).toBe(401);
+    });
+
+    it('EMPIRICAL PROBE 5.4: Rejects empty or whitespace-only Bearer token', async () => {
+      vi.spyOn(requireAdminModule, 'requireAdminOrDeploy').mockResolvedValue(
+        NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+      );
+
+      const req = new NextRequest('http://localhost:3000/api/admin/handover/verify', {
+        headers: { Authorization: 'Bearer   ' },
+      });
+      const res = await getVerifyRoute(req);
+
+      expect(res.status).toBe(401);
+    });
+
+    it('EMPIRICAL PROBE 5.5: Prevents empty secret match when CRON_SECRET is unset in environment', async () => {
+      delete process.env.CRON_SECRET;
+      delete process.env.INTERNAL_API_SECRET;
+
+      vi.spyOn(requireAdminModule, 'requireAdminOrDeploy').mockResolvedValue(
+        NextResponse.json({ error: 'Unauthorized' }, { status: 401 }),
+      );
+
+      const req = new NextRequest('http://localhost:3000/api/admin/handover/verify', {
+        headers: { Authorization: 'Bearer ' },
+      });
+      const res = await getVerifyRoute(req);
+
+      expect(res.status).toBe(401);
+    });
+
+    it('EMPIRICAL PROBE 5.6: Authenticates successfully with valid Bearer CRON_SECRET', async () => {
+      const mockReport: VerificationRunReport = {
+        runId: 'run_cron_auth_test',
+        timestamp: new Date().toISOString(),
+        durationMs: 25,
+        overallVerdict: 'PASS',
+        totalChecks: 11,
+        passedCount: 11,
+        failedCount: 0,
+        warningCount: 0,
+        deployedSha: 'abcdef123456',
+        localSha: 'abcdef123456',
+        shaMatched: true,
+        checkpoints: [],
+      };
+      vi.spyOn(orchestratorModule, 'executeVerificationSuite').mockResolvedValue(mockReport);
+
+      const req = new NextRequest('http://localhost:3000/api/admin/handover/verify', {
+        headers: { Authorization: 'Bearer cron_secret_alpha_999' },
+      });
+      const res = await getVerifyRoute(req);
+
+      expect(res.status).toBe(200);
+      const json = await res.json() as VerificationRunReport;
+      expect(json.runId).toBe('run_cron_auth_test');
+      expect(json.overallVerdict).toBe('PASS');
+    });
+
+    it('EMPIRICAL PROBE 5.7: Authenticates successfully with valid Bearer INTERNAL_API_SECRET', async () => {
+      const mockReport: VerificationRunReport = {
+        runId: 'run_internal_auth_test',
+        timestamp: new Date().toISOString(),
+        durationMs: 20,
+        overallVerdict: 'PASS',
+        totalChecks: 11,
+        passedCount: 11,
+        failedCount: 0,
+        warningCount: 0,
+        deployedSha: 'abcdef123456',
+        localSha: 'abcdef123456',
+        shaMatched: true,
+        checkpoints: [],
+      };
+      vi.spyOn(orchestratorModule, 'executeVerificationSuite').mockResolvedValue(mockReport);
+
+      const req = new NextRequest('http://localhost:3000/api/admin/handover/verify', {
+        headers: { Authorization: 'Bearer internal_secret_beta_888' },
+      });
+      const res = await getVerifyRoute(req);
+
+      expect(res.status).toBe(200);
+      const json = await res.json() as VerificationRunReport;
+      expect(json.runId).toBe('run_internal_auth_test');
+    });
+
+    it('EMPIRICAL PROBE 5.8: Authenticates successfully with valid admin session', async () => {
+      vi.spyOn(requireAdminModule, 'requireAdminOrDeploy').mockResolvedValue({
+        userId: 'usr_admin_authorized',
+        isDeployToken: false,
+      });
+
+      const mockReport: VerificationRunReport = {
+        runId: 'run_admin_session_test',
+        timestamp: new Date().toISOString(),
+        durationMs: 30,
+        overallVerdict: 'PASS',
+        totalChecks: 11,
+        passedCount: 11,
+        failedCount: 0,
+        warningCount: 0,
+        deployedSha: 'abcdef123456',
+        localSha: 'abcdef123456',
+        shaMatched: true,
+        checkpoints: [],
+      };
+      vi.spyOn(orchestratorModule, 'executeVerificationSuite').mockResolvedValue(mockReport);
+
+      const req = new NextRequest('http://localhost:3000/api/admin/handover/verify');
+      const res = await getVerifyRoute(req);
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get('X-Handover-Verdict')).toBe('PASS');
+    });
+  });
+
+  // =========================================================================
+  // CHALLENGE 6: Partial Check Failures & Exception Resilience
+  // =========================================================================
+  describe('6. Partial Check Failures & Exception Resilience', () => {
+    beforeEach(() => {
+      process.env.CRON_SECRET = 'cron_secret_resilience_test';
+    });
+
+    it('EMPIRICAL PROBE 6.1: Gracefully returns diagnostic report with FAIL status without crashing on partial check failures', async () => {
+      const partialFailReport: VerificationRunReport = {
+        runId: 'run_partial_fail_01',
+        timestamp: new Date().toISOString(),
+        durationMs: 120,
+        overallVerdict: 'FAIL',
+        totalChecks: 11,
+        passedCount: 8,
+        failedCount: 2,
+        warningCount: 1,
+        deployedSha: 'deploy_sha_01',
+        localSha: 'deploy_sha_01',
+        shaMatched: true,
+        checkpoints: [
+          {
+            checkpointId: 'edge_responsiveness',
+            name: 'Edge Responsiveness Probe',
+            nameVi: 'Kiểm Tra Máy Chủ Edge',
+            category: 'edge',
+            status: 'PASS',
+            latencyMs: 15,
+            details: 'Edge OK',
+          },
+          {
+            checkpointId: 'd1_crud_consistency',
+            name: 'D1 CRUD Consistency',
+            nameVi: 'Nhất Quán Đọc Ghi D1',
+            category: 'database',
+            status: 'FAIL',
+            latencyMs: 80,
+            details: 'D1 connection timed out',
+            error: 'Database timeout',
+          },
+          {
+            checkpointId: 'r2_video_bucket',
+            name: 'R2 Video Bucket',
+            nameVi: 'Kho Lưu Trữ Video R2',
+            category: 'storage',
+            status: 'FAIL',
+            latencyMs: 10,
+            details: 'Missing R2 bindings',
+            error: 'VIDEO_BUCKET unbound',
+          },
+          {
+            checkpointId: 'notifications_telegram',
+            name: 'Telegram Bot Probe',
+            nameVi: 'Bot Cảnh Báo Telegram',
+            category: 'notifications',
+            status: 'WARN',
+            latencyMs: 5,
+            details: 'TELEGRAM_BOT_TOKEN unconfigured',
+          },
+        ],
+      };
+
+      vi.spyOn(orchestratorModule, 'executeVerificationSuite').mockResolvedValue(partialFailReport);
+
+      const req = new NextRequest('http://localhost:3000/api/admin/handover/verify', {
+        headers: { Authorization: 'Bearer cron_secret_resilience_test' },
+      });
+      const res = await getVerifyRoute(req);
+
+      // Must return HTTP 200 with diagnostics, NOT an unhandled 500 crash
+      expect(res.status).toBe(200);
+      expect(res.headers.get('X-Handover-Verdict')).toBe('FAIL');
+      expect(res.headers.get('X-Checks-Passed')).toBe('8/11');
+
+      const json = await res.json() as VerificationRunReport;
+      expect(json.overallVerdict).toBe('FAIL');
+      expect(json.failedCount).toBe(2);
+      expect(json.warningCount).toBe(1);
+      expect(json.passedCount).toBe(8);
+      expect(json.checkpoints.find(c => c.checkpointId === 'd1_crud_consistency')?.status).toBe('FAIL');
+    });
+
+    it('EMPIRICAL PROBE 6.2: POST /api/admin/handover/verify handles malformed non-JSON body gracefully', async () => {
+      const mockReport: VerificationRunReport = {
+        runId: 'run_malformed_body_test',
+        timestamp: new Date().toISOString(),
+        durationMs: 15,
+        overallVerdict: 'PASS',
+        totalChecks: 11,
+        passedCount: 11,
+        failedCount: 0,
+        warningCount: 0,
+        deployedSha: 'test_sha',
+        localSha: 'test_sha',
+        shaMatched: true,
+        checkpoints: [],
+      };
+
+      vi.spyOn(orchestratorModule, 'executeVerificationSuite').mockResolvedValue(mockReport);
+
+      const req = new NextRequest('http://localhost:3000/api/admin/handover/verify', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer cron_secret_resilience_test',
+          'Content-Type': 'application/json',
+        },
+        body: 'NOT_VALID_JSON{:::broken',
+      });
+
+      const res = await postVerifyRoute(req);
+      expect(res.status).toBe(200);
+      const json = await res.json() as VerificationRunReport;
+      expect(json.runId).toBe('run_malformed_body_test');
+    });
+
+    it('EMPIRICAL PROBE 6.3: Clamps extreme timeoutMs parameter to maximum allowed 10000ms', async () => {
+      const execSpy = vi.spyOn(orchestratorModule, 'executeVerificationSuite').mockResolvedValue({
+        runId: 'run_timeout_clamp_test',
+        timestamp: new Date().toISOString(),
+        durationMs: 10,
+        overallVerdict: 'PASS',
+        totalChecks: 11,
+        passedCount: 11,
+        failedCount: 0,
+        warningCount: 0,
+        deployedSha: 'test_sha',
+        localSha: 'test_sha',
+        shaMatched: true,
+        checkpoints: [],
+      });
+
+      const req = new NextRequest('http://localhost:3000/api/admin/handover/verify?timeoutMs=999999999', {
+        headers: { Authorization: 'Bearer cron_secret_resilience_test' },
+      });
+
+      await getVerifyRoute(req);
+
+      expect(execSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          timeoutMs: 10000,
+        }),
+      );
+    });
+
+    it('EMPIRICAL PROBE 6.4: Catches unexpected unhandled runner exception and returns HTTP 500 JSON without process termination', async () => {
+      vi.spyOn(orchestratorModule, 'executeVerificationSuite').mockRejectedValue(
+        new Error('Fatal unhandled runtime segmentation fault simulation'),
+      );
+
+      const req = new NextRequest('http://localhost:3000/api/admin/handover/verify', {
+        headers: { Authorization: 'Bearer cron_secret_resilience_test' },
+      });
+
+      const res = await getVerifyRoute(req);
+      expect(res.status).toBe(500);
+      const json = await res.json() as Record<string, unknown>;
+      expect(json.error).toBe('Verification runner failed');
+      expect(json.message).toContain('Fatal unhandled runtime segmentation fault simulation');
     });
   });
 });

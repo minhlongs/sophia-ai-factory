@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { checkCreatorAccess } from '../ServerGate';
 import { Suspense } from 'react';
 import { Sparkles, CheckCircle, Check, Send } from 'lucide-react';
+import { submitCreatorApplication } from './actions';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -68,7 +69,22 @@ async function ApplyPageClient({ locale, submitted }: { locale: string; submitte
         </div>
 
         {!submitted && (
-          <form action={`/${locale}/dashboard/sop-creator/apply`} method="POST" className="space-y-6">
+          <form
+            action={async (formData: FormData) => {
+              'use server';
+              await submitCreatorApplication({
+                website: String(formData.get('website') || ''),
+                niche: String(formData.get('niche') || ''),
+                subscribers: String(formData.get('subscribers') || ''),
+                monthlyViews: String(formData.get('monthlyViews') || ''),
+                experience: String(formData.get('experience') || ''),
+                whyJoin: String(formData.get('whyJoin') || ''),
+                sampleContent: String(formData.get('sampleContent') || ''),
+              });
+              redirect(`/${locale}/dashboard/sop-creator/apply?submitted=true`);
+            }}
+            className="space-y-6"
+          >
             <div className="bg-card border rounded-xl p-6">
               <h3 className="text-lg font-semibold text-foreground mb-6 text-center">{t('apply.form.title')}</h3>
               <div className="space-y-4">

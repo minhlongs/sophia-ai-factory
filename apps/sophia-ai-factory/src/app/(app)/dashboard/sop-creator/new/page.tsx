@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import { redirect } from 'next/navigation';
 import { checkCreatorAccess } from '../ServerGate';
 import { Suspense } from 'react';
+import { createNewListing } from './actions';
 
 interface PageProps {
   params: Promise<{ locale: string }>;
@@ -35,7 +36,26 @@ async function NewListingPageClient({ locale, userId: _userId }: { locale: strin
   const t = await getTranslations({ locale, namespace: 'sop.creator' });
 
   return (
-    <form action={`/${locale}/dashboard/sop-creator/new`} method="POST" className="space-y-6">
+    <form
+      action={async (formData: FormData) => {
+        'use server';
+        const priceVal = parseFloat(String(formData.get('priceCents') || '0'));
+        const result = await createNewListing({
+          title: String(formData.get('title') || ''),
+          sopTemplateId: String(formData.get('sopTemplateId') || ''),
+          priceCents: isNaN(priceVal) ? 0 : priceVal,
+          category: String(formData.get('category') || ''),
+          description: String(formData.get('description') || ''),
+          tags: String(formData.get('tags') || ''),
+          thumbnailUrl: String(formData.get('thumbnailUrl') || ''),
+          demovideoUrl: String(formData.get('demovideoUrl') || ''),
+        });
+        if (result.success) {
+          redirect(`/${locale}/dashboard/sop-creator?created=true`);
+        }
+      }}
+      className="space-y-6"
+    >
       <div className="mb-8">
         <a
           href={`/${locale}/dashboard/sop-creator`}

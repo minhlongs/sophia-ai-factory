@@ -71,14 +71,14 @@ const METRIC_CONFIGS: Record<string, MetricPillConfig> = {
   },
 };
 
-const DEFAULT_METRICS: DashboardMetric[] = [
-  { id: "total_campaigns", value: "24", change: "+12%", trend: "up", icon: "Megaphone" },
-  { id: "active_campaigns", value: "8", change: "+3", trend: "up", icon: "Play" },
-  { id: "videos_generated", value: "142", change: "+28%", trend: "up", icon: "Video" },
-  { id: "success_rate", value: "98.4%", change: "neutral", trend: "neutral", icon: "TrendingUp" },
+export const ZERO_METRICS: DashboardMetric[] = [
+  { id: "total_campaigns", value: "0", change: "0%", trend: "neutral", icon: "Megaphone" },
+  { id: "active_campaigns", value: "0", change: "0", trend: "neutral", icon: "Play" },
+  { id: "videos_generated", value: "0", change: "0%", trend: "neutral", icon: "Video" },
+  { id: "success_rate", value: "0.0%", change: "neutral", trend: "neutral", icon: "TrendingUp" },
 ];
 
-export function DashboardMetricsGrid({ metrics = DEFAULT_METRICS, className }: DashboardMetricsGridProps) {
+export function DashboardMetricsGrid({ metrics, className }: DashboardMetricsGridProps) {
   let t: (key: string) => string;
   try {
     const hookT = useTranslations("stitch.dashboard");
@@ -87,7 +87,7 @@ export function DashboardMetricsGrid({ metrics = DEFAULT_METRICS, className }: D
     t = (key: string) => key;
   }
 
-  const items = metrics.length > 0 ? metrics : DEFAULT_METRICS;
+  const items = metrics && metrics.length > 0 ? metrics : ZERO_METRICS;
 
   return (
     <div

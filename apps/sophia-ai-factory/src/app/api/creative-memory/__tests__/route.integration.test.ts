@@ -182,8 +182,35 @@ describe('DELETE /api/creative-memory', () => {
     expect(res.status).toBe(400);
   });
 
+  it('returns 404 when memory not found', async () => {
+    mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
+    const res = await DELETE(
+      makeReq('DELETE', 'http://localhost/api/creative-memory?id=mem_notfound'),
+    );
+    expect(res.status).toBe(404);
+  });
+
+  it('returns 403 when workspace access denied', async () => {
+    mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
+    const { createServerClient } = await import('@/seed/db/client');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const client = createServerClient() as any;
+    client.prepare().bind().first.mockResolvedValueOnce({ workspace_id: 'ws_1' });
+    client.prepare().bind().first.mockResolvedValueOnce(null);
+
+    const res = await DELETE(
+      makeReq('DELETE', 'http://localhost/api/creative-memory?id=mem_1'),
+    );
+    expect(res.status).toBe(403);
+  });
+
   it('soft-deletes memory and returns 200', async () => {
     mockGetCurrentUser.mockResolvedValueOnce({ id: 'user1' } as never);
+    const { createServerClient } = await import('@/seed/db/client');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const client = createServerClient() as any;
+    client.prepare().bind().first.mockResolvedValueOnce({ workspace_id: 'ws_1' });
+    client.prepare().bind().first.mockResolvedValueOnce({});
     mockDeleteMemory.mockResolvedValueOnce(undefined);
 
     const res = await DELETE(

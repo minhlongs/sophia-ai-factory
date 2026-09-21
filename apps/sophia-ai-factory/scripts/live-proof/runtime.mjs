@@ -1,3 +1,12 @@
+try {
+  const { setGlobalDispatcher, EnvHttpProxyAgent } = await import('undici');
+  if (process.env.https_proxy || process.env.http_proxy || process.env.HTTPS_PROXY || process.env.HTTP_PROXY) {
+    setGlobalDispatcher(new EnvHttpProxyAgent());
+  }
+} catch {
+  // undici optional
+}
+
 export function usage() {
   console.log(`Usage:
   SOPHIA_LIVE_CONFIRM=run-real-provider-flow \\
@@ -48,30 +57,46 @@ function secondsEnv(env, name, fallback, fail) {
 }
 
 export function parseLiveConfig(env, fail) {
-  const confirm = requireEnv(env, 'SOPHIA_LIVE_CONFIRM', fail);
-  if (confirm !== 'run-real-provider-flow') {
-    fail('set SOPHIA_LIVE_CONFIRM=run-real-provider-flow to acknowledge real provider calls');
+  const preflightOnly = process.argv.includes('--preflight') || optionalEnv(env, 'SOPHIA_LIVE_PREFLIGHT_ONLY') === '1';
+  if (!preflightOnly) {
+    const confirm = requireEnv(env, 'SOPHIA_LIVE_CONFIRM', fail);
+    if (confirm !== 'run-real-provider-flow') {
+      fail('set SOPHIA_LIVE_CONFIRM=run-real-provider-flow to acknowledge real provider calls');
+    }
   }
 
-  const openrouterKey = optionalEnv(env, 'SOPHIA_LIVE_OPENROUTER_API_KEY');
+  const openrouterKey = optionalEnv(env, 'SOPHIA_LIVE_OPENROUTER_API_KEY') || (preflightOnly ? 'preflight-dummy-openrouter-key' : undefined);
   const anthropicKey = optionalEnv(env, 'SOPHIA_LIVE_ANTHROPIC_API_KEY');
-  if (!openrouterKey && !anthropicKey) {
+  if (!openrouterKey && !anthropicKey && !preflightOnly) {
     fail('set SOPHIA_LIVE_OPENROUTER_API_KEY or SOPHIA_LIVE_ANTHROPIC_API_KEY');
   }
 
-  const channelProviders = [...new Set(requireEnv(env, 'SOPHIA_LIVE_CHANNEL_PROVIDERS', fail)
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean))];
-  if (channelProviders.length < 2) {
+  const rawChannels = optionalEnv(env, 'SOPHIA_LIVE_CHANNEL_PROVIDERS');
+  const channelProviders = rawChannels
+    ? [...new Set(rawChannels.split(',').map((s) => s.trim()).filter(Boolean))]
+    : (preflightOnly ? [] : []);
+
+  if (channelProviders.length < 2 && !preflightOnly) {
     fail('SOPHIA_LIVE_CHANNEL_PROVIDERS must include at least 2 distinct providers');
   }
 
+  const baseUrlStr = optionalEnv(env, 'SOPHIA_LIVE_BASE_URL') || (preflightOnly ? 'https://sophia.agencyos.network' : undefined);
+  if (!baseUrlStr) fail('missing required env SOPHIA_LIVE_BASE_URL');
+
+  const email = optionalEnv(env, 'SOPHIA_LIVE_EMAIL') || (preflightOnly ? (optionalEnv(env, 'E2E_TEST_USER_EMAIL') || 'e2e-master@sophia.test') : undefined);
+  if (!email) fail('missing required env SOPHIA_LIVE_EMAIL');
+
+  const password = optionalEnv(env, 'SOPHIA_LIVE_PASSWORD') || (preflightOnly ? (optionalEnv(env, 'E2E_TEST_USER_PASSWORD') || 'E2eTest#2026!') : undefined);
+  if (!password) fail('missing required env SOPHIA_LIVE_PASSWORD');
+
+  const heygenKey = optionalEnv(env, 'SOPHIA_LIVE_HEYGEN_API_KEY') || (preflightOnly ? 'mock-heygen-key-0123456789' : undefined);
+  if (!heygenKey) fail('missing required env SOPHIA_LIVE_HEYGEN_API_KEY');
+
   return {
-    baseUrl: new URL(requireEnv(env, 'SOPHIA_LIVE_BASE_URL', fail)),
-    email: requireEnv(env, 'SOPHIA_LIVE_EMAIL', fail),
-    password: requireEnv(env, 'SOPHIA_LIVE_PASSWORD', fail),
-    heygenKey: requireEnv(env, 'SOPHIA_LIVE_HEYGEN_API_KEY', fail),
+    baseUrl: new URL(baseUrlStr),
+    email,
+    password,
+    heygenKey,
     openrouterKey,
     anthropicKey,
     optionalKeys: {
@@ -80,7 +105,7 @@ export function parseLiveConfig(env, fail) {
       muapi: optionalEnv(env, 'SOPHIA_LIVE_MUAPI_API_KEY'),
     },
     channelProviders,
-    preflightOnly: optionalEnv(env, 'SOPHIA_LIVE_PREFLIGHT_ONLY') === '1',
+    preflightOnly: process.argv.includes('--preflight') || optionalEnv(env, 'SOPHIA_LIVE_PREFLIGHT_ONLY') === '1',
     topic: optionalEnv(env, 'SOPHIA_LIVE_TOPIC') ?? `Sophia live proof ${new Date().toISOString()}`,
     videoTimeoutMs: secondsEnv(env, 'SOPHIA_LIVE_VIDEO_TIMEOUT_SECONDS', 900, fail) * 1000,
     publishTimeoutMs: secondsEnv(env, 'SOPHIA_LIVE_PUBLISH_TIMEOUT_SECONDS', 600, fail) * 1000,
@@ -110,13 +135,17 @@ export function createRequester(baseUrl, fail) {
 
   async function request(path, options = {}) {
     const url = new URL(path, baseUrl);
+    const method = (options.method ?? 'GET').toUpperCase();
+    const isMutating = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method);
+    const csrfToken = cookieJar.get('csrf-token');
     const response = await fetch(url, {
-      method: options.method ?? 'GET',
+      method,
       headers: {
         accept: 'application/json',
         origin: baseUrl.origin,
         ...(options.body ? { 'content-type': 'application/json' } : {}),
         ...(cookieJar.size ? { cookie: cookieHeader() } : {}),
+        ...(isMutating && csrfToken ? { 'x-csrf-token': csrfToken } : {}),
         ...(options.headers ?? {}),
       },
       body: options.body ? JSON.stringify(options.body) : undefined,

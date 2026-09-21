@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getCurrentUser } from '@/seed/auth/better-auth-session';
 import { createServerClient } from '@/seed/db/client';
-import { verifyWorkspaceAccess, verifyWorkspaceRole } from '@/seed/auth/workspace-access';
+import { verifyWorkspaceAccess } from '@/seed/auth/workspace-access';
 import {
   upsertMemory,
   listMemoryKeys,
@@ -146,6 +146,21 @@ export async function GET(request: NextRequest) {
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+async function getMemoryWorkspaceId(memoryId: string): Promise<string | null> {
+  const d1 = createServerClient();
+  const row = await d1
+    .prepare('SELECT workspace_id FROM creative_memory WHERE id = ? AND is_deleted = 0')
+    .bind(memoryId)
+    .first<{ workspace_id: string; is_deleted?: number }>();
+  if (!row) return null;
+  if ('is_deleted' in row && row.is_deleted === 1) return null;
+  return row.workspace_id ?? null;
+}
+
+// ---------------------------------------------------------------------------
 // DELETE — soft-delete memory by id (query param)
 // ---------------------------------------------------------------------------
 
@@ -171,6 +186,16 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
+    const workspaceId = await getMemoryWorkspaceId(parsed.data.id);
+    if (!workspaceId) {
+      return NextResponse.json({ error: 'Memory not found' }, { status: 404 });
+    }
+
+    const hasAccess = await verifyWorkspaceAccess(workspaceId, user.id);
+    if (!hasAccess) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     await deleteMemory(parsed.data.id);
     return NextResponse.json({ deleted: true });
   } catch (err) {

@@ -38,10 +38,41 @@ vi.mock('@/navigation', () => ({
   ),
 }));
 
+const TEST_PERIOD_DATA: Record<ChartPeriod, RevenueDataPoint[]> = {
+  '7d': [
+    { label: 'Mon', revenue: 4200, percentage: 44 },
+    { label: 'Tue', revenue: 6500, percentage: 68 },
+    { label: 'Wed', revenue: 4800, percentage: 50 },
+    { label: 'Thu', revenue: 8900, percentage: 92 },
+    { label: 'Fri', revenue: 7200, percentage: 75 },
+    { label: 'Sat', revenue: 9600, percentage: 100 },
+    { label: 'Sun', revenue: 6800, percentage: 70 },
+  ],
+  '30d': [
+    { label: 'W1', revenue: 18400, percentage: 62 },
+    { label: 'W2', revenue: 24100, percentage: 81 },
+    { label: 'W3', revenue: 21300, percentage: 72 },
+    { label: 'W4', revenue: 29800, percentage: 100 },
+  ],
+  '6m': [
+    { label: 'Apr', revenue: 42000, percentage: 48 },
+    { label: 'May', revenue: 56000, percentage: 64 },
+    { label: 'Jun', revenue: 63000, percentage: 72 },
+    { label: 'Jul', revenue: 71000, percentage: 81 },
+    { label: 'Aug', revenue: 82000, percentage: 93 },
+    { label: 'Sep', revenue: 88000, percentage: 100 },
+  ],
+  ytd: [
+    { label: 'Q1', revenue: 125000, percentage: 55 },
+    { label: 'Q2', revenue: 184000, percentage: 81 },
+    { label: 'Q3', revenue: 228000, percentage: 100 },
+  ],
+};
+
 describe('Empirical Challenger 2 — Revenue Chart & Dashboard Widgets Stress Harness', () => {
   describe('1. DashboardRevenueChart: Bottom-Up Baseline Anchoring', () => {
     it('anchors all bar columns strictly to bottom baseline without ceiling pinning', () => {
-      const { container } = render(<DashboardRevenueChart currentPeriod="7d" />);
+      const { container } = render(<DashboardRevenueChart currentPeriod="7d" periodData={TEST_PERIOD_DATA} />);
 
       // Verify the columns container has flex and items-end
       const columnsContainer = screen.getByTestId('chart-columns-container');
@@ -188,7 +219,7 @@ describe('Empirical Challenger 2 — Revenue Chart & Dashboard Widgets Stress Ha
 
   describe('3. DashboardRevenueChart: Period Switching & Hover Tooltips', () => {
     it('toggles seamlessly between 7d, 30d, 6m, and ytd periods in uncontrolled mode', () => {
-      render(<DashboardRevenueChart />);
+      render(<DashboardRevenueChart periodData={TEST_PERIOD_DATA} />);
 
       // Default is 7d (Mon-Sun: 7 columns)
       expect(screen.getAllByTestId(/^revenue-bar-/).length).toBe(7);
@@ -217,7 +248,7 @@ describe('Empirical Challenger 2 — Revenue Chart & Dashboard Widgets Stress Ha
     it('respects controlled currentPeriod prop and fires onPeriodChange callback', () => {
       const onPeriodChange = vi.fn();
       const { rerender } = render(
-        <DashboardRevenueChart currentPeriod="30d" onPeriodChange={onPeriodChange} />
+        <DashboardRevenueChart currentPeriod="30d" periodData={TEST_PERIOD_DATA} onPeriodChange={onPeriodChange} />
       );
 
       // Controlled period is 30d -> 4 columns
@@ -228,12 +259,12 @@ describe('Empirical Challenger 2 — Revenue Chart & Dashboard Widgets Stress Ha
       expect(onPeriodChange).toHaveBeenCalledWith('6m');
 
       // Controlled parent rerenders with 6m
-      rerender(<DashboardRevenueChart currentPeriod="6m" onPeriodChange={onPeriodChange} />);
+      rerender(<DashboardRevenueChart currentPeriod="6m" periodData={TEST_PERIOD_DATA} onPeriodChange={onPeriodChange} />);
       expect(screen.getAllByTestId(/^revenue-bar-/).length).toBe(6);
     });
 
     it('renders hover tooltips with obsidian glass styling and proper role', () => {
-      render(<DashboardRevenueChart currentPeriod="7d" />);
+      render(<DashboardRevenueChart currentPeriod="7d" periodData={TEST_PERIOD_DATA} />);
 
       const tooltips = screen.getAllByRole('tooltip');
       expect(tooltips.length).toBe(7);
@@ -272,11 +303,12 @@ describe('Empirical Challenger 2 — Revenue Chart & Dashboard Widgets Stress Ha
     it('falls back to default metrics when empty array is passed', () => {
       render(<DashboardMetricsGrid metrics={[]} />);
 
-      // Should render default 4 cards
+      // Should render default 4 cards with zero counts
       expect(screen.getByTestId('kpi-card-total_campaigns')).toBeDefined();
       expect(screen.getByTestId('kpi-card-active_campaigns')).toBeDefined();
       expect(screen.getByTestId('kpi-card-videos_generated')).toBeDefined();
       expect(screen.getByTestId('kpi-card-success_rate')).toBeDefined();
+      expect(screen.getByText('0.0%')).toBeDefined();
     });
 
     it('handles unrecognized metric IDs with fallback icon and label without crashing', () => {

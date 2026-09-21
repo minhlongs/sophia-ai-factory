@@ -24,11 +24,15 @@ export const ROLE_HIERARCHY = WORKSPACE_ROLE_HIERARCHY;
 
 /**
  * Normalizes input role string to canonical WorkspaceRole (case-insensitive, trimmed).
- * Defaults to 'MEMBER' if undefined, empty, or unparseable.
+ * Defaults to fallback ('MEMBER' by default for backward compatibility, or 'VIEWER' for least-privilege)
+ * if undefined, empty, or unparseable.
  */
-export function normalizeWorkspaceRole(role: string | null | undefined): WorkspaceRole {
+export function normalizeWorkspaceRole(
+  role: string | null | undefined,
+  fallback: WorkspaceRole = 'MEMBER'
+): WorkspaceRole {
   if (!role || typeof role !== 'string') {
-    return 'MEMBER';
+    return fallback;
   }
   const upper = role.trim().toUpperCase();
   switch (upper) {
@@ -43,19 +47,20 @@ export function normalizeWorkspaceRole(role: string | null | undefined): Workspa
     case 'VIEWER':
       return 'VIEWER';
     default:
-      return 'MEMBER';
+      return fallback;
   }
 }
 
 /**
  * Checks if userRole satisfies the minimum requiredRole according to WORKSPACE_ROLE_HIERARCHY.
+ * Enforces least-privilege 'VIEWER' normalization for untrusted userRole inputs.
  */
 export function hasMinimumRole(
   userRole: WorkspaceRole | string | null | undefined,
   requiredRole: WorkspaceRole | string | null | undefined
 ): boolean {
-  const normalizedUser = normalizeWorkspaceRole(userRole);
-  const normalizedReq = normalizeWorkspaceRole(requiredRole);
+  const normalizedUser = normalizeWorkspaceRole(userRole, 'VIEWER');
+  const normalizedReq = normalizeWorkspaceRole(requiredRole, 'MEMBER');
   return WORKSPACE_ROLE_HIERARCHY[normalizedUser] >= WORKSPACE_ROLE_HIERARCHY[normalizedReq];
 }
 
@@ -163,13 +168,7 @@ export async function getWorkspaceMembership(
     if (typeof row === 'object' && row !== null) {
       if ('role' in row && typeof (row as { role?: unknown }).role === 'string') {
         roleString = (row as { role: string }).role;
-      } else if ('1' in row && !('role' in row)) {
-        // Mock query compatibility for legacy SELECT 1 checks
-        roleString = 'ADMIN';
       }
-    } else if (row === 1 || row === true) {
-      // Mock query compatibility for numeric/boolean return values in test stubs
-      roleString = 'ADMIN';
     }
 
     return {

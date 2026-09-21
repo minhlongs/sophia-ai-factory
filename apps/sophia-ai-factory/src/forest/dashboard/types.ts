@@ -11,6 +11,23 @@ export type { CampaignStatus } from '@/seed/types';
 export type { Tier } from '@/seed/types';
 
 /**
+ * Chart period selector options
+ */
+export type ChartPeriod = '7d' | '30d' | '6m' | 'ytd';
+
+/**
+ * Individual data point for revenue and financial charts
+ */
+export interface RevenueDataPoint {
+  label: string;
+  period?: string; // contract compatibility
+  revenue: number;
+  percentage: number;
+}
+
+export type RevenuePoint = RevenueDataPoint;
+
+/**
  * Dashboard metrics for the main overview card grid
  */
 export interface DashboardMetric {
@@ -66,6 +83,7 @@ export interface DashboardData {
   campaignMetrics: CampaignMetrics;
   recentActivities: RecentActivity[];
   topAffiliates: AffiliateStats[];
+  revenueData?: RevenueDataPoint[];
   timeframe?: 'week' | 'month' | 'quarter' | 'year';
 }
 

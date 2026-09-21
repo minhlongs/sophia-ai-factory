@@ -157,8 +157,8 @@ export function DashboardSidebarNav({
     name: "Sophia Founder",
     email: "founder@sophia.ai",
     tier: "PRO",
-    quotaUsagePercent: 65,
-    quotaUsed: 650,
+    quotaUsagePercent: 0,
+    quotaUsed: 0,
     quotaTotal: 1000,
   },
   isMobileOpen = false,
@@ -208,7 +208,8 @@ export function DashboardSidebarNav({
         .toUpperCase()
     : "SF";
 
-  const quotaPercent = user.quotaUsagePercent ?? 65;
+  const rawQuota = user.quotaUsagePercent ?? 0;
+  const quotaPercent = Number.isFinite(rawQuota) ? rawQuota : 0;
   const userTier = user.tier || "PRO";
 
   const renderNavItems = () => (

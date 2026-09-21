@@ -14,7 +14,7 @@
 
 import { execSync } from 'child_process';
 import { mkdirSync, existsSync, statSync } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 
 // ── Local D1 resolution (mirrors tests/e2e/fixtures/free100-db-helpers.ts) ───
 import { getLocalD1Path } from './fixtures/free100-db-helpers';
@@ -63,7 +63,10 @@ export default async () => {
   if (process.env.NEXT_PUBLIC_MOCK_D1 === 'true') {
     try {
       console.log('🗄️  Bootstrapping local D1 database...');
-      const bootstrapScript = join(process.cwd(), 'scripts', 'e2e-bootstrap-d1.sh');
+      const resolvedScript = resolve(__dirname, '../../scripts/e2e-bootstrap-d1.sh');
+      const bootstrapScript = existsSync(resolvedScript)
+        ? resolvedScript
+        : join(process.cwd(), 'scripts', 'e2e-bootstrap-d1.sh');
       if (!existsSync(bootstrapScript)) {
         console.warn(`⚠️ Bootstrap script not found at ${bootstrapScript}`);
         console.warn(' Run `npm run dev` once or create the script to enable D1 bootstrap.');
