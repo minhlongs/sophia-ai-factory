@@ -36,10 +36,7 @@ const removeMemberSchema = z.object({
 
 const updateProfileSchema = z.object({
   name: z
-    .string({
-      required_error: 'Name cannot be empty',
-      invalid_type_error: 'Name must be a string',
-    })
+    .string()
     .transform((val) => val.replace(/[\u0000-\u001F\u007F-\u009F]/g, '').trim())
     .refine((val) => val.length >= 1, {
       message: 'Name cannot be empty',
