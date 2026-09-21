@@ -3322,6 +3322,49 @@
         }
       }
     },
+    "keyRotation": {
+      "title": "BYOK Master Key Rotation",
+      "subtitle": "Manage cryptographic master key versions and monitor automated credential re-encryption",
+      "dbUnavailable": "Database unavailable",
+      "currentVersion": "Current Master Key",
+      "version": "Version",
+      "keyType": "Key Type",
+      "createdAt": "Created At",
+      "age": "Key Age",
+      "daysAgo": "{days} days",
+      "activeStatus": "Active",
+      "inactiveStatus": "Inactive",
+      "noActiveKey": "No active master key found",
+      "dualDecryptNotice": "7-day backward compatibility for in-flight requests",
+      "rotateNow": "Rotate Now",
+      "rotating": "Rotating...",
+      "dialogTitle": "Confirm Master Key Rotation",
+      "dialogDescription": "Rotating the master key generates a new version and queues background re-encryption of all stored credentials. The current key remains active during the 7-day dual-decrypt transition window.",
+      "reasonLabel": "Rotation Reason (optional)",
+      "reasonPlaceholder": "e.g. Scheduled quarterly rotation, security policy update",
+      "cancel": "Cancel",
+      "confirm": "Confirm Rotation",
+      "successToast": "Master key rotation initiated successfully. Re-encryption job queued.",
+      "errorToast": "Failed to initiate key rotation. Please try again.",
+      "historyTitle": "Version History",
+      "historySubtitle": "Recent master key versions and lifecycle metadata",
+      "emptyHistory": "No key version history found",
+      "auditTitle": "Rotation Audit Trail",
+      "auditSubtitle": "Immutable log of key rotation events and actor actions",
+      "emptyAudit": "No rotation audit logs found",
+      "columns": {
+        "version": "Version",
+        "keyType": "Type",
+        "status": "Status",
+        "createdAt": "Created At",
+        "rotatedAt": "Rotated",
+        "rotatedBy": "Rotated By",
+        "action": "Action",
+        "timestamp": "Timestamp",
+        "actor": "Actor",
+        "details": "Details"
+      }
+    },
     "licenses": {
       "emptyTitle": "No licenses found",
       "emptyDesc": "No license keys match your current filter criteria. Try adjusting your search or tier filter."
@@ -6228,6 +6271,8 @@
         "title": "Revenue Over Time",
         "subtitle": "Total sales performance this quarter",
         "period": "Last 30 Days",
+        "emptyTitle": "No Revenue Recorded",
+        "emptyDesc": "No transaction revenue recorded for this period.",
         "periods": {
           "7d": "Last 7 Days",
           "30d": "Last 30 Days",
@@ -6629,6 +6674,7 @@
       "users": {
         "title": "Title",
         "viewAll": "View All",
+        "empty": "No user signups recorded in this environment.",
         "headers": {
           "user": "User",
           "tier": "Tier",

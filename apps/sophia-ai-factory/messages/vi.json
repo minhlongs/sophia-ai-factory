@@ -3322,6 +3322,49 @@
         }
       }
     },
+    "keyRotation": {
+      "title": "Xoay Khóa Master BYOK",
+      "subtitle": "Quản lý các phiên bản khóa master mã hóa và giám sát quá trình tái mã hóa thông tin xác thực tự động",
+      "dbUnavailable": "Cơ sở dữ liệu không khả dụng",
+      "currentVersion": "Khóa Master Hiện Tại",
+      "version": "Phiên bản",
+      "keyType": "Loại khóa",
+      "createdAt": "Thời gian tạo",
+      "age": "Tuổi khóa",
+      "daysAgo": "{days} ngày",
+      "activeStatus": "Đang hoạt động",
+      "inactiveStatus": "Không hoạt động",
+      "noActiveKey": "Không tìm thấy khóa master đang hoạt động",
+      "dualDecryptNotice": "Tương thích ngược 7 ngày cho các yêu cầu đang thực thi",
+      "rotateNow": "Xoay Khóa Ngay",
+      "rotating": "Đang xoay khóa...",
+      "dialogTitle": "Xác Nhận Xoay Khóa Master",
+      "dialogDescription": "Việc xoay khóa master sẽ tạo phiên bản mới và đưa tiến trình tái mã hóa thông tin xác thực vào hàng đợi nền. Khóa hiện tại vẫn hoạt động trong cửa sổ chuyển tiếp giải mã kép 7 ngày.",
+      "reasonLabel": "Lý do xoay khóa (tùy chọn)",
+      "reasonPlaceholder": "vd. Xoay khóa định kỳ quý, cập nhật chính sách bảo mật",
+      "cancel": "Hủy",
+      "confirm": "Xác Nhận Xoay Khóa",
+      "successToast": "Khởi tạo xoay khóa master thành công. Đã đưa tác vụ tái mã hóa vào hàng đợi.",
+      "errorToast": "Không thể khởi tạo xoay khóa. Vui lòng thử lại.",
+      "historyTitle": "Lịch Sử Phiên Bản",
+      "historySubtitle": "Các phiên bản khóa master gần đây và siêu dữ liệu vòng đời",
+      "emptyHistory": "Chưa có lịch sử phiên bản khóa",
+      "auditTitle": "Nhật Ký Kiểm Toán Xoay Khóa",
+      "auditSubtitle": "Nhật ký bất biến về các sự kiện xoay khóa và hành động của tác nhân",
+      "emptyAudit": "Chưa có nhật ký kiểm toán xoay khóa nào",
+      "columns": {
+        "version": "Phiên bản",
+        "keyType": "Loại khóa",
+        "status": "Trạng thái",
+        "createdAt": "Thời gian tạo",
+        "rotatedAt": "Ngày xoay",
+        "rotatedBy": "Người thực hiện",
+        "action": "Hành động",
+        "timestamp": "Thời gian",
+        "actor": "Tác nhân",
+        "details": "Chi tiết"
+      }
+    },
     "licenses": {
       "emptyTitle": "Không tìm thấy giấy phép",
       "emptyDesc": "Không có khoá giấy phép nào khớp với bộ lọc hiện tại. Hãy thử điều chỉnh tìm kiếm hoặc bộ lọc gói."
@@ -6235,6 +6278,8 @@
         "title": "Doanh thu theo thời gian",
         "subtitle": "Hiệu suất bán hàng quý này",
         "period": "30 ngày qua",
+        "emptyTitle": "Chưa Có Doanh Thu",
+        "emptyDesc": "Chưa ghi nhận doanh thu giao dịch trong khoảng thời gian này.",
         "periods": {
           "7d": "7 ngày qua",
           "30d": "30 ngày qua",
@@ -6636,6 +6681,7 @@
       "users": {
         "title": "Title",
         "viewAll": "View All",
+        "empty": "Không có lượt đăng ký người dùng nào được ghi nhận trong môi trường này.",
         "headers": {
           "user": "User",
           "tier": "Tier",

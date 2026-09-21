@@ -43,6 +43,8 @@ import {
   approvalTimeoutCron,
   revenueAttribution,
   opsTelegramAlert,
+  keyRotationCron,
+  keyRotationReencrypt,
 } from "@/forest/inngest/functions/index";
 
 
@@ -121,5 +123,8 @@ export const { GET, POST, PUT } = serve({
     revenueAttribution,
     // Customer Ops Watchdog & Telegram Alerts
     opsTelegramAlert,
+    // BYOK Key Rotation — 90-day auto-rotation + re-encrypt handler
+    keyRotationCron,
+    keyRotationReencrypt,
   ],
 });

@@ -103,4 +103,22 @@ describe('Inngest route registration', () => {
     expect(registered).toContain(barrel.agentRollbackCron);
     expect(registered).toContain(barrel.provenanceBridge);
   });
+
+  // ── BYOK Key Rotation registration ────────────────────────────────────────
+  // Both functions must be present in serve(). A missing entry silently drops
+  // the cron trigger / re-encrypt event and the rotation pipeline never runs.
+
+  it('registers keyRotationCron (90-day auto-rotation)', async () => {
+    await import('@/app/api/inngest/route');
+    const registered = mocks.serve.mock.calls[0][0].functions;
+    expect(barrel.keyRotationCron).toBeDefined();
+    expect(registered).toContain(barrel.keyRotationCron);
+  });
+
+  it('registers keyRotationReencrypt (re-encrypt handler)', async () => {
+    await import('@/app/api/inngest/route');
+    const registered = mocks.serve.mock.calls[0][0].functions;
+    expect(barrel.keyRotationReencrypt).toBeDefined();
+    expect(registered).toContain(barrel.keyRotationReencrypt);
+  });
 });
