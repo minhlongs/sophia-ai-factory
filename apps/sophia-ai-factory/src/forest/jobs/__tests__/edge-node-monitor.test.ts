@@ -2,6 +2,8 @@
  * @module forest/jobs/__tests__/edge-node-monitor.test
  *
  * Integration test suite for Mekong edge node Inngest health sweep monitor.
+ *
+ * @vitest-environment node
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';

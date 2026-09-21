@@ -2,6 +2,8 @@
  * @module tree/mekong/__tests__/hybrid-router.test
  *
  * Comprehensive unit test suite for Mekong AI Hybrid Task Router & Transparent Cloud Fallback.
+ *
+ * @vitest-environment node
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';

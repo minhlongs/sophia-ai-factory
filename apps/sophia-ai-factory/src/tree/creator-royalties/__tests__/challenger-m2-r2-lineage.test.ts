@@ -2,6 +2,8 @@
  * Challenger M2 Round 2: Empirical Adversarial Stress Test Suite
  * Anti-Fraud Ancestor Lineage Traversal & Multi-Hop Circular Self-Remix Rejection
  *
+ * @vitest-environment node
+ *
  * Layer: tree
  */
 

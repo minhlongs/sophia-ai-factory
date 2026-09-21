@@ -1,6 +1,8 @@
 /**
  * Challenger Empirical Verification Suite — Milestone M1 Round 2
  *
+ * @vitest-environment node
+ *
  * Exhaustive empirical challenge testing:
  * 1. Numerical sanitization under extreme inputs:
  *    - NaN, null, undefined, +Infinity, -Infinity across all telemetry fields

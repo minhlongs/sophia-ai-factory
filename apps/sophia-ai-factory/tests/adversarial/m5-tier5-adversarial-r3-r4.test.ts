@@ -2,6 +2,8 @@
  * Phase 2 Tier 5 Adversarial Coverage Hardening Suite for Milestone M5:
  * Multi-Network Affiliate Commissions (R3) & Mekong AI Hybrid Edge Node Synchronization (R4)
  *
+ * @vitest-environment node
+ *
  * Empirical challenger harness verifying:
  * 1. SQLite status CHECK constraints across commission_ledger, payout_batches, and edge_nodes.
  * 2. 14-day hold promoter millisecond boundary and dual-entry ledger negative row clawback invariants.

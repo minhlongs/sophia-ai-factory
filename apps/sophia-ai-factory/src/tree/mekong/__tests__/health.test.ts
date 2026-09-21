@@ -3,6 +3,8 @@
  *
  * Comprehensive unit test suite for Mekong health probes, 15-second offline transition
  * detection, and heartbeat telemetry ingestion.
+ *
+ * @vitest-environment node
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';

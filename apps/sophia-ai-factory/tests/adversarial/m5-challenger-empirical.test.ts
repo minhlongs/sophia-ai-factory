@@ -2,6 +2,8 @@
  * Milestone M5 Tier 5 Adversarial Coverage Hardening:
  * Empirical Challenger Verification Harness for R1 & R2
  *
+ * @vitest-environment node
+ *
  * Requirements Verified:
  * 1. OCC CAS monotonic sequences [1..10] with 0% flakiness across 50 consecutive runs.
  * 2. Multi-hop circular self-remix rejection (A -> B -> A, A -> B -> C -> A) with CIRCULAR_SELF_REMIX_DENIED.

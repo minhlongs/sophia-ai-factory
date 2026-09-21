@@ -1,6 +1,8 @@
 /**
  * Empirical Challenger Stress Harness — Milestone M1 Round 2
  *
+ * @vitest-environment node
+ *
  * Adversarial validation of:
  * - 10 concurrent workers (E2) zero dropped updates and exact oracle bounds across 50 iterations
  * - Cold start race condition (E5) across ALL generated dimensions (hook, duration, channel)

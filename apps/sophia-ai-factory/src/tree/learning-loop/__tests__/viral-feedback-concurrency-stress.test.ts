@@ -1,6 +1,8 @@
 /**
  * Empirical Concurrency & Stress Harness for Milestone M1
  *
+ * @vitest-environment node
+ *
  * Adversarial validation of:
  * - Race conditions under concurrent `ingestEngagementFeedback`
  * - Stale write overwrites (Lost Update anomaly) in `updatePatternScoreCAS`

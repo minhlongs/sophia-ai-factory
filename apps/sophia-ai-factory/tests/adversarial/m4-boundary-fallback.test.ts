@@ -1,6 +1,8 @@
 /**
  * Adversarial Empirical Challenger Test Suite — Milestone M4: Mekong AI Hybrid Edge Node
  *
+ * @vitest-environment node
+ *
  * Focus:
  * 1. Mathematical Boundary on 15-Second Offline Transition:
  *    - Strict inequality check: (nowMs - last_heartbeat_at > 15000)

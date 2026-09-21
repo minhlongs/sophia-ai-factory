@@ -2,6 +2,8 @@
  * Milestone M2 Adversarial Stress Test Suite:
  * Creator Marketplace & Video Blueprint Royalty Attribution, Lineage & OCC CAS Ledger
  *
+ * @vitest-environment node
+ *
  * Empirical challenger validation of:
  * 1. Exact integer cent truncation math (\lfloor (R \times P) / 100 \rfloor, boundary $0, 0%, 100%, negative, fuzzing)
  * 2. Deep multi-tier lineage splits (70/30 split, root + parent === totalPool across 1,000 randomized revenue values, zero leakage)
