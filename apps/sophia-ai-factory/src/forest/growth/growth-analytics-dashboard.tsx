@@ -32,6 +32,7 @@ import {
   Zap,
 } from 'lucide-react';
 import type { GrowthAnalyticsSummary, FunnelStageKey } from '@/seed/types/solutions-types';
+import { CustomerHealthMonitor } from './customer-health-monitor';
 
 export interface GrowthAnalyticsDashboardProps {
   initialData: GrowthAnalyticsSummary;
@@ -495,6 +496,11 @@ export function GrowthAnalyticsDashboard({
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Autonomous Client Retention & Anti-Churn AI Guardian (R1) */}
+      <div className="pt-4 border-t border-zinc-800/80">
+        <CustomerHealthMonitor locale={locale} />
       </div>
     </div>
   );

@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "clean": "rm -rf .next node_modules",
+    "type-check": "npm --prefix apps/sophia-ai-factory run type-check",
+    "test": "npm --prefix apps/sophia-ai-factory run test",
+    "lint": "npm --prefix apps/sophia-ai-factory run lint",
     "harness": "bash scripts/harness/harness.sh",
     "harness:audit": "bash scripts/harness/harness.sh audit",
     "harness:fix": "bash scripts/harness/harness.sh fix",

@@ -235,3 +235,5 @@ export * from './creative-economy';
 export * from './creator-marketplace';
 export * from './telegram-sales';
 export * from './growth';
+export * from './affiliate-expansion-types';
+export * from './unit-economics-types';

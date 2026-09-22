@@ -82,6 +82,6 @@ for entry in "${duplicates[@]}"; do
   done
 done
 echo "" >&2
-echo "Next available prefix: $(printf '%04d' $(( $(printf '%s\n' "${prefixes[@]}" | sort -n | tail -1) + 1 )))" >&2
+echo "Next available prefix: $(printf '%04d' $(( 10#$(printf '%s\n' "${prefixes[@]}" | sort -n | tail -1) + 1 )))" >&2
 echo "How to fix: rename the newer file(s) to an unused prefix, e.g. sed -i '' 's/^NNNN-/NNNN-new-/'" >&2
 exit 1

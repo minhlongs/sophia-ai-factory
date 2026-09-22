@@ -16,11 +16,13 @@ import {
   Wallet,
   Tag,
   TrendingUp,
+  Calculator,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Growth Analytics", href: "/admin/growth-analytics", icon: TrendingUp },
+  { name: "Unit Economics", href: "/admin/unit-economics", icon: Calculator },
   { name: "Analytics", href: "/admin/analytics/usage", icon: BarChart3 },
   { name: "Users", href: "/admin/users", icon: Users },
   { name: "Promo Codes", href: "/admin/promo-codes", icon: Tag },

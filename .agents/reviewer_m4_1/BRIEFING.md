@@ -1,7 +1,7 @@
-# BRIEFING — 2026-09-21T09:55:00Z
+# BRIEFING — 2026-09-22T17:43:00Z
 
 ## Mission
-Independently review, stress-test, and verify Milestone 4: Customer Handover Acceptance Portal (/dashboard/handover, /admin/handover), Automated Diagnostic Test API (/api/admin/handover/verify) with 11 Day-1 checkpoints, and immutable SHA-256 Handover Certificate.
+Independently review, stress-test, and verify Milestone 4 (R4: Cost Arbitrage & Unit Economics): domain types, Multimodal Cost Router, Cost Arbitrage Fallback, Unit Economics Service, Unit Economics Dashboard UI, Admin App Pages, Admin API Route, Admin Sidebar navigation, 4-layer architecture compliance, and automated test suites.
 
 ## 🔒 My Identity
 - Archetype: reviewer
@@ -10,64 +10,64 @@ Independently review, stress-test, and verify Milestone 4: Customer Handover Acc
 - Original parent: 296606c0-04b8-47fd-b8b5-4a63a8f83a7c
 - Milestone: M4
 - Instance: 1 of 1
-- Current invocation parent: aec71178-85c7-4ba9-8d2b-a28cf210eac5
-- Role assignment: Reviewer M4-1 (Milestone 4 End-to-End Real Execution & Full Logic Certification Suite)
+- Current invocation parent: 45ff8cff-2ac9-4415-bcbe-761aa7e49bd9
+- Role assignment: Reviewer M4-1 (Milestone 4: R4 Cost Arbitrage & Unit Economics)
 
 ## 🔒 Key Constraints
 - Review-only — do NOT modify implementation code
 - DO NOT set BypassSandbox=true in run_command tool calls. Keep BypassSandbox as default (false or omitted).
-- Follow Canonical 4-Layer Architecture and zero Buffer dependencies in edge runtime.
+- Follow Canonical 4-Layer Architecture (seed -> tree -> forest -> land) and zero Buffer dependencies in edge runtime.
 - Actively check for integrity violations (hardcoded test outputs, dummy implementations, facade code, bypasses).
 - Never approve work with integrity violations; issue REQUEST_CHANGES if found.
 
 ## Current Parent
-- Conversation ID: aec71178-85c7-4ba9-8d2b-a28cf210eac5
-- Updated: 2026-09-21T09:51:27Z
+- Conversation ID: 45ff8cff-2ac9-4415-bcbe-761aa7e49bd9
+- Updated: 2026-09-22T17:43:00Z
 
 ## Review Scope
 - **Files to review**:
-  - `apps/sophia-ai-factory/src/app/[locale]/dashboard/handover/page.tsx`
-  - `apps/sophia-ai-factory/src/app/(app)/admin/handover/page.tsx`
-  - `apps/sophia-ai-factory/src/app/api/admin/handover/verify/route.ts`
-  - `apps/sophia-ai-factory/src/tree/handover/day1-verification-engine.ts`
-  - `apps/sophia-ai-factory/src/forest/handover/verification-orchestrator.ts`
-  - `apps/sophia-ai-factory/src/land/actions/handover-actions.ts`
-  - `apps/sophia-ai-factory/src/seed/handover/certificate-hasher.ts`
-  - `apps/sophia-ai-factory/src/forest/components/handover/handover-acceptance-client.tsx`
-  - `apps/sophia-ai-factory/src/forest/components/handover/handover-admin-console-client.tsx`
-  - `apps/sophia-ai-factory/migrations/0280_customer_handover_acceptance.sql`
-- **Interface contracts**: `ORIGINAL_REQUEST.md` (lines 924-987), `PROJECT.md` (Milestone 4)
-- **Review criteria**: Genuine D1 data flow, role protection, zero mock components, 11 Day-1 operational checkpoints, test suite passing (14 files, 169 tests), Web Crypto SHA-256 certificate immutability, timing-safe checks, adversarial edge-case robustness.
+  - `src/seed/types/unit-economics-types.ts`
+  - `src/tree/ai/multimodal-cost-router.ts`
+  - `src/tree/ai/cost-arbitrage-fallback.ts`
+  - `src/land/economics/unit-economics-service.ts`
+  - `src/forest/economics/unit-economics-dashboard.tsx`
+  - `src/app/(app)/admin/unit-economics/page.tsx`
+  - `src/app/[locale]/(admin)/admin/unit-economics/page.tsx`
+  - `src/app/api/admin/unit-economics/route.ts`
+  - `src/app/components/admin/admin-sidebar.tsx`
+- **Interface contracts**: `ORIGINAL_REQUEST.md` (R4, lines 78-83, 107-111), `PROJECT.md` (Milestone 4).
+- **Review criteria**: Real calculations & genuine token/cost tracking, multimodal cost arbitration, circuit breaker failover, clean 4-layer boundaries, zero mock facades, edge runtime compatibility, passing quality gates.
 
 ## Review Checklist
 - **Items reviewed**:
-  - Customer Handover Route (`/dashboard/handover`): Verified authentic D1 data flow (`getCustomerHandover`), session redirection, zero mocks.
-  - Admin Handover Console Route (`/admin/handover`): Verified admin role enforcement (`isUserAdmin`), D1 metrics aggregation (`listAllCustomerHandovers`, `getHandoverStats`).
-  - Automated Diagnostic Test API (`/api/admin/handover/verify`): Verified Bearer token and admin auth, 11 Day-1 checkpoints, live 401 unauthenticated response on edge.
-  - 11 Day-1 Checkpoints Engine (`day1-verification-engine.ts`): Verified real Web Crypto AES-256-GCM, genuine D1 read-after-write non-destructive probe, SHA parity gate, R2 bindings, runbook catalog.
-  - Handover Server Actions (`signHandoverAcceptanceAction`, `triggerHandoverVerificationAction`): Verified double sign-off protection (`ALREADY_ACCEPTED`), role whitelist, cache invalidation.
-  - Cryptographic Certificate Hasher (`certificate-hasher.ts`): Verified native Web Crypto SHA-256, canonical JSON sorting, constant-time comparison.
-  - Handover Vitest Suites: 14 test files, 169 tests passed cleanly.
-  - Adversarial Tamper Suite: 36 tests passed cleanly.
-  - Quality Gates: `tsc` 0 errors, `check-layer-boundaries.sh` 0 violations, `sophia-doctor` 11/11 GREEN, live edge SHA `63753ab2` equals local HEAD.
+  - Domain types in `unit-economics-types.ts`: Clean seed layer, zero dependencies.
+  - Tree AI Multimodal Cost Router (`multimodal-cost-router.ts`): Accurate per-second calculations, unmetered Mekong edge ($0.00), circuit breaker integration.
+  - Tree AI Cost Arbitrage Fallback (`cost-arbitrage-fallback.ts`): Automatic failover chain, 6s SLA timeout guard, error classification.
+  - Land Unit Economics Aggregator (`unit-economics-service.ts`): Real D1 queries (`media_jobs`, `payment_events`, `raas_licenses`, etc.), division-by-zero guards, benchmark cold-start fallback.
+  - Forest UI Dashboard (`unit-economics-dashboard.tsx`): 4 Hero KPI Cards, interactive simulator, provider & tier matrices, bilingual VI/EN.
+  - App routes & API (`page.tsx`, `route.ts`, `admin-sidebar.tsx`): force-dynamic, await params, Calculator navigation link.
+  - Layer Boundaries: 0 violations (`bash scripts/check-layer-boundaries.sh`).
+  - TypeScript: 0 compilation errors (`tsc --noEmit`).
+  - Tests: 4 test files, 67 tests passed (100% pass rate).
+  - Sophia Doctor: 11/11 GREEN (100% pass score).
 - **Verdict**: APPROVE
-- **Unverified claims**: None; all claims independently verified through tool execution and source inspection.
+- **Unverified claims**: None.
 
 ## Attack Surface
 - **Hypotheses tested**:
-  - Unauthenticated access to `/admin/handover`: Redirects to `/login` (tested & confirmed in code).
-  - Non-admin user access to `/admin/handover`: Redirects to `/dashboard` (tested & confirmed in code).
-  - Unauthenticated request to `/api/admin/handover/verify`: Returns HTTP 401 `{"error":"Unauthorized","detail":"Authentication required"}` (tested live against edge).
-  - Double sign-off attack: Server Action returns `ALREADY_ACCEPTED` with failure code; domain service preserves original certificate (tested & confirmed).
-  - Unauthorized signatory role (e.g., "Hacker", "Intern"): Rejects with `INVALID_INPUT` (36/36 tests passed).
-  - Single-byte tampering across certificate fields: Any 1-byte change in customerName, signerName, signerRole, or deployedSha fails verification (tested & confirmed).
-  - Hardcoded or dummy mock data: Verified 0 mock arrays in `src/forest/components/handover/`.
+  - Division by zero in gross margin (0 revenue), COGS/video (0 videos), LTV:CAC (0 customers, 0% churn): all pass with guarded defaults and finite numbers.
+  - Negative margins (COGS > revenue): clamped properly to [-100, 100].
+  - D1 database failure/lock or empty sets: gracefully caught and returns benchmark summary.
+  - Hang/latency SLA failure on provider: Promise.race aborts at 6,000ms and invokes fallback chain.
+  - Provider circuit breaker OPEN: candidate immediately skipped.
+  - 1,500 Monte Carlo randomized trials: 0 NaN, 0 Infinity.
 - **Vulnerabilities found**: 0 vulnerabilities or integrity violations detected.
-- **Untested angles**: Physical edge node hardware failure during concurrent active sign-off (mitigated by D1 transactions and idempotency checks).
+- **Untested angles**: Extreme concurrent race condition on edge node registration (handled by D1 transactions).
 
 ## Key Decisions Made
-- Confirmed full compliance with Milestone 4 requirements (R4 & Features 7-8).
-- Final verdict: APPROVE.
+- Confirmed full compliance with Milestone 4 requirements (R4).
+- Verified zero integrity violations and genuine mathematical implementation.
+- Explicit Verdict: APPROVE.
 
 ## Artifact Index
 - `/Users/macbook/sophia-ai-factory/.agents/reviewer_m4_1/BRIEFING.md` — persistent memory

@@ -1069,3 +1069,85 @@ Mở rộng lưu lượng truy cập tìm kiếm tự nhiên bền vững:
 - [ ] Toàn bộ unit/integration test suites chạy đạt 100% pass rate.
 - [ ] Deployed commit SHA khớp bit-for-bit với live edge `https://sophia.agencyos.network/api/version`.
 - [ ] Sophia Doctor (`node scripts/sophia-doctor.mjs`) báo cáo 11/11 GREEN (100% pass score).
+
+## 2026-09-22T16:23:12Z
+
+The user requested: /teamwork-preview go next
+Triển khai Cỗ máy Mở rộng Tự động & Đa Khách thuê Đại lý (Autonomous Scale & Agency Multi-Tenancy Engine) nhằm chinh phục cột mốc $10K–$25K MRR và mở rộng phục vụ 50–125 khách hàng trả phí cho Sophia AI Factory: xây dựng Trợ lý AI Bảo vệ Khách hàng & Chống Rời bỏ (Autonomous Client Retention & Anti-Churn AI Guardian), triển khai Không gian Làm việc Đại lý Tự phục vụ & Phân quyền Tài khoản Phụ (Self-Service Agency Workspace & Client Sub-Accounts with Video Review Approval Portal), mở rộng Mạng lưới Tiếp thị Liên kết Master 2 tầng & Chi trả Kép (2-Tier Master Affiliate Network Expansion with Automated Tier Progression & VietQR/USDT Dual-Rail Payouts), thiết lập Cỗ máy Tối ưu Chi phí Đa Mô hình & Dự phòng Cạnh Lai (Multi-Model Cost Arbitrage & Hybrid Edge Fallback Engine with Real-Time Unit Economics Dashboard /admin/unit-economics), và xác thực triển khai sản xuất qua GitHub Actions CI/CD và Sophia Doctor 11/11 GREEN.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+References:
+- docs/mrr-roadmap.md
+- MONEY_GRAPH.md
+- BUSINESS_MODEL.md
+- apps/sophia-ai-factory/CLAUDE.md
+- AGENTS.md
+- apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
+- apps/sophia-ai-factory/src/land/growth/
+- apps/sophia-ai-factory/src/land/affiliates/
+- apps/sophia-ai-factory/src/tree/organizations/
+
+## Requirements
+
+### R1. Autonomous Client Retention & Anti-Churn AI Guardian
+Xây dựng hệ thống tự động phát hiện nguy cơ rời bỏ và giữ chân khách hàng:
+- Thuật toán tính toán Điểm Sức khỏe Khách hàng (Customer Health Score 0–100) dựa trên tần suất đăng nhập, số video tạo ra, số dư MCU, và tỷ lệ render lỗi.
+- Tự động kích hoạt kịch bản chăm sóc phục hồi (Automated Win-Back Triggers) gửi qua Email (Resend) và Telegram Bot khi Health Score giảm dưới ngưỡng cảnh báo (< 40).
+- Bổ sung màn hình Giám sát Sức khỏe Khách hàng vào `/admin/growth-analytics` với tính năng hỗ trợ founder can thiệp 1-click (tặng credit ưu đãi hoặc gửi tin nhắn hỗ trợ trực tiếp).
+
+### R2. Self-Service Agency Workspace & Client Sub-Accounts (Phase 18 Scale)
+Nâng cấp kiến trúc đa người dùng phục vụ các Agency quản lý nhiều khách hàng:
+- Quản lý phân cấp Tài khoản phụ Khách hàng (`client_subaccounts`) cho phép Agency tạo không gian riêng biệt cho từng thương hiệu với logo, bảng màu và tên miền tùy chỉnh.
+- Cơ chế phân bổ hạn ngạch MCU và phân quyền chi tiết (Agency Owner, Video Editor, Client Reviewer).
+- Cổng Duyệt Video Khách hàng tương tác (`/client-review/[token]`, `/vi/client-review/[token]`): Khách hàng của Agency xem trước bản nháp video, bình luận phản hồi hoặc bấm Phê duyệt trước khi video được đăng tự động lên mạng xã hội.
+
+### R3. 2-Tier Master Affiliate Network Expansion & Dual-Rail Payouts
+Nâng cấp mạng lưới đối tác quy mô lớn và hỗ trợ thanh toán linh hoạt cho thị trường Việt Nam & Quốc tế:
+- Tự động thăng hạng đối tác (Tier Progression Engine): Bạc (20%), Vàng (25%), Bạch Kim (30%) căn cứ theo doanh thu MRR kích hoạt thực tế.
+- Bảng xếp hạng Đối tác Vinh danh trực tiếp (`/affiliate/leaderboard`, `/vi/affiliate/leaderboard`) hiển thị top 10 affiliate xuất sắc hàng tháng và phân bổ giải thưởng thưởng thêm.
+- Hệ thống chi trả hoa hồng kênh đôi (Dual-Rail Payout Engine): Hỗ trợ thanh toán USDT tự động qua NOWPayments Mass-Payout API song song với tính năng xuất lệnh chuyển khoản VietQR chuẩn định dạng ngân hàng Việt Nam.
+
+### R4. Multi-Model Cost Arbitrage & Hybrid Edge Fallback Engine
+Tối ưu hóa lợi nhuận gộp (Unit Economics & Gross Margin) và loại bỏ điểm nghẽn hạ tầng:
+- Bộ định tuyến AI thông minh (Cost-Arbitrage Router) tự động so sánh chi phí per-second giữa các nhà cung cấp (OpenRouter, fal.ai, ElevenLabs, và Mekong GPU cục bộ) để chọn lựa mô hình tối ưu theo ngân sách chiến dịch.
+- Cơ chế Circuit Breaker và tự động chuyển đổi dự phòng (Automatic Fallback) tức thì sang nhà cung cấp phụ khi phát hiện lỗi hoặc độ trễ vượt ngưỡng.
+- Dashboard Quản trị Hiệu quả Kinh tế Đơn vị (`/admin/unit-economics`, `/vi/admin/unit-economics`): Theo dõi biên lợi nhuận gộp thực tế (Gross Margin %), COGS hạ tầng trên mỗi video xuất bản, và tỷ lệ LTV:CAC theo thời gian thực.
+
+### R5. Layer Architecture Discipline & Production CI/CD Verification
+- Tuân thủ nghiêm ngặt cấu trúc 4 tầng Clean Architecture (`seed` → `tree` → `forest` → `land`) với 0 vi phạm.
+- Duy trì 0 lỗi biên dịch TypeScript (`tsc --noEmit`) và 100% test pass rate trên các test suite mới và hiện có.
+- Triển khai và xác thực thông qua GitHub Actions CI/CD (`.github/workflows/deploy.yml`), đảm bảo `shortSha` khớp bit-for-bit với live edge `https://sophia.agencyos.network/api/version`.
+- Đảm bảo công cụ chẩn đoán Sophia Doctor báo cáo 11/11 GREEN (100% pass score).
+
+## Acceptance Criteria
+
+### Client Retention & Anti-Churn Guardian (R1)
+- [ ] Customer Health Score được tính toán chính xác từ 4 tham số hoạt động trong D1.
+- [ ] Luồng cảnh báo Win-Back tự động gửi thông báo qua email và Telegram khi điểm số suy giảm.
+- [ ] Bảng điều khiển admin hiển thị danh sách khách hàng có nguy cơ rời bỏ kèm nút kích hoạt hỗ trợ.
+
+### Agency Workspace & Client Review Portal (R2)
+- [ ] Agency có thể khởi tạo tài khoản phụ cho khách hàng với hạn ngạch MCU độc lập.
+- [ ] Link duyệt video `/client-review/[token]` hiển thị trình phát video bảo mật và ghi nhận trạng thái Phê duyệt/Yêu cầu chỉnh sửa.
+- [ ] Phân quyền người dùng ngăn chặn rò rỉ dữ liệu giữa các khách hàng khác nhau.
+
+### 2-Tier Affiliate Network & Dual-Rail Payouts (R3)
+- [ ] Hệ thống tự động nâng hạng hoa hồng cho đối tác khi đạt mốc doanh thu giới thiệu.
+- [ ] Bảng xếp hạng `/affiliate/leaderboard` hiển thị số liệu chính xác với hỗ trợ song ngữ VI/EN.
+- [ ] Xuất file lệnh chi trả VietQR và tạo lệnh USDT mass payout thành công không trùng lặp.
+
+### Cost Arbitrage & Unit Economics Dashboard (R4)
+- [ ] Cost-Arbitrage Router lựa chọn nhà cung cấp có chi phí thấp nhất thỏa mãn yêu cầu chất lượng.
+- [ ] Circuit breaker chuyển đổi dự phòng suôn sẻ khi nhà cung cấp chính gặp sự cố mô phỏng.
+- [ ] Dashboard `/admin/unit-economics` biểu diễn chính xác Gross Margin, COGS per Video và LTV:CAC.
+
+### Quality Gates & Production Deployment (R5)
+- [ ] `npm run type-check` đạt 0 lỗi.
+- [ ] `bash scripts/check-layer-boundaries.sh` đạt 0 vi phạm (100% clean architecture).
+- [ ] Toàn bộ unit/integration test suites chạy đạt 100% pass rate.
+- [ ] Deployed commit SHA khớp bit-for-bit với live edge `https://sophia.agencyos.network/api/version`.
+- [ ] Sophia Doctor (`node scripts/sophia-doctor.mjs`) báo cáo 11/11 GREEN (100% pass score).
+
