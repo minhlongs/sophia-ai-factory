@@ -924,3 +924,69 @@ Xây dựng pipeline CI/CD hoàn chỉnh và tự động hóa toàn diện trê
 - [ ] `bash scripts/check-layer-boundaries.sh` đạt 0 vi phạm (100% clean architecture).
 - [ ] Toàn bộ test suite chạy đạt 100% pass rate.
 
+## 2026-09-22T13:51:24Z
+
+The user requested: The full multi-agent team (DevOps/SRE Lead, QA Engineer, Site Reliability Engineer).
+Execute full Production Go-Live and operational activation of Sophia AI Factory: deploy the latest codebase to Cloudflare Workers edge via the standardized GitHub Actions CI/CD pipeline, verify bit-for-bit live edge SHA synchronization on `https://sophia.agencyos.network/api/version`, execute live end-to-end synthetic user video flow preflight, confirm 11/11 GREEN Sophia Doctor score, and validate 100% production readiness across all public and authenticated routes.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+References:
+- .github/workflows/deploy.yml
+- apps/sophia-ai-factory/scripts/sophia-doctor.mjs
+- apps/sophia-ai-factory/scripts/verify-user-video-flow-live.mjs
+- apps/sophia-ai-factory/CLAUDE.md
+- AGENTS.md
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
+- apps/sophia-ai-factory/docs/ceo-handover/CEO_DAY_1_ACCESS_TEST.md
+
+## Requirements
+
+### R1. Live Edge CI/CD Deployment & SHA Parity Synchronization
+- Kích hoạt và theo dõi pipeline GitHub Actions CI/CD (`.github/workflows/deploy.yml`) cho commit `HEAD` (`8de578b44` hoặc commit mới nhất).
+- Đảm bảo toàn bộ 4 giai đoạn (Quality Gate, Build & D1 Migration, Edge Deploy, Post-Deploy Verify) hoàn thành thành công 100%.
+- Xác thực endpoint `https://sophia.agencyos.network/api/version` trả về `shortSha` khớp chính xác từng ký tự với git commit SHA deployed.
+
+### R2. End-to-End Live Synthetic User Flow Preflight
+- Thực thi công cụ kiểm thử luồng thực tế `node scripts/verify-user-video-flow-live.mjs --preflight` kết nối trực tiếp tới live edge `https://sophia.agencyos.network`.
+- Xác nhận toàn bộ các khâu sống còn:
+  - Version handshake
+  - Xác thực phiên làm việc Better Auth (sign-in cookie)
+  - Mã hóa và lưu trữ BYOK credentials trong cơ sở dữ liệu Cloudflare D1
+  - Kênh phát hành (publish channels) preflight thành công.
+
+### R3. Sophia Doctor 11/11 GREEN & Operational Health Certification
+- Chạy `node scripts/sophia-doctor.mjs` trên môi trường thực tế, đảm bảo đạt điểm số tuyệt đối 11/11 GREEN (0 cảnh báo, 0 lỗi).
+- Xác nhận các kiểm tra trọng yếu:
+  - Check 4: D1 migrations đồng bộ 100% (246/246 migrations).
+  - Check 5: TypeScript 0 lỗi compilation.
+  - Check 7: MCP servers whitelist đã được phê duyệt.
+  - Check 9b: CI/CD GitHub Actions active & canonical pipeline (`deploy.yml`).
+  - Check 11 & 12: Production `/api/version` và `/api/health` trả về trạng thái chuẩn.
+
+### R4. Public & Authenticated Routes Live Smoke Audit
+- Thăm dò và kiểm tra tính toàn vẹn của các route chính trên production:
+  - `/api/health` -> HTTP 200
+  - `/api/version` -> HTTP 200 (chứa metadata `shortSha`, `deployedAt`)
+  - `/login` -> HTTP 307 redirect
+  - `/vi/login` -> HTTP 200 (giao diện đăng nhập tiếng Việt)
+  - `/dashboard` -> Được bảo vệ bởi middleware xác thực
+
+## Acceptance Criteria
+
+### Live Edge CI/CD Deployment (R1)
+- [ ] Pipeline `.github/workflows/deploy.yml` hoàn tất với trạng thái `success` (GREEN) trên GitHub Actions.
+- [ ] `curl -s https://sophia.agencyos.network/api/version` trả về `shortSha` khớp bit-for-bit với git commit SHA.
+
+### Live Synthetic Preflight (R2)
+- [ ] `node scripts/verify-user-video-flow-live.mjs --preflight` hoàn tất với thông điệp: `LIVE PREFLIGHT PASS: deployment, credentials, and publish channels are ready.`
+- [ ] Không có lỗi runtime hoặc authentication failure nào trên production.
+
+### Operational Certification (R3)
+- [ ] `node scripts/sophia-doctor.mjs` báo cáo 11/11 GREEN (100% pass score).
+- [ ] Kiến trúc tầng `bash scripts/check-layer-boundaries.sh` đạt 0 vi phạm.
+
+### Production Routing & Security Smoke (R4)
+- [ ] Tất cả các route `/api/health`, `/api/version`, `/login`, `/vi/login` phản hồi HTTP status codes chính xác.
+- [ ] Header bảo mật (CSP, HSTS, X-Content-Type-Options) hiển thị đầy đủ trên production response.
