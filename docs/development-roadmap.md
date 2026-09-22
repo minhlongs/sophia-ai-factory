@@ -2,7 +2,7 @@
 
 > Product milestones and progress tracking (2026)
 
-**Last Updated:** 2026-09-21 (E3 OTEL Production Rollout shipped — SHA `681a53df` deployed to production)
+**Last Updated:** 2026-09-21 (M1-M4 Real Logic Certification Suite + Migration 0281 shipped — SHA `287b2c28` deployed to production)
 **Target:** $1M ARR, 100/100 a16z solo company score
 **Go-Live Shipped (2026-05-03):** Production deployment https://sophia.agencyos.network (SHA 5b1f711f). GAP1: Magic-link E2E validation PASS (setup-wizard cookie chain verified, 5 regression tests). GAP2: Self-serve checkout (public /pricing monthly+yearly, NOWPayments invoice, PayOS VN QR, idempotent IPN, atomic D1 tier upgrade, bilingual receipt email VAT 10%, dashboard period_end). GAP3: Mission control handover (durable D1 email outbox, /onboarding 3-step resumable, D1 API keys, mission control widget, public /status page 90d uptime, D+1/D+7 lifecycle emails). Infrastructure: 9 smoke tests PASS (200 HTTP), 4431 tests 100% pass, build < 10s, 0 TS errors.
 
@@ -15,6 +15,7 @@ Transformed Sophia AI Factory from technical readiness into a fully customer-ope
 
 | Phase | Status | Completion | Details |
 |-------|--------|-----------|---------|
+| **M1-M4: Real Logic Certification Suite + Migration 0281** | ✅ SHIPPED | 2026-09-21 | End-to-end real execution & full logic certification harness across 4 milestone phases (M1–M4): `src/app/api/v1/harness/{trigger,poll,update,status,check,jobs}` with D1-backed persistence, circuit breaker, real provider flows gated by `SOPHIA_LIVE_CONFIRM` / `--preflight` for CI. Migration 0281 adds `key_validated_at INTEGER` to `user_api_keys` for BYOK credential timestamp tracking. Live-proof fix: OpenRouter preflight key formatted with canonical `sk-or-v1-` prefix so build no longer rewrites `scripts/live-proof/runtime.mjs`. Commits: `3ae2051e7`, `3b53de35c`, `287b2c281`. Deployed to production at SHA `287b2c28` (verified `/api/version` shortSha match, 11,942 tests passing across 1063 files). |
 | **TST: 100% Green Test Suite Recovery** | ✅ COMPLETE | 2026-09-21 | Fixed 11 pre-existing `node:sqlite` bundling test failures by adding `@vitest-environment node` directive. Full test suite now 100% green: 1,052/1,053 test files pass (11,729 tests passing, 0 failures). `SKIP_TESTS=1` deploy workaround eliminated. |
 | **UIUX: Full Platform UI/UX Upgrade** | ✅ SHIPPED | 2026-09-20 | All 6 phases of `plans/20260920-1600-full-platform-ui-ux-upgrade/` shipped: (1) loading/error boundaries on 15+ dashboard subroutes, (2) design system polish with amber primary tokens, (3) WCAG 2.1 AA accessibility (44px touch targets, aria-labels on icon buttons), (4) mobile & responsive (sidebar hide on mobile, sticky pricing), (5) empty state unification onto canonical `<EmptyState>` primitive across 10 components + 100% vi/en key parity, (6) final verification. Deployed to production at SHA `835510c3`. |
 | **CHP: Customer Handover Productization** | ✅ SHIPPED | 2026-09-10 | Canonical 6-step onboarding, live HTTP BYOK validation (fal.ai, OpenRouter, ElevenLabs, D-ID), customer health dashboard (5 safe error categories, 4 action zones), first-run wizard with cost estimation, usage metering & ownership delegation, sanitized diagnostics, 10 customer runbooks (`docs/customer/*`), Handover Sign-off Pack & Exit Charter. Deployed live via CF-direct doctrine (`shortSha: "c3b2e7e6"`). |
@@ -614,8 +615,8 @@ Plan: `plans/260516-1948-raas-zero-bug-handover/` · Handover doc: `plans/report
 | **2026-05-28** | **Agent Orchestration Upgrade** — Phase 1-3: D1-native checkpoint/resume, fleet spawner circuit breaker + bounded exponential retry, typed prompt contracts with Zod validation, 100% tests pass. | **✅ COMPLETE** |
 | **2026-06-18** | **SOC 2 Type I Evidence Pack Finalized** — Auditor selected (Barr Advisory), controls walkthrough complete, vendor SOC2 reports collected (AWS, Cloudflare, Resend, Sentry, Stripe, Upstash), evidence index published. | **✅ COMPLETE** |
 | **2026-06-18** | **Deploy Guard Multi-Operator Complete** — 2-of-3 approvals, admin UI, pre-push gate, CI integration, hash-chain audit logging. Commit `7c8dc4c5a`. | **✅ SHIPPED** |
-| **2026-06-20** | **BYOK Rotation Core Implementation** — AES-GCM key versioning, rotation cron design, admin API (`/api/admin/byok-rotation`), re-encrypt background job design. Staging test pending. | **🟡 IN PROGRESS** |
-| **2026-06-22** | **OpenTelemetry Staging Deployed** — Honeycomb integration code-complete, staging configured (100% sample), verification script ready. Production pending API key. | **🟡 STAGING READY** |
+| **2026-06-20** | **BYOK Rotation Core Implementation** — AES-GCM key versioning, rotation cron design, admin API (`/api/admin/byok-rotation`), re-encrypt background job design. | ✅ COMPLETE (shipped as E4 at SHA `63753ab2`, 2026-09-21) |
+| **2026-06-22** | **OpenTelemetry Staging Deployed** — Honeycomb integration code-complete, staging configured (100% sample), verification script ready. | ✅ COMPLETE (shipped as E3 at SHA `681a53df`, 2026-09-21) |
 | 2026-05-15 | Phase 15 (Deferred): Playwright E2E suite (12 scenarios), k6 load tests (smoke/steady/spike/soak/stress), Stripe Connect KYC, customer status page, Fly.io Coqui/MoviePy deploy, Runpod HunyuanVideo | 🔄 Backlog |
 | 2026-05-15 | Go-Live Audit Phase 02 (Tier-2): Load Testing, Error Budgets, Observability Integration | 🔄 Partial (OTEL pending prod) |
 | 2026-06-01 | Multi-Language Support (Vietnamese) — i18n framework complete, email templates bilingual | ✅ Complete (Core shipped Apr 17) |
@@ -636,21 +637,20 @@ All decisions documented in `.sophia-factory/journal/` for audit trail.
 
 ---
 
-## Current Status Summary (2026-06-22)
+## Current Status Summary (2026-09-21)
 
 **Production Status:** ✅ LIVE — https://sophia.agencyos.network (CF Workers + D1 + R2)
+**Production SHA:** `287b2c28` (M1-M4 Real Logic Certification Suite + Migration 0281)
 
-**Immediate Priorities:**
-1. **Revenue & Trust Sprint** — Now complete. Code review fixes for i18n, layer violations, and types shipped at SHA 5265c0a5a.
-2. **OTEL Production Rollout** — Set `HONEYCOMB_API_KEY` and deploy to enable observability
-3. **BYOK Rotation Staging Test** — Validate key rotation flow before production
-4. **SOC 2 Type I Report** — Finalize auditor findings and receive official report
-
-**Completed Milestones:**
+**Completed Milestones (Q3 2026):**
+- ✅ M1–M4 Real Logic Certification Suite + Migration 0281 (SHA `287b2c28`)
+- ✅ 100% Test Suite Recovery — 11,942 tests passing across 1,063 files (SHA `38f88db86`)
+- ✅ Full Platform UI/UX Upgrade — Obsidian Cyber-Glass rollout (SHA `835510c3`)
+- ✅ E3 OTEL Production Rollout — instrumentation.ts wired to Honeycomb (SHA `681a53df`)
+- ✅ E4 BYOK Key Rotation — admin UI + Inngest cron (SHA `63753ab2`)
+- ✅ Customer Handover Productization (SHA `c3b2e7e6`)
 - ✅ Feature-complete (Phases 6-14, April 30)
 - ✅ Production go-live (May 3, all gaps closed)
-- ✅ Enterprise hardening: Deploy Guard, SOC2 evidence, OTEL staging
-- ✅ 4431+ tests passing, 0 TypeScript errors, layer architecture enforced
 
 **Backlog (Q3-Q4 2026):**
 - Phase 15: E2E test suite (Playwright), load tests (k6)
