@@ -33,9 +33,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 /** Earnings rows — static data for the commission table */
 const EARNINGS_ROWS = [
-  { tier: 'Starter', price: '$199', cut: 'up to $139/mo' },
-  { tier: 'Growth',  price: '$399', cut: 'up to $279/mo' },
-  { tier: 'Premium', price: '$799', cut: 'up to $559/mo' },
+  { tier: 'Starter', price: '$199/mo', cut: '20%–30% ($39.80 – $59.70/mo)' },
+  { tier: 'Growth',  price: '$399/mo', cut: '20%–30% ($79.80 – $119.70/mo)' },
+  { tier: 'Premium', price: '$799/mo', cut: '20%–30% ($159.80 – $239.70/mo)' },
+  { tier: 'Tier 2 (Sub-Affiliate)', price: 'All Plans', cut: '5% recurring override' },
 ] as const;
 
 export default async function AffiliateLandingPage({ params }: PageProps) {

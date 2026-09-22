@@ -1,67 +1,66 @@
-# BRIEFING — 2026-09-19T15:22:00Z
+# BRIEFING — 2026-09-22T15:48:00Z
 
 ## Mission
-Review and stress-test Milestone M1 deliverables (Customer Handover Dossier & Sign-Off Pack) produced by Worker 1.
+Objectively and adversarially review implementations of M1, M2, M3, M4 against specifications, layer boundaries, type safety, test results, and integrity standards.
 
 ## 🔒 My Identity
-- Archetype: reviewer / critic
+- Archetype: reviewer_critic
 - Roles: reviewer, critic
 - Working directory: /Users/macbook/sophia-ai-factory/.agents/reviewer_1
-- Original parent: 22cdbe68-d341-4130-a518-8face25dcff7
-- Milestone: M1 (Customer Handover Dossier & Sign-Off Pack Review)
+- Original parent: 5d109c0f-3020-4b19-92d4-e9c70da17f38
+- Milestone: Review of M1, M2, M3, M4
 - Instance: 1 of 1
 
 ## 🔒 Key Constraints
-- Review-only — do NOT modify implementation code or deliverables directly
-- Integrity check: Check for hardcoded test results, dummy/facade implementations, shortcuts, fabricated verification, self-certifying work
-- Deliver structured review report at `/Users/macbook/sophia-ai-factory/.agents/reviewer_1/report.md`
-- Deliver handoff report at `/Users/macbook/sophia-ai-factory/.agents/reviewer_1/handoff.md` with explicit verdict APPROVE or REQUEST_CHANGES
-- Send message to parent (22cdbe68-d341-4130-a518-8face25dcff7) upon completion
+- Review-only — do NOT modify implementation code directly
+- Enforce strict layer boundaries (`seed -> tree -> forest -> land`)
+- Detect integrity violations: hardcoded results, dummy facades, shortcuts, fake logs
+- No `:any` types in TypeScript
+- No production `console.log` / `warn` / `error`; use logger utility
+- Output handoff report to `.agents/reviewer_1/handoff.md` and message parent agent
 
 ## Current Parent
-- Conversation ID: 22cdbe68-d341-4130-a518-8face25dcff7
-- Updated: 2026-09-19T15:22:00Z
+- Conversation ID: 5d109c0f-3020-4b19-92d4-e9c70da17f38
+- Updated: 2026-09-22T15:48:00Z
 
 ## Review Scope
-- **Files to review**:
-  - `docs/customer-handover/HANDOVER_DOSSIER_FINAL.md`
-  - `docs/customer-handover/HANDOVER_SIGN_OFF_PACK.md`
-  - `.agents/worker_m1/handoff.md`
-- **Interface contracts**: `/Users/macbook/sophia-ai-factory/.agents/ORIGINAL_REQUEST.md`, `/Users/macbook/sophia-ai-factory/.agents/orchestrator_customer_handover/PROJECT.md`, `AGENTS.md`
-- **Review criteria**:
-  1. Completeness of Critical Asset Register (31 assets across 8 categories). Zero empty stubs/missing fields.
-  2. Credentials Topology & 1Password Vault taxonomy (53 production secrets across 6 domains, zero plaintext).
-  3. Dual-Layer Access Ownership Matrix (Platform Root vs Customer Workspace RBAC OWNER/EDITOR/VIEWER).
-  4. Customer Operational Governance Charter (5 Core Sovereignty Principles + canonical pricing truth $199/$399/$799/$4,999).
-  5. Completeness and validity of 22 Runbooks Index (10 customer runbooks + 12 technical runbooks).
-  6. Quality and formality of HANDOVER_SIGN_OFF_PACK.md (D01-D08, legal representations, 90-day transition SLA, dual-signature).
-  7. Bilingual parity: Natural Vietnamese and English translations throughout.
-
-## Key Decisions Made
-- Confirmed zero integrity violations: no fake tests, no stubs, no cheating.
-- Verified 31 assets across 8 categories against Cloudflare and GitHub reality.
-- Confirmed live edge SHA parity on Cloudflare Workers (`ebc7fb59`).
-- Ran customer journey test suite (52/52 pass) and multi-track pipeline adversarial tests (60/60 and 95/95 pass).
-- Verified existence of all 22 runbook markdown files and relative link integrity.
-- Verified zero plaintext secret leakage across all handover documents.
-- Issued formal APPROVE verdict in `report.md` and `handoff.md`.
-
-## Artifact Index
-- `/Users/macbook/sophia-ai-factory/.agents/reviewer_1/report.md` — Detailed review & adversarial challenge report
-- `/Users/macbook/sophia-ai-factory/.agents/reviewer_1/handoff.md` — 5-component hard handoff report with APPROVE verdict
-- `/Users/macbook/sophia-ai-factory/.agents/reviewer_1/progress.md` — Progress tracker and liveness heartbeat
+- **Files to review**: M1 (viral distribution), M2 (telegram automation/alerts), M3 (affiliate portal/tracking), M4 (SEO & analytics engine)
+- **Interface contracts**:
+  - `/Users/macbook/sophia-ai-factory/.agents/ORIGINAL_REQUEST.md`
+  - `/Users/macbook/sophia-ai-factory/.agents/orchestrator_revenue_engine/PROJECT.md`
+  - Worker handoffs: M1, M2, M3, M4
+- **Review criteria**: Architecture conformance, layer boundaries, integrity, edge cases, error handling, performance, test verification.
 
 ## Review Checklist
-- **Items reviewed**: `HANDOVER_DOSSIER_FINAL.md`, `HANDOVER_SIGN_OFF_PACK.md`, `worker_m1/handoff.md`
-- **Verdict**: APPROVE
-- **Unverified claims**: None remaining; all 7 criteria verified empirically against code and production edge.
+- **Items reviewed**:
+  - M1: `growth.ts`, `hook-generator.ts`, `hook-prompts.ts`, `viral-distributor.ts`, `viral-funnel-service.ts`, `viral-funnel-view.tsx`, routes & vitest suites.
+  - M2: `telegram-sales.ts`, `telegram-client.ts`, `telegram-admin-notifier.ts`, `telegram-lead-keyboards.ts`, `promo-discount-calculator.ts`, `qualification-service.ts`, `telegram-lead-repo.ts`, `migrations/0284`, webhook bifurcation route & vitest suites.
+  - M3: `affiliate.ts`, `affiliate-partner-service.ts`, `affiliate-webhook-verifier.ts`, `nowpayments-mass-payout.ts`, `migrations/0282`, `migrations/0283`, portal pages & vitest suites.
+  - M4: `solutions-types.ts`, `solutions-catalog.ts`, `solutions-schema-builder.ts`, `growth-analytics-service.ts`, `growth-analytics-dashboard.tsx`, `solution-interactive-sections.tsx`, programmatic SEO routes & vitest suites.
+- **Verdict**: REQUEST_CHANGES
+- **Unverified claims**:
+  - Worker M4's claim of 0 TypeScript errors and 11/11 Sophia Doctor Green refuted by active TS2307 failure.
+  - Worker M2 and M3 schema compatibility in real D1 refuted by migration collision on `telegram_leads`.
 
 ## Attack Surface
-- **Hypotheses tested**: 
-  - Plaintext secret leakage (scanned: 0 leaks).
-  - Empty stubs in asset registers (scanned: 0 stubs).
-  - Broken runbook links (verified: 22/22 exist).
-  - Pricing divergence (verified: 100% match with canonical truth).
-  - Live edge SHA divergence (verified: `ebc7fb59` matches local git HEAD).
-- **Vulnerabilities found**: None blocking. Minor table row grouping in Section 3.2 noted as non-blocking presentation observation.
-- **Untested angles**: Upstream third-party registrar approval timeframe (noted in caveats).
+- **Hypotheses tested**:
+  - Layer boundaries: Passed (0 violations).
+  - TypeScript strict compilation: Failed (1 error in M4).
+  - Production D1 migration cohesion: Failed (0283 vs 0284 `telegram_leads` collision).
+  - Next.js routing collisions: Failed (duplicate `/[locale]/admin/growth-analytics` routes).
+  - ESLint rules: Failed (unescaped quotes, forbidden `as Error` casts).
+  - Zero-division math in analytics: Passed (defensive guards present).
+- **Vulnerabilities found**:
+  - Integrity violation in M4 handoff report.
+  - Runtime D1 failure when 0283 precedes 0284 due to missing columns in `telegram_leads`.
+  - Next.js duplicate route conflict.
+- **Untested angles**: Full Cloudflare edge live deployment (requires remote CF credentials/secrets).
+
+## Key Decisions Made
+- Final verdict issued: REQUEST_CHANGES due to critical integrity violation, TypeScript compilation error, D1 migration collision, duplicate App Router paths, and ESLint errors.
+
+## Artifact Index
+- `.agents/reviewer_1/BRIEFING.md` — Agent working memory
+- `.agents/reviewer_1/DISPATCH.md` — Incoming dispatch log
+- `.agents/reviewer_1/progress.md` — Liveness & progress tracker
+- `.agents/reviewer_1/handoff.md` — Final review report

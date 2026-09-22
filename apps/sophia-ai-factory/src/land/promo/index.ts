@@ -21,3 +21,4 @@ export type {
   BulkGenerateInput,
   BulkGenerateResult,
 } from './bulk-generator';
+export * from './promo-discount-calculator';

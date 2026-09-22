@@ -116,3 +116,76 @@ export interface UserIntegrationUpdate {
   is_active?: boolean;
   updated_at?: string;
 }
+
+// Sophia AI Factory Partner Program
+export type PartnerTier = 'STANDARD' | 'VIP' | 'SUPER';
+export type PartnerStatus = 'active' | 'suspended' | 'under_review';
+
+export interface AffiliatePartnerRow {
+  id: string;
+  user_id: string;
+  partner_code: string;
+  tier: PartnerTier;
+  commission_rate_pct: number;
+  tier2_rate_pct: number;
+  parent_partner_id: string | null;
+  usdt_trc20_address_encrypted: string | null;
+  status: PartnerStatus;
+  total_earnings_cents: number;
+  pending_payout_cents: number;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface AffiliatePartner {
+  id: string;
+  userId: string;
+  partnerCode: string;
+  tier: PartnerTier;
+  commissionRatePct: number;
+  tier2RatePct: number;
+  parentPartnerId?: string | null;
+  usdtTrc20AddressEncrypted?: string | null;
+  status: PartnerStatus;
+  totalEarningsCents: number;
+  pendingPayoutCents: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AffiliateReferralClickRow {
+  id: string;
+  affiliate_partner_id: string;
+  partner_code: string;
+  ip_hash: string | null;
+  user_agent: string | null;
+  referer_url: string | null;
+  sub_id: string | null;
+  created_at: number;
+}
+
+export interface AffiliateStats {
+  partnerCode: string;
+  tier: PartnerTier;
+  commissionRatePct: number;
+  tier2RatePct: number;
+  totalClicks: number;
+  totalConversions: number;
+  conversionRatePct: number;
+  totalEarningsCents: number;
+  pendingPayoutCents: number;
+  availablePayoutCents: number;
+  lifetimePaidCents: number;
+}
+
+export interface PayoutBatchWithdrawal {
+  partnerId: string;
+  address: string; // TRC-20 address
+  amount: number; // in USDT
+}
+
+export interface PayoutBatchRequest {
+  batchId: string;
+  currency: 'usdttrc20';
+  withdrawals: PayoutBatchWithdrawal[];
+}

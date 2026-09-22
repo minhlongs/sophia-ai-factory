@@ -79,6 +79,7 @@ export interface CreateCheckoutInput {
   customerEmail?: string
   period?: 'monthly' | 'yearly'
   orderId?: string
+  priceAmountOverride?: number
 }
 
 export async function createCheckout(input: CreateCheckoutInput): Promise<{
@@ -94,7 +95,7 @@ export async function createCheckout(input: CreateCheckoutInput): Promise<{
   if (isYearly && config.yearlyPrice === 0) {
     throw new Error(`Yearly billing not available for tier: ${input.tierId}`)
   }
-  const priceAmount = isYearly ? config.yearlyPrice : config.price
+  const priceAmount = input.priceAmountOverride ?? (isYearly ? config.yearlyPrice : config.price)
 
   const orderId = input.orderId || `sophia_${input.userId}_${Date.now()}`
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://sophia.agencyos.network'

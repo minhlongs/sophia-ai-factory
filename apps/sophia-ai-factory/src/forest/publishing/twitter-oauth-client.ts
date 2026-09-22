@@ -163,3 +163,10 @@ export async function getUserInfo(accessToken: string): Promise<TwitterUserInfo>
     throw error;
   }
 }
+
+export const twitterOAuthClient = {
+  exchangeCodeForTokens,
+  refreshAccessToken,
+  getUserInfo,
+};
+

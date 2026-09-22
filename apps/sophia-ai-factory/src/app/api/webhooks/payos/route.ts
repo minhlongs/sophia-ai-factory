@@ -243,6 +243,48 @@ export async function POST(request: NextRequest) {
     }, userId)
 
     logger.info('[PayOS Webhook] Tier activated', { userId, tier, orgId, isLifetime, periodEnd })
+
+    // Wire Telegram Admin / Founder notification
+    try {
+      const { notifyFounderPaymentSuccess } = await import('@/tree/telegram/telegram-admin-notifier')
+      const { data: userRow } = await db.from('user').select('name,email').eq('id', userId).maybeSingle()
+      const userName = (userRow as { name?: string; email?: string } | null)?.name ?? `User ${userId}`
+      const userEmail = (userRow as { name?: string; email?: string } | null)?.email
+
+      const d1 = await getD1Raw().catch(() => null)
+      let paidCount = 1
+      if (d1) {
+        const countRes = await d1
+          .prepare(`SELECT COUNT(*) as cnt FROM payment_events WHERE event_type = 'payos.payment_success' AND processed = 1`)
+          .first<{ cnt: number }>()
+          .catch(() => null)
+        paidCount = countRes?.cnt ?? 1
+      }
+
+      await notifyFounderPaymentSuccess({
+        customerName: userName,
+        email: userEmail,
+        tier,
+        amountUsd: Math.round(amount / 25000),
+        amountVnd: amount,
+        provider: 'payos',
+        promoCode: order.promo_code ?? undefined,
+        paymentId: `payos_${paymentLinkId}`,
+        orderId,
+        customerIndex: paidCount,
+      })
+
+      if (orderId.includes('sophia_tg_')) {
+        const { markLeadPaid } = await import('@/land/telegram-sales/telegram-lead-repo')
+        const match = orderId.match(/sophia_tg_([^_]+)_/)
+        if (match) {
+          await markLeadPaid(match[1], orderId).catch(() => {})
+        }
+      }
+    } catch (notifyErr) {
+      logger.warn('[PayOS Webhook] Founder notification failed (non-fatal)', { error: String(notifyErr) })
+    }
+
     return NextResponse.json({ received: true })
 
   } catch (error) {

@@ -21,6 +21,8 @@ import {
   safelyEnqueueWelcomeEmail,
   safelyCreditReferralReward,
 } from './nowpayments-email-referral'
+import { notifyFounderPaymentSuccess } from '@/tree/telegram/telegram-admin-notifier'
+import { markLeadPaid } from '@/land/telegram-sales/telegram-lead-repo'
 
 /**
  * Run all post-activation workflows.
@@ -43,6 +45,7 @@ export async function runPostActivationWorkflow(
   await safelySendReceiptEmail(userId, tier, billingPeriod, ipn, db)
   await safelyEnqueueWelcomeEmail(userId, tier, ipn, db, d1)
   await safelyCreditReferralReward(userId, tier, ipn, db, d1)
+  await safelyNotifyFounderPayment(userId, tier, ipn, db, d1)
 }
 
 async function safelyRecordAudit(
@@ -131,3 +134,47 @@ async function safelyTriggerAutoHandover(
     logger.warn('[NOWPayments] Auto-handover failed (non-fatal)', { userId, error: String(err) })
   }
 }
+
+async function safelyNotifyFounderPayment(
+  userId: string,
+  tier: Tier,
+  ipn: NowPaymentsIpnPayload,
+  db: ReturnType<typeof getDb>,
+  d1: D1Database
+): Promise<void> {
+  try {
+    const { data: userRow } = await db.from('user').select('email,name').eq('id', userId).single()
+    const userEmail = (userRow as { email?: string; name?: string } | null)?.email ?? ipn.customer_email ?? ''
+    const userName = (userRow as { email?: string; name?: string } | null)?.name ?? 'Customer'
+
+    const purchaseCount = await d1
+      .prepare(`SELECT COUNT(*) as cnt FROM user_purchases WHERE status = 'paid'`)
+      .first<{ cnt: number }>()
+      .catch(() => null)
+    const paidCount = purchaseCount?.cnt ?? 1
+
+    await notifyFounderPaymentSuccess({
+      customerName: userName,
+      email: userEmail,
+      tier,
+      amountUsd: ipn.price_amount ?? ipn.actually_paid ?? 0,
+      provider: 'nowpayments',
+      paymentId: ipn.payment_id,
+      orderId: ipn.order_id,
+      customerIndex: paidCount,
+    })
+
+    if (ipn.order_id && ipn.order_id.includes('sophia_tg_')) {
+      const match = ipn.order_id.match(/sophia_tg_([^_]+)_/)
+      if (match) {
+        await markLeadPaid(match[1], ipn.order_id).catch(() => {})
+      }
+    }
+  } catch (err) {
+    logger.warn('[NOWPayments] Founder notification failed (non-fatal)', {
+      userId,
+      error: String(err),
+    })
+  }
+}
+

@@ -990,3 +990,82 @@ References:
 ### Production Routing & Security Smoke (R4)
 - [ ] Tất cả các route `/api/health`, `/api/version`, `/login`, `/vi/login` phản hồi HTTP status codes chính xác.
 - [ ] Header bảo mật (CSP, HSTS, X-Content-Type-Options) hiển thị đầy đủ trên production response.
+
+## 2026-09-22T14:56:32Z
+
+The user requested: The full multi-agent team (Growth Marketing Architect, Full-Stack Revenue Engineer, Telegram Bot Engineer, QA Auditor).
+Triển khai toàn diện Cỗ máy Tăng trưởng Doanh thu Đa kênh (Omnichannel Revenue & Customer Acquisition Engine) nhằm chốt 10 khách hàng trả phí đầu tiên và chinh phục cột mốc $5K MRR cho Sophia AI Factory: xây dựng phễu Viral Video Lead Generation (TikTok Shop, YouTube Shorts), tự động hóa kịch bản chốt đơn qua Telegram Sales Bot, kích hoạt mạng lưới tiếp thị liên kết (Affiliate Commission Engine với thanh toán tự động NOWPayments USDT mass payouts), xuất bản hệ thống Programmatic SEO Landing Pages, và tích hợp bộ đo lường chuyển đổi Real-time Analytics Dashboard.
+
+Working directory: /Users/macbook/sophia-ai-factory
+Integrity mode: development
+
+References:
+- docs/mrr-roadmap.md
+- docs/development-roadmap.md
+- apps/sophia-ai-factory/CLAUDE.md
+- AGENTS.md
+- apps/sophia-ai-factory/.claude/rules/sophia-layer-architecture.md
+- apps/sophia-ai-factory/.claude/rules/sophia-deploy-verify.md
+- apps/sophia-ai-factory/src/tree/affiliate/
+- apps/sophia-ai-factory/src/forest/mission/
+- apps/sophia-ai-factory/src/land/telegram/
+
+## Requirements
+
+### R1. Viral Video Lead Generation & Multi-Channel Distribution Funnel
+Xây dựng pipeline tự động sản xuất video ngắn thu hút khách hàng tiềm năng:
+- Tích hợp công cụ phát hiện xu hướng (trending hook finder) và tự động tạo kịch bản bán hàng ngắn (short-form hook scripts) cho niche AI Automation, E-commerce và Solopreneur.
+- Đóng gói quy trình xuất bản tự động đa nền tảng (TikTok, YouTube Shorts, X) đính kèm CTA mã giới thiệu (referral UTM tracking codes) và link dẫn về phễu đăng ký.
+- Tạo màn hình quản lý phễu video (`/dashboard/growth/viral-funnel`, `/vi/dashboard/growth/viral-funnel`) cho phép đo lường lượt xem, tỷ lệ click CTA và số lượng leads đăng ký từ mỗi video.
+
+### R2. Telegram Automated Sales & Lead Qualification Bot
+Nâng cấp và tự động hóa toàn diện luồng tư vấn và chốt sales qua Telegram Bot:
+- Xây dựng flow đối thoại tương tác tự động khi khách hàng bấm vào Telegram Link từ video viral: Chào đón, khảo sát nhu cầu (niche, ngân sách), demo nhanh 1 video mẫu tạo tự động.
+- Kịch bản chốt đơn tự động (Automated Checkout Trigger): Gửi link thanh toán kích hoạt gói dịch vụ (NOWPayments USDT hoặc PayOS QR VN) ngay trong chat với mã ưu đãi độc quyền `SOLO100`.
+- Cơ chế thông báo tức thời cho Founder/Admin mỗi khi có lead mới đăng ký hoặc có đơn hàng phát sinh.
+
+### R3. Multi-Tier Affiliate Commission Engine & Automated USDT Mass Payouts
+Xây dựng hạ tầng tiếp thị liên kết chuyên nghiệp để nhân bản đội ngũ đối tác bán hàng:
+- Cổng thông tin Affiliate Partner (`/affiliate`, `/vi/affiliate`, `/dashboard/affiliate`): Cung cấp link chia sẻ cá nhân hóa, tài liệu marketing (banners, sample scripts), bảng thống kê số click, tỷ lệ chuyển đổi và hoa hồng tích lũy (20% - 30% recurring MRR).
+- Cơ chế xác thực webhook hoa hồng chống gian lận (14-day hold period, HMAC-SHA256 signature verification).
+- Module thanh toán hoa hồng hàng loạt tự động qua NOWPayments USDT Mass-Payout API (hoặc export CSV chuẩn ngân hàng cho đối tác Việt Nam).
+
+### R4. Programmatic SEO Landing Pages & Real-Time Conversion Analytics
+Mở rộng lưu lượng truy cập tìm kiếm tự nhiên bền vững:
+- Xây dựng hệ thống dynamic programmatic landing pages (`/solutions/[use-case]`, `/vi/solutions/[use-case]`) tối ưu SEO cho hơn 20 ngành hàng (bất động sản, mỹ phẩm, thời trang, khóa học, F&B, bảo hiểm...).
+- Tích hợp Schema.org structured data, OpenGraph tags, và điểm số Web Vitals tối ưu.
+- Dashboard quản trị doanh thu thời gian thực (`/admin/growth-analytics`): Theo dõi trực quan phễu chuyển đổi: Visitors $\to$ Leads $\to$ Trial $\to$ Paid ($5K MRR tracker).
+
+### R5. Layer Architecture Discipline & Production CI/CD Verification
+- Tuân thủ nghiêm ngặt kiến trúc 4 tầng Clean Architecture (`seed` $\to$ `tree` $\to$ `forest` $\to$ `land`) với 0 vi phạm.
+- Duy trì 0 lỗi biên dịch TypeScript (`tsc --noEmit`) và 100% test pass rate trên các test suite mới và hiện có.
+- Tự động kiểm tra chất lượng và deploy thông qua GitHub Actions CI/CD (`.github/workflows/deploy.yml`), xác thực `shortSha` live trên `https://sophia.agencyos.network/api/version`.
+- Đảm bảo Sophia Doctor báo cáo 11/11 GREEN (100% pass score).
+
+## Acceptance Criteria
+
+### Viral Video Lead Gen Pipeline (R1)
+- [ ] Màn hình `/dashboard/growth/viral-funnel` hiển thị danh sách video phễu và tracking UTM leads chính xác từ D1.
+- [ ] Kịch bản video tự động tạo hook hấp dẫn với CTA dẫn về landing page hoặc Telegram bot.
+- [ ] Cơ chế đo lường click-through rate (CTR) và lead conversion hoạt động chính xác.
+
+### Telegram Sales & Qualification Bot (R2)
+- [ ] Luồng đối thoại bot tự động phân loại nhu cầu khách hàng qua các nút bấm tương tác (Inline Keyboard).
+- [ ] Bot tạo và gửi link thanh toán NOWPayments/PayOS kèm voucher giảm giá `SOLO100` thành công.
+- [ ] Founder/Admin nhận được thông báo Telegram tức thời khi có đơn hàng mới được thanh toán.
+
+### Affiliate Commission Engine & USDT Payouts (R3)
+- [ ] Giao diện `/dashboard/affiliate` hiển thị đúng mã giới thiệu, số dư khả dụng và lịch sử hoa hồng.
+- [ ] Webhook ghi nhận đơn hàng thành công tự động cộng hoa hồng cho affiliate partner với cơ chế chống gian lận.
+- [ ] Module payout hỗ trợ xuất lệnh chi trả USDT qua NOWPayments API hoặc file đối soát.
+
+### Programmatic SEO & Growth Dashboard (R4)
+- [ ] Các trang `/solutions/[use-case]` và `/vi/solutions/[use-case]` render SSR với đầy đủ metadata SEO song ngữ.
+- [ ] Dashboard `/admin/growth-analytics` thống kê chính xác số lượng leads, tỷ lệ chuyển đổi và tiến độ đạt mốc $5K MRR.
+
+### Quality Gates & Production Deployment (R5)
+- [ ] `npm run type-check` đạt 0 lỗi.
+- [ ] `bash scripts/check-layer-boundaries.sh` đạt 0 vi phạm (100% clean architecture).
+- [ ] Toàn bộ unit/integration test suites chạy đạt 100% pass rate.
+- [ ] Deployed commit SHA khớp bit-for-bit với live edge `https://sophia.agencyos.network/api/version`.
+- [ ] Sophia Doctor (`node scripts/sophia-doctor.mjs`) báo cáo 11/11 GREEN (100% pass score).

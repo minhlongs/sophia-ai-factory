@@ -25,3 +25,5 @@ export * from './providers/shareasale';
 export * from './campaign-bridge';
 export * from './actions/discover-offers-action';
 export * from './actions/convert-offer-action';
+export * from './affiliate-partner-service';
+export * from './affiliate-webhook-verifier';

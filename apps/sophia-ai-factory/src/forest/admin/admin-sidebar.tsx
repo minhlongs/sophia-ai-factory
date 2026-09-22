@@ -26,10 +26,12 @@ import {
   BarChart3,
   Wallet,
   Tag,
+  TrendingUp,
 } from "lucide-react";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { name: "Growth Analytics", href: "/admin/growth-analytics", icon: TrendingUp },
   { name: "Handover Console", href: "/admin/handover", icon: ShieldCheck },
   { name: "Analytics", href: "/admin/analytics/usage", icon: BarChart3 },
   { name: "Users", href: "/admin/users", icon: Users },

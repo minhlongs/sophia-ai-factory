@@ -58,6 +58,7 @@ export interface PayOsCheckoutInput {
   userId: string
   orderId: string
   customerEmail?: string
+  amountVndOverride?: number
 }
 
 export interface PayOsCheckoutResult {
@@ -195,9 +196,11 @@ export async function createPayOsInvoice(input: PayOsCheckoutInput): Promise<Pay
   const description = `Sophia ${tier} - ${orderId.slice(-8)}`
   const expiredAt = Math.floor((Date.now() + 30 * 60 * 1000) / 1000) // 30 min
 
+  const amount = input.amountVndOverride ?? config.vndAmount
+
   const body = {
     orderCode,
-    amount: config.vndAmount,
+    amount,
     description,
     buyerEmail: customerEmail,
     buyerName: undefined,
@@ -208,7 +211,7 @@ export async function createPayOsInvoice(input: PayOsCheckoutInput): Promise<Pay
       {
         name: `Sophia AI Factory ${tier}`,
         quantity: 1,
-        price: config.vndAmount,
+        price: amount,
       },
     ],
   }

@@ -33,6 +33,10 @@ import {
 import { consumePairingToken } from '@/tree/telegram/pairing-token-service'
 import { writeDeadLetterToR2, generateDeadLetterKey } from '@/seed/r2/bucket-ops'
 import { logger } from '@/seed/utils/logger-utility'
+import {
+  handleLeadGreeting,
+  handleQualificationCallback,
+} from '@/land/telegram-sales/qualification-service'
 
 interface TelegramUpdate {
   callback_query?: {
@@ -42,6 +46,7 @@ interface TelegramUpdate {
   message?: {
     text?: string
     chat?: { id?: number | string; first_name?: string }
+    from?: { username?: string; first_name?: string; id?: number | string }
   }
 }
 
@@ -108,6 +113,15 @@ export async function POST(request: NextRequest) {
       const callbackData = body.callback_query.data
 
       if (chatId && callbackData) {
+        // Route lead qualification & sales checkout callbacks to qualification-service
+        if (
+          callbackData.startsWith('lead_') ||
+          callbackData.startsWith('checkout_pay:')
+        ) {
+          await handleQualificationCallback(chatId, callbackData)
+          return NextResponse.json({ ok: true })
+        }
+
         // Route offer_* callbacks to FSM before falling through to legacy handler
         if (callbackData.startsWith('offer_')) {
           await handleOfferCallback(chatId, callbackData)
@@ -185,65 +199,97 @@ export async function POST(request: NextRequest) {
     // Keep this list read-only/status-only. Promo redemption and any command
     // that can mutate accounts, grants, tiers, or credits must stay behind the
     // pairing gate.
-    //
-    // NOTE: /start is INTENTIONALLY excluded — bare /start should trigger the
-    // pairing gate so admin-controlled bots reject unknown senders. The
-    // /start <token> deep-link flow consumes the token AFTER the gate (it
-    // expects the chat to be paired via web-side admin invite).
     const PUBLIC_COMMANDS = ['/version', '/help'] as const
     const isPublicCommand = PUBLIC_COMMANDS.some(
       (c) => text === c || text.startsWith(`${c} `),
     )
 
-    // ── Token pairing (runs before DM gate) ─────────────────────────────────────
- // Unpaired users who open /start with a valid web-account token bypass
- // the admin-only allowlist and self-link here.
- const pairingToken: string | null =
-   text === '/start' ? null : text.startsWith('/start ') ? text.slice(7).trim() : null
+    // ── Bifurcated Routing: Token Pairing vs. Sales Deep-Links vs. Privileged Commands ──
+    const startArg: string | null =
+      text === '/start' ? null : text.startsWith('/start ') ? text.slice(7).trim() : null
 
- if (pairingToken) {
-   const db = await getDbOrDeadLetter('consume_pairing_token', `pairing_token_${pairingToken.slice(0, 50)}`)
-   if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
-   const result = await consumePairingToken(db, pairingToken)
-   if (result) {
-     const db2 = await getDbOrDeadLetter('pairing_token_upsert', `pairing_token_upsert_${chatId}`)
-     if (!db2) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
-     await db2.from('telegram_paired_chats').upsert({
-       chat_id: chatId,
-       first_name: firstName || null,
-       paired_at: new Date().toISOString(),
-       paired_by: result.userId,
-     })
-     await sendTelegramMessage(
-       chatId,
-       `✅ Đã kết nối! Xin chào ${firstName || 'bạn'}. Gõ /campaign để bắt đầu tạo video.\n\n` +
-       `✅ Linked! Hi ${firstName || 'there'}. Type /campaign to start creating videos.`,
-     )
-   } else {
-     await sendTelegramMessage(
-       chatId,
-       "❌ Mã kết nối không hợp lệ hoặc đã hết hạn. Vui lòng bấm \"Kết nối Telegram\" lại trên trang web.\n\n" +
-       "❌ Pairing token is invalid or expired. Please click \"Connect Telegram\" again on the website.",
-     )
-   }
-   return NextResponse.json({ ok: true })
- }
+    // 1. Web-Account Pairing Token (32-char hex from web settings)
+    const isWebPairingToken = Boolean(startArg && /^[a-f0-9]{32}$/i.test(startArg))
 
- // ── DM pairing gate ────────────────────────────────────────────────────────
-    // Skip gate for admin, public commands, and when TELEGRAM_ADMIN_CHAT_ID is
-    // not set (open mode).
-    if (adminChatId && chatId !== adminChatId && !isPublicCommand && !pairingToken) {
-      const db = await getDbOrDeadLetter('dm_pairing_gate', `dm_gate_${chatId}`)
+    if (isWebPairingToken && startArg) {
+      const db = await getDbOrDeadLetter('consume_pairing_token', `pairing_token_${startArg.slice(0, 50)}`)
       if (!db) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
-      const allowed = await isAllowed(db, chatId)
-      if (!allowed) {
-        const { code } = await requestPairing(db, chatId, firstName)
+      const result = await consumePairingToken(db, startArg)
+      if (result) {
+        const db2 = await getDbOrDeadLetter('pairing_token_upsert', `pairing_token_upsert_${chatId}`)
+        if (!db2) return NextResponse.json({ error: 'Database temporarily unavailable' }, { status: 503 })
+        await db2.from('telegram_paired_chats').upsert({
+          chat_id: chatId,
+          first_name: firstName || null,
+          paired_at: new Date().toISOString(),
+          paired_by: result.userId,
+        })
         await sendTelegramMessage(
           chatId,
-          `Hi! To use Sophia bot, ask the admin to approve you.\n\nYour pairing code: \`${code}\`\n\n_Code expires in 15 minutes._\n\nMeanwhile you can run: /version, /help.`
+          `✅ Đã kết nối! Xin chào ${firstName || 'bạn'}. Gõ /campaign để bắt đầu tạo video.\n\n` +
+          `✅ Linked! Hi ${firstName || 'there'}. Type /campaign to start creating videos.`,
         )
-        return NextResponse.json({ ok: true })
+      } else {
+        await sendTelegramMessage(
+          chatId,
+          "❌ Mã kết nối không hợp lệ hoặc đã hết hạn. Vui lòng bấm \"Kết nối Telegram\" lại trên trang web.\n\n" +
+          "❌ Pairing token is invalid or expired. Please click \"Connect Telegram\" again on the website.",
+        )
       }
+      return NextResponse.json({ ok: true })
+    }
+
+    // 2. Inbound Sales Lead: Viral Video link, Referral, Promo, or Sales Command
+    const isSalesDeepLink = Boolean(
+      startArg &&
+      (startArg.startsWith('vid_') ||
+       startArg.startsWith('ref_') ||
+       startArg.startsWith('demo_') ||
+       startArg.toLowerCase().includes('solo100'))
+    )
+
+    const isSalesCommand =
+      text.startsWith('/demo') ||
+      text.startsWith('/solo100') ||
+      text.startsWith('/buy')
+
+    // Check pairing status in D1
+    const db = await getDbOrDeadLetter('dm_check', `dm_check_${chatId}`)
+    const userIsPaired = db ? await isAllowed(db, chatId) : false
+
+    // Sales leads arriving from viral videos, social campaigns, or sales commands
+    // bypass the DM pairing gate completely and enter the autonomous sales FSM!
+    if (isSalesDeepLink || isSalesCommand) {
+      await handleLeadGreeting(
+        chatId,
+        firstName,
+        startArg || (isSalesCommand ? text.slice(1) : null),
+        message.from?.username
+      )
+      return NextResponse.json({ ok: true })
+    }
+
+    // Public /start from unpaired cold visitors: start sales & qualification flow
+    if (text === '/start' && !userIsPaired && chatId !== adminChatId) {
+      await handleLeadGreeting(chatId, firstName, null, message.from?.username)
+      return NextResponse.json({ ok: true })
+    }
+
+    // ── DM pairing gate (Protect privileged creator commands like /campaign, /analytics, /status) ──
+    if (adminChatId && chatId !== adminChatId && !isPublicCommand && !userIsPaired) {
+      if (!db) {
+        logger.error('[telegram-webhook] Cannot request pairing: database unavailable', { chatId })
+        return NextResponse.json(
+          { error: 'Database temporarily unavailable' },
+          { status: 503 }
+        )
+      }
+      const { code } = await requestPairing(db, chatId, firstName)
+      await sendTelegramMessage(
+        chatId,
+        `Hi! To use Sophia bot, ask the admin to approve you.\n\nYour pairing code: \`${code}\`\n\n_Code expires in 15 minutes._\n\nMeanwhile you can run: /version, /help.`
+      )
+      return NextResponse.json({ ok: true })
     }
 
     // Route commands through middleware (rate limiting)

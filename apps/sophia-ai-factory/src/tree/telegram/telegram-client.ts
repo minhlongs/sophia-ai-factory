@@ -44,7 +44,8 @@ export async function setTelegramWebhook() {
 
 export interface InlineKeyboardButton {
   text: string;
-  callback_data: string;
+  callback_data?: string;
+  url?: string;
 }
 
 export interface InlineKeyboardMarkup {
@@ -149,6 +150,124 @@ export async function sendTelegramMessage(chatId: string, text: string) {
     recordSuccess('telegram');
     return await response.json();
   } catch {
+    return null;
+  }
+}
+
+export async function sendTelegramVideo(
+  chatId: string,
+  videoUrl: string,
+  options?: {
+    caption?: string;
+    parse_mode?: 'Markdown' | 'MarkdownV2' | 'HTML';
+    reply_markup?: InlineKeyboardMarkup;
+    supports_streaming?: boolean;
+  },
+) {
+  if (!shouldAllowRequest('telegram')) {
+    return null;
+  }
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return null;
+
+  try {
+    const payload: Record<string, unknown> = {
+      chat_id: chatId,
+      video: videoUrl,
+      supports_streaming: options?.supports_streaming ?? true,
+    };
+    if (options?.caption) payload.caption = options.caption;
+    if (options?.parse_mode) payload.parse_mode = options.parse_mode;
+    if (options?.reply_markup) payload.reply_markup = options.reply_markup;
+
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendVideo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      if (options?.parse_mode && response.status === 400) {
+        delete payload.parse_mode;
+        const retryRes = await fetch(`https://api.telegram.org/bot${botToken}/sendVideo`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (retryRes.ok) {
+          recordSuccess('telegram');
+          return await retryRes.json();
+        }
+      }
+      logger.warn('[sendTelegramVideo] Telegram API non-ok response', {
+        status: response.status,
+        chatId,
+      });
+      recordFailure('telegram', classifyError(new Error(`HTTP ${response.status}`)));
+      return null;
+    }
+    recordSuccess('telegram');
+    return await response.json();
+  } catch (err) {
+    recordFailure('telegram', classifyError(err));
+    return null;
+  }
+}
+
+export async function sendTelegramPhoto(
+  chatId: string,
+  photoUrl: string,
+  options?: {
+    caption?: string;
+    parse_mode?: 'Markdown' | 'MarkdownV2' | 'HTML';
+    reply_markup?: InlineKeyboardMarkup;
+  },
+) {
+  if (!shouldAllowRequest('telegram')) {
+    return null;
+  }
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return null;
+
+  try {
+    const payload: Record<string, unknown> = {
+      chat_id: chatId,
+      photo: photoUrl,
+    };
+    if (options?.caption) payload.caption = options.caption;
+    if (options?.parse_mode) payload.parse_mode = options.parse_mode;
+    if (options?.reply_markup) payload.reply_markup = options.reply_markup;
+
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      if (options?.parse_mode && response.status === 400) {
+        delete payload.parse_mode;
+        const retryRes = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (retryRes.ok) {
+          recordSuccess('telegram');
+          return await retryRes.json();
+        }
+      }
+      logger.warn('[sendTelegramPhoto] Telegram API non-ok response', {
+        status: response.status,
+        chatId,
+      });
+      recordFailure('telegram', classifyError(new Error(`HTTP ${response.status}`)));
+      return null;
+    }
+    recordSuccess('telegram');
+    return await response.json();
+  } catch (err) {
+    recordFailure('telegram', classifyError(err));
     return null;
   }
 }

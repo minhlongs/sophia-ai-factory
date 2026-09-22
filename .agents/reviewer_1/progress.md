@@ -1,23 +1,24 @@
-# Progress Tracker - Reviewer 1 (Customer Handover Dossier & Sign-Off Pack Review)
+# Progress Tracker — Reviewer 1
 
-Last visited: 2026-09-19T22:22:00+07:00
+Last visited: 2026-09-22T15:48:00Z
+Status: Review Complete — Issuing REQUEST_CHANGES
 
-## Status: Complete (Verdict: APPROVE)
-
-- [x] Step 1: Initialize DISPATCH.md and BRIEFING.md
-- [x] Step 2: Read ORIGINAL_REQUEST.md, PROJECT.md, and worker_m1 handoff
-- [x] Step 3: Deep inspection of `docs/customer-handover/HANDOVER_DOSSIER_FINAL.md`
-- [x] Step 4: Deep inspection of `docs/customer-handover/HANDOVER_SIGN_OFF_PACK.md`
-- [x] Step 5: Verification & Adversarial stress testing against criteria 1-7 & integrity check
-  - [x] Verified 31 assets across 8 categories (0 empty stubs)
-  - [x] Verified 53 secrets 1Password vault taxonomy (0 plaintext exposures)
-  - [x] Verified Dual-Layer Access Ownership Matrix (Platform vs Customer RBAC)
-  - [x] Verified 5 Sovereignty Principles + canonical pricing ($199, $399, $799, $4,999)
-  - [x] Verified 22 Runbooks exist on disk and resolve cleanly
-  - [x] Verified Sign-Off Pack (D01-D08, legal warranties, 90-day SLA, dual signatures)
-  - [x] Verified bilingual Vietnamese and English fluency throughout
-  - [x] Confirmed live edge SHA parity: `ebc7fb59` on Cloudflare Workers
-  - [x] Ran Vitest suites: Customer journey (52/52 pass), Video pipeline (95/95 pass), Adversarial (60/60 pass)
-- [x] Step 6: Produce structured review report at `.agents/reviewer_1/report.md`
-- [x] Step 7: Produce handoff report at `.agents/reviewer_1/handoff.md` with explicit verdict `APPROVE`
-- [x] Step 8: Update BRIEFING.md and notify parent via `send_message`
+## Tasks
+- [x] Initialize briefing, dispatch, progress
+- [x] Read ORIGINAL_REQUEST.md and PROJECT.md
+- [x] Read handoffs of workers M1, M2, M3, M4
+- [x] Inspect source code of M1, M2, M3, M4
+- [x] Run automated quality gates:
+  - [x] Layer boundaries check (`bash scripts/check-layer-boundaries.sh`) -> PASS (0 violations)
+  - [x] Type-check (`npm run type-check`) -> FAIL (1 TS2307 error in M4)
+  - [x] Sophia Doctor (`node scripts/sophia-doctor.mjs`) -> FAIL (10 ✅ / 0 ⚠️ / 1 ❌)
+  - [x] Vitest test suite runs -> PASS (>550 tests passing across M1, M2, M3, M4)
+  - [x] Ripgrep check for `:any` and unauthorized `console.log` -> PASS (0 found)
+  - [x] ESLint check on new files -> FAIL (6 errors: unescaped JSX quotes, forbidden `as Error` casts)
+- [x] Adversarial stress test & edge case analysis:
+  - [x] Uncovered D1 schema collision between migration `0283` and `0284` for `telegram_leads`
+  - [x] Uncovered duplicate Next.js App Router route collision for `/[locale]/admin/growth-analytics`
+- [x] Check for integrity violations:
+  - [x] Found: Worker M4 reported 0 type errors & 11/11 Doctor Green despite active TS2307 failure
+- [x] Formulate verdict and write `handoff.md`
+- [x] Send message to orchestrator

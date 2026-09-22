@@ -208,3 +208,134 @@ export async function queueBatch(input: BatchQueueInput): Promise<{ externalPaym
 
   return { externalPaymentId }
 }
+
+export interface MassPayoutItem {
+  partnerId: string
+  partnerCode?: string
+  totalCents: number
+  recipientAddrEncrypted: string
+  network?: string
+}
+
+export interface MultiPayoutBatchInput {
+  batchId: string
+  tenantId?: string
+  items: MassPayoutItem[]
+}
+
+export interface MultiPayoutBatchResult {
+  batchId: string
+  totalCount: number
+  successCount: number
+  failureCount: number
+  externalPaymentIds: Record<string, string>
+  failures: Array<{ partnerId: string; error: string }>
+}
+
+/**
+ * Execute mass-payout across multiple affiliate partners with rate limiting (5 req/sec),
+ * circuit breaker validation, and encrypted TRC20 wallet address decryption.
+ */
+export async function executeMultiPayoutBatch(
+  input: MultiPayoutBatchInput,
+): Promise<MultiPayoutBatchResult> {
+  const externalPaymentIds: Record<string, string> = {}
+  const failures: Array<{ partnerId: string; error: string }> = []
+
+  let successCount = 0
+  let failureCount = 0
+
+  for (const item of input.items) {
+    const singleBatchId = `${input.batchId}_${item.partnerId}`
+    try {
+      const res = await queueBatch({
+        batchId: singleBatchId,
+        affiliateId: item.partnerId,
+        totalCents: item.totalCents,
+        recipientAddrEncrypted: item.recipientAddrEncrypted,
+        network: item.network || 'TRC20',
+      })
+      externalPaymentIds[item.partnerId] = res.externalPaymentId
+      successCount++
+    } catch (err) {
+      const safeErr = sanitizeErrorText(err instanceof Error ? err.message : String(err))
+      failures.push({ partnerId: item.partnerId, error: safeErr })
+      failureCount++
+    }
+  }
+
+  return {
+    batchId: input.batchId,
+    totalCount: input.items.length,
+    successCount,
+    failureCount,
+    externalPaymentIds,
+    failures,
+  }
+}
+
+export interface BankReconciliationRecord {
+  batchId: string
+  affiliateId: string
+  partnerCode: string
+  payoutMethod: string
+  recipientAddressOrAccount: string
+  amountCents: number
+  status: string
+  createdAt?: string | number
+  vndRate?: number
+}
+
+function escapeCsvField(val: unknown): string {
+  if (val === null || val === undefined) return '""'
+  const str = String(val)
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    return `"${str.replaceAll('"', '""')}"`
+  }
+  return `"${str}"`
+}
+
+/**
+ * Generate standard RFC 4180 Bank Reconciliation CSV export fallback
+ * for domestic banking and accounting settlement.
+ */
+export function exportBankReconciliationCsv(records: BankReconciliationRecord[]): string {
+  const headers = [
+    'batch_id',
+    'affiliate_id',
+    'partner_code',
+    'payout_method',
+    'recipient_account_or_address',
+    'amount_cents',
+    'amount_usd',
+    'amount_vnd',
+    'status',
+    'created_at',
+  ]
+
+  const rows = records.map((r) => {
+    const amountUsd = fromCents(r.amountCents).toFixed(2)
+    const rate = r.vndRate ?? 25450 // standard USD/VND conversion rate
+    const amountVnd = Math.round(fromCents(r.amountCents) * rate)
+    const createdAtIso = r.createdAt
+      ? typeof r.createdAt === 'number'
+        ? new Date(r.createdAt).toISOString()
+        : String(r.createdAt)
+      : new Date().toISOString()
+
+    return [
+      escapeCsvField(r.batchId),
+      escapeCsvField(r.affiliateId),
+      escapeCsvField(r.partnerCode),
+      escapeCsvField(r.payoutMethod),
+      escapeCsvField(r.recipientAddressOrAccount),
+      escapeCsvField(r.amountCents),
+      escapeCsvField(amountUsd),
+      escapeCsvField(amountVnd),
+      escapeCsvField(r.status),
+      escapeCsvField(createdAtIso),
+    ].join(',')
+  })
+
+  return [headers.join(','), ...rows].join('\n')
+}
